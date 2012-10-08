@@ -1,0 +1,98 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Copyright (c) 2009-2012 Illumina, Inc.
+//
+// This software is covered by the "Illumina Genome Analyzer Software
+// License Agreement" and the "Illumina Source Code License Agreement",
+// and certain third party copyright/licenses, and any user of this
+// source file is bound by the terms therein (see accompanying files
+// Illumina_Genome_Analyzer_Software_License_Agreement.pdf and
+// Illumina_Source_Code_License_Agreement.pdf and third party
+// copyright/license notices).
+//
+//
+
+/// \file
+
+/// \author Chris Saunders
+///
+
+#include <cassert>
+
+
+struct fval {
+    fval(const blt_float_t x_init = 0.,
+         const blt_float_t val_init = 0.)
+        : x(x_init)
+        , val(val_init) {}
+
+    blt_float_t x;
+    blt_float_t val;
+};
+
+
+
+// Helper function to create new fval object from x value, while
+// recording the sampled function value. Side-effects are too heavy to
+// make a ctor out of this:
+template <typename Func>
+fval
+make_fval(const blt_float_t x,
+          Func& f) {
+    const blt_float_t val(f.calc_and_store_val(x));
+    return fval(x,val);
+}
+
+
+
+template <typename Func>
+void
+sample_uniform_range(const blt_float_t min_x,
+                     const blt_float_t max_x,
+                     Func& f) {
+
+    static const blt_float_t min_range(0.0001);
+    static const unsigned max_iter(8);
+
+    assert(min_x < max_x);
+
+    fval low(make_fval(min_x,f));
+    fval high(make_fval(max_x,f));
+
+    for(unsigned i(0);i<max_iter;++i){
+
+        const blt_float_t range(high.x-low.x);
+        const blt_float_t next_range(range*0.5);
+
+        assert(next_range>=0);
+        if(next_range<min_range) return;
+
+        const fval mid(make_fval(low.x+next_range,f));
+
+        if(high.val>low.val){
+            if((high.x+next_range)<max_x) {
+                const fval mid2(make_fval(high.x+next_range,f));
+                if(mid2.val>mid.val) {
+                    low=high;
+                    high=mid2;
+                } else {
+                    low=mid;
+                }
+            } else {
+                low=mid;
+            }
+        } else {
+            if((low.x-next_range)>min_x) {
+                const fval mid2(make_fval(low.x-next_range,f));
+                if(mid2.val>=mid.val) {
+                    high=low;
+                    low=mid2;
+                } else {
+                    high=mid;
+                }
+            } else {
+                high=mid;
+            }
+        }
+    }
+}

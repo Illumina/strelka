@@ -1,0 +1,6 @@
+starling:
+add recommanded reference fields to vcf output
+add recommended contig fields to vcf output
+strelka:
+simple stuff:
+add AD tags to the output, corresponding to the calling teir
