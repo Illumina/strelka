@@ -225,8 +225,6 @@ struct blt_options {
     bool is_include_singleton;
     bool is_include_anomalous;
 
-    std::vector<std::string> sorted_filenames;
-
     std::string counts_filename;
     std::string bsnp_diploid_filename;
     std::string bsnp_diploid_allele_filename;

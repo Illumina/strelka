@@ -125,11 +125,6 @@ legacy_starling_arg_parse(arg_data& ad,
             set_filename_arg(i,ad,opt.is_counts,opt.counts_filename);
         } else if(ad.argstr[i]=="-clobber"){
             opt.is_clobber = true;
-        } else if(ad.argstr[i]=="-sorted"){
-            bool is_sorted(! opt.sorted_filenames.empty());
-            std::string sorted_filename;
-            set_filename_arg(i,ad,is_sorted,sorted_filename);
-            opt.sorted_filenames.push_back(sorted_filename);
         } else if(ad.argstr[i]=="-bam-file"){
             bool is_bam_filename(! opt.bam_filename.empty());
             set_filename_arg(i,ad,is_bam_filename,opt.bam_filename);
@@ -225,12 +220,6 @@ legacy_starling_arg_parse(arg_data& ad,
 
         if(opt.bam_filename.empty()) {
             pinfo.usage("Must specify a sorted BAM file containing aligned sample reads");
-        }
-        if(! opt.sorted_filenames.empty()){
-            const unsigned n_sorted(opt.sorted_filenames.size());
-            if((n_sorted!=1) || (! opt.bam_filename.empty())){
-                pinfo.usage("cannot specify multiple reads files");
-            }
         }
 
         if((! opt.bam_filename.empty()) && opt.bam_seq_name.empty()) {
