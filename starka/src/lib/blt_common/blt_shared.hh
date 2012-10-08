@@ -28,8 +28,6 @@
 
 extern const char STDIN_FILENAME[];
 
-extern const int DEFAULT_MIN_PAIRED_ALIGN_SCORE;
-
 extern const unsigned MAX_FLANK_SIZE;
 
 enum { BLT_MAX_READ_SIZE = 250 };
@@ -49,7 +47,7 @@ struct blt_options {
 
     blt_options()
         : lsnp_alpha(0),
-          bsnp_diploid_theta(0),
+          bsnp_diploid_theta(0.001),
           bsnp_monoploid_theta(0),
           bsnp_nploid_ploidy(0),
           bsnp_nploid_snp_prob(0),
@@ -62,7 +60,7 @@ struct blt_options {
           adis_win_lrt_flank_size(0),
           acov_alpha(0),
           is_lsnp(false),
-          is_bsnp_diploid(false),
+          is_bsnp_diploid_model(false),
           is_bsnp_monoploid(false),
           is_bsnp_nploid(false),
           is_bsnp_diploid_file(false),
@@ -127,6 +125,7 @@ struct blt_options {
         , is_eland_compat(false)
         , is_max_input_depth(false)
         , max_input_depth(0)
+        , is_gvcf_output(true)
     {}
 
     virtual ~blt_options() {}
@@ -139,6 +138,11 @@ struct blt_options {
 
     bool
     is_nonref_sites() const { return (! nonref_sites_filename.empty()); }
+
+    bool
+    is_bsnp_dipoid() const {
+        return (is_bsnp_diploid_model || is_gvcf_output);
+    }
 
     bool
     is_tier2() const {
@@ -226,7 +230,7 @@ struct blt_options {
     bool is_print_all_poly_gt; // print the posterior probabilities for all genotypes
     bool is_print_used_allele_counts; // print allele counts as in CASAVA 1.7 output
     int used_allele_count_min_qscore; // print the above with a qscore cutoff...
-    double max_basecall_filter_fraction; // if more than this fraction of basecalls are filtered out, than don't report the snp
+    double max_basecall_filter_fraction; // if more than this fraction of basecalls are filtered out, than filter the snp
     int max_vexp_iterations;
     bool is_min_vexp;
     double min_vexp;
@@ -258,6 +262,8 @@ struct blt_options {
 
     bool is_max_input_depth;
     unsigned max_input_depth;
+
+    bool is_gvcf_output;
 };
 
 

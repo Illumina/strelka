@@ -413,7 +413,7 @@ starling_pos_processor_base(const starling_options& client_opt,
         _ninfo.reset(new nploid_info(_client_opt.bsnp_nploid_ploidy));
     }
 
-    if(_client_opt.is_bsnp_diploid_allele_file){
+    if(_client_opt.is_all_sites()){
         // pre-calculate qscores for sites with no observations:
         //
         snp_pos_info good_pi;
@@ -427,7 +427,7 @@ starling_pos_processor_base(const starling_options& client_opt,
         }
     }
 
-    _is_dependent_eprob = ((_client_opt.is_bsnp_diploid || _client_opt.is_bsnp_monoploid) &&
+    _is_dependent_eprob = ((_client_opt.is_bsnp_diploid() || _client_opt.is_bsnp_monoploid) &&
                            (_client_opt.bsnp_ssd_no_mismatch>0. || _client_opt.bsnp_ssd_one_mismatch>0));
 
     // define an expanded indel influence zone around the report range:
@@ -1431,6 +1431,23 @@ starling_pos_processor_base::
 process_pos_snp_single_sample_impl(const pos_t pos,
                                    const unsigned sample_no){
     
+    // TODO:
+    //
+    // note this might not matter wrt larger changes taking place, but here goes:
+    //
+    // change filters to support vcf concept of 1..N filters which are added to the genotype information
+    //
+    // generalize site tests with an object
+    //
+    // genotype_test {
+    //    ctor(); // setup any cached values
+    //    
+    //    test(site_info);
+    //
+    //    write()?? (do we need to even bother with this?)
+    // }
+    //
+    
     sample_info& sif(sample(sample_no));
 
     snp_pos_info null_pi;
@@ -1516,8 +1533,8 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     if(_client_opt.is_lsnp){
         position_snp_call_lrt(_client_opt.lsnp_alpha,good_pi,lsc);
     }
-    if(_client_opt.is_bsnp_diploid_file || _client_opt.is_bsnp_diploid_allele_file){
-        _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,dgt,_client_opt.is_bsnp_diploid_allele_file);
+    if(_client_opt.is_bsnp_diploid_file || _client_opt.is_bsnp_diploid_allele_file || _client_opt.is_gvcf_output){
+        _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,dgt,_client_opt.is_all_sites());
     }
     if(_client_opt.is_bsnp_monoploid){
         position_snp_call_pprob_monogt(_client_opt.bsnp_monoploid_theta,good_pi,mgt);

@@ -321,6 +321,10 @@ calculate_result_set(const blt_float_t* lhood,
 
 
 ///
+/// \params is_always_test - continue the full computation even for a site which is
+///                          obviously non-variant
+///
+///
 /// The likelihood of an observed 'column' of observations for any
 /// genotype: P(obs=ACT|genotype=AT) is a sum over all possible
 /// columns:

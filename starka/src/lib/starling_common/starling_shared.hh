@@ -54,8 +54,8 @@ operator<<(std::ostream& os, const avg_window_data& awd);
 struct starling_options : public blt_options {
 
     starling_options()
-        : bindel_diploid_theta(0),
-          is_bindel_diploid(false),
+        : bindel_diploid_theta(0.0001),
+          is_bindel_diploid_model(false),
           bindel_diploid_het_bias(0),
           is_bindel_diploid_het_bias(false),
           is_test_indels(false),
@@ -95,7 +95,6 @@ struct starling_options : public blt_options {
         , is_htype_calling(false)
         , hytpe_count(2)
         , htype_call_segment(1000)
-        , is_gvcf_output(true)
     {}
 
     // report whether any type of indel-caller is running (including
@@ -103,7 +102,17 @@ struct starling_options : public blt_options {
     virtual
     bool
     is_call_indels() const {
-        return (is_bindel_diploid || is_gvcf_output);
+        return is_bindel_diploid();
+    }
+
+    bool
+    is_bindel_diploid() const {
+        return (is_bindel_diploid_model || is_gvcf_output);
+    }
+
+    bool
+    is_all_sites() const {
+        return (is_bsnp_diploid_allele_file || is_gvcf_output);
     }
 
     bool
