@@ -543,18 +543,14 @@ insert_read(const bam_record& br,
             const align_id_t contig_id,
             const indel_set_t* contig_indels_ptr) {
 
-    const char* chrom_expect(NULL);
-
-    if(_bam_chrom_name.empty()) {
+    if(_chrom_name.empty()) {
         assert(NULL != chrom_name);
         assert(strlen(chrom_name));
-        _bam_chrom_name=chrom_name;
-        _chrom_name=_bam_chrom_name;
+        _chrom_name=chrom_name;
     }
-    chrom_expect=_bam_chrom_name.c_str();
 
-    if(0 != strcmp(chrom_expect,chrom_name)){
-        log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << chrom_expect << "'\n"
+    if(0 != strcmp(_chrom_name.c_str(),chrom_name)){
+        log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chrom_name << "'\n"
                << "\tread_key: " << read_key(br) << "\n";
         exit(EXIT_FAILURE);
     }

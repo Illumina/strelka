@@ -478,8 +478,7 @@ protected:
     stage_manager _stageman;
 
     pos_range _report_influence_range;
-    std::string _bam_chrom_name; // this one is defined by the incoming bam file
-    std::string _chrom_name; // by default same as bam chrom name, can be overridden with casava_chrom(). used for output.
+    std::string _chrom_name; // this is set by the incoming reads -- assumes read string is single chromosome
 
     // used to keep read id's unique across multiple samples:
     read_id_counter _ric;
