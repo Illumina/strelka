@@ -61,7 +61,7 @@ usage(const char* xmessage) const {
 }
 
 
-
+#if 0
 void
 starling_info::
 doc() const {
@@ -217,3 +217,4 @@ doc() const {
 
     exit(EXIT_SUCCESS);
 }
+#endif
