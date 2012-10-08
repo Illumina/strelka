@@ -197,8 +197,6 @@ legacy_starling_arg_parse(arg_data& ad,
             opt.is_baby_elephant=true;
         } else if(ad.argstr[i]=="-h"){
             pinfo.usage();
-        } else if(ad.argstr[i]=="-doc"){
-            pinfo.doc();
         } else { continue; }
 
         ad.argmark[i] = true;

@@ -165,8 +165,6 @@ write_starling_legacy_options(std::ostream& os) {
     os << 
         " -bam-file file     - Analyze reads from 'file' in sorted BAM format (required) \n" // (use \"" << STDIN_FILENAME << "\" for stdin)\n"
         " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the bam file (required)\n"
-        " -single-seq-reference file\n"
-        "                    - Get the reference sequence from fasta 'file' containing only one sequence (single-seq or samtools reference required)\n"
         " -samtools-reference file\n"
         "                    - Get the reference sequence from the multi-sequence fasta 'file' following samtools reference conventions (single-seq or samtools reference required)\n"
         "\n"
@@ -297,8 +295,7 @@ write_starling_legacy_options(std::ostream& os) {
         " -skip-variable-metadata\n"
         "                    - do not print commmand-line or time stamp in data file metadata\n"
         "\n"
-        " -h                 - Display usage (this page)\n"
-        " -doc               - Display documentation\n";
+        " -h                 - Display usage (this page)\n";
 }
 
 
