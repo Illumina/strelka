@@ -402,10 +402,6 @@ starling_pos_processor_base(const starling_options& client_opt,
         _sample[i] = new sample_info(_client_opt,report_size,knownref_report_size,&_ric);
     }
 
-    if(_client_opt.is_casava_chrom()){
-        _chrom_name=_client_opt.casava_chrom;
-    }
-
 #ifdef HAVE_FISHER_EXACT_TEST
     if(_client_opt.is_adis_table) {
         _ws = get_exact_test_ws();
@@ -549,19 +545,13 @@ insert_read(const bam_record& br,
 
     const char* chrom_expect(NULL);
 
-    if((READ_ALIGN::GENOME==rat) || (! _client_opt.is_casava_chrom())) {
-        if(_bam_chrom_name.empty()) {
-            assert(NULL != chrom_name);
-            assert(strlen(chrom_name));
-            _bam_chrom_name=chrom_name;
-            if(! _client_opt.is_casava_chrom()){
-                _chrom_name=_bam_chrom_name;
-            }
-        }
-        chrom_expect=_bam_chrom_name.c_str();
-    } else {
-        chrom_expect=_client_opt.casava_chrom.c_str();
+    if(_bam_chrom_name.empty()) {
+        assert(NULL != chrom_name);
+        assert(strlen(chrom_name));
+        _bam_chrom_name=chrom_name;
+        _chrom_name=_bam_chrom_name;
     }
+    chrom_expect=_bam_chrom_name.c_str();
 
     if(0 != strcmp(chrom_expect,chrom_name)){
         log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << chrom_expect << "'\n"

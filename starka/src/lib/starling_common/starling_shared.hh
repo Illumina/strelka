@@ -110,11 +110,6 @@ struct starling_options : public blt_options {
         return (not candidate_indel_filename.empty());
     }
 
-    bool
-    is_casava_chrom() const {
-        return (not casava_chrom.empty());
-    }
-
     unsigned htype_buffer_segment() const {
         return max_indel_size;
     }

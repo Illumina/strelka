@@ -118,8 +118,6 @@ get_starling_shared_option_parser(starling_options& opt) {
 
     po::options_description compat_opt("compatibility-options");
     compat_opt.add_options()
-        ("casava-chrom", po::value<std::string>(&opt.casava_chrom),
-         "Expect the following chromosome label from GROUPER input and use this in all file output (default: use BAM chrom label)")
         ("eland-compatability",
          "When argument is provided the input reads are checked for an optional AS field corresponding to the ELAND PE map score.");
 
