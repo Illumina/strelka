@@ -114,7 +114,6 @@ struct blt_options {
           is_print_all_poly_gt(false),
           is_print_used_allele_counts(false),
           used_allele_count_min_qscore(0),
-          is_print_extra_snp_info(false),
           max_basecall_filter_fraction(1.),
           max_vexp_iterations(0),
           is_min_vexp(false),
@@ -230,7 +229,6 @@ struct blt_options {
     bool is_print_all_poly_gt; // print the posterior probabilities for all genotypes
     bool is_print_used_allele_counts; // print allele counts as in CASAVA 1.7 output
     int used_allele_count_min_qscore; // print the above with a qscore cutoff...
-    bool is_print_extra_snp_info;
     double max_basecall_filter_fraction; // if more than this fraction of basecalls are filtered out, than don't report the snp
     int max_vexp_iterations;
     bool is_min_vexp;

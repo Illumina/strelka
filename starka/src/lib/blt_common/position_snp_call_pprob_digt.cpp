@@ -381,7 +381,7 @@ position_snp_call_pprob_digt(const blt_options& opt,
     dgt.is_snp=(dgt.genome.snp_qphred != 0);
 
     // compute strand-bias here: 
-    const bool is_compute_sb(opt.is_print_extra_snp_info);
+    const bool is_compute_sb(true);
     if(is_compute_sb && dgt.is_snp) {
         blt_float_t lhood_fwd[DIGT::SIZE];
         get_diploid_gt_lhood(opt,epi,opt.is_bsnp_diploid_het_bias,opt.bsnp_diploid_het_bias,lhood_fwd,true,true);
@@ -439,7 +439,7 @@ write_diploid_genotype_allele(const blt_options& opt,
         pi.print_known_counts(os,opt.used_allele_count_min_qscore);
     }
 
-    if(opt.is_print_extra_snp_info && is_nf_snp) {
+    if(is_nf_snp) {
         os << '\t' << sb
            << '\t' << hpol;
     }

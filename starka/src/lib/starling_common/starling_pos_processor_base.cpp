@@ -1571,7 +1571,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     const bool is_nf_snp(is_snp && (! is_filter_snp));
     unsigned hpol(0);
-    if(_client_opt.is_print_extra_snp_info && is_nf_snp) {
+    if(is_nf_snp) {
         hpol=get_snp_hpol_size(pos,_ref);
     }
 

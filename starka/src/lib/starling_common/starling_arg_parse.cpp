@@ -155,8 +155,6 @@ legacy_starling_arg_parse(arg_data& ad,
             opt.is_print_used_allele_counts=true;
         } else if(ad.argstr[i]=="-used-allele-count-min-qscore"){
             set_arg(i,ad,is_uacmq_set,opt.used_allele_count_min_qscore);
-        } else if(ad.argstr[i]=="-print-extra-snp-info") {
-            opt.is_print_extra_snp_info=true;
         } else if(ad.argstr[i]=="-min-candidate-indel-reads"){
             set_arg(i,ad,is_min_can_indel_set,opt.default_min_candidate_indel_reads);
         } else if(ad.argstr[i]=="-min-candidate-indel-read-frac"){

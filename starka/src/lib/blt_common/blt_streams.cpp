@@ -142,9 +142,7 @@ setup_bsnp_file(const blt_options& opt,
         }
     }
 
-    if(opt.is_print_extra_snp_info) {
-        fos << " snv_sb snv_hpol";
-    }
+    fos << " snv_sb snv_hpol";
     
     if(opt.is_print_all_poly_gt) {
         for(unsigned gt(0);gt<DIGT::SIZE;++gt){
