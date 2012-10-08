@@ -28,7 +28,6 @@
 
 extern const char STDIN_FILENAME[];
 
-extern const int DEFAULT_MIN_QSCORE;
 extern const int DEFAULT_MIN_PAIRED_ALIGN_SCORE;
 
 extern const unsigned MAX_FLANK_SIZE;
@@ -74,7 +73,7 @@ struct blt_options {
           is_adis_table(false),
           is_adis_win_lrt(false),
           is_acov(false),
-          min_qscore(0),
+          min_qscore(17),
           min_single_align_score(10),
           min_paired_align_score(6),
           single_align_score_exclude_mode(false),
