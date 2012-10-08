@@ -9,19 +9,18 @@ export VCFTOOLS_ID := vcftools_0.1.6
 
 all:
 	$(MAKE) -C $(REDIST_DIR) && \
-	$(MAKE) -C $(SRC_DIR) &&
+	$(MAKE) -C $(SRC_DIR)
 
 clean: srcclean
-	$(MAKE) -C $(REDIST_DIR) clean
+	$(MAKE) -C $(REDIST_DIR) $@ 
 
 # developer targets:
 #
 
 # clean only src directories but leave redist built:
 srcclean:
-	$(MAKE) -C $(SRC_DIR) clean
-	rm -f $(LAUNCH_SCRIPT)
+	$(MAKE) -C $(SRC_DIR) $@
 
 etags:
-	$(MAKE) -C $(SRC_DIR) etags
-	cd $(SRC_DIR) && find . -type f -iname "*.[ch]" -or -iname "*.cpp" -or -iname "*.hh" | sed "s/\.\///" | etags -	
+	$(MAKE) -C $(SRC_DIR) $@
+

@@ -45,16 +45,16 @@ boost: $(BOOST_ID)
 
 samtools: $(SAMTOOLS_ID)
 	$(MAKE) -C $(SAMTOOLS_ID) && \
-	ln -sf $(SAMTOOLS_ID) samtools
+	ln -sf $< $@
 
 tabix: $(TABIX_ID)
 	$(MAKE) -C $(TABIX_ID) && \
-	ln -sf $(TABIX_ID) tabix
+	ln -sf $< $@
 
 # vcftools has a makefile issue preventing recursive make on some linux distros unless MAKEFLAGS is cleared first:
 vcftools: $(VCFTOOLS_ID)
 	$(MAKE) -C $(VCFTOOLS_ID) MAKEFLAGS= && \
-	ln -sf $(VCFTOOLS_ID) vcftools
+	ln -sf $< $@
 
 clean:
 	$(RM) -rf $(DIRS) boost samtools tabix vcftools
