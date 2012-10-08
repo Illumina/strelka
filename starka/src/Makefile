@@ -37,8 +37,8 @@ STRELKA_INCLUDE_DIR:=$(CURDIR)/lib
 CXXFLAGS := $(XFLAGS)
 LDFLAGS := $(XFLAGS)
 
-STRELKA_BIN := bin/strelka
-STAR_BIN := bin/starling
+STRELKA_BIN := bin/strelka2
+STAR_BIN := bin/starling2
 
 VAR_BINS := $(STRELKA_BIN) $(STAR_BIN)
 
