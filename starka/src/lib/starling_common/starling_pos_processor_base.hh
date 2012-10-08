@@ -34,6 +34,7 @@
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
 #include "starling_common/depth_buffer.hh"
+#include "starling_common/gvcf_aggregator.hh"
 #include "starling_common/indel_buffer.hh"
 #include "starling_common/indel_set.hh"
 #include "starling_common/indel_synchronizer.hh"
@@ -498,6 +499,8 @@ protected:
     htype_region_data _hregion;
 
     bool _is_variant_windows;
+
+    gvcf_aggregator _gvcfer;
 };
 
 

@@ -95,6 +95,7 @@ struct starling_options : public blt_options {
         , is_htype_calling(false)
         , hytpe_count(2)
         , htype_call_segment(1000)
+        , is_gvcf_output(true)
     {}
 
     // report whether any type of indel-caller is running (including
@@ -102,7 +103,7 @@ struct starling_options : public blt_options {
     virtual
     bool
     is_call_indels() const {
-        return is_bindel_diploid;
+        return (is_bindel_diploid || is_gvcf_output);
     }
 
     bool
