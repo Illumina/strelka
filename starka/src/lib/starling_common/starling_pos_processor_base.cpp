@@ -37,7 +37,6 @@
 #include "blt_common/position_strand_distro_anomaly.hh"
 #include "blt_common/position_strand_distro_anomaly_lrt.hh"
 #include "blt_common/ref_context.hh"
-#include "blt_common/report_bacon_calls.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/read_util.hh"
@@ -1489,12 +1488,6 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     if(sample_no!=0) return;
 
     if(pi.calls.empty()) {
-        // report allele-caller output for empty lines if option to do so is set:
-        if(_client_opt.is_bacon_allele && _client_opt.is_bacon_allele_print_empty){
-            bacon_info bi;
-            get_bacon_scores(_client_opt,good_pi,n_unused_calls,bi);
-            report_bacon_allele_call(_client_io,output_pos,bi);
-        }
         if(_client_opt.is_bsnp_diploid_allele_file && _client_opt.is_bsnp_diploid_allele_print_empty){
             const diploid_genotype& edgt(get_empty_dgt(pi.ref_base));
             write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,n_used_calls,n_unused_calls,good_pi,edgt);
@@ -1513,17 +1506,11 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     // delay writing any snpcalls so that anomaly tests can (optionally) be applied as filters:
     //
-    bacon_info bi;
     nonref_test_call nrc;
     lrt_snp_call lsc;
     diploid_genotype dgt;
     monoploid_genotype mgt;
     std::auto_ptr<nploid_genotype> ngt_ptr;
-
-    //
-    if(_client_opt.is_bacon_allele || _client_opt.is_bacon_snp){
-        get_bacon_scores(_client_opt,good_pi,n_unused_calls,bi);
-    }
 
     if(_client_opt.is_counts){
         report_counts(good_pi,n_unused_calls,output_pos,*_client_io.counts_osptr());
@@ -1560,7 +1547,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         position_snp_call_pprob_nploid(_client_opt.bsnp_nploid_snp_prob,good_pi,*_ninfo,*ngt_ptr);
     }
 
-    const bool is_snp(bi.is_snp || nrc.is_snp || lsc.is_snp || dgt.is_snp || mgt.is_snp || (ngt_ptr.get() && ngt_ptr->is_snp));
+    const bool is_snp(nrc.is_snp || lsc.is_snp || dgt.is_snp || mgt.is_snp || (ngt_ptr.get() && ngt_ptr->is_snp));
 
     // find anomalies:
     //
@@ -1581,20 +1568,6 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     const bool is_anomaly(is_pos_adis || is_pos_acov);
     const bool is_filter_snp(is_overfilter || (_client_opt.is_filter_anom_calls && is_anomaly));
-
-    // in case of anomaly filtering -- still print out the allele caller line, but reduce the BaCON score to zero:
-    //
-    if(_client_opt.is_bacon_allele){
-        if(is_filter_snp) {
-            bacon_scores& bas(bi.bas);
-            bas.max_score = 0.;
-            bas.max2_score = 0.;
-            bas.max_base_id = base_to_id(pi.ref_base);
-            bas.max2_base_id = base_to_id(pi.ref_base);
-            bi.is_max2_reported = false;
-        }
-        report_bacon_allele_call(_client_io,output_pos,bi);
-    }
 
     const bool is_nf_snp(is_snp && (! is_filter_snp));
     unsigned hpol(0);
@@ -1625,10 +1598,6 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     std::ostream& report_os(get_report_os());
 
     if(is_nf_snp) {
-        if(_client_opt.is_bacon_snp && bi.is_snp) {
-            report_bacon_snp_call(_client_io,output_pos,pi.ref_base,bi);
-        }
-
         if(nrc.is_snp) {
             std::ostream& bos(*_client_io.nonref_test_osptr());
             write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,n_used_calls,n_unused_calls,bos);

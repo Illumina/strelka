@@ -52,21 +52,7 @@ check_option_arg_range(const prog_info& pinfo,
 
 void
 validate_blt_opt(const prog_info& pinfo,
-                 const blt_options& opt,
-                 const bool is_bacon_call_thresh,
-                 const bool is_bacon_second_call_thresh,
-                 const bool is_bacon_het_snp_ratio_thresh){
-
-    const bool is_bacon_set(is_bacon_call_thresh || is_bacon_second_call_thresh || is_bacon_het_snp_ratio_thresh);
-    const bool is_bacon_used(opt.is_bacon_snp || opt.is_bacon_allele);
-
-    if(is_bacon_set && ! is_bacon_used){
-        pinfo.usage("BaCON parameters set without specifying either -bacon-snp or -bacon-allele");
-    }
-
-    if(opt.is_bacon_allele_print_empty && ! opt.is_bacon_allele) {
-        pinfo.usage("-bacon-allele-print-empty specified without providing a -bacon-allele file");
-    }
+                 const blt_options& opt){
 
     if(opt.is_min_win_qscore && opt.min_win_qscore_flank_size > MAX_FLANK_SIZE){
         std::ostringstream oss;

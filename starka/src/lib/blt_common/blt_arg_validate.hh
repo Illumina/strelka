@@ -39,9 +39,6 @@ check_option_arg_range(const prog_info& pinfo,
 
 void
 validate_blt_opt(const prog_info& pinfo,
-                 const blt_options& client_opt,
-                 const bool is_bacon_call_thresh,
-                 const bool is_bacon_second_call_thresh,
-                 const bool is_bacon_het_snp_ratio_thresh);
+                 const blt_options& client_opt);
 
 #endif

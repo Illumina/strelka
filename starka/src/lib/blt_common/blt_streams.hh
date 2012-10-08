@@ -37,8 +37,6 @@ struct blt_streams {
 
     std::ostream& report_os() const { return _report_os; }
     std::ostream* counts_osptr() const { return _counts_osptr.get(); }
-    std::ostream* bacon_snp_osptr() const { return _bacon_snp_osptr.get(); }
-    std::ostream* bacon_allele_osptr() const { return _bacon_allele_osptr.get(); }
     std::ostream* bsnp_diploid_osptr() const { return _bsnp_diploid_osptr.get(); }
     std::ostream* bsnp_diploid_allele_osptr() const { return _bsnp_diploid_allele_osptr.get(); }
     std::ostream* nonref_test_osptr() const { return _nonref_test_osptr.get(); }
@@ -76,8 +74,6 @@ protected:
 private:
     std::ostream& _report_os;
     std::auto_ptr<std::ostream> _counts_osptr;
-    std::auto_ptr<std::ostream> _bacon_snp_osptr;
-    std::auto_ptr<std::ostream> _bacon_allele_osptr;
     std::auto_ptr<std::ostream> _bsnp_diploid_osptr;
     std::auto_ptr<std::ostream> _bsnp_diploid_allele_osptr;
     std::auto_ptr<std::ostream> _nonref_test_osptr;

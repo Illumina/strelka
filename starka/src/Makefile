@@ -45,9 +45,9 @@ VAR_BINS := $(STRELKA_BIN) $(STAR_BIN)
 SHARED_CXX_DIR := blt_util blt_common common starling_common
 SHARED_CXX_SRC := $(wildcard $(patsubst %,lib/%/*.cpp,$(SHARED_CXX_DIR)))
 SHARED_OBJS := $(patsubst %.cpp,%.o,$(SHARED_CXX_SRC))
-STRELKA_CXX_SRC := bin/strelka.cpp $(wildcard lib/strelka/*.cpp) $(SHARED_CXX_SRC)
+STRELKA_CXX_SRC := bin/strelka2.cpp $(wildcard lib/strelka/*.cpp) $(SHARED_CXX_SRC)
 STRELKA_OBJS := $(patsubst %.cpp,%.o,$(STRELKA_CXX_SRC))
-STAR_CXX_SRC := bin/starling.cpp $(wildcard lib/starling/*.cpp) $(SHARED_CXX_SRC)
+STAR_CXX_SRC := bin/starling2.cpp $(wildcard lib/starling/*.cpp) $(SHARED_CXX_SRC)
 STAR_OBJS := $(patsubst %.cpp,%.o,$(STAR_CXX_SRC))
 
 all: $(STRELKA_BIN) $(STAR_BIN)

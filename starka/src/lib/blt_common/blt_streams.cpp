@@ -285,28 +285,6 @@ blt_streams(const blt_options& opt,
         fos << "\n";
     }
 
-    if(opt.is_bacon_allele) {
-        std::ofstream* fosptr(new std::ofstream);
-        _bacon_allele_osptr.reset(fosptr);
-        std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.bacon_allele_filename,"bacon allele",opt.is_clobber,fos);
-
-        fos << "# ** " << pinfo.name() << " BaCON allele file **\n";
-        write_file_audit(opt,pinfo,cmdline,fos);
-        fos << "#$ COLUMNS pos A_used C_used G_used T_used allele_call bcalls bcalls_used BaCON_score\n";
-    }
-
-    if(opt.is_bacon_snp) {
-        std::ofstream* fosptr(new std::ofstream);
-        _bacon_snp_osptr.reset(fosptr);
-        std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.bacon_snp_filename,"bacon snp",opt.is_clobber,fos);
-
-        fos << "# ** " << pinfo.name() << " BaCON snp file **\n";
-        write_file_audit(opt,pinfo,cmdline,fos);
-        fos << "#$ COLUMNS pos A_used C_used G_used T_used snp_call bcalls bcalls_used BaCON_score ref snp_type\n";
-    }
-
     if(opt.is_bsnp_diploid_file){
         setup_bsnp_file(opt,pinfo,cmdline,_bsnp_diploid_osptr,
                         opt.bsnp_diploid_filename,"bsnp-diploid",is_include_seq_name);          

@@ -30,8 +30,6 @@ extern const char STDIN_FILENAME[];
 
 extern const int DEFAULT_MIN_QSCORE;
 extern const int DEFAULT_MIN_PAIRED_ALIGN_SCORE;
-extern const double DEFAULT_BACON_CALL_THRESH;
-extern const double DEFAULT_BACON_HET_SNP_RATIO_THRESH;
 
 extern const unsigned MAX_FLANK_SIZE;
 
@@ -103,12 +101,6 @@ struct blt_options {
           max_win_mismatch(0),
           max_win_mismatch_flank_size(0),
           is_counts(false),
-          is_bacon_snp(false),
-          is_bacon_allele(false),
-          is_bacon_allele_print_empty(false),
-          bacon_call_thresh(10),
-          bacon_second_call_thresh(bacon_call_thresh),
-          bacon_het_snp_ratio_thresh(3),
           is_print_evidence(false),
           is_print_all_site_evidence(false),
           is_read_sample(false),
@@ -217,12 +209,6 @@ struct blt_options {
     unsigned max_win_mismatch;
     unsigned max_win_mismatch_flank_size;
     bool is_counts;
-    bool is_bacon_snp;
-    bool is_bacon_allele;
-    bool is_bacon_allele_print_empty;
-    double bacon_call_thresh;
-    double bacon_second_call_thresh;
-    double bacon_het_snp_ratio_thresh;
     bool is_print_evidence;
     bool is_print_all_site_evidence;
     pos_range user_report_range;   // requested report range
@@ -242,8 +228,6 @@ struct blt_options {
     std::vector<std::string> sorted_filenames;
 
     std::string counts_filename;
-    std::string bacon_snp_filename;
-    std::string bacon_allele_filename;
     std::string bsnp_diploid_filename;
     std::string bsnp_diploid_allele_filename;
 
