@@ -131,8 +131,6 @@ legacy_starling_arg_parse(arg_data& ad,
         } else if(ad.argstr[i]=="-bam-seq-name"){
             bool is_bam_seq_name(! opt.bam_seq_name.empty());
             set_filename_arg(i,ad,is_bam_seq_name,opt.bam_seq_name);
-        } else if(ad.argstr[i]=="-single-seq-reference"){
-            set_filename_arg(i,ad,opt.is_single_ref_set,opt.single_ref_seq_file);
         } else if(ad.argstr[i]=="-samtools-reference"){
             set_filename_arg(i,ad,opt.is_samtools_ref_set,opt.samtools_ref_seq_file);
         } else if(ad.argstr[i]=="-indel-contigs"){

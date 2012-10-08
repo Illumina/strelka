@@ -105,7 +105,6 @@ struct blt_options {
           is_print_all_site_evidence(false),
           is_read_sample(false),
           read_sample_rate(0),
-          is_single_ref_set(false),
           is_samtools_ref_set(false),
           is_filter_anom_calls(false),
           is_include_singleton(false),
@@ -136,7 +135,7 @@ struct blt_options {
     virtual ~blt_options() {}
 
     bool
-    is_ref_set() const { return (is_single_ref_set || is_samtools_ref_set); }
+    is_ref_set() const { return (is_samtools_ref_set); }
 
     bool
     is_nonref_test() const { return (! nonref_test_filename.empty()); }
@@ -214,9 +213,6 @@ struct blt_options {
     pos_range user_report_range;   // requested report range
     bool is_read_sample;
     double read_sample_rate;
-
-    bool is_single_ref_set;
-    std::string single_ref_seq_file;
 
     bool is_samtools_ref_set;
     std::string samtools_ref_seq_file;

@@ -122,10 +122,6 @@ validate_blt_opt(const prog_info& pinfo,
         }
     }
 
-    if(opt.is_single_ref_set && opt.is_samtools_ref_set) {
-        pinfo.usage("cannot specify both single-seq-reference and samtools-reference");
-    }
-
     if(rr.is_begin_pos){
         if(rr.begin_pos<=0) pinfo.usage("-report-range-begin argument must be > 0");
     }
