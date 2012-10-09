@@ -172,10 +172,11 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     }
 
 protected:
-    std::ostream&
-    get_report_os() const {
-        return _client_io.report_os();
+    std::ostream*
+    get_report_osptr() const {
+        return _client_io.report_osptr();
     }
+
 
     void
     process_pos_snp_single_sample(const pos_t pos,

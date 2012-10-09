@@ -1005,7 +1005,7 @@ process_pos_indel_single_sample(const pos_t pos,
     // the methods are coded,)
     //
 
-    std::ostream& report_os(get_report_os());
+    std::ostream& report_os(std::cerr);
     const pos_t output_pos(pos+1);
 
     typedef indel_buffer::const_iterator ciiter;
@@ -1057,7 +1057,7 @@ process_pos_indel_single_sample(const pos_t pos,
                 get_starling_indel_sample_report_info(_client_dopt,ik,id,sif.bc_buff,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
-                if(_client_opt.is_gvcf_output) {
+                if(_client_opt.is_gvcf_output()) {
                     _gvcfer.add_indel(output_pos,dindel,iri,isri);
                 }
 
@@ -1582,7 +1582,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         if(is_filter_snp) {
             dgt_ptr=&get_empty_dgt(pi.ref_base);
         }
-        if(_client_opt.is_gvcf_output) {
+        if(_client_opt.is_gvcf_output()) {
             _gvcfer.add_site(output_pos,pi.ref_base,n_used_calls,n_unused_calls,good_pi,*dgt_ptr,is_nf_snp,dgt_ptr->sb,hpol);
         }
         write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,n_used_calls,n_unused_calls,good_pi,*dgt_ptr,is_nf_snp,dgt_ptr->sb,hpol);
@@ -1600,7 +1600,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     //
     bool is_reported_event(false);
 
-    std::ostream& report_os(get_report_os());
+    std::ostream& report_os(std::cerr);
 
     if(is_nf_snp) {
         if(nrc.is_snp) {

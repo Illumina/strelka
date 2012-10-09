@@ -107,7 +107,7 @@ struct starling_options : public blt_options {
     // is diploid indel model being used?
     bool
     is_bindel_diploid() const {
-        return (is_bindel_diploid_file || is_gvcf_output);
+        return (is_bindel_diploid_file || is_gvcf_output());
     }
 
     bool

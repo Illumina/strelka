@@ -217,8 +217,6 @@ process_pos_snp_somatic(const pos_t pos) {
     //
     bool is_reported_event(false);
 
-    std::ostream& report_os(get_report_os());
-
     if(is_snv) {
 #if 0
         if(sgt.is_snv){
@@ -295,11 +293,12 @@ process_pos_snp_somatic(const pos_t pos) {
         is_reported_event = true;
     }
 
-    if(_opt.is_print_all_site_evidence or (_opt.is_print_evidence and is_reported_event)){
-        report_os << "TUMOR/NORMAL EVIDENCE pos: " << output_pos << "\n"
-                  << "is_snv: " << is_snv << "\n"
-                  << "normal-data:\n" << normald_ptr[0]->epd.good_pi << "\n"
-                  << "tumor-data:\n" << tumord_ptr[0]->epd.good_pi << "\n";
+    std::ostream& log_os(std::cerr);
+    if(_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event)){
+        log_os << "TUMOR/NORMAL EVIDENCE pos: " << output_pos << "\n"
+               << "is_snv: " << is_snv << "\n"
+               << "normal-data:\n" << normald_ptr[0]->epd.good_pi << "\n"
+               << "tumor-data:\n" << tumord_ptr[0]->epd.good_pi << "\n";
     }
 }
 
@@ -447,7 +446,9 @@ void
 strelka_pos_processor::
 write_counts(const pos_range& output_report_range) const {
 
-    std::ostream& report_os(get_report_os());
+    std::ostream* report_os_ptr(get_report_osptr());
+    if(NULL==report_os_ptr) return;
+    std::ostream& report_os(*report_os_ptr);
 
     for(unsigned i(0);i<STRELKA_SAMPLE_TYPE::SIZE;++i) {
         const sample_info& sif(sample(i));

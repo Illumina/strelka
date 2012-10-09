@@ -233,12 +233,18 @@ open_ofstream(const prog_info& pinfo,
 blt_streams::
 blt_streams(const blt_options& opt,
             const prog_info& pinfo,
-            const bool is_include_seq_name)
-    : _report_os(std::cout) {
+            const bool is_include_seq_name) {
 
     const char* const cmdline(opt.cmdline.c_str());
 
-    write_audit(opt,pinfo,cmdline,report_os());
+    if(! opt.report_filename.empty()) {
+        std::ofstream* fosptr(new std::ofstream);
+        _report_osptr.reset(fosptr);
+        std::ofstream& fos(*fosptr);
+        open_ofstream(pinfo,opt.report_filename,"report",opt.is_clobber,fos);
+
+        write_audit(opt,pinfo,cmdline,fos);
+    }
 
     if(opt.is_counts) {
         std::ofstream* fosptr(new std::ofstream);

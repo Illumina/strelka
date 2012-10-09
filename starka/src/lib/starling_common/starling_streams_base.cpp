@@ -18,6 +18,7 @@
 ///
 
 #include "blt_util/bam_dumper.hh"
+#include "blt_util/vcf_util.hh"
 #include "starling_common/starling_streams_base.hh"
 
 #include <cassert>
@@ -52,6 +53,56 @@ initialize_bindel_file(const starling_options& opt,
 }
 
 
+
+// return stream, is_malloced_pointer
+std::ostream*
+starling_streams_base::
+initialize_gvcf_file(const starling_options& opt,
+                     const prog_info& pinfo,
+                     const std::string& filename,
+                     std::auto_ptr<std::ostream>& os_ptr_auto) {
+
+    std::ostream* osptr(&std::cout);
+    if(filename != "-") {
+        std::ofstream* fos_ptr(new std::ofstream);
+        open_ofstream(pinfo,filename,"gvcf",opt.is_clobber,*fos_ptr);
+        os_ptr_auto.reset(fos_ptr);
+        osptr=os_ptr_auto.get();
+    }
+    std::ostream& os(*osptr);
+
+    const char* const cmdline(opt.cmdline.c_str());
+
+    write_vcf_audit(opt,pinfo,cmdline,os);
+    os << "##content=starling small-variant calls\n"
+       << "##SnpTheta=" << opt.bsnp_diploid_theta << "\n"
+       << "##IndelTheta=" << opt.bindel_diploid_theta << "\n";
+
+#if 0
+    // INFO:
+    fos << "##INFO=<ID=QSS,Number=1,Type=Integer,Description=\"Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal\">\n";
+    fos << "##INFO=<ID=TQSS,Number=1,Type=Integer,Description=\"Data tier used to compute QSS\">\n";
+    fos << "##INFO=<ID=NT,Number=1,Type=String,Description=\"Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.\">\n";
+    fos << "##INFO=<ID=QSS_NT,Number=1,Type=Integer,Description=\"Quality score reflecting the joint probability of a somatic variant and NT\">\n";
+    fos << "##INFO=<ID=TQSS_NT,Number=1,Type=Integer,Description=\"Data tier used to compute QSS_NT\">\n";
+    fos << "##INFO=<ID=SGT,Number=1,Type=String,Description=\"Most likely somatic genotype excluding normal noise states\">\n";
+    fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
+    
+    // FORMAT:
+    fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1 (used+filtered)\">\n";
+    fos << "##FORMAT=<ID=FDP,Number=1,Type=Integer,Description=\"Number of basecalls filtered from original read depth for tier1\">\n";
+    fos << "##FORMAT=<ID=SDP,Number=1,Type=Integer,Description=\"Number of reads with deletions spanning this site at tier1\">\n";
+    fos << "##FORMAT=<ID=SUBDP,Number=1,Type=Integer,Description=\"Number of reads below tier1 mapping quality threshold aligned across this site\">\n";
+    fos << "##FORMAT=<ID=AU,Number=2,Type=Integer,Description=\"Number of 'A' alleles used in tiers 1,2\">\n";
+    fos << "##FORMAT=<ID=CU,Number=2,Type=Integer,Description=\"Number of 'C' alleles used in tiers 1,2\">\n";
+    fos << "##FORMAT=<ID=GU,Number=2,Type=Integer,Description=\"Number of 'G' alleles used in tiers 1,2\">\n";
+    fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
+#endif    
+
+    os << vcf_col_label() << "\tFORMAT\tSAMPLE\n";
+
+    return osptr;
+}
 
 bam_dumper*
 starling_streams_base::

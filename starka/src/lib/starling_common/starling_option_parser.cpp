@@ -68,7 +68,8 @@ get_starling_shared_option_parser(starling_options& opt) {
         ("snp-theta", po::value<double>(&opt.bsnp_diploid_theta)->default_value(opt.bsnp_diploid_theta),
          "Set snp theta.")
         ("indel-theta", po::value<double>(&opt.bindel_diploid_theta)->default_value(opt.bindel_diploid_theta),
-         "Set indel theta");
+         "Set indel theta")
+        ("gvcf-file",po::value<std::string>(&opt.gvcf_filename),"gVCF output file");
 
     po::options_description hap_opt("haplotype-options");
     hap_opt.add_options()
@@ -135,11 +136,15 @@ get_starling_shared_option_parser(starling_options& opt) {
          "Maximum allowed read depth per sample (prior to realignment). Input reads which would exceed this depth are filtered out.  (default: no limit)")
         ("ignore-conflicting-read-names",
          "Do not report an error if two input reads share the same QNAME and read number");
-;
+
+    po::options_description other_opt("other-options");
+    other_opt.add_options()
+        ("report-file", po::value<std::string>(&opt.report_filename),
+         "Report non-error run info and statistics to file");
 
     po::options_description new_opt("New options");
 
-    new_opt.add(geno_opt).add(hap_opt).add(blt_nonref_opt).add(contig_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt);
+    new_opt.add(geno_opt).add(hap_opt).add(blt_nonref_opt).add(contig_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt).add(other_opt);
 
     return new_opt;
 }

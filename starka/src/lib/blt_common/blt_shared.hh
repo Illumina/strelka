@@ -124,7 +124,6 @@ struct blt_options {
         , is_eland_compat(false)
         , is_max_input_depth(false)
         , max_input_depth(0)
-        , is_gvcf_output(true)
     {}
 
     virtual ~blt_options() {}
@@ -143,12 +142,17 @@ struct blt_options {
     is_bsnp_diploid() const {
         return (is_bsnp_diploid_file ||
                 is_bsnp_diploid_allele_file ||
-                is_gvcf_output);
+                is_gvcf_output());
     }
 
     bool
     is_all_sites() const {
-        return (is_bsnp_diploid_allele_file || is_gvcf_output);
+        return (is_bsnp_diploid_allele_file || is_gvcf_output());
+    }
+
+    bool
+    is_gvcf_output() const {
+        return (! gvcf_filename.empty());
     }
 
     bool
@@ -269,7 +273,9 @@ struct blt_options {
     bool is_max_input_depth;
     unsigned max_input_depth;
 
-    bool is_gvcf_output;
+    std::string report_filename;
+
+    std::string gvcf_filename;
 };
 
 

@@ -35,7 +35,7 @@ struct blt_streams {
 
     ~blt_streams();
 
-    std::ostream& report_os() const { return _report_os; }
+    std::ostream* report_osptr() const { return _report_osptr.get(); }
     std::ostream* counts_osptr() const { return _counts_osptr.get(); }
     std::ostream* bsnp_diploid_osptr() const { return _bsnp_diploid_osptr.get(); }
     std::ostream* bsnp_diploid_allele_osptr() const { return _bsnp_diploid_allele_osptr.get(); }
@@ -72,7 +72,7 @@ protected:
                     std::ostream& os);
 
 private:
-    std::ostream& _report_os;
+    std::auto_ptr<std::ostream> _report_osptr;
     std::auto_ptr<std::ostream> _counts_osptr;
     std::auto_ptr<std::ostream> _bsnp_diploid_osptr;
     std::auto_ptr<std::ostream> _bsnp_diploid_allele_osptr;

@@ -45,6 +45,11 @@ struct starling_streams_base : public blt_streams {
         return _bindel_diploid_osptr[sample_no].get();
     }
     
+    std::ostream*
+    gvcf_osptr(const unsigned sample_no) const {
+        return _gvcf_osptr[sample_no];
+    }
+
     bam_dumper*
     realign_bam_ptr(const unsigned sample_no) const {
         return _realign_bam_ptr[sample_no].get();
@@ -68,6 +73,13 @@ protected:
                            const std::string& filename,
                            const char* label=NULL);
 
+    static
+    std::ostream*
+    initialize_gvcf_file(const starling_options& opt,
+                         const prog_info& pinfo,
+                         const std::string& filename,
+                         std::auto_ptr<std::ostream>& os_ptr_auto);
+
     bam_dumper*
     initialize_realign_bam(const bool is_clobber,
                            const prog_info& pinfo,
@@ -89,6 +101,8 @@ protected:
                            const sample_info& si);
 
     std::auto_ptr<std::ostream> _bindel_diploid_osptr[MAX_SAMPLE];
+    std::ostream* _gvcf_osptr[MAX_SAMPLE];
+    std::auto_ptr<std::ostream> _gvcf_osptr_auto[MAX_SAMPLE];
     std::auto_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];
 private:
     std::auto_ptr<std::ostream> _candidate_indel_osptr;

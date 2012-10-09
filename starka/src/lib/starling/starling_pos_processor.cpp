@@ -27,7 +27,9 @@ void
 starling_pos_processor::
 write_counts(const pos_range& output_report_range) const {
 
-    std::ostream& report_os(get_report_os());
+    std::ostream* report_osptr(get_report_osptr());
+    if(NULL==report_osptr) return;
+    std::ostream& report_os(*report_osptr);
 
     const sample_info& sif(sample());
 
