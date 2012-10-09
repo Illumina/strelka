@@ -88,16 +88,8 @@ validate_blt_opt(const prog_info& pinfo,
         pinfo.usage("ERROR:: ploidy argument to -bsnp-nploid must be greater than 0\n");
     }
 
-    if(opt.is_bsnp_diploid_file && (! opt.is_bsnp_diploid)){
-        pinfo.usage("-bsnp-diploid-file specified without providing -bsnp-diploid parameter\n");
-    }
-
-    if(opt.is_bsnp_diploid_allele_file && (! opt.is_bsnp_diploid)){
-        pinfo.usage("-bsnp-diploid-file specified without providing -bsnp-diploid parameter\n");
-    }
-
     if(opt.is_bsnp_diploid_het_bias) {
-        if(! opt.is_bsnp_diploid) {
+        if(! opt.is_bsnp_diploid()) {
             pinfo.usage("-bsnp-diploid-het-bias does not make sense when bsnp-diploid model is not in use\n");
         }
         if((opt.bsnp_diploid_het_bias < 0.) || (opt.bsnp_diploid_het_bias >= 0.5)){

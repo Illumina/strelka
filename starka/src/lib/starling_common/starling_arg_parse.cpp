@@ -70,8 +70,6 @@ legacy_starling_arg_parse(arg_data& ad,
 
         if(ad.argstr[i]=="-lsnp-alpha"){
             set_xrange_arg(i,ad,opt.is_lsnp,opt.lsnp_alpha);
-        } else if(ad.argstr[i]=="-bsnp-diploid"){
-            set_xrange_arg(i,ad,opt.is_bsnp_diploid,opt.bsnp_diploid_theta);
         } else if(ad.argstr[i]=="-bsnp-diploid-file"){
             set_filename_arg(i,ad,opt.is_bsnp_diploid_file,opt.bsnp_diploid_filename);
         } else if(ad.argstr[i]=="-bsnp-diploid-allele-file"){
@@ -86,8 +84,6 @@ legacy_starling_arg_parse(arg_data& ad,
             set_xrange_arg(i,ad,opt.is_bsnp_diploid_het_bias,opt.bsnp_diploid_het_bias,true);
         } else if(ad.argstr[i]=="-bsnp-nploid"){
             set_nploid_arg(i,ad,opt.is_bsnp_nploid,opt.bsnp_nploid_ploidy,opt.bsnp_nploid_snp_prob);
-        } else if(ad.argstr[i]=="-bindel-diploid"){
-            set_xrange_arg(i,ad,opt.is_bindel_diploid,opt.bindel_diploid_theta);
         } else if(ad.argstr[i]=="-bindel-diploid-het-bias"){
             set_xrange_arg(i,ad,opt.is_bindel_diploid_het_bias,opt.bindel_diploid_het_bias,true);
         } else if(ad.argstr[i]=="-bindel-diploid-file"){

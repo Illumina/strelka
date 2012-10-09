@@ -23,3 +23,27 @@
 
 
 
+void
+gvcf_aggregator::
+add_site(const pos_t output_pos,
+         const char ref,
+         const unsigned n_used_calls,
+         const unsigned n_unused_calls,
+         const snp_pos_info& good_pi,
+         const diploid_genotype& dgt,
+         const bool is_nf_snp,
+         const double sb,
+         const unsigned hpol) {
+
+}
+
+
+
+void
+gvcf_aggregator::
+add_indel(const pos_t output_pos,
+          const starling_diploid_indel& dindel,
+          const starling_indel_report_info& iri,
+          const starling_indel_sample_report_info& isri) {
+
+}

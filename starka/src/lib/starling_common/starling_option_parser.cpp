@@ -62,6 +62,14 @@ void validate(boost::any& v,
 po::options_description
 get_starling_shared_option_parser(starling_options& opt) {
 
+
+    po::options_description geno_opt("genotyping options");
+    geno_opt.add_options()
+        ("snp-theta", po::value<double>(&opt.bsnp_diploid_theta)->default_value(opt.bsnp_diploid_theta),
+         "Set snp theta.")
+        ("indel-theta", po::value<double>(&opt.bindel_diploid_theta)->default_value(opt.bindel_diploid_theta),
+         "Set indel theta");
+
     po::options_description hap_opt("haplotype-options");
     hap_opt.add_options()
         ("hap-model",
@@ -131,7 +139,7 @@ get_starling_shared_option_parser(starling_options& opt) {
 
     po::options_description new_opt("New options");
 
-    new_opt.add(hap_opt).add(blt_nonref_opt).add(contig_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt);
+    new_opt.add(geno_opt).add(hap_opt).add(blt_nonref_opt).add(contig_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt);
 
     return new_opt;
 }
@@ -166,7 +174,6 @@ write_starling_legacy_options(std::ostream& os) {
         " -samtools-reference file\n"
         "                    - Get the reference sequence from the multi-sequence fasta 'file' following samtools reference conventions (single-seq or samtools reference required)\n"
         "\n"
-        " -bsnp-diploid x    - Set diploid snv theta=x\n"
         " -bsnp-diploid-het-bias x\n"
         "                    - Set bias term for the heterozygous state in the bsnp model, such that\n"
         "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
@@ -211,7 +218,6 @@ write_starling_legacy_options(std::ostream& os) {
         " -print-evidence    - Print the observed data at single site events (does not include indels)\n"
         " -print-all-site-evidence\n"
         "                    - Print the observed data for all sites (does not include indels)\n"
-        " -bindel-diploid x  - Set diploid indel theta=x\n"
         " -bindel-diploid-het-bias x\n"
         "                    - Set bias term for the heterozygous state in the bindel model, such that\n"
         "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
@@ -301,15 +307,6 @@ void
 finalize_legacy_starling_options(const prog_info& pinfo,
                                  starling_options& opt) {
 
-    // max_theta for indels is actually 2./3., but because we don't
-    // allow non-reference hets, we stick with the lower value
-    // used for snps:
-    //
-    if(opt.bindel_diploid_theta>MAX_DIPLOID_THETA){
-        std::ostringstream oss;
-        oss << "indel diploid heterozygosity exceeds maximum value of: " << MAX_DIPLOID_THETA;
-        pinfo.usage(oss.str().c_str());
-    }
 
     if(! opt.is_ref_set()){
         pinfo.usage("a reference sequence must be specified");
@@ -368,6 +365,17 @@ finalize_starling_options(const prog_info& pinfo,
     check_option_arg_range(pinfo,opt.min_nonref_freq,"min-nonref-freq",0.,1.);
 
     // starling section:
+
+    // max_theta for indels is actually 2./3., but because we don't
+    // allow non-reference hets, we stick with the lower value
+    // used for snps:
+    //
+    if(opt.bindel_diploid_theta>MAX_DIPLOID_THETA){
+        std::ostringstream oss;
+        oss << "indel diploid heterozygosity exceeds maximum value of: " << MAX_DIPLOID_THETA;
+        pinfo.usage(oss.str().c_str());
+    }
+
     if(vm.count("hap-model")) {
         opt.is_htype_calling=true;
     }

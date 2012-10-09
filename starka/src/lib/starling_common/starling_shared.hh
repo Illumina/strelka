@@ -55,7 +55,6 @@ struct starling_options : public blt_options {
 
     starling_options()
         : bindel_diploid_theta(0.0001),
-          is_bindel_diploid_model(false),
           bindel_diploid_het_bias(0),
           is_bindel_diploid_het_bias(false),
           is_test_indels(false),
@@ -105,14 +104,10 @@ struct starling_options : public blt_options {
         return is_bindel_diploid();
     }
 
+    // is diploid indel model being used?
     bool
     is_bindel_diploid() const {
-        return (is_bindel_diploid_model || is_gvcf_output);
-    }
-
-    bool
-    is_all_sites() const {
-        return (is_bsnp_diploid_allele_file || is_gvcf_output);
+        return (is_bindel_diploid_file || is_gvcf_output);
     }
 
     bool
@@ -127,7 +122,6 @@ struct starling_options : public blt_options {
     // parameters inherited from varling caller:
     //
     double bindel_diploid_theta;
-    bool is_bindel_diploid;
     double bindel_diploid_het_bias;
     bool is_bindel_diploid_het_bias;
     bool is_test_indels;

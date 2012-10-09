@@ -548,6 +548,7 @@ insert_read(const bam_record& br,
         assert(NULL != chrom_name);
         assert(strlen(chrom_name));
         _chrom_name=chrom_name;
+        _gvcfer.set_chrom_name(_chrom_name.c_str());
     }
 
     if(0 != strcmp(_chrom_name.c_str(),chrom_name)){
@@ -1025,7 +1026,7 @@ process_pos_indel_single_sample(const pos_t pos,
 
         bool is_indel(false);
 
-        if(_client_opt.is_bindel_diploid_file){
+        if(_client_opt.is_bindel_diploid()){
             // indel_report_info needs to be run first now so that
             // local small repeat info is available to the indel
             // caller
@@ -1056,13 +1057,17 @@ process_pos_indel_single_sample(const pos_t pos,
                 get_starling_indel_sample_report_info(_client_dopt,ik,id,sif.bc_buff,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
-                assert(_client_opt.is_bindel_diploid_file);
+                if(_client_opt.is_gvcf_output) {
+                    _gvcfer.add_indel(output_pos,dindel,iri,isri);
+                }
 
-                std::ostream& bos(*_client_io.bindel_diploid_osptr(sample_no));
-                bos << _chrom_name << "\t" << output_pos << "\t";
-                write_starling_diploid_indel_file(dindel,iri,isri,bos);
-                bos << "\n";
+                if(_client_opt.is_bindel_diploid_file) {
 
+                    std::ostream& bos(*_client_io.bindel_diploid_osptr(sample_no));
+                    bos << _chrom_name << "\t" << output_pos << "\t";
+                    write_starling_diploid_indel_file(dindel,iri,isri,bos);
+                    bos << "\n";
+                }
                 if(_is_variant_windows) _variant_print_pos.insert(pos);
             }
 
@@ -1533,7 +1538,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     if(_client_opt.is_lsnp){
         position_snp_call_lrt(_client_opt.lsnp_alpha,good_pi,lsc);
     }
-    if(_client_opt.is_bsnp_diploid_file || _client_opt.is_bsnp_diploid_allele_file || _client_opt.is_gvcf_output){
+    if(_client_opt.is_bsnp_diploid()){
         _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,dgt,_client_opt.is_all_sites());
     }
     if(_client_opt.is_bsnp_monoploid){
@@ -1577,6 +1582,9 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         if(is_filter_snp) {
             dgt_ptr=&get_empty_dgt(pi.ref_base);
         }
+        if(_client_opt.is_gvcf_output) {
+            _gvcfer.add_site(output_pos,pi.ref_base,n_used_calls,n_unused_calls,good_pi,*dgt_ptr,is_nf_snp,dgt_ptr->sb,hpol);
+        }
         write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,n_used_calls,n_unused_calls,good_pi,*dgt_ptr,is_nf_snp,dgt_ptr->sb,hpol);
     }
 
@@ -1616,8 +1624,10 @@ process_pos_snp_single_sample_impl(const pos_t pos,
                 bos << "\t";
                 write_diploid_genotype_snp(_client_opt,good_pi,dgt,bos,true,dgt.sb,hpol);
                 bos << "\n";
-                if(_is_variant_windows) _variant_print_pos.insert(pos);
             }
+
+            // this needs to be updated no matter where the snp-call is written to:
+            if(_is_variant_windows) _variant_print_pos.insert(pos);
         }
         if(mgt.is_snp) {
             write_snp_prefix_info("BSNP1",output_pos,pi.ref_base,n_used_calls,n_unused_calls,report_os);

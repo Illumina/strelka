@@ -60,7 +60,6 @@ struct blt_options {
           adis_win_lrt_flank_size(0),
           acov_alpha(0),
           is_lsnp(false),
-          is_bsnp_diploid_model(false),
           is_bsnp_monoploid(false),
           is_bsnp_nploid(false),
           is_bsnp_diploid_file(false),
@@ -139,9 +138,17 @@ struct blt_options {
     bool
     is_nonref_sites() const { return (! nonref_sites_filename.empty()); }
 
+    // is the diploid snp model being used?
     bool
-    is_bsnp_dipoid() const {
-        return (is_bsnp_diploid_model || is_gvcf_output);
+    is_bsnp_diploid() const {
+        return (is_bsnp_diploid_file ||
+                is_bsnp_diploid_allele_file ||
+                is_gvcf_output);
+    }
+
+    bool
+    is_all_sites() const {
+        return (is_bsnp_diploid_allele_file || is_gvcf_output);
     }
 
     bool
@@ -171,7 +178,6 @@ struct blt_options {
     unsigned adis_win_lrt_flank_size;
     double acov_alpha;
     bool is_lsnp;
-    bool is_bsnp_diploid;
     bool is_bsnp_monoploid;
     bool is_bsnp_nploid;
     bool is_bsnp_diploid_file;
