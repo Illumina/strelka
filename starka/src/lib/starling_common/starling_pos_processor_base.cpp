@@ -1473,14 +1473,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     //
     if(sample_no!=0) return;
 
-    if(pi.calls.empty()) {
-        if(_client_opt.is_bsnp_diploid_allele_file && _client_opt.is_bsnp_diploid_allele_print_empty){
-            const diploid_genotype& edgt(get_empty_dgt(pi.ref_base));
-            write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,n_used_calls,n_unused_calls,good_pi,edgt);
-        }
-
-        return;
-    }
+    if(pi.calls.empty()) return;
 
     adjust_joint_eprob(_client_opt,_dpcache,good_pi,sif.epd.dependent_eprob,_is_dependent_eprob);
 

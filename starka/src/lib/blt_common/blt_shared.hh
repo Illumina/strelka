@@ -67,7 +67,6 @@ struct blt_options {
           is_bsnp_nploid(false),
           is_bsnp_diploid_file(false),
           is_bsnp_diploid_allele_file(false),
-          is_bsnp_diploid_allele_print_empty(false),
           is_bsnp_diploid_het_bias(false),
           is_adis_lrt(false),
           is_adis_table(false),
@@ -173,7 +172,6 @@ struct blt_options {
     bool is_bsnp_nploid;
     bool is_bsnp_diploid_file;
     bool is_bsnp_diploid_allele_file;
-    bool is_bsnp_diploid_allele_print_empty;
     bool is_bsnp_diploid_het_bias;
     bool is_adis_lrt;
     bool is_adis_table;
