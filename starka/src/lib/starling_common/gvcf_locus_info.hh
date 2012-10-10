@@ -45,8 +45,8 @@ namespace VCF_FILTERS {
 
     inline 
     const char*
-    get_label(const index_t i) {
-        switch(i) {
+    get_label(const unsigned idx) {
+        switch(idx) {
         case HighDepth: return "HighDepth";
         case LowGQX: return "LowGQX";
         case HighSB: return "HighSB";
@@ -127,6 +127,14 @@ struct indel_info {
         iri=(init_iri);
         isri=(init_isri);
         imod.init();
+    }
+
+    const char*
+    get_gt() {
+        if(imod.is_overlap) {
+            return imod.overlap_gt.c_str();
+        }
+        return STAR_DIINDEL::get_gt_label(dindel.max_gt);
     }
 
     pos_t pos;

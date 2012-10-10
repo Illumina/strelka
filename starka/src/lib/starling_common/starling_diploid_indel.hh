@@ -44,6 +44,19 @@ namespace STAR_DIINDEL {
         }
     }
 
+    inline
+    const char*
+    get_gt_label(const unsigned idx){
+        switch(idx){
+        case NOINDEL: return "0/0";
+        case HOM: return "1/1";
+        case HET: return "0/1";
+        default:
+            assert(0);
+            return NULL;
+        }
+    }
+
 #if 0
     // states are the number of copies of I,R,NR
     // I=called indel allele

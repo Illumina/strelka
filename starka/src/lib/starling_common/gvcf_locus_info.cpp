@@ -37,7 +37,7 @@ write_filters(std::ostream& os) {
         if(_filters[i]) {
             if(is_sep) { os << ";"; }
             else       { is_sep=true; }
-            os << VCF_FILTERS::get_label(static_cast<VCF_FILTERS::index_t>(i));
+            os << VCF_FILTERS::get_label(i);
         }
     }
 }

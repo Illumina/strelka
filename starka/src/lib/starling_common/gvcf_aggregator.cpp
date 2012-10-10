@@ -216,6 +216,7 @@ write_indel_record() {
 
     // FILTER:
     ii.imod.write_filters(os);
+    os << '\t';
 
     // INFO
     os << ".\t";
@@ -224,7 +225,7 @@ write_indel_record() {
     os << "GT" << '\t';
 
     //SAMPLE
-    os << ".\n";
+    os << ii.get_gt()  << '\n';
 }
 
 
