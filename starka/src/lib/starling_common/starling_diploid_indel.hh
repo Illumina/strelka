@@ -76,22 +76,45 @@ namespace STAR_DIINDEL {
 }
 
 
+// separate out core with automatic copy ctor:
+//
+struct starling_diploid_indel_core {
 
-struct starling_diploid_indel : private boost::noncopyable {
-
-    starling_diploid_indel()
+    starling_diploid_indel_core()
         : is_indel(false), max_gt(0) {
-        static const double p(1./static_cast<double>(STAR_DIINDEL::SIZE));
-        static const int qp(error_prob_to_qphred((1.-p)));
+        static const int qp(error_prob_to_qphred((1.-init_p())));
         indel_qphred=qp;
         max_gt_qphred=qp;
-        for(unsigned i(0);i<STAR_DIINDEL::SIZE;++i) pprob[i] = p;
     }
+
+protected:
+
+    static
+    double
+    init_p() {
+        static const double p(1./static_cast<double>(STAR_DIINDEL::SIZE));
+        return p;
+    }
+
+public:
 
     bool is_indel;
     unsigned max_gt;
     int indel_qphred;
     int max_gt_qphred;
+};
+
+
+
+struct starling_diploid_indel : public starling_diploid_indel_core, private boost::noncopyable {
+
+    starling_diploid_indel()
+        : starling_diploid_indel_core()
+    {
+        static const double p(init_p());
+        for(unsigned i(0);i<STAR_DIINDEL::SIZE;++i) pprob[i] = p;
+    }
+
     double pprob[STAR_DIINDEL::SIZE];
 };
 

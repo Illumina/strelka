@@ -25,13 +25,14 @@
 #include "blt_util/digt.hh"
 #include "blt_util/qscore.hh"
 
+#include <boost/array.hpp>
 #include <boost/utility.hpp>
 
 #include <iosfwd>
 
 
 
-struct diploid_genotype : private boost::noncopyable {
+struct diploid_genotype {
 
     diploid_genotype() 
         : is_snp(false), ref_gt(0) {}
@@ -53,7 +54,7 @@ struct diploid_genotype : private boost::noncopyable {
         unsigned max_gt;
         int snp_qphred;
         int max_gt_qphred;
-        double pprob[DIGT::SIZE]; // note this is intentionally stored at higher float resolution than the rest of the computation
+        boost::array<double,DIGT::SIZE> pprob; // note this is intentionally stored at higher float resolution than the rest of the computation
     };
 
     bool is_snp;

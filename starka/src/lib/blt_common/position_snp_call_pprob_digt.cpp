@@ -312,10 +312,10 @@ calculate_result_set(const blt_float_t* lhood,
         rs.pprob[gt] = lhood[gt] + lnprior[gt];
     }
 
-    normalize_ln_distro(rs.pprob,rs.pprob+DIGT::SIZE,rs.max_gt);
+    normalize_ln_distro(rs.pprob.begin(),rs.pprob.end(),rs.max_gt);
 
     rs.snp_qphred=error_prob_to_qphred(rs.pprob[ref_gt]);
-    rs.max_gt_qphred=error_prob_to_qphred(prob_comp(rs.pprob,rs.pprob+DIGT::SIZE,rs.max_gt));
+    rs.max_gt_qphred=error_prob_to_qphred(prob_comp(rs.pprob.begin(),rs.pprob.end(),rs.max_gt));
 }
 
 

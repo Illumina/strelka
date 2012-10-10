@@ -25,21 +25,44 @@
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "starling_common/starling_shared.hh"
 
+#include <iostream>
+
+
+
+struct indel_info {
+
+    void
+    init(const pos_t init_pos,
+         const starling_diploid_indel_core& init_dindel,
+         const starling_indel_report_info& init_iri,
+         const starling_indel_sample_report_info& init_isri)
+    { 
+        pos=(init_pos);
+        dindel=(init_dindel);
+        iri=(init_iri);
+        isri=(init_isri);
+    }
+
+    pos_t pos;
+    starling_diploid_indel_core dindel;
+    starling_indel_report_info iri;
+    starling_indel_sample_report_info isri;
+};
+
+
 
 ///
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
 
-
-// 0. setup test case
-// 1. naively cram everything together:
-// 2. create command-line option and output stream
 struct gvcf_aggregator {
 
-    gvcf_aggregator(const starling_options& opt)
-        : _opt(opt)
-    {}
+    gvcf_aggregator(const starling_options& opt,
+                    const pos_range& report_range,
+                    std::ostream* os);
+
+    ~gvcf_aggregator();
 
     void
     set_chrom_name(const char* chrom) {
@@ -47,7 +70,7 @@ struct gvcf_aggregator {
     }
 
     void
-    add_site(const pos_t output_pos,
+    add_site(const pos_t pos,
              const char ref,
              const unsigned n_used_calls,
              const unsigned n_unused_calls,
@@ -58,18 +81,44 @@ struct gvcf_aggregator {
              const unsigned hpol);
 
     void
-    add_indel(const pos_t output_pos,
-              const starling_diploid_indel& dindel,
+    add_indel(const pos_t pos,
+              const starling_diploid_indel_core& dindel,
               const starling_indel_report_info& iri,
               const starling_indel_sample_report_info& isri);
 
 private:
+
+    // resolve a set of overlapping indel and site calls:
+    void process_overlaps();
+    
+
+    // initial policy is to write nothing at empty sites. why?
+    //
+    // (1) gatk does it
+    // (2) if gVCF output is every turned off, the output would be ridiculous -- maybe this should be a gVCf only thing?
+    //
+    //void
+    //write_empty_pos();
+
+    //void
+    //update_pos();
+
     const starling_options& _opt;
     const char* _chrom;
+
+    const known_pos_range _report_range;
+
+    //pos_t _head_pos;  // all input has been recieved up to this pos
+    //pos_t _write_pos; // output has been written out to this pos
+
+    pos_t _indel_end_pos;
+
+    unsigned _indel_buffer_size;
+    std::vector<indel_info> _indel_buffer;
+
+    // convenient reference to gvcf stream from opt:
+    std::ostream* _osptr;
 };
-
-
-//std::ostream& operator<<(std::ostream& os,const alignment& al);
 
 
 #endif
