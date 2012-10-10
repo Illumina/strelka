@@ -31,11 +31,14 @@
 namespace VCF_FILTERS {
 
     enum index_t {
-        MaxDepth,
+        HighDepth,
         LowGQX,
         HighSB,
         HighHpol,
         HighBaseFilt,
+        HighRepeatCount,
+        IndelConflict,
+        SiteConflict,
         SIZE
     };
 
@@ -43,11 +46,14 @@ namespace VCF_FILTERS {
     const char*
     get_label(const index_t i) {
         switch(i) {
-        case MaxDepth: return "MaxDepth";
+        case HighDepth: return "HighDepth";
         case LowGQX: return "LowGQX";
         case HighSB: return "HighSB";
         case HighHpol: return "HighHpol";
         case HighBaseFilt: return "HighBaseFilt";
+        case HighRepeatCount: return "HighRepeatCount";
+        case IndelConflict: return "IndelConflict";
+        case SiteConflict: return "SiteConflict";
         default:
             assert(0);
             return NULL;

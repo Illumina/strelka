@@ -100,6 +100,20 @@ add_site(const pos_t pos,
 
 
 
+static
+bool
+is_het_indel(const starling_diploid_indel_core& dindel) {
+    return (dindel.max_gt==STAR_DIINDEL::HET);
+}
+
+static
+bool
+is_no_indel(const starling_diploid_indel_core& dindel) {
+    return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
+}
+
+
+
 void
 gvcf_aggregator::
 add_indel(const pos_t pos,
@@ -111,9 +125,12 @@ add_indel(const pos_t pos,
     // we can't handle breakends at all right now:
     if(ik.is_breakpoint()) return;
 
+    // don't handle max_gt=="ref" cases for now:
+    if(is_no_indel(dindel)) return;
+
     // check to see if we add this indel to the buffer:
     if(0 != _indel_buffer_size) {
-        // check if this indel overlaps the buffer -- note this will catch adjacent deletions:
+        // check if this indel overlaps the buffer -- note this deleberatly picks up adjacent deletions:
         if(pos<=_indel_end_pos) {
             _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
         } else {
@@ -130,6 +147,20 @@ add_indel(const pos_t pos,
 
 
 
+static
+bool
+is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
+                        const unsigned size) {
+
+    return (size==2 &&
+            is_het_indel(indel_buffer[0].dindel) &&
+            is_het_indel(indel_buffer[1].dindel));
+
+}
+
+
+
+
 void
 gvcf_aggregator::
 process_overlaps() {
@@ -137,6 +168,16 @@ process_overlaps() {
     if(0==_indel_buffer_size) return;
 
     // do the overlap processing:
+    if(_indel_buffer_size==1) {
+        // simple case of no overlap:
+    } else {
+        if(is_simple_indel_overlap(_indel_buffer,_indel_buffer_size)){
+            // handle the simplest possible overlap case (two hets):
+
+        } else {
+            // mark the whole region as conflicting
+        }
+    }
 
     *_osptr << "INDEL_SIZE: " << _indel_buffer_size << "\n";
 
