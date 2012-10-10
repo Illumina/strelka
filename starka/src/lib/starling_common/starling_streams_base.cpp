@@ -198,6 +198,8 @@ starling_streams_base(const starling_options& opt,
 {
     assert((_n_samples>0) && (_n_samples<=MAX_SAMPLE));
 
+    for(unsigned i(0);i<_n_samples;++i) _gvcf_osptr[i] = NULL;
+
     if(opt.is_write_candidate_indels()) {
         _candidate_indel_osptr.reset(initialize_candidate_indel_file(opt,pinfo,opt.candidate_indel_filename));
     }
