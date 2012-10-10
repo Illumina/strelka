@@ -160,6 +160,73 @@ is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
 
 
 
+void
+gvcf_aggregator::
+modify_overlap_indel_record() {
+
+    // can only handle simple 2-indel overlaps right now:
+    assert(_indel_buffer_size==2);
+
+    // accumutate all modification info in the *first* indel record:
+    indel_info& ii(_indel_buffer[0]);
+
+    ii.imod.is_overlap=true;
+
+    // there's going to be 1 (possibly empty) fill range in front of one haplotype
+    // and one possibly empty fill range on the back of one haplotype
+}
+
+
+
+static
+void
+add_indel_modifiers(const starling_options& opt,
+                    indel_info& ii) {
+
+    ii.imod.gqx=std::min(ii.dindel.indel_qphred,ii.dindel.max_gt_qphred);
+    if(opt.is_gvcf_min_gqx) {
+        if(ii.imod.gqx<opt.gvcf_min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+    }
+
+    if(opt.is_gvcf_max_depth) {
+        if(ii.isri.depth > opt.gvcf_max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+    }
+}
+
+
+
+void
+gvcf_aggregator::
+write_indel_record() {
+
+    assert(_indel_buffer_size>0);
+
+    std::ostream& os(*_osptr);
+    indel_info& ii(_indel_buffer[0]);
+
+    // compute final mods:
+    add_indel_modifiers(_opt,ii);
+
+    os << _chrom << '\t'   // CHROM
+       << ii.pos << '\t'   // POS
+       << ".\t"            // ID
+       << ii.iri.vcf_ref_seq << '\t' // REF
+       << ii.iri.vcf_indel_seq << '\t' // ALT
+       << ii.dindel.indel_qphred << '\t'; //QUAL
+
+    // FILTER:
+    ii.imod.write_filters(os);
+
+    // INFO
+    os << ".\t";
+
+    //FORMAT
+    os << "GT" << '\t';
+
+    //SAMPLE
+    os << ".\n";
+}
+
 
 void
 gvcf_aggregator::
@@ -173,12 +240,13 @@ process_overlaps() {
     } else {
         if(is_simple_indel_overlap(_indel_buffer,_indel_buffer_size)){
             // handle the simplest possible overlap case (two hets):
-
+            modify_overlap_indel_record();
         } else {
             // mark the whole region as conflicting
         }
     }
 
+    write_indel_record();
     *_osptr << "INDEL_SIZE: " << _indel_buffer_size << "\n";
 
     // tmp debug:

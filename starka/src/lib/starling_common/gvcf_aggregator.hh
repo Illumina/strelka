@@ -64,9 +64,12 @@ struct gvcf_aggregator {
 
 private:
 
+    void modify_overlap_indel_record();
+
     // resolve a set of overlapping indel and site calls:
     void process_overlaps();
     
+    void write_indel_record();
 
     // initial policy is to write nothing at empty sites. why?
     //

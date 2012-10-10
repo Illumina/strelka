@@ -124,6 +124,10 @@ struct blt_options {
         , is_eland_compat(false)
         , is_max_input_depth(false)
         , max_input_depth(0)
+        , is_gvcf_min_gqx(true)
+        , gvcf_min_gqx(30.)
+        , is_gvcf_max_depth(true)
+        , gvcf_max_depth(100.)
     {}
 
     virtual ~blt_options() {}
@@ -276,6 +280,12 @@ struct blt_options {
     std::string report_filename;
 
     std::string gvcf_filename;
+
+
+    bool is_gvcf_min_gqx;
+    double gvcf_min_gqx;
+    bool is_gvcf_max_depth;
+    double gvcf_max_depth;
 };
 
 

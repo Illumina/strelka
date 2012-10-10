@@ -26,6 +26,7 @@
 #include "starling_common/starling_shared.hh"
 
 #include <bitset>
+#include <iosfwd>
 
 
 namespace VCF_FILTERS {
@@ -66,19 +67,43 @@ namespace VCF_FILTERS {
 struct shared_modifiers {
     
     shared_modifiers()
-    {}
+    { init(); }
 
     void
     set_filter(const VCF_FILTERS::index_t i) {
-        filters[i] = 1;
+        _filters.set(i);
     }
 
-    std::bitset<VCF_FILTERS::SIZE> filters;
+    void
+    write_filters(std::ostream& os);
+
+
+
+    int gqx;
+
+    void
+    init() {
+        _filters.reset();
+    }
+
+private:
+    std::bitset<VCF_FILTERS::SIZE> _filters;
 };
 
 
 struct indel_modifiers : public shared_modifiers {
+    indel_modifiers() {
+        init();
+    }
 
+    void
+    init() {
+        shared_modifiers::init();
+        is_overlap=false;
+    }
+
+    bool is_overlap;
+    std::string overlap_gt;
 };
 
 struct site_modifiers : public shared_modifiers {
@@ -101,6 +126,7 @@ struct indel_info {
         dindel=(init_dindel);
         iri=(init_iri);
         isri=(init_isri);
+        imod.init();
     }
 
     pos_t pos;
@@ -135,6 +161,7 @@ struct site_info {
         is_nf_snp=init_is_nf_snp;
         sb=init_sb;
         hpo=init_hpo;
+        smod.init();
     }
 
     pos_t pos;
