@@ -22,6 +22,25 @@
 #include <iostream>
 
 
+#if 0
+VcfRecord {
+    reset(site_info);
+    reset(site_info,site_modifiers);
+    reset(indel_info);
+};
+
+
+gvcf_blocker {
+
+    add(const site_info&,
+        const site_modifiers&);
+
+    add(const indel_info&, indel_modifiers&);
+
+};
+#endif
+
+
 
 gvcf_aggregator::
 gvcf_aggregator(const starling_options& opt,

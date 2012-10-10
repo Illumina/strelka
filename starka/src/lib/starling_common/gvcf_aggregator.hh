@@ -21,73 +21,9 @@
 #define __GVCF_AGGREGATOR_HH
 
 
-#include "blt_common/position_snp_call_pprob_digt.hh"
-#include "starling_common/starling_indel_call_pprob_digt.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/gvcf_locus_info.hh"
 
-#include <iostream>
-
-
-
-struct indel_info {
-
-    void
-    init(const pos_t init_pos,
-         const indel_key& init_ik,
-         const starling_diploid_indel_core& init_dindel,
-         const starling_indel_report_info& init_iri,
-         const starling_indel_sample_report_info& init_isri)
-    { 
-        pos=(init_pos);
-        ik=(init_ik);
-        dindel=(init_dindel);
-        iri=(init_iri);
-        isri=(init_isri);
-    }
-
-    pos_t pos;
-    indel_key ik;
-    starling_diploid_indel_core dindel;
-    starling_indel_report_info iri;
-    starling_indel_sample_report_info isri;
-};
-
-
-
-struct site_info {
-    void
-    init(const pos_t init_pos,
-         const char init_ref,
-         const unsigned init_n_used_calls,
-         const unsigned init_n_unused_calls,
-         const snp_pos_info& init_good_pi,
-         const diploid_genotype& init_dgt,
-         const bool init_is_nf_snp,
-         const double init_sb,
-         const unsigned init_hpo) {
-
-        pos=(init_pos);
-        ref=(init_ref);
-        n_used_calls=(init_n_used_calls);
-        n_unused_calls=(init_n_unused_calls);
-        good_pi=init_good_pi;
-        dgt=init_dgt;
-        is_nf_snp=init_is_nf_snp;
-        sb=init_sb;
-        hpo=init_hpo;
-    }
-
-    pos_t pos;
-    char ref;
-    unsigned n_used_calls;
-    unsigned n_unused_calls;
-    snp_pos_info good_pi;
-    diploid_genotype dgt;
-    bool is_nf_snp;
-    double sb;
-    unsigned hpo;
-};
-
+#include <iosfwd>
 
 
 ///
