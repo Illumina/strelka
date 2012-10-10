@@ -62,7 +62,10 @@ add_site(const pos_t pos,
         if(pos>=_indel_end_pos) {
             process_overlaps();
         } else {
-            // buffer site:
+            while(_site_buffer.size() <= _site_buffer_size) {
+                _site_buffer.push_back(site_info());
+            }
+            _site_buffer[_site_buffer_size++].init(pos,ref,n_used_calls,n_unused_calls,good_pi,dgt,is_nf_snp,sb,hpol);
             return;
         }
     }
@@ -76,24 +79,29 @@ add_site(const pos_t pos,
 void
 gvcf_aggregator::
 add_indel(const pos_t pos,
+          const indel_key ik,
           const starling_diploid_indel_core& dindel,
           const starling_indel_report_info& iri,
           const starling_indel_sample_report_info& isri) {
 
+    // we can't handle breakends at all right now:
+    if(ik.is_breakpoint()) return;
 
     // check to see if we add this indel to the buffer:
     if(0 != _indel_buffer_size) {
-        // check if it's time to process the buffer:
-        //if() {
+        // check if this indel overlaps the buffer -- note this will catch adjacent deletions:
+        if(pos<=_indel_end_pos) {
+            _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
+        } else {
             process_overlaps();
-            //}
+        }
     }
 
     while(_indel_buffer.size() <= _indel_buffer_size) {
         _indel_buffer.push_back(indel_info());
     }
-    _indel_buffer[_indel_buffer_size++].init(pos,dindel,iri,isri);
-    // set indel end pos!!
+    _indel_buffer[_indel_buffer_size++].init(pos,ik,dindel,iri,isri);
+    _indel_end_pos=ik.right_pos();
 }
 
 
@@ -106,7 +114,15 @@ process_overlaps() {
 
     // do the overlap processing:
 
+    *_osptr << "INDEL_SIZE: " << _indel_buffer_size << "\n";
+
+    // tmp debug:
+    for(unsigned i(0);i<_site_buffer_size;++i) {
+        *_osptr << _chrom << "\t" << (_site_buffer[i].pos+1) << "\t" << "BufferedSNP" << "\n";
+    }
+
     _indel_buffer_size = 0;
+    _site_buffer_size = 0;
 }
 
 

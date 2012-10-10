@@ -1058,7 +1058,7 @@ process_pos_indel_single_sample(const pos_t pos,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
                 if(_client_opt.is_gvcf_output()) {
-                    _gvcfer.add_indel(pos,dindel,iri,isri);
+                    _gvcfer.add_indel(pos,ik,dindel,iri,isri);
                 }
 
                 if(_client_opt.is_bindel_diploid_file) {
