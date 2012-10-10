@@ -31,12 +31,13 @@ gvcf_aggregator(const starling_options& opt,
     , _report_range(report_range.begin_pos,report_range.end_pos)
     , _indel_end_pos(0)
     , _indel_buffer_size(0)
+    , _site_buffer_size(0)
     , _osptr(osptr)
 {
     assert(report_range.is_begin_pos);
     assert(report_range.is_end_pos);
 
-    if(opt.is_gvcf_output) {
+    if(opt.is_gvcf_output()) {
         assert(NULL != osptr);
     }
 }
