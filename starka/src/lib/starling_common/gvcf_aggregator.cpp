@@ -195,8 +195,13 @@ void
 add_site_modifiers(const starling_options& opt,
                    site_info& si) {
 
-    // if these two disagree then GQX should be 0 and GT should be genome:
-    if(si.dgt.genome.max_gt != si.dgt.poly.max_gt) {
+    si.smod.is_unknown=(si.ref=='N');
+
+    if     (si.smod.is_unknown) {
+        si.smod.gqx=0;
+        si.smod.max_gt=0;
+    } else if(si.dgt.genome.max_gt != si.dgt.poly.max_gt) {
+        // if these two disagree then GQX should be 0 and GT should be genome:
         si.smod.gqx=0;
         si.smod.max_gt=si.dgt.genome.max_gt;
     } else {
@@ -276,13 +281,13 @@ write_site_record(const site_info& si) {
 
     std::ostream& os(*_osptr);
 
-    os << _chrom << '\t'   // CHROM
-       << si.pos << '\t'   // POS
-       << ".\t"            // ID
+    os << _chrom << '\t'  // CHROM
+       << si.pos << '\t'  // POS
+       << ".\t"           // ID
        << si.ref << '\t'; // REF
-    
+
     // ALT
-    if(si.smod.block_count>0) {
+    if(si.smod.is_unknown || si.smod.block_count>0) {
         os << '.';
     } else {
         print_vcf_alt(si.smod.max_gt,si.dgt.ref_gt,os);
@@ -290,7 +295,7 @@ write_site_record(const site_info& si) {
     os << '\t';
 
     // QUAL:
-    if(si.smod.block_count>0) {
+    if(si.smod.is_unknown || si.smod.block_count>0) {
         os << '.';
     } else {
         os << si.dgt.genome.snp_qphred;
@@ -308,7 +313,12 @@ write_site_record(const site_info& si) {
     os << "GT:GQX" << '\t';
 
     //SAMPLE
-    os << DIGT::get_vcf_gt(si.smod.max_gt,si.dgt.ref_gt) << ':' << si.smod.gqx  << '\n';
+    if(si.smod.is_unknown) {
+        os << "./.:.";
+    } else {
+        os << DIGT::get_vcf_gt(si.smod.max_gt,si.dgt.ref_gt) << ':' << si.smod.gqx;
+    }
+    os << '\n';
 }
 
 

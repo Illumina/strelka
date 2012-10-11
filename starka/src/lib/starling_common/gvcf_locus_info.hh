@@ -114,8 +114,9 @@ struct site_modifiers : public shared_modifiers {
         block_count=0;
     }
 
-    unsigned block_count;
+    bool is_unknown;
 
+    unsigned block_count;
     unsigned max_gt;
 };
 

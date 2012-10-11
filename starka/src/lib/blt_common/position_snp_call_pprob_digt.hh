@@ -34,21 +34,29 @@
 
 struct diploid_genotype {
 
-    diploid_genotype() 
-        : is_snp(false), ref_gt(0) {}
+    diploid_genotype() { reset(); }
+
+    void reset() {
+        is_snp=false;
+        ref_gt=0;
+        genome.reset();
+        poly.reset();
+    }
 
     struct result_set {
 
-        result_set() 
-            : max_gt(0)
-        {
+        result_set() { reset(); }
+
+        void
+        reset() {
+            max_gt=0;
             static const blt_float_t p(1./static_cast<blt_float_t>(DIGT::SIZE));
             static const int qp(error_prob_to_qphred((1.-p)));
             snp_qphred=qp;
             max_gt_qphred=qp;
             for(unsigned i(0);i<DIGT::SIZE;++i) {
                 pprob[i] = p;
-            } 
+            }
         }
   
         unsigned max_gt;
