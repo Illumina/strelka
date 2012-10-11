@@ -165,8 +165,7 @@ is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
 static
 void
 get_hap_cigar(const std::string lead,
-              const std::string ref,
-              const std::string alt,
+              const indel_key& ik,
               const std::string trail,
               ALIGNPATH::path_t& apath) {
 
@@ -176,11 +175,11 @@ get_hap_cigar(const std::string lead,
     if(lead.size()) {
         apath.push_back(path_segment(MATCH,lead.size()));
     }
-    if(ref.size()) {
-        apath.push_back(path_segment(DELETE,ref.size()));
+    if(ik.delete_length()) {
+        apath.push_back(path_segment(DELETE,ik.delete_length()));
     }
-    if(alt.size()) {
-        apath.push_back(path_segment(INSERT,alt.size()));
+    if(ik.insert_length()) {
+        apath.push_back(path_segment(INSERT,ik.insert_length()));
     }
     if(trail.size()) {
         apath.push_back(path_segment(MATCH,trail.size()));
@@ -191,13 +190,12 @@ get_hap_cigar(const std::string lead,
 
 static
 void
-get_hap_cigar(const std::string ref,
-              const std::string alt,
+get_hap_cigar(const indel_key& ik,
               ALIGNPATH::path_t& apath) {
 
     static const std::string lead("N");
     static const std::string trail("");
-    get_hap_cigar(lead,ref,alt,trail,apath);
+    get_hap_cigar(lead,ik,trail,apath);
 }
 
 
@@ -209,7 +207,7 @@ modify_single_indel_record() {
     assert(_indel_buffer_size==1);
 
     indel_info& ii(_indel_buffer[0]);
-    get_hap_cigar(ii.iri.ref_seq,ii.iri.indel_seq,ii.imod.cigar);
+    get_hap_cigar(ii.ik,ii.imod.cigar);
 }
 
 
@@ -249,15 +247,15 @@ modify_overlap_indel_record() {
             }
         }
         
-        _ref.get_substring(indel_begin_pos,_indel_buffer[hap].pos-indel_begin_pos,leading_seq);
+        // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
+        _ref.get_substring(indel_begin_pos,(_indel_buffer[hap].pos-indel_begin_pos)-1,leading_seq);
         const unsigned trail_len(_indel_end_pos-_indel_buffer[hap].ik.right_pos());
         _ref.get_substring(_indel_end_pos-trail_len,trail_len,trailing_seq);
 
-        _indel_buffer[hap].iri.vcf_indel_seq = leading_seq + _indel_buffer[hap].iri.indel_seq + trailing_seq;
+        _indel_buffer[hap].iri.vcf_indel_seq = leading_seq + _indel_buffer[hap].iri.vcf_indel_seq + trailing_seq;
 
         get_hap_cigar(leading_seq,
-                      _indel_buffer[hap].iri.ref_seq,
-                      _indel_buffer[hap].iri.indel_seq,
+                      _indel_buffer[hap].ik,
                       trailing_seq,
                       _indel_buffer[hap].imod.cigar);
     }
