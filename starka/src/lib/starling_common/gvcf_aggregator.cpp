@@ -164,16 +164,16 @@ is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
 
 static
 void
-get_hap_cigar(const std::string lead,
+get_hap_cigar(ALIGNPATH::path_t& apath,
               const indel_key& ik,
-              const std::string trail,
-              ALIGNPATH::path_t& apath) {
+              const unsigned lead=1,
+              const unsigned trail=0) {
 
     using namespace ALIGNPATH;
 
     apath.clear();
-    if(lead.size()) {
-        apath.push_back(path_segment(MATCH,lead.size()));
+    if(lead) {
+        apath.push_back(path_segment(MATCH,lead));
     }
     if(ik.delete_length()) {
         apath.push_back(path_segment(DELETE,ik.delete_length()));
@@ -181,21 +181,9 @@ get_hap_cigar(const std::string lead,
     if(ik.insert_length()) {
         apath.push_back(path_segment(INSERT,ik.insert_length()));
     }
-    if(trail.size()) {
-        apath.push_back(path_segment(MATCH,trail.size()));
+    if(trail) {
+        apath.push_back(path_segment(MATCH,trail));
     }
-}
-
-
-
-static
-void
-get_hap_cigar(const indel_key& ik,
-              ALIGNPATH::path_t& apath) {
-
-    static const std::string lead("N");
-    static const std::string trail("");
-    get_hap_cigar(lead,ik,trail,apath);
 }
 
 
@@ -207,7 +195,7 @@ modify_single_indel_record() {
     assert(_indel_buffer_size==1);
 
     indel_info& ii(_indel_buffer[0]);
-    get_hap_cigar(ii.ik,ii.imod.cigar);
+    get_hap_cigar(ii.imod.cigar,ii.ik);
 }
 
 
@@ -252,12 +240,13 @@ modify_overlap_indel_record() {
         const unsigned trail_len(_indel_end_pos-_indel_buffer[hap].ik.right_pos());
         _ref.get_substring(_indel_end_pos-trail_len,trail_len,trailing_seq);
 
+
         _indel_buffer[hap].iri.vcf_indel_seq = leading_seq + _indel_buffer[hap].iri.vcf_indel_seq + trailing_seq;
 
-        get_hap_cigar(leading_seq,
+        get_hap_cigar(_indel_buffer[hap].imod.cigar,
                       _indel_buffer[hap].ik,
-                      trailing_seq,
-                      _indel_buffer[hap].imod.cigar);
+                      leading_seq.size()+1,
+                      trailing_seq.size());
     }
 }
 
@@ -300,7 +289,7 @@ write_indel_record() {
     // ALT
     for(unsigned i(0);i<_indel_buffer_size;++i) {
         if(i) os << ',';
-        os << ii.iri.vcf_indel_seq;
+        os << _indel_buffer[i].iri.vcf_indel_seq;
     }
     os << '\t';
 
