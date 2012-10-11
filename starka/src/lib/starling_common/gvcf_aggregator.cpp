@@ -22,25 +22,6 @@
 #include <iostream>
 
 
-#if 0
-VcfRecord {
-    reset(site_info);
-    reset(site_info,site_modifiers);
-    reset(indel_info);
-};
-
-
-gvcf_blocker {
-
-    add(const site_info&,
-        const site_modifiers&);
-
-    add(const indel_info&, indel_modifiers&);
-
-};
-#endif
-
-
 
 gvcf_aggregator::
 gvcf_aggregator(const starling_options& opt,
@@ -75,30 +56,23 @@ gvcf_aggregator::
 
 void
 gvcf_aggregator::
-add_site(const pos_t pos,
-         const char ref,
-         const unsigned n_used_calls,
-         const unsigned n_unused_calls,
-         const snp_pos_info& good_pi,
-         const diploid_genotype& dgt,
-         const bool is_nf_snp,
-         const double sb,
-         const unsigned hpol) {
+add_site(site_info& si) {
 
     if(0 != _indel_buffer_size) {
-        if(pos>=_indel_end_pos) {
+        if(si.pos>=_indel_end_pos) {
             process_overlaps();
         } else {
             while(_site_buffer.size() <= _site_buffer_size) {
                 _site_buffer.push_back(site_info());
             }
-            _site_buffer[_site_buffer_size++].init(pos,ref,n_used_calls,n_unused_calls,good_pi,dgt,is_nf_snp,sb,hpol);
+            _site_buffer[_site_buffer_size++] = si;
+            _site_buffer[_site_buffer_size++].smod.clear();
             return;
         }
     }
 
     // write_site:
-    *_osptr << _chrom << "\t" << (pos+1) << "\t" << "SNP" << "\t" << ref << "\n";
+    queue_site_record(si);
 }
 
 
@@ -205,6 +179,139 @@ add_indel_modifiers(const starling_options& opt,
 
 
 
+static
+void
+set_site_gt(const diploid_genotype::result_set& rs,
+            site_modifiers& smod) {
+
+    smod.max_gt=rs.max_gt;
+    smod.gqx=rs.max_gt_qphred;
+}
+
+
+
+static
+void
+add_site_modifiers(const starling_options& opt,
+                   site_info& si) {
+
+    // if these two disagree then GQX should be 0 and GT should be genome:
+    if(si.dgt.genome.max_gt != si.dgt.poly.max_gt) {
+        si.smod.gqx=0;
+        si.smod.max_gt=si.dgt.genome.max_gt;
+    } else {
+        if(si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred){
+            set_site_gt(si.dgt.genome,si.smod);
+        } else {
+            set_site_gt(si.dgt.poly,si.smod);
+        }
+    }
+
+    if(opt.is_gvcf_min_gqx) {
+        if(si.smod.gqx<opt.gvcf_min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
+    }
+
+    if(opt.is_gvcf_max_depth) {
+        if((si.n_used_calls+si.n_unused_calls) > opt.gvcf_max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
+    }
+}
+
+
+
+// is the current site eligable to even be considered for block compression?
+static
+bool
+is_site_record_blockable(const site_info& si) {
+    return false;
+}
+
+
+
+// queue site record for writing, after
+// possibly joining it into a compressed non-variant block
+//
+void
+gvcf_aggregator::
+queue_site_record(site_info& si) {
+
+    add_site_modifiers(_opt,si);
+
+    if(! is_site_record_blockable(si)) {
+        write_block_site_record();
+        write_site_record(si);
+    }
+
+    //if(! is_record_in_current_block(si)) {
+        //    write_block_site_record();
+        //}
+    
+    //    join_site_record_to_block(si);
+}
+
+
+
+static
+void
+print_vcf_alt(const unsigned gt,
+              const unsigned ref_gt,
+              std::ostream& os) {
+
+    bool is_print(false);
+    for(unsigned b(0);b<N_BASE;++b){
+        if(b==ref_gt) continue;
+        if(DIGT::expect2(b,gt)) {
+            if(is_print) os << ",";
+            os << id_to_base(b);
+            is_print=true;
+        }
+    }
+    if(! is_print) os << '.';
+}
+
+
+
+void
+gvcf_aggregator::
+write_site_record(const site_info& si) {
+
+    std::ostream& os(*_osptr);
+
+    os << _chrom << '\t'   // CHROM
+       << si.pos << '\t'   // POS
+       << ".\t"            // ID
+       << si.ref << '\t'; // REF
+    
+    // ALT
+    if(si.smod.block_count>0) {
+        os << '.';
+    } else {
+        print_vcf_alt(si.smod.max_gt,si.dgt.ref_gt,os);
+    }
+    os << '\t';
+
+    // QUAL:
+    if(si.smod.block_count>0) {
+        os << '.';
+    } else {
+        os << si.dgt.genome.snp_qphred;
+    }
+    os << '\t';
+
+    // FILTER:
+    si.smod.write_filters(os);
+    os << '\t';
+
+    // INFO:
+    os << ".\t";
+
+    //FORMAT
+    os << "GT:GQX" << '\t';
+
+    //SAMPLE
+    os << DIGT::get_vcf_gt(si.smod.max_gt,si.dgt.ref_gt) << ':' << si.smod.gqx  << '\n';
+}
+
+
 // set the CIGAR string:
 void
 gvcf_aggregator::
@@ -295,8 +402,11 @@ modify_conflict_indel_record() {
 void
 gvcf_aggregator::
 write_indel_record(const unsigned write_index) {
-
+    
     assert(_indel_buffer_size>0);
+
+    // flush any non-variant block before starting:
+    write_block_site_record();
 
     std::ostream& os(*_osptr);
     indel_info& ii(_indel_buffer[write_index]);
@@ -370,6 +480,7 @@ process_overlaps() {
 
     unsigned indel_index(0);
     unsigned site_index(0);
+
     while(true) {
         const bool is_indel(indel_index<_indel_buffer_size);
         const bool is_site(site_index<_site_buffer_size);
@@ -385,7 +496,7 @@ process_overlaps() {
             }
         } else {
             // print site:
-            *_osptr << _chrom << "\t" << (_site_buffer[site_index].pos+1) << "\t" << "BufferedSNP" << "\t" << _site_buffer[site_index].ref << "\n";
+            queue_site_record(_site_buffer[site_index]);
             site_index++;
         }
     }

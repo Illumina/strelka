@@ -172,15 +172,13 @@ write_bsnp_diploid_allele(const blt_options& client_opt,
                           const unsigned n_unused_calls,
                           const snp_pos_info& good_pi,
                           const diploid_genotype& dgt,
-                          const bool is_nf_snp = false,
-                          const double sb = 0.,
                           const unsigned hpol = 0){
 
     std::ostream& os(*client_io.bsnp_diploid_allele_osptr());
 
     write_snp_prefix_info_file(seq_name,output_pos,ref,n_used_calls,n_unused_calls,os);
     os << "\t";
-    write_diploid_genotype_allele(client_opt,good_pi,dgt,os,is_nf_snp,sb,hpol);
+    write_diploid_genotype_allele(client_opt,good_pi,dgt,os,hpol);
     os << "\n";
 }
 
@@ -1478,15 +1476,15 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         good_pi.calls.push_back(pi.calls[i]);
     }
 
-    const unsigned n_used_calls(good_pi.calls.size());
-    const unsigned n_unused_calls(n_calls-n_used_calls);
+    _site_info.n_used_calls=(good_pi.calls.size());
+    _site_info.n_unused_calls=(n_calls-_site_info.n_used_calls);
 
     sif.ss.update(n_calls);
-    sif.used_ss.update(n_used_calls);
+    sif.used_ss.update(_site_info.n_used_calls);
     if(pi.ref_base != 'N') {
         sif.ssn.update(n_calls);
-        sif.used_ssn.update(n_used_calls);
-        sif.wav.insert(pos,n_used_calls,n_unused_calls,n_spandel,n_submapped);
+        sif.used_ssn.update(_site_info.n_used_calls);
+        sif.wav.insert(pos,_site_info.n_used_calls,_site_info.n_unused_calls,n_spandel,n_submapped);
     } else {
         sif.wav.insert_null(pos);
     }
@@ -1503,19 +1501,20 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     const extended_pos_info good_epi(good_pi,sif.epd.dependent_eprob);
 
     // get fraction of filtered bases:
+#if 0
     const double filter_fraction(static_cast<double>(n_unused_calls)/static_cast<double>(n_calls));
     const bool is_overfilter(filter_fraction > _client_opt.max_basecall_filter_fraction);
+#endif
 
     // delay writing any snpcalls so that anomaly tests can (optionally) be applied as filters:
     //
     nonref_test_call nrc;
     lrt_snp_call lsc;
-    diploid_genotype dgt;
     monoploid_genotype mgt;
     std::auto_ptr<nploid_genotype> ngt_ptr;
 
     if(_client_opt.is_counts){
-        report_counts(good_pi,n_unused_calls,output_pos,*_client_io.counts_osptr());
+        report_counts(good_pi,_site_info.n_unused_calls,output_pos,*_client_io.counts_osptr());
     }
 
     if(_client_opt.is_nonref_test() || _client_opt.is_nonref_sites()) {
@@ -1539,7 +1538,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         position_snp_call_lrt(_client_opt.lsnp_alpha,good_pi,lsc);
     }
     if(_client_opt.is_bsnp_diploid()){
-        _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,dgt,_client_opt.is_all_sites());
+        _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
     }
     if(_client_opt.is_bsnp_monoploid){
         position_snp_call_pprob_monogt(_client_opt.bsnp_monoploid_theta,good_pi,mgt);
@@ -1549,7 +1548,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         position_snp_call_pprob_nploid(_client_opt.bsnp_nploid_snp_prob,good_pi,*_ninfo,*ngt_ptr);
     }
 
-    const bool is_snp(nrc.is_snp || lsc.is_snp || dgt.is_snp || mgt.is_snp || (ngt_ptr.get() && ngt_ptr->is_snp));
+    const bool is_snp(nrc.is_snp || lsc.is_snp || _site_info.dgt.is_snp || mgt.is_snp || (ngt_ptr.get() && ngt_ptr->is_snp));
 
     // find anomalies:
     //
@@ -1568,29 +1567,31 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         is_pos_acov = position_strand_coverage_anomaly(_client_opt.acov_alpha,pi);
     }
 
-    const bool is_anomaly(is_pos_adis || is_pos_acov);
-    const bool is_filter_snp(is_overfilter || (_client_opt.is_filter_anom_calls && is_anomaly));
+    //const bool is_anomaly(is_pos_adis || is_pos_acov);
+    //const bool is_filter_snp(is_overfilter || (_client_opt.is_filter_anom_calls && is_anomaly));
 
-    const bool is_nf_snp(is_snp && (! is_filter_snp));
-    unsigned hpol(0);
-    if(is_nf_snp) {
-        hpol=get_snp_hpol_size(pos,_ref);
+    //    const bool is_nf_snp(is_snp && (! is_filter_snp));
+    if(is_snp) {
+        _site_info.hpol=get_snp_hpol_size(pos,_ref);
     }
 
     if(_client_opt.is_bsnp_diploid_allele_file){
-        const diploid_genotype* dgt_ptr(&dgt);
+#if 0
+        const diploid_genotype* dgt_ptr(&_site_info.dgt);
         if(is_filter_snp) {
             dgt_ptr=&get_empty_dgt(pi.ref_base);
         }
+#endif
         if(_client_opt.is_gvcf_output()) {
-            _gvcfer.add_site(pos,pi.ref_base,n_used_calls,n_unused_calls,good_pi,*dgt_ptr,is_nf_snp,dgt_ptr->sb,hpol);
+            _site_info.init(pos,pi.ref_base,good_pi,_client_opt.used_allele_count_min_qscore);
+            _gvcfer.add_site(_site_info);
         }
-        write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,n_used_calls,n_unused_calls,good_pi,*dgt_ptr,is_nf_snp,dgt_ptr->sb,hpol);
+        write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
     }
 
     if(_client_opt.is_nonref_sites()) {
         std::ostream& bos(*_client_io.nonref_sites_osptr());
-        write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,n_used_calls,n_unused_calls,bos);
+        write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,bos);
         bos << "\t";
         write_nonref_2allele_test(_client_opt,good_pi,nrc,bos);
         bos << "\n";
@@ -1602,10 +1603,10 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     std::ostream& report_os(std::cerr);
 
-    if(is_nf_snp) {
+    if(is_snp) {
         if(nrc.is_snp) {
             std::ostream& bos(*_client_io.nonref_test_osptr());
-            write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,n_used_calls,n_unused_calls,bos);
+            write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,bos);
             bos << "\t";
             write_nonref_2allele_test(_client_opt,good_pi,nrc,bos);
 #if 0
@@ -1614,15 +1615,15 @@ process_pos_snp_single_sample_impl(const pos_t pos,
             bos << "\n";
         }
         if(lsc.is_snp) {
-            write_snp_prefix_info("LSNP",output_pos,pi.ref_base,n_used_calls,n_unused_calls,report_os);
+            write_snp_prefix_info("LSNP",output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,report_os);
             report_os << " " << lsc << "\n";
         }
-        if(dgt.is_snp){
+        if(_site_info.dgt.is_snp){
             if(_client_opt.is_bsnp_diploid_file) {
                 std::ostream& bos(*_client_io.bsnp_diploid_osptr());
-                write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,n_used_calls,n_unused_calls,bos);
+                write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,bos);
                 bos << "\t";
-                write_diploid_genotype_snp(_client_opt,good_pi,dgt,bos,true,dgt.sb,hpol);
+                write_diploid_genotype_snp(_client_opt,good_pi,_site_info.dgt,bos,_site_info.hpol);
                 bos << "\n";
             }
 
@@ -1630,11 +1631,11 @@ process_pos_snp_single_sample_impl(const pos_t pos,
             if(_is_variant_windows) _variant_print_pos.insert(pos);
         }
         if(mgt.is_snp) {
-            write_snp_prefix_info("BSNP1",output_pos,pi.ref_base,n_used_calls,n_unused_calls,report_os);
+            write_snp_prefix_info("BSNP1",output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,report_os);
             report_os << " " << mgt << "\n";
         }
         if(ngt_ptr.get() && ngt_ptr->is_snp) {
-            write_snp_prefix_info("BSNPN",output_pos,pi.ref_base,n_used_calls,n_unused_calls,report_os);
+            write_snp_prefix_info("BSNPN",output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,report_os);
             report_os << " ";
             nploid_write(*_ninfo,*ngt_ptr,report_os);
             report_os << "\n";
@@ -1643,17 +1644,18 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         is_reported_event = true;
     }
 
+#if 0
     if(is_anomaly && (! _client_opt.is_filter_anom_calls)){
         if(is_pos_adis) report_os << "ANOM_DIS pos: " << output_pos << "\n";
         if(is_pos_acov) report_os << "ANOM_COV pos: " << output_pos << "\n";
 
         is_reported_event = true;
     }
+#endif
 
     if(_client_opt.is_print_all_site_evidence || (_client_opt.is_print_evidence && is_reported_event)){
         report_os << "EVIDENCE pos: " << output_pos << "\n"
                   << "is_snp: " << is_snp << "\n"
-                  << "is_anomaly: " << is_anomaly << "\n"
                   << pi << "\n";
     }
 }

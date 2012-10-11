@@ -424,8 +424,6 @@ write_diploid_genotype_allele(const blt_options& opt,
                               const snp_pos_info& pi,
                               const diploid_genotype& dgt,
                               std::ostream& os,
-                              const bool is_nf_snp,
-                              const double sb,
                               const unsigned hpol){
 
     const result_set& ge(dgt.genome);
@@ -443,8 +441,8 @@ write_diploid_genotype_allele(const blt_options& opt,
         pi.print_known_counts(os,opt.used_allele_count_min_qscore);
     }
 
-    if(is_nf_snp) {
-        os << '\t' << sb
+    if(dgt.is_snp) {
+        os << '\t' << dgt.sb
            << '\t' << hpol;
     }
 

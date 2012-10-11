@@ -46,15 +46,7 @@ struct gvcf_aggregator {
     }
 
     void
-    add_site(const pos_t pos,
-             const char ref,
-             const unsigned n_used_calls,
-             const unsigned n_unused_calls,
-             const snp_pos_info& good_pi,
-             const diploid_genotype& dgt,
-             const bool is_nf_snp,
-             const double sb,
-             const unsigned hpol);
+    add_site(site_info& si);
 
     void
     add_indel(const pos_t pos,
@@ -64,6 +56,16 @@ struct gvcf_aggregator {
               const starling_indel_sample_report_info& isri);
 
 private:
+
+    void write_block_site_record() {
+        if(_block_record.smod.block_count<=0) return;
+        write_site_record(_block_record);
+        _block_record.smod.block_count=0;
+    }
+
+    void write_site_record(const site_info& si);
+
+    void queue_site_record(site_info& si);
 
     void modify_single_indel_record();
 
@@ -75,6 +77,7 @@ private:
     void process_overlaps();
     
     void write_indel_record(const unsigned write_index=0);
+
 
     // initial policy is to write nothing at empty sites. why?
     //
@@ -103,6 +106,8 @@ private:
 
     unsigned _site_buffer_size;
     std::vector<site_info> _site_buffer;
+
+    site_info _block_record;
 };
 
 

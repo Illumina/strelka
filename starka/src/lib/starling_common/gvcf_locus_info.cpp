@@ -25,7 +25,7 @@
 
 void
 shared_modifiers::
-write_filters(std::ostream& os) {
+write_filters(std::ostream& os) const {
 
     if(_filters.none()) {
         os << "PASS";

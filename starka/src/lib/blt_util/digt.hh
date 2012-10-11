@@ -155,6 +155,26 @@ namespace DIGT {
         return ex[gt][base_id];
     }
   
+    inline
+    const char*
+    get_vcf_gt(const int gt,
+               const int ref_gt) {
+        
+        static const char* gtstr[] = { "0/0","0/1","1/1","1/2" };
+
+        static const unsigned ex[SIZE][N_BASE] = {{ 0, 2, 2, 2},
+                                                  { 2, 0, 2, 2},
+                                                  { 2, 2, 0, 2},
+                                                  { 2, 2, 2, 0},
+                                                  { 1, 1, 3, 3},
+                                                  { 1, 3, 1, 3},
+                                                  { 1, 3, 3, 1},
+                                                  { 3, 1, 1, 3},
+                                                  { 3, 1, 3, 1},
+                                                  { 3, 3, 1, 1}};
+   
+        return gtstr[ex[gt][ref_gt]];
+    }
 }
 
 

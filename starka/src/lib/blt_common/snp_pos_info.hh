@@ -110,9 +110,20 @@ struct snp_pos_info {
         n_submapped=0;
     }
 
+    template <typename T>
     void
-    get_known_counts(unsigned base_counts[N_BASE],
-                     const int min_qscore) const;
+    get_known_counts(T& base_count,
+                     const int min_qscore) const {
+
+        for(unsigned i(0);i<N_BASE;++i) base_count[i] = 0;
+    
+        const unsigned n_calls(calls.size());
+        for(unsigned i(0);i<n_calls;++i){
+            if(calls[i].base_id==BASE_ID::ANY) continue;
+            if(calls[i].get_qscore()<min_qscore) continue;
+            base_count[calls[i].base_id]++;
+        }
+    }
 
     void
     print_known_counts(std::ostream& os,

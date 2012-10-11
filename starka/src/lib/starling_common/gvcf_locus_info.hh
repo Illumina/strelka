@@ -67,8 +67,7 @@ namespace VCF_FILTERS {
 
 struct shared_modifiers {
     
-    shared_modifiers()
-    { init(); }
+    shared_modifiers() { clear(); }
 
     void
     set_filter(const VCF_FILTERS::index_t i) {
@@ -76,16 +75,15 @@ struct shared_modifiers {
     }
 
     void
-    write_filters(std::ostream& os);
+    write_filters(std::ostream& os) const;
 
+    void
+    clear() {
+        _filters.reset();
+    }
 
 
     int gqx;
-
-    void
-    init() {
-        _filters.reset();
-    }
 
 private:
     std::bitset<VCF_FILTERS::SIZE> _filters;
@@ -93,13 +91,11 @@ private:
 
 
 struct indel_modifiers : public shared_modifiers {
-    indel_modifiers() {
-        init();
-    }
+    indel_modifiers() { clear(); }
 
     void
-    init() {
-        shared_modifiers::init();
+    clear() {
+        shared_modifiers::clear();
         is_overlap=false;
     }
 
@@ -110,6 +106,17 @@ struct indel_modifiers : public shared_modifiers {
 
 struct site_modifiers : public shared_modifiers {
 
+    site_modifiers() { clear(); }
+
+    void
+    clear() {
+        shared_modifiers::clear();
+        block_count=0;
+    }
+
+    unsigned block_count;
+
+    unsigned max_gt;
 };
 
 
@@ -128,7 +135,7 @@ struct indel_info {
         dindel=(init_dindel);
         iri=(init_iri);
         isri=(init_isri);
-        imod.init();
+        imod.clear();
     }
 
     const char*
@@ -151,38 +158,36 @@ struct indel_info {
 
 
 struct site_info {
+
+    site_info()
+        : pos(0)
+        , ref('N')
+        , n_used_calls(0)
+        , n_unused_calls(0)
+        , sb(0)
+        , hpol(0)
+    {}
+
     void
     init(const pos_t init_pos,
          const char init_ref,
-         const unsigned init_n_used_calls,
-         const unsigned init_n_unused_calls,
-         const snp_pos_info& init_good_pi,
-         const diploid_genotype& init_dgt,
-         const bool init_is_nf_snp,
-         const double init_sb,
-         const unsigned init_hpo) {
+         const snp_pos_info& good_pi,
+         const bool used_allele_count_min_qscore) {
 
         pos=(init_pos);
         ref=(init_ref);
-        n_used_calls=(init_n_used_calls);
-        n_unused_calls=(init_n_unused_calls);
-        good_pi=init_good_pi;
-        dgt=init_dgt;
-        is_nf_snp=init_is_nf_snp;
-        sb=init_sb;
-        hpo=init_hpo;
-        smod.init();
+        good_pi.get_known_counts(known_counts,used_allele_count_min_qscore);
+        smod.clear();
     }
 
     pos_t pos;
     char ref;
     unsigned n_used_calls;
     unsigned n_unused_calls;
-    snp_pos_info good_pi;
+    boost::array<unsigned,N_BASE> known_counts;
     diploid_genotype dgt;
-    bool is_nf_snp;
     double sb;
-    unsigned hpo;
+    unsigned hpol;
 
     site_modifiers smod;
 };

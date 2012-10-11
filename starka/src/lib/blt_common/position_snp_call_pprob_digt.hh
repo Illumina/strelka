@@ -83,8 +83,6 @@ write_diploid_genotype_allele(const blt_options& opt,
                               const snp_pos_info& pi,
                               const diploid_genotype& dgt,
                               std::ostream& os,
-                              const bool is_nf_snp,
-                              const double sb,
                               const unsigned hpol);
 
 // snp call output:
@@ -95,11 +93,9 @@ write_diploid_genotype_snp(const blt_options& opt,
                            const snp_pos_info& pi,
                            const diploid_genotype& dgt,
                            std::ostream& os,
-                           const bool is_nf_snp,
-                           const double sb,
                            const unsigned hpol){
 
-    write_diploid_genotype_allele(opt,pi,dgt,os,is_nf_snp,sb,hpol);
+    write_diploid_genotype_allele(opt,pi,dgt,os,hpol);
 }
 
 

@@ -96,7 +96,7 @@ namespace DIGT {
     is_loh(const unsigned ngt,
            const unsigned tgt){
 
-        if((not is_het(ngt)) or is_het(tgt)) return false;
+        if((! is_het(ngt)) || is_het(tgt)) return false;
         return (expect2(tgt,ngt)>0);
     }
 }
