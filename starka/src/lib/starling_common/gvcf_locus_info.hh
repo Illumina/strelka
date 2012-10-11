@@ -22,6 +22,7 @@
 
 
 #include "blt_common/position_snp_call_pprob_digt.hh"
+#include "starling_common/align_path.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "starling_common/starling_shared.hh"
 
@@ -102,8 +103,9 @@ struct indel_modifiers : public shared_modifiers {
         is_overlap=false;
     }
 
+    ALIGNPATH::path_t cigar;
+
     bool is_overlap;
-    std::string overlap_gt;
 };
 
 struct site_modifiers : public shared_modifiers {
@@ -132,7 +134,7 @@ struct indel_info {
     const char*
     get_gt() {
         if(imod.is_overlap) {
-            return imod.overlap_gt.c_str();
+            return "1/2";
         }
         return STAR_DIINDEL::get_gt_label(dindel.max_gt);
     }

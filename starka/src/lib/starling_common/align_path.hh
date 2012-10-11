@@ -22,8 +22,9 @@
 
 #include "blt_util/pos_range.hh"
 
-#include <stdint.h>
 #include <ciso646>
+#include <iosfwd>
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -138,6 +139,8 @@ namespace ALIGNPATH {
     };
 
     typedef std::vector<path_segment> path_t;
+
+    std::ostream& operator<<(std::ostream& os, const path_t& apath);
 
     void
     export_md_to_apath(const char* md,

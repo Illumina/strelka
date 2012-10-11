@@ -35,6 +35,7 @@ struct gvcf_aggregator {
 
     gvcf_aggregator(const starling_options& opt,
                     const pos_range& report_range,
+                    const reference_contig_segment& ref,
                     std::ostream* os);
 
     ~gvcf_aggregator();
@@ -83,12 +84,13 @@ private:
     //update_pos();
 
     const starling_options& _opt;
-    const char* _chrom;
-
     const known_pos_range _report_range;
+    const reference_contig_segment& _ref;
+    // convenient reference to gvcf stream from opt:
+    std::ostream* _osptr;
 
-    //pos_t _head_pos;  // all input has been recieved up to this pos
-    //pos_t _write_pos; // output has been written out to this pos
+
+    const char* _chrom;
 
     pos_t _indel_end_pos;
 
@@ -97,9 +99,6 @@ private:
 
     unsigned _site_buffer_size;
     std::vector<site_info> _site_buffer;
-
-    // convenient reference to gvcf stream from opt:
-    std::ostream* _osptr;
 };
 
 

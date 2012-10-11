@@ -45,6 +45,32 @@ struct reference_contig_segment {
         return _seq[pos-_offset];
     }
 
+    void
+    get_substring(const pos_t pos,
+                  const pos_t length,
+                  std::string& substr) const {
+
+        if(pos<_offset || (pos+length)>end()) {
+            //slow path (minority of calls):
+            substr.clear();
+            if(pos<_offset) {
+                substr += std::string(std::min(length,(_offset-pos)),'N');
+            }
+            
+            const unsigned rstart(std::min(pos,_offset));
+            const unsigned rend(std::max(pos+length,end()));
+            if(rend>rstart) {
+                substr += _seq.substr(rstart,rend-rstart);
+            }
+            if((pos+length)>end()) {
+                substr += std::string(std::min(length,((pos+length)-end())),'N');
+            }
+        } else {
+            //fast path
+            substr.assign(_seq,pos-_offset,length);
+        }
+    }
+
     std::string& seq() { return _seq; }
     const std::string& seq() const { return _seq; }
 

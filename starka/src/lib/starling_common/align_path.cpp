@@ -77,7 +77,7 @@ apath_push(path_t& apath,
            path_segment& ps,
            const align_t t){
     
-    if( (0==ps.length) or (ps.type==t) ) return;
+    if( (0==ps.length) || (ps.type==t) ) return;
     apath.push_back(ps);
     ps.clear();
 }
@@ -385,6 +385,17 @@ rev_apath_to_export_md(path_t& apath,
     }
 
     if(foundUnsupportedCigar) md = "UNSUPPORTED";
+}
+
+
+
+std::ostream&
+operator<<(std::ostream& os, const path_t& apath){
+    const unsigned as(apath.size());
+    for(unsigned i(0);i<as;++i){
+        os << apath[i].length << segment_type_to_cigar_code(apath[i].type);
+    }
+    return os;
 }
 
 

@@ -392,7 +392,7 @@ starling_pos_processor_base(const starling_options& client_opt,
     , _n_samples(n_samples)
     , _ws(0)
     , _is_variant_windows(_client_opt.variant_windows.size())
-    , _gvcfer(client_opt,client_dopt.report_range,client_io.gvcf_osptr(0))
+    , _gvcfer(client_opt,client_dopt.report_range,ref,client_io.gvcf_osptr(0))
 {
 
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));

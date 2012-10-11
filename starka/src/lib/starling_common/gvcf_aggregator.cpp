@@ -45,13 +45,16 @@ gvcf_blocker {
 gvcf_aggregator::
 gvcf_aggregator(const starling_options& opt,
                 const pos_range& report_range,
+                const reference_contig_segment& ref,
                 std::ostream* osptr)
     : _opt(opt)
     , _report_range(report_range.begin_pos,report_range.end_pos)
+    , _ref(ref)
+    , _osptr(osptr)
+    , _chrom(NULL)
     , _indel_end_pos(0)
     , _indel_buffer_size(0)
     , _site_buffer_size(0)
-    , _osptr(osptr)
 {
     assert(report_range.is_begin_pos);
     assert(report_range.is_end_pos);
@@ -95,7 +98,7 @@ add_site(const pos_t pos,
     }
 
     // write_site:
-    *_osptr << _chrom << "\t" << (pos+1) << "\t" << "SNP" << "\n";
+    *_osptr << _chrom << "\t" << (pos+1) << "\t" << "SNP" << "\t" << ref << "\n";
 }
 
 
@@ -159,6 +162,32 @@ is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
 }
 
 
+static
+void
+get_hap_cigar(const std::string lead,
+              const std::string ref,
+              const std::string alt,
+              const std::string trail,
+              ALIGNPATH::path_t& apath) {
+
+    using namespace ALIGNPATH;
+
+    apath.clear();
+    if(lead.size()) {
+        apath.push_back(path_segment(MATCH,lead.size()));
+    }
+    if(ref.size()) {
+        apath.push_back(path_segment(DELETE,ref.size()));
+    }
+    if(alt.size()) {
+        apath.push_back(path_segment(INSERT,alt.size()));
+    }
+    if(trail.size()) {
+        apath.push_back(path_segment(MATCH,trail.size()));
+    }
+}
+
+
 
 void
 gvcf_aggregator::
@@ -174,6 +203,39 @@ modify_overlap_indel_record() {
 
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
+    std::string leading_seq,trailing_seq;
+
+    const pos_t indel_begin_pos(ii.pos-1);
+
+    // add shared information (to the first indel only)
+    // make extended vcf ref seq:
+    _ref.get_substring(indel_begin_pos,(_indel_end_pos-indel_begin_pos),ii.iri.vcf_ref_seq);
+
+
+    // add per-haplotype information:
+    for(unsigned hap(0);hap<2;++hap) {
+        //reduce qual and gt to the lowest of the set:
+        if(hap) {
+            if(ii.dindel.indel_qphred>_indel_buffer[hap].dindel.indel_qphred) {
+                ii.dindel.indel_qphred = _indel_buffer[hap].dindel.indel_qphred;
+            }
+            if(ii.dindel.max_gt_qphred>_indel_buffer[hap].dindel.max_gt_qphred) {
+                ii.dindel.max_gt_qphred = _indel_buffer[hap].dindel.max_gt_qphred;
+            }
+        }
+        
+        _ref.get_substring(indel_begin_pos,_indel_buffer[hap].pos-indel_begin_pos,leading_seq);
+        const unsigned trail_len(_indel_end_pos-_indel_buffer[hap].ik.right_pos());
+        _ref.get_substring(_indel_end_pos-trail_len,trail_len,trailing_seq);
+
+        _indel_buffer[hap].iri.vcf_indel_seq = leading_seq + _indel_buffer[hap].iri.indel_seq + trailing_seq;
+
+        get_hap_cigar(leading_seq,
+                      _indel_buffer[hap].iri.ref_seq,
+                      _indel_buffer[hap].iri.indel_seq,
+                      trailing_seq,
+                      _indel_buffer[hap].imod.cigar);
+    }
 }
 
 
@@ -210,23 +272,36 @@ write_indel_record() {
     os << _chrom << '\t'   // CHROM
        << ii.pos << '\t'   // POS
        << ".\t"            // ID
-       << ii.iri.vcf_ref_seq << '\t' // REF
-       << ii.iri.vcf_indel_seq << '\t' // ALT
-       << ii.dindel.indel_qphred << '\t'; //QUAL
+       << ii.iri.vcf_ref_seq << '\t'; // REF
+
+    // ALT
+    for(unsigned i(0);i<_indel_buffer_size;++i) {
+        if(i) os << ',';
+        os << ii.iri.vcf_indel_seq;
+    }
+    os << '\t';
+
+    os << ii.dindel.indel_qphred << '\t'; //QUAL
 
     // FILTER:
     ii.imod.write_filters(os);
     os << '\t';
 
     // INFO
-    os << ".\t";
+    os << "CIGAR=";
+    for(unsigned i(0);i<_indel_buffer_size;++i) {
+        if(i) os << ',';
+        os << _indel_buffer[i].imod.cigar;
+    }
+    os << '\t';
 
     //FORMAT
-    os << "GT" << '\t';
+    os << "GT:GQX" << '\t';
 
     //SAMPLE
-    os << ii.get_gt()  << '\n';
+    os << ii.get_gt() << ':' << ii.imod.gqx  << '\n';
 }
+
 
 
 void
@@ -252,7 +327,7 @@ process_overlaps() {
 
     // tmp debug:
     for(unsigned i(0);i<_site_buffer_size;++i) {
-        *_osptr << _chrom << "\t" << (_site_buffer[i].pos+1) << "\t" << "BufferedSNP" << "\n";
+        *_osptr << _chrom << "\t" << (_site_buffer[i].pos+1) << "\t" << "BufferedSNP" << "\t" << _site_buffer[i].ref << "\n";
     }
 
     _indel_buffer_size = 0;
