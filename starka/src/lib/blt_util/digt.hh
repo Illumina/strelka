@@ -160,7 +160,9 @@ namespace DIGT {
     get_vcf_gt(const int gt,
                const int ref_gt) {
         
-        static const char* gtstr[] = { "0/0","0/1","1/1","1/2" };
+        static const unsigned N_BASE(4);
+
+        static const char* gtstr[N_BASE] = { "0/0","0/1","1/1","1/2" };
 
         static const unsigned ex[SIZE][N_BASE] = {{ 0, 2, 2, 2},
                                                   { 2, 0, 2, 2},
