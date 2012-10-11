@@ -65,6 +65,8 @@ struct gvcf_aggregator {
 
 private:
 
+    void modify_single_indel_record();
+
     void modify_overlap_indel_record();
 
     // resolve a set of overlapping indel and site calls:

@@ -189,6 +189,31 @@ get_hap_cigar(const std::string lead,
 
 
 
+static
+void
+get_hap_cigar(const std::string ref,
+              const std::string alt,
+              ALIGNPATH::path_t& apath) {
+
+    static const std::string lead("N");
+    static const std::string trail("");
+    get_hap_cigar(lead,ref,alt,trail,apath);
+}
+
+
+
+// set the CIGAR string:
+void
+gvcf_aggregator::
+modify_overlap_indel_record() {
+    assert(_indel_buffer_size==1);
+
+    indel_info& ii(_indel_buffer[0]);
+    get_hap_cigar(ii.iri.ref_seq,iri.indel_seq,,ii.imod.cigar);
+}
+
+
+
 void
 gvcf_aggregator::
 modify_overlap_indel_record() {
@@ -313,6 +338,7 @@ process_overlaps() {
     // do the overlap processing:
     if(_indel_buffer_size==1) {
         // simple case of no overlap:
+        modify_single_indel_record();
     } else {
         if(is_simple_indel_overlap(_indel_buffer,_indel_buffer_size)){
             // handle the simplest possible overlap case (two hets):
