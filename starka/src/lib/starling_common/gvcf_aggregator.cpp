@@ -205,11 +205,11 @@ get_hap_cigar(const std::string ref,
 // set the CIGAR string:
 void
 gvcf_aggregator::
-modify_overlap_indel_record() {
+modify_single_indel_record() {
     assert(_indel_buffer_size==1);
 
     indel_info& ii(_indel_buffer[0]);
-    get_hap_cigar(ii.iri.ref_seq,iri.indel_seq,,ii.imod.cigar);
+    get_hap_cigar(ii.iri.ref_seq,ii.iri.indel_seq,ii.imod.cigar);
 }
 
 
@@ -217,7 +217,7 @@ modify_overlap_indel_record() {
 void
 gvcf_aggregator::
 modify_overlap_indel_record() {
-
+    
     // can only handle simple 2-indel overlaps right now:
     assert(_indel_buffer_size==2);
 
