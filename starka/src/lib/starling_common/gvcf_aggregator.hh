@@ -69,10 +69,12 @@ private:
 
     void modify_overlap_indel_record();
 
+    void modify_conflict_indel_record();
+
     // resolve a set of overlapping indel and site calls:
     void process_overlaps();
     
-    void write_indel_record();
+    void write_indel_record(const unsigned write_index=0);
 
     // initial policy is to write nothing at empty sites. why?
     //

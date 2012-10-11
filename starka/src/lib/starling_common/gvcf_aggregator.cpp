@@ -188,6 +188,23 @@ get_hap_cigar(ALIGNPATH::path_t& apath,
 
 
 
+static
+void
+add_indel_modifiers(const starling_options& opt,
+                    indel_info& ii) {
+
+    ii.imod.gqx=std::min(ii.dindel.indel_qphred,ii.dindel.max_gt_qphred);
+    if(opt.is_gvcf_min_gqx) {
+        if(ii.imod.gqx<opt.gvcf_min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+    }
+
+    if(opt.is_gvcf_max_depth) {
+        if(ii.isri.depth > opt.gvcf_max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+    }
+}
+
+
+
 // set the CIGAR string:
 void
 gvcf_aggregator::
@@ -196,6 +213,8 @@ modify_single_indel_record() {
 
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
+
+    add_indel_modifiers(_opt,ii);
 }
 
 
@@ -248,22 +267,26 @@ modify_overlap_indel_record() {
                       leading_seq.size()+1,
                       trailing_seq.size());
     }
+
+
+    add_indel_modifiers(_opt,ii);
 }
 
 
 
-static
+// set the CIGAR string:
 void
-add_indel_modifiers(const starling_options& opt,
-                    indel_info& ii) {
+gvcf_aggregator::
+modify_conflict_indel_record() {
+    assert(_indel_buffer_size==1);
 
-    ii.imod.gqx=std::min(ii.dindel.indel_qphred,ii.dindel.max_gt_qphred);
-    if(opt.is_gvcf_min_gqx) {
-        if(ii.imod.gqx<opt.gvcf_min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
-    }
+    for(unsigned i(0);i<_indel_buffer_size;++i) {
+        indel_info& ii(_indel_buffer[i]);
+        get_hap_cigar(ii.imod.cigar,ii.ik);
 
-    if(opt.is_gvcf_max_depth) {
-        if(ii.isri.depth > opt.gvcf_max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+        ii.imod.set_filter(VCF_FILTERS::IndelConflict);
+
+        add_indel_modifiers(_opt,ii);
     }
 }
 
@@ -271,15 +294,12 @@ add_indel_modifiers(const starling_options& opt,
 
 void
 gvcf_aggregator::
-write_indel_record() {
+write_indel_record(const unsigned write_index) {
 
     assert(_indel_buffer_size>0);
 
     std::ostream& os(*_osptr);
-    indel_info& ii(_indel_buffer[0]);
-
-    // compute final mods:
-    add_indel_modifiers(_opt,ii);
+    indel_info& ii(_indel_buffer[write_index]);
 
     os << _chrom << '\t'   // CHROM
        << ii.pos << '\t'   // POS
@@ -287,8 +307,13 @@ write_indel_record() {
        << ii.iri.vcf_ref_seq << '\t'; // REF
 
     // ALT
-    for(unsigned i(0);i<_indel_buffer_size;++i) {
-        if(i) os << ',';
+    unsigned end_index(write_index);
+    if(ii.imod.is_overlap) {
+        end_index++;
+    }
+        
+    for(unsigned i(write_index);i<=end_index;++i) {
+        if(i!=write_index) os << ',';
         os << _indel_buffer[i].iri.vcf_indel_seq;
     }
     os << '\t';
@@ -301,8 +326,8 @@ write_indel_record() {
 
     // INFO
     os << "CIGAR=";
-    for(unsigned i(0);i<_indel_buffer_size;++i) {
-        if(i) os << ',';
+    for(unsigned i(write_index);i<=end_index;++i) {
+        if(i!=write_index) os << ',';
         os << _indel_buffer[i].imod.cigar;
     }
     os << '\t';
@@ -321,6 +346,8 @@ gvcf_aggregator::
 process_overlaps() {
 
     if(0==_indel_buffer_size) return;
+    
+    bool is_conflict_print(false);
 
     // do the overlap processing:
     if(_indel_buffer_size==1) {
@@ -332,15 +359,35 @@ process_overlaps() {
             modify_overlap_indel_record();
         } else {
             // mark the whole region as conflicting
+            modify_conflict_indel_record();
+            is_conflict_print=true;
         }
     }
 
-    write_indel_record();
     *_osptr << "INDEL_SIZE: " << _indel_buffer_size << "\n";
 
-    // tmp debug:
-    for(unsigned i(0);i<_site_buffer_size;++i) {
-        *_osptr << _chrom << "\t" << (_site_buffer[i].pos+1) << "\t" << "BufferedSNP" << "\t" << _site_buffer[i].ref << "\n";
+
+
+    unsigned indel_index(0);
+    unsigned site_index(0);
+    while(true) {
+        const bool is_indel(indel_index<_indel_buffer_size);
+        const bool is_site(site_index<_site_buffer_size);
+        if(! (is_indel || is_site)) return;
+
+        if(is_indel && ((! is_site) || _indel_buffer[indel_index].pos <= _site_buffer[site_index].pos)) {
+            // print indel:
+            write_indel_record(indel_index);
+            if(is_conflict_print) {
+                indel_index++;
+            } else {
+                indel_index=_indel_buffer_size;
+            }
+        } else {
+            // print site:
+            *_osptr << _chrom << "\t" << (_site_buffer[site_index].pos+1) << "\t" << "BufferedSNP" << "\t" << _site_buffer[site_index].ref << "\n";
+            site_index++;
+        }
     }
 
     _indel_buffer_size = 0;
