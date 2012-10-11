@@ -373,7 +373,7 @@ process_overlaps() {
     while(true) {
         const bool is_indel(indel_index<_indel_buffer_size);
         const bool is_site(site_index<_site_buffer_size);
-        if(! (is_indel || is_site)) return;
+        if(! (is_indel || is_site)) break;
 
         if(is_indel && ((! is_site) || _indel_buffer[indel_index].pos <= _site_buffer[site_index].pos)) {
             // print indel:
