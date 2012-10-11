@@ -278,7 +278,7 @@ modify_overlap_indel_record() {
 void
 gvcf_aggregator::
 modify_conflict_indel_record() {
-    assert(_indel_buffer_size==1);
+    assert(_indel_buffer_size>1);
 
     for(unsigned i(0);i<_indel_buffer_size;++i) {
         indel_info& ii(_indel_buffer[i]);
