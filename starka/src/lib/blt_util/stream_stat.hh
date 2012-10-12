@@ -2,13 +2,25 @@
 //
 // Copyright (c) 2009-2012 Illumina, Inc.
 //
-// This software is covered by the "Illumina Genome Analyzer Software
-// License Agreement" and the "Illumina Source Code License Agreement",
-// and certain third party copyright/licenses, and any user of this
-// source file is bound by the terms therein (see accompanying files
-// Illumina_Genome_Analyzer_Software_License_Agreement.pdf and
-// Illumina_Source_Code_License_Agreement.pdf and third party
-// copyright/license notices).
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies
+// of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 //
 //
 
@@ -19,7 +31,6 @@
 #ifndef __STREAM_STAT_HH
 #define __STREAM_STAT_HH
 
-#include <ciso646>
 #include <cmath>
 
 #include <iosfwd>
@@ -36,7 +47,15 @@ struct stream_stat {
     // Variable names follow his
     stream_stat() : M_(0),Q_(0),max_(0),min_(0),k_(0) {}
 
-    void update (const double x) {
+    void reset() {
+        M_ = 0;
+        Q_ = 0;
+        max_ = 0;
+        min_ = 0;
+        k_ = 0;
+    }
+
+    void add(const double x) {
         k_++;
         if(k_==1 || x>max_) max_=x;
         if(k_==1 || x<min_) min_=x;
@@ -47,7 +66,9 @@ struct stream_stat {
         Q_+=delta*(x-M_);
     }
 
-    int sample_size() const { return k_; }
+    int size() const { return k_; }
+    bool empty() const { return (k_==0); } 
+
     double min() const { return ((k_<1) ? nan() : min_); }
     double max() const { return ((k_<1) ? nan() : max_); }
     double mean() const { return ((k_<1) ? nan() : M_); }

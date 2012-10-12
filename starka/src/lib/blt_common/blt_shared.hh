@@ -128,6 +128,10 @@ struct blt_options {
         , gvcf_min_gqx(30.)
         , is_gvcf_max_depth(true)
         , gvcf_max_depth(100.)
+        , gvcf_block_label("BLOCKAVG_min30p3a")
+        , gvcf_block_frac_tol(.3)
+        , gvcf_block_abs_tol(3)
+        , gvcf_block_max_nonref(.2)
     {}
 
     virtual ~blt_options() {}
@@ -286,6 +290,13 @@ struct blt_options {
     double gvcf_min_gqx;
     bool is_gvcf_max_depth;
     double gvcf_max_depth;
+
+    // blocking scheme:
+    std::string gvcf_block_label;
+    double gvcf_block_frac_tol;
+    double gvcf_block_abs_tol;
+
+    double gvcf_block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
 };
 
 

@@ -111,12 +111,12 @@ struct site_modifiers : public shared_modifiers {
     void
     clear() {
         shared_modifiers::clear();
-        block_count=0;
+        is_block=false;
     }
 
     bool is_unknown;
+    bool is_block;
 
-    unsigned block_count;
     unsigned max_gt;
 };
 
@@ -165,7 +165,6 @@ struct site_info {
         , ref('N')
         , n_used_calls(0)
         , n_unused_calls(0)
-        , sb(0)
         , hpol(0)
     {}
 
@@ -187,7 +186,6 @@ struct site_info {
     unsigned n_unused_calls;
     boost::array<unsigned,N_BASE> known_counts;
     diploid_genotype dgt;
-    double sb;
     unsigned hpol;
 
     site_modifiers smod;

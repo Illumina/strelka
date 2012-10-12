@@ -21,9 +21,36 @@
 #define __GVCF_AGGREGATOR_HH
 
 
+#include "blt_util/stream_stat.hh"
 #include "starling_common/gvcf_locus_info.hh"
 
 #include <iosfwd>
+
+
+
+struct block_site_record {
+
+    block_site_record(const starling_options& opt)
+        : frac_tol(opt.gvcf_block_frac_tol)
+        , abs_tol(opt.gvcf_block_abs_tol)
+        , count(0)
+    {}
+
+    void
+    reset() {
+        count=0;
+        block_gqx.reset();
+    }
+
+    site_info record;
+
+    const double frac_tol;
+    const int abs_tol;
+    int count;
+    stream_stat block_gqx;
+    //stream_stat _blockDP;
+    //stream_stat _blockMQ;
+};
 
 
 ///
@@ -58,9 +85,9 @@ struct gvcf_aggregator {
 private:
 
     void write_block_site_record() {
-        if(_block_record.smod.block_count<=0) return;
-        write_site_record(_block_record);
-        _block_record.smod.block_count=0;
+        if(_block.count<=0) return;
+        write_site_record(_block.record);
+        _block.reset();
     }
 
     void write_site_record(const site_info& si) const;
@@ -93,9 +120,7 @@ private:
     const starling_options& _opt;
     const known_pos_range _report_range;
     const reference_contig_segment& _ref;
-    // convenient reference to gvcf stream from opt:
-    std::ostream* _osptr;
-
+    std::ostream* _osptr;    // convenience to get gvcf stream from opt
 
     const char* _chrom;
 
@@ -107,7 +132,7 @@ private:
     unsigned _site_buffer_size;
     std::vector<site_info> _site_buffer;
 
-    site_info _block_record;
+    block_site_record _block;
 };
 
 

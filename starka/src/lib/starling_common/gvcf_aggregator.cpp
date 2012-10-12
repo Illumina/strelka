@@ -36,6 +36,7 @@ gvcf_aggregator(const starling_options& opt,
     , _indel_end_pos(0)
     , _indel_buffer_size(0)
     , _site_buffer_size(0)
+    , _block(_opt)
 {
     assert(report_range.is_begin_pos);
     assert(report_range.is_end_pos);
@@ -226,8 +227,17 @@ add_site_modifiers(const starling_options& opt,
 // is the current site eligable to even be considered for block compression?
 static
 bool
-is_site_record_blockable(const site_info& si) {
-    return false;
+is_site_record_blockable(const starling_options& opt,
+                         const site_info& si) {
+
+    if(si.dgt.is_snp) return false;
+
+    if(si.ref!='N') {
+        const double reffrac(static_cast<double>(si.known_counts[si.dgt.ref_gt]) /
+                             static_cast<double>(si.n_used_calls));
+        if(reffrac+opt.gvcf_block_max_nonref <= 1) return false;
+    }
+    return true;
 }
 
 
@@ -241,7 +251,7 @@ queue_site_record(site_info& si) {
 
     add_site_modifiers(_opt,si);
 
-    if(! is_site_record_blockable(si)) {
+    if(! is_site_record_blockable(_opt,si)) {
         write_block_site_record();
         write_site_record(si);
     }
@@ -287,7 +297,7 @@ write_site_record(const site_info& si) const {
        << si.ref << '\t'; // REF
 
     // ALT
-    if(si.smod.is_unknown || si.smod.block_count>0) {
+    if(si.smod.is_unknown || si.smod.is_block) {
         os << '.';
     } else {
         print_vcf_alt(si.smod.max_gt,si.dgt.ref_gt,os);
@@ -295,7 +305,7 @@ write_site_record(const site_info& si) const {
     os << '\t';
 
     // QUAL:
-    if(si.smod.is_unknown || si.smod.block_count>0) {
+    if(si.smod.is_unknown || si.smod.is_block) {
         os << '.';
     } else {
         os << si.dgt.genome.snp_qphred;
