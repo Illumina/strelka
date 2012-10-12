@@ -388,6 +388,7 @@ starling_pos_processor_base(const starling_options& client_opt,
     //, _largest_indel_size(std::min(client_opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
     , _largest_indel_size(client_opt.max_indel_size)
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE,_largest_indel_size,_client_opt),client_dopt.report_range,*this)
+    , _chrom_name(_client_opt.bam_seq_name)
     , _n_samples(n_samples)
     , _ws(0)
     , _is_variant_windows(_client_opt.variant_windows.size())
@@ -491,6 +492,8 @@ reset() {
     }
 
     write_counts(output_report_range);
+
+    if(_client_opt.is_gvcf_output()) { _gvcfer.flush(); }
 }
 
 
@@ -542,13 +545,6 @@ insert_read(const bam_record& br,
             const unsigned sample_no,
             const align_id_t contig_id,
             const indel_set_t* contig_indels_ptr) {
-
-    if(_chrom_name.empty()) {
-        assert(NULL != chrom_name);
-        assert(strlen(chrom_name));
-        _chrom_name=chrom_name;
-        _gvcfer.set_chrom_name(_chrom_name.c_str());
-    }
 
     if(0 != strcmp(_chrom_name.c_str(),chrom_name)){
         log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chrom_name << "'\n"

@@ -480,7 +480,7 @@ protected:
     stage_manager _stageman;
 
     pos_range _report_influence_range;
-    std::string _chrom_name; // this is set by the incoming reads -- assumes read string is single chromosome
+    const std::string& _chrom_name;
 
     // used to keep read id's unique across multiple samples:
     read_id_counter _ric;

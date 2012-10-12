@@ -42,11 +42,6 @@ struct gvcf_aggregator {
     ~gvcf_aggregator();
 
     void
-    set_chrom_name(const char* chrom) {
-        _chrom=chrom;
-    }
-
-    void
     add_site(site_info& si);
 
     void
@@ -55,6 +50,13 @@ struct gvcf_aggregator {
               const starling_diploid_indel_core& dindel,
               const starling_indel_report_info& iri,
               const starling_indel_sample_report_info& isri);
+    
+    void
+    flush() {
+        skip_to_pos(_report_range.end_pos+1);
+        process_overlaps();
+        write_block_site_record();
+    }
 
 private:
 

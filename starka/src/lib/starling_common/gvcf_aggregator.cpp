@@ -90,7 +90,7 @@ gvcf_aggregator(const starling_options& opt,
     , _report_range(report_range.begin_pos,report_range.end_pos)
     , _ref(ref)
     , _osptr(osptr)
-    , _chrom(NULL)
+    , _chrom(_opt.bam_seq_name.c_str())
     , _indel_end_pos(0)
     , _indel_buffer_size(0)
     , _site_buffer_size(0)
@@ -109,12 +109,7 @@ gvcf_aggregator(const starling_options& opt,
 
 
 gvcf_aggregator::
-~gvcf_aggregator() {
-    skip_to_pos(_report_range.end_pos+1);
-    process_overlaps();
-}
-
-
+~gvcf_aggregator() { flush(); }
 
 
 
