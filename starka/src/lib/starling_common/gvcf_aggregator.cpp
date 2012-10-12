@@ -18,131 +18,8 @@
 ///
 
 #include "gvcf_aggregator.hh"
-#include "blt_util/compat_util.hh"
 
 #include <iostream>
-
-
-
-static
-bool
-check_block_single_tolerance(const stream_stat& ss,
-                             const int min,
-                             const int tol) {
-    return ((min + tol) >= ss.max());
-}
-
-
-
-static
-bool
-check_block_tolerance(const stream_stat& ss,
-                      const double frac_tol,
-                      const int abs_tol) {
-
-    const int min(static_cast<int>(compat_round(ss.min())));
-    if(check_block_single_tolerance(ss,min,abs_tol)) return true;
-    const int ftol(static_cast<int>(std::floor(min * frac_tol)));
-    if (ftol <= abs_tol) return false;
-    return check_block_single_tolerance(ss, min, ftol);
-}
-
-
-
-static
-bool
-is_new_value_blockable(const bool is_new_val,
-                       const int new_val,
-                       const bool is_old_val,
-                       const stream_stat& ss,
-                       const double frac_tol,
-                       const int abs_tol) {
-
-    if(!(is_new_val && is_old_val)) return (is_new_val == is_old_val);
-
-    stream_stat ss2(ss);
-    ss2.add(new_val);
-    return check_block_tolerance(ss2,frac_tol,abs_tol);
-}
-
-
-
-bool
-block_site_record::
-test(const site_info& si) const {
-
-    if(count==0) return true;
-    
-    // pos must be +1 from end of record:
-    if((record.pos+count) != si.pos) return false;
-    
-    // filters must match:
-    if(record.smod.filters != si.smod.filters) return false;
-    
-    if(0!=strcmp(record.get_gt(),si.get_gt())) return false;
-    
-    // coverage states must match:
-    if(record.smod.is_covered != si.smod.is_covered) return false;
-    if(record.smod.is_used_covered != si.smod.is_used_covered) return false;
-    
-    // test blocking values:
-    if(! is_new_value_blockable(si.smod.is_gqx(),si.smod.gqx,
-                                record.smod.is_gqx(),
-                                block_gqx,frac_tol,abs_tol)) {
-        return false;
-    }
-       
-    return true;
-}
-
-
-
-void
-block_site_record::
-join(const site_info& si) {
-    if(count == 0) {
-        record = si;
-        record.smod.is_block=true;
-    }
-
-    if(si.smod.is_gqx()) {
-        block_gqx.add(si.smod.gqx);
-    }
-
-    count += 1;
-}
-
-
-
-gvcf_aggregator::
-gvcf_aggregator(const starling_options& opt,
-                const pos_range& report_range,
-                const reference_contig_segment& ref,
-                std::ostream* osptr)
-    : _opt(opt)
-    , _report_range(report_range.begin_pos,report_range.end_pos)
-    , _ref(ref)
-    , _osptr(osptr)
-    , _chrom(NULL)
-    , _indel_end_pos(0)
-    , _indel_buffer_size(0)
-    , _site_buffer_size(0)
-    , _block(_opt)
-{
-    assert(report_range.is_begin_pos);
-    assert(report_range.is_end_pos);
-
-    if(opt.is_gvcf_output()) {
-        assert(NULL != osptr);
-    }
-}
-
-
-
-gvcf_aggregator::
-~gvcf_aggregator() {
-    process_overlaps();
-}
 
 
 
@@ -169,6 +46,7 @@ set_site_filters(const starling_options& opt,
         if((si.n_used_calls+si.n_unused_calls) > opt.gvcf_max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
 }
+
 
 
 static
@@ -203,11 +81,80 @@ add_site_modifiers(const starling_options& opt,
 
 
 
+gvcf_aggregator::
+gvcf_aggregator(const starling_options& opt,
+                const pos_range& report_range,
+                const reference_contig_segment& ref,
+                std::ostream* osptr)
+    : _opt(opt)
+    , _report_range(report_range.begin_pos,report_range.end_pos)
+    , _ref(ref)
+    , _osptr(osptr)
+    , _chrom(NULL)
+    , _indel_end_pos(0)
+    , _indel_buffer_size(0)
+    , _site_buffer_size(0)
+    , _block(_opt)
+    , _head_pos(report_range.begin_pos)
+{
+    assert(report_range.is_begin_pos);
+    assert(report_range.is_end_pos);
+
+    if(opt.is_gvcf_output()) {
+        assert(NULL != osptr);
+    }
+    add_site_modifiers(_opt,_empty_site);
+}
+
+
+
+gvcf_aggregator::
+~gvcf_aggregator() {
+    skip_to_pos(_report_range.end_pos+1);
+    process_overlaps();
+}
+
+
+
+
+
+// fill in missing sites:
+void
+gvcf_aggregator::
+skip_to_pos(const pos_t target_pos) {
+
+    // advance through any indel region by adding individual sites
+    while(_head_pos<target_pos) {
+        add_site_internal(get_empty_site(_head_pos));
+
+        // only add one empty site after completing any pre-existing indel blocks,
+        // then extend the block size of that one site as required:
+        if(0 != _indel_buffer_size) continue;
+        assert(_block.count!=0);
+        _block.count += (target_pos-_head_pos);
+        _head_pos=target_pos;
+    }
+}
+
+
+
 void
 gvcf_aggregator::
 add_site(site_info& si) {
 
+    skip_to_pos(si.pos);
     add_site_modifiers(_opt,si);
+
+    add_site_internal(si);
+}
+
+
+
+void
+gvcf_aggregator::
+add_site_internal(const site_info& si) {
+
+    _head_pos=si.pos+1;
 
     if(0 != _indel_buffer_size) {
         if(si.pos>=_indel_end_pos) {
@@ -254,6 +201,8 @@ add_indel(const pos_t pos,
 
     // don't handle max_gt=="ref" cases for now:
     if(is_no_indel(dindel)) return;
+
+    skip_to_pos(pos);
 
     // check to see if we add this indel to the buffer:
     if(0 != _indel_buffer_size) {
@@ -378,7 +327,7 @@ is_site_record_blockable(const starling_options& opt,
 //
 void
 gvcf_aggregator::
-queue_site_record(site_info& si) {
+queue_site_record(const site_info& si) {
 
     if(! is_site_record_blockable(_opt,si)) {
         write_block_site_record();

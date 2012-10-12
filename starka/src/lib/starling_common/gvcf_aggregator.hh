@@ -21,44 +21,10 @@
 #define __GVCF_AGGREGATOR_HH
 
 
-#include "blt_util/stream_stat.hh"
+#include "starling_common/gvcf_block_site_record.hh"
 #include "starling_common/gvcf_locus_info.hh"
 
 #include <iosfwd>
-
-
-
-struct block_site_record {
-
-    block_site_record(const starling_options& opt)
-        : frac_tol(opt.gvcf_block_frac_tol)
-        , abs_tol(opt.gvcf_block_abs_tol)
-        , count(0)
-    {}
-
-    void
-    reset() {
-        count=0;
-        block_gqx.reset();
-    }
-
-    // determine if the site could be joined this block:
-    bool
-    test(const site_info& si) const;
-
-    // add record to this block
-    void
-    join(const site_info& si);
-
-    site_info record;
-
-    const double frac_tol;
-    const int abs_tol;
-    int count;
-    stream_stat block_gqx;
-    //stream_stat _blockDP;
-    //stream_stat _blockMQ;
-};
 
 
 ///
@@ -92,6 +58,9 @@ struct gvcf_aggregator {
 
 private:
 
+    void
+    add_site_internal(const site_info& si);
+
     void write_block_site_record() {
         if(_block.count<=0) return;
         write_site_record(_block.record);
@@ -100,7 +69,7 @@ private:
 
     void write_site_record(const site_info& si) const;
 
-    void queue_site_record(site_info& si);
+    void queue_site_record(const site_info& si);
 
     void modify_single_indel_record();
 
@@ -112,7 +81,15 @@ private:
     void process_overlaps();
     
     void write_indel_record(const unsigned write_index=0);
+    
+    void
+    skip_to_pos(const pos_t target_pos);
 
+    const site_info&
+    get_empty_site(const pos_t pos) {
+        _empty_site.ref=_ref.get_base(pos);
+        return _empty_site;
+    }
 
     // initial policy is to write nothing at empty sites. why?
     //
@@ -140,7 +117,10 @@ private:
     unsigned _site_buffer_size;
     std::vector<site_info> _site_buffer;
 
-    block_site_record _block;
+    gvcf_block_site_record _block;
+
+    pos_t _head_pos; // we've observed sites upto but not includeing this position
+    site_info _empty_site;
 };
 
 
