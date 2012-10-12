@@ -383,7 +383,7 @@ write_site_record(const site_info& si) const {
     os << '\t';
 
     // QUAL:
-    if(si.smod.is_qual()) {
+    if(si.is_qual()) {
         os << si.dgt.genome.snp_qphred;
     } else {
         os << '.';

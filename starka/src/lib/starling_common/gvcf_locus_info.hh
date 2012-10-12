@@ -143,11 +143,6 @@ struct site_modifiers : public shared_modifiers {
     }
 
     bool
-    is_qual() const {
-        return ((!is_block) && (!is_unknown) && is_used_covered && (!is_zero_ploidy));
-    }
-
-    bool
     is_gqx() const {
         return ((!is_unknown) && is_used_covered && (!is_zero_ploidy));
     }
@@ -253,6 +248,11 @@ struct site_info {
         } else {
             return DIGT::get_vcf_gt(smod.max_gt,dgt.ref_gt);
         }
+    }
+
+    bool
+    is_qual() const {
+        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (! dgt.ref_gt == smod.max_gt));
     }
 
 
