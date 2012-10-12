@@ -87,6 +87,7 @@ struct shared_modifiers {
 };
 
 
+
 struct indel_modifiers : public shared_modifiers {
     indel_modifiers() { clear(); }
 
@@ -94,12 +95,39 @@ struct indel_modifiers : public shared_modifiers {
     clear() {
         shared_modifiers::clear();
         is_overlap=false;
+        ploidy.clear();
     }
 
     ALIGNPATH::path_t cigar;
 
     bool is_overlap;
+    std::vector<unsigned> ploidy;
 };
+
+
+
+namespace MODIFIED_SITE_GT {
+
+    enum index_t {
+        NONE,
+        UNKNOWN,
+        ZERO,
+        ONE
+    };
+
+    const char*
+    get_label(const unsigned idx) {
+        switch(static_cast<index_t>(idx)) {
+        case ZERO: return "0";
+        case ONE: return "1";
+        case UNKNOWN: return ".";
+        default:
+            assert(0);
+            return NULL;
+        }
+    }
+}
+
 
 struct site_modifiers : public shared_modifiers {
 
@@ -109,19 +137,29 @@ struct site_modifiers : public shared_modifiers {
     clear() {
         shared_modifiers::clear();
         is_block=false;
+        modified_gt=MODIFIED_SITE_GT::NONE;
+        is_zero_ploidy=false;
+    }
+
+    bool
+    is_qual() const {
+        return ((!is_block) && (!is_unknown) && is_used_covered && (!is_zero_ploidy));
     }
 
     bool
     is_gqx() const {
-        return ((!is_unknown) && is_used_covered);
+        return ((!is_unknown) && is_used_covered && (!is_zero_ploidy));
     }
 
     bool is_unknown;
     bool is_covered;
     bool is_used_covered;
+    bool is_zero_ploidy;
     bool is_block;
 
     unsigned max_gt;
+
+    MODIFIED_SITE_GT::index_t modified_gt;
 };
 
 
@@ -150,6 +188,26 @@ struct indel_info {
         }
         return STAR_DIINDEL::get_gt_label(dindel.max_gt);
     }
+
+    // the site ploidy within the indel at offset x
+    unsigned
+    get_ploidy(const unsigned offset) {
+        assert(offset>=0);
+        if(! imod.is_overlap) {
+            using namespace STAR_DIINDEL;
+            switch(dindel.max_gt) {
+            case HOM: return 0;
+            case HET: return 1;
+            case NOINDEL: return 2;
+            }
+            assert(0);
+        } else {
+            assert(offset<imod.ploidy.size());
+            return imod.ploidy[offset];
+        }
+        return 2;
+    }
+
 
     pos_t pos;
     indel_key ik;
@@ -184,14 +242,19 @@ struct site_info {
         smod.clear();
     }
 
+
+
     const char*
     get_gt() const {
-        if(smod.is_unknown || (!smod.is_used_covered)) {
+        if       (smod.modified_gt != MODIFIED_SITE_GT::NONE) {
+            return MODIFIED_SITE_GT::get_label(smod.modified_gt);
+        } else if(smod.is_unknown || (!smod.is_used_covered)) {
             return "./.";
         } else {
             return DIGT::get_vcf_gt(smod.max_gt,dgt.ref_gt);
         }
     }
+
 
     pos_t pos;
     char ref;

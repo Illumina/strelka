@@ -146,9 +146,60 @@ gvcf_aggregator::
 
 
 
+static
+void
+set_site_gt(const diploid_genotype::result_set& rs,
+            site_modifiers& smod) {
+
+    smod.max_gt=rs.max_gt;
+    smod.gqx=rs.max_gt_qphred;
+}
+
+
+
+static
+void
+add_site_modifiers(const starling_options& opt,
+                   site_info& si) {
+
+    si.smod.clear();
+
+    si.smod.is_unknown=(si.ref=='N');
+
+    si.smod.is_used_covered=(si.n_used_calls!=0);
+    si.smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
+
+    if     (si.smod.is_unknown) {
+        si.smod.gqx=0;
+        si.smod.max_gt=0;
+    } else if(si.dgt.genome.max_gt != si.dgt.poly.max_gt) {
+        // if these two disagree then GQX should be 0 and GT should be genome:
+        si.smod.gqx=0;
+        si.smod.max_gt=si.dgt.genome.max_gt;
+    } else {
+        if(si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred){
+            set_site_gt(si.dgt.genome,si.smod);
+        } else {
+            set_site_gt(si.dgt.poly,si.smod);
+        }
+    }
+
+    if(opt.is_gvcf_min_gqx) {
+        if(si.smod.gqx<opt.gvcf_min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
+    }
+
+    if(opt.is_gvcf_max_depth) {
+        if((si.n_used_calls+si.n_unused_calls) > opt.gvcf_max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
+    }
+}
+
+
+
 void
 gvcf_aggregator::
 add_site(site_info& si) {
+
+    add_site_modifiers(_opt,si);
 
     if(0 != _indel_buffer_size) {
         if(si.pos>=_indel_end_pos) {
@@ -157,7 +208,6 @@ add_site(site_info& si) {
             while(_site_buffer.size() <= _site_buffer_size) {
                 _site_buffer.push_back(site_info());
             }
-            si.smod.clear();
             _site_buffer[_site_buffer_size++] = si;
             return;
         }
@@ -253,6 +303,30 @@ get_hap_cigar(ALIGNPATH::path_t& apath,
 }
 
 
+// figure out the per-site ploidy inside of indel based on each haplotype's match descriptor:
+static
+void
+add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
+                    std::vector<unsigned>& ploidy) {
+
+    using namespace ALIGNPATH;
+    const unsigned as(apath.size());
+    int offset(-1);
+    for(unsigned i(0);i<as;++i) {
+        const path_segment& ps(apath[i]);
+        if(ps.type==MATCH) {
+            for(unsigned j(0);j<ps.length;++j){
+                if(offset>=0) ploidy[offset]++;
+                offset++;
+            }
+        } else if(ps.type==DELETE) {
+            offset+=ps.length;
+        }
+    }
+}
+
+
+
 
 static
 void
@@ -270,51 +344,6 @@ add_indel_modifiers(const starling_options& opt,
 }
 
 
-
-static
-void
-set_site_gt(const diploid_genotype::result_set& rs,
-            site_modifiers& smod) {
-
-    smod.max_gt=rs.max_gt;
-    smod.gqx=rs.max_gt_qphred;
-}
-
-
-
-static
-void
-add_site_modifiers(const starling_options& opt,
-                   site_info& si) {
-
-    si.smod.is_unknown=(si.ref=='N');
-
-    si.smod.is_used_covered=(si.n_used_calls!=0);
-    si.smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
-
-    if     (si.smod.is_unknown) {
-        si.smod.gqx=0;
-        si.smod.max_gt=0;
-    } else if(si.dgt.genome.max_gt != si.dgt.poly.max_gt) {
-        // if these two disagree then GQX should be 0 and GT should be genome:
-        si.smod.gqx=0;
-        si.smod.max_gt=si.dgt.genome.max_gt;
-    } else {
-        if(si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred){
-            set_site_gt(si.dgt.genome,si.smod);
-        } else {
-            set_site_gt(si.dgt.poly,si.smod);
-        }
-    }
-
-    if(opt.is_gvcf_min_gqx) {
-        if(si.smod.gqx<opt.gvcf_min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
-    }
-
-    if(opt.is_gvcf_max_depth) {
-        if((si.n_used_calls+si.n_unused_calls) > opt.gvcf_max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
-    }
-}
 
 
 
@@ -342,8 +371,6 @@ is_site_record_blockable(const starling_options& opt,
 void
 gvcf_aggregator::
 queue_site_record(site_info& si) {
-
-    add_site_modifiers(_opt,si);
 
     if(! is_site_record_blockable(_opt,si)) {
         write_block_site_record();
@@ -399,10 +426,10 @@ write_site_record(const site_info& si) const {
     os << '\t';
 
     // QUAL:
-    if(si.smod.is_unknown || si.smod.is_block) {
-        os << '.';
-    } else {
+    if(si.smod.is_qual()) {
         os << si.dgt.genome.snp_qphred;
+    } else {
+        os << '.';
     }
     os << '\t';
 
@@ -451,6 +478,50 @@ modify_single_indel_record() {
 
 
 
+static
+void
+modify_indel_overlap_site(const indel_info& ii,
+                          const unsigned ploidy,
+                          site_info& si) {
+
+    // inherit any filters from the indel:
+    si.smod.filters &= ii.imod.filters;
+
+    // change ploidy:
+    if(ploidy==1) {
+        // limit qual and gq values to those of the indel
+        si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred,ii.dindel.indel_qphred);
+        si.smod.gqx = std::min(si.smod.gqx,ii.dindel.max_gt_qphred);
+
+        if(DIGT::is_het(si.smod.max_gt)) {
+            si.smod.set_filter(VCF_FILTERS::SiteConflict);
+            si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
+        } else {
+            if(si.smod.max_gt == si.dgt.ref_gt) {
+                si.smod.modified_gt=MODIFIED_SITE_GT::ZERO;
+            } else {
+                si.smod.modified_gt=MODIFIED_SITE_GT::ONE;
+            }
+        }
+    } else if(ploidy==0) {
+        si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
+        si.smod.is_zero_ploidy=true;
+    } else {
+        assert(0);
+    }
+}
+
+
+
+static
+void
+modify_indel_conflict_site(site_info& si) {
+
+    si.smod.set_filter(VCF_FILTERS::IndelConflict);
+}
+
+
+
 void
 gvcf_aggregator::
 modify_overlap_indel_record() {
@@ -473,6 +544,7 @@ modify_overlap_indel_record() {
     // make extended vcf ref seq:
     _ref.get_substring(indel_begin_pos,(_indel_end_pos-indel_begin_pos),ii.iri.vcf_ref_seq);
 
+    ii.imod.ploidy.resize(_indel_end_pos-ii.pos,0);
 
     // add per-haplotype information:
     for(unsigned hap(0);hap<2;++hap) {
@@ -498,8 +570,10 @@ modify_overlap_indel_record() {
                       _indel_buffer[hap].ik,
                       leading_seq.size()+1,
                       trailing_seq.size());
-    }
 
+        // add to the ploidy object:
+        add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
+    }
 
     add_indel_modifiers(_opt,ii);
 }
@@ -601,6 +675,16 @@ process_overlaps() {
 
     *_osptr << "INDEL_SIZE: " << _indel_buffer_size << "\n";
 
+    // process sites to be consistent with overlapping indels:
+    for(unsigned i(0);i<_site_buffer_size;++i) {
+        const pos_t offset(_site_buffer[i].pos-_indel_buffer[0].pos);
+        assert(offset>=0);
+        if(! is_conflict_print) {
+            modify_indel_overlap_site(_indel_buffer[0],_indel_buffer[0].get_ploidy(offset),_site_buffer[i]);
+        } else {
+            modify_indel_conflict_site(_site_buffer[i]);
+        }
+    }
 
 
     unsigned indel_index(0);
