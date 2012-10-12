@@ -65,8 +65,8 @@ add_site(site_info& si) {
             while(_site_buffer.size() <= _site_buffer_size) {
                 _site_buffer.push_back(site_info());
             }
+            si.smod.clear();
             _site_buffer[_site_buffer_size++] = si;
-            _site_buffer[_site_buffer_size++].smod.clear();
             return;
         }
     }
@@ -195,8 +195,6 @@ void
 add_site_modifiers(const starling_options& opt,
                    site_info& si) {
 
-    si.smod.is_unknown=(si.ref=='N');
-
     if     (si.smod.is_unknown) {
         si.smod.gqx=0;
         si.smod.max_gt=0;
@@ -265,7 +263,7 @@ print_vcf_alt(const unsigned gt,
     for(unsigned b(0);b<N_BASE;++b){
         if(b==ref_gt) continue;
         if(DIGT::expect2(b,gt)) {
-            if(is_print) os << ",";
+            if(is_print) os << ',';
             os << id_to_base(b);
             is_print=true;
         }
