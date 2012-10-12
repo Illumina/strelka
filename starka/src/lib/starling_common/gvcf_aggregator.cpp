@@ -396,8 +396,12 @@ write_site_record(const site_info& si) const {
 
     // INFO:
     if(si.smod.is_block) {
-        os << "END=" << (si.pos+_block.count) << ';';
-        os << _opt.gvcf_block_label;
+        if(_block.count>1) {
+            os << "END=" << (si.pos+_block.count) << ';';
+            os << _opt.gvcf_block_label;
+        } else {
+            os << '.';
+        }
     } else {
         os << '.';
     }
