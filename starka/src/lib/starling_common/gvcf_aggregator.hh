@@ -42,6 +42,14 @@ struct block_site_record {
         block_gqx.reset();
     }
 
+    // determine if the site could be joined this block:
+    bool
+    test(const site_info& si) const;
+
+    // add record to this block
+    void
+    join(const site_info& si);
+
     site_info record;
 
     const double frac_tol;

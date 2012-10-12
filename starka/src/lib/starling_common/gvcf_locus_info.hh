@@ -71,7 +71,7 @@ struct shared_modifiers {
 
     void
     set_filter(const VCF_FILTERS::index_t i) {
-        _filters.set(i);
+        filters.set(i);
     }
 
     void
@@ -79,14 +79,11 @@ struct shared_modifiers {
 
     void
     clear() {
-        _filters.reset();
+        filters.reset();
     }
 
-
     int gqx;
-
-private:
-    std::bitset<VCF_FILTERS::SIZE> _filters;
+    std::bitset<VCF_FILTERS::SIZE> filters;
 };
 
 
@@ -114,7 +111,14 @@ struct site_modifiers : public shared_modifiers {
         is_block=false;
     }
 
+    bool
+    is_gqx() const {
+        return ((!is_unknown) && is_used_covered);
+    }
+
     bool is_unknown;
+    bool is_covered;
+    bool is_used_covered;
     bool is_block;
 
     unsigned max_gt;
@@ -178,6 +182,15 @@ struct site_info {
         ref=(init_ref);
         good_pi.get_known_counts(known_counts,used_allele_count_min_qscore);
         smod.clear();
+    }
+
+    const char*
+    get_gt() const {
+        if(smod.is_unknown || (!smod.is_used_covered)) {
+            return "./.";
+        } else {
+            return DIGT::get_vcf_gt(smod.max_gt,dgt.ref_gt);
+        }
     }
 
     pos_t pos;

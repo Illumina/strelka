@@ -294,7 +294,7 @@ struct blt_options {
     // blocking scheme:
     std::string gvcf_block_label;
     double gvcf_block_frac_tol;
-    double gvcf_block_abs_tol;
+    int gvcf_block_abs_tol;
 
     double gvcf_block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
 };

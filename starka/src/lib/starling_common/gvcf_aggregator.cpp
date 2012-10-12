@@ -18,8 +18,99 @@
 ///
 
 #include "gvcf_aggregator.hh"
+#include "blt_util/compat_util.hh"
 
 #include <iostream>
+
+
+
+static
+bool
+check_block_single_tolerance(const stream_stat& ss,
+                             const int min,
+                             const int tol) {
+    return ((min + tol) >= ss.max());
+}
+
+
+
+static
+bool
+check_block_tolerance(const stream_stat& ss,
+                      const double frac_tol,
+                      const int abs_tol) {
+
+    const int min(static_cast<int>(compat_round(ss.min())));
+    if(check_block_single_tolerance(ss,min,abs_tol)) return true;
+    const int ftol(static_cast<int>(std::floor(min * frac_tol)));
+    if (ftol <= abs_tol) return false;
+    return check_block_single_tolerance(ss, min, ftol);
+}
+
+
+
+static
+bool
+is_new_value_blockable(const bool is_new_val,
+                       const int new_val,
+                       const bool is_old_val,
+                       const stream_stat& ss,
+                       const double frac_tol,
+                       const int abs_tol) {
+
+    if(!(is_new_val && is_old_val)) return false;
+
+    stream_stat ss2(ss);
+    ss2.add(new_val);
+    return check_block_tolerance(ss2,frac_tol,abs_tol);
+}
+
+
+
+bool
+block_site_record::
+test(const site_info& si) const {
+
+    if(count==0) return true;
+    
+    // pos must be +1 from end of record:
+    if(record.pos != (si.pos+count)) return false;
+    
+    // filters must match:
+    if(record.smod.filters != si.smod.filters) return false;
+    
+    if(record.get_gt() != si.get_gt()) return false;
+    
+    // coverage states must match:
+    if(record.smod.is_covered != si.smod.is_covered) return false;
+    if(record.smod.is_used_covered != si.smod.is_used_covered) return false;
+    
+    // test blocking values:
+    if(! is_new_value_blockable(si.smod.is_gqx(),si.smod.gqx,
+                                record.smod.is_gqx(),
+                                block_gqx,frac_tol,abs_tol)) {
+        return false;
+    }
+       
+    return true;
+}
+
+
+
+void
+block_site_record::
+join(const site_info& si) {
+    if(count == 0) {
+        record = si;
+        record.smod.is_block=true;
+    }
+
+    if(si.smod.is_gqx()) {
+        block_gqx.add(si.smod.gqx);
+    }
+
+    count += 1;
+}
 
 
 
@@ -198,6 +289,9 @@ add_site_modifiers(const starling_options& opt,
 
     si.smod.is_unknown=(si.ref=='N');
 
+    si.smod.is_used_covered=(si.n_used_calls!=0);
+    si.smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
+
     if     (si.smod.is_unknown) {
         si.smod.gqx=0;
         si.smod.max_gt=0;
@@ -256,11 +350,11 @@ queue_site_record(site_info& si) {
         write_site_record(si);
     }
 
-    //if(! is_record_in_current_block(si)) {
-        //    write_block_site_record();
-        //}
+    if(! _block.test(si)) {
+        write_block_site_record();
+    }
     
-    //    join_site_record_to_block(si);
+    _block.join(si);
 }
 
 
@@ -292,7 +386,7 @@ write_site_record(const site_info& si) const {
     std::ostream& os(*_osptr);
 
     os << _chrom << '\t'  // CHROM
-       << si.pos << '\t'  // POS
+       << (si.pos+1) << '\t'  // POS
        << ".\t"           // ID
        << si.ref << '\t'; // REF
 
@@ -317,16 +411,27 @@ write_site_record(const site_info& si) const {
     os << '\t';
 
     // INFO:
-    os << ".\t";
+    if(si.smod.is_block) {
+        os << "END=" << (si.pos+_block.count) << ';';
+        os << _opt.gvcf_block_label;
+    } else {
+        os << '.';
+    }
+    os << '\t';
 
     //FORMAT
     os << "GT:GQX" << '\t';
 
     //SAMPLE
-    if(si.smod.is_unknown) {
-        os << "./.:.";
+    os << si.get_gt() << ';';
+    if(si.smod.is_gqx()) {
+        if(si.smod.is_block) {
+            os << _block.block_gqx.min();
+        } else {
+            os << si.smod.gqx;
+        }
     } else {
-        os << DIGT::get_vcf_gt(si.smod.max_gt,si.dgt.ref_gt) << ':' << si.smod.gqx;
+        os << '.';
     }
     os << '\n';
 }
