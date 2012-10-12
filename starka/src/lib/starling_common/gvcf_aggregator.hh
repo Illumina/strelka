@@ -87,6 +87,7 @@ private:
 
     const site_info&
     get_empty_site(const pos_t pos) {
+        _empty_site.pos=pos;
         _empty_site.ref=_ref.get_base(pos);
         return _empty_site;
     }
