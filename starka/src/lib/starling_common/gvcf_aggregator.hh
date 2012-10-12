@@ -63,7 +63,7 @@ private:
         _block_record.smod.block_count=0;
     }
 
-    void write_site_record(const site_info& si);
+    void write_site_record(const site_info& si) const;
 
     void queue_site_record(site_info& si);
 

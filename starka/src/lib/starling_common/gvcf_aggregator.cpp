@@ -195,6 +195,8 @@ void
 add_site_modifiers(const starling_options& opt,
                    site_info& si) {
 
+    si.smod.is_unknown=(si.ref=='N');
+
     if     (si.smod.is_unknown) {
         si.smod.gqx=0;
         si.smod.max_gt=0;
@@ -275,7 +277,7 @@ print_vcf_alt(const unsigned gt,
 
 void
 gvcf_aggregator::
-write_site_record(const site_info& si) {
+write_site_record(const site_info& si) const {
 
     std::ostream& os(*_osptr);
 
