@@ -74,12 +74,12 @@ test(const site_info& si) const {
     if(count==0) return true;
     
     // pos must be +1 from end of record:
-    if(record.pos != (si.pos+count+1)) return false;
+    if((record.pos+count) != si.pos) return false;
     
     // filters must match:
     if(record.smod.filters != si.smod.filters) return false;
     
-    if(record.get_gt() != si.get_gt()) return false;
+    if(0!=strcmp(record.get_gt(),si.get_gt())) return false;
     
     // coverage states must match:
     if(record.smod.is_covered != si.smod.is_covered) return false;
