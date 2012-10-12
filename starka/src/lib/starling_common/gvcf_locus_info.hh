@@ -115,6 +115,7 @@ namespace MODIFIED_SITE_GT {
         ONE
     };
 
+    inline
     const char*
     get_label(const unsigned idx) {
         switch(static_cast<index_t>(idx)) {
@@ -241,7 +242,6 @@ struct site_info {
         good_pi.get_known_counts(known_counts,used_allele_count_min_qscore);
         smod.clear();
     }
-
 
 
     const char*
