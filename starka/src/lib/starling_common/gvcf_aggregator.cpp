@@ -156,6 +156,20 @@ set_site_gt(const diploid_genotype::result_set& rs,
 }
 
 
+static
+void
+set_site_filters(const starling_options& opt,
+                 site_info& si) {
+
+   if(opt.is_gvcf_min_gqx) {
+        if(si.smod.gqx<opt.gvcf_min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
+    }
+
+    if(opt.is_gvcf_max_depth) {
+        if((si.n_used_calls+si.n_unused_calls) > opt.gvcf_max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
+    }
+}
+
 
 static
 void
@@ -184,13 +198,7 @@ add_site_modifiers(const starling_options& opt,
         }
     }
 
-    if(opt.is_gvcf_min_gqx) {
-        if(si.smod.gqx<opt.gvcf_min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
-    }
-
-    if(opt.is_gvcf_max_depth) {
-        if((si.n_used_calls+si.n_unused_calls) > opt.gvcf_max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
-    }
+    set_site_filters(opt,si);
 }
 
 
@@ -480,7 +488,8 @@ modify_single_indel_record() {
 
 static
 void
-modify_indel_overlap_site(const indel_info& ii,
+modify_indel_overlap_site(const starling_options& opt,
+                          const indel_info& ii,
                           const unsigned ploidy,
                           site_info& si) {
 
@@ -509,6 +518,9 @@ modify_indel_overlap_site(const indel_info& ii,
     } else {
         assert(0);
     }
+
+    // after all those changes we need to rerun the site filters:
+    set_site_filters(opt,si);
 }
 
 
@@ -680,7 +692,7 @@ process_overlaps() {
         const pos_t offset(_site_buffer[i].pos-_indel_buffer[0].pos);
         assert(offset>=0);
         if(! is_conflict_print) {
-            modify_indel_overlap_site(_indel_buffer[0],_indel_buffer[0].get_ploidy(offset),_site_buffer[i]);
+            modify_indel_overlap_site(_opt,_indel_buffer[0],_indel_buffer[0].get_ploidy(offset),_site_buffer[i]);
         } else {
             modify_indel_conflict_site(_site_buffer[i]);
         }
