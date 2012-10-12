@@ -58,7 +58,7 @@ is_new_value_blockable(const bool is_new_val,
                        const double frac_tol,
                        const int abs_tol) {
 
-    if(!(is_new_val && is_old_val)) return false;
+    if(!(is_new_val && is_old_val)) return (is_new_val == is_old_val);
 
     stream_stat ss2(ss);
     ss2.add(new_val);
