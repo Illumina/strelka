@@ -74,7 +74,7 @@ test(const site_info& si) const {
     if(count==0) return true;
     
     // pos must be +1 from end of record:
-    if(record.pos != (si.pos+count)) return false;
+    if(record.pos != (si.pos+count+1)) return false;
     
     // filters must match:
     if(record.smod.filters != si.smod.filters) return false;
