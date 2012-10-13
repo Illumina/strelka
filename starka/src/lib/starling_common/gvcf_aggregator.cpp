@@ -445,15 +445,15 @@ modify_indel_overlap_site(const starling_options& opt,
     // inherit any filters from the indel:
     si.smod.filters &= ii.imod.filters;
 
+    // limit qual and gq values to those of the indel
+    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred,ii.dindel.indel_qphred);
+    si.smod.gqx = std::min(si.smod.gqx,ii.dindel.max_gt_qphred);
+
     // change ploidy:
     if(ploidy==1) {
-        // limit qual and gq values to those of the indel
-        si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred,ii.dindel.indel_qphred);
-        si.smod.gqx = std::min(si.smod.gqx,ii.dindel.max_gt_qphred);
-
         if(DIGT::is_het(si.smod.max_gt)) {
             si.smod.set_filter(VCF_FILTERS::SiteConflict);
-            si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
+            //si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
         } else {
             if(si.smod.max_gt == si.dgt.ref_gt) {
                 si.smod.modified_gt=MODIFIED_SITE_GT::ZERO;
@@ -462,8 +462,12 @@ modify_indel_overlap_site(const starling_options& opt,
             }
         }
     } else if(ploidy==0) {
-        si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
-        si.smod.is_zero_ploidy=true;
+        if(si.smod.max_gt == si.dgt.ref_gt) {
+            si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
+            si.smod.is_zero_ploidy=true;
+        } else {
+            si.smod.set_filter(VCF_FILTERS::SiteConflict);
+        }
     } else {
         assert(0);
     }
