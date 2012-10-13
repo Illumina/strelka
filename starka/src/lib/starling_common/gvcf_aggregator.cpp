@@ -650,6 +650,7 @@ write_indel_record(const unsigned write_index) {
         if(i!=write_index) os << ',';
         os << _indel_buffer[i].imod.cigar;
     }
+    os << ';';
     os << "RU=";
     for(unsigned i(write_index);i<=end_index;++i) {
         if(i!=write_index) os << ',';
@@ -660,6 +661,7 @@ write_indel_record(const unsigned write_index) {
             os << '.';
         }
     }
+    os << ';';
     os << "REFREP=";
     for(unsigned i(write_index);i<=end_index;++i) {
         if(i!=write_index) os << ',';
@@ -669,7 +671,8 @@ write_indel_record(const unsigned write_index) {
             os << '.';
         }
     }
-    os << "IDREP=";
+    os << ';';
+    os << "IREP=";
     for(unsigned i(write_index);i<=end_index;++i) {
         if(i!=write_index) os << ',';
         if(_indel_buffer[i].iri.is_repeat_unit) {
