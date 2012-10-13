@@ -38,8 +38,8 @@ namespace VCF_FILTERS {
         LowGQX,
         HighBaseFilt,
         HighDepth,
-        HighSB,
-        HighHpol,
+        HighSNVSB,
+        HighSNVHPOL,
         HighRepeatCount,
         SIZE
     };
@@ -50,8 +50,8 @@ namespace VCF_FILTERS {
         switch(idx) {
         case HighDepth: return "HighDepth";
         case LowGQX: return "LowGQX";
-        case HighSB: return "HighSB";
-        case HighHpol: return "HighHpol";
+        case HighSNVSB: return "HighSNVSB";
+        case HighSNVHPOL: return "HighSNVHPOL";
         case HighBaseFilt: return "HighBaseFilt";
         case HighRepeatCount: return "HighRepeatCount";
         case IndelConflict: return "IndelConflict";

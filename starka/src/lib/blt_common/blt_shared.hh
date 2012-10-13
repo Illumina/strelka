@@ -52,6 +52,10 @@ struct gvcf_options {
         , max_depth(100.)
         , is_max_base_filt(true)
         , max_base_filt(.3)
+        , is_max_snv_sb(true)
+        , max_snv_sb(10)
+        , is_max_snv_hpol(true)
+        , max_snv_hpol(6)
         , block_label("BLOCKAVG_min30p3a")
         , block_frac_tol(.3)
         , block_abs_tol(3)
@@ -67,6 +71,10 @@ struct gvcf_options {
     double max_depth;
     bool is_max_base_filt;
     double max_base_filt;
+    bool is_max_snv_sb;
+    double max_snv_sb;
+    bool is_max_snv_hpol;
+    unsigned max_snv_hpol;
 
     // blocking scheme:
     std::string block_label;

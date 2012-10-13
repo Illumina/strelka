@@ -82,6 +82,9 @@ initialize_gvcf_file(const starling_options& opt,
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">";
     os << "##INFO=<ID=BLOCKAVG_min30p3a,Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+3,(x*1.3)). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
     os << "##INFO=<ID=CIGAR,Number=A,Type=String,Description=\"CIGAR alignment for each alternate indel allele\">\n";
+    
+    os << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"SNV site strand bias\">\n";
+    os << "##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description=\"SNV contextual homopolymer length\">\n";
 
     //FORMAT:
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
@@ -90,6 +93,13 @@ initialize_gvcf_file(const starling_options& opt,
     // FILTER:
     os << "##FILTER=<ID=IndelConflict,Description=\"Locus is in region with conflicting indel calls.\">\n";
     os << "##FILTER=<ID=SiteConflict,Description=\"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion.\">\n";
+    
+    if(opt.gvcf.is_max_snv_sb) {
+        os << "##FILTER=<ID=MaxSB,Description=\"SNV strand bias value (SNVSB) exceeds " << opt.gvcf.max_snv_sb << "\">\n";
+    }
+    if(opt.gvcf.is_max_snv_hpol) {
+        os << "##FILTER=<ID=MaxHpol,Description=\"SNV contextual homopolymer length (SNVHPOL) exceeds " <<opt.gvcf.max_snv_hpol <<"\">\n";
+    }
 
 #if 0
     // INFO:
