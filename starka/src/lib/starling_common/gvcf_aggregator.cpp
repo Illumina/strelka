@@ -19,6 +19,7 @@
 
 #include "gvcf_aggregator.hh"
 
+#include <iomanip>
 #include <iostream>
 
 
@@ -54,12 +55,14 @@ set_site_filters(const gvcf_options& opt,
        }
    }
 
-   if(opt.is_max_snv_sb) {
-       if(si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
-   }
+   if(si.dgt.is_snp) {
+       if(opt.is_max_snv_sb) {
+           if(si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
+       }
 
-   if(opt.is_max_snv_hpol) {
-       if(si.hpol>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
+       if(opt.is_max_snv_hpol) {
+           if(si.hpol>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
+       }
    }
 }
 
@@ -416,7 +419,7 @@ write_site_record(const site_info& si) const {
         }
     } else {
         if(si.dgt.is_snp) {
-            os << "SNVSB=" << si.dgt.sb << ';';
+            os << "SNVSB=" << std::setprecision(1) << si.dgt.sb << ';';
             os << "SNVHPOL=" << si.hpol;
         } else {
             os << '.';
