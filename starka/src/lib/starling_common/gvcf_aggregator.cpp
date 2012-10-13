@@ -327,6 +327,7 @@ queue_site_record(const site_info& si) {
     if(! is_site_record_blockable(_opt,si)) {
         write_block_site_record();
         write_site_record(si);
+        return;
     }
 
     if(! _block.test(si)) {
