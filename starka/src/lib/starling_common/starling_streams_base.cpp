@@ -80,7 +80,7 @@ add_gvcf_filters(const gvcf_options& opt,
     if(opt.is_min_gqx) {
         std::ostringstream oss;
         oss << "Locus GQX is less than " << opt.min_gqx << " or not present";
-        write_vcf_filter(os,get_label(LowGQX),oss.str(),c_str());
+        write_vcf_filter(os,get_label(LowGQX),oss.str().c_str());
     }
 
     if(opt.is_max_base_filt) {
