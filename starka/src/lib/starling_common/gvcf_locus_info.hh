@@ -40,7 +40,7 @@ namespace VCF_FILTERS {
         HighDepth,
         HighSNVSB,
         HighSNVHPOL,
-        HighRepeatCount,
+        HighRefRep,
         SIZE
     };
 
@@ -53,7 +53,7 @@ namespace VCF_FILTERS {
         case HighSNVSB: return "HighSNVSB";
         case HighSNVHPOL: return "HighSNVHPOL";
         case HighBaseFilt: return "HighBaseFilt";
-        case HighRepeatCount: return "HighRepeatCount";
+        case HighRefRep: return "HighRefRep";
         case IndelConflict: return "IndelConflict";
         case SiteConflict: return "SiteConflict";
         default:

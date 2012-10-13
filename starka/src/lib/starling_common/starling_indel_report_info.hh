@@ -31,7 +31,8 @@
 struct starling_indel_report_info {
 
     starling_indel_report_info()
-        : ref_repeat_count(0)
+        : is_repeat_unit(false)
+        , ref_repeat_count(0)
         , indel_repeat_count(0)
         , ihpol(0)
         , it(INDEL::NONE) {}
@@ -43,6 +44,8 @@ struct starling_indel_report_info {
     std::string vcf_indel_seq;
     std::string ref_upstream;
     std::string ref_downstream;
+
+    bool is_repeat_unit;
     std::string repeat_unit;
     unsigned ref_repeat_count;
     unsigned indel_repeat_count;

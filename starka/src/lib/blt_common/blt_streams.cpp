@@ -90,6 +90,7 @@ write_vcf_audit(const blt_options& opt,
     os << "##fileformat=VCFv4.1\n";
     os << "##fileDate=" << vcf_fileDate << "\n";
     os << "##source=" << pinfo.name() << "\n";
+    os << "##source_version=" << pinfo.version() << "\n";
     os << "##startTime=" << asctime(localtime(&t));
     os << "##cmdline=" << cmdline << "\n";
     if(opt.is_samtools_ref_set) {

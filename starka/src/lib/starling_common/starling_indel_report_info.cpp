@@ -185,6 +185,7 @@ set_repeat_info(const indel_key& ik,
                 const reference_contig_segment& ref,
                 starling_indel_report_info& iri)
 {
+    iri.is_repeat_unit = false;
     iri.repeat_unit = "N/A";
     iri.ref_repeat_count = 0;
     iri.indel_repeat_count = 0;
@@ -247,6 +248,7 @@ set_repeat_info(const indel_key& ik,
         }
     }
     
+    iri.is_repeat_unit = true;
     iri.ref_repeat_count = indel_context_repeat_count+delete_repeat_count;
     iri.indel_repeat_count = indel_context_repeat_count+insert_repeat_count;
 }

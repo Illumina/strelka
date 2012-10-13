@@ -56,6 +56,8 @@ struct gvcf_options {
         , max_snv_sb(10)
         , is_max_snv_hpol(true)
         , max_snv_hpol(6)
+        , is_max_ref_rep(true)
+        , max_ref_rep(8)
         , block_label("BLOCKAVG_min30p3a")
         , block_frac_tol(.3)
         , block_abs_tol(3)
@@ -75,6 +77,8 @@ struct gvcf_options {
     double max_snv_sb;
     bool is_max_snv_hpol;
     unsigned max_snv_hpol;
+    bool is_max_ref_rep;
+    unsigned max_ref_rep;
 
     // blocking scheme:
     std::string block_label;

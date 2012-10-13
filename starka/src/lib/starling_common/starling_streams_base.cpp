@@ -20,11 +20,13 @@
 #include "blt_util/bam_dumper.hh"
 #include "blt_util/vcf_util.hh"
 #include "starling_common/starling_streams_base.hh"
+#include "starling_common/gvcf_locus_info.hh"
 
 #include <cassert>
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 
 
@@ -54,6 +56,46 @@ initialize_bindel_file(const starling_options& opt,
 
 
 
+static
+void
+write_vcf_filter(std::ostream& os,
+                 const char* id,
+                 const char* desc) {
+    os << "##FILTER=<ID=" << id << ",Description=\"" << desc << "\">\n";
+}
+
+
+
+static
+void
+add_gvcf_filters(const gvcf_options& opt,
+                 std::ostream& os) {
+
+    using namespace VCF_FILTERS;
+
+    write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls.");
+    write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion.");
+    
+    if(opt.is_max_snv_sb) {
+        std::ostringstream oss;
+        oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
+        write_vcf_filter(os,get_label(HighSNVSB),oss.str().c_str());
+    }
+    if(opt.is_max_snv_hpol) {
+        std::ostringstream oss;
+        oss << "SNV contextual homopolymer length (SNVHPOL) exceeds " <<opt.max_snv_hpol;
+        write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
+    }
+
+    if(opt.is_max_ref_rep) {
+        std::ostringstream oss;
+        oss << "Indel contains an ellele which occurs in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
+        write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
+    }
+}
+
+
+
 // return stream, is_malloced_pointer
 std::ostream*
 starling_streams_base::
@@ -79,48 +121,25 @@ initialize_gvcf_file(const starling_options& opt,
        << "##IndelTheta=" << opt.bindel_diploid_theta << "\n";
 
     //INFO:
-    os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">";
+    os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
     os << "##INFO=<ID=BLOCKAVG_min30p3a,Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+3,(x*1.3)). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
-    os << "##INFO=<ID=CIGAR,Number=A,Type=String,Description=\"CIGAR alignment for each alternate indel allele\">\n";
-    
+
+    // site specific:
     os << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"SNV site strand bias\">\n";
     os << "##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description=\"SNV contextual homopolymer length\">\n";
+
+    // indel specific:
+    os << "##INFO=<ID=CIGAR,Number=A,Type=String,Description=\"CIGAR alignment for each alternate indel allele\">\n";
+    os << "##INFO=<ID=RU,Number=A,Type=String,Description=\"Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.\">\n";
+    os << "##INFO=<ID=REFREP,Number=A,Type=String,Description=\"Number of times RU is repeated in reference.\">";
+    os << "##INFO=<ID=IREP,Number=A,Type=String,Description=\"Number of times RU is repeated in indel allele.\">\n";
 
     //FORMAT:
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
     os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
 
     // FILTER:
-    os << "##FILTER=<ID=IndelConflict,Description=\"Locus is in region with conflicting indel calls.\">\n";
-    os << "##FILTER=<ID=SiteConflict,Description=\"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion.\">\n";
-    
-    if(opt.gvcf.is_max_snv_sb) {
-        os << "##FILTER=<ID=MaxSB,Description=\"SNV strand bias value (SNVSB) exceeds " << opt.gvcf.max_snv_sb << "\">\n";
-    }
-    if(opt.gvcf.is_max_snv_hpol) {
-        os << "##FILTER=<ID=MaxHpol,Description=\"SNV contextual homopolymer length (SNVHPOL) exceeds " <<opt.gvcf.max_snv_hpol <<"\">\n";
-    }
-
-#if 0
-    // INFO:
-    fos << "##INFO=<ID=QSS,Number=1,Type=Integer,Description=\"Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal\">\n";
-    fos << "##INFO=<ID=TQSS,Number=1,Type=Integer,Description=\"Data tier used to compute QSS\">\n";
-    fos << "##INFO=<ID=NT,Number=1,Type=String,Description=\"Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.\">\n";
-    fos << "##INFO=<ID=QSS_NT,Number=1,Type=Integer,Description=\"Quality score reflecting the joint probability of a somatic variant and NT\">\n";
-    fos << "##INFO=<ID=TQSS_NT,Number=1,Type=Integer,Description=\"Data tier used to compute QSS_NT\">\n";
-    fos << "##INFO=<ID=SGT,Number=1,Type=String,Description=\"Most likely somatic genotype excluding normal noise states\">\n";
-    fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
-    
-    // FORMAT:
-    fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1 (used+filtered)\">\n";
-    fos << "##FORMAT=<ID=FDP,Number=1,Type=Integer,Description=\"Number of basecalls filtered from original read depth for tier1\">\n";
-    fos << "##FORMAT=<ID=SDP,Number=1,Type=Integer,Description=\"Number of reads with deletions spanning this site at tier1\">\n";
-    fos << "##FORMAT=<ID=SUBDP,Number=1,Type=Integer,Description=\"Number of reads below tier1 mapping quality threshold aligned across this site\">\n";
-    fos << "##FORMAT=<ID=AU,Number=2,Type=Integer,Description=\"Number of 'A' alleles used in tiers 1,2\">\n";
-    fos << "##FORMAT=<ID=CU,Number=2,Type=Integer,Description=\"Number of 'C' alleles used in tiers 1,2\">\n";
-    fos << "##FORMAT=<ID=GU,Number=2,Type=Integer,Description=\"Number of 'G' alleles used in tiers 1,2\">\n";
-    fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
-#endif    
+    add_gvcf_filters(opt.gvcf,os);
 
     os << vcf_col_label() << "\tFORMAT\tSAMPLE\n";
 

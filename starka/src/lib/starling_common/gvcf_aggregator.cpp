@@ -305,12 +305,22 @@ add_indel_modifiers(const gvcf_options& opt,
                     indel_info& ii) {
 
     ii.imod.gqx=std::min(ii.dindel.indel_qphred,ii.dindel.max_gt_qphred);
+
     if(opt.is_min_gqx) {
         if(ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
     if(opt.is_max_depth) {
         if(ii.isri.depth > opt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+    }
+
+    if(opt.is_max_ref_rep) {
+        if(ii.iri.is_repeat_unit) {
+            if((ii.iri.repeat_unit.size() <= 2) &&
+               (ii.iri.ref_repeat_count > opt.max_ref_rep)) {
+                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
+            }
+        }
     }
 }
 
@@ -571,9 +581,12 @@ modify_overlap_indel_record() {
 
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
-    }
 
-    add_indel_modifiers(_opt,ii);
+        add_indel_modifiers(_opt,_indel_buffer[hap]);
+        if(hap>0) {
+            ii.imod.filters &= _indel_buffer[hap].imod.filters;
+        }
+    }
 }
 
 
@@ -636,6 +649,34 @@ write_indel_record(const unsigned write_index) {
     for(unsigned i(write_index);i<=end_index;++i) {
         if(i!=write_index) os << ',';
         os << _indel_buffer[i].imod.cigar;
+    }
+    os << "RU=";
+    for(unsigned i(write_index);i<=end_index;++i) {
+        if(i!=write_index) os << ',';
+        if(_indel_buffer[i].iri.is_repeat_unit &&
+           (_indel_buffer[i].iri.repeat_unit.size() <= 20)) {
+            os << _indel_buffer[i].iri.repeat_unit;
+        } else {
+            os << '.';
+        }
+    }
+    os << "REFREP=";
+    for(unsigned i(write_index);i<=end_index;++i) {
+        if(i!=write_index) os << ',';
+        if(_indel_buffer[i].iri.is_repeat_unit) {
+            os << _indel_buffer[i].iri.ref_repeat_count;
+        } else {
+            os << '.';
+        }
+    }
+    os << "IDREP=";
+    for(unsigned i(write_index);i<=end_index;++i) {
+        if(i!=write_index) os << ',';
+        if(_indel_buffer[i].iri.is_repeat_unit) {
+            os << _indel_buffer[i].iri.indel_repeat_count;
+        } else {
+            os << '.';
+        }
     }
     os << '\t';
 
