@@ -590,7 +590,7 @@ modify_overlap_indel_record() {
 
         add_indel_modifiers(_opt,_indel_buffer[hap]);
         if(hap>0) {
-            ii.imod.filters &= _indel_buffer[hap].imod.filters;
+            ii.imod.filters |= _indel_buffer[hap].imod.filters;
         }
     }
 }
