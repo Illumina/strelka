@@ -407,7 +407,7 @@ write_site_record(const site_info& si) const {
     os << "GT:GQX" << '\t';
 
     //SAMPLE
-    os << si.get_gt() << ';';
+    os << si.get_gt() << ':';
     if(si.smod.is_gqx()) {
         if(si.smod.is_block) {
             os << _block.block_gqx.min();
