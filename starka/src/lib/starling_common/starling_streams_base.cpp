@@ -131,8 +131,8 @@ initialize_gvcf_file(const starling_options& opt,
     // indel specific:
     os << "##INFO=<ID=CIGAR,Number=A,Type=String,Description=\"CIGAR alignment for each alternate indel allele\">\n";
     os << "##INFO=<ID=RU,Number=A,Type=String,Description=\"Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.\">\n";
-    os << "##INFO=<ID=REFREP,Number=A,Type=String,Description=\"Number of times RU is repeated in reference.\">\n";
-    os << "##INFO=<ID=IREP,Number=A,Type=String,Description=\"Number of times RU is repeated in indel allele.\">\n";
+    os << "##INFO=<ID=REFREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in reference.\">\n";
+    os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
 
     //FORMAT:
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";

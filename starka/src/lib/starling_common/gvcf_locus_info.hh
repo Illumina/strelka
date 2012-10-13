@@ -52,7 +52,7 @@ namespace VCF_FILTERS {
         case LowGQX: return "LowGQX";
         case HighSNVSB: return "HighSNVSB";
         case HighSNVHPOL: return "HighSNVHPOL";
-        case HighBaseFilt: return "HighBaseFilt";
+        case HighBaseFilt: return "HighDPF";
         case HighRefRep: return "HighREFREP";
         case IndelConflict: return "IndelConflict";
         case SiteConflict: return "SiteConflict";

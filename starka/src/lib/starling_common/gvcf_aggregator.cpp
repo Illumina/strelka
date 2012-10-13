@@ -121,6 +121,7 @@ gvcf_aggregator(const starling_options& opt,
 
     if(opt.is_gvcf_output()) {
         assert(NULL != osptr);
+        *osptr << std::fixed << std::setprecision(1);
     }
     add_site_modifiers(_opt,_empty_site);
 }
@@ -429,7 +430,7 @@ write_site_record(const site_info& si) const {
         }
     } else {
         if(si.dgt.is_snp) {
-            os << "SNVSB=" << std::setprecision(1) << si.dgt.sb << ';';
+            os << "SNVSB=" << si.dgt.sb << ';';
             os << "SNVHPOL=" << si.hpol;
         } else {
             os << '.';
@@ -672,7 +673,7 @@ write_indel_record(const unsigned write_index) {
         }
     }
     os << ';';
-    os << "IREP=";
+    os << "IDREP=";
     for(unsigned i(write_index);i<=end_index;++i) {
         if(i!=write_index) os << ',';
         if(_indel_buffer[i].iri.is_repeat_unit) {
