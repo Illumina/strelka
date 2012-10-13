@@ -244,7 +244,7 @@ struct site_info {
         if       (smod.modified_gt != MODIFIED_SITE_GT::NONE) {
             return MODIFIED_SITE_GT::get_label(smod.modified_gt);
         } else if(smod.is_unknown || (!smod.is_used_covered)) {
-            return "./.";
+            return ".";
         } else {
             return DIGT::get_vcf_gt(smod.max_gt,dgt.ref_gt);
         }
