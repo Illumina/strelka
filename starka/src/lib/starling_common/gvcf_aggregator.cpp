@@ -19,6 +19,7 @@
 
 #include "gvcf_aggregator.hh"
 
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 
@@ -121,7 +122,6 @@ gvcf_aggregator(const starling_options& opt,
 
     if(opt.is_gvcf_output()) {
         assert(NULL != osptr);
-        *osptr << std::fixed << std::setprecision(1);
     }
     add_site_modifiers(_opt,_empty_site);
 }
@@ -430,7 +430,12 @@ write_site_record(const site_info& si) const {
         }
     } else {
         if(si.dgt.is_snp) {
-            os << "SNVSB=" << si.dgt.sb << ';';
+            os << "SNVSB=";
+            std::ofstream tmp;
+            tmp.copyfmt(os);
+            os << std::fixed << std::setprecision(1) << si.dgt.sb;
+            os.copyfmt(tmp);
+            os << ';';
             os << "SNVHPOL=" << si.hpol;
         } else {
             os << '.';
