@@ -69,7 +69,7 @@ get_starling_shared_option_parser(starling_options& opt) {
          "Set snp theta.")
         ("indel-theta", po::value<double>(&opt.bindel_diploid_theta)->default_value(opt.bindel_diploid_theta),
          "Set indel theta")
-        ("gvcf-file",po::value<std::string>(&opt.gvcf_filename),"gVCF output file");
+        ("gvcf-file",po::value<std::string>(&opt.gvcf.filename),"gVCF output file");
 
     po::options_description hap_opt("haplotype-options");
     hap_opt.add_options()

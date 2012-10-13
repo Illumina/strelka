@@ -43,6 +43,42 @@ namespace LOG_LEVEL {
 }
 
 
+struct gvcf_options {
+
+    gvcf_options()
+        : is_min_gqx(true)
+        , min_gqx(30.)
+        , is_max_depth(true)
+        , max_depth(100.)
+        , is_max_base_filt(true)
+        , max_base_filt(.3)
+        , block_label("BLOCKAVG_min30p3a")
+        , block_frac_tol(.3)
+        , block_abs_tol(3)
+        , block_max_nonref(.2)
+    {}
+
+    std::string filename;
+
+
+    bool is_min_gqx;
+    double min_gqx;
+    bool is_max_depth;
+    double max_depth;
+    bool is_max_base_filt;
+    double max_base_filt;
+
+    // blocking scheme:
+    std::string block_label;
+    double block_frac_tol;
+    int block_abs_tol;
+
+    double block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
+};
+    
+
+
+
 struct blt_options {
 
     blt_options()
@@ -124,14 +160,6 @@ struct blt_options {
         , is_eland_compat(false)
         , is_max_input_depth(false)
         , max_input_depth(0)
-        , is_gvcf_min_gqx(true)
-        , gvcf_min_gqx(30.)
-        , is_gvcf_max_depth(true)
-        , gvcf_max_depth(100.)
-        , gvcf_block_label("BLOCKAVG_min30p3a")
-        , gvcf_block_frac_tol(.3)
-        , gvcf_block_abs_tol(3)
-        , gvcf_block_max_nonref(.2)
     {}
 
     virtual ~blt_options() {}
@@ -160,7 +188,7 @@ struct blt_options {
 
     bool
     is_gvcf_output() const {
-        return (! gvcf_filename.empty());
+        return (! gvcf.filename.empty());
     }
 
     bool
@@ -283,20 +311,7 @@ struct blt_options {
 
     std::string report_filename;
 
-    std::string gvcf_filename;
-
-
-    bool is_gvcf_min_gqx;
-    double gvcf_min_gqx;
-    bool is_gvcf_max_depth;
-    double gvcf_max_depth;
-
-    // blocking scheme:
-    std::string gvcf_block_label;
-    double gvcf_block_frac_tol;
-    int gvcf_block_abs_tol;
-
-    double gvcf_block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
+    gvcf_options gvcf;
 };
 
 

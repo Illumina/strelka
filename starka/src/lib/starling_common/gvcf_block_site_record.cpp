@@ -49,12 +49,12 @@ check_block_tolerance(const stream_stat& ss,
 
 static
 bool
-is_new_value_blockable(const bool is_new_val,
-                       const int new_val,
-                       const bool is_old_val,
+is_new_value_blockable(const int new_val,
                        const stream_stat& ss,
                        const double frac_tol,
-                       const int abs_tol) {
+                       const int abs_tol,
+                       const bool is_new_val = true,
+                       const bool is_old_val = true) {
 
     if(!(is_new_val && is_old_val)) return (is_new_val == is_old_val);
 
@@ -84,9 +84,19 @@ test(const site_info& si) const {
     if(record.smod.is_used_covered != si.smod.is_used_covered) return false;
     
     // test blocking values:
-    if(! is_new_value_blockable(si.smod.is_gqx(),si.smod.gqx,
-                                record.smod.is_gqx(),
-                                block_gqx,frac_tol,abs_tol)) {
+    if(! is_new_value_blockable(si.smod.gqx,
+                                block_gqx,frac_tol,abs_tol,
+                                si.smod.is_gqx(),
+                                record.smod.is_gqx())) {
+        return false;
+    }
+
+    if(! is_new_value_blockable(si.n_used_calls,
+                                block_dpu,frac_tol,abs_tol)) {
+        return false;
+    }
+    if(! is_new_value_blockable(si.n_unused_calls,
+                                block_dpf,frac_tol,abs_tol)) {
         return false;
     }
        
@@ -106,6 +116,9 @@ join(const site_info& si) {
     if(si.smod.is_gqx()) {
         block_gqx.add(si.smod.gqx);
     }
+
+    block_dpu.add(si.n_used_calls);
+    block_dpf.add(si.n_unused_calls);
 
     count += 1;
 }

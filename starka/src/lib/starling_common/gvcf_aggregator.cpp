@@ -35,23 +35,31 @@ set_site_gt(const diploid_genotype::result_set& rs,
 
 static
 void
-set_site_filters(const starling_options& opt,
+set_site_filters(const gvcf_options& opt,
                  site_info& si) {
 
-   if(opt.is_gvcf_min_gqx) {
-        if(si.smod.gqx<opt.gvcf_min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
+   if(opt.is_min_gqx) {
+        if(si.smod.gqx<opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if(opt.is_gvcf_max_depth) {
-        if((si.n_used_calls+si.n_unused_calls) > opt.gvcf_max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
-    }
+   if(opt.is_max_depth) {
+       if((si.n_used_calls+si.n_unused_calls) > opt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
+   }
+
+   if(opt.is_max_base_filt) {
+       const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
+       if(total_calls>0) {
+           const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
+           if(filt>opt.max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
+       }
+   }
 }
 
 
 
 static
 void
-add_site_modifiers(const starling_options& opt,
+add_site_modifiers(const gvcf_options& opt,
                    site_info& si) {
 
     si.smod.clear();
@@ -86,11 +94,11 @@ gvcf_aggregator(const starling_options& opt,
                 const pos_range& report_range,
                 const reference_contig_segment& ref,
                 std::ostream* osptr)
-    : _opt(opt)
+    : _opt(opt.gvcf)
     , _report_range(report_range.begin_pos,report_range.end_pos)
     , _ref(ref)
     , _osptr(osptr)
-    , _chrom(_opt.bam_seq_name.c_str())
+    , _chrom(opt.bam_seq_name.c_str())
     , _indel_end_pos(0)
     , _indel_buffer_size(0)
     , _site_buffer_size(0)
@@ -282,16 +290,16 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
 
 static
 void
-add_indel_modifiers(const starling_options& opt,
+add_indel_modifiers(const gvcf_options& opt,
                     indel_info& ii) {
 
     ii.imod.gqx=std::min(ii.dindel.indel_qphred,ii.dindel.max_gt_qphred);
-    if(opt.is_gvcf_min_gqx) {
-        if(ii.imod.gqx<opt.gvcf_min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+    if(opt.is_min_gqx) {
+        if(ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if(opt.is_gvcf_max_depth) {
-        if(ii.isri.depth > opt.gvcf_max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+    if(opt.is_max_depth) {
+        if(ii.isri.depth > opt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }
 }
 
@@ -302,7 +310,7 @@ add_indel_modifiers(const starling_options& opt,
 // is the current site eligable to even be considered for block compression?
 static
 bool
-is_site_record_blockable(const starling_options& opt,
+is_site_record_blockable(const gvcf_options& opt,
                          const site_info& si) {
 
     if(si.dgt.is_snp) return false;
@@ -310,7 +318,7 @@ is_site_record_blockable(const starling_options& opt,
     if(si.ref!='N') {
         const double reffrac(static_cast<double>(si.known_counts[si.dgt.ref_gt]) /
                              static_cast<double>(si.n_used_calls));
-        if(reffrac+opt.gvcf_block_max_nonref <= 1) return false;
+        if(reffrac+opt.block_max_nonref <= 1) return false;
     }
     return true;
 }
@@ -394,7 +402,7 @@ write_site_record(const site_info& si) const {
     if(si.smod.is_block) {
         if(_block.count>1) {
             os << "END=" << (si.pos+_block.count) << ';';
-            os << _opt.gvcf_block_label;
+            os << _opt.block_label;
         } else {
             os << '.';
         }
@@ -404,7 +412,7 @@ write_site_record(const site_info& si) const {
     os << '\t';
 
     //FORMAT
-    os << "GT:GQX" << '\t';
+    os << "GT:GQX:DP:DPF" << '\t';
 
     //SAMPLE
     os << si.get_gt() << ':';
@@ -417,6 +425,15 @@ write_site_record(const site_info& si) const {
     } else {
         os << '.';
     }
+    os << ':';
+    if(si.smod.is_block) {
+        os << _block.block_dpu.min() << ':'
+           << _block.block_dpf.min();
+    } else {
+        os << si.n_used_calls << ':'
+           << si.n_unused_calls;
+    }
+
     os << '\n';
 }
 
@@ -437,7 +454,7 @@ modify_single_indel_record() {
 
 static
 void
-modify_indel_overlap_site(const starling_options& opt,
+modify_indel_overlap_site(const gvcf_options& opt,
                           const indel_info& ii,
                           const unsigned ploidy,
                           site_info& si) {

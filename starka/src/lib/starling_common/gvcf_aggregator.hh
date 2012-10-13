@@ -105,7 +105,7 @@ private:
     //void
     //update_pos();
 
-    const starling_options& _opt;
+    const gvcf_options& _opt;
     const known_pos_range _report_range;
     const reference_contig_segment& _ref;
     std::ostream* _osptr;    // convenience to get gvcf stream from opt

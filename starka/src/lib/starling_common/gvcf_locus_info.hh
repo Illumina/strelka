@@ -33,14 +33,14 @@
 namespace VCF_FILTERS {
 
     enum index_t {
-        HighDepth,
-        LowGQX,
-        HighSB,
-        HighHpol,
-        HighBaseFilt,
-        HighRepeatCount,
         IndelConflict,
         SiteConflict,
+        LowGQX,
+        HighBaseFilt,
+        HighDepth,
+        HighSB,
+        HighHpol,
+        HighRepeatCount,
         SIZE
     };
 

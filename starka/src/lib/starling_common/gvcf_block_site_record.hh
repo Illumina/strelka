@@ -28,9 +28,9 @@
 
 struct gvcf_block_site_record {
 
-    gvcf_block_site_record(const starling_options& opt)
-        : frac_tol(opt.gvcf_block_frac_tol)
-        , abs_tol(opt.gvcf_block_abs_tol)
+    gvcf_block_site_record(const gvcf_options& opt)
+        : frac_tol(opt.block_frac_tol)
+        , abs_tol(opt.block_abs_tol)
         , count(0)
     {}
 
@@ -38,6 +38,8 @@ struct gvcf_block_site_record {
     reset() {
         count=0;
         block_gqx.reset();
+        block_dpu.reset();
+        block_dpf.reset();
     }
 
     // determine if the site could be joined this block:
@@ -54,7 +56,8 @@ struct gvcf_block_site_record {
     const int abs_tol;
     int count;
     stream_stat block_gqx;
-    //stream_stat _blockDP;
+    stream_stat block_dpu;
+    stream_stat block_dpf;
     //stream_stat _blockMQ;
 };
 
