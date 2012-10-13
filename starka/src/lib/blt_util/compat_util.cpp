@@ -31,10 +31,32 @@
 
 #include "compat_util.hh"
 
+#include <cerrno>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 
 #include <iostream>
+
+
+
+bool
+compat_realpath(std::string& path) {
+#ifdef _WIN32
+    XXXXXX NOT IMPLEMENTED;
+#else 
+    errno=0;
+    const char* newpath(realpath(path.c_str(),NULL));
+    if((NULL==newpath) || (errno!=0)) {
+        if(NULL!=newpath) free((void*)newpath);
+        return false;
+    }
+    path = newpath;
+    free((void*)newpath);
+    return true;
+#endif
+}
+
 
 
 double

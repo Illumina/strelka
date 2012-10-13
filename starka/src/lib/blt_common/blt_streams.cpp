@@ -92,6 +92,11 @@ write_vcf_audit(const blt_options& opt,
     os << "##source=" << pinfo.name() << "\n";
     os << "##startTime=" << asctime(localtime(&t));
     os << "##cmdline=" << cmdline << "\n";
+    if(opt.is_samtools_ref_set) {
+        os << "##reference=file://" << opt.samtools_ref_seq_file << "\n";
+    } else {
+        assert(0);
+    }
 }
 
 

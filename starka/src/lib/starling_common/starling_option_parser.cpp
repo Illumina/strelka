@@ -18,6 +18,7 @@
 ///
 
 #include "blt_common/blt_arg_validate.hh"
+#include "blt_util/compat_util.hh"
 #include "starling_common/starling_option_parser.hh"
 
 #include "boost/format.hpp"
@@ -315,6 +316,17 @@ finalize_legacy_starling_options(const prog_info& pinfo,
 
     if(! opt.is_ref_set()){
         pinfo.usage("a reference sequence must be specified");
+    }
+
+    // canonicalize the reference seqeunce path:
+    if(opt.is_samtools_ref_set) {
+        if(! compat_realpath(opt.samtools_ref_seq_file)){
+            std::ostringstream oss;
+            oss << "can't resolve samtools reference path: " << opt.samtools_ref_seq_file << "\n";
+            pinfo.usage(oss.str().c_str());
+        }
+    } else {
+        assert(0);
     }
 
     if(! opt.is_user_genome_size) {

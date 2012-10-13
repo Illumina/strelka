@@ -35,6 +35,9 @@
 #define __COMPAT_UTIL
 
 
+#include <string>
+
+
 #ifdef _WIN32 
 #define snprintf _snprintf
 #endif
@@ -46,5 +49,12 @@ compat_round(const double x);
 
 const char*
 compat_basename(const char* s);
+
+
+// gets canonical name of paths *when these refere to existing items*
+// returns false on error.
+bool
+compat_realpath(std::string& path);
+
 
 #endif
