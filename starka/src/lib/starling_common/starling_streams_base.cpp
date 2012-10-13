@@ -75,7 +75,20 @@ add_gvcf_filters(const gvcf_options& opt,
 
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls.");
     write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion.");
-    
+
+
+    if(opt.is_min_gqx) {
+        std::ostringstream oss;
+        oss << "Locus GQX is less than " << opt.min_gqx << " or not present";
+        write_vcf_filter(os,get_label(LowGQX),oss.str(),c_str());
+    }
+
+    if(opt.is_max_base_filt) {
+        std::ostringstream oss;
+        oss << "The fraction of basecalls filtered out at a site is greater than " << opt.max_base_filt;
+        write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
+    }
+  
     if(opt.is_max_snv_sb) {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
