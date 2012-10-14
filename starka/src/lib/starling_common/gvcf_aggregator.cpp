@@ -238,26 +238,23 @@ add_indel(const pos_t pos,
     // we can't handle breakends at all right now:
     if(ik.is_breakpoint()) return;
 
-    // don't handle max_gt=="ref" cases for now:
+    // don't handle homozygous reference calls for now:
     if(is_no_indel(dindel)) return;
 
     skip_to_pos(pos);
 
-    // check to see if we add this indel to the buffer:
-    if(0 != _indel_buffer_size) {
-        // check if this indel overlaps the buffer -- note this deleberatly picks up adjacent deletions:
-        if(pos<=_indel_end_pos) {
-            _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
-        } else {
-            process_overlaps();
-        }
+    // check if an indel is already buffered and we done't overlap it,
+    // in which case we need to clear it first -- note this definition
+    // of overlap deleberatly picks up adjacent deletions:
+    if((0 != _indel_buffer_size) && (pos>_indel_end_pos)) {
+        process_overlaps();
     }
 
     while(_indel_buffer.size() <= _indel_buffer_size) {
         _indel_buffer.push_back(indel_info());
     }
     _indel_buffer[_indel_buffer_size++].init(pos,ik,dindel,iri,isri);
-    _indel_end_pos=ik.right_pos();
+    _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
 }
 
 
