@@ -5,11 +5,11 @@ set -o pipefail
 set -o xtrace
 
 #
-# this makes the strelka release tarball assuming it's being called in the release checkout version
+# this makes the starling/strelka binary tarball assuming it's being called in the release checkout version
 # the tarball is written to the caller's working directory
 #
 
-package_name=strelka_workflow
+package_name=starka
 
 pname_root=""
 if [ $# -gt 1 ]; then
@@ -19,12 +19,15 @@ elif [ $# == 1 ]; then
     pname_root=$1
 fi
 
-thisdir=$(dirname $0)
+absdir() {
+    cd $1; pwd -P
+}
+
+thisdir=$(absdir $(dirname $0))
 outdir=$(pwd)
 
 cd $thisdir
-gitversion=$(git describe)
-#date=$(date '+%Y%m%d')
+gitversion=$(git describe | sed "s/^v//")
 
 if [ "$pname_root" == "" ]; then
     pname_root=${package_name}-$gitversion
@@ -38,20 +41,13 @@ if [ -d $pname ]; then
 fi
 mkdir -p $pname
 
-source_directory=$thisdir/../strelka_workflow
-cp -r $source_directory/* $pname
-
-# prep workflow files:
-(
-cd $pname
-make clean
-find . -name ".git" -type d -print | xargs rm -rf
-find . -name "*.xz" -type f -print | xargs xz -d
-)
+cd ..
+git archive --prefix=$pname_root/ HEAD:starka/ | tar -x -C $outdir
 
 # make version number substitutions:
-for f in README strelka/include/strelka/strelka_info.hh; do
-    cat $source_directory/$f |\
+source_dir=$(pwd)/starka
+for f in README src/lib/starling/starling_info.hh src/lib/strelka/strelka_info.hh; do
+    cat $source_dir/$f |\
     sed "s/\${VERSION}/$gitversion/" >|\
     $pname/$f
 done
