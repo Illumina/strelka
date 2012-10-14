@@ -41,15 +41,15 @@ set_site_gt(const diploid_genotype::result_set& rs,
 static
 void
 set_site_filters(const gvcf_options& opt,
-                 const double chrom_max_depth,
+                 const gvcf_deriv_options& dopt,
                  site_info& si) {
 
    if(opt.is_min_gqx) {
         if(si.smod.gqx<opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-   if(opt.is_max_depth_factor) {
-       if((si.n_used_calls+si.n_unused_calls) > chrom_max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
+   if(dopt.is_max_depth) {
+       if((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
    }
 
    if(opt.is_max_base_filt) {
@@ -76,7 +76,7 @@ set_site_filters(const gvcf_options& opt,
 static
 void
 add_site_modifiers(const gvcf_options& opt,
-                   const double chrom_max_depth,
+                   const gvcf_deriv_options& dopt,
                    site_info& si) {
 
     si.smod.clear();
@@ -101,7 +101,7 @@ add_site_modifiers(const gvcf_options& opt,
         }
     }
 
-    set_site_filters(opt,chrom_max_depth,si);
+    set_site_filters(opt,dopt,si);
 }
 
 
@@ -121,7 +121,6 @@ gvcf_aggregator(const starling_options& opt,
     , _site_buffer_size(0)
     , _block(_opt)
     , _head_pos(report_range.begin_pos)
-    , _chrom_max_depth(0)
 {
     assert(report_range.is_begin_pos);
     assert(report_range.is_end_pos);
@@ -129,6 +128,8 @@ gvcf_aggregator(const starling_options& opt,
     if(! opt.is_gvcf_output()) return;
         
     assert(NULL != _osptr);
+    assert((NULL !=_chrom) && (strlen(_chrom)>0));
+
     cdmap_t chrom_depth;
     if(_opt.is_max_depth_factor && (! _opt.chrom_depth_file.empty())) {
         parse_chrom_depth(_opt.chrom_depth_file,chrom_depth);
@@ -140,14 +141,14 @@ gvcf_aggregator(const starling_options& opt,
             oss << "ERROR: Can't find chromosome: '" << _chrom << "' in chrom depth file: " << _opt.chrom_depth_file << "\n";
             throw blt_exception(oss.str().c_str());
         }
-        _chrom_max_depth=(cdi->second*_opt.max_depth_factor);
-
-        assert(_chrom_max_depth>=0.);
+        _dopt.max_depth=(cdi->second*_opt.max_depth_factor);
+        assert(_dopt.max_depth>=0.);
+        _dopt.is_max_depth=true;
     }
 
     finish_gvcf_header(_opt,chrom_depth,*_osptr);
 
-    add_site_modifiers(_opt,_chrom_max_depth,_empty_site);
+    add_site_modifiers(_opt,_dopt,_empty_site);
 }
 
 
@@ -182,7 +183,7 @@ gvcf_aggregator::
 add_site(site_info& si) {
 
     skip_to_pos(si.pos);
-    add_site_modifiers(_opt,_chrom_max_depth,si);
+    add_site_modifiers(_opt,_dopt,si);
 
     add_site_internal(si);
 }
@@ -324,7 +325,7 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
 static
 void
 add_indel_modifiers(const gvcf_options& opt,
-                    const double chrom_max_depth,
+                    const gvcf_deriv_options& dopt,
                     indel_info& ii) {
 
     ii.imod.gqx=std::min(ii.dindel.indel_qphred,ii.dindel.max_gt_qphred);
@@ -333,8 +334,8 @@ add_indel_modifiers(const gvcf_options& opt,
         if(ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if(opt.is_max_depth_factor) {
-        if(ii.isri.depth > chrom_max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+    if(dopt.is_max_depth) {
+        if(ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }
 
     if(opt.is_max_ref_rep) {
@@ -501,7 +502,7 @@ modify_single_indel_record() {
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
 
-    add_indel_modifiers(_opt,_chrom_max_depth,ii);
+    add_indel_modifiers(_opt,_dopt,ii);
 }
 
 
@@ -509,7 +510,7 @@ modify_single_indel_record() {
 static
 void
 modify_indel_overlap_site(const gvcf_options& opt,
-                          const double chrom_max_depth,
+                          const gvcf_deriv_options& dopt,
                           const indel_info& ii,
                           const unsigned ploidy,
                           site_info& si) {
@@ -545,7 +546,7 @@ modify_indel_overlap_site(const gvcf_options& opt,
     }
 
     // after all those changes we need to rerun the site filters:
-    set_site_filters(opt,chrom_max_depth,si);
+    set_site_filters(opt,dopt,si);
 }
 
 
@@ -611,7 +612,7 @@ modify_overlap_indel_record() {
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
 
-        add_indel_modifiers(_opt,_chrom_max_depth,_indel_buffer[hap]);
+        add_indel_modifiers(_opt,_dopt,_indel_buffer[hap]);
         if(hap>0) {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
         }
@@ -632,7 +633,7 @@ modify_conflict_indel_record() {
 
         ii.imod.set_filter(VCF_FILTERS::IndelConflict);
 
-        add_indel_modifiers(_opt,_chrom_max_depth,ii);
+        add_indel_modifiers(_opt,_dopt,ii);
     }
 }
 
@@ -753,7 +754,7 @@ process_overlaps() {
         const pos_t offset(_site_buffer[i].pos-_indel_buffer[0].pos);
         assert(offset>=0);
         if(! is_conflict_print) {
-            modify_indel_overlap_site(_opt,_chrom_max_depth,
+            modify_indel_overlap_site(_opt,_dopt,
                                       _indel_buffer[0],
                                       _indel_buffer[0].get_ploidy(offset),
                                       _site_buffer[i]);

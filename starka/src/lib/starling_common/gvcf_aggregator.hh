@@ -26,6 +26,18 @@
 
 #include <iosfwd>
 
+struct gvcf_deriv_options {
+    
+    gvcf_deriv_options()
+        : is_max_depth(false)
+        , max_depth(0)
+    {}
+
+    bool is_max_depth;
+    double max_depth;
+};
+
+
 
 ///
 /// Assembles all site and indel call information into a consistent set, blocks output
@@ -112,6 +124,8 @@ private:
 
     const char* _chrom;
 
+    gvcf_deriv_options _dopt;
+
     pos_t _indel_end_pos;
 
     unsigned _indel_buffer_size;
@@ -124,8 +138,6 @@ private:
 
     pos_t _head_pos; // we've observed sites upto but not includeing this position
     site_info _empty_site;
-
-    double _chrom_max_depth;
 };
 
 
