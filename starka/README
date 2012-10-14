@@ -1,47 +1,19 @@
 
-Strelka -- ${VERSION}
+starling/strelka binaries -- ${VERSION}
 ---------------
 
-Christopher Saunders (csaunders@illumina.com)
+Chris Saunders (csaunders@illumina.com)
 
+Starling is a single-sample small-variant caller.
 
-Strelka is an analysis package designed to detect somatic SNVs and
-small indels from the aligned sequencing reads of matched tumor-normal
-samples.
-
-For additional documentation and mailing list info, please see:
-
-https://sites.google.com/site/strelkasomaticvariantcaller
-
-
-WORKFLOW SUMMARY:
-
-The inputs of the workflow are BAM files for each sample containing
-aligned sequencing reads. These must be sorted and indexed. PCR
-duplicate removal is recommended. Strelka does its own read
-realignment around indels so it is not necessary to pre-process the
-data with any such step.
-
-The output of the workflow are a pair of VCF files describing the
-somatic SNVs and indels. The workflow takes advantage of the VCF file
-format to report both filtered and passed variants, but it is strongly
-recommended that only the passed variants (or a subset thereof) be
-used.
+Strelka is detects somatic SNVs and small indels from the
+aligned sequencing reads of matched tumor-normal samples.
 
 
 
 INSTALLATION:
 
-The strelka workflow is designed to run on *nux-like platforms. It has
-been specifically tested on the following distributions:
-
-* Amazon Linux AMI 2011.09
-* Centos 5.3
-* Centos 6.2
-* Mac OS X 10.5
-* Ubuntu 11.10
-* Ubuntu 12.04 LTS
-
+These binaries are designed to run on *nux-like platforms.
 
 For Centos/Amazon Linux and other rpm-based distributions, the following
 packages (and their dependencies) are known requirements on top of
@@ -71,93 +43,4 @@ tarball. These included prerequisites are:
 * codemin 1.0.2
 * tabix 0.2.5 (makefile modified to reorder libz library to last place, as required for Ubuntu 12 build)
 
-
-The Makefile included in the strelka workflow tarball will compile both the
-included prerequisite packages and strelka itself. To do this, go to the
-root of the strelka_workflow directory tree and type 'make'.
-
-Example build:
-"""
-tar -xzf strelka_workflow.tar.gz
-cd strelka_workflow
-make
-"""
-
-If the installation succeeds the root strelka_workflow directory will
-contain the primary configurataion script:
-
-configureStrelkaWorkflow.pl
-
-This script must remain in the root strelka_workflow directory to run
-correctly. More details on using this script are provided in the
-CONFIGURATION & ANALYSIS section below.
-
-The final installation step is to run the strelka workflow on the
-demostration data included in the distribution to verify that the
-workflow completes and produces the expected answer. To do this, first
-complete the installation steps above, then go into the demo directory
-and execute the script 'run_demo.bash'. The demo runs on a very small
-region of the genome so it should complete quickly (less than a
-minute).  If the 'run_demo.bash' script succeeds, you should see the
-following lines as the final output:
-
-"""
-**** No differences between expected and computed results.
-
-
-**** Demo/verification successfully completed
-"""
-
-
-
-CONFIGURATION & ANALYSIS:
-
-A strelka run is accomplished in two steps: (1) configuration and (2)
-analysis.
-
-The configuration is a fast step designed to setup the run and perform
-some preliminary validation (eg. check that the chromosome names match
-in the BAM header and reference genome). The configuration will create
-a makefile to control the analysis and a directory structure to hold
-all intermediate and final results. All configuration output is
-written to the analysis directory. This step requires a configuration
-initialization file containing strelka's default parameters. Template
-configuration files can be found in the strelka/etc/ subdirectory from
-the strelka_workflow root (see example run setup below).
-
-Following configuration, the makefile can be used to run the analysis
-itself using make, qmake, or a similar tool. For whole genome sequence
-data from human samples, strelka requires approximately 1 core-hour
-per 2x of combined sample reference coverage e.g. analyzing a human
-tumor-normal sample pair sequenced to 60x and 40x respectively should
-take approximately 50 core-hours.
-
-Example run:
-"""
-# example location where strelka was compiled:
-#
-STRELKA_INSTALL_DIR=/opt/strelka_workflow
-
-# example location where analysis will be run:
-#
-WORK_DIR=/data/myWork
-
-# Step 1. Move to working directory:
-#
-cd $WORK_DIR
-
-# Step 2. Copy configuration ini file from default template set to a local copy,
-#         possibly edit settings in local copy of file:
-#
-cp $STRELKA_INSTALL_DIR/strelka/etc/strelka_config_eland_default.ini config.ini
-
-# Step 3. Configure:
-#
-$STRELKA_INSTALL_DIR/configureStrelkaWorkflow.pl --normal=/data/normal.bam --tumor=/data/tumor.bam --ref=/data/reference/hg19.fa --config=config.ini --output-dir=./myAnalysis
-
-# Step 4. Run Analysis
-#         This example is run using 8 cores on the local host:
-#
-cd ./myAnalysis
-make -j 8
 

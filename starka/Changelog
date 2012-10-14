@@ -1,23 +1,2 @@
-v0.4.7 20120827
-- add configuration time check and error message for non-standard format fai
-files (required to catch fai files for NCBI 37 distributed with GATK bundle)
-- filter out reads with secondary alignment bit set
-v0.4.6.2 20120609
-- minor bug fix - remove chromosome name parsing bug for ncbi fasta files
-v0.4.6.1 20120609
-- Minor modification to makefile for tabix 0.2.5 to reorder libz as final
-library dependency -- required for succussful build in (at least) Ubuntu 12.04
-LTS
-- Improve error messages for certain types of invalid CIGAR strings
-v0.4.6 20120522
-Improve & verify support for hard-clip segments based on novoalign test case
-v0.4.5 20120517
-Add support for alignments with hard-clip segments
-v0.4.4.2 20120517
-Change recommended bwa indel noise rate from 1e-7 to 1e-6
-v0.4.4.1 20120515
-Change recommended bwa tier1 mapq threshold from 15 to 20
-v0.4.4 20120512
-Added BAM header check patch from Sean Davis
-v0.4.3
-first version tag associated with manuscript revision
+v2.0a1
+- initial version of starling with direct gVCF output
