@@ -423,7 +423,7 @@ starling_pos_processor_base(const starling_options& client_opt,
             good_pi.ref_base = id_to_base(b);
             _empty_dgt[b].reset(new diploid_genotype);
             _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,
-                                                                 *_empty_dgt[b],_client_opt.is_bsnp_diploid_allele_file);
+                                                                 *_empty_dgt[b],_client_opt.is_all_sites());
         }
     }
 
@@ -1580,7 +1580,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         _site_info.hpol=get_snp_hpol_size(pos,_ref);
     }
 
-    if(_client_opt.is_bsnp_diploid_allele_file){
+    if(_client_opt.is_all_sites()){
 #if 0
         const diploid_genotype* dgt_ptr(&_site_info.dgt);
         if(is_filter_snp) {
@@ -1591,7 +1591,9 @@ process_pos_snp_single_sample_impl(const pos_t pos,
             _site_info.init(pos,pi.ref_base,good_pi,_client_opt.used_allele_count_min_qscore);
             _gvcfer.add_site(_site_info);
         }
-        write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
+        if(_client_opt.is_bsnp_diploid_allele_file) {
+            write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
+        }
     }
 
     if(_client_opt.is_nonref_sites()) {
