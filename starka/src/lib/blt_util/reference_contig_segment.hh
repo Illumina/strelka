@@ -53,17 +53,8 @@ struct reference_contig_segment {
         if(pos<_offset || (pos+length)>end()) {
             //slow path (minority of calls):
             substr.clear();
-            if(pos<_offset) {
-                substr += std::string(std::min(length,(_offset-pos)),'N');
-            }
-            
-            const unsigned rstart(std::min(pos,_offset));
-            const unsigned rend(std::max(pos+length,end()));
-            if(rend>rstart) {
-                substr += _seq.substr(rstart,rend-rstart);
-            }
-            if((pos+length)>end()) {
-                substr += std::string(std::min(length,((pos+length)-end())),'N');
+            for(int i(0);i<length;++i) {
+                substr.push_back(get_base(pos+i));
             }
         } else {
             //fast path
