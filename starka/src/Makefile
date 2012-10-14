@@ -50,7 +50,12 @@ STRELKA_OBJS := $(patsubst %.cpp,%.o,$(STRELKA_CXX_SRC))
 STAR_CXX_SRC := bin/starling2.cpp $(wildcard lib/starling/*.cpp) $(SHARED_CXX_SRC)
 STAR_OBJS := $(patsubst %.cpp,%.o,$(STAR_CXX_SRC))
 
-all: $(STRELKA_BIN) $(STAR_BIN)
+all: build
+
+build: $(VAR_BINS)
+
+install: build
+	cp $(VAR_BINS) $(BIN_DIR)
 
 $(VAR_BINS): CXXFLAGS += -I$(STRELKA_INCLUDE_DIR) -I$(BOOST_INCLUDE_DIR) -I$(SAMTOOLS_DIR) -I$(TABIX_DIR) -I$(CODEMIN_INCLUDE_DIR)
 $(VAR_BINS): LIBS := -lbam -ltabix -lz -lboost_program_options
