@@ -23,7 +23,6 @@
 
 
 
-static
 void
 test_rcs() {
     std::ostream& os(std::cerr);
