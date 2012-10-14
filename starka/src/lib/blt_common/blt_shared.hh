@@ -46,10 +46,10 @@ namespace LOG_LEVEL {
 struct gvcf_options {
 
     gvcf_options()
-        : is_min_gqx(true)
+        : is_max_depth_factor(true)
+        , max_depth_factor(3.)
+        , is_min_gqx(true)
         , min_gqx(30.)
-        , is_max_depth(true)
-        , max_depth(100.)
         , is_max_base_filt(true)
         , max_base_filt(.3)
         , is_max_snv_sb(true)
@@ -64,13 +64,13 @@ struct gvcf_options {
         , block_max_nonref(.2)
     {}
 
-    std::string filename;
+    std::string out_file;
+    std::string chrom_depth_file;
 
-
+    bool is_max_depth_factor;
+    double max_depth_factor;
     bool is_min_gqx;
     double min_gqx;
-    bool is_max_depth;
-    double max_depth;
     bool is_max_base_filt;
     double max_base_filt;
     bool is_max_snv_sb;
@@ -200,7 +200,7 @@ struct blt_options {
 
     bool
     is_gvcf_output() const {
-        return (! gvcf.filename.empty());
+        return (! gvcf.out_file.empty());
     }
 
     bool

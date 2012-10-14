@@ -124,6 +124,8 @@ private:
 
     pos_t _head_pos; // we've observed sites upto but not includeing this position
     site_info _empty_site;
+
+    double _chrom_max_depth;
 };
 
 

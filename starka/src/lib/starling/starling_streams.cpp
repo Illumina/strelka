@@ -37,7 +37,7 @@ starling_streams(const starling_options& opt,
     }
 
     if(opt.is_gvcf_output()) {
-        _gvcf_osptr[0] = initialize_gvcf_file(opt,pinfo,opt.gvcf.filename,_gvcf_osptr_auto[0]);
+        _gvcf_osptr[0] = initialize_gvcf_file(opt,pinfo,opt.gvcf.out_file,_gvcf_osptr_auto[0]);
     }
     
     if(opt.is_realigned_read_file) {

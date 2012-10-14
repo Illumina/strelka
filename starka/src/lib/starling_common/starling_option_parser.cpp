@@ -69,8 +69,12 @@ get_starling_shared_option_parser(starling_options& opt) {
         ("snp-theta", po::value<double>(&opt.bsnp_diploid_theta)->default_value(opt.bsnp_diploid_theta),
          "Set snp theta.")
         ("indel-theta", po::value<double>(&opt.bindel_diploid_theta)->default_value(opt.bindel_diploid_theta),
-         "Set indel theta")
-        ("gvcf-file",po::value<std::string>(&opt.gvcf.filename),"gVCF output file");
+         "Set indel theta");
+
+    po::options_description gvcf_opt("gVCF options");
+    gvcf_opt.add_options()
+        ("gvcf-file",po::value<std::string>(&opt.gvcf.out_file),"gVCF output file, enter '-' to write to stdout. An argument must be specified to activeate gVCF mode")
+        ("chrom-depth-file",po::value<std::string>(&opt.gvcf.chrom_depth_file),"If provided, the mean depth for each chromosome will be read from file, and these values will be used for high depth filtration. File should contain one line per chromosome, where each line begins with: \"chrom_name<TAB>depth\" (default: no chrom depth filtration)");
 
     po::options_description hap_opt("haplotype-options");
     hap_opt.add_options()
@@ -145,7 +149,7 @@ get_starling_shared_option_parser(starling_options& opt) {
 
     po::options_description new_opt("New options");
 
-    new_opt.add(geno_opt).add(hap_opt).add(blt_nonref_opt).add(contig_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt).add(other_opt);
+    new_opt.add(geno_opt).add(gvcf_opt).add(hap_opt).add(blt_nonref_opt).add(contig_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt).add(other_opt);
 
     return new_opt;
 }
@@ -183,13 +187,16 @@ write_starling_legacy_options(std::ostream& os) {
         " -bsnp-diploid-het-bias x\n"
         "                    - Set bias term for the heterozygous state in the bsnp model, such that\n"
         "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
+#if 0
         " -bsnp-monoploid x  - Use Bayesian monoploid genotype snp caller with theta=x\n"
         " -bsnp-nploid n x   - Use Bayesian nploid genotype snp caller with ploidy=n and prior(snp)=x\n"
         " -lsnp-alpha x      - Use likelihood ratio test snp caller with alpha=x\n"
+#endif
         " -bsnp-diploid-file file\n"
         "                    - Run bayesian diploid genotype model, write results to 'file'\n"
         " -bsnp-diploid-allele-file file\n"
         "                    - Write the most probable genotype at every position to file\n"
+#if 0
         " -anom-distro-table-alpha x\n"
         "                    - Test whether strands were sampled from different distributions at snp\n"
         "                      call sites. The test has a false positive rate of x over all snp calls.\n"
@@ -200,6 +207,7 @@ write_starling_legacy_options(std::ostream& os) {
         "                      Implemented as a likelihood ratio test.\n"
         " -anom-cov-alpha x  - Detect strand coverage anomaly with alpha=x\n"
         " -filter-anom-calls - Don't write any variants at positions where an anomaly is detected\n"
+#endif
         " -min-qscore n      - Don't use base if qscore<n (default: " << default_opt.min_qscore << ")\n"
         " -max-window-mismatch n m\n"
         "                    - Don't use base if mismatch count>n within a window of m flanking bases\n"

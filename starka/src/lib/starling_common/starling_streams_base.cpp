@@ -18,15 +18,12 @@
 ///
 
 #include "blt_util/bam_dumper.hh"
-#include "blt_util/vcf_util.hh"
 #include "starling_common/starling_streams_base.hh"
-#include "starling_common/gvcf_locus_info.hh"
 
 #include <cassert>
 
 #include <fstream>
 #include <iostream>
-#include <sstream>
 
 
 
@@ -56,60 +53,6 @@ initialize_bindel_file(const starling_options& opt,
 
 
 
-static
-void
-write_vcf_filter(std::ostream& os,
-                 const char* id,
-                 const char* desc) {
-    os << "##FILTER=<ID=" << id << ",Description=\"" << desc << "\">\n";
-}
-
-
-
-static
-void
-add_gvcf_filters(const gvcf_options& opt,
-                 std::ostream& os) {
-
-    using namespace VCF_FILTERS;
-
-    write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls.");
-    write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion.");
-
-
-    if(opt.is_min_gqx) {
-        std::ostringstream oss;
-        oss << "Locus GQX is less than " << opt.min_gqx << " or not present";
-        write_vcf_filter(os,get_label(LowGQX),oss.str().c_str());
-    }
-
-    if(opt.is_max_base_filt) {
-        std::ostringstream oss;
-        oss << "The fraction of basecalls filtered out at a site is greater than " << opt.max_base_filt;
-        write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
-    }
-  
-    if(opt.is_max_snv_sb) {
-        std::ostringstream oss;
-        oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
-        write_vcf_filter(os,get_label(HighSNVSB),oss.str().c_str());
-    }
-    if(opt.is_max_snv_hpol) {
-        std::ostringstream oss;
-        oss << "SNV contextual homopolymer length (SNVHPOL) exceeds " <<opt.max_snv_hpol;
-        write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
-    }
-
-    if(opt.is_max_ref_rep) {
-        std::ostringstream oss;
-        oss << "Indel contains an ellele which occurs in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
-        write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
-    }
-}
-
-
-
-// return stream, is_malloced_pointer
 std::ostream*
 starling_streams_base::
 initialize_gvcf_file(const starling_options& opt,
@@ -130,34 +73,13 @@ initialize_gvcf_file(const starling_options& opt,
 
     write_vcf_audit(opt,pinfo,cmdline,os);
     os << "##content=starling small-variant calls\n"
-       << "##SnpTheta=" << opt.bsnp_diploid_theta << "\n"
+       << "##SnvTheta=" << opt.bsnp_diploid_theta << "\n"
        << "##IndelTheta=" << opt.bindel_diploid_theta << "\n";
-
-    //INFO:
-    os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
-    os << "##INFO=<ID=BLOCKAVG_min30p3a,Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+3,(x*1.3)). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
-
-    // site specific:
-    os << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"SNV site strand bias\">\n";
-    os << "##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description=\"SNV contextual homopolymer length\">\n";
-
-    // indel specific:
-    os << "##INFO=<ID=CIGAR,Number=A,Type=String,Description=\"CIGAR alignment for each alternate indel allele\">\n";
-    os << "##INFO=<ID=RU,Number=A,Type=String,Description=\"Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.\">\n";
-    os << "##INFO=<ID=REFREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in reference.\">\n";
-    os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
-
-    //FORMAT:
-    os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
-    os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
-
-    // FILTER:
-    add_gvcf_filters(opt.gvcf,os);
-
-    os << vcf_col_label() << "\tFORMAT\tSAMPLE\n";
 
     return osptr;
 }
+
+
 
 bam_dumper*
 starling_streams_base::
