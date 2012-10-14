@@ -26,7 +26,7 @@ clean: srcclean
 # clean only src directories but leave redist built:
 srcclean:
 	$(MAKE) -C $(SRC_DIR) clean
-	$(RM) $(BIN_DIR)
+	$(RM) -rf $(BIN_DIR)
 
 etags:
 	$(MAKE) -C $(SRC_DIR) $@
