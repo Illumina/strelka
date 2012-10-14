@@ -747,7 +747,7 @@ process_overlaps() {
         }
     }
 
-    *_osptr << "INDEL_SIZE: " << _indel_buffer_size << "\n";
+    //    *_osptr << "INDEL_SIZE: " << _indel_buffer_size << "\n";
 
     // process sites to be consistent with overlapping indels:
     for(unsigned i(0);i<_site_buffer_size;++i) {
