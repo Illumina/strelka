@@ -74,7 +74,9 @@ get_starling_shared_option_parser(starling_options& opt) {
     po::options_description gvcf_opt("gVCF options");
     gvcf_opt.add_options()
         ("gvcf-file",po::value<std::string>(&opt.gvcf.out_file),"gVCF output file, enter '-' to write to stdout. An argument must be specified to activeate gVCF mode")
-        ("chrom-depth-file",po::value<std::string>(&opt.gvcf.chrom_depth_file),"If provided, the mean depth for each chromosome will be read from file, and these values will be used for high depth filtration. File should contain one line per chromosome, where each line begins with: \"chrom_name<TAB>depth\" (default: no chrom depth filtration)");
+        ("chrom-depth-file",po::value<std::string>(&opt.gvcf.chrom_depth_file),"If provided, the mean depth for each chromosome will be read from file, and these values will be used for high depth filtration. File should contain one line per chromosome, where each line begins with: \"chrom_name<TAB>depth\" (default: no chrom depth filtration)")
+        ("gvcf-skip-header", 
+         "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
 
     po::options_description hap_opt("haplotype-options");
     hap_opt.add_options()
@@ -430,6 +432,10 @@ finalize_starling_options(const prog_info& pinfo,
         }
 
         opt.is_skip_realignment=true;
+    }
+
+    if(vm.count("gvcf-skip-header")) {
+        opt.gvcf.is_skip_header=true;
     }
 
     std::sort(opt.variant_windows.begin(),opt.variant_windows.end());

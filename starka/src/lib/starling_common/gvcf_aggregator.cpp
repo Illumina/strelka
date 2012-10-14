@@ -146,7 +146,9 @@ gvcf_aggregator(const starling_options& opt,
         _dopt.is_max_depth=true;
     }
 
-    finish_gvcf_header(_opt,chrom_depth,*_osptr);
+    if(! _opt.is_skip_header) {
+        finish_gvcf_header(_opt,chrom_depth,*_osptr);
+    }
 
     add_site_modifiers(_opt,_dopt,_empty_site);
 }
