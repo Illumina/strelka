@@ -65,7 +65,7 @@ struct gvcf_aggregator {
     
     void
     flush() {
-        skip_to_pos(_report_range.end_pos+1);
+        skip_to_pos(_report_range.end_pos);
         process_overlaps();
         write_block_site_record();
     }
