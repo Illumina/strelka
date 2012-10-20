@@ -176,7 +176,7 @@ struct blt_options {
         , is_eland_compat(false)
         , is_max_input_depth(false)
         , max_input_depth(0)
-        , is_compute_hapscore(true)
+        , is_compute_hapscore(false)
     {}
 
     virtual ~blt_options() {}
