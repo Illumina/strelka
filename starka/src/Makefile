@@ -72,7 +72,9 @@ clean:
 
 # extra dev tags:
 #
-etags:
+etags: TAGS
+
+TAGS:
 	find . -type f -iname "*.[ch]" -or -iname "*.cpp" -or -iname "*.hh" | sed "s/\.\///" | etags - 
 
 

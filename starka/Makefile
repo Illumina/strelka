@@ -10,7 +10,7 @@ export VCFTOOLS_ID := vcftools_0.1.6
 
 all: install
 
-build:
+build: etags
 	$(MAKE) -C $(REDIST_DIR) && \
 	$(MAKE) -C $(SRC_DIR)
 
