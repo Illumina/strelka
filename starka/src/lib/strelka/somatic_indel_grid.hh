@@ -146,15 +146,6 @@ private:
 };
 
 
-// file output -- data only
-//
-void
-write_somatic_indel_file_grid(const somatic_indel_call& dgt,
-                              const starling_indel_report_info& iri,
-                              const starling_indel_sample_report_info* normal_isri,
-                              const starling_indel_sample_report_info* tumor_isri,
-                              std::ostream& os);
-
 // vcf output
 void
 write_somatic_indel_vcf_grid(const somatic_indel_call& sindel,

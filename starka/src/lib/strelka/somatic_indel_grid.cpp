@@ -540,52 +540,6 @@ get_somatic_indel(const strelka_options& opt,
 
 static
 void
-write_isri(const starling_indel_sample_report_info& isri,
-          std::ostream& os) {
-
-    os << '\t' << isri.depth
-       << '\t' << isri.n_q30_ref_reads+isri.n_q30_alt_reads
-       << '\t' << isri.n_q30_indel_reads
-       << '\t' << isri.n_other_reads;
-}
-
-
-
-void
-write_somatic_indel_file_grid(const somatic_indel_call& sindel,
-                              const starling_indel_report_info& iri,
-                              const starling_indel_sample_report_info* nisri,
-                              const starling_indel_sample_report_info* tisri,
-                              std::ostream& os) {
-
-    const somatic_indel_call::result_set& rs(sindel.rs);
-
-    os << iri.desc
-       << '\t' << iri.ref_upstream
-       << '\t' << iri.ref_seq << "/" << iri.indel_seq
-       << '\t' << iri.ref_downstream
-       << '\t' << (sindel.sindel_tier+1)
-       << '\t' << rs.sindel_qphred
-       << '\t' << NTYPE::label(rs.ntype) // print normal state
-       << '\t' << (sindel.sindel_from_ntype_tier+1)
-       << '\t' << rs.sindel_from_ntype_qphred
-       << '\t' << static_cast<DDIINDEL_GRID::index_t>(rs.max_gt);
-    
-    for(unsigned t(0);t<2;++t) {
-        write_isri(nisri[t],os);
-        write_isri(tisri[t],os);
-    }
-
-    os << '\t' << iri.repeat_unit
-       << '\t' << iri.ref_repeat_count
-       << '\t' << iri.indel_repeat_count
-       << "\t" << iri.ihpol;
-}
-
-
-
-static
-void
 write_vcf_isri_tiers(const starling_indel_sample_report_info& isri1,
                      const starling_indel_sample_report_info& isri2,
                      std::ostream& os) {

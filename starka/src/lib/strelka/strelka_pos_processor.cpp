@@ -37,32 +37,6 @@
 
 
 
-#ifndef OUTPUT_VCF
-static
-void
-write_snv_prefix_info_file(const std::string& seq_name,
-                           const pos_t output_pos,
-                           const char ref,
-                           const sample_pos_data& normald,
-                           const sample_pos_data& tumord,
-                           std::ostream& os){
-
-    os << seq_name << "\t"
-       << output_pos << "\t"
-       << normald.n_used_calls << "\t"
-       << normald.n_unused_calls << "\t"
-       << normald.pi.n_spandel << "\t"
-       << normald.pi.n_submapped << "\t"
-       << tumord.n_used_calls << "\t"
-       << tumord.n_unused_calls << "\t"
-       << tumord.pi.n_spandel << "\t"
-       << tumord.pi.n_submapped << "\t"
-       << ref;
-}
-#endif
-
-
-
 strelka_pos_processor::
 strelka_pos_processor(const strelka_options& opt,
                       const strelka_deriv_options& dopt,
@@ -248,33 +222,6 @@ process_pos_snp_somatic(const pos_t pos) {
             log_os << "\n";
 #endif
 
-#ifndef OUTPUT_VCF
-            write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,
-                                       *(normald_ptr[0]),
-                                       *(tumord_ptr[0]),
-                                       bos);
-            bos << "\t";
-#if 0
-            write_somatic_snv_genotype_grid(_opt,sgtg,ndata.epd.good_pi,tdata.epd.good_pi,bos);
-#else
-            write_somatic_snv_genotype_strand_grid(_opt,sgtg,
-                                                   normald_ptr[0]->epd.good_pi,
-                                                   tumord_ptr[0]->epd.good_pi,
-                                                   normald_ptr[1]->epd.good_pi,
-                                                   tumord_ptr[1]->epd.good_pi,
-                                                   bos);
-#endif
-#if 0
-            const unsigned hpol(get_snp_hpol_size(pos,_ref_seq));
-            bos << "\t" << hpol;
-
-            bos << "\t" << normald_ptr[0]->pi.n_spandel;
-            bos << "\t" << tumord_ptr[0]->pi.n_spandel;
-#endif
-
-
-#else
-            // OUTPUT_VCF:
             bos << _chrom_name << '\t'
                 << output_pos << '\t'
                 << ".";
@@ -285,9 +232,6 @@ process_pos_snp_somatic(const pos_t pos) {
                                                        *(normald_ptr[1]),
                                                        *(tumord_ptr[1]),
                                                        bos);
-
-#endif
-
             bos << "\n";
         }
         is_reported_event = true;
@@ -385,26 +329,15 @@ process_pos_indel_somatic(const pos_t pos) {
                 }
 
                 pos_t indel_pos(ik.pos);
-#ifdef OUTPUT_VCF
                 if(ik.type != INDEL::BP_RIGHT) {
                     indel_pos -= 1;
                 }
-#endif
+
                 const pos_t output_pos(indel_pos+1);
 
                 std::ostream& bos(*_client_io.somatic_indel_osptr());
-#ifndef OUTPUT_VCF
-                bos << _chrom_name << "\t" << output_pos << "\t";
-#ifdef USE_ORIG_SINDEL
-                write_somatic_indel_file(sindel,iri,normal_isri,tumor_isri,bos);
-#else
-                write_somatic_indel_file_grid(sindel,iri,normal_isri,tumor_isri,bos);
-#endif
-
-#else
                 bos << _chrom_name << "\t" << output_pos << "\t" << ".";
                 write_somatic_indel_vcf_grid(sindel,iri,normal_isri,tumor_isri,bos);
-#endif
                 bos << "\n";
                 
                 _variant_print_pos.insert(indel_pos);

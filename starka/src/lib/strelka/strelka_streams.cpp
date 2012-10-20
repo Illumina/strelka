@@ -62,30 +62,6 @@ strelka_streams(const strelka_options& opt,
         std::ofstream& fos(*fosptr);
         open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",opt.is_clobber,fos);
 
-#ifndef OUTPUT_VCF
-        fos << "# ** " << pinfo.name() << " somatic snv-call file **\n";
-        write_file_audit(opt,pinfo,cmdline,fos);
-        fos << "#$ GERMLINE_SNV_THETA " << opt.bsnp_diploid_theta << "\n";
-        fos << "#$ SOMATIC_SNV_RATE " << opt.somatic_snv_rate << "\n";
-        fos << "#\n";
-        fos << "#$ COLUMNS seq_name pos n1-used n1-filt n1-spandel n1-submap t1-used t1-filt t1-spandel t2-submap ref";
-        fos << " snv_tier Q(snv) ntype snv+ntype_tier Q(snv+ntype) max_gt";
-#ifdef ENABLE_POLY
-        fos << " Q(snv|poly) Q(snv+ref->|poly) Q(snv+het->|poly) Q(snv+het->+LOH|poly) Q(snv+het->-LOH|poly) Q(snv+hom->|poly) Q(snv+anyhom->|poly) max_gt|poly Q(max_gt|poly)";
-#endif
-
-        if(opt.is_print_used_allele_counts) {
-            for(unsigned t(0);t<2;++t) {
-                for(unsigned s(0);s<SIZE;++s) {
-                    for(unsigned b(0);b<N_BASE;++b){
-                        fos << ' ' << get_char_label(s) << (t+1) << '-' << id_to_base(b) << "_used";
-                    }
-                }
-            }
-        }
-
-        fos << "\n";
-#else
         write_vcf_audit(opt,pinfo,cmdline,header,fos);
         fos << "##content=strelka somatic snv calls\n"
             << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n"
@@ -115,8 +91,6 @@ strelka_streams(const strelka_options& opt,
             fos << "\t" << STRELKA_SAMPLE_TYPE::get_label(s);
         }
         fos << "\n";
-#endif
-
     }
 
     if(opt.is_somatic_indel()){
@@ -128,23 +102,6 @@ strelka_streams(const strelka_options& opt,
 
         open_ofstream(pinfo,opt.somatic_indel_filename,"somatic-indel",opt.is_clobber,fos);
 
-#ifndef OUTPUT_VCF        
-        fos << "# ** " << pinfo.name() << " somatic indel-call file **\n";
-        write_file_audit(opt,pinfo,cmdline,fos);
-        fos << "#$ GERMLINE_INDEL_THETA " << opt.bindel_diploid_theta << "\n";
-        fos << "#$ SOMATIC_INDEL_RATE " << opt.somatic_indel_rate << "\n";
-        fos << "#\n";
-        fos << "#$ COLUMNS seq_name pos type ref_upstream ref/indel ref_downstream si_tier Q(si) ntype si+ntype_tier Q(si+ntype) max_gt";
-        static const char* read_label[] = {"depth","alt_reads","indel_reads","other_reads"};
-        for(unsigned t(0);t<2;++t) {  // tier
-            for(unsigned s(0);s<2;++s) { // sample
-                for(unsigned i(0);i<4;++i) {
-                    fos << ' ' << get_char_label(s) << (t+1) << '-' << read_label[i];
-                }
-            }
-        }
-        fos << "repeat_unit ref_repeat_count indel_repeat_count ihpol_count\n";
-#else
         write_vcf_audit(opt,pinfo,cmdline,header,fos);
         fos << "##content=strelka somatic indel calls\n"
             << "##germlineIndelTheta=" << opt.bindel_diploid_theta << "\n"
@@ -177,7 +134,6 @@ strelka_streams(const strelka_options& opt,
             fos << "\t" << STRELKA_SAMPLE_TYPE::get_label(s);
         }
         fos << "\n";
-#endif
     }
 
 }

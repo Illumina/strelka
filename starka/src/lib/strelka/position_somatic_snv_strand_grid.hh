@@ -233,17 +233,6 @@ private:
 
 
 
-// legacy snv call output:
-//
-void
-write_somatic_snv_genotype_strand_grid(const strelka_options& opt,
-                                       const somatic_snv_genotype_grid& sgt,
-                                       const snp_pos_info& n1_pi,
-                                       const snp_pos_info& t1_pi,
-                                       const snp_pos_info& n2_pi,
-                                       const snp_pos_info& t2_pi,
-                                       std::ostream& os);
-
 // vcf output:
 //
 void

@@ -1177,41 +1177,6 @@ write_result_set(const result_set& rs,
 
 
 
-void
-write_somatic_snv_genotype_strand_grid(const strelka_options& opt,
-                                       const somatic_snv_genotype_grid& sgt,
-                                       const snp_pos_info& n1_pi,
-                                       const snp_pos_info& t1_pi,
-                                       const snp_pos_info& n2_pi,
-                                       const snp_pos_info& t2_pi,
-                                       std::ostream& os) {
-
-    os << std::setprecision(10) << std::fixed;
-    
-    const result_set& rs(sgt.rs);
-
-    os << (sgt.snv_tier+1) 
-       << '\t' << rs.snv_qphred
-       << '\t' << NTYPE::label(rs.ntype)
-       << '\t' << (sgt.snv_from_ntype_tier+1)
-       << '\t' << rs.snv_from_ntype_qphred
-       << '\t';
-    DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
-                            sgt.ref_gt,os);
-
-    if(opt.is_print_used_allele_counts) {
-        // print out both data-tiers:
-        n1_pi.print_known_counts(os,opt.used_allele_count_min_qscore);
-        t1_pi.print_known_counts(os,opt.used_allele_count_min_qscore);
-        n2_pi.print_known_counts(os,opt.used_allele_count_min_qscore);
-        t2_pi.print_known_counts(os,opt.used_allele_count_min_qscore);       
-    }
-
-     os.unsetf(std::ios::fixed);
-}
-
-
-
 static
 void
 write_vcf_sample_info(const blt_options& opt,

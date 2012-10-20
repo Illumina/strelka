@@ -25,8 +25,6 @@
 #include "strelka/strelka_shared.hh"
 
 
-#define OUTPUT_VCF
-
 
 struct strelka_streams : public starling_streams_base {
 
