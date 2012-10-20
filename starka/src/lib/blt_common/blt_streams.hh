@@ -20,6 +20,7 @@
 #define __BLT_STREAMS_HH
 
 #include "blt_common/blt_shared.hh"
+#include "blt_util/bam_util.hh"
 #include "blt_util/prog_info.hh"
 
 #include <iosfwd>
@@ -69,6 +70,7 @@ protected:
     write_vcf_audit(const blt_options& opt,
                     const prog_info& pinfo,
                     const char* const cmdline,
+                    const bam_header_t* const header,
                     std::ostream& os);
 
 private:

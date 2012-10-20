@@ -86,7 +86,7 @@ strelka_streams(const strelka_options& opt,
 
         fos << "\n";
 #else
-        write_vcf_audit(opt,pinfo,cmdline,fos);
+        write_vcf_audit(opt,pinfo,cmdline,header,fos);
         fos << "##content=strelka somatic snv calls\n"
             << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n"
             << "##priorSomaticSnvRate=" << opt.somatic_snv_rate << "\n";
@@ -145,7 +145,7 @@ strelka_streams(const strelka_options& opt,
         }
         fos << "repeat_unit ref_repeat_count indel_repeat_count ihpol_count\n";
 #else
-        write_vcf_audit(opt,pinfo,cmdline,fos);
+        write_vcf_audit(opt,pinfo,cmdline,header,fos);
         fos << "##content=strelka somatic indel calls\n"
             << "##germlineIndelTheta=" << opt.bindel_diploid_theta << "\n"
             << "##priorSomaticIndelRate=" << opt.somatic_indel_rate << "\n";

@@ -35,7 +35,7 @@ hap_cand(const bam_seq_base& read_seq,
     : _total_qual(0)
 {
     const int read_len(read_seq.size());
-    assert((offset>=0) and (offset<read_len));
+    assert((offset>=0) && (offset<read_len));
     
     int start(offset-FLANK_SIZE);
     int end(offset+FLANK_SIZE+1);
@@ -151,7 +151,7 @@ get_align_score(const hap_cand& hc,
 
     double score(0);
     for(unsigned i(0);i<hap_cand::HAP_SIZE;++i) {
-        if((hi.hseq[i] == BASE_ID::ANY) or
+        if((hi.hseq[i] == BASE_ID::ANY) ||
            (hc.base_id(i) == BASE_ID::ANY)) {
             //score += lnany;
         } else if(hi.hseq[i] != hc.base_id(i)) {
@@ -184,7 +184,7 @@ get_hapscore(hap_set_t& hap_set) {
                     break;
                 }
             }
-            if(not is_match) haps.push_back(hinfo(*i));
+            if(! is_match) haps.push_back(hinfo(*i));
         }
     }
 

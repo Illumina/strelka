@@ -83,6 +83,7 @@ void
 write_vcf_audit(const blt_options& opt,
                 const prog_info& pinfo,
                 const char* const cmdline,
+                const bam_header_t* const header,
                 std::ostream& os) {
     
     const time_t t(time(NULL));
@@ -97,6 +98,13 @@ write_vcf_audit(const blt_options& opt,
         os << "##reference=file://" << opt.samtools_ref_seq_file << "\n";
     } else {
         assert(0);
+    }
+
+    assert(NULL != header);
+
+    for(int32_t i(0);i<header->n_targets;++i) {
+        os << "##contig=<ID=" << header->target_name[i]
+           << ",length=" << header->target_len[i] << ">\n";
     }
 }
 
@@ -216,9 +224,10 @@ blt_streams::
 write_vcf_audit(const blt_options& opt,
                 const prog_info& pinfo,
                 const char* const cmdline,
+                const bam_header_t* const header,
                 std::ostream& os) {
 
-    ::write_vcf_audit(opt,pinfo,cmdline,os);
+    ::write_vcf_audit(opt,pinfo,cmdline,header,os);
 }
 
 
