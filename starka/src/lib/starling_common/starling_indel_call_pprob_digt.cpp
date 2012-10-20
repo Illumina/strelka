@@ -493,12 +493,17 @@ starling_indel_call_pprob_digt(const starling_options& opt,
 
     normalize_ln_distro(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt);
 
+
 #ifdef DEBUG_INDEL_CALL
     log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << dindel.pprob[STAR_DIINDEL::NOINDEL] << " " << dindel.pprob[STAR_DIINDEL::HOM] << " " << dindel.pprob[STAR_DIINDEL::HET] << "\n";
 #endif
 
     dindel.indel_qphred=error_prob_to_qphred(dindel.pprob[STAR_DIINDEL::NOINDEL]);
     dindel.max_gt_qphred=error_prob_to_qphred(prob_comp(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt));
+
+    // add new poly calls:
+    normalize_ln_distro(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly);
+    dindel.max_gt_poly_qphred=error_prob_to_qphred(prob_comp(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly));
 
     // old report criteria:
     //dindel.is_indel=(dindel.max_gt != STAR_DIINDEL::NOINDEL);

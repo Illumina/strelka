@@ -94,10 +94,11 @@ namespace STAR_DIINDEL {
 struct starling_diploid_indel_core {
 
     starling_diploid_indel_core()
-        : is_indel(false), max_gt(0) {
+        : is_indel(false), max_gt(0), max_gt_poly(0) {
         static const int qp(error_prob_to_qphred((1.-init_p())));
         indel_qphred=qp;
         max_gt_qphred=qp;
+        max_gt_poly_qphred=qp;
     }
 
 protected:
@@ -115,6 +116,9 @@ public:
     unsigned max_gt;
     int indel_qphred;
     int max_gt_qphred;
+
+    unsigned max_gt_poly;
+    int max_gt_poly_qphred;
 };
 
 

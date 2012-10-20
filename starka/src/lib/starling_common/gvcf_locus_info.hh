@@ -83,6 +83,9 @@ struct shared_modifiers {
     }
 
     int gqx;
+    int gq;
+    unsigned max_gt;
+
     std::bitset<VCF_FILTERS::SIZE> filters;
 };
 
@@ -153,8 +156,6 @@ struct site_modifiers : public shared_modifiers {
     bool is_zero_ploidy;
     bool is_block;
 
-    unsigned max_gt;
-
     MODIFIED_SITE_GT::index_t modified_gt;
 };
 
@@ -182,7 +183,7 @@ struct indel_info {
         if(imod.is_overlap) {
             return "1/2";
         }
-        return STAR_DIINDEL::get_gt_label(dindel.max_gt);
+        return STAR_DIINDEL::get_gt_label(imod.max_gt);
     }
 
     // the site ploidy within the indel at offset x

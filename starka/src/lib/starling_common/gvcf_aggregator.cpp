@@ -88,17 +88,19 @@ add_site_modifiers(const gvcf_options& opt,
 
     if     (si.smod.is_unknown) {
         si.smod.gqx=0;
+        si.smod.gq=0;
         si.smod.max_gt=0;
     } else if(si.dgt.genome.max_gt != si.dgt.poly.max_gt) {
-        // if these two disagree then GQX should be 0 and GT should be genome:
         si.smod.gqx=0;
-        si.smod.max_gt=si.dgt.genome.max_gt;
+        si.smod.gq=si.dgt.poly.max_gt_qphred;
+        si.smod.max_gt=si.dgt.poly.max_gt;
     } else {
         if(si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred){
             set_site_gt(si.dgt.genome,si.smod);
         } else {
             set_site_gt(si.dgt.poly,si.smod);
         }
+        si.smod.gq=si.dgt.poly.max_gt_qphred;
     }
 
     set_site_filters(opt,dopt,si);
@@ -330,7 +332,14 @@ add_indel_modifiers(const gvcf_options& opt,
                     const gvcf_deriv_options& dopt,
                     indel_info& ii) {
 
-    ii.imod.gqx=std::min(ii.dindel.indel_qphred,ii.dindel.max_gt_qphred);
+    if(ii.dindel.max_gt != ii.dindel.max_gt_poly) {
+        ii.imod.gqx=0;
+    } else {
+        ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
+    }
+    ii.imod.max_gt=ii.dindel.max_gt_poly;
+    ii.imod.gq=ii.dindel.max_gt_poly_qphred;
+
 
     if(opt.is_min_gqx) {
         if(ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
@@ -473,10 +482,18 @@ write_site_record(const site_info& si) const {
     os << '\t';
 
     //FORMAT
-    os << "GT:GQX:DP:DPF" << '\t';
+    os << "GT";
+    if(si.dgt.is_snp) {
+        os << ":GQ";
+    }
+    os << ":GQX:DP:DPF";
+    os << '\t';
 
     //SAMPLE
     os << si.get_gt() << ':';
+    if(si.dgt.is_snp) {
+        os << si.smod.gq;
+    }
     if(si.smod.is_gqx()) {
         if(si.smod.is_block) {
             os << _block.block_gqx.min();
@@ -720,10 +737,11 @@ write_indel_record(const unsigned write_index) {
     os << '\t';
 
     //FORMAT
-    os << "GT:GQX:DPI" << '\t';
+    os << "GT:GQ:GQX:DPI" << '\t';
 
     //SAMPLE
-    os << ii.get_gt() << ':' 
+    os << ii.get_gt() << ':'
+       << ii.imod.gq << ':'
        << ii.imod.gqx  << ':'
        << ii.isri.depth << '\n';
 }
