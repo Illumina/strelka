@@ -224,6 +224,7 @@ struct site_info {
         , n_used_calls(0)
         , n_unused_calls(0)
         , hpol(0)
+        , hapscore(0)
     {}
 
     void
@@ -263,6 +264,7 @@ struct site_info {
     boost::array<unsigned,N_BASE> known_counts;
     diploid_genotype dgt;
     unsigned hpol;
+    double hapscore;
 
     site_modifiers smod;
 };

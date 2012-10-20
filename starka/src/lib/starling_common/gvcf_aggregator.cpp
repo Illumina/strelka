@@ -111,7 +111,7 @@ gvcf_aggregator(const starling_options& opt,
                 const pos_range& report_range,
                 const reference_contig_segment& ref,
                 std::ostream* osptr)
-    : _opt(opt.gvcf)
+    : _opt(opt)
     , _report_range(report_range.begin_pos,report_range.end_pos)
     , _ref(ref)
     , _osptr(osptr)
@@ -119,7 +119,7 @@ gvcf_aggregator(const starling_options& opt,
     , _indel_end_pos(0)
     , _indel_buffer_size(0)
     , _site_buffer_size(0)
-    , _block(_opt)
+    , _block(_opt.gvcf)
     , _head_pos(report_range.begin_pos)
 {
     assert(report_range.is_begin_pos);
@@ -131,26 +131,26 @@ gvcf_aggregator(const starling_options& opt,
     assert((NULL !=_chrom) && (strlen(_chrom)>0));
 
     cdmap_t chrom_depth;
-    if(_opt.is_max_depth_factor && (! _opt.chrom_depth_file.empty())) {
-        parse_chrom_depth(_opt.chrom_depth_file,chrom_depth);
+    if(_opt.gvcf.is_max_depth_factor && (! _opt.gvcf.chrom_depth_file.empty())) {
+        parse_chrom_depth(_opt.gvcf.chrom_depth_file,chrom_depth);
         //TODO, verify that chroms match bam chroms
 
         cdmap_t::const_iterator cdi(chrom_depth.find(std::string(_chrom)));
         if(cdi == chrom_depth.end()) {
             std::ostringstream oss;
-            oss << "ERROR: Can't find chromosome: '" << _chrom << "' in chrom depth file: " << _opt.chrom_depth_file << "\n";
+            oss << "ERROR: Can't find chromosome: '" << _chrom << "' in chrom depth file: " << _opt.gvcf.chrom_depth_file << "\n";
             throw blt_exception(oss.str().c_str());
         }
-        _dopt.max_depth=(cdi->second*_opt.max_depth_factor);
+        _dopt.max_depth=(cdi->second*_opt.gvcf.max_depth_factor);
         assert(_dopt.max_depth>=0.);
         _dopt.is_max_depth=true;
     }
 
-    if(! _opt.is_skip_header) {
-        finish_gvcf_header(_opt,chrom_depth,*_osptr);
+    if(! _opt.gvcf.is_skip_header) {
+        finish_gvcf_header(_opt.gvcf,chrom_depth,*_osptr);
     }
 
-    add_site_modifiers(_opt,_dopt,_empty_site);
+    add_site_modifiers(_opt.gvcf,_dopt,_empty_site);
 }
 
 
@@ -185,7 +185,7 @@ gvcf_aggregator::
 add_site(site_info& si) {
 
     skip_to_pos(si.pos);
-    add_site_modifiers(_opt,_dopt,si);
+    add_site_modifiers(_opt.gvcf,_dopt,si);
 
     add_site_internal(si);
 }
@@ -379,7 +379,7 @@ void
 gvcf_aggregator::
 queue_site_record(const site_info& si) {
 
-    if(! is_site_record_blockable(_opt,si)) {
+    if(! is_site_record_blockable(_opt.gvcf,si)) {
         write_block_site_record();
         write_site_record(si);
         return;
@@ -449,7 +449,7 @@ write_site_record(const site_info& si) const {
     if(si.smod.is_block) {
         if(_block.count>1) {
             os << "END=" << (si.pos+_block.count) << ';';
-            os << _opt.block_label;
+            os << _opt.gvcf.block_label;
         } else {
             os << '.';
         }
@@ -462,6 +462,10 @@ write_site_record(const site_info& si) const {
             os.copyfmt(tmp_os);
             os << ';';
             os << "SNVHPOL=" << si.hpol;
+            if(_opt.is_compute_hapscore) {
+                os << ';';
+                os << "HapScore=" << si.hapscore;
+            }
         } else {
             os << '.';
         }
@@ -504,7 +508,7 @@ modify_single_indel_record() {
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
 
-    add_indel_modifiers(_opt,_dopt,ii);
+    add_indel_modifiers(_opt.gvcf,_dopt,ii);
 }
 
 
@@ -614,7 +618,7 @@ modify_overlap_indel_record() {
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
 
-        add_indel_modifiers(_opt,_dopt,_indel_buffer[hap]);
+        add_indel_modifiers(_opt.gvcf,_dopt,_indel_buffer[hap]);
         if(hap>0) {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
         }
@@ -635,7 +639,7 @@ modify_conflict_indel_record() {
 
         ii.imod.set_filter(VCF_FILTERS::IndelConflict);
 
-        add_indel_modifiers(_opt,_dopt,ii);
+        add_indel_modifiers(_opt.gvcf,_dopt,ii);
     }
 }
 
@@ -756,7 +760,7 @@ process_overlaps() {
         const pos_t offset(_site_buffer[i].pos-_indel_buffer[0].pos);
         assert(offset>=0);
         if(! is_conflict_print) {
-            modify_indel_overlap_site(_opt,_dopt,
+            modify_indel_overlap_site(_opt.gvcf,_dopt,
                                       _indel_buffer[0],
                                       _indel_buffer[0].get_ploidy(offset),
                                       _site_buffer[i]);

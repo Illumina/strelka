@@ -176,6 +176,7 @@ struct blt_options {
         , is_eland_compat(false)
         , is_max_input_depth(false)
         , max_input_depth(0)
+        , is_compute_hapscore(true)
     {}
 
     virtual ~blt_options() {}
@@ -324,6 +325,8 @@ struct blt_options {
 
     bool is_max_input_depth;
     unsigned max_input_depth;
+
+    bool is_compute_hapscore;
 
     std::string report_filename;
 

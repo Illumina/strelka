@@ -19,6 +19,7 @@
 #ifndef __SNP_POS_INFO_HH
 #define __SNP_POS_INFO_HH
 
+#include "blt_common/hapscore.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/seq_util.hh"
 
@@ -108,6 +109,8 @@ struct snp_pos_info {
         is_n_ref_warn=false;
         n_spandel=0;
         n_submapped=0;
+
+        hap_set.clear();
     }
 
     template <typename T>
@@ -143,6 +146,8 @@ struct snp_pos_info {
     // note this could be usable,filtered or spanning deletion,
     // all submapped reads get counted here:
     unsigned n_submapped;
+
+    hap_set_t hap_set;
 };
 
 std::ostream& operator<<(std::ostream& os,const snp_pos_info& pci);

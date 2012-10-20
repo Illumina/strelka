@@ -386,6 +386,14 @@ private:
                         const base_call& bc);
 
     void
+    insert_hap_cand(const pos_t pos,
+                    const unsigned sample_no,
+                    const bool is_tier1,
+                    const bam_seq_base& read_seq,
+                    const uint8_t* qual,
+                    const unsigned offset);
+
+    void
     process_pos(const int stage_no,
                 const pos_t pos);
 

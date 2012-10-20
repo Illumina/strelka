@@ -53,6 +53,18 @@ struct pos_basecall_buffer {
         }
     }
 
+    void
+    insert_hap_cand(const pos_t pos,
+                    const bool is_tier1,
+                    const bam_seq_base& read_seq,
+                    const uint8_t* qual,
+                    const unsigned offset) {
+        
+        // TODO write this for multi-tier:
+        assert(is_tier1);
+        _pdata[pos].hap_set.push_back(hap_cand(read_seq,qual,offset));
+    }
+
     // returns NULL for empty pos
     //
     snp_pos_info*

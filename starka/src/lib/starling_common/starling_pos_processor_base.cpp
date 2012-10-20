@@ -951,6 +951,24 @@ insert_pos_basecall(const pos_t pos,
 
 void
 starling_pos_processor_base::
+insert_hap_cand(const pos_t pos,
+                const unsigned sample_no,
+                const bool is_tier1,
+                const bam_seq_base& read_seq,
+                const uint8_t* qual,
+                const unsigned offset) {
+
+    if(! is_pos_reportable(pos)) return;
+
+    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+
+    sample(sample_no).bc_buff.insert_hap_cand(pos,is_tier1,read_seq,qual,offset);
+}
+
+
+
+void
+starling_pos_processor_base::
 write_candidate_indels_pos(const pos_t pos){
 
     static const unsigned sample_no(0);
@@ -1376,6 +1394,12 @@ pileup_read_segment(const read_segment& rseg,
                                         base_call(call_id,qscore,best_al.is_fwd_strand,
                                                   align_strand_read_pos,end_trimmed_read_len,
                                                   current_call_filter,is_neighbor_mismatch,is_tier_specific_filter));
+
+                    if(_client_opt.is_compute_hapscore) {
+                        insert_hap_cand(ref_pos,sample_no,is_tier1,
+                                        bseq,qual,read_pos);
+                    }
+
                 } catch (...) {
                     log_os << "Exception caught in starling_pos_processor_base.insert_pos_basecall() "
                            << "while processing read_position: " << (read_pos+1) << "\n";
@@ -1577,6 +1601,9 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
     if(is_snp) {
+        if(_client_opt.is_compute_hapscore) {
+            _site_info.hapscore=get_hapscore(pi.hap_set);
+        }
         _site_info.hpol=get_snp_hpol_size(pos,_ref);
     }
 
