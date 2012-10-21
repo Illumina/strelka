@@ -423,6 +423,23 @@ print_vcf_alt(const unsigned gt,
 
 
 
+static
+void
+print_site_ad(const site_info& si,
+              std::ostream& os) {
+
+    os << si.known_counts[si.dgt.ref_gt];
+
+    for(unsigned b(0);b<N_BASE;++b){
+        if(b==si.dgt.ref_gt) continue;
+        if(DIGT::expect2(b,si.smod.max_gt)) {
+            os << ',' << si.known_counts[b];
+        }
+    }
+}
+
+
+
 void
 gvcf_aggregator::
 write_site_record(const site_info& si) const {
@@ -487,6 +504,9 @@ write_site_record(const site_info& si) const {
         os << ":GQ";
     }
     os << ":GQX:DP:DPF";
+    if(! si.smod.is_block) {
+        os << ":AD";
+    }
     os << '\t';
 
     //SAMPLE
@@ -504,12 +524,19 @@ write_site_record(const site_info& si) const {
         os << '.';
     }
     os << ':';
+    //print DP:DPF
     if(si.smod.is_block) {
         os << _block.block_dpu.min() << ':'
            << _block.block_dpf.min();
     } else {
         os << si.n_used_calls << ':'
            << si.n_unused_calls;
+    }
+
+    if(! si.smod.is_block) {
+        // print AD
+        os << ':';
+        print_site_ad(si,os);
     }
 
     os << '\n';
