@@ -42,3 +42,21 @@ write_filters(std::ostream& os) const {
     }
 }
 
+
+
+std::ostream&
+operator<<(std::ostream& os,
+           const site_modifiers& smod) {
+
+    os << "is_unknown: " << smod.is_unknown;
+    os << " is_covered: " << smod.is_covered;
+    os << " is_used_coverage: " << smod.is_used_covered;
+    os << " is_zero_ploidy: " << smod.is_zero_ploidy;
+    os << " is_block: " << smod.is_block;
+
+    if(smod.modified_gt !=MODIFIED_SITE_GT::NONE) {
+        os << " modgt: " << MODIFIED_SITE_GT::get_label(smod.modified_gt);
+    }
+    return os;
+}
+

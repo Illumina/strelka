@@ -160,6 +160,9 @@ struct site_modifiers : public shared_modifiers {
 };
 
 
+std::ostream& operator<<(std::ostream& os,const site_modifiers& smod);
+
+
 
 struct indel_info {
 
