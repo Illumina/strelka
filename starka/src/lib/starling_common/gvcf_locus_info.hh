@@ -257,7 +257,7 @@ struct site_info {
 
     bool
     is_qual() const {
-        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (! dgt.ref_gt == smod.max_gt));
+        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (dgt.ref_gt != smod.max_gt));
     }
 
 
