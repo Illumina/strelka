@@ -126,6 +126,7 @@ finish_gvcf_header(const gvcf_options& opt,
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
     os << "##FORMAT=<ID=GQ,Number=1,Type=Float,Description=\"Genotype Quality\">\n";
     os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
+    os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed\">\n";
 
     os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Basecall depth associated with indel, taken from the site preceding the indel.\">\n";
 
