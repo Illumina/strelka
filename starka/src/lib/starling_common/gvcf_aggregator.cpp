@@ -492,7 +492,7 @@ write_site_record(const site_info& si) const {
     //SAMPLE
     os << si.get_gt() << ':';
     if(si.dgt.is_snp) {
-        os << si.smod.gq;
+        os << si.smod.gq << ':';
     }
     if(si.smod.is_gqx()) {
         if(si.smod.is_block) {
