@@ -764,13 +764,25 @@ write_indel_record(const unsigned write_index) {
     os << '\t';
 
     //FORMAT
-    os << "GT:GQ:GQX:DPI" << '\t';
+    os << "GT:GQ:GQX:DPI:AD" << '\t';
 
     //SAMPLE
     os << ii.get_gt() << ':'
        << ii.imod.gq << ':'
        << ii.imod.gqx  << ':'
-       << ii.isri.depth << '\n';
+       << ii.isri.depth << ':';
+
+    // SAMPLE AD:
+    unsigned ref_count(0);
+    for(unsigned i(write_index);i<=end_index;++i) {
+        ref_count = std::max(ref_count,_indel_buffer[i].isri.n_q30_ref_reads);
+    }
+    os << ref_count;
+    for(unsigned i(write_index);i<=end_index;++i) {
+        os << ',' << _indel_buffer[i].isri.n_q30_indel_reads;
+    }
+
+    os << '\n';
 }
 
 
