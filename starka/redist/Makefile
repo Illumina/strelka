@@ -2,7 +2,7 @@
 # relies on 'IDS' definitions from parent makefile
 #
 
-IDS := BOOST_ID CODEMIN_ID SAMTOOLS_ID VCFTOOLS_ID TABIX_ID
+IDS := BOOST_ID CODEMIN_ID SAMTOOLS_ID TABIX_ID
 
 assert-defined-indirect = $(if $($1),,$(error Variable '$1' must be defined))
 $(foreach I,$(IDS), $(call assert-defined-indirect,$I))
@@ -11,7 +11,11 @@ id-to-dir = $($1)
 DIRS := $(foreach I,$(IDS), $(call id-to-dir,$I))
 
 .PHONY: $(IDS)
-all: boost $(CODEMIN_ID) samtools tabix vcftools
+
+LINKS := boost samtools tabix
+
+all: $(CODEMIN_ID) $(LINKS) 
+
 
 $(IDS): $(DIRS)
 
@@ -41,7 +45,8 @@ endef
 
 
 boost: $(BOOST_ID)
-	$(install-boost) && cd $(CURDIR) && ln -sf $(BOOST_ID) boost
+	$(install-boost) && cd $(CURDIR) && \
+	ln -sf $< $@
 
 samtools: $(SAMTOOLS_ID)
 	$(MAKE) -C $(SAMTOOLS_ID) && \
@@ -51,11 +56,6 @@ tabix: $(TABIX_ID)
 	$(MAKE) -C $(TABIX_ID) && \
 	ln -sf $< $@
 
-# vcftools has a makefile issue preventing recursive make on some linux distros unless MAKEFLAGS is cleared first:
-vcftools: $(VCFTOOLS_ID)
-	$(MAKE) -C $(VCFTOOLS_ID) MAKEFLAGS= && \
-	ln -sf $< $@
-
 clean:
-	$(RM) -rf $(DIRS) boost samtools tabix vcftools
+	$(RM) -r $(DIRS) $(LINKS)
 
