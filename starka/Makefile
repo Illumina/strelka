@@ -14,7 +14,7 @@ all: install
 redist:
 	$(MAKE) -C $(REDIST_DIR)
 
-build: redist etags
+build: redist
 	$(MAKE) -C $(SRC_DIR)
 
 install: build
