@@ -73,11 +73,22 @@ get_starling_shared_option_parser(starling_options& opt) {
 
     po::options_description gvcf_opt("gVCF options");
     gvcf_opt.add_options()
-        ("gvcf-file",po::value<std::string>(&opt.gvcf.out_file),"gVCF output file, enter '-' to write to stdout. An argument must be specified to activeate gVCF mode")
-        ("chrom-depth-file",po::value<std::string>(&opt.gvcf.chrom_depth_file),"If provided, the mean depth for each chromosome will be read from file, and these values will be used for high depth filtration. File should contain one line per chromosome, where each line begins with: \"chrom_name<TAB>depth\" (default: no chrom depth filtration)")
-        ("gvcf-max-depth-factor",po::value<double>(&opt.gvcf.max_depth_factor)->default_value(opt.gvcf.max_depth_factor),"If a chrom depth file is supplied then loci with depth exceeding the mean chromosome depth times this value are filtered")
-        ("gvcf-min-gqx",po::value<double>(&opt.gvcf.min_gqx)->default_value(opt.gvcf.min_gqx),"Minimum locus GQX in gVCF output")
-        ("gvcf-min-blockable-nonref",po::value<double>(&opt.gvcf.block_max_nonref)->default_value(opt.gvcf.block_max_nonref),"A site cannot be joined into a non-variant block if it contains more than this fraction of non-reference alleles")
+        ("gvcf-file",po::value<std::string>(&opt.gvcf.out_file),
+         "gVCF output file, enter '-' to write to stdout. An argument must be specified to activeate gVCF mode")
+        ("chrom-depth-file",po::value<std::string>(&opt.gvcf.chrom_depth_file),
+         "If provided, the mean depth for each chromosome will be read from file, and these values will be used for high depth filtration. File should contain one line per chromosome, where each line begins with: \"chrom_name<TAB>depth\" (default: no chrom depth filtration)")
+        ("gvcf-max-depth-factor",po::value<double>(&opt.gvcf.max_depth_factor)->default_value(opt.gvcf.max_depth_factor),
+         "If a chrom depth file is supplied then loci with depth exceeding the mean chromosome depth times this value are filtered")
+        ("gvcf-min-gqx",po::value<double>(&opt.gvcf.min_gqx)->default_value(opt.gvcf.min_gqx),
+         "Minimum locus GQX in gVCF output. Providing a negative value disables the filter.")
+        ("gvcf-max-snv-strand-bias",po::value<double>(&opt.gvcf.max_snv_sb)->default_value(opt.gvcf.max_snv_sb),
+         "Maximum SNV strand bias value")
+        ("gvcf-no-snv-strand-bias-filter",
+         "Disable SNV strand-bias filter")
+        ("gvcf-max-indel-ref-repeat",po::value<int>(&opt.gvcf.max_ref_rep)->default_value(opt.gvcf.max_ref_rep),
+         "Indels are filtered if they lengthen or contract a homopolymer or dinucleotide with reference repeat length greater than this value. Providing a negative value disables the filter")
+        ("gvcf-min-blockable-nonref",po::value<double>(&opt.gvcf.block_max_nonref)->default_value(opt.gvcf.block_max_nonref),
+         "A site cannot be joined into a non-variant block if it contains more than this fraction of non-reference alleles")
         ("gvcf-skip-header", 
          "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
 
@@ -435,6 +446,19 @@ finalize_starling_options(const prog_info& pinfo,
         }
 
         opt.is_skip_realignment=true;
+    }
+
+    // gvcf handlers:
+    if(opt.gvcf.min_gqx < 0.) {
+        opt.gvcf.is_min_gqx=false;
+    }
+
+    if(opt.gvcf.max_ref_rep < 0) {
+        opt.gvcf.is_max_ref_rep=false;
+    }
+
+    if(vm.count("gvcf-no-snv-strand-bias-filter")){
+        opt.gvcf.is_max_snv_sb=false;
     }
 
     if(vm.count("gvcf-skip-header")) {

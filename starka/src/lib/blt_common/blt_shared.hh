@@ -82,7 +82,7 @@ struct gvcf_options {
     bool is_max_snv_hpol;
     unsigned max_snv_hpol;
     bool is_max_ref_rep;
-    unsigned max_ref_rep;
+    int max_ref_rep;
 
     // blocking scheme:
     std::string block_label;
