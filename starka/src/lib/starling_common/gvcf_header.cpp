@@ -77,7 +77,7 @@ add_gvcf_filters(const gvcf_options& opt,
 
     if(opt.is_max_ref_rep) {
         std::ostringstream oss;
-        oss << "Indel contains an ellele which occurs in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
+        oss << "Locus contains an indel allele occurring in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
