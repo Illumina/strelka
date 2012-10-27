@@ -352,7 +352,7 @@ add_indel_modifiers(const gvcf_options& opt,
     if(opt.is_max_ref_rep) {
         if(ii.iri.is_repeat_unit) {
             if((ii.iri.repeat_unit.size() <= 2) &&
-               (ii.iri.ref_repeat_count > opt.max_ref_rep)) {
+               (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
                 ii.imod.set_filter(VCF_FILTERS::HighRefRep);
             }
         }
