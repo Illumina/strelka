@@ -1,2 +1,14 @@
+v2.0.1
+- Added command-line controls for for "R8" indel filter and strand-bias
+v2.0.0
+- First RC. No changes from v2.0a3
+v2.0a3
+- Completed gVCF outptu to pass vcf-validator
+- added AD tags to snps and indels
+- added haplotypescore but left this turned off
+- added command-line controls for min-gqx,max-depth-factor and other filters/blocking thresholds
+- cleaned up other final details
+v2.0a2
+- Bugfix: gVCF output was being written +1 past end of requirested range
 v2.0a1
 - initial version of starling with direct gVCF output
