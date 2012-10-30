@@ -89,6 +89,8 @@ get_starling_shared_option_parser(starling_options& opt) {
          "Indels are filtered if they lengthen or contract a homopolymer or dinucleotide with reference repeat length greater than this value. Providing a negative value disables the filter")
         ("gvcf-min-blockable-nonref",po::value<double>(&opt.gvcf.block_max_nonref)->default_value(opt.gvcf.block_max_nonref),
          "A site cannot be joined into a non-variant block if it contains more than this fraction of non-reference alleles")
+        ("gvcf-include-hapscore",
+         "Include haplotype score at SNV positions in gVCF output.")
         ("gvcf-skip-header", 
          "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
 
@@ -459,6 +461,10 @@ finalize_starling_options(const prog_info& pinfo,
 
     if(vm.count("gvcf-no-snv-strand-bias-filter")){
         opt.gvcf.is_max_snv_sb=false;
+    }
+
+    if(vm.count("gvcf-include-hapscore")){
+        opt.is_compute_hapscore=true;
     }
 
     if(vm.count("gvcf-skip-header")) {
