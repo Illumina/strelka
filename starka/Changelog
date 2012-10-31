@@ -1,3 +1,5 @@
+v2.0.2
+- Add haplotype score option to command-line
 v2.0.1
 - Added command-line controls for for "R8" indel filter and strand-bias
 v2.0.0
