@@ -153,7 +153,7 @@ struct starling_options : public blt_options {
     // maximum indel size which can be represented by starling
     // (formerly a static value)
     unsigned max_indel_size;
-    
+
     // indel cannot become candidate unless at least min reads which
     // meet mapping threshold support it
     //

@@ -46,7 +46,7 @@ operator<<(std::ostream& os,
     unsigned tumor_gt;
     DDIINDEL::get_digt_states(dgt,normal_gt,tumor_gt);
 
-    os << STAR_DIINDEL::label(normal_gt) 
+    os << STAR_DIINDEL::label(normal_gt)
        << "->"
        << STAR_DIINDEL::label(tumor_gt);
 
@@ -58,7 +58,7 @@ operator<<(std::ostream& os,
 
 somatic_indel_caller::
 somatic_indel_caller(const strelka_options& opt,
-                     const indel_digt_caller& in_caller) 
+                     const indel_digt_caller& in_caller)
     : _in_caller(in_caller)
 {
     _ln_som_match=(log1p_switch(-opt.somatic_indel_rate));
@@ -88,7 +88,7 @@ calculate_result_set(const strelka_options& opt,
         const double base_prior(normal_lnprior[ngt]);
         for(unsigned tgt(0);tgt<STAR_DIINDEL::SIZE;++tgt){
             const unsigned dgt(DDIINDEL::get_state(ngt,tgt));
-            check_prior[dgt] = 
+            check_prior[dgt] =
                 base_prior+
                 ((tgt==ngt) ? lnmatch : lnmismatch);
         }
@@ -106,7 +106,7 @@ calculate_result_set(const strelka_options& opt,
         const double base_prior(normal_lnprior[ngt]);
         for(unsigned tgt(0);tgt<STAR_DIINDEL::SIZE;++tgt){
             const unsigned dgt(DDIINDEL::get_state(ngt,tgt));
-            pprob[dgt] = 
+            pprob[dgt] =
                 normal_lhood[ngt]+
                 tumor_lhood[tgt]+
                 base_prior+
@@ -139,7 +139,7 @@ calculate_result_set(const strelka_options& opt,
     rs.sindel_from_ref_qphred=error_prob_to_qphred(not_somfrom_sum[STAR_DIINDEL::NOINDEL]);
     rs.sindel_from_het_qphred=error_prob_to_qphred(not_somfrom_sum[STAR_DIINDEL::HET]);
     rs.sindel_from_hom_qphred=error_prob_to_qphred(not_somfrom_sum[STAR_DIINDEL::HOM]);
-    
+
     double not_somfromanyhom_sum(nonsomatic_sum);
     for(unsigned ngt(0);ngt<STAR_DIINDEL::SIZE;++ngt){
         if(STAR_DIINDEL::HET != ngt) continue;
@@ -185,7 +185,7 @@ get_somatic_indel(const strelka_options& opt,
         const bool is_include_tier2(i==1);
         if(is_include_tier2) {
             if(not opt.is_tier2()) continue;
-            if(tier_rs[0].sindel_qphred==0) { 
+            if(tier_rs[0].sindel_qphred==0) {
                 tier_rs[1].sindel_qphred=0;
                 continue;
             }

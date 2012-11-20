@@ -180,6 +180,6 @@ parse_double_str(const std::string& s) {
     }
     return val;
 }
- 
+
 }
 }

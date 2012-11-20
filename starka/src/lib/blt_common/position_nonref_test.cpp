@@ -39,7 +39,7 @@
 struct nonref_freq_loghood_sparse_func { //: public sample_func_iface {
 
     nonref_freq_loghood_sparse_func(const snp_pos_info& pi,
-                                    sparse_function& sf) 
+                                    sparse_function& sf)
         : _pi(pi), _sf(sf) {}
 
     blt_float_t
@@ -198,7 +198,7 @@ write_nonref_test(const blt_options& opt,
                   std::ostream& os){
 
     os << nrc.snp_qphred
-       << '\t' << NRTEST::label(static_cast<NRTEST::index_t>(nrc.max_gt)) 
+       << '\t' << NRTEST::label(static_cast<NRTEST::index_t>(nrc.max_gt))
        << '\t' << nrc.max_gt_qphred;
 
     if(opt.is_print_used_allele_counts) {

@@ -60,7 +60,7 @@ change_bam_data_segment_len(const int end,
     const int tail_size(old_len-end);
     assert(tail_size>=0);
     change_bam_data_len(new_len,br);
-    
+
     // move post-segment data to its new position:
     if(0==tail_size) return;
     uint8_t* old_tail_ptr(br.data+end);
@@ -69,7 +69,7 @@ change_bam_data_segment_len(const int end,
 }
 
 
-    
+
 void
 edit_bam_qname(const char* name,
                bam1_t& br){
@@ -95,7 +95,7 @@ edit_bam_qname(const char* name,
 
 
 static
-inline 
+inline
 int seq_size(const int a) { return a+(a+1)/2; }
 
 
@@ -108,10 +108,10 @@ edit_bam_read_and_quality(const char* read,
     const int old_size(seq_size(br.core.l_qseq));
     const int new_size(seq_size(new_len));
     const int delta(new_size-old_size);
-    
+
     if(0 != delta) {
         const int end(bam1_aux(&br)-br.data);
-        change_bam_data_segment_len(end,delta,br);  
+        change_bam_data_segment_len(end,delta,br);
     }
     br.core.l_qseq = new_len;
     // update seq:
@@ -172,4 +172,4 @@ check_header_compatibility(const bam_header_t* h1,
     }
     return true;
 }
-        
+

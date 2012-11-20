@@ -132,7 +132,7 @@ struct indel_key {
         if(type < rhs.type) return true;
         if(type == rhs.type) {
             if((type == INDEL::NONE) ||
-               (type == INDEL::BP_LEFT) || 
+               (type == INDEL::BP_LEFT) ||
                (type == INDEL::BP_RIGHT)) return false;
             if(length < rhs.length) return true;
             if(length == rhs.length) {
@@ -167,7 +167,7 @@ struct indel_key {
         } else {
             return 0;
         }
-    }   
+    }
 
     unsigned
     delete_length() const {
@@ -178,7 +178,7 @@ struct indel_key {
         } else {
             return 0;
         }
-    } 
+    }
 
     // correct pos range to use when we view sv's as breakpoints:
     known_pos_range breakpoint_pos_range() const {
@@ -291,7 +291,7 @@ struct read_path_scores {
 
 
 struct indel_data {
-    indel_data() 
+    indel_data()
         : is_external_candidate(false)
         , is_candidate_indel_cached(false)
     {}
@@ -321,7 +321,7 @@ struct indel_data {
     //
     // submap_read_ids are genomic alignments that fall below the
     // mapping thresholds.
-    // 
+    //
     // all_read_ids contains the list of reads which either have a
     // genomic alignment passing the mapping criteria or have a contig
     // alignment.

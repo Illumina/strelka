@@ -91,7 +91,7 @@ get_starling_shared_option_parser(starling_options& opt) {
          "A site cannot be joined into a non-variant block if it contains more than this fraction of non-reference alleles")
         ("gvcf-include-hapscore",
          "Include haplotype score at SNV positions in gVCF output.")
-        ("gvcf-skip-header", 
+        ("gvcf-skip-header",
          "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
 
     po::options_description hap_opt("haplotype-options");
@@ -133,7 +133,7 @@ get_starling_shared_option_parser(starling_options& opt) {
 
     po::options_description indel_opt("indel-options");
     indel_opt.add_options()
-        ("max-candidate-indel-depth", 
+        ("max-candidate-indel-depth",
          po::value<unsigned>(&opt.max_candidate_indel_depth)->default_value(opt.max_candidate_indel_depth),
 "Maximum estimated read depth for an indel to reach candidacy. If any one sample exceeds this depth at the indel, the indel will not reach candidacy in all indel-synchronized samples")
         ("min-candidate-open-length",
@@ -181,8 +181,8 @@ get_starling_option_parser(starling_options& opt) {
 
     po::options_description help_parse_opt("Help");
     help_parse_opt.add_options()
-        ("help,h","print this message");  
-    
+        ("help,h","print this message");
+
     po::options_description visible("Options");
     visible.add(starling_parse_opt).add(help_parse_opt);
 
@@ -195,8 +195,8 @@ void
 write_starling_legacy_options(std::ostream& os) {
 
     static const starling_options default_opt;
-        
-    os << 
+
+    os <<
         " -bam-file file     - Analyze reads from 'file' in sorted BAM format (required) \n" // (use \"" << STDIN_FILENAME << "\" for stdin)\n"
         " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the bam file (required)\n"
         " -samtools-reference file\n"

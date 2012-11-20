@@ -70,7 +70,7 @@ namespace DIGT_SGRID {
 
         unsigned digt_state[N_BASE][STRAND_SIZE];
     };
-    
+
     extern const strand_state_tables stables;
 
     inline
@@ -99,7 +99,7 @@ namespace DIGT_SGRID {
                    const unsigned ref_base) {
         if(state<N_BASE)         return state;
         if(state<PRESTRAND_SIZE) return N_BASE+((state-N_BASE)%HET_SIZE);
-        return stables.digt_state[ref_base][get_strand_state(state)];   
+        return stables.digt_state[ref_base][get_strand_state(state)];
     }
 
 
@@ -118,7 +118,7 @@ namespace DIGT_SGRID {
 
 
 namespace DDIGT_SGRID {
-    
+
     enum constants { PRESTRAND_SIZE = DIGT_SGRID::PRESTRAND_SIZE*DIGT_SGRID::PRESTRAND_SIZE };
     enum index_t { SIZE = PRESTRAND_SIZE+DIGT_SGRID::STRAND_STATE_SIZE };
 
@@ -150,8 +150,8 @@ namespace DDIGT_SGRID {
                 const unsigned ref_gt,
                 std::ostream& os);
 
-    // writes state to pattern: "AA_0->AG_5_strand", using a unique id for 
-    // each heterozygous state. Writing actual allele frequencies instead of just 
+    // writes state to pattern: "AA_0->AG_5_strand", using a unique id for
+    // each heterozygous state. Writing actual allele frequencies instead of just
     // ids TBD
     void
     write_full_state(const DDIGT_SGRID::index_t dgt,
@@ -192,7 +192,7 @@ struct somatic_snv_caller_strand_grid {
     // versions of the method -- we don't actually need all of this for any one computation:
     //
     struct prior_set {
-        prior_set() 
+        prior_set()
             : normal(DIGT_SGRID::SIZE)
             , somatic_marginal(DIGT_SGRID::SIZE)
             , normal_poly(DIGT_SGRID::SIZE)

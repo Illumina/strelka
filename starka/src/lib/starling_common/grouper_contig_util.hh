@@ -46,7 +46,7 @@ struct contig_reader {
         if(_is_valid) { _is_valid=get_next_contig(_is,_ctg); }
         return _is_valid;
     }
-    
+
     const grouper_contig& get_contig() const { return _ctg; }
 
 private:

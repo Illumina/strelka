@@ -40,7 +40,7 @@ operator<<(std::ostream& os,
     unsigned tumor_gt;
     DDIGT::get_digt_states(dgt,normal_gt,tumor_gt);
 
-    os << DIGT::label(normal_gt) 
+    os << DIGT::label(normal_gt)
        << "->"
        << DIGT::label(tumor_gt);
 
@@ -193,7 +193,7 @@ calculate_result_set(const blt_float_t* normal_lhood,
     rs.snv_from_het_nonloh_qphred=error_prob_to_qphred(not_somfrom_het_nonloh_sum);
     rs.snv_from_hom_qphred=error_prob_to_qphred(not_somfrom_hom_sum);
     rs.snv_from_anyhom_qphred=error_prob_to_qphred(not_somfrom_anyhom_sum);
-    
+
     rs.max_gt_qphred=error_prob_to_qphred(prob_comp(rs.pprob.begin(),rs.pprob.end(),rs.max_gt));
 }
 
@@ -260,7 +260,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
         calculate_result_set(normal_lhood,tumor_lhood,
                              lnprior_genomic(sgt.ref_gt),sgt.ref_gt,tier_rs[i]);
 
-#ifdef ENABLE_POLY    
+#ifdef ENABLE_POLY
         // polymorphic site results:
         assert(0); // still needs to be adapted for 2-tier system:
         calculate_result_set(normal_lhood,tumor_lhood,
@@ -309,7 +309,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
     blt_float_t pprob[DDIGT::SIZE];
     for(unsigned gt(0);gt<DDIGT::SIZE;++gt){
         pprob[gt] = rs.pprob[gt];
-    }   
+    }
     debug_dump_ddigt_lhood(pprob,log_os);
     }
 #endif
@@ -330,7 +330,7 @@ write_result_set(const result_set& rs,
        << '\t' << rs.snv_from_het_nonloh_qphred
        << '\t' << rs.snv_from_hom_qphred
        << '\t' << rs.snv_from_anyhom_qphred
-       << '\t' << static_cast<DDIGT::index_t>(rs.max_gt) 
+       << '\t' << static_cast<DDIGT::index_t>(rs.max_gt)
        << '\t' << rs.max_gt_qphred;
 }
 
@@ -344,7 +344,7 @@ write_somatic_snv_genotype(const strelka_options& opt,
                            std::ostream& os) {
 
     os << std::setprecision(10) << std::fixed;
-    
+
     const result_set& ge(sgt.genome);
 #ifdef ENABLE_POLY
     const result_set& po(sgt.poly);

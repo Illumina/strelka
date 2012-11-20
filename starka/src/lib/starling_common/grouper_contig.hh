@@ -25,7 +25,7 @@
 
 struct grouper_contig : public alignment {
 
-    grouper_contig() : 
+    grouper_contig() :
         is_usable(true) {}
 
     void

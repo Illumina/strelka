@@ -27,7 +27,7 @@
 #include <iosfwd>
 
 struct gvcf_deriv_options {
-    
+
     gvcf_deriv_options()
         : is_max_depth(false)
         , max_depth(0)
@@ -62,7 +62,7 @@ struct gvcf_aggregator {
               const starling_diploid_indel_core& dindel,
               const starling_indel_report_info& iri,
               const starling_indel_sample_report_info& isri);
-    
+
     void
     flush() {
         skip_to_pos(_report_range.end_pos);
@@ -93,9 +93,9 @@ private:
 
     // resolve a set of overlapping indel and site calls:
     void process_overlaps();
-    
+
     void write_indel_record(const unsigned write_index=0);
-    
+
     void
     skip_to_pos(const pos_t target_pos);
 

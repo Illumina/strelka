@@ -38,7 +38,7 @@ namespace ALIGNPATH {
                    pos_t& ref_offset)
     {
         const path_segment& ps(path[path_index]);
-        
+
         if       (ps.type == MATCH) {
             read_offset += ps.length;
             ref_offset += ps.length;
@@ -51,13 +51,13 @@ namespace ALIGNPATH {
         } else {
             assert(0); // can't handle other CIGAR types yet
         }
-        
+
         path_index++;
     }
 
 
     // Initialize to the segment count, insert and delete size of a
-    // swap in the path. assumes path_index points to the begining of 
+    // swap in the path. assumes path_index points to the begining of
     // a swap:
     //
     struct swap_info {

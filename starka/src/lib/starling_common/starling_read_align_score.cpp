@@ -118,8 +118,8 @@ score_segment(const starling_options& /*opt*/,
             const pos_t refi(ref_head_pos+static_cast<pos_t>(i));
             is_ref=(sbase == ref.get_code(refi));
         }
-        lnp += ( is_ref ? 
-                 qphred_to_ln_comp_error_prob(qscore) : 
+        lnp += ( is_ref ?
+                 qphred_to_ln_comp_error_prob(qscore) :
                  qphred_to_ln_error_prob(qscore)+lnthird );
     }
 }
@@ -131,7 +131,7 @@ score_candidate_alignment(const starling_options& opt,
                           const indel_buffer& ibuff,
                           const read_segment& rseg,
                           const candidate_alignment& cal,
-                          const reference_contig_segment& ref){    
+                          const reference_contig_segment& ref){
     using namespace ALIGNPATH;
 
 #ifdef DEBUG_SCORE
@@ -164,7 +164,7 @@ score_candidate_alignment(const starling_options& opt,
 
             const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
             if(NULL == id_ptr){
-                std::ostringstream oss;                
+                std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected swap indel: " << ik << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
                 throw blt_exception(oss.str().c_str());
@@ -225,7 +225,7 @@ score_candidate_alignment(const starling_options& opt,
 
             const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
             if(NULL == id_ptr){
-                std::ostringstream oss;                
+                std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected insertion: " << ik << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
                 throw blt_exception(oss.str().c_str());

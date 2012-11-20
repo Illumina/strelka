@@ -71,7 +71,7 @@ namespace DIGT_SGRID {
                 if(alt==ref) continue;
                 digt_state[ref][strand_state] = 0;
                 for(unsigned gt(N_BASE);gt<DIGT::SIZE;++gt){
-                    if(DIGT::expect2(ref,gt) and 
+                    if(DIGT::expect2(ref,gt) and
                        DIGT::expect2(alt,gt)) {
                         digt_state[ref][strand_state] = gt;
                         break;
@@ -98,7 +98,7 @@ namespace DDIGT_SGRID {
         unsigned normal_gt;
         unsigned tumor_gt;
         DDIGT_SGRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
-        
+
         DIGT_SGRID::write_state(static_cast<DIGT_SGRID::index_t>(normal_gt),ref_gt,os);
         os << "->";
         DIGT_SGRID::write_state(static_cast<DIGT_SGRID::index_t>(tumor_gt),ref_gt,os);
@@ -151,7 +151,7 @@ namespace DDIGT_SGRID {
         for(unsigned gt(0);gt<DIGT_SGRID::SIZE;++gt){
             val[get_state(gt,gt)] = true;
         }
-    }   
+    }
 
     const is_nonsom_maker_t is_nonsom;
 }
@@ -310,7 +310,7 @@ get_prior(const blt_float_t* normal_lnprior,
 
 somatic_snv_caller_strand_grid::
 somatic_snv_caller_strand_grid(const strelka_options& opt,
-                               const pprob_digt_caller& pd_caller) 
+                               const pprob_digt_caller& pd_caller)
     : _opt(opt), _pd_caller(pd_caller) {
 
     _ln_som_match=(log1p_switch(-opt.somatic_snv_rate));
@@ -391,12 +391,12 @@ struct het_ratio_cache {
     std::pair<bool,cache_val<NVAL>*>
     get_val(const unsigned qscore,
             const unsigned ratio_index) {
-        
+
         if(qscore>=MAX_QSCORE ||
            ratio_index>=MAX_INDEX) {
             return std::make_pair(false,&_any_val);
         }
-        
+
         const unsigned index(ratio_index + qscore*MAX_INDEX);
         if(_is_cached[index]) {
             return std::make_pair(true,&(_cache[index]));
@@ -410,7 +410,7 @@ private:
     enum contanst { MAX_QSCORE = 64, MAX_INDEX = 12 };
 
     typedef cache_val<NVAL> cache_val_n;
-    
+
     cache_val_n _any_val; // return this if a request is outside of cached range
     std::vector<bool> _is_cached;
     std::vector<cache_val_n> _cache;
@@ -444,12 +444,12 @@ get_high_low_het_ratio_lhood_spi(const snp_pos_info& pi,
 
         std::pair<bool,cache_val<3>*> ret(hrcache.get_val(bc.get_qscore(),het_ratio_index));
         cache_val<3>& cv(*ret.second);
-        if(! ret.first) {         
+        if(! ret.first) {
             const blt_float_t eprob(bc.error_prob());
             const blt_float_t ceprob(1.-eprob);
             //const blt_float_t lne(bc.ln_error_prob());
             //const blt_float_t lnce(bc.ln_comp_error_prob());
-            
+
             // precalculate the result for expect values of 0.0, het_ratio, chet_ratio, 1.0
             cv.val[0] = bc.ln_error_prob()+ln_one_third;
             cv.val[1] = std::log((ceprob)*het_ratio+((eprob)*one_third)*chet_ratio);
@@ -646,7 +646,7 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
     }
 
     static const unsigned n_strand_het_axes(3);
-    
+
     for(unsigned i(0);i<n_calls;++i){
         const base_call& bc(pi.calls[i]);
 
@@ -1051,7 +1051,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                                   tier_rs[i]);
 
 #if 0
-#ifdef ENABLE_POLY    
+#ifdef ENABLE_POLY
         // polymorphic site results:
         assert(0); // still needs to be adapted for 2-tier system:
         calculate_result_set(normal_lhood,tumor_lhood,
@@ -1084,10 +1084,10 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                  //            static const blt_float_t unorm(std::log(static_cast<blt_float_t>(DIGT_SGRID::PRESTRAND_SIZE)));
 
                  //blt_float_t prior;
-                 //if(tgt==ngt) { prior=pset.normal[ngt]+lnmatch; } 
+                 //if(tgt==ngt) { prior=pset.normal[ngt]+lnmatch; }
                  //else         { prior=pset.somatic_marginal[ngt]+lnmismatch; }
                  blt_float_t pr;
-                 if(tgt==ngt) { pr=pset.normal[ngt]+lnmatch; } 
+                 if(tgt==ngt) { pr=pset.normal[ngt]+lnmatch; }
                  else         { pr=pset.somatic_marginal[ngt]+lnmismatch; }
                  prior[dgt] = pr;
 

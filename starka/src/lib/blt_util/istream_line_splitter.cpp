@@ -57,29 +57,29 @@ parse_line() {
         oss << "ERROR: input exceeds buffer size on line_no: " << _line_no << "\n\n";
         throw blt_exception(oss.str().c_str());
     }
-    
+
     if(! _is) {
         if(_is.eof()) { return false; } // normal eof:
-        
+
         std::ostringstream oss;
         oss << "ERROR: Unexpected read failure in parse_line().\n";
         throw blt_exception(oss.str().c_str());
     }
-    
+
     if(NULL == _buf) return false;
     assert(len);
-    
+
     // do a low-level separator parse:
-    {  
+    {
         char* p(_buf);
         word[0]=p;
         unsigned i(1);
-        while(i<_max_word){  
+        while(i<_max_word){
             if((*p == '\n') || (*p == '\0')) break;
             if (*p == _sep) {
                 *p = '\0';
                 word[i++] = p+1;
-            }  
+            }
             ++p;
         }
         _n_word=i;

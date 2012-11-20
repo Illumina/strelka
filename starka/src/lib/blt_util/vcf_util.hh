@@ -90,7 +90,7 @@ get_format_key_index(const char* format,
 
 
 
-// return pointer to 
+// return pointer to
 //
 inline
 const char*

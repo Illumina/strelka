@@ -29,7 +29,7 @@ struct bam_dumper {
     bam_dumper(const char* filename,
                const bam_header_t* header);
 
-    ~bam_dumper() { 
+    ~bam_dumper() {
         if(NULL != _bfp) samclose(_bfp);
     }
 

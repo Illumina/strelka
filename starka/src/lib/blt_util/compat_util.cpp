@@ -44,7 +44,7 @@ bool
 compat_realpath(std::string& path) {
 #ifdef _WIN32
     XXXXXX NOT IMPLEMENTED;
-#else 
+#else
     errno=0;
     const char* newpath(realpath(path.c_str(),NULL));
     if((NULL==newpath) || (errno!=0)) {

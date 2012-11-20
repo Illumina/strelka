@@ -48,11 +48,11 @@ set(const char* s,
 
     static const char sep('\t');
     static const unsigned maxword(5);
-    
+
     // simple tab parse:
     const char* start(s);
     const char* p(start);
-    
+
     unsigned wordindex(0);
     while(wordindex<maxword) {
         if ((*p == sep) || (*p == '\n') || (*p == '\0')) {
@@ -106,7 +106,7 @@ std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr) {
        << vcfr.pos << '\t'
        << '.' << '\t'
        << vcfr.ref << '\t';
-    
+
     const unsigned nalt(vcfr.alt.size());
     for(unsigned a(0);a<nalt;++a) {
         if(a) os << ',';
@@ -117,7 +117,7 @@ std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr) {
        << '.' << '\t'
        << '.' << '\t'
        << '.' << '\n';
-    
+
     return os;
 }
 

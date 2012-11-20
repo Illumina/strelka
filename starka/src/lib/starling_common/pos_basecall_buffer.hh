@@ -59,7 +59,7 @@ struct pos_basecall_buffer {
                     const bam_seq_base& read_seq,
                     const uint8_t* qual,
                     const unsigned offset) {
-        
+
         // TODO write this for multi-tier:
         assert(is_tier1);
         _pdata[pos].hap_set.push_back(hap_cand(read_seq,qual,offset));

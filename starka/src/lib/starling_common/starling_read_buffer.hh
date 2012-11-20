@@ -56,13 +56,13 @@ struct read_segment_iter;
 // (2) key or
 // (3) read_id_no
 // (4) contig_id_no(s)
-// 
+//
 // multiple reads may be associated with (1) and (4), but (2) and (3)
 // can produce at most a single result.
 //
 struct starling_read_buffer : private boost::noncopyable {
 
-    starling_read_buffer(read_id_counter* ricp = NULL) 
+    starling_read_buffer(read_id_counter* ricp = NULL)
         : _ricp( (NULL==ricp) ? &_ric : ricp ) {}
 
     ~starling_read_buffer();
@@ -149,7 +149,7 @@ private:
 
     // read name (eg. QNAME) to read id map:
     read_key_lup_t _read_key;
-    
+
     // storage position to read segment id map
     //
     // note that storage position starts out as the starting position
@@ -167,7 +167,7 @@ private:
 // not a real iterator
 //
 struct read_segment_iter {
-    
+
     typedef std::pair<starling_read*,seg_id_t> ret_val;
 
     // returns first=NULL if no read segments left:

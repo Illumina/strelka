@@ -75,10 +75,10 @@ struct position_nonref_allele_freq_loghood_minfunc : public codemin::minfunc_1d_
     /// assumes pi has already had bad cases filtered out:
     explicit
     position_nonref_allele_freq_loghood_minfunc(const snp_pos_info& pi,
-                                                const unsigned nonref_id) 
+                                                const unsigned nonref_id)
         : _pi(pi)
         , _nonref_id(nonref_id)
-        , _nonref2_id(nonref2_id) 
+        , _nonref2_id(nonref2_id)
     {}
 
     virtual double val(const double nonref_freq) const;

@@ -37,10 +37,10 @@
 ///
 
 struct pos_range {
-    
+
     pos_range() : is_begin_pos(false), is_end_pos(false), begin_pos(0), end_pos(0) {}
 
-    pos_range(const pos_t bp,const pos_t ep) 
+    pos_range(const pos_t bp,const pos_t ep)
         :  is_begin_pos(true), is_end_pos(true), begin_pos(bp), end_pos(ep) {}
 
     void
@@ -83,16 +83,16 @@ struct pos_range {
 
     bool
     is_range_intersect(const pos_range& pr) const {
-        return (((! pr.is_end_pos) || (! is_begin_pos) || (pr.end_pos > begin_pos)) && 
+        return (((! pr.is_end_pos) || (! is_begin_pos) || (pr.end_pos > begin_pos)) &&
                 ((! pr.is_begin_pos) || (! is_end_pos) || (pr.begin_pos < end_pos)));
     }
 
     /// does this range completely overlap pr?
     bool
     is_superset_of(const pos_range& pr) const {
-        return 
-            (((! is_end_pos) || 
-              ( pr.is_end_pos && (pr.end_pos <= end_pos) )) && 
+        return
+            (((! is_end_pos) ||
+              ( pr.is_end_pos && (pr.end_pos <= end_pos) )) &&
              ((! is_begin_pos) ||
               ( pr.is_begin_pos && (pr.begin_pos >= begin_pos) )));
     }

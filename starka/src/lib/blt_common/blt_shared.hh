@@ -91,7 +91,7 @@ struct gvcf_options {
 
     double block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
 };
-    
+
 
 
 
@@ -210,9 +210,9 @@ struct blt_options {
 
     bool
     is_tier2() const {
-        return 
+        return
             (is_tier2_min_single_align_score ||
-             is_tier2_min_paired_align_score || 
+             is_tier2_min_paired_align_score ||
              is_tier2_single_align_score_rescue_mode ||
              is_tier2_mismatch_density_filter_count ||
              is_tier2_no_mismatch_density_filter ||

@@ -78,12 +78,12 @@ private:
 // all alignments must be on the same strand and 'reasonably' proximate.
 //
 // all alignment info is fwd-strand
-// 
+//
 struct starling_read : private boost::noncopyable {
 
     starling_read(const bam_record& br,
                   const bool is_bam_record_genomic);
-    
+
     ~starling_read();
 
     // bool
@@ -97,7 +97,7 @@ struct starling_read : private boost::noncopyable {
         _read_rec.copy(br);
         _is_bam_record_genomic=true;
     }
-    
+
     // is new alignment compatible with pre-existing information?
     //
     bool
@@ -139,7 +139,7 @@ struct starling_read : private boost::noncopyable {
     }
 
     read_segment&
-    get_segment(seg_id_t seg_no) { 
+    get_segment(seg_id_t seg_no) {
         if(seg_no>0) {
             assert(is_segmented() && (seg_no<=segment_count()));
             return _segment_ptr->get_segment(seg_no);
@@ -148,7 +148,7 @@ struct starling_read : private boost::noncopyable {
     }
 
     const read_segment&
-    get_segment(seg_id_t seg_no) const { 
+    get_segment(seg_id_t seg_no) const {
         if(seg_no>0) {
             assert(is_segmented() && (seg_no<=segment_count()));
             return _segment_ptr->get_segment(seg_no);
@@ -174,11 +174,11 @@ private:
     const bam1_t*
     get_brp() const { return _read_rec._bp; }
 
-#if 0    
+#if 0
     // returns as tier1 mapped if only a contig alignment exists
     MAPLEVEL::index_t
     effective_maplevel() const;
-#endif    
+#endif
 
     bool
     is_treated_as_anytier_mapping() const;

@@ -54,7 +54,7 @@ struct indel_buffer {
         return _idata.lower_bound(indel_key(pos));
     }
 
-    // position iterators which return (at least) all indels with a 
+    // position iterators which return (at least) all indels with a
     // left or right breakpoint in the range.
     //
     // Note:

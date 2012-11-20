@@ -66,7 +66,7 @@ struct gt_parse_helper {
           const bool is_badend) {
         gti.clear();
         if(isdigit(*gt)) return digit(gt,gti,is_badend);
-        
+
         switch(*gt) {
         case '.' :  return unknown(gt,gti,is_badend);
         default: return false;

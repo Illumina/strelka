@@ -63,7 +63,7 @@ add_gvcf_filters(const gvcf_options& opt,
         oss << "The fraction of basecalls filtered out at a site is greater than " << opt.max_base_filt;
         write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
     }
-  
+
     if(opt.is_max_snv_sb) {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;

@@ -104,7 +104,7 @@ add_read_alignment(const starling_options& opt,
         }
 
         if(! sread.is_compatible_alignment(al,rat,contig_id,opt)){
-            log_os << "WARNING: skipping new alignment: " << al 
+            log_os << "WARNING: skipping new alignment: " << al
                    << " which is incompatible with alignments in read: " << sread;
             return std::make_pair(false,0);
         }
@@ -194,7 +194,7 @@ clear_pos(const starling_options& opt,
 
     const pos_group_t::iterator i(_pos_group.find(pos));
     if(i == _pos_group.end()) return;
-    
+
     segment_group_t& seg_group(i->second);
     segment_group_t::const_iterator j(seg_group.begin()),j_end(seg_group.end());
     for(;j!=j_end;++j){
@@ -242,7 +242,7 @@ dump_pos(const pos_t pos,
     const pos_group_t::const_iterator i(_pos_group.find(pos));
     if(i == _pos_group.end()) return;
 
-    os << "READ_BUFFER_POSITION: " << pos << " DUMP ON\n";    
+    os << "READ_BUFFER_POSITION: " << pos << " DUMP ON\n";
 
     const segment_group_t& seg_group(i->second);
     segment_group_t::const_iterator j(seg_group.begin()),j_end(seg_group.end());
@@ -251,12 +251,12 @@ dump_pos(const pos_t pos,
         const seg_id_t seg_id(j->second);
         const read_data_t::const_iterator k(_read_data.find(read_id));
         if(k == _read_data.end()) continue;
-        
+
         const starling_read& sr(*(k->second));
         os << "READ_BUFFER_POSITION: " << pos << " read_segment_no: " << ++r << " seg_id: " << seg_id << "\n";
         os << sr.get_segment(seg_id);
     }
-    os << "READ_BUFFER_POSITION: " << pos << " DUMP OFF\n";    
+    os << "READ_BUFFER_POSITION: " << pos << " DUMP OFF\n";
 }
 
 

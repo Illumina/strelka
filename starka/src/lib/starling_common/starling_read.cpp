@@ -279,7 +279,7 @@ set_genome_align(const alignment& al) {
     pos_t seg_start_read_pos(read_pos);
     pos_t seg_start_ref_pos(ref_pos);
     path_t seg_path;
-    
+
     const unsigned as(al.path.size());
     for(unsigned i(0);i<as;++i){
         const path_segment& ps(al.path[i]);
@@ -305,7 +305,7 @@ set_genome_align(const alignment& al) {
             seg_start_read_pos=read_pos;
             seg_start_ref_pos=ref_pos;
             seg_path.clear();
-        } 
+        }
     }
 }
 
@@ -395,7 +395,7 @@ write_bam(bam_dumper& bamd) {
     // just print out genomic alignment:
     if(al == rseg.genome_align()) {
         //        bamd.put_record(_read_rec._bp);
-        return; 
+        return;
     }
 
     // \TODO there should be a soft-clip for the negative position

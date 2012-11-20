@@ -119,10 +119,10 @@ is_candidate_indel_int(const starling_options& opt,
             }
             n_total_reads += n_reads;
         }
-        
+
         // do reads from all samples exceed the default threshold?:
         if(n_total_reads >= opt.default_min_candidate_indel_reads) is_min_count=true;
-        
+
         if(! is_min_count) return;
     }
 
@@ -171,7 +171,7 @@ is_candidate_indel_int(const starling_options& opt,
         for(unsigned i(0);i<isds;++i) {
             const unsigned estdepth(ebuff(i).val(ik.pos-1));
             if(estdepth > max_depth) return;
-        } 
+        }
     }
 
     /////////////////////////////////////////

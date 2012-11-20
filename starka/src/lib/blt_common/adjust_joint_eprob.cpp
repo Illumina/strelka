@@ -26,7 +26,7 @@
 #include <vector>
 
 
-typedef unsigned icall_t; 
+typedef unsigned icall_t;
 typedef std::vector<icall_t> icalls_t;
 
 
@@ -34,7 +34,7 @@ typedef std::vector<icall_t> icalls_t;
 struct sort_icall_by_eprob {
     sort_icall_by_eprob(const snp_pos_info& pi) : _pi(pi) {}
 
-    bool 
+    bool
     operator()(const icall_t& a, const icall_t& b) const {
         return (_pi.calls[a].get_qscore() > _pi.calls[b].get_qscore());
     }
@@ -69,7 +69,7 @@ get_dependent_val(const unsigned qscore,
         _val[qscore] = get_dependent_eprob(qscore,vexp);
         _is_init[qscore] = true;
     }
-    
+
     return _val[qscore];
 }
 
@@ -87,7 +87,7 @@ adjust_icalls_eprob(const blt_options& opt,
 
     const unsigned ic_size(ic.size());
 
-#ifdef DEBUG_ADJUST 
+#ifdef DEBUG_ADJUST
     for(unsigned i(0);i<ic_size;++i){
         base_call& bi(pi.calls[ic[i]]);
         std::cerr << "BEFORE: " << i << " " << bi.is_neighbor_mismatch << " " << dependent_eprob[ic[i]] << "\n";
@@ -131,7 +131,7 @@ adjust_icalls_eprob(const blt_options& opt,
             dependent_eprob[ic[i]] = static_cast<float>(get_dependent_eprob(bi.get_qscore(),vexp));
 
             if(is_limit_vexp_iterations && (static_cast<int>(i)>=max_vexp_iterations)) continue;
-        
+
             blt_float_t next_vexp(vexp);
             if(is_use_vexp_frac) {
                 next_vexp *= (1.-vexp_frac);
@@ -178,7 +178,7 @@ adjust_joint_eprob(const blt_options& opt,
     for(unsigned i(0);i<n_calls;++i){
         dependent_eprob.push_back(static_cast<float>(pi.calls[i].error_prob()));
     }
-    
+
     if(! is_dependent) return;
 
     // split icalls into fwd and reverse strand and allele types:
@@ -204,7 +204,7 @@ adjust_joint_eprob(const blt_options& opt,
     // process each isize array:
     for(unsigned i(0);i<group_size;++i){
         adjust_icalls_eprob(opt,dpc,icalls[i],pi,dependent_eprob);
-    } 
+    }
 }
 
 

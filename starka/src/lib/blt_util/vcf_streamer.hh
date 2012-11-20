@@ -32,7 +32,7 @@ struct vcf_streamer {
     vcf_streamer(const char* filename,
                  const char* region = NULL,
                  const bam_header_t* bh = NULL);
-    
+
     ~vcf_streamer();
 
     bool next(const bool is_indel_only=false);

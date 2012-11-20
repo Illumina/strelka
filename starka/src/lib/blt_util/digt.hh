@@ -122,7 +122,7 @@ namespace DIGT {
 
         return ex[gt][base_id];
     }
-    
+
     /// expect2_bias is a copy of the expect2 function for biased het
     /// allele calculations
     ///
@@ -154,12 +154,12 @@ namespace DIGT {
 
         return ex[gt][base_id];
     }
-  
+
     inline
     const char*
     get_vcf_gt(const int gt,
                const int ref_gt) {
-        
+
         static const unsigned N_BASE(4);
 
         static const char* gtstr[N_BASE] = { "0/0","0/1","1/1","1/2" };
@@ -174,7 +174,7 @@ namespace DIGT {
                                                   { 3, 1, 1, 3},
                                                   { 3, 1, 3, 1},
                                                   { 3, 3, 1, 1}};
-   
+
         return gtstr[ex[gt][ref_gt]];
     }
 }

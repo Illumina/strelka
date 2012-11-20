@@ -42,7 +42,7 @@ struct hap_cand {
     total_qual() const { return _total_qual; }
 
     uint8_t
-    base_id(const unsigned i) const { 
+    base_id(const unsigned i) const {
         assert(i<HAP_SIZE);
         return (_bq[i] ? (_bq[i] & BASE_MASK) : BASE_ID::ANY );
     }
@@ -58,12 +58,12 @@ struct hap_cand {
         // sort the highest scores first:
         return (_total_qual > rhs._total_qual);
     }
-    
+
     enum { FLANK_SIZE = 10,
            HAP_SIZE = FLANK_SIZE*2+1,
            BASE_MASK = 0x3,
            QUAL_SHIFT = 2};
-    
+
 private:
     uint16_t _total_qual;
     boost::array<uint8_t,HAP_SIZE> _bq;

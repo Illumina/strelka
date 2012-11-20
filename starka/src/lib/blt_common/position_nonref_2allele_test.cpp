@@ -40,7 +40,7 @@ struct nonref_allele_freq_loghood_sparse_func { //: public sample_func_iface {
 
     nonref_allele_freq_loghood_sparse_func(const snp_pos_info& pi,
                                            const unsigned nonref_id,
-                                           sparse_function& sf) 
+                                           sparse_function& sf)
         : _pi(pi), _nonref_id(nonref_id), _sf(sf) {}
 
     blt_float_t
@@ -70,7 +70,7 @@ position_nonref_2allele_test(const snp_pos_info& pi,
                              nonref_test_call& nrc) {
 
     static const bool is_mle_freq(false);
- 
+
     if(pi.ref_base=='N') return;
 
     // add early escape test here?
@@ -83,7 +83,7 @@ position_nonref_2allele_test(const snp_pos_info& pi,
     {
         double qtot[N_BASE];
         for(unsigned i(0);i<N_BASE;++i) qtot[i] = 0;
-    
+
         const unsigned n_calls(pi.calls.size());
         for(unsigned i(0);i<n_calls;++i){
             if(pi.calls[i].base_id==BASE_ID::ANY) continue;

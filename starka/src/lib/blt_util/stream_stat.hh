@@ -67,7 +67,7 @@ struct stream_stat {
     }
 
     int size() const { return k_; }
-    bool empty() const { return (k_==0); } 
+    bool empty() const { return (k_==0); }
 
     double min() const { return ((k_<1) ? nan() : min_); }
     double max() const { return ((k_<1) ? nan() : max_); }

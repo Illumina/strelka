@@ -23,7 +23,7 @@
 
 
 std::ostream&
-operator<<(std::ostream& os, 
+operator<<(std::ostream& os,
            const bam_seq_base& bs) {
 
     const unsigned rs(bs.size());

@@ -205,7 +205,7 @@ protected:
 
     struct win_avgs {
 
-        win_avgs(const starling_options& opt) 
+        win_avgs(const starling_options& opt)
             : _max_winsize(0)
             , _is_last_pos(false)
             , _last_insert_pos(false) {
@@ -244,7 +244,7 @@ protected:
 
         win_avg_set&
         get_win_avg_set(const unsigned i) { return *(_wav[i]); }
-        
+
     private:
 
         void
@@ -308,7 +308,7 @@ protected:
         depth_buffer estdepth_buff; // provide an early estimate of read depth before realignment.
 
         starling_sample_options sample_opt;
-        
+
         indel_synchronizer isync_default;
         indel_synchronizer* indel_sync_ptr;
 

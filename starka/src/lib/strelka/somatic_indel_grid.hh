@@ -64,7 +64,7 @@ namespace STAR_DIINDEL_GRID {
 
 
 namespace DDIINDEL_GRID {
-    
+
     // This is the SIZE to represent the normal allele freq X tumor
     // allele freq space which we calculate the final posteriour
     // probabilty in.
@@ -129,7 +129,7 @@ private:
     }
 
     struct prior_set {
-        prior_set() 
+        prior_set()
             : normal(STAR_DIINDEL_GRID::SIZE)
             , normal_poly(STAR_DIINDEL_GRID::SIZE)
         {}

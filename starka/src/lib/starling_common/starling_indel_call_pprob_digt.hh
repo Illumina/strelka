@@ -62,7 +62,7 @@ write_starling_diploid_indel_file(const starling_diploid_indel& dgt,
 // theta value:
 //
 struct indel_digt_caller : private boost::noncopyable {
-    
+
     indel_digt_caller(const double theta);
 
     // \brief call an indel @ pos by calculating the posterior probability

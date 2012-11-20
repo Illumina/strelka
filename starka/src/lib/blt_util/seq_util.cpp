@@ -132,7 +132,7 @@ get_ref_seq(const char* ref_seq_file,
         } else {
             ref_seq += buff;
         }
-        ref_pos += rc; 
+        ref_pos += rc;
     }
 
 #ifdef SEQ_UTIL_VERBOSE

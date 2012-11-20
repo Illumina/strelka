@@ -55,10 +55,10 @@ void
 starling_input_stream_data::
 register_error(const char* label,
                const sample_id_t sample_no) const {
-    log_os << "ERROR: attempting to register " << label 
-           << " with sample number: " << sample_no 
+    log_os << "ERROR: attempting to register " << label
+           << " with sample number: " << sample_no
            << " more than once\n";
-    exit(EXIT_FAILURE);   
+    exit(EXIT_FAILURE);
 }
 
 
@@ -77,7 +77,7 @@ starling_input_stream_handler(const starling_input_stream_data& data,
 {
     // initial loading for _stream_queue:
     const unsigned rs(_data._reads.size());
-    for(unsigned i(0);i<rs;++i) { 
+    for(unsigned i(0);i<rs;++i) {
         push_next(INPUT_TYPE::READ,_data._reads.get_key(i),i);
     }
     const unsigned cs(_data._contigs.size());
@@ -112,7 +112,7 @@ next() {
         bool is_usable(true);
         _current=_stream_queue.top();
         _stream_queue.pop();
-        
+
         if(_is_head_pos and
            (_current.pos < _head_pos)) {
             if(_current.itype == INPUT_TYPE::CONTIG) {
@@ -125,22 +125,22 @@ next() {
             } else if (_current.itype == INPUT_TYPE::READ) {
                 std::ostringstream oss;
                 oss << "ERROR: unexpected read order:\n"
-                    << "\tInput-record with pos/type/sample_no: " 
+                    << "\tInput-record with pos/type/sample_no: "
                     << (_current.pos+1) << "/" << input_type_label(_current.itype) << "/" << _current.sample_no
-                    << " follows pos/type/sample_no: " 
+                    << " follows pos/type/sample_no: "
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
                 throw blt_exception(oss.str().c_str());
             } else if (_current.itype == INPUT_TYPE::INDEL) {
                 std::ostringstream oss;
                 oss << "ERROR: unexpected vcf record order:\n"
-                    << "\tInput-record with pos/type/sample_no: " 
+                    << "\tInput-record with pos/type/sample_no: "
                     << (_current.pos+1) << "/" << input_type_label(_current.itype) << "/" << _current.sample_no
-                    << " follows pos/type/sample_no: " 
+                    << " follows pos/type/sample_no: "
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
                 throw blt_exception(oss.str().c_str());
             } else {
                 assert(0);
-            }	
+            }
         }
 
         if(_is_head_pos) {

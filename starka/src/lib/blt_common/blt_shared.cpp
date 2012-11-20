@@ -59,7 +59,7 @@ set_report_range(const blt_options& opt,
     }
 
     if(! opt.is_ref_set()) return;
-    
+
     if(report_range.is_begin_pos){
         if(report_range.begin_pos>=ref_end) {
             log_os << "ERROR::-report-range-begin argument must be <= reference sequence size\n";
@@ -89,8 +89,8 @@ get_report_range_limit(const pos_range& report_range,
 
     rrl.set_begin_pos((report_range.is_begin_pos ? report_range.begin_pos : 0));
     rrl.is_end_pos = (report_range.is_end_pos || is_ref_set);
-    rrl.end_pos = (report_range.is_end_pos ? 
-                   report_range.end_pos : 
+    rrl.end_pos = (report_range.is_end_pos ?
+                   report_range.end_pos :
                    (is_ref_set ? ref_end : 0));
     return rrl;
 }

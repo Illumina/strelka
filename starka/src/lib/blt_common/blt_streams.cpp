@@ -85,7 +85,7 @@ write_vcf_audit(const blt_options& opt,
                 const char* const cmdline,
                 const bam_header_t* const header,
                 std::ostream& os) {
-    
+
     const time_t t(time(NULL));
 
     os << "##fileformat=VCFv4.1\n";
@@ -157,7 +157,7 @@ setup_bsnp_file(const blt_options& opt,
     }
 
     fos << " snv_sb snv_hpol";
-    
+
     if(opt.is_print_all_poly_gt) {
         for(unsigned gt(0);gt<DIGT::SIZE;++gt){
             fos << " P(" << DIGT::label(gt) << "|ps)";
@@ -187,21 +187,21 @@ setup_nonref_output(const blt_options& opt,
     osptr.reset(fosptr);
     std::ofstream& fos(*fosptr);
     open_ofstream(pinfo,filename,label,opt.is_clobber,fos);
-    
+
     fos << "# ** " << pinfo.name() << " nonref allele test file **\n";
     write_file_audit(opt,pinfo,cmdline,fos);
     fos << "#$ COLUMNS seq_name pos bcalls_used bcalls_filt ref Q(snv) max_gt Q(max_gt)";
-    
+
     //        if(opt.is_print_used_allele_counts) {
     for(unsigned b(0);b<N_BASE;++b){
         fos << " " << id_to_base(b) << "_used";
     }
-    
+
     for(unsigned b(0);b<N_BASE;++b){
         fos << " " << id_to_base(b) << "_meanQ";
     }
     //}
-    
+
     fos << "\n";
 }
 
@@ -306,7 +306,7 @@ blt_streams(const blt_options& opt,
 
     if(opt.is_bsnp_diploid_file){
         setup_bsnp_file(opt,pinfo,cmdline,_bsnp_diploid_osptr,
-                        opt.bsnp_diploid_filename,"bsnp-diploid",is_include_seq_name);          
+                        opt.bsnp_diploid_filename,"bsnp-diploid",is_include_seq_name);
     }
 
     if(opt.is_bsnp_diploid_allele_file){

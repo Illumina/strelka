@@ -59,7 +59,7 @@ struct base_call {
     {
         qphred_cache::qscore_check(qscore,"basecall quality");
     }
-    
+
     // pull quality value transformations from caching functions:
     double
     error_prob() const {
@@ -119,7 +119,7 @@ struct snp_pos_info {
                      const int min_qscore) const {
 
         for(unsigned i(0);i<N_BASE;++i) base_count[i] = 0;
-    
+
         const unsigned n_calls(calls.size());
         for(unsigned i(0);i<n_calls;++i){
             if(calls[i].base_id==BASE_ID::ANY) continue;

@@ -27,7 +27,7 @@ struct strelka_options : public starling_options {
 
     typedef starling_options base_t;
 
-    strelka_options() 
+    strelka_options()
         : somatic_snv_rate  (0.000001)
         , somatic_indel_rate(0.000001)
         , shared_site_error_rate(0.000005)

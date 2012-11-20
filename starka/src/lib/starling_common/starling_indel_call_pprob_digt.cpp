@@ -82,7 +82,7 @@ get_het_observed_allele_ratio(const unsigned read_length,
                               double& log_ref_prob,
                               double& log_indel_prob) {
 
-    assert((ik.type==INDEL::INSERT) || 
+    assert((ik.type==INDEL::INSERT) ||
            (ik.type==INDEL::DELETE) ||
            (ik.type == INDEL::SWAP));
 
@@ -190,7 +190,7 @@ get_high_low_het_ratio_lhood(const starling_options& opt,
                                               ik,chet_ratio,log_ref_prob,log_indel_prob);
             }
             const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
-            
+
             het_lhood_high += integrate_out_sites(dopt,path_lnp.nsite,het_lnp,is_tier2_pass);
         }
     }
@@ -259,7 +259,7 @@ get_sum_path_pprob(const starling_deriv_options& dopt,
 
         // optionally skip tier2 data:
         if((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
-        
+
         const read_path_scores path_pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
 
         total_pprob.indel += path_pprob.indel;
@@ -448,7 +448,7 @@ get_indel_digt_lhood(const starling_options& opt,
                                       ref_error_lnp,ref_real_lnp,
                                       ik,id,het_ratio,is_tier2_pass,is_use_alt_indel,lhood);
         }
-        
+
         const unsigned n_het_subgt(1+2*n_bias_steps);
         const double subgt_log_prior(std::log(static_cast<double>(n_het_subgt)));
         lhood[STAR_DIINDEL::HET] -= subgt_log_prior;

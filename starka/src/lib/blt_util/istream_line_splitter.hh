@@ -83,7 +83,7 @@ private:
             dparse.dump(oss);
             throw blt_exception(oss.str().c_str());
         }
-        
+
         for(unsigned i(1);(i+1)<col_count;++i){
             dparse.word[i][strlen(dparse.word[i])] = sep;
         }

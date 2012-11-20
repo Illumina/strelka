@@ -43,7 +43,7 @@ check_option_arg_range(const prog_info& pinfo,
 
     std::ostringstream oss;
     oss << std::setprecision(10);
-    oss << "Value provided for '" << label << "': '" << val 
+    oss << "Value provided for '" << label << "': '" << val
         << "', is not in expected range: [ " << min << " , " << max << " ]";
     pinfo.usage(oss.str().c_str());
 }

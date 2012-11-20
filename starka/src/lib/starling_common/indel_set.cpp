@@ -27,6 +27,6 @@ void
 dump_indel_set(const indel_set_t& is,
                std::ostream& os){
 
-    indel_set_t::const_iterator i(is.begin()), i_end(is.end());  
+    indel_set_t::const_iterator i(is.begin()), i_end(is.end());
     for(;i!=i_end;++i) os << *i;
 }

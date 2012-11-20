@@ -44,7 +44,7 @@ namespace VCF_FILTERS {
         SIZE
     };
 
-    inline 
+    inline
     const char*
     get_label(const unsigned idx) {
         switch(idx) {
@@ -66,7 +66,7 @@ namespace VCF_FILTERS {
 
 
 struct shared_modifiers {
-    
+
     shared_modifiers() { clear(); }
 
     void
@@ -172,7 +172,7 @@ struct indel_info {
          const starling_diploid_indel_core& init_dindel,
          const starling_indel_report_info& init_iri,
          const starling_indel_sample_report_info& init_isri)
-    { 
+    {
         pos=(init_pos);
         ik=(init_ik);
         dindel=(init_dindel);

@@ -34,7 +34,7 @@
 
 
 namespace DDIGT {
-    
+
     enum index_t { SIZE = DIGT::SIZE*DIGT::SIZE };
 
     inline
@@ -66,7 +66,7 @@ struct somatic_snv_genotype : private boost::noncopyable {
 
     struct result_set {
 
-        result_set() 
+        result_set()
             : max_gt(0), pprob(DDIGT::SIZE)
         {
             static const blt_float_t p(1./static_cast<blt_float_t>(DDIGT::SIZE));
@@ -81,11 +81,11 @@ struct somatic_snv_genotype : private boost::noncopyable {
             max_gt_qphred=qp;
             for(unsigned i(0);i<DDIGT::SIZE;++i) {
                 pprob[i] = p;
-            } 
+            }
         }
 
         // TODO: add marginal normal/tumor genotypes
-  
+
         unsigned max_gt;
         int snv_qphred;
         int snv_from_ref_qphred;

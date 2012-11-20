@@ -56,7 +56,7 @@ namespace NR2TEST {
 ///
 /// Method is optimized to pick up low-frequency snps, but will also
 /// inevitably call higher frequency germline variation (without
-/// correct priors) if present. 
+/// correct priors) if present.
 ///
 void
 position_nonref_2allele_test(const snp_pos_info& pi,

@@ -31,14 +31,14 @@ struct vcf_record {
     // set record from record string s, return false on error
     bool set(const char* s,
              const int len);
-    
+
     void clear() {
         chrom="";
         pos=0;
         ref="";
         alt.clear();
     }
-    
+
     std::string chrom;
     int pos;
     std::string ref;

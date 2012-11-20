@@ -36,20 +36,20 @@ hap_cand(const bam_seq_base& read_seq,
 {
     const int read_len(read_seq.size());
     assert((offset>=0) && (offset<read_len));
-    
+
     int start(offset-FLANK_SIZE);
     int end(offset+FLANK_SIZE+1);
     const int pre_seq( (start<0) ? -start : 0 );
     const int post_seq( (end>read_len) ? (end-read_len) : 0 );
     start=std::max(start,0);
     end=std::min(end,read_len);
-    
+
     for(int i(0);i<pre_seq;++i) { _bq[i] = 0; }
 
     for(int i(start);i<end;++i) {
         _total_qual += qual[i];
         const char rs(read_seq.get_char(i));
-        _bq[i-start+pre_seq] = 
+        _bq[i-start+pre_seq] =
             ( (rs=='N') ?
               0 :
               (qual[i]<<QUAL_SHIFT | base_to_id(rs)));
@@ -59,7 +59,7 @@ hap_cand(const bam_seq_base& read_seq,
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, const hap_cand& hc) {
 
     os << "hap_cand:\n";
@@ -98,7 +98,7 @@ struct hinfo {
 
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, const hinfo& hi) {
 
     os << "hinfo:\n";
@@ -126,7 +126,7 @@ is_hap_match(const hap_cand& hc,
                (hc.base_id(i) != BASE_ID::ANY)) return false;
         }
     }
-    
+
     // match!
     for(unsigned i(0);i<hap_cand::HAP_SIZE;++i) {
         if((hi.hseq[i] == hc.base_id(i)) or

@@ -79,7 +79,7 @@ print_known_qscore(std::ostream& os,
     for(unsigned i(0);i<N_BASE;++i) qscore_tot[i] = 0;
     unsigned qscore_count[N_BASE];
     for(unsigned i(0);i<N_BASE;++i) qscore_count[i] = 0;
-    
+
     const unsigned n_calls(calls.size());
     for(unsigned i(0);i<n_calls;++i){
         if(calls[i].base_id==BASE_ID::ANY) continue;

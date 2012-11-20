@@ -70,19 +70,19 @@ gvcf_block_site_record::
 test(const site_info& si) const {
 
     if(count==0) return true;
-    
+
     // pos must be +1 from end of record:
     if((record.pos+count) != si.pos) return false;
-    
+
     // filters must match:
     if(record.smod.filters != si.smod.filters) return false;
-    
+
     if(0!=strcmp(record.get_gt(),si.get_gt())) return false;
-    
+
     // coverage states must match:
     if(record.smod.is_covered != si.smod.is_covered) return false;
     if(record.smod.is_used_covered != si.smod.is_used_covered) return false;
-    
+
     // test blocking values:
     if(! is_new_value_blockable(si.smod.gqx,
                                 block_gqx,frac_tol,abs_tol,
@@ -99,7 +99,7 @@ test(const site_info& si) const {
                                 block_dpf,frac_tol,abs_tol)) {
         return false;
     }
-       
+
     return true;
 }
 

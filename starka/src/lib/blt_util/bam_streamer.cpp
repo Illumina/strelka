@@ -53,25 +53,25 @@ bam_streamer(const char* filename,
         log_os << "ERROR: file must be in BAM format for region lookup: " << filename << "\n";
         exit(EXIT_FAILURE);
     }
-    
+
     /// TODO: Find out whether _bidx can be destroyed after the BAM
     /// iterator is created, in which case this could be a local
     /// variable. Until we know, _bidx should persist for the lifetime
     /// of _biter
-    _bidx = bam_index_load(filename); // load BAM index   
-    if (NULL == _bidx) {   
-        log_os << "ERROR: BAM index is not available for file: " << filename << "\n";   
+    _bidx = bam_index_load(filename); // load BAM index
+    if (NULL == _bidx) {
+        log_os << "ERROR: BAM index is not available for file: " << filename << "\n";
         exit(EXIT_FAILURE);
     }
-    
+
     int ref,beg,end;
     bam_parse_region(_bfp->header, region, &ref, &beg, &end); // parse the region
-    
-    if (ref < 0) {   
-        log_os << "ERROR: Invalid region: '" <<  region << "' specified for BAM file: " << filename << "\n";   
+
+    if (ref < 0) {
+        log_os << "ERROR: Invalid region: '" <<  region << "' specified for BAM file: " << filename << "\n";
         exit(EXIT_FAILURE);
-    }   
-    
+    }
+
     _biter = bam_iter_query(_bidx,ref,beg,end);
 }
 
@@ -80,7 +80,7 @@ bam_streamer(const char* filename,
 bam_streamer::
 ~bam_streamer() {
     if(NULL != _biter) bam_iter_destroy(_biter);
-    if(NULL != _bidx) bam_index_destroy(_bidx); 
+    if(NULL != _bidx) bam_index_destroy(_bidx);
     if(NULL != _bfp) samclose(_bfp);
 }
 

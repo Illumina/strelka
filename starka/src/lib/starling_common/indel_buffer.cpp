@@ -88,7 +88,7 @@ insert_indel(const indel& in,
 
     indel_data& id(get_indel_data(i));
 
-    if(in.key.is_breakpoint() && 
+    if(in.key.is_breakpoint() &&
        (id.seq.size() < in.data.seq.size())) {
         id.seq = in.data.seq;
     }

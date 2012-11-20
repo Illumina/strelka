@@ -44,7 +44,7 @@ alt_map_qual(const char* tag) const {
 
 
 
-const char* 
+const char*
 bam_record::
 get_string_tag(const char* tag) const {
 

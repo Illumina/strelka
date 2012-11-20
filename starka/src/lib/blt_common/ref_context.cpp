@@ -26,7 +26,7 @@
 unsigned
 get_snp_hpol_size(const pos_t pos,
                   const reference_contig_segment& ref){
-    
+
     // count upstream repeats:
     bool is_up_repeat(false);
     char up_repeat('N');

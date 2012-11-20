@@ -58,7 +58,7 @@ struct diploid_genotype {
                 pprob[i] = p;
             }
         }
-  
+
         unsigned max_gt;
         int snp_qphred;
         int max_gt_qphred;

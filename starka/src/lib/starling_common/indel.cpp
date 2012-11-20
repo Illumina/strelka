@@ -24,11 +24,11 @@
 
 
 std::ostream&
-operator<<(std::ostream& os, 
+operator<<(std::ostream& os,
            const indel_key& ik){
-    os << "INDEL pos: " << ik.pos 
-       << " type: " << INDEL::get_index_label(ik.type) 
-       << " len: " << ik.length 
+    os << "INDEL pos: " << ik.pos
+       << " type: " << INDEL::get_index_label(ik.type)
+       << " len: " << ik.length
        << " swap_dlen: " << ik.swap_dlength << "\n";
     return os;
 }
@@ -94,7 +94,7 @@ operator<<(std::ostream& os,
         siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
         for(unsigned n(0);i!=i_end;++i){
             os << "read_path_lnp no: " << ++n
-               << " id: " << i->first 
+               << " id: " << i->first
                << " " << i->second
                << "\n";
         }

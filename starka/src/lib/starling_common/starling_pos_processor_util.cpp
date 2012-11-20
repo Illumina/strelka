@@ -67,7 +67,7 @@ is_valid_bam_code(const uint8_t a) {
 
     switch(a) {
     case A:
-    case C: 
+    case C:
     case G:
     case T:
     case ANY: return true;
@@ -101,7 +101,7 @@ check_bam_record(const bam_streamer& read_stream,
         read_stream.report_state(log_os);
         exit(EXIT_FAILURE);
     }
-        
+
     if(rs > STARLING_MAX_READ_SIZE){
         log_os << "ERROR: maximum read size (" << STARLING_MAX_READ_SIZE << ") exceeded in input read alignment record:\n";
         read_stream.report_state(log_os);
@@ -185,7 +185,7 @@ is_usable_read_mapping(const starling_options& opt,
             return false;
         }
     }
- 
+
     if(is_use_legacy_map_scores) {
         const int se_mapq(static_cast<int>(read.se_map_qual()));
 
@@ -204,7 +204,7 @@ is_usable_read_mapping(const starling_options& opt,
                 return false;
             }
         }
-   
+
     } else {
         const int mapq(static_cast<int>(read.map_qual()));
         if(read.is_paired()){
@@ -228,7 +228,7 @@ get_map_level(const starling_options& opt,
               const bam_record& read) {
 
     using namespace MAPLEVEL;
-    
+
     if(read.is_unmapped()) return UNMAPPED;
 
     if(is_usable_read_mapping(opt,read)) return TIER1_MAPPED;
@@ -295,7 +295,7 @@ process_genomic_read(const starling_options& opt,
         brc.duplicate++;
         return;
     }
-    
+
     if(read.is_unmapped()) {
         brc.unmapped++;
         return;
@@ -329,7 +329,7 @@ process_genomic_read(const starling_options& opt,
     {   //    if(is_usable_mapping or opt.is_realign_submapped_reads){ // or opt.is_realigned_read_file){
 
         // if we're seeing an unmapped read, it's still expected to
-        // have a position and chrom assignment 
+        // have a position and chrom assignment
         //
         alignment al;
         al.pos=base_pos;
@@ -359,7 +359,7 @@ process_genomic_read(const starling_options& opt,
                 return;
             }
         }
-        
+
 
         const char* chrom_name(read_stream.target_id_to_name(read.target_id()));
 
@@ -386,7 +386,7 @@ common_xfix_length(const std::string& s1,
 
     const unsigned s1s(s1.size());
     const unsigned s2s(s2.size());
-	
+
     unsigned prefix(0);
     unsigned nsearch(std::min(s1s,s2s));
     for(;prefix<nsearch;++prefix){
@@ -421,7 +421,7 @@ process_candidate_indel(const vcf_record& vcf_indel,
         assert(nfix<=std::min(rs,as));
         const int insert_length(as-nfix);
         const int delete_length(rs-nfix);
-        
+
         indel in;
         // starling indel pos is at the first changed base but zero-indexed:
         in.key.pos = (vcf_indel.pos+xfix.first-1);
@@ -441,7 +441,7 @@ process_candidate_indel(const vcf_record& vcf_indel,
             log_os << "ERROR: Can't parse vcf indel: '" << vcf_indel << "'\n";
             exit(EXIT_FAILURE);
         }
-        
+
         in.data.is_external_candidate = true;
         sppr.insert_indel(in,sample_no);
     }

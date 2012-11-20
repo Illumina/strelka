@@ -33,7 +33,7 @@ void
 get_read_key_from_export_line(const export_line_parser& exl,
                               std::string& key){
 
-    // note that this has been changed to the slower numerical version to 
+    // note that this has been changed to the slower numerical version to
     // guarantee that matching reads will be identified as such even after GROUPER
     // removes leading zeros
     //
@@ -48,7 +48,7 @@ get_read_key_from_export_line(const export_line_parser& exl,
 
 pos_t
 get_alignment_buffer_pos(const alignment& al){
-    
+
     const pos_t lead(apath_read_lead_size(al.path));
     return al.pos-lead;
 }
@@ -60,7 +60,7 @@ struct ddata {
     ddata(const unsigned read_size,
           const unsigned flank_size,
           read_mismatch_info& rmi_init)
-        : is_totaled(false), 
+        : is_totaled(false),
           fs(flank_size), fs2(fs*2),
           delta_size(std::max(1+fs2,read_size)-fs2),
           rmi(rmi_init) {
@@ -155,7 +155,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
                 const unsigned read_pos(read_head_pos+j);
                 if((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
-                
+
                 if(read_seq.get_char(read_pos) != ref_seq.get_char(ref_pos)){
                     rmi[read_pos].is_mismatch=true;
                     dd.inc(read_pos,1);
@@ -230,7 +230,7 @@ get_valid_alignment_range(const alignment& al,
             for(unsigned j(0);j<ps.length;++j){
                 const unsigned read_pos(read_head_pos+j);
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
-                
+
                 const char read_char(read_seq.get_char(read_pos));
                 const char ref_char(ref_seq.get_char(ref_pos));
                 if((read_char != 'N') && (ref_char != 'N')) {
@@ -242,7 +242,7 @@ get_valid_alignment_range(const alignment& al,
                         rev_read_score[read_pos] += match_score;
                     }
                 }
-            }   
+            }
             read_head_pos += ps.length;
             ref_head_pos += ps.length;
 

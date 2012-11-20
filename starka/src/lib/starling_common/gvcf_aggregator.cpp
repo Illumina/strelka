@@ -128,7 +128,7 @@ gvcf_aggregator(const starling_options& opt,
     assert(report_range.is_end_pos);
 
     if(! opt.is_gvcf_output()) return;
-        
+
     assert(NULL != _osptr);
     assert((NULL !=_chrom) && (strlen(_chrom)>0));
 
@@ -397,7 +397,7 @@ queue_site_record(const site_info& si) {
     if(! _block.test(si)) {
         write_block_site_record();
     }
-    
+
     _block.join(si);
 }
 
@@ -613,7 +613,7 @@ modify_indel_conflict_site(site_info& si) {
 void
 gvcf_aggregator::
 modify_overlap_indel_record() {
-    
+
     // can only handle simple 2-indel overlaps right now:
     assert(_indel_buffer_size==2);
 
@@ -645,7 +645,7 @@ modify_overlap_indel_record() {
                 ii.dindel.max_gt_qphred = _indel_buffer[hap].dindel.max_gt_qphred;
             }
         }
-        
+
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         _ref.get_substring(indel_begin_pos,(_indel_buffer[hap].pos-indel_begin_pos)-1,leading_seq);
         const unsigned trail_len(_indel_end_pos-_indel_buffer[hap].ik.right_pos());
@@ -692,7 +692,7 @@ modify_conflict_indel_record() {
 void
 gvcf_aggregator::
 write_indel_record(const unsigned write_index) {
-    
+
     assert(_indel_buffer_size>0);
 
     // flush any non-variant block before starting:
@@ -711,7 +711,7 @@ write_indel_record(const unsigned write_index) {
     if(ii.imod.is_overlap) {
         end_index++;
     }
-        
+
     for(unsigned i(write_index);i<=end_index;++i) {
         if(i!=write_index) os << ',';
         os << _indel_buffer[i].iri.vcf_indel_seq;
@@ -792,7 +792,7 @@ gvcf_aggregator::
 process_overlaps() {
 
     if(0==_indel_buffer_size) return;
-    
+
     bool is_conflict_print(false);
 
     // do the overlap processing:
