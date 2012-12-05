@@ -26,15 +26,19 @@
 
 struct vcf_streamer {
 
-    // optionally provide a BAM header to validatr vcf chromosome names against
+    // optionally provide a BAM header to validate vcf chromosome names against
     //
     explicit
     vcf_streamer(const char* filename,
                  const char* region = NULL,
                  const bam_header_t* bh = NULL);
-    
+
     ~vcf_streamer();
 
+    // advance to next vcf record
+    //
+    // is_indel_only - if set, skip all records except indels
+    //
     bool next(const bool is_indel_only=false);
 
     const vcf_record* get_record_ptr() const {

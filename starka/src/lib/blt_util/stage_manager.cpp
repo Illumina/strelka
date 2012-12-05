@@ -35,14 +35,14 @@ add_stage(const int id,
           const int parent_id,
           const unsigned parent_distance,
           const bool is_parent) {
-    
+
     unsigned pos(0);
     if(is_parent) {
         idmap_t::iterator pit(_ids.find(parent_id));
 
         if(pit==_ids.end()){
             log_os << "ERROR: stage_data.add_stage() parent_id " << parent_id << " does not exist\n";
-            exit(EXIT_FAILURE);   
+            exit(EXIT_FAILURE);
         }
 
         pos=(pit->second+parent_distance);
@@ -168,7 +168,7 @@ reset() {
         }
     }
     finish_process_pos();
-    
+
     // reset to ground state:
     _is_first_pos_set=false;
     _is_head_pos=false;
@@ -304,7 +304,7 @@ finish_process_pos(){
                 }
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
-    
+
             if(stage_pos>=_head_pos) break;
         }
         _is_any_minpos=get_is_any_minpos(_is_minpos,_stage_size);
@@ -317,7 +317,7 @@ finish_process_pos(){
                 if(stage_pos<_min_pos) break;
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
-    
+
             if(stage_pos>=_head_pos) break;
         }
     }

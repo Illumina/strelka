@@ -79,7 +79,7 @@ struct strelka_sample_info : public sample_info {
         case NORMAL: return (is_tier1 ? "n1-" : "n2-");
         case TUMOR: return (is_tier1 ? "t1-" : "t2-");
         default: return "?" "?-";
-        } 
+        }
     }
 };
 

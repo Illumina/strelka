@@ -33,12 +33,12 @@
 
 struct diploid_genotype : private boost::noncopyable {
 
-    diploid_genotype() 
+    diploid_genotype()
         : is_snp(false), ref_gt(0) {}
 
     struct result_set {
 
-        result_set() 
+        result_set()
             : max_gt(0)
         {
             static const blt_float_t p(1./static_cast<blt_float_t>(DIGT::SIZE));
@@ -47,9 +47,9 @@ struct diploid_genotype : private boost::noncopyable {
             max_gt_qphred=qp;
             for(unsigned i(0);i<DIGT::SIZE;++i) {
                 pprob[i] = p;
-            } 
+            }
         }
-  
+
         unsigned max_gt;
         int snp_qphred;
         int max_gt_qphred;

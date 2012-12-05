@@ -66,7 +66,7 @@ test_contig_usability(const starling_options& opt,
     static const bool is_filter_swap(false);
     if(is_filter_swap && is_seq_swap(ctg.path)) {
         log_os << "WARNING: Indel contig: '" << ctg.id << "'";
-        if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";   
+        if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";
         log_os << " contains adjacent insertion/deletion event. Skipping...\n";
         return false;
     }
@@ -85,7 +85,7 @@ test_contig_usability(const starling_options& opt,
         if(is_skip) {
             if(opt.verbosity >= LOG_LEVEL::ALLWARN) {
                 log_os << "WARNING: Indel contig: '" << ctg.id << "'";
-                if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";   
+                if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";
                 log_os << " contains an edge match segment shorter than "
                        << opt.min_contig_edge_alignment << " bases. Skipping...\n";
                 print_contig_alignment(ctg,log_os);
@@ -111,7 +111,7 @@ test_contig_usability(const starling_options& opt,
         if(is_skip) {
             if(opt.verbosity >= LOG_LEVEL::ALLWARN) {
                 log_os << "WARNING: Indel contig: '" << ctg.id << "'";
-                if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";   
+                if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";
                 log_os << " does not contain a contiguous match segment of at least "
                        << opt.min_contig_contiguous_match << " bases. Skipping...\n";
                 print_contig_alignment(ctg,log_os);
@@ -132,7 +132,7 @@ test_contig_usability(const starling_options& opt,
         if(is_skip) {
             if(opt.verbosity >= LOG_LEVEL::ALLWARN) {
                 log_os << "WARNING: Indel contig: '" << ctg.id << "'";
-                if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";   
+                if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";
                 log_os << " contains short open-end. Skipping...\n";
                 print_contig_alignment(ctg,log_os);
             }
@@ -149,7 +149,7 @@ test_contig_usability(const starling_options& opt,
 /// starling_processor
 ///
 /// returns true if the read is accepted into the buffer
-/// (read can fail a number of quality checks -- such as 
+/// (read can fail a number of quality checks -- such as
 /// being located too far away from other alignments of the
 /// same read or having an indel that is too large
 ///
@@ -180,7 +180,7 @@ add_export_read_to_buffer(starling_pos_processor_base& sppr,
         brc.flag = 0;
         brc.pos = -1;
         brc.mpos = -1;
-        // always set to the same chrom: brc.tid = -1; 
+        // always set to the same chrom: brc.tid = -1;
         brc.mtid = -1;
         brc.isize = 0;
 
@@ -208,7 +208,7 @@ add_export_read_to_buffer(starling_pos_processor_base& sppr,
         if(tmp_key_br.is_first()) tmp_key_br.toggle_is_first();
         if(! tmp_key_br.is_second()) tmp_key_br.toggle_is_second();
     }
-    
+
     // set strand:
     if(al.is_fwd_strand!=tmp_key_br.is_fwd_strand()) {
         tmp_key_br.toggle_is_fwd_strand();
@@ -265,7 +265,7 @@ find_first_read_for_contig(const std::string& contig_id,
                            export_stream_reader& exr) {
 
     do {
-        if((exr.exline()) && 
+        if((exr.exline()) &&
            (contig_id == exr.exline()->match_chromosome())) return;
     } while(exr.next());
 
@@ -321,7 +321,7 @@ set_candidate_edge_insert_bp(candidate_alignment& cal){
 // simple object to share code between the genomic and
 // contig read parse routines
 //
-struct export_read_parse {
+struct export_read_parse  : private boost::noncopyable {
 
     export_read_parse(const export_stream_reader& exr)
         : _fwd_strand_read_store(NULL)
@@ -330,16 +330,16 @@ struct export_read_parse {
 
         read=exl.read();
         assert(read);
-        
+
         read_size=strlen(read);
         assert(read_size>0);
-        
+
         if(read_size > STARLING_MAX_READ_SIZE){
             log_os << "ERROR: maximum read size (" << STARLING_MAX_READ_SIZE << ") exceeded in export line.\n";
             exr.report_state(log_os);
             exit(EXIT_FAILURE);
         }
-        
+
         if(! is_valid_seq(read)){
             log_os << "ERROR: unsupported base(s) in read sequence.\n";
             exr.report_state(log_os);
@@ -411,8 +411,8 @@ process_contig_reads(const grouper_contig& ctg,
         {   // read apath will be derived from the contig apath, but
             // first assert that there are no indels in the read's
             // alignment to the contig:
-            const char* const md(exl.match_descriptor());   
-            export_md_to_apath(md,al.is_fwd_strand,al.path); 
+            const char* const md(exl.match_descriptor());
+            export_md_to_apath(md,al.is_fwd_strand,al.path);
             assert((al.path.size()==1) && (al.path[0].type == ALIGNPATH::MATCH));
         }
 
@@ -478,7 +478,7 @@ process_contig(const starling_options& client_opt,
     static const INDEL_ALIGN_TYPE::index_t iat(INDEL_ALIGN_TYPE::CONTIG);
     const string_bam_seq bseq(ctg.seq);
     try {
-        add_alignment_indels_to_sppr(client_opt.max_indel_size,ref,ctg,bseq,sppr,iat,contig_no,sample_no); 
+        add_alignment_indels_to_sppr(client_opt.max_indel_size,ref,ctg,bseq,sppr,iat,contig_no,sample_no);
     } catch (...) {
         log_os << "\nException caught in add_alignment_indels_to_sppr() while processing contig";
         if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";

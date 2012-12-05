@@ -54,7 +54,7 @@ struct indel_buffer {
         return _idata.lower_bound(indel_key(pos));
     }
 
-    // position iterators which return (at least) all indels with a 
+    // position iterators which return (at least) all indels with a
     // left or right breakpoint in the range.
     //
     // Note:
@@ -88,9 +88,13 @@ struct indel_buffer {
     // samples. With this option the  function does add read or contig id's to
     // indel_data.
     //
+    // is_repeat_obs - true if this id is already entered in the indel data
+    //                 for its sample, this is both read and set
+    //
     bool
-    insert_indel(const indel& in,
-                 const bool is_shared = false);
+    insert_indel(const indel_observation& obs,
+                 const bool is_shared,
+                 bool& is_repeat_obs);
 
     // like insert indel, but used for indels from other samples where
     // the candidate indel pool is to be synchronized between

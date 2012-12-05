@@ -17,7 +17,7 @@
 /// \author Chris Saunders
 ///
 /// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
+/// XXX_begin_pos is zero-indexed position at the beginning of the range
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
@@ -91,7 +91,9 @@ starling_run(const starling_options& opt){
     // hold zero-to-many vcf streams open in indel_streams:
     typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
-    for(unsigned i(0);i<opt.input_candidate_indel_vcf.size();++i) {
+
+    const unsigned n_input_vcf(opt.input_candidate_indel_vcf.size());
+    for(unsigned i(0);i<n_input_vcf;++i) {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(opt.input_candidate_indel_vcf[i].c_str(),
                                                         bam_region.c_str(),read_stream.get_header())));
       	sdata.register_indels(*(indel_stream.back()));

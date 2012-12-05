@@ -76,7 +76,7 @@ struct htype_element {
         : pos(p)
         , delete_length(0)
         , open_end(OPEN::NONE) {}
-    
+
     void
     clear() {
         pos=0;
@@ -116,7 +116,7 @@ struct htype_element {
         if(delete_length==rhs.delete_length) {
             if(open_end < rhs.open_end) return true;
             if(open_end==rhs.open_end) {
-                if(seq < rhs.seq) return true; 
+                if(seq < rhs.seq) return true;
             }
         }
         return false;
@@ -177,7 +177,7 @@ std::ostream&
 operator<<(std::ostream& os,
            const htype_element& he) {
 
-    os << "htype_element: pos: " << he.pos 
+    os << "htype_element: pos: " << he.pos
        << " del_len: " << he.delete_length;
     if(OPEN::NONE != he.open_end) {
         os << " open_end: " << OPEN::label(he.open_end);
@@ -343,7 +343,7 @@ convert_indel_to_htype(const indel_key& ik,
     // build he:
     if(ref_indel_pr.is_complete()) {
         he.delete_length=ref_indel_pr.end_pos-ref_indel_pr.begin_pos;
-    } 
+    }
 
     if(!  read_indel_pr.is_begin_pos) {
         he.pos=read_indel_pr.end_pos;
@@ -366,7 +366,7 @@ convert_indel_to_htype(const indel_key& ik,
                 pr.set_begin_pos(nonclip_pr.begin_pos);
             } else {
                 pr.set_end_pos(nonclip_pr.end_pos);
-            } 
+            }
         }
 
         assert(pr.begin_pos<=pr.end_pos && pr.begin_pos>=0);
@@ -375,7 +375,7 @@ convert_indel_to_htype(const indel_key& ik,
         }
     }
 
-    if((he.delete_length==0) && 
+    if((he.delete_length==0) &&
        (he.insert_length()==0)) {
         he.clear();
         return false;
@@ -490,7 +490,7 @@ get_region_haplotypes(const known_pos_range full_pr,
             {
                 indel_set_t cal_indels;
                 get_alignment_indels(cal,opt.max_indel_size,cal_indels);
-            }           
+            }
 
             //rseg.blah....
         }

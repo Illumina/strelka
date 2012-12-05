@@ -67,7 +67,7 @@ initialize_realign_bam(const bool is_clobber,
     //
     //fp->header = bam_header_dup((const bam_header_t*)aux);
     //fos << "@PG\tID:" << pinfo.name() << "\tVN:" << pinfo.version() << "\tCL:" << cmdline << "\n";
-    
+
     if(not is_clobber){ // weak clobber test:
         std::ofstream fos;
         open_ofstream(pinfo,filename,label,is_clobber,fos);

@@ -129,13 +129,13 @@ get_indel_summary_strings(const indel_key& ik,
     if((ik.type == INDEL::INSERT) ||
        (ik.type == INDEL::BP_LEFT) ||
        (ik.type == INDEL::BP_RIGHT)) {
-        indel_seq = id.seq;
+        indel_seq = id.get_insert_seq();
         indel_ref_seq = std::string(indel_seq.size(),'-');
     } else if(ik.type == INDEL::DELETE) {
         set_delete_seq(ik,ref,indel_ref_seq);
         indel_seq = std::string(indel_ref_seq.size(),'-');
     } else if(ik.type == INDEL::SWAP) {
-        indel_seq = id.seq;
+        indel_seq = id.get_insert_seq();
         set_delete_seq(ik,ref,indel_ref_seq);
         int idelt(static_cast<int>(ik.length)-static_cast<int>(ik.swap_dlength));
         if(idelt>0) { indel_ref_seq += std::string(idelt,'-'); }
@@ -159,21 +159,21 @@ get_vcf_summary_strings(const indel_key& ik,
                         const reference_contig_segment& ref,
                         std::string& vcf_indel_seq,
                         std::string& vcf_ref_seq){
-    
+
     if       (ik.is_breakpoint()) {
         if       (ik.type == INDEL::BP_LEFT) {
             copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_ref_seq);
-            vcf_indel_seq = vcf_ref_seq + id.seq + '.';
+            vcf_indel_seq = vcf_ref_seq + id.get_insert_seq() + '.';
         } else if(ik.type == INDEL::BP_RIGHT){
             copy_ref_subseq(ref,ik.pos,ik.pos+1,vcf_ref_seq);
-            vcf_indel_seq = '.' + id.seq + vcf_ref_seq;
+            vcf_indel_seq = '.' + id.get_insert_seq() + vcf_ref_seq;
         } else {
             assert(0);
         }
     } else {
         copy_ref_subseq(ref,ik.pos-1,ik.pos+ik.delete_length(),vcf_ref_seq);
         copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_indel_seq);
-        vcf_indel_seq += id.seq;
+        vcf_indel_seq += id.get_insert_seq();
     }
 }
 
@@ -246,7 +246,7 @@ set_repeat_info(const indel_key& ik,
             indel_context_repeat_count += 1;
         }
     }
-    
+
     iri.ref_repeat_count = indel_context_repeat_count+delete_repeat_count;
     iri.indel_repeat_count = indel_context_repeat_count+insert_repeat_count;
 }
@@ -258,7 +258,7 @@ get_starling_indel_report_info(const indel_key& ik,
                                const indel_data& id,
                                const reference_contig_segment& ref,
                                starling_indel_report_info& iri){
-    
+
     // indel summary info
     get_indel_summary_strings(ik,id,ref,iri.desc,iri.indel_seq,iri.ref_seq);
     get_vcf_summary_strings(ik,id,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
@@ -370,7 +370,7 @@ indel_lnp_to_pprob(const starling_deriv_options& dopt,
         }
 #endif
     }
-    
+
 
     double sum(pprob_nonsite+pprob.ref+pprob.indel);
     if(is_use_alt_indel) {
@@ -430,7 +430,7 @@ get_starling_indel_sample_report_info(const starling_deriv_options& dopt,
 
             // optionally skip tier2 data:
             if((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
-            
+
             const read_path_scores pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
             if       (pprob.ref >= path_pprob_thresh) {
                 isri.n_q30_ref_reads++;
@@ -438,13 +438,13 @@ get_starling_indel_sample_report_info(const starling_deriv_options& dopt,
                 isri.n_q30_indel_reads++;
             } else {
                 typedef read_path_scores::alt_indel_t::const_iterator aciter;
-                
+
                 bool is_alt_found(false);
 #if 0
                 if(pprob.is_alt && (pprob.alt >= path_pprob_thresh)){
                     isri.n_q30_alt_reads++;
                     is_alt_found=true;
-                }                
+                }
 #else
                 aciter j(pprob.alt_indel.begin()), j_end(pprob.alt_indel.end());
                 for(;j!=j_end;++j){
@@ -465,7 +465,7 @@ get_starling_indel_sample_report_info(const starling_deriv_options& dopt,
         isri.n_other_reads = (n_subscore_reads+n_suboverlap_tier1_reads);
 
         if(is_tier2_pass) {
-            const unsigned n_suboverlap_tier2_reads(id.suboverlap_tier2_read_ids.size()); 
+            const unsigned n_suboverlap_tier2_reads(id.suboverlap_tier2_read_ids.size());
             isri.n_other_reads += n_suboverlap_tier2_reads;
         }
     }

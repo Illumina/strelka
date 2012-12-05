@@ -72,7 +72,7 @@ namespace DIGT_GRID {
 
 
 namespace DDIGT_GRID {
-    
+
     enum index_t { SIZE = DIGT_GRID::SIZE*DIGT_GRID::SIZE };
 
     inline
@@ -129,7 +129,7 @@ private:
     }
 
     struct prior_set {
-        prior_set() 
+        prior_set()
             : normal(DIGT_GRID::SIZE)
             , normal_poly(DIGT_GRID::SIZE) {}
 

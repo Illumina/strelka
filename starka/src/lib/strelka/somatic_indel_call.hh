@@ -26,7 +26,7 @@ struct somatic_indel_call {
 
     somatic_indel_call()
         : is_indel(false)
-    {}  
+    {}
 
     typedef bool tier_t;
 

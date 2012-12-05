@@ -58,7 +58,7 @@ struct base_call {
     {
         qphred_cache::qscore_check(qscore,"basecall quality");
     }
-    
+
     // pull quality value transformations from caching functions:
     double
     error_prob() const {

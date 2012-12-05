@@ -77,7 +77,7 @@ strelka_pos_processor(const strelka_options& opt,
 
     sample_info& normal_sif(sample(NORMAL));
     sample_info& tumor_sif(sample(TUMOR));
-     
+
     // set sample-specific parameter overrides:
     normal_sif.sample_opt.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
 
@@ -341,7 +341,7 @@ process_pos_indel_somatic(const pos_t pos) {
             // indel_report_info needs to be run first now so that
             // local small repeat info is available to the indel
             // caller
-            
+
             // get iri from either sample:
             starling_indel_report_info iri;
             get_starling_indel_report_info(ik,tumor_id,_ref,iri);
@@ -407,7 +407,7 @@ process_pos_indel_somatic(const pos_t pos) {
                 write_somatic_indel_vcf_grid(sindel,iri,normal_isri,tumor_isri,bos);
 #endif
                 bos << "\n";
-                
+
                 _variant_print_pos.insert(indel_pos);
             }
 

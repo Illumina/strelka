@@ -101,15 +101,18 @@ get_starling_shared_option_parser(starling_options& opt) {
 
     po::options_description indel_opt("indel-options");
     indel_opt.add_options()
-        ("max-candidate-indel-depth", 
+        ("max-candidate-indel-depth",
          po::value<unsigned>(&opt.max_candidate_indel_depth)->default_value(opt.max_candidate_indel_depth),
 "Maximum estimated read depth for an indel to reach candidacy. If any one sample exceeds this depth at the indel, the indel will not reach candidacy in all indel-synchronized samples")
         ("min-candidate-open-length",
          po::value<unsigned>(&opt.min_candidate_indel_open_length)->default_value(opt.min_candidate_indel_open_length),
          "Minimum open-ended breakpoint sequence length required to become a breakpoint candidate")
-         ("candidate-indel-input-vcf",
-          po::value<std::vector<std::string> >(&opt.input_candidate_indel_vcf)->multitoken(),
-          "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files.");
+        ("candidate-indel-input-vcf",
+         po::value<std::vector<std::string> >(&opt.input_candidate_indel_vcf)->multitoken(),
+         "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files.")
+        ("upstream-oligo-size",
+         po::value<unsigned>(&opt.upstream_oligo_size),
+         "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.");
 
     po::options_description window_opt("window-options");
     window_opt.add_options()
@@ -147,8 +150,8 @@ get_starling_option_parser(starling_options& opt) {
 
     po::options_description help_parse_opt("Help");
     help_parse_opt.add_options()
-        ("help,h","print this message");  
-    
+        ("help,h","print this message");
+
     po::options_description visible("Options");
     visible.add(starling_parse_opt).add(help_parse_opt);
 
@@ -161,8 +164,8 @@ void
 write_starling_legacy_options(std::ostream& os) {
 
     static const starling_options default_opt;
-        
-    os << 
+
+    os <<
         " -bam-file file     - Analyze reads from 'file' in sorted BAM format (required) \n" // (use \"" << STDIN_FILENAME << "\" for stdin)\n"
         " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the bam file (required)\n"
         " -single-seq-reference file\n"

@@ -55,7 +55,7 @@ map_grouper_contig_read_to_genome(const grouper_contig& ctg,
         const align_t ali(read_al.path[i].type);
         assert((ali==MATCH) || (ali==SOFT_CLIP));
     }
-    
+
     const unsigned al_ref_length(apath_ref_length(read_al.path));
 
     pos_t read_begin_pos(read_al.pos);
@@ -154,7 +154,7 @@ map_grouper_contig_read_to_genome(const grouper_contig& ctg,
         } else {
             new_path.push_back(seg);
         }
-        
+
         if(is_final_seg) break;
     }
 
@@ -226,20 +226,20 @@ get_next_contig(std::istream& is,
         if (c != '>') {
             throw blt_exception("ERROR: Unexpected format in GROUPER contig file\n");
         }
-        
+
         std::string header;
         if (not std::getline(is,header)) {
             throw blt_exception("ERROR: Unexpected format in GROUPER contig file\n");
         }
-        
+
         static const unsigned header_field_count(5);
         std::string::size_type begin_pos,pos(1);
         for(unsigned i(0);i<header_field_count;++i){
             begin_pos=header.find_first_not_of(header_delim,pos);
             pos=header.find_first_of(header_delim,begin_pos);
-            
+
             if(std::string::npos == begin_pos) bad_header_error(header);
-            
+
             if       (i==0){
                 ctg.id=header.substr(begin_pos,pos-begin_pos);
             } else if(i==1){
@@ -252,7 +252,7 @@ get_next_contig(std::istream& is,
             } else if(i==4){
                 //intentional throwaway:
                 //pos_t indel_begin_pos=boost::lexical_cast<pos_t>(header.substr(begin_pos,pos-begin_pos))-1;
-                
+
             } else {
                 bad_header_error(header);
             }
@@ -280,7 +280,7 @@ get_next_contig(std::istream& is,
             if(ctg.is_usable) {
                 seq += line_buff.substr(begin_pos,pos-begin_pos);
                 if(seq.size() > MAX_CONTIG_SIZE) {
-                    log_os << "WARNING: GROUPER contig: '" << ctg.id << "' exceeds maximum contig size. Skipping...\n"; 
+                    log_os << "WARNING: GROUPER contig: '" << ctg.id << "' exceeds maximum contig size. Skipping...\n";
                     ctg.is_usable=false;
                 }
             }
@@ -294,7 +294,7 @@ get_next_contig(std::istream& is,
 
 contig_data_manager::
 contig_data_manager(const std::string& contig_filename,
-                    const std::string& contig_read_filename) 
+                    const std::string& contig_read_filename)
     : _contig_isp(new std::ifstream)
     , _contig_read_isp(new std::ifstream) {
 
@@ -310,7 +310,7 @@ contig_data_manager(const std::string& contig_filename,
         open_ifstream(contig_is,contig_filename.c_str());
         open_ifstream(contig_read_is,contig_read_filename.c_str());
     }
-    
+
     _contig_read_exrp.reset(new export_stream_reader(contig_read_is,contig_filename.c_str()));
     _creaderp.reset(new contig_reader(contig_is));
 }

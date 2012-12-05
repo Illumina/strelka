@@ -30,7 +30,7 @@
 
 
 namespace DDIINDEL {
-    
+
     enum index_t { SIZE = STAR_DIINDEL::SIZE*STAR_DIINDEL::SIZE };
 
     inline

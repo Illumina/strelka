@@ -45,7 +45,7 @@ struct sample_info {
     const char* get_label(const unsigned /*i*/) const {
         return "";
     }
-    
+
     virtual
     const char* get_prefix(const unsigned /*i*/,
                            const bool /*is_tier1*/) const {

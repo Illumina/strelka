@@ -63,7 +63,7 @@ namespace ALIGNPATH {
 
     inline
     align_t
-    cigar_code_to_segment_type(const char c){   
+    cigar_code_to_segment_type(const char c){
         switch(c) {
         case 'M' : return MATCH;
         case 'I' : return INSERT;
@@ -78,7 +78,7 @@ namespace ALIGNPATH {
 
     inline
     bool
-    is_segment_type_read_length(const align_t id){   
+    is_segment_type_read_length(const align_t id){
         switch(id) {
         case MATCH     :
         case INSERT    :
@@ -89,7 +89,7 @@ namespace ALIGNPATH {
 
     inline
     bool
-    is_segment_type_ref_length(const align_t id){   
+    is_segment_type_ref_length(const align_t id){
         switch(id) {
         case MATCH  :
         case DELETE :
@@ -100,7 +100,7 @@ namespace ALIGNPATH {
 
     inline
     bool
-    is_segment_type_indel(const align_t id){   
+    is_segment_type_indel(const align_t id){
         switch(id) {
         case INSERT :
         case DELETE : return true;
@@ -113,7 +113,7 @@ namespace ALIGNPATH {
                      const unsigned l = 0) : type(t), length(l) {}
 
         void
-        clear() { 
+        clear() {
             type=NONE;
             length=0;
         }
@@ -132,7 +132,7 @@ namespace ALIGNPATH {
             }
             return false;
         }
-      
+
         align_t type;
         unsigned length;
     };
@@ -227,7 +227,7 @@ namespace ALIGNPATH {
                        unsigned& hc_trail,
                        unsigned& sc_lead,
                        unsigned& sc_trail);
-    
+
     // adds lead clip to front of alignment and trail clip
     // to back -- assumes no clipping exists on the path already.
     //
@@ -259,7 +259,7 @@ namespace ALIGNPATH {
     // provide reference offsets for the begining of each exon:
     //
     struct exon_offsets {
-        exon_offsets(const path_t& apath) 
+        exon_offsets(const path_t& apath)
             : _apath(apath)
             , _asize(apath.size())
             , _offset(0)

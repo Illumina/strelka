@@ -99,7 +99,7 @@ get_indel_error_prob(const starling_options& client_opt,
     }
 
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
-    
+
     if(! is_simple_indel) {
         // breakpoints and swaps --
         // use zero repeat error for now.

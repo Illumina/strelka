@@ -101,7 +101,7 @@ private:
         qscore_check_int(qscore);
         return q2lne[qscore];
     }
-    
+
     int
     get_mapped_qscore_imp(const int basecall_qscore,
                           int mapping_qscore) const {
@@ -130,7 +130,7 @@ struct qlogodds_cache {
 
 private:
     qlogodds_cache();
- 
+
     void qscore_error(const int qscore) const;
 
     double

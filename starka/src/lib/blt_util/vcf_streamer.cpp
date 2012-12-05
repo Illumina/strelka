@@ -39,10 +39,10 @@ void
 check_vcf_header_compatability(const char* vcf_filename,
                                const ti_index_t* vh,
                                const bam_header_t* bh){
-    
+
     assert(NULL != bh);
     assert(NULL != vh);
-    
+
     // build set of chrom labels from BAM:
     std::set<std::string> bamlabels;
     for(int32_t i(0);i<bh->n_targets;++i) {
@@ -50,7 +50,7 @@ check_vcf_header_compatability(const char* vcf_filename,
     }
     int n_vcf_labels(0);
     const char** vcf_labels = ti_seqname(vh, &n_vcf_labels);
-    
+
     for(int i(0);i<n_vcf_labels;++i) {
         if(bamlabels.find(std::string(vcf_labels[i])) == bamlabels.end()) {
             log_os << "ERROR: Chromosome label '" << vcf_labels[i] << "' in VCF file '" << vcf_filename << "' does not exist in the BAM header\n";
@@ -126,15 +126,15 @@ next(const bool is_indel_only) {
 
     do {
     	int len;
-        const char* s = ti_read(_tfp, _titer, &len);
-	
-    	_is_stream_end=(NULL == s);
+        const char* vcf_record_string(ti_read(_tfp, _titer, &len));
+
+        _is_stream_end=(NULL == vcf_record_string);
         _is_record_set=(! _is_stream_end);
-        if(_is_record_set) _record_no++;
-        else break;
-        
-        if(! _vcfrec.set(s,len)) {
-            log_os << "ERROR: Can't parse vcf record: '" << s << "'\n";   
+        if(! _is_record_set) break;
+        _record_no++;
+
+        if(! _vcfrec.set(vcf_record_string,len)) {
+            log_os << "ERROR: Can't parse vcf record: '" << vcf_record_string << "'\n";
             exit(EXIT_FAILURE);
         }
         if(_is_record_set && is_indel_only) {
@@ -150,7 +150,7 @@ next(const bool is_indel_only) {
             if(is_indel) break;
         }
     } while(is_indel_only && (_is_record_set));
-    
+
     return _is_record_set;
 }
 

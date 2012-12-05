@@ -128,7 +128,7 @@ strelka_streams(const strelka_options& opt,
 
         open_ofstream(pinfo,opt.somatic_indel_filename,"somatic-indel",opt.is_clobber,fos);
 
-#ifndef OUTPUT_VCF        
+#ifndef OUTPUT_VCF
         fos << "# ** " << pinfo.name() << " somatic indel-call file **\n";
         write_file_audit(opt,pinfo,cmdline,fos);
         fos << "#$ GERMLINE_INDEL_THETA " << opt.bindel_diploid_theta << "\n";

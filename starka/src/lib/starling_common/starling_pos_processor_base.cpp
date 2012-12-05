@@ -63,7 +63,7 @@ const unsigned STARLING_INIT_LARGEST_READ_SIZE(250);
 const double STARLING_LARGEST_READ_SIZE_PAD(1.25);
 
 // largest indel_size grows dynamically with observed indel size until
-// hitting max_indel_size. Initiallized to the follow value prior to
+// hitting max_indel_size. Initialized to the follow value prior to
 // observation:
 //
 // start with max_indel_size to deal with grouperisms:
@@ -247,17 +247,17 @@ namespace STAGE {
     static
     int
     get_pileup_stage_no(const starling_options& opt) {
-        return (opt.is_htype_calling ? 
-                static_cast<int>(POST_REGION) : 
+        return (opt.is_htype_calling ?
+                static_cast<int>(POST_REGION) :
                 static_cast<int>(POST_ALIGN));
     }
-    
+
     // stage into which pileup entries must fit:
     static
     int
     get_last_static_stage_no(const starling_options& opt) {
-        return (opt.is_htype_calling ? 
-                static_cast<int>(POST_CALL) : 
+        return (opt.is_htype_calling ?
+                static_cast<int>(POST_CALL) :
                 static_cast<int>(POST_CALL));
     }
 
@@ -335,7 +335,7 @@ namespace STAGE {
             //
             sdata.add_stage(POST_REGION,POST_ALIGN,(opt.htype_buffer_segment()+
                                                     opt.htype_call_segment));
-            
+
             // POST_CALL is used to free up the pileup data. This data is
             // preserved for one extra cycle after snp and indel calling so that
             // the indel caller can look one base 'to the left' of its call
@@ -346,8 +346,8 @@ namespace STAGE {
             //
             static const unsigned pileup_free_delay(1);
             sdata.add_stage(POST_CALL,POST_REGION,pileup_free_delay);
-            
-            
+
+
             // POST_READ is used to free reads during haplotype based calling:
             //
             const unsigned read_reserve_segment(get_read_buffer_size(largest_read_size,
@@ -437,7 +437,7 @@ starling_pos_processor_base(const starling_options& client_opt,
     // define an expanded indel influence zone around the report range:
     const int bshift(get_influence_zone_size(get_largest_read_size(),
                                              _client_opt.max_indel_size));
-    pos_range& rir( _report_influence_range);  
+    pos_range& rir( _report_influence_range);
     rir = _client_dopt.report_range_limit;
     if(rir.is_begin_pos) { rir.begin_pos -= bshift; }
     if(rir.is_end_pos) { rir.end_pos += bshift; }
@@ -502,12 +502,12 @@ reset() {
 
 bool
 starling_pos_processor_base::
-insert_indel(const indel& in,
+insert_indel(const indel_observation& obs,
              const unsigned sample_no){
 
     //
     // ppr advance is controlled by the start positions of reads and
-    // contigs, not indels. The rationalle for this is that indels are
+    // contigs, not indels. The rationale for this is that indels are
     // relatively cheap to store (so long as we aren't including
     // gigantic insert sequences) and do not scale up linearly with
     // increased coverage like reads do. For this reason our strategy
@@ -515,14 +515,15 @@ insert_indel(const indel& in,
     // the read buffer sizes fixed at a smaller value.
     //
 
-    _stageman.validate_new_pos_value(in.key.pos,STAGE::READ_BUFFER);
+    _stageman.validate_new_pos_value(obs.key.pos,STAGE::READ_BUFFER);
 
-    const unsigned len(std::min(static_cast<unsigned>((in.key.length+in.key.swap_dlength)*STARLING_LARGEST_INDEL_SIZE_PAD),_client_opt.max_indel_size));
+    // dynamically scale maximum indel size:
+    const unsigned len(std::min(static_cast<unsigned>((obs.key.length+obs.key.swap_dlength)*STARLING_LARGEST_INDEL_SIZE_PAD),_client_opt.max_indel_size));
     if(len>get_largest_indel_size()){
         set_largest_indel_size(len);
     }
 
-    return sample(sample_no).indel_sync().insert_indel(in);
+    return sample(sample_no).indel_sync().insert_indel(obs);
 }
 
 
@@ -532,6 +533,16 @@ get_estimated_depth(const pos_t pos,
                     const unsigned sample_no) const {
 
     return sample(sample_no).estdepth_buff.val(pos);
+}
+
+
+bool
+starling_pos_processor_base::
+is_estimated_depth_range_ge_than(const pos_t begin,
+                                 const pos_t end,
+                                 const unsigned depth,
+                                 const unsigned sample_no) const {
+    return sample(sample_no).estdepth_buff.is_range_ge_than(begin,end,depth);
 }
 
 
@@ -569,7 +580,7 @@ insert_read(const bam_record& br,
                << "\tread_key: " << read_key(br) << "\n";
         exit(EXIT_FAILURE);
     }
-    
+
     // Check at al.pos rather than buffer pos because we need to
     // insure that all candidate indels get entered by the end of HEAD
     // stage. If the read aligns back past the end of head stage it is
@@ -577,7 +588,7 @@ insert_read(const bam_record& br,
     // in this region:
     //
     if(! _stageman.is_new_pos_value_valid(al.pos,STAGE::HEAD)) {
-        log_os << "WARNING: skipping alignment for read: " << read_key(br) 
+        log_os << "WARNING: skipping alignment for read: " << read_key(br)
                << " which falls outside of the read buffer\n";
         return std::make_pair(false,0);
     }
@@ -624,7 +635,7 @@ insert_read(const bam_record& br,
         //
         // TODO -- normalize indels
         //
-        static const INDEL_ALIGN_TYPE::index_t iat(INDEL_ALIGN_TYPE::CONTIG_READ);   
+        static const INDEL_ALIGN_TYPE::index_t iat(INDEL_ALIGN_TYPE::CONTIG_READ);
         const bam_seq bseq(br.get_bam_read());
         try {
             add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
@@ -752,7 +763,7 @@ init_read_segment_pos(const pos_t pos) {
 
 #if 0
 // function has the general purpose of normalizing candidates which
-// are very likely to refer to the same event -- in practice at the 
+// are very likely to refer to the same event -- in practice at the
 // moment this only includes removing breakpoint calls which fall
 // entirely within an existing closed insertion
 //
@@ -911,7 +922,7 @@ process_pos(const int stage_no,
         for(unsigned s(0);s<_n_samples;++s) {
             sample(s).indel_buff.clear_pos(pos);
         }
-        
+
     } else if (stage_no>STAGE::POST_CALL) {
         print_delayed_results(stage_no,pos);
 
@@ -931,7 +942,7 @@ insert_pos_submap_count(const pos_t pos,
     if(! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
-    
+
     sample(sample_no).bc_buff.insert_pos_submap_count(pos);
 }
 
@@ -945,7 +956,7 @@ insert_pos_spandel_count(const pos_t pos,
     if(! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
-    
+
     sample(sample_no).bc_buff.insert_pos_spandel_count(pos);
 }
 
@@ -986,14 +997,14 @@ write_candidate_indels_pos(const pos_t pos){
         const indel_key& ik(i->first);
         const indel_data& id(get_indel_data(i));
         if(! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
-        bos << _chrom_name << "\t" 
+        bos << _chrom_name << "\t"
             << output_pos << "\t"
             << INDEL::get_index_label(ik.type) << "\t"
             << ik.length << "\t";
         if(INDEL::SWAP==ik.type) {
             bos << ik.swap_dlength << "\t";
         }
-        bos << id.seq << "\n";
+        bos << id.get_insert_seq() << "\n";
     }
 }
 
@@ -1324,8 +1335,8 @@ pileup_read_segment(const read_segment& rseg,
     const unsigned as(best_al.path.size());
     for(unsigned i(0);i<as;++i){
         const path_segment& ps(best_al.path[i]);
-      
-#ifdef DEBUG_PPOS  
+
+#ifdef DEBUG_PPOS
         log_os << "seg,ref,read: " << i << " " << ref_head_pos << " " << read_head_pos << "\n";
 #endif
 
@@ -1352,7 +1363,7 @@ pileup_read_segment(const read_segment& rseg,
                     qscore = qphred_to_mapped_qphred(qscore,mapq);
                 }
 
-                bool is_call_filter((call_code == BAM_BASE::ANY) || 
+                bool is_call_filter((call_code == BAM_BASE::ANY) ||
                                     (qscore < _client_opt.min_qscore));
 
                 assert(! _client_opt.is_min_win_qscore);
@@ -1444,7 +1455,7 @@ void
 starling_pos_processor_base::
 process_pos_snp_single_sample_impl(const pos_t pos,
                                    const unsigned sample_no){
-    
+
     sample_info& sif(sample(sample_no));
 
     snp_pos_info null_pi;
@@ -1714,7 +1725,7 @@ print_delayed_results(const int stage_no,
     assert(window_no<vs);
 
     const pos_t output_pos(pos+1);
-    std::ostream& bos(*_client_io.variant_window_osptr(window_no)); 
+    std::ostream& bos(*_client_io.variant_window_osptr(window_no));
 
     bos << _chrom_name << "\t" << output_pos;
 

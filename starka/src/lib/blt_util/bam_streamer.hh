@@ -32,7 +32,7 @@ struct bam_streamer {
     explicit
     bam_streamer(const char* filename,
                  const char* region = NULL);
-    
+
     ~bam_streamer();
 
     bool next();

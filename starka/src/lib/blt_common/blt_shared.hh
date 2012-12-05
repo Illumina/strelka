@@ -154,9 +154,9 @@ struct blt_options {
 
     bool
     is_tier2() const {
-        return 
+        return
             (is_tier2_min_single_align_score ||
-             is_tier2_min_paired_align_score || 
+             is_tier2_min_paired_align_score ||
              is_tier2_single_align_score_rescue_mode ||
              is_tier2_mismatch_density_filter_count ||
              is_tier2_no_mismatch_density_filter ||

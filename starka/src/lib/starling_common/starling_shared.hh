@@ -92,6 +92,7 @@ struct starling_options : public blt_options {
         , is_skip_realignment(false)
         , is_baby_elephant(false)
         , is_ignore_read_names(false)
+        , upstream_oligo_size(0)
         , is_htype_calling(false)
         , hytpe_count(2)
         , htype_call_segment(1000)
@@ -154,7 +155,7 @@ struct starling_options : public blt_options {
     // maximum indel size which can be represented by starling
     // (formerly a static value)
     unsigned max_indel_size;
-    
+
     // indel cannot become candidate unless at least min reads which
     // meet mapping threshold support it
     //
@@ -245,6 +246,9 @@ struct starling_options : public blt_options {
 
     // if not using grouper, you can optionally turn off the restriction that each qname occurs once in the bam:
     bool is_ignore_read_names;
+
+    // Indicates that an upstream oligo is present on reads, which can be used to increase confidence for indels near the edge of the read
+    unsigned upstream_oligo_size;
 
     // turn on haplotype based calling:
     bool is_htype_calling;

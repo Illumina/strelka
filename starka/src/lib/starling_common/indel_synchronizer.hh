@@ -112,7 +112,7 @@ struct indel_synchronizer {
     // indel is fully inserted into the primary sample buffer, but
     // only the key is inserted into other sample buffers.
     bool
-    insert_indel(const indel& in);
+    insert_indel(const indel_observation& obs);
 
     // is an indel treated as a candidate for genotype calling and
     // realignment or as a "private" (ie. noise) indel?
@@ -122,10 +122,10 @@ struct indel_synchronizer {
                        const indel_key& ik,
                        const indel_data& id) const {
 
-        if(not id.is_candidate_indel_cached) {
+        if(not id.status.is_candidate_indel_cached) {
             is_candidate_indel_int(opt,ik,id);
         }
-        return id.is_candidate_indel;
+        return id.status.is_candidate_indel;
     }
 
     // this version is less efficient than if you have indel_data

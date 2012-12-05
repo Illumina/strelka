@@ -119,12 +119,21 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     // returns true if this indel is novel to the buffer
     //
     bool
-    insert_indel(const indel& in,
+    insert_indel(const indel_observation& obs,
                  const unsigned sample_no);
 
     unsigned
     get_estimated_depth(const pos_t pos,
                         const unsigned sample_no) const;
+
+
+    // in range [begin,end), is the estimated depth always below
+    // depth?
+    bool
+    is_estimated_depth_range_ge_than(const pos_t begin,
+                                     const pos_t end,
+                                     const unsigned depth,
+                                     const unsigned sample_no) const;
 
     // first return value is true if the alignment is accepted into
     // the buffer (alignments can fail a number of quality checks --
@@ -203,7 +212,7 @@ protected:
 
     struct win_avgs {
 
-        win_avgs(const starling_options& opt) 
+        win_avgs(const starling_options& opt)
             : _max_winsize(0)
             , _is_last_pos(false)
             , _last_insert_pos(false) {
@@ -242,7 +251,7 @@ protected:
 
         win_avg_set&
         get_win_avg_set(const unsigned i) { return *(_wav[i]); }
-        
+
     private:
 
         void
@@ -306,7 +315,7 @@ protected:
         depth_buffer estdepth_buff; // provide an early estimate of read depth before realignment.
 
         starling_sample_options sample_opt;
-        
+
         indel_synchronizer isync_default;
         indel_synchronizer* indel_sync_ptr;
 

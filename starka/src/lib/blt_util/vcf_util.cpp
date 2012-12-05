@@ -27,7 +27,7 @@
 
 
 
-std::ostream& 
+std::ostream&
 vcf_fileDate(std::ostream& os) {
     const time_t t(time(NULL));
     struct tm* ct(localtime(&t));

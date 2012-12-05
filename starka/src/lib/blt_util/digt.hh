@@ -122,7 +122,7 @@ namespace DIGT {
 
         return ex[gt][base_id];
     }
-    
+
     /// expect2_bias is a copy of the expect2 function for biased het
     /// allele calculations
     ///
@@ -154,7 +154,7 @@ namespace DIGT {
 
         return ex[gt][base_id];
     }
-  
+
 }
 
 

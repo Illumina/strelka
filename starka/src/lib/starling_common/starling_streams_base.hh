@@ -44,7 +44,7 @@ struct starling_streams_base : public blt_streams {
     bindel_diploid_osptr(const unsigned sample_no) const {
         return _bindel_diploid_osptr[sample_no].get();
     }
-    
+
     bam_dumper*
     realign_bam_ptr(const unsigned sample_no) const {
         return _realign_bam_ptr[sample_no].get();

@@ -34,7 +34,7 @@
 //
 struct alignment {
 
-    alignment() 
+    alignment()
         : pos(0),
           is_fwd_strand(true) {}
 

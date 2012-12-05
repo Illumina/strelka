@@ -34,7 +34,7 @@
 //
 known_pos_range
 get_strict_alignment_range(const alignment& al){
-    
+
     const pos_t asize(apath_ref_length(al.path));
 
     return known_pos_range(al.pos,al.pos+asize);
@@ -47,7 +47,7 @@ get_strict_alignment_range(const alignment& al){
 //
 known_pos_range
 get_soft_clip_alignment_range(const alignment& al){
-    
+
     const pos_t lead(apath_insert_lead_size(al.path));
     const pos_t trail(apath_insert_trail_size(al.path));
     const pos_t asize(apath_ref_length(al.path));
@@ -65,7 +65,7 @@ get_soft_clip_alignment_range(const alignment& al){
 //
 known_pos_range
 get_alignment_range(const alignment& al){
-    
+
     const pos_t lead(apath_read_lead_size(al.path));
     const pos_t trail(apath_read_trail_size(al.path));
     const pos_t asize(apath_ref_length(al.path));
@@ -85,7 +85,7 @@ get_alignment_range(const alignment& al){
 known_pos_range
 get_alignment_zone(const alignment& al,
                    const unsigned seq_length){
-    
+
     const known_pos_range ps(get_alignment_range(al));
     known_pos_range ps2(ps);
     ps2.begin_pos=std::max(0,std::min(ps.begin_pos,ps.end_pos-static_cast<pos_t>(seq_length)));
@@ -132,7 +132,7 @@ is_indel_in_alignment(const alignment& al,
         unsigned n_seg(1); // number of path_segments consumed
         if       (is_edge_insert) {
             if(path_index==ends.first){
-                if(      (ref_head_pos==ik.pos) && 
+                if(      (ref_head_pos==ik.pos) &&
                          (INDEL::BP_RIGHT==ik.type)) {
                     read_indel_pr.set_end_pos(read_offset+ps.length);
                     return true;
@@ -171,7 +171,7 @@ is_indel_in_alignment(const alignment& al,
         } else if(is_segment_type_indel(path[path_index].type)) {
             if((ref_head_pos==ik.pos) &&
                (ps.length == ik.length) &&
-               (((INSERT==ps.type) && (INDEL::INSERT==ik.type)) || 
+               (((INSERT==ps.type) && (INDEL::INSERT==ik.type)) ||
                 ((DELETE==ps.type) && (INDEL::DELETE==ik.type)))) {
                 read_indel_pr.set_begin_pos(read_offset);
                 const unsigned insert_length(INDEL::INSERT==ik.type ? ps.length : 0);
@@ -207,7 +207,7 @@ normalize_alignment(alignment& al,
 //
 // return two pieces of info:
 // 1) bool indicating if the indel is invalid (i.e. it 'fell off the left end of the read')
-// 2) distance to shift the indel to the left 
+// 2) distance to shift the indel to the left
 //
 // Note that this functions purpose is not to validate indels -- that
 // will happen in a subsequent step, if an indel 'falls off' the edge
@@ -222,7 +222,7 @@ normalize_indel(const char* base_seq,
                 const char* insert_seq,
                 const pos_t insert_seq_start,
                 const unsigned insert_size){
-    
+
     assert(NULL != base_seq);
     assert(NULL != insert_seq);
     assert(0 != insert_size);
@@ -232,13 +232,13 @@ normalize_indel(const char* base_seq,
 
     while(true) {
         // read deletion fell off edge:
-        if(bs==0) return std::make_pair(true,0); 
+        if(bs==0) return std::make_pair(true,0);
 
         // attempt to shift back one base
         if(base_seq[bs-1] != insert_seq[is+insert_size-1]){
             return std::make_pair(false,base_seq_start-bs);
         }
-        
+
         // read insertion fell off edge:
         if(is==0) return std::make_pair(true,0);
         bs--;
@@ -249,7 +249,7 @@ normalize_indel(const char* base_seq,
 
 
 // this function is held up on normalization of multiple, potentially colliding
-// indels -- really this is becoming just a bad way of doing a realignment. Punt 
+// indels -- really this is becoming just a bad way of doing a realignment. Punt
 // this whole procedure for now.
 //
 
@@ -268,7 +268,7 @@ normalize_alignment(alignment& al,
     unsigned ref_offset(0);
 
     pos_t last_event_end(ps.pos);
-    
+
     const unsigned aps(al.apath.size());
     for(unsigned i(0);i<aps;++i){
         path_segment& ps(al.apath[i]);
@@ -304,7 +304,7 @@ normalize_alignment(alignment& al,
             } else {
                 const unsigned shift(norm_res.second); // TODO -- collision detection!
                 std::cerr << "norm pass shift: " << shift << "\n";
-                
+
                 if(ps.length <= MAX_INDEL_SIZE) {
                     indel in;
                     in.pos=base_pos+ref_offset-shift;
@@ -323,7 +323,7 @@ normalize_alignment(alignment& al,
                 }
             }
         }
-        
+
         if       (ps.type == MATCH) {
             read_offset += ps.length;
             ref_offset += ps.length;
@@ -335,7 +335,7 @@ normalize_alignment(alignment& al,
         } else {
             assert(0); // can't handle other CIGAR types yet
         }
-        
+
     }
 
     return is_norm;

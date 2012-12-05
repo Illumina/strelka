@@ -61,7 +61,7 @@ std::ostream&
 operator<<(std::ostream& os,
            const alignment& al) {
 
-    os << "ALIGNMENT pos: " << al.pos 
+    os << "ALIGNMENT pos: " << al.pos
        << " strand: " << (al.is_fwd_strand? 'F' : 'R')
        << " path: " << apath_to_cigar(al.path);
     //    if(al.is_overmax(max_indel_size)) os << " overmax";

@@ -25,7 +25,7 @@
 
 // random vcf utilities
 //
-     
+
 inline
 const char*
 vcf_col_label() {
@@ -34,7 +34,7 @@ vcf_col_label() {
 }
 
 
-std::ostream& 
+std::ostream&
 vcf_fileDate(std::ostream& os);
 
 

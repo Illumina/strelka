@@ -61,7 +61,7 @@ normalize_ln_distro(const It pbegin,
     unsigned i(1);
     for(It p(pbegin+1);p!=pend;++p,++i){
         if(*p > max){
-            max = *p; 
+            max = *p;
             max_idx = i;
         }
     }
@@ -84,7 +84,7 @@ normalize_ln_distro(const It pbegin,
 //
 // values significantly less than opt-max will be treated as zero probability
 //
-// opt-max is found within the subset of the distribution where the predicate 
+// opt-max is found within the subset of the distribution where the predicate
 // iterator is true
 //
 template <typename It,typename It2>

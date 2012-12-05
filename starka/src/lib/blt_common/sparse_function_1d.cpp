@@ -129,7 +129,7 @@ integrate_sparsefunc(const sparse_function& sf,
         } else {
             is_last_in_range=(in_range(min_x,last_x,max_x));
 
-            if(is_in_range && 
+            if(is_in_range &&
                is_last_in_range) {
                 // entire segment is enclosed in target range:
 
@@ -179,7 +179,7 @@ integrate_sparsefunc(const sparse_function& sf,
         const blt_float_t segrange(max_x-last_x);
         sum += (last_y*(wf.get_val(max_x)+wf.get_val(last_x))) * (segrange/range);
     }
-    
+
     return sum;
 }
 

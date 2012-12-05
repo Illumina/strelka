@@ -16,17 +16,21 @@
 ///
 /// \author Chris Saunders
 ///
+/// note coding convention for all ranges '_pos fields' is:
+/// XXX_begin_pos is zero-indexed position at the beginning of the range
+/// XXX_end_pos is zero-index position 1 step after the end of the range
+///
 
-#include "starling_common/indel_set.hh"
-
-#include <iostream>
+#pragma once
 
 
-
-void
-dump_indel_set(const indel_set_t& is,
-               std::ostream& os){
-
-    indel_set_t::const_iterator i(is.begin()), i_end(is.end());
-    for(;i!=i_end;++i) os << *i;
+namespace INDEL_ALIGN_TYPE {
+    enum index_t {
+        GENOME_TIER1_READ,
+        GENOME_TIER2_READ,
+        GENOME_SUBMAP_READ,
+        CONTIG,
+        CONTIG_READ
+    };
 }
+

@@ -73,7 +73,7 @@ try_main(int argc,char* argv[]){
 
         // allow remaining options to be parsed using starling command-line parser:
         legacy_starling_args = po::collect_unrecognized(parsed.options,po::include_positional);
-        
+
     } catch(const boost::program_options::error& e) {
         pinfo.usage(e.what());
     }
@@ -89,7 +89,7 @@ try_main(int argc,char* argv[]){
     legacy_starling_arg_parse(ad,opt);
 
     finalize_strelka_options(pinfo,vm,opt);
-    
+
     strelka_run(opt);
 }
 
@@ -126,7 +126,7 @@ main(int argc,char* argv[]){
         dump_cl(argc,argv,log_os);
         exit(EXIT_FAILURE);
     } catch (const casava::common::ExceptionData &e) {
-        log_os << "FATAL_ERROR: " << pinfo.name() << " EXCEPTION: " 
+        log_os << "FATAL_ERROR: " << pinfo.name() << " EXCEPTION: "
                << e.getContext() << ": " << e.getMessage() << "\n"
                << "...caught in main()\n";
         dump_cl(argc,argv,log_os);

@@ -165,7 +165,7 @@ arg_to_prob(const double arg){
 /// The terms used below for individual basecalls are found as follows.
 /// f is nonref frequency, e is basecall error prob:
 ///
-/// Ref case: 
+/// Ref case:
 /// Ref base prob is: P(ref) = (1-e)(1-f)
 /// Id'd Non-ref base prob is: P(nonref_id) = (e/3)(f)
 /// Other Non-ref base prob is: P(nonref_other) = (e/3)(0)

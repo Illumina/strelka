@@ -59,7 +59,7 @@ struct stage_data {
     add_stage(const int id) {
         return add_stage(id,0,0,false);
     }
-    
+
     // Add a child stage which follows at a certain distance from its
     // parent. parent id must already have been entered:
     void
@@ -190,7 +190,7 @@ struct stage_manager {
     // must have the the same number of stages, with the same set
     // of ids. Stages may only increase in length relative to their
     // prior values.
-    // 
+    //
     void
     revise_stage_data(const stage_data& sdata);
 

@@ -46,7 +46,7 @@ static
 void
 unknown_md_error(const char* const md,
                  const char* const mdptr){
-    
+
     std::ostringstream oss;
     oss << "ERROR: can't parse match descriptor string: " << md << "\n"
         << "\tunexpected character: '" << *mdptr << "' at position: " << (mdptr-md+1) << "\n";
@@ -59,7 +59,7 @@ static
 void
 unknown_cigar_error(const char* const cigar,
                     const char* const cptr){
-    
+
     std::ostringstream oss;
     oss << "ERROR: can't parse cigar string: " << cigar << "\n"
         << "\tunexpected character: '" << *cptr << "' at position: " << (cptr-cigar+1) << "\n";
@@ -76,7 +76,7 @@ void
 apath_push(path_t& apath,
            path_segment& ps,
            const align_t t){
-    
+
     if( (0==ps.length) or (ps.type==t) ) return;
     apath.push_back(ps);
     ps.clear();
@@ -116,7 +116,7 @@ export_md_to_apath_impl(const char* md,
                     const unsigned mlen(parse_unsigned(mdptr));
                     ps.length=mlen;
                     ps.type=INSERT;
-                    
+
                 } else if(is_valid_base(*mdptr)){
                     apath_push(apath,ps,DELETE);
                     mdptr++;
@@ -149,7 +149,7 @@ export_md_to_apath(const char* md,
     // to make best use of previous code, we parse the MD in the
     // alignment direction and then orient apath to the forward strand
     // as a second step if required
-    //    
+    //
     assert(NULL != md);
 
     apath.clear();
@@ -375,7 +375,7 @@ rev_apath_to_export_md(path_t& apath,
             if(numMatchingBases != 0) {
                 md += boost::lexical_cast<std::string>(numMatchingBases);
             }
-        
+
         } else {
 
             // handle unsupported CIGAR operation
@@ -418,11 +418,11 @@ cigar_to_apath(const char* cigar,
             lps.length += ps.length;
         }
     }
-    
+
     if(lps.type != NONE) apath.push_back(lps);
 }
 
-    
+
 
 unsigned
 apath_read_length(const path_t& apath) {
@@ -457,7 +457,7 @@ apath_ref_length(const path_t& apath) {
 static
 inline
 bool
-is_segment_type_unaligned_read_edge(const align_t id){   
+is_segment_type_unaligned_read_edge(const align_t id){
     switch(id) {
     case INSERT    :
     case HARD_CLIP :
@@ -808,7 +808,7 @@ is_apath_invalid(const path_t& apath,
     const unsigned as(apath.size());
     for(unsigned i(0);i<as;++i){
         const path_segment& ps(apath[i]);
-        
+
         if(ps.type==NONE) return true;
         if((i!=0) && ps.type==last_type) return true;
 
@@ -846,7 +846,7 @@ is_apath_invalid(const path_t& apath,
     // run in reverse to finish checking condition (2a):
     for(unsigned i(0);i<as;++i){
         const path_segment& ps(apath[as-(i+1)]);
-        if(ps.type==MATCH) break;        
+        if(ps.type==MATCH) break;
         if((ps.type==DELETE) || (ps.type==SKIP)) return true;
     }
 
@@ -867,7 +867,7 @@ is_apath_starling_invalid(const path_t& apath) {
     const unsigned as(apath.size());
     for(unsigned i(0);i<as;++i){
         const path_segment& ps(apath[i]);
-        
+
         if(ps.type==PAD) return true;
     }
     return false;

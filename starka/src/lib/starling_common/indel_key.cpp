@@ -17,16 +17,20 @@
 /// \author Chris Saunders
 ///
 
-#include "starling_common/indel_set.hh"
+#include "starling_common/indel_key.hh"
 
 #include <iostream>
 
 
 
-void
-dump_indel_set(const indel_set_t& is,
-               std::ostream& os){
-
-    indel_set_t::const_iterator i(is.begin()), i_end(is.end());
-    for(;i!=i_end;++i) os << *i;
+std::ostream&
+operator<<(std::ostream& os,
+           const indel_key& ik){
+    os << "INDEL pos: " << ik.pos
+       << " type: " << INDEL::get_index_label(ik.type)
+       << " len: " << ik.length
+       << " swap_dlen: " << ik.swap_dlength << "\n";
+    return os;
 }
+
+

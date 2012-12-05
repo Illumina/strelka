@@ -148,7 +148,7 @@ pprob_digt_caller(const blt_float_t theta) {
         prior_set& ps(_lnprior[i]);
         log_gt(ps.genome);
         log_gt(ps.poly);
-    }  
+    }
 }
 
 
@@ -259,10 +259,10 @@ get_diploid_gt_lhood(const blt_options& opt,
             const blt_float_t het_ratio(0.5+(i+1)*ratio_increment);
             increment_het_ratio_lhood(epi,het_ratio,lhood,is_strand_specific,is_ss_fwd);
         }
-        
+
         const unsigned n_het_subgt(1+2*n_bias_steps);
         const blt_float_t subgt_log_prior(std::log(1./static_cast<blt_float_t>(n_het_subgt)));
-        
+
         for(unsigned gt(0);gt<DIGT::SIZE;++gt){
             if(! DIGT::is_het(gt)) continue;
             lhood[gt] += subgt_log_prior;
@@ -380,7 +380,7 @@ position_snp_call_pprob_digt(const blt_options& opt,
 
     dgt.is_snp=(dgt.genome.snp_qphred != 0);
 
-    // compute strand-bias here: 
+    // compute strand-bias here:
     const bool is_compute_sb(opt.is_print_extra_snp_info);
     if(is_compute_sb && dgt.is_snp) {
         blt_float_t lhood_fwd[DIGT::SIZE];
@@ -430,7 +430,7 @@ write_diploid_genotype_allele(const blt_options& opt,
     os << std::setprecision(6) << std::fixed;
 
     os << ge.snp_qphred
-       << '\t' << DIGT::label(ge.max_gt) 
+       << '\t' << DIGT::label(ge.max_gt)
        << '\t' << ge.max_gt_qphred
        << '\t' << DIGT::label(po.max_gt)
        << '\t' << po.max_gt_qphred;

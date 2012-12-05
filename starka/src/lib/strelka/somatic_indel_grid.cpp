@@ -48,7 +48,7 @@ namespace DDIINDEL_GRID {
         for(unsigned gt(0);gt<STAR_DIINDEL_GRID::SIZE;++gt){
             val[get_state(gt,gt)] = true;
         }
-    }   
+    }
 
     const is_nonsom_maker_t is_nonsom;
 }
@@ -63,7 +63,7 @@ operator<<(std::ostream& os,
     unsigned tumor_gt;
     DDIINDEL_GRID::get_sdiindel_grid_states(dgt,normal_gt,tumor_gt);
 
-    os << STAR_DIINDEL::label(STAR_DIINDEL_GRID::get_star_diindel_state(normal_gt)) 
+    os << STAR_DIINDEL::label(STAR_DIINDEL_GRID::get_star_diindel_state(normal_gt))
        << "->"
        << STAR_DIINDEL::label(STAR_DIINDEL_GRID::get_star_diindel_state(tumor_gt));
 
@@ -184,7 +184,7 @@ calculate_result_set(const strelka_options& /*opt*/,
         const double base_prior(normal_lnprior[ngt]);
         for(unsigned tgt(0);tgt<STAR_DIINDEL_GRID::SIZE;++tgt){
             const unsigned dgt(DDIINDEL_GRID::get_state(ngt,tgt));
-            check_prior[dgt] = 
+            check_prior[dgt] =
                 base_prior+
                 ((tgt==ngt) ? lnmatch : lnmismatch);
         }
@@ -202,7 +202,7 @@ calculate_result_set(const strelka_options& /*opt*/,
         const double base_prior(normal_lnprior[ngt]);
         for(unsigned tgt(0);tgt<STAR_DIINDEL_GRID::SIZE;++tgt){
             const unsigned dgt(DDIINDEL_GRID::get_state(ngt,tgt));
-            pprob[dgt] = 
+            pprob[dgt] =
                 normal_lhood[ngt]+
                 tumor_lhood[tgt]+
                 base_prior+
@@ -434,7 +434,7 @@ get_somatic_indel(const strelka_options& opt,
         const bool is_include_tier2(i==1);
         if(is_include_tier2) {
             if(! opt.is_tier2()) continue;
-            if(tier_rs[0].sindel_qphred==0) { 
+            if(tier_rs[0].sindel_qphred==0) {
                 tier_rs[1].sindel_qphred=0;
                 continue;
             }
@@ -449,7 +449,7 @@ get_somatic_indel(const strelka_options& opt,
             if(ismulti) {
                 tier_rs[i].sindel_qphred=0;
 #if 0
-                std::cerr << "BUG: rejected\n"; 
+                std::cerr << "BUG: rejected\n";
 #endif
                 continue;
             }
@@ -570,7 +570,7 @@ write_somatic_indel_file_grid(const somatic_indel_call& sindel,
        << '\t' << (sindel.sindel_from_ntype_tier+1)
        << '\t' << rs.sindel_from_ntype_qphred
        << '\t' << static_cast<DDIINDEL_GRID::index_t>(rs.max_gt);
-    
+
     for(unsigned t(0);t<2;++t) {
         write_isri(nisri[t],os);
         write_isri(tisri[t],os);
@@ -594,7 +594,7 @@ write_vcf_isri_tiers(const starling_indel_sample_report_info& isri1,
        << ':'
        << isri2.depth
        << ':'
-       << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ',' 
+       << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
        << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
        << ':'
        << isri1.n_q30_indel_reads << ','

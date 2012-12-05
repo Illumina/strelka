@@ -60,7 +60,7 @@ get_alignment_indels(const candidate_alignment& cal,
     const std::pair<unsigned,unsigned> ends(get_nonclip_end_segments(cal.al.path));
     const unsigned aps(path.size());
     while(path_index<aps) {
-        
+
         const bool is_edge_segment((path_index==ends.first) || (path_index==ends.second));
         const bool is_edge_insert(is_edge_segment && (path[path_index].type == INSERT));
 

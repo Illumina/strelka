@@ -36,7 +36,7 @@ struct bam_record {
         }
     }
 
-    bam_record(const bam_record& br) 
+    bam_record(const bam_record& br)
         : _bp(bam_dup1(br._bp)) {}
 
     void
@@ -154,7 +154,7 @@ public:
 
     bam1_t*
     get_data() { return _bp; }
-    
+
     const bam1_t*
     get_data() const { return _bp; }
 

@@ -118,8 +118,8 @@ score_segment(const starling_options& /*opt*/,
             const pos_t refi(ref_head_pos+static_cast<pos_t>(i));
             is_ref=(sbase == ref.get_code(refi));
         }
-        lnp += ( is_ref ? 
-                 qphred_to_ln_comp_error_prob(qscore) : 
+        lnp += ( is_ref ?
+                 qphred_to_ln_comp_error_prob(qscore) :
                  qphred_to_ln_error_prob(qscore)+lnthird );
     }
 }
@@ -131,7 +131,7 @@ score_candidate_alignment(const starling_options& opt,
                           const indel_buffer& ibuff,
                           const read_segment& rseg,
                           const candidate_alignment& cal,
-                          const reference_contig_segment& ref){    
+                          const reference_contig_segment& ref){
     using namespace ALIGNPATH;
 
 #ifdef DEBUG_SCORE
@@ -164,13 +164,13 @@ score_candidate_alignment(const starling_options& opt,
 
             const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
             if(NULL == id_ptr){
-                std::ostringstream oss;                
+                std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected swap indel: " << ik << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->seq);
+            const string_bam_seq insert_bseq(id_ptr->get_insert_seq());
             const pos_t insert_seq_head_pos(0);
 
             score_segment(opt,
@@ -225,13 +225,13 @@ score_candidate_alignment(const starling_options& opt,
 
             const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
             if(NULL == id_ptr){
-                std::ostringstream oss;                
+                std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected insertion: " << ik << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->seq);
+            const string_bam_seq insert_bseq(id_ptr->get_insert_seq());
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:

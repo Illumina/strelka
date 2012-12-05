@@ -132,7 +132,7 @@ read_segment::
 is_any_nonovermax(const unsigned max_indel_size) const {
 
     const read_segment& rseg(*this);
-    if((not rseg.genome_align().empty()) and 
+    if((not rseg.genome_align().empty()) and
        (not rseg.genome_align().is_overmax(max_indel_size))) return true;
 
     typedef contig_align_t cat;
@@ -150,7 +150,7 @@ is_valid() const {
 
     const read_segment& rseg(*this);
     const unsigned rs(rseg.read_size());
-    
+
     if(not rseg.genome_align().empty()) {
         const ALIGNPATH::path_t path(rseg.genome_align().path);
         if(is_apath_invalid(path,rs) or

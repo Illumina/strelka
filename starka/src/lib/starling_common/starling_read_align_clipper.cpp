@@ -44,11 +44,11 @@ struct ref_map_type {
         CONFLICT
     };
 
-   
+
     ref_map_type(const map_t t = NONE,
-                 const pos_t p = 0) 
+                 const pos_t p = 0)
         : type(t), pos(p) {}
-    
+
     static
     char
     get_type_label(const map_t t) {
@@ -144,7 +144,7 @@ mark_ref_map_conflicts(const alignment& al,
             for(unsigned j(0);j<ps.length;++j) {
                 ref_map_type& rm(ref_map[read_head_pos+j]);
                 if(rm.type == ref_map_type::CONFLICT) continue;
-                if((rm.type != ref_map_type::MATCH) or 
+                if((rm.type != ref_map_type::MATCH) or
                    (rm.pos != (ref_head_pos+static_cast<pos_t>(j)))){
                     rm.type=ref_map_type::CONFLICT;
                 }
@@ -217,7 +217,7 @@ soft_clip_alignment(alignment& al,
     const unsigned as(al.path.size());
     for(unsigned i(0);i<as;++i) {
         path_segment& ps(al.path[i]);
-        
+
         if((ps.type == MATCH) or (ps.type == INSERT)) {
             if(leading_clip > read_head_pos) {
                 const unsigned clip_length(std::min(ps.length,(leading_clip-read_head_pos)));
@@ -309,12 +309,12 @@ get_clipped_alignment_from_cal_pool(const cal_pool_t& max_cal_pool,
     }
     for(;leading_clip>0;leading_clip--){
         if((ref_map[leading_clip-1].type == ref_map_type::CONFLICT) ||
-           (ref_map[leading_clip-1].type == ref_map_type::SOFT_CLIP)) break; 
+           (ref_map[leading_clip-1].type == ref_map_type::SOFT_CLIP)) break;
     }
 
     unsigned trailing_clip(read_size);
     for(;trailing_clip>0;trailing_clip--){
-        if(ref_map[trailing_clip-1].type == ref_map_type::MATCH) break; 
+        if(ref_map[trailing_clip-1].type == ref_map_type::MATCH) break;
     }
     for(;trailing_clip<read_size;trailing_clip++){
         if((ref_map[trailing_clip].type == ref_map_type::CONFLICT) ||

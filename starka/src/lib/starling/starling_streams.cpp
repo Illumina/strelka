@@ -35,7 +35,7 @@ starling_streams(const starling_options& opt,
     if(opt.is_bindel_diploid_file){
         _bindel_diploid_osptr[0].reset(initialize_bindel_file(opt,pinfo,opt.bindel_diploid_filename));
     }
-    
+
     if(opt.is_realigned_read_file) {
         _realign_bam_ptr[0].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"realigned-read BAM",header));
     }

@@ -70,31 +70,21 @@ pos_range_iter(const pos_t begin_pos,
 
 bool
 indel_buffer::
-insert_indel(const indel& in,
-             const bool is_shared) {
+insert_indel(const indel_observation& obs,
+             const bool is_shared,
+             bool& is_repeat_obs) {
 
-    assert(in.key.type != INDEL::NONE);
-    idata_t::iterator i(_idata.find(in.key));
+    assert(obs.key.type != INDEL::NONE);
+    idata_t::iterator i(_idata.find(obs.key));
     if(i == _idata.end()){
-        if(is_shared) {
-            indel_data id;
-            id.seq = in.data.seq;
-            _idata.insert(std::make_pair(in.key,id));
-        } else {
-            _idata.insert(std::make_pair(in.key,in.data));
-        }
+        indel_data id;
+        id.add_observation(obs.data,is_shared,is_repeat_obs);
+        _idata.insert(std::make_pair(obs.key,id));
         return true;
     }
 
     indel_data& id(get_indel_data(i));
-
-    if(in.key.is_breakpoint() && 
-       (id.seq.size() < in.data.seq.size())) {
-        id.seq = in.data.seq;
-    }
-    if(! is_shared) {
-        id.add_indel_data_evidence(in.data);
-    }
+    id.add_observation(obs.data,is_shared,is_repeat_obs);
     return false;
 }
 

@@ -52,7 +52,7 @@ namespace DDIGT_GRID {
         for(unsigned gt(0);gt<DIGT_GRID::SIZE;++gt){
             val[get_state(gt,gt)] = true;
         }
-    }   
+    }
 
     const is_nonsom_maker_t is_nonsom;
 }
@@ -69,7 +69,7 @@ operator<<(std::ostream& os,
     unsigned tumor_gt;
     DDIGT_GRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
 
-    os << DIGT::label(DIGT_GRID::get_digt_state(normal_gt)) 
+    os << DIGT::label(DIGT_GRID::get_digt_state(normal_gt))
        << "->"
        << DIGT::label(DIGT_GRID::get_digt_state(tumor_gt));
 
@@ -83,9 +83,9 @@ static
 void
 get_prior(const blt_float_t* normal_lnprior,
           std::vector<blt_float_t>& grid_normal_lnprior) {
-    
+
     static const blt_float_t het_mod( -std::log(static_cast<blt_float_t>(DIGT_GRID::HET_COUNT)) );
-    
+
     for(unsigned ngt(0);ngt<DIGT_GRID::SIZE;++ngt) {
         const unsigned ngt2(DIGT_GRID::get_digt_state(ngt));
         const bool is_het(DIGT::is_het(ngt2));
@@ -154,7 +154,7 @@ get_prior(const blt_float_t* normal_lnprior,
 
 somatic_snv_caller_grid::
 somatic_snv_caller_grid(const strelka_options& opt,
-                        const pprob_digt_caller& pd_caller) 
+                        const pprob_digt_caller& pd_caller)
     : _opt(opt), _pd_caller(pd_caller) {
 
     _ln_som_match=(log1p_switch(-opt.somatic_snv_rate));
@@ -288,7 +288,7 @@ get_high_low_het_ratio_lhood_spi(const snp_pos_info& pi,
 #if 0
         std::pair<bool,cache_val*> ret(hrcache.get_val(bc.qscore,het_ratio_index));
         cache_val& cv(*ret.second);
-        if(not ret.first)   
+        if(not ret.first)
 #endif
         const blt_float_t eprob(bc.error_prob());
         const blt_float_t ceprob(1.-eprob);
@@ -299,7 +299,7 @@ get_high_low_het_ratio_lhood_spi(const snp_pos_info& pi,
         cv.val[0] = bc.ln_error_prob()+ln_one_third;
         cv.val[1] = std::log((ceprob)*het_ratio+((eprob)*one_third)*chet_ratio);
         cv.val[2] = std::log((ceprob)*chet_ratio+((eprob)*one_third)*het_ratio);
-        
+
         const uint8_t obs_id(bc.base_id);
 
         for(unsigned gt(N_BASE);gt<DIGT::SIZE;++gt){
@@ -387,10 +387,10 @@ get_diploid_gt_lhood_spi(const blt_options& opt,
             const blt_float_t het_ratio(0.5+(i+1)*ratio_increment);
             increment_het_ratio_lhood_spi(pi,het_ratio,i,lhood);
         }
-        
+
         const unsigned n_het_subgt(1+2*n_bias_steps);
         const blt_float_t subgt_log_prior(std::log(1./static_cast<blt_float_t>(n_het_subgt)));
-        
+
         for(unsigned gt(0);gt<DIGT::SIZE;++gt){
             if(not DIGT::is_het(gt)) continue;
             lhood[gt] += subgt_log_prior;
@@ -504,7 +504,7 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     blt_float_t not_somfrom_ref_sum(nonsomatic_sum+nonref_prob-(nonsomatic_sum*nonref_prob));
 
     rs.snv_from_ref_qphred=error_prob_to_qphred(not_somfrom_ref_sum);
-    
+
     rs.max_gt_qphred=error_prob_to_qphred(prob_comp(pprob.begin(),pprob.end(),rs.max_gt));
 }
 
@@ -589,7 +589,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                                   tier_rs[i]);
 
 #if 0
-#ifdef ENABLE_POLY    
+#ifdef ENABLE_POLY
         // polymorphic site results:
         assert(0); // still needs to be adapted for 2-tier system:
         calculate_result_set(normal_lhood,tumor_lhood,
@@ -648,7 +648,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
     blt_float_t pprob[DDIGT::SIZE];
     for(unsigned gt(0);gt<DDIGT::SIZE;++gt){
         pprob[gt] = rs.pprob[gt];
-    }   
+    }
     debug_dump_ddigt_lhood(pprob,log_os);
     }
 #endif
@@ -669,7 +669,7 @@ write_result_set(const result_set& rs,
        << '\t' << rs.snv_from_het_nonloh_qphred
        << '\t' << rs.snv_from_hom_qphred
        << '\t' << rs.snv_from_anyhom_qphred
-       << '\t' << static_cast<DDIGT_GRID::index_t>(rs.max_gt) 
+       << '\t' << static_cast<DDIGT_GRID::index_t>(rs.max_gt)
        << '\t' << rs.max_gt_qphred;
 }
 
@@ -683,7 +683,7 @@ write_somatic_snv_genotype_grid(const strelka_options& opt,
                                 std::ostream& os) {
 
     os << std::setprecision(10) << std::fixed;
-    
+
     const result_set& ge(sgt.genome);
 #ifdef ENABLE_POLY
     const result_set& po(sgt.poly);

@@ -38,41 +38,17 @@
 
 static
 void
-finish_indel_sppr(indel& in,
+finish_indel_sppr(indel_observation& obs,
                   starling_pos_processor_base& sppr,
-                  const INDEL_ALIGN_TYPE::index_t iat,
-                  const bool is_noise,
-                  const align_id_t id,
                   const unsigned sample_no){
 
-    using namespace INDEL_ALIGN_TYPE;
-
-    if       (iat == CONTIG) {
-        in.data.contig_ids.insert(id);
-    } else if(is_noise) {
-        // noise state overides all except contig type:
-        //
-        in.data.noise_read_ids.insert(id);
-    } else if(iat == CONTIG_READ) {
-        in.data.all_read_ids.insert(id);
-    } else if(iat == GENOME_TIER1_READ) {
-        //in.data.tier1_map_read_ids.insert(id);
-        in.data.all_read_ids.insert(id);
-    } else if(iat == GENOME_TIER2_READ) {
-        in.data.tier2_map_read_ids.insert(id);
-    } else if(iat == GENOME_SUBMAP_READ) {
-        in.data.submap_read_ids.insert(id);
-    } else {
-        assert(0);
-    }
-
-    const bool is_novel_indel(sppr.insert_indel(in,sample_no));
+    const bool is_novel_indel(sppr.insert_indel(obs,sample_no));
 
     // contig reads are supposed to be associated with indels from their contig only:
     //
-    if((CONTIG_READ == iat) && is_novel_indel){
+    if((INDEL_ALIGN_TYPE::CONTIG_READ == obs.data.iat) && is_novel_indel){
         std::ostringstream oss;
-        oss << "ERROR: contig read contains novel indel: " << in << "\n";
+        oss << "ERROR: contig read contains novel indel: " << obs.key << "\n";
         throw blt_exception(oss.str().c_str());
     }
 }
@@ -105,38 +81,35 @@ process_edge_insert(const unsigned max_indel_size,
                     const ALIGNPATH::path_t& path,
                     const bam_seq_base& bseq,
                     starling_pos_processor_base& sppr,
-                    const INDEL_ALIGN_TYPE::index_t iat,
-                    const align_id_t id,
+                    indel_observation& obs,
                     const unsigned sample_no,
                     const indel_set_t* edge_indel_ptr,
                     const unsigned seq_len,
                     const std::pair<unsigned,unsigned>& ends,
                     const unsigned path_index,
                     const unsigned read_offset,
-                    const pos_t ref_head_pos,
-                    bool is_noise)
+                    const pos_t ref_head_pos)
 {
     using namespace ALIGNPATH;
 
     const path_segment& ps(path[path_index]);
 
-    if       (iat == INDEL_ALIGN_TYPE::CONTIG) {
-        indel in;
-        in.key.pos=ref_head_pos;
-        in.key.length=ps.length;
+    if       (obs.data.iat == INDEL_ALIGN_TYPE::CONTIG) {
+        obs.key.pos=ref_head_pos;
+        obs.key.length=ps.length;
         if(path_index==ends.first) { // right side BP:
-            in.key.type=INDEL::BP_RIGHT;
+            obs.key.type=INDEL::BP_RIGHT;
             const unsigned next_read_offset(read_offset+ps.length);
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
-            bam_seq_to_str(bseq,start_offset,next_read_offset,in.data.seq);
+            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.insert_seq);
         } else { // left side BP:
-            in.key.type=INDEL::BP_LEFT;
+            obs.key.type=INDEL::BP_LEFT;
             const unsigned seq_size(std::min(seq_len-read_offset,max_indel_size));
-            bam_seq_to_str(bseq,read_offset,read_offset+seq_size,in.data.seq);
+            bam_seq_to_str(bseq,read_offset,read_offset+seq_size,obs.data.insert_seq);
         }
-        finish_indel_sppr(in,sppr,iat,is_noise,id,sample_no);
+        finish_indel_sppr(obs,sppr,sample_no);
 
-    } else if(iat == INDEL_ALIGN_TYPE::CONTIG_READ) {
+    } else if(obs.data.iat == INDEL_ALIGN_TYPE::CONTIG_READ) {
 
         // add edge indels for contig reads:
         if(NULL != edge_indel_ptr){
@@ -162,19 +135,18 @@ process_edge_insert(const unsigned max_indel_size,
                     if(current_pos!=j->right_pos()) continue;
                 }
 
-                indel in;
-                in.key = *j;
+                obs.key = *j;
 
                 // large insertion breakpoints are not filtered as noise:
-                if(is_noise) {
-                    if(in.key.is_breakpoint() ||
-                       ((in.key.type == INDEL::INSERT) &&
-                        (in.key.length > max_cand_filter_insert_size))) {
-                        is_noise=false;
+                if(obs.data.is_noise) {
+                    if(obs.key.is_breakpoint() ||
+                       ((obs.key.type == INDEL::INSERT) &&
+                        (obs.key.length > max_cand_filter_insert_size))) {
+                        obs.data.is_noise=false;
                     }
                 }
 
-                finish_indel_sppr(in,sppr,iat,is_noise,id,sample_no);
+                finish_indel_sppr(obs,sppr,sample_no);
                 break;
             }
         }
@@ -204,13 +176,11 @@ process_swap(const unsigned max_indel_size,
              const ALIGNPATH::path_t& path,
              const bam_seq_base& bseq,
              starling_pos_processor_base& sppr,
-             const INDEL_ALIGN_TYPE::index_t iat,
-             const align_id_t id,
+             indel_observation& obs,
              const unsigned sample_no,
              const unsigned path_index,
              const unsigned read_offset,
-             const pos_t ref_head_pos,
-             bool is_noise)
+             const pos_t ref_head_pos)
 {
     using namespace ALIGNPATH;
 
@@ -218,46 +188,43 @@ process_swap(const unsigned max_indel_size,
     const unsigned swap_size(std::max(sinfo.insert_length,sinfo.delete_length));
 
     // large insertions are not filtered as noise:
-    if(is_noise) {
+    if(obs.data.is_noise) {
         if(sinfo.insert_length > max_cand_filter_insert_size) {
-            is_noise=false;
+            obs.data.is_noise=false;
         }
     }
 
     if(swap_size <= max_indel_size) {
-        indel in;
-        in.key.pos=ref_head_pos;
-        in.key.length=sinfo.insert_length;
-        in.key.swap_dlength=sinfo.delete_length;
-        in.key.type = INDEL::SWAP;
-        bam_seq_to_str(bseq,read_offset,read_offset+sinfo.insert_length,in.data.seq);
-        finish_indel_sppr(in,sppr,iat,is_noise,id,sample_no);
+        obs.key.pos=ref_head_pos;
+        obs.key.length=sinfo.insert_length;
+        obs.key.swap_dlength=sinfo.delete_length;
+        obs.key.type = INDEL::SWAP;
+        bam_seq_to_str(bseq,read_offset,read_offset+sinfo.insert_length,obs.data.insert_seq);
+        finish_indel_sppr(obs,sppr,sample_no);
 
     } else {
 
         // left side BP:
         {
-            indel in;
-            in.key.pos=ref_head_pos;
-            in.key.length=swap_size;
-            in.key.type=INDEL::BP_LEFT;
+            obs.key.pos=ref_head_pos;
+            obs.key.length=swap_size;
+            obs.key.type=INDEL::BP_LEFT;
             const unsigned start(read_offset);
             const unsigned size(bseq.size()-read_offset);
             const unsigned end(start+std::min(size,max_indel_size));
-            bam_seq_to_str(bseq,start,end,in.data.seq);
-            finish_indel_sppr(in,sppr,iat,is_noise,id,sample_no);
+            bam_seq_to_str(bseq,start,end,obs.data.insert_seq);
+            finish_indel_sppr(obs,sppr,sample_no);
         }
 
         // right side BP:
         {
-            indel in;
-            in.key.pos=ref_head_pos+sinfo.delete_length;
-            in.key.length=swap_size;
-            in.key.type=INDEL::BP_RIGHT;
+            obs.key.pos=ref_head_pos+sinfo.delete_length;
+            obs.key.length=swap_size;
+            obs.key.type=INDEL::BP_RIGHT;
             const unsigned next_read_offset(read_offset+sinfo.insert_length);
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
-            bam_seq_to_str(bseq,start_offset,next_read_offset,in.data.seq);
-            finish_indel_sppr(in,sppr,iat,is_noise,id,sample_no);
+            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.insert_seq);
+            finish_indel_sppr(obs,sppr,sample_no);
         }
     }
 
@@ -275,62 +242,57 @@ process_simple_indel(const unsigned max_indel_size,
                      const ALIGNPATH::path_t& path,
                      const bam_seq_base& bseq,
                      starling_pos_processor_base& sppr,
-                     const INDEL_ALIGN_TYPE::index_t iat,
-                     const align_id_t id,
+                     indel_observation& obs,
                      const unsigned sample_no,
                      const unsigned path_index,
                      const unsigned read_offset,
-                     const pos_t ref_head_pos,
-                     bool is_noise)
+                     const pos_t ref_head_pos)
 {
     using namespace ALIGNPATH;
 
     const path_segment& ps(path[path_index]);
 
     // large insertion breakpoints are not filtered as noise:
-    if(is_noise) {
+    if(obs.data.is_noise) {
         if((ps.type == INSERT) &&
            (ps.length > max_cand_filter_insert_size)) {
-            is_noise=false;
+            obs.data.is_noise=false;
         }
     }
 
     if(ps.length <= max_indel_size) {
-        indel in;
-        in.key.pos=ref_head_pos;
-        in.key.length = ps.length;
+        obs.key.pos=ref_head_pos;
+        obs.key.length = ps.length;
         if(ps.type == INSERT){
-            in.key.type=INDEL::INSERT;
-            bam_seq_to_str(bseq,read_offset,read_offset+ps.length,in.data.seq);
+            obs.key.type=INDEL::INSERT;
+            bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
         } else {
-            in.key.type=INDEL::DELETE;
+            obs.key.type=INDEL::DELETE;
         }
-        finish_indel_sppr(in,sppr,iat,is_noise,id,sample_no);
+        finish_indel_sppr(obs,sppr,sample_no);
     } else {
         // left side BP:
         {
-            indel in;
-            in.key.pos=ref_head_pos;
-            in.key.length=ps.length;
-            in.key.type=INDEL::BP_LEFT;
+            obs.key.pos=ref_head_pos;
+            obs.key.length=ps.length;
+            obs.key.type=INDEL::BP_LEFT;
             const unsigned start(read_offset);
             const unsigned size(bseq.size()-read_offset);
             const unsigned end(start+std::min(size,max_indel_size));
-            bam_seq_to_str(bseq,start,end,in.data.seq);
-            finish_indel_sppr(in,sppr,iat,is_noise,id,sample_no);
+            bam_seq_to_str(bseq,start,end,obs.data.insert_seq);
+            finish_indel_sppr(obs,sppr,sample_no);
         }
         // right side BP:
         {
-            indel in;
-            in.key.pos=ref_head_pos;
-            if(ps.type == DELETE) in.key.pos+=ps.length;
-            in.key.length=ps.length;
-            in.key.type=INDEL::BP_RIGHT;
+            obs.key.pos=ref_head_pos;
+            if(ps.type == DELETE) obs.key.pos+=ps.length;
+            obs.key.length=ps.length;
+            obs.key.type=INDEL::BP_RIGHT;
 
             const unsigned next_read_offset(read_offset+((ps.type==INSERT) ? ps.length : 0));
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
-            bam_seq_to_str(bseq,start_offset,next_read_offset,in.data.seq);
-            finish_indel_sppr(in,sppr,iat,is_noise,id,sample_no);
+            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.insert_seq);
+            finish_indel_sppr(obs,sppr,sample_no);
         }
     }
 }
@@ -395,7 +357,10 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         assert(! (is_edge_segment && (ps.type == DELETE)));
         assert(! (is_edge_insert && is_swap_start));
 
-        bool is_noise(false);
+        indel_observation obs;
+        obs.data.iat = iat;
+        obs.data.id = id;
+
         if(MATCH != ps.type) {
             pos_range indel_read_pr;
             indel_read_pr.set_begin_pos((read_offset==0) ? 0 : (read_offset-1));
@@ -408,7 +373,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                 rlen=ps.length;
             }
             indel_read_pr.set_end_pos(std::min(seq_len,read_offset+1+rlen));
-            if(! valid_pr.is_superset_of(indel_read_pr)) is_noise=true;
+            if(! valid_pr.is_superset_of(indel_read_pr)) obs.data.is_noise=true;
         }
 
         unsigned n_seg(1); // number of path segments consumed
@@ -426,18 +391,18 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 #endif
 
             process_edge_insert(max_indel_size,al.path,read_seq,
-                                sppr,iat,id,sample_no,edge_indel_ptr,
-                                seq_len,ends,path_index,read_offset,ref_head_pos,is_noise);
+                                sppr,obs,sample_no,edge_indel_ptr,
+                                seq_len,ends,path_index,read_offset,ref_head_pos);
 
         } else if(is_swap_start) {
             n_seg = process_swap(max_indel_size,al.path,read_seq,
-                                 sppr,iat,id,sample_no,
-                                 path_index,read_offset,ref_head_pos,is_noise);
+                                 sppr,obs,sample_no,
+                                 path_index,read_offset,ref_head_pos);
 
         } else if(is_segment_type_indel(al.path[path_index].type)) {
             process_simple_indel(max_indel_size,al.path,read_seq,
-                                 sppr,iat,id,sample_no,
-                                 path_index,read_offset,ref_head_pos,is_noise);
+                                 sppr,obs,sample_no,
+                                 path_index,read_offset,ref_head_pos);
 
         }
 

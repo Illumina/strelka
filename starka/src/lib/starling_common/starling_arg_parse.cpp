@@ -50,7 +50,7 @@ legacy_starling_arg_parse(arg_data& ad,
     bool is_bsnp_ssd_no_mismatch(false);
     bool is_bsnp_ssd_one_mismatch(false);
 
-    bool is_min_can_indel_set(false);    
+    bool is_min_can_indel_set(false);
     bool is_min_can_indel_frac_set(false);
     bool is_min_small_can_indel_frac_set(false);
     bool is_max_can_indel_density_set(false);
