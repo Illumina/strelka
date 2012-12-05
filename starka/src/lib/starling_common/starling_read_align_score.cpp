@@ -170,7 +170,7 @@ score_candidate_alignment(const starling_options& opt,
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->seq);
+            const string_bam_seq insert_bseq(id_ptr->get_insert_seq());
             const pos_t insert_seq_head_pos(0);
 
             score_segment(opt,
@@ -231,7 +231,7 @@ score_candidate_alignment(const starling_options& opt,
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->seq);
+            const string_bam_seq insert_bseq(id_ptr->get_insert_seq());
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:

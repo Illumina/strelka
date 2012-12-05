@@ -321,7 +321,7 @@ set_candidate_edge_insert_bp(candidate_alignment& cal){
 // simple object to share code between the genomic and
 // contig read parse routines
 //
-struct export_read_parse {
+struct export_read_parse  : private boost::noncopyable {
 
     export_read_parse(const export_stream_reader& exr)
         : _fwd_strand_read_store(NULL)

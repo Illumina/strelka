@@ -43,14 +43,19 @@ register_sample(indel_buffer& ib,
 
 bool
 indel_synchronizer::
-insert_indel(const indel& in) {
-    bool is_novel(false);
+insert_indel(const indel_observation& obs) {
+
+    // first insert indel into this sample:
+    bool is_synced_sample(false);
+    bool is_repeat_obs(false);
+    const bool is_novel(ibuff(_sample_order).insert_indel(obs,is_synced_sample,is_repeat_obs));
+
+    // then insert indel into synchronized samples:
+    is_synced_sample=true;
     const unsigned isds(idata().size());
     for(unsigned i(0);i<isds;++i) {
-        const bool is_synced_sample(i!=_sample_order);
-        if(ibuff(i).insert_indel(in,is_synced_sample)) {
-            is_novel=true;
-        }
+        if (i == _sample_order) continue;
+        ibuff(i).insert_indel(obs,is_synced_sample,is_repeat_obs);
     }
     return is_novel;
 }
@@ -81,8 +86,8 @@ is_candidate_indel_int(const starling_options& opt,
 
     // pre-set result to false until candidacy is shown:
     for(unsigned i(0);i<isds;++i) {
-        idsp[i]->is_candidate_indel=false;
-        idsp[i]->is_candidate_indel_cached=true;
+        idsp[i]->status.is_candidate_indel=false;
+        idsp[i]->status.is_candidate_indel_cached=true;
     }
 
     // check whether the candidate has been externally specified:
@@ -96,7 +101,7 @@ is_candidate_indel_int(const starling_options& opt,
 
     if(is_external_candidate) {
         for(unsigned i(0);i<isds;++i) {
-            idsp[i]->is_candidate_indel=true;
+            idsp[i]->status.is_candidate_indel=true;
         }
         return;
     }
@@ -179,13 +184,13 @@ is_candidate_indel_int(const starling_options& opt,
     //
     {
         if(ik.is_breakpoint() &&
-           (opt.min_candidate_indel_open_length > id.seq.size())) {
+           (opt.min_candidate_indel_open_length > id.get_insert_seq().size())) {
             return;
         }
     }
 
     // made it!
     for(unsigned i(0);i<isds;++i) {
-        idsp[i]->is_candidate_indel=true;
+        idsp[i]->status.is_candidate_indel=true;
     }
 }

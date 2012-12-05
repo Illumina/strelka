@@ -65,7 +65,6 @@ vcf_col_label() {
 }
 
 
-
 std::ostream&
 vcf_fileDate(std::ostream& os);
 

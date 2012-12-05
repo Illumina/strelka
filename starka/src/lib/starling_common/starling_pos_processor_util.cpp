@@ -257,8 +257,11 @@ is_al_overdepth(const starling_options& opt,
     for(unsigned i(0);i<as;++i){
         const path_segment& ps(al.path[i]);
         if(ps.type == MATCH) {
-            for(unsigned j(0);j<ps.length;++j) {
-                if(sppr.get_estimated_depth(ref_head_pos+static_cast<pos_t>(j),sample_no) >= opt.max_input_depth) return true;
+            if(sppr.is_estimated_depth_range_ge_than(ref_head_pos,
+                                                     ref_head_pos+static_cast<pos_t>(ps.length),
+                                                     opt.max_input_depth,
+                                                     sample_no)) {
+                return true;
             }
         }
 
@@ -422,27 +425,27 @@ process_candidate_indel(const vcf_record& vcf_indel,
         const int insert_length(as-nfix);
         const int delete_length(rs-nfix);
 
-        indel in;
+        indel_observation obs;
         // starling indel pos is at the first changed base but zero-indexed:
-        in.key.pos = (vcf_indel.pos+xfix.first-1);
+        obs.key.pos = (vcf_indel.pos+xfix.first-1);
         if(insert_length>0) {
             if(delete_length>0) {
-                in.key.type = INDEL::SWAP;
-                in.key.swap_dlength = delete_length;
+                obs.key.type = INDEL::SWAP;
+                obs.key.swap_dlength = delete_length;
             } else {
-                in.key.type = INDEL::INSERT;
+                obs.key.type = INDEL::INSERT;
             }
-            in.key.length = insert_length;
-            in.data.seq = std::string(alt.begin()+xfix.first,alt.end()-xfix.second);
+            obs.key.length = insert_length;
+            obs.data.insert_seq = std::string(alt.begin()+xfix.first,alt.end()-xfix.second);
         } else if(delete_length>0) {
-            in.key.type = INDEL::DELETE;
-            in.key.length = delete_length;
+            obs.key.type = INDEL::DELETE;
+            obs.key.length = delete_length;
         } else {
             log_os << "ERROR: Can't parse vcf indel: '" << vcf_indel << "'\n";
             exit(EXIT_FAILURE);
         }
 
-        in.data.is_external_candidate = true;
-        sppr.insert_indel(in,sample_no);
+        obs.data.is_external_candidate = true;
+        sppr.insert_indel(obs,sample_no);
     }
 }

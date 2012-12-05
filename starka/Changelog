@@ -14,3 +14,9 @@ v2.0a2
 - Bugfix: gVCF output was being written +1 past end of requirested range
 v2.0a1
 - initial version of starling with direct gVCF output
+v1.1.0
+- Import all updates from starling/strelka maintained on the strelka
+standalone 0.4.10 tag.
+v1.0.0
+- initial transfer of v1 starling/strelka from the public strelka release
+branch

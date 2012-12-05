@@ -126,15 +126,15 @@ next(const bool is_indel_only) {
 
     do {
     	int len;
-        const char* s = ti_read(_tfp, _titer, &len);
+        const char* vcf_record_string(ti_read(_tfp, _titer, &len));
 
-    	_is_stream_end=(NULL == s);
+        _is_stream_end=(NULL == vcf_record_string);
         _is_record_set=(! _is_stream_end);
-        if(_is_record_set) _record_no++;
-        else break;
+        if(! _is_record_set) break;
+        _record_no++;
 
-        if(! _vcfrec.set(s,len)) {
-            log_os << "ERROR: Can't parse vcf record: '" << s << "'\n";
+        if(! _vcfrec.set(vcf_record_string,len)) {
+            log_os << "ERROR: Can't parse vcf record: '" << vcf_record_string << "'\n";
             exit(EXIT_FAILURE);
         }
         if(_is_record_set && is_indel_only) {

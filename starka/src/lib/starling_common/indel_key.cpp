@@ -17,7 +17,7 @@
 /// \author Chris Saunders
 ///
 
-#include "starling_common/indel.hh"
+#include "starling_common/indel_key.hh"
 
 #include <iostream>
 
@@ -25,9 +25,12 @@
 
 std::ostream&
 operator<<(std::ostream& os,
-           const indel& in) {
-
-    os << in.key << in.data;
-
+           const indel_key& ik){
+    os << "INDEL pos: " << ik.pos
+       << " type: " << INDEL::get_index_label(ik.type)
+       << " len: " << ik.length
+       << " swap_dlen: " << ik.swap_dlength << "\n";
     return os;
 }
+
+

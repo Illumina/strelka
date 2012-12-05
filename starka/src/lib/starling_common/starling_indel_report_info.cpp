@@ -129,13 +129,13 @@ get_indel_summary_strings(const indel_key& ik,
     if((ik.type == INDEL::INSERT) ||
        (ik.type == INDEL::BP_LEFT) ||
        (ik.type == INDEL::BP_RIGHT)) {
-        indel_seq = id.seq;
+        indel_seq = id.get_insert_seq();
         indel_ref_seq = std::string(indel_seq.size(),'-');
     } else if(ik.type == INDEL::DELETE) {
         set_delete_seq(ik,ref,indel_ref_seq);
         indel_seq = std::string(indel_ref_seq.size(),'-');
     } else if(ik.type == INDEL::SWAP) {
-        indel_seq = id.seq;
+        indel_seq = id.get_insert_seq();
         set_delete_seq(ik,ref,indel_ref_seq);
         int idelt(static_cast<int>(ik.length)-static_cast<int>(ik.swap_dlength));
         if(idelt>0) { indel_ref_seq += std::string(idelt,'-'); }
@@ -163,17 +163,17 @@ get_vcf_summary_strings(const indel_key& ik,
     if       (ik.is_breakpoint()) {
         if       (ik.type == INDEL::BP_LEFT) {
             copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_ref_seq);
-            vcf_indel_seq = vcf_ref_seq + id.seq + '.';
+            vcf_indel_seq = vcf_ref_seq + id.get_insert_seq() + '.';
         } else if(ik.type == INDEL::BP_RIGHT){
             copy_ref_subseq(ref,ik.pos,ik.pos+1,vcf_ref_seq);
-            vcf_indel_seq = '.' + id.seq + vcf_ref_seq;
+            vcf_indel_seq = '.' + id.get_insert_seq() + vcf_ref_seq;
         } else {
             assert(0);
         }
     } else {
         copy_ref_subseq(ref,ik.pos-1,ik.pos+ik.delete_length(),vcf_ref_seq);
         copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_indel_seq);
-        vcf_indel_seq += id.seq;
+        vcf_indel_seq += id.get_insert_seq();
     }
 }
 

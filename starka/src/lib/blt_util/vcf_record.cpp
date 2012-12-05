@@ -49,6 +49,8 @@ set(const char* s,
     static const char sep('\t');
     static const unsigned maxword(5);
 
+    clear();
+
     // simple tab parse:
     const char* start(s);
     const char* p(start);
@@ -72,7 +74,7 @@ set(const char* s,
                 stoupper(ref);
                 break;
             case 4:
-                // addition parse loop for ',' character:
+                // additional parse loop for ',' character:
                 {
                     const char* p2(start);
                     while(p2<=p){

@@ -94,9 +94,15 @@ is_interfering_indel(const indel_set_t& current_indels,
 // present in the alignment -- otherwise there are multiple possible
 // realignments of the read
 //
+// Allow for the possibility of an upstream oligo to be implicitely
+// present for the read, acting to 'anchor' the beginning of the read
+// with the equivelent length match state even though this does not
+// appear in the read's CIGAR string.
+//
 static
 std::pair<int,int>
-get_alignment_indel_bp_overlap(const alignment& al,
+get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
+                               const alignment& al,
                                const indel_key& ik) {
 
     using namespace ALIGNPATH;
@@ -106,7 +112,8 @@ get_alignment_indel_bp_overlap(const alignment& al,
     pos_t read_head_pos(0);
     pos_t ref_head_pos(al.pos);
 
-    // mark the indel breakpoints in read position coordinates:
+    // mark the left and right indel breakpoints in read position
+    // coordinates:
     bool is_left_read_pos(false);
     pos_t left_read_pos(0);
     bool is_right_read_pos(false);
@@ -126,7 +133,7 @@ get_alignment_indel_bp_overlap(const alignment& al,
             next_read_head_pos += ps.length;
         } else if(ps.type == DELETE) {
             next_ref_head_pos += ps.length;
-        } else if((ps.type == SOFT_CLIP) or (ps.type == HARD_CLIP)) {
+        } else if((ps.type == SOFT_CLIP) || (ps.type == HARD_CLIP)) {
             // do nothing... this function operates on unclipped read
             // coordinates instead of true read coordinates
             //
@@ -135,11 +142,11 @@ get_alignment_indel_bp_overlap(const alignment& al,
             assert(0);
         }
 
-        if((not is_left_read_pos) and (ik.pos<=(next_ref_head_pos))){
+        if((! is_left_read_pos) && (ik.pos<=(next_ref_head_pos))){
             left_read_pos=read_head_pos+(ik.pos-ref_head_pos);
             is_left_read_pos=true;
         }
-        if((not is_right_read_pos) and (ik.right_pos()<(next_ref_head_pos))){
+        if((! is_right_read_pos) && (ik.right_pos()<(next_ref_head_pos))){
             right_read_pos=read_head_pos+(ik.right_pos()-ref_head_pos);
             is_right_read_pos=true;
         }
@@ -148,15 +155,25 @@ get_alignment_indel_bp_overlap(const alignment& al,
         ref_head_pos=next_ref_head_pos;
     }
 
+    // extension values account for oligo anchors at the end of the
+    // read not represented in the CIGAR string:
+    int left_extension(0);
+    int right_extension(0);
+    if(al.is_fwd_strand) {
+        if( left_read_pos > 0 ) left_extension = upstream_oligo_size;
+    } else {
+        if( (read_head_pos-right_read_pos)  > 0 )right_extension = upstream_oligo_size;
+    }
+
     int left_overlap(0);
     if(is_left_read_pos) {
-        left_overlap=std::min(left_read_pos,(read_head_pos-left_read_pos));
+        left_overlap=std::min(left_read_pos+left_extension,(read_head_pos-left_read_pos));
         left_overlap=std::max(0,left_overlap);
     }
 
     int right_overlap(0);
     if(is_right_read_pos) {
-        right_overlap=std::min(right_read_pos,(read_head_pos-right_read_pos));
+        right_overlap=std::min(right_read_pos,(read_head_pos-right_read_pos)+right_extension);
         right_overlap=std::max(0,right_overlap);
     }
 
@@ -489,7 +506,7 @@ score_indels(const starling_options& opt,
 #endif
 
             if(is_indel_present) {
-                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(max_cal.al,ik));
+                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,max_cal.al,ik));
                 const int bpo(std::max(both_bpo.first,both_bpo.second));
 #ifdef DEBUG_ALIGN
                 log_os << "VARMIT: indel bp_overlap " << bpo << "\n";
@@ -731,7 +748,7 @@ score_indels(const starling_options& opt,
                 }
 
                 const candidate_alignment& alt_cal(*(j->second.second));
-                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(alt_cal.al,ik));
+                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,alt_cal.al,ik));
                 const int bpo(std::max(both_bpo.first,both_bpo.second));
 
 #ifdef DEBUG_ALIGN

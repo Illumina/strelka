@@ -62,7 +62,7 @@ const unsigned STARLING_INIT_LARGEST_READ_SIZE(250);
 const double STARLING_LARGEST_READ_SIZE_PAD(1.25);
 
 // largest indel_size grows dynamically with observed indel size until
-// hitting max_indel_size. Initiallized to the follow value prior to
+// hitting max_indel_size. Initialized to the follow value prior to
 // observation:
 //
 // start with max_indel_size to deal with grouperisms:
@@ -500,12 +500,12 @@ reset() {
 
 bool
 starling_pos_processor_base::
-insert_indel(const indel& in,
+insert_indel(const indel_observation& obs,
              const unsigned sample_no){
 
     //
     // ppr advance is controlled by the start positions of reads and
-    // contigs, not indels. The rationalle for this is that indels are
+    // contigs, not indels. The rationale for this is that indels are
     // relatively cheap to store (so long as we aren't including
     // gigantic insert sequences) and do not scale up linearly with
     // increased coverage like reads do. For this reason our strategy
@@ -513,14 +513,15 @@ insert_indel(const indel& in,
     // the read buffer sizes fixed at a smaller value.
     //
 
-    _stageman.validate_new_pos_value(in.key.pos,STAGE::READ_BUFFER);
+    _stageman.validate_new_pos_value(obs.key.pos,STAGE::READ_BUFFER);
 
-    const unsigned len(std::min(static_cast<unsigned>((in.key.length+in.key.swap_dlength)*STARLING_LARGEST_INDEL_SIZE_PAD),_client_opt.max_indel_size));
+    // dynamically scale maximum indel size:
+    const unsigned len(std::min(static_cast<unsigned>((obs.key.length+obs.key.swap_dlength)*STARLING_LARGEST_INDEL_SIZE_PAD),_client_opt.max_indel_size));
     if(len>get_largest_indel_size()){
         set_largest_indel_size(len);
     }
 
-    return sample(sample_no).indel_sync().insert_indel(in);
+    return sample(sample_no).indel_sync().insert_indel(obs);
 }
 
 
@@ -530,6 +531,16 @@ get_estimated_depth(const pos_t pos,
                     const unsigned sample_no) const {
 
     return sample(sample_no).estdepth_buff.val(pos);
+}
+
+
+bool
+starling_pos_processor_base::
+is_estimated_depth_range_ge_than(const pos_t begin,
+                                 const pos_t end,
+                                 const unsigned depth,
+                                 const unsigned sample_no) const {
+    return sample(sample_no).estdepth_buff.is_range_ge_than(begin,end,depth);
 }
 
 
@@ -993,7 +1004,7 @@ write_candidate_indels_pos(const pos_t pos){
         if(INDEL::SWAP==ik.type) {
             bos << ik.swap_dlength << "\t";
         }
-        bos << id.seq << "\n";
+        bos << id.get_insert_seq() << "\n";
     }
 }
 

@@ -139,9 +139,12 @@ get_starling_shared_option_parser(starling_options& opt) {
         ("min-candidate-open-length",
          po::value<unsigned>(&opt.min_candidate_indel_open_length)->default_value(opt.min_candidate_indel_open_length),
          "Minimum open-ended breakpoint sequence length required to become a breakpoint candidate")
-         ("candidate-indel-input-vcf",
-          po::value<std::vector<std::string> >(&opt.input_candidate_indel_vcf)->multitoken(),
-          "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files.");
+        ("candidate-indel-input-vcf",
+         po::value<std::vector<std::string> >(&opt.input_candidate_indel_vcf)->multitoken(),
+         "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files.")
+        ("upstream-oligo-size",
+         po::value<unsigned>(&opt.upstream_oligo_size),
+         "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.");
 
     po::options_description window_opt("window-options");
     window_opt.add_options()

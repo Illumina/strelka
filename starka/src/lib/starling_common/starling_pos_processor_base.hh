@@ -120,12 +120,21 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     // returns true if this indel is novel to the buffer
     //
     bool
-    insert_indel(const indel& in,
+    insert_indel(const indel_observation& obs,
                  const unsigned sample_no);
 
     unsigned
     get_estimated_depth(const pos_t pos,
                         const unsigned sample_no) const;
+
+
+    // in range [begin,end), is the estimated depth always below
+    // depth?
+    bool
+    is_estimated_depth_range_ge_than(const pos_t begin,
+                                     const pos_t end,
+                                     const unsigned depth,
+                                     const unsigned sample_no) const;
 
     // first return value is true if the alignment is accepted into
     // the buffer (alignments can fail a number of quality checks --
