@@ -40,8 +40,6 @@ LDFLAGS := $(XFLAGS)
 STRELKA_BIN := bin/strelka
 STAR_BIN := bin/starling
 
-VAR_BINS := $(STRELKA_BIN) $(STAR_BIN)
-
 SHARED_CXX_DIR := blt_util blt_common common starling_common
 SHARED_CXX_SRC := $(wildcard $(patsubst %,lib/%/*.cpp,$(SHARED_CXX_DIR)))
 SHARED_OBJS := $(patsubst %.cpp,%.o,$(SHARED_CXX_SRC))
@@ -50,9 +48,9 @@ STRELKA_OBJS := $(patsubst %.cpp,%.o,$(STRELKA_CXX_SRC))
 STAR_CXX_SRC := bin/starling.cpp $(wildcard lib/starling/*.cpp) $(SHARED_CXX_SRC)
 STAR_OBJS := $(patsubst %.cpp,%.o,$(STAR_CXX_SRC))
 
-FASTA_BIN := bin/countFastaBases
+all: build
 
-all: $(STRELKA_BIN) $(STAR_BIN) $(FASTA_BIN)
+VAR_BINS = $(STRELKA_BIN) $(STAR_BIN)
 
 $(VAR_BINS): CXXFLAGS += -I$(STRELKA_INCLUDE_DIR) -I$(BOOST_INCLUDE_DIR) -I$(SAMTOOLS_DIR) -I$(TABIX_DIR) -I$(CODEMIN_INCLUDE_DIR)
 $(VAR_BINS): LIBS := -lbam -ltabix -lz -lboost_program_options
@@ -62,16 +60,20 @@ $(VAR_BINS): CC := $(CXX)
 $(STRELKA_BIN): $(STRELKA_OBJS) $(SHARED_OBJS)
 $(STAR_BIN): $(STAR_OBJS) $(SHARED_OBJS)
 
-$(FASTA_BIN): $(FASTA_BIN).cpp
+build: $(VAR_BINS)
 
+install: build
+	cp $(VAR_BINS) $(BIN_DIR)
 
 clean:
-	$(RM) $(STRELKA_OBJS) $(STAR_OBJS) $(SHARED_OBJS) $(STRELKA_BIN) $(STAR_BIN) $(FASTA_BIN) TAGS
+	$(RM) $(STRELKA_OBJS) $(STAR_OBJS) $(SHARED_OBJS) $(STRELKA_BIN) $(STAR_BIN)
 
 
 # extra dev tags:
 #
-etags:
+etags: TAGS
+
+TAGS:
 	find . -type f -iname "*.[ch]" -or -iname "*.cpp" -or -iname "*.hh" | sed "s/\.\///" | etags - 
 
 
