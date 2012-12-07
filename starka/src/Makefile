@@ -23,7 +23,7 @@ SAMTOOLS_DIR := $(REDIST_DIR)/$(SAMTOOLS_ID)
 TABIX_DIR := $(REDIST_DIR)/$(TABIX_ID)
 CODEMIN_INCLUDE_DIR := $(REDIST_DIR)/$(CODEMIN_ID)/include
 
-WARNFLAGS := -Wall -Werror
+WARNFLAGS := -Wall -W -Werror
 OPTFLAGS := -O2
 DEBUGFLAGS := -ggdb -O0
 XFLAGS := $(WARNFLAGS) $(OPTFLAGS)
@@ -57,7 +57,9 @@ build: $(VAR_BINS)
 install: build
 	cp $(VAR_BINS) $(BIN_DIR)
 
-$(VAR_BINS): CXXFLAGS += -I$(STRELKA_INCLUDE_DIR) -I$(BOOST_INCLUDE_DIR) -I$(SAMTOOLS_DIR) -I$(TABIX_DIR) -I$(CODEMIN_INCLUDE_DIR)
+# use isystem so that we can run starka with stringent warnings and skip
+# all the failed cases in boost
+$(VAR_BINS): CXXFLAGS += -I$(STRELKA_INCLUDE_DIR) -isystem $(BOOST_INCLUDE_DIR) -isystem $(SAMTOOLS_DIR) -isystem $(TABIX_DIR) -isystem $(CODEMIN_INCLUDE_DIR)
 $(VAR_BINS): LIBS := -lbam -ltabix -lz -lboost_program_options
 $(VAR_BINS): LDLIBS += -L$(BOOST_LIB_DIR) -L$(SAMTOOLS_DIR) -L$(TABIX_DIR) $(LIBS)
 $(VAR_BINS): CC := $(CXX)
