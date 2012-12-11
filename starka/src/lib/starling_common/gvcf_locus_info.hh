@@ -192,7 +192,6 @@ struct indel_info {
     // the site ploidy within the indel at offset x
     unsigned
     get_ploidy(const unsigned offset) {
-        assert(offset>=0);
         if(! imod.is_overlap) {
             using namespace STAR_DIINDEL;
             switch(dindel.max_gt) {
