@@ -839,8 +839,8 @@ get_extra_path_info(const ALIGNPATH::path_t& p){
     unsigned read_pos(0);
 
     extra_path_info epi;
-    const unsigned ps(p.size());
-    for(unsigned i(0);i<ps;++i){
+    const unsigned psize(p.size());
+    for(unsigned i(0);i<psize;++i){
         const path_segment& ps(p[i]);
         if(ps.type != MATCH) epi.indel_count++;
         if(ps.type == DELETE) {
@@ -1266,13 +1266,15 @@ get_exemplar_candidate_alignments(const starling_options& opt,
 
     // to prevent incompatible alignments, we must put all active indels first in the order list:
     //
-    typedef indel_status_map_t::const_iterator siter;
-    const siter i_begin(indel_status_map.begin());
-    const siter i_end(indel_status_map.end());
+    {
+        typedef indel_status_map_t::const_iterator siter;
+        const siter i_begin(indel_status_map.begin());
+        const siter i_end(indel_status_map.end());
 
-    indel_order.clear();
-    for(siter i(i_begin);i!=i_end;++i){ if(i->second) indel_order.push_back(i->first); }
-    for(siter i(i_begin);i!=i_end;++i){ if(! i->second) indel_order.push_back(i->first); }
+        indel_order.clear();
+        for(siter i(i_begin);i!=i_end;++i){ if(i->second) indel_order.push_back(i->first); }
+        for(siter i(i_begin);i!=i_end;++i){ if(! i->second) indel_order.push_back(i->first); }
+    }
 
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT exemplar starting indel_status_map:\n";
@@ -1329,13 +1331,13 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         typedef std::set<candidate_alignment>::iterator xiter;
         const xiter i_begin(cal_set2.begin()),i_end(cal_set2.end());
         for(xiter i(i_begin);i!=i_end;++i){
-            candidate_alignment cal(*i);
-            apath_clip_adder(cal.al.path,
+            candidate_alignment ical(*i);
+            apath_clip_adder(ical.al.path,
                              hc_lead,
                              hc_trail,
                              sc_lead,
                              sc_trail);
-            cal_set.insert(cal);
+            cal_set.insert(ical);
         }
     }
 }

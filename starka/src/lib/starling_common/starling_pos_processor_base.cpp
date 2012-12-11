@@ -1035,12 +1035,12 @@ process_pos_indel_single_sample(const pos_t pos,
     typedef indel_buffer::const_iterator ciiter;
 
     sample_info& sif(sample(sample_no));
-    ciiter i(sif.indel_buff.pos_iter(pos));
-    const ciiter i_end(sif.indel_buff.pos_iter(pos+1));
+    ciiter it(sif.indel_buff.pos_iter(pos));
+    const ciiter it_end(sif.indel_buff.pos_iter(pos+1));
 
-    for(;i!=i_end;++i){
-        const indel_key& ik(i->first);
-        const indel_data& id(get_indel_data(i));
+    for(;it!=it_end;++it){
+        const indel_key& ik(it->first);
+        const indel_data& id(get_indel_data(it));
         if(! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
         if(id.read_path_lnp.empty()) continue;
 
@@ -1104,10 +1104,10 @@ process_pos_indel_single_sample(const pos_t pos,
                 report_os << "INDEL_EVIDENCE " << ik;
 
                 typedef indel_data::score_t::const_iterator siter;
-                siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-                for(;i!=i_end;++i){
-                    const align_id_t read_id(i->first);
-                    const read_path_scores& lnp(i->second);
+                siter it2(id.read_path_lnp.begin()), it2_end(id.read_path_lnp.end());
+                for(;it2!=it2_end;++it2){
+                    const align_id_t read_id(it2->first);
+                    const read_path_scores& lnp(it2->second);
                     const read_path_scores pprob(indel_lnp_to_pprob(_client_dopt,lnp,is_tier2_pass,is_use_alt_indel));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 

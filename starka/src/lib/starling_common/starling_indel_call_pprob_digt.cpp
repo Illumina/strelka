@@ -386,9 +386,9 @@ get_indel_digt_lhood(const starling_options& opt,
     //    typedef read_path_scores::alt_indel_t::const_iterator aiter;
 
     typedef indel_data::score_t::const_iterator siter;
-    siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-    for(;i!=i_end;++i){
-        const read_path_scores& path_lnp(i->second);
+    siter it(id.read_path_lnp.begin()), it_end(id.read_path_lnp.end());
+    for(;it!=it_end;++it){
+        const read_path_scores& path_lnp(it->second);
 
         // optionally skip tier2 data:
         if((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
@@ -441,8 +441,8 @@ get_indel_digt_lhood(const starling_options& opt,
         // loop is currently setup to assume a uniform het ratio subgenotype prior
         const unsigned n_bias_steps(1+static_cast<unsigned>(het_bias/opt.het_bias_max_ratio_inc));
         const double ratio_increment(het_bias/static_cast<double>(n_bias_steps));
-        for(unsigned i(0);i<n_bias_steps;++i) {
-            const double het_ratio(0.5+(i+1)*ratio_increment);
+        for(unsigned step(0);step<n_bias_steps;++step) {
+            const double het_ratio(0.5+(step+1)*ratio_increment);
             increment_het_ratio_lhood(opt,dopt,sample_opt,
                                       indel_error_lnp,indel_real_lnp,
                                       ref_error_lnp,ref_real_lnp,
