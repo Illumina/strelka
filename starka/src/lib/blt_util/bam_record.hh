@@ -148,8 +148,8 @@ public:
     //
     void
     set_readqual(const char* read,
-                 const uint8_t* qual) {
-        edit_bam_read_and_quality(read,qual,*_bp);
+                 const uint8_t* init_qual) {
+        edit_bam_read_and_quality(read,init_qual,*_bp);
     }
 
     bam1_t*

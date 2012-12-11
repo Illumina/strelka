@@ -32,15 +32,15 @@
 //
 struct window_average {
 
-    window_average(const int32_t full_size)
+    window_average(const int32_t init_full_size)
         : _total(0)
         , _size(0)
         , _null_size(0)
         , _head(0)
-        , _full_size(full_size)
-        , _buf(full_size)
-        , _is_buf(full_size)
-    { assert(full_size>0); }
+        , _full_size(init_full_size)
+        , _buf(init_full_size)
+        , _is_buf(init_full_size)
+    { assert(init_full_size>0); }
 
     void
     reset() {

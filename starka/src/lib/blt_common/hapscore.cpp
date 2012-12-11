@@ -30,7 +30,7 @@
 
 hap_cand::
 hap_cand(const bam_seq_base& read_seq,
-         const uint8_t* qual,
+         const uint8_t* init_qual,
          const int offset)  // the offset into read of the pileup base
     : _total_qual(0)
 {
@@ -47,12 +47,12 @@ hap_cand(const bam_seq_base& read_seq,
     for(int i(0);i<pre_seq;++i) { _bq[i] = 0; }
 
     for(int i(start);i<end;++i) {
-        _total_qual += qual[i];
+        _total_qual += init_qual[i];
         const char rs(read_seq.get_char(i));
         _bq[i-start+pre_seq] =
             ( (rs=='N') ?
               0 :
-              (qual[i]<<QUAL_SHIFT | base_to_id(rs)));
+              (init_qual[i]<<QUAL_SHIFT | base_to_id(rs)));
     }
 
     for(int i(0);i<post_seq;++i) { _bq[i+end-start+pre_seq] = 0; }

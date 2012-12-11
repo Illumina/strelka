@@ -23,7 +23,8 @@ SAMTOOLS_DIR := $(REDIST_DIR)/$(SAMTOOLS_ID)
 TABIX_DIR := $(REDIST_DIR)/$(TABIX_ID)
 CODEMIN_INCLUDE_DIR := $(REDIST_DIR)/$(CODEMIN_ID)/include
 
-WARNFLAGS := -Wall -W -Wshadow -Werror
+CXX := g++
+WARNFLAGS := -Wall -Wextra -Wshadow -Wunused -Wpointer-arith -Wparentheses -Werror  
 OPTFLAGS := -O2
 DEBUGFLAGS := -ggdb -O0
 XFLAGS := $(WARNFLAGS) $(OPTFLAGS)

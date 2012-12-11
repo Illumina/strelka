@@ -100,13 +100,13 @@ private:
     };
 
     void
-    ginfo_init(const unsigned ploidy,
+    ginfo_init(const unsigned init_ploidy,
                const unsigned pli,
                const unsigned init_i,
                gtype_info& gi);
 
     void
-    ref_gtype_init(const unsigned ploidy,
+    ref_gtype_init(const unsigned init_ploidy,
                    const unsigned pli,
                    const unsigned init_i,
                    const bool is_hom,

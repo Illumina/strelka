@@ -51,7 +51,7 @@ nploid_info(const unsigned init_ploidy)
 // recursively derive labels and base frequencies for each genotype
 void
 nploid_info::
-ginfo_init(const unsigned ploidy,
+ginfo_init(const unsigned init_ploidy,
            const unsigned pli,
            const unsigned init_i,
            gtype_info& gi) {
@@ -59,8 +59,8 @@ ginfo_init(const unsigned ploidy,
     for(unsigned i(init_i); i<N_BASE; ++i){
         gi.efreq_levels[i] += 1;
         gi.label[pli]=id_to_base(i);
-        if((pli+1)<ploidy) {
-            ginfo_init(ploidy,pli+1,i,gi);
+        if((pli+1)<init_ploidy) {
+            ginfo_init(init_ploidy,pli+1,i,gi);
         } else {
             _ginfo.push_back(gi);
         }
@@ -74,7 +74,7 @@ ginfo_init(const unsigned ploidy,
 // for each possible reference base:
 void
 nploid_info::
-ref_gtype_init(const unsigned ploidy,
+ref_gtype_init(const unsigned init_ploidy,
                const unsigned pli,
                const unsigned init_i,
                const bool is_hom,
@@ -83,8 +83,8 @@ ref_gtype_init(const unsigned ploidy,
 
     for(unsigned i(init_i); i<N_BASE; ++i){
         const bool is_iter_hom(pli==0 || (is_hom && (i==init_i)));
-        if((pli+1)<ploidy) {
-            ref_gtype_init(ploidy,pli+1,i,is_iter_hom,ref,index);
+        if((pli+1)<init_ploidy) {
+            ref_gtype_init(init_ploidy,pli+1,i,is_iter_hom,ref,index);
         } else {
             if(is_iter_hom) *ref++ = index;
             ++index;

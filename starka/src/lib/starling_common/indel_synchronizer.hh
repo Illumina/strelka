@@ -72,7 +72,7 @@ private:
 // samples, currently used for tumor/normal indel-calling.
 //
 // There is one indel synchronizer associated with each sample
-// (referred to as the primary sample below). The synchonizer defines
+// (referred to as the primary sample below). The synchronizer defines
 // the primary sample's synchronization policy with any other sample.
 //
 struct indel_synchronizer {
@@ -81,11 +81,11 @@ struct indel_synchronizer {
     //
     indel_synchronizer(indel_buffer& ib,
                        const depth_buffer& db,
-                       const starling_sample_options& sample_opt)
+                       const starling_sample_options& init_sample_opt)
         : _sample_no(0)
         , _sample_order(0)
     {
-        _isd.register_sample(ib,db,sample_opt,_sample_no);
+        _isd.register_sample(ib,db,init_sample_opt,_sample_no);
     }
 
     // ctor for multi-sample synced cases:

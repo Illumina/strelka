@@ -105,9 +105,9 @@ std::ostream& operator<<(std::ostream& os, const bam_seq_base& bs);
 struct bam_seq : public bam_seq_base {
 
     bam_seq(const uint8_t* s,
-            const uint16_t size,
+            const uint16_t init_size,
             const uint16_t offset=0)
-        : _s(s), _size(size), _offset(offset) {}
+        : _s(s), _size(init_size), _offset(offset) {}
 
 #if 0
     bam_seq(const bam_seq bs,
@@ -147,8 +147,8 @@ struct string_bam_seq : public bam_seq_base {
         : _s(s.c_str()), _size(s.size()) {}
 
     string_bam_seq(const char* s,
-                   const unsigned size)
-        : _s(s), _size(size) {}
+                   const unsigned init_size)
+        : _s(s), _size(init_size) {}
 
     uint8_t
     get_code(pos_t i) const {
