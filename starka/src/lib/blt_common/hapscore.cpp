@@ -87,7 +87,7 @@ struct hinfo {
     }
 
     bool
-    operator<(const hinfo& rhs) {
+    operator<(const hinfo& rhs) const {
         return (total_qual > rhs.total_qual);
     }
 

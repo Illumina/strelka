@@ -58,7 +58,9 @@ struct ref_map_type {
         case INSERT: return 'I';
         case SOFT_CLIP: return 'S';
         case CONFLICT: return 'X';
-        default: assert(0);
+        default:
+            assert(0);
+            return '\0';
         }
     }
 
@@ -260,9 +262,6 @@ soft_clip_alignment(alignment& al,
     al=new_al;
 }
 
-
-
-typedef std::vector<const candidate_alignment*> cal_pool_t;
 
 
 

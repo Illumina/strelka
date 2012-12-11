@@ -213,8 +213,6 @@ bool
 get_next_contig(std::istream& is,
                 grouper_contig& ctg){
 
-    static const char header_delim[] = "| \t\n\r";
-
     ctg.clear();
 
     if(! is) return false;
@@ -235,6 +233,8 @@ get_next_contig(std::istream& is,
         static const unsigned header_field_count(5);
         std::string::size_type begin_pos,pos(1);
         for(unsigned i(0);i<header_field_count;++i){
+            static const char header_delim[] = "| \t\n\r";
+
             begin_pos=header.find_first_not_of(header_delim,pos);
             pos=header.find_first_of(header_delim,begin_pos);
 

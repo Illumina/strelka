@@ -127,7 +127,7 @@ position_nonref_2allele_test(const snp_pos_info& pi,
     lhood[NR2TEST::NONREF_MF] = integrate_ln_sparsefunc(sf, opt.min_nonref_freq, 1,1,1);
     lhood[NR2TEST::NONREF_MF_NOISE] = integrate_ln_sparsefunc(sf, 0, opt.nonref_site_error_decay_freq,1,0);
 
-    static const blt_float_t neginf(std::log(0.0f));
+    static const blt_float_t neginf(-std::numeric_limits<blt_float_t>::infinity());
     lhood[NR2TEST::NONREF_OTHER] = neginf;
 
     //std::cerr << "WAGART: logh ref/nonef: " << lhood[0] << " " << lhood[1] << "\n";

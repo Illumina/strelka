@@ -295,9 +295,9 @@ get_prior(const blt_float_t* normal_lnprior,
         grid_normal_lnprior[ngt] = (strand_axis_prior[sgt]+ln_strand_sse_rate+error_mod);
     }
 
+#ifdef SOMATIC_DEBUG
     throwaway_sum *= std::exp(ln_strand_sse_rate);
 
-#ifdef SOMATIC_DEBUG
     check_ln_distro(grid_normal_lnprior.begin(),
                     grid_normal_lnprior.end(),
                     "somatic prior",
@@ -819,7 +819,7 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     // the priors which should have a low-impact on the results.
     // the prior below is incomplete
 #ifdef DEBUG_ALTERNATE_PRIOR
-    static const double neginf(std::log(0));
+    static const double neginf(-std::numeric_limits<double>::infinity());
 
     std::vector<double> prior(DDIGT_SGRID::SIZE);
     std::fill(prior.begin(),prior.end(),neginf);

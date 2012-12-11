@@ -29,7 +29,7 @@
 
 
 struct convert {
-    void operator()(char& c) { c = toupper((unsigned char)c); }
+    void operator()(char& c) const { c = toupper((unsigned char)c); }
 };
 
 

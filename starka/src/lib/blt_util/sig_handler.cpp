@@ -46,6 +46,7 @@ blt_sig_handler (int sig) {
 #endif
     default:
         log_os << "INFO: " << _progname << " received signal no: " << sig << std::endl;
+        break;
     }
 }
 

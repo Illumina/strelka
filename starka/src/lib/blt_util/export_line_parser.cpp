@@ -58,8 +58,8 @@ set_export_line(char* line) {
             << "\texport line: ";
         write_export_line(oss);
         oss << "\n";
-        throw blt_exception(oss.str().c_str());
         _is_set=false;
+        throw blt_exception(oss.str().c_str());
     }
     _entry_count=i;
 }
