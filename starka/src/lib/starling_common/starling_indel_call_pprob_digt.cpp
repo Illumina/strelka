@@ -111,7 +111,7 @@ get_het_observed_allele_ratio(const unsigned read_length,
 
 void
 indel_digt_caller::
-get_high_low_het_ratio_lhood(const starling_options& opt,
+get_high_low_het_ratio_lhood(const starling_options& /*opt*/,
                              const starling_deriv_options& dopt,
                              const starling_sample_options& sample_opt,
                              const double indel_error_lnp,

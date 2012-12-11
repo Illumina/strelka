@@ -29,8 +29,7 @@ struct vcf_record {
     vcf_record() : pos(0) { clear(); }
 
     // set record from record string s, return false on error
-    bool set(const char* s,
-             const int len);
+    bool set(const char* s);
 
     void clear() {
         chrom="";

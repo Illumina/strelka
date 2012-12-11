@@ -971,7 +971,7 @@ void
 finish_realignment(const starling_options& client_opt,
                    read_segment& rseg,
                    const cal_pool_t& cal_pool,
-                   const double path_lnp,
+                   const double /*path_lnp*/,
                    const candidate_alignment* cal_ptr){
 
     if(client_opt.is_clip_ambiguous_path &&

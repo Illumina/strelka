@@ -66,7 +66,7 @@ private:
 void
 position_nonref_2allele_test(const snp_pos_info& pi,
                              const blt_options& opt,
-                             const bool is_always_test,
+                             const bool /*is_always_test*/,
                              nonref_test_call& nrc) {
 
     static const bool is_mle_freq(false);

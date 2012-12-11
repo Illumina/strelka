@@ -209,7 +209,7 @@ is_equiv_candidate(const candidate_alignment& cal1,
     if(s1 != s2) return false;
 
     indel_set_t::const_iterator it1(is1.begin()), it1_end(is1.end());
-    indel_set_t::const_iterator it2(is2.begin()), it2_end(is2.end());
+    indel_set_t::const_iterator it2(is2.begin()); //, it2_end(is2.end());
 
     for(;it1!=it1_end;++it1,++it2) {
         if(*it1==*it2) continue;
@@ -249,7 +249,7 @@ is_first_indel_dominant(const starling_options& opt,
 //
 void
 score_indels(const starling_options& opt,
-             const starling_deriv_options& dopt,
+             const starling_deriv_options& /*dopt*/,
              const starling_sample_options& sample_opt,
              const read_segment& rseg,
              indel_synchronizer& isync,
@@ -633,7 +633,7 @@ score_indels(const starling_options& opt,
                 const indel_key& ik(*i);
                 const bool is_indel_present(ical_indels.count(ik)!=0);
                 if(is_indel_present) {
-                    const indel_status_t mkey(std::make_pair(ik,std::make_pair(is_indel_present,ik)));
+                    //const indel_status_t mkey(std::make_pair(ik,std::make_pair(is_indel_present,ik)));
                     check_and_update_iks(iks_max_path_lnp,ik,is_indel_present,ik,path_lnp,&ical);
 
                     // mark this as an alternate indel score for interfering indels:

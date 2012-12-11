@@ -133,7 +133,7 @@ next(const bool is_indel_only) {
         if(! _is_record_set) break;
         _record_no++;
 
-        if(! _vcfrec.set(vcf_record_string,len)) {
+        if(! _vcfrec.set(vcf_record_string)) {
             log_os << "ERROR: Can't parse vcf record: '" << vcf_record_string << "'\n";
             exit(EXIT_FAILURE);
         }

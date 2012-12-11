@@ -303,7 +303,7 @@ dump(std::ostream& os) const {
 static
 bool
 convert_indel_to_htype(const indel_key& ik,
-                       const indel_data& id,
+                       const indel_data& /*id*/,
                        const read_segment& rseg,
                        const reference_contig_segment& ref,
                        htype_element& he) {
@@ -438,7 +438,7 @@ get_htypes_for_indel(const starling_deriv_options& dopt,
 void
 starling_pos_processor_base::
 get_region_haplotypes(const known_pos_range full_pr,
-                      const known_pos_range active_pr) {
+                      const known_pos_range /*active_pr*/) {
 
     // only works for the first sample right now:
     static const unsigned sample_no(0);

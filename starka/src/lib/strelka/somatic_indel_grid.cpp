@@ -170,7 +170,7 @@ static
 void
 calculate_result_set(const strelka_options& /*opt*/,
                      const std::vector<blt_float_t>& normal_lnprior,
-                     const std::vector<blt_float_t>& normal_lnprior_poly,
+                     const std::vector<blt_float_t>& /*normal_lnprior_poly*/,
                      const double lnmatch,
                      const double lnmismatch,
                      const double* normal_lhood,

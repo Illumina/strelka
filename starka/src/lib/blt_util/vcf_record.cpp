@@ -43,8 +43,7 @@ stoupper(std::string& s) {
 
 bool
 vcf_record::
-set(const char* s,
-    const int len) {
+set(const char* s) {
 
     static const char sep('\t');
     static const unsigned maxword(5);
@@ -89,6 +88,7 @@ set(const char* s,
                 break;
             default:
                 assert(0);
+                break;
             }
             start=p+1;
             wordindex++;
