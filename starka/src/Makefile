@@ -24,7 +24,7 @@ TABIX_DIR := $(REDIST_DIR)/$(TABIX_ID)
 CODEMIN_INCLUDE_DIR := $(REDIST_DIR)/$(CODEMIN_ID)/include
 
 CXX := g++
-WARNFLAGS := -Wall -Wextra -Wshadow -Wunused -Wpointer-arith -Wparentheses -Werror  
+WARNFLAGS := -Wall -Wextra -Wshadow -Wunused -Wpointer-arith -Winit-self -Wunused-but-set-parameter -Wunused-but-set-variable -Werror # -Wsign-conversion -Weverything 
 OPTFLAGS := -O2
 DEBUGFLAGS := -ggdb -O0
 XFLAGS := $(WARNFLAGS) $(OPTFLAGS)
