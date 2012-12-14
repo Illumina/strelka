@@ -56,12 +56,12 @@ STAR_OBJS := $(patsubst %.cpp,%.o,$(STAR_CXX_SRC))
 
 all: build
 
-build: $(VAR_BINS) run_cppcheck
+build: cppcheck.done
 
 install: build
 	cp $(VAR_BINS) $(BIN_DIR)
 
-run_cppcheck:
+cppcheck.done: $(VAR_BINS)
 	@echo "Runnning cppcheck" && \
 	run_cppcheck.bash
 

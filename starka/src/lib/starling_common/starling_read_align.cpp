@@ -614,7 +614,7 @@ make_candidate_alignments(const starling_options& client_opt,
                           const unsigned toggle_depth, // total number of changes made to the exemplar alignment
                           known_pos_range read_range,
                           int max_read_indel_toggle,
-                          const candidate_alignment cal){
+                          const candidate_alignment& cal){
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT starting MCA depth: " << depth << "\n";
     std::cerr << "\twith cal: " << cal;

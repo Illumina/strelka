@@ -352,7 +352,7 @@ write_somatic_snv_genotype(const strelka_options& opt,
 
     os << (sgt.tier+1) << '\t';
     write_result_set(ge,os);
-#ifdef ENALBLE_POLY
+#ifdef ENABLE_POLY
     os << '\t';
     write_result_set(po,os);
 #endif
