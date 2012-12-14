@@ -109,9 +109,11 @@ next() {
 const char*
 bam_streamer::
 target_id_to_name(const int32_t tid) const {
-    static const char unmapped[] = "*";
     // assert(tid < _bfp->header->n_targets);
-    if(tid<0) return unmapped;
+    if(tid<0) {
+        static const char unmapped[] = "*";
+        return unmapped;
+    }
     return _bfp->header->target_name[tid];
 }
 

@@ -106,9 +106,10 @@ position_nonref_2allele_test(const snp_pos_info& pi,
         if       (ref_id==max_id) {
             nrc.nonref_id=max2_id;
 
+#if 0
         } else if(ref_id==max2_id) {
             nrc.nonref_id=max_id;
-
+#endif
         } else {
             nrc.nonref_id=max_id;
             //nonref2_id=max2_id;

@@ -824,6 +824,8 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     std::vector<double> prior(DDIGT_SGRID::SIZE);
     std::fill(prior.begin(),prior.end(),neginf);
 
+    // this zero'd code is incomplete and abandoned for now...:
+#if 0
     for(unsigned ngt(0);ngt<DIGT_SGRID::PRESTRAND_SIZE;++ngt){
         double base_prior(neginf);
         const bool is_noise(ngt>=STAR_DIINDEL::SIZE);
@@ -843,6 +845,7 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
         const unsigned dgt(DDIGT_SGRID::get_state(gt,gt));
         prior[dgt] = normal_genomic_lnprior[gt]+lnmatch;
     }
+#endif
 
     check_ln_distro(prior.begin(),
                     prior.end(),

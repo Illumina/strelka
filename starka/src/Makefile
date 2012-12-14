@@ -24,7 +24,10 @@ TABIX_DIR := $(REDIST_DIR)/$(TABIX_ID)
 CODEMIN_INCLUDE_DIR := $(REDIST_DIR)/$(CODEMIN_ID)/include
 
 CXX := g++
-WARNFLAGS := -Wall -Wextra -Wshadow -Wunused -Wpointer-arith -Winit-self -Wunused-but-set-parameter -Wunused-but-set-variable -Werror # -Wsign-conversion -Weverything 
+BASE_WARNFLAGS := -Wall -Wextra -Wshadow -Wunused
+EXTRA_WARNFLAGS := -Wpointer-arith -Winit-self -Wunused-but-set-parameter -Wunused-but-set-variable -Wredundant-decls # -Wsign-conversion -Weverything 
+INTERNAL_WARNFLAGS := -Werror
+WARNFLAGS = $(BASE_WARNFLAGS) $(EXTRA_WARNFLAGS) $(INTERNAL_WARNFLAGS)
 OPTFLAGS := -O2
 DEBUGFLAGS := -ggdb -O0
 XFLAGS := $(WARNFLAGS) $(OPTFLAGS)
@@ -53,17 +56,21 @@ STAR_OBJS := $(patsubst %.cpp,%.o,$(STAR_CXX_SRC))
 
 all: build
 
-build: $(VAR_BINS)
+build: $(VAR_BINS) run_cppcheck
 
 install: build
 	cp $(VAR_BINS) $(BIN_DIR)
+
+run_cppcheck:
+	@echo "Runnning cppcheck" && \
+	run_cppcheck.bash
 
 # use isystem so that we can run starka with stringent warnings and skip
 # all the failed cases in boost
 $(VAR_BINS): CXXFLAGS += -I$(STRELKA_INCLUDE_DIR) -isystem $(BOOST_INCLUDE_DIR) -isystem $(SAMTOOLS_DIR) -isystem $(TABIX_DIR) -isystem $(CODEMIN_INCLUDE_DIR)
 $(VAR_BINS): LIBS := -lbam -ltabix -lz -lboost_program_options
 $(VAR_BINS): LDLIBS += -L$(BOOST_LIB_DIR) -L$(SAMTOOLS_DIR) -L$(TABIX_DIR) $(LIBS)
-$(VAR_BINS): CC := $(CXX)
+$(VAR_BINS): CC := $(CXX) # this fixes the linker to inlcude libc++
 
 $(STRELKA_BIN): $(STRELKA_OBJS) $(SHARED_OBJS)
 $(STAR_BIN): $(STAR_OBJS) $(SHARED_OBJS)
