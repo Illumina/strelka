@@ -16,9 +16,13 @@ thisdir=$(getAbsDir $(dirname $0))
 logdir=$thisdir/../testlogs
 builddir=$thisdir/../testbuild
 
-simpleMessage() {
+stdinMessage() {
     msg="$1"
-    echo $(hostname):$thisdir | mail -s "$msg" $emailTo
+    mail -s "$msg" $emailTo
+}
+
+simpleMessage() {
+    echo $(hostname):$thisdir | stdinMessage "$1" 
 }
 
 trap "simpleMessage 'starka nightly: failed. reason unknown'" INT TERM EXIT
@@ -50,7 +54,7 @@ build_exit_code=$?
 trap - INT TERM EXIT
 
 if [ $build_exit_code != 0 ]; then
-    simpleMessage "starka nightly: build failed. exit code $build_exit_code"
+    cat $build_stderr | stdinMessage "starka nightly: build failed. exit code $build_exit_code"
 else
     simpleMessage "starka nightly: build succeeded"
 fi
