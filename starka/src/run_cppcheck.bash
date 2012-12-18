@@ -19,7 +19,9 @@ cppcheck \
 --suppress=unsignedLessThanZero \
 --suppress=obsoleteFunctionsasctime \
 --suppress=unusedFunction \
---suppress=missingInclude $thisDir 2>| $outFile
+--suppress=missingInclude \
+--suppress=unmatchedSuppression \
+$thisDir 2>| $outFile
 
 # --inconclusive \
 
