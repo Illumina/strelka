@@ -63,7 +63,7 @@ install: build
 
 cppcheck.done: $(VAR_BINS)
 	@echo "Runnning cppcheck" && \
-	run_cppcheck.bash
+	$(CURDIR)/run_cppcheck.bash
 
 # use isystem so that we can run starka with stringent warnings and skip
 # all the failed cases in boost
