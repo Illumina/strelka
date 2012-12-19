@@ -4,7 +4,7 @@ set -o nounset
 set -o xtrace
 
 # user settings:
-starka_git_repo=/home/csaunders/devel/git/repos/starka.git
+starka_git_repo=ussd-git.illumina.com:OptimusPrime/starka
 emailTo="csaunders@illumina.com"
 
 
