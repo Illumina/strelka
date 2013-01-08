@@ -449,7 +449,11 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 
         // note this relies on the single extra base of separation
         // required between indels during indel conflict detection:
-        assert(ik.pos > ref_head_pos);
+        if(ik.pos <= ref_head_pos) {
+            log_os << "ERROR: indel candidate: " << ik << " is not greater than ref_head_pos: " << ref_head_pos
+                   << ". Cannot resolve indel with candidate read alignment: " << cal << "\n";
+            exit(EXIT_FAILURE);
+        }
 
         const unsigned match_segment(ik.pos-ref_head_pos);
 
