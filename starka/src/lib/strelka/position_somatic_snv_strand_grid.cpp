@@ -311,7 +311,8 @@ get_prior(const blt_float_t* normal_lnprior,
 somatic_snv_caller_strand_grid::
 somatic_snv_caller_strand_grid(const strelka_options& opt,
                                const pprob_digt_caller& pd_caller)
-    : _opt(opt), _pd_caller(pd_caller) {
+      : _opt(opt)
+    {
 
     _ln_som_match=(log1p_switch(-opt.somatic_snv_rate));
     _ln_som_mismatch=(std::log(opt.somatic_snv_rate/(static_cast<blt_float_t>((DIGT_SGRID::PRESTRAND_SIZE)-1))));
@@ -1035,15 +1036,6 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
         get_diploid_strand_grid_lhood_spi(nepi.pi,sgt.ref_gt,normal_lhood+DIGT_SGRID::PRESTRAND_SIZE);
         get_diploid_strand_grid_lhood_spi(tepi.pi,sgt.ref_gt,tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE);
-
-#if 0
-        // get normal diploid results (will use these for somatic call classification):
-        diploid_genotype::result_set normal_digt_rs;
-        pprob_digt_caller::calculate_result_set(normal_lhood,
-                                                _pd_caller.lnprior_genomic(sgt.ref_gt),
-                                                sgt.ref_gt,
-                                                normal_digt_rs);
-#endif
 
         // genomic site results:
         calculate_result_set_grid(normal_lhood,

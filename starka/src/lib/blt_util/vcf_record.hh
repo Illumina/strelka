@@ -42,10 +42,6 @@ struct vcf_record {
     int pos;
     std::string ref;
     std::vector<std::string> alt;
-
-private:
-    enum { MAX_WORD_COUNT = 6 };
-    char* _word[MAX_WORD_COUNT];
 };
 
 

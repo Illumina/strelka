@@ -225,7 +225,6 @@ private:
     }
 
     const strelka_options& _opt;
-    const pprob_digt_caller& _pd_caller;
     prior_set _lnprior[N_BASE+1];
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;
