@@ -518,7 +518,7 @@ protected:
 
     bool _is_variant_windows;
 
-    gvcf_aggregator _gvcfer;
+    std::auto_ptr<gvcf_aggregator> _gvcfer;
 
     // a caching term used for gvcf:
     site_info _site_info;

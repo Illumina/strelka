@@ -392,10 +392,13 @@ starling_pos_processor_base(const starling_options& client_opt,
     , _n_samples(n_samples)
     , _ws(0)
     , _is_variant_windows(_client_opt.variant_windows.size())
-    , _gvcfer(client_opt,client_dopt.report_range,ref,client_io.gvcf_osptr(0))
 {
 
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
+
+    if(_client_opt.is_gvcf_output()){
+        _gvcfer.reset(new gvcf_aggregator(client_opt,client_dopt.report_range,ref,client_io.gvcf_osptr(0)));
+    }
 
     const unsigned report_size(_client_dopt.report_range.size());
     const unsigned knownref_report_size(get_ref_seq_known_size(_ref,_client_dopt.report_range));
@@ -493,7 +496,7 @@ reset() {
 
     write_counts(output_report_range);
 
-    if(_client_opt.is_gvcf_output()) { _gvcfer.flush(); }
+    if(_client_opt.is_gvcf_output()) { _gvcfer->flush(); }
 }
 
 
@@ -1082,7 +1085,7 @@ process_pos_indel_single_sample(const pos_t pos,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
                 if(_client_opt.is_gvcf_output()) {
-                    _gvcfer.add_indel(pos,ik,dindel,iri,isri);
+                    _gvcfer->add_indel(pos,ik,dindel,iri,isri);
                 }
 
                 if(_client_opt.is_bindel_diploid_file) {
@@ -1627,7 +1630,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 #endif
         if(_client_opt.is_gvcf_output()) {
             _site_info.init(pos,pi.ref_base,good_pi,_client_opt.used_allele_count_min_qscore);
-            _gvcfer.add_site(_site_info);
+            _gvcfer->add_site(_site_info);
         }
         if(_client_opt.is_bsnp_diploid_allele_file) {
             write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);

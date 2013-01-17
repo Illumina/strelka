@@ -140,9 +140,12 @@ struct site_modifiers : public shared_modifiers {
     void
     clear() {
         shared_modifiers::clear();
+        is_unknown=true;
+        is_covered=false;
+        is_used_covered=false;
+        is_zero_ploidy=false;
         is_block=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
-        is_zero_ploidy=false;
     }
 
     bool
