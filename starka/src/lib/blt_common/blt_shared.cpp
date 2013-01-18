@@ -48,7 +48,7 @@ set_report_range(const blt_options& opt,
     //
     // The blt internal range format is zero-indexed and half-closed,
     // so begin=0 and end=3 refers to the set: {0,1,2} , this is the
-    // internal equivilent to the command-line range specied above.
+    // internal equivalent to the command-line range specied above.
     //
     // In the next step below we change from the command-line range
     // representation to the internal representation:
@@ -78,7 +78,8 @@ set_report_range(const blt_options& opt,
 }
 
 
-
+/// the input report_range can optionally have unknown begin and end positions,
+/// the output range will have begin defined, and end defined if possible.
 static
 pos_range
 get_report_range_limit(const pos_range& report_range,
