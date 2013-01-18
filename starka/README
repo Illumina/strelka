@@ -38,7 +38,7 @@ Other compilation and runtime prerequisites are included in the distribution
 tarball. These included prerequisites are:
 
 * boost 1.44 (modified to include only the subset of the library used by strelka)
-* samtools 0.1.14 (modified to remove the 'curses' library requirement)
+* samtools 0.1.18 (modified to remove the 'curses' library requirement)
 * vcftools 0.1.6
 * codemin 1.0.2
 * tabix 0.2.5 (makefile modified to reorder libz library to last place, as required for Ubuntu 12 build)
