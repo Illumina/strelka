@@ -415,12 +415,12 @@ cigar_to_apath(const char* cigar,
     while(*cptr) {
         path_segment ps;
         // expect sequences of digits and cigar codes:
-        if((not isdigit(*cptr)) or (*cptr=='0')) unknown_cigar_error(cigar,cptr);
+        if(! isdigit(*cptr)) unknown_cigar_error(cigar,cptr);
         ps.length = parse_unsigned(cptr);
         ps.type = cigar_code_to_segment_type(*cptr);
         if(ps.type == NONE) unknown_cigar_error(cigar,cptr);
         cptr++;
-        if((ps.type == PAD) or (ps.length == 0)) continue;
+        if((ps.type == PAD) || (ps.length == 0)) continue;
 
         if(ps.type != lps.type){
             if(lps.type != NONE) apath.push_back(lps);
