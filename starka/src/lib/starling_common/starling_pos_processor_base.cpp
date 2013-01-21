@@ -786,8 +786,13 @@ align_pos(const pos_t pos) {
             read_segment& rseg(r.first->get_segment(r.second));
             if(_client_opt.is_realign_submapped_reads ||
                rseg.is_treated_as_anytier_mapping()){
-                realign_and_score_read(_client_opt,_client_dopt,sif.sample_opt,_ref,rseg,sif.indel_sync());
-
+                try {
+                    realign_and_score_read(_client_opt,_client_dopt,sif.sample_opt,_ref,rseg,sif.indel_sync());
+                } catch(...) {
+                    log_os << "ERROR: Exception caught in align_pos() while realigning segment: "
+                           << static_cast<int>(r.second) << " of read: " << (*r.first) << "\n";
+                    throw;
+                }
                 // check that read has not been realigned too far to the left:
                 if(rseg.is_realigned) {
                     if(! _stageman.is_new_pos_value_valid(rseg.realignment.pos,STAGE::POST_ALIGN)){

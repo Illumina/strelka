@@ -343,6 +343,8 @@ process_genomic_read(const starling_options& opt,
             al.is_fwd_strand=read.is_fwd_strand();
             bam_cigar_to_apath(read.raw_cigar(),read.n_cigar(),al.path);
 
+            ALIGNPATH::apath_cleaner(al.path);
+
             if(read.read_size() != ALIGNPATH::apath_read_length(al.path)) {
                 const unsigned rs(read.read_size());
                 const unsigned as(ALIGNPATH::apath_read_length(al.path));

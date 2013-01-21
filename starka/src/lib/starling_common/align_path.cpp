@@ -653,6 +653,70 @@ apath_clip_adder(path_t& apath,
 
 
 
+// 1. remove zero-length segments
+// 2. remove pads
+// 3. condense repeated segment types
+// 4. reduce adjacent insertion/deletion tags to a single pair
+//
+// return true if path has been altered
+//
+bool
+apath_cleaner(path_t& apath) {
+    bool is_cleaned(false);
+    const unsigned as(apath.size());
+    unsigned insertIndex(as);
+    unsigned deleteIndex(as);
+    unsigned otherIndex(as);
+    for(unsigned i(0);i<as;++i){
+        path_segment& ps(apath[i]);
+        if       (ps.length == 0) {
+            is_cleaned = true;
+        } else if(ps.type == PAD) {
+            ps.length = 0;
+            is_cleaned = true;
+        } else if(ps.type == INSERT) {
+            if(insertIndex < as){
+                apath[insertIndex].length += ps.length;
+                ps.length = 0;
+                is_cleaned = true;
+            } else {
+                insertIndex = i;
+            }
+        } else if(ps.type == DELETE) {
+            if(deleteIndex < as){
+                apath[deleteIndex].length += ps.length;
+                ps.length = 0;
+                is_cleaned = true;
+            } else {
+                deleteIndex = i;
+            }
+        } else {
+            if((insertIndex<as) || (deleteIndex<as)) {
+                insertIndex = as;
+                deleteIndex = as;
+                otherIndex = as;
+            }
+            if((otherIndex < as) && (apath[otherIndex].type == ps.type)) {
+                apath[otherIndex].length += ps.length;
+                ps.length = 0;
+                is_cleaned = true;
+            } else {
+                otherIndex = i;
+            }
+        }
+    }
+    if(is_cleaned) {
+        path_t apath2;
+        for(unsigned i(0);i<as;++i){
+            if(apath[i].length == 0) continue;
+            apath2.push_back(apath[i]);
+        }
+        apath = apath2;
+    }
+    return is_cleaned;
+}
+
+
 
 std::pair<unsigned,unsigned>
 get_nonclip_end_segments(const path_t& apath) {
@@ -807,7 +871,7 @@ is_apath_floating(const path_t& apath) {
 //   2a) delete and skip cannot occur with only insert and clip connecting them to edge
 // 3) no unknown segments
 // 4) no repeated segments
-//      Note this might semi-legitimatly occur where padding is stripped out of an alignment.
+//      Note this might semi-legitimately occur where padding is stripped out of an alignment.
 // 5) must contain at least one match segment
 //
 bool

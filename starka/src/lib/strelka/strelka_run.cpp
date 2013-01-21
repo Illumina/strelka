@@ -84,7 +84,7 @@ strelka_run(const strelka_options& opt) {
 
     // We make the assumption that the normal and tumor files have the
     // same set of reference chromosomes (and thus tid matches for the
-    // same chrome label in the binary records. Check this constraint
+    // same chrom label in the binary records. Check this constraint
     // here:
     {
         const int32_t tumor_tid(tumor_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));

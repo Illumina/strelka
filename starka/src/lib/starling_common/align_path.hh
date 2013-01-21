@@ -241,6 +241,22 @@ namespace ALIGNPATH {
                      const unsigned sc_lead,
                      const unsigned sc_trail);
 
+    // 'cleans' the path so that it can be used, or used more consistently, in starka
+    //
+    // note this does not try to correct or work around anything
+    // which can't be unambiguously reinterpreted to a simpler form
+    //
+    // 1. remove zero length alignment segments
+    // 2. remove pad segments
+    // 3. remove repeated segments
+    // 4. for any combined insertion/deletion pair, reduce this to
+    //    a single segment pair (in either order)
+    //
+    //  \return true if path has been altered
+    //
+    bool
+    apath_cleaner(path_t& apath);
+
     // Get the match descriptor segment numbers for the first and last
     // non-soft/hard clipped segments. Return total segment size on
     // error.

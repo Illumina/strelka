@@ -450,9 +450,10 @@ make_start_pos_alignment(const pos_t ref_start_pos,
         // note this relies on the single extra base of separation
         // required between indels during indel conflict detection:
         if(ik.pos <= ref_head_pos) {
-            log_os << "ERROR: indel candidate: " << ik << " is not greater than ref_head_pos: " << ref_head_pos
-                   << ". Cannot resolve indel with candidate read alignment: " << cal << "\n";
-            exit(EXIT_FAILURE);
+            std::ostringstream oss;
+            oss << "ERROR: indel candidate: " << ik << " is not greater than ref_head_pos: " << ref_head_pos
+                << ". Cannot resolve indel with candidate read alignment: " << cal << "\n";
+            throw blt_exception(oss.str().c_str());
         }
 
         const unsigned match_segment(ik.pos-ref_head_pos);
