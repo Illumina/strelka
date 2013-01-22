@@ -58,7 +58,7 @@ parse_double(const char*& s);
 
 
 /// std::string version of above, no ptr advance obviously. explicit rename
-/// of functions gaurds against unexpected std::string temporaries
+/// of functions guards against unexpected std::string temporaries
 ///
 unsigned
 parse_unsigned_str(const std::string& s);
