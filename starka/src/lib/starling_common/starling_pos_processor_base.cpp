@@ -1281,7 +1281,8 @@ pileup_read_segment(const read_segment& rseg,
     const bam_seq bseq(rseg.get_bam_read());
     const uint8_t* qual(rseg.qual());
 
-    const uint8_t mapq(rseg.map_qual());
+    static const uint8_t min_adjust_mapq(5);
+    const uint8_t mapq(std::max(min_adjust_mapq,rseg.map_qual()));
     const bool is_mapq_adjust(mapq<=80);
 
     // test read against max indel size (this is a backup, should have been taken care of upstream):
