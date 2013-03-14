@@ -147,7 +147,7 @@ get_align_score(const hap_cand& hc,
                 const hinfo& hi) {
 
     //static const double lnany(std::log(0.25));
-    static const double ln_one_third(-std::log(3));
+    static const double ln_one_third(-std::log(3.0));
 
     double score(0);
     for(unsigned i(0);i<hap_cand::HAP_SIZE;++i) {

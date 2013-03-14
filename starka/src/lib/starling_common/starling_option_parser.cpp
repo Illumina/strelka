@@ -347,7 +347,7 @@ finalize_legacy_starling_options(const prog_info& pinfo,
         pinfo.usage("a reference sequence must be specified");
     }
 
-    // canonicalize the reference seqeunce path:
+    // canonicalize the reference sequence path:
     if(opt.is_samtools_ref_set) {
         if(! compat_realpath(opt.samtools_ref_seq_file)){
             std::ostringstream oss;
@@ -359,7 +359,7 @@ finalize_legacy_starling_options(const prog_info& pinfo,
     }
 
     if(! opt.is_user_genome_size) {
-        // this requirment is not what we want, but it's the only way to make things reliable for now:
+        // this requirement is not what we want, but it's the only way to make things reliable for now:
         pinfo.usage("must specify genome-size");
     } else {
         if(opt.user_genome_size<1) {
@@ -382,7 +382,7 @@ finalize_legacy_starling_options(const prog_info& pinfo,
             if(is_contigs) {
                 pinfo.usage("Contigs specified without corresponding contig reads.");
             } else {
-                pinfo.usage("Contig reads specifed without corresponding contigs.");
+                pinfo.usage("Contig reads specified without corresponding contigs.");
             }
         }
 

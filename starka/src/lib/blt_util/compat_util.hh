@@ -51,7 +51,7 @@ const char*
 compat_basename(const char* s);
 
 
-// gets canonical name of paths *when these refere to existing items*
+// gets canonical name of paths, but only when these refer to existing items
 // returns false on error.
 bool
 compat_realpath(std::string& path);
