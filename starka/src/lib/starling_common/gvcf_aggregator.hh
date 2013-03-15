@@ -109,7 +109,7 @@ private:
     // initial policy is to write nothing at empty sites. why?
     //
     // (1) gatk does it
-    // (2) if gVCF output is every turned off, the output would be ridiculous -- maybe this should be a gVCf only thing?
+    // (2) if gVCF output is ever turned off, the output would be ridiculous -- maybe this should be a gVCF only thing?
     //
     //void
     //write_empty_pos();
@@ -136,7 +136,7 @@ private:
 
     gvcf_block_site_record _block;
 
-    pos_t _head_pos; // we've observed sites upto but not includeing this position
+    pos_t _head_pos; // we've observed sites upto but not including this position
     site_info _empty_site;
 };
 

@@ -90,6 +90,8 @@ struct shared_modifiers {
 };
 
 
+std::ostream& operator<<(std::ostream& os,const shared_modifiers& shmod);
+
 
 struct indel_modifiers : public shared_modifiers {
     indel_modifiers() { clear(); }
@@ -253,7 +255,11 @@ struct site_info {
         } else if(smod.is_unknown || (!smod.is_used_covered)) {
             return ".";
         } else {
-            return DIGT::get_vcf_gt(smod.max_gt,dgt.ref_gt);
+            unsigned print_gt(smod.max_gt);
+            if(smod.is_block) {
+                print_gt = dgt.ref_gt;
+            }
+            return DIGT::get_vcf_gt(print_gt,dgt.ref_gt);
         }
     }
 

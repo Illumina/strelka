@@ -363,7 +363,7 @@ add_indel_modifiers(const gvcf_options& opt,
 
 
 
-// is the current site eligable to even be considered for block compression?
+// is the current site eligible to even be considered for block compression?
 static
 bool
 is_site_record_blockable(const gvcf_options& opt,
