@@ -1,5 +1,7 @@
+v2.0.3
 - STARKA-16 fix gVCF output so that GT does not contain allele numbers which are
 not in the ALT tag
+- Add win32 compat fixes from Eric Roller
 - STARKA-13 Groom CIGAR alignments on input to remove zero-length and PAD
 segments
 - STARKA-11 Samtools upgraded to 0.1.18 to resolve issues reported for 
