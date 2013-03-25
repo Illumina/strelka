@@ -41,16 +41,16 @@
 
 namespace DDIINDEL_GRID {
 
-    is_nonsom_maker_t::
-    is_nonsom_maker_t()
-      : val(SIZE,false)
-    {
-        for(unsigned gt(0);gt<STAR_DIINDEL_GRID::SIZE;++gt){
-            val[get_state(gt,gt)] = true;
-        }
+is_nonsom_maker_t::
+is_nonsom_maker_t()
+    : val(SIZE,false)
+{
+    for(unsigned gt(0); gt<STAR_DIINDEL_GRID::SIZE; ++gt) {
+        val[get_state(gt,gt)] = true;
     }
+}
 
-    const is_nonsom_maker_t is_nonsom;
+const is_nonsom_maker_t is_nonsom;
 }
 
 
@@ -108,13 +108,13 @@ somatic_indel_caller_grid(const strelka_options& opt,
 
     const double* normal_lnprior_genomic(in_caller.lnprior_genomic());
     const double* normal_lnprior_polymorphic(in_caller.lnprior_polymorphic());
-    for(unsigned ngt(0);ngt<STAR_DIINDEL::SIZE;++ngt) {
+    for(unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt) {
         _lnprior.normal[ngt] = (normal_lnprior_genomic[ngt]+ln_csie_rate);
         _lnprior.normal_poly[ngt] = (normal_lnprior_polymorphic[ngt]+ln_csie_rate);
         //         _lnprior_normal_nonoise[ngt] = normal_lnprior[ngt];
     }
 
-    for(unsigned ngt(STAR_DIINDEL::SIZE);ngt<STAR_DIINDEL_GRID::SIZE;++ngt) {
+    for(unsigned ngt(STAR_DIINDEL::SIZE); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt) {
         _lnprior.normal[ngt] = ln_sie_rate+error_mod;
         _lnprior.normal_poly[ngt] = ln_sie_rate+error_mod;
     }
@@ -148,10 +148,10 @@ get_indel_het_grid_lhood(const starling_options& opt,
                          double* const lhood) {
 
     static const unsigned lsize(STAR_DIINDEL_GRID::HET_RES*2);
-    for(unsigned gt(0);gt<(lsize);++gt) lhood[gt] = 0.;
+    for(unsigned gt(0); gt<(lsize); ++gt) lhood[gt] = 0.;
 
     static const double ratio_increment(0.5/static_cast<double>(STAR_DIINDEL_GRID::HET_RES+1));
-    for(unsigned i(0);i<STAR_DIINDEL_GRID::HET_RES;++i) {
+    for(unsigned i(0); i<STAR_DIINDEL_GRID::HET_RES; ++i) {
         const double het_ratio((i+1)*ratio_increment);
         indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,
                                                         sample_opt,
@@ -180,9 +180,9 @@ calculate_result_set(const strelka_options& /*opt*/,
 #ifdef SOMATIC_DEBUG
     std::vector<double> check_prior(DDIINDEL_GRID::SIZE);
 
-    for(unsigned ngt(0);ngt<STAR_DIINDEL_GRID::SIZE;++ngt){
+    for(unsigned ngt(0); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt) {
         const double base_prior(normal_lnprior[ngt]);
-        for(unsigned tgt(0);tgt<STAR_DIINDEL_GRID::SIZE;++tgt){
+        for(unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt) {
             const unsigned dgt(DDIINDEL_GRID::get_state(ngt,tgt));
             check_prior[dgt] =
                 base_prior+
@@ -198,9 +198,9 @@ calculate_result_set(const strelka_options& /*opt*/,
     // get unnormalized posterior:
     std::vector<double> pprob(DDIINDEL_GRID::SIZE);
 
-    for(unsigned ngt(0);ngt<STAR_DIINDEL_GRID::SIZE;++ngt){
+    for(unsigned ngt(0); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt) {
         const double base_prior(normal_lnprior[ngt]);
-        for(unsigned tgt(0);tgt<STAR_DIINDEL_GRID::SIZE;++tgt){
+        for(unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt) {
             const unsigned dgt(DDIINDEL_GRID::get_state(ngt,tgt));
             pprob[dgt] =
                 normal_lhood[ngt]+
@@ -214,10 +214,10 @@ calculate_result_set(const strelka_options& /*opt*/,
     normalize_ln_distro(pprob.begin(),pprob.end(),rs.max_gt);
 
 #ifdef DEBUG_INDEL_CALL
-        log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
+    log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
 #endif
     double nonsomatic_sum(0);
-    for(unsigned gt(0);gt<STAR_DIINDEL_GRID::SIZE;++gt){
+    for(unsigned gt(0); gt<STAR_DIINDEL_GRID::SIZE; ++gt) {
         nonsomatic_sum += pprob[DDIINDEL_GRID::get_state(gt,gt)];
     }
     rs.sindel_qphred=error_prob_to_qphred(nonsomatic_sum);
@@ -227,8 +227,8 @@ calculate_result_set(const strelka_options& /*opt*/,
     // reset max_gt to the most likely state excluding normal noise states:
     //
     rs.max_gt=0;
-    for(unsigned sgt(0);sgt<STAR_DIINDEL::SIZE;++sgt){
-        for(unsigned tgt(0);tgt<STAR_DIINDEL_GRID::SIZE;++tgt) {
+    for(unsigned sgt(0); sgt<STAR_DIINDEL::SIZE; ++sgt) {
+        for(unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt) {
             const unsigned dstate(DDIINDEL_GRID::get_state(sgt,tgt));
             if(pprob[dstate] > pprob[rs.max_gt]) rs.max_gt=dstate;
         }
@@ -239,13 +239,13 @@ calculate_result_set(const strelka_options& /*opt*/,
     // the three reference states:
     //
     double min_not_somfrom_sum(0);
-    for(unsigned sgt(0);sgt<STAR_DIINDEL::SIZE;++sgt){
+    for(unsigned sgt(0); sgt<STAR_DIINDEL::SIZE; ++sgt) {
         double not_somfrom_sum(nonsomatic_sum);
-        for(unsigned ngt(0);ngt<STAR_DIINDEL_GRID::SIZE;++ngt){
+        for(unsigned ngt(0); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt) {
             // skip this case because we want events where the normal
             // state is NOT sgt:
             if(sgt==ngt) continue;
-            for(unsigned tgt(0);tgt<STAR_DIINDEL_GRID::SIZE;++tgt){
+            for(unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt) {
                 // skip this case because we've already summed
                 // nonsomatic prob:
                 if(tgt==ngt) continue;
@@ -282,7 +282,7 @@ calculate_result_set(const strelka_options& /*opt*/,
     // and not simply an unsampled copy of the somatic variation.
     //
     std::vector<double> normal_pprob(STAR_DIINDEL_GRID::SIZE);
-    for(unsigned ngt(0);ngt<STAR_DIINDEL_GRID::SIZE;++ngt){
+    for(unsigned ngt(0); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt) {
         normal_pprob[ngt] = normal_lhood[ngt]+normal_lnprior_poly[ngt];
     }
 
@@ -308,7 +308,7 @@ debug_dump_indel_lhood(const double* lhood,
                        std::ostream& os) {
 
     double pprob[STAR_DIINDEL_GRID::SIZE];
-    for(unsigned gt(0);gt<STAR_DIINDEL_GRID::SIZE;++gt){
+    for(unsigned gt(0); gt<STAR_DIINDEL_GRID::SIZE; ++gt) {
         pprob[gt] = lhood[gt];
     }
 
@@ -316,7 +316,7 @@ debug_dump_indel_lhood(const double* lhood,
     normalize_ln_distro(pprob,pprob+STAR_DIINDEL_GRID::SIZE,max_gt);
 
     os << std::setprecision(3) << std::fixed;
-    for(unsigned gt(0);gt<STAR_DIINDEL_GRID::SIZE;++gt){
+    for(unsigned gt(0); gt<STAR_DIINDEL_GRID::SIZE; ++gt) {
         os << static_cast<STAR_DIINDEL::index_t>(STAR_DIINDEL_GRID::get_star_diindel_state(gt)) << ": " << -std::log(pprob[gt]) << " ";
         os << "\n";
     }
@@ -353,17 +353,17 @@ is_multi_indel_allele(const starling_deriv_options& dopt,
     scores.push_back(std::make_pair(-total_pprob.ref,static_cast<int>(REF)));
     const read_path_scores::alt_indel_t& ai(total_pprob.alt_indel);
     const int ais(ai.size());
-    for(int i(0);i<ais;++i){
+    for(int i(0); i<ais; ++i) {
         scores.push_back(std::make_pair(-ai[i].second,i));
     }
 
     sort(scores.begin(),scores.end());
 
 #if 0
-std::cerr << "BUG: normal_id: " << normal_id;
-std::cerr << "BUG: tumor_id: " << tumor_id;
-std::cerr << "BUG: total_pprob: " << total_pprob << "\n";
-std::cerr << "BUG: max1_id,max2_id " << scores[0].second << " " << scores[1].second << "\n";
+    std::cerr << "BUG: normal_id: " << normal_id;
+    std::cerr << "BUG: tumor_id: " << tumor_id;
+    std::cerr << "BUG: total_pprob: " << total_pprob << "\n";
+    std::cerr << "BUG: max1_id,max2_id " << scores[0].second << " " << scores[1].second << "\n";
 #endif
 
     // If the top two alleles are both alternate indels, check that
@@ -373,7 +373,7 @@ std::cerr << "BUG: max1_id,max2_id " << scores[0].second << " " << scores[1].sec
     //
     assert(scores.size() >= 2);
     while(scores[0].second>=0 && scores[1].second>=0) {
-        if(is_indel_conflict(ai[scores[0].second].first,ai[scores[1].second].first)){ break; }
+        if(is_indel_conflict(ai[scores[0].second].first,ai[scores[1].second].first)) { break; }
         scores.erase(scores.begin()+1);
         assert(scores.size() >= 2);
     }
@@ -430,7 +430,7 @@ get_somatic_indel(const strelka_options& opt,
 
     static const unsigned n_tier(2);
     result_set tier_rs[n_tier];
-    for(unsigned i(0);i<n_tier;++i) {
+    for(unsigned i(0); i<n_tier; ++i) {
         const bool is_include_tier2(i==1);
         if(is_include_tier2) {
             if(! opt.is_tier2()) continue;
@@ -524,16 +524,16 @@ get_somatic_indel(const strelka_options& opt,
             sindel.rs.ntype=NTYPE::HET;
         }
 #if 0
-        } else if(sindel.rs.ntype==STAR_DIINDEL::HET) {
-            sindel.rs.ntype=NTYPE::HET;
-        } else {
-            assert(0);
-        }
-#endif
+    } else if(sindel.rs.ntype==STAR_DIINDEL::HET) {
+        sindel.rs.ntype=NTYPE::HET;
+    } else {
+        assert(0);
     }
+#endif
+}
 
-    sindel.rs.sindel_qphred = tier_rs[sindel.sindel_tier].sindel_qphred;
-    sindel.is_indel=(sindel.rs.sindel_qphred != 0);
+sindel.rs.sindel_qphred = tier_rs[sindel.sindel_tier].sindel_qphred;
+sindel.is_indel=(sindel.rs.sindel_qphred != 0);
 }
 
 

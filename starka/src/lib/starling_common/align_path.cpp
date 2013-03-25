@@ -45,7 +45,7 @@ enum {
 static
 void
 unknown_md_error(const char* const md,
-                 const char* const mdptr){
+                 const char* const mdptr) {
 
     std::ostringstream oss;
     oss << "ERROR: can't parse match descriptor string: " << md << "\n"
@@ -58,7 +58,7 @@ unknown_md_error(const char* const md,
 static
 void
 unknown_cigar_error(const char* const cigar,
-                    const char* const cptr){
+                    const char* const cptr) {
 
     std::ostringstream oss;
     oss << "ERROR: can't parse cigar string: " << cigar << "\n"
@@ -75,7 +75,7 @@ static
 void
 apath_push(path_t& apath,
            path_segment& ps,
-           const align_t t){
+           const align_t t) {
 
     if( (0==ps.length) || (ps.type==t) ) return;
     apath.push_back(ps);
@@ -101,23 +101,23 @@ export_md_to_apath_impl(const char* md,
             ps.length += mlen;
             ps.type = MATCH;
 
-        } else if(is_valid_base(*mdptr)){
+        } else if(is_valid_base(*mdptr)) {
             apath_push(apath,ps,MATCH);
             mdptr++;
             ps.length++;
             ps.type = MATCH;
 
-        } else if(*mdptr == INDEL_BEGIN){
+        } else if(*mdptr == INDEL_BEGIN) {
             mdptr++; // eat INDEL_BEGIN
 
-            while(*mdptr != INDEL_END){
-                if       (isdigit(*mdptr)){
+            while(*mdptr != INDEL_END) {
+                if       (isdigit(*mdptr)) {
                     apath_push(apath,ps,INSERT);
                     const unsigned mlen(parse_unsigned(mdptr));
                     ps.length=mlen;
                     ps.type=INSERT;
 
-                } else if(is_valid_base(*mdptr)){
+                } else if(is_valid_base(*mdptr)) {
                     apath_push(apath,ps,DELETE);
                     mdptr++;
                     ps.length++;
@@ -144,7 +144,7 @@ void
 export_md_to_apath(const char* md,
                    const bool is_fwd_strand,
                    path_t& apath,
-                   const bool is_edge_deletion_error){
+                   const bool is_edge_deletion_error) {
 
     // to make best use of previous code, we parse the MD in the
     // alignment direction and then orient apath to the forward strand
@@ -171,7 +171,7 @@ export_md_to_apath(const char* md,
         } else {
             log_os << oss.str();
             path_t apath2;
-            for(unsigned i(0);i<as;++i){
+            for(unsigned i(0); i<as; ++i) {
                 if(((i==0) or ((i+1)==as)) and
                    apath[i].type == DELETE) continue;
                 apath2.push_back(apath[i]);
@@ -195,7 +195,7 @@ apath_to_cigar(const path_t& apath,
     cigar.clear();
 
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         cigar += boost::lexical_cast<std::string>(ps.length);
         cigar.push_back(segment_type_to_cigar_code(ps.type));
@@ -390,9 +390,9 @@ rev_apath_to_export_md(path_t& apath,
 
 
 std::ostream&
-operator<<(std::ostream& os, const path_t& apath){
+operator<<(std::ostream& os, const path_t& apath) {
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         os << apath[i].length << segment_type_to_cigar_code(apath[i].type);
     }
     return os;
@@ -402,7 +402,7 @@ operator<<(std::ostream& os, const path_t& apath){
 
 void
 cigar_to_apath(const char* cigar,
-               path_t& apath){
+               path_t& apath) {
 
     using casava::blt_util::parse_unsigned;
 
@@ -422,7 +422,7 @@ cigar_to_apath(const char* cigar,
         cptr++;
         if((ps.type == PAD) || (ps.length == 0)) continue;
 
-        if(ps.type != lps.type){
+        if(ps.type != lps.type) {
             if(lps.type != NONE) apath.push_back(lps);
             lps = ps;
         } else {
@@ -440,7 +440,7 @@ apath_read_length(const path_t& apath) {
 
     unsigned val(0);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         if(! is_segment_type_read_length(ps.type)) continue;
         val += ps.length;
@@ -455,7 +455,7 @@ apath_ref_length(const path_t& apath) {
 
     unsigned val(0);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         if(! is_segment_type_ref_length(ps.type)) continue;
         val += ps.length;
@@ -468,7 +468,7 @@ apath_ref_length(const path_t& apath) {
 static
 inline
 bool
-is_segment_type_unaligned_read_edge(const align_t id){
+is_segment_type_unaligned_read_edge(const align_t id) {
     switch(id) {
     case INSERT    :
     case HARD_CLIP :
@@ -480,10 +480,10 @@ is_segment_type_unaligned_read_edge(const align_t id){
 
 
 unsigned
-apath_read_lead_size(const path_t& apath){
+apath_read_lead_size(const path_t& apath) {
     unsigned val(0);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         if(! is_segment_type_unaligned_read_edge(ps.type)) return val;
         if(is_segment_type_read_length(ps.type)) val += ps.length;
@@ -494,10 +494,10 @@ apath_read_lead_size(const path_t& apath){
 
 
 unsigned
-apath_read_trail_size(const path_t& apath){
+apath_read_trail_size(const path_t& apath) {
     unsigned val(0);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[as-i-1]);
         if(! is_segment_type_unaligned_read_edge(ps.type)) return val;
         if(is_segment_type_read_length(ps.type)) val += ps.length;
@@ -508,10 +508,10 @@ apath_read_trail_size(const path_t& apath){
 
 
 unsigned
-apath_soft_clip_lead_size(const path_t& apath){
+apath_soft_clip_lead_size(const path_t& apath) {
     unsigned val(0);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         if       (HARD_CLIP == ps.type) {
             // do nothing:
@@ -527,10 +527,10 @@ apath_soft_clip_lead_size(const path_t& apath){
 
 
 unsigned
-apath_soft_clip_trail_size(const path_t& apath){
+apath_soft_clip_trail_size(const path_t& apath) {
     unsigned val(0);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[as-i-1]);
         if       (HARD_CLIP == ps.type) {
             // do nothing:
@@ -546,10 +546,10 @@ apath_soft_clip_trail_size(const path_t& apath){
 
 
 unsigned
-apath_insert_lead_size(const path_t& apath){
+apath_insert_lead_size(const path_t& apath) {
     unsigned val(0);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         if((HARD_CLIP == ps.type) || (SOFT_CLIP == ps.type)) {
             // do nothing:
@@ -565,10 +565,10 @@ apath_insert_lead_size(const path_t& apath){
 
 
 unsigned
-apath_insert_trail_size(const path_t& apath){
+apath_insert_trail_size(const path_t& apath) {
     unsigned val(0);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[as-i-1]);
         if((HARD_CLIP == ps.type) || (SOFT_CLIP == ps.type)) {
             // do nothing:
@@ -588,7 +588,7 @@ apath_clip_clipper(path_t& apath,
                    unsigned& hc_lead,
                    unsigned& hc_trail,
                    unsigned& sc_lead,
-                   unsigned& sc_trail){
+                   unsigned& sc_trail) {
 
     hc_lead=0;
     hc_trail=0;
@@ -598,7 +598,7 @@ apath_clip_clipper(path_t& apath,
     bool is_lead(true);
     path_t apath2;
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         if       (HARD_CLIP == ps.type) {
             if(is_lead) { hc_lead += ps.length; }
@@ -623,7 +623,7 @@ apath_clip_adder(path_t& apath,
                  const unsigned hc_lead,
                  const unsigned hc_trail,
                  const unsigned sc_lead,
-                 const unsigned sc_trail){
+                 const unsigned sc_trail) {
 
     path_t apath2;
     path_segment ps;
@@ -667,7 +667,7 @@ apath_cleaner(path_t& apath) {
     unsigned insertIndex(as);
     unsigned deleteIndex(as);
     unsigned otherIndex(as);
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         path_segment& ps(apath[i]);
         if       (ps.length == 0) {
             is_cleaned = true;
@@ -675,7 +675,7 @@ apath_cleaner(path_t& apath) {
             ps.length = 0;
             is_cleaned = true;
         } else if(ps.type == INSERT) {
-            if(insertIndex < as){
+            if(insertIndex < as) {
                 apath[insertIndex].length += ps.length;
                 ps.length = 0;
                 is_cleaned = true;
@@ -683,7 +683,7 @@ apath_cleaner(path_t& apath) {
                 insertIndex = i;
             }
         } else if(ps.type == DELETE) {
-            if(deleteIndex < as){
+            if(deleteIndex < as) {
                 apath[deleteIndex].length += ps.length;
                 ps.length = 0;
                 is_cleaned = true;
@@ -707,7 +707,7 @@ apath_cleaner(path_t& apath) {
     }
     if(is_cleaned) {
         path_t apath2;
-        for(unsigned i(0);i<as;++i){
+        for(unsigned i(0); i<as; ++i) {
             if(apath[i].length == 0) continue;
             apath2.push_back(apath[i]);
         }
@@ -723,7 +723,7 @@ get_nonclip_end_segments(const path_t& apath) {
     const unsigned as(apath.size());
     std::pair<unsigned,unsigned> res(as,as);
     bool is_first_nonclip(false);
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         if(! (ps.type == SOFT_CLIP ||
               ps.type == HARD_CLIP)) {
@@ -744,7 +744,7 @@ get_nonclip_range(const path_t& apath) {
     pos_range pr;
     unsigned read_offset(0);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         const bool is_rt(is_segment_type_read_length(ps.type));
         if(! (ps.type == SOFT_CLIP ||
@@ -766,7 +766,7 @@ get_match_end_segments(const path_t& apath) {
     const unsigned as(apath.size());
     std::pair<unsigned,unsigned> res(as,as);
     bool is_first_match(false);
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         if(MATCH == ps.type) {
             if(! is_first_match) res.first=i;
@@ -780,10 +780,10 @@ get_match_end_segments(const path_t& apath) {
 
 
 unsigned
-apath_exon_count(const path_t& apath){
+apath_exon_count(const path_t& apath) {
     unsigned val(1);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         if(apath[i].type==SKIP) val++;
     }
     return val;
@@ -792,7 +792,7 @@ apath_exon_count(const path_t& apath){
 
 
 bool
-is_clipped(const path_t& apath){
+is_clipped(const path_t& apath) {
     const unsigned as(apath.size());
     if(as<=0) return false;
     if((apath[0].type == SOFT_CLIP) || (apath[0].type == HARD_CLIP)) return true;
@@ -805,7 +805,7 @@ is_clipped(const path_t& apath){
 
 
 bool
-is_edge_clipped(const path_t& apath){
+is_edge_clipped(const path_t& apath) {
     const unsigned as(apath.size());
     if(as<=0) return false;
 
@@ -815,7 +815,7 @@ is_edge_clipped(const path_t& apath){
     // at this point we assume the alignment has been sanity checked for legal soft-clipping,
     // which can only be at the edge or inside of a hard-clip segment.
     //
-    for(unsigned i(0);i<as;++i) {
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
         if(ps.type == SOFT_CLIP) return true;
 
@@ -831,7 +831,7 @@ is_edge_clipped(const path_t& apath){
 bool
 is_seq_swap(const path_t& apath) {
     const unsigned as(apath.size());
-    for(unsigned i(0);(i+1)<as;++i){
+    for(unsigned i(0); (i+1)<as; ++i) {
         if(is_segment_type_indel(apath[i].type) &&
            is_segment_type_indel(apath[i+1].type)) {
             return true;
@@ -856,7 +856,7 @@ bool
 is_apath_floating(const path_t& apath) {
 
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         if(apath[i].type==MATCH) return false;
     }
     return true;
@@ -881,7 +881,7 @@ is_apath_invalid(const path_t& apath,
     bool is_match(false);
     align_t last_type(NONE);
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
 
         if(ps.type==NONE) return true;
@@ -919,7 +919,7 @@ is_apath_invalid(const path_t& apath,
     if(! is_match) return true;
 
     // run in reverse to finish checking condition (2a):
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[as-(i+1)]);
         if(ps.type==MATCH) break;
         if((ps.type==DELETE) || (ps.type==SKIP)) return true;
@@ -940,7 +940,7 @@ bool
 is_apath_starling_invalid(const path_t& apath) {
 
     const unsigned as(apath.size());
-    for(unsigned i(0);i<as;++i){
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(apath[i]);
 
         if(ps.type==PAD) return true;

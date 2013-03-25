@@ -36,7 +36,7 @@ istream_line_splitter::
 dump(std::ostream& os) const {
     os << "\tline_no: " << _line_no << "\n";
     os << "\tline: '";
-    for(unsigned i(0);i<_n_word;++i) {
+    for(unsigned i(0); i<_n_word; ++i) {
         if(i) os << _sep;
         os << word[i];
     }
@@ -52,7 +52,7 @@ parse_line() {
     _line_no++;
     _is.getline(_buf,_buf_size);
     const unsigned len(strlen(_buf));
-    if((len+1) >= _buf_size){
+    if((len+1) >= _buf_size) {
         std::ostringstream oss;
         oss << "ERROR: input exceeds buffer size on line_no: " << _line_no << "\n\n";
         throw blt_exception(oss.str().c_str());
@@ -74,7 +74,7 @@ parse_line() {
         char* p(_buf);
         word[0]=p;
         unsigned i(1);
-        while(i<_max_word){
+        while(i<_max_word) {
             if((*p == '\n') || (*p == '\0')) break;
             if (*p == _sep) {
                 *p = '\0';

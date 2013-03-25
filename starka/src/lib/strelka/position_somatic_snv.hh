@@ -35,23 +35,23 @@
 
 namespace DDIGT {
 
-    enum index_t { SIZE = DIGT::SIZE*DIGT::SIZE };
+enum index_t { SIZE = DIGT::SIZE*DIGT::SIZE };
 
-    inline
-    unsigned
-    get_state(const unsigned normal_gt,
-              const unsigned tumor_gt) {
-        return normal_gt+DIGT::SIZE*tumor_gt;
-    }
+inline
+unsigned
+get_state(const unsigned normal_gt,
+          const unsigned tumor_gt) {
+    return normal_gt+DIGT::SIZE*tumor_gt;
+}
 
-    inline
-    void
-    get_digt_states(const unsigned dgt,
-                    unsigned& normal_gt,
-                    unsigned& tumor_gt) {
-        normal_gt = (dgt%DIGT::SIZE);
-        tumor_gt = (dgt/DIGT::SIZE);
-    }
+inline
+void
+get_digt_states(const unsigned dgt,
+                unsigned& normal_gt,
+                unsigned& tumor_gt) {
+    normal_gt = (dgt%DIGT::SIZE);
+    tumor_gt = (dgt/DIGT::SIZE);
+}
 }
 
 
@@ -79,7 +79,7 @@ struct somatic_snv_genotype : private boost::noncopyable {
             snv_from_hom_qphred=qp;
             snv_from_anyhom_qphred=qp;
             max_gt_qphred=qp;
-            for(unsigned i(0);i<DDIGT::SIZE;++i) {
+            for(unsigned i(0); i<DDIGT::SIZE; ++i) {
                 pprob[i] = p;
             }
         }

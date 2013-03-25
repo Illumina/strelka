@@ -38,7 +38,7 @@ struct id_set {
     /// number in either case
     unsigned insert_key(const K& key) {
         const typename k2id_t::const_iterator i(_k2id.find(key));
-        if(i==_k2id.end()){
+        if(i==_k2id.end()) {
             const unsigned id(_id2k.size());
             _k2id[key]=id;
             _id2k.push_back(key);
@@ -96,7 +96,7 @@ struct id_map {
     /// return id number in either case
     unsigned insert(const K& key, const V& value) {
         const typename k2id_t::const_iterator i(_k2id.find(key));
-        if(i==_k2id.end()){
+        if(i==_k2id.end()) {
             const unsigned id(_id2kv.size());
             _k2id[key]=id;
             _id2kv.push_back(std::make_pair(key,value));

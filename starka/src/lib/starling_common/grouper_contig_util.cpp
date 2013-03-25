@@ -42,7 +42,7 @@
 //
 bool
 map_grouper_contig_read_to_genome(const grouper_contig& ctg,
-                                  alignment& read_al){
+                                  alignment& read_al) {
 
     using namespace ALIGNPATH;
 
@@ -51,7 +51,7 @@ map_grouper_contig_read_to_genome(const grouper_contig& ctg,
     //
     const unsigned rp_size(read_al.path.size());
     assert(rp_size>=1);
-    for(unsigned i(0);i<rp_size;++i){
+    for(unsigned i(0); i<rp_size; ++i) {
         const align_t ali(read_al.path[i].type);
         assert((ali==MATCH) || (ali==SOFT_CLIP));
     }
@@ -71,7 +71,7 @@ map_grouper_contig_read_to_genome(const grouper_contig& ctg,
     }
 
     // mark any sequence hanging off the end of the contig as soft-clipped:
-    if(read_begin_pos<0){
+    if(read_begin_pos<0) {
         path_segment seg;
         seg.type = SOFT_CLIP;
         seg.length = -read_begin_pos;
@@ -100,7 +100,7 @@ map_grouper_contig_read_to_genome(const grouper_contig& ctg,
             n_seg=sinfo_ptr->n_seg;
         }
 
-        for(unsigned i(0);i<n_seg;++i) {
+        for(unsigned i(0); i<n_seg; ++i) {
             increment_path(ctg.path,path_index,
                            contig_segment_offset,
                            ref_segment_end_pos);
@@ -109,7 +109,7 @@ map_grouper_contig_read_to_genome(const grouper_contig& ctg,
         bool is_edge_segment(false);
         unsigned read_segment_reduction(0);
 
-        if(! is_read_path_begin){
+        if(! is_read_path_begin) {
             if(read_begin_pos >= static_cast<pos_t>(contig_segment_offset)) continue;
 
             is_read_path_begin=true;
@@ -133,7 +133,7 @@ map_grouper_contig_read_to_genome(const grouper_contig& ctg,
         }
 
         const bool is_final_seg(read_end_pos <= static_cast<pos_t>(contig_segment_offset));
-        if(is_final_seg){
+        if(is_final_seg) {
             is_edge_segment=true;
             const pos_t shift(contig_segment_offset-read_end_pos);
             if(is_swap_start) {
@@ -183,10 +183,10 @@ map_grouper_contig_read_to_genome(const grouper_contig& ctg,
         rp.clear();
         align_t last_type(NONE);
         const unsigned nps(new_path.size());
-        for(unsigned i(0);i<nps;++i){
+        for(unsigned i(0); i<nps; ++i) {
             const path_segment& ps(new_path[i]);
             if(ps.type == MATCH) is_genome_align=true;
-            if(ps.type != last_type){
+            if(ps.type != last_type) {
                 rp.push_back(ps);
                 last_type=ps.type;
             } else {
@@ -211,7 +211,7 @@ bad_header_error(const std::string& header) {
 
 bool
 get_next_contig(std::istream& is,
-                grouper_contig& ctg){
+                grouper_contig& ctg) {
 
     ctg.clear();
 
@@ -232,7 +232,7 @@ get_next_contig(std::istream& is,
 
         static const unsigned header_field_count(5);
         std::string::size_type begin_pos,pos(1);
-        for(unsigned i(0);i<header_field_count;++i){
+        for(unsigned i(0); i<header_field_count; ++i) {
             static const char header_delim[] = "| \t\n\r";
 
             begin_pos=header.find_first_not_of(header_delim,pos);
@@ -240,16 +240,16 @@ get_next_contig(std::istream& is,
 
             if(std::string::npos == begin_pos) bad_header_error(header);
 
-            if       (i==0){
+            if       (i==0) {
                 ctg.id=header.substr(begin_pos,pos-begin_pos);
-            } else if(i==1){
+            } else if(i==1) {
                 ctg.chrom=header.substr(begin_pos,pos-begin_pos);
-            } else if(i==2){
+            } else if(i==2) {
                 ctg.pos=boost::lexical_cast<pos_t>(header.substr(begin_pos,pos-begin_pos))-1;
-            } else if(i==3){
+            } else if(i==3) {
                 const std::string cigar(header.substr(begin_pos,pos-begin_pos));
                 cigar_to_apath(cigar.c_str(),ctg.path);
-            } else if(i==4){
+            } else if(i==4) {
                 //intentional throwaway:
                 //pos_t indel_begin_pos=boost::lexical_cast<pos_t>(header.substr(begin_pos,pos-begin_pos))-1;
 
@@ -273,7 +273,7 @@ get_next_contig(std::istream& is,
 
         std::string::size_type begin_pos,pos(1);
         std::string& seq(ctg.seq);
-        while (std::getline(is,line_buff)){
+        while (std::getline(is,line_buff)) {
             begin_pos=line_buff.find_first_not_of(seq_delim);
             pos=line_buff.find_last_not_of(seq_delim)+1;
 

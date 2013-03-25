@@ -54,7 +54,8 @@ struct qphred_cache {
     }
 
     enum { MAX_QSCORE = 70,
-           MAX_MAP = 90 };
+           MAX_MAP = 90
+         };
 
     static
     void
@@ -79,7 +80,7 @@ private:
 
     static
     void
-    qscore_check_int(const int qscore){
+    qscore_check_int(const int qscore) {
         static const char* label = "phred";
         qscore_check(qscore,label);
     }

@@ -25,12 +25,12 @@
 
 
 namespace INDEL_ALIGN_TYPE {
-    enum index_t {
-        GENOME_TIER1_READ,
-        GENOME_TIER2_READ,
-        GENOME_SUBMAP_READ,
-        CONTIG,
-        CONTIG_READ
-    };
+enum index_t {
+    GENOME_TIER1_READ,
+    GENOME_TIER2_READ,
+    GENOME_SUBMAP_READ,
+    CONTIG,
+    CONTIG_READ
+};
 }
 

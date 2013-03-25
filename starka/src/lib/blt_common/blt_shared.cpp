@@ -40,7 +40,7 @@ static
 void
 set_report_range(const blt_options& opt,
                  const pos_t ref_end,
-                 pos_range& report_range){
+                 pos_range& report_range) {
 
     // The range format submitted by users on the command-line is
     // 1-indexed and fully closed, so begin=1 and end=3 refers to the
@@ -54,13 +54,13 @@ set_report_range(const blt_options& opt,
     // representation to the internal representation:
     //
     report_range = opt.user_report_range;
-    if(report_range.is_begin_pos){
+    if(report_range.is_begin_pos) {
         report_range.begin_pos -= 1;
     }
 
     if(! opt.is_ref_set()) return;
 
-    if(report_range.is_begin_pos){
+    if(report_range.is_begin_pos) {
         if(report_range.begin_pos>=ref_end) {
             log_os << "ERROR::-report-range-begin argument must be <= reference sequence size\n";
             exit(EXIT_FAILURE);
@@ -70,7 +70,7 @@ set_report_range(const blt_options& opt,
         report_range.set_begin_pos(0);
     }
 
-    if(report_range.is_end_pos){
+    if(report_range.is_end_pos) {
         report_range.end_pos=std::min(report_range.end_pos,ref_end);
     } else {
         report_range.set_end_pos(ref_end);

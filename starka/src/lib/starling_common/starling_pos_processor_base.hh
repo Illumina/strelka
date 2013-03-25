@@ -220,7 +220,7 @@ protected:
             , _last_insert_pos(false) {
             const unsigned vs(opt.variant_windows.size());
             _wav.resize(vs);
-            for(unsigned i(0);i<vs;++i) {
+            for(unsigned i(0); i<vs; ++i) {
                 const unsigned winsize(1+opt.variant_windows[i].flank_size*2);
                 _wav[i].reset(new win_avg_set(winsize));
                 if(winsize>_max_winsize) _max_winsize=winsize;
@@ -243,7 +243,7 @@ protected:
         insert_null(const pos_t pos) {
             check_skipped_pos(pos);
             const unsigned ws(_wav.size());
-            for(unsigned i(0);i<ws;++i) {
+            for(unsigned i(0); i<ws; ++i) {
                 _wav[i]->ss_used_win.insert_null();
                 _wav[i]->ss_filt_win.insert_null();
                 _wav[i]->ss_spandel_win.insert_null();
@@ -258,9 +258,9 @@ protected:
 
         void
         check_skipped_pos(const pos_t pos) {
-            if(_is_last_pos && (pos>(_last_insert_pos+1))){
+            if(_is_last_pos && (pos>(_last_insert_pos+1))) {
                 const unsigned rep(std::min(static_cast<pos_t>(_max_winsize),(pos-(_last_insert_pos+1))));
-                for(unsigned i(0);i<rep;++i) insert_impl(0,0,0,0);
+                for(unsigned i(0); i<rep; ++i) insert_impl(0,0,0,0);
             }
             _last_insert_pos=pos;
             _is_last_pos=true;
@@ -272,7 +272,7 @@ protected:
                     const unsigned n_spandel,
                     const unsigned n_submap) {
             const unsigned ws(_wav.size());
-            for(unsigned i(0);i<ws;++i) {
+            for(unsigned i(0); i<ws; ++i) {
                 _wav[i]->ss_used_win.insert(n_used);
                 _wav[i]->ss_filt_win.insert(n_filt);
                 _wav[i]->ss_spandel_win.insert(n_spandel);
@@ -342,7 +342,7 @@ protected:
     bool
     empty() const {
         if(! _is_skip_process_pos) {
-            for(unsigned s(0);s<_n_samples;++s) {
+            for(unsigned s(0); s<_n_samples; ++s) {
                 const sample_info& sif(sample(s));
                 if(! sif.read_buff.empty()) return false;
                 if(! sif.bc_buff.empty()) return false;
@@ -376,7 +376,7 @@ protected:
 
 private:
     bool
-    is_pos_reportable(const pos_t pos){
+    is_pos_reportable(const pos_t pos) {
         return _client_dopt.report_range_limit.is_pos_intersect(pos);
     }
 

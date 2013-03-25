@@ -32,7 +32,7 @@ starling_streams(const starling_options& opt,
                  const bam_header_t* const header)
     : base_t(opt,pinfo,starling_sample_info) {
 
-    if(opt.is_bindel_diploid_file){
+    if(opt.is_bindel_diploid_file) {
         _bindel_diploid_osptr[0].reset(initialize_bindel_file(opt,pinfo,opt.bindel_diploid_filename));
     }
 

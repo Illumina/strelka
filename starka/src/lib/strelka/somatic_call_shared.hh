@@ -28,23 +28,24 @@
 //
 namespace NTYPE {
 
-    enum index_t { REF,
-                   HOM,
-                   HET,
-                   CONFLICT,
-                   SIZE };
+enum index_t { REF,
+               HOM,
+               HET,
+               CONFLICT,
+               SIZE
+             };
 
-    inline
-    const char*
-    label(const unsigned idx){
-        switch(idx){
-        case REF: return "ref";
-        case HOM: return "hom";
-        case HET: return "het";
-        case CONFLICT: return "conflict";
-        default: return "xxx";
-        }
+inline
+const char*
+label(const unsigned idx) {
+    switch(idx) {
+    case REF: return "ref";
+    case HOM: return "hom";
+    case HET: return "het";
+    case CONFLICT: return "conflict";
+    default: return "xxx";
     }
+}
 }
 
 #endif

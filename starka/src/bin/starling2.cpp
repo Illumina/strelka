@@ -43,11 +43,11 @@ const prog_info& pinfo(starling_info::get());
 
 static
 void
-try_main(int argc,char* argv[]){
+try_main(int argc,char* argv[]) {
 
     starling_options opt;
 
-    for(int i(0);i<argc;++i){
+    for(int i(0); i<argc; ++i) {
         if(i) opt.cmdline += ' ';
         opt.cmdline += argv[i];
     }
@@ -93,7 +93,7 @@ dump_cl(int argc,
         std::ostream& os) {
 
     os << "cmdline:";
-    for(int i(0);i<argc;++i){
+    for(int i(0); i<argc; ++i) {
         os << ' ' << argv[i];
     }
     os << std::endl;
@@ -102,13 +102,13 @@ dump_cl(int argc,
 
 
 int
-main(int argc,char* argv[]){
+main(int argc,char* argv[]) {
 
     std::ios_base::sync_with_stdio(false);
 
     // last chance to catch exceptions...
     //
-    try{
+    try {
         try_main(argc,argv);
 
     } catch (const blt_exception& e) {
@@ -116,7 +116,7 @@ main(int argc,char* argv[]){
                << "...caught in main()\n";
         dump_cl(argc,argv,log_os);
         exit(EXIT_FAILURE);
-    } catch (const casava::common::ExceptionData &e) {
+    } catch (const casava::common::ExceptionData& e) {
         log_os << "FATAL_ERROR: " << pinfo.name() << " EXCEPTION: "
                << e.getContext() << ": " << e.getMessage() << "\n"
                << "...caught in main()\n";

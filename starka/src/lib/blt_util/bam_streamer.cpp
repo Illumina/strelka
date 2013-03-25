@@ -137,13 +137,13 @@ report_state(std::ostream& os) const {
     if(_is_region) {
         os << "\tbam_stream_selected_region: " << _region << "\n";
     }
-    if(NULL != bamp){
+    if(NULL != bamp) {
         os << "\tbam_stream_record_no: " << record_no() << "\n";
         os << "\tbam_record QNAME/read_number: " << bamp->qname() << "/" << bamp->read_no() << "\n";
         const char* chrom_name(target_id_to_name(bamp->target_id()));
         os << "\tbam record RNAME: " << chrom_name << "\n";
         os << "\tbam record POS: " << bamp->pos() << "\n";
     } else {
-       os << "\tno bam record currently set\n";
+        os << "\tno bam record currently set\n";
     }
 }

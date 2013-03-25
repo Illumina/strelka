@@ -31,20 +31,20 @@
 
 
 namespace BAM_BASE {
-    enum index_t {
-        REF = 0x0,
-        A = 0x1,
-        C = 0x2,
-        G = 0x4,
-        T = 0x8,
-        ANY = 0xF
-    };
+enum index_t {
+    REF = 0x0,
+    A = 0x1,
+    C = 0x2,
+    G = 0x4,
+    T = 0x8,
+    ANY = 0xF
+};
 }
 
 
 inline
 char
-get_bam_seq_char(const uint8_t a){
+get_bam_seq_char(const uint8_t a) {
 
     using namespace BAM_BASE;
 
@@ -61,7 +61,7 @@ get_bam_seq_char(const uint8_t a){
 
 inline
 uint8_t
-get_bam_seq_code(const char c){
+get_bam_seq_code(const char c) {
 
     using namespace BAM_BASE;
 

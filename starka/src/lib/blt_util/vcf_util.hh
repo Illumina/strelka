@@ -39,20 +39,20 @@
 
 
 namespace VCFID {
-    enum index_t
-    {
-        CHROM,
-        POS,
-        ID,
-        REF,
-        ALT,
-        QUAL,
-        FILT,
-        INFO,
-        FORMAT,
-        SAMPLE,
-        SIZE
-    };
+enum index_t
+{
+    CHROM,
+    POS,
+    ID,
+    REF,
+    ALT,
+    QUAL,
+    FILT,
+    INFO,
+    FORMAT,
+    SAMPLE,
+    SIZE
+};
 }
 
 
@@ -93,14 +93,14 @@ get_format_key_index(const char* format,
 //
 inline
 const char*
-get_format_string_nocopy(const char* const * word,
+get_format_string_nocopy(const char* const* word,
                          const char* key) {
 
     unsigned keynum(0);
     if(! get_format_key_index(word[VCFID::FORMAT],key,keynum)) return NULL;
 
     const char* sample(word[VCFID::SAMPLE]);
-    for(;keynum;sample++) {
+    for(; keynum; sample++) {
         if(! *sample) return NULL;
         if((*sample)==':') keynum--;
     }

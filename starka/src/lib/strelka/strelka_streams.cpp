@@ -39,10 +39,10 @@ strelka_streams(const strelka_options& opt,
 
     using namespace STRELKA_SAMPLE_TYPE;
 
-    if(opt.is_bindel_diploid_file){
+    if(opt.is_bindel_diploid_file) {
         _bindel_diploid_osptr[NORMAL].reset(initialize_bindel_file(opt,pinfo,opt.bindel_diploid_filename,"normal-sample"));
     }
-    if(opt.is_tumor_bindel_diploid()){
+    if(opt.is_tumor_bindel_diploid()) {
         _bindel_diploid_osptr[TUMOR].reset(initialize_bindel_file(opt,pinfo,opt.tumor_bindel_diploid_filename,"tumor-sample"));
     }
 
@@ -54,7 +54,7 @@ strelka_streams(const strelka_options& opt,
         _realign_bam_ptr[TUMOR].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.tumor_realigned_read_filename,"tumor sample realigned-read BAM",header));
     }
 
-    if(opt.is_somatic_snv()){
+    if(opt.is_somatic_snv()) {
         const char* const cmdline(opt.cmdline.c_str());
 
         std::ofstream* fosptr(new std::ofstream);
@@ -87,13 +87,13 @@ strelka_streams(const strelka_options& opt,
         fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
 
         fos << vcf_col_label() << "\tFORMAT";
-        for(unsigned s(0);s<STRELKA_SAMPLE_TYPE::SIZE;++s) {
+        for(unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s) {
             fos << "\t" << STRELKA_SAMPLE_TYPE::get_label(s);
         }
         fos << "\n";
     }
 
-    if(opt.is_somatic_indel()){
+    if(opt.is_somatic_indel()) {
         const char* const cmdline(opt.cmdline.c_str());
 
         std::ofstream* fosptr(new std::ofstream);
@@ -130,7 +130,7 @@ strelka_streams(const strelka_options& opt,
         fos << "##FORMAT=<ID=TOR,Number=2,Type=Integer,Description=\"Other reads (weak support or insufficient indel breakpoint overlap) for tiers 1,2\">\n";
 
         fos << vcf_col_label() << "\tFORMAT";
-        for(unsigned s(0);s<STRELKA_SAMPLE_TYPE::SIZE;++s) {
+        for(unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s) {
             fos << "\t" << STRELKA_SAMPLE_TYPE::get_label(s);
         }
         fos << "\n";

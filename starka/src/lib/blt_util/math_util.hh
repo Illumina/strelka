@@ -30,12 +30,12 @@
 ///
 template <typename FloatType>
 FloatType
-log1p_switch(const FloatType x){
+log1p_switch(const FloatType x) {
 
     // better number??
     static const FloatType smallx_thresh(0.01);
 
-    if(std::abs(x)<smallx_thresh){
+    if(std::abs(x)<smallx_thresh) {
         return boost::math::log1p(x);
     } else {
         return std::log(1+x);

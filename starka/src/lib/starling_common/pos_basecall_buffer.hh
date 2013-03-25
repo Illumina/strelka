@@ -31,13 +31,13 @@
 struct pos_basecall_buffer {
 
     void
-    insert_pos_submap_count(const pos_t pos){
+    insert_pos_submap_count(const pos_t pos) {
 
         _pdata[pos].n_submapped++;
     }
 
     void
-    insert_pos_spandel_count(const pos_t pos){
+    insert_pos_spandel_count(const pos_t pos) {
 
         _pdata[pos].n_spandel++;
     }
@@ -45,7 +45,7 @@ struct pos_basecall_buffer {
     void
     insert_pos_basecall(const pos_t pos,
                         const bool is_tier1,
-                        const base_call& bc){
+                        const base_call& bc) {
         if(is_tier1) {
             _pdata[pos].calls.push_back(bc);
         } else {

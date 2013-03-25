@@ -33,7 +33,7 @@ write_filters(std::ostream& os) const {
     }
 
     bool is_sep(false);
-    for(unsigned i(0);i<VCF_FILTERS::SIZE;++i){
+    for(unsigned i(0); i<VCF_FILTERS::SIZE; ++i) {
         if(filters.test(i)) {
             if(is_sep) { os << ";"; }
             else       { is_sep=true; }

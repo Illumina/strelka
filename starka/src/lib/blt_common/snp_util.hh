@@ -32,7 +32,7 @@ is_spi_allref(const snp_pos_info& pi,
               const unsigned ref_gt) {
 
     const unsigned n_calls(pi.calls.size());
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         const uint8_t obs_id(pi.calls[i].base_id);
         assert(obs_id!=BASE_ID::ANY);
         if(ref_gt!=obs_id) return false;

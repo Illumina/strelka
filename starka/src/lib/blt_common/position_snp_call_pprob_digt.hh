@@ -54,7 +54,7 @@ struct diploid_genotype {
             static const int qp(error_prob_to_qphred((1.-p)));
             snp_qphred=qp;
             max_gt_qphred=qp;
-            for(unsigned i(0);i<DIGT::SIZE;++i) {
+            for(unsigned i(0); i<DIGT::SIZE; ++i) {
                 pprob[i] = p;
             }
         }
@@ -101,7 +101,7 @@ write_diploid_genotype_snp(const blt_options& opt,
                            const snp_pos_info& pi,
                            const diploid_genotype& dgt,
                            std::ostream& os,
-                           const unsigned hpol){
+                           const unsigned hpol) {
 
     write_diploid_genotype_allele(opt,pi,dgt,os,hpol);
 }

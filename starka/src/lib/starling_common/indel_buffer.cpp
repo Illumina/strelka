@@ -36,7 +36,7 @@ pos_range_iter(const pos_t begin_pos,
     const iterator end(_idata.lower_bound(end_range_key));
     const indel_key begin_range_key(begin_pos-static_cast<pos_t>(_max_indel_size));
     iterator begin(_idata.lower_bound(begin_range_key));
-    for(;begin!=end;++begin) {
+    for(; begin!=end; ++begin) {
         if(begin->first.right_pos() >= begin_pos) break;
     }
     return std::make_pair(begin,end);
@@ -60,7 +60,7 @@ pos_range_iter(const pos_t begin_pos,
     const const_iterator end(_idata.lower_bound(end_range_key));
     const indel_key begin_range_key(begin_pos-static_cast<pos_t>(_max_indel_size));
     const_iterator begin(_idata.lower_bound(begin_range_key));
-    for(;begin!=end;++begin) {
+    for(; begin!=end; ++begin) {
         if(begin->first.right_pos() >= begin_pos) break;
     }
     return std::make_pair(begin,end);
@@ -76,7 +76,7 @@ insert_indel(const indel_observation& obs,
 
     assert(obs.key.type != INDEL::NONE);
     idata_t::iterator i(_idata.find(obs.key));
-    if(i == _idata.end()){
+    if(i == _idata.end()) {
         indel_data id;
         id.add_observation(obs.data,is_shared,is_repeat_obs);
         _idata.insert(std::make_pair(obs.key,id));
@@ -105,7 +105,7 @@ dump_range(indel_buffer::const_iterator i,
            const indel_buffer::const_iterator i_end,
            std::ostream& os)
 {
-    for(;i!=i_end;++i){
+    for(; i!=i_end; ++i) {
         os << i->first << get_indel_data(i);
     }
 }

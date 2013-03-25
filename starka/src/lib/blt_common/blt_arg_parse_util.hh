@@ -62,7 +62,7 @@ void
 set_val(const prog_info& pinfo,
         const char* arg_label,
         const char* arg,
-        T& val){
+        T& val) {
     try {
         val=boost::lexical_cast<T>(arg);
     } catch(boost::bad_lexical_cast& e) {
@@ -78,7 +78,7 @@ void
 set_arg(unsigned& argi,
         arg_data& ad,
         bool& is_val_set,
-        T& val){
+        T& val) {
 
     const char* arg_label(ad.argstr[argi].c_str());
 

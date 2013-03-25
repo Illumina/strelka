@@ -40,7 +40,7 @@ add_stage(const int id,
     if(is_parent) {
         idmap_t::iterator pit(_ids.find(parent_id));
 
-        if(pit==_ids.end()){
+        if(pit==_ids.end()) {
             log_os << "ERROR: stage_data.add_stage() parent_id " << parent_id << " does not exist\n";
             exit(EXIT_FAILURE);
         }
@@ -76,7 +76,7 @@ dump(std::ostream& os) const {
 
     os << "stage_pos:\n";
     siter i(_stage_pos.begin()), i_end(_stage_pos.end());
-    for(;i!=i_end;++i) {
+    for(; i!=i_end; ++i) {
         os << "pos: " << i->first << " id: " << i->second << "\n";
     }
 }
@@ -112,7 +112,7 @@ revise_stage_data(const stage_data& sdata) {
 
     assert(sps==_stage_size);
 
-    for(unsigned i(0);i<sps;++i){
+    for(unsigned i(0); i<sps; ++i) {
         const pos_t new_pos(sp[i].first);
         const int new_id(sp[i].second);
         const pos_t old_pos(_sdata.get_stage_id_shift(new_id));
@@ -122,13 +122,13 @@ revise_stage_data(const stage_data& sdata) {
 
     // map up any old minimum values:
     std::map<int,std::pair<bool,pos_t> > old_minpos;
-    for(unsigned i(0);i<sps;++i){
+    for(unsigned i(0); i<sps; ++i) {
         const int old_id(_stage_pos_ptr->operator[](i).second);
         old_minpos[old_id] = std::make_pair(_is_minpos[i],_minpos[i]);
     }
 
     // create new minimum values:
-    for(unsigned i(0);i<sps;++i){
+    for(unsigned i(0); i<sps; ++i) {
         const pos_t new_pos(sp[i].first);
         const int new_id(sp[i].second);
         const pos_t old_pos(_sdata.get_stage_id_shift(new_id));
@@ -150,20 +150,20 @@ revise_stage_data(const stage_data& sdata) {
 void
 stage_manager::
 reset() {
-    if(_is_first_pos_set){
+    if(_is_first_pos_set) {
         if(_report_range.is_end_pos) {
             pos_t final_pos(_report_range.end_pos);
-            for(pos_t i(_max_pos+1);i<final_pos;++i){
+            for(pos_t i(_max_pos+1); i<final_pos; ++i) {
                 process_pos(i);
             }
         }
-    } else if(_report_range.is_begin_pos && _report_range.is_end_pos){
+    } else if(_report_range.is_begin_pos && _report_range.is_end_pos) {
         // never read any data in this case, so we just write out
         // the approriate range of zeros for consistency:
         //
         _min_pos=_report_range.begin_pos;
         const pos_t end(_report_range.end_pos);
-        for(pos_t i(_report_range.begin_pos);i<end;++i){
+        for(pos_t i(_report_range.begin_pos); i<end; ++i) {
             process_pos(i);
         }
     }
@@ -178,15 +178,15 @@ reset() {
 
 void
 stage_manager::
-handle_new_pos_value(const pos_t pos){
+handle_new_pos_value(const pos_t pos) {
 
-    if(! _is_first_pos_set){
+    if(! _is_first_pos_set) {
         _max_pos = pos;
         _min_pos = pos;
-        if(_report_range.is_begin_pos){
+        if(_report_range.is_begin_pos) {
             _min_pos = _report_range.begin_pos;
         }
-        for(pos_t i(_min_pos);i<=pos;++i) process_pos(i);
+        for(pos_t i(_min_pos); i<=pos; ++i) process_pos(i);
         _is_first_pos_set = true;
     }
 
@@ -212,7 +212,7 @@ handle_new_pos_value(const pos_t pos){
 bool
 stage_manager::
 is_new_pos_value_valid(const pos_t pos,
-                       const int stage_id){
+                       const int stage_id) {
 
     // get fshift first to validate stage_id:
     const pos_t fshift(_sdata.get_stage_id_shift(stage_id));
@@ -225,8 +225,8 @@ is_new_pos_value_valid(const pos_t pos,
 void
 stage_manager::
 validate_new_pos_value(const pos_t pos,
-                       const int stage_id){
-    if(! is_new_pos_value_valid(pos,stage_id)){
+                       const int stage_id) {
+    if(! is_new_pos_value_valid(pos,stage_id)) {
         std::ostringstream oss;
         oss << "ERROR:: reference sequence position difference too high for multi_stage_circular_buffer\n"
             << "current position:\t" << (pos+1) << "\n"
@@ -242,7 +242,7 @@ static
 bool
 get_is_any_minpos(const std::vector<uint8_t>& minpos,
                   const unsigned stage_size) {
-    for(unsigned i(0);i<stage_size;++i) if(minpos[i]) return true;
+    for(unsigned i(0); i<stage_size; ++i) if(minpos[i]) return true;
     return false;
 }
 
@@ -250,7 +250,7 @@ get_is_any_minpos(const std::vector<uint8_t>& minpos,
 
 void
 stage_manager::
-process_pos(const pos_t pos){
+process_pos(const pos_t pos) {
 
     if(! _is_head_pos) {
         _head_pos = pos;
@@ -258,8 +258,8 @@ process_pos(const pos_t pos){
     }
 
     if(_is_any_minpos) {
-        for(pos_t p(_head_pos);p<=pos;++p){
-            for(unsigned s(0);s<_stage_size;++s) {
+        for(pos_t p(_head_pos); p<=pos; ++p) {
+            for(unsigned s(0); s<_stage_size; ++s) {
                 const pos_t stage_pos(p-static_cast<pos_t>(_stage_pos_ptr->operator[](s).first));
                 if(stage_pos<_min_pos) break;
                 if(_is_minpos[s]) {
@@ -270,15 +270,15 @@ process_pos(const pos_t pos){
             }
         }
         _is_any_minpos=get_is_any_minpos(_is_minpos,_stage_size);
-     } else {
-        for(pos_t p(_head_pos);p<=pos;++p){
-            for(unsigned s(0);s<_stage_size;++s) {
+    } else {
+        for(pos_t p(_head_pos); p<=pos; ++p) {
+            for(unsigned s(0); s<_stage_size; ++s) {
                 const pos_t stage_pos(p-static_cast<pos_t>(_stage_pos_ptr->operator[](s).first));
                 if(stage_pos<_min_pos) break;
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
         }
-     }
+    }
 
     _head_pos=pos+1;
 }
@@ -287,14 +287,14 @@ process_pos(const pos_t pos){
 
 void
 stage_manager::
-finish_process_pos(){
+finish_process_pos() {
 
     if(! _is_head_pos) return;
 
     if(_is_any_minpos) {
-        for(pos_t p(_head_pos);true;++p){
+        for(pos_t p(_head_pos); true; ++p) {
             pos_t stage_pos(p);
-            for(unsigned s(0);s<_stage_size;++s) {
+            for(unsigned s(0); s<_stage_size; ++s) {
                 stage_pos=(p-static_cast<pos_t>(_stage_pos_ptr->operator[](s).first));
                 if(stage_pos>=_head_pos) continue;
                 if(stage_pos<_min_pos) break;
@@ -309,9 +309,9 @@ finish_process_pos(){
         }
         _is_any_minpos=get_is_any_minpos(_is_minpos,_stage_size);
     } else {
-        for(pos_t p(_head_pos);true;++p){
+        for(pos_t p(_head_pos); true; ++p) {
             pos_t stage_pos(p);
-            for(unsigned s(0);s<_stage_size;++s) {
+            for(unsigned s(0); s<_stage_size; ++s) {
                 stage_pos=(p-static_cast<pos_t>(_stage_pos_ptr->operator[](s).first));
                 if(stage_pos>=_head_pos) continue;
                 if(stage_pos<_min_pos) break;

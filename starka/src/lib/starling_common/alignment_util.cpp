@@ -33,7 +33,7 @@
 // indels will be missed if using this range
 //
 known_pos_range
-get_strict_alignment_range(const alignment& al){
+get_strict_alignment_range(const alignment& al) {
 
     const pos_t asize(apath_ref_length(al.path));
 
@@ -46,7 +46,7 @@ get_strict_alignment_range(const alignment& al){
 // are converted to match, but not soft-clip segments:
 //
 known_pos_range
-get_soft_clip_alignment_range(const alignment& al){
+get_soft_clip_alignment_range(const alignment& al) {
 
     const pos_t lead(apath_insert_lead_size(al.path));
     const pos_t trail(apath_insert_trail_size(al.path));
@@ -64,7 +64,7 @@ get_soft_clip_alignment_range(const alignment& al){
 // are converted to match.
 //
 known_pos_range
-get_alignment_range(const alignment& al){
+get_alignment_range(const alignment& al) {
 
     const pos_t lead(apath_read_lead_size(al.path));
     const pos_t trail(apath_read_trail_size(al.path));
@@ -84,7 +84,7 @@ get_alignment_range(const alignment& al){
 //
 known_pos_range
 get_alignment_zone(const alignment& al,
-                   const unsigned seq_length){
+                   const unsigned seq_length) {
 
     const known_pos_range ps(get_alignment_range(al));
     known_pos_range ps2(ps);
@@ -131,7 +131,7 @@ is_indel_in_alignment(const alignment& al,
 
         unsigned n_seg(1); // number of path_segments consumed
         if       (is_edge_insert) {
-            if(path_index==ends.first){
+            if(path_index==ends.first) {
                 if(      (ref_head_pos==ik.pos) &&
                          (INDEL::BP_RIGHT==ik.type)) {
                     read_indel_pr.set_end_pos(read_offset+ps.length);
@@ -180,7 +180,7 @@ is_indel_in_alignment(const alignment& al,
             }
         }
 
-        for(unsigned i(0);i<n_seg;++i) { increment_path(path,path_index,read_offset,ref_head_pos); }
+        for(unsigned i(0); i<n_seg; ++i) { increment_path(path,path_index,read_offset,ref_head_pos); }
     }
 
     return false;
@@ -221,7 +221,7 @@ normalize_indel(const char* base_seq,
                 const pos_t base_seq_start,
                 const char* insert_seq,
                 const pos_t insert_seq_start,
-                const unsigned insert_size){
+                const unsigned insert_size) {
 
     assert(NULL != base_seq);
     assert(NULL != insert_seq);
@@ -235,7 +235,7 @@ normalize_indel(const char* base_seq,
         if(bs==0) return std::make_pair(true,0);
 
         // attempt to shift back one base
-        if(base_seq[bs-1] != insert_seq[is+insert_size-1]){
+        if(base_seq[bs-1] != insert_seq[is+insert_size-1]) {
             return std::make_pair(false,base_seq_start-bs);
         }
 
@@ -270,7 +270,7 @@ normalize_alignment(alignment& al,
     pos_t last_event_end(ps.pos);
 
     const unsigned aps(al.apath.size());
-    for(unsigned i(0);i<aps;++i){
+    for(unsigned i(0); i<aps; ++i) {
         path_segment& ps(al.apath[i]);
 
         std::cerr << "apath segment i: " << i << "\n";
@@ -282,7 +282,7 @@ normalize_alignment(alignment& al,
             pos_t base_start(al.pos+ref_offset);
             const char* insert(al.seq());
             pos_t insert_start(read_offset);
-            if(ps.type == DELETE){
+            if(ps.type == DELETE) {
                 std::swap(base,insert);
                 std::swap(base_start,insert_start);
             }
@@ -294,7 +294,7 @@ normalize_alignment(alignment& al,
             if(norm_res.first or (0 != norm_res.second)) is_norm=true;
 
             if(norm.res_first) {
-                if(ps.type == INSERT){
+                if(ps.type == INSERT) {
                     ps.type == MATCH;
                     ps.pos -= ps.length;
                 } else {
@@ -309,7 +309,7 @@ normalize_alignment(alignment& al,
                     indel in;
                     in.pos=base_pos+ref_offset-shift;
                     in.key.length = ps.length;
-                    if(ps.type == INSERT){
+                    if(ps.type == INSERT) {
                         in.key.type=INDEL::INSERT;
                         in.data.seq=std::string(fwd_strand_read+read_offset-shift,ps.length);
                     } else {
@@ -328,9 +328,9 @@ normalize_alignment(alignment& al,
             read_offset += ps.length;
             ref_offset += ps.length;
             continue;
-        } else if(ps.type == DELETE){
+        } else if(ps.type == DELETE) {
             ref_offset += ps.length;
-        } else if(ps.type == INSERT){
+        } else if(ps.type == INSERT) {
             read_offset += ps.length;
         } else {
             assert(0); // can't handle other CIGAR types yet

@@ -40,11 +40,11 @@ usage(const char* xmessage) const {
     static const po::options_description visible(get_strelka_option_parser(default_opt));
 
     os <<
-        "\n" << name() << " - joint tumor/normal small-variant caller\n"
-        "\tversion: " << version() << "\n"
-        "\n"
-        "usage: " << name() << " [options]\n\n" << visible
-             << "\n\n[ ***** new single-sample options ***** ]\n\n";
+       "\n" << name() << " - joint tumor/normal small-variant caller\n"
+       "\tversion: " << version() << "\n"
+       "\n"
+       "usage: " << name() << " [options]\n\n" << visible
+       << "\n\n[ ***** new single-sample options ***** ]\n\n";
 
     static const po::options_description visible2(get_starling_shared_option_parser(default_opt));
     os << visible2

@@ -62,10 +62,10 @@ struct align_printer {
         os << "scoring alignment:\n";
         const unsigned ss(_seq.size());
         os << "read:   ";
-        for(unsigned i(0);i<ss;++i) os << _seq[i].read;
+        for(unsigned i(0); i<ss; ++i) os << _seq[i].read;
         os << "\n";
         os << "        ";
-        for(unsigned i(0);i<ss;++i) {
+        for(unsigned i(0); i<ss; ++i) {
             char c(' ');
             if(_seq[i].read != '-') {
                 char r(_seq[i].ref);
@@ -76,10 +76,10 @@ struct align_printer {
         }
         os << "\n";
         os << "ref:    ";
-        for(unsigned i(0);i<ss;++i) os << _seq[i].ref;
+        for(unsigned i(0); i<ss; ++i) os << _seq[i].ref;
         os << "\n";
         os << "insert: ";
-        for(unsigned i(0);i<ss;++i) os << _seq[i].insert;
+        for(unsigned i(0); i<ss; ++i) os << _seq[i].insert;
         os << "\n";
     }
 
@@ -108,7 +108,7 @@ score_segment(const starling_options& /*opt*/,
 
     static const double lnthird(-std::log(3.));
 
-    for(unsigned i(0);i<seg_length;++i){
+    for(unsigned i(0); i<seg_length; ++i) {
         const pos_t readi(static_cast<pos_t>(read_offset+i));
         const uint8_t sbase(seq.get_code(readi));
         if(sbase == BAM_BASE::ANY) continue;
@@ -131,7 +131,7 @@ score_candidate_alignment(const starling_options& opt,
                           const indel_buffer& ibuff,
                           const read_segment& rseg,
                           const candidate_alignment& cal,
-                          const reference_contig_segment& ref){
+                          const reference_contig_segment& ref) {
     using namespace ALIGNPATH;
 
 #ifdef DEBUG_SCORE
@@ -163,7 +163,7 @@ score_candidate_alignment(const starling_options& opt,
             const indel_key ik(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
 
             const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
-            if(NULL == id_ptr){
+            if(NULL == id_ptr) {
                 std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected swap indel: " << ik << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
@@ -183,12 +183,12 @@ score_candidate_alignment(const starling_options& opt,
                           al_lnp);
 
 #ifdef DEBUG_SCORE
-            for(unsigned ii(0);ii<sinfo.insert_length;++ii) {
+            for(unsigned ii(0); ii<sinfo.insert_length; ++ii) {
                 ap.push(read_bseq.get_char(static_cast<pos_t>(read_offset+ii)),
                         GAP,
                         insert_bseq.get_char(insert_seq_head_pos+static_cast<pos_t>(ii)));
             }
-            for(unsigned ii(0);ii<sinfo.delete_length;++ii) {
+            for(unsigned ii(0); ii<sinfo.delete_length; ++ii) {
                 ap.push(GAP,
                         ref_bseq.get_char(ref_head_pos+static_cast<pos_t>(ii)),
                         GAP);
@@ -205,7 +205,7 @@ score_candidate_alignment(const starling_options& opt,
                           ref_head_pos,
                           al_lnp);
 #ifdef DEBUG_SCORE
-            for(unsigned ii(0);ii<ps.length;++ii) {
+            for(unsigned ii(0); ii<ps.length; ++ii) {
                 ap.push(read_bseq.get_char(static_cast<pos_t>(read_offset+ii)),
                         ref_bseq.get_char(ref_head_pos+static_cast<pos_t>(ii)),
                         GAP);
@@ -217,14 +217,14 @@ score_candidate_alignment(const starling_options& opt,
             indel_key ik(ref_head_pos,INDEL::INSERT,ps.length);
 
             // check if this is an edge insertion:
-            if((path_index==ends.first) || (path_index==ends.second)){
+            if((path_index==ends.first) || (path_index==ends.second)) {
                 if(path_index==ends.first) { ik=cal.leading_indel_key; }
                 else                       { ik=cal.trailing_indel_key; }
                 assert(ik.type!=INDEL::NONE);
             }
 
             const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
-            if(NULL == id_ptr){
+            if(NULL == id_ptr) {
                 std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected insertion: " << ik << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
@@ -251,7 +251,7 @@ score_candidate_alignment(const starling_options& opt,
                           al_lnp);
 
 #ifdef DEBUG_SCORE
-            for(unsigned ii(0);ii<ps.length;++ii) {
+            for(unsigned ii(0); ii<ps.length; ++ii) {
                 ap.push(read_bseq.get_char(static_cast<pos_t>(read_offset+ii)),
                         GAP,
                         insert_bseq.get_char(insert_seq_head_pos+static_cast<pos_t>(ii)));
@@ -262,7 +262,7 @@ score_candidate_alignment(const starling_options& opt,
             // no read segment to worry about in this case
             //
 #ifdef DEBUG_SCORE
-            for(unsigned ii(0);ii<ps.length;++ii) {
+            for(unsigned ii(0); ii<ps.length; ++ii) {
                 ap.push(GAP,
                         ref_bseq.get_char(ref_head_pos+static_cast<pos_t>(ii)),
                         GAP);
@@ -286,12 +286,12 @@ score_candidate_alignment(const starling_options& opt,
             // do nothing
 
         } else {
-             std::ostringstream oss;
-             oss << "Can't handle cigar code: " << segment_type_to_cigar_code(ps.type) << "\n";
-             throw blt_exception(oss.str().c_str());
+            std::ostringstream oss;
+            oss << "Can't handle cigar code: " << segment_type_to_cigar_code(ps.type) << "\n";
+            throw blt_exception(oss.str().c_str());
         }
 
-        for(unsigned i(0);i<n_seg;++i) { increment_path(cal.al.path,path_index,read_offset,ref_head_pos); }
+        for(unsigned i(0); i<n_seg; ++i) { increment_path(cal.al.path,path_index,read_offset,ref_head_pos); }
     }
 
 #ifdef DEBUG_SCORE

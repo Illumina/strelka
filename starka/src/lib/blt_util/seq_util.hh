@@ -29,13 +29,13 @@
 #include <string>
 
 namespace BASE_ID {
-    enum index_t {
-        A,
-        C,
-        G,
-        T,
-        ANY
-    };
+enum index_t {
+    A,
+    C,
+    G,
+    T,
+    ANY
+};
 }
 
 enum { N_BASE=4 };
@@ -46,7 +46,7 @@ base_error(const char* func,
 
 inline
 uint8_t
-base_to_id(const char a){
+base_to_id(const char a) {
     using namespace BASE_ID;
     switch(a) {
     case 'A': return A;
@@ -63,7 +63,7 @@ base_to_id(const char a){
 inline
 uint8_t
 bam_seq_code_to_id(const uint8_t a,
-                   const uint8_t ref = BAM_BASE::ANY){
+                   const uint8_t ref = BAM_BASE::ANY) {
 
     using namespace BAM_BASE;
 
@@ -97,7 +97,7 @@ id_to_base(const uint8_t i) {
 /// valid in the ELAND sense [ACGTN]
 inline
 bool
-is_valid_base(char a){
+is_valid_base(char a) {
     switch(a) {
     case 'A':
     case 'C':
@@ -110,7 +110,7 @@ is_valid_base(char a){
 
 inline
 bool
-is_iupac_base(char a){
+is_iupac_base(char a) {
     switch(a) {
     case 'A':
     case 'C':
@@ -140,7 +140,7 @@ is_valid_seq(const char* seq);
 
 inline
 char
-elandize_base(char a){
+elandize_base(char a) {
     switch(a) {
     case 'A': return 'A';
     case 'C': return 'C';
@@ -168,7 +168,7 @@ elandize_base(char a){
 
 inline
 char
-comp_base(char a){
+comp_base(char a) {
     switch(a) {
     case 'A': return 'T';
     case 'C': return 'G';
@@ -185,9 +185,9 @@ inline
 char
 get_seq_base(const char* seq,
              const pos_t size,
-             const pos_t pos){
+             const pos_t pos) {
 
-    if((pos<0) || (pos>=size)){
+    if((pos<0) || (pos>=size)) {
         return 'N';
     } else {
         return seq[pos];
@@ -197,7 +197,7 @@ get_seq_base(const char* seq,
 inline
 char
 get_seq_base(const std::string& seq,
-             const pos_t pos){
+             const pos_t pos) {
 
     return get_seq_base(seq.c_str(),seq.size(),pos);
 }
@@ -206,9 +206,9 @@ get_seq_base(const std::string& seq,
 //
 template <typename Iter>
 void
-reverseComp(Iter b,Iter e){
+reverseComp(Iter b,Iter e) {
     char t;
-    for(;b!=e;++b){
+    for(; b!=e; ++b) {
         if((--e)==b) { *b=comp_base(*b); break; }
         t=comp_base(*b);
         *b=comp_base(*e);
@@ -223,7 +223,7 @@ inline void fixCstring(char* b) { *b='\0'; }
 //
 template <typename ConstIter,typename Iter>
 void
-reverseCompCopy(ConstIter cb,ConstIter ce,Iter b){
+reverseCompCopy(ConstIter cb,ConstIter ce,Iter b) {
     while(cb!=ce) { *b++ = comp_base(*--ce); }
     fixCstring(b);
 }

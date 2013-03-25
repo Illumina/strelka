@@ -74,18 +74,18 @@ set(const char* s) {
                 break;
             case 4:
                 // additional parse loop for ',' character:
-                {
-                    const char* p2(start);
-                    while(p2<=p){
-                        if((*p2==',') || (p2==p)) {
-                            alt.push_back(std::string(start,p2-start));
-                            stoupper(alt.back());
-                            start=p2+1;
-                        }
-                        p2++;
+            {
+                const char* p2(start);
+                while(p2<=p) {
+                    if((*p2==',') || (p2==p)) {
+                        alt.push_back(std::string(start,p2-start));
+                        stoupper(alt.back());
+                        start=p2+1;
                     }
+                    p2++;
                 }
-                break;
+            }
+            break;
             default:
                 assert(0);
                 break;
@@ -110,7 +110,7 @@ std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr) {
        << vcfr.ref << '\t';
 
     const unsigned nalt(vcfr.alt.size());
-    for(unsigned a(0);a<nalt;++a) {
+    for(unsigned a(0); a<nalt; ++a) {
         if(a) os << ',';
         os << vcfr.alt[a];
     }

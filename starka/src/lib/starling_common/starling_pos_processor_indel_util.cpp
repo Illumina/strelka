@@ -40,13 +40,13 @@ static
 void
 finish_indel_sppr(indel_observation& obs,
                   starling_pos_processor_base& sppr,
-                  const unsigned sample_no){
+                  const unsigned sample_no) {
 
     const bool is_novel_indel(sppr.insert_indel(obs,sample_no));
 
     // contig reads are supposed to be associated with indels from their contig only:
     //
-    if((INDEL_ALIGN_TYPE::CONTIG_READ == obs.data.iat) && is_novel_indel){
+    if((INDEL_ALIGN_TYPE::CONTIG_READ == obs.data.iat) && is_novel_indel) {
         std::ostringstream oss;
         oss << "ERROR: contig read contains novel indel: " << obs.key << "\n";
         throw blt_exception(oss.str().c_str());
@@ -62,7 +62,7 @@ bam_seq_to_str(const bam_seq_base& bs,
                const unsigned end,
                std::string& s) {
     s.clear();
-    for(unsigned i(start);i<end;++i) s.push_back(bs.get_char(i));
+    for(unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
 }
 
 
@@ -112,11 +112,11 @@ process_edge_insert(const unsigned max_indel_size,
     } else if(obs.data.iat == INDEL_ALIGN_TYPE::CONTIG_READ) {
 
         // add edge indels for contig reads:
-        if(NULL != edge_indel_ptr){
+        if(NULL != edge_indel_ptr) {
             const pos_t current_pos(ref_head_pos);
             typedef indel_set_t::const_iterator cit;
             cit j(edge_indel_ptr->begin()), j_end(edge_indel_ptr->end());
-            for(;j!=j_end;++j){
+            for(; j!=j_end; ++j) {
 
                 // This checks that we've identified the edge indel
                 // for this read out of the full set of indels in the
@@ -263,7 +263,7 @@ process_simple_indel(const unsigned max_indel_size,
     if(ps.length <= max_indel_size) {
         obs.key.pos=ref_head_pos;
         obs.key.length = ps.length;
-        if(ps.type == INSERT){
+        if(ps.type == INSERT) {
             obs.key.type=INDEL::INSERT;
             bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
         } else {
@@ -313,7 +313,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const INDEL_ALIGN_TYPE::index_t iat,
                              const align_id_t id,
                              const unsigned sample_no,
-                             const indel_set_t* edge_indel_ptr){
+                             const indel_set_t* edge_indel_ptr) {
 
     using namespace ALIGNPATH;
 
@@ -346,7 +346,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
     pos_t ref_head_pos(al.pos);
 
     const unsigned aps(al.path.size());
-    while(path_index<aps){
+    while(path_index<aps) {
         const path_segment& ps(al.path[path_index]);
         const bool is_edge_segment((path_index==ends.first) || (path_index==ends.second));
         const bool is_edge_insert(is_edge_segment && (ps.type == INSERT));
@@ -406,7 +406,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 
         }
 
-        for(unsigned i(0);i<n_seg;++i) { increment_path(al.path,path_index,read_offset,ref_head_pos); }
+        for(unsigned i(0); i<n_seg; ++i) { increment_path(al.path,path_index,read_offset,ref_head_pos); }
     }
 }
 

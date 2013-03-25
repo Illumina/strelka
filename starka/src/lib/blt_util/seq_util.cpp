@@ -29,7 +29,7 @@
 
 
 void
-base_error(const char* func, const char a){
+base_error(const char* func, const char a) {
     log_os << "ERROR:: Invalid base in " << func << ".\n"
            << "\t\tinvalid base (char): '" << a << "'\n"
            << "\t\tinvalid base (int): " << static_cast<int>(a) << "\n";
@@ -39,7 +39,7 @@ base_error(const char* func, const char a){
 
 
 void
-id_to_base_error(const uint8_t i){
+id_to_base_error(const uint8_t i) {
     log_os << "ERROR:: Invalid id in id_to_base. id: " << i << "\n";
     exit(EXIT_FAILURE);
 }
@@ -47,11 +47,11 @@ id_to_base_error(const uint8_t i){
 
 
 bool
-is_valid_seq(const char* seq){
+is_valid_seq(const char* seq) {
 
     assert(NULL != seq);
 
-    while(*seq !=  '\0'){
+    while(*seq !=  '\0') {
         if(! is_valid_base(*seq)) return false;
         seq++;
     }
@@ -94,12 +94,12 @@ get_ref_seq(const char* ref_seq_file,
     pos_t ref_pos(0);
 
     ref_seq.clear();
-    while(true){
+    while(true) {
         ref_is.getline(buff,buff_size);
         if(! ref_is) {
             if     (ref_is.eof()) break;
             else if(ref_is.fail()) {
-                if(ref_is.bad()){
+                if(ref_is.bad()) {
                     log_os << "ERROR: unexpected failure while attempting to read sequence file: " << ref_seq_file << "\n";
                     exit(EXIT_FAILURE);
                 }
@@ -150,11 +150,11 @@ standardize_ref_seq(const char* ref_seq_file,
                     const pos_t offset) {
 
     const std::string::size_type ref_size(ref_seq.size());
-    for(std::string::size_type i(0);i<ref_size;++i){
+    for(std::string::size_type i(0); i<ref_size; ++i) {
         const char old_ref(ref_seq[i]);
         char c(old_ref);
         if(islower(c)) c = toupper(c);
-        if(! is_valid_base(c)){
+        if(! is_valid_base(c)) {
             if(! is_iupac_base(c)) {
                 static const char def_chr_name[] = "first-sequence-in-file";
                 const char* seq_name(NULL != chr_name ? chr_name : def_chr_name);
@@ -181,7 +181,7 @@ get_ref_seq_known_size(const std::string& ref_seq) {
     std::string::const_iterator i(ref_seq.begin());
     const std::string::const_iterator i_end(ref_seq.end());
     std::size_t size(0);
-    for(;i != i_end;++i){
+    for(; i != i_end; ++i) {
         if(*i != 'N') size++;
     }
     return size;
@@ -197,7 +197,7 @@ get_ref_seq_known_size(const reference_contig_segment& ref,
     if(pr.is_begin_pos && (pr.begin_pos>0)) b=pr.begin_pos;
     if(pr.is_end_pos && (pr.end_pos>0)) end=std::min(end,pr.end_pos);
     std::size_t size(0);
-    for(;b<end;++b) {
+    for(; b<end; ++b) {
         if(ref.get_base(b) != 'N') size++;
     }
     return size;
@@ -214,15 +214,15 @@ get_seq_repeat_unit(const std::string& seq,
     const unsigned seq_size((sg!=std::string::npos) ? sg : seq.size());
 
     // check all divisors of seq_size until a repeat is found:
-    for(unsigned i(1);i<seq_size;++i){
-         /// TODO -- find a real way to get the divisor list, this
-         /// isn't very important because indels are so small it
-         /// almost doesn't matter.
+    for(unsigned i(1); i<seq_size; ++i) {
+        /// TODO -- find a real way to get the divisor list, this
+        /// isn't very important because indels are so small it
+        /// almost doesn't matter.
         if((seq_size%i) != 0) continue;
 
         bool is_repeat(true);
-        for(unsigned j(i);j<seq_size; j += i){
-            for(unsigned k(0);k<i;++k){
+        for(unsigned j(i); j<seq_size; j += i) {
+            for(unsigned k(0); k<i; ++k) {
                 if(seq[j+k] != seq[k]) {
                     is_repeat=false;
                     break;

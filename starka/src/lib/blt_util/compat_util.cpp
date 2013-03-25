@@ -99,19 +99,19 @@ test_bn(const char* x) {
 
 void
 test_compat() {
-  test_round(3.5);
-  test_round(3.2);
-  test_round(3.7);
-  test_round(-1);
-  test_round(-1.5);
-  test_round(-1.7);
-  test_round(-1.2);
+    test_round(3.5);
+    test_round(3.2);
+    test_round(3.7);
+    test_round(-1);
+    test_round(-1.5);
+    test_round(-1.7);
+    test_round(-1.2);
 
-  test_bn("/foo");
-  test_bn("foo");
-  test_bn("//");
-  test_bn("/");
-  test_bn("");
+    test_bn("/foo");
+    test_bn("foo");
+    test_bn("//");
+    test_bn("/");
+    test_bn("");
 }
 
 

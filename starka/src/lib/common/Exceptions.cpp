@@ -30,8 +30,8 @@ namespace casava
 namespace common
 {
 
-ExceptionData::ExceptionData(int errorNumber, const std::string &message) : boost::exception(),
-            errorNumber_(errorNumber), message_(message)
+ExceptionData::ExceptionData(int errorNumber, const std::string& message) : boost::exception(),
+    errorNumber_(errorNumber), message_(message)
 {
 }
 
@@ -51,37 +51,37 @@ std::string ExceptionData::getContext() const
     return now + ": " + std::string(strerror(errorNumber_)) + ": " + boost::diagnostic_information(*this);
 }
 
-IoException::IoException(int errorNumber, const std::string &message)
+IoException::IoException(int errorNumber, const std::string& message)
     : std::ios_base::failure(message)
     , ExceptionData(errorNumber, message)
 {
 }
 
-UnsupportedVersionException::UnsupportedVersionException(const std::string &message)
+UnsupportedVersionException::UnsupportedVersionException(const std::string& message)
     : std::logic_error(message)
     , ExceptionData(EINVAL, message)
 {
 }
 
-InvalidParameterException::InvalidParameterException(const std::string &message)
+InvalidParameterException::InvalidParameterException(const std::string& message)
     : std::logic_error(message)
     , ExceptionData(EINVAL, message)
 {
 }
 
-InvalidOptionException::InvalidOptionException(const std::string &message)
+InvalidOptionException::InvalidOptionException(const std::string& message)
     : std::logic_error(message)
     , ExceptionData(EINVAL, message)
 {
 }
 
-PreConditionException::PreConditionException(const std::string &message)
+PreConditionException::PreConditionException(const std::string& message)
     : std::logic_error(message)
     , ExceptionData(EINVAL, message)
 {
 }
 
-PostConditionException::PostConditionException(const std::string &message)
+PostConditionException::PostConditionException(const std::string& message)
     : std::logic_error(message)
     , ExceptionData(EINVAL, message)
 {

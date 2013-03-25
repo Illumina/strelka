@@ -32,35 +32,35 @@
 
 namespace VCF_FILTERS {
 
-    enum index_t {
-        IndelConflict,
-        SiteConflict,
-        LowGQX,
-        HighBaseFilt,
-        HighDepth,
-        HighSNVSB,
-        HighSNVHPOL,
-        HighRefRep,
-        SIZE
-    };
+enum index_t {
+    IndelConflict,
+    SiteConflict,
+    LowGQX,
+    HighBaseFilt,
+    HighDepth,
+    HighSNVSB,
+    HighSNVHPOL,
+    HighRefRep,
+    SIZE
+};
 
-    inline
-    const char*
-    get_label(const unsigned idx) {
-        switch(idx) {
-        case HighDepth: return "HighDepth";
-        case LowGQX: return "LowGQX";
-        case HighSNVSB: return "HighSNVSB";
-        case HighSNVHPOL: return "HighSNVHPOL";
-        case HighBaseFilt: return "HighDPFRatio";
-        case HighRefRep: return "HighREFREP";
-        case IndelConflict: return "IndelConflict";
-        case SiteConflict: return "SiteConflict";
-        default:
-            assert(0);
-            return NULL;
-        }
+inline
+const char*
+get_label(const unsigned idx) {
+    switch(idx) {
+    case HighDepth: return "HighDepth";
+    case LowGQX: return "LowGQX";
+    case HighSNVSB: return "HighSNVSB";
+    case HighSNVHPOL: return "HighSNVHPOL";
+    case HighBaseFilt: return "HighDPFRatio";
+    case HighRefRep: return "HighREFREP";
+    case IndelConflict: return "IndelConflict";
+    case SiteConflict: return "SiteConflict";
+    default:
+        assert(0);
+        return NULL;
     }
+}
 }
 
 
@@ -113,25 +113,25 @@ struct indel_modifiers : public shared_modifiers {
 
 namespace MODIFIED_SITE_GT {
 
-    enum index_t {
-        NONE,
-        UNKNOWN,
-        ZERO,
-        ONE
-    };
+enum index_t {
+    NONE,
+    UNKNOWN,
+    ZERO,
+    ONE
+};
 
-    inline
-    const char*
-    get_label(const unsigned idx) {
-        switch(static_cast<index_t>(idx)) {
-        case ZERO: return "0";
-        case ONE: return "1";
-        case UNKNOWN: return ".";
-        default:
-            assert(0);
-            return NULL;
-        }
+inline
+const char*
+get_label(const unsigned idx) {
+    switch(static_cast<index_t>(idx)) {
+    case ZERO: return "0";
+    case ONE: return "1";
+    case UNKNOWN: return ".";
+    default:
+        assert(0);
+        return NULL;
     }
+}
 }
 
 

@@ -25,13 +25,13 @@
 
 unsigned
 get_snp_hpol_size(const pos_t pos,
-                  const reference_contig_segment& ref){
+                  const reference_contig_segment& ref) {
 
     // count upstream repeats:
     bool is_up_repeat(false);
     char up_repeat('N');
     unsigned up_size(0);
-    for(pos_t i(pos-1);i>=0;i--){
+    for(pos_t i(pos-1); i>=0; i--) {
         if(is_up_repeat) {
             if(up_repeat != ref.get_base(i)) break;
         } else {
@@ -47,7 +47,7 @@ get_snp_hpol_size(const pos_t pos,
     char dn_repeat('N');
     unsigned dn_size(0);
     const pos_t rs(ref.end());
-    for(pos_t i(pos+1);i<rs;i++){
+    for(pos_t i(pos+1); i<rs; i++) {
         if(is_dn_repeat) {
             if(dn_repeat != ref.get_base(i)) break;
         } else {
@@ -68,9 +68,9 @@ get_snp_hpol_size(const pos_t pos,
 struct ihpol_data {
 
     ihpol_data()
-      : r1('N'), r2('N')
-      , nr1(0), nr2(0)
-      , size(0)
+        : r1('N'), r2('N')
+        , nr1(0), nr2(0)
+        , size(0)
     {}
 
     // returns false when limit is reached:
@@ -109,29 +109,29 @@ struct ihpol_data {
 
 unsigned
 get_interupted_hpol_size(const pos_t pos,
-                         const reference_contig_segment& ref){
+                         const reference_contig_segment& ref) {
 
     // count current base + upstream repeats:
     ihpol_data up_ihd;
-    for(pos_t i(pos);i>=0;i--){
+    for(pos_t i(pos); i>=0; i--) {
         const char base(ref.get_base(i));
         if(! up_ihd.add_base(base)) break;
     }
     // then see how far we can extend downstream:
     const pos_t rs(ref.end());
-    for(pos_t i(pos+1);i<rs;i++){
+    for(pos_t i(pos+1); i<rs; i++) {
         const char base(ref.get_base(i));
         if(! up_ihd.add_base(base)) break;
     }
 
     // count current base + downstream repeats:
     ihpol_data dn_ihd;
-    for(pos_t i(pos);i<rs;i++){
+    for(pos_t i(pos); i<rs; i++) {
         const char base(ref.get_base(i));
         if(! dn_ihd.add_base(base)) break;
     }
     // then see how far we can extend upstream:
-    for(pos_t i(pos-1);i>=0;i--){
+    for(pos_t i(pos-1); i>=0; i--) {
         const char base(ref.get_base(i));
         if(! dn_ihd.add_base(base)) break;
     }

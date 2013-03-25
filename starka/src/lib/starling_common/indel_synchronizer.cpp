@@ -53,7 +53,7 @@ insert_indel(const indel_observation& obs) {
     // then insert indel into synchronized samples:
     is_synced_sample=true;
     const unsigned isds(idata().size());
-    for(unsigned i(0);i<isds;++i) {
+    for(unsigned i(0); i<isds; ++i) {
         if (i == _sample_order) continue;
         ibuff(i).insert_indel(obs,is_synced_sample,is_repeat_obs);
     }
@@ -75,7 +75,7 @@ is_candidate_indel_int(const starling_options& opt,
     const indel_data* idsp[MAX_SAMPLE];
 
     const unsigned isds(idata().size());
-    for(unsigned i(0);i<isds;++i) {
+    for(unsigned i(0); i<isds; ++i) {
         if(i==_sample_order) {
             idsp[i] = &id;
         } else {
@@ -85,14 +85,14 @@ is_candidate_indel_int(const starling_options& opt,
     }
 
     // pre-set result to false until candidacy is shown:
-    for(unsigned i(0);i<isds;++i) {
+    for(unsigned i(0); i<isds; ++i) {
         idsp[i]->status.is_candidate_indel=false;
         idsp[i]->status.is_candidate_indel_cached=true;
     }
 
     // check whether the candidate has been externally specified:
     bool is_external_candidate=false;
-    for(unsigned i(0);i<isds;++i) {
+    for(unsigned i(0); i<isds; ++i) {
         if(idsp[i]->is_external_candidate) {
             is_external_candidate=true;
             break;
@@ -100,7 +100,7 @@ is_candidate_indel_int(const starling_options& opt,
     }
 
     if(is_external_candidate) {
-        for(unsigned i(0);i<isds;++i) {
+        for(unsigned i(0); i<isds; ++i) {
             idsp[i]->status.is_candidate_indel=true;
         }
         return;
@@ -113,7 +113,7 @@ is_candidate_indel_int(const starling_options& opt,
         bool is_min_count(false);
 
         int n_total_reads(0);
-        for(unsigned i(0);i<isds;++i) {
+        for(unsigned i(0); i<isds; ++i) {
             const int n_reads(idsp[i]->all_read_ids.size());
 
             // do the candidate reads exceed the (possibly lower than
@@ -144,7 +144,7 @@ is_candidate_indel_int(const starling_options& opt,
         // std::max() below
         static const unsigned one(1);
 
-        for(unsigned i(0);i<isds;++i) {
+        for(unsigned i(0); i<isds; ++i) {
             // note estdepth is based on genomic reads only, so
             // readfrac can be > 1:
             //
@@ -173,7 +173,7 @@ is_candidate_indel_int(const starling_options& opt,
     //
     {
         const double max_depth(opt.max_candidate_indel_depth);
-        for(unsigned i(0);i<isds;++i) {
+        for(unsigned i(0); i<isds; ++i) {
             const unsigned estdepth(ebuff(i).val(ik.pos-1));
             if(estdepth > max_depth) return;
         }
@@ -190,7 +190,7 @@ is_candidate_indel_int(const starling_options& opt,
     }
 
     // made it!
-    for(unsigned i(0);i<isds;++i) {
+    for(unsigned i(0); i<isds; ++i) {
         idsp[i]->status.is_candidate_indel=true;
     }
 }

@@ -34,7 +34,7 @@ static
 void
 get_indel_error_prob_hpol_len(const unsigned hpol_len,
                               double& insert_error_prob,
-                              double& delete_error_prob){
+                              double& delete_error_prob) {
 
     // indel error model parameters for P(error) = Ax+Bx^C, where x=hpol_len
     // note that fit does not cover length 1 deletions,
@@ -55,7 +55,7 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
     insert_error_prob=(1.-std::exp(-insert_g));
 
     double delete_g(delete_hpol1_err);
-    if(hpol_len>1){
+    if(hpol_len>1) {
         delete_g = delete_A*hpol_len+delete_B*std::pow(hpol_len,delete_C);
     }
     delete_error_prob=(1.-std::exp(-delete_g));
@@ -71,7 +71,7 @@ void
 get_indel_error_prob(const starling_options& client_opt,
                      const starling_indel_report_info& iri,
                      double& indel_error_prob,
-                     double& ref_error_prob){
+                     double& ref_error_prob) {
 
     // cache results for any realistic homopolymer length:
     static const unsigned max_hpol_len(40);
@@ -85,13 +85,13 @@ get_indel_error_prob(const starling_options& client_opt,
         if(! client_opt.is_simple_indel_error) {
             double itmp(0);
             double dtmp(0);
-            for(unsigned i(0);i<max_hpol_len;++i){
+            for(unsigned i(0); i<max_hpol_len; ++i) {
                 get_indel_error_prob_hpol_len(i+1,itmp,dtmp);
                 indel_error_prob_len[i] = std::make_pair(itmp,dtmp);
             }
         } else {
             const double ie(client_opt.simple_indel_error);
-            for(unsigned i(0);i<max_hpol_len;++i){
+            for(unsigned i(0); i<max_hpol_len; ++i) {
                 indel_error_prob_len[i] = std::make_pair(ie,ie);
             }
         }

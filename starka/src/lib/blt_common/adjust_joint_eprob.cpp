@@ -88,7 +88,7 @@ adjust_icalls_eprob(const blt_options& opt,
     const unsigned ic_size(ic.size());
 
 #ifdef DEBUG_ADJUST
-    for(unsigned i(0);i<ic_size;++i){
+    for(unsigned i(0); i<ic_size; ++i) {
         base_call& bi(pi.calls[ic[i]]);
         std::cerr << "BEFORE: " << i << " " << bi.is_neighbor_mismatch << " " << dependent_eprob[ic[i]] << "\n";
     }
@@ -98,11 +98,11 @@ adjust_icalls_eprob(const blt_options& opt,
 
     // produce weighted fraction of reads with a neighboring mismatch:
     blt_float_t vexp_frac(opt.bsnp_ssd_no_mismatch);
-    if(is_use_vexp_frac){
+    if(is_use_vexp_frac) {
         static const blt_float_t lnran(std::log(0.75));
         blt_float_t num(0);
         blt_float_t den(0);
-        for(unsigned i(0);i<ic_size;++i){
+        for(unsigned i(0); i<ic_size; ++i) {
             const base_call& bi(pi.calls[ic[i]]);
 //            const blt_float_t eprob(dependent_eprob[ic[i]]);
             const blt_float_t weight(lnran-bi.ln_error_prob());
@@ -125,7 +125,7 @@ adjust_icalls_eprob(const blt_options& opt,
 
     std::sort(ic.begin(),ic.end(),sort_icall_by_eprob(pi));
     blt_float_t vexp(1.);
-    for(unsigned i(0);i<ic_size;++i){
+    for(unsigned i(0); i<ic_size; ++i) {
         const base_call& bi(pi.calls[ic[i]]);
         if(! is_min_vexp) {
             dependent_eprob[ic[i]] = static_cast<float>(get_dependent_eprob(bi.get_qscore(),vexp));
@@ -155,7 +155,7 @@ adjust_icalls_eprob(const blt_options& opt,
     }
 
 #ifdef DEBUG_ADJUST
-    for(unsigned i(0);i<ic_size;++i){
+    for(unsigned i(0); i<ic_size; ++i) {
         base_call& bi(pi.calls[ic[i]]);
         std::cerr << "AFTER: " << i << " " << bi.is_neighbor_mismatch << " " << dependent_eprob[ic[i]] << "\n";
     }
@@ -175,7 +175,7 @@ adjust_joint_eprob(const blt_options& opt,
 
     const unsigned n_calls(pi.calls.size());
     dependent_eprob.clear();
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         dependent_eprob.push_back(static_cast<float>(pi.calls[i].error_prob()));
     }
 
@@ -185,7 +185,7 @@ adjust_joint_eprob(const blt_options& opt,
     //
     static const unsigned group_size(8); // (is_fwd*base_id)
     icalls_t icalls[group_size];
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         // exclude q2's and filtered bases:
         const base_call& b(pi.calls[i]);
 #ifdef NOREFFILTER
@@ -202,7 +202,7 @@ adjust_joint_eprob(const blt_options& opt,
     }
 
     // process each isize array:
-    for(unsigned i(0);i<group_size;++i){
+    for(unsigned i(0); i<group_size; ++i) {
         adjust_icalls_eprob(opt,dpc,icalls[i],pi,dependent_eprob);
     }
 }

@@ -46,7 +46,7 @@ operator<<(std::ostream& os,
 void
 get_alignment_indels(const candidate_alignment& cal,
                      const unsigned max_indel_size,
-                     indel_set_t& indels){
+                     indel_set_t& indels) {
 
     using namespace ALIGNPATH;
 
@@ -72,7 +72,7 @@ get_alignment_indels(const candidate_alignment& cal,
 
         unsigned n_seg(1); // number of path_segments consumed
         if       (is_edge_insert) {
-            if(path_index==ends.first){
+            if(path_index==ends.first) {
                 assert(cal.leading_indel_key.type != INDEL::NONE);
                 indels.insert(cal.leading_indel_key);
             } else {
@@ -95,7 +95,7 @@ get_alignment_indels(const candidate_alignment& cal,
 
         } else if(is_segment_type_indel(path[path_index].type)) {
             const path_segment& ps(path[path_index]);
-            if(ps.length <= max_indel_size){
+            if(ps.length <= max_indel_size) {
                 const INDEL::index_t id( (ps.type==INSERT) ? INDEL::INSERT : INDEL::DELETE );
                 indels.insert(indel_key(ref_head_pos,id,ps.length));
             } else {
@@ -106,6 +106,6 @@ get_alignment_indels(const candidate_alignment& cal,
 
         }
 
-        for(unsigned i(0);i<n_seg;++i) { increment_path(path,path_index,read_offset,ref_head_pos); }
+        for(unsigned i(0); i<n_seg; ++i) { increment_path(path,path_index,read_offset,ref_head_pos); }
     }
 }

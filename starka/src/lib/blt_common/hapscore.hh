@@ -62,7 +62,8 @@ struct hap_cand {
     enum { FLANK_SIZE = 10,
            HAP_SIZE = FLANK_SIZE*2+1,
            BASE_MASK = 0x3,
-           QUAL_SHIFT = 2};
+           QUAL_SHIFT = 2
+         };
 
 private:
     uint16_t _total_qual;

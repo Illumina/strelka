@@ -44,59 +44,60 @@
 
 namespace DIGT_GRID {
 
-    // HET_RES is the number of points sampled between 0 and 0.5 on
-    // the continuous frequency scale. Thus a fully sampled axis will
-    // be sampled HET_RES*2+3 times.
-    //
-    enum constants { HET_RES = 4,
-                     HET_COUNT = HET_RES*2+1,
-                     HET_SIZE = DIGT::SIZE-N_BASE };
+// HET_RES is the number of points sampled between 0 and 0.5 on
+// the continuous frequency scale. Thus a fully sampled axis will
+// be sampled HET_RES*2+3 times.
+//
+enum constants { HET_RES = 4,
+                 HET_COUNT = HET_RES*2+1,
+                 HET_SIZE = DIGT::SIZE-N_BASE
+               };
 
-    enum index_t { SIZE = N_BASE+HET_SIZE*HET_COUNT };
+enum index_t { SIZE = N_BASE+HET_SIZE*HET_COUNT };
 
 
-    inline
-    unsigned
-    get_digt_state (const unsigned state) {
-        if(state<N_BASE) return state;
-        return N_BASE+((state-N_BASE)%HET_SIZE);
-    }
+inline
+unsigned
+get_digt_state (const unsigned state) {
+    if(state<N_BASE) return state;
+    return N_BASE+((state-N_BASE)%HET_SIZE);
+}
 
-    inline
-    unsigned
-    get_het_count(const unsigned state) {
-        if(state<N_BASE) return 0;
-        return (state-N_BASE)/HET_SIZE;
-    }
+inline
+unsigned
+get_het_count(const unsigned state) {
+    if(state<N_BASE) return 0;
+    return (state-N_BASE)/HET_SIZE;
+}
 }
 
 
 namespace DDIGT_GRID {
 
-    enum index_t { SIZE = DIGT_GRID::SIZE*DIGT_GRID::SIZE };
+enum index_t { SIZE = DIGT_GRID::SIZE*DIGT_GRID::SIZE };
 
-    inline
-    unsigned
-    get_state(const unsigned normal_gt,
-              const unsigned tumor_gt) {
-        return normal_gt+DIGT_GRID::SIZE*tumor_gt;
-    }
+inline
+unsigned
+get_state(const unsigned normal_gt,
+          const unsigned tumor_gt) {
+    return normal_gt+DIGT_GRID::SIZE*tumor_gt;
+}
 
-    inline
-    void
-    get_digt_grid_states(const unsigned dgt,
-                         unsigned& normal_gt,
-                         unsigned& tumor_gt) {
-        normal_gt = (dgt%DIGT_GRID::SIZE);
-        tumor_gt = (dgt/DIGT_GRID::SIZE);
-    }
+inline
+void
+get_digt_grid_states(const unsigned dgt,
+                     unsigned& normal_gt,
+                     unsigned& tumor_gt) {
+    normal_gt = (dgt%DIGT_GRID::SIZE);
+    tumor_gt = (dgt/DIGT_GRID::SIZE);
+}
 
 
-    struct is_nonsom_maker_t {
-        is_nonsom_maker_t();
+struct is_nonsom_maker_t {
+    is_nonsom_maker_t();
 
-        std::vector<bool> val;
-    };
+    std::vector<bool> val;
+};
 }
 
 

@@ -29,7 +29,7 @@ pos_basecall_buffer::
 dump(std::ostream& os) const {
 
     pciter i(_pdata.begin()), i_end(_pdata.end());
-    for(;i!=i_end;++i) {
+    for(; i!=i_end; ++i) {
         os << "pc_buff pos: " << i->first << "\n";
     }
 }

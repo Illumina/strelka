@@ -56,27 +56,27 @@
 // ahead of all other types at a given position:
 //
 namespace INDEL {
-    enum index_t {
-        NONE,
-        INSERT,
-        DELETE,
-        BP_LEFT,
-        BP_RIGHT,
-        SWAP
-    };
+enum index_t {
+    NONE,
+    INSERT,
+    DELETE,
+    BP_LEFT,
+    BP_RIGHT,
+    SWAP
+};
 
-    inline
-    const char*
-    get_index_label(index_t id) {
-        switch(id) {
-        case NONE:        return "NONE";
-        case INSERT:      return "INSERT";
-        case DELETE:      return "DELETE";
-        case BP_LEFT:  return "BP_LEFT";
-        case BP_RIGHT: return "BP_RIGHT";
-        case SWAP:        return "SWAP";
-        default:          return "UNKNOWN";
-        }
+inline
+const char*
+get_index_label(index_t id) {
+    switch(id) {
+    case NONE:        return "NONE";
+    case INSERT:      return "INSERT";
+    case DELETE:      return "DELETE";
+    case BP_LEFT:  return "BP_LEFT";
+    case BP_RIGHT: return "BP_RIGHT";
+    case SWAP:        return "SWAP";
+    default:          return "UNKNOWN";
     }
+}
 }
 

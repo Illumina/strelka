@@ -72,8 +72,8 @@ struct alignment {
                 const unsigned ps(path.size());
                 const unsigned rps(rhs.path.size());
                 if(ps<rps) return true;
-                if(ps==rps){
-                    for(unsigned i(0);i<ps;++i){
+                if(ps==rps) {
+                    for(unsigned i(0); i<ps; ++i) {
                         if(path[i]<rhs.path[i]) return true;
                         if(path[i]==rhs.path[i]) continue;
                         return false;

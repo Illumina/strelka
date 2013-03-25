@@ -46,7 +46,7 @@ struct base_call {
               const bool init_is_call_filter,
               const bool init_is_neighbor_mismatch,
               const bool init_is_tscf=false
-              )
+             )
         : qscore(init_qscore),
 #ifdef BC_DEBUG
           read_pos(init_read_pos), read_size(init_read_size),
@@ -118,10 +118,10 @@ struct snp_pos_info {
     get_known_counts(T& base_count,
                      const int min_qscore) const {
 
-        for(unsigned i(0);i<N_BASE;++i) base_count[i] = 0;
+        for(unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
 
         const unsigned n_calls(calls.size());
-        for(unsigned i(0);i<n_calls;++i){
+        for(unsigned i(0); i<n_calls; ++i) {
             if(calls[i].base_id==BASE_ID::ANY) continue;
             if(calls[i].get_qscore()<min_qscore) continue;
             base_count[calls[i].base_id]++;

@@ -75,13 +75,13 @@ report_state(std::ostream& os) const {
     const export_line_parser* exlp(exline());
 
     os << "\texport_stream_label: " << name() << "\n";
-    if(exlp){
+    if(exlp) {
         os << "\texport_line_no: " << line_no() << "\n"
            << "\texport_line: ";
         exlp->write_export_line(os);
         os << "\n";
     } else {
-       os << "\tno export_line currently set\n";
+        os << "\tno export_line currently set\n";
     }
 }
 
@@ -92,7 +92,7 @@ export_file_reader::
 export_file_reader(const char* filename)
     : _fisp(new std::ifstream(filename)) {
 
-    if( (! _fisp) || (! *_fisp) ){
+    if( (! _fisp) || (! *_fisp) ) {
         log_os << "ERROR:: Can't open file: " << filename << "\n";
         exit(EXIT_FAILURE);
     }
@@ -109,7 +109,7 @@ export_file_reader::
 
 void
 export_file_reader::
-rewind(){
+rewind() {
     _fisp->clear();                   // forget we hit the end of file
     _fisp->seekg(0, std::ios::beg);   // move to the start of the file
     _line_no=0;

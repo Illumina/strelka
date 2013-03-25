@@ -39,7 +39,7 @@ void
 get_max_lhood_allele_freq(const snp_pos_info& pi,
                           double* allele_freq,
                           bool* is_allele_used,
-                          double& loghood){
+                          double& loghood) {
 
     // minimization constants:
     static const double line_tol(1e-7);
@@ -52,14 +52,14 @@ get_max_lhood_allele_freq(const snp_pos_info& pi,
     double conj_dir[N_BASE2];
 
     unsigned n_allele(0);
-    for(unsigned i(0);i<N_BASE;++i) { if(is_allele_used[i]) n_allele++; }
+    for(unsigned i(0); i<N_BASE; ++i) { if(is_allele_used[i]) n_allele++; }
 
     assert(n_allele);
 
     const unsigned n_allele2(n_allele*n_allele);
 
     std::fill(conj_dir,conj_dir+n_allele2,0.);
-    for(unsigned i(0);i<n_allele;++i) {
+    for(unsigned i(0); i<n_allele; ++i) {
         const double start_dist( std::max(std::fabs(allele_freq[i]*start_ratio),min_start_dist) );
         conj_dir[i*(n_allele+1)] = start_dist;
     }
@@ -80,7 +80,7 @@ void
 position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
                                           double& null_loghood,
                                           double& alt_loghood,
-                                          unsigned& df){
+                                          unsigned& df) {
 
     null_loghood=0;
     alt_loghood=0;
@@ -91,14 +91,14 @@ position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
 
     bool is_allele_used[N_BASE] = {false,false,false,false};
 
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         const uint8_t obs_id(pi.calls[i].base_id);
         assert(obs_id !=BASE_ID::ANY);
         is_allele_used[obs_id] = true;
     }
 
     unsigned n_allele(0);
-    for(unsigned i(0);i<N_BASE;++i) { if(is_allele_used[i]) n_allele++; }
+    for(unsigned i(0); i<N_BASE; ++i) { if(is_allele_used[i]) n_allele++; }
 
     if(n_allele<2) return;
 
@@ -107,7 +107,7 @@ position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
 
     fstrand_pi.ref_base = pi.ref_base;
     rstrand_pi.ref_base = pi.ref_base;
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         if(pi.calls[i].is_fwd_strand) {
             fstrand_pi.calls.push_back(pi.calls[i]);
         } else {
@@ -120,7 +120,7 @@ position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
     const double allele_expect(1./static_cast<double>(n_allele));
 
     double joint_allele_freq[N_BASE];
-    for(unsigned i(0);i<n_allele;++i) joint_allele_freq[i] = allele_expect;
+    for(unsigned i(0); i<n_allele; ++i) joint_allele_freq[i] = allele_expect;
 
     get_max_lhood_allele_freq(pi,joint_allele_freq,is_allele_used,null_loghood);
 
@@ -131,16 +131,16 @@ position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
     {
         unsigned i(0);
         while(i<n_allele) {
-            if(joint_allele_freq[i]<zero_thresh){
+            if(joint_allele_freq[i]<zero_thresh) {
                 is_rerun=true;
-                for(unsigned j(i);(j+1)<n_allele;++j){
+                for(unsigned j(i); (j+1)<n_allele; ++j) {
                     joint_allele_freq[j]=joint_allele_freq[j+1];
                 }
                 --n_allele;
                 if(n_allele<2) return;
 
                 unsigned allele_no(0);
-                for(unsigned j(0);j<N_BASE;++j){
+                for(unsigned j(0); j<N_BASE; ++j) {
                     if(is_allele_used[j]) {
                         if(allele_no==i) {
                             is_allele_used[j] = false;
@@ -154,7 +154,7 @@ position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
         }
     }
 
-    if(is_rerun){
+    if(is_rerun) {
         get_max_lhood_allele_freq(pi,joint_allele_freq,is_allele_used,null_loghood);
     }
 
@@ -162,7 +162,7 @@ position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
     double rstrand_loghood(0);
     double fstrand_allele_freq[N_BASE];
     double rstrand_allele_freq[N_BASE];
-    for(unsigned i(0);i<n_allele;++i) {
+    for(unsigned i(0); i<n_allele; ++i) {
         fstrand_allele_freq[i] = joint_allele_freq[i];
         rstrand_allele_freq[i] = joint_allele_freq[i];
     }
@@ -178,7 +178,7 @@ position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
 
 bool
 position_strand_distro_anomaly_lrt(const double alpha,
-                                   const snp_pos_info& pi){
+                                   const snp_pos_info& pi) {
 
     double null_loghood(0);
     double alt_loghood(0);

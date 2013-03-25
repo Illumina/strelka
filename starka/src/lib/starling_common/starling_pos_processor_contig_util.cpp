@@ -54,7 +54,7 @@ test_contig_usability(const starling_options& opt,
     // skip contigs which are too large:
     if(! ctg.is_usable) return false;
 
-    {  // skip contigs which will not affect results in the report range:
+    {   // skip contigs which will not affect results in the report range:
         const pos_t contig_span(apath_ref_length(ctg.path));
         const pos_t contig_end_pos(ctg.pos+contig_span);
         const known_pos_range contig_bounds(ctg.pos,contig_end_pos);
@@ -100,13 +100,13 @@ test_contig_usability(const starling_options& opt,
 
         bool is_skip(true);
         const unsigned aps(ctg.path.size());
-        for(unsigned i(0);i<aps;++i){
+        for(unsigned i(0); i<aps; ++i) {
             const path_segment& ps(ctg.path[i]);
             if((MATCH == ps.type) &&
                (opt.min_contig_contiguous_match <= ps.length)) {
-                   is_skip=false;
-                   break;
-               }
+                is_skip=false;
+                break;
+            }
         }
         if(is_skip) {
             if(opt.verbosity >= LOG_LEVEL::ALLWARN) {
@@ -217,12 +217,12 @@ add_export_read_to_buffer(starling_pos_processor_base& sppr,
     // set read and quality:
     const char* const raw_quality(exl.quality());
     boost::scoped_array<uint8_t> fwd_quality(new uint8_t[read_size]);
-    if(al.is_fwd_strand){
-        for(unsigned i(0);i<read_size;++i) {
+    if(al.is_fwd_strand) {
+        for(unsigned i(0); i<read_size; ++i) {
             fwd_quality[i] = raw_quality[i]-64;
         }
     } else {
-        for(unsigned i(0);i<read_size;++i) {
+        for(unsigned i(0); i<read_size; ++i) {
             fwd_quality[i] = raw_quality[read_size-(i+1)]-64;
         }
     }
@@ -282,7 +282,7 @@ find_first_read_for_contig(const std::string& contig_id,
 ///
 static
 void
-set_candidate_edge_insert_bp(candidate_alignment& cal){
+set_candidate_edge_insert_bp(candidate_alignment& cal) {
 
     using namespace ALIGNPATH;
 
@@ -290,7 +290,7 @@ set_candidate_edge_insert_bp(candidate_alignment& cal){
 
     pos_t ref_head_pos(cal.al.pos);
     const unsigned as(path.size());
-    for(unsigned i(0);i<as;++i) {
+    for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(path[i]);
         const bool is_edge_segment((i==0) || ((i+1)==as));
         if((ps.type==INSERT) || (ps.type==DELETE)) {
@@ -334,13 +334,13 @@ struct export_read_parse  : private boost::noncopyable {
         read_size=strlen(read);
         assert(read_size>0);
 
-        if(read_size > STARLING_MAX_READ_SIZE){
+        if(read_size > STARLING_MAX_READ_SIZE) {
             log_os << "ERROR: maximum read size (" << STARLING_MAX_READ_SIZE << ") exceeded in export line.\n";
             exr.report_state(log_os);
             exit(EXIT_FAILURE);
         }
 
-        if(! is_valid_seq(read)){
+        if(! is_valid_seq(read)) {
             log_os << "ERROR: unsupported base(s) in read sequence.\n";
             exr.report_state(log_os);
             exit(EXIT_FAILURE);
@@ -382,7 +382,7 @@ process_contig_reads(const grouper_contig& ctg,
                      export_stream_reader& exr,
                      starling_pos_processor_base& sppr,
                      bam_record& tmp_key_br,
-                     const unsigned sample_no){
+                     const unsigned sample_no) {
 
     // advance to first read aligning to contig id:
     find_first_read_for_contig(ctg.id,exr);
@@ -461,7 +461,7 @@ process_contig(const starling_options& client_opt,
                const grouper_contig& ctg,
                starling_pos_processor_base& sppr,
                const unsigned sample_no,
-               const char* sample_label){
+               const char* sample_label) {
 
     contig_no++;
 
@@ -470,7 +470,7 @@ process_contig(const starling_options& client_opt,
     log_os << "contig: " << ctg;
 #endif
 
-    if(! is_valid_seq(ctg.seq.c_str())){
+    if(! is_valid_seq(ctg.seq.c_str())) {
         log_os << "ERROR: invalid sequence in contig: " << ctg << "\n";
         exit(EXIT_FAILURE);
     }

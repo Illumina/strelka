@@ -81,17 +81,17 @@ private:
 
     struct gtype_info {
         gtype_info() {
-            for(unsigned i(0);i<N_BASE;++i) efreq_levels[i]=0;
+            for(unsigned i(0); i<N_BASE; ++i) efreq_levels[i]=0;
         }
 
         gtype_info(const gtype_info& g) : label(g.label) {
-            for(unsigned i(0);i<N_BASE;++i) efreq_levels[i]=g.efreq_levels[i];
+            for(unsigned i(0); i<N_BASE; ++i) efreq_levels[i]=g.efreq_levels[i];
         }
 
         gtype_info& operator=(const gtype_info& rhs) {
             if( this == &rhs ) return *this;
             label=rhs.label;
-            for(unsigned i(0);i<N_BASE;++i) efreq_levels[i]=rhs.efreq_levels[i];
+            for(unsigned i(0); i<N_BASE; ++i) efreq_levels[i]=rhs.efreq_levels[i];
             return *this;
         }
 

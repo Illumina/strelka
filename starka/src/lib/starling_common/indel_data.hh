@@ -35,14 +35,14 @@
 /// represents the data associated with a single indel observation:
 ///
 struct indel_observation_data {
-    
+
     indel_observation_data()
         : is_noise(false)
         , is_external_candidate(false)
         , iat(INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ)
         , id(0)
     {}
-    
+
     bool is_noise;
     bool is_external_candidate;
     INDEL_ALIGN_TYPE::index_t iat;
@@ -82,7 +82,7 @@ struct read_path_scores {
         } else {
             unsigned min_index(ais);
             score_t min(a);
-            for(unsigned i(0);i<ais;++i) {
+            for(unsigned i(0); i<ais; ++i) {
                 if(alt_indel[i].second < min) {
                     min = alt_indel[i].second;
                     min_index = i;
@@ -124,18 +124,18 @@ struct read_path_scores {
 ///
 struct insert_seq_manager {
 
-	insert_seq_manager()
-		: _is_consensus(false)
-		, _obs_count(0)
-	{}
+    insert_seq_manager()
+        : _is_consensus(false)
+        , _obs_count(0)
+    {}
 
-	// get final consensus sequence:
+    // get final consensus sequence:
     const std::string&
     get() {
         if(! _is_consensus) {
             finalize();
         }
-    	return _consensus_seq;
+        return _consensus_seq;
     }
 
     // add insert sequence observation:
@@ -228,7 +228,7 @@ struct indel_data {
     // insert sequence for all contig and tier1 observations:
     void
     add_insert_seq_obs(//const align_id_t id,
-                       const std::string& seq) {
+        const std::string& seq) {
 
         //if(all_read_ids.find(id) != all_read_ids.end()) return;
         _insert_seq.add_obs(seq);
@@ -281,13 +281,13 @@ public:
     typedef std::map<align_id_t,read_path_scores> score_t;
     score_t read_path_lnp;
     evidence_t suboverlap_tier1_read_ids; // the reads which cross an indel breakpoint, but not by enough
-                                          // to be entered into the scores list
+    // to be entered into the scores list
     evidence_t suboverlap_tier2_read_ids;
 
     struct status_t {
         status_t()
-        : is_candidate_indel_cached(false)
-        , is_candidate_indel(false)
+            : is_candidate_indel_cached(false)
+            , is_candidate_indel(false)
         {}
 
         bool is_candidate_indel_cached;

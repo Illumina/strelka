@@ -53,7 +53,7 @@ struct reference_contig_segment {
         if(pos<_offset || (pos+length)>end()) {
             //slow path (minority of calls):
             substr.clear();
-            for(int i(0);i<length;++i) {
+            for(int i(0); i<length; ++i) {
                 substr.push_back(get_base(pos+i));
             }
         } else {

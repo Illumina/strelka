@@ -29,7 +29,7 @@
 #if 0
 struct null_snp_pos_info {
     null_snp_pos_info() {
-        for(unsigned i(0);i<(N_BASE+1);++i){
+        for(unsigned i(0); i<(N_BASE+1); ++i) {
             pi[i].ref_base = id_to_base(i);
         }
     }
@@ -60,7 +60,7 @@ struct sample_pos_data {
         epd.good_pi.ref_base = pi.ref_base;
 
         const unsigned n_tier1_calls(pi.calls.size());
-        for(unsigned i(0);i<n_tier1_calls;++i){
+        for(unsigned i(0); i<n_tier1_calls; ++i) {
             n_calls++;
             if(pi.calls[i].is_call_filter) {
                 if(not (is_include_tier2 and
@@ -73,7 +73,7 @@ struct sample_pos_data {
 
         if(is_include_tier2) {
             const unsigned n_tier2_calls(pi.tier2_calls.size());
-            for(unsigned i(0);i<n_tier2_calls;++i){
+            for(unsigned i(0); i<n_tier2_calls; ++i) {
                 n_calls++;
                 if(pi.tier2_calls[i].is_call_filter) continue;
                 epd.good_pi.calls.push_back(pi.tier2_calls[i]);

@@ -33,9 +33,9 @@ struct nonref_test_call : private boost::noncopyable {
           max_gt(0),
           nonref_id(BASE_ID::ANY) {}
 #if 0
-          is_freq(false),
-          min_loghood(0) {
-        for(unsigned i(0);i<N_BASE;++i) allele_freq[i]=0.;
+    is_freq(false),
+    min_loghood(0) {
+        for(unsigned i(0); i<N_BASE; ++i) allele_freq[i]=0.;
     }
 #endif
 

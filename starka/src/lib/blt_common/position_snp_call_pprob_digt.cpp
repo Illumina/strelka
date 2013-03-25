@@ -47,10 +47,10 @@ get_genomic_prior(const unsigned ref_gt,
                   blt_float_t* const prior) {
 
     blt_float_t prior_sum(0.);
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
         if(gt==ref_gt) continue;
         prior[gt]=(theta*one_third);
-        if(DIGT::is_het(gt)){
+        if(DIGT::is_het(gt)) {
             if(DIGT::expect(ref_gt,gt)<=0.) prior[gt]*=theta;
         } else {
             prior[gt]*=.5;
@@ -71,10 +71,10 @@ get_poly_prior(const unsigned ref_gt,
 
     blt_float_t prior_sum(0.);
     const blt_float_t ctheta(1.-theta);
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
         if(gt==ref_gt) {
             prior[gt]=0.25*(ctheta);
-        } else if(DIGT::is_het(gt)){
+        } else if(DIGT::is_het(gt)) {
             if(DIGT::expect(ref_gt,gt)<=0.) {
                 prior[gt] = theta*one_third;
             } else {
@@ -94,7 +94,7 @@ static
 void
 sum_gt(blt_float_t* const x1,
        const blt_float_t* const x2) {
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){ x1[gt] += x2[gt]; }
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) { x1[gt] += x2[gt]; }
 }
 
 
@@ -103,9 +103,9 @@ static
 void
 norm_gt(blt_float_t* const x) {
     blt_float_t sum(0);
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){ sum += x[gt]; }
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) { sum += x[gt]; }
     sum = 1./sum;
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){ x[gt] *= sum; }
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) { x[gt] *= sum; }
 }
 
 
@@ -113,7 +113,7 @@ norm_gt(blt_float_t* const x) {
 static
 void
 log_gt(blt_float_t* const x) {
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){ x[gt] = std::log(x[gt]); }
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) { x[gt] = std::log(x[gt]); }
 }
 
 
@@ -121,13 +121,13 @@ log_gt(blt_float_t* const x) {
 pprob_digt_caller::
 pprob_digt_caller(const blt_float_t theta) {
 
-    for(unsigned i(0);i<(N_BASE+1);++i) {
+    for(unsigned i(0); i<(N_BASE+1); ++i) {
         prior_set& ps(_lnprior[i]);
         std::fill(ps.genome,ps.genome+DIGT::SIZE,0);
         std::fill(ps.poly,ps.poly+DIGT::SIZE,0);
     }
 
-    for(unsigned i(0);i<N_BASE;++i) {
+    for(unsigned i(0); i<N_BASE; ++i) {
         prior_set& ps(_lnprior[i]);
         get_genomic_prior(i,theta,ps.genome);
         get_poly_prior(i,theta,ps.poly);
@@ -135,7 +135,7 @@ pprob_digt_caller(const blt_float_t theta) {
 
     // 'N' prior is the average:
     prior_set& nps(_lnprior[N_BASE]);
-    for(unsigned i(0);i<N_BASE;++i) {
+    for(unsigned i(0); i<N_BASE; ++i) {
         prior_set& ps(_lnprior[i]);
         sum_gt(nps.genome,ps.genome);
         sum_gt(nps.poly,ps.poly);
@@ -144,7 +144,7 @@ pprob_digt_caller(const blt_float_t theta) {
     norm_gt(nps.poly);
 
     // take logs:
-    for(unsigned i(0);i<(N_BASE+1);++i) {
+    for(unsigned i(0); i<(N_BASE+1); ++i) {
         prior_set& ps(_lnprior[i]);
         log_gt(ps.genome);
         log_gt(ps.poly);
@@ -173,7 +173,7 @@ increment_het_ratio_lhood(const extended_pos_info& epi,
     //
     blt_float_t lhood_high[DIGT::SIZE];
     blt_float_t lhood_low[DIGT::SIZE];
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt) {
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
         lhood_high[gt] = 0.;
         lhood_low[gt] = 0.;
     }
@@ -185,7 +185,7 @@ increment_het_ratio_lhood(const extended_pos_info& epi,
 
     blt_float_t val_high[3];
 
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         const blt_float_t eprob(epi.de[i]);
         const blt_float_t ceprob(1.-pi.calls[i].error_prob());
 
@@ -197,7 +197,7 @@ increment_het_ratio_lhood(const extended_pos_info& epi,
         const bool is_force_ref(is_strand_specific && (is_ss_fwd!=pi.calls[i].is_fwd_strand));
 
         const uint8_t obs_id(pi.calls[i].base_id);
-        for(unsigned gt(N_BASE);gt<DIGT::SIZE;++gt){
+        for(unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt) {
             static const uint8_t low_remap[] = {0,2,1};
             const unsigned key(DIGT::expect2_bias(obs_id,(is_force_ref ? ref_gt : gt)));
             lhood_high[gt] += val_high[key];
@@ -205,7 +205,7 @@ increment_het_ratio_lhood(const extended_pos_info& epi,
         }
     }
 
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
         if(! DIGT::is_het(gt)) continue;
         all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_high[gt]);
         all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_low[gt]);
@@ -225,13 +225,13 @@ get_diploid_gt_lhood(const blt_options& opt,
                      const bool is_ss_fwd) {
 
     // get likelihood of each genotype
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt) lhood[gt] = 0.;
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) lhood[gt] = 0.;
 
     const snp_pos_info& pi(epi.pi);
     const unsigned ref_gt(base_to_id(pi.ref_base));
 
     const unsigned n_calls(pi.calls.size());
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         const base_call& bc(pi.calls[i]);
         const blt_float_t eprob(epi.de[i]);
         const blt_float_t ceprob(1.-bc.error_prob());
@@ -246,7 +246,7 @@ get_diploid_gt_lhood(const blt_options& opt,
         const bool is_force_ref(is_strand_specific && (is_ss_fwd!=bc.is_fwd_strand));
 
         const uint8_t obs_id(bc.base_id);
-        for(unsigned gt(0);gt<DIGT::SIZE;++gt){
+        for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
             lhood[gt] += val[DIGT::expect2(obs_id,(is_force_ref ? ref_gt : gt))];
         }
     }
@@ -255,7 +255,7 @@ get_diploid_gt_lhood(const blt_options& opt,
         // loop is currently setup to assume a uniform het ratio subgenotype prior
         const unsigned n_bias_steps(1+static_cast<unsigned>(het_bias/opt.het_bias_max_ratio_inc));
         const blt_float_t ratio_increment(het_bias/static_cast<blt_float_t>(n_bias_steps));
-        for(unsigned i(0);i<n_bias_steps;++i) {
+        for(unsigned i(0); i<n_bias_steps; ++i) {
             const blt_float_t het_ratio(0.5+(i+1)*ratio_increment);
             increment_het_ratio_lhood(epi,het_ratio,lhood,is_strand_specific,is_ss_fwd);
         }
@@ -263,7 +263,7 @@ get_diploid_gt_lhood(const blt_options& opt,
         const unsigned n_het_subgt(1+2*n_bias_steps);
         const blt_float_t subgt_log_prior(std::log(1./static_cast<blt_float_t>(n_het_subgt)));
 
-        for(unsigned gt(0);gt<DIGT::SIZE;++gt){
+        for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
             if(! DIGT::is_het(gt)) continue;
             lhood[gt] += subgt_log_prior;
         }
@@ -283,7 +283,7 @@ debug_dump_digt_lhood(const blt_float_t* lhood,
                       std::ostream& os) {
 
     blt_float_t pprob[DIGT::SIZE];
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
         pprob[gt] = lhood[gt];
     }
 
@@ -291,7 +291,7 @@ debug_dump_digt_lhood(const blt_float_t* lhood,
     normalize_ln_distro(pprob,pprob+DIGT::SIZE,max_gt);
 
     os << std::setprecision(3) << std::fixed;
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
         os << DIGT::label(gt) << ": " << -std::log(pprob[gt]) << " ";
     }
     os.unsetf(std::ios::fixed);
@@ -308,7 +308,7 @@ calculate_result_set(const blt_float_t* lhood,
 
     // mult by prior distro to get unnormalized pprob:
     //
-    for(unsigned gt(0);gt<DIGT::SIZE;++gt){
+    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
         rs.pprob[gt] = lhood[gt] + lnprior[gt];
     }
 
@@ -424,7 +424,7 @@ write_diploid_genotype_allele(const blt_options& opt,
                               const snp_pos_info& pi,
                               const diploid_genotype& dgt,
                               std::ostream& os,
-                              const unsigned hpol){
+                              const unsigned hpol) {
 
     const result_set& ge(dgt.genome);
     const result_set& po(dgt.poly);
@@ -447,16 +447,16 @@ write_diploid_genotype_allele(const blt_options& opt,
     }
 
     if(opt.is_print_all_poly_gt) {
-         for(unsigned gt(0);gt<DIGT::SIZE;++gt){
+        for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
 #if 1
-             // print GT as prob:
-             os << '\t' << po.pprob[gt];
+            // print GT as prob:
+            os << '\t' << po.pprob[gt];
 #else
-             // print GT as qval:
-             os << '\t' << error_prob_to_qphred(prob_comp(po.pprob,po.pprob+DIGT::SIZE,gt));
+            // print GT as qval:
+            os << '\t' << error_prob_to_qphred(prob_comp(po.pprob,po.pprob+DIGT::SIZE,gt));
 #endif
-         }
-     }
+        }
+    }
 
-     os.unsetf(std::ios::fixed);
+    os.unsetf(std::ios::fixed);
 }

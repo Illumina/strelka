@@ -39,7 +39,7 @@ struct istream_line_splitter {
         , _max_word(max_word)
         , _buf(new char[_buf_size]) {
 
-        if((0==_max_word) || (MAX_WORD_COUNT < _max_word)){
+        if((0==_max_word) || (MAX_WORD_COUNT < _max_word)) {
             _max_word=MAX_WORD_COUNT;
         }
     }
@@ -72,19 +72,19 @@ private:
 
 
 #if 0
-{ //usage example:
+{   //usage example:
     istream_line_splitter dparse(data_is);
 
     while(dparse.parse_line()) {
         static const unsigned col_count(46);
-        if(dparse.n_word()!=col_count){
+        if(dparse.n_word()!=col_count) {
             std::ostringstream oss;
             oss << "ERROR: unexpected number of columns in paired export line:\n\n";
             dparse.dump(oss);
             throw blt_exception(oss.str().c_str());
         }
 
-        for(unsigned i(1);(i+1)<col_count;++i){
+        for(unsigned i(1); (i+1)<col_count; ++i) {
             dparse.word[i][strlen(dparse.word[i])] = sep;
         }
         const char* nocompress_segment(dparse.word[0]);

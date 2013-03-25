@@ -25,7 +25,7 @@
 
 std::ostream&
 operator<<(std::ostream& os,
-           const indel_key& ik){
+           const indel_key& ik) {
     os << "INDEL pos: " << ik.pos
        << " type: " << INDEL::get_index_label(ik.type)
        << " len: " << ik.length

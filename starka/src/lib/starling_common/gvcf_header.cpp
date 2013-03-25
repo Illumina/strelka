@@ -91,7 +91,7 @@ add_gvcf_filters(const gvcf_options& opt,
         os << std::fixed << std::setprecision(2);
 
         cdmap_t::const_iterator i(chrom_depth.begin()), i_end(chrom_depth.end());
-        for(;i!=i_end;++i) {
+        for(; i!=i_end; ++i) {
             const std::string& chrom(i->first);
             const double max_depth(opt.max_depth_factor*i->second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";

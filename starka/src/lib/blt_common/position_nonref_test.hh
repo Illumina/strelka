@@ -27,21 +27,21 @@
 
 
 namespace NRTEST {
-    enum index_t {
-        REF,
-        NONREF,
-        SIZE
-    };
+enum index_t {
+    REF,
+    NONREF,
+    SIZE
+};
 
-    inline
-    const char*
-    label(const index_t i) {
-        switch(i) {
-        case REF: return "ref";
-        case NONREF: return "nonref";
-        default: return "xxx";
-        }
+inline
+const char*
+label(const index_t i) {
+    switch(i) {
+    case REF: return "ref";
+    case NONREF: return "nonref";
+    default: return "xxx";
     }
+}
 }
 
 

@@ -59,7 +59,7 @@ private:
     get_pstat() const {
         if(! _is_pstat) {
             _pstat=_ustat;
-            for(unsigned i(_ustat.sample_size());i<_kprior;++i) _pstat.update(0);
+            for(unsigned i(_ustat.sample_size()); i<_kprior; ++i) _pstat.update(0);
             _is_pstat=true;
         }
         return _pstat;

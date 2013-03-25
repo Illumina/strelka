@@ -37,9 +37,9 @@ const double test_max_error_prob(std::exp(1.45*std::log(10.)));
 double
 position_strand_distro_anomaly_pval(const snp_pos_info& pi,
 #ifdef HAVE_FISHER_EXACT_TEST
-                                    double* ws){
+                                    double* ws) {
 #else
-                                    double*){
+                                    double*) {
 #endif
 
     static const unsigned N_STRAND(2);
@@ -50,7 +50,7 @@ position_strand_distro_anomaly_pval(const snp_pos_info& pi,
     std::fill(table,table+TABLE_SIZE,0);
     unsigned n_good_calls(0);
 
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         const uint8_t obs_id(pi.calls[i].base_id);
         assert(obs_id != BASE_ID::ANY);
         if(pi.calls[i].error_prob() > test_max_error_prob) continue;
@@ -72,12 +72,12 @@ position_strand_distro_anomaly_pval(const snp_pos_info& pi,
 bool
 position_strand_distro_anomaly(const double alpha,
                                const snp_pos_info& pi,
-                               double* ws){
+                               double* ws) {
 
     const unsigned n_calls(pi.calls.size());
     unsigned n_good_calls(0);
 
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         //const char obs_base(pi.calls[i].base);
         assert(pi.calls[i].base_id != BASE_ID::ANY);
         if(pi.calls[i].error_prob() > test_max_error_prob) continue;

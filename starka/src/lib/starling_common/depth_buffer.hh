@@ -56,7 +56,7 @@ struct depth_buffer {
         assert(begin <= end);
         citer i(_data.lower_bound(begin));
         const citer i_end(_data.upper_bound(end));
-        for(;i!=i_end;++i) if(i->second >= depth) return true;
+        for(; i!=i_end; ++i) if(i->second >= depth) return true;
         return false;
     }
 

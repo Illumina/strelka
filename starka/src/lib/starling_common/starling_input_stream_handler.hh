@@ -42,7 +42,7 @@
 
 
 namespace INPUT_TYPE {
-    enum index_t { NONE, READ, CONTIG, INDEL };
+enum index_t { NONE, READ, CONTIG, INDEL };
 }
 
 struct starling_input_stream_hander;

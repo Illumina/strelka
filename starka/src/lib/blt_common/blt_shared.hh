@@ -36,10 +36,10 @@ enum { MAX_READ_REF_DELETION_SIZE = 150 };
 
 
 namespace LOG_LEVEL {
-    enum index_t {
-        DEFAULT = 0, // 0 = errors and low-frequency warnings
-        ALLWARN = 1  // all other warnings
-    };
+enum index_t {
+    DEFAULT = 0, // 0 = errors and low-frequency warnings
+    ALLWARN = 1  // all other warnings
+};
 }
 
 
@@ -166,17 +166,17 @@ struct blt_options {
           is_min_vexp(false),
           min_vexp(0),
           verbosity(LOG_LEVEL::DEFAULT)
-        , is_write_variable_metadata(true)
-        , het_bias_inc_fudge(0.0001)
-        , het_bias_max_ratio_inc(0.05+het_bias_inc_fudge)
-        , nonref_variant_rate(0.000001)
-        , min_nonref_freq(0)
-        , nonref_site_error_rate(0.0001)
-        , nonref_site_error_decay_freq(0.01)
-        , is_eland_compat(false)
-        , is_max_input_depth(false)
-        , max_input_depth(0)
-        , is_compute_hapscore(false)
+          , is_write_variable_metadata(true)
+          , het_bias_inc_fudge(0.0001)
+          , het_bias_max_ratio_inc(0.05+het_bias_inc_fudge)
+          , nonref_variant_rate(0.000001)
+          , min_nonref_freq(0)
+          , nonref_site_error_rate(0.0001)
+          , nonref_site_error_decay_freq(0.01)
+          , is_eland_compat(false)
+          , is_max_input_depth(false)
+          , max_input_depth(0)
+          , is_compute_hapscore(false)
     {}
 
     virtual ~blt_options() {}

@@ -25,13 +25,13 @@
 /// \brief a minimal exception class
 struct blt_exception : public std::exception {
 
-  blt_exception(const char* s);
+    blt_exception(const char* s);
 
-  ~blt_exception() throw() {}
+    ~blt_exception() throw() {}
 
-  const char* what() const throw() { return message.c_str(); }
+    const char* what() const throw() { return message.c_str(); }
 
-  std::string message;
+    std::string message;
 };
 
 

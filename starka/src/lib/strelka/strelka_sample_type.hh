@@ -30,27 +30,27 @@
 
 
 namespace STRELKA_SAMPLE_TYPE {
-    enum index_t { NORMAL, TUMOR, SIZE };
+enum index_t { NORMAL, TUMOR, SIZE };
 
-    inline
-    const char*
-    get_label(const unsigned i) {
-        switch(static_cast<index_t>(i)) {
-        case NORMAL: return "NORMAL";
-        case TUMOR: return "TUMOR";
-        default: return "UNKNOWN";
-        }
+inline
+const char*
+get_label(const unsigned i) {
+    switch(static_cast<index_t>(i)) {
+    case NORMAL: return "NORMAL";
+    case TUMOR: return "TUMOR";
+    default: return "UNKNOWN";
     }
+}
 
-    inline
-    char
-    get_char_label(const unsigned i) {
-        switch(static_cast<index_t>(i)) {
-        case NORMAL: return 'n';
-        case TUMOR: return 't';
-        default: return '?';
-        }
+inline
+char
+get_char_label(const unsigned i) {
+    switch(static_cast<index_t>(i)) {
+    case NORMAL: return 'n';
+    case TUMOR: return 't';
+    default: return '?';
     }
+}
 }
 
 

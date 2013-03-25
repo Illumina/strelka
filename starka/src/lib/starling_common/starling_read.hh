@@ -34,13 +34,13 @@
 
 
 namespace READ_ALIGN {
-    enum index_t {
-        GENOME,
-        CONTIG
-    };
+enum index_t {
+    GENOME,
+    CONTIG
+};
 
-    const char*
-    label(const index_t i);
+const char*
+label(const index_t i);
 }
 
 

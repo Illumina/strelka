@@ -31,23 +31,23 @@
 
 namespace DDIINDEL {
 
-    enum index_t { SIZE = STAR_DIINDEL::SIZE*STAR_DIINDEL::SIZE };
+enum index_t { SIZE = STAR_DIINDEL::SIZE*STAR_DIINDEL::SIZE };
 
-    inline
-    unsigned
-    get_state(const unsigned normal_gt,
-              const unsigned tumor_gt) {
-        return normal_gt+STAR_DIINDEL::SIZE*tumor_gt;
-    }
+inline
+unsigned
+get_state(const unsigned normal_gt,
+          const unsigned tumor_gt) {
+    return normal_gt+STAR_DIINDEL::SIZE*tumor_gt;
+}
 
-    inline
-    void
-    get_digt_states(const unsigned dgt,
-                    unsigned& normal_gt,
-                    unsigned& tumor_gt) {
-        normal_gt = (dgt%STAR_DIINDEL::SIZE);
-        tumor_gt = (dgt/STAR_DIINDEL::SIZE);
-    }
+inline
+void
+get_digt_states(const unsigned dgt,
+                unsigned& normal_gt,
+                unsigned& tumor_gt) {
+    normal_gt = (dgt%STAR_DIINDEL::SIZE);
+    tumor_gt = (dgt/STAR_DIINDEL::SIZE);
+}
 }
 
 std::ostream& operator<<(std::ostream& os,const DDIINDEL::index_t dgt);

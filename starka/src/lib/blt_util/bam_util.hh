@@ -29,19 +29,19 @@ extern "C" {
 
 
 namespace BAM_FLAG {
-    enum index_t {
-        PAIRED        = 0x001,
-        PROPER_PAIR   = 0x002,
-        UNMAPPED      = 0x004,
-        MATE_UNMAPPED = 0x008,
-        STRAND        = 0x010,
-        MATE_STRAND   = 0x020,
-        FIRST_READ    = 0x040,
-        SECOND_READ   = 0x080,
-        SECONDARY     = 0x100,
-        FILTER        = 0x200,
-        DUPLICATE     = 0x400
-    };
+enum index_t {
+    PAIRED        = 0x001,
+    PROPER_PAIR   = 0x002,
+    UNMAPPED      = 0x004,
+    MATE_UNMAPPED = 0x008,
+    STRAND        = 0x010,
+    MATE_STRAND   = 0x020,
+    FIRST_READ    = 0x040,
+    SECOND_READ   = 0x080,
+    SECONDARY     = 0x100,
+    FILTER        = 0x200,
+    DUPLICATE     = 0x400
+};
 }
 
 

@@ -25,7 +25,7 @@
 bool
 is_chi_sqr_reject(const double xsq,
                   const unsigned df,
-                  const double alpha){
+                  const double alpha) {
 
     assert(xsq>=0);
     assert(df>0);
@@ -46,7 +46,7 @@ bool
 is_lrt_reject_null(const double null_loghood,
                    const double alt_loghood,
                    const unsigned df,
-                   const double alpha){
+                   const double alpha) {
 
     if(df == 0) return false;
     if(null_loghood>alt_loghood) return false;

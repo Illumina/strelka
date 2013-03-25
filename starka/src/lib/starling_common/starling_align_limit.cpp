@@ -37,7 +37,7 @@ max_candidate_alignment_count(const unsigned n_indel,
     const float n(n_indel);
 
     float sum(1);
-    for(unsigned i(0);i<n_toggle;++i){
+    for(unsigned i(0); i<n_toggle; ++i) {
         const float k(i+1);
         sum += std::pow(2.,k)*boost::math::binomial_coefficient<float>(n,k);
     }
@@ -58,11 +58,11 @@ max_candidate_alignment_toggle(const unsigned n_indel,
     const float max(max_alignments);
 
     float sum(1.);
-    for(unsigned i(0);i<n_indel;++i){
+    for(unsigned i(0); i<n_indel; ++i) {
         const unsigned k(i+1);
         sum += std::pow(static_cast<float>(2),static_cast<float>(k))*boost::math::binomial_coefficient<float>(n_indel,k);
         if(sum>max) return i;
-   }
+    }
     return n_indel;
 }
 
@@ -72,7 +72,7 @@ starling_align_limit::
 starling_align_limit(const unsigned mac) {
 
     static const unsigned max_indels(100);
-    for(unsigned i(0);i<max_indels;++i){
+    for(unsigned i(0); i<max_indels; ++i) {
         const unsigned mt(max_candidate_alignment_toggle(i,mac));
         if((i>1) && (mt<2)) break;
         _max_toggle.push_back(max_candidate_alignment_toggle(i,mac));

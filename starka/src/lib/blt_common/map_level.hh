@@ -23,30 +23,30 @@
 
 
 namespace MAPLEVEL {
-    enum index_t {
-        UNKNOWN,
-        UNKNOWN_MAPPED,
-        TIER1_MAPPED,
-        TIER2_MAPPED,
-        SUB_MAPPED,
-        UNMAPPED
-    };
+enum index_t {
+    UNKNOWN,
+    UNKNOWN_MAPPED,
+    TIER1_MAPPED,
+    TIER2_MAPPED,
+    SUB_MAPPED,
+    UNMAPPED
+};
 
-    inline
-    const char*
-    get_label(const index_t i) {
-        switch(i) {
-        case UNKNOWN: return "unknown";
-        case UNKNOWN_MAPPED: return "unknown-mapped";
-        case TIER1_MAPPED: return "tier1-mapped";
-        case TIER2_MAPPED: return "tier2-mapped";
-        case SUB_MAPPED: return "sub-mapped";
-        case UNMAPPED: return "unmapped";
-        default:
-            assert(0);
-            return "none";
-        }
+inline
+const char*
+get_label(const index_t i) {
+    switch(i) {
+    case UNKNOWN: return "unknown";
+    case UNKNOWN_MAPPED: return "unknown-mapped";
+    case TIER1_MAPPED: return "tier1-mapped";
+    case TIER2_MAPPED: return "tier2-mapped";
+    case SUB_MAPPED: return "sub-mapped";
+    case UNMAPPED: return "unmapped";
+    default:
+        assert(0);
+        return "none";
     }
+}
 }
 
 

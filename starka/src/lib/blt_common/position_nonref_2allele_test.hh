@@ -27,25 +27,25 @@
 
 
 namespace NR2TEST {
-    enum index_t {
-        REF,             // reference allele only
-        NONREF_MF,       // reference allele mixed with single signal allele
-        NONREF_MF_NOISE, // reference allele mixed with site specific error
-        NONREF_OTHER,    // reference allele mixed with non-signal allele (lhood is approximated to 0 for this state)
-        SIZE
-    };
+enum index_t {
+    REF,             // reference allele only
+    NONREF_MF,       // reference allele mixed with single signal allele
+    NONREF_MF_NOISE, // reference allele mixed with site specific error
+    NONREF_OTHER,    // reference allele mixed with non-signal allele (lhood is approximated to 0 for this state)
+    SIZE
+};
 
-    inline
-    const char*
-    label(const index_t i) {
-        switch(i) {
-        case REF: return "ref";
-        case NONREF_MF: return "nonref";
-        case NONREF_MF_NOISE: return "noise";
-        case NONREF_OTHER: return "nonref-other";
-        default: return "xxx";
-        }
+inline
+const char*
+label(const index_t i) {
+    switch(i) {
+    case REF: return "ref";
+    case NONREF_MF: return "nonref";
+    case NONREF_MF_NOISE: return "noise";
+    case NONREF_OTHER: return "nonref-other";
+    default: return "xxx";
     }
+}
 }
 
 

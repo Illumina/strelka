@@ -48,8 +48,8 @@ namespace common
 class ExceptionData : public boost::exception
 {
 public:
-    ExceptionData(int errorNumber=0, const std::string &message="");
-    ExceptionData(const ExceptionData &e) : boost::exception(e), errorNumber_(e.errorNumber_), message_(e.message_) {}
+    ExceptionData(int errorNumber=0, const std::string& message="");
+    ExceptionData(const ExceptionData& e) : boost::exception(e), errorNumber_(e.errorNumber_), message_(e.message_) {}
     virtual ~ExceptionData() throw ()
     {
     }
@@ -65,22 +65,22 @@ public:
 private:
     const int errorNumber_;
     const std::string message_;
-    ExceptionData &operator=(const ExceptionData &);
+    ExceptionData& operator=(const ExceptionData&);
 };
 
 class CasavaException: public std::exception, public ExceptionData
 {
 public:
-    CasavaException(int errorNumber, const std::string &message) : ExceptionData(errorNumber, message) {}
-    CasavaException(const CasavaException &e) : std::exception(e), ExceptionData(e) {}
+    CasavaException(int errorNumber, const std::string& message) : ExceptionData(errorNumber, message) {}
+    CasavaException(const CasavaException& e) : std::exception(e), ExceptionData(e) {}
 private:
-    CasavaException &operator=(const CasavaException &);
+    CasavaException& operator=(const CasavaException&);
 };
 
 class IoException: public std::ios_base::failure, public ExceptionData
 {
 public:
-    IoException(int errorNumber, const std::string &message);
+    IoException(int errorNumber, const std::string& message);
 };
 
 /**
@@ -96,7 +96,7 @@ public:
 class UnsupportedVersionException: public std::logic_error, public ExceptionData
 {
 public:
-    UnsupportedVersionException(const std::string &message);
+    UnsupportedVersionException(const std::string& message);
 };
 
 /**
@@ -106,7 +106,7 @@ public:
 class InvalidParameterException: public std::logic_error, public ExceptionData
 {
 public:
-    InvalidParameterException(const std::string &message);
+    InvalidParameterException(const std::string& message);
 };
 
 /**
@@ -116,7 +116,7 @@ public:
 class InvalidOptionException: public std::logic_error, public ExceptionData
 {
 public:
-    InvalidOptionException(const std::string &message);
+    InvalidOptionException(const std::string& message);
 };
 
 /**
@@ -126,7 +126,7 @@ public:
 class PreConditionException: public std::logic_error, public ExceptionData
 {
 public:
-    PreConditionException(const std::string &message);
+    PreConditionException(const std::string& message);
 };
 
 /**
@@ -136,7 +136,7 @@ public:
 class PostConditionException: public std::logic_error, public ExceptionData
 {
 public:
-    PostConditionException(const std::string &message);
+    PostConditionException(const std::string& message);
 };
 
 } // namespace common

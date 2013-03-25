@@ -34,13 +34,13 @@
 void
 position_snp_call_lrt(const double alpha,
                       const snp_pos_info& pi,
-                      lrt_snp_call& sc){
+                      lrt_snp_call& sc) {
 
     if(pi.ref_base=='N') return;
 
     unsigned ecount(0);
     const unsigned n_calls(pi.calls.size());
-    for(unsigned i(0);i<n_calls;++i){
+    for(unsigned i(0); i<n_calls; ++i) {
         assert(pi.calls[i].base_id !=BASE_ID::ANY);
         ecount++;
     }
@@ -93,7 +93,7 @@ position_snp_call_lrt(const double alpha,
 
     const double ref_freq(1.-x_nonref_freq);
     const double nonref_freq((x_nonref_freq)/3.);
-    for(unsigned i(0);i<N_BASE;++i){
+    for(unsigned i(0); i<N_BASE; ++i) {
         if(i==ref_base_id) sc.allele_freq[i] = ref_freq;
         else               sc.allele_freq[i] = nonref_freq;
     }
@@ -101,7 +101,7 @@ position_snp_call_lrt(const double alpha,
     static const unsigned N_BASE2(N_BASE*N_BASE);
     double conj_dir[N_BASE2];
     std::fill(conj_dir,conj_dir+N_BASE2,0.);
-    for(unsigned i(0);i<N_BASE;++i) {
+    for(unsigned i(0); i<N_BASE; ++i) {
         const double start_dist( std::max(std::fabs(sc.allele_freq[i]*start_ratio),min_start_dist) );
         conj_dir[i*(N_BASE+1)] = start_dist;
     }
