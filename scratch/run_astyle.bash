@@ -18,6 +18,7 @@ astyle \
 --keep-one-line-blocks \
 --keep-one-line-statements \
 --max-instatement-indent=80 \
+--min-conditional-indent=0 \
 --recursive \
 *.cpp *.hh *.h
 
