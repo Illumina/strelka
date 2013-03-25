@@ -67,7 +67,7 @@ strelka_run(const strelka_options& opt) {
     bam_streamer tumor_read_stream(opt.tumor_bam_filename.c_str(),bam_region.c_str());
 
     // check for header consistency:
-    if(! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header())){
+    if(! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header())) {
         std::ostringstream oss;
         oss << "ERROR: Normal and tumor BAM files have incompatible headers.\n";
         oss << "\tnormal_bam_file:\t'" << opt.bam_filename << "'\n";
@@ -114,10 +114,10 @@ strelka_run(const strelka_options& opt) {
     // hold zero-to-many vcf streams open in indel_streams:
     typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
-    for(unsigned i(0);i<opt.input_candidate_indel_vcf.size();++i) {
+    for(unsigned i(0); i<opt.input_candidate_indel_vcf.size(); ++i) {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(opt.input_candidate_indel_vcf[i].c_str(),
                                                         bam_region.c_str(),normal_read_stream.get_header())));
-      	sdata.register_indels(*(indel_stream.back()));
+        sdata.register_indels(*(indel_stream.back()));
     }
 
     starling_input_stream_handler sinput(sdata);
@@ -128,14 +128,14 @@ strelka_run(const strelka_options& opt) {
         // If we're past the end of rlimit range then we're done.
         //   Note that some additional padding is allowed for off
         //   range indels which might influence results within the
-        //   report:
+        //   report range:
         //
         if(rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+max_indel_size))) break;
 
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(sinput.get_head_pos()-1);
 
-        if       (current.itype == INPUT_TYPE::READ){  // handle regular ELAND reads
+        if       (current.itype == INPUT_TYPE::READ) { // handle reads from the primary mapper (as opposed to the local assembler)
 
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report

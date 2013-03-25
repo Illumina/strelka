@@ -166,7 +166,9 @@ get_starling_shared_option_parser(starling_options& opt) {
     po::options_description other_opt("other-options");
     other_opt.add_options()
         ("report-file", po::value<std::string>(&opt.report_filename),
-         "Report non-error run info and statistics to file");
+         "Report non-error run info and statistics to file")
+        ("remap-input-softclip",
+         "Attempt to realign all soft-clipped segments in input reads");
 
     po::options_description new_opt("New options");
 
@@ -432,6 +434,10 @@ finalize_starling_options(const prog_info& pinfo,
 
     if(vm.count("max-input-depth")) {
         opt.is_max_input_depth=true;
+    }
+
+    if(vm.count("remap-input-softclip")) {
+        opt.is_remap_input_softclip=true;
     }
 
     if(vm.count("ignore-conflicting-read-names")) {

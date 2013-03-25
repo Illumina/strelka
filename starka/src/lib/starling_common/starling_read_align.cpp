@@ -59,7 +59,7 @@ greatest_known_range(const known_pos_range& p1,
 //
 static
 bool
-check_for_candidate_indel_overlap(const starling_options& client_opt,
+check_for_candidate_indel_overlap(const starling_options& opt,
                                   const read_segment& rseg,
                                   const indel_synchronizer& isync){
 
@@ -77,9 +77,11 @@ check_for_candidate_indel_overlap(const starling_options& client_opt,
         pr=get_alignment_zone(al,seq_length);
         is_pr_set=true;
 
-        // for the genomic alignment only we subtract off any edge soft-clip:
-        pr.begin_pos+=apath_soft_clip_lead_size(al.path);
-        pr.end_pos-=static_cast<pos_t>(apath_soft_clip_trail_size(al.path));
+        if(! opt.is_remap_input_softclip) {
+            // for the genomic alignment only we subtract off any edge soft-clip:
+            pr.begin_pos+=apath_soft_clip_lead_size(al.path);
+            pr.end_pos-=static_cast<pos_t>(apath_soft_clip_trail_size(al.path));
+        }
     }
 
     {
@@ -118,7 +120,7 @@ check_for_candidate_indel_overlap(const starling_options& client_opt,
 #endif
 
         // check if indel qualifies as candidate indel:
-        if(isync.is_candidate_indel(client_opt,ik,id)){
+        if(isync.is_candidate_indel(opt,ik,id)){
 #ifdef DEBUG_ALIGN
             std::cerr << "VARMIT read segment intersects at least one qualifying indel.\n";
 #endif
@@ -245,18 +247,20 @@ matchify_edge_soft_clip(const alignment& al) {
 
 
 
-// transform an alignment such that any soft-clipped and insert edge
-// segments become match.
-//
-// segments are joined and start pos is adjusted appropriately
-//
+/// transform an alignment such that any soft-clipped and insert edge
+/// segments become match.
+///
+/// segments are joined and start pos is adjusted appropriately
+///
+/// \param is_preserve_soft_clip if true, don't transform soft clip regions
+///
 static
 alignment
 matchify_edge(const alignment& al,
-              const bool ignore_soft_clip) {
+              const bool is_preserve_soft_clip) {
 
     const alignment al2(matchify_edge_insertion(al));
-    if(ignore_soft_clip) return al2;
+    if(is_preserve_soft_clip) return al2;
     return matchify_edge_soft_clip(al2);
 }
 
@@ -269,7 +273,7 @@ static
 void
 add_exemplar_alignment(const alignment& al,
                        const unsigned max_indel_size,
-                       const bool is_genomic,
+                       const bool is_preserve_soft_clip,
                        std::vector<alignment>& exal){
 
     if(! al.is_realignable(max_indel_size)) return;
@@ -282,7 +286,7 @@ add_exemplar_alignment(const alignment& al,
     const alignment* al_ptr(&al);
     alignment nsal;
     if(is_edge_clipped(al.path)) {
-        nsal=matchify_edge(al,is_genomic);
+        nsal=matchify_edge(al,is_preserve_soft_clip);
         al_ptr=&nsal;
     }
 
@@ -301,18 +305,24 @@ add_exemplar_alignment(const alignment& al,
 //
 static
 void
-get_exemplar_alignments(const read_segment& rseg,
-                        const unsigned max_indel_size,
+get_exemplar_alignments(const starling_options& opt,
+                        const read_segment& rseg,
                         std::vector<alignment>& exal) {
 
-    exal.clear();
-    const alignment& al(rseg.genome_align());
-    if(! al.empty()) add_exemplar_alignment(al,max_indel_size,true,exal);
+    static const bool is_preserve_assembler_soft_clip(false);
+    const bool is_preserve_mapper_soft_clip(! opt.is_remap_input_softclip);
 
+    exal.clear();
+
+    // get exemplar from read mapper:
+    const alignment& al(rseg.genome_align());
+    if(! al.empty()) add_exemplar_alignment(al,opt.max_indel_size,is_preserve_mapper_soft_clip,exal);
+
+    // get additional examplars from assembler: 
     typedef contig_align_t cat;
     const cat& ct(rseg.contig_align());
     cat::const_iterator i(ct.begin()),i_end(ct.end());
-    for(;i!=i_end;++i) add_exemplar_alignment(i->second,max_indel_size,false,exal);
+    for(;i!=i_end;++i) add_exemplar_alignment(i->second,opt.max_indel_size,is_preserve_assembler_soft_clip,exal);
 }
 
 
@@ -1382,7 +1392,7 @@ realign_and_score_read(const starling_options& opt,
     // finding some way for contig alignments to preserve soft-clip.
     //
     std::vector<alignment> exemplars;
-    get_exemplar_alignments(rseg,opt.max_indel_size,exemplars);
+    get_exemplar_alignments(opt,rseg,exemplars);
 
     if(exemplars.empty()) return;
 

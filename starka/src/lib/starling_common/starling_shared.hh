@@ -95,6 +95,7 @@ struct starling_options : public blt_options {
         , is_htype_calling(false)
         , hytpe_count(2)
         , htype_call_segment(1000)
+        , is_remap_input_softclip(false)
     {}
 
     // report whether any type of indel-caller is running (including
@@ -186,8 +187,8 @@ struct starling_options : public blt_options {
     // the maximum number of candidate re-alignments for each read:
     unsigned max_realignment_candidates;
 
-     // clip the section of a read which aligns equally well to two or
-     // more paths before pileup or realigned read output
+    // clip the section of a read which aligns equally well to two or
+    // more paths before pileup or realigned read output
     bool is_clip_ambiguous_path;
 
     bool is_realigned_read_file;
@@ -257,6 +258,9 @@ struct starling_options : public blt_options {
 
     // multiple of max-indel-size used for haplotyping:
     unsigned htype_call_segment;
+
+    // if true, treat all soft-clipped segments on the egdes of reads as realignable
+    bool is_remap_input_softclip;
 };
 
 
