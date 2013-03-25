@@ -153,7 +153,7 @@ get_starling_shared_option_parser(starling_options& opt) {
 
     po::options_description compat_opt("compatibility-options");
     compat_opt.add_options()
-    ("eland-compatability",
+    ("eland-compatibility",
      "When argument is provided the input reads are checked for an optional AS field corresponding to the ELAND PE map score.");
 
     po::options_description input_opt("input-options");
@@ -428,7 +428,7 @@ finalize_starling_options(const prog_info& pinfo,
         opt.is_htype_calling=true;
     }
 
-    if(vm.count("eland-compatability")) {
+    if(vm.count("eland-compatibility")) {
         opt.is_eland_compat=true;
     }
 
