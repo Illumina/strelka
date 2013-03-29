@@ -19,13 +19,26 @@ cppcheck \
 --suppress=unsignedLessThanZero \
 --suppress=obsoleteFunctionsasctime \
 --suppress=unusedFunction \
---suppress=missingInclude \
 --suppress=unmatchedSuppression \
+--suppress=missingInclude \
 $thisDir 2>| $outFile
 
+# xml output is usful for getting a warnings id field, which is what you need to supress it:
+# --xml \
+
+# this is more aggresive and includes more FPs
 # --inconclusive \
 
-cat $outFile 1>&2
-if [ -s $outFile ]; then exit 1; fi
+filtered_output() {
+    cat $outFile | grep -v "Cppcheck cannot find all the include files"
+}
+
+filtered_output 1>&2
+
+# in cppcheck 1.59 missingInclude supression appears to be broken -- this is a workaround:
+#
+error_line_count=$(filtered_output | wc -l)
+
+if [ "$error_line_count" != "0" ]; then exit 1; fi
 
 touch cppcheck.done
