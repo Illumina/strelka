@@ -35,7 +35,7 @@ $(DIRS):
 define install-boost
 cd $(BOOST_ID); \
 if ! test -f ./bjam; then \
-  ./bootstrap.sh --with-libraries=program_options; \
+  ./bootstrap.sh --with-libraries=program_options,test; \
 fi; \
 ./bjam -a link=static; \
 cd stage; \
