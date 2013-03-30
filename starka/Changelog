@@ -1,3 +1,5 @@
+STARKA-22 Reorganize build system around libraries, add unit test framework as
+part of the build.
 v2.0.3
 - STARKA-16 fix gVCF output so that GT does not contain allele numbers which are
 not in the ALT tag
