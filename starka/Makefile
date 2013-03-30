@@ -7,9 +7,9 @@ export CODEMIN_ID := CodeMin-1.0.2
 export SAMTOOLS_ID := samtools-0.1.18_no_tview
 export TABIX_ID := tabix-0.2.5_new_libz_order
 
-.PHONY:  all redist build install clean srcclean etags
+.PHONY:  all build clean install redist srcclean test etags
 
-all: install
+all: install test
 
 redist:
 	$(MAKE) -C $(REDIST_DIR)
@@ -26,6 +26,8 @@ clean: srcclean
 
 # developer targets:
 #
+test: build
+	$(MAKE) -C $(SRC_DIR) $@
 
 # clean only src directories but leave redist built:
 srcclean:

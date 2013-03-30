@@ -5,7 +5,7 @@
 #
 # REDIST_DIR : location of other dependencies (besides boost)
 #
-# SAMTOOLS_ID : Strelka uses an older version of the samtools library (0.1.8) for bam parsing. This is included in redist/ and should not need to be set.
+# SAMTOOLS_ID : Strelka uses the samtools library for bam parsing. This is included in redist/ and should not need to be set.
 # TABIX_ID :
 # CODEMIN_ID : 
 #
@@ -38,46 +38,64 @@ BOOST_LIB_DIR := $(BOOST_REDIST_ROOT)/lib
 
 STRELKA_INCLUDE_DIR:=$(CURDIR)/lib
 
-CXXFLAGS := $(XFLAGS)
-LDFLAGS := $(XFLAGS)
+# use isystem so that we can run starka with stringent warnings and skip
+# all the failed cases in boost
+export CXXFLAGS := $(XFLAGS) -isystem $(BOOST_INCLUDE_DIR) -isystem $(SAMTOOLS_DIR) -isystem $(TABIX_DIR) -isystem $(CODEMIN_INCLUDE_DIR)
+export LDFLAGS := -L$(BOOST_LIB_DIR) -L$(SAMTOOLS_DIR) -L$(TABIX_DIR)
+export LDLIBS := -lbam -ltabix -lz 
 
-STRELKA_BIN := bin/strelka2
-STAR_BIN := bin/starling2
 
-VAR_BINS := $(STRELKA_BIN) $(STAR_BIN)
 
-SHARED_CXX_DIR := blt_util blt_common common starling_common
-SHARED_CXX_SRC := $(wildcard $(patsubst %,lib/%/*.cpp,$(SHARED_CXX_DIR)))
-SHARED_OBJS := $(patsubst %.cpp,%.o,$(SHARED_CXX_SRC))
+STRELKA_PROGRAM := bin/strelka2
+STARLING_PROGRAM := bin/starling2
+
+STARKA_PROGRAMS := $(STRELKA_PROGRAM) $(STARLING_PROGRAM)
+
+
+export SHARED_CXX_DIR := starling_common common blt_common blt_util
+SHARED_CXX_PATH := $(patsubst %,$(CURDIR)/lib/%,$(SHARED_CXX_DIR))
+SHARED_CXX_LIB  := $(foreach dir,$(SHARED_CXX_DIR),$(CURDIR)/lib/$(dir)/lib$(dir).a)
+
+#SHARED_CXX_SRC := $(wildcard $(patsubst %,lib/%/*.cpp,$(SHARED_CXX_DIR)))
+#SHARED_OBJS := $(patsubst %.cpp,%.o,$(SHARED_CXX_SRC))
+
 STRELKA_CXX_SRC := bin/strelka2.cpp $(wildcard lib/strelka/*.cpp) $(SHARED_CXX_SRC)
 STRELKA_OBJS := $(patsubst %.cpp,%.o,$(STRELKA_CXX_SRC))
 STAR_CXX_SRC := bin/starling2.cpp $(wildcard lib/starling/*.cpp) $(SHARED_CXX_SRC)
 STAR_OBJS := $(patsubst %.cpp,%.o,$(STAR_CXX_SRC))
 
+
+.PHONY: all build clean install test
+
+
 all: build
 
-build: cppcheck.done
+build: cppcheck.done $(STARKA_PROGRAMS)
+
+$(SHARED_CXX_LIB) :
+	$(MAKE) -C $(dir $@) $(notdir $@)
 
 install: build
-	cp $(VAR_BINS) $(BIN_DIR)
+	cp $(STARKA_PROGRAMS) $(BIN_DIR)
 
-cppcheck.done: $(VAR_BINS)
+test: build
+	$(MAKE) -C lib $@
+
+cppcheck.done: $(STARKA_PROGRAMS)
 	@echo "Runnning cppcheck" && \
 	$(CURDIR)/run_cppcheck.bash
 
-# use isystem so that we can run starka with stringent warnings and skip
-# all the failed cases in boost
-$(VAR_BINS): CXXFLAGS += -I$(STRELKA_INCLUDE_DIR) -isystem $(BOOST_INCLUDE_DIR) -isystem $(SAMTOOLS_DIR) -isystem $(TABIX_DIR) -isystem $(CODEMIN_INCLUDE_DIR)
-$(VAR_BINS): LIBS := -lbam -ltabix -lz -lboost_program_options
-$(VAR_BINS): LDLIBS += -L$(BOOST_LIB_DIR) -L$(SAMTOOLS_DIR) -L$(TABIX_DIR) $(LIBS)
-$(VAR_BINS): CC := $(CXX) # this fixes the linker to inlcude libc++
+$(STARKA_PROGRAMS): CXXFLAGS += -I$(STRELKA_INCLUDE_DIR)
+$(STARKA_PROGRAMS): LDLIBS += -lboost_program_options
+$(STARKA_PROGRAMS): CC := $(CXX) # this fixes the linker to inlcude libc++
 
-$(STRELKA_BIN): $(STRELKA_OBJS) $(SHARED_OBJS)
-$(STAR_BIN): $(STAR_OBJS) $(SHARED_OBJS)
+$(STRELKA_PROGRAM): $(STRELKA_OBJS) $(SHARED_CXX_LIB)
+$(STARLING_PROGRAM): $(STAR_OBJS) $(SHARED_CXX_LIB)
 
 
 clean:
-	$(RM) $(STRELKA_OBJS) $(STAR_OBJS) $(SHARED_OBJS) $(STRELKA_BIN) $(STAR_BIN)
+	$(MAKE) -C lib $@
+	$(RM) $(STRELKA_OBJS) $(STAR_OBJS) $(SHARED_CXX_LIB) $(STRELKA_PROGRAM) $(STARLING_PROGRAM)
 
 
 # extra dev tags:
