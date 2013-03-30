@@ -17,8 +17,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __SNP_UTIL_HH
-#define __SNP_UTIL_HH
+#pragma once
 
 #include "blt_common/snp_pos_info.hh"
 #include "blt_util/seq_util.hh"
@@ -26,6 +25,8 @@
 #include <cassert>
 
 
+/// \brief test if all basecalls in a pileup column are reference
+///
 inline
 bool
 is_spi_allref(const snp_pos_info& pi,
@@ -40,5 +41,3 @@ is_spi_allref(const snp_pos_info& pi,
     return true;
 }
 
-
-#endif

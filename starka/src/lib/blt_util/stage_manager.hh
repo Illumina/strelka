@@ -17,8 +17,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STAGE_MANAGER_H
-#define __STAGE_MANAGER_H
+#pragma once
 
 #include "pos_processor_base.hh"
 
@@ -31,22 +30,21 @@
 #include <vector>
 
 
-// This structure is used to describe stages to the stage_manager:
-//
-// Each stage has an integer id.
-//
-// All stages are related to each other by a tree. Edge distance on
-// this tree represent bases of the reference. A root stage must be
-// defined first, all following stages must have a parent stage and
-// a distance to the parent.
-//
-// Example: As used by the stage_manager, a simple two-stage tree
-// where the stages are separated by 100 cycles would mean that the
-// root stage is executed at the reference position pointer (as
-// always), but the second stage is executed at positions 100 bases
-// behind the reference position pointer.
-//
-
+/// \brief describes stages to the stage_manager/
+///
+/// Each stage has an integer id.
+///
+/// All stages are related to each other by a tree. Edge distance on
+/// this tree represent bases of the reference. A root stage must be
+/// defined first, all following stages must have a parent stage and
+/// a distance to the parent.
+///
+/// \example As used by the stage_manager, a simple two-stage tree
+/// where the stages are separated by 100 cycles would mean that the
+/// root stage is executed at the reference position pointer (as
+/// always), but the second stage is executed at positions 100 bases
+/// behind the reference position pointer.
+///
 struct stage_data {
 
     // position,stage_id pair, where position is total distance of this stage from the root stage:
@@ -54,28 +52,31 @@ struct stage_data {
     // pos_stage_ids, sorted by increasing position and stage id:
     typedef std::vector<pos_stage_id> stage_pos_t;
 
-    // Add a "root" stage:
+    /// \brief Add a "root" stage:
     void
     add_stage(const int id) {
         return add_stage(id,0,0,false);
     }
 
-    // Add a child stage which follows at a certain distance from its
-    // parent. parent id must already have been entered:
+    /// \brief Add a child stage which follows at a certain distance from its
+    /// parent
+    ///
+    /// parent id must already have been entered
+    ///
     void
     add_stage(const int id,
               const int parent_id,
               const unsigned parent_distance,
               const bool is_parent=true);
 
-    // The stages are summarized to the stage manager through the
-    // following interface:
-    //
+    /// The stages are summarized to the stage manager through the
+    /// following interface:
+    ///
     const stage_pos_t&
     stage_pos() const { return _stage_pos; }
 
-    // lookup total distance from root stage for any stage id:
-    //
+    /// lookup total distance from root stage for any stage id:
+    ///
     unsigned
     get_stage_id_shift(const int id) const {
         idmap_t::const_iterator i(_ids.find(id));
@@ -83,7 +84,7 @@ struct stage_data {
         return i->second;
     }
 
-    // debug output:
+    /// debug output:
     void
     dump(std::ostream& os) const;
 
@@ -101,7 +102,7 @@ private:
 
 
 /// \brief help to manage information which is being gathered in an
-/// approximately sequential fasion and processed in sequence in
+/// approximately sequential fashion and processed in sequence in
 /// multiple stages.
 ///
 /// assumes that information related to each position will be
@@ -112,15 +113,13 @@ private:
 ///
 /// range policy:
 ///
-/// if begin_pos is not specified, then event processiing and
+/// if begin_pos is not specified, then event processing and
 /// reporting start at the first pos >= 0 with position information
 /// submitted, else at begin_pos
 ///
 /// if end_pos is not specified, then processing ends after last_pos
 /// with information submitted, else at end_pos.
 ///
-
-
 struct stage_manager {
 
     // stage_data structure is described above
@@ -226,5 +225,3 @@ private:
     bool _is_any_minpos;
 };
 
-
-#endif

@@ -16,14 +16,15 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __DEPTH_STREAM_STAT_RANGE_HH
-#define __DEPTH_STREAM_STAT_RANGE_HH
+#pragma once
 
 #include "depth_stream_stat.hh"
 
 
 
-/// \brief this version of stream stat requires that you specify the
+/// \brief Simple inline statistics on a stream of unsigned values
+///
+/// This version of stream stat requires that you specify the
 /// total number of observations beforehand. All observations not
 /// provided as updates() are assumed to be zero.
 ///
@@ -77,5 +78,3 @@ std::ostream&
 operator<<(std::ostream& os,const depth_stream_stat_range& ss) {
     return os << ss.get_pstat();
 }
-
-#endif

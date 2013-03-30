@@ -28,8 +28,7 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __STREAM_STAT_HH
-#define __STREAM_STAT_HH
+#pragma once
 
 #include <cmath>
 
@@ -37,7 +36,11 @@
 
 
 
-/// \brief from the indel finder's single_pass mean/sd calculator:
+/// \brief Simple on-line statistics for double values
+///
+/// derived From Tony Cox's IndelFinder code
+///
+/// TODO: there are 3 minor variants of stream_stat now... consolidate this logic via template/inheritance
 ///
 struct stream_stat {
 
@@ -90,5 +93,3 @@ private:
 
 std::ostream& operator<<(std::ostream& os,const stream_stat& ss);
 
-
-#endif

@@ -16,8 +16,7 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __DEPTH_STREAM_STAT_HH
-#define __DEPTH_STREAM_STAT_HH
+#pragma once
 
 #include <ciso646>
 #include <cmath>
@@ -26,8 +25,9 @@
 #include <limits>
 
 
-
-/// \brief from the indel finder's single_pass mean/sd calculator:
+/// \brief Simple on-line statistics for unsigned values
+///
+/// derived From Tony Cox's IndelFinder code
 ///
 struct depth_stream_stat {
 
@@ -71,5 +71,3 @@ private:
 
 std::ostream& operator<<(std::ostream& os,const depth_stream_stat& ss);
 
-
-#endif
