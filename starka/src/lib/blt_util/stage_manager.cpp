@@ -41,16 +41,18 @@ add_stage(const int id,
         idmap_t::iterator pit(_ids.find(parent_id));
 
         if(pit==_ids.end()) {
-            log_os << "ERROR: stage_data.add_stage() parent_id " << parent_id << " does not exist\n";
-            exit(EXIT_FAILURE);
+            std::ostringstream oss;
+            oss << "ERROR: stage_data.add_stage() parent_id " << parent_id << " does not exist\n";
+            throw blt_exception(oss.str().c_str());
         }
 
         pos=(pit->second+parent_distance);
     }
     const std::pair<idmap_t::iterator,bool> ret(_ids.insert(std::make_pair(id,pos)));
     if(! ret.second) {
-        log_os << "ERROR: stage_data.add_stage() id " << id << " already exists\n";
-        exit(EXIT_FAILURE);
+        std::ostringstream oss;
+        oss << "ERROR: stage_data.add_stage() id " << id << " already exists\n";
+        throw blt_exception(oss.str().c_str());
     }
     _stage_pos.push_back(std::make_pair(pos,id));
     // not efficient to do this every time, but we always expect the

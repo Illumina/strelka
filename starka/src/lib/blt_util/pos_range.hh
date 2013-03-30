@@ -25,17 +25,17 @@
 #include <algorithm>
 #include <iosfwd>
 
+/// \brief number ranges which are potentially unbounded
 ///
-/// utility to handle (potentially open) number ranges and test
-/// intersections to either positions or other ranges.
+/// Object handles representation, including intersection with positions
+/// and other ranges.
 ///
 /// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
+/// XXX_begin_pos is zero-indexed position at the beginning of the range
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 /// any non-range pos value is assumed to be zero-indexed
 ///
-
 struct pos_range {
 
     pos_range() : is_begin_pos(false), is_end_pos(false), begin_pos(0), end_pos(0) {}
@@ -110,9 +110,8 @@ struct pos_range {
 };
 
 
-// More restricted closed form. This object allows functions to express a
-// closed interval requirement
-//
+/// \brief pos_range for bounded intervals only
+///
 struct known_pos_range : public pos_range {
 
     known_pos_range(const pos_t bp,const pos_t ep) : pos_range(bp,ep) {}

@@ -2,6 +2,16 @@
 
 #include "stage_manager.hh"
 
+//#define DEBUG_SM_TEST
+
+#ifdef DEBUG_SM_TEST
+#include <iostream>
+
+namespace {
+std::ostream& log_os(std::cerr);
+}
+#endif
+
 
 BOOST_AUTO_TEST_SUITE( test_stage_manager )
 
@@ -36,6 +46,94 @@ BOOST_AUTO_TEST_CASE( test_stage_data_dist ) {
     BOOST_CHECK_EQUAL(sd.get_stage_id_shift(2),30);
     BOOST_CHECK_EQUAL(sd.get_stage_id_shift(3),20);
 }
+
+
+BOOST_AUTO_TEST_CASE( test_stage_data_badparent ) {
+
+    stage_data sd;
+    BOOST_CHECK_THROW(sd.add_stage(1,0,10),std::exception);
+}
+
+
+BOOST_AUTO_TEST_CASE( test_stage_data_badid ) {
+
+    stage_data sd;
+    sd.add_stage(1);
+
+    BOOST_CHECK_THROW(sd.get_stage_id_shift(0),std::exception);
+    BOOST_CHECK_NO_THROW(sd.get_stage_id_shift(1));
+    BOOST_CHECK_THROW(sd.get_stage_id_shift(2),std::exception);
+}
+
+
+/// \breif Minimal pos_processor object used to test stage manager
+///
+/// Note that this object is itself part of the test infrastructure by
+/// asserting the expected relationship of all stages as process-pos is called
+///
+struct test_pos_processor : public pos_processor_base {
+
+    // pos_processor wouldn't normally need this info, but we use
+    // it to test expected stage position relationships
+    //
+    // TODO: check stage relationships
+    //
+    //test_pos_processor(const stage_data& sd, const pos_range& pr)
+
+    void
+    process_pos(const int stage_no,
+                const pos_t pos) {
+
+#ifdef DEBUG_SM_TEST
+        log_os << "process_pos stage_no: " << stage_no << " pos: " << pos << "\n";
+#endif
+
+        // assert that pos for each stage does not repeat or decrease:
+        spos_t::const_iterator i(stage_pos.find(stage_no));
+        if(i != stage_pos.end()) {
+            BOOST_CHECK(pos > (i->second));
+        }
+        stage_pos[stage_no] = pos;
+    }
+
+    typedef std::map<int,pos_t> spos_t;
+    spos_t stage_pos;
+};
+
+
+
+BOOST_AUTO_TEST_CASE( test_stage_manager ) {
+
+    const stage_data sd(get_test_stage_data());
+    const pos_range report_range(0,60);
+    test_pos_processor tpp;
+
+    stage_manager sman(sd,report_range,tpp);
+
+    sman.handle_new_pos_value(40);
+
+    BOOST_CHECK_EQUAL(tpp.stage_pos[0],40);
+    BOOST_CHECK_EQUAL(tpp.stage_pos[1],30);
+    BOOST_CHECK_EQUAL(tpp.stage_pos[2],10);
+    BOOST_CHECK_EQUAL(tpp.stage_pos[3],20);
+}
+
+
+BOOST_AUTO_TEST_CASE( test_stage_manager_reset ) {
+
+    const stage_data sd(get_test_stage_data());
+    const pos_range report_range(0,60);
+    test_pos_processor tpp;
+
+    stage_manager sman(sd,report_range,tpp);
+
+    sman.reset();
+
+    for(int i(0);i<4;++i) {
+        BOOST_CHECK_EQUAL(tpp.stage_pos[i],59);
+    }
+}
+
 
 
 BOOST_AUTO_TEST_SUITE_END()
