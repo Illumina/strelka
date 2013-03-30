@@ -2,12 +2,8 @@
 .PHONY: clean test
 
 clean:
-	for dir in $(SHARED_CXX_DIR); do \
-		$(MAKE) -C $$dir $@; \
-	done
+	$(foreach dir,$(SHARED_CXX_DIR), $(MAKE) -C $(dir) $@ &&) exit 0
 
 test:
-	for dir in $(SHARED_CXX_DIR); do \
-		$(MAKE) -C $$dir $@; \
-	done
+	$(foreach dir,$(SHARED_CXX_DIR), $(MAKE) -C $(dir) $@ &&) exit 0
 

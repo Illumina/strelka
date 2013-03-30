@@ -40,7 +40,7 @@ STRELKA_INCLUDE_DIR:=$(CURDIR)/lib
 
 # use isystem so that we can run starka with stringent warnings and skip
 # all the failed cases in boost
-export CXXFLAGS := $(XFLAGS) -isystem $(BOOST_INCLUDE_DIR) -isystem $(SAMTOOLS_DIR) -isystem $(TABIX_DIR) -isystem $(CODEMIN_INCLUDE_DIR)
+export CXXFLAGS := $(XFLAGS) -isystem $(BOOST_INCLUDE_DIR) -isystem $(SAMTOOLS_DIR) -isystem $(TABIX_DIR) -isystem $(CODEMIN_INCLUDE_DIR) -I$(STRELKA_INCLUDE_DIR)
 export LDFLAGS := -L$(BOOST_LIB_DIR) -L$(SAMTOOLS_DIR) -L$(TABIX_DIR)
 export LDLIBS := -lbam -ltabix -lz 
 
@@ -85,7 +85,6 @@ cppcheck.done: $(STARKA_PROGRAMS)
 	@echo "Runnning cppcheck" && \
 	$(CURDIR)/run_cppcheck.bash
 
-$(STARKA_PROGRAMS): CXXFLAGS += -I$(STRELKA_INCLUDE_DIR)
 $(STARKA_PROGRAMS): LDLIBS += -lboost_program_options
 $(STARKA_PROGRAMS): CC := $(CXX) # this fixes the linker to inlcude libc++
 
