@@ -1,7 +1,7 @@
 #
 # IDS must be defined:
 #
-IDS := CXXFLAGS LDFLAGS LDLIBS
+IDS := CXXFLAGS LDFLAGS LDLIBS SHARED_CXX_LIB
 
 assert-defined-indirect = $(if $($1),,$(error Variable '$1' must be defined))
 $(foreach I,$(IDS), $(call assert-defined-indirect,$I))
@@ -31,7 +31,7 @@ test_execute: $(TEST_PROGRAM)
 
 $(TEST_PROGRAM): LDLIBS += -lboost_unit_test_framework
 $(TEST_PROGRAM): $(LIBNAME) $(TEST_OBJS)
-	$(CXX) $(TEST_OBJS) $(LIBNAME) -o $(TEST_PROGRAM) $(LDFLAGS) $(LDLIBS)
+	$(CXX) $(TEST_OBJS) $(SHARED_CXX_LIB) -o $(TEST_PROGRAM) $(LDFLAGS) $(LDLIBS)
 
 $(TEST_OBJS): CXXFLAGS += -I$(CURDIR)
 

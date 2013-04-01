@@ -54,7 +54,7 @@ STARKA_PROGRAMS := $(STRELKA_PROGRAM) $(STARLING_PROGRAM)
 
 export SHARED_CXX_DIR := starling_common common blt_common blt_util
 SHARED_CXX_PATH := $(patsubst %,$(CURDIR)/lib/%,$(SHARED_CXX_DIR))
-SHARED_CXX_LIB  := $(foreach dir,$(SHARED_CXX_DIR),$(CURDIR)/lib/$(dir)/lib$(dir).a)
+export SHARED_CXX_LIB  := $(foreach dir,$(SHARED_CXX_DIR),$(CURDIR)/lib/$(dir)/lib$(dir).a)
 
 #SHARED_CXX_SRC := $(wildcard $(patsubst %,lib/%/*.cpp,$(SHARED_CXX_DIR)))
 #SHARED_OBJS := $(patsubst %.cpp,%.o,$(SHARED_CXX_SRC))
