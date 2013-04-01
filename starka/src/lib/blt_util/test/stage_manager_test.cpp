@@ -59,14 +59,14 @@ BOOST_AUTO_TEST_CASE( test_stage_data_dist ) {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_stage_data_badparent ) {
+BOOST_AUTO_TEST_CASE( test_stage_data_bad_parent ) {
 
     stage_data sd;
     BOOST_CHECK_THROW(sd.add_stage(1,0,10),std::exception);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_stage_data_badid ) {
+BOOST_AUTO_TEST_CASE( test_stage_data_bad_id ) {
 
     stage_data sd;
     sd.add_stage(1);

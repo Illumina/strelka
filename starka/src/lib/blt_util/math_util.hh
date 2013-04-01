@@ -43,6 +43,8 @@ log1p_switch(const FloatType x) {
 }
 
 
+/// returns equiv of log(exp(x1)+exp(x2))
+///
 template <typename FloatType>
 FloatType
 log_sum(FloatType x1, FloatType x2) {
