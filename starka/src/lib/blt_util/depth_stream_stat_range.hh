@@ -22,7 +22,7 @@
 
 
 
-/// \brief Simple inline statistics on a stream of unsigned values
+/// \brief Simple on-line statistics for unsigned values
 ///
 /// This version of stream stat requires that you specify the
 /// total number of observations beforehand. All observations not
