@@ -136,7 +136,7 @@ private:
 
     gvcf_block_site_record _block;
 
-    pos_t _head_pos; // we've observed sites upto but not including this position
+    pos_t _head_pos; // we've observed sites up to but not including this position
     site_info _empty_site;
 };
 

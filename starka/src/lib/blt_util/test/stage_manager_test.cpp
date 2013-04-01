@@ -77,19 +77,24 @@ BOOST_AUTO_TEST_CASE( test_stage_data_bad_id ) {
 }
 
 
-/// \breif Minimal pos_processor object used to test stage manager
+/// \brief Minimal pos_processor object used to test stage manager
 ///
 /// Note that this object is itself part of the test infrastructure by
-/// asserting the expected relationship of all stages as process-pos is called
+/// asserting:
+///   1. ...that pos increases for each stage
+///   2. TODO: ..the expected relationship (stage-to-root distance vs expect)
+///              of all stages as process_pos is called
 ///
 struct test_pos_processor : public pos_processor_base {
 
+    //
+    // TODO: finish setting up stage relationship checking...
+    //
     // pos_processor wouldn't normally need this info, but we use
     // it to test expected stage position relationships
     //
-    // TODO: check stage relationships
-    //
     //test_pos_processor(const stage_data& sd, const pos_range& pr)
+    //
 
     void
     process_pos(const int stage_no,
