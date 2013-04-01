@@ -204,41 +204,7 @@ apath_to_cigar(const path_t& apath,
 
 
 
-void
-apath_to_export_md(path_t& apath,
-                   const char* ref_seq,
-                   const char* ref_end,
-                   const int32_t ref_pos,
-                   const std::string& read_bases,
-                   const bool is_fwd_strand,
-                   std::string& md) {
-
-    md.clear();
-
-    if(is_fwd_strand) {
-
-        const char* pRead      = read_bases.c_str();
-        const char* pReference = ref_seq + ref_pos - 1;
-        fwd_apath_to_export_md(apath, ref_seq, pReference, ref_end, pRead, md);
-
-    } else {
-
-        uint32_t numRefBases = 0;
-        path_t::const_iterator pCIter;
-        for(pCIter = apath.begin(); pCIter != apath.end(); ++pCIter) {
-            if((pCIter->type == MATCH) || (pCIter->type == DELETE)) {
-                numRefBases += pCIter->length;
-            }
-        }
-
-        const char* pRead      = read_bases.c_str();
-        const char* pReference = ref_seq + ref_pos + numRefBases - 2;
-        rev_apath_to_export_md(apath, ref_seq, pReference, ref_end, pRead, md);
-    }
-}
-
-
-
+static
 void
 fwd_apath_to_export_md(path_t& apath,
                        const char* ref_begin,
@@ -313,6 +279,7 @@ fwd_apath_to_export_md(path_t& apath,
 
 
 
+static
 void
 rev_apath_to_export_md(path_t& apath,
                        const char* ref_begin,
@@ -385,6 +352,41 @@ rev_apath_to_export_md(path_t& apath,
     }
 
     if(foundUnsupportedCigar) md = "UNSUPPORTED";
+}
+
+
+
+void
+apath_to_export_md(path_t& apath,
+                   const char* ref_seq,
+                   const char* ref_end,
+                   const int32_t ref_pos,
+                   const std::string& read_bases,
+                   const bool is_fwd_strand,
+                   std::string& md) {
+
+    md.clear();
+
+    if(is_fwd_strand) {
+
+        const char* pRead      = read_bases.c_str();
+        const char* pReference = ref_seq + ref_pos - 1;
+        fwd_apath_to_export_md(apath, ref_seq, pReference, ref_end, pRead, md);
+
+    } else {
+
+        uint32_t numRefBases = 0;
+        path_t::const_iterator pCIter;
+        for(pCIter = apath.begin(); pCIter != apath.end(); ++pCIter) {
+            if((pCIter->type == MATCH) || (pCIter->type == DELETE)) {
+                numRefBases += pCIter->length;
+            }
+        }
+
+        const char* pRead      = read_bases.c_str();
+        const char* pReference = ref_seq + ref_pos + numRefBases - 2;
+        rev_apath_to_export_md(apath, ref_seq, pReference, ref_end, pRead, md);
+    }
 }
 
 

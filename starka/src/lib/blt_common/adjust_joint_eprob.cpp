@@ -30,6 +30,7 @@ typedef unsigned icall_t;
 typedef std::vector<icall_t> icalls_t;
 
 
+namespace {
 
 struct sort_icall_by_eprob {
     sort_icall_by_eprob(const snp_pos_info& pi) : _pi(pi) {}
@@ -42,6 +43,7 @@ struct sort_icall_by_eprob {
     const snp_pos_info& _pi;
 };
 
+}
 
 
 static

@@ -12,7 +12,7 @@
 //
 //
 
-/// \file didn't have a better place to throw this function:
+/// \file
 
 /// \author Chris Saunders
 ///

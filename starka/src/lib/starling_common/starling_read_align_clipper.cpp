@@ -35,6 +35,8 @@
 #endif
 
 
+namespace {
+
 struct ref_map_type {
     enum map_t {
         NONE,
@@ -68,6 +70,7 @@ struct ref_map_type {
     pos_t pos;
 };
 
+}
 
 
 #ifdef DEBUG_ALIGN_CLIP

@@ -55,6 +55,8 @@ get_alignment_buffer_pos(const alignment& al) {
 
 
 
+namespace {
+
 struct ddata {
 
     ddata(const unsigned read_size,
@@ -93,6 +95,8 @@ private:
     const unsigned delta_size;
     read_mismatch_info& rmi;
 };
+
+}
 
 
 

@@ -71,7 +71,7 @@ add_gvcf_filters(const gvcf_options& opt,
     }
     if(opt.is_max_snv_hpol) {
         std::ostringstream oss;
-        oss << "SNV contextual homopolymer length (SNVHPOL) exceeds " <<opt.max_snv_hpol;
+        oss << "SNV contextual homopolymer length (SNVHPOL) exceeds " << opt.max_snv_hpol;
         write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
     }
 

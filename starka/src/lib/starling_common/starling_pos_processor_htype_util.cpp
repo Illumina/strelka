@@ -30,7 +30,7 @@
 
 
 
-// used to desribe an open breakpoint haplotype:
+// used to describe an open breakpoint haplotype:
 //
 namespace OPEN {
 enum index_t {
@@ -52,6 +52,7 @@ label(index_t i) {
 }
 }
 
+namespace {
 
 // haplotypes are composed of sequences of "elements", each element is
 // similar to the current "sequence swap" indel type, thus it can
@@ -156,6 +157,11 @@ struct htype_element {
 };
 
 
+}
+
+
+namespace {
+
 struct right_pos_htype_element_sorter {
     bool
     operator()(const htype_element& h1,
@@ -168,9 +174,9 @@ struct right_pos_htype_element_sorter {
     }
 };
 
+}
 
 std::ostream& operator<<(std::ostream& os, const htype_element& he);
-
 
 
 std::ostream&
@@ -188,6 +194,8 @@ operator<<(std::ostream& os,
 }
 
 
+
+namespace {
 
 struct htype_buffer {
     typedef std::map<htype_element,unsigned> hdata_t;
@@ -245,6 +253,8 @@ private:
     typedef std::map<pos_t,pos_t> rightkey_t;
     rightkey_t _rightpos;
 };
+
+}
 
 
 // search for a key in the right_pos-sorted list with value less
@@ -530,7 +540,6 @@ get_region_haplotypes(const known_pos_range full_pr,
     for(ciiter i(ipair.first); i!=ipair.second; ++i) {
         const indel_key& ik(i->first);
         const indel_data& id(get_indel_data(i));
-
 #if 1
         // iterate through reads in region:
         for(pos_t pos(begin); pos<end; ++pos) {
@@ -544,56 +553,57 @@ get_region_haplotypes(const known_pos_range full_pr,
             }
         }
 #endif
+    }
 #endif
+}
+
+
+
+void
+starling_pos_processor_base::
+process_htype_pos(const pos_t begin_pos) {
+
+    // exclude negative begin_pos b/c
+    // (1) don't wan't to have to write negative mod
+    // (2) should be disallowed in any BAM-based pipeline
+    if(begin_pos<0) return;
+
+    if(_hregion.is_first_region) {
+        _hregion.is_first_region=false;
+        _hregion.region_alignment=begin_pos%static_cast<pos_t>(_client_opt.htype_call_segment);
+    } else {
+        if((begin_pos%static_cast<pos_t>(_client_opt.htype_call_segment))!=_hregion.region_alignment) return;
     }
 
+    const known_pos_range active_pr(begin_pos,begin_pos+_client_opt.htype_call_segment);
 
+    // see if there's anything reportable in the central region:
+    bool is_reportable(false);
 
-    void
-    starling_pos_processor_base::
-    process_htype_pos(const pos_t begin_pos) {
-
-        // exclude negative begin_pos b/c
-        // (1) don't wan't to have to write negative mod
-        // (2) should be disallowed in any BAM-based pipeline
-        if(begin_pos<0) return;
-
-        if(_hregion.is_first_region) {
-            _hregion.is_first_region=false;
-            _hregion.region_alignment=begin_pos%static_cast<pos_t>(_client_opt.htype_call_segment);
-        } else {
-            if((begin_pos%static_cast<pos_t>(_client_opt.htype_call_segment))!=_hregion.region_alignment) return;
-        }
-
-        const known_pos_range active_pr(begin_pos,begin_pos+_client_opt.htype_call_segment);
-
-        // see if there's anything reportable in the central region:
-        bool is_reportable(false);
-
-        for(pos_t pos(active_pr.begin_pos); pos<active_pr.end_pos; ++pos) {
-            if(is_pos_reportable(pos)) {
-                is_reportable=true;
-                break;
-            }
-        }
-        if(! is_reportable) return;
-
-        // do haplotypeing routines:
-        const unsigned full_htype_segment(_client_opt.htype_buffer_segment()+
-                                          _client_opt.htype_call_segment+
-                                          _client_opt.htype_buffer_segment());
-
-        const pos_t full_begin_pos(begin_pos-_client_opt.htype_buffer_segment());
-        const known_pos_range full_pr(full_begin_pos,full_begin_pos+full_htype_segment);
-        get_region_haplotypes(full_pr,active_pr);
-
-        // do regular calling for now:
-        for(pos_t pos(active_pr.begin_pos); pos<active_pr.end_pos; ++pos) {
-            pileup_pos_reads(pos);
-            write_reads(pos);
-            if(is_pos_reportable(pos)) {
-                process_pos_variants(pos);
-            }
+    for(pos_t pos(active_pr.begin_pos); pos<active_pr.end_pos; ++pos) {
+        if(is_pos_reportable(pos)) {
+            is_reportable=true;
+            break;
         }
     }
+    if(! is_reportable) return;
+
+    // do haplotypeing routines:
+    const unsigned full_htype_segment(_client_opt.htype_buffer_segment()+
+                                      _client_opt.htype_call_segment+
+                                      _client_opt.htype_buffer_segment());
+
+    const pos_t full_begin_pos(begin_pos-_client_opt.htype_buffer_segment());
+    const known_pos_range full_pr(full_begin_pos,full_begin_pos+full_htype_segment);
+    get_region_haplotypes(full_pr,active_pr);
+
+    // do regular calling for now:
+    for(pos_t pos(active_pr.begin_pos); pos<active_pr.end_pos; ++pos) {
+        pileup_pos_reads(pos);
+        write_reads(pos);
+        if(is_pos_reportable(pos)) {
+            process_pos_variants(pos);
+        }
+    }
+}
 

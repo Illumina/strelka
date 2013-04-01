@@ -169,22 +169,6 @@ apath_to_export_md(path_t& apath,
                    const bool is_fwd_strand,
                    std::string& md);
 
-void
-fwd_apath_to_export_md(path_t& apath,
-                       const char* ref_begin,
-                       const char* ref_seq,
-                       const char* ref_end,
-                       const char* read_bases,
-                       std::string& md);
-
-void
-rev_apath_to_export_md(path_t& apath,
-                       const char* ref_begin,
-                       const char* ref_seq,
-                       const char* ref_end,
-                       const char* read_bases,
-                       std::string& md);
-
 // Convert cigar string into apath format
 //
 // any padding in the CIGAR string is removed

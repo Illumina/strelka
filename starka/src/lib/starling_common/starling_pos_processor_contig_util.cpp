@@ -317,6 +317,7 @@ set_candidate_edge_insert_bp(candidate_alignment& cal) {
 }
 
 
+namespace {
 
 // simple object to share code between the genomic and
 // contig read parse routines
@@ -369,6 +370,9 @@ private:
     char* _fwd_strand_read_store;
 };
 
+
+
+} // namespace
 
 
 // TODO -- do I have to say it?

@@ -321,7 +321,7 @@ calculate_result_set(const blt_float_t* lhood,
 
 
 ///
-/// \params is_always_test - continue the full computation even for a site which is
+/// \param is_always_test - continue the full computation even for a site which is
 ///                          obviously non-variant
 ///
 ///
