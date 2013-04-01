@@ -37,14 +37,25 @@ get_test_stage_data() {
 }
 
 
+static
+void
+stage_data_shift_test(const stage_data& sd,
+                      const int stage_id,
+                      const unsigned expect) {
+
+    const unsigned result(sd.get_stage_id_shift(stage_id));
+    BOOST_CHECK_EQUAL(result,expect);
+}
+
+
 BOOST_AUTO_TEST_CASE( test_stage_data_dist ) {
 
     const stage_data sd(get_test_stage_data());
 
-    BOOST_CHECK_EQUAL(sd.get_stage_id_shift(0),0);
-    BOOST_CHECK_EQUAL(sd.get_stage_id_shift(1),10);
-    BOOST_CHECK_EQUAL(sd.get_stage_id_shift(2),30);
-    BOOST_CHECK_EQUAL(sd.get_stage_id_shift(3),20);
+    stage_data_shift_test(sd,0,0);
+    stage_data_shift_test(sd,1,10);
+    stage_data_shift_test(sd,2,30);
+    stage_data_shift_test(sd,3,20);
 }
 
 
