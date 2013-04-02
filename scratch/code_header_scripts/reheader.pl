@@ -23,7 +23,7 @@ while(<STDIN>) {
       $count++;
       next;
     }
-    die("No header to replace!") unless($count);
+    #die("No header to replace!") unless($count);
     print $newstr;
     $isfirst=0;
 

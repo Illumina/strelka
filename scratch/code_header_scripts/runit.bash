@@ -13,8 +13,8 @@ reheader_file() {
 
     if [ ! -f $file ]; then return; fi
     echo $file
-    #reheader.pl new_header < $file >| foo 
-    #mv foo $file
+    reheader.pl new_header < $file >| foo 
+    mv foo $file
     if [ $? != 0 ]; then echo "error on file $file"; fi
 }
 
