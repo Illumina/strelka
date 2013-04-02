@@ -56,9 +56,9 @@ struct gvcf_options {
         , is_max_snv_sb(true)
         , max_snv_sb(10)
         , is_max_snv_hpol(true)
-        , max_snv_hpol(6)
+        , max_snv_hpol(-1)
         , is_max_ref_rep(true)
-        , max_ref_rep(8)
+        , max_ref_rep(-1)
         , block_label("BLOCKAVG_min30p3a")
         , block_frac_tol(.3)
         , block_abs_tol(3)
@@ -80,7 +80,7 @@ struct gvcf_options {
     bool is_max_snv_sb;
     double max_snv_sb;
     bool is_max_snv_hpol;
-    unsigned max_snv_hpol;
+    int max_snv_hpol;
     bool is_max_ref_rep;
     int max_ref_rep;
 

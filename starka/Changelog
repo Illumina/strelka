@@ -1,5 +1,8 @@
-STARKA-22 Reorganize build system around libraries, add unit test framework as
-part of the build.
+v2.0.4
+- STARKA-21 Add command-line control for snv hpol filter. Set snv and indel hpol filters
+off by default.
+- STARKA-22 Reorganize build system around libraries, add unit test framework as
+part of every build and seed framework with a few tests for each library
 v2.0.3
 - STARKA-16 fix gVCF output so that GT does not contain allele numbers which are
 not in the ALT tag
