@@ -1,19 +1,21 @@
 
-starling/strelka binaries -- ${VERSION}
+Starling/Strelka variant callers -- ${VERSION}
 ---------------
 
 Chris Saunders (csaunders@illumina.com)
 
-Starling is a single-sample small-variant caller.
+Starling is a diploid small-variant caller for individual samples. This is also known as the Isaac Variant Caller.
 
-Strelka is detects somatic SNVs and small indels from the
-aligned sequencing reads of matched tumor-normal samples.
+Strelka is a somatic small-variant caller for matched tumor-normal samples.
+
+
+Note that both of these variant callers are designed to be used within a parent workflow method -- Isaac Variant Caller workflow and Strelka workflow, respectively. See the correspondig workflow for extended installation, usage and output documentation.
 
 
 
 INSTALLATION:
 
-These binaries are designed to run on *nux-like platforms.
+This code is designed to compile and run on *nux-like platforms.
 
 For Centos/Amazon Linux and other rpm-based distributions, the following
 packages (and their dependencies) are known requirements on top of
@@ -37,10 +39,8 @@ the base Ubuntu 11.10 distribution:
 Other compilation and runtime prerequisites are included in the distribution
 tarball. These included prerequisites are:
 
-* boost 1.44 (modified to include only the subset of the library used by strelka)
+* boost 1.44 (modified to include only the subset of the library used by Starling/Strelka)
 * samtools 0.1.18 (modified to remove the 'curses' library requirement)
-* vcftools 0.1.6
 * codemin 1.0.2
 * tabix 0.2.5 (makefile modified to reorder libz library to last place, as required for Ubuntu 12 build)
-
 
