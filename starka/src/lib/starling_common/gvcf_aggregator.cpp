@@ -64,7 +64,7 @@ set_site_filters(const gvcf_options& opt,
         }
 
         if(opt.is_max_snv_hpol) {
-            if(si.hpol>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
+            if(static_cast<int>(si.hpol)>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
         }
     }
 }

@@ -36,11 +36,11 @@ BOOST_REDIST_ROOT := $(REDIST_DIR)/$(BOOST_ID)/stage
 BOOST_INCLUDE_DIR := $(BOOST_REDIST_ROOT)/include
 BOOST_LIB_DIR := $(BOOST_REDIST_ROOT)/lib
 
-STRELKA_INCLUDE_DIR:=$(CURDIR)/lib
+STARKA_INCLUDE_DIR:=$(CURDIR)/lib
 
 # use isystem so that we can run starka with stringent warnings and skip
 # all the failed cases in boost
-export CXXFLAGS := $(XFLAGS) -isystem $(BOOST_INCLUDE_DIR) -isystem $(SAMTOOLS_DIR) -isystem $(TABIX_DIR) -isystem $(CODEMIN_INCLUDE_DIR) -I$(STRELKA_INCLUDE_DIR)
+export CXXFLAGS := $(XFLAGS) -isystem $(BOOST_INCLUDE_DIR) -isystem $(SAMTOOLS_DIR) -isystem $(TABIX_DIR) -isystem $(CODEMIN_INCLUDE_DIR) -I$(STARKA_INCLUDE_DIR)
 export LDFLAGS := -L$(BOOST_LIB_DIR) -L$(SAMTOOLS_DIR) -L$(TABIX_DIR)
 export LDLIBS := -lbam -ltabix -lz 
 
