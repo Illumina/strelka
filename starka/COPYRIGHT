@@ -1,12 +1,17 @@
-Copyright (c) 2007-2012 Illumina, Inc.
+Stelka and Isaac Variant Caller Software
+Copyright (c) 2009-2013 Illumina, Inc.
 
-This software is covered by the "Illumina Genome Analyzer Software
-License Agreement" and the "Illumina Source Code License Agreement",
-and certain third party copyright/licenses, and any user of this
-source file is bound by the terms therein (see accompanying files
-Illumina_Genome_Analyzer_Software_License_Agreement.pdf and
-Illumina_Source_Code_License_Agreement.pdf and third party
-copyright/license notices).
+This software is provided under the terms and conditions of the
+Illumina Open Source Software License 1.
+
+You should have received a copy of the Illumina Open Source
+Software License 1 along with this program. If not, see
+<https://github.com/downloads/sequencing/licenses/>.
+
+The distribution includes the code libraries listed below in the
+'redist' sub-directory. These are distributed according to the
+licensing terms governing each library.
+
 
 This distribution includes the following code libraries/external
 tools and are distributed according to the licensing terms governing each 
@@ -14,7 +19,7 @@ library.
 
 ******************************************************************
 
-SAMTools 0.1.14
+SAMTools 0.1.18
 Copyright (c) 2008-2009 Genome Research Ltd.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
