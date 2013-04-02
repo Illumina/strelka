@@ -26,13 +26,13 @@ base_dir=$(rel2abs $thisdir/../../starka/src)
 for f in lib; do
     for g in blt_common blt_util common starling_common starling strelka; do
         fdir=$base_dir/$f/$g
-        for h in $fdir/* $fdir/test/*; do
+        for h in $fdir/*.{cpp,hh} $fdir/test/*.{cpp,hh}; do
             reheader_file $h
         done
     done
 done
 
-for h in $base_dir/bin/*; do
+for h in $base_dir/bin/*.{cpp,hh}; do
     reheader_file $h
 done
 
