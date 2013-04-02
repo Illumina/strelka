@@ -18,7 +18,7 @@ v2.0.1
 v2.0.0
 - First RC. No changes from v2.0a3
 v2.0a3
-- Completed gVCF outptu to pass vcf-validator
+- Completed gVCF output to pass vcf-validator
 - added AD tags to snps and indels
 - added haplotypescore but left this turned off
 - added command-line controls for min-gqx,max-depth-factor and other filters/blocking thresholds

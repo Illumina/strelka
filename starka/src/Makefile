@@ -1,11 +1,11 @@
 
 # Assumes values have been set by parent makefile:
 #
-# BOOST_ROOT : Strelka is currently tested on Boost v1.44
+# BOOST_ROOT : currently tested on Boost v1.44
 #
 # REDIST_DIR : location of other dependencies (besides boost)
 #
-# SAMTOOLS_ID : Strelka uses the samtools library for bam parsing. This is included in redist/ and should not need to be set.
+# SAMTOOLS_ID : Uses the samtools library for bam parsing. This is included in redist/ and should not need to be set.
 # TABIX_ID :
 # CODEMIN_ID : 
 #
