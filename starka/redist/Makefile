@@ -14,15 +14,15 @@ DIRS := $(foreach I,$(IDS), $(call id-to-dir,$I))
 
 LINKS := boost samtools tabix
 
-all: $(CODEMIN_ID) $(LINKS) 
+all: $(CODEMIN_ID) $(LINKS)
 
 
 $(IDS): $(DIRS)
 
 safe-expand = \
-mkdir -p $1.extract.tmp; \
-$2 -dc < $1 | tar -xf - -C $1.extract.tmp; \
-mv $1.extract.tmp/* .; \
+mkdir -p $1.extract.tmp && \
+$2 -dc < $1 | tar -xf - -C $1.extract.tmp && \
+mv $1.extract.tmp/* . && \
 rmdir $1.extract.tmp
 
 maybe-expand = $(if $(wildcard $1),$(call safe-expand,$1,$2,$3),)
