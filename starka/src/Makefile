@@ -26,8 +26,13 @@ CODEMIN_INCLUDE_DIR := $(REDIST_DIR)/$(CODEMIN_ID)/include
 CXX := g++
 BASE_WARNFLAGS := -Wall -Wextra -Wshadow -Wunused
 EXTRA_WARNFLAGS := -Wpointer-arith -Winit-self -Wredundant-decls # -Wsign-conversion -Weverything 
-INTERNAL_WARNFLAGS := -Werror
-WARNFLAGS = $(BASE_WARNFLAGS) $(EXTRA_WARNFLAGS) $(INTERNAL_WARNFLAGS)
+WARNFLAGS = $(BASE_WARNFLAGS) $(EXTRA_WARNFLAGS)
+
+STRICT_WARNFLAGS := -Werror
+ifeq ($(STRICT_COMPILE),1)
+    WARNFLAGS += $(STRICT_WARNFLAGS)
+endif
+
 OPTFLAGS := -O2
 DEBUGFLAGS := -ggdb -O0
 XFLAGS := $(WARNFLAGS) $(OPTFLAGS)
