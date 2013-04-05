@@ -25,6 +25,8 @@
 #include <map>
 
 
+/// simple pos->depth map
+///
 struct depth_buffer {
 
     unsigned
@@ -46,6 +48,7 @@ struct depth_buffer {
         _data.erase(pos);
     }
 
+    /// return true if buffered depth exceeds depth in [begin,end]
     bool
     is_range_ge_than(const pos_t begin,
                      const pos_t end,
