@@ -1,3 +1,5 @@
+v2.0.5
+Associated with new parent strelka workflow release, no major chaages from v2.0.4
 v2.0.4
 - STARKA-21 Add command-line control for snv hpol filter. Set snv and indel hpol filters
 off by default.
