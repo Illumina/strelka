@@ -8,14 +8,10 @@ You should have received a copy of the Illumina Open Source
 Software License 1 along with this program. If not, see
 <https://github.com/downloads/sequencing/licenses/>.
 
-The distribution includes the code libraries listed below in the
-'redist' sub-directory. These are distributed according to the
-licensing terms governing each library.
-
-
-This distribution includes the following code libraries/external
-tools and are distributed according to the licensing terms governing each 
+This distribution includes the following code libraries/external tools.
+These are distributed according to the licensing terms governing each
 library.
+
 
 ******************************************************************
 
