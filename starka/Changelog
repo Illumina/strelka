@@ -1,3 +1,5 @@
+v2.0.6
+Change makefile to build when cwd is not in PATH
 v2.0.5
 Associated with new parent strelka workflow release, no major chaages from v2.0.4
 v2.0.4

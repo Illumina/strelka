@@ -29,7 +29,7 @@ TEST_PROGRAM := $(LIBLABEL)_unittest
 
 test_execute: $(TEST_PROGRAM)
 	@echo Unit testing $(LIBNAME)
-	@$(TEST_PROGRAM) --log_level=test_suite
+	@$(CURDIR)/$(TEST_PROGRAM) --log_level=test_suite
 
 $(TEST_PROGRAM): LDLIBS += -lboost_unit_test_framework
 $(TEST_PROGRAM): $(LIBNAME) $(TEST_OBJS)
