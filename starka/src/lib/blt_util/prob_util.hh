@@ -32,10 +32,10 @@ prob_comp(It begin,
           const It end,
           const unsigned cgt) {
 
-    typedef typename std::iterator_traits<It>::value_type float_t;
+    typedef typename std::iterator_traits<It>::value_type float_type;
 
     unsigned i(0);
-    float_t val(0.);
+    float_type val(0.);
     for(; begin!=end; ++begin,++i) {
         if(i == cgt) continue;
         val = val + *begin;
@@ -50,12 +50,12 @@ normalize_ln_distro(const It pbegin,
                     const It pend,
                     unsigned& max_idx) {
 
-    typedef typename std::iterator_traits<It>::value_type float_t;
+    typedef typename std::iterator_traits<It>::value_type float_type;
 
     // scale and exp pprob values:
     max_idx=0;
     if(pbegin==pend) return;
-    float_t max(*pbegin);
+    float_type max(*pbegin);
     unsigned i(1);
     for(It p(pbegin+1); p!=pend; ++p,++i) {
         if(*p > max) {
@@ -64,7 +64,7 @@ normalize_ln_distro(const It pbegin,
         }
     }
 
-    float_t sum(0.);
+    float_type sum(0.);
     for(It p(pbegin); p!=pend; ++p) {
         *p = std::exp(*p-max);
         sum += *p;
@@ -92,13 +92,13 @@ opt_normalize_ln_distro(const It pbegin,
                         const It2 pred_begin,
                         unsigned& max_idx) {
 
-    typedef typename std::iterator_traits<It>::value_type float_t;
+    typedef typename std::iterator_traits<It>::value_type float_type;
 
     max_idx=0;
     if(pbegin==pend) return;
 
     bool is_max(false), is_opt_max(false);
-    float_t max(0), opt_max(0);
+    float_type max(0), opt_max(0);
 
     unsigned i(0);
     It2 pred(pred_begin);
@@ -116,17 +116,17 @@ opt_normalize_ln_distro(const It pbegin,
 
     assert(is_opt_max);
 
-    static const float_t norm_thresh(20);
-    static const float_t opt_thresh(5);
+    static const float_type norm_thresh(20);
+    static const float_type opt_thresh(5);
 
-    float_t sum(0.);
+    float_type sum(0.);
     pred=(pred_begin);
     for(It p(pbegin); p!=pend; ++p,++pred) {
-        float_t mdiff(max-*p);
+        float_type mdiff(max-*p);
         const bool is_mdiff_skip(mdiff>norm_thresh);
         if(is_mdiff_skip) {
             if(! *pred) { *p=0; continue; }
-            float_t optdiff(opt_max-*p);
+            float_type optdiff(opt_max-*p);
             if(optdiff>opt_thresh) { *p=0; continue; }
         }
         *p = std::exp(-mdiff);
