@@ -1051,8 +1051,8 @@ score_candidate_alignments(const starling_options& client_opt,
 
     typedef std::set<candidate_alignment>::const_iterator citer;
     const citer cal_set_begin(cal_set.begin()), cal_set_end(cal_set.end());
-    for(citer i(cal_set_begin); i!=cal_set_end; ++i) {
-        const candidate_alignment& ical(*i);
+    for(citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter) {
+        const candidate_alignment& ical(*cal_iter);
         const double path_lnp(score_candidate_alignment(client_opt,ibuff,rseg,ical,ref));
 
         cal_set_path_lnp.push_back(path_lnp);
@@ -1065,7 +1065,7 @@ score_candidate_alignments(const starling_options& client_opt,
         if(NULL!=max_cal_ptr) {
             if(path_lnp<max_path_lnp) continue;
 
-            // TODO -- cleaner test of float equivilence (the
+            // TODO -- cleaner test of float equivalence (the
             // present test should be legit given the way the
             // score is calculated, but it's still not preferred)
             //
@@ -1110,9 +1110,10 @@ score_candidate_alignments(const starling_options& client_opt,
             oss << "ERROR: reached anomalous state during search for most likely exon alignment.\n";
             oss << "\tread_segment: " << rseg << "\n";
             oss << "\tCandidate alignments:\n";
-            for(citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter,++cal_index) {
+            for(citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter) {
                 oss << *cal_iter << "\n";
             }
+            throw blt_exception(oss.str().c_str());
         }
     }
 
