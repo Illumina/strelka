@@ -1033,7 +1033,7 @@ score_candidate_alignments(const starling_options& client_opt,
 
     // the smooth optimum alignment and alignment pool are actually
     // used for realignment, whereas the strict max_path path
-    // alingmnet is reported back to the indel_scoring routines.
+    // alignment is reported back to the indel_scoring routines.
     //
     // the smooth set may be different from the max pool set for two
     // reasons: (1) the path score is within smooth range of the
@@ -1050,8 +1050,8 @@ score_candidate_alignments(const starling_options& client_opt,
     const bool is_pinned(edge_pin.first || edge_pin.second);
 
     typedef std::set<candidate_alignment>::const_iterator citer;
-    const citer i_begin(cal_set.begin()),i_end(cal_set.end());
-    for(citer i(i_begin); i!=i_end; ++i) {
+    const citer cal_set_begin(cal_set.begin()), cal_set_end(cal_set.end());
+    for(citer i(cal_set_begin); i!=cal_set_end; ++i) {
         const candidate_alignment& ical(*i);
         const double path_lnp(score_candidate_alignment(client_opt,ibuff,rseg,ical,ref));
 
@@ -1088,18 +1088,30 @@ score_candidate_alignments(const starling_options& client_opt,
         is_cal_allowed.resize(cal_set.size(),true);
         const known_pos_range gen_pr(get_strict_alignment_range(rseg.genome_align()));
 
-        unsigned n(0);
-        for(citer i(i_begin); i!=i_end; ++i,++n) {
-            const known_pos_range cal_pr(get_strict_alignment_range(i->al));
+        unsigned cal_index(0);
+        for(citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter,++cal_index) {
+            const known_pos_range cal_pr(get_strict_alignment_range(cal_iter->al));
             if       (edge_pin.first && (cal_pr.begin_pos != gen_pr.begin_pos)) {
-                is_cal_allowed[n] = false;
+                is_cal_allowed[cal_index] = false;
             } else if(edge_pin.second && (cal_pr.end_pos != gen_pr.end_pos)) {
-                is_cal_allowed[n] = false;
+                is_cal_allowed[cal_index] = false;
             }
-            if(! is_cal_allowed[n]) continue;
+            if(! is_cal_allowed[cal_index]) continue;
 
             if(NULL!=max_allowed_cal_ptr) {
-                if(cal_set_path_lnp[n]<max_allowed_path_lnp) continue;
+                if(cal_set_path_lnp[cal_index]<max_allowed_path_lnp) continue;
+            }
+            max_allowed_path_lnp=cal_set_path_lnp[cal_index];
+            max_allowed_cal_ptr=&(*cal_iter);
+        }
+
+        if(NULL == max_allowed_cal_ptr) {
+            std::ostringstream oss;
+            oss << "ERROR: reached anomalous state during search for most likely exon alignment.\n";
+            oss << "\tread_segment: " << rseg << "\n";
+            oss << "\tCandidate alignments:\n";
+            for(citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter,++cal_index) {
+                oss << *cal_iter << "\n";
             }
             max_allowed_path_lnp=cal_set_path_lnp[n];
             max_allowed_cal_ptr=&(*i);
