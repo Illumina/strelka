@@ -25,11 +25,6 @@
 
 
 
-// Provides the bounds of an alignment
-//
-// note that for normal indel intersection test leading/trailing
-// indels will be missed if using this range
-//
 known_pos_range
 get_strict_alignment_range(const alignment& al) {
 
@@ -40,9 +35,6 @@ get_strict_alignment_range(const alignment& al) {
 
 
 
-// Provides the bounds of an alignment when edge indels
-// are converted to match, but not soft-clip segments:
-//
 known_pos_range
 get_soft_clip_alignment_range(const alignment& al) {
 
@@ -58,9 +50,6 @@ get_soft_clip_alignment_range(const alignment& al) {
 
 
 
-// Provides the bounds of an alignment when edge indels and soft clip
-// are converted to match.
-//
 known_pos_range
 get_alignment_range(const alignment& al) {
 
@@ -74,12 +63,8 @@ get_alignment_range(const alignment& al) {
     return known_pos_range(begin_pos,end_pos);
 }
 
-// Provides the largest reasonable bounds of an alignment by including
-// any leading and trailing edge sequence and requiring that the end
-// of the alignment range is equal to at least the
-// orig_start+read_length and the start of the alignment range is
-// equal to at least orig_end-read_length:
-//
+
+
 known_pos_range
 get_alignment_zone(const alignment& al,
                    const unsigned seq_length) {
@@ -94,9 +79,6 @@ get_alignment_zone(const alignment& al,
 
 
 
-/// Return true if the indel is in this alignment or is consistent with
-/// an edge-insertion in the alignment.
-///
 bool
 is_indel_in_alignment(const alignment& al,
                       const indel_key& ik,
