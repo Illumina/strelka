@@ -1113,10 +1113,7 @@ score_candidate_alignments(const starling_options& client_opt,
             for(citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter,++cal_index) {
                 oss << *cal_iter << "\n";
             }
-            max_allowed_path_lnp=cal_set_path_lnp[n];
-            max_allowed_cal_ptr=&(*i);
         }
-        assert(NULL != max_allowed_cal_ptr);
     }
 
     // go back through the the path_lnp values and produce a pool
@@ -1137,16 +1134,16 @@ score_candidate_alignments(const starling_options& client_opt,
     const candidate_alignment* smooth_cal_ptr(NULL);
     cal_pool_t smooth_cal_pool; // set of alignments within smooth-range of max path score
 
-    unsigned n(0);
-    for(citer i(i_begin); i!=i_end; ++i,++n) {
-        if((cal_set_path_lnp[n]+allowed_lnp_range) < max_allowed_path_lnp) continue;
-        if(is_pinned && (! is_cal_allowed[n])) continue;
-        const candidate_alignment& ical(*i);
+    unsigned cal_index(0);
+    for(citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter,++cal_index) {
+        if((cal_set_path_lnp[cal_index]+allowed_lnp_range) < max_allowed_path_lnp) continue;
+        if(is_pinned && (! is_cal_allowed[cal_index])) continue;
+        const candidate_alignment& ical(*cal_iter);
         smooth_cal_pool.push_back(&ical);
         if((NULL==smooth_cal_ptr) ||
            (! is_first_cal_preferred(client_opt,isync,
                                      *smooth_cal_ptr,ical))) {
-            smooth_path_lnp=cal_set_path_lnp[n];
+            smooth_path_lnp=cal_set_path_lnp[cal_index];
             smooth_cal_ptr=&ical;
         }
     }
