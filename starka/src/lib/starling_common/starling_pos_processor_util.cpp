@@ -406,8 +406,7 @@ common_xfix_length(const std::string& s1,
 
 
 
-// handles genomic read alignments -- reads are parsed, their indels
-// are extracted and buffered, and the reads themselves are buffered
+// handles candidate indel input from a vcf record
 //
 void
 process_candidate_indel(const vcf_record& vcf_indel,

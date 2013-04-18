@@ -89,7 +89,7 @@ struct indel_synchronizer {
     // ctor for multi-sample synced cases:
     //
     // sample_no is the sample that is 'primary'
-    // for this syncronizer.
+    // for this synchronizer.
     //
     indel_synchronizer(const indel_sync_data& isd,
                        const sample_id_t sample_no)
