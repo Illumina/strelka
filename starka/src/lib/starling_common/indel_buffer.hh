@@ -29,10 +29,10 @@
 //
 
 
-// holds the complete set of candidate indels in buffer
-//
-// TODO make structure more efficient by only holding right-side keys for deletions
-//
+/// holds the complete set of candidate indels in buffer
+///
+/// TODO make structure more efficient by only holding right-side keys for deletions
+///
 struct indel_buffer {
 
     typedef indel_data idata_value_t;
@@ -79,16 +79,16 @@ struct indel_buffer {
         return ((i==_idata.end()) ? NULL : &(i->second) );
     }
 
-    // returns true if this indel is novel to the buffer
-    //
-    // is_shared = true is used for indels from other samples where
-    // the candidate indel pool is to be synchronized between
-    // samples. With this option the  function does add read or contig id's to
-    // indel_data.
-    //
-    // is_repeat_obs - true if this id is already entered in the indel data
-    //                 for its sample, this is both read and set
-    //
+    /// \return true if this indel is novel to the buffer
+    ///
+    /// \param is_shared true is used for indels from other samples where
+    /// the candidate indel pool is to be synchronized between
+    /// samples. With this option the  function does add read or contig id's to
+    /// indel_data.
+    ///
+    /// \param is_repeat_obs true if this id is already entered in the indel data
+    ///                 for its sample, this is both read and set
+    ///
     bool
     insert_indel(const indel_observation& obs,
                  const bool is_shared,
