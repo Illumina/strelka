@@ -307,20 +307,67 @@ bool
 is_segment_swap_start(const path_t& apath,
                       const unsigned i);
 
-// test if alignment has not match:
+// test if alignment has no match:
 bool
 is_apath_floating(const path_t& apath);
 
-// test that:
-// 1) clipping only occurs on the edge
-// 2) delete and skip cannot occur on edge
-// 3) no unknown segments
-// 4) no repeated segments
-// 5) must contain at least one match segment
-//
+
+namespace ALIGN_ISSUE {
+    enum issue_t {
+        NONE,
+        CLIPPING,
+        EDGE_DELETE,
+        EDGE_SKIP,
+        UNKNOWN_SEGMENT,
+        REPEATED_SEGMENT,
+        FLOATING,
+        LENGTH
+    };
+
+    inline
+    const char*
+    description(const issue_t i) {
+        switch(i){
+        case CLIPPING: return "alignment contains invalid clipping";
+        case EDGE_DELETE: return "deletion on alignment edge";
+        case EDGE_SKIP: return "skip on alignment edge";
+        case UNKNOWN_SEGMENT: return "unknown segment in alignment";
+        case REPEATED_SEGMENT: return "alignment contains repeated segment";
+        case FLOATING: return "alignment contains no match segments";
+        case LENGTH: return "alignment length does not match read length";
+        default: return "no error";
+        }
+    }
+}
+
+
+/// Take a shot at the relatively simple stuff:
+///
+/// 1) clipping only occurs on the edge and hardclip must occur outside of soft-clip
+/// 2) delete and skip cannot occur on edge
+///   2a) delete and skip cannot occur with only insert and clip connecting them to edge
+/// 3) no unknown segments
+/// 4) no repeated segments
+///      Note this might semi-legitimately occur where padding is stripped out of an alignment.
+/// 5) must contain at least one match segment
+///
+ALIGN_ISSUE::issue_t
+get_apath_invalid_type(const path_t& path,
+                       const unsigned seq_length);
+
+/// if is_apath_invalid fails, this supplies an error string
+std::string
+get_apath_invalid_reason(const path_t& apath,
+                         const unsigned seq_length);
+
+/// simple boolean call to the invalid alignment typer.
+inline
 bool
 is_apath_invalid(const path_t& apath,
-                 const unsigned seq_length);
+                 const unsigned seq_length) {
+
+    return (ALIGN_ISSUE::NONE != get_apath_invalid_type(apath,seq_length));
+}
 
 // check for conditions on an otherwise valid path which starling
 // does not handle:

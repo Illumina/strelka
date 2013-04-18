@@ -319,16 +319,13 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 
     if(is_apath_invalid(al.path,seq_len)) {
         std::ostringstream oss;
-        oss << "ERROR: alignment path is invalid or does not correspond to given sequence length.\n"
-            << "\tsequence length: " << seq_len << "\n"
-            << "\talignment path: " << apath_to_cigar(al.path) << "\n"
-            << "\texpected alignment path length: " << apath_read_length(al.path) << "\n";
+        oss << "ERROR: Can't handle alignment path '" << apath_to_cigar(al.path) << "' -- " << get_apath_invalid_reason(al.path,seq_len) << "\n";
         throw blt_exception(oss.str().c_str());
     }
 
     if(is_apath_starling_invalid(al.path)) {
         std::ostringstream oss;
-        oss << "ERROR: can't handle alignment path: " << apath_to_cigar(al.path) << "\n";
+        oss << "ERROR: can't handle alignment path '" << apath_to_cigar(al.path) << "'\n";
         throw blt_exception(oss.str().c_str());
     }
 

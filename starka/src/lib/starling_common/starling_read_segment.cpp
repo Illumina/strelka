@@ -151,7 +151,7 @@ is_valid() const {
 
     if(not rseg.genome_align().empty()) {
         const ALIGNPATH::path_t path(rseg.genome_align().path);
-        if(is_apath_invalid(path,rs) or
+        if(is_apath_invalid(path,rs) ||
            is_apath_starling_invalid(path)) return false;
     }
 
@@ -160,7 +160,7 @@ is_valid() const {
     cat::const_iterator i(ct.begin()),i_end(ct.end());
     for(; i!=i_end; ++i) {
         const ALIGNPATH::path_t path(i->second.path);
-        if(is_apath_invalid(path,rs) or
+        if(is_apath_invalid(path,rs) ||
            is_apath_starling_invalid(path)) return false;
     }
     return true;
