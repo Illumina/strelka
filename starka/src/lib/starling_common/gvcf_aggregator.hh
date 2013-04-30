@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __GVCF_AGGREGATOR_HH
-#define __GVCF_AGGREGATOR_HH
+#pragma once
 
 
 #include "starling_common/gvcf_block_site_record.hh"
@@ -41,7 +40,6 @@ struct gvcf_deriv_options {
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
-
 struct gvcf_aggregator {
 
     gvcf_aggregator(const starling_options& opt,
@@ -138,5 +136,3 @@ private:
     site_info _empty_site;
 };
 
-
-#endif
