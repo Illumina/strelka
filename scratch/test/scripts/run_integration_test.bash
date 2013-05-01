@@ -181,7 +181,8 @@ mkdir -p $starling_results_dir
 printf "Starting Starling test\n" 1>&2
 start_time=$(date +%s)
 
-$starka_bin/starling2 \
+starling_command() {
+    echo $starka_bin/starling2 \
 --gvcf-min-gqx 30 --gvcf-max-snv-strand-bias 10 --gvcf-max-indel-ref-repeat 8 -min-qscore 17 \
 -min-vexp 0.25 -max-window-mismatch 2 20 -max-indel-size 50 -genome-size 2861343702 \
 -clobber -min-single-align-score 20 -min-paired-align-score 20 -bsnp-ssd-no-mismatch 0.35 -bsnp-ssd-one-mismatch 0.6 \
@@ -189,8 +190,11 @@ $starka_bin/starling2 \
 --chrom-depth-file $sample1_bam.depth \
 -bam-file $sample1_bam \
 -samtools-reference $ref \
--bam-seq-name chr15 -report-range-begin 84000000 -report-range-end 86000000 \
->| $workspace_dir/starling.log 2>| $workspace_dir/starling.log2
+-bam-seq-name chr15 -report-range-begin 84000000 -report-range-end 86000000
+}
+
+$(starling_command) >| $workspace_dir/starling.log 2>| $workspace_dir/starling.log2
+
 #-bam-seq-name chr15 -report-range-begin 85046000 -report-range-end 85047000 >| log 2>| log2
 ##reference=file:///illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
 check_exit Starling $?
@@ -213,7 +217,8 @@ mkdir -p $strelka_results_dir
 
 start_time=$(date +%s)
 
-$starka_bin/strelka2 \
+strelka_command() {
+    echo $starka_bin/strelka2 \
 -clobber -filter-unanchored -min-paired-align-score 20 \
 -min-single-align-score 10 -min-qscore 0 \
 -max-window-mismatch 3 20 -print-used-allele-counts -max-indel-size 50 -indel-nonsite-match-prob 0.5 \
@@ -229,8 +234,10 @@ $starka_bin/strelka2 \
 -bam-file $sample1_bam \
 --tumor-bam-file $sample2_bam \
 -samtools-reference $ref \
--bam-seq-name chr15 -report-range-begin 84000000 -report-range-end 86000000 \
->| $workspace_dir/strelka.log 2>| $workspace_dir/strelka.log2
+-bam-seq-name chr15 -report-range-begin 84000000 -report-range-end 86000000
+}
+
+$(strelka_command) >| $workspace_dir/strelka.log 2>| $workspace_dir/strelka.log2
 
 check_exit Strelka $?
 
@@ -241,3 +248,16 @@ check_time Strelka $strelka_elapsed_time $strelka_expected_time
 
 diff_dirs Strelka $strelka_results_dir $strelka_expected_dir
 
+
+# add valgrind tests:
+valgrind_prefix() {
+    echo valgrind --error-exitcode=1 --tool=memcheck 
+}
+
+#printf "Starting Starling valgrind test\n" 1>&2
+#$(valgrind_prefix) $(starling_command) >| $workspace_dir/starling.valgrind.log 2>| $workspace_dir/starling.valgrind.log2
+#check_exit "Starling valgrind" $?
+
+#printf "Starting Strelka valgrind test\n" 1>&2
+#$(valgrind_prefix) $(strelka_command) >| $workspace_dir/strelka.valgrind.log 2>| $workspace_dir/strelka.valgrind.log2
+#check_exit "Strelka valgrind" $?
