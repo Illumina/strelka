@@ -377,6 +377,8 @@ bool
 is_site_record_blockable(const gvcf_options& opt,
                          const site_info& si) {
 
+    if(! opt.is_block_compression) return false;
+
     if(si.dgt.is_snp) return false;
 
     if(si.ref!='N') {

@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __GVCF_BLOCK_SITE_RECORD_HH
-#define __GVCF_BLOCK_SITE_RECORD_HH
+#pragma once
 
 
 #include "blt_util/stream_stat.hh"
@@ -40,7 +39,7 @@ struct gvcf_block_site_record {
         block_dpf.reset();
     }
 
-    // determine if the site could be joined this block:
+    // determine if the site could be joined to this block:
     bool
     test(const site_info& si) const;
 
@@ -59,6 +58,3 @@ struct gvcf_block_site_record {
     //stream_stat _blockMQ;
 };
 
-
-
-#endif

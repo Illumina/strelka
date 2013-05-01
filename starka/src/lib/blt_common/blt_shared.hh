@@ -14,8 +14,7 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __BLT_SHARED_HH
-#define __BLT_SHARED_HH
+#pragma once
 
 #include "blt_util/blt_types.hh"
 #include "blt_util/pos_range.hh"
@@ -57,6 +56,7 @@ struct gvcf_options {
         , max_snv_hpol(-1)
         , is_max_ref_rep(true)
         , max_ref_rep(-1)
+        , is_block_compression(true)
         , block_label("BLOCKAVG_min30p3a")
         , block_frac_tol(.3)
         , block_abs_tol(3)
@@ -83,6 +83,7 @@ struct gvcf_options {
     int max_ref_rep;
 
     // blocking scheme:
+    bool is_block_compression;
     std::string block_label;
     double block_frac_tol;
     int block_abs_tol;
@@ -399,4 +400,3 @@ struct blt_read_counts {
 };
 
 
-#endif
