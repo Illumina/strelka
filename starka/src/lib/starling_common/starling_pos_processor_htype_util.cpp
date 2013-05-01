@@ -278,15 +278,15 @@ htype_buffer::
 pos_range_iter(const pos_t begin_pos,
                const pos_t end_pos) {
 
-    typedef htype_element key_t;
+    typedef htype_element hkey_t;
 
-    const key_t end_range_key(end_pos);
+    const hkey_t end_range_key(end_pos);
     const iterator end(_hdata.lower_bound(end_range_key));
-    const key_t begin_range_key(begin_pos);
+    const hkey_t begin_range_key(begin_pos);
     iterator begin(_hdata.lower_bound(begin_range_key));
-    key_t left_begin_key(end_range_key);
+    hkey_t left_begin_key(end_range_key);
     if((begin!=_hdata.end()) && (begin->first<left_begin_key)) left_begin_key=begin->first;
-    const key_t begin_key(leftmost_rightkey_pos(begin_range_key.pos,end_range_key.pos));
+    const hkey_t begin_key(leftmost_rightkey_pos(begin_range_key.pos,end_range_key.pos));
     if(begin_key < left_begin_key) begin=_hdata.find(begin_key);
     return std::make_pair(begin,end);
 }
