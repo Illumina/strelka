@@ -183,9 +183,13 @@ skip_to_pos(const pos_t target_pos) {
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
         if(0 != _indel_buffer_size) continue;
-        assert(_block.count!=0);
-        _block.count += (target_pos-_head_pos);
-        _head_pos=target_pos;
+        if(_opt.gvcf.is_block_compression) {
+            assert(_block.count!=0);
+            _block.count += (target_pos-_head_pos);
+            _head_pos=target_pos;
+        } else {
+            _head_pos++;
+        }
     }
 }
 
