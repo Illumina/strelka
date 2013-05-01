@@ -56,10 +56,10 @@ struct gvcf_options {
         , max_snv_hpol(-1)
         , is_max_ref_rep(true)
         , max_ref_rep(-1)
-        , is_block_compression(true)
         , block_label("BLOCKAVG_min30p3a")
         , block_frac_tol(.3)
         , block_abs_tol(3)
+        , is_block_compression(true)
         , block_max_nonref(.2)
     {}
 
@@ -83,10 +83,14 @@ struct gvcf_options {
     int max_ref_rep;
 
     // blocking scheme:
-    bool is_block_compression;
+    //
+    // NOTE: bool inserted in this line causes some type of struct initialization error in gcc (4.1 and 4.7)... in blt_options and starling options
+    //       as if the struct was sliced. This smells like a compiler errro but those should be rare... possible other struct layout error here?
+    //
     std::string block_label;
     double block_frac_tol;
     int block_abs_tol;
+    bool is_block_compression;
 
     double block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
 };
