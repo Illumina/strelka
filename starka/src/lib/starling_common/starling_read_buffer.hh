@@ -65,6 +65,8 @@ struct starling_read_buffer : private boost::noncopyable {
 
     ~starling_read_buffer();
 
+    /// \return <was the read added?, what is the id in the read buffer? >
+    ///
     // note pos_processor is responsible for checking that the
     // position of the read is not too low -- the read_buffer itself
     // is agnostic to the data management process:

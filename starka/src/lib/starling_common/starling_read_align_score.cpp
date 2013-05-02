@@ -268,11 +268,11 @@ score_candidate_alignment(const starling_options& opt,
 #endif
 
         } else if(ps.type==SOFT_CLIP) {
-            // we rely on candidate alignment generator to supress
+            // we rely on candidate alignment generator to suppress
             // soft-clipping so this routine does not penalizing
             // soft-clip states for now... the complication is that a
             // soft-clip alignment will always do better than its
-            // unclipped equivilent. The rationalle right now is that
+            // unclipped equivalent. The rationale right now is that
             // if a user has soft-clipping on their input reads, they
             // want it to stay there.
             //

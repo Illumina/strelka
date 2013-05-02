@@ -21,6 +21,8 @@
 #include "blt_util/blt_exception.hh"
 #include "starling_common/starling_shared.hh"
 
+#include "boost/foreach.hpp"
+
 #include <cassert>
 
 #include <sstream>
@@ -143,13 +145,14 @@ create_mismatch_filter_map(const blt_options& client_opt,
     for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(al.path[i]);
 
+        const bool is_edge_segment((i<ends.first) || (i>ends.second));
+
         if       (ps.type == INSERT) {
-            const bool is_edge_insert((i<ends.first) || (i>ends.second));
-            if(! is_edge_insert) dd.inc(read_head_pos,ps.length);
+            if(! is_edge_segment) dd.inc(read_head_pos,ps.length);
             read_head_pos += ps.length;
 
         } else if(ps.type == DELETE) {
-            dd.inc(read_head_pos,0);
+            if(! is_edge_segment) dd.inc(read_head_pos,0);
             ref_head_pos += ps.length;
 
         } else if(ps.type == MATCH) {
@@ -212,9 +215,7 @@ get_valid_alignment_range(const alignment& al,
 
     using namespace ALIGNPATH;
 
-    const unsigned as(al.path.size());
-    for(unsigned i(0); i<as; ++i) {
-        const path_segment& ps(al.path[i]);
+    BOOST_FOREACH(const path_segment& ps, al.path) {
 
         if       ((ps.type == INSERT) || (ps.type == SOFT_CLIP)) {
             if(ps.type == INSERT) {
@@ -224,8 +225,14 @@ get_valid_alignment_range(const alignment& al,
             read_head_pos += ps.length;
 
         } else if(ps.type == DELETE) {
-            fwd_read_score[read_head_pos-1] += mismatch_score;
-            rev_read_score[read_head_pos] += mismatch_score;
+
+            if(read_head_pos > 0) { // filter out leading deletions:
+                fwd_read_score[read_head_pos-1] += mismatch_score;
+            }
+
+            if(read_head_pos < read_size) { // filter out trailing deletions
+                rev_read_score[read_head_pos] += mismatch_score;
+            }
             ref_head_pos += ps.length;
 
         } else if(ps.type == MATCH) {
