@@ -17,8 +17,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef ISTREAM_LINE_SPLITTER_HH__
-#define ISTREAM_LINE_SPLITTER_HH__
+
+#pragma once
 
 #include <iosfwd>
 
@@ -26,7 +26,7 @@
 struct istream_line_splitter {
 
     istream_line_splitter(std::istream& is,
-                          const unsigned line_buf_size=4096,
+                          const unsigned line_buf_size=8*1024,
                           const char word_seperator='\t',
                           const unsigned max_word=0)
         : _is(is)
@@ -37,7 +37,7 @@ struct istream_line_splitter {
         , _max_word(max_word)
         , _buf(new char[_buf_size]) {
 
-        if((0==_max_word) || (MAX_WORD_COUNT < _max_word)) {
+        if((0==_max_word) || (MAX_WORD_COUNT < _max_word)){
             _max_word=MAX_WORD_COUNT;
         }
     }
@@ -47,17 +47,26 @@ struct istream_line_splitter {
     unsigned
     n_word() const { return _n_word; }
 
-    void
-    dump(std::ostream& os) const;
-
     /// returns false for regular end of input:
     bool
     parse_line();
+
+    // recreates the line before parsing
+    void
+    write_line(std::ostream& os) const;
+
+    // debug output, which provides line number and other info before calling write_line
+    void
+    dump(std::ostream& os) const;
 
 
     enum { MAX_WORD_COUNT = 50 };
     char* word[MAX_WORD_COUNT];
 private:
+
+    void
+    increase_buffer_size();
+
     std::istream& _is;
     unsigned _line_no;
     unsigned _n_word;
@@ -70,19 +79,19 @@ private:
 
 
 #if 0
-{   //usage example:
+{ //usage example:
     istream_line_splitter dparse(data_is);
 
     while(dparse.parse_line()) {
         static const unsigned col_count(46);
-        if(dparse.n_word()!=col_count) {
+        if(dparse.n_word()!=col_count){
             std::ostringstream oss;
             oss << "ERROR: unexpected number of columns in paired export line:\n\n";
             dparse.dump(oss);
             throw blt_exception(oss.str().c_str());
         }
-
-        for(unsigned i(1); (i+1)<col_count; ++i) {
+        
+        for(unsigned i(1);(i+1)<col_count;++i){
             dparse.word[i][strlen(dparse.word[i])] = sep;
         }
         const char* nocompress_segment(dparse.word[0]);
@@ -94,4 +103,3 @@ private:
 #endif
 
 
-#endif
