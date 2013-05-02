@@ -66,10 +66,13 @@ STAR_OBJS := $(patsubst %.cpp,%.o, $(wildcard lib/starling/*.cpp))
 
 .PHONY: all build clean install test
 
+# not really phony, but we want to force a check of whether source files are newer than lib:
+.PHONY: $(SHARED_CXX_LIB)
+
 
 all: build
 
-build: cppcheck.done $(STARKA_PROGRAMS)
+build: $(STARKA_PROGRAMS)
 
 $(SHARED_CXX_LIB) :
 	$(MAKE) -C $(dir $@) $(notdir $@)
@@ -77,11 +80,11 @@ $(SHARED_CXX_LIB) :
 install: build
 	cp $(STARKA_PROGRAMS) $(BIN_DIR)
 
-test: build
+test: build cppcheck.done
 	$(MAKE) -C lib $@
 
 cppcheck.done: $(STARKA_PROGRAMS)
-	@echo "Runnning cppcheck" && \
+	@echo "Running cppcheck" && \
 	$(CURDIR)/run_cppcheck.bash
 
 $(STARKA_PROGRAMS): LDLIBS += -lboost_program_options
