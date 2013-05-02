@@ -39,5 +39,130 @@ BOOST_AUTO_TEST_CASE( test_indel_intersect_deletion ) {
 }
 
 
+
+static
+bool
+test_single_intersect_case(const indel_key& ik,
+                           const bool expect) {
+
+    // test case represents a 10-base alignment from 10-20 (1-indexed range)
+    static const known_pos_range tpr(9,20);
+
+    return (expect==is_range_intersect_indel_breakpoints(tpr,ik));
+}
+
+
+BOOST_AUTO_TEST_CASE( test_range_intersect_delete ) {
+
+    static const INDEL::index_t itype(INDEL::DELETE);
+
+    // simple interior case:
+    BOOST_CHECK(test_single_intersect_case(indel_key(14,itype,1),true));
+
+    // left-side edge cases:
+    BOOST_CHECK(test_single_intersect_case(indel_key(8,itype,1),false));
+    BOOST_CHECK(test_single_intersect_case(indel_key(9,itype,1),true));
+
+    // right-side edge cases:
+    BOOST_CHECK(test_single_intersect_case(indel_key(19,itype,1),true));
+    BOOST_CHECK(test_single_intersect_case(indel_key(20,itype,1),false));
+}
+
+
+BOOST_AUTO_TEST_CASE( test_range_intersect_insert ) {
+
+    static const INDEL::index_t itype(INDEL::INSERT);
+
+    // simple interior case:
+    BOOST_CHECK(test_single_intersect_case(indel_key(14,itype,1),true));
+
+    // left-side edge cases:
+    BOOST_CHECK(test_single_intersect_case(indel_key(9,itype,1),false));
+    BOOST_CHECK(test_single_intersect_case(indel_key(10,itype,1),true));
+
+    // right-side edge cases:
+    BOOST_CHECK(test_single_intersect_case(indel_key(19,itype,1),true));
+    BOOST_CHECK(test_single_intersect_case(indel_key(20,itype,1),false));
+}
+
+BOOST_AUTO_TEST_CASE( test_range_intersect_swap ) {
+
+    static const INDEL::index_t itype(INDEL::SWAP);
+
+    // simple interior case:
+    BOOST_CHECK(test_single_intersect_case(indel_key(14,itype,1,1),true));
+
+    // left-side edge cases:
+    BOOST_CHECK(test_single_intersect_case(indel_key(8,itype,1,1),false));
+    BOOST_CHECK(test_single_intersect_case(indel_key(9,itype,1,1),true));
+
+    // right-side edge cases:
+    BOOST_CHECK(test_single_intersect_case(indel_key(19,itype,1,1),true));
+    BOOST_CHECK(test_single_intersect_case(indel_key(20,itype,1,1),false));
+}
+
+
+
+static
+bool
+test_single_adjacent_case(const indel_key& ik,
+                           const bool expect) {
+
+    // test case represents a 10-base alignment from 10-20 (1-indexed range)
+    static const known_pos_range tpr(9,20);
+
+    return (expect==is_range_adjacent_indel_breakpoints(tpr,ik));
+}
+
+
+BOOST_AUTO_TEST_CASE( test_range_adjacent_delete ) {
+
+    static const INDEL::index_t itype(INDEL::DELETE);
+
+    // simple interior case:
+    BOOST_CHECK(test_single_adjacent_case(indel_key(14,itype,1),true));
+
+    // left-side edge cases:
+    BOOST_CHECK(test_single_adjacent_case(indel_key(7,itype,1),false));
+    BOOST_CHECK(test_single_adjacent_case(indel_key(8,itype,1),true));
+
+    // right-side edge cases:
+    BOOST_CHECK(test_single_adjacent_case(indel_key(20,itype,1),true));
+    BOOST_CHECK(test_single_adjacent_case(indel_key(21,itype,1),false));
+}
+
+
+BOOST_AUTO_TEST_CASE( test_range_adjacent_insert ) {
+
+    static const INDEL::index_t itype(INDEL::INSERT);
+
+    // simple interior case:
+    BOOST_CHECK(test_single_adjacent_case(indel_key(14,itype,1),true));
+
+    // left-side edge cases:
+    BOOST_CHECK(test_single_adjacent_case(indel_key(8,itype,1),false));
+    BOOST_CHECK(test_single_adjacent_case(indel_key(9,itype,1),true));
+
+    // right-side edge cases:
+    BOOST_CHECK(test_single_adjacent_case(indel_key(20,itype,1),true));
+    BOOST_CHECK(test_single_adjacent_case(indel_key(21,itype,1),false));
+}
+
+BOOST_AUTO_TEST_CASE( test_range_adjacent_swap ) {
+
+    static const INDEL::index_t itype(INDEL::SWAP);
+
+    // simple interior case:
+    BOOST_CHECK(test_single_adjacent_case(indel_key(14,itype,1,1),true));
+
+    // left-side edge cases:
+    BOOST_CHECK(test_single_adjacent_case(indel_key(7,itype,1,1),false));
+    BOOST_CHECK(test_single_adjacent_case(indel_key(8,itype,1,1),true));
+
+    // right-side edge cases:
+    BOOST_CHECK(test_single_adjacent_case(indel_key(20,itype,1,1),true));
+    BOOST_CHECK(test_single_adjacent_case(indel_key(21,itype,1,1),false));
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
