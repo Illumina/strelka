@@ -177,14 +177,14 @@ matchify_edge_insertion(const alignment& al) {
     al2.is_fwd_strand=al.is_fwd_strand;
     al2.pos=al.pos;
 
-    const std::pair<unsigned,unsigned> ends(get_nonclip_end_segments(al.path));
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
     const unsigned as(al.path.size());
     for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(al.path[i]);
-        const bool is_edge_segment((i==ends.first) || (i==ends.second));
+        const bool is_edge_segment((i<ends.first) || (i>ends.second));
         const bool is_clip_type(ps.type==INSERT);
         const bool is_edge_clip(is_edge_segment && is_clip_type);
-        if(is_clip_type && (i==ends.first)) al2.pos-=ps.length;
+        if(is_clip_type && (i<ends.first)) al2.pos-=ps.length;
         if(is_edge_clip || (ps.type==MATCH)) {
             if((! al2.empty()) && (al2.path.back().type==MATCH)) {
                 al2.path.back().length+=ps.length;
@@ -218,7 +218,7 @@ matchify_edge_soft_clip(const alignment& al) {
     al2.is_fwd_strand=al.is_fwd_strand;
     al2.pos=al.pos;
 
-    const std::pair<unsigned,unsigned> ends(get_nonclip_end_segments(al.path));
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
 
     const unsigned as(al.path.size());
     for(unsigned i(0); i<as; ++i) {
@@ -283,7 +283,7 @@ add_exemplar_alignment(const alignment& al,
     //
     const alignment* al_ptr(&al);
     alignment nsal;
-    if(is_edge_clipped(al.path)) {
+    if(is_edge_readref_len_segment(al.path)) {
         nsal=matchify_edge(al,is_preserve_soft_clip);
         al_ptr=&nsal;
     }

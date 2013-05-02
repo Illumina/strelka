@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __ALIGN_PATH_HH
-#define __ALIGN_PATH_HH
+#pragma once
 
 #include "blt_util/pos_range.hh"
 
@@ -239,11 +238,13 @@ apath_clip_adder(path_t& apath,
 bool
 apath_cleaner(path_t& apath);
 
+#if 0
 // Get the match descriptor segment numbers for the first and last
 // non-soft/hard clipped segments. Return total segment size on
 // error.
 std::pair<unsigned,unsigned>
 get_nonclip_end_segments(const path_t& apath);
+#endif
 
 // return the read coordinate range after clipping:
 pos_range
@@ -252,7 +253,7 @@ get_nonclip_range(const path_t& apath);
 // Get the match descriptor segment numbers for the first and last
 // match segments. Return total segment size on error.
 std::pair<unsigned,unsigned>
-get_match_end_segments(const path_t& apath);
+get_match_edge_segments(const path_t& apath);
 
 unsigned
 apath_exon_count(const path_t& apath);
@@ -289,13 +290,23 @@ private:
     unsigned _segment;
 };
 
-// is either edge of the alignment soft-clipped or hard-clipped?
+/// does the alignment contain any soft-clipped segments?
+bool
+is_soft_clipped(const path_t& apath);
+
+/// is either edge of the alignment soft-clipped or hard-clipped?
 bool
 is_clipped(const path_t& apath);
 
-// is either edge of the alignment soft-clipped or insert-clipped (optionally inside of a hard-clip)?
+/// does either edge of the alignment
+/// contain a segment which impacts read length or reference positions?
+/// (INSERT,DELETE,SKIP,SOFT_CLIP)
+///
+/// Note: "edge" is defined as any segment with match segments to only one side
+/// Note: edge HARD_CLIP, PAD, etc.. are ignored
+///
 bool
-is_edge_clipped(const path_t& apath);
+is_edge_readref_len_segment(const path_t& apath);
 
 // does alignment contain an adjacent insertion/deletion event?
 //
@@ -379,5 +390,3 @@ normalize_path();
 #endif
 }
 
-
-#endif

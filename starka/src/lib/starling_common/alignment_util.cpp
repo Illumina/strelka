@@ -92,7 +92,7 @@ is_indel_in_alignment(const alignment& al,
     unsigned path_index(0);
     unsigned read_offset(0);
     pos_t ref_head_pos(al.pos);
-    const std::pair<unsigned,unsigned> ends(get_nonclip_end_segments(al.path));
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
     const unsigned aps(path.size());
     while(path_index<aps) {
 
@@ -100,7 +100,7 @@ is_indel_in_alignment(const alignment& al,
 
         const path_segment& ps(path[path_index]);
 
-        const bool is_edge_segment((path_index==ends.first) || (path_index==ends.second));
+        const bool is_edge_segment((path_index<ends.first) || (path_index>ends.second));
         const bool is_edge_insert(is_edge_segment && (ps.type == INSERT));
 
         const bool is_swap_start(is_segment_swap_start(path,path_index));

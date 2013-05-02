@@ -331,7 +331,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 
     const rc_segment_bam_seq ref_bseq(ref);
 
-    const std::pair<unsigned,unsigned> ends(get_nonclip_end_segments(al.path));
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
 
     pos_range valid_pr;
     get_valid_alignment_range(al,ref_bseq,read_seq,valid_pr);
@@ -343,7 +343,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
     const unsigned aps(al.path.size());
     while(path_index<aps) {
         const path_segment& ps(al.path[path_index]);
-        const bool is_edge_segment((path_index==ends.first) || (path_index==ends.second));
+        const bool is_edge_segment((path_index<ends.first) || (path_index>ends.second));
         const bool is_edge_insert(is_edge_segment && (ps.type == INSERT));
 
         const bool is_swap_start(is_segment_swap_start(al.path,path_index));

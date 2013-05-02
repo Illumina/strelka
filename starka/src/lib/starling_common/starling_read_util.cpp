@@ -137,14 +137,14 @@ create_mismatch_filter_map(const blt_options& client_opt,
 
     using namespace ALIGNPATH;
 
-    const std::pair<unsigned,unsigned> ends(get_nonclip_end_segments(al.path));
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
 
     const unsigned as(al.path.size());
     for(unsigned i(0); i<as; ++i) {
         const path_segment& ps(al.path[i]);
 
         if       (ps.type == INSERT) {
-            const bool is_edge_insert((i<=ends.first) || (i>=ends.second));
+            const bool is_edge_insert((i<ends.first) || (i>ends.second));
             if(! is_edge_insert) dd.inc(read_head_pos,ps.length);
             read_head_pos += ps.length;
 

@@ -145,7 +145,7 @@ score_candidate_alignment(const starling_options& opt,
     unsigned read_offset(0);
     pos_t ref_head_pos(cal.al.pos);
 
-    const std::pair<unsigned,unsigned> ends(get_nonclip_end_segments(cal.al.path));
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(cal.al.path));
     const unsigned aps(cal.al.path.size());
     unsigned path_index(0);
     while(path_index<aps) {
@@ -215,9 +215,9 @@ score_candidate_alignment(const starling_options& opt,
             indel_key ik(ref_head_pos,INDEL::INSERT,ps.length);
 
             // check if this is an edge insertion:
-            if((path_index==ends.first) || (path_index==ends.second)) {
-                if(path_index==ends.first) { ik=cal.leading_indel_key; }
-                else                       { ik=cal.trailing_indel_key; }
+            if((path_index<ends.first) || (path_index>ends.second)) {
+                if(path_index<ends.first) { ik=cal.leading_indel_key; }
+                else                      { ik=cal.trailing_indel_key; }
                 assert(ik.type!=INDEL::NONE);
             }
 
@@ -235,7 +235,7 @@ score_candidate_alignment(const starling_options& opt,
             // insert_seq_head_pos accordingly:
             //
             pos_t insert_seq_head_pos(0);
-            if(path_index==ends.first) {
+            if(path_index<ends.first) {
                 insert_seq_head_pos=static_cast<int>(insert_bseq.size())-static_cast<int>(ps.length);
             }
 
