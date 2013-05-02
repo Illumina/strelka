@@ -24,7 +24,6 @@
 #include <algorithm>
 
 
-
 known_pos_range
 get_strict_alignment_range(const alignment& al) {
 
@@ -101,26 +100,27 @@ is_indel_in_alignment(const alignment& al,
         const path_segment& ps(path[path_index]);
 
         const bool is_edge_segment((path_index<ends.first) || (path_index>ends.second));
-        const bool is_edge_insert(is_edge_segment && (ps.type == INSERT));
 
         const bool is_swap_start(is_segment_swap_start(path,path_index));
 
         assert(! (ps.type == SKIP));
-        assert(! (is_edge_segment && (ps.type == DELETE)));
-        assert(! (is_edge_insert && is_swap_start));
+        assert(! (is_edge_segment && is_swap_start));
 
         unsigned n_seg(1); // number of path_segments consumed
-        if       (is_edge_insert) {
-            if(path_index==ends.first) {
-                if(      (ref_head_pos==ik.pos) &&
-                         (INDEL::BP_RIGHT==ik.type)) {
-                    read_indel_pr.set_end_pos(read_offset+ps.length);
-                    return true;
-                } else if((ref_head_pos==ik.right_pos()) &&
-                          ((INDEL::INSERT==ik.type) || (INDEL::SWAP==ik.type)) &&
-                          (ps.length <= ik.length)) {
-                    read_indel_pr.set_end_pos(read_offset+ps.length);
-                    return true;
+        if       (is_edge_segment) {
+            // only edge segment we use is insert:
+            if(ps.type == INSERT) {
+                if(path_index<ends.first) {
+                    if(      (ref_head_pos==ik.pos) &&
+                             (INDEL::BP_RIGHT==ik.type)) {
+                        read_indel_pr.set_end_pos(read_offset+ps.length);
+                        return true;
+                    } else if((ref_head_pos==ik.right_pos()) &&
+                              ((INDEL::INSERT==ik.type) || (INDEL::SWAP==ik.type)) &&
+                              (ps.length <= ik.length)) {
+                        read_indel_pr.set_end_pos(read_offset+ps.length);
+                        return true;
+                    }
                 }
 
             } else {
@@ -166,6 +166,37 @@ is_indel_in_alignment(const alignment& al,
     return false;
 }
 
+
+
+alignment
+remove_edge_deletions(const alignment& al,
+                      const bool is_remove_leading_edge,
+                      const bool is_remove_trailing_edge) {
+
+    using namespace ALIGNPATH;
+
+    alignment al2;
+    al2.is_fwd_strand=al.is_fwd_strand;
+    al2.pos=al.pos;
+
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
+    const unsigned as(al.path.size());
+    for(unsigned i(0); i<as; ++i) {
+        const path_segment& ps(al.path[i]);
+        const bool is_leading_edge_segment(i<ends.first);
+        const bool is_trailing_edge_segment(i>ends.second);
+        const bool is_target_type(ps.type==DELETE);
+        if(is_target_type &&
+           ((is_leading_edge_segment && is_remove_leading_edge) ||
+            (is_trailing_edge_segment && is_remove_trailing_edge))) {
+            if(i<ends.first) al2.pos += ps.length;
+        } else {
+            al2.path.push_back(ps);
+        }
+    }
+
+    return al2;
+}
 
 
 #if 0

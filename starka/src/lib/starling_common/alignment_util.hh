@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __ALIGNMENT_UTIL_HH
-#define __ALIGNMENT_UTIL_HH
+#pragma once
 
 
 #include "blt_util/pos_range.hh"
@@ -69,6 +68,15 @@ is_indel_in_alignment(const alignment& al,
                       const indel_key& ik,
                       pos_range& read_indel_pr);
 
+
+
+/// remove any edge deletions and properly adjust pos for leading deletions:
+alignment
+remove_edge_deletions(const alignment& al,
+                      const bool is_remove_leading_edge=true,
+                      const bool is_remove_trailing_edge=true);
+
+
 #if 0
 /// Shift all indels as far "to the left" as possible -- note that
 /// some indels may be lost. Returns true if the alignment was changed.
@@ -79,4 +87,3 @@ normalize_alignment(alignment& al,
                     const std::string& ref_seq);
 #endif
 
-#endif
