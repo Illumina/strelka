@@ -15,14 +15,16 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_ALIGN_LIMIT_H
-#define __STARLING_ALIGN_LIMIT_H
+#pragma once
 
 #include <vector>
 
 
-// Object which helps to control realignment complexity:
-//
+/// Object which helps to control realignment complexity.
+///
+/// complexity is restricted as a function of the number of
+/// indel candidates intersecting a read
+///
 struct starling_align_limit {
 
     starling_align_limit(const unsigned max_alignment_count);
@@ -39,7 +41,4 @@ struct starling_align_limit {
 private:
     std::vector<unsigned> _max_toggle;
 };
-
-
-#endif
 

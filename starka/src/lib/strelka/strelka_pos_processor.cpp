@@ -274,7 +274,7 @@ process_pos_indel_somatic(const pos_t pos) {
         assert(NULL != normal_id_ptr);
         const indel_data& normal_id(*normal_id_ptr);
 
-        if(normal_id.read_path_lnp.empty() and tumor_id.read_path_lnp.empty()) continue;
+        if(normal_id.read_path_lnp.empty() && tumor_id.read_path_lnp.empty()) continue;
 
         //bool is_indel(false);
 
@@ -334,9 +334,10 @@ process_pos_indel_somatic(const pos_t pos) {
                 const pos_t output_pos(indel_pos+1);
 
                 std::ostream& bos(*_client_io.somatic_indel_osptr());
-                bos << _chrom_name << "\t" << output_pos << "\t" << ".";
+                bos << _chrom_name << '\t'
+                    << output_pos << '\t' << '.';
                 write_somatic_indel_vcf_grid(sindel,iri,normal_isri,tumor_isri,bos);
-                bos << "\n";
+                bos << '\n';
 
                 _variant_print_pos.insert(indel_pos);
             }

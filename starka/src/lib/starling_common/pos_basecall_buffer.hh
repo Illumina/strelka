@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __POS_BASECALL_BUFFER_HH
-#define __POS_BASECALL_BUFFER_HH
+#pragma once
 
 #include "blt_common/snp_pos_info.hh"
 #include "blt_util/blt_types.hh"
@@ -112,5 +111,3 @@ private:
     pdata_t _pdata;
 };
 
-
-#endif
