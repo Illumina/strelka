@@ -26,6 +26,8 @@
 #include "blt_util/pos_range.hh"
 #include "starling_common/indel_util.hh"
 
+#include "boost/foreach.hpp"
+
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -36,6 +38,29 @@
 
 //#define DEBUG_ALIGN
 
+/// information associated with each candidate indel intersecting an alignment
+struct starling_align_indel_info {
+
+    starling_align_indel_info() :
+        is_present(false),
+        is_remove_only(false)
+    {}
+
+    bool is_present;
+    bool is_remove_only; // candidate can be toggled off during search but not added
+};
+
+
+
+std::ostream&
+operator<<(std::ostream& os, const starling_align_indel_info& ii){
+
+    os << "is_present: " << ii.is_present << " is_remove_only: " << ii.is_remove_only;
+    return os;
+}
+
+
+typedef std::map<indel_key,starling_align_indel_info> starling_align_indel_status;
 
 
 // Gets the lowest known min and highest known max.
@@ -415,6 +440,9 @@ make_start_pos_alignment(const pos_t ref_start_pos,
     assert(ref_start_pos>=0);
     assert(read_start_pos>=0);
 
+    // if true, this read contains a leading insert,swap,softclip,etc...
+    const bool is_leading_read(read_start_pos!=0);
+
     candidate_alignment cal;
     cal.al.pos=ref_start_pos;
     cal.al.is_fwd_strand=is_fwd_strand;
@@ -422,15 +450,11 @@ make_start_pos_alignment(const pos_t ref_start_pos,
     pos_t ref_head_pos(ref_start_pos);
     pos_t read_head_pos(read_start_pos);
 
-    indel_set_t::const_iterator i(indels.begin()),i_end(indels.end());
-
     path_t& apath(cal.al.path);
 
-    for(; i!=i_end; ++i) {
-        const indel_key& ik(*i);
+    BOOST_FOREACH(const indel_key& ik, indels) {
 
         // check that indel is a possible interception:
-        const bool is_leading_read(read_start_pos!=0);
         const pos_t swap_pos(ik.pos+ik.swap_dlength);
         if((swap_pos < ref_start_pos) || ((swap_pos == ref_start_pos) && (! is_leading_read))) continue;
 
@@ -535,6 +559,9 @@ get_end_pin_start_pos(const indel_set_t& indels,
     ref_start_pos=ref_end_pos;
     read_start_pos=read_end_pos;
 
+    // if true, read contains trailing indel, swap or open-ended event:
+    const bool is_trailing_read(read_end_pos != static_cast<pos_t>(read_length));
+
     bool is_first(true);
 
     // having trouble with normal reverse_iterator for this data
@@ -545,7 +572,6 @@ get_end_pin_start_pos(const indel_set_t& indels,
         const indel_key& ik(*i);
 
         // check that indel is a possible interception:
-        const bool is_trailing_read(read_end_pos != static_cast<pos_t>(read_length));
         if((ik.pos > ref_end_pos) || ((ik.pos==ref_end_pos) && (! is_trailing_read))) continue;
 
         const bool is_trailing_indel((ik.pos == ref_end_pos) && is_trailing_read);
@@ -578,9 +604,9 @@ get_end_pin_start_pos(const indel_set_t& indels,
             if(read_start_pos==0) return;
 
             if       (ik.type==INDEL::INSERT || ik.type==INDEL::SWAP) {
+                ref_start_pos -= ik.swap_dlength;
                 if(static_cast<pos_t>(ik.length) >= read_start_pos) return;
                 read_start_pos -= ik.length;
-                ref_start_pos -= ik.swap_dlength;
             } else if(ik.type==INDEL::DELETE) {
                 ref_start_pos -= ik.length;
             } else if(ik.type==INDEL::BP_RIGHT) {
@@ -609,9 +635,9 @@ struct mca_warnings {
 
 
 
-// Recursively build potential alignment paths and push them into the
-// candidate alignment set:
-//
+/// Recursively build potential alignment paths and push them into the
+/// candidate alignment set:
+///
 static
 void
 make_candidate_alignments(const starling_options& client_opt,
@@ -728,7 +754,7 @@ make_candidate_alignments(const starling_options& client_opt,
             max_read_indel_toggle=client_opt.max_read_indel_toggle;
         }
 
-        // a new stronger complexity limit:
+        // a new stronger complexity limit on search based on total candidate indels crossing the read:
         //
         {
             const int max_toggle(client_dopt.sal.get_max_toggle(indel_status_map.size()));
@@ -759,6 +785,7 @@ make_candidate_alignments(const starling_options& client_opt,
 
         for(siter i(i_begin); i!=i_end; ++i) { if(i->second) current_indels.insert(i->first); }
     }
+
     // a pin on either end of the alignment is not possible/sensible
     // if:
     //
@@ -773,8 +800,15 @@ make_candidate_alignments(const starling_options& client_opt,
         const pos_t ref_start_pos(cal.al.pos);
 
         const bool is_start_pos_delete_span(cindel.open_pos_range().is_pos_intersect(ref_start_pos));
-        const bool is_start_pos_insert_span(is_cindel_on && (cindel == cal.leading_indel_key));
-        const bool is_start_pin_valid(! (is_start_pos_delete_span || is_start_pos_insert_span));
+        const bool is_start_pos_indel_span(is_cindel_on && (cindel == cal.leading_indel_key));
+        const bool is_start_pin_valid(! (is_start_pos_delete_span || is_start_pos_indel_span));
+
+#ifdef DEBUG_ALIGN
+        std::cerr << "VARMIT togglling MCA depth: " << depth << "\n";
+        std::cerr << "VARMIT current indel: " << cindel;
+        std::cerr << "VARMIT current indel on?: " << is_cindel_on << "\n";
+        std::cerr << "VARMIT start-pin valid?: " << is_start_pin_valid << "\n";
+#endif
 
         if(is_start_pin_valid) {
             const pos_t read_start_pos(apath_read_lead_size(cal.al.path));
@@ -800,8 +834,15 @@ make_candidate_alignments(const starling_options& client_opt,
         const pos_t ref_end_pos(cal.al.pos+apath_ref_length(cal.al.path));
 
         const bool is_end_pos_delete_span(cindel.open_pos_range().is_pos_intersect(ref_end_pos-1));
-        const bool is_end_pos_insert_span(is_cindel_on && (cindel == cal.trailing_indel_key));
-        const bool is_end_pin_valid(! (is_end_pos_delete_span || is_end_pos_insert_span));
+        const bool is_end_pos_indel_span(is_cindel_on && (cindel == cal.trailing_indel_key));
+        const bool is_end_pin_valid(! (is_end_pos_delete_span || is_end_pos_indel_span));
+
+#ifdef DEBUG_ALIGN
+        std::cerr << "VARMIT togglling MCA depth: " << depth << "\n";
+        std::cerr << "VARMIT current indel: " << cindel;
+        std::cerr << "VARMIT current indel on?: " << is_cindel_on << "\n";
+        std::cerr << "VARMIT end-pin valid?: " << is_end_pin_valid << "\n";
+#endif
 
         if(is_end_pin_valid) {
             // work backwards from end_pos to get start_pos and
@@ -814,7 +855,7 @@ make_candidate_alignments(const starling_options& client_opt,
                                   ref_end_pos,read_end_pos,
                                   ref_start_pos,read_start_pos);
 
-            // gaurd against low-frequency circular chromosome event:
+            // guard against low-frequency circular chromosome event:
             if(ref_start_pos<0) {
                 warn.origin_skip=true;
             } else {
@@ -1233,6 +1274,39 @@ score_candidate_alignments_and_indels(const starling_options& opt,
 }
 
 
+/// Initialize a candidate alignment with edge indels set according
+/// to those in the input alignment
+///
+/// Normally we're worried about incomplete edge insertions.
+/// In this case load them on the cal edges.
+///
+void
+load_cal_with_edge_indels(const alignment& al,
+                         candidate_alignment& cal) {
+
+    using namespace ALIGNPATH;
+
+    cal.al=al;
+
+    pos_t ref_pos(al.pos);
+
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
+    const unsigned as(al.path.size());
+    for(unsigned i(0); i<as; ++i) {
+        const path_segment& ps(al.path[i]);
+        if((INSERT == ps.type) || (DELETE == ps.type)) {
+            INDEL::index_t itype;
+            if(INSERT == ps.type) { itype = INDEL::INSERT; }
+            else                  { itype = INDEL::DELETE; }
+            const indel_key ik(ref_pos,itype,ps.length);
+            if     (i<ends.first)  { cal.leading_indel_key = ik; }
+            else if(i>ends.second) { cal.trailing_indel_key = ik; }
+        }
+        if(is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
+    }
+}
+
+
 
 static
 void
@@ -1313,10 +1387,10 @@ get_exemplar_candidate_alignments(const starling_options& opt,
 #endif
 
     // to handle soft-clip and hard-clip in the genomic alignment, we take the
-    // soft-clip portion off of the alignment before entering
+    // soft and hard clip portion off of the alignment before entering
     // make_candidate_alignments, and add it back in afterwards.
     //
-    // TODO -- something less hacky to handle soft-clip
+    // TODO -- something less hacky to handle clipping
     //
     unsigned cal_read_length(read_length);
     unsigned hc_lead(0);
@@ -1368,7 +1442,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
 
 
 // search for optimal realignments of the read and score alternate
-// indel states in preperation for indel genotype calling
+// indel states in preparation for indel genotype calling
 //
 void
 realign_and_score_read(const starling_options& opt,
@@ -1409,11 +1483,8 @@ realign_and_score_read(const starling_options& opt,
     // Note that even though such alignments will not occur in BAM, they
     // can still be produced by grouper.
     //
-    {
-        const unsigned n_ex(exemplars.size());
-        for(unsigned i(0); i<n_ex; ++i) {
-            if(exemplars[i].pos<0) return;
-        }
+    BOOST_FOREACH(const alignment& al, exemplars) {
+        if(al.pos<0) return;
     }
 
     // run recursive alignment search starting from each discovery
@@ -1444,9 +1515,8 @@ realign_and_score_read(const starling_options& opt,
     std::set<candidate_alignment> cal_set;
     mca_warnings warn;
 
-    const unsigned n_ex(exemplars.size());
-    for(unsigned i(0); i<n_ex; ++i) {
-        get_exemplar_candidate_alignments(opt,dopt,rseg,isync,exemplars[i],warn,cal_set);
+    BOOST_FOREACH(const alignment& al, exemplars) {
+        get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,warn,cal_set);
     }
 
     assert(! cal_set.empty());
