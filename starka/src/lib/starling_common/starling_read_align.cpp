@@ -1346,18 +1346,16 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         indel_set_t cal_indels;
         get_alignment_indels(cal,opt.max_indel_size,cal_indels);
 
-        typedef indel_set_t::const_iterator siter;
-        const siter i_begin(cal_indels.begin());
-        const siter i_end(cal_indels.end());
-        for(siter i(i_begin); i!=i_end; ++i) {
-            if(indel_status_map.find(*i)==indel_status_map.end()) {
-                log_os << "ERROR: Exemplar alignment contains indel not found in the overlap indel set\n"
-                       << "\tIndel: " << *i
-                       << "Exemplar overlap set:\n";
-                dump_indel_status_map(indel_status_map,log_os);
-                exit(EXIT_FAILURE);
+        BOOST_FOREACH(const indel_key& ik, cal_indels) {
+            if(indel_status_map.find(ik)==indel_status_map.end()) {
+                std::ostringstream oss;
+                oss << "ERROR: Exemplar alignment contains indel not found in the overlap indel set\n"
+                    << "\tIndel: " << ik
+                    << "Exemplar overlap set:\n";
+                dump_indel_status_map(indel_status_map,oss);
+                throw blt_exception(oss.str().c_str());
             }
-            indel_status_map[*i] = true;
+            indel_status_map[ik] = true;
         }
     }
 

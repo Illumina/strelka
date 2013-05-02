@@ -1338,6 +1338,11 @@ pileup_read_segment(const read_segment& rseg,
         }
     }
 
+    // info used to determine filter certain deletions, as follows:
+    // any edge deletion is thrown away, unless it is next to an exon
+    const std::pair<bool,bool> edge_pins(rseg.get_segment_edge_pin());
+    const std::pair<unsigned,unsigned> edge_ends(ALIGNPATH::get_match_edge_segments(best_al.path));
+
     // alignment walkthough:
     pos_t ref_head_pos(best_al.pos);
     unsigned read_head_pos(0);
@@ -1423,16 +1428,21 @@ pileup_read_segment(const read_segment& rseg,
                            << "while processing read_position: " << (read_pos+1) << "\n";
                     throw;
                 }
-
             }
-        } else if(ps.type==DELETE) {
-            for(unsigned j(0); j<ps.length; ++j) {
-                const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
 
-                if(is_submapped) {
-                    insert_pos_submap_count(ref_pos,sample_no);
-                } else {
-                    insert_pos_spandel_count(ref_pos,sample_no);
+        } else if(ps.type==DELETE) {
+            const bool is_edge_deletion((i<edge_ends.first)  || (i>edge_ends.second));
+            const bool is_pinned_deletion(((i<edge_ends.first) && (edge_pins.first)) ||
+                                          ((i>edge_ends.second) && (edge_pins.second)));
+            if((! is_edge_deletion) || is_pinned_deletion) {
+                for(unsigned j(0); j<ps.length; ++j) {
+                    const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
+
+                    if(is_submapped) {
+                        insert_pos_submap_count(ref_pos,sample_no);
+                    } else {
+                        insert_pos_spandel_count(ref_pos,sample_no);
+                    }
                 }
             }
         }
