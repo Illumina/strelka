@@ -24,7 +24,7 @@ starling_output_name=Mother_S1_chr15.84M-86M.raw.genome.vcf
 starling_expected_dir=/bioinfoSD/csaunders/proj/starka/test/expected_results/starling
 starling_result=$starling_results_dir/$starling_output_name
 sample1_bam=/bioinfoSD/stanner/CephMother/Data/Intensities/BaseCalls/Alignment2/Mother_S1.bam
-ref=/illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFASTA/genome.fa
+test_reference=/illumina/scratch/iGenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
 
 
 # strelka test constants
@@ -126,6 +126,9 @@ END
 }
 
 
+if ! [ -f $test_reference ]; then
+    error "Can't find reference: $test_reference"
+fi
 
 #
 # 1. put all the mess in one place (can make this a temp directory later:
@@ -176,6 +179,10 @@ fi
 #
 # 3. test starling
 #
+big_start=84000000
+big_end=86000000
+small_start=84990000
+small_end=85010000
 
 mkdir -p $starling_results_dir
 
@@ -183,6 +190,8 @@ printf "Starting Starling test\n" 1>&2
 start_time=$(date +%s)
 
 starling_command() {
+    begin=$1
+    end=$2
     echo $starka_bin/starling2 \
 --gvcf-min-gqx 30 --gvcf-max-snv-strand-bias 10 --gvcf-max-indel-ref-repeat 8 -min-qscore 17 \
 -min-vexp 0.25 -max-window-mismatch 2 20 -max-indel-size 50 -genome-size 2861343702 \
@@ -190,12 +199,21 @@ starling_command() {
 --gvcf-file $starling_result \
 --chrom-depth-file $sample1_bam.depth \
 -bam-file $sample1_bam \
--samtools-reference $ref \
+-samtools-reference $test_reference \
 -realigned-read-file $workspace_dir/starling.realigned.bam \
--bam-seq-name chr15 -report-range-begin 84000000 -report-range-end 86000000
+-bam-seq-name chr15 -report-range-begin $begin -report-range-end $end
 }
 
-$(starling_command) >| $workspace_dir/starling.log 2>| $workspace_dir/starling.log2
+starling_command_big_interval() {
+    starling_command $big_start $big_end
+}
+
+starling_command_small_interval() {
+    starling_command $small_start $small_end
+}
+
+
+$(starling_command_big_interval) >| $workspace_dir/starling.log 2>| $workspace_dir/starling.log2
 
 #-bam-seq-name chr15 -report-range-begin 85046000 -report-range-end 85047000 >| log 2>| log2
 check_exit Starling $?
@@ -219,6 +237,8 @@ mkdir -p $strelka_results_dir
 start_time=$(date +%s)
 
 strelka_command() {
+    begin=$1
+    end=$2
     echo $starka_bin/strelka2 \
 -clobber -filter-unanchored -min-paired-align-score 20 \
 -min-single-align-score 10 -min-qscore 0 \
@@ -234,13 +254,22 @@ strelka_command() {
 --max-input-depth 10000 -genome-size 2861343702 \
 -bam-file $sample1_bam \
 --tumor-bam-file $sample2_bam \
--samtools-reference $ref \
+-samtools-reference $test_reference \
 -realigned-read-file $workspace_dir/strelka.realigned.normal.bam \
 --tumor-realigned-read-file $workspace_dir/strelka.realigned.normal.bam \
--bam-seq-name chr15 -report-range-begin 84000000 -report-range-end 86000000
+-bam-seq-name chr15 -report-range-begin $begin -report-range-end $end
 }
 
-$(strelka_command) >| $workspace_dir/strelka.log 2>| $workspace_dir/strelka.log2
+strelka_command_big_interval() {
+    strelka_command $big_start $big_end
+}
+
+strelka_command_small_interval() {
+    strelka_command $small_start $small_end
+}
+
+
+$(strelka_command_big_interval) >| $workspace_dir/strelka.log 2>| $workspace_dir/strelka.log2
 
 check_exit Strelka $?
 
@@ -258,9 +287,9 @@ valgrind_prefix() {
 }
 
 printf "Starting Starling valgrind test\n" 1>&2
-$(valgrind_prefix) $(starling_command) >| $workspace_dir/starling.valgrind.log 2>| $workspace_dir/starling.valgrind.log2
+$(valgrind_prefix) $(starling_command_small_interval) >| $workspace_dir/starling.valgrind.log 2>| $workspace_dir/starling.valgrind.log2
 check_exit "Starling valgrind" $?
 
 printf "Starting Strelka valgrind test\n" 1>&2
-$(valgrind_prefix) $(strelka_command) >| $workspace_dir/strelka.valgrind.log 2>| $workspace_dir/strelka.valgrind.log2
+$(valgrind_prefix) $(strelka_command_small_interval) >| $workspace_dir/strelka.valgrind.log 2>| $workspace_dir/strelka.valgrind.log2
 check_exit "Strelka valgrind" $?
