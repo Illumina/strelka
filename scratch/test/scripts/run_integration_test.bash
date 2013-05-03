@@ -35,9 +35,6 @@ strelka_expected_dir=/bioinfoSD/csaunders/proj/starka/test/expected_results/stre
 sample2_bam=/bioinfoSD/stanner/CephFather/Data/Intensities/BaseCalls/Alignment2/Father_S1.bam
 
 
-# tmp pointer
-starka_bin=/home/csaunders/devel/starka/scratch/starka-test/bin
-#starka_bin=/home/csaunders/devel/starka/starka/bin
 
 #
 # utility functions:
@@ -85,7 +82,7 @@ check_exit() {
 
 filter_variable_metadata() {
     awk '!/^##(fileDate|source_version|startTime|reference|cmdline)/' |\
-    awk '$2!~/(START_TIME|CMDLINE)/'
+    awk '$2!~/(START_TIME|CMDLINE|PROGRAM_VERSION)/'
 }
 
 
@@ -142,18 +139,17 @@ cd $workspace_dir
 # X. create starka tarball and compile (in progress):
 #
 
-starka_tarball_key=INSTALL
-starka_tarball_dir=starka-$starka_tarball_key
+starka_tarball_key=starka-master
+starka_tarball_dir=$starka_tarball_key
 starka_tarball_name=$starka_tarball_dir.tar.gz
 
-cat << END > /dev/null
 make_starka_tarball() {
     cd $workspace_dir
-    if [ -d TUNE ]; then rm -rf TUNE; fi
+    if [ -d $starka_tarball_dir ]; then rm -rf $starka_tarball_dir; fi
     git clone --recursive $starka_git_url
 
     (
-        cd TUNE
+        cd starka
         git checkout $starka_version
         cd scratch
         ./make_release_tarball.bash $starka_tarball_key
@@ -161,8 +157,13 @@ make_starka_tarball() {
     )
 }
 
-make_straka_tarball
-END
+make_starka_tarball
+tar -xzf $starka_tarball_name
+cd $starka_tarball_dir
+make -j4
+cd $workspace_dir
+
+starka_bin=$workspace_dir/$starka_tarball_dir/bin
 
 
 if ! [ -f $starka_bin/starling2 ]; then
@@ -197,7 +198,6 @@ starling_command() {
 $(starling_command) >| $workspace_dir/starling.log 2>| $workspace_dir/starling.log2
 
 #-bam-seq-name chr15 -report-range-begin 85046000 -report-range-end 85047000 >| log 2>| log2
-##reference=file:///illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
 check_exit Starling $?
 
 end_time=$(date +%s)
@@ -257,10 +257,10 @@ valgrind_prefix() {
     echo valgrind --error-exitcode=1 --tool=memcheck 
 }
 
-#printf "Starting Starling valgrind test\n" 1>&2
-#$(valgrind_prefix) $(starling_command) >| $workspace_dir/starling.valgrind.log 2>| $workspace_dir/starling.valgrind.log2
-#check_exit "Starling valgrind" $?
+printf "Starting Starling valgrind test\n" 1>&2
+$(valgrind_prefix) $(starling_command) >| $workspace_dir/starling.valgrind.log 2>| $workspace_dir/starling.valgrind.log2
+check_exit "Starling valgrind" $?
 
-#printf "Starting Strelka valgrind test\n" 1>&2
-#$(valgrind_prefix) $(strelka_command) >| $workspace_dir/strelka.valgrind.log 2>| $workspace_dir/strelka.valgrind.log2
-#check_exit "Strelka valgrind" $?
+printf "Starting Strelka valgrind test\n" 1>&2
+$(valgrind_prefix) $(strelka_command) >| $workspace_dir/strelka.valgrind.log 2>| $workspace_dir/strelka.valgrind.log2
+check_exit "Strelka valgrind" $?
