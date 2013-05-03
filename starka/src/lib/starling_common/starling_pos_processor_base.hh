@@ -21,8 +21,7 @@
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-#ifndef __STARLING_POS_PROCESSOR_BASE_H
-#define __STARLING_POS_PROCESSOR_BASE_H
+#pragma once
 
 
 #include "blt_common/adjust_joint_eprob.hh"
@@ -56,9 +55,15 @@ struct nploid_info;
 //get_influence_zone_size(const unsigned max_indel_size);
 
 
-// keep a single copy of this struct to reuse for every site to lower alloc costs:
+/// keep a single copy of this struct to reuse for every site to lower alloc costs:
 struct extra_position_data {
+    /// stores the column of basecalls actually used for snp-calling after the
+    /// mismatch density filter and other quality filters have been applied:
     snp_pos_info good_pi;
+
+    /// stores information on approximate qscore reductions implemented to represent
+    /// site-specific basecalling dependency, note this is not applied in somatic
+    /// calling:
     std::vector<float> dependent_eprob;
 };
 
@@ -521,6 +526,3 @@ protected:
     // a caching term used for gvcf:
     site_info _site_info;
 };
-
-
-#endif

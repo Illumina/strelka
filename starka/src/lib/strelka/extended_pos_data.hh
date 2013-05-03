@@ -15,13 +15,12 @@
 /// \author Chris Saunders
 ///
 
-
-#ifndef EXTENDED_POS_DATA_
-#define EXTENDED_POS_DATA_
+#pragma once
 
 
 #include "starling_common/starling_pos_processor_base.hh"
 
+#include "boost/foreach.hpp"
 
 
 #if 0
@@ -57,24 +56,22 @@ struct sample_pos_data {
         epd.good_pi.clear();
         epd.good_pi.ref_base = pi.ref_base;
 
-        const unsigned n_tier1_calls(pi.calls.size());
-        for(unsigned i(0); i<n_tier1_calls; ++i) {
-            n_calls++;
-            if(pi.calls[i].is_call_filter) {
-                if(not (is_include_tier2 and
-                        pi.calls[i].is_tier_specific_call_filter)) {
+        n_calls += pi.calls.size();
+        BOOST_FOREACH(const base_call& bc, pi.calls) {
+            if(bc.is_call_filter) {
+                if(! (is_include_tier2 &&
+                      bc.is_tier_specific_call_filter)) {
                     continue;
                 }
             }
-            epd.good_pi.calls.push_back(pi.calls[i]);
+            epd.good_pi.calls.push_back(bc);
         }
 
         if(is_include_tier2) {
-            const unsigned n_tier2_calls(pi.tier2_calls.size());
-            for(unsigned i(0); i<n_tier2_calls; ++i) {
-                n_calls++;
-                if(pi.tier2_calls[i].is_call_filter) continue;
-                epd.good_pi.calls.push_back(pi.tier2_calls[i]);
+            n_calls += pi.tier2_calls.size();
+            BOOST_FOREACH(const base_call& bc, pi.tier2_calls) {
+                if(bc.is_call_filter) continue;
+                epd.good_pi.calls.push_back(bc);
             }
         }
 
@@ -112,5 +109,3 @@ struct extended_pos_data : public sample_pos_data {
 
     extended_pos_info good_epi;
 };
-
-#endif
