@@ -621,8 +621,10 @@ insert_read(const bam_record& br,
         static const INDEL_ALIGN_TYPE::index_t iat(INDEL_ALIGN_TYPE::CONTIG_READ);
         const bam_seq bseq(br.get_bam_read());
         try {
+            static const std::pair<bool,bool> edge_pin(std::make_pair(false,false));
             add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
-                                         al,bseq,*this,iat,res.second,sample_no,contig_indels_ptr);
+                                         al,bseq,*this,iat,res.second,sample_no,
+                                         edge_pin,contig_indels_ptr);
         } catch (...) {
             log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << read_key(br) << "\n";
             throw;
@@ -709,7 +711,7 @@ init_read_segment(const read_segment& rseg,
     const bam_seq bseq(rseg.get_bam_read());
     try {
         add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
-                                     al,bseq,*this,iat,rseg.id(),sample_no);
+                                     al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin());
     } catch (...) {
         log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << rseg.key() << "\n";
         throw;

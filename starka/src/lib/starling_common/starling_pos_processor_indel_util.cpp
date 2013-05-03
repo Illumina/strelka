@@ -25,6 +25,7 @@
 #include "starling_read_util.hh"
 
 #include "blt_util/blt_exception.hh"
+#include "blt_util/log.hh"
 #include "starling_common/align_path_util.hh"
 
 #include <cassert>
@@ -69,9 +70,10 @@ const unsigned max_cand_filter_insert_size(10);
 
 
 
-// Handle edge insert segments in contigs and contig reads. For contig
-// reads we need to find out what (ussually larger) indel this edge
-// corresponds to.
+// Handle edge inserts. For contigs we take the edge insert verbatim. For contig
+// reads we need to find out what (usually larger) indel this edge corresponds to.
+// for regular reads we record this as a private indel (ie. it does not count towards
+// candidacy.
 //
 static
 void
@@ -86,7 +88,8 @@ process_edge_insert(const unsigned max_indel_size,
                     const std::pair<unsigned,unsigned>& ends,
                     const unsigned path_index,
                     const unsigned read_offset,
-                    const pos_t ref_head_pos)
+                    const pos_t ref_head_pos,
+                    const bool is_pinned_indel)
 {
     using namespace ALIGNPATH;
 
@@ -149,15 +152,71 @@ process_edge_insert(const unsigned max_indel_size,
             }
         }
     } else {
-        //relax error policy to allow genomic reads with edge-indels
-        //though, but not use them to generate or support candidate
-        //indels.
-#if 0
-        std::ostringstream oss;
-        oss << "ERROR: unexpected INDEL_ALIGN_TYPE value in process_edge_insert(): " << static_cast<int>(iat) << "\n";
-        throw blt_exception(oss.str().c_str());
+        // do not allow edge-indels on genomic reads to generate or support candidate
+        // indels, except for pinned cases:
+        if(! is_pinned_indel) return;
+        if(ps.length > max_indel_size) return;
+
+        obs.key.pos=ref_head_pos;
+        obs.key.length = ps.length;
+        assert(ps.type == INSERT);
+        obs.key.type=INDEL::INSERT;
+
+#ifdef SPI_DEBUG
+        log_os << "FOOBAR: adding pinned edge indel: " << obs.key << "\n";
 #endif
+
+        bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
+        finish_indel_sppr(obs,sppr,sample_no);
     }
+}
+
+
+
+/// handle edge deletions
+///
+/// currently these are only alllowed for indels adjacent to an intron
+///
+static
+void
+process_edge_delete(const unsigned max_indel_size,
+                    const ALIGNPATH::path_t& path,
+                    const bam_seq_base& bseq,
+                    starling_pos_processor_base& sppr,
+                    indel_observation& obs,
+                    const unsigned sample_no,
+                    const unsigned path_index,
+                    const unsigned read_offset,
+                    const pos_t ref_head_pos,
+                    const bool is_pinned_indel)
+{
+    // we should never see grouper reads here
+    if ((obs.data.iat == INDEL_ALIGN_TYPE::CONTIG) ||
+        (obs.data.iat == INDEL_ALIGN_TYPE::CONTIG_READ)) {
+        return;
+    }
+
+
+    using namespace ALIGNPATH;
+
+    const path_segment& ps(path[path_index]);
+
+    // do not allow edge-indels on genomic reads to generate or support candidate
+    // indels, except for pinned cases:
+    if(! is_pinned_indel) return;
+    if(ps.length > max_indel_size) return;
+
+    obs.key.pos=ref_head_pos;
+    obs.key.length = ps.length;
+    assert(ps.type == DELETE);
+    obs.key.type=INDEL::DELETE;
+
+#ifdef SPI_DEBUG
+    log_os << "FOOBAR: adding pinned edge indel: " << obs.key << "\n";
+#endif
+
+    bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
+    finish_indel_sppr(obs,sppr,sample_no);
 }
 
 
@@ -311,6 +370,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const INDEL_ALIGN_TYPE::index_t iat,
                              const align_id_t id,
                              const unsigned sample_no,
+                             const std::pair<bool,bool>& edge_pin,
                              const indel_set_t* edge_indel_ptr) {
 
     using namespace ALIGNPATH;
@@ -343,14 +403,14 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
     const unsigned aps(al.path.size());
     while(path_index<aps) {
         const path_segment& ps(al.path[path_index]);
-        const bool is_edge_segment((path_index<ends.first) || (path_index>ends.second));
-        const bool is_edge_insert(is_edge_segment && (ps.type == INSERT));
+        const bool is_begin_edge(path_index<ends.first);
+        const bool is_end_edge(path_index>ends.second);
+        const bool is_edge_segment(is_begin_edge || is_end_edge);
 
         const bool is_swap_start(is_segment_swap_start(al.path,path_index));
 
         assert(ps.type != SKIP);
-        assert(! (is_edge_segment && (ps.type == DELETE)));
-        assert(! (is_edge_insert && is_swap_start));
+        assert(! (is_edge_segment && is_swap_start));
 
         indel_observation obs;
         obs.data.iat = iat;
@@ -372,23 +432,25 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         }
 
         unsigned n_seg(1); // number of path segments consumed
-        if(is_edge_insert) {
+        if(is_edge_segment) {
+            // is this indel occurring on a pinned edge (ie against an exon?)
+            const bool is_pinned_indel((is_begin_edge && edge_pin.first) ||
+                                       (is_end_edge && edge_pin.second));
 
-            //relax error policy to allow these reads though, but not
-            //use them to generate or support candidate indels.
-#if 0
-            if((iat!=INDEL_ALIGN_TYPE::CONTIG) &&
-               (iat!=INDEL_ALIGN_TYPE::CONTIG_READ)) {
-                std::ostringstream oss;
-                oss << "ERROR: can't handle edge insertions in read alignment path: " << apath_to_cigar(al.path) << "\n";
-                throw blt_exception(oss.str().c_str());
+            // edge inserts are allowed for intron adjacent and grouper reads, edge deletions for intron adjacent only:
+            if(ps.type == INSERT) {
+                process_edge_insert(max_indel_size,al.path,read_seq,
+                                    sppr,obs,sample_no,edge_indel_ptr,
+                                    seq_len,ends,path_index,read_offset,ref_head_pos,
+                                    is_pinned_indel);
+            } else if(ps.type == DELETE) {
+                if(is_pinned_indel) {
+                    process_edge_delete(max_indel_size,al.path,read_seq,
+                                        sppr,obs,sample_no,
+                                        path_index,read_offset,ref_head_pos,
+                                        is_pinned_indel);
+                }
             }
-#endif
-
-            process_edge_insert(max_indel_size,al.path,read_seq,
-                                sppr,obs,sample_no,edge_indel_ptr,
-                                seq_len,ends,path_index,read_offset,ref_head_pos);
-
         } else if(is_swap_start) {
             n_seg = process_swap(max_indel_size,al.path,read_seq,
                                  sppr,obs,sample_no,
@@ -404,6 +466,5 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         for(unsigned i(0); i<n_seg; ++i) { increment_path(al.path,path_index,read_offset,ref_head_pos); }
     }
 }
-
 
 

@@ -190,6 +190,7 @@ starling_command() {
 --chrom-depth-file $sample1_bam.depth \
 -bam-file $sample1_bam \
 -samtools-reference $ref \
+-realigned-read-file $workspace_dir/starling.realigned.bam \
 -bam-seq-name chr15 -report-range-begin 84000000 -report-range-end 86000000
 }
 
@@ -234,6 +235,8 @@ strelka_command() {
 -bam-file $sample1_bam \
 --tumor-bam-file $sample2_bam \
 -samtools-reference $ref \
+-realigned-read-file $workspace_dir/strelka.realigned.normal.bam \
+--tumor-realigned-read-file $workspace_dir/strelka.realigned.normal.bam \
 -bam-seq-name chr15 -report-range-begin 84000000 -report-range-end 86000000
 }
 

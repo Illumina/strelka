@@ -479,7 +479,8 @@ process_contig(const starling_options& client_opt,
     static const INDEL_ALIGN_TYPE::index_t iat(INDEL_ALIGN_TYPE::CONTIG);
     const string_bam_seq bseq(ctg.seq);
     try {
-        add_alignment_indels_to_sppr(client_opt.max_indel_size,ref,ctg,bseq,sppr,iat,contig_no,sample_no);
+        static const std::pair<bool,bool> edge_pin(std::make_pair(false,false));
+        add_alignment_indels_to_sppr(client_opt.max_indel_size,ref,ctg,bseq,sppr,iat,contig_no,sample_no, edge_pin);
     } catch (...) {
         log_os << "\nException caught in add_alignment_indels_to_sppr() while processing contig";
         if(NULL != sample_label) log_os << " from sample '" << sample_label << "'";

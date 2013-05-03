@@ -15,14 +15,11 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_READ_ALIGN_HH
-#define __STARLING_READ_ALIGN_HH
+#pragma once
 
 #include "starling_common/indel_synchronizer.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_shared.hh"
-
-#include <string>
 
 
 void
@@ -33,4 +30,3 @@ realign_and_score_read(const starling_options& opt,
                        read_segment& rseg,
                        indel_synchronizer& isync);
 
-#endif

@@ -27,10 +27,12 @@
 
 
 // Extract indel information from various alignment types and store
-// this information in the starling_pos_processor indel buffer.
-//
-// assumes that path is already validated for read_seq!!!
-//
+/// this information in the starling_pos_processor indel buffer.
+///
+/// \param edge_pin are the beginning or end of this read segment pinned?
+///
+/// assumes that path is already validated for read_seq!!!
+///
 void
 add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const reference_contig_segment& ref,
@@ -40,6 +42,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const INDEL_ALIGN_TYPE::index_t iat,
                              align_id_t id,
                              const unsigned sample_no,
+                             const std::pair<bool,bool>& edge_pin,
                              const indel_set_t* edge_indel_ptr = NULL);
 
 #endif
