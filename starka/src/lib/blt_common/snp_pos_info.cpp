@@ -16,7 +16,6 @@
 ///
 
 #include "blt_common/snp_pos_info.hh"
-
 #include <iomanip>
 #include <iostream>
 
@@ -52,6 +51,37 @@ operator<<(std::ostream& os,
 }
 
 
+double
+snp_pos_info::
+get_rms_mq(){
+	if (n_mapq==0){
+		return 0.0;
+	}
+    return sqrt(1.0*cumm_mapq/n_mapq);
+}
+
+
+double
+snp_pos_info::
+get_read_pos_ranksum(){
+//	cout << read_pos_ranksum << endl;
+	return read_pos_ranksum.get_u_stat();
+}
+
+double
+snp_pos_info::
+get_mq_ranksum(){
+//	cout << mq_ranksum << endl;
+	return mq_ranksum.get_u_stat();
+}
+
+double
+snp_pos_info::
+get_baseq_ranksum(){
+//	cout << baseq_ranksum << endl;
+	return baseq_ranksum.get_u_stat();
+}
+
 
 void
 snp_pos_info::
@@ -65,7 +95,6 @@ print_known_counts(std::ostream& os,
         os << '\t' << base_count[b];
     }
 }
-
 
 
 void
@@ -83,6 +112,7 @@ print_known_qscore(std::ostream& os,
         if(calls[i].base_id==BASE_ID::ANY) continue;
         if(calls[i].get_qscore()<min_qscore) continue;
         qscore_tot[calls[i].base_id] += calls[i].get_qscore();
+        os << calls[i] << '\n';
         qscore_count[calls[i].base_id]++;
     }
 
