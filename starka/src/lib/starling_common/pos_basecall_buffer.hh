@@ -22,6 +22,7 @@
 
 #include <iosfwd>
 #include <map>
+#include <cmath>
 #include <string>
 
 
@@ -38,6 +39,19 @@ struct pos_basecall_buffer {
 
         _pdata[pos].n_spandel++;
     }
+
+    // update mapQ sum for MQ calculation
+    void
+    insert_mapq_count(const pos_t pos, const uint8_t mapq) {
+
+        _pdata[pos].n_mapq++;
+        _pdata[pos].cumm_mapq += pow(static_cast<int>(mapq), 2.0);
+        //we calculate the RMS, so store squared mapq
+    }
+
+    // add single base meta-data to rank-sum pile-up data-structures
+    void
+    update_ranksums(char refpos, const pos_t pos,const base_call& bc, const uint8_t mapq, const int cycle);
 
     void
     insert_pos_basecall(const pos_t pos,
@@ -87,6 +101,7 @@ struct pos_basecall_buffer {
     bool
     empty() const { return _pdata.empty(); }
 
+
 #if 0
     iterator pos_iter(const pos_t pos) {
         return _pdata.lower_bound(pos);
@@ -103,7 +118,7 @@ struct pos_basecall_buffer {
     void
     dump(std::ostream& os) const;
 
-private:
+public:
     typedef std::map<pos_t,snp_pos_info> pdata_t;
     typedef pdata_t::iterator piter;
     typedef pdata_t::const_iterator pciter;

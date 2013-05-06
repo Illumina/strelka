@@ -390,6 +390,16 @@ private:
     void
     insert_pos_spandel_count(const pos_t pos,
                              const unsigned sample_no);
+    void
+    insert_mapq_count(const pos_t pos,
+                      const unsigned sample_no,
+                      const uint8_t mapq);
+    void
+    update_ranksum(const pos_t pos,
+    			   const unsigned sample_no,
+    			   const base_call& bc,
+    			   const uint8_t mapq,
+    			   const int cycle);
 
     void
     insert_pos_basecall(const pos_t pos,

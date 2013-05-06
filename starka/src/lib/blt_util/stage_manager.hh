@@ -193,7 +193,7 @@ struct stage_manager {
 
 private:
     // advances head position from its current value to pos,
-    // signalling all stage processing steps to pos_process_base along
+    // signaling all stage processing steps to pos_process_base along
     // the way:
     //
     void
