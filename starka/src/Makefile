@@ -63,6 +63,7 @@ export SHARED_CXX_LIB  := $(foreach dir,$(SHARED_CXX_DIR),$(CURDIR)/lib/$(dir)/l
 STRELKA_OBJS := $(patsubst %.cpp,%.o, $(wildcard lib/strelka/*.cpp))
 STAR_OBJS := $(patsubst %.cpp,%.o, $(wildcard lib/starling/*.cpp))
 
+PROGRAM_OBJS := $(patsubst %,%.o, $(STARKA_PROGRAMS))
 
 .PHONY: all build clean install test
 
@@ -96,7 +97,7 @@ $(STARLING_PROGRAM): % : %.o $(STAR_OBJS) $(SHARED_CXX_LIB)
 
 clean:
 	$(MAKE) -C lib $@
-	$(RM) $(STRELKA_OBJS) $(STAR_OBJS) $(SHARED_CXX_LIB) $(STARKA_PROGRAMS)
+	$(RM) $(STRELKA_OBJS) $(STAR_OBJS) $(PROGRAM_OBJS) $(SHARED_CXX_LIB) $(STARKA_PROGRAMS)
 
 
 # extra dev tags:
