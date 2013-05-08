@@ -31,7 +31,7 @@ struct starling_info : public prog_info {
 
 private:
     const char* name() const {
-        static const char NAME[] = "starling";
+        static const char NAME[] = "IsaacVariantCaller";
         return NAME;
     }
 
