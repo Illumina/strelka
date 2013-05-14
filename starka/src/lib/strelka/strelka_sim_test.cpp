@@ -65,7 +65,7 @@ static
 unsigned
 get_binom(const unsigned n,
           const float p) {
-    typedef boost::binomial_distribution<float> bdist_t;
+    typedef boost::binomial_distribution<int,float> bdist_t;
     typedef boost::variate_generator<gen_t&,bdist_t> bvgen_t;
 
     bdist_t bdist(n,p);
