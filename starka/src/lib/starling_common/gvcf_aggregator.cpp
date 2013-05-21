@@ -800,7 +800,17 @@ write_indel_record(const unsigned write_index) {
             os << '.';
         }
     }
-    os << '\t';
+    os << ';';
+
+    // write VQSR metrics
+//    os << "MQ=" << ii.MQ;
+//    os << ';';
+//    os << "MQRankSum=" << ii.MQRankSum;
+//    os << ';';
+//    os << "BaseQRankSum=" << ii.BaseQRankSum;
+//    os << ';';
+//    os << "ReadPosRankSum=" << ii.ReadPosRankSum;
+//    os << '\t';
 
     //FORMAT
     os << "GT:GQ:GQX:DPI:AD" << '\t';
