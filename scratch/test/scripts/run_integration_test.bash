@@ -12,7 +12,7 @@ set -o pipefail
 # starka test constants (git checkout not finished yet)
 #
 starka_git_url=ussd-git.illumina.com:OptimusPrime/starka
-starka_version=master
+starka_version=master #c82a82731e784700df1345dd64cc88360ad83a83
 workspace_dir=$(pwd)/workspace
 
 
@@ -23,7 +23,8 @@ starling_results_dir=$workspace_dir/starling_results
 starling_output_name=Mother_S1_chr15.84M-86M.raw.genome.vcf
 starling_expected_dir=/bioinfoSD/csaunders/proj/starka/test/expected_results/starling
 starling_result=$starling_results_dir/$starling_output_name
-sample1_bam=/bioinfoSD/stanner/CephMother/Data/Intensities/BaseCalls/Alignment2/Mother_S1.bam
+test_data_dir=/bioinfoSD/csaunders/proj/starka/test/data
+sample1_bam=$test_data_dir/Mother_S1.bam
 test_reference=/illumina/scratch/iGenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
 
 
@@ -32,8 +33,7 @@ test_reference=/illumina/scratch/iGenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeG
 strelka_expected_time=79
 strelka_results_dir=$workspace_dir/strelka_results
 strelka_expected_dir=/bioinfoSD/csaunders/proj/starka/test/expected_results/strelka
-sample2_bam=/bioinfoSD/stanner/CephFather/Data/Intensities/BaseCalls/Alignment2/Father_S1.bam
-
+sample2_bam=$test_data_dir/Father_S1.bam
 
 
 #
@@ -126,6 +126,11 @@ END
 }
 
 
+script_dir=$(rel2abs $(dirname $0))
+get_depth=$script_dir/util/getBamAvgChromDepth.pl
+
+
+
 if ! [ -f $test_reference ]; then
     error "Can't find reference: $test_reference"
 fi
@@ -186,6 +191,8 @@ small_end=85010000
 
 mkdir -p $starling_results_dir
 
+depth_file=$workspace_dir/starling.bam.depth
+
 printf "Starting Starling test\n" 1>&2
 start_time=$(date +%s)
 
@@ -197,7 +204,7 @@ starling_command() {
 -min-vexp 0.25 -max-window-mismatch 2 20 -max-indel-size 50 -genome-size 2861343702 \
 -clobber -min-single-align-score 20 -min-paired-align-score 20 -bsnp-ssd-no-mismatch 0.35 -bsnp-ssd-one-mismatch 0.6 \
 --gvcf-file $starling_result \
---chrom-depth-file $sample1_bam.depth \
+--chrom-depth-file $depth_file \
 -bam-file $sample1_bam \
 -samtools-reference $test_reference \
 -realigned-read-file $workspace_dir/starling.realigned.bam \
@@ -212,6 +219,7 @@ starling_command_small_interval() {
     starling_command $small_start $small_end
 }
 
+$get_depth $sample1_bam >| $depth_file
 
 $(starling_command_big_interval) >| $workspace_dir/starling.log 2>| $workspace_dir/starling.log2
 
