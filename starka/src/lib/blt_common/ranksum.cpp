@@ -100,6 +100,7 @@ operator<< (ostream &out, map<int, int> &l)
     out << "Elements in l: " << endl;
     for (map<int, int>::iterator it = l.begin();it != l.end(); ++it)
         out << "\t" <<(*it).first << " => " << (*it).second <<  endl;
+    return out;
 }
 
 ostream&
