@@ -180,6 +180,7 @@ struct blt_options {
           , is_max_input_depth(false)
           , max_input_depth(0)
           , is_compute_hapscore(false)
+    	  , is_compute_VQSRmetrics(true)
     {}
 
     virtual ~blt_options() {}
@@ -330,6 +331,7 @@ struct blt_options {
     unsigned max_input_depth;
 
     bool is_compute_hapscore;
+    bool is_compute_VQSRmetrics;
 
     std::string report_filename;
 

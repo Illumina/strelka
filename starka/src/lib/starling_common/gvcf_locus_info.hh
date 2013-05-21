@@ -132,7 +132,6 @@ get_label(const unsigned idx) {
 }
 }
 
-
 struct site_modifiers : public shared_modifiers {
 
     site_modifiers() { clear(); }
@@ -181,6 +180,10 @@ struct indel_info {
         dindel=(init_dindel);
         iri=(init_iri);
         isri=(init_isri);
+//        MQ=0.0;
+//        ReadPosRankSum=0.0;
+//        BaseQRankSum=0.0;
+//        MQRankSum=0.0;
         imod.clear();
     }
 
@@ -216,12 +219,15 @@ struct indel_info {
     starling_diploid_indel_core dindel;
     starling_indel_report_info iri;
     starling_indel_sample_report_info isri;
-
+//    double MQ;               // RMS of mapping qualities
+//    double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
+//    double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
+//    double MQRankSum;        // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
     indel_modifiers imod;
 };
 
 
-
+//Data structure defining parameters for a single site to be used for writing in gvcf_aggregator
 struct site_info {
 
     site_info()
@@ -231,6 +237,10 @@ struct site_info {
         , n_unused_calls(0)
         , hpol(0)
         , hapscore(0)
+		, MQ(0)
+		, ReadPosRankSum(0)
+		, BaseQRankSum(0)
+		, MQRankSum(0)
     {
         for(unsigned i(0); i<N_BASE; ++i) known_counts[i] = 0;
     }
@@ -277,10 +287,14 @@ struct site_info {
     diploid_genotype dgt;
     unsigned hpol;
     double hapscore;
+    double MQ;				 // RMS of mapping qualities
+
+    //only meaningful for het calls
+    double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
+    double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
+    double MQRankSum;        // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
 
     site_modifiers smod;
 };
-
-
 
 #endif

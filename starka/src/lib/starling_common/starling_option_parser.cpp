@@ -91,8 +91,11 @@ get_starling_shared_option_parser(starling_options& opt) {
      "A site cannot be joined into a non-variant block if it contains more than this fraction of non-reference alleles")
     ("gvcf-include-hapscore",
      "Include haplotype score at SNV positions in gVCF output.")
+
     ("gvcf-no-block-compression",
      "Turn off block compression in gVCF output")
+    ("gvcf-compute-VQSRmetrics",
+     "Report metrics used for VQSR: BaseQRankSum, ReadPosRankSum, MQRankSum and MQ.")
     ("gvcf-skip-header",
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
 
@@ -476,6 +479,9 @@ finalize_starling_options(const prog_info& pinfo,
 
     if(vm.count("gvcf-no-block-compression")) {
         opt.gvcf.is_block_compression=false;
+    }
+    if(vm.count("gvcf-compute-VQSRmetrics")) {
+        opt.is_compute_VQSRmetrics=true;
     }
 
     if(vm.count("gvcf-skip-header")) {

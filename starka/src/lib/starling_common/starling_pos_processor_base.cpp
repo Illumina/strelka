@@ -421,7 +421,7 @@ starling_pos_processor_base(const starling_options& client_opt,
         static const std::vector<float> dependent_eprob;
         const extended_pos_info good_epi(good_pi,dependent_eprob);
         for(unsigned b(0); b<N_BASE; ++b) {
-            good_pi.ref_base = id_to_base(b);
+            good_pi.set_ref_base(id_to_base(b));
             _empty_dgt[b].reset(new diploid_genotype);
             _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,
                                                                  *_empty_dgt[b],_client_opt.is_all_sites());
@@ -951,6 +951,31 @@ insert_pos_spandel_count(const pos_t pos,
 }
 
 
+void
+starling_pos_processor_base::
+insert_mapq_count(const pos_t pos,
+                  const unsigned sample_no,
+                  const uint8_t mapq) {
+
+    if(! is_pos_reportable(pos)) return;
+
+    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+//    log_os << "Inserting mapq at " << pos << '\n';
+    sample(sample_no).bc_buff.insert_mapq_count(pos,mapq);
+}
+
+void
+starling_pos_processor_base::
+update_ranksum(const pos_t pos,const unsigned sample_no,const base_call& bc, const uint8_t mapq, const int cycle){
+
+	if(! is_pos_reportable(pos)) return;
+//	log_os << "updating ranksum" << endl;
+
+    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+
+    sample(sample_no).bc_buff.update_ranksums(_ref.get_base(pos),pos,bc,mapq,cycle);
+}
+
 
 void
 starling_pos_processor_base::
@@ -1220,7 +1245,6 @@ write_reads(const pos_t pos) {
 void
 starling_pos_processor_base::
 pileup_pos_reads(const pos_t pos) {
-
     static const bool is_include_submapped(false);
 
     for(unsigned s(0); s<_n_samples; ++s) {
@@ -1237,9 +1261,6 @@ pileup_pos_reads(const pos_t pos) {
         }
     }
 }
-
-
-
 
 
 void
@@ -1284,7 +1305,6 @@ pileup_read_segment(const read_segment& rseg,
     static const uint8_t min_adjust_mapq(5);
     const uint8_t mapq(std::max(min_adjust_mapq,rseg.map_qual()));
     const bool is_mapq_adjust(mapq<=80);
-
     // test read against max indel size (this is a backup, should have been taken care of upstream):
     const unsigned read_ref_mapped_size(apath_ref_length(best_al.path));
     if(read_ref_mapped_size > (read_size+_client_opt.max_indel_size)) {
@@ -1372,15 +1392,14 @@ pileup_read_segment(const read_segment& rseg,
                     insert_pos_submap_count(ref_pos,sample_no);
                     continue;
                 }
-
-                //const char ref(get_seq_base(_ref_seq,ref_pos));
+//                const char ref(get_seq_base(_ref_seq,ref_pos));
                 const uint8_t call_code(bseq.get_code(read_pos));
                 uint8_t qscore(qual[read_pos]);
 
                 if(is_mapq_adjust) {
                     qscore = qphred_to_mapped_qphred(qscore,mapq);
                 }
-
+//                log_os << static_cast<int>(qscore) << "\n";
                 bool is_call_filter((call_code == BAM_BASE::ANY) ||
                                     (qscore < _client_opt.min_qscore));
 
@@ -1410,15 +1429,23 @@ pileup_read_segment(const read_segment& rseg,
                 }
 
                 try {
-                    const uint8_t call_id(bam_seq_code_to_id(call_code));
+
+                	const uint8_t call_id(bam_seq_code_to_id(call_code));
                     const bool current_call_filter( is_tier1 ? is_call_filter : is_tier2_call_filter );
                     const bool is_tier_specific_filter( is_tier1 && is_call_filter && (! is_tier2_call_filter) );
+
+                    const base_call bc = base_call(call_id,qscore,best_al.is_fwd_strand,
+                            align_strand_read_pos,end_trimmed_read_len,
+                            current_call_filter,is_neighbor_mismatch,is_tier_specific_filter);
+
                     insert_pos_basecall(ref_pos,
                                         sample_no,
                                         is_tier1,
-                                        base_call(call_id,qscore,best_al.is_fwd_strand,
-                                                  align_strand_read_pos,end_trimmed_read_len,
-                                                  current_call_filter,is_neighbor_mismatch,is_tier_specific_filter));
+                                        bc);
+
+                    // update mapq and rank-sum metrics
+                    insert_mapq_count(ref_pos,sample_no,mapq);
+                    update_ranksum(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
 
                     if(_client_opt.is_compute_hapscore) {
                         insert_hap_cand(ref_pos,sample_no,is_tier1,
@@ -1515,13 +1542,13 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     const pos_t output_pos(pos+1);
 
-    pi.ref_base=_ref.get_base(pos);
+    pi.set_ref_base(_ref.get_base(pos));
 
     // for all but coverage-tests, we use a high-quality subset of the basecalls:
     //
     snp_pos_info& good_pi(sif.epd.good_pi);
     good_pi.clear();
-    good_pi.ref_base = pi.ref_base;
+    good_pi.set_ref_base(pi.get_ref_base());
     for(unsigned i(0); i<n_calls; ++i) {
         if(pi.calls[i].is_call_filter) continue;
         good_pi.calls.push_back(pi.calls[i]);
@@ -1532,7 +1559,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     sif.ss.update(n_calls);
     sif.used_ss.update(_site_info.n_used_calls);
-    if(pi.ref_base != 'N') {
+    if(pi.get_ref_base() != 'N') {
         sif.ssn.update(n_calls);
         sif.used_ssn.update(_site_info.n_used_calls);
         sif.wav.insert(pos,_site_info.n_used_calls,_site_info.n_unused_calls,n_spandel,n_submapped);
@@ -1634,7 +1661,18 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         if(_client_opt.is_compute_hapscore) {
             _site_info.hapscore=get_hapscore(pi.hap_set);
         }
+
+        // do calculate VQSR metrics
+        if(_client_opt.is_compute_VQSRmetrics) {
+        	_site_info.MQ 				= pi.get_rms_mq();
+			_site_info.ReadPosRankSum 	= pi.get_read_pos_ranksum();
+			_site_info.MQRankSum 		= pi.get_mq_ranksum();
+			_site_info.BaseQRankSum 	= pi.get_baseq_ranksum();
+        }
+
+        // hpol filter
         _site_info.hpol=get_snp_hpol_size(pos,_ref);
+
     }
 
     if(_client_opt.is_all_sites()) {
@@ -1645,17 +1683,17 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         }
 #endif
         if(_client_opt.is_gvcf_output()) {
-            _site_info.init(pos,pi.ref_base,good_pi,_client_opt.used_allele_count_min_qscore);
+            _site_info.init(pos,pi.get_ref_base(),good_pi,_client_opt.used_allele_count_min_qscore);
             _gvcfer->add_site(_site_info);
         }
         if(_client_opt.is_bsnp_diploid_allele_file) {
-            write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
+            write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
         }
     }
 
     if(_client_opt.is_nonref_sites()) {
         std::ostream& bos(*_client_io.nonref_sites_osptr());
-        write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,bos);
+        write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
         bos << "\t";
         write_nonref_2allele_test(_client_opt,good_pi,nrc,bos);
         bos << "\n";
@@ -1670,7 +1708,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     if(is_snp) {
         if(nrc.is_snp) {
             std::ostream& bos(*_client_io.nonref_test_osptr());
-            write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,bos);
+            write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
             bos << "\t";
             write_nonref_2allele_test(_client_opt,good_pi,nrc,bos);
 #if 0
@@ -1687,7 +1725,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         if(_site_info.dgt.is_snp) {
             if(_client_opt.is_bsnp_diploid_file) {
                 std::ostream& bos(*_client_io.bsnp_diploid_osptr());
-                write_snp_prefix_info_file(_chrom_name,output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,bos);
+                write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
                 bos << "\t";
                 write_diploid_genotype_snp(_client_opt,good_pi,_site_info.dgt,bos,_site_info.hpol);
                 bos << "\n";

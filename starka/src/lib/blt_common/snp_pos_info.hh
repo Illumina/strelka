@@ -18,6 +18,7 @@
 #define __SNP_POS_INFO_HH
 
 #include "blt_common/hapscore.hh"
+#include "blt_common/ranksum.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/seq_util.hh"
 
@@ -106,8 +107,11 @@ struct snp_pos_info {
         tier2_calls.clear();
         is_n_ref_warn=false;
         n_spandel=0;
-        n_submapped=0;
-
+        n_mapq=0;
+        cumm_mapq=0;
+        mq_ranksum.clear();
+        baseq_ranksum.clear();
+        read_pos_ranksum.clear();
         hap_set.clear();
     }
 
@@ -126,6 +130,36 @@ struct snp_pos_info {
         }
     }
 
+
+    void
+    set_ref_base(char base){
+        ref_base = base;
+        mq_ranksum.set_ref_base(base);
+        baseq_ranksum.set_ref_base(base);
+        read_pos_ranksum.set_ref_base(base);
+    }
+
+    char
+    get_ref_base(){
+        return ref_base;
+    }
+
+    // returns the RMS of the read mapQs
+    double
+    get_rms_mq();
+
+    // returns the read-position rank sum
+    double
+    get_read_pos_ranksum();
+
+    // returns the mapQ rank sum
+    double
+    get_mq_ranksum();
+
+    // return the baseq rank sum
+    double
+    get_baseq_ranksum();
+
     void
     print_known_counts(std::ostream& os,
                        const int min_qscore) const;
@@ -134,10 +168,11 @@ struct snp_pos_info {
     print_known_qscore(std::ostream& os,
                        const int min_qscore) const;
 
+public:
     char ref_base; // always fwd-strand base
     bool is_n_ref_warn;
     std::vector<base_call> calls;
-    std::vector<base_call> tier2_calls;
+    std::vector<base_call> tier2_calls; // call not passing stringent quality criteria
     // number of spanning deletions crossing the site:
     unsigned n_spandel;
     // number of submapped reads crossing the site.
@@ -145,7 +180,17 @@ struct snp_pos_info {
     // all submapped reads get counted here:
     unsigned n_submapped;
 
+    // number of mapq observations, meaning coverage at position
+    unsigned n_mapq;
+    // sum of mapq for all reads at this position
+    int cumm_mapq;
+
     hap_set_t hap_set;
+
+    //for calculating various rank-sum statistics
+    ranksum mq_ranksum;
+    ranksum baseq_ranksum;
+    ranksum read_pos_ranksum;
 };
 
 std::ostream& operator<<(std::ostream& os,const snp_pos_info& pci);

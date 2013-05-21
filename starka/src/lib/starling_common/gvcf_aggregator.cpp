@@ -453,7 +453,7 @@ print_site_ad(const site_info& si,
 }
 
 
-
+//writes out a SNP record
 void
 gvcf_aggregator::
 write_site_record(const site_info& si) const {
@@ -504,7 +504,23 @@ write_site_record(const site_info& si) const {
             os << "SNVHPOL=" << si.hpol;
             if(_opt.is_compute_hapscore) {
                 os << ';';
-                os << "HapScore=" << si.hapscore;
+                os << "HaplotypeScore=" << si.hapscore;
+            }
+
+            // compute metrics nessacery
+            if(_opt.is_compute_VQSRmetrics) {
+                os << ';';
+                os << "MQ=" << si.MQ;
+
+                //if we have a het, report these metrics as well
+//                if(si.get_gt()=="0/1"){
+			   os << ';';
+			   os << "MQRankSum=" << si.MQRankSum;
+			   os << ';';
+			   os << "BaseQRankSum=" << si.BaseQRankSum;
+			   os << ';';
+			   os << "ReadPosRankSum=" << si.ReadPosRankSum;
+//                }
             }
         } else {
             os << '.';
@@ -784,7 +800,17 @@ write_indel_record(const unsigned write_index) {
             os << '.';
         }
     }
-    os << '\t';
+    os << ';';
+
+    // write VQSR metrics
+//    os << "MQ=" << ii.MQ;
+//    os << ';';
+//    os << "MQRankSum=" << ii.MQRankSum;
+//    os << ';';
+//    os << "BaseQRankSum=" << ii.BaseQRankSum;
+//    os << ';';
+//    os << "ReadPosRankSum=" << ii.ReadPosRankSum;
+//    os << '\t';
 
     //FORMAT
     os << "GT:GQ:GQX:DPI:AD" << '\t';

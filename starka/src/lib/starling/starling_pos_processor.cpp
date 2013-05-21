@@ -9,7 +9,6 @@
 // Software License 1 along with this program. If not, see
 // <https://github.com/downloads/sequencing/licenses/>.
 //
-
 /// \file
 ///
 /// \author Chris Saunders
