@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __CANDIDATE_ALIGNMENT_HH
-#define __CANDIDATE_ALIGNMENT_HH
+#pragma once
 
 #include "starling_common/alignment.hh"
 #include "starling_common/indel_set.hh"
@@ -52,6 +51,3 @@ void
 get_alignment_indels(const candidate_alignment& cal,
                      const unsigned max_indel_size,
                      indel_set_t& indels);
-
-
-#endif

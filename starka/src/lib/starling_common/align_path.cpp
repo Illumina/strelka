@@ -853,10 +853,21 @@ is_seq_swap(const path_t& apath) {
 
 bool
 is_segment_swap_start(const path_t& apath,
-                      const unsigned i) {
-    return (((i+1)<apath.size()) &&
-            is_segment_type_indel(apath[i].type) &&
-            is_segment_type_indel(apath[i+1].type));
+                      unsigned i) {
+
+    using namespace ALIGNPATH;
+
+    bool is_insert(false);
+    bool is_delete(false);
+
+    const unsigned as(apath.size());
+    for(;i<as;++i) {
+        if     (apath[i].type == INSERT) { is_insert=true; }
+        else if(apath[i].type == DELETE) { is_delete=true; }
+        else { break; }
+    }
+
+    return (is_insert && is_delete);
 }
 
 

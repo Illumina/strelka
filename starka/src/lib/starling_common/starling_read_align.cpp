@@ -238,6 +238,20 @@ add_indels_in_range(const starling_options& opt,
 
 
 
+static
+void
+add_path_segment(ALIGNPATH::path_t& apath,
+                 ALIGNPATH::align_t inc_type,
+                 pos_t& inc_pos,
+                 const unsigned increment) {
+    using namespace ALIGNPATH;
+
+    apath.push_back(path_segment(inc_type,increment));
+    inc_pos += increment;
+}
+
+
+
 // construct an alignment which includes all of the indels turned on
 // in the indel set, holding the start_position fixed to the target
 // value -- indel sets should be pre-filtered for cases where an indel
@@ -275,10 +289,31 @@ make_start_pos_alignment(const pos_t ref_start_pos,
         if(ik.right_pos() < ref_start_pos) continue;
         if((ik.right_pos() == ref_start_pos) && (! is_leading_read)) continue;
 
+        if(apath.empty()) assert(ref_head_pos==ref_start_pos);
+
         // deal with leading indel, swap or right breakpoint:
-        const bool is_leading_indel((ik.right_pos() == ref_start_pos) && is_leading_read);
-        if(is_leading_indel) {
-            assert((apath.size()==0) && (ref_head_pos==ref_start_pos));
+        const bool is_first_intersecting_indel(apath.empty());
+
+        if(is_leading_read && is_first_intersecting_indel) {
+            if(ik.pos != ref_start_pos) {
+                std::ostringstream oss;
+                oss << "ERROR: anomalous condition for indel candidate: " << ik << "\n"
+                    << "\tref_start_pos: " << ref_start_pos << "\n"
+                    << "\tread_start_pos: " << read_start_pos << "\n"
+                    << "\tref_head_pos: " << ref_head_pos << "\n"
+                    << "\tread_head_pos: " << read_head_pos << "\n"
+                    << "\tis_fwd_strand: " << is_fwd_strand << "\n"
+                    << "\tread_length: " << read_length << "\n";
+
+                oss << "\tfull indel set: ";
+                BOOST_FOREACH(const indel_key& ik2, indels) {
+                    oss << "\t\t" << ik2;
+                }
+
+                throw blt_exception(oss.str().c_str());
+            }
+
+            assert((apath.empty()) && (ref_head_pos==ref_start_pos));
             assert((ik.type == INDEL::INSERT) ||
                    (ik.type == INDEL::SWAP) ||
                    (ik.type == INDEL::BP_RIGHT));
@@ -289,6 +324,9 @@ make_start_pos_alignment(const pos_t ref_start_pos,
             }
 
             apath.push_back(path_segment(INSERT,read_start_pos));
+            if(ik.type == INDEL::SWAP) {
+                add_path_segment(apath,DELETE,ref_head_pos,ik.swap_dlength);
+            }
             cal.leading_indel_key=ik;
             continue;
         }
@@ -308,6 +346,8 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 
         const unsigned match_segment(ik.pos-ref_head_pos);
 
+        assert(match_segment>0);
+
         // remaining read segment match segment added after indel loop:
         if(read_head_pos+match_segment>=read_length) break;
 
@@ -317,27 +357,25 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 
         if       (ik.type==INDEL::INSERT ||
                   ik.type==INDEL::SWAP) {
-            unsigned insert_length(read_length-read_head_pos);
-            const bool is_final(ik.length>=insert_length);
-            insert_length=std::min(ik.length,insert_length);
-            apath.push_back(path_segment(INSERT,insert_length));
-            read_head_pos += insert_length;
+
+            if(ik.type==INDEL::SWAP) {
+                add_path_segment(apath,DELETE,ref_head_pos,ik.swap_dlength);
+            }
+
+            const unsigned max_insert_length(read_length-read_head_pos);
+            const unsigned insert_length(std::min(ik.length,max_insert_length));
+            add_path_segment(apath,INSERT,read_head_pos,insert_length);
+
+            const bool is_final(ik.length>=max_insert_length);
             if(is_final) {
                 cal.trailing_indel_key=ik;
                 break;
-            } else {
-                if(ik.type==INDEL::SWAP) {
-                    apath.push_back(path_segment(DELETE,ik.swap_dlength));
-                    ref_head_pos += ik.swap_dlength;
-                }
             }
         } else if(ik.type==INDEL::DELETE) {
-            apath.push_back(path_segment(DELETE,ik.length));
-            ref_head_pos += ik.length;
+            add_path_segment(apath,DELETE,ref_head_pos,ik.length);
         } else if(ik.type==INDEL::BP_LEFT) {
             const unsigned overhang_length(read_length-read_head_pos);
-            apath.push_back(path_segment(INSERT,overhang_length));
-            read_head_pos+=overhang_length;
+            add_path_segment(apath,INSERT,read_head_pos,overhang_length);
             cal.trailing_indel_key=ik;
             break;
         } else {
@@ -393,11 +431,12 @@ get_end_pin_start_pos(const indel_set_t& indels,
         if(ik.pos > ref_end_pos) continue;
         if((ik.pos == ref_end_pos) && (! is_trailing_read)) continue;
 
-        const bool is_trailing_insert((ik.pos == ref_end_pos) && is_trailing_read);
+        const bool is_trailing_indel((ik.right_pos() == ref_end_pos) && is_trailing_read);
 
-        if(is_trailing_insert) { // deal with trailing-edge insert/breakpoint case first
+        if(is_trailing_indel) { // deal with trailing-edge insert/breakpoint case first
             assert((is_first) && (ref_start_pos==ref_end_pos));
             assert((ik.type == INDEL::INSERT) ||
+                   (ik.type == INDEL::DELETE) ||
                    (ik.type == INDEL::SWAP) ||
                    (ik.type == INDEL::BP_LEFT));
 
@@ -407,16 +446,21 @@ get_end_pin_start_pos(const indel_set_t& indels,
             }
         } else { // deal with normal case:
             if(is_first && (read_end_pos!=static_cast<pos_t>(read_length))) {
-                log_os << "ERROR: is_first: " << is_first
-                       << " read_end_pos: " << read_end_pos
-                       << " read_length: " << read_length << "\n";
-                assert(0);
+                std::ostringstream oss;
+                oss << "ERROR: is_first: " << is_first
+                    << " read_end_pos: " << read_end_pos
+                    << " read_length: " << read_length << "\n";
+                throw blt_exception(oss.str().c_str());
             }
 
             // note the excluding 'equals' relationship relies on the single extra base of separation
             // required between indels during indel conflict detection:
-            const bool is_edge_delete((INDEL::DELETE == ik.type) && (ik.right_pos() == ref_end_pos));
-            if((ik.right_pos() >= ref_start_pos) && (! is_edge_delete)) {
+            //const bool is_edge_delete((INDEL::DELETE == ik.type) && (ik.right_pos() == ref_end_pos));
+
+            // new indel must end at least one base below the current ref head (otherwise it would be
+            // an interfering indel):
+            //
+            if((ik.right_pos() >= ref_start_pos)) { //&& (! is_edge_delete)) {
                 std::ostringstream oss;
                 oss << "Unexpected indel position: indel: " << ik;
                 oss << "\tref_start_pos: " << ref_start_pos << " ref_end_pos: " << ref_end_pos << "\n";
@@ -663,7 +707,7 @@ make_candidate_alignments(const starling_options& client_opt,
         const bool is_start_pin_valid(! (is_start_pos_delete_span || is_start_pos_indel_span));
 
 #ifdef DEBUG_ALIGN
-        std::cerr << "VARMIT togglling MCA depth: " << depth << "\n";
+        std::cerr << "VARMIT toggling MCA depth: " << depth << "\n";
         std::cerr << "VARMIT current indel: " << cindel;
         std::cerr << "VARMIT current indel on?: " << is_cindel_on << "\n";
         std::cerr << "VARMIT start-pin valid?: " << is_start_pin_valid << "\n";
@@ -671,14 +715,23 @@ make_candidate_alignments(const starling_options& client_opt,
 
         if(is_start_pin_valid) {
             const pos_t read_start_pos(apath_read_lead_size(cal.al.path));
-            make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
-                                      indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
-                                      max_read_indel_toggle,
-                                      make_start_pos_alignment(ref_start_pos,
-                                                               read_start_pos,
-                                                               cal.al.is_fwd_strand,
-                                                               read_length,
-                                                               current_indels));
+            candidate_alignment start_cal;
+            try {
+                start_cal = make_start_pos_alignment(ref_start_pos,
+                                                     read_start_pos,
+                                                     cal.al.is_fwd_strand,
+                                                     read_length,
+                                                     current_indels);
+
+                make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
+                                          indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
+                                          max_read_indel_toggle,start_cal);
+            } catch (...) {
+                log_os << "Exception caught while building start-pinned alignment candidate at depth: " << depth << "\n"
+                       << "\tcal: " << cal << "\n"
+                       << "\tstart_cal: " << start_cal << "\n";
+                throw;
+            }
         }
     }
 
@@ -697,7 +750,7 @@ make_candidate_alignments(const starling_options& client_opt,
         const bool is_end_pin_valid(! (is_end_pos_delete_span || is_end_pos_indel_span));
 
 #ifdef DEBUG_ALIGN
-        std::cerr << "VARMIT togglling MCA depth: " << depth << "\n";
+        std::cerr << "VARMIT toggling MCA depth: " << depth << "\n";
         std::cerr << "VARMIT current indel: " << cindel;
         std::cerr << "VARMIT current indel on?: " << is_cindel_on << "\n";
         std::cerr << "VARMIT end-pin valid?: " << is_end_pin_valid << "\n";
@@ -718,14 +771,23 @@ make_candidate_alignments(const starling_options& client_opt,
             if(ref_start_pos<0) {
                 warn.origin_skip=true;
             } else {
-                make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
-                                          indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
-                                          max_read_indel_toggle,
-                                          make_start_pos_alignment(ref_start_pos,
-                                                                   read_start_pos,
-                                                                   cal.al.is_fwd_strand,
-                                                                   read_length,
-                                                                   current_indels));
+                candidate_alignment start_cal;
+                try {
+                    start_cal = make_start_pos_alignment(ref_start_pos,
+                                                         read_start_pos,
+                                                         cal.al.is_fwd_strand,
+                                                         read_length,
+                                                         current_indels);
+
+                    make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
+                                              indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
+                                              max_read_indel_toggle,start_cal);
+                } catch (...) {
+                    log_os << "Exception caught while building end-pinned alignment candidate at depth: " << depth << "\n"
+                           << "\tcal: " << cal << "\n"
+                           << "\tstart_cal: " << start_cal << "\n";
+                    throw;
+                }
             }
         }
     }

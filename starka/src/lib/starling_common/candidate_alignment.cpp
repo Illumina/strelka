@@ -62,13 +62,20 @@ get_alignment_indels(const candidate_alignment& cal,
         const bool is_edge_segment((path_index<ends.first) || (path_index>ends.second));
         const bool is_swap_start(is_segment_swap_start(path,path_index));
 
-        assert(! (path[path_index].type == SKIP));
-        assert(! (is_edge_segment && is_swap_start));
+        const path_segment& ps(path[path_index]);
+
+        assert(! (ps.type == SKIP));
 
         unsigned n_seg(1); // number of path_segments consumed
+        if(is_swap_start) {
+            const swap_info sinfo(path,path_index);
+            n_seg=sinfo.n_seg;
+        }
+
         if       (is_edge_segment) {
-            // ignore all edge segments except INSERT and DELETE:
-            if((DELETE == path[path_index].type) || (INSERT == path[path_index].type)) {
+            // ignore all edge segments except INSERT/DELETE (this includes SWAP):
+            if((DELETE == ps.type) ||
+               (INSERT == ps.type)) {
                 if(path_index<ends.first) {
                     assert(cal.leading_indel_key.type != INDEL::NONE);
                     indels.insert(cal.leading_indel_key);
@@ -80,7 +87,6 @@ get_alignment_indels(const candidate_alignment& cal,
 
         } else if(is_swap_start) {
             const swap_info sinfo(path,path_index);
-            n_seg=sinfo.n_seg;
 
             const unsigned swap_size(std::max(sinfo.insert_length,sinfo.delete_length));
             if(swap_size <= max_indel_size) {
@@ -92,7 +98,6 @@ get_alignment_indels(const candidate_alignment& cal,
             }
 
         } else if(is_segment_type_indel(path[path_index].type)) {
-            const path_segment& ps(path[path_index]);
             if(ps.length <= max_indel_size) {
                 const INDEL::index_t id( (ps.type==INSERT) ? INDEL::INSERT : INDEL::DELETE );
                 indels.insert(indel_key(ref_head_pos,id,ps.length));
