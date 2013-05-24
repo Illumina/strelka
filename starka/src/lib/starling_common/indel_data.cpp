@@ -15,10 +15,25 @@
 /// \author Chris Saunders
 ///
 
+#include "blt_util/blt_exception.hh"
 #include "starling_common/indel_data.hh"
 
 #include <iostream>
+#include <sstream>
 
+
+
+std::ostream&
+operator<<(std::ostream& os,
+           const indel_observation_data& obs) {
+
+    os << "is_noise: " << obs.is_noise << "\n";
+    os << "is_external: " << obs.is_external_candidate << "\n";
+    os << "type: " << INDEL_ALIGN_TYPE::label(obs.iat) << "\n";
+    os << "align_id: " << obs.id << "\n";
+    os << "insert_seq: " << obs.insert_seq << "\n";
+    return os;
+}
 
 static
 void
@@ -61,10 +76,18 @@ operator<<(std::ostream& os,
 }
 
 
+void
+insert_seq_manager::
+_exception(const char* msg) const {
+    std::ostringstream oss;
+    oss << "Exception in insert_seq_manager: " << msg;
+    throw blt_exception(oss.str().c_str());
+}
+
 
 void
 insert_seq_manager::
-finalize() {
+_finalize() {
     obs_t::const_iterator i(_obs.begin()), i_end(_obs.end());
 
     unsigned count(0);

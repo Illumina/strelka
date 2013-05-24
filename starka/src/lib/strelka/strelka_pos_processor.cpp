@@ -23,15 +23,11 @@
 #include "somatic_indel_grid.hh"
 #include "strelka_pos_processor.hh"
 
+#include "blt_util/log.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
-
-
-#ifdef SOMATIC_DEBUG
-#include "blt_util/log.hh"
-#endif
 
 
 
@@ -235,7 +231,6 @@ process_pos_snp_somatic(const pos_t pos) {
         is_reported_event = true;
     }
 
-    std::ostream& log_os(std::cerr);
     if(_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event)) {
         log_os << "TUMOR/NORMAL EVIDENCE pos: " << output_pos << "\n"
                << "is_snv: " << is_snv << "\n"

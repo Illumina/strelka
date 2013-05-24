@@ -15,8 +15,8 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __INDEL_HH
-#define __INDEL_HH
+#pragma once
+
 
 #include "starling_common/indel_key.hh"
 #include "starling_common/indel_data.hh"
@@ -41,8 +41,6 @@ struct indel {
 
 
 // Debugging dump:
+std::ostream& operator<<(std::ostream& os, const indel_observation& obs);
 std::ostream& operator<<(std::ostream& os, const indel& in);
 
-
-
-#endif
