@@ -10,7 +10,6 @@
 // <https://github.com/downloads/sequencing/licenses/>.
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -25,6 +24,8 @@
 #include "starling_common/align_path_bam_util.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_shared.hh"
+
+#include "boost/foreach.hpp"
 
 #include <iostream>
 
@@ -355,9 +356,7 @@ update_full_segment() {
             fal.path.push_back(ps);
         }
         ref_pos=ral.pos;
-        const unsigned rs(ral.path.size());
-        for(unsigned j(0); j<rs; ++j) {
-            const path_segment& ps(ral.path[j]);
+        BOOST_FOREACH(const path_segment& ps, ral.path) {
             if(is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
             fal.path.push_back(ps);
         }

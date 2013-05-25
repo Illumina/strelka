@@ -36,7 +36,7 @@ v2.0a3
 - added command-line controls for min-gqx,max-depth-factor and other filters/blocking thresholds
 - cleaned up other final details
 v2.0a2
-- Bugfix: gVCF output was being written +1 past end of requirested range
+- Bugfix: gVCF output was being written +1 past end of requested range
 v2.0a1
 - initial version of starling with direct gVCF output
 v1.1.0

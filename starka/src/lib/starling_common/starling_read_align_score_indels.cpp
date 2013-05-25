@@ -21,6 +21,8 @@
 #include "blt_util/log.hh"
 #include "starling_common/indel_util.hh"
 
+#include "boost/foreach.hpp"
+
 #include <algorithm>
 #include <iostream>
 
@@ -50,7 +52,7 @@ check_and_update_iks(iks_map_t& iks_map,
 
     // check to see if the path score is better than what we already have:
     const iks_map_t::const_iterator j(iks_map.find(mkey));
-    if((j!=iks_map.end()) and ((j->second.first) >= path_lnp)) return;
+    if((j!=iks_map.end()) && ((j->second.first) >= path_lnp)) return;
     iks_map[mkey]=std::make_pair(path_lnp,cal_ptr);
 }
 
@@ -79,8 +81,9 @@ is_interfering_indel(const indel_set_t& current_indels,
     if(current_indels.count(new_indel) != 0) return false;
 
     typedef indel_set_t::const_iterator siter;
-    siter i(current_indels.begin()), i_end(current_indels.end());
-    for(; i!=i_end; ++i) if(is_indel_conflict(*i,new_indel)) return true;
+    BOOST_FOREACH(const indel_key& ik, current_indels) {
+        if(is_indel_conflict(ik,new_indel)) return true;
+    }
     return false;
 }
 
@@ -94,7 +97,7 @@ is_interfering_indel(const indel_set_t& current_indels,
 //
 // Allow for the possibility of an upstream oligo to be implicitely
 // present for the read, acting to 'anchor' the beginning of the read
-// with the equivelent length match state even though this does not
+// with the equivalent length match state even though this does not
 // appear in the read's CIGAR string.
 //
 static
@@ -117,10 +120,7 @@ get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
     bool is_right_read_pos(false);
     pos_t right_read_pos(0);
 
-    const unsigned as(al.path.size());
-    for(unsigned i(0); i<as; ++i) {
-        const path_segment& ps(al.path[i]);
-
+    BOOST_FOREACH(const path_segment& ps, al.path) {
         pos_t next_read_head_pos(read_head_pos);
         pos_t next_ref_head_pos(ref_head_pos);
 
@@ -233,7 +233,7 @@ is_first_indel_dominant(const starling_options& opt,
     const bool ic1(isync.is_candidate_indel(opt,ik1));
     const bool ic2(isync.is_candidate_indel(opt,ik2));
 
-    if(ic2 and (not ic1)) return false;
+    if(ic2 && (! ic1)) return false;
     if(ic2==ic1) {
         return (ik1.pos<=ik2.pos);
     }
@@ -386,7 +386,7 @@ score_indels(const starling_options& opt,
 #ifdef DEBUG_ALIGN
                         log_os << "COWSLIP: marking 2 nonnorm: " << ip->second << "\n";
 #endif
-                        if(not is_removed) {
+                        if(! is_removed) {
                             cal_set_exclude[sortj] = true;
                             is_any_excluded = true;
                             smooth_path_lnp[sorti] = std::max(smooth_path_lnp[sorti],smooth_path_lnp[sortj]);
@@ -399,7 +399,7 @@ score_indels(const starling_options& opt,
 #ifdef DEBUG_ALIGN
                         log_os << "COWSLIP: marking 1 nonnorm: " << ip->first << "\n";
 #endif
-                        if(not is_removed) {
+                        if(! is_removed) {
                             cal_set_exclude[sorti] = true;
                             is_any_excluded = true;
                             smooth_path_lnp[sortj] = std::max(smooth_path_lnp[sorti],smooth_path_lnp[sortj]);
@@ -521,7 +521,7 @@ score_indels(const starling_options& opt,
                 log_os << "VARMIT: indel intersects max_path? "
                        <<  is_range_intersect_indel_breakpoints(strict_max_pr,ik) << "\n";
 #endif
-                if(not is_range_intersect_indel_breakpoints(strict_max_pr,ik)) continue;
+                if(! is_range_intersect_indel_breakpoints(strict_max_pr,ik)) continue;
             }
 
             // all checks passed... indel will be evaluated for indel calling:
@@ -588,24 +588,21 @@ score_indels(const starling_options& opt,
             // taking advantage of our knowledge that this will be the
             // highest scoring path already:
             //
-            indel_set_t::const_iterator i(max_cal_eval_indels.begin()), i_end(max_cal_eval_indels.end());
             const align_info_t max_info(std::make_pair(max_path_lnp,&max_cal));
-            for(; i!=i_end; ++i) {
-                const bool is_indel_present(max_cal_indels.count(*i)!=0);
+            BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels) {
+                const bool is_indel_present(max_cal_indels.count(eval_ik)!=0);
 
                 if(is_indel_present) {
-                    iks_max_path_lnp[std::make_pair(*i,std::make_pair(is_indel_present,*i))] = max_info;
+                    iks_max_path_lnp[std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
 
                     // mark this as an alternate indel score for interfering indels:
-                    const indel_set_t& os(indel_overlap_map[*i]);
-                    indel_set_t::const_iterator j(os.begin()),j_end(os.end());
-                    for(; j!=j_end; ++j) {
-                        iks_max_path_lnp[std::make_pair(*j,std::make_pair(is_indel_present,*i))] = max_info;
+                    BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik]) {
+                        iks_max_path_lnp[std::make_pair(overlap_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
                     }
                 } else {
                     // check that this indel does not interfere with the max-set:
-                    if(not is_max_cal_eval_indels_interfere[*i]) {
-                        iks_max_path_lnp[std::make_pair(*i,std::make_pair(is_indel_present,*i))] = max_info;
+                    if(! is_max_cal_eval_indels_interfere[eval_ik]) {
+                        iks_max_path_lnp[std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
                     }
                 }
             }
@@ -616,7 +613,7 @@ score_indels(const starling_options& opt,
             const candidate_alignment& ical(*si);
             const bool is_max_cal(&ical == &max_cal);
             if(cal_set_exclude[c]) {
-                assert(not is_max_cal);
+                assert(! is_max_cal);
                 continue;
             }
             if(is_max_cal) continue;
@@ -626,19 +623,15 @@ score_indels(const starling_options& opt,
             indel_set_t ical_indels;
             get_alignment_indels(ical,opt.max_indel_size,ical_indels);
 
-            indel_set_t::const_iterator i(max_cal_eval_indels.begin()), i_end(max_cal_eval_indels.end());
-            for(; i!=i_end; ++i) {
-                const indel_key& ik(*i);
-                const bool is_indel_present(ical_indels.count(ik)!=0);
+            BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels) {
+                const bool is_indel_present(ical_indels.count(eval_ik)!=0);
                 if(is_indel_present) {
-                    //const indel_status_t mkey(std::make_pair(ik,std::make_pair(is_indel_present,ik)));
-                    check_and_update_iks(iks_max_path_lnp,ik,is_indel_present,ik,path_lnp,&ical);
+                    //const indel_status_t mkey(std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik)));
+                    check_and_update_iks(iks_max_path_lnp,eval_ik,is_indel_present,eval_ik,path_lnp,&ical);
 
                     // mark this as an alternate indel score for interfering indels:
-                    const indel_set_t& os(indel_overlap_map[ik]);
-                    indel_set_t::const_iterator j(os.begin()),j_end(os.end());
-                    for(; j!=j_end; ++j) {
-                        check_and_update_iks(iks_max_path_lnp,*j,is_indel_present,ik,path_lnp,&ical);
+                    BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik]) {
+                        check_and_update_iks(iks_max_path_lnp,overlap_ik,is_indel_present,eval_ik,path_lnp,&ical);
                     }
                 } else {
                     // if indel is not present, we must determine
@@ -647,19 +640,15 @@ score_indels(const starling_options& opt,
                     // category:
                     //
                     bool is_interference(false);
-                    {
-                        const indel_set_t& os(indel_overlap_map[ik]);
-                        indel_set_t::const_iterator j(os.begin()),j_end(os.end());
-                        for(; j!=j_end; ++j) {
-                            if(ical_indels.count(*j)!=0) {
-                                is_interference=true;
-                                continue;
-                            }
+                    BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik]) {
+                        if(ical_indels.count(overlap_ik)!=0) {
+                            is_interference=true;
+                            break;
                         }
                     }
 
-                    if(not is_interference) {
-                        check_and_update_iks(iks_max_path_lnp,ik,is_indel_present,ik,path_lnp,&ical);
+                    if(! is_interference) {
+                        check_and_update_iks(iks_max_path_lnp,eval_ik,is_indel_present,eval_ik,path_lnp,&ical);
                     }
                 }
             }
@@ -691,17 +680,15 @@ score_indels(const starling_options& opt,
     //
     {
         indel_buffer& ibuff(isync.ibuff());
-        indel_set_t::const_iterator i(max_cal_eval_indels.begin()), i_end(max_cal_eval_indels.end());
-        for(; i!=i_end; ++i) {
-            const indel_key& ik(*i);
-            indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
+        BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels) {
+            indel_data* id_ptr(ibuff.get_indel_data_ptr(eval_ik));
             assert(NULL != id_ptr);
 
             // we test for presence of the indel on the highest
             // scoring alignment because breakpoint overlap has
             // already been tested there, allowing us to skip this
             // step:
-            const bool is_indel_present_on_max_path(max_cal_indels.count(ik)!=0);
+            const bool is_indel_present_on_max_path(max_cal_indels.count(eval_ik)!=0);
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: final indel scan: " << ik;
@@ -716,18 +703,18 @@ score_indels(const starling_options& opt,
 
             // 1) indel present:
             double indel_path_lnp(max_path_lnp);
-            if(not is_indel_present_on_max_path) {
-                const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(ik,std::make_pair(true,ik))));
+            if(! is_indel_present_on_max_path) {
+                const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,eval_ik))));
                 const bool is_found(j!=iks_max_path_lnp.end());
-                if(not is_found) {
+                if(! is_found) {
                     if(is_incomplete_search) continue;
                     // TODO -- get more precise information on exactly when we expect an indel which overlaps a max_cal indel to not be found, for
                     // now we have to give a pass on all cases:
-                    if(is_max_cal_eval_indels_interfere[ik]) continue;
+                    if(is_max_cal_eval_indels_interfere[eval_ik]) continue;
 
                     // for the nonnorm cases, we've already eliminated at least some of the alignments which contain them
                     // and in certain circumstances there won't be alternates available
-                    if(nonnorm_indels.count(ik)!=0) continue;
+                    if(nonnorm_indels.count(eval_ik)!=0) continue;
 
                     if(is_safe_mode) {
                         log_os << "WARNING: ";
@@ -735,7 +722,7 @@ score_indels(const starling_options& opt,
                         log_os << "ERROR: ";
                     }
 
-                    log_os << "failed to find expected alignment for indel: " << ik
+                    log_os << "failed to find expected alignment for indel: " << eval_ik
                            << "\twhile evaluating read_segment:\n" << rseg << "\n";
 
                     if(is_safe_mode) {
@@ -746,7 +733,7 @@ score_indels(const starling_options& opt,
                 }
 
                 const candidate_alignment& alt_cal(*(j->second.second));
-                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,alt_cal.al,ik));
+                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,alt_cal.al,eval_ik));
                 const int bpo(std::max(both_bpo.first,both_bpo.second));
 
 #ifdef DEBUG_ALIGN
@@ -770,10 +757,10 @@ score_indels(const starling_options& opt,
             // 2) indel absent w/o interference:
             double ref_path_lnp(0);
             {
-                const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(ik,std::make_pair(false,ik))));
+                const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(false,eval_ik))));
                 const bool is_found(j!=iks_max_path_lnp.end());
-                if(is_incomplete_search and (not is_found)) continue;
-                if(not is_found) {
+                if(is_incomplete_search && (! is_found)) continue;
+                if(! is_found) {
                     if(is_safe_mode) {
                         log_os << "WARNING: ";
                     } else {
@@ -802,50 +789,48 @@ score_indels(const starling_options& opt,
 
 
             // start adding alternate indel alleles, if present:
-            {
-                const indel_set_t& os(indel_overlap_map[ik]);
-                indel_set_t::const_iterator k(os.begin()),k_end(os.end());
-                for(; k!=k_end; ++k) {
-                    const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(ik,std::make_pair(true,*k))));
+
+            BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik]) {
+                const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,overlap_ik))));
 
 #ifdef DEBUG_ALIGN
-                    log_os << "VARMIT: alternate_indel " << *k;
+                log_os << "VARMIT: alternate_indel " << *k;
 #endif
 
-                    // TODO consider a way that the basic stores
-                    // could still be used even if we can't get all
-                    // alternate paths?
-                    //
-                    const bool is_found(j!=iks_max_path_lnp.end());
+                // TODO consider a way that the basic stores
+                // could still be used even if we can't get all
+                // alternate paths?
+                //
+                const bool is_found(j!=iks_max_path_lnp.end());
 
-                    //if(is_incomplete_search and (not is_found)) continue;
-                    //assert(is_found);
+                //if(is_incomplete_search and (not is_found)) continue;
+                //assert(is_found);
 
-                    // for now, this case has to be allowed, because it is possible
-                    // for no alignment not including the called indel to be in range
-                    // of the alternate indel
-                    //
-                    // for now we continue when the alt case is not found.
-                    //
-                    // TODO tighten the re-alignment procedure so that we know when the
-                    // alt case should be missing -- possibly use ref_path instead of continuing
-                    // in this case
-                    //
-                    if(is_found) {
-                        rps.insert_alt(*k,j->second.first);
-                        //                        rps.alt_indel[*k] = j->second.first;
-                    } else {
-                        // TODO look at these cases in more detail before allowing them!
-                        continue;
-                        //rp.alt_indel[*k] = ref_path_lnp;
-                    }
-
-#ifdef DEBUG_ALIGN
-                    //log_os << "VARMIT: alternate_indel_path_found: " << is_found << "\n";
-                    log_os << "VARMIT: alternate_indel_path_lnp " << j->second.first << "\n";
-#endif
+                // for now, this case has to be allowed, because it is possible
+                // for no alignment not including the called indel to be in range
+                // of the alternate indel
+                //
+                // for now we continue when the alt case is not found.
+                //
+                // TODO tighten the re-alignment procedure so that we know when the
+                // alt case should be missing -- possibly use ref_path instead of continuing
+                // in this case
+                //
+                if(is_found) {
+                    rps.insert_alt(overlap_ik,j->second.first);
+                    //                        rps.alt_indel[*k] = j->second.first;
+                } else {
+                    // TODO look at these cases in more detail before allowing them!
+                    continue;
+                    //rp.alt_indel[*k] = ref_path_lnp;
                 }
+
+#ifdef DEBUG_ALIGN
+                //log_os << "VARMIT: alternate_indel_path_found: " << is_found << "\n";
+                log_os << "VARMIT: alternate_indel_path_lnp " << j->second.first << "\n";
+#endif
             }
+
 
             id_ptr->read_path_lnp[rseg.id()] = rps;
 

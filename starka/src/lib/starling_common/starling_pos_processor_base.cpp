@@ -43,8 +43,11 @@
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 
+#include "boost/foreach.hpp"
+
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
 
 
@@ -84,10 +87,9 @@ report_counts(const snp_pos_info& pi,
 
     for(unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
 
-    const unsigned n_calls(pi.calls.size());
-    for(unsigned i(0); i<n_calls; ++i) {
-        assert(pi.calls[i].base_id!=BASE_ID::ANY);
-        base_count[pi.calls[i].base_id]++;
+    BOOST_FOREACH(const base_call& bc, pi.calls) {
+        assert(bc.base_id!=BASE_ID::ANY);
+        base_count[bc.base_id]++;
     }
 
     os << output_pos << '\t';
@@ -284,11 +286,11 @@ get_stage_data(const unsigned largest_read_size,
     // and processed for indels, it needs enough room to collect the full
     // candidate indel map before we start read alignment:
     //
-    // occuring at the beginning of stage READ_BUFFER (or before):
+    // occurring at the beginning of stage READ_BUFFER (or before):
     // collect and buffer read
     // enter read into estimated depth
     //
-    // occuring at the end of stage READ_BUFFER:
+    // occurring at the end of stage READ_BUFFER:
     // read realignment
     // base-call pos entry (pileup)
     //
