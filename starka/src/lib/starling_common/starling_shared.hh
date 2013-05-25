@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_SHARED_HH
-#define __STARLING_SHARED_HH
+#pragma once
 
 #include "blt_common/blt_shared.hh"
 #include "blt_util/reference_contig_segment.hh"
@@ -336,5 +335,3 @@ struct starling_read_counts : public blt_read_counts {
     unsigned grouper_indel_intersect;
     unsigned grouper_unused;
 };
-
-#endif

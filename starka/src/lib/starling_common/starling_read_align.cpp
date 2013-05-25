@@ -1023,8 +1023,8 @@ score_candidate_alignments(const starling_options& client_opt,
                            const std::set<candidate_alignment>& cal_set,
                            std::vector<double>& cal_set_path_lnp,
                            double& max_path_lnp,
-                           const candidate_alignment*& max_cal_ptr) {
-
+                           const candidate_alignment*& max_cal_ptr)
+{
     // the smooth optimum alignment and alignment pool are actually
     // used for realignment, whereas the strict max_path path
     // alignment is reported back to the indel_scoring routines.
@@ -1225,6 +1225,7 @@ score_candidate_alignments_and_indels(const starling_options& opt,
 }
 
 
+
 /// Initialize a candidate alignment with edge indels set according
 /// to those in the input alignment
 ///
@@ -1323,7 +1324,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         for(siter i(i_begin); i!=i_end; ++i) { if(! i->second.is_present) indel_order.push_back(i->first); }
     }
 
-    // to prevent trancated search, we must put all non-present remove-only indels last in the order list:
+    // to prevent truncated search, we must put all non-present remove-only indels last in the order list:
     sort_remove_only_indels_last(indel_status_map,indel_order);
 
 #ifdef DEBUG_ALIGN
@@ -1378,10 +1379,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         // un soft-clip candidate alignments:
         std::set<candidate_alignment> cal_set2(cal_set);
         cal_set.clear();
-        typedef std::set<candidate_alignment>::iterator xiter;
-        const xiter i_begin(cal_set2.begin()),i_end(cal_set2.end());
-        for(xiter i(i_begin); i!=i_end; ++i) {
-            candidate_alignment ical(*i);
+        BOOST_FOREACH(candidate_alignment ical, cal_set2) {
             apath_clip_adder(ical.al.path,
                              hc_lead,
                              hc_trail,

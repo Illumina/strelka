@@ -28,6 +28,8 @@
 #include "blt_util/log.hh"
 #include "starling_common/align_path_util.hh"
 
+#include "boost/foreach.hpp"
+
 #include <cassert>
 
 #include <iostream>
@@ -115,10 +117,7 @@ process_edge_insert(const unsigned max_indel_size,
         // add edge indels for contig reads:
         if(NULL != edge_indel_ptr) {
             const pos_t current_pos(ref_head_pos);
-            typedef indel_set_t::const_iterator cit;
-            cit j(edge_indel_ptr->begin()), j_end(edge_indel_ptr->end());
-            for(; j!=j_end; ++j) {
-
+            BOOST_FOREACH(const indel_key& ik, *edge_indel_ptr) {
                 // This checks that we've identified the edge indel
                 // for this read out of the full set of indels in the
                 // contig. It is not fantastically robust. In summary:
@@ -131,12 +130,12 @@ process_edge_insert(const unsigned max_indel_size,
                 // indel.
                 //
                 if(path_index!=ends.first) {
-                    if(current_pos!=j->pos) continue;
+                    if(current_pos!=ik.pos) continue;
                 } else {
-                    if(current_pos!=j->right_pos()) continue;
+                    if(current_pos!=ik.right_pos()) continue;
                 }
 
-                obs.key = *j;
+                obs.key = ik;
 
                 // large insertion breakpoints are not filtered as noise:
                 if(obs.data.is_noise) {

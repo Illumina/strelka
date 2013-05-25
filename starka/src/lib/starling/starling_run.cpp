@@ -10,7 +10,6 @@
 // <https://github.com/downloads/sequencing/licenses/>.
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -80,8 +79,6 @@ starling_run(const starling_options& opt) {
     starling_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
-    const pos_t max_indel_size(opt.max_indel_size);
-
     starling_input_stream_data sdata;
     sdata.register_reads(read_stream);
     sdata.register_contigs(cdm.creader());
@@ -106,7 +103,7 @@ starling_run(const starling_options& opt) {
         // some additional padding is allowed for off-range indels
         // which might influence results within rlimit:
         //
-        if(rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+max_indel_size))) break;
+        if(rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(sinput.get_head_pos()-1);
@@ -122,7 +119,7 @@ starling_run(const starling_options& opt) {
             // if( sppr.is_range_outside_report_influence_zone(any_read_bounds) ) continue;
 
             // Approximate begin range filter: (removed for RNA-Seq)
-            //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
+            //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
 
             const bam_record& read(*(read_stream.get_record_ptr()));
 

@@ -191,6 +191,11 @@ struct stage_manager {
     void
     revise_stage_data(const stage_data& sdata);
 
+    const stage_data&
+    get_stage_data() const {
+        return _sdata;
+    }
+
 private:
     // advances head position from its current value to pos,
     // signalling all stage processing steps to pos_process_base along
