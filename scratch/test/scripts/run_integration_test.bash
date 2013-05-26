@@ -147,7 +147,7 @@ cd $workspace_dir
 # X. create starka tarball and compile (in progress):
 #
 
-starka_tarball_key=starka-master
+starka_tarball_key=starka-$starka_version
 starka_tarball_dir=$starka_tarball_key
 starka_tarball_name=$starka_tarball_dir.tar.gz
 
