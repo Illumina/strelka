@@ -141,7 +141,7 @@ strelka_pile_test_run(strelka_options& opt) {
         assert(6 == dparse.n_word());
 
         const char* pcopy(dparse.word[0]);
-        const unsigned pos(casava::blt_util::parse_unsigned(pcopy));
+        const unsigned pos(illumina::blt_util::parse_unsigned(pcopy));
         const char ref_base(*dparse.word[1]);
 
         {

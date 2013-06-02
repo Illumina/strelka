@@ -18,7 +18,7 @@
 
 BOOST_AUTO_TEST_SUITE( parse_util )
 
-using namespace casava::blt_util;
+using namespace illumina::blt_util;
 
 BOOST_AUTO_TEST_CASE( test_parse_int ) {
     const char* two = "2";
