@@ -94,7 +94,7 @@ check_bam_record(const bam_streamer& read_stream,
 
     const unsigned rs(read.read_size());
 
-    if(rs<=0) {
+    if(rs==0) {
         log_os << "ERROR: anomalous read size (<=0) in input alignment record:\n";
         read_stream.report_state(log_os);
         exit(EXIT_FAILURE);

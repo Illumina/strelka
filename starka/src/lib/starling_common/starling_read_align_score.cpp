@@ -112,7 +112,7 @@ score_segment(const starling_options& /*opt*/,
         if(sbase == BAM_BASE::ANY) continue;
         const uint8_t qscore(qual[readi]);
         bool is_ref(sbase == BAM_BASE::REF);
-        if(not is_ref) {
+        if(! is_ref) {
             const pos_t refi(ref_head_pos+static_cast<pos_t>(i));
             is_ref=(sbase == ref.get_code(refi));
         }
@@ -142,23 +142,40 @@ score_candidate_alignment(const starling_options& opt,
     const bam_seq read_bseq(rseg.get_bam_read());
     const uint8_t* qual(rseg.qual());
 
+    const path_t& path(cal.al.path);
+
+#ifdef DEBUG_SCORE
+        log_os << "LLAMA: path: " << path << "\n";
+#endif
+
     unsigned read_offset(0);
     pos_t ref_head_pos(cal.al.pos);
 
-    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(cal.al.path));
-    const unsigned aps(cal.al.path.size());
+    const std::pair<unsigned,unsigned> ends(get_match_edge_segments(path));
+    const unsigned aps(path.size());
     unsigned path_index(0);
     while(path_index<aps) {
-        const bool is_swap_start(is_segment_swap_start(cal.al.path,path_index));
+        const bool is_swap_start(is_segment_swap_start(path,path_index));
 
         unsigned n_seg(1); // number of path segments consumed
-        const path_segment& ps(cal.al.path[path_index]);
+        const path_segment& ps(path[path_index]);
+
+#ifdef DEBUG_SCORE
+        log_os << "LLAMA: path_index: " << path_index << " read_offset: " << read_offset << " ref_head_pos: " << ref_head_pos << "\n";
+#endif
 
         if       (is_swap_start) {
-            const swap_info sinfo(cal.al.path,path_index);
+            const swap_info sinfo(path,path_index);
             n_seg=sinfo.n_seg;
 
-            const indel_key ik(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
+            indel_key ik(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
+
+            // check if this is an edge swap:
+            if((path_index<ends.first) || (path_index>ends.second)) {
+                if(path_index<ends.first) { ik=cal.leading_indel_key; }
+                else                      { ik=cal.trailing_indel_key; }
+                assert(ik.type!=INDEL::NONE);
+            }
 
             const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
             if(NULL == id_ptr) {
@@ -169,7 +186,14 @@ score_candidate_alignment(const starling_options& opt,
             }
 
             const string_bam_seq insert_bseq(id_ptr->get_insert_seq());
-            const pos_t insert_seq_head_pos(0);
+
+            // if this is a leading edge-insertion we need to set
+            // insert_seq_head_pos accordingly:
+            //
+            pos_t insert_seq_head_pos(0);
+            if(path_index<ends.first) {
+                insert_seq_head_pos=static_cast<int>(insert_bseq.size())-static_cast<int>(ps.length);
+            }
 
             score_segment(opt,
                           sinfo.insert_length,
@@ -289,11 +313,11 @@ score_candidate_alignment(const starling_options& opt,
             throw blt_exception(oss.str().c_str());
         }
 
-        for(unsigned i(0); i<n_seg; ++i) { increment_path(cal.al.path,path_index,read_offset,ref_head_pos); }
+        for(unsigned i(0); i<n_seg; ++i) { increment_path(path,path_index,read_offset,ref_head_pos); }
     }
 
 #ifdef DEBUG_SCORE
-    ap.dump(std::cerr);
+    ap.dump(log_os);
 #endif
     return al_lnp;
 }

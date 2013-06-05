@@ -2,7 +2,7 @@
 SRC_DIR := $(CURDIR)/src
 export BIN_DIR := $(CURDIR)/bin
 export REDIST_DIR := $(CURDIR)/redist
-export BOOST_ID := boost_1_44_0_subset
+export BOOST_ID := boost_1_53_0_subset
 export CODEMIN_ID := CodeMin-1.0.2
 export SAMTOOLS_ID := samtools-0.1.18_no_tview
 export TABIX_ID := tabix-0.2.5_new_libz_order

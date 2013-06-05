@@ -514,15 +514,20 @@ insert_indel(const indel_observation& obs,
     // the read buffer sizes fixed at a smaller value.
     //
 
-    _stageman.validate_new_pos_value(obs.key.pos,STAGE::READ_BUFFER);
+    try {
+        _stageman.validate_new_pos_value(obs.key.pos,STAGE::READ_BUFFER);
 
-    // dynamically scale maximum indel size:
-    const unsigned len(std::min(static_cast<unsigned>((obs.key.length+obs.key.swap_dlength)*STARLING_LARGEST_INDEL_SIZE_PAD),_client_opt.max_indel_size));
-    if(len>get_largest_indel_size()) {
-        set_largest_indel_size(len);
+        // dynamically scale maximum indel size:
+        const unsigned len(std::min(static_cast<unsigned>((obs.key.length+obs.key.swap_dlength)*STARLING_LARGEST_INDEL_SIZE_PAD),_client_opt.max_indel_size));
+        if(len>get_largest_indel_size()) {
+            set_largest_indel_size(len);
+        }
+
+        return sample(sample_no).indel_sync().insert_indel(obs);
+    } catch (...) {
+        log_os << "Exception caught while attempting to insert indel: " << obs << "\n";
+        throw;
     }
-
-    return sample(sample_no).indel_sync().insert_indel(obs);
 }
 
 

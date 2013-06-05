@@ -75,7 +75,7 @@ insert_indel(const indel_observation& obs,
     assert(obs.key.type != INDEL::NONE);
     idata_t::iterator i(_idata.find(obs.key));
     if(i == _idata.end()) {
-        indel_data id;
+        indel_data id(obs.key);
         id.add_observation(obs.data,is_shared,is_repeat_obs);
         _idata.insert(std::make_pair(obs.key,id));
         return true;

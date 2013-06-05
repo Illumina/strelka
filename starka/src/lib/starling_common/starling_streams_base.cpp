@@ -72,7 +72,8 @@ initialize_gvcf_file(const starling_options& opt,
         const char* const cmdline(opt.cmdline.c_str());
 
         write_vcf_audit(opt,pinfo,cmdline,header,os);
-        os << "##content=starling small-variant calls\n"
+
+        os << "##content=" << pinfo.name() << " small-variant calls\n"
            << "##SnvTheta=" << opt.bsnp_diploid_theta << "\n"
            << "##IndelTheta=" << opt.bindel_diploid_theta << "\n";
     }

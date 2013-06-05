@@ -12,28 +12,28 @@ set -o pipefail
 # starka test constants (git checkout not finished yet)
 #
 starka_git_url=ussd-git.illumina.com:OptimusPrime/starka
-starka_version=master
+starka_version=master #c82a82731e784700df1345dd64cc88360ad83a83
 workspace_dir=$(pwd)/workspace
 
 
 # starling test constants
 #
-starling_expected_time=53
+starling_expected_time=183
 starling_results_dir=$workspace_dir/starling_results
-starling_output_name=Mother_S1_chr15.84M-86M.raw.genome.vcf
 starling_expected_dir=/bioinfoSD/csaunders/proj/starka/test/expected_results/starling
-starling_result=$starling_results_dir/$starling_output_name
-sample1_bam=/bioinfoSD/stanner/CephMother/Data/Intensities/BaseCalls/Alignment2/Mother_S1.bam
+test_data_dir=/bioinfoSD/csaunders/proj/starka/test/data
+sample1_bam=$test_data_dir/Mother_S1.bam
+sample1_indel_vcf=$test_data_dir/Mother_S1.SVIndelCandidates.gz
 test_reference=/illumina/scratch/iGenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
 
 
 # strelka test constants
 #
-strelka_expected_time=79
+strelka_expected_time=293
 strelka_results_dir=$workspace_dir/strelka_results
 strelka_expected_dir=/bioinfoSD/csaunders/proj/starka/test/expected_results/strelka
-sample2_bam=/bioinfoSD/stanner/CephFather/Data/Intensities/BaseCalls/Alignment2/Father_S1.bam
-
+sample2_bam=$test_data_dir/Father_S1.bam
+sample2_indel_vcf=$test_data_dir/Father_S1.SVIndelCandidates.gz
 
 
 #
@@ -126,6 +126,11 @@ END
 }
 
 
+script_dir=$(rel2abs $(dirname $0))
+get_depth=$script_dir/util/getBamAvgChromDepth.pl
+
+
+
 if ! [ -f $test_reference ]; then
     error "Can't find reference: $test_reference"
 fi
@@ -142,7 +147,7 @@ cd $workspace_dir
 # X. create starka tarball and compile (in progress):
 #
 
-starka_tarball_key=starka-master
+starka_tarball_key=starka-$starka_version
 starka_tarball_dir=$starka_tarball_key
 starka_tarball_name=$starka_tarball_dir.tar.gz
 
@@ -160,11 +165,15 @@ make_starka_tarball() {
     )
 }
 
-make_starka_tarball
-tar -xzf $starka_tarball_name
-cd $starka_tarball_dir
-make -j4
-cd $workspace_dir
+prep_starka() {
+    make_starka_tarball
+    tar -xzf $starka_tarball_name
+    cd $starka_tarball_dir
+    make -j4
+    cd $workspace_dir
+}
+
+prep_starka
 
 starka_bin=$workspace_dir/$starka_tarball_dir/bin
 
@@ -181,42 +190,70 @@ fi
 #
 big_start=84000000
 big_end=86000000
-small_start=84990000
-small_end=85010000
+chr1_big_start=1
+chr1_big_end=3000000
+small_start=84980000
+small_end=85020000
 
 mkdir -p $starling_results_dir
+
+depth_file=$workspace_dir/starling.bam.depth
 
 printf "Starting Starling test\n" 1>&2
 start_time=$(date +%s)
 
 starling_command() {
-    begin=$1
-    end=$2
-    echo $starka_bin/starling2 \
+    chrom=$1
+    begin=$2
+    end=$3
+    logprefix=$4
+
+    prefix=""
+    if [ $# == 5 ]; then prefix="$5"; fi
+
+    loctag=$chrom:$begin-$end
+    logfile=$logprefix/starling.$loctag.log
+
+    $prefix $starka_bin/starling2 \
 --gvcf-min-gqx 30 --gvcf-max-snv-strand-bias 10 --gvcf-max-indel-ref-repeat 8 -min-qscore 17 \
 -min-vexp 0.25 -max-window-mismatch 2 20 -max-indel-size 50 -genome-size 2861343702 \
 -clobber -min-single-align-score 20 -min-paired-align-score 20 -bsnp-ssd-no-mismatch 0.35 -bsnp-ssd-one-mismatch 0.6 \
---gvcf-file $starling_result \
---chrom-depth-file $sample1_bam.depth \
+--gvcf-file $starling_results_dir/sample1.$loctag.genome.vcf \
+--chrom-depth-file $depth_file \
 -bam-file $sample1_bam \
 -samtools-reference $test_reference \
--realigned-read-file $workspace_dir/starling.realigned.bam \
--bam-seq-name chr15 -report-range-begin $begin -report-range-end $end
+-realigned-read-file $workspace_dir/starling.$chrom:$begin-$end.realigned.bam \
+--candidate-indel-input-vcf $sample1_indel_vcf \
+-bam-seq-name $chrom -report-range-begin $begin -report-range-end $end \
+ >| $logfile 2>| ${logfile}2
 }
 
-starling_command_big_interval() {
-    starling_command $big_start $big_end
+valgrind_prefix() {
+    echo valgrind --error-exitcode=1 --tool=memcheck 
+}
+
+
+starling_command_big_interval1() {
+    starling_command chr1 $chr1_big_start $chr1_big_end $workspace_dir/
+}
+
+starling_command_big_interval15() {
+    starling_command chr15 $big_start $big_end $workspace_dir/
 }
 
 starling_command_small_interval() {
-    starling_command $small_start $small_end
+    starling_command chr15 $small_start $small_end $workspace_dir/ "$(valgrind_prefix)"
 }
 
+$get_depth $sample1_bam >| $depth_file
 
-$(starling_command_big_interval) >| $workspace_dir/starling.log 2>| $workspace_dir/starling.log2
+$(starling_command_big_interval1)
 
-#-bam-seq-name chr15 -report-range-begin 85046000 -report-range-end 85047000 >| log 2>| log2
-check_exit Starling $?
+check_exit Starling1 $?
+
+$(starling_command_big_interval15)
+
+check_exit Starling15 $?
 
 end_time=$(date +%s)
 starling_elapsed_time=$(($end_time - $start_time))
@@ -237,9 +274,18 @@ mkdir -p $strelka_results_dir
 start_time=$(date +%s)
 
 strelka_command() {
-    begin=$1
-    end=$2
-    echo $starka_bin/strelka2 \
+    chrom=$1
+    begin=$2
+    end=$3
+    logprefix=$4
+
+    prefix=""
+    if [ $# == 5 ]; then prefix="$5"; fi
+
+    loctag=$chrom:$begin-$end
+    logfile=$logprefix/strelka.$loctag.log
+
+    $prefix $starka_bin/strelka2 \
 -clobber -filter-unanchored -min-paired-align-score 20 \
 -min-single-align-score 10 -min-qscore 0 \
 -max-window-mismatch 3 20 -print-used-allele-counts -max-indel-size 50 -indel-nonsite-match-prob 0.5 \
@@ -248,30 +294,40 @@ strelka_command() {
 --tier2-min-single-align-score 5 --tier2-min-paired-align-score 5 --tier2-single-align-score-rescue-mode \
 --tier2-mismatch-density-filter-count 10 --tier2-no-filter-unanchored \
 --tier2-indel-nonsite-match-prob 0.25 --tier2-include-singleton --tier2-include-anomalous \
---somatic-snv-file $strelka_results_dir/somatic.snvs.unfiltered.vcf \
---somatic-indel-file $strelka_results_dir/somatic.indels.unfiltered.vcf \
---variant-window-flank-file 50 $strelka_results_dir/somatic.indels.unfiltered.vcf.window \
+--somatic-snv-file $strelka_results_dir/somatic.snvs.unfiltered.$loctag.vcf \
+--somatic-indel-file $strelka_results_dir/somatic.indels.unfiltered.$loctag.vcf \
+--variant-window-flank-file 50 $strelka_results_dir/somatic.indels.unfiltered.$loctag.vcf.window \
 --max-input-depth 10000 -genome-size 2861343702 \
 -bam-file $sample1_bam \
 --tumor-bam-file $sample2_bam \
 -samtools-reference $test_reference \
--realigned-read-file $workspace_dir/strelka.realigned.normal.bam \
---tumor-realigned-read-file $workspace_dir/strelka.realigned.normal.bam \
--bam-seq-name chr15 -report-range-begin $begin -report-range-end $end
+-realigned-read-file $workspace_dir/strelka.$loctag.realigned.normal.bam \
+--tumor-realigned-read-file $workspace_dir/strelka.$loctag.realigned.normal.bam \
+--candidate-indel-input-vcf $sample1_indel_vcf \
+--candidate-indel-input-vcf $sample2_indel_vcf \
+-bam-seq-name $chrom -report-range-begin $begin -report-range-end $end \
+ >| $logfile 2>| ${logfile}2
 }
 
-strelka_command_big_interval() {
-    strelka_command $big_start $big_end
+strelka_command_big_interval1() {
+    strelka_command chr1 $chr1_big_start $chr1_big_end $workspace_dir/
+}
+strelka_command_big_interval15() {
+    strelka_command chr15 $big_start $big_end $workspace_dir/
 }
 
 strelka_command_small_interval() {
-    strelka_command $small_start $small_end
+    strelka_command chr15 $small_start $small_end $workspace_dir/ "$(valgrind_prefix)"
 }
 
 
-$(strelka_command_big_interval) >| $workspace_dir/strelka.log 2>| $workspace_dir/strelka.log2
+$(strelka_command_big_interval1)
 
-check_exit Strelka $?
+check_exit Strelka1 $?
+
+$(strelka_command_big_interval15)
+
+check_exit Strelka15 $?
 
 end_time=$(date +%s)
 strelka_elapsed_time=$(($end_time - $start_time))
@@ -282,14 +338,10 @@ diff_dirs Strelka $strelka_results_dir $strelka_expected_dir
 
 
 # add valgrind tests:
-valgrind_prefix() {
-    echo valgrind --error-exitcode=1 --tool=memcheck 
-}
-
 printf "Starting Starling valgrind test\n" 1>&2
-$(valgrind_prefix) $(starling_command_small_interval) >| $workspace_dir/starling.valgrind.log 2>| $workspace_dir/starling.valgrind.log2
+$(starling_command_small_interval) 
 check_exit "Starling valgrind" $?
 
 printf "Starting Strelka valgrind test\n" 1>&2
-$(valgrind_prefix) $(strelka_command_small_interval) >| $workspace_dir/strelka.valgrind.log 2>| $workspace_dir/strelka.valgrind.log2
+$(strelka_command_small_interval)
 check_exit "Strelka valgrind" $?

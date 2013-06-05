@@ -795,7 +795,7 @@ apath_exon_count(const path_t& apath) {
 bool
 is_clipped(const path_t& apath) {
     const unsigned as(apath.size());
-    if(as<=0) return false;
+    if(as==0) return false;
     if((apath[0].type == SOFT_CLIP) || (apath[0].type == HARD_CLIP)) return true;
     if(as>1) {
         if((apath[as-1].type == SOFT_CLIP) || (apath[as-1].type == HARD_CLIP)) return true;
@@ -818,7 +818,7 @@ is_soft_clipped(const path_t& apath) {
 bool
 is_edge_readref_len_segment(const path_t& apath) {
     const unsigned as(apath.size());
-    if(as<=0) return false;
+    if(as==0) return false;
 
     const std::pair<unsigned,unsigned> ends(get_match_edge_segments(apath));
 
@@ -853,10 +853,21 @@ is_seq_swap(const path_t& apath) {
 
 bool
 is_segment_swap_start(const path_t& apath,
-                      const unsigned i) {
-    return (((i+1)<apath.size()) &&
-            is_segment_type_indel(apath[i].type) &&
-            is_segment_type_indel(apath[i+1].type));
+                      unsigned i) {
+
+    using namespace ALIGNPATH;
+
+    bool is_insert(false);
+    bool is_delete(false);
+
+    const unsigned as(apath.size());
+    for(;i<as;++i) {
+        if     (apath[i].type == INSERT) { is_insert=true; }
+        else if(apath[i].type == DELETE) { is_delete=true; }
+        else { break; }
+    }
+
+    return (is_insert && is_delete);
 }
 
 
@@ -864,9 +875,8 @@ is_segment_swap_start(const path_t& apath,
 bool
 is_apath_floating(const path_t& apath) {
 
-    const unsigned as(apath.size());
-    for(unsigned i(0); i<as; ++i) {
-        if(apath[i].type==MATCH) return false;
+    BOOST_FOREACH(const path_segment& ps, apath) {
+        if(ps.type==MATCH) return false;
     }
     return true;
 }
@@ -903,7 +913,6 @@ get_apath_invalid_type(const path_t& apath,
         if((i!=0) && ps.type==last_type) return ALIGN_ISSUE::REPEATED_SEGMENT;
 
         if(! is_match) {
-            //if(ps.type==DELETE) return ALIGN_ISSUE::EDGE_DELETE;
             if(ps.type==SKIP) return ALIGN_ISSUE::EDGE_SKIP;
         }
 
@@ -956,10 +965,7 @@ get_apath_invalid_type(const path_t& apath,
 bool
 is_apath_starling_invalid(const path_t& apath) {
 
-    const unsigned as(apath.size());
-    for(unsigned i(0); i<as; ++i) {
-        const path_segment& ps(apath[i]);
-
+    BOOST_FOREACH(const path_segment& ps, apath) {
         if(ps.type==PAD) return true;
     }
     return false;

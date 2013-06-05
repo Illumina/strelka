@@ -28,6 +28,13 @@
 #include <set>
 #include <vector>
 
+//#define ID_DEBUG
+
+#ifdef ID_DEBUG
+#include "blt_util/log.hh"
+
+#include <iostream>
+#endif
 
 
 /// represents the data associated with a single indel observation:
@@ -118,7 +125,7 @@ struct read_path_scores {
 /// the most common insert sequence.
 ///
 /// Note that for open-breakends we also report the longest insert
-/// candidate, and consider the most prevelant as a secondary term.
+/// candidate, and consider the most prevalent as a secondary term.
 ///
 struct insert_seq_manager {
 
@@ -131,7 +138,7 @@ struct insert_seq_manager {
     const std::string&
     get() {
         if(! _is_consensus) {
-            finalize();
+            _finalize();
         }
         return _consensus_seq;
     }
@@ -139,7 +146,9 @@ struct insert_seq_manager {
     // add insert sequence observation:
     void
     add_obs(const std::string& seq) {
-        assert(! _is_consensus);
+        if(_is_consensus) {
+            _exception("Attempting to add insert observation after finalizing");
+        }
 
         // if we don't know what the most common insert will be after
         // this many samples are collected, then more cases will be
@@ -157,7 +166,10 @@ struct insert_seq_manager {
     }
 
 private:
-    void finalize();
+    void _exception(const char* msg) const;
+
+    void _finalize();
+
 
     typedef std::map<std::string,unsigned> obs_t;
     bool _is_consensus;
@@ -171,8 +183,10 @@ private:
 // represents the data from all observations associated with an indel
 //
 struct indel_data {
-    indel_data()
-        : is_external_candidate(false)
+
+    indel_data(const indel_key& ik)
+        : _ik(ik),
+          is_external_candidate(false)
     {}
 
     /// add an observation for this indel
@@ -186,7 +200,11 @@ struct indel_data {
                     const bool is_shared,
                     bool& is_repeat_obs) {
 
-
+#ifdef ID_DEBUG
+        log_os << "KATTER: adding obs for indel: " << _ik;
+        log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
+        log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
+#endif
         if(! is_shared) {
             add_observation_core(obs_data,is_repeat_obs);
         }
@@ -219,6 +237,9 @@ struct indel_data {
 
     const std::string&
     get_insert_seq() const {
+#ifdef ID_DEBUG
+        log_os << "KATTER: reporting insert seq for indel: " << _ik << "\n";
+#endif
         return _insert_seq.get();
     }
 
@@ -240,6 +261,9 @@ struct indel_data {
 #endif
 
 private:
+    // indel key is maintained for debugging only:
+    const indel_key _ik;
+
     mutable insert_seq_manager _insert_seq;
 
 public:
@@ -348,6 +372,7 @@ private:
 
 
 // Debugging dumps:
+std::ostream& operator<<(std::ostream& os, const indel_observation_data& id);
 std::ostream& operator<<(std::ostream& os, const read_path_scores& rps);
 std::ostream& operator<<(std::ostream& os, const indel_data& id);
 

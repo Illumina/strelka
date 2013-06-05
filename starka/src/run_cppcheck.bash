@@ -16,7 +16,6 @@ cppcheck \
 --enable=all --std=c++03 --force --verbose --quiet \
 --template='{file}:{line}:{severity}:{message}' \
 --suppress=uninitMemberVar \
---suppress=unsignedLessThanZero \
 --suppress=obsoleteFunctionsasctime \
 --suppress=unusedFunction \
 --suppress=unmatchedSuppression \
