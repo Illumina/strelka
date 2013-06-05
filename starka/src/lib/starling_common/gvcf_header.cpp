@@ -134,5 +134,5 @@ finish_gvcf_header(const gvcf_options& opt,
     // FILTER:
     add_gvcf_filters(opt,chrom_depth,os);
 
-    os << vcf_col_label() << "\tFORMAT\tSAMPLE\n";
+    os << vcf_col_label() << "\tFORMAT\tMYSAMPLE\n";
 }

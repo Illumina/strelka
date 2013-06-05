@@ -11,7 +11,6 @@
 //
 
 /// \file
-///
 /// \author Chris Saunders
 ///
 
@@ -522,6 +521,8 @@ insert_indel(const indel_observation& obs,
         set_largest_indel_size(len);
     }
 
+
+//   log_os << obs.key << endl;
     return sample(sample_no).indel_sync().insert_indel(obs);
 }
 
@@ -578,7 +579,6 @@ insert_read(const bam_record& br,
 
     // assume that pos_procesor, as a container, is no longer empty...
     _is_skip_process_pos=false;
-
     // check read_size:
     {
         const unsigned rs(static_cast<unsigned>(STARLING_LARGEST_READ_SIZE_PAD*br.read_size()));
@@ -622,6 +622,7 @@ insert_read(const bam_record& br,
         const bam_seq bseq(br.get_bam_read());
         try {
             static const std::pair<bool,bool> edge_pin(std::make_pair(false,false));
+//            log_os << "bam record information " << static_cast<int>(br.map_qual()) << endl;
             add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
                                          al,bseq,*this,iat,res.second,sample_no,
                                          edge_pin,contig_indels_ptr);
@@ -843,7 +844,7 @@ process_pos(const int stage_no,
             }
         }
     } else if (stage_no==STAGE::READ_BUFFER) {
-#ifdef DEBUG_PPOS
+#if 0
         for(unsigned s(0); s<_n_samples; ++s) {
             sample_info& sif(sample(s));
             sif.indel_buff.dump_pos(pos,log_os);
@@ -1444,9 +1445,10 @@ pileup_read_segment(const read_segment& rseg,
                                         bc);
 
                     // update mapq and rank-sum metrics
-                    insert_mapq_count(ref_pos,sample_no,mapq);
-                    update_ranksum(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
-
+                    if(_client_opt.is_compute_VQSRmetrics) {
+                        insert_mapq_count(ref_pos,sample_no,mapq);
+                        update_ranksum(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
+                    }
                     if(_client_opt.is_compute_hapscore) {
                         insert_hap_cand(ref_pos,sample_no,is_tier1,
                                         bseq,qual,read_pos);

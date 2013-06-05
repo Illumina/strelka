@@ -457,6 +457,8 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                                  path_index,read_offset,ref_head_pos);
 
         } else if(is_segment_type_indel(al.path[path_index].type)) {
+//            log_os << "offset " << read_offset <<  endl;
+//            log_os << " " << ref_head_pos <<  endl;
             process_simple_indel(max_indel_size,al.path,read_seq,
                                  sppr,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);

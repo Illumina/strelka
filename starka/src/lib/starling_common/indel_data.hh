@@ -20,6 +20,7 @@
 #include "starling_common/indel_align_type.hh"
 #include "starling_common/indel_key.hh"
 #include "starling_common/starling_types.hh"
+#include "blt_common/ranksum.hh"
 
 #include <cassert>
 #include <iosfwd>
@@ -186,7 +187,6 @@ struct indel_data {
                     const bool is_shared,
                     bool& is_repeat_obs) {
 
-
         if(! is_shared) {
             add_observation_core(obs_data,is_repeat_obs);
         }
@@ -281,6 +281,13 @@ public:
     evidence_t suboverlap_tier1_read_ids; // the reads which cross an indel breakpoint, but not by enough
     // to be entered into the scores list
     evidence_t suboverlap_tier2_read_ids;
+
+    ranksum mq_ranksum;
+    ranksum baseq_ranksum;
+    ranksum read_pos_ranksum;
+    unsigned n_mapq;
+    // sum of mapq for all reads at this position
+    int cumm_mapq;
 
     struct status_t {
         status_t()

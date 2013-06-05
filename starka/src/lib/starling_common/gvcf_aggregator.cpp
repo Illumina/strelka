@@ -520,6 +520,12 @@ write_site_record(const site_info& si) const {
 			   os << "BaseQRankSum=" << si.BaseQRankSum;
 			   os << ';';
 			   os << "ReadPosRankSum=" << si.ReadPosRankSum;
+			   os << ';';
+			   os << "DP=" << (si.n_used_calls+si.n_unused_calls);
+               os << ';';
+               os << "GQ=" << si.smod.gq;
+               os << ';';
+               os << "GQX=" << si.smod.gqx;
 //                }
             }
         } else {
@@ -800,6 +806,20 @@ write_indel_record(const unsigned write_index) {
             os << '.';
         }
     }
+    os << ';';
+
+    // VQSR metrics here
+    os << "MQ=" << ii.MQ;
+
+    //if we have a het, report these metrics as well
+    //                if(si.get_gt()=="0/1"){
+    os << ';';
+    os << "MQRankSum=" << ii.MQRankSum;
+    os << ';';
+    os << "BaseQRankSum=" << ii.BaseQRankSum;
+    os << ';';
+    os << "ReadPosRankSum=" << ii.ReadPosRankSum;
+
     os << '\t';
 
     //FORMAT

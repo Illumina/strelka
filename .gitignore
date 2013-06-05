@@ -1,12 +1,45 @@
-# Compiled Object files
-*.slo
-*.lo
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
 *.o
-
-# Compiled Dynamic libraries
-*.so
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
+*.so
+.gitignore~
+.gitignore
+starka/.cproject
+starka/.gitignore
+starka/.gitignore~
+starka/.project
+starka/StarlingVCFgen/
+starka/bin/
+starka/redist/CodeMin-1.0.2/
+starka/redist/boost
+starka/redist/boost_1_44_0_subset/
+starka/redist/samtools
+starka/redist/samtools-0.1.18_no_tview/
+starka/redist/tabix
+starka/redist/tabix-0.2.5_new_libz_order/
+starka/src/bin/starling2
+starka/src/bin/strelka2
+starka/src/bin/strelkaSiteSimulator
+starka/src/lib/blt_common/libblt_common_unittest
+starka/src/lib/blt_util/libblt_util_unittest
+starka/src/lib/common/libcommon_unittest
+starka/src/lib/starling_common/libstarling_common_unittest
+
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
