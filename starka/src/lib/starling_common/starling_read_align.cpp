@@ -533,6 +533,29 @@ struct mca_warnings {
 
 
 
+static
+void
+add_pin_exception_info(
+        const char* label,
+        const unsigned depth,
+        const candidate_alignment& cal,
+        const candidate_alignment& start_cal,
+        const pos_t ref_start_pos,
+        const pos_t read_start_pos,
+        const indel_set_t& current_indels)
+{
+    log_os << "Exception caught while building " << label << "-pinned alignment candidate at depth: " << depth << "\n"
+           << "\tcal: " << cal << "\n"
+           << "\tstart_cal: " << start_cal << "\n"
+           << "\tref_start_pos: " << ref_start_pos << "\n"
+           << "\tread_start_pos: " << read_start_pos << "\n";
+    BOOST_FOREACH(const indel_key& ik, current_indels) {
+        log_os << "current_indels: " << ik;
+    }
+}
+
+
+
 /// Recursively build potential alignment paths and push them into the
 /// candidate alignment set:
 ///
@@ -727,9 +750,7 @@ make_candidate_alignments(const starling_options& client_opt,
                                           indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
                                           max_read_indel_toggle,start_cal);
             } catch (...) {
-                log_os << "Exception caught while building start-pinned alignment candidate at depth: " << depth << "\n"
-                       << "\tcal: " << cal << "\n"
-                       << "\tstart_cal: " << start_cal << "\n";
+                add_pin_exception_info("start",depth,cal,start_cal,ref_start_pos,read_start_pos,current_indels);
                 throw;
             }
         }
@@ -783,9 +804,7 @@ make_candidate_alignments(const starling_options& client_opt,
                                               indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
                                               max_read_indel_toggle,start_cal);
                 } catch (...) {
-                    log_os << "Exception caught while building end-pinned alignment candidate at depth: " << depth << "\n"
-                           << "\tcal: " << cal << "\n"
-                           << "\tstart_cal: " << start_cal << "\n";
+                    add_pin_exception_info("end",depth,cal,start_cal,ref_start_pos,read_start_pos,current_indels);
                     throw;
                 }
             }
