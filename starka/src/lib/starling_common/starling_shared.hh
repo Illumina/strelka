@@ -223,8 +223,6 @@ struct starling_options : public blt_options {
     bool is_tier2_indel_nonsite_match_prob;
     double tier2_indel_nonsite_match_prob;
 
-    std::string casava_chrom;
-
     std::vector<avg_window_data> variant_windows;
 
     // Test if an indel is not in the two most likely indel alleles

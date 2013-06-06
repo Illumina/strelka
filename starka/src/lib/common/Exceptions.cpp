@@ -37,7 +37,7 @@
 
 #include "common/Exceptions.hh"
 
-namespace casava
+namespace illumina
 {
 namespace common
 {
@@ -99,5 +99,5 @@ PostConditionException::PostConditionException(const std::string& message)
 {
 }
 
-} // namespace common
-} // namespace casava
+}
+}

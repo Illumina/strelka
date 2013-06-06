@@ -117,7 +117,7 @@ main(int argc,char* argv[]){
                << "...caught in main()\n";
         dump_cl(argc,argv,log_os);
         exit(EXIT_FAILURE);
-    } catch (const casava::common::ExceptionData &e) {
+    } catch (const illumina::common::ExceptionData &e) {
         log_os << "FATAL_ERROR: EXCEPTION: " 
                << e.getContext() << ": " << e.getMessage() << "\n"
                << "...caught in main()\n";

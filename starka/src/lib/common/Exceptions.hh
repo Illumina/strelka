@@ -11,21 +11,6 @@
 //
 
 /**
- ** Copyright (c) 2007-2009 Illumina, Inc.
- **
- ** This software is covered by the "Illumina Genome Analyzer Software
- ** License Agreement" and the "Illumina Source Code License Agreement",
- ** and certain third party copyright/licenses, and any user of this
- ** source file is bound by the terms therein (see accompanying files
- ** Illumina_Genome_Analyzer_Software_License_Agreement.pdf and
- ** Illumina_Source_Code_License_Agreement.pdf and third party
- ** copyright/license notices).
- **
- ** This file is part of the Consensus Assessment of Sequence And VAriation
- ** (CASAVA) software package.
- **
- ** \file Exceptions.hh
- **
  ** \brief Declaration of the common exception mechanism.
  **
  ** All exceptions must carry the same data (independently of the
@@ -35,8 +20,7 @@
  ** \author Come Raczy
  **/
 
-#ifndef CASAVA_COMMON_EXCEPTIONS_HH
-#define CASAVA_COMMON_EXCEPTIONS_HH
+#pragma once
 
 #include <string>
 #include <stdexcept>
@@ -46,7 +30,7 @@
 #include <boost/exception/all.hpp>
 #include <boost/throw_exception.hpp>
 
-namespace casava
+namespace illumina
 {
 namespace common
 {
@@ -80,13 +64,13 @@ private:
     ExceptionData& operator=(const ExceptionData&);
 };
 
-class CasavaException: public std::exception, public ExceptionData
+class IlluminaException: public std::exception, public ExceptionData
 {
 public:
-    CasavaException(int errorNumber, const std::string& message) : ExceptionData(errorNumber, message) {}
-    CasavaException(const CasavaException& e) : std::exception(e), ExceptionData(e) {}
+    IlluminaException(int errorNumber, const std::string& message) : ExceptionData(errorNumber, message) {}
+    IlluminaException(const IlluminaException& e) : std::exception(e), ExceptionData(e) {}
 private:
-    CasavaException& operator=(const CasavaException&);
+    IlluminaException& operator=(const IlluminaException&);
 };
 
 class IoException: public std::ios_base::failure, public ExceptionData
@@ -151,7 +135,5 @@ public:
     PostConditionException(const std::string& message);
 };
 
-} // namespace common
-} // namespace casava
-
-#endif // #ifndef CASAVA_COMMON_EXCEPTIONS_HH
+}
+}

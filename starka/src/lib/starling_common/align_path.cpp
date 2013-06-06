@@ -88,7 +88,7 @@ void
 export_md_to_apath_impl(const char* md,
                         path_t& apath) {
 
-    using casava::blt_util::parse_unsigned;
+    using illumina::blt_util::parse_unsigned;
 
     const char* mdptr(md);
     path_segment ps;
@@ -405,7 +405,7 @@ void
 cigar_to_apath(const char* cigar,
                path_t& apath) {
 
-    using casava::blt_util::parse_unsigned;
+    using illumina::blt_util::parse_unsigned;
 
     assert(NULL != cigar);
 

@@ -60,7 +60,7 @@ set(const char* s) {
                 chrom=std::string(start,p-start);
                 break;
             case 1:
-                pos=casava::blt_util::parse_int(start);
+                pos=illumina::blt_util::parse_int(start);
                 assert(start==p);
                 break;
             case 2:

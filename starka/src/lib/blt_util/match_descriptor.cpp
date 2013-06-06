@@ -74,7 +74,7 @@ expand_match_descriptor(const char* const read,
                         const unsigned read_length,
                         unsigned& ref_read_length) {
 
-    using casava::blt_util::parse_unsigned;
+    using illumina::blt_util::parse_unsigned;
 
     static const char GAP('-');
 
