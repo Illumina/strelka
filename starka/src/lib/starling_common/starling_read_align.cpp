@@ -257,6 +257,7 @@ add_path_segment(ALIGNPATH::path_t& apath,
 // value -- indel sets should be pre-filtered for cases where an indel
 // crosses the start pos, so this is treated as an error condition:
 //
+/// see unit tests
 static
 candidate_alignment
 make_start_pos_alignment(const pos_t ref_start_pos,
@@ -394,11 +395,11 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 }
 
 
-
 // work backwards from end_pos to get start_pos and read_start_pos
 // when the current indel set included, and then use the
 // make_start_pos_alignment routine.
 //
+/// see unit tests
 static
 void
 get_end_pin_start_pos(const indel_set_t& indels,
@@ -415,7 +416,7 @@ get_end_pin_start_pos(const indel_set_t& indels,
     ref_start_pos=ref_end_pos;
     read_start_pos=read_end_pos;
 
-    // if true, read contains trailing indel, swap or open-ended event:
+    // if true, read contains trailing insert, swap or open-ended event:
     const bool is_trailing_read(read_end_pos != static_cast<pos_t>(read_length));
 
     bool is_first(true);
@@ -431,7 +432,7 @@ get_end_pin_start_pos(const indel_set_t& indels,
         if(ik.pos > ref_end_pos) continue;
         if((ik.pos == ref_end_pos) && (! is_trailing_read)) continue;
 
-        const bool is_trailing_indel((ik.right_pos() == ref_end_pos) && is_trailing_read);
+        const bool is_trailing_indel(ik.right_pos() == ref_end_pos);
 
         if(is_trailing_indel) { // deal with trailing-edge insert/breakpoint case first
             assert((is_first) && (ref_start_pos==ref_end_pos));
@@ -443,6 +444,12 @@ get_end_pin_start_pos(const indel_set_t& indels,
             if((ik.type == INDEL::INSERT) ||
                (ik.type == INDEL::SWAP)) {
                 assert(ik.length>=(read_length-read_end_pos));
+            }
+
+            if       (ik.type==INDEL::SWAP) {
+                ref_start_pos -= ik.swap_dlength;
+            } else if(ik.type==INDEL::DELETE) {
+                ref_start_pos -= ik.length;
             }
         } else { // deal with normal case:
             if(is_first && (read_end_pos!=static_cast<pos_t>(read_length))) {
@@ -542,13 +549,15 @@ add_pin_exception_info(
         const candidate_alignment& start_cal,
         const pos_t ref_start_pos,
         const pos_t read_start_pos,
+        const indel_key& cindel,
         const indel_set_t& current_indels)
 {
-    log_os << "Exception caught while building " << label << "-pinned alignment candidate at depth: " << depth << "\n"
-           << "\tcal: " << cal << "\n"
-           << "\tstart_cal: " << start_cal << "\n"
+    log_os << "\nException caught while building " << label << "-pinned alignment candidate at depth: " << depth << "\n"
+           << "\tcal: " << cal
+           << "\tstart_cal: " << start_cal
            << "\tref_start_pos: " << ref_start_pos << "\n"
-           << "\tread_start_pos: " << read_start_pos << "\n";
+           << "\tread_start_pos: " << read_start_pos << "\n"
+           << "this_indel: " << cindel;
     BOOST_FOREACH(const indel_key& ik, current_indels) {
         log_os << "current_indels: " << ik;
     }
@@ -638,14 +647,19 @@ make_candidate_alignments(const starling_options& client_opt,
     // edge-indels only be pinned on one side
     //
     const indel_key& cindel(indel_order[depth]);
-
     const bool is_cindel_on(indel_status_map[cindel].is_present);
 
     // alignment 1) --> unchanged case:
-    make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
-                              indel_status_map,indel_order,depth+1,toggle_depth,read_range,
-                              max_read_indel_toggle,cal);
-
+    try {
+        make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
+                indel_status_map,indel_order,depth+1,toggle_depth,read_range,
+                max_read_indel_toggle,cal);
+    } catch(...) {
+        log_os << "\nException caught while building default alignment candidate at depth: " << depth << "\n"
+               << "\tcal: " << cal
+               << "this_indel: " << cindel;
+        throw;
+    }
 
     if(! is_cindel_on) {
         // check whether this is a remove only indel:
@@ -750,7 +764,7 @@ make_candidate_alignments(const starling_options& client_opt,
                                           indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
                                           max_read_indel_toggle,start_cal);
             } catch (...) {
-                add_pin_exception_info("start",depth,cal,start_cal,ref_start_pos,read_start_pos,current_indels);
+                add_pin_exception_info("start",depth,cal,start_cal,ref_start_pos,read_start_pos,cindel,current_indels);
                 throw;
             }
         }
@@ -766,6 +780,9 @@ make_candidate_alignments(const starling_options& client_opt,
     {
         const pos_t ref_end_pos(cal.al.pos+apath_ref_length(cal.al.path));
 
+        // end pin is not possible when
+        // (1) an indel deletes through the end-pin position
+        // (2) we try to remove a trailing indel [TODO seems like same rule should be in place for adding a trailing indel]
         const bool is_end_pos_delete_span(cindel.open_pos_range().is_pos_intersect(ref_end_pos-1));
         const bool is_end_pos_indel_span(is_cindel_on && (cindel == cal.trailing_indel_key));
         const bool is_end_pin_valid(! (is_end_pos_delete_span || is_end_pos_indel_span));
@@ -804,7 +821,9 @@ make_candidate_alignments(const starling_options& client_opt,
                                               indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
                                               max_read_indel_toggle,start_cal);
                 } catch (...) {
-                    add_pin_exception_info("end",depth,cal,start_cal,ref_start_pos,read_start_pos,current_indels);
+                    add_pin_exception_info("end",depth,cal,start_cal,ref_start_pos,read_start_pos,cindel,current_indels);
+                    log_os << "ref_end_pos: " << ref_end_pos << "\n"
+                           << "read_end_pos: " << read_end_pos << "\n";
                     throw;
                 }
             }
