@@ -26,13 +26,13 @@
 
 double
 get_z_score(int n1, int n2, double w1){
-    double mean = n1*(n1+n2+1)/2.0;
-    double var  = sqrt(n1*n2*(n1+n2+1)/12.0);
-    if (static_cast<int>(var)==0){
-        return 0.0;
-    }
-    double z = (w1-mean)/var;
-    return z;
+	double mean = n1*(n1+n2+1)/2.0;
+	double var  = sqrt(n1*n2*(n1+n2+1)/12.0);
+	if (static_cast<int>(var)==0){
+		return 0.0;
+	}
+	double z = (w1-mean)/var;
+	return z;
 }
 
 // return the U statistic
@@ -106,14 +106,14 @@ operator<< (ostream &out, map<int, int> &l)
 ostream&
 operator<< (ostream &out, ranksum &r)
 {
-    double z = r.get_u_stat();
-    out << endl << "My reference base: " << r.get_refbase() << endl;
-    out << "elements in space: " << endl;
-    out << "[";
-    vector<int> myvector = r.getSpace();
-    for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
-        std::cout << ' ' << *it;
-    out << "]" << endl;
+	double z = r.get_u_stat();
+	out << endl << "My reference base: " << r.get_refbase() << endl;
+	out << "elements in space: " << endl;
+	out << "[";
+	vector<int> myvector = r.getSpace();
+	for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
+	    std::cout << ' ' << *it;
+	out << "]" << endl;
     out << r.l1;
     out << r.l2;
     out << "N1: " << r.N1 << "\tR1: " << r.R1 <<  endl;
@@ -144,7 +144,7 @@ operator<< (ostream &out, ranksum &r)
 //  r.add_observation('A',79);
 //  r.add_observation('N',85);
 //  r.add_observation('N',93);
-//  cout << r << '\n';
+//  cout << r << endl;
 //  cout << r.get_u_stat() << endl;
 ////  cout << get_z_score(00,12,0.0) << endl;
 //  return 0;

@@ -63,7 +63,10 @@ get_rms_mq(){
 double
 snp_pos_info::
 get_read_pos_ranksum(){
-    return read_pos_ranksum.get_u_stat();
+
+    //	cout << read_pos_ranksum << endl;
+	return read_pos_ranksum.get_u_stat();
+
 }
 
 double

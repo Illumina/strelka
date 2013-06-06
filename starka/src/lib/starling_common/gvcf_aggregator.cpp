@@ -193,8 +193,6 @@ skip_to_pos(const pos_t target_pos) {
     }
 }
 
-
-
 void
 gvcf_aggregator::
 add_site(site_info& si) {
@@ -204,8 +202,6 @@ add_site(site_info& si) {
 
     add_site_internal(si);
 }
-
-
 
 void
 gvcf_aggregator::
@@ -230,8 +226,6 @@ add_site_internal(const site_info& si) {
     queue_site_record(si);
 }
 
-
-
 static
 bool
 is_het_indel(const starling_diploid_indel_core& dindel) {
@@ -243,8 +237,6 @@ bool
 is_no_indel(const starling_diploid_indel_core& dindel) {
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
-
-
 
 void
 gvcf_aggregator::
@@ -520,6 +512,12 @@ write_site_record(const site_info& si) const {
 			   os << "BaseQRankSum=" << si.BaseQRankSum;
 			   os << ';';
 			   os << "ReadPosRankSum=" << si.ReadPosRankSum;
+			   os << ';';
+			   os << "DP=" << (si.n_used_calls+si.n_unused_calls);
+               os << ';';
+               os << "GQ=" << si.smod.gq;
+               os << ';';
+               os << "GQX=" << si.smod.gqx;
 //                }
             }
         } else {
@@ -802,15 +800,20 @@ write_indel_record(const unsigned write_index) {
     }
     os << ';';
 
-    // write VQSR metrics
-//    os << "MQ=" << ii.MQ;
-//    os << ';';
-//    os << "MQRankSum=" << ii.MQRankSum;
-//    os << ';';
-//    os << "BaseQRankSum=" << ii.BaseQRankSum;
-//    os << ';';
-//    os << "ReadPosRankSum=" << ii.ReadPosRankSum;
-//    os << '\t';
+    // VQSR metrics here
+    os << "MQ=" << ii.MQ;
+
+    //if we have a het, report these metrics as well
+    //                if(si.get_gt()=="0/1"){
+    os << ';';
+    os << "MQRankSum=" << ii.MQRankSum;
+    os << ';';
+    os << "BaseQRankSum=" << ii.BaseQRankSum;
+    os << ';';
+    os << "ReadPosRankSum=" << ii.ReadPosRankSum;
+
+    os << '\t';
+
 
     //FORMAT
     os << "GT:GQ:GQX:DPI:AD" << '\t';

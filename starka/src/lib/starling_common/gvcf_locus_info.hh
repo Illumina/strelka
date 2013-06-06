@@ -185,6 +185,10 @@ struct indel_info {
 //        BaseQRankSum=0.0;
 //        MQRankSum=0.0;
         imod.clear();
+        MQ = 0.0;
+        ReadPosRankSum = 0.0;
+        BaseQRankSum = 0.0;
+        MQRankSum = 0.0;
     }
 
     const char*
@@ -224,6 +228,13 @@ struct indel_info {
 //    double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
 //    double MQRankSum;        // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
     indel_modifiers imod;
+    double MQ;               // RMS of mapping qualities
+
+    //only meaningful for het calls
+    double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
+    double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
+    double MQRankSum;
+
 };
 
 

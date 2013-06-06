@@ -48,7 +48,13 @@ public:
     }
 
     ranksum(char base) {
-        set_ref_base(base);
+    	set_ref_base(base);
+//    	N1(0);
+//		N2(0);
+//		U1(0.0);
+//		U2(0.0);
+//		R1(0.0);
+//		R2(0.0);
     }
 
     // insert an observation for base-call case
@@ -62,41 +68,43 @@ public:
     }
 
     vector<int> getSpace(){
-    vector<int> res;
-    for (map<int, int>::iterator it = space.begin();it != space.end(); ++it){
-        res.push_back((*it).first);}
+        vector<int> res;
+        for (map<int, int>::iterator it = space.begin();it != space.end(); ++it){
+            res.push_back((*it).first);}
 
-        std::sort(res.begin(), res.end());
-        return res;
+            std::sort(res.begin(), res.end());
+            return res;
     }
 
     // returns the count for a given base and observation
     int get_obs_count(bool is_ref, int obs){
-        int res = 0;
-        map<int,int>::iterator it;
 
-        //check for observation in reference map
-        if(is_ref){
-            it = l1.find(obs);
-            if(it != l1.end())
-                res = it->second;
-        }
-        else{
-            it = l2.find(obs);
-            if(it != l2.end())
-                res = it->second;
-        }
-        return res;
+    	int res = 0;
+    	map<int,int>::iterator it;
+
+    	//check for observation in reference map
+    	if(is_ref){
+    	    it = l1.find(obs);
+    		if(it != l1.end())
+    			res = it->second;
+    	}
+    	else{
+    		it = l2.find(obs);
+    		if(it != l2.end())
+    		    res = it->second;
+    	}
+    	return res;
     }
 
     void clear(){
-        l1.clear();
-        l2.clear();
-        space.clear();
+    	l1.clear();
+    	l2.clear();
+    	space.clear();
+
     }
 
     char get_refbase(){
-        return ref_base;
+    	return ref_base;
     }
 };
 

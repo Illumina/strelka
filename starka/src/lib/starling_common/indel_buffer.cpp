@@ -73,6 +73,8 @@ insert_indel(const indel_observation& obs,
              bool& is_repeat_obs) {
 
     assert(obs.key.type != INDEL::NONE);
+
+    // if not previously observed
     idata_t::iterator i(_idata.find(obs.key));
     if(i == _idata.end()) {
         indel_data id(obs.key);
