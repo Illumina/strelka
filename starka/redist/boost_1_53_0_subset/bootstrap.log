@@ -1,0 +1,21 @@
+###
+### Using 'gcc' toolset.
+###
+rm -rf bootstrap
+mkdir bootstrap
+gcc -o bootstrap/jam0 command.c compile.c constants.c debug.c function.c glob.c hash.c hdrmacro.c headers.c jam.c jambase.c jamgram.c lists.c make.c make1.c object.c option.c output.c parse.c pathunix.c regexp.c rules.c scan.c search.c subst.c timestamp.c variable.c modules.c strings.c filesys.c builtins.c pwd.c class.c native.c md5.c w32_getreg.c modules/set.c modules/path.c modules/regex.c modules/property-set.c modules/sequence.c modules/order.c execunix.c fileunix.c
+function.c: In function ‘argument_list_print’:
+function.c:3109:17: warning: format ‘%s’ expects argument of type ‘char *’, but argument 2 has type ‘struct OBJECT *’ [-Wformat]
+./bootstrap/jam0 -f build.jam --toolset=gcc --toolset-root= clean
+...found 1 target...
+...updating 1 target...
+...updated 1 target...
+./bootstrap/jam0 -f build.jam --toolset=gcc --toolset-root=
+...found 50 targets...
+...updating 3 targets...
+[MKDIR] bin.linuxx86_64
+[COMPILE] bin.linuxx86_64/b2
+function.c: In function ‘argument_list_print’:
+function.c:3109:17: warning: format ‘%s’ expects argument of type ‘char *’, but argument 2 has type ‘struct OBJECT *’ [-Wformat]
+[COPY] bin.linuxx86_64/bjam
+...updated 3 targets...
