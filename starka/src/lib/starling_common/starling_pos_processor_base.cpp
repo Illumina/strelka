@@ -69,7 +69,6 @@ const double STARLING_LARGEST_READ_SIZE_PAD(1.25);
 // start with max_indel_size to deal with grouperisms:
 //
 //const unsigned STARLING_INIT_LARGEST_INDEL_SIZE(40);
-const double STARLING_LARGEST_INDEL_SIZE_PAD(2);
 
 
 //////////////////////////////////////////////
@@ -187,9 +186,9 @@ write_bsnp_diploid_allele(const blt_options& client_opt,
 
 static
 unsigned
-get_read_buffer_size(const unsigned largest_indel_size,
-                     const unsigned largest_read_size) {
-    return (largest_read_size+largest_indel_size);
+get_read_buffer_size(const unsigned largest_read_size,
+                     const unsigned largest_total_indel_span_per_read) {
+    return (largest_read_size+largest_total_indel_span_per_read);
 }
 
 
@@ -199,12 +198,11 @@ get_read_buffer_size(const unsigned largest_indel_size,
 static
 int
 get_influence_zone_size(const unsigned largest_read_size,
-                        const unsigned largest_indel_size) {
+                        const unsigned largest_total_indel_span_per_read) {
     static const unsigned min_influence_zone_read_size(512);
     const unsigned influence_read_size(std::max(min_influence_zone_read_size,
                                                 largest_read_size));
-    return static_cast<int>(get_read_buffer_size(influence_read_size,
-                                                 largest_indel_size))-1;
+    return static_cast<int>(get_read_buffer_size(influence_read_size,largest_total_indel_span_per_read))-1;
 }
 
 
@@ -259,13 +257,13 @@ get_last_static_stage_no(const starling_options& opt) {
             static_cast<int>(POST_CALL));
 }
 
-// given max_indel_size, provide a vector of circular buffer stage
+// given largest read, and indel ref span per read, get stage
 // lengths:
 //
 static
 stage_data
 get_stage_data(const unsigned largest_read_size,
-               const unsigned largest_indel_size,
+               const unsigned largest_total_indel_ref_span_per_read,
                const starling_options& opt) {
 
     stage_data sdata;
@@ -295,8 +293,7 @@ get_stage_data(const unsigned largest_read_size,
     // read realignment
     // base-call pos entry (pileup)
     //
-    sdata.add_stage(READ_BUFFER,HEAD,get_read_buffer_size(largest_read_size,
-                                                          largest_indel_size));
+    sdata.add_stage(READ_BUFFER,HEAD,get_read_buffer_size(largest_read_size,largest_total_indel_ref_span_per_read));
 
     //
     // POST_ALIGN_STAGE - the end of this stage is where snp and indel
@@ -310,7 +307,7 @@ get_stage_data(const unsigned largest_read_size,
     // snp-calling
     // realigned read output
     //
-    sdata.add_stage(POST_ALIGN,READ_BUFFER,largest_indel_size);
+    sdata.add_stage(POST_ALIGN,READ_BUFFER,largest_total_indel_ref_span_per_read);
 
     if(! opt.is_htype_calling) {
         // POST_CALL is used to free up the pileup data. This data is
@@ -349,7 +346,7 @@ get_stage_data(const unsigned largest_read_size,
         // POST_READ is used to free reads during haplotype based calling:
         //
         const unsigned read_reserve_segment(get_read_buffer_size(largest_read_size,
-                                                                 largest_indel_size));
+                                                                 largest_total_indel_ref_span_per_read));
         const unsigned post_read_to_post_region(opt.htype_buffer_segment()+read_reserve_segment);
         sdata.add_stage(POST_READ,POST_REGION,post_read_to_post_region);
     }
@@ -386,8 +383,9 @@ starling_pos_processor_base(const starling_options& client_opt,
     , _client_io(client_io)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
     //, _largest_indel_size(std::min(client_opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
-    , _largest_indel_size(client_opt.max_indel_size)
-    , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE,_largest_indel_size,_client_opt),client_dopt.report_range,*this)
+    , _largest_indel_ref_span(client_opt.max_indel_size)
+    , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
+    , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE,get_largest_total_indel_ref_span_per_read(),_client_opt),client_dopt.report_range,*this)
     , _chrom_name(_client_opt.bam_seq_name)
     , _n_samples(n_samples)
     , _ws(0)
@@ -434,8 +432,11 @@ starling_pos_processor_base(const starling_options& client_opt,
                            (_client_opt.bsnp_ssd_no_mismatch>0. || _client_opt.bsnp_ssd_one_mismatch>0));
 
     // define an expanded indel influence zone around the report range:
+    //
+    // note that we don't know the max indel ref span per read at this point, so a fudge factor is
+    // added here:
     const int bshift(get_influence_zone_size(get_largest_read_size(),
-                                             _client_opt.max_indel_size));
+                                             _client_opt.max_indel_size*2));
     pos_range& rir( _report_influence_range);
     rir = _client_dopt.report_range_limit;
     if(rir.is_begin_pos) { rir.begin_pos -= bshift; }
@@ -446,22 +447,42 @@ starling_pos_processor_base(const starling_options& client_opt,
 
 void
 starling_pos_processor_base::
-set_largest_read_size(const unsigned rs) {
-    assert(rs<=STARLING_MAX_READ_SIZE);
-    assert(rs>=_rmi.size());
+update_stageman() {
+    _stageman.revise_stage_data(STAGE::get_stage_data(get_largest_read_size(),get_largest_total_indel_ref_span_per_read(),_client_opt));
+}
+
+
+bool
+starling_pos_processor_base::
+update_largest_read_size(const unsigned rs) {
+    if(rs>STARLING_MAX_READ_SIZE) return false;
+
+    if(rs<=get_largest_read_size()) return true;
     _rmi.resize(rs);
-    _stageman.revise_stage_data(STAGE::get_stage_data(get_largest_read_size(),get_largest_indel_size(),_client_opt));
+    update_stageman();
+    return true;
 }
 
 
 
 void
 starling_pos_processor_base::
-set_largest_indel_size(const unsigned is) {
+update_largest_indel_ref_span(const unsigned is) {
+    if(is<=_largest_indel_ref_span) return;
     assert(is<=_client_opt.max_indel_size);
-    assert(is>=_largest_indel_size);
-    _largest_indel_size=is;
-    _stageman.revise_stage_data(STAGE::get_stage_data(get_largest_read_size(),get_largest_indel_size(),_client_opt));
+    _largest_indel_ref_span=std::min(is,_client_opt.max_indel_size);
+    update_largest_total_indel_ref_span_per_read(is);
+    update_stageman();
+}
+
+
+
+void
+starling_pos_processor_base::
+update_largest_total_indel_ref_span_per_read(const unsigned is) {
+    if(is<=_largest_total_indel_ref_span_per_read) return;
+    _largest_total_indel_ref_span_per_read=is;
+    update_stageman();
 }
 
 
@@ -520,10 +541,8 @@ insert_indel(const indel_observation& obs,
         _stageman.validate_new_pos_value(obs.key.pos,STAGE::READ_BUFFER);
 
         // dynamically scale maximum indel size:
-        const unsigned len(std::min(static_cast<unsigned>((obs.key.length+obs.key.swap_dlength)*STARLING_LARGEST_INDEL_SIZE_PAD),_client_opt.max_indel_size));
-        if(len>get_largest_indel_size()) {
-            set_largest_indel_size(len);
-        }
+        const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_client_opt.max_indel_size));
+        update_largest_indel_ref_span(len);
 
         return sample(sample_no).indel_sync().insert_indel(obs);
     } catch (...) {
@@ -586,11 +605,13 @@ insert_read(const bam_record& br,
     // assume that pos_procesor, as a container, is no longer empty...
     _is_skip_process_pos=false;
 
-    // check read_size:
+    // update read_size:
     {
         const unsigned rs(static_cast<unsigned>(STARLING_LARGEST_READ_SIZE_PAD*br.read_size()));
-        if(rs>get_largest_read_size()) {
-            set_largest_read_size(rs);
+        if(! update_largest_read_size(rs)){
+            std::ostringstream oss;
+            oss << "ERROR: Input read size: " << br.read_size() << " exceeds maximum.";
+            throw blt_exception(oss.str().c_str());
         }
     }
 
@@ -629,9 +650,11 @@ insert_read(const bam_record& br,
         const bam_seq bseq(br.get_bam_read());
         try {
             static const std::pair<bool,bool> edge_pin(std::make_pair(false,false));
-            add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
-                                         al,bseq,*this,iat,res.second,sample_no,
-                                         edge_pin,contig_indels_ptr);
+            const unsigned total_indel_ref_span_per_read =
+                    add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
+                                                 al,bseq,*this,iat,res.second,sample_no,
+                                                 edge_pin,contig_indels_ptr);
+            update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
         } catch (...) {
             log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << read_key(br) << "\n";
             throw;
@@ -717,8 +740,12 @@ init_read_segment(const read_segment& rseg,
 
     const bam_seq bseq(rseg.get_bam_read());
     try {
-        add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
-                                     al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin());
+        const unsigned total_indel_ref_span_per_read =
+            add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
+                                         al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin());
+
+        update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
+
     } catch (...) {
         log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << rseg.key() << "\n";
         throw;
@@ -1315,7 +1342,7 @@ pileup_read_segment(const read_segment& rseg,
 
     // test read against max indel size (this is a backup, should have been taken care of upstream):
     const unsigned read_ref_mapped_size(apath_ref_length(best_al.path));
-    if(read_ref_mapped_size > (read_size+_client_opt.max_indel_size)) {
+    if(read_ref_mapped_size > (read_size+get_largest_total_indel_ref_span_per_read())) {
         //brc.large_ref_deletion++;
         return;
     }

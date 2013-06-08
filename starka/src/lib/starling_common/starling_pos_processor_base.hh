@@ -472,16 +472,23 @@ private:
         return _rmi.size();
     }
 
-    void
-    set_largest_read_size(const unsigned rs);
+    // return false if read is too large
+    bool
+    update_largest_read_size(const unsigned rs);
 
     unsigned
-    get_largest_indel_size() const {
-        return _largest_indel_size;
+    get_largest_total_indel_ref_span_per_read() const {
+        return _largest_total_indel_ref_span_per_read;
     }
 
     void
-    set_largest_indel_size(const unsigned is);
+    update_largest_indel_ref_span(const unsigned is);
+
+    void
+    update_largest_total_indel_ref_span_per_read(const unsigned is);
+
+    void
+    update_stageman();
 
 protected:
 
@@ -495,7 +502,12 @@ protected:
 
     // read-length data structure used to compute mismatch density filter:
     read_mismatch_info _rmi;
-    unsigned _largest_indel_size;
+
+    // largest delete length observed for any one indel (but not greater than max_delete_size)
+    unsigned _largest_indel_ref_span;
+
+    // largest
+    unsigned _largest_total_indel_ref_span_per_read;
 
     stage_manager _stageman;
 

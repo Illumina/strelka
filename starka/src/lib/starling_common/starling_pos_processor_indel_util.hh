@@ -19,8 +19,7 @@
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-#ifndef __STARLING_POS_PROCESSOR_INDEL_UTIL_HH
-#define __STARLING_POS_PROCESSOR_INDEL_UTIL_HH
+#pragma once
 
 #include "starling_common/indel_align_type.hh"
 #include "starling_common/starling_pos_processor_base.hh"
@@ -33,7 +32,7 @@
 ///
 /// assumes that path is already validated for read_seq!!!
 ///
-void
+unsigned
 add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const reference_contig_segment& ref,
                              const alignment& al,
@@ -45,4 +44,3 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const std::pair<bool,bool>& edge_pin,
                              const indel_set_t* edge_indel_ptr = NULL);
 
-#endif
