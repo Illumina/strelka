@@ -768,6 +768,25 @@ consolidate_candidate_indel_pos(pos) {
 
 
 
+/// get max-min bounds in which reads can be realigned:
+static
+known_pos_range
+get_realignment_range(const pos_t pos,
+                      const stage_data& sdata)
+{
+    const unsigned head_offset(sdata.get_stage_id_shift(STAGE::HEAD));
+    const unsigned buffer_offset(sdata.get_stage_id_shift(STAGE::READ_BUFFER));
+    const unsigned post_offset(sdata.get_stage_id_shift(STAGE::POST_ALIGN));
+    assert(buffer_offset>head_offset);
+    assert(post_offset>buffer_offset);
+
+    const pos_t min_pos(std::max(static_cast<pos_t>(0),pos-static_cast<pos_t>(post_offset-buffer_offset)));
+    const pos_t max_pos(pos+1+(buffer_offset-head_offset));
+    return known_pos_range(min_pos, max_pos);
+}
+
+
+
 // For all reads buffered at the current position:
 // 1) determine the set of candidate indels that the read overlaps
 // 2) determine the set of private indels within the read's discovery alignments
@@ -784,6 +803,8 @@ void
 starling_pos_processor_base::
 align_pos(const pos_t pos) {
 
+    const known_pos_range realign_pr(get_realignment_range(pos, _stageman.get_stage_data()));
+
     for(unsigned s(0); s<_n_samples; ++s) {
         sample_info& sif(sample(s));
         read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
@@ -794,7 +815,7 @@ align_pos(const pos_t pos) {
             if(_client_opt.is_realign_submapped_reads ||
                rseg.is_treated_as_anytier_mapping()) {
                 try {
-                    realign_and_score_read(_client_opt,_client_dopt,sif.sample_opt,_ref,rseg,sif.indel_sync());
+                    realign_and_score_read(_client_opt,_client_dopt,sif.sample_opt,_ref,realign_pr,rseg,sif.indel_sync());
                 } catch(...) {
                     log_os << "ERROR: Exception caught in align_pos() while realigning segment: "
                            << static_cast<int>(r.second) << " of read: " << (*r.first) << "\n";
