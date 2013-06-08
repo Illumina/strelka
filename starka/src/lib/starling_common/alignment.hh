@@ -37,8 +37,7 @@ struct alignment {
     bool
     empty() const { return path.empty(); }
 
-    // is there an (internal) indel exceeding MAX_INDEL_SIZE or
-    // another reason this alignment can't be handled?
+    // is there an indel exceeding max_indel_size?
     bool
     is_overmax(const unsigned max_indel_size) const;
 
