@@ -1012,6 +1012,16 @@ finish_realignment(const starling_options& client_opt,
 
 
 
+static
+bool
+is_alignment_spanned_by_range(const known_pos_range pr,
+                              const alignment& al)
+{
+    return pr.is_superset_of(get_strict_alignment_range(al));
+}
+
+
+
 // score the candidate alignments, find the most likely and the best for realignment:
 //
 static
@@ -1268,6 +1278,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
                                   const read_segment& rseg,
                                   const indel_synchronizer& isync,
                                   const alignment& exemplar,
+                                  const known_pos_range realign_pr,
                                   mca_warnings& warn,
                                   std::set<candidate_alignment>& cal_set) {
 
@@ -1388,6 +1399,17 @@ get_exemplar_candidate_alignments(const starling_options& opt,
             cal_set.insert(ical);
         }
     }
+
+    { // clear out-of-range alignment candidates:
+        std::set<candidate_alignment> cal_set2(cal_set);
+        cal_set.clear();
+        BOOST_FOREACH(const candidate_alignment& ical, cal_set2) {
+            // check that the alignment is within realign bounds
+            if(is_alignment_spanned_by_range(realign_pr,ical.al)) {
+                cal_set.insert(ical);
+            }
+        }
+    }
 }
 
 
@@ -1400,6 +1422,7 @@ realign_and_score_read(const starling_options& opt,
                        const starling_deriv_options& dopt,
                        const starling_sample_options& sample_opt,
                        const reference_contig_segment& ref,
+                       const known_pos_range& realign_pr,
                        read_segment& rseg,
                        indel_synchronizer& isync) {
 
@@ -1407,6 +1430,9 @@ realign_and_score_read(const starling_options& opt,
         log_os << "ERROR: invalid alignment path associated with read segment:\n" << rseg;
         exit(EXIT_FAILURE);
     }
+
+    // check that the original alignment is within realign bounds
+    if(! is_alignment_spanned_by_range(realign_pr,rseg.genome_align())) return;
 
     // check that there are any candidate indels within bounds of the
     // discovery alignments for this read:
@@ -1467,7 +1493,7 @@ realign_and_score_read(const starling_options& opt,
     mca_warnings warn;
 
     BOOST_FOREACH(const alignment& al, exemplars) {
-        get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,warn,cal_set);
+        get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,realign_pr,warn,cal_set);
     }
 
     assert(! cal_set.empty());
