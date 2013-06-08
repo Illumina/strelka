@@ -85,7 +85,7 @@ call(const unsigned pos,
                                                                 NULL,
                                                                 sgtg);
 
-    if (! sgtg.is_snv) return;
+    if (! sgtg.is_output()) return;
 
     static const char chrom_name[] = "sim";
     _os << chrom_name << '\t'

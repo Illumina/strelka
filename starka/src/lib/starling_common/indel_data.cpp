@@ -29,6 +29,7 @@ operator<<(std::ostream& os,
 
     os << "is_noise: " << obs.is_noise << "\n";
     os << "is_external: " << obs.is_external_candidate << "\n";
+    os << "is_forced_output: " << obs.is_forced_output << "\n";
     os << "type: " << INDEL_ALIGN_TYPE::label(obs.iat) << "\n";
     os << "align_id: " << obs.id << "\n";
     os << "insert_seq: " << obs.insert_seq << "\n";

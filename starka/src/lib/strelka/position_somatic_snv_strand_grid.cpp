@@ -812,6 +812,7 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
                           const blt_float_t lnmatch,
                           const blt_float_t lnmismatch,
                           const unsigned /*ref_gt*/,
+                          const bool is_forced_output,
                           result_set& rs) {
 
     // a piece transplanted from 1150 to make a formal correction to
@@ -900,7 +901,7 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     }
     rs.snv_qphred=error_prob_to_qphred(nonsomatic_sum);
 
-    if (0==rs.snv_qphred) return;
+    if ((! is_forced_output) && (0==rs.snv_qphred)) return;
 
 #if 0
     // alternate way to calculate the joint:
@@ -982,19 +983,20 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                           const extended_pos_info* tumor_epi_t2_ptr,
                           somatic_snv_genotype_grid& sgt) const {
 
-    static const bool is_always_test(false);
-
     {
         const snp_pos_info& normal_pi(normal_epi.pi);
         const snp_pos_info& tumor_pi(tumor_epi.pi);
 
-        if (normal_pi.ref_base=='N') return;
+        if (normal_pi.ref_base=='N') {
+            sgt.is_forced_output=false;
+            return;
+        }
         sgt.ref_gt=base_to_id(normal_pi.ref_base);
 
         // check that a non-reference call meeting quality criteria even
         // exists:
-        if (not is_always_test) {
-            if (is_spi_allref(normal_pi,sgt.ref_gt) and is_spi_allref(tumor_pi,sgt.ref_gt)) return;
+        if (! sgt.is_forced_output) {
+            if (is_spi_allref(normal_pi,sgt.ref_gt) && is_spi_allref(tumor_pi,sgt.ref_gt)) return;
         }
     }
 
@@ -1041,6 +1043,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                                   get_prior_set(sgt.ref_gt),
                                   _ln_som_match,_ln_som_mismatch,
                                   sgt.ref_gt,
+                                  sgt.is_forced_output,
                                   tier_rs[i]);
 
 #if 0
@@ -1106,8 +1109,10 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
     }
 
-    if ((tier_rs[0].snv_qphred==0) ||
-        (is_tier2 && (tier_rs[1].snv_qphred==0))) return;
+    if (! sgt.is_forced_output) {
+        if ((tier_rs[0].snv_qphred==0) ||
+            (is_tier2 && (tier_rs[1].snv_qphred==0))) return;
+    }
 
     sgt.snv_tier=0;
     sgt.snv_from_ntype_tier=0;
@@ -1143,7 +1148,6 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
     }
 
     sgt.rs.snv_qphred = tier_rs[sgt.snv_tier].snv_qphred;
-    sgt.is_snv=((sgt.rs.snv_qphred != 0));
 }
 
 

@@ -31,6 +31,8 @@
 #include "starling_common/align_path_bam_util.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
+#include "boost/foreach.hpp"
+
 #include <cassert>
 
 #include <sstream>
@@ -426,12 +428,11 @@ common_xfix_length(const std::string& s1,
 void
 process_candidate_indel(const vcf_record& vcf_indel,
                         starling_pos_processor_base& sppr,
-                        const unsigned sample_no) {
+                        const unsigned sample_no,
+                        const bool is_forced_output) {
 
     const unsigned rs(vcf_indel.ref.size());
-    const unsigned nalt(vcf_indel.alt.size());
-    for (unsigned a(0); a<nalt; ++a) {
-        const std::string& alt(vcf_indel.alt[a]);
+    BOOST_FOREACH(const std::string& alt, vcf_indel.alt) {
         const unsigned as(alt.size());
         const std::pair<unsigned,unsigned> xfix(common_xfix_length(vcf_indel.ref,alt));
         const unsigned nfix(xfix.first+xfix.second);
@@ -460,6 +461,7 @@ process_candidate_indel(const vcf_record& vcf_indel,
         }
 
         obs.data.is_external_candidate = true;
+        obs.data.is_forced_output = is_forced_output;
         sppr.insert_indel(obs,sample_no);
     }
 }

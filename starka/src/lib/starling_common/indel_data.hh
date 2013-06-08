@@ -45,12 +45,14 @@ struct indel_observation_data {
     indel_observation_data()
         : is_noise(false)
         , is_external_candidate(false)
+        , is_forced_output(false)
         , iat(INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ)
         , id(0)
     {}
 
     bool is_noise;
     bool is_external_candidate;
+    bool is_forced_output; // results of gt tests must be output even for very unlikely cases
     INDEL_ALIGN_TYPE::index_t iat;
     align_id_t id;
     std::string insert_seq;
@@ -187,7 +189,8 @@ struct indel_data {
 
     indel_data(const indel_key& ik)
         : _ik(ik),
-          is_external_candidate(false)
+          is_external_candidate(false),
+          is_forced_output(false)
     {}
 
     /// add an observation for this indel
@@ -299,6 +302,9 @@ public:
     // candidates can be provided from external sources as well:
     bool is_external_candidate;
 
+    // if true candidates should be output even if very unlikely:
+    bool is_forced_output;
+
     // this structure represents support for the indel among all reads
     // which cross an indel breakpoint by a sufficient margin after
     // re-alignment:
@@ -344,10 +350,10 @@ private:
     add_observation_core(const indel_observation_data& obs_data,
                          bool& is_repeat_obs) {
 
-        if (obs_data.is_external_candidate) {
-            is_external_candidate=true;
+        is_external_candidate=obs_data.is_external_candidate;
+        is_forced_output=obs_data.is_forced_output;
 
-        } else {
+        if (! is_external_candidate) {
 
             using namespace INDEL_ALIGN_TYPE;
 

@@ -14,8 +14,11 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __VCF_RECORD_HH
-#define __VCF_RECORD_HH
+#pragma once
+
+#include "blt_util/seq_util.hh"
+
+#include "boost/foreach.hpp"
 
 #include <iosfwd>
 #include <string>
@@ -36,6 +39,35 @@ struct vcf_record {
         alt.clear();
     }
 
+    bool
+    is_valid() const {
+        if (! is_valid_seq(ref.c_str())) return false;
+        BOOST_FOREACH(const std::string& alt_allele, alt) {
+            if (! is_valid_seq(alt_allele.c_str())) return false;
+        }
+        return true;
+    }
+
+    bool
+    is_indel() const {
+        if (! is_valid()) return false;
+        if ((ref.size()>1) && (alt.size()>0)) return true;
+        BOOST_FOREACH(const std::string& alt_allele, alt) {
+            if (alt_allele.size()>1) return true;
+        }
+        return false;
+    }
+
+    bool
+    is_snv() const {
+        if (! is_valid()) return false;
+        if (1 != ref.size()) return false;
+        BOOST_FOREACH(const std::string& alt_allele, alt) {
+            if (1 != alt_allele.size()) return false;
+        }
+        return true;
+    }
+
     std::string chrom;
     int pos;
     std::string ref;
@@ -45,5 +77,3 @@ struct vcf_record {
 
 std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr);
 
-
-#endif

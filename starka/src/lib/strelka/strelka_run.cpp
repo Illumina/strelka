@@ -30,6 +30,7 @@
 #include "strelka/strelka_info.hh"
 #include "strelka/strelka_run.hh"
 
+#include "boost/foreach.hpp"
 #include "boost/shared_ptr.hpp"
 
 #include <sstream>
@@ -107,13 +108,22 @@ strelka_run(const strelka_options& opt) {
     sdata.register_contigs(normal_cdm.creader(),STRELKA_SAMPLE_TYPE::NORMAL);
     sdata.register_contigs(tumor_cdm.creader(),STRELKA_SAMPLE_TYPE::TUMOR);
 
-    // hold zero-to-many vcf streams open in indel_streams:
+    // hold zero-to-many vcf streams open:
     typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
-    for (unsigned i(0); i<opt.input_candidate_indel_vcf.size(); ++i) {
-        indel_stream.push_back(vcf_ptr(new vcf_streamer(opt.input_candidate_indel_vcf[i].c_str(),
+
+    BOOST_FOREACH(const std::string& vcf_filename, opt.input_candidate_indel_vcf) {
+        indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
                                                         bam_region.c_str(),normal_read_stream.get_header())));
         sdata.register_indels(*(indel_stream.back()));
+    }
+
+    std::vector<vcf_ptr> foutput_stream;
+
+    BOOST_FOREACH(const std::string& vcf_filename, opt.force_output_vcf) {
+        foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
+                                                          bam_region.c_str(),normal_read_stream.get_header())));
+        sdata.register_forced_output(*(foutput_stream.back()));
     }
 
     starling_input_stream_handler sinput(sdata);
@@ -183,6 +193,16 @@ strelka_run(const strelka_options& opt) {
         } else if (current.itype == INPUT_TYPE::INDEL) { // process candidate indels input from vcf file(s)
             const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
             process_candidate_indel(vcf_indel,sppr);
+
+        } else if (current.itype == INPUT_TYPE::FORCED_OUTPUT) { // process forced genotype tests from vcf file(s)
+            const vcf_record& vcf_variant(*(foutput_stream[current.get_order()]->get_record_ptr()));
+            if (vcf_variant.is_indel()) {
+                static const unsigned sample_no(0);
+                static const bool is_forced_output(true);
+                process_candidate_indel(vcf_variant,sppr,sample_no,is_forced_output);
+            } else if (vcf_variant.is_snv()) {
+                sppr.insert_forced_output_pos(vcf_variant.pos-1);
+            }
 
         } else {
             log_os << "ERROR: invalid input condition.\n";

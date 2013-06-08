@@ -23,7 +23,7 @@
 struct somatic_indel_call {
 
     somatic_indel_call()
-        : is_indel(false)
+        : is_forced_output(false)
     {}
 
     typedef bool tier_t;
@@ -31,7 +31,8 @@ struct somatic_indel_call {
     struct result_set {
 
         result_set()
-            : is_overlap(false)
+            : sindel_qphred(0),
+              is_overlap(false)
         {}
 
         unsigned ntype;
@@ -41,10 +42,21 @@ struct somatic_indel_call {
         bool is_overlap;
     };
 
-    bool is_indel;
+    bool
+    is_indel() const {
+        return (rs.sindel_qphred != 0);
+    }
+
+    // should this indel be written out?
+    bool
+    is_output() const {
+        return (is_indel() || is_forced_output);
+    }
+
     tier_t sindel_tier;
     tier_t sindel_from_ntype_tier;
     result_set rs;
+    bool is_forced_output;
 };
 
 #endif

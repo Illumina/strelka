@@ -122,7 +122,7 @@ vcf_streamer::
 next(const bool is_indel_only) {
     if (_is_stream_end || (NULL==_tfp) || (NULL==_titer)) return false;
 
-    do {
+    while (true) {
         int len;
         const char* vcf_record_string(ti_read(_tfp, _titer, &len));
 
@@ -135,19 +135,11 @@ next(const bool is_indel_only) {
             log_os << "ERROR: Can't parse vcf record: '" << vcf_record_string << "'\n";
             exit(EXIT_FAILURE);
         }
-        if (_is_record_set && is_indel_only) {
-            if (! is_valid_seq(_vcfrec.ref.c_str())) continue;
-            const unsigned nalt(_vcfrec.alt.size());
-            const bool is_rsgt1(_vcfrec.ref.size()>1);
-            bool is_indel(nalt>0);
-            for (unsigned a(0); a<nalt; ++a) {
-                if ((!is_rsgt1) && (_vcfrec.alt[a].size() <= 1)) is_indel=false;
-                // also make sure these aren't symbolic alleles:
-                if (! is_valid_seq(_vcfrec.ref.c_str())) is_indel=false;
-            }
-            if (is_indel) break;
-        }
-    } while (is_indel_only && (_is_record_set));
+        if (! _vcfrec.is_valid()) continue;
+        if (is_indel_only && (! _vcfrec.is_indel())) continue;
+
+        break; // found expected vcf record type
+    }
 
     return _is_record_set;
 }

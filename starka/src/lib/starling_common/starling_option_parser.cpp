@@ -147,6 +147,8 @@ get_starling_shared_option_parser(starling_options& opt) {
     ("candidate-indel-input-vcf",
      po::value(&opt.input_candidate_indel_vcf)->multitoken(),
      "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files.")
+    ("force-output-vcf", po::value(&opt.force_output_vcf)->multitoken(),
+     "For each site or indel in the vcf file to be written to the snv or indel output, even if no variant is found. An indels submitted will also be treated as candidate indels. Option can be provided multiple times to combine multiple vcf files.")
     ("upstream-oligo-size", po::value(&opt.upstream_oligo_size),
      "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.");
 

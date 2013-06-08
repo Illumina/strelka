@@ -24,9 +24,7 @@
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-
-#ifndef __STARLING_INPUT_STREAM_HANDLER_HH
-#define __STARLING_INPUT_STREAM_HANDLER_HH
+#pragma once
 
 
 #include "blt_util/id_map.hh"
@@ -40,7 +38,7 @@
 
 
 namespace INPUT_TYPE {
-enum index_t { NONE, READ, CONTIG, INDEL };
+enum index_t { NONE, READ, CONTIG, INDEL, FORCED_OUTPUT };
 }
 
 struct starling_input_stream_hander;
@@ -69,6 +67,14 @@ struct starling_input_stream_data {
         _indels.push_back(std::make_pair(sample_no,&vr));
     }
 
+    void
+    register_forced_output(vcf_streamer& vr,
+                           const sample_id_t sample_no = 0) {
+        // sites and indels in these files must be included in the snv/indel output, this means that
+        // any indels in these files are also candidate indels:
+        _output.push_back(std::make_pair(sample_no,&vr));
+    }
+
 private:
 
     void
@@ -85,10 +91,14 @@ private:
     reads_t _reads;
     contigs_t _contigs;
     indels_t _indels;
+    indels_t _output;
 };
 
 
 
+/// abstracts different record types (bam/contig/vcf, etc...) so that these can be
+/// sorted and handled in order
+///
 struct input_record_info {
 
     input_record_info(const pos_t p = 0,
@@ -139,7 +149,8 @@ struct starling_input_stream_handler {
 
     starling_input_stream_handler(const starling_input_stream_data& data,
                                   const pos_t contig_lead = 1000,
-                                  const pos_t indel_lead = 100);
+                                  const pos_t indel_lead = 100,
+                                  const pos_t output_lead = 100);
 
     bool next();
 
@@ -172,8 +183,9 @@ private:
     //
     const pos_t _contig_lead;
 
-    // ditto for indel_lead with indels:
+    // ditto for indel_lead with indels and forced output:
     const pos_t _indel_lead;
+    const pos_t _output_lead;
 
     input_record_info _current;
     input_record_info _last;
@@ -186,5 +198,3 @@ private:
     std::priority_queue<input_record_info> _stream_queue;
 };
 
-
-#endif

@@ -156,6 +156,10 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
                 const align_id_t contig_id = 0,
                 const indel_set_t* contig_indels_ptr = NULL);
 
+    /// snv gt and stats must be reported for this pos (not only honored in strelka right now)
+    void
+    insert_forced_output_pos(const pos_t pos);
+
 #if 0
     starling_read*
     get_read(const align_id_t read_id,
@@ -351,6 +355,7 @@ protected:
                 if (! sif.bc_buff.empty()) return false;
             }
             if (! _variant_print_pos.empty()) return false;
+            if (! _forced_output_pos.empty()) return false;
             _is_skip_process_pos=true;
         }
         return true;
@@ -500,7 +505,17 @@ private:
     void
     update_stageman();
 
+    void
+    clear_forced_output_pos(const pos_t pos) {
+        _forced_output_pos.erase(pos);
+    }
+
 protected:
+
+    bool
+    is_forced_output_pos(const pos_t pos) const {
+        return (_forced_output_pos.find(pos) != _forced_output_pos.end());
+    }
 
     //////////////////////////////////
     // data:
@@ -538,6 +553,7 @@ protected:
     double* _ws;
 
     std::set<pos_t> _variant_print_pos;
+    std::set<pos_t> _forced_output_pos;
 
     htype_region_data _hregion;
 
