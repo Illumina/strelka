@@ -7,7 +7,7 @@
 
 set -o nounset
 set -o pipefail
-#set -o xtrace
+set -o xtrace
 
 # starka test constants (git checkout not finished yet)
 #
@@ -153,6 +153,7 @@ starka_tarball_name=$starka_tarball_dir.tar.gz
 
 make_starka_tarball() {
     cd $workspace_dir
+    if [ -d starka ]; then rm -rf starka; fi
     if [ -d $starka_tarball_dir ]; then rm -rf $starka_tarball_dir; fi
     git clone --recursive $starka_git_url
 
