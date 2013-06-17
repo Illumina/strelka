@@ -10,13 +10,11 @@
 // <https://github.com/downloads/sequencing/licenses/>.
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __ALIGNMENT_HH
-#define __ALIGNMENT_HH
+#pragma once
 
 
 #include "blt_util/blt_types.hh"
@@ -39,8 +37,7 @@ struct alignment {
     bool
     empty() const { return path.empty(); }
 
-    // is there an (internal) indel exceeding MAX_INDEL_SIZE or
-    // another reason this alignment can't be handled?
+    // is there an indel exceeding max_indel_size?
     bool
     is_overmax(const unsigned max_indel_size) const;
 
@@ -84,7 +81,7 @@ struct alignment {
 
     bool
     operator==(const alignment& rhs) const {
-        return ((pos==rhs.pos) and (path==rhs.path) and (is_fwd_strand==rhs.is_fwd_strand));
+        return ((pos==rhs.pos) && (path==rhs.path) && (is_fwd_strand==rhs.is_fwd_strand));
     }
 
     /////
@@ -95,6 +92,3 @@ struct alignment {
 
 
 std::ostream& operator<<(std::ostream& os,const alignment& al);
-
-
-#endif

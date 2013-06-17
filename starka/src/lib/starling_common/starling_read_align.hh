@@ -10,23 +10,27 @@
 // <https://github.com/downloads/sequencing/licenses/>.
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
+
 #include "starling_common/indel_synchronizer.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_shared.hh"
 
 
+///
+/// \param realign_pr range in reference coordinates in which read is allowed to realign to (due to buffering constraints)
+///
 void
 realign_and_score_read(const starling_options& opt,
                        const starling_deriv_options& dopt,
                        const starling_sample_options& sample_opt,
                        const reference_contig_segment& ref,
+                       const known_pos_range& realign_pr,
                        read_segment& rseg,
                        indel_synchronizer& isync);
 

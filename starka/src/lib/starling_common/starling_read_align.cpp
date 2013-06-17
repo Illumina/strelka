@@ -1012,6 +1012,16 @@ finish_realignment(const starling_options& client_opt,
 
 
 
+static
+bool
+is_alignment_spanned_by_range(const known_pos_range pr,
+                              const alignment& al)
+{
+    return pr.is_superset_of(get_strict_alignment_range(al));
+}
+
+
+
 // score the candidate alignments, find the most likely and the best for realignment:
 //
 static
@@ -1023,8 +1033,8 @@ score_candidate_alignments(const starling_options& client_opt,
                            const std::set<candidate_alignment>& cal_set,
                            std::vector<double>& cal_set_path_lnp,
                            double& max_path_lnp,
-                           const candidate_alignment*& max_cal_ptr) {
-
+                           const candidate_alignment*& max_cal_ptr)
+{
     // the smooth optimum alignment and alignment pool are actually
     // used for realignment, whereas the strict max_path path
     // alignment is reported back to the indel_scoring routines.
@@ -1225,6 +1235,7 @@ score_candidate_alignments_and_indels(const starling_options& opt,
 }
 
 
+
 /// Initialize a candidate alignment with edge indels set according
 /// to those in the input alignment
 ///
@@ -1267,6 +1278,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
                                   const read_segment& rseg,
                                   const indel_synchronizer& isync,
                                   const alignment& exemplar,
+                                  const known_pos_range realign_pr,
                                   mca_warnings& warn,
                                   std::set<candidate_alignment>& cal_set) {
 
@@ -1323,7 +1335,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         for(siter i(i_begin); i!=i_end; ++i) { if(! i->second.is_present) indel_order.push_back(i->first); }
     }
 
-    // to prevent trancated search, we must put all non-present remove-only indels last in the order list:
+    // to prevent truncated search, we must put all non-present remove-only indels last in the order list:
     sort_remove_only_indels_last(indel_status_map,indel_order);
 
 #ifdef DEBUG_ALIGN
@@ -1378,16 +1390,24 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         // un soft-clip candidate alignments:
         std::set<candidate_alignment> cal_set2(cal_set);
         cal_set.clear();
-        typedef std::set<candidate_alignment>::iterator xiter;
-        const xiter i_begin(cal_set2.begin()),i_end(cal_set2.end());
-        for(xiter i(i_begin); i!=i_end; ++i) {
-            candidate_alignment ical(*i);
+        BOOST_FOREACH(candidate_alignment ical, cal_set2) {
             apath_clip_adder(ical.al.path,
                              hc_lead,
                              hc_trail,
                              sc_lead,
                              sc_trail);
             cal_set.insert(ical);
+        }
+    }
+
+    { // clear out-of-range alignment candidates:
+        std::set<candidate_alignment> cal_set2(cal_set);
+        cal_set.clear();
+        BOOST_FOREACH(const candidate_alignment& ical, cal_set2) {
+            // check that the alignment is within realign bounds
+            if(is_alignment_spanned_by_range(realign_pr,ical.al)) {
+                cal_set.insert(ical);
+            }
         }
     }
 }
@@ -1402,6 +1422,7 @@ realign_and_score_read(const starling_options& opt,
                        const starling_deriv_options& dopt,
                        const starling_sample_options& sample_opt,
                        const reference_contig_segment& ref,
+                       const known_pos_range& realign_pr,
                        read_segment& rseg,
                        indel_synchronizer& isync) {
 
@@ -1409,6 +1430,9 @@ realign_and_score_read(const starling_options& opt,
         log_os << "ERROR: invalid alignment path associated with read segment:\n" << rseg;
         exit(EXIT_FAILURE);
     }
+
+    // check that the original alignment is within realign bounds
+    if(! is_alignment_spanned_by_range(realign_pr,rseg.genome_align())) return;
 
     // check that there are any candidate indels within bounds of the
     // discovery alignments for this read:
@@ -1469,7 +1493,7 @@ realign_and_score_read(const starling_options& opt,
     mca_warnings warn;
 
     BOOST_FOREACH(const alignment& al, exemplars) {
-        get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,warn,cal_set);
+        get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,realign_pr,warn,cal_set);
     }
 
     assert(! cal_set.empty());

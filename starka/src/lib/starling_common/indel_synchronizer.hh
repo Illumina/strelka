@@ -10,13 +10,11 @@
 // <https://github.com/downloads/sequencing/licenses/>.
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __INDEL_SYNCHRONIZER_HH
-#define __INDEL_SYNCHRONIZER_HH
+#pragma once
 
 #include "blt_util/id_map.hh"
 #include "starling_common/depth_buffer.hh"
@@ -120,7 +118,7 @@ struct indel_synchronizer {
                        const indel_key& ik,
                        const indel_data& id) const {
 
-        if(not id.status.is_candidate_indel_cached) {
+        if(! id.status.is_candidate_indel_cached) {
             is_candidate_indel_int(opt,ik,id);
         }
         return id.status.is_candidate_indel;
@@ -152,6 +150,7 @@ private:
 
     indel_buffer&
     ibuff(const unsigned s) { return *(idata().get_value(s).ibp); }
+
     const indel_buffer&
     ibuff(const unsigned s) const { return *(idata().get_value(s).ibp); }
 
@@ -181,6 +180,3 @@ private:
     //
     const unsigned _sample_order;
 };
-
-
-#endif

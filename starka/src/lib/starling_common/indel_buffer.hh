@@ -10,13 +10,11 @@
 // <https://github.com/downloads/sequencing/licenses/>.
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __INDEL_BUFFER_HH
-#define __INDEL_BUFFER_HH
+#pragma once
 
 #include "starling_common/indel.hh"
 
@@ -134,5 +132,3 @@ inline
 const indel_data&
 get_indel_data(const indel_buffer::const_iterator i) { return (i->second); }
 
-
-#endif

@@ -18,6 +18,8 @@
 #include "starling_common/starling_read_segment.hh"
 #include "starling_common/starling_read.hh"
 
+#include "boost/foreach.hpp"
+
 #include <iostream>
 
 
@@ -130,13 +132,12 @@ read_segment::
 is_any_nonovermax(const unsigned max_indel_size) const {
 
     const read_segment& rseg(*this);
-    if((not rseg.genome_align().empty()) and
-       (not rseg.genome_align().is_overmax(max_indel_size))) return true;
+    if((! rseg.genome_align().empty()) &&
+       (! rseg.genome_align().is_overmax(max_indel_size))) return true;
 
-    typedef contig_align_t cat;
-    const cat& ct(rseg.contig_align());
-    cat::const_iterator i(ct.begin()),i_end(ct.end());
-    for(; i!=i_end; ++i) if(not i->second.is_overmax(max_indel_size)) return true;
+    BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()){
+        if(! calign.second.is_overmax(max_indel_size)) return true;
+    }
     return false;
 }
 
@@ -149,17 +150,14 @@ is_valid() const {
     const read_segment& rseg(*this);
     const unsigned rs(rseg.read_size());
 
-    if(not rseg.genome_align().empty()) {
+    if(! rseg.genome_align().empty()) {
         const ALIGNPATH::path_t path(rseg.genome_align().path);
         if(is_apath_invalid(path,rs) ||
            is_apath_starling_invalid(path)) return false;
     }
 
-    typedef contig_align_t cat;
-    const cat& ct(rseg.contig_align());
-    cat::const_iterator i(ct.begin()),i_end(ct.end());
-    for(; i!=i_end; ++i) {
-        const ALIGNPATH::path_t path(i->second.path);
+    BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()){
+        const ALIGNPATH::path_t path(calign.second.path);
         if(is_apath_invalid(path,rs) ||
            is_apath_starling_invalid(path)) return false;
     }
@@ -172,7 +170,7 @@ void
 short_report(std::ostream& os,
              const read_segment& rseg) {
 
-    if(not rseg.genome_align().empty()) os << "GENOME " << rseg.genome_align();
+    if(! rseg.genome_align().empty()) os << "GENOME " << rseg.genome_align();
     os << "is_realigned? " << rseg.is_realigned << "\n";
     if(rseg.is_realigned) {
         //os << "REALIGN_path_log_lhood: " << rseg.realign_path_lnp << "\n";
