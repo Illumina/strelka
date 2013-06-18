@@ -25,6 +25,9 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
 
 
 
@@ -99,7 +102,23 @@ add_gvcf_filters(const gvcf_options& opt,
     }
 }
 
-
+// try to determine the sample_name from the BAM header
+// if none found return 'SAMPLE' to be used as sample name
+std::string
+determine_sample(const std::string bam_header_text){
+    std::string res_name = "SAMPLE";
+    using namespace boost;
+    char_separator<char> sep("\t\n");
+    tokenizer< char_separator<char> > tokens(bam_header_text, sep);
+    BOOST_FOREACH (const std::string& t, tokens) {
+        if (std::string::npos != t.find("SM:")){
+            res_name = t.substr(t.find("SM:")+3);
+            std::cerr << res_name << std::endl;
+            return res_name;
+        }
+    }
+    return res_name;
+}
 
 void
 finish_gvcf_header(const gvcf_options& opt,
@@ -134,5 +153,8 @@ finish_gvcf_header(const gvcf_options& opt,
     // FILTER:
     add_gvcf_filters(opt,chrom_depth,os);
 
-    os << vcf_col_label() << "\tFORMAT\tMYSAMPLE\n";
+    // try to determine the sample_name from the BAM header
+    string sample_name = determine_sample(opt.bam_header_data);
+
+    os << vcf_col_label() << "\tFORMAT\t" << sample_name << "\n";
 }
