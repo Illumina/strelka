@@ -506,18 +506,18 @@ write_site_record(const site_info& si) const {
 
                 //if we have a het, report these metrics as well
 //                if(si.get_gt()=="0/1"){
-			   os << ';';
-			   os << "MQRankSum=" << si.MQRankSum;
-			   os << ';';
-			   os << "BaseQRankSum=" << si.BaseQRankSum;
-			   os << ';';
-			   os << "ReadPosRankSum=" << si.ReadPosRankSum;
-			   os << ';';
-			   os << "DP=" << (si.n_used_calls+si.n_unused_calls);
-               os << ';';
-               os << "GQ=" << si.smod.gq;
-               os << ';';
-               os << "GQX=" << si.smod.gqx;
+                os << ';';
+                os << "MQRankSum=" << si.MQRankSum;
+                os << ';';
+                os << "BaseQRankSum=" << si.BaseQRankSum;
+                os << ';';
+                os << "ReadPosRankSum=" << si.ReadPosRankSum;
+                os << ';';
+                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
+                os << ';';
+                os << "GQ=" << si.smod.gq;
+                os << ';';
+                os << "GQX=" << si.smod.gqx;
 //                }
             }
         } else {
@@ -594,15 +594,15 @@ modify_indel_overlap_site(const gvcf_options& opt,
                           site_info& si) {
 
 #ifdef DEBUG_GVCF
-   log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
-   log_os << "CHIRP: indel_overlap_site imod before: " << ii.imod << "\n";
+    log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
+    log_os << "CHIRP: indel_overlap_site imod before: " << ii.imod << "\n";
 #endif
 
     // inherit any filters from the indel:
     si.smod.filters |= ii.imod.filters;
 
 #ifdef DEBUG_GVCF
-   log_os << "CHIRP: indel_overlap_site smod after: " << si.smod << "\n";
+    log_os << "CHIRP: indel_overlap_site smod after: " << si.smod << "\n";
 #endif
 
     // limit qual and gq values to those of the indel

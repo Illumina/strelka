@@ -27,14 +27,14 @@ using namespace std;
 
 
 double
-get_z_score(int n1, int n2, double w1){
-	double mean = n1*(n1+n2+1)/2.0;
-	double var  = sqrt(n1*n2*(n1+n2+1)/12.0);
-	if (static_cast<int>(var)==0){
-		return 0.0;
-	}
-	double z = (w1-mean)/var;
-	return z;
+get_z_score(int n1, int n2, double w1) {
+    double mean = n1*(n1+n2+1)/2.0;
+    double var  = sqrt(n1*n2*(n1+n2+1)/12.0);
+    if (static_cast<int>(var)==0) {
+        return 0.0;
+    }
+    double z = (w1-mean)/var;
+    return z;
 }
 
 // return the U statistic
@@ -49,7 +49,7 @@ ranksum::get_u_stat()
     N1 = 0;
     N2 = 0;
     //loop over all observations
-    for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it){
+    for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it) {
         int key = *it;
 
         // get the observation counts for reference and alt
@@ -62,17 +62,17 @@ ranksum::get_u_stat()
         N1 += obs1;
         N2 += obs2;
         current_rank += obs;
-    //		cout << key << "\t{"<< obs1 << ", " << obs2 << "}" << " sum: " << obs ;
-    //		cout << " weight " << rank_weight << " U1: " << U1 << " U2: " << U2 << endl;
-    //		cout << "updated rank " << current_rank << endl;
-	}
+        //		cout << key << "\t{"<< obs1 << ", " << obs2 << "}" << " sum: " << obs ;
+        //		cout << " weight " << rank_weight << " U1: " << U1 << " U2: " << U2 << endl;
+        //		cout << "updated rank " << current_rank << endl;
+    }
 
-	//return the z-score for the smaller of U1 and U2 assuming a gaussian approx.
+    //return the z-score for the smaller of U1 and U2 assuming a gaussian approx.
     double z;
-    if (R1>R2){
+    if (R1>R2) {
         z = get_z_score(N2,N1,R2);
     }
-    else{
+    else {
         z = get_z_score(N1,N2,R1);
     }
 
@@ -80,16 +80,16 @@ ranksum::get_u_stat()
 }
 
 void
-ranksum::add_observation(bool is_ref, int obs){
+ranksum::add_observation(bool is_ref, int obs) {
     space[obs] =1;
-    if (is_ref){
+    if (is_ref) {
         l1[obs]++;
-    //		cout << "ref case" << endl;
+        //		cout << "ref case" << endl;
     }
-    else{
+    else {
         l2[obs]++;
-    //		cout << "alt case" << endl;
-    //		cout << "ref_base: " << ref_base << " alt_base: " << base <<   endl;
+        //		cout << "alt case" << endl;
+        //		cout << "ref_base: " << ref_base << " alt_base: " << base <<   endl;
     }
 }
 
@@ -97,25 +97,25 @@ ranksum::add_observation(bool is_ref, int obs){
 // output specification
 
 ostream&
-operator<< (ostream &out, map<int, int> &l)
+operator<< (ostream& out, map<int, int>& l)
 {
     out << "Elements in l: " << endl;
-    for (map<int, int>::iterator it = l.begin();it != l.end(); ++it)
+    for (map<int, int>::iterator it = l.begin(); it != l.end(); ++it)
         out << "\t" <<(*it).first << " => " << (*it).second <<  endl;
     return out;
 }
 
 ostream&
-operator<< (ostream &out, ranksum &r)
+operator<< (ostream& out, ranksum& r)
 {
-	double z = r.get_u_stat();
-	out << endl << "My reference base: " << r.get_refbase() << endl;
-	out << "elements in space: " << endl;
-	out << "[";
-	vector<int> myvector = r.getSpace();
-	for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
-	    std::cout << ' ' << *it;
-	out << "]" << endl;
+    double z = r.get_u_stat();
+    out << endl << "My reference base: " << r.get_refbase() << endl;
+    out << "elements in space: " << endl;
+    out << "[";
+    vector<int> myvector = r.getSpace();
+    for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
+        std::cout << ' ' << *it;
+    out << "]" << endl;
     out << r.l1;
     out << r.l2;
     out << "N1: " << r.N1 << "\tR1: " << r.R1 <<  endl;

@@ -54,7 +54,7 @@ struct starling_align_indel_info {
 
 
 std::ostream&
-operator<<(std::ostream& os, const starling_align_indel_info& ii){
+operator<<(std::ostream& os, const starling_align_indel_info& ii) {
 
     os << "is_present: " << ii.is_present << " is_remove_only: " << ii.is_remove_only;
     return os;
@@ -543,14 +543,14 @@ struct mca_warnings {
 static
 void
 add_pin_exception_info(
-        const char* label,
-        const unsigned depth,
-        const candidate_alignment& cal,
-        const candidate_alignment& start_cal,
-        const pos_t ref_start_pos,
-        const pos_t read_start_pos,
-        const indel_key& cindel,
-        const indel_set_t& current_indels)
+    const char* label,
+    const unsigned depth,
+    const candidate_alignment& cal,
+    const candidate_alignment& start_cal,
+    const pos_t ref_start_pos,
+    const pos_t read_start_pos,
+    const indel_key& cindel,
+    const indel_set_t& current_indels)
 {
     log_os << "\nException caught while building " << label << "-pinned alignment candidate at depth: " << depth << "\n"
            << "\tcal: " << cal
@@ -652,8 +652,8 @@ make_candidate_alignments(const starling_options& client_opt,
     // alignment 1) --> unchanged case:
     try {
         make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
-                indel_status_map,indel_order,depth+1,toggle_depth,read_range,
-                max_read_indel_toggle,cal);
+                                  indel_status_map,indel_order,depth+1,toggle_depth,read_range,
+                                  max_read_indel_toggle,cal);
     } catch(...) {
         log_os << "\nException caught while building default alignment candidate at depth: " << depth << "\n"
                << "\tcal: " << cal
@@ -1245,7 +1245,7 @@ score_candidate_alignments_and_indels(const starling_options& opt,
 static
 void
 load_cal_with_edge_indels(const alignment& al,
-                         candidate_alignment& cal) {
+                          candidate_alignment& cal) {
 
     using namespace ALIGNPATH;
 
@@ -1400,7 +1400,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         }
     }
 
-    { // clear out-of-range alignment candidates:
+    {   // clear out-of-range alignment candidates:
         std::set<candidate_alignment> cal_set2(cal_set);
         cal_set.clear();
         BOOST_FOREACH(const candidate_alignment& ical, cal_set2) {

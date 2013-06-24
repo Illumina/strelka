@@ -248,10 +248,10 @@ struct site_info {
         , n_unused_calls(0)
         , hpol(0)
         , hapscore(0)
-		, MQ(0)
-		, ReadPosRankSum(0)
-		, BaseQRankSum(0)
-		, MQRankSum(0)
+        , MQ(0)
+        , ReadPosRankSum(0)
+        , BaseQRankSum(0)
+        , MQRankSum(0)
     {
         for(unsigned i(0); i<N_BASE; ++i) known_counts[i] = 0;
     }

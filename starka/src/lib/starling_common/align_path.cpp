@@ -861,7 +861,7 @@ is_segment_swap_start(const path_t& apath,
     bool is_delete(false);
 
     const unsigned as(apath.size());
-    for(;i<as;++i) {
+    for(; i<as; ++i) {
         if     (apath[i].type == INSERT) { is_insert=true; }
         else if(apath[i].type == DELETE) { is_delete=true; }
         else { break; }
@@ -901,7 +901,7 @@ get_apath_invalid_reason(const path_t& apath,
 
 ALIGN_ISSUE::issue_t
 get_apath_invalid_type(const path_t& apath,
-                     const unsigned seq_length) {
+                       const unsigned seq_length) {
 
     bool is_match(false);
     align_t last_type(NONE);

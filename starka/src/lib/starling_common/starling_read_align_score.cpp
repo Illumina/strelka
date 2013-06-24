@@ -145,7 +145,7 @@ score_candidate_alignment(const starling_options& opt,
     const path_t& path(cal.al.path);
 
 #ifdef DEBUG_SCORE
-        log_os << "LLAMA: path: " << path << "\n";
+    log_os << "LLAMA: path: " << path << "\n";
 #endif
 
     unsigned read_offset(0);

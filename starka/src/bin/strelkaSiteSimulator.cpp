@@ -32,12 +32,12 @@
 
 static
 void
-try_main(int argc,char* argv[]){
+try_main(int argc,char* argv[]) {
 
     strelka_options opt;
     strelka_site_sim_options sim_opt;
 
-    for(int i(0);i<argc;++i){
+    for(int i(0); i<argc; ++i) {
         if(i) opt.cmdline += ' ';
         opt.cmdline += argv[i];
     }
@@ -50,12 +50,12 @@ try_main(int argc,char* argv[]){
     namespace po = boost::program_options;
     po::options_description req("configuration");
     req.add_options()
-        ("total-sites", po::value<unsigned>(&sim_opt.total_sites)->default_value(sim_opt.total_sites),"number of sites to simulate")
-        ("ncov", po::value<unsigned>(&sim_opt.ncov)->default_value(sim_opt.ncov),"normal depth")
-        ("tcov", po::value<unsigned>(&sim_opt.tcov)->default_value(sim_opt.tcov),"tumor depth")
-        ("tumor-purity", po::value<double>(&sim_opt.tumor_purity)->default_value(sim_opt.tumor_purity),"tumor purity")
-        ("somatic-only","only simulate somatic sites")
-        ("seed",po::value<uint32_t>(&sim_opt.seed),"seed");
+    ("total-sites", po::value<unsigned>(&sim_opt.total_sites)->default_value(sim_opt.total_sites),"number of sites to simulate")
+    ("ncov", po::value<unsigned>(&sim_opt.ncov)->default_value(sim_opt.ncov),"normal depth")
+    ("tcov", po::value<unsigned>(&sim_opt.tcov)->default_value(sim_opt.tcov),"tumor depth")
+    ("tumor-purity", po::value<double>(&sim_opt.tumor_purity)->default_value(sim_opt.tumor_purity),"tumor purity")
+    ("somatic-only","only simulate somatic sites")
+    ("seed",po::value<uint32_t>(&sim_opt.seed),"seed");
 
     po::options_description visible("options");
     visible.add(req);
@@ -94,7 +94,7 @@ dump_cl(int argc,
         std::ostream& os) {
 
     os << "cmdline:";
-    for(int i(0);i<argc;++i){
+    for(int i(0); i<argc; ++i) {
         os << ' ' << argv[i];
     }
     os << std::endl;
@@ -103,13 +103,13 @@ dump_cl(int argc,
 
 
 int
-main(int argc,char* argv[]){
+main(int argc,char* argv[]) {
 
     std::ios_base::sync_with_stdio(false);
 
     // last chance to catch exceptions...
     //
-    try{
+    try {
         try_main(argc,argv);
 
     } catch (const blt_exception& e) {
@@ -117,8 +117,8 @@ main(int argc,char* argv[]){
                << "...caught in main()\n";
         dump_cl(argc,argv,log_os);
         exit(EXIT_FAILURE);
-    } catch (const illumina::common::ExceptionData &e) {
-        log_os << "FATAL_ERROR: EXCEPTION: " 
+    } catch (const illumina::common::ExceptionData& e) {
+        log_os << "FATAL_ERROR: EXCEPTION: "
                << e.getContext() << ": " << e.getMessage() << "\n"
                << "...caught in main()\n";
         dump_cl(argc,argv,log_os);

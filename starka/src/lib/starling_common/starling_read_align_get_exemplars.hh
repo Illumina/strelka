@@ -30,5 +30,5 @@
 void
 get_exemplar_alignments(const starling_options& opt,
                         const read_segment& rseg,
-                        std::vector<alignment>& exal); 
+                        std::vector<alignment>& exal);
 

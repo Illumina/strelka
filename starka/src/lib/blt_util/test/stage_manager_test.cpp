@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( test_stage_manager_reset ) {
 
     sman.reset();
 
-    for(int i(0);i<4;++i) {
+    for(int i(0); i<4; ++i) {
         BOOST_CHECK_EQUAL(tpp.stage_pos[i],59);
     }
 }

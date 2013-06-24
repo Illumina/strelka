@@ -609,7 +609,7 @@ insert_read(const bam_record& br,
     // update read_size:
     {
         const unsigned rs(static_cast<unsigned>(STARLING_LARGEST_READ_SIZE_PAD*br.read_size()));
-        if(! update_largest_read_size(rs)){
+        if(! update_largest_read_size(rs)) {
             std::ostringstream oss;
             oss << "ERROR: Input read size: " << br.read_size() << " exceeds maximum.";
             throw blt_exception(oss.str().c_str());
@@ -652,9 +652,9 @@ insert_read(const bam_record& br,
         try {
             static const std::pair<bool,bool> edge_pin(std::make_pair(false,false));
             const unsigned total_indel_ref_span_per_read =
-                    add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
-                                                 al,bseq,*this,iat,res.second,sample_no,
-                                                 edge_pin,contig_indels_ptr);
+                add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
+                                             al,bseq,*this,iat,res.second,sample_no,
+                                             edge_pin,contig_indels_ptr);
             update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
         } catch (...) {
             log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << read_key(br) << "\n";
@@ -1022,9 +1022,9 @@ insert_mapq_count(const pos_t pos,
 
 void
 starling_pos_processor_base::
-update_ranksum(const pos_t pos,const unsigned sample_no,const base_call& bc, const uint8_t mapq, const int cycle){
+update_ranksum(const pos_t pos,const unsigned sample_no,const base_call& bc, const uint8_t mapq, const int cycle) {
 
-	if(! is_pos_reportable(pos)) return;
+    if(! is_pos_reportable(pos)) return;
 //	log_os << "updating ranksum" << endl;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
@@ -1486,13 +1486,13 @@ pileup_read_segment(const read_segment& rseg,
 
                 try {
 
-                	const uint8_t call_id(bam_seq_code_to_id(call_code));
+                    const uint8_t call_id(bam_seq_code_to_id(call_code));
                     const bool current_call_filter( is_tier1 ? is_call_filter : is_tier2_call_filter );
                     const bool is_tier_specific_filter( is_tier1 && is_call_filter && (! is_tier2_call_filter) );
 
                     const base_call bc = base_call(call_id,qscore,best_al.is_fwd_strand,
-                            align_strand_read_pos,end_trimmed_read_len,
-                            current_call_filter,is_neighbor_mismatch,is_tier_specific_filter);
+                                                   align_strand_read_pos,end_trimmed_read_len,
+                                                   current_call_filter,is_neighbor_mismatch,is_tier_specific_filter);
 
                     insert_pos_basecall(ref_pos,
                                         sample_no,
@@ -1721,10 +1721,10 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
         // do calculate VQSR metrics
         if(_client_opt.is_compute_VQSRmetrics) {
-        	_site_info.MQ 				= pi.get_rms_mq();
-			_site_info.ReadPosRankSum 	= pi.get_read_pos_ranksum();
-			_site_info.MQRankSum 		= pi.get_mq_ranksum();
-			_site_info.BaseQRankSum 	= pi.get_baseq_ranksum();
+            _site_info.MQ 				= pi.get_rms_mq();
+            _site_info.ReadPosRankSum 	= pi.get_read_pos_ranksum();
+            _site_info.MQRankSum 		= pi.get_mq_ranksum();
+            _site_info.BaseQRankSum 	= pi.get_baseq_ranksum();
         }
 
         // hpol filter

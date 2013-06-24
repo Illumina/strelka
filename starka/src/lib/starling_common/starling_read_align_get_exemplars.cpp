@@ -228,7 +228,7 @@ get_exemplar_alignments(const starling_options& opt,
 
 #ifdef DEBUG_ALIGN
     log_os << "VARMIT: Final exemplar set:\n";
-    BOOST_FOREACH(const alignment& exemplar, exal){
+    BOOST_FOREACH(const alignment& exemplar, exal) {
         log_os << "exemplar: " << exemplar;
     }
 #endif

@@ -396,10 +396,10 @@ private:
                       const uint8_t mapq);
     void
     update_ranksum(const pos_t pos,
-    			   const unsigned sample_no,
-    			   const base_call& bc,
-    			   const uint8_t mapq,
-    			   const int cycle);
+                   const unsigned sample_no,
+                   const base_call& bc,
+                   const uint8_t mapq,
+                   const int cycle);
 
     void
     insert_pos_basecall(const pos_t pos,

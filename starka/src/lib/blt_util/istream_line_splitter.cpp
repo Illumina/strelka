@@ -32,7 +32,7 @@
 void
 istream_line_splitter::
 write_line(std::ostream& os) const {
-    for(unsigned i(0);i<_n_word;++i) {
+    for(unsigned i(0); i<_n_word; ++i) {
         if(i) os << _sep;
         os << word[i];
     }
@@ -74,7 +74,7 @@ check_istream(std::istream& is,
     if(is) {
         line_no++;
         // regular successful line read:
-        return true; 
+        return true;
     }
 
     if     (is.eof()) return false;
@@ -109,7 +109,7 @@ parse_line() {
             std::ostringstream oss;
             oss << "ERROR: Unexpected read failure in parse_line() at line_no: " << _line_no << "\n";
             throw blt_exception(oss.str().c_str());
-        } 
+        }
         buflen=(strlen(_buf));
     }
 
@@ -118,21 +118,21 @@ parse_line() {
         oss << "ERROR: Unexpected read failure in parse_line() at line_no: " << _line_no << "\n";
         throw blt_exception(oss.str().c_str());
     }
-    
+
     if(NULL == _buf) return false;
     assert(buflen);
-    
+
     // do a low-level separator parse:
-    {  
+    {
         char* p(_buf);
         word[0]=p;
         unsigned i(1);
-        while(i<_max_word){  
+        while(i<_max_word) {
             if((*p == '\n') || (*p == '\0')) break;
             if (*p == _sep) {
                 *p = '\0';
                 word[i++] = p+1;
-            }  
+            }
             ++p;
         }
         _n_word=i;

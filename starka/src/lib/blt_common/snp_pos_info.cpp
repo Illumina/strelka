@@ -53,7 +53,7 @@ operator<<(std::ostream& os,
 
 double
 snp_pos_info::
-get_rms_mq(){
+get_rms_mq() {
     if (n_mapq==0)
         return 0.0;
     return sqrt(1.0*cumm_mapq/n_mapq);
@@ -62,23 +62,23 @@ get_rms_mq(){
 
 double
 snp_pos_info::
-get_read_pos_ranksum(){
+get_read_pos_ranksum() {
 
     //	cout << read_pos_ranksum << endl;
-	return read_pos_ranksum.get_u_stat();
+    return read_pos_ranksum.get_u_stat();
 
 }
 
 double
 snp_pos_info::
-get_mq_ranksum(){
+get_mq_ranksum() {
 //	cout << mq_ranksum << endl;
     return mq_ranksum.get_u_stat();
 }
 
 double
 snp_pos_info::
-get_baseq_ranksum(){
+get_baseq_ranksum() {
 //	cout << baseq_ranksum << endl;
     return baseq_ranksum.get_u_stat();
 }

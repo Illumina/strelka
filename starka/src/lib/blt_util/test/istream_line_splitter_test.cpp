@@ -22,9 +22,9 @@ BOOST_AUTO_TEST_SUITE( test_istream_line_splitter )
 
 
 BOOST_AUTO_TEST_CASE( test_istream_line_splitter_parse )
-{ 
+{
 
-    std::string test_input("1\t2\t3\t4\n11\t22\t33\t44\n");    
+    std::string test_input("1\t2\t3\t4\n11\t22\t33\t44\n");
     std::istringstream iss(test_input);
 
     istream_line_splitter dparse(iss);
@@ -68,7 +68,7 @@ check_long_line(const int init_buffer_size) {
 
 
 BOOST_AUTO_TEST_CASE( test_istream_line_splitter_long_line )
-{ 
+{
     check_long_line(2);
     check_long_line(41);
 }

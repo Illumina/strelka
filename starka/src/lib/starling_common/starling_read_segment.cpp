@@ -135,7 +135,7 @@ is_any_nonovermax(const unsigned max_indel_size) const {
     if((! rseg.genome_align().empty()) &&
        (! rseg.genome_align().is_overmax(max_indel_size))) return true;
 
-    BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()){
+    BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()) {
         if(! calign.second.is_overmax(max_indel_size)) return true;
     }
     return false;
@@ -156,7 +156,7 @@ is_valid() const {
            is_apath_starling_invalid(path)) return false;
     }
 
-    BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()){
+    BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()) {
         const ALIGNPATH::path_t path(calign.second.path);
         if(is_apath_invalid(path,rs) ||
            is_apath_starling_invalid(path)) return false;

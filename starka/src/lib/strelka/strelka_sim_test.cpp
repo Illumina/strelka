@@ -94,7 +94,7 @@ get_obs_base_id(const uint8_t true_id,
     if(uran() >= qphred_to_error_prob(qval)) {
         return true_id;
     }
-     
+
     return get_mut_base_id(true_id);
 }
 
@@ -105,7 +105,7 @@ get_obs_base_id(const uint8_t true_id,
 static
 unsigned
 random_cdf_variate(const double cdf[],
-                   const unsigned N){
+                   const unsigned N) {
 
     const double* lbp(std::lower_bound(cdf,cdf+N,uran()));
     return std::min(static_cast<unsigned>(lbp-cdf),N-1);
@@ -127,7 +127,7 @@ struct qval_distro {
             std::cerr << "ERROR: can't open file '" << distro_file << "'\n";
             exit(EXIT_FAILURE);
         }
-       
+
         istream_line_splitter dparse(ifs);
 
         while(dparse.parse_line()) {
@@ -148,7 +148,7 @@ struct qval_distro {
             _qsize++;
         }
 
-        for(unsigned i(0);i<_qsize;++i) {
+        for(unsigned i(0); i<_qsize; ++i) {
             _qval_cdf[i] /= total;
             if(i) _qval_cdf[i] += _qval_cdf[i-1];
         }
@@ -192,7 +192,7 @@ sim_sample_pi(vgen_t& cov_gen,
     pi.clear();
     pi.ref_base=id_to_base(ref_id);
 
-    for(unsigned i(0);i<all_cov;++i) {
+    for(unsigned i(0); i<all_cov; ++i) {
         const uint8_t qval(qdist.get());
 
         uint8_t true_id(ref_id);
@@ -232,13 +232,13 @@ strelka_site_sim(strelka_options& opt,
     bool is_ofs(false);
     std::ofstream ofs;
     if(! sim_opt.oracle_file.empty()) {
-      is_ofs=true;
-      ofs.open(sim_opt.oracle_file.c_str());
+        is_ofs=true;
+        ofs.open(sim_opt.oracle_file.c_str());
     }
 
     strelka_pile_caller scall(opt,std::cout);
 
-    for(unsigned i(0);i<sim_opt.total_sites;++i) {
+    for(unsigned i(0); i<sim_opt.total_sites; ++i) {
 
         const unsigned pos(i+1);
 
@@ -247,7 +247,7 @@ strelka_site_sim(strelka_options& opt,
         float nalt_freq(0.);
         float talt_freq(0.);
 
-        // test for alternate states 
+        // test for alternate states
         if(sim_opt.mode == SIM_RANDOM) {
             if(uran() < opt.shared_site_error_rate) {
                 sim_opt.mode=SIM_NOISE;
@@ -282,7 +282,7 @@ strelka_site_sim(strelka_options& opt,
             talt_id=nalt_id;
 
             static const double one_third(1./3.);
-            if(uran() <= one_third) { nalt_freq=1.; } 
+            if(uran() <= one_third) { nalt_freq=1.; }
             else                    { nalt_freq=0.5; }
             talt_freq=nalt_freq;
 
@@ -310,7 +310,7 @@ load_pi(const char ref_base,
     pi.ref_base=ref_base;
 
     const unsigned len(strlen(read));
-    for(unsigned i(0);i<len;++i) {
+    for(unsigned i(0); i<len; ++i) {
         const bool is_fwd(isupper(read[i]));
         const uint8_t base_id(base_to_id(toupper(read[i])));
         assert(qual[i]>=33);
@@ -349,7 +349,7 @@ strelka_pile_test_run(strelka_options& opt) {
     static dependent_prob_cache dpcache;
 
     while(dparse.parse_line()) {
-        
+
         assert(6 == dparse.n_word());
 
         const char* pcopy(dparse.word[0]);
@@ -369,14 +369,14 @@ strelka_pile_test_run(strelka_options& opt) {
         }
 
         static const unsigned n_tier(2);
-        
+
         std::auto_ptr<extended_pos_data> normald_ptr[n_tier];
         std::auto_ptr<extended_pos_data> tumord_ptr[n_tier];
 
         extra_position_data* normal_epd_ptr[n_tier] = { &(norm_epd) , &(tier2_epd[STRELKA_SAMPLE_TYPE::NORMAL]) };
         extra_position_data* tumor_epd_ptr[n_tier] = { &(tumor_epd) , &(tier2_epd[STRELKA_SAMPLE_TYPE::TUMOR]) };
-        
-        for(unsigned t(0);t<n_tier;++t) {
+
+        for(unsigned t(0); t<n_tier; ++t) {
             static const bool is_dep(false);
             const bool is_include_tier2(t!=0);
             if(is_include_tier2) continue;
@@ -391,7 +391,7 @@ strelka_pile_test_run(strelka_options& opt) {
 
         static const extended_pos_info* normal_epi_t2_ptr(NULL);
         static const extended_pos_info* tumor_epi_t2_ptr(NULL);
-        
+
         dopt.sscaller_strand_grid().position_somatic_snv_call(normald_ptr[0]->good_epi,
                                                               tumord_ptr[0]->good_epi,
                                                               normal_epi_t2_ptr,
@@ -414,7 +414,7 @@ strelka_pile_test_run(strelka_options& opt) {
                                                    *(tumord_ptr[0]),
                                                    bos);
 
-        bos << "\n";    
+        bos << "\n";
     }
 }
 #endif

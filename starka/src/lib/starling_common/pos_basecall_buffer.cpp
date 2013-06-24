@@ -33,10 +33,10 @@ dump(std::ostream& os) const {
 }
 
 void
-pos_basecall_buffer::update_ranksums(char refpos, const pos_t pos,const base_call& bc, const uint8_t mapq, const int cycle){
-	const bool is_reference(refpos==id_to_base(bc.base_id));
+pos_basecall_buffer::update_ranksums(char refpos, const pos_t pos,const base_call& bc, const uint8_t mapq, const int cycle) {
+    const bool is_reference(refpos==id_to_base(bc.base_id));
 
-	_pdata[pos].baseq_ranksum.add_observation(is_reference,static_cast<int>(bc.get_qscore()));
-	_pdata[pos].mq_ranksum.add_observation(is_reference,static_cast<int>(mapq));
-	_pdata[pos].read_pos_ranksum.add_observation(is_reference,cycle);
+    _pdata[pos].baseq_ranksum.add_observation(is_reference,static_cast<int>(bc.get_qscore()));
+    _pdata[pos].mq_ranksum.add_observation(is_reference,static_cast<int>(mapq));
+    _pdata[pos].read_pos_ranksum.add_observation(is_reference,cycle);
 }

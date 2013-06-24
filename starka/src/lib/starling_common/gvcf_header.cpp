@@ -115,7 +115,7 @@ determine_sample(const std::string& bam_header_text) {
     char_separator<char> sep("\t\n");
     tokenizer< char_separator<char> > tokens(bam_header_text, sep);
     BOOST_FOREACH (const std::string& t, tokens) {
-        if (std::string::npos != t.find("SM:")){
+        if (std::string::npos != t.find("SM:")) {
             return t.substr(t.find("SM:")+3);
         }
     }

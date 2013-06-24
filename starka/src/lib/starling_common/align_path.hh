@@ -324,31 +324,31 @@ is_apath_floating(const path_t& apath);
 
 
 namespace ALIGN_ISSUE {
-    enum issue_t {
-        NONE,
-        CLIPPING,
-        EDGE_DELETE,
-        EDGE_SKIP,
-        UNKNOWN_SEGMENT,
-        REPEATED_SEGMENT,
-        FLOATING,
-        LENGTH
-    };
+enum issue_t {
+    NONE,
+    CLIPPING,
+    EDGE_DELETE,
+    EDGE_SKIP,
+    UNKNOWN_SEGMENT,
+    REPEATED_SEGMENT,
+    FLOATING,
+    LENGTH
+};
 
-    inline
-    const char*
-    description(const issue_t i) {
-        switch(i){
-        case CLIPPING: return "alignment contains invalid clipping";
-        case EDGE_DELETE: return "deletion on alignment edge";
-        case EDGE_SKIP: return "skip on alignment edge";
-        case UNKNOWN_SEGMENT: return "unknown segment in alignment";
-        case REPEATED_SEGMENT: return "alignment contains repeated segment";
-        case FLOATING: return "alignment contains no match segments";
-        case LENGTH: return "alignment length does not match read length";
-        default: return "no error";
-        }
+inline
+const char*
+description(const issue_t i) {
+    switch(i) {
+    case CLIPPING: return "alignment contains invalid clipping";
+    case EDGE_DELETE: return "deletion on alignment edge";
+    case EDGE_SKIP: return "skip on alignment edge";
+    case UNKNOWN_SEGMENT: return "unknown segment in alignment";
+    case REPEATED_SEGMENT: return "alignment contains repeated segment";
+    case FLOATING: return "alignment contains no match segments";
+    case LENGTH: return "alignment length does not match read length";
+    default: return "no error";
     }
+}
 }
 
 

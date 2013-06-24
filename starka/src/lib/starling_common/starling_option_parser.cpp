@@ -84,7 +84,7 @@ get_starling_shared_option_parser(starling_options& opt) {
     ("gvcf-no-snv-strand-bias-filter",
      "Disable SNV strand-bias filter")
     ("gvcf-max-snv-hpol",po::value<int>(&opt.gvcf.max_snv_hpol)->default_value(opt.gvcf.max_snv_hpol),
-      "SNVs are filtered if they exist in a homopolymer context greater than this length. A negative value disables the filter")
+     "SNVs are filtered if they exist in a homopolymer context greater than this length. A negative value disables the filter")
     ("gvcf-max-indel-ref-repeat",po::value<int>(&opt.gvcf.max_ref_rep)->default_value(opt.gvcf.max_ref_rep),
      "Indels are filtered if they lengthen or contract a homopolymer or dinucleotide with reference repeat length greater than this value. A negative value disables the filter")
     ("gvcf-min-blockable-nonref",po::value<double>(&opt.gvcf.block_max_nonref)->default_value(opt.gvcf.block_max_nonref),

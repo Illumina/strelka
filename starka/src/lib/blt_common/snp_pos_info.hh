@@ -133,7 +133,7 @@ struct snp_pos_info {
 
 
     void
-    set_ref_base(char base){
+    set_ref_base(char base) {
         ref_base = base;
         mq_ranksum.set_ref_base(base);
         baseq_ranksum.set_ref_base(base);
@@ -141,7 +141,7 @@ struct snp_pos_info {
     }
 
     char
-    get_ref_base(){
+    get_ref_base() {
         return ref_base;
     }
 
