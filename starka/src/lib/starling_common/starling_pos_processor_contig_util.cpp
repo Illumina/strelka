@@ -466,7 +466,7 @@ process_contig(const starling_options& client_opt,
 
     contig_no++;
 
-#if 1//def DEBUG_STARLING
+#ifdef DEBUG_STARLING
     log_os << "contig_no: " << contig_no << "\n";
     log_os << "contig: " << ctg;
 #endif
