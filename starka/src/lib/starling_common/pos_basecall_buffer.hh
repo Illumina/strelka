@@ -118,7 +118,7 @@ struct pos_basecall_buffer {
     void
     dump(std::ostream& os) const;
 
-public:
+private:
     typedef std::map<pos_t,snp_pos_info> pdata_t;
     typedef pdata_t::iterator piter;
     typedef pdata_t::const_iterator pciter;
