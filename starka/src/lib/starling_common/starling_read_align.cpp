@@ -1211,7 +1211,15 @@ score_candidate_alignments_and_indels(const starling_options& opt,
     double max_path_lnp(0);
     const candidate_alignment* max_cal_ptr(NULL);
 
-    score_candidate_alignments(opt,ref,rseg,isync,cal_set,cal_set_path_lnp,max_path_lnp,max_cal_ptr);
+    try
+    {
+        score_candidate_alignments(opt,ref,rseg,isync,cal_set,cal_set_path_lnp,max_path_lnp,max_cal_ptr);
+    }
+    catch(...)
+    {
+        log_os << "ERROR: exception caught while scoring candidate alignments for read segment: " << rseg;
+        throw;
+    }
 
 
     //
@@ -1231,7 +1239,15 @@ score_candidate_alignments_and_indels(const starling_options& opt,
     //
     if (! rseg.is_treated_as_anytier_mapping()) return;
 
-    score_indels(opt,dopt,sample_opt,rseg,isync,cal_set,is_incomplete_search,cal_set_path_lnp,max_path_lnp,max_cal_ptr);
+    try
+    {
+        score_indels(opt,dopt,sample_opt,rseg,isync,cal_set,is_incomplete_search,cal_set_path_lnp,max_path_lnp,max_cal_ptr);
+    }
+    catch(...)
+    {
+        log_os << "ERROR: exception caught while scoring indels for read segment: " << rseg;
+        throw;
+    }
 }
 
 
