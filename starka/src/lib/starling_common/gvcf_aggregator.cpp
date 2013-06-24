@@ -119,11 +119,11 @@ add_site_modifiers(const gvcf_options& opt,
 
 gvcf_aggregator::
 gvcf_aggregator(const starling_options& opt,
-                const pos_range& report_range,
+                const starling_deriv_options& dopt,
                 const reference_contig_segment& ref,
                 std::ostream* osptr)
     : _opt(opt)
-    , _report_range(report_range.begin_pos,report_range.end_pos)
+    , _report_range(dopt.report_range.begin_pos,dopt.report_range.end_pos)
     , _ref(ref)
     , _osptr(osptr)
     , _chrom(opt.bam_seq_name.c_str())
@@ -131,10 +131,10 @@ gvcf_aggregator(const starling_options& opt,
     , _indel_buffer_size(0)
     , _site_buffer_size(0)
     , _block(_opt.gvcf)
-    , _head_pos(report_range.begin_pos)
+    , _head_pos(dopt.report_range.begin_pos)
 {
-    assert(report_range.is_begin_pos);
-    assert(report_range.is_end_pos);
+    assert(_report_range.is_begin_pos);
+    assert(_report_range.is_end_pos);
 
     if(! opt.is_gvcf_output()) return;
 
@@ -158,7 +158,7 @@ gvcf_aggregator(const starling_options& opt,
     }
 
     if(! _opt.gvcf.is_skip_header) {
-        finish_gvcf_header(_opt.gvcf,chrom_depth,*_osptr);
+        finish_gvcf_header(_opt.gvcf,chrom_depth,dopt.bam_header_data,*_osptr);
     }
 
     add_site_modifiers(_opt.gvcf,_dopt,_empty_site);

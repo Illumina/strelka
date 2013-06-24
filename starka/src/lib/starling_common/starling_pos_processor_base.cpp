@@ -394,7 +394,7 @@ starling_pos_processor_base(const starling_options& client_opt,
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
     if(_client_opt.is_gvcf_output()) {
-        _gvcfer.reset(new gvcf_aggregator(client_opt,client_dopt.report_range,ref,client_io.gvcf_osptr(0)));
+        _gvcfer.reset(new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0)));
     }
 
     const unsigned report_size(_client_dopt.report_range.size());

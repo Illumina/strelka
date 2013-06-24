@@ -15,6 +15,7 @@
 /// \author Chris Saunders
 ///
 
+#include "blt_util/bam_streamer.hh"
 #include "blt_util/math_util.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "starling_common/starling_shared.hh"
@@ -41,7 +42,6 @@ starling_deriv_options(const starling_options& opt,
     , sal(opt.max_realignment_candidates)
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
 {
-
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);
     if(opt.is_tier2_indel_nonsite_match_prob) {
         tier2_indel_nonsite_match_lnp=std::log(opt.tier2_indel_nonsite_match_prob);
@@ -63,6 +63,12 @@ starling_deriv_options(const starling_options& opt,
         const double site_prior(1./(2.*static_cast<double>(genome_size)));
         site_lnprior=std::log(site_prior);
         nonsite_lnprior=log1p_switch(-site_prior);
+    }
+
+    {
+        // get bam header text:
+        bam_streamer read_stream(opt.bam_filename.c_str());
+        bam_header_data = read_stream.get_header()->text;
     }
 }
 

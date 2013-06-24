@@ -127,6 +127,7 @@ determine_sample(const std::string& bam_header_text) {
 void
 finish_gvcf_header(const gvcf_options& opt,
                    const cdmap_t& chrom_depth,
+                   const std::string& bam_header_data,
                    std::ostream& os) {
 
     //INFO:
@@ -158,7 +159,7 @@ finish_gvcf_header(const gvcf_options& opt,
     add_gvcf_filters(opt,chrom_depth,os);
 
     // try to determine the sample_name from the BAM header
-    std::string sample_name = determine_sample(opt.bam_header_data);
+    std::string sample_name = determine_sample(bam_header_data);
 
     os << vcf_col_label() << "\tFORMAT\t" << sample_name << "\n";
 }
