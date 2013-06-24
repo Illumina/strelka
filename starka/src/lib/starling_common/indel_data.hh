@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include "blt_util/ranksum.hh"
 #include "starling_common/indel_align_type.hh"
 #include "starling_common/indel_key.hh"
 #include "starling_common/starling_types.hh"
-#include "blt_common/ranksum.hh"
 
 #include <cassert>
 #include <iosfwd>

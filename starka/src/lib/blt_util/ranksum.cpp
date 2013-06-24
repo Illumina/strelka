@@ -15,7 +15,7 @@
 /// \author Morten Kallberg
 ///
 
-#include "blt_common/ranksum.hh"
+#include "blt_util/ranksum.hh"
 #include <cmath>
 #include <algorithm>
 #include <iostream>

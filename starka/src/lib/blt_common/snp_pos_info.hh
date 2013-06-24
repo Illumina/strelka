@@ -18,8 +18,8 @@
 #define __SNP_POS_INFO_HH
 
 #include "blt_common/hapscore.hh"
-#include "blt_common/ranksum.hh"
 #include "blt_util/qscore.hh"
+#include "blt_util/ranksum.hh"
 #include "blt_util/seq_util.hh"
 
 #include "stdint.h"
