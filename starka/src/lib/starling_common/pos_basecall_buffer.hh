@@ -45,7 +45,7 @@ struct pos_basecall_buffer {
     insert_mapq_count(const pos_t pos, const uint8_t mapq) {
 
         _pdata[pos].n_mapq++;
-        _pdata[pos].cumm_mapq += pow(static_cast<int>(mapq), 2.0);
+        _pdata[pos].cumm_mapq += (mapq*mapq);
         //we calculate the RMS, so store squared mapq
     }
 
