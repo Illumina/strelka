@@ -124,31 +124,3 @@ operator<< (ostream &out, ranksum &r)
     return out;
 }
 
-
-
-// for testing
-//int main()
-//{
-//  ranksum r('A');
-//  r.add_observation('A',44);
-//  r.add_observation('A',45); //check tie both
-//  r.add_observation('N',45);
-//  r.add_observation('N',50);
-//  r.add_observation('A',52);
-//  r.add_observation('A',53);
-//  r.add_observation('A',56);
-//  r.add_observation('A',58); //check tie single
-//  r.add_observation('A',58);
-//  r.add_observation('N',61);
-//  r.add_observation('N',63);
-//  r.add_observation('A',65);
-//  r.add_observation('N',75);
-//  r.add_observation('A',79);
-//  r.add_observation('N',85);
-//  r.add_observation('N',93);
-//  cout << r << endl;
-//  cout << r.get_u_stat() << endl;
-////  cout << get_z_score(00,12,0.0) << endl;
-//  return 0;
-//}
-
