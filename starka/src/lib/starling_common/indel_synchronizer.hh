@@ -131,7 +131,7 @@ struct indel_synchronizer {
     is_candidate_indel(const starling_options& opt,
                        const indel_key& ik) const {
         const indel_data* id_ptr(ibuff().get_indel_data_ptr(ik));
-        assert(NULL != id_ptr);
+        if(NULL == id_ptr) find_data_exception(ik);
         return is_candidate_indel(opt,ik,*id_ptr);
     }
 
@@ -167,6 +167,9 @@ private:
 
     const idata_t&
     idata() const { return _isd._idata; }
+
+    void
+    find_data_exception(const indel_key& ik) const;
 
     indel_sync_data _isd;
 

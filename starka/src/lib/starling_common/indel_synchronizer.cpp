@@ -15,11 +15,13 @@
 /// \author Chris Saunders
 ///
 
+#include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "starling_common/indel_synchronizer.hh"
 
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 
 
 
@@ -192,3 +194,14 @@ is_candidate_indel_int(const starling_options& opt,
         idsp[i]->status.is_candidate_indel=true;
     }
 }
+
+
+void
+indel_synchronizer::
+find_data_exception(const indel_key& ik) const
+{
+    std::ostringstream oss;
+    oss << "ERROR: could not find indel_data for indel: " << ik;
+    throw blt_exception(oss.str().c_str());
+}
+
