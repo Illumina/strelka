@@ -34,7 +34,7 @@ enum index_t {
 inline
 const char*
 label(const index_t i) {
-    switch(i) {
+    switch (i) {
     case REF: return "ref";
     case NONREF: return "nonref";
     default: return "xxx";

@@ -68,7 +68,7 @@ const contig_align_t&
 read_segment::
 contig_align() const  {
     static const contig_align_t empty_set;
-    if(is_full_segment()) return sread()._contig_align;
+    if (is_full_segment()) return sread()._contig_align;
     return empty_set;
 }
 
@@ -114,11 +114,11 @@ read_segment::
 get_segment_edge_pin() const {
     std::pair<bool,bool> res(false,false);
     const seg_id_t n_seg(sread().segment_count());
-    for(unsigned i(0); i<n_seg; ++i) {
+    for (unsigned i(0); i<n_seg; ++i) {
         const seg_id_t seg_id(i+1);
-        if(this==&(sread().get_segment(seg_id))) {
-            if(i!=0) res.first=true;
-            if((i+1)!=n_seg) res.second=true;
+        if (this==&(sread().get_segment(seg_id))) {
+            if (i!=0) res.first=true;
+            if ((i+1)!=n_seg) res.second=true;
         }
     }
     return res;
@@ -132,11 +132,11 @@ read_segment::
 is_any_nonovermax(const unsigned max_indel_size) const {
 
     const read_segment& rseg(*this);
-    if((! rseg.genome_align().empty()) &&
-       (! rseg.genome_align().is_overmax(max_indel_size))) return true;
+    if ((! rseg.genome_align().empty()) &&
+        (! rseg.genome_align().is_overmax(max_indel_size))) return true;
 
     BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()) {
-        if(! calign.second.is_overmax(max_indel_size)) return true;
+        if (! calign.second.is_overmax(max_indel_size)) return true;
     }
     return false;
 }
@@ -150,16 +150,16 @@ is_valid() const {
     const read_segment& rseg(*this);
     const unsigned rs(rseg.read_size());
 
-    if(! rseg.genome_align().empty()) {
+    if (! rseg.genome_align().empty()) {
         const ALIGNPATH::path_t path(rseg.genome_align().path);
-        if(is_apath_invalid(path,rs) ||
-           is_apath_starling_invalid(path)) return false;
+        if (is_apath_invalid(path,rs) ||
+            is_apath_starling_invalid(path)) return false;
     }
 
     BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()) {
         const ALIGNPATH::path_t path(calign.second.path);
-        if(is_apath_invalid(path,rs) ||
-           is_apath_starling_invalid(path)) return false;
+        if (is_apath_invalid(path,rs) ||
+            is_apath_starling_invalid(path)) return false;
     }
     return true;
 }
@@ -170,9 +170,9 @@ void
 short_report(std::ostream& os,
              const read_segment& rseg) {
 
-    if(! rseg.genome_align().empty()) os << "GENOME " << rseg.genome_align();
+    if (! rseg.genome_align().empty()) os << "GENOME " << rseg.genome_align();
     os << "is_realigned? " << rseg.is_realigned << "\n";
-    if(rseg.is_realigned) {
+    if (rseg.is_realigned) {
         //os << "REALIGN_path_log_lhood: " << rseg.realign_path_lnp << "\n";
         os << "REALIGN " << rseg.realignment;
     }
@@ -197,7 +197,7 @@ operator<<(std::ostream& os,
     {
         const unsigned rs(rseg.read_size());
         const uint8_t* qual(rseg.qual());
-        for(unsigned i(0); i<rs; ++i) os << static_cast<char>(qual[i]+33);
+        for (unsigned i(0); i<rs; ++i) os << static_cast<char>(qual[i]+33);
     }
     os << "\n";
 
@@ -207,7 +207,7 @@ operator<<(std::ostream& os,
         typedef contig_align_t cat;
         const cat& ct(rseg.contig_align());
         cat::const_iterator i(ct.begin()),i_end(ct.end());
-        for(; i!=i_end; ++i) {
+        for (; i!=i_end; ++i) {
             os << "CONTIG contig_id: " << i->first << " " << i->second;
         }
     }

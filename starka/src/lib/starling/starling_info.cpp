@@ -42,20 +42,20 @@ time_when_compiled()
 
     int month;
     if     ( str_month == "Jan" ) month = 1;
-    else if( str_month == "Feb" ) month = 2;
-    else if( str_month == "Mar" ) month = 3;
-    else if( str_month == "Apr" ) month = 4;
-    else if( str_month == "May" ) month = 5;
-    else if( str_month == "Jun" ) month = 6;
-    else if( str_month == "Jul" ) month = 7;
-    else if( str_month == "Aug" ) month = 8;
-    else if( str_month == "Sep" ) month = 9;
-    else if( str_month == "Oct" ) month = 10;
-    else if( str_month == "Nov" ) month = 11;
-    else if( str_month == "Dec" ) month = 12;
+    else if ( str_month == "Feb" ) month = 2;
+    else if ( str_month == "Mar" ) month = 3;
+    else if ( str_month == "Apr" ) month = 4;
+    else if ( str_month == "May" ) month = 5;
+    else if ( str_month == "Jun" ) month = 6;
+    else if ( str_month == "Jul" ) month = 7;
+    else if ( str_month == "Aug" ) month = 8;
+    else if ( str_month == "Sep" ) month = 9;
+    else if ( str_month == "Oct" ) month = 10;
+    else if ( str_month == "Nov" ) month = 11;
+    else if ( str_month == "Dec" ) month = 12;
     else exit(-1);
 
-    for( string::size_type pos = timestr.find( ':' ); pos != string::npos; pos = timestr.find( ':', pos ) )
+    for ( string::size_type pos = timestr.find( ':' ); pos != string::npos; pos = timestr.find( ':', pos ) )
         timestr[ pos ] = ' ';
     istringstream iss_time( timestr );
     int hour, min, sec;
@@ -95,7 +95,7 @@ usage(const char* xmessage) const {
     write_starling_legacy_options(os);
     os << "\n";
 
-    if(xmessage) {
+    if (xmessage) {
         os << "\n"
            << "******** COMMAND-LINE ERROR:: " << xmessage << " ********\n"
            << "\n";

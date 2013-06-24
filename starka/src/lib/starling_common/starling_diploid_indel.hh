@@ -34,7 +34,7 @@ enum index_t {
 inline
 const char*
 label(const unsigned idx) {
-    switch(idx) {
+    switch (idx) {
     case NOINDEL: return "ref";
     case HOM: return "hom";
     case HET: return "het";
@@ -45,7 +45,7 @@ label(const unsigned idx) {
 inline
 const char*
 get_gt_label(const unsigned idx) {
-    switch(idx) {
+    switch (idx) {
     case NOINDEL: return "0/0";
     case HOM: return "1/1";
     case HET: return "0/1";
@@ -73,7 +73,7 @@ enum index_t {
 inline
 const char*
 label(const unsigned idx) {
-    switch(idx) {
+    switch (idx) {
     case I2:       return "hom";
     case I1R1:     return "het";
     case I1NR1:    return "nonref_het";
@@ -127,7 +127,7 @@ struct starling_diploid_indel : public starling_diploid_indel_core, private boos
         : starling_diploid_indel_core()
     {
         static const double p(init_p());
-        for(unsigned i(0); i<STAR_DIINDEL::SIZE; ++i) pprob[i] = p;
+        for (unsigned i(0); i<STAR_DIINDEL::SIZE; ++i) pprob[i] = p;
     }
 
     double pprob[STAR_DIINDEL::SIZE];

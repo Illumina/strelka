@@ -48,7 +48,7 @@ void validate(boost::any& v,
 
     try {
         awd.flank_size = boost::lexical_cast<unsigned>(values[0]);
-    } catch(const boost::bad_lexical_cast&) {
+    } catch (const boost::bad_lexical_cast&) {
         throw po::validation_error(po::validation_error::invalid_option_value);
     }
     awd.filename = values[1];
@@ -350,13 +350,13 @@ finalize_legacy_starling_options(const prog_info& pinfo,
                                  starling_options& opt) {
 
 
-    if(! opt.is_ref_set()) {
+    if (! opt.is_ref_set()) {
         pinfo.usage("a reference sequence must be specified");
     }
 
     // canonicalize the reference sequence path:
-    if(opt.is_samtools_ref_set) {
-        if(! compat_realpath(opt.samtools_ref_seq_file)) {
+    if (opt.is_samtools_ref_set) {
+        if (! compat_realpath(opt.samtools_ref_seq_file)) {
             std::ostringstream oss;
             oss << "can't resolve samtools reference path: " << opt.samtools_ref_seq_file << "\n";
             pinfo.usage(oss.str().c_str());
@@ -365,18 +365,18 @@ finalize_legacy_starling_options(const prog_info& pinfo,
         assert(0);
     }
 
-    if(! opt.is_user_genome_size) {
+    if (! opt.is_user_genome_size) {
         // this requirement is not what we want, but it's the only way to make things reliable for now:
         pinfo.usage("must specify genome-size");
     } else {
-        if(opt.user_genome_size<1) {
+        if (opt.user_genome_size<1) {
             pinfo.usage("genome-size must be greater than 0");
         }
     }
 
 
-    if(! opt.is_call_indels()) {
-        if(opt.is_simple_indel_error) {
+    if (! opt.is_call_indels()) {
+        if (opt.is_simple_indel_error) {
             pinfo.usage("--indel-error-rate has no effect when not calling indels");
         }
     }
@@ -385,23 +385,23 @@ finalize_legacy_starling_options(const prog_info& pinfo,
         const bool is_contigs(! opt.indel_contig_filename.empty());
         const bool is_reads(! opt.indel_contig_read_filename.empty());
 
-        if(is_contigs ^ is_reads) { //should work when they're both bools...
-            if(is_contigs) {
+        if (is_contigs ^ is_reads) { //should work when they're both bools...
+            if (is_contigs) {
                 pinfo.usage("Contigs specified without corresponding contig reads.");
             } else {
                 pinfo.usage("Contig reads specified without corresponding contigs.");
             }
         }
 
-        if(is_contigs || is_reads) {
-            if(opt.is_ignore_read_names) {
+        if (is_contigs || is_reads) {
+            if (opt.is_ignore_read_names) {
                 pinfo.usage("Cannot use 'ignore-conflicting-read-names' when indel contigs are specified.");
             }
         }
     }
 
-    if(opt.is_write_candidate_indels_only &&
-       opt.candidate_indel_filename.empty()) {
+    if (opt.is_write_candidate_indels_only &&
+        opt.candidate_indel_filename.empty()) {
         pinfo.usage("Cannot specify -write-candidate-indels-only without providing candidate indel filename.");
     }
 }
@@ -423,41 +423,41 @@ finalize_starling_options(const prog_info& pinfo,
     // allow non-reference hets, we stick with the lower value
     // used for snps:
     //
-    if(opt.bindel_diploid_theta>MAX_DIPLOID_THETA) {
+    if (opt.bindel_diploid_theta>MAX_DIPLOID_THETA) {
         std::ostringstream oss;
         oss << "indel diploid heterozygosity exceeds maximum value of: " << MAX_DIPLOID_THETA;
         pinfo.usage(oss.str().c_str());
     }
 
-    if(vm.count("hap-model")) {
+    if (vm.count("hap-model")) {
         opt.is_htype_calling=true;
     }
 
-    if(vm.count("eland-compatibility")) {
+    if (vm.count("eland-compatibility")) {
         opt.is_eland_compat=true;
     }
 
-    if(vm.count("max-input-depth")) {
+    if (vm.count("max-input-depth")) {
         opt.is_max_input_depth=true;
     }
 
-    if(vm.count("remap-input-softclip")) {
+    if (vm.count("remap-input-softclip")) {
         opt.is_remap_input_softclip=true;
     }
 
-    if(vm.count("ignore-conflicting-read-names")) {
+    if (vm.count("ignore-conflicting-read-names")) {
         opt.is_ignore_read_names=true;
     }
 
-    if(vm.count("skip-realignment")) {
-        if(opt.is_call_indels()) {
+    if (vm.count("skip-realignment")) {
+        if (opt.is_call_indels()) {
             pinfo.usage("Cannot disable realignment when indel-calling is selected.");
         }
 
         const bool is_contigs(! opt.indel_contig_filename.empty());
         const bool is_reads(! opt.indel_contig_read_filename.empty());
 
-        if(is_contigs || is_reads) {
+        if (is_contigs || is_reads) {
             pinfo.usage("Cannot disable realignment when reading grouper contigs.");
         }
 
@@ -469,22 +469,22 @@ finalize_starling_options(const prog_info& pinfo,
     opt.gvcf.is_max_snv_hpol = (opt.gvcf.max_snv_hpol >= 0);
     opt.gvcf.is_max_ref_rep = (opt.gvcf.max_ref_rep >= 0);
 
-    if(vm.count("gvcf-no-snv-strand-bias-filter")) {
+    if (vm.count("gvcf-no-snv-strand-bias-filter")) {
         opt.gvcf.is_max_snv_sb=false;
     }
 
-    if(vm.count("gvcf-include-hapscore")) {
+    if (vm.count("gvcf-include-hapscore")) {
         opt.is_compute_hapscore=true;
     }
 
-    if(vm.count("gvcf-no-block-compression")) {
+    if (vm.count("gvcf-no-block-compression")) {
         opt.gvcf.is_block_compression=false;
     }
-    if(vm.count("gvcf-compute-VQSRmetrics")) {
+    if (vm.count("gvcf-compute-VQSRmetrics")) {
         opt.is_compute_VQSRmetrics=true;
     }
 
-    if(vm.count("gvcf-skip-header")) {
+    if (vm.count("gvcf-skip-header")) {
         opt.gvcf.is_skip_header=true;
     }
 
@@ -492,20 +492,20 @@ finalize_starling_options(const prog_info& pinfo,
     const unsigned vs(opt.variant_windows.size());
     unsigned last_fs(0);
     std::set<std::string> filenames;
-    for(unsigned i(0); i<vs; ++i) {
+    for (unsigned i(0); i<vs; ++i) {
         const std::string& filename(opt.variant_windows[i].filename);
-        if(filenames.count(filename)) {
+        if (filenames.count(filename)) {
             pinfo.usage((boost::format("variant-window-flank-file options contain a repeated filename: '%s'") % filename).str().c_str());
         }
         filenames.insert(filename);
         const unsigned fs(opt.variant_windows[i].flank_size);
-        if(fs>max_flank_size) {
+        if (fs>max_flank_size) {
             pinfo.usage((boost::format("variant-window-flank-file flank size %u exceeds maximum flank size of %u") % fs % max_flank_size).str().c_str());
         }
-        if(fs<1) {
+        if (fs<1) {
             pinfo.usage((boost::format("variant-window-flank-file flank size %u is less than minimum flank size of 1") % fs).str().c_str());
         }
-        if((i!=0) && (fs==last_fs)) {
+        if ((i!=0) && (fs==last_fs)) {
             pinfo.usage((boost::format("Repeated flank size of %u provided to variant-window-flank-file") % fs).str().c_str());
         }
         last_fs=fs;

@@ -26,7 +26,7 @@
 #if 0
 struct null_snp_pos_info {
     null_snp_pos_info() {
-        for(unsigned i(0); i<(N_BASE+1); ++i) {
+        for (unsigned i(0); i<(N_BASE+1); ++i) {
             pi[i].ref_base = id_to_base(i);
         }
     }
@@ -58,19 +58,19 @@ struct sample_pos_data {
 
         n_calls += pi.calls.size();
         BOOST_FOREACH(const base_call& bc, pi.calls) {
-            if(bc.is_call_filter) {
-                if(! (is_include_tier2 &&
-                      bc.is_tier_specific_call_filter)) {
+            if (bc.is_call_filter) {
+                if (! (is_include_tier2 &&
+                       bc.is_tier_specific_call_filter)) {
                     continue;
                 }
             }
             epd.good_pi.calls.push_back(bc);
         }
 
-        if(is_include_tier2) {
+        if (is_include_tier2) {
             n_calls += pi.tier2_calls.size();
             BOOST_FOREACH(const base_call& bc, pi.tier2_calls) {
-                if(bc.is_call_filter) continue;
+                if (bc.is_call_filter) continue;
                 epd.good_pi.calls.push_back(bc);
             }
         }

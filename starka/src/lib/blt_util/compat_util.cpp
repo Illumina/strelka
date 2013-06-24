@@ -35,8 +35,8 @@ bool
 compat_realpath(std::string& path) {
     errno=0;
     const char* newpath(realpath(path.c_str(),NULL));
-    if((NULL==newpath) || (errno!=0)) {
-        if(NULL!=newpath) free((void*)newpath);
+    if ((NULL==newpath) || (errno!=0)) {
+        if (NULL!=newpath) free((void*)newpath);
         return false;
     }
     path = newpath;
@@ -48,7 +48,7 @@ compat_realpath(std::string& path) {
 
 double
 compat_round(const double x) {
-    if(x>=0.) {
+    if (x>=0.) {
         return std::floor(x+0.5);
     } else {
         return std::ceil(x-0.5);
@@ -65,7 +65,7 @@ compat_basename(const char* str) {
     static const char pathsep('/');
 #endif
     const char* res(strrchr(str,pathsep));
-    if(NULL==res) return str;
+    if (NULL==res) return str;
     return res+1;
 }
 

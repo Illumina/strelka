@@ -37,8 +37,8 @@ try_main(int argc,char* argv[]) {
     strelka_options opt;
     strelka_site_sim_options sim_opt;
 
-    for(int i(0); i<argc; ++i) {
-        if(i) opt.cmdline += ' ';
+    for (int i(0); i<argc; ++i) {
+        if (i) opt.cmdline += ' ';
         opt.cmdline += argv[i];
     }
 
@@ -65,7 +65,7 @@ try_main(int argc,char* argv[]) {
     try {
         po::store(po::parse_command_line(argc, argv, visible), vm);
         po::notify(vm);
-    } catch(const boost::program_options::error& e) {
+    } catch (const boost::program_options::error& e) {
         log_os << "\nERROR: Exception thrown by option parser: " << e.what() << "\n";
         po_parse_fail=true;
     }
@@ -77,7 +77,7 @@ try_main(int argc,char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if(vm.count("somatic-only")) {
+    if (vm.count("somatic-only")) {
         sim_opt.mode=SIM_SOMATIC;
     }
 
@@ -94,7 +94,7 @@ dump_cl(int argc,
         std::ostream& os) {
 
     os << "cmdline:";
-    for(int i(0); i<argc; ++i) {
+    for (int i(0); i<argc; ++i) {
         os << ' ' << argv[i];
     }
     os << std::endl;
@@ -123,12 +123,12 @@ main(int argc,char* argv[]) {
                << "...caught in main()\n";
         dump_cl(argc,argv,log_os);
         exit (EXIT_FAILURE);
-    } catch(const std::exception& e) {
+    } catch (const std::exception& e) {
         log_os << "FATAL_ERROR: EXCEPTION: " << e.what() << "\n"
                << "...caught in main()\n";
         dump_cl(argc,argv,log_os);
         exit(EXIT_FAILURE);
-    } catch(...) {
+    } catch (...) {
         log_os << "FATAL_ERROR: UNKNOWN EXCEPTION\n"
                << "...caught in main()\n";
         dump_cl(argc,argv,log_os);

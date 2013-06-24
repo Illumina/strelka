@@ -32,14 +32,14 @@ struct depth_buffer {
     unsigned
     val(const pos_t pos) const {
         const citer i(_data.find(pos));
-        if(i == _data.end()) return 0;
+        if (i == _data.end()) return 0;
         else                 return i->second;
     }
 
     void
     inc(const pos_t pos) {
         const iter i(_data.find(pos));
-        if(i == _data.end()) _data[pos] = 1;
+        if (i == _data.end()) _data[pos] = 1;
         else                 i->second += 1;
     }
 
@@ -57,7 +57,7 @@ struct depth_buffer {
         assert(begin <= end);
         citer i(_data.lower_bound(begin));
         const citer i_end(_data.upper_bound(end));
-        for(; i!=i_end; ++i) if(i->second >= depth) return true;
+        for (; i!=i_end; ++i) if (i->second >= depth) return true;
         return false;
     }
 

@@ -42,9 +42,9 @@ hap_cand(const bam_seq_base& read_seq,
     start=std::max(start,0);
     end=std::min(end,read_len);
 
-    for(int i(0); i<pre_seq; ++i) { _bq[i] = 0; }
+    for (int i(0); i<pre_seq; ++i) { _bq[i] = 0; }
 
-    for(int i(start); i<end; ++i) {
+    for (int i(start); i<end; ++i) {
         _total_qual += init_qual[i];
         const char rs(read_seq.get_char(i));
         _bq[i-start+pre_seq] =
@@ -53,7 +53,7 @@ hap_cand(const bam_seq_base& read_seq,
               (init_qual[i]<<QUAL_SHIFT | base_to_id(rs)));
     }
 
-    for(int i(0); i<post_seq; ++i) { _bq[i+end-start+pre_seq] = 0; }
+    for (int i(0); i<post_seq; ++i) { _bq[i+end-start+pre_seq] = 0; }
 }
 
 
@@ -63,10 +63,10 @@ operator<<(std::ostream& os, const hap_cand& hc) {
     os << "hap_cand:\n";
     os << "total_qual: " << hc.total_qual() << "\n";
     os << "read: ";
-    for(unsigned i(0); i<hap_cand::HAP_SIZE; ++i) { os << id_to_base(hc.base_id(i)); }
+    for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i) { os << id_to_base(hc.base_id(i)); }
     os << "\n";
     os << "qual: ";
-    for(unsigned i(0); i<hap_cand::HAP_SIZE; ++i) { os << static_cast<char>(33+hc.qual(i)); }
+    for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i) { os << static_cast<char>(33+hc.qual(i)); }
     os << "\n";
     return os;
 }
@@ -79,7 +79,7 @@ struct hinfo {
     hinfo(const hap_cand& hc)
     {
         total_qual = hc.total_qual();
-        for(unsigned i(0); i<hap_cand::HAP_SIZE; ++i) {
+        for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i) {
             hseq[i] = hc.base_id(i);
         }
     }
@@ -102,7 +102,7 @@ operator<<(std::ostream& os, const hinfo& hi) {
     os << "hinfo:\n";
     os << "total_qual: " << hi.total_qual << "\n";
     os << "read: ";
-    for(unsigned i(0); i<hap_cand::HAP_SIZE; ++i) { os << id_to_base(hi.hseq[i]); }
+    for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i) { os << id_to_base(hi.hseq[i]); }
     os << "\n";
     return os;
 }
@@ -118,17 +118,17 @@ bool
 is_hap_match(const hap_cand& hc,
              hinfo& hi) {
 
-    for(unsigned i(0); i<hap_cand::HAP_SIZE; ++i) {
-        if(hi.hseq[i] != hc.base_id(i)) {
-            if((hi.hseq[i] != BASE_ID::ANY) and
-               (hc.base_id(i) != BASE_ID::ANY)) return false;
+    for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i) {
+        if (hi.hseq[i] != hc.base_id(i)) {
+            if ((hi.hseq[i] != BASE_ID::ANY) and
+                (hc.base_id(i) != BASE_ID::ANY)) return false;
         }
     }
 
     // match!
-    for(unsigned i(0); i<hap_cand::HAP_SIZE; ++i) {
-        if((hi.hseq[i] == hc.base_id(i)) or
-           (hi.hseq[i] != BASE_ID::ANY)) continue;
+    for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i) {
+        if ((hi.hseq[i] == hc.base_id(i)) or
+            (hi.hseq[i] != BASE_ID::ANY)) continue;
         hi.hseq[i] = hc.base_id(i);
     }
     hi.total_qual += hc.total_qual();
@@ -148,11 +148,11 @@ get_align_score(const hap_cand& hc,
     static const double ln_one_third(-std::log(3.0));
 
     double score(0);
-    for(unsigned i(0); i<hap_cand::HAP_SIZE; ++i) {
-        if((hi.hseq[i] == BASE_ID::ANY) ||
-           (hc.base_id(i) == BASE_ID::ANY)) {
+    for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i) {
+        if ((hi.hseq[i] == BASE_ID::ANY) ||
+            (hc.base_id(i) == BASE_ID::ANY)) {
             //score += lnany;
-        } else if(hi.hseq[i] != hc.base_id(i)) {
+        } else if (hi.hseq[i] != hc.base_id(i)) {
             score += qphred_to_ln_error_prob(hc.qual(i)) + ln_one_third - qphred_to_ln_comp_error_prob(hc.qual(i));
         }
     }
@@ -172,24 +172,24 @@ get_hapscore(hap_set_t& hap_set) {
     typedef hap_set_t::const_iterator hiter;
     {
         hiter i(hap_set.begin()), i_end(hap_set.end());
-        for(; i!=i_end; ++i) {
+        for (; i!=i_end; ++i) {
             // 1: check if we match any types; add new type if not
             bool is_match(false);
             const unsigned hs(haps.size());
-            for(unsigned j(0); j<hs; ++j) {
-                if(is_hap_match(*i,haps[j])) {
+            for (unsigned j(0); j<hs; ++j) {
+                if (is_hap_match(*i,haps[j])) {
                     is_match=true;
                     break;
                 }
             }
-            if(! is_match) haps.push_back(hinfo(*i));
+            if (! is_match) haps.push_back(hinfo(*i));
         }
     }
 
     const bool is_2hap(haps.size()>1);
 
     // 2: get two most likely haplotypes:
-    if(is_2hap) {
+    if (is_2hap) {
         std::partial_sort(haps.begin(),haps.begin()+2,haps.end());
     }
 
@@ -198,9 +198,9 @@ get_hapscore(hap_set_t& hap_set) {
     double ln2hapratio(0);
     {
         hiter i(hap_set.begin()), i_end(hap_set.end());
-        for(; i!=i_end; ++i) {
+        for (; i!=i_end; ++i) {
             double als(get_align_score(*i,haps[0]));
-            if(is_2hap) {
+            if (is_2hap) {
                 als=std::max(als,get_align_score(*i,haps[1]));
             }
             //ln2hapratio = log_sum(ln2hapratio,als);

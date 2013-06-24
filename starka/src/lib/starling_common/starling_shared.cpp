@@ -43,7 +43,7 @@ starling_deriv_options(const starling_options& opt,
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);
-    if(opt.is_tier2_indel_nonsite_match_prob) {
+    if (opt.is_tier2_indel_nonsite_match_prob) {
         tier2_indel_nonsite_match_lnp=std::log(opt.tier2_indel_nonsite_match_prob);
     } else {
         tier2_indel_nonsite_match_lnp=indel_nonsite_match_lnp;
@@ -52,7 +52,7 @@ starling_deriv_options(const starling_options& opt,
     {
         // set genome_size for indel model:
         uint32_t genome_size;
-        if(opt.is_user_genome_size) {
+        if (opt.is_user_genome_size) {
             genome_size = opt.user_genome_size;
         } else {
             assert(0);

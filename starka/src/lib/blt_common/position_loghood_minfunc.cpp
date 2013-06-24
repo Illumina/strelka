@@ -78,7 +78,7 @@ blt_float_t
 calc_pos_nonref_freq_loghood(const snp_pos_info& pi,
                              const blt_float_t nonref_freq) {
 
-    if((nonref_freq < 0.) || (nonref_freq > 1.)) {
+    if ((nonref_freq < 0.) || (nonref_freq > 1.)) {
         log_os << "ERROR:: invalid probability value: " << nonref_freq << "\n";
         exit(EXIT_FAILURE);
     }
@@ -99,18 +99,18 @@ calc_pos_nonref_freq_loghood(const snp_pos_info& pi,
     const uint8_t ref_id(base_to_id(pi.ref_base));
     const blt_float_t ref_freq(1.-nonref_freq);
 
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         const unsigned qscore(pi.calls[i].get_qscore());
         const bool is_ref_obs(ref_id == pi.calls[i].base_id);
 
         assert(qscore<=max_qscore);
 
-        if(! is_cache[is_ref_obs]->operator[](qscore) ) {
+        if (! is_cache[is_ref_obs]->operator[](qscore) ) {
             const double eprob(qphred_to_error_prob(qscore));
             const double ceprob(1-eprob);
 
             // each term is a sum of the probability of each of the four bases
-            if(is_ref_obs) {
+            if (is_ref_obs) {
                 cache[is_ref_obs][qscore] = std::log((ceprob)*(ref_freq)+eprob*(nonref_freq*one_third));
             } else {
                 cache[is_ref_obs][qscore] = std::log((eprob*one_third)*(ref_freq)+(ceprob+2*eprob*one_third)*(nonref_freq*one_third));
@@ -142,7 +142,7 @@ arg_to_prob(const double arg) {
     double prob(std::fabs(arg));
     const double pf(std::floor(prob));
     prob-=pf;
-    if(1==static_cast<int>(pf)%2) { prob=1.-prob; }
+    if (1==static_cast<int>(pf)%2) { prob=1.-prob; }
     return prob;
 }
 
@@ -191,7 +191,7 @@ calc_pos_nonref_allele_freq_loghood(const snp_pos_info& pi,
                                     const unsigned nonref_id,
                                     const blt_float_t nonref_freq) {
 
-    if((nonref_freq < 0.) || (nonref_freq > 1.)) {
+    if ((nonref_freq < 0.) || (nonref_freq > 1.)) {
         log_os << "ERROR:: invalid probability value: " << nonref_freq << "\n";
         exit(EXIT_FAILURE);
     }
@@ -213,7 +213,7 @@ calc_pos_nonref_allele_freq_loghood(const snp_pos_info& pi,
     const uint8_t ref_id(base_to_id(pi.ref_base));
     const blt_float_t ref_freq(1.-nonref_freq);
 
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         const base_call& bc(pi.calls[i]);
         const unsigned qscore(bc.get_qscore());
 
@@ -221,15 +221,15 @@ calc_pos_nonref_allele_freq_loghood(const snp_pos_info& pi,
 
         assert(qscore<=max_qscore);
 
-        if(! is_cache[base_id_state]->operator[](qscore) ) {
+        if (! is_cache[base_id_state]->operator[](qscore) ) {
             const double eprob(qphred_to_error_prob(qscore));
             const double ceprob(1-eprob);
 
-            if(0==base_id_state) {
+            if (0==base_id_state) {
                 cache[base_id_state][qscore] = std::log((ceprob*ref_freq) + (eprob*nonref_freq*one_third));
-            } else if(1==base_id_state) {
+            } else if (1==base_id_state) {
                 cache[base_id_state][qscore] = std::log((eprob*one_third*ref_freq) + (ceprob*nonref_freq));
-            } else if(2==base_id_state) {
+            } else if (2==base_id_state) {
                 cache[base_id_state][qscore] = std::log((eprob*one_third)*(1. - 2*nonref_freq*one_third));
             } else {
                 assert(0);
@@ -261,8 +261,8 @@ calc_pos_allele_distro_loghood(const snp_pos_info& pi,
                                const unsigned* allele_map) {
 
     // minimization parameters should already be normalized:
-    for(unsigned i(0); i<n_allele; ++i) {
-        if((allele_distro[i] < 0.) || (allele_distro[i] > 1.)) {
+    for (unsigned i(0); i<n_allele; ++i) {
+        if ((allele_distro[i] < 0.) || (allele_distro[i] > 1.)) {
             log_os << "ERROR:: invalid probability value: " << allele_distro[i] << "\n";
             exit(EXIT_FAILURE);
         }
@@ -272,13 +272,13 @@ calc_pos_allele_distro_loghood(const snp_pos_info& pi,
 
     double loghood(0.);
 
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         const double eprob(pi.calls[i].error_prob());
         const double ceprob(1-eprob);
 
         const unsigned idx(pi.calls[i].base_id);
         double site_prob(0.);
-        for(unsigned n(0); n<n_allele; ++n) {
+        for (unsigned n(0); n<n_allele; ++n) {
             const double nprob( (allele_map[n] == idx) ? (ceprob) : (eprob*one_third) );
             site_prob += nprob*allele_distro[n];
         }
@@ -305,18 +305,18 @@ arg_to_prob(const double* allele_distro_in,
             double* allele_distro) {
 
     double sum(0.);
-    for(unsigned i(0); i<_n_allele; ++i) {
+    for (unsigned i(0); i<_n_allele; ++i) {
         allele_distro[i] = std::fabs(allele_distro_in[i]);
         sum += allele_distro[i];
     }
 
     assert(sum>=0.);
-    if(sum>0.) {
+    if (sum>0.) {
         const double scale(1./sum);
-        for(unsigned i(0); i<_n_allele; ++i) allele_distro[i] *= scale;
+        for (unsigned i(0); i<_n_allele; ++i) allele_distro[i] *= scale;
     } else {
         static const double allele_expect(1./static_cast<double>(_n_allele));
-        for(unsigned i(0); i<_n_allele; ++i) allele_distro[i] = allele_expect;
+        for (unsigned i(0); i<_n_allele; ++i) allele_distro[i] = allele_expect;
     }
 }
 

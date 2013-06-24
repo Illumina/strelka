@@ -33,7 +33,7 @@ struct depth_stream_stat_range {
         , _is_pstat(false) {}
 
     void update (const unsigned d) {
-        if(_is_pstat) _is_pstat=false;
+        if (_is_pstat) _is_pstat=false;
         _ustat.update(d);
     }
 
@@ -56,9 +56,9 @@ private:
 
     const depth_stream_stat&
     get_pstat() const {
-        if(! _is_pstat) {
+        if (! _is_pstat) {
             _pstat=_ustat;
-            for(unsigned i(_ustat.sample_size()); i<_kprior; ++i) _pstat.update(0);
+            for (unsigned i(_ustat.sample_size()); i<_kprior; ++i) _pstat.update(0);
             _is_pstat=true;
         }
         return _pstat;

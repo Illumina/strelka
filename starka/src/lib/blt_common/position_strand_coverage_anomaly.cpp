@@ -26,16 +26,16 @@ position_strand_coverage_anomaly(const double alpha,
 
     static const double expect_binomial_p(0.5);
 
-    if(pi.calls.empty()) return false;
+    if (pi.calls.empty()) return false;
 
     const unsigned n_calls(pi.calls.size());
 
-    if(n_calls<8) return false;
+    if (n_calls<8) return false;
 
     unsigned n_fwd_calls(0);
 
-    for(unsigned i(0); i<n_calls; ++i) {
-        if(pi.calls[i].is_fwd_strand) n_fwd_calls += 1;
+    for (unsigned i(0); i<n_calls; ++i) {
+        if (pi.calls[i].is_fwd_strand) n_fwd_calls += 1;
     }
 
     return is_reject_binomial_p(alpha,expect_binomial_p,n_fwd_calls,n_calls-n_fwd_calls);

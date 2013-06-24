@@ -85,7 +85,7 @@ call(const unsigned pos,
                                                                 NULL,
                                                                 sgtg);
 
-    if(! sgtg.is_snv) return;
+    if (! sgtg.is_snv) return;
 
     static const char chrom_name[] = "sim";
     _os << chrom_name << '\t'
@@ -115,7 +115,7 @@ load_pi(const char ref_base,
     pi.ref_base=ref_base;
 
     const unsigned len(strlen(read));
-    for(unsigned i(0); i<len; ++i) {
+    for (unsigned i(0); i<len; ++i) {
         const bool is_fwd(isupper(read[i]));
         const uint8_t base_id(base_to_id(toupper(read[i])));
         assert(qual[i]>=33);
@@ -136,7 +136,7 @@ strelka_pile_test_run(strelka_options& opt) {
     snp_pos_info norm_pi;
     snp_pos_info tumor_pi;
 
-    while(dparse.parse_line()) {
+    while (dparse.parse_line()) {
 
         assert(6 == dparse.n_word());
 

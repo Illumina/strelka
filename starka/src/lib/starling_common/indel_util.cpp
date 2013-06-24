@@ -39,9 +39,9 @@ bool
 is_range_intersect_indel_breakpoints(const known_pos_range read_pr,
                                      const indel_key& ik) {
 
-    if(read_pr.is_range_intersect(pos_range(ik.pos,ik.pos))) return true;
+    if (read_pr.is_range_intersect(pos_range(ik.pos,ik.pos))) return true;
     const pos_t rpos(ik.right_pos());
-    if(ik.pos==rpos) return false;
+    if (ik.pos==rpos) return false;
     return (read_pr.is_range_intersect(pos_range(rpos,rpos)));
 }
 
@@ -51,8 +51,8 @@ bool
 is_range_adjacent_indel_breakpoints(const known_pos_range read_pr,
                                     const indel_key& ik) {
 
-    if(read_pr.is_range_intersect(pos_range(ik.pos-1,ik.pos+1))) return true;
+    if (read_pr.is_range_intersect(pos_range(ik.pos-1,ik.pos+1))) return true;
     const pos_t rpos(ik.right_pos());
-    if(ik.pos==rpos) return false;
+    if (ik.pos==rpos) return false;
     return (read_pr.is_range_intersect(pos_range(rpos-1,rpos+1)));
 }

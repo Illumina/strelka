@@ -82,9 +82,9 @@ calculate_result_set(const strelka_options& opt,
 #ifdef SOMATIC_DEBUG
     std::vector<double> check_prior(DDIINDEL::SIZE);
 
-    for(unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt) {
+    for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt) {
         const double base_prior(normal_lnprior[ngt]);
-        for(unsigned tgt(0); tgt<STAR_DIINDEL::SIZE; ++tgt) {
+        for (unsigned tgt(0); tgt<STAR_DIINDEL::SIZE; ++tgt) {
             const unsigned dgt(DDIINDEL::get_state(ngt,tgt));
             check_prior[dgt] =
                 base_prior+
@@ -100,9 +100,9 @@ calculate_result_set(const strelka_options& opt,
     // get unnormalized posterior:
     std::vector<double> pprob(DDIINDEL::SIZE);
 
-    for(unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt) {
+    for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt) {
         const double base_prior(normal_lnprior[ngt]);
-        for(unsigned tgt(0); tgt<STAR_DIINDEL::SIZE; ++tgt) {
+        for (unsigned tgt(0); tgt<STAR_DIINDEL::SIZE; ++tgt) {
             const unsigned dgt(DDIINDEL::get_state(ngt,tgt));
             pprob[dgt] =
                 normal_lhood[ngt]+
@@ -118,18 +118,18 @@ calculate_result_set(const strelka_options& opt,
     log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
 #endif
     double nonsomatic_sum(0);
-    for(unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt) {
+    for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt) {
         nonsomatic_sum += pprob[DDIINDEL::get_state(gt,gt)];
     }
     rs.sindel_qphred=error_prob_to_qphred(nonsomatic_sum);
 
     double not_somfrom_sum[STAR_DIINDEL::SIZE];
-    for(unsigned sgt(0); sgt<STAR_DIINDEL::SIZE; ++sgt) {
+    for (unsigned sgt(0); sgt<STAR_DIINDEL::SIZE; ++sgt) {
         not_somfrom_sum[sgt]=nonsomatic_sum;
-        for(unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt) {
-            if(sgt==ngt) continue;
-            for(unsigned tgt(0); tgt<STAR_DIINDEL::SIZE; ++tgt) {
-                if(tgt==ngt) continue;
+        for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt) {
+            if (sgt==ngt) continue;
+            for (unsigned tgt(0); tgt<STAR_DIINDEL::SIZE; ++tgt) {
+                if (tgt==ngt) continue;
                 not_somfrom_sum[sgt] += pprob[DDIINDEL::get_state(ngt,tgt)];
             }
         }
@@ -139,10 +139,10 @@ calculate_result_set(const strelka_options& opt,
     rs.sindel_from_hom_qphred=error_prob_to_qphred(not_somfrom_sum[STAR_DIINDEL::HOM]);
 
     double not_somfromanyhom_sum(nonsomatic_sum);
-    for(unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt) {
-        if(STAR_DIINDEL::HET != ngt) continue;
-        for(unsigned tgt(0); tgt<STAR_DIINDEL::SIZE; ++tgt) {
-            if(tgt==ngt) continue;
+    for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt) {
+        if (STAR_DIINDEL::HET != ngt) continue;
+        for (unsigned tgt(0); tgt<STAR_DIINDEL::SIZE; ++tgt) {
+            if (tgt==ngt) continue;
             not_somfromanyhom_sum += pprob[DDIINDEL::get_state(ngt,tgt)];
         }
     }
@@ -179,11 +179,11 @@ get_somatic_indel(const strelka_options& opt,
 
     static const unsigned n_tier(2);
     result_set tier_rs[n_tier];
-    for(unsigned i(0); i<n_tier; ++i) {
+    for (unsigned i(0); i<n_tier; ++i) {
         const bool is_include_tier2(i==1);
-        if(is_include_tier2) {
-            if(not opt.is_tier2()) continue;
-            if(tier_rs[0].sindel_qphred==0) {
+        if (is_include_tier2) {
+            if (not opt.is_tier2()) continue;
+            if (tier_rs[0].sindel_qphred==0) {
                 tier_rs[1].sindel_qphred=0;
                 continue;
             }
@@ -203,8 +203,8 @@ get_somatic_indel(const strelka_options& opt,
     }
 
     sindel.tier=0;
-    if(opt.is_tier2()) {
-        if(tier_rs[0].sindel_qphred > tier_rs[1].sindel_qphred) {
+    if (opt.is_tier2()) {
+        if (tier_rs[0].sindel_qphred > tier_rs[1].sindel_qphred) {
             sindel.tier=1;
         }
     }

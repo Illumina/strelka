@@ -30,13 +30,13 @@ BOOST_AUTO_TEST_CASE( test_istream_line_splitter_parse )
     istream_line_splitter dparse(iss);
 
     int line_no(0);
-    while(dparse.parse_line()) {
+    while (dparse.parse_line()) {
         line_no++;
         static const unsigned expected_col_count(4);
         BOOST_CHECK_EQUAL(dparse.n_word(),expected_col_count);
         if       (1==line_no) {
             BOOST_CHECK_EQUAL(std::string(dparse.word[1]),std::string("2"));
-        } else if(2==line_no) {
+        } else if (2==line_no) {
             BOOST_CHECK_EQUAL(std::string(dparse.word[1]),std::string("22"));
         }
     }
@@ -53,14 +53,14 @@ check_long_line(const int init_buffer_size) {
     istream_line_splitter dparse(iss,init_buffer_size);
 
     int line_no(0);
-    while(dparse.parse_line()) {
+    while (dparse.parse_line()) {
         line_no++;
         static const unsigned expected_col_count(4);
         BOOST_CHECK_EQUAL(dparse.n_word(),expected_col_count);
         if       (1==line_no) {
             BOOST_CHECK_EQUAL(std::string(dparse.word[0]),std::string("1ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
             BOOST_CHECK_EQUAL(std::string(dparse.word[3]),std::string("4ABCDEFG"));
-        } else if(2==line_no) {
+        } else if (2==line_no) {
             BOOST_CHECK_EQUAL(std::string(dparse.word[2]),std::string("33"));
         }
     }

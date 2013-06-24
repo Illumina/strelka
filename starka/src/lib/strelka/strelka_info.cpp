@@ -50,7 +50,7 @@ usage(const char* xmessage) const {
     write_starling_legacy_options(os);
     os << "\n";
 
-    if(xmessage) {
+    if (xmessage) {
         os << "\n"
            << "******** COMMAND-LINE ERROR:: " << xmessage << " ********\n"
            << "\n";

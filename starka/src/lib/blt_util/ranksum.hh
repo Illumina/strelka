@@ -83,14 +83,14 @@ public:
         std::map<int,int>::iterator it;
 
         //check for observation in reference map
-        if(is_ref) {
+        if (is_ref) {
             it = l1.find(obs);
-            if(it != l1.end())
+            if (it != l1.end())
                 res = it->second;
         }
         else {
             it = l2.find(obs);
-            if(it != l2.end())
+            if (it != l2.end())
                 res = it->second;
         }
         return res;

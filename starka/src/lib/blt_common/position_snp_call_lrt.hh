@@ -32,7 +32,7 @@ struct lrt_snp_call : private boost::noncopyable {
           min_test_loghood(0),
           min_loghood(0),
           snp_prob(0) {
-        for(unsigned i(0); i<N_BASE; ++i) allele_freq[i]=0.;
+        for (unsigned i(0); i<N_BASE; ++i) allele_freq[i]=0.;
     }
 
     bool is_snp;

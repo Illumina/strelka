@@ -43,14 +43,14 @@ check_vcf_header_compatability(const char* vcf_filename,
 
     // build set of chrom labels from BAM:
     std::set<std::string> bamlabels;
-    for(int32_t i(0); i<bh->n_targets; ++i) {
+    for (int32_t i(0); i<bh->n_targets; ++i) {
         bamlabels.insert(std::string(bh->target_name[i]));
     }
     int n_vcf_labels(0);
     const char** vcf_labels = ti_seqname(vh, &n_vcf_labels);
 
-    for(int i(0); i<n_vcf_labels; ++i) {
-        if(bamlabels.find(std::string(vcf_labels[i])) == bamlabels.end()) {
+    for (int i(0); i<n_vcf_labels; ++i) {
+        if (bamlabels.find(std::string(vcf_labels[i])) == bamlabels.end()) {
             log_os << "ERROR: Chromosome label '" << vcf_labels[i] << "' in VCF file '" << vcf_filename << "' does not exist in the BAM header\n";
             exit(EXIT_FAILURE);
         }
@@ -68,17 +68,17 @@ vcf_streamer(const char* filename,
     : _is_record_set(false), _is_stream_end(false), _record_no(0), _stream_name(filename),
       _tfp(NULL), _titer(NULL) {
 
-    if(NULL == filename) {
+    if (NULL == filename) {
         throw blt_exception("vcf filename is null ptr");
     }
 
-    if('\0' == *filename) {
+    if ('\0' == *filename) {
         throw blt_exception("vcf filename is empty string");
     }
 
     _tfp = ti_open(filename, 0);
 
-    if(NULL == _tfp) {
+    if (NULL == _tfp) {
         log_os << "ERROR: Failed to open VCF file: '" << filename << "'\n";
         exit(EXIT_FAILURE);
     }
@@ -89,11 +89,11 @@ vcf_streamer(const char* filename,
         exit(EXIT_FAILURE);
     }
 
-    if(NULL != bh) {
+    if (NULL != bh) {
         check_vcf_header_compatability(filename,_tfp->idx,bh);
     }
 
-    if(NULL == region) {
+    if (NULL == region) {
         // read the whole VCF file:
         _titer = ti_query(_tfp, 0, 0, 0);
         return;
@@ -111,8 +111,8 @@ vcf_streamer(const char* filename,
 
 vcf_streamer::
 ~vcf_streamer() {
-    if(NULL != _titer) ti_iter_destroy(_titer);
-    if(NULL != _tfp) ti_close(_tfp);
+    if (NULL != _titer) ti_iter_destroy(_titer);
+    if (NULL != _tfp) ti_close(_tfp);
 }
 
 
@@ -120,7 +120,7 @@ vcf_streamer::
 bool
 vcf_streamer::
 next(const bool is_indel_only) {
-    if(_is_stream_end || (NULL==_tfp) || (NULL==_titer)) return false;
+    if (_is_stream_end || (NULL==_tfp) || (NULL==_titer)) return false;
 
     do {
         int len;
@@ -128,26 +128,26 @@ next(const bool is_indel_only) {
 
         _is_stream_end=(NULL == vcf_record_string);
         _is_record_set=(! _is_stream_end);
-        if(! _is_record_set) break;
+        if (! _is_record_set) break;
         _record_no++;
 
-        if(! _vcfrec.set(vcf_record_string)) {
+        if (! _vcfrec.set(vcf_record_string)) {
             log_os << "ERROR: Can't parse vcf record: '" << vcf_record_string << "'\n";
             exit(EXIT_FAILURE);
         }
-        if(_is_record_set && is_indel_only) {
-            if(! is_valid_seq(_vcfrec.ref.c_str())) continue;
+        if (_is_record_set && is_indel_only) {
+            if (! is_valid_seq(_vcfrec.ref.c_str())) continue;
             const unsigned nalt(_vcfrec.alt.size());
             const bool is_rsgt1(_vcfrec.ref.size()>1);
             bool is_indel(nalt>0);
-            for(unsigned a(0); a<nalt; ++a) {
-                if((!is_rsgt1) && (_vcfrec.alt[a].size() <= 1)) is_indel=false;
+            for (unsigned a(0); a<nalt; ++a) {
+                if ((!is_rsgt1) && (_vcfrec.alt[a].size() <= 1)) is_indel=false;
                 // also make sure these aren't symbolic alleles:
-                if(! is_valid_seq(_vcfrec.ref.c_str())) is_indel=false;
+                if (! is_valid_seq(_vcfrec.ref.c_str())) is_indel=false;
             }
-            if(is_indel) break;
+            if (is_indel) break;
         }
-    } while(is_indel_only && (_is_record_set));
+    } while (is_indel_only && (_is_record_set));
 
     return _is_record_set;
 }
@@ -161,7 +161,7 @@ report_state(std::ostream& os) const {
     const vcf_record* vcfp(get_record_ptr());
 
     os << "\tvcf_stream_label: " << name() << "\n";
-    if(NULL != vcfp) {
+    if (NULL != vcfp) {
         os << "\tvcf_stream_record_no: " << record_no() << "\n"
            << "\tvcf_record: " << *(vcfp) << "\n";
     } else {

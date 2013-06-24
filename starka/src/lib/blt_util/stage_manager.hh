@@ -78,7 +78,7 @@ struct stage_data {
     unsigned
     get_stage_id_shift(const int id) const {
         idmap_t::const_iterator i(_ids.find(id));
-        if(i==_ids.end()) unknown_id_error(id);
+        if (i==_ids.end()) unknown_id_error(id);
         return i->second;
     }
 

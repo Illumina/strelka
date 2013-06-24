@@ -28,19 +28,19 @@
 
 qphred_cache::
 qphred_cache() {
-    for(int i(0); i<=MAX_QSCORE; ++i) {
+    for (int i(0); i<=MAX_QSCORE; ++i) {
         q2p[i] = phred_to_error_prob(static_cast<double>(i));
     }
-    for(int i(0); i<=MAX_QSCORE; ++i) {
+    for (int i(0); i<=MAX_QSCORE; ++i) {
         q2lncompe[i] = log1p_switch(-q2p[i]);
     }
     static const double q2lnp(-std::log(10.)/10.);
-    for(int i(0); i<=MAX_QSCORE; ++i) {
+    for (int i(0); i<=MAX_QSCORE; ++i) {
         q2lne[i] = static_cast<double>(i)*q2lnp;
     }
 
-    for(int i(0); i<=MAX_QSCORE; ++i) {
-        for(int j(0); j<=MAX_MAP; ++j) {
+    for (int i(0); i<=MAX_QSCORE; ++i) {
+        for (int j(0); j<=MAX_MAP; ++j) {
             mappedq[j][i] = error_prob_to_qphred(phred_to_mapped_error_prob(i,j));
         }
     }
@@ -71,7 +71,7 @@ high_qscore_error(const int qscore,
 
 qlogodds_cache::
 qlogodds_cache() : q2p(q2p_base-MIN_QSCORE) {
-    for(int i(MIN_QSCORE); i<=MAX_QSCORE; ++i) {
+    for (int i(MIN_QSCORE); i<=MAX_QSCORE; ++i) {
         q2p[i] = logodds_to_error_prob(static_cast<double>(i));
     }
 }

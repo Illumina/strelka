@@ -48,15 +48,15 @@ position_strand_distro_anomaly_pval(const snp_pos_info& pi,
     std::fill(table,table+TABLE_SIZE,0);
     unsigned n_good_calls(0);
 
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         const uint8_t obs_id(pi.calls[i].base_id);
         assert(obs_id != BASE_ID::ANY);
-        if(pi.calls[i].error_prob() > test_max_error_prob) continue;
+        if (pi.calls[i].error_prob() > test_max_error_prob) continue;
         n_good_calls++;
         const unsigned strand(pi.calls[i].is_fwd_strand);
         table[obs_id+strand*N_BASE]++;
     }
-    if(n_good_calls<2) return 1.;
+    if (n_good_calls<2) return 1.;
 
 #ifdef HAVE_FISHER_EXACT_TEST
     return table_exact_pval(table,N_STRAND,N_BASE,ws);
@@ -75,13 +75,13 @@ position_strand_distro_anomaly(const double alpha,
     const unsigned n_calls(pi.calls.size());
     unsigned n_good_calls(0);
 
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         //const char obs_base(pi.calls[i].base);
         assert(pi.calls[i].base_id != BASE_ID::ANY);
-        if(pi.calls[i].error_prob() > test_max_error_prob) continue;
+        if (pi.calls[i].error_prob() > test_max_error_prob) continue;
         n_good_calls++;
     }
-    if(n_good_calls<8) return false;
+    if (n_good_calls<8) return false;
 
     return (position_strand_distro_anomaly_pval(pi,ws) < alpha);
 }

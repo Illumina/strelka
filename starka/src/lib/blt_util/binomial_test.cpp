@@ -36,7 +36,7 @@ is_reject_binomial_p_exact(const double alpha,
     const double obs_p((double)n_success/(double)n_trial);
 
     double exact_prob;
-    if(obs_p <= p) {
+    if (obs_p <= p) {
         exact_prob=cdf(binomial(n_trial,p),n_success);
     } else {
         exact_prob=cdf(binomial(n_trial,1.-p),n_failure);
@@ -79,7 +79,7 @@ is_reject_binomial_p(const double alpha,
 
     const unsigned n_trial(n_success+n_failure);
 
-    if(n_trial > exact_test_threshold) {
+    if (n_trial > exact_test_threshold) {
         return is_reject_binomial_p_chi_sqr(alpha,p,n_success,n_failure);
     } else {
         return is_reject_binomial_p_exact(alpha,p,n_success,n_failure);

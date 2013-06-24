@@ -58,19 +58,19 @@ write_full_state(const DIGT_SGRID::index_t gt,
 
     write_state(gt,ref_gt,os);
     os << "_" << get_het_count(gt);
-    if(is_strand_state(gt)) os << "_strand";
+    if (is_strand_state(gt)) os << "_strand";
 }
 
 strand_state_tables::
 strand_state_tables() {
-    for(unsigned ref(0); ref<N_BASE; ++ref) {
+    for (unsigned ref(0); ref<N_BASE; ++ref) {
         unsigned strand_state(0);
-        for(unsigned alt(0); alt<N_BASE; ++alt) {
-            if(alt==ref) continue;
+        for (unsigned alt(0); alt<N_BASE; ++alt) {
+            if (alt==ref) continue;
             digt_state[ref][strand_state] = 0;
-            for(unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt) {
-                if(DIGT::expect2(ref,gt) and
-                   DIGT::expect2(alt,gt)) {
+            for (unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt) {
+                if (DIGT::expect2(ref,gt) and
+                    DIGT::expect2(alt,gt)) {
                     digt_state[ref][strand_state] = gt;
                     break;
                 }
@@ -130,23 +130,23 @@ write_alt_alleles(const DDIGT_SGRID::index_t dgt,
     unsigned tumor_digt(DIGT_SGRID::get_digt_state(tumor_gt,ref_gt));
 
     bool is_print(false);
-    for(unsigned b(0); b<N_BASE; ++b) {
-        if(b==ref_gt) continue;
-        if(DIGT::expect2(b,normal_digt) ||
-           DIGT::expect2(b,tumor_digt)) {
-            if(is_print) os << ",";
+    for (unsigned b(0); b<N_BASE; ++b) {
+        if (b==ref_gt) continue;
+        if (DIGT::expect2(b,normal_digt) ||
+            DIGT::expect2(b,tumor_digt)) {
+            if (is_print) os << ",";
             os << id_to_base(b);
             is_print=true;
         }
     }
-    if(! is_print) os << ".";
+    if (! is_print) os << ".";
 }
 
 is_nonsom_maker_t::
 is_nonsom_maker_t()
     : val(SIZE,false)
 {
-    for(unsigned gt(0); gt<DIGT_SGRID::SIZE; ++gt) {
+    for (unsigned gt(0); gt<DIGT_SGRID::SIZE; ++gt) {
         val[get_state(gt,gt)] = true;
     }
 }
@@ -175,7 +175,7 @@ get_nostrand_marginal_prior(const blt_float_t* normal_lnprior,
     const blt_float_t ln_nostrand_sse_rate( std::log(nostrand_sse_rate) );
 
     // fill in normal sample prior for canonical diploid allele frequencies:
-    for(unsigned ngt(0); ngt<DIGT::SIZE; ++ngt) {
+    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt) {
         grid_normal_lnprior[ngt] = (normal_lnprior[ngt]+ln_csse_rate);
     }
 
@@ -187,12 +187,12 @@ get_nostrand_marginal_prior(const blt_float_t* normal_lnprior,
     //
     static const unsigned n_het_axes(6);
     blt_float_t nostrand_axis_prior[n_het_axes];
-    for(unsigned ngt(N_BASE); ngt<DIGT::SIZE; ++ngt) {
+    for (unsigned ngt(N_BASE); ngt<DIGT::SIZE; ++ngt) {
         const unsigned axis_id(ngt-N_BASE);
         nostrand_axis_prior[axis_id] = normal_lnprior[ngt];
         // get the two associated homs:
-        for(unsigned b(0); b<N_BASE; ++b) {
-            if(DIGT::expect2(b,ngt)<=0) continue;
+        for (unsigned b(0); b<N_BASE; ++b) {
+            if (DIGT::expect2(b,ngt)<=0) continue;
             nostrand_axis_prior[axis_id] = log_sum(nostrand_axis_prior[axis_id],
                                                    normal_lnprior[b]+ln_one_third);
         }
@@ -201,7 +201,7 @@ get_nostrand_marginal_prior(const blt_float_t* normal_lnprior,
     static const blt_float_t error_mod( -std::log(static_cast<blt_float_t>(DIGT_SGRID::HET_RES*2)) );
 
     // fill in normal sample prior for 'noise' frequencies:
-    for(unsigned ngt(DIGT::SIZE); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
+    for (unsigned ngt(DIGT::SIZE); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
         // 'ngt2' is the root diploid state corresponding to noise
         // state 'ngt'
         const unsigned ngt2(DIGT_SGRID::get_digt_state(ngt,ref_gt));
@@ -243,7 +243,7 @@ get_prior(const blt_float_t* normal_lnprior,
           std::vector<blt_float_t>& somatic_marginal_lnprior) {
 
     get_nostrand_marginal_prior(normal_lnprior,ref_gt,sse_rate,sseb_fraction,grid_normal_lnprior);
-    if(is_somatic_normal_noise_rate) {
+    if (is_somatic_normal_noise_rate) {
         get_nostrand_marginal_prior(normal_lnprior,ref_gt,somatic_normal_noise_rate,0,somatic_marginal_lnprior);
     } else {
         get_nostrand_marginal_prior(normal_lnprior,ref_gt,sse_rate,sseb_fraction,somatic_marginal_lnprior);
@@ -272,7 +272,7 @@ get_prior(const blt_float_t* normal_lnprior,
     blt_float_t strand_axis_prior[n_strand_het_axes];
 
     double throwaway_sum(0);
-    for(unsigned sgt(0); sgt<n_strand_het_axes; ++sgt) {
+    for (unsigned sgt(0); sgt<n_strand_het_axes; ++sgt) {
         strand_axis_prior[sgt] = normal_lnprior[ref_gt]+ln_one_third;
         throwaway_sum += std::exp(strand_axis_prior[sgt]);
     }
@@ -288,7 +288,7 @@ get_prior(const blt_float_t* normal_lnprior,
     // TODO: unclear comment?
     //
 
-    for(unsigned ngt(DIGT_SGRID::PRESTRAND_SIZE); ngt<(DIGT_SGRID::SIZE); ++ngt) {
+    for (unsigned ngt(DIGT_SGRID::PRESTRAND_SIZE); ngt<(DIGT_SGRID::SIZE); ++ngt) {
         const unsigned sgt(DIGT_SGRID::get_strand_state(ngt));
         grid_normal_lnprior[ngt] = (strand_axis_prior[sgt]+ln_strand_sse_rate+error_mod);
     }
@@ -315,13 +315,13 @@ somatic_snv_caller_strand_grid(const strelka_options& opt,
     _ln_som_match=(log1p_switch(-opt.somatic_snv_rate));
     _ln_som_mismatch=(std::log(opt.somatic_snv_rate/(static_cast<blt_float_t>((DIGT_SGRID::PRESTRAND_SIZE)-1))));
 
-    for(unsigned i(0); i<(N_BASE+1); ++i) {
+    for (unsigned i(0); i<(N_BASE+1); ++i) {
         prior_set& ps(_lnprior[i]);
         std::fill(ps.normal.begin(),ps.normal.end(),0);
         std::fill(ps.normal_poly.begin(),ps.normal_poly.end(),0);
     }
 
-    for(unsigned i(0); i<(N_BASE+1); ++i) {
+    for (unsigned i(0); i<(N_BASE+1); ++i) {
         prior_set& ps(_lnprior[i]);
         get_prior(pd_caller.lnprior_genomic(i),i,
                   opt.shared_site_error_rate,
@@ -350,13 +350,13 @@ struct cache_val {
     cache_val() {}
 
     cache_val(const cache_val<NVAL>& x) {
-        for(unsigned i(0); i<NVAL; ++i) { val[i] = x.val[i]; }
+        for (unsigned i(0); i<NVAL; ++i) { val[i] = x.val[i]; }
     }
 
     cache_val&
     operator=(const cache_val<NVAL>& rhs) {
-        if(&rhs==this) return *this;
-        for(unsigned i(0); i<NVAL; ++i) { val[i] = rhs.val[i]; }
+        if (&rhs==this) return *this;
+        for (unsigned i(0); i<NVAL; ++i) { val[i] = rhs.val[i]; }
         return *this;
     }
 
@@ -391,13 +391,13 @@ struct het_ratio_cache {
     get_val(const unsigned qscore,
             const unsigned ratio_index) {
 
-        if(qscore>=MAX_QSCORE ||
-           ratio_index>=MAX_INDEX) {
+        if (qscore>=MAX_QSCORE ||
+            ratio_index>=MAX_INDEX) {
             return std::make_pair(false,&_any_val);
         }
 
         const unsigned index(ratio_index + qscore*MAX_INDEX);
-        if(_is_cached[index]) {
+        if (_is_cached[index]) {
             return std::make_pair(true,&(_cache[index]));
         } else {
             _is_cached[index] = true;
@@ -438,12 +438,12 @@ get_high_low_het_ratio_lhood_spi(const snp_pos_info& pi,
     //    cache_val cv;
     static const uint8_t remap[3] = {0,2,1};
 
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         const base_call& bc(pi.calls[i]);
 
         std::pair<bool,cache_val<3>*> ret(hrcache.get_val(bc.get_qscore(),het_ratio_index));
         cache_val<3>& cv(*ret.second);
-        if(! ret.first) {
+        if (! ret.first) {
             const blt_float_t eprob(bc.error_prob());
             const blt_float_t ceprob(1.-eprob);
             //const blt_float_t lne(bc.ln_error_prob());
@@ -457,7 +457,7 @@ get_high_low_het_ratio_lhood_spi(const snp_pos_info& pi,
 
         const uint8_t obs_id(bc.base_id);
 
-        for(unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt) {
+        for (unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt) {
             const unsigned key(DIGT::expect2_bias(obs_id,gt));
             lhood_high[gt] += cv.val[key];
             lhood_low[gt] += cv.val[remap[key]];
@@ -487,14 +487,14 @@ increment_het_ratio_lhood_spi(const snp_pos_info& pi,
     //
     blt_float_t lhood_high[DIGT::SIZE];
     blt_float_t lhood_low[DIGT::SIZE];
-    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
+    for (unsigned gt(0); gt<DIGT::SIZE; ++gt) {
         lhood_high[gt] = 0.;
         lhood_low[gt] = 0.;
     }
     get_high_low_het_ratio_lhood_spi(pi,het_ratio,het_ratio_index,hrcache,lhood_high,lhood_low);
 
-    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
-        if(not DIGT::is_het(gt)) continue;
+    for (unsigned gt(0); gt<DIGT::SIZE; ++gt) {
+        if (not DIGT::is_het(gt)) continue;
         all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_high[gt]);
         all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_low[gt]);
     }
@@ -519,15 +519,15 @@ get_diploid_gt_lhood_spi(const blt_options& opt,
     static het_ratio_cache<3> hrcache;
 
     // get likelihood of each genotype
-    for(unsigned gt(0); gt<DIGT::SIZE; ++gt) lhood[gt] = 0.;
+    for (unsigned gt(0); gt<DIGT::SIZE; ++gt) lhood[gt] = 0.;
 
     const unsigned n_calls(pi.calls.size());
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         const base_call& bc(pi.calls[i]);
 
         std::pair<bool,cache_val<3>*> ret(hrcache.get_val(bc.get_qscore(),0));
         cache_val<3>& cv(*ret.second);
-        if(! ret.first) {
+        if (! ret.first) {
             const blt_float_t eprob(bc.error_prob());
             const blt_float_t ceprob(1.-eprob);
             const blt_float_t lne(bc.ln_error_prob());
@@ -540,7 +540,7 @@ get_diploid_gt_lhood_spi(const blt_options& opt,
         }
 
         const uint8_t obs_id(pi.calls[i].base_id);
-        for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
+        for (unsigned gt(0); gt<DIGT::SIZE; ++gt) {
             lhood[gt] += cv.val[DIGT::expect2(obs_id,gt)];
         }
     }
@@ -550,14 +550,14 @@ get_diploid_gt_lhood_spi(const blt_options& opt,
     // single-sample analysis and not currently used for somatic
     // calls (as of strelka proto3/4)
     //
-    if(is_het_bias) {
+    if (is_het_bias) {
         // ! not thread-safe !
         static het_ratio_cache<3> hrcache_bias;
 
         // loop is currently setup to assume a uniform het ratio subgenotype prior
         const unsigned n_bias_steps(1+static_cast<unsigned>(het_bias/opt.het_bias_max_ratio_inc));
         const blt_float_t ratio_increment(het_bias/static_cast<blt_float_t>(n_bias_steps));
-        for(unsigned i(0); i<n_bias_steps; ++i) {
+        for (unsigned i(0); i<n_bias_steps; ++i) {
             const blt_float_t het_ratio(0.5+(i+1)*ratio_increment);
             increment_het_ratio_lhood_spi(pi,het_ratio,i,hrcache_bias,lhood);
         }
@@ -565,8 +565,8 @@ get_diploid_gt_lhood_spi(const blt_options& opt,
         const unsigned n_het_subgt(1+2*n_bias_steps);
         const blt_float_t subgt_log_prior(std::log(1./static_cast<blt_float_t>(n_het_subgt)));
 
-        for(unsigned gt(0); gt<DIGT::SIZE; ++gt) {
-            if(! DIGT::is_het(gt)) continue;
+        for (unsigned gt(0); gt<DIGT::SIZE; ++gt) {
+            if (! DIGT::is_het(gt)) continue;
             lhood[gt] += subgt_log_prior;
         }
     }
@@ -586,12 +586,12 @@ get_diploid_het_grid_lhood_spi(const snp_pos_info& pi,
     static het_ratio_cache<3> hrcache;
 
     // get likelihood of each genotype
-    for(unsigned gt(0); gt<(DIGT_SGRID::PRESTRAND_SIZE-DIGT::SIZE); ++gt) lhood[gt] = 0.;
+    for (unsigned gt(0); gt<(DIGT_SGRID::PRESTRAND_SIZE-DIGT::SIZE); ++gt) lhood[gt] = 0.;
 
     blt_float_t* lhood_off=lhood-N_BASE;
 
     static const blt_float_t ratio_increment(0.5/static_cast<blt_float_t>(DIGT_SGRID::HET_RES+1));
-    for(unsigned i(0); i<DIGT_SGRID::HET_RES; ++i) {
+    for (unsigned i(0); i<DIGT_SGRID::HET_RES; ++i) {
         const blt_float_t het_ratio((i+1)*ratio_increment);
         get_high_low_het_ratio_lhood_spi(pi,het_ratio,i,hrcache,
                                          lhood_off+(i*DIGT_SGRID::HET_SIZE),
@@ -639,19 +639,19 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
     blt_float_t lhood_fwd[DIGT_SGRID::STRAND_SIZE]; // "on-strand" is fwd
     blt_float_t lhood_rev[DIGT_SGRID::STRAND_SIZE]; // "on-strand" is rev
 
-    for(unsigned i(0); i<DIGT_SGRID::STRAND_SIZE; ++i) {
+    for (unsigned i(0); i<DIGT_SGRID::STRAND_SIZE; ++i) {
         lhood_fwd[i] = 0;
         lhood_rev[i] = 0;
     }
 
     static const unsigned n_strand_het_axes(3);
 
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         const base_call& bc(pi.calls[i]);
 
         std::pair<bool,cache_val<2>*> ret(hrcache.get_val(bc.get_qscore(),het_ratio_index));
         cache_val<2>& cv(*ret.second);
-        if(! ret.first) {
+        if (! ret.first) {
             const blt_float_t eprob(bc.error_prob());
             const blt_float_t ceprob(1.-eprob);
             // cached value [0] refers to state 2 above: on-strand
@@ -664,12 +664,12 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
 
         const uint8_t obs_id(bc.base_id);
 
-        if(obs_id==ref_gt) {
+        if (obs_id==ref_gt) {
             //const double val_onstr(std::log((ceprob)*chet_ratio+((eprob)*one_third)*het_ratio));
             const blt_float_t val_off_strand(bc.ln_comp_error_prob());
             const blt_float_t val_fwd(bc.is_fwd_strand ? cv.val[0] : val_off_strand);
             const blt_float_t val_rev(bc.is_fwd_strand ? val_off_strand : cv.val[0]);
-            for(unsigned sgt(0); sgt<n_strand_het_axes; ++sgt) {
+            for (unsigned sgt(0); sgt<n_strand_het_axes; ++sgt) {
                 lhood_fwd[sgt] += val_fwd;
                 lhood_rev[sgt] += val_rev;
             }
@@ -680,8 +680,8 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
             const blt_float_t val_rev(bc.is_fwd_strand ? val_off_strand : cv.val[1]);
 
             const unsigned match_strand_state(obs_id>ref_gt ? obs_id-1 : obs_id);
-            for(unsigned sgt(0); sgt<n_strand_het_axes; ++sgt) {
-                if(sgt==match_strand_state) {
+            for (unsigned sgt(0); sgt<n_strand_het_axes; ++sgt) {
+                if (sgt==match_strand_state) {
                     lhood_fwd[sgt] += val_fwd;
                     lhood_rev[sgt] += val_rev;
                 } else {
@@ -692,7 +692,7 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
         }
     }
 
-    for(unsigned i(0); i<DIGT_SGRID::STRAND_SIZE; ++i) {
+    for (unsigned i(0); i<DIGT_SGRID::STRAND_SIZE; ++i) {
         lhood[i] = log_sum(lhood_fwd[i],lhood_rev[i])+ln_one_half;
     }
 }
@@ -714,10 +714,10 @@ get_diploid_strand_grid_lhood_spi(const snp_pos_info& pi,
     static het_ratio_cache<2> hrcache;
 
     // get likelihood of each genotype
-    for(unsigned gt(0); gt<(DIGT_SGRID::STRAND_STATE_SIZE); ++gt) lhood[gt] = 0.;
+    for (unsigned gt(0); gt<(DIGT_SGRID::STRAND_STATE_SIZE); ++gt) lhood[gt] = 0.;
 
     static const blt_float_t ratio_increment(0.5/static_cast<blt_float_t>(DIGT_SGRID::HET_RES+1));
-    for(unsigned i(0); i<DIGT_SGRID::HET_RES; ++i) {
+    for (unsigned i(0); i<DIGT_SGRID::HET_RES; ++i) {
         const blt_float_t het_ratio((i+1)*ratio_increment);
         get_strand_ratio_lhood_spi(pi,ref_gt,het_ratio,i,hrcache,
                                    lhood+(i*DIGT_SGRID::STRAND_SIZE));
@@ -737,7 +737,7 @@ debug_dump_ddigt_lhood(const blt_float_t* lhood,
                        std::ostream& os) {
 
     double pprob[DDIGT::SIZE]; //intentionally run at higher float-resolution
-    for(unsigned gt(0); gt<DDIGT::SIZE; ++gt) {
+    for (unsigned gt(0); gt<DDIGT::SIZE; ++gt) {
         pprob[gt] = lhood[gt];
     }
 
@@ -745,8 +745,8 @@ debug_dump_ddigt_lhood(const blt_float_t* lhood,
     normalize_ln_distro(pprob,pprob+DDIGT::SIZE,max_gt);
 
     os << std::setprecision(3) << std::fixed;
-    for(unsigned ngt(0); ngt<DIGT::SIZE; ++ngt) {
-        for(unsigned tgt(0); tgt<DIGT::SIZE; ++tgt) {
+    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt) {
+        for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt) {
             const unsigned dgt(DDIGT::get_state(ngt,tgt));
             os << static_cast<DDIGT::index_t>(dgt) << ": " << -std::log(pprob[dgt]) << " ";
         }
@@ -776,7 +776,7 @@ sort_n_dump(const std::string& label,
     const unsigned ds(distro.size());
     assert(ds == distro2.size());
     std::vector<std::pair<std::pair<double,double>,unsigned> > idistro(ds);
-    for(unsigned i(0); i<ds; ++i) {
+    for (unsigned i(0); i<ds; ++i) {
         idistro[i] = std::make_pair(std::make_pair(-distro[i],-distro2[i]),i);
     }
 
@@ -786,7 +786,7 @@ sort_n_dump(const std::string& label,
                       idistro.end());
 
     os << std::setprecision(3) << std::fixed;
-    for(unsigned i(0); i<topn_used; ++i) {
+    for (unsigned i(0); i<topn_used; ++i) {
         os << label << ": " << i << " ";
         DDIGT_SGRID::write_full_state(static_cast<DDIGT_SGRID::index_t>(idistro[i].second),
                                       ref_gt,os);
@@ -825,22 +825,22 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
 
     // this zero'd code is incomplete and abandoned for now...:
 #if 0
-    for(unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
+    for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
         double base_prior(neginf);
         const bool is_noise(ngt>=STAR_DIINDEL::SIZE);
-        if(is_noise) {
+        if (is_noise) {
             base_prior=pset.normal[ngt];
         } else {
             base_prior=pset.nonoise[ngt];
         }
-        for(unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
+        for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
             const blt_float_t tgt_prior_mod( (tgt==ngt) ? lnmatch : lnmismatch );
             const unsigned dgt(DDIGT_SGRID::get_state(ngt,tgt));
             prior[dgt] = normal_genomic_lnprior[ngt]+tgt_prior_mod;
         }
     }
 
-    for(unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt) {
+    for (unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt) {
         const unsigned dgt(DDIGT_SGRID::get_state(gt,gt));
         prior[dgt] = normal_genomic_lnprior[gt]+lnmatch;
     }
@@ -857,8 +857,8 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     // mult by prior distro to get unnormalized pprob for states in
     // the regular grid model:
     //
-    for(unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
-        for(unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
+    for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
+        for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
             const unsigned dgt(DDIGT_SGRID::get_state(ngt,tgt));
 
 #if 0
@@ -870,7 +870,7 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
             // unorm takes the role of the normal prior for the somatic case:
             //            static const blt_float_t unorm(std::log(static_cast<blt_float_t>(DIGT_SGRID::PRESTRAND_SIZE)));
             blt_float_t prior;
-            if(tgt==ngt) {
+            if (tgt==ngt) {
                 prior=pset.normal[ngt]+lnmatch;
             } else {
                 prior=pset.somatic_marginal[ngt]+lnmismatch;
@@ -886,7 +886,7 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     // variation with these noise states, b/c single-strand
     // observations can almost exclusively be ruled out as noise:
     //
-    for(unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt) {
+    for (unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt) {
         const unsigned dgt(DDIGT_SGRID::get_state(gt,gt));
         pprob[dgt] = normal_lhood[gt]+tumor_lhood[gt]+pset.normal[gt]+lnmatch;
     }
@@ -895,36 +895,36 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     //normalize_ln_distro(pprob.begin(),pprob.end(),rs.max_gt);
 
     double nonsomatic_sum(0);
-    for(unsigned gt(0); gt<DIGT_SGRID::SIZE; ++gt) {
+    for (unsigned gt(0); gt<DIGT_SGRID::SIZE; ++gt) {
         nonsomatic_sum += pprob[DDIGT_SGRID::get_state(gt,gt)];
     }
     rs.snv_qphred=error_prob_to_qphred(nonsomatic_sum);
 
-    if(0==rs.snv_qphred) return;
+    if (0==rs.snv_qphred) return;
 
 #if 0
     // alternate way to calculate the joint:
     //
     double min_not_somfrom_sum(0);
-    for(unsigned dgt(0); dgt<DIGT::SIZE; ++dgt) {
+    for (unsigned dgt(0); dgt<DIGT::SIZE; ++dgt) {
         double not_somfrom_sum(nonsomatic_sum);
 
-        for(unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
+        for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
             // we're looking for the joint prob when state dgt is true
             // in the normal, so skip this as a normal state here:
             //
-            if(dgt==ngt) continue;
+            if (dgt==ngt) continue;
 
-            for(unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
+            for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
                 // we've already started from the nonsomatic som, so we can skip the equal states:
                 //
-                if(ngt==tgt) continue;
+                if (ngt==tgt) continue;
 
                 not_somfrom_sum += pprob[DDIGT_SGRID::get_state(ngt,tgt)];
             }
         }
 
-        if((dgt==0) || (!_somfrom_sum<min_not_somfrom_sum)) {
+        if ((dgt==0) || (!_somfrom_sum<min_not_somfrom_sum)) {
             min_not_somfrom_sum=not_somfrom_sum;
             rs.snv_from_ntype_qphred=error_prob_to_qphred(not_somfrom_sum);
             rs.ntype=dgt;
@@ -936,10 +936,10 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     // reset max_gt to the most likely state excluding normal noise states:
     //
     rs.max_gt=0;
-    for(unsigned dgt(0); dgt<DIGT::SIZE; ++dgt) {
-        for(unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
+    for (unsigned dgt(0); dgt<DIGT::SIZE; ++dgt) {
+        for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
             const unsigned xgt(DDIGT_SGRID::get_state(dgt,tgt));
-            if(pprob[xgt] > pprob[rs.max_gt]) rs.max_gt=xgt;
+            if (pprob[xgt] > pprob[rs.max_gt]) rs.max_gt=xgt;
         }
     }
 #endif
@@ -953,7 +953,7 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     // and not simply an unsampled copy of the somatic variation.
     //
     std::vector<double> normal_pprob(DIGT_SGRID::PRESTRAND_SIZE);
-    for(unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
+    for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
         normal_pprob[ngt] = normal_lhood[ngt]+pset.normal_poly[ngt];
     }
 
@@ -988,13 +988,13 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
         const snp_pos_info& normal_pi(normal_epi.pi);
         const snp_pos_info& tumor_pi(tumor_epi.pi);
 
-        if(normal_pi.ref_base=='N') return;
+        if (normal_pi.ref_base=='N') return;
         sgt.ref_gt=base_to_id(normal_pi.ref_base);
 
         // check that a non-reference call meeting quality criteria even
         // exists:
-        if(not is_always_test) {
-            if(is_spi_allref(normal_pi,sgt.ref_gt) and is_spi_allref(tumor_pi,sgt.ref_gt)) return;
+        if (not is_always_test) {
+            if (is_spi_allref(normal_pi,sgt.ref_gt) and is_spi_allref(tumor_pi,sgt.ref_gt)) return;
         }
     }
 
@@ -1007,11 +1007,11 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
     static const unsigned n_tier(2);
     result_set tier_rs[n_tier];
-    for(unsigned i(0); i<n_tier; ++i) {
+    for (unsigned i(0); i<n_tier; ++i) {
         const bool is_include_tier2(i==1);
-        if(is_include_tier2) {
-            if(! is_tier2) continue;
-            if(tier_rs[0].snv_qphred==0) {
+        if (is_include_tier2) {
+            if (! is_tier2) continue;
+            if (tier_rs[0].snv_qphred==0) {
                 tier_rs[1].snv_qphred=0;
                 continue;
             }
@@ -1055,7 +1055,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 #endif
 
 #ifdef SOMATIC_DEBUG
-        if((i==0) && (tier_rs[i].snv_qphred > 0)) {
+        if ((i==0) && (tier_rs[i].snv_qphred > 0)) {
             const somatic_snv_caller_strand_grid::prior_set& pset(get_prior_set(sgt.ref_gt));
             const blt_float_t lnmatch(_ln_som_match);
             const blt_float_t lnmismatch(_ln_som_mismatch);
@@ -1070,8 +1070,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
             // first get raw lhood:
             //
-            for(unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
-                for(unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
+            for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
+                for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
                     const unsigned dgt(DDIGT_SGRID::get_state(ngt,tgt));
                     // unorm takes the role of the normal prior for the somatic case:
                     //            static const blt_float_t unorm(std::log(static_cast<blt_float_t>(DIGT_SGRID::PRESTRAND_SIZE)));
@@ -1080,7 +1080,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                     //if(tgt==ngt) { prior=pset.normal[ngt]+lnmatch; }
                     //else         { prior=pset.somatic_marginal[ngt]+lnmismatch; }
                     blt_float_t pr;
-                    if(tgt==ngt) { pr=pset.normal[ngt]+lnmatch; }
+                    if (tgt==ngt) { pr=pset.normal[ngt]+lnmatch; }
                     else         { pr=pset.somatic_marginal[ngt]+lnmismatch; }
                     prior[dgt] = pr;
 
@@ -1089,7 +1089,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                 }
             }
 
-            for(unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt) {
+            for (unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt) {
                 const unsigned dgt(DDIGT_SGRID::get_state(gt,gt));
                 lhood[dgt] = normal_lhood[gt]+tumor_lhood[gt];
                 prior[dgt] = pset.normal[gt]+lnmatch;
@@ -1106,24 +1106,24 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
     }
 
-    if((tier_rs[0].snv_qphred==0) ||
-       (is_tier2 && (tier_rs[1].snv_qphred==0))) return;
+    if ((tier_rs[0].snv_qphred==0) ||
+        (is_tier2 && (tier_rs[1].snv_qphred==0))) return;
 
     sgt.snv_tier=0;
     sgt.snv_from_ntype_tier=0;
-    if(is_tier2) {
-        if(tier_rs[0].snv_qphred > tier_rs[1].snv_qphred) {
+    if (is_tier2) {
+        if (tier_rs[0].snv_qphred > tier_rs[1].snv_qphred) {
             sgt.snv_tier=1;
         }
 
-        if(tier_rs[0].snv_from_ntype_qphred > tier_rs[1].snv_from_ntype_qphred) {
+        if (tier_rs[0].snv_from_ntype_qphred > tier_rs[1].snv_from_ntype_qphred) {
             sgt.snv_from_ntype_tier=1;
         }
     }
 
     sgt.rs=tier_rs[sgt.snv_from_ntype_tier];
 
-    if(is_tier2 && (tier_rs[0].ntype != tier_rs[1].ntype)) {
+    if (is_tier2 && (tier_rs[0].ntype != tier_rs[1].ntype)) {
         // catch NTYPE conflict states:
         sgt.rs.ntype = NTYPE::CONFLICT;
         sgt.rs.snv_from_ntype_qphred = 0;
@@ -1135,7 +1135,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
         //
         if       (sgt.rs.ntype==sgt.ref_gt) {
             sgt.rs.ntype=NTYPE::REF;
-        } else if(DIGT::is_het(sgt.rs.ntype)) {
+        } else if (DIGT::is_het(sgt.rs.ntype)) {
             sgt.rs.ntype=NTYPE::HET;
         } else {
             sgt.rs.ntype=NTYPE::HOM;
@@ -1187,7 +1187,7 @@ write_vcf_sample_info(const blt_options& opt,
 
     unsigned tier1_base_counts[N_BASE];
     unsigned tier2_base_counts[N_BASE];
-    for(unsigned b(0); b<N_BASE; ++b) {
+    for (unsigned b(0); b<N_BASE; ++b) {
         tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
         tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
         os << ':'

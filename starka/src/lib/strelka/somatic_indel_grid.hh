@@ -49,14 +49,14 @@ enum index_t { SIZE = HOM_SIZE+HET_SIZE*HET_COUNT };
 inline
 unsigned
 get_star_diindel_state (const unsigned state) {
-    if(state<HOM_SIZE) return state;
+    if (state<HOM_SIZE) return state;
     return STAR_DIINDEL::HET;
 }
 
 inline
 unsigned
 get_het_count(const unsigned state) {
-    if(state<HOM_SIZE) return 0;
+    if (state<HOM_SIZE) return 0;
     return (state-HOM_SIZE)/HET_SIZE;
 }
 }

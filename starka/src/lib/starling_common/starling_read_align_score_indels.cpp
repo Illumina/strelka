@@ -52,7 +52,7 @@ check_and_update_iks(iks_map_t& iks_map,
 
     // check to see if the path score is better than what we already have:
     const iks_map_t::const_iterator j(iks_map.find(mkey));
-    if((j!=iks_map.end()) && ((j->second.first) >= path_lnp)) return;
+    if ((j!=iks_map.end()) && ((j->second.first) >= path_lnp)) return;
     iks_map[mkey]=std::make_pair(path_lnp,cal_ptr);
 }
 
@@ -68,7 +68,7 @@ overlap_map_tick(overlap_map_t& omap,
                  const indel_key& ik1,
                  const indel_key& ik2) {
     indel_set_t& os(omap[ik1]);
-    if(os.find(ik2) == os.end()) os.insert(ik2);
+    if (os.find(ik2) == os.end()) os.insert(ik2);
 }
 
 
@@ -78,11 +78,11 @@ bool
 is_interfering_indel(const indel_set_t& current_indels,
                      const indel_key& new_indel) {
 
-    if(current_indels.count(new_indel) != 0) return false;
+    if (current_indels.count(new_indel) != 0) return false;
 
     typedef indel_set_t::const_iterator siter;
     BOOST_FOREACH(const indel_key& ik, current_indels) {
-        if(is_indel_conflict(ik,new_indel)) return true;
+        if (is_indel_conflict(ik,new_indel)) return true;
     }
     return false;
 }
@@ -127,11 +127,11 @@ get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
         if       (ps.type == MATCH) {
             next_read_head_pos += ps.length;
             next_ref_head_pos += ps.length;
-        } else if(ps.type == INSERT) {
+        } else if (ps.type == INSERT) {
             next_read_head_pos += ps.length;
-        } else if(ps.type == DELETE) {
+        } else if (ps.type == DELETE) {
             next_ref_head_pos += ps.length;
-        } else if((ps.type == SOFT_CLIP) || (ps.type == HARD_CLIP)) {
+        } else if ((ps.type == SOFT_CLIP) || (ps.type == HARD_CLIP)) {
             // do nothing... this function operates on unclipped read
             // coordinates instead of true read coordinates
             //
@@ -140,11 +140,11 @@ get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
             assert(0);
         }
 
-        if((! is_left_read_pos) && (ik.pos<=(next_ref_head_pos))) {
+        if ((! is_left_read_pos) && (ik.pos<=(next_ref_head_pos))) {
             left_read_pos=read_head_pos+(ik.pos-ref_head_pos);
             is_left_read_pos=true;
         }
-        if((! is_right_read_pos) && (ik.right_pos()<(next_ref_head_pos))) {
+        if ((! is_right_read_pos) && (ik.right_pos()<(next_ref_head_pos))) {
             right_read_pos=read_head_pos+(ik.right_pos()-ref_head_pos);
             is_right_read_pos=true;
         }
@@ -157,20 +157,20 @@ get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
     // read not represented in the CIGAR string:
     int left_extension(0);
     int right_extension(0);
-    if(al.is_fwd_strand) {
-        if( left_read_pos > 0 ) left_extension = upstream_oligo_size;
+    if (al.is_fwd_strand) {
+        if ( left_read_pos > 0 ) left_extension = upstream_oligo_size;
     } else {
-        if( (read_head_pos-right_read_pos)  > 0 )right_extension = upstream_oligo_size;
+        if ( (read_head_pos-right_read_pos)  > 0 )right_extension = upstream_oligo_size;
     }
 
     int left_overlap(0);
-    if(is_left_read_pos) {
+    if (is_left_read_pos) {
         left_overlap=std::min(left_read_pos+left_extension,(read_head_pos-left_read_pos));
         left_overlap=std::max(0,left_overlap);
     }
 
     int right_overlap(0);
-    if(is_right_read_pos) {
+    if (is_right_read_pos) {
         right_overlap=std::min(right_read_pos,(read_head_pos-right_read_pos)+right_extension);
         right_overlap=std::max(0,right_overlap);
     }
@@ -204,15 +204,15 @@ is_equiv_candidate(const candidate_alignment& cal1,
     const unsigned s1(is1.size());
     const unsigned s2(is2.size());
 
-    if(s1 != s2) return false;
+    if (s1 != s2) return false;
 
     indel_set_t::const_iterator it1(is1.begin()), it1_end(is1.end());
     indel_set_t::const_iterator it2(is2.begin()); //, it2_end(is2.end());
 
-    for(; it1!=it1_end; ++it1,++it2) {
-        if(*it1==*it2) continue;
-        if(it1->type != it2->type) return false;
-        if(it1->length != it2->length) return false;
+    for (; it1!=it1_end; ++it1,++it2) {
+        if (*it1==*it2) continue;
+        if (it1->type != it2->type) return false;
+        if (it1->length != it2->length) return false;
         equiv_keys.insert(std::make_pair(*it1,*it2));
     }
     return true;
@@ -233,8 +233,8 @@ is_first_indel_dominant(const starling_options& opt,
     const bool ic1(isync.is_candidate_indel(opt,ik1));
     const bool ic2(isync.is_candidate_indel(opt,ik2));
 
-    if(ic2 && (! ic1)) return false;
-    if(ic2==ic1) {
+    if (ic2 && (! ic1)) return false;
+    if (ic2==ic1) {
         return (ik1.pos<=ik2.pos);
     }
     return true;
@@ -308,7 +308,7 @@ score_indels(const starling_options& opt,
     // normalization, set is_slip_norm=false to disable:
     //
     static const bool is_slip_norm(true);
-    if(is_slip_norm) {
+    if (is_slip_norm) {
 
         const double equiv_lnp_range( opt.is_smoothed_alignments ?
                                       opt.smoothed_lnp_range : 0. );
@@ -319,7 +319,7 @@ score_indels(const starling_options& opt,
         std::vector<const candidate_alignment*> cal_ptr_vec;
         {
             std::set<candidate_alignment>::const_iterator si(cal_set.begin());
-            for(unsigned i(0); i<cal_set_size; ++i,++si) {
+            for (unsigned i(0); i<cal_set_size; ++i,++si) {
                 sorted_path_lnp.push_back(std::make_pair(cal_set_path_lnp[i],i));
                 cal_ptr_vec.push_back(&(*si));
             }
@@ -334,22 +334,22 @@ score_indels(const starling_options& opt,
         bool is_any_excluded(false);
         indel_pair_set ips;
 
-        for(unsigned i(0); i<cal_set_size; ++i) {
+        for (unsigned i(0); i<cal_set_size; ++i) {
             const unsigned sorti(sorted_path_lnp[i].second);
-            if(cal_set_exclude[sorti]) continue;
+            if (cal_set_exclude[sorti]) continue;
 
-            for(unsigned j(i+1); j<cal_set_size; ++j) {
+            for (unsigned j(i+1); j<cal_set_size; ++j) {
                 const unsigned sortj(sorted_path_lnp[j].second);
-                if(cal_set_exclude[sortj]) continue;
+                if (cal_set_exclude[sortj]) continue;
 
                 // determine if this is an equiv_indel:
-                if(smooth_path_lnp[sortj]+equiv_lnp_range < smooth_path_lnp[sorti]) break;
+                if (smooth_path_lnp[sortj]+equiv_lnp_range < smooth_path_lnp[sorti]) break;
                 const bool is_equiv(is_equiv_candidate(*(cal_ptr_vec[sorti]),
                                                        *(cal_ptr_vec[sortj]),
                                                        opt.max_indel_size,
                                                        ips));
 
-                if(not is_equiv) continue;
+                if (not is_equiv) continue;
 
 #ifdef DEBUG_ALIGN
                 log_os << "COWSLIP: sorti,lnpi,sortj,lnpj: "
@@ -364,7 +364,7 @@ score_indels(const starling_options& opt,
                 // the same score and the same set of indels, but
                 // (i.e. different start positions) could somehow
                 // occur.
-                if(ips.empty()) continue;
+                if (ips.empty()) continue;
 
                 indel_pair_set::const_iterator ip(ips.begin()),ip_end(ips.end());
                 // for each pair, determine which indel is dominant,
@@ -373,7 +373,7 @@ score_indels(const starling_options& opt,
                 // indel only
                 bool is_sorti_removed(false);
                 bool is_removed(false);
-                for(; ip!=ip_end; ++ip) {
+                for (; ip!=ip_end; ++ip) {
                     const bool is1(is_first_indel_dominant(opt,isync,ip->first,ip->second));
 
 #ifdef DEBUG_ALIGN
@@ -381,12 +381,12 @@ score_indels(const starling_options& opt,
                     log_os << "COWSLIP: indel2: " << ip->second << "\n";
                     log_os << "COWSLIP: is_indel1_dominant?: " << is1 << "\n";
 #endif
-                    if(is1) {
+                    if (is1) {
                         nonnorm_indels.insert(ip->second);
 #ifdef DEBUG_ALIGN
                         log_os << "COWSLIP: marking 2 nonnorm: " << ip->second << "\n";
 #endif
-                        if(! is_removed) {
+                        if (! is_removed) {
                             cal_set_exclude[sortj] = true;
                             is_any_excluded = true;
                             smooth_path_lnp[sorti] = std::max(smooth_path_lnp[sorti],smooth_path_lnp[sortj]);
@@ -399,7 +399,7 @@ score_indels(const starling_options& opt,
 #ifdef DEBUG_ALIGN
                         log_os << "COWSLIP: marking 1 nonnorm: " << ip->first << "\n";
 #endif
-                        if(! is_removed) {
+                        if (! is_removed) {
                             cal_set_exclude[sorti] = true;
                             is_any_excluded = true;
                             smooth_path_lnp[sortj] = std::max(smooth_path_lnp[sorti],smooth_path_lnp[sortj]);
@@ -411,7 +411,7 @@ score_indels(const starling_options& opt,
                     }
                     is_removed=true;
                 }
-                if(is_sorti_removed) break;
+                if (is_sorti_removed) break;
             }
         }
 
@@ -419,10 +419,10 @@ score_indels(const starling_options& opt,
         //
         // note this loop is designed to take advantage of the high->low path_lnp sort
         //
-        if(is_any_excluded) {
-            for(unsigned i(0); i<cal_set_size; ++i) {
+        if (is_any_excluded) {
+            for (unsigned i(0); i<cal_set_size; ++i) {
                 const unsigned sorti(sorted_path_lnp[i].second);
-                if(cal_set_exclude[sorti]) continue;
+                if (cal_set_exclude[sorti]) continue;
 #ifdef DEBUG_ALIGN
                 log_os << "COWSLIP: reseting max_path_lnp/max_cal from: " << max_path_lnp << " " << *(max_cal_ptr) << "\n";
 #endif
@@ -478,7 +478,7 @@ score_indels(const starling_options& opt,
 #endif
         indel_buffer& ibuff(isync.ibuff());
         const std::pair<iiter,iiter> ipair(ibuff.pos_range_iter(max_pr.begin_pos,max_pr.end_pos));
-        for(iiter i(ipair.first); i!=ipair.second; ++i) {
+        for (iiter i(ipair.first); i!=ipair.second; ++i) {
             const indel_key& ik(i->first);
             indel_data& id(get_indel_data(i));
 
@@ -486,7 +486,7 @@ score_indels(const starling_options& opt,
             log_os << "VARMIT: max path eval indel candidate: " << ik;
 #endif
 
-            if(not isync.is_candidate_indel(opt,ik,id)) continue;
+            if (not isync.is_candidate_indel(opt,ik,id)) continue;
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path indel is candidate\n";
@@ -503,15 +503,15 @@ score_indels(const starling_options& opt,
             log_os << "VARMIT: indel present? " << is_indel_present << "\n";
 #endif
 
-            if(is_indel_present) {
+            if (is_indel_present) {
                 const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,max_cal.al,ik));
                 const int bpo(std::max(both_bpo.first,both_bpo.second));
 #ifdef DEBUG_ALIGN
                 log_os << "VARMIT: indel bp_overlap " << bpo << "\n";
 #endif
-                if(bpo < sample_opt.min_read_bp_flank) {
-                    if(bpo>0) {
-                        if(is_tier1_read) id.suboverlap_tier1_read_ids.insert(rseg.id());
+                if (bpo < sample_opt.min_read_bp_flank) {
+                    if (bpo>0) {
+                        if (is_tier1_read) id.suboverlap_tier1_read_ids.insert(rseg.id());
                         else              id.suboverlap_tier2_read_ids.insert(rseg.id());
                     }
                     continue;
@@ -521,7 +521,7 @@ score_indels(const starling_options& opt,
                 log_os << "VARMIT: indel intersects max_path? "
                        <<  is_range_intersect_indel_breakpoints(strict_max_pr,ik) << "\n";
 #endif
-                if(! is_range_intersect_indel_breakpoints(strict_max_pr,ik)) continue;
+                if (! is_range_intersect_indel_breakpoints(strict_max_pr,ik)) continue;
             }
 
             // all checks passed... indel will be evaluated for indel calling:
@@ -542,10 +542,10 @@ score_indels(const starling_options& opt,
     {
         indel_set_t::const_iterator i(max_cal_eval_indels.begin());
         const indel_set_t::const_iterator i_end(max_cal_eval_indels.end());
-        for(; i!=i_end; ++i) {
+        for (; i!=i_end; ++i) {
             indel_set_t::const_iterator j(i); ++j;
-            for(; j!=i_end; ++j) {
-                if(is_indel_conflict(*i,*j)) {
+            for (; j!=i_end; ++j) {
+                if (is_indel_conflict(*i,*j)) {
                     overlap_map_tick(indel_overlap_map,*i,*j);
                     overlap_map_tick(indel_overlap_map,*j,*i);
                 }
@@ -592,7 +592,7 @@ score_indels(const starling_options& opt,
             BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels) {
                 const bool is_indel_present(max_cal_indels.count(eval_ik)!=0);
 
-                if(is_indel_present) {
+                if (is_indel_present) {
                     iks_max_path_lnp[std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
 
                     // mark this as an alternate indel score for interfering indels:
@@ -601,7 +601,7 @@ score_indels(const starling_options& opt,
                     }
                 } else {
                     // check that this indel does not interfere with the max-set:
-                    if(! is_max_cal_eval_indels_interfere[eval_ik]) {
+                    if (! is_max_cal_eval_indels_interfere[eval_ik]) {
                         iks_max_path_lnp[std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
                     }
                 }
@@ -609,14 +609,14 @@ score_indels(const starling_options& opt,
         }
 
         std::set<candidate_alignment>::const_iterator si(cal_set.begin()),si_end(cal_set.end());
-        for(unsigned c(0); si!=si_end; ++si,++c) {
+        for (unsigned c(0); si!=si_end; ++si,++c) {
             const candidate_alignment& ical(*si);
             const bool is_max_cal(&ical == &max_cal);
-            if(cal_set_exclude[c]) {
+            if (cal_set_exclude[c]) {
                 assert(! is_max_cal);
                 continue;
             }
-            if(is_max_cal) continue;
+            if (is_max_cal) continue;
 
             const double path_lnp(cal_set_path_lnp[c]);
 
@@ -625,7 +625,7 @@ score_indels(const starling_options& opt,
 
             BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels) {
                 const bool is_indel_present(ical_indels.count(eval_ik)!=0);
-                if(is_indel_present) {
+                if (is_indel_present) {
                     //const indel_status_t mkey(std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik)));
                     check_and_update_iks(iks_max_path_lnp,eval_ik,is_indel_present,eval_ik,path_lnp,&ical);
 
@@ -641,13 +641,13 @@ score_indels(const starling_options& opt,
                     //
                     bool is_interference(false);
                     BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik]) {
-                        if(ical_indels.count(overlap_ik)!=0) {
+                        if (ical_indels.count(overlap_ik)!=0) {
                             is_interference=true;
                             break;
                         }
                     }
 
-                    if(! is_interference) {
+                    if (! is_interference) {
                         check_and_update_iks(iks_max_path_lnp,eval_ik,is_indel_present,eval_ik,path_lnp,&ical);
                     }
                 }
@@ -666,8 +666,8 @@ score_indels(const starling_options& opt,
     uint16_t nsite(0);
     {
         const bam_seq bseq(rseg.get_bam_read());
-        for(unsigned i(0); i<read_length; ++i) {
-            if(bseq.get_code(i) == BAM_BASE::ANY) continue;
+        for (unsigned i(0); i<read_length; ++i) {
+            if (bseq.get_code(i) == BAM_BASE::ANY) continue;
             nsite++;
         }
     }
@@ -703,20 +703,20 @@ score_indels(const starling_options& opt,
 
             // 1) indel present:
             double indel_path_lnp(max_path_lnp);
-            if(! is_indel_present_on_max_path) {
+            if (! is_indel_present_on_max_path) {
                 const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,eval_ik))));
                 const bool is_found(j!=iks_max_path_lnp.end());
-                if(! is_found) {
-                    if(is_incomplete_search) continue;
+                if (! is_found) {
+                    if (is_incomplete_search) continue;
                     // TODO -- get more precise information on exactly when we expect an indel which overlaps a max_cal indel to not be found, for
                     // now we have to give a pass on all cases:
-                    if(is_max_cal_eval_indels_interfere[eval_ik]) continue;
+                    if (is_max_cal_eval_indels_interfere[eval_ik]) continue;
 
                     // for the nonnorm cases, we've already eliminated at least some of the alignments which contain them
                     // and in certain circumstances there won't be alternates available
-                    if(nonnorm_indels.count(eval_ik)!=0) continue;
+                    if (nonnorm_indels.count(eval_ik)!=0) continue;
 
-                    if(is_safe_mode) {
+                    if (is_safe_mode) {
                         log_os << "WARNING: ";
                     } else {
                         log_os << "ERROR: ";
@@ -725,7 +725,7 @@ score_indels(const starling_options& opt,
                     log_os << "failed to find expected alignment for indel: " << eval_ik
                            << "\twhile evaluating read_segment:\n" << rseg << "\n";
 
-                    if(is_safe_mode) {
+                    if (is_safe_mode) {
                         continue;
                     } else {
                         exit(EXIT_FAILURE);
@@ -739,9 +739,9 @@ score_indels(const starling_options& opt,
 #ifdef DEBUG_ALIGN
                 log_os << "VARMIT: called_indel_bp_overlap " << bpo << "\n";
 #endif
-                if(bpo < sample_opt.min_read_bp_flank) {
-                    if(bpo>0) {
-                        if(is_tier1_read) id_ptr->suboverlap_tier1_read_ids.insert(rseg.id());
+                if (bpo < sample_opt.min_read_bp_flank) {
+                    if (bpo>0) {
+                        if (is_tier1_read) id_ptr->suboverlap_tier1_read_ids.insert(rseg.id());
                         else              id_ptr->suboverlap_tier2_read_ids.insert(rseg.id());
                     }
                     continue;
@@ -759,9 +759,9 @@ score_indels(const starling_options& opt,
             {
                 const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(false,eval_ik))));
                 const bool is_found(j!=iks_max_path_lnp.end());
-                if(is_incomplete_search && (! is_found)) continue;
-                if(! is_found) {
-                    if(is_safe_mode) {
+                if (is_incomplete_search && (! is_found)) continue;
+                if (! is_found) {
+                    if (is_safe_mode) {
                         log_os << "WARNING: ";
                     } else {
                         log_os << "ERROR: ";
@@ -769,7 +769,7 @@ score_indels(const starling_options& opt,
 
                     log_os << "failed to find reference alignement while evaluating read_segment:\n" << rseg << "\n";
 
-                    if(is_safe_mode) {
+                    if (is_safe_mode) {
                         continue;
                     } else {
                         exit(EXIT_FAILURE);
@@ -816,7 +816,7 @@ score_indels(const starling_options& opt,
                 // alt case should be missing -- possibly use ref_path instead of continuing
                 // in this case
                 //
-                if(is_found) {
+                if (is_found) {
                     rps.insert_alt(overlap_ik,j->second.first);
                     //                        rps.alt_indel[*k] = j->second.first;
                 } else {

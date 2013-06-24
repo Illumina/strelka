@@ -53,36 +53,36 @@ add_gvcf_filters(const gvcf_options& opt,
     write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion");
 
 
-    if(opt.is_min_gqx) {
+    if (opt.is_min_gqx) {
         std::ostringstream oss;
         oss << "Locus GQX is less than " << opt.min_gqx << " or not present";
         write_vcf_filter(os,get_label(LowGQX),oss.str().c_str());
     }
 
-    if(opt.is_max_base_filt) {
+    if (opt.is_max_base_filt) {
         std::ostringstream oss;
         oss << "The fraction of basecalls filtered out at a site is greater than " << opt.max_base_filt;
         write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
     }
 
-    if(opt.is_max_snv_sb) {
+    if (opt.is_max_snv_sb) {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
         write_vcf_filter(os,get_label(HighSNVSB),oss.str().c_str());
     }
-    if(opt.is_max_snv_hpol) {
+    if (opt.is_max_snv_hpol) {
         std::ostringstream oss;
         oss << "SNV contextual homopolymer length (SNVHPOL) exceeds " << opt.max_snv_hpol;
         write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
     }
 
-    if(opt.is_max_ref_rep) {
+    if (opt.is_max_ref_rep) {
         std::ostringstream oss;
         oss << "Locus contains an indel allele occurring in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    if(opt.is_max_depth_factor && (! chrom_depth.empty())) {
+    if (opt.is_max_depth_factor && (! chrom_depth.empty())) {
         std::ostringstream oss;
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";
         write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
@@ -92,7 +92,7 @@ add_gvcf_filters(const gvcf_options& opt,
         os << std::fixed << std::setprecision(2);
 
         cdmap_t::const_iterator i(chrom_depth.begin()), i_end(chrom_depth.end());
-        for(; i!=i_end; ++i) {
+        for (; i!=i_end; ++i) {
             const std::string& chrom(i->first);
             const double max_depth(opt.max_depth_factor*i->second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";

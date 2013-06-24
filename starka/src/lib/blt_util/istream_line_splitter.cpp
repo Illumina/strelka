@@ -32,8 +32,8 @@
 void
 istream_line_splitter::
 write_line(std::ostream& os) const {
-    for(unsigned i(0); i<_n_word; ++i) {
-        if(i) os << _sep;
+    for (unsigned i(0); i<_n_word; ++i) {
+        if (i) os << _sep;
         os << word[i];
     }
     os << "\n";
@@ -71,15 +71,15 @@ bool
 check_istream(std::istream& is,
               unsigned& line_no) {
 
-    if(is) {
+    if (is) {
         line_no++;
         // regular successful line read:
         return true;
     }
 
     if     (is.eof()) return false;
-    else if(is.fail()) {
-        if(is.bad()) {
+    else if (is.fail()) {
+        if (is.bad()) {
             std::ostringstream oss;
             oss << "ERROR: unexpected failure while attempting to read line " << (line_no+1) << "\n";
             throw blt_exception(oss.str().c_str());
@@ -99,13 +99,13 @@ parse_line() {
     _n_word=0;
     _is.getline(_buf,_buf_size);
     const unsigned previous_line_no(_line_no);
-    if(! check_istream(_is,_line_no)) return false; // normal eof
+    if (! check_istream(_is,_line_no)) return false; // normal eof
     unsigned buflen(strlen(_buf));
 
-    while(((buflen+1) == _buf_size) && (previous_line_no==_line_no)) {
+    while (((buflen+1) == _buf_size) && (previous_line_no==_line_no)) {
         increase_buffer_size();
         _is.getline(_buf+buflen,_buf_size-buflen);
-        if(! check_istream(_is,_line_no)) {
+        if (! check_istream(_is,_line_no)) {
             std::ostringstream oss;
             oss << "ERROR: Unexpected read failure in parse_line() at line_no: " << _line_no << "\n";
             throw blt_exception(oss.str().c_str());
@@ -113,13 +113,13 @@ parse_line() {
         buflen=(strlen(_buf));
     }
 
-    if((buflen+1) >_buf_size) {
+    if ((buflen+1) >_buf_size) {
         std::ostringstream oss;
         oss << "ERROR: Unexpected read failure in parse_line() at line_no: " << _line_no << "\n";
         throw blt_exception(oss.str().c_str());
     }
 
-    if(NULL == _buf) return false;
+    if (NULL == _buf) return false;
     assert(buflen);
 
     // do a low-level separator parse:
@@ -127,8 +127,8 @@ parse_line() {
         char* p(_buf);
         word[0]=p;
         unsigned i(1);
-        while(i<_max_word) {
-            if((*p == '\n') || (*p == '\0')) break;
+        while (i<_max_word) {
+            if ((*p == '\n') || (*p == '\0')) break;
             if (*p == _sep) {
                 *p = '\0';
                 word[i++] = p+1;

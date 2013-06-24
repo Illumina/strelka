@@ -111,8 +111,8 @@ private:
     str2int(const char* s) const {
         const long i(str2long(s,"int"));
 
-        if((i > std::numeric_limits<int>::max()) ||
-           (i < std::numeric_limits<int>::min())) {
+        if ((i > std::numeric_limits<int>::max()) ||
+            (i < std::numeric_limits<int>::min())) {
             str2i_die(s,"int");
         }
         return static_cast<int>(i);

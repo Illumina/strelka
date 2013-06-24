@@ -33,7 +33,7 @@ enum index_t { NORMAL, TUMOR, SIZE };
 inline
 const char*
 get_label(const unsigned i) {
-    switch(static_cast<index_t>(i)) {
+    switch (static_cast<index_t>(i)) {
     case NORMAL: return "NORMAL";
     case TUMOR: return "TUMOR";
     default: return "UNKNOWN";
@@ -43,7 +43,7 @@ get_label(const unsigned i) {
 inline
 char
 get_char_label(const unsigned i) {
-    switch(static_cast<index_t>(i)) {
+    switch (static_cast<index_t>(i)) {
     case NORMAL: return 'n';
     case TUMOR: return 't';
     default: return '?';
@@ -73,7 +73,7 @@ struct strelka_sample_info : public sample_info {
 
         using namespace STRELKA_SAMPLE_TYPE;
 
-        switch(static_cast<index_t>(i)) {
+        switch (static_cast<index_t>(i)) {
         case NORMAL: return (is_tier1 ? "n1-" : "n2-");
         case TUMOR: return (is_tier1 ? "t1-" : "t2-");
         default: return "?" "?-";

@@ -127,15 +127,15 @@ finalize_strelka_options(const prog_info& pinfo,
     //
     //finalize_starling_options(pinfo,vm,opt);
 
-    if(opt.tumor_bam_filename.empty()) {
+    if (opt.tumor_bam_filename.empty()) {
         pinfo.usage("Must specify a sorted BAM file containing aligned tumor sample reads");
     }
 
     {
         const bool is_contigs(! opt.tumor_indel_contig_filename.empty());
         const bool is_reads(! opt.tumor_indel_contig_read_filename.empty());
-        if((is_contigs || is_reads) && !(is_contigs && is_reads)) {
-            if(is_contigs) {
+        if ((is_contigs || is_reads) && !(is_contigs && is_reads)) {
+            if (is_contigs) {
                 pinfo.usage("Tumor contigs specified without corresponding contig reads.");
             } else {
                 pinfo.usage("Tumor contig reads specifed without corresponding contigs.");
@@ -143,15 +143,15 @@ finalize_strelka_options(const prog_info& pinfo,
         }
     }
 
-    if(vm.count("skip-realignment")) {
-        if(opt.is_call_indels()) {
+    if (vm.count("skip-realignment")) {
+        if (opt.is_call_indels()) {
             pinfo.usage("Cannot disable realignment when indel-calling is selected.");
         }
 
         const bool is_contigs(! opt.tumor_indel_contig_filename.empty());
         const bool is_reads(! opt.tumor_indel_contig_read_filename.empty());
 
-        if(is_contigs || is_reads) {
+        if (is_contigs || is_reads) {
             pinfo.usage("Cannot disable realignment when reading grouper contigs.");
         }
     }
@@ -166,20 +166,20 @@ finalize_strelka_options(const prog_info& pinfo,
     check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"indel-somatic-normal-noise-rate",0.,1.);
     check_option_arg_range(pinfo,opt.tier2_indel_nonsite_match_prob,"tier2-indel-nonsite-match-prob",0.,1.);
 
-    if(vm.count("site-somatic-normal-noise-rate")) {
+    if (vm.count("site-somatic-normal-noise-rate")) {
         opt.is_site_somatic_normal_noise_rate=true;
     }
 
-    if(vm.count("indel-somatic-normal-noise-rate")) {
+    if (vm.count("indel-somatic-normal-noise-rate")) {
         opt.is_indel_somatic_normal_noise_rate=true;
     }
 
-    if(vm.count("tier2-indel-nonsite-match-prob")) {
+    if (vm.count("tier2-indel-nonsite-match-prob")) {
         opt.is_tier2_indel_nonsite_match_prob=true;
     }
 
-    if(vm.count("tier2-min-single-align-score")) {
-        if(opt.tier2_min_single_align_score >= opt.min_single_align_score) {
+    if (vm.count("tier2-min-single-align-score")) {
+        if (opt.tier2_min_single_align_score >= opt.min_single_align_score) {
             std::ostringstream oss;
             oss << "Invalid tier2 single align score. Value must be lower than primary single align score: '" << opt.min_single_align_score << "'";
             pinfo.usage(oss.str().c_str());
@@ -187,8 +187,8 @@ finalize_strelka_options(const prog_info& pinfo,
         opt.is_tier2_min_single_align_score=true;
     }
 
-    if(vm.count("tier2-min-paired-align-score")) {
-        if(opt.tier2_min_paired_align_score >= opt.min_paired_align_score) {
+    if (vm.count("tier2-min-paired-align-score")) {
+        if (opt.tier2_min_paired_align_score >= opt.min_paired_align_score) {
             std::ostringstream oss;
             oss << "Invalid tier2 paired align score. Value must be lower than primary paired align score: '" << opt.min_paired_align_score << "'";
             pinfo.usage(oss.str().c_str());
@@ -196,38 +196,38 @@ finalize_strelka_options(const prog_info& pinfo,
         opt.is_tier2_min_paired_align_score=true;
     }
 
-    if(vm.count("tier2-single-align-score-rescue-mode")) {
+    if (vm.count("tier2-single-align-score-rescue-mode")) {
         opt.is_tier2_single_align_score_rescue_mode=true;
     }
 
-    if(vm.count("tier2-no-mismatch-density-filter")) {
+    if (vm.count("tier2-no-mismatch-density-filter")) {
         opt.is_tier2_no_mismatch_density_filter=true;
     }
 
-    if(vm.count("tier2-mismatch-density-filter-count")) {
-        if(opt.is_tier2_no_mismatch_density_filter) {
+    if (vm.count("tier2-mismatch-density-filter-count")) {
+        if (opt.is_tier2_no_mismatch_density_filter) {
             pinfo.usage("Only one tier2 mismatch density filter setting allowed");
         }
         opt.is_tier2_mismatch_density_filter_count=true;
     }
 
-    if(vm.count("tier2-no-filter-unanchored")) {
+    if (vm.count("tier2-no-filter-unanchored")) {
         opt.is_tier2_no_filter_unanchored=true;
     }
 
-    if(vm.count("tier2-include-singleton")) {
+    if (vm.count("tier2-include-singleton")) {
         opt.is_tier2_include_singleton=true;
     }
 
-    if(vm.count("tier2-include-anomalous")) {
+    if (vm.count("tier2-include-anomalous")) {
         opt.is_tier2_include_anomalous=true;
     }
 
-    if(vm.count("tumor-min-candidate-indel-reads")) {
+    if (vm.count("tumor-min-candidate-indel-reads")) {
         opt.is_tumor_sample_min_candidate_indel_reads=true;
     }
 
-    if(vm.count("tumor-min-small-candidate-indel-read-frac")) {
+    if (vm.count("tumor-min-small-candidate-indel-read-frac")) {
         opt.is_tumor_sample_min_small_candidate_indel_read_frac=true;
     }
 

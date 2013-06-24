@@ -82,8 +82,8 @@ struct window_average {
 private:
     void
     pre_insert() {
-        if(_size==_full_size) {
-            if(_is_buf[_head]) {
+        if (_size==_full_size) {
+            if (_is_buf[_head]) {
                 _total -= _buf[_head];
             } else {
                 _null_size--;

@@ -72,7 +72,7 @@ private:
     add_site_internal(const site_info& si);
 
     void write_block_site_record() {
-        if(_block.count<=0) return;
+        if (_block.count<=0) return;
         write_site_record(_block.record);
         _block.reset();
     }

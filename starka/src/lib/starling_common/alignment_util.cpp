@@ -92,9 +92,9 @@ is_indel_in_alignment(const alignment& al,
     pos_t ref_head_pos(al.pos);
     const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
     const unsigned aps(path.size());
-    while(path_index<aps) {
+    while (path_index<aps) {
 
-        if(ref_head_pos > ik.right_pos()) return false;
+        if (ref_head_pos > ik.right_pos()) return false;
 
         const path_segment& ps(path[path_index]);
 
@@ -108,50 +108,50 @@ is_indel_in_alignment(const alignment& al,
         unsigned n_seg(1); // number of path_segments consumed
         if       (is_edge_segment) {
             // only edge segment we use is insert:
-            if(ps.type == INSERT) {
-                if(path_index<ends.first) {
-                    if(      (ref_head_pos==ik.pos) &&
-                             (INDEL::BP_RIGHT==ik.type)) {
+            if (ps.type == INSERT) {
+                if (path_index<ends.first) {
+                    if (      (ref_head_pos==ik.pos) &&
+                              (INDEL::BP_RIGHT==ik.type)) {
                         read_indel_pr.set_end_pos(read_offset+ps.length);
                         return true;
-                    } else if((ref_head_pos==ik.right_pos()) &&
-                              ((INDEL::INSERT==ik.type) || (INDEL::SWAP==ik.type)) &&
-                              (ps.length <= ik.length)) {
+                    } else if ((ref_head_pos==ik.right_pos()) &&
+                               ((INDEL::INSERT==ik.type) || (INDEL::SWAP==ik.type)) &&
+                               (ps.length <= ik.length)) {
                         read_indel_pr.set_end_pos(read_offset+ps.length);
                         return true;
                     }
                 }
 
             } else {
-                if(      (ref_head_pos==ik.pos) &&
-                         (INDEL::BP_LEFT==ik.type)) {
+                if (      (ref_head_pos==ik.pos) &&
+                          (INDEL::BP_LEFT==ik.type)) {
                     read_indel_pr.set_begin_pos(read_offset);
                     return true;
-                } else if((ref_head_pos==ik.pos) &&
-                          ((INDEL::INSERT==ik.type) || (INDEL::SWAP==ik.type)) &&
-                          (ps.length <= ik.length)) {
+                } else if ((ref_head_pos==ik.pos) &&
+                           ((INDEL::INSERT==ik.type) || (INDEL::SWAP==ik.type)) &&
+                           (ps.length <= ik.length)) {
                     read_indel_pr.set_begin_pos(read_offset);
                     return true;
                 }
             }
 
-        } else if(is_swap_start) {
+        } else if (is_swap_start) {
             const swap_info sinfo(path,path_index);
             n_seg=sinfo.n_seg;
 
-            if((ref_head_pos==ik.pos) &&
-               (sinfo.insert_length==ik.length) &&
-               (sinfo.delete_length==ik.swap_dlength)) {
+            if ((ref_head_pos==ik.pos) &&
+                (sinfo.insert_length==ik.length) &&
+                (sinfo.delete_length==ik.swap_dlength)) {
                 read_indel_pr.set_begin_pos(read_offset);
                 read_indel_pr.set_end_pos(read_offset+sinfo.insert_length);
                 return true;
             }
 
-        } else if(is_segment_type_indel(path[path_index].type)) {
-            if((ref_head_pos==ik.pos) &&
-               (ps.length == ik.length) &&
-               (((INSERT==ps.type) && (INDEL::INSERT==ik.type)) ||
-                ((DELETE==ps.type) && (INDEL::DELETE==ik.type)))) {
+        } else if (is_segment_type_indel(path[path_index].type)) {
+            if ((ref_head_pos==ik.pos) &&
+                (ps.length == ik.length) &&
+                (((INSERT==ps.type) && (INDEL::INSERT==ik.type)) ||
+                 ((DELETE==ps.type) && (INDEL::DELETE==ik.type)))) {
                 read_indel_pr.set_begin_pos(read_offset);
                 const unsigned insert_length(INDEL::INSERT==ik.type ? ps.length : 0);
                 read_indel_pr.set_end_pos(read_offset+insert_length);
@@ -159,7 +159,7 @@ is_indel_in_alignment(const alignment& al,
             }
         }
 
-        for(unsigned i(0); i<n_seg; ++i) { increment_path(path,path_index,read_offset,ref_head_pos); }
+        for (unsigned i(0); i<n_seg; ++i) { increment_path(path,path_index,read_offset,ref_head_pos); }
     }
 
     return false;
@@ -180,15 +180,15 @@ remove_edge_deletions(const alignment& al,
 
     const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
     const unsigned as(al.path.size());
-    for(unsigned i(0); i<as; ++i) {
+    for (unsigned i(0); i<as; ++i) {
         const path_segment& ps(al.path[i]);
         const bool is_leading_edge_segment(i<ends.first);
         const bool is_trailing_edge_segment(i>ends.second);
         const bool is_target_type(ps.type==DELETE);
-        if(is_target_type &&
-           ((is_leading_edge_segment && is_remove_leading_edge) ||
-            (is_trailing_edge_segment && is_remove_trailing_edge))) {
-            if(i<ends.first) al2.pos += ps.length;
+        if (is_target_type &&
+            ((is_leading_edge_segment && is_remove_leading_edge) ||
+             (is_trailing_edge_segment && is_remove_trailing_edge))) {
+            if (i<ends.first) al2.pos += ps.length;
         } else {
             al2.path.push_back(ps);
         }
@@ -240,17 +240,17 @@ normalize_indel(const char* base_seq,
     unsigned bs(base_seq_start);
     unsigned is(insert_seq_start);
 
-    while(true) {
+    while (true) {
         // read deletion fell off edge:
-        if(bs==0) return std::make_pair(true,0);
+        if (bs==0) return std::make_pair(true,0);
 
         // attempt to shift back one base
-        if(base_seq[bs-1] != insert_seq[is+insert_size-1]) {
+        if (base_seq[bs-1] != insert_seq[is+insert_size-1]) {
             return std::make_pair(false,base_seq_start-bs);
         }
 
         // read insertion fell off edge:
-        if(is==0) return std::make_pair(true,0);
+        if (is==0) return std::make_pair(true,0);
         bs--;
         is--;
     }
@@ -280,19 +280,19 @@ normalize_alignment(alignment& al,
     pos_t last_event_end(ps.pos);
 
     const unsigned aps(al.apath.size());
-    for(unsigned i(0); i<aps; ++i) {
+    for (unsigned i(0); i<aps; ++i) {
         path_segment& ps(al.apath[i]);
 
         std::cerr << "apath segment i: " << i << "\n";
 
-        if((ps.type == INSERT) or (ps.type == DELETE)) {
+        if ((ps.type == INSERT) or (ps.type == DELETE)) {
             // do indel normalization:
             //
             const char* base(ref_seq.c_str());
             pos_t base_start(al.pos+ref_offset);
             const char* insert(al.seq());
             pos_t insert_start(read_offset);
-            if(ps.type == DELETE) {
+            if (ps.type == DELETE) {
                 std::swap(base,insert);
                 std::swap(base_start,insert_start);
             }
@@ -301,10 +301,10 @@ normalize_alignment(alignment& al,
                                      insert,insert_start,
                                      ps.length);
 
-            if(norm_res.first or (0 != norm_res.second)) is_norm=true;
+            if (norm_res.first or (0 != norm_res.second)) is_norm=true;
 
-            if(norm.res_first) {
-                if(ps.type == INSERT) {
+            if (norm.res_first) {
+                if (ps.type == INSERT) {
                     ps.type == MATCH;
                     ps.pos -= ps.length;
                 } else {
@@ -315,11 +315,11 @@ normalize_alignment(alignment& al,
                 const unsigned shift(norm_res.second); // TODO -- collision detection!
                 std::cerr << "norm pass shift: " << shift << "\n";
 
-                if(ps.length <= MAX_INDEL_SIZE) {
+                if (ps.length <= MAX_INDEL_SIZE) {
                     indel in;
                     in.pos=base_pos+ref_offset-shift;
                     in.key.length = ps.length;
-                    if(ps.type == INSERT) {
+                    if (ps.type == INSERT) {
                         in.key.type=INDEL::INSERT;
                         in.data.seq=std::string(fwd_strand_read+read_offset-shift,ps.length);
                     } else {
@@ -338,9 +338,9 @@ normalize_alignment(alignment& al,
             read_offset += ps.length;
             ref_offset += ps.length;
             continue;
-        } else if(ps.type == DELETE) {
+        } else if (ps.type == DELETE) {
             ref_offset += ps.length;
-        } else if(ps.type == INSERT) {
+        } else if (ps.type == INSERT) {
             read_offset += ps.length;
         } else {
             assert(0); // can't handle other CIGAR types yet

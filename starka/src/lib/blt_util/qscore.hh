@@ -105,7 +105,7 @@ inline
 int
 error_prob_to_qscore(const double prob,
                      const bool is_qphred) {
-    if(is_qphred) {
+    if (is_qphred) {
         return error_prob_to_qphred(prob);
     } else {
         return error_prob_to_qlogodds(prob);
@@ -116,7 +116,7 @@ inline
 double
 qscore_to_error_prob(const int qscore,
                      const bool is_qphred) {
-    if(is_qphred) {
+    if (is_qphred) {
         return qphred_to_error_prob(qscore);
     } else {
         return qlogodds_to_error_prob(qscore);

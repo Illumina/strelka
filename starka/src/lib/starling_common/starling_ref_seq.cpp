@@ -40,10 +40,10 @@ get_samtools_ref_seq(const char* ref_file,
     faidx_t* fai(fai_load(ref_file));
     std::ostringstream fa_region_oss;
     fa_region_oss << chr_name;
-    if(pr.is_end_pos) {
+    if (pr.is_end_pos) {
         const pos_t begin(1+(pr.is_begin_pos ? pr.begin_pos : 0));
         fa_region_oss << ':' << begin << '-' << pr.end_pos;
-    } else if(pr.is_begin_pos) {
+    } else if (pr.is_begin_pos) {
         fa_region_oss << ':' << pr.begin_pos+1;
     }
     int len; // throwaway...
@@ -70,14 +70,14 @@ get_starling_ref_seq(const starling_options& opt,
     pos_range ref_range = opt.user_report_range;
     static const pos_t region_read_size_pad(512);
     const pos_t pad_size(opt.max_indel_size+region_read_size_pad);
-    if(ref_range.is_begin_pos) {
+    if (ref_range.is_begin_pos) {
         ref_range.begin_pos -= 1;
         ref_range.begin_pos = std::max(0,ref_range.begin_pos-pad_size);
     } else {
         ref_range.set_begin_pos(0);
     }
 
-    if(ref_range.is_end_pos) {
+    if (ref_range.is_end_pos) {
         ref_range.end_pos += pad_size;
     }
 
@@ -86,7 +86,7 @@ get_starling_ref_seq(const starling_options& opt,
     const char* filename(NULL);
     const char* chrom_name(NULL);
 
-    if(opt.is_samtools_ref_set) {
+    if (opt.is_samtools_ref_set) {
         assert(! opt.bam_seq_name.empty());
         filename=opt.samtools_ref_seq_file.c_str();
         chrom_name=opt.bam_seq_name.c_str();

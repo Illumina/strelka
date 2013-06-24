@@ -53,7 +53,7 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
     insert_error_prob=(1.-std::exp(-insert_g));
 
     double delete_g(delete_hpol1_err);
-    if(hpol_len>1) {
+    if (hpol_len>1) {
         delete_g = delete_A*hpol_len+delete_B*std::pow(hpol_len,delete_C);
     }
     delete_error_prob=(1.-std::exp(-delete_g));
@@ -79,17 +79,17 @@ get_indel_error_prob(const starling_options& client_opt,
     //
     static std::pair<double,double> indel_error_prob_len[max_hpol_len];
 
-    if(! is_init) {
-        if(! client_opt.is_simple_indel_error) {
+    if (! is_init) {
+        if (! client_opt.is_simple_indel_error) {
             double itmp(0);
             double dtmp(0);
-            for(unsigned i(0); i<max_hpol_len; ++i) {
+            for (unsigned i(0); i<max_hpol_len; ++i) {
                 get_indel_error_prob_hpol_len(i+1,itmp,dtmp);
                 indel_error_prob_len[i] = std::make_pair(itmp,dtmp);
             }
         } else {
             const double ie(client_opt.simple_indel_error);
-            for(unsigned i(0); i<max_hpol_len; ++i) {
+            for (unsigned i(0); i<max_hpol_len; ++i) {
                 indel_error_prob_len[i] = std::make_pair(ie,ie);
             }
         }
@@ -98,7 +98,7 @@ get_indel_error_prob(const starling_options& client_opt,
 
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
-    if(! is_simple_indel) {
+    if (! is_simple_indel) {
         // breakpoints and swaps --
         // use zero repeat error for now.
         //
@@ -110,13 +110,13 @@ get_indel_error_prob(const starling_options& client_opt,
         // treat everything besides simple homopolymer
         // contractions/expansions as homopolymer length 1:
         //
-        if(iri.repeat_unit.size() == 1) {
+        if (iri.repeat_unit.size() == 1) {
             static const unsigned one(1);
             const unsigned ref_hpol_len = std::min(std::max(iri.ref_repeat_count,one),max_hpol_len);
             const unsigned indel_hpol_len = std::min(std::max(iri.indel_repeat_count,one),max_hpol_len);
             int indel_size(1);
             static const bool is_indel_size_dependent_error(false);
-            if(is_indel_size_dependent_error) {
+            if (is_indel_size_dependent_error) {
                 indel_size=(std::abs(static_cast<long>(iri.ref_repeat_count)-
                                      static_cast<long>(iri.indel_repeat_count)));
             }
@@ -126,7 +126,7 @@ get_indel_error_prob(const starling_options& client_opt,
                                           std::pow(indel_error_prob_len[ref_hpol_len-1].first,indel_size));
                 ref_error_prob=std::max(indel_error_prob_len[0].second,
                                         std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
-            } else if(iri.it == INDEL::DELETE) {
+            } else if (iri.it == INDEL::DELETE) {
                 indel_error_prob=std::max(indel_error_prob_len[0].second,
                                           std::pow(indel_error_prob_len[ref_hpol_len-1].second,indel_size));
                 ref_error_prob=std::max(indel_error_prob_len[0].first,
@@ -139,7 +139,7 @@ get_indel_error_prob(const starling_options& client_opt,
             if       (iri.it == INDEL::INSERT) {
                 indel_error_prob=indel_error_prob_len[0].first;
                 ref_error_prob=indel_error_prob_len[0].second;
-            } else if(iri.it == INDEL::DELETE) {
+            } else if (iri.it == INDEL::DELETE) {
                 indel_error_prob=indel_error_prob_len[0].second;
                 ref_error_prob=indel_error_prob_len[0].first;
             } else {

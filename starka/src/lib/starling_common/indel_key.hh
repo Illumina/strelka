@@ -52,8 +52,8 @@ struct indel_key {
     //
     bool
     operator<(const indel_key& rhs) const {
-        if(pos < rhs.pos) return true;
-        if(pos == rhs.pos) {
+        if (pos < rhs.pos) return true;
+        if (pos == rhs.pos) {
             return gtcore(rhs);
         }
         return false;
@@ -61,14 +61,14 @@ struct indel_key {
 
     bool
     gtcore(const indel_key& rhs) const {
-        if(type < rhs.type) return true;
-        if(type == rhs.type) {
-            if((type == INDEL::NONE) ||
-               (type == INDEL::BP_LEFT) ||
-               (type == INDEL::BP_RIGHT)) return false;
-            if(length < rhs.length) return true;
-            if(length == rhs.length) {
-                if(swap_dlength < rhs.swap_dlength) return true;
+        if (type < rhs.type) return true;
+        if (type == rhs.type) {
+            if ((type == INDEL::NONE) ||
+                (type == INDEL::BP_LEFT) ||
+                (type == INDEL::BP_RIGHT)) return false;
+            if (length < rhs.length) return true;
+            if (length == rhs.length) {
+                if (swap_dlength < rhs.swap_dlength) return true;
             }
         }
         return false;
@@ -84,7 +84,7 @@ struct indel_key {
 
     pos_t right_pos() const {
         if     (type==INDEL::DELETE) { return pos+length; }
-        else if(type==INDEL::SWAP)   { return pos+swap_dlength; }
+        else if (type==INDEL::SWAP)   { return pos+swap_dlength; }
         return pos;
     }
 
@@ -93,8 +93,8 @@ struct indel_key {
     //
     unsigned
     insert_length() const {
-        if((type == INDEL::INSERT) ||
-           (type == INDEL::SWAP)) {
+        if ((type == INDEL::INSERT) ||
+            (type == INDEL::SWAP)) {
             return length;
         } else {
             return 0;
@@ -105,7 +105,7 @@ struct indel_key {
     delete_length() const {
         if       (type == INDEL::DELETE) {
             return length;
-        } else if(type == INDEL::SWAP) {
+        } else if (type == INDEL::SWAP) {
             return swap_dlength;
         } else {
             return 0;
@@ -124,7 +124,7 @@ struct indel_key {
             pos_range pr;
             pr.set_begin_pos(pos);
             return pr;
-        } else if(type == INDEL::BP_RIGHT) {
+        } else if (type == INDEL::BP_RIGHT) {
             pos_range pr;
             pr.set_end_pos(pos);
             return pr;
@@ -150,8 +150,8 @@ struct right_pos_indel_key_sorter {
     bool
     operator()(const indel_key& i1,
                const indel_key& i2) const {
-        if(i1.right_pos() < i2.right_pos()) return true;
-        if(i1.right_pos() == i2.right_pos()) {
+        if (i1.right_pos() < i2.right_pos()) return true;
+        if (i1.right_pos() == i2.right_pos()) {
             return i1.gtcore(i2);
         }
         return false;

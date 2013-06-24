@@ -66,7 +66,7 @@ struct ddata {
           fs(flank_size), fs2(fs*2),
           delta_size(std::max(1+fs2,read_size)-fs2),
           rmi(rmi_init) {
-        for(unsigned i(0); i<delta_size; ++i) { rmi[i].delta = 0; }
+        for (unsigned i(0); i<delta_size; ++i) { rmi[i].delta = 0; }
     }
 
     void
@@ -74,19 +74,19 @@ struct ddata {
         const unsigned length) {
         assert(! is_totaled);
         rmi[std::max(fs2,start_pos)-fs2].delta += 1;
-        if((start_pos+length)<delta_size) { rmi[start_pos+length].delta -= 1; }
+        if ((start_pos+length)<delta_size) { rmi[start_pos+length].delta -= 1; }
     }
 
     int
     get(const unsigned pos) {
-        if(! is_totaled) { total(); is_totaled=true; }
+        if (! is_totaled) { total(); is_totaled=true; }
         return rmi[std::min(delta_size-1,std::max(fs,pos)-fs)].delta;
     }
 
 private:
     void
     total() {
-        for(unsigned i(1); i<delta_size; ++i) { rmi[i].delta += rmi[i-1].delta; }
+        for (unsigned i(1); i<delta_size; ++i) { rmi[i].delta += rmi[i-1].delta; }
     }
 
     bool is_totaled;
@@ -132,7 +132,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
     const unsigned fs(client_opt.max_win_mismatch_flank_size);
     ddata dd(read_size,fs,rmi);
 
-    for(unsigned i(0); i<read_size; ++i) rmi[i].is_mismatch=false;
+    for (unsigned i(0); i<read_size; ++i) rmi[i].is_mismatch=false;
 
     pos_t ref_head_pos(al.pos);
     unsigned read_head_pos(0);
@@ -142,26 +142,26 @@ create_mismatch_filter_map(const blt_options& client_opt,
     const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
 
     const unsigned as(al.path.size());
-    for(unsigned i(0); i<as; ++i) {
+    for (unsigned i(0); i<as; ++i) {
         const path_segment& ps(al.path[i]);
 
         const bool is_edge_segment((i<ends.first) || (i>ends.second));
 
         if       (ps.type == INSERT) {
-            if(! is_edge_segment) dd.inc(read_head_pos,ps.length);
+            if (! is_edge_segment) dd.inc(read_head_pos,ps.length);
             read_head_pos += ps.length;
 
-        } else if(ps.type == DELETE) {
-            if(! is_edge_segment) dd.inc(read_head_pos,0);
+        } else if (ps.type == DELETE) {
+            if (! is_edge_segment) dd.inc(read_head_pos,0);
             ref_head_pos += ps.length;
 
-        } else if(ps.type == MATCH) {
-            for(unsigned j(0); j<ps.length; ++j) {
+        } else if (ps.type == MATCH) {
+            for (unsigned j(0); j<ps.length; ++j) {
                 const unsigned read_pos(read_head_pos+j);
-                if((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
+                if ((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
 
-                if(read_seq.get_char(read_pos) != ref_seq.get_char(ref_pos)) {
+                if (read_seq.get_char(read_pos) != ref_seq.get_char(ref_pos)) {
                     rmi[read_pos].is_mismatch=true;
                     dd.inc(read_pos,1);
                 }
@@ -169,11 +169,11 @@ create_mismatch_filter_map(const blt_options& client_opt,
             read_head_pos += ps.length;
             ref_head_pos += ps.length;
 
-        } else if(ps.type == SOFT_CLIP) {
+        } else if (ps.type == SOFT_CLIP) {
             //dd.inc(read_head_pos,ps.length);
             read_head_pos += ps.length;
 
-        } else if(ps.type == HARD_CLIP) {
+        } else if (ps.type == HARD_CLIP) {
             // do nothing
 
         } else {
@@ -185,7 +185,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
 
     // set mismatch filter value:
     const int max_pass(static_cast<int>(client_opt.max_win_mismatch));
-    for(unsigned i(0); i<read_size; ++i) {
+    for (unsigned i(0); i<read_size; ++i) {
         const int del(dd.get(i));
         rmi[i].mismatch_count = del;
         rmi[i].mismatch_count_ns = del - rmi[i].is_mismatch;
@@ -218,32 +218,32 @@ get_valid_alignment_range(const alignment& al,
     BOOST_FOREACH(const path_segment& ps, al.path) {
 
         if       ((ps.type == INSERT) || (ps.type == SOFT_CLIP)) {
-            if(ps.type == INSERT) {
+            if (ps.type == INSERT) {
                 fwd_read_score[read_head_pos] += mismatch_score;
                 rev_read_score[read_head_pos+ps.length-1] += mismatch_score;
             }
             read_head_pos += ps.length;
 
-        } else if(ps.type == DELETE) {
+        } else if (ps.type == DELETE) {
 
-            if(read_head_pos > 0) { // filter out leading deletions:
+            if (read_head_pos > 0) { // filter out leading deletions:
                 fwd_read_score[read_head_pos-1] += mismatch_score;
             }
 
-            if(read_head_pos < read_size) { // filter out trailing deletions
+            if (read_head_pos < read_size) { // filter out trailing deletions
                 rev_read_score[read_head_pos] += mismatch_score;
             }
             ref_head_pos += ps.length;
 
-        } else if(ps.type == MATCH) {
-            for(unsigned j(0); j<ps.length; ++j) {
+        } else if (ps.type == MATCH) {
+            for (unsigned j(0); j<ps.length; ++j) {
                 const unsigned read_pos(read_head_pos+j);
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
 
                 const char read_char(read_seq.get_char(read_pos));
                 const char ref_char(ref_seq.get_char(ref_pos));
-                if((read_char != 'N') && (ref_char != 'N')) {
-                    if(read_char != ref_char) {
+                if ((read_char != 'N') && (ref_char != 'N')) {
+                    if (read_char != ref_char) {
                         fwd_read_score[read_pos] += mismatch_score;
                         rev_read_score[read_pos] += mismatch_score;
                     } else {
@@ -255,7 +255,7 @@ get_valid_alignment_range(const alignment& al,
             read_head_pos += ps.length;
             ref_head_pos += ps.length;
 
-        } else if(ps.type == HARD_CLIP) {
+        } else if (ps.type == HARD_CLIP) {
             // do nothing:
 
         } else {
@@ -270,19 +270,19 @@ get_valid_alignment_range(const alignment& al,
     valid_pr.set_end_pos(read_size);
     int fwd_sum(0),fwd_min(min_segment_score);
     int rev_sum(0),rev_min(min_segment_score);
-    for(unsigned i(0); i<read_size; ++i) {
+    for (unsigned i(0); i<read_size; ++i) {
         fwd_sum += fwd_read_score[i];
-        if(fwd_sum<=fwd_min) {
+        if (fwd_sum<=fwd_min) {
             valid_pr.begin_pos=i+1;
             fwd_min=fwd_sum;
         }
         rev_sum += rev_read_score[read_size-i-1];
-        if(rev_sum<=rev_min) {
+        if (rev_sum<=rev_min) {
             valid_pr.end_pos=read_size-i-1;
             rev_min=rev_sum;
         }
     }
-    if(valid_pr.end_pos<=valid_pr.begin_pos) {
+    if (valid_pr.end_pos<=valid_pr.begin_pos) {
         valid_pr.begin_pos=0;
         valid_pr.end_pos=0;
     }

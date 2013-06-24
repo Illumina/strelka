@@ -50,14 +50,14 @@ struct starling_input_stream_data {
     void
     register_reads(bam_streamer& bs,
                    const sample_id_t sample_no = 0) {
-        if(_reads.test_key(sample_no)) register_error("reads",sample_no);
+        if (_reads.test_key(sample_no)) register_error("reads",sample_no);
         _reads.insert(sample_no,&bs);
     }
 
     void
     register_contigs(contig_reader& cr,
                      const sample_id_t sample_no = 0) {
-        if(_contigs.test_key(sample_no)) register_error("contigs",sample_no);
+        if (_contigs.test_key(sample_no)) register_error("contigs",sample_no);
         _contigs.insert(sample_no,&cr);
     }
 
@@ -103,10 +103,10 @@ struct input_record_info {
     //
     bool
     operator<(const input_record_info& rhs) const {
-        if(pos > rhs.pos) return true;
-        if(pos == rhs.pos) {
-            if(itype < rhs.itype) return true;
-            if(itype==rhs.itype) {
+        if (pos > rhs.pos) return true;
+        if (pos == rhs.pos) {
+            if (itype < rhs.itype) return true;
+            if (itype==rhs.itype) {
                 if (sample_no > rhs.sample_no) return true;
                 if (sample_no == rhs.sample_no) {
                     return (_order > rhs._order);

@@ -69,7 +69,7 @@ namespace READ_ALIGN {
 
 const char*
 label(const index_t i) {
-    switch(i) {
+    switch (i) {
     case GENOME: return "GENOME";
     case CONTIG: return "CONTIG";
     }
@@ -92,7 +92,7 @@ newalign_dump(const starling_read& sr,
     log_os << "\tread: " << sr << "\n"
            << "\tnew-alignment: " << al << "\n"
            << "\tnew-alignment-type: " << READ_ALIGN::label(rat) << "\n";
-    if(READ_ALIGN::CONTIG == rat) log_os << "\tcontig-id: " << contig_id << "\n";
+    if (READ_ALIGN::CONTIG == rat) log_os << "\tcontig-id: " << contig_id << "\n";
 }
 
 
@@ -132,7 +132,7 @@ starling_read::
 MAPLEVEL::index_t
 starling_read::
 effective_maplevel() const {
-    if(get_full_segment().genome_align().empty()) {
+    if (get_full_segment().genome_align().empty()) {
         return MAPLEVEL::TIER1_MAPPED;
     } else {
         return genome_align_maplev;
@@ -145,7 +145,7 @@ effective_maplevel() const {
 bool
 starling_read::
 is_treated_as_tier1_mapping() const {
-    if(get_full_segment().genome_align().empty()) {
+    if (get_full_segment().genome_align().empty()) {
         return true;
     } else {
         return (MAPLEVEL::TIER1_MAPPED == genome_align_maplev);
@@ -166,8 +166,8 @@ is_treated_as_anytier_mapping() const {
 uint8_t
 starling_read::
 map_qual() const {
-    if((! get_full_segment().genome_align().empty()) &&
-       _is_bam_record_genomic) {
+    if ((! get_full_segment().genome_align().empty()) &&
+        _is_bam_record_genomic) {
         return _read_rec.map_qual();
     } else {
         return 255;
@@ -197,8 +197,8 @@ is_compatible_alignment(const alignment& al,
                         const align_id_t contig_id,
                         const starling_options& opt) const {
 
-    if(is_fwd_strand() != al.is_fwd_strand) {
-        if(opt.is_baby_elephant) {
+    if (is_fwd_strand() != al.is_fwd_strand) {
+        if (opt.is_baby_elephant) {
             log_os << "WARNING: Disallowed internal development option in use (baby-elephant).\n";
             log_os << "WARNING: ";
         } else {
@@ -208,7 +208,7 @@ is_compatible_alignment(const alignment& al,
         log_os << "multiple suggested alignments for read are not same-strand.\n";
         newalign_dump(*this,al,rat,contig_id);
 
-        if(opt.is_baby_elephant) {
+        if (opt.is_baby_elephant) {
             return false;
         } else {
             exit(EXIT_FAILURE);
@@ -217,8 +217,8 @@ is_compatible_alignment(const alignment& al,
 
     const read_segment& rseg(get_full_segment());
 
-    if(READ_ALIGN::GENOME == rat) {
-        if(! rseg.genome_align().empty()) {
+    if (READ_ALIGN::GENOME == rat) {
+        if (! rseg.genome_align().empty()) {
             log_os << "ERROR: multiple suggested genomic alignments for read.\n";
             death_dump(*this,al,rat,contig_id);
         }
@@ -226,8 +226,8 @@ is_compatible_alignment(const alignment& al,
         typedef contig_align_t cat;
         const cat& ct(rseg.contig_align());
         cat::const_iterator i(ct.begin()),i_end(ct.end());
-        for(; i!=i_end; ++i) {
-            if(i->first == contig_id) {
+        for (; i!=i_end; ++i) {
+            if (i->first == contig_id) {
                 log_os << "ERROR: multiple suggested alignments for read from same contig.\n";
                 death_dump(*this,al,rat,contig_id);
             }
@@ -238,14 +238,14 @@ is_compatible_alignment(const alignment& al,
     // stored for this read to be used -- this is treated as a warning
     // for now:
     const pos_t new_pos(get_alignment_buffer_pos(al));
-    if(! rseg.genome_align().empty()) {
-        if(! is_alignment_in_range(new_pos,rseg.genome_align(),opt.max_indel_size)) return false;
+    if (! rseg.genome_align().empty()) {
+        if (! is_alignment_in_range(new_pos,rseg.genome_align(),opt.max_indel_size)) return false;
     }
     typedef contig_align_t cat;
     const cat& ct(rseg.contig_align());
     cat::const_iterator i(ct.begin()),i_end(ct.end());
-    for(; i!=i_end; ++i) {
-        if(! is_alignment_in_range(new_pos,i->second,opt.max_indel_size)) {
+    for (; i!=i_end; ++i) {
+        if (! is_alignment_in_range(new_pos,i->second,opt.max_indel_size)) {
             return false;
         }
     }
@@ -264,7 +264,7 @@ set_genome_align(const alignment& al) {
 
     get_full_segment()._genome_align=al;
     const seg_id_t n_seg(apath_exon_count(al.path));
-    if(n_seg<=1) return;
+    if (n_seg<=1) return;
 
     // deal with segmented reads now:
     assert(! is_segmented());
@@ -280,15 +280,15 @@ set_genome_align(const alignment& al) {
     path_t seg_path;
 
     const unsigned as(al.path.size());
-    for(unsigned i(0); i<as; ++i) {
+    for (unsigned i(0); i<as; ++i) {
         const path_segment& ps(al.path[i]);
         const pos_t last_read_pos(read_pos);
-        if(is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
-        if(is_segment_type_read_length(ps.type)) read_pos += ps.length;
+        if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
+        if (is_segment_type_read_length(ps.type)) read_pos += ps.length;
 
-        if(ps.type!=SKIP) seg_path.push_back(ps);
+        if (ps.type!=SKIP) seg_path.push_back(ps);
 
-        if(ps.type==SKIP || ((i+1)==as)) {
+        if (ps.type==SKIP || ((i+1)==as)) {
             const pos_t end_read_pos( (ps.type==SKIP) ?
                                       last_read_pos : read_pos );
             assert(end_read_pos>seg_start_read_pos);
@@ -322,29 +322,29 @@ update_full_segment() {
 
     // first determine if anything even needs to be done:
     const unsigned n_seg(segment_count());
-    for(unsigned i(0); i<n_seg; ++i) {
+    for (unsigned i(0); i<n_seg; ++i) {
         const seg_id_t seg_id(i+1);
         const read_segment& rseg(get_segment(seg_id));
-        if(! rseg.is_realigned) continue;
-        if(rseg.realignment==rseg.genome_align()) continue;
+        if (! rseg.is_realigned) continue;
+        if (rseg.realignment==rseg.genome_align()) continue;
         is_new_realignment=true;
         break;
     }
 
-    if(! is_new_realignment) return;
+    if (! is_new_realignment) return;
 
     // sew together segment reads:
     fullseg.is_realigned=true;
     alignment& fal(fullseg.realignment);
     assert(fal.empty());
     pos_t ref_pos(0);
-    for(unsigned i(0); i<n_seg; ++i) {
+    for (unsigned i(0); i<n_seg; ++i) {
         using namespace ALIGNPATH;
         const seg_id_t seg_id(i+1);
         const read_segment& rseg(get_segment(seg_id));
         const alignment& ral(rseg.is_realigned ? rseg.realignment : rseg.genome_align() );
         assert(! ral.empty());
-        if(i==0) {
+        if (i==0) {
             fal.pos=ral.pos;
             fal.is_fwd_strand=is_fwd_strand();
         } else {
@@ -357,7 +357,7 @@ update_full_segment() {
         }
         ref_pos=ral.pos;
         BOOST_FOREACH(const path_segment& ps, ral.path) {
-            if(is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
+            if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
             fal.path.push_back(ps);
         }
     }
@@ -373,15 +373,15 @@ void
 starling_read::
 write_bam(bam_dumper& bamd) {
 
-    if(is_segmented()) update_full_segment();
+    if (is_segmented()) update_full_segment();
 
     const read_segment& rseg(get_full_segment());
 
     const alignment* al_ptr(rseg.get_best_alignment());
-    if(NULL == al_ptr) return;
+    if (NULL == al_ptr) return;
 
     // if original genomic alignment, write out record unmodified:
-    if(al_ptr == (&(rseg.genome_align()))) {
+    if (al_ptr == (&(rseg.genome_align()))) {
         //        bamd.put_record(_read_rec._bp);
         return;
     }
@@ -390,7 +390,7 @@ write_bam(bam_dumper& bamd) {
 
     // if "realigned" to exactly the original genomic alignment, then
     // just print out genomic alignment:
-    if(al == rseg.genome_align()) {
+    if (al == rseg.genome_align()) {
         //        bamd.put_record(_read_rec._bp);
         return;
     }
@@ -399,7 +399,7 @@ write_bam(bam_dumper& bamd) {
     // realignment case, for now we skip realignment if this happens
     // and write out the original genomic record:
     //
-    if(al.pos < 0) {
+    if (al.pos < 0) {
         //        bamd.put_record(_read_rec._bp);
         return;
     }
@@ -413,7 +413,7 @@ write_bam(bam_dumper& bamd) {
     const bool is_orig_unmapped((! _is_bam_record_genomic) || _read_rec.is_unmapped());
 
     // mark mapped bit if necessary:
-    if(is_orig_unmapped) {
+    if (is_orig_unmapped) {
         static const uint8_t unknown_mapq(255);
         ca.flag &= ~(BAM_FLAG::UNMAPPED);
         ca.qual=unknown_mapq;
@@ -436,11 +436,11 @@ write_bam(bam_dumper& bamd) {
     // update pos field if it has changed:
     //
     const int32_t orig_pos( is_orig_unmapped ? -1 : ca.pos );
-    if(orig_pos != al.pos) {
+    if (orig_pos != al.pos) {
         // write current pos to "OP" field if "OP" field does not
         // exist already:
         static const char optag[] = {'O','P'};
-        if(NULL==bam_aux_get(&br,optag)) {
+        if (NULL==bam_aux_get(&br,optag)) {
             assert(orig_pos>=-1);
             const uint32_t out_pos(orig_pos+1);
             bam_aux_append_unsigned(br,optag,out_pos);
@@ -452,7 +452,7 @@ write_bam(bam_dumper& bamd) {
     // cigar has changed in realignment):
     //
     static const char octag[] = {'O','C'};
-    if((! is_orig_unmapped) && (NULL==bam_aux_get(&br,octag))) {
+    if ((! is_orig_unmapped) && (NULL==bam_aux_get(&br,octag))) {
         std::string _oc_cigar;
         apath_to_cigar(rseg.genome_align().path,_oc_cigar);
         bam_aux_append(&br,octag,'Z', (_oc_cigar.size()+1),(uint8_t*) (_oc_cigar.c_str()));
@@ -531,7 +531,7 @@ operator<<(std::ostream& os,
     os << sr.get_full_segment();
 
     const seg_id_t sc(sr.segment_count());
-    for(unsigned i(0); i<sc; ++i) {
+    for (unsigned i(0); i<sc; ++i) {
         const seg_id_t seg_id(i+1);
         os << "partial_segment " << static_cast<unsigned>(seg_id) << " :\n";
         short_report(os,sr.get_segment(seg_id));

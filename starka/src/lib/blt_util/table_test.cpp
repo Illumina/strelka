@@ -45,7 +45,7 @@ int workspace(2000000);
 double*
 get_exact_test_ws() {
     double* ws = make_ws(workspace);
-    if(ws==0) {
+    if (ws==0) {
         log_os << "ERROR: can't allocate exact test workspace.\n";
         exit(EXIT_FAILURE);
     }
@@ -63,7 +63,7 @@ table_exact_pval(const int* table,
     static const unsigned MAX_DIM(10);
 
     bool is_free_ws(false);
-    if(ws==0) {
+    if (ws==0) {
         ws=get_exact_test_ws();
         is_free_ws=true;
     }
@@ -83,13 +83,13 @@ table_exact_pval(const int* table,
 
     fexact(&nc,&nr,const_cast<int*>(table),&nc,&expect,&percent,&emin,&prt,&pval,&workspace,ws,&mult);
 
-    if(is_free_ws) free(ws);
+    if (is_free_ws) free(ws);
 
 #ifdef DEBUG_EXACT
     std::cerr << "table:\n";
-    for(unsigned i(0); i<n_row; ++i) {
-        for(unsigned j(0); j<n_col++j) {
-            if(j) std::cerr << " ";
+    for (unsigned i(0); i<n_row; ++i) {
+        for (unsigned j(0); j<n_col++j) {
+            if (j) std::cerr << " ";
             std::cerr << table[j+i*n_col];
         }
         std::cerr << "\n";
@@ -129,11 +129,11 @@ table_chi_sqr_pval(const int* table,
     int rsum[MAX_DIM];
     int csum[MAX_DIM];
 
-    for(unsigned r(0); r<n_row; ++r) rsum[r] = 0;
-    for(unsigned c(0); c<n_col; ++c) csum[c] = 0;
+    for (unsigned r(0); r<n_row; ++r) rsum[r] = 0;
+    for (unsigned c(0); c<n_col; ++c) csum[c] = 0;
 
-    for(unsigned r(0); r<n_row; ++r) {
-        for(unsigned c(0); c<n_col; ++c) {
+    for (unsigned r(0); r<n_row; ++r) {
+        for (unsigned c(0); c<n_col; ++c) {
             const int obs(table[c+r*n_col]);
             assert(obs>=0);
             csum[c] += obs;
@@ -142,14 +142,14 @@ table_chi_sqr_pval(const int* table,
         }
     }
 
-    if(sum <= 0.) return 1.;
+    if (sum <= 0.) return 1.;
 
     double xsq(0);
-    for(unsigned r(0); r<n_row; ++r) {
-        for(unsigned c(0); c<n_col; ++c) {
+    for (unsigned r(0); r<n_row; ++r) {
+        for (unsigned c(0); c<n_col; ++c) {
             const int obs(table[c+r*n_col]);
             const double expect((rsum[r]*csum[c])/sum);
-            if(expect <= 0) continue;
+            if (expect <= 0) continue;
             const double d(obs-expect);
             xsq += (d*d)/expect;
         }
@@ -157,16 +157,16 @@ table_chi_sqr_pval(const int* table,
 
     unsigned n_df_row(n_row);
     unsigned n_df_col(n_col);
-    for(unsigned r(0); r<n_row; ++r) {
-        if(rsum[r] == 0) {
+    for (unsigned r(0); r<n_row; ++r) {
+        if (rsum[r] == 0) {
             n_df_row--;
-            if(n_df_row<=1) return 1.;
+            if (n_df_row<=1) return 1.;
         }
     }
-    for(unsigned c(0); c<n_col; ++c) {
-        if(csum[c] == 0) {
+    for (unsigned c(0); c<n_col; ++c) {
+        if (csum[c] == 0) {
             n_df_col--;
-            if(n_df_col<=1) return 1.;
+            if (n_df_col<=1) return 1.;
         }
     }
     const unsigned df((n_df_row-1)*(n_df_col-1));
@@ -198,7 +198,7 @@ is_reject_table(const double alpha,
 
     const unsigned n_trial(n_success+n_failure);
 
-    if(n_trial > exact_test_threshold) {
+    if (n_trial > exact_test_threshold) {
         return is_reject_table_chi_sqr(alpha,table,n_row,n_col);
     } else {
         return is_reject_table_exact(alpha,table,n_row,n_col);

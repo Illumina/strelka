@@ -83,18 +83,18 @@ struct read_path_scores {
     insert_alt(const indel_key& ik,
                const score_t a) {
         const unsigned ais(static_cast<unsigned>(alt_indel.size()));
-        if(ais < 2) {
+        if (ais < 2) {
             alt_indel.push_back(std::make_pair(ik,a));
         } else {
             unsigned min_index(ais);
             score_t min(a);
-            for(unsigned i(0); i<ais; ++i) {
-                if(alt_indel[i].second < min) {
+            for (unsigned i(0); i<ais; ++i) {
+                if (alt_indel[i].second < min) {
                     min = alt_indel[i].second;
                     min_index = i;
                 }
             }
-            if(min_index<ais) {
+            if (min_index<ais) {
                 alt_indel[min_index] = std::make_pair(ik,a);
             }
         }
@@ -138,7 +138,7 @@ struct insert_seq_manager {
     // get final consensus sequence:
     const std::string&
     get() {
-        if(! _is_consensus) {
+        if (! _is_consensus) {
             _finalize();
         }
         return _consensus_seq;
@@ -147,7 +147,7 @@ struct insert_seq_manager {
     // add insert sequence observation:
     void
     add_obs(const std::string& seq) {
-        if(_is_consensus) {
+        if (_is_consensus) {
             _exception("Attempting to add insert observation after finalizing");
         }
 
@@ -155,10 +155,10 @@ struct insert_seq_manager {
         // this many samples are collected, then more cases will be
         // unlikely to help:
         static const unsigned max_obs_count(256);
-        if(_obs_count>max_obs_count) return;
+        if (_obs_count>max_obs_count) return;
 
         obs_t::iterator i(_obs.find(seq));
-        if(i == _obs.end()) {
+        if (i == _obs.end()) {
             _obs[seq] = 1;
         } else {
             i->second += 1;
@@ -208,12 +208,12 @@ struct indel_data {
         log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
 #endif
 
-        if(! is_shared) {
+        if (! is_shared) {
             add_observation_core(obs_data,is_repeat_obs);
         }
 
-        if(! obs_data.insert_seq.empty()) {
-            if(! (is_shared && is_repeat_obs)) {
+        if (! obs_data.insert_seq.empty()) {
+            if (! (is_shared && is_repeat_obs)) {
                 _insert_seq.add_obs(obs_data.insert_seq);
             }
         }
@@ -233,7 +233,7 @@ struct indel_data {
         add_evidence(tier2_map_read_ids,id.tier2_map_read_ids);
         add_evidence(submap_read_ids,id.submap_read_ids);
         add_evidence(noise_read_ids,id.noise_read_ids);
-        if(id.is_external_candidate) is_external_candidate=true;
+        if (id.is_external_candidate) is_external_candidate=true;
     }
 #endif
 
@@ -344,7 +344,7 @@ private:
     add_observation_core(const indel_observation_data& obs_data,
                          bool& is_repeat_obs) {
 
-        if(obs_data.is_external_candidate) {
+        if (obs_data.is_external_candidate) {
             is_external_candidate=true;
 
         } else {
@@ -353,23 +353,23 @@ private:
 
             if       (obs_data.iat == CONTIG) {
                 contig_ids.insert(obs_data.id);
-            } else if(obs_data.is_noise) {
+            } else if (obs_data.is_noise) {
                 // noise state overrides all except contig type:
                 //
                 noise_read_ids.insert(obs_data.id);
-            } else if(obs_data.iat == CONTIG_READ) {
-                if(all_read_ids.find(obs_data.id) != all_read_ids.end()) {
+            } else if (obs_data.iat == CONTIG_READ) {
+                if (all_read_ids.find(obs_data.id) != all_read_ids.end()) {
                     is_repeat_obs=true;
                 }
                 all_read_ids.insert(obs_data.id);
-            } else if(obs_data.iat == GENOME_TIER1_READ) {
-                if(all_read_ids.find(obs_data.id) != all_read_ids.end()) {
+            } else if (obs_data.iat == GENOME_TIER1_READ) {
+                if (all_read_ids.find(obs_data.id) != all_read_ids.end()) {
                     is_repeat_obs=true;
                 }
                 all_read_ids.insert(obs_data.id);
-            } else if(obs_data.iat == GENOME_TIER2_READ) {
+            } else if (obs_data.iat == GENOME_TIER2_READ) {
                 tier2_map_read_ids.insert(obs_data.id);
-            } else if(obs_data.iat == GENOME_SUBMAP_READ) {
+            } else if (obs_data.iat == GENOME_SUBMAP_READ) {
                 submap_read_ids.insert(obs_data.id);
             } else {
                 assert(0);

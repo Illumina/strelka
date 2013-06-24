@@ -66,7 +66,7 @@ enum index_t {
 inline
 const char*
 get_index_label(index_t id) {
-    switch(id) {
+    switch (id) {
     case NONE:        return "NONE";
     case INSERT:      return "INSERT";
     case DELETE:      return "DELETE";

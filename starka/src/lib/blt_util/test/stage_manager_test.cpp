@@ -118,7 +118,7 @@ struct test_pos_processor : public pos_processor_base {
 
         // assert that pos for each stage does not repeat or decrease:
         spos_t::const_iterator i(stage_pos.find(stage_no));
-        if(i != stage_pos.end()) {
+        if (i != stage_pos.end()) {
             BOOST_CHECK(pos > (i->second));
         }
         stage_pos[stage_no] = pos;
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( test_stage_manager_reset ) {
 
     sman.reset();
 
-    for(int i(0); i<4; ++i) {
+    for (int i(0); i<4; ++i) {
         BOOST_CHECK_EQUAL(tpp.stage_pos[i],59);
     }
 }
