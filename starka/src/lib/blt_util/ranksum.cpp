@@ -23,6 +23,8 @@
 #include <iostream>
 #include <map>
 
+using namespace std;
+
 
 double
 get_z_score(int n1, int n2, double w1){

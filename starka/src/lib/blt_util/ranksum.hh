@@ -16,11 +16,10 @@
 ///
 #include <cmath>
 #include <algorithm>
-#include <iostream>
+#include <iosfwd>
 #include <map>
 #include <vector>
 
-using namespace std;
 
 #ifndef __RANKSUM_HH
 #define __RANKSUM_HH
@@ -38,9 +37,9 @@ public:
     int N2;
     double R1;
     double R2;
-    map<int,int> l1;  // observations for reference base
-    map<int,int> l2;  // observations for alternate base
-    map<int,int> space;// full key space
+    std::map<int,int> l1;  // observations for reference base
+    std::map<int,int> l2;  // observations for alternate base
+    std::map<int,int> space;// full key space
     //constructor
 
     ranksum() {
@@ -67,9 +66,9 @@ public:
         ref_base = base;
     }
 
-    vector<int> getSpace(){
-        vector<int> res;
-        for (map<int, int>::iterator it = space.begin();it != space.end(); ++it){
+    std::vector<int> getSpace(){
+        std::vector<int> res;
+        for (std::map<int, int>::iterator it = space.begin();it != space.end(); ++it){
             res.push_back((*it).first);}
 
             std::sort(res.begin(), res.end());
@@ -80,7 +79,7 @@ public:
     int get_obs_count(bool is_ref, int obs){
 
     	int res = 0;
-    	map<int,int>::iterator it;
+        std::map<int,int>::iterator it;
 
     	//check for observation in reference map
     	if(is_ref){
@@ -108,7 +107,7 @@ public:
     }
 };
 
-ostream& operator<< (ostream &out, ranksum &r);
+std::ostream& operator<< (std::ostream &out, ranksum &r);
 
 #endif
 
