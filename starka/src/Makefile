@@ -24,7 +24,7 @@ TABIX_DIR := $(REDIST_DIR)/$(TABIX_ID)
 CODEMIN_INCLUDE_DIR := $(REDIST_DIR)/$(CODEMIN_ID)/include
 
 CXX := g++
-BASE_WARNFLAGS := -Wall -Wextra -Wshadow -Wunused -g
+BASE_WARNFLAGS := -Wall -Wextra -Wshadow -Wunused
 EXTRA_WARNFLAGS := -Wpointer-arith -Winit-self -Wredundant-decls # -Wsign-conversion -Weverything 
 WARNFLAGS = $(BASE_WARNFLAGS) $(EXTRA_WARNFLAGS)
 
@@ -33,7 +33,7 @@ ifeq ($(STRICT_COMPILE),1)
     WARNFLAGS += $(STRICT_WARNFLAGS)
 endif
 
-OPTFLAGS := -O2
+OPTFLAGS := -ggdb -O2
 DEBUGFLAGS := -ggdb -O0
 XFLAGS := $(WARNFLAGS) $(OPTFLAGS)
 
