@@ -180,7 +180,7 @@ struct blt_options {
           , is_max_input_depth(false)
           , max_input_depth(0)
           , is_compute_hapscore(false)
-    	  , is_compute_VQSRmetrics(true)
+          , is_compute_VQSRmetrics(false)
     {}
 
     virtual ~blt_options() {}
