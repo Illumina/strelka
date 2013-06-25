@@ -798,19 +798,21 @@ write_indel_record(const unsigned write_index) {
             os << '.';
         }
     }
-    os << ';';
 
-    // VQSR metrics here
-    os << "MQ=" << ii.MQ;
+    if (_opt.is_compute_VQSRmetrics)
+    {
+        os << ';';
+        os << "MQ=" << ii.MQ;
 
-    //if we have a het, report these metrics as well
-    //                if(si.get_gt()=="0/1"){
-    os << ';';
-    os << "MQRankSum=" << ii.MQRankSum;
-    os << ';';
-    os << "BaseQRankSum=" << ii.BaseQRankSum;
-    os << ';';
-    os << "ReadPosRankSum=" << ii.ReadPosRankSum;
+        //if we have a het, report these metrics as well
+        //                if(si.get_gt()=="0/1"){
+        os << ';';
+        os << "MQRankSum=" << ii.MQRankSum;
+        os << ';';
+        os << "BaseQRankSum=" << ii.BaseQRankSum;
+        os << ';';
+        os << "ReadPosRankSum=" << ii.ReadPosRankSum;
+    }
 
     os << '\t';
 
