@@ -262,8 +262,12 @@ process_pos_indel_somatic(const pos_t pos) {
 
     for (; i!=i_end; ++i) {
         const indel_key& ik(i->first);
+
+        // don't write breakpoint output:
+        if(ik.is_breakpoint()) continue;
+
         const indel_data& tumor_id(get_indel_data(i));
-        if (not tumor_sif.indel_sync().is_candidate_indel(_opt,ik,tumor_id)) continue;
+        if (! tumor_sif.indel_sync().is_candidate_indel(_opt,ik,tumor_id)) continue;
 
         const indel_data* normal_id_ptr(normal_sif.indel_buff.get_indel_data_ptr(ik));
         assert(NULL != normal_id_ptr);
