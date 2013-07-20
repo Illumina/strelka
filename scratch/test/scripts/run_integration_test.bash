@@ -66,7 +66,7 @@ check_time() {
         error $(printf "%s elapsed_time %i exceeded maximum time: %i\n" $label $elapsed $max)
     fi
     if [ $elapsed -lt $min ]; then
-        error $(printf "%s elapsed_time %i less than minimum time: %i. Could be good... but suspiciious!!!\n" $label $elapsed $min)
+        error $(printf "%s elapsed_time %i less than minimum time: %i. Could be good... but suspicious!!!\n" $label $elapsed $min)
     fi
 }
 
