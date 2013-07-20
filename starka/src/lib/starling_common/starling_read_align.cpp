@@ -10,7 +10,6 @@
 // <https://github.com/downloads/sequencing/licenses/>.
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -38,6 +37,7 @@
 
 
 //#define DEBUG_ALIGN
+
 
 /// information associated with each candidate indel intersecting an alignment
 struct starling_align_indel_info {
@@ -215,9 +215,16 @@ add_indels_in_range(const starling_options& opt,
         std::cerr << "Usable?: " <<  is_usable_indel(isync,opt,ik,get_indel_data(i),read_id) << "\n";
         std::cerr << "Count: " << indel_status_map.count(ik) << "\n";
 #endif
+        // check if the indel is not intersecting or adjacent -- if neither we don't need to
+        // worry about the indel at all:
         if (! is_range_adjacent_indel_breakpoints(pr,ik)) continue;
 
+        // if true, this means the indel is adjacent but not intersecting:
         const bool is_remove_only(! is_range_intersect_indel_breakpoints(pr,ik));
+
+#ifdef DEBUG_ALIGN
+        std::cerr << "is_remove_only " << is_remove_only << "\n";
+#endif
 
         // if indel is already present, it may be possible to promote this indel from
         // adjacent to an intersection:
@@ -1311,11 +1318,11 @@ get_exemplar_candidate_alignments(const starling_options& opt,
 #endif
 
     // Get indel set and indel order for the exemplar alignment:
-    const known_pos_range pr(get_strict_alignment_range(cal.al));
-    add_indels_in_range(opt,rseg.id(),isync,pr,indel_status_map,indel_order);
+    const known_pos_range exemplar_pr(get_soft_clip_alignment_range(cal.al));
+    add_indels_in_range(opt,rseg.id(),isync,exemplar_pr,indel_status_map,indel_order);
 
 #ifdef DEBUG_ALIGN
-    std::cerr << "VARMIT exemplar alignment range: " << pr << "\n";
+    std::cerr << "VARMIT exemplar alignment range: " << exemplar_pr << "\n";
 #endif
 
     // Mark the indels which are already included in the discovery
@@ -1399,8 +1406,8 @@ get_exemplar_candidate_alignments(const starling_options& opt,
     static const unsigned start_depth(0);
     static const unsigned start_toggle_depth(0);
     make_candidate_alignments(opt,dopt,rseg.id(),cal_read_length,isync,cal_set,warn,
-                              indel_status_map,indel_order,start_depth,start_toggle_depth,pr,
-                              opt.max_read_indel_toggle,cal);
+                              indel_status_map,indel_order,start_depth,start_toggle_depth,
+                              exemplar_pr,opt.max_read_indel_toggle,cal);
 
     if (is_exemplar_clip) {
         // un soft-clip candidate alignments:

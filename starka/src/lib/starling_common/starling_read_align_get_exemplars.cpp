@@ -26,6 +26,9 @@
 #include <iostream>
 
 
+//#define DEBUG_ALIGN
+
+
 
 // return true if alignments are compatible -- the only allowed
 // difference is edge soft clipping, if a match exists in the new
@@ -160,6 +163,14 @@ add_exemplar_alignment(const alignment& al,
 
     if (! al.is_realignable(max_indel_size)) return;
 
+#ifdef DEBUG_ALIGN
+    log_os << "Adding Exemplar Alignment."
+           << " remove leading: " << is_remove_leading_edge_indels
+           << " remove trailing: " << is_remove_trailing_edge_indels
+           << " remove soft-clip: " << is_remove_soft_clip
+           << "\n";
+#endif
+
     // right now we:
     // (1) optionally remove soft-clipping and force the clipped regions to match
     // (2) remove edge indels for grouper reads
@@ -185,6 +196,11 @@ add_exemplar_alignment(const alignment& al,
 
     // no compatible alignment found! Add this alignment as a new exemplar:
     exal.push_back(*al_ptr);
+
+#ifdef DEBUG_ALIGN
+    log_os << "Added exemplar " << *al_ptr << "\n";
+#endif
+
 }
 
 
