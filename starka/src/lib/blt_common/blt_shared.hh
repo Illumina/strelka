@@ -49,7 +49,7 @@ struct gvcf_options {
         , is_min_gqx(true)
         , min_gqx(30.)
         , is_max_base_filt(true)
-        , max_base_filt(.3)
+        , max_base_filt(.3)  // DPFratio
         , is_max_snv_sb(true)
         , max_snv_sb(10)
         , is_max_snv_hpol(true)
@@ -182,7 +182,7 @@ struct blt_options {
           , is_max_input_depth(false)
           , max_input_depth(0)
           , is_compute_hapscore(false)
-    	  , is_compute_VQSRmetrics(true)
+    	  , is_compute_VQSRmetrics(false)
     {}
 
     virtual ~blt_options() {}
