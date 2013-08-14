@@ -42,7 +42,7 @@ report_indel_evidence_set(const indel_data::evidence_t& e,
                           std::ostream& os) {
     typedef indel_data::evidence_t::const_iterator viter;
     viter i(e.begin()),i_end(e.end());
-    for(unsigned n(0); i!=i_end; ++i) {
+    for (unsigned n(0); i!=i_end; ++i) {
         os << label << " no: " << ++n << " id: " << *i << "\n";
     }
 }
@@ -58,13 +58,13 @@ operator<<(std::ostream& os,
        << " nsite: " << rps.nsite;
 
 #if 0
-    if(rps.is_alt) {
+    if (rps.is_alt) {
         os << " alt: " << rps.alt;
     }
 #else
     typedef read_path_scores::alt_indel_t::const_iterator aiter;
     aiter i(rps.alt_indel.begin()), i_end(rps.alt_indel.end());
-    for(; i!=i_end; ++i) {
+    for (; i!=i_end; ++i) {
         const indel_key& ik(i->first);
         os << " alt-" << ik.pos << "-" << INDEL::get_index_label(ik.type) << ik.length << ": " << i->second;
     }
@@ -93,9 +93,9 @@ _finalize() {
     unsigned count(0);
     std::string& candidate(_consensus_seq);
 
-    for(; i!=i_end; ++i) {
-        if((i->first.size() > candidate.size()) ||
-           ( i->second > count)) {
+    for (; i!=i_end; ++i) {
+        if ((i->first.size() > candidate.size()) ||
+            ( i->second > count)) {
             candidate = i->first;
             count = i->second;
         }
@@ -122,7 +122,7 @@ operator<<(std::ostream& os,
     {
         typedef indel_data::score_t::const_iterator siter;
         siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-        for(unsigned n(0); i!=i_end; ++i) {
+        for (unsigned n(0); i!=i_end; ++i) {
             os << "read_path_lnp no: " << ++n
                << " id: " << i->first
                << " " << i->second

@@ -26,7 +26,7 @@ struct bam_dumper {
                const bam_header_t* header);
 
     ~bam_dumper() {
-        if(NULL != _bfp) samclose(_bfp);
+        if (NULL != _bfp) samclose(_bfp);
     }
 
     void

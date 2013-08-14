@@ -75,8 +75,8 @@ extern const strand_state_tables stables;
 inline
 unsigned
 get_het_count(const unsigned state) {
-    if(state<N_BASE)         return 0;
-    if(state<PRESTRAND_SIZE) return (state-N_BASE)/HET_SIZE;
+    if (state<N_BASE)         return 0;
+    if (state<PRESTRAND_SIZE) return (state-N_BASE)/HET_SIZE;
     return (state-PRESTRAND_SIZE)/STRAND_SIZE;
 }
 
@@ -96,8 +96,8 @@ inline
 unsigned
 get_digt_state(const unsigned state,
                const unsigned ref_base) {
-    if(state<N_BASE)         return state;
-    if(state<PRESTRAND_SIZE) return N_BASE+((state-N_BASE)%HET_SIZE);
+    if (state<N_BASE)         return state;
+    if (state<PRESTRAND_SIZE) return N_BASE+((state-N_BASE)%HET_SIZE);
     return stables.digt_state[ref_base][get_strand_state(state)];
 }
 
@@ -125,7 +125,7 @@ inline
 unsigned
 get_state(const unsigned normal_gt,
           const unsigned tumor_gt) {
-    if(normal_gt<DIGT_SGRID::PRESTRAND_SIZE) return normal_gt+DIGT_SGRID::PRESTRAND_SIZE*tumor_gt;
+    if (normal_gt<DIGT_SGRID::PRESTRAND_SIZE) return normal_gt+DIGT_SGRID::PRESTRAND_SIZE*tumor_gt;
     return PRESTRAND_SIZE+normal_gt-DIGT_SGRID::PRESTRAND_SIZE;
 }
 
@@ -134,7 +134,7 @@ void
 get_digt_grid_states(const unsigned dgt,
                      unsigned& normal_gt,
                      unsigned& tumor_gt) {
-    if(dgt<PRESTRAND_SIZE) {
+    if (dgt<PRESTRAND_SIZE) {
         normal_gt = (dgt%DIGT_SGRID::PRESTRAND_SIZE);
         tumor_gt = (dgt/DIGT_SGRID::PRESTRAND_SIZE);
     } else {

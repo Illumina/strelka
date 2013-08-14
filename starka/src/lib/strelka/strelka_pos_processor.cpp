@@ -49,10 +49,10 @@ strelka_pos_processor(const strelka_options& opt,
     // set sample-specific parameter overrides:
     normal_sif.sample_opt.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
 
-    if(opt.is_tumor_sample_min_candidate_indel_reads) {
+    if (opt.is_tumor_sample_min_candidate_indel_reads) {
         tumor_sif.sample_opt.min_candidate_indel_reads = opt.tumor_sample_min_candidate_indel_reads;
     }
-    if(opt.is_tumor_sample_min_small_candidate_indel_read_frac) {
+    if (opt.is_tumor_sample_min_small_candidate_indel_read_frac) {
         tumor_sif.sample_opt.min_small_candidate_indel_read_frac = opt.tumor_sample_min_small_candidate_indel_read_frac;
     }
 
@@ -68,7 +68,7 @@ strelka_pos_processor(const strelka_options& opt,
 
 strelka_pos_processor::
 ~strelka_pos_processor() {
-    for(unsigned i(0); i<_n_samples; ++i) {
+    for (unsigned i(0); i<_n_samples; ++i) {
         delete sample(i).indel_sync_ptr;
     }
 }
@@ -104,9 +104,9 @@ process_pos_snp_somatic(const pos_t pos) {
                         ref_base,_opt,_dpcache,is_dep,is_include_tier2);
 #endif
 
-    for(unsigned t(0); t<n_tier; ++t) {
+    for (unsigned t(0); t<n_tier; ++t) {
         const bool is_include_tier2(t!=0);
-        if(is_include_tier2 && (! _opt.is_tier2())) continue;
+        if (is_include_tier2 && (! _opt.is_tier2())) continue;
         normald_ptr[t].reset(new extended_pos_data(normal_sif.bc_buff.get_pos(pos),*(normal_epd_ptr[t]),
                                                    ref_base,_opt,_dpcache,is_dep,is_include_tier2));
         tumord_ptr[t].reset(new extended_pos_data(tumor_sif.bc_buff.get_pos(pos),*(tumor_epd_ptr[t]),
@@ -116,7 +116,7 @@ process_pos_snp_somatic(const pos_t pos) {
 #if 0
     sif.ss.update(n_calls);
     sif.used_ss.update(n_used_calls);
-    if(pi.ref_base != 'N') {
+    if (pi.ref_base != 'N') {
         sif.ssn.update(n_calls);
         sif.used_ssn.update(n_used_calls);
     }
@@ -134,10 +134,10 @@ process_pos_snp_somatic(const pos_t pos) {
     somatic_snv_genotype_grid sgtg;
 
 #if 0
-    if(_opt.is_somatic_snv()) {
+    if (_opt.is_somatic_snv()) {
         const extended_pos_info* normal_epi_t2_ptr(NULL);
         const extended_pos_info* tumor_epi_t2_ptr(NULL);
-        if(_opt.is_tier2()) {
+        if (_opt.is_tier2()) {
             normal_epi_t2_ptr=(&(normald_t2_ptr->good_epi));
             tumor_epi_t2_ptr=(&(tumord_t2_ptr->good_epi));
         }
@@ -149,10 +149,10 @@ process_pos_snp_somatic(const pos_t pos) {
     }
 #else
 #if 0
-    if(_opt.is_somatic_snv()) {
+    if (_opt.is_somatic_snv()) {
         const extended_pos_info* normal_epi_t2_ptr(NULL);
         const extended_pos_info* tumor_epi_t2_ptr(NULL);
-        if(_opt.is_tier2()) {
+        if (_opt.is_tier2()) {
             normal_epi_t2_ptr=(&(normald_t2_ptr->good_epi));
             tumor_epi_t2_ptr=(&(tumord_t2_ptr->good_epi));
         }
@@ -163,10 +163,10 @@ process_pos_snp_somatic(const pos_t pos) {
                                                         sgtg);
     }
 #else
-    if(_opt.is_somatic_snv()) {
+    if (_opt.is_somatic_snv()) {
         const extended_pos_info* normal_epi_t2_ptr(NULL);
         const extended_pos_info* tumor_epi_t2_ptr(NULL);
-        if(_opt.is_tier2()) {
+        if (_opt.is_tier2()) {
             normal_epi_t2_ptr=(&(normald_ptr[1]->good_epi));
             tumor_epi_t2_ptr=(&(tumord_ptr[1]->good_epi));
         }
@@ -185,9 +185,9 @@ process_pos_snp_somatic(const pos_t pos) {
     //
     bool is_reported_event(false);
 
-    if(is_snv) {
+    if (is_snv) {
 #if 0
-        if(sgt.is_snv) {
+        if (sgt.is_snv) {
             std::ostream& bos(*_client_io.somatic_snv_osptr());
             const extended_pos_data& ndata( (sgt.tier==0) ? normald : *normald_t2_ptr );
             const extended_pos_data& tdata( (sgt.tier==0) ? tumord : *tumord_t2_ptr );
@@ -204,7 +204,7 @@ process_pos_snp_somatic(const pos_t pos) {
             bos << "\n";
         }
 #endif
-        if(sgtg.is_snv) {
+        if (sgtg.is_snv) {
             std::ostream& bos(*_client_io.somatic_snv_osptr());
             //            const extended_pos_data& ndata( (sgtg.tier==0) ? normald : *normald_t2_ptr );
             //            const extended_pos_data& tdata( (sgtg.tier==0) ? tumord : *tumord_t2_ptr );
@@ -231,7 +231,7 @@ process_pos_snp_somatic(const pos_t pos) {
         is_reported_event = true;
     }
 
-    if(_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event)) {
+    if (_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event)) {
         log_os << "TUMOR/NORMAL EVIDENCE pos: " << output_pos << "\n"
                << "is_snv: " << is_snv << "\n"
                << "normal-data:\n" << normald_ptr[0]->epd.good_pi << "\n"
@@ -260,20 +260,24 @@ process_pos_indel_somatic(const pos_t pos) {
     ciiter i(tumor_sif.indel_buff.pos_iter(pos));
     const ciiter i_end(tumor_sif.indel_buff.pos_iter(pos+1));
 
-    for(; i!=i_end; ++i) {
+    for (; i!=i_end; ++i) {
         const indel_key& ik(i->first);
+
+        // don't write breakpoint output:
+        if(ik.is_breakpoint()) continue;
+
         const indel_data& tumor_id(get_indel_data(i));
-        if(not tumor_sif.indel_sync().is_candidate_indel(_opt,ik,tumor_id)) continue;
+        if (! tumor_sif.indel_sync().is_candidate_indel(_opt,ik,tumor_id)) continue;
 
         const indel_data* normal_id_ptr(normal_sif.indel_buff.get_indel_data_ptr(ik));
         assert(NULL != normal_id_ptr);
         const indel_data& normal_id(*normal_id_ptr);
 
-        if(normal_id.read_path_lnp.empty() && tumor_id.read_path_lnp.empty()) continue;
+        if (normal_id.read_path_lnp.empty() && tumor_id.read_path_lnp.empty()) continue;
 
         //bool is_indel(false);
 
-        if(_opt.is_somatic_indel()) {
+        if (_opt.is_somatic_indel()) {
             // indel_report_info needs to be run first now so that
             // local small repeat info is available to the indel
             // caller
@@ -305,13 +309,13 @@ process_pos_indel_somatic(const pos_t pos) {
                                                     sindel);
 #endif
 
-            if(sindel.is_indel) {
+            if (sindel.is_indel) {
                 //is_indel=true;
 
                 // get sample specific info:
                 starling_indel_sample_report_info normal_isri[2];
                 starling_indel_sample_report_info tumor_isri[2];
-                for(unsigned t(0); t<2; ++t) {
+                for (unsigned t(0); t<2; ++t) {
                     const bool is_include_tier2(t!=0);
                     get_starling_indel_sample_report_info(_dopt,ik,normal_id,normal_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
@@ -322,7 +326,7 @@ process_pos_indel_somatic(const pos_t pos) {
                 }
 
                 pos_t indel_pos(ik.pos);
-                if(ik.type != INDEL::BP_RIGHT) {
+                if (ik.type != INDEL::BP_RIGHT) {
                     indel_pos -= 1;
                 }
 
@@ -343,19 +347,19 @@ process_pos_indel_somatic(const pos_t pos) {
             ///
             static const bool is_print_indel_evidence(false);
 
-            if(is_print_indel_evidence and is_indel) {
+            if (is_print_indel_evidence and is_indel) {
                 report_os << "INDEL_EVIDENCE " << ik;
 
                 typedef indel_data::score_t::const_iterator siter;
                 siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-                for(; i!=i_end; ++i) {
+                for (; i!=i_end; ++i) {
                     const align_id_t read_id(i->first);
                     const read_path_scores& lnp(i->second);
                     const read_path_scores pprob(indel_lnp_to_pprob(_dopt,lnp));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 
                     report_os << "read key: ";
-                    if(NULL==srptr) report_os << "UNKNOWN_KEY";
+                    if (NULL==srptr) report_os << "UNKNOWN_KEY";
                     else            report_os << srptr->key();
                     report_os << "\n"
                               << "read log_lhoods: " << lnp << "\n"
@@ -374,10 +378,10 @@ strelka_pos_processor::
 write_counts(const pos_range& output_report_range) const {
 
     std::ostream* report_os_ptr(get_report_osptr());
-    if(NULL==report_os_ptr) return;
+    if (NULL==report_os_ptr) return;
     std::ostream& report_os(*report_os_ptr);
 
-    for(unsigned i(0); i<STRELKA_SAMPLE_TYPE::SIZE; ++i) {
+    for (unsigned i(0); i<STRELKA_SAMPLE_TYPE::SIZE; ++i) {
         const sample_info& sif(sample(i));
         const std::string label(STRELKA_SAMPLE_TYPE::get_label(i));
 
@@ -385,7 +389,7 @@ write_counts(const pos_range& output_report_range) const {
         report_stream_stat(sif.ss,(label+"_ALLSITES_COVERAGE").c_str(),output_report_range,report_os);
         report_stream_stat(sif.used_ss,(label+"_ALLSITES_COVERAGE_USED").c_str(),output_report_range,report_os);
 
-        if(_opt.is_ref_set()) {
+        if (_opt.is_ref_set()) {
             report_stream_stat(sif.ssn,(label+"_NO_REF_N_COVERAGE").c_str(),output_report_range,report_os);
             report_stream_stat(sif.used_ssn,(label+"_NO_REF_N_COVERAGE_USED").c_str(),output_report_range,report_os);
         }

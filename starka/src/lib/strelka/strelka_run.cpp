@@ -65,7 +65,7 @@ strelka_run(const strelka_options& opt) {
     bam_streamer tumor_read_stream(opt.tumor_bam_filename.c_str(),bam_region.c_str());
 
     // check for header consistency:
-    if(! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header())) {
+    if (! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header())) {
         std::ostringstream oss;
         oss << "ERROR: Normal and tumor BAM files have incompatible headers.\n";
         oss << "\tnormal_bam_file:\t'" << opt.bam_filename << "'\n";
@@ -74,7 +74,7 @@ strelka_run(const strelka_options& opt) {
     }
 
     const int32_t tid(normal_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
-    if(tid < 0) {
+    if (tid < 0) {
         std::ostringstream oss;
         oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" << opt.bam_filename << "'\n";
         throw blt_exception(oss.str().c_str());
@@ -86,7 +86,7 @@ strelka_run(const strelka_options& opt) {
     // here:
     {
         const int32_t tumor_tid(tumor_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
-        if(tid != tumor_tid) {
+        if (tid != tumor_tid) {
             throw blt_exception("ERROR: tumor and normal BAM files have mis-matched reference sequence dictionaries.\n");
         }
     }
@@ -110,7 +110,7 @@ strelka_run(const strelka_options& opt) {
     // hold zero-to-many vcf streams open in indel_streams:
     typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
-    for(unsigned i(0); i<opt.input_candidate_indel_vcf.size(); ++i) {
+    for (unsigned i(0); i<opt.input_candidate_indel_vcf.size(); ++i) {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(opt.input_candidate_indel_vcf[i].c_str(),
                                                         bam_region.c_str(),normal_read_stream.get_header())));
         sdata.register_indels(*(indel_stream.back()));
@@ -118,7 +118,7 @@ strelka_run(const strelka_options& opt) {
 
     starling_input_stream_handler sinput(sdata);
 
-    while(sinput.next()) {
+    while (sinput.next()) {
         const input_record_info current(sinput.get_current());
 
         // If we're past the end of rlimit range then we're done.
@@ -158,7 +158,7 @@ strelka_run(const strelka_options& opt) {
             process_genomic_read(opt,ref,read_stream,read,current.pos,
                                  rlimit.begin_pos,brc,sppr,current.sample_no);
 
-        } else if(current.itype == INPUT_TYPE::CONTIG) { // process local-assembly contig and its reads
+        } else if (current.itype == INPUT_TYPE::CONTIG) { // process local-assembly contig and its reads
 
             contig_data_manager* cdmp(NULL);
             if        (current.sample_no == STRELKA_SAMPLE_TYPE::NORMAL) {
@@ -174,13 +174,13 @@ strelka_run(const strelka_options& opt) {
 
             const char* sample_label(STRELKA_SAMPLE_TYPE::get_label(current.sample_no));
 
-            if(! test_contig_usability(opt,ctg,sppr,sample_label)) continue;
+            if (! test_contig_usability(opt,ctg,sppr,sample_label)) continue;
 
             process_contig(opt,ref,ctg,sppr,current.sample_no,sample_label);
 
             process_contig_reads(ctg,opt.max_indel_size,cdmp->contig_read_exr(),sppr,tmp_key_br,current.sample_no);
 
-        } else if(current.itype == INPUT_TYPE::INDEL) { // process candidate indels input from vcf file(s)
+        } else if (current.itype == INPUT_TYPE::INDEL) { // process candidate indels input from vcf file(s)
             const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
             process_candidate_indel(vcf_indel,sppr);
 

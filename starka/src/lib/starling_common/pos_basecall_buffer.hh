@@ -45,7 +45,7 @@ struct pos_basecall_buffer {
     insert_mapq_count(const pos_t pos, const uint8_t mapq) {
 
         _pdata[pos].n_mapq++;
-        _pdata[pos].cumm_mapq += pow(static_cast<int>(mapq), 2.0);
+        _pdata[pos].cumm_mapq += (mapq*mapq);
         //we calculate the RMS, so store squared mapq
     }
 
@@ -57,7 +57,7 @@ struct pos_basecall_buffer {
     insert_pos_basecall(const pos_t pos,
                         const bool is_tier1,
                         const base_call& bc) {
-        if(is_tier1) {
+        if (is_tier1) {
             _pdata[pos].calls.push_back(bc);
         } else {
             _pdata[pos].tier2_calls.push_back(bc);
@@ -81,21 +81,21 @@ struct pos_basecall_buffer {
     snp_pos_info*
     get_pos(const pos_t pos) {
         const piter i(_pdata.find(pos));
-        if(i==_pdata.end()) return NULL;
+        if (i==_pdata.end()) return NULL;
         return &(i->second);
     }
 
     const snp_pos_info*
     get_pos(const pos_t pos) const {
         const pciter i(_pdata.find(pos));
-        if(i==_pdata.end()) return NULL;
+        if (i==_pdata.end()) return NULL;
         return &(i->second);
     }
 
     void
     clear_pos(const pos_t pos) {
         const piter i(_pdata.find(pos));
-        if(i!=_pdata.end()) _pdata.erase(i);
+        if (i!=_pdata.end()) _pdata.erase(i);
     }
 
     bool
@@ -118,7 +118,7 @@ struct pos_basecall_buffer {
     void
     dump(std::ostream& os) const;
 
-public:
+private:
     typedef std::map<pos_t,snp_pos_info> pdata_t;
     typedef pdata_t::iterator piter;
     typedef pdata_t::const_iterator pciter;

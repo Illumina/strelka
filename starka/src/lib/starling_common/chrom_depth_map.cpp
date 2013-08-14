@@ -47,9 +47,9 @@ parse_chrom_depth(const std::string& chrom_depth_file,
 
     unsigned line_no(0);
 
-    while(true) {
+    while (true) {
         depth_is.getline(buff,buff_size);
-        if(! depth_is) {
+        if (! depth_is) {
             if     (depth_is.eof()) break;
             else {
                 log_os << "ERROR: unexpected failure while attempting to read chrom depth file line " << (line_no+1) << "\n";
@@ -60,7 +60,7 @@ parse_chrom_depth(const std::string& chrom_depth_file,
         }
 
         char* word2(strchr(buff,'\t'));
-        if(NULL == word2) {
+        if (NULL == word2) {
             log_os << "ERROR: unexpected format in read chrom depth file line " << (line_no) << "\n";
             exit(EXIT_FAILURE);
         }
@@ -68,7 +68,7 @@ parse_chrom_depth(const std::string& chrom_depth_file,
         try {
             const char* s(word2);
             chrom_depth[buff] = illumina::blt_util::parse_double(s);
-        } catch(const blt_exception& e) {
+        } catch (const blt_exception& e) {
             log_os << "ERROR: unexpected format in read chrom depth file line " << (line_no) << "\n";
             throw;
         }

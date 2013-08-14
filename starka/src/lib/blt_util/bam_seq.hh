@@ -46,7 +46,7 @@ get_bam_seq_char(const uint8_t a) {
 
     using namespace BAM_BASE;
 
-    switch(a) {
+    switch (a) {
     case REF: return '=';
     case A:   return 'A';
     case C:   return 'C';
@@ -63,7 +63,7 @@ get_bam_seq_code(const char c) {
 
     using namespace BAM_BASE;
 
-    switch(c) {
+    switch (c) {
     case '=': return REF;
     case 'A': return A;
     case 'C': return C;
@@ -118,7 +118,7 @@ struct bam_seq : public bam_seq_base {
 
     uint8_t
     get_code(pos_t i) const {
-        if(! is_in_range(i)) return BAM_BASE::ANY;
+        if (! is_in_range(i)) return BAM_BASE::ANY;
         i += static_cast<pos_t>(_offset);
         return _s[(i/2)] >> 4*(1-(i%2)) & 0xf;
     }
@@ -155,7 +155,7 @@ struct string_bam_seq : public bam_seq_base {
 
     char
     get_char(const pos_t i) const {
-        if(! is_in_range(i)) return 'N';
+        if (! is_in_range(i)) return 'N';
         return _s[i];
     }
 

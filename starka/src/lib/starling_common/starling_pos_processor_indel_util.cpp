@@ -47,7 +47,7 @@ finish_indel_sppr(indel_observation& obs,
 
     // contig reads are supposed to be associated with indels from their contig only:
     //
-    if((INDEL_ALIGN_TYPE::CONTIG_READ == obs.data.iat) && is_novel_indel) {
+    if ((INDEL_ALIGN_TYPE::CONTIG_READ == obs.data.iat) && is_novel_indel) {
         std::ostringstream oss;
         oss << "ERROR: contig read contains novel indel: " << obs.key << "\n";
         throw blt_exception(oss.str().c_str());
@@ -63,7 +63,7 @@ bam_seq_to_str(const bam_seq_base& bs,
                const unsigned end,
                std::string& s) {
     s.clear();
-    for(unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
+    for (unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
 }
 
 
@@ -100,7 +100,7 @@ process_edge_insert(const unsigned max_indel_size,
     if       (obs.data.iat == INDEL_ALIGN_TYPE::CONTIG) {
         obs.key.pos=ref_head_pos;
         obs.key.length=ps.length;
-        if(path_index==ends.first) { // right side BP:
+        if (path_index==ends.first) { // right side BP:
             obs.key.type=INDEL::BP_RIGHT;
             const unsigned next_read_offset(read_offset+ps.length);
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
@@ -112,10 +112,10 @@ process_edge_insert(const unsigned max_indel_size,
         }
         finish_indel_sppr(obs,sppr,sample_no);
 
-    } else if(obs.data.iat == INDEL_ALIGN_TYPE::CONTIG_READ) {
+    } else if (obs.data.iat == INDEL_ALIGN_TYPE::CONTIG_READ) {
 
         // add edge indels for contig reads:
-        if(NULL != edge_indel_ptr) {
+        if (NULL != edge_indel_ptr) {
             const pos_t current_pos(ref_head_pos);
             BOOST_FOREACH(const indel_key& ik, *edge_indel_ptr) {
                 // This checks that we've identified the edge indel
@@ -133,15 +133,16 @@ process_edge_insert(const unsigned max_indel_size,
                     if(current_pos!=ik.pos) continue;
                 } else {
                     if(current_pos!=ik.right_pos()) continue;
+
                 }
 
                 obs.key = ik;
 
                 // large insertion breakpoints are not filtered as noise:
-                if(obs.data.is_noise) {
-                    if(obs.key.is_breakpoint() ||
-                       ((obs.key.type == INDEL::INSERT) &&
-                        (obs.key.length > max_cand_filter_insert_size))) {
+                if (obs.data.is_noise) {
+                    if (obs.key.is_breakpoint() ||
+                        ((obs.key.type == INDEL::INSERT) &&
+                         (obs.key.length > max_cand_filter_insert_size))) {
                         obs.data.is_noise=false;
                     }
                 }
@@ -153,8 +154,8 @@ process_edge_insert(const unsigned max_indel_size,
     } else {
         // do not allow edge-indels on genomic reads to generate or support candidate
         // indels, except for pinned cases:
-        if(! is_pinned_indel) return;
-        if(ps.length > max_indel_size) return;
+        if (! is_pinned_indel) return;
+        if (ps.length > max_indel_size) return;
 
         obs.key.pos=ref_head_pos;
         obs.key.length = ps.length;
@@ -202,8 +203,8 @@ process_edge_delete(const unsigned max_indel_size,
 
     // do not allow edge-indels on genomic reads to generate or support candidate
     // indels, except for pinned cases:
-    if(! is_pinned_indel) return;
-    if(ps.length > max_indel_size) return;
+    if (! is_pinned_indel) return;
+    if (ps.length > max_indel_size) return;
 
     obs.key.pos=ref_head_pos;
     obs.key.length = ps.length;
@@ -244,13 +245,13 @@ process_swap(const unsigned max_indel_size,
     const unsigned swap_size(std::max(sinfo.insert_length,sinfo.delete_length));
 
     // large insertions are not filtered as noise:
-    if(obs.data.is_noise) {
-        if(sinfo.insert_length > max_cand_filter_insert_size) {
+    if (obs.data.is_noise) {
+        if (sinfo.insert_length > max_cand_filter_insert_size) {
             obs.data.is_noise=false;
         }
     }
 
-    if(swap_size <= max_indel_size) {
+    if (swap_size <= max_indel_size) {
         obs.key.pos=ref_head_pos;
         obs.key.length=sinfo.insert_length;
         obs.key.swap_dlength=sinfo.delete_length;
@@ -309,17 +310,17 @@ process_simple_indel(const unsigned max_indel_size,
     const path_segment& ps(path[path_index]);
 
     // large insertion breakpoints are not filtered as noise:
-    if(obs.data.is_noise) {
-        if((ps.type == INSERT) &&
-           (ps.length > max_cand_filter_insert_size)) {
+    if (obs.data.is_noise) {
+        if ((ps.type == INSERT) &&
+            (ps.length > max_cand_filter_insert_size)) {
             obs.data.is_noise=false;
         }
     }
 
-    if(ps.length <= max_indel_size) {
+    if (ps.length <= max_indel_size) {
         obs.key.pos=ref_head_pos;
         obs.key.length = ps.length;
-        if(ps.type == INSERT) {
+        if (ps.type == INSERT) {
             obs.key.type=INDEL::INSERT;
             bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
         } else {
@@ -341,7 +342,7 @@ process_simple_indel(const unsigned max_indel_size,
         // right side BP:
         {
             obs.key.pos=ref_head_pos;
-            if(ps.type == DELETE) obs.key.pos+=ps.length;
+            if (ps.type == DELETE) obs.key.pos+=ps.length;
             obs.key.length=ps.length;
             obs.key.type=INDEL::BP_RIGHT;
 
@@ -376,13 +377,13 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 
     const unsigned seq_len(read_seq.size());
 
-    if(is_apath_invalid(al.path,seq_len)) {
+    if (is_apath_invalid(al.path,seq_len)) {
         std::ostringstream oss;
         oss << "ERROR: Can't handle alignment path '" << apath_to_cigar(al.path) << "' -- " << get_apath_invalid_reason(al.path,seq_len) << "\n";
         throw blt_exception(oss.str().c_str());
     }
 
-    if(is_apath_starling_invalid(al.path)) {
+    if (is_apath_starling_invalid(al.path)) {
         std::ostringstream oss;
         oss << "ERROR: can't handle alignment path '" << apath_to_cigar(al.path) << "'\n";
         throw blt_exception(oss.str().c_str());
@@ -402,7 +403,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
     unsigned total_indel_ref_span_per_read(0);
 
     const unsigned aps(al.path.size());
-    while(path_index<aps) {
+    while (path_index<aps) {
         const path_segment& ps(al.path[path_index]);
         const bool is_begin_edge(path_index<ends.first);
         const bool is_end_edge(path_index>ends.second);
@@ -417,7 +418,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         obs.data.iat = iat;
         obs.data.id = id;
 
-        if(MATCH != ps.type) {
+        if (MATCH != ps.type) {
             pos_range indel_read_pr;
             indel_read_pr.set_begin_pos((read_offset==0) ? 0 : (read_offset-1));
 
@@ -425,7 +426,6 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
             if       (is_swap_start) {
                 const swap_info sinfo(al.path,path_index);
                 rlen=sinfo.insert_length;
-
                 if(sinfo.delete_length<=max_indel_size) {
                     total_indel_ref_span_per_read += sinfo.delete_length;
                 }
@@ -439,35 +439,35 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                 }
             }
             indel_read_pr.set_end_pos(std::min(seq_len,read_offset+1+rlen));
-            if(! valid_pr.is_superset_of(indel_read_pr)) obs.data.is_noise=true;
+            if (! valid_pr.is_superset_of(indel_read_pr)) obs.data.is_noise=true;
         }
 
         unsigned n_seg(1); // number of path segments consumed
-        if(is_edge_segment) {
+        if (is_edge_segment) {
             // is this indel occurring on a pinned edge (ie against an exon?)
             const bool is_pinned_indel((is_begin_edge && edge_pin.first) ||
                                        (is_end_edge && edge_pin.second));
 
             // edge inserts are allowed for intron adjacent and grouper reads, edge deletions for intron adjacent only:
-            if(ps.type == INSERT) {
+            if (ps.type == INSERT) {
                 process_edge_insert(max_indel_size,al.path,read_seq,
                                     sppr,obs,sample_no,edge_indel_ptr,
                                     seq_len,ends,path_index,read_offset,ref_head_pos,
                                     is_pinned_indel);
-            } else if(ps.type == DELETE) {
-                if(is_pinned_indel) {
+            } else if (ps.type == DELETE) {
+                if (is_pinned_indel) {
                     process_edge_delete(max_indel_size,al.path,read_seq,
                                         sppr,obs,sample_no,
                                         path_index,read_offset,ref_head_pos,
                                         is_pinned_indel);
                 }
             }
-        } else if(is_swap_start) {
+        } else if (is_swap_start) {
             n_seg = process_swap(max_indel_size,al.path,read_seq,
                                  sppr,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
 
-        } else if(is_segment_type_indel(al.path[path_index].type)) {
+        } else if (is_segment_type_indel(al.path[path_index].type)) {
 //            log_os << "offset " << read_offset <<  endl;
 //            log_os << " " << ref_head_pos <<  endl;
             process_simple_indel(max_indel_size,al.path,read_seq,
@@ -476,7 +476,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 
         }
 
-        for(unsigned i(0); i<n_seg; ++i) { increment_path(al.path,path_index,read_offset,ref_head_pos); }
+        for (unsigned i(0); i<n_seg; ++i) { increment_path(al.path,path_index,read_offset,ref_head_pos); }
     }
 
     return total_indel_ref_span_per_read;

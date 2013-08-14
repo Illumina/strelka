@@ -37,9 +37,9 @@ set_export_line(char* line) {
 
     _entry[0]=p;
     unsigned i(1);
-    while((*p != '\n') && (*p != '\0')) {
+    while ((*p != '\n') && (*p != '\0')) {
         if (*p == sep) {
-            if(i == MAX_ENTRY) break;
+            if (i == MAX_ENTRY) break;
             *p = '\0';
             _entry[i++] = p+1;
         }
@@ -49,7 +49,7 @@ set_export_line(char* line) {
     *p = '\0';
     _is_set=true;
 
-    if(i < SIZE) {
+    if (i < SIZE) {
         _entry[i] = 0;
         std::ostringstream oss;
         oss << "ERROR:: Detected only " <<  i << " fields in export line where at least " << SIZE << " fields were expected.\n"
@@ -68,9 +68,9 @@ void
 export_line_parser::
 write_export_line(std::ostream& os) const {
 
-    for(unsigned i(0); i<SIZE; ++i) {
-        if(_entry[i]==0) break;
-        if(i) os << '\t';
+    for (unsigned i(0); i<SIZE; ++i) {
+        if (_entry[i]==0) break;
+        if (i) os << '\t';
         os << _entry[i];
     }
 }

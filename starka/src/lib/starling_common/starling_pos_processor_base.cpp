@@ -84,7 +84,7 @@ report_counts(const snp_pos_info& pi,
 
     unsigned base_count[N_BASE];
 
-    for(unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
+    for (unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
 
     BOOST_FOREACH(const base_call& bc, pi.calls) {
         assert(bc.base_id!=BASE_ID::ANY);
@@ -92,7 +92,7 @@ report_counts(const snp_pos_info& pi,
     }
 
     os << output_pos << '\t';
-    for(unsigned i(0); i<N_BASE; ++i) {
+    for (unsigned i(0); i<N_BASE; ++i) {
         os << base_count[i] << '\t';
     }
     os << n_unused_calls << '\n';
@@ -107,14 +107,14 @@ report_pos_range(const pos_range& pr,
 
     // convert pos_range to 1-indexed inclusive interval for output:
     os << "begin: ";
-    if(pr.is_begin_pos) {
+    if (pr.is_begin_pos) {
         os << pr.begin_pos+1;
     } else {
         os << "NA";
     }
 
     os << " end: ";
-    if(pr.is_end_pos) {
+    if (pr.is_end_pos) {
         os << pr.end_pos;
     } else {
         os << "NA";
@@ -308,7 +308,7 @@ get_stage_data(const unsigned largest_read_size,
     //
     sdata.add_stage(POST_ALIGN,READ_BUFFER,largest_total_indel_ref_span_per_read);
 
-    if(! opt.is_htype_calling) {
+    if (! opt.is_htype_calling) {
         // POST_CALL is used to free up the pileup data. This data is
         // preserved for one extra cycle after snp and indel calling so that
         // the indel caller can look one base 'to the left' of its call
@@ -358,7 +358,7 @@ get_stage_data(const unsigned largest_read_size,
     //
     const unsigned vs(opt.variant_windows.size());
     const int pileup_stage(get_pileup_stage_no(opt));
-    for(unsigned i(0); i<vs; ++i) {
+    for (unsigned i(0); i<vs; ++i) {
         const unsigned flank_size(opt.variant_windows[i].flank_size);
         sdata.add_stage(POST_CALL+i+1,pileup_stage,flank_size);
     }
@@ -393,33 +393,33 @@ starling_pos_processor_base(const starling_options& client_opt,
 
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
-    if(_client_opt.is_gvcf_output()) {
-        _gvcfer.reset(new gvcf_aggregator(client_opt,client_dopt.report_range,ref,client_io.gvcf_osptr(0)));
+    if (_client_opt.is_gvcf_output()) {
+        _gvcfer.reset(new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0)));
     }
 
     const unsigned report_size(_client_dopt.report_range.size());
     const unsigned knownref_report_size(get_ref_seq_known_size(_ref,_client_dopt.report_range));
-    for(unsigned i(0); i<_n_samples; ++i) {
+    for (unsigned i(0); i<_n_samples; ++i) {
         _sample[i] = new sample_info(_client_opt,report_size,knownref_report_size,&_ric);
     }
 
 #ifdef HAVE_FISHER_EXACT_TEST
-    if(_client_opt.is_adis_table) {
+    if (_client_opt.is_adis_table) {
         _ws = get_exact_test_ws();
     }
 #endif
 
-    if(_client_opt.is_bsnp_nploid) {
+    if (_client_opt.is_bsnp_nploid) {
         _ninfo.reset(new nploid_info(_client_opt.bsnp_nploid_ploidy));
     }
 
-    if(_client_opt.is_all_sites()) {
+    if (_client_opt.is_all_sites()) {
         // pre-calculate qscores for sites with no observations:
         //
         snp_pos_info good_pi;
         static const std::vector<float> dependent_eprob;
         const extended_pos_info good_epi(good_pi,dependent_eprob);
-        for(unsigned b(0); b<N_BASE; ++b) {
+        for (unsigned b(0); b<N_BASE; ++b) {
             good_pi.set_ref_base(id_to_base(b));
             _empty_dgt[b].reset(new diploid_genotype);
             _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,
@@ -438,8 +438,8 @@ starling_pos_processor_base(const starling_options& client_opt,
                                              _client_opt.max_indel_size*2));
     pos_range& rir( _report_influence_range);
     rir = _client_dopt.report_range_limit;
-    if(rir.is_begin_pos) { rir.begin_pos -= bshift; }
-    if(rir.is_end_pos) { rir.end_pos += bshift; }
+    if (rir.is_begin_pos) { rir.begin_pos -= bshift; }
+    if (rir.is_end_pos) { rir.end_pos += bshift; }
 }
 
 
@@ -455,7 +455,6 @@ bool
 starling_pos_processor_base::
 update_largest_read_size(const unsigned rs) {
     if(rs>STARLING_MAX_READ_SIZE) return false;
-
     if(rs<=get_largest_read_size()) return true;
     _rmi.resize(rs);
     update_stageman();
@@ -488,9 +487,9 @@ update_largest_total_indel_ref_span_per_read(const unsigned is) {
 
 starling_pos_processor_base::
 ~starling_pos_processor_base() {
-    if(_ws) free(_ws);
+    if (_ws) free(_ws);
 
-    for(unsigned i(0); i<_n_samples; ++i) {
+    for (unsigned i(0); i<_n_samples; ++i) {
         delete _sample[i]; _sample[i] = NULL;
     }
 }
@@ -504,19 +503,19 @@ reset() {
 
     pos_range output_report_range(_client_dopt.report_range);
 
-    if((! output_report_range.is_begin_pos) &&
-       _stageman.is_first_pos_set()) {
+    if ((! output_report_range.is_begin_pos) &&
+        _stageman.is_first_pos_set()) {
         output_report_range.set_begin_pos(_stageman.min_pos());
     }
 
-    if((! output_report_range.is_end_pos) &&
-       _stageman.is_first_pos_set()) {
+    if ((! output_report_range.is_end_pos) &&
+        _stageman.is_first_pos_set()) {
         output_report_range.set_end_pos(_stageman.max_pos()+1);
     }
 
     write_counts(output_report_range);
 
-    if(_client_opt.is_gvcf_output()) { _gvcfer->flush(); }
+    if (_client_opt.is_gvcf_output()) { _gvcfer->flush(); }
 }
 
 
@@ -585,7 +584,7 @@ insert_read(const bam_record& br,
             const align_id_t contig_id,
             const indel_set_t* contig_indels_ptr) {
 
-    if(0 != strcmp(_chrom_name.c_str(),chrom_name)) {
+    if (0 != strcmp(_chrom_name.c_str(),chrom_name)) {
         log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chrom_name << "'\n"
                << "\tread_key: " << read_key(br) << "\n";
         exit(EXIT_FAILURE);
@@ -597,7 +596,7 @@ insert_read(const bam_record& br,
     // ok so long as we know it will not generate any candidate indels
     // in this region:
     //
-    if(! _stageman.is_new_pos_value_valid(al.pos,STAGE::HEAD)) {
+    if (! _stageman.is_new_pos_value_valid(al.pos,STAGE::HEAD)) {
         log_os << "WARNING: skipping alignment for read: " << read_key(br)
                << " which falls outside of the read buffer\n";
         return std::make_pair(false,0);
@@ -606,7 +605,6 @@ insert_read(const bam_record& br,
     // assume that pos_procesor, as a container, is no longer empty...
     _is_skip_process_pos=false;
     // update read_size:
-
     {
         const unsigned rs(static_cast<unsigned>(STARLING_LARGEST_READ_SIZE_PAD*br.read_size()));
         if(! update_largest_read_size(rs)){
@@ -620,13 +618,13 @@ insert_read(const bam_record& br,
     const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(_client_opt,
                                                                   br,al,maplev,
                                                                   rat,contig_id));
-    if(! res.first) return res;
+    if (! res.first) return res;
 
     // must initialize initial genomic read_segments "by-hand":
     //
     // TODO get this streamlined into the pos-processor
     //
-    if(READ_ALIGN::GENOME==rat) {
+    if (READ_ALIGN::GENOME==rat) {
         const starling_read* sread_ptr(rbuff.get_read(res.second));
         assert(NULL!=sread_ptr);
 
@@ -640,7 +638,7 @@ insert_read(const bam_record& br,
 
     // add contig read indels to sppr (genomic reads handled within pos_processor_base):
     //
-    if((READ_ALIGN::CONTIG==rat) && (! al.empty())) {
+    if ((READ_ALIGN::CONTIG==rat) && (! al.empty())) {
         // TODO -- check that indels stay within the bounds of the ref_seq
         //
         // TODO -- check that multiple indels on the same read do not add-up to exceed the buffer size
@@ -656,7 +654,6 @@ insert_read(const bam_record& br,
                                                  al,bseq,*this,iat,res.second,sample_no,
                                                  edge_pin,contig_indels_ptr);
             update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
-
         } catch (...) {
             log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << read_key(br) << "\n";
             throw;
@@ -699,7 +696,7 @@ insert_read(const bam_record& br,
 static
 INDEL_ALIGN_TYPE::index_t
 translate_maplev_to_indel_type(const MAPLEVEL::index_t i) {
-    switch(i) {
+    switch (i) {
     case MAPLEVEL::TIER1_MAPPED: return INDEL_ALIGN_TYPE::GENOME_TIER1_READ;
     case MAPLEVEL::TIER2_MAPPED: return INDEL_ALIGN_TYPE::GENOME_TIER2_READ;
     case MAPLEVEL::SUB_MAPPED: return INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ;
@@ -716,11 +713,11 @@ starling_pos_processor_base::
 load_read_in_depth_buffer(const read_segment& rseg,
                           const unsigned sample_no) {
     const alignment& al(rseg.genome_align());
-    if(al.empty()) return;
+    if (al.empty()) return;
 
     const MAPLEVEL::index_t maplev(rseg.genome_align_maplev());
     const bool is_usable_mapping(MAPLEVEL::TIER1_MAPPED == maplev);
-    if(is_usable_mapping) {
+    if (is_usable_mapping) {
         add_alignment_to_depth_buffer(al,sample(sample_no).estdepth_buff);
     }
 }
@@ -733,7 +730,7 @@ starling_pos_processor_base::
 init_read_segment(const read_segment& rseg,
                   const unsigned sample_no) {
     const alignment& al(rseg.genome_align());
-    if(al.empty()) return;
+    if (al.empty()) return;
 
     const MAPLEVEL::index_t maplev(rseg.genome_align_maplev());
     //    const bool is_usable_mapping(MAPLEVEL::TIER1_MAPPED == maplev);
@@ -764,17 +761,17 @@ void
 starling_pos_processor_base::
 init_read_segment_pos(const pos_t pos) {
 
-    for(unsigned s(0); s<_n_samples; ++s) {
+    for (unsigned s(0); s<_n_samples; ++s) {
         read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
-        for(read_segment_iter::ret_val r; true; ri.next()) {
+        for (read_segment_iter::ret_val r; true; ri.next()) {
             r=ri.get_ptr();
-            if(NULL==r.first) break;
+            if (NULL==r.first) break;
             // full_segments of unspliced reads and the initial
             // segment of spliced reads are initialized outside of the
             // process_pos framework, so this routine only initializes
             // the second segment or higher:
             //
-            if(r.second<2) continue;
+            if (r.second<2) continue;
             init_read_segment(r.first->get_segment(r.second),s);
         }
     }
@@ -837,22 +834,22 @@ align_pos(const pos_t pos) {
     for(unsigned s(0); s<_n_samples; ++s) {
         sample_info& sif(sample(s));
         read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
-        for(read_segment_iter::ret_val r; true; ri.next()) {
+        for (read_segment_iter::ret_val r; true; ri.next()) {
             r=ri.get_ptr();
-            if(NULL==r.first) break;
+            if (NULL==r.first) break;
             read_segment& rseg(r.first->get_segment(r.second));
-            if(_client_opt.is_realign_submapped_reads ||
-               rseg.is_treated_as_anytier_mapping()) {
+            if (_client_opt.is_realign_submapped_reads ||
+                rseg.is_treated_as_anytier_mapping()) {
                 try {
                     realign_and_score_read(_client_opt,_client_dopt,sif.sample_opt,_ref,realign_pr,rseg,sif.indel_sync());
-                } catch(...) {
+                } catch (...) {
                     log_os << "ERROR: Exception caught in align_pos() while realigning segment: "
                            << static_cast<int>(r.second) << " of read: " << (*r.first) << "\n";
                     throw;
                 }
                 // check that read has not been realigned too far to the left:
-                if(rseg.is_realigned) {
-                    if(! _stageman.is_new_pos_value_valid(rseg.realignment.pos,STAGE::POST_ALIGN)) {
+                if (rseg.is_realigned) {
+                    if (! _stageman.is_new_pos_value_valid(rseg.realignment.pos,STAGE::POST_ALIGN)) {
                         log_os << "WARNING: read realigned outside bounds of realignment stage buffer. Skipping...\n"
                                << "\tread: " << rseg.key() << "\n";
                         rseg.is_invalid_realignment=true;
@@ -862,7 +859,7 @@ align_pos(const pos_t pos) {
         }
 
 #ifdef ESTDEPTH_DUMP
-        if(sif.estdepth_buff.val(pos)>0) {
+        if (sif.estdepth_buff.val(pos)>0) {
             log_os << "ESTDEPTH: pos,val: " << pos << " " << sif.estdepth_buff.val(pos) << "\n";
         }
 #endif
@@ -889,19 +886,19 @@ process_pos(const int stage_no,
     log_os << "pos,stage_no: " << pos << " " << stage_no << "\n";
 #endif
 
-    if(empty()) return;
+    if (empty()) return;
 
     if        (stage_no==STAGE::HEAD) {
         init_read_segment_pos(pos);
 
-        if(_client_opt.is_write_candidate_indels()) {
-            if(is_pos_reportable(pos)) {
+        if (_client_opt.is_write_candidate_indels()) {
+            if (is_pos_reportable(pos)) {
                 write_candidate_indels_pos(pos);
             }
         }
     } else if (stage_no==STAGE::READ_BUFFER) {
 #if 0
-        for(unsigned s(0); s<_n_samples; ++s) {
+        for (unsigned s(0); s<_n_samples; ++s) {
             sample_info& sif(sample(s));
             sif.indel_buff.dump_pos(pos,log_os);
             sif.read_buff.dump_pos(pos,log_os);
@@ -909,10 +906,10 @@ process_pos(const int stage_no,
 #endif
         //        consolidate_candidate_indel_pos(pos);
 
-        if(! _client_opt.is_htype_calling) {
-            if(! _client_opt.is_write_candidate_indels_only) {
+        if (! _client_opt.is_htype_calling) {
+            if (! _client_opt.is_write_candidate_indels_only) {
                 //        clean_pos(pos);
-                if(! _client_opt.is_skip_realignment) {
+                if (! _client_opt.is_skip_realignment) {
                     align_pos(pos);
                 }
                 pileup_pos_reads(pos);
@@ -923,12 +920,12 @@ process_pos(const int stage_no,
                 write_reads(pos);
             }
 
-            for(unsigned s(0); s<_n_samples; ++s) {
+            for (unsigned s(0); s<_n_samples; ++s) {
                 sample(s).read_buff.clear_pos(_client_opt,pos);
             }
 
         } else {
-            if(! _client_opt.is_write_candidate_indels_only) {
+            if (! _client_opt.is_write_candidate_indels_only) {
                 //        clean_pos(pos);
                 align_pos(pos);
                 rebuffer_pos_reads(pos);
@@ -936,13 +933,13 @@ process_pos(const int stage_no,
         }
 
     } else if (stage_no==STAGE::POST_ALIGN) {
-        if(! _client_opt.is_htype_calling) {
-            if(! _client_opt.is_write_candidate_indels_only) {
-                if(is_pos_reportable(pos)) {
+        if (! _client_opt.is_htype_calling) {
+            if (! _client_opt.is_write_candidate_indels_only) {
+                if (is_pos_reportable(pos)) {
                     process_pos_variants(pos);
                 }
             }
-            for(unsigned s(0); s<_n_samples; ++s) {
+            for (unsigned s(0); s<_n_samples; ++s) {
                 sample(s).indel_buff.clear_pos(pos);
             }
         }
@@ -950,12 +947,12 @@ process_pos(const int stage_no,
     } else if (stage_no==STAGE::POST_REGION) {
         assert(_client_opt.is_htype_calling);
 
-        if(! _client_opt.is_write_candidate_indels_only) {
+        if (! _client_opt.is_write_candidate_indels_only) {
             process_htype_pos(pos);
         }
 
     } else if (stage_no==STAGE::POST_CALL) {
-        for(unsigned s(0); s<_n_samples; ++s) {
+        for (unsigned s(0); s<_n_samples; ++s) {
             sample_info& sif(sample(s));
             sif.estdepth_buff.clear_pos(pos);
             sif.bc_buff.clear_pos(pos);
@@ -963,10 +960,10 @@ process_pos(const int stage_no,
     } else if (stage_no==STAGE::POST_READ) {
         assert(_client_opt.is_htype_calling);
 
-        for(unsigned s(0); s<_n_samples; ++s) {
+        for (unsigned s(0); s<_n_samples; ++s) {
             sample(s).read_buff.clear_pos(_client_opt,pos);
         }
-        for(unsigned s(0); s<_n_samples; ++s) {
+        for (unsigned s(0); s<_n_samples; ++s) {
             sample(s).indel_buff.clear_pos(pos);
         }
 
@@ -986,7 +983,7 @@ starling_pos_processor_base::
 insert_pos_submap_count(const pos_t pos,
                         const unsigned sample_no) {
 
-    if(! is_pos_reportable(pos)) return;
+    if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
 
@@ -1000,7 +997,7 @@ starling_pos_processor_base::
 insert_pos_spandel_count(const pos_t pos,
                          const unsigned sample_no) {
 
-    if(! is_pos_reportable(pos)) return;
+    if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
 
@@ -1014,7 +1011,7 @@ insert_mapq_count(const pos_t pos,
                   const unsigned sample_no,
                   const uint8_t mapq) {
 
-    if(! is_pos_reportable(pos)) return;
+    if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
 //    log_os << "Inserting mapq at " << pos << '\n';
@@ -1023,9 +1020,9 @@ insert_mapq_count(const pos_t pos,
 
 void
 starling_pos_processor_base::
-update_ranksum(const pos_t pos,const unsigned sample_no,const base_call& bc, const uint8_t mapq, const int cycle){
+update_ranksum(const pos_t pos,const unsigned sample_no,const base_call& bc, const uint8_t mapq, const int cycle) {
 
-	if(! is_pos_reportable(pos)) return;
+    if (! is_pos_reportable(pos)) return;
 //	log_os << "updating ranksum" << endl;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
@@ -1041,7 +1038,7 @@ insert_pos_basecall(const pos_t pos,
                     const bool is_tier1,
                     const base_call& bc) {
 
-    if(! is_pos_reportable(pos)) return;
+    if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
 
@@ -1059,7 +1056,7 @@ insert_hap_cand(const pos_t pos,
                 const uint8_t* qual,
                 const unsigned offset) {
 
-    if(! is_pos_reportable(pos)) return;
+    if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
 
@@ -1083,15 +1080,15 @@ write_candidate_indels_pos(const pos_t pos) {
 
     std::ostream& bos(*_client_io.candidate_indel_osptr());
 
-    for(; i!=i_end; ++i) {
+    for (; i!=i_end; ++i) {
         const indel_key& ik(i->first);
         const indel_data& id(get_indel_data(i));
-        if(! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
+        if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
         bos << _chrom_name << "\t"
             << output_pos << "\t"
             << INDEL::get_index_label(ik.type) << "\t"
             << ik.length << "\t";
-        if(INDEL::SWAP==ik.type) {
+        if (INDEL::SWAP==ik.type) {
             bos << ik.swap_dlength << "\t";
         }
         bos << id.get_insert_seq() << "\n";
@@ -1108,7 +1105,7 @@ process_pos_indel_single_sample(const pos_t pos,
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if(sample_no!=0) return;
+    if (sample_no!=0) return;
 
     // Current multiploid indel model can handle a het or hom indel
     // allele vs. reference, or two intersecting non-reference indel
@@ -1128,11 +1125,11 @@ process_pos_indel_single_sample(const pos_t pos,
     ciiter it(sif.indel_buff.pos_iter(pos));
     const ciiter it_end(sif.indel_buff.pos_iter(pos+1));
 
-    for(; it!=it_end; ++it) {
+    for (; it!=it_end; ++it) {
         const indel_key& ik(it->first);
         const indel_data& id(get_indel_data(it));
-        if(! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
-        if(id.read_path_lnp.empty()) continue;
+        if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
+        if (id.read_path_lnp.empty()) continue;
 
         // TODO implement indel overlap resolution
         //
@@ -1140,7 +1137,7 @@ process_pos_indel_single_sample(const pos_t pos,
 
         bool is_indel(false);
 
-        if(_client_opt.is_bindel_diploid()) {
+        if (_client_opt.is_bindel_diploid()) {
             // indel_report_info needs to be run first now so that
             // local small repeat info is available to the indel
             // caller
@@ -1162,7 +1159,7 @@ process_pos_indel_single_sample(const pos_t pos,
                                                                    indel_error_prob,ref_error_prob,
                                                                    ik,id,is_use_alt_indel,dindel);
 
-            if(dindel.is_indel) {
+            if (dindel.is_indel) {
                 is_indel=true;
 
                 // sample-specific info: (division doesn't really matter
@@ -1171,18 +1168,18 @@ process_pos_indel_single_sample(const pos_t pos,
                 get_starling_indel_sample_report_info(_client_dopt,ik,id,sif.bc_buff,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
-                if(_client_opt.is_gvcf_output()) {
+                if (_client_opt.is_gvcf_output()) {
                     _gvcfer->add_indel(pos,ik,dindel,iri,isri);
                 }
 
-                if(_client_opt.is_bindel_diploid_file) {
+                if (_client_opt.is_bindel_diploid_file) {
 
                     std::ostream& bos(*_client_io.bindel_diploid_osptr(sample_no));
                     bos << _chrom_name << "\t" << output_pos << "\t";
                     write_starling_diploid_indel_file(dindel,iri,isri,bos);
                     bos << "\n";
                 }
-                if(_is_variant_windows) _variant_print_pos.insert(pos);
+                if (_is_variant_windows) _variant_print_pos.insert(pos);
             }
 
             /// \TODO put this option under runtime control...
@@ -1190,19 +1187,19 @@ process_pos_indel_single_sample(const pos_t pos,
             ///
             static const bool is_print_indel_evidence(false);
 
-            if(is_print_indel_evidence && is_indel) {
+            if (is_print_indel_evidence && is_indel) {
                 report_os << "INDEL_EVIDENCE " << ik;
 
                 typedef indel_data::score_t::const_iterator siter;
                 siter it2(id.read_path_lnp.begin()), it2_end(id.read_path_lnp.end());
-                for(; it2!=it2_end; ++it2) {
+                for (; it2!=it2_end; ++it2) {
                     const align_id_t read_id(it2->first);
                     const read_path_scores& lnp(it2->second);
                     const read_path_scores pprob(indel_lnp_to_pprob(_client_dopt,lnp,is_tier2_pass,is_use_alt_indel));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 
                     report_os << "read key: ";
-                    if(NULL==srptr) report_os << "UNKNOWN_KEY";
+                    if (NULL==srptr) report_os << "UNKNOWN_KEY";
                     else            report_os << srptr->key();
                     report_os << "\n"
                               << "read log_lhoods: " << lnp << "\n"
@@ -1221,9 +1218,9 @@ get_new_read_pos(const read_segment& rseg) {
 
     // get the best alignment for the read:
     const alignment* best_al_ptr(&(rseg.genome_align()));
-    if(rseg.is_realigned) best_al_ptr=&(rseg.realignment);
+    if (rseg.is_realigned) best_al_ptr=&(rseg.realignment);
 
-    if(best_al_ptr->empty()) return rseg.buffer_pos;      // a grouper contig read which was not realigned...
+    if (best_al_ptr->empty()) return rseg.buffer_pos;     // a grouper contig read which was not realigned...
     else                     return best_al_ptr->pos;
 }
 
@@ -1241,24 +1238,24 @@ rebuffer_pos_reads(const pos_t pos) {
     //
     typedef std::pair<std::pair<align_id_t,seg_id_t>,pos_t> read_pos_t;
 
-    for(unsigned s(0); s<_n_samples; ++s) {
+    for (unsigned s(0); s<_n_samples; ++s) {
         sample_info& sif(sample(s));
         std::vector<read_pos_t> new_read_pos;
         read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
-        for(read_segment_iter::ret_val r; true; ri.next()) {
+        for (read_segment_iter::ret_val r; true; ri.next()) {
             r=ri.get_ptr();
-            if(NULL==r.first) break;
+            if (NULL==r.first) break;
             read_segment& rseg(r.first->get_segment(r.second));
 
             const pos_t new_pos(get_new_read_pos(rseg));
-            if((new_pos!=pos) &&
-               (_stageman.is_new_pos_value_valid(new_pos,STAGE::POST_ALIGN))) {
+            if ((new_pos!=pos) &&
+                (_stageman.is_new_pos_value_valid(new_pos,STAGE::POST_ALIGN))) {
                 new_read_pos.push_back(std::make_pair(std::make_pair(rseg.id(),r.second),new_pos));
             }
         }
 
         const unsigned nr(new_read_pos.size());
-        for(unsigned i(0); i<nr; ++i) {
+        for (unsigned i(0); i<nr; ++i) {
             sif.read_buff.rebuffer_read_segment(new_read_pos[i].first.first,
                                                 new_read_pos[i].first.second,
                                                 new_read_pos[i].second);
@@ -1275,18 +1272,18 @@ void
 starling_pos_processor_base::
 write_reads(const pos_t pos) {
 
-    for(unsigned s(0); s<_n_samples; ++s) {
+    for (unsigned s(0); s<_n_samples; ++s) {
         bam_dumper* bamd_ptr(_client_io.realign_bam_ptr(s));
-        if(NULL == bamd_ptr) continue;
+        if (NULL == bamd_ptr) continue;
         bam_dumper& bamd(*bamd_ptr);
 
         read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
         read_segment_iter::ret_val r;
 
-        while(true) {
+        while (true) {
             r=ri.get_ptr();
-            if(NULL==r.first) break;
-            if(r.first->segment_count()==r.second) {
+            if (NULL==r.first) break;
+            if (r.first->segment_count()==r.second) {
                 r.first->write_bam(bamd);
             }
             ri.next();
@@ -1304,14 +1301,14 @@ starling_pos_processor_base::
 pileup_pos_reads(const pos_t pos) {
     static const bool is_include_submapped(false);
 
-    for(unsigned s(0); s<_n_samples; ++s) {
+    for (unsigned s(0); s<_n_samples; ++s) {
         read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
         read_segment_iter::ret_val r;
-        while(true) {
+        while (true) {
             r=ri.get_ptr();
-            if(NULL==r.first) break;
+            if (NULL==r.first) break;
             const read_segment& rseg(r.first->get_segment(r.second));
-            if(is_include_submapped || rseg.is_treated_as_anytier_mapping()) {
+            if (is_include_submapped || rseg.is_treated_as_anytier_mapping()) {
                 pileup_read_segment(rseg,s);
             }
             ri.next();
@@ -1327,17 +1324,17 @@ pileup_read_segment(const read_segment& rseg,
 
     // get the best alignment for the read:
     const alignment* best_al_ptr(&(rseg.genome_align()));
-    if(rseg.is_realigned) {
+    if (rseg.is_realigned) {
         best_al_ptr=&(rseg.realignment);
     } else {
         // detect whether this read has no alignments with indels we can handle:
-        if(! rseg.is_any_nonovermax(_client_opt.max_indel_size)) return;
+        if (! rseg.is_any_nonovermax(_client_opt.max_indel_size)) return;
     }
 
     const alignment& best_al(*best_al_ptr);
-    if(best_al.empty()) {
-        if(! rseg.is_realigned) {
-            if(_client_opt.verbosity >= LOG_LEVEL::ALLWARN) {
+    if (best_al.empty()) {
+        if (! rseg.is_realigned) {
+            if (_client_opt.verbosity >= LOG_LEVEL::ALLWARN) {
                 log_os << "WARNING: skipping read_segment with no genomic alignment and contig alignment outside of indel.\n";
                 log_os << "\tread_name: " << rseg.key() << "\n";
             }
@@ -1353,7 +1350,7 @@ pileup_read_segment(const read_segment& rseg,
     //
     // A warning has already been issues for this at the end of realignment:
     //
-    if(rseg.is_realigned && rseg.is_invalid_realignment) return;
+    if (rseg.is_realigned && rseg.is_invalid_realignment) return;
 
     const unsigned read_size(rseg.read_size());
     const bam_seq bseq(rseg.get_bam_read());
@@ -1372,10 +1369,10 @@ pileup_read_segment(const read_segment& rseg,
     // exact begin and end report range filters:
     {
         const pos_range& rlimit(_client_dopt.report_range_limit);
-        if(rlimit.is_end_pos && (best_al.pos>=rlimit.end_pos)) return;
-        if(rlimit.is_begin_pos) {
+        if (rlimit.is_end_pos && (best_al.pos>=rlimit.end_pos)) return;
+        if (rlimit.is_begin_pos) {
             const pos_t al_end_pos(best_al.pos+static_cast<pos_t>(read_ref_mapped_size));
-            if(al_end_pos <= rlimit.begin_pos) return;
+            if (al_end_pos <= rlimit.begin_pos) return;
         }
     }
 
@@ -1406,12 +1403,12 @@ pileup_read_segment(const read_segment& rseg,
     const bool is_tier1(rseg.is_treated_as_tier1_mapping());
 
     // precompute mismatch density info for this read:
-    if((! is_submapped) && _client_opt.is_max_win_mismatch) {
+    if ((! is_submapped) && _client_opt.is_max_win_mismatch) {
         const rc_segment_bam_seq ref_bseq(_ref);
         create_mismatch_filter_map(_client_opt,best_al,ref_bseq,bseq,read_begin,read_end,_rmi);
-        if(_client_opt.is_tier2_mismatch_density_filter_count) {
+        if (_client_opt.is_tier2_mismatch_density_filter_count) {
             const int max_pass(_client_opt.tier2_mismatch_density_filter_count);
-            for(unsigned i(0); i<read_size; ++i) {
+            for (unsigned i(0); i<read_size; ++i) {
                 _rmi[i].tier2_mismatch_filter_map = (max_pass < _rmi[i].mismatch_count);
             }
         }
@@ -1428,24 +1425,24 @@ pileup_read_segment(const read_segment& rseg,
 
     using namespace ALIGNPATH;
     const unsigned as(best_al.path.size());
-    for(unsigned i(0); i<as; ++i) {
+    for (unsigned i(0); i<as; ++i) {
         const path_segment& ps(best_al.path[i]);
 
 #ifdef DEBUG_PPOS
         log_os << "seg,ref,read: " << i << " " << ref_head_pos << " " << read_head_pos << "\n";
 #endif
 
-        if(ps.type == MATCH) {
-            for(unsigned j(0); j<ps.length; ++j) {
+        if (ps.type == MATCH) {
+            for (unsigned j(0); j<ps.length; ++j) {
                 const unsigned read_pos(read_head_pos+j);
-                if((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
+                if ((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
 
 #ifdef DEBUG_PPOS
                 log_os << "j,ref,read: " << j << " " << ref_pos <<  " " << read_pos << "\n";
 #endif
 
-                if(is_submapped) {
+                if (is_submapped) {
                     insert_pos_submap_count(ref_pos,sample_no);
                     continue;
                 }
@@ -1453,7 +1450,7 @@ pileup_read_segment(const read_segment& rseg,
                 const uint8_t call_code(bseq.get_code(read_pos));
                 uint8_t qscore(qual[read_pos]);
 
-                if(is_mapq_adjust) {
+                if (is_mapq_adjust) {
                     qscore = qphred_to_mapped_qphred(qscore,mapq);
                 }
 //                log_os << static_cast<int>(qscore) << "\n";
@@ -1463,10 +1460,10 @@ pileup_read_segment(const read_segment& rseg,
                 assert(! _client_opt.is_min_win_qscore);
 
                 bool is_tier2_call_filter(is_call_filter);
-                if(! is_call_filter && _client_opt.is_max_win_mismatch) {
+                if (! is_call_filter && _client_opt.is_max_win_mismatch) {
                     is_call_filter = _rmi[read_pos].mismatch_filter_map;
-                    if(! _client_opt.is_tier2_no_mismatch_density_filter) {
-                        if(_client_opt.is_tier2_mismatch_density_filter_count) {
+                    if (! _client_opt.is_tier2_no_mismatch_density_filter) {
+                        if (_client_opt.is_tier2_mismatch_density_filter_count) {
                             is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map;
                         } else {
                             is_tier2_call_filter = is_call_filter;
@@ -1476,24 +1473,24 @@ pileup_read_segment(const read_segment& rseg,
 
                 unsigned align_strand_read_pos(read_pos);
                 unsigned end_trimmed_read_len(read_end);
-                if(! best_al.is_fwd_strand) {
+                if (! best_al.is_fwd_strand) {
                     align_strand_read_pos=read_size-(read_pos+1);
                     end_trimmed_read_len=read_size-fwd_strand_begin_skip;
                 }
 
-                if(_client_opt.is_max_win_mismatch) {
+                if (_client_opt.is_max_win_mismatch) {
                     is_neighbor_mismatch=(_rmi[read_pos].mismatch_count_ns>0);
                 }
 
                 try {
 
-                	const uint8_t call_id(bam_seq_code_to_id(call_code));
+                    const uint8_t call_id(bam_seq_code_to_id(call_code));
                     const bool current_call_filter( is_tier1 ? is_call_filter : is_tier2_call_filter );
                     const bool is_tier_specific_filter( is_tier1 && is_call_filter && (! is_tier2_call_filter) );
 
                     const base_call bc = base_call(call_id,qscore,best_al.is_fwd_strand,
-                            align_strand_read_pos,end_trimmed_read_len,
-                            current_call_filter,is_neighbor_mismatch,is_tier_specific_filter);
+                                                   align_strand_read_pos,end_trimmed_read_len,
+                                                   current_call_filter,is_neighbor_mismatch,is_tier_specific_filter);
 
                     insert_pos_basecall(ref_pos,
                                         sample_no,
@@ -1501,11 +1498,11 @@ pileup_read_segment(const read_segment& rseg,
                                         bc);
 
                     // update mapq and rank-sum metrics
-                    if(_client_opt.is_compute_VQSRmetrics) {
+                    if (_client_opt.is_compute_VQSRmetrics) {
                         insert_mapq_count(ref_pos,sample_no,mapq);
                         update_ranksum(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
                     }
-                    if(_client_opt.is_compute_hapscore) {
+                    if (_client_opt.is_compute_hapscore) {
                         insert_hap_cand(ref_pos,sample_no,is_tier1,
                                         bseq,qual,read_pos);
                     }
@@ -1517,15 +1514,15 @@ pileup_read_segment(const read_segment& rseg,
                 }
             }
 
-        } else if(ps.type==DELETE) {
+        } else if (ps.type==DELETE) {
             const bool is_edge_deletion((i<edge_ends.first)  || (i>edge_ends.second));
             const bool is_pinned_deletion(((i<edge_ends.first) && (edge_pins.first)) ||
                                           ((i>edge_ends.second) && (edge_pins.second)));
-            if((! is_edge_deletion) || is_pinned_deletion) {
-                for(unsigned j(0); j<ps.length; ++j) {
+            if ((! is_edge_deletion) || is_pinned_deletion) {
+                for (unsigned j(0); j<ps.length; ++j) {
                     const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
 
-                    if(is_submapped) {
+                    if (is_submapped) {
                         insert_pos_submap_count(ref_pos,sample_no);
                     } else {
                         insert_pos_spandel_count(ref_pos,sample_no);
@@ -1534,8 +1531,8 @@ pileup_read_segment(const read_segment& rseg,
             }
         }
 
-        if(is_segment_type_read_length(ps.type)) read_head_pos += ps.length;
-        if(is_segment_type_ref_length(ps.type)) ref_head_pos += ps.length;
+        if (is_segment_type_read_length(ps.type)) read_head_pos += ps.length;
+        if (is_segment_type_ref_length(ps.type)) ref_head_pos += ps.length;
     }
 
     //    return READ_FATE::USED;
@@ -1554,7 +1551,7 @@ process_pos_snp_single_sample(const pos_t pos,
         log_os << "Exception caught in starling_pos_processor_base.process_pos_snp_single_sample_impl() while processing chromosome position: " << (pos+1) << "\n"
                << "snp_pos_info:\n";
         const snp_pos_info* spi_ptr(sample(sample_no).bc_buff.get_pos(pos));
-        if(NULL==spi_ptr) {
+        if (NULL==spi_ptr) {
             static const snp_pos_info spi_null;
             spi_ptr=&spi_null;
         }
@@ -1591,7 +1588,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     snp_pos_info null_pi;
     snp_pos_info* pi_ptr(sif.bc_buff.get_pos(pos));
-    if(NULL==pi_ptr) pi_ptr=&null_pi;
+    if (NULL==pi_ptr) pi_ptr=&null_pi;
     snp_pos_info& pi(*pi_ptr);
 
     const unsigned n_calls(pi.calls.size());
@@ -1607,8 +1604,8 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     snp_pos_info& good_pi(sif.epd.good_pi);
     good_pi.clear();
     good_pi.set_ref_base(pi.get_ref_base());
-    for(unsigned i(0); i<n_calls; ++i) {
-        if(pi.calls[i].is_call_filter) continue;
+    for (unsigned i(0); i<n_calls; ++i) {
+        if (pi.calls[i].is_call_filter) continue;
         good_pi.calls.push_back(pi.calls[i]);
     }
 
@@ -1617,7 +1614,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     sif.ss.update(n_calls);
     sif.used_ss.update(_site_info.n_used_calls);
-    if(pi.get_ref_base() != 'N') {
+    if (pi.get_ref_base() != 'N') {
         sif.ssn.update(n_calls);
         sif.used_ssn.update(_site_info.n_used_calls);
         sif.wav.insert(pos,_site_info.n_used_calls,_site_info.n_unused_calls,n_spandel,n_submapped);
@@ -1628,9 +1625,9 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if(sample_no!=0) return;
+    if (sample_no!=0) return;
 
-    if(pi.calls.empty()) return;
+    if (pi.calls.empty()) return;
 
     adjust_joint_eprob(_client_opt,_dpcache,good_pi,sif.epd.dependent_eprob,_is_dependent_eprob);
 
@@ -1650,11 +1647,11 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     //monoploid_genotype mgt;
     //std::auto_ptr<nploid_genotype> ngt_ptr;
 
-    if(_client_opt.is_counts) {
+    if (_client_opt.is_counts) {
         report_counts(good_pi,_site_info.n_unused_calls,output_pos,*_client_io.counts_osptr());
     }
 
-    if(_client_opt.is_nonref_test() || _client_opt.is_nonref_sites()) {
+    if (_client_opt.is_nonref_test() || _client_opt.is_nonref_sites()) {
         position_nonref_2allele_test(good_pi,
                                      _client_opt,
                                      _client_opt.is_nonref_sites(),
@@ -1672,18 +1669,18 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     }
 
 #if 0
-    if(_client_opt.is_lsnp) {
+    if (_client_opt.is_lsnp) {
         position_snp_call_lrt(_client_opt.lsnp_alpha,good_pi,lsc);
     }
 #endif
-    if(_client_opt.is_bsnp_diploid()) {
+    if (_client_opt.is_bsnp_diploid()) {
         _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
     }
 #if 0
-    if(_client_opt.is_bsnp_monoploid) {
+    if (_client_opt.is_bsnp_monoploid) {
         position_snp_call_pprob_monogt(_client_opt.bsnp_monoploid_theta,good_pi,mgt);
     }
-    if(_client_opt.is_bsnp_nploid) {
+    if (_client_opt.is_bsnp_nploid) {
         ngt_ptr.reset(new nploid_genotype(*_ninfo));
         position_snp_call_pprob_nploid(_client_opt.bsnp_nploid_snp_prob,good_pi,*_ninfo,*ngt_ptr);
     }
@@ -1698,15 +1695,15 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     bool is_pos_adis(false);
     bool is_pos_acov(false);
 
-    if((_client_opt.is_adis_table || _client_opt.is_adis_lrt) && is_snp) {
-        if(_client_opt.is_adis_table) {
+    if ((_client_opt.is_adis_table || _client_opt.is_adis_lrt) && is_snp) {
+        if (_client_opt.is_adis_table) {
             is_pos_adis = (is_pos_adis || position_strand_distro_anomaly(_client_opt.adis_table_alpha,good_pi,_ws));
         }
-        if(_client_opt.is_adis_lrt) {
+        if (_client_opt.is_adis_lrt) {
             is_pos_adis = (is_pos_adis || position_strand_distro_anomaly_lrt(_client_opt.adis_lrt_alpha,good_pi));
         }
     }
-    if(_client_opt.is_acov) {
+    if (_client_opt.is_acov) {
         is_pos_acov = position_strand_coverage_anomaly(_client_opt.acov_alpha,pi);
     }
 #endif
@@ -1715,17 +1712,17 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     //const bool is_filter_snp(is_overfilter || (_client_opt.is_filter_anom_calls && is_anomaly));
 
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
-    if(is_snp) {
-        if(_client_opt.is_compute_hapscore) {
+    if (is_snp) {
+        if (_client_opt.is_compute_hapscore) {
             _site_info.hapscore=get_hapscore(pi.hap_set);
         }
 
         // do calculate VQSR metrics
-        if(_client_opt.is_compute_VQSRmetrics) {
-        	_site_info.MQ 				= pi.get_rms_mq();
-			_site_info.ReadPosRankSum 	= pi.get_read_pos_ranksum();
-			_site_info.MQRankSum 		= pi.get_mq_ranksum();
-			_site_info.BaseQRankSum 	= pi.get_baseq_ranksum();
+        if (_client_opt.is_compute_VQSRmetrics) {
+            _site_info.MQ 				= pi.get_rms_mq();
+            _site_info.ReadPosRankSum 	= pi.get_read_pos_ranksum();
+            _site_info.MQRankSum 		= pi.get_mq_ranksum();
+            _site_info.BaseQRankSum 	= pi.get_baseq_ranksum();
         }
 
         // hpol filter
@@ -1733,23 +1730,23 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     }
 
-    if(_client_opt.is_all_sites()) {
+    if (_client_opt.is_all_sites()) {
 #if 0
         const diploid_genotype* dgt_ptr(&_site_info.dgt);
-        if(is_filter_snp) {
+        if (is_filter_snp) {
             dgt_ptr=&get_empty_dgt(pi.ref_base);
         }
 #endif
-        if(_client_opt.is_gvcf_output()) {
+        if (_client_opt.is_gvcf_output()) {
             _site_info.init(pos,pi.get_ref_base(),good_pi,_client_opt.used_allele_count_min_qscore);
             _gvcfer->add_site(_site_info);
         }
-        if(_client_opt.is_bsnp_diploid_allele_file) {
+        if (_client_opt.is_bsnp_diploid_allele_file) {
             write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
         }
     }
 
-    if(_client_opt.is_nonref_sites()) {
+    if (_client_opt.is_nonref_sites()) {
         std::ostream& bos(*_client_io.nonref_sites_osptr());
         write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
         bos << "\t";
@@ -1763,8 +1760,8 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 
     std::ostream& report_os(std::cerr);
 
-    if(is_snp) {
-        if(nrc.is_snp) {
+    if (is_snp) {
+        if (nrc.is_snp) {
             std::ostream& bos(*_client_io.nonref_test_osptr());
             write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
             bos << "\t";
@@ -1775,13 +1772,13 @@ process_pos_snp_single_sample_impl(const pos_t pos,
             bos << "\n";
         }
 #if 0
-        if(lsc.is_snp) {
+        if (lsc.is_snp) {
             write_snp_prefix_info("LSNP",output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,report_os);
             report_os << " " << lsc << "\n";
         }
 #endif
-        if(_site_info.dgt.is_snp) {
-            if(_client_opt.is_bsnp_diploid_file) {
+        if (_site_info.dgt.is_snp) {
+            if (_client_opt.is_bsnp_diploid_file) {
                 std::ostream& bos(*_client_io.bsnp_diploid_osptr());
                 write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
                 bos << "\t";
@@ -1790,14 +1787,14 @@ process_pos_snp_single_sample_impl(const pos_t pos,
             }
 
             // this needs to be updated no matter where the snp-call is written to:
-            if(_is_variant_windows) _variant_print_pos.insert(pos);
+            if (_is_variant_windows) _variant_print_pos.insert(pos);
         }
 #if 0
-        if(mgt.is_snp) {
+        if (mgt.is_snp) {
             write_snp_prefix_info("BSNP1",output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,report_os);
             report_os << " " << mgt << "\n";
         }
-        if(ngt_ptr.get() && ngt_ptr->is_snp) {
+        if (ngt_ptr.get() && ngt_ptr->is_snp) {
             write_snp_prefix_info("BSNPN",output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,report_os);
             report_os << " ";
             nploid_write(*_ninfo,*ngt_ptr,report_os);
@@ -1809,15 +1806,15 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     }
 
 #if 0
-    if(is_anomaly && (! _client_opt.is_filter_anom_calls)) {
-        if(is_pos_adis) report_os << "ANOM_DIS pos: " << output_pos << "\n";
-        if(is_pos_acov) report_os << "ANOM_COV pos: " << output_pos << "\n";
+    if (is_anomaly && (! _client_opt.is_filter_anom_calls)) {
+        if (is_pos_adis) report_os << "ANOM_DIS pos: " << output_pos << "\n";
+        if (is_pos_acov) report_os << "ANOM_COV pos: " << output_pos << "\n";
 
         is_reported_event = true;
     }
 #endif
 
-    if(_client_opt.is_print_all_site_evidence || (_client_opt.is_print_evidence && is_reported_event)) {
+    if (_client_opt.is_print_all_site_evidence || (_client_opt.is_print_evidence && is_reported_event)) {
         report_os << "EVIDENCE pos: " << output_pos << "\n"
                   << "is_snp: " << is_snp << "\n"
                   << pi << "\n";
@@ -1829,7 +1826,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
 const diploid_genotype&
 starling_pos_processor_base::
 get_empty_dgt(const char ref) const {
-    if(ref!='N') {
+    if (ref!='N') {
         return static_cast<const diploid_genotype&>(*_empty_dgt[base_to_id(ref)]);
     } else {
         static const diploid_genotype n_dgt;
@@ -1844,7 +1841,7 @@ starling_pos_processor_base::
 print_delayed_results(const int stage_no,
                       const pos_t pos) {
 
-    if(_variant_print_pos.count(pos)==0) return;
+    if (_variant_print_pos.count(pos)==0) return;
 
     const int pcn(STAGE::get_last_static_stage_no(_client_opt));
     assert(stage_no>pcn);
@@ -1862,7 +1859,7 @@ print_delayed_results(const int stage_no,
 
     bos << std::setprecision(2) << std::fixed;
 
-    for(unsigned s(0); s<_n_samples; ++s) {
+    for (unsigned s(0); s<_n_samples; ++s) {
         const win_avg_set& was(sample(s).wav.get_win_avg_set(window_no));
         bos << "\t" << was.ss_used_win.avg()
             << "\t" << was.ss_filt_win.avg()
@@ -1873,7 +1870,7 @@ print_delayed_results(const int stage_no,
 
     bos << "\n";
 
-    if((window_no+1) == vs) {
+    if ((window_no+1) == vs) {
         _variant_print_pos.erase(pos);
     }
 }

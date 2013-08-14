@@ -106,8 +106,8 @@ struct position_allele_distro_loghood_minfunc : public codemin::minfunc_interfac
     explicit
     position_allele_distro_loghood_minfunc(const snp_pos_info& pi,
                                            const bool* is_allele_used = 0) : _pi(pi), _n_allele(0) {
-        for(unsigned i(0); i<N_BASE; ++i) {
-            if((! is_allele_used) || is_allele_used[i]) {
+        for (unsigned i(0); i<N_BASE; ++i) {
+            if ((! is_allele_used) || is_allele_used[i]) {
                 _allele_map[_n_allele] = i;
                 _n_allele++;
             }

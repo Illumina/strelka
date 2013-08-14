@@ -26,6 +26,9 @@
 #include <iostream>
 
 
+//#define DEBUG_ALIGN
+
+
 
 // return true if alignments are compatible -- the only allowed
 // difference is edge soft clipping, if a match exists in the new
@@ -73,7 +76,7 @@ matchify_edge_segment_type(const alignment& al,
 
     const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
     const unsigned as(al.path.size());
-    for(unsigned i(0); i<as; ++i) {
+    for (unsigned i(0); i<as; ++i) {
         const path_segment& ps(al.path[i]);
         const bool is_leading_edge_segment(i<ends.first);
         const bool is_trailing_edge_segment(i>ends.second);
@@ -81,9 +84,9 @@ matchify_edge_segment_type(const alignment& al,
         const bool is_candidate_edge((is_match_leading_edge && is_leading_edge_segment) ||
                                      (is_match_trailing_edge && is_trailing_edge_segment));
         const bool is_edge_target(is_candidate_edge && is_target_type);
-        if(is_edge_target && is_leading_edge_segment) al2.pos-=ps.length;
-        if(is_edge_target || (ps.type==MATCH)) {
-            if((! al2.path.empty()) && (al2.path.back().type == MATCH)) {
+        if (is_edge_target && is_leading_edge_segment) al2.pos-=ps.length;
+        if (is_edge_target || (ps.type==MATCH)) {
+            if ((! al2.path.empty()) && (al2.path.back().type == MATCH)) {
                 al2.path.back().length += ps.length;
             } else {
                 al2.path.push_back(ps);
@@ -158,7 +161,15 @@ add_exemplar_alignment(const alignment& al,
                        const bool is_remove_soft_clip,
                        std::vector<alignment>& exal) {
 
-    if(! al.is_realignable(max_indel_size)) return;
+    if (! al.is_realignable(max_indel_size)) return;
+
+#ifdef DEBUG_ALIGN
+    log_os << "Adding Exemplar Alignment."
+           << " remove leading: " << is_remove_leading_edge_indels
+           << " remove trailing: " << is_remove_trailing_edge_indels
+           << " remove soft-clip: " << is_remove_soft_clip
+           << "\n";
+#endif
 
     // right now we:
     // (1) optionally remove soft-clipping and force the clipped regions to match
@@ -167,24 +178,29 @@ add_exemplar_alignment(const alignment& al,
     //
     const alignment* al_ptr(&al);
     alignment nial;
-    if((is_remove_leading_edge_indels || is_remove_trailing_edge_indels) & is_edge_readref_len_segment(al.path)) {
+    if ((is_remove_leading_edge_indels || is_remove_trailing_edge_indels) & is_edge_readref_len_segment(al.path)) {
         nial=matchify_edge_indel(*al_ptr,is_remove_leading_edge_indels,is_remove_trailing_edge_indels);
         al_ptr=&nial;
     }
 
     alignment nscal;
-    if((is_remove_soft_clip) & is_soft_clipped(al.path)) {
+    if ((is_remove_soft_clip) & is_soft_clipped(al.path)) {
         nscal=matchify_edge_soft_clip(*al_ptr);
         al_ptr=&nscal;
     }
 
     // check that this candidate exemplar does not already exist:
     BOOST_FOREACH(alignment& exemplar, exal) {
-        if(check_and_adjust_exemplar(*al_ptr,exemplar)) return;
+        if (check_and_adjust_exemplar(*al_ptr,exemplar)) return;
     }
 
     // no compatible alignment found! Add this alignment as a new exemplar:
     exal.push_back(*al_ptr);
+
+#ifdef DEBUG_ALIGN
+    log_os << "Added exemplar " << *al_ptr << "\n";
+#endif
+
 }
 
 
@@ -203,7 +219,7 @@ get_exemplar_alignments(const starling_options& opt,
 
     // get exemplar from read mapper:
     const alignment& al(rseg.genome_align());
-    if(! al.empty()) {
+    if (! al.empty()) {
         const std::pair<bool,bool> end_pin(rseg.get_segment_edge_pin());
         const bool is_remove_leading_edge_indels(! end_pin.first);
         const bool is_remove_trailing_edge_indels(! end_pin.second);
@@ -228,7 +244,7 @@ get_exemplar_alignments(const starling_options& opt,
 
 #ifdef DEBUG_ALIGN
     log_os << "VARMIT: Final exemplar set:\n";
-    BOOST_FOREACH(const alignment& exemplar, exal){
+    BOOST_FOREACH(const alignment& exemplar, exal) {
         log_os << "exemplar: " << exemplar;
     }
 #endif

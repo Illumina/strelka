@@ -41,7 +41,7 @@ struct contig_reader {
     contig_reader(std::istream& is) : _is(is), _is_valid(true) {}
 
     bool next() {
-        if(_is_valid) { _is_valid=get_next_contig(_is,_ctg); }
+        if (_is_valid) { _is_valid=get_next_contig(_is,_ctg); }
         return _is_valid;
     }
 

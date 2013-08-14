@@ -130,7 +130,7 @@ struct starling_read : private boost::noncopyable {
 
     seg_id_t
     segment_count() const {
-        if(is_segmented()) {
+        if (is_segmented()) {
             return _segment_ptr->segment_count();
         }
         return 0;
@@ -138,7 +138,7 @@ struct starling_read : private boost::noncopyable {
 
     read_segment&
     get_segment(seg_id_t seg_no) {
-        if(seg_no>0) {
+        if (seg_no>0) {
             assert(is_segmented() && (seg_no<=segment_count()));
             return _segment_ptr->get_segment(seg_no);
         }
@@ -147,7 +147,7 @@ struct starling_read : private boost::noncopyable {
 
     const read_segment&
     get_segment(seg_id_t seg_no) const {
-        if(seg_no>0) {
+        if (seg_no>0) {
             assert(is_segmented() && (seg_no<=segment_count()));
             return _segment_ptr->get_segment(seg_no);
         }

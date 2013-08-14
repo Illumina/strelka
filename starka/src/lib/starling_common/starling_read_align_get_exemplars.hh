@@ -10,7 +10,6 @@
 // <https://github.com/downloads/sequencing/licenses/>.
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -30,5 +29,5 @@
 void
 get_exemplar_alignments(const starling_options& opt,
                         const read_segment& rseg,
-                        std::vector<alignment>& exal); 
+                        std::vector<alignment>& exal);
 

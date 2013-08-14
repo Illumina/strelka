@@ -45,7 +45,7 @@ bam_streamer(const char* filename,
     if (NULL == region) {
         // read the whole BAM file:
 
-        if(_bfp->header->n_targets) {
+        if (_bfp->header->n_targets) {
             // parse a fake region so that header->hash is created
             std::string fake_region(target_id_to_name(0));
             fake_region += ":1-1";
@@ -75,7 +75,7 @@ void
 bam_streamer::
 _load_index() {
 
-    if(NULL != _bidx) return;
+    if (NULL != _bidx) return;
 
     // use the BAM index to read a region of the BAM file
     if (! (_bfp->type&0x01)) {
@@ -179,7 +179,7 @@ report_state(std::ostream& os) const {
     const bam_record* bamp(get_record_ptr());
 
     os << "\tbam_stream_label: " << name() << "\n";
-    if(_is_region && (! _region.empty())) {
+    if (_is_region && (! _region.empty())) {
         os << "\tbam_stream_selected_region: " << _region << "\n";
     }
     if (NULL != bamp) {

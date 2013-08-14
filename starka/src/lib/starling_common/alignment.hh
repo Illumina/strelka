@@ -60,17 +60,17 @@ struct alignment {
 
     bool
     operator<(const alignment& rhs) const {
-        if(pos<rhs.pos) return true;
-        if(pos==rhs.pos) {
-            if(is_fwd_strand<rhs.is_fwd_strand) return true;
-            if(is_fwd_strand==rhs.is_fwd_strand) {
+        if (pos<rhs.pos) return true;
+        if (pos==rhs.pos) {
+            if (is_fwd_strand<rhs.is_fwd_strand) return true;
+            if (is_fwd_strand==rhs.is_fwd_strand) {
                 const unsigned ps(path.size());
                 const unsigned rps(rhs.path.size());
-                if(ps<rps) return true;
-                if(ps==rps) {
-                    for(unsigned i(0); i<ps; ++i) {
-                        if(path[i]<rhs.path[i]) return true;
-                        if(path[i]==rhs.path[i]) continue;
+                if (ps<rps) return true;
+                if (ps==rps) {
+                    for (unsigned i(0); i<ps; ++i) {
+                        if (path[i]<rhs.path[i]) return true;
+                        if (path[i]==rhs.path[i]) continue;
                         return false;
                     }
                 }

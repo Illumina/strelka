@@ -97,7 +97,7 @@ struct pos_range {
 
     unsigned
     size() const {
-        if(! is_complete()) return 0;
+        if (! is_complete()) return 0;
         return std::max(0,end_pos-begin_pos);
     }
 

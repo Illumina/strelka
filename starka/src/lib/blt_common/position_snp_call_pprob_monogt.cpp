@@ -35,17 +35,17 @@ position_snp_call_pprob_monogt(const double theta,
                                const snp_pos_info& pi,
                                monoploid_genotype& mgt) {
 
-    if(pi.ref_base=='N') return;
+    if (pi.ref_base=='N') return;
 
     const unsigned n_calls(pi.calls.size());
     mgt.ref_gt=base_to_id(pi.ref_base);
 
     // check that a non-reference call meeting quality criteria even exists:
     bool is_test(false);
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         const uint8_t obs_id(pi.calls[i].base_id);
         assert(obs_id!=BASE_ID::ANY);
-        if(mgt.ref_gt!=obs_id) {
+        if (mgt.ref_gt!=obs_id) {
             is_test=true;
             break;
         }
@@ -55,20 +55,20 @@ position_snp_call_pprob_monogt(const double theta,
 
     // get likelihood of each genotype
     double lhood[MONOGT::SIZE];
-    for(unsigned gt(0); gt<MONOGT::SIZE; ++gt) lhood[gt] = 0.;
+    for (unsigned gt(0); gt<MONOGT::SIZE; ++gt) lhood[gt] = 0.;
 
     static const double one_third(1./3.);
     static const double log_one_third(std::log(one_third));
 
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         const uint8_t obs_id(pi.calls[i].base_id);
         const double eprob(pi.calls[i].error_prob());
 
         const double val0(std::log(eprob)+log_one_third);
         const double val1(std::log(1.-eprob));
 
-        for(unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
-            if(obs_id != gt) {
+        for (unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
+            if (obs_id != gt) {
                 lhood[gt] += val0;
             } else {
                 lhood[gt] += val1;
@@ -78,10 +78,10 @@ position_snp_call_pprob_monogt(const double theta,
 
     //
     double prior[MONOGT::SIZE];
-    for(unsigned gt(0); gt<MONOGT::SIZE; ++gt) prior[gt] = 0.;
+    for (unsigned gt(0); gt<MONOGT::SIZE; ++gt) prior[gt] = 0.;
 
-    for(unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
-        if(gt==mgt.ref_gt) {
+    for (unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
+        if (gt==mgt.ref_gt) {
             prior[gt] = 1.-theta;
             assert(prior[gt]>0.);
         } else {
@@ -90,7 +90,7 @@ position_snp_call_pprob_monogt(const double theta,
     }
 
     // mult by prior distro to get unnormalized pprob:
-    for(unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
+    for (unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
         mgt.pprob[gt] = lhood[gt] + std::log(prior[gt]);
     }
 
@@ -99,13 +99,13 @@ position_snp_call_pprob_monogt(const double theta,
     mgt.max2_gt=1;
     double max(mgt.pprob[mgt.max_gt]);
     double max2(mgt.pprob[mgt.max2_gt]);
-    for(unsigned gt(1); gt<MONOGT::SIZE; ++gt) {
-        if(mgt.pprob[gt] > max) {
+    for (unsigned gt(1); gt<MONOGT::SIZE; ++gt) {
+        if (mgt.pprob[gt] > max) {
             max2 = max;
             max = mgt.pprob[gt];
             mgt.max2_gt = mgt.max_gt;
             mgt.max_gt = gt;
-        } else if(mgt.pprob[gt] > max2) {
+        } else if (mgt.pprob[gt] > max2) {
             max2 = mgt.pprob[gt];
             mgt.max2_gt = gt;
         }
@@ -115,14 +115,14 @@ position_snp_call_pprob_monogt(const double theta,
     mgt.is_snp=(mgt.max_gt != mgt.ref_gt);
 
     double sum(0.);
-    for(unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
+    for (unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
         mgt.pprob[gt] = std::exp(mgt.pprob[gt]-max);
         sum += mgt.pprob[gt];
     }
 
     // normalize:
     sum = 1./sum;
-    for(unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
+    for (unsigned gt(0); gt<MONOGT::SIZE; ++gt) {
         mgt.pprob[gt] *= sum;
     }
 }

@@ -29,7 +29,7 @@ struct bam_record {
 
     ~bam_record() {
         if (NULL != _bp) {
-            if(NULL != _bp->data) free(_bp->data);
+            if (NULL != _bp->data) free(_bp->data);
             free(_bp);
         }
     }
@@ -112,13 +112,13 @@ public:
     //
     bool
     is_unanchored() const {
-        if(! is_paired()) return false;
+        if (! is_paired()) return false;
         static const char amtag[] = {'A','M'};
         uint8_t* am_ptr(bam_aux_get(_bp,amtag));
-        if(NULL == am_ptr)  return false;
+        if (NULL == am_ptr)  return false;
         static const char smtag[] = {'S','M'};
         uint8_t* sm_ptr(bam_aux_get(_bp,smtag));
-        if(NULL == sm_ptr)  return false;
+        if (NULL == sm_ptr)  return false;
         return (is_int_code(am_ptr[0]) &&
                 is_int_code(sm_ptr[0]) &&
                 (0 == bam_aux2i(am_ptr)) &&
@@ -138,7 +138,7 @@ public:
 
     void
     set_target_id(int32_t tid) {
-        if(tid<-1) tid=-1;
+        if (tid<-1) tid=-1;
         _bp->core.tid=tid;
     }
 
@@ -165,7 +165,7 @@ private:
     static
     bool
     is_int_code(char c) {
-        switch(c) {
+        switch (c) {
         case 'c' :
         case 's' :
         case 'i' :

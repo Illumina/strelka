@@ -47,7 +47,7 @@ enum align_t {
 inline
 char
 segment_type_to_cigar_code(const align_t id) {
-    switch(id) {
+    switch (id) {
     case MATCH     : return 'M';
     case INSERT    : return 'I';
     case DELETE    : return 'D';
@@ -62,7 +62,7 @@ segment_type_to_cigar_code(const align_t id) {
 inline
 align_t
 cigar_code_to_segment_type(const char c) {
-    switch(c) {
+    switch (c) {
     case 'M' : return MATCH;
     case 'I' : return INSERT;
     case 'D' : return DELETE;
@@ -77,7 +77,7 @@ cigar_code_to_segment_type(const char c) {
 inline
 bool
 is_segment_type_read_length(const align_t id) {
-    switch(id) {
+    switch (id) {
     case MATCH     :
     case INSERT    :
     case SOFT_CLIP : return true;
@@ -88,7 +88,7 @@ is_segment_type_read_length(const align_t id) {
 inline
 bool
 is_segment_type_ref_length(const align_t id) {
-    switch(id) {
+    switch (id) {
     case MATCH  :
     case DELETE :
     case SKIP   : return true;
@@ -99,7 +99,7 @@ is_segment_type_ref_length(const align_t id) {
 inline
 bool
 is_segment_type_indel(const align_t id) {
-    switch(id) {
+    switch (id) {
     case INSERT :
     case DELETE : return true;
     default     : return false;
@@ -124,8 +124,8 @@ struct path_segment {
     // arbitrary ordering which lets us look up from a set of alignments:
     bool
     operator<(const path_segment& rhs) const {
-        if(type<rhs.type) return true;
-        if(type==rhs.type) {
+        if (type<rhs.type) return true;
+        if (type==rhs.type) {
             return length<rhs.length;
         }
         return false;
@@ -271,11 +271,11 @@ struct exon_offsets {
     bool
     next() {
         bool is_break_next(false);
-        for(; _segment<_asize; ++_segment) {
-            if(is_break_next) return true;
+        for (; _segment<_asize; ++_segment) {
+            if (is_break_next) return true;
             const path_segment& ps(_apath[_segment]);
-            if(ps.type==SKIP) is_break_next=true;
-            if(is_segment_type_ref_length(ps.type)) _offset += ps.length;
+            if (ps.type==SKIP) is_break_next=true;
+            if (is_segment_type_ref_length(ps.type)) _offset += ps.length;
         }
         return false;
     }
@@ -324,31 +324,31 @@ is_apath_floating(const path_t& apath);
 
 
 namespace ALIGN_ISSUE {
-    enum issue_t {
-        NONE,
-        CLIPPING,
-        EDGE_DELETE,
-        EDGE_SKIP,
-        UNKNOWN_SEGMENT,
-        REPEATED_SEGMENT,
-        FLOATING,
-        LENGTH
-    };
+enum issue_t {
+    NONE,
+    CLIPPING,
+    EDGE_DELETE,
+    EDGE_SKIP,
+    UNKNOWN_SEGMENT,
+    REPEATED_SEGMENT,
+    FLOATING,
+    LENGTH
+};
 
-    inline
-    const char*
-    description(const issue_t i) {
-        switch(i){
-        case CLIPPING: return "alignment contains invalid clipping";
-        case EDGE_DELETE: return "deletion on alignment edge";
-        case EDGE_SKIP: return "skip on alignment edge";
-        case UNKNOWN_SEGMENT: return "unknown segment in alignment";
-        case REPEATED_SEGMENT: return "alignment contains repeated segment";
-        case FLOATING: return "alignment contains no match segments";
-        case LENGTH: return "alignment length does not match read length";
-        default: return "no error";
-        }
+inline
+const char*
+description(const issue_t i) {
+    switch (i) {
+    case CLIPPING: return "alignment contains invalid clipping";
+    case EDGE_DELETE: return "deletion on alignment edge";
+    case EDGE_SKIP: return "skip on alignment edge";
+    case UNKNOWN_SEGMENT: return "unknown segment in alignment";
+    case REPEATED_SEGMENT: return "alignment contains repeated segment";
+    case FLOATING: return "alignment contains no match segments";
+    case LENGTH: return "alignment length does not match read length";
+    default: return "no error";
     }
+}
 }
 
 

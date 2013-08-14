@@ -33,7 +33,7 @@ enum index_t {
 inline
 const char*
 get_label(const index_t i) {
-    switch(i) {
+    switch (i) {
     case UNKNOWN: return "unknown";
     case UNKNOWN_MAPPED: return "unknown-mapped";
     case TIER1_MAPPED: return "tier1-mapped";

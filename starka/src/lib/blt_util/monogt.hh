@@ -30,7 +30,7 @@ enum index_t {
 inline
 const char*
 label(const unsigned idx) {
-    switch(idx) {
+    switch (idx) {
     case A: return "A";
     case C: return "C";
     case G: return "G";

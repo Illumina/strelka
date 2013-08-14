@@ -52,7 +52,7 @@ struct diploid_genotype {
             static const int qp(error_prob_to_qphred((1.-p)));
             snp_qphred=qp;
             max_gt_qphred=qp;
-            for(unsigned i(0); i<DIGT::SIZE; ++i) {
+            for (unsigned i(0); i<DIGT::SIZE; ++i) {
                 pprob[i] = p;
             }
         }

@@ -311,6 +311,8 @@ struct starling_deriv_options : public blt_deriv_options {
 
     starling_align_limit sal;
 
+    std::string bam_header_data; // the full bam header, read in from bam file. Used for setting the sample name in
+
 private:
     std::auto_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
 };

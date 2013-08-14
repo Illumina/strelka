@@ -30,15 +30,15 @@ starling_streams(const starling_options& opt,
                  const bam_header_t* const header)
     : base_t(opt,pinfo,starling_sample_info) {
 
-    if(opt.is_bindel_diploid_file) {
+    if (opt.is_bindel_diploid_file) {
         _bindel_diploid_osptr[0].reset(initialize_bindel_file(opt,pinfo,opt.bindel_diploid_filename));
     }
 
-    if(opt.is_gvcf_output()) {
+    if (opt.is_gvcf_output()) {
         _gvcf_osptr[0] = initialize_gvcf_file(opt,pinfo,opt.gvcf.out_file,header,_gvcf_osptr_auto[0]);
     }
 
-    if(opt.is_realigned_read_file) {
+    if (opt.is_realigned_read_file) {
         _realign_bam_ptr[0].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"realigned-read BAM",header));
     }
 }

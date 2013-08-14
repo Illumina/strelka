@@ -54,10 +54,10 @@ ginfo_init(const unsigned init_ploidy,
            const unsigned init_i,
            gtype_info& gi) {
 
-    for(unsigned i(init_i); i<N_BASE; ++i) {
+    for (unsigned i(init_i); i<N_BASE; ++i) {
         gi.efreq_levels[i] += 1;
         gi.label[pli]=id_to_base(i);
-        if((pli+1)<init_ploidy) {
+        if ((pli+1)<init_ploidy) {
             ginfo_init(init_ploidy,pli+1,i,gi);
         } else {
             _ginfo.push_back(gi);
@@ -79,12 +79,12 @@ ref_gtype_init(const unsigned init_ploidy,
                unsigned*& ref,
                unsigned& index) {
 
-    for(unsigned i(init_i); i<N_BASE; ++i) {
+    for (unsigned i(init_i); i<N_BASE; ++i) {
         const bool is_iter_hom(pli==0 || (is_hom && (i==init_i)));
-        if((pli+1)<init_ploidy) {
+        if ((pli+1)<init_ploidy) {
             ref_gtype_init(init_ploidy,pli+1,i,is_iter_hom,ref,index);
         } else {
-            if(is_iter_hom) *ref++ = index;
+            if (is_iter_hom) *ref++ = index;
             ++index;
         }
     }

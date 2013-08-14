@@ -34,22 +34,22 @@ position_snp_call_lrt(const double alpha,
                       const snp_pos_info& pi,
                       lrt_snp_call& sc) {
 
-    if(pi.ref_base=='N') return;
+    if (pi.ref_base=='N') return;
 
     unsigned ecount(0);
     const unsigned n_calls(pi.calls.size());
-    for(unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i) {
         assert(pi.calls[i].base_id !=BASE_ID::ANY);
         ecount++;
     }
-    if(ecount==0) return;
+    if (ecount==0) return;
 
     const double null_loghood(calc_pos_nonref_freq_loghood(pi,0.));
 
     // heuristic to escape early:
     static const double p_delta(0.001);
     const double delta_loghood(calc_pos_nonref_freq_loghood(pi,p_delta));
-    if(null_loghood > delta_loghood) return;
+    if (null_loghood > delta_loghood) return;
 
     double x_nonref_freq;
     double x_loghood;
@@ -79,7 +79,7 @@ position_snp_call_lrt(const double alpha,
     // if it's a snp then get additional information on non-reference
     // allele frequencies.
     //
-    if(! sc.is_snp) return;
+    if (! sc.is_snp) return;
 
     static const double line_tol(1e-7);
     static const double start_ratio(0.05);
@@ -91,15 +91,15 @@ position_snp_call_lrt(const double alpha,
 
     const double ref_freq(1.-x_nonref_freq);
     const double nonref_freq((x_nonref_freq)/3.);
-    for(unsigned i(0); i<N_BASE; ++i) {
-        if(i==ref_base_id) sc.allele_freq[i] = ref_freq;
+    for (unsigned i(0); i<N_BASE; ++i) {
+        if (i==ref_base_id) sc.allele_freq[i] = ref_freq;
         else               sc.allele_freq[i] = nonref_freq;
     }
 
     static const unsigned N_BASE2(N_BASE*N_BASE);
     double conj_dir[N_BASE2];
     std::fill(conj_dir,conj_dir+N_BASE2,0.);
-    for(unsigned i(0); i<N_BASE; ++i) {
+    for (unsigned i(0); i<N_BASE; ++i) {
         const double start_dist( std::max(std::fabs(sc.allele_freq[i]*start_ratio),min_start_dist) );
         conj_dir[i*(N_BASE+1)] = start_dist;
     }

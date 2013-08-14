@@ -92,8 +92,8 @@ bam_update_bin(bam1_t& br) {
     // because we want to index shadow reads.
     //
     bam1_core_t& brc(br.core);
-    if(brc.pos>=0) {
-        if(brc.n_cigar!=0) {
+    if (brc.pos>=0) {
+        if (brc.n_cigar!=0) {
             // normal case:
             brc.bin = bam_reg2bin(brc.pos, bam_calend(&brc, bam1_cigar(&br)));
         } else {

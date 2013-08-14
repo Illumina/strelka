@@ -36,7 +36,7 @@ enum index_t { REF,
 inline
 const char*
 label(const unsigned idx) {
-    switch(idx) {
+    switch (idx) {
     case REF: return "ref";
     case HOM: return "hom";
     case HET: return "het";

@@ -1,3 +1,9 @@
+v2.0.12
+STARKA-34 Properly handle insertions adjacent to introns
+Filter out all open-breakends
+v2.0.11
+STARKA-14 Add option to provide sample name in output VCF SAMPLE column
+VQSR features
 v2.0.10
 STARKA-30 fix stability issue encounted with large indels in 2x400 reads
 v2.0.9

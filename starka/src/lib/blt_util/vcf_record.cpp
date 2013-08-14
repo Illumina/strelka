@@ -53,9 +53,9 @@ set(const char* s) {
     const char* p(start);
 
     unsigned wordindex(0);
-    while(wordindex<maxword) {
+    while (wordindex<maxword) {
         if ((*p == sep) || (*p == '\n') || (*p == '\0')) {
-            switch(wordindex) {
+            switch (wordindex) {
             case 0:
                 chrom=std::string(start,p-start);
                 break;
@@ -74,8 +74,8 @@ set(const char* s) {
                 // additional parse loop for ',' character:
             {
                 const char* p2(start);
-                while(p2<=p) {
-                    if((*p2==',') || (p2==p)) {
+                while (p2<=p) {
+                    if ((*p2==',') || (p2==p)) {
                         alt.push_back(std::string(start,p2-start));
                         stoupper(alt.back());
                         start=p2+1;
@@ -91,7 +91,7 @@ set(const char* s) {
             start=p+1;
             wordindex++;
         }
-        if((*p == '\n') || (*p == '\0')) break;
+        if ((*p == '\n') || (*p == '\0')) break;
         ++p;
     }
 
@@ -108,8 +108,8 @@ std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr) {
        << vcfr.ref << '\t';
 
     const unsigned nalt(vcfr.alt.size());
-    for(unsigned a(0); a<nalt; ++a) {
-        if(a) os << ',';
+    for (unsigned a(0); a<nalt; ++a) {
+        if (a) os << ',';
         os << vcfr.alt[a];
     }
     os << '\t'

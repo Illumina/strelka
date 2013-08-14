@@ -45,7 +45,7 @@ enum index_t {
 inline
 const char*
 get_label(const unsigned idx) {
-    switch(idx) {
+    switch (idx) {
     case HighDepth: return "HighDepth";
     case LowGQX: return "LowGQX";
     case HighSNVSB: return "HighSNVSB";
@@ -121,7 +121,7 @@ enum index_t {
 inline
 const char*
 get_label(const unsigned idx) {
-    switch(static_cast<index_t>(idx)) {
+    switch (static_cast<index_t>(idx)) {
     case ZERO: return "0";
     case ONE: return "1";
     case UNKNOWN: return ".";
@@ -193,7 +193,7 @@ struct indel_info {
 
     const char*
     get_gt() {
-        if(imod.is_overlap) {
+        if (imod.is_overlap) {
             return "1/2";
         }
         return STAR_DIINDEL::get_gt_label(imod.max_gt);
@@ -202,9 +202,9 @@ struct indel_info {
     // the site ploidy within the indel at offset x
     unsigned
     get_ploidy(const unsigned offset) {
-        if(! imod.is_overlap) {
+        if (! imod.is_overlap) {
             using namespace STAR_DIINDEL;
-            switch(dindel.max_gt) {
+            switch (dindel.max_gt) {
             case HOM: return 0;
             case HET: return 1;
             case NOINDEL: return 2;
@@ -248,12 +248,12 @@ struct site_info {
         , n_unused_calls(0)
         , hpol(0)
         , hapscore(0)
-		, MQ(0)
-		, ReadPosRankSum(0)
-		, BaseQRankSum(0)
-		, MQRankSum(0)
+        , MQ(0)
+        , ReadPosRankSum(0)
+        , BaseQRankSum(0)
+        , MQRankSum(0)
     {
-        for(unsigned i(0); i<N_BASE; ++i) known_counts[i] = 0;
+        for (unsigned i(0); i<N_BASE; ++i) known_counts[i] = 0;
     }
 
     void
@@ -273,11 +273,11 @@ struct site_info {
     get_gt() const {
         if       (smod.modified_gt != MODIFIED_SITE_GT::NONE) {
             return MODIFIED_SITE_GT::get_label(smod.modified_gt);
-        } else if(smod.is_unknown || (!smod.is_used_covered)) {
+        } else if (smod.is_unknown || (!smod.is_used_covered)) {
             return ".";
         } else {
             unsigned print_gt(smod.max_gt);
-            if(smod.is_block) {
+            if (smod.is_block) {
                 print_gt = dgt.ref_gt;
             }
             return DIGT::get_vcf_gt(print_gt,dgt.ref_gt);

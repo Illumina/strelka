@@ -100,7 +100,7 @@ struct read_segment {
     get_best_alignment() const {
         if       (is_realigned) {
             return &(realignment);
-        } else if(! genome_align().empty()) {
+        } else if (! genome_align().empty()) {
             return &(genome_align());
         }
         return NULL;

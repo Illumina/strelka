@@ -66,10 +66,10 @@ get_format_key_index(const char* format,
                      unsigned& index) {
     index=0;
     do {
-        if(index) format++;
-        if(0==strncmp(format,key,strlen(key))) return true;
+        if (index) format++;
+        if (0==strncmp(format,key,strlen(key))) return true;
         index++;
-    } while(NULL != (format=strchr(format,':')));
+    } while (NULL != (format=strchr(format,':')));
     return false;
 }
 
@@ -83,12 +83,12 @@ get_format_string_nocopy(const char* const* word,
                          const char* key) {
 
     unsigned keynum(0);
-    if(! get_format_key_index(word[VCFID::FORMAT],key,keynum)) return NULL;
+    if (! get_format_key_index(word[VCFID::FORMAT],key,keynum)) return NULL;
 
     const char* sample(word[VCFID::SAMPLE]);
-    for(; keynum; sample++) {
-        if(! *sample) return NULL;
-        if((*sample)==':') keynum--;
+    for (; keynum; sample++) {
+        if (! *sample) return NULL;
+        if ((*sample)==':') keynum--;
     }
     return sample;
 }

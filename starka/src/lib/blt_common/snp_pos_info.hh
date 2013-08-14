@@ -18,8 +18,8 @@
 #define __SNP_POS_INFO_HH
 
 #include "blt_common/hapscore.hh"
-#include "blt_common/ranksum.hh"
 #include "blt_util/qscore.hh"
+#include "blt_util/ranksum.hh"
 #include "blt_util/seq_util.hh"
 
 #include "stdint.h"
@@ -107,6 +107,7 @@ struct snp_pos_info {
         tier2_calls.clear();
         is_n_ref_warn=false;
         n_spandel=0;
+        n_submapped=0;
         n_mapq=0;
         cumm_mapq=0;
         mq_ranksum.clear();
@@ -120,19 +121,19 @@ struct snp_pos_info {
     get_known_counts(T& base_count,
                      const int min_qscore) const {
 
-        for(unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
+        for (unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
 
         const unsigned n_calls(calls.size());
-        for(unsigned i(0); i<n_calls; ++i) {
-            if(calls[i].base_id==BASE_ID::ANY) continue;
-            if(calls[i].get_qscore()<min_qscore) continue;
+        for (unsigned i(0); i<n_calls; ++i) {
+            if (calls[i].base_id==BASE_ID::ANY) continue;
+            if (calls[i].get_qscore()<min_qscore) continue;
             base_count[calls[i].base_id]++;
         }
     }
 
 
     void
-    set_ref_base(char base){
+    set_ref_base(char base) {
         ref_base = base;
         mq_ranksum.set_ref_base(base);
         baseq_ranksum.set_ref_base(base);
@@ -140,7 +141,7 @@ struct snp_pos_info {
     }
 
     char
-    get_ref_base(){
+    get_ref_base() {
         return ref_base;
     }
 

@@ -63,7 +63,7 @@ set_val(const prog_info& pinfo,
         T& val) {
     try {
         val=boost::lexical_cast<T>(arg);
-    } catch(boost::bad_lexical_cast& e) {
+    } catch (boost::bad_lexical_cast& e) {
         std::ostringstream oss;
         oss << "argument after flag " << arg_label << " (" << arg << ") cannot be parsed to expected type: " << e.what();
         pinfo.usage(oss.str().c_str());
@@ -81,10 +81,10 @@ set_arg(unsigned& argi,
     const char* arg_label(ad.argstr[argi].c_str());
 
     ad.argmark[argi] = true;
-    if(++argi>=ad.argstr.size()) {
+    if (++argi>=ad.argstr.size()) {
         ad.pinfo.usage((std::string("no value following ")+arg_label).c_str());
     }
-    if(is_val_set) { ad.pinfo.usage((std::string("multiple ")+arg_label+" arguments").c_str()); }
+    if (is_val_set) { ad.pinfo.usage((std::string("multiple ")+arg_label+" arguments").c_str()); }
     set_val(ad.pinfo,arg_label,ad.argstr[argi].c_str(),val);
     is_val_set=true;
 }

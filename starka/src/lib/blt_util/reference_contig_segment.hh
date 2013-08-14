@@ -39,7 +39,7 @@ struct reference_contig_segment {
 
     char
     get_base(const pos_t pos) const {
-        if(pos<_offset || pos>=end()) return 'N';
+        if (pos<_offset || pos>=end()) return 'N';
         return _seq[pos-_offset];
     }
 
@@ -48,10 +48,10 @@ struct reference_contig_segment {
                   const pos_t length,
                   std::string& substr) const {
 
-        if(pos<_offset || (pos+length)>end()) {
+        if (pos<_offset || (pos+length)>end()) {
             //slow path (minority of calls):
             substr.clear();
-            for(int i(0); i<length; ++i) {
+            for (int i(0); i<length; ++i) {
                 substr.push_back(get_base(pos+i));
             }
         } else {

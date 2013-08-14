@@ -30,7 +30,7 @@ bam_dumper(const char* filename,
 
     _bfp = samopen(filename, "wb", header);
 
-    if(NULL == _bfp) {
+    if (NULL == _bfp) {
         log_os << "ERROR: Failed to open output BAM file: " << filename << "\n";
         exit(EXIT_FAILURE);
     }

@@ -57,14 +57,14 @@ enum index_t { SIZE = N_BASE+HET_SIZE*HET_COUNT };
 inline
 unsigned
 get_digt_state (const unsigned state) {
-    if(state<N_BASE) return state;
+    if (state<N_BASE) return state;
     return N_BASE+((state-N_BASE)%HET_SIZE);
 }
 
 inline
 unsigned
 get_het_count(const unsigned state) {
-    if(state<N_BASE) return 0;
+    if (state<N_BASE) return 0;
     return (state-N_BASE)/HET_SIZE;
 }
 }

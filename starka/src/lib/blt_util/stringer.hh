@@ -55,7 +55,7 @@ struct stringer : public stringer_base {
     stringer<T>()
     {
         _scanstr=scan_string<T>();
-        if(NULL==_scanstr) { type_error(typeid(T).name()); }
+        if (NULL==_scanstr) { type_error(typeid(T).name()); }
     }
 
 
@@ -63,7 +63,7 @@ struct stringer : public stringer_base {
     get32(const T val) const {
         static const unsigned buff_size(32);
         const int write_size(snprintf(_buff32,buff_size,_scanstr,val));
-        if((write_size<0) || (write_size >= static_cast<int>(buff_size))) {
+        if ((write_size<0) || (write_size >= static_cast<int>(buff_size))) {
             get32_error(write_size);
         }
         return _buff32;

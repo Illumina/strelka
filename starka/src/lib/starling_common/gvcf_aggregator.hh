@@ -43,7 +43,7 @@ struct gvcf_deriv_options {
 struct gvcf_aggregator {
 
     gvcf_aggregator(const starling_options& opt,
-                    const pos_range& report_range,
+                    const starling_deriv_options& dopt,
                     const reference_contig_segment& ref,
                     std::ostream* os);
 
@@ -72,7 +72,7 @@ private:
     add_site_internal(const site_info& si);
 
     void write_block_site_record() {
-        if(_block.count<=0) return;
+        if (_block.count<=0) return;
         write_site_record(_block.record);
         _block.reset();
     }

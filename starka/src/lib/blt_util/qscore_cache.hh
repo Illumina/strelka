@@ -59,8 +59,8 @@ struct qphred_cache {
     void
     qscore_check(const int qscore,
                  const char* label) {
-        if(qscore < 0) invalid_qscore_error(qscore,label);
-        if(qscore > MAX_QSCORE) high_qscore_error(qscore,label);
+        if (qscore < 0) invalid_qscore_error(qscore,label);
+        if (qscore > MAX_QSCORE) high_qscore_error(qscore,label);
     }
 
 private:
@@ -107,7 +107,7 @@ private:
         static const char* label = "basecall quality";
         qscore_check(basecall_qscore,label);
         assert(mapping_qscore>=0);
-        if(mapping_qscore>MAX_MAP) { mapping_qscore=MAX_MAP; }
+        if (mapping_qscore>MAX_MAP) { mapping_qscore=MAX_MAP; }
         return mappedq[mapping_qscore][basecall_qscore];
     }
 
@@ -134,7 +134,7 @@ private:
 
     double
     get_error_prob_imp(const int qscore) const {
-        if((qscore < MIN_QSCORE) || (qscore > MAX_QSCORE)) qscore_error(qscore);
+        if ((qscore < MIN_QSCORE) || (qscore > MAX_QSCORE)) qscore_error(qscore);
         return q2p[qscore];
     }
 

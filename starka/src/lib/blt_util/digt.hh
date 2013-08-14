@@ -36,7 +36,7 @@ enum index_t {
 inline
 const char*
 label(const unsigned idx) {
-    switch(idx) {
+    switch (idx) {
     case AA: return "AA";
     case CC: return "CC";
     case GG: return "GG";
@@ -54,7 +54,7 @@ label(const unsigned idx) {
 inline
 bool
 is_het(const unsigned idx) {
-    switch(idx) {
+    switch (idx) {
     case AA:
     case CC:
     case GG:
@@ -66,7 +66,7 @@ is_het(const unsigned idx) {
 inline
 char
 hom_base(const unsigned idx) {
-    switch(idx) {
+    switch (idx) {
     case AA: return 'A';
     case CC: return 'C';
     case GG: return 'G';
