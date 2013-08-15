@@ -63,7 +63,7 @@ qphred_cache::
 high_qscore_error(const int qscore,
                   const char* label) {
     std::stringstream oss;
-    oss << "ERROR: Attempting to lookup " << label << " score " << qscore << " which exceeds the maximum cached " << label << " score of " <<  MAX_QSCORE;
+    oss << "WARNING: Attempting to lookup " << label << " score " << qscore << " which exceeds the maximum cached " << label << " score of " <<  MAX_QSCORE;
     throw blt_exception(oss.str().c_str());
 }
 

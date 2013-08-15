@@ -85,10 +85,8 @@ is_valid_bam_seq(const bam_seq& bs) {
     return true;
 }
 
-
-
 static
-void
+bool
 check_bam_record(const bam_streamer& read_stream,
                  const bam_record& read) {
 
@@ -119,6 +117,12 @@ check_bam_record(const bam_streamer& read_stream,
         const uint8_t* qual(read.qual());
         for (unsigned i(0); i<rs; ++i) {
             try {
+                //for RNAseq work-flow corner case. Reads of length one with '*' q-score
+//                log_os << "qscore " << static_cast<int>(qual[i])<< "\n";
+                if (qual[i]==255){
+//                    log_os << "\nException for basecall quality score " << static_cast<int>(qual[i])<< "\n";
+                    return false;
+                }
                 qphred_cache::qscore_check(qual[i],"basecall quality");
             } catch (...) {
                 log_os << "\nException for basecall quality score " << static_cast<int>(qual[i]) << " at read position " << (i+1) << "\n";
@@ -127,7 +131,11 @@ check_bam_record(const bam_streamer& read_stream,
             }
         }
     }
+
+    return true;
 }
+
+
 
 
 
@@ -311,7 +319,14 @@ process_genomic_read(const starling_options& opt,
 
     MAPLEVEL::index_t maplev(get_map_level(opt,read));
 
-    check_bam_record(read_stream,read);
+    // RNAseq modification, qscore 255 used as flag
+    // do not throw exception but rather ignore read
+    // logic implemented in check_bam_record
+    bool allGood  = check_bam_record(read_stream,read);
+    if(!allGood){
+//        log_os << "Skipping read " << read << "\n";
+        return;
+    }
 
     // secondary range filter check:
     //   (removed as part of RNA-Seq modifications)
