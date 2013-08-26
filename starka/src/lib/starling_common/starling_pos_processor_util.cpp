@@ -119,7 +119,7 @@ check_bam_record(const bam_streamer& read_stream,
             try {
                 //for RNAseq work-flow corner case. Reads of length one with '*' q-score
 //                log_os << "qscore " << static_cast<int>(qual[i])<< "\n";
-                if (qual[i]==255){
+                if (qual[i]==255) {
 //                    log_os << "\nException for basecall quality score " << static_cast<int>(qual[i])<< "\n";
                     return false;
                 }
@@ -323,7 +323,7 @@ process_genomic_read(const starling_options& opt,
     // do not throw exception but rather ignore read
     // logic implemented in check_bam_record
     bool allGood  = check_bam_record(read_stream,read);
-    if(!allGood){
+    if (!allGood) {
 //        log_os << "Skipping read " << read << "\n";
         return;
     }

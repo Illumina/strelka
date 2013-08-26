@@ -181,7 +181,7 @@ struct blt_options {
           , max_input_depth(0)
           , is_compute_hapscore(false)
           , is_compute_VQSRmetrics(false)
-         // , do_codon_phasing(false)
+          // , do_codon_phasing(false)
     {}
 
     virtual ~blt_options() {}

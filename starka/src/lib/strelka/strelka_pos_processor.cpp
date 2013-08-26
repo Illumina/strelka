@@ -264,7 +264,7 @@ process_pos_indel_somatic(const pos_t pos) {
         const indel_key& ik(i->first);
 
         // don't write breakpoint output:
-        if(ik.is_breakpoint()) continue;
+        if (ik.is_breakpoint()) continue;
 
         const indel_data& tumor_id(get_indel_data(i));
         if (! tumor_sif.indel_sync().is_candidate_indel(_opt,ik,tumor_id)) continue;
