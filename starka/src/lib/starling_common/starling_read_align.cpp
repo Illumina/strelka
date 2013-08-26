@@ -1423,8 +1423,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         }
     }
 
-
-    { // clear out-of-range alignment candidates:
+    {   // clear out-of-range alignment candidates:
         std::set<candidate_alignment> cal_set2(cal_set);
         cal_set.clear();
         BOOST_FOREACH(const candidate_alignment& ical, cal_set2) {
@@ -1456,7 +1455,8 @@ realign_and_score_read(const starling_options& opt,
     }
 
     // check that the original alignment is within realign bounds
-    if(! is_alignment_spanned_by_range(realign_pr,rseg.genome_align())) return;
+    if (! is_alignment_spanned_by_range(realign_pr,rseg.genome_align())) return;
+
     // check that there are any candidate indels within bounds of the
     // discovery alignments for this read:
     //

@@ -126,7 +126,7 @@ strelka_run(const strelka_options& opt) {
         //   range indels which might influence results within the
         //   report range:
         //
-        if(rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(sinput.get_head_pos()-1);

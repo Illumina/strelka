@@ -454,8 +454,9 @@ update_stageman() {
 bool
 starling_pos_processor_base::
 update_largest_read_size(const unsigned rs) {
-    if(rs>STARLING_MAX_READ_SIZE) return false;
-    if(rs<=get_largest_read_size()) return true;
+    if (rs>STARLING_MAX_READ_SIZE) return false;
+
+    if (rs<=get_largest_read_size()) return true;
     _rmi.resize(rs);
     update_stageman();
     return true;
@@ -466,7 +467,7 @@ update_largest_read_size(const unsigned rs) {
 void
 starling_pos_processor_base::
 update_largest_indel_ref_span(const unsigned is) {
-    if(is<=_largest_indel_ref_span) return;
+    if (is<=_largest_indel_ref_span) return;
     assert(is<=_client_opt.max_indel_size);
     _largest_indel_ref_span=std::min(is,_client_opt.max_indel_size);
     update_largest_total_indel_ref_span_per_read(is);
@@ -478,7 +479,7 @@ update_largest_indel_ref_span(const unsigned is) {
 void
 starling_pos_processor_base::
 update_largest_total_indel_ref_span_per_read(const unsigned is) {
-    if(is<=_largest_total_indel_ref_span_per_read) return;
+    if (is<=_largest_total_indel_ref_span_per_read) return;
     _largest_total_indel_ref_span_per_read=is;
     update_stageman();
 }
@@ -604,10 +605,11 @@ insert_read(const bam_record& br,
 
     // assume that pos_procesor, as a container, is no longer empty...
     _is_skip_process_pos=false;
+
     // update read_size:
     {
         const unsigned rs(static_cast<unsigned>(STARLING_LARGEST_READ_SIZE_PAD*br.read_size()));
-        if(! update_largest_read_size(rs)){
+        if (! update_largest_read_size(rs)) {
             std::ostringstream oss;
             oss << "ERROR: Input read size: " << br.read_size() << " exceeds maximum.";
             throw blt_exception(oss.str().c_str());
@@ -650,9 +652,9 @@ insert_read(const bam_record& br,
         try {
             static const std::pair<bool,bool> edge_pin(std::make_pair(false,false));
             const unsigned total_indel_ref_span_per_read =
-                    add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
-                                                 al,bseq,*this,iat,res.second,sample_no,
-                                                 edge_pin,contig_indels_ptr);
+                add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
+                                             al,bseq,*this,iat,res.second,sample_no,
+                                             edge_pin,contig_indels_ptr);
             update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
         } catch (...) {
             log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << read_key(br) << "\n";
@@ -831,7 +833,7 @@ align_pos(const pos_t pos) {
 
     const known_pos_range realign_pr(get_realignment_range(pos, _stageman.get_stage_data()));
 
-    for(unsigned s(0); s<_n_samples; ++s) {
+    for (unsigned s(0); s<_n_samples; ++s) {
         sample_info& sif(sample(s));
         read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
         for (read_segment_iter::ret_val r; true; ri.next()) {
@@ -1361,7 +1363,7 @@ pileup_read_segment(const read_segment& rseg,
     const bool is_mapq_adjust(mapq<=80);
     // test read against max indel size (this is a backup, should have been taken care of upstream):
     const unsigned read_ref_mapped_size(apath_ref_length(best_al.path));
-    if(read_ref_mapped_size > (read_size+get_largest_total_indel_ref_span_per_read())) {
+    if (read_ref_mapped_size > (read_size+get_largest_total_indel_ref_span_per_read())) {
         //brc.large_ref_deletion++;
         return;
     }

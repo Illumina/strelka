@@ -129,11 +129,10 @@ process_edge_insert(const unsigned max_indel_size,
                 // insertion ends at the same place as the contig
                 // indel.
                 //
-                if(path_index!=ends.first) {
-                    if(current_pos!=ik.pos) continue;
+                if (path_index!=ends.first) {
+                    if (current_pos!=ik.pos) continue;
                 } else {
-                    if(current_pos!=ik.right_pos()) continue;
-
+                    if (current_pos!=ik.right_pos()) continue;
                 }
 
                 obs.key = ik;
@@ -426,14 +425,15 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
             if       (is_swap_start) {
                 const swap_info sinfo(al.path,path_index);
                 rlen=sinfo.insert_length;
-                if(sinfo.delete_length<=max_indel_size) {
+
+                if (sinfo.delete_length<=max_indel_size) {
                     total_indel_ref_span_per_read += sinfo.delete_length;
                 }
-            } else if(is_segment_type_read_length(ps.type)) {
+            } else if (is_segment_type_read_length(ps.type)) {
                 rlen=ps.length;
             } else {
-                if(ps.type == DELETE) {
-                    if(ps.length <= max_indel_size) {
+                if (ps.type == DELETE) {
+                    if (ps.length <= max_indel_size) {
                         total_indel_ref_span_per_read += ps.length;
                     }
                 }

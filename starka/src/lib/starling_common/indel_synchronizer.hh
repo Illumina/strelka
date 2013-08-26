@@ -118,7 +118,7 @@ struct indel_synchronizer {
                        const indel_key& ik,
                        const indel_data& id) const {
 
-        if(! id.status.is_candidate_indel_cached) {
+        if (! id.status.is_candidate_indel_cached) {
             is_candidate_indel_int(opt,ik,id);
         }
         return id.status.is_candidate_indel;

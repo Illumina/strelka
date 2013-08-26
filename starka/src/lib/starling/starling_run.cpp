@@ -47,7 +47,7 @@ const prog_info& pinfo(starling_info::get());
 
 
 void
-starling_run(starling_options& opt) {
+starling_run(const starling_options& opt) {
 
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
@@ -77,9 +77,6 @@ starling_run(starling_options& opt) {
 
     starling_streams client_io(opt,pinfo,read_stream.get_header());
 
-    //grap the header from the bam file and store it in the gvcf options
-    const bam_header_t* header = read_stream.get_header();
-    opt.gvcf.bam_header_data = header->text;
     starling_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
@@ -107,7 +104,7 @@ starling_run(starling_options& opt) {
         // some additional padding is allowed for off-range indels
         // which might influence results within rlimit:
         //
-        if(rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(sinput.get_head_pos()-1);

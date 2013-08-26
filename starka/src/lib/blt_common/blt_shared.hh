@@ -57,7 +57,6 @@ struct gvcf_options {
         , is_max_ref_rep(true)
         , max_ref_rep(-1)
         , block_label("BLOCKAVG_min30p3a")
-        , bam_header_data("SAMPLE")
         , block_frac_tol(.3)
         , block_abs_tol(3)
         , is_block_compression(true)
@@ -89,7 +88,6 @@ struct gvcf_options {
     //       as if the struct was sliced. This smells like a compiler errro but those should be rare... possible other struct layout error here?
     //
     std::string block_label;
-    std::string bam_header_data; // the full bam header, read in from bam file. Used for setting the sample name in
     double block_frac_tol;
     int block_abs_tol;
     bool is_block_compression;
@@ -182,7 +180,7 @@ struct blt_options {
           , is_max_input_depth(false)
           , max_input_depth(0)
           , is_compute_hapscore(false)
-    	  , is_compute_VQSRmetrics(false)
+          , is_compute_VQSRmetrics(false)
          // , do_codon_phasing(false)
     {}
 

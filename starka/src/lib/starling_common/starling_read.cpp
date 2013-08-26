@@ -357,7 +357,7 @@ update_full_segment() {
         }
         ref_pos=ral.pos;
         BOOST_FOREACH(const path_segment& ps, ral.path) {
-            if(is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
+            if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
             fal.path.push_back(ps);
         }
     }

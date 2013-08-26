@@ -52,7 +52,6 @@ check_and_update_iks(iks_map_t& iks_map,
 
     // check to see if the path score is better than what we already have:
     const iks_map_t::const_iterator j(iks_map.find(mkey));
-
     if ((j!=iks_map.end()) && ((j->second.first) >= path_lnp)) return;
     iks_map[mkey]=std::make_pair(path_lnp,cal_ptr);
 }
@@ -83,7 +82,6 @@ is_interfering_indel(const indel_set_t& current_indels,
 
     typedef indel_set_t::const_iterator siter;
     BOOST_FOREACH(const indel_key& ik, current_indels) {
-
         if (is_indel_conflict(ik,new_indel)) return true;
     }
     return false;
@@ -388,7 +386,6 @@ score_indels(const starling_options& opt,
 #ifdef DEBUG_ALIGN
                         log_os << "COWSLIP: marking 2 nonnorm: " << ip->second << "\n";
 #endif
-
                         if (! is_removed) {
                             cal_set_exclude[sortj] = true;
                             is_any_excluded = true;
@@ -402,7 +399,7 @@ score_indels(const starling_options& opt,
 #ifdef DEBUG_ALIGN
                         log_os << "COWSLIP: marking 1 nonnorm: " << ip->first << "\n";
 #endif
-                        if(! is_removed) {
+                        if (! is_removed) {
                             cal_set_exclude[sorti] = true;
                             is_any_excluded = true;
                             smooth_path_lnp[sortj] = std::max(smooth_path_lnp[sorti],smooth_path_lnp[sortj]);
@@ -524,8 +521,7 @@ score_indels(const starling_options& opt,
                 log_os << "VARMIT: indel intersects max_path? "
                        <<  is_range_intersect_indel_breakpoints(strict_max_pr,ik) << "\n";
 #endif
-
-                if(! is_range_intersect_indel_breakpoints(strict_max_pr,ik)) continue;
+                if (! is_range_intersect_indel_breakpoints(strict_max_pr,ik)) continue;
             }
 
             // all checks passed... indel will be evaluated for indel calling:
@@ -596,7 +592,7 @@ score_indels(const starling_options& opt,
             BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels) {
                 const bool is_indel_present(max_cal_indels.count(eval_ik)!=0);
 
-                if(is_indel_present) {
+                if (is_indel_present) {
                     iks_max_path_lnp[std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
 
                     // mark this as an alternate indel score for interfering indels:
@@ -605,7 +601,7 @@ score_indels(const starling_options& opt,
                     }
                 } else {
                     // check that this indel does not interfere with the max-set:
-                    if(! is_max_cal_eval_indels_interfere[eval_ik]) {
+                    if (! is_max_cal_eval_indels_interfere[eval_ik]) {
                         iks_max_path_lnp[std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
                     }
                 }
@@ -630,7 +626,7 @@ score_indels(const starling_options& opt,
 
             BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels) {
                 const bool is_indel_present(ical_indels.count(eval_ik)!=0);
-                if(is_indel_present) {
+                if (is_indel_present) {
                     //const indel_status_t mkey(std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik)));
                     check_and_update_iks(iks_max_path_lnp,eval_ik,is_indel_present,eval_ik,path_lnp,&ical);
 
@@ -646,12 +642,11 @@ score_indels(const starling_options& opt,
                     //
                     bool is_interference(false);
                     BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik]) {
-                        if(ical_indels.count(overlap_ik)!=0) {
+                        if (ical_indels.count(overlap_ik)!=0) {
                             is_interference=true;
                             break;
                         }
                     }
-
 
                     if (! is_interference) {
                         check_and_update_iks(iks_max_path_lnp,eval_ik,is_indel_present,eval_ik,path_lnp,&ical);
@@ -709,18 +704,18 @@ score_indels(const starling_options& opt,
 
             // 1) indel present:
             double indel_path_lnp(max_path_lnp);
-            if(! is_indel_present_on_max_path) {
+            if (! is_indel_present_on_max_path) {
                 const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,eval_ik))));
                 const bool is_found(j!=iks_max_path_lnp.end());
-                if(! is_found) {
-                    if(is_incomplete_search) continue;
+                if (! is_found) {
+                    if (is_incomplete_search) continue;
                     // TODO -- get more precise information on exactly when we expect an indel which overlaps a max_cal indel to not be found, for
                     // now we have to give a pass on all cases:
-                    if(is_max_cal_eval_indels_interfere[eval_ik]) continue;
+                    if (is_max_cal_eval_indels_interfere[eval_ik]) continue;
 
                     // for the nonnorm cases, we've already eliminated at least some of the alignments which contain them
                     // and in certain circumstances there won't be alternates available
-                    if(nonnorm_indels.count(eval_ik)!=0) continue;
+                    if (nonnorm_indels.count(eval_ik)!=0) continue;
 
                     if (is_safe_mode) {
                         log_os << "WARNING: ";
@@ -765,10 +760,9 @@ score_indels(const starling_options& opt,
             {
                 const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(false,eval_ik))));
                 const bool is_found(j!=iks_max_path_lnp.end());
-                if(is_incomplete_search && (! is_found)) continue;
-                if(! is_found) {
-                    if(is_safe_mode) {
-
+                if (is_incomplete_search && (! is_found)) continue;
+                if (! is_found) {
+                    if (is_safe_mode) {
                         log_os << "WARNING: ";
                     } else {
                         log_os << "ERROR: ";
@@ -823,7 +817,7 @@ score_indels(const starling_options& opt,
                 // alt case should be missing -- possibly use ref_path instead of continuing
                 // in this case
                 //
-                if(is_found) {
+                if (is_found) {
                     rps.insert_alt(overlap_ik,j->second.first);
                     //                        rps.alt_indel[*k] = j->second.first;
                 } else {

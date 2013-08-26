@@ -22,7 +22,6 @@
 #include "starling_common/chrom_depth_map.hh"
 
 #include <iosfwd>
-//#include <regex>
 
 
 void
@@ -30,8 +29,5 @@ finish_gvcf_header(const gvcf_options& opt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,
                    std::ostream& os);
-
-std::string
-determine_sample(const std::string bam_header_text);
 
 #endif

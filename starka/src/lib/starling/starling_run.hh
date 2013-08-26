@@ -22,6 +22,6 @@
 
 
 void
-starling_run(starling_options& client_opt);
+starling_run(const starling_options& client_opt);
 
 #endif
