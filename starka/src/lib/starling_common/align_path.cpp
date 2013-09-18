@@ -658,6 +658,7 @@ apath_clip_adder(path_t& apath,
 // 2. remove pads
 // 3. condense repeated segment types
 // 4. reduce adjacent insertion/deletion tags to a single pair
+// 5. replace NDN pattern with single SKIP segment
 //
 // return true if path has been altered
 //
@@ -706,6 +707,27 @@ apath_cleaner(path_t& apath) {
             }
         }
     }
+
+    // convert NDN to single N:
+    for (unsigned i(0); i<as; ++i) {
+        path_segment& ps(apath[i]);
+        if (ps.type == SKIP)
+        {
+            if( (i+2)<as)
+            {
+                if ((apath[i+1].type == DELETE) && (apath[i+2].type == SKIP))
+                {
+                    for (unsigned j(1);j<3;++j)
+                    {
+                        ps.length += apath[i+j].length;
+                        apath[i+j].length = 0;
+                    }
+                    is_cleaned = true;
+                }
+            }
+        }
+    }
+
     if (is_cleaned) {
         path_t apath2;
         for (unsigned i(0); i<as; ++i) {

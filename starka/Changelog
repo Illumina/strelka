@@ -1,3 +1,5 @@
+v2.0.13
+STARKA-37 Handle Skip-Delete-Skip pattern in tophat output
 STARKA-23 Accept an input VCF file for which each alternate allele must be genotyped
 STARKA-35 Fixed 255 q-score bug for RNAseq workflow
 v2.0.12
