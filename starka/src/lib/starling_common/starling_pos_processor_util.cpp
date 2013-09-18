@@ -318,13 +318,18 @@ process_genomic_read(const starling_options& opt,
         return;
     }
 
+    if (read.is_supplement()) {
+        brc.supplement++;
+        return;
+    }
+
 
     MAPLEVEL::index_t maplev(get_map_level(opt,read));
 
     // RNAseq modification, qscore 255 used as flag
     // do not throw exception but rather ignore read
     // logic implemented in check_bam_record
-    bool allGood  = check_bam_record(read_stream,read);
+    const bool allGood  = check_bam_record(read_stream,read);
     if (!allGood) {
 //        log_os << "Skipping read " << read << "\n";
         return;

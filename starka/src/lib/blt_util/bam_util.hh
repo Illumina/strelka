@@ -10,16 +10,15 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-/// bam record manipulation functions
+/// \brief bam record manipulation functions
 ///
 
-#ifndef __BAM_UTIL_HH
-#define __BAM_UTIL_HH
+#pragma once
+
 
 extern "C" {
 #include "sam.h"
@@ -38,7 +37,8 @@ enum index_t {
     SECOND_READ   = 0x080,
     SECONDARY     = 0x100,
     FILTER        = 0x200,
-    DUPLICATE     = 0x400
+    DUPLICATE     = 0x400,
+    SUPPLEMENT    = 0x800
 };
 }
 
@@ -113,5 +113,3 @@ bam_update_bin(bam1_t& br) {
 bool
 check_header_compatibility(const bam_header_t* h1,
                            const bam_header_t* h2);
-
-#endif

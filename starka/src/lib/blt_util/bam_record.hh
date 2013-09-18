@@ -10,16 +10,15 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __BAM_RECORD_HH
-#define __BAM_RECORD_HH
+
+#pragma once
+
 
 #include "blt_util/bam_util.hh"
 #include "blt_util/bam_seq.hh"
-//#include "blt_util/read_record.hh"
 
 
 struct bam_record {
@@ -66,6 +65,7 @@ public:
     bool is_first() const { return ((_bp->core.flag & BAM_FLAG::FIRST_READ) != 0); }
     bool is_second() const { return ((_bp->core.flag & BAM_FLAG::SECOND_READ) != 0); }
     bool is_secondary() const { return ((_bp->core.flag & BAM_FLAG::SECONDARY) != 0); }
+    bool is_supplement() const { return ((_bp->core.flag & BAM_FLAG::SUPPLEMENT) != 0); }
 
     void toggle_is_paired() { _bp->core.flag ^= BAM_FLAG::PAIRED; }
     void toggle_is_unmapped() { _bp->core.flag ^= BAM_FLAG::UNMAPPED; }
@@ -178,6 +178,3 @@ private:
 
     bam1_t* _bp;
 };
-
-
-#endif
