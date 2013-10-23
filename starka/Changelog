@@ -1,3 +1,5 @@
+v2.0.14
+STARKA-41 Fix consensus open-breakend error
 v2.0.13
 Skip BWA-mem supplementary reads
 STARKA-37 Handle Skip-Delete-Skip pattern in tophat output
