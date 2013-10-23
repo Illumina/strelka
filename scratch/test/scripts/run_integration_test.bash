@@ -15,13 +15,14 @@ starka_git_url=ussd-git.illumina.com:OptimusPrime/starka
 starka_version=master #c82a82731e784700df1345dd64cc88360ad83a83
 workspace_dir=$(pwd)/workspace
 
+test_data_base_dir=/bioinfoSD/users/csaunders/proj/starka/test
 
 # starling test constants
 #
 starling_expected_time=183
 starling_results_dir=$workspace_dir/starling_results
-starling_expected_dir=/bioinfoSD/csaunders/proj/starka/test/expected_results/starling
-test_data_dir=/bioinfoSD/csaunders/proj/starka/test/data
+starling_expected_dir=$test_data_base_dir/expected_results/starling
+test_data_dir=$test_data_base_dir/data
 sample1_bam=$test_data_dir/Mother_S1.bam
 sample1_indel_vcf=$test_data_dir/Mother_S1.SVIndelCandidates.gz
 test_reference=/illumina/scratch/iGenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
@@ -31,7 +32,7 @@ test_reference=/illumina/scratch/iGenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeG
 #
 strelka_expected_time=293
 strelka_results_dir=$workspace_dir/strelka_results
-strelka_expected_dir=/bioinfoSD/csaunders/proj/starka/test/expected_results/strelka
+strelka_expected_dir=$test_data_base_dir/expected_results/strelka
 sample2_bam=$test_data_dir/Father_S1.bam
 sample2_indel_vcf=$test_data_dir/Father_S1.SVIndelCandidates.gz
 
