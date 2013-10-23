@@ -182,9 +182,11 @@ is_candidate_indel_int(const starling_options& opt,
     /////////////////////////////////////////
     // test against short open-ended segments:
     //
+    // call get_insert_size() instead of asking for the insert seq
+    // so as to not finalize any incomplete insertions:
     {
         if (ik.is_breakpoint() &&
-            (opt.min_candidate_indel_open_length > id.get_insert_seq().size())) {
+            (opt.min_candidate_indel_open_length > id.get_insert_size())) {
             return;
         }
     }

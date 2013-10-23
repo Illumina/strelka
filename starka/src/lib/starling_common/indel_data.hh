@@ -22,6 +22,8 @@
 #include "starling_common/indel_key.hh"
 #include "starling_common/starling_types.hh"
 
+#include "boost/foreach.hpp"
+
 #include <cassert>
 #include <iosfwd>
 #include <map>
@@ -146,6 +148,25 @@ struct insert_seq_manager {
         return _consensus_seq;
     }
 
+    // return the insert size
+    //
+    // note that this test will not trigger consensus finalization,
+    // so it is substantially different than get().size()
+    unsigned
+    get_size() const
+    {
+        if (_is_consensus) return _consensus_seq.size();
+
+        unsigned size(0);
+        BOOST_FOREACH(const obs_t::value_type& val, _obs)
+        {
+            if (val.first.size() <= size) continue;
+            size = val.first.size();
+        }
+
+        return size;
+    }
+
     // add insert sequence observation:
     void
     add_obs(const std::string& seq) {
@@ -190,7 +211,9 @@ struct indel_data {
     indel_data(const indel_key& ik)
         : _ik(ik),
           is_external_candidate(false),
-          is_forced_output(false)
+          is_forced_output(false),
+          n_mapq(0),
+          cumm_mapq(0)
     {}
 
     /// add an observation for this indel
@@ -247,6 +270,14 @@ struct indel_data {
         log_os << "KATTER: reporting insert seq for indel: " << _ik << "\n";
 #endif
         return _insert_seq.get();
+    }
+
+    /// this test is different than asking for insert-seq in that it does not
+    /// trigger insert sequence consensus generation:
+    unsigned
+    get_insert_size() const
+    {
+        return _insert_seq.get_size();
     }
 
 #if 0
