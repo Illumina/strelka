@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -29,6 +29,7 @@ operator<<(std::ostream& os,
 
     os << "is_noise: " << obs.is_noise << "\n";
     os << "is_external: " << obs.is_external_candidate << "\n";
+    os << "is_forced_output: " << obs.is_forced_output << "\n";
     os << "type: " << INDEL_ALIGN_TYPE::label(obs.iat) << "\n";
     os << "align_id: " << obs.id << "\n";
     os << "insert_seq: " << obs.insert_seq << "\n";
@@ -88,17 +89,18 @@ _exception(const char* msg) const {
 void
 insert_seq_manager::
 _finalize() {
-    obs_t::const_iterator i(_obs.begin()), i_end(_obs.end());
-
     unsigned count(0);
     std::string& candidate(_consensus_seq);
 
-    for (; i!=i_end; ++i) {
-        if ((i->first.size() > candidate.size()) ||
-            ( i->second > count)) {
-            candidate = i->first;
-            count = i->second;
+    BOOST_FOREACH(const obs_t::value_type& val, _obs)
+    {
+        if (val.first.size() < candidate.size()) continue;
+        if (val.first.size() == candidate.size())
+        {
+            if (val.second <= count) continue;
         }
+        candidate = val.first;
+        count = val.second;
     }
     _consensus_seq = candidate;
     _obs.clear();

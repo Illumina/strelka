@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -41,6 +41,7 @@ input_type_label(const INPUT_TYPE::index_t i) {
     case READ   : return "READ";
     case CONTIG : return "CONTIG";
     case INDEL  : return "INDEL";
+    case FORCED_OUTPUT  : return "FORCED_OUTPUT";
     default :
         log_os << "ERROR: unrecognized event type.\n";
         exit(EXIT_FAILURE);
@@ -65,10 +66,12 @@ register_error(const char* label,
 starling_input_stream_handler::
 starling_input_stream_handler(const starling_input_stream_data& data,
                               const pos_t contig_lead,
-                              const pos_t indel_lead)
+                              const pos_t indel_lead,
+                              const pos_t output_lead)
     : _data(data)
     , _contig_lead(contig_lead)
     , _indel_lead(indel_lead)
+    , _output_lead(output_lead)
     , _is_end(false)
     , _is_head_pos(false)
     , _head_pos(0)
@@ -85,6 +88,10 @@ starling_input_stream_handler(const starling_input_stream_data& data,
     const unsigned is(_data._indels.size());
     for (unsigned i(0); i<is; ++i) {
         push_next(INPUT_TYPE::INDEL,_data._indels[i].first,i);
+    }
+    const unsigned os(_data._output.size());
+    for (unsigned i(0); i<os; ++i) {
+        push_next(INPUT_TYPE::FORCED_OUTPUT,_data._output[i].first,i);
     }
 }
 
@@ -111,7 +118,7 @@ next() {
         _current=_stream_queue.top();
         _stream_queue.pop();
 
-        if (_is_head_pos and
+        if (_is_head_pos &&
             (_current.pos < _head_pos)) {
             if (_current.itype == INPUT_TYPE::CONTIG) {
                 if ((_current.pos+_contig_lead) < _head_pos) {
@@ -128,7 +135,7 @@ next() {
                     << " follows pos/type/sample_no: "
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
                 throw blt_exception(oss.str().c_str());
-            } else if (_current.itype == INPUT_TYPE::INDEL) {
+            } else if ((_current.itype == INPUT_TYPE::INDEL) || (_current.itype == INPUT_TYPE::FORCED_OUTPUT)) {
                 std::ostringstream oss;
                 oss << "ERROR: unexpected vcf record order:\n"
                     << "\tInput-record with pos/type/sample_no: "
@@ -201,9 +208,28 @@ get_next_indel_pos(bool& is_next_indel,
     is_next_indel=indel_stream.next(is_indel_only);
     if (is_next_indel) {
         const vcf_record& vcf_rec(*(indel_stream.get_record_ptr()));
-        next_indel_pos=(vcf_rec.pos);
+        next_indel_pos=(vcf_rec.pos-1);
     } else {
         next_indel_pos=0;
+    }
+}
+
+
+
+//
+static
+void
+get_next_forced_output_pos(bool& is_next_variant,
+                           pos_t& next_variant_pos,
+                           vcf_streamer& variant_stream) {
+
+    static const bool is_indel_only(false);
+    is_next_variant=variant_stream.next(is_indel_only);
+    if (is_next_variant) {
+        const vcf_record& vcf_rec(*(variant_stream.get_record_ptr()));
+        next_variant_pos=(vcf_rec.pos-1);
+    } else {
+        next_variant_pos=0;
     }
 }
 
@@ -228,6 +254,10 @@ push_next(const INPUT_TYPE::index_t itype,
         vcf_streamer& indel_stream(*(_data._indels[order].second));
         get_next_indel_pos(is_next,next_pos,indel_stream);
         next_pos -= std::min(_indel_lead,next_pos);
+    } else if (itype == INPUT_TYPE::FORCED_OUTPUT) {
+        vcf_streamer& fo_stream(*(_data._output[order].second));
+        get_next_forced_output_pos(is_next,next_pos,fo_stream);
+        next_pos -= std::min(_output_lead,next_pos);
     } else {
         assert(0);
     }

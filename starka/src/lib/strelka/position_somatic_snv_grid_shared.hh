@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -26,22 +26,36 @@
 struct somatic_snv_genotype_grid {
 
     somatic_snv_genotype_grid()
-        : is_snv(false) {}
+        : is_forced_output(false) {}
 
     typedef bool tier_t;
 
     struct result_set {
+        result_set()
+            : snv_qphred(0)
+        {}
+
         unsigned ntype;
         unsigned max_gt;
         int snv_qphred;
         int snv_from_ntype_qphred;
     };
 
-    bool is_snv;
+    bool
+    is_snv() const {
+        return (0 != rs.snv_qphred);
+    }
+
+    bool
+    is_output() const {
+        return (is_snv() || is_forced_output);
+    }
+
     tier_t snv_tier;
     tier_t snv_from_ntype_tier;
     unsigned ref_gt;
     result_set rs;
+    bool is_forced_output;
 };
 
 #endif

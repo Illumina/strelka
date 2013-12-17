@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -235,6 +235,9 @@ struct starling_options : public blt_options {
 
     // vcfs can be input to specify candidate indels:
     std::vector<std::string> input_candidate_indel_vcf;
+
+    // positions/indels in vcf must be written in output:
+    std::vector<std::string> force_output_vcf;
 
     // Internal development option - not for production use:
     bool is_baby_elephant;

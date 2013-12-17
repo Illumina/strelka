@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -20,8 +20,7 @@
 ///
 
 
-#ifndef __STARLING_POS_PROCESSOR_UTIL_HH
-#define __STARLING_POS_PROCESSOR_UTIL_HH
+#pragma once
 
 #include "blt_util/bam_record.hh"
 #include "blt_util/bam_streamer.hh"
@@ -51,11 +50,13 @@ process_genomic_read(const starling_options& client_opt,
                      starling_pos_processor_base& sppr,
                      const unsigned sample_no = 0);
 
-
+/// insert a candidate indel into sppr
+///
+/// \param is_forced_output - the results of the genotype type must be output for this indel, no matter how unlikely the variant is:
 void
-process_candidate_indel(const vcf_record& vcf_indel,
-                        starling_pos_processor_base& sppr,
-                        const unsigned sample_no = 0);
-
-#endif
-
+process_candidate_indel(
+    const unsigned max_indel_size,
+    const vcf_record& vcf_indel,
+    starling_pos_processor_base& sppr,
+    const unsigned sample_no = 0,
+    const bool is_forced_output = false);

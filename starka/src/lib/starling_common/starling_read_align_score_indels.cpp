@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -349,7 +349,7 @@ score_indels(const starling_options& opt,
                                                        opt.max_indel_size,
                                                        ips));
 
-                if (not is_equiv) continue;
+                if (! is_equiv) continue;
 
 #ifdef DEBUG_ALIGN
                 log_os << "COWSLIP: sorti,lnpi,sortj,lnpj: "
@@ -486,7 +486,7 @@ score_indels(const starling_options& opt,
             log_os << "VARMIT: max path eval indel candidate: " << ik;
 #endif
 
-            if (not isync.is_candidate_indel(opt,ik,id)) continue;
+            if (! isync.is_candidate_indel(opt,ik,id)) continue;
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path indel is candidate\n";

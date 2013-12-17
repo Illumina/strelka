@@ -7,15 +7,14 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
 
 /// \author Chris Saunders
 ///
-#ifndef __SEQ_UTIL_HH
-#define __SEQ_UTIL_HH
+#pragma once
 
 #include "blt_util/bam_seq.hh"
 #include "blt_util/blt_types.hh"
@@ -263,4 +262,3 @@ get_seq_repeat_unit(const std::string& seq,
                     std::string& repeat_unit,
                     unsigned& repeat_count);
 
-#endif

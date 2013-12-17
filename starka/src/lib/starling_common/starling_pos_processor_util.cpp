@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -30,6 +30,8 @@
 #include "starling_common/align_path.hh"
 #include "starling_common/align_path_bam_util.hh"
 #include "starling_common/starling_pos_processor_util.hh"
+
+#include "boost/foreach.hpp"
 
 #include <cassert>
 
@@ -316,13 +318,18 @@ process_genomic_read(const starling_options& opt,
         return;
     }
 
+    if (read.is_supplement()) {
+        brc.supplement++;
+        return;
+    }
+
 
     MAPLEVEL::index_t maplev(get_map_level(opt,read));
 
     // RNAseq modification, qscore 255 used as flag
     // do not throw exception but rather ignore read
     // logic implemented in check_bam_record
-    bool allGood  = check_bam_record(read_stream,read);
+    const bool allGood  = check_bam_record(read_stream,read);
     if (!allGood) {
 //        log_os << "Skipping read " << read << "\n";
         return;
@@ -424,20 +431,24 @@ common_xfix_length(const std::string& s1,
 // handles candidate indel input from a vcf record
 //
 void
-process_candidate_indel(const vcf_record& vcf_indel,
-                        starling_pos_processor_base& sppr,
-                        const unsigned sample_no) {
+process_candidate_indel(
+    const unsigned max_indel_size,
+    const vcf_record& vcf_indel,
+    starling_pos_processor_base& sppr,
+    const unsigned sample_no,
+    const bool is_forced_output) {
 
     const unsigned rs(vcf_indel.ref.size());
-    const unsigned nalt(vcf_indel.alt.size());
-    for (unsigned a(0); a<nalt; ++a) {
-        const std::string& alt(vcf_indel.alt[a]);
+    BOOST_FOREACH(const std::string& alt, vcf_indel.alt) {
         const unsigned as(alt.size());
         const std::pair<unsigned,unsigned> xfix(common_xfix_length(vcf_indel.ref,alt));
         const unsigned nfix(xfix.first+xfix.second);
         assert(nfix<=std::min(rs,as));
         const int insert_length(as-nfix);
         const int delete_length(rs-nfix);
+
+        if ((insert_length > static_cast<int>(max_indel_size)) ||
+            (delete_length > static_cast<int>(max_indel_size))) continue;
 
         indel_observation obs;
         // starling indel pos is at the first changed base but zero-indexed:
@@ -460,6 +471,7 @@ process_candidate_indel(const vcf_record& vcf_indel,
         }
 
         obs.data.is_external_candidate = true;
+        obs.data.is_forced_output = is_forced_output;
         sppr.insert_indel(obs,sample_no);
     }
 }

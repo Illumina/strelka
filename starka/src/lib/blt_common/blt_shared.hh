@@ -7,11 +7,10 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 #pragma once
@@ -26,10 +25,6 @@
 extern const char STDIN_FILENAME[];
 
 extern const unsigned MAX_FLANK_SIZE;
-
-enum { BLT_MAX_READ_SIZE = 250 };
-
-enum { MAX_READ_REF_DELETION_SIZE = 150 };
 
 
 namespace LOG_LEVEL {
@@ -378,6 +373,7 @@ struct blt_read_counts {
           duplicate(0),
           unmapped(0),
           secondary(0),
+          supplement(0),
           unanchored(0),
           large_ref_deletion(0),
           align_score_filter(0),
@@ -393,6 +389,7 @@ struct blt_read_counts {
     unsigned duplicate;
     unsigned unmapped;
     unsigned secondary;
+    unsigned supplement;
     unsigned unanchored;
     unsigned large_ref_deletion;
     unsigned align_score_filter;

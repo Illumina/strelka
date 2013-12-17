@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -548,7 +548,6 @@ insert_indel(const indel_observation& obs,
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_client_opt.max_indel_size));
         update_largest_indel_ref_span(len);
 
-
         return sample(sample_no).indel_sync().insert_indel(obs);
     } catch (...) {
         log_os << "Exception caught while attempting to insert indel: " << obs << "\n";
@@ -556,6 +555,17 @@ insert_indel(const indel_observation& obs,
     }
 
 }
+
+
+// snv gt and stats must be reported for this pos (not only honored in strelka right now)
+void
+starling_pos_processor_base::
+insert_forced_output_pos(const pos_t pos) {
+
+    _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
+    _forced_output_pos.insert(pos);
+}
+
 
 
 unsigned
@@ -946,6 +956,8 @@ process_pos(const int stage_no,
                     process_pos_variants(pos);
                 }
             }
+            clear_forced_output_pos(pos);
+
             for (unsigned s(0); s<_n_samples; ++s) {
                 sample(s).indel_buff.clear_pos(pos);
             }
@@ -956,6 +968,7 @@ process_pos(const int stage_no,
 
         if (! _client_opt.is_write_candidate_indels_only) {
             process_htype_pos(pos);
+            clear_forced_output_pos(pos);
         }
 
     } else if (stage_no==STAGE::POST_CALL) {

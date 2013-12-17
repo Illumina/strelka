@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -421,6 +421,8 @@ get_somatic_indel(const strelka_options& opt,
     double normal_lhood[STAR_DIINDEL_GRID::SIZE];
     double tumor_lhood[STAR_DIINDEL_GRID::SIZE];
 
+    sindel.is_forced_output=(normal_id.is_forced_output || tumor_id.is_forced_output);
+
     const double indel_error_lnp(std::log(indel_error_prob));
     const double indel_real_lnp(std::log(1.-indel_error_prob));
     const double ref_error_lnp(std::log(ref_error_prob));
@@ -433,8 +435,10 @@ get_somatic_indel(const strelka_options& opt,
         if (is_include_tier2) {
             if (! opt.is_tier2()) continue;
             if (tier_rs[0].sindel_qphred==0) {
-                tier_rs[1].sindel_qphred=0;
-                continue;
+                if (! sindel.is_forced_output) { // if forced output then there's still a point to computing tier2
+                    tier_rs[1].sindel_qphred=0;
+                    continue;
+                }
             }
         }
 
@@ -484,8 +488,10 @@ get_somatic_indel(const strelka_options& opt,
                              normal_lhood,tumor_lhood,tier_rs[i]);
     }
 
-    if (tier_rs[0].sindel_qphred==0 ||
-        tier_rs[1].sindel_qphred==0) return;
+    if (! sindel.is_forced_output) {
+        if (tier_rs[0].sindel_qphred==0 ||
+            tier_rs[1].sindel_qphred==0) return;
+    }
 
     sindel.sindel_tier=0;
     if (opt.is_tier2()) {
@@ -520,18 +526,16 @@ get_somatic_indel(const strelka_options& opt,
             sindel.rs.ntype=NTYPE::HOM;
         } else {
             sindel.rs.ntype=NTYPE::HET;
-        }
 #if 0
-    } else if (sindel.rs.ntype==STAR_DIINDEL::HET) {
-        sindel.rs.ntype=NTYPE::HET;
-    } else {
-        assert(0);
-    }
+        } else if (sindel.rs.ntype==STAR_DIINDEL::HET) {
+            sindel.rs.ntype=NTYPE::HET;
+        } else {
+            assert(0);
 #endif
-}
+        }
+    }
 
-sindel.rs.sindel_qphred = tier_rs[sindel.sindel_tier].sindel_qphred;
-sindel.is_indel=(sindel.rs.sindel_qphred != 0);
+    sindel.rs.sindel_qphred = tier_rs[sindel.sindel_tier].sindel_qphred;
 }
 
 

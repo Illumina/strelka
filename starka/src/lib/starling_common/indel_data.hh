@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -21,6 +21,8 @@
 #include "starling_common/indel_align_type.hh"
 #include "starling_common/indel_key.hh"
 #include "starling_common/starling_types.hh"
+
+#include "boost/foreach.hpp"
 
 #include <cassert>
 #include <iosfwd>
@@ -45,12 +47,14 @@ struct indel_observation_data {
     indel_observation_data()
         : is_noise(false)
         , is_external_candidate(false)
+        , is_forced_output(false)
         , iat(INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ)
         , id(0)
     {}
 
     bool is_noise;
     bool is_external_candidate;
+    bool is_forced_output; // results of gt tests must be output even for very unlikely cases
     INDEL_ALIGN_TYPE::index_t iat;
     align_id_t id;
     std::string insert_seq;
@@ -144,6 +148,25 @@ struct insert_seq_manager {
         return _consensus_seq;
     }
 
+    // return the insert size
+    //
+    // note that this test will not trigger consensus finalization,
+    // so it is substantially different than get().size()
+    unsigned
+    get_size() const
+    {
+        if (_is_consensus) return _consensus_seq.size();
+
+        unsigned size(0);
+        BOOST_FOREACH(const obs_t::value_type& val, _obs)
+        {
+            if (val.first.size() <= size) continue;
+            size = val.first.size();
+        }
+
+        return size;
+    }
+
     // add insert sequence observation:
     void
     add_obs(const std::string& seq) {
@@ -187,7 +210,10 @@ struct indel_data {
 
     indel_data(const indel_key& ik)
         : _ik(ik),
-          is_external_candidate(false)
+          is_external_candidate(false),
+          is_forced_output(false),
+          n_mapq(0),
+          cumm_mapq(0)
     {}
 
     /// add an observation for this indel
@@ -246,6 +272,14 @@ struct indel_data {
         return _insert_seq.get();
     }
 
+    /// this test is different than asking for insert-seq in that it does not
+    /// trigger insert sequence consensus generation:
+    unsigned
+    get_insert_size() const
+    {
+        return _insert_seq.get_size();
+    }
+
 #if 0
     // insert sequence for all contig and tier1 observations:
     void
@@ -299,6 +333,9 @@ public:
     // candidates can be provided from external sources as well:
     bool is_external_candidate;
 
+    // if true candidates should be output even if very unlikely:
+    bool is_forced_output;
+
     // this structure represents support for the indel among all reads
     // which cross an indel breakpoint by a sufficient margin after
     // re-alignment:
@@ -344,10 +381,10 @@ private:
     add_observation_core(const indel_observation_data& obs_data,
                          bool& is_repeat_obs) {
 
-        if (obs_data.is_external_candidate) {
-            is_external_candidate=true;
+        is_external_candidate=obs_data.is_external_candidate;
+        is_forced_output=obs_data.is_forced_output;
 
-        } else {
+        if (! is_external_candidate) {
 
             using namespace INDEL_ALIGN_TYPE;
 

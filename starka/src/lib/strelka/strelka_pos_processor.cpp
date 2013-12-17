@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -133,37 +133,9 @@ process_pos_snp_somatic(const pos_t pos) {
     //    somatic_snv_genotype sgt;
     somatic_snv_genotype_grid sgtg;
 
-#if 0
     if (_opt.is_somatic_snv()) {
-        const extended_pos_info* normal_epi_t2_ptr(NULL);
-        const extended_pos_info* tumor_epi_t2_ptr(NULL);
-        if (_opt.is_tier2()) {
-            normal_epi_t2_ptr=(&(normald_t2_ptr->good_epi));
-            tumor_epi_t2_ptr=(&(tumord_t2_ptr->good_epi));
-        }
-        _dopt.sscaller().position_somatic_snv_call(normald.good_epi,
-                                                   tumord.good_epi,
-                                                   normal_epi_t2_ptr,
-                                                   tumor_epi_t2_ptr,
-                                                   sgt);
-    }
-#else
-#if 0
-    if (_opt.is_somatic_snv()) {
-        const extended_pos_info* normal_epi_t2_ptr(NULL);
-        const extended_pos_info* tumor_epi_t2_ptr(NULL);
-        if (_opt.is_tier2()) {
-            normal_epi_t2_ptr=(&(normald_t2_ptr->good_epi));
-            tumor_epi_t2_ptr=(&(tumord_t2_ptr->good_epi));
-        }
-        _dopt.sscaller_grid().position_somatic_snv_call(normald.good_epi,
-                                                        tumord.good_epi,
-                                                        normal_epi_t2_ptr,
-                                                        tumor_epi_t2_ptr,
-                                                        sgtg);
-    }
-#else
-    if (_opt.is_somatic_snv()) {
+        sgtg.is_forced_output=is_forced_output_pos(pos);
+
         const extended_pos_info* normal_epi_t2_ptr(NULL);
         const extended_pos_info* tumor_epi_t2_ptr(NULL);
         if (_opt.is_tier2()) {
@@ -176,58 +148,33 @@ process_pos_snp_somatic(const pos_t pos) {
                                                                tumor_epi_t2_ptr,
                                                                sgtg);
     }
-#endif
-#endif
-
-    const bool is_snv(sgtg.is_snv);
 
     // report events:
     //
+    bool is_snv(sgtg.is_snv());
     bool is_reported_event(false);
 
-    if (is_snv) {
-#if 0
-        if (sgt.is_snv) {
-            std::ostream& bos(*_client_io.somatic_snv_osptr());
-            const extended_pos_data& ndata( (sgt.tier==0) ? normald : *normald_t2_ptr );
-            const extended_pos_data& tdata( (sgt.tier==0) ? tumord : *tumord_t2_ptr );
-            //            write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,ndata,tdata,bos);
+    if (sgtg.is_output()) {
+        std::ostream& bos(*_client_io.somatic_snv_osptr());
 
-            // have to keep tier1 counts for filtration purposes:
+        // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG
-            write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,normald,tumord,log_os);
-            log_os << "\n";
-#endif
-            write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,normald,tumord,bos);
-            bos << "\t";
-            write_somatic_snv_genotype(_opt,sgt,ndata.epd.good_pi,tdata.epd.good_pi,bos);
-            bos << "\n";
-        }
-#endif
-        if (sgtg.is_snv) {
-            std::ostream& bos(*_client_io.somatic_snv_osptr());
-            //            const extended_pos_data& ndata( (sgtg.tier==0) ? normald : *normald_t2_ptr );
-            //            const extended_pos_data& tdata( (sgtg.tier==0) ? tumord : *tumord_t2_ptr );
-            //            write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,ndata,tdata,bos);
-
-            // have to keep tier1 counts for filtration purposes:
-#ifdef SOMATIC_DEBUG
-            write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,normald,tumord,log_os);
-            log_os << "\n";
+        write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,normald,tumord,log_os);
+        log_os << "\n";
 #endif
 
-            bos << _chrom_name << '\t'
-                << output_pos << '\t'
-                << ".";
+        bos << _chrom_name << '\t'
+            << output_pos << '\t'
+            << ".";
 
-            write_vcf_somatic_snv_genotype_strand_grid(_opt,sgtg,
-                                                       *(normald_ptr[0]),
-                                                       *(tumord_ptr[0]),
-                                                       *(normald_ptr[1]),
-                                                       *(tumord_ptr[1]),
-                                                       bos);
-            bos << "\n";
-        }
+        write_vcf_somatic_snv_genotype_strand_grid(_opt,sgtg,
+                                                   *(normald_ptr[0]),
+                                                   *(tumord_ptr[0]),
+                                                   *(normald_ptr[1]),
+                                                   *(tumord_ptr[1]),
+                                                   bos);
+        bos << "\n";
+
         is_reported_event = true;
     }
 
@@ -309,9 +256,7 @@ process_pos_indel_somatic(const pos_t pos) {
                                                     sindel);
 #endif
 
-            if (sindel.is_indel) {
-                //is_indel=true;
-
+            if (sindel.is_output()) {
                 // get sample specific info:
                 starling_indel_sample_report_info normal_isri[2];
                 starling_indel_sample_report_info tumor_isri[2];

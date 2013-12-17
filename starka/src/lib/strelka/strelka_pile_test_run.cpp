@@ -7,7 +7,7 @@
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 /// \file
@@ -85,7 +85,7 @@ call(const unsigned pos,
                                                                 NULL,
                                                                 sgtg);
 
-    if (! sgtg.is_snv) return;
+    if (! sgtg.is_output()) return;
 
     static const char chrom_name[] = "sim";
     _os << chrom_name << '\t'
