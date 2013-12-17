@@ -42,13 +42,12 @@
 #include "starling_common/starling_indel_error_prob.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_base.hh"
-
+#include "starling_common/gvcf_aggregator.hh"
 #include "boost/foreach.hpp"
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-
 
 
 //#define DEBUG_PPOS
@@ -395,6 +394,12 @@ starling_pos_processor_base(const starling_options& client_opt,
 
     if (_client_opt.is_gvcf_output()) {
         _gvcfer.reset(new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0)));
+        if(_client_opt.do_codon_phasing){
+            Codon_buffer *cb = new Codon_buffer();
+//            cb->set_sample(_sample[0]);
+//            sample(s).read_buff.get_pos_read_segment_iter(pos));
+//            log_os << _sample[0] << "\n";
+        }
     }
 
     const unsigned report_size(_client_dopt.report_range.size());
@@ -826,7 +831,7 @@ get_realignment_range(const pos_t pos,
 // 5) process most-likely alignment for snp-calling
 // 5a) insert most-likely alignment into output read buffer (re-link within same data-structure?)
 // 6) remove read from input read buffer
-//
+
 void
 starling_pos_processor_base::
 align_pos(const pos_t pos) {
@@ -1319,6 +1324,30 @@ pileup_pos_reads(const pos_t pos) {
 }
 
 
+//void
+//starling_pos_processor_base::
+//buffer_codon_reads(const pos_t pos) {
+//    static const bool is_include_submapped(false);
+//
+//    for (unsigned s(0); s<_n_samples; ++s) {
+//        read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
+//        read_segment_iter::ret_val r;
+//        while (true) {
+//            r=ri.get_ptr();
+//            if (NULL==r.first) break;
+//            const read_segment& rseg(r.first->get_segment(r.second));
+//            if (is_include_submapped || rseg.is_treated_as_anytier_mapping()) {
+//                pileup_read_segment(rseg,s);
+//            }
+//            ri.next();
+//        }
+//    }
+//}
+
+
+// after the fact pileup around the window of the condon we are looking at
+
+
 void
 starling_pos_processor_base::
 pileup_read_segment(const read_segment& rseg,
@@ -1504,10 +1533,21 @@ pileup_read_segment(const read_segment& rseg,
                         insert_mapq_count(ref_pos,sample_no,mapq);
                         update_ranksum(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
                     }
+
+                    if (_client_opt.do_codon_phasing) {
+                        // build graph
+                        //log_os << "Doing codon"  << "\n";
+
+                    }
+
                     if (_client_opt.is_compute_hapscore) {
                         insert_hap_cand(ref_pos,sample_no,is_tier1,
                                         bseq,qual,read_pos);
                     }
+
+
+
+
 
                 } catch (...) {
                     log_os << "Exception caught in starling_pos_processor_base.insert_pos_basecall() "
@@ -1739,10 +1779,14 @@ process_pos_snp_single_sample_impl(const pos_t pos,
             dgt_ptr=&get_empty_dgt(pi.ref_base);
         }
 #endif
+
+        //Add site gvcf
         if (_client_opt.is_gvcf_output()) {
             _site_info.init(pos,pi.get_ref_base(),good_pi,_client_opt.used_allele_count_min_qscore);
             _gvcfer->add_site(_site_info);
         }
+
+
         if (_client_opt.is_bsnp_diploid_allele_file) {
             write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
         }

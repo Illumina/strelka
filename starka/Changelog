@@ -1,3 +1,5 @@
+v2.0.13
+STARKA-35 Throw out q-score 255 reads encountered in RNAseq workflow, rather than error out. 
 v2.0.12
 STARKA-34 Properly handle insertions adjacent to introns
 Filter out all open-breakends

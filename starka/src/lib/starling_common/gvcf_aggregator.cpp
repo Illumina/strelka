@@ -20,6 +20,7 @@
 #include "starling_common/gvcf_aggregator.hh"
 #include "starling_common/gvcf_header.hh"
 
+
 #include "boost/foreach.hpp"
 
 #include <fstream>
@@ -28,7 +29,7 @@
 #include <sstream>
 
 
-//#define DEBUG_GVCF
+#define DEBUG_GVCF
 
 
 #ifdef DEBUG_GVCF
@@ -138,6 +139,15 @@ gvcf_aggregator(const starling_options& opt,
 
     if (! opt.is_gvcf_output()) return;
 
+    // initialize codonPhaser
+    if(_opt.do_codon_phasing){
+        codon_phaser = Codon_phaser();
+//        codon_phaser = Codon_phaser();
+        #ifdef DEBUG_GVCF
+            //log_os << "I have a phaser" << "\n";
+        #endif
+    }
+
     assert(NULL != _osptr);
     assert((NULL !=_chrom) && (strlen(_chrom)>0));
 
@@ -193,15 +203,37 @@ skip_to_pos(const pos_t target_pos) {
     }
 }
 
+
 void
 gvcf_aggregator::
 add_site(site_info& si) {
 
-    skip_to_pos(si.pos);
     add_site_modifiers(_opt.gvcf,_dopt,si);
+    skip_to_pos(si.pos);
+    if (_opt.do_codon_phasing){
+        bool emptyBuffer = codon_phaser.add_site(si);
 
-    add_site_internal(si);
+        // Was site absorbed, if not release all buffered sites
+        // and add these into the gVCF pipeline
+        if (!codon_phaser.is_in_block || emptyBuffer){
+//            codon_phaser.write_out_buffer();
+//            log_os << "### buffer size:" << codon_phaser.buffer.size() << "\n";
+            for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it){
+//                log_os << *it << "\n";
+                add_site_internal(*it);
+            }
+            skip_to_pos(si.pos);
+            add_site_internal(si);
+            codon_phaser.clear_buffer();
+        }
+
+    }
+    else{
+        add_site_internal(si);
+    }
 }
+
+//Add sites to queue for writing to gVCF
 
 void
 gvcf_aggregator::
@@ -445,7 +477,7 @@ print_site_ad(const site_info& si,
 }
 
 
-//writes out a SNP record
+//writes out a SNP or block record
 void
 gvcf_aggregator::
 write_site_record(const site_info& si) const {
@@ -868,6 +900,7 @@ process_overlaps() {
 
     // process sites to be consistent with overlapping indels:
     for (unsigned i(0); i<_site_buffer_size; ++i) {
+
 #ifdef DEBUG_GVCF
         log_os << "CHIRP: indel overlapping site: " << _site_buffer[i].pos << "\n";
 #endif
@@ -902,11 +935,11 @@ process_overlaps() {
             }
         } else {
             // print site:
+            log_os << "site record" << "\n";
             queue_site_record(_site_buffer[site_index]);
             site_index++;
         }
     }
-
     _indel_buffer_size = 0;
     _site_buffer_size = 0;
 }
