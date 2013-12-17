@@ -431,10 +431,12 @@ common_xfix_length(const std::string& s1,
 // handles candidate indel input from a vcf record
 //
 void
-process_candidate_indel(const vcf_record& vcf_indel,
-                        starling_pos_processor_base& sppr,
-                        const unsigned sample_no,
-                        const bool is_forced_output) {
+process_candidate_indel(
+    const unsigned max_indel_size,
+    const vcf_record& vcf_indel,
+    starling_pos_processor_base& sppr,
+    const unsigned sample_no,
+    const bool is_forced_output) {
 
     const unsigned rs(vcf_indel.ref.size());
     BOOST_FOREACH(const std::string& alt, vcf_indel.alt) {
@@ -444,6 +446,9 @@ process_candidate_indel(const vcf_record& vcf_indel,
         assert(nfix<=std::min(rs,as));
         const int insert_length(as-nfix);
         const int delete_length(rs-nfix);
+
+        if ((insert_length > static_cast<int>(max_indel_size)) ||
+            (delete_length > static_cast<int>(max_indel_size))) continue;
 
         indel_observation obs;
         // starling indel pos is at the first changed base but zero-indexed:

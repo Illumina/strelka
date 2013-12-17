@@ -1033,14 +1033,15 @@ is_alignment_spanned_by_range(const known_pos_range pr,
 //
 static
 void
-score_candidate_alignments(const starling_options& client_opt,
-                           const reference_contig_segment& ref,
-                           read_segment& rseg,
-                           indel_synchronizer& isync,
-                           const std::set<candidate_alignment>& cal_set,
-                           std::vector<double>& cal_set_path_lnp,
-                           double& max_path_lnp,
-                           const candidate_alignment*& max_cal_ptr)
+score_candidate_alignments(
+    const starling_options& client_opt,
+    const reference_contig_segment& ref,
+    read_segment& rseg,
+    indel_synchronizer& isync,
+    const std::set<candidate_alignment>& cal_set,
+    std::vector<double>& cal_set_path_lnp,
+    double& max_path_lnp,
+    const candidate_alignment*& max_cal_ptr)
 {
     // the smooth optimum alignment and alignment pool are actually
     // used for realignment, whereas the strict max_path path
@@ -1073,6 +1074,9 @@ score_candidate_alignments(const starling_options& client_opt,
         std::cerr << "score: " << path_lnp << "\n";
 #endif
 
+        // check that this is not the first iteration, then determine if this
+        // cal will be the new max value:
+        //
         if (NULL!=max_cal_ptr) {
             if (path_lnp<max_path_lnp) continue;
 

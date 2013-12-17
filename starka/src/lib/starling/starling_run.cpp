@@ -148,14 +148,14 @@ starling_run(const starling_options& opt) {
 
         } else if (current.itype == INPUT_TYPE::INDEL) { // process candidate indels input from vcf file(s)
             const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
-            process_candidate_indel(vcf_indel,sppr);
+            process_candidate_indel(opt.max_indel_size, vcf_indel,sppr);
 
         } else if (current.itype == INPUT_TYPE::FORCED_OUTPUT) { // process forced genotype tests from vcf file(s)
             const vcf_record& vcf_variant(*(foutput_stream[current.get_order()]->get_record_ptr()));
             if       (vcf_variant.is_indel()) {
                 static const unsigned sample_no(0);
                 static const bool is_forced_output(true);
-                process_candidate_indel(vcf_variant,sppr,sample_no,is_forced_output);
+                process_candidate_indel(opt.max_indel_size, vcf_variant,sppr,sample_no,is_forced_output);
             } else if (vcf_variant.is_snv()) {
                 sppr.insert_forced_output_pos(vcf_variant.pos-1);
             }
