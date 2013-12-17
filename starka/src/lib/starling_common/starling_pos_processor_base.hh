@@ -23,7 +23,6 @@
 
 #pragma once
 
-
 #include "blt_common/adjust_joint_eprob.hh"
 #include "blt_common/map_level.hh"
 #include "blt_util/depth_stream_stat_range.hh"
@@ -40,6 +39,8 @@
 #include "starling_common/starling_read_buffer.hh"
 #include "starling_common/starling_shared.hh"
 #include "starling_common/starling_streams_base.hh"
+#include "starling_common/gvcf_aggregator.hh"
+//#include "starling_common/codon_buffer.hh"
 
 
 #include "boost/utility.hpp"
@@ -296,6 +297,7 @@ protected:
 
     // this structure contains all information which is sample dependent:
     //
+public:
     struct sample_info {
 
         sample_info(const starling_options& opt,
@@ -563,4 +565,5 @@ protected:
 
     // a caching term used for gvcf:
     site_info _site_info;
+
 };

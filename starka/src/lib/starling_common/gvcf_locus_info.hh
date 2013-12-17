@@ -144,6 +144,7 @@ struct site_modifiers : public shared_modifiers {
         is_used_covered=false;
         is_zero_ploidy=false;
         is_block=false;
+        is_codon=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
     }
 
@@ -157,6 +158,7 @@ struct site_modifiers : public shared_modifiers {
     bool is_used_covered;
     bool is_zero_ploidy;
     bool is_block;
+    bool is_codon;
 
     MODIFIED_SITE_GT::index_t modified_gt;
 };
@@ -180,10 +182,6 @@ struct indel_info {
         dindel=(init_dindel);
         iri=(init_iri);
         isri=(init_isri);
-//        MQ=0.0;
-//        ReadPosRankSum=0.0;
-//        BaseQRankSum=0.0;
-//        MQRankSum=0.0;
         imod.clear();
         MQ = 0.0;
         ReadPosRankSum = 0.0;
@@ -223,10 +221,6 @@ struct indel_info {
     starling_diploid_indel_core dindel;
     starling_indel_report_info iri;
     starling_indel_sample_report_info isri;
-//    double MQ;               // RMS of mapping qualities
-//    double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
-//    double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
-//    double MQRankSum;        // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
     indel_modifiers imod;
     double MQ;               // RMS of mapping qualities
 
@@ -265,6 +259,7 @@ struct site_info {
         pos=(init_pos);
         ref=(init_ref);
         good_pi.get_known_counts(known_counts,used_allele_count_min_qscore);
+
         smod.clear();
     }
 
@@ -282,6 +277,12 @@ struct site_info {
             }
             return DIGT::get_vcf_gt(print_gt,dgt.ref_gt);
         }
+    }
+
+    bool
+    is_het() const {
+        unsigned print_gt(smod.max_gt);
+        return DIGT::is_het(print_gt);
     }
 
     bool
@@ -307,5 +308,7 @@ struct site_info {
 
     site_modifiers smod;
 };
+
+std::ostream& operator<<(std::ostream& os,const site_info& si);
 
 #endif

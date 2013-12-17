@@ -20,6 +20,7 @@
 
 #include "starling_common/gvcf_block_site_record.hh"
 #include "starling_common/gvcf_locus_info.hh"
+//#include "starling_common/codon_phaser.hh"
 
 #include <iosfwd>
 
@@ -67,6 +68,9 @@ struct gvcf_aggregator {
     }
 
 private:
+
+//    void
+//    setup_codon_phasing(const codon_buffer& cb);
 
     void
     add_site_internal(const site_info& si);
@@ -134,5 +138,7 @@ private:
 
     pos_t _head_pos; // we've observed sites up to but not including this position
     site_info _empty_site;
+
+//    Codon_phaser codon_phaser;
 };
 

@@ -176,7 +176,7 @@ struct blt_options {
           , max_input_depth(0)
           , is_compute_hapscore(false)
           , is_compute_VQSRmetrics(false)
-          // , do_codon_phasing(false)
+          , do_codon_phasing(true)
     {}
 
     virtual ~blt_options() {}
@@ -328,6 +328,7 @@ struct blt_options {
 
     bool is_compute_hapscore;
     bool is_compute_VQSRmetrics;
+    bool do_codon_phasing;
 
     std::string report_filename;
 

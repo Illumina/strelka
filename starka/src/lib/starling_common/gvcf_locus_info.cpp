@@ -77,3 +77,10 @@ operator<<(std::ostream& os,
     return os;
 }
 
+std::ostream&
+operator<<(std::ostream& os,
+           const site_info& si) {
+    os << "pos: " << (si.pos+1) << " " << si.get_gt();
+    return os;
+}
+
