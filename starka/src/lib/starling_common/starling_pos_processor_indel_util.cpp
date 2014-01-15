@@ -411,7 +411,9 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         const bool is_swap_start(is_segment_swap_start(al.path,path_index));
 
         assert(ps.type != SKIP);
-        assert(! (is_edge_segment && is_swap_start));
+
+        // fix STARKA-43:
+        // assert(! (is_edge_segment && is_swap_start));
 
         indel_observation obs;
         obs.data.iat = iat;

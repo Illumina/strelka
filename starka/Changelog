@@ -1,3 +1,4 @@
+STARKA-43 Accept edge indel pattern produced by freeBayes/BamLeftAlign
 STARKA-45 Filter indels greater than max indel size from candidate indel vcf 
 v2.0.14
 STARKA-41 Fix consensus open-breakend error
