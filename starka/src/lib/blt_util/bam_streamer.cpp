@@ -20,6 +20,7 @@
 
 #include <cstdlib>
 
+#include <fstream>
 #include <iostream>
 
 
@@ -70,6 +71,26 @@ bam_streamer::
 
 
 
+static
+bool fexists(const char *filename)
+{
+  std::ifstream ifile(filename);
+  return ifile;
+}
+
+
+
+static
+bool hasEnding(
+    const std::string& fullString,
+    const std::string& ending)
+{
+    if (fullString.length() < ending.length()) return false;
+    return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+}
+
+
+
 // load index if it hasn't been set already:
 void
 bam_streamer::
@@ -87,7 +108,17 @@ _load_index() {
     /// iterator is created, in which case this could be a local
     /// variable. Until we know, _bidx should persist for the lifetime
     /// of _biter
-    _bidx = bam_index_load(name()); // load BAM index
+    std::string index_base(name());
+    if(! fexists((index_base+".bai").c_str()))
+    {
+        static const std::string bamext(".bam");
+        if (hasEnding(index_base,bamext))
+        {
+            index_base=index_base.substr(0,index_base.length()-bamext.length());
+        }
+    }
+
+    _bidx = bam_index_load(index_base.c_str()); // load BAM index
     if (NULL == _bidx) {
         log_os << "ERROR: BAM index is not available for file: " << name() << "\n";
         exit(EXIT_FAILURE);
