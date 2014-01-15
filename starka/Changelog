@@ -1,3 +1,4 @@
+v2.0.15
 STARKA-47 Accept GATK-style bam indices
 STARKA-43 Accept edge indel pattern produced by freeBayes/BamLeftAlign
 STARKA-45 Filter indels greater than max indel size from candidate indel vcf 
