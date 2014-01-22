@@ -21,19 +21,20 @@
 #include "starling_common/gvcf_block_site_record.hh"
 #include "starling_common/gvcf_locus_info.hh"
 #include "starling_common/codon_phaser.hh"
+#include "starling_common/calibration_models.hh"
 
 #include <iosfwd>
-
-struct gvcf_deriv_options {
-
-    gvcf_deriv_options()
-        : is_max_depth(false)
-        , max_depth(0)
-    {}
-
-    bool is_max_depth;
-    double max_depth;
-};
+// moved declaration to calibration_models.hh
+//struct gvcf_deriv_options {
+//
+//    gvcf_deriv_options()
+//        : is_max_depth(false)
+//        , max_depth(0)
+//    {}
+//
+//    bool is_max_depth;
+//    double max_depth;
+//};
 
 
 
@@ -140,5 +141,6 @@ private:
     site_info _empty_site;
 
     Codon_phaser codon_phaser;
+    calibration_models CM;
 };
 

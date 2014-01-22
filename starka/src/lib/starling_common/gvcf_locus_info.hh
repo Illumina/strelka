@@ -26,6 +26,7 @@
 
 #include <bitset>
 #include <iosfwd>
+#include <map>
 
 
 namespace VCF_FILTERS {
@@ -246,6 +247,7 @@ struct site_info {
         , ReadPosRankSum(0)
         , BaseQRankSum(0)
         , MQRankSum(0)
+        , Qscore(-1)
     {
         for (unsigned i(0); i<N_BASE; ++i) known_counts[i] = 0;
     }
@@ -279,6 +281,35 @@ struct site_info {
         }
     }
 
+    std::map<std::string, double>
+    get_qscore_features(){
+        std::map<std::string, double> res;
+        res["GQX"]              = smod.gqx;
+        res["GQ"]               = smod.gq;
+        res["SNVSB"]            = dgt.sb;
+        res["SNVHPOL"]          = hpol;
+        res["DP"]               = n_used_calls;
+        res["DPF"]              = n_unused_calls;
+        res["AD"]               = known_counts[dgt.ref_gt];
+        res["AD2"]              = 0.0;          // set below
+        res["MQ"]               = MQ;
+        res["ReadPosRankSum"]   = ReadPosRankSum;
+        res["BaseQRankSum"]     = BaseQRankSum;
+        res["MQRankSum"]        = MQRankSum;
+        for (unsigned b(0); b<N_BASE; ++b) {
+            if (b==dgt.ref_gt) continue;
+            if (DIGT::expect2(b,smod.max_gt))
+                res["AD2"] =  known_counts[b];
+         }
+        if ((res["DP"]+res["DPF"])>0.0){
+            res["VFStar"]           = res["AD2"]/(res["DP"]+res["DPF"]); //VFStar = AD2/(DP+DPF);
+        }
+        else{
+            res["VFStar"]           = res["AD2"]/(30.0); //default hack for
+        }
+        return res;
+    }
+
     bool
     is_het() const {
         unsigned print_gt(smod.max_gt);
@@ -290,7 +321,6 @@ struct site_info {
         return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (dgt.ref_gt != smod.max_gt));
     }
 
-
     pos_t pos;
     char ref;
     unsigned n_used_calls;
@@ -300,6 +330,7 @@ struct site_info {
     unsigned hpol;
     double hapscore;
     double MQ;				 // RMS of mapping qualities
+    double Qscore;           // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
 
     //only meaningful for het calls
     double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.

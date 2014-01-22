@@ -175,8 +175,11 @@ struct blt_options {
           , is_max_input_depth(false)
           , max_input_depth(0)
           , is_compute_hapscore(false)
-          , is_compute_VQSRmetrics(false)
-          , do_codon_phasing(true)
+          , is_compute_VQSRmetrics(true)
+          , do_codon_phasing(false)
+          , calibration_model("default")
+          , calibration_cutoff_snp(14.0)      // the Q-score cut-off for what is considered a PASS SNP
+          , calibration_cutoff_indel(3.0)
     {}
 
     virtual ~blt_options() {}
@@ -298,6 +301,10 @@ struct blt_options {
     bool is_min_vexp;
     double min_vexp;
 
+    double calibration_cutoff_snp;      // the Q-score cut-off for what is considered a PASS SNP
+    double calibration_cutoff_indel;    // the Q-score cut-off for what is considered a PASS INDEL
+    std::string calibration_model;      // which calibration model should we use
+
 
     LOG_LEVEL::index_t verbosity;
 
@@ -331,6 +338,7 @@ struct blt_options {
     bool do_codon_phasing;
 
     std::string report_filename;
+    std::string calibration_models_filename;
 
     gvcf_options gvcf;
 };
