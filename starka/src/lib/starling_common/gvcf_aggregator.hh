@@ -139,6 +139,10 @@ private:
     pos_t _head_pos; // we've observed sites up to but not including this position
     site_info _empty_site;
 
+<<<<<<< HEAD
 //    Codon_phaser codon_phaser;
+=======
+  //  Codon_phaser codon_phaser;
+>>>>>>> resolve conflicts
 };
 
