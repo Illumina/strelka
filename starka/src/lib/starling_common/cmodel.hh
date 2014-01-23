@@ -28,6 +28,7 @@ private:
     double log_odds(featuremap features, featuremap& coeffs);
     double prior_adjustment(const double raw_score,featuremap& priors);
     void set_qscore_filters(const double raw_score,featuremap& priors);
+    void apply_qscore_filters(site_info& si, featuremap& qscore_cuts,featuremap& most_predictive);
     std::string model_name;
     std::string model_type;
     parmap pars;

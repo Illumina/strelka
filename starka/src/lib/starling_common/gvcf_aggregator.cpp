@@ -88,12 +88,6 @@ set_site_filters_CM(const gvcf_options& opt,
                  calibration_models& model) {
     // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
     model.clasify_site(opt,dopt,si);
-    if (si.Qscore< 14){
-        si.smod.set_filter(VCF_FILTERS::LowGQX); // more sophisticated filter setting here
-    }
-
-//    log_os << "my Q " << si.Qscore << "\n";
-
 }
 
 

@@ -17,8 +17,9 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <stdlib.h>     /* atof */
+#include "blt_util/qscore.hh"
 
-#define DEBUG_MODEL
+//#define DEBUG_MODEL
 
 #ifdef DEBUG_MODEL
 #include "blt_util/log.hh"
@@ -41,7 +42,6 @@ void c_model::add_parameters(parmap myPars){
 
 void c_model::do_rule_model(featuremap& cutoffs, site_info& si){
       if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
-//      log_os << "GQX set to " << cutoffs["DPFratio"] << "\n";
       if (cutoffs["DP"]>0) {
           if ((si.n_used_calls+si.n_unused_calls) > cutoffs["DP"]) si.smod.set_filter(VCF_FILTERS::HighDepth);
       }
@@ -62,10 +62,7 @@ void c_model::do_rule_model(featuremap& cutoffs, site_info& si){
 //the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
 featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor){
     for(featuremap::const_iterator it = norm_factor.begin(); it != norm_factor.end(); ++it){ // only normalize the features that are needed
-//        log_os << it->first << "=" << it->second << " ";
-//        log_os << "scale " << "=" << adjust_factor[it->first] << " ";
         features[it->first] = (features[it->first]-adjust_factor[it->first])/norm_factor[it->first];
-//        log_os << it->first << "=" << it->second << "\n";
     }
     return features;
 }
@@ -79,7 +76,7 @@ double c_model::log_odds(featuremap features, featuremap& coeffs){
     double sum = coeffs["Intercept"];
 //    log_os << "sum" << "=" << sum << "\n";
     for(featuremap::const_iterator it = coeffs.begin(); it != coeffs.end(); ++it){
-        if (it->first !="Intercept" && it->second !=0){ // check that out coefficient is greater than 0
+        if (it->first !="Intercept" && it->second !=0){ // check that our coefficient is different from 0
             split(tokens, it->first, is_any_of(":"));
 //            log_os << it->first << "=" << it->second << "\n";
             double term = it->second;
@@ -103,13 +100,13 @@ double c_model::log_odds(featuremap features, featuremap& coeffs){
 //solve for p(TP): p(TP) = 1/(1+exp(-logOddsRatio))
 //- Rescale the probabilities p(TP), p(FP) with the specified class priors,
 //as they were counted on the training set before balancing to 50/50.
-//- Convert the rescaled probability p(FP) into a q score
+//- Convert the rescaled probability p(FP) into a
 //Q-score: Q-score = round( -10*log10(p(FP)) )
 // simplification possible  qscore(raw) = round(10log((1+e^raw)/prior))
 double c_model::prior_adjustment(const double raw_score, featuremap& priors){
     double pFP = 1.0 - 1.0/(1+exp(-raw_score)); // this calculation can likely be simplified
     double pFPrescale   = pFP*priors["minorityPrior"];
-    double qscore       = round(-10.0 * log10(pFPrescale));
+    double qscore       =  error_prob_to_qphred(pFPrescale);
 //    double qscore_test  = round(10*log10((1+exp(raw_score))/priors["minorityPrior"]));
     #ifdef DEBUG_MODEL
         log_os << "minorityPrior " << priors["minorityPrior"] << "\n";
@@ -117,11 +114,19 @@ double c_model::prior_adjustment(const double raw_score, featuremap& priors){
         log_os << "rescale=" << pFPrescale << "\n";
 //        log_os << "experimental=" << qscore_test << "\n";
     #endif
+    // cap the score at 40
+    if (qscore>40)
+        qscore = 40;
+    // TODO check for inf and NaN artifacts
 
     return qscore;
 }
-
-
+void c_model::apply_qscore_filters(site_info& si, featuremap& qscore_cuts, featuremap& most_predictive){
+    most_predictive.size();
+    if (si.Qscore < qscore_cuts["Q"]){
+        si.smod.set_filter(VCF_FILTERS::LowGQX); // more sophisticated filter setting here
+    }
+}
 
 void c_model::score_instance(featuremap features, site_info& si){
     if (this->model_type=="LOGISTIC"){ //case we are using a logistic regression mode
@@ -137,6 +142,11 @@ void c_model::score_instance(featuremap features, site_info& si){
 
         // adjust by prior and calculate q-score
         si.Qscore = this->prior_adjustment(raw_score,this->pars[snpCase]["priors"]);
+
+        // set filters according to q-scores
+        featuremap most_pred; //place-holder
+        this->apply_qscore_filters(si,this->pars[snpCase]["qcutoff"],most_pred);
+
     #ifdef DEBUG_MODEL
             log_os << "Im doing a logistic model" << "\n";
     #endif
@@ -145,9 +155,6 @@ void c_model::score_instance(featuremap features, site_info& si){
     else if (this->model_type=="RULE"){//case we are using a rule based model
         featuremap myCutoffs;
         this->do_rule_model(this->pars["snp"]["cutoff"],si);
-    }
-    else{                             //should never end up here
-        si.Qscore = 10.1;
     }
 }
 
