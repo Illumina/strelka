@@ -13,26 +13,23 @@
 #include "starling_common/gvcf_locus_info.hh"
 
 typedef std::map<std::string, double> featuremap;
-
+typedef std::map<std::string, std::map<std::string, featuremap > > parmap;
 class c_model {
 public:
     c_model(std::string name, std::string type);
     virtual ~c_model();
 
-    // add different parameters to the model
-    void add_parameter(std::vector<std::string> tokens, std::string type, std::string context);
-
+    // add parameters to the model
+    void add_parameters(parmap myPars);
     void score_instance(featuremap features, site_info& si);
-    void do_rule_model(featuremap cutoffs, site_info& si);
-    featuremap normalize(featuremap features, featuremap adjust_factor, featuremap norm_factor);
-    double log_odds(featuremap features, featuremap scaling_factor);
-    double prior_adjustment(double raw_score);
-
-
 private:
+    void do_rule_model(featuremap& cutoffs, site_info& si);
+    featuremap normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor);
+    double log_odds(featuremap features, featuremap& coeffs);
+    double prior_adjustment(double raw_score, featuremap& priors);
     std::string model_name;
     std::string model_type;
-    std::map<std::string, std::map<std::string, featuremap > > pars;
+    parmap pars;
 };
 
 #endif /* CMODEL_HH_ */

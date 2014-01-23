@@ -9,6 +9,14 @@
 #include <stdlib.h>     /* atof */
 #include <iostream>
 #include <sstream>
+#include <cassert>
+#include <exception>
+#include <string>
+#include <fstream>
+#include <iterator>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <stdlib.h>     /* atof */
 
 //#define DEBUG_MODEL
 
@@ -26,17 +34,12 @@ c_model::~c_model() {
 }
 
 // add model paramaters
-void c_model::add_parameter(std::vector<std::string> tokens,std::string submodel, std::string context){
-    if (tokens.size()>1){
-//        log_os << "Loaded " << submodel << " " << context << " " << tokens.at(0) << " " << tokens.at(1) << "\n";
-        this->pars[submodel][context].insert(std::make_pair(tokens.at(0),atof(tokens.at(1).c_str())));
-//        log_os << this->pars[submodel][context][tokens.at(0)] << "\n";
-//
-//        log_os << "map size " << this->pars[submodel][context].size() << "\n";
-    }
+void c_model::add_parameters(parmap myPars){
+    this->pars = myPars;
 }
 
-void c_model::do_rule_model(featuremap cutoffs, site_info& si){
+
+void c_model::do_rule_model(featuremap& cutoffs, site_info& si){
       if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
 //      log_os << "GQX set to " << cutoffs["GQX"] << "\n";
       if (cutoffs["DP"]>0) {
@@ -52,42 +55,86 @@ void c_model::do_rule_model(featuremap cutoffs, site_info& si){
 
       if (si.dgt.is_snp) {
           if (si.dgt.sb>cutoffs["HighSNVSB"]) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
-
-          //kick out hpol filter completely
-//          if (opt.is_max_snv_hpol) {
-//              if (static_cast<int>(si.hpol)>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
-//          }
       }
 }
 
-
-featuremap c_model::normalize(featuremap features, featuremap adjust_factor, featuremap norm_factor){
+//Transform the features with the specified scaling parameters that were used to standardize
+//the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
+featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor){
+    for(featuremap::const_iterator it = norm_factor.begin(); it != norm_factor.end(); ++it){ // only normalize the features that are needed
+//        log_os << it->first << "=" << it->second << " ";
+//        log_os << "scale " << "=" << adjust_factor[it->first] << " ";
+        features[it->first] = (features[it->first]-adjust_factor[it->first])/norm_factor[it->first];
+//        log_os << it->first << "=" << it->second << "\n";
+    }
     return features;
 }
 
-double c_model::log_odds(featuremap features, featuremap scaling_factor){
-    return 0.08934589;
+//Model: log⁡〖(𝑃(𝑇𝑃|𝑥))/(𝑃(𝐹𝑃│𝑥) )=〖(𝑤〗_1 𝑥_1+⋯+〗 𝑤_𝑛 𝑥_𝑛)+〖(𝑤〗_12 𝑥_1 𝑥_2+⋯+𝑤_1𝑛 𝑥_1 𝑥_𝑛+⋯)
+// calculate sum from
+double c_model::log_odds(featuremap features, featuremap& coeffs){
+    using namespace boost::algorithm;
+    std::vector<std::string> tokens;
+    std::map<std::string,double> predictive;
+    double sum = coeffs["Intercept"];
+//    log_os << "sum" << "=" << sum << "\n";
+    for(featuremap::const_iterator it = coeffs.begin(); it != coeffs.end(); ++it){
+        if (it->first !="Intercept" && it->second !=0){ // check that out coefficient is greater than 0
+            split(tokens, it->first, is_any_of(":"));
+//            log_os << it->first << "=" << it->second << "\n";
+            double term = it->second;
+//            log_os << "term" << "=" << term << "\n";
+            for (int i=0; i < tokens.size(); i++) {
+                term = term*features[tokens[i]];
+//                log_os << "term" << "=" << term << "\n";
+            }
+            // use term to determine the most predictive parameter
+            predictive[it->first] = term;
+            sum += term;
+//            log_os << "sum " << "=" << sum << "\n";
+//            log_os << tokens.size() << "\n";
+        }
+    }
+    //TO-DO sort map to find most predictive feature for setting filter for
+    return sum;
 }
 
-// adjust for prior and calculate q-score
-double c_model::prior_adjustment(double raw_score){
-    return 0.18934589;
+//- From the identities logOddsRatio = ln(p(TP|x)/p(FP|x)) and p(TP|x) + p(FP|x) = 1,
+//solve for p(TP): p(TP) = 1/(1+exp(-logOddsRatio))
+//- Rescale the probabilities p(TP), p(FP) with the specified class priors,
+//as they were counted on the training set before balancing to 50/50.
+//- Convert the rescaled probability p(FP) into a
+//Q-score: Q-score = round( -10*log10(p(FP)) )
+double c_model::prior_adjustment(double raw_score, featuremap& priors){
+    double pTP = 1.0/(1+exp(-raw_score)); // this calculation can likely be simplified
+    double pFP = 1.0 - pTP;
+    double pFPrescale = pFP*priors["minorityPrior"];
+
+    #ifdef DEBUG_MODEL
+//        log_os << "minorityPrior " << priors["minorityPrior"] << "\n";
+//        log_os << "pFP=" << pFP << "\n";
+        log_os << "rescale=" << pFPrescale << "\n";
+    #endif
+
+        return round(-10.0 * log10(pFPrescale));
 }
 
 
 
 void c_model::score_instance(featuremap features, site_info& si){
     if (this->model_type=="LOGISTIC"){ //case we are using a logistic regression mode
-        // pull out the correct model parameters for the case we are dealing with
+        std::string snpCase = "homsnp";
+        if (si.is_het())
+            snpCase = "hetsnp";
 
         // normalize
-        featuremap norm_features = this->normalize(features,features,features);
+        featuremap norm_features = this->normalize(features,this->pars[snpCase]["scalecenter"],this->pars[snpCase]["scaleshift"]);
 
         //calculates log-odds ratio
-        double raw_score = this->log_odds(norm_features,features);
+        double raw_score = this->log_odds(norm_features,this->pars[snpCase]["coefs"]);
 
         // adjust by prior and calculate q-score
-        si.Qscore = this->prior_adjustment(raw_score);
+        si.Qscore = this->prior_adjustment(raw_score,this->pars[snpCase]["priors"]);
     #ifdef DEBUG_MODEL
             log_os << "Im doing a logistic model" << "\n";
     #endif
@@ -95,11 +142,7 @@ void c_model::score_instance(featuremap features, site_info& si){
     }
     else if (this->model_type=="RULE"){//case we are using a rule based model
         featuremap myCutoffs;
-        myCutoffs["GQX"] = 30;
-        myCutoffs["HighSNVSB"] = 10;
-        myCutoffs["DPFratio"]  = 0.6;
-        myCutoffs["DP"]  = 0;
-        this->do_rule_model(myCutoffs,si);
+        this->do_rule_model(this->pars["snp"]["cutoff"],si);
     }
     else{                             //should never end up here
         si.Qscore = 10.1;

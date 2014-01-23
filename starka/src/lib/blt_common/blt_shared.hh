@@ -178,7 +178,7 @@ struct blt_options {
           , is_compute_VQSRmetrics(true)
           , do_codon_phasing(false)
           , calibration_model("default")
-          , calibration_cutoff_snp(14.0)      // the Q-score cut-off for what is considered a PASS SNP
+          , calibration_cutoff_snp(13.0)      // the Q-score cut-off for what is considered a PASS SNP
           , calibration_cutoff_indel(3.0)
     {}
 

@@ -97,9 +97,6 @@ get_starling_shared_option_parser(starling_options& opt) {
     ("gvcf-compute-VQSRmetrics", po::value(&opt.is_compute_VQSRmetrics)->zero_tokens(),
      "Report metrics used for VQSR: BaseQRankSum, ReadPosRankSum, MQRankSum and MQ.")
 
-    ("calibration-model", po::value(&opt.calibration_model)->zero_tokens(),
-      "Specifies the calibration model used for variant filtering.")
-
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
 
@@ -178,7 +175,6 @@ get_starling_shared_option_parser(starling_options& opt) {
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
 
-     // models file template
    ("calibration-model-file", po::value(&opt.calibration_models_filename),
        "File containing calibration model parameters")
 

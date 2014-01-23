@@ -19,6 +19,7 @@
 #include <map>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <stdlib.h>     /* atof */
 
 
 //#define DEBUG_CAL
@@ -67,12 +68,10 @@ void calibration_models::default_clasify_site(const gvcf_options& opt, const gvc
               if (filt>opt.max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
           }
       }
-
       if (si.dgt.is_snp) {
           if (opt.is_max_snv_sb) {
               if (si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
           }
-
           if (opt.is_max_snv_hpol) {
               if (static_cast<int>(si.hpol)>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
           }
@@ -93,10 +92,8 @@ void calibration_models::set_model(const std::string& name){
     #endif
 }
 
-c_model calibration_models::get_model(std::string name){
-    modelmap::iterator it;
-    it = this->models.find(name);
-    return it->second;
+c_model& calibration_models::get_model(std::string& name){
+    return this->models.find(name)->second;
 }
 
 
@@ -112,6 +109,7 @@ void calibration_models::load_models(std::string model_file){
     std::string parspace;
     std::string submodel;
     std::string current_name;
+    parmap pars;
     if (myReadFile.is_open()) {
         while (!myReadFile.eof()) {
            std::getline (myReadFile,output);
@@ -119,6 +117,13 @@ void calibration_models::load_models(std::string model_file){
            split(tokens, output, is_any_of(" ")); // tokenize string
            //case new model
            if (tokens.at(0).substr(0,3)=="###"){
+               if (pars.size()>0){
+                   #ifdef DEBUG_CAL
+                       log_os << "Adding pars " << pars.size() << "\n";
+                   #endif
+                   this->get_model(current_name).add_parameters(pars);
+                   pars.clear();
+               }
                current_name = tokens.at(1);
                c_model current_model(tokens.at(1),tokens.at(2));
                this->models.insert(modelmap::value_type(current_name, current_model));
@@ -136,7 +141,9 @@ void calibration_models::load_models(std::string model_file){
            }
            //case load parameters
            else{
-               this->get_model(current_name).add_parameter(tokens,submodel,parspace);
+               if (tokens.size()>1){
+                   pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
+               }
            }
         }
     }

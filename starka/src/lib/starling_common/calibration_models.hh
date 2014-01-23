@@ -35,7 +35,7 @@ public:
 
     void clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si);
 
-    c_model get_model(std::string name);
+    c_model& get_model(std::string& name);
 
     // mimics behaviour of previous hard filters
     void default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si);
