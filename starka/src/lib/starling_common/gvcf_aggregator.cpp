@@ -29,7 +29,7 @@
 #include <sstream>
 
 
-#define DEBUG_GVCF
+//#define DEBUG_GVCF
 
 
 #ifdef DEBUG_GVCF
@@ -958,7 +958,6 @@ process_overlaps() {
             }
         } else {
             // print site:
-            log_os << "site record" << "\n";
             queue_site_record(_site_buffer[site_index]);
             site_index++;
         }

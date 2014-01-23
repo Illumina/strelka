@@ -299,9 +299,6 @@ struct blt_options {
     bool is_min_vexp;
     double min_vexp;
 
-    std::string calibration_model;      // which calibration model should we use
-
-
     LOG_LEVEL::index_t verbosity;
 
     bool is_write_variable_metadata;
@@ -331,6 +328,7 @@ struct blt_options {
 
     bool is_compute_hapscore;
     bool is_compute_VQSRmetrics;
+    std::string calibration_model;      // which calibration model should we use
     bool do_codon_phasing;
 
     std::string report_filename;
