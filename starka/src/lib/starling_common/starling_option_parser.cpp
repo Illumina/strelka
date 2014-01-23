@@ -96,6 +96,7 @@ get_starling_shared_option_parser(starling_options& opt) {
      "Turn off block compression in gVCF output")
     ("gvcf-compute-VQSRmetrics", po::value(&opt.is_compute_VQSRmetrics)->zero_tokens(),
      "Report metrics used for VQSR: BaseQRankSum, ReadPosRankSum, MQRankSum and MQ.")
+
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
 
@@ -173,6 +174,13 @@ get_starling_shared_option_parser(starling_options& opt) {
     other_opt.add_options()
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
+
+   ("calibration-model-file", po::value(&opt.calibration_models_filename),
+       "File containing calibration model parameters")
+
+   ("scoring-model", po::value(&opt.calibration_model),
+     "The calibration model for quality filtering variants")
+
     ("remap-input-softclip", po::value(&opt.is_remap_input_softclip)->zero_tokens(),
      "Attempt to realign all soft-clipped segments in input reads");
 

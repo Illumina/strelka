@@ -1,8 +1,10 @@
+v2.0.15
 STARKA-47 Accept GATK-style bam indices
 STARKA-43 Accept edge indel pattern produced by freeBayes/BamLeftAlign
 STARKA-45 Filter indels greater than max indel size from candidate indel vcf 
 v2.0.14
-STARKA-41 Fix consensus open-breakend error
+- STARKA-41 Fix consensus open-breakend error
+- STARKA-45 Filter indels greater than max indel size from candidate indel vcf
 v2.0.13
 Skip BWA-mem supplementary reads
 STARKA-37 Handle Skip-Delete-Skip pattern in tophat output
@@ -11,25 +13,25 @@ STARKA-35 Fixed 255 q-score bug for RNAseq workflow
 v2.0.13
 STARKA-35 Throw out q-score 255 reads encountered in RNAseq workflow, ra
 v2.0.12
-STARKA-34 Properly handle insertions adjacent to introns
-Filter out all open-breakends from vcf output
+- STARKA-34 Properly handle insertions adjacent to introns
+- Filter out all open-breakends from vcf output
 v2.0.11
-STARKA-14 Add option to provide sample name in output VCF SAMPLE column
-VQSR features
+- STARKA-14 Add option to provide sample name in output VCF SAMPLE column
+- VQSR features
 v2.0.10
-STARKA-30 fix stability issue encounted with large indels in 2x400 reads
+- STARKA-30 fix stability issue encounted with large indels in 2x400 reads
 v2.0.9
-STARKA-32 fix handling of another complex indel on read edge
+- STARKA-32 fix handling of another complex indel on read edge
 v2.0.8
-STARKA-27 correctly handle complex insert/delete indels for read edges
+- STARKA-27 correctly handle complex insert/delete indels for read edges
 v2.0.7
-STARKA-12 tolerate all edge insertions/deletions
-STARKA-17 Add option to output gVCF with no block compression
-STARKA-24 fix gVCF site records to correctly inherit spanning deletion filters
+- STARKA-12 tolerate all edge insertions/deletions
+- STARKA-17 Add option to output gVCF with no block compression
+- STARKA-24 fix gVCF site records to correctly inherit spanning deletion filters
 v2.0.6
-Change makefile to build when cwd is not in PATH
+- Change makefile to build when cwd is not in PATH
 v2.0.5
-Associated with new parent strelka workflow release, no major chaages from v2.0.4
+- Associated with new parent strelka workflow release, no major chaages from v2.0.4
 v2.0.4
 - STARKA-21 Add command-line control for snv hpol filter. Set snv and indel hpol filters
 off by default.

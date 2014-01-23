@@ -47,38 +47,47 @@ set_site_gt(const diploid_genotype::result_set& rs,
     smod.gqx=rs.max_gt_qphred;
 }
 
-
+//legacy methof
 static
 void
 set_site_filters(const gvcf_options& opt,
                  const gvcf_deriv_options& dopt,
                  site_info& si) {
 
-    if (opt.is_min_gqx) {
-        if (si.smod.gqx<opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
-    }
-
-    if (dopt.is_max_depth) {
-        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
-    }
-
-    if (opt.is_max_base_filt) {
-        const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
-        if (total_calls>0) {
-            const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>opt.max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
-        }
-    }
-
-    if (si.dgt.is_snp) {
-        if (opt.is_max_snv_sb) {
-            if (si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
+      if (opt.is_min_gqx) {
+            if (si.smod.gqx<opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
         }
 
-        if (opt.is_max_snv_hpol) {
-            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
+        if (dopt.is_max_depth) {
+            if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
         }
-    }
+
+        if (opt.is_max_base_filt) {
+            const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
+            if (total_calls>0) {
+                const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
+                if (filt>opt.max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
+            }
+        }
+
+        if (si.dgt.is_snp) {
+            if (opt.is_max_snv_sb) {
+                if (si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
+            }
+
+            if (opt.is_max_snv_hpol) {
+                if (static_cast<int>(si.hpol)>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
+            }
+        }
+}
+
+void
+set_site_filters_CM(const gvcf_options& opt,
+                 const gvcf_deriv_options& dopt,
+                 site_info& si,
+                 calibration_models& model) {
+    // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
+    model.clasify_site(opt,dopt,si);
 }
 
 
@@ -87,7 +96,8 @@ static
 void
 add_site_modifiers(const gvcf_options& opt,
                    const gvcf_deriv_options& dopt,
-                   site_info& si) {
+                   site_info& si,
+                   calibration_models& model) {
 
     si.smod.clear();
 
@@ -113,7 +123,7 @@ add_site_modifiers(const gvcf_options& opt,
         si.smod.gq=si.dgt.poly.max_gt_qphred;
     }
 
-    set_site_filters(opt,dopt,si);
+    set_site_filters_CM(opt,dopt,si,model);
 }
 
 
@@ -140,13 +150,16 @@ gvcf_aggregator(const starling_options& opt,
     if (! opt.is_gvcf_output()) return;
 
     // initialize codonPhaser
-//    if(_opt.do_codon_phasing){
+
+    if(_opt.do_codon_phasing){
 //        codon_phaser = Codon_phaser();
-////        codon_phaser = Codon_phaser();
-//        #ifdef DEBUG_GVCF
-//            //log_os << "I have a phaser" << "\n";
-//        #endif
-//    }
+        #ifdef DEBUG_GVCF
+            //log_os << "I have a phaser" << "\n";
+        #endif
+    }
+    // initialize calibration model
+    this->CM.load_models(opt.calibration_models_filename);
+    this->CM.set_model(opt.calibration_model);
 
     assert(NULL != _osptr);
     assert((NULL !=_chrom) && (strlen(_chrom)>0));
@@ -171,7 +184,7 @@ gvcf_aggregator(const starling_options& opt,
         finish_gvcf_header(_opt.gvcf,chrom_depth,dopt.bam_header_data,*_osptr);
     }
 
-    add_site_modifiers(_opt.gvcf,_dopt,_empty_site);
+    add_site_modifiers(_opt.gvcf,_dopt,_empty_site,this->CM);
 }
 
 
@@ -208,18 +221,18 @@ void
 gvcf_aggregator::
 add_site(site_info& si) {
 
-    add_site_modifiers(_opt.gvcf,_dopt,si);
+    add_site_modifiers(_opt.gvcf,_dopt,si,this->CM);
     skip_to_pos(si.pos);
     if (_opt.do_codon_phasing){
 //        bool emptyBuffer = codon_phaser.add_site(si);
-//
-//        // Was site absorbed, if not release all buffered sites
-//        // and add these into the gVCF pipeline
+
+        // Was site absorbed, if not release all buffered sites
+        // and add these into the gVCF pipeline
 //        if (!codon_phaser.is_in_block || emptyBuffer){
-////            codon_phaser.write_out_buffer();
-////            log_os << "### buffer size:" << codon_phaser.buffer.size() << "\n";
+//            codon_phaser.write_out_buffer();
+//            log_os << "### buffer size:" << codon_phaser.buffer.size() << "\n";
 //            for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it){
-////                log_os << *it << "\n";
+//                log_os << *it << "\n";
 //                add_site_internal(*it);
 //            }
 //            skip_to_pos(si.pos);
@@ -396,9 +409,6 @@ add_indel_modifiers(const gvcf_options& opt,
 }
 
 
-
-
-
 // is the current site eligible to even be considered for block compression?
 static
 bool
@@ -416,8 +426,6 @@ is_site_record_blockable(const gvcf_options& opt,
     }
     return true;
 }
-
-
 
 // queue site record for writing, after
 // possibly joining it into a compressed non-variant block
@@ -530,6 +538,11 @@ write_site_record(const site_info& si) const {
                 os << ';';
                 os << "HaplotypeScore=" << si.hapscore;
             }
+            //reported q-score
+            if (si.Qscore>0){
+                os << ';';
+                os << "Qscore=" << si.Qscore;
+            }
 
             // compute metrics nessacery
             if (_opt.is_compute_VQSRmetrics) {
@@ -552,6 +565,7 @@ write_site_record(const site_info& si) const {
                 os << "GQX=" << si.smod.gqx;
 //                }
             }
+
         } else {
             os << '.';
         }
@@ -845,6 +859,9 @@ write_indel_record(const unsigned write_index) {
         os << ';';
         os << "ReadPosRankSum=" << ii.ReadPosRankSum;
     }
+
+    //write out Q-score
+    //if not ii.
 
     os << '\t';
 

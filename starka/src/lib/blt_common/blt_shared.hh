@@ -176,7 +176,9 @@ struct blt_options {
           , max_input_depth(0)
           , is_compute_hapscore(false)
           , is_compute_VQSRmetrics(false)
-          , do_codon_phasing(true)
+          , calibration_model("default") // default model reports rule-based metrics
+          , do_codon_phasing(false)
+
     {}
 
     virtual ~blt_options() {}
@@ -298,7 +300,6 @@ struct blt_options {
     bool is_min_vexp;
     double min_vexp;
 
-
     LOG_LEVEL::index_t verbosity;
 
     bool is_write_variable_metadata;
@@ -328,9 +329,11 @@ struct blt_options {
 
     bool is_compute_hapscore;
     bool is_compute_VQSRmetrics;
+    std::string calibration_model;      // which calibration model should we use
     bool do_codon_phasing;
 
     std::string report_filename;
+    std::string calibration_models_filename;
 
     gvcf_options gvcf;
 };
