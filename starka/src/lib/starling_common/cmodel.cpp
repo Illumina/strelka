@@ -18,7 +18,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <stdlib.h>     /* atof */
 
-//#define DEBUG_MODEL
+#define DEBUG_MODEL
 
 #ifdef DEBUG_MODEL
 #include "blt_util/log.hh"
@@ -41,7 +41,7 @@ void c_model::add_parameters(parmap myPars){
 
 void c_model::do_rule_model(featuremap& cutoffs, site_info& si){
       if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
-//      log_os << "GQX set to " << cutoffs["GQX"] << "\n";
+//      log_os << "GQX set to " << cutoffs["DPFratio"] << "\n";
       if (cutoffs["DP"]>0) {
           if ((si.n_used_calls+si.n_unused_calls) > cutoffs["DP"]) si.smod.set_filter(VCF_FILTERS::HighDepth);
       }
@@ -70,8 +70,8 @@ featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, fe
     return features;
 }
 
-//Model: log⁡〖(𝑃(𝑇𝑃|𝑥))/(𝑃(𝐹𝑃│𝑥) )=〖(𝑤〗_1 𝑥_1+⋯+〗 𝑤_𝑛 𝑥_𝑛)+〖(𝑤〗_12 𝑥_1 𝑥_2+⋯+𝑤_1𝑛 𝑥_1 𝑥_𝑛+⋯)
-// calculate sum from
+//Model: ln(p(TP|x)/p(FP|x))=w_1*x_1 ... w_n*x_n + w_1*w_2*x_1 ... w_{n-1}*w_{n}*x_1
+// calculate sum from feature map
 double c_model::log_odds(featuremap features, featuremap& coeffs){
     using namespace boost::algorithm;
     std::vector<std::string> tokens;
@@ -84,7 +84,7 @@ double c_model::log_odds(featuremap features, featuremap& coeffs){
 //            log_os << it->first << "=" << it->second << "\n";
             double term = it->second;
 //            log_os << "term" << "=" << term << "\n";
-            for (int i=0; i < tokens.size(); i++) {
+            for (unsigned int i=0; i < tokens.size(); i++) {
                 term = term*features[tokens[i]];
 //                log_os << "term" << "=" << term << "\n";
             }
@@ -103,20 +103,22 @@ double c_model::log_odds(featuremap features, featuremap& coeffs){
 //solve for p(TP): p(TP) = 1/(1+exp(-logOddsRatio))
 //- Rescale the probabilities p(TP), p(FP) with the specified class priors,
 //as they were counted on the training set before balancing to 50/50.
-//- Convert the rescaled probability p(FP) into a
+//- Convert the rescaled probability p(FP) into a q score
 //Q-score: Q-score = round( -10*log10(p(FP)) )
-double c_model::prior_adjustment(double raw_score, featuremap& priors){
-    double pTP = 1.0/(1+exp(-raw_score)); // this calculation can likely be simplified
-    double pFP = 1.0 - pTP;
-    double pFPrescale = pFP*priors["minorityPrior"];
-
+// simplification possible  qscore(raw) = round(10log((1+e^raw)/prior))
+double c_model::prior_adjustment(const double raw_score, featuremap& priors){
+    double pFP = 1.0 - 1.0/(1+exp(-raw_score)); // this calculation can likely be simplified
+    double pFPrescale   = pFP*priors["minorityPrior"];
+    double qscore       = round(-10.0 * log10(pFPrescale));
+//    double qscore_test  = round(10*log10((1+exp(raw_score))/priors["minorityPrior"]));
     #ifdef DEBUG_MODEL
-//        log_os << "minorityPrior " << priors["minorityPrior"] << "\n";
-//        log_os << "pFP=" << pFP << "\n";
+        log_os << "minorityPrior " << priors["minorityPrior"] << "\n";
+        log_os << "pFP=" << pFP << "\n";
         log_os << "rescale=" << pFPrescale << "\n";
+//        log_os << "experimental=" << qscore_test << "\n";
     #endif
 
-        return round(-10.0 * log10(pFPrescale));
+    return qscore;
 }
 
 

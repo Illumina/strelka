@@ -26,7 +26,8 @@ private:
     void do_rule_model(featuremap& cutoffs, site_info& si);
     featuremap normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor);
     double log_odds(featuremap features, featuremap& coeffs);
-    double prior_adjustment(double raw_score, featuremap& priors);
+    double prior_adjustment(const double raw_score,featuremap& priors);
+    void set_qscore_filters(const double raw_score,featuremap& priors);
     std::string model_name;
     std::string model_type;
     parmap pars;

@@ -330,12 +330,12 @@ struct site_info {
     unsigned hpol;
     double hapscore;
     double MQ;				 // RMS of mapping qualities
-    double Qscore;           // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
 
     //only meaningful for het calls
     double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
     double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
     double MQRankSum;        // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
+    double Qscore;           // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
 
     site_modifiers smod;
 };
