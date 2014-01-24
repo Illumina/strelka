@@ -257,7 +257,7 @@ score_indels(const starling_options& opt,
              double max_path_lnp,
              const candidate_alignment* max_cal_ptr) {
 
-    static bool is_safe_mode(true);
+    static const bool is_safe_mode(true);
 
     // (1) score candidate alignments -- already done before calling this function
 

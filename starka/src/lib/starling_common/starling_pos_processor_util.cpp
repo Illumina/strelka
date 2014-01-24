@@ -386,10 +386,9 @@ process_genomic_read(const starling_options& opt,
         }
 
 
-        const char* chrom_name(read_stream.target_id_to_name(read.target_id()));
-
         static const READ_ALIGN::index_t rat(READ_ALIGN::GENOME);
         try {
+            const char* chrom_name(read_stream.target_id_to_name(read.target_id()));
             sppr.insert_read(read,al,rat,chrom_name,maplev,sample_no);
         } catch (...) {
             log_os << "\nException caught while inserting read alignment in sppr. Genomic read alignment record:\n";

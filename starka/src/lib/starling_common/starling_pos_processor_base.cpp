@@ -1156,8 +1156,6 @@ process_pos_indel_single_sample(const pos_t pos,
         //
         // punt conflict resolution for now....
 
-        bool is_indel(false);
-
         if (_client_opt.is_bindel_diploid()) {
             // indel_report_info needs to be run first now so that
             // local small repeat info is available to the indel
@@ -1180,6 +1178,7 @@ process_pos_indel_single_sample(const pos_t pos,
                                                                    indel_error_prob,ref_error_prob,
                                                                    ik,id,is_use_alt_indel,dindel);
 
+            bool is_indel(false);
             if (dindel.is_indel) {
                 is_indel=true;
 

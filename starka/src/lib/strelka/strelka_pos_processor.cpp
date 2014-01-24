@@ -151,7 +151,6 @@ process_pos_snp_somatic(const pos_t pos) {
 
     // report events:
     //
-    bool is_snv(sgtg.is_snv());
     bool is_reported_event(false);
 
     if (sgtg.is_output()) {
@@ -180,7 +179,7 @@ process_pos_snp_somatic(const pos_t pos) {
 
     if (_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event)) {
         log_os << "TUMOR/NORMAL EVIDENCE pos: " << output_pos << "\n"
-               << "is_snv: " << is_snv << "\n"
+               << "is_snv: " << sgtg.is_snv() << "\n"
                << "normal-data:\n" << normald_ptr[0]->epd.good_pi << "\n"
                << "tumor-data:\n" << tumord_ptr[0]->epd.good_pi << "\n";
     }
