@@ -19,7 +19,6 @@ Codon_phaser::Codon_phaser() {
     block_end = -1;
     range = 3;                  // phasing range we are considering
     is_in_block = false;
-    buffer = std::vector<site_info>();
     het_count = 0;
 }
 

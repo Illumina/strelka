@@ -10,13 +10,11 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
-#include <exception>
 #include <string>
 #include <fstream>
 #include <iterator>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
-#include <stdlib.h>     /* atof */
 #include "blt_util/qscore.hh"
 
 //#define DEBUG_MODEL
@@ -26,16 +24,8 @@
 #endif
 
 
-c_model::c_model(std::string name, std::string type){
-    this->model_name = name;
-    this->model_type = type;
-}
-c_model::~c_model() {
-    // TODO Auto-generated destructor stub
-}
-
 // add model paramaters
-void c_model::add_parameters(parmap myPars){
+void c_model::add_parameters(const parmap& myPars){
     this->pars = myPars;
 }
 
@@ -72,7 +62,6 @@ featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, fe
 double c_model::log_odds(featuremap features, featuremap& coeffs){
     using namespace boost::algorithm;
     std::vector<std::string> tokens;
-    std::map<std::string,double> predictive;
     double sum = coeffs["Intercept"];
 //    log_os << "sum" << "=" << sum << "\n";
     for(featuremap::const_iterator it = coeffs.begin(); it != coeffs.end(); ++it){
@@ -86,7 +75,6 @@ double c_model::log_odds(featuremap features, featuremap& coeffs){
 //                log_os << "term" << "=" << term << "\n";
             }
             // use term to determine the most predictive parameter
-            predictive[it->first] = term;
             sum += term;
 //            log_os << "sum " << "=" << sum << "\n";
 //            log_os << tokens.size() << "\n";
@@ -153,7 +141,6 @@ void c_model::score_instance(featuremap features, site_info& si){
 
     }
     else if (this->model_type=="RULE"){//case we are using a rule based model
-        featuremap myCutoffs;
         this->do_rule_model(this->pars["snp"]["cutoff"],si);
     }
 }
