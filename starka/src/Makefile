@@ -86,7 +86,7 @@ test: build cppcheck.done
 
 cppcheck.done: $(STARKA_PROGRAMS)
 	@echo "Running cppcheck" && \
-	$(CURDIR)/run_cppcheck.bash
+	$(CURDIR)/run_cppcheck.py $(CURDIR)
 
 $(STARKA_PROGRAMS): LDLIBS += -lboost_program_options
 $(STARKA_PROGRAMS): CC := $(CXX) # this fixes the linker to inlcude libc++
