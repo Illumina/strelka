@@ -394,7 +394,7 @@ starling_pos_processor_base(const starling_options& client_opt,
 
     if (_client_opt.is_gvcf_output()) {
         _gvcfer.reset(new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0)));
-        if(_client_opt.do_codon_phasing){
+        if (_client_opt.do_codon_phasing) {
 //            Codon_buffer *cb = new Codon_buffer();
 
 //            cb->set_sample(_sample[0]);

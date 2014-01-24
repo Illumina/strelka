@@ -713,11 +713,11 @@ apath_cleaner(path_t& apath) {
         path_segment& ps(apath[i]);
         if (ps.type == SKIP)
         {
-            if( (i+2)<as)
+            if ( (i+2)<as)
             {
                 if ((apath[i+1].type == DELETE) && (apath[i+2].type == SKIP))
                 {
-                    for (unsigned j(1);j<3;++j)
+                    for (unsigned j(1); j<3; ++j)
                     {
                         ps.length += apath[i+j].length;
                         apath[i+j].length = 0;

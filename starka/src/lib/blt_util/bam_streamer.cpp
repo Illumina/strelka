@@ -72,10 +72,10 @@ bam_streamer::
 
 
 static
-bool fexists(const char *filename)
+bool fexists(const char* filename)
 {
-  std::ifstream ifile(filename);
-  return ifile;
+    std::ifstream ifile(filename);
+    return ifile;
 }
 
 
@@ -109,7 +109,7 @@ _load_index() {
     /// variable. Until we know, _bidx should persist for the lifetime
     /// of _biter
     std::string index_base(name());
-    if(! fexists((index_base+".bai").c_str()))
+    if (! fexists((index_base+".bai").c_str()))
     {
         static const std::string bamext(".bam");
         if (hasEnding(index_base,bamext))

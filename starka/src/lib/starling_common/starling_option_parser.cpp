@@ -175,10 +175,10 @@ get_starling_shared_option_parser(starling_options& opt) {
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
 
-   ("calibration-model-file", po::value(&opt.calibration_models_filename),
-       "File containing calibration model parameters")
+    ("calibration-model-file", po::value(&opt.calibration_models_filename),
+     "File containing calibration model parameters")
 
-   ("scoring-model", po::value(&opt.calibration_model),
+    ("scoring-model", po::value(&opt.calibration_model),
      "The calibration model for quality filtering variants")
 
     ("remap-input-softclip", po::value(&opt.is_remap_input_softclip)->zero_tokens(),

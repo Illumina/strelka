@@ -282,7 +282,7 @@ struct site_info {
     }
 
     std::map<std::string, double>
-    get_qscore_features(){
+    get_qscore_features() {
         std::map<std::string, double> res;
         res["GQX"]              = smod.gqx;
         res["GQ"]               = smod.gq;
@@ -300,11 +300,11 @@ struct site_info {
             if (b==dgt.ref_gt) continue;
             if (DIGT::expect2(b,smod.max_gt))
                 res["AD2"] =  known_counts[b];
-         }
-        if ((res["DP"]+res["DPF"])>0.0){
+        }
+        if ((res["DP"]+res["DPF"])>0.0) {
             res["VFStar"]           = res["AD2"]/(res["DP"]+res["DPF"]); //VFStar = AD2/(DP+DPF);
         }
-        else{
+        else {
             res["VFStar"]           = res["AD2"]/(30.0); //default hack for
         }
         return res;
