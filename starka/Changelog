@@ -1,17 +1,16 @@
+v2.0.16
+- Adjusted filters for Nova release
 v2.0.15
-STARKA-47 Accept GATK-style bam indices
-STARKA-43 Accept edge indel pattern produced by freeBayes/BamLeftAlign
-STARKA-45 Filter indels greater than max indel size from candidate indel vcf 
+- STARKA-47 Accept GATK-style bam indices
+- STARKA-43 Accept edge indel pattern produced by freeBayes/BamLeftAlign
+- STARKA-45 Filter indels greater than max indel size from candidate indel vcf 
 v2.0.14
-- STARKA-41 Fix consensus open-breakend error
-- STARKA-45 Filter indels greater than max indel size from candidate indel vcf
+- STARKA-41 Fix consensus open-break-end error
 v2.0.13
-Skip BWA-mem supplementary reads
-STARKA-37 Handle Skip-Delete-Skip pattern in tophat output
-STARKA-23 Accept an input VCF file for which each alternate allele must be genotyped
-STARKA-35 Fixed 255 q-score bug for RNAseq workflow
-v2.0.13
-STARKA-35 Throw out q-score 255 reads encountered in RNAseq workflow, ra
+- Skip BWA-mem supplementary reads
+- STARKA-37 Handle Skip-Delete-Skip pattern in tophat output
+- STARKA-23 Accept an input VCF file for which each alternate allele must be genotyped
+- STARKA-35 Fixed 255 q-score bug for RNAseq workflow
 v2.0.12
 - STARKA-34 Properly handle insertions adjacent to introns
 - Filter out all open-breakends from vcf output

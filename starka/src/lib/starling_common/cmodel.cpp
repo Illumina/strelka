@@ -96,9 +96,9 @@ int prior_adjustment(
     const double raw_score,
     const double minorityPrior) {
 
-    double pFP = 1.0/(1+std::exp(raw_score)); // this calculation can likely be simplified
+    double pFP          = 1.0/(1+std::exp(raw_score)); // this calculation can likely be simplified
     double pFPrescale   = pFP*minorityPrior;
-    int qscore       =  error_prob_to_qphred(pFPrescale);
+    int qscore          = error_prob_to_qphred(pFPrescale);
 //    double qscore_test  = round(10*log10((1+exp(raw_score))/priors["minorityPrior"]));
 #ifdef DEBUG_MODEL
     log_os << "minorityPrior " << minorityPrior << "\n";
