@@ -91,13 +91,17 @@ double c_model::log_odds(featuremap features, featuremap& coeffs){
 //- Convert the rescaled probability p(FP) into a
 //Q-score: Q-score = round( -10*log10(p(FP)) )
 // simplification possible  qscore(raw) = round(10log((1+e^raw)/prior))
-double c_model::prior_adjustment(const double raw_score, featuremap& priors){
+static
+int prior_adjustment(
+    const double raw_score,
+    const double minorityPrior){
+
     double pFP = 1.0 - 1.0/(1+exp(-raw_score)); // this calculation can likely be simplified
-    double pFPrescale   = pFP*priors["minorityPrior"];
-    double qscore       =  error_prob_to_qphred(pFPrescale);
+    double pFPrescale   = pFP*minorityPrior;
+    int qscore       =  error_prob_to_qphred(pFPrescale);
 //    double qscore_test  = round(10*log10((1+exp(raw_score))/priors["minorityPrior"]));
     #ifdef DEBUG_MODEL
-        log_os << "minorityPrior " << priors["minorityPrior"] << "\n";
+        log_os << "minorityPrior " << minorityPrior << "\n";
         log_os << "pFP=" << pFP << "\n";
         log_os << "rescale=" << pFPrescale << "\n";
 //        log_os << "experimental=" << qscore_test << "\n";
@@ -129,7 +133,7 @@ void c_model::score_instance(featuremap features, site_info& si){
         double raw_score = this->log_odds(norm_features,this->pars[snpCase]["coefs"]);
 
         // adjust by prior and calculate q-score
-        si.Qscore = this->prior_adjustment(raw_score,this->pars[snpCase]["priors"]);
+        si.Qscore = prior_adjustment(raw_score,this->pars[snpCase]["priors"]["minorityPrior"]);
 
         // set filters according to q-scores
         featuremap most_pred; //place-holder
