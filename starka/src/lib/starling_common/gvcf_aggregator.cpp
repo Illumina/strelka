@@ -408,6 +408,16 @@ add_indel_modifiers(const gvcf_options& opt,
     }
 }
 
+//static
+//void
+//add_indel_modifiers_CM(const gvcf_options& opt,
+//                    const gvcf_deriv_options& dopt,
+//                    indel_info& ii) {
+//
+//}
+
+
+
 
 // is the current site eligible to even be considered for block compression?
 static

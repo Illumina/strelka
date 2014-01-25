@@ -1,3 +1,5 @@
+v2.0.17
+- Introduced 
 v2.0.16
 - Adjusted filters for Nova release
 v2.0.15
@@ -30,7 +32,7 @@ v2.0.7
 v2.0.6
 - Change makefile to build when cwd is not in PATH
 v2.0.5
-- Associated with new parent strelka workflow release, no major chaages from v2.0.4
+- Associated with new parent strelka workflow release, no major changes from v2.0.4
 v2.0.4
 - STARKA-21 Add command-line control for snv hpol filter. Set snv and indel hpol filters
 off by default.

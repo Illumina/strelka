@@ -29,7 +29,6 @@ void c_model::add_parameters(const parmap& myPars) {
     this->pars = myPars;
 }
 
-
 void c_model::do_rule_model(featuremap& cutoffs, site_info& si) {
     if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
     if (cutoffs["DP"]>0) {
@@ -69,11 +68,12 @@ double c_model::log_odds(featuremap features, featuremap& coeffs) {
             split(tokens, it->first, is_any_of(":"));
 //            log_os << it->first << "=" << it->second << "\n";
             double term = it->second;
-//            log_os << "term" << "=" << term << "\n";
             for (unsigned int i=0; i < tokens.size(); i++) {
                 term = term*features[tokens[i]];
-//                log_os << "term" << "=" << term << "\n";
+//                log_os << tokens[i] << "=" << features[tokens[i]] << "\n";
             }
+//            log_os << "term" << "=" << term << "\n";
+//            log_os << "\n";
             // use term to determine the most predictive parameter
             sum += term;
 //            log_os << "sum " << "=" << sum << "\n";
@@ -85,27 +85,34 @@ double c_model::log_odds(featuremap features, featuremap& coeffs) {
 }
 
 //- From the identities logOddsRatio = ln(p(TP|x)/p(FP|x)) and p(TP|x) + p(FP|x) = 1,
-//solve for p(TP): p(TP) = 1/(1+exp(-logOddsRatio))
+//  solve for p(TP): p(TP) = 1/(1+exp(-logOddsRatio))
 //- Rescale the probabilities p(TP), p(FP) with the specified class priors,
-//as they were counted on the training set before balancing to 50/50.
+//  as they were counted on the training set before balancing to 50/50.
+//- Rescale with the class priors; hard-coded 0.5, because we have 1:1 ratio in the balanced data
+//  p(FP).pos.res = p(FP).pos*(minorityPrior/0.5)
+//  p(TP).pos.res = p(TP).pos*(minorityPrior/0.5)
+//- Renormalize to sum to one
+//  p(FP).pos.ret = p(FP).pos.res/(p(TP).pos.res + p(FP).pos.res)
+//  p(TP).pos.ret = p(TP).pos.res/(p(TP).pos.res + p(FP).pos.res)
+//- Above simplifies to:
+//  p(FP).pos.ret = p(FP).pos*minorityPrior/(1+2*minorityPrior*p(FP).pos-minorityPrior-p(FP).pos)
 //- Convert the rescaled probability p(FP) into a
-//Q-score: Q-score = round( -10*log10(p(FP)) )
-// simplification possible  qscore(raw) = round(10log((1+e^raw)/prior))
+//  Q-score: Q-score = round( -10*log10(p(FP).pos.ret) )
 static
 int prior_adjustment(
     const double raw_score,
     const double minorityPrior) {
 
     double pFP          = 1.0/(1+std::exp(raw_score)); // this calculation can likely be simplified
-    double pFPrescale   = pFP*minorityPrior;
+    double pFPrescale   = pFP*minorityPrior/(1+2*minorityPrior*pFP-minorityPrior-pFP);
     int qscore          = error_prob_to_qphred(pFPrescale);
-//    double qscore_test  = round(10*log10((1+exp(raw_score))/priors["minorityPrior"]));
-#ifdef DEBUG_MODEL
-    log_os << "minorityPrior " << minorityPrior << "\n";
-    log_os << "pFP=" << pFP << "\n";
-    log_os << "rescale=" << pFPrescale << "\n";
-//        log_os << "experimental=" << qscore_test << "\n";
-#endif
+    #ifdef DEBUG_MODEL
+        log_os << "minorityPrior " << minorityPrior << "\n";
+        log_os << "pFP=" << pFP << "\n";
+        log_os << "rescale=" << pFPrescale << "\n";
+    //        log_os << "experimental=" << qscore_test << "\n";
+    #endif
+
     // cap the score at 40
     if (qscore>40)
         qscore = 40;
@@ -113,8 +120,8 @@ int prior_adjustment(
 
     return qscore;
 }
-void c_model::apply_qscore_filters(site_info& si, featuremap& qscore_cuts, featuremap& most_predictive) {
-    most_predictive.size();
+void c_model::apply_qscore_filters(site_info& si, featuremap& qscore_cuts){//, featuremap& most_predictive) {
+//    most_predictive.size();
     if (si.Qscore < qscore_cuts["Q"]) {
         si.smod.set_filter(VCF_FILTERS::LowGQX); // more sophisticated filter setting here
     }
@@ -125,7 +132,7 @@ void c_model::score_instance(featuremap features, site_info& si) {
         std::string snpCase = "homsnp";
         if (si.is_het())
             snpCase = "hetsnp";
-
+//        this->sanity_check();
         // normalize
         featuremap norm_features = this->normalize(features,this->pars[snpCase]["scalecenter"],this->pars[snpCase]["scaleshift"]);
 
@@ -136,11 +143,11 @@ void c_model::score_instance(featuremap features, site_info& si) {
         si.Qscore = prior_adjustment(raw_score,this->pars[snpCase]["priors"]["minorityPrior"]);
 
         // set filters according to q-scores
-        featuremap most_pred; //place-holder
-        this->apply_qscore_filters(si,this->pars[snpCase]["qcutoff"],most_pred);
+//        featuremap most_pred; //place-holder
+        this->apply_qscore_filters(si,this->pars[snpCase]["qcutoff"]);
 
 #ifdef DEBUG_MODEL
-        log_os << "Im doing a logistic model" << "\n";
+//        log_os << "Im doing a logistic model" << "\n";
 #endif
 
     }
@@ -148,4 +155,38 @@ void c_model::score_instance(featuremap features, site_info& si) {
         this->do_rule_model(this->pars["snp"]["cutoff"],si);
     }
 }
+
+// TODO decompose to unit-test
+//void c_model::sanity_check(){
+//    featuremap fm;
+//    featuremap fm2;
+//    fm["GQX"]   = 42;
+//    fm["DP"]    = 28;
+//    fm["AD2"]   = 6;
+//    fm["SNVSB"] = -5.9;
+//    fm["SNVHPOL"] = 3;
+//    fm["VFStar"] = 0.214286;
+//    fm["DPF"] = 0;
+//    fm["MQ"] = 60;
+//
+//    fm2["GQX"]   = 128;
+//    fm2["DP"]    = 34;
+//    fm2["AD2"]   = 12;
+//    fm2["SNVSB"] = -18;
+//    fm2["SNVHPOL"] = 3;
+//    fm2["VFStar"] = 0.333333;
+//    fm2["DPF"] = 2;
+//    fm2["MQ"] = 60;
+//
+//    std::string snpCase = "hetsnp";
+//    featuremap norm_features = this->normalize(fm2,this->pars[snpCase]["scalecenter"],this->pars[snpCase]["scaleshift"]);
+////    for (featuremap::const_iterator it = norm_features.begin(); it != norm_features.end(); ++it) {
+////        log_os << it->first << "=" << it->second << "\n";
+////    }
+//    const double raw_score = this->log_odds(norm_features,this->pars[snpCase]["coefs"]);
+//    log_os << "score " << raw_score << std::endl;
+//    int q = prior_adjustment(raw_score,this->pars[snpCase]["priors"]["minorityPrior"]);
+//    log_os << "q " << q << std::endl;
+//
+//}
 
