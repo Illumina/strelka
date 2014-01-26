@@ -11,7 +11,7 @@ DPFratio 0.2
 DP 0
 ### Qscore LOGISTIC
 # hetsnp qcutoff
-Q 25
+Q 13
 # hetsnp priors
 majorityPrior 0.992783131384278
 minorityPrior 0.00721686861572166

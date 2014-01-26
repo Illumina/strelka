@@ -51,8 +51,10 @@ void c_model::do_rule_model(featuremap& cutoffs, site_info& si) {
 //the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
 featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor) {
     for (featuremap::const_iterator it = norm_factor.begin(); it != norm_factor.end(); ++it) { // only normalize the features that are needed
+//        log_os << it->first << "=" << features[it->first] << "  ";
         features[it->first] = (features[it->first]-adjust_factor[it->first])/norm_factor[it->first];
     }
+//    log_os << "\n";
     return features;
 }
 
@@ -116,13 +118,17 @@ int prior_adjustment(
     // cap the score at 40
     if (qscore>40)
         qscore = 40;
+    if (qscore<1){
+//        log_os << qscore << std::endl;
+        qscore = 1;
+    }
     // TODO check for inf and NaN artifacts
 
     return qscore;
 }
-void c_model::apply_qscore_filters(site_info& si, featuremap& qscore_cuts){//, featuremap& most_predictive) {
+void c_model::apply_qscore_filters(site_info& si, const int qscore_cut){//, featuremap& most_predictive) {
 //    most_predictive.size();
-    if (si.Qscore < qscore_cuts["Q"]) {
+    if (si.Qscore < qscore_cut) {
         si.smod.set_filter(VCF_FILTERS::LowGQX); // more sophisticated filter setting here
     }
 }
@@ -130,8 +136,9 @@ void c_model::apply_qscore_filters(site_info& si, featuremap& qscore_cuts){//, f
 void c_model::score_instance(featuremap features, site_info& si) {
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
         std::string snpCase = "homsnp";
-        if (si.is_het())
+        if (si.is_het()){
             snpCase = "hetsnp";
+        }
 //        this->sanity_check();
         // normalize
         featuremap norm_features = this->normalize(features,this->pars[snpCase]["scalecenter"],this->pars[snpCase]["scaleshift"]);
@@ -144,7 +151,7 @@ void c_model::score_instance(featuremap features, site_info& si) {
 
         // set filters according to q-scores
 //        featuremap most_pred; //place-holder
-        this->apply_qscore_filters(si,this->pars[snpCase]["qcutoff"]);
+        this->apply_qscore_filters(si,static_cast<int>(this->pars[snpCase]["qcutoff"]["Q"]));
 
 #ifdef DEBUG_MODEL
 //        log_os << "Im doing a logistic model" << "\n";
