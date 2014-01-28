@@ -123,16 +123,16 @@ determine_sample(const std::string& bam_header_text) {
 }
 
 
-
 void
 finish_gvcf_header(const gvcf_options& opt,
+                   const gvcf_deriv_options& dopt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,
                    std::ostream& os) {
 
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
-    os << "##INFO=<ID=BLOCKAVG_min30p3a,Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+3,(x*1.3)). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
+    os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
 
     // site specific:
     os << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"SNV site strand bias\">\n";

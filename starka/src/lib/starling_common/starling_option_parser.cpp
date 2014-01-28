@@ -92,6 +92,8 @@ get_starling_shared_option_parser(starling_options& opt) {
     ("gvcf-include-hapscore", po::value(&opt.is_compute_hapscore)->zero_tokens(),
      "Include haplotype score at SNV positions in gVCF output.")
 
+    ("gvcf-block-percent-tol", po::value(&opt.gvcf.block_percent_tol)->default_value(opt.gvcf.block_percent_tol),
+     "Non-variant blocks are chosen to constrain sample values to range [x,y], y <= max(x+3,x*(100+block-percent-tol)/100)")
     ("gvcf-no-block-compression", po::value(&opt.gvcf.is_block_compression)->zero_tokens()->implicit_value(false),
      "Turn off block compression in gVCF output")
     ("gvcf-compute-VQSRmetrics", po::value(&opt.is_compute_VQSRmetrics)->zero_tokens(),
@@ -459,6 +461,11 @@ finalize_starling_options(const prog_info& pinfo,
     opt.gvcf.is_min_gqx = (opt.gvcf.min_gqx >= 0);
     opt.gvcf.is_max_snv_hpol = (opt.gvcf.max_snv_hpol >= 0);
     opt.gvcf.is_max_ref_rep = (opt.gvcf.max_ref_rep >= 0);
+
+    if (opt.gvcf.block_percent_tol > 100)
+    {
+        pinfo.usage("block-percent-tol must be in range [0-100].");
+    }
 
     std::sort(opt.variant_windows.begin(),opt.variant_windows.end());
     const unsigned vs(opt.variant_windows.size());

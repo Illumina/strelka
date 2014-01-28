@@ -14,16 +14,9 @@
 //#include "starling_common/gvcf_aggregator.hh"
 
 
-struct gvcf_deriv_options {
-    gvcf_deriv_options()
-        : is_max_depth(false)
-        , max_depth(0)
-    {}
-    bool is_max_depth;
-    double max_depth;
-};
 //forward declaration
 struct gvcf_options;
+struct gvcf_deriv_options;
 
 class calibration_models {
 public:
@@ -37,7 +30,7 @@ public:
 
     c_model& get_model(std::string& name);
 
-    // mimics behaviour of previous hard filters
+    // mimics behavior of previous hard filters
     void default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si);
 private:
     typedef std::map<std::string,c_model> modelmap;

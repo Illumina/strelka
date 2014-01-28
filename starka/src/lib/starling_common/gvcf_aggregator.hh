@@ -24,18 +24,6 @@
 #include "starling_common/calibration_models.hh"
 
 #include <iosfwd>
-// moved declaration to calibration_models.hh
-//struct gvcf_deriv_options {
-//
-//    gvcf_deriv_options()
-//        : is_max_depth(false)
-//        , max_depth(0)
-//    {}
-//
-//    bool is_max_depth;
-//    double max_depth;
-//};
-
 
 
 ///

@@ -81,6 +81,7 @@ set_site_filters(const gvcf_options& opt,
     }
 }
 
+static
 void
 set_site_filters_CM(const gvcf_options& opt,
                     const gvcf_deriv_options& dopt,
@@ -138,6 +139,7 @@ gvcf_aggregator(const starling_options& opt,
     , _ref(ref)
     , _osptr(osptr)
     , _chrom(opt.bam_seq_name.c_str())
+    , _dopt(_opt.gvcf)
     , _indel_end_pos(0)
     , _indel_buffer_size(0)
     , _site_buffer_size(0)
@@ -164,6 +166,7 @@ gvcf_aggregator(const starling_options& opt,
     assert(NULL != _osptr);
     assert((NULL !=_chrom) && (strlen(_chrom)>0));
 
+    //initialize gvcf deriv options:
     cdmap_t chrom_depth;
     if (_opt.gvcf.is_max_depth_factor && (! _opt.gvcf.chrom_depth_file.empty())) {
         parse_chrom_depth(_opt.gvcf.chrom_depth_file,chrom_depth);
@@ -181,7 +184,7 @@ gvcf_aggregator(const starling_options& opt,
     }
 
     if (! _opt.gvcf.is_skip_header) {
-        finish_gvcf_header(_opt.gvcf,chrom_depth,dopt.bam_header_data,*_osptr);
+        finish_gvcf_header(_opt.gvcf,_dopt, chrom_depth,dopt.bam_header_data,*_osptr);
     }
 
     add_site_modifiers(_opt.gvcf,_dopt,_empty_site,this->CM);
@@ -521,7 +524,7 @@ write_site_record(const site_info& si) const {
     if (si.smod.is_block) {
         if (_block.count>1) {
             os << "END=" << (si.pos+_block.count) << ';';
-            os << _opt.gvcf.block_label;
+            os << _dopt.block_label;
         } else {
             os << '.';
         }
