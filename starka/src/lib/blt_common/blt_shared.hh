@@ -44,7 +44,7 @@ struct gvcf_options {
         , is_min_gqx(true)
         , min_gqx(30.)
         , is_max_base_filt(true)
-        , max_base_filt(.3)  // DPFratio
+        , max_base_filt(.4)  // DPFratio
         , is_max_snv_sb(true)
         , max_snv_sb(10)
         , is_max_snv_hpol(true)

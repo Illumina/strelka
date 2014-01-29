@@ -22,6 +22,11 @@
 #include "boost/format.hpp"
 
 #include <iostream>
+//#define DEBUG_OPTIONPARSER
+
+#ifdef DEBUG_OPTIONPARSER
+    #include "blt_util/log.hh"
+#endif
 
 
 
@@ -464,6 +469,7 @@ finalize_starling_options(const prog_info& pinfo,
 
     if (opt.gvcf.block_percent_tol > 100)
     {
+//        log_os << "block tolerance: " << opt.gvcf.block_percent_tol << std::endl;
         pinfo.usage("block-percent-tol must be in range [0-100].");
     }
 
