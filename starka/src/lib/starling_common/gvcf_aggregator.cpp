@@ -565,7 +565,7 @@ write_site_record(const site_info& si) const {
                 os << ';';
                 os << "GQ=" << si.smod.gq;
                 os << ';';
-                os << "GQX=" << si.smod.gqx;
+                os << "GQX=" << std::fixed << si.smod.gqx;
 //                }
             }
 
