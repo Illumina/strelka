@@ -1,4 +1,5 @@
 v2.0.17
+- STARKA-48 Fixed formatting bug for high GQX 
 - Header fix for adjusted Nova filters
 v2.0.16
 - Adjusted filters for Nova release

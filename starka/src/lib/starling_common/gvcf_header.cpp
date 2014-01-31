@@ -133,7 +133,7 @@ finish_gvcf_header(const gvcf_options& opt,
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
     os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
-
+    os.precision(6); // reset precision for output to not affect high DP/GQX values in variant records
     // site specific:
     os << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"SNV site strand bias\">\n";
     os << "##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description=\"SNV contextual homopolymer length\">\n";
