@@ -54,7 +54,7 @@ export LDLIBS := -lbam -ltabix -lz
 STRELKA_PROGRAMS := bin/strelka2 bin/strelkaSiteSimulator
 STARLING_PROGRAM := bin/starling2
 
-STARKA_PROGRAMS := $(STARLING_PROGRAM) #$(STRELKA_PROGRAMS) 
+STARKA_PROGRAMS := $(STARLING_PROGRAM) $(STRELKA_PROGRAMS) 
 
 
 export SHARED_CXX_DIR := starling_common common blt_common blt_util
