@@ -129,7 +129,6 @@ END
 
 script_dir=$(rel2abs $(dirname $0))
 get_depth=$script_dir/util/getBamAvgChromDepth.pl
-samtools=
 
 
 
