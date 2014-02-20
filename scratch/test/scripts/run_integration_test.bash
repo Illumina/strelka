@@ -38,6 +38,22 @@ sample2_indel_vcf=$test_data_dir/Father_S1.SVIndelCandidates.gz
 
 
 #
+# cmdline options:
+#
+
+test_time=1
+if [ $# -gt 1 ]; then
+    echo "usage: $0 [-no-time]"
+    exit 2
+elif [ $# == 1 ]; then
+    if [ $1 == "-no-time" ]; then
+        test_time=0
+    fi
+fi
+
+
+
+#
 # utility functions:
 #
 rel2abs() {
@@ -261,7 +277,9 @@ check_exit Starling15 $?
 end_time=$(date +%s)
 starling_elapsed_time=$(($end_time - $start_time))
 
-check_time Starling $starling_elapsed_time $starling_expected_time
+if [ $test_time == 1 ]; then
+    check_time Starling $starling_elapsed_time $starling_expected_time
+fi
 
 diff_dirs Starling $starling_results_dir $starling_expected_dir
 
@@ -335,7 +353,9 @@ check_exit Strelka15 $?
 end_time=$(date +%s)
 strelka_elapsed_time=$(($end_time - $start_time))
 
-check_time Strelka $strelka_elapsed_time $strelka_expected_time
+if [ $test_time == 1 ]; then
+    check_time Strelka $strelka_elapsed_time $strelka_expected_time
+fi
 
 diff_dirs Strelka $strelka_results_dir $strelka_expected_dir
 
