@@ -129,6 +129,7 @@ END
 
 script_dir=$(rel2abs $(dirname $0))
 get_depth=$script_dir/util/getBamAvgChromDepth.pl
+samtools=
 
 
 
@@ -178,6 +179,7 @@ prep_starka() {
 prep_starka
 
 starka_bin=$workspace_dir/$starka_tarball_dir/bin
+samtools_dir=$workspace_dir/$starka_tarball_dir/redist/samtools
 
 
 if ! [ -f $starka_bin/starling2 ]; then
@@ -247,7 +249,7 @@ starling_command_small_interval() {
     starling_command chr15 $small_start $small_end $workspace_dir/ "$(valgrind_prefix)"
 }
 
-$get_depth $sample1_bam >| $depth_file
+SAMTOOLS=${samtools_dir}/samtools $get_depth $sample1_bam >| $depth_file
 
 $(starling_command_big_interval1)
 
