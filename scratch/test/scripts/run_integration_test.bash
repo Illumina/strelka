@@ -248,7 +248,7 @@ starling_command_small_interval() {
     starling_command chr15 $small_start $small_end $workspace_dir/ "$(valgrind_prefix)"
 }
 
-SAMTOOLS=${samtools_dir}/samtools $get_depth $sample1_bam >| $depth_file
+SAMTOOLS=${samtools_dir}/samtools perl $get_depth $sample1_bam >| $depth_file
 
 $(starling_command_big_interval1)
 
