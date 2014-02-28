@@ -19,8 +19,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_SOMATIC_SNV_GRID_SHARED_HH
-#define __POSITION_SOMATIC_SNV_GRID_SHARED_HH
+
+#pragma once
 
 
 struct somatic_snv_genotype_grid {
@@ -57,5 +57,3 @@ struct somatic_snv_genotype_grid {
     result_set rs;
     bool is_forced_output;
 };
-
-#endif

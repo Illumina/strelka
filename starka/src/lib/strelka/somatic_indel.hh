@@ -14,8 +14,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __SOMATIC_INDEL_HH
-#define __SOMATIC_INDEL_HH
+
+#pragma once
 
 #if 0
 
@@ -93,7 +93,5 @@ write_somatic_indel_file(const somatic_indel_call& dgt,
                          const starling_indel_sample_report_info& normal_isri,
                          const starling_indel_sample_report_info& tumor_isri,
                          std::ostream& os);
-
-#endif
 
 #endif

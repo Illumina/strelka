@@ -19,9 +19,7 @@
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-
-#ifndef STRELKA_PILE_TEST_RUN_
-#define STRELKA_PILE_TEST_RUN_
+#pragma once
 
 #include "blt_common/snp_pos_info.hh"
 #include "strelka/strelka_shared.hh"
@@ -45,5 +43,3 @@ private:
     std::auto_ptr<strelka_deriv_options> _dopt_ptr;
     std::ostream& _os;
 };
-
-#endif

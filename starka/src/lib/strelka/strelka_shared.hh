@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STRELKA_SHARED_HH
-#define __STRELKA_SHARED_HH
+#pragma once
 
 #include "starling_common/starling_shared.hh"
 
@@ -135,6 +134,3 @@ private:
     std::auto_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;
     std::auto_ptr<somatic_indel_caller_grid> _sicaller_grid;
 };
-
-
-#endif

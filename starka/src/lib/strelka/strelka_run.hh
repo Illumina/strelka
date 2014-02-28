@@ -14,14 +14,11 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __STRELKA_RUN_HH
-#define __STRELKA_RUN_HH
 
+#pragma once
 
 #include "strelka/strelka_shared.hh"
 
 
 void
 strelka_run(const strelka_options& opt);
-
-#endif

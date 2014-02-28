@@ -12,15 +12,15 @@
 
 /// \file
 
-/// variation on the original strowman snv caller -- implements a
+/// variation on the original strawman snv caller -- implements a
 /// compile-time specified grid in allele frequency space and requires
 /// similar frequency as definition of non-somatic.
 ///
 
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_SOMATIC_SNV_STRAND_GRID_HH
-#define __POSITION_SOMATIC_SNV_STRAND_GRID_HH
+
+#pragma once
 
 #include "extended_pos_data.hh"
 #include "position_somatic_snv_grid_shared.hh"
@@ -234,11 +234,11 @@ private:
 // vcf output:
 //
 void
-write_vcf_somatic_snv_genotype_strand_grid(const strelka_options& opt,
-                                           const somatic_snv_genotype_grid& sgt,
-                                           const extended_pos_data& n1_epd,
-                                           const extended_pos_data& t1_epd,
-                                           const extended_pos_data& n2_epd,
-                                           const extended_pos_data& t2_epd,
-                                           std::ostream& os);
-#endif
+write_vcf_somatic_snv_genotype_strand_grid(
+    const strelka_options& opt,
+    const somatic_snv_genotype_grid& sgt,
+    const extended_pos_data& n1_epd,
+    const extended_pos_data& t1_epd,
+    const extended_pos_data& n2_epd,
+    const extended_pos_data& t2_epd,
+    std::ostream& os);

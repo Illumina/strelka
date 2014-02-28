@@ -14,8 +14,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __SOMATIC_INDEL_CALL_HH
-#define __SOMATIC_INDEL_CALL_HH
+
+#pragma once
 
 #include "boost/utility.hpp"
 
@@ -58,5 +58,3 @@ struct somatic_indel_call {
     result_set rs;
     bool is_forced_output;
 };
-
-#endif

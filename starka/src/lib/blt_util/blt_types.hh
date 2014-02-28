@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __BLT_TYPES_HH
-#define __BLT_TYPES_HH
+#pragma once
 
 #include <stdint.h>
 
@@ -26,5 +25,3 @@
 typedef int32_t pos_t;
 
 typedef float blt_float_t;
-
-#endif

@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STRELKA_INFO_HH
-#define __STRELKA_INFO_HH
+#pragma once
 
 #include "blt_util/prog_info.hh"
 
@@ -47,5 +46,3 @@ private:
     strelka_info() {}
     virtual ~strelka_info() {}
 };
-
-#endif

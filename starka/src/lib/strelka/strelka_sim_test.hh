@@ -19,8 +19,7 @@
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-#ifndef STRELKA_SIM_TEST_
-#define STRELKA_SIM_TEST_
+#pragma once
 
 
 enum sim_mode_t {
@@ -67,5 +66,3 @@ struct strelka_site_sim_options {
 void
 strelka_site_sim(strelka_options& opt,
                  strelka_site_sim_options& sim_opt);
-
-#endif

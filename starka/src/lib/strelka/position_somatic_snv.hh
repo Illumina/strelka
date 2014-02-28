@@ -14,8 +14,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_SOMATIC_SNV_HH
-#define __POSITION_SOMATIC_SNV_HH
+
+#pragma once
 
 #include "blt_common/snp_pos_info.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
@@ -148,5 +148,3 @@ private:
     const strelka_options& _opt;
     prior_set _lnprior[N_BASE+1];
 };
-
-#endif

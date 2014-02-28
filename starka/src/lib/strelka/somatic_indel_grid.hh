@@ -14,8 +14,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __SOMATIC_INDEL_GRID_HH
-#define __SOMATIC_INDEL_GRID_HH
+
+#pragma once
 
 #include "somatic_indel_call.hh"
 
@@ -152,5 +152,3 @@ write_somatic_indel_vcf_grid(const somatic_indel_call& sindel,
                              const starling_indel_sample_report_info* nisri,
                              const starling_indel_sample_report_info* tisri,
                              std::ostream& os);
-
-#endif

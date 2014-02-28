@@ -17,12 +17,11 @@
 
 ///
 /// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
+/// XXX_begin_pos is zero-indexed position at the beginning of the range
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-#ifndef __STRELKA_SAMPLE_TYPE_HH
-#define __STRELKA_SAMPLE_TYPE_HH
+#pragma once
 
 #include "starling_common/sample_info.hh"
 
@@ -80,6 +79,3 @@ struct strelka_sample_info : public sample_info {
         }
     }
 };
-
-
-#endif

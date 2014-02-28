@@ -15,8 +15,8 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_OPTION_PARSER_HH
-#define __STARLING_OPTION_PARSER_HH
+#pragma once
+
 
 #include "blt_util/prog_info.hh"
 #include "starling_common/starling_shared.hh"
@@ -54,5 +54,3 @@ void
 finalize_starling_options(const prog_info& pinfo,
                           const po::variables_map& vm,
                           starling_options& opt);
-
-#endif

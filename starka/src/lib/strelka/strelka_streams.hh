@@ -14,8 +14,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __STRELKA_STREAMS_HH
-#define __STRELKA_STREAMS_HH
+
+#pragma once
 
 #include "strelka_sample_type.hh"
 
@@ -48,6 +48,3 @@ private:
     std::auto_ptr<std::ostream> _somatic_snv_osptr;
     std::auto_ptr<std::ostream> _somatic_indel_osptr;
 };
-
-
-#endif

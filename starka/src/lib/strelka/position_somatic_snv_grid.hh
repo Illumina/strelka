@@ -19,8 +19,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_SOMATIC_SNV_GRID_HH
-#define __POSITION_SOMATIC_SNV_GRID_HH
+
+#pragma once
 
 #if 0
 
@@ -152,7 +152,5 @@ write_somatic_snv_genotype_grid(const strelka_options& opt,
                                 const snp_pos_info& normal_pi,
                                 const snp_pos_info& tumor_pi,
                                 std::ostream& os);
-
-#endif
 
 #endif

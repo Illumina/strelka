@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STRELKA_OPTION_PARSER_HH
-#define __STRELKA_OPTION_PARSER_HH
+#pragma once
 
 #include "blt_util/prog_info.hh"
 #include "strelka/strelka_shared.hh"
@@ -38,5 +37,3 @@ void
 finalize_strelka_options(const prog_info& pinfo,
                          const po::variables_map& vm,
                          strelka_options& opt);
-
-#endif
