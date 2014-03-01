@@ -806,6 +806,7 @@ sort_n_dump(const std::string& label,
 
 
 
+#if 0
 static
 float
 nonsomatic_gvcf_prior(
@@ -814,9 +815,50 @@ nonsomatic_gvcf_prior(
     const unsigned tgt)
 {
     static const float ln_ref_som_match=std::log(0.5);
-    static const float ln_ref_som_mismatch=(std::log(0.5/(static_cast<blt_float_t>((DIGT_SGRID::PRESTRAND_SIZE)-1))));
+    static const float ln_ref_som_mismatch=(std::log(0.5/static_cast<blt_float_t>(DIGT_SGRID::PRESTRAND_SIZE-1)));
 
     if (tgt==ngt)
+    {
+        return /*pset.normal_poly_nostrand[ngt]+*/ln_ref_som_match;
+    }
+    else
+    {
+        return /*pset.normal_poly_nostrand[ngt]+*/ln_ref_som_mismatch;
+    }
+}
+#endif
+
+
+
+/// expanded nonsomatic definition for the purpose of somatic gvcf output:
+static
+bool
+is_gvcf_nonsomatic_state(
+    const unsigned ngt,
+    const unsigned tgt)
+{
+    return ((ngt==tgt) || ((ngt>0 && (ngt+1)<DIGT_SGRID::PRESTRAND_SIZE) && (tgt>0 && (tgt+1)<DIGT_SGRID::PRESTRAND_SIZE)) );
+}
+
+
+
+/// expanded definition of 'nonsomatic' for the purpose of providing somatic gVCF output:
+static
+float
+gvcf_nonsomatic_gvcf_prior(
+    const somatic_snv_caller_strand_grid::prior_set& /*pset*/,
+    const unsigned ngt,
+    const unsigned tgt)
+{
+    static const float psize(static_cast<blt_float_t>(DIGT_SGRID::PRESTRAND_SIZE));
+    static const float standard_ratio(1.f/(psize-1.f));
+    static const float limit_ratio((psize-2.f)/2.f);
+    static const float gvcf_ratio((2.f*standard_ratio+(psize-2.f)*limit_ratio)/psize);
+
+    static const float ln_ref_som_match=std::log(0.5);
+    static const float ln_ref_som_mismatch=std::log(0.5*gvcf_ratio);
+
+    if (is_gvcf_nonsomatic_state(ngt,tgt))
     {
         return /*pset.normal_poly_nostrand[ngt]+*/ln_ref_som_match;
     }
@@ -999,7 +1041,7 @@ calculate_result_set_grid(
     rs.snv_from_ntype_qphred=error_prob_to_qphred(not_somfrom_sum);
     rs.ntype=max_norm_gt;
 
-    // add new somatic gVCF value:
+    // add new somatic gVCF value -- note this is an expanded definition of 'non-somatic' beyond just f_N == f_T
     if (isComputeNonSomatic)
     {
         /// process regular tumor/normal lhood, but:
@@ -1010,7 +1052,7 @@ calculate_result_set_grid(
         for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
             for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
                 const unsigned dgt(DDIGT_SGRID::get_state(ngt,tgt));
-                pprob[dgt] = normal_lhood[ngt]+tumor_lhood[tgt]+nonsomatic_gvcf_prior(pset,ngt,tgt);
+                pprob[dgt] = normal_lhood[ngt]+tumor_lhood[tgt]+gvcf_nonsomatic_gvcf_prior(pset,ngt,tgt);
             }
         }
 
@@ -1019,9 +1061,12 @@ calculate_result_set_grid(
                                 DDIGT_SGRID::is_nonsom.val.begin(),max_gt);
 
         double sgvcf_nonsomatic_sum(0);
-        for (unsigned gt(0); gt<DIGT_SGRID::PRESTRAND_SIZE; ++gt) {
-            const unsigned dgt(DDIGT_SGRID::get_state(gt,gt));
-            sgvcf_nonsomatic_sum += pprob[dgt];
+        for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
+            for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
+                if (! is_gvcf_nonsomatic_state(ngt,tgt)) continue;
+                const unsigned dgt(DDIGT_SGRID::get_state(ngt,tgt));
+                sgvcf_nonsomatic_sum += pprob[dgt];
+            }
         }
 
         rs.nonsomatic_qphred=error_prob_to_qphred(1.-sgvcf_nonsomatic_sum);
