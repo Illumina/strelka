@@ -181,11 +181,12 @@ struct somatic_snv_caller_strand_grid {
 
     //
     void
-    position_somatic_snv_call(const extended_pos_info& normal_epi,
-                              const extended_pos_info& tumor_epi,
-                              const extended_pos_info* normal_epi_t2_ptr,
-                              const extended_pos_info* tumor_epi_t2_ptr,
-                              somatic_snv_genotype_grid& sgt) const;
+    position_somatic_snv_call(
+        const extended_pos_info& normal_epi,
+        const extended_pos_info& tumor_epi,
+        const extended_pos_info* normal_epi_t2_ptr,
+        const extended_pos_info* tumor_epi_t2_ptr,
+        somatic_snv_genotype_grid& sgt) const;
 
     // compute a lot of prior information for various alternate
     // versions of the method -- we don't actually need all of this for any one computation:

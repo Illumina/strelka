@@ -30,11 +30,12 @@ const strelka_sample_info ssi;
 
 
 strelka_streams::
-strelka_streams(const strelka_options& opt,
-                const prog_info& pinfo,
-                const bam_header_t* const header)
-    : base_t(opt,pinfo,ssi) {
-
+strelka_streams(
+    const strelka_options& opt,
+    const prog_info& pinfo,
+    const bam_header_t* const header)
+    : base_t(opt,pinfo,ssi)
+{
     using namespace STRELKA_SAMPLE_TYPE;
 
     if (opt.is_bindel_diploid_file) {
@@ -115,7 +116,7 @@ strelka_streams(const strelka_options& opt,
         fos << "##INFO=<ID=RU,Number=1,Type=String,Description=\"Smallest repeating sequence unit in inserted or deleted sequence\">\n";
         fos << "##INFO=<ID=RC,Number=1,Type=Integer,Description=\"Number of times RU repeats in the reference allele\">\n";
         fos << "##INFO=<ID=IC,Number=1,Type=Integer,Description=\"Number of times RU repeats in the indel allele\">\n";
-        fos << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Largest reference interupted homopolymer length intersecting with the indel\">\n";
+        fos << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Largest reference interrupted homopolymer length intersecting with the indel\">\n";
         fos << "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">\n";
         fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
         fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";

@@ -65,6 +65,7 @@ starling_deriv_options(const starling_options& opt,
         nonsite_lnprior=log1p_switch(-site_prior);
     }
 
+    if (! opt.bam_filename.empty())
     {
         // get bam header text:
         bam_streamer read_stream(opt.bam_filename.c_str());

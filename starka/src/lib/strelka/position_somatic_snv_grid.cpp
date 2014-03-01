@@ -529,8 +529,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
         // check that a non-reference call meeting quality criteria even
         // exists:
-        if (not is_always_test) {
-            if (is_spi_allref(normal_pi,sgt.ref_gt) and is_spi_allref(tumor_pi,sgt.ref_gt)) return;
+        if (! is_always_test) {
+            if (is_spi_allref(normal_pi,sgt.ref_gt) && is_spi_allref(tumor_pi,sgt.ref_gt)) return;
         }
     }
 
@@ -546,9 +546,9 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
     for (unsigned i(0); i<n_tier; ++i) {
         const bool is_include_tier2(i==1);
         if (is_include_tier2) {
-            if (not is_tier2) continue;
+            if (! is_tier2) continue;
             if (tier_rs[0].snv_qphred==0) {
-                tier_rs[1].snv_qphred=0;
+                tier_rs[1] = tier_rs[0];
                 continue;
             }
         }

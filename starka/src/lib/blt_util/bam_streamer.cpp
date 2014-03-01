@@ -16,6 +16,7 @@
 ///
 
 #include "blt_util/bam_streamer.hh"
+#include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 
 #include <cstdlib>
@@ -33,7 +34,11 @@ bam_streamer(const char* filename,
 {
 
     assert(NULL != filename);
-    assert('\0' != *filename);
+    if ('\0' == *filename)
+    {
+        throw blt_exception("Can't initialize bam_streamer with empty filename\n");
+    }
+
 
     _bfp = samopen(filename, "rb", 0);
 

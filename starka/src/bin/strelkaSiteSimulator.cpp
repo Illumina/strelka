@@ -50,10 +50,10 @@ try_main(int argc,char* argv[]) {
     namespace po = boost::program_options;
     po::options_description req("configuration");
     req.add_options()
-    ("total-sites", po::value<unsigned>(&sim_opt.total_sites)->default_value(sim_opt.total_sites),"number of sites to simulate")
-    ("ncov", po::value<unsigned>(&sim_opt.ncov)->default_value(sim_opt.ncov),"normal depth")
-    ("tcov", po::value<unsigned>(&sim_opt.tcov)->default_value(sim_opt.tcov),"tumor depth")
-    ("tumor-purity", po::value<double>(&sim_opt.tumor_purity)->default_value(sim_opt.tumor_purity),"tumor purity")
+    ("total-sites", po::value(&sim_opt.total_sites)->default_value(sim_opt.total_sites),"number of sites to simulate")
+    ("ncov", po::value(&sim_opt.ncov)->default_value(sim_opt.ncov),"normal depth")
+    ("tcov", po::value(&sim_opt.tcov)->default_value(sim_opt.tcov),"tumor depth")
+    ("tumor-purity", po::value(&sim_opt.tumor_purity)->default_value(sim_opt.tumor_purity),"tumor purity")
     ("somatic-only","only simulate somatic sites")
     ("seed",po::value<uint32_t>(&sim_opt.seed),"seed");
 
