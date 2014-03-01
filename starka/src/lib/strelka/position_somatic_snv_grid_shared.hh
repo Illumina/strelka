@@ -33,12 +33,15 @@ struct somatic_snv_genotype_grid {
     struct result_set {
         result_set()
             : snv_qphred(0)
+            , snv_from_ntype_qphred(0)
+            , nonsomatic_qphred(0)
         {}
 
         unsigned ntype;
         unsigned max_gt;
         int snv_qphred;
         int snv_from_ntype_qphred;
+        int nonsomatic_qphred;
     };
 
     bool

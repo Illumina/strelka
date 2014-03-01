@@ -41,11 +41,11 @@ struct strelka_site_sim_options {
         : total_sites(1000000)
         , ncov(35)
         , tcov(35)
-        , qval_file("default_data/qval_distro")
         , ssnv_prior(0.000001)
         , tumor_purity(1.)
         , seed(1)
         , mode(SIM_RANDOM)
+        , is_somatic_gvcf(false)
     {}
 
     unsigned total_sites;
@@ -58,6 +58,8 @@ struct strelka_site_sim_options {
     double tumor_purity;
     uint32_t seed;
     sim_mode_t mode;
+
+    bool is_somatic_gvcf;
 };
 
 

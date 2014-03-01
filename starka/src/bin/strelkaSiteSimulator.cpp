@@ -55,7 +55,10 @@ try_main(int argc,char* argv[]) {
     ("tcov", po::value(&sim_opt.tcov)->default_value(sim_opt.tcov),"tumor depth")
     ("tumor-purity", po::value(&sim_opt.tumor_purity)->default_value(sim_opt.tumor_purity),"tumor purity")
     ("somatic-only","only simulate somatic sites")
-    ("seed",po::value<uint32_t>(&sim_opt.seed),"seed");
+    ("seed",po::value<uint32_t>(&sim_opt.seed),"seed")
+    ("qscores",po::value(&sim_opt.qval_file),"tab-delimited file specifying basecall qscore distribution (default: all basecalls are Q30)")
+    ("gvcf",po::value(&sim_opt.is_somatic_gvcf)->zero_tokens(),"use somatic gvcf mode to compute scores for non-somatic sites")
+    ;
 
     po::options_description visible("options");
     visible.add(req);

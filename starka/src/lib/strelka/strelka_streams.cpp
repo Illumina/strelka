@@ -135,6 +135,17 @@ strelka_streams(
         fos << "\n";
     }
 
+    if (opt.is_somatic_callable())
+    {
+        std::ofstream* fosptr(new std::ofstream);
+        _somatic_callable_osptr.reset(fosptr);
+        std::ofstream& fos(*fosptr);
+
+        open_ofstream(pinfo,opt.somatic_callable_filename,"somatic-callable-regions",opt.is_clobber,fos);
+
+        fos << "track name=\"StrelkaCallableSites\" "
+            << "description=\"Sites with sufficient information to call somatic alleles at 10% frequency or greater.\"\n";
+    }
 }
 
 

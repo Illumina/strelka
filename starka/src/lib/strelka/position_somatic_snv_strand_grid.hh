@@ -197,6 +197,8 @@ struct somatic_snv_caller_strand_grid {
             , somatic_marginal(DIGT_SGRID::SIZE)
             , normal_poly(DIGT_SGRID::SIZE)
             , somatic_marginal_poly(DIGT_SGRID::SIZE)
+            , normal_nostrand(DIGT_SGRID::SIZE)
+            , normal_poly_nostrand(DIGT_SGRID::SIZE)
         {}
 
         typedef std::vector<blt_float_t> prior_t;
@@ -205,6 +207,10 @@ struct somatic_snv_caller_strand_grid {
         prior_t somatic_marginal;
         prior_t normal_poly;
         prior_t somatic_marginal_poly;
+
+        // added to support somatic gVCF:
+        prior_t normal_nostrand;
+        prior_t normal_poly_nostrand;
     };
 
 private:

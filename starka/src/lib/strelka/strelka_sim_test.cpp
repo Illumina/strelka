@@ -115,10 +115,18 @@ random_cdf_variate(const double cdf[],
 
 struct qval_distro {
 
-    qval_distro(const char* distro_file)
-        : _qsize(0)
-    {
+    qval_distro(
+        const uint8_t constval = 30)
+        : _is_const(true),
+          _constval(constval),
+          _qsize(0)
+    {}
 
+    qval_distro(const char* distro_file)
+        : _is_const(false),
+          _constval(0),
+          _qsize(0)
+    {
         double total(0);
 
         assert(distro_file);
@@ -155,12 +163,22 @@ struct qval_distro {
     }
 
     uint8_t
-    get() const {
-        return _qval_id[random_cdf_variate(_qval_cdf,_qsize)];
-        //return 30;
+    get() const
+    {
+        if (_is_const)
+        {
+            return _constval;
+        }
+        else
+        {
+            return _qval_id[random_cdf_variate(_qval_cdf,_qsize)];
+        }
     }
 
 private:
+    bool _is_const;
+    uint8_t _constval;
+
     enum { MAX_QVAL=80 };
     unsigned _qsize;
     uint8_t _qval_id[MAX_QVAL];
@@ -220,7 +238,15 @@ strelka_site_sim(strelka_options& opt,
     snp_pos_info norm_pi;
     snp_pos_info tumor_pi;
 
-    qval_distro qdist(sim_opt.qval_file.c_str());
+    std::auto_ptr<qval_distro> qdistptr;
+    if (sim_opt.qval_file.empty())
+    {
+        qdistptr.reset(new qval_distro());
+    }
+    else
+    {
+        qdistptr.reset(new qval_distro(sim_opt.qval_file.c_str()));
+    }
 
     dist_t ndist(sim_opt.ncov);
     dist_t tdist(sim_opt.tcov);
@@ -290,10 +316,10 @@ strelka_site_sim(strelka_options& opt,
             //is_nonref=true;
         }
 
-        sim_sample_pi(ngen,qdist,ref_id,nalt_id,nalt_freq,norm_pi);
-        sim_sample_pi(tgen,qdist,ref_id,talt_id,talt_freq,tumor_pi);
+        sim_sample_pi(ngen,*qdistptr,ref_id,nalt_id,nalt_freq,norm_pi);
+        sim_sample_pi(tgen,*qdistptr,ref_id,talt_id,talt_freq,tumor_pi);
 
-        scall.call(i+1,norm_pi,tumor_pi);
+        scall.call(sim_opt.is_somatic_gvcf,i+1,norm_pi,tumor_pi);
     }
 }
 

@@ -30,13 +30,16 @@
 
 struct strelka_pile_caller {
 
-    strelka_pile_caller(strelka_options& opt,
-                        std::ostream& os);
+    strelka_pile_caller(
+        strelka_options& opt,
+        std::ostream& os);
 
     void
-    call(const unsigned pos,
-         snp_pos_info& norm_pi,
-         snp_pos_info& tumor_pi);
+    call(
+        const bool is_somatic_gvcf,
+        const unsigned pos,
+        snp_pos_info& norm_pi,
+        snp_pos_info& tumor_pi);
 
 private:
     strelka_options& _opt;

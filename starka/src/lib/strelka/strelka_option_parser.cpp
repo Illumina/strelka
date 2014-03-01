@@ -110,8 +110,12 @@ get_strelka_option_parser(strelka_options& opt) {
      po::value(&opt.tumor_sample_min_small_candidate_indel_read_frac),
      "For small indels an additional indel candidacy filter is applied: Unless at least this fraction of intersecting reads contain the small indel in the tumor sample, it cannot become a candidate unless this same test passes for other samples. (default: not used)")
     ("indel-somatic-normal-noise-rate",
-     po::value<double>(&opt.indel_somatic_normal_noise_rate),
-     "Expected rate of 'noise' in the normal sample at somatic indels -- this allows for some degree of tumor contamination in the normal sample for raw somatic Q-scores (default: use shared site error instead)");
+     po::value(&opt.indel_somatic_normal_noise_rate),
+     "Expected rate of 'noise' in the normal sample at somatic indels -- this allows for some degree of tumor contamination in the normal sample for raw somatic Q-scores (default: use shared site error instead)")
+    ("somatic-callable-region-file",
+     po::value(&opt.somatic_callable_filename),
+     "Output a bed file of regions which are confidently somatic or non-somatic for SNVs at allele frequencies of 10% or greater.")
+    ;
 
     po::options_description strelka_parse_opt("Two-sample options");
     strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv);

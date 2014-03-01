@@ -58,6 +58,12 @@ struct strelka_options : public starling_options {
         return (! somatic_indel_filename.empty());
     }
 
+    bool
+    is_somatic_callable() const
+    {
+        return (! somatic_callable_filename.empty());
+    }
+
     // report whether any type of indel-caller is running (including
     // checks from child class options):
     virtual
@@ -103,6 +109,8 @@ struct strelka_options : public starling_options {
     bool is_tumor_sample_min_small_candidate_indel_read_frac;
     int tumor_sample_min_candidate_indel_reads;
     double tumor_sample_min_small_candidate_indel_read_frac;
+
+    std::string somatic_callable_filename;
 };
 
 

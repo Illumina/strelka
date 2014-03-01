@@ -1,3 +1,4 @@
+- STARKA-50 option to output somatic-callable bed file
 v2.0.17
 - STARKA-48 Fixed formatting bug for high GQX 
 - Header fix for adjusted Nova filters

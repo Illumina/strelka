@@ -17,17 +17,17 @@
 
 ///
 /// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
+/// XXX_begin_pos is zero-indexed position at the beginning of the range
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-#ifndef __STRELKA_POS_PROCESSOR_HH
-#define __STRELKA_POS_PROCESSOR_HH
+#pragma once
 
 #include "strelka_sample_type.hh"
 #include "strelka_streams.hh"
 
 #include "starling_common/starling_pos_processor_base.hh"
+#include "strelka/CallableProcessor.hh"
 #include "strelka/strelka_shared.hh"
 
 
@@ -75,7 +75,6 @@ private:
     const strelka_streams& _client_io;
 
     extra_position_data _tier2_epd[MAX_SAMPLE];
+
+    CallableProcessor _callProcessor;
 };
-
-
-#endif

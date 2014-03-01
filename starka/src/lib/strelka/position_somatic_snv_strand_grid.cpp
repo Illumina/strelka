@@ -337,6 +337,10 @@ somatic_snv_caller_strand_grid(const strelka_options& opt,
                   opt.is_site_somatic_normal_noise_rate,
                   ps.normal_poly,
                   ps.somatic_marginal_poly);
+
+        // special nostrand distro is used for somatic_gvcf:
+        get_nostrand_marginal_prior(pd_caller.lnprior_genomic(i),i,opt.shared_site_error_rate,0,ps.normal_nostrand);
+        get_nostrand_marginal_prior(pd_caller.lnprior_polymorphic(i),i,opt.shared_site_error_rate,0,ps.normal_poly_nostrand);
     }
 }
 
@@ -729,6 +733,7 @@ get_diploid_strand_grid_lhood_spi(const snp_pos_info& pi,
 typedef somatic_snv_genotype_grid::result_set result_set;
 
 
+
 #ifdef SOMATIC_DEBUG
 #if 0
 static
@@ -801,20 +806,44 @@ sort_n_dump(const std::string& label,
 
 
 
+static
+float
+nonsomatic_gvcf_prior(
+    const somatic_snv_caller_strand_grid::prior_set& /*pset*/,
+    const unsigned ngt,
+    const unsigned tgt)
+{
+    static const float ln_ref_som_match=std::log(0.5);
+    static const float ln_ref_som_mismatch=(std::log(0.5/(static_cast<blt_float_t>((DIGT_SGRID::PRESTRAND_SIZE)-1))));
+
+    if (tgt==ngt)
+    {
+        return /*pset.normal_poly_nostrand[ngt]+*/ln_ref_som_match;
+    }
+    else
+    {
+        return /*pset.normal_poly_nostrand[ngt]+*/ln_ref_som_mismatch;
+    }
+}
+
+
+
 // Given the likelihood, go through the final computations to get the
 // posterior and derived values.
 //
 static
 void
-calculate_result_set_grid(const blt_float_t* normal_lhood,
-                          const blt_float_t* tumor_lhood,
-                          const somatic_snv_caller_strand_grid::prior_set& pset,
-                          const blt_float_t lnmatch,
-                          const blt_float_t lnmismatch,
-                          const unsigned /*ref_gt*/,
-                          const bool is_forced_output,
-                          result_set& rs) {
-
+calculate_result_set_grid(
+    const bool isComputeNonSomatic,
+    const blt_float_t* normal_lhood,
+    const blt_float_t* tumor_lhood,
+    const somatic_snv_caller_strand_grid::prior_set& pset,
+    const blt_float_t lnmatch,
+    const blt_float_t lnmismatch,
+    const unsigned /*ref_gt*/,
+    const bool is_forced_output,
+    result_set& rs)
+{
     // a piece transplanted from 1150 to make a formal correction to
     // the priors which should have a low-impact on the results.
     // the prior below is incomplete
@@ -901,7 +930,7 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
     }
     rs.snv_qphred=error_prob_to_qphred(nonsomatic_sum);
 
-    if ((! is_forced_output) && (0==rs.snv_qphred)) return;
+    if ((! (is_forced_output || isComputeNonSomatic)) && (0==rs.snv_qphred)) return;
 
 #if 0
     // alternate way to calculate the joint:
@@ -969,6 +998,34 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
 
     rs.snv_from_ntype_qphred=error_prob_to_qphred(not_somfrom_sum);
     rs.ntype=max_norm_gt;
+
+    // add new somatic gVCF value:
+    if (isComputeNonSomatic)
+    {
+        /// process regular tumor/normal lhood, but:
+        /// (1) use uniform probability for {somatic,non-somatic} states
+        /// (2) simply computation to remove strand-specific logic
+        /// (3) ignore normal genotype
+        ///
+        for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt) {
+            for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt) {
+                const unsigned dgt(DDIGT_SGRID::get_state(ngt,tgt));
+                pprob[dgt] = normal_lhood[ngt]+tumor_lhood[tgt]+nonsomatic_gvcf_prior(pset,ngt,tgt);
+            }
+        }
+
+        unsigned max_gt(0);
+        opt_normalize_ln_distro(pprob.begin(),pprob.begin()+DDIGT_SGRID::PRESTRAND_SIZE,
+                                DDIGT_SGRID::is_nonsom.val.begin(),max_gt);
+
+        double sgvcf_nonsomatic_sum(0);
+        for (unsigned gt(0); gt<DIGT_SGRID::PRESTRAND_SIZE; ++gt) {
+            const unsigned dgt(DDIGT_SGRID::get_state(gt,gt));
+            sgvcf_nonsomatic_sum += pprob[dgt];
+        }
+
+        rs.nonsomatic_qphred=error_prob_to_qphred(1.-sgvcf_nonsomatic_sum);
+    }
 }
 
 
@@ -977,11 +1034,14 @@ calculate_result_set_grid(const blt_float_t* normal_lhood,
 ///
 void
 somatic_snv_caller_strand_grid::
-position_somatic_snv_call(const extended_pos_info& normal_epi,
-                          const extended_pos_info& tumor_epi,
-                          const extended_pos_info* normal_epi_t2_ptr,
-                          const extended_pos_info* tumor_epi_t2_ptr,
-                          somatic_snv_genotype_grid& sgt) const {
+position_somatic_snv_call(
+    const extended_pos_info& normal_epi,
+    const extended_pos_info& tumor_epi,
+    const extended_pos_info* normal_epi_t2_ptr,
+    const extended_pos_info* tumor_epi_t2_ptr,
+    somatic_snv_genotype_grid& sgt) const
+{
+    const bool isComputeNonSomatic(_opt.is_somatic_callable());
 
     {
         const snp_pos_info& normal_pi(normal_epi.pi);
@@ -995,7 +1055,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
         // check that a non-reference call meeting quality criteria even
         // exists:
-        if (! sgt.is_forced_output) {
+        if (! (sgt.is_forced_output || isComputeNonSomatic)) {
             if (is_spi_allref(normal_pi,sgt.ref_gt) && is_spi_allref(tumor_pi,sgt.ref_gt)) return;
         }
     }
@@ -1014,7 +1074,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
         if (is_include_tier2) {
             if (! is_tier2) continue;
             if (tier_rs[0].snv_qphred==0) {
-                tier_rs[1].snv_qphred=0;
+                tier_rs[1] = tier_rs[0];
                 continue;
             }
         }
@@ -1038,7 +1098,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
         get_diploid_strand_grid_lhood_spi(tepi.pi,sgt.ref_gt,tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE);
 
         // genomic site results:
-        calculate_result_set_grid(normal_lhood,
+        calculate_result_set_grid(isComputeNonSomatic,
+                                  normal_lhood,
                                   tumor_lhood,
                                   get_prior_set(sgt.ref_gt),
                                   _ln_som_match,_ln_som_mismatch,
@@ -1058,18 +1119,25 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 #endif
 
 #ifdef SOMATIC_DEBUG
-        if ((i==0) && (tier_rs[i].snv_qphred > 0)) {
+        if ((i==0) && ((tier_rs[i].snv_qphred > 0) || isComputeNonSomatic)) {
             const somatic_snv_caller_strand_grid::prior_set& pset(get_prior_set(sgt.ref_gt));
+#ifdef STANDARD
             const blt_float_t lnmatch(_ln_som_match);
             const blt_float_t lnmismatch(_ln_som_mismatch);
 
+            const unsigned state_size(DDIGT_SGRID::SIZE);
+#else
+            const unsigned state_size(DDIGT_SGRID::PRESTRAND_SIZE);
+#endif
+
             log_os << "DUMP ON\n";
-            log_os << "tier1_qphred: " << tier_rs[0].snv_qphred << "\n";
+            log_os << "tier1_qphred_snv: " << tier_rs[0].snv_qphred << "\n";
+            log_os << "tier1_qphred_nonsomatic: " << tier_rs[0].nonsomatic_qphred << "\n";
 
             // instead of dumping the entire distribution, we sort the lhood,prior,and prob to print out the N top values of each:
-            std::vector<double> lhood(DDIGT_SGRID::SIZE);
-            std::vector<double> prior(DDIGT_SGRID::SIZE);
-            std::vector<double> post(DDIGT_SGRID::SIZE);
+            std::vector<double> lhood(state_size,0);
+            std::vector<double> prior(state_size,0);
+            std::vector<double> post(state_size,0);
 
             // first get raw lhood:
             //
@@ -1079,6 +1147,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                     // unorm takes the role of the normal prior for the somatic case:
                     //            static const blt_float_t unorm(std::log(static_cast<blt_float_t>(DIGT_SGRID::PRESTRAND_SIZE)));
 
+                    // switch between standard and gvcf info:
+#ifdef STANDARD
                     //blt_float_t prior;
                     //if(tgt==ngt) { prior=pset.normal[ngt]+lnmatch; }
                     //else         { prior=pset.somatic_marginal[ngt]+lnmismatch; }
@@ -1086,18 +1156,22 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                     if (tgt==ngt) { pr=pset.normal[ngt]+lnmatch; }
                     else         { pr=pset.somatic_marginal[ngt]+lnmismatch; }
                     prior[dgt] = pr;
-
+#else
+                    prior[dgt] = nonsomatic_gvcf_prior(pset,ngt,tgt);
+#endif
                     lhood[dgt] = normal_lhood[ngt]+tumor_lhood[tgt];
                     post[dgt] = lhood[dgt] + prior[dgt];
                 }
             }
 
+#ifdef STANDARD
             for (unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt) {
                 const unsigned dgt(DDIGT_SGRID::get_state(gt,gt));
                 lhood[dgt] = normal_lhood[gt]+tumor_lhood[gt];
                 prior[dgt] = pset.normal[gt]+lnmatch;
                 post[dgt] = lhood[dgt] + prior[dgt];
             }
+#endif
 
             std::vector<double> lhood2(lhood);
             sort_n_dump("lhood_prior",lhood,prior,sgt.ref_gt);
@@ -1109,7 +1183,7 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
     }
 
-    if (! sgt.is_forced_output) {
+    if (! (sgt.is_forced_output || isComputeNonSomatic)) {
         if ((tier_rs[0].snv_qphred==0) ||
             (is_tier2 && (tier_rs[1].snv_qphred==0))) return;
     }
@@ -1148,6 +1222,9 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
     }
 
     sgt.rs.snv_qphred = tier_rs[sgt.snv_tier].snv_qphred;
+
+    /// somatic gVCF, always use tier1 to keep things simple:
+    sgt.rs.nonsomatic_qphred = tier_rs[0].nonsomatic_qphred;
 }
 
 
@@ -1203,13 +1280,14 @@ write_vcf_sample_info(const blt_options& opt,
 
 
 void
-write_vcf_somatic_snv_genotype_strand_grid(const strelka_options& opt,
-                                           const somatic_snv_genotype_grid& sgt,
-                                           const extended_pos_data& n1_epd,
-                                           const extended_pos_data& t1_epd,
-                                           const extended_pos_data& n2_epd,
-                                           const extended_pos_data& t2_epd,
-                                           std::ostream& os) {
+write_vcf_somatic_snv_genotype_strand_grid(
+    const strelka_options& opt,
+    const somatic_snv_genotype_grid& sgt,
+    const extended_pos_data& n1_epd,
+    const extended_pos_data& t1_epd,
+    const extended_pos_data& n2_epd,
+    const extended_pos_data& t2_epd,
+    std::ostream& os) {
 
     const result_set& rs(sgt.rs);
 
@@ -1227,8 +1305,9 @@ write_vcf_somatic_snv_genotype_strand_grid(const strelka_options& opt,
     //INFO:
     os << '\t'
        << "SOMATIC"
-       << ";QSS=" << rs.snv_qphred
-       << ";TQSS=" << (sgt.snv_tier+1)
+       << ";QSS=" << rs.snv_qphred;
+
+    os << ";TQSS=" << (sgt.snv_tier+1)
        << ";NT=" << NTYPE::label(rs.ntype)
        << ";QSS_NT=" << rs.snv_from_ntype_qphred
        << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1)

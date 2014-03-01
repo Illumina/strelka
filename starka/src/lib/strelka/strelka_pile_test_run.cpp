@@ -58,9 +58,11 @@ strelka_pile_caller(strelka_options& opt,
 
 void
 strelka_pile_caller::
-call(const unsigned pos,
-     snp_pos_info& norm_pi,
-     snp_pos_info& tumor_pi) {
+call(
+    const bool is_somatic_gvcf,
+    const unsigned pos,
+    snp_pos_info& norm_pi,
+    snp_pos_info& tumor_pi) {
 
     static dependent_prob_cache dpcache;
 
@@ -85,7 +87,7 @@ call(const unsigned pos,
                                                                 NULL,
                                                                 sgtg);
 
-    if (! sgtg.is_output()) return;
+    if (! (sgtg.is_output() || is_somatic_gvcf)) return;
 
     static const char chrom_name[] = "sim";
     _os << chrom_name << '\t'
@@ -156,6 +158,7 @@ strelka_pile_test_run(strelka_options& opt) {
             load_pi(ref_base,tumorbase,tumorqual,tumor_pi);
         }
 
-        pcall.call(pos,norm_pi,tumor_pi);
+        static const bool is_somatic_gvcf(false);
+        pcall.call(is_somatic_gvcf, pos,norm_pi,tumor_pi);
     }
 }

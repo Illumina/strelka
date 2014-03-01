@@ -39,8 +39,9 @@ strelka_pos_processor(const strelka_options& opt,
     : base_t(opt,dopt,ref,client_io,STRELKA_SAMPLE_TYPE::SIZE)
     , _opt(opt)
     , _dopt(dopt)
-    , _client_io(client_io) {
-
+    , _client_io(client_io)
+    , _callProcessor(client_io.somatic_callable_osptr())
+{
     using namespace STRELKA_SAMPLE_TYPE;
 
     sample_info& normal_sif(sample(NORMAL));
@@ -123,7 +124,7 @@ process_pos_snp_somatic(const pos_t pos) {
 #endif
 
     // note single-sample anomaly filtration won't apply here (more of
-    // a vestigal blt feature anyway)
+    // a vestigial blt feature anyway)
     //
 
     // retain original blt loop structure from the single-sample case
@@ -142,11 +143,17 @@ process_pos_snp_somatic(const pos_t pos) {
             normal_epi_t2_ptr=(&(normald_ptr[1]->good_epi));
             tumor_epi_t2_ptr=(&(tumord_ptr[1]->good_epi));
         }
-        _dopt.sscaller_strand_grid().position_somatic_snv_call(normald_ptr[0]->good_epi,
-                                                               tumord_ptr[0]->good_epi,
-                                                               normal_epi_t2_ptr,
-                                                               tumor_epi_t2_ptr,
-                                                               sgtg);
+        _dopt.sscaller_strand_grid().position_somatic_snv_call(
+            normald_ptr[0]->good_epi,
+            tumord_ptr[0]->good_epi,
+            normal_epi_t2_ptr,
+            tumor_epi_t2_ptr,
+            sgtg);
+
+        if (_opt.is_somatic_callable())
+        {
+            _callProcessor.add(_chrom_name,output_pos,sgtg);
+        }
     }
 
     // report events:

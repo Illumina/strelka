@@ -35,16 +35,25 @@ struct strelka_streams : public starling_streams_base {
     ~strelka_streams();
 
     std::ostream*
-    somatic_snv_osptr() const {
+    somatic_snv_osptr() const
+    {
         return _somatic_snv_osptr.get();
     }
 
     std::ostream*
-    somatic_indel_osptr() const {
+    somatic_indel_osptr() const
+    {
         return _somatic_indel_osptr.get();
+    }
+
+    std::ostream*
+    somatic_callable_osptr() const
+    {
+        return _somatic_callable_osptr.get();
     }
 
 private:
     std::auto_ptr<std::ostream> _somatic_snv_osptr;
     std::auto_ptr<std::ostream> _somatic_indel_osptr;
+    std::auto_ptr<std::ostream> _somatic_callable_osptr;
 };
