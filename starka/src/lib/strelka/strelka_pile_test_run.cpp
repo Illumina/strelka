@@ -85,6 +85,7 @@ call(
                                                                 tumord.good_epi,
                                                                 NULL,
                                                                 NULL,
+                                                                is_somatic_gvcf,
                                                                 sgtg);
 
     if (! (sgtg.is_output() || is_somatic_gvcf)) return;
@@ -94,7 +95,7 @@ call(
         << pos << '\t'
         << ".";
 
-    write_vcf_somatic_snv_genotype_strand_grid(_opt,sgtg,
+    write_vcf_somatic_snv_genotype_strand_grid(_opt,sgtg,is_somatic_gvcf,
                                                normald,
                                                tumord,
                                                normald,

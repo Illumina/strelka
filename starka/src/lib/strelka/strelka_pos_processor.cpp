@@ -143,11 +143,15 @@ process_pos_snp_somatic(const pos_t pos) {
             normal_epi_t2_ptr=(&(normald_ptr[1]->good_epi));
             tumor_epi_t2_ptr=(&(tumord_ptr[1]->good_epi));
         }
+
+        const bool isComputeNonSomatic(_opt.is_somatic_callable());
+
         _dopt.sscaller_strand_grid().position_somatic_snv_call(
             normald_ptr[0]->good_epi,
             tumord_ptr[0]->good_epi,
             normal_epi_t2_ptr,
             tumor_epi_t2_ptr,
+            isComputeNonSomatic,
             sgtg);
 
         if (_opt.is_somatic_callable())
@@ -173,7 +177,8 @@ process_pos_snp_somatic(const pos_t pos) {
             << output_pos << '\t'
             << ".";
 
-        write_vcf_somatic_snv_genotype_strand_grid(_opt,sgtg,
+        static const bool is_write_nqss(false);
+        write_vcf_somatic_snv_genotype_strand_grid(_opt,sgtg,is_write_nqss,
                                                    *(normald_ptr[0]),
                                                    *(tumord_ptr[0]),
                                                    *(normald_ptr[1]),

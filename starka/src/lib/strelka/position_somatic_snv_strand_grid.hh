@@ -186,6 +186,7 @@ struct somatic_snv_caller_strand_grid {
         const extended_pos_info& tumor_epi,
         const extended_pos_info* normal_epi_t2_ptr,
         const extended_pos_info* tumor_epi_t2_ptr,
+        const bool isComputeNonSomatic,
         somatic_snv_genotype_grid& sgt) const;
 
     // compute a lot of prior information for various alternate
@@ -244,6 +245,7 @@ void
 write_vcf_somatic_snv_genotype_strand_grid(
     const strelka_options& opt,
     const somatic_snv_genotype_grid& sgt,
+    const bool is_write_nqss,
     const extended_pos_data& n1_epd,
     const extended_pos_data& t1_epd,
     const extended_pos_data& n2_epd,

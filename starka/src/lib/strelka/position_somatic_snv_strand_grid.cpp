@@ -1084,10 +1084,9 @@ position_somatic_snv_call(
     const extended_pos_info& tumor_epi,
     const extended_pos_info* normal_epi_t2_ptr,
     const extended_pos_info* tumor_epi_t2_ptr,
+    const bool isComputeNonSomatic,
     somatic_snv_genotype_grid& sgt) const
 {
-    const bool isComputeNonSomatic(_opt.is_somatic_callable());
-
     {
         const snp_pos_info& normal_pi(normal_epi.pi);
         const snp_pos_info& tumor_pi(tumor_epi.pi);
@@ -1328,6 +1327,7 @@ void
 write_vcf_somatic_snv_genotype_strand_grid(
     const strelka_options& opt,
     const somatic_snv_genotype_grid& sgt,
+    const bool is_write_nqss,
     const extended_pos_data& n1_epd,
     const extended_pos_data& t1_epd,
     const extended_pos_data& n2_epd,
@@ -1351,6 +1351,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
     os << '\t'
        << "SOMATIC"
        << ";QSS=" << rs.snv_qphred;
+
+    if (is_write_nqss)
+    {
+        os << ";NQSS=" << rs.nonsomatic_qphred;
+    }
 
     os << ";TQSS=" << (sgt.snv_tier+1)
        << ";NT=" << NTYPE::label(rs.ntype)
