@@ -33,7 +33,7 @@ add(
     // determine if we need to flush current range:
     if (_is_range)
     {
-        if ((chrom != _chrom) || (_prange.end_pos != outputPos))
+        if ((chrom != _chrom) || ((_prange.end_pos+1) != outputPos))
         {
             flush();
         }
