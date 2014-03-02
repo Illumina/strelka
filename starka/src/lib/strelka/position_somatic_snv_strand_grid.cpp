@@ -69,7 +69,7 @@ strand_state_tables() {
             if (alt==ref) continue;
             digt_state[ref][strand_state] = 0;
             for (unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt) {
-                if (DIGT::expect2(ref,gt) and
+                if (DIGT::expect2(ref,gt) &&
                     DIGT::expect2(alt,gt)) {
                     digt_state[ref][strand_state] = gt;
                     break;
@@ -856,7 +856,7 @@ gvcf_nonsomatic_gvcf_prior(
         static const float lone(std::log(1.f));
         return lone;
     }
-    else if (ngt==0 || (ngt+1)==DIGT_SGRID::PRESTRAND_SIZE)
+    else if (ngt<N_BASE)
     {
         static const float lhalf(std::log(0.5f));
         return lhalf;
