@@ -31,7 +31,7 @@ struct CallableProcessor
     CallableProcessor(
         std::ostream* osptr = NULL) :
         _minQSS(15),
-        _minNQSS(25),
+        _minNQSS(15),
         _osptr(osptr),
         _is_range(false)
     {}
