@@ -19,6 +19,11 @@
 
 #include <iostream>
 
+    void
+    indel_key::addRanksumInfo(const int mapq, const int baseq, bool is_alt){
+        this->mapq_val=mapq;
+        this->baseq_val=baseq;
+    }
 
 
 std::ostream&
@@ -27,6 +32,8 @@ operator<<(std::ostream& os,
     os << "INDEL pos: " << ik.pos
        << " type: " << INDEL::get_index_label(ik.type)
        << " len: " << ik.length
+       << " mapq: " << ik.mapq_val
+       << " baseq: " << ik.baseq_val
        << " swap_dlen: " << ik.swap_dlength << "\n";
     return os;
 }

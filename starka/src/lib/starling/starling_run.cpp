@@ -142,7 +142,8 @@ starling_run(const starling_options& opt) {
 
             if (! test_contig_usability(opt,ctg,sppr)) continue;
 
-            process_contig(opt,ref,ctg,sppr);
+            //legacy grouper stuff?
+//            process_contig(opt,ref,ctg,sppr);
 
             process_contig_reads(ctg,opt.max_indel_size,cdm.contig_read_exr(),sppr,tmp_key_br);
 

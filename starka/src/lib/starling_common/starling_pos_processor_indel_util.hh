@@ -32,6 +32,21 @@
 ///
 /// assumes that path is already validated for read_seq!!!
 ///
+
+struct read_stats {
+
+    read_stats(const uint8_t& map,
+              const uint8_t* q)
+//              const pos_t& p)
+        : mapq(map),qual(q) {}
+
+    const uint8_t& mapq;
+    const uint8_t* qual;
+//    const pos_t pos;
+};
+
+
+
 unsigned
 add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const reference_contig_segment& ref,
@@ -42,5 +57,6 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              align_id_t id,
                              const unsigned sample_no,
                              const std::pair<bool,bool>& edge_pin,
+                             const read_stats rs,
                              const indel_set_t* edge_indel_ptr = NULL);
 

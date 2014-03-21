@@ -472,6 +472,7 @@ process_candidate_indel(
 
         obs.data.is_external_candidate = true;
         obs.data.is_forced_output = is_forced_output;
+
         sppr.insert_indel(obs,sample_no);
     }
 }

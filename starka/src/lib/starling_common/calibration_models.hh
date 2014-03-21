@@ -34,11 +34,13 @@ public:
     void load_models(std::string model_file);                       // read in model parameters
 
     void clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si);
+    void clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii);
 
     c_model& get_model(std::string& name);
 
     // mimics behaviour of previous hard filters
     void default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si);
+    void default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii);
 private:
     typedef std::map<std::string,c_model> modelmap;
     typedef std::map<std::string, double> featuremap;

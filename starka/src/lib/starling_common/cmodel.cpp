@@ -17,7 +17,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include "blt_util/qscore.hh"
 
-//#define DEBUG_MODEL
+#define DEBUG_MODEL
 
 #ifdef DEBUG_MODEL
 #include "blt_util/log.hh"
@@ -29,29 +29,57 @@ void c_model::add_parameters(const parmap& myPars) {
     this->pars = myPars;
 }
 
+// rule-based filtering for SNPs
 void c_model::do_rule_model(featuremap& cutoffs, site_info& si) {
     if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
     if (cutoffs["DP"]>0) {
         if ((si.n_used_calls+si.n_unused_calls) > cutoffs["DP"]) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
-
     // high DPFratio filter
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
     if (total_calls>0) {
         const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
         if (filt>cutoffs["DPFratio"]) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
     }
-
     if (si.dgt.is_snp) {
         if (si.dgt.sb>cutoffs["HighSNVSB"]) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
     }
+}
+
+// rule-based filtering for INDELs
+void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii) {
+    if (ii.dindel.max_gt != ii.dindel.max_gt_poly) {
+        ii.imod.gqx=0;
+    } else {
+        ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
+    }
+    ii.imod.max_gt=ii.dindel.max_gt_poly;
+    ii.imod.gq=ii.dindel.max_gt_poly_qphred;
+
+
+//    if (opt.is_min_gqx) {
+//        if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+//    }
+//
+//    if (dopt.is_max_depth) {
+//        if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+//    }
+//
+//    if (opt.is_max_ref_rep) {
+//        if (ii.iri.is_repeat_unit) {
+//            if ((ii.iri.repeat_unit.size() <= 2) &&
+//                (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
+//                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
+//            }
+//        }
+//    }
 }
 
 //Transform the features with the specified scaling parameters that were used to standardize
 //the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
 featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor) {
     for (featuremap::const_iterator it = norm_factor.begin(); it != norm_factor.end(); ++it) { // only normalize the features that are needed
-//        log_os << it->first << "=" << features[it->first] << "  ";
+        //log_os << it->first << "=" << features[it->first] << "  ";
         features[it->first] = (features[it->first]-adjust_factor[it->first])/norm_factor[it->first];
     }
 //    log_os << "\n";
@@ -109,10 +137,10 @@ int prior_adjustment(
     double pFPrescale   = pFP*minorityPrior/(1+2*minorityPrior*pFP-minorityPrior-pFP);
     int qscore          = error_prob_to_qphred(pFPrescale);
     #ifdef DEBUG_MODEL
-        log_os << "minorityPrior " << minorityPrior << "\n";
-        log_os << "pFP=" << pFP << "\n";
-        log_os << "rescale=" << pFPrescale << "\n";
-    //        log_os << "experimental=" << qscore_test << "\n";
+//        log_os << "minorityPrior " << minorityPrior << "\n";
+//        log_os << "pFP=" << pFP << "\n";
+//        log_os << "rescale=" << pFPrescale << "\n";
+//        log_os << "experimental=" << qscore_test << "\n";
     #endif
 
     // cap the score at 40
@@ -133,25 +161,65 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut){//, feat
     }
 }
 
+void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut){//, featuremap& most_predictive) {
+//    most_predictive.size();
+    if (ii.Qscore < qscore_cut) {
+        ii.imod.set_filter(VCF_FILTERS::LowGQX);
+    }
+}
+
+// joint logistic regression for both SNPs and INDELs
+int c_model::logistic_score(std::string var_case, featuremap features){
+    // normalize
+    // log_os << var_case <<"\n";
+    featuremap norm_features = this->normalize(features,this->pars[var_case]["scalecenter"],this->pars[var_case]["scaleshift"]);
+//    if (var_case=="insertion" || var_case=="deletion"){
+//        for (featuremap::const_iterator it = norm_features.begin(); it != norm_features.end(); ++it) {
+//            log_os << it->first << "=" << norm_features[it->first] << "  ";
+//        }
+        //log_os << "\n\n";
+//    }
+
+    //calculates log-odds ratio
+    double raw_score = this->log_odds(norm_features,this->pars[var_case]["coefs"]);
+
+    // adjust by prior and calculate q-score
+    int Qscore = prior_adjustment(raw_score,this->pars[var_case]["priors"]["minorityPrior"]);
+    return Qscore;
+}
+
+//score snp case
 void c_model::score_instance(featuremap features, site_info& si) {
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
-        std::string snpCase = "homsnp";
+        std::string var_case = "homsnp";
         if (si.is_het()){
-            snpCase = "hetsnp";
+            var_case = "hetsnp";
         }
-//        this->sanity_check();
-        // normalize
-        featuremap norm_features = this->normalize(features,this->pars[snpCase]["scalecenter"],this->pars[snpCase]["scaleshift"]);
+        si.Qscore = logistic_score(var_case, features);
+//        featuremap most_pred; //place-holder
+        this->apply_qscore_filters(si,static_cast<int>(this->pars[var_case]["qcutoff"]["Q"])); // set filters according to q-scores
 
-        //calculates log-odds ratio
-        double raw_score = this->log_odds(norm_features,this->pars[snpCase]["coefs"]);
+        #ifdef DEBUG_MODEL
+        //        log_os << "Im doing a logistic model" << "\n";
+        #endif
+    }
+    else if (this->model_type=="RULE") { //case we are using a rule based model
+        this->do_rule_model(this->pars["snp"]["cutoff"],si);
+    }
+}
 
-        // adjust by prior and calculate q-score
-        si.Qscore = prior_adjustment(raw_score,this->pars[snpCase]["priors"]["minorityPrior"]);
-
+// score indel case
+void c_model::score_instance(featuremap features, indel_info& ii){
+    if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
+        std::string var_case = "deletion";
+        if (ii.iri.it==INDEL::INSERT){
+            var_case = "insertion";
+        }
+        ii.Qscore = logistic_score(var_case, features);
+//        log_os << "my Q=" << ii.Qscore << "\n";
         // set filters according to q-scores
 //        featuremap most_pred; //place-holder
-        this->apply_qscore_filters(si,static_cast<int>(this->pars[snpCase]["qcutoff"]["Q"]));
+        this->apply_qscore_filters(ii,static_cast<int>(this->pars[var_case]["qcutoff"]["Q"]));
 
 #ifdef DEBUG_MODEL
 //        log_os << "Im doing a logistic model" << "\n";
@@ -159,8 +227,9 @@ void c_model::score_instance(featuremap features, site_info& si) {
 
     }
     else if (this->model_type=="RULE") { //case we are using a rule based model
-        this->do_rule_model(this->pars["snp"]["cutoff"],si);
+        this->do_rule_model(this->pars["snp"]["cutoff"],ii);
     }
+
 }
 
 // TODO decompose to unit-test

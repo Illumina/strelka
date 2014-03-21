@@ -176,8 +176,10 @@ struct blt_options {
           , max_input_depth(0)
           , is_compute_hapscore(false)
           , is_compute_VQSRmetrics(false)
+          , is_compute_calibration_features(false)
           , calibration_model("default") // default model reports rule-based metrics
           , do_codon_phasing(false)
+          , phasing_window(3)
 
     {}
 
@@ -329,8 +331,11 @@ struct blt_options {
 
     bool is_compute_hapscore;
     bool is_compute_VQSRmetrics;
-    std::string calibration_model;      // which calibration model should we use
-    bool do_codon_phasing;
+    bool is_compute_calibration_features;// For development only, out all features needed im
+    std::string calibration_model;       // Which calibration model should we use
+    bool do_codon_phasing;               // Apply codon phasing
+    int phasing_window;                  // Size of the window we are phasing in, default is codon range (=3)
+
 
     std::string report_filename;
     std::string calibration_models_filename;

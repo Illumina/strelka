@@ -96,6 +96,8 @@ get_starling_shared_option_parser(starling_options& opt) {
      "Turn off block compression in gVCF output")
     ("gvcf-compute-VQSRmetrics", po::value(&opt.is_compute_VQSRmetrics)->zero_tokens(),
      "Report metrics used for VQSR: BaseQRankSum, ReadPosRankSum, MQRankSum and MQ.")
+    ("gvcf-compute-calibration-features", po::value(&opt.is_compute_calibration_features)->zero_tokens(),
+      "Output all features used for calibration model training, development only.")
 
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");

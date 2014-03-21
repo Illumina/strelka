@@ -34,14 +34,13 @@ calibration_models::calibration_models() {
 calibration_models::~calibration_models() {};
 
 void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si) {
-    // create site value feature dict
-    featuremap features = si.get_qscore_features();
 
     if (si.dgt.is_snp && this->model_name!="default") {
 //        for(featuremap::const_iterator it = features.begin(); it != features.end(); ++it)
 //            log_os << it->first << "=" << it->second << " ";
 //        log_os << "\n";
 
+        featuremap features = si.get_qscore_features();     // create site value feature dict
         c_model myModel = this->get_model(this->model_name);
         myModel.score_instance(features,si);
     }
@@ -51,15 +50,32 @@ void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_
     }
 }
 
+void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii){
+//    log_os << "INDEL stat: " << ii.iri.ref_seq << "\n";
+//    log_os << "INDEL seqs: " << ii.iri.vcf_indel_seq << "\n";
+//    bool isInsert = (ii.iri.it==INDEL::INSERT);
+//    log_os << "INDEL seqs: " << isInsert << "\n";
+//    log_os << "\n";
+   if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && this->model_name!="default") {
+       featuremap features = ii.get_qscore_features();
+       c_model myModel = this->get_model(this->model_name);
+       myModel.score_instance(features,ii);
+    }
+    else {
+        // don't know what to do with SWAP and NONE sites, throw them to the old default filters
+        this->default_clasify_site(opt,dopt,ii);
+    }
+
+}
+
+
 void calibration_models::default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si) {
     if (opt.is_min_gqx) {
         if (si.smod.gqx<opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
     }
-
     if (dopt.is_max_depth) {
         if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
-
     // high DPFratio filter
     if (opt.is_max_base_filt) {
         const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
@@ -77,6 +93,11 @@ void calibration_models::default_clasify_site(const gvcf_options& opt, const gvc
         }
     }
 }
+
+void calibration_models::default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii) {
+
+}
+
 
 void calibration_models::set_model(const std::string& name) {
     modelmap::iterator it = this->models.find(name);
