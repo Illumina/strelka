@@ -63,7 +63,7 @@ static
 void
 get_indel_error_prob_hpol_len(const unsigned hpol_len,
                               double& insert_error_prob,
-                              double& delete_error_prob) {
+                              double& delete_error_prob, const std::string context) {
 
     // Calculate p(error) of
     //    CASE: del
@@ -75,21 +75,87 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
     //    Function prob(error)=0.00109573511176/ (1 + exp((9.82226041538-x)/1.03579658224))+8.31843836296e-06
     //    --------------------
 
-    static const double insert_A(1.49133831e-03);
-    static const double insert_B(1.03348683e+01);
-    static const double insert_C(1.13646811e+00);
-    static const double insert_D(1.18488282e-05);
+    // logistic model, fit for AT Reference context
+    if (context=="AT"){
+        static const double insert_A(1.49133831e-03);
+        static const double insert_B(1.03348683e+01);
+        static const double insert_C(1.13646811e+00);
+        static const double insert_D(1.18488282e-05);
 
-    static const double delete_A(1.09573511e-03);
-    static const double delete_B(9.82226042e+00);
-    static const double delete_C(1.03579658e+00);
-    static const double delete_D(8.31843836e-06);
+        static const double delete_A(1.09573511e-03);
+        static const double delete_B(9.82226042e+00);
+        static const double delete_C(1.03579658e+00);
+        static const double delete_D(8.31843836e-06);
 
-    const double insert_g(insert_A/ (1 + std::exp((insert_B-hpol_len)/insert_C))+insert_D);
-    insert_error_prob=(1.-std::exp(-insert_g));
+        const double insert_g(insert_A/ (1 + std::exp((insert_B-hpol_len)/insert_C))+insert_D);
+        insert_error_prob=(1.-std::exp(-insert_g));
 
-    const double delete_g(delete_A/ (1 + std::exp((delete_B-hpol_len)/delete_C))+delete_D);
-    delete_error_prob=(1.-std::exp(-delete_g));
+        const double delete_g(delete_A/ (1 + std::exp((delete_B-hpol_len)/delete_C))+delete_D);
+        delete_error_prob=(1.-std::exp(-delete_g));
+    }
+    else{
+        // new polynomial model, fit for CG reference context
+        static const double insert_A(5.03824e-7);
+        static const double insert_B(3.30572e-10);
+        static const double insert_C(6.99777);
+
+        static const double delete_hpol1_err(5.00057e-5);
+        static const double delete_A(1.09814e-5);
+        static const double delete_B(5.19742e-10);
+        static const double delete_C(6.99256);
+
+        const double insert_g(insert_A*hpol_len+insert_B*std::pow(hpol_len,insert_C));
+        insert_error_prob=(1.-std::exp(-insert_g));
+
+        double delete_g(delete_hpol1_err);
+        if (hpol_len>1) {
+            delete_g = delete_A*hpol_len+delete_B*std::pow(hpol_len,delete_C);
+        }
+        delete_error_prob=(1.-std::exp(-delete_g));
+    }
+}
+
+// return the pre-calculated indel error rate for a given repeat-context and hpol length
+//
+typedef static std::pair<double,double> errorModel;
+void get_pattern_error_model(const std::string pattern,const int hpol,const int indel_length=1){
+
+    // cache results for any realistic homopolymer length:
+    static const unsigned max_hpol_len(40);
+    // Treat everything above indel length 50 the same.
+    static const unsigned max_indel_len(50);
+    static bool is_init(false);
+    std::map<std::string,errorModel> errorMap;
+    // the pair is the spurious value for (insertion,deletion):
+    // stratify by AT and CG case
+    static std::pair<double,double> indel_error_prob_len_AT[max_hpol_len];
+    static std::pair<double,double> indel_error_prob_len_CG[max_hpol_len];
+
+    // initialize error
+    if (! is_init) {
+        double itmp(0);
+        double dtmp(0);
+        for (unsigned i(0); i<max_hpol_len; ++i) {
+            const std::string AT_case = "AT";
+            const std::string CG_case = "CG";
+
+            get_indel_error_prob_hpol_len(i+1,itmp,dtmp,AT_case);
+            indel_error_prob_len_CG[i] = std::make_pair(itmp,dtmp);
+            log_os << i << "_AT: " << itmp <<  " " << dtmp <<  "\n"; //print out test
+            get_indel_error_prob_hpol_len(i+1,itmp,dtmp,CG_case);
+            indel_error_prob_len_AT[i] = std::make_pair(itmp,dtmp);
+            log_os << i << "_CG: " << itmp <<  " " << dtmp <<  "\n"; //print out test
+        }
+        is_init=true;
+    }
+    if ("G"==iri.repeat_unit or "C"==iri.repeat_unit){
+            indel_error_prob_len = indel_error_prob_len_CG;
+//            log_os << "!!!!" << iri.repeat_unit << "\n";
+    }
+    else{
+        indel_error_prob_len = indel_error_prob_len_AT;
+//        log_os << "case" << iri.repeat_unit << "\n";
+    }
 }
 
 
@@ -102,33 +168,8 @@ get_indel_error_prob(const starling_options& client_opt,
                      double& indel_error_prob,
                      double& ref_error_prob) {
 
-    // cache results for any realistic homopolymer length:
-    static const unsigned max_hpol_len(40);
-    static bool is_init(false);
-
-    // the pair is the spurious value for (insertion,deletion):
-    //
-    static std::pair<double,double> indel_error_prob_len[max_hpol_len];
-
-    if (! is_init) {
-        if (! client_opt.is_simple_indel_error) {
-            double itmp(0);
-            double dtmp(0);
-            for (unsigned i(0); i<max_hpol_len; ++i) {
-                get_indel_error_prob_hpol_len(i+1,itmp,dtmp);
-                indel_error_prob_len[i] = std::make_pair(itmp,dtmp);
-//                log_os << i << ": " << itmp <<  " " << dtmp <<  "\n"; //print out test
-            }
-        } else {
-            const double ie(client_opt.simple_indel_error);
-            for (unsigned i(0); i<max_hpol_len; ++i) {
-                indel_error_prob_len[i] = std::make_pair(ie,ie);
-            }
-        }
-        is_init=true;
-    }
-
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
+
 
     if (! is_simple_indel) {
         // breakpoints and swaps --
@@ -156,6 +197,8 @@ get_indel_error_prob(const starling_options& client_opt,
             if       (iri.it == INDEL::INSERT) {
                 indel_error_prob=std::max(indel_error_prob_len[0].first,
                                           std::pow(indel_error_prob_len[ref_hpol_len-1].first,indel_size));
+                //reverse prob that true allele has been masked as reference by chance
+                //may want to leave this term for now.
                 ref_error_prob=std::max(indel_error_prob_len[0].second,
                                         std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
             } else if (iri.it == INDEL::DELETE) {

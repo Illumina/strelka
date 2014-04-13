@@ -385,12 +385,12 @@ finalize_legacy_starling_options(const prog_info& pinfo,
         }
     }
 
-
-    if (! opt.is_call_indels()) {
-        if (opt.is_simple_indel_error) {
-            pinfo.usage("--indel-error-rate has no effect when not calling indels");
-        }
-    }
+// not longer supporting is_simple_indel_error option
+//    if (! opt.is_call_indels()) {
+//        if (opt.is_simple_indel_error) {
+//            pinfo.usage("--indel-error-rate has no effect when not calling indels");
+//        }
+//    }
 
     {
         const bool is_contigs(! opt.indel_contig_filename.empty());

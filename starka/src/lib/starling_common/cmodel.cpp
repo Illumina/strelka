@@ -99,8 +99,14 @@ double c_model::log_odds(featuremap features, featuremap& coeffs) {
 //            log_os << it->first << "=" << it->second << "\n";
             double term = it->second;
             for (unsigned int i=0; i < tokens.size(); i++) {
-                term = term*features[tokens[i]];
-//                log_os << tokens[i] << "=" << features[tokens[i]] << "\n";
+                if (features.find( tokens[i] ) != features.end()){
+                    term = term*features[tokens[i]];
+                    log_os << tokens[i] << "=" << features[tokens[i]] << "\n";
+                }
+                //should not get here, if we havent loaded the feature we are in trouble...
+                else{
+                    log_os << "I dont know feature " << tokens[i] << "\n";
+                }
             }
 //            log_os << "term" << "=" << term << "\n";
 //            log_os << "\n";
@@ -171,13 +177,13 @@ void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut){//, fea
 // joint logistic regression for both SNPs and INDELs
 int c_model::logistic_score(std::string var_case, featuremap features){
     // normalize
-    // log_os << var_case <<"\n";
+//    log_os << var_case <<"\n";
     featuremap norm_features = this->normalize(features,this->pars[var_case]["scalecenter"],this->pars[var_case]["scaleshift"]);
-//    if (var_case=="insertion" || var_case=="deletion"){
+//    if (var_case=="inshet" || var_case=="delhet"){
 //        for (featuremap::const_iterator it = norm_features.begin(); it != norm_features.end(); ++it) {
 //            log_os << it->first << "=" << norm_features[it->first] << "  ";
 //        }
-        //log_os << "\n\n";
+//        log_os << "\n\n";
 //    }
 
     //calculates log-odds ratio
@@ -188,12 +194,14 @@ int c_model::logistic_score(std::string var_case, featuremap features){
     return Qscore;
 }
 
+
+
 //score snp case
 void c_model::score_instance(featuremap features, site_info& si) {
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
-        std::string var_case = "homsnp";
+        std::string var_case = "snphom";
         if (si.is_het()){
-            var_case = "hetsnp";
+            var_case = "snphet";
         }
         si.Qscore = logistic_score(var_case, features);
 //        featuremap most_pred; //place-holder
@@ -203,6 +211,9 @@ void c_model::score_instance(featuremap features, site_info& si) {
         //        log_os << "Im doing a logistic model" << "\n";
         #endif
     }
+//    else if(this->model_type=="RFtree"){
+//        si.Qscore = rf_score(var_case, features);
+//    }
     else if (this->model_type=="RULE") { //case we are using a rule based model
         this->do_rule_model(this->pars["snp"]["cutoff"],si);
     }
@@ -211,21 +222,19 @@ void c_model::score_instance(featuremap features, site_info& si) {
 // score indel case
 void c_model::score_instance(featuremap features, indel_info& ii){
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
-        std::string var_case = "deletion";
+        std::string var_case = "delhet";
         if (ii.iri.it==INDEL::INSERT){
-            var_case = "insertion";
+            var_case = "inshet";
         }
         ii.Qscore = logistic_score(var_case, features);
 //        log_os << "my Q=" << ii.Qscore << "\n";
         // set filters according to q-scores
 //        featuremap most_pred; //place-holder
         this->apply_qscore_filters(ii,static_cast<int>(this->pars[var_case]["qcutoff"]["Q"]));
-
-#ifdef DEBUG_MODEL
-//        log_os << "Im doing a logistic model" << "\n";
-#endif
-
     }
+//    else if(this->model_type=="RFtree"){
+//        si.Qscore = rf_score(var_case, features);
+//    }
     else if (this->model_type=="RULE") { //case we are using a rule based model
         this->do_rule_model(this->pars["snp"]["cutoff"],ii);
     }

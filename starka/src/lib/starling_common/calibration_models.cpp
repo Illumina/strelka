@@ -24,9 +24,9 @@
 
 //#define DEBUG_CAL
 
-#ifdef DEBUG_CAL
+//#ifdef DEBUG_CAL
 #include "blt_util/log.hh"
-#endif
+//#endif
 
 calibration_models::calibration_models() {
     this->set_model("default");
@@ -59,6 +59,7 @@ void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_
    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && this->model_name!="default") {
        featuremap features = ii.get_qscore_features();
        c_model myModel = this->get_model(this->model_name);
+//       log_os << this->model_name << "\n";
        myModel.score_instance(features,ii);
     }
     else {
