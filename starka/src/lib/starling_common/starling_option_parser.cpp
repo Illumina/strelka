@@ -295,7 +295,7 @@ write_starling_legacy_options(std::ostream& os) {
        "                      value is used by the indel-caller only. (default: " << default_opt.indel_nonsite_match_prob << ")\n"
        " -report-range-begin n\n"
        "                    - Event reports and coverage begin at base n\n"
-       "                      (default: 0)\n"
+       "                      (default: 1)\n"
        " -report-range-end n\n"
        "                    - Event reports and coverage end after base n or min(n,ref_size) if reference\n"
        "                      specified.\n"
