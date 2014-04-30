@@ -56,6 +56,7 @@ struct gvcf_options {
         , block_abs_tol(3)
         , is_block_compression(true)
         , block_max_nonref(.2)
+        , minor_allele_file("")
     {}
 
     // admin/other:
@@ -88,6 +89,7 @@ struct gvcf_options {
     bool is_block_compression;
 
     double block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
+    std::string minor_allele_file; //
 };
 
 
@@ -339,6 +341,7 @@ struct blt_options {
 
     std::string report_filename;
     std::string calibration_models_filename;
+    std::string minor_allele_bed;
 
     gvcf_options gvcf;
 };

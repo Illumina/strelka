@@ -183,12 +183,18 @@ gvcf_aggregator(const starling_options& opt,
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
 
+    // read in sites that should not be block-compressed
+    if (static_cast<int>(opt.minor_allele_bed.length())>2){   // hacky, check if the bed file has been set
+        this->gvcf_comp.read_bed(opt.minor_allele_bed);
+    }
+
     if (! opt.is_gvcf_output()) return;
 
     // initialize codonPhaser
 
     if (_opt.do_codon_phasing) {
 //        codon_phaser = Codon_phaser();
+
 #ifdef DEBUG_GVCF
         //log_os << "I have a phaser" << "\n";
 #endif
@@ -387,7 +393,6 @@ get_hap_cigar(ALIGNPATH::path_t& apath,
     }
 }
 
-
 // figure out the per-site ploidy inside of indel based on each haplotype's match descriptor:
 static
 void
@@ -408,37 +413,17 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
     }
 }
 
-// is the current site eligible to even be considered for block compression?
-static
-bool
-is_site_record_blockable(const gvcf_options& opt,
-                         const site_info& si) {
-
-    if (! opt.is_block_compression) return false;
-
-    if (si.dgt.is_snp) return false;
-
-    if (si.ref!='N') {
-        const double reffrac(static_cast<double>(si.known_counts[si.dgt.ref_gt]) /
-                             static_cast<double>(si.n_used_calls));
-        if (reffrac+opt.block_max_nonref <= 1) return false;
-    }
-    return true;
-}
-
 // queue site record for writing, after
 // possibly joining it into a compressed non-variant block
 //
 void
 gvcf_aggregator::
 queue_site_record(const site_info& si) {
-
-    if (! is_site_record_blockable(_opt.gvcf,si)) {
+    if (! this->gvcf_comp.is_site_compressable(_opt.gvcf,si)) {
         write_block_site_record();
         write_site_record(si);
         return;
     }
-
     if (! _block.test(si)) {
         write_block_site_record();
     }
@@ -462,7 +447,6 @@ print_vcf_alt(const unsigned gt,
     }
     if (! is_print) os << '.';
 }
-
 
 
 static

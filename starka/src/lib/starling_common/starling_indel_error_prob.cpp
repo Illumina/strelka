@@ -27,38 +27,6 @@
 #include <utility>
 
 
-// Previous indel model fitted to chrX/eColi data
-//static
-//void
-//get_indel_error_prob_hpol_len_legacy(const unsigned hpol_len,
-//                              double& insert_error_prob,
-//                              double& delete_error_prob) {
-//
-//    // indel error model parameters for P(error) = Ax+Bx^C, where x=hpol_len
-//    // note that fit does not cover length 1 deletions,
-//    // for which the estimated value is instead provided directly
-//    //
-//    // \todo get these parameters out of the code!
-//    //
-//    static const double insert_A(5.03824e-7);
-//    static const double insert_B(3.30572e-10);
-//    static const double insert_C(6.99777);
-//
-//    static const double delete_hpol1_err(3.00057e-6);
-//    static const double delete_A(1.09814e-5);
-//    static const double delete_B(5.19742e-10);
-//    static const double delete_C(6.99256);
-//
-//    const double insert_g(insert_A*hpol_len+insert_B*std::pow(hpol_len,insert_C));
-//    insert_error_prob=(1.-std::exp(-insert_g));
-//
-//    double delete_g(delete_hpol1_err);
-//    if (hpol_len>1) {
-//        delete_g = delete_A*hpol_len+delete_B*std::pow(hpol_len,delete_C);
-//    }
-//    delete_error_prob=(1.-std::exp(-delete_g));
-//}
-
 static
 void
 get_indel_error_prob_hpol_len(const unsigned hpol_len,
@@ -116,20 +84,20 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
 }
 
 // return the pre-calculated indel error rate for a given repeat-context and hpol length
-//
-typedef static std::pair<double,double> errorModel;
-void get_pattern_error_model(const std::string pattern,const int hpol,const int indel_length=1){
+static const unsigned max_hpol_len(40);
+typedef std::pair<double,double> error_model[max_hpol_len];
+
+error_model& get_pattern_error_model(std::string pattern="A",const int indel_length=1){
 
     // cache results for any realistic homopolymer length:
-    static const unsigned max_hpol_len(40);
     // Treat everything above indel length 50 the same.
-    static const unsigned max_indel_len(50);
+    // static const unsigned max_indel_len(50);
     static bool is_init(false);
-    std::map<std::string,errorModel> errorMap;
+    std::map<std::string,error_model> errorMap;
     // the pair is the spurious value for (insertion,deletion):
     // stratify by AT and CG case
-    static std::pair<double,double> indel_error_prob_len_AT[max_hpol_len];
-    static std::pair<double,double> indel_error_prob_len_CG[max_hpol_len];
+    static error_model indel_error_prob_len_AT;
+    static error_model indel_error_prob_len_CG;
 
     // initialize error
     if (! is_init) {
@@ -141,20 +109,18 @@ void get_pattern_error_model(const std::string pattern,const int hpol,const int 
 
             get_indel_error_prob_hpol_len(i+1,itmp,dtmp,AT_case);
             indel_error_prob_len_CG[i] = std::make_pair(itmp,dtmp);
-            log_os << i << "_AT: " << itmp <<  " " << dtmp <<  "\n"; //print out test
+//            log_os << i << "_AT: " << itmp <<  " " << dtmp <<  "\n"; //print out test
             get_indel_error_prob_hpol_len(i+1,itmp,dtmp,CG_case);
             indel_error_prob_len_AT[i] = std::make_pair(itmp,dtmp);
-            log_os << i << "_CG: " << itmp <<  " " << dtmp <<  "\n"; //print out test
+//            log_os << i << "_CG: " << itmp <<  " " << dtmp <<  "\n"; //print out test
         }
         is_init=true;
     }
-    if ("G"==iri.repeat_unit or "C"==iri.repeat_unit){
-            indel_error_prob_len = indel_error_prob_len_CG;
-//            log_os << "!!!!" << iri.repeat_unit << "\n";
+    if ("G"==pattern or "C"==pattern){
+        return indel_error_prob_len_CG;
     }
     else{
-        indel_error_prob_len = indel_error_prob_len_AT;
-//        log_os << "case" << iri.repeat_unit << "\n";
+        return indel_error_prob_len_AT;
     }
 }
 
@@ -170,6 +136,7 @@ get_indel_error_prob(const starling_options& client_opt,
 
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
+    error_model indel_error_prob_len = get_pattern_error_model(iri.repeat_unit);
 
     if (! is_simple_indel) {
         // breakpoints and swaps --

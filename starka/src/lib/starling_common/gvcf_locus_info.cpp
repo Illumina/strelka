@@ -45,8 +45,8 @@ write_filters(std::ostream& os) const {
 std::map<std::string, double> indel_info::get_qscore_features() {
     this->calc_vqsr_metrics();
     std::map<std::string, double> res;
-    res["F_GQX"]              = imod.gqx;
-    res["F_GQ"]               = imod.gq;
+    res["F_GQX"]            = imod.gqx;
+    res["F_GQ"]             = imod.gq;
     res["REFREP"]           = iri.ref_repeat_count;
     res["LENGTH"]           = ik.length;
     res["IDREP"]            = iri.indel_repeat_count;

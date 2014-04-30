@@ -22,6 +22,7 @@
 #include "starling_common/gvcf_locus_info.hh"
 //#include "starling_common/codon_phaser.hh"
 #include "starling_common/calibration_models.hh"
+#include "starling_common/gvcf_compressor.hh"
 
 #include <iosfwd>
 // moved declaration to calibration_models.hh
@@ -142,5 +143,6 @@ private:
 
     //Codon_phaser codon_phaser;
     calibration_models CM;
+    gvcf_compressor gvcf_comp;
 };
 

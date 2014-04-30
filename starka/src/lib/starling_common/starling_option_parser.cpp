@@ -98,6 +98,8 @@ get_starling_shared_option_parser(starling_options& opt) {
      "Report metrics used for VQSR: BaseQRankSum, ReadPosRankSum, MQRankSum and MQ.")
     ("gvcf-compute-calibration-features", po::value(&opt.is_compute_calibration_features)->zero_tokens(),
       "Output all features used for calibration model training, development only.")
+    ("minor-allele-bed-file",  po::value(&opt.minor_allele_bed)->default_value(""),
+      "Bed file with sites that should not be block-compressed if hom-ref.")
 
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
