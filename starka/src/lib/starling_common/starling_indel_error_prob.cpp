@@ -87,7 +87,7 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
 static const unsigned max_hpol_len(40);
 typedef std::pair<double,double> error_model[max_hpol_len];
 
-error_model& get_pattern_error_model(std::string pattern="A",const int indel_length=1){
+error_model& get_pattern_error_model(const std::string overall_error_model, std::string pattern="A",const int indel_length=1){
 
     // cache results for any realistic homopolymer length:
     // Treat everything above indel length 50 the same.
@@ -116,12 +116,25 @@ error_model& get_pattern_error_model(std::string pattern="A",const int indel_len
         }
         is_init=true;
     }
-    if ("G"==pattern or "C"==pattern){
-        return indel_error_prob_len_CG;
+
+    // choose the error model based on
+    if (overall_error_model=="old"){
+//        log_os << "Using indel error model: " << overall_error_model << "\n";
+        return indel_error_prob_len_CG; // for now this is the old polynomial model
+    }
+    else if (overall_error_model=="stratified"){
+
+        if ("G"==pattern or "C"==pattern){
+            return indel_error_prob_len_CG;
+        }
+        else{
+            return indel_error_prob_len_AT;
+        }
     }
     else{
         return indel_error_prob_len_AT;
     }
+
 }
 
 
@@ -136,7 +149,7 @@ get_indel_error_prob(const starling_options& client_opt,
 
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
-    error_model indel_error_prob_len = get_pattern_error_model(iri.repeat_unit);
+    error_model indel_error_prob_len = get_pattern_error_model(client_opt.indel_error_model,iri.repeat_unit);
 
     if (! is_simple_indel) {
         // breakpoints and swaps --

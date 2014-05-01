@@ -2,7 +2,7 @@
  * gvcfcompressor.cpp
  *
  *  Created on: Feb 21, 2014
- *      Author: Morten Kallberg
+ *  Author: Morten Kallberg
  */
 
 #include "gvcf_compressor.hh"
@@ -33,7 +33,7 @@ gvcf_compressor::gvcf_compressor() {
     this->minor_allele_loaded = false;
 }
 
-void gvcf_compressor::read_bed(const std::string input_file){
+void gvcf_compressor::read_bed(const std::string& input_file, const std::string& chrom){
 	using namespace boost::algorithm;
 	   std::ifstream myReadFile;
 	   std::cout << "reading bed \n";
@@ -44,12 +44,12 @@ void gvcf_compressor::read_bed(const std::string input_file){
 	    if (myReadFile.is_open()) {
 	        while (!myReadFile.eof()) {
 	            std::getline (myReadFile,output);
-	            boost::replace_all(output, "chr", "");
+//	            boost::replace_all(output, "chr", "");
 	            std::vector<std::string> tokens;
 //	            std::cout  << output << "\n";
 	            split(tokens, output, is_any_of("\t")); // tokenize string
 //	            //case new model
-	            if (tokens.size()>3){
+	            if (tokens.size()>3 && tokens.at(0)==chrom){
 //	                std::cout  << tokens.at(0) << "\n";
 //	                int my_pos = atoi( tokens.at(1).c_str() );
 //	                std::cout  << pos << "\n";
@@ -58,7 +58,8 @@ void gvcf_compressor::read_bed(const std::string input_file){
 	            }
 	        }
 	   }
-	    this->minor_allele_loaded = true;
+	   this->my_chrom = chrom;
+	   this->minor_allele_loaded = true;
 }
 
 bool gvcf_compressor::is_minor_allele_site(const std::string chr, const int pos){
@@ -93,16 +94,7 @@ bool gvcf_compressor::is_site_compressable(const gvcf_options& opt, const site_i
     }
 
     // check if site is in the pre-specified site that are not to be block-compressed
-    if (this->minor_allele_loaded && this->is_minor_allele_site("1",static_cast<int>(si.pos))) return false;
+    if (this->minor_allele_loaded && this->is_minor_allele_site(this->my_chrom,static_cast<int>(si.pos))) return false;
 
     return true;
 }
-
-// for some testing
-//using namespace std;
-//int main()
-//{
-//	gvcf_compressor comp();
-//	comp.read_bed("/home/kallberg/RefMinorAllele.bed");
-//	return(0);
-//}

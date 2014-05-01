@@ -185,7 +185,7 @@ gvcf_aggregator(const starling_options& opt,
 
     // read in sites that should not be block-compressed
     if (static_cast<int>(opt.minor_allele_bed.length())>2){   // hacky, check if the bed file has been set
-        this->gvcf_comp.read_bed(opt.minor_allele_bed);
+        this->gvcf_comp.read_bed(opt.minor_allele_bed,opt.bam_seq_name.c_str());
     }
 
     if (! opt.is_gvcf_output()) return;
@@ -419,6 +419,8 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
 void
 gvcf_aggregator::
 queue_site_record(const site_info& si) {
+
+    //test for basic blocking criteria
     if (! this->gvcf_comp.is_site_compressable(_opt.gvcf,si)) {
         write_block_site_record();
         write_site_record(si);
