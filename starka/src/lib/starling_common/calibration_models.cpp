@@ -41,8 +41,11 @@ void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_
 //        log_os << "\n";
 
         featuremap features = si.get_qscore_features();     // create site value feature dict
-        c_model myModel = this->get_model(this->model_name);
-        myModel.score_instance(features,si);
+//        for(featuremap::const_iterator it = features.begin(); it != features.end(); ++it)
+//            log_os << it->first << "=" << it->second << " ";
+//        log_os << "\n";
+            c_model myModel = this->get_model(this->model_name);
+            myModel.score_instance(features,si);
     }
     else {
         // don't know what to do with this site, throw it to the old default filters
@@ -95,6 +98,7 @@ void calibration_models::default_clasify_site(const gvcf_options& opt, const gvc
     }
 }
 
+// TODO default indel model here
 void calibration_models::default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii) {
 
 }
@@ -115,7 +119,24 @@ void calibration_models::set_model(const std::string& name) {
 }
 
 c_model& calibration_models::get_model(std::string& name) {
-    return this->models.find(name)->second;
+    modelmap::iterator it = this->models.find(name);
+    if(it != this->models.end())
+    {
+//        log_os << "I do know model " << name << "\n";
+        return this->models.find(name)->second;
+    }
+    else{
+        log_os << "I dont know model " << name << "\n";
+    }
+}
+
+void calibration_models::add_model_pars(std::string& name,parmap& my_pars) {
+        #ifdef DEBUG_CAL
+                log_os << "Adding pars for model " << name << "\n";
+                log_os << "Adding pars " << my_pars.size() << "\n";
+        #endif
+        this->get_model(name).add_parameters(my_pars);
+        my_pars.clear();
 }
 
 
@@ -140,11 +161,7 @@ void calibration_models::load_models(std::string model_file) {
             //case new model
             if (tokens.at(0).substr(0,3)=="###") {
                 if (pars.size()>0) {
-#ifdef DEBUG_CAL
-                    log_os << "Adding pars " << pars.size() << "\n";
-#endif
-                    this->get_model(current_name).add_parameters(pars);
-                    pars.clear();
+                    this->add_model_pars(current_name,pars);
                 }
                 current_name = tokens.at(1);
                 c_model current_model(tokens.at(1),tokens.at(2));
@@ -156,7 +173,7 @@ void calibration_models::load_models(std::string model_file) {
             //load submodel
             else if (tokens.at(0)=="#") {
 #ifdef DEBUG_CAL
-                log_os << "submodel: " << tokens.at(1) << " parspace: " << tokens.at(2) << "\n";
+                //log_os << "submodel: " << tokens.at(1) << " parspace: " << tokens.at(2) << "\n";
 #endif
                 submodel = tokens.at(1);
                 parspace = tokens.at(2);
@@ -164,10 +181,14 @@ void calibration_models::load_models(std::string model_file) {
             //case load parameters
             else {
                 if (tokens.size()>1) {
+                    #ifdef DEBUG_CAL
+                                    //log_os << " setting " << tokens.at(0) << " = " << tokens.at(1) << "\n";
+                    #endif
                     pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
                 }
             }
         }
+        this->add_model_pars(current_name,pars);
     }
 #ifdef DEBUG_CAL
     log_os << "Done loading models" << "\n";

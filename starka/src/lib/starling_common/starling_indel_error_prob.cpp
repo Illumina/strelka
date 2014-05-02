@@ -107,12 +107,12 @@ error_model& get_pattern_error_model(const std::string overall_error_model, std:
             const std::string AT_case = "AT";
             const std::string CG_case = "CG";
 
-            get_indel_error_prob_hpol_len(i+1,itmp,dtmp,AT_case);
-            indel_error_prob_len_CG[i] = std::make_pair(itmp,dtmp);
-//            log_os << i << "_AT: " << itmp <<  " " << dtmp <<  "\n"; //print out test
             get_indel_error_prob_hpol_len(i+1,itmp,dtmp,CG_case);
-            indel_error_prob_len_AT[i] = std::make_pair(itmp,dtmp);
+            indel_error_prob_len_CG[i] = std::make_pair(itmp,dtmp);
 //            log_os << i << "_CG: " << itmp <<  " " << dtmp <<  "\n"; //print out test
+            get_indel_error_prob_hpol_len(i+1,itmp,dtmp,AT_case);
+            indel_error_prob_len_AT[i] = std::make_pair(itmp,dtmp);
+//            log_os << i << "_AT: " << itmp <<  " " << dtmp <<  "\n"; //print out test
         }
         is_init=true;
     }
@@ -149,6 +149,8 @@ get_indel_error_prob(const starling_options& client_opt,
 
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
+//    log_os << "Indel model " << client_opt.indel_error_model << "\n";
+
     error_model indel_error_prob_len = get_pattern_error_model(client_opt.indel_error_model,iri.repeat_unit);
 
     if (! is_simple_indel) {
@@ -163,6 +165,7 @@ get_indel_error_prob(const starling_options& client_opt,
         // treat everything besides simple homopolymer
         // contractions/expansions as homopolymer length 1:
         //
+//        log_os << "Im doing in indels \n";
         if (iri.repeat_unit.size() == 1) {
             static const unsigned one(1);
             const unsigned ref_hpol_len = std::min(std::max(iri.ref_repeat_count,one),max_hpol_len);
@@ -174,24 +177,25 @@ get_indel_error_prob(const starling_options& client_opt,
                                      static_cast<long>(iri.indel_repeat_count)));
             }
 
-            if       (iri.it == INDEL::INSERT) {
-                indel_error_prob=std::max(indel_error_prob_len[0].first,
-                                          std::pow(indel_error_prob_len[ref_hpol_len-1].first,indel_size));
-                //reverse prob that true allele has been masked as reference by chance
-                //may want to leave this term for now.
-                ref_error_prob=std::max(indel_error_prob_len[0].second,
-                                        std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
-            } else if (iri.it == INDEL::DELETE) {
-                indel_error_prob=std::max(indel_error_prob_len[0].second,
-                                          std::pow(indel_error_prob_len[ref_hpol_len-1].second,indel_size));
-                ref_error_prob=std::max(indel_error_prob_len[0].first,
-                                        std::pow(indel_error_prob_len[indel_hpol_len-1].first,indel_size));
-            } else {
-                log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
-                throw blt_exception("Unknown indel type.");
-            }
+        if       (iri.it == INDEL::INSERT) {
+            indel_error_prob=std::max(indel_error_prob_len[0].first,
+                                      std::pow(indel_error_prob_len[ref_hpol_len-1].first,indel_size));
+            log_os << "error prob: " << indel_error_prob_len[ref_hpol_len-1].first << "\n";
+            //reverse prob that true allele has been masked as reference by chance
+            //may want to leave this term for now.
+            ref_error_prob=std::max(indel_error_prob_len[0].second,
+                                    std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
+        } else if (iri.it == INDEL::DELETE) {
+            indel_error_prob=std::max(indel_error_prob_len[0].second,
+                                      std::pow(indel_error_prob_len[ref_hpol_len-1].second,indel_size));
+            ref_error_prob=std::max(indel_error_prob_len[0].first,
+                                    std::pow(indel_error_prob_len[indel_hpol_len-1].first,indel_size));
         } else {
-            if       (iri.it == INDEL::INSERT) {
+            log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
+            throw blt_exception("Unknown indel type.");
+        }
+        } else {
+            if (iri.it == INDEL::INSERT) {
                 indel_error_prob=indel_error_prob_len[0].first;
                 ref_error_prob=indel_error_prob_len[0].second;
             } else if (iri.it == INDEL::DELETE) {

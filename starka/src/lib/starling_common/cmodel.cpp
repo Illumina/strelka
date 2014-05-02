@@ -78,9 +78,17 @@ void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii) {
 //Transform the features with the specified scaling parameters that were used to standardize
 //the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
 featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor) {
+//    log_os << "normalizing" << "\n";
+//    log_os << adjust_factor.size() << "\n";
+//    log_os << features.size() << "\n";
+//    for (featuremap::const_iterator it = features.begin(); it != features.end(); ++it) { // only normalize the features that are needed
+//        log_os << it->first << "=" << features[it->first] << "  ";
+//    }
+//    log_os << "\n";
     for (featuremap::const_iterator it = norm_factor.begin(); it != norm_factor.end(); ++it) { // only normalize the features that are needed
-        //log_os << it->first << "=" << features[it->first] << "  ";
+//        log_os << it->first << "=" << features[it->first] << "  " << "\n";
         features[it->first] = (features[it->first]-adjust_factor[it->first])/norm_factor[it->first];
+//        log_os << it->first << "=" << features[it->first] << "  " << "\n";
     }
 //    log_os << "\n";
     return features;
@@ -101,15 +109,15 @@ double c_model::log_odds(featuremap features, featuremap& coeffs) {
             for (unsigned int i=0; i < tokens.size(); i++) {
                 if (features.find( tokens[i] ) != features.end()){
                     term = term*features[tokens[i]];
-                    log_os << tokens[i] << "=" << features[tokens[i]] << "\n";
+//                    log_os << tokens[i] << "=" << features[tokens[i]] << "\n";
                 }
                 //should not get here, if we havent loaded the feature we are in trouble...
                 else{
                     log_os << "I dont know feature " << tokens[i] << "\n";
                 }
             }
-//            log_os << "term" << "=" << term << "\n";
 //            log_os << "\n";
+//            log_os << "term" << "=" << term << "\n";
             // use term to determine the most predictive parameter
             sum += term;
 //            log_os << "sum " << "=" << sum << "\n";
@@ -150,10 +158,11 @@ int prior_adjustment(
     #endif
 
     // cap the score at 40
-    if (qscore>40)
-        qscore = 40;
+    if (qscore>60)
+        qscore = 60;
     if (qscore<1){
-//        log_os << qscore << std::endl;
+//       log_os << "Raw score " << raw_score << std::endl;
+//       log_os << "Qscore "<< qscore << std::endl;
         qscore = 1;
     }
     // TODO check for inf and NaN artifacts
@@ -163,22 +172,25 @@ int prior_adjustment(
 void c_model::apply_qscore_filters(site_info& si, const int qscore_cut){//, featuremap& most_predictive) {
 //    most_predictive.size();
     if (si.Qscore < qscore_cut) {
-        si.smod.set_filter(VCF_FILTERS::LowGQX); // more sophisticated filter setting here
+        si.smod.set_filter(VCF_FILTERS::LowQscore); // more sophisticated filter setting here
     }
 }
 
 void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut){//, featuremap& most_predictive) {
 //    most_predictive.size();
     if (ii.Qscore < qscore_cut) {
-        ii.imod.set_filter(VCF_FILTERS::LowGQX);
+        ii.imod.set_filter(VCF_FILTERS::LowQscore);
     }
 }
 
 // joint logistic regression for both SNPs and INDELs
 int c_model::logistic_score(std::string var_case, featuremap features){
     // normalize
-//    log_os << var_case <<"\n";
-    featuremap norm_features = this->normalize(features,this->pars[var_case]["scalecenter"],this->pars[var_case]["scaleshift"]);
+//    log_os << features.size() << "\n";
+//    log_os << var_case << "\n";
+//    log_os << "Total submodels" << this->pars.size() << "\n";
+//    log_os << this->pars[var_case].size() << "\n";
+    featuremap norm_features = this->normalize(features,this->pars[var_case]["CenterVal"],this->pars[var_case]["ScaleVal"]);
 //    if (var_case=="inshet" || var_case=="delhet"){
 //        for (featuremap::const_iterator it = norm_features.begin(); it != norm_features.end(); ++it) {
 //            log_os << it->first << "=" << norm_features[it->first] << "  ";
@@ -187,10 +199,12 @@ int c_model::logistic_score(std::string var_case, featuremap features){
 //    }
 
     //calculates log-odds ratio
-    double raw_score = this->log_odds(norm_features,this->pars[var_case]["coefs"]);
+    double raw_score = this->log_odds(norm_features,this->pars[var_case]["Coefs"]);
 
     // adjust by prior and calculate q-score
-    int Qscore = prior_adjustment(raw_score,this->pars[var_case]["priors"]["minorityPrior"]);
+//    log_os << "My prior " << this->pars[var_case]["Priors"]["fp.prior"] << "\n";
+//    log_os << "Raw score " << raw_score << "\n";
+    int Qscore = prior_adjustment(raw_score,this->pars[var_case]["Priors"]["fp.prior"]);
     return Qscore;
 }
 
@@ -198,20 +212,21 @@ int c_model::logistic_score(std::string var_case, featuremap features){
 
 //score snp case
 void c_model::score_instance(featuremap features, site_info& si) {
-    if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
+    //TODO turn of default to else
+    if (this->model_type=="LOGISTIC" && false) { //case we are using a logistic regression mode
         std::string var_case = "snphom";
         if (si.is_het()){
             var_case = "snphet";
         }
+//       #ifdef DEBUG_MODEL
+//               log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
+//       #endif
         si.Qscore = logistic_score(var_case, features);
-//        featuremap most_pred; //place-holder
-        this->apply_qscore_filters(si,static_cast<int>(this->pars[var_case]["qcutoff"]["Q"])); // set filters according to q-scores
-
-        #ifdef DEBUG_MODEL
-        //        log_os << "Im doing a logistic model" << "\n";
-        #endif
+//        log_os << "Adding in pars || " << this->pars.size() << "\n";
+//        log_os << "Q cut " <<  << "\n";
+        this->apply_qscore_filters(si,static_cast<int>(this->pars[var_case]["PassThreshold"]["Q"])); // set filters according to q-scores
     }
-//    else if(this->model_type=="RFtree"){
+//    else if(this->model_type=="RFtree"){ // place-holder, put random forest here
 //        si.Qscore = rf_score(var_case, features);
 //    }
     else if (this->model_type=="RULE") { //case we are using a rule based model
@@ -226,11 +241,13 @@ void c_model::score_instance(featuremap features, indel_info& ii){
         if (ii.iri.it==INDEL::INSERT){
             var_case = "inshet";
         }
+//        log_os << var_case << "\n";
+//        log_os << "" << this->pars[var_case]["PassThreshold"]["Q"] << "\n";
         ii.Qscore = logistic_score(var_case, features);
 //        log_os << "my Q=" << ii.Qscore << "\n";
         // set filters according to q-scores
 //        featuremap most_pred; //place-holder
-        this->apply_qscore_filters(ii,static_cast<int>(this->pars[var_case]["qcutoff"]["Q"]));
+        this->apply_qscore_filters(ii,static_cast<int>(this->pars[var_case]["PassThreshold"]["Q"]));
     }
 //    else if(this->model_type=="RFtree"){
 //        si.Qscore = rf_score(var_case, features);

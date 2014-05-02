@@ -47,14 +47,21 @@ std::map<std::string, double> indel_info::get_qscore_features() {
     std::map<std::string, double> res;
     res["F_GQX"]            = imod.gqx;
     res["F_GQ"]             = imod.gq;
-    res["REFREP"]           = iri.ref_repeat_count;
+    res["REFREP1"]           = iri.ref_repeat_count;
     res["LENGTH"]           = ik.length;
     res["IDREP"]            = iri.indel_repeat_count;
-    res["RU"]               = iri.repeat_unit.length(); //isri.depth;               //This feature actually means the length of the RU string
-    res["MQ"]               = MQ;
-    res["ReadPosRankSum"]   = ReadPosRankSum;
-    res["BaseQRankSum"]     = BaseQRankSum;
-    res["MQRankSum"]        = MQRankSum;
+//    res["IDREP1"]            = iri.indel_repeat_count;
+    res["RULEN1"]           = iri.repeat_unit.length(); //isri.depth;               //This feature actually means the length of the RU string
+
+    unsigned ref_count(0);
+    ref_count = std::max(ref_count,isri.n_q30_ref_reads);
+    res["AD0"]              = ref_count;
+    res["AD1"]              = isri.n_q30_indel_reads;
+    res["F_DPI"]            = isri.depth;
+//    res["MQ"]               = MQ;
+//    res["ReadPosRankSum"]   = ReadPosRankSum;
+//    res["BaseQRankSum"]     = BaseQRankSum;
+//    res["MQRankSum"]        = MQRankSum;
     return res;
 }
 
@@ -69,28 +76,28 @@ void indel_info::calc_vqsr_metrics(){
 
 std::map<std::string, double> site_info::get_qscore_features() {
     std::map<std::string, double> res;
-    res["GQX"]              = smod.gqx;
-    res["GQ"]               = smod.gq;
-    res["SNVSB"]            = dgt.sb;
-    res["SNVHPOL"]          = hpol;
-    res["DP"]               = n_used_calls;
-    res["DPF"]              = n_unused_calls;
-    res["AD"]               = known_counts[dgt.ref_gt];
-    res["AD2"]              = 0.0;          // set below
-    res["MQ"]               = MQ;
-    res["ReadPosRankSum"]   = ReadPosRankSum;
-    res["BaseQRankSum"]     = BaseQRankSum;
-    res["MQRankSum"]        = MQRankSum;
+    res["F_GQX"]              = smod.gqx;
+    res["F_GQ"]               = smod.gq;
+    res["I_SNVSB"]            = dgt.sb;
+    res["I_SNVHPOL"]          = hpol;
+    res["F_DP"]               = n_used_calls;
+    res["F_DPF"]              = n_unused_calls;
+    res["AD0"]                = known_counts[dgt.ref_gt];
+    res["AD1"]                = 0.0;          // set below
+    res["I_MQ"]               = MQ;
+    res["I_ReadPosRankSum"]   = ReadPosRankSum;
+    res["I_BaseQRankSum"]     = BaseQRankSum;
+    res["I_MQRankSum"]        = MQRankSum;
     for (unsigned b(0); b<N_BASE; ++b) {
         if (b==dgt.ref_gt) continue;
         if (DIGT::expect2(b,smod.max_gt))
-            res["AD2"] =  known_counts[b];
+            res["AD1"] =  known_counts[b];
     }
-    if ((res["DP"]+res["DPF"])>0.0) {
-        res["VFStar"]           = res["AD2"]/(res["DP"]+res["DPF"]); //VFStar = AD2/(DP+DPF);
+    if ((res["F_DP"]+res["F_DPF"])>0.0) {
+        res["VFStar"]           = res["AD1"]/(res["DP"]+res["DPF"]); //VFStar = AD2/(DP+DPF);
     }
     else {
-        res["VFStar"]           = res["AD2"]/(30.0); //default hack for
+        res["VFStar"]           = res["AD1"]/(30.0); //default hack for
     }
     return res;
 }

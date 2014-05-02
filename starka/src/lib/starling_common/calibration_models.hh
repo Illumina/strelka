@@ -41,6 +41,8 @@ public:
     // mimics behaviour of previous hard filters
     void default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si);
     void default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii);
+
+    void add_model_pars(std::string& name,parmap& my_pars);
 private:
     typedef std::map<std::string,c_model> modelmap;
     typedef std::map<std::string, double> featuremap;
