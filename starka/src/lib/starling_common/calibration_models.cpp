@@ -6,9 +6,6 @@
  */
 
 #include "calibration_models.hh"
-//#include <boost/property_tree/ptree.hpp>
-//#include <boost/property_tree/json_parser.hpp>
-//#include <boost/foreach.hpp>
 #include <cassert>
 #include <exception>
 #include <sstream>
@@ -54,22 +51,14 @@ void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_
 }
 
 void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii){
-//    log_os << "INDEL stat: " << ii.iri.ref_seq << "\n";
-//    log_os << "INDEL seqs: " << ii.iri.vcf_indel_seq << "\n";
-//    bool isInsert = (ii.iri.it==INDEL::INSERT);
-//    log_os << "INDEL seqs: " << isInsert << "\n";
-//    log_os << "\n";
-   if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && this->model_name!="default") {
+    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && this->model_name!="default") {
        featuremap features = ii.get_qscore_features();
        c_model myModel = this->get_model(this->model_name);
-//       log_os << this->model_name << "\n";
        myModel.score_instance(features,ii);
     }
     else {
-        // don't know what to do with SWAP and NONE sites, throw them to the old default filters
         this->default_clasify_site(opt,dopt,ii);
     }
-
 }
 
 
@@ -100,7 +89,7 @@ void calibration_models::default_clasify_site(const gvcf_options& opt, const gvc
 
 // TODO default indel model here
 void calibration_models::default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii) {
-
+    log_os << "classify indel site";
 }
 
 

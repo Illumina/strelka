@@ -520,11 +520,6 @@ write_site_record(const site_info& si) const {
                 os << ';';
                 os << "HaplotypeScore=" << si.hapscore;
             }
-            //reported q-score
-            if (si.Qscore>0) {
-                os << ';';
-                os << "Qscore=" << si.Qscore;
-            }
 
             // TODO only report VQSR metrics if flag explicitly set, not for calibration model
             if (_opt.is_compute_VQSRmetrics ) {
@@ -539,13 +534,18 @@ write_site_record(const site_info& si) const {
                 os << "BaseQRankSum=" << si.BaseQRankSum;
                 os << ';';
                 os << "ReadPosRankSum=" << si.ReadPosRankSum;
-                os << ';';
-                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
-                os << ';';
-                os << "GQ=" << si.smod.gq;
-                os << ';';
-                os << "GQX=" << si.smod.gqx;
+//                os << ';';
+//                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
+//                os << ';';
+//                os << "GQ=" << si.smod.gq;
+//                os << ';';
+//                os << "GQX=" << si.smod.gqx;
 //                }
+            }
+            //reported q-score
+            if (si.Qscore>0) {
+                os << ';';
+                os << "Qscore=" << si.Qscore;
             }
 
         } else {
@@ -832,14 +832,11 @@ write_indel_record(const unsigned write_index) {
         os << "Qscore=" << ii.Qscore;
     }
 
-    // omly report metrics if flag explicitly set
+//    only report metrics if flag explicitly set
 //    if (_opt.is_compute_VQSRmetrics)
 //    {
 //        os << ';';
 //        os << "MQ=" << ii.MQ;
-
-        //if we have a het, report these metrics as well
-        //                if(si.get_gt()=="0/1"){
 //        os << ';';
 //        os << "MQRankSum=" << ii.MQRankSum;
 //        os << ';';

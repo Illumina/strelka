@@ -48,47 +48,36 @@ void c_model::do_rule_model(featuremap& cutoffs, site_info& si) {
 
 // rule-based filtering for INDELs
 void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii) {
-    if (ii.dindel.max_gt != ii.dindel.max_gt_poly) {
-        ii.imod.gqx=0;
-    } else {
-        ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
-    }
+
     ii.imod.max_gt=ii.dindel.max_gt_poly;
     ii.imod.gq=ii.dindel.max_gt_poly_qphred;
 
 
-//    if (opt.is_min_gqx) {
-//        if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
-//    }
-//
-//    if (dopt.is_max_depth) {
-//        if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
-//    }
-//
-//    if (opt.is_max_ref_rep) {
-//        if (ii.iri.is_repeat_unit) {
-//            if ((ii.iri.repeat_unit.size() <= 2) &&
-//                (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
-//                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
-//            }
-//        }
-//    }
+    if (cutoffs["GQX"]>0) {
+        if (ii.imod.gqx<cutoffs["GQX"]) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+    }
+
+    if (cutoffs["DP"]>0) {
+        if (ii.isri.depth > cutoffs["DP"]) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+    }
+
+    if (cutoffs["HighSNVSB"]>0) {
+        if (ii.iri.is_repeat_unit) {
+            if ((ii.iri.repeat_unit.size() <= 2) &&
+                (static_cast<int>(ii.iri.ref_repeat_count) > cutoffs["HighSNVSB"])) {
+                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
+            }
+        }
+    }
 }
 
 //Transform the features with the specified scaling parameters that were used to standardize
 //the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
 featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor) {
-//    log_os << "normalizing" << "\n";
-//    log_os << adjust_factor.size() << "\n";
-//    log_os << features.size() << "\n";
-//    for (featuremap::const_iterator it = features.begin(); it != features.end(); ++it) { // only normalize the features that are needed
-//        log_os << it->first << "=" << features[it->first] << "  ";
-//    }
-//    log_os << "\n";
     for (featuremap::const_iterator it = norm_factor.begin(); it != norm_factor.end(); ++it) { // only normalize the features that are needed
-//        log_os << it->first << "=" << features[it->first] << "  " << "\n";
+//        log_os << it->first << "=" << features[it->first] << " ";
         features[it->first] = (features[it->first]-adjust_factor[it->first])/norm_factor[it->first];
-//        log_os << it->first << "=" << features[it->first] << "  " << "\n";
+//        log_os << it->first << "=" << features[it->first] << " ";
     }
 //    log_os << "\n";
     return features;
@@ -186,10 +175,6 @@ void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut){//, fea
 // joint logistic regression for both SNPs and INDELs
 int c_model::logistic_score(std::string var_case, featuremap features){
     // normalize
-//    log_os << features.size() << "\n";
-//    log_os << var_case << "\n";
-//    log_os << "Total submodels" << this->pars.size() << "\n";
-//    log_os << this->pars[var_case].size() << "\n";
     featuremap norm_features = this->normalize(features,this->pars[var_case]["CenterVal"],this->pars[var_case]["ScaleVal"]);
 //    if (var_case=="inshet" || var_case=="delhet"){
 //        for (featuremap::const_iterator it = norm_features.begin(); it != norm_features.end(); ++it) {
@@ -202,8 +187,6 @@ int c_model::logistic_score(std::string var_case, featuremap features){
     double raw_score = this->log_odds(norm_features,this->pars[var_case]["Coefs"]);
 
     // adjust by prior and calculate q-score
-//    log_os << "My prior " << this->pars[var_case]["Priors"]["fp.prior"] << "\n";
-//    log_os << "Raw score " << raw_score << "\n";
     int Qscore = prior_adjustment(raw_score,this->pars[var_case]["Priors"]["fp.prior"]);
     return Qscore;
 }
@@ -212,18 +195,15 @@ int c_model::logistic_score(std::string var_case, featuremap features){
 
 //score snp case
 void c_model::score_instance(featuremap features, site_info& si) {
-    //TODO turn of default to else
-    if (this->model_type=="LOGISTIC" && false) { //case we are using a logistic regression mode
+    if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
         std::string var_case = "snphom";
         if (si.is_het()){
             var_case = "snphet";
         }
-//       #ifdef DEBUG_MODEL
-//               log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
-//       #endif
+       #ifdef DEBUG_MODEL
+               //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
+       #endif
         si.Qscore = logistic_score(var_case, features);
-//        log_os << "Adding in pars || " << this->pars.size() << "\n";
-//        log_os << "Q cut " <<  << "\n";
         this->apply_qscore_filters(si,static_cast<int>(this->pars[var_case]["PassThreshold"]["Q"])); // set filters according to q-scores
     }
 //    else if(this->model_type=="RFtree"){ // place-holder, put random forest here
@@ -253,7 +233,7 @@ void c_model::score_instance(featuremap features, indel_info& ii){
 //        si.Qscore = rf_score(var_case, features);
 //    }
     else if (this->model_type=="RULE") { //case we are using a rule based model
-        this->do_rule_model(this->pars["snp"]["cutoff"],ii);
+        this->do_rule_model(this->pars["indel"]["cutoff"],ii);
     }
 
 }

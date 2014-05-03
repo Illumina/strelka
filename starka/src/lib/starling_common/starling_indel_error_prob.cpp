@@ -137,7 +137,6 @@ error_model& get_pattern_error_model(const std::string overall_error_model, std:
 
 }
 
-
 // "indel_error" is the probability that the read supporting the indel case is an error
 // "ref_error" is the probability that the read supporting the ref case is an error
 //
@@ -180,7 +179,7 @@ get_indel_error_prob(const starling_options& client_opt,
         if       (iri.it == INDEL::INSERT) {
             indel_error_prob=std::max(indel_error_prob_len[0].first,
                                       std::pow(indel_error_prob_len[ref_hpol_len-1].first,indel_size));
-            log_os << "error prob: " << indel_error_prob_len[ref_hpol_len-1].first << "\n";
+//            log_os << "error prob: " << indel_error_prob_len[ref_hpol_len-1].first << "\n";
             //reverse prob that true allele has been masked as reference by chance
             //may want to leave this term for now.
             ref_error_prob=std::max(indel_error_prob_len[0].second,

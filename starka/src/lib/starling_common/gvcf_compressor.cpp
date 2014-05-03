@@ -36,7 +36,6 @@ gvcf_compressor::gvcf_compressor() {
 void gvcf_compressor::read_bed(const std::string& input_file, const std::string& chrom){
 	using namespace boost::algorithm;
 	   std::ifstream myReadFile;
-	   std::cout << "reading bed \n";
 	    myReadFile.open(input_file.c_str());
 	    std::string chr;
 	    std::string pos;
