@@ -87,9 +87,33 @@ void calibration_models::default_clasify_site(const gvcf_options& opt, const gvc
     }
 }
 
-// TODO default indel model here
+// default rules based indel model
 void calibration_models::default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii) {
-    log_os << "classify indel site";
+        if (ii.dindel.max_gt != ii.dindel.max_gt_poly) {
+            ii.imod.gqx=0;
+        } else {
+            ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
+        }
+        ii.imod.max_gt=ii.dindel.max_gt_poly;
+        ii.imod.gq=ii.dindel.max_gt_poly_qphred;
+
+
+        if (opt.is_min_gqx) {
+            if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+        }
+
+        if (dopt.is_max_depth) {
+            if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+        }
+
+        if (opt.is_max_ref_rep) {
+            if (ii.iri.is_repeat_unit) {
+                if ((ii.iri.repeat_unit.size() <= 2) &&
+                    (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
+                    ii.imod.set_filter(VCF_FILTERS::HighRefRep);
+                }
+            }
+        }
 }
 
 

@@ -223,7 +223,7 @@ gvcf_aggregator(const starling_options& opt,
     }
 
     if (! _opt.gvcf.is_skip_header) {
-        finish_gvcf_header(_opt.gvcf,chrom_depth,dopt.bam_header_data,*_osptr);
+        finish_gvcf_header(_opt.gvcf,_opt,chrom_depth,dopt.bam_header_data,*_osptr);
     }
 
     add_site_modifiers(_opt.gvcf,_dopt,_empty_site,this->CM);

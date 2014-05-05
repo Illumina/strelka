@@ -20,12 +20,14 @@
 
 #include "blt_common/blt_shared.hh"
 #include "starling_common/chrom_depth_map.hh"
+#include "starling_common/starling_shared.hh"
 
 #include <iosfwd>
 
 
 void
 finish_gvcf_header(const gvcf_options& opt,
+                   const starling_options& sopt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,
                    std::ostream& os);
