@@ -99,6 +99,10 @@ error_model& get_pattern_error_model(const std::string overall_error_model, std:
     static error_model indel_error_prob_len_AT;
     static error_model indel_error_prob_len_CG;
 
+    if(indel_length<0){
+        //TODO use indel length
+    }
+
     // initialize error
     if (! is_init) {
         double itmp(0);

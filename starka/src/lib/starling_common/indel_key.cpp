@@ -19,11 +19,12 @@
 
 #include <iostream>
 
-    void
-    indel_key::addRanksumInfo(const int mapq, const int baseq, bool is_alt){
-        this->mapq_val=mapq;
-        this->baseq_val=baseq;
-    }
+//void
+//indel_key::addRanksumInfo(const int mapq, const int baseq, bool is_alt){
+//    this->mapq_val=mapq;
+//    this->baseq_val=baseq;
+//    is_alt = 1; //TODO use alt info
+//}
 
 
 std::ostream&

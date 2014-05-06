@@ -103,14 +103,27 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         os.copyfmt(tmp_os);
     }
 
+    // phasing filters
+//    if (!do_rule_filters) {
+//                std::ostringstream oss;
+//                oss << "Locus quality score falls below passing threshold the given variant type";
+//                write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
+//    }
+
     if (!do_rule_filters) {
             std::ostringstream oss;
-            oss << "Locus quality score falls below passing threshold the given variant type";
+            oss << "Locus quality score falls below passing threshold for the given variant type";
             write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
     }
+    // Inconsistent phasing, meaning
+    if (sopt.do_codon_phasing){
+        std::ostringstream oss;
+        oss << "Locus read evidence displays conflicting phasing patterns";
+        write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
+    }
+
 
 }
-
 
 
 // try to determine the sample_name from the BAM header
@@ -140,6 +153,8 @@ finish_gvcf_header(const gvcf_options& opt,
                    const std::string& bam_header_data,
                    std::ostream& os) {
 
+    bool do_rule_filters  = (sopt.calibration_model=="default" || sopt.calibration_model=="Qrule");
+
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
     os << "##INFO=<ID=BLOCKAVG_min30p3a,Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+3,(x*1.3)). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
@@ -153,6 +168,22 @@ finish_gvcf_header(const gvcf_options& opt,
     os << "##INFO=<ID=RU,Number=A,Type=String,Description=\"Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.\">\n";
     os << "##INFO=<ID=REFREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in reference.\">\n";
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
+
+    // ranksums
+    if (sopt.is_compute_VQSRmetrics){
+        os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
+        os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities.\">\n";
+        os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities.\">\n";
+        os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\" Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position. \">\n";
+    }
+
+    // Qscore
+    if (!do_rule_filters)
+        os << "##INFO=<ID=Qscore,Number=1,Type=Integer,Description=\"Calibrated quality score indicating expected empirical FP-rate for variant site.\">\n";
+
+    // Unphased, flag if a site that is within a phasing window hasn't been phased
+    if (sopt.do_codon_phasing)
+        os << "##INFO=<ID=Unphased,Number=0,Type=Flag,Description=\"Indicates a record that is within the specified phasing window of another variant but could not be phased due to lack of minimum read support.\">\n";
 
     //FORMAT:
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";

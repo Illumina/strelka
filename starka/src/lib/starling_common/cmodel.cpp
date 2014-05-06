@@ -17,10 +17,10 @@
 #include <boost/algorithm/string/classification.hpp>
 #include "blt_util/qscore.hh"
 
-#define DEBUG_MODEL
+//#define DEBUG_MODEL
 
 #ifdef DEBUG_MODEL
-#include "blt_util/log.hh"
+    #include "blt_util/log.hh"
 #endif
 
 

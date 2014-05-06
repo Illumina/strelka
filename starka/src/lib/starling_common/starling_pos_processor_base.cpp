@@ -664,18 +664,13 @@ insert_read(const bam_record& br,
         //
         static const INDEL_ALIGN_TYPE::index_t iat(INDEL_ALIGN_TYPE::CONTIG_READ);
         const bam_seq bseq(br.get_bam_read());
-        const read_stats rs = read_stats(br.map_qual(),br.qual());
-//        log_os << "\n" << static_cast<int>(br.map_qual()) << "\n";
-//        rs["mq"] = int(br.map_qual());
-//        log_os << int(br.qual()[50]) << "\n";
+//        const read_stats rs = read_stats(br.map_qual(),br.qual());
         try {
             static const std::pair<bool,bool> edge_pin(std::make_pair(false,false));
-//            log_os << "wefw\n";
-//            log_os << int(br.qual()[50]) << "\n";
             const unsigned total_indel_ref_span_per_read =
                 add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
                                              al,bseq,*this,iat,res.second,sample_no,
-                                             edge_pin,rs,contig_indels_ptr);
+                                             edge_pin,contig_indels_ptr);
             update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
         } catch (...) {
             log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << read_key(br) << "\n";
@@ -760,18 +755,10 @@ init_read_segment(const read_segment& rseg,
 
     const bam_seq bseq(rseg.get_bam_read());
     try {
-//        log_os << "My qual=" << static_cast<int>(rseg.qual()[50]) << "\n";
-//        log_os << "My mapq=" << static_cast<int>(rseg.map_qual()) << "\n";
-//        log_os << "My size=" << rseg.read_size() << "\n";
-//        log_os << "bq=" << static_cast<int>(rseg.get_bam_read().get_code(10)) << "\n";
-//        read_stats rs = read_stats();
-//        log_os << "\n\n" << static_cast<int>(rseg.map_qual()) << "\n";
-//        rs["mq"] = static_cast<int>(rseg.map_qual());
-//        rs["baseQ"] = static_cast<int>(rseg.qual());
-        const read_stats rs = read_stats(rseg.map_qual(),rseg.qual());
+//        const read_stats rs = read_stats(rseg.map_qual(),rseg.qual());
         const unsigned total_indel_ref_span_per_read =
             add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
-                                         al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin(),rs);
+                                         al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin());
 
         update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
 

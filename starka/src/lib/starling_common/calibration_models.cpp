@@ -22,7 +22,7 @@
 //#define DEBUG_CAL
 
 //#ifdef DEBUG_CAL
-#include "blt_util/log.hh"
+    #include "blt_util/log.hh"
 //#endif
 
 calibration_models::calibration_models() {
@@ -33,10 +33,6 @@ calibration_models::~calibration_models() {};
 void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si) {
 
     if (si.dgt.is_snp && this->model_name!="default") {
-//        for(featuremap::const_iterator it = features.begin(); it != features.end(); ++it)
-//            log_os << it->first << "=" << it->second << " ";
-//        log_os << "\n";
-
         featuremap features = si.get_qscore_features();     // create site value feature dict
 //        for(featuremap::const_iterator it = features.begin(); it != features.end(); ++it)
 //            log_os << it->first << "=" << it->second << " ";
@@ -116,7 +112,6 @@ void calibration_models::default_clasify_site(const gvcf_options& opt, const gvc
         }
 }
 
-
 void calibration_models::set_model(const std::string& name) {
     modelmap::iterator it = this->models.find(name);
     if (it != this->models.end())
@@ -132,15 +127,9 @@ void calibration_models::set_model(const std::string& name) {
 }
 
 c_model& calibration_models::get_model(std::string& name) {
-    modelmap::iterator it = this->models.find(name);
-    if(it != this->models.end())
-    {
-//        log_os << "I do know model " << name << "\n";
-        return this->models.find(name)->second;
-    }
-    else{
-        log_os << "I dont know model " << name << "\n";
-    }
+//    modelmap::iterator it = this->models.find(name);
+//    assert(it != this->models.end() && "I don't know the specified calibration model");
+    return this->models.find(name)->second;
 }
 
 void calibration_models::add_model_pars(std::string& name,parmap& my_pars) {
@@ -186,7 +175,7 @@ void calibration_models::load_models(std::string model_file) {
             //load submodel
             else if (tokens.at(0)=="#") {
 #ifdef DEBUG_CAL
-                //log_os << "submodel: " << tokens.at(1) << " parspace: " << tokens.at(2) << "\n";
+                log_os << "submodel: " << tokens.at(1) << " parspace: " << tokens.at(2) << "\n";
 #endif
                 submodel = tokens.at(1);
                 parspace = tokens.at(2);
@@ -195,7 +184,7 @@ void calibration_models::load_models(std::string model_file) {
             else {
                 if (tokens.size()>1) {
                     #ifdef DEBUG_CAL
-                                    //log_os << " setting " << tokens.at(0) << " = " << tokens.at(1) << "\n";
+                        log_os << " setting " << tokens.at(0) << " = " << tokens.at(1) << "\n";
                     #endif
                     pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
                 }

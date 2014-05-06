@@ -36,6 +36,7 @@ enum index_t {
     SiteConflict,
     LowGQX,
     LowQscore,
+    PhasingConflict,
     HighBaseFilt,
     HighDepth,
     HighSNVSB,
@@ -51,6 +52,7 @@ get_label(const unsigned idx) {
     case HighDepth: return "HighDepth";
     case LowGQX: return "LowGQX";
     case LowQscore: return "LowQscore";
+    case PhasingConflict: return "PhasingConflict";
     case HighSNVSB: return "HighSNVSB";
     case HighSNVHPOL: return "HighSNVHPOL";
     case HighBaseFilt: return "HighDPFRatio";

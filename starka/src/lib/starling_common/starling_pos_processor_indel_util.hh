@@ -57,6 +57,6 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              align_id_t id,
                              const unsigned sample_no,
                              const std::pair<bool,bool>& edge_pin,
-                             const read_stats rs,
+                             //const read_stats rs,
                              const indel_set_t* edge_indel_ptr = NULL);
 

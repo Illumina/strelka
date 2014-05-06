@@ -371,7 +371,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const align_id_t id,
                              const unsigned sample_no,
                              const std::pair<bool,bool>& edge_pin,
-                             read_stats rs,
+                             //read_stats rs,
                              const indel_set_t* edge_indel_ptr) {
 
     using namespace ALIGNPATH;
@@ -477,7 +477,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 //            log_os << al.path << "\n";
 //            log_os << int(rs.qual[read_offset]) << "\n\n";
 
-            obs.key.addRanksumInfo(static_cast<int>(rs.mapq),static_cast<int>(rs.qual[read_offset]),true);
+            //obs.key.addRanksumInfo(static_cast<int>(rs.mapq),static_cast<int>(rs.qual[read_offset]),true); //TODO for updateing indel ranksums
             process_simple_indel(max_indel_size,al.path,read_seq,
                                  sppr,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);

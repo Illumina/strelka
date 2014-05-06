@@ -522,7 +522,7 @@ write_site_record(const site_info& si) const {
             }
 
             // TODO only report VQSR metrics if flag explicitly set, not for calibration model
-            if (_opt.is_compute_VQSRmetrics ) {
+            if (_opt.is_compute_VQSRmetrics) {
                 os << ';';
                 os << "MQ=" << si.MQ;
 
