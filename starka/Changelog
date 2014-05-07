@@ -1,4 +1,4 @@
-v2.0.2
+v2.0.20
 - Added VQSR for indels
 - Updated VQSR model parameters
 - Updated homopolymer error-model
