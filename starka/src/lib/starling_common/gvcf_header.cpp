@@ -43,7 +43,8 @@ write_vcf_filter(std::ostream& os,
 
 static
 void
-add_gvcf_filters(const gvcf_options& opt,
+add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options and starling_options
+                 const starling_options& sopt,
                  const cdmap_t& chrom_depth,
                  std::ostream& os) {
 
@@ -52,37 +53,38 @@ add_gvcf_filters(const gvcf_options& opt,
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
     write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion");
 
+    bool do_rule_filters  = (sopt.calibration_model=="default" || sopt.calibration_model=="Qrule");
 
-    if (opt.is_min_gqx) {
+    if (opt.is_min_gqx && do_rule_filters) {
         std::ostringstream oss;
         oss << "Locus GQX is less than " << opt.min_gqx << " or not present";
         write_vcf_filter(os,get_label(LowGQX),oss.str().c_str());
     }
 
-    if (opt.is_max_base_filt) {
+    if (opt.is_max_base_filt && do_rule_filters) {
         std::ostringstream oss;
         oss << "The fraction of basecalls filtered out at a site is greater than " << opt.max_base_filt;
         write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
     }
 
-    if (opt.is_max_snv_sb) {
+    if (opt.is_max_snv_sb && do_rule_filters) {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
         write_vcf_filter(os,get_label(HighSNVSB),oss.str().c_str());
     }
-    if (opt.is_max_snv_hpol) {
+    if (opt.is_max_snv_hpol && do_rule_filters) {
         std::ostringstream oss;
         oss << "SNV contextual homopolymer length (SNVHPOL) exceeds " << opt.max_snv_hpol;
         write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
     }
 
-    if (opt.is_max_ref_rep) {
+    if (opt.is_max_ref_rep && do_rule_filters) {
         std::ostringstream oss;
         oss << "Locus contains an indel allele occurring in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    if (opt.is_max_depth_factor && (! chrom_depth.empty())) {
+    if (opt.is_max_depth_factor && (! chrom_depth.empty()) && do_rule_filters) {
         std::ostringstream oss;
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";
         write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
@@ -100,8 +102,28 @@ add_gvcf_filters(const gvcf_options& opt,
 
         os.copyfmt(tmp_os);
     }
-}
 
+    // phasing filters
+//    if (!do_rule_filters) {
+//                std::ostringstream oss;
+//                oss << "Locus quality score falls below passing threshold the given variant type";
+//                write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
+//    }
+
+    if (!do_rule_filters) {
+            std::ostringstream oss;
+            oss << "Locus quality score falls below passing threshold for the given variant type";
+            write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
+    }
+    // Inconsistent phasing, meaning
+    if (sopt.do_codon_phasing){
+        std::ostringstream oss;
+        oss << "Locus read evidence displays conflicting phasing patterns";
+        write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
+    }
+
+
+}
 
 
 // try to determine the sample_name from the BAM header
@@ -124,17 +146,21 @@ determine_sample(const std::string& bam_header_text) {
 
 
 void
-finish_gvcf_header(const gvcf_options& opt,
+finish_gvcf_header(const starling_options& opt,
                    const gvcf_deriv_options& dopt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,
                    std::ostream& os) {
 
+    bool do_rule_filters  = (opt.calibration_model=="default" || opt.calibration_model=="Qrule");
+
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
-    os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
+
+    os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.gvcf.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.gvcf.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
     os.precision(6); // reset precision for output to not affect high DP/GQX values in variant records
-    // site specific:
+
+
     os << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"SNV site strand bias\">\n";
     os << "##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description=\"SNV contextual homopolymer length\">\n";
 
@@ -143,6 +169,22 @@ finish_gvcf_header(const gvcf_options& opt,
     os << "##INFO=<ID=RU,Number=A,Type=String,Description=\"Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.\">\n";
     os << "##INFO=<ID=REFREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in reference.\">\n";
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
+
+    // ranksums
+    if (opt.is_compute_VQSRmetrics){
+        os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
+        os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities.\">\n";
+        os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities.\">\n";
+        os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\" Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position. \">\n";
+    }
+
+    // Qscore
+    if (!do_rule_filters)
+        os << "##INFO=<ID=Qscore,Number=1,Type=Integer,Description=\"Calibrated quality score indicating expected empirical FP-rate for variant site.\">\n";
+
+    // Unphased, flag if a site that is within a phasing window hasn't been phased
+    if (opt.do_codon_phasing)
+        os << "##INFO=<ID=Unphased,Number=0,Type=Flag,Description=\"Indicates a record that is within the specified phasing window of another variant but could not be phased due to lack of minimum read support.\">\n";
 
     //FORMAT:
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
@@ -156,7 +198,8 @@ finish_gvcf_header(const gvcf_options& opt,
     os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Read depth associated with indel, taken from the site preceding the indel.\">\n";
 
     // FILTER:
-    add_gvcf_filters(opt,chrom_depth,os);
+
+    add_gvcf_filters(opt.gvcf,opt,chrom_depth,os);
 
     // try to determine the sample_name from the BAM header
     std::string sample_name = determine_sample(bam_header_data);

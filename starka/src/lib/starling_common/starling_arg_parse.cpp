@@ -131,8 +131,8 @@ legacy_starling_arg_parse(arg_data& ad,
             set_filename_arg(i,ad,is_contigs_set,opt.indel_contig_filename);
         } else if (ad.argstr[i]=="-indel-contig-reads") {
             set_filename_arg(i,ad,is_contig_reads_set,opt.indel_contig_read_filename);
-        } else if (ad.argstr[i]=="-indel-error-rate") {
-            set_xrange_arg(i,ad,opt.is_simple_indel_error,opt.simple_indel_error,true);
+//        } else if (ad.argstr[i]=="-indel-error-rate") {
+//            set_xrange_arg(i,ad,opt.is_simple_indel_error,opt.simple_indel_error,true);
         } else if (ad.argstr[i]=="-indel-nonsite-match-prob") {
             set_xrange_arg(i,ad,is_inmp,opt.indel_nonsite_match_prob,true);
         } else if (ad.argstr[i]=="-report-range-begin") {

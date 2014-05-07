@@ -6,9 +6,6 @@
  */
 
 #include "calibration_models.hh"
-//#include <boost/property_tree/ptree.hpp>
-//#include <boost/property_tree/json_parser.hpp>
-//#include <boost/foreach.hpp>
 #include <cassert>
 #include <exception>
 #include <sstream>
@@ -24,9 +21,9 @@
 
 //#define DEBUG_CAL
 
-#ifdef DEBUG_CAL
-#include "blt_util/log.hh"
-#endif
+//#ifdef DEBUG_CAL
+    #include "blt_util/log.hh"
+//#endif
 
 calibration_models::calibration_models() {
     this->set_model("default");
@@ -34,16 +31,14 @@ calibration_models::calibration_models() {
 calibration_models::~calibration_models() {};
 
 void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si) {
-    // create site value feature dict
-    featuremap features = si.get_qscore_features();
 
     if (si.dgt.is_snp && this->model_name!="default") {
+        featuremap features = si.get_qscore_features();     // create site value feature dict
 //        for(featuremap::const_iterator it = features.begin(); it != features.end(); ++it)
 //            log_os << it->first << "=" << it->second << " ";
 //        log_os << "\n";
-
-        c_model myModel = this->get_model(this->model_name);
-        myModel.score_instance(features,si);
+            c_model myModel = this->get_model(this->model_name);
+            myModel.score_instance(features,si);
     }
     else {
         // don't know what to do with this site, throw it to the old default filters
@@ -51,15 +46,25 @@ void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_
     }
 }
 
+void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii){
+    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && this->model_name!="default") {
+       featuremap features = ii.get_qscore_features();
+       c_model myModel = this->get_model(this->model_name);
+       myModel.score_instance(features,ii);
+    }
+    else {
+        this->default_clasify_site(opt,dopt,ii);
+    }
+}
+
+
 void calibration_models::default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si) {
     if (opt.is_min_gqx) {
         if (si.smod.gqx<opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
     }
-
     if (dopt.is_max_depth) {
         if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
-
     // high DPFratio filter
     if (opt.is_max_base_filt) {
         const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
@@ -78,6 +83,35 @@ void calibration_models::default_clasify_site(const gvcf_options& opt, const gvc
     }
 }
 
+// default rules based indel model
+void calibration_models::default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii) {
+        if (ii.dindel.max_gt != ii.dindel.max_gt_poly) {
+            ii.imod.gqx=0;
+        } else {
+            ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
+        }
+        ii.imod.max_gt=ii.dindel.max_gt_poly;
+        ii.imod.gq=ii.dindel.max_gt_poly_qphred;
+
+
+        if (opt.is_min_gqx) {
+            if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+        }
+
+        if (dopt.is_max_depth) {
+            if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+        }
+
+        if (opt.is_max_ref_rep) {
+            if (ii.iri.is_repeat_unit) {
+                if ((ii.iri.repeat_unit.size() <= 2) &&
+                    (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
+                    ii.imod.set_filter(VCF_FILTERS::HighRefRep);
+                }
+            }
+        }
+}
+
 void calibration_models::set_model(const std::string& name) {
     modelmap::iterator it = this->models.find(name);
     if (it != this->models.end())
@@ -93,7 +127,18 @@ void calibration_models::set_model(const std::string& name) {
 }
 
 c_model& calibration_models::get_model(std::string& name) {
+//    modelmap::iterator it = this->models.find(name);
+//    assert(it != this->models.end() && "I don't know the specified calibration model");
     return this->models.find(name)->second;
+}
+
+void calibration_models::add_model_pars(std::string& name,parmap& my_pars) {
+        #ifdef DEBUG_CAL
+                log_os << "Adding pars for model " << name << "\n";
+                log_os << "Adding pars " << my_pars.size() << "\n";
+        #endif
+        this->get_model(name).add_parameters(my_pars);
+        my_pars.clear();
 }
 
 
@@ -118,11 +163,7 @@ void calibration_models::load_models(std::string model_file) {
             //case new model
             if (tokens.at(0).substr(0,3)=="###") {
                 if (pars.size()>0) {
-#ifdef DEBUG_CAL
-                    log_os << "Adding pars " << pars.size() << "\n";
-#endif
-                    this->get_model(current_name).add_parameters(pars);
-                    pars.clear();
+                    this->add_model_pars(current_name,pars);
                 }
                 current_name = tokens.at(1);
                 c_model current_model(tokens.at(1),tokens.at(2));
@@ -142,17 +183,17 @@ void calibration_models::load_models(std::string model_file) {
             //case load parameters
             else {
                 if (tokens.size()>1) {
+                    #ifdef DEBUG_CAL
+                        log_os << " setting " << tokens.at(0) << " = " << tokens.at(1) << "\n";
+                    #endif
                     pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
                 }
             }
         }
+        this->add_model_pars(current_name,pars);
     }
 #ifdef DEBUG_CAL
     log_os << "Done loading models" << "\n";
 #endif
     myReadFile.close();
 }
-
-
-
-

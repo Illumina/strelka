@@ -58,8 +58,8 @@ struct starling_options : public blt_options {
           is_bindel_diploid_file(false),
           user_genome_size(0),
           is_user_genome_size(false),
-          is_simple_indel_error(false),
-          simple_indel_error(0),
+//          is_simple_indel_error(false),
+//          simple_indel_error(0),
           default_min_read_bp_flank(6),
           is_realign_submapped_reads(false),
           max_indel_size(150),
@@ -127,8 +127,8 @@ struct starling_options : public blt_options {
     bool is_bindel_diploid_file;
     uint32_t user_genome_size; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size;
-    bool is_simple_indel_error;
-    double simple_indel_error;
+//    bool is_simple_indel_error;
+//    double simple_indel_error;
 
     /// to contibute to a breakpoint likelihood, a read must have at least
     /// this many bases on each side of the breakpoint:

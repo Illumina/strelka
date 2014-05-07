@@ -21,6 +21,101 @@
 #include <iostream>
 #include <sstream>
 
+#define ID_DEBUG
+
+void
+read_path_scores::insert_alt(const indel_key& ik,
+           const score_t a) {
+    const unsigned ais(static_cast<unsigned>(alt_indel.size()));
+    if (ais < 2) {
+        alt_indel.push_back(std::make_pair(ik,a));
+    } else {
+        unsigned min_index(ais);
+        score_t min(a);
+        for (unsigned i(0); i<ais; ++i) {
+            if (alt_indel[i].second < min) {
+                min = alt_indel[i].second;
+                min_index = i;
+            }
+        }
+        if (min_index<ais) {
+            alt_indel[min_index] = std::make_pair(ik,a);
+        }
+    }
+//    log_os << ik << "\n";
+}
+
+/// add an observation for this indel
+///
+/// is_repeat_obs - has this read_id been observed before? this is both
+///                 read and set by this method. Read ids are allowed to be
+///                 repeated due to suggested alternate alignments from
+///                 GROUPER
+void
+indel_data::add_observation(const indel_observation_data& obs_data,
+                const bool is_shared,
+                bool& is_repeat_obs) {
+
+
+//#ifdef ID_DEBUG
+//    log_os << "KATTER: adding obs for indel: " << _ik;
+//    log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
+//    log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
+//#endif
+
+    if (! is_shared) {
+        add_observation_core(obs_data,is_repeat_obs);
+    }
+
+    if (! obs_data.insert_seq.empty()) {
+        if (! (is_shared && is_repeat_obs)) {
+            _insert_seq.add_obs(obs_data.insert_seq);
+        }
+    }
+}
+
+// add observation for the non-shared case
+void
+indel_data::add_observation_core(const indel_observation_data& obs_data,
+                     bool& is_repeat_obs) {
+    #ifdef ID_DEBUG
+//        log_os << "KATTER: adding obs for indel: " << _ik;
+//        log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
+//        log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
+    #endif
+    is_external_candidate=obs_data.is_external_candidate;
+    is_forced_output=obs_data.is_forced_output;
+
+    if (! is_external_candidate) {
+
+        using namespace INDEL_ALIGN_TYPE;
+
+        if       (obs_data.iat == CONTIG) {
+            contig_ids.insert(obs_data.id);
+        } else if (obs_data.is_noise) {
+            // noise state overrides all except contig type:
+            //
+            noise_read_ids.insert(obs_data.id);
+        } else if (obs_data.iat == CONTIG_READ) {
+            if (all_read_ids.find(obs_data.id) != all_read_ids.end()) {
+                is_repeat_obs=true;
+            }
+            all_read_ids.insert(obs_data.id);
+        } else if (obs_data.iat == GENOME_TIER1_READ) {
+            if (all_read_ids.find(obs_data.id) != all_read_ids.end()) {
+                is_repeat_obs=true;
+            }
+            all_read_ids.insert(obs_data.id);
+        } else if (obs_data.iat == GENOME_TIER2_READ) {
+            tier2_map_read_ids.insert(obs_data.id);
+        } else if (obs_data.iat == GENOME_SUBMAP_READ) {
+            submap_read_ids.insert(obs_data.id);
+        } else {
+            assert(0);
+        }
+    }
+}
+
 
 
 std::ostream&
@@ -47,6 +142,8 @@ report_indel_evidence_set(const indel_data::evidence_t& e,
         os << label << " no: " << ++n << " id: " << *i << "\n";
     }
 }
+
+
 
 
 

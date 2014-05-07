@@ -315,13 +315,14 @@ process_simple_indel(const unsigned max_indel_size,
             obs.data.is_noise=false;
         }
     }
-
     if (ps.length <= max_indel_size) {
         obs.key.pos=ref_head_pos;
         obs.key.length = ps.length;
         if (ps.type == INSERT) {
             obs.key.type=INDEL::INSERT;
+//            log_os << "l: " << bseq << "\n";
             bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
+
         } else {
             obs.key.type=INDEL::DELETE;
         }
@@ -370,12 +371,13 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const align_id_t id,
                              const unsigned sample_no,
                              const std::pair<bool,bool>& edge_pin,
+                             //read_stats rs,
                              const indel_set_t* edge_indel_ptr) {
 
     using namespace ALIGNPATH;
 
     const unsigned seq_len(read_seq.size());
-
+//    log_os << rs << "\n";
     if (is_apath_invalid(al.path,seq_len)) {
         std::ostringstream oss;
         oss << "ERROR: Can't handle alignment path '" << apath_to_cigar(al.path) << "' -- " << get_apath_invalid_reason(al.path,seq_len) << "\n";
@@ -400,7 +402,6 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
     pos_t ref_head_pos(al.pos);
 
     unsigned total_indel_ref_span_per_read(0);
-
     const unsigned aps(al.path.size());
     while (path_index<aps) {
         const path_segment& ps(al.path[path_index]);
@@ -420,6 +421,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         obs.data.id = id;
 
         if (MATCH != ps.type) {
+//            log_os << al.path <<" \n";
             pos_range indel_read_pr;
             indel_read_pr.set_begin_pos((read_offset==0) ? 0 : (read_offset-1));
 
@@ -470,17 +472,19 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                                  path_index,read_offset,ref_head_pos);
 
         } else if (is_segment_type_indel(al.path[path_index].type)) {
-//            log_os << "offset " << read_offset <<  endl;
-//            log_os << " " << ref_head_pos <<  endl;
+//            log_os << read_offset << "\n";
+//            log_os << int(rs.mapq) << "\n";
+//            log_os << al.path << "\n";
+//            log_os << int(rs.qual[read_offset]) << "\n\n";
+
+            //obs.key.addRanksumInfo(static_cast<int>(rs.mapq),static_cast<int>(rs.qual[read_offset]),true); //TODO for updateing indel ranksums
             process_simple_indel(max_indel_size,al.path,read_seq,
                                  sppr,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
-
         }
 
         for (unsigned i(0); i<n_seg; ++i) { increment_path(al.path,path_index,read_offset,ref_head_pos); }
     }
-
     return total_indel_ref_span_per_read;
 }
 

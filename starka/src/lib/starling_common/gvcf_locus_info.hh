@@ -35,6 +35,8 @@ enum index_t {
     IndelConflict,
     SiteConflict,
     LowGQX,
+    LowQscore,
+    PhasingConflict,
     HighBaseFilt,
     HighDepth,
     HighSNVSB,
@@ -49,6 +51,8 @@ get_label(const unsigned idx) {
     switch (idx) {
     case HighDepth: return "HighDepth";
     case LowGQX: return "LowGQX";
+    case LowQscore: return "LowQscore";
+    case PhasingConflict: return "PhasingConflict";
     case HighSNVSB: return "HighSNVSB";
     case HighSNVHPOL: return "HighSNVHPOL";
     case HighBaseFilt: return "HighDPFRatio";
@@ -188,6 +192,7 @@ struct indel_info {
         ReadPosRankSum = 0.0;
         BaseQRankSum = 0.0;
         MQRankSum = 0.0;
+        Qscore = 0;
     }
 
     const char*
@@ -216,6 +221,9 @@ struct indel_info {
         return 2;
     }
 
+    void calc_vqsr_metrics(); //calculate the final VQSR metrics from the indel_key data
+
+    std::map<std::string, double> get_qscore_features();
 
     pos_t pos;
     indel_key ik;
@@ -229,6 +237,7 @@ struct indel_info {
     double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
     double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
     double MQRankSum;
+    int Qscore;
 
 };
 
@@ -281,34 +290,7 @@ struct site_info {
         }
     }
 
-    std::map<std::string, double>
-    get_qscore_features() {
-        std::map<std::string, double> res;
-        res["GQX"]              = smod.gqx;
-        res["GQ"]               = smod.gq;
-        res["SNVSB"]            = dgt.sb;
-        res["SNVHPOL"]          = hpol;
-        res["DP"]               = n_used_calls;
-        res["DPF"]              = n_unused_calls;
-        res["AD"]               = known_counts[dgt.ref_gt];
-        res["AD2"]              = 0.0;          // set below
-        res["MQ"]               = MQ;
-        res["ReadPosRankSum"]   = ReadPosRankSum;
-        res["BaseQRankSum"]     = BaseQRankSum;
-        res["MQRankSum"]        = MQRankSum;
-        for (unsigned b(0); b<N_BASE; ++b) {
-            if (b==dgt.ref_gt) continue;
-            if (DIGT::expect2(b,smod.max_gt))
-                res["AD2"] =  known_counts[b];
-        }
-        if ((res["DP"]+res["DPF"])>0.0) {
-            res["VFStar"]           = res["AD2"]/(res["DP"]+res["DPF"]); //VFStar = AD2/(DP+DPF);
-        }
-        else {
-            res["VFStar"]           = res["AD2"]/(30.0); //default hack for
-        }
-        return res;
-    }
+    std::map<std::string, double> get_qscore_features();
 
     bool
     is_het() const {
@@ -316,6 +298,11 @@ struct site_info {
         return DIGT::is_het(print_gt);
     }
 
+
+    bool
+    is_deletion() const {
+        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (dgt.ref_gt != smod.max_gt));
+    }
 
     bool
     is_qual() const {

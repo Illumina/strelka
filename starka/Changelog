@@ -1,3 +1,9 @@
+v2.0.2
+- Added VQSR for indels
+- Updated VQSR model parameters
+- Updated homopolymer error-model
+- Modified block-compression parameters for better NextSeq compression 
+- Added option for providing bed-file with sites that should not be block-compressed 
 - STARKA-50 option to output somatic-callable bed file
 v2.0.17
 - STARKA-48 Fixed formatting bug for high GQX 
@@ -34,7 +40,7 @@ v2.0.7
 v2.0.6
 - Change makefile to build when cwd is not in PATH
 v2.0.5
-- Associated with new parent strelka workflow release, no major chaages from v2.0.4
+- Associated with new parent strelka workflow release, no major changes from v2.0.4
 v2.0.4
 - STARKA-21 Add command-line control for snv hpol filter. Set snv and indel hpol filters
 off by default.

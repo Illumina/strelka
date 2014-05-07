@@ -25,7 +25,7 @@ bool
 check_block_single_tolerance(const stream_stat& ss,
                              const int min,
                              const int tol) {
-    return ((min + tol) >= ss.max());
+    return ((min + tol) >= ss.max()/2.0);       // hack to get nova vcfs into acceptable size ramge, make check less stringent across the board
 }
 
 
@@ -37,6 +37,8 @@ check_block_tolerance(const stream_stat& ss,
                       const int abs_tol) {
 
     const int min(static_cast<int>(compat_round(ss.min())));
+//    log_os << min << "\n";
+//    return true;
     if (check_block_single_tolerance(ss,min,abs_tol)) return true;
     const int ftol(static_cast<int>(std::floor(min * frac_tol)));
     if (ftol <= abs_tol) return false;

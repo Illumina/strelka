@@ -47,39 +47,72 @@ set_site_gt(const diploid_genotype::result_set& rs,
     smod.gqx=rs.max_gt_qphred;
 }
 
-//legacy methof
-static
-void
-set_site_filters(const gvcf_options& opt,
-                 const gvcf_deriv_options& dopt,
-                 site_info& si) {
-
-    if (opt.is_min_gqx) {
-        if (si.smod.gqx<opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
-    }
-
-    if (dopt.is_max_depth) {
-        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
-    }
-
-    if (opt.is_max_base_filt) {
-        const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
-        if (total_calls>0) {
-            const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>opt.max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
-        }
-    }
-
-    if (si.dgt.is_snp) {
-        if (opt.is_max_snv_sb) {
-            if (si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
-        }
-
-        if (opt.is_max_snv_hpol) {
-            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
-        }
-    }
-}
+//legacy methods for filtering
+//static
+//void
+//set_site_filters(const gvcf_options& opt,
+//                 const gvcf_deriv_options& dopt,
+//                 site_info& si) {
+//
+//    if (opt.is_min_gqx) {
+//        if (si.smod.gqx<opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
+//    }
+//
+//    if (dopt.is_max_depth) {
+//        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
+//    }
+//
+//    if (opt.is_max_base_filt) {
+//        const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
+//        if (total_calls>0) {
+//            const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
+//            if (filt>opt.max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
+//        }
+//    }
+//
+//    if (si.dgt.is_snp) {
+//        if (opt.is_max_snv_sb) {
+//            if (si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
+//        }
+//
+//        if (opt.is_max_snv_hpol) {
+//            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
+//        }
+//    }
+//}
+//
+//static
+//void
+//add_indel_modifiers(const gvcf_options& opt,
+//                    const gvcf_deriv_options& dopt,
+//                    indel_info& ii) {
+//
+//    if (ii.dindel.max_gt != ii.dindel.max_gt_poly) {
+//        ii.imod.gqx=0;
+//    } else {
+//        ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
+//    }
+//    ii.imod.max_gt=ii.dindel.max_gt_poly;
+//    ii.imod.gq=ii.dindel.max_gt_poly_qphred;
+//
+//
+//    if (opt.is_min_gqx) {
+//        if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+//    }
+//
+//    if (dopt.is_max_depth) {
+//        if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+//    }
+//
+//    if (opt.is_max_ref_rep) {
+//        if (ii.iri.is_repeat_unit) {
+//            if ((ii.iri.repeat_unit.size() <= 2) &&
+//                (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
+//                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
+//            }
+//        }
+//    }
+//}
 
 static
 void
@@ -91,7 +124,13 @@ set_site_filters_CM(const gvcf_options& opt,
     model.clasify_site(opt,dopt,si);
 }
 
-
+void
+add_indel_modifiers_CM(const gvcf_options& opt,
+                    const gvcf_deriv_options& dopt,
+                    indel_info& ii, calibration_models& model) {
+        // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
+        model.clasify_site(opt,dopt,ii);
+}
 
 static
 void
@@ -123,11 +162,8 @@ add_site_modifiers(const gvcf_options& opt,
         }
         si.smod.gq=si.dgt.poly.max_gt_qphred;
     }
-
     set_site_filters_CM(opt,dopt,si,model);
 }
-
-
 
 gvcf_aggregator::
 gvcf_aggregator(const starling_options& opt,
@@ -148,6 +184,10 @@ gvcf_aggregator(const starling_options& opt,
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
+    // read in sites that should not be block-compressed
+    if (static_cast<int>(opt.minor_allele_bed.length())>2){   // hacky, check if the bed file has been set
+        this->gvcf_comp.read_bed(opt.minor_allele_bed,opt.bam_seq_name.c_str());
+    }
 
     if (! opt.is_gvcf_output()) return;
 
@@ -155,6 +195,7 @@ gvcf_aggregator(const starling_options& opt,
 
     if (_opt.do_codon_phasing) {
 //        codon_phaser = Codon_phaser();
+
 #ifdef DEBUG_GVCF
         //log_os << "I have a phaser" << "\n";
 #endif
@@ -184,7 +225,7 @@ gvcf_aggregator(const starling_options& opt,
     }
 
     if (! _opt.gvcf.is_skip_header) {
-        finish_gvcf_header(_opt.gvcf,_dopt, chrom_depth,dopt.bam_header_data,*_osptr);
+        finish_gvcf_header(_opt,_dopt, chrom_depth,dopt.bam_header_data,*_osptr);
     }
 
     add_site_modifiers(_opt.gvcf,_dopt,_empty_site,this->CM);
@@ -354,7 +395,6 @@ get_hap_cigar(ALIGNPATH::path_t& apath,
     }
 }
 
-
 // figure out the per-site ploidy inside of indel based on each haplotype's match descriptor:
 static
 void
@@ -375,61 +415,6 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
     }
 }
 
-
-
-
-static
-void
-add_indel_modifiers(const gvcf_options& opt,
-                    const gvcf_deriv_options& dopt,
-                    indel_info& ii) {
-
-    if (ii.dindel.max_gt != ii.dindel.max_gt_poly) {
-        ii.imod.gqx=0;
-    } else {
-        ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
-    }
-    ii.imod.max_gt=ii.dindel.max_gt_poly;
-    ii.imod.gq=ii.dindel.max_gt_poly_qphred;
-
-
-    if (opt.is_min_gqx) {
-        if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
-    }
-
-    if (dopt.is_max_depth) {
-        if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
-    }
-
-    if (opt.is_max_ref_rep) {
-        if (ii.iri.is_repeat_unit) {
-            if ((ii.iri.repeat_unit.size() <= 2) &&
-                (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
-                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
-            }
-        }
-    }
-}
-
-
-// is the current site eligible to even be considered for block compression?
-static
-bool
-is_site_record_blockable(const gvcf_options& opt,
-                         const site_info& si) {
-
-    if (! opt.is_block_compression) return false;
-
-    if (si.dgt.is_snp) return false;
-
-    if (si.ref!='N') {
-        const double reffrac(static_cast<double>(si.known_counts[si.dgt.ref_gt]) /
-                             static_cast<double>(si.n_used_calls));
-        if (reffrac+opt.block_max_nonref <= 1) return false;
-    }
-    return true;
-}
-
 // queue site record for writing, after
 // possibly joining it into a compressed non-variant block
 //
@@ -437,20 +422,17 @@ void
 gvcf_aggregator::
 queue_site_record(const site_info& si) {
 
-    if (! is_site_record_blockable(_opt.gvcf,si)) {
+    //test for basic blocking criteria
+    if (! this->gvcf_comp.is_site_compressable(_opt.gvcf,si)) {
         write_block_site_record();
         write_site_record(si);
         return;
     }
-
     if (! _block.test(si)) {
         write_block_site_record();
     }
-
     _block.join(si);
 }
-
-
 
 static
 void
@@ -469,7 +451,6 @@ print_vcf_alt(const unsigned gt,
     }
     if (! is_print) os << '.';
 }
-
 
 
 static
@@ -541,13 +522,8 @@ write_site_record(const site_info& si) const {
                 os << ';';
                 os << "HaplotypeScore=" << si.hapscore;
             }
-            //reported q-score
-            if (si.Qscore>0) {
-                os << ';';
-                os << "Qscore=" << si.Qscore;
-            }
 
-            // compute metrics nessacery
+            // TODO only report VQSR metrics if flag explicitly set, not for calibration model
             if (_opt.is_compute_VQSRmetrics) {
                 os << ';';
                 os << "MQ=" << si.MQ;
@@ -560,13 +536,18 @@ write_site_record(const site_info& si) const {
                 os << "BaseQRankSum=" << si.BaseQRankSum;
                 os << ';';
                 os << "ReadPosRankSum=" << si.ReadPosRankSum;
-                os << ';';
-                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
-                os << ';';
-                os << "GQ=" << si.smod.gq;
-                os << ';';
-                os << "GQX=" <<  si.smod.gqx;
+//                os << ';';
+//                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
+//                os << ';';
+//                os << "GQ=" << si.smod.gq;
+//                os << ';';
+//                os << "GQX=" << si.smod.gqx;
 //                }
+            }
+            //reported q-score
+            if (si.Qscore>0) {
+                os << ';';
+                os << "Qscore=" << si.Qscore;
             }
 
         } else {
@@ -629,7 +610,7 @@ modify_single_indel_record() {
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
 
-    add_indel_modifiers(_opt.gvcf,_dopt,ii);
+    add_indel_modifiers_CM(_opt.gvcf,_dopt,ii,this->CM);
 }
 
 
@@ -640,7 +621,7 @@ modify_indel_overlap_site(const gvcf_options& opt,
                           const gvcf_deriv_options& dopt,
                           const indel_info& ii,
                           const unsigned ploidy,
-                          site_info& si) {
+                          site_info& si,calibration_models& CM) {
 
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
@@ -682,7 +663,8 @@ modify_indel_overlap_site(const gvcf_options& opt,
     }
 
     // after all those changes we need to rerun the site filters:
-    set_site_filters(opt,dopt,si);
+    set_site_filters_CM(opt,dopt,si,CM); //TODO needs to go into calibration models eventually
+
 }
 
 
@@ -690,7 +672,6 @@ modify_indel_overlap_site(const gvcf_options& opt,
 static
 void
 modify_indel_conflict_site(site_info& si) {
-
     si.smod.set_filter(VCF_FILTERS::IndelConflict);
 }
 
@@ -748,7 +729,7 @@ modify_overlap_indel_record() {
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
 
-        add_indel_modifiers(_opt.gvcf,_dopt,_indel_buffer[hap]);
+        add_indel_modifiers_CM(_opt.gvcf,_dopt,_indel_buffer[hap],this->CM);
         if (hap>0) {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
         }
@@ -769,7 +750,7 @@ modify_conflict_indel_record() {
 
         ii.imod.set_filter(VCF_FILTERS::IndelConflict);
 
-        add_indel_modifiers(_opt.gvcf,_dopt,ii);
+        add_indel_modifiers_CM(_opt.gvcf,_dopt,ii,this->CM);
     }
 }
 
@@ -848,23 +829,24 @@ write_indel_record(const unsigned write_index) {
         }
     }
 
-    if (_opt.is_compute_VQSRmetrics)
-    {
+    if (ii.Qscore>0) {
         os << ';';
-        os << "MQ=" << ii.MQ;
-
-        //if we have a het, report these metrics as well
-        //                if(si.get_gt()=="0/1"){
-        os << ';';
-        os << "MQRankSum=" << ii.MQRankSum;
-        os << ';';
-        os << "BaseQRankSum=" << ii.BaseQRankSum;
-        os << ';';
-        os << "ReadPosRankSum=" << ii.ReadPosRankSum;
+        os << "Qscore=" << ii.Qscore;
     }
 
-    //write out Q-score
-    //if not ii.
+//    only report metrics if flag explicitly set
+//    if (_opt.is_compute_VQSRmetrics)
+//    {
+//        os << ';';
+//        os << "MQ=" << ii.MQ;
+//        os << ';';
+//        os << "MQRankSum=" << ii.MQRankSum;
+//        os << ';';
+//        os << "BaseQRankSum=" << ii.BaseQRankSum;
+//        os << ';';
+//        os << "ReadPosRankSum=" << ii.ReadPosRankSum;
+//    }
+
 
     os << '\t';
 
@@ -930,12 +912,11 @@ process_overlaps() {
             modify_indel_overlap_site(_opt.gvcf,_dopt,
                                       _indel_buffer[0],
                                       _indel_buffer[0].get_ploidy(offset),
-                                      _site_buffer[i]);
+                                      _site_buffer[i], this->CM);
         } else {
             modify_indel_conflict_site(_site_buffer[i]);
         }
     }
-
 
     unsigned indel_index(0);
     unsigned site_index(0);

@@ -186,7 +186,7 @@ strelka_run(const strelka_options& opt) {
 
             if (! test_contig_usability(opt,ctg,sppr,sample_label)) continue;
 
-            process_contig(opt,ref,ctg,sppr,current.sample_no,sample_label);
+            //process_contig(opt,ref,ctg,sppr,current.sample_no,sample_label);
 
             process_contig_reads(ctg,opt.max_indel_size,cdmp->contig_read_exr(),sppr,tmp_key_br,current.sample_no);
 

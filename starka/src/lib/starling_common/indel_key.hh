@@ -43,8 +43,10 @@ struct indel_key {
     indel_key(const pos_t p=0,
               const INDEL::index_t t=INDEL::NONE,
               const unsigned l=0,
-              const unsigned sl=0)
-        : pos(p), type(t), length(l), swap_dlength(sl) {}
+              const unsigned sl=0,
+              const unsigned mq=0,
+              const unsigned bq=0)
+        : pos(p), type(t), length(l), swap_dlength(sl),mapq_val(mq),baseq_val(bq) {}
 
     // default sort is based on left-most position of the indel (note
     // we consider breakpoints to have the same left and right
@@ -73,6 +75,10 @@ struct indel_key {
         }
         return false;
     }
+
+    //updating data on the ranksums as the reads come in
+    void
+    addRanksumInfo(const int mapq, const int baseq, bool is_alt);
 
     bool
     operator==(const indel_key& rhs) const {
@@ -141,6 +147,9 @@ struct indel_key {
     INDEL::index_t type;
     unsigned length;
     unsigned swap_dlength;
+    unsigned mapq_val;
+    unsigned baseq_val;
+
 };
 
 

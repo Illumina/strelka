@@ -600,7 +600,6 @@ insert_read(const bam_record& br,
             const unsigned sample_no,
             const align_id_t contig_id,
             const indel_set_t* contig_indels_ptr) {
-
     if (0 != strcmp(_chrom_name.c_str(),chrom_name)) {
         log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chrom_name << "'\n"
                << "\tread_key: " << read_key(br) << "\n";
@@ -665,6 +664,7 @@ insert_read(const bam_record& br,
         //
         static const INDEL_ALIGN_TYPE::index_t iat(INDEL_ALIGN_TYPE::CONTIG_READ);
         const bam_seq bseq(br.get_bam_read());
+//        const read_stats rs = read_stats(br.map_qual(),br.qual());
         try {
             static const std::pair<bool,bool> edge_pin(std::make_pair(false,false));
             const unsigned total_indel_ref_span_per_read =
@@ -740,8 +740,6 @@ load_read_in_depth_buffer(const read_segment& rseg,
     }
 }
 
-
-
 // only acts on genomic mapped reads:
 void
 starling_pos_processor_base::
@@ -757,6 +755,7 @@ init_read_segment(const read_segment& rseg,
 
     const bam_seq bseq(rseg.get_bam_read());
     try {
+//        const read_stats rs = read_stats(rseg.map_qual(),rseg.qual());
         const unsigned total_indel_ref_span_per_read =
             add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
                                          al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin());
@@ -791,6 +790,7 @@ init_read_segment_pos(const pos_t pos) {
             //
             if (r.second<2) continue;
             init_read_segment(r.first->get_segment(r.second),s);
+
         }
     }
 }
@@ -1542,7 +1542,7 @@ pileup_read_segment(const read_segment& rseg,
                                         bc);
 
                     // update mapq and rank-sum metrics
-                    if (_client_opt.is_compute_VQSRmetrics) {
+                    if (_client_opt.is_compute_VQSRmetrics || _client_opt.calibration_model!="default") {
                         insert_mapq_count(ref_pos,sample_no,mapq);
                         update_ranksum(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
                     }
@@ -1557,10 +1557,6 @@ pileup_read_segment(const read_segment& rseg,
                         insert_hap_cand(ref_pos,sample_no,is_tier1,
                                         bseq,qual,read_pos);
                     }
-
-
-
-
 
                 } catch (...) {
                     log_os << "Exception caught in starling_pos_processor_base.insert_pos_basecall() "
@@ -1773,7 +1769,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         }
 
         // do calculate VQSR metrics
-        if (_client_opt.is_compute_VQSRmetrics) {
+        if (_client_opt.is_compute_VQSRmetrics || _client_opt.calibration_model!="default") {
             _site_info.MQ 				= pi.get_rms_mq();
             _site_info.ReadPosRankSum 	= pi.get_read_pos_ranksum();
             _site_info.MQRankSum 		= pi.get_mq_ranksum();

@@ -56,6 +56,7 @@ struct gvcf_options {
         , block_abs_tol(3)
         , is_block_compression(true)
         , block_max_nonref(.2)
+        , minor_allele_file("")
     {}
 
     // admin/other:
@@ -88,6 +89,7 @@ struct gvcf_options {
     bool is_block_compression;
 
     double block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
+    std::string minor_allele_file; //
 };
 
 
@@ -186,8 +188,10 @@ struct blt_options {
           , max_input_depth(0)
           , is_compute_hapscore(false)
           , is_compute_VQSRmetrics(false)
+          , is_compute_calibration_features(false)
           , calibration_model("default") // default model reports rule-based metrics
           , do_codon_phasing(false)
+          , phasing_window(3)
 
     {}
 
@@ -339,11 +343,16 @@ struct blt_options {
 
     bool is_compute_hapscore;
     bool is_compute_VQSRmetrics;
-    std::string calibration_model;      // which calibration model should we use
-    bool do_codon_phasing;
+    bool is_compute_calibration_features;// For development only, out all features needed im
+    std::string calibration_model;       // Which calibration model should we use
+    bool do_codon_phasing;               // Apply codon phasing
+    int phasing_window;                  // Size of the window we are phasing in, default is codon range (=3)
+
 
     std::string report_filename;
     std::string calibration_models_filename;
+    std::string minor_allele_bed;
+    std::string indel_error_model;      // which baseline prior should be used for candidate indel genotyping
 
     gvcf_options gvcf;
 };

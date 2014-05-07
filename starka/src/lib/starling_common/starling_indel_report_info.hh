@@ -51,6 +51,11 @@ struct starling_indel_report_info {
 
     // not directly reported, but handy to have pre-calculated:
     INDEL::index_t it;
+
+//    bool is_deletion(){
+//        if ()
+//        return false;
+//    }
 };
 
 
