@@ -53,7 +53,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
     write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion");
 
-    bool do_rule_filters  = (sopt.calibration_model=="default" || sopt.calibration_model=="Qrule");
+    bool do_rule_filters  = true;//(sopt.calibration_model=="default" || sopt.calibration_model=="Qrule");
 
     if (opt.is_min_gqx && do_rule_filters) {
         std::ostringstream oss;
