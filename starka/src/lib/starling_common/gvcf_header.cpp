@@ -110,7 +110,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
 //                write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
 //    }
 
-    if (!do_rule_filters) {
+    if (true) {
             std::ostringstream oss;
             oss << "Locus quality score falls below passing threshold for the given variant type";
             write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
