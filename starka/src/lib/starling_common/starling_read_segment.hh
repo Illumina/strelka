@@ -15,9 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_READ_SEGMENT_HH
-#define __STARLING_READ_SEGMENT_HH
-
+#pragma once
 
 #include "blt_common/map_level.hh"
 #include "starling_common/alignment.hh"
@@ -27,7 +25,6 @@
 #include <map>
 
 
-typedef std::map<align_id_t,alignment> contig_align_t;
 typedef uint8_t seg_id_t;
 struct starling_read;
 
@@ -65,9 +62,6 @@ struct read_segment {
     unsigned read_size() const { return _size; }
     bam_seq get_bam_read() const;
     const uint8_t* qual() const;
-
-    const contig_align_t&
-    contig_align() const;
 
     // are there any alignments without indels above max_indel_size?
     bool
@@ -135,5 +129,3 @@ void
 short_report(std::ostream& os, const read_segment& rseg);
 
 std::ostream& operator<<(std::ostream& os, const read_segment& rseg);
-
-#endif

@@ -43,15 +43,7 @@ finish_indel_sppr(indel_observation& obs,
                   starling_pos_processor_base& sppr,
                   const unsigned sample_no) {
 
-    const bool is_novel_indel(sppr.insert_indel(obs,sample_no));
-
-    // contig reads are supposed to be associated with indels from their contig only:
-    //
-    if ((INDEL_ALIGN_TYPE::CONTIG_READ == obs.data.iat) && is_novel_indel) {
-        std::ostringstream oss;
-        oss << "ERROR: contig read contains novel indel: " << obs.key << "\n";
-        throw blt_exception(oss.str().c_str());
-    }
+    sppr.insert_indel(obs,sample_no);
 }
 
 
@@ -85,9 +77,6 @@ process_edge_insert(const unsigned max_indel_size,
                     starling_pos_processor_base& sppr,
                     indel_observation& obs,
                     const unsigned sample_no,
-                    const indel_set_t* edge_indel_ptr,
-                    const unsigned seq_len,
-                    const std::pair<unsigned,unsigned>& ends,
                     const unsigned path_index,
                     const unsigned read_offset,
                     const pos_t ref_head_pos,
@@ -97,60 +86,7 @@ process_edge_insert(const unsigned max_indel_size,
 
     const path_segment& ps(path[path_index]);
 
-    if       (obs.data.iat == INDEL_ALIGN_TYPE::CONTIG) {
-        obs.key.pos=ref_head_pos;
-        obs.key.length=ps.length;
-        if (path_index==ends.first) { // right side BP:
-            obs.key.type=INDEL::BP_RIGHT;
-            const unsigned next_read_offset(read_offset+ps.length);
-            const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
-            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.insert_seq);
-        } else { // left side BP:
-            obs.key.type=INDEL::BP_LEFT;
-            const unsigned seq_size(std::min(seq_len-read_offset,max_indel_size));
-            bam_seq_to_str(bseq,read_offset,read_offset+seq_size,obs.data.insert_seq);
-        }
-        finish_indel_sppr(obs,sppr,sample_no);
-
-    } else if (obs.data.iat == INDEL_ALIGN_TYPE::CONTIG_READ) {
-
-        // add edge indels for contig reads:
-        if (NULL != edge_indel_ptr) {
-            const pos_t current_pos(ref_head_pos);
-            BOOST_FOREACH(const indel_key& ik, *edge_indel_ptr) {
-                // This checks that we've identified the edge indel
-                // for this read out of the full set of indels in the
-                // contig. It is not fantastically robust. In summary:
-                //
-                // Contig indel 'j' is identified as our edge indel if
-                // the read insertion starts at the same place as the
-                // contig indel unless this is the first segment in
-                // the read, in which case we check that the read
-                // insertion ends at the same place as the contig
-                // indel.
-                //
-                if (path_index!=ends.first) {
-                    if (current_pos!=ik.pos) continue;
-                } else {
-                    if (current_pos!=ik.right_pos()) continue;
-                }
-
-                obs.key = ik;
-
-                // large insertion breakpoints are not filtered as noise:
-                if (obs.data.is_noise) {
-                    if (obs.key.is_breakpoint() ||
-                        ((obs.key.type == INDEL::INSERT) &&
-                         (obs.key.length > max_cand_filter_insert_size))) {
-                        obs.data.is_noise=false;
-                    }
-                }
-
-                finish_indel_sppr(obs,sppr,sample_no);
-                break;
-            }
-        }
-    } else {
+    {
         // do not allow edge-indels on genomic reads to generate or support candidate
         // indels, except for pinned cases:
         if (! is_pinned_indel) return;
@@ -189,13 +125,6 @@ process_edge_delete(const unsigned max_indel_size,
                     const pos_t ref_head_pos,
                     const bool is_pinned_indel)
 {
-    // we should never see grouper reads here
-    if ((obs.data.iat == INDEL_ALIGN_TYPE::CONTIG) ||
-        (obs.data.iat == INDEL_ALIGN_TYPE::CONTIG_READ)) {
-        return;
-    }
-
-
     using namespace ALIGNPATH;
 
     const path_segment& ps(path[path_index]);
@@ -370,9 +299,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const INDEL_ALIGN_TYPE::index_t iat,
                              const align_id_t id,
                              const unsigned sample_no,
-                             const std::pair<bool,bool>& edge_pin,
-                             //read_stats rs,
-                             const indel_set_t* edge_indel_ptr) {
+                             const std::pair<bool,bool>& edge_pin) {
 
     using namespace ALIGNPATH;
 
@@ -455,8 +382,8 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
             // edge inserts are allowed for intron adjacent and grouper reads, edge deletions for intron adjacent only:
             if (ps.type == INSERT) {
                 process_edge_insert(max_indel_size,al.path,read_seq,
-                                    sppr,obs,sample_no,edge_indel_ptr,
-                                    seq_len,ends,path_index,read_offset,ref_head_pos,
+                                    sppr,obs,sample_no,
+                                    path_index,read_offset,ref_head_pos,
                                     is_pinned_indel);
             } else if (ps.type == DELETE) {
                 if (is_pinned_indel) {

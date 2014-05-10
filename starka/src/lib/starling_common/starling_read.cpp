@@ -71,7 +71,6 @@ const char*
 label(const index_t i) {
     switch (i) {
     case GENOME: return "GENOME";
-    case CONTIG: return "CONTIG";
     }
     log_os << "ERROR: unknown READ_ALIGN index: " << i << "\n";
     exit(EXIT_FAILURE);
@@ -86,13 +85,11 @@ static
 void
 newalign_dump(const starling_read& sr,
               const alignment& al,
-              const READ_ALIGN::index_t rat,
-              const align_id_t contig_id) {
+              const READ_ALIGN::index_t rat) {
 
     log_os << "\tread: " << sr << "\n"
            << "\tnew-alignment: " << al << "\n"
            << "\tnew-alignment-type: " << READ_ALIGN::label(rat) << "\n";
-    if (READ_ALIGN::CONTIG == rat) log_os << "\tcontig-id: " << contig_id << "\n";
 }
 
 
@@ -101,10 +98,9 @@ static
 void
 death_dump(const starling_read& sr,
            const alignment& al,
-           const READ_ALIGN::index_t rat,
-           const align_id_t contig_id) {
+           const READ_ALIGN::index_t rat) {
 
-    newalign_dump(sr,al,rat,contig_id);
+    newalign_dump(sr,al,rat);
     exit(EXIT_FAILURE);
 }
 
@@ -194,7 +190,6 @@ bool
 starling_read::
 is_compatible_alignment(const alignment& al,
                         const READ_ALIGN::index_t rat,
-                        const align_id_t contig_id,
                         const starling_options& opt) const {
 
     if (is_fwd_strand() != al.is_fwd_strand) {
@@ -206,7 +201,7 @@ is_compatible_alignment(const alignment& al,
         }
 
         log_os << "multiple suggested alignments for read are not same-strand.\n";
-        newalign_dump(*this,al,rat,contig_id);
+        newalign_dump(*this,al,rat);
 
         if (opt.is_baby_elephant) {
             return false;
@@ -220,18 +215,10 @@ is_compatible_alignment(const alignment& al,
     if (READ_ALIGN::GENOME == rat) {
         if (! rseg.genome_align().empty()) {
             log_os << "ERROR: multiple suggested genomic alignments for read.\n";
-            death_dump(*this,al,rat,contig_id);
+            death_dump(*this,al,rat);
         }
     } else {
-        typedef contig_align_t cat;
-        const cat& ct(rseg.contig_align());
-        cat::const_iterator i(ct.begin()),i_end(ct.end());
-        for (; i!=i_end; ++i) {
-            if (i->first == contig_id) {
-                log_os << "ERROR: multiple suggested alignments for read from same contig.\n";
-                death_dump(*this,al,rat,contig_id);
-            }
-        }
+        assert(false && "Unknown alignment type");
     }
 
     // al_buffer_pos must be compatible with all non-empty alignemnts
@@ -240,14 +227,6 @@ is_compatible_alignment(const alignment& al,
     const pos_t new_pos(get_alignment_buffer_pos(al));
     if (! rseg.genome_align().empty()) {
         if (! is_alignment_in_range(new_pos,rseg.genome_align(),opt.max_indel_size)) return false;
-    }
-    typedef contig_align_t cat;
-    const cat& ct(rseg.contig_align());
-    cat::const_iterator i(ct.begin()),i_end(ct.end());
-    for (; i!=i_end; ++i) {
-        if (! is_alignment_in_range(new_pos,i->second,opt.max_indel_size)) {
-            return false;
-        }
     }
 
     return true;

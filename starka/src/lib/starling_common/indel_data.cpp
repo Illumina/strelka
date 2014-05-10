@@ -90,17 +90,10 @@ indel_data::add_observation_core(const indel_observation_data& obs_data,
 
         using namespace INDEL_ALIGN_TYPE;
 
-        if       (obs_data.iat == CONTIG) {
-            contig_ids.insert(obs_data.id);
-        } else if (obs_data.is_noise) {
+        if (obs_data.is_noise) {
             // noise state overrides all except contig type:
             //
             noise_read_ids.insert(obs_data.id);
-        } else if (obs_data.iat == CONTIG_READ) {
-            if (all_read_ids.find(obs_data.id) != all_read_ids.end()) {
-                is_repeat_obs=true;
-            }
-            all_read_ids.insert(obs_data.id);
         } else if (obs_data.iat == GENOME_TIER1_READ) {
             if (all_read_ids.find(obs_data.id) != all_read_ids.end()) {
                 is_repeat_obs=true;
@@ -111,7 +104,7 @@ indel_data::add_observation_core(const indel_observation_data& obs_data,
         } else if (obs_data.iat == GENOME_SUBMAP_READ) {
             submap_read_ids.insert(obs_data.id);
         } else {
-            assert(0);
+            assert(false && "Unknown indel alignment type");
         }
     }
 }
@@ -212,7 +205,6 @@ operator<<(std::ostream& os,
     os << "seq: " << id.get_insert_seq() << "\n";
 
     report_indel_evidence_set(id.all_read_ids,"all_read",os);
-    report_indel_evidence_set(id.contig_ids,"contig",os);
     //    report_indel_evidence_set(id.tier1_map_read_ids,"tier1_map_read",os);
     report_indel_evidence_set(id.tier2_map_read_ids,"tier2_map_read",os);
     report_indel_evidence_set(id.submap_read_ids,"submap_read",os);
@@ -236,4 +228,3 @@ operator<<(std::ostream& os,
 
     return os;
 }
-

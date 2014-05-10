@@ -74,9 +74,6 @@ struct strelka_options : public starling_options {
 
     std::string tumor_bam_filename;
 
-    std::string tumor_indel_contig_filename;
-    std::string tumor_indel_contig_read_filename;
-
     std::string tumor_bindel_diploid_filename;
     std::string tumor_realigned_read_filename;
 

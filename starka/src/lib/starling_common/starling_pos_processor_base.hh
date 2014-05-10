@@ -154,9 +154,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
                 const READ_ALIGN::index_t rat,
                 const char* chrom_name,
                 const MAPLEVEL::index_t maplev,
-                const unsigned sample_no,
-                const align_id_t contig_id = 0,
-                const indel_set_t* contig_indels_ptr = NULL);
+                const unsigned sample_no);
 
     /// snv gt and stats must be reported for this pos (not only honored in strelka right now)
     void

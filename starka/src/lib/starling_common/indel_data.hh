@@ -278,14 +278,10 @@ public:
     // mapping thresholds.
     //
     // all_read_ids contains the list of reads which either have a
-    // genomic alignment passing the mapping criteria or have a contig
-    // alignment.
-    //
-    // contig_ids are the grouper contig(s) which support the indel
+    // genomic alignment passing the mapping criteria
     //
     typedef std::set<align_id_t> evidence_t;
-    evidence_t contig_ids;
-    evidence_t all_read_ids; // all contig and tier1 read_ids
+    evidence_t all_read_ids; // all tier1 read_ids
     evidence_t tier2_map_read_ids;
     evidence_t submap_read_ids;
 

@@ -12,9 +12,12 @@
 
 /// \file
 ///
-/// object which accepts as input bam and contig files from multiple
+/// object which accepts as input bam files from multiple
 /// samples and presents them in the order expected by
 /// starling_pos_processor
+///
+/// note the design carries some legacy crud from also syncing grouper
+/// contig input in with the bams, this should be removed
 ///
 ///
 /// \author Chris Saunders
@@ -31,14 +34,13 @@
 #include "blt_util/bam_streamer.hh"
 #include "blt_util/vcf_streamer.hh"
 #include "starling_common/starling_types.hh"
-#include "starling_common/grouper_contig_util.hh"
 
 #include <map>
 #include <queue>
 
 
 namespace INPUT_TYPE {
-enum index_t { NONE, READ, CONTIG, INDEL, FORCED_OUTPUT };
+enum index_t { NONE, READ, INDEL, FORCED_OUTPUT };
 }
 
 struct starling_input_stream_hander;
@@ -50,13 +52,6 @@ struct starling_input_stream_data {
                    const sample_id_t sample_no = 0) {
         if (_reads.test_key(sample_no)) register_error("reads",sample_no);
         _reads.insert(sample_no,&bs);
-    }
-
-    void
-    register_contigs(contig_reader& cr,
-                     const sample_id_t sample_no = 0) {
-        if (_contigs.test_key(sample_no)) register_error("contigs",sample_no);
-        _contigs.insert(sample_no,&cr);
     }
 
     void
@@ -85,11 +80,9 @@ private:
 /////////// data:
     friend struct starling_input_stream_handler;
     typedef id_map<sample_id_t,bam_streamer*> reads_t;
-    typedef id_map<sample_id_t,contig_reader*> contigs_t;
     typedef std::vector<std::pair<sample_id_t, vcf_streamer*> > indels_t;
 
     reads_t _reads;
-    contigs_t _contigs;
     indels_t _indels;
     indels_t _output;
 };
@@ -148,7 +141,6 @@ private:
 struct starling_input_stream_handler {
 
     starling_input_stream_handler(const starling_input_stream_data& data,
-                                  const pos_t contig_lead = 1000,
                                   const pos_t indel_lead = 100,
                                   const pos_t output_lead = 100);
 
@@ -171,19 +163,9 @@ private:
 ///////////////////////////////// data:
     const starling_input_stream_data& _data;
 
-    // contig_lead controls the amount by which we read the
-    // local-assembly contig and contig read buffer ahead of the
-    // genomic reads:
+    // indel/output_lead controls the amount by which we read the
+    // vcf buffer ahead of the bam reads:
     //
-    // \TODO redesign so that we handle the much larger deletions coming
-    // from GROUPER (more) correctly. Idea is (1) to prevent any possible
-    // double counting of a widely separated GROUPER and genomic read and
-    // (2) to handle deletion spanning reads as segmented reads using the
-    // exon handling system.
-    //
-    const pos_t _contig_lead;
-
-    // ditto for indel_lead with indels and forced output:
     const pos_t _indel_lead;
     const pos_t _output_lead;
 

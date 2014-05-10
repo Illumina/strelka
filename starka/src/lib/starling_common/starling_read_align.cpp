@@ -64,17 +64,6 @@ operator<<(std::ostream& os, const starling_align_indel_info& ii) {
 typedef std::map<indel_key,starling_align_indel_info> starling_align_indel_status;
 
 
-// Gets the lowest known min and highest known max.
-//
-static
-known_pos_range
-greatest_known_range(const known_pos_range& p1,
-                     const known_pos_range& p2) {
-    return known_pos_range(std::min(p1.begin_pos,p2.begin_pos),
-                           std::max(p1.end_pos,p2.end_pos));
-}
-
-
 
 // Check to see if an alignment overlaps any candidate indels (but not
 // private indels) over the maximum range suggested by its discovery
@@ -105,21 +94,6 @@ check_for_candidate_indel_overlap(const starling_options& opt,
             // for the genomic alignment only we subtract off any edge soft-clip:
             pr.begin_pos+=apath_soft_clip_lead_size(al.path);
             pr.end_pos-=static_cast<pos_t>(apath_soft_clip_trail_size(al.path));
-        }
-    }
-
-    {
-        typedef contig_align_t cat;
-        const cat& ct(rseg.contig_align());
-        cat::const_iterator i(ct.begin()),i_end(ct.end());
-        for (; i!=i_end; ++i) {
-            const known_pos_range k(get_alignment_zone(i->second,seq_length));
-            if (! is_pr_set) {
-                pr=k;
-                is_pr_set=true;
-            } else {
-                pr=greatest_known_range(pr,k);
-            }
         }
     }
 

@@ -212,7 +212,6 @@ get_exemplar_alignments(const starling_options& opt,
                         const read_segment& rseg,
                         std::vector<alignment>& exal) {
 
-    static const bool is_remove_assembler_soft_clip(true);
     const bool is_remove_mapper_soft_clip(opt.is_remap_input_softclip);
 
     exal.clear();
@@ -227,18 +226,6 @@ get_exemplar_alignments(const starling_options& opt,
                                is_remove_leading_edge_indels,
                                is_remove_trailing_edge_indels,
                                is_remove_mapper_soft_clip,
-                               exal);
-    }
-
-    // get additional exemplars from assembler:
-    const contig_align_t& cat(rseg.contig_align());
-    BOOST_FOREACH(const contig_align_t::value_type& idal, cat) {
-        static const bool is_remove_leading_edge_indels(true);
-        static const bool is_remove_trailing_edge_indels(true);
-        add_exemplar_alignment(idal.second, opt.max_indel_size,
-                               is_remove_leading_edge_indels,
-                               is_remove_trailing_edge_indels,
-                               is_remove_assembler_soft_clip,
                                exal);
     }
 

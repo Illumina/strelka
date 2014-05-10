@@ -39,7 +39,6 @@ input_type_label(const INPUT_TYPE::index_t i) {
     switch (i) {
     case NONE   : return "NONE";
     case READ   : return "READ";
-    case CONTIG : return "CONTIG";
     case INDEL  : return "INDEL";
     case FORCED_OUTPUT  : return "FORCED_OUTPUT";
     default :
@@ -65,11 +64,9 @@ register_error(const char* label,
 
 starling_input_stream_handler::
 starling_input_stream_handler(const starling_input_stream_data& data,
-                              const pos_t contig_lead,
                               const pos_t indel_lead,
                               const pos_t output_lead)
     : _data(data)
-    , _contig_lead(contig_lead)
     , _indel_lead(indel_lead)
     , _output_lead(output_lead)
     , _is_end(false)
@@ -80,10 +77,6 @@ starling_input_stream_handler(const starling_input_stream_data& data,
     const unsigned rs(_data._reads.size());
     for (unsigned i(0); i<rs; ++i) {
         push_next(INPUT_TYPE::READ,_data._reads.get_key(i),i);
-    }
-    const unsigned cs(_data._contigs.size());
-    for (unsigned i(0); i<cs; ++i) {
-        push_next(INPUT_TYPE::CONTIG,_data._contigs.get_key(i),i);
     }
     const unsigned is(_data._indels.size());
     for (unsigned i(0); i<is; ++i) {
@@ -120,14 +113,7 @@ next() {
 
         if (_is_head_pos &&
             (_current.pos < _head_pos)) {
-            if (_current.itype == INPUT_TYPE::CONTIG) {
-                if ((_current.pos+_contig_lead) < _head_pos) {
-                    // grouper contigs are out-of-order by a greater than expected margin:
-                    const contig_reader& creader(*(_data._contigs.get_value(_current._order)));
-                    log_os << "WARNING: local-assembly contig: " << creader.get_contig().id << " is too far out-of-order. skipping\n";
-                    is_usable=false;
-                }
-            } else if (_current.itype == INPUT_TYPE::READ) {
+            if (_current.itype == INPUT_TYPE::READ) {
                 std::ostringstream oss;
                 oss << "ERROR: unexpected read order:\n"
                     << "\tInput-record with pos/type/sample_no: "
@@ -144,7 +130,7 @@ next() {
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
                 throw blt_exception(oss.str().c_str());
             } else {
-                assert(0);
+                assert(false && "Unknown input type");
             }
         }
 
@@ -175,24 +161,6 @@ get_next_read_pos(bool& is_next_read,
     } else {
         next_read_pos=0;
     }
-}
-
-
-
-// reads position of and holds next contig from the contig file:
-//
-// TODO -- system to test for and filter out very poor contigs
-// (this should be left to GROUPER, but it might be approriate to
-// catch extreme cases here?)
-//
-static
-void
-get_next_contig_pos(bool& is_next_contig,
-                    pos_t& next_contig_pos,
-                    contig_reader& creader) {
-
-    is_next_contig=creader.next();
-    next_contig_pos=creader.get_contig().pos;
 }
 
 
@@ -246,10 +214,6 @@ push_next(const INPUT_TYPE::index_t itype,
     if       (itype == INPUT_TYPE::READ) {
         bam_streamer& read_stream(*(_data._reads.get_value(order)));
         get_next_read_pos(is_next,next_pos,read_stream);
-    } else if (itype == INPUT_TYPE::CONTIG) {
-        contig_reader& creader(*(_data._contigs.get_value(order)));
-        get_next_contig_pos(is_next,next_pos,creader);
-        next_pos -= std::min(_contig_lead,next_pos);
     } else if (itype == INPUT_TYPE::INDEL) {
         vcf_streamer& indel_stream(*(_data._indels[order].second));
         get_next_indel_pos(is_next,next_pos,indel_stream);
@@ -259,7 +223,7 @@ push_next(const INPUT_TYPE::index_t itype,
         get_next_forced_output_pos(is_next,next_pos,fo_stream);
         next_pos -= std::min(_output_lead,next_pos);
     } else {
-        assert(0);
+        assert(false && "Unknown input type");
     }
     if (not is_next) return;
     _stream_queue.push(input_record_info(next_pos,itype,sample_no,order));

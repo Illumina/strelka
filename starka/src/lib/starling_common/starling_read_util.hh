@@ -15,26 +15,14 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_READ_UTIL_HH
-#define __STARLING_READ_UTIL_HH
-
+#pragma once
 
 #include "blt_common/blt_shared.hh"
 #include "blt_util/bam_seq.hh"
 #include "blt_util/blt_types.hh"
-#include "blt_util/export_line_parser.hh"
 #include "starling_common/alignment.hh"
 #include "starling_common/read_mismatch_info.hh"
 
-#include <string>
-
-
-// provide a key from the export line which follows the pattern used
-// in export->SAM/BAM conversion
-//
-void
-get_read_key_from_export_line(const export_line_parser& exl,
-                              std::string& key);
 
 // the position used to buffer alignments allows for the possibility that
 // any leading soft-clip or insert sequence could really align to the reference:
@@ -71,5 +59,3 @@ get_valid_alignment_range(const alignment& al,
                           const bam_seq_base& ref_seq,
                           const bam_seq_base& read_seq,
                           pos_range& valid_pr);
-
-#endif

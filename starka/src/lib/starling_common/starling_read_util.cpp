@@ -29,23 +29,6 @@
 
 
 
-void
-get_read_key_from_export_line(const export_line_parser& exl,
-                              std::string& key) {
-
-    // note that this has been changed to the slower numerical version to
-    // guarantee that matching reads will be identified as such even after GROUPER
-    // removes leading zeros
-    //
-    std::ostringstream oss;
-    oss << exl.machine() << '_' << exl.run_number() << ':'
-        << exl.lane() << ':' << exl.tile() << ':'
-        << exl.x_coordinate() << ':' << exl.y_coordinate();
-    key = oss.str();
-}
-
-
-
 pos_t
 get_alignment_buffer_pos(const alignment& al) {
 

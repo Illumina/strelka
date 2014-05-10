@@ -28,13 +28,7 @@ get_strelka_option_parser(strelka_options& opt) {
     strelka_parse_opt_ti.add_options()
     ("tumor-bam-file",
      po::value(&opt.tumor_bam_filename),
-     "BAM file containing read alignments for the tumor sample (required)")
-    ("tumor-indel-contigs",
-     po::value(&opt.tumor_indel_contig_filename),
-     "Tumor sample contig file produced by GROUPER indel-finder (required if tumor contig read file is specified)")
-    ("tumor-indel-contig-reads",
-     po::value(&opt.tumor_indel_contig_read_filename),
-     "Tumor sample contig reads file produced by GROUPER indel-finder (required if tumor contig file is specified)");
+     "BAM file containing read alignments for the tumor sample (required)");
 
     po::options_description strelka_parse_opt_to("Tumor-sample output");
     strelka_parse_opt_to.add_options()
@@ -145,28 +139,9 @@ finalize_strelka_options(const prog_info& pinfo,
         pinfo.usage("Must specify a sorted BAM file containing aligned tumor sample reads");
     }
 
-    {
-        const bool is_contigs(! opt.tumor_indel_contig_filename.empty());
-        const bool is_reads(! opt.tumor_indel_contig_read_filename.empty());
-        if ((is_contigs || is_reads) && !(is_contigs && is_reads)) {
-            if (is_contigs) {
-                pinfo.usage("Tumor contigs specified without corresponding contig reads.");
-            } else {
-                pinfo.usage("Tumor contig reads specified without corresponding contigs.");
-            }
-        }
-    }
-
     if (vm.count("skip-realignment")) {
         if (opt.is_call_indels()) {
             pinfo.usage("Cannot disable realignment when indel-calling is selected.");
-        }
-
-        const bool is_contigs(! opt.tumor_indel_contig_filename.empty());
-        const bool is_reads(! opt.tumor_indel_contig_read_filename.empty());
-
-        if (is_contigs || is_reads) {
-            pinfo.usage("Cannot disable realignment when reading grouper contigs.");
         }
     }
 

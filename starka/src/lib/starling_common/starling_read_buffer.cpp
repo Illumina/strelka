@@ -47,8 +47,7 @@ add_read_alignment(const starling_options& opt,
                    const bam_record& br,
                    const alignment& al,
                    const MAPLEVEL::index_t maplev,
-                   const READ_ALIGN::index_t rat,
-                   const align_id_t contig_id) {
+                   const READ_ALIGN::index_t rat) {
 
     assert(! br.is_unmapped());
 
@@ -86,27 +85,6 @@ add_read_alignment(const starling_options& opt,
         sread.id() = this_read_id;
 
     } else {
-        {   // no GROUPER input accepted for reads crossing splice junctions:
-            bool is_spliced_contig_read(false);
-            if (is_genomic) {
-                if ((! sread.contig_align().empty()) &&
-                    (apath_exon_count(al.path)>1)) is_spliced_contig_read=true;
-            } else {
-                if (sread.is_segmented()) is_spliced_contig_read=true;
-            }
-
-            if (is_spliced_contig_read) {
-                log_os << "ERROR: assembled contig realignments are not allowed for splice junction reads. Read: " << sread.key() << "\n";
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        if (! sread.is_compatible_alignment(al,rat,contig_id,opt)) {
-            log_os << "WARNING: skipping new alignment: " << al
-                   << " which is incompatible with alignments in read: " << sread;
-            return std::make_pair(false,0);
-        }
-
         // contig BAM records are incomplete, so we want to fill in
         // the full record if there's a mapped genomic alignment
         // available:
@@ -128,9 +106,7 @@ add_read_alignment(const starling_options& opt,
             }
         }
     } else {
-        // contig alignments:
-        sread.contig_align()[contig_id] = al;
-        (_contig_group[contig_id]).insert(this_read_id);
+        assert(false && "no other alignment type");
     }
 
     if ((! is_key_found) && (! sread.is_segmented())) {
@@ -209,18 +185,6 @@ clear_pos(const starling_options& opt,
         // occur at the same position:
         //
         if (seg_id != srp->segment_count()) continue;
-
-        // remove from contigs:
-        typedef contig_align_t cat;
-        const cat& ca(srp->contig_align());
-        cat::const_iterator m(ca.begin()), m_end(ca.end());
-        for (; m!=m_end; ++m) {
-            const align_id_t contig_id(m->first);
-            align_id_group_t::iterator p(_contig_group.find(contig_id));
-            if (p==_contig_group.end()) continue;
-            p->second.erase(read_id);
-            if (p->second.empty()) _contig_group.erase(p);
-        }
 
         // remove from simple lookup structures and delete read itself:
         _read_data.erase(k);
