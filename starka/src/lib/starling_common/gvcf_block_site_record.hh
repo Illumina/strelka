@@ -37,6 +37,7 @@ struct gvcf_block_site_record {
         block_gqx.reset();
         block_dpu.reset();
         block_dpf.reset();
+        record.smod.clear(); //clear filter as well
     }
 
     // determine if the site could be joined to this block:

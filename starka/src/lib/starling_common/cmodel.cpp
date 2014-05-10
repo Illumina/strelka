@@ -1,7 +1,7 @@
 /*
  * cmodel.cpp
  *
- *  Created on: Dec 1, 2013
+ *      Created on: Dec 1, 2013
  *      Author: Morten Kallberg
  */
 
@@ -101,9 +101,9 @@ double c_model::log_odds(featuremap features, featuremap& coeffs) {
 //                    log_os << tokens[i] << "=" << features[tokens[i]] << "\n";
                 }
                 //should not get here, if we havent loaded the feature we are in trouble...
-                else{
-                    log_os << "I dont know feature " << tokens[i] << "\n";
-                }
+//                else{
+//                    log_os << "I dont know feature " << tokens[i] << "\n";
+//                }
             }
 //            log_os << "\n";
 //            log_os << "term" << "=" << term << "\n";
@@ -146,7 +146,7 @@ int prior_adjustment(
 //        log_os << "experimental=" << qscore_test << "\n";
     #endif
 
-    // cap the score at 40
+    // cap the score at 60
     if (qscore>60)
         qscore = 60;
     if (qscore<1){
@@ -176,12 +176,6 @@ void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut){//, fea
 int c_model::logistic_score(std::string var_case, featuremap features){
     // normalize
     featuremap norm_features = this->normalize(features,this->pars[var_case]["CenterVal"],this->pars[var_case]["ScaleVal"]);
-//    if (var_case=="inshet" || var_case=="delhet"){
-//        for (featuremap::const_iterator it = norm_features.begin(); it != norm_features.end(); ++it) {
-//            log_os << it->first << "=" << norm_features[it->first] << "  ";
-//        }
-//        log_os << "\n\n";
-//    }
 
     //calculates log-odds ratio
     double raw_score = this->log_odds(norm_features,this->pars[var_case]["Coefs"]);
@@ -195,11 +189,12 @@ int c_model::logistic_score(std::string var_case, featuremap features){
 
 //score snp case
 void c_model::score_instance(featuremap features, site_info& si) {
+
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
         std::string var_case = "snphom";
-        if (si.is_het()){
+        if (si.is_het())
             var_case = "snphet";
-        }
+
        #ifdef DEBUG_MODEL
                //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
        #endif
@@ -217,7 +212,7 @@ void c_model::score_instance(featuremap features, site_info& si) {
 // score indel case
 void c_model::score_instance(featuremap features, indel_info& ii){
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
-        //TODO hacky, put into enum context
+        //TODO put into enum context
         std::string var_case("del");
         if (ii.iri.it==INDEL::INSERT)
             var_case = "ins";
@@ -235,40 +230,4 @@ void c_model::score_instance(featuremap features, indel_info& ii){
     else if (this->model_type=="RULE") { //case we are using a rule based model
         this->do_rule_model(this->pars["indel"]["cutoff"],ii);
     }
-
 }
-
-// TODO decompose to unit-test
-//void c_model::sanity_check(){
-//    featuremap fm;
-//    featuremap fm2;
-//    fm["GQX"]   = 42;
-//    fm["DP"]    = 28;
-//    fm["AD2"]   = 6;
-//    fm["SNVSB"] = -5.9;
-//    fm["SNVHPOL"] = 3;
-//    fm["VFStar"] = 0.214286;
-//    fm["DPF"] = 0;
-//    fm["MQ"] = 60;
-
-//    fm2["GQX"]   = 128;
-//    fm2["DP"]    = 34;
-//    fm2["AD2"]   = 12;
-//    fm2["SNVSB"] = -18;
-//    fm2["SNVHPOL"] = 3;
-//    fm2["VFStar"] = 0.333333;
-//    fm2["DPF"] = 2;
-//    fm2["MQ"] = 60;
-
-//    std::string snpCase = "hetsnp";
-//    featuremap norm_features = this->normalize(fm2,this->pars[snpCase]["scalecenter"],this->pars[snpCase]["scaleshift"]);
-//    for (featuremap::const_iterator it = norm_features.begin(); it != norm_features.end(); ++it) {
-//        log_os << it->first << "=" << it->second << "\n";
-//    }
-//    const double raw_score = this->log_odds(norm_features,this->pars[snpCase]["coefs"]);
-//    log_os << "score " << raw_score << std::endl;
-//    int q = prior_adjustment(raw_score,this->pars[snpCase]["priors"]["minorityPrior"]);
-//    log_os << "q " << q << std::endl;
-
-//}
-
