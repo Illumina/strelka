@@ -34,11 +34,9 @@ gvcf_compressor::gvcf_compressor() {
 }
 
 void gvcf_compressor::read_bed(const std::string& input_file, const std::string& chrom){
-	using namespace boost::algorithm;
-	   std::ifstream myReadFile;
+	    using namespace boost::algorithm;
+	    std::ifstream myReadFile;
 	    myReadFile.open(input_file.c_str());
-	    std::string chr;
-	    std::string pos;
 	    std::string output;
 	    if (myReadFile.is_open()) {
 	        while (!myReadFile.eof()) {
@@ -61,7 +59,7 @@ void gvcf_compressor::read_bed(const std::string& input_file, const std::string&
 	   this->minor_allele_loaded = true;
 }
 
-bool gvcf_compressor::is_minor_allele_site(const std::string chr, const int pos){
+bool gvcf_compressor::is_minor_allele_site(const std::string& chr, const int pos){
     chrposmap::iterator it = this->chr_to_pos.find(chr);
 //    log_os << "checking for chr " << chr << " pos " << pos << "\n";
 

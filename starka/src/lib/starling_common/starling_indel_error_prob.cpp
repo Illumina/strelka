@@ -31,7 +31,7 @@ static
 void
 get_indel_error_prob_hpol_len(const unsigned hpol_len,
                               double& insert_error_prob,
-                              double& delete_error_prob, const std::string context) {
+                              double& delete_error_prob, const std::string& context) {
 
     // Calculate p(error) of
     //    CASE: del
