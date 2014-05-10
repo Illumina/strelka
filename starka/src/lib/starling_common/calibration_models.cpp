@@ -22,7 +22,7 @@
 //#define DEBUG_CAL
 
 //#ifdef DEBUG_CAL
-    #include "blt_util/log.hh"
+#include "blt_util/log.hh"
 //#endif
 
 calibration_models::calibration_models() {
@@ -34,8 +34,8 @@ void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_
 
     if (si.dgt.is_snp && this->model_name!="default") {
         featuremap features = si.get_qscore_features();     // create site value feature dict
-            c_model myModel = this->get_model(this->model_name);
-            myModel.score_instance(features,si);
+        c_model myModel = this->get_model(this->model_name);
+        myModel.score_instance(features,si);
     }
     else {
         // don't know what to do with this site, throw it to the old default filters
@@ -43,11 +43,11 @@ void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_
     }
 }
 
-void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii){
+void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii) {
     if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && this->model_name!="default") {
-       featuremap features = ii.get_qscore_features();
-       c_model myModel = this->get_model(this->model_name);
-       myModel.score_instance(features,ii);
+        featuremap features = ii.get_qscore_features();
+        c_model myModel = this->get_model(this->model_name);
+        myModel.score_instance(features,ii);
     }
     else {
         this->default_clasify_site(opt,dopt,ii);
@@ -82,31 +82,31 @@ void calibration_models::default_clasify_site(const gvcf_options& opt, const gvc
 
 // default rules based indel model
 void calibration_models::default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii) {
-        if (ii.dindel.max_gt != ii.dindel.max_gt_poly) {
-            ii.imod.gqx=0;
-        } else {
-            ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
-        }
-        ii.imod.max_gt=ii.dindel.max_gt_poly;
-        ii.imod.gq=ii.dindel.max_gt_poly_qphred;
+    if (ii.dindel.max_gt != ii.dindel.max_gt_poly) {
+        ii.imod.gqx=0;
+    } else {
+        ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
+    }
+    ii.imod.max_gt=ii.dindel.max_gt_poly;
+    ii.imod.gq=ii.dindel.max_gt_poly_qphred;
 
 
-        if (opt.is_min_gqx) {
-            if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
-        }
+    if (opt.is_min_gqx) {
+        if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+    }
 
-        if (dopt.is_max_depth) {
-            if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
-        }
+    if (dopt.is_max_depth) {
+        if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+    }
 
-        if (opt.is_max_ref_rep) {
-            if (ii.iri.is_repeat_unit) {
-                if ((ii.iri.repeat_unit.size() <= 2) &&
-                    (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
-                    ii.imod.set_filter(VCF_FILTERS::HighRefRep);
-                }
+    if (opt.is_max_ref_rep) {
+        if (ii.iri.is_repeat_unit) {
+            if ((ii.iri.repeat_unit.size() <= 2) &&
+                (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
+                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
             }
         }
+    }
 }
 
 void calibration_models::set_model(const std::string& name) {
@@ -130,12 +130,12 @@ c_model& calibration_models::get_model(std::string& name) {
 }
 
 void calibration_models::add_model_pars(std::string& name,parmap& my_pars) {
-        #ifdef DEBUG_CAL
-                log_os << "Adding pars for model " << name << "\n";
-                log_os << "Adding pars " << my_pars.size() << "\n";
-        #endif
-        this->get_model(name).add_parameters(my_pars);
-        my_pars.clear();
+#ifdef DEBUG_CAL
+    log_os << "Adding pars for model " << name << "\n";
+    log_os << "Adding pars " << my_pars.size() << "\n";
+#endif
+    this->get_model(name).add_parameters(my_pars);
+    my_pars.clear();
 }
 
 
@@ -180,9 +180,9 @@ void calibration_models::load_models(std::string model_file) {
             //case load parameters
             else {
                 if (tokens.size()>1) {
-                    #ifdef DEBUG_CAL
-                        log_os << " setting " << tokens.at(0) << " = " << tokens.at(1) << "\n";
-                    #endif
+#ifdef DEBUG_CAL
+                    log_os << " setting " << tokens.at(0) << " = " << tokens.at(1) << "\n";
+#endif
                     pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
                 }
             }

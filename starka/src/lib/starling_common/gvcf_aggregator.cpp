@@ -126,10 +126,10 @@ set_site_filters_CM(const gvcf_options& opt,
 
 void
 add_indel_modifiers_CM(const gvcf_options& opt,
-                    const gvcf_deriv_options& dopt,
-                    indel_info& ii, calibration_models& model) {
-        // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
-        model.clasify_site(opt,dopt,ii);
+                       const gvcf_deriv_options& dopt,
+                       indel_info& ii, calibration_models& model) {
+    // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
+    model.clasify_site(opt,dopt,ii);
 }
 
 static
@@ -185,7 +185,7 @@ gvcf_aggregator(const starling_options& opt,
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
     // read in sites that should not be block-compressed
-    if (static_cast<int>(opt.minor_allele_bed.length())>2){   // hacky, check if the bed file has been set
+    if (static_cast<int>(opt.minor_allele_bed.length())>2) {  // hacky, check if the bed file has been set
         this->gvcf_comp.read_bed(opt.minor_allele_bed,opt.bam_seq_name.c_str());
     }
 

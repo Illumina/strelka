@@ -25,7 +25,7 @@
 
 void
 read_path_scores::insert_alt(const indel_key& ik,
-           const score_t a) {
+                             const score_t a) {
     const unsigned ais(static_cast<unsigned>(alt_indel.size()));
     if (ais < 2) {
         alt_indel.push_back(std::make_pair(ik,a));
@@ -53,8 +53,8 @@ read_path_scores::insert_alt(const indel_key& ik,
 ///                 GROUPER
 void
 indel_data::add_observation(const indel_observation_data& obs_data,
-                const bool is_shared,
-                bool& is_repeat_obs) {
+                            const bool is_shared,
+                            bool& is_repeat_obs) {
 
 
 //#ifdef ID_DEBUG
@@ -77,12 +77,12 @@ indel_data::add_observation(const indel_observation_data& obs_data,
 // add observation for the non-shared case
 void
 indel_data::add_observation_core(const indel_observation_data& obs_data,
-                     bool& is_repeat_obs) {
-    #ifdef ID_DEBUG
+                                 bool& is_repeat_obs) {
+#ifdef ID_DEBUG
 //        log_os << "KATTER: adding obs for indel: " << _ik;
 //        log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
 //        log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
-    #endif
+#endif
     is_external_candidate=obs_data.is_external_candidate;
     is_forced_output=obs_data.is_forced_output;
 

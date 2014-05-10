@@ -44,7 +44,7 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
     //    --------------------
 
     // logistic model, fit for AT Reference context
-    if (context=="AT"){
+    if (context=="AT") {
         static const double insert_A(1.49133831e-03);
         static const double insert_B(1.03348683e+01);
         static const double insert_C(1.13646811e+00);
@@ -61,7 +61,7 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
         const double delete_g(delete_A/ (1 + std::exp((delete_B-hpol_len)/delete_C))+delete_D);
         delete_error_prob=(1.-std::exp(-delete_g));
     }
-    else{
+    else {
         // new polynomial model, fit for CG reference context
         static const double insert_A(5.03824e-7);
         static const double insert_B(3.30572e-10);
@@ -87,7 +87,7 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
 static const unsigned max_hpol_len(40);
 typedef std::pair<double,double> error_model[max_hpol_len];
 
-error_model& get_pattern_error_model(const std::string overall_error_model, std::string pattern="A",const int indel_length=1){
+error_model& get_pattern_error_model(const std::string overall_error_model, std::string pattern="A",const int indel_length=1) {
 
     // cache results for any realistic homopolymer length:
     // Treat everything above indel length 50 the same.
@@ -99,7 +99,7 @@ error_model& get_pattern_error_model(const std::string overall_error_model, std:
     static error_model indel_error_prob_len_AT;
     static error_model indel_error_prob_len_CG;
 
-    if(indel_length<0){
+    if (indel_length<0) {
         //TODO use indel length
     }
 
@@ -122,20 +122,20 @@ error_model& get_pattern_error_model(const std::string overall_error_model, std:
     }
 
     // choose the error model based on
-    if (overall_error_model=="old"){
+    if (overall_error_model=="old") {
 //        log_os << "Using indel error model: " << overall_error_model << "\n";
         return indel_error_prob_len_CG; // for now this is the old polynomial model
     }
-    else if (overall_error_model=="stratified"){
+    else if (overall_error_model=="stratified") {
 
-        if ("G"==pattern or "C"==pattern){
+        if ("G"==pattern or "C"==pattern) {
             return indel_error_prob_len_CG;
         }
-        else{
+        else {
             return indel_error_prob_len_AT;
         }
     }
-    else{
+    else {
         return indel_error_prob_len_AT;
     }
 
@@ -180,23 +180,23 @@ get_indel_error_prob(const starling_options& client_opt,
                                      static_cast<long>(iri.indel_repeat_count)));
             }
 
-        if       (iri.it == INDEL::INSERT) {
-            indel_error_prob=std::max(indel_error_prob_len[0].first,
-                                      std::pow(indel_error_prob_len[ref_hpol_len-1].first,indel_size));
+            if       (iri.it == INDEL::INSERT) {
+                indel_error_prob=std::max(indel_error_prob_len[0].first,
+                                          std::pow(indel_error_prob_len[ref_hpol_len-1].first,indel_size));
 //            log_os << "error prob: " << indel_error_prob_len[ref_hpol_len-1].first << "\n";
-            //reverse prob that true allele has been masked as reference by chance
-            //may want to leave this term for now.
-            ref_error_prob=std::max(indel_error_prob_len[0].second,
-                                    std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
-        } else if (iri.it == INDEL::DELETE) {
-            indel_error_prob=std::max(indel_error_prob_len[0].second,
-                                      std::pow(indel_error_prob_len[ref_hpol_len-1].second,indel_size));
-            ref_error_prob=std::max(indel_error_prob_len[0].first,
-                                    std::pow(indel_error_prob_len[indel_hpol_len-1].first,indel_size));
-        } else {
-            log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
-            throw blt_exception("Unknown indel type.");
-        }
+                //reverse prob that true allele has been masked as reference by chance
+                //may want to leave this term for now.
+                ref_error_prob=std::max(indel_error_prob_len[0].second,
+                                        std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
+            } else if (iri.it == INDEL::DELETE) {
+                indel_error_prob=std::max(indel_error_prob_len[0].second,
+                                          std::pow(indel_error_prob_len[ref_hpol_len-1].second,indel_size));
+                ref_error_prob=std::max(indel_error_prob_len[0].first,
+                                        std::pow(indel_error_prob_len[indel_hpol_len-1].first,indel_size));
+            } else {
+                log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
+                throw blt_exception("Unknown indel type.");
+            }
         } else {
             if (iri.it == INDEL::INSERT) {
                 indel_error_prob=indel_error_prob_len[0].first;

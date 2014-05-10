@@ -36,7 +36,7 @@
 struct read_stats {
 
     read_stats(const uint8_t& map,
-              const uint8_t* q)
+               const uint8_t* q)
 //              const pos_t& p)
         : mapq(map),qual(q) {}
 
