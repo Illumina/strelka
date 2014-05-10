@@ -53,7 +53,7 @@ std::map<std::string, double> indel_info::get_qscore_features() {
     }
     imod.max_gt=dindel.max_gt_poly;
     imod.gq=dindel.max_gt_poly_qphred;
-
+    //F_DPI   F_GQ    F_GQX   CLASS   RULEN1  REFREP1 IDREP1  AD0     AD1
 
     std::map<std::string, double> res;
     res["QUAL"]             = dindel.indel_qphred;
@@ -61,15 +61,15 @@ std::map<std::string, double> indel_info::get_qscore_features() {
     res["F_GQ"]             = imod.gq;
     res["REFREP1"]          = iri.ref_repeat_count;
 
-    res["LENGTH"]           = ik.length;
+    //res["LENGTH"]           = ik.length;
     res["IDREP1"]           = iri.indel_repeat_count;
     res["RULEN1"]           = iri.repeat_unit.length(); //isri.depth;               //This feature actually means the length of the RU string
 
     if (imod.is_overlap) {
         // hack for overlap case
-        res["REFREP2"]          = iri.ref_repeat_count;
-        res["IDREP2"]           = iri.indel_repeat_count;
-        res["RULEN2"]           = iri.repeat_unit.length();
+        //res["REFREP2"]          = iri.ref_repeat_count;
+        //res["IDREP2"]           = iri.indel_repeat_count;
+        //res["RULEN2"]           = iri.repeat_unit.length();
     }
     unsigned ref_count(0);
     ref_count = std::max(ref_count,isri.n_q30_ref_reads);

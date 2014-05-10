@@ -34,9 +34,6 @@ void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_
 
     if (si.dgt.is_snp && this->model_name!="default") {
         featuremap features = si.get_qscore_features();     // create site value feature dict
-//        for(featuremap::const_iterator it = features.begin(); it != features.end(); ++it)
-//            log_os << it->first << "=" << it->second << " ";
-//        log_os << "\n";
             c_model myModel = this->get_model(this->model_name);
             myModel.score_instance(features,si);
     }

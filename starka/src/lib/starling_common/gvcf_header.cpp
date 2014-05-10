@@ -99,7 +99,6 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
             const double max_depth(opt.max_depth_factor*i->second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
         }
-
         os.copyfmt(tmp_os);
     }
 

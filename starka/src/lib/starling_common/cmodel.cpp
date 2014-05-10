@@ -217,16 +217,16 @@ void c_model::score_instance(featuremap features, site_info& si) {
 // score indel case
 void c_model::score_instance(featuremap features, indel_info& ii){
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
-        std::string var_case = "delhet";
-        if (ii.iri.it==INDEL::INSERT){
-            var_case = "inshet";
-        }
-//        log_os << var_case << "\n";
-//        log_os << "" << this->pars[var_case]["PassThreshold"]["Q"] << "\n";
+        //TODO hacky, put into enum context
+        std::string var_case("del");
+        if (ii.iri.it==INDEL::INSERT)
+            var_case = "ins";
+        if (ii.is_het())
+            var_case += "het";
+        else
+            var_case += "hom";
+
         ii.Qscore = logistic_score(var_case, features);
-//        log_os << "my Q=" << ii.Qscore << "\n";
-        // set filters according to q-scores
-//        featuremap most_pred; //place-holder
         this->apply_qscore_filters(ii,static_cast<int>(this->pars[var_case]["PassThreshold"]["Q"]));
     }
 //    else if(this->model_type=="RFtree"){
@@ -250,7 +250,7 @@ void c_model::score_instance(featuremap features, indel_info& ii){
 //    fm["VFStar"] = 0.214286;
 //    fm["DPF"] = 0;
 //    fm["MQ"] = 60;
-//
+
 //    fm2["GQX"]   = 128;
 //    fm2["DP"]    = 34;
 //    fm2["AD2"]   = 12;
@@ -259,16 +259,16 @@ void c_model::score_instance(featuremap features, indel_info& ii){
 //    fm2["VFStar"] = 0.333333;
 //    fm2["DPF"] = 2;
 //    fm2["MQ"] = 60;
-//
+
 //    std::string snpCase = "hetsnp";
 //    featuremap norm_features = this->normalize(fm2,this->pars[snpCase]["scalecenter"],this->pars[snpCase]["scaleshift"]);
-////    for (featuremap::const_iterator it = norm_features.begin(); it != norm_features.end(); ++it) {
-////        log_os << it->first << "=" << it->second << "\n";
-////    }
+//    for (featuremap::const_iterator it = norm_features.begin(); it != norm_features.end(); ++it) {
+//        log_os << it->first << "=" << it->second << "\n";
+//    }
 //    const double raw_score = this->log_odds(norm_features,this->pars[snpCase]["coefs"]);
 //    log_os << "score " << raw_score << std::endl;
 //    int q = prior_adjustment(raw_score,this->pars[snpCase]["priors"]["minorityPrior"]);
 //    log_os << "q " << q << std::endl;
-//
+
 //}
 
