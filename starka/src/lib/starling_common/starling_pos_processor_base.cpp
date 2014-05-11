@@ -63,10 +63,7 @@ const double STARLING_LARGEST_READ_SIZE_PAD(1.25);
 // largest indel_size grows dynamically with observed indel size until
 // hitting max_indel_size. Initialized to the follow value prior to
 // observation:
-//
-// start with max_indel_size to deal with grouperisms:
-//
-//const unsigned STARLING_INIT_LARGEST_INDEL_SIZE(40);
+
 
 
 //////////////////////////////////////////////

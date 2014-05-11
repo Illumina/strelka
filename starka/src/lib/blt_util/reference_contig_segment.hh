@@ -14,8 +14,7 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __REFERENCE_CONTIG_SEGMENT_HH
-#define __REFERENCE_CONTIG_SEGMENT_HH
+#pragma once
 
 #include "blt_util/blt_types.hh"
 
@@ -76,6 +75,3 @@ private:
     pos_t _offset;
     std::string _seq;
 };
-
-
-#endif

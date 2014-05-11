@@ -66,12 +66,6 @@ starling_run(const starling_options& opt) {
         throw blt_exception(oss.str().c_str());
     }
 
-    // Provide a temporary bam record for contig reads to write key
-    // information into, and initialize this record with values that
-    // will be fixed for this run:
-    bam_record tmp_key_br;
-    tmp_key_br.set_target_id(tid);
-
     starling_streams client_io(opt,pinfo,read_stream.get_header());
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);

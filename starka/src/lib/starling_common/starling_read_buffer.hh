@@ -52,7 +52,6 @@ struct read_segment_iter;
 // (1) first alignment pos
 // (2) key or
 // (3) read_id_no
-// (4) contig_id_no(s)
 //
 // multiple reads may be associated with (1) and (4), but (2) and (3)
 // can produce at most a single result.

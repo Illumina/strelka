@@ -188,4 +188,3 @@ operator<<(std::ostream& os,
 
     return os;
 }
-

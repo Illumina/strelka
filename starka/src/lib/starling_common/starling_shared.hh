@@ -28,8 +28,6 @@
 //
 enum { STARLING_MAX_READ_SIZE = 25000 };
 
-enum { MAX_CONTIG_SIZE = 10000 };
-
 
 
 struct avg_window_data {
@@ -220,7 +218,7 @@ struct starling_options : public blt_options {
     //
     bool is_noise_indel_filter;
 
-    // only allowed when (1) no indel output is selected and (2) there is no grouper contig input
+    // only allowed when no indel output is selected
     bool is_skip_realignment;
 
     // vcfs can be input to specify candidate indels:
@@ -316,17 +314,12 @@ struct starling_read_counts : public blt_read_counts {
 
     starling_read_counts() :
         normal_indel_used(0),
-        normal_indel_intersect(0),
-        grouper_indel_used(0),
-        grouper_indel_intersect(0),
-        grouper_unused(0) {}
+        normal_indel_intersect(0)
+    {}
 
     void
     report(std::ostream& os) const;
 
     unsigned normal_indel_used;
     unsigned normal_indel_intersect;
-    unsigned grouper_indel_used;
-    unsigned grouper_indel_intersect;
-    unsigned grouper_unused;
 };

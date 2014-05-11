@@ -84,12 +84,6 @@ strelka_run(const strelka_options& opt) {
         }
     }
 
-    // Provide a temporary bam record for contig reads to write key
-    // information into, and initialize this record with values that
-    // will be fixed for this run:
-    bam_record tmp_key_br;
-    tmp_key_br.set_target_id(tid);
-
     strelka_streams client_io(opt,pinfo,normal_read_stream.get_header());
     strelka_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;

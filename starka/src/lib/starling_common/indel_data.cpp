@@ -45,12 +45,7 @@ read_path_scores::insert_alt(const indel_key& ik,
 //    log_os << ik << "\n";
 }
 
-/// add an observation for this indel
-///
-/// is_repeat_obs - has this read_id been observed before? this is both
-///                 read and set by this method. Read ids are allowed to be
-///                 repeated due to suggested alternate alignments from
-///                 GROUPER
+
 void
 indel_data::add_observation(const indel_observation_data& obs_data,
                             const bool is_shared,

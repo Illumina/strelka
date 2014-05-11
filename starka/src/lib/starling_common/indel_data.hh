@@ -214,12 +214,11 @@ struct indel_data {
 
 
 #if 0
-    // add read and contig id evidence from another indel_data
+    // add read evidence from another indel_data
     // structure -- this is not a copy ctor
     //
     void
     add_indel_data_evidence(const indel_data& id) {
-        add_evidence(contig_ids,id.contig_ids);
         add_evidence(all_read_ids,id.all_read_ids);
         add_evidence(tier2_map_read_ids,id.tier2_map_read_ids);
         add_evidence(submap_read_ids,id.submap_read_ids);
