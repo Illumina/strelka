@@ -33,7 +33,7 @@ ifeq ($(STRICT_COMPILE),1)
     WARNFLAGS += $(STRICT_WARNFLAGS)
 endif
 
-OPTFLAGS := -ggdb -O2
+OPTFLAGS := -ggdb -O2 -static-libgcc -static-libstdc++
 DEBUGFLAGS := -ggdb -O0
 XFLAGS := $(WARNFLAGS) $(OPTFLAGS)
 
