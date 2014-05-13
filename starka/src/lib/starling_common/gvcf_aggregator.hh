@@ -20,7 +20,7 @@
 
 #include "starling_common/gvcf_block_site_record.hh"
 #include "starling_common/gvcf_locus_info.hh"
-//#include "starling_common/codon_phaser.hh"
+#include "starling_common/codon_phaser.hh"
 #include "starling_common/calibration_models.hh"
 #include "starling_common/gvcf_compressor.hh"
 
@@ -129,8 +129,10 @@ private:
     pos_t _head_pos; // we've observed sites up to but not including this position
     site_info _empty_site;
 
-    //Codon_phaser codon_phaser;
     calibration_models CM;
     gvcf_compressor gvcf_comp;
+
+public:
+    Codon_phaser codon_phaser;
 };
 

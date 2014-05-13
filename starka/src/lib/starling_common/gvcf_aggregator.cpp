@@ -194,11 +194,7 @@ gvcf_aggregator(const starling_options& opt,
     // initialize codonPhaser
 
     if (_opt.do_codon_phasing) {
-//        codon_phaser = Codon_phaser();
-
-#ifdef DEBUG_GVCF
-        //log_os << "I have a phaser" << "\n";
-#endif
+//        this->codon_phaser = &temp_phaser;  // add in commandline parameters
     }
     // initialize calibration model
     this->CM.load_models(opt.calibration_models_filename);
@@ -268,21 +264,22 @@ add_site(site_info& si) {
     add_site_modifiers(_opt.gvcf,_dopt,si,this->CM);
     skip_to_pos(si.pos);
     if (_opt.do_codon_phasing) {
-//        bool emptyBuffer = codon_phaser.add_site(si);
-
-        // Was site absorbed, if not release all buffered sites
-        // and add these into the gVCF pipeline
-//        if (!codon_phaser.is_in_block || emptyBuffer){
-//            codon_phaser.write_out_buffer();
+//
+//        // buffer site
+        bool emptyBuffer = codon_phaser.add_site(si);
+//
+//       //  Was site absorbed, if not release all buffered sites
+//       //  and add these into the gVCF pipeline
+        if (!codon_phaser.is_in_block || emptyBuffer){
 //            log_os << "### buffer size:" << codon_phaser.buffer.size() << "\n";
-//            for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it){
+            for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it){
 //                log_os << *it << "\n";
-//                add_site_internal(*it);
-//            }
-//            skip_to_pos(si.pos);
-//            add_site_internal(si);
-//            codon_phaser.clear_buffer();
-//        }
+                add_site_internal(*it);
+            }
+            skip_to_pos(si.pos);
+            add_site_internal(si);
+            codon_phaser.clear_buffer();
+        }
 
     }
     else {

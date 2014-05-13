@@ -110,6 +110,11 @@ get_starling_shared_option_parser(starling_options& opt) {
     ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("old"),
       "Choose indel error model to use, available option old,new, new_stratified (development option only)")
 
+
+    ("do-short-range-phasing", po::value(&opt.do_codon_phasing)->zero_tokens(),
+       "Do condon-range phasing.")
+
+
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
 
