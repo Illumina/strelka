@@ -86,7 +86,12 @@ private:
     double
     get_error_prob_imp(const int qscore) const {
         qscore_check_int(qscore);
+
+        /// we get a FP warning here in gcc 4.9.0:
+#pragma GCC diagnostic ignored "-Warray-bounds"
         return q2p[qscore];
+#pragma GCC diagnostic pop
+
     }
 
     double

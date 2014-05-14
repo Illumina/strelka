@@ -23,7 +23,7 @@ SAMTOOLS_DIR := $(REDIST_DIR)/$(SAMTOOLS_ID)
 TABIX_DIR := $(REDIST_DIR)/$(TABIX_ID)
 CODEMIN_INCLUDE_DIR := $(REDIST_DIR)/$(CODEMIN_ID)/include
 
-CXX := g++
+#CXX := g++
 BASE_WARNFLAGS := -Wall -Wextra -Wshadow -Wunused
 EXTRA_WARNFLAGS := -Wpointer-arith -Winit-self -Wredundant-decls # -Wsign-conversion -Weverything 
 WARNFLAGS = $(BASE_WARNFLAGS) $(EXTRA_WARNFLAGS)

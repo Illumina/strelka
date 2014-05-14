@@ -20,7 +20,7 @@ class gvcf_compressor {
 public:
     gvcf_compressor();
     void read_bed(const std::string& input_file, const std::string& chrom);
-    bool is_minor_allele_site(const std::string chr, const int pos); //determine if the reference is the minor allele
+    bool is_minor_allele_site(const std::string& chr, const int pos); //determine if the reference is the minor allele
     bool is_site_compressable(const gvcf_options& opt, const site_info& si); //determine if a site should be added to current block or if the block should be written out
 
 //    void sanity_check();

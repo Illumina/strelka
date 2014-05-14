@@ -80,7 +80,6 @@ is_interfering_indel(const indel_set_t& current_indels,
 
     if (current_indels.count(new_indel) != 0) return false;
 
-    typedef indel_set_t::const_iterator siter;
     BOOST_FOREACH(const indel_key& ik, current_indels) {
         if (is_indel_conflict(ik,new_indel)) return true;
     }
