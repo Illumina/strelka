@@ -936,9 +936,7 @@ process_pos(const int stage_no,
                 write_reads(pos);
             }
 
-            for (unsigned s(0); s<_n_samples; ++s) {
-                sample(s).read_buff.clear_pos(_client_opt,pos);
-            }
+            //previously cleared read-buffer here
 
         } else {
             if (! _client_opt.is_write_candidate_indels_only) {
@@ -952,9 +950,19 @@ process_pos(const int stage_no,
         if (! _client_opt.is_htype_calling) {
             if (! _client_opt.is_write_candidate_indels_only) {
                 if (is_pos_reportable(pos)) {
+
                     process_pos_variants(pos);
                 }
             }
+
+            // clear read buffer here as oppose to READ_BUFFER stage.
+            // if we are doing short-range phasing, the codon_phaser
+            // is responsible or clearing the read buffer
+            if (!this->_client_opt.do_codon_phasing)
+                for (unsigned s(0); s<_n_samples; ++s) {
+                    //sample(s).read_buff.clear_pos(_client_opt,pos);
+                }
+
             clear_forced_output_pos(pos);
 
             for (unsigned s(0); s<_n_samples; ++s) {
@@ -1520,12 +1528,6 @@ pileup_read_segment(const read_segment& rseg,
                         update_ranksum(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
                     }
 
-                    if (_client_opt.do_codon_phasing) {
-                        // build graph
-                        //log_os << "Doing codon"  << "\n";
-
-                    }
-
                     if (_client_opt.is_compute_hapscore) {
                         insert_hap_cand(ref_pos,sample_no,is_tier1,
                                         bseq,qual,read_pos);
@@ -1762,7 +1764,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         }
 #endif
 
-        //Add site gvcf
+        //Add site to gvcf
         if (_client_opt.is_gvcf_output()) {
             _site_info.init(pos,pi.get_ref_base(),good_pi,_client_opt.used_allele_count_min_qscore);
             _gvcfer->add_site(_site_info);
