@@ -91,7 +91,7 @@ cppcheck.done: $(STARKA_PROGRAMS)
 $(STARKA_PROGRAMS): LDLIBS += -lboost_program_options
 $(STARKA_PROGRAMS): CC := $(CXX) # this fixes the linker to inlcude libc++
 
-#$(STRELKA_PROGRAMS): % : %.o $(STRELKA_OBJS) $(SHARED_CXX_LIB)
+$(STRELKA_PROGRAMS): % : %.o $(STRELKA_OBJS) $(SHARED_CXX_LIB)
 $(STARLING_PROGRAM): % : %.o $(STAR_OBJS) $(SHARED_CXX_LIB)
 
 

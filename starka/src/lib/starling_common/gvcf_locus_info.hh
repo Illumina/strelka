@@ -149,7 +149,7 @@ struct site_modifiers : public shared_modifiers {
         is_used_covered=false;
         is_zero_ploidy=false;
         is_block=false;
-        is_codon=false;
+        is_phased_region=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
     }
 
@@ -163,7 +163,7 @@ struct site_modifiers : public shared_modifiers {
     bool is_used_covered;
     bool is_zero_ploidy;
     bool is_block;
-    bool is_codon;
+    bool is_phased_region;
 
     MODIFIED_SITE_GT::index_t modified_gt;
 };
@@ -248,6 +248,7 @@ struct site_info {
     site_info()
         : pos(0)
         , ref('N')
+        , region_ref("")
         , n_used_calls(0)
         , n_unused_calls(0)
         , hpol(0)
@@ -311,6 +312,7 @@ struct site_info {
 
     pos_t pos;
     char ref;
+    std::string region_ref;
     unsigned n_used_calls;
     unsigned n_unused_calls;
     boost::array<unsigned,N_BASE> known_counts;

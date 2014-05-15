@@ -191,11 +191,6 @@ gvcf_aggregator(const starling_options& opt,
 
     if (! opt.is_gvcf_output()) return;
 
-    // initialize codonPhaser
-
-    if (_opt.do_codon_phasing) {
-//        this->codon_phaser = &temp_phaser;  // add in commandline parameters
-    }
     // initialize calibration model
     this->CM.load_models(opt.calibration_models_filename);
     this->CM.set_model(opt.calibration_model);
@@ -262,27 +257,22 @@ gvcf_aggregator::
 add_site(site_info& si) {
 
     add_site_modifiers(_opt.gvcf,_dopt,si,this->CM);
-    skip_to_pos(si.pos);
+
+    // TODO move to pos_processor instead
     if (_opt.do_codon_phasing) {
-//
-//        // buffer site
         bool emptyBuffer = codon_phaser.add_site(si);
-//
-//       //  Was site absorbed, if not release all buffered sites
-//       //  and add these into the gVCF pipeline
+       //  Was site absorbed, if not release all buffered sites and add these into the gVCF pipeline
         if (!codon_phaser.is_in_block || emptyBuffer){
-//            log_os << "### buffer size:" << codon_phaser.buffer.size() << "\n";
             for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it){
-//                log_os << *it << "\n";
+                skip_to_pos(it.base()->pos);
                 add_site_internal(*it);
             }
-            skip_to_pos(si.pos);
-            add_site_internal(si);
             codon_phaser.clear_buffer();
         }
-
     }
     else {
+        //default behavior
+        skip_to_pos(si.pos);
         add_site_internal(si);
     }
 }
@@ -307,8 +297,7 @@ add_site_internal(const site_info& si) {
             return;
         }
     }
-
-    // write_site:
+    // write_site
     queue_site_record(si);
 }
 
@@ -475,8 +464,12 @@ write_site_record(const site_info& si) const {
 
     os << _chrom << '\t'  // CHROM
        << (si.pos+1) << '\t'  // POS
-       << ".\t"           // ID
-       << si.ref << '\t'; // REF
+       << ".\t";           // ID
+
+    if(si.smod.is_phased_region)
+        os  << si.region_ref << '\t'; // REF
+    else
+        os  << si.ref << '\t'; // REF
 
     // ALT
     if (si.smod.is_unknown || si.smod.is_block) {
