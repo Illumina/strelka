@@ -12,6 +12,7 @@
 
 #include "starling_common/gvcf_locus_info.hh"
 #include "starling_common/starling_read_buffer.hh"
+#include <sstream>
 
 class Codon_phaser {
 public:
@@ -31,21 +32,18 @@ public:
     bool is_in_block;                   // Are we currently in a phasing block
     std::vector<site_info> buffer;      // buffer of het snp calls
     starling_read_buffer *read_buffer;  // pass along the relevant read-buffer
+    int block_start,block_end;          // position of the first and last added het site to block
 private:
-    int block_start;                    // position of first added het site to block
-    int block_end;                      // position of last added het site to block
     int range;                          // phasing window considered
     int het_count;                      // total hets observed in buffer
     int read_len;                       // the length of the input reads
     int previous_clear;                 // cleared buffer up to this site
-    int total_reads;                    // total used reads spanning phasing region
-    int total_reads_unused;             // total unused reads spanning phasing region
-    int min_baseq;                      // minimum baseq to consider
+    int total_reads,total_reads_unused; // total used and unused reads spanning phasing region
+    int min_baseq;                      // minimum baseq to consider TODO replace with reference to opt
     int min_mapq;                       // minimum mapq to consider
     bool phase_indels;                  // should we attempt to phase indels as well, if false simply break the block at this point
     std::string reference;              // the phased allele reference
     typedef std::map<std::string,int> allele_map;
     allele_map observations;
-    std::string max_alleles[2];         // maintain two max alleles
 };
 #endif /* CODONPHASER_HH_ */

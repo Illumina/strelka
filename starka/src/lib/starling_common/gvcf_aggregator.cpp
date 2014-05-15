@@ -278,7 +278,6 @@ add_site(site_info& si) {
 }
 
 //Add sites to queue for writing to gVCF
-
 void
 gvcf_aggregator::
 add_site_internal(const site_info& si) {
@@ -425,7 +424,6 @@ void
 print_vcf_alt(const unsigned gt,
               const unsigned ref_gt,
               std::ostream& os) {
-
     bool is_print(false);
     for (unsigned b(0); b<N_BASE; ++b) {
         if (b==ref_gt) continue;
@@ -467,7 +465,7 @@ write_site_record(const site_info& si) const {
        << ".\t";           // ID
 
     if(si.smod.is_phased_region)
-        os  << si.region_ref << '\t'; // REF
+        os  << si.phased_ref << '\t'; // REF
     else
         os  << si.ref << '\t'; // REF
 
@@ -475,7 +473,12 @@ write_site_record(const site_info& si) const {
     if (si.smod.is_unknown || si.smod.is_block) {
         os << '.';
     } else {
-        print_vcf_alt(si.smod.max_gt,si.dgt.ref_gt,os);
+
+        if(si.smod.is_phased_region){
+            os << si.phased_alt;
+        }
+        else
+            print_vcf_alt(si.smod.max_gt,si.dgt.ref_gt,os);
     }
     os << '\t';
 
@@ -581,8 +584,9 @@ write_site_record(const site_info& si) const {
            << si.n_unused_calls;
     }
 
-    if (! si.smod.is_block) {
-        // print AD
+    if (si.smod.is_phased_region)
+        os << ':' << si.phased_AD;
+    else if (! si.smod.is_block) {
         os << ':';
         print_site_ad(si,os);
     }

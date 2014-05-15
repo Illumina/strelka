@@ -248,7 +248,9 @@ struct site_info {
     site_info()
         : pos(0)
         , ref('N')
-        , region_ref("")
+        , phased_ref("")
+        , phased_alt("")
+        , phased_AD("")
         , n_used_calls(0)
         , n_unused_calls(0)
         , hpol(0)
@@ -312,7 +314,7 @@ struct site_info {
 
     pos_t pos;
     char ref;
-    std::string region_ref;
+    std::string phased_ref, phased_alt, phased_AD;
     unsigned n_used_calls;
     unsigned n_unused_calls;
     boost::array<unsigned,N_BASE> known_counts;

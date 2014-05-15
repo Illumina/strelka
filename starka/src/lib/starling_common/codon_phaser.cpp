@@ -80,29 +80,95 @@ Codon_phaser::construct_reference(){
 
 void
 Codon_phaser::create_phased_record() {
-    if (this->total_reads<10){  // some initial minimum conditions, look for at least 10 spanning reads support
-        // set flag saying to little evidence to phase
+    if (this->total_reads<10){
+        // some initial minimum conditions, look for at least 10 spanning reads support
+        // set flag on records saying too little evidence to phase
         return;
     }
 
     //Decide if we accept the novel alleles, very hacky criteria for now
-    //at least 90% of the reads have to support a diploid model
+    //at least 80% of the reads have to support a diploid model
     //TODO unphased genotype corresponds to as many phased genotypes as there are permutations of
     //the observed alleles. Thus, for a given unphased genotyping G1, . . . ,Gn,
     //we need to to calculate probability of sampling a particular unphased genotype combinations
-    //given a set of allele frequencies: P(G1, . . . ,Gn|f1, . . . , fk)
+    //given a set of allele frequencies...
+    typedef std::pair<std::string, int> allele_count;
+    allele_count max_alleles[2] = {allele_count("",0),allele_count("",0)};
+    for (allele_map::const_iterator it = this->observations.begin(); it != this->observations.end(); ++it) { // only normalize the features that are needed
+            if (this->observations[it->first]>max_alleles[0].second){
+                max_alleles[0].first  = it->first;
+                max_alleles[0].second = it->second;
+            }
+            if (this->observations[it->first]>max_alleles[1].second && max_alleles[0].first!=it->first){
+                max_alleles[1].first  = it->first;
+                max_alleles[1].second = it->second;
+            }
+    }
 
+    // some add hoc metrics to measure consistency with diploid model
+    int allele_sum = max_alleles[0].second + max_alleles[1].second;
+    float max_allele_frac = (1.0*allele_sum)/this->total_reads;
+    float relative_allele_frac  = 1.0*max_alleles[1].second/max_alleles[0].second;
 
+    #ifdef DEBUG_CODON
+//        log_os << "max alleles sum " << allele_sum << "\n";
+//        log_os << "max alleles frac " << max_allele_frac << "\n";
+//        log_os << "relative_allele_frac " << relative_allele_frac << "\n";
+    #endif
 
+    if (max_allele_frac<0.8){
+        log_os << "doesnt seem like a clear diploid site \n";
+        // set filter as, multiple alleles
+        return;
+    }
+
+    if (relative_allele_frac<0.5){
+        log_os << "allele imbalance \n";
+        // set filter as, allele imbalance?
+        return;
+    }
+
+    // we have phased record, modify site buffer to reflect
     site_info &base = (this->buffer.at(0));
-    base.region_ref = this->reference;
+
+    base.phased_ref = this->reference;
+    bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
+    std::stringstream AD,alt;
+
+    // hacking  the gt method to 0/1
+    base.smod.max_gt = 4;
+    base.dgt.ref_gt  = 0;
+
+    if (!is_ref){
+       AD << this->observations[this->reference] << ",";
+       base.dgt.ref_gt = 2; // hacking  the gt method to 1/2
+    }
+
+    log_os << "my max gt " << base.smod.max_gt << "\n";
+    log_os << "my max ref gt " << base.dgt.ref_gt << "\n";
+
+    for (unsigned i(0);i<2; i++){
+        if (i>0)
+            alt << ",";
+        if (i>0 && !is_ref)
+            AD << ",";
+        alt << max_alleles[i].first;
+        AD << this->observations[max_alleles[i].first];
+    }
+
+    base.phased_alt = alt.str();
+    base.phased_AD  = AD.str();
+
     base.smod.is_phased_region = true;
     base.n_used_calls = this->total_reads;
     base.n_unused_calls = this->total_reads_unused;
 
-    // case we want to report the phased record instead
-    this->buffer.clear();
-    this->buffer.push_back(base);
+    // case we want to report the phased record clean out buffer and push on the phased record only
+    log_os << "buffer size " << buffer.size() << "\n";
+    this->write_out_buffer();
+    buffer.erase(buffer.begin()+1,buffer.begin()+3);
+    log_os << "buffer size " << buffer.size() << "\n";
+    this->write_out_buffer();
 }
 
 // makes the phased VCF record from the buffered sites list
@@ -166,19 +232,6 @@ void Codon_phaser::collect_read_evidence(){
                 #endif
                 if(do_include){
                     this->observations[sub_str]++;
-
-                    // maintain max keys
-                    if (this->max_alleles[0]==""){
-                        this->max_alleles[0] = sub_str;
-                        this->max_alleles[1] = sub_str;
-                    }
-                    else if (this->observations[sub_str]> this->observations[this->max_alleles[0]]){
-                        this->max_alleles[1] = this->max_alleles[0];
-                        this->max_alleles[0] = sub_str;
-                    }
-                    else if(this->observations[sub_str]> this->observations[this->max_alleles[1]])
-                        this->max_alleles[1] = sub_str;
-
                     total_reads++;
                 }
                 else
@@ -187,9 +240,8 @@ void Codon_phaser::collect_read_evidence(){
             ri.next();
         }
     }
-
     #ifdef DEBUG_CODON
-        log_os << "total reads " << total_reads << "\n";
+        //log_os << "total reads " << total_reads << "\n";
     #endif
 }
 
@@ -203,8 +255,6 @@ Codon_phaser::clear_buffer() {
     this->total_reads       = 0;
     this->total_reads_unused = 0;
     this->reference          = "";
-    for (unsigned i(0);i<2;i++)
-        this->max_alleles[i] = "";
 }
 
 void
@@ -213,11 +263,10 @@ Codon_phaser::clear_read_buffer(int i){
     log_os << i << "\n";
 }
 
-
 void
 Codon_phaser::write_out_buffer() {
     for (std::vector<site_info>::iterator it = buffer.begin(); it != buffer.end(); ++it)
-        log_os << *it << "\n";
+        log_os << *it << " ref " << it.base()->ref << "\n";
 }
 
 void
