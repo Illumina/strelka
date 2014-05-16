@@ -21,7 +21,7 @@ Codon_phaser::Codon_phaser() {
     range       = 3;                  // phasing range we are considering, may be determined dynamically
     is_in_block = false;
     het_count   = 0;
-    read_len    = 100;                // this options need set externally
+    read_len    = 100;                //TODO this options need set externally
     min_mapq    = 20;
     min_baseq   = 17;
     phase_indels= false;              // if false we break the block when encountering an indel
@@ -81,6 +81,7 @@ Codon_phaser::construct_reference(){
 void
 Codon_phaser::create_phased_record() {
     if (this->total_reads<10){
+        log_os << "Insufficient coverage \n";
         // some initial minimum conditions, look for at least 10 spanning reads support
         // set flag on records saying too little evidence to phase
         return;
@@ -93,17 +94,23 @@ Codon_phaser::create_phased_record() {
     //we need to to calculate probability of sampling a particular unphased genotype combinations
     //given a set of allele frequencies...
     typedef std::pair<std::string, int> allele_count;
-    allele_count max_alleles[2] = {allele_count("",0),allele_count("",0)};
+    allele_count max_alleles[2] = {allele_count("N",0),allele_count("N",0)};
     for (allele_map::const_iterator it = this->observations.begin(); it != this->observations.end(); ++it) { // only normalize the features that are needed
             if (this->observations[it->first]>max_alleles[0].second){
+                max_alleles[1]  = max_alleles[0];
                 max_alleles[0].first  = it->first;
                 max_alleles[0].second = it->second;
             }
             if (this->observations[it->first]>max_alleles[1].second && max_alleles[0].first!=it->first){
-                max_alleles[1].first  = it->first;
-                max_alleles[1].second = it->second;
+                        max_alleles[1].first  = it->first;
+                        max_alleles[1].second = it->second;
             }
     }
+
+    #ifdef DEBUG_CODON
+//        log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
+//        log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
+    #endif
 
     // some add hoc metrics to measure consistency with diploid model
     int allele_sum = max_alleles[0].second + max_alleles[1].second;
@@ -128,32 +135,34 @@ Codon_phaser::create_phased_record() {
         return;
     }
 
-    // we have phased record, modify site buffer to reflect
+    // we have a phased record, modify site buffer to reflect the changes
     site_info &base = (this->buffer.at(0));
 
     base.phased_ref = this->reference;
     bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
     std::stringstream AD,alt;
 
-    // hacking  the gt method to 0/1
     base.smod.max_gt = 4;
-    base.dgt.ref_gt  = 0;
+    base.dgt.ref_gt  = 0; // hacking  the gt method to 0/1
+    if (!is_ref) base.dgt.ref_gt = 2; // hacking the gt method to 1/2
 
-    if (!is_ref){
-       AD << this->observations[this->reference] << ",";
-       base.dgt.ref_gt = 2; // hacking  the gt method to 1/2
-    }
+    AD << this->observations[this->reference] << ",";
 
-    log_os << "my max gt " << base.smod.max_gt << "\n";
-    log_os << "my max ref gt " << base.dgt.ref_gt << "\n";
+//    log_os << "my max gt " << base.smod.max_gt << "\n";
+//    log_os << "my max ref gt " << base.dgt.ref_gt << "\n";
 
     for (unsigned i(0);i<2; i++){
-        if (i>0)
-            alt << ",";
-        if (i>0 && !is_ref)
-            AD << ",";
-        alt << max_alleles[i].first;
-        AD << this->observations[max_alleles[i].first];
+        if (i>0 && !is_ref) AD << ",";
+        if (max_alleles[i].first!=this->reference){
+            if (i>0) alt << ",";
+            alt << max_alleles[i].first;
+            AD << this->observations[max_alleles[i].first];
+        }
+    }
+
+    // set GQ and GQX
+    for (unsigned i(0);i<this->get_block_length();i++){
+
     }
 
     base.phased_alt = alt.str();
@@ -166,7 +175,7 @@ Codon_phaser::create_phased_record() {
     // case we want to report the phased record clean out buffer and push on the phased record only
     log_os << "buffer size " << buffer.size() << "\n";
     this->write_out_buffer();
-    buffer.erase(buffer.begin()+1,buffer.begin()+3);
+    buffer.erase(buffer.begin()+1,buffer.begin()+this->get_block_length());
     log_os << "buffer size " << buffer.size() << "\n";
     this->write_out_buffer();
 }
@@ -198,8 +207,10 @@ void Codon_phaser::collect_read_evidence(){
             const bam_seq bseq(rseg.get_bam_read());
 
             // read quality checks
-            if (rseg.is_invalid_realignment || !rseg.is_valid()) break;
-            if (static_cast<int>(rseg.map_qual())<this->min_mapq) break;
+            if (static_cast<int>(rseg.map_qual())<this->min_mapq){
+                this->total_reads_unused++;
+                break;
+            }
 
             int sub_start((this->block_start-rseg.buffer_pos));
             int sub_end((this->block_end-rseg.buffer_pos));
@@ -212,7 +223,6 @@ void Codon_phaser::collect_read_evidence(){
 
             if (sub_start>=0 && sub_end<read_len){
                 //instead make bit array counting the number of times het pos co-occur
-                //explore the space of all phas-possibilities?
                 std::string sub_str("");
                 for (int t=sub_start;t<(sub_end+1);t++){ //pull out substring of read
                     if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->min_baseq)){
@@ -241,7 +251,8 @@ void Codon_phaser::collect_read_evidence(){
         }
     }
     #ifdef DEBUG_CODON
-        //log_os << "total reads " << total_reads << "\n";
+        log_os << "total reads " << total_reads << "\n";
+        log_os << "total reads unused " << total_reads_unused << "\n";
     #endif
 }
 
@@ -249,12 +260,12 @@ void
 Codon_phaser::clear_buffer() {
     buffer.clear();
     this->observations.clear();
-    block_end               = -1;
-    is_in_block             = false;
-    het_count               = 0;
-    this->total_reads       = 0;
-    this->total_reads_unused = 0;
-    this->reference          = "";
+    block_end                   = -1;
+    is_in_block                 = false;
+    het_count                   = 0;
+    this->total_reads           = 0;
+    this->total_reads_unused    = 0;
+    this->reference             = "";
 }
 
 void
