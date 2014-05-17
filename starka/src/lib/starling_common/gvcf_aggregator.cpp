@@ -124,12 +124,13 @@ set_site_filters_CM(const gvcf_options& opt,
     model.clasify_site(opt,dopt,si);
 }
 
+static
 void
 add_indel_modifiers_CM(const gvcf_options& opt,
                     const gvcf_deriv_options& dopt,
                     indel_info& ii, calibration_models& model) {
-        // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
-        model.clasify_site(opt,dopt,ii);
+    // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
+    model.clasify_site(opt,dopt,ii);
 }
 
 static
@@ -282,7 +283,10 @@ void
 gvcf_aggregator::
 add_site_internal(const site_info& si) {
 
-    _head_pos=si.pos+1;
+    if (si.smod.is_phased_region)
+        _head_pos=si.pos+si.phased_ref.length();
+    else
+        _head_pos=si.pos+1;
 
     // resolve any current or previous indels before queue-ing site:
     if (0 != _indel_buffer_size) {

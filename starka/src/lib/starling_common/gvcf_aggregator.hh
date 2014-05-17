@@ -119,6 +119,7 @@ private:
     pos_t _indel_end_pos;
 
     unsigned _indel_buffer_size;
+    unsigned _phasing_buffer_size;
     std::vector<indel_info> _indel_buffer;
 
     unsigned _site_buffer_size;
