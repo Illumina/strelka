@@ -260,7 +260,7 @@ add_site(site_info& si) {
     add_site_modifiers(_opt.gvcf,_dopt,si,this->CM);
 
     // TODO move to pos_processor instead
-    if (_opt.do_codon_phasing) {
+    if (_opt.do_codon_phasing && (!si.smod.is_block||codon_phaser.is_in_block)) {
         bool emptyBuffer = codon_phaser.add_site(si);
        //  Was site absorbed, if not release all buffered sites and add these into the gVCF pipeline
         if (!codon_phaser.is_in_block || emptyBuffer){

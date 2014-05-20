@@ -170,14 +170,14 @@ Codon_phaser::create_phased_record() {
 
     base.smod.is_phased_region = true;
     base.n_used_calls = this->total_reads;
-    base.n_unused_calls = this->total_reads_unused;
+    base.n_unused_calls = this->total_reads_unused + (this->total_reads-allele_sum); // second term mark all alleles that we didnt use as unused reads
 
     // case we want to report the phased record clean out buffer and push on the phased record only
-    log_os << "buffer size " << buffer.size() << "\n";
-    this->write_out_buffer();
+//    log_os << "buffer size " << buffer.size() << "\n";
+//    this->write_out_buffer();
     buffer.erase(buffer.begin()+1,buffer.begin()+this->get_block_length());
-    log_os << "buffer size " << buffer.size() << "\n";
-    this->write_out_buffer();
+//    log_os << "buffer size " << buffer.size() << "\n";
+//    this->write_out_buffer();
 }
 
 // makes the phased VCF record from the buffered sites list
