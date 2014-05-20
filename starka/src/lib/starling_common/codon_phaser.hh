@@ -38,11 +38,12 @@ public:
 private:
     int range;                          // phasing window considered
     int het_count;                      // total hets observed in buffer
-    int read_len;                       // the length of the input reads
+    unsigned read_len;                       // the length of the input reads
     int previous_clear;                 // cleared buffer up to this site
     int total_reads,total_reads_unused; // total used and unused reads spanning phasing region
     int min_baseq;                      // minimum baseq to consider TODO replace with reference to opt
     int min_mapq;                       // minimum mapq to consider
+    unsigned last_cleared;              // the last cleared site
     bool phase_indels;                  // should we attempt to phase indels as well, if false simply break the block at this point
     std::string reference;              // the phased allele reference
     typedef std::map<std::string,int> allele_map;

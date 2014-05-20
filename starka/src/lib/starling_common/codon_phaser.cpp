@@ -25,6 +25,7 @@ Codon_phaser::Codon_phaser() {
     min_mapq    = 20;
     min_baseq   = 17;
     phase_indels= false;              // if false we break the block when encountering an indel
+    last_cleared= -1;
     this->clear_buffer();
 }
 
