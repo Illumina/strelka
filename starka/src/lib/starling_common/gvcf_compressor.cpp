@@ -33,41 +33,43 @@ gvcf_compressor::gvcf_compressor() {
     this->minor_allele_loaded = false;
 }
 
-void gvcf_compressor::read_bed(const std::string& input_file, const std::string& chrom){
-	using namespace boost::algorithm;
-	   std::ifstream myReadFile;
-	    myReadFile.open(input_file.c_str());
-	    std::string output;
-	    if (myReadFile.is_open()) {
-	        while (!myReadFile.eof()) {
-	            std::getline (myReadFile,output);
+
+void gvcf_compressor::read_bed(const std::string& input_file, const std::string& chrom) {
+    using namespace boost::algorithm;
+    std::ifstream myReadFile;
+    myReadFile.open(input_file.c_str());
+    std::string output;
+    if (myReadFile.is_open()) {
+        while (!myReadFile.eof()) {
+            std::getline (myReadFile,output);
 //	            boost::replace_all(output, "chr", "");
-	            std::vector<std::string> tokens;
+            std::vector<std::string> tokens;
 //	            std::cout  << output << "\n";
-	            split(tokens, output, is_any_of("\t")); // tokenize string
+            split(tokens, output, is_any_of("\t")); // tokenize string
 //	            //case new model
-	            if (tokens.size()>3 && tokens.at(0)==chrom){
+            if (tokens.size()>3 && tokens.at(0)==chrom) {
 //	                std::cout  << tokens.at(0) << "\n";
 //	                int my_pos = atoi( tokens.at(1).c_str() );
 //	                std::cout  << pos << "\n";
 //	                std::cout  << my_pos << "\n";
-	                this->chr_to_pos[tokens.at(0)][atoi( tokens.at(1).c_str() )] = true;
-	            }
-	        }
-	   }
-	   this->my_chrom = chrom;
-	   this->minor_allele_loaded = true;
+                this->chr_to_pos[tokens.at(0)][atoi( tokens.at(1).c_str() )] = true;
+            }
+        }
+    }
+    this->my_chrom = chrom;
+    this->minor_allele_loaded = true;
 }
 
-bool gvcf_compressor::is_minor_allele_site(const std::string& chr, const int pos){
+
+bool gvcf_compressor::is_minor_allele_site(const std::string& chr, const int pos) {
     chrposmap::iterator it = this->chr_to_pos.find(chr);
 //    log_os << "checking for chr " << chr << " pos " << pos << "\n";
 
-    if(it != this->chr_to_pos.end())
+    if (it != this->chr_to_pos.end())
     {
 //        log_os << "found chr " << "\n";
         posmap::iterator it2 = this->chr_to_pos[chr].find(pos);
-        if(it2 != this->chr_to_pos[chr].end())
+        if (it2 != this->chr_to_pos[chr].end())
         {
 //            log_os << "found pos " << "\n";
             return true;
@@ -78,7 +80,7 @@ bool gvcf_compressor::is_minor_allele_site(const std::string& chr, const int pos
 
 
 
-bool gvcf_compressor::is_site_compressable(const gvcf_options& opt, const site_info& si){
+bool gvcf_compressor::is_site_compressable(const gvcf_options& opt, const site_info& si) {
 
     if (! opt.is_block_compression) return false;
 

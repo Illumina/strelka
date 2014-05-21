@@ -310,7 +310,7 @@ strelka_command() {
 -clobber -filter-unanchored -min-paired-align-score 20 \
 -min-single-align-score 10 -min-qscore 0 \
 -max-window-mismatch 3 20 -print-used-allele-counts -max-indel-size 50 -indel-nonsite-match-prob 0.5 \
---min-contig-open-end-support 35 --somatic-snv-rate 0.000001 --shared-site-error-rate 0.0000005 \
+--somatic-snv-rate 0.000001 --shared-site-error-rate 0.0000005 \
 --shared-site-error-strand-bias-fraction 0.5 --somatic-indel-rate 0.000001 --shared-indel-error-rate 0.000001 \
 --tier2-min-single-align-score 5 --tier2-min-paired-align-score 5 --tier2-single-align-score-rescue-mode \
 --tier2-mismatch-density-filter-count 10 --tier2-no-filter-unanchored \

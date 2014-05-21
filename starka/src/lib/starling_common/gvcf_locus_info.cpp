@@ -83,7 +83,7 @@ std::map<std::string, double> indel_info::get_qscore_features() {
     return res;
 }
 
-void indel_info::calc_vqsr_metrics(){
+void indel_info::calc_vqsr_metrics() {
     this->MQ                = 0.0; //this->ik.mapq_val*1.0/this->ik.mapq_n;
     this->ReadPosRankSum    = 1.0;
     this->MQRankSum         = 2.0;

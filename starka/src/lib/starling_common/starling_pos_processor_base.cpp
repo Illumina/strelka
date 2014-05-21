@@ -63,10 +63,7 @@ const double STARLING_LARGEST_READ_SIZE_PAD(1.25);
 // largest indel_size grows dynamically with observed indel size until
 // hitting max_indel_size. Initialized to the follow value prior to
 // observation:
-//
-// start with max_indel_size to deal with grouperisms:
-//
-//const unsigned STARLING_INIT_LARGEST_INDEL_SIZE(40);
+
 
 
 //////////////////////////////////////////////
@@ -597,9 +594,7 @@ insert_read(const bam_record& br,
             const READ_ALIGN::index_t rat,
             const char* chrom_name,
             const MAPLEVEL::index_t maplev,
-            const unsigned sample_no,
-            const align_id_t contig_id,
-            const indel_set_t* contig_indels_ptr) {
+            const unsigned sample_no) {
     if (0 != strcmp(_chrom_name.c_str(),chrom_name)) {
         log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chrom_name << "'\n"
                << "\tread_key: " << read_key(br) << "\n";
@@ -634,7 +629,7 @@ insert_read(const bam_record& br,
     starling_read_buffer& rbuff(sample(sample_no).read_buff);
     const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(_client_opt,
                                                                   br,al,maplev,
-                                                                  rat,contig_id));
+                                                                  rat));
     if (! res.first) return res;
 
     // must initialize initial genomic read_segments "by-hand":
@@ -651,31 +646,6 @@ insert_read(const bam_record& br,
         // update other data for only the first read segment
         const seg_id_t seg_id(sread_ptr->is_segmented() ? 1 : 0 );
         init_read_segment(sread_ptr->get_segment(seg_id),sample_no);
-    }
-
-    // add contig read indels to sppr (genomic reads handled within pos_processor_base):
-    //
-    if ((READ_ALIGN::CONTIG==rat) && (! al.empty())) {
-        // TODO -- check that indels stay within the bounds of the ref_seq
-        //
-        // TODO -- check that multiple indels on the same read do not add-up to exceed the buffer size
-        //
-        // TODO -- normalize indels
-        //
-        static const INDEL_ALIGN_TYPE::index_t iat(INDEL_ALIGN_TYPE::CONTIG_READ);
-        const bam_seq bseq(br.get_bam_read());
-//        const read_stats rs = read_stats(br.map_qual(),br.qual());
-        try {
-            static const std::pair<bool,bool> edge_pin(std::make_pair(false,false));
-            const unsigned total_indel_ref_span_per_read =
-                add_alignment_indels_to_sppr(_client_opt.max_indel_size,_ref,
-                                             al,bseq,*this,iat,res.second,sample_no,
-                                             edge_pin,contig_indels_ptr);
-            update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
-        } catch (...) {
-            log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << read_key(br) << "\n";
-            throw;
-        }
     }
 
     return res;

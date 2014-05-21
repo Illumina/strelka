@@ -214,12 +214,11 @@ struct indel_data {
 
 
 #if 0
-    // add read and contig id evidence from another indel_data
+    // add read evidence from another indel_data
     // structure -- this is not a copy ctor
     //
     void
     add_indel_data_evidence(const indel_data& id) {
-        add_evidence(contig_ids,id.contig_ids);
         add_evidence(all_read_ids,id.all_read_ids);
         add_evidence(tier2_map_read_ids,id.tier2_map_read_ids);
         add_evidence(submap_read_ids,id.submap_read_ids);
@@ -278,14 +277,10 @@ public:
     // mapping thresholds.
     //
     // all_read_ids contains the list of reads which either have a
-    // genomic alignment passing the mapping criteria or have a contig
-    // alignment.
-    //
-    // contig_ids are the grouper contig(s) which support the indel
+    // genomic alignment passing the mapping criteria
     //
     typedef std::set<align_id_t> evidence_t;
-    evidence_t contig_ids;
-    evidence_t all_read_ids; // all contig and tier1 read_ids
+    evidence_t all_read_ids; // all tier1 read_ids
     evidence_t tier2_map_read_ids;
     evidence_t submap_read_ids;
 

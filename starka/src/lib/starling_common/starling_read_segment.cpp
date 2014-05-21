@@ -64,16 +64,6 @@ qual() const {
 
 
 
-const contig_align_t&
-read_segment::
-contig_align() const  {
-    static const contig_align_t empty_set;
-    if (is_full_segment()) return sread()._contig_align;
-    return empty_set;
-}
-
-
-
 align_id_t
 read_segment::
 id() const { return sread().id(); }
@@ -136,9 +126,6 @@ is_any_nonovermax(const unsigned max_indel_size) const {
     if ((! rseg.genome_align().empty()) &&
         (! rseg.genome_align().is_overmax(max_indel_size))) return true;
 
-    BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()) {
-        if (! calign.second.is_overmax(max_indel_size)) return true;
-    }
     return false;
 }
 
@@ -157,11 +144,6 @@ is_valid() const {
             is_apath_starling_invalid(path)) return false;
     }
 
-    BOOST_FOREACH(const contig_align_t::value_type& calign, rseg.contig_align()) {
-        const ALIGNPATH::path_t path(calign.second.path);
-        if (is_apath_invalid(path,rs) ||
-            is_apath_starling_invalid(path)) return false;
-    }
     return true;
 }
 
@@ -204,15 +186,5 @@ operator<<(std::ostream& os,
 
     short_report(os,rseg);
 
-    {
-        typedef contig_align_t cat;
-        const cat& ct(rseg.contig_align());
-        cat::const_iterator i(ct.begin()),i_end(ct.end());
-        for (; i!=i_end; ++i) {
-            os << "CONTIG contig_id: " << i->first << " " << i->second;
-        }
-    }
-
     return os;
 }
-

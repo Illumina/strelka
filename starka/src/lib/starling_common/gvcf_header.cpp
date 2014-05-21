@@ -110,12 +110,12 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
 //    }
 
     if (true) {
-            std::ostringstream oss;
-            oss << "Locus quality score falls below passing threshold for the given variant type";
-            write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
+        std::ostringstream oss;
+        oss << "Locus quality score falls below passing threshold for the given variant type";
+        write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
     }
     // Inconsistent phasing, meaning
-    if (sopt.do_codon_phasing){
+    if (sopt.do_codon_phasing) {
         std::ostringstream oss;
         oss << "Locus read evidence displays conflicting phasing patterns";
         write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
@@ -170,7 +170,7 @@ finish_gvcf_header(const starling_options& opt,
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
 
     // ranksums
-    if (opt.is_compute_VQSRmetrics){
+    if (opt.is_compute_VQSRmetrics) {
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
         os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities.\">\n";
         os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities.\">\n";

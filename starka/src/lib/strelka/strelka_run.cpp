@@ -22,10 +22,8 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/vcf_streamer.hh"
-#include "starling_common/grouper_contig_util.hh"
 #include "starling_common/starling_input_stream_handler.hh"
 #include "starling_common/starling_ref_seq.hh"
-#include "starling_common/starling_pos_processor_contig_util.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 #include "strelka/strelka_info.hh"
 #include "strelka/strelka_run.hh"
@@ -51,12 +49,6 @@ strelka_run(const strelka_options& opt) {
     const strelka_deriv_options dopt(opt,ref);
 
     const pos_range& rlimit(dopt.report_range_limit);
-
-    contig_data_manager normal_cdm(opt.indel_contig_filename,
-                                   opt.indel_contig_read_filename);
-
-    contig_data_manager tumor_cdm(opt.tumor_indel_contig_filename,
-                                  opt.tumor_indel_contig_read_filename);
 
     assert(! opt.bam_filename.empty());
     assert(! opt.tumor_bam_filename.empty());
@@ -92,12 +84,6 @@ strelka_run(const strelka_options& opt) {
         }
     }
 
-    // Provide a temporary bam record for contig reads to write key
-    // information into, and initialize this record with values that
-    // will be fixed for this run:
-    bam_record tmp_key_br;
-    tmp_key_br.set_target_id(tid);
-
     strelka_streams client_io(opt,pinfo,normal_read_stream.get_header());
     strelka_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
@@ -105,8 +91,6 @@ strelka_run(const strelka_options& opt) {
     starling_input_stream_data sdata;
     sdata.register_reads(normal_read_stream,STRELKA_SAMPLE_TYPE::NORMAL);
     sdata.register_reads(tumor_read_stream,STRELKA_SAMPLE_TYPE::TUMOR);
-    sdata.register_contigs(normal_cdm.creader(),STRELKA_SAMPLE_TYPE::NORMAL);
-    sdata.register_contigs(tumor_cdm.creader(),STRELKA_SAMPLE_TYPE::TUMOR);
 
     // hold zero-to-many vcf streams open:
     typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
@@ -168,28 +152,6 @@ strelka_run(const strelka_options& opt) {
             process_genomic_read(opt,ref,read_stream,read,current.pos,
                                  rlimit.begin_pos,brc,sppr,current.sample_no);
 
-        } else if (current.itype == INPUT_TYPE::CONTIG) { // process local-assembly contig and its reads
-
-            contig_data_manager* cdmp(NULL);
-            if        (current.sample_no == STRELKA_SAMPLE_TYPE::NORMAL) {
-                cdmp = &normal_cdm;
-            } else if (current.sample_no == STRELKA_SAMPLE_TYPE::TUMOR) {
-                cdmp = &tumor_cdm;
-            } else {
-                log_os << "ERROR: unrecognized sample_no: " << current.sample_no << "\n";
-                exit(EXIT_FAILURE);
-            }
-
-            const grouper_contig& ctg(cdmp->creader().get_contig());
-
-            const char* sample_label(STRELKA_SAMPLE_TYPE::get_label(current.sample_no));
-
-            if (! test_contig_usability(opt,ctg,sppr,sample_label)) continue;
-
-            //process_contig(opt,ref,ctg,sppr,current.sample_no,sample_label);
-
-            process_contig_reads(ctg,opt.max_indel_size,cdmp->contig_read_exr(),sppr,tmp_key_br,current.sample_no);
-
         } else if (current.itype == INPUT_TYPE::INDEL) { // process candidate indels input from vcf file(s)
             const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
             process_candidate_indel(opt.max_indel_size, vcf_indel, sppr);
@@ -214,4 +176,3 @@ strelka_run(const strelka_options& opt) {
 
     //    brc.report(client_io.report_os());
 }
-

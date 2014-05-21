@@ -28,8 +28,6 @@
 //
 enum { STARLING_MAX_READ_SIZE = 25000 };
 
-enum { MAX_CONTIG_SIZE = 10000 };
-
 
 
 struct avg_window_data {
@@ -77,9 +75,6 @@ struct starling_options : public blt_options {
           is_smoothed_alignments(true),
           smoothed_lnp_range(std::log(10.))
           , is_filter_unanchored(false)
-          , min_contig_open_end_support(0)
-          , min_contig_edge_alignment(7)
-          , min_contig_contiguous_match(14)
           , is_write_candidate_indels_only(false)
           , indel_nonsite_match_prob(0.25)
           , is_tier2_indel_nonsite_match_prob(false)
@@ -130,15 +125,13 @@ struct starling_options : public blt_options {
 //    bool is_simple_indel_error;
 //    double simple_indel_error;
 
-    /// to contibute to a breakpoint likelihood, a read must have at least
+    /// to contribute to a breakpoint likelihood, a read must have at least
     /// this many bases on each side of the breakpoint:
     ///
     /// This is the default used in all samples unless an override is provided for the sample.
     ///
     int default_min_read_bp_flank;
 
-    std::string indel_contig_filename;
-    std::string indel_contig_read_filename;
     std::string bindel_diploid_filename;
 
     // starling parameters:
@@ -161,7 +154,7 @@ struct starling_options : public blt_options {
 
     // indel cannot become candidate unless at least frac of reads
     // which meet mapping thresholds support it (num is reads
-    // supporting indel/den is ELAND reads aligning to adjacent
+    // supporting indel/den in aligner reads aligning to adjacent
     // position).
     double min_candidate_indel_read_frac;
 
@@ -205,11 +198,6 @@ struct starling_options : public blt_options {
     // for internal analysis:
     bool is_filter_unanchored;
 
-    // contig options:
-    unsigned min_contig_open_end_support;
-    unsigned min_contig_edge_alignment;
-    unsigned min_contig_contiguous_match;
-
     std::string realigned_read_filename;
     std::string bam_filename;
     std::string bam_seq_name;
@@ -230,7 +218,7 @@ struct starling_options : public blt_options {
     //
     bool is_noise_indel_filter;
 
-    // only allowed when (1) no indel output is selected and (2) there is no grouper contig input
+    // only allowed when no indel output is selected
     bool is_skip_realignment;
 
     // vcfs can be input to specify candidate indels:
@@ -326,17 +314,12 @@ struct starling_read_counts : public blt_read_counts {
 
     starling_read_counts() :
         normal_indel_used(0),
-        normal_indel_intersect(0),
-        grouper_indel_used(0),
-        grouper_indel_intersect(0),
-        grouper_unused(0) {}
+        normal_indel_intersect(0)
+    {}
 
     void
     report(std::ostream& os) const;
 
     unsigned normal_indel_used;
     unsigned normal_indel_intersect;
-    unsigned grouper_indel_used;
-    unsigned grouper_indel_intersect;
-    unsigned grouper_unused;
 };

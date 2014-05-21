@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_READ_BUFFER_HH
-#define __STARLING_READ_BUFFER_HH
+#pragma once
 
 #include "starling_common/starling_read.hh"
 
@@ -53,7 +52,6 @@ struct read_segment_iter;
 // (1) first alignment pos
 // (2) key or
 // (3) read_id_no
-// (4) contig_id_no(s)
 //
 // multiple reads may be associated with (1) and (4), but (2) and (3)
 // can produce at most a single result.
@@ -78,8 +76,7 @@ struct starling_read_buffer : private boost::noncopyable {
                        const bam_record& br,
                        const alignment& al,
                        const MAPLEVEL::index_t maplev,
-                       const READ_ALIGN::index_t rat,
-                       const align_id_t contig_id);
+                       const READ_ALIGN::index_t rat);
 
 #if 1
     // adjust read segment's buffer position to new_buffer_pos,
@@ -129,11 +126,9 @@ private:
     typedef read_key read_key_t;
     typedef std::map<align_id_t,starling_read*> read_data_t;
     typedef std::map<read_key_t, align_id_t> read_key_lup_t;
-    typedef std::set<align_id_t> read_group_t;
     typedef std::pair<align_id_t,seg_id_t> segment_t;
     typedef std::set<segment_t> segment_group_t;
     typedef std::map<pos_t,segment_group_t> pos_group_t;
-    typedef std::map<align_id_t,read_group_t> align_id_group_t;
 
     static const segment_group_t _empty_segment_group;
 
@@ -157,9 +152,6 @@ private:
     // the storage position:
     //
     pos_group_t _pos_group;
-
-    // map from contig id to all corresponding contig reads
-    align_id_group_t _contig_group;
 };
 
 
@@ -194,6 +186,3 @@ private:
     piter _head;
     const piter _end;
 };
-
-
-#endif

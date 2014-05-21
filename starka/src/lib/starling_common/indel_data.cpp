@@ -25,7 +25,7 @@
 
 void
 read_path_scores::insert_alt(const indel_key& ik,
-           const score_t a) {
+                             const score_t a) {
     const unsigned ais(static_cast<unsigned>(alt_indel.size()));
     if (ais < 2) {
         alt_indel.push_back(std::make_pair(ik,a));
@@ -45,16 +45,11 @@ read_path_scores::insert_alt(const indel_key& ik,
 //    log_os << ik << "\n";
 }
 
-/// add an observation for this indel
-///
-/// is_repeat_obs - has this read_id been observed before? this is both
-///                 read and set by this method. Read ids are allowed to be
-///                 repeated due to suggested alternate alignments from
-///                 GROUPER
+
 void
 indel_data::add_observation(const indel_observation_data& obs_data,
-                const bool is_shared,
-                bool& is_repeat_obs) {
+                            const bool is_shared,
+                            bool& is_repeat_obs) {
 
 
 //#ifdef ID_DEBUG
@@ -77,12 +72,12 @@ indel_data::add_observation(const indel_observation_data& obs_data,
 // add observation for the non-shared case
 void
 indel_data::add_observation_core(const indel_observation_data& obs_data,
-                     bool& is_repeat_obs) {
-    #ifdef ID_DEBUG
+                                 bool& is_repeat_obs) {
+#ifdef ID_DEBUG
 //        log_os << "KATTER: adding obs for indel: " << _ik;
 //        log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
 //        log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
-    #endif
+#endif
     is_external_candidate=obs_data.is_external_candidate;
     is_forced_output=obs_data.is_forced_output;
 
@@ -90,17 +85,10 @@ indel_data::add_observation_core(const indel_observation_data& obs_data,
 
         using namespace INDEL_ALIGN_TYPE;
 
-        if       (obs_data.iat == CONTIG) {
-            contig_ids.insert(obs_data.id);
-        } else if (obs_data.is_noise) {
+        if (obs_data.is_noise) {
             // noise state overrides all except contig type:
             //
             noise_read_ids.insert(obs_data.id);
-        } else if (obs_data.iat == CONTIG_READ) {
-            if (all_read_ids.find(obs_data.id) != all_read_ids.end()) {
-                is_repeat_obs=true;
-            }
-            all_read_ids.insert(obs_data.id);
         } else if (obs_data.iat == GENOME_TIER1_READ) {
             if (all_read_ids.find(obs_data.id) != all_read_ids.end()) {
                 is_repeat_obs=true;
@@ -111,7 +99,7 @@ indel_data::add_observation_core(const indel_observation_data& obs_data,
         } else if (obs_data.iat == GENOME_SUBMAP_READ) {
             submap_read_ids.insert(obs_data.id);
         } else {
-            assert(0);
+            assert(false && "Unknown indel alignment type");
         }
     }
 }
@@ -212,7 +200,6 @@ operator<<(std::ostream& os,
     os << "seq: " << id.get_insert_seq() << "\n";
 
     report_indel_evidence_set(id.all_read_ids,"all_read",os);
-    report_indel_evidence_set(id.contig_ids,"contig",os);
     //    report_indel_evidence_set(id.tier1_map_read_ids,"tier1_map_read",os);
     report_indel_evidence_set(id.tier2_map_read_ids,"tier2_map_read",os);
     report_indel_evidence_set(id.submap_read_ids,"submap_read",os);
@@ -236,4 +223,3 @@ operator<<(std::ostream& os,
 
     return os;
 }
-

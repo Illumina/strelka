@@ -39,8 +39,6 @@ legacy_starling_arg_parse(arg_data& ad,
     bool is_min_qscore_set(false);
     bool is_min_sascore_set(false);
     bool is_min_pascore_set(false);
-    bool is_contigs_set(false);
-    bool is_contig_reads_set(false);
 
     bool is_bsnp_ssd_no_mismatch(false);
     bool is_bsnp_ssd_one_mismatch(false);
@@ -127,10 +125,6 @@ legacy_starling_arg_parse(arg_data& ad,
             set_filename_arg(i,ad,is_bam_seq_name,opt.bam_seq_name);
         } else if (ad.argstr[i]=="-samtools-reference") {
             set_filename_arg(i,ad,opt.is_samtools_ref_set,opt.samtools_ref_seq_file);
-        } else if (ad.argstr[i]=="-indel-contigs") {
-            set_filename_arg(i,ad,is_contigs_set,opt.indel_contig_filename);
-        } else if (ad.argstr[i]=="-indel-contig-reads") {
-            set_filename_arg(i,ad,is_contig_reads_set,opt.indel_contig_read_filename);
 //        } else if (ad.argstr[i]=="-indel-error-rate") {
 //            set_xrange_arg(i,ad,opt.is_simple_indel_error,opt.simple_indel_error,true);
         } else if (ad.argstr[i]=="-indel-nonsite-match-prob") {

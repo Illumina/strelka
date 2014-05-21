@@ -104,11 +104,11 @@ get_starling_shared_option_parser(starling_options& opt) {
     ("gvcf-compute-VQSRmetrics", po::value(&opt.is_compute_VQSRmetrics)->zero_tokens(),
      "Report metrics used for VQSR: BaseQRankSum, ReadPosRankSum, MQRankSum and MQ.")
     ("gvcf-compute-calibration-features", po::value(&opt.is_compute_calibration_features)->zero_tokens(),
-      "Output all features used for calibration model training, development only.")
+     "Output all features used for calibration model training, development only.")
     ("minor-allele-bed-file",  po::value(&opt.minor_allele_bed)->default_value(""),
-      "Bed file with sites that should not be block-compressed if hom-ref.")
+     "Bed file with sites that should not be block-compressed if hom-ref.")
     ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("old"),
-      "Choose indel error model to use, available option old,new, new_stratified (development option only)")
+     "Choose indel error model to use, available option old,new, new_stratified (development option only)")
 
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
@@ -134,21 +134,12 @@ get_starling_shared_option_parser(starling_options& opt) {
      po::value(&opt.nonref_site_error_decay_freq)->default_value(opt.nonref_site_error_decay_freq),
      "The decay_freq used for the site-error state as described above.");
 
-    po::options_description contig_opt("contig-options");
-    contig_opt.add_options()
-    ("min-contig-open-end-support", po::value(&opt.min_contig_open_end_support)->default_value(opt.min_contig_open_end_support),
-     "Filter out any open-ended contig with an unaligned breakpoint sequence length of less than N.")
-    ("min-contig-edge-alignment", po::value(&opt.min_contig_edge_alignment)->default_value(opt.min_contig_edge_alignment),
-     "Filter out any contig with an edge match segment shorter than N.")
-    ("min-contig-contiguous-match", po::value(&opt.min_contig_contiguous_match)->default_value(opt.min_contig_contiguous_match),
-     "Filter out any contig without a match segment of length at least N.");
-
     po::options_description realign_opt("realignment-options");
     realign_opt.add_options()
     ("max-indel-toggle-depth", po::value(&opt.max_read_indel_toggle)->default_value(opt.max_read_indel_toggle),
      "Controls the realignment stringency. Lowering this value will increase the realignment speed at the expense of indel-call quality")
     ("skip-realignment", po::value(&opt.is_skip_realignment)->zero_tokens(),
-     "Turns off read realignment. Only accepted when there are no indel calling options turned on and no input grouper contigs");
+     "Turns off read realignment. Only accepted when there are no indel calling options turned on");
 
     po::options_description indel_opt("indel-options");
     indel_opt.add_options()
@@ -199,7 +190,7 @@ get_starling_shared_option_parser(starling_options& opt) {
 
     po::options_description new_opt("New options");
 
-    new_opt.add(geno_opt).add(gvcf_opt).add(hap_opt).add(blt_nonref_opt).add(contig_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt).add(other_opt);
+    new_opt.add(geno_opt).add(gvcf_opt).add(hap_opt).add(blt_nonref_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt).add(other_opt);
 
     return new_opt;
 }
@@ -287,10 +278,6 @@ write_starling_legacy_options(std::ostream& os) {
        "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
        " -bindel-diploid-file file\n"
        "                    - Run Bayesian diploid genotype caller, write results to 'file'\n"
-       " -indel-contigs file\n"
-       "                    - Contig file produced by GROUPER indel-finder (must be specified together with -indel-contig-reads)\n"
-       " -indel-contig-reads file\n"
-       "                    - Contig reads file produced by GROUPER indel-finder (must be specified together with -indel-contigs)\n"
        " -indel-error-rate x\n"
        "                    - If calling indels, set the indel error rate to a constant value of x (0<=x<=1).\n"
        "                      The default indel error rate is taken from an empirical function accounting for\n"
@@ -315,19 +302,19 @@ write_starling_legacy_options(std::ostream& os) {
        "                      have been aligned for use in indel calling.\n"
        " -min-candidate-indel-reads n\n"
        "                    - Unless an indel is supported by at least this many reads, it cannot become a candidate\n"
-       "                      for realignment and indel calling. A read counts if it's either a contig read or a genomic\n"
-       "                      read which passes the mapping score threshold. (default: " << default_opt.default_min_candidate_indel_reads << ")\n"
+       "                      for realignment and indel calling. A read counts if it\n"
+       "                      passes the mapping score threshold. (default: " << default_opt.default_min_candidate_indel_reads << ")\n"
 
        " -min-candidate-indel-read-frac x\n"
        "                    - Unless at least this fraction of intersecting reads contain the indel, it cannot become\n"
-       "                      a candidate for realignment and indel calling. A read counts if it's either a contig read\n"
-       "                      or a genomic read which passes the mapping score threshold. Only genomic reads which pass\n"
+       "                      a candidate for realignment and indel calling. A read counts if it\n"
+       "                      passes the mapping score threshold. Only genomic reads which pass\n"
        "                      the mapping score threshold are used for the denominator of this metric. (default: " << default_opt.min_candidate_indel_read_frac << ")\n"
        " -min-small-candidate-indel-read-frac x\n"
        "                    - For small indels (no more than " << default_opt.max_small_candidate_indel_size << " bases), an additional indel candidacy filter is applied:\n"
        "                      Unless at least this fraction of intersecting reads contain the small indel, it cannot become\n"
-       "                      a candidate for realignment and indel calling. A read counts if it's either a contig read\n"
-       "                      or a genomic read which passes the mapping score threshold. Only genomic reads which pass\n"
+       "                      a candidate for realignment and indel calling. A read counts if it\n"
+       "                      passes the mapping score threshold. Only genomic reads which pass\n"
        "                      the mapping score threshold are used for the denominator of this metric. (default: " << default_opt.default_min_small_candidate_indel_read_frac << ")\n"
        " -max-candidate-indel-density x\n"
        "                    - If there are more than x candidate indels per base intersecting a read, then realignment\n"
@@ -403,25 +390,6 @@ finalize_legacy_starling_options(const prog_info& pinfo,
 //        }
 //    }
 
-    {
-        const bool is_contigs(! opt.indel_contig_filename.empty());
-        const bool is_reads(! opt.indel_contig_read_filename.empty());
-
-        if (is_contigs ^ is_reads) { //should work when they're both bools...
-            if (is_contigs) {
-                pinfo.usage("Contigs specified without corresponding contig reads.");
-            } else {
-                pinfo.usage("Contig reads specified without corresponding contigs.");
-            }
-        }
-
-        if (is_contigs || is_reads) {
-            if (opt.is_ignore_read_names) {
-                pinfo.usage("Cannot use 'ignore-conflicting-read-names' when indel contigs are specified.");
-            }
-        }
-    }
-
     if (opt.is_write_candidate_indels_only &&
         opt.candidate_indel_filename.empty()) {
         pinfo.usage("Cannot specify -write-candidate-indels-only without providing candidate indel filename.");
@@ -458,13 +426,6 @@ finalize_starling_options(const prog_info& pinfo,
     if (opt.is_skip_realignment) {
         if (opt.is_call_indels()) {
             pinfo.usage("Cannot disable realignment when indel-calling is selected.");
-        }
-
-        const bool is_contigs(! opt.indel_contig_filename.empty());
-        const bool is_reads(! opt.indel_contig_read_filename.empty());
-
-        if (is_contigs || is_reads) {
-            pinfo.usage("Cannot disable realignment when reading grouper contigs.");
         }
     }
 

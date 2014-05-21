@@ -863,7 +863,7 @@ gvcf_nonsomatic_gvcf_prior(
     }
     else
     {
-        static const float lzero(std::log(0.f));
+        static const float lzero(-std::numeric_limits<float>::infinity());
         return lzero;
     }
 }

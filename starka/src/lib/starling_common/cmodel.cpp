@@ -20,7 +20,7 @@
 //#define DEBUG_MODEL
 
 #ifdef DEBUG_MODEL
-    #include "blt_util/log.hh"
+#include "blt_util/log.hh"
 #endif
 
 
@@ -96,7 +96,7 @@ double c_model::log_odds(featuremap features, featuremap& coeffs) {
 //            log_os << it->first << "=" << it->second << "\n";
             double term = it->second;
             for (unsigned int i=0; i < tokens.size(); i++) {
-                if (features.find( tokens[i] ) != features.end()){
+                if (features.find( tokens[i] ) != features.end()) {
                     term = term*features[tokens[i]];
 //                    log_os << tokens[i] << "=" << features[tokens[i]] << "\n";
                 }
@@ -139,17 +139,17 @@ int prior_adjustment(
     double pFP          = 1.0/(1+std::exp(raw_score)); // this calculation can likely be simplified
     double pFPrescale   = pFP*minorityPrior/(1+2*minorityPrior*pFP-minorityPrior-pFP);
     int qscore          = error_prob_to_qphred(pFPrescale);
-    #ifdef DEBUG_MODEL
+#ifdef DEBUG_MODEL
 //        log_os << "minorityPrior " << minorityPrior << "\n";
 //        log_os << "pFP=" << pFP << "\n";
 //        log_os << "rescale=" << pFPrescale << "\n";
 //        log_os << "experimental=" << qscore_test << "\n";
-    #endif
+#endif
 
     // cap the score at 60
     if (qscore>60)
         qscore = 60;
-    if (qscore<1){
+    if (qscore<1) {
 //       log_os << "Raw score " << raw_score << std::endl;
 //       log_os << "Qscore "<< qscore << std::endl;
         qscore = 1;
@@ -158,14 +158,14 @@ int prior_adjustment(
 
     return qscore;
 }
-void c_model::apply_qscore_filters(site_info& si, const int qscore_cut){//, featuremap& most_predictive) {
+void c_model::apply_qscore_filters(site_info& si, const int qscore_cut) { //, featuremap& most_predictive) {
 //    most_predictive.size();
     if (si.Qscore < qscore_cut) {
         si.smod.set_filter(VCF_FILTERS::LowQscore); // more sophisticated filter setting here
     }
 }
 
-void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut){//, featuremap& most_predictive) {
+void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut) { //, featuremap& most_predictive) {
 //    most_predictive.size();
     if (ii.Qscore < qscore_cut) {
         ii.imod.set_filter(VCF_FILTERS::LowQscore);
@@ -173,7 +173,7 @@ void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut){//, fea
 }
 
 // joint logistic regression for both SNPs and INDELs
-int c_model::logistic_score(std::string var_case, featuremap features){
+int c_model::logistic_score(std::string var_case, featuremap features) {
     // normalize
     featuremap norm_features = this->normalize(features,this->pars[var_case]["CenterVal"],this->pars[var_case]["ScaleVal"]);
 
@@ -195,9 +195,9 @@ void c_model::score_instance(featuremap features, site_info& si) {
         if (si.is_het())
             var_case = "snphet";
 
-       #ifdef DEBUG_MODEL
-               //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
-       #endif
+#ifdef DEBUG_MODEL
+        //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
+#endif
         si.Qscore = logistic_score(var_case, features);
         this->apply_qscore_filters(si,static_cast<int>(this->pars[var_case]["PassThreshold"]["Q"])); // set filters according to q-scores
     }
@@ -210,7 +210,7 @@ void c_model::score_instance(featuremap features, site_info& si) {
 }
 
 // score indel case
-void c_model::score_instance(featuremap features, indel_info& ii){
+void c_model::score_instance(featuremap features, indel_info& ii) {
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
         //TODO put into enum context
         std::string var_case("del");

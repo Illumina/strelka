@@ -88,7 +88,5 @@ report(std::ostream& os) const {
     os << "STARLING_READ_COUNTS"
        << " normal_indel_used: " << normal_indel_used
        << " normal_indel_intersect: " << normal_indel_intersect
-       << " grouper_indel_used: " << grouper_indel_used
-       << " grouper_indel_intersect: " << grouper_indel_intersect
-       << " grouper_unused: " << grouper_unused << "\n";
+       << "\n";
 }

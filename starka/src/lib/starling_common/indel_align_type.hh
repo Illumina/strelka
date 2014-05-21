@@ -26,9 +26,7 @@ namespace INDEL_ALIGN_TYPE {
 enum index_t {
     GENOME_TIER1_READ,
     GENOME_TIER2_READ,
-    GENOME_SUBMAP_READ,
-    CONTIG,
-    CONTIG_READ
+    GENOME_SUBMAP_READ
 };
 
 inline
@@ -38,10 +36,7 @@ label(const index_t i) {
     case GENOME_TIER1_READ : return "genome_tier1";
     case GENOME_TIER2_READ : return "genome_tier2";
     case GENOME_SUBMAP_READ : return "genome_submap";
-    case CONTIG : return "contig";
-    case CONTIG_READ : return "contig_read";
     default: return "unknown";
     }
 }
 }
-

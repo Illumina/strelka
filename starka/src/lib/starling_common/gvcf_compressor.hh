@@ -5,11 +5,9 @@
  *      Author: Morten Kallberg
  */
 
-#ifndef GVCFCOMPRESSOR_H_
-#define GVCFCOMPRESSOR_H_
-//#include <vector>
+#pragma once
+
 #include <map>
-#include <fstream>
 #include "starling_common/gvcf_locus_info.hh"
 #include "blt_common/blt_shared.hh"
 
@@ -29,5 +27,3 @@ private:
     bool minor_allele_loaded;
     std::string my_chrom;
 };
-
-#endif /* GVCFCOMPRESSOR_H_ */

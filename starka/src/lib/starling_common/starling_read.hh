@@ -15,9 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_READ_HH
-#define __STARLING_READ_HH
-
+#pragma once
 
 #include "blt_common/map_level.hh"
 #include "blt_util/bam_dumper.hh"
@@ -33,8 +31,7 @@
 
 namespace READ_ALIGN {
 enum index_t {
-    GENOME,
-    CONTIG
+    GENOME
 };
 
 const char*
@@ -101,7 +98,6 @@ struct starling_read : private boost::noncopyable {
     bool
     is_compatible_alignment(const alignment& al,
                             const READ_ALIGN::index_t rat,
-                            const align_id_t contig_id,
                             const starling_options& opt) const;
 
     // enters full alignment, and handles segment setup for splice
@@ -160,12 +156,6 @@ struct starling_read : private boost::noncopyable {
     const read_segment&
     get_full_segment() const { return get_segment(0); }
 
-    contig_align_t&
-    contig_align() { return _contig_align; }
-
-    const contig_align_t&
-    contig_align() const { return _contig_align; }
-
 private:
     friend struct read_segment;
 
@@ -195,15 +185,10 @@ public:
 private:
     bool _is_bam_record_genomic; // indicates that this was the original (and thus, complete) alignment before grouper.
     align_id_t _id;
-    contig_align_t _contig_align; // key is contig id
     bam_record _read_rec;
     read_segment _full_read;
     std::auto_ptr<starling_segmented_read> _segment_ptr;
 };
 
 
-
-// debugging output:
 std::ostream& operator<<(std::ostream& os, const starling_read& sr);
-
-#endif

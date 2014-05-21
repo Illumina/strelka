@@ -29,10 +29,8 @@
 #include "starling/starling_info.hh"
 #include "starling_common/starling_input_stream_handler.hh"
 #include "starling_common/starling_ref_seq.hh"
-#include "starling_common/starling_pos_processor_contig_util.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 #include "starling_common/starling_shared.hh"
-#include "starling_common/grouper_contig_util.hh"
 
 #include "boost/foreach.hpp"
 #include "boost/shared_ptr.hpp"
@@ -55,8 +53,6 @@ starling_run(const starling_options& opt) {
 
     const starling_deriv_options dopt(opt,ref);
     const pos_range& rlimit(dopt.report_range_limit);
-    contig_data_manager cdm(opt.indel_contig_filename,
-                            opt.indel_contig_read_filename);
 
     assert(! opt.bam_filename.empty());
 
@@ -70,12 +66,6 @@ starling_run(const starling_options& opt) {
         throw blt_exception(oss.str().c_str());
     }
 
-    // Provide a temporary bam record for contig reads to write key
-    // information into, and initialize this record with values that
-    // will be fixed for this run:
-    bam_record tmp_key_br;
-    tmp_key_br.set_target_id(tid);
-
     starling_streams client_io(opt,pinfo,read_stream.get_header());
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
@@ -83,7 +73,6 @@ starling_run(const starling_options& opt) {
 
     starling_input_stream_data sdata;
     sdata.register_reads(read_stream);
-    sdata.register_contigs(cdm.creader());
 
     // hold zero-to-many vcf streams open:
     typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
@@ -102,8 +91,6 @@ starling_run(const starling_options& opt) {
                                                           bam_region.c_str(),read_stream.get_header())));
         sdata.register_forced_output(*(foutput_stream.back()));
     }
-
-
 
     starling_input_stream_handler sinput(sdata);
 
@@ -135,17 +122,6 @@ starling_run(const starling_options& opt) {
             const bam_record& read(*(read_stream.get_record_ptr()));
 
             process_genomic_read(opt,ref,read_stream,read,current.pos,rlimit.begin_pos,brc,sppr);
-
-        } else if (current.itype == INPUT_TYPE::CONTIG) { // process local-assembly contig and its reads
-
-            const grouper_contig& ctg(cdm.creader().get_contig());
-
-            if (! test_contig_usability(opt,ctg,sppr)) continue;
-
-            //legacy grouper stuff?
-//            process_contig(opt,ref,ctg,sppr);
-
-            process_contig_reads(ctg,opt.max_indel_size,cdm.contig_read_exr(),sppr,tmp_key_br);
 
         } else if (current.itype == INPUT_TYPE::INDEL) { // process candidate indels input from vcf file(s)
             const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));

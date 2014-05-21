@@ -36,7 +36,7 @@
 struct read_stats {
 
     read_stats(const uint8_t& map,
-              const uint8_t* q)
+               const uint8_t* q)
 //              const pos_t& p)
         : mapq(map),qual(q) {}
 
@@ -56,7 +56,5 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const INDEL_ALIGN_TYPE::index_t iat,
                              align_id_t id,
                              const unsigned sample_no,
-                             const std::pair<bool,bool>& edge_pin,
-                             //const read_stats rs,
-                             const indel_set_t* edge_indel_ptr = NULL);
+                             const std::pair<bool,bool>& edge_pin);
 
