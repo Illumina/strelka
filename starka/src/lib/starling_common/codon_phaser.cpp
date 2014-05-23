@@ -18,24 +18,16 @@
 Codon_phaser::Codon_phaser() {
     block_start   = -1;
     block_end   = -1;
-    range       = 3;                  // phasing range we are considering, may be determined dynamically
     is_in_block = false;
     het_count   = 0;
     read_len    = 100;                //TODO this options need set externally
-    min_mapq    = 20;
-    min_baseq   = 17;
     phase_indels= false;              // if false we break the block when encountering an indel
     last_cleared= -1;
+    this->opt = NULL;
     this->clear_buffer();
 }
 
 //Codon_phaser::~Codon_phaser() {}
-
-// Add a indel site to the phasing buffer
-//bool
-//Codon_phaser::add_site_indel(int i) {
-//    //currently for indel sites we
-//}
 
 // Add a SNP site to the phasing buffer
 bool
@@ -56,7 +48,7 @@ Codon_phaser::add_site(site_info& si) {
     }
 
     // case: extending block with none-het call based on the phasing range
-    if (is_in_block && (si.pos-block_end+1)<this->range) {
+    if (is_in_block && (si.pos-block_end+1)<this->opt->phasing_window) {
         #ifdef DEBUG_CODON
 //            log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
         #endif
@@ -75,7 +67,7 @@ Codon_phaser::add_site(site_info& si) {
 void
 Codon_phaser::construct_reference(){
     this->reference = "";
-    for (unsigned i=0;i<this->buffer.size()-(this->range-1);i++)
+    for (unsigned i=0;i<this->buffer.size()-(this->opt->phasing_window-1);i++)
         this->reference += buffer.at(i).ref;
 }
 
@@ -85,6 +77,9 @@ Codon_phaser::create_phased_record() {
         log_os << "Insufficient coverage \n";
         // some initial minimum conditions, look for at least 10 spanning reads support
         // set flag on records saying too little evidence to phase
+//        for (int i=0;i<this->buffer.size();i++)
+//            if(this->buffer.at(i).is_het())
+//                this->buffer.at(i).smod.set_filter();
         return;
     }
 
@@ -124,19 +119,26 @@ Codon_phaser::create_phased_record() {
 //        log_os << "relative_allele_frac " << relative_allele_frac << "\n";
     #endif
 
+    bool phasing_consistent(true);
     if (max_allele_frac<0.8){
         log_os << "doesnt seem like a clear diploid site \n";
-        // set filter as, multiple alleles
-        return;
+        phasing_consistent = false;
     }
 
     if (relative_allele_frac<0.5){
         log_os << "allele imbalance \n";
         // set filter as, allele imbalance?
-        return;
+        phasing_consistent = false;
     }
 
-    // we have a phased record! Modify site buffer to reflect the changes
+    if (!phasing_consistent){
+    for (unsigned i=0;i<this->buffer.size();i++)
+                if(this->buffer.at(i).is_het())
+                    this->buffer.at(i).smod.set_filter(VCF_FILTERS::PhasingConflict);
+    return;
+    }
+
+    // we have a phased record, modify site buffer to reflect the changes
     site_info &base = (this->buffer.at(0));
 
     base.phased_ref = this->reference;
@@ -171,7 +173,7 @@ Codon_phaser::create_phased_record() {
         }
     }
 
-    // set various quality fields conservatively TODO, should really be recalculated for the new allele observations
+    // set various qualty fields conservatively
     base.smod.gq                = min_gq;
     base.dgt.genome.snp_qphred  = min_qual;
     base.smod.gqx               = std::min(min_gq,min_qual);
@@ -181,8 +183,9 @@ Codon_phaser::create_phased_record() {
     base.phased_AD  = AD.str();
 
     base.smod.is_phased_region = true;
-    base.n_used_calls = this->total_reads;
-    base.n_unused_calls = this->total_reads_unused + (this->total_reads-allele_sum); // second term mark all alleles that we didnt use as unused reads
+    int reads_ignored = (this->total_reads-allele_sum);
+    base.n_used_calls = this->total_reads - reads_ignored;
+    base.n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
 
     // case we want to report the phased record clean out buffer and push on the phased record only
 //    log_os << "buffer size " << buffer.size() << "\n";
@@ -220,7 +223,7 @@ Codon_phaser::collect_read_evidence(){
             const bam_seq bseq(rseg.get_bam_read());
 
             // read quality checks
-            if (static_cast<int>(rseg.map_qual())<this->min_mapq){
+            if (static_cast<int>(rseg.map_qual())<this->opt->min_single_align_score){
                 this->total_reads_unused++;
                 break;
             }
@@ -238,7 +241,7 @@ Codon_phaser::collect_read_evidence(){
                 //instead make bit array counting the number of times het pos co-occur
                 std::string sub_str("");
                 for (int t=sub_start;t<(sub_end+1);t++){ //pull out substring of read
-                    if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->min_baseq)){
+                    if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->opt->min_qscore)){
                         do_include = false; // do qual check of individual bases here, kick out entire read if we dont meet cut-off
                         break;
                     }
@@ -272,26 +275,30 @@ Codon_phaser::collect_read_evidence(){
 void
 Codon_phaser::clear_buffer() {
     buffer.clear();
-    this->observations.clear();
+    observations.clear();
     block_end                   = -1;
     is_in_block                 = false;
     het_count                   = 0;
-    this->total_reads           = 0;
-    this->total_reads_unused    = 0;
-    this->reference             = "";
+    total_reads                 = 0;
+    total_reads_unused          = 0;
+    reference                   = "";
 }
 
 void
-Codon_phaser::set_options(const starling_options& client_opt){
-    this->min_mapq = client_opt.min_single_align_score;
-    this->min_baseq = client_opt.min_qscore;
-    this->range = client_opt.phasing_window;
+Codon_phaser::set_options(const starling_options& client_opt, const starling_deriv_options& client_dopt){
+    this->opt = &client_opt;
+    this->last_cleared = client_dopt.report_range.begin_pos-200;
 }
 
 void
-Codon_phaser::clear_read_buffer(int i){
+Codon_phaser::clear_read_buffer(const int& pos){
     // clear read buffer up to next feasible position
-    log_os << i << "\n";
+    int clear_to = pos-(this->read_len+1);
+    for (int i=this->last_cleared;i<clear_to;i++){
+        log_os << i << "\n";
+//        this->read_buffer->clear_pos(this->opt,i);
+    }
+    this->last_cleared = clear_to;
 }
 
 void

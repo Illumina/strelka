@@ -42,7 +42,6 @@ static
 void
 set_site_gt(const diploid_genotype::result_set& rs,
             site_modifiers& smod) {
-
     smod.max_gt=rs.max_gt;
     smod.gqx=rs.max_gt_qphred;
 }
@@ -221,14 +220,10 @@ gvcf_aggregator(const starling_options& opt,
     add_site_modifiers(_opt.gvcf,_dopt,_empty_site,this->CM);
 }
 
-
-
 gvcf_aggregator::
 ~gvcf_aggregator() { flush(); }
 
-
-
-// fill in missing sites:
+// fill in missing sites
 void
 gvcf_aggregator::
 skip_to_pos(const pos_t target_pos) {

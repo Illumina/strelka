@@ -401,8 +401,7 @@ starling_pos_processor_base(const starling_options& client_opt,
         gvcf_aggregator *temp_agg = new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0));
         if (_client_opt.do_codon_phasing) {
             temp_agg->codon_phaser.read_buffer = &_sample[0]->read_buff; // give codon-phaser access to the read-buffer
-            temp_agg->codon_phaser.set_options(client_opt);
-//            temp_agg->codon_phaser.
+            temp_agg->codon_phaser.set_options(client_opt,client_dopt);
         }
         _gvcfer.reset(temp_agg);
     }
@@ -960,7 +959,7 @@ process_pos(const int stage_no,
             // is responsible or clearing the read buffer
             if (!this->_client_opt.do_codon_phasing)
                 for (unsigned s(0); s<_n_samples; ++s) {
-                    //sample(s).read_buff.clear_pos(_client_opt,pos);
+                    sample(s).read_buff.clear_pos(_client_opt,pos);
                 }
 
             clear_forced_output_pos(pos);
