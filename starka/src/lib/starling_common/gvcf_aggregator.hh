@@ -96,6 +96,9 @@ private:
         return _empty_site;
     }
 
+    void
+    output_phased_blocked();
+
     // initial policy is to write nothing at empty sites. why?
     //
     // (1) gatk does it

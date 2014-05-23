@@ -61,14 +61,14 @@ void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii) {
         if (ii.isri.depth > cutoffs["DP"]) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }
 
-    if (cutoffs["HighSNVSB"]>0) {
-        if (ii.iri.is_repeat_unit) {
-            if ((ii.iri.repeat_unit.size() <= 2) &&
-                (static_cast<int>(ii.iri.ref_repeat_count) > cutoffs["HighSNVSB"])) {
-                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
-            }
-        }
-    }
+//    if (cutoffs["HighSNVSB"]>0) {
+//        if (ii.iri.is_repeat_unit) {
+//            if ((ii.iri.repeat_unit.size() <= 2) &&
+//                (static_cast<int>(ii.iri.ref_repeat_count) > cutoffs["HighSNVSB"])) {
+//                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
+//            }
+//        }
+//    }
 }
 
 //Transform the features with the specified scaling parameters that were used to standardize

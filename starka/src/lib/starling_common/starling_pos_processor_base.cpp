@@ -363,10 +363,8 @@ get_stage_data(const unsigned largest_read_size,
     }
 
     return sdata;
+    }
 }
-}
-
-
 
 starling_pos_processor_base::
 starling_pos_processor_base(const starling_options& client_opt,
@@ -403,6 +401,8 @@ starling_pos_processor_base(const starling_options& client_opt,
         gvcf_aggregator *temp_agg = new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0));
         if (_client_opt.do_codon_phasing) {
             temp_agg->codon_phaser.read_buffer = &_sample[0]->read_buff; // give codon-phaser access to the read-buffer
+            temp_agg->codon_phaser.set_options(client_opt);
+//            temp_agg->codon_phaser.
         }
         _gvcfer.reset(temp_agg);
     }

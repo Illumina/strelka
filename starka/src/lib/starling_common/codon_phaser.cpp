@@ -136,7 +136,7 @@ Codon_phaser::create_phased_record() {
         return;
     }
 
-    // we have a phased record, modify site buffer to reflect the changes
+    // we have a phased record! Modify site buffer to reflect the changes
     site_info &base = (this->buffer.at(0));
 
     base.phased_ref = this->reference;
@@ -162,9 +162,20 @@ Codon_phaser::create_phased_record() {
     }
 
     // set GQ and GQX
-    for (unsigned i(0);i<this->get_block_length();i++){
-
+    int min_gq(INT_MAX), min_qual(INT_MAX), min_qscore(INT_MAX);
+    for (int i(0);i<this->get_block_length();i++){
+        if (this->buffer.at(i).is_het()){
+            min_gq      = std::min(this->buffer.at(i).smod.gq,min_gq);
+            min_qual      = std::min(this->buffer.at(i).dgt.genome.snp_qphred,min_qual);
+            min_qscore  = std::min(this->buffer.at(i).Qscore,min_qscore);
+        }
     }
+
+    // set various quality fields conservatively TODO, should really be recalculated for the new allele observations
+    base.smod.gq                = min_gq;
+    base.dgt.genome.snp_qphred  = min_qual;
+    base.smod.gqx               = std::min(min_gq,min_qual);
+    base.Qscore                 = min_qscore;
 
     base.phased_alt = alt.str();
     base.phased_AD  = AD.str();
@@ -193,7 +204,8 @@ Codon_phaser::make_record() {
     #endif
 }
 
-void Codon_phaser::collect_read_evidence(){
+void
+Codon_phaser::collect_read_evidence(){
     int buffer_start = (block_start-this->read_len);
     int buffer_end = (block_start);
     // extract evidence for all reads that span the entire phasing range
@@ -267,6 +279,13 @@ Codon_phaser::clear_buffer() {
     this->total_reads           = 0;
     this->total_reads_unused    = 0;
     this->reference             = "";
+}
+
+void
+Codon_phaser::set_options(const starling_options& client_opt){
+    this->min_mapq = client_opt.min_single_align_score;
+    this->min_baseq = client_opt.min_qscore;
+    this->range = client_opt.phasing_window;
 }
 
 void
