@@ -8,22 +8,22 @@
 #include "codon_phaser.hh"
 #include <vector>
 
-#define DEBUG_CODON
+//#define DEBUG_CODON
 
 
 #ifdef DEBUG_CODON
-#include "blt_util/log.hh"
+    #include "blt_util/log.hh"
 #endif
 
 Codon_phaser::Codon_phaser() {
-    block_start   = -1;
-    block_end   = -1;
-    is_in_block = false;
-    het_count   = 0;
-    read_len    = 100;                //TODO this options need set externally
-    phase_indels= false;              // if false we break the block when encountering an indel
-    last_cleared= -1;
-    this->opt = NULL;
+    block_start     = -1;
+    block_end       = -1;
+    is_in_block     = false;
+    het_count       = 0;
+    read_len        = -1;
+    phase_indels    = false;              //TODO not used; if false we break the block when encountering an indel
+    last_cleared    = -1;
+    this->opt       = NULL;
     this->clear_buffer();
 }
 
@@ -58,7 +58,9 @@ Codon_phaser::add_site(site_info& si) {
     // case: setup the phased record and write out
     if (het_count>1) {
 //        log_os << "!!!het count " << het_count << "\n";
-        this->write_out_buffer();
+        #ifdef DEBUG_CODON
+            this->write_out_buffer();
+        #endif
         make_record();
     }
     return true;
@@ -77,9 +79,9 @@ Codon_phaser::create_phased_record() {
         log_os << "Insufficient coverage \n";
         // some initial minimum conditions, look for at least 10 spanning reads support
         // set flag on records saying too little evidence to phase
-//        for (int i=0;i<this->buffer.size();i++)
-//            if(this->buffer.at(i).is_het())
-//                this->buffer.at(i).smod.set_filter();
+        //        for (int i=0;i<this->buffer.size();i++)
+        //            if(this->buffer.at(i).is_het())
+        //                this->buffer.at(i).smod.;
         return;
     }
 
@@ -114,27 +116,37 @@ Codon_phaser::create_phased_record() {
     float relative_allele_frac  = 1.0*max_alleles[1].second/max_alleles[0].second;
 
     #ifdef DEBUG_CODON
-//        log_os << "max alleles sum " << allele_sum << "\n";
-//        log_os << "max alleles frac " << max_allele_frac << "\n";
-//        log_os << "relative_allele_frac " << relative_allele_frac << "\n";
+        log_os << "max alleles sum " << allele_sum << "\n";
+        log_os << "max alleles frac " << max_allele_frac << "\n";
+        log_os << "relative_allele_frac " << relative_allele_frac << "\n";
     #endif
 
-    bool phasing_consistent(true);
+    bool phasing_inconsistent(false);
     if (max_allele_frac<0.8){
-        log_os << "doesnt seem like a clear diploid site \n";
-        phasing_consistent = false;
+        #ifdef DEBUG_CODON
+            log_os << "doesnt seem like a clear diploid site \n";
+        #endif
+        phasing_inconsistent = true;
     }
 
-    if (relative_allele_frac<0.5){
-        log_os << "allele imbalance \n";
-        // set filter as, allele imbalance?
-        phasing_consistent = false;
+    if (relative_allele_frac<0.75){
+        #ifdef DEBUG_CODON
+            log_os << "allele imbalance \n";
+        #endif
+        phasing_inconsistent = true;
     }
 
-    if (!phasing_consistent){
-    for (unsigned i=0;i<this->buffer.size();i++)
-                if(this->buffer.at(i).is_het())
+    #ifdef DEBUG_CODON
+        log_os << "Phasing inconsistent value " << phasing_inconsistent << "\n";
+    #endif
+
+    if (phasing_inconsistent){
+    for (unsigned i=0;i<this->buffer.size();i++){
+                if(this->buffer.at(i).is_het()){
                     this->buffer.at(i).smod.set_filter(VCF_FILTERS::PhasingConflict);
+                    log_os << "Adding filter \n";
+                }
+    }
     return;
     }
 
@@ -143,7 +155,6 @@ Codon_phaser::create_phased_record() {
 
     base.phased_ref = this->reference;
     bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
-    std::stringstream AD,alt;
 
     base.smod.max_gt = 4;
     base.dgt.ref_gt  = 0; // hacking  the gt method to 0/1
@@ -157,7 +168,7 @@ Codon_phaser::create_phased_record() {
     for (unsigned i(0);i<2; i++){
         if (i>0 && !is_ref) AD << ",";
         if (max_alleles[i].first!=this->reference){
-            if (i>0) alt << ",";
+            if (i>0 && !is_ref) alt << ",";
             alt << max_alleles[i].first;
             AD << this->observations[max_alleles[i].first];
         }
@@ -173,7 +184,7 @@ Codon_phaser::create_phased_record() {
         }
     }
 
-    // set various qualty fields conservatively
+    // set various quality fields conservatively
     base.smod.gq                = min_gq;
     base.dgt.genome.snp_qphred  = min_qual;
     base.smod.gqx               = std::min(min_gq,min_qual);
@@ -201,7 +212,7 @@ Codon_phaser::make_record() {
     this->construct_reference();
     this->collect_read_evidence();
     this->create_phased_record();
-
+    this->clear_read_buffer(this->block_start);
     #ifdef DEBUG_CODON
         this->write_out_alleles();
     #endif
@@ -282,6 +293,8 @@ Codon_phaser::clear_buffer() {
     total_reads                 = 0;
     total_reads_unused          = 0;
     reference                   = "";
+    alt.str("");
+    AD.str("");
 }
 
 void
@@ -295,8 +308,7 @@ Codon_phaser::clear_read_buffer(const int& pos){
     // clear read buffer up to next feasible position
     int clear_to = pos-(this->read_len+1);
     for (int i=this->last_cleared;i<clear_to;i++){
-        log_os << i << "\n";
-//        this->read_buffer->clear_pos(this->opt,i);
+        this->read_buffer->clear_pos(false,i);
     }
     this->last_cleared = clear_to;
 }

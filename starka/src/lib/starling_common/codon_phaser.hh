@@ -48,6 +48,7 @@ private:
     bool phase_indels;                  // should we attempt to phase indels as well? For now false, thus returning any block upon encountering an indel
     std::string reference;              // the phased allele reference
     typedef std::map<std::string,int> allele_map;
+    std::stringstream AD,alt;           // for collecting the AD and ALT fields for phased record
     allele_map observations;
     const starling_options *opt;
 };

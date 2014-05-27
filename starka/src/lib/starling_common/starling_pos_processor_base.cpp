@@ -959,7 +959,7 @@ process_pos(const int stage_no,
             // is responsible or clearing the read buffer
             if (!this->_client_opt.do_codon_phasing)
                 for (unsigned s(0); s<_n_samples; ++s) {
-                    sample(s).read_buff.clear_pos(_client_opt,pos);
+                    sample(s).read_buff.clear_pos(_client_opt.is_ignore_read_names,pos);
                 }
 
             clear_forced_output_pos(pos);
@@ -987,7 +987,7 @@ process_pos(const int stage_no,
         assert(_client_opt.is_htype_calling);
 
         for (unsigned s(0); s<_n_samples; ++s) {
-            sample(s).read_buff.clear_pos(_client_opt,pos);
+            sample(s).read_buff.clear_pos(_client_opt.is_ignore_read_names,pos);
         }
         for (unsigned s(0); s<_n_samples; ++s) {
             sample(s).indel_buff.clear_pos(pos);
