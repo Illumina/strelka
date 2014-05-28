@@ -75,7 +75,6 @@ Codon_phaser::construct_reference(){
 void
 Codon_phaser::create_phased_record() {
     if (this->total_reads<10){
-        log_os << "Insufficient coverage \n";
         // some initial minimum conditions, look for at least 10 spanning reads support
         // set flag on records saying too little evidence to phase
         //        for (int i=0;i<this->buffer.size();i++)
@@ -128,7 +127,7 @@ Codon_phaser::create_phased_record() {
         phasing_inconsistent = true;
     }
 
-    if (relative_allele_frac<0.75){
+    if (relative_allele_frac<0.5){
         #ifdef DEBUG_CODON
             log_os << "allele imbalance \n";
         #endif
@@ -143,7 +142,6 @@ Codon_phaser::create_phased_record() {
     for (unsigned i=0;i<this->buffer.size();i++){
                 if(this->buffer.at(i).is_het()){
                     this->buffer.at(i).smod.set_filter(VCF_FILTERS::PhasingConflict);
-                    log_os << "Adding filter \n";
                 }
     }
     return;

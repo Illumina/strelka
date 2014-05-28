@@ -118,7 +118,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
     // Inconsistent phasing, meaning
     if (sopt.do_codon_phasing){
         std::ostringstream oss;
-        oss << "Locus read evidence displays conflicting phasing patterns";
+        oss << "Locus read evidence displays unbalanced phasing patterns";
         write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
     }
 
