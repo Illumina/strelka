@@ -166,6 +166,9 @@ struct starling_read : private boost::noncopyable {
     const contig_align_t&
     contig_align() const { return _contig_align; }
 
+//    const bool
+//    is_mate_unmapped(){return this->_read_rec.is_mate_unmapped();}
+
 private:
     friend struct read_segment;
 
@@ -187,6 +190,7 @@ private:
     // update full segment with sub-segment realignments
     void
     update_full_segment();
+
 
 public:
     // mapping qualities of ELAND reads, does not apply to GROUPER:

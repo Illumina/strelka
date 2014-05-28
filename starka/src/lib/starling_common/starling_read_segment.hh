@@ -106,6 +106,8 @@ struct read_segment {
         return NULL;
     }
 
+//    const bool is_mate_unmapped(){return this->sread().is_mate_unmapped();}
+
 private:
     friend struct starling_read;
 

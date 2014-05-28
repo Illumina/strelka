@@ -32,17 +32,16 @@ public:
     void collect_read_evidence();       // fill in allele counter
     void construct_reference();         // assemble the reference allele for the record
     void create_phased_record();        // fill in the si record and decide if we have sufficient evidence for a phased call
-    int get_block_length()
-        {return (this->block_end-this->block_start+1);}
+    int get_block_length() {return (this->block_end-this->block_start+1);}
     void set_options(const starling_options& client_opt,const starling_deriv_options& client_dopt);
     bool is_in_block;                   // Are we currently in a phasing block
     std::vector<site_info> buffer;      // buffer of het snp calls
     starling_read_buffer *read_buffer;  // pass along the relevant read-buffer
     int block_start,block_end;          // position of the first and last added het site to block
     int last_cleared;
+    unsigned max_read_len;                  // the length of the input reads
 private:
     int het_count;                      // total hets observed in buffer
-    int read_len;                       // the length of the input reads
     int previous_clear;                 // cleared buffer up to this site
     int total_reads,total_reads_unused; // total used and unused reads spanning phasing region
     bool phase_indels;                  // should we attempt to phase indels as well? For now false, thus returning any block upon encountering an indel

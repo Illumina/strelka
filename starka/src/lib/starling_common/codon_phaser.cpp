@@ -8,7 +8,7 @@
 #include "codon_phaser.hh"
 #include <vector>
 
-//#define DEBUG_CODON
+#define DEBUG_CODON
 
 
 #ifdef DEBUG_CODON
@@ -20,7 +20,6 @@ Codon_phaser::Codon_phaser() {
     block_end       = -1;
     is_in_block     = false;
     het_count       = 0;
-    read_len        = -1;
     phase_indels    = false;              //TODO not used; if false we break the block when encountering an indel
     last_cleared    = -1;
     this->opt       = NULL;
@@ -220,7 +219,7 @@ Codon_phaser::make_record() {
 
 void
 Codon_phaser::collect_read_evidence(){
-    int buffer_start = (block_start-this->read_len);
+    int buffer_start = (block_start-this->max_read_len);
     int buffer_end = (block_start);
     // extract evidence for all reads that span the entire phasing range
     for (int i=buffer_start;i<buffer_end;i++){
@@ -231,16 +230,22 @@ Codon_phaser::collect_read_evidence(){
             r=ri.get_ptr();
             if (NULL==r.first) break;
             const read_segment& rseg(r.first->get_segment(r.second));
+
+            //check if we are covering the block range
+            if (abs(rseg.buffer_pos-this->block_end)>rseg.read_size())
+                break;
+
             const bam_seq bseq(rseg.get_bam_read());
 
             // read quality checks
-            if (static_cast<int>(rseg.map_qual())<this->opt->min_single_align_score){
-                this->total_reads_unused++;
+//            log_os << "Min score " << opt->min_single_align_score << "\n";
+            if (static_cast<int>(rseg.map_qual())<this->opt->min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid()){
+//                this->total_reads_unused++; // do not count filtered reads in DPF
                 break;
             }
 
             int sub_start((this->block_start-rseg.buffer_pos));
-            int sub_end((this->block_end-rseg.buffer_pos));
+            unsigned sub_end((this->block_end-rseg.buffer_pos));
             #ifdef DEBUG_CODON
                 int pad(0); // add context to extracted alleles for debugging
                 sub_start -= pad;
@@ -248,7 +253,7 @@ Codon_phaser::collect_read_evidence(){
             #endif
             using namespace BAM_BASE;
 
-            if (sub_start>=0 && sub_end<read_len){
+            if (sub_start>=0 && sub_end<max_read_len){
                 //instead make bit array counting the number of times het pos co-occur
                 std::string sub_str("");
                 for (int t=sub_start;t<(sub_end+1);t++){ //pull out substring of read
@@ -278,6 +283,10 @@ Codon_phaser::collect_read_evidence(){
         }
     }
     #ifdef DEBUG_CODON
+        log_os << "max read len " << max_read_len << "\n";
+    #endif
+
+    #ifdef DEBUG_CODON
         log_os << "total reads " << total_reads << "\n";
         log_os << "total reads unused " << total_reads_unused << "\n";
     #endif
@@ -300,13 +309,13 @@ Codon_phaser::clear_buffer() {
 void
 Codon_phaser::set_options(const starling_options& client_opt, const starling_deriv_options& client_dopt){
     this->opt = &client_opt;
-    this->last_cleared = client_dopt.report_range.begin_pos-200;
+    this->last_cleared = client_dopt.report_range.begin_pos-this->max_read_len;
 }
 
 void
 Codon_phaser::clear_read_buffer(const int& pos){
     // clear read buffer up to next feasible position
-    int clear_to = pos-(this->read_len+1);
+    int clear_to = pos-(this->max_read_len+1);
     for (int i=this->last_cleared;i<clear_to;i++){
         this->read_buffer->clear_pos(false,i);
     }
