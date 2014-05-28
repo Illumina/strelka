@@ -39,7 +39,7 @@ public:
     starling_read_buffer *read_buffer;  // pass along the relevant read-buffer
     int block_start,block_end;          // position of the first and last added het site to block
     int last_cleared;
-    unsigned max_read_len;                  // the length of the input reads
+    unsigned max_read_len;              // the length of the input reads
 private:
     int het_count;                      // total hets observed in buffer
     int previous_clear;                 // cleared buffer up to this site
