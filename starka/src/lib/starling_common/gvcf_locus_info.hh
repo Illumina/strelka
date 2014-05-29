@@ -149,7 +149,7 @@ struct site_modifiers : public shared_modifiers {
         is_used_covered=false;
         is_zero_ploidy=false;
         is_block=false;
-        is_codon=false;
+        is_phased_region=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
     }
 
@@ -163,7 +163,7 @@ struct site_modifiers : public shared_modifiers {
     bool is_used_covered;
     bool is_zero_ploidy;
     bool is_block;
-    bool is_codon;
+    bool is_phased_region;
 
     MODIFIED_SITE_GT::index_t modified_gt;
 };
@@ -253,6 +253,9 @@ struct site_info {
     site_info()
         : pos(0)
         , ref('N')
+        , phased_ref("")
+        , phased_alt("")
+        , phased_AD("")
         , n_used_calls(0)
         , n_unused_calls(0)
         , hpol(0)
@@ -316,6 +319,7 @@ struct site_info {
 
     pos_t pos;
     char ref;
+    std::string phased_ref, phased_alt, phased_AD;
     unsigned n_used_calls;
     unsigned n_unused_calls;
     boost::array<unsigned,N_BASE> known_counts;
@@ -328,7 +332,7 @@ struct site_info {
     double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
     double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
     double MQRankSum;        // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
-    double Qscore;           // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
+    int Qscore;           // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
 
     site_modifiers smod;
 };

@@ -251,7 +251,6 @@ get_is_any_minpos(const std::vector<uint8_t>& minpos,
 void
 stage_manager::
 process_pos(const pos_t pos) {
-
     if (! _is_head_pos) {
         _head_pos = pos;
         _is_head_pos = true;

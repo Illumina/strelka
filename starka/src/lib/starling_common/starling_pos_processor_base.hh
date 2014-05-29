@@ -40,9 +40,6 @@
 #include "starling_common/starling_shared.hh"
 #include "starling_common/starling_streams_base.hh"
 #include "starling_common/gvcf_aggregator.hh"
-//#include "starling_common/codon_buffer.hh"
-
-
 
 #include "boost/utility.hpp"
 

@@ -1,3 +1,9 @@
+- STARKA-53 remove grouper legacy contig logic
+- STARKA-29 short-range SNP phasing
+- STARKA-57 HighRefRep should not be default rule-based filter for indels
+v2.0.21
+- Minor VQSR fixes
+- STARKA-52 gVCF block compression filters not cleared on single record 
 v2.0.20
 - Added VQSR for indels
 - Updated VQSR model parameters

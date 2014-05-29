@@ -107,7 +107,7 @@ struct starling_read_buffer : private boost::noncopyable {
     }
 
     void
-    clear_pos(const starling_options& opt,
+    clear_pos(const bool is_ignore_read_names,
               const pos_t pos);
 
     void

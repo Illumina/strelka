@@ -180,6 +180,4 @@ get_vcf_gt(const int gt,
     return gtstr[ex[gt][ref_gt]];
 }
 }
-
-
 #endif

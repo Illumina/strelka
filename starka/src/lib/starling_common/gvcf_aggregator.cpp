@@ -42,7 +42,6 @@ static
 void
 set_site_gt(const diploid_genotype::result_set& rs,
             site_modifiers& smod) {
-
     smod.max_gt=rs.max_gt;
     smod.gqx=rs.max_gt_qphred;
 }
@@ -124,10 +123,11 @@ set_site_filters_CM(const gvcf_options& opt,
     model.clasify_site(opt,dopt,si);
 }
 
+static
 void
 add_indel_modifiers_CM(const gvcf_options& opt,
-                       const gvcf_deriv_options& dopt,
-                       indel_info& ii, calibration_models& model) {
+                    const gvcf_deriv_options& dopt,
+                    indel_info& ii, calibration_models& model) {
     // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
     model.clasify_site(opt,dopt,ii);
 }
@@ -140,9 +140,7 @@ add_site_modifiers(const gvcf_options& opt,
                    calibration_models& model) {
 
     si.smod.clear();
-
     si.smod.is_unknown=(si.ref=='N');
-
     si.smod.is_used_covered=(si.n_used_calls!=0);
     si.smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
 
@@ -191,15 +189,6 @@ gvcf_aggregator(const starling_options& opt,
 
     if (! opt.is_gvcf_output()) return;
 
-    // initialize codonPhaser
-
-    if (_opt.do_codon_phasing) {
-//        codon_phaser = Codon_phaser();
-
-#ifdef DEBUG_GVCF
-        //log_os << "I have a phaser" << "\n";
-#endif
-    }
     // initialize calibration model
     this->CM.load_models(opt.calibration_models_filename);
     this->CM.set_model(opt.calibration_model);
@@ -231,14 +220,10 @@ gvcf_aggregator(const starling_options& opt,
     add_site_modifiers(_opt.gvcf,_dopt,_empty_site,this->CM);
 }
 
-
-
 gvcf_aggregator::
 ~gvcf_aggregator() { flush(); }
 
-
-
-// fill in missing sites:
+// fill in missing sites
 void
 gvcf_aggregator::
 skip_to_pos(const pos_t target_pos) {
@@ -263,40 +248,43 @@ skip_to_pos(const pos_t target_pos) {
 
 void
 gvcf_aggregator::
+output_phased_blocked(){
+    for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it){
+        skip_to_pos(it.base()->pos);
+        add_site_internal(*it);
+    }
+    codon_phaser.clear_buffer();
+}
+
+
+void
+gvcf_aggregator::
 add_site(site_info& si) {
 
     add_site_modifiers(_opt.gvcf,_dopt,si,this->CM);
-    skip_to_pos(si.pos);
-    if (_opt.do_codon_phasing) {
-//        bool emptyBuffer = codon_phaser.add_site(si);
 
-        // Was site absorbed, if not release all buffered sites
-        // and add these into the gVCF pipeline
-//        if (!codon_phaser.is_in_block || emptyBuffer){
-//            codon_phaser.write_out_buffer();
-//            log_os << "### buffer size:" << codon_phaser.buffer.size() << "\n";
-//            for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it){
-//                log_os << *it << "\n";
-//                add_site_internal(*it);
-//            }
-//            skip_to_pos(si.pos);
-//            add_site_internal(si);
-//            codon_phaser.clear_buffer();
-//        }
-
+    // TODO move to pos_processor instead
+    if (_opt.do_codon_phasing && (!si.smod.is_block||codon_phaser.is_in_block)) {
+        bool emptyBuffer = codon_phaser.add_site(si);
+       //  Was site absorbed, if not release all buffered sites and add these into the gVCF pipeline
+        if (!codon_phaser.is_in_block || emptyBuffer)
+            this->output_phased_blocked();
     }
     else {
+        skip_to_pos(si.pos);
         add_site_internal(si);
     }
 }
 
 //Add sites to queue for writing to gVCF
-
 void
 gvcf_aggregator::
 add_site_internal(const site_info& si) {
 
-    _head_pos=si.pos+1;
+    if (si.smod.is_phased_region)
+        _head_pos=si.pos+si.phased_ref.length();
+    else
+        _head_pos=si.pos+1;
 
     // resolve any current or previous indels before queue-ing site:
     if (0 != _indel_buffer_size) {
@@ -310,8 +298,7 @@ add_site_internal(const site_info& si) {
             return;
         }
     }
-
-    // write_site:
+    // write_site
     queue_site_record(si);
 }
 
@@ -343,6 +330,10 @@ add_indel(const pos_t pos,
 
     skip_to_pos(pos);
 
+    // if we are in phasing a block and encounter an indel, we empty the block
+    if (_opt.do_codon_phasing && this->codon_phaser.is_in_block)
+        this->output_phased_blocked();
+
     // check if an indel is already buffered and we done't overlap it,
     // in which case we need to clear it first -- note this definition
     // of overlap deliberately picks up adjacent deletions:
@@ -367,7 +358,6 @@ is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
     return (size==2 &&
             is_het_indel(indel_buffer[0].dindel) &&
             is_het_indel(indel_buffer[1].dindel));
-
 }
 
 
@@ -439,7 +429,6 @@ void
 print_vcf_alt(const unsigned gt,
               const unsigned ref_gt,
               std::ostream& os) {
-
     bool is_print(false);
     for (unsigned b(0); b<N_BASE; ++b) {
         if (b==ref_gt) continue;
@@ -478,14 +467,23 @@ write_site_record(const site_info& si) const {
 
     os << _chrom << '\t'  // CHROM
        << (si.pos+1) << '\t'  // POS
-       << ".\t"           // ID
-       << si.ref << '\t'; // REF
+       << ".\t";           // ID
+
+    if(si.smod.is_phased_region)
+        os  << si.phased_ref << '\t'; // REF
+    else
+        os  << si.ref << '\t'; // REF
 
     // ALT
     if (si.smod.is_unknown || si.smod.is_block) {
         os << '.';
     } else {
-        print_vcf_alt(si.smod.max_gt,si.dgt.ref_gt,os);
+
+        if(si.smod.is_phased_region){
+            os << si.phased_alt;
+        }
+        else
+            print_vcf_alt(si.smod.max_gt,si.dgt.ref_gt,os);
     }
     os << '\t';
 
@@ -591,15 +589,15 @@ write_site_record(const site_info& si) const {
            << si.n_unused_calls;
     }
 
-    if (! si.smod.is_block) {
-        // print AD
+    if (si.smod.is_phased_region)
+        os << ':' << si.phased_AD;
+    else if (! si.smod.is_block) {
         os << ':';
         print_site_ad(si,os);
     }
 
     os << '\n';
 }
-
 
 // set the CIGAR string:
 void
@@ -612,8 +610,6 @@ modify_single_indel_record() {
 
     add_indel_modifiers_CM(_opt.gvcf,_dopt,ii,this->CM);
 }
-
-
 
 static
 void
@@ -663,19 +659,15 @@ modify_indel_overlap_site(const gvcf_options& opt,
     }
 
     // after all those changes we need to rerun the site filters:
-    set_site_filters_CM(opt,dopt,si,CM); //TODO needs to go into calibration models eventually
+    set_site_filters_CM(opt,dopt,si,CM); //TODO needs to go into calibration model
 
 }
-
-
 
 static
 void
 modify_indel_conflict_site(site_info& si) {
     si.smod.set_filter(VCF_FILTERS::IndelConflict);
 }
-
-
 
 void
 gvcf_aggregator::
@@ -728,7 +720,6 @@ modify_overlap_indel_record() {
 
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
-
         add_indel_modifiers_CM(_opt.gvcf,_dopt,_indel_buffer[hap],this->CM);
         if (hap>0) {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
@@ -846,10 +837,7 @@ write_indel_record(const unsigned write_index) {
 //        os << ';';
 //        os << "ReadPosRankSum=" << ii.ReadPosRankSum;
 //    }
-
-
     os << '\t';
-
 
     //FORMAT
     os << "GT:GQ:GQX:DPI:AD" << '\t';
@@ -869,7 +857,6 @@ write_indel_record(const unsigned write_index) {
     for (unsigned i(write_index); i<=end_index; ++i) {
         os << ',' << _indel_buffer[i].isri.n_q30_indel_reads;
     }
-
     os << '\n';
 }
 
@@ -944,6 +931,3 @@ process_overlaps() {
     _indel_buffer_size = 0;
     _site_buffer_size = 0;
 }
-
-
-

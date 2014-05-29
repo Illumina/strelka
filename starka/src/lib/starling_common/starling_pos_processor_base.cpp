@@ -360,10 +360,8 @@ get_stage_data(const unsigned largest_read_size,
     }
 
     return sdata;
+    }
 }
-}
-
-
 
 starling_pos_processor_base::
 starling_pos_processor_base(const starling_options& client_opt,
@@ -389,21 +387,21 @@ starling_pos_processor_base(const starling_options& client_opt,
 
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
-    if (_client_opt.is_gvcf_output()) {
-        _gvcfer.reset(new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0)));
-        if (_client_opt.do_codon_phasing) {
-//            Codon_buffer *cb = new Codon_buffer();
-
-//            cb->set_sample(_sample[0]);
-//            sample(s).read_buff.get_pos_read_segment_iter(pos));
-//            log_os << _sample[0] << "\n";
-        }
-    }
-
     const unsigned report_size(_client_dopt.report_range.size());
     const unsigned knownref_report_size(get_ref_seq_known_size(_ref,_client_dopt.report_range));
     for (unsigned i(0); i<_n_samples; ++i) {
         _sample[i] = new sample_info(_client_opt,report_size,knownref_report_size,&_ric);
+    }
+
+    // setup gvcf aggregator
+    if (_client_opt.is_gvcf_output()) {
+        gvcf_aggregator *temp_agg = new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0));
+        if (_client_opt.do_codon_phasing) {
+            temp_agg->codon_phaser.read_buffer = &_sample[0]->read_buff; // give codon-phaser access to the read-buffer
+            temp_agg->codon_phaser.set_options(client_opt,client_dopt);
+            temp_agg->codon_phaser.max_read_len = get_largest_read_size();
+        }
+        _gvcfer.reset(temp_agg);
     }
 
 #ifdef HAVE_FISHER_EXACT_TEST
@@ -908,9 +906,7 @@ process_pos(const int stage_no,
                 write_reads(pos);
             }
 
-            for (unsigned s(0); s<_n_samples; ++s) {
-                sample(s).read_buff.clear_pos(_client_opt,pos);
-            }
+            //previously cleared read-buffer here
 
         } else {
             if (! _client_opt.is_write_candidate_indels_only) {
@@ -924,9 +920,19 @@ process_pos(const int stage_no,
         if (! _client_opt.is_htype_calling) {
             if (! _client_opt.is_write_candidate_indels_only) {
                 if (is_pos_reportable(pos)) {
+
                     process_pos_variants(pos);
                 }
             }
+
+            // clear read buffer here as oppose to READ_BUFFER stage.
+            // if we are doing short-range phasing, the codon_phaser
+            // is responsible or clearing the read buffer
+            if (!this->_client_opt.do_codon_phasing)
+                for (unsigned s(0); s<_n_samples; ++s) {
+                    sample(s).read_buff.clear_pos(_client_opt.is_ignore_read_names,pos);
+                }
+
             clear_forced_output_pos(pos);
 
             for (unsigned s(0); s<_n_samples; ++s) {
@@ -952,7 +958,7 @@ process_pos(const int stage_no,
         assert(_client_opt.is_htype_calling);
 
         for (unsigned s(0); s<_n_samples; ++s) {
-            sample(s).read_buff.clear_pos(_client_opt,pos);
+            sample(s).read_buff.clear_pos(_client_opt.is_ignore_read_names,pos);
         }
         for (unsigned s(0); s<_n_samples; ++s) {
             sample(s).indel_buff.clear_pos(pos);
@@ -1306,31 +1312,6 @@ pileup_pos_reads(const pos_t pos) {
     }
 }
 
-
-//void
-//starling_pos_processor_base::
-//buffer_codon_reads(const pos_t pos) {
-//    static const bool is_include_submapped(false);
-//
-//    for (unsigned s(0); s<_n_samples; ++s) {
-//        read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
-//        read_segment_iter::ret_val r;
-//        while (true) {
-//            r=ri.get_ptr();
-//            if (NULL==r.first) break;
-//            const read_segment& rseg(r.first->get_segment(r.second));
-//            if (is_include_submapped || rseg.is_treated_as_anytier_mapping()) {
-//                pileup_read_segment(rseg,s);
-//            }
-//            ri.next();
-//        }
-//    }
-//}
-
-
-// after the fact pileup around the window of the condon we are looking at
-
-
 void
 starling_pos_processor_base::
 pileup_read_segment(const read_segment& rseg,
@@ -1515,12 +1496,6 @@ pileup_read_segment(const read_segment& rseg,
                     if (_client_opt.is_compute_VQSRmetrics || _client_opt.calibration_model!="default") {
                         insert_mapq_count(ref_pos,sample_no,mapq);
                         update_ranksum(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
-                    }
-
-                    if (_client_opt.do_codon_phasing) {
-                        // build graph
-                        //log_os << "Doing codon"  << "\n";
-
                     }
 
                     if (_client_opt.is_compute_hapscore) {
@@ -1759,7 +1734,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
         }
 #endif
 
-        //Add site gvcf
+        //Add site to gvcf
         if (_client_opt.is_gvcf_output()) {
             _site_info.init(pos,pi.get_ref_base(),good_pi,_client_opt.used_allele_count_min_qscore);
             _gvcfer->add_site(_site_info);

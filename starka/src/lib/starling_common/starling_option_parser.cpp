@@ -110,6 +110,13 @@ get_starling_shared_option_parser(starling_options& opt) {
     ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("old"),
      "Choose indel error model to use, available option old,new, new_stratified (development option only)")
 
+
+    ("do-short-range-phasing", po::value(&opt.do_codon_phasing)->zero_tokens(),
+       "Do short-range SNP phasing, default window phasing window considered is 3.")
+    ("phasing-window", po::value(&opt.phasing_window)->default_value(opt.phasing_window),
+       "The maximum window to consider for short-range phasing (default 3).")
+
+
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)");
 
