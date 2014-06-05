@@ -229,6 +229,7 @@ gvcf_aggregator::
 skip_to_pos(const pos_t target_pos) {
 
     // advance through any indel region by adding individual sites
+
     while (_head_pos<target_pos) {
         add_site_internal(get_empty_site(_head_pos));
 
@@ -250,7 +251,6 @@ void
 gvcf_aggregator::
 output_phased_blocked(){
     for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it){
-        skip_to_pos(it.base()->pos);
         add_site_internal(*it);
     }
     codon_phaser.clear_buffer();
@@ -264,7 +264,7 @@ add_site(site_info& si) {
     add_site_modifiers(_opt.gvcf,_dopt,si,this->CM);
 
     // TODO move to pos_processor instead
-    if (_opt.do_codon_phasing && (!si.smod.is_block||codon_phaser.is_in_block)) {
+    if (_opt.do_codon_phasing && (si.is_het()||codon_phaser.is_in_block)) {
         bool emptyBuffer = codon_phaser.add_site(si);
        //  Was site absorbed, if not release all buffered sites and add these into the gVCF pipeline
         if (!codon_phaser.is_in_block || emptyBuffer)
@@ -282,7 +282,7 @@ gvcf_aggregator::
 add_site_internal(const site_info& si) {
 
     if (si.smod.is_phased_region)
-        _head_pos=si.pos+si.phased_ref.length();
+           _head_pos=si.pos+si.phased_ref.length();
     else
         _head_pos=si.pos+1;
 
@@ -298,6 +298,7 @@ add_site_internal(const site_info& si) {
             return;
         }
     }
+
     // write_site
     queue_site_record(si);
 }
@@ -322,6 +323,10 @@ add_indel(const pos_t pos,
           const starling_indel_report_info& iri,
           const starling_indel_sample_report_info& isri) {
 
+    // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
+    if (_opt.do_codon_phasing && this->codon_phaser.is_in_block)
+        this->output_phased_blocked();
+
     // we can't handle breakends at all right now:
     if (ik.is_breakpoint()) return;
 
@@ -329,10 +334,6 @@ add_indel(const pos_t pos,
     if (is_no_indel(dindel)) return;
 
     skip_to_pos(pos);
-
-    // if we are in phasing a block and encounter an indel, we empty the block
-    if (_opt.do_codon_phasing && this->codon_phaser.is_in_block)
-        this->output_phased_blocked();
 
     // check if an indel is already buffered and we done't overlap it,
     // in which case we need to clear it first -- note this definition
