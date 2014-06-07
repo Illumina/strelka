@@ -69,7 +69,7 @@ bool gvcf_compressor::is_minor_allele_site(const int pos) {
         posmap::iterator it2 = this->chr_to_pos[this->my_chrom].find(pos);
         if (it2 != this->chr_to_pos[this->my_chrom].end())
         {
-            log_os << "found non-compress pos " << this->my_chrom << ":" << (pos+1) << "\n";
+//            log_os << "found non-compress pos " << this->my_chrom << ":" << (pos+1) << "\n";
             return true;
         }
     }
