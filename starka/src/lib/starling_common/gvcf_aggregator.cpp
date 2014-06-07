@@ -36,8 +36,6 @@
 #include "blt_util/log.hh"
 #endif
 
-
-
 static
 void
 set_site_gt(const diploid_genotype::result_set& rs,
@@ -45,73 +43,6 @@ set_site_gt(const diploid_genotype::result_set& rs,
     smod.max_gt=rs.max_gt;
     smod.gqx=rs.max_gt_qphred;
 }
-
-//legacy methods for filtering
-//static
-//void
-//set_site_filters(const gvcf_options& opt,
-//                 const gvcf_deriv_options& dopt,
-//                 site_info& si) {
-//
-//    if (opt.is_min_gqx) {
-//        if (si.smod.gqx<opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
-//    }
-//
-//    if (dopt.is_max_depth) {
-//        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
-//    }
-//
-//    if (opt.is_max_base_filt) {
-//        const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
-//        if (total_calls>0) {
-//            const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-//            if (filt>opt.max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
-//        }
-//    }
-//
-//    if (si.dgt.is_snp) {
-//        if (opt.is_max_snv_sb) {
-//            if (si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
-//        }
-//
-//        if (opt.is_max_snv_hpol) {
-//            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
-//        }
-//    }
-//}
-//
-//static
-//void
-//add_indel_modifiers(const gvcf_options& opt,
-//                    const gvcf_deriv_options& dopt,
-//                    indel_info& ii) {
-//
-//    if (ii.dindel.max_gt != ii.dindel.max_gt_poly) {
-//        ii.imod.gqx=0;
-//    } else {
-//        ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
-//    }
-//    ii.imod.max_gt=ii.dindel.max_gt_poly;
-//    ii.imod.gq=ii.dindel.max_gt_poly_qphred;
-//
-//
-//    if (opt.is_min_gqx) {
-//        if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
-//    }
-//
-//    if (dopt.is_max_depth) {
-//        if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
-//    }
-//
-//    if (opt.is_max_ref_rep) {
-//        if (ii.iri.is_repeat_unit) {
-//            if ((ii.iri.repeat_unit.size() <= 2) &&
-//                (static_cast<int>(ii.iri.ref_repeat_count) > opt.max_ref_rep)) {
-//                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
-//            }
-//        }
-//    }
-//}
 
 static
 void
@@ -163,6 +94,12 @@ add_site_modifiers(const gvcf_options& opt,
     set_site_filters_CM(opt,dopt,si,model);
 }
 
+void gvcf_aggregator::write_block_site_record() {
+    if (_block.count<=0) return;
+    write_site_record(_block.record);
+    _block.reset();
+}
+
 gvcf_aggregator::
 gvcf_aggregator(const starling_options& opt,
                 const starling_deriv_options& dopt,
@@ -185,6 +122,7 @@ gvcf_aggregator(const starling_options& opt,
     // read in sites that should not be block-compressed
     if (static_cast<int>(opt.minor_allele_bed.length())>2) {  // hacky, check if the bed file has been set
         this->gvcf_comp.read_bed(opt.minor_allele_bed,opt.bam_seq_name.c_str());
+//        log_os << "I've got minor allele \n";
     }
 
     if (! opt.is_gvcf_output()) return;
@@ -229,23 +167,23 @@ gvcf_aggregator::
 skip_to_pos(const pos_t target_pos) {
 
     // advance through any indel region by adding individual sites
-
     while (_head_pos<target_pos) {
+//        const site_info& si = get_empty_site(_head_pos);
         add_site_internal(get_empty_site(_head_pos));
-
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
         if (0 != _indel_buffer_size) continue;
-        if (_opt.gvcf.is_block_compression) {
+
+        if (_opt.gvcf.is_block_compression && !this->gvcf_comp.minor_allele_loaded) {
             assert(_block.count!=0);
             _block.count += (target_pos-_head_pos);
-            _head_pos=target_pos;
-        } else {
-            _head_pos++;
+            _head_pos= target_pos;
         }
+//                    else {
+//                _head_pos++;
+//            }
     }
 }
-
 
 void
 gvcf_aggregator::
@@ -255,7 +193,6 @@ output_phased_blocked(){
     }
     codon_phaser.clear_buffer();
 }
-
 
 void
 gvcf_aggregator::
@@ -282,7 +219,7 @@ gvcf_aggregator::
 add_site_internal(const site_info& si) {
 
     if (si.smod.is_phased_region)
-           _head_pos=si.pos+si.phased_ref.length();
+        _head_pos=si.pos+si.phased_ref.length();
     else
         _head_pos=si.pos+1;
 

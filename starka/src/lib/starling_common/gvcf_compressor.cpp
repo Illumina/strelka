@@ -61,24 +61,31 @@ void gvcf_compressor::read_bed(const std::string& input_file, const std::string&
 }
 
 
-bool gvcf_compressor::is_minor_allele_site(const std::string& chr, const int pos) {
-    chrposmap::iterator it = this->chr_to_pos.find(chr);
-//    log_os << "checking for chr " << chr << " pos " << pos << "\n";
+bool gvcf_compressor::is_minor_allele_site(const int pos) {
+    chrposmap::iterator it = this->chr_to_pos.find(this->my_chrom);
 
     if (it != this->chr_to_pos.end())
     {
-//        log_os << "found chr " << "\n";
-        posmap::iterator it2 = this->chr_to_pos[chr].find(pos);
-        if (it2 != this->chr_to_pos[chr].end())
+        posmap::iterator it2 = this->chr_to_pos[this->my_chrom].find(pos);
+        if (it2 != this->chr_to_pos[this->my_chrom].end())
         {
-//            log_os << "found pos " << "\n";
+            log_os << "found non-compress pos " << this->my_chrom << ":" << (pos+1) << "\n";
             return true;
         }
     }
     return false;
 }
 
+int gvcf_compressor::max_compressible_nocall_range(const int start, const int end){
+    if (!this->minor_allele_loaded)
+        return (end-start);
+    int i;
+    for (i=start;i<=end;i++)
+        if (this->is_minor_allele_site(i))
+            return (i-start);
 
+    return (end-start);
+}
 
 bool gvcf_compressor::is_site_compressable(const gvcf_options& opt, const site_info& si) {
 
@@ -93,7 +100,7 @@ bool gvcf_compressor::is_site_compressable(const gvcf_options& opt, const site_i
     }
 
     // check if site is in the pre-specified site that are not to be block-compressed
-    if (this->minor_allele_loaded && this->is_minor_allele_site(this->my_chrom,static_cast<int>(si.pos))) return false;
+    if (this->minor_allele_loaded && this->is_minor_allele_site(static_cast<int>(si.pos))) return false;
 
     return true;
 }

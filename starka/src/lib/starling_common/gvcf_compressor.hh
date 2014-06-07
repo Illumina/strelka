@@ -18,12 +18,13 @@ class gvcf_compressor {
 public:
     gvcf_compressor();
     void read_bed(const std::string& input_file, const std::string& chrom);
-    bool is_minor_allele_site(const std::string& chr, const int pos); //determine if the reference is the minor allele
+    bool is_minor_allele_site(const int pos); //determine if the reference is the minor allele
     bool is_site_compressable(const gvcf_options& opt, const site_info& si); //determine if a site should be added to current block or if the block should be written out
-
+    //determine the maximum no-call range that can be compressed, return the number of loci the block can be extended by
+    int max_compressible_nocall_range(const int start, const int end);
+    bool minor_allele_loaded;
 //    void sanity_check();
 private:
     chrposmap chr_to_pos;
-    bool minor_allele_loaded;
     std::string my_chrom;
 };
