@@ -24,8 +24,8 @@ public:
 
 public:
     bool add_site(site_info& si);       // add site to buffer
-    void clear_buffer();            // clear site buffer
-    void make_record();             // make phased record
+    void clear_buffer();                // clear site buffer
+    void make_record();                 // make phased record
     void write_out_buffer();            // debugging feature, print current buffer to std
     void write_out_alleles();           // print allele evidence
     void clear_read_buffer(const int& pos);    // free up read that are no longer in phasing evidence, up to and including this position
@@ -39,7 +39,7 @@ public:
     starling_read_buffer *read_buffer;  // pass along the relevant read-buffer
     int block_start,block_end;          // position of the first and last added het site to block
     int last_cleared;
-    unsigned max_read_len;              // the length of the input reads
+    int max_read_len;              // the length of the input reads
 private:
     int het_count;                      // total hets observed in buffer
     int previous_clear;                 // cleared buffer up to this site

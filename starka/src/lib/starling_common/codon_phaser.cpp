@@ -241,7 +241,7 @@ Codon_phaser::collect_read_evidence(){
             }
 
             int sub_start((this->block_start-rseg.buffer_pos));
-            unsigned sub_end((this->block_end-rseg.buffer_pos));
+            int sub_end((this->block_end-rseg.buffer_pos));
             #ifdef DEBUG_CODON
                 int pad(0); // add context to extracted alleles for debugging
                 sub_start -= pad;
