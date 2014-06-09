@@ -54,7 +54,7 @@ struct gvcf_options {
         , block_label_prefix("BLOCKAVG_min")
         , block_percent_tol(30)
         , block_abs_tol(3)
-        , is_block_compression(false)
+        , is_block_compression(true)
         , block_max_nonref(.2)
         , minor_allele_file("")
     {}

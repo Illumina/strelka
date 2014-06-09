@@ -56,10 +56,10 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
         static const double delete_D(8.31843836e-06);
 
         const double insert_g(insert_A/ (1 + std::exp((insert_B-hpol_len)/insert_C))+insert_D);
-        insert_error_prob=(1.-std::exp(-insert_g));
+        insert_error_prob=(1.-std::exp(-insert_g/hpol_len));
 
         const double delete_g(delete_A/ (1 + std::exp((delete_B-hpol_len)/delete_C))+delete_D);
-        delete_error_prob=(1.-std::exp(-delete_g));
+        delete_error_prob=(1.-std::exp(-delete_g/hpol_len));
     }
     else {
         // new polynomial model, fit for CG reference context

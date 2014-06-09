@@ -23,7 +23,6 @@
 #include "blt_util/log.hh"
 #endif
 
-
 // add model paramaters
 void c_model::add_parameters(const parmap& myPars) {
     this->pars = myPars;
@@ -158,30 +157,34 @@ int prior_adjustment(
 
     return qscore;
 }
-void c_model::apply_qscore_filters(site_info& si, const int qscore_cut) { //, featuremap& most_predictive) {
+void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case) { //, featuremap& most_predictive) {
 //    most_predictive.size();
     if (si.Qscore < qscore_cut) {
-        si.smod.set_filter(VCF_FILTERS::LowQscore); // more sophisticated filter setting here
+//        log_os << CALIBRATION_MODEL::get_label(my_case) << "\n";
+        si.smod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(my_case)); // more sophisticated filter setting here
     }
 }
 
-void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut) { //, featuremap& most_predictive) {
+void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case) { //, featuremap& most_predictive) {
 //    most_predictive.size();
     if (ii.Qscore < qscore_cut) {
-        ii.imod.set_filter(VCF_FILTERS::LowQscore);
+//        log_os << CALIBRATION_MODEL::get_label(my_case) << "\n";
+        ii.imod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(my_case));
     }
 }
 
 // joint logistic regression for both SNPs and INDELs
-int c_model::logistic_score(std::string var_case, featuremap features) {
+int c_model::logistic_score(const CALIBRATION_MODEL::var_case var_case, featuremap features) {
+
+    std::string var_case_label(CALIBRATION_MODEL::get_label(var_case));
     // normalize
-    featuremap norm_features = this->normalize(features,this->pars[var_case]["CenterVal"],this->pars[var_case]["ScaleVal"]);
+    featuremap norm_features = this->normalize(features,this->pars[var_case_label]["CenterVal"],this->pars[var_case_label]["ScaleVal"]);
 
     //calculates log-odds ratio
-    double raw_score = this->log_odds(norm_features,this->pars[var_case]["Coefs"]);
+    double raw_score = this->log_odds(norm_features,this->pars[var_case_label]["Coefs"]);
 
     // adjust by prior and calculate q-score
-    int Qscore = prior_adjustment(raw_score,this->pars[var_case]["Priors"]["fp.prior"]);
+    int Qscore = prior_adjustment(raw_score,this->pars[var_case_label]["Priors"]["fp.prior"]);
     return Qscore;
 }
 
@@ -191,15 +194,15 @@ int c_model::logistic_score(std::string var_case, featuremap features) {
 void c_model::score_instance(featuremap features, site_info& si) {
 
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
-        std::string var_case = "snphom";
+        CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HomSNP);
         if (si.is_het())
-            var_case = "snphet";
+            var_case = CALIBRATION_MODEL::HetSNP;
 
 #ifdef DEBUG_MODEL
         //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
 #endif
         si.Qscore = logistic_score(var_case, features);
-        this->apply_qscore_filters(si,static_cast<int>(this->pars[var_case]["PassThreshold"]["Q"])); // set filters according to q-scores
+        this->apply_qscore_filters(si,static_cast<int>(this->pars[CALIBRATION_MODEL::get_label(var_case)]["PassThreshold"]["Q"]), var_case); // set filters according to q-scores
     }
 //    else if(this->model_type=="RFtree"){ // place-holder, put random forest here
 //        si.Qscore = rf_score(var_case, features);
@@ -213,16 +216,17 @@ void c_model::score_instance(featuremap features, site_info& si) {
 void c_model::score_instance(featuremap features, indel_info& ii) {
     if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
         //TODO put into enum context
-        std::string var_case("del");
-        if (ii.iri.it==INDEL::INSERT)
-            var_case = "ins";
-        if (ii.is_het())
-            var_case += "het";
-        else
-            var_case += "hom";
-
+        CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
+        if (!ii.is_het())
+            var_case = CALIBRATION_MODEL::HomDel;
+        if(ii.iri.it==INDEL::INSERT){
+            if (ii.is_het())
+                var_case = CALIBRATION_MODEL::HetIns;
+            else
+                var_case = CALIBRATION_MODEL::HomIns;
+        }
         ii.Qscore = logistic_score(var_case, features);
-        this->apply_qscore_filters(ii,static_cast<int>(this->pars[var_case]["PassThreshold"]["Q"]));
+        this->apply_qscore_filters(ii,static_cast<int>(this->pars[CALIBRATION_MODEL::get_label(var_case)]["PassThreshold"]["Q"]),var_case);
     }
 //    else if(this->model_type=="RFtree"){
 //        si.Qscore = rf_score(var_case, features);

@@ -480,11 +480,11 @@ write_site_record(const site_info& si) const {
 //                os << "GQX=" << si.smod.gqx;
 //                }
             }
-            //reported q-score
-            if (si.Qscore>0) {
-                os << ';';
-                os << "Qscore=" << si.Qscore;
-            }
+//            //reported q-score
+//            if (si.Qscore>0) {
+//                os << ';';
+//                os << "Qscore=" << si.Qscore;
+//            }
 
         } else {
             os << '.';
@@ -512,7 +512,10 @@ write_site_record(const site_info& si) const {
         if (si.smod.is_block) {
             os << _block.block_gqx.min();
         } else {
-            os << si.smod.gqx;
+            if (si.Qscore>0)
+                os << si.Qscore ;
+            else
+                os << si.smod.gqx;
         }
     } else {
         os << '.';
@@ -758,10 +761,10 @@ write_indel_record(const unsigned write_index) {
         }
     }
 
-    if (ii.Qscore>0) {
-        os << ';';
-        os << "Qscore=" << ii.Qscore;
-    }
+//    if (ii.Qscore>0) {
+//        os << ';';
+//        os << "Qscore=" << ii.Qscore;
+//    }
 
 //    only report metrics if flag explicitly set
 //    if (_opt.is_compute_VQSRmetrics)
@@ -782,9 +785,14 @@ write_indel_record(const unsigned write_index) {
 
     //SAMPLE
     os << ii.get_gt() << ':'
-       << ii.imod.gq << ':'
-       << ii.imod.gqx  << ':'
-       << ii.isri.depth << ':';
+       << ii.imod.gq << ':';
+
+    if (ii.Qscore>0)
+        os << ii.Qscore  << ':';
+    else
+        os << ii.imod.gqx  << ':';
+
+    os << ii.isri.depth << ':';
 
     // SAMPLE AD:
     unsigned ref_count(0);

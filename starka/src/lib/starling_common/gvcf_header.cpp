@@ -102,19 +102,29 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         os.copyfmt(tmp_os);
     }
 
-    // phasing filters
-//    if (!do_rule_filters) {
-//                std::ostringstream oss;
-//                oss << "Locus quality score falls below passing threshold the given variant type";
-//                write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
-//    }
 
     if (true) {
         std::ostringstream oss;
-        oss << "Locus quality score falls below passing threshold for the given variant type";
-        write_vcf_filter(os,get_label(LowQscore),oss.str().c_str());
+        oss << "Locus quality is less than 15 for het SNP";
+        write_vcf_filter(os,get_label(LowQscoreHetSNP),oss.str().c_str());
+        oss.str("");
+        oss << "Locus GQX is less than 17 for hom SNP";
+        write_vcf_filter(os,get_label(LowQscoreHomSNP),oss.str().c_str());
+        oss.str("");
+        oss << "Locus GQX is less than 5 for het insertion";
+        write_vcf_filter(os,get_label(LowQscoreHetIns),oss.str().c_str());
+        oss.str("");
+        oss << "Locus GQX is less than 11 for hom insertion";
+        write_vcf_filter(os,get_label(LowQscoreHomIns),oss.str().c_str());
+        oss.str("");
+        oss << "Locus GQX is less than 13 for het deletion";
+        write_vcf_filter(os,get_label(LowQscoreHetDel),oss.str().c_str());
+        oss.str("");
+        oss << "Locus GQX is than 20 for hom deletion";
+        write_vcf_filter(os,get_label(LowQscoreHomIns),oss.str().c_str());
+        oss.str("");
     }
-    // Inconsistent phasing, meaning
+    // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
     if (sopt.do_codon_phasing) {
         std::ostringstream oss;
         oss << "Locus read evidence displays unbalanced phasing patterns";
@@ -151,7 +161,7 @@ finish_gvcf_header(const starling_options& opt,
                    const std::string& bam_header_data,
                    std::ostream& os) {
 
-    bool do_rule_filters  = (opt.calibration_model=="default" || opt.calibration_model=="Qrule");
+//    bool do_rule_filters  = (opt.calibration_model=="default" || opt.calibration_model=="Qrule");
 
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
@@ -178,8 +188,8 @@ finish_gvcf_header(const starling_options& opt,
     }
 
     // Qscore
-    if (!do_rule_filters)
-        os << "##INFO=<ID=Qscore,Number=1,Type=Integer,Description=\"Calibrated quality score indicating expected empirical FP-rate for variant site.\">\n";
+//    if (!do_rule_filters)
+//        os << "##INFO=<ID=Qscore,Number=1,Type=Integer,Description=\"Calibrated quality score indicating expected empirical FP-rate for variant site.\">\n";
 
     // Unphased, flag if a site that is within a phasing window hasn't been phased
     if (opt.do_codon_phasing)
@@ -188,7 +198,8 @@ finish_gvcf_header(const starling_options& opt,
     //FORMAT:
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
     os << "##FORMAT=<ID=GQ,Number=1,Type=Float,Description=\"Genotype Quality\">\n";
-    os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
+    os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Empirically calibrated variant quality score for variant sites, otherwise Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
+//    os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
     os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Filtered basecall depth used for site genotyping\">\n";
     os << "##FORMAT=<ID=DPF,Number=1,Type=Integer,Description=\"Basecalls filtered from input prior to site genotyping\">\n";
 
