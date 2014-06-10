@@ -84,25 +84,6 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    if (opt.is_max_depth_factor && (! chrom_depth.empty()) && do_rule_filters) {
-        std::ostringstream oss;
-        oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";
-        write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
-
-        std::ofstream tmp_os;
-        tmp_os.copyfmt(os);
-        os << std::fixed << std::setprecision(2);
-
-        cdmap_t::const_iterator i(chrom_depth.begin()), i_end(chrom_depth.end());
-        for (; i!=i_end; ++i) {
-            const std::string& chrom(i->first);
-            const double max_depth(opt.max_depth_factor*i->second);
-            os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
-        }
-        os.copyfmt(tmp_os);
-    }
-
-
     if (true) {
         std::ostringstream oss;
         oss << "Locus quality is less than 15 for het SNP";
@@ -131,6 +112,24 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
     }
 
+
+    if (opt.is_max_depth_factor && (! chrom_depth.empty()) && do_rule_filters) {
+        std::ostringstream oss;
+        oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";
+        write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
+
+        std::ofstream tmp_os;
+        tmp_os.copyfmt(os);
+        os << std::fixed << std::setprecision(2);
+
+        cdmap_t::const_iterator i(chrom_depth.begin()), i_end(chrom_depth.end());
+        for (; i!=i_end; ++i) {
+            const std::string& chrom(i->first);
+            const double max_depth(opt.max_depth_factor*i->second);
+            os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
+        }
+        os.copyfmt(tmp_os);
+    }
 
 }
 
