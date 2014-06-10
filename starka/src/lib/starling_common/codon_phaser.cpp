@@ -229,7 +229,7 @@ Codon_phaser::collect_read_evidence(){
             const read_segment& rseg(r.first->get_segment(r.second));
 
             //check if we are covering the block range
-            if (abs(rseg.buffer_pos-this->block_end)>rseg.read_size())
+            if (static_cast<unsigned>(abs(rseg.buffer_pos-this->block_end))>rseg.read_size())
                 break;
 
             const bam_seq bseq(rseg.get_bam_read());
