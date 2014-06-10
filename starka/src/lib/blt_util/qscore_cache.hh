@@ -88,9 +88,9 @@ private:
         qscore_check_int(qscore);
 
         /// we get a FP warning here in gcc 4.9.0:
-#pragma GCC diagnostic ignored "-Warray-bounds"
+//#pragma GCC diagnostic ignored "-Warray-bounds"
         return q2p[qscore];
-#pragma GCC diagnostic pop
+//#pragma GCC diagnostic pop
 
     }
 
