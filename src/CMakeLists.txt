@@ -48,9 +48,9 @@ set(THIS_BOOTSTRAP_DIR "${CMAKE_SOURCE_DIR}/cmake/bootstrap")
 set(THIS_SOURCE_QC_DIR "${CMAKE_SOURCE_DIR}/srcqc")
 
 execute_process(COMMAND bash ${THIS_BOOTSTRAP_DIR}/getVersion.bash OUTPUT_VARIABLE THIS_GIT_VERSION)
-set(THIS_VERSION "${THIS_GIT_VERSION}")
-set(THIS_FULL_VERSION "${THIS_PROJECT_NAME}-${THIS_VERSION}")
-message (STATUS "STARKA_VERSION: ${THIS_VERSION}")
+set(STARKA_VERSION "${THIS_GIT_VERSION}")
+set(STARKA_FULL_VERSION "${THIS_PROJECT_NAME}-${THIS_VERSION}")
+message (STATUS "STARKA_VERSION: ${STARKA_VERSION}")
 
 
 #
@@ -69,7 +69,7 @@ message (STATUS "BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 if (CPACK_GENERATOR)
     message (STATUS "Configuring to produce the following package types: ${CPACK_GENERATOR}")
     set(CPACK_PACKAGE_VENDOR "Illumina")
-    set(CPACK_PACKAGE_VERSION "${THIS_VERSION}")
+    set(CPACK_PACKAGE_VERSION "${STARKA_VERSION}")
     set(CPAKC_PACKAGE_CONTACT "csaunders@illumina.com")
 
     if (CPACK_GENERATOR STREQUAL "RPM")
@@ -114,6 +114,7 @@ set(THIS_LIBEXECDIR "${THIS_EXEC_PREFIX}/libexec")
 set(THIS_PYTHON_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/python")
 set(THIS_DATADIR "${CMAKE_INSTALL_PREFIX}/share")
 set(THIS_DOCDIR "${CMAKE_INSTALL_PREFIX}/doc")
+set(THIS_CONFIGDIR "${THIS_DATADIR}/config")
 
 message (STATUS "install prefix: ${CMAKE_INSTALL_PREFIX}")
 
@@ -159,6 +160,7 @@ add_subdirectory (cmake/preInstall)
 add_subdirectory (opt)
 add_subdirectory (c++)
 add_subdirectory (python)
+add_subdirectory (config)
 add_subdirectory (markdown)
 add_subdirectory (cmake/postInstall)
 

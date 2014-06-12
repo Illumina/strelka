@@ -24,27 +24,26 @@
 ## build the documentation when available
 ##
 
-macro(process_user_guide name)
+function(process_user_guide name)
     set (UG "${name}.md")
-    set (UL "${CMAKE_CURRENT_BINARY_DIR}/${UP}.html")
+    set (UL "${CMAKE_CURRENT_BINARY_DIR}/${name}.html")
 
     configure_files (${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${UG})
 
     add_custom_command(
         OUTPUT ${UL}
-        COMMAND ${HOEDOWN_PROG} ${CMAKE_CURRENT_BINARY_DIR}/${SGUG} > ${UL}
+        COMMAND ${HOEDOWN_PROG} ${CMAKE_CURRENT_BINARY_DIR}/${UG} > ${UL}
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${UG}
         DEPENDS STARKA_MARKDOWN
         COMMENT "Converting ${name} to html")
 
-    add_custom_target(STARKA_${name} ALL DEPENDS ${UL} ${UL})
+    add_custom_target(STARKA_${name} ALL DEPENDS ${UL})
 
     install(FILES ${UL} DESTINATION ${THIS_DOCDIR}/html)
-    install(FILES ${UL} DESTINATION ${THIS_DOCDIR}/html)
-endmacro()
+endfunction()
 
 process_user_guide("starlingUserGuide")
-process_user_guide("starkaUserGuide")
+process_user_guide("strelkaUserGuide")
 
 install(FILES "userGuide.css" DESTINATION ${THIS_DOCDIR}/html)
 install(FILES "tableOfContents.js" DESTINATION ${THIS_DOCDIR}/html)
