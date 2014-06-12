@@ -1,0 +1,84 @@
+- STARKA-53 remove grouper legacy contig logic
+- STARKA-29 short-range SNP phasing and arbitrary phasing window
+- STARKA-57 HighRefRep should not be default rule-based filter for indels
+v2.0.21
+- Minor VQSR fixes
+- STARKA-52 gVCF block compression filters not cleared on single record 
+v2.0.20
+- Added VQSR for indels
+- Updated VQSR model parameters
+- Updated homopolymer error-model
+- Modified block-compression parameters for better NextSeq compression 
+- Added option for providing bed-file with sites that should not be block-compressed 
+- STARKA-50 option to output somatic-callable bed file
+v2.0.17
+- STARKA-48 Fixed formatting bug for high GQX 
+- Header fix for adjusted Nova filters
+v2.0.16
+- Adjusted filters for Nova release
+v2.0.15
+- STARKA-47 Accept GATK-style bam indices
+- STARKA-43 Accept edge indel pattern produced by freeBayes/BamLeftAlign
+- STARKA-45 Filter indels greater than max indel size from candidate indel vcf 
+v2.0.14
+- STARKA-41 Fix consensus open-break-end error
+v2.0.13
+- Skip BWA-mem supplementary reads
+- STARKA-37 Handle Skip-Delete-Skip pattern in tophat output
+- STARKA-23 Accept an input VCF file for which each alternate allele must be genotyped
+- STARKA-35 Fixed 255 q-score bug for RNAseq workflow
+v2.0.12
+- STARKA-34 Properly handle insertions adjacent to introns
+- Filter out all open-breakends from vcf output
+v2.0.11
+- STARKA-14 Add option to provide sample name in output VCF SAMPLE column
+- VQSR features
+v2.0.10
+- STARKA-30 fix stability issue encounted with large indels in 2x400 reads
+v2.0.9
+- STARKA-32 fix handling of another complex indel on read edge
+v2.0.8
+- STARKA-27 correctly handle complex insert/delete indels for read edges
+v2.0.7
+- STARKA-12 tolerate all edge insertions/deletions
+- STARKA-17 Add option to output gVCF with no block compression
+- STARKA-24 fix gVCF site records to correctly inherit spanning deletion filters
+v2.0.6
+- Change makefile to build when cwd is not in PATH
+v2.0.5
+- Associated with new parent strelka workflow release, no major changes from v2.0.4
+v2.0.4
+- STARKA-21 Add command-line control for snv hpol filter. Set snv and indel hpol filters
+off by default.
+- STARKA-22 Reorganize build system around libraries, add unit test framework as
+part of every build and seed framework with a few tests for each library
+v2.0.3
+- STARKA-16 fix gVCF output so that GT does not contain allele numbers which are
+not in the ALT tag
+- Add win32 compat fixes from Eric Roller
+- STARKA-13 Groom CIGAR alignments on input to remove zero-length and PAD
+segments
+- STARKA-11 Samtools upgraded to 0.1.18 to resolve issues reported for 
+strelka run with long-line version of hg19 reference.
+v2.0.2
+- Add haplotype score option to command-line
+v2.0.1
+- Added command-line controls for for "R8" indel filter and strand-bias
+v2.0.0
+- First RC. No changes from v2.0a3
+v2.0a3
+- Completed gVCF output to pass vcf-validator
+- added AD tags to snps and indels
+- added haplotypescore but left this turned off
+- added command-line controls for min-gqx,max-depth-factor and other filters/blocking thresholds
+- cleaned up other final details
+v2.0a2
+- Bugfix: gVCF output was being written +1 past end of requested range
+v2.0a1
+- initial version of starling with direct gVCF output
+v1.1.0
+- Import all updates from starling/strelka maintained on the strelka
+standalone 0.4.10 tag.
+v1.0.0
+- initial transfer of v1 starling/strelka from the public strelka release
+branch

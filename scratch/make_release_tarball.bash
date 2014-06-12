@@ -4,30 +4,37 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
-#
-# this makes the starling/strelka binary tarball assuming it's being called in the release checkout version
-# the tarball is written to the caller's working directory
-#
 
 package_name=starka
 
 pname_root=""
 if [ $# -gt 1 ]; then
-    echo "usage: $0 [rootname]"
+    cat <<END
+usage: $0 [tarball_rootname]
+
+This script makes the $package_name source tarball
+
+- script assumes that it is located in the release checkout version
+- the tarball is written to the caller's working directory
+END
     exit 2
 elif [ $# == 1 ]; then
     pname_root=$1
 fi
 
-absdir() {
-    cd $1; pwd -P
+rel2abs() {
+    (cd $1; pwd -P)
 }
 
-thisdir=$(absdir $(dirname $0))
+thisdir=$(rel2abs $(dirname $0))
 outdir=$(pwd)
 
 cd $thisdir
 gitversion=$(git describe | sed "s/^v//")
+if [ $? != 0 ]; then
+    echo "ERROR: 'git describe' failed" 1>&2
+    exit 1
+fi
 
 if [ "$pname_root" == "" ]; then
     pname_root=${package_name}-$gitversion
@@ -42,20 +49,32 @@ fi
 mkdir -p $pname
 
 cd ..
-git archive --prefix=$pname_root/ HEAD:starka/ | tar -x -C $outdir
+git archive --prefix=$pname_root/ HEAD: | tar -x -C $outdir
 
 # make version number substitutions:
-source_dir=$(pwd)/starka
-for f in README src/lib/starling/starling_info.hh src/lib/strelka/strelka_info.hh; do
-    cat $source_dir/$f |\
-    sed "s/\${VERSION}/$gitversion/" >|\
-    $pname/$f
-done
+tmp_file=$(mktemp)
+cml=$pname/src/CMakeLists.txt
+awk -v gver=$gitversion '
+{
+    if      ($1=="set\(STARKA_VERSION") printf "set(STARKA_VERSION \"%s\")\n",gver;
+    else if ($1=="set\(DEVELOPER_MODE") printf "set(DEVELOPER_MODE false)\n";
+    else print;
+}' $cml >| $tmp_file
+mv $tmp_file $cml
+
+rme=$pname/README.md
+awk -v gver=$gitversion '
+{
+    if      ($0~/^Version: NOT RELEASED/) printf "Version: %s\n",gver;
+    else if ($0~/_NOT_ part of an end-user/) a=1;
+    else print;
+}' $rme >| $tmp_file
+mv $tmp_file $rme
 
 # tar it up:
 (
 cd $outdir
-tar -f $pname_root.tar.gz -cz $pname_root
+tar -f $pname_root.tar.bz2 -cj $pname_root
 )
 
 rm -rf $pname
