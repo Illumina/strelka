@@ -41,7 +41,7 @@ INCLUDE_DIR=${INSTALL_DIR}/include
 
 SCRIPT=`basename "$0"`
 VERSION=`echo ${THIS_BOOST_VERSION} | sed "s/\./_/g"`
-SOURCE_TARBALL=${REDIST_DIR}/boost_${VERSION}.tar.bz2
+SOURCE_TARBALL=${REDIST_DIR}/boost_${VERSION}_subset.tar.bz2
 TARBALL_COMPRESSION=j
 SOURCE_DIR=${BUILD_DIR}/boost_${VERSION}
 

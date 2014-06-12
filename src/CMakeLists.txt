@@ -122,14 +122,14 @@ add_custom_target(STARKA_OPT ALL)
 set(THIS_REDIST_DIR "${CMAKE_SOURCE_DIR}/../redist")
 
 # required boost libraries
-set (THIS_BOOST_VERSION 1.49.0)
+set (THIS_BOOST_VERSION 1.53.0)
 set (THIS_BOOST_COMPONENTS date_time filesystem program_options
-                            regex serialization system unit_test_framework)
+                           regex system unit_test_framework)
 
 # the name given to boost.build and the library name are the same for all libraries, except
 # for test, so we need two lists now:
 set (THIS_BOOST_BUILD_COMPONENTS date_time filesystem program_options
-                                 regex serialization system test)
+                                 regex system test)
 set (Boost_USE_MULTITHREADED OFF)
 set (Boost_USE_STATIC_LIBS ON)
 
@@ -156,9 +156,9 @@ add_custom_target(STARKA_UNITTESTS
     )
 
 add_subdirectory (cmake/preInstall)
-#add_subdirectory (opt)
+add_subdirectory (opt)
 add_subdirectory (c++)
 add_subdirectory (python)
-#add_subdirectory (markdown)
+add_subdirectory (markdown)
 add_subdirectory (cmake/postInstall)
 

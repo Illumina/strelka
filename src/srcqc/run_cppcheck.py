@@ -41,7 +41,7 @@ def usage() :
 
     usage: %s cxx_root_directory
 
-    run cppcheck on manta c++ source code, return error for any unsupressed cppcheck issue
+    run cppcheck on project c++ source code, return error for any unsupressed cppcheck issue
 
 """ % (scriptName)
 
@@ -82,7 +82,7 @@ def main() :
     # xml output is usful for getting a warnings id field, which is what you need to suppress it:
     #checkCmd.append("--xml")
 
-    # additional suppressed checks from starka:
+    # additional suppressed checks
     #--suppress=uninitMemberVar \
     #--suppress=unsignedLessThanZero \
     #--suppress=obsoleteFunctionsasctime \
