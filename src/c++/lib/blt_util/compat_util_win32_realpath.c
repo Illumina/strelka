@@ -87,7 +87,7 @@ realpath( const char * name, char * resolved )
    * or it is NULL, with `errno' set appropriately, either of which
    * is our required return condition.
    */
-  
+
   return retname;
 }
 

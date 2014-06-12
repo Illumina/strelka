@@ -67,7 +67,7 @@ macro(static_find_boost boost_version boost_components)
     if (NOT Boost_FOUND)
         find_package(Boost ${boost_version} REQUIRED ${boost_components})
     endif()
-    
+
     foreach(COMPONENT ${THIS_BOOST_COMPONENTS})
         STRING(TOUPPER ${COMPONENT} UPPERCOMPONENT)
         set(HAVE_LIBBOOST_${UPPERCOMPONENT} ${Boost_${UPPERCOMPONENT}_FOUND})

@@ -76,11 +76,11 @@ def main() :
     checkCmd.append("--template={file}:{line}:1: error: {severity}:{message}")
 
     suppressList=["unusedFunction", "unmatchedSuppression", "missingInclude"]
-    
+
     # extra suppressions only used in starka, these are likely removable:
     extraSuppressList=["uninitMemberVar","unsignedLessThanZero","obsoleteFunctionsasctime"]
     suppressList.extend(extraSuppressList)
-    
+
     for stype in suppressList :
         checkCmd.append("--suppress="+stype)
 
