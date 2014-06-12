@@ -26,7 +26,7 @@
 
 
 #ifdef _WIN32
-#include "win32_realpath.c"
+#include "compat_util_win32_realpath.c"
 #endif
 
 

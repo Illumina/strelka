@@ -16,9 +16,9 @@
 #pragma once
 
 #include "somatic_indel_call.hh"
+#include "strelka_shared.hh"
 
 #include "starling_common/starling_indel_call_pprob_digt.hh"
-#include "strelka/strelka_shared.hh"
 
 #include "boost/utility.hpp"
 

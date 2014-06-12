@@ -10,7 +10,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -21,8 +20,9 @@
 
 #pragma once
 
+#include "strelka_shared.hh"
+
 #include "blt_common/snp_pos_info.hh"
-#include "strelka/strelka_shared.hh"
 
 #include <iosfwd>
 #include <memory>
@@ -46,3 +46,7 @@ private:
     std::auto_ptr<strelka_deriv_options> _dopt_ptr;
     std::ostream& _os;
 };
+
+
+void
+strelka_pile_test_run(strelka_options& opt);

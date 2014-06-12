@@ -22,7 +22,6 @@
 
 struct strelkaSiteSimulator : public starka::Program
 {
-
     const char*
     name() const
     {
@@ -32,4 +31,3 @@ struct strelkaSiteSimulator : public starka::Program
     void
     runInternal(int argc, char* argv[]) const;
 };
-

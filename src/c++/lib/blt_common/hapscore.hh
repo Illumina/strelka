@@ -14,8 +14,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __HAPSCORE_HH
-#define __HAPSCORE_HH
+
+#pragma once
 
 #include "blt_util/bam_seq.hh"
 #include "blt_util/seq_util.hh"
@@ -77,6 +77,3 @@ typedef std::vector<hap_cand> hap_set_t;
 
 double
 get_hapscore(hap_set_t& hap_set);
-
-
-#endif

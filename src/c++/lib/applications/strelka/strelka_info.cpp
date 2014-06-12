@@ -15,10 +15,11 @@
 /// \author Chris Saunders
 ///
 
+#include "strelka_info.hh"
+#include "strelka_option_parser.hh"
+#include "strelka_shared.hh"
+
 #include "starling_common/starling_option_parser.hh"
-#include "strelka/strelka_info.hh"
-#include "strelka/strelka_option_parser.hh"
-#include "strelka/strelka_shared.hh"
 
 #include "blt_util/log.hh"
 

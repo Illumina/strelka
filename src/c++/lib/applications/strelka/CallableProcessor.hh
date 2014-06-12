@@ -16,9 +16,10 @@
 
 #pragma once
 
+#include "position_somatic_snv_grid_shared.hh"
+
 #include "blt_util/blt_types.hh"
 #include "blt_util/pos_range.hh"
-#include "strelka/position_somatic_snv_grid_shared.hh"
 
 #include <iosfwd>
 #include <string>

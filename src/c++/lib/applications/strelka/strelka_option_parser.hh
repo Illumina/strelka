@@ -10,15 +10,15 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
+#include "strelka_shared.hh"
+
 #include "blt_util/prog_info.hh"
-#include "strelka/strelka_shared.hh"
 
 #include "boost/program_options.hpp"
 

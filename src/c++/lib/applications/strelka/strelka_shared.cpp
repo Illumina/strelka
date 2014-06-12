@@ -20,8 +20,7 @@
 #include "position_somatic_snv_strand_grid.hh"
 #include "somatic_indel.hh"
 #include "somatic_indel_grid.hh"
-
-#include "strelka/strelka_shared.hh"
+#include "strelka_shared.hh"
 
 
 

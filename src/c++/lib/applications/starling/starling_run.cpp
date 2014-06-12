@@ -18,15 +18,15 @@
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-
+#include "starling_run.hh"
 #include "starling_pos_processor.hh"
 #include "starling_streams.hh"
+#include "starling_info.hh"
 
 #include "blt_util/bam_streamer.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/vcf_streamer.hh"
-#include "starling/starling_info.hh"
 #include "starling_common/starling_input_stream_handler.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"

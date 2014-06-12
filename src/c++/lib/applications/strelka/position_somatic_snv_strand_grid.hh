@@ -22,11 +22,11 @@
 
 #include "extended_pos_data.hh"
 #include "position_somatic_snv_grid_shared.hh"
+#include "strelka_shared.hh"
 
 #include "blt_common/snp_pos_info.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/qscore.hh"
-#include "strelka/strelka_shared.hh"
 
 #include <boost/utility.hpp>
 

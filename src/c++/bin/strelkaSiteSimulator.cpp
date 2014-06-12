@@ -11,11 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-#include "applications/strelka/strelka.hh"
+#include "applications/strelka/strelkaSiteSimulator.hh"
 
 int
 main(int argc, char* argv[])
 {
     return strelkaSiteSimulator().run(argc,argv);
 }
-

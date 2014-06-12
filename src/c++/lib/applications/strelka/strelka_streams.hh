@@ -18,9 +18,9 @@
 #pragma once
 
 #include "strelka_sample_type.hh"
+#include "strelka_shared.hh"
 
 #include "starling_common/starling_streams_base.hh"
-#include "strelka/strelka_shared.hh"
 
 
 

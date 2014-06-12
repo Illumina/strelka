@@ -14,6 +14,11 @@
 /// \author Chris Saunders
 ///
 
+#include "strelka_info.hh"
+#include "strelka_option_parser.hh"
+#include "strelka_run.hh"
+#include "strelka.hh"
+
 #include "blt_common/blt_arg_parse_util.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
@@ -21,10 +26,6 @@
 #include "common/Exceptions.hh"
 #include "starling_common/starling_arg_parse.hh"
 #include "starling_common/starling_option_parser.hh"
-#include "strelka/strelka_info.hh"
-#include "strelka/strelka_option_parser.hh"
-#include "strelka/strelka_run.hh"
-#include "strelka/strelka.hh"
 
 #include "boost/program_options.hpp"
 

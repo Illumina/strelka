@@ -95,6 +95,10 @@ struct hinfo {
 };
 
 
+std::ostream&
+operator<<(std::ostream& os, const hinfo& hi);
+
+
 
 std::ostream&
 operator<<(std::ostream& os, const hinfo& hi) {

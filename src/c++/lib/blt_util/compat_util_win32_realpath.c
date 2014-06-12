@@ -18,6 +18,7 @@
  *
  */
 
+#ifdef _WIN32
 #include <io.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -91,3 +92,4 @@ realpath( const char * name, char * resolved )
 }
 
 /* $RCSfile$: end of file */
+#endif

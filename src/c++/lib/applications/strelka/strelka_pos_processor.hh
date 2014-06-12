@@ -10,7 +10,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -23,12 +22,13 @@
 
 #pragma once
 
+
 #include "strelka_sample_type.hh"
 #include "strelka_streams.hh"
+#include "CallableProcessor.hh"
+#include "strelka_shared.hh"
 
 #include "starling_common/starling_pos_processor_base.hh"
-#include "strelka/CallableProcessor.hh"
-#include "strelka/strelka_shared.hh"
 
 
 ///

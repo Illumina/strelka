@@ -19,13 +19,13 @@
 ///
 
 
-#include "strelka/strelkaSiteSimulator.hh"
+#include "strelkaSiteSimulator.hh"
+#include "strelka_pile_test_run.hh"
+#include "strelka_sim_test.hh"
 
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
-#include "strelka/strelka_pile_test_run.hh"
-#include "strelka/strelka_sim_test.hh"
 
 #include "boost/program_options.hpp"
 
@@ -33,7 +33,7 @@
 
 void
 strelkaSiteSimulator::
-runInternal(int argc,char* argv[])
+runInternal(int argc,char* argv[]) const
 {
     strelka_options opt;
     strelka_site_sim_options sim_opt;

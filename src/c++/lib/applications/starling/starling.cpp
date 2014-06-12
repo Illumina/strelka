@@ -14,7 +14,9 @@
 /// \author Chris Saunders
 ///
 
-#include "starling/starling.hh"
+#include "starling.hh"
+#include "starling_info.hh"
+#include "starling_run.hh"
 
 #include "blt_common/blt_arg_parse_util.hh"
 #include "blt_util/blt_exception.hh"
@@ -23,8 +25,6 @@
 #include "common/Exceptions.hh"
 #include "starling_common/starling_arg_parse.hh"
 #include "starling_common/starling_option_parser.hh"
-#include "starling/starling_info.hh"
-#include "starling/starling_run.hh"
 
 #include <cassert>
 #include <cstdlib>

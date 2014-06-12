@@ -10,14 +10,14 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
+#include "strelka_option_parser.hh"
+
 #include "blt_common/blt_arg_validate.hh"
 #include "starling_common/starling_option_parser.hh"
-#include "strelka/strelka_option_parser.hh"
 
 
 

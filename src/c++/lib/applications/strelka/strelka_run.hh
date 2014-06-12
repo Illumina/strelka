@@ -10,14 +10,12 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "strelka/strelka_shared.hh"
+#include "strelka_shared.hh"
 
 
 void

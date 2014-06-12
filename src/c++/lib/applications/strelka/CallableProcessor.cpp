@@ -14,7 +14,7 @@
 /// \author Chris Saunders
 ///
 
-#include "strelka/CallableProcessor.hh"
+#include "CallableProcessor.hh"
 
 #include <iostream>
 

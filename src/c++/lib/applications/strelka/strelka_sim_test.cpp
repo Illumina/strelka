@@ -10,7 +10,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -22,12 +21,12 @@
 
 #include "position_somatic_snv_strand_grid.hh"
 #include "strelka_sample_type.hh"
+#include "strelka_pile_test_run.hh"
+#include "strelka_sim_test.hh"
 
 #include "blt_util/istream_line_splitter.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/seq_util.hh"
-#include "strelka/strelka_pile_test_run.hh"
-#include "strelka/strelka_sim_test.hh"
 
 #include "boost/lexical_cast.hpp"
 #include "boost/random.hpp"
