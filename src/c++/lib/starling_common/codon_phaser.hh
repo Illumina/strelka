@@ -7,8 +7,7 @@
  *  Author: Morten Kallberg
  */
 
-#ifndef CODONPHASER_HH_
-#define CODONPHASER_HH_
+#pragma once
 
 #include "starling_common/gvcf_locus_info.hh"
 #include "starling_common/starling_read_buffer.hh"
@@ -42,7 +41,6 @@ public:
     int max_read_len;              // the length of the input reads
 private:
     int het_count;                      // total hets observed in buffer
-    int previous_clear;                 // cleared buffer up to this site
     int total_reads,total_reads_unused; // total used and unused reads spanning phasing region
     bool phase_indels;                  // should we attempt to phase indels as well? For now false, thus returning any block upon encountering an indel
     std::string reference;              // the phased allele reference
@@ -51,4 +49,3 @@ private:
     allele_map observations;
     const starling_options *opt;
 };
-#endif /* CODONPHASER_HH_ */

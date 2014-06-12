@@ -399,7 +399,7 @@ get_indel_digt_lhood(const starling_options& opt,
             alt_path_lnp=path_lnp.alt;
         }
 #else
-        if (is_use_alt_indel and (not path_lnp.alt_indel.empty()) ) {
+        if (is_use_alt_indel && (! path_lnp.alt_indel.empty()) ) {
             typedef read_path_scores::alt_indel_t::const_iterator aiter;
             aiter j(path_lnp.alt_indel.begin()), j_end(path_lnp.alt_indel.end());
             for (; j!=j_end; ++j) {
@@ -417,7 +417,7 @@ get_indel_digt_lhood(const starling_options& opt,
 
         double log_ref_prob(loghalf);
         double log_indel_prob(loghalf);
-        if (not is_breakpoint) {
+        if (! is_breakpoint) {
             static const double het_allele_ratio(0.5);
             get_het_observed_allele_ratio(path_lnp.read_length,sample_opt.min_read_bp_flank,
                                           ik,het_allele_ratio,log_ref_prob,log_indel_prob);

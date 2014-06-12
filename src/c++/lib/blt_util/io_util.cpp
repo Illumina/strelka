@@ -14,6 +14,8 @@
 
 /// \author Chris Saunders
 ///
+
+#include "blt_util/io_util.hh"
 #include "blt_util/log.hh"
 
 #include <cstdlib>

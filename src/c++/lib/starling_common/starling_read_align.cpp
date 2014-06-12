@@ -52,7 +52,7 @@ struct starling_align_indel_info {
 };
 
 
-
+static
 std::ostream&
 operator<<(std::ostream& os, const starling_align_indel_info& ii) {
 

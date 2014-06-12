@@ -15,12 +15,13 @@
 /// \author Chris Saunders
 ///
 
+#if 0
 #include "blt_util/reference_contig_segment.hh"
 
 #include <iostream>
 
 
-
+static
 void
 test_rcs() {
     std::ostream& os(std::cerr);
@@ -45,4 +46,4 @@ test_rcs() {
 
 
 //int main() { test_rcs(); }
-
+#endif

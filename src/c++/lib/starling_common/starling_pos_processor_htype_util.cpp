@@ -37,6 +37,7 @@ enum index_t {
     RIGHT
 };
 
+static
 const char*
 label(index_t i) {
     switch (i) {

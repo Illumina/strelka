@@ -49,8 +49,8 @@ endforeach ()
 
 if (THIS_LIBRARY_SOURCES)
     #include_directories (${THIS_COMMON_INCLUDE})
-    add_library     (manta_${CURRENT_DIR_NAME} STATIC ${THIS_LIBRARY_SOURCES})
-    add_dependencies(manta_${CURRENT_DIR_NAME} STARKA_OPT)
+    add_library     (starka_${CURRENT_DIR_NAME} STATIC ${THIS_LIBRARY_SOURCES})
+    add_dependencies(starka_${CURRENT_DIR_NAME} STARKA_OPT)
 endif()
 
 ##

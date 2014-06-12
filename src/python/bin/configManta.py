@@ -19,9 +19,9 @@ import os,sys
 
 scriptDir=os.path.abspath(os.path.dirname(__file__))
 scriptName=os.path.basename(__file__)
-workflowDir=os.path.abspath(os.path.join(scriptDir,"@MANTA_RELATIVE_PYTHON_LIBDIR@"))
+workflowDir=os.path.abspath(os.path.join(scriptDir,"@STARKA_RELATIVE_PYTHON_LIBDIR@"))
 
-version="@MANTA_FULL_VERSION@"
+version="@STARKA_FULL_VERSION@"
 
 
 # quick test to see if 'make' was run

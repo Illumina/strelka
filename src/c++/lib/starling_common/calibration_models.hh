@@ -5,13 +5,12 @@
  *  Author: Morten Kallberg
  */
 
-#ifndef CALBRATIONMODELS_H_
-#define CALBRATIONMODELS_H_
+#pragma once
+
 #include "blt_util/blt_exception.hh"
 #include "starling_common/gvcf_block_site_record.hh"
 #include "starling_common/gvcf_locus_info.hh"
 #include "starling_common/cmodel.hh"
-//#include "starling_common/gvcf_aggregator.hh"
 
 
 //forward declaration
@@ -43,4 +42,3 @@ private:
     modelmap models;
 };
 
-#endif /* CALIBRATIONMODELS_H_ */

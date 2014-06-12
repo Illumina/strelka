@@ -14,8 +14,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_LOGHOOD_MINFUNC_HH
-#define __POSITION_LOGHOOD_MINFUNC_HH
+
+#pragma once
 
 #include "blt_common/snp_pos_info.hh"
 #include "blt_util/seq_util.hh"
@@ -127,5 +127,3 @@ private:
     unsigned _n_allele;
     unsigned _allele_map[N_BASE];
 };
-
-#endif

@@ -14,14 +14,11 @@
 ///
 /// \author Chris Saunders
 ///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
-///
 
 #include "blt_common/blt_arg_parse_util.hh"
 #include "blt_common/blt_arg_validate.hh"
 #include "starling_common/starling_shared.hh"
+#include "starling_common/starling_arg_parse.hh"
 
 
 void

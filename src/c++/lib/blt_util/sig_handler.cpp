@@ -30,6 +30,7 @@ std::string _cmdline;
 
 
 
+static
 void
 blt_sig_handler (int sig) {
 

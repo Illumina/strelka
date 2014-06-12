@@ -60,7 +60,7 @@ add_custom_command(
     COMMAND tar -xjf "${THIS_REDIST_DIR}/${TABIX_PREFIX}.tar.bz2"
     COMMAND $(MAKE) -C "${TABIX_DIR}" all 2>| tabix.build.log
     COMMENT "Building tabix")
-add_custom_target(MANTA_TABIX DEPENDS "${TABIX_PROG}")
+add_custom_target(STARKA_TABIX DEPENDS "${TABIX_PROG}")
 
 install(PROGRAMS "${TABIX_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 

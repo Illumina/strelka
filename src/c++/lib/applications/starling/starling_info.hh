@@ -10,13 +10,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_INFO_HH
-#define __STARLING_INFO_HH
+#pragma once
 
 #include "blt_util/prog_info.hh"
 
@@ -47,5 +45,3 @@ private:
     starling_info() {}
     virtual ~starling_info() {}
 };
-
-#endif

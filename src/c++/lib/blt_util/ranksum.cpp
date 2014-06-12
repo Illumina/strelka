@@ -26,6 +26,7 @@
 using namespace std;
 
 
+static
 double
 get_z_score(int n1, int n2, double w1) {
     double mean = n1*(n1+n2+1)/2.0;
@@ -95,7 +96,7 @@ ranksum::add_observation(bool is_ref, int obs) {
 
 
 // output specification
-
+static
 ostream&
 operator<< (ostream& out, map<int, int>& l)
 {

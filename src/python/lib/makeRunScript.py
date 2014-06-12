@@ -92,7 +92,7 @@ def get_run_options(workflowClassName) :
     from configureUtil import EpilogOptionParser
     from estimateHardware import EstException, getNodeHyperthreadCoreCount, getNodeMemMb
 
-    version="@MANTA_FULL_VERSION@"
+    version="@STARKA_FULL_VERSION@"
 
     sgeDefaultCores=workflowClassName.runModeDefaultCores('sge')
 

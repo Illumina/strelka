@@ -87,7 +87,62 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
 static const unsigned max_hpol_len(40);
 typedef std::pair<double,double> error_model[max_hpol_len];
 
-error_model& get_pattern_error_model(const std::string overall_error_model, std::string pattern="A",const int indel_length=1) {
+struct PatternErrorModel
+{
+    PatternErrorModel()
+    {
+        const std::string AT_case = "AT";
+        const std::string CG_case = "CG";
+
+        double itmp(0);
+        double dtmp(0);
+        for (unsigned i(0); i<max_hpol_len; ++i) {
+            get_indel_error_prob_hpol_len(i+1,itmp,dtmp,CG_case);
+            indel_error_prob_len_CG[i] = std::make_pair(itmp,dtmp);
+//            log_os << i << "_CG: " << itmp <<  " " << dtmp <<  "\n"; //print out test
+            get_indel_error_prob_hpol_len(i+1,itmp,dtmp,AT_case);
+            indel_error_prob_len_AT[i] = std::make_pair(itmp,dtmp);
+//            log_os << i << "_AT: " << itmp <<  " " << dtmp <<  "\n"; //print out test
+        }
+    }
+
+    const error_model&
+    getModel(
+        const std::string& overall_error_model,
+        const std::string& pattern) const
+    {
+        // choose the error model based on
+        if (overall_error_model=="old") {
+    //        log_os << "Using indel error model: " << overall_error_model << "\n";
+            return indel_error_prob_len_CG; // for now this is the old polynomial model
+        }
+        else if (overall_error_model=="stratified") {
+
+            if ("G"==pattern || "C"==pattern) {
+                return indel_error_prob_len_CG;
+            }
+            else {
+                return indel_error_prob_len_AT;
+            }
+        }
+        else {
+            return indel_error_prob_len_AT;
+        }
+    }
+
+    error_model indel_error_prob_len_AT;
+    error_model indel_error_prob_len_CG;
+};
+
+
+PatternErrorModel emodel;
+
+#if 0
+error_model&
+get_pattern_error_model(
+    const std::string& overall_error_model,
+    std::string pattern="A",
+    const int indel_length=1) {
 
     // cache results for any realistic homopolymer length:
     // Treat everything above indel length 50 the same.
@@ -138,8 +193,9 @@ error_model& get_pattern_error_model(const std::string overall_error_model, std:
     else {
         return indel_error_prob_len_AT;
     }
-
 }
+#endif
+
 
 // "indel_error" is the probability that the read supporting the indel case is an error
 // "ref_error" is the probability that the read supporting the ref case is an error
@@ -154,7 +210,7 @@ get_indel_error_prob(const starling_options& client_opt,
 
 //    log_os << "Indel model " << client_opt.indel_error_model << "\n";
 
-    error_model indel_error_prob_len = get_pattern_error_model(client_opt.indel_error_model,iri.repeat_unit);
+    const error_model& indel_error_prob_len(emodel.getModel(client_opt.indel_error_model,iri.repeat_unit));
 
     if (! is_simple_indel) {
         // breakpoints and swaps --

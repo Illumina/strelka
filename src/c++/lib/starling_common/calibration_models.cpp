@@ -28,7 +28,7 @@
 calibration_models::calibration_models() {
     this->set_model("default");
 }
-calibration_models::~calibration_models() {};
+calibration_models::~calibration_models() {}
 
 void calibration_models::clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si) {
 

@@ -68,7 +68,7 @@ namespace CALIBRATION_MODEL {
                 return VCF_FILTERS::LowGQX;
             }
         }
-};
+}
 
 typedef std::map<std::string, double> featuremap;
 typedef std::map<std::string, std::map<std::string, featuremap > > parmap;

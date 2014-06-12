@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __IO_UTIL_HH
-#define __IO_UTIL_HH
+#pragma once
 
 #include <iosfwd>
 
@@ -24,5 +23,3 @@
 void
 open_ifstream(std::ifstream& ifs,
               const char* filename);
-
-#endif

@@ -218,8 +218,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
         // check that a non-reference call meeting quality criteria even
         // exists:
-        if (not is_always_test) {
-            if (is_spi_allref(normal_pi,sgt.ref_gt) and is_spi_allref(tumor_pi,sgt.ref_gt)) return;
+        if (! is_always_test) {
+            if (is_spi_allref(normal_pi,sgt.ref_gt) && is_spi_allref(tumor_pi,sgt.ref_gt)) return;
         }
     }
 

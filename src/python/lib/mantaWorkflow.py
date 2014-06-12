@@ -37,7 +37,7 @@ from configureUtil import getIniSections,dumpIniSections
 
 
 def getVersion() :
-    return "@MANTA_VERSION@"
+    return "@STARKA_VERSION@"
 
 
 __version__ = getVersion()

@@ -17,9 +17,7 @@
 // take care of some (mostly C99) functions not available in VS C++
 //
 
-#ifndef __COMPAT_UTIL
-#define __COMPAT_UTIL
-
+#pragma once
 
 #include <string>
 
@@ -41,6 +39,3 @@ compat_basename(const char* s);
 // returns false on error.
 bool
 compat_realpath(std::string& path);
-
-
-#endif
