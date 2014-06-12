@@ -64,8 +64,10 @@ macro(static_find_boost boost_version boost_components)
 #        message(FATAL_ERROR "pthread library is required to build")
 #    endif ()
 
-    find_package(Boost ${boost_version} REQUIRED ${boost_components})
-
+    if (NOT Boost_FOUND)
+        find_package(Boost ${boost_version} REQUIRED ${boost_components})
+    endif()
+    
     foreach(COMPONENT ${THIS_BOOST_COMPONENTS})
         STRING(TOUPPER ${COMPONENT} UPPERCOMPONENT)
         set(HAVE_LIBBOOST_${UPPERCOMPONENT} ${Boost_${UPPERCOMPONENT}_FOUND})
@@ -79,6 +81,19 @@ endif ()
 
 find_package(Boost ${THIS_BOOST_VERSION} COMPONENTS ${THIS_BOOST_COMPONENTS})
 
+set(BOOST_BOOTSTRAP_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/bootstrap/boost)
+if (NOT Boost_FOUND)
+    # try again to see if we've already booststrapped boost for this installation:
+    resetFindBoost()
+    set (ENV{BOOST_ROOT} "${BOOST_BOOTSTRAP_INSTALL_DIR}")
+    message(STATUS "Boost not found in system installation, looking for existing boostrap installation in: ${BOOST_BOOTSTRAP_INSTALL_DIR}")
+    find_package(Boost ${THIS_BOOST_VERSION} COMPONENTS ${THIS_BOOST_COMPONENTS})
+
+    if (Boost_FOUND)
+        set (BOOST_ROOT "${BOOST_BOOTSTRAP_INSTALL_DIR}")
+    endif()
+endif()
+
 
 # CMAKE_PARALLEL is only used if boost is found, but moving the setting here (outside of the if below) supresses a cmake warning:
 if (NOT CMAKE_PARALLEL)
@@ -89,7 +104,6 @@ endif ()
 # If the right version of boost is not found, it will be built from the distribution
 #
 if (NOT Boost_FOUND)
-
     foreach(COMPONENT ${THIS_BOOST_COMPONENTS})
         STRING(TOUPPER ${COMPONENT} UPPERCOMPONENT)
         if (${Boost_${UPPERCOMPONENT}_FOUND})
@@ -112,7 +126,6 @@ if (NOT Boost_FOUND)
     set(ENV{THIS_BOOST_BUILD_COMPONENTS} "${THIS_BOOST_BUILD_COMPONENTS}")
     set(ENV{THIS_BOOST_VERSION} "${THIS_BOOST_VERSION}")
 
-    set(BOOST_BOOTSTRAP_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/bootstrap/boost)
     set(BOOST_BUILD_COMMAND bash "${THIS_BOOTSTRAP_DIR}/installBoost.bash" "${THIS_REDIST_DIR}" "${BOOST_BOOTSTRAP_INSTALL_DIR}" "${CMAKE_PARALLEL}")
 
     string(REPLACE ";" " " PRETTY_BOOST_BUILD_COMMAND "${BOOST_BUILD_COMMAND}")

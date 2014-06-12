@@ -123,13 +123,13 @@ set(THIS_REDIST_DIR "${CMAKE_SOURCE_DIR}/../redist")
 
 # required boost libraries
 set (THIS_BOOST_VERSION 1.53.0)
-set (THIS_BOOST_COMPONENTS date_time filesystem program_options
-                           regex system unit_test_framework)
+set (THIS_BOOST_COMPONENTS filesystem program_options
+                           system unit_test_framework)
 
 # the name given to boost.build and the library name are the same for all libraries, except
 # for test, so we need two lists now:
-set (THIS_BOOST_BUILD_COMPONENTS date_time filesystem program_options
-                                 regex system test)
+set (THIS_BOOST_BUILD_COMPONENTS filesystem program_options
+                                 system test)
 set (Boost_USE_MULTITHREADED OFF)
 set (Boost_USE_STATIC_LIBS ON)
 
@@ -137,7 +137,9 @@ set (THIS_GLOBALS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/globals.cmake")
 set (THIS_MACROS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/macros.cmake")
 
 # redist includes
+message (STATUS "preboost")
 include ("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
+message (STATUS "postboost")
 
 # global source QC -- don't allow non-ascii chars in source files:
 add_custom_target(STARKA_SOURCE_CHECK
@@ -155,9 +157,16 @@ add_custom_target(STARKA_UNITTESTS
     COMMAND ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --output-on-failure
     )
 
+message (STATUS "prepre")
+
 add_subdirectory (cmake/preInstall)
+message (STATUS "preopt")
 add_subdirectory (opt)
+message (STATUS "precpp")
+
 add_subdirectory (c++)
+message (STATUS "prepy")
+
 add_subdirectory (python)
 add_subdirectory (markdown)
 add_subdirectory (cmake/postInstall)

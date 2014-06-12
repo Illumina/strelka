@@ -76,16 +76,16 @@ def main() :
     checkCmd.append("--template={file}:{line}:1: error: {severity}:{message}")
 
     suppressList=["unusedFunction", "unmatchedSuppression", "missingInclude"]
+    
+    # extra suppressions only used in starka, these are likely removable:
+    extraSuppressList=["uninitMemberVar","unsignedLessThanZero","obsoleteFunctionsasctime"]
+    suppressList.extend(extraSuppressList)
+    
     for stype in suppressList :
         checkCmd.append("--suppress="+stype)
 
     # xml output is usful for getting a warnings id field, which is what you need to suppress it:
     #checkCmd.append("--xml")
-
-    # additional suppressed checks
-    #--suppress=uninitMemberVar \
-    #--suppress=unsignedLessThanZero \
-    #--suppress=obsoleteFunctionsasctime \
 
     # this is more aggressive  and includes more FPs
     #checkCmd.append("--inconclusive")

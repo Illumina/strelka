@@ -30,7 +30,7 @@ set (THIS_ALL_LIBRARIES blt_util common blt_common starling_common)
 ## THIS_AVAILABLE_LIBRARIES is incrementally updated
 ##
 set (THIS_AVAILABLE_LIBRARIES "")
-foreach THIS_LIB_DIR ${THIS_ALL_LIBRARIES})
+foreach (THIS_LIB_DIR ${THIS_ALL_LIBRARIES})
     add_subdirectory(${THIS_LIB_DIR})
 
     set(THIS_AVAILABLE_LIBRARIES starka_${THIS_LIB_DIR} ${THIS_AVAILABLE_LIBRARIES})

@@ -21,10 +21,10 @@
 #include <vector>
 
 
-#ifndef __RANKSUM_HH
-#define __RANKSUM_HH
+#pragma once
 
-// Calculates the Mann–Whitney rank-sum statistic from two populations with
+
+// Calculates the Mann-Whitney rank-sum statistic from two populations with
 // sparse (and similar) observation spaces
 //
 class ranksum
@@ -109,7 +109,3 @@ public:
 };
 
 std::ostream& operator<< (std::ostream& out, ranksum& r);
-
-#endif
-
-

@@ -37,7 +37,7 @@ macro(process_user_guide name)
         DEPENDS STARKA_MARKDOWN
         COMMENT "Converting ${name} to html")
 
-    add_custom_target(STARKA_USERGUIDE ALL DEPENDS ${UL} ${UL})
+    add_custom_target(STARKA_${name} ALL DEPENDS ${UL} ${UL})
 
     install(FILES ${UL} DESTINATION ${THIS_DOCDIR}/html)
     install(FILES ${UL} DESTINATION ${THIS_DOCDIR}/html)
