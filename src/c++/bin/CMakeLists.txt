@@ -27,12 +27,21 @@ file (GLOB THIS_PROGRAM_SOURCE_LIST [a-zA-Z0-9]*.cpp)
 ##
 foreach(THIS_PROGRAM_SOURCE ${THIS_PROGRAM_SOURCE_LIST})
     get_filename_component(THIS_PROGRAM ${THIS_PROGRAM_SOURCE} NAME_WE)
-    set(THIS_APPLICATION_LIB starka_${THIS_PROGRAM})
+    set(THIS_LIBSUFFIX ${THIS_PROGRAM})
+    if (THIS_PROGRAM STREQUAL "starling2")
+        set(THIS_LIBSUFFIX "starling")
+    endif ()
+    if (THIS_PROGRAM STREQUAL "strelka2")
+        set(THIS_LIBSUFFIX "strelka")
+    endif ()
+    if (THIS_PROGRAM STREQUAL "strelkaSiteSimulator")
+        set(THIS_LIBSUFFIX "strelka")
+    endif ()
+    set(THIS_APPLICATION_LIB starka_${THIS_LIBSUFFIX})
     add_executable        (${THIS_PROGRAM} ${THIS_PROGRAM_SOURCE})
     target_link_libraries (${THIS_PROGRAM}  ${THIS_APPLICATION_LIB} ${THIS_AVAILABLE_LIBRARIES}
                            ${SAMTOOLS_LIBRARY} ${TABIX_LIBRARY} ${Boost_LIBRARIES}
                            ${THIS_ADDITIONAL_LIB})
     install(TARGETS ${THIS_PROGRAM} RUNTIME DESTINATION ${THIS_LIBEXECDIR})
 endforeach()
-
 

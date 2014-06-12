@@ -1,6 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Copyright (c) 2009-2013 Illumina, Inc.
+// Manta
+// Copyright (c) 2013-2014 Illumina, Inc.
 //
 // This software is provided under the terms and conditions of the
 // Illumina Open Source Software License 1.
@@ -10,13 +11,28 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \author Chris Saunders
-///
+/// \brief provide access to cmake project version numbers
 
 #pragma once
 
-#include "starling_common/starling_shared.hh"
+#include "config.h"
+
+namespace starka
+{
+
+inline
+const char*
+getVersion()
+{
+    return STARKA_VERSION;
+}
 
 
-void
-starling_run(const starling_options& client_opt);
+inline
+const char*
+getFullVersion()
+{
+    return STARKA_FULL_VERSION;
+}
+
+}

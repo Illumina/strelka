@@ -64,6 +64,19 @@ add_custom_target(STARKA_TABIX DEPENDS "${TABIX_PROG}")
 
 install(PROGRAMS "${TABIX_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 
+#
+# codemin
+#
+set(CODEMIN_PREFIX "CodeMin-1.0.2")
+superset(CODEMIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CODEMIN_PREFIX}/include")
+set(CODEMIN_MARK "${CODEMIN_DIR}/minimize_1d.h")
+
+add_custom_command(
+    OUTPUT ${CODEMIN_MARK}
+    COMMAND rm -rf "${CODEMIN_DIR}"
+    COMMAND tar -xjf "${THIS_REDIST_DIR}/${CODEMIN_PREFIX}.tar.bz2"
+    COMMENT "Unpacking CodeMin")
+add_custom_target(STARKA_CODEMIN DEPENDS "${CODEMIN_MARK}")
 
 #
 # pyflow
@@ -92,7 +105,7 @@ endforeach ()
 
 # tie results back to parent:
 #
-add_dependencies(STARKA_OPT STARKA_SAMTOOLS STARKA_TABIX STARKA_PYFLOW)
+add_dependencies(STARKA_OPT STARKA_SAMTOOLS STARKA_TABIX STARKA_CODEMIN STARKA_PYFLOW)
 
 
 #

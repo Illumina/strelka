@@ -1,6 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Copyright (c) 2009-2013 Illumina, Inc.
+// Manta
+// Copyright (c) 2013-2014 Illumina, Inc.
 //
 // This software is provided under the terms and conditions of the
 // Illumina Open Source Software License 1.
@@ -10,13 +11,25 @@
 // <https://github.com/sequencing/licenses/>
 //
 
+///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "starling_common/starling_shared.hh"
+#include "starling_common/Program.hh"
 
 
-void
-starling_run(const starling_options& client_opt);
+struct strelka : public starka::Program
+{
+
+    const char*
+    name() const
+    {
+        return "strelka";
+    }
+
+    void
+    runInternal(int argc, char* argv[]) const;
+};
+

@@ -17,6 +17,7 @@
 #pragma once
 
 #include "blt_util/prog_info.hh"
+#include "starling_common/version.hh"
 
 
 struct starling_info : public prog_info {
@@ -34,8 +35,7 @@ private:
     }
 
     const char* version() const {
-        static const char VERSION[] = "${VERSION}";
-        return VERSION;
+        return starka::getFullVersion();
     }
 
     void usage(const char* xmessage = 0) const;

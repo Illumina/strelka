@@ -10,8 +10,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
 #include "somatic_call_shared.hh"

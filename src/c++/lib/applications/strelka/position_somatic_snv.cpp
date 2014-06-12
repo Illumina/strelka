@@ -10,8 +10,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
 #include "position_somatic_snv.hh"

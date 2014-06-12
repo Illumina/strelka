@@ -15,8 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __PROG_INFO_HH
-#define __PROG_INFO_HH
+#pragma once
 
 struct prog_info {
     virtual
@@ -35,5 +34,3 @@ protected:
     prog_info() {}
     virtual ~prog_info() {}
 };
-
-#endif

@@ -10,9 +10,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
-/// variation on the original strowman snv caller -- implements a
+/// variation on the original strawman snv caller -- implements a
 /// compile-time specified grid in allele frequency space and requires
 /// similar frequency as definition of non-somatic.
 ///
