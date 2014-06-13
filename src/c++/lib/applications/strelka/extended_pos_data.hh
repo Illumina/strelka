@@ -17,10 +17,7 @@
 
 #pragma once
 
-
 #include "starling_common/starling_pos_processor_base.hh"
-
-#include "boost/foreach.hpp"
 
 
 #if 0
@@ -41,7 +38,6 @@ struct null_snp_pos_info
 
 struct sample_pos_data
 {
-
     sample_pos_data(snp_pos_info* pi_ptr,
                     extra_position_data& epd_init,
                     const char ref_base,
@@ -62,7 +58,7 @@ struct sample_pos_data
         epd.good_pi.ref_base = pi.ref_base;
 
         n_calls += pi.calls.size();
-        BOOST_FOREACH(const base_call& bc, pi.calls)
+        for (const auto& bc : pi.calls)
         {
             if (bc.is_call_filter)
             {
@@ -78,7 +74,7 @@ struct sample_pos_data
         if (is_include_tier2)
         {
             n_calls += pi.tier2_calls.size();
-            BOOST_FOREACH(const base_call& bc, pi.tier2_calls)
+            for (const auto& bc : pi.tier2_calls)
             {
                 if (bc.is_call_filter) continue;
                 epd.good_pi.calls.push_back(bc);

@@ -22,8 +22,6 @@
 #include "blt_util/log.hh"
 #include "starling_common/indel_util.hh"
 
-#include "boost/foreach.hpp"
-
 #include <algorithm>
 #include <iostream>
 
@@ -84,7 +82,7 @@ is_interfering_indel(const indel_set_t& current_indels,
 
     if (current_indels.count(new_indel) != 0) return false;
 
-    BOOST_FOREACH(const indel_key& ik, current_indels)
+    for (const indel_key& ik : current_indels)
     {
         if (is_indel_conflict(ik,new_indel)) return true;
     }
@@ -125,7 +123,7 @@ get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
     bool is_right_read_pos(false);
     pos_t right_read_pos(0);
 
-    BOOST_FOREACH(const path_segment& ps, al.path)
+    for (const path_segment& ps : al.path)
     {
         pos_t next_read_head_pos(read_head_pos);
         pos_t next_ref_head_pos(ref_head_pos);
@@ -638,7 +636,7 @@ score_indels(const starling_options& opt,
             // highest scoring path already:
             //
             const align_info_t max_info(std::make_pair(max_path_lnp,&max_cal));
-            BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels)
+            for (const indel_key& eval_ik : max_cal_eval_indels)
             {
                 const bool is_indel_present(max_cal_indels.count(eval_ik)!=0);
 
@@ -647,7 +645,7 @@ score_indels(const starling_options& opt,
                     iks_max_path_lnp[std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
 
                     // mark this as an alternate indel score for interfering indels:
-                    BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik])
+                    for (const indel_key& overlap_ik : indel_overlap_map[eval_ik])
                     {
                         iks_max_path_lnp[std::make_pair(overlap_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
                     }
@@ -681,7 +679,7 @@ score_indels(const starling_options& opt,
             indel_set_t ical_indels;
             get_alignment_indels(ical,opt.max_indel_size,ical_indels);
 
-            BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels)
+            for (const indel_key& eval_ik : max_cal_eval_indels)
             {
                 const bool is_indel_present(ical_indels.count(eval_ik)!=0);
                 if (is_indel_present)
@@ -690,7 +688,7 @@ score_indels(const starling_options& opt,
                     check_and_update_iks(iks_max_path_lnp,eval_ik,is_indel_present,eval_ik,path_lnp,&ical);
 
                     // mark this as an alternate indel score for interfering indels:
-                    BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik])
+                    for (const indel_key& overlap_ik : indel_overlap_map[eval_ik])
                     {
                         check_and_update_iks(iks_max_path_lnp,overlap_ik,is_indel_present,eval_ik,path_lnp,&ical);
                     }
@@ -703,7 +701,7 @@ score_indels(const starling_options& opt,
                     // category:
                     //
                     bool is_interference(false);
-                    BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik])
+                    for (const indel_key& overlap_ik : indel_overlap_map[eval_ik])
                     {
                         if (ical_indels.count(overlap_ik)!=0)
                         {
@@ -747,7 +745,7 @@ score_indels(const starling_options& opt,
     //
     {
         indel_buffer& ibuff(isync.ibuff());
-        BOOST_FOREACH(const indel_key& eval_ik, max_cal_eval_indels)
+        for (const indel_key& eval_ik : max_cal_eval_indels)
         {
             indel_data* id_ptr(ibuff.get_indel_data_ptr(eval_ik));
             assert(NULL != id_ptr);
@@ -875,7 +873,7 @@ score_indels(const starling_options& opt,
 
             // start adding alternate indel alleles, if present:
 
-            BOOST_FOREACH(const indel_key& overlap_ik, indel_overlap_map[eval_ik])
+            for (const indel_key& overlap_ik : indel_overlap_map[eval_ik])
             {
                 const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,overlap_ik))));
 

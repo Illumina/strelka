@@ -32,8 +32,6 @@
 #include "starling_common/align_path_bam_util.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
-#include "boost/foreach.hpp"
-
 #include <cassert>
 
 #include <sstream>
@@ -506,7 +504,7 @@ process_candidate_indel(
 {
 
     const unsigned rs(vcf_indel.ref.size());
-    BOOST_FOREACH(const std::string& alt, vcf_indel.alt)
+    for (const auto& alt : vcf_indel.alt)
     {
         const unsigned as(alt.size());
         const std::pair<unsigned,unsigned> xfix(common_xfix_length(vcf_indel.ref,alt));

@@ -23,8 +23,6 @@
 #include "starling_common/indel_key.hh"
 #include "starling_common/starling_types.hh"
 
-#include "boost/foreach.hpp"
-
 #include <cassert>
 #include <iosfwd>
 #include <map>
@@ -45,7 +43,6 @@
 ///
 struct indel_observation_data
 {
-
     indel_observation_data()
         : is_noise(false)
         , is_external_candidate(false)
@@ -71,7 +68,6 @@ struct indel_observation_data
 //
 struct read_path_scores
 {
-
     typedef float score_t;
 
     read_path_scores(const score_t r=0,
@@ -120,7 +116,6 @@ struct read_path_scores
 ///
 struct insert_seq_manager
 {
-
     insert_seq_manager()
         : _is_consensus(false)
         , _obs_count(0)
@@ -147,7 +142,7 @@ struct insert_seq_manager
         if (_is_consensus) return _consensus_seq.size();
 
         unsigned size(0);
-        BOOST_FOREACH(const obs_t::value_type& val, _obs)
+        for (const auto& val : _obs)
         {
             if (val.first.size() <= size) continue;
             size = val.first.size();

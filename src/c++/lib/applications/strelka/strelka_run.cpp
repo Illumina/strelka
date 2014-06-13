@@ -29,7 +29,6 @@
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
-#include "boost/foreach.hpp"
 #include "boost/shared_ptr.hpp"
 
 #include <sstream>
@@ -45,7 +44,6 @@ const prog_info& pinfo(strelka_info::get());
 void
 strelka_run(const strelka_options& opt)
 {
-
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
 
@@ -102,7 +100,7 @@ strelka_run(const strelka_options& opt)
     typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
 
-    BOOST_FOREACH(const std::string& vcf_filename, opt.input_candidate_indel_vcf)
+    for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
     {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
                                                         bam_region.c_str(),normal_read_stream.get_header())));
@@ -111,7 +109,7 @@ strelka_run(const strelka_options& opt)
 
     std::vector<vcf_ptr> foutput_stream;
 
-    BOOST_FOREACH(const std::string& vcf_filename, opt.force_output_vcf)
+    for (const auto& vcf_filename : opt.force_output_vcf)
     {
         foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
                                                           bam_region.c_str(),normal_read_stream.get_header())));

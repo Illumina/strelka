@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -22,7 +21,8 @@
 #include <iostream>
 #include <sstream>
 
-#define ID_DEBUG
+//#define DEBUG_ID
+
 
 void
 read_path_scores::insert_alt(const indel_key& ik,
@@ -59,13 +59,11 @@ indel_data::add_observation(const indel_observation_data& obs_data,
                             const bool is_shared,
                             bool& is_repeat_obs)
 {
-
-
-//#ifdef ID_DEBUG
-//    log_os << "KATTER: adding obs for indel: " << _ik;
-//    log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
-//    log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
-//#endif
+#ifdef DEBUG_ID
+    log_os << "KATTER: adding obs for indel: " << _ik;
+    log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
+    log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
+#endif
 
     if (! is_shared)
     {
@@ -86,17 +84,17 @@ void
 indel_data::add_observation_core(const indel_observation_data& obs_data,
                                  bool& is_repeat_obs)
 {
-#ifdef ID_DEBUG
-//        log_os << "KATTER: adding obs for indel: " << _ik;
-//        log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
-//        log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
+#ifdef DEBUG_ID
+    log_os << "KATTER: adding obs for indel: " << _ik;
+    log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
+    log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
 #endif
+
     is_external_candidate=obs_data.is_external_candidate;
     is_forced_output=obs_data.is_forced_output;
 
     if (! is_external_candidate)
     {
-
         using namespace INDEL_ALIGN_TYPE;
 
         if (obs_data.is_noise)
@@ -209,7 +207,7 @@ _finalize()
     unsigned count(0);
     std::string& candidate(_consensus_seq);
 
-    BOOST_FOREACH(const obs_t::value_type& val, _obs)
+    for(const auto& val : _obs)
     {
         if (val.first.size() < candidate.size()) continue;
         if (val.first.size() == candidate.size())

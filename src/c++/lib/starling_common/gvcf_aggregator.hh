@@ -34,7 +34,6 @@
 ///
 struct gvcf_aggregator
 {
-
     gvcf_aggregator(const starling_options& opt,
                     const starling_deriv_options& dopt,
                     const reference_contig_segment& ref,

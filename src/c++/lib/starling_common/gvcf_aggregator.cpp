@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -20,9 +19,6 @@
 #include "starling_common/chrom_depth_map.hh"
 #include "starling_common/gvcf_aggregator.hh"
 #include "starling_common/gvcf_header.hh"
-
-
-#include "boost/foreach.hpp"
 
 #include <fstream>
 #include <iomanip>
@@ -378,7 +374,7 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
 
     using namespace ALIGNPATH;
     int offset(-1);
-    BOOST_FOREACH(const path_segment& ps, apath)
+    for (const auto& ps : apath)
     {
         if (ps.type==MATCH)
         {

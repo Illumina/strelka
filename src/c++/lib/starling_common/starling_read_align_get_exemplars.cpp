@@ -20,8 +20,6 @@
 #include "starling_common/alignment_util.hh"
 #include "starling_common/starling_read_align_get_exemplars.hh"
 
-#include "boost/foreach.hpp"
-
 #include <cassert>
 
 #include <iostream>
@@ -206,7 +204,7 @@ add_exemplar_alignment(const alignment& al,
     }
 
     // check that this candidate exemplar does not already exist:
-    BOOST_FOREACH(alignment& exemplar, exal)
+    for (alignment& exemplar : exal)
     {
         if (check_and_adjust_exemplar(*al_ptr,exemplar)) return;
     }
@@ -250,7 +248,7 @@ get_exemplar_alignments(const starling_options& opt,
 
 #ifdef DEBUG_ALIGN
     log_os << "VARMIT: Final exemplar set:\n";
-    BOOST_FOREACH(const alignment& exemplar, exal)
+    for (const alignment& exemplar : exal)
     {
         log_os << "exemplar: " << exemplar;
     }

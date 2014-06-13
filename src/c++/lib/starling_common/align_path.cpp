@@ -1011,7 +1011,7 @@ is_clipped(const path_t& apath)
 bool
 is_soft_clipped(const path_t& apath)
 {
-    BOOST_FOREACH(const path_segment& ps, apath)
+    for (const auto& ps : apath)
     {
         if (SOFT_CLIP == ps.type) return true;
     }
@@ -1097,7 +1097,7 @@ bool
 is_apath_floating(const path_t& apath)
 {
 
-    BOOST_FOREACH(const path_segment& ps, apath)
+    for (const auto& ps : apath)
     {
         if (ps.type==MATCH) return false;
     }
@@ -1205,8 +1205,7 @@ get_apath_invalid_type(const path_t& apath,
 bool
 is_apath_starling_invalid(const path_t& apath)
 {
-
-    BOOST_FOREACH(const path_segment& ps, apath)
+    for (const auto& ps : apath)
     {
         if (ps.type==PAD) return true;
     }

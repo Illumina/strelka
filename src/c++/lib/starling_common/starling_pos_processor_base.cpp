@@ -44,7 +44,6 @@
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 #include "starling_common/gvcf_aggregator.hh"
-#include "boost/foreach.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -84,7 +83,7 @@ report_counts(const snp_pos_info& pi,
 
     for (unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
 
-    BOOST_FOREACH(const base_call& bc, pi.calls)
+    for (const auto& bc : pi.calls)
     {
         assert(bc.base_id!=BASE_ID::ANY);
         base_count[bc.base_id]++;

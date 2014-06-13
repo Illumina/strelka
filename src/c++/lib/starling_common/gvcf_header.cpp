@@ -27,7 +27,6 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 
 
@@ -50,7 +49,6 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
                  const cdmap_t& chrom_depth,
                  std::ostream& os)
 {
-
     using namespace VCF_FILTERS;
 
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
@@ -157,7 +155,7 @@ determine_sample(const std::string& bam_header_text)
     using namespace boost;
     char_separator<char> sep("\t\n");
     tokenizer< char_separator<char> > tokens(bam_header_text, sep);
-    BOOST_FOREACH (const std::string& t, tokens)
+    for (const auto& t : tokens)
     {
         if (std::string::npos != t.find("SM:"))
         {
