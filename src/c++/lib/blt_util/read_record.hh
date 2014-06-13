@@ -22,7 +22,8 @@
 #include "boost/utility.hpp"
 
 
-struct read_record : private boost::noncopyable {
+struct read_record : private boost::noncopyable
+{
 
     virtual ~read_record() {}
 

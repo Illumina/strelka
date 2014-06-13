@@ -22,7 +22,8 @@
 
 
 std::ostream&
-operator<<(std::ostream& os,const stream_stat& ss) {
+operator<<(std::ostream& os,const stream_stat& ss)
+{
 
     os << "sample_size: " << ss.size() << " min: " << ss.min() << " max: " << ss.max()
        << " mean: " << ss.mean() << " sd: " << ss.sd() << " se: " << ss.stderror();

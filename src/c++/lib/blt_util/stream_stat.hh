@@ -29,7 +29,8 @@
 ///
 /// TODO: there are 3 minor variants of stream_stat now... consolidate this logic via template/inheritance
 ///
-struct stream_stat {
+struct stream_stat
+{
 
     // Accumulate mean and standard dev using a single pass formula
     // Uses the cancellation-friendly formulae on p.26 of
@@ -37,7 +38,8 @@ struct stream_stat {
     // Variable names follow his
     stream_stat() : M_(0),Q_(0),max_(0),min_(0),k_(0) {}
 
-    void reset() {
+    void reset()
+    {
         M_ = 0;
         Q_ = 0;
         max_ = 0;
@@ -45,7 +47,8 @@ struct stream_stat {
         k_ = 0;
     }
 
-    void add(const double x) {
+    void add(const double x)
+    {
         k_++;
         if (k_==1 || x>max_) max_=x;
         if (k_==1 || x<min_) min_=x;
@@ -56,19 +59,47 @@ struct stream_stat {
         Q_+=delta*(x-M_);
     }
 
-    int size() const { return k_; }
-    bool empty() const { return (k_==0); }
+    int size() const
+    {
+        return k_;
+    }
+    bool empty() const
+    {
+        return (k_==0);
+    }
 
-    double min() const { return ((k_<1) ? nan() : min_); }
-    double max() const { return ((k_<1) ? nan() : max_); }
-    double mean() const { return ((k_<1) ? nan() : M_); }
-    double variance() const { return ((k_<2) ? nan() : Q_/(static_cast<double>(k_-1))); }
-    double sd() const { return std::sqrt(variance()); }
-    double stderror() const { return sd()/std::sqrt(static_cast<double>(k_)); }
+    double min() const
+    {
+        return ((k_<1) ? nan() : min_);
+    }
+    double max() const
+    {
+        return ((k_<1) ? nan() : max_);
+    }
+    double mean() const
+    {
+        return ((k_<1) ? nan() : M_);
+    }
+    double variance() const
+    {
+        return ((k_<2) ? nan() : Q_/(static_cast<double>(k_-1)));
+    }
+    double sd() const
+    {
+        return std::sqrt(variance());
+    }
+    double stderror() const
+    {
+        return sd()/std::sqrt(static_cast<double>(k_));
+    }
 
 private:
     static
-    double nan() { double a(0.); return 0./a; }  // 'a' supresses compiler warnings
+    double nan()
+    {
+        double a(0.);    // 'a' supresses compiler warnings
+        return 0./a;
+    }
 
     double M_;
     double Q_;

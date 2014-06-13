@@ -34,7 +34,8 @@ const starling_read_buffer::segment_group_t starling_read_buffer::_empty_segment
 
 
 starling_read_buffer::
-~starling_read_buffer() {
+~starling_read_buffer()
+{
     read_data_t::iterator i(_read_data.begin());
     const read_data_t::iterator i_end(_read_data.end());
     for (; i!=i_end; ++i) delete i->second;
@@ -48,7 +49,8 @@ add_read_alignment(const starling_options& opt,
                    const bam_record& br,
                    const alignment& al,
                    const MAPLEVEL::index_t maplev,
-                   const READ_ALIGN::index_t rat) {
+                   const READ_ALIGN::index_t rat)
+{
 
     assert(! br.is_unmapped());
 
@@ -56,61 +58,79 @@ add_read_alignment(const starling_options& opt,
     align_id_t this_read_id;
     bool is_key_found(false);
 
-    if (opt.is_ignore_read_names) {
+    if (opt.is_ignore_read_names)
+    {
         this_read_id=next_id();
         _read_data[this_read_id] = new starling_read(br,is_genomic);
-    } else {
+    }
+    else
+    {
         const read_key tmp_key(br);
         const read_key_lup_t::const_iterator i(_read_key.find(tmp_key));
         is_key_found=(i!=_read_key.end());
 
-        if (! is_key_found) {
+        if (! is_key_found)
+        {
             this_read_id=next_id();
             _read_data[this_read_id] = new starling_read(br,is_genomic);
-        } else {
+        }
+        else
+        {
             this_read_id=i->second;
         }
 
         starling_read& sread(*(_read_data[this_read_id]));
 
-        if (! is_key_found) {
+        if (! is_key_found)
+        {
             _read_key[sread.key()]=this_read_id;
-        } else {
+        }
+        else
+        {
             assert(sread.key() == tmp_key);
         }
     }
 
     starling_read& sread(*(_read_data[this_read_id]));
 
-    if (! is_key_found) {
+    if (! is_key_found)
+    {
         sread.id() = this_read_id;
 
-    } else {
+    }
+    else
+    {
         // contig BAM records are incomplete, so we want to fill in
         // the full record if there's a mapped genomic alignment
         // available:
         if (is_genomic) sread.set_genomic_bam_record(br);
     }
 
-    if (is_genomic) {
+    if (is_genomic)
+    {
         sread.set_genome_align(al);
         sread.genome_align_maplev = maplev;
 
         // deal with segmented reads now:
-        if (sread.is_segmented()) {
+        if (sread.is_segmented())
+        {
             const uint8_t n_seg(sread.segment_count());
-            for (unsigned i(0); i<n_seg; ++i) {
+            for (unsigned i(0); i<n_seg; ++i)
+            {
                 const uint8_t seg_no(i+1);
                 const pos_t seg_buffer_pos(get_alignment_buffer_pos(sread.get_segment(seg_no).genome_align()));
                 sread.get_segment(seg_no).buffer_pos = seg_buffer_pos;
                 (_pos_group[seg_buffer_pos]).insert(std::make_pair(this_read_id,seg_no));
             }
         }
-    } else {
+    }
+    else
+    {
         assert(false && "no other alignment type");
     }
 
-    if ((! is_key_found) && (! sread.is_segmented())) {
+    if ((! is_key_found) && (! sread.is_segmented()))
+    {
         const pos_t buffer_pos(get_alignment_buffer_pos(al));
         const seg_id_t seg_id(0);
         sread.get_full_segment().buffer_pos = buffer_pos;
@@ -126,7 +146,8 @@ void
 starling_read_buffer::
 rebuffer_read_segment(const align_id_t read_id,
                       const seg_id_t seg_id,
-                      const pos_t new_buffer_pos) {
+                      const pos_t new_buffer_pos)
+{
 
     // double check that the read exists:
     const read_data_t::iterator i(_read_data.find(read_id));
@@ -153,7 +174,8 @@ rebuffer_read_segment(const align_id_t read_id,
 
 read_segment_iter
 starling_read_buffer::
-get_pos_read_segment_iter(const pos_t pos) {
+get_pos_read_segment_iter(const pos_t pos)
+{
     const segment_group_t* g(&(_empty_segment_group));
     const pos_group_t::const_iterator j(_pos_group.find(pos));
     if (j != _pos_group.end()) g=(&(j->second));
@@ -165,14 +187,16 @@ get_pos_read_segment_iter(const pos_t pos) {
 void
 starling_read_buffer::
 clear_pos(const bool is_ignore_read_names,
-          const pos_t pos) {
+          const pos_t pos)
+{
 
     const pos_group_t::iterator i(_pos_group.find(pos));
     if (i == _pos_group.end()) return;
 
     segment_group_t& seg_group(i->second);
     segment_group_t::const_iterator j(seg_group.begin()),j_end(seg_group.end());
-    for (; j!=j_end; ++j) {
+    for (; j!=j_end; ++j)
+    {
         const align_id_t read_id(j->first);
         const seg_id_t seg_id(j->second);
 
@@ -200,7 +224,8 @@ clear_pos(const bool is_ignore_read_names,
 void
 starling_read_buffer::
 dump_pos(const pos_t pos,
-         std::ostream& os) const {
+         std::ostream& os) const
+{
 
     const pos_group_t::const_iterator i(_pos_group.find(pos));
     if (i == _pos_group.end()) return;
@@ -209,7 +234,8 @@ dump_pos(const pos_t pos,
 
     const segment_group_t& seg_group(i->second);
     segment_group_t::const_iterator j(seg_group.begin()),j_end(seg_group.end());
-    for (unsigned r(0); j!=j_end; ++j) {
+    for (unsigned r(0); j!=j_end; ++j)
+    {
         const align_id_t read_id(j->first);
         const seg_id_t seg_id(j->second);
         const read_data_t::const_iterator k(_read_data.find(read_id));
@@ -226,7 +252,8 @@ dump_pos(const pos_t pos,
 
 read_segment_iter::ret_val
 read_segment_iter::
-get_ptr() {
+get_ptr()
+{
     static const ret_val null_ret(std::make_pair(static_cast<starling_read*>(NULL),0));
     if (_head==_end) return null_ret;
     const align_id_t read_id(_head->first);

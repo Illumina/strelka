@@ -23,7 +23,8 @@ BOOST_AUTO_TEST_SUITE( math_util )
 static
 void
 single_log_sum_test(const double x1,
-                    const double x2) {
+                    const double x2)
+{
 
     static const double eps(0.00001);
 
@@ -37,7 +38,8 @@ single_log_sum_test(const double x1,
 }
 
 
-BOOST_AUTO_TEST_CASE( test_log_sum ) {
+BOOST_AUTO_TEST_CASE( test_log_sum )
+{
 
     single_log_sum_test(0.5,0.2);
     single_log_sum_test(0.00001,0.00000001);

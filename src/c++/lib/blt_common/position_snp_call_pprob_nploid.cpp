@@ -31,7 +31,8 @@
 void
 nploid_write(const nploid_info& ninfo,
              const nploid_genotype& ngt,
-             std::ostream& os) {
+             std::ostream& os)
+{
 
     os << std::setprecision(10) << std::fixed;
 
@@ -78,7 +79,8 @@ void
 position_snp_call_pprob_nploid(const double snp_prob,
                                const snp_pos_info& pi,
                                const nploid_info& ninfo,
-                               nploid_genotype& ngt) {
+                               nploid_genotype& ngt)
+{
 
     if (pi.ref_base=='N') return;
 
@@ -87,10 +89,12 @@ position_snp_call_pprob_nploid(const double snp_prob,
 
     // check that a non-reference call meeting quality criteria even exists:
     bool is_test(false);
-    for (unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i)
+    {
         const uint8_t obs_id(pi.calls[i].base_id);
         assert(obs_id!=BASE_ID::ANY);
-        if (ref_id!=obs_id) {
+        if (ref_id!=obs_id)
+        {
             is_test=true;
             break;
         }
@@ -111,17 +115,20 @@ position_snp_call_pprob_nploid(const double snp_prob,
     const unsigned n_freq(ninfo.expect_freq_level_size());
     std::vector<double> ln_obs_prob_cache(n_freq);
 
-    for (unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i)
+    {
         const double eprob(pi.calls[i].error_prob());
 
-        for (unsigned j(0); j<n_freq; ++j) {
+        for (unsigned j(0); j<n_freq; ++j)
+        {
             const double obs_expect(j*freq_chunk);
             const double obs_prob((obs_expect)*(1.-eprob)+(1.-obs_expect)*(eprob*one_third));
             ln_obs_prob_cache[j] = std::log(obs_prob);
         }
 
         const uint8_t obs_id(pi.calls[i].base_id);
-        for (unsigned gt(0); gt<n_gt; ++gt) {
+        for (unsigned gt(0); gt<n_gt; ++gt)
+        {
             lhood[gt] += ln_obs_prob_cache[ninfo.expect_freq_level(gt,obs_id)];
         }
     }
@@ -130,16 +137,21 @@ position_snp_call_pprob_nploid(const double snp_prob,
     std::vector<double> prior(n_gt,0.);
 
     const double nonref_prob(snp_prob/static_cast<double>(n_gt-1));
-    for (unsigned gt(0); gt<n_gt; ++gt) {
-        if (gt==ngt.ref_gt) {
+    for (unsigned gt(0); gt<n_gt; ++gt)
+    {
+        if (gt==ngt.ref_gt)
+        {
             prior[gt] = 1.-snp_prob;
-        } else {
+        }
+        else
+        {
             prior[gt] = nonref_prob;
         }
     }
 
     // mult by prior distro to get unnormalized pprob:
-    for (unsigned gt(0); gt<n_gt; ++gt) {
+    for (unsigned gt(0); gt<n_gt; ++gt)
+    {
         ngt.pprob[gt] = lhood[gt] + std::log(prior[gt]);
     }
 
@@ -148,13 +160,17 @@ position_snp_call_pprob_nploid(const double snp_prob,
     ngt.max2_gt=1;
     double max(ngt.pprob[ngt.max_gt]);
     double max2(ngt.pprob[ngt.max2_gt]);
-    for (unsigned gt(1); gt<n_gt; ++gt) {
-        if (ngt.pprob[gt] > max) {
+    for (unsigned gt(1); gt<n_gt; ++gt)
+    {
+        if (ngt.pprob[gt] > max)
+        {
             max2 = max;
             max = ngt.pprob[gt];
             ngt.max2_gt = ngt.max_gt;
             ngt.max_gt = gt;
-        } else if (ngt.pprob[gt] > max2) {
+        }
+        else if (ngt.pprob[gt] > max2)
+        {
             max2 = ngt.pprob[gt];
             ngt.max2_gt = gt;
         }
@@ -164,14 +180,16 @@ position_snp_call_pprob_nploid(const double snp_prob,
     ngt.is_snp=(ngt.max_gt != ngt.ref_gt);
 
     double sum(0.);
-    for (unsigned gt(0); gt<n_gt; ++gt) {
+    for (unsigned gt(0); gt<n_gt; ++gt)
+    {
         ngt.pprob[gt] = std::exp(ngt.pprob[gt]-max);
         sum += ngt.pprob[gt];
     }
 
     // normalize:
     sum = 1./sum;
-    for (unsigned gt(0); gt<n_gt; ++gt) {
+    for (unsigned gt(0); gt<n_gt; ++gt)
+    {
         ngt.pprob[gt] *= sum;
     }
 }

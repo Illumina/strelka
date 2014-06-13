@@ -33,10 +33,12 @@
 
 
 bool
-compat_realpath(std::string& path) {
+compat_realpath(std::string& path)
+{
     errno=0;
     const char* newpath(realpath(path.c_str(),NULL));
-    if ((NULL==newpath) || (errno!=0)) {
+    if ((NULL==newpath) || (errno!=0))
+    {
         if (NULL!=newpath) free((void*)newpath);
         return false;
     }
@@ -48,10 +50,14 @@ compat_realpath(std::string& path) {
 
 
 double
-compat_round(const double x) {
-    if (x>=0.) {
+compat_round(const double x)
+{
+    if (x>=0.)
+    {
         return std::floor(x+0.5);
-    } else {
+    }
+    else
+    {
         return std::ceil(x-0.5);
     }
 }
@@ -59,7 +65,8 @@ compat_round(const double x) {
 
 
 const char*
-compat_basename(const char* str) {
+compat_basename(const char* str)
+{
 #ifdef _WIN32
     static const char pathsep('\\');
 #else

@@ -26,7 +26,8 @@
 
 
 // Represents a single indel observation
-struct indel_observation {
+struct indel_observation
+{
     indel_key key;
     indel_observation_data data;
 };
@@ -34,7 +35,8 @@ struct indel_observation {
 
 
 // Represents all information about an indel
-struct indel {
+struct indel
+{
     indel_key key;
     indel_data data;
 };

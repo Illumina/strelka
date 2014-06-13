@@ -22,14 +22,16 @@
 #pragma once
 
 
-struct somatic_snv_genotype_grid {
+struct somatic_snv_genotype_grid
+{
 
     somatic_snv_genotype_grid()
         : is_forced_output(false) {}
 
     typedef bool tier_t;
 
-    struct result_set {
+    struct result_set
+    {
         result_set()
             : snv_qphred(0)
             , snv_from_ntype_qphred(0)
@@ -44,12 +46,14 @@ struct somatic_snv_genotype_grid {
     };
 
     bool
-    is_snv() const {
+    is_snv() const
+    {
         return (0 != rs.snv_qphred);
     }
 
     bool
-    is_output() const {
+    is_output() const
+    {
         return (is_snv() || is_forced_output);
     }
 

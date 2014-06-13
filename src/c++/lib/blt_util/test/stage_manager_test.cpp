@@ -20,7 +20,8 @@
 #ifdef DEBUG_SM_TEST
 #include <iostream>
 
-namespace {
+namespace
+{
 std::ostream& log_os(std::cerr);
 }
 #endif
@@ -38,7 +39,8 @@ BOOST_AUTO_TEST_SUITE( test_stage_manager )
 //
 static
 stage_data
-get_test_stage_data() {
+get_test_stage_data()
+{
 
     stage_data sd;
     sd.add_stage(0);
@@ -54,14 +56,16 @@ static
 void
 stage_data_shift_test(const stage_data& sd,
                       const int stage_id,
-                      const unsigned expect) {
+                      const unsigned expect)
+{
 
     const unsigned result(sd.get_stage_id_shift(stage_id));
     BOOST_CHECK_EQUAL(result,expect);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_stage_data_dist ) {
+BOOST_AUTO_TEST_CASE( test_stage_data_dist )
+{
 
     const stage_data sd(get_test_stage_data());
 
@@ -72,14 +76,16 @@ BOOST_AUTO_TEST_CASE( test_stage_data_dist ) {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_stage_data_bad_parent ) {
+BOOST_AUTO_TEST_CASE( test_stage_data_bad_parent )
+{
 
     stage_data sd;
     BOOST_CHECK_THROW(sd.add_stage(1,0,10),std::exception);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_stage_data_bad_id ) {
+BOOST_AUTO_TEST_CASE( test_stage_data_bad_id )
+{
 
     stage_data sd;
     sd.add_stage(1);
@@ -98,7 +104,8 @@ BOOST_AUTO_TEST_CASE( test_stage_data_bad_id ) {
 ///   2. TODO: ..the expected relationship (stage-to-root distance vs expect)
 ///              of all stages as process_pos is called
 ///
-struct test_pos_processor : public pos_processor_base {
+struct test_pos_processor : public pos_processor_base
+{
 
     //
     // TODO: finish setting up stage relationship checking...
@@ -111,7 +118,8 @@ struct test_pos_processor : public pos_processor_base {
 
     void
     process_pos(const int stage_no,
-                const pos_t pos) {
+                const pos_t pos)
+    {
 
 #ifdef DEBUG_SM_TEST
         log_os << "process_pos stage_no: " << stage_no << " pos: " << pos << "\n";
@@ -119,7 +127,8 @@ struct test_pos_processor : public pos_processor_base {
 
         // assert that pos for each stage does not repeat or decrease:
         spos_t::const_iterator i(stage_pos.find(stage_no));
-        if (i != stage_pos.end()) {
+        if (i != stage_pos.end())
+        {
             BOOST_CHECK(pos > (i->second));
         }
         stage_pos[stage_no] = pos;
@@ -131,7 +140,8 @@ struct test_pos_processor : public pos_processor_base {
 
 
 
-BOOST_AUTO_TEST_CASE( test_stage_manager ) {
+BOOST_AUTO_TEST_CASE( test_stage_manager )
+{
 
     const stage_data sd(get_test_stage_data());
     const pos_range report_range(0,60);
@@ -148,7 +158,8 @@ BOOST_AUTO_TEST_CASE( test_stage_manager ) {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_stage_manager_reset ) {
+BOOST_AUTO_TEST_CASE( test_stage_manager_reset )
+{
 
     const stage_data sd(get_test_stage_data());
     const pos_range report_range(0,60);
@@ -158,7 +169,8 @@ BOOST_AUTO_TEST_CASE( test_stage_manager_reset ) {
 
     sman.reset();
 
-    for (int i(0); i<4; ++i) {
+    for (int i(0); i<4; ++i)
+    {
         BOOST_CHECK_EQUAL(tpp.stage_pos[i],59);
     }
 }

@@ -25,12 +25,15 @@ BOOST_AUTO_TEST_SUITE( test_depth_buffer )
 ///
 static
 depth_buffer
-get_db_test_pattern() {
+get_db_test_pattern()
+{
     depth_buffer db;
 
     // load a depth pattern in:
-    for (unsigned i(100); i<110; ++i) {
-        for (unsigned j(i+1); j<110; ++j) {
+    for (unsigned i(100); i<110; ++i)
+    {
+        for (unsigned j(i+1); j<110; ++j)
+        {
             db.inc(j);
         }
     }
@@ -38,14 +41,16 @@ get_db_test_pattern() {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_depth_buffer_val ) {
+BOOST_AUTO_TEST_CASE( test_depth_buffer_val )
+{
 
     depth_buffer db(get_db_test_pattern());
     BOOST_CHECK_EQUAL(static_cast<int>(db.val(109)),9);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_depth_buffer_clear ) {
+BOOST_AUTO_TEST_CASE( test_depth_buffer_clear )
+{
 
     depth_buffer db(get_db_test_pattern());
     db.clear_pos(109);
@@ -53,7 +58,8 @@ BOOST_AUTO_TEST_CASE( test_depth_buffer_clear ) {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_depth_buffer_range ) {
+BOOST_AUTO_TEST_CASE( test_depth_buffer_range )
+{
 
     depth_buffer db(get_db_test_pattern());
     BOOST_CHECK(! db.is_range_ge_than(0,107,8));

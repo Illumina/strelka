@@ -21,7 +21,8 @@
 #include "starling_common/starling_shared.hh"
 
 
-struct strelka_options : public starling_options {
+struct strelka_options : public starling_options
+{
 
     typedef starling_options base_t;
 
@@ -43,19 +44,23 @@ struct strelka_options : public starling_options {
         , tumor_sample_min_small_candidate_indel_read_frac(0.02)
     {}
 
-    bool is_tumor_bindel_diploid() const {
+    bool is_tumor_bindel_diploid() const
+    {
         return (! tumor_bindel_diploid_filename.empty());
     }
 
-    bool is_tumor_realigned_read() const {
+    bool is_tumor_realigned_read() const
+    {
         return (! tumor_realigned_read_filename.empty());
     }
 
-    bool is_somatic_snv() const {
+    bool is_somatic_snv() const
+    {
         return (! somatic_snv_filename.empty());
     }
 
-    bool is_somatic_indel() const {
+    bool is_somatic_indel() const
+    {
         return (! somatic_indel_filename.empty());
     }
 
@@ -69,7 +74,8 @@ struct strelka_options : public starling_options {
     // checks from child class options):
     virtual
     bool
-    is_call_indels() const {
+    is_call_indels() const
+    {
         return (is_somatic_indel() || base_t::is_call_indels());
     }
 
@@ -121,7 +127,8 @@ struct somatic_indel_caller_grid;
 
 // data deterministically derived from the input options:
 //
-struct strelka_deriv_options : public starling_deriv_options {
+struct strelka_deriv_options : public starling_deriv_options
+{
 
     typedef starling_deriv_options base_t;
 
@@ -131,10 +138,16 @@ struct strelka_deriv_options : public starling_deriv_options {
     ~strelka_deriv_options();
 
     const somatic_snv_caller_strand_grid&
-    sscaller_strand_grid() const { return *(_sscaller_strand_grid.get()); }
+    sscaller_strand_grid() const
+    {
+        return *(_sscaller_strand_grid.get());
+    }
 
     const somatic_indel_caller_grid&
-    sicaller_grid() const { return *(_sicaller_grid.get()); }
+    sicaller_grid() const
+    {
+        return *(_sicaller_grid.get());
+    }
 
 private:
     std::auto_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;

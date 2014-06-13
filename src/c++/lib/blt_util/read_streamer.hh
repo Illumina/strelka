@@ -27,7 +27,8 @@
 
 // unified interface between bam and export readers:
 //
-struct read_streamer : private boost::noncopyable {
+struct read_streamer : private boost::noncopyable
+{
 
     virtual ~read_stream() {}
 

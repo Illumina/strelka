@@ -31,22 +31,30 @@
 //
 // (2) iterate through all existing values sorted on x
 //
-struct sparse_function {
+struct sparse_function
+{
 
     typedef std::map<blt_float_t,blt_float_t> fmap_t;
     typedef fmap_t::const_iterator const_iterator;
 
     const_iterator
-    begin() const { return _fmap.begin(); }
+    begin() const
+    {
+        return _fmap.begin();
+    }
 
     const_iterator
-    end() const { return _fmap.end(); }
+    end() const
+    {
+        return _fmap.end();
+    }
 
     // we don't check for repeated x:
     //
     void
     insert(const blt_float_t x,
-           const blt_float_t y) {
+           const blt_float_t y)
+    {
         _fmap.insert(std::make_pair(x,y));
     }
 

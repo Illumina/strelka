@@ -29,7 +29,8 @@
 struct gvcf_options;
 struct gvcf_deriv_options;
 
-class calibration_models {
+class calibration_models
+{
 public:
     calibration_models();
     virtual ~calibration_models();

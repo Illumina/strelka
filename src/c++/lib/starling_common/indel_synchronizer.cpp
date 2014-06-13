@@ -31,9 +31,11 @@ indel_sync_data::
 register_sample(indel_buffer& ib,
                 const depth_buffer& db,
                 const starling_sample_options& sample_opt,
-                const sample_id_t sample_no) {
+                const sample_id_t sample_no)
+{
 
-    if (_idata.test_key(sample_no)) {
+    if (_idata.test_key(sample_no))
+    {
         log_os << "ERROR: sample_no " << sample_no << " repeated in indel sync registration\n";
         exit(EXIT_FAILURE);
     }
@@ -44,7 +46,8 @@ register_sample(indel_buffer& ib,
 
 bool
 indel_synchronizer::
-insert_indel(const indel_observation& obs) {
+insert_indel(const indel_observation& obs)
+{
 
     // first insert indel into this sample:
     bool is_synced_sample(false);
@@ -54,7 +57,8 @@ insert_indel(const indel_observation& obs) {
     // then insert indel into synchronized samples:
     is_synced_sample=true;
     const unsigned isds(idata().size());
-    for (unsigned i(0); i<isds; ++i) {
+    for (unsigned i(0); i<isds; ++i)
+    {
         if (i == _sample_order) continue;
         ibuff(i).insert_indel(obs,is_synced_sample,is_repeat_obs);
     }
@@ -68,7 +72,8 @@ void
 indel_synchronizer::
 is_candidate_indel_int(const starling_options& opt,
                        const indel_key& ik,
-                       const indel_data& id) const {
+                       const indel_data& id) const
+{
 
     //////////////////////////////////////
     // lookup all indel_data objects:
@@ -76,32 +81,41 @@ is_candidate_indel_int(const starling_options& opt,
     const indel_data* idsp[MAX_SAMPLE];
 
     const unsigned isds(idata().size());
-    for (unsigned i(0); i<isds; ++i) {
-        if (i==_sample_order) {
+    for (unsigned i(0); i<isds; ++i)
+    {
+        if (i==_sample_order)
+        {
             idsp[i] = &id;
-        } else {
+        }
+        else
+        {
             idsp[i] = ibuff(i).get_indel_data_ptr(ik);
             assert(NULL != idsp[i]);
         }
     }
 
     // pre-set result to false until candidacy is shown:
-    for (unsigned i(0); i<isds; ++i) {
+    for (unsigned i(0); i<isds; ++i)
+    {
         idsp[i]->status.is_candidate_indel=false;
         idsp[i]->status.is_candidate_indel_cached=true;
     }
 
     // check whether the candidate has been externally specified:
     bool is_external_candidate=false;
-    for (unsigned i(0); i<isds; ++i) {
-        if (idsp[i]->is_external_candidate) {
+    for (unsigned i(0); i<isds; ++i)
+    {
+        if (idsp[i]->is_external_candidate)
+        {
             is_external_candidate=true;
             break;
         }
     }
 
-    if (is_external_candidate) {
-        for (unsigned i(0); i<isds; ++i) {
+    if (is_external_candidate)
+    {
+        for (unsigned i(0); i<isds; ++i)
+        {
             idsp[i]->status.is_candidate_indel=true;
         }
         return;
@@ -114,12 +128,14 @@ is_candidate_indel_int(const starling_options& opt,
         bool is_min_count(false);
 
         int n_total_reads(0);
-        for (unsigned i(0); i<isds; ++i) {
+        for (unsigned i(0); i<isds; ++i)
+        {
             const int n_reads(idsp[i]->all_read_ids.size());
 
             // do the candidate reads exceed the (possibly lower than
             // default) sample specific threshold?:
-            if (n_reads >= sample_opt(i).min_candidate_indel_reads) {
+            if (n_reads >= sample_opt(i).min_candidate_indel_reads)
+            {
                 is_min_count=true;
                 break;
             }
@@ -145,7 +161,8 @@ is_candidate_indel_int(const starling_options& opt,
         // std::max() below
         static const unsigned one(1);
 
-        for (unsigned i(0); i<isds; ++i) {
+        for (unsigned i(0); i<isds; ++i)
+        {
             // note estdepth is based on genomic reads only, so
             // readfrac can be > 1:
             //
@@ -154,13 +171,15 @@ is_candidate_indel_int(const starling_options& opt,
             const double readfrac(static_cast<double>(n_reads)/static_cast<double>(estdepth));
 
             double min_indel_frac(min_large_indel_frac);
-            if (is_small_indel) {
+            if (is_small_indel)
+            {
                 min_indel_frac=std::max(min_indel_frac,sample_opt(i).min_small_candidate_indel_read_frac);
             }
 
             // min_frac threshold only needs to pass in one sample to
             // be a candidate in all synchronized samples:
-            if (readfrac >= min_indel_frac) {
+            if (readfrac >= min_indel_frac)
+            {
                 is_min_frac=true;
                 break;
             }
@@ -174,7 +193,8 @@ is_candidate_indel_int(const starling_options& opt,
     //
     {
         const double max_depth(opt.max_candidate_indel_depth);
-        for (unsigned i(0); i<isds; ++i) {
+        for (unsigned i(0); i<isds; ++i)
+        {
             const unsigned estdepth(ebuff(i).val(ik.pos-1));
             if (estdepth > max_depth) return;
         }
@@ -187,13 +207,15 @@ is_candidate_indel_int(const starling_options& opt,
     // so as to not finalize any incomplete insertions:
     {
         if (ik.is_breakpoint() &&
-            (opt.min_candidate_indel_open_length > id.get_insert_size())) {
+            (opt.min_candidate_indel_open_length > id.get_insert_size()))
+        {
             return;
         }
     }
 
     // made it!
-    for (unsigned i(0); i<isds; ++i) {
+    for (unsigned i(0); i<isds; ++i)
+    {
         idsp[i]->status.is_candidate_indel=true;
     }
 }

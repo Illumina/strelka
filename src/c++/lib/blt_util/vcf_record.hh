@@ -26,14 +26,19 @@
 #include <vector>
 
 
-struct vcf_record {
+struct vcf_record
+{
 
-    vcf_record() : pos(0) { clear(); }
+    vcf_record() : pos(0)
+    {
+        clear();
+    }
 
     // set record from record string s, return false on error
     bool set(const char* s);
 
-    void clear() {
+    void clear()
+    {
         chrom="";
         pos=0;
         ref="";
@@ -41,29 +46,35 @@ struct vcf_record {
     }
 
     bool
-    is_valid() const {
+    is_valid() const
+    {
         if (! is_valid_seq(ref.c_str())) return false;
-        BOOST_FOREACH(const std::string& alt_allele, alt) {
+        BOOST_FOREACH(const std::string& alt_allele, alt)
+        {
             if (! is_valid_seq(alt_allele.c_str())) return false;
         }
         return true;
     }
 
     bool
-    is_indel() const {
+    is_indel() const
+    {
         if (! is_valid()) return false;
         if ((ref.size()>1) && (alt.size()>0)) return true;
-        BOOST_FOREACH(const std::string& alt_allele, alt) {
+        BOOST_FOREACH(const std::string& alt_allele, alt)
+        {
             if (alt_allele.size()>1) return true;
         }
         return false;
     }
 
     bool
-    is_snv() const {
+    is_snv() const
+    {
         if (! is_valid()) return false;
         if (1 != ref.size()) return false;
-        BOOST_FOREACH(const std::string& alt_allele, alt) {
+        BOOST_FOREACH(const std::string& alt_allele, alt)
+        {
             if (1 != alt_allele.size()) return false;
         }
         return true;

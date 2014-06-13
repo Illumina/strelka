@@ -28,9 +28,11 @@
 
 
 
-struct monoploid_genotype : private boost::noncopyable {
+struct monoploid_genotype : private boost::noncopyable
+{
 
-    monoploid_genotype() : is_snp(false), ref_gt(0), max_gt(0), max2_gt(0) {
+    monoploid_genotype() : is_snp(false), ref_gt(0), max_gt(0), max2_gt(0)
+    {
         static const double p(1./static_cast<double>(MONOGT::SIZE));
         for (unsigned i(0); i<MONOGT::SIZE; ++i) pprob[i] = p;
     }

@@ -40,24 +40,28 @@
 #include <queue>
 
 
-namespace INPUT_TYPE {
+namespace INPUT_TYPE
+{
 enum index_t { NONE, READ, INDEL, FORCED_OUTPUT };
 }
 
 struct starling_input_stream_hander;
 
-struct starling_input_stream_data {
+struct starling_input_stream_data
+{
 
     void
     register_reads(bam_streamer& bs,
-                   const sample_id_t sample_no = 0) {
+                   const sample_id_t sample_no = 0)
+    {
         if (_reads.test_key(sample_no)) register_error("reads",sample_no);
         _reads.insert(sample_no,&bs);
     }
 
     void
     register_indels(vcf_streamer& vr,
-                    const sample_id_t sample_no = 0) {
+                    const sample_id_t sample_no = 0)
+    {
         // unlike reads/contigs, we allow multiple files associated with the same
         // sample_no for input indels:
         _indels.push_back(std::make_pair(sample_no,&vr));
@@ -65,7 +69,8 @@ struct starling_input_stream_data {
 
     void
     register_forced_output(vcf_streamer& vr,
-                           const sample_id_t sample_no = 0) {
+                           const sample_id_t sample_no = 0)
+    {
         // sites and indels in these files must be included in the snv/indel output, this means that
         // any indels in these files are also candidate indels:
         _output.push_back(std::make_pair(sample_no,&vr));
@@ -93,7 +98,8 @@ private:
 /// abstracts different record types (bam/contig/vcf, etc...) so that these can be
 /// sorted and handled in order
 ///
-struct input_record_info {
+struct input_record_info
+{
 
     input_record_info(const pos_t p = 0,
                       const INPUT_TYPE::index_t t = INPUT_TYPE::NONE,
@@ -106,13 +112,17 @@ struct input_record_info {
     // priority_queue
     //
     bool
-    operator<(const input_record_info& rhs) const {
+    operator<(const input_record_info& rhs) const
+    {
         if (pos > rhs.pos) return true;
-        if (pos == rhs.pos) {
+        if (pos == rhs.pos)
+        {
             if (itype < rhs.itype) return true;
-            if (itype==rhs.itype) {
+            if (itype==rhs.itype)
+            {
                 if (sample_no > rhs.sample_no) return true;
-                if (sample_no == rhs.sample_no) {
+                if (sample_no == rhs.sample_no)
+                {
                     return (_order > rhs._order);
                 }
             }
@@ -120,7 +130,10 @@ struct input_record_info {
         return false;
     }
 
-    unsigned get_order() const { return _order; }
+    unsigned get_order() const
+    {
+        return _order;
+    }
 
     pos_t pos;
     INPUT_TYPE::index_t itype;
@@ -139,7 +152,8 @@ private:
 // in positional order (but with offsets for contigs and vcfs to
 // run ahead of the bam reads)
 //
-struct starling_input_stream_handler {
+struct starling_input_stream_handler
+{
 
     starling_input_stream_handler(const starling_input_stream_data& data,
                                   const pos_t indel_lead = 100,
@@ -148,10 +162,16 @@ struct starling_input_stream_handler {
     bool next();
 
     input_record_info
-    get_current() const { return _current; }
+    get_current() const
+    {
+        return _current;
+    }
 
     pos_t
-    get_head_pos() const { return _head_pos; }
+    get_head_pos() const
+    {
+        return _head_pos;
+    }
 
 private:
 

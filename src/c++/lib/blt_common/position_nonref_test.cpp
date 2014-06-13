@@ -35,19 +35,22 @@
 
 
 
-struct nonref_freq_loghood_sparse_func { //: public sample_func_iface {
+struct nonref_freq_loghood_sparse_func   //: public sample_func_iface {
+{
 
     nonref_freq_loghood_sparse_func(const snp_pos_info& pi,
                                     sparse_function& sf)
         : _pi(pi), _sf(sf) {}
 
     blt_float_t
-    calc_val(const blt_float_t x) const {
+    calc_val(const blt_float_t x) const
+    {
         return calc_pos_nonref_freq_loghood(_pi,x);
     }
 
     blt_float_t
-    calc_and_store_val(const blt_float_t x) {
+    calc_and_store_val(const blt_float_t x)
+    {
         const blt_float_t val(calc_val(x));
         _sf.insert(x,val);
         return val;
@@ -65,7 +68,8 @@ position_nonref_test(const snp_pos_info& pi,
                      const double nonref_site_prob,
                      const double min_nonref_freq,
                      const bool is_mle_freq,
-                     nonref_test_call& nrc) {
+                     nonref_test_call& nrc)
+{
 
     if (pi.ref_base=='N') return;
 
@@ -86,7 +90,8 @@ position_nonref_test(const snp_pos_info& pi,
     // start out with a hack just to get the method rolling:
     static const blt_float_t freqs[] = { 0.01, 0.05, 0.25, 0.5, 0.75, 1. };
     static const unsigned n_freq=sizeof(freqs)/sizeof(blt_float_t);
-    for (unsigned i(0); i<n_freq; ++i) {
+    for (unsigned i(0); i<n_freq; ++i)
+    {
         sf.insert(freqs[i],calc_pos_nonref_freq_loghood(pi,freqs[i]));
     }
 
@@ -102,7 +107,8 @@ position_nonref_test(const snp_pos_info& pi,
     prior[NRTEST::NONREF] = std::log(nonref_site_prob);
 
     double pprob[NRTEST::SIZE];
-    for (unsigned i(0); i<NRTEST::SIZE; ++i) {
+    for (unsigned i(0); i<NRTEST::SIZE; ++i)
+    {
         pprob[i] = lhood[i] + prior[i];
     }
     normalize_ln_distro(pprob,pprob+NRTEST::SIZE,nrc.max_gt);
@@ -162,7 +168,8 @@ position_nonref_test(const snp_pos_info& pi,
 
     const double ref_freq(1.-x_nonref_freq);
     const double nonref_freq((x_nonref_freq)/3.);
-    for (unsigned i(0); i<N_BASE; ++i) {
+    for (unsigned i(0); i<N_BASE; ++i)
+    {
         if (i==ref_base_id) sc.allele_freq[i] = ref_freq;
         else               sc.allele_freq[i] = nonref_freq;
     }
@@ -170,7 +177,8 @@ position_nonref_test(const snp_pos_info& pi,
     static const unsigned N_BASE2(N_BASE*N_BASE);
     double conj_dir[N_BASE2];
     std::fill(conj_dir,conj_dir+N_BASE2,0.);
-    for (unsigned i(0); i<N_BASE; ++i) {
+    for (unsigned i(0); i<N_BASE; ++i)
+    {
         const double start_dist( std::max(std::fabs(sc.allele_freq[i]*start_ratio),min_start_dist) );
         conj_dir[i*(N_BASE+1)] = start_dist;
     }
@@ -194,20 +202,24 @@ void
 write_nonref_test(const blt_options& opt,
                   const snp_pos_info& pi,
                   const nonref_test_call& nrc,
-                  std::ostream& os) {
+                  std::ostream& os)
+{
 
     os << nrc.snp_qphred
        << '\t' << NRTEST::label(static_cast<NRTEST::index_t>(nrc.max_gt))
        << '\t' << nrc.max_gt_qphred;
 
-    if (opt.is_print_used_allele_counts) {
+    if (opt.is_print_used_allele_counts)
+    {
         pi.print_known_counts(os,opt.used_allele_count_min_qscore);
         pi.print_known_qscore(os,opt.used_allele_count_min_qscore);
     }
 
 #if 0
-    if (opt.is_print_all_poly_gt) {
-        for (unsigned gt(0); gt<DIGT::SIZE; ++gt) {
+    if (opt.is_print_all_poly_gt)
+    {
+        for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+        {
 #if 1
             // print GT as prob:
             os << '\t' << po.pprob[gt];
@@ -222,9 +234,11 @@ write_nonref_test(const blt_options& opt,
 #endif
 
 #if 0
-    if (nrc.is_freq) {
+    if (nrc.is_freq)
+    {
         os << std::setprecision(8) << std::fixed;
-        for (unsigned i(0); i<N_BASE; ++i) {
+        for (unsigned i(0); i<N_BASE; ++i)
+        {
             os << '\t' << nrc.allele_freq[i];
         }
         os.unsetf(std::ios::fixed);

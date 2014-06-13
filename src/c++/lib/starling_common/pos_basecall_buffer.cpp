@@ -25,16 +25,19 @@
 // debug dumpers:
 void
 pos_basecall_buffer::
-dump(std::ostream& os) const {
+dump(std::ostream& os) const
+{
 
     pciter i(_pdata.begin()), i_end(_pdata.end());
-    for (; i!=i_end; ++i) {
+    for (; i!=i_end; ++i)
+    {
         os << "pc_buff pos: " << i->first << "\n";
     }
 }
 
 void
-pos_basecall_buffer::update_ranksums(char refpos, const pos_t pos,const base_call& bc, const uint8_t mapq, const int cycle) {
+pos_basecall_buffer::update_ranksums(char refpos, const pos_t pos,const base_call& bc, const uint8_t mapq, const int cycle)
+{
     const bool is_reference(refpos==id_to_base(bc.base_id));
 
     _pdata[pos].baseq_ranksum.add_observation(is_reference,static_cast<int>(bc.get_qscore()));

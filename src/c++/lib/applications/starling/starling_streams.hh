@@ -19,7 +19,8 @@
 #include "starling_common/starling_streams_base.hh"
 
 
-struct starling_streams : public starling_streams_base {
+struct starling_streams : public starling_streams_base
+{
 
     typedef starling_streams_base base_t;
 

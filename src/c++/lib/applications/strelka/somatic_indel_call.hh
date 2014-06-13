@@ -19,7 +19,8 @@
 #include "boost/utility.hpp"
 
 
-struct somatic_indel_call {
+struct somatic_indel_call
+{
 
     somatic_indel_call()
         : is_forced_output(false)
@@ -27,7 +28,8 @@ struct somatic_indel_call {
 
     typedef bool tier_t;
 
-    struct result_set {
+    struct result_set
+    {
 
         result_set()
             : sindel_qphred(0),
@@ -42,13 +44,15 @@ struct somatic_indel_call {
     };
 
     bool
-    is_indel() const {
+    is_indel() const
+    {
         return (rs.sindel_qphred != 0);
     }
 
     // should this indel be written out?
     bool
-    is_output() const {
+    is_output() const
+    {
         return (is_indel() || is_forced_output);
     }
 

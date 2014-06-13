@@ -29,7 +29,8 @@
 #include <vector>
 
 
-struct starling_streams_base : public blt_streams {
+struct starling_streams_base : public blt_streams
+{
 
     typedef blt_streams base_t;
 
@@ -40,27 +41,32 @@ struct starling_streams_base : public blt_streams {
     ~starling_streams_base();
 
     std::ostream*
-    bindel_diploid_osptr(const unsigned sample_no) const {
+    bindel_diploid_osptr(const unsigned sample_no) const
+    {
         return _bindel_diploid_osptr[sample_no].get();
     }
 
     std::ostream*
-    gvcf_osptr(const unsigned sample_no) const {
+    gvcf_osptr(const unsigned sample_no) const
+    {
         return _gvcf_osptr[sample_no];
     }
 
     bam_dumper*
-    realign_bam_ptr(const unsigned sample_no) const {
+    realign_bam_ptr(const unsigned sample_no) const
+    {
         return _realign_bam_ptr[sample_no].get();
     }
 
     std::ostream*
-    candidate_indel_osptr() const {
+    candidate_indel_osptr() const
+    {
         return _candidate_indel_osptr.get();
     }
 
     std::ostream*
-    variant_window_osptr(const unsigned window_no) const {
+    variant_window_osptr(const unsigned window_no) const
+    {
         return _window_osptr.at(window_no).get();
     }
 

@@ -24,7 +24,8 @@
 
 std::ostream&
 operator<<(std::ostream& os,
-           const read_key& rk) {
+           const read_key& rk)
+{
 
     os << rk.qname() << '/' << rk.read_no();
     return os;

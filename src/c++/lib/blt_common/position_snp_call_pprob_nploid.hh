@@ -25,11 +25,13 @@
 #include <iosfwd>
 
 
-struct nploid_genotype {
+struct nploid_genotype
+{
 
     nploid_genotype(const nploid_info& ni)
         : is_snp(false), ref_gt(0), max_gt(0), max2_gt(0),
-          pprob(ni.gtype_size()), ploidy(ni.ploidy()) {
+          pprob(ni.gtype_size()), ploidy(ni.ploidy())
+    {
         const unsigned n_gt(ni.gtype_size());
         static const double p(1./static_cast<double>(n_gt));
         for (unsigned i(0); i<n_gt; ++i) pprob[i] = p;

@@ -39,7 +39,8 @@
 // if type is breakpoint it is the length of unaligned sequence stored for the other side of the breakpoint
 // it type is swap it is the inserted sequence, in this case swapd_length is used to indicated the deletion length
 //
-struct indel_key {
+struct indel_key
+{
 
     indel_key(const pos_t p=0,
               const INDEL::index_t t=INDEL::NONE,
@@ -54,23 +55,28 @@ struct indel_key {
     // locations)
     //
     bool
-    operator<(const indel_key& rhs) const {
+    operator<(const indel_key& rhs) const
+    {
         if (pos < rhs.pos) return true;
-        if (pos == rhs.pos) {
+        if (pos == rhs.pos)
+        {
             return gtcore(rhs);
         }
         return false;
     }
 
     bool
-    gtcore(const indel_key& rhs) const {
+    gtcore(const indel_key& rhs) const
+    {
         if (type < rhs.type) return true;
-        if (type == rhs.type) {
+        if (type == rhs.type)
+        {
             if ((type == INDEL::NONE) ||
                 (type == INDEL::BP_LEFT) ||
                 (type == INDEL::BP_RIGHT)) return false;
             if (length < rhs.length) return true;
-            if (length == rhs.length) {
+            if (length == rhs.length)
+            {
                 if (swap_dlength < rhs.swap_dlength) return true;
             }
         }
@@ -82,16 +88,24 @@ struct indel_key {
     addRanksumInfo(const int mapq, const int baseq, bool is_alt);
 
     bool
-    operator==(const indel_key& rhs) const {
+    operator==(const indel_key& rhs) const
+    {
         return ((pos == rhs.pos) &&
                 (type == rhs.type) &&
                 (length == rhs.length) &&
                 (swap_dlength == rhs.swap_dlength));
     }
 
-    pos_t right_pos() const {
-        if     (type==INDEL::DELETE) { return pos+length; }
-        else if (type==INDEL::SWAP)   { return pos+swap_dlength; }
+    pos_t right_pos() const
+    {
+        if     (type==INDEL::DELETE)
+        {
+            return pos+length;
+        }
+        else if (type==INDEL::SWAP)
+        {
+            return pos+swap_dlength;
+        }
         return pos;
     }
 
@@ -99,39 +113,54 @@ struct indel_key {
     // generalize some length concepts:
     //
     unsigned
-    insert_length() const {
+    insert_length() const
+    {
         if ((type == INDEL::INSERT) ||
-            (type == INDEL::SWAP)) {
+            (type == INDEL::SWAP))
+        {
             return length;
-        } else {
+        }
+        else
+        {
             return 0;
         }
     }
 
     unsigned
-    delete_length() const {
-        if       (type == INDEL::DELETE) {
+    delete_length() const
+    {
+        if       (type == INDEL::DELETE)
+        {
             return length;
-        } else if (type == INDEL::SWAP) {
+        }
+        else if (type == INDEL::SWAP)
+        {
             return swap_dlength;
-        } else {
+        }
+        else
+        {
             return 0;
         }
     }
 
     // correct pos range to use when we view sv's as breakpoints:
-    known_pos_range breakpoint_pos_range() const {
+    known_pos_range breakpoint_pos_range() const
+    {
         return known_pos_range(pos,right_pos());
     }
 
     // correct pos range to use when we view sv's as ranges
     // (ie. candidate indel interference within a single read:)
-    pos_range open_pos_range() const {
-        if       (type == INDEL::BP_LEFT) {
+    pos_range open_pos_range() const
+    {
+        if       (type == INDEL::BP_LEFT)
+        {
             pos_range pr;
             pr.set_begin_pos(pos);
             return pr;
-        } else if (type == INDEL::BP_RIGHT) {
+        }
+        else if (type == INDEL::BP_RIGHT)
+        {
             pos_range pr;
             pr.set_end_pos(pos);
             return pr;
@@ -140,7 +169,8 @@ struct indel_key {
         return breakpoint_pos_range();
     }
 
-    bool is_breakpoint() const {
+    bool is_breakpoint() const
+    {
         return ((type == INDEL::BP_LEFT) || (type == INDEL::BP_RIGHT));
     }
 
@@ -156,12 +186,15 @@ struct indel_key {
 
 
 #if 0
-struct right_pos_indel_key_sorter {
+struct right_pos_indel_key_sorter
+{
     bool
     operator()(const indel_key& i1,
-               const indel_key& i2) const {
+               const indel_key& i2) const
+    {
         if (i1.right_pos() < i2.right_pos()) return true;
-        if (i1.right_pos() == i2.right_pos()) {
+        if (i1.right_pos() == i2.right_pos())
+        {
             return i1.gtcore(i2);
         }
         return false;

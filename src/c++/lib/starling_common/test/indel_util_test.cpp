@@ -19,7 +19,8 @@
 BOOST_AUTO_TEST_SUITE( indel_util )
 
 
-BOOST_AUTO_TEST_CASE( test_indel_intersect_deletion ) {
+BOOST_AUTO_TEST_CASE( test_indel_intersect_deletion )
+{
 
     // 5-base deletion starting at zero-indexed position 9:
     const indel_key ikdel1(9,INDEL::DELETE,5);
@@ -44,7 +45,8 @@ BOOST_AUTO_TEST_CASE( test_indel_intersect_deletion ) {
 static
 bool
 test_single_intersect_case(const indel_key& ik,
-                           const bool expect) {
+                           const bool expect)
+{
 
     // test case represents a 10-base alignment from 10-20 (1-indexed range)
     static const known_pos_range tpr(9,20);
@@ -53,7 +55,8 @@ test_single_intersect_case(const indel_key& ik,
 }
 
 
-BOOST_AUTO_TEST_CASE( test_range_intersect_delete ) {
+BOOST_AUTO_TEST_CASE( test_range_intersect_delete )
+{
 
     static const INDEL::index_t itype(INDEL::DELETE);
 
@@ -70,7 +73,8 @@ BOOST_AUTO_TEST_CASE( test_range_intersect_delete ) {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_range_intersect_insert ) {
+BOOST_AUTO_TEST_CASE( test_range_intersect_insert )
+{
 
     static const INDEL::index_t itype(INDEL::INSERT);
 
@@ -86,7 +90,8 @@ BOOST_AUTO_TEST_CASE( test_range_intersect_insert ) {
     BOOST_CHECK(test_single_intersect_case(indel_key(20,itype,1),false));
 }
 
-BOOST_AUTO_TEST_CASE( test_range_intersect_swap ) {
+BOOST_AUTO_TEST_CASE( test_range_intersect_swap )
+{
 
     static const INDEL::index_t itype(INDEL::SWAP);
 
@@ -107,7 +112,8 @@ BOOST_AUTO_TEST_CASE( test_range_intersect_swap ) {
 static
 bool
 test_single_adjacent_case(const indel_key& ik,
-                          const bool expect) {
+                          const bool expect)
+{
 
     // test case represents a 10-base alignment from 10-20 (1-indexed range)
     static const known_pos_range tpr(9,20);
@@ -116,7 +122,8 @@ test_single_adjacent_case(const indel_key& ik,
 }
 
 
-BOOST_AUTO_TEST_CASE( test_range_adjacent_delete ) {
+BOOST_AUTO_TEST_CASE( test_range_adjacent_delete )
+{
 
     static const INDEL::index_t itype(INDEL::DELETE);
 
@@ -133,7 +140,8 @@ BOOST_AUTO_TEST_CASE( test_range_adjacent_delete ) {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_range_adjacent_insert ) {
+BOOST_AUTO_TEST_CASE( test_range_adjacent_insert )
+{
 
     static const INDEL::index_t itype(INDEL::INSERT);
 
@@ -149,7 +157,8 @@ BOOST_AUTO_TEST_CASE( test_range_adjacent_insert ) {
     BOOST_CHECK(test_single_adjacent_case(indel_key(21,itype,1),false));
 }
 
-BOOST_AUTO_TEST_CASE( test_range_adjacent_swap ) {
+BOOST_AUTO_TEST_CASE( test_range_adjacent_swap )
+{
 
     static const INDEL::index_t itype(INDEL::SWAP);
 

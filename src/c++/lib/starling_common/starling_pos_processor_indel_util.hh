@@ -34,7 +34,8 @@
 /// assumes that path is already validated for read_seq!!!
 ///
 
-struct read_stats {
+struct read_stats
+{
 
     read_stats(const uint8_t& map,
                const uint8_t* q)

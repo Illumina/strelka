@@ -29,14 +29,18 @@
 //
 // note read and alignment are always stored in fwd orientation:
 //
-struct alignment {
+struct alignment
+{
 
     alignment()
         : pos(0),
           is_fwd_strand(true) {}
 
     bool
-    empty() const { return path.empty(); }
+    empty() const
+    {
+        return path.empty();
+    }
 
     // is there an indel exceeding max_indel_size?
     bool
@@ -45,31 +49,41 @@ struct alignment {
     // is there an adjacent insertion/deletion event in this
     // alignment?
     bool
-    is_seq_swap() const { return ALIGNPATH::is_seq_swap(path); }
+    is_seq_swap() const
+    {
+        return ALIGNPATH::is_seq_swap(path);
+    }
 
     bool
-    is_realignable(const unsigned max_indel_size) const {
+    is_realignable(const unsigned max_indel_size) const
+    {
         return (! is_overmax(max_indel_size));
     }
 
     void
-    clear() {
+    clear()
+    {
         pos=0;
         path.clear();
         is_fwd_strand=true;
     }
 
     bool
-    operator<(const alignment& rhs) const {
+    operator<(const alignment& rhs) const
+    {
         if (pos<rhs.pos) return true;
-        if (pos==rhs.pos) {
+        if (pos==rhs.pos)
+        {
             if (is_fwd_strand<rhs.is_fwd_strand) return true;
-            if (is_fwd_strand==rhs.is_fwd_strand) {
+            if (is_fwd_strand==rhs.is_fwd_strand)
+            {
                 const unsigned ps(path.size());
                 const unsigned rps(rhs.path.size());
                 if (ps<rps) return true;
-                if (ps==rps) {
-                    for (unsigned i(0); i<ps; ++i) {
+                if (ps==rps)
+                {
+                    for (unsigned i(0); i<ps; ++i)
+                    {
                         if (path[i]<rhs.path[i]) return true;
                         if (path[i]==rhs.path[i]) continue;
                         return false;
@@ -81,7 +95,8 @@ struct alignment {
     }
 
     bool
-    operator==(const alignment& rhs) const {
+    operator==(const alignment& rhs) const
+    {
         return ((pos==rhs.pos) && (path==rhs.path) && (is_fwd_strand==rhs.is_fwd_strand));
     }
 

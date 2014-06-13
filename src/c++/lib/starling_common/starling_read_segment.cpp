@@ -27,14 +27,16 @@
 
 bool
 read_segment::
-is_treated_as_tier1_mapping() const {
+is_treated_as_tier1_mapping() const
+{
     return sread().is_treated_as_tier1_mapping();
 }
 
 
 bool
 read_segment::
-is_treated_as_anytier_mapping() const {
+is_treated_as_anytier_mapping() const
+{
     return sread().is_treated_as_anytier_mapping();
 }
 
@@ -42,7 +44,8 @@ is_treated_as_anytier_mapping() const {
 #if 0
 MAPLEVEL::index_t
 read_segment::
-effective_maplevel() const {
+effective_maplevel() const
+{
     return sread().effective_maplevel();
 }
 #endif
@@ -51,7 +54,8 @@ effective_maplevel() const {
 
 bam_seq
 read_segment::
-get_bam_read() const {
+get_bam_read() const
+{
     return bam_seq(bam1_seq(sread().get_brp()),_size,_offset);
 }
 
@@ -59,7 +63,8 @@ get_bam_read() const {
 
 const uint8_t*
 read_segment::
-qual() const {
+qual() const
+{
     return bam1_qual(sread().get_brp())+_offset;
 }
 
@@ -67,19 +72,26 @@ qual() const {
 
 align_id_t
 read_segment::
-id() const { return sread().id(); }
+id() const
+{
+    return sread().id();
+}
 
 
 
 read_key
 read_segment::
-key() const { return sread().key(); }
+key() const
+{
+    return sread().key();
+}
 
 
 
 MAPLEVEL::index_t
 read_segment::
-genome_align_maplev() const {
+genome_align_maplev() const
+{
     return sread().genome_align_maplev;
 }
 
@@ -87,7 +99,8 @@ genome_align_maplev() const {
 
 uint8_t
 read_segment::
-map_qual() const {
+map_qual() const
+{
     return sread().map_qual();
 }
 
@@ -95,19 +108,23 @@ map_qual() const {
 
 bool
 read_segment::
-is_full_segment() const {
+is_full_segment() const
+{
     return (read_size() == sread()._read_rec.read_size());
 }
 
 
 std::pair<bool,bool>
 read_segment::
-get_segment_edge_pin() const {
+get_segment_edge_pin() const
+{
     std::pair<bool,bool> res(false,false);
     const seg_id_t n_seg(sread().segment_count());
-    for (unsigned i(0); i<n_seg; ++i) {
+    for (unsigned i(0); i<n_seg; ++i)
+    {
         const seg_id_t seg_id(i+1);
-        if (this==&(sread().get_segment(seg_id))) {
+        if (this==&(sread().get_segment(seg_id)))
+        {
             if (i!=0) res.first=true;
             if ((i+1)!=n_seg) res.second=true;
         }
@@ -120,7 +137,8 @@ get_segment_edge_pin() const {
 // detect whether this read has any small (handlable) alignments:
 bool
 read_segment::
-is_any_nonovermax(const unsigned max_indel_size) const {
+is_any_nonovermax(const unsigned max_indel_size) const
+{
 
     const read_segment& rseg(*this);
 
@@ -134,12 +152,14 @@ is_any_nonovermax(const unsigned max_indel_size) const {
 
 bool
 read_segment::
-is_valid() const {
+is_valid() const
+{
 
     const read_segment& rseg(*this);
     const unsigned rs(rseg.read_size());
 
-    if (! rseg.genome_align().empty()) {
+    if (! rseg.genome_align().empty())
+    {
         const ALIGNPATH::path_t path(rseg.genome_align().path);
         if (is_apath_invalid(path,rs) ||
             is_apath_starling_invalid(path)) return false;
@@ -152,11 +172,13 @@ is_valid() const {
 
 void
 short_report(std::ostream& os,
-             const read_segment& rseg) {
+             const read_segment& rseg)
+{
 
     if (! rseg.genome_align().empty()) os << "GENOME " << rseg.genome_align();
     os << "is_realigned? " << rseg.is_realigned << "\n";
-    if (rseg.is_realigned) {
+    if (rseg.is_realigned)
+    {
         //os << "REALIGN_path_log_lhood: " << rseg.realign_path_lnp << "\n";
         os << "REALIGN " << rseg.realignment;
     }
@@ -170,7 +192,8 @@ short_report(std::ostream& os,
 //
 std::ostream&
 operator<<(std::ostream& os,
-           const read_segment& rseg) {
+           const read_segment& rseg)
+{
 
     os << "key: " << rseg.key() << "\n";
     os << "id: " << rseg.id() << "\n";

@@ -30,8 +30,10 @@
 #include <memory>
 
 
-namespace READ_ALIGN {
-enum index_t {
+namespace READ_ALIGN
+{
+enum index_t
+{
     GENOME
 };
 
@@ -44,7 +46,8 @@ label(const index_t i);
 // helper class for starling_read to support the recently nailed-on
 // notion of exons
 //
-struct starling_segmented_read {
+struct starling_segmented_read
+{
 
     starling_segmented_read(const seg_id_t size);
 
@@ -59,7 +62,10 @@ struct starling_segmented_read {
     get_segment(const seg_id_t seg_no) const;
 
     seg_id_t
-    segment_count() const { return _seg_info.size(); }
+    segment_count() const
+    {
+        return _seg_info.size();
+    }
 
 private:
     std::vector<read_segment> _seg_info;
@@ -75,7 +81,8 @@ private:
 //
 // all alignment info is fwd-strand
 //
-struct starling_read : private boost::noncopyable {
+struct starling_read : private boost::noncopyable
+{
 
     starling_read(const bam_record& br,
                   const bool is_bam_record_genomic);
@@ -88,7 +95,8 @@ struct starling_read : private boost::noncopyable {
     // }
 
     void
-    set_genomic_bam_record(const bam_record& br) {
+    set_genomic_bam_record(const bam_record& br)
+    {
         assert(! _is_bam_record_genomic);
         _read_rec.copy(br);
         _is_bam_record_genomic=true;
@@ -112,30 +120,49 @@ struct starling_read : private boost::noncopyable {
     write_bam(bam_dumper& bamd);
 
     bool
-    is_fwd_strand() const { return _read_rec.is_fwd_strand(); }
+    is_fwd_strand() const
+    {
+        return _read_rec.is_fwd_strand();
+    }
 
     uint8_t map_qual() const;
 
-    align_id_t& id() { return _id; }
-    align_id_t id() const { return _id; }
+    align_id_t& id()
+    {
+        return _id;
+    }
+    align_id_t id() const
+    {
+        return _id;
+    }
 
     read_key
-    key() const { return read_key(_read_rec); }
+    key() const
+    {
+        return read_key(_read_rec);
+    }
 
     bool
-    is_segmented() const { return (NULL!=_segment_ptr.get()); }
+    is_segmented() const
+    {
+        return (NULL!=_segment_ptr.get());
+    }
 
     seg_id_t
-    segment_count() const {
-        if (is_segmented()) {
+    segment_count() const
+    {
+        if (is_segmented())
+        {
             return _segment_ptr->segment_count();
         }
         return 0;
     }
 
     read_segment&
-    get_segment(seg_id_t seg_no) {
-        if (seg_no>0) {
+    get_segment(seg_id_t seg_no)
+    {
+        if (seg_no>0)
+        {
             assert(is_segmented() && (seg_no<=segment_count()));
             return _segment_ptr->get_segment(seg_no);
         }
@@ -143,8 +170,10 @@ struct starling_read : private boost::noncopyable {
     }
 
     const read_segment&
-    get_segment(seg_id_t seg_no) const {
-        if (seg_no>0) {
+    get_segment(seg_id_t seg_no) const
+    {
+        if (seg_no>0)
+        {
             assert(is_segmented() && (seg_no<=segment_count()));
             return _segment_ptr->get_segment(seg_no);
         }
@@ -152,10 +181,16 @@ struct starling_read : private boost::noncopyable {
     }
 
     read_segment&
-    get_full_segment() { return get_segment(0); }
+    get_full_segment()
+    {
+        return get_segment(0);
+    }
 
     const read_segment&
-    get_full_segment() const { return get_segment(0); }
+    get_full_segment() const
+    {
+        return get_segment(0);
+    }
 
 
 //    const bool
@@ -165,7 +200,10 @@ private:
     friend struct read_segment;
 
     const bam1_t*
-    get_brp() const { return _read_rec._bp; }
+    get_brp() const
+    {
+        return _read_rec._bp;
+    }
 
 #if 0
     // returns as tier1 mapped if only a contig alignment exists

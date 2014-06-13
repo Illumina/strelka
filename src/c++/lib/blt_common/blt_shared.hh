@@ -28,15 +28,18 @@ extern const char STDIN_FILENAME[];
 extern const unsigned MAX_FLANK_SIZE;
 
 
-namespace LOG_LEVEL {
-enum index_t {
+namespace LOG_LEVEL
+{
+enum index_t
+{
     DEFAULT = 0, // 0 = errors and low-frequency warnings
     ALLWARN = 1  // all other warnings
 };
 }
 
 
-struct gvcf_options {
+struct gvcf_options
+{
 
     gvcf_options()
         : is_skip_header(false)
@@ -95,7 +98,8 @@ struct gvcf_options {
 
 
 
-struct gvcf_deriv_options {
+struct gvcf_deriv_options
+{
     gvcf_deriv_options(const gvcf_options& opt);
 
     bool is_max_depth;
@@ -106,7 +110,8 @@ struct gvcf_deriv_options {
 
 
 
-struct blt_options {
+struct blt_options
+{
 
     blt_options()
         : lsnp_alpha(0),
@@ -199,34 +204,47 @@ struct blt_options {
     virtual ~blt_options() {}
 
     bool
-    is_ref_set() const { return (is_samtools_ref_set); }
+    is_ref_set() const
+    {
+        return (is_samtools_ref_set);
+    }
 
     bool
-    is_nonref_test() const { return (! nonref_test_filename.empty()); }
+    is_nonref_test() const
+    {
+        return (! nonref_test_filename.empty());
+    }
 
     bool
-    is_nonref_sites() const { return (! nonref_sites_filename.empty()); }
+    is_nonref_sites() const
+    {
+        return (! nonref_sites_filename.empty());
+    }
 
     // is the diploid snp model being used?
     bool
-    is_bsnp_diploid() const {
+    is_bsnp_diploid() const
+    {
         return (is_bsnp_diploid_file ||
                 is_bsnp_diploid_allele_file ||
                 is_gvcf_output());
     }
 
     bool
-    is_all_sites() const {
+    is_all_sites() const
+    {
         return (is_bsnp_diploid_allele_file || is_gvcf_output());
     }
 
     bool
-    is_gvcf_output() const {
+    is_gvcf_output() const
+    {
         return (! gvcf.out_file.empty());
     }
 
     bool
-    is_tier2() const {
+    is_tier2() const
+    {
         return
             (is_tier2_min_single_align_score ||
              is_tier2_min_paired_align_score ||
@@ -365,7 +383,8 @@ struct pprob_digt_caller;
 
 // data deterministically derived from the user input options:
 //
-struct blt_deriv_options {
+struct blt_deriv_options
+{
 
     /// @param ref_end this is either the full reference contig size,
     /// or the end position of the acquired reference segment if
@@ -380,7 +399,10 @@ struct blt_deriv_options {
     pos_range report_range_limit;   //  maximum report range
 
     const pprob_digt_caller&
-    pdcaller() const { return *(_pdcaller.get()); }
+    pdcaller() const
+    {
+        return *(_pdcaller.get());
+    }
 
 private:
     std::auto_ptr<pprob_digt_caller> _pdcaller; // object to precalculate bsnp_diploid priors..
@@ -388,7 +410,8 @@ private:
 
 
 
-struct blt_read_counts {
+struct blt_read_counts
+{
 
     blt_read_counts()
         : subsample_filter(0),

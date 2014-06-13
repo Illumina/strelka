@@ -27,7 +27,8 @@
 #include <string>
 
 
-struct blt_streams {
+struct blt_streams
+{
 
     blt_streams(const blt_options& client_opt,
                 const prog_info& pinfo,
@@ -35,12 +36,30 @@ struct blt_streams {
 
     ~blt_streams();
 
-    std::ostream* report_osptr() const { return _report_osptr.get(); }
-    std::ostream* counts_osptr() const { return _counts_osptr.get(); }
-    std::ostream* bsnp_diploid_osptr() const { return _bsnp_diploid_osptr.get(); }
-    std::ostream* bsnp_diploid_allele_osptr() const { return _bsnp_diploid_allele_osptr.get(); }
-    std::ostream* nonref_test_osptr() const { return _nonref_test_osptr.get(); }
-    std::ostream* nonref_sites_osptr() const { return _nonref_sites_osptr.get(); }
+    std::ostream* report_osptr() const
+    {
+        return _report_osptr.get();
+    }
+    std::ostream* counts_osptr() const
+    {
+        return _counts_osptr.get();
+    }
+    std::ostream* bsnp_diploid_osptr() const
+    {
+        return _bsnp_diploid_osptr.get();
+    }
+    std::ostream* bsnp_diploid_allele_osptr() const
+    {
+        return _bsnp_diploid_allele_osptr.get();
+    }
+    std::ostream* nonref_test_osptr() const
+    {
+        return _nonref_test_osptr.get();
+    }
+    std::ostream* nonref_sites_osptr() const
+    {
+        return _nonref_sites_osptr.get();
+    }
 
 protected:
 

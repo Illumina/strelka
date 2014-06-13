@@ -24,7 +24,8 @@
 
 template <typename T>
 const char*
-scan_string() {
+scan_string()
+{
     // no scan_string available for type:
     BOOST_STATIC_ASSERT(sizeof(T)==0);
     return NULL;
@@ -34,12 +35,18 @@ scan_string() {
 template <>
 inline
 const char*
-scan_string<int>() { return "%d"; }
+scan_string<int>()
+{
+    return "%d";
+}
 
 template <>
 inline
 const char*
-scan_string<long>() { return "%ld"; }
+scan_string<long>()
+{
+    return "%ld";
+}
 
 
 #endif

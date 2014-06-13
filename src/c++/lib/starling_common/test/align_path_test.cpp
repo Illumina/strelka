@@ -19,7 +19,8 @@
 
 #ifdef DEBUG_AP_TEST
 #include <iostream>
-namespace {
+namespace
+{
 std::ostream& log_os(std::cerr);
 }
 #endif
@@ -33,14 +34,16 @@ using namespace ALIGNPATH;
 
 static
 void
-test_single_cigar_conversion(const std::string& input) {
+test_single_cigar_conversion(const std::string& input)
+{
 
     path_t apath;
     cigar_to_apath(input.c_str(),apath);
     BOOST_CHECK_EQUAL(input,apath_to_cigar(apath));
 }
 
-BOOST_AUTO_TEST_CASE( test_align_path_cigar_conversion ) {
+BOOST_AUTO_TEST_CASE( test_align_path_cigar_conversion )
+{
 
     path_t apath;
     cigar_to_apath("10I10M10D10M10S",apath);
@@ -53,7 +56,8 @@ BOOST_AUTO_TEST_CASE( test_align_path_cigar_conversion ) {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_align_path_ref_length ) {
+BOOST_AUTO_TEST_CASE( test_align_path_ref_length )
+{
 
     path_t apath;
     cigar_to_apath("2I10M10D4I10M10N10M3S",apath);
@@ -61,7 +65,8 @@ BOOST_AUTO_TEST_CASE( test_align_path_ref_length ) {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_align_path_read_length ) {
+BOOST_AUTO_TEST_CASE( test_align_path_read_length )
+{
 
     path_t apath;
     cigar_to_apath("2I10M10D4I10M10N10M3S",apath);
@@ -72,7 +77,8 @@ BOOST_AUTO_TEST_CASE( test_align_path_read_length ) {
 
 static
 void
-test_string_clean(const char* cigar, const char* expect) {
+test_string_clean(const char* cigar, const char* expect)
+{
 
     path_t apath;
     cigar_to_apath(cigar,apath);
@@ -89,7 +95,8 @@ test_string_clean(const char* cigar, const char* expect) {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_align_path_cleaner ) {
+BOOST_AUTO_TEST_CASE( test_align_path_cleaner )
+{
 
     // test cases for apath_cleaner function:
     test_string_clean("29M2I5M1D0M3I20M16S","29M2I5M1D3I20M16S");

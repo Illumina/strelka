@@ -29,7 +29,8 @@
 #include <memory>
 
 
-struct strelka_pile_caller {
+struct strelka_pile_caller
+{
 
     strelka_pile_caller(
         strelka_options& opt,

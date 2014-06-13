@@ -34,14 +34,20 @@
 
 static
 const char*
-input_type_label(const INPUT_TYPE::index_t i) {
+input_type_label(const INPUT_TYPE::index_t i)
+{
     using namespace INPUT_TYPE;
 
-    switch (i) {
-    case NONE   : return "NONE";
-    case READ   : return "READ";
-    case INDEL  : return "INDEL";
-    case FORCED_OUTPUT  : return "FORCED_OUTPUT";
+    switch (i)
+    {
+    case NONE   :
+        return "NONE";
+    case READ   :
+        return "READ";
+    case INDEL  :
+        return "INDEL";
+    case FORCED_OUTPUT  :
+        return "FORCED_OUTPUT";
     default :
         log_os << "ERROR: unrecognized event type.\n";
         exit(EXIT_FAILURE);
@@ -53,7 +59,8 @@ input_type_label(const INPUT_TYPE::index_t i) {
 void
 starling_input_stream_data::
 register_error(const char* label,
-               const sample_id_t sample_no) const {
+               const sample_id_t sample_no) const
+{
     log_os << "ERROR: attempting to register " << label
            << " with sample number: " << sample_no
            << " more than once\n";
@@ -76,15 +83,18 @@ starling_input_stream_handler(const starling_input_stream_data& data,
 {
     // initial loading for _stream_queue:
     const unsigned rs(_data._reads.size());
-    for (unsigned i(0); i<rs; ++i) {
+    for (unsigned i(0); i<rs; ++i)
+    {
         push_next(INPUT_TYPE::READ,_data._reads.get_key(i),i);
     }
     const unsigned is(_data._indels.size());
-    for (unsigned i(0); i<is; ++i) {
+    for (unsigned i(0); i<is; ++i)
+    {
         push_next(INPUT_TYPE::INDEL,_data._indels[i].first,i);
     }
     const unsigned os(_data._output.size());
-    for (unsigned i(0); i<os; ++i) {
+    for (unsigned i(0); i<os; ++i)
+    {
         push_next(INPUT_TYPE::FORCED_OUTPUT,_data._output[i].first,i);
     }
 }
@@ -93,17 +103,21 @@ starling_input_stream_handler(const starling_input_stream_data& data,
 
 bool
 starling_input_stream_handler::
-next() {
+next()
+{
     if (_is_end) return false;
 
-    while (true) {
-        if (_current.itype != INPUT_TYPE::NONE) {
+    while (true)
+    {
+        if (_current.itype != INPUT_TYPE::NONE)
+        {
             // reload stream_queue with current type and sample_no;
             push_next(_current.itype,_current.sample_no,_current._order);
             _last=_current;
         }
 
-        if (_stream_queue.empty()) {
+        if (_stream_queue.empty())
+        {
             _current=input_record_info();
             _is_end=true;
             return false;
@@ -113,8 +127,10 @@ next() {
         _stream_queue.pop();
 
         if (_is_head_pos &&
-            (_current.pos < _head_pos)) {
-            if (_current.itype == INPUT_TYPE::READ) {
+            (_current.pos < _head_pos))
+        {
+            if (_current.itype == INPUT_TYPE::READ)
+            {
                 std::ostringstream oss;
                 oss << "ERROR: unexpected read order:\n"
                     << "\tInput-record with pos/type/sample_no: "
@@ -122,7 +138,9 @@ next() {
                     << " follows pos/type/sample_no: "
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
                 throw blt_exception(oss.str().c_str());
-            } else if ((_current.itype == INPUT_TYPE::INDEL) || (_current.itype == INPUT_TYPE::FORCED_OUTPUT)) {
+            }
+            else if ((_current.itype == INPUT_TYPE::INDEL) || (_current.itype == INPUT_TYPE::FORCED_OUTPUT))
+            {
                 std::ostringstream oss;
                 oss << "ERROR: unexpected vcf record order:\n"
                     << "\tInput-record with pos/type/sample_no: "
@@ -130,14 +148,19 @@ next() {
                     << " follows pos/type/sample_no: "
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
                 throw blt_exception(oss.str().c_str());
-            } else {
+            }
+            else
+            {
                 assert(false && "Unknown input type");
             }
         }
 
-        if (_is_head_pos) {
+        if (_is_head_pos)
+        {
             _head_pos=std::max(_head_pos,_current.pos);
-        } else {
+        }
+        else
+        {
             _is_head_pos=true;
             _head_pos=_current.pos;
         }
@@ -153,13 +176,17 @@ static
 void
 get_next_read_pos(bool& is_next_read,
                   pos_t& next_read_pos,
-                  bam_streamer& read_stream) {
+                  bam_streamer& read_stream)
+{
 
     is_next_read=read_stream.next();
-    if (is_next_read) {
+    if (is_next_read)
+    {
         const bam_record& read_rec(*(read_stream.get_record_ptr()));
         next_read_pos=(read_rec.pos()-1);
-    } else {
+    }
+    else
+    {
         next_read_pos=0;
     }
 }
@@ -171,14 +198,18 @@ static
 void
 get_next_indel_pos(bool& is_next_indel,
                    pos_t& next_indel_pos,
-                   vcf_streamer& indel_stream) {
+                   vcf_streamer& indel_stream)
+{
 
     static const bool is_indel_only(true);
     is_next_indel=indel_stream.next(is_indel_only);
-    if (is_next_indel) {
+    if (is_next_indel)
+    {
         const vcf_record& vcf_rec(*(indel_stream.get_record_ptr()));
         next_indel_pos=(vcf_rec.pos-1);
-    } else {
+    }
+    else
+    {
         next_indel_pos=0;
     }
 }
@@ -190,14 +221,18 @@ static
 void
 get_next_forced_output_pos(bool& is_next_variant,
                            pos_t& next_variant_pos,
-                           vcf_streamer& variant_stream) {
+                           vcf_streamer& variant_stream)
+{
 
     static const bool is_indel_only(false);
     is_next_variant=variant_stream.next(is_indel_only);
-    if (is_next_variant) {
+    if (is_next_variant)
+    {
         const vcf_record& vcf_rec(*(variant_stream.get_record_ptr()));
         next_variant_pos=(vcf_rec.pos-1);
-    } else {
+    }
+    else
+    {
         next_variant_pos=0;
     }
 }
@@ -208,22 +243,30 @@ void
 starling_input_stream_handler::
 push_next(const INPUT_TYPE::index_t itype,
           const sample_id_t sample_no,
-          const unsigned order) {
+          const unsigned order)
+{
 
     bool is_next(false);
     pos_t next_pos;
-    if       (itype == INPUT_TYPE::READ) {
+    if       (itype == INPUT_TYPE::READ)
+    {
         bam_streamer& read_stream(*(_data._reads.get_value(order)));
         get_next_read_pos(is_next,next_pos,read_stream);
-    } else if (itype == INPUT_TYPE::INDEL) {
+    }
+    else if (itype == INPUT_TYPE::INDEL)
+    {
         vcf_streamer& indel_stream(*(_data._indels[order].second));
         get_next_indel_pos(is_next,next_pos,indel_stream);
         next_pos -= std::min(_indel_lead,next_pos);
-    } else if (itype == INPUT_TYPE::FORCED_OUTPUT) {
+    }
+    else if (itype == INPUT_TYPE::FORCED_OUTPUT)
+    {
         vcf_streamer& fo_stream(*(_data._output[order].second));
         get_next_forced_output_pos(is_next,next_pos,fo_stream);
         next_pos -= std::min(_output_lead,next_pos);
-    } else {
+    }
+    else
+    {
         assert(false && "Unknown input type");
     }
     if (not is_next) return;

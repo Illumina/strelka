@@ -25,31 +25,45 @@
 
 void
 shared_modifiers::
-write_filters(std::ostream& os) const {
+write_filters(std::ostream& os) const
+{
 
-    if (filters.none()) {
+    if (filters.none())
+    {
         os << "PASS";
         return;
     }
 
     bool is_sep(false);
-    for (unsigned i(0); i<VCF_FILTERS::SIZE; ++i) {
-        if (filters.test(i)) {
-            if (is_sep) { os << ";"; }
-            else       { is_sep=true; }
+    for (unsigned i(0); i<VCF_FILTERS::SIZE; ++i)
+    {
+        if (filters.test(i))
+        {
+            if (is_sep)
+            {
+                os << ";";
+            }
+            else
+            {
+                is_sep=true;
+            }
             os << VCF_FILTERS::get_label(i);
         }
     }
 }
 
 
-std::map<std::string, double> indel_info::get_qscore_features() {
+std::map<std::string, double> indel_info::get_qscore_features()
+{
     this->calc_vqsr_metrics();
 
     // set GQ and GQX
-    if (dindel.max_gt != dindel.max_gt_poly) {
+    if (dindel.max_gt != dindel.max_gt_poly)
+    {
         imod.gqx=0;
-    } else {
+    }
+    else
+    {
         imod.gqx=std::min(dindel.max_gt_poly_qphred,dindel.max_gt_qphred);
     }
     imod.max_gt=dindel.max_gt_poly;
@@ -66,7 +80,8 @@ std::map<std::string, double> indel_info::get_qscore_features() {
     res["IDREP1"]           = iri.indel_repeat_count;
     res["RULEN1"]           = iri.repeat_unit.length(); //isri.depth;               //This feature actually means the length of the RU string
 
-    if (imod.is_overlap) {
+    if (imod.is_overlap)
+    {
         // hack for overlap case
         //res["REFREP2"]          = iri.ref_repeat_count;
         //res["IDREP2"]           = iri.indel_repeat_count;
@@ -84,7 +99,8 @@ std::map<std::string, double> indel_info::get_qscore_features() {
     return res;
 }
 
-void indel_info::calc_vqsr_metrics() {
+void indel_info::calc_vqsr_metrics()
+{
     this->MQ                = 0.0; //this->ik.mapq_val*1.0/this->ik.mapq_n;
     this->ReadPosRankSum    = 1.0;
     this->MQRankSum         = 2.0;
@@ -93,7 +109,8 @@ void indel_info::calc_vqsr_metrics() {
 }
 
 
-std::map<std::string, double> site_info::get_qscore_features() {
+std::map<std::string, double> site_info::get_qscore_features()
+{
     std::map<std::string, double> res;
     res["QUAL"]               = dgt.genome.snp_qphred;;
     res["F_GQX"]              = smod.gqx;
@@ -108,15 +125,18 @@ std::map<std::string, double> site_info::get_qscore_features() {
     res["I_ReadPosRankSum"]   = ReadPosRankSum;
     res["I_BaseQRankSum"]     = BaseQRankSum;
     res["I_MQRankSum"]        = MQRankSum;
-    for (unsigned b(0); b<N_BASE; ++b) {
+    for (unsigned b(0); b<N_BASE; ++b)
+    {
         if (b==dgt.ref_gt) continue;
         if (DIGT::expect2(b,smod.max_gt))
             res["AD1"] =  known_counts[b];
     }
-    if ((res["F_DP"]+res["F_DPF"])>0.0) {
+    if ((res["F_DP"]+res["F_DPF"])>0.0)
+    {
         res["VFStar"]           = res["AD1"]/(res["DP"]+res["DPF"]); //VFStar = AD2/(DP+DPF);
     }
-    else {
+    else
+    {
         res["VFStar"]           = res["AD1"]/(30.0); //default hack for
     }
     return res;
@@ -125,7 +145,8 @@ std::map<std::string, double> site_info::get_qscore_features() {
 
 std::ostream&
 operator<<(std::ostream& os,
-           const shared_modifiers& shmod) {
+           const shared_modifiers& shmod)
+{
 
     os << "gqx: " << shmod.gqx
        << " gq: " << shmod.gq
@@ -139,7 +160,8 @@ operator<<(std::ostream& os,
 
 std::ostream&
 operator<<(std::ostream& os,
-           const site_modifiers& smod) {
+           const site_modifiers& smod)
+{
 
     os << static_cast<shared_modifiers>(smod) << '\n';
 
@@ -149,7 +171,8 @@ operator<<(std::ostream& os,
     os << " is_zero_ploidy: " << smod.is_zero_ploidy;
     os << " is_block: " << smod.is_block;
 
-    if (smod.modified_gt != MODIFIED_SITE_GT::NONE) {
+    if (smod.modified_gt != MODIFIED_SITE_GT::NONE)
+    {
         os << " modgt: " << MODIFIED_SITE_GT::get_label(smod.modified_gt);
     }
 
@@ -158,7 +181,8 @@ operator<<(std::ostream& os,
 
 std::ostream&
 operator<<(std::ostream& os,
-           const site_info& si) {
+           const site_info& si)
+{
     os << "pos: " << (si.pos+1) << " " << si.get_gt();
     return os;
 }

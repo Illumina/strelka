@@ -35,7 +35,8 @@ calc_pos_nonref_freq_loghood(const snp_pos_info& pi,
 
 // provides lhood of the reference vs. non-reference frequency:
 //
-struct position_nonref_freq_loghood_minfunc : public codemin::minfunc_1d_interface<double> {
+struct position_nonref_freq_loghood_minfunc : public codemin::minfunc_1d_interface<double>
+{
 
     /// assumes pi has already had bad cases filtered out:
     explicit
@@ -69,7 +70,8 @@ calc_pos_nonref_allele_freq_loghood(const snp_pos_info& pi,
 // provides lhood of the reference frequency vs. another allele
 // frequency (or frequency of two nonref alleles):
 //
-struct position_nonref_allele_freq_loghood_minfunc : public codemin::minfunc_1d_interface<double> {
+struct position_nonref_allele_freq_loghood_minfunc : public codemin::minfunc_1d_interface<double>
+{
 
     /// assumes pi has already had bad cases filtered out:
     explicit
@@ -99,23 +101,30 @@ private:
 
 // provides lhood given all four allele frequencies:
 //
-struct position_allele_distro_loghood_minfunc : public codemin::minfunc_interface<double> {
+struct position_allele_distro_loghood_minfunc : public codemin::minfunc_interface<double>
+{
 
     // assumes pi has had bad cases filtered out already:
     // is_allele_used is true for each base submitted to val in the
     // frequency array, all other frequencies are locked at zero
     explicit
     position_allele_distro_loghood_minfunc(const snp_pos_info& pi,
-                                           const bool* is_allele_used = 0) : _pi(pi), _n_allele(0) {
-        for (unsigned i(0); i<N_BASE; ++i) {
-            if ((! is_allele_used) || is_allele_used[i]) {
+                                           const bool* is_allele_used = 0) : _pi(pi), _n_allele(0)
+    {
+        for (unsigned i(0); i<N_BASE; ++i)
+        {
+            if ((! is_allele_used) || is_allele_used[i])
+            {
                 _allele_map[_n_allele] = i;
                 _n_allele++;
             }
         }
     }
 
-    virtual unsigned dim() const { return _n_allele; }
+    virtual unsigned dim() const
+    {
+        return _n_allele;
+    }
 
     virtual double val(const double* allele_distro_in);
 

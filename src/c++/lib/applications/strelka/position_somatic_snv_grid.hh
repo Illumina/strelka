@@ -39,7 +39,8 @@
 //#define SOMATIC_DEBUG
 
 
-namespace DIGT_GRID {
+namespace DIGT_GRID
+{
 
 // HET_RES is the number of points sampled between 0 and 0.5 on
 // the continuous frequency scale. Thus a fully sampled axis will
@@ -55,28 +56,32 @@ enum index_t { SIZE = N_BASE+HET_SIZE*HET_COUNT };
 
 inline
 unsigned
-get_digt_state (const unsigned state) {
+get_digt_state (const unsigned state)
+{
     if (state<N_BASE) return state;
     return N_BASE+((state-N_BASE)%HET_SIZE);
 }
 
 inline
 unsigned
-get_het_count(const unsigned state) {
+get_het_count(const unsigned state)
+{
     if (state<N_BASE) return 0;
     return (state-N_BASE)/HET_SIZE;
 }
 }
 
 
-namespace DDIGT_GRID {
+namespace DDIGT_GRID
+{
 
 enum index_t { SIZE = DIGT_GRID::SIZE*DIGT_GRID::SIZE };
 
 inline
 unsigned
 get_state(const unsigned normal_gt,
-          const unsigned tumor_gt) {
+          const unsigned tumor_gt)
+{
     return normal_gt+DIGT_GRID::SIZE*tumor_gt;
 }
 
@@ -84,13 +89,15 @@ inline
 void
 get_digt_grid_states(const unsigned dgt,
                      unsigned& normal_gt,
-                     unsigned& tumor_gt) {
+                     unsigned& tumor_gt)
+{
     normal_gt = (dgt%DIGT_GRID::SIZE);
     tumor_gt = (dgt/DIGT_GRID::SIZE);
 }
 
 
-struct is_nonsom_maker_t {
+struct is_nonsom_maker_t
+{
     is_nonsom_maker_t();
 
     std::vector<bool> val;
@@ -102,7 +109,8 @@ std::ostream& operator<<(std::ostream& os,const DDIGT_GRID::index_t dgt);
 
 
 // object used to pre-compute priors:
-struct somatic_snv_caller_grid {
+struct somatic_snv_caller_grid
+{
 
     somatic_snv_caller_grid(const strelka_options& opt,
                             const pprob_digt_caller& pd_caller);
@@ -117,16 +125,19 @@ struct somatic_snv_caller_grid {
 
 private:
     const std::vector<blt_float_t>&
-    lnprior_genomic(const unsigned ref_id) const {
+    lnprior_genomic(const unsigned ref_id) const
+    {
         return _lnprior[ref_id].normal;
     }
 
     const std::vector<blt_float_t>&
-    lnprior_polymorphic(const unsigned ref_id) const {
+    lnprior_polymorphic(const unsigned ref_id) const
+    {
         return _lnprior[ref_id].normal_poly;
     }
 
-    struct prior_set {
+    struct prior_set
+    {
         prior_set()
             : normal(DIGT_GRID::SIZE)
             , normal_poly(DIGT_GRID::SIZE) {}

@@ -40,7 +40,8 @@
 static
 void
 set_site_gt(const diploid_genotype::result_set& rs,
-            site_modifiers& smod) {
+            site_modifiers& smod)
+{
     smod.max_gt=rs.max_gt;
     smod.gqx=rs.max_gt_qphred;
 }
@@ -50,7 +51,8 @@ void
 set_site_filters_CM(const gvcf_options& opt,
                     const gvcf_deriv_options& dopt,
                     site_info& si,
-                    calibration_models& model) {
+                    calibration_models& model)
+{
     // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
     model.clasify_site(opt,dopt,si);
 }
@@ -58,8 +60,9 @@ set_site_filters_CM(const gvcf_options& opt,
 static
 void
 add_indel_modifiers_CM(const gvcf_options& opt,
-                    const gvcf_deriv_options& dopt,
-                    indel_info& ii, calibration_models& model) {
+                       const gvcf_deriv_options& dopt,
+                       indel_info& ii, calibration_models& model)
+{
     // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
     model.clasify_site(opt,dopt,ii);
 }
@@ -69,25 +72,34 @@ void
 add_site_modifiers(const gvcf_options& opt,
                    const gvcf_deriv_options& dopt,
                    site_info& si,
-                   calibration_models& model) {
+                   calibration_models& model)
+{
 
     si.smod.clear();
     si.smod.is_unknown=(si.ref=='N');
     si.smod.is_used_covered=(si.n_used_calls!=0);
     si.smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
 
-    if     (si.smod.is_unknown) {
+    if     (si.smod.is_unknown)
+    {
         si.smod.gqx=0;
         si.smod.gq=0;
         si.smod.max_gt=0;
-    } else if (si.dgt.genome.max_gt != si.dgt.poly.max_gt) {
+    }
+    else if (si.dgt.genome.max_gt != si.dgt.poly.max_gt)
+    {
         si.smod.gqx=0;
         si.smod.gq=si.dgt.poly.max_gt_qphred;
         si.smod.max_gt=si.dgt.poly.max_gt;
-    } else {
-        if (si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred) {
+    }
+    else
+    {
+        if (si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred)
+        {
             set_site_gt(si.dgt.genome,si.smod);
-        } else {
+        }
+        else
+        {
             set_site_gt(si.dgt.poly,si.smod);
         }
         si.smod.gq=si.dgt.poly.max_gt_qphred;
@@ -95,7 +107,8 @@ add_site_modifiers(const gvcf_options& opt,
     set_site_filters_CM(opt,dopt,si,model);
 }
 
-void gvcf_aggregator::write_block_site_record() {
+void gvcf_aggregator::write_block_site_record()
+{
     if (_block.count<=0) return;
     write_site_record(_block.record);
     _block.reset();
@@ -121,7 +134,8 @@ gvcf_aggregator(const starling_options& opt,
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
     // read in sites that should not be block-compressed
-    if (static_cast<int>(opt.minor_allele_bed.length())>2) {  // hacky, check if the bed file has been set
+    if (static_cast<int>(opt.minor_allele_bed.length())>2)    // hacky, check if the bed file has been set
+    {
         this->gvcf_comp.read_bed(opt.minor_allele_bed,opt.bam_seq_name.c_str());
 //        log_os << "I've got minor allele \n";
     }
@@ -137,12 +151,14 @@ gvcf_aggregator(const starling_options& opt,
 
     //initialize gvcf deriv options:
     cdmap_t chrom_depth;
-    if (_opt.gvcf.is_max_depth_factor && (! _opt.gvcf.chrom_depth_file.empty())) {
+    if (_opt.gvcf.is_max_depth_factor && (! _opt.gvcf.chrom_depth_file.empty()))
+    {
         parse_chrom_depth(_opt.gvcf.chrom_depth_file,chrom_depth);
         //TODO, verify that chroms match bam chroms
 
         cdmap_t::const_iterator cdi(chrom_depth.find(std::string(_chrom)));
-        if (cdi == chrom_depth.end()) {
+        if (cdi == chrom_depth.end())
+        {
             std::ostringstream oss;
             oss << "ERROR: Can't find chromosome: '" << _chrom << "' in chrom depth file: " << _opt.gvcf.chrom_depth_file << "\n";
             throw blt_exception(oss.str().c_str());
@@ -152,7 +168,8 @@ gvcf_aggregator(const starling_options& opt,
         _dopt.is_max_depth=true;
     }
 
-    if (! _opt.gvcf.is_skip_header) {
+    if (! _opt.gvcf.is_skip_header)
+    {
         finish_gvcf_header(_opt,_dopt, chrom_depth,dopt.bam_header_data,*_osptr);
     }
 
@@ -160,22 +177,28 @@ gvcf_aggregator(const starling_options& opt,
 }
 
 gvcf_aggregator::
-~gvcf_aggregator() { flush(); }
+~gvcf_aggregator()
+{
+    flush();
+}
 
 // fill in missing sites
 void
 gvcf_aggregator::
-skip_to_pos(const pos_t target_pos) {
+skip_to_pos(const pos_t target_pos)
+{
 
     // advance through any indel region by adding individual sites
-    while (_head_pos<target_pos) {
+    while (_head_pos<target_pos)
+    {
 //        const site_info& si = get_empty_site(_head_pos);
         add_site_internal(get_empty_site(_head_pos));
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
         if (0 != _indel_buffer_size) continue;
 
-        if (_opt.gvcf.is_block_compression && !this->gvcf_comp.minor_allele_loaded) {
+        if (_opt.gvcf.is_block_compression && !this->gvcf_comp.minor_allele_loaded)
+        {
             assert(_block.count!=0);
             _block.count += (target_pos-_head_pos);
             _head_pos= target_pos;
@@ -188,8 +211,10 @@ skip_to_pos(const pos_t target_pos) {
 
 void
 gvcf_aggregator::
-output_phased_blocked(){
-    for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it){
+output_phased_blocked()
+{
+    for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it)
+    {
         add_site_internal(*it);
     }
     codon_phaser.clear_buffer();
@@ -197,18 +222,21 @@ output_phased_blocked(){
 
 void
 gvcf_aggregator::
-add_site(site_info& si) {
+add_site(site_info& si)
+{
 
     add_site_modifiers(_opt.gvcf,_dopt,si,this->CM);
 
     // TODO move to pos_processor instead
-    if (_opt.do_codon_phasing && (si.is_het()||codon_phaser.is_in_block)) {
+    if (_opt.do_codon_phasing && (si.is_het()||codon_phaser.is_in_block))
+    {
         bool emptyBuffer = codon_phaser.add_site(si);
-       //  Was site absorbed, if not release all buffered sites and add these into the gVCF pipeline
+        //  Was site absorbed, if not release all buffered sites and add these into the gVCF pipeline
         if (!codon_phaser.is_in_block || emptyBuffer)
             this->output_phased_blocked();
     }
-    else {
+    else
+    {
         skip_to_pos(si.pos);
         add_site_internal(si);
     }
@@ -217,7 +245,8 @@ add_site(site_info& si) {
 //Add sites to queue for writing to gVCF
 void
 gvcf_aggregator::
-add_site_internal(const site_info& si) {
+add_site_internal(const site_info& si)
+{
 
     if (si.smod.is_phased_region)
         _head_pos=si.pos+si.phased_ref.length();
@@ -225,11 +254,16 @@ add_site_internal(const site_info& si) {
         _head_pos=si.pos+1;
 
     // resolve any current or previous indels before queue-ing site:
-    if (0 != _indel_buffer_size) {
-        if (si.pos>=_indel_end_pos) {
+    if (0 != _indel_buffer_size)
+    {
+        if (si.pos>=_indel_end_pos)
+        {
             process_overlaps();
-        } else {
-            while (_site_buffer.size() <= _site_buffer_size) {
+        }
+        else
+        {
+            while (_site_buffer.size() <= _site_buffer_size)
+            {
                 _site_buffer.push_back(site_info());
             }
             _site_buffer[_site_buffer_size++] = si;
@@ -243,13 +277,15 @@ add_site_internal(const site_info& si) {
 
 static
 bool
-is_het_indel(const starling_diploid_indel_core& dindel) {
+is_het_indel(const starling_diploid_indel_core& dindel)
+{
     return (dindel.max_gt==STAR_DIINDEL::HET);
 }
 
 static
 bool
-is_no_indel(const starling_diploid_indel_core& dindel) {
+is_no_indel(const starling_diploid_indel_core& dindel)
+{
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
 
@@ -259,7 +295,8 @@ add_indel(const pos_t pos,
           const indel_key ik,
           const starling_diploid_indel_core& dindel,
           const starling_indel_report_info& iri,
-          const starling_indel_sample_report_info& isri) {
+          const starling_indel_sample_report_info& isri)
+{
 
     // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
     if (_opt.do_codon_phasing && this->codon_phaser.is_in_block)
@@ -276,11 +313,13 @@ add_indel(const pos_t pos,
     // check if an indel is already buffered and we done't overlap it,
     // in which case we need to clear it first -- note this definition
     // of overlap deliberately picks up adjacent deletions:
-    if ((0 != _indel_buffer_size) && (pos>_indel_end_pos)) {
+    if ((0 != _indel_buffer_size) && (pos>_indel_end_pos))
+    {
         process_overlaps();
     }
 
-    while (_indel_buffer.size() <= _indel_buffer_size) {
+    while (_indel_buffer.size() <= _indel_buffer_size)
+    {
         _indel_buffer.push_back(indel_info());
     }
     _indel_buffer[_indel_buffer_size++].init(pos,ik,dindel,iri,isri);
@@ -292,7 +331,8 @@ add_indel(const pos_t pos,
 static
 bool
 is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
-                        const unsigned size) {
+                        const unsigned size)
+{
 
     return (size==2 &&
             is_het_indel(indel_buffer[0].dindel) &&
@@ -305,21 +345,26 @@ void
 get_hap_cigar(ALIGNPATH::path_t& apath,
               const indel_key& ik,
               const unsigned lead=1,
-              const unsigned trail=0) {
+              const unsigned trail=0)
+{
 
     using namespace ALIGNPATH;
 
     apath.clear();
-    if (lead) {
+    if (lead)
+    {
         apath.push_back(path_segment(MATCH,lead));
     }
-    if (ik.delete_length()) {
+    if (ik.delete_length())
+    {
         apath.push_back(path_segment(DELETE,ik.delete_length()));
     }
-    if (ik.insert_length()) {
+    if (ik.insert_length())
+    {
         apath.push_back(path_segment(INSERT,ik.insert_length()));
     }
-    if (trail) {
+    if (trail)
+    {
         apath.push_back(path_segment(MATCH,trail));
     }
 }
@@ -328,17 +373,23 @@ get_hap_cigar(ALIGNPATH::path_t& apath,
 static
 void
 add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
-                    std::vector<unsigned>& ploidy) {
+                    std::vector<unsigned>& ploidy)
+{
 
     using namespace ALIGNPATH;
     int offset(-1);
-    BOOST_FOREACH(const path_segment& ps, apath) {
-        if (ps.type==MATCH) {
-            for (unsigned j(0); j<ps.length; ++j) {
+    BOOST_FOREACH(const path_segment& ps, apath)
+    {
+        if (ps.type==MATCH)
+        {
+            for (unsigned j(0); j<ps.length; ++j)
+            {
                 if (offset>=0) ploidy[offset]++;
                 offset++;
             }
-        } else if (ps.type==DELETE) {
+        }
+        else if (ps.type==DELETE)
+        {
             offset+=ps.length;
         }
     }
@@ -349,15 +400,18 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
 //
 void
 gvcf_aggregator::
-queue_site_record(const site_info& si) {
+queue_site_record(const site_info& si)
+{
 
     //test for basic blocking criteria
-    if (! this->gvcf_comp.is_site_compressable(_opt.gvcf,si)) {
+    if (! this->gvcf_comp.is_site_compressable(_opt.gvcf,si))
+    {
         write_block_site_record();
         write_site_record(si);
         return;
     }
-    if (! _block.test(si)) {
+    if (! _block.test(si))
+    {
         write_block_site_record();
     }
     _block.join(si);
@@ -367,11 +421,14 @@ static
 void
 print_vcf_alt(const unsigned gt,
               const unsigned ref_gt,
-              std::ostream& os) {
+              std::ostream& os)
+{
     bool is_print(false);
-    for (unsigned b(0); b<N_BASE; ++b) {
+    for (unsigned b(0); b<N_BASE; ++b)
+    {
         if (b==ref_gt) continue;
-        if (DIGT::expect2(b,gt)) {
+        if (DIGT::expect2(b,gt))
+        {
             if (is_print) os << ',';
             os << id_to_base(b);
             is_print=true;
@@ -384,13 +441,16 @@ print_vcf_alt(const unsigned gt,
 static
 void
 print_site_ad(const site_info& si,
-              std::ostream& os) {
+              std::ostream& os)
+{
 
     os << si.known_counts[si.dgt.ref_gt];
 
-    for (unsigned b(0); b<N_BASE; ++b) {
+    for (unsigned b(0); b<N_BASE; ++b)
+    {
         if (b==si.dgt.ref_gt) continue;
-        if (DIGT::expect2(b,si.smod.max_gt)) {
+        if (DIGT::expect2(b,si.smod.max_gt))
+        {
             os << ',' << si.known_counts[b];
         }
     }
@@ -400,7 +460,8 @@ print_site_ad(const site_info& si,
 //writes out a SNP or block record
 void
 gvcf_aggregator::
-write_site_record(const site_info& si) const {
+write_site_record(const site_info& si) const
+{
 
     std::ostream& os(*_osptr);
 
@@ -408,17 +469,21 @@ write_site_record(const site_info& si) const {
        << (si.pos+1) << '\t'  // POS
        << ".\t";           // ID
 
-    if(si.smod.is_phased_region)
+    if (si.smod.is_phased_region)
         os  << si.phased_ref << '\t'; // REF
     else
         os  << si.ref << '\t'; // REF
 
     // ALT
-    if (si.smod.is_unknown || si.smod.is_block) {
+    if (si.smod.is_unknown || si.smod.is_block)
+    {
         os << '.';
-    } else {
+    }
+    else
+    {
 
-        if(si.smod.is_phased_region){
+        if (si.smod.is_phased_region)
+        {
             os << si.phased_alt;
         }
         else
@@ -427,9 +492,12 @@ write_site_record(const site_info& si) const {
     os << '\t';
 
     // QUAL:
-    if (si.is_qual()) {
+    if (si.is_qual())
+    {
         os << si.dgt.genome.snp_qphred;
-    } else {
+    }
+    else
+    {
         os << '.';
     }
     os << '\t';
@@ -439,15 +507,22 @@ write_site_record(const site_info& si) const {
     os << '\t';
 
     // INFO:
-    if (si.smod.is_block) {
-        if (_block.count>1) {
+    if (si.smod.is_block)
+    {
+        if (_block.count>1)
+        {
             os << "END=" << (si.pos+_block.count) << ';';
             os << _dopt.block_label;
-        } else {
+        }
+        else
+        {
             os << '.';
         }
-    } else {
-        if (si.dgt.is_snp) {
+    }
+    else
+    {
+        if (si.dgt.is_snp)
+        {
             os << "SNVSB=";
             std::ofstream tmp_os;
             tmp_os.copyfmt(os);
@@ -455,13 +530,15 @@ write_site_record(const site_info& si) const {
             os.copyfmt(tmp_os);
             os << ';';
             os << "SNVHPOL=" << si.hpol;
-            if (_opt.is_compute_hapscore) {
+            if (_opt.is_compute_hapscore)
+            {
                 os << ';';
                 os << "HaplotypeScore=" << si.hapscore;
             }
 
             // TODO only report VQSR metrics if flag explicitly set, not for calibration model
-            if (_opt.is_compute_VQSRmetrics) {
+            if (_opt.is_compute_VQSRmetrics)
+            {
                 os << ';';
                 os << "MQ=" << si.MQ;
 
@@ -487,7 +564,9 @@ write_site_record(const site_info& si) const {
 //                os << "Qscore=" << si.Qscore;
 //            }
 
-        } else {
+        }
+        else
+        {
             os << '.';
         }
     }
@@ -495,45 +574,58 @@ write_site_record(const site_info& si) const {
 
     //FORMAT
     os << "GT";
-    if (si.dgt.is_snp) {
+    if (si.dgt.is_snp)
+    {
         os << ":GQ";
     }
     os << ":GQX:DP:DPF";
-    if (! si.smod.is_block) {
+    if (! si.smod.is_block)
+    {
         os << ":AD";
     }
     os << '\t';
 
     //SAMPLE
     os << si.get_gt() << ':';
-    if (si.dgt.is_snp) {
+    if (si.dgt.is_snp)
+    {
         os << si.smod.gq << ':';
     }
-    if (si.smod.is_gqx()) {
-        if (si.smod.is_block) {
+    if (si.smod.is_gqx())
+    {
+        if (si.smod.is_block)
+        {
             os << _block.block_gqx.min();
-        } else {
+        }
+        else
+        {
             if (si.Qscore>0)
                 os << si.Qscore ;
             else
                 os << si.smod.gqx;
         }
-    } else {
+    }
+    else
+    {
         os << '.';
     }
     os << ':';
     //print DP:DPF
-    if (si.smod.is_block) {
+    if (si.smod.is_block)
+    {
         os << _block.block_dpu.min() << ':'
            << _block.block_dpf.min();
-    } else {
+    }
+    else
+    {
         os << si.n_used_calls << ':'
            << si.n_unused_calls;
     }
 
     if (si.smod.is_phased_region)
         os << ':' << si.phased_AD;
-    else if (! si.smod.is_block) {
+    else if (! si.smod.is_block)
+    {
         os << ':';
         print_site_ad(si,os);
     }
@@ -544,7 +636,8 @@ write_site_record(const site_info& si) const {
 // set the CIGAR string:
 void
 gvcf_aggregator::
-modify_single_indel_record() {
+modify_single_indel_record()
+{
     assert(_indel_buffer_size==1);
 
     indel_info& ii(_indel_buffer[0]);
@@ -559,7 +652,8 @@ modify_indel_overlap_site(const gvcf_options& opt,
                           const gvcf_deriv_options& dopt,
                           const indel_info& ii,
                           const unsigned ploidy,
-                          site_info& si,calibration_models& CM) {
+                          site_info& si,calibration_models& CM)
+{
 
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
@@ -578,25 +672,39 @@ modify_indel_overlap_site(const gvcf_options& opt,
     si.smod.gqx = std::min(si.smod.gqx,ii.dindel.max_gt_qphred);
 
     // change ploidy:
-    if (ploidy==1) {
-        if (DIGT::is_het(si.smod.max_gt)) {
+    if (ploidy==1)
+    {
+        if (DIGT::is_het(si.smod.max_gt))
+        {
             si.smod.set_filter(VCF_FILTERS::SiteConflict);
             //si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
-        } else {
-            if (si.smod.max_gt == si.dgt.ref_gt) {
+        }
+        else
+        {
+            if (si.smod.max_gt == si.dgt.ref_gt)
+            {
                 si.smod.modified_gt=MODIFIED_SITE_GT::ZERO;
-            } else {
+            }
+            else
+            {
                 si.smod.modified_gt=MODIFIED_SITE_GT::ONE;
             }
         }
-    } else if (ploidy==0) {
-        if (si.smod.max_gt == si.dgt.ref_gt) {
+    }
+    else if (ploidy==0)
+    {
+        if (si.smod.max_gt == si.dgt.ref_gt)
+        {
             si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
             si.smod.is_zero_ploidy=true;
-        } else {
+        }
+        else
+        {
             si.smod.set_filter(VCF_FILTERS::SiteConflict);
         }
-    } else {
+    }
+    else
+    {
         assert(0);
     }
 
@@ -607,13 +715,15 @@ modify_indel_overlap_site(const gvcf_options& opt,
 
 static
 void
-modify_indel_conflict_site(site_info& si) {
+modify_indel_conflict_site(site_info& si)
+{
     si.smod.set_filter(VCF_FILTERS::IndelConflict);
 }
 
 void
 gvcf_aggregator::
-modify_overlap_indel_record() {
+modify_overlap_indel_record()
+{
 
     // can only handle simple 2-indel overlaps right now:
     assert(_indel_buffer_size==2);
@@ -636,13 +746,17 @@ modify_overlap_indel_record() {
     ii.imod.ploidy.resize(_indel_end_pos-ii.pos,0);
 
     // add per-haplotype information:
-    for (unsigned hap(0); hap<2; ++hap) {
+    for (unsigned hap(0); hap<2; ++hap)
+    {
         //reduce qual and gt to the lowest of the set:
-        if (hap) {
-            if (ii.dindel.indel_qphred>_indel_buffer[hap].dindel.indel_qphred) {
+        if (hap)
+        {
+            if (ii.dindel.indel_qphred>_indel_buffer[hap].dindel.indel_qphred)
+            {
                 ii.dindel.indel_qphred = _indel_buffer[hap].dindel.indel_qphred;
             }
-            if (ii.dindel.max_gt_qphred>_indel_buffer[hap].dindel.max_gt_qphred) {
+            if (ii.dindel.max_gt_qphred>_indel_buffer[hap].dindel.max_gt_qphred)
+            {
                 ii.dindel.max_gt_qphred = _indel_buffer[hap].dindel.max_gt_qphred;
             }
         }
@@ -663,7 +777,8 @@ modify_overlap_indel_record() {
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
         add_indel_modifiers_CM(_opt.gvcf,_dopt,_indel_buffer[hap],this->CM);
-        if (hap>0) {
+        if (hap>0)
+        {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
         }
     }
@@ -674,10 +789,12 @@ modify_overlap_indel_record() {
 // set the CIGAR string:
 void
 gvcf_aggregator::
-modify_conflict_indel_record() {
+modify_conflict_indel_record()
+{
     assert(_indel_buffer_size>1);
 
-    for (unsigned i(0); i<_indel_buffer_size; ++i) {
+    for (unsigned i(0); i<_indel_buffer_size; ++i)
+    {
         indel_info& ii(_indel_buffer[i]);
         get_hap_cigar(ii.imod.cigar,ii.ik);
 
@@ -691,7 +808,8 @@ modify_conflict_indel_record() {
 
 void
 gvcf_aggregator::
-write_indel_record(const unsigned write_index) {
+write_indel_record(const unsigned write_index)
+{
 
     assert(_indel_buffer_size>0);
 
@@ -708,11 +826,13 @@ write_indel_record(const unsigned write_index) {
 
     // ALT
     unsigned end_index(write_index);
-    if (ii.imod.is_overlap) {
+    if (ii.imod.is_overlap)
+    {
         end_index++;
     }
 
-    for (unsigned i(write_index); i<=end_index; ++i) {
+    for (unsigned i(write_index); i<=end_index; ++i)
+    {
         if (i!=write_index) os << ',';
         os << _indel_buffer[i].iri.vcf_indel_seq;
     }
@@ -726,38 +846,51 @@ write_indel_record(const unsigned write_index) {
 
     // INFO
     os << "CIGAR=";
-    for (unsigned i(write_index); i<=end_index; ++i) {
+    for (unsigned i(write_index); i<=end_index; ++i)
+    {
         if (i!=write_index) os << ',';
         os << _indel_buffer[i].imod.cigar;
     }
     os << ';';
     os << "RU=";
-    for (unsigned i(write_index); i<=end_index; ++i) {
+    for (unsigned i(write_index); i<=end_index; ++i)
+    {
         if (i!=write_index) os << ',';
         if (_indel_buffer[i].iri.is_repeat_unit &&
-            (_indel_buffer[i].iri.repeat_unit.size() <= 20)) {
+            (_indel_buffer[i].iri.repeat_unit.size() <= 20))
+        {
             os << _indel_buffer[i].iri.repeat_unit;
-        } else {
+        }
+        else
+        {
             os << '.';
         }
     }
     os << ';';
     os << "REFREP=";
-    for (unsigned i(write_index); i<=end_index; ++i) {
+    for (unsigned i(write_index); i<=end_index; ++i)
+    {
         if (i!=write_index) os << ',';
-        if (_indel_buffer[i].iri.is_repeat_unit) {
+        if (_indel_buffer[i].iri.is_repeat_unit)
+        {
             os << _indel_buffer[i].iri.ref_repeat_count;
-        } else {
+        }
+        else
+        {
             os << '.';
         }
     }
     os << ';';
     os << "IDREP=";
-    for (unsigned i(write_index); i<=end_index; ++i) {
+    for (unsigned i(write_index); i<=end_index; ++i)
+    {
         if (i!=write_index) os << ',';
-        if (_indel_buffer[i].iri.is_repeat_unit) {
+        if (_indel_buffer[i].iri.is_repeat_unit)
+        {
             os << _indel_buffer[i].iri.indel_repeat_count;
-        } else {
+        }
+        else
+        {
             os << '.';
         }
     }
@@ -797,11 +930,13 @@ write_indel_record(const unsigned write_index) {
 
     // SAMPLE AD:
     unsigned ref_count(0);
-    for (unsigned i(write_index); i<=end_index; ++i) {
+    for (unsigned i(write_index); i<=end_index; ++i)
+    {
         ref_count = std::max(ref_count,_indel_buffer[i].isri.n_q30_ref_reads);
     }
     os << ref_count;
-    for (unsigned i(write_index); i<=end_index; ++i) {
+    for (unsigned i(write_index); i<=end_index; ++i)
+    {
         os << ',' << _indel_buffer[i].isri.n_q30_indel_reads;
     }
     os << '\n';
@@ -811,21 +946,28 @@ write_indel_record(const unsigned write_index) {
 
 void
 gvcf_aggregator::
-process_overlaps() {
+process_overlaps()
+{
 
     if (0==_indel_buffer_size) return;
 
     bool is_conflict_print(false);
 
     // do the overlap processing:
-    if (_indel_buffer_size==1) {
+    if (_indel_buffer_size==1)
+    {
         // simple case of no overlap:
         modify_single_indel_record();
-    } else {
-        if (is_simple_indel_overlap(_indel_buffer,_indel_buffer_size)) {
+    }
+    else
+    {
+        if (is_simple_indel_overlap(_indel_buffer,_indel_buffer_size))
+        {
             // handle the simplest possible overlap case (two hets):
             modify_overlap_indel_record();
-        } else {
+        }
+        else
+        {
             // mark the whole region as conflicting
             modify_conflict_indel_record();
             is_conflict_print=true;
@@ -835,19 +977,23 @@ process_overlaps() {
     //    *_osptr << "INDEL_SIZE: " << _indel_buffer_size << "\n";
 
     // process sites to be consistent with overlapping indels:
-    for (unsigned i(0); i<_site_buffer_size; ++i) {
+    for (unsigned i(0); i<_site_buffer_size; ++i)
+    {
 
 #ifdef DEBUG_GVCF
         log_os << "CHIRP: indel overlapping site: " << _site_buffer[i].pos << "\n";
 #endif
         const pos_t offset(_site_buffer[i].pos-_indel_buffer[0].pos);
         assert(offset>=0);
-        if (! is_conflict_print) {
+        if (! is_conflict_print)
+        {
             modify_indel_overlap_site(_opt.gvcf,_dopt,
                                       _indel_buffer[0],
                                       _indel_buffer[0].get_ploidy(offset),
                                       _site_buffer[i], this->CM);
-        } else {
+        }
+        else
+        {
             modify_indel_conflict_site(_site_buffer[i]);
         }
     }
@@ -855,20 +1001,27 @@ process_overlaps() {
     unsigned indel_index(0);
     unsigned site_index(0);
 
-    while (true) {
+    while (true)
+    {
         const bool is_indel(indel_index<_indel_buffer_size);
         const bool is_site(site_index<_site_buffer_size);
         if (! (is_indel || is_site)) break;
 
-        if (is_indel && ((! is_site) || _indel_buffer[indel_index].pos <= _site_buffer[site_index].pos)) {
+        if (is_indel && ((! is_site) || _indel_buffer[indel_index].pos <= _site_buffer[site_index].pos))
+        {
             // print indel:
             write_indel_record(indel_index);
-            if (is_conflict_print) {
+            if (is_conflict_print)
+            {
                 indel_index++;
-            } else {
+            }
+            else
+            {
                 indel_index=_indel_buffer_size;
             }
-        } else {
+        }
+        else
+        {
             // print site:
             //log_os << "site record" << "\n";
             queue_site_record(_site_buffer[site_index]);

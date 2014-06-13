@@ -27,27 +27,37 @@
 
 // information required to uniquely identify a read:
 //
-struct read_key {
+struct read_key
+{
 
     read_key(const bam_record& br) : _br_ptr(&br) {}
 
     int
-    read_no() const { return _br_ptr->read_no(); }
+    read_no() const
+    {
+        return _br_ptr->read_no();
+    }
 
     const char*
-    qname() const { return _br_ptr->qname(); }
+    qname() const
+    {
+        return _br_ptr->qname();
+    }
 
     bool
-    operator<(const read_key& rhs) const {
+    operator<(const read_key& rhs) const
+    {
         if (read_no()<rhs.read_no()) return true;
-        if (read_no()==rhs.read_no()) {
+        if (read_no()==rhs.read_no())
+        {
             return (strcmp(qname(),rhs.qname())<0);
         }
         return false;
     }
 
     bool
-    operator==(const read_key& rhs) const {
+    operator==(const read_key& rhs) const
+    {
         return ((read_no()==rhs.read_no()) and ((0==strcmp(qname(),rhs.qname()))));
     }
 

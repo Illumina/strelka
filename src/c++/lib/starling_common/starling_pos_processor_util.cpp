@@ -42,7 +42,8 @@
 
 std::string
 get_starling_bam_region_string(const starling_options& opt,
-                               const starling_deriv_options& dopt) {
+                               const starling_deriv_options& dopt)
+{
 
     const int zsize(opt.max_indel_size);
     const pos_t begin_pos(std::max(0,dopt.report_range.begin_pos-zsize));
@@ -62,17 +63,21 @@ get_starling_bam_region_string(const starling_options& opt,
 //
 static
 bool
-is_valid_bam_code(const uint8_t a) {
+is_valid_bam_code(const uint8_t a)
+{
 
     using namespace BAM_BASE;
 
-    switch (a) {
+    switch (a)
+    {
     case A:
     case C:
     case G:
     case T:
-    case ANY: return true;
-    default:  return false;
+    case ANY:
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -80,9 +85,11 @@ is_valid_bam_code(const uint8_t a) {
 
 static
 bool
-is_valid_bam_seq(const bam_seq& bs) {
+is_valid_bam_seq(const bam_seq& bs)
+{
     const unsigned rs(bs.size());
-    for (unsigned i(0); i<rs; ++i) {
+    for (unsigned i(0); i<rs; ++i)
+    {
         if (! is_valid_bam_code(bs.get_code(i))) return false;
     }
     return true;
@@ -91,17 +98,20 @@ is_valid_bam_seq(const bam_seq& bs) {
 static
 bool
 check_bam_record(const bam_streamer& read_stream,
-                 const bam_record& read) {
+                 const bam_record& read)
+{
 
     const unsigned rs(read.read_size());
 
-    if (rs==0) {
+    if (rs==0)
+    {
         log_os << "ERROR: anomalous read size (<=0) in input alignment record:\n";
         read_stream.report_state(log_os);
         exit(EXIT_FAILURE);
     }
 
-    if (rs > STARLING_MAX_READ_SIZE) {
+    if (rs > STARLING_MAX_READ_SIZE)
+    {
         log_os << "ERROR: maximum read size (" << STARLING_MAX_READ_SIZE << ") exceeded in input read alignment record:\n";
         read_stream.report_state(log_os);
         exit(EXIT_FAILURE);
@@ -109,7 +119,8 @@ check_bam_record(const bam_streamer& read_stream,
 
     // check that BAM read sequence contains expected characters:
     const bam_seq bseq(read.get_bam_read());
-    if (! is_valid_bam_seq(bseq)) {
+    if (! is_valid_bam_seq(bseq))
+    {
         log_os << "ERROR: unsupported base(s) in read sequence: " << bseq << "\n";
         read_stream.report_state(log_os);
         exit(EXIT_FAILURE);
@@ -118,16 +129,21 @@ check_bam_record(const bam_streamer& read_stream,
     // check that BAM qual sequence contains quality values we can handle:
     {
         const uint8_t* qual(read.qual());
-        for (unsigned i(0); i<rs; ++i) {
-            try {
+        for (unsigned i(0); i<rs; ++i)
+        {
+            try
+            {
                 //for RNAseq work-flow corner case. Reads of length one with '*' q-score
 //                log_os << "qscore " << static_cast<int>(qual[i])<< "\n";
-                if (qual[i]==255) {
+                if (qual[i]==255)
+                {
 //                    log_os << "\nException for basecall quality score " << static_cast<int>(qual[i])<< "\n";
                     return false;
                 }
                 qphred_cache::qscore_check(qual[i],"basecall quality");
-            } catch (...) {
+            }
+            catch (...)
+            {
                 log_os << "\nException for basecall quality score " << static_cast<int>(qual[i]) << " at read position " << (i+1) << "\n";
                 read_stream.report_state(log_os);
                 throw;
@@ -146,7 +162,8 @@ static
 bool
 is_usable_read_mapping(const starling_options& opt,
                        const bam_record& read,
-                       const bool is_tier2 =false) {
+                       const bool is_tier2 =false)
+{
 
     // Legacy map scores are the separate SE and PE mapping scores
     // from ELAND. Non-legacy mode uses the MAPQ score from the BAM
@@ -159,69 +176,94 @@ is_usable_read_mapping(const starling_options& opt,
     bool is_filter_unanchored(opt.is_filter_unanchored);
     bool is_include_singleton(opt.is_include_singleton);
     bool is_include_anomalous(opt.is_include_anomalous);
-    if (is_tier2) {
-        if (opt.is_tier2_min_single_align_score) {
+    if (is_tier2)
+    {
+        if (opt.is_tier2_min_single_align_score)
+        {
             current_min_single_align_score=opt.tier2_min_single_align_score;
         }
-        if (opt.is_tier2_min_paired_align_score) {
+        if (opt.is_tier2_min_paired_align_score)
+        {
             current_min_paired_align_score=opt.tier2_min_paired_align_score;
         }
-        if (opt.is_tier2_single_align_score_rescue_mode) {
+        if (opt.is_tier2_single_align_score_rescue_mode)
+        {
             is_rescue_mode=true;
         }
-        if (opt.is_tier2_no_filter_unanchored) {
+        if (opt.is_tier2_no_filter_unanchored)
+        {
             is_filter_unanchored=false;
         }
-        if (opt.is_tier2_include_singleton) {
+        if (opt.is_tier2_include_singleton)
+        {
             is_include_singleton=true;
         }
-        if (opt.is_tier2_include_anomalous) {
+        if (opt.is_tier2_include_anomalous)
+        {
             is_include_anomalous=true;
         }
     }
 
     if (is_filter_unanchored &&
-        read.is_unanchored()) {
+        read.is_unanchored())
+    {
         return false;
     }
 
-    if (read.is_paired()) {
+    if (read.is_paired())
+    {
         const bool is_singleton(read.is_mate_unmapped());
         const bool is_anomalous((! is_singleton) && (! read.is_proper_pair()));
-        if        ((! is_include_singleton) && is_singleton) {
+        if        ((! is_include_singleton) && is_singleton)
+        {
             return false; // singleton
-        } else if ((! is_include_anomalous) && is_anomalous) {
+        }
+        else if ((! is_include_anomalous) && is_anomalous)
+        {
             return false;
         }
     }
 
-    if (is_use_legacy_map_scores) {
+    if (is_use_legacy_map_scores)
+    {
         const int se_mapq(static_cast<int>(read.se_map_qual()));
 
-        if (read.is_paired()) {
+        if (read.is_paired())
+        {
             const int pe_mapq(static_cast<int>(read.pe_map_qual()));
-            if (pe_mapq<current_min_paired_align_score) {
+            if (pe_mapq<current_min_paired_align_score)
+            {
                 if ((! is_rescue_mode) ||
-                    (se_mapq<current_min_single_align_score)) {
+                    (se_mapq<current_min_single_align_score))
+                {
                     return false;
                 }
             }
         }
 
-        if ((! read.is_paired()) || opt.single_align_score_exclude_mode) {
-            if (se_mapq<current_min_single_align_score) {
+        if ((! read.is_paired()) || opt.single_align_score_exclude_mode)
+        {
+            if (se_mapq<current_min_single_align_score)
+            {
                 return false;
             }
         }
 
-    } else {
+    }
+    else
+    {
         const int mapq(static_cast<int>(read.map_qual()));
-        if (read.is_paired()) {
-            if (mapq < current_min_paired_align_score) {
+        if (read.is_paired())
+        {
+            if (mapq < current_min_paired_align_score)
+            {
                 return false; // paired submap
             }
-        } else {
-            if (mapq < current_min_single_align_score) {
+        }
+        else
+        {
+            if (mapq < current_min_single_align_score)
+            {
                 return false; // single submap
             }
         }
@@ -234,14 +276,16 @@ is_usable_read_mapping(const starling_options& opt,
 static
 MAPLEVEL::index_t
 get_map_level(const starling_options& opt,
-              const bam_record& read) {
+              const bam_record& read)
+{
 
     using namespace MAPLEVEL;
 
     if (read.is_unmapped()) return UNMAPPED;
 
     if (is_usable_read_mapping(opt,read)) return TIER1_MAPPED;
-    if (opt.is_tier2()) {
+    if (opt.is_tier2())
+    {
         if (is_usable_read_mapping(opt,read,true)) return TIER2_MAPPED;
     }
     return SUB_MAPPED;
@@ -254,7 +298,8 @@ bool
 is_al_overdepth(const starling_options& opt,
                 const starling_pos_processor_base& sppr,
                 const unsigned sample_no,
-                const alignment& al) {
+                const alignment& al)
+{
 
     using namespace ALIGNPATH;
 
@@ -263,13 +308,16 @@ is_al_overdepth(const starling_options& opt,
     pos_t ref_head_pos(al.pos);
 
     const unsigned as(al.path.size());
-    for (unsigned i(0); i<as; ++i) {
+    for (unsigned i(0); i<as; ++i)
+    {
         const path_segment& ps(al.path[i]);
-        if (ps.type == MATCH) {
+        if (ps.type == MATCH)
+        {
             if (sppr.is_estimated_depth_range_ge_than(ref_head_pos,
                                                       ref_head_pos+static_cast<pos_t>(ps.length),
                                                       opt.max_input_depth,
-                                                      sample_no)) {
+                                                      sample_no))
+            {
                 return true;
             }
         }
@@ -293,33 +341,39 @@ process_genomic_read(const starling_options& opt,
                      const pos_t /*report_begin_pos*/,
                      starling_read_counts& brc,
                      starling_pos_processor_base& sppr,
-                     const unsigned sample_no) {
+                     const unsigned sample_no)
+{
 
     // read filters which are *always* on, because starling/strelka
     // can't do anything sensible with this information:
     //
-    if (read.is_filter()) {
+    if (read.is_filter())
+    {
         brc.primary_filter++;
         return;
     }
 
-    if (read.is_dup()) {
+    if (read.is_dup())
+    {
         brc.duplicate++;
         return;
     }
 
-    if (read.is_unmapped()) {
+    if (read.is_unmapped())
+    {
         brc.unmapped++;
         return;
     }
 
     // for now, we can't do anything with secondary alignments either:
-    if (read.is_secondary()) {
+    if (read.is_secondary())
+    {
         brc.secondary++;
         return;
     }
 
-    if (read.is_supplement()) {
+    if (read.is_supplement())
+    {
         brc.supplement++;
         return;
     }
@@ -331,7 +385,8 @@ process_genomic_read(const starling_options& opt,
     // do not throw exception but rather ignore read
     // logic implemented in check_bam_record
     const bool allGood  = check_bam_record(read_stream,read);
-    if (!allGood) {
+    if (!allGood)
+    {
 //        log_os << "Skipping read " << read << "\n";
         return;
     }
@@ -350,7 +405,8 @@ process_genomic_read(const starling_options& opt,
     // include submapped reads for realignment only if we are writing out the realigned cases
     // ** feature disabled for now -- unmapped reads are ignored unless they come from grouper
     //
-    {   //    if(is_usable_mapping or opt.is_realign_submapped_reads){ // or opt.is_realigned_read_file){
+    {
+        //    if(is_usable_mapping or opt.is_realign_submapped_reads){ // or opt.is_realigned_read_file){
 
         // if we're seeing an unmapped read, it's still expected to
         // have a position and chrom assignment
@@ -360,13 +416,15 @@ process_genomic_read(const starling_options& opt,
 
 
         // if mapped, sanity check alignment:
-        if (maplev != MAPLEVEL::UNMAPPED) {
+        if (maplev != MAPLEVEL::UNMAPPED)
+        {
             al.is_fwd_strand=read.is_fwd_strand();
             bam_cigar_to_apath(read.raw_cigar(),read.n_cigar(),al.path);
 
             ALIGNPATH::apath_cleaner(al.path);
 
-            if (read.read_size() != ALIGNPATH::apath_read_length(al.path)) {
+            if (read.read_size() != ALIGNPATH::apath_read_length(al.path))
+            {
                 const unsigned rs(read.read_size());
                 const unsigned as(ALIGNPATH::apath_read_length(al.path));
                 log_os << "ERROR: Read length implied by mapped alignment (" << as << ") does not match read length (" << rs << ") in alignment record:\n";
@@ -375,12 +433,14 @@ process_genomic_read(const starling_options& opt,
             }
 
             // filter out reads with no match segments:
-            if (ALIGNPATH::is_apath_floating(al.path)) {
+            if (ALIGNPATH::is_apath_floating(al.path))
+            {
                 brc.floating++;
                 return;
             }
 
-            if (is_al_overdepth(opt,sppr,sample_no,al)) {
+            if (is_al_overdepth(opt,sppr,sample_no,al))
+            {
                 brc.max_depth++;
                 return;
             }
@@ -388,10 +448,13 @@ process_genomic_read(const starling_options& opt,
 
 
         static const READ_ALIGN::index_t rat(READ_ALIGN::GENOME);
-        try {
+        try
+        {
             const char* chrom_name(read_stream.target_id_to_name(read.target_id()));
             sppr.insert_read(read,al,rat,chrom_name,maplev,sample_no);
-        } catch (...) {
+        }
+        catch (...)
+        {
             log_os << "\nException caught while inserting read alignment in sppr. Genomic read alignment record:\n";
             read_stream.report_state(log_os);
             throw;
@@ -407,20 +470,23 @@ process_genomic_read(const starling_options& opt,
 static
 std::pair<unsigned,unsigned>
 common_xfix_length(const std::string& s1,
-                   const std::string& s2) {
+                   const std::string& s2)
+{
 
     const unsigned s1s(s1.size());
     const unsigned s2s(s2.size());
 
     unsigned prefix(0);
     unsigned nsearch(std::min(s1s,s2s));
-    for (; prefix<nsearch; ++prefix) {
+    for (; prefix<nsearch; ++prefix)
+    {
         if (s1[prefix] != s2[prefix]) break;
     }
 
     unsigned suffix(0);
     nsearch -= prefix;
-    for (; suffix<nsearch; ++suffix) {
+    for (; suffix<nsearch; ++suffix)
+    {
         if (s1[s1s-1-suffix] != s2[s2s-1-suffix]) break;
     }
     return std::make_pair(prefix,suffix);
@@ -436,10 +502,12 @@ process_candidate_indel(
     const vcf_record& vcf_indel,
     starling_pos_processor_base& sppr,
     const unsigned sample_no,
-    const bool is_forced_output) {
+    const bool is_forced_output)
+{
 
     const unsigned rs(vcf_indel.ref.size());
-    BOOST_FOREACH(const std::string& alt, vcf_indel.alt) {
+    BOOST_FOREACH(const std::string& alt, vcf_indel.alt)
+    {
         const unsigned as(alt.size());
         const std::pair<unsigned,unsigned> xfix(common_xfix_length(vcf_indel.ref,alt));
         const unsigned nfix(xfix.first+xfix.second);
@@ -453,19 +521,27 @@ process_candidate_indel(
         indel_observation obs;
         // starling indel pos is at the first changed base but zero-indexed:
         obs.key.pos = (vcf_indel.pos+xfix.first-1);
-        if (insert_length>0) {
-            if (delete_length>0) {
+        if (insert_length>0)
+        {
+            if (delete_length>0)
+            {
                 obs.key.type = INDEL::SWAP;
                 obs.key.swap_dlength = delete_length;
-            } else {
+            }
+            else
+            {
                 obs.key.type = INDEL::INSERT;
             }
             obs.key.length = insert_length;
             obs.data.insert_seq = std::string(alt.begin()+xfix.first,alt.end()-xfix.second);
-        } else if (delete_length>0) {
+        }
+        else if (delete_length>0)
+        {
             obs.key.type = INDEL::DELETE;
             obs.key.length = delete_length;
-        } else {
+        }
+        else
+        {
             log_os << "ERROR: Can't parse vcf indel: '" << vcf_indel << "'\n";
             exit(EXIT_FAILURE);
         }

@@ -35,14 +35,16 @@
 #include <sstream>
 
 
-namespace {
+namespace
+{
 const prog_info& pinfo(strelka_info::get());
 }
 
 
 
 void
-strelka_run(const strelka_options& opt) {
+strelka_run(const strelka_options& opt)
+{
 
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
@@ -59,7 +61,8 @@ strelka_run(const strelka_options& opt) {
     bam_streamer tumor_read_stream(opt.tumor_bam_filename.c_str(),bam_region.c_str());
 
     // check for header consistency:
-    if (! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header())) {
+    if (! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header()))
+    {
         std::ostringstream oss;
         oss << "ERROR: Normal and tumor BAM files have incompatible headers.\n";
         oss << "\tnormal_bam_file:\t'" << opt.bam_filename << "'\n";
@@ -68,7 +71,8 @@ strelka_run(const strelka_options& opt) {
     }
 
     const int32_t tid(normal_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
-    if (tid < 0) {
+    if (tid < 0)
+    {
         std::ostringstream oss;
         oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" << opt.bam_filename << "'\n";
         throw blt_exception(oss.str().c_str());
@@ -80,7 +84,8 @@ strelka_run(const strelka_options& opt) {
     // here:
     {
         const int32_t tumor_tid(tumor_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
-        if (tid != tumor_tid) {
+        if (tid != tumor_tid)
+        {
             throw blt_exception("ERROR: tumor and normal BAM files have mis-matched reference sequence dictionaries.\n");
         }
     }
@@ -97,7 +102,8 @@ strelka_run(const strelka_options& opt) {
     typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
 
-    BOOST_FOREACH(const std::string& vcf_filename, opt.input_candidate_indel_vcf) {
+    BOOST_FOREACH(const std::string& vcf_filename, opt.input_candidate_indel_vcf)
+    {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
                                                         bam_region.c_str(),normal_read_stream.get_header())));
         sdata.register_indels(*(indel_stream.back()));
@@ -105,7 +111,8 @@ strelka_run(const strelka_options& opt) {
 
     std::vector<vcf_ptr> foutput_stream;
 
-    BOOST_FOREACH(const std::string& vcf_filename, opt.force_output_vcf) {
+    BOOST_FOREACH(const std::string& vcf_filename, opt.force_output_vcf)
+    {
         foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
                                                           bam_region.c_str(),normal_read_stream.get_header())));
         sdata.register_forced_output(*(foutput_stream.back()));
@@ -113,7 +120,8 @@ strelka_run(const strelka_options& opt) {
 
     starling_input_stream_handler sinput(sdata);
 
-    while (sinput.next()) {
+    while (sinput.next())
+    {
         const input_record_info current(sinput.get_current());
 
         // If we're past the end of rlimit range then we're done.
@@ -126,7 +134,8 @@ strelka_run(const strelka_options& opt) {
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(sinput.get_head_pos()-1);
 
-        if       (current.itype == INPUT_TYPE::READ) { // handle reads from the primary mapper (as opposed to the local assembler)
+        if       (current.itype == INPUT_TYPE::READ)   // handle reads from the primary mapper (as opposed to the local assembler)
+        {
 
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
@@ -139,11 +148,16 @@ strelka_run(const strelka_options& opt) {
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
             const bam_streamer* streamptr(NULL);
-            if        (current.sample_no == STRELKA_SAMPLE_TYPE::NORMAL) {
+            if        (current.sample_no == STRELKA_SAMPLE_TYPE::NORMAL)
+            {
                 streamptr = &normal_read_stream;
-            } else if (current.sample_no == STRELKA_SAMPLE_TYPE::TUMOR) {
+            }
+            else if (current.sample_no == STRELKA_SAMPLE_TYPE::TUMOR)
+            {
                 streamptr = &tumor_read_stream;
-            } else {
+            }
+            else
+            {
                 log_os << "ERROR: unrecognized sample_no: " << current.sample_no << "\n";
                 exit(EXIT_FAILURE);
             }
@@ -153,21 +167,30 @@ strelka_run(const strelka_options& opt) {
             process_genomic_read(opt,ref,read_stream,read,current.pos,
                                  rlimit.begin_pos,brc,sppr,current.sample_no);
 
-        } else if (current.itype == INPUT_TYPE::INDEL) { // process candidate indels input from vcf file(s)
+        }
+        else if (current.itype == INPUT_TYPE::INDEL)     // process candidate indels input from vcf file(s)
+        {
             const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
             process_candidate_indel(opt.max_indel_size, vcf_indel, sppr);
 
-        } else if (current.itype == INPUT_TYPE::FORCED_OUTPUT) { // process forced genotype tests from vcf file(s)
+        }
+        else if (current.itype == INPUT_TYPE::FORCED_OUTPUT)     // process forced genotype tests from vcf file(s)
+        {
             const vcf_record& vcf_variant(*(foutput_stream[current.get_order()]->get_record_ptr()));
-            if (vcf_variant.is_indel()) {
+            if (vcf_variant.is_indel())
+            {
                 static const unsigned sample_no(0);
                 static const bool is_forced_output(true);
                 process_candidate_indel(opt.max_indel_size, vcf_variant,sppr,sample_no,is_forced_output);
-            } else if (vcf_variant.is_snv()) {
+            }
+            else if (vcf_variant.is_snv())
+            {
                 sppr.insert_forced_output_pos(vcf_variant.pos-1);
             }
 
-        } else {
+        }
+        else
+        {
             log_os << "ERROR: invalid input condition.\n";
             exit(EXIT_FAILURE);
         }

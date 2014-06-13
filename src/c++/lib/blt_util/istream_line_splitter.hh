@@ -24,7 +24,8 @@
 #include <iosfwd>
 
 
-struct istream_line_splitter {
+struct istream_line_splitter
+{
 
     istream_line_splitter(std::istream& is,
                           const unsigned line_buf_size=8*1024,
@@ -36,17 +37,29 @@ struct istream_line_splitter {
         , _buf_size(line_buf_size)
         , _sep(word_seperator)
         , _max_word(max_word)
-        , _buf(new char[_buf_size]) {
+        , _buf(new char[_buf_size])
+    {
 
-        if ((0==_max_word) || (MAX_WORD_COUNT < _max_word)) {
+        if ((0==_max_word) || (MAX_WORD_COUNT < _max_word))
+        {
             _max_word=MAX_WORD_COUNT;
         }
     }
 
-    ~istream_line_splitter() { if (NULL!=_buf) { delete [] _buf; _buf=NULL;} }
+    ~istream_line_splitter()
+    {
+        if (NULL!=_buf)
+        {
+            delete [] _buf;
+            _buf=NULL;
+        }
+    }
 
     unsigned
-    n_word() const { return _n_word; }
+    n_word() const
+    {
+        return _n_word;
+    }
 
     /// returns false for regular end of input:
     bool
@@ -80,19 +93,23 @@ private:
 
 
 #if 0
-{   //usage example:
+{
+    //usage example:
     istream_line_splitter dparse(data_is);
 
-    while (dparse.parse_line()) {
+    while (dparse.parse_line())
+    {
         static const unsigned col_count(46);
-        if (dparse.n_word()!=col_count) {
+        if (dparse.n_word()!=col_count)
+        {
             std::ostringstream oss;
             oss << "ERROR: unexpected number of columns in paired export line:\n\n";
             dparse.dump(oss);
             throw blt_exception(oss.str().c_str());
         }
 
-        for (unsigned i(1); (i+1)<col_count; ++i) {
+        for (unsigned i(1); (i+1)<col_count; ++i)
+        {
             dparse.word[i][strlen(dparse.word[i])] = sep;
         }
         const char* nocompress_segment(dparse.word[0]);

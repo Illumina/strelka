@@ -32,7 +32,8 @@
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
-struct gvcf_aggregator {
+struct gvcf_aggregator
+{
 
     gvcf_aggregator(const starling_options& opt,
                     const starling_deriv_options& dopt,
@@ -52,7 +53,8 @@ struct gvcf_aggregator {
               const starling_indel_sample_report_info& isri);
 
     void
-    flush() {
+    flush()
+    {
         skip_to_pos(_report_range.end_pos);
         process_overlaps();
         write_block_site_record();
@@ -87,7 +89,8 @@ private:
     skip_to_pos(const pos_t target_pos);
 
     const site_info&
-    get_empty_site(const pos_t pos) {
+    get_empty_site(const pos_t pos)
+    {
         _empty_site.pos=pos;
         _empty_site.ref=_ref.get_base(pos);
         return _empty_site;

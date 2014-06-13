@@ -32,7 +32,8 @@ static
 void
 get_indel_error_prob_hpol_len(const unsigned hpol_len,
                               double& insert_error_prob,
-                              double& delete_error_prob, const std::string& context) {
+                              double& delete_error_prob, const std::string& context)
+{
 
     // Calculate p(error) of
     //    CASE: del
@@ -45,7 +46,8 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
     //    --------------------
 
     // logistic model, fit for AT Reference context
-    if (context=="AT") {
+    if (context=="AT")
+    {
         static const double insert_A(1.49133831e-03);
         static const double insert_B(1.03348683e+01);
         static const double insert_C(1.13646811e+00);
@@ -62,7 +64,8 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
         const double delete_g(delete_A/ (1 + std::exp((delete_B-hpol_len)/delete_C))+delete_D);
         delete_error_prob=(1.-std::exp(-delete_g/hpol_len));
     }
-    else {
+    else
+    {
         // new polynomial model, fit for CG reference context
         static const double insert_A(5.03824e-7);
         static const double insert_B(3.30572e-10);
@@ -77,7 +80,8 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
         insert_error_prob=(1.-std::exp(-insert_g));
 
         double delete_g(delete_hpol1_err);
-        if (hpol_len>1) {
+        if (hpol_len>1)
+        {
             delete_g = delete_A*hpol_len+delete_B*std::pow(hpol_len,delete_C);
         }
         delete_error_prob=(1.-std::exp(-delete_g));
@@ -97,7 +101,8 @@ struct PatternErrorModel
 
         double itmp(0);
         double dtmp(0);
-        for (unsigned i(0); i<max_hpol_len; ++i) {
+        for (unsigned i(0); i<max_hpol_len; ++i)
+        {
             get_indel_error_prob_hpol_len(i+1,itmp,dtmp,CG_case);
             indel_error_prob_len_CG[i] = std::make_pair(itmp,dtmp);
 //            log_os << i << "_CG: " << itmp <<  " " << dtmp <<  "\n"; //print out test
@@ -113,20 +118,25 @@ struct PatternErrorModel
         const std::string& pattern) const
     {
         // choose the error model based on
-        if (overall_error_model=="old") {
-    //        log_os << "Using indel error model: " << overall_error_model << "\n";
+        if (overall_error_model=="old")
+        {
+            //        log_os << "Using indel error model: " << overall_error_model << "\n";
             return indel_error_prob_len_CG; // for now this is the old polynomial model
         }
-        else if (overall_error_model=="stratified") {
+        else if (overall_error_model=="stratified")
+        {
 
-            if ("G"==pattern || "C"==pattern) {
+            if ("G"==pattern || "C"==pattern)
+            {
                 return indel_error_prob_len_CG;
             }
-            else {
+            else
+            {
                 return indel_error_prob_len_AT;
             }
         }
-        else {
+        else
+        {
             return indel_error_prob_len_AT;
         }
     }
@@ -143,7 +153,8 @@ error_model&
 get_pattern_error_model(
     const std::string& overall_error_model,
     std::string pattern="A",
-    const int indel_length=1) {
+    const int indel_length=1)
+{
 
     // cache results for any realistic homopolymer length:
     // Treat everything above indel length 50 the same.
@@ -155,15 +166,18 @@ get_pattern_error_model(
     static error_model indel_error_prob_len_AT;
     static error_model indel_error_prob_len_CG;
 
-    if (indel_length<0) {
+    if (indel_length<0)
+    {
         //TODO use indel length
     }
 
     // initialize error
-    if (! is_init) {
+    if (! is_init)
+    {
         double itmp(0);
         double dtmp(0);
-        for (unsigned i(0); i<max_hpol_len; ++i) {
+        for (unsigned i(0); i<max_hpol_len; ++i)
+        {
             const std::string AT_case = "AT";
             const std::string CG_case = "CG";
 
@@ -178,20 +192,25 @@ get_pattern_error_model(
     }
 
     // choose the error model based on
-    if (overall_error_model=="old") {
+    if (overall_error_model=="old")
+    {
 //        log_os << "Using indel error model: " << overall_error_model << "\n";
         return indel_error_prob_len_CG; // for now this is the old polynomial model
     }
-    else if (overall_error_model=="stratified") {
+    else if (overall_error_model=="stratified")
+    {
 
-        if ("G"==pattern or "C"==pattern) {
+        if ("G"==pattern or "C"==pattern)
+        {
             return indel_error_prob_len_CG;
         }
-        else {
+        else
+        {
             return indel_error_prob_len_AT;
         }
     }
-    else {
+    else
+    {
         return indel_error_prob_len_AT;
     }
 }
@@ -205,7 +224,8 @@ void
 get_indel_error_prob(const starling_options& client_opt,
                      const starling_indel_report_info& iri,
                      double& indel_error_prob,
-                     double& ref_error_prob) {
+                     double& ref_error_prob)
+{
 
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
@@ -213,7 +233,8 @@ get_indel_error_prob(const starling_options& client_opt,
 
     const error_model& indel_error_prob_len(emodel.getModel(client_opt.indel_error_model,iri.repeat_unit));
 
-    if (! is_simple_indel) {
+    if (! is_simple_indel)
+    {
         // breakpoints and swaps --
         // use zero repeat error for now.
         //
@@ -221,23 +242,28 @@ get_indel_error_prob(const starling_options& client_opt,
         //
         indel_error_prob=std::max(indel_error_prob_len[0].first,indel_error_prob_len[0].second);
         ref_error_prob=indel_error_prob;
-    } else {
+    }
+    else
+    {
         // treat everything besides simple homopolymer
         // contractions/expansions as homopolymer length 1:
         //
 //        log_os << "Im doing in indels \n";
-        if (iri.repeat_unit.size() == 1) {
+        if (iri.repeat_unit.size() == 1)
+        {
             static const unsigned one(1);
             const unsigned ref_hpol_len = std::min(std::max(iri.ref_repeat_count,one),max_hpol_len);
             const unsigned indel_hpol_len = std::min(std::max(iri.indel_repeat_count,one),max_hpol_len);
             int indel_size(1);
             static const bool is_indel_size_dependent_error(false);
-            if (is_indel_size_dependent_error) {
+            if (is_indel_size_dependent_error)
+            {
                 indel_size=(std::abs(static_cast<long>(iri.ref_repeat_count)-
                                      static_cast<long>(iri.indel_repeat_count)));
             }
 
-            if       (iri.it == INDEL::INSERT) {
+            if       (iri.it == INDEL::INSERT)
+            {
                 indel_error_prob=std::max(indel_error_prob_len[0].first,
                                           std::pow(indel_error_prob_len[ref_hpol_len-1].first,indel_size));
 //            log_os << "error prob: " << indel_error_prob_len[ref_hpol_len-1].first << "\n";
@@ -245,23 +271,34 @@ get_indel_error_prob(const starling_options& client_opt,
                 //may want to leave this term for now.
                 ref_error_prob=std::max(indel_error_prob_len[0].second,
                                         std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
-            } else if (iri.it == INDEL::DELETE) {
+            }
+            else if (iri.it == INDEL::DELETE)
+            {
                 indel_error_prob=std::max(indel_error_prob_len[0].second,
                                           std::pow(indel_error_prob_len[ref_hpol_len-1].second,indel_size));
                 ref_error_prob=std::max(indel_error_prob_len[0].first,
                                         std::pow(indel_error_prob_len[indel_hpol_len-1].first,indel_size));
-            } else {
+            }
+            else
+            {
                 log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
                 throw blt_exception("Unknown indel type.");
             }
-        } else {
-            if (iri.it == INDEL::INSERT) {
+        }
+        else
+        {
+            if (iri.it == INDEL::INSERT)
+            {
                 indel_error_prob=indel_error_prob_len[0].first;
                 ref_error_prob=indel_error_prob_len[0].second;
-            } else if (iri.it == INDEL::DELETE) {
+            }
+            else if (iri.it == INDEL::DELETE)
+            {
                 indel_error_prob=indel_error_prob_len[0].second;
                 ref_error_prob=indel_error_prob_len[0].first;
-            } else {
+            }
+            else
+            {
                 log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
                 throw blt_exception("Unknown indel type.");
             }

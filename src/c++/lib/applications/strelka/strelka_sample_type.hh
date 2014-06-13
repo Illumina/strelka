@@ -27,26 +27,37 @@
 #include "starling_common/sample_info.hh"
 
 
-namespace STRELKA_SAMPLE_TYPE {
+namespace STRELKA_SAMPLE_TYPE
+{
 enum index_t { NORMAL, TUMOR, SIZE };
 
 inline
 const char*
-get_label(const unsigned i) {
-    switch (static_cast<index_t>(i)) {
-    case NORMAL: return "NORMAL";
-    case TUMOR: return "TUMOR";
-    default: return "UNKNOWN";
+get_label(const unsigned i)
+{
+    switch (static_cast<index_t>(i))
+    {
+    case NORMAL:
+        return "NORMAL";
+    case TUMOR:
+        return "TUMOR";
+    default:
+        return "UNKNOWN";
     }
 }
 
 inline
 char
-get_char_label(const unsigned i) {
-    switch (static_cast<index_t>(i)) {
-    case NORMAL: return 'n';
-    case TUMOR: return 't';
-    default: return '?';
+get_char_label(const unsigned i)
+{
+    switch (static_cast<index_t>(i))
+    {
+    case NORMAL:
+        return 'n';
+    case TUMOR:
+        return 't';
+    default:
+        return '?';
     }
 }
 }
@@ -54,29 +65,39 @@ get_char_label(const unsigned i) {
 
 // same thing, but easier to pass around as an argument:
 //
-struct strelka_sample_info : public sample_info {
+struct strelka_sample_info : public sample_info
+{
 
     strelka_sample_info() : sample_info() {}
 
     virtual
     unsigned
-    sample_size() const { return STRELKA_SAMPLE_TYPE::SIZE; }
+    sample_size() const
+    {
+        return STRELKA_SAMPLE_TYPE::SIZE;
+    }
 
     virtual
-    const char* get_label(const unsigned i) const {
+    const char* get_label(const unsigned i) const
+    {
         return STRELKA_SAMPLE_TYPE::get_label(i);
     }
 
     virtual
     const char* get_prefix(const unsigned i,
-                           const bool is_tier1) const {
+                           const bool is_tier1) const
+    {
 
         using namespace STRELKA_SAMPLE_TYPE;
 
-        switch (static_cast<index_t>(i)) {
-        case NORMAL: return (is_tier1 ? "n1-" : "n2-");
-        case TUMOR: return (is_tier1 ? "t1-" : "t2-");
-        default: return "?" "?-";
+        switch (static_cast<index_t>(i))
+        {
+        case NORMAL:
+            return (is_tier1 ? "n1-" : "n2-");
+        case TUMOR:
+            return (is_tier1 ? "t1-" : "t2-");
+        default:
+            return "?" "?-";
         }
     }
 };

@@ -30,9 +30,11 @@
 #include <map>
 
 
-namespace VCF_FILTERS {
+namespace VCF_FILTERS
+{
 
-enum index_t {
+enum index_t
+{
     IndelConflict,
     SiteConflict,
     LowGQX,
@@ -53,23 +55,40 @@ enum index_t {
 
 inline
 const char*
-get_label(const unsigned idx) {
-    switch (idx) {
-    case HighDepth: return "HighDepth";
-    case LowGQX: return "LowGQX";
-    case LowQscoreHetSNP: return "LowGQXHetSNP";
-    case LowQscoreHomSNP: return "LowGQXHomSNP";
-    case LowQscoreHetIns: return "LowGQXHetIns";
-    case LowQscoreHomIns: return "LowGQXHomIns";
-    case LowQscoreHetDel: return "LowGQXHetDel";
-    case LowQscoreHomDel: return "LowGQXHetDel";
-    case PhasingConflict: return "PhasingConflict";
-    case HighSNVSB: return "HighSNVSB";
-    case HighSNVHPOL: return "HighSNVHPOL";
-    case HighBaseFilt: return "HighDPFRatio";
-    case HighRefRep: return "HighREFREP";
-    case IndelConflict: return "IndelConflict";
-    case SiteConflict: return "SiteConflict";
+get_label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case HighDepth:
+        return "HighDepth";
+    case LowGQX:
+        return "LowGQX";
+    case LowQscoreHetSNP:
+        return "LowGQXHetSNP";
+    case LowQscoreHomSNP:
+        return "LowGQXHomSNP";
+    case LowQscoreHetIns:
+        return "LowGQXHetIns";
+    case LowQscoreHomIns:
+        return "LowGQXHomIns";
+    case LowQscoreHetDel:
+        return "LowGQXHetDel";
+    case LowQscoreHomDel:
+        return "LowGQXHetDel";
+    case PhasingConflict:
+        return "PhasingConflict";
+    case HighSNVSB:
+        return "HighSNVSB";
+    case HighSNVHPOL:
+        return "HighSNVHPOL";
+    case HighBaseFilt:
+        return "HighDPFRatio";
+    case HighRefRep:
+        return "HighREFREP";
+    case IndelConflict:
+        return "IndelConflict";
+    case SiteConflict:
+        return "SiteConflict";
     default:
         assert(0);
         return NULL;
@@ -79,12 +98,17 @@ get_label(const unsigned idx) {
 
 
 
-struct shared_modifiers {
+struct shared_modifiers
+{
 
-    shared_modifiers() { clear(); }
+    shared_modifiers()
+    {
+        clear();
+    }
 
     void
-    set_filter(const VCF_FILTERS::index_t i) {
+    set_filter(const VCF_FILTERS::index_t i)
+    {
         filters.set(i);
     }
 
@@ -92,7 +116,8 @@ struct shared_modifiers {
     write_filters(std::ostream& os) const;
 
     void
-    clear() {
+    clear()
+    {
         filters.reset();
     }
 
@@ -107,11 +132,16 @@ struct shared_modifiers {
 std::ostream& operator<<(std::ostream& os,const shared_modifiers& shmod);
 
 
-struct indel_modifiers : public shared_modifiers {
-    indel_modifiers() { clear(); }
+struct indel_modifiers : public shared_modifiers
+{
+    indel_modifiers()
+    {
+        clear();
+    }
 
     void
-    clear() {
+    clear()
+    {
         shared_modifiers::clear();
         is_overlap=false;
         ploidy.clear();
@@ -125,9 +155,11 @@ struct indel_modifiers : public shared_modifiers {
 
 
 
-namespace MODIFIED_SITE_GT {
+namespace MODIFIED_SITE_GT
+{
 
-enum index_t {
+enum index_t
+{
     NONE,
     UNKNOWN,
     ZERO,
@@ -136,11 +168,16 @@ enum index_t {
 
 inline
 const char*
-get_label(const unsigned idx) {
-    switch (static_cast<index_t>(idx)) {
-    case ZERO: return "0";
-    case ONE: return "1";
-    case UNKNOWN: return ".";
+get_label(const unsigned idx)
+{
+    switch (static_cast<index_t>(idx))
+    {
+    case ZERO:
+        return "0";
+    case ONE:
+        return "1";
+    case UNKNOWN:
+        return ".";
     default:
         assert(0);
         return NULL;
@@ -148,12 +185,17 @@ get_label(const unsigned idx) {
 }
 }
 
-struct site_modifiers : public shared_modifiers {
+struct site_modifiers : public shared_modifiers
+{
 
-    site_modifiers() { clear(); }
+    site_modifiers()
+    {
+        clear();
+    }
 
     void
-    clear() {
+    clear()
+    {
         shared_modifiers::clear();
         is_unknown=true;
         is_covered=false;
@@ -165,7 +207,8 @@ struct site_modifiers : public shared_modifiers {
     }
 
     bool
-    is_gqx() const {
+    is_gqx() const
+    {
         return ((!is_unknown) && is_used_covered && (!is_zero_ploidy));
     }
 
@@ -184,7 +227,8 @@ std::ostream& operator<<(std::ostream& os,const site_modifiers& smod);
 
 
 
-struct indel_info {
+struct indel_info
+{
 
     void
     init(const pos_t init_pos,
@@ -207,30 +251,41 @@ struct indel_info {
     }
 
     const char*
-    get_gt() {
-        if (imod.is_overlap) {
+    get_gt()
+    {
+        if (imod.is_overlap)
+        {
             return "1/2";
         }
         return STAR_DIINDEL::get_gt_label(imod.max_gt);
     }
 
     bool
-    is_het() {
+    is_het()
+    {
         return (static_cast<int>(imod.max_gt)>1);
     }
 
     // the site ploidy within the indel at offset x
     unsigned
-    get_ploidy(const unsigned offset) {
-        if (! imod.is_overlap) {
+    get_ploidy(const unsigned offset)
+    {
+        if (! imod.is_overlap)
+        {
             using namespace STAR_DIINDEL;
-            switch (dindel.max_gt) {
-            case HOM: return 0;
-            case HET: return 1;
-            case NOINDEL: return 2;
+            switch (dindel.max_gt)
+            {
+            case HOM:
+                return 0;
+            case HET:
+                return 1;
+            case NOINDEL:
+                return 2;
             }
             assert(0);
-        } else {
+        }
+        else
+        {
             assert(offset<imod.ploidy.size());
             return imod.ploidy[offset];
         }
@@ -259,7 +314,8 @@ struct indel_info {
 
 
 //Data structure defining parameters for a single site to be used for writing in gvcf_aggregator
-struct site_info {
+struct site_info
+{
 
     site_info()
         : pos(0)
@@ -284,7 +340,8 @@ struct site_info {
     init(const pos_t init_pos,
          const char init_ref,
          const snp_pos_info& good_pi,
-         const bool used_allele_count_min_qscore) {
+         const bool used_allele_count_min_qscore)
+    {
 
         pos=(init_pos);
         ref=(init_ref);
@@ -295,14 +352,21 @@ struct site_info {
 
 
     const char*
-    get_gt() const {
-        if       (smod.modified_gt != MODIFIED_SITE_GT::NONE) {
+    get_gt() const
+    {
+        if       (smod.modified_gt != MODIFIED_SITE_GT::NONE)
+        {
             return MODIFIED_SITE_GT::get_label(smod.modified_gt);
-        } else if (smod.is_unknown || (!smod.is_used_covered)) {
+        }
+        else if (smod.is_unknown || (!smod.is_used_covered))
+        {
             return ".";
-        } else {
+        }
+        else
+        {
             unsigned print_gt(smod.max_gt);
-            if (smod.is_block) {
+            if (smod.is_block)
+            {
                 print_gt = dgt.ref_gt;
             }
             return DIGT::get_vcf_gt(print_gt,dgt.ref_gt);
@@ -312,19 +376,22 @@ struct site_info {
     std::map<std::string, double> get_qscore_features();
 
     bool
-    is_het() const {
+    is_het() const
+    {
         unsigned print_gt(smod.max_gt);
         return DIGT::is_het(print_gt);
     }
 
 
     bool
-    is_deletion() const {
+    is_deletion() const
+    {
         return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (dgt.ref_gt != smod.max_gt));
     }
 
     bool
-    is_qual() const {
+    is_qual() const
+    {
         return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (dgt.ref_gt != smod.max_gt));
     }
 

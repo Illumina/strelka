@@ -31,7 +31,8 @@
 #include <cstdlib>
 
 
-namespace {
+namespace
+{
 const prog_info& pinfo(starling_info::get());
 }
 
@@ -43,7 +44,8 @@ runInternal(int argc, char* argv[]) const
 {
     starling_options opt;
 
-    for (int i(0); i<argc; ++i) {
+    for (int i(0); i<argc; ++i)
+    {
         if (i) opt.cmdline += ' ';
         opt.cmdline += argv[i];
     }
@@ -52,7 +54,8 @@ runInternal(int argc, char* argv[]) const
 
     std::vector<std::string> legacy_starling_args;
     po::variables_map vm;
-    try {
+    try
+    {
         po::options_description visible(get_starling_option_parser(opt));
         po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).allow_unregistered().run());
         po::store(parsed,vm);
@@ -61,11 +64,14 @@ runInternal(int argc, char* argv[]) const
         // allow remaining options to be parsed using old starling command-line parser:
         legacy_starling_args = po::collect_unrecognized(parsed.options,po::include_positional);
 
-    } catch (const boost::program_options::error& e) {
+    }
+    catch (const boost::program_options::error& e)
+    {
         pinfo.usage(e.what());
     }
 
-    if ((argc==1) || vm.count("help")) {
+    if ((argc==1) || vm.count("help"))
+    {
         pinfo.usage();
     }
 

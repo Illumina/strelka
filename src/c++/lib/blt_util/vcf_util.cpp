@@ -29,7 +29,8 @@
 
 
 std::ostream&
-vcf_fileDate(std::ostream& os) {
+vcf_fileDate(std::ostream& os)
+{
     const time_t t(time(NULL));
     struct tm* ct(localtime(&t));
     assert(NULL != ct);
@@ -43,20 +44,25 @@ vcf_fileDate(std::ostream& os) {
 
 
 
-struct gt_parse_helper {
+struct gt_parse_helper
+{
 
     // return is_valid_genotype
     static
     bool
     start(const char* gt,
           std::vector<int>& gti,
-          const bool is_badend) {
+          const bool is_badend)
+    {
         gti.clear();
         if (isdigit(*gt)) return digit(gt,gti,is_badend);
 
-        switch (*gt) {
-        case '.' :  return unknown(gt,gti,is_badend);
-        default: return false;
+        switch (*gt)
+        {
+        case '.' :
+            return unknown(gt,gti,is_badend);
+        default:
+            return false;
         }
     }
 
@@ -66,14 +72,19 @@ private:
     bool
     unknown(const char* gt,
             std::vector<int>& gti,
-            const bool is_badend) {
+            const bool is_badend)
+    {
         gt++;
         gti.push_back(-1);
-        switch (*gt) {
-        case '\0' : return true;
+        switch (*gt)
+        {
+        case '\0' :
+            return true;
         case '|' :
-        case '/' : return sep(gt,gti,is_badend);
-        default : return is_badend;
+        case '/' :
+            return sep(gt,gti,is_badend);
+        default :
+            return is_badend;
         }
     }
 
@@ -81,12 +92,16 @@ private:
     bool
     sep(const char* gt,
         std::vector<int>& gti,
-        const bool is_badend) {
+        const bool is_badend)
+    {
         gt++;
         if (isdigit(*gt)) return digit(gt,gti,is_badend);
-        switch (*gt) {
-        case '.' : return unknown(gt,gti,is_badend);
-        default : return false;
+        switch (*gt)
+        {
+        case '.' :
+            return unknown(gt,gti,is_badend);
+        default :
+            return false;
         }
     }
 
@@ -94,19 +109,25 @@ private:
     bool
     digit(const char* gt,
           std::vector<int>& gti,
-          const bool is_badend) {
+          const bool is_badend)
+    {
         int val(0);
-        while (isdigit(*gt)) {
+        while (isdigit(*gt))
+        {
             val = val*10 + static_cast<int>(*gt-'0');
             gt++;
         }
         gti.push_back(val);
 
-        switch (*gt) {
-        case '\0' : return true;
+        switch (*gt)
+        {
+        case '\0' :
+            return true;
         case '|' :
-        case '/' : return sep(gt,gti,is_badend);
-        default : return is_badend;
+        case '/' :
+            return sep(gt,gti,is_badend);
+        default :
+            return is_badend;
         }
     }
 };
@@ -117,9 +138,11 @@ private:
 void
 parse_gt(const char* gt,
          std::vector<int>& gti,
-         const bool is_allow_bad_end_char) {
+         const bool is_allow_bad_end_char)
+{
 
-    if (! gt_parse_helper::start(gt,gti,is_allow_bad_end_char)) {
+    if (! gt_parse_helper::start(gt,gti,is_allow_bad_end_char))
+    {
         std::ostringstream oss;
         oss << "ERROR: can't parse genotype string: '" << gt << "'\n";
         throw blt_exception(oss.str().c_str());

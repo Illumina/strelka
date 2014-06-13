@@ -31,14 +31,16 @@
 //#define SOMATIC_DEBUG
 
 
-namespace DDIGT {
+namespace DDIGT
+{
 
 enum index_t { SIZE = DIGT::SIZE*DIGT::SIZE };
 
 inline
 unsigned
 get_state(const unsigned normal_gt,
-          const unsigned tumor_gt) {
+          const unsigned tumor_gt)
+{
     return normal_gt+DIGT::SIZE*tumor_gt;
 }
 
@@ -46,7 +48,8 @@ inline
 void
 get_digt_states(const unsigned dgt,
                 unsigned& normal_gt,
-                unsigned& tumor_gt) {
+                unsigned& tumor_gt)
+{
     normal_gt = (dgt%DIGT::SIZE);
     tumor_gt = (dgt/DIGT::SIZE);
 }
@@ -57,12 +60,14 @@ std::ostream& operator<<(std::ostream& os,const DDIGT::index_t dgt);
 
 
 
-struct somatic_snv_genotype : private boost::noncopyable {
+struct somatic_snv_genotype : private boost::noncopyable
+{
 
     somatic_snv_genotype()
         : is_snv(false), tier(0), ref_gt(0) {}
 
-    struct result_set {
+    struct result_set
+    {
 
         result_set()
             : max_gt(0), pprob(DDIGT::SIZE)
@@ -77,7 +82,8 @@ struct somatic_snv_genotype : private boost::noncopyable {
             snv_from_hom_qphred=qp;
             snv_from_anyhom_qphred=qp;
             max_gt_qphred=qp;
-            for (unsigned i(0); i<DDIGT::SIZE; ++i) {
+            for (unsigned i(0); i<DDIGT::SIZE; ++i)
+            {
                 pprob[i] = p;
             }
         }
@@ -116,7 +122,8 @@ write_somatic_snv_genotype(const strelka_options& opt,
 
 
 // object used to pre-compute priors:
-struct somatic_snv_caller {
+struct somatic_snv_caller
+{
 
     somatic_snv_caller(const strelka_options& opt,
                        const pprob_digt_caller& pd_caller);
@@ -131,16 +138,19 @@ struct somatic_snv_caller {
 
 private:
     const blt_float_t*
-    lnprior_genomic(const unsigned ref_id) const {
+    lnprior_genomic(const unsigned ref_id) const
+    {
         return _lnprior[ref_id].genome;
     }
 
     const blt_float_t*
-    lnprior_polymorphic(const unsigned ref_id) const {
+    lnprior_polymorphic(const unsigned ref_id) const
+    {
         return _lnprior[ref_id].poly;
     }
 
-    struct prior_set {
+    struct prior_set
+    {
         blt_float_t genome[DDIGT::SIZE];
         blt_float_t poly[DDIGT::SIZE];
     };

@@ -31,10 +31,12 @@ enum { STARLING_MAX_READ_SIZE = 25000 };
 
 
 
-struct avg_window_data {
+struct avg_window_data
+{
 
     bool
-    operator<(const avg_window_data& rhs) const {
+    operator<(const avg_window_data& rhs) const
+    {
         return (flank_size < rhs.flank_size);
     }
 
@@ -47,7 +49,8 @@ operator<<(std::ostream& os, const avg_window_data& awd);
 
 
 
-struct starling_options : public blt_options {
+struct starling_options : public blt_options
+{
 
     starling_options()
         : bindel_diploid_theta(0.0001),
@@ -95,22 +98,26 @@ struct starling_options : public blt_options {
     // checks from child class options):
     virtual
     bool
-    is_call_indels() const {
+    is_call_indels() const
+    {
         return is_bindel_diploid();
     }
 
     // is diploid indel model being used?
     bool
-    is_bindel_diploid() const {
+    is_bindel_diploid() const
+    {
         return (is_bindel_diploid_file || is_gvcf_output());
     }
 
     bool
-    is_write_candidate_indels() const {
+    is_write_candidate_indels() const
+    {
         return (not candidate_indel_filename.empty());
     }
 
-    unsigned htype_buffer_segment() const {
+    unsigned htype_buffer_segment() const
+    {
         return max_indel_size;
     }
 
@@ -254,7 +261,8 @@ struct starling_options : public blt_options {
 
 // allow for sample-specific parameter values:
 //
-struct starling_sample_options {
+struct starling_sample_options
+{
 
     starling_sample_options(const starling_options& opt)
         : min_read_bp_flank(opt.default_min_read_bp_flank)
@@ -274,7 +282,8 @@ struct indel_digt_caller;
 
 // data deterministically derived from the input options:
 //
-struct starling_deriv_options : public blt_deriv_options {
+struct starling_deriv_options : public blt_deriv_options
+{
 
     typedef blt_deriv_options base_t;
 
@@ -284,11 +293,15 @@ struct starling_deriv_options : public blt_deriv_options {
     ~starling_deriv_options();
 
     const indel_digt_caller&
-    incaller() const { return *(_incaller.get()); }
+    incaller() const
+    {
+        return *(_incaller.get());
+    }
 
     double
     get_nonsite_path_lnp(const bool is_tier2_pass,
-                         const uint16_t nsite) const {
+                         const uint16_t nsite) const
+    {
         const double nonsite_match_lnp(is_tier2_pass ?
                                        tier2_indel_nonsite_match_lnp :
                                        indel_nonsite_match_lnp );
@@ -311,7 +324,8 @@ private:
 
 
 
-struct starling_read_counts : public blt_read_counts {
+struct starling_read_counts : public blt_read_counts
+{
 
     starling_read_counts() :
         normal_indel_used(0),

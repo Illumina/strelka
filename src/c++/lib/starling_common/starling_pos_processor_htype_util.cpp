@@ -31,8 +31,10 @@
 
 // used to describe an open breakpoint haplotype:
 //
-namespace OPEN {
-enum index_t {
+namespace OPEN
+{
+enum index_t
+{
     NONE,
     LEFT,
     RIGHT
@@ -40,8 +42,10 @@ enum index_t {
 
 static
 const char*
-label(index_t i) {
-    switch (i) {
+label(index_t i)
+{
+    switch (i)
+    {
     case LEFT:
         return "left";
     case RIGHT:
@@ -52,7 +56,8 @@ label(index_t i) {
 }
 }
 
-namespace {
+namespace
+{
 
 // haplotypes are composed of sequences of "elements", each element is
 // similar to the current "sequence swap" indel type, thus it can
@@ -71,7 +76,8 @@ namespace {
 // All conventions for pos,right_pos(), etc should match indel_key
 // when possible
 //
-struct htype_element {
+struct htype_element
+{
 
     htype_element(const pos_t p=0)
         : pos(p)
@@ -79,23 +85,27 @@ struct htype_element {
         , open_end(OPEN::NONE) {}
 
     void
-    clear() {
+    clear()
+    {
         pos=0;
         delete_length=0;
         open_end=OPEN::NONE;
         seq.clear();
     }
 
-    unsigned insert_length() const {
+    unsigned insert_length() const
+    {
         return seq.size();
     }
 
-    pos_t right_pos() const {
+    pos_t right_pos() const
+    {
         return (pos+delete_length);
     }
 
     bool
-    operator==(const htype_element& rhs) const {
+    operator==(const htype_element& rhs) const
+    {
         return ((pos == rhs.pos) &&
                 (delete_length == rhs.delete_length) &&
                 (open_end == rhs.open_end) &&
@@ -103,20 +113,25 @@ struct htype_element {
     }
 
     bool
-    operator<(const htype_element& rhs) const {
+    operator<(const htype_element& rhs) const
+    {
         if (pos < rhs.pos) return true;
-        if (pos==rhs.pos) {
+        if (pos==rhs.pos)
+        {
             return gtcore(rhs);
         }
         return false;
     }
 
     bool
-    gtcore(const htype_element& rhs) const {
+    gtcore(const htype_element& rhs) const
+    {
         if (delete_length < rhs.delete_length) return true;
-        if (delete_length==rhs.delete_length) {
+        if (delete_length==rhs.delete_length)
+        {
             if (open_end < rhs.open_end) return true;
-            if (open_end==rhs.open_end) {
+            if (open_end==rhs.open_end)
+            {
                 if (seq < rhs.seq) return true;
             }
         }
@@ -125,19 +140,24 @@ struct htype_element {
 
     // correct pos range to use when we view sv's as breakpoints:
     known_pos_range
-    breakpoint_pos_range() const {
+    breakpoint_pos_range() const
+    {
         return known_pos_range(pos,right_pos());
     }
 
     // correct pos range to use when we view sv's as ranges
     // (ie. candidate indel interference within a single read:)
     pos_range
-    open_pos_range() const {
-        if       (open_end == OPEN::RIGHT) {
+    open_pos_range() const
+    {
+        if       (open_end == OPEN::RIGHT)
+        {
             pos_range pr;
             pr.set_begin_pos(pos);
             return pr;
-        } else if (open_end == OPEN::LEFT) {
+        }
+        else if (open_end == OPEN::LEFT)
+        {
             pos_range pr;
             pr.set_end_pos(pos);
             return pr;
@@ -146,7 +166,8 @@ struct htype_element {
         return breakpoint_pos_range();
     }
 
-    bool is_breakpoint() const {
+    bool is_breakpoint() const
+    {
         return (open_end != OPEN::NONE);
     }
 
@@ -160,14 +181,18 @@ struct htype_element {
 }
 
 
-namespace {
+namespace
+{
 
-struct right_pos_htype_element_sorter {
+struct right_pos_htype_element_sorter
+{
     bool
     operator()(const htype_element& h1,
-               const htype_element& h2) const {
+               const htype_element& h2) const
+    {
         if (h1.right_pos() < h2.right_pos()) return true;
-        if (h1.right_pos() == h2.right_pos()) {
+        if (h1.right_pos() == h2.right_pos())
+        {
             return h1.gtcore(h2);
         }
         return false;
@@ -181,11 +206,13 @@ std::ostream& operator<<(std::ostream& os, const htype_element& he);
 
 std::ostream&
 operator<<(std::ostream& os,
-           const htype_element& he) {
+           const htype_element& he)
+{
 
     os << "htype_element: pos: " << he.pos
        << " del_len: " << he.delete_length;
-    if (OPEN::NONE != he.open_end) {
+    if (OPEN::NONE != he.open_end)
+    {
         os << " open_end: " << OPEN::label(he.open_end);
     }
     os << " seq: " << he.seq;
@@ -195,27 +222,34 @@ operator<<(std::ostream& os,
 
 
 
-namespace {
+namespace
+{
 
-struct htype_buffer {
+struct htype_buffer
+{
     typedef std::map<htype_element,unsigned> hdata_t;
     typedef hdata_t::iterator iterator;
     typedef hdata_t::const_iterator const_iterator;
 
     bool
-    empty() const {
+    empty() const
+    {
         return _hdata.empty();
     }
 
     //
     //
     void
-    insert_element(const htype_element& he) {
+    insert_element(const htype_element& he)
+    {
         const hdata_t::iterator i(_hdata.find(he));
-        if (i==_hdata.end()) {
+        if (i==_hdata.end())
+        {
             _hdata.insert(std::make_pair(he,1));
             _rightpos.insert(std::make_pair(he.right_pos(),he.pos));
-        } else {
+        }
+        else
+        {
             i->second++;
         }
     }
@@ -262,7 +296,8 @@ private:
 pos_t
 htype_buffer::
 leftmost_rightkey_pos(const pos_t& begin_range_pos,
-                      const pos_t& end_range_pos) const {
+                      const pos_t& end_range_pos) const
+{
 
     typedef rightkey_t::const_iterator riter;
 
@@ -278,7 +313,8 @@ leftmost_rightkey_pos(const pos_t& begin_range_pos,
 std::pair<htype_buffer::iterator,htype_buffer::iterator>
 htype_buffer::
 pos_range_iter(const pos_t begin_pos,
-               const pos_t end_pos) {
+               const pos_t end_pos)
+{
 
     typedef htype_element hkey_t;
 
@@ -297,11 +333,13 @@ pos_range_iter(const pos_t begin_pos,
 
 void
 htype_buffer::
-dump(std::ostream& os) const {
+dump(std::ostream& os) const
+{
 
     os << "Haplotype buffer dump ON\n";
     const_iterator i(_hdata.begin()),i_end(_hdata.end());
-    for (; i!=i_end; ++i) {
+    for (; i!=i_end; ++i)
+    {
         os << i->first << " count: " << i->second << "\n";
     }
     os << "Haplotype buffer dump OFF\n";
@@ -316,7 +354,8 @@ convert_indel_to_htype(const indel_key& ik,
                        const indel_data& /*id*/,
                        const read_segment& rseg,
                        const reference_contig_segment& ref,
-                       htype_element& he) {
+                       htype_element& he)
+{
 
     he.clear();
 
@@ -351,42 +390,56 @@ convert_indel_to_htype(const indel_key& ik,
     assert(! ref_indel_pr.is_empty());
 
     // build he:
-    if (ref_indel_pr.is_complete()) {
+    if (ref_indel_pr.is_complete())
+    {
         he.delete_length=ref_indel_pr.end_pos-ref_indel_pr.begin_pos;
     }
 
-    if (!  read_indel_pr.is_begin_pos) {
+    if (!  read_indel_pr.is_begin_pos)
+    {
         he.pos=read_indel_pr.end_pos;
-    } else {
+    }
+    else
+    {
         he.pos=read_indel_pr.begin_pos;
     }
 
-    if       (! read_indel_pr.is_end_pos) {
+    if       (! read_indel_pr.is_end_pos)
+    {
         he.open_end=OPEN::RIGHT;
-    } else if (! read_indel_pr.is_begin_pos) {
+    }
+    else if (! read_indel_pr.is_begin_pos)
+    {
         he.open_end=OPEN::LEFT;
     }
 
-    {   // copy into htype element seq (don't worry about efficiency for now)
+    {
+        // copy into htype element seq (don't worry about efficiency for now)
         pos_range pr(read_indel_pr);
-        if (! pr.is_complete()) {
+        if (! pr.is_complete())
+        {
             const pos_range nonclip_pr(get_nonclip_range(al.path));
             assert(nonclip_pr.is_complete());
-            if       (! pr.is_begin_pos) {
+            if       (! pr.is_begin_pos)
+            {
                 pr.set_begin_pos(nonclip_pr.begin_pos);
-            } else {
+            }
+            else
+            {
                 pr.set_end_pos(nonclip_pr.end_pos);
             }
         }
 
         assert(pr.begin_pos<=pr.end_pos && pr.begin_pos>=0);
-        for (pos_t i(pr.begin_pos); i<pr.end_pos; ++i) {
+        for (pos_t i(pr.begin_pos); i<pr.end_pos; ++i)
+        {
             he.seq.push_back(read_seq.get_char(i));
         }
     }
 
     if ((he.delete_length==0) &&
-        (he.insert_length()==0)) {
+        (he.insert_length()==0))
+    {
         he.clear();
         return false;
     }
@@ -404,7 +457,8 @@ get_htypes_for_indel(const starling_deriv_options& dopt,
                      const reference_contig_segment& ref,
                      const indel_key& ik,
                      const indel_data& id,
-                     htype_buffer& hdata) {
+                     htype_buffer& hdata)
+{
 
     static const bool is_tier2_pass(false);
     static const bool is_use_alt_indel(true);
@@ -414,17 +468,20 @@ get_htypes_for_indel(const starling_deriv_options& dopt,
 
     htype_element he;
     siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-    for (; i!=i_end; ++i) {
+    for (; i!=i_end; ++i)
+    {
         const align_id_t read_id(i->first);
         const read_path_scores& path_lnp(i->second);
         const read_path_scores pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
 
-        if (pprob.indel >= include_thresh) {
+        if (pprob.indel >= include_thresh)
+        {
             // convert indel to htype_element and insert:
             const starling_read* srptr(rbuff.get_read(read_id));
 
             /// TODO - add segmented read support
-            if (srptr->is_segmented()) {
+            if (srptr->is_segmented())
+            {
                 log_os << "ERROR: haplotype model does not work for spliced reads\n";
                 exit(EXIT_FAILURE);
             }
@@ -448,7 +505,8 @@ get_htypes_for_indel(const starling_deriv_options& dopt,
 void
 starling_pos_processor_base::
 get_region_haplotypes(const known_pos_range full_pr,
-                      const known_pos_range /*active_pr*/) {
+                      const known_pos_range /*active_pr*/)
+{
 
     // only works for the first sample right now:
     static const unsigned sample_no(0);
@@ -464,7 +522,8 @@ get_region_haplotypes(const known_pos_range full_pr,
     const indel_buffer& ibuff(sif.indel_sync().ibuff());
     typedef indel_buffer::const_iterator ciiter;
     const std::pair<ciiter,ciiter> ipair(ibuff.pos_range_iter(full_pr.begin_pos,full_pr.end_pos));
-    for (ciiter i(ipair.first); i!=ipair.second; ++i) {
+    for (ciiter i(ipair.first); i!=ipair.second; ++i)
+    {
         const indel_key& ik(i->first);
         const indel_data& id(get_indel_data(i));
 
@@ -490,9 +549,11 @@ get_region_haplotypes(const known_pos_range full_pr,
     const known_pos_range expanded_pr(full_pr.begin_pos-(_client_opt.max_indel_size+XXXMAX_READ_SIZE),full_pr.end_pos);
 
     // iterate through reads in region:
-    for (pos_t pos(begin); pos<end; ++pos) {
+    for (pos_t pos(begin); pos<end; ++pos)
+    {
         read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
-        for (read_segment_iter::ret_val r; true; ri.next()) {
+        for (read_segment_iter::ret_val r; true; ri.next())
+        {
             r=ri.get_ptr();
             if (NULL==r.first) break;
             read_segment& rseg(r.first->get_segment(r.second));
@@ -510,7 +571,8 @@ get_region_haplotypes(const known_pos_range full_pr,
 #if 0
     const indel_buffer& ibuff(sif.indel_sync().ibuff());
     const std::pair<ciiter,ciiter> ipair(ibuff.pos_range_iter(full_pr.begin_pos,full_pr.end_pos));
-    for (ciiter i(ipair.first); i!=ipair.second; ++i) {
+    for (ciiter i(ipair.first); i!=ipair.second; ++i)
+    {
         const indel_key& ik(i->first);
         const indel_data& id(get_indel_data(i));
 
@@ -537,14 +599,17 @@ get_region_haplotypes(const known_pos_range full_pr,
     const indel_buffer& ibuff(isync.ibuff());
     typedef indel_buffer::const_iterator ciiter;
     const std::pair<ciiter,ciiter> ipair(ibuff.pos_range_iter(pr.begin_pos,pr.end_pos));
-    for (ciiter i(ipair.first); i!=ipair.second; ++i) {
+    for (ciiter i(ipair.first); i!=ipair.second; ++i)
+    {
         const indel_key& ik(i->first);
         const indel_data& id(get_indel_data(i));
 #if 1
         // iterate through reads in region:
-        for (pos_t pos(begin); pos<end; ++pos) {
+        for (pos_t pos(begin); pos<end; ++pos)
+        {
             read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
-            for (read_segment_iter::ret_val r; true; ri.next()) {
+            for (read_segment_iter::ret_val r; true; ri.next())
+            {
                 r=ri.get_ptr();
                 if (NULL==r.first) break;
                 read_segment& rseg(r.first->get_segment(r.second));
@@ -561,17 +626,21 @@ get_region_haplotypes(const known_pos_range full_pr,
 
 void
 starling_pos_processor_base::
-process_htype_pos(const pos_t begin_pos) {
+process_htype_pos(const pos_t begin_pos)
+{
 
     // exclude negative begin_pos b/c
     // (1) don't wan't to have to write negative mod
     // (2) should be disallowed in any BAM-based pipeline
     if (begin_pos<0) return;
 
-    if (_hregion.is_first_region) {
+    if (_hregion.is_first_region)
+    {
         _hregion.is_first_region=false;
         _hregion.region_alignment=begin_pos%static_cast<pos_t>(_client_opt.htype_call_segment);
-    } else {
+    }
+    else
+    {
         if ((begin_pos%static_cast<pos_t>(_client_opt.htype_call_segment))!=_hregion.region_alignment) return;
     }
 
@@ -580,8 +649,10 @@ process_htype_pos(const pos_t begin_pos) {
     // see if there's anything reportable in the central region:
     bool is_reportable(false);
 
-    for (pos_t pos(active_pr.begin_pos); pos<active_pr.end_pos; ++pos) {
-        if (is_pos_reportable(pos)) {
+    for (pos_t pos(active_pr.begin_pos); pos<active_pr.end_pos; ++pos)
+    {
+        if (is_pos_reportable(pos))
+        {
             is_reportable=true;
             break;
         }
@@ -598,10 +669,12 @@ process_htype_pos(const pos_t begin_pos) {
     get_region_haplotypes(full_pr,active_pr);
 
     // do regular calling for now:
-    for (pos_t pos(active_pr.begin_pos); pos<active_pr.end_pos; ++pos) {
+    for (pos_t pos(active_pr.begin_pos); pos<active_pr.end_pos; ++pos)
+    {
         pileup_pos_reads(pos);
         write_reads(pos);
-        if (is_pos_reportable(pos)) {
+        if (is_pos_reportable(pos))
+        {
             process_pos_variants(pos);
         }
     }

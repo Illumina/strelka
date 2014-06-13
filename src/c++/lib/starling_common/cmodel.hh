@@ -23,68 +23,96 @@
 #include <map>
 #include "starling_common/gvcf_locus_info.hh"
 
-namespace CALIBRATION_MODEL {
+namespace CALIBRATION_MODEL
+{
 
-    enum var_case {
-        HetSNP,
-        HomSNP,
-        HetIns,
-        HomIns,
-        HetDel,
-        HomDel};
+enum var_case
+{
+    HetSNP,
+    HomSNP,
+    HetIns,
+    HomIns,
+    HetDel,
+    HomDel
+};
 
-    inline
-    const char*
-    get_label(const unsigned idx) {
-        switch (idx) {
-        case HetSNP: return "snphet";
-        case HomSNP: return "snphom";
-        case HetIns: return "inshet";
-        case HomIns: return "inshom";
-        case HetDel: return "delhet";
-        case HomDel: return "delhom";
-        default:
-            assert(0);
-            return NULL;
-        }
+inline
+const char*
+get_label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case HetSNP:
+        return "snphet";
+    case HomSNP:
+        return "snphom";
+    case HetIns:
+        return "inshet";
+    case HomIns:
+        return "inshom";
+    case HetDel:
+        return "delhet";
+    case HomDel:
+        return "delhom";
+    default:
+        assert(0);
+        return NULL;
     }
+}
 
-    inline
-    const char*
-    get_label_header(const unsigned idx) {
-        switch (idx) {
-        case HetSNP: return "het SNP";
-        case HomSNP: return "hom SNP";
-        case HetIns: return "het insertion";
-        case HomIns: return "hom insertion";
-        case HetDel: return "het deletion";
-        case HomDel: return "hom deletion";
-        default:
-            assert(0);
-            return NULL;
-        }
+inline
+const char*
+get_label_header(const unsigned idx)
+{
+    switch (idx)
+    {
+    case HetSNP:
+        return "het SNP";
+    case HomSNP:
+        return "hom SNP";
+    case HetIns:
+        return "het insertion";
+    case HomIns:
+        return "hom insertion";
+    case HetDel:
+        return "het deletion";
+    case HomDel:
+        return "hom deletion";
+    default:
+        assert(0);
+        return NULL;
     }
+}
 
-    inline
-    VCF_FILTERS::index_t
-    get_Qscore_filter(const unsigned var_case) {
-            switch (var_case) {
-            case HetSNP: return VCF_FILTERS::LowQscoreHetSNP;
-            case HomSNP: return VCF_FILTERS::LowQscoreHomSNP;
-            case HetIns: return VCF_FILTERS::LowQscoreHetIns;
-            case HomIns: return VCF_FILTERS::LowQscoreHomIns;
-            case HetDel: return VCF_FILTERS::LowQscoreHetDel;
-            case HomDel: return VCF_FILTERS::LowQscoreHomDel;
-            default:
-                assert(0);
-                return VCF_FILTERS::LowGQX;
-            }
-        }
+inline
+VCF_FILTERS::index_t
+get_Qscore_filter(const unsigned var_case)
+{
+    switch (var_case)
+    {
+    case HetSNP:
+        return VCF_FILTERS::LowQscoreHetSNP;
+    case HomSNP:
+        return VCF_FILTERS::LowQscoreHomSNP;
+    case HetIns:
+        return VCF_FILTERS::LowQscoreHetIns;
+    case HomIns:
+        return VCF_FILTERS::LowQscoreHomIns;
+    case HetDel:
+        return VCF_FILTERS::LowQscoreHetDel;
+    case HomDel:
+        return VCF_FILTERS::LowQscoreHomDel;
+    default:
+        assert(0);
+        return VCF_FILTERS::LowGQX;
+    }
+}
 }
 
 typedef std::map<std::string, double> featuremap;
 typedef std::map<std::string, std::map<std::string, featuremap > > parmap;
-class c_model {
+class c_model
+{
 public:
     c_model(
         const std::string& name,

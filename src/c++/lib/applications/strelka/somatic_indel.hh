@@ -28,14 +28,16 @@
 #include "boost/utility.hpp"
 
 
-namespace DDIINDEL {
+namespace DDIINDEL
+{
 
 enum index_t { SIZE = STAR_DIINDEL::SIZE*STAR_DIINDEL::SIZE };
 
 inline
 unsigned
 get_state(const unsigned normal_gt,
-          const unsigned tumor_gt) {
+          const unsigned tumor_gt)
+{
     return normal_gt+STAR_DIINDEL::SIZE*tumor_gt;
 }
 
@@ -43,7 +45,8 @@ inline
 void
 get_digt_states(const unsigned dgt,
                 unsigned& normal_gt,
-                unsigned& tumor_gt) {
+                unsigned& tumor_gt)
+{
     normal_gt = (dgt%STAR_DIINDEL::SIZE);
     tumor_gt = (dgt/STAR_DIINDEL::SIZE);
 }
@@ -54,7 +57,8 @@ std::ostream& operator<<(std::ostream& os,const DDIINDEL::index_t dgt);
 
 
 // object used to pre-compute priors:
-struct somatic_indel_caller : private boost::noncopyable {
+struct somatic_indel_caller : private boost::noncopyable
+{
 
     somatic_indel_caller(const strelka_options& opt,
                          const indel_digt_caller& in_caller);
@@ -72,7 +76,8 @@ struct somatic_indel_caller : private boost::noncopyable {
 
 private:
     const double*
-    normal_lnprior() const {
+    normal_lnprior() const
+    {
         return _in_caller.lnprior();
     }
 

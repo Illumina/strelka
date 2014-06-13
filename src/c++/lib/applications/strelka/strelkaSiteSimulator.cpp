@@ -39,7 +39,8 @@ runInternal(int argc,char* argv[]) const
     strelka_options opt;
     strelka_site_sim_options sim_opt;
 
-    for (int i(0); i<argc; ++i) {
+    for (int i(0); i<argc; ++i)
+    {
         if (i) opt.cmdline += ' ';
         opt.cmdline += argv[i];
     }
@@ -67,22 +68,27 @@ runInternal(int argc,char* argv[]) const
 
     bool po_parse_fail(false);
     po::variables_map vm;
-    try {
+    try
+    {
         po::store(po::parse_command_line(argc, argv, visible), vm);
         po::notify(vm);
-    } catch (const boost::program_options::error& e) {
+    }
+    catch (const boost::program_options::error& e)
+    {
         log_os << "\nERROR: Exception thrown by option parser: " << e.what() << "\n";
         po_parse_fail=true;
     }
 
-    if ((argc<=1) || (vm.count("help")) || po_parse_fail) {
+    if ((argc<=1) || (vm.count("help")) || po_parse_fail)
+    {
         log_os << "\n strelka site simulator...\n\n";
         log_os << "usage: program [options] > called\n\n";
         log_os << visible << "\n";
         exit(EXIT_FAILURE);
     }
 
-    if (vm.count("somatic-only")) {
+    if (vm.count("somatic-only"))
+    {
         sim_opt.mode=SIM_SOMATIC;
     }
 

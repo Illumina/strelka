@@ -29,10 +29,12 @@ using namespace std;
 
 static
 double
-get_z_score(int n1, int n2, double w1) {
+get_z_score(int n1, int n2, double w1)
+{
     double mean = n1*(n1+n2+1)/2.0;
     double var  = sqrt(n1*n2*(n1+n2+1)/12.0);
-    if (static_cast<int>(var)==0) {
+    if (static_cast<int>(var)==0)
+    {
         return 0.0;
     }
     double z = (w1-mean)/var;
@@ -51,7 +53,8 @@ ranksum::get_u_stat()
     N1 = 0;
     N2 = 0;
     //loop over all observations
-    for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it) {
+    for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
+    {
         int key = *it;
 
         // get the observation counts for reference and alt
@@ -71,10 +74,12 @@ ranksum::get_u_stat()
 
     //return the z-score for the smaller of U1 and U2 assuming a gaussian approx.
     double z;
-    if (R1>R2) {
+    if (R1>R2)
+    {
         z = get_z_score(N2,N1,R2);
     }
-    else {
+    else
+    {
         z = get_z_score(N1,N2,R1);
     }
 
@@ -82,13 +87,16 @@ ranksum::get_u_stat()
 }
 
 void
-ranksum::add_observation(bool is_ref, int obs) {
+ranksum::add_observation(bool is_ref, int obs)
+{
     space[obs] =1;
-    if (is_ref) {
+    if (is_ref)
+    {
         l1[obs]++;
         //		cout << "ref case" << endl;
     }
-    else {
+    else
+    {
         l2[obs]++;
         //		cout << "alt case" << endl;
         //		cout << "ref_base: " << ref_base << " alt_base: " << base <<   endl;

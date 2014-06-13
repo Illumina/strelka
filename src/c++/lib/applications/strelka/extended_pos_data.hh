@@ -24,9 +24,12 @@
 
 
 #if 0
-struct null_snp_pos_info {
-    null_snp_pos_info() {
-        for (unsigned i(0); i<(N_BASE+1); ++i) {
+struct null_snp_pos_info
+{
+    null_snp_pos_info()
+    {
+        for (unsigned i(0); i<(N_BASE+1); ++i)
+        {
             pi[i].ref_base = id_to_base(i);
         }
     }
@@ -36,7 +39,8 @@ struct null_snp_pos_info {
 #endif
 
 
-struct sample_pos_data {
+struct sample_pos_data
+{
 
     sample_pos_data(snp_pos_info* pi_ptr,
                     extra_position_data& epd_init,
@@ -47,7 +51,8 @@ struct sample_pos_data {
                     const bool is_include_tier2)
         : pi((NULL==pi_ptr) ? _null_pi : *pi_ptr),
           epd(epd_init),
-          n_calls(0) {
+          n_calls(0)
+    {
 
         pi.ref_base=ref_base;
 
@@ -57,19 +62,24 @@ struct sample_pos_data {
         epd.good_pi.ref_base = pi.ref_base;
 
         n_calls += pi.calls.size();
-        BOOST_FOREACH(const base_call& bc, pi.calls) {
-            if (bc.is_call_filter) {
+        BOOST_FOREACH(const base_call& bc, pi.calls)
+        {
+            if (bc.is_call_filter)
+            {
                 if (! (is_include_tier2 &&
-                       bc.is_tier_specific_call_filter)) {
+                       bc.is_tier_specific_call_filter))
+                {
                     continue;
                 }
             }
             epd.good_pi.calls.push_back(bc);
         }
 
-        if (is_include_tier2) {
+        if (is_include_tier2)
+        {
             n_calls += pi.tier2_calls.size();
-            BOOST_FOREACH(const base_call& bc, pi.tier2_calls) {
+            BOOST_FOREACH(const base_call& bc, pi.tier2_calls)
+            {
                 if (bc.is_call_filter) continue;
                 epd.good_pi.calls.push_back(bc);
             }
@@ -93,7 +103,8 @@ public:
 };
 
 
-struct extended_pos_data : public sample_pos_data {
+struct extended_pos_data : public sample_pos_data
+{
 
     typedef sample_pos_data base_t;
 

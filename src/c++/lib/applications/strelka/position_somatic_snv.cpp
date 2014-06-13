@@ -31,7 +31,8 @@
 
 std::ostream&
 operator<<(std::ostream& os,
-           const DDIGT::index_t dgt) {
+           const DDIGT::index_t dgt)
+{
 
     unsigned normal_gt;
     unsigned tumor_gt;
@@ -52,12 +53,15 @@ void
 get_prior(const blt_float_t lnmatch,
           const blt_float_t lnmismatch,
           const blt_float_t* normal_lnprior,
-          blt_float_t* prior) {
+          blt_float_t* prior)
+{
 
-    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt) {
+    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt)
+    {
         const blt_float_t gtlnmatch(normal_lnprior[ngt]+lnmatch);
         const blt_float_t gtlnmismatch(normal_lnprior[ngt]+lnmismatch);
-        for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt) {
+        for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt)
+        {
             prior[DDIGT::get_state(ngt,tgt)] = ((tgt==ngt) ? gtlnmatch : gtlnmismatch);
         }
     }
@@ -67,18 +71,21 @@ get_prior(const blt_float_t lnmatch,
 
 somatic_snv_caller::
 somatic_snv_caller(const strelka_options& opt,
-                   const pprob_digt_caller& pd_caller) : _opt(opt) {
+                   const pprob_digt_caller& pd_caller) : _opt(opt)
+{
 
     const blt_float_t lnmatch(std::log(1.-opt.somatic_snv_rate));
     const blt_float_t lnmismatch(std::log(opt.somatic_snv_rate/(static_cast<blt_float_t>(DIGT::SIZE-1))));
 
-    for (unsigned i(0); i<(N_BASE+1); ++i) {
+    for (unsigned i(0); i<(N_BASE+1); ++i)
+    {
         prior_set& ps(_lnprior[i]);
         std::fill(ps.genome,ps.genome+DDIGT::SIZE,0);
         std::fill(ps.poly,ps.poly+DDIGT::SIZE,0);
     }
 
-    for (unsigned i(0); i<(N_BASE+1); ++i) {
+    for (unsigned i(0); i<(N_BASE+1); ++i)
+    {
         prior_set& ps(_lnprior[i]);
         get_prior(lnmatch,lnmismatch,pd_caller.lnprior_genomic(i),ps.genome);
         get_prior(lnmatch,lnmismatch,pd_caller.lnprior_polymorphic(i),ps.poly);
@@ -86,12 +93,14 @@ somatic_snv_caller(const strelka_options& opt,
 }
 
 
-namespace DIGT {
+namespace DIGT
+{
 
 inline
 bool
 is_loh(const unsigned ngt,
-       const unsigned tgt) {
+       const unsigned tgt)
+{
 
     if ((! is_het(ngt)) || is_het(tgt)) return false;
     return (expect2(tgt,ngt)>0);
@@ -108,10 +117,12 @@ typedef somatic_snv_genotype::result_set result_set;
 static
 void
 debug_dump_ddigt_lhood(const blt_float_t* lhood,
-                       std::ostream& os) {
+                       std::ostream& os)
+{
 
     blt_float_t pprob[DDIGT::SIZE];
-    for (unsigned gt(0); gt<DDIGT::SIZE; ++gt) {
+    for (unsigned gt(0); gt<DDIGT::SIZE; ++gt)
+    {
         pprob[gt] = lhood[gt];
     }
 
@@ -119,8 +130,10 @@ debug_dump_ddigt_lhood(const blt_float_t* lhood,
     normalize_ln_prob(pprob,pprob+DDIGT::SIZE,max_gt);
 
     os << std::setprecision(3) << std::fixed;
-    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt) {
-        for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt) {
+    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt)
+    {
+        for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt)
+        {
             const unsigned dgt(DDIGT::get_state(ngt,tgt));
             os << static_cast<DDIGT::index_t>(dgt) << ": " << -std::log(pprob[dgt]) << " ";
         }
@@ -138,12 +151,15 @@ calculate_result_set(const blt_float_t* normal_lhood,
                      const blt_float_t* tumor_lhood,
                      const blt_float_t* lnprior,
                      const unsigned ref_gt,
-                     result_set& rs) {
+                     result_set& rs)
+{
 
     // mult by prior distro to get unnormalized pprob:
     //
-    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt) {
-        for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt) {
+    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt)
+    {
+        for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt)
+        {
             const unsigned dgt(DDIGT::get_state(ngt,tgt));
             rs.pprob[dgt] = normal_lhood[ngt]+tumor_lhood[tgt]+lnprior[dgt];
         }
@@ -152,7 +168,8 @@ calculate_result_set(const blt_float_t* normal_lhood,
     normalize_ln_distro(rs.pprob.begin(),rs.pprob.end(),rs.max_gt);
 
     blt_float_t nonsomatic_sum(0);
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt) {
+    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+    {
         nonsomatic_sum += rs.pprob[DDIGT::get_state(gt,gt)];
     }
     rs.snv_qphred=error_prob_to_qphred(nonsomatic_sum);
@@ -163,20 +180,25 @@ calculate_result_set(const blt_float_t* normal_lhood,
     blt_float_t not_somfrom_het_nonloh_sum(nonsomatic_sum);
     blt_float_t not_somfrom_hom_sum(nonsomatic_sum);
     blt_float_t not_somfrom_anyhom_sum(nonsomatic_sum);
-    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt) {
+    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt)
+    {
         const bool is_ref(ref_gt == ngt);
         const bool is_het(DIGT::is_het(ngt));
-        for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt) {
+        for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt)
+        {
             if (ngt==tgt) continue;
             const blt_float_t val(rs.pprob[DDIGT::get_state(ngt,tgt)]);
             if (not is_ref) not_somfrom_ref_sum += val;
-            if (is_het) {
+            if (is_het)
+            {
                 not_somfrom_anyhom_sum += val;
 
                 const bool is_loh(DIGT::is_loh(ngt,tgt));
                 if (is_loh) not_somfrom_het_nonloh_sum += val;
                 else       not_somfrom_het_loh_sum += val;
-            } else {
+            }
+            else
+            {
                 not_somfrom_het_sum += val;
                 not_somfrom_het_loh_sum += val;
                 not_somfrom_het_nonloh_sum += val;
@@ -204,7 +226,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
                           const extended_pos_info& tumor_epi,
                           const extended_pos_info* normal_epi_t2_ptr,
                           const extended_pos_info* tumor_epi_t2_ptr,
-                          somatic_snv_genotype& sgt) const {
+                          somatic_snv_genotype& sgt) const
+{
 
     static const bool is_always_test(false);
 
@@ -217,7 +240,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
         // check that a non-reference call meeting quality criteria even
         // exists:
-        if (! is_always_test) {
+        if (! is_always_test)
+        {
             if (is_spi_allref(normal_pi,sgt.ref_gt) && is_spi_allref(tumor_pi,sgt.ref_gt)) return;
         }
     }
@@ -231,11 +255,14 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
     static const unsigned n_tier(2);
     result_set tier_rs[n_tier];
-    for (unsigned i(0); i<n_tier; ++i) {
+    for (unsigned i(0); i<n_tier; ++i)
+    {
         const bool is_include_tier2(i==1);
-        if (is_include_tier2) {
+        if (is_include_tier2)
+        {
             if (not is_tier2) continue;
-            if (tier_rs[0].snv_qphred==0) {
+            if (tier_rs[0].snv_qphred==0)
+            {
                 tier_rs[1].snv_qphred=0;
                 continue;
             }
@@ -268,8 +295,10 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
     }
 
     sgt.tier=0;
-    if (is_tier2) {
-        if (tier_rs[0].snv_qphred > tier_rs[1].snv_qphred) {
+    if (is_tier2)
+    {
+        if (tier_rs[0].snv_qphred > tier_rs[1].snv_qphred)
+        {
             sgt.tier=1;
         }
     }
@@ -282,13 +311,16 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 
 
 #ifdef SOMATIC_DEBUG
-    if (sgt.is_snv) {
+    if (sgt.is_snv)
+    {
         log_os << "tier1_qphred: " << tier_rs[0].snv_qphred << "\n";
         log_os << "tier2_qphred: " << tier_rs[1].snv_qphred << "\n";
         result_set rs(sgt.genome);
         const blt_float_t* lnprior(lnprior_genomic(sgt.ref_gt));
-        for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt) {
-            for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt) {
+        for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt)
+        {
+            for (unsigned tgt(0); tgt<DIGT::SIZE; ++tgt)
+            {
                 const unsigned dgt(DDIGT::get_state(ngt,tgt));
                 rs.pprob[dgt] = normal_lhood[ngt]+tumor_lhood[tgt]+lnprior[dgt];
             }
@@ -304,7 +336,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
         debug_dump_ddigt_lhood(lnprior,log_os);
         log_os << "pprob:\n";
         blt_float_t pprob[DDIGT::SIZE];
-        for (unsigned gt(0); gt<DDIGT::SIZE; ++gt) {
+        for (unsigned gt(0); gt<DDIGT::SIZE; ++gt)
+        {
             pprob[gt] = rs.pprob[gt];
         }
         debug_dump_ddigt_lhood(pprob,log_os);
@@ -318,7 +351,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
 static
 void
 write_result_set(const result_set& rs,
-                 std::ostream& os) {
+                 std::ostream& os)
+{
 
     os << rs.snv_qphred
        << '\t' << rs.snv_from_ref_qphred
@@ -338,7 +372,8 @@ write_somatic_snv_genotype(const strelka_options& opt,
                            const somatic_snv_genotype& sgt,
                            const snp_pos_info& normal_pi,
                            const snp_pos_info& tumor_pi,
-                           std::ostream& os) {
+                           std::ostream& os)
+{
 
     os << std::setprecision(10) << std::fixed;
 
@@ -353,7 +388,8 @@ write_somatic_snv_genotype(const strelka_options& opt,
     os << '\t';
     write_result_set(po,os);
 #endif
-    if (opt.is_print_used_allele_counts) {
+    if (opt.is_print_used_allele_counts)
+    {
         normal_pi.print_known_counts(os,opt.used_allele_count_min_qscore);
         tumor_pi.print_known_counts(os,opt.used_allele_count_min_qscore);
     }

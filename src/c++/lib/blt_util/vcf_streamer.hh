@@ -23,7 +23,8 @@
 #include "blt_util/vcf_record.hh"
 
 
-struct vcf_streamer {
+struct vcf_streamer
+{
 
     // optionally provide a BAM header to validate vcf chromosome names against
     //
@@ -40,14 +41,21 @@ struct vcf_streamer {
     //
     bool next(const bool is_indel_only=false);
 
-    const vcf_record* get_record_ptr() const {
+    const vcf_record* get_record_ptr() const
+    {
         if (_is_record_set) return &_vcfrec;
         else               return NULL;
     }
 
-    const char* name() const { return _stream_name.c_str(); }
+    const char* name() const
+    {
+        return _stream_name.c_str();
+    }
 
-    unsigned record_no() const { return _record_no; }
+    unsigned record_no() const
+    {
+        return _record_no;
+    }
 
     void report_state(std::ostream& os) const;
 

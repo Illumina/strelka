@@ -54,8 +54,10 @@
 // The "NONE" type is used for some indel lookup methods, because it sorts
 // ahead of all other types at a given position:
 //
-namespace INDEL {
-enum index_t {
+namespace INDEL
+{
+enum index_t
+{
     NONE,
     INSERT,
     DELETE,
@@ -66,15 +68,24 @@ enum index_t {
 
 inline
 const char*
-get_index_label(index_t id) {
-    switch (id) {
-    case NONE:        return "NONE";
-    case INSERT:      return "INSERT";
-    case DELETE:      return "DELETE";
-    case BP_LEFT:  return "BP_LEFT";
-    case BP_RIGHT: return "BP_RIGHT";
-    case SWAP:        return "SWAP";
-    default:          return "UNKNOWN";
+get_index_label(index_t id)
+{
+    switch (id)
+    {
+    case NONE:
+        return "NONE";
+    case INSERT:
+        return "INSERT";
+    case DELETE:
+        return "DELETE";
+    case BP_LEFT:
+        return "BP_LEFT";
+    case BP_RIGHT:
+        return "BP_RIGHT";
+    case SWAP:
+        return "SWAP";
+    default:
+        return "UNKNOWN";
     }
 }
 }

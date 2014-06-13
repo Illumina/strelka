@@ -24,8 +24,10 @@
 #include "boost/utility.hpp"
 
 
-namespace STAR_DIINDEL {
-enum index_t {
+namespace STAR_DIINDEL
+{
+enum index_t
+{
     NOINDEL,
     HOM,
     HET,
@@ -34,22 +36,33 @@ enum index_t {
 
 inline
 const char*
-label(const unsigned idx) {
-    switch (idx) {
-    case NOINDEL: return "ref";
-    case HOM: return "hom";
-    case HET: return "het";
-    default: return "xxx";
+label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case NOINDEL:
+        return "ref";
+    case HOM:
+        return "hom";
+    case HET:
+        return "het";
+    default:
+        return "xxx";
     }
 }
 
 inline
 const char*
-get_gt_label(const unsigned idx) {
-    switch (idx) {
-    case NOINDEL: return "0/0";
-    case HOM: return "1/1";
-    case HET: return "0/1";
+get_gt_label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case NOINDEL:
+        return "0/0";
+    case HOM:
+        return "1/1";
+    case HET:
+        return "0/1";
     default:
         assert(0);
         return NULL;
@@ -61,7 +74,8 @@ get_gt_label(const unsigned idx) {
 // I=called indel allele
 // R=reference (no indels which interfere with I)
 // NR=first indel allele interfering with I
-enum index_t {
+enum index_t
+{
     I2,
     I1R1,
     I1NR1,
@@ -73,15 +87,23 @@ enum index_t {
 
 inline
 const char*
-label(const unsigned idx) {
-    switch (idx) {
-    case I2:       return "hom";
-    case I1R1:     return "het";
-    case I1NR1:    return "nonref_het";
-    case R2:       return "ref";
+label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case I2:
+        return "hom";
+    case I1R1:
+        return "het";
+    case I1NR1:
+        return "nonref_het";
+    case R2:
+        return "ref";
     case R1NR1:
-    case NR2:      return "other";
-    default:       return "xxx";
+    case NR2:
+        return "other";
+    default:
+        return "xxx";
     }
 }
 #endif
@@ -90,10 +112,12 @@ label(const unsigned idx) {
 
 // separate out core with automatic copy ctor:
 //
-struct starling_diploid_indel_core {
+struct starling_diploid_indel_core
+{
 
     starling_diploid_indel_core()
-        : is_indel(false), max_gt(0), max_gt_poly(0) {
+        : is_indel(false), max_gt(0), max_gt_poly(0)
+    {
         static const int qp(error_prob_to_qphred((1.-init_p())));
         indel_qphred=qp;
         max_gt_qphred=qp;
@@ -104,7 +128,8 @@ protected:
 
     static
     double
-    init_p() {
+    init_p()
+    {
         static const double p(1./static_cast<double>(STAR_DIINDEL::SIZE));
         return p;
     }
@@ -122,7 +147,8 @@ public:
 
 
 
-struct starling_diploid_indel : public starling_diploid_indel_core, private boost::noncopyable {
+struct starling_diploid_indel : public starling_diploid_indel_core, private boost::noncopyable
+{
 
     starling_diploid_indel()
         : starling_diploid_indel_core()

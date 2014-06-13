@@ -18,7 +18,8 @@
 
 #pragma once
 
-struct prog_info {
+struct prog_info
+{
     virtual
     const char* name() const = 0;
 

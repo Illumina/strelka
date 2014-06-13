@@ -35,7 +35,8 @@
 
 
 
-struct nonref_allele_freq_loghood_sparse_func { //: public sample_func_iface {
+struct nonref_allele_freq_loghood_sparse_func   //: public sample_func_iface {
+{
 
     nonref_allele_freq_loghood_sparse_func(const snp_pos_info& pi,
                                            const unsigned nonref_id,
@@ -43,12 +44,14 @@ struct nonref_allele_freq_loghood_sparse_func { //: public sample_func_iface {
         : _pi(pi), _nonref_id(nonref_id), _sf(sf) {}
 
     blt_float_t
-    calc_val(const blt_float_t x) const {
+    calc_val(const blt_float_t x) const
+    {
         return calc_pos_nonref_allele_freq_loghood(_pi,_nonref_id,x);
     }
 
     blt_float_t
-    calc_and_store_val(const blt_float_t x) {
+    calc_and_store_val(const blt_float_t x)
+    {
         const blt_float_t val(calc_val(x));
         _sf.insert(x,val);
         return val;
@@ -66,7 +69,8 @@ void
 position_nonref_2allele_test(const snp_pos_info& pi,
                              const blt_options& opt,
                              const bool /*is_always_test*/,
-                             nonref_test_call& nrc) {
+                             nonref_test_call& nrc)
+{
 
     static const bool is_mle_freq(false);
 
@@ -84,7 +88,8 @@ position_nonref_2allele_test(const snp_pos_info& pi,
         for (unsigned i(0); i<N_BASE; ++i) qtot[i] = 0;
 
         const unsigned n_calls(pi.calls.size());
-        for (unsigned i(0); i<n_calls; ++i) {
+        for (unsigned i(0); i<n_calls; ++i)
+        {
             if (pi.calls[i].base_id==BASE_ID::ANY) continue;
             qtot[pi.calls[i].base_id] += pi.calls[i].get_qscore();
         }
@@ -92,24 +97,33 @@ position_nonref_2allele_test(const snp_pos_info& pi,
         // get max and max2:
         unsigned max_id=0;
         unsigned max2_id=1;
-        for (unsigned b(1); b<N_BASE; ++b) {
-            if (qtot[b] > qtot[max_id]) {
+        for (unsigned b(1); b<N_BASE; ++b)
+        {
+            if (qtot[b] > qtot[max_id])
+            {
                 max2_id = max_id;
                 max_id = b;
-            } else if (qtot[b] > qtot[max2_id]) {
+            }
+            else if (qtot[b] > qtot[max2_id])
+            {
                 max2_id = b;
             }
         }
 
         const unsigned ref_id=base_to_id(pi.ref_base);
-        if       (ref_id==max_id) {
+        if       (ref_id==max_id)
+        {
             nrc.nonref_id=max2_id;
 
 #if 0
-        } else if (ref_id==max2_id) {
+        }
+        else if (ref_id==max2_id)
+        {
             nrc.nonref_id=max_id;
 #endif
-        } else {
+        }
+        else
+        {
             nrc.nonref_id=max_id;
             //nonref2_id=max2_id;
         }
@@ -145,7 +159,8 @@ position_nonref_2allele_test(const snp_pos_info& pi,
     prior[NR2TEST::NONREF_OTHER] = std::log(2*nonref_variant_rate_used/3);
 
     double pprob[NR2TEST::SIZE];
-    for (unsigned i(0); i<NR2TEST::SIZE; ++i) {
+    for (unsigned i(0); i<NR2TEST::SIZE; ++i)
+    {
         pprob[i] = lhood[i] + prior[i];
     }
     normalize_ln_distro(pprob,pprob+NR2TEST::SIZE,nrc.max_gt);
@@ -205,7 +220,8 @@ position_nonref_2allele_test(const snp_pos_info& pi,
 
     const double ref_freq(1.-x_nonref_freq);
     const double nonref_freq((x_nonref_freq)/3.);
-    for (unsigned i(0); i<N_BASE; ++i) {
+    for (unsigned i(0); i<N_BASE; ++i)
+    {
         if (i==ref_base_id) sc.allele_freq[i] = ref_freq;
         else               sc.allele_freq[i] = nonref_freq;
     }
@@ -213,7 +229,8 @@ position_nonref_2allele_test(const snp_pos_info& pi,
     static const unsigned N_BASE2(N_BASE*N_BASE);
     double conj_dir[N_BASE2];
     std::fill(conj_dir,conj_dir+N_BASE2,0.);
-    for (unsigned i(0); i<N_BASE; ++i) {
+    for (unsigned i(0); i<N_BASE; ++i)
+    {
         const double start_dist( std::max(std::fabs(sc.allele_freq[i]*start_ratio),min_start_dist) );
         conj_dir[i*(N_BASE+1)] = start_dist;
     }
@@ -237,7 +254,8 @@ void
 write_nonref_2allele_test(const blt_options& opt,
                           const snp_pos_info& pi,
                           const nonref_test_call& nrc,
-                          std::ostream& os) {
+                          std::ostream& os)
+{
 
     os << nrc.snp_qphred
        << '\t' << NR2TEST::label(static_cast<NR2TEST::index_t>(nrc.max_gt)) << "_" << id_to_base(nrc.nonref_id)
@@ -249,8 +267,10 @@ write_nonref_2allele_test(const blt_options& opt,
     //}
 
 #if 0
-    if (opt.is_print_all_poly_gt) {
-        for (unsigned gt(0); gt<DIGT::SIZE; ++gt) {
+    if (opt.is_print_all_poly_gt)
+    {
+        for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+        {
 #if 1
             // print GT as prob:
             os << '\t' << po.pprob[gt];
@@ -265,9 +285,11 @@ write_nonref_2allele_test(const blt_options& opt,
 #endif
 
 #if 0
-    if (nrc.is_freq) {
+    if (nrc.is_freq)
+    {
         os << std::setprecision(8) << std::fixed;
-        for (unsigned i(0); i<N_BASE; ++i) {
+        for (unsigned i(0); i<N_BASE; ++i)
+        {
             os << '\t' << nrc.allele_freq[i];
         }
         os.unsetf(std::ios::fixed);

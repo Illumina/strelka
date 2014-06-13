@@ -23,16 +23,19 @@
 
 void
 add_alignment_to_depth_buffer(const alignment& al,
-                              depth_buffer& db) {
+                              depth_buffer& db)
+{
 
     using namespace ALIGNPATH;
 
     pos_t ref_head_pos(al.pos);
 
     const unsigned as(al.path.size());
-    for (unsigned i(0); i<as; ++i) {
+    for (unsigned i(0); i<as; ++i)
+    {
         const path_segment& ps(al.path[i]);
-        if (ps.type == MATCH) {
+        if (ps.type == MATCH)
+        {
             for (unsigned j(0); j<ps.length; ++j) db.inc(ref_head_pos+static_cast<pos_t>(j));
         }
 

@@ -19,7 +19,8 @@
 
 #ifdef DEBUG_AU_TEST
 #include <iostream>
-namespace {
+namespace
+{
 std::ostream& log_os(std::cerr);
 }
 #endif
@@ -31,7 +32,8 @@ BOOST_AUTO_TEST_SUITE( test_alignment_util )
 
 static
 alignment
-get_test_alignment() {
+get_test_alignment()
+{
     alignment al;
     al.pos=1000;
     al.is_fwd_strand=true;
@@ -40,7 +42,8 @@ get_test_alignment() {
 }
 
 
-BOOST_AUTO_TEST_CASE( test_remove_edge_deletion ) {
+BOOST_AUTO_TEST_CASE( test_remove_edge_deletion )
+{
 
     alignment al(get_test_alignment());
 

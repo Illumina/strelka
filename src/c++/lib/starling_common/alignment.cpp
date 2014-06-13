@@ -29,16 +29,19 @@
 
 bool
 alignment::
-is_overmax(const unsigned max_indel_size) const {
+is_overmax(const unsigned max_indel_size) const
+{
 
     // test if any individual indel exceeds max_indel_size
     using namespace ALIGNPATH;
     const unsigned as(path.size());
-    for (unsigned i(0); i<as; ++i) {
+    for (unsigned i(0); i<as; ++i)
+    {
         const path_segment& ps(path[i]);
         if ((i==0) || ((i+1)==as)) continue;
         if (((ps.type==INSERT) || (ps.type==DELETE)) &&
-            (ps.length>max_indel_size)) {
+            (ps.length>max_indel_size))
+        {
             return true;
         }
     }
@@ -49,7 +52,8 @@ is_overmax(const unsigned max_indel_size) const {
 
 std::ostream&
 operator<<(std::ostream& os,
-           const alignment& al) {
+           const alignment& al)
+{
 
     os << "ALIGNMENT pos: " << al.pos
        << " strand: " << (al.is_fwd_strand? 'F' : 'R')

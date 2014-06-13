@@ -40,14 +40,16 @@
 
 
 
-namespace {
+namespace
+{
 const prog_info& pinfo(starling_info::get());
 }
 
 
 
 void
-starling_run(const starling_options& opt) {
+starling_run(const starling_options& opt)
+{
 
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
@@ -61,7 +63,8 @@ starling_run(const starling_options& opt) {
     bam_streamer read_stream(opt.bam_filename.c_str(),bam_region.c_str());
 
     const int32_t tid(read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
-    if (tid < 0) {
+    if (tid < 0)
+    {
         std::ostringstream oss;
         oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" << opt.bam_filename << "'\n";
         throw blt_exception(oss.str().c_str());
@@ -79,7 +82,8 @@ starling_run(const starling_options& opt) {
     typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
 
-    BOOST_FOREACH(const std::string& vcf_filename, opt.input_candidate_indel_vcf) {
+    BOOST_FOREACH(const std::string& vcf_filename, opt.input_candidate_indel_vcf)
+    {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
                                                         bam_region.c_str(),read_stream.get_header())));
         sdata.register_indels(*(indel_stream.back()));
@@ -87,7 +91,8 @@ starling_run(const starling_options& opt) {
 
     std::vector<vcf_ptr> foutput_stream;
 
-    BOOST_FOREACH(const std::string& vcf_filename, opt.force_output_vcf) {
+    BOOST_FOREACH(const std::string& vcf_filename, opt.force_output_vcf)
+    {
         foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
                                                           bam_region.c_str(),read_stream.get_header())));
         sdata.register_forced_output(*(foutput_stream.back()));
@@ -95,7 +100,8 @@ starling_run(const starling_options& opt) {
 
     starling_input_stream_handler sinput(sdata);
 
-    while (sinput.next()) {
+    while (sinput.next())
+    {
         const input_record_info current(sinput.get_current());
 
         // Process finishes at the the end of rlimit range. Note that
@@ -107,7 +113,8 @@ starling_run(const starling_options& opt) {
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(sinput.get_head_pos()-1);
 
-        if       (current.itype == INPUT_TYPE::READ) { // handle regular ELAND reads
+        if       (current.itype == INPUT_TYPE::READ)   // handle regular ELAND reads
+        {
 
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
@@ -124,21 +131,30 @@ starling_run(const starling_options& opt) {
 
             process_genomic_read(opt,ref,read_stream,read,current.pos,rlimit.begin_pos,brc,sppr);
 
-        } else if (current.itype == INPUT_TYPE::INDEL) { // process candidate indels input from vcf file(s)
+        }
+        else if (current.itype == INPUT_TYPE::INDEL)     // process candidate indels input from vcf file(s)
+        {
             const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
             process_candidate_indel(opt.max_indel_size, vcf_indel,sppr);
 
-        } else if (current.itype == INPUT_TYPE::FORCED_OUTPUT) { // process forced genotype tests from vcf file(s)
+        }
+        else if (current.itype == INPUT_TYPE::FORCED_OUTPUT)     // process forced genotype tests from vcf file(s)
+        {
             const vcf_record& vcf_variant(*(foutput_stream[current.get_order()]->get_record_ptr()));
-            if       (vcf_variant.is_indel()) {
+            if       (vcf_variant.is_indel())
+            {
                 static const unsigned sample_no(0);
                 static const bool is_forced_output(true);
                 process_candidate_indel(opt.max_indel_size, vcf_variant,sppr,sample_no,is_forced_output);
-            } else if (vcf_variant.is_snv()) {
+            }
+            else if (vcf_variant.is_snv())
+            {
                 sppr.insert_forced_output_pos(vcf_variant.pos-1);
             }
 
-        } else {
+        }
+        else
+        {
             log_os << "ERROR: invalid input condition.\n";
             exit(EXIT_FAILURE);
         }

@@ -28,10 +28,11 @@
 #include <climits>
 #include <sstream>
 
-class Codon_phaser {
+class Codon_phaser
+{
 public:
     Codon_phaser();
-    virtual ~Codon_phaser(){};
+    virtual ~Codon_phaser() {};
 
 public:
     bool add_site(site_info& si);       // add site to buffer
@@ -43,11 +44,14 @@ public:
     void collect_read_evidence();       // fill in allele counter
     void construct_reference();         // assemble the reference allele for the record
     void create_phased_record();        // fill in the si record and decide if we have sufficient evidence for a phased call
-    int get_block_length() {return (this->block_end-this->block_start+1);}
+    int get_block_length()
+    {
+        return (this->block_end-this->block_start+1);
+    }
     void set_options(const starling_options& client_opt,const starling_deriv_options& client_dopt);
     bool is_in_block;                   // Are we currently in a phasing block
     std::vector<site_info> buffer;      // buffer of het snp calls
-    starling_read_buffer *read_buffer;  // pass along the relevant read-buffer
+    starling_read_buffer* read_buffer;  // pass along the relevant read-buffer
     int block_start,block_end;          // position of the first and last added het site to block
     int last_cleared;
     int max_read_len;              // the length of the input reads
@@ -59,5 +63,5 @@ private:
     typedef std::map<std::string,int> allele_map;
     std::stringstream AD,alt;           // for collecting the AD and ALT fields for phased record
     allele_map observations;
-    const starling_options *opt;
+    const starling_options* opt;
 };

@@ -25,8 +25,10 @@
 #include <iosfwd>
 
 
-namespace NRTEST {
-enum index_t {
+namespace NRTEST
+{
+enum index_t
+{
     REF,
     NONREF,
     SIZE
@@ -34,11 +36,16 @@ enum index_t {
 
 inline
 const char*
-label(const index_t i) {
-    switch (i) {
-    case REF: return "ref";
-    case NONREF: return "nonref";
-    default: return "xxx";
+label(const index_t i)
+{
+    switch (i)
+    {
+    case REF:
+        return "ref";
+    case NONREF:
+        return "nonref";
+    default:
+        return "xxx";
     }
 }
 }

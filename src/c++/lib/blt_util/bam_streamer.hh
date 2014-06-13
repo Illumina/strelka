@@ -22,7 +22,8 @@
 #include <string>
 
 
-struct bam_streamer {
+struct bam_streamer
+{
 
     explicit
     bam_streamer(const char* filename,
@@ -39,16 +40,19 @@ struct bam_streamer {
 
     bool next();
 
-    const bam_record* get_record_ptr() const {
+    const bam_record* get_record_ptr() const
+    {
         if (_is_record_set) return &_brec;
         else               return NULL;
     }
 
-    const char* name() const {
+    const char* name() const
+    {
         return _stream_name.c_str();
     }
 
-    unsigned record_no() const {
+    unsigned record_no() const
+    {
         return _record_no;
     }
 
@@ -61,7 +65,8 @@ struct bam_streamer {
     target_name_to_id(const char* seq_name) const;
 
     const bam_header_t*
-    get_header() const {
+    get_header() const
+    {
         return _bfp->header;
     }
 

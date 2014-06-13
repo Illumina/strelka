@@ -30,7 +30,8 @@
 
 
 
-struct arg_data {
+struct arg_data
+{
 
     arg_data(int init_argc,
              char* init_argv[],
@@ -47,7 +48,10 @@ struct arg_data {
     void finalize_args();
 
     unsigned
-    size() { return argstr.size(); }
+    size()
+    {
+        return argstr.size();
+    }
 
     std::vector<bool> argmark;
     std::vector<std::string> argstr;
@@ -61,10 +65,14 @@ void
 set_val(const prog_info& pinfo,
         const char* arg_label,
         const char* arg,
-        T& val) {
-    try {
+        T& val)
+{
+    try
+    {
         val=boost::lexical_cast<T>(arg);
-    } catch (boost::bad_lexical_cast& e) {
+    }
+    catch (boost::bad_lexical_cast& e)
+    {
         std::ostringstream oss;
         oss << "argument after flag " << arg_label << " (" << arg << ") cannot be parsed to expected type: " << e.what();
         pinfo.usage(oss.str().c_str());
@@ -77,15 +85,20 @@ void
 set_arg(unsigned& argi,
         arg_data& ad,
         bool& is_val_set,
-        T& val) {
+        T& val)
+{
 
     const char* arg_label(ad.argstr[argi].c_str());
 
     ad.argmark[argi] = true;
-    if (++argi>=ad.argstr.size()) {
+    if (++argi>=ad.argstr.size())
+    {
         ad.pinfo.usage((std::string("no value following ")+arg_label).c_str());
     }
-    if (is_val_set) { ad.pinfo.usage((std::string("multiple ")+arg_label+" arguments").c_str()); }
+    if (is_val_set)
+    {
+        ad.pinfo.usage((std::string("multiple ")+arg_label+" arguments").c_str());
+    }
     set_val(ad.pinfo,arg_label,ad.argstr[argi].c_str(),val);
     is_val_set=true;
 }

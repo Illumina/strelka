@@ -19,8 +19,10 @@
 #define __MONOGT_HH
 
 
-namespace MONOGT {
-enum index_t {
+namespace MONOGT
+{
+enum index_t
+{
     A,
     C,
     G,
@@ -30,13 +32,20 @@ enum index_t {
 
 inline
 const char*
-label(const unsigned idx) {
-    switch (idx) {
-    case A: return "A";
-    case C: return "C";
-    case G: return "G";
-    case T: return "T";
-    default: return "X";
+label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case A:
+        return "A";
+    case C:
+        return "C";
+    case G:
+        return "G";
+    case T:
+        return "T";
+    default:
+        return "X";
     }
 }
 
@@ -44,7 +53,8 @@ label(const unsigned idx) {
 inline
 double
 expect(const int base_id,
-       const int gt) {
+       const int gt)
+{
 
     static const unsigned N_BASE(4);
 

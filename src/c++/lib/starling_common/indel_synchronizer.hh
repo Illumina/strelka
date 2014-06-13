@@ -26,7 +26,8 @@
 struct indel_synchronizer;
 
 
-struct indel_sync_data {
+struct indel_sync_data
+{
 
     void
     register_sample(indel_buffer& ib,
@@ -37,7 +38,8 @@ struct indel_sync_data {
 private:
     friend struct indel_synchronizer;
 
-    struct indel_sample_data {
+    struct indel_sample_data
+    {
 
         indel_sample_data()
             : ibp(0)
@@ -72,7 +74,8 @@ private:
 // (referred to as the primary sample below). The synchronizer defines
 // the primary sample's synchronization policy with any other sample.
 //
-struct indel_synchronizer {
+struct indel_synchronizer
+{
 
     // ctor for simple single-sample operation:
     //
@@ -98,10 +101,16 @@ struct indel_synchronizer {
 
 
     indel_buffer&
-    ibuff() { return ibuff(_sample_order); }
+    ibuff()
+    {
+        return ibuff(_sample_order);
+    }
 
     const indel_buffer&
-    ibuff() const { return ibuff(_sample_order); }
+    ibuff() const
+    {
+        return ibuff(_sample_order);
+    }
 
 
     // returns true if this indel is novel to the buffer
@@ -117,9 +126,11 @@ struct indel_synchronizer {
     bool
     is_candidate_indel(const starling_options& opt,
                        const indel_key& ik,
-                       const indel_data& id) const {
+                       const indel_data& id) const
+    {
 
-        if (! id.status.is_candidate_indel_cached) {
+        if (! id.status.is_candidate_indel_cached)
+        {
             is_candidate_indel_int(opt,ik,id);
         }
         return id.status.is_candidate_indel;
@@ -130,7 +141,8 @@ struct indel_synchronizer {
     //
     bool
     is_candidate_indel(const starling_options& opt,
-                       const indel_key& ik) const {
+                       const indel_key& ik) const
+    {
         const indel_data* id_ptr(ibuff().get_indel_data_ptr(ik));
         if (NULL == id_ptr) find_data_exception(ik);
         return is_candidate_indel(opt,ik,*id_ptr);
@@ -138,7 +150,8 @@ struct indel_synchronizer {
 
     // used for debug output:
     sample_id_t
-    get_sample_id() const {
+    get_sample_id() const
+    {
         return _sample_no;
     }
 
@@ -150,24 +163,42 @@ private:
                            const indel_data& id) const;
 
     indel_buffer&
-    ibuff(const unsigned s) { return *(idata().get_value(s).ibp); }
+    ibuff(const unsigned s)
+    {
+        return *(idata().get_value(s).ibp);
+    }
 
     const indel_buffer&
-    ibuff(const unsigned s) const { return *(idata().get_value(s).ibp); }
+    ibuff(const unsigned s) const
+    {
+        return *(idata().get_value(s).ibp);
+    }
 
     const depth_buffer&
-    ebuff(const unsigned s) const { return *(idata().get_value(s).dbp); }
+    ebuff(const unsigned s) const
+    {
+        return *(idata().get_value(s).dbp);
+    }
 
     const starling_sample_options&
-    sample_opt(const unsigned s) const { return *(idata().get_value(s).sample_optp); }
+    sample_opt(const unsigned s) const
+    {
+        return *(idata().get_value(s).sample_optp);
+    }
 
     typedef indel_sync_data::idata_t idata_t;
 
     idata_t&
-    idata() { return _isd._idata; }
+    idata()
+    {
+        return _isd._idata;
+    }
 
     const idata_t&
-    idata() const { return _isd._idata; }
+    idata() const
+    {
+        return _isd._idata;
+    }
 
     void
     find_data_exception(const indel_key& ik) const;

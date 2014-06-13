@@ -53,7 +53,8 @@
 static
 bool
 check_and_adjust_exemplar(const alignment& al1,
-                          alignment& al2) {
+                          alignment& al2)
+{
     return (al1==al2);
 }
 
@@ -65,7 +66,8 @@ alignment
 matchify_edge_segment_type(const alignment& al,
                            const ALIGNPATH::align_t segment_type,
                            const bool is_match_leading_edge = true,
-                           const bool is_match_trailing_edge = true) {
+                           const bool is_match_trailing_edge = true)
+{
 
     using namespace ALIGNPATH;
 
@@ -77,7 +79,8 @@ matchify_edge_segment_type(const alignment& al,
 
     const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
     const unsigned as(al.path.size());
-    for (unsigned i(0); i<as; ++i) {
+    for (unsigned i(0); i<as; ++i)
+    {
         const path_segment& ps(al.path[i]);
         const bool is_leading_edge_segment(i<ends.first);
         const bool is_trailing_edge_segment(i>ends.second);
@@ -86,14 +89,20 @@ matchify_edge_segment_type(const alignment& al,
                                      (is_match_trailing_edge && is_trailing_edge_segment));
         const bool is_edge_target(is_candidate_edge && is_target_type);
         if (is_edge_target && is_leading_edge_segment) al2.pos-=ps.length;
-        if (is_edge_target || (ps.type==MATCH)) {
-            if ((! al2.path.empty()) && (al2.path.back().type == MATCH)) {
+        if (is_edge_target || (ps.type==MATCH))
+        {
+            if ((! al2.path.empty()) && (al2.path.back().type == MATCH))
+            {
                 al2.path.back().length += ps.length;
-            } else {
+            }
+            else
+            {
                 al2.path.push_back(ps);
                 al2.path.back().type = MATCH;
             }
-        } else {
+        }
+        else
+        {
             al2.path.push_back(ps);
         }
     }
@@ -112,7 +121,8 @@ static
 alignment
 matchify_edge_insertions(const alignment& al,
                          const bool is_match_leading_edge,
-                         const bool is_match_trailing_edge) {
+                         const bool is_match_trailing_edge)
+{
 
     return matchify_edge_segment_type(al, ALIGNPATH::INSERT,is_match_leading_edge,is_match_trailing_edge);
 }
@@ -126,7 +136,8 @@ matchify_edge_insertions(const alignment& al,
 //
 static
 alignment
-matchify_edge_soft_clip(const alignment& al) {
+matchify_edge_soft_clip(const alignment& al)
+{
 
     return matchify_edge_segment_type(al, ALIGNPATH::SOFT_CLIP);
 }
@@ -141,7 +152,8 @@ static
 alignment
 matchify_edge_indel(const alignment& al,
                     const bool is_match_leading_edge,
-                    const bool is_match_trailing_edge) {
+                    const bool is_match_trailing_edge)
+{
 
     const alignment al2(remove_edge_deletions(al,is_match_leading_edge,is_match_trailing_edge));
     return matchify_edge_insertions(al2,is_match_leading_edge,is_match_trailing_edge);
@@ -160,7 +172,8 @@ add_exemplar_alignment(const alignment& al,
                        const bool is_remove_leading_edge_indels,
                        const bool is_remove_trailing_edge_indels,
                        const bool is_remove_soft_clip,
-                       std::vector<alignment>& exal) {
+                       std::vector<alignment>& exal)
+{
 
     if (! al.is_realignable(max_indel_size)) return;
 
@@ -179,19 +192,22 @@ add_exemplar_alignment(const alignment& al,
     //
     const alignment* al_ptr(&al);
     alignment nial;
-    if ((is_remove_leading_edge_indels || is_remove_trailing_edge_indels) & is_edge_readref_len_segment(al.path)) {
+    if ((is_remove_leading_edge_indels || is_remove_trailing_edge_indels) & is_edge_readref_len_segment(al.path))
+    {
         nial=matchify_edge_indel(*al_ptr,is_remove_leading_edge_indels,is_remove_trailing_edge_indels);
         al_ptr=&nial;
     }
 
     alignment nscal;
-    if ((is_remove_soft_clip) & is_soft_clipped(al.path)) {
+    if ((is_remove_soft_clip) & is_soft_clipped(al.path))
+    {
         nscal=matchify_edge_soft_clip(*al_ptr);
         al_ptr=&nscal;
     }
 
     // check that this candidate exemplar does not already exist:
-    BOOST_FOREACH(alignment& exemplar, exal) {
+    BOOST_FOREACH(alignment& exemplar, exal)
+    {
         if (check_and_adjust_exemplar(*al_ptr,exemplar)) return;
     }
 
@@ -211,7 +227,8 @@ add_exemplar_alignment(const alignment& al,
 void
 get_exemplar_alignments(const starling_options& opt,
                         const read_segment& rseg,
-                        std::vector<alignment>& exal) {
+                        std::vector<alignment>& exal)
+{
 
     const bool is_remove_mapper_soft_clip(opt.is_remap_input_softclip);
 
@@ -219,7 +236,8 @@ get_exemplar_alignments(const starling_options& opt,
 
     // get exemplar from read mapper:
     const alignment& al(rseg.genome_align());
-    if (! al.empty()) {
+    if (! al.empty())
+    {
         const std::pair<bool,bool> end_pin(rseg.get_segment_edge_pin());
         const bool is_remove_leading_edge_indels(! end_pin.first);
         const bool is_remove_trailing_edge_indels(! end_pin.second);
@@ -232,7 +250,8 @@ get_exemplar_alignments(const starling_options& opt,
 
 #ifdef DEBUG_ALIGN
     log_os << "VARMIT: Final exemplar set:\n";
-    BOOST_FOREACH(const alignment& exemplar, exal) {
+    BOOST_FOREACH(const alignment& exemplar, exal)
+    {
         log_os << "exemplar: " << exemplar;
     }
 #endif

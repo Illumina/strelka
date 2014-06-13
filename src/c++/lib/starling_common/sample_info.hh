@@ -30,7 +30,8 @@
 // information where required, the base-class handles the starling
 // case of unlabeled single sample analysis.
 //
-struct sample_info {
+struct sample_info
+{
 
     sample_info() {}
     virtual
@@ -38,16 +39,21 @@ struct sample_info {
 
     virtual
     unsigned
-    sample_size() const { return 1; }
+    sample_size() const
+    {
+        return 1;
+    }
 
     virtual
-    const char* get_label(const unsigned /*i*/) const {
+    const char* get_label(const unsigned /*i*/) const
+    {
         return "";
     }
 
     virtual
     const char* get_prefix(const unsigned /*i*/,
-                           const bool /*is_tier1*/) const {
+                           const bool /*is_tier1*/) const
+    {
         return "";
     }
 };

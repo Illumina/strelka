@@ -60,7 +60,8 @@ write_starling_diploid_indel_file(const starling_diploid_indel& dgt,
 // Use caller object to precalculate prior distributions based on
 // theta value:
 //
-struct indel_digt_caller : private boost::noncopyable {
+struct indel_digt_caller : private boost::noncopyable
+{
 
     indel_digt_caller(const double theta);
 
@@ -79,13 +80,19 @@ struct indel_digt_caller : private boost::noncopyable {
                                    starling_diploid_indel& dindel) const;
 
     const double*
-    lnprior_genomic() const { return _lnprior_genomic; }
+    lnprior_genomic() const
+    {
+        return _lnprior_genomic;
+    }
 
     // this prior isn't current used for single-sample indel calling
     // itself, but is available for indel_digt_caller clients:
     //
     const double*
-    lnprior_polymorphic() const { return _lnprior_polymorphic; }
+    lnprior_polymorphic() const
+    {
+        return _lnprior_polymorphic;
+    }
 
     static
     void

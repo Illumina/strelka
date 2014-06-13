@@ -28,24 +28,28 @@
 
 /// simple pos->depth map
 ///
-struct depth_buffer {
+struct depth_buffer
+{
 
     unsigned
-    val(const pos_t pos) const {
+    val(const pos_t pos) const
+    {
         const citer i(_data.find(pos));
         if (i == _data.end()) return 0;
         else                 return i->second;
     }
 
     void
-    inc(const pos_t pos) {
+    inc(const pos_t pos)
+    {
         const iter i(_data.find(pos));
         if (i == _data.end()) _data[pos] = 1;
         else                 i->second += 1;
     }
 
     void
-    clear_pos(const pos_t pos) {
+    clear_pos(const pos_t pos)
+    {
         _data.erase(pos);
     }
 
@@ -53,7 +57,8 @@ struct depth_buffer {
     bool
     is_range_ge_than(const pos_t begin,
                      const pos_t end,
-                     const unsigned depth) const {
+                     const unsigned depth) const
+    {
 
         assert(begin <= end);
         citer i(_data.lower_bound(begin));

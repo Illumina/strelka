@@ -28,7 +28,8 @@
 #include <sstream>
 
 
-enum {
+enum
+{
     INDEL_BEGIN='^',
     INDEL_END='$'
 };
@@ -38,7 +39,8 @@ enum {
 static
 void
 read_length_error(const char* const md,
-                  const unsigned read_length) {
+                  const unsigned read_length)
+{
     std::ostringstream oss;
     oss << "ERROR:: match descriptor: " << md << " is inconsistent with expected read_length: " << read_length << "\n";
     throw blt_exception(oss.str().c_str());
@@ -49,7 +51,8 @@ read_length_error(const char* const md,
 static
 void
 unknown_md_error(const char* const md,
-                 const char* const mdptr) {
+                 const char* const mdptr)
+{
 
     std::ostringstream oss;
     oss << "ERROR:: can't parse match descriptor string: " << md << "\n"
@@ -73,7 +76,8 @@ expand_match_descriptor(const char* const read,
                         char* const ref,
                         unsigned* const pos,
                         const unsigned read_length,
-                        unsigned& ref_read_length) {
+                        unsigned& ref_read_length)
+{
 
     using illumina::blt_util::parse_unsigned;
 
@@ -88,19 +92,25 @@ expand_match_descriptor(const char* const read,
 
     unsigned read_pos(0);
     unsigned map_pos(0);
-    while (*mdptr) {
+    while (*mdptr)
+    {
 
-        if       (isdigit(*mdptr)) {
+        if       (isdigit(*mdptr))
+        {
             const unsigned mlen(parse_unsigned(mdptr));
             if ((read_pos+mlen) > read_length) read_length_error(md,read_length);
-            for (unsigned i(0); i<mlen; ++i) {
+            for (unsigned i(0); i<mlen; ++i)
+            {
                 ref[read_pos] = read[read_pos];
                 pos[read_pos++] = ++map_pos;
             }
 
-        } else if (is_valid_base(*mdptr)) {
+        }
+        else if (is_valid_base(*mdptr))
+        {
             if ((read_pos+1) > read_length) read_length_error(md,read_length);
-            if (*mdptr == read[read_pos]) {
+            if (*mdptr == read[read_pos])
+            {
                 std::ostringstream oss;
                 oss << "ERROR:: match descriptor indicates mismatch where none exists.\n"
                     << "\tread_pos: " << (read_pos+1) << "\n"
@@ -111,23 +121,32 @@ expand_match_descriptor(const char* const read,
             ref[read_pos] = *mdptr++;
             pos[read_pos++] = ++map_pos;
 
-        } else if (*mdptr == INDEL_BEGIN) {
+        }
+        else if (*mdptr == INDEL_BEGIN)
+        {
             mdptr++; // eat INDEL_BEGIN
 
-            while (*mdptr != INDEL_END) {
-                if       (isdigit(*mdptr)) {
+            while (*mdptr != INDEL_END)
+            {
+                if       (isdigit(*mdptr))
+                {
                     const unsigned mlen(parse_unsigned(mdptr));
                     if ((read_pos+mlen) > read_length) read_length_error(md,read_length);
-                    for (unsigned i(0); i<mlen; ++i) {
+                    for (unsigned i(0); i<mlen; ++i)
+                    {
                         ref[read_pos] = GAP;
                         pos[read_pos++] = 0;
                     }
 
-                } else if (is_valid_base(*mdptr)) {
+                }
+                else if (is_valid_base(*mdptr))
+                {
                     ++mdptr;
                     ++map_pos;
 
-                } else {
+                }
+                else
+                {
                     unknown_md_error(md,mdptr);
 
                 }
@@ -135,19 +154,26 @@ expand_match_descriptor(const char* const read,
 
             mdptr++; // eat INDEL_END
 
-        } else {
+        }
+        else
+        {
             unknown_md_error(md,mdptr);
         }
     }
 
-    if (read_pos != read_length) {
+    if (read_pos != read_length)
+    {
 #ifdef IMPLICIT_SOFT_CLIP
-        if (read_pos < read_length) {
-            while (read_pos<read_length) {
+        if (read_pos < read_length)
+        {
+            while (read_pos<read_length)
+            {
                 ref[read_pos] = GAP;
                 pos[read_pos++] = 0;
             }
-        } else {
+        }
+        else
+        {
             read_length_error(md,read_length);
         }
 #else

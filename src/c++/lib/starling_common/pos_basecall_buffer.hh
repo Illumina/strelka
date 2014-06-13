@@ -27,23 +27,27 @@
 #include <string>
 
 
-struct pos_basecall_buffer {
+struct pos_basecall_buffer
+{
 
     void
-    insert_pos_submap_count(const pos_t pos) {
+    insert_pos_submap_count(const pos_t pos)
+    {
 
         _pdata[pos].n_submapped++;
     }
 
     void
-    insert_pos_spandel_count(const pos_t pos) {
+    insert_pos_spandel_count(const pos_t pos)
+    {
 
         _pdata[pos].n_spandel++;
     }
 
     // update mapQ sum for MQ calculation
     void
-    insert_mapq_count(const pos_t pos, const uint8_t mapq) {
+    insert_mapq_count(const pos_t pos, const uint8_t mapq)
+    {
 
         _pdata[pos].n_mapq++;
         _pdata[pos].cumm_mapq += (mapq*mapq);
@@ -57,10 +61,14 @@ struct pos_basecall_buffer {
     void
     insert_pos_basecall(const pos_t pos,
                         const bool is_tier1,
-                        const base_call& bc) {
-        if (is_tier1) {
+                        const base_call& bc)
+    {
+        if (is_tier1)
+        {
             _pdata[pos].calls.push_back(bc);
-        } else {
+        }
+        else
+        {
             _pdata[pos].tier2_calls.push_back(bc);
         }
     }
@@ -70,7 +78,8 @@ struct pos_basecall_buffer {
                     const bool is_tier1,
                     const bam_seq_base& read_seq,
                     const uint8_t* qual,
-                    const unsigned offset) {
+                    const unsigned offset)
+    {
 
         // TODO write this for multi-tier:
         assert(is_tier1);
@@ -80,34 +89,42 @@ struct pos_basecall_buffer {
     // returns NULL for empty pos
     //
     snp_pos_info*
-    get_pos(const pos_t pos) {
+    get_pos(const pos_t pos)
+    {
         const piter i(_pdata.find(pos));
         if (i==_pdata.end()) return NULL;
         return &(i->second);
     }
 
     const snp_pos_info*
-    get_pos(const pos_t pos) const {
+    get_pos(const pos_t pos) const
+    {
         const pciter i(_pdata.find(pos));
         if (i==_pdata.end()) return NULL;
         return &(i->second);
     }
 
     void
-    clear_pos(const pos_t pos) {
+    clear_pos(const pos_t pos)
+    {
         const piter i(_pdata.find(pos));
         if (i!=_pdata.end()) _pdata.erase(i);
     }
 
     bool
-    empty() const { return _pdata.empty(); }
+    empty() const
+    {
+        return _pdata.empty();
+    }
 
 
 #if 0
-    iterator pos_iter(const pos_t pos) {
+    iterator pos_iter(const pos_t pos)
+    {
         return _pdata.lower_bound(pos);
     }
-    const_iterator pos_iter(const pos_t pos) const {
+    const_iterator pos_iter(const pos_t pos) const
+    {
         return _pdata.lower_bound(pos);
     }
 

@@ -43,7 +43,8 @@
 
 /// represents the data associated with a single indel observation:
 ///
-struct indel_observation_data {
+struct indel_observation_data
+{
 
     indel_observation_data()
         : is_noise(false)
@@ -68,7 +69,8 @@ struct indel_observation_data {
 // to the indel or the reference (or elsewhere in the genome). Used
 // for indel genotyping.
 //
-struct read_path_scores {
+struct read_path_scores
+{
 
     typedef float score_t;
 
@@ -116,7 +118,8 @@ struct read_path_scores {
 /// Note that for open-breakends we also report the longest insert
 /// candidate, and consider the most prevalent as a secondary term.
 ///
-struct insert_seq_manager {
+struct insert_seq_manager
+{
 
     insert_seq_manager()
         : _is_consensus(false)
@@ -125,8 +128,10 @@ struct insert_seq_manager {
 
     // get final consensus sequence:
     const std::string&
-    get() {
-        if (! _is_consensus) {
+    get()
+    {
+        if (! _is_consensus)
+        {
             _finalize();
         }
         return _consensus_seq;
@@ -153,8 +158,10 @@ struct insert_seq_manager {
 
     // add insert sequence observation:
     void
-    add_obs(const std::string& seq) {
-        if (_is_consensus) {
+    add_obs(const std::string& seq)
+    {
+        if (_is_consensus)
+        {
             _exception("Attempting to add insert observation after finalizing");
         }
 
@@ -165,9 +172,12 @@ struct insert_seq_manager {
         if (_obs_count>max_obs_count) return;
 
         obs_t::iterator i(_obs.find(seq));
-        if (i == _obs.end()) {
+        if (i == _obs.end())
+        {
             _obs[seq] = 1;
-        } else {
+        }
+        else
+        {
             i->second += 1;
         }
         _obs_count += 1;
@@ -190,7 +200,8 @@ private:
 
 // represents the data from all observations associated with an indel
 //
-struct indel_data {
+struct indel_data
+{
 
     indel_data(const indel_key& ik)
         : _ik(ik),
@@ -219,7 +230,8 @@ struct indel_data {
     // structure -- this is not a copy ctor
     //
     void
-    add_indel_data_evidence(const indel_data& id) {
+    add_indel_data_evidence(const indel_data& id)
+    {
         add_evidence(all_read_ids,id.all_read_ids);
         add_evidence(tier2_map_read_ids,id.tier2_map_read_ids);
         add_evidence(submap_read_ids,id.submap_read_ids);
@@ -230,7 +242,8 @@ struct indel_data {
 
 
     const std::string&
-    get_insert_seq() const {
+    get_insert_seq() const
+    {
 #ifdef ID_DEBUG
         //log_os << "KATTER: reporting insert seq for indel: " << _ik << "\n";
 #endif
@@ -249,7 +262,8 @@ struct indel_data {
     // insert sequence for all contig and tier1 observations:
     void
     add_insert_seq_obs(//const align_id_t id,
-        const std::string& seq) {
+        const std::string& seq)
+    {
 
         //if(all_read_ids.find(id) != all_read_ids.end()) return;
         _insert_seq.add_obs(seq);
@@ -259,7 +273,10 @@ struct indel_data {
     //
     // this is useful to construct partial indel_data clones
     const insert_seq_manager&
-    get_insert_seq_manager() const { return _insert_seq; }
+    get_insert_seq_manager() const
+    {
+        return _insert_seq;
+    }
 #endif
 
 private:
@@ -314,7 +331,8 @@ public:
     // sum of mapq for all reads at this position
     int cumm_mapq;
 
-    struct status_t {
+    struct status_t
+    {
         status_t()
             : is_candidate_indel_cached(false)
             , is_candidate_indel(false)
@@ -332,7 +350,8 @@ private:
     static
     void
     add_evidence(evidence_t& a,
-                 const evidence_t& b) {
+                 const evidence_t& b)
+    {
         a.insert(b.begin(),b.end());
     }
 #endif

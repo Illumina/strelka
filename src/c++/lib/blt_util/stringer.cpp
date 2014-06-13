@@ -25,7 +25,8 @@
 
 void
 stringer_base::
-type_error(const char* tiname) {
+type_error(const char* tiname)
+{
     std::ostringstream oss;
     oss << "ERROR: Can't initialize stringer object for type: "  << tiname << "\n";
     throw blt_exception(oss.str().c_str());
@@ -35,7 +36,8 @@ type_error(const char* tiname) {
 
 void
 stringer_base::
-get32_error(const int write_size) const {
+get32_error(const int write_size) const
+{
     _buff32[31]='\0';
     std::ostringstream oss;
     oss << "ERROR: stringer.get32 failed to convert type to string. write_size: '" << write_size << " buffer: " << _buff32 << "'\n";

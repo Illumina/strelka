@@ -23,7 +23,8 @@
 
 // a simplification of diploid calls down to types relative to the reference:
 //
-namespace NTYPE {
+namespace NTYPE
+{
 
 enum index_t { REF,
                HOM,
@@ -34,13 +35,20 @@ enum index_t { REF,
 
 inline
 const char*
-label(const unsigned idx) {
-    switch (idx) {
-    case REF: return "ref";
-    case HOM: return "hom";
-    case HET: return "het";
-    case CONFLICT: return "conflict";
-    default: return "xxx";
+label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case REF:
+        return "ref";
+    case HOM:
+        return "hom";
+    case HET:
+        return "het";
+    case CONFLICT:
+        return "conflict";
+    default:
+        return "xxx";
     }
 }
 }

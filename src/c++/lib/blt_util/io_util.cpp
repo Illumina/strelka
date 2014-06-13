@@ -28,10 +28,12 @@
 
 void
 open_ifstream(std::ifstream& ifs,
-              const char* filename) {
+              const char* filename)
+{
 
     ifs.open(filename);
-    if (! ifs) {
+    if (! ifs)
+    {
         log_os << "ERROR: Can't open file: " << filename << "\n";
         exit(EXIT_FAILURE);
     }

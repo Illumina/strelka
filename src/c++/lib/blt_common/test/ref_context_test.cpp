@@ -23,14 +23,16 @@ static
 void
 single_snp_hpol_test(const pos_t pos,
                      const reference_contig_segment& ref,
-                     const unsigned expect) {
+                     const unsigned expect)
+{
 
     const unsigned result(get_snp_hpol_size(pos,ref));
     BOOST_CHECK_EQUAL(result,expect);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_snp_hpol_size ) {
+BOOST_AUTO_TEST_CASE( test_snp_hpol_size )
+{
     reference_contig_segment ref;
     ref.seq() = "TGTTTGAGATTT";
 
@@ -44,14 +46,16 @@ static
 void
 single_ihpol_test(const pos_t pos,
                   const reference_contig_segment& ref,
-                  const unsigned expect) {
+                  const unsigned expect)
+{
 
     const unsigned result(get_interupted_hpol_size(pos,ref));
     BOOST_CHECK_EQUAL(result,expect);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_interupted_hpol_size ) {
+BOOST_AUTO_TEST_CASE( test_interupted_hpol_size )
+{
     reference_contig_segment ref;
     ref.seq() = "TGTTTGAGATTT";
 

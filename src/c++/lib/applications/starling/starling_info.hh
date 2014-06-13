@@ -21,21 +21,25 @@
 #include "starling_common/version.hh"
 
 
-struct starling_info : public prog_info {
+struct starling_info : public prog_info
+{
 
     static
-    const prog_info& get() {
+    const prog_info& get()
+    {
         static const starling_info vci;
         return vci;
     }
 
 private:
-    const char* name() const {
+    const char* name() const
+    {
         static const char NAME[] = "IsaacVariantCaller";
         return NAME;
     }
 
-    const char* version() const {
+    const char* version() const
+    {
         return starka::getFullVersion();
     }
 

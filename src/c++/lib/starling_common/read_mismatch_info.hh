@@ -23,7 +23,8 @@
 #include <vector>
 
 
-struct read_base_mismatch_info {
+struct read_base_mismatch_info
+{
     int mismatch_count;
     int mismatch_count_ns;
 

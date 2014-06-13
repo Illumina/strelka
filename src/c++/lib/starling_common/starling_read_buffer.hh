@@ -33,11 +33,15 @@
 // have been passed the same counter object. Obviously a single thread
 // solution.
 //
-struct read_id_counter {
+struct read_id_counter
+{
     read_id_counter() : _head_read_id(0) {}
 
     // provide the current id and increment:
-    align_id_t next() { return _head_read_id++; }
+    align_id_t next()
+    {
+        return _head_read_id++;
+    }
 
 private:
     align_id_t _head_read_id; // tracks head read_id number for next read added
@@ -57,7 +61,8 @@ struct read_segment_iter;
 // multiple reads may be associated with (1) and (4), but (2) and (3)
 // can produce at most a single result.
 //
-struct starling_read_buffer : private boost::noncopyable {
+struct starling_read_buffer : private boost::noncopyable
+{
 
     starling_read_buffer(read_id_counter* ricp = NULL)
         : _ricp( (NULL==ricp) ? &_ric : ricp ) {}
@@ -93,7 +98,8 @@ struct starling_read_buffer : private boost::noncopyable {
 
     // returns NULL if read_id isn't present:
     starling_read*
-    get_read(const align_id_t read_id) {
+    get_read(const align_id_t read_id)
+    {
         const read_data_t::iterator k(_read_data.find(read_id));
         if (k == _read_data.end()) return NULL;
         return (k->second);
@@ -101,7 +107,8 @@ struct starling_read_buffer : private boost::noncopyable {
 
     // returns NULL if read_id isn't present:
     const starling_read*
-    get_read(const align_id_t read_id) const {
+    get_read(const align_id_t read_id) const
+    {
         const read_data_t::const_iterator k(_read_data.find(read_id));
         if (k == _read_data.end()) return NULL;
         return (k->second);
@@ -115,11 +122,17 @@ struct starling_read_buffer : private boost::noncopyable {
     dump_pos(const pos_t pos, std::ostream& os) const;
 
     bool
-    empty() const { return _pos_group.empty(); }
+    empty() const
+    {
+        return _pos_group.empty();
+    }
 
 private:
     align_id_t
-    next_id() const { return _ricp->next(); }
+    next_id() const
+    {
+        return _ricp->next();
+    }
 
     friend struct read_segment_iter;
 
@@ -159,7 +172,8 @@ private:
 
 // not a real iterator
 //
-struct read_segment_iter {
+struct read_segment_iter
+{
 
     typedef std::pair<starling_read*,seg_id_t> ret_val;
 
@@ -169,7 +183,8 @@ struct read_segment_iter {
 
     // returns false if no more reads
     //
-    bool next() {
+    bool next()
+    {
         if (_head!=_end) _head++;
         return (_head!=_end);
     }

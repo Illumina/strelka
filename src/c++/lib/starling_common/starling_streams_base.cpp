@@ -31,7 +31,8 @@ starling_streams_base::
 initialize_bindel_file(const starling_options& opt,
                        const prog_info& pinfo,
                        const std::string& filename,
-                       const char* label) {
+                       const char* label)
+{
 
     const char* const cmdline(opt.cmdline.c_str());
 
@@ -58,10 +59,12 @@ initialize_gvcf_file(const starling_options& opt,
                      const prog_info& pinfo,
                      const std::string& filename,
                      const bam_header_t* const header,
-                     std::auto_ptr<std::ostream>& os_ptr_auto) {
+                     std::auto_ptr<std::ostream>& os_ptr_auto)
+{
 
     std::ostream* osptr(&std::cout);
-    if (filename != "-") {
+    if (filename != "-")
+    {
         std::ofstream* fos_ptr(new std::ofstream);
         open_ofstream(pinfo,filename,"gvcf",opt.is_clobber,*fos_ptr);
         os_ptr_auto.reset(fos_ptr);
@@ -69,7 +72,8 @@ initialize_gvcf_file(const starling_options& opt,
     }
     std::ostream& os(*osptr);
 
-    if (! opt.gvcf.is_skip_header) {
+    if (! opt.gvcf.is_skip_header)
+    {
         const char* const cmdline(opt.cmdline.c_str());
 
         write_vcf_audit(opt,pinfo,cmdline,header,os);
@@ -89,7 +93,8 @@ initialize_realign_bam(const bool is_clobber,
                        const prog_info& pinfo,
                        const std::string& filename,
                        const char* label,
-                       const bam_header_t* const header) {
+                       const bam_header_t* const header)
+{
 
     assert(NULL != header);
 
@@ -98,7 +103,8 @@ initialize_realign_bam(const bool is_clobber,
     //fp->header = bam_header_dup((const bam_header_t*)aux);
     //fos << "@PG\tID:" << pinfo.name() << "\tVN:" << pinfo.version() << "\tCL:" << cmdline << "\n";
 
-    if (not is_clobber) { // weak clobber test:
+    if (not is_clobber)   // weak clobber test:
+    {
         std::ofstream fos;
         open_ofstream(pinfo,filename,label,is_clobber,fos);
     }
@@ -111,7 +117,8 @@ std::ostream*
 starling_streams_base::
 initialize_candidate_indel_file(const starling_options& opt,
                                 const prog_info& pinfo,
-                                const std::string& filename) {
+                                const std::string& filename)
+{
 
     const char* const cmdline(opt.cmdline.c_str());
 
@@ -135,7 +142,8 @@ starling_streams_base::
 initialize_window_file(const starling_options& opt,
                        const prog_info& pinfo,
                        const avg_window_data& awd,
-                       const sample_info& si) {
+                       const sample_info& si)
+{
 
     const char* const cmdline(opt.cmdline.c_str());
 
@@ -155,8 +163,10 @@ initialize_window_file(const starling_options& opt,
     static const char* win_type[] = {"used","filt","submap"};
     static unsigned n_win_type(sizeof(win_type)/sizeof(char*));
     const unsigned n_samples(si.sample_size());
-    for (unsigned s(0); s<n_samples; ++s) {
-        for (unsigned i(0); i<n_win_type; ++i) {
+    for (unsigned s(0); s<n_samples; ++s)
+    {
+        for (unsigned i(0); i<n_win_type; ++i)
+        {
             fos << " " << si.get_prefix(s,is_tier1) << "win" << fs << "_" << win_type[i];
         }
     }
@@ -179,12 +189,14 @@ starling_streams_base(const starling_options& opt,
 
     for (unsigned i(0); i<_n_samples; ++i) _gvcf_osptr[i] = NULL;
 
-    if (opt.is_write_candidate_indels()) {
+    if (opt.is_write_candidate_indels())
+    {
         _candidate_indel_osptr.reset(initialize_candidate_indel_file(opt,pinfo,opt.candidate_indel_filename));
     }
 
     const unsigned vs(opt.variant_windows.size());
-    for (unsigned i(0); i<vs; ++i) {
+    for (unsigned i(0); i<vs; ++i)
+    {
         _window_osptr[i].reset(initialize_window_file(opt,pinfo,opt.variant_windows[i],si));
     }
 }

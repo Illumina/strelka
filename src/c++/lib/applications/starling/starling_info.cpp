@@ -76,7 +76,8 @@ static starling_info::time_t compile_time(time_when_compiled);
 
 void
 starling_info::
-usage(const char* xmessage) const {
+usage(const char* xmessage) const
+{
 
     std::ostream& os(log_os);
 
@@ -95,7 +96,8 @@ usage(const char* xmessage) const {
     write_starling_legacy_options(os);
     os << "\n";
 
-    if (xmessage) {
+    if (xmessage)
+    {
         os << "\n"
            << "******** COMMAND-LINE ERROR:: " << xmessage << " ********\n"
            << "\n";

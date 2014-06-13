@@ -24,7 +24,8 @@
 
 
 
-struct gvcf_block_site_record {
+struct gvcf_block_site_record
+{
 
     gvcf_block_site_record(const gvcf_options& opt)
         : frac_tol(static_cast<double>(opt.block_percent_tol)/100.)
@@ -33,7 +34,8 @@ struct gvcf_block_site_record {
     {}
 
     void
-    reset() {
+    reset()
+    {
         count=0;
         block_gqx.reset();
         block_dpu.reset();

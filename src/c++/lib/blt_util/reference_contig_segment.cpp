@@ -24,21 +24,25 @@
 
 static
 void
-test_rcs() {
+test_rcs()
+{
     std::ostream& os(std::cerr);
 
     reference_contig_segment ref;
     ref.seq() = "12345";
     ref.set_offset(10);
 
-    for (unsigned i(5); i<20; ++i) {
+    for (unsigned i(5); i<20; ++i)
+    {
         os << "get_base i/res: " << i << " " << ref.get_base(i) << "\n";
     }
 
     std::string test;
     pos_t lens[2] = { 3, 8 };
-    for (unsigned j(0); j<2; ++j) {
-        for (unsigned i(5); i<20; ++i) {
+    for (unsigned j(0); j<2; ++j)
+    {
+        for (unsigned i(5); i<20; ++i)
+        {
             ref.get_substring(i,lens[j],test);
             os << "get_ss" << lens[j] << " i/res: " << i << " " << test << "\n";
         }

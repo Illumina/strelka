@@ -27,14 +27,19 @@
 
 
 
-struct convert {
-    void operator()(char& c) const { c = toupper((unsigned char)c); }
+struct convert
+{
+    void operator()(char& c) const
+    {
+        c = toupper((unsigned char)c);
+    }
 };
 
 
 static
 void
-stoupper(std::string& s) {
+stoupper(std::string& s)
+{
     std::for_each(s.begin(), s.end(), convert());
 }
 
@@ -42,7 +47,8 @@ stoupper(std::string& s) {
 
 bool
 vcf_record::
-set(const char* s) {
+set(const char* s)
+{
 
     static const char sep('\t');
     static const unsigned maxword(5);
@@ -54,9 +60,12 @@ set(const char* s) {
     const char* p(start);
 
     unsigned wordindex(0);
-    while (wordindex<maxword) {
-        if ((*p == sep) || (*p == '\n') || (*p == '\0')) {
-            switch (wordindex) {
+    while (wordindex<maxword)
+    {
+        if ((*p == sep) || (*p == '\n') || (*p == '\0'))
+        {
+            switch (wordindex)
+            {
             case 0:
                 chrom=std::string(start,p-start);
                 break;
@@ -75,8 +84,10 @@ set(const char* s) {
                 // additional parse loop for ',' character:
             {
                 const char* p2(start);
-                while (p2<=p) {
-                    if ((*p2==',') || (p2==p)) {
+                while (p2<=p)
+                {
+                    if ((*p2==',') || (p2==p))
+                    {
                         alt.push_back(std::string(start,p2-start));
                         stoupper(alt.back());
                         start=p2+1;
@@ -101,7 +112,8 @@ set(const char* s) {
 
 
 
-std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr) {
+std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr)
+{
 
     os << vcfr.chrom << '\t'
        << vcfr.pos << '\t'
@@ -109,7 +121,8 @@ std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr) {
        << vcfr.ref << '\t';
 
     const unsigned nalt(vcfr.alt.size());
-    for (unsigned a(0); a<nalt; ++a) {
+    for (unsigned a(0); a<nalt; ++a)
+    {
         if (a) os << ',';
         os << vcfr.alt[a];
     }

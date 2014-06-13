@@ -62,7 +62,8 @@ call(
     const bool is_somatic_gvcf,
     const unsigned pos,
     snp_pos_info& norm_pi,
-    snp_pos_info& tumor_pi) {
+    snp_pos_info& tumor_pi)
+{
 
     static dependent_prob_cache dpcache;
 
@@ -112,13 +113,15 @@ void
 load_pi(const char ref_base,
         const char* read,
         const uint8_t* qual,
-        snp_pos_info& pi) {
+        snp_pos_info& pi)
+{
 
     pi.clear();
     pi.ref_base=ref_base;
 
     const unsigned len(strlen(read));
-    for (unsigned i(0); i<len; ++i) {
+    for (unsigned i(0); i<len; ++i)
+    {
         const bool is_fwd(isupper(read[i]));
         const uint8_t base_id(base_to_id(toupper(read[i])));
         assert(qual[i]>=33);
@@ -130,7 +133,8 @@ load_pi(const char ref_base,
 
 // call sites from an external simulator:
 void
-strelka_pile_test_run(strelka_options& opt) {
+strelka_pile_test_run(strelka_options& opt)
+{
 
     strelka_pile_caller pcall(opt,std::cout);
 
@@ -139,7 +143,8 @@ strelka_pile_test_run(strelka_options& opt) {
     snp_pos_info norm_pi;
     snp_pos_info tumor_pi;
 
-    while (dparse.parse_line()) {
+    while (dparse.parse_line())
+    {
 
         assert(6 == dparse.n_word());
 

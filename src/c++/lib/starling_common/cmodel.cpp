@@ -36,39 +36,47 @@
 #endif
 
 // add model paramaters
-void c_model::add_parameters(const parmap& myPars) {
+void c_model::add_parameters(const parmap& myPars)
+{
     this->pars = myPars;
 }
 
 // rule-based filtering for SNPs
-void c_model::do_rule_model(featuremap& cutoffs, site_info& si) {
+void c_model::do_rule_model(featuremap& cutoffs, site_info& si)
+{
     if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
-    if (cutoffs["DP"]>0) {
+    if (cutoffs["DP"]>0)
+    {
         if ((si.n_used_calls+si.n_unused_calls) > cutoffs["DP"]) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
-    if (total_calls>0) {
+    if (total_calls>0)
+    {
         const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
         if (filt>cutoffs["DPFratio"]) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
     }
-    if (si.dgt.is_snp) {
+    if (si.dgt.is_snp)
+    {
         if (si.dgt.sb>cutoffs["HighSNVSB"]) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
     }
 }
 
 // rule-based filtering for INDELs
-void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii) {
+void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii)
+{
 
     ii.imod.max_gt=ii.dindel.max_gt_poly;
     ii.imod.gq=ii.dindel.max_gt_poly_qphred;
 
 
-    if (cutoffs["GQX"]>0) {
+    if (cutoffs["GQX"]>0)
+    {
         if (ii.imod.gqx<cutoffs["GQX"]) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if (cutoffs["DP"]>0) {
+    if (cutoffs["DP"]>0)
+    {
         if (ii.isri.depth > cutoffs["DP"]) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }
 
@@ -84,8 +92,10 @@ void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii) {
 
 //Transform the features with the specified scaling parameters that were used to standardize
 //the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
-featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor) {
-    for (featuremap::const_iterator it = norm_factor.begin(); it != norm_factor.end(); ++it) { // only normalize the features that are needed
+featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor)
+{
+    for (featuremap::const_iterator it = norm_factor.begin(); it != norm_factor.end(); ++it)   // only normalize the features that are needed
+    {
 //        log_os << it->first << "=" << features[it->first] << " ";
         features[it->first] = (features[it->first]-adjust_factor[it->first])/norm_factor[it->first];
 //        log_os << it->first << "=" << features[it->first] << " ";
@@ -96,18 +106,23 @@ featuremap c_model::normalize(featuremap features, featuremap& adjust_factor, fe
 
 //Model: ln(p(TP|x)/p(FP|x))=w_1*x_1 ... w_n*x_n + w_1*w_2*x_1 ... w_{n-1}*w_{n}*x_1
 // calculate sum from feature map
-double c_model::log_odds(featuremap features, featuremap& coeffs) {
+double c_model::log_odds(featuremap features, featuremap& coeffs)
+{
     using namespace boost::algorithm;
     std::vector<std::string> tokens;
     double sum = coeffs["Intercept"];
 //    log_os << "sum" << "=" << sum << "\n";
-    for (featuremap::const_iterator it = coeffs.begin(); it != coeffs.end(); ++it) {
-        if (it->first !="Intercept" && it->second !=0) { // check that our coefficient is different from 0
+    for (featuremap::const_iterator it = coeffs.begin(); it != coeffs.end(); ++it)
+    {
+        if (it->first !="Intercept" && it->second !=0)   // check that our coefficient is different from 0
+        {
             split(tokens, it->first, is_any_of(":"));
 //            log_os << it->first << "=" << it->second << "\n";
             double term = it->second;
-            for (unsigned int i=0; i < tokens.size(); i++) {
-                if (features.find( tokens[i] ) != features.end()) {
+            for (unsigned int i=0; i < tokens.size(); i++)
+            {
+                if (features.find( tokens[i] ) != features.end())
+                {
                     term = term*features[tokens[i]];
 //                    log_os << tokens[i] << "=" << features[tokens[i]] << "\n";
                 }
@@ -145,7 +160,8 @@ double c_model::log_odds(featuremap features, featuremap& coeffs) {
 static
 int prior_adjustment(
     const double raw_score,
-    const double minorityPrior) {
+    const double minorityPrior)
+{
 
     double pFP          = 1.0/(1+std::exp(raw_score)); // this calculation can likely be simplified
     double pFPrescale   = pFP*minorityPrior/(1+2*minorityPrior*pFP-minorityPrior-pFP);
@@ -160,7 +176,8 @@ int prior_adjustment(
     // cap the score at 60
     if (qscore>60)
         qscore = 60;
-    if (qscore<1) {
+    if (qscore<1)
+    {
 //       log_os << "Raw score " << raw_score << std::endl;
 //       log_os << "Qscore "<< qscore << std::endl;
         qscore = 1;
@@ -169,24 +186,29 @@ int prior_adjustment(
 
     return qscore;
 }
-void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case) { //, featuremap& most_predictive) {
+void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
+{
 //    most_predictive.size();
-    if (si.Qscore < qscore_cut) {
+    if (si.Qscore < qscore_cut)
+    {
 //        log_os << CALIBRATION_MODEL::get_label(my_case) << "\n";
         si.smod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(my_case)); // more sophisticated filter setting here
     }
 }
 
-void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case) { //, featuremap& most_predictive) {
+void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
+{
 //    most_predictive.size();
-    if (ii.Qscore < qscore_cut) {
+    if (ii.Qscore < qscore_cut)
+    {
 //        log_os << CALIBRATION_MODEL::get_label(my_case) << "\n";
         ii.imod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(my_case));
     }
 }
 
 // joint logistic regression for both SNPs and INDELs
-int c_model::logistic_score(const CALIBRATION_MODEL::var_case var_case, featuremap features) {
+int c_model::logistic_score(const CALIBRATION_MODEL::var_case var_case, featuremap features)
+{
 
     std::string var_case_label(CALIBRATION_MODEL::get_label(var_case));
     // normalize
@@ -203,9 +225,11 @@ int c_model::logistic_score(const CALIBRATION_MODEL::var_case var_case, featurem
 
 
 //score snp case
-void c_model::score_instance(featuremap features, site_info& si) {
+void c_model::score_instance(featuremap features, site_info& si)
+{
 
-    if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
+    if (this->model_type=="LOGISTIC")   //case we are using a logistic regression mode
+    {
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HomSNP);
         if (si.is_het())
             var_case = CALIBRATION_MODEL::HetSNP;
@@ -219,19 +243,23 @@ void c_model::score_instance(featuremap features, site_info& si) {
 //    else if(this->model_type=="RFtree"){ // place-holder, put random forest here
 //        si.Qscore = rf_score(var_case, features);
 //    }
-    else if (this->model_type=="RULE") { //case we are using a rule based model
+    else if (this->model_type=="RULE")   //case we are using a rule based model
+    {
         this->do_rule_model(this->pars["snp"]["cutoff"],si);
     }
 }
 
 // score indel case
-void c_model::score_instance(featuremap features, indel_info& ii) {
-    if (this->model_type=="LOGISTIC") { //case we are using a logistic regression mode
+void c_model::score_instance(featuremap features, indel_info& ii)
+{
+    if (this->model_type=="LOGISTIC")   //case we are using a logistic regression mode
+    {
         //TODO put into enum context
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
         if (!ii.is_het())
             var_case = CALIBRATION_MODEL::HomDel;
-        if(ii.iri.it==INDEL::INSERT){
+        if (ii.iri.it==INDEL::INSERT)
+        {
             if (ii.is_het())
                 var_case = CALIBRATION_MODEL::HetIns;
             else
@@ -243,7 +271,8 @@ void c_model::score_instance(featuremap features, indel_info& ii) {
 //    else if(this->model_type=="RFtree"){
 //        si.Qscore = rf_score(var_case, features);
 //    }
-    else if (this->model_type=="RULE") { //case we are using a rule based model
+    else if (this->model_type=="RULE")   //case we are using a rule based model
+    {
         this->do_rule_model(this->pars["indel"]["cutoff"],ii);
     }
 }

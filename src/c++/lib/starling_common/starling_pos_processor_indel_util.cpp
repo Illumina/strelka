@@ -42,7 +42,8 @@ static
 void
 finish_indel_sppr(indel_observation& obs,
                   starling_pos_processor_base& sppr,
-                  const unsigned sample_no) {
+                  const unsigned sample_no)
+{
 
     sppr.insert_indel(obs,sample_no);
 }
@@ -54,7 +55,8 @@ void
 bam_seq_to_str(const bam_seq_base& bs,
                const unsigned start,
                const unsigned end,
-               std::string& s) {
+               std::string& s)
+{
     s.clear();
     for (unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
 }
@@ -174,13 +176,16 @@ process_swap(const unsigned max_indel_size,
     const unsigned swap_size(std::max(sinfo.insert_length,sinfo.delete_length));
 
     // large insertions are not filtered as noise:
-    if (obs.data.is_noise) {
-        if (sinfo.insert_length > max_cand_filter_insert_size) {
+    if (obs.data.is_noise)
+    {
+        if (sinfo.insert_length > max_cand_filter_insert_size)
+        {
             obs.data.is_noise=false;
         }
     }
 
-    if (swap_size <= max_indel_size) {
+    if (swap_size <= max_indel_size)
+    {
         obs.key.pos=ref_head_pos;
         obs.key.length=sinfo.insert_length;
         obs.key.swap_dlength=sinfo.delete_length;
@@ -188,7 +193,9 @@ process_swap(const unsigned max_indel_size,
         bam_seq_to_str(bseq,read_offset,read_offset+sinfo.insert_length,obs.data.insert_seq);
         finish_indel_sppr(obs,sppr,sample_no);
 
-    } else {
+    }
+    else
+    {
 
         // left side BP:
         {
@@ -239,25 +246,33 @@ process_simple_indel(const unsigned max_indel_size,
     const path_segment& ps(path[path_index]);
 
     // large insertion breakpoints are not filtered as noise:
-    if (obs.data.is_noise) {
+    if (obs.data.is_noise)
+    {
         if ((ps.type == INSERT) &&
-            (ps.length > max_cand_filter_insert_size)) {
+            (ps.length > max_cand_filter_insert_size))
+        {
             obs.data.is_noise=false;
         }
     }
-    if (ps.length <= max_indel_size) {
+    if (ps.length <= max_indel_size)
+    {
         obs.key.pos=ref_head_pos;
         obs.key.length = ps.length;
-        if (ps.type == INSERT) {
+        if (ps.type == INSERT)
+        {
             obs.key.type=INDEL::INSERT;
 //            log_os << "l: " << bseq << "\n";
             bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
 
-        } else {
+        }
+        else
+        {
             obs.key.type=INDEL::DELETE;
         }
         finish_indel_sppr(obs,sppr,sample_no);
-    } else {
+    }
+    else
+    {
         // left side BP:
         {
             obs.key.pos=ref_head_pos;
@@ -300,19 +315,22 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const INDEL_ALIGN_TYPE::index_t iat,
                              const align_id_t id,
                              const unsigned sample_no,
-                             const std::pair<bool,bool>& edge_pin) {
+                             const std::pair<bool,bool>& edge_pin)
+{
 
     using namespace ALIGNPATH;
 
     const unsigned seq_len(read_seq.size());
 //    log_os << rs << "\n";
-    if (is_apath_invalid(al.path,seq_len)) {
+    if (is_apath_invalid(al.path,seq_len))
+    {
         std::ostringstream oss;
         oss << "ERROR: Can't handle alignment path '" << apath_to_cigar(al.path) << "' -- " << get_apath_invalid_reason(al.path,seq_len) << "\n";
         throw blt_exception(oss.str().c_str());
     }
 
-    if (is_apath_starling_invalid(al.path)) {
+    if (is_apath_starling_invalid(al.path))
+    {
         std::ostringstream oss;
         oss << "ERROR: can't handle alignment path '" << apath_to_cigar(al.path) << "'\n";
         throw blt_exception(oss.str().c_str());
@@ -331,7 +349,8 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 
     unsigned total_indel_ref_span_per_read(0);
     const unsigned aps(al.path.size());
-    while (path_index<aps) {
+    while (path_index<aps)
+    {
         const path_segment& ps(al.path[path_index]);
         const bool is_begin_edge(path_index<ends.first);
         const bool is_end_edge(path_index>ends.second);
@@ -348,24 +367,33 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         obs.data.iat = iat;
         obs.data.id = id;
 
-        if (MATCH != ps.type) {
+        if (MATCH != ps.type)
+        {
 //            log_os << al.path <<" \n";
             pos_range indel_read_pr;
             indel_read_pr.set_begin_pos((read_offset==0) ? 0 : (read_offset-1));
 
             unsigned rlen(0);
-            if       (is_swap_start) {
+            if       (is_swap_start)
+            {
                 const swap_info sinfo(al.path,path_index);
                 rlen=sinfo.insert_length;
 
-                if (sinfo.delete_length<=max_indel_size) {
+                if (sinfo.delete_length<=max_indel_size)
+                {
                     total_indel_ref_span_per_read += sinfo.delete_length;
                 }
-            } else if (is_segment_type_read_length(ps.type)) {
+            }
+            else if (is_segment_type_read_length(ps.type))
+            {
                 rlen=ps.length;
-            } else {
-                if (ps.type == DELETE) {
-                    if (ps.length <= max_indel_size) {
+            }
+            else
+            {
+                if (ps.type == DELETE)
+                {
+                    if (ps.length <= max_indel_size)
+                    {
                         total_indel_ref_span_per_read += ps.length;
                     }
                 }
@@ -375,31 +403,40 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         }
 
         unsigned n_seg(1); // number of path segments consumed
-        if (is_edge_segment) {
+        if (is_edge_segment)
+        {
             // is this indel occurring on a pinned edge (ie against an exon?)
             const bool is_pinned_indel((is_begin_edge && edge_pin.first) ||
                                        (is_end_edge && edge_pin.second));
 
             // edge inserts are allowed for intron adjacent and grouper reads, edge deletions for intron adjacent only:
-            if (ps.type == INSERT) {
+            if (ps.type == INSERT)
+            {
                 process_edge_insert(max_indel_size,al.path,read_seq,
                                     sppr,obs,sample_no,
                                     path_index,read_offset,ref_head_pos,
                                     is_pinned_indel);
-            } else if (ps.type == DELETE) {
-                if (is_pinned_indel) {
+            }
+            else if (ps.type == DELETE)
+            {
+                if (is_pinned_indel)
+                {
                     process_edge_delete(max_indel_size,al.path,read_seq,
                                         sppr,obs,sample_no,
                                         path_index,read_offset,ref_head_pos,
                                         is_pinned_indel);
                 }
             }
-        } else if (is_swap_start) {
+        }
+        else if (is_swap_start)
+        {
             n_seg = process_swap(max_indel_size,al.path,read_seq,
                                  sppr,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
 
-        } else if (is_segment_type_indel(al.path[path_index].type)) {
+        }
+        else if (is_segment_type_indel(al.path[path_index].type))
+        {
 //            log_os << read_offset << "\n";
 //            log_os << int(rs.mapq) << "\n";
 //            log_os << al.path << "\n";
@@ -411,7 +448,10 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                                  path_index,read_offset,ref_head_pos);
         }
 
-        for (unsigned i(0); i<n_seg; ++i) { increment_path(al.path,path_index,read_offset,ref_head_pos); }
+        for (unsigned i(0); i<n_seg; ++i)
+        {
+            increment_path(al.path,path_index,read_offset,ref_head_pos);
+        }
     }
     return total_indel_ref_span_per_read;
 }

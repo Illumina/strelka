@@ -19,8 +19,10 @@
 #define __DIGT_HH
 
 
-namespace DIGT {
-enum index_t {
+namespace DIGT
+{
+enum index_t
+{
     AA,
     CC,
     GG,
@@ -36,50 +38,75 @@ enum index_t {
 
 inline
 const char*
-label(const unsigned idx) {
-    switch (idx) {
-    case AA: return "AA";
-    case CC: return "CC";
-    case GG: return "GG";
-    case TT: return "TT";
-    case AC: return "AC";
-    case AG: return "AG";
-    case AT: return "AT";
-    case CG: return "CG";
-    case CT: return "CT";
-    case GT: return "GT";
-    default: return "XX";
+label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case AA:
+        return "AA";
+    case CC:
+        return "CC";
+    case GG:
+        return "GG";
+    case TT:
+        return "TT";
+    case AC:
+        return "AC";
+    case AG:
+        return "AG";
+    case AT:
+        return "AT";
+    case CG:
+        return "CG";
+    case CT:
+        return "CT";
+    case GT:
+        return "GT";
+    default:
+        return "XX";
     }
 }
 
 inline
 bool
-is_het(const unsigned idx) {
-    switch (idx) {
+is_het(const unsigned idx)
+{
+    switch (idx)
+    {
     case AA:
     case CC:
     case GG:
-    case TT: return false;
-    default: return true;
+    case TT:
+        return false;
+    default:
+        return true;
     }
 }
 
 inline
 char
-hom_base(const unsigned idx) {
-    switch (idx) {
-    case AA: return 'A';
-    case CC: return 'C';
-    case GG: return 'G';
-    case TT: return 'T';
-    default: return 'X';
+hom_base(const unsigned idx)
+{
+    switch (idx)
+    {
+    case AA:
+        return 'A';
+    case CC:
+        return 'C';
+    case GG:
+        return 'G';
+    case TT:
+        return 'T';
+    default:
+        return 'X';
     }
 }
 
 inline
 double
 expect(const int base_id,
-       const int gt) {
+       const int gt)
+{
 
     static const unsigned N_BASE(4);
 
@@ -105,7 +132,8 @@ expect(const int base_id,
 inline
 unsigned
 expect2(const int base_id,
-        const int gt) {
+        const int gt)
+{
 
     static const unsigned N_BASE(4);
 
@@ -138,7 +166,8 @@ expect2(const int base_id,
 inline
 unsigned
 expect2_bias(const int base_id,
-             const int gt) {
+             const int gt)
+{
 
     static const unsigned N_BASE(4);
 
@@ -160,7 +189,8 @@ expect2_bias(const int base_id,
 inline
 const char*
 get_vcf_gt(const int gt,
-           const int ref_gt) {
+           const int ref_gt)
+{
 
     static const unsigned N_BASE(4);
 

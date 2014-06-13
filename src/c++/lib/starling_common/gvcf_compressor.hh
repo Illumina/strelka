@@ -26,7 +26,8 @@
 
 typedef std::map<int, bool> posmap;
 typedef std::map<std::string,posmap> chrposmap;
-class gvcf_compressor {
+class gvcf_compressor
+{
 public:
     gvcf_compressor();
     void read_bed(const std::string& input_file, const std::string& chrom);

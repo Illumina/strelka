@@ -56,7 +56,8 @@ struct nploid_info;
 
 
 /// keep a single copy of this struct to reuse for every site to lower alloc costs:
-struct extra_position_data {
+struct extra_position_data
+{
     /// stores the column of basecalls actually used for snp-calling after the
     /// mismatch density filter and other quality filters have been applied:
     snp_pos_info good_pi;
@@ -101,7 +102,8 @@ struct extra_position_data {
 ///
 /// ...
 ///
-struct starling_pos_processor_base : public pos_processor_base, private boost::noncopyable {
+struct starling_pos_processor_base : public pos_processor_base, private boost::noncopyable
+{
 
     typedef pos_processor_base base_t;
 
@@ -161,7 +163,8 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 #if 0
     starling_read*
     get_read(const align_id_t read_id,
-             const unsigned sample_no) {
+             const unsigned sample_no)
+    {
         return sample(sample_no).read_buff.get_read(read_id);
     }
 #endif
@@ -174,20 +177,23 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     // excluded?
     //
     bool
-    is_range_outside_report_influence_zone(const pos_range& pr) const {
+    is_range_outside_report_influence_zone(const pos_range& pr) const
+    {
         return (! _report_influence_range.is_range_intersect(pr));
     }
 
     // Does a range fall outside of the report start and stop positions?
     //
     bool
-    is_range_outside_report_zone(const pos_range& pr) const {
+    is_range_outside_report_zone(const pos_range& pr) const
+    {
         return (! _client_dopt.report_range_limit.is_range_intersect(pr));
     }
 
 protected:
     std::ostream*
-    get_report_osptr() const {
+    get_report_osptr() const
+    {
         return _client_io.report_osptr();
     }
 
@@ -201,7 +207,8 @@ protected:
                                     const unsigned sample_no);
 
     /////////////////////////////////
-    struct win_avg_set {
+    struct win_avg_set
+    {
 
         win_avg_set(const unsigned size)
             : ss_used_win(size)
@@ -217,15 +224,18 @@ protected:
     };
 
 
-    struct win_avgs {
+    struct win_avgs
+    {
 
         win_avgs(const starling_options& opt)
             : _max_winsize(0)
             , _is_last_pos(false)
-            , _last_insert_pos(false) {
+            , _last_insert_pos(false)
+        {
             const unsigned vs(opt.variant_windows.size());
             _wav.resize(vs);
-            for (unsigned i(0); i<vs; ++i) {
+            for (unsigned i(0); i<vs; ++i)
+            {
                 const unsigned winsize(1+opt.variant_windows[i].flank_size*2);
                 _wav[i].reset(new win_avg_set(winsize));
                 if (winsize>_max_winsize) _max_winsize=winsize;
@@ -237,7 +247,8 @@ protected:
                const unsigned n_used,
                const unsigned n_filt,
                const unsigned n_spandel,
-               const unsigned n_submap) {
+               const unsigned n_submap)
+        {
             if (_wav.empty()) return;
             check_skipped_pos(pos);
             insert_impl(n_used,n_filt,n_spandel,n_submap);
@@ -245,10 +256,12 @@ protected:
 
         // TODO: does check_skipped_pos need to be called here as well?
         void
-        insert_null(const pos_t pos) {
+        insert_null(const pos_t pos)
+        {
             check_skipped_pos(pos);
             const unsigned ws(_wav.size());
-            for (unsigned i(0); i<ws; ++i) {
+            for (unsigned i(0); i<ws; ++i)
+            {
                 _wav[i]->ss_used_win.insert_null();
                 _wav[i]->ss_filt_win.insert_null();
                 _wav[i]->ss_spandel_win.insert_null();
@@ -257,13 +270,18 @@ protected:
         }
 
         win_avg_set&
-        get_win_avg_set(const unsigned i) { return *(_wav[i]); }
+        get_win_avg_set(const unsigned i)
+        {
+            return *(_wav[i]);
+        }
 
     private:
 
         void
-        check_skipped_pos(const pos_t pos) {
-            if (_is_last_pos && (pos>(_last_insert_pos+1))) {
+        check_skipped_pos(const pos_t pos)
+        {
+            if (_is_last_pos && (pos>(_last_insert_pos+1)))
+            {
                 const unsigned rep(std::min(static_cast<pos_t>(_max_winsize),(pos-(_last_insert_pos+1))));
                 for (unsigned i(0); i<rep; ++i) insert_impl(0,0,0,0);
             }
@@ -275,9 +293,11 @@ protected:
         insert_impl(const unsigned n_used,
                     const unsigned n_filt,
                     const unsigned n_spandel,
-                    const unsigned n_submap) {
+                    const unsigned n_submap)
+        {
             const unsigned ws(_wav.size());
-            for (unsigned i(0); i<ws; ++i) {
+            for (unsigned i(0); i<ws; ++i)
+            {
                 _wav[i]->ss_used_win.insert(n_used);
                 _wav[i]->ss_filt_win.insert(n_filt);
                 _wav[i]->ss_spandel_win.insert(n_spandel);
@@ -295,7 +315,8 @@ protected:
     // this structure contains all information which is sample dependent:
     //
 public:
-    struct sample_info {
+    struct sample_info
+    {
 
         sample_info(const starling_options& opt,
                     const unsigned report_size,
@@ -314,7 +335,10 @@ public:
         {}
 
         indel_synchronizer&
-        indel_sync() { return *indel_sync_ptr; }
+        indel_sync()
+        {
+            return *indel_sync_ptr;
+        }
 
 
         indel_buffer indel_buff;
@@ -340,15 +364,24 @@ public:
     };
 
     sample_info&
-    sample(const unsigned sample_no = 0) { return *_sample[sample_no]; }
+    sample(const unsigned sample_no = 0)
+    {
+        return *_sample[sample_no];
+    }
 
     const sample_info&
-    sample(const unsigned sample_no = 0) const { return *_sample[sample_no]; }
+    sample(const unsigned sample_no = 0) const
+    {
+        return *_sample[sample_no];
+    }
 
     bool
-    empty() const {
-        if (! _is_skip_process_pos) {
-            for (unsigned s(0); s<_n_samples; ++s) {
+    empty() const
+    {
+        if (! _is_skip_process_pos)
+        {
+            for (unsigned s(0); s<_n_samples; ++s)
+            {
                 const sample_info& sif(sample(s));
                 if (! sif.read_buff.empty()) return false;
                 if (! sif.bc_buff.empty()) return false;
@@ -362,7 +395,8 @@ public:
 
     // data for haplotoype regions, shared between all samples:
     //
-    struct htype_region_data {
+    struct htype_region_data
+    {
         htype_region_data()
             : is_first_region(true)
             , region_alignment(0) {}
@@ -383,7 +417,8 @@ public:
 
 private:
     bool
-    is_pos_reportable(const pos_t pos) {
+    is_pos_reportable(const pos_t pos)
+    {
         return _client_dopt.report_range_limit.is_pos_intersect(pos);
     }
 
@@ -482,7 +517,8 @@ private:
     write_counts(const pos_range& output_report_range) const = 0;
 
     unsigned
-    get_largest_read_size() const {
+    get_largest_read_size() const
+    {
         return _rmi.size();
     }
 
@@ -491,7 +527,8 @@ private:
     update_largest_read_size(const unsigned rs);
 
     unsigned
-    get_largest_total_indel_ref_span_per_read() const {
+    get_largest_total_indel_ref_span_per_read() const
+    {
         return _largest_total_indel_ref_span_per_read;
     }
 
@@ -505,14 +542,16 @@ private:
     update_stageman();
 
     void
-    clear_forced_output_pos(const pos_t pos) {
+    clear_forced_output_pos(const pos_t pos)
+    {
         _forced_output_pos.erase(pos);
     }
 
 protected:
 
     bool
-    is_forced_output_pos(const pos_t pos) const {
+    is_forced_output_pos(const pos_t pos) const
+    {
         return (_forced_output_pos.find(pos) != _forced_output_pos.end());
     }
 

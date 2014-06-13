@@ -36,7 +36,8 @@ static
 void
 write_vcf_filter(std::ostream& os,
                  const char* id,
-                 const char* desc) {
+                 const char* desc)
+{
     os << "##FILTER=<ID=" << id << ",Description=\"" << desc << "\">\n";
 }
 
@@ -47,7 +48,8 @@ void
 add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options and starling_options
                  const starling_options& sopt,
                  const cdmap_t& chrom_depth,
-                 std::ostream& os) {
+                 std::ostream& os)
+{
 
     using namespace VCF_FILTERS;
 
@@ -56,36 +58,42 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
 
     bool do_rule_filters  = true;//(sopt.calibration_model=="default" || sopt.calibration_model=="Qrule");
 
-    if (opt.is_min_gqx && do_rule_filters) {
+    if (opt.is_min_gqx && do_rule_filters)
+    {
         std::ostringstream oss;
         oss << "Locus GQX is less than " << opt.min_gqx << " or not present";
         write_vcf_filter(os,get_label(LowGQX),oss.str().c_str());
     }
 
-    if (opt.is_max_base_filt && do_rule_filters) {
+    if (opt.is_max_base_filt && do_rule_filters)
+    {
         std::ostringstream oss;
         oss << "The fraction of basecalls filtered out at a site is greater than " << opt.max_base_filt;
         write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
     }
 
-    if (opt.is_max_snv_sb && do_rule_filters) {
+    if (opt.is_max_snv_sb && do_rule_filters)
+    {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
         write_vcf_filter(os,get_label(HighSNVSB),oss.str().c_str());
     }
-    if (opt.is_max_snv_hpol && do_rule_filters) {
+    if (opt.is_max_snv_hpol && do_rule_filters)
+    {
         std::ostringstream oss;
         oss << "SNV contextual homopolymer length (SNVHPOL) exceeds " << opt.max_snv_hpol;
         write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
     }
 
-    if (opt.is_max_ref_rep && do_rule_filters) {
+    if (opt.is_max_ref_rep && do_rule_filters)
+    {
         std::ostringstream oss;
         oss << "Locus contains an indel allele occurring in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    if (true) {
+    if (true)
+    {
         std::ostringstream oss;
         oss << "Locus quality is less than 15 for het SNP";
         write_vcf_filter(os,get_label(LowQscoreHetSNP),oss.str().c_str());
@@ -107,14 +115,16 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         oss.str("");
     }
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
-    if (sopt.do_codon_phasing) {
+    if (sopt.do_codon_phasing)
+    {
         std::ostringstream oss;
         oss << "Locus read evidence displays unbalanced phasing patterns";
         write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
     }
 
 
-    if (opt.is_max_depth_factor && (! chrom_depth.empty()) && do_rule_filters) {
+    if (opt.is_max_depth_factor && (! chrom_depth.empty()) && do_rule_filters)
+    {
         std::ostringstream oss;
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";
         write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
@@ -124,7 +134,8 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         os << std::fixed << std::setprecision(2);
 
         cdmap_t::const_iterator i(chrom_depth.begin()), i_end(chrom_depth.end());
-        for (; i!=i_end; ++i) {
+        for (; i!=i_end; ++i)
+        {
             const std::string& chrom(i->first);
             const double max_depth(opt.max_depth_factor*i->second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
@@ -139,14 +150,17 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
 // if none found return 'SAMPLE' to be used as sample name
 static
 std::string
-determine_sample(const std::string& bam_header_text) {
+determine_sample(const std::string& bam_header_text)
+{
     static const std::string default_res_name("SAMPLE");
 
     using namespace boost;
     char_separator<char> sep("\t\n");
     tokenizer< char_separator<char> > tokens(bam_header_text, sep);
-    BOOST_FOREACH (const std::string& t, tokens) {
-        if (std::string::npos != t.find("SM:")) {
+    BOOST_FOREACH (const std::string& t, tokens)
+    {
+        if (std::string::npos != t.find("SM:"))
+        {
             return t.substr(t.find("SM:")+3);
         }
     }
@@ -159,7 +173,8 @@ finish_gvcf_header(const starling_options& opt,
                    const gvcf_deriv_options& dopt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,
-                   std::ostream& os) {
+                   std::ostream& os)
+{
 
 //    bool do_rule_filters  = (opt.calibration_model=="default" || opt.calibration_model=="Qrule");
 
@@ -180,7 +195,8 @@ finish_gvcf_header(const starling_options& opt,
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
 
     // ranksums
-    if (opt.is_compute_VQSRmetrics) {
+    if (opt.is_compute_VQSRmetrics)
+    {
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
         os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities.\">\n";
         os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities.\">\n";

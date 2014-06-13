@@ -32,7 +32,8 @@
 ///
 /// TODO make structure more efficient by only holding right-side keys for deletions
 ///
-struct indel_buffer {
+struct indel_buffer
+{
 
     typedef indel_data idata_value_t;
     typedef std::map<indel_key,idata_value_t> idata_t;
@@ -44,10 +45,12 @@ struct indel_buffer {
     {}
 
     // position iterators based on left-most indel position:
-    iterator pos_iter(const pos_t pos) {
+    iterator pos_iter(const pos_t pos)
+    {
         return _idata.lower_bound(indel_key(pos));
     }
-    const_iterator pos_iter(const pos_t pos) const {
+    const_iterator pos_iter(const pos_t pos) const
+    {
         return _idata.lower_bound(indel_key(pos));
     }
 
@@ -67,13 +70,15 @@ struct indel_buffer {
 
     // return NULL if no indel found:
     indel_data*
-    get_indel_data_ptr(const indel_key& ik) {
+    get_indel_data_ptr(const indel_key& ik)
+    {
         const iterator i(_idata.find(ik));
         return ((i==_idata.end()) ? NULL : &(i->second) );
     }
 
     const indel_data*
-    get_indel_data_ptr(const indel_key& ik) const {
+    get_indel_data_ptr(const indel_key& ik) const
+    {
         const const_iterator i(_idata.find(ik));
         return ((i==_idata.end()) ? NULL : &(i->second) );
     }
@@ -127,9 +132,15 @@ private:
 // top-level TODO
 inline
 indel_data&
-get_indel_data(const indel_buffer::iterator i) { return (i->second); }
+get_indel_data(const indel_buffer::iterator i)
+{
+    return (i->second);
+}
 
 inline
 const indel_data&
-get_indel_data(const indel_buffer::const_iterator i) { return (i->second); }
+get_indel_data(const indel_buffer::const_iterator i)
+{
+    return (i->second);
+}
 

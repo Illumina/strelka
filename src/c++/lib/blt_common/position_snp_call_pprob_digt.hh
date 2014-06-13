@@ -31,29 +31,40 @@
 
 
 
-struct diploid_genotype {
+struct diploid_genotype
+{
 
-    diploid_genotype() { reset(); }
+    diploid_genotype()
+    {
+        reset();
+    }
 
-    void reset() {
+    void reset()
+    {
         is_snp=false;
         ref_gt=0;
         genome.reset();
         poly.reset();
     }
 
-    struct result_set {
+    struct result_set
+    {
 
-        result_set() { reset(); }
+        result_set()
+        {
+            reset();
+        }
 
         void
-        reset() {
+        reset()
+        {
             max_gt=0;
             static const blt_float_t p(1./static_cast<blt_float_t>(DIGT::SIZE));
             static const int qp(error_prob_to_qphred((1.-p)));
             snp_qphred=qp;
             max_gt_qphred=qp;
-            for (unsigned i(0); i<DIGT::SIZE; ++i) {
+            for (unsigned i(0); i<DIGT::SIZE; ++i)
+            {
                 pprob[i] = p;
             }
         }
@@ -100,7 +111,8 @@ write_diploid_genotype_snp(const blt_options& opt,
                            const snp_pos_info& pi,
                            const diploid_genotype& dgt,
                            std::ostream& os,
-                           const unsigned hpol) {
+                           const unsigned hpol)
+{
 
     write_diploid_genotype_allele(opt,pi,dgt,os,hpol);
 }
@@ -109,7 +121,8 @@ write_diploid_genotype_snp(const blt_options& opt,
 // Use caller object to precalculate prior distributions based on
 // theta value:
 //
-struct pprob_digt_caller : private boost::noncopyable {
+struct pprob_digt_caller : private boost::noncopyable
+{
 
     pprob_digt_caller(const blt_float_t theta);
 
@@ -127,12 +140,14 @@ struct pprob_digt_caller : private boost::noncopyable {
 
 
     const blt_float_t*
-    lnprior_genomic(const unsigned ref_id) const {
+    lnprior_genomic(const unsigned ref_id) const
+    {
         return _lnprior[ref_id].genome;
     }
 
     const blt_float_t*
-    lnprior_polymorphic(const unsigned ref_id) const {
+    lnprior_polymorphic(const unsigned ref_id) const
+    {
         return _lnprior[ref_id].poly;
     }
 
@@ -154,7 +169,8 @@ struct pprob_digt_caller : private boost::noncopyable {
                          diploid_genotype::result_set& rs);
 
 private:
-    struct prior_set {
+    struct prior_set
+    {
         blt_float_t genome[DIGT::SIZE];
         blt_float_t poly[DIGT::SIZE];
     };

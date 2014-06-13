@@ -33,30 +33,40 @@ nploid_gtype_size(const unsigned ploidy);
 /// pre-compute genotype count, labels and allele frequencies for any
 /// given ploidy:
 ///
-struct nploid_info : private boost::noncopyable {
+struct nploid_info : private boost::noncopyable
+{
 
     nploid_info(const unsigned init_ploidy);
 
     unsigned
-    ploidy() const { return _ploidy; }
+    ploidy() const
+    {
+        return _ploidy;
+    }
 
     unsigned
-    gtype_size() const { return _ginfo.size(); }
+    gtype_size() const
+    {
+        return _ginfo.size();
+    }
 
     const char*
-    label(const unsigned gt_index) const {
+    label(const unsigned gt_index) const
+    {
         return _ginfo[gt_index].label.c_str();
     }
 
     unsigned
-    get_ref_gtype(const char a) const {
+    get_ref_gtype(const char a) const
+    {
         return _ref_gtype[base_to_id(a)];
     }
 
     /// look up expectation frequencies directly:
     double
     expect_freq(const unsigned gt_index,
-                const unsigned base_id) const {
+                const unsigned base_id) const
+    {
         return expect_freq_level(gt_index,base_id)*expect_freq_chunk();
     }
 
@@ -65,29 +75,40 @@ struct nploid_info : private boost::noncopyable {
     /// level and chunk size, where expect=level*chunk, chunk=1/ploidy
     ///
     double
-    expect_freq_chunk() const { return _echunk; }
+    expect_freq_chunk() const
+    {
+        return _echunk;
+    }
 
     unsigned
     expect_freq_level(const unsigned gt_index,
-                      const unsigned base_id) const {
+                      const unsigned base_id) const
+    {
         return _ginfo[gt_index].efreq_levels[base_id];
     }
 
     unsigned
-    expect_freq_level_size() const { return _ploidy+1; }
+    expect_freq_level_size() const
+    {
+        return _ploidy+1;
+    }
 
 private:
 
-    struct gtype_info {
-        gtype_info() {
+    struct gtype_info
+    {
+        gtype_info()
+        {
             for (unsigned i(0); i<N_BASE; ++i) efreq_levels[i]=0;
         }
 
-        gtype_info(const gtype_info& g) : label(g.label) {
+        gtype_info(const gtype_info& g) : label(g.label)
+        {
             for (unsigned i(0); i<N_BASE; ++i) efreq_levels[i]=g.efreq_levels[i];
         }
 
-        gtype_info& operator=(const gtype_info& rhs) {
+        gtype_info& operator=(const gtype_info& rhs)
+        {
             if ( this == &rhs ) return *this;
             label=rhs.label;
             for (unsigned i(0); i<N_BASE; ++i) efreq_levels[i]=rhs.efreq_levels[i];

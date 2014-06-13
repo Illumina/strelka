@@ -25,7 +25,8 @@
 #include <vector>
 
 
-namespace VCFID {
+namespace VCFID
+{
 enum index_t
 {
     CHROM,
@@ -46,7 +47,8 @@ enum index_t
 
 inline
 const char*
-vcf_col_label() {
+vcf_col_label()
+{
     static const char h[] = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO";
     return h;
 }
@@ -64,13 +66,16 @@ inline
 bool
 get_format_key_index(const char* format,
                      const char* key,
-                     unsigned& index) {
+                     unsigned& index)
+{
     index=0;
-    do {
+    do
+    {
         if (index) format++;
         if (0==strncmp(format,key,strlen(key))) return true;
         index++;
-    } while (NULL != (format=strchr(format,':')));
+    }
+    while (NULL != (format=strchr(format,':')));
     return false;
 }
 
@@ -81,13 +86,15 @@ get_format_key_index(const char* format,
 inline
 const char*
 get_format_string_nocopy(const char* const* word,
-                         const char* key) {
+                         const char* key)
+{
 
     unsigned keynum(0);
     if (! get_format_key_index(word[VCFID::FORMAT],key,keynum)) return NULL;
 
     const char* sample(word[VCFID::SAMPLE]);
-    for (; keynum; sample++) {
+    for (; keynum; sample++)
+    {
         if (! *sample) return NULL;
         if ((*sample)==':') keynum--;
     }

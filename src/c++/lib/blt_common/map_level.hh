@@ -21,8 +21,10 @@
 #include <cassert>
 
 
-namespace MAPLEVEL {
-enum index_t {
+namespace MAPLEVEL
+{
+enum index_t
+{
     UNKNOWN,
     UNKNOWN_MAPPED,
     TIER1_MAPPED,
@@ -33,14 +35,22 @@ enum index_t {
 
 inline
 const char*
-get_label(const index_t i) {
-    switch (i) {
-    case UNKNOWN: return "unknown";
-    case UNKNOWN_MAPPED: return "unknown-mapped";
-    case TIER1_MAPPED: return "tier1-mapped";
-    case TIER2_MAPPED: return "tier2-mapped";
-    case SUB_MAPPED: return "sub-mapped";
-    case UNMAPPED: return "unmapped";
+get_label(const index_t i)
+{
+    switch (i)
+    {
+    case UNKNOWN:
+        return "unknown";
+    case UNKNOWN_MAPPED:
+        return "unknown-mapped";
+    case TIER1_MAPPED:
+        return "tier1-mapped";
+    case TIER2_MAPPED:
+        return "tier2-mapped";
+    case SUB_MAPPED:
+        return "sub-mapped";
+    case UNMAPPED:
+        return "unmapped";
     default:
         assert(0);
         return "none";

@@ -27,7 +27,8 @@
 
 // indel summary information which is shared between all samples:
 //
-struct starling_indel_report_info {
+struct starling_indel_report_info
+{
 
     starling_indel_report_info()
         : is_repeat_unit(false)
@@ -62,7 +63,8 @@ struct starling_indel_report_info {
 
 // indel summary information which is specific to each sample:
 //
-struct starling_indel_sample_report_info {
+struct starling_indel_sample_report_info
+{
 
     starling_indel_sample_report_info()
         : n_q30_ref_reads(0)

@@ -23,7 +23,8 @@
 #pragma once
 
 
-enum sim_mode_t {
+enum sim_mode_t
+{
     SIM_RANDOM,
     SIM_NOISE,
     SIM_SOMATIC,
@@ -36,7 +37,8 @@ enum sim_mode_t {
 // fleshed out tool... this is just the minimum we need to do
 // fast site simulations...
 //
-struct strelka_site_sim_options {
+struct strelka_site_sim_options
+{
 
     strelka_site_sim_options()
         : total_sites(1000000)

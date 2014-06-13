@@ -36,7 +36,8 @@ struct starling_read;
 // purposes of realignment/pileup, etc. while starling_read aggregates
 // all information associated with the full cluster.
 //
-struct read_segment {
+struct read_segment
+{
 
     read_segment(const uint16_t size=0,
                  const uint16_t offset=0,
@@ -60,7 +61,10 @@ struct read_segment {
     bool
     is_treated_as_anytier_mapping() const;
 
-    unsigned read_size() const { return _size; }
+    unsigned read_size() const
+    {
+        return _size;
+    }
     bam_seq get_bam_read() const;
     const uint8_t* qual() const;
 
@@ -72,7 +76,10 @@ struct read_segment {
     bool is_valid() const;
 
     const alignment&
-    genome_align() const { return _genome_align; }
+    genome_align() const
+    {
+        return _genome_align;
+    }
 
     // these methods just repeat from the parent read:
     align_id_t
@@ -92,10 +99,14 @@ struct read_segment {
 
     // returns NULL for non-realigned contig reads:
     const alignment*
-    get_best_alignment() const {
-        if       (is_realigned) {
+    get_best_alignment() const
+    {
+        if       (is_realigned)
+        {
             return &(realignment);
-        } else if (! genome_align().empty()) {
+        }
+        else if (! genome_align().empty())
+        {
             return &(genome_align());
         }
         return NULL;
@@ -109,7 +120,10 @@ private:
     bool
     is_full_segment() const;
 
-    const starling_read& sread() const { return *_sread_ptr; }
+    const starling_read& sread() const
+    {
+        return *_sread_ptr;
+    }
 
 private:
     alignment _genome_align;

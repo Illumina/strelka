@@ -38,7 +38,8 @@ void validate(boost::any& v,
               const std::vector<std::string>& values,
               std::vector<avg_window_data>*, int)
 {
-    if (v.empty()) {
+    if (v.empty())
+    {
         v = boost::any(std::vector<avg_window_data>());
     }
     std::vector<avg_window_data>* tv = boost::any_cast< std::vector<avg_window_data> >(&v);
@@ -47,13 +48,17 @@ void validate(boost::any& v,
     avg_window_data awd;
 
     // Extract tokens from values string vector and populate avg_window_data struct.
-    if (values.size() != 2) {
+    if (values.size() != 2)
+    {
         throw po::validation_error(po::validation_error::invalid_option_value);
     }
 
-    try {
+    try
+    {
         awd.flank_size = boost::lexical_cast<unsigned>(values[0]);
-    } catch (const boost::bad_lexical_cast&) {
+    }
+    catch (const boost::bad_lexical_cast&)
+    {
         throw po::validation_error(po::validation_error::invalid_option_value);
     }
     awd.filename = values[1];
@@ -64,7 +69,8 @@ void validate(boost::any& v,
 
 
 po::options_description
-get_starling_shared_option_parser(starling_options& opt) {
+get_starling_shared_option_parser(starling_options& opt)
+{
 
 
     po::options_description geno_opt("genotyping options");
@@ -112,9 +118,9 @@ get_starling_shared_option_parser(starling_options& opt) {
 
 
     ("do-short-range-phasing", po::value(&opt.do_codon_phasing)->zero_tokens(),
-       "Do short-range SNP phasing, default window phasing window considered is 3.")
+     "Do short-range SNP phasing, default window phasing window considered is 3.")
     ("phasing-window", po::value(&opt.phasing_window)->default_value(opt.phasing_window),
-       "The maximum window to consider for short-range phasing (default 3).")
+     "The maximum window to consider for short-range phasing (default 3).")
 
 
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
@@ -205,7 +211,8 @@ get_starling_shared_option_parser(starling_options& opt) {
 
 
 po::options_description
-get_starling_option_parser(starling_options& opt) {
+get_starling_option_parser(starling_options& opt)
+{
 
     po::options_description starling_parse_opt(get_starling_shared_option_parser(opt));
 
@@ -222,7 +229,8 @@ get_starling_option_parser(starling_options& opt) {
 
 
 void
-write_starling_legacy_options(std::ostream& os) {
+write_starling_legacy_options(std::ostream& os)
+{
 
     static const starling_options default_opt;
 
@@ -363,29 +371,39 @@ write_starling_legacy_options(std::ostream& os) {
 static
 void
 finalize_legacy_starling_options(const prog_info& pinfo,
-                                 starling_options& opt) {
+                                 starling_options& opt)
+{
 
 
-    if (! opt.is_ref_set()) {
+    if (! opt.is_ref_set())
+    {
         pinfo.usage("a reference sequence must be specified");
     }
 
     // canonicalize the reference sequence path:
-    if (opt.is_samtools_ref_set) {
-        if (! compat_realpath(opt.samtools_ref_seq_file)) {
+    if (opt.is_samtools_ref_set)
+    {
+        if (! compat_realpath(opt.samtools_ref_seq_file))
+        {
             std::ostringstream oss;
             oss << "can't resolve samtools reference path: " << opt.samtools_ref_seq_file << "\n";
             pinfo.usage(oss.str().c_str());
         }
-    } else {
+    }
+    else
+    {
         assert(0);
     }
 
-    if (! opt.is_user_genome_size) {
+    if (! opt.is_user_genome_size)
+    {
         // this requirement is not what we want, but it's the only way to make things reliable for now:
         pinfo.usage("must specify genome-size");
-    } else {
-        if (opt.user_genome_size<1) {
+    }
+    else
+    {
+        if (opt.user_genome_size<1)
+        {
             pinfo.usage("genome-size must be greater than 0");
         }
     }
@@ -398,7 +416,8 @@ finalize_legacy_starling_options(const prog_info& pinfo,
 //    }
 
     if (opt.is_write_candidate_indels_only &&
-        opt.candidate_indel_filename.empty()) {
+        opt.candidate_indel_filename.empty())
+    {
         pinfo.usage("Cannot specify -write-candidate-indels-only without providing candidate indel filename.");
     }
 }
@@ -408,7 +427,8 @@ finalize_legacy_starling_options(const prog_info& pinfo,
 void
 finalize_starling_options(const prog_info& pinfo,
                           const po::variables_map& vm,
-                          starling_options& opt) {
+                          starling_options& opt)
+{
 
     // blt section:
     check_option_arg_range(pinfo,opt.nonref_variant_rate,"nonref-variant-rate",0.,1.);
@@ -420,18 +440,22 @@ finalize_starling_options(const prog_info& pinfo,
     // allow non-reference hets, we stick with the lower value
     // used for snps:
     //
-    if (opt.bindel_diploid_theta>MAX_DIPLOID_THETA) {
+    if (opt.bindel_diploid_theta>MAX_DIPLOID_THETA)
+    {
         std::ostringstream oss;
         oss << "indel diploid heterozygosity exceeds maximum value of: " << MAX_DIPLOID_THETA;
         pinfo.usage(oss.str().c_str());
     }
 
-    if (vm.count("max-input-depth")) {
+    if (vm.count("max-input-depth"))
+    {
         opt.is_max_input_depth=true;
     }
 
-    if (opt.is_skip_realignment) {
-        if (opt.is_call_indels()) {
+    if (opt.is_skip_realignment)
+    {
+        if (opt.is_call_indels())
+        {
             pinfo.usage("Cannot disable realignment when indel-calling is selected.");
         }
     }
@@ -451,20 +475,25 @@ finalize_starling_options(const prog_info& pinfo,
     const unsigned vs(opt.variant_windows.size());
     unsigned last_fs(0);
     std::set<std::string> filenames;
-    for (unsigned i(0); i<vs; ++i) {
+    for (unsigned i(0); i<vs; ++i)
+    {
         const std::string& filename(opt.variant_windows[i].filename);
-        if (filenames.count(filename)) {
+        if (filenames.count(filename))
+        {
             pinfo.usage((boost::format("variant-window-flank-file options contain a repeated filename: '%s'") % filename).str().c_str());
         }
         filenames.insert(filename);
         const unsigned fs(opt.variant_windows[i].flank_size);
-        if (fs>max_flank_size) {
+        if (fs>max_flank_size)
+        {
             pinfo.usage((boost::format("variant-window-flank-file flank size %u exceeds maximum flank size of %u") % fs % max_flank_size).str().c_str());
         }
-        if (fs<1) {
+        if (fs<1)
+        {
             pinfo.usage((boost::format("variant-window-flank-file flank size %u is less than minimum flank size of 1") % fs).str().c_str());
         }
-        if ((i!=0) && (fs==last_fs)) {
+        if ((i!=0) && (fs==last_fs))
+        {
             pinfo.usage((boost::format("Repeated flank size of %u provided to variant-window-flank-file") % fs).str().c_str());
         }
         last_fs=fs;

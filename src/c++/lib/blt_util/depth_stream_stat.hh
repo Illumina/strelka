@@ -28,7 +28,8 @@
 ///
 /// derived From Tony Cox's IndelFinder code
 ///
-struct depth_stream_stat {
+struct depth_stream_stat
+{
 
     // Accumulate mean and standard dev using a single pass formula
     // Uses the cancellation-friendly formulae on p.26 of
@@ -36,7 +37,8 @@ struct depth_stream_stat {
     // Variable names follow his
     depth_stream_stat() : M_(0),Q_(0),max_(0),min_(0),k_(0),n_(0) {}
 
-    void update (const unsigned d) {
+    void update (const unsigned d)
+    {
         k_++;
         if (d!=0) n_++;
         if ((k_==1) || (d>max_)) max_=d;
@@ -48,14 +50,38 @@ struct depth_stream_stat {
         Q_+=delta*(static_cast<double>(d)-M_);
     }
 
-    unsigned sample_size() const { return k_; }
-    unsigned nonzero() const { return n_; }
-    double min() const { return ((k_<1) ? std::numeric_limits<double>::quiet_NaN() : min_); }
-    double max() const { return ((k_<1) ? std::numeric_limits<double>::quiet_NaN() : max_); }
-    double mean() const { return ((k_<1) ? std::numeric_limits<double>::quiet_NaN() : M_); }
-    double variance() const { return ((k_<2) ? std::numeric_limits<double>::quiet_NaN() : Q_/(static_cast<double>(k_-1))); }
-    double sd() const { return std::sqrt(variance()); }
-    double stderror() const { return sd()/std::sqrt(static_cast<double>(k_)); }
+    unsigned sample_size() const
+    {
+        return k_;
+    }
+    unsigned nonzero() const
+    {
+        return n_;
+    }
+    double min() const
+    {
+        return ((k_<1) ? std::numeric_limits<double>::quiet_NaN() : min_);
+    }
+    double max() const
+    {
+        return ((k_<1) ? std::numeric_limits<double>::quiet_NaN() : max_);
+    }
+    double mean() const
+    {
+        return ((k_<1) ? std::numeric_limits<double>::quiet_NaN() : M_);
+    }
+    double variance() const
+    {
+        return ((k_<2) ? std::numeric_limits<double>::quiet_NaN() : Q_/(static_cast<double>(k_-1)));
+    }
+    double sd() const
+    {
+        return std::sqrt(variance());
+    }
+    double stderror() const
+    {
+        return sd()/std::sqrt(static_cast<double>(k_));
+    }
 
 private:
 

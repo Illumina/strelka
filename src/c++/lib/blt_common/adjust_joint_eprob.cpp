@@ -29,13 +29,16 @@ typedef unsigned icall_t;
 typedef std::vector<icall_t> icalls_t;
 
 
-namespace {
+namespace
+{
 
-struct sort_icall_by_eprob {
+struct sort_icall_by_eprob
+{
     sort_icall_by_eprob(const snp_pos_info& pi) : _pi(pi) {}
 
     bool
-    operator()(const icall_t& a, const icall_t& b) const {
+    operator()(const icall_t& a, const icall_t& b) const
+    {
         return (_pi.calls[a].get_qscore() > _pi.calls[b].get_qscore());
     }
 
@@ -48,7 +51,8 @@ struct sort_icall_by_eprob {
 static
 blt_float_t
 get_dependent_eprob(const unsigned qscore,
-                    const blt_float_t vexp) {
+                    const blt_float_t vexp)
+{
 
     static const blt_float_t dep_converge_prob(0.75);
 
@@ -63,10 +67,12 @@ get_dependent_eprob(const unsigned qscore,
 blt_float_t
 dependent_prob_cache::
 get_dependent_val(const unsigned qscore,
-                  const blt_float_t vexp) {
+                  const blt_float_t vexp)
+{
 
     assert(qscore <= MAX_QSCORE);
-    if (! _is_init[qscore]) {
+    if (! _is_init[qscore])
+    {
         _val[qscore] = get_dependent_eprob(qscore,vexp);
         _is_init[qscore] = true;
     }
@@ -84,12 +90,14 @@ adjust_icalls_eprob(const blt_options& opt,
                     dependent_prob_cache& dpc,
                     icalls_t& ic,
                     const snp_pos_info& pi,
-                    std::vector<float>& dependent_eprob) {
+                    std::vector<float>& dependent_eprob)
+{
 
     const unsigned ic_size(ic.size());
 
 #ifdef DEBUG_ADJUST
-    for (unsigned i(0); i<ic_size; ++i) {
+    for (unsigned i(0); i<ic_size; ++i)
+    {
         base_call& bi(pi.calls[ic[i]]);
         std::cerr << "BEFORE: " << i << " " << bi.is_neighbor_mismatch << " " << dependent_eprob[ic[i]] << "\n";
     }
@@ -99,16 +107,21 @@ adjust_icalls_eprob(const blt_options& opt,
 
     // produce weighted fraction of reads with a neighboring mismatch:
     blt_float_t vexp_frac(opt.bsnp_ssd_no_mismatch);
-    if (is_use_vexp_frac) {
+    if (is_use_vexp_frac)
+    {
         static const blt_float_t lnran(std::log(0.75));
         blt_float_t num(0);
         blt_float_t den(0);
-        for (unsigned i(0); i<ic_size; ++i) {
+        for (unsigned i(0); i<ic_size; ++i)
+        {
             const base_call& bi(pi.calls[ic[i]]);
 //            const blt_float_t eprob(dependent_eprob[ic[i]]);
             const blt_float_t weight(lnran-bi.ln_error_prob());
             den += weight;
-            if (bi.is_neighbor_mismatch) { num += weight; }
+            if (bi.is_neighbor_mismatch)
+            {
+                num += weight;
+            }
         }
         blt_float_t mismatch_frac(0);
         if (ic_size && (den>0.)) mismatch_frac=(num/den);
@@ -126,37 +139,51 @@ adjust_icalls_eprob(const blt_options& opt,
 
     std::sort(ic.begin(),ic.end(),sort_icall_by_eprob(pi));
     blt_float_t vexp(1.);
-    for (unsigned i(0); i<ic_size; ++i) {
+    for (unsigned i(0); i<ic_size; ++i)
+    {
         const base_call& bi(pi.calls[ic[i]]);
-        if (! is_min_vexp) {
+        if (! is_min_vexp)
+        {
             dependent_eprob[ic[i]] = static_cast<float>(get_dependent_eprob(bi.get_qscore(),vexp));
 
             if (is_limit_vexp_iterations && (static_cast<int>(i)>=max_vexp_iterations)) continue;
 
             blt_float_t next_vexp(vexp);
-            if (is_use_vexp_frac) {
+            if (is_use_vexp_frac)
+            {
                 next_vexp *= (1.-vexp_frac);
-            } else {
-                if (bi.is_neighbor_mismatch) {
+            }
+            else
+            {
+                if (bi.is_neighbor_mismatch)
+                {
                     next_vexp *= (1.-opt.bsnp_ssd_one_mismatch);
-                } else {
+                }
+                else
+                {
                     next_vexp *= (1.-opt.bsnp_ssd_no_mismatch);
                 }
             }
-            if (is_limit_vexp) {
+            if (is_limit_vexp)
+            {
                 is_min_vexp=(next_vexp<=min_vexp);
                 vexp = std::max(min_vexp,next_vexp);
-            } else {
+            }
+            else
+            {
                 vexp = next_vexp;
             }
-        } else {
+        }
+        else
+        {
             // cached version:
             dependent_eprob[ic[i]] = static_cast<float>(dpc.get_dependent_val(bi.get_qscore(),vexp));
         }
     }
 
 #ifdef DEBUG_ADJUST
-    for (unsigned i(0); i<ic_size; ++i) {
+    for (unsigned i(0); i<ic_size; ++i)
+    {
         base_call& bi(pi.calls[ic[i]]);
         std::cerr << "AFTER: " << i << " " << bi.is_neighbor_mismatch << " " << dependent_eprob[ic[i]] << "\n";
     }
@@ -172,11 +199,13 @@ adjust_joint_eprob(const blt_options& opt,
                    dependent_prob_cache& dpc,
                    const snp_pos_info& pi,
                    std::vector<float>& dependent_eprob,
-                   const bool is_dependent) {
+                   const bool is_dependent)
+{
 
     const unsigned n_calls(pi.calls.size());
     dependent_eprob.clear();
-    for (unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i)
+    {
         dependent_eprob.push_back(static_cast<float>(pi.calls[i].error_prob()));
     }
 
@@ -186,7 +215,8 @@ adjust_joint_eprob(const blt_options& opt,
     //
     static const unsigned group_size(8); // (is_fwd*base_id)
     icalls_t icalls[group_size];
-    for (unsigned i(0); i<n_calls; ++i) {
+    for (unsigned i(0); i<n_calls; ++i)
+    {
         // exclude q2's and filtered bases:
         const base_call& b(pi.calls[i]);
 #ifdef NOREFFILTER
@@ -203,7 +233,8 @@ adjust_joint_eprob(const blt_options& opt,
     }
 
     // process each isize array:
-    for (unsigned i(0); i<group_size; ++i) {
+    for (unsigned i(0); i<group_size; ++i)
+    {
         adjust_icalls_eprob(opt,dpc,icalls[i],pi,dependent_eprob);
     }
 }

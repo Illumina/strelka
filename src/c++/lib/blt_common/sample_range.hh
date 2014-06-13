@@ -23,7 +23,8 @@
 // able to inherit from this interface.
 //
 #if 0
-struct sample_func_iface {
+struct sample_func_iface
+{
     virtual
     blt_float_t
     calc_and_store_val(const blt_float_t x) = 0;

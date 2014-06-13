@@ -43,11 +43,13 @@ public:
     std::map<int,int> space;// full key space
     //constructor
 
-    ranksum() {
+    ranksum()
+    {
         set_ref_base('N');
     }
 
-    ranksum(char base) {
+    ranksum(char base)
+    {
         set_ref_base(base);
 //    	N1(0);
 //		N2(0);
@@ -63,13 +65,16 @@ public:
     //return rank-sum U statistic
     double get_u_stat();
 
-    void set_ref_base(char base) {
+    void set_ref_base(char base)
+    {
         ref_base = base;
     }
 
-    std::vector<int> getSpace() {
+    std::vector<int> getSpace()
+    {
         std::vector<int> res;
-        for (std::map<int, int>::iterator it = space.begin(); it != space.end(); ++it) {
+        for (std::map<int, int>::iterator it = space.begin(); it != space.end(); ++it)
+        {
             res.push_back((*it).first);
         }
 
@@ -78,18 +83,21 @@ public:
     }
 
     // returns the count for a given base and observation
-    int get_obs_count(bool is_ref, int obs) {
+    int get_obs_count(bool is_ref, int obs)
+    {
 
         int res = 0;
         std::map<int,int>::iterator it;
 
         //check for observation in reference map
-        if (is_ref) {
+        if (is_ref)
+        {
             it = l1.find(obs);
             if (it != l1.end())
                 res = it->second;
         }
-        else {
+        else
+        {
             it = l2.find(obs);
             if (it != l2.end())
                 res = it->second;
@@ -97,14 +105,16 @@ public:
         return res;
     }
 
-    void clear() {
+    void clear()
+    {
         l1.clear();
         l2.clear();
         space.clear();
 
     }
 
-    char get_refbase() {
+    char get_refbase()
+    {
         return ref_base;
     }
 };

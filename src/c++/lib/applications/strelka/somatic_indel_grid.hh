@@ -25,7 +25,8 @@
 
 
 
-namespace STAR_DIINDEL_GRID {
+namespace STAR_DIINDEL_GRID
+{
 
 // HET_RES is the number of frequency points sampled on a
 // half-axis (that is between 0-0.5)
@@ -47,21 +48,24 @@ enum index_t { SIZE = HOM_SIZE+HET_SIZE*HET_COUNT };
 
 inline
 unsigned
-get_star_diindel_state (const unsigned state) {
+get_star_diindel_state (const unsigned state)
+{
     if (state<HOM_SIZE) return state;
     return STAR_DIINDEL::HET;
 }
 
 inline
 unsigned
-get_het_count(const unsigned state) {
+get_het_count(const unsigned state)
+{
     if (state<HOM_SIZE) return 0;
     return (state-HOM_SIZE)/HET_SIZE;
 }
 }
 
 
-namespace DDIINDEL_GRID {
+namespace DDIINDEL_GRID
+{
 
 // This is the SIZE to represent the normal allele freq X tumor
 // allele freq space which we calculate the final posteriour
@@ -72,7 +76,8 @@ enum index_t { SIZE = STAR_DIINDEL_GRID::SIZE*STAR_DIINDEL_GRID::SIZE };
 inline
 unsigned
 get_state(const unsigned normal_gt,
-          const unsigned tumor_gt) {
+          const unsigned tumor_gt)
+{
     return normal_gt+STAR_DIINDEL_GRID::SIZE*tumor_gt;
 }
 
@@ -80,12 +85,14 @@ inline
 void
 get_sdiindel_grid_states(const unsigned dgt,
                          unsigned& normal_gt,
-                         unsigned& tumor_gt) {
+                         unsigned& tumor_gt)
+{
     normal_gt = (dgt%STAR_DIINDEL_GRID::SIZE);
     tumor_gt = (dgt/STAR_DIINDEL_GRID::SIZE);
 }
 
-struct is_nonsom_maker_t {
+struct is_nonsom_maker_t
+{
     is_nonsom_maker_t();
 
     std::vector<bool> val;
@@ -97,7 +104,8 @@ std::ostream& operator<<(std::ostream& os,const DDIINDEL_GRID::index_t dgt);
 
 
 // object used to pre-compute priors:
-struct somatic_indel_caller_grid : private boost::noncopyable {
+struct somatic_indel_caller_grid : private boost::noncopyable
+{
 
     somatic_indel_caller_grid(const strelka_options& opt,
                               const indel_digt_caller& in_caller);
@@ -117,16 +125,19 @@ struct somatic_indel_caller_grid : private boost::noncopyable {
 
 private:
     const std::vector<blt_float_t>&
-    lnprior_genomic() const {
+    lnprior_genomic() const
+    {
         return _lnprior.normal;
     }
 
     const std::vector<blt_float_t>&
-    lnprior_polymorphic() const {
+    lnprior_polymorphic() const
+    {
         return _lnprior.normal_poly;
     }
 
-    struct prior_set {
+    struct prior_set
+    {
         prior_set()
             : normal(STAR_DIINDEL_GRID::SIZE)
             , normal_poly(STAR_DIINDEL_GRID::SIZE)

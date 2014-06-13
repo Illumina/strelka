@@ -21,17 +21,20 @@ extern "C" {
 }
 
 
-struct bam_dumper {
+struct bam_dumper
+{
 
     bam_dumper(const char* filename,
                const bam_header_t* header);
 
-    ~bam_dumper() {
+    ~bam_dumper()
+    {
         if (NULL != _bfp) samclose(_bfp);
     }
 
     void
-    put_record(const bam1_t* brec) {
+    put_record(const bam1_t* brec)
+    {
         samwrite(_bfp,brec);
     }
 
