@@ -29,7 +29,7 @@ maintained for Centos5,6 and Ubuntu 12.04.
 
 #### Compilation prerequisites:
 
-Manta requires a compiler supporting most of the C++11 standard. These are the
+Starka requires a compiler supporting most of the C++11 standard. These are the
 current minimum versions enforced by the build system:
 
 * python 2.4+
@@ -70,10 +70,10 @@ Note that during the configuration step, the following compilation
 dependencies will be built if these are not found:
 
 * cmake 2.8.0+
-* boost 1.49.0
+* boost 1.53.0
 
 To optionally avoid this extra step, ensure that (1) cmake is in your PATH and (2)
-BOOST\_ROOT is defined to point to boost 1.49.0 (the boost version is required to
+BOOST\_ROOT is defined to point to boost 1.53.0 (the boost version is required to
 be an exact match). If either of these dependencies are not found, they will be
 built during the configuration step, To accelerate this process it may be
 desirable to parallelize the configure step over multiple cores. To do so
