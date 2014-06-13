@@ -24,17 +24,12 @@ workflowDir=os.path.abspath(os.path.join(scriptDir,"@STARKA_RELATIVE_PYTHON_LIBD
 version="@STARKA_FULL_VERSION@"
 
 
-# quick test to see if 'make' was run
-# if not os.path.exists(os.path.join(scriptDir,'..',"make.complete")) :
-#     sys.stderr.write("Workflow does not appear to be fully installed. Has 'make' been run to compile sox?\n")
-#     sys.exit(1)
-
 sys.path.append(workflowDir)
 
-from mantaOptions import MantaWorkflowOptionsBase
+from starlingOptions import MantaWorkflowOptionsBase
 from configureUtil import assertOptionExists, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
 from makeRunScript import makeRunScript
-from mantaWorkflow import MantaWorkflow
+from starlingWorkflow import MantaWorkflow
 from workflowUtil import ensureDir, isValidSampleId, parseGenomeRegion
 from checkChromSet import checkChromSet
 
