@@ -40,6 +40,7 @@ set_site_gt(const diploid_genotype::result_set& rs,
 {
     smod.max_gt=rs.max_gt;
     smod.gqx=rs.max_gt_qphred;
+    smod.gq  = 2;
 }
 
 static
@@ -211,6 +212,7 @@ output_phased_blocked()
 {
     for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it)
     {
+        this->skip_to_pos((*it).pos);
         add_site_internal(*it);
     }
     codon_phaser.clear_buffer();

@@ -29,6 +29,9 @@ starka/src/lib/blt_common/libblt_common_unittest
 starka/src/lib/blt_util/libblt_util_unittest
 starka/src/lib/common/libcommon_unittest
 starka/src/lib/starling_common/libstarling_common_unittest
+src/.cproject
+src/.project
+
 
 
 # Packages #

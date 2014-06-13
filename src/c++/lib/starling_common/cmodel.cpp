@@ -70,6 +70,7 @@ void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii)
     ii.imod.gq=ii.dindel.max_gt_poly_qphred;
 
 
+
     if (cutoffs["GQX"]>0)
     {
         if (ii.imod.gqx<cutoffs["GQX"]) ii.imod.set_filter(VCF_FILTERS::LowGQX);
