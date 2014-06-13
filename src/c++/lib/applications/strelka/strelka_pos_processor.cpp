@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -99,8 +98,8 @@ process_pos_snp_somatic(const pos_t pos)
 
     // TODO this is ridiculous -- if the tier2 data scheme works then come back and clean this up:
     static const unsigned n_tier(2);
-    std::auto_ptr<extended_pos_data> normald_ptr[n_tier];
-    std::auto_ptr<extended_pos_data> tumord_ptr[n_tier];
+    std::unique_ptr<extended_pos_data> normald_ptr[n_tier];
+    std::unique_ptr<extended_pos_data> tumord_ptr[n_tier];
 
     extra_position_data* normal_epd_ptr[n_tier] = { &(normal_sif.epd) , &(_tier2_epd[NORMAL]) };
     extra_position_data* tumor_epd_ptr[n_tier] = { &(tumor_sif.epd) , &(_tier2_epd[TUMOR]) };

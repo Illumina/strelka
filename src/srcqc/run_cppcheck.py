@@ -67,7 +67,7 @@ def main() :
 
     checkCmd=[cppcheck_path]
     checkCmd.append("--enable=all")
-    checkCmd.append("--std=c++03")
+    checkCmd.append("--std=c++11")
     checkCmd.append("--force")
     checkCmd.append("--verbose")
     checkCmd.append("--quiet")

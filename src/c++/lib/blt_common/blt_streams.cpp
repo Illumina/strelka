@@ -139,7 +139,7 @@ void
 setup_bsnp_file(const blt_options& opt,
                 const prog_info& pinfo,
                 const char* const cmdline,
-                std::auto_ptr<std::ostream>& apo,
+                std::unique_ptr<std::ostream>& apo,
                 const std::string& filename,
                 const char* label,
                 const bool is_include_seq_name,
@@ -198,7 +198,7 @@ static
 void
 setup_nonref_output(const blt_options& opt,
                     const prog_info& pinfo,
-                    std::auto_ptr<std::ostream>& osptr,
+                    std::unique_ptr<std::ostream>& osptr,
                     const char* filename,
                     const char* label)
 {

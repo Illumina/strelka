@@ -15,8 +15,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __STARLING_STREAMS_BASE_HH
-#define __STARLING_STREAMS_BASE_HH
+
+#pragma once
 
 #include "blt_common/blt_streams.hh"
 #include "blt_util/bam_dumper.hh"
@@ -84,7 +84,7 @@ protected:
                          const prog_info& pinfo,
                          const std::string& filename,
                          const bam_header_t* const header,
-                         std::auto_ptr<std::ostream>& os_ptr_auto);
+                         std::unique_ptr<std::ostream>& os_ptr_auto);
 
     bam_dumper*
     initialize_realign_bam(const bool is_clobber,
@@ -106,16 +106,13 @@ protected:
                            const avg_window_data& awd,
                            const sample_info& si);
 
-    std::auto_ptr<std::ostream> _bindel_diploid_osptr[MAX_SAMPLE];
+    std::unique_ptr<std::ostream> _bindel_diploid_osptr[MAX_SAMPLE];
     std::ostream* _gvcf_osptr[MAX_SAMPLE];
-    std::auto_ptr<std::ostream> _gvcf_osptr_auto[MAX_SAMPLE];
-    std::auto_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];
+    std::unique_ptr<std::ostream> _gvcf_osptr_auto[MAX_SAMPLE];
+    std::unique_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];
 private:
-    std::auto_ptr<std::ostream> _candidate_indel_osptr;
+    std::unique_ptr<std::ostream> _candidate_indel_osptr;
     unsigned _n_samples;
 
-    std::vector<boost::shared_ptr<std::ostream> > _window_osptr;
+    std::vector<boost::shared_ptr<std::ostream>> _window_osptr;
 };
-
-
-#endif

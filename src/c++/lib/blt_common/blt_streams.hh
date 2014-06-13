@@ -15,8 +15,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __BLT_STREAMS_HH
-#define __BLT_STREAMS_HH
+
+#pragma once
 
 #include "blt_common/blt_shared.hh"
 #include "blt_util/bam_util.hh"
@@ -92,13 +92,10 @@ protected:
                     std::ostream& os);
 
 private:
-    std::auto_ptr<std::ostream> _report_osptr;
-    std::auto_ptr<std::ostream> _counts_osptr;
-    std::auto_ptr<std::ostream> _bsnp_diploid_osptr;
-    std::auto_ptr<std::ostream> _bsnp_diploid_allele_osptr;
-    std::auto_ptr<std::ostream> _nonref_test_osptr;
-    std::auto_ptr<std::ostream> _nonref_sites_osptr;
+    std::unique_ptr<std::ostream> _report_osptr;
+    std::unique_ptr<std::ostream> _counts_osptr;
+    std::unique_ptr<std::ostream> _bsnp_diploid_osptr;
+    std::unique_ptr<std::ostream> _bsnp_diploid_allele_osptr;
+    std::unique_ptr<std::ostream> _nonref_test_osptr;
+    std::unique_ptr<std::ostream> _nonref_sites_osptr;
 };
-
-
-#endif

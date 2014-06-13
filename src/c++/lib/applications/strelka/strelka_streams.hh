@@ -11,8 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
 
@@ -55,7 +53,7 @@ struct strelka_streams : public starling_streams_base
     }
 
 private:
-    std::auto_ptr<std::ostream> _somatic_snv_osptr;
-    std::auto_ptr<std::ostream> _somatic_indel_osptr;
-    std::auto_ptr<std::ostream> _somatic_callable_osptr;
+    std::unique_ptr<std::ostream> _somatic_snv_osptr;
+    std::unique_ptr<std::ostream> _somatic_indel_osptr;
+    std::unique_ptr<std::ostream> _somatic_callable_osptr;
 };
