@@ -16,8 +16,16 @@
 ##
 ################################################################################
 
-file (GLOB CONFIG_LIST [a-zA-Z0-9]*.json)
+# starling VQSR config files:
+file (GLOB JSON_CONFIG_LIST [a-zA-Z0-9]*.json)
 
-foreach(CONFIG_FILE ${CONFIG_LIST})
+foreach(CONFIG_FILE ${JSON_CONFIG_LIST})
+    install(FILES ${CONFIG_FILE} DESTINATION ${THIS_CONFIGDIR})
+endforeach()
+
+# strelka user config file templates:
+file (GLOB STRELKA_CONFIG_LIST strelka_[a-zA-Z0-9]*.ini)
+
+foreach(CONFIG_FILE ${STRELKA_CONFIG_LIST})
     install(FILES ${CONFIG_FILE} DESTINATION ${THIS_CONFIGDIR})
 endforeach()

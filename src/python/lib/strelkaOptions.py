@@ -43,7 +43,7 @@ def joinFile(*arg) :
 
 
 
-class MantaWorkflowOptionsBase(ConfigureWorkflowOptions) :
+class StrelkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--runDir", type="string",dest="runDir",

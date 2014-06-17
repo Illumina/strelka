@@ -11,7 +11,7 @@
 #
 
 """
-Manta SV discovery workflow
+Strelka somatic small variant calling workflow
 """
 
 
@@ -392,9 +392,9 @@ class PathInfo:
 
 
 
-class MantaWorkflow(WorkflowRunner) :
+class StrelkaWorkflow(WorkflowRunner) :
     """
-    Manta SV discovery workflow
+    Strelka somatic small variant calling workflow
     """
 
     def __init__(self,params,iniSections) :
@@ -456,14 +456,14 @@ class MantaWorkflow(WorkflowRunner) :
     def getSuccessMessage(self) :
         "Message to be included in email for successful runs"
 
-        msg  = "Manta workflow successfully completed.\n\n"
+        msg  = "Strelka workflow successfully completed.\n\n"
         msg += "\tworkflow version: %s\n" % (__version__)
         return msg
 
 
 
     def workflow(self) :
-        self.flowLog("Initiating Manta workflow version: %s" % (__version__))
+        self.flowLog("Initiating Strelka workflow version: %s" % (__version__))
 
         graphTaskDependencies = set()
 

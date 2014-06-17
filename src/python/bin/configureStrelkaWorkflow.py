@@ -12,7 +12,7 @@
 #
 
 """
-This script configures the Manta SV analysis workflow
+This script configures the Strelka somatic small variant calling workflow
 """
 
 import os,sys
@@ -26,22 +26,22 @@ version="@STARKA_FULL_VERSION@"
 
 sys.path.append(workflowDir)
 
-from strelkaOptions import MantaWorkflowOptionsBase
+from strelkaOptions import StrelkaWorkflowOptionsBase
 from configureUtil import assertOptionExists, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
 from makeRunScript import makeRunScript
-from strelkaWorkflow import MantaWorkflow
+from strelkaWorkflow import StrelkaWorkflow
 from workflowUtil import ensureDir, isValidSampleId, parseGenomeRegion
 from checkChromSet import checkChromSet
 
 
 
-class MantaWorkflowOptions(MantaWorkflowOptionsBase) :
+class StrelkaWorkflowOptions(StrelkaWorkflowOptionsBase) :
 
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the Manta SV analysis pipeline.
-You must specify a BAM file for at least one sample.
+This script configures the Strelka somatic small variant calling pipeline.
+You must specify BAM file(s) for a pair of samples.
 """ % (version)
 
     validAlignerModes = ["bwa","isaac"]
@@ -85,16 +85,16 @@ You must specify a BAM file for at least one sample.
                               "meaningful result. Examples: '--region chr20' (whole chromosome), "
                               "'--region chr2:100-2000 --region chr3:2500-3000' (two translocation regions)'")
 
-        MantaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
+        StrelkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
 
 
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
-        defaults=MantaWorkflowOptionsBase.getOptionDefaults(self)
+        defaults=StrelkaWorkflowOptionsBase.getOptionDefaults(self)
         defaults.update({
             'alignerMode' : "isaac",
-            'runDir' : 'MantaWorkflow',
+            'runDir' : 'StrelkaWorkflow',
             'isExome' : False,
             'isRNA' : False,
             'useExistingAlignStats' : False,
@@ -154,7 +154,7 @@ You must specify a BAM file for at least one sample.
         assertOptionExists(options.alignerMode,"aligner mode")
         assertOptionExists(options.referenceFasta,"reference fasta file")
 
-        MantaWorkflowOptionsBase.validateOptionExistence(self,options)
+        StrelkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
         # check that the reference and all bams are using the same
         # set of chromosomes:
@@ -188,20 +188,20 @@ You must specify a BAM file for at least one sample.
 
 def main() :
 
-    primarySectionName="manta"
-    options,iniSections=MantaWorkflowOptions().getRunOptions(primarySectionName, version=version)
+    primarySectionName="strelka"
+    options,iniSections=StrelkaWorkflowOptions().getRunOptions(primarySectionName, version=version)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    MantaWorkflow(options,iniSections)
+    StrelkaWorkflow(options,iniSections)
 
     # generate runscript:
     #
     ensureDir(options.runDir)
     scriptFile=os.path.join(options.runDir,"runWorkflow.py")
 
-    makeRunScript(scriptFile,os.path.join(workflowDir,"mantaWorkflow.py"),"MantaWorkflow",primarySectionName,iniSections)
+    makeRunScript(scriptFile,os.path.join(workflowDir,"strelkaWorkflow.py"),"StrelkaWorkflow",primarySectionName,iniSections)
 
     notefp=sys.stdout
     notefp.write("""
