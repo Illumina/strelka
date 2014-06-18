@@ -1,14 +1,14 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Strelka Workflow Software
-// Copyright (c) 2009-2013 Illumina, Inc.
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
 //
 // This software is provided under the terms and conditions of the
 // Illumina Open Source Software License 1.
 //
 // You should have received a copy of the Illumina Open Source
 // Software License 1 along with this program. If not, see
-// <https://github.com/downloads/sequencing/licenses/>.
+// <https://github.com/sequencing/licenses/>
 //
 
 #include "countFastaBases.hh"
@@ -35,18 +35,19 @@ usage(
     std::ostream& os(log_os);
 
     os <<
-        "\n" << pname << " - count bases in a fasta file\n"
-        "\n"
-        "usage: \n" << pname << " < fasta_file\nor:\n" << pname << " fasta_file1 [[fasta_file2]...]\n"
-        "\n"
-        "Prints tab-delimited pair of known and total base counts, where known={ACGTacgt}.\n";
+       "\n" << pname << " - count bases in a fasta file\n"
+       "\n"
+       "usage: \n" << pname << " < fasta_file\nor:\n" << pname << " fasta_file1 [[fasta_file2]...]\n"
+       "\n"
+       "Prints tab-delimited pair of known and total base counts, where known={ACGTacgt}.\n";
 
     exit(EXIT_FAILURE);
 }
 
 
 
-static const bool isBase[128] = {
+static const bool isBase[128] =
+{
     0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
     0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
     0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -62,9 +63,12 @@ static const bool isBase[128] = {
 struct scan_result
 {
     scan_result(const char* f)
-      : fileName(f), _isSet(false) {}
+        : fileName(f), _isSet(false) {}
 
-    ~scan_result() { report(); }
+    ~scan_result()
+    {
+        report();
+    }
 
     void
     reset(const char* s,
@@ -79,7 +83,7 @@ struct scan_result
     void
     report()
     {
-        if(! _isSet) return;
+        if (! _isSet) return;
         report_os << fileName << '\t'
                   << contigName << '\t'
                   << knownCount << '\t'
@@ -102,7 +106,7 @@ const char*
 next_word(const char* c,
           const bool is_end=false)
 {
-    while((*c!='\0') && (is_end ^ static_cast<bool>(isspace(*c))))
+    while ((*c!='\0') && (is_end ^ static_cast<bool>(isspace(*c))))
     {
         c++;
     }
@@ -113,7 +117,7 @@ next_word(const char* c,
 
 static
 bool
-get_seq_counts(std::istream &ref_is,
+get_seq_counts(std::istream& ref_is,
                const char* fileName)
 {
     static const unsigned buff_size(512);
@@ -123,16 +127,16 @@ get_seq_counts(std::istream &ref_is,
     unsigned line_no(0);
     scan_result sr(fileName);
 
-    while(true)
+    while (true)
     {
         bool is_wrap(false);
         ref_is.getline(buff,buff_size);
         if (! ref_is)
         {
             if     (ref_is.eof()) break;
-            else if(ref_is.fail())
+            else if (ref_is.fail())
             {
-                if(ref_is.bad())
+                if (ref_is.bad())
                 {
                     log_os << "ERROR: unexpected failure while attempting to read line " << (line_no+1) << "\n";
                     return false;
@@ -146,16 +150,16 @@ get_seq_counts(std::istream &ref_is,
             ++line_no;
         }
 
-        if(is_header_wrap)
+        if (is_header_wrap)
         {
-            if(!is_wrap) is_header_wrap=false; // skip the remainder of wrapped header line
+            if (!is_wrap) is_header_wrap=false; // skip the remainder of wrapped header line
         }
-        else if(buff[0] == '>')
+        else if (buff[0] == '>')
         {
-            if(is_wrap) is_header_wrap=true;
+            if (is_wrap) is_header_wrap=true;
             sr.report();
             const char* ns(next_word(buff+1));
-            if(*ns=='\0')
+            if (*ns=='\0')
             {
                 log_os << "ERROR: unexpected header format on line " << (line_no+is_wrap) << " : '" << buff << "'\n";
                 return false;
@@ -165,17 +169,17 @@ get_seq_counts(std::istream &ref_is,
         }
         else
         {
-            if((line_no+is_wrap)<=1)
+            if ((line_no+is_wrap)<=1)
             {
                 log_os << "ERROR: missing fasta header\n";
                 return false;
             }
 
-            for(const char* b(buff); *b; ++b)
+            for (const char* b(buff); *b; ++b)
             {
-                if('\r' == *b) continue; //windows fasta files may still have '\r'
+                if ('\r' == *b) continue; //windows fasta files may still have '\r'
                 ++sr.totalCount;
-                if(isBase[static_cast<int8_t>(*b)]) ++sr.knownCount;
+                if (isBase[static_cast<int8_t>(*b)]) ++sr.knownCount;
             }
         }
     }
@@ -202,9 +206,9 @@ countFastaBases::
 runInternal(int argc, char* argv[]) const
 {
     static const std::string helpStr[] = {"--help", "-help", "-h"};
-    static const std::string *helpStrEnd = helpStr + sizeof(helpStr) / sizeof(helpStr[0]);
+    static const std::string* helpStrEnd = helpStr + sizeof(helpStr) / sizeof(helpStr[0]);
 
-    if(argc==1) check_get_seq_counts(std::cin,"stdin");
+    if (argc==1) check_get_seq_counts(std::cin,"stdin");
 
     for (int i(1); i < argc; ++i)
     {
