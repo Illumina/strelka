@@ -37,8 +37,8 @@ superset(SAMTOOLS_LIBRARY "${SAMTOOLS_DIR}/libbam.a")
 
 add_custom_command(
     OUTPUT ${SAMTOOLS_LIBRARY}
-    COMMAND rm -rf "${SAMTOOLS_DIR}"
-    COMMAND tar -xjf "${THIS_REDIST_DIR}/${SAMTOOLS_PREFIX}.tar.bz2"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${SAMTOOLS_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${SAMTOOLS_PREFIX}.tar.bz2"
     COMMAND $(MAKE) -C "${SAMTOOLS_DIR}" all bgzip 2>| samtools.build.log
     COMMENT "Building the SAM/BAM library and tools")
 add_custom_target(STARKA_SAMTOOLS DEPENDS "${SAMTOOLS_LIBRARY}")
@@ -56,8 +56,8 @@ superset(TABIX_LIBRARY "${TABIX_DIR}/libtabix.a")
 
 add_custom_command(
     OUTPUT ${TABIX_PROG}
-    COMMAND rm -rf "${TABIX_DIR}"
-    COMMAND tar -xjf "${THIS_REDIST_DIR}/${TABIX_PREFIX}.tar.bz2"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${TABIX_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${TABIX_PREFIX}.tar.bz2"
     COMMAND $(MAKE) -C "${TABIX_DIR}" all 2>| tabix.build.log
     COMMENT "Building tabix")
 add_custom_target(STARKA_TABIX DEPENDS "${TABIX_PROG}")
@@ -73,8 +73,8 @@ set(CODEMIN_MARK "${CODEMIN_DIR}/minimize_1d.h")
 
 add_custom_command(
     OUTPUT ${CODEMIN_MARK}
-    COMMAND rm -rf "${CODEMIN_DIR}"
-    COMMAND tar -xjf "${THIS_REDIST_DIR}/${CODEMIN_PREFIX}.tar.bz2"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${CODEMIN_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${CODEMIN_PREFIX}.tar.bz2"
     COMMENT "Unpacking CodeMin")
 add_custom_target(STARKA_CODEMIN DEPENDS "${CODEMIN_MARK}")
 
@@ -89,9 +89,9 @@ set(PYFLOW_SCRIPT "${PYFLOW_DIR}/src/pyflow.py")
 
 add_custom_command(
     OUTPUT ${PYFLOW_SCRIPT}
-    COMMAND rm -rf "${PYFLOW_DIR}"
-    COMMAND tar -xjf "${THIS_REDIST_DIR}/${PYFLOW_PREFIX}.tar.bz2"
-    COMMAND rm "${PYFLOW_DIR}/src/__init__.py"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${PYFLOW_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${PYFLOW_PREFIX}.tar.bz2"
+    COMMAND ${CMAKE_COMMAND} -E remove -f "${PYFLOW_DIR}/src/__init__.py"
     COMMAND ${PYTHON_EXECUTABLE} -m compileall -q "${PYFLOW_DIR}/src"
     COMMENT "Extracting pyflow")
 
@@ -117,8 +117,8 @@ superset(HOEDOWN_PROG "${HOEDOWN_DIR}/hoedown_allext")
 
 add_custom_command(
     OUTPUT ${HOEDOWN_PROG}
-    COMMAND rm -rf "${HOEDOWN_DIR}"
-    COMMAND tar -xjf "${THIS_REDIST_DIR}/${HOEDOWN_PREFIX}.tar.bz2"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${HOEDOWN_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${HOEDOWN_PREFIX}.tar.bz2"
     COMMAND $(MAKE) -C "${HOEDOWN_DIR}"
     COMMENT "Building hoedown markdown parser")
 add_custom_target(STARKA_MARKDOWN DEPENDS "${HOEDOWN_PROG}")
