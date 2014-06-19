@@ -15,6 +15,7 @@
 This script configures the Manta SV analysis workflow
 """
 
+
 import os,sys
 
 scriptDir=os.path.abspath(os.path.dirname(__file__))

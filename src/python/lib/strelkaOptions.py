@@ -62,13 +62,8 @@ class StrelkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         samtoolsBin=joinFile(libexecDir,"samtools")
         tabixBin=joinFile(libexecDir,"tabix")
 
-        mantaStatsBin=joinFile(libexecDir,"GetAlignmentStats")
-        mantaGraphBin=joinFile(libexecDir,"EstimateSVLoci")
-        mantaGraphMergeBin=joinFile(libexecDir,"MergeSVLoci")
-        mantaGraphCheckBin=joinFile(libexecDir,"CheckSVLoci")
-        mantaHyGenBin=joinFile(libexecDir,"GenerateSVCandidates")
-        mantaGraphStatsBin=joinFile(libexecDir,"SummarizeSVLoci")
-        mantaStatsSummaryBin=joinFile(libexecDir,"SummarizeAlignmentStats")
+        fastaCountBin=joinFile(libexecDir,"fastaCountBases")
+        strelkaBin=joinFile(libexecDir,"strelka2")
 
         mantaChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
         mantaSortVcf=joinFile(libexecDir,"sortVcf.py")
@@ -84,10 +79,10 @@ class StrelkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         #       use ever expected in a production run. The consequence of exceeding the mean is
         #       a slow run due to swapping.
         #
-        estimateMemMb=2*1024
-        mergeMemMb=4*1024
-        hyGenSGEMemMb=4*1024
-        hyGenLocalMemMb=2*1024
+        callMemMb=2*1024
+        #mergeMemMb=4*1024
+        #hyGenSGEMemMb=4*1024
+        #hyGenLocalMemMb=2*1024
 
         return cleanLocals(locals())
 

@@ -49,16 +49,16 @@ You must specify BAM file(s) for a pair of samples.
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--normalBam", type="string",dest="normalBamList",metavar="FILE", action="append",
-                         help="Normal sample BAM file. May be specified more than once, multiple inputs will be merged. [at least one required] (no default)")
+                         help="Normal sample BAM file. [required] (no default)")
         group.add_option("--tumorBam","--tumourBam", type="string",dest="tumorBamList",metavar="FILE", action="append",
-                          help="Tumor sample BAM file. May be specified more than once, multiple inputs will be merged. [optional] (no default)")
+                          help="Tumor sample BAM file. [required] (no default)")
 #         group.add_option("--aligner", type="string",dest="alignerMode",metavar="ALIGNER",
 #                          help="Aligner type. Accepted option are {%s} [required] (no default)" % (",".join(['%s' % (x) for x in self.validAlignerModes])))
-        group.add_option("--exome", dest="isExome", action="store_true",
-                         help="Set options for WES input: turn off depth filters")
-        group.add_option("--rna", dest="isRNA", action="store_true",
-                         help="Set options for RNA-Seq input: turn off depth filters and don't treat "
-                              "anomalous reads as SV evidence when the proper-pair bit is set.")
+        #group.add_option("--exome", dest="isExome", action="store_true",
+        #                 help="Set options for WES input: turn off depth filters")
+        #group.add_option("--rna", dest="isRNA", action="store_true",
+        #                 help="Set options for RNA-Seq input: turn off depth filters and don't treat "
+        #                      "anomalous reads as SV evidence when the proper-pair bit is set.")
         group.add_option("--referenceFasta",type="string",dest="referenceFasta",metavar="FILE",
                          help="samtools-indexed reference fasta file [required] (default: %default)")
 
@@ -66,18 +66,9 @@ You must specify BAM file(s) for a pair of samples.
 
 
     def addExtendedGroupOptions(self,group) :
-        group.add_option("--useExistingAlignStats",
-                         dest="useExistingAlignStats", action="store_true",
-                         help="Use pre-calculated alignment statistics.")
-        group.add_option("--useExistingChromDepths",
-                         dest="useExistingChromDepths", action="store_true",
-                         help="Use pre-calculated chromosome depths.")
         group.add_option("--scanSizeMb",type="int",dest="scanSizeMb",metavar="scanSizeMb",
                          help="Maximum sequence region size (in Mb) scanned by each task during "
                          "SV locus graph generation. (default: %default)")
-        group.add_option("--candidateBins",type="int",dest="nonlocalWorkBins",metavar="candidateBins",
-                         help="Provide the total number of tasks which candidate generation "
-                            " will be sub-divided into. (default: %default)")
         group.add_option("--region",type="string",dest="regionStrList",metavar="samtoolsRegion", action="append",
                          help="Limit the SV analysis to a region of the genome for debugging purposes. "
                               "If this argument is provided multiple times all specified regions will "
@@ -95,13 +86,9 @@ You must specify BAM file(s) for a pair of samples.
         defaults.update({
             'alignerMode' : "isaac",
             'runDir' : 'StrelkaWorkflow',
-            'isExome' : False,
-            'isRNA' : False,
-            'useExistingAlignStats' : False,
-            'useExistingChromDepths' : False,
-            'scanSizeMb' : 12,
-            'nonlocalWorkBins' : 256
-                          })
+            "minTier2Mapq" : 5,
+            'scanSizeMb' : 12
+            })
         return defaults
 
 
@@ -130,7 +117,6 @@ You must specify BAM file(s) for a pair of samples.
 
         options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference")
 
-
         # check for reference fasta index file:
         if options.referenceFasta is not None :
             faiFile=options.referenceFasta + ".fai"
@@ -148,8 +134,18 @@ You must specify BAM file(s) for a pair of samples.
 
     def validateOptionExistence(self,options) :
 
-        if (options.normalBamList is None) or (len(options.normalBamList) == 0) :
-            raise OptParseException("No normal sample BAM files specified")
+        # note that we inherit a multi-bam capable infrastructure from manta, but then restrict usage
+        # to one bam from each sample (hopefully temporarily)
+        #
+        def checkBamList(bamList, label) :
+            if (bamList is None) or (len(options.bamList) == 0) :
+                raise OptParseException("No %s sample BAM files specified" % (label))
+
+            if len(options.bamList) > 1 :
+                raise OptParseException("More than one %s sample BAM files specified" % (label))
+
+        checkBamList(options.normalBamList, "normal")
+        checkBamList(options.tumorBamList, "tumor")
 
         assertOptionExists(options.alignerMode,"aligner mode")
         assertOptionExists(options.referenceFasta,"reference fasta file")
