@@ -32,7 +32,7 @@ from pyflow import WorkflowRunner
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getChromIntervals, getFastaChromOrderSize
 
-from configureUtil import getIniSections,dumpIniSections
+from configureUtil import argToBool, getIniSections, dumpIniSections
 
 
 
@@ -345,6 +345,7 @@ class StrelkaWorkflow(WorkflowRunner) :
 
         self.paths = PathInfo(self.params)
 
+        self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
         #self.params.isHighDepthFilter = (not (self.params.isExome or self.params.isRNA))
         #self.params.isIgnoreAnomProperPair = (self.params.isRNA)
 
