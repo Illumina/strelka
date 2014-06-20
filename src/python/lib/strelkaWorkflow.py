@@ -214,7 +214,7 @@ def callGenomeSegment(self, gseg, taskPrefix="", dependencies=None) :
         for arg in self.params.extraStrelkaArguments.strip().split() :
             segCmd.append(arg)
 
-    segCmd.extend(["--report-file", self.paths.getTmpReportPath(gseg.pyflowid)])
+    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
 
     nextStepWait = set()
 
@@ -226,9 +226,9 @@ def callGenomeSegment(self, gseg, taskPrefix="", dependencies=None) :
         def sortRealignBam(label) :
             unsorted = self.paths.getTmpUnsortRealignBamPath(segStr, label)
             sorted   = self.paths.getTmpRealignBamPath(segStr, label)
-            sortCmd="%s sort %s %s && rm -f %s" & (self.params.samtoolsBin,"sort",unsorted,sorted,unsorted)
+            sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gset.pyflowId)
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.pyflowId)
             self.addTask(sortTaskLabel,sortCmd,dependencies=setTaskLabel,memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
@@ -251,7 +251,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     for gseg in getNextGenomeSegment(self.params) :
 
-        graphTasks |= self.callGenomeSegment(gseg, dependencies=dirTask)
+        graphTasks |= callGenomeSegment(self, gseg, dependencies=dirTask)
 
     nextStepWait = graphTasks
     return nextStepWait
@@ -286,6 +286,9 @@ class PathInfo:
 
     def getTmpRealignBamPath(self, segStr, label) :
         return os.path.join( self.getTmpSegmentDir(), "%s.%s.realigned" % (label, segStr))
+
+    def getTmpSegmentReportPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
 
 
@@ -359,7 +362,7 @@ class StrelkaWorkflow(WorkflowRunner) :
     def workflow(self) :
         self.flowLog("Initiating Strelka workflow version: %s" % (__version__))
 
-        self.callGenome()
+        callGenome(self)
 
         """
         graphTaskDependencies = set()
