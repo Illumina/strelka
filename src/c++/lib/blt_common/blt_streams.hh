@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -29,12 +28,9 @@
 
 struct blt_streams
 {
-
     blt_streams(const blt_options& client_opt,
                 const prog_info& pinfo,
                 const bool is_include_seq_name=false);
-
-    ~blt_streams();
 
     std::ostream* report_osptr() const
     {

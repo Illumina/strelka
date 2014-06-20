@@ -20,10 +20,30 @@
 
 #include "starling_common/starling_shared.hh"
 
+/// variant call filtration options used only for somatic snvs and indels
+///
+/// these are isolated from starling gvcf options to avoid conflicts
+///
+struct somatic_filter_options
+{
+    somatic_filter_options()
+        : is_skip_header(false)
+        , is_max_depth_factor(true)
+        , max_depth_factor(3.)
+    {}
+
+    std::string chrom_depth_file;
+    bool is_skip_header;
+
+    // filters:
+    bool is_max_depth_factor;
+    double max_depth_factor;
+};
+
+
 
 struct strelka_options : public starling_options
 {
-
     typedef starling_options base_t;
 
     strelka_options()
@@ -115,6 +135,8 @@ struct strelka_options : public starling_options
     double tumor_sample_min_small_candidate_indel_read_frac;
 
     std::string somatic_callable_filename;
+
+    somatic_filter_options sfilter;
 };
 
 

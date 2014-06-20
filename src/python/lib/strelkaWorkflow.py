@@ -154,8 +154,16 @@ def runDepth(self,taskPrefix="",dependencies=None) :
 
 
 
-def callGenomeSegment(self, gseg, taskPrefix="", dependencies=None) :
+class TempSegmentFiles :
+    def __init__(self) :
+        self.snv = []
+        self.indel = []
 
+    
+
+def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
+
+    isFirstSegment = (len(segFiles.snv) == 0)
 
     # TMP
     genomeSize=1000000000
@@ -196,14 +204,16 @@ def callGenomeSegment(self, gseg, taskPrefix="", dependencies=None) :
     for bamPath in self.params.tumorBamList :
         segCmd.extend(["--tumor-bam-file",bamPath])
 
-    segCmd.extend(["--somatic-snv-file ", self.paths.getTmpSegmentSnvPath(segStr) ] )
+    tmpSnvPath = self.paths.getTmpSegmentSnvPath(segStr)
+    segFiles.snv.append(tmpSnvPath)
+    segCmd.extend(["--somatic-snv-file ", tmpSnvPath ] )
     segCmd.extend(["--somatic-indel-file", self.paths.getTmpSegmentIndelPath(segStr) ] )
     segCmd.extend(["--variant-window-flank-file", "50", self.paths.getTmpSegmentIndelWinPath(segStr) ] )
 
     if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
         segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
 
-    if (self.params.isWriteCallableRegion is not None) and (self.params.isWriteCallableRegion > 0) :
+    if self.params.isWriteCallableRegion :
         segCmd.extend(["--somatic-callable-region-file", self.paths.getTmpSegmentRegionPath(segStr) ])
 
     if self.params.isWriteRealignedBam :
@@ -215,6 +225,9 @@ def callGenomeSegment(self, gseg, taskPrefix="", dependencies=None) :
             segCmd.append(arg)
 
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+
+    if not isFirstSegment :
+        segCmd.append("--strelka-skip-header")
 
     nextStepWait = set()
 
@@ -249,11 +262,25 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     graphTasks = set()
 
+    segFiles = TempSegmentFiles()
     for gseg in getNextGenomeSegment(self.params) :
 
-        graphTasks |= callGenomeSegment(self, gseg, dependencies=dirTask)
+        graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
 
-    nextStepWait = graphTasks
+    # create a checkpoint for all segments:
+    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegmetns"),dependencies=graphTasks)
+
+    finishTasks = set()
+
+    def finishVcf(tmpList, output, label) :
+        cmd  = "cat " + " ".join(tmpList)
+        cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
+        cmd += " && %s -p vcf %s" % (self.params.tabixBin, output)
+        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeVCF"), cmd, dependencies= completeSegmentsTask))
+    
+    finishVcf(segFiles.snv, self.paths.getSnvOutputPath(),"SNV")
+    nextStepWait = finishTasks
+    
     return nextStepWait
 
 
@@ -289,6 +316,16 @@ class PathInfo:
 
     def getTmpSegmentReportPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
+
+    def getVariantsDir(self) :
+        return self.params.variantsDir
+    
+    def getSnvOutputPath(self) :
+        return os.path.join( self.getVariantsDir(), "somatic.snvs.vcf")
+
+    def getIndelOutputPath(self) :
+        return os.path.join( self.getVariantsDir(), "somatic.indels.vcf")
+
 
 
 
@@ -346,6 +383,7 @@ class StrelkaWorkflow(WorkflowRunner) :
         self.paths = PathInfo(self.params)
 
         self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
+        self.params.isWriteCallableRegion = argToBool(self.params.isWriteCallableRegion)
         #self.params.isHighDepthFilter = (not (self.params.isExome or self.params.isRNA))
         #self.params.isIgnoreAnomProperPair = (self.params.isRNA)
 
