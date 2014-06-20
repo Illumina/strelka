@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __QSCORE_HH
-#define __QSCORE_HH
+
+#pragma once
 
 #include "blt_util/qscore_cache.hh"
 
@@ -145,4 +144,3 @@ qscore_to_error_prob(const int qscore,
     }
 }
 
-#endif

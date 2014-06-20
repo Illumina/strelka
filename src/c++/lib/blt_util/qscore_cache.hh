@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
-#ifndef __QSCORE_CACHE_HH
-#define __QSCORE_CACHE_HH
+#pragma once
 
 #include <stdint.h>
 
@@ -97,11 +95,7 @@ private:
     {
         qscore_check_int(qscore);
 
-        /// we get a FP warning here in gcc 4.9.0:
-//#pragma GCC diagnostic ignored "-Warray-bounds"
         return q2p[qscore];
-//#pragma GCC diagnostic pop
-
     }
 
     double
@@ -167,6 +161,4 @@ private:
     double q2p_base[MAX_QSCORE+1-MIN_QSCORE];
     double* const q2p;
 };
-
-#endif
 

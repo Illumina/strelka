@@ -188,7 +188,7 @@ private:
     bool _is_const;
     uint8_t _constval;
 
-    enum { MAX_QVAL=80 };
+    enum { MAX_QVAL=70 };
     unsigned _qsize;
     uint8_t _qval_id[MAX_QVAL];
     double _qval_cdf[MAX_QVAL];
