@@ -62,7 +62,7 @@ You must specify BAM file(s) for a pair of samples.
         group.add_option("--referenceFasta",type="string",dest="referenceFasta",metavar="FILE",
                          help="samtools-indexed reference fasta file [required] (default: %default)")
 
-        MantaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
+        StrelkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
     def addExtendedGroupOptions(self,group) :
@@ -128,7 +128,7 @@ You must specify BAM file(s) for a pair of samples.
         else :
             options.genomeRegionList = [parseGenomeRegion(r) for r in options.regionStrList]
 
-        MantaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
+        StrelkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
 
 
 

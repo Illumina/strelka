@@ -55,14 +55,14 @@ class StrelkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         Every local variable in this method becomes part of the default hash
         """
-        libexecDir=os.path.abspath(os.path.join(scriptDir,"@STARKA_RELATIVE_LIBEXECDIR@"))
+        libexecDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_LIBEXECDIR@"))
         assert os.path.isdir(libexecDir)
 
         bgzipBin=joinFile(libexecDir,"bgzip")
         samtoolsBin=joinFile(libexecDir,"samtools")
         tabixBin=joinFile(libexecDir,"tabix")
 
-        fastaCountBin=joinFile(libexecDir,"fastaCountBases")
+        fastaCountBin=joinFile(libexecDir,"countFastaBases")
         strelkaBin=joinFile(libexecDir,"strelka2")
 
         mantaChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
