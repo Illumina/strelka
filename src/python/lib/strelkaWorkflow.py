@@ -339,7 +339,6 @@ class StrelkaWorkflow(WorkflowRunner) :
         # sanity check some parameter typing:
         MEGABASE = 1000000
         self.params.scanSize = int(self.params.scanSizeMb) * MEGABASE
-        self.params.nonlocalWorkBins = int(self.params.nonlocalWorkBins)
 
         self.paths = PathInfo(self.params)
 

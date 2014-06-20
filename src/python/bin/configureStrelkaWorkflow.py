@@ -138,10 +138,10 @@ You must specify BAM file(s) for a pair of samples.
         # to one bam from each sample (hopefully temporarily)
         #
         def checkBamList(bamList, label) :
-            if (bamList is None) or (len(options.bamList) == 0) :
+            if (bamList is None) or (len(bamList) == 0) :
                 raise OptParseException("No %s sample BAM files specified" % (label))
 
-            if len(options.bamList) > 1 :
+            if len(bamList) > 1 :
                 raise OptParseException("More than one %s sample BAM files specified" % (label))
 
         checkBamList(options.normalBamList, "normal")
