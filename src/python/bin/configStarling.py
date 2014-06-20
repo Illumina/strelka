@@ -20,7 +20,7 @@ import os,sys
 
 scriptDir=os.path.abspath(os.path.dirname(__file__))
 scriptName=os.path.basename(__file__)
-workflowDir=os.path.abspath(os.path.join(scriptDir,"@STARKA_RELATIVE_PYTHON_LIBDIR@"))
+workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR@"))
 
 version="@STARKA_FULL_VERSION@"
 
