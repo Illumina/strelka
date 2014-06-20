@@ -124,7 +124,7 @@ get_strelka_option_parser(
     ;
 
     po::options_description strelka_parse_opt("Two-sample options");
-    strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv);
+    strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv).add(strelka_parse_opt_filter);
 
     po::options_description help_parse_opt("Help");
     help_parse_opt.add_options()
