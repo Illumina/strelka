@@ -165,9 +165,3 @@ strelka_streams(
         }
     }
 }
-
-
-
-// dtor here to make auto_ptr work correctly:
-strelka_streams::
-~strelka_streams() {}

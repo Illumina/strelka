@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -33,7 +32,6 @@ strelka_deriv_options(const strelka_options& opt,
     , _sicaller_grid(new somatic_indel_caller_grid(opt,incaller()))
 {}
 
-
-
+/// dtor required to be in the cpp so that unique ptr can access complete data type
 strelka_deriv_options::
 ~strelka_deriv_options() {}

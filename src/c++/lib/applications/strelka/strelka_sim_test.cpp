@@ -205,7 +205,6 @@ sim_sample_pi(vgen_t& cov_gen,
               const float alt_freq,
               snp_pos_info& pi)
 {
-
     const unsigned all_cov(cov_gen());
     const unsigned fwd_cov(get_binom(all_cov,0.5));
     const unsigned rev_cov(all_cov-fwd_cov);
@@ -246,13 +245,12 @@ void
 strelka_site_sim(strelka_options& opt,
                  strelka_site_sim_options& sim_opt)
 {
-
     gen.seed(sim_opt.seed);
 
     snp_pos_info norm_pi;
     snp_pos_info tumor_pi;
 
-    std::auto_ptr<qval_distro> qdistptr;
+    std::unique_ptr<qval_distro> qdistptr;
     if (sim_opt.qval_file.empty())
     {
         qdistptr.reset(new qval_distro());
@@ -281,7 +279,6 @@ strelka_site_sim(strelka_options& opt,
 
     for (unsigned i(0); i<sim_opt.total_sites; ++i)
     {
-
         const unsigned pos(i+1);
 
         uint8_t nalt_id(ref_id);
@@ -435,8 +432,8 @@ strelka_pile_test_run(strelka_options& opt)
 
         static const unsigned n_tier(2);
 
-        std::auto_ptr<extended_pos_data> normald_ptr[n_tier];
-        std::auto_ptr<extended_pos_data> tumord_ptr[n_tier];
+        std::unique_ptr<extended_pos_data> normald_ptr[n_tier];
+        std::unique_ptr<extended_pos_data> tumord_ptr[n_tier];
 
         extra_position_data* normal_epd_ptr[n_tier] = { &(norm_epd) , &(tier2_epd[STRELKA_SAMPLE_TYPE::NORMAL]) };
         extra_position_data* tumor_epd_ptr[n_tier] = { &(tumor_epd) , &(tier2_epd[STRELKA_SAMPLE_TYPE::TUMOR]) };

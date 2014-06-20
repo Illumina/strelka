@@ -31,14 +31,11 @@
 
 struct starling_streams_base : public blt_streams
 {
-
     typedef blt_streams base_t;
 
     starling_streams_base(const starling_options& opt,
                           const prog_info& pinfo,
                           const sample_info& si);
-
-    ~starling_streams_base();
 
     std::ostream*
     bindel_diploid_osptr(const unsigned sample_no) const

@@ -151,7 +151,6 @@ struct somatic_indel_caller_grid;
 //
 struct strelka_deriv_options : public starling_deriv_options
 {
-
     typedef starling_deriv_options base_t;
 
     strelka_deriv_options(const strelka_options& opt,
@@ -172,6 +171,6 @@ struct strelka_deriv_options : public starling_deriv_options
     }
 
 private:
-    std::auto_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;
-    std::auto_ptr<somatic_indel_caller_grid> _sicaller_grid;
+    std::unique_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;
+    std::unique_ptr<somatic_indel_caller_grid> _sicaller_grid;
 };

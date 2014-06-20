@@ -200,9 +200,3 @@ starling_streams_base(const starling_options& opt,
         _window_osptr[i].reset(initialize_window_file(opt,pinfo,opt.variant_windows[i],si));
     }
 }
-
-
-
-// dtor here to make auto_ptr work correctly:
-starling_streams_base::
-~starling_streams_base() {}

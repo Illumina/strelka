@@ -64,7 +64,6 @@ call(
     snp_pos_info& norm_pi,
     snp_pos_info& tumor_pi)
 {
-
     static dependent_prob_cache dpcache;
 
     const char ref_base(norm_pi.ref_base);
@@ -115,7 +114,6 @@ load_pi(const char ref_base,
         const uint8_t* qual,
         snp_pos_info& pi)
 {
-
     pi.clear();
     pi.ref_base=ref_base;
 
@@ -135,7 +133,6 @@ load_pi(const char ref_base,
 void
 strelka_pile_test_run(strelka_options& opt)
 {
-
     strelka_pile_caller pcall(opt,std::cout);
 
     istream_line_splitter dparse(std::cin);

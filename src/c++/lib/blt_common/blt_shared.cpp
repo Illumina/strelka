@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -54,7 +53,6 @@ set_report_range(const blt_options& opt,
                  const pos_t ref_end,
                  pos_range& report_range)
 {
-
     // The range format submitted by users on the command-line is
     // 1-indexed and fully closed, so begin=1 and end=3 refers to the
     // set: {1,2,3}
@@ -133,6 +131,7 @@ blt_deriv_options(const blt_options& opt,
 
 
 
+/// dtor required to be in the cpp so that unique ptr can access complete data type
 blt_deriv_options::
 ~blt_deriv_options() {}
 

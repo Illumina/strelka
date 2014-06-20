@@ -104,7 +104,6 @@ struct extra_position_data
 ///
 struct starling_pos_processor_base : public pos_processor_base, private boost::noncopyable
 {
-
     typedef pos_processor_base base_t;
 
     starling_pos_processor_base(const starling_options& client_opt,
@@ -586,8 +585,8 @@ protected:
     bool _is_dependent_eprob;
     dependent_prob_cache _dpcache;
 
-    std::auto_ptr<diploid_genotype> _empty_dgt[N_BASE];
-    std::auto_ptr<nploid_info> _ninfo;
+    std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
+    std::unique_ptr<nploid_info> _ninfo;
     double* _ws;
 
     std::set<pos_t> _variant_print_pos;
@@ -597,9 +596,8 @@ protected:
 
     bool _is_variant_windows;
 
-    std::auto_ptr<gvcf_aggregator> _gvcfer;
+    std::unique_ptr<gvcf_aggregator> _gvcfer;
 
     // a caching term used for gvcf:
     site_info _site_info;
-
 };

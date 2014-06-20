@@ -83,12 +83,6 @@ starling_deriv_options(const starling_options& opt,
 
 
 
-// dtor must be here so that auto_ptr works correctly:
-starling_deriv_options::
-~starling_deriv_options() {}
-
-
-
 void
 starling_read_counts::
 report(std::ostream& os) const

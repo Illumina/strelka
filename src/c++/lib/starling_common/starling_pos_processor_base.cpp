@@ -1843,7 +1843,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     //lrt_snp_call lsc;
     _site_info.dgt.reset();
     //monoploid_genotype mgt;
-    //std::auto_ptr<nploid_genotype> ngt_ptr;
+    //std::unique_ptr<nploid_genotype> ngt_ptr;
 
     if (_client_opt.is_counts)
     {

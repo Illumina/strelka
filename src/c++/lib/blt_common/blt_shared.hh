@@ -385,7 +385,6 @@ struct pprob_digt_caller;
 //
 struct blt_deriv_options
 {
-
     /// @param ref_end this is either the full reference contig size,
     /// or the end position of the acquired reference segment if
     /// -report-range-end was used
@@ -405,7 +404,7 @@ struct blt_deriv_options
     }
 
 private:
-    std::auto_ptr<pprob_digt_caller> _pdcaller; // object to precalculate bsnp_diploid priors..
+    std::unique_ptr<pprob_digt_caller> _pdcaller; // object to precalculate bsnp_diploid priors..
 };
 
 

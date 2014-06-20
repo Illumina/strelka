@@ -95,7 +95,6 @@ newalign_dump(const starling_read& sr,
               const alignment& al,
               const READ_ALIGN::index_t rat)
 {
-
     log_os << "\tread: " << sr << "\n"
            << "\tnew-alignment: " << al << "\n"
            << "\tnew-alignment-type: " << READ_ALIGN::label(rat) << "\n";
@@ -109,7 +108,6 @@ death_dump(const starling_read& sr,
            const alignment& al,
            const READ_ALIGN::index_t rat)
 {
-
     newalign_dump(sr,al,rat);
     exit(EXIT_FAILURE);
 }
@@ -123,15 +121,9 @@ starling_read(const bam_record& br,
       _is_bam_record_genomic(is_bam_record_genomic),
       _id(0),
       _read_rec(br),
-      _full_read(_read_rec.read_size(),0,this),
-      _segment_ptr(NULL)
+      _full_read(_read_rec.read_size(),0,this)
 {}
 
-
-
-// this needs to be in the cpp file for auto_ptr to work correctly
-starling_read::
-~starling_read() {}
 
 
 #if 0
@@ -216,7 +208,6 @@ is_compatible_alignment(const alignment& al,
                         const READ_ALIGN::index_t rat,
                         const starling_options& opt) const
 {
-
     if (is_fwd_strand() != al.is_fwd_strand)
     {
         if (opt.is_baby_elephant)
@@ -275,7 +266,6 @@ void
 starling_read::
 set_genome_align(const alignment& al)
 {
-
     assert(get_full_segment().genome_align().empty());
     assert(! al.empty());
 
@@ -334,7 +324,6 @@ void
 starling_read::
 update_full_segment()
 {
-
     read_segment& fullseg(_full_read);
     assert(! fullseg.is_realigned);
 
@@ -399,7 +388,6 @@ void
 starling_read::
 write_bam(bam_dumper& bamd)
 {
-
     if (is_segmented()) update_full_segment();
 
     const read_segment& rseg(get_full_segment());
@@ -557,7 +545,6 @@ std::ostream&
 operator<<(std::ostream& os,
            const starling_read& sr)
 {
-
     os << "STARLING_READ id: " << sr.id()
        << " genomic_mapping?: " << MAPLEVEL::get_label(sr.genome_align_maplev)
        << "\n";
