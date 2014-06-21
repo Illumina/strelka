@@ -308,7 +308,7 @@ process_pos_indel_somatic(const pos_t pos)
                 std::ostream& bos(*_client_io.somatic_indel_osptr());
                 bos << _chrom_name << '\t'
                     << output_pos << '\t' << '.';
-                write_somatic_indel_vcf_grid(sindel,iri,normal_isri,tumor_isri,bos);
+                write_somatic_indel_vcf_grid(_dopt, sindel,iri,normal_isri,tumor_isri,bos);
                 bos << '\n';
 
                 _variant_print_pos.insert(indel_pos);

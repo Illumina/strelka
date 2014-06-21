@@ -13,8 +13,10 @@
 
 /// \author Chris Saunders
 ///
+
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
+#include "strelka_vcf_locus_info.hh"
 
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
@@ -618,19 +620,38 @@ write_vcf_isri_tiers(const starling_indel_sample_report_info& isri1,
 
 
 void
-write_somatic_indel_vcf_grid(const somatic_indel_call& sindel,
-                             const starling_indel_report_info& iri,
-                             const starling_indel_sample_report_info* nisri,
-                             const starling_indel_sample_report_info* tisri,
-                             std::ostream& os)
+write_somatic_indel_vcf_grid(
+    const strelka_deriv_options& dopt,
+    const somatic_indel_call& sindel,
+    const starling_indel_report_info& iri,
+    const starling_indel_sample_report_info* nisri,
+    const starling_indel_sample_report_info* tisri,
+    std::ostream& os)
 {
-
     const somatic_indel_call::result_set& rs(sindel.rs);
 
+    strelka_shared_modifiers smod;
+    {
+        // compute all site filters:
+        if (dopt.sfilter.is_max_depth())
+        {
+            const unsigned& depth(nisri[0].depth);
+            if (depth > dopt.sfilter.max_depth)
+            {
+                smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
+            }
+        }
+    }
+
     os << '\t' << iri.vcf_ref_seq
-       << '\t' << iri.vcf_indel_seq
-       << '\t' << '.'
-       << '\t' << '.';
+       << '\t' << iri.vcf_indel_seq;
+
+    //QUAL:
+    os << "\t.";
+
+    //FILTER:
+    os << "\t";
+    smod.write_filters(os);
 
     //INFO
     os << '\t'
@@ -669,5 +690,4 @@ write_somatic_indel_vcf_grid(const somatic_indel_call& sindel,
     // write tumor sample info:
     os << '\t';
     write_vcf_isri_tiers(tisri[0],tisri[1],os);
-
 }
