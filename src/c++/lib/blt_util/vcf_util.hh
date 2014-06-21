@@ -11,13 +11,12 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 /// random vcf utilities
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __VCF_UTIL_HH
-#define __VCF_UTIL_HH
+
+#pragma once
 
 
 #include <cstring>
@@ -57,6 +56,12 @@ vcf_col_label()
 std::ostream&
 vcf_fileDate(std::ostream& os);
 
+
+void
+write_vcf_filter(
+    std::ostream& os,
+    const char* id,
+    const char* desc);
 
 
 // look for 'key' in vcf FORMAT field, provide index of key or return
@@ -108,6 +113,3 @@ void
 parse_gt(const char* gt,
          std::vector<int>& gti,
          const bool is_allow_bad_end_char=false);
-
-
-#endif

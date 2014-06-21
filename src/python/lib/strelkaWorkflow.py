@@ -321,10 +321,10 @@ class PathInfo:
         return self.params.variantsDir
     
     def getSnvOutputPath(self) :
-        return os.path.join( self.getVariantsDir(), "somatic.snvs.vcf")
+        return os.path.join( self.getVariantsDir(), "somatic.snvs.vcf.gz")
 
     def getIndelOutputPath(self) :
-        return os.path.join( self.getVariantsDir(), "somatic.indels.vcf")
+        return os.path.join( self.getVariantsDir(), "somatic.indels.vcf.gz")
 
 
 

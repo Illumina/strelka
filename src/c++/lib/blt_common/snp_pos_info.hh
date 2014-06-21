@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __SNP_POS_INFO_HH
-#define __SNP_POS_INFO_HH
+
+#pragma once
 
 #include "blt_common/hapscore.hh"
 #include "blt_util/qscore.hh"
@@ -106,7 +105,6 @@ std::ostream& operator<<(std::ostream& os,const base_call& bc);
 
 struct snp_pos_info
 {
-
     snp_pos_info()
     {
         clear();
@@ -225,5 +223,3 @@ struct extended_pos_info
     const snp_pos_info& pi;
     const std::vector<float>& de;
 };
-
-#endif

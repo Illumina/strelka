@@ -44,6 +44,17 @@ vcf_fileDate(std::ostream& os)
 
 
 
+void
+write_vcf_filter(
+    std::ostream& os,
+    const char* id,
+    const char* desc)
+{
+    os << "##FILTER=<ID=" << id << ",Description=\"" << desc << "\">\n";
+}
+
+
+
 struct gt_parse_helper
 {
 

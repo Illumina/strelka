@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -46,7 +45,6 @@ strelka_run(const strelka_options& opt)
 {
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
-
     const strelka_deriv_options dopt(opt,ref);
 
     const pos_range& rlimit(dopt.report_range_limit);
@@ -88,7 +86,7 @@ strelka_run(const strelka_options& opt)
         }
     }
 
-    strelka_streams client_io(opt,pinfo,normal_read_stream.get_header());
+    strelka_streams client_io(opt, dopt, pinfo,normal_read_stream.get_header());
     strelka_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 

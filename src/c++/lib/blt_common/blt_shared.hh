@@ -43,7 +43,6 @@ struct gvcf_options
 
     gvcf_options()
         : is_skip_header(false)
-        , is_max_depth_factor(true)
         , max_depth_factor(3.)
         , is_min_gqx(true)
         , min_gqx(30.)
@@ -69,7 +68,6 @@ struct gvcf_options
     bool is_skip_header;
 
     // filters:
-    bool is_max_depth_factor;
     double max_depth_factor;
     bool is_min_gqx;
     double min_gqx;

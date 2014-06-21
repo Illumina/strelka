@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -31,7 +30,6 @@ bool
 is_spi_allref(const snp_pos_info& pi,
               const unsigned ref_gt)
 {
-
     const unsigned n_calls(pi.calls.size());
     for (unsigned i(0); i<n_calls; ++i)
     {

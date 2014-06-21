@@ -11,14 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-
-#ifndef __CHROM_DEPTH_MAP
-#define __CHROM_DEPTH_MAP
+#pragma once
 
 
 #include <map>
@@ -32,6 +29,3 @@ typedef std::map<std::string,double> cdmap_t;
 void
 parse_chrom_depth(const std::string& chrom_depth_file,
                   cdmap_t& chrom_depth);
-
-
-#endif

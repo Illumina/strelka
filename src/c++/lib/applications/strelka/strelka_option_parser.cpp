@@ -30,13 +30,15 @@ get_strelka_option_parser(
     strelka_parse_opt_ti.add_options()
     ("tumor-bam-file",
      po::value(&opt.tumor_bam_filename),
-     "BAM file containing read alignments for the tumor sample (required)");
+     "BAM file containing read alignments for the tumor sample (required)")
+     ;
 
     po::options_description strelka_parse_opt_to("Tumor-sample output");
     strelka_parse_opt_to.add_options()
     ("tumor-realigned-read-file",
      po::value(&opt.tumor_realigned_read_filename),
-     "Write tumor reads which have had their alignments altered during realignment to a BAM file.");
+     "Write tumor reads which have had their alignments altered during realignment to a BAM file.")
+     ;
 
     po::options_description strelka_parse_opt_sv("Somatic variant-calling");
     strelka_parse_opt_sv.add_options()
@@ -143,11 +145,6 @@ finalize_strelka_options(const prog_info& pinfo,
                          const po::variables_map& vm,
                          strelka_options& opt)
 {
-
-    // base class handler:
-    //
-    //finalize_starling_options(pinfo,vm,opt);
-
     if (opt.tumor_bam_filename.empty())
     {
         pinfo.usage("Must specify a sorted BAM file containing aligned tumor sample reads");
@@ -225,6 +222,12 @@ finalize_strelka_options(const prog_info& pinfo,
     if (vm.count("tumor-min-small-candidate-indel-read-frac"))
     {
         opt.is_tumor_sample_min_small_candidate_indel_read_frac=true;
+    }
+
+    // deal with sfilter options:
+    if (opt.sfilter.max_depth_factor < 0)
+    {
+        pinfo.usage("Strelka depth factor must not be less than 0");
     }
 
     finalize_starling_options(pinfo,vm,opt);

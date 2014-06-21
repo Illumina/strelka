@@ -95,7 +95,7 @@ call(
         << pos << '\t'
         << ".";
 
-    write_vcf_somatic_snv_genotype_strand_grid(_opt,sgtg,is_somatic_gvcf,
+    write_vcf_somatic_snv_genotype_strand_grid(_opt,*(_dopt_ptr),sgtg,is_somatic_gvcf,
                                                normald,
                                                tumord,
                                                normald,

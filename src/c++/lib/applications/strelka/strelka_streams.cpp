@@ -16,23 +16,60 @@
 /// \author Chris Saunders
 ///
 
+#include "strelka_vcf_locus_info.hh"
+#include "strelka_streams.hh"
+
 #include "blt_util/bam_dumper.hh"
 #include "blt_util/vcf_util.hh"
-#include "strelka_streams.hh"
+#include "starling_common/chrom_depth_map.hh"
 
 #include <cassert>
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 
 
 const strelka_sample_info ssi;
+
+/// add vcf filter tags shared by all vcf types:
+static
+void
+write_shared_vcf_header_info(
+    const somatic_filter_options& opt,
+    const somatic_filter_deriv_options& dopt,
+    std::ostream&os)
+{
+    if (dopt.is_max_depth())
+    {
+        using namespace STRELKA_VCF_FILTERS;
+
+        std::ostringstream oss;
+        oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth in the normal sample";
+        //oss << "Greater than " << opt.max_depth_factor << "x chromosomal mean depth in Normal sample
+        write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
+
+        std::ofstream tmp_os;
+        tmp_os.copyfmt(os);
+        os << std::fixed << std::setprecision(2);
+
+        for (const auto& val : dopt.chrom_depth)
+        {
+            const std::string& chrom(val.first);
+            const double max_depth(opt.max_depth_factor*val.second);
+            os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
+        }
+        os.copyfmt(tmp_os);
+    }
+}
 
 
 
 strelka_streams::
 strelka_streams(
     const strelka_options& opt,
+    const strelka_deriv_options& dopt,
     const prog_info& pinfo,
     const bam_header_t* const header)
     : base_t(opt,pinfo,ssi)
@@ -93,6 +130,8 @@ strelka_streams(
             fos << "##FORMAT=<ID=GU,Number=2,Type=Integer,Description=\"Number of 'G' alleles used in tiers 1,2\">\n";
             fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
 
+            write_shared_vcf_header_info(opt.sfilter,dopt.sfilter,fos);
+
             fos << vcf_col_label() << "\tFORMAT";
             for (unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s)
             {
@@ -140,6 +179,8 @@ strelka_streams(
             fos << "##FORMAT=<ID=TAR,Number=2,Type=Integer,Description=\"Reads strongly supporting alternate allele for tiers 1,2\">\n";
             fos << "##FORMAT=<ID=TIR,Number=2,Type=Integer,Description=\"Reads strongly supporting indel allele for tiers 1,2\">\n";
             fos << "##FORMAT=<ID=TOR,Number=2,Type=Integer,Description=\"Other reads (weak support or insufficient indel breakpoint overlap) for tiers 1,2\">\n";
+
+            write_shared_vcf_header_info(opt.sfilter,dopt.sfilter,fos);
 
             fos << vcf_col_label() << "\tFORMAT";
             for (unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s)

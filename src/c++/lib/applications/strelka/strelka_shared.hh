@@ -18,7 +18,9 @@
 
 #pragma once
 
+#include "starling_common/chrom_depth_map.hh"
 #include "starling_common/starling_shared.hh"
+
 
 /// variant call filtration options used only for somatic snvs and indels
 ///
@@ -28,15 +30,17 @@ struct somatic_filter_options
 {
     somatic_filter_options()
         : is_skip_header(false)
-        , is_max_depth_factor(true)
         , max_depth_factor(3.)
     {}
 
+    bool
+    is_depth_filter() const
+    {
+        return (! chrom_depth_file.empty());
+    }
+
     std::string chrom_depth_file;
     bool is_skip_header;
-
-    // filters:
-    bool is_max_depth_factor;
     double max_depth_factor;
 };
 
@@ -140,6 +144,27 @@ struct strelka_options : public starling_options
 };
 
 
+
+/// somatic filter options computed after user input is finished:
+///
+struct somatic_filter_deriv_options
+{
+    somatic_filter_deriv_options()
+        : max_depth(0.)
+    {}
+
+    bool
+    is_max_depth() const
+    {
+        return (! chrom_depth.empty());
+    }
+
+    double max_depth;
+    cdmap_t chrom_depth;
+};
+
+
+
 //struct somatic_snv_caller;
 //struct somatic_snv_caller_grid;
 struct somatic_snv_caller_strand_grid;
@@ -153,8 +178,9 @@ struct strelka_deriv_options : public starling_deriv_options
 {
     typedef starling_deriv_options base_t;
 
-    strelka_deriv_options(const strelka_options& opt,
-                          const reference_contig_segment& ref);
+    strelka_deriv_options(
+        const strelka_options& opt,
+        const reference_contig_segment& ref);
 
     ~strelka_deriv_options();
 
@@ -169,6 +195,9 @@ struct strelka_deriv_options : public starling_deriv_options
     {
         return *(_sicaller_grid.get());
     }
+
+/// data:
+    somatic_filter_deriv_options sfilter;
 
 private:
     std::unique_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;

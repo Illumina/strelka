@@ -143,12 +143,12 @@ gvcf_aggregator(const starling_options& opt,
     this->CM.load_models(opt.calibration_models_filename);
     this->CM.set_model(opt.calibration_model);
 
-    assert(NULL != _osptr);
-    assert((NULL !=_chrom) && (strlen(_chrom)>0));
+    assert(nullptr != _osptr);
+    assert((nullptr !=_chrom) && (strlen(_chrom)>0));
 
     //initialize gvcf deriv options:
     cdmap_t chrom_depth;
-    if (_opt.gvcf.is_max_depth_factor && (! _opt.gvcf.chrom_depth_file.empty()))
+    if (! _opt.gvcf.chrom_depth_file.empty())
     {
         parse_chrom_depth(_opt.gvcf.chrom_depth_file,chrom_depth);
         //TODO, verify that chroms match bam chroms

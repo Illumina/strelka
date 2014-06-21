@@ -188,7 +188,6 @@ std::ostream& operator<<(std::ostream& os,const DDIGT_SGRID::index_t dgt);
 // object used to pre-compute priors:
 struct somatic_snv_caller_strand_grid
 {
-
     somatic_snv_caller_strand_grid(const strelka_options& opt,
                                    const pprob_digt_caller& pd_caller);
 
@@ -261,6 +260,7 @@ private:
 void
 write_vcf_somatic_snv_genotype_strand_grid(
     const strelka_options& opt,
+    const strelka_deriv_options& dopt,
     const somatic_snv_genotype_grid& sgt,
     const bool is_write_nqss,
     const extended_pos_data& n1_epd,

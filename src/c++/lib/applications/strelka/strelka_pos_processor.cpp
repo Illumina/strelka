@@ -188,7 +188,7 @@ process_pos_snp_somatic(const pos_t pos)
             << ".";
 
         static const bool is_write_nqss(false);
-        write_vcf_somatic_snv_genotype_strand_grid(_opt,sgtg,is_write_nqss,
+        write_vcf_somatic_snv_genotype_strand_grid(_opt,_dopt,sgtg,is_write_nqss,
                                                    *(normald_ptr[0]),
                                                    *(tumord_ptr[0]),
                                                    *(normald_ptr[1]),

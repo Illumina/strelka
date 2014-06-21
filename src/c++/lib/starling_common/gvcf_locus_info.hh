@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __GVCF_LOCUS_INFO_HH
-#define __GVCF_LOCUS_INFO_HH
+#pragma once
 
 
 #include "blt_common/position_snp_call_pprob_digt.hh"
@@ -416,5 +414,3 @@ struct site_info
 };
 
 std::ostream& operator<<(std::ostream& os,const site_info& si);
-
-#endif

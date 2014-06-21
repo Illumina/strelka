@@ -16,6 +16,7 @@
 
 #include "position_somatic_snv_strand_grid.hh"
 #include "somatic_call_shared.hh"
+#include "strelka_vcf_locus_info.hh"
 
 #include "blt_common/snp_util.hh"
 #include "blt_util/log.hh"
@@ -1460,6 +1461,7 @@ write_vcf_sample_info(const blt_options& opt,
 void
 write_vcf_somatic_snv_genotype_strand_grid(
     const strelka_options& opt,
+    const strelka_deriv_options& dopt,
     const somatic_snv_genotype_grid& sgt,
     const bool is_write_nqss,
     const extended_pos_data& n1_epd,
@@ -1468,8 +1470,20 @@ write_vcf_somatic_snv_genotype_strand_grid(
     const extended_pos_data& t2_epd,
     std::ostream& os)
 {
-
     const result_set& rs(sgt.rs);
+
+    strelka_shared_modifiers smod;
+    {
+        // compute all site filters:
+        if (dopt.sfilter.is_max_depth())
+        {
+            const unsigned& depth(n1_epd.n_calls);
+            if (depth > dopt.sfilter.max_depth)
+            {
+                smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
+            }
+        }
+    }
 
     //REF:
     os << '\t' << n1_epd.pi.ref_base
@@ -1478,9 +1492,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
     DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
                                    sgt.ref_gt,os);
     //QUAL:
-    os << "\t."
-       //FILTER:
-       << "\t.";
+    os << "\t.";
+
+    //FILTER:
+    os << "\t";
+    smod.write_filters(os);
 
     //INFO:
     os << '\t'
