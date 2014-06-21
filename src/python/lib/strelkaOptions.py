@@ -65,9 +65,9 @@ class StrelkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         fastaCountBin=joinFile(libexecDir,"countFastaBases")
         strelkaBin=joinFile(libexecDir,"strelka2")
 
-        mantaChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
-        mantaSortVcf=joinFile(libexecDir,"sortVcf.py")
-        mantaExtraSmallVcf=joinFile(libexecDir,"extractSmallIndelCandidates.py")
+        getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
+        #mantaSortVcf=joinFile(libexecDir,"sortVcf.py")
+        #mantaExtraSmallVcf=joinFile(libexecDir,"extractSmallIndelCandidates.py")
 
         # default memory request per process-type
         #

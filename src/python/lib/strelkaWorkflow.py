@@ -143,7 +143,7 @@ def runDepth(self,taskPrefix="",dependencies=None) :
         return set()
 
 
-    cmd  = "%s -E %s" % (sys.executable, self.params.mantaChromDepth)
+    cmd  = "%s -E %s" % (sys.executable, self.params.getChromDepth)
     cmd += " --bam '%s'" % (bamFile)
     cmd += " > %s" % (self.paths.getChromDepth())
 
@@ -229,6 +229,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if not isFirstSegment :
         segCmd.append("--strelka-skip-header")
 
+    if not self.params.isSkipDepthFilters :
+        segCmd.extend("--strelka-chrom-depth-file", self.paths.getChromDepth)
+        segCmd.extedn("--strelka-max-depth-factor", self.params.depthFilterMultiple)
+
     nextStepWait = set()
 
     setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
@@ -292,6 +296,9 @@ class PathInfo:
 
     def __init__(self, params) :
         self.params = params
+
+    def getChromDepth(self) :
+        return os.path.join(self.params.workDir,"chromDepth.txt")
 
     def getTmpSegmentDir(self) :
         return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
@@ -384,6 +391,7 @@ class StrelkaWorkflow(WorkflowRunner) :
 
         self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
         self.params.isWriteCallableRegion = argToBool(self.params.isWriteCallableRegion)
+        self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
         #self.params.isHighDepthFilter = (not (self.params.isExome or self.params.isRNA))
         #self.params.isIgnoreAnomProperPair = (self.params.isRNA)
 
@@ -401,7 +409,12 @@ class StrelkaWorkflow(WorkflowRunner) :
     def workflow(self) :
         self.flowLog("Initiating Strelka workflow version: %s" % (__version__))
 
-        callGenome(self)
+        callPreReqs = set()
+        if not self.params.isSkipDepthFilters :
+            depthTasks = runDepth(self)
+            callPreReqs |= depthTasks
+
+        callGenome(self, dependencies=callPreReqs)
 
         """
         graphTaskDependencies = set()
