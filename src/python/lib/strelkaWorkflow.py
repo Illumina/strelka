@@ -230,8 +230,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.append("--strelka-skip-header")
 
     if not self.params.isSkipDepthFilters :
-        segCmd.extend("--strelka-chrom-depth-file", self.paths.getChromDepth)
-        segCmd.extedn("--strelka-max-depth-factor", self.params.depthFilterMultiple)
+        segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
+        segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
 
     nextStepWait = set()
 
