@@ -207,7 +207,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     tmpSnvPath = self.paths.getTmpSegmentSnvPath(segStr)
     segFiles.snv.append(tmpSnvPath)
     segCmd.extend(["--somatic-snv-file ", tmpSnvPath ] )
-    segCmd.extend(["--somatic-indel-file", self.paths.getTmpSegmentIndelPath(segStr) ] )
+    
+    tmpIndelPath = self.paths.getTmpSegmentIndelPath(segStr)
+    segFiles.indel.append(tmpIndelPath)
+    segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
     segCmd.extend(["--variant-window-flank-file", "50", self.paths.getTmpSegmentIndelWinPath(segStr) ] )
 
     if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
@@ -283,6 +286,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
         finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeVCF"), cmd, dependencies= completeSegmentsTask))
     
     finishVcf(segFiles.snv, self.paths.getSnvOutputPath(),"SNV")
+    finishVcf(segFiles.indel, self.paths.getIndelOutputPath(),"Indel")
     nextStepWait = finishTasks
     
     return nextStepWait
