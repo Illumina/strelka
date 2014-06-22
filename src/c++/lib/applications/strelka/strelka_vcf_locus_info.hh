@@ -45,6 +45,11 @@ enum index_t
     BCNoise,
     SpanDel,
     QSS_ref,
+    // indels only:
+    Repeat,
+    iHpol,
+    IndelBCNoise,
+    QSI_ref,
     SIZE
 };
 
@@ -63,6 +68,14 @@ get_label(const unsigned idx)
         return "SpanDel";
     case QSS_ref:
         return "QSS_ref";
+    case Repeat:
+        return "Repeat";
+    case iHpol:
+        return "iHpol";
+    case IndelBCNoise:
+        return "BCNoise";
+    case QSI_ref:
+        return "QSI_ref";
     default:
         assert(false && "Unknown vcf filter id");
         return nullptr;

@@ -123,12 +123,22 @@ get_strelka_option_parser(
      "If a chrom depth file is supplied then loci with depth exceeding the mean chromosome depth times this value are filtered")
     ("strelka-skip-header", po::value(&opt.sfilter.is_skip_header)->zero_tokens(),
      "Skip writing header info for the somatic vcf files (usually used to simplify segment concatenation)")
+    // snv only:
     ("strelka-snv-max-filtered-basecall-frac", po::value(&opt.sfilter.snv_max_filtered_basecall_frac)->default_value(opt.sfilter.snv_max_filtered_basecall_frac),
      "max filtered call fraction")
     ("strelka-snv-max-spanning-deletion-frac", po::value(&opt.sfilter.snv_max_spanning_deletion_frac)->default_value(opt.sfilter.snv_max_spanning_deletion_frac),
      "max fraction of overlapping deletion reads")
     ("strelka-snv-min-qss-ref", po::value(&opt.sfilter.snv_min_qss_ref)->default_value(opt.sfilter.snv_min_qss_ref),
      "min QSS_ref value")
+     // indel only:
+     ("strelka-indel-max-ref-repeat",  po::value(&opt.sfilter.indelMaxRefRepeat)->default_value(opt.sfilter.indelMaxRefRepeat),
+      "indels expand/contracting pattterns with greater than this repeat will be filtered out")
+     ("strelka-indel-max-int-hpol-length",  po::value(&opt.sfilter.indelMaxIntHpolLength)->default_value(opt.sfilter.indelMaxIntHpolLength),
+      "indels are filtered if they overlap 'interrupted homopolymers' greater than this length")
+     ("strelka-indel-max-window-filtered-basecall-frac",  po::value(&opt.sfilter.indelMaxWindowFilteredBasecallFrac)->default_value(opt.sfilter.indelMaxWindowFilteredBasecallFrac),
+      "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
+     ("strelka-indel-min-qsi-ref", po::value(&opt.sfilter.sindelQuality_LowerBound)->default_value(opt.sfilter.sindelQuality_LowerBound),
+      "min QSI_ref value")
     ;
 
     po::options_description strelka_parse_opt("Two-sample options");

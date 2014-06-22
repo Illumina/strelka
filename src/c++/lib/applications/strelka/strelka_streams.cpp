@@ -149,6 +149,27 @@ strelka_streams(
                     oss << "Normal sample is not homozygous ref or ssnv Q-score < $minQSSNT, ie calls with NT!=ref or QSS_NT < " << opt.sfilter.snv_min_qss_ref;
                     write_vcf_filter(fos, get_label(QSS_ref), oss.str().c_str());
                 }
+
+                {
+                    std::ostringstream oss;
+                    oss << "Sequence repeat of more than " << opt.sfilter.indelMaxRefRepeat << "x in the reference sequence";
+                    write_vcf_filter(fos, get_label(Repeat), oss.str().c_str());
+                }
+                {
+                    std::ostringstream oss;
+                    oss << "Indel overlaps an interupted homopolymer longer than " << opt.sfilter.indelMaxIntHpolLength << "x in the reference sequence";
+                    write_vcf_filter(fos, get_label(iHpol), oss.str().c_str());
+                }
+                {
+                    std::ostringstream oss;
+                    oss << "Average fraction of filtered basecalls within 50 bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
+                    write_vcf_filter(fos, get_label(iHpol), oss.str().c_str());
+                }
+                {
+                    std::ostringstream oss;
+                    oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << " ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
+                    write_vcf_filter(fos, get_label(iHpol), oss.str().c_str());
+                }
             }
 
             write_shared_vcf_header_info(opt.sfilter,dopt.sfilter,fos);

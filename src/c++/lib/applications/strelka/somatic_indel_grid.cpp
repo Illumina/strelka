@@ -621,6 +621,7 @@ write_vcf_isri_tiers(const starling_indel_sample_report_info& isri1,
 
 void
 write_somatic_indel_vcf_grid(
+    const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const somatic_indel_call& sindel,
     const starling_indel_report_info& iri,
@@ -640,6 +641,21 @@ write_somatic_indel_vcf_grid(
             {
                 smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
             }
+        }
+
+        if (iri.ref_repeat_count > opt.sfilter.indelMaxRefRepeat)
+        {
+            smod.set_filter(STRELKA_VCF_FILTERS::Repeat);
+        }
+
+        if (iri.ihpol > opt.sfilter.indelMaxIntHpolLength)
+        {
+            smod.set_filter(STRELKA_VCF_FILTERS::iHpol);
+        }
+
+        if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
+        {
+            smod.set_filter(STRELKA_VCF_FILTERS::QSI_ref);
         }
     }
 

@@ -33,6 +33,10 @@ struct somatic_filter_options
         , snv_max_filtered_basecall_frac(0.4)
         , snv_max_spanning_deletion_frac(0.75)
         , snv_min_qss_ref(15)
+        , indelMaxRefRepeat(8)
+        , indelMaxIntHpolLength(14)
+        , indelMaxWindowFilteredBasecallFrac(0.3)
+        , sindelQuality_LowerBound(30)
     {}
 
     bool
@@ -47,6 +51,11 @@ struct somatic_filter_options
     double snv_max_filtered_basecall_frac;
     double snv_max_spanning_deletion_frac;
     int snv_min_qss_ref;
+
+    unsigned indelMaxRefRepeat;
+    unsigned indelMaxIntHpolLength;
+    double indelMaxWindowFilteredBasecallFrac;
+    int sindelQuality_LowerBound;
 };
 
 
