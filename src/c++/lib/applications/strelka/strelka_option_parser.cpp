@@ -31,14 +31,14 @@ get_strelka_option_parser(
     ("tumor-bam-file",
      po::value(&opt.tumor_bam_filename),
      "BAM file containing read alignments for the tumor sample (required)")
-     ;
+    ;
 
     po::options_description strelka_parse_opt_to("Tumor-sample output");
     strelka_parse_opt_to.add_options()
     ("tumor-realigned-read-file",
      po::value(&opt.tumor_realigned_read_filename),
      "Write tumor reads which have had their alignments altered during realignment to a BAM file.")
-     ;
+    ;
 
     po::options_description strelka_parse_opt_sv("Somatic variant-calling");
     strelka_parse_opt_sv.add_options()
@@ -130,15 +130,15 @@ get_strelka_option_parser(
      "max fraction of overlapping deletion reads")
     ("strelka-snv-min-qss-ref", po::value(&opt.sfilter.snv_min_qss_ref)->default_value(opt.sfilter.snv_min_qss_ref),
      "min QSS_ref value")
-     // indel only:
-     ("strelka-indel-max-ref-repeat",  po::value(&opt.sfilter.indelMaxRefRepeat)->default_value(opt.sfilter.indelMaxRefRepeat),
-      "indels expand/contracting pattterns with greater than this repeat will be filtered out")
-     ("strelka-indel-max-int-hpol-length",  po::value(&opt.sfilter.indelMaxIntHpolLength)->default_value(opt.sfilter.indelMaxIntHpolLength),
-      "indels are filtered if they overlap 'interrupted homopolymers' greater than this length")
-     ("strelka-indel-max-window-filtered-basecall-frac",  po::value(&opt.sfilter.indelMaxWindowFilteredBasecallFrac)->default_value(opt.sfilter.indelMaxWindowFilteredBasecallFrac),
-      "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
-     ("strelka-indel-min-qsi-ref", po::value(&opt.sfilter.sindelQuality_LowerBound)->default_value(opt.sfilter.sindelQuality_LowerBound),
-      "min QSI_ref value")
+    // indel only:
+    ("strelka-indel-max-ref-repeat",  po::value(&opt.sfilter.indelMaxRefRepeat)->default_value(opt.sfilter.indelMaxRefRepeat),
+     "indels expand/contracting pattterns with greater than this repeat will be filtered out")
+    ("strelka-indel-max-int-hpol-length",  po::value(&opt.sfilter.indelMaxIntHpolLength)->default_value(opt.sfilter.indelMaxIntHpolLength),
+     "indels are filtered if they overlap 'interrupted homopolymers' greater than this length")
+    ("strelka-indel-max-window-filtered-basecall-frac",  po::value(&opt.sfilter.indelMaxWindowFilteredBasecallFrac)->default_value(opt.sfilter.indelMaxWindowFilteredBasecallFrac),
+     "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
+    ("strelka-indel-min-qsi-ref", po::value(&opt.sfilter.sindelQuality_LowerBound)->default_value(opt.sfilter.sindelQuality_LowerBound),
+     "min QSI_ref value")
     ;
 
     po::options_description strelka_parse_opt("Two-sample options");

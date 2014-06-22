@@ -284,8 +284,8 @@ process_pos_indel_somatic(const pos_t pos)
             if (sindel.is_output())
             {
                 // get sample specific info:
-                starling_indel_sample_report_info normal_isri[2];
-                starling_indel_sample_report_info tumor_isri[2];
+                std::array<starling_indel_sample_report_info,2> normal_isri;
+                std::array<starling_indel_sample_report_info,2> tumor_isri;
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);

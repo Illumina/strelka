@@ -159,7 +159,7 @@ class TempSegmentFiles :
         self.snv = []
         self.indel = []
 
-    
+
 
 def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
@@ -198,11 +198,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--tier2-indel-nonsite-match-prob", "0.25"] )
     segCmd.append("--tier2-include-singleton")
     segCmd.append("--tier2-include-anomalous")
-    
+
     segCmd.extend(["--strelka-snv-max-filtered-basecall-frac", str(self.params.snvMaxFilteredBasecallFrac)])
     segCmd.extend(["--strelka-snv-max-spanning-deletion-frac", str(self.params.snvMaxSpanningDeletionFrac)])
     segCmd.extend(["--strelka-snv-min-qss-ref", str(self.params.ssnvQuality_LowerBound)])
-    
+
     segCmd.extend(["--strelka-indel-max-ref-repeat", str(self.params.indelMaxRefRepeat)])
     segCmd.extend(["--strelka-indel-max-int-hpol-length", str(self.params.indelMaxIntHpolLength)])
     segCmd.extend(["--strelka-indel-max-window-filtered-basecall-frac", str(self.params.indelMaxWindowFilteredBasecallFrac)])
@@ -216,7 +216,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     tmpSnvPath = self.paths.getTmpSegmentSnvPath(segStr)
     segFiles.snv.append(tmpSnvPath)
     segCmd.extend(["--somatic-snv-file ", tmpSnvPath ] )
-    
+
     tmpIndelPath = self.paths.getTmpSegmentIndelPath(segStr)
     segFiles.indel.append(tmpIndelPath)
     segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
@@ -293,11 +293,11 @@ def callGenome(self,taskPrefix="",dependencies=None):
         cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
         cmd += " && %s -p vcf %s" % (self.params.tabixBin, output)
         finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeVCF"), cmd, dependencies= completeSegmentsTask))
-    
+
     finishVcf(segFiles.snv, self.paths.getSnvOutputPath(),"SNV")
     finishVcf(segFiles.indel, self.paths.getIndelOutputPath(),"Indel")
     nextStepWait = finishTasks
-    
+
     return nextStepWait
 
 
@@ -339,7 +339,7 @@ class PathInfo:
 
     def getVariantsDir(self) :
         return self.params.variantsDir
-    
+
     def getSnvOutputPath(self) :
         return os.path.join( self.getVariantsDir(), "somatic.snvs.vcf.gz")
 

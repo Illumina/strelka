@@ -1519,7 +1519,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
             const double tumorSpanDelFrac(safeFrac(tumorSDP, tumorSpanTot));
 
             if ((normalSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac) ||
-                (tumorSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac))            {
+                (tumorSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac))
+            {
                 smod.set_filter(STRELKA_VCF_FILTERS::SpanDel);
             }
         }

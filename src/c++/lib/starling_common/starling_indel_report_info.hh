@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_INDEL_REPORT_INFO_HH
-#define __STARLING_INDEL_REPORT_INFO_HH
+#pragma once
 
 #include "starling_common/indel.hh"
 #include "starling_common/starling_shared.hh"
@@ -112,5 +110,3 @@ get_starling_indel_sample_report_info(const starling_deriv_options& dopt,
                                       const bool is_include_tier2,
                                       const bool is_use_alt_indel,
                                       starling_indel_sample_report_info& isri);
-
-#endif
