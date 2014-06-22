@@ -127,6 +127,8 @@ get_strelka_option_parser(
      "max filtered call fraction")
     ("strelka-snv-max-spanning-deletion-frac", po::value(&opt.sfilter.snv_max_spanning_deletion_frac)->default_value(opt.sfilter.snv_max_spanning_deletion_frac),
      "max fraction of overlapping deletion reads")
+    ("strelka-snv-min-qss-ref", po::value(&opt.sfilter.snv_min_qss_ref)->default_value(opt.sfilter.snv_min_qss_ref),
+     "min QSS_ref value")
     ;
 
     po::options_description strelka_parse_opt("Two-sample options");
