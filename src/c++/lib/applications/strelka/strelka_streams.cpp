@@ -146,7 +146,7 @@ strelka_streams(
                 }
                 {
                     std::ostringstream oss;
-                    oss << "Normal sample is not homozygous ref or ssnv Q-score < $minQSSNT, ie calls with NT!=ref or QSS_NT < " << opt.sfilter.snv_min_qss_ref;
+                    oss << "Normal sample is not homozygous ref or ssnv Q-score < " << opt.sfilter.snv_min_qss_ref << ", ie calls with NT!=ref or QSS_NT < " << opt.sfilter.snv_min_qss_ref;
                     write_vcf_filter(fos, get_label(QSS_ref), oss.str().c_str());
                 }
 
