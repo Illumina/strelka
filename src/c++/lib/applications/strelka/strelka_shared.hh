@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -31,6 +30,9 @@ struct somatic_filter_options
     somatic_filter_options()
         : is_skip_header(false)
         , max_depth_factor(3.)
+        , snv_max_filtered_basecall_frac(0.4)
+        , snv_max_spanning_deletion_frac(0.75)
+        , snv_min_qss_ref(15)
     {}
 
     bool
@@ -42,6 +44,9 @@ struct somatic_filter_options
     std::string chrom_depth_file;
     bool is_skip_header;
     double max_depth_factor;
+    double snv_max_filtered_basecall_frac;
+    double snv_max_spanning_deletion_frac;
+    int snv_min_qss_ref;
 };
 
 

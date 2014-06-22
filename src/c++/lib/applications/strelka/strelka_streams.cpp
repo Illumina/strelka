@@ -39,7 +39,7 @@ void
 write_shared_vcf_header_info(
     const somatic_filter_options& opt,
     const somatic_filter_deriv_options& dopt,
-    std::ostream&os)
+    std::ostream& os)
 {
     if (dopt.is_max_depth())
     {
@@ -50,8 +50,7 @@ write_shared_vcf_header_info(
         //oss << "Greater than " << opt.max_depth_factor << "x chromosomal mean depth in Normal sample
         write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
 
-        std::ofstream tmp_os;
-        tmp_os.copyfmt(os);
+        const std::ios::fmtflags old_os_settings(os.flags());
         os << std::fixed << std::setprecision(2);
 
         for (const auto& val : dopt.chrom_depth)
@@ -60,7 +59,7 @@ write_shared_vcf_header_info(
             const double max_depth(opt.max_depth_factor*val.second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
         }
-        os.copyfmt(tmp_os);
+        os.flags(old_os_settings);
     }
 }
 
@@ -74,25 +73,27 @@ strelka_streams(
     const bam_header_t* const header)
     : base_t(opt,pinfo,ssi)
 {
-    using namespace STRELKA_SAMPLE_TYPE;
+    {
+        using namespace STRELKA_SAMPLE_TYPE;
 
-    if (opt.is_bindel_diploid_file)
-    {
-        _bindel_diploid_osptr[NORMAL].reset(initialize_bindel_file(opt,pinfo,opt.bindel_diploid_filename,"normal-sample"));
-    }
-    if (opt.is_tumor_bindel_diploid())
-    {
-        _bindel_diploid_osptr[TUMOR].reset(initialize_bindel_file(opt,pinfo,opt.tumor_bindel_diploid_filename,"tumor-sample"));
-    }
+        if (opt.is_bindel_diploid_file)
+        {
+            _bindel_diploid_osptr[NORMAL].reset(initialize_bindel_file(opt,pinfo,opt.bindel_diploid_filename,"normal-sample"));
+        }
+        if (opt.is_tumor_bindel_diploid())
+        {
+            _bindel_diploid_osptr[TUMOR].reset(initialize_bindel_file(opt,pinfo,opt.tumor_bindel_diploid_filename,"tumor-sample"));
+        }
 
-    if (opt.is_realigned_read_file)
-    {
-        _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"normal sample realigned-read BAM",header));
-    }
+        if (opt.is_realigned_read_file)
+        {
+            _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"normal sample realigned-read BAM",header));
+        }
 
-    if (opt.is_tumor_realigned_read())
-    {
-        _realign_bam_ptr[TUMOR].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.tumor_realigned_read_filename,"tumor sample realigned-read BAM",header));
+        if (opt.is_tumor_realigned_read())
+        {
+            _realign_bam_ptr[TUMOR].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.tumor_realigned_read_filename,"tumor sample realigned-read BAM",header));
+        }
     }
 
     if (opt.is_somatic_snv())
@@ -129,6 +130,26 @@ strelka_streams(
             fos << "##FORMAT=<ID=CU,Number=2,Type=Integer,Description=\"Number of 'C' alleles used in tiers 1,2\">\n";
             fos << "##FORMAT=<ID=GU,Number=2,Type=Integer,Description=\"Number of 'G' alleles used in tiers 1,2\">\n";
             fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
+
+            // FILTERS:
+            {
+                using namespace STRELKA_VCF_FILTERS;
+                {
+                    std::ostringstream oss;
+                    oss << "Fraction of basecalls filtered at this site in either sample is at or above " << opt.sfilter.snv_max_filtered_basecall_frac;
+                    write_vcf_filter(fos, get_label(BCNoise), oss.str().c_str());
+                }
+                {
+                    std::ostringstream oss;
+                    oss << "Fraction of reads crossing site with spanning deletions in either sample exceeds " << opt.sfilter.snv_max_spanning_deletion_frac;
+                    write_vcf_filter(fos, get_label(SpanDel), oss.str().c_str());
+                }
+                {
+                    std::ostringstream oss;
+                    oss << "Normal sample is not homozygous ref or ssnv Q-score < $minQSSNT, ie calls with NT!=ref or QSS_NT < " << opt.sfilter.snv_min_qss_ref;
+                    write_vcf_filter(fos, get_label(QSS_ref), oss.str().c_str());
+                }
+            }
 
             write_shared_vcf_header_info(opt.sfilter,dopt.sfilter,fos);
 

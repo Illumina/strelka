@@ -198,6 +198,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--tier2-indel-nonsite-match-prob", "0.25"] )
     segCmd.append("--tier2-include-singleton")
     segCmd.append("--tier2-include-anomalous")
+    
+    segCmd.extend(["--strelka-snv-max-filtered-basecall-frac", str(self.params.snvMaxFilteredBasecallFrac)])
+    segCmd.extend(["--strelka-snv-max-spanning-deletion-frac", str(self.params.snvMaxSpanningDeletionFrac)])
+    segCmd.extend(["--strelka-snv-min-qss-ref", str(self.params.ssnvQuality_LowerBound)])
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["-bam-file",bamPath])

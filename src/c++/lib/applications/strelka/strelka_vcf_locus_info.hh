@@ -39,7 +39,12 @@ namespace STRELKA_VCF_FILTERS
 
 enum index_t
 {
+    // SNVs and indels:
     HighDepth,
+    // SNVs only:
+    BCNoise,
+    SpanDel,
+    QSS_ref,
     SIZE
 };
 
@@ -51,7 +56,13 @@ get_label(const unsigned idx)
     {
     case HighDepth:
         return "HighDepth";
-        //return "DP";
+        //return "DP"; // old strelka workflow name
+    case BCNoise:
+        return "BCNoise";
+    case SpanDel:
+        return "SpanDel";
+    case QSS_ref:
+        return "QSS_ref";
     default:
         assert(false && "Unknown vcf filter id");
         return nullptr;

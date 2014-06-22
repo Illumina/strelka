@@ -32,7 +32,7 @@ strelka_deriv_options(
     , _sscaller_strand_grid(new somatic_snv_caller_strand_grid(opt,pdcaller()))
     , _sicaller_grid(new somatic_indel_caller_grid(opt,incaller()))
 {
-    if (! opt.sfilter.is_depth_filter())
+    if (opt.sfilter.is_depth_filter())
     {
         parse_chrom_depth(opt.sfilter.chrom_depth_file, sfilter.chrom_depth);
 
