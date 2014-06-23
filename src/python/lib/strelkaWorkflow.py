@@ -103,32 +103,6 @@ def getNextGenomeSegment(params) :
 
 
 
-def runStats(self,taskPrefix="",dependencies=None) :
-
-    statsPath=self.paths.getStatsPath()
-
-    cmd = [ self.params.mantaStatsBin ]
-    cmd.extend(["--output-file",statsPath])
-    for bamPath in self.params.normalBamList :
-        cmd.extend(["--align-file",bamPath])
-    for bamPath in self.params.tumorBamList :
-        cmd.extend(["--tumor-align-file",bamPath])
-
-    statsTask = self.addTask(preJoin(taskPrefix,"generateStats"),cmd,dependencies=dependencies)
-
-    nextStepWait = set()
-    nextStepWait.add(statsTask)
-
-    # summarize stats for humans, no need for follow-up tasks to wait for this:
-    cmd  = self.params.mantaStatsSummaryBin
-    cmd += " --align-stats " + statsPath
-    cmd += " > " + self.paths.getStatsSummaryPath()
-    self.addTask(preJoin(taskPrefix,"summarizeStats"),cmd,dependencies=statsTask)
-
-    return nextStepWait
-
-
-
 def runDepth(self,taskPrefix="",dependencies=None) :
     """
     estimate chrom depth
@@ -158,6 +132,9 @@ class TempSegmentFiles :
     def __init__(self) :
         self.snv = []
         self.indel = []
+        self.callable = []
+        self.normalRealign = []
+        self.tumorRealign = []
 
 
 
@@ -226,7 +203,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
 
     if self.params.isWriteCallableRegion :
-        segCmd.extend(["--somatic-callable-region-file", self.paths.getTmpSegmentRegionPath(segStr) ])
+        tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
+        segFiles.callable.append(tmpCallablePath)
+        segCmd.extend(["--somatic-callable-region-file", tmpCallablePath ])
 
     if self.params.isWriteRealignedBam :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr, "normal")])
@@ -252,17 +231,18 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     nextStepWait.add(setTaskLabel)
 
     if self.params.isWriteRealignedBam :
-        def sortRealignBam(label) :
+        def sortRealignBam(label, sortList) :
             unsorted = self.paths.getTmpUnsortRealignBamPath(segStr, label)
             sorted   = self.paths.getTmpRealignBamPath(segStr, label)
+            sortList.append(sorted)
             sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
             sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.pyflowId)
             self.addTask(sortTaskLabel,sortCmd,dependencies=setTaskLabel,memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
-        sortRealignBam("normal")
-        sortRealignBam("tumor")
+        sortRealignBam("normal", segFiles.normalRealign)
+        sortRealignBam("tumor", segFiles.tumorRealign)
 
     return nextStepWait
 
@@ -292,10 +272,35 @@ def callGenome(self,taskPrefix="",dependencies=None):
         cmd  = "cat " + " ".join(tmpList)
         cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
         cmd += " && %s -p vcf %s" % (self.params.tabixBin, output)
-        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeVCF"), cmd, dependencies= completeSegmentsTask))
+        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeVCF"), cmd, dependencies=completeSegmentsTask))
 
     finishVcf(segFiles.snv, self.paths.getSnvOutputPath(),"SNV")
     finishVcf(segFiles.indel, self.paths.getIndelOutputPath(),"Indel")
+
+    if self.params.isWriteCallableRegion :
+        def finishBed(tmpList, output, label):
+            cmd  = "cat " + " ".join(tmpList)
+            cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
+            cmd += " && %s -p bed %s" % (self.params.tabixBin, output)
+            finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBED"), cmd, dependencies=completeSegmentsTask))
+            
+        finishBed(segFiles.callable, self.paths.getRegionOutputPath(), "callableRegions")
+    
+    if self.params.isWriteRealignedBam :
+        def finishBam(tmpList, output, label) :
+            assert(len(tmpList) > 0)
+            headerTmp = tmpList[0] + "header"
+            cmd  = "%s view -H %s >| %s" % (self.params.samtoolsBin, tmpList[0], headerTmp)
+            cmd += " && %s merge  -h %s %s " % (self.params.samtoolsBin, headerTmp, output)
+            cmd += " ".join(tmpList)
+            cmd += " && %s index %s" % (self.params.samtoolsBin, output)
+            finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
+            
+        finishBam(segFiles.normalRealign, self.paths.getRealignedBamPath("normal"), "realignedNormal")
+        finishBam(segFiles.tumorRealign, self.paths.getRealignedBamPath("tumor"), "realignedTumor")
+    
+    # add a tmp folder rm step here....
+
     nextStepWait = finishTasks
 
     return nextStepWait
@@ -346,9 +351,14 @@ class PathInfo:
     def getIndelOutputPath(self) :
         return os.path.join( self.getVariantsDir(), "somatic.indels.vcf.gz")
 
+    def getRegionOutputPath(self) :
+        return os.path.join( self.params.regionsDir, 'somatic.callable.region.bed.gz');
+
+    def getRealignedBamPath(self, label) :
+        return os.path.join( self.params.realignedDir, '%s.realigned.bam' % (label));
 
 
-
+RealignedNormalPath
 class StrelkaWorkflow(WorkflowRunner) :
     """
     Strelka somatic small variant calling workflow
@@ -369,6 +379,11 @@ class StrelkaWorkflow(WorkflowRunner) :
         if self.params.normalBamList is None : self.params.normalBamList = []
         if self.params.tumorBamList is None : self.params.tumorBamList = []
 
+        # format other:
+        self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
+        self.params.isWriteCallableRegion = argToBool(self.params.isWriteCallableRegion)
+        self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
+
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
         ensureDir(self.params.runDir)
@@ -384,6 +399,9 @@ class StrelkaWorkflow(WorkflowRunner) :
         ensureDir(self.params.statsDir)
         self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
         ensureDir(self.params.variantsDir)
+        if self.params.isWriteCallableRegion :
+            self.params.regionsDir=os.path.join(self.params.resultsDir,"regions")
+            ensureDir(self.params.regionsDir)
 
         indexRefFasta=self.params.referenceFasta+".fai"
 
@@ -401,13 +419,6 @@ class StrelkaWorkflow(WorkflowRunner) :
         self.params.scanSize = int(self.params.scanSizeMb) * MEGABASE
 
         self.paths = PathInfo(self.params)
-
-        self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
-        self.params.isWriteCallableRegion = argToBool(self.params.isWriteCallableRegion)
-        self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
-        #self.params.isHighDepthFilter = (not (self.params.isExome or self.params.isRNA))
-        #self.params.isIgnoreAnomProperPair = (self.params.isRNA)
-
 
 
     def getSuccessMessage(self) :
