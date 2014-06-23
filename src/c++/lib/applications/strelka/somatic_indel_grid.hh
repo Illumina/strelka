@@ -153,15 +153,3 @@ private:
     double _ln_som_match;
     double _ln_som_mismatch;
 };
-
-
-// vcf output
-void
-write_somatic_indel_vcf_grid(
-    const strelka_options& opt,
-    const strelka_deriv_options& dopt,
-    const somatic_indel_call& sindel,
-    const starling_indel_report_info& iri,
-    const std::array<starling_indel_sample_report_info,2>& nisri,
-    const std::array<starling_indel_sample_report_info,2>& tisri,
-    std::ostream& os);

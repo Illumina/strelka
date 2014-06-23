@@ -281,7 +281,6 @@ get_stage_data(const unsigned largest_read_size,
                const unsigned largest_total_indel_ref_span_per_read,
                const starling_options& opt)
 {
-
     stage_data sdata;
 
     //
@@ -2074,7 +2073,6 @@ starling_pos_processor_base::
 print_delayed_results(const int stage_no,
                       const pos_t pos)
 {
-
     if (_variant_print_pos.count(pos)==0) return;
 
     const int pcn(STAGE::get_last_static_stage_no(_client_opt));

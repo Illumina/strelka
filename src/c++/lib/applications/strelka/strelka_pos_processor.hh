@@ -28,6 +28,7 @@
 #include "strelka_streams.hh"
 #include "CallableProcessor.hh"
 #include "strelka_shared.hh"
+#include "SomaticIndelVcfWriter.hh"
 
 #include "starling_common/starling_pos_processor_base.hh"
 
@@ -80,4 +81,7 @@ private:
     extra_position_data _tier2_epd[MAX_SAMPLE];
 
     CallableProcessor _callProcessor;
+
+    // enables delayed indel write:
+    SomaticIndelVcfWriter _indelWriter;
 };

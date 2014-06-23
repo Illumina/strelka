@@ -41,6 +41,7 @@ strelka_pos_processor(const strelka_options& opt,
     , _dopt(dopt)
     , _client_io(client_io)
     , _callProcessor(client_io.somatic_callable_osptr())
+    , _indelWriter(opt, dopt, client_io.somatic_indel_osptr())
 {
     using namespace STRELKA_SAMPLE_TYPE;
 
@@ -284,17 +285,19 @@ process_pos_indel_somatic(const pos_t pos)
             if (sindel.is_output())
             {
                 // get sample specific info:
-                std::array<starling_indel_sample_report_info,2> normal_isri;
-                std::array<starling_indel_sample_report_info,2> tumor_isri;
+                SomaticIndelVcfInfo siInfo;
+                siInfo.sindel = sindel;
+                siInfo.iri = iri;
+
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);
                     get_starling_indel_sample_report_info(_dopt,ik,normal_id,normal_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
-                                                          normal_isri[t]);
+                                                          siInfo.nisri[t]);
                     get_starling_indel_sample_report_info(_dopt,ik,tumor_id,tumor_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
-                                                          tumor_isri[t]);
+                                                          siInfo.tisri[t]);
                 }
 
                 pos_t indel_pos(ik.pos);
@@ -305,11 +308,7 @@ process_pos_indel_somatic(const pos_t pos)
 
                 const pos_t output_pos(indel_pos+1);
 
-                std::ostream& bos(*_client_io.somatic_indel_osptr());
-                bos << _chrom_name << '\t'
-                    << output_pos << '\t' << '.';
-                write_somatic_indel_vcf_grid(_opt, _dopt, sindel,iri,normal_isri,tumor_isri,bos);
-                bos << '\n';
+                _indelWriter.queueIndel(output_pos,siInfo);
 
                 _variant_print_pos.insert(indel_pos);
             }
