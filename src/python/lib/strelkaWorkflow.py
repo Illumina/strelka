@@ -478,4 +478,4 @@ class StrelkaWorkflow(WorkflowRunner) :
         if not self.params.isSkipDepthFilters :
             callPreReqs |= runDepth(self)
 
-        self.addWorkflowTask(CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
+        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
