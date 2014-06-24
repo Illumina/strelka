@@ -241,6 +241,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
             unsorted = self.paths.getTmpUnsortRealignBamPath(segStr, label)
             sorted   = self.paths.getTmpRealignBamPath(segStr, label)
             sortList.append(sorted)
+            
+            # adjust sorted to remove the ".bam" suffix
+            sorted = sorted[:-4]
             sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
             sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.pyflowId)
@@ -369,7 +372,7 @@ class PathInfo:
         return os.path.join( self.getTmpSegmentDir(), "%s.%s.unsorted.realigned.bam" % (label, segStr))
 
     def getTmpRealignBamPath(self, segStr, label) :
-        return os.path.join( self.getTmpSegmentDir(), "%s.%s.realigned" % (label, segStr))
+        return os.path.join( self.getTmpSegmentDir(), "%s.%s.realigned.bam" % (label, segStr))
 
     def getTmpSegmentReportPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
@@ -430,8 +433,6 @@ class StrelkaWorkflow(WorkflowRunner) :
         # all finalized pretty results get transfered to resultsDir
         self.params.resultsDir=os.path.join(self.params.runDir,"results")
         ensureDir(self.params.resultsDir)
-        self.params.statsDir=os.path.join(self.params.resultsDir,"stats")
-        ensureDir(self.params.statsDir)
         self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
         ensureDir(self.params.variantsDir)
 
