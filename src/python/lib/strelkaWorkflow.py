@@ -241,7 +241,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
             unsorted = self.paths.getTmpUnsortRealignBamPath(segStr, label)
             sorted   = self.paths.getTmpRealignBamPath(segStr, label)
             sortList.append(sorted)
-            
+
             # adjust sorted to remove the ".bam" suffix
             sorted = sorted[:-4]
             sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)

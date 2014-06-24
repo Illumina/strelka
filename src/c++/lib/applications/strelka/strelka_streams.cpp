@@ -50,7 +50,8 @@ write_shared_vcf_header_info(
         //oss << "Greater than " << opt.max_depth_factor << "x chromosomal mean depth in Normal sample
         write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
 
-        const std::ios::fmtflags old_os_settings(os.flags());
+        std::ofstream tmp_os;
+        tmp_os.copyfmt(os);
         os << std::fixed << std::setprecision(2);
 
         for (const auto& val : dopt.chrom_depth)
@@ -59,7 +60,8 @@ write_shared_vcf_header_info(
             const double max_depth(opt.max_depth_factor*val.second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
         }
-        os.flags(old_os_settings);
+
+        os.copyfmt(tmp_os);
     }
 }
 

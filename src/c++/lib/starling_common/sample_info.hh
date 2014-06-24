@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -22,8 +21,7 @@
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-#ifndef __SAMPLE_INFO_HH
-#define __SAMPLE_INFO_HH
+#pragma once
 
 
 // subclasses of this object can be passed around to specify sample
@@ -32,8 +30,8 @@
 //
 struct sample_info
 {
-
     sample_info() {}
+
     virtual
     ~sample_info() {}
 
@@ -57,6 +55,3 @@ struct sample_info
         return "";
     }
 };
-
-
-#endif

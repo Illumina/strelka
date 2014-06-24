@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_TYPES_HH
-#define __STARLING_TYPES_HH
+#pragma once
 
 #include <stdint.h>
 
@@ -30,5 +28,3 @@ typedef int32_t sample_id_t;
 // this to create stack arrays:
 //
 enum { MAX_SAMPLE=2 };
-
-#endif

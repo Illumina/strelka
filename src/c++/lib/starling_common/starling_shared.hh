@@ -17,6 +17,9 @@
 
 #pragma once
 
+#include "starling_pos_processor_base_stages.hh"
+
+
 #include "blt_common/blt_shared.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "starling_common/starling_align_limit.hh"
@@ -110,7 +113,7 @@ struct starling_options : public blt_options
     bool
     is_write_candidate_indels() const
     {
-        return (not candidate_indel_filename.empty());
+        return (! candidate_indel_filename.empty());
     }
 
     unsigned htype_buffer_segment() const
@@ -301,6 +304,23 @@ struct starling_deriv_options : public blt_deriv_options
         return nonsite_match_lnp*nsite;
     }
 
+    const std::vector<unsigned>&
+    get_post_call_stage() const
+    {
+        return _post_call_stage;
+    }
+
+protected:
+    unsigned
+    add_post_call_stage(
+        const unsigned size)
+    {
+        _post_call_stage.push_back(size);
+        return STAGE::SIZE+_post_call_stage.size();
+    }
+
+public:
+
     double indel_nonsite_match_lnp;
     double tier2_indel_nonsite_match_lnp;
 
@@ -311,8 +331,13 @@ struct starling_deriv_options : public blt_deriv_options
 
     std::string bam_header_data; // the full bam header, read in from bam file. Used for setting the sample name in
 
+    unsigned variant_window_first_stage;
+    unsigned variant_window_last_stage;
+
 private:
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
+
+    std::vector<unsigned> _post_call_stage;
 };
 
 

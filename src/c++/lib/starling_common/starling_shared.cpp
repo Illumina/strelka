@@ -42,6 +42,8 @@ starling_deriv_options(const starling_options& opt,
                        const reference_contig_segment& ref)
     : base_t(opt,ref.end())
     , sal(opt.max_realignment_candidates)
+    , variant_window_first_stage(0)
+    , variant_window_last_stage(0)
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);
@@ -78,6 +80,26 @@ starling_deriv_options(const starling_options& opt,
         // get bam header text:
         bam_streamer read_stream(opt.bam_filename.c_str());
         bam_header_data = read_stream.get_header()->text;
+    }
+
+    //
+    // register post-call stages:
+    //
+
+    // register variant_windows as post-call stages:
+    const unsigned vs(opt.variant_windows.size());
+    for (unsigned i(0); i<vs; ++i)
+    {
+        const unsigned stage_no(add_post_call_stage(opt.variant_windows[i].flank_size));
+
+        if (i == 0)
+        {
+            variant_window_first_stage=stage_no;
+        }
+        else if ((i+1) == vs)
+        {
+            variant_window_last_stage=stage_no;
+        }
     }
 }
 

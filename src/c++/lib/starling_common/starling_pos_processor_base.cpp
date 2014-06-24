@@ -45,6 +45,7 @@
 #include "starling_common/starling_pos_processor_base.hh"
 #include "starling_common/gvcf_aggregator.hh"
 
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -242,15 +243,6 @@ report_stream_stat(const depth_stream_stat_range& ss,
 
 namespace STAGE
 {
-enum index_t
-{
-    HEAD,
-    READ_BUFFER,
-    POST_ALIGN,
-    POST_REGION, // haplotype specific stage
-    POST_READ,  // haplotype specific stage
-    POST_CALL
-};
 
 // stage into which pileup entries must fit:
 static
@@ -279,7 +271,8 @@ static
 stage_data
 get_stage_data(const unsigned largest_read_size,
                const unsigned largest_total_indel_ref_span_per_read,
-               const starling_options& opt)
+               const starling_options& opt,
+               const starling_deriv_options& dopt)
 {
     stage_data sdata;
 
@@ -369,18 +362,17 @@ get_stage_data(const unsigned largest_read_size,
         sdata.add_stage(POST_READ,POST_REGION,post_read_to_post_region);
     }
 
-    // dynamic stages after POST_CALL are used to provide window
-    // average statistics around the call site, each window
-    // running at a different flank_size after the post_align stage
+    // dynamic stages after POST_CALL are used to region based information around a site
     //
     // TODO this will not work correctly for the haplotype calling right now:
     //
-    const unsigned vs(opt.variant_windows.size());
     const int pileup_stage(get_pileup_stage_no(opt));
-    for (unsigned i(0); i<vs; ++i)
+
+    const auto& stages(dopt.get_post_call_stage());
+    const unsigned stageCount(stages.size());
+    for (unsigned i(0); i<stageCount; ++i)
     {
-        const unsigned flank_size(opt.variant_windows[i].flank_size);
-        sdata.add_stage(POST_CALL+i+1,pileup_stage,flank_size);
+        sdata.add_stage(SIZE+i,pileup_stage,stages[i]);
     }
 
     return sdata;
@@ -402,7 +394,7 @@ starling_pos_processor_base(const starling_options& client_opt,
     //, _largest_indel_size(std::min(client_opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
     , _largest_indel_ref_span(client_opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
-    , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE,get_largest_total_indel_ref_span_per_read(),_client_opt),client_dopt.report_range,*this)
+    , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _client_opt, _client_dopt),client_dopt.report_range,*this)
     , _chrom_name(_client_opt.bam_seq_name)
     , _n_samples(n_samples)
     , _ws(0)
@@ -486,7 +478,11 @@ void
 starling_pos_processor_base::
 update_stageman()
 {
-    _stageman.revise_stage_data(STAGE::get_stage_data(get_largest_read_size(),get_largest_total_indel_ref_span_per_read(),_client_opt));
+    _stageman.revise_stage_data(
+        STAGE::get_stage_data(get_largest_read_size(),
+                              get_largest_total_indel_ref_span_per_read(),
+                              _client_opt,
+                              _client_dopt));
 }
 
 
@@ -577,7 +573,6 @@ starling_pos_processor_base::
 insert_indel(const indel_observation& obs,
              const unsigned sample_no)
 {
-
     //
     // ppr advance is controlled by the start positions of reads and
     // contigs, not indels. The rationale for this is that indels are
@@ -612,7 +607,6 @@ void
 starling_pos_processor_base::
 insert_forced_output_pos(const pos_t pos)
 {
-
     _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
     _forced_output_pos.insert(pos);
 }
@@ -624,7 +618,6 @@ starling_pos_processor_base::
 get_estimated_depth(const pos_t pos,
                     const unsigned sample_no) const
 {
-
     return sample(sample_no).estdepth_buff.val(pos);
 }
 
@@ -892,7 +885,6 @@ void
 starling_pos_processor_base::
 align_pos(const pos_t pos)
 {
-
     const known_pos_range realign_pr(get_realignment_range(pos, _stageman.get_stage_data()));
 
     for (unsigned s(0); s<_n_samples; ++s)
@@ -956,7 +948,6 @@ starling_pos_processor_base::
 process_pos(const int stage_no,
             const pos_t pos)
 {
-
 #if 0
     log_os << "pos,stage_no: " << pos << " " << stage_no << "\n";
 #endif
@@ -1085,8 +1076,7 @@ process_pos(const int stage_no,
     }
     else if (stage_no>STAGE::POST_CALL)
     {
-        print_delayed_results(stage_no,pos);
-
+        run_post_call_step(stage_no,pos);
     }
     else
     {
@@ -2070,8 +2060,9 @@ get_empty_dgt(const char ref) const
 
 void
 starling_pos_processor_base::
-print_delayed_results(const int stage_no,
-                      const pos_t pos)
+run_post_call_step(
+    const int stage_no,
+    const pos_t pos)
 {
     if (_variant_print_pos.count(pos)==0) return;
 
@@ -2079,7 +2070,10 @@ print_delayed_results(const int stage_no,
     assert(stage_no>pcn);
 
     // convert stage_no to window_no:
-    const unsigned window_no(stage_no-(pcn+1));
+    assert(stage_no >= static_cast<int>(_client_dopt.variant_window_first_stage));
+    assert(stage_no <= static_cast<int>(_client_dopt.variant_window_last_stage));
+
+    const unsigned window_no(stage_no-_client_dopt.variant_window_first_stage);
     const unsigned vs(_client_opt.variant_windows.size());
 
     assert(window_no<vs);
@@ -2088,6 +2082,9 @@ print_delayed_results(const int stage_no,
     std::ostream& bos(*_client_io.variant_window_osptr(window_no));
 
     bos << _chrom_name << "\t" << output_pos;
+
+    std::ofstream tmp_os;
+    tmp_os.copyfmt(bos);
 
     bos << std::setprecision(2) << std::fixed;
 
@@ -2099,7 +2096,7 @@ print_delayed_results(const int stage_no,
             << "\t" << was.ss_submap_win.avg();
     }
 
-    bos.unsetf(std::ios::fixed);
+    bos.copyfmt(tmp_os);
 
     bos << "\n";
 

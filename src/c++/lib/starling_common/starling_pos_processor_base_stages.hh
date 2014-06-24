@@ -17,15 +17,17 @@
 
 #pragma once
 
-#include "starling_common/indel.hh"
 
-#include <iosfwd>
-#include <set>
-
-
-typedef std::set<indel_key> indel_set_t;
-
-
-void
-dump_indel_set(const indel_set_t& is,
-               std::ostream& os);
+namespace STAGE
+{
+enum index_t
+{
+    HEAD,
+    READ_BUFFER,
+    POST_ALIGN,
+    POST_REGION, // haplotype specific stage
+    POST_READ,  // haplotype specific stage
+    POST_CALL,
+    SIZE
+};
+}

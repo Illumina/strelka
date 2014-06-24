@@ -506,6 +506,12 @@ private:
     void
     process_pos_variants(const pos_t pos) = 0;
 
+    virtual
+    void
+    run_post_call_step(
+        const int stage_no,
+        const pos_t pos);
+
     //////
     void
     print_delayed_results(const int stage_no,

@@ -16,8 +16,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __READ_MISMATCH_INFO_HH
-#define __READ_MISMATCH_INFO_HH
+#pragma once
 
 
 #include <vector>
@@ -39,6 +38,3 @@ struct read_base_mismatch_info
 };
 
 typedef std::vector<read_base_mismatch_info> read_mismatch_info;
-
-
-#endif
