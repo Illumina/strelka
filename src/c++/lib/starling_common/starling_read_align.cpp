@@ -349,6 +349,15 @@ make_start_pos_alignment(const pos_t ref_start_pos,
         {
             std::ostringstream oss;
             oss << "ERROR: indel candidate: " << ik << " is not greater than ref_head_pos: " << ref_head_pos
+                << ". ref_start_pos: " << ref_start_pos << ". Cannot resolve indel with candidate read alignment: " << cal << "\n";
+            throw blt_exception(oss.str().c_str());
+        }
+
+        /// TODO: several redundant error checks in this region. cleanup.
+        if (ik.pos <= ref_head_pos)
+        {
+            std::ostringstream oss;
+            oss << "ERROR: indel candidate: " << ik << " is not greater than ref_head_pos: " << ref_head_pos
                 << ". Cannot resolve indel with candidate read alignment: " << cal << "\n";
             throw blt_exception(oss.str().c_str());
         }

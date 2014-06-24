@@ -103,6 +103,15 @@ def getNextGenomeSegment(params) :
 
 
 
+def runCount(self, taskPrefix="", dependencies=None) :
+    cmd  = "%s %s > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+
+    nextStepWait = set()
+    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
+
+    return nextStepWait
+
+
 def runDepth(self,taskPrefix="",dependencies=None) :
     """
     estimate chrom depth
@@ -142,9 +151,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     isFirstSegment = (len(segFiles.snv) == 0)
 
-    # TMP
-    genomeSize=1000000000
-
     segStr = str(gseg.id)
 
     segCmd = [ self.params.strelkaBin ]
@@ -159,7 +165,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-max-window-mismatch", "3", "20" ])
     segCmd.append("-print-used-allele-counts")
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
-    segCmd.extend(["-genome-size", str(genomeSize)] )
+    segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
     segCmd.extend(["-indel-nonsite-match-prob", "0.5"] )
     segCmd.extend(["--somatic-snv-rate", str(self.params.ssnvPrior) ] )
@@ -283,9 +289,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
             cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
             cmd += " && %s -p bed %s" % (self.params.tabixBin, output)
             finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBED"), cmd, dependencies=completeSegmentsTask))
-            
+
         finishBed(segFiles.callable, self.paths.getRegionOutputPath(), "callableRegions")
-    
+
     if self.params.isWriteRealignedBam :
         def finishBam(tmpList, output, label) :
             assert(len(tmpList) > 0)
@@ -295,15 +301,41 @@ def callGenome(self,taskPrefix="",dependencies=None):
             cmd += " ".join(tmpList)
             cmd += " && %s index %s" % (self.params.samtoolsBin, output)
             finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
-            
+
         finishBam(segFiles.normalRealign, self.paths.getRealignedBamPath("normal"), "realignedNormal")
         finishBam(segFiles.tumorRealign, self.paths.getRealignedBamPath("tumor"), "realignedTumor")
-    
+
     # add a tmp folder rm step here....
 
     nextStepWait = finishTasks
 
     return nextStepWait
+
+
+
+"""
+A separate call workflow is setup so that we can delay the workflow execution until
+the ref count file exists
+"""
+class CallWorkflow(WorkflowRunner) :
+
+    def __init__(self,params,paths) :
+        self.params = params
+        self.paths = paths
+
+    def workflow(self) :
+
+        if True :
+            knownSize = 0
+            for line in open(self.paths.getRefCountFile()) :
+                word = line.strip().split('\t')
+                if len(word) != 4 :
+                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
+                knownSize += int(word[2])
+
+            self.params.knownSize = knownSize
+
+        callGenome(self)
 
 
 
@@ -357,8 +389,11 @@ class PathInfo:
     def getRealignedBamPath(self, label) :
         return os.path.join( self.params.realignedDir, '%s.realigned.bam' % (label));
 
+    def getRefCountFile(self) :
+        return os.path.join( self.params.workDir, "refCount.txt")
 
-RealignedNormalPath
+
+
 class StrelkaWorkflow(WorkflowRunner) :
     """
     Strelka somatic small variant calling workflow
@@ -399,9 +434,14 @@ class StrelkaWorkflow(WorkflowRunner) :
         ensureDir(self.params.statsDir)
         self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
         ensureDir(self.params.variantsDir)
+
         if self.params.isWriteCallableRegion :
             self.params.regionsDir=os.path.join(self.params.resultsDir,"regions")
             ensureDir(self.params.regionsDir)
+
+        if self.params.isWriteRealignedBam :
+            self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
+            ensureDir(self.params.realignedDir)
 
         indexRefFasta=self.params.referenceFasta+".fai"
 
@@ -434,24 +474,8 @@ class StrelkaWorkflow(WorkflowRunner) :
         self.flowLog("Initiating Strelka workflow version: %s" % (__version__))
 
         callPreReqs = set()
+        callPreReqs |= runCount(self)
         if not self.params.isSkipDepthFilters :
-            depthTasks = runDepth(self)
-            callPreReqs |= depthTasks
+            callPreReqs |= runDepth(self)
 
-        callGenome(self, dependencies=callPreReqs)
-
-        """
-        graphTaskDependencies = set()
-
-        if not self.params.useExistingAlignStats :
-            statsTasks = runStats(self)
-            graphTaskDependencies |= statsTasks
-
-        if not ((not self.params.isHighDepthFilter) or self.params.useExistingChromDepths) :
-            depthTasks = runDepth(self)
-            graphTaskDependencies |= depthTasks
-
-        graphTasks = runLocusGraph(self,dependencies=graphTaskDependencies)
-
-        hygenTasks = runHyGen(self,dependencies=graphTasks)
-        """
+        self.addWorkflowTask(CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

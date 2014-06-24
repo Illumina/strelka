@@ -62,7 +62,7 @@ class StrelkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         samtoolsBin=joinFile(libexecDir,"samtools")
         tabixBin=joinFile(libexecDir,"tabix")
 
-        fastaCountBin=joinFile(libexecDir,"countFastaBases")
+        countFastaBin=joinFile(libexecDir,"countFastaBases")
         strelkaBin=joinFile(libexecDir,"strelka2")
 
         getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")

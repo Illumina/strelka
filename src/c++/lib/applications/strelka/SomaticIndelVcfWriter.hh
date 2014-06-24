@@ -41,9 +41,9 @@ struct SomaticIndelVcfWriter
         const strelka_options& opt,
         const strelka_deriv_options& dopt,
         std::ostream* osptr) :
-            _opt(opt),
-            _dopt(dopt),
-            _osptr(osptr)
+        _opt(opt),
+        _dopt(dopt),
+        _osptr(osptr)
     {}
 
     void
