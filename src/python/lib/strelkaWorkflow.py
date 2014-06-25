@@ -203,7 +203,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     tmpIndelPath = self.paths.getTmpSegmentIndelPath(segStr)
     segFiles.indel.append(tmpIndelPath)
     segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
-    segCmd.extend(["--variant-window-flank-file", "50", self.paths.getTmpSegmentIndelWinPath(segStr) ] )
 
     if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
         segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
@@ -361,9 +360,6 @@ class PathInfo:
 
     def getTmpSegmentIndelPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "somatic.indels.unfiltered.%s.vcf" % (segStr))
-
-    def getTmpSegmentIndelWinPath(self, segStr) :
-        return self.getTmpSegmentIndelPath(segStr) + ".window"
 
     def getTmpSegmentRegionPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "somatic.callable.region.%s.bed" % (segStr))

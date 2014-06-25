@@ -51,10 +51,9 @@ struct SomaticIndelVcfWriter
         const pos_t pos,
         const SomaticIndelVcfInfo& siInfo);
 
-#if 0
     void
-    addIndelWindowData();
-#endif
+    addIndelWindowData(
+        const pos_t pos);
 
 private:
     const strelka_options& _opt;

@@ -387,6 +387,7 @@ public:
             }
             if (! _variant_print_pos.empty()) return false;
             if (! _forced_output_pos.empty()) return false;
+            if (! derived_empty()) return false;
             _is_skip_process_pos=true;
         }
         return true;
@@ -506,12 +507,14 @@ private:
     void
     process_pos_variants(const pos_t pos) = 0;
 
+protected:
     virtual
     void
     run_post_call_step(
         const int stage_no,
         const pos_t pos);
 
+private:
     //////
     void
     print_delayed_results(const int stage_no,
@@ -550,6 +553,14 @@ private:
     clear_forced_output_pos(const pos_t pos)
     {
         _forced_output_pos.erase(pos);
+    }
+
+    /// allow a derived class to declare non-empty status:
+    virtual
+    bool
+    derived_empty() const
+    {
+        return true;
     }
 
 protected:

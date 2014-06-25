@@ -37,6 +37,7 @@ struct somatic_filter_options
         , indelMaxIntHpolLength(14)
         , indelMaxWindowFilteredBasecallFrac(0.3)
         , sindelQuality_LowerBound(30)
+        , indelRegionFlankSize(50)
     {}
 
     bool
@@ -56,6 +57,8 @@ struct somatic_filter_options
     unsigned indelMaxIntHpolLength;
     double indelMaxWindowFilteredBasecallFrac;
     int sindelQuality_LowerBound;
+
+    unsigned indelRegionFlankSize;
 };
 
 
@@ -164,7 +167,8 @@ struct strelka_options : public starling_options
 struct somatic_filter_deriv_options
 {
     somatic_filter_deriv_options()
-        : max_depth(0.)
+        : max_depth(0.),
+          indelRegionStage(0)
     {}
 
     bool
@@ -175,6 +179,7 @@ struct somatic_filter_deriv_options
 
     double max_depth;
     cdmap_t chrom_depth;
+    unsigned indelRegionStage;
 };
 
 

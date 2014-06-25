@@ -90,7 +90,7 @@ starling_deriv_options(const starling_options& opt,
     const unsigned vs(opt.variant_windows.size());
     for (unsigned i(0); i<vs; ++i)
     {
-        const unsigned stage_no(add_post_call_stage(opt.variant_windows[i].flank_size));
+        const unsigned stage_no(addPostCallStage(opt.variant_windows[i].flank_size));
 
         if (i == 0)
         {

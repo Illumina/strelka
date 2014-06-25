@@ -68,7 +68,18 @@ private:
     process_pos_indel_somatic(const pos_t pos);
 
     void
+    run_post_call_step(
+        const int stage_no,
+        const pos_t pos);
+
+    void
     write_counts(const pos_range& output_report_range) const;
+
+    bool
+    derived_empty() const
+    {
+        return _somatic_indel_print_pos.empty();
+    }
 
     /////////////////////////////
 
@@ -84,4 +95,6 @@ private:
 
     // enables delayed indel write:
     SomaticIndelVcfWriter _indelWriter;
+
+    std::set<pos_t> _somatic_indel_print_pos;
 };

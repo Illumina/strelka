@@ -305,22 +305,21 @@ struct starling_deriv_options : public blt_deriv_options
     }
 
     const std::vector<unsigned>&
-    get_post_call_stage() const
+    getPostCalLStage() const
     {
-        return _post_call_stage;
+        return _postCallStage;
     }
 
 protected:
     unsigned
-    add_post_call_stage(
+    addPostCallStage(
         const unsigned size)
     {
-        _post_call_stage.push_back(size);
-        return STAGE::SIZE+_post_call_stage.size()-1;
+        _postCallStage.push_back(size);
+        return STAGE::SIZE+_postCallStage.size()-1;
     }
 
 public:
-
     double indel_nonsite_match_lnp;
     double tier2_indel_nonsite_match_lnp;
 
@@ -337,7 +336,7 @@ public:
 private:
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
 
-    std::vector<unsigned> _post_call_stage;
+    std::vector<unsigned> _postCallStage;
 };
 
 

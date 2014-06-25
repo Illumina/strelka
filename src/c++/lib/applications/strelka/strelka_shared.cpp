@@ -49,23 +49,7 @@ strelka_deriv_options(
         assert(sfilter.max_depth>=0.);
     }
 
-#if 0
-    // register variant_windows as post-call stages:
-    const unsigned vs(opt.variant_windows.size());
-    for (unsigned i(0); i<vs; ++i)
-    {
-        const unsigned stage_no(add_post_call_stage(opt.variant_windows[i].flank_size));
-
-        if (i == 0)
-        {
-            variant_window_first_stage=stage_no;
-        }
-        else if ((i+1) == vs)
-        {
-            variant_window_last_stage=stage_no;
-        }
-    }
-#endif
+    sfilter.indelRegionStage=(addPostCallStage(opt.sfilter.indelRegionFlankSize));
 }
 
 /// dtor required to be in the cpp so that unique ptr can access complete data type

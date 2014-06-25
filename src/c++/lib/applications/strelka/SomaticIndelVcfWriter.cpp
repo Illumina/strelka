@@ -85,11 +85,13 @@ writeSomaticIndelVcfGrid(
         }
     }
 
+    const pos_t output_pos(pos+1);
+
     // CHROM
     os << opt.bam_seq_name;
 
-    // POS
-    os << '\t' << pos;
+    // POS+
+    os << '\t' << output_pos;
 
     // REF/ALT
     os << '\t' << siInfo.iri.vcf_ref_seq
@@ -150,5 +152,19 @@ queueIndel(
     const pos_t pos,
     const SomaticIndelVcfInfo& siInfo)
 {
-    writeSomaticIndelVcfGrid(_opt, _dopt, pos, siInfo, *_osptr);
+    assert(_data.count(pos) == 0);
+    _data[pos] = siInfo;
+}
+
+
+
+void
+SomaticIndelVcfWriter::
+addIndelWindowData(
+    const pos_t pos)
+{
+    assert( _data.count(pos) != 0);
+    writeSomaticIndelVcfGrid(_opt, _dopt, pos, _data[pos], *_osptr);
+
+    _data.erase(pos);
 }
