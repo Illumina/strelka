@@ -96,7 +96,7 @@ starling_deriv_options(const starling_options& opt,
         {
             variant_window_first_stage=stage_no;
         }
-        else if ((i+1) == vs)
+        if ((i+1) == vs)
         {
             variant_window_last_stage=stage_no;
         }

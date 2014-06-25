@@ -316,7 +316,7 @@ protected:
         const unsigned size)
     {
         _post_call_stage.push_back(size);
-        return STAGE::SIZE+_post_call_stage.size();
+        return STAGE::SIZE+_post_call_stage.size()-1;
     }
 
 public:
