@@ -248,7 +248,7 @@ strelka_streams(
 
         if (! opt.sfilter.is_skip_header)
         {
-            fos << "track name=\"StrelkaCallableSites\" "
+            fos << "track name=\"StrelkaCallableSites\"\t"
                 << "description=\"Sites with sufficient information to call somatic alleles at 10% frequency or greater.\"\n";
         }
     }

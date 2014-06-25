@@ -122,7 +122,7 @@ get_strelka_option_parser(
     ("strelka-max-depth-factor", po::value(&opt.sfilter.max_depth_factor)->default_value(opt.sfilter.max_depth_factor),
      "If a chrom depth file is supplied then loci with depth exceeding the mean chromosome depth times this value are filtered")
     ("strelka-skip-header", po::value(&opt.sfilter.is_skip_header)->zero_tokens(),
-     "Skip writing header info for the somatic vcf files (usually used to simplify segment concatenation)")
+     "Skip writing header info for the somatic vcf/bed files (usually used to simplify segment concatenation)")
     // snv only:
     ("strelka-snv-max-filtered-basecall-frac", po::value(&opt.sfilter.snv_max_filtered_basecall_frac)->default_value(opt.sfilter.snv_max_filtered_basecall_frac),
      "max filtered call fraction")
