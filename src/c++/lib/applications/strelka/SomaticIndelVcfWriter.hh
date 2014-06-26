@@ -11,6 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
+///
 /// \author Chris Saunders
 ///
 
@@ -20,6 +21,7 @@
 #include "strelka_shared.hh"
 
 #include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/starling_pos_processor_win_avg_set.hh"
 
 #include <map>
 
@@ -46,14 +48,33 @@ struct SomaticIndelVcfWriter
         _osptr(osptr)
     {}
 
+    /// return true if indel information is cached for this position
+    bool
+    testPos(
+        const pos_t pos) const
+    {
+        return (_data.count(pos) != 0);
+    }
+
+    /// return true if no indel information is cache
+    bool
+    empty() const
+    {
+        return (_data.empty());
+    }
+
+    /// store an indel call
     void
-    queueIndel(
+    cacheIndel(
         const pos_t pos,
         const SomaticIndelVcfInfo& siInfo);
 
+    /// add final information required
     void
     addIndelWindowData(
-        const pos_t pos);
+        const pos_t pos,
+        const win_avg_set& wasNormal,
+        const win_avg_set& wasTumor);
 
 private:
     const strelka_options& _opt;

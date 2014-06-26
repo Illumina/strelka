@@ -1725,8 +1725,9 @@ process_pos_snp_single_sample(const pos_t pos,
 
 void
 starling_pos_processor_base::
-process_pos_snp_single_sample_impl(const pos_t pos,
-                                   const unsigned sample_no)
+process_pos_snp_single_sample_impl(
+    const pos_t pos,
+    const unsigned sample_no)
 {
     // TODO:
     //
@@ -2059,7 +2060,7 @@ run_post_call_step(
     const pos_t output_pos(pos+1);
     std::ostream& bos(*_client_io.variant_window_osptr(window_no));
 
-    bos << _chrom_name << "\t" << output_pos;
+    bos << _chrom_name << '\t' << output_pos;
 
     std::ofstream tmp_os;
     tmp_os.copyfmt(bos);
@@ -2069,14 +2070,14 @@ run_post_call_step(
     for (unsigned s(0); s<_n_samples; ++s)
     {
         const win_avg_set& was(sample(s).wav.get_win_avg_set(window_no));
-        bos << "\t" << was.ss_used_win.avg()
-            << "\t" << was.ss_filt_win.avg()
-            << "\t" << was.ss_submap_win.avg();
+        bos << '\t' << was.ss_used_win.avg()
+            << '\t' << was.ss_filt_win.avg()
+            << '\t' << was.ss_submap_win.avg();
     }
 
     bos.copyfmt(tmp_os);
 
-    bos << "\n";
+    bos << '\n';
 
     if ((window_no+1) == vs)
     {

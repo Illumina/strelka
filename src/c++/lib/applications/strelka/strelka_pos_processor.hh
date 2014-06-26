@@ -78,7 +78,7 @@ private:
     bool
     derived_empty() const
     {
-        return _somatic_indel_print_pos.empty();
+        return _indelWriter.empty();
     }
 
     /////////////////////////////
@@ -96,5 +96,6 @@ private:
     // enables delayed indel write:
     SomaticIndelVcfWriter _indelWriter;
 
-    std::set<pos_t> _somatic_indel_print_pos;
+    unsigned _indelRegionIndexNormal;
+    unsigned _indelRegionIndexTumor;
 };

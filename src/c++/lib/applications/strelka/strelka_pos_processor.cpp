@@ -42,6 +42,8 @@ strelka_pos_processor(const strelka_options& opt,
     , _client_io(client_io)
     , _callProcessor(client_io.somatic_callable_osptr())
     , _indelWriter(opt, dopt, client_io.somatic_indel_osptr())
+    , _indelRegionIndexNormal(0)
+    , _indelRegionIndexTumor(0)
 {
     using namespace STRELKA_SAMPLE_TYPE;
 
@@ -66,6 +68,10 @@ strelka_pos_processor(const strelka_options& opt,
     isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.sample_opt,TUMOR);
     normal_sif.indel_sync_ptr = (new indel_synchronizer(isdata,NORMAL));
     tumor_sif.indel_sync_ptr = (new indel_synchronizer(isdata,TUMOR));
+
+    // setup indel avg window:
+    _indelRegionIndexNormal=sample(NORMAL).wav.add_win(opt.sfilter.indelRegionFlankSize*2);
+    _indelRegionIndexTumor=sample(NORMAL).wav.add_win(opt.sfilter.indelRegionFlankSize*2);
 }
 
 
@@ -303,9 +309,7 @@ process_pos_indel_somatic(const pos_t pos)
                     indel_pos -= 1;
                 }
 
-                _indelWriter.queueIndel(indel_pos,siInfo);
-
-                _variant_print_pos.insert(indel_pos);
+                _indelWriter.cacheIndel(indel_pos,siInfo);
             }
 
 #if 0
@@ -375,56 +379,16 @@ run_post_call_step(
     const int stage_no,
     const pos_t pos)
 {
-   if (stage_no != static_cast<int>(_dopt.sfilter.indelRegionStage))
-   {
-       base_t::run_post_call_step(stage_no, pos);
-       return;
-   }
+    if (stage_no != static_cast<int>(_dopt.sfilter.indelRegionStage))
+    {
+        base_t::run_post_call_step(stage_no, pos);
+        return;
+    }
 
-   if (_somatic_indel_print_pos.count(pos)==0) return;
+    if (_indelWriter.testPos(pos)==0) return;
 
-   _indelWriter.addIndelWindowData(pos);
+    const win_avg_set& was_normal(sample(STRELKA_SAMPLE_TYPE::NORMAL).wav.get_win_avg_set(_indelRegionIndexNormal));
+    const win_avg_set& was_tumor(sample(STRELKA_SAMPLE_TYPE::TUMOR).wav.get_win_avg_set(_indelRegionIndexTumor));
 
-   _somatic_indel_print_pos.erase(pos);
-
-#if 0
-   const int pcn(STAGE::get_last_static_stage_no(_client_opt));
-   assert(stage_no>pcn);
-
-   // convert stage_no to window_no:
-   assert(stage_no >= static_cast<int>(_client_dopt.variant_window_first_stage));
-   assert(stage_no <= static_cast<int>(_client_dopt.variant_window_last_stage));
-
-   const unsigned window_no(stage_no-_client_dopt.variant_window_first_stage);
-   const unsigned vs(_client_opt.variant_windows.size());
-
-   assert(window_no<vs);
-
-   const pos_t output_pos(pos+1);
-   std::ostream& bos(*_client_io.variant_window_osptr(window_no));
-
-   bos << _chrom_name << "\t" << output_pos;
-
-   std::ofstream tmp_os;
-   tmp_os.copyfmt(bos);
-
-   bos << std::setprecision(2) << std::fixed;
-
-   for (unsigned s(0); s<_n_samples; ++s)
-   {
-       const win_avg_set& was(sample(s).wav.get_win_avg_set(window_no));
-       bos << "\t" << was.ss_used_win.avg()
-           << "\t" << was.ss_filt_win.avg()
-           << "\t" << was.ss_submap_win.avg();
-   }
-
-   bos.copyfmt(tmp_os);
-
-   bos << "\n";
-
-   if ((window_no+1) == vs)
-   {
-       _variant_print_pos.erase(pos);
-   }
-#endif
+    _indelWriter.addIndelWindowData(pos, was_normal, was_tumor);
 }

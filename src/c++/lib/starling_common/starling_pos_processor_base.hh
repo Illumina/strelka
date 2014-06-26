@@ -37,6 +37,7 @@
 #include "starling_common/indel_synchronizer.hh"
 #include "starling_common/pos_basecall_buffer.hh"
 #include "starling_common/read_mismatch_info.hh"
+#include "starling_common/starling_pos_processor_win_avg_set.hh"
 #include "starling_common/starling_read_buffer.hh"
 #include "starling_common/starling_shared.hh"
 #include "starling_common/starling_streams_base.hh"
@@ -205,40 +206,23 @@ protected:
     process_pos_indel_single_sample(const pos_t pos,
                                     const unsigned sample_no);
 
-    /////////////////////////////////
-    struct win_avg_set
+
+    struct pos_win_avgs
     {
-
-        win_avg_set(const unsigned size)
-            : ss_used_win(size)
-            , ss_filt_win(size)
-            , ss_spandel_win(size)
-            , ss_submap_win(size)
-        {}
-
-        window_average ss_used_win;
-        window_average ss_filt_win;
-        window_average ss_spandel_win;
-        window_average ss_submap_win;
-    };
-
-
-    struct win_avgs
-    {
-
-        win_avgs(const starling_options& opt)
+        pos_win_avgs()
             : _max_winsize(0)
             , _is_last_pos(false)
             , _last_insert_pos(false)
+        {}
+
+        /// return index of new window:
+        unsigned
+        add_win(
+            const unsigned winsize)
         {
-            const unsigned vs(opt.variant_windows.size());
-            _wav.resize(vs);
-            for (unsigned i(0); i<vs; ++i)
-            {
-                const unsigned winsize(1+opt.variant_windows[i].flank_size*2);
-                _wav[i].reset(new win_avg_set(winsize));
-                if (winsize>_max_winsize) _max_winsize=winsize;
-            }
+            _wav.push_back(win_avg_set(winsize));
+            if (winsize>_max_winsize) _max_winsize=winsize;
+            return (_wav.size()-1);
         }
 
         void
@@ -258,20 +242,19 @@ protected:
         insert_null(const pos_t pos)
         {
             check_skipped_pos(pos);
-            const unsigned ws(_wav.size());
-            for (unsigned i(0); i<ws; ++i)
+            for (auto& win : _wav)
             {
-                _wav[i]->ss_used_win.insert_null();
-                _wav[i]->ss_filt_win.insert_null();
-                _wav[i]->ss_spandel_win.insert_null();
-                _wav[i]->ss_submap_win.insert_null();
+                win.ss_used_win.insert_null();
+                win.ss_filt_win.insert_null();
+                win.ss_spandel_win.insert_null();
+                win.ss_submap_win.insert_null();
             }
         }
 
-        win_avg_set&
-        get_win_avg_set(const unsigned i)
+        const win_avg_set&
+        get_win_avg_set(const unsigned i) const
         {
-            return *(_wav[i]);
+            return _wav[i];
         }
 
     private:
@@ -294,17 +277,16 @@ protected:
                     const unsigned n_spandel,
                     const unsigned n_submap)
         {
-            const unsigned ws(_wav.size());
-            for (unsigned i(0); i<ws; ++i)
+            for (auto& win : _wav)
             {
-                _wav[i]->ss_used_win.insert(n_used);
-                _wav[i]->ss_filt_win.insert(n_filt);
-                _wav[i]->ss_spandel_win.insert(n_spandel);
-                _wav[i]->ss_submap_win.insert(n_submap);
+                win.ss_used_win.insert(n_used);
+                win.ss_filt_win.insert(n_filt);
+                win.ss_spandel_win.insert(n_spandel);
+                win.ss_submap_win.insert(n_submap);
             }
         }
 
-        std::vector<boost::shared_ptr<win_avg_set> > _wav;
+        std::vector<win_avg_set> _wav;
         unsigned _max_winsize;
         bool _is_last_pos;
         pos_t _last_insert_pos;
@@ -316,7 +298,6 @@ protected:
 public:
     struct sample_info
     {
-
         sample_info(const starling_options& opt,
                     const unsigned report_size,
                     const unsigned knownref_report_size,
@@ -330,8 +311,14 @@ public:
             , used_ss(report_size)
             , ssn(knownref_report_size)
             , used_ssn(knownref_report_size)
-            , wav(opt)
-        {}
+            , wav()
+        {
+            const unsigned vs(opt.variant_windows.size());
+            for (unsigned i(0); i<vs; ++i)
+            {
+                wav.add_win(opt.variant_windows[i].flank_size*2);
+            }
+        }
 
         indel_synchronizer&
         indel_sync()
@@ -356,7 +343,7 @@ public:
         depth_stream_stat_range used_ssn;
 
         // regional basecall average windows:
-        win_avgs wav;
+        pos_win_avgs wav;
 
         // keep a single copy of this struct to reuse for every site to lower alloc costs:
         extra_position_data epd;

@@ -28,22 +28,39 @@ void
 write_vcf_isri_tiers(
     const starling_indel_sample_report_info& isri1,
     const starling_indel_sample_report_info& isri2,
+    const win_avg_set& was,
     std::ostream& os)
 {
+    static const char sep(':');
     os << isri1.depth
-       << ':'
+       << sep
        << isri2.depth
-       << ':'
+       << sep
        << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
        << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
-       << ':'
+       << sep
        << isri1.n_q30_indel_reads << ','
        << isri2.n_q30_indel_reads
-       << ':'
+       << sep
        << isri1.n_other_reads << ','
        << isri2.n_other_reads;
+
+    const int used(was.ss_used_win.avg());
+    const int filt(was.ss_filt_win.avg());
+    const int submap(was.ss_submap_win.avg());
+    os << sep << (used+filt)
+       << sep << filt
+       << sep << submap;
 }
 
+
+
+static
+double
+safeFrac(const int num, const int denom)
+{
+    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
+}
 
 
 static
@@ -53,6 +70,8 @@ writeSomaticIndelVcfGrid(
     const strelka_deriv_options& dopt,
     const pos_t pos,
     const SomaticIndelVcfInfo& siInfo,
+    const win_avg_set& wasNormal,
+    const win_avg_set& wasTumor,
     std::ostream& os)
 {
     const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
@@ -77,6 +96,22 @@ writeSomaticIndelVcfGrid(
         if (siInfo.iri.ihpol > opt.sfilter.indelMaxIntHpolLength)
         {
             smod.set_filter(STRELKA_VCF_FILTERS::iHpol);
+        }
+
+        {
+            const int normalFilt(wasNormal.ss_filt_win.avg());
+            const int normalUsed(wasNormal.ss_used_win.avg());
+            const float normalWinFrac(safeFrac(normalFilt,(normalFilt+normalUsed)));
+
+            const int tumorFilt(wasTumor.ss_filt_win.avg());
+            const int tumorUsed(wasTumor.ss_used_win.avg());
+            const float tumorWinFrac(safeFrac(tumorFilt,(tumorFilt+tumorUsed)));
+
+            if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
+                (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
+            {
+                smod.set_filter(STRELKA_VCF_FILTERS::IndelBCNoise);
+            }
         }
 
         if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
@@ -132,15 +167,15 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << '\t' << "DP:DP2:TAR:TIR:TOR";
+    os << '\t' << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50";
 
     // write normal sample info:
     os << '\t';
-    write_vcf_isri_tiers(siInfo.nisri[0],siInfo.nisri[1],os);
+    write_vcf_isri_tiers(siInfo.nisri[0],siInfo.nisri[1], wasNormal,os);
 
     // write tumor sample info:
     os << '\t';
-    write_vcf_isri_tiers(siInfo.tisri[0],siInfo.tisri[1],os);
+    write_vcf_isri_tiers(siInfo.tisri[0],siInfo.tisri[1], wasTumor,os);
 
     os << '\n';
 }
@@ -148,7 +183,7 @@ writeSomaticIndelVcfGrid(
 
 void
 SomaticIndelVcfWriter::
-queueIndel(
+cacheIndel(
     const pos_t pos,
     const SomaticIndelVcfInfo& siInfo)
 {
@@ -161,10 +196,12 @@ queueIndel(
 void
 SomaticIndelVcfWriter::
 addIndelWindowData(
-    const pos_t pos)
+    const pos_t pos,
+    const win_avg_set& wasNormal,
+    const win_avg_set& wasTumor)
 {
     assert( _data.count(pos) != 0);
-    writeSomaticIndelVcfGrid(_opt, _dopt, pos, _data[pos], *_osptr);
+    writeSomaticIndelVcfGrid(_opt, _dopt, pos, _data[pos], wasNormal, wasTumor, *_osptr);
 
     _data.erase(pos);
 }

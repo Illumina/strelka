@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -203,6 +202,10 @@ strelka_streams(
             fos << "##FORMAT=<ID=TIR,Number=2,Type=Integer,Description=\"Reads strongly supporting indel allele for tiers 1,2\">\n";
             fos << "##FORMAT=<ID=TOR,Number=2,Type=Integer,Description=\"Other reads (weak support or insufficient indel breakpoint overlap) for tiers 1,2\">\n";
 
+            fos << "##FORMAT=<ID=DP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average tier1 read depth within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
+            fos << "##FORMAT=<ID=FDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average tier1 number of basecalls filtered from original read depth within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
+            fos << "##FORMAT=<ID=SUBDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average number of reads below tier1 mapping quality threshold aligned across sites within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
+
             // FILTERS:
             {
                 using namespace STRELKA_VCF_FILTERS;
@@ -218,7 +221,7 @@ strelka_streams(
                 }
                 {
                     std::ostringstream oss;
-                    oss << "Average fraction of filtered basecalls within 50 bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
+                    oss << "Average fraction of filtered basecalls within " << opt.sfilter.indelRegionFlankSize << " bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
                     write_vcf_filter(fos, get_label(IndelBCNoise), oss.str().c_str());
                 }
                 {

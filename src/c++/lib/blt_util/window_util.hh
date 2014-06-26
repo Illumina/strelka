@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
-#ifndef __WINDOW_UTIL_HH
-#define __WINDOW_UTIL_HH
+#pragma once
 
 #include <stdint.h>
 
@@ -25,13 +23,11 @@
 #include <iosfwd>
 #include <vector>
 
-#include <iostream>
 
 // maintains the average of a set in a sliding window
 //
 struct window_average
 {
-
     window_average(const int32_t init_full_size)
         : _total(0)
         , _size(0)
@@ -124,31 +120,3 @@ private:
     std::vector<int32_t> _buf;
     std::vector<bool> _is_buf;
 };
-
-
-// v simple use example:
-/***********************
-#include "window_util.hh"
-
-#include <iostream>
-
-
-main() {
-    window_average wa(3);
-    for(unsigned i(0);i<10;++i){
-        wa.insert(i);
-        std::cout << "WTEST: " << i << " " << wa.size() << " " << wa.avg() << "\n";
-    }
-    for(unsigned i(0);i<10;++i){
-       wa.insert_null();
-       std::cout << "WTEST: " << i << " " << wa.size() << " " << wa.avg() << "\n";
-    }
-    for(unsigned i(0);i<10;++i){
-       wa.insert(i);
-       std::cout << "WTEST: " << i << " " << wa.size() << " " << wa.avg() << "\n";
-    }
-
-}
-**********************/
-
-#endif
