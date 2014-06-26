@@ -27,8 +27,6 @@
 #include "blt_util/pos_range.hh"
 #include "starling_common/indel_util.hh"
 
-#include "boost/foreach.hpp"
-
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -146,7 +144,7 @@ dump_indel_status(const starling_align_indel_status& ismap,
                   std::ostream& os)
 {
 
-    BOOST_FOREACH(const starling_align_indel_status::value_type& is, ismap)
+    for (const auto& is : ismap)
     {
         os << is.first << "status: " << is.second << "\n";
     }
@@ -285,7 +283,7 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 
     path_t& apath(cal.al.path);
 
-    BOOST_FOREACH(const indel_key& ik, indels)
+    for (const indel_key& ik : indels)
     {
 
         // don't consider indels which can't intersect the read:
@@ -311,7 +309,7 @@ make_start_pos_alignment(const pos_t ref_start_pos,
                     << "\tread_length: " << read_length << "\n";
 
                 oss << "\tfull indel set: ";
-                BOOST_FOREACH(const indel_key& ik2, indels)
+                for (const indel_key& ik2 : indels)
                 {
                     oss << "\t\t" << ik2;
                 }
@@ -610,7 +608,7 @@ add_pin_exception_info(
            << "\tref_start_pos: " << ref_start_pos << "\n"
            << "\tread_start_pos: " << read_start_pos << "\n"
            << "this_indel: " << cindel;
-    BOOST_FOREACH(const indel_key& ik, current_indels)
+    for (const indel_key& ik : current_indels)
     {
         log_os << "current_indels: " << ik;
     }
@@ -791,7 +789,7 @@ make_candidate_alignments(const starling_options& client_opt,
     // alignment:
     //
     indel_set_t current_indels;
-    BOOST_FOREACH(const starling_align_indel_status::value_type& is, indel_status_map)
+    for (const auto& is : indel_status_map)
     {
         if (is.second.is_present) current_indels.insert(is.first);
     }
@@ -935,7 +933,7 @@ get_extra_path_info(const ALIGNPATH::path_t& p)
     unsigned read_pos(0);
 
     extra_path_info epi;
-    BOOST_FOREACH(const path_segment& ps, p)
+    for (const path_segment& ps : p)
     {
         if (ps.type != MATCH) epi.indel_count++;
         if (ps.type == DELETE)
@@ -999,7 +997,7 @@ get_candidate_indel_count(const starling_options& client_opt,
     get_alignment_indels(cal,client_opt.max_indel_size,is);
 
     unsigned val(0);
-    BOOST_FOREACH(const indel_key& ik, is)
+    for (const indel_key& ik : is)
     {
         if (isync.is_candidate_indel(client_opt,ik)) val++;
     }
@@ -1471,7 +1469,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         indel_set_t cal_indels;
         get_alignment_indels(cal,opt.max_indel_size,cal_indels);
 
-        BOOST_FOREACH(const indel_key& ik, cal_indels)
+        for (const indel_key& ik : cal_indels)
         {
             if (indel_status_map.find(ik)==indel_status_map.end())
             {
@@ -1562,7 +1560,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         // un soft-clip candidate alignments:
         std::set<candidate_alignment> cal_set2(cal_set);
         cal_set.clear();
-        BOOST_FOREACH(candidate_alignment ical, cal_set2)
+        for (candidate_alignment ical : cal_set2)
         {
             apath_clip_adder(ical.al.path,
                              hc_lead,
@@ -1577,7 +1575,7 @@ get_exemplar_candidate_alignments(const starling_options& opt,
         // clear out-of-range alignment candidates:
         std::set<candidate_alignment> cal_set2(cal_set);
         cal_set.clear();
-        BOOST_FOREACH(const candidate_alignment& ical, cal_set2)
+        for (const candidate_alignment& ical : cal_set2)
         {
             // check that the alignment is within realign bounds
             if (is_alignment_spanned_by_range(realign_pr,ical.al))
@@ -1638,7 +1636,7 @@ realign_and_score_read(const starling_options& opt,
     // Note that even though such alignments will not occur in BAM, they
     // can still be produced by grouper.
     //
-    BOOST_FOREACH(const alignment& al, exemplars)
+    for (const alignment& al : exemplars)
     {
         if (al.pos<0) return;
     }
@@ -1671,7 +1669,7 @@ realign_and_score_read(const starling_options& opt,
     std::set<candidate_alignment> cal_set;
     mca_warnings warn;
 
-    BOOST_FOREACH(const alignment& al, exemplars)
+    for (const alignment& al : exemplars)
     {
         get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,realign_pr,warn,cal_set);
     }

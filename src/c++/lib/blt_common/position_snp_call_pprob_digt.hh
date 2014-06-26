@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_SNP_CALL_PPROB_DIGT_HH
-#define __POSITION_SNP_CALL_PPROB_DIGT_HH
+
+#pragma once
 
 #include "blt_common/blt_shared.hh"
 #include "blt_common/snp_pos_info.hh"
@@ -24,7 +23,6 @@
 #include "blt_util/digt.hh"
 #include "blt_util/qscore.hh"
 
-#include <boost/array.hpp>
 #include <boost/utility.hpp>
 
 #include <iosfwd>
@@ -33,7 +31,6 @@
 
 struct diploid_genotype
 {
-
     diploid_genotype()
     {
         reset();
@@ -72,7 +69,7 @@ struct diploid_genotype
         unsigned max_gt;
         int snp_qphred;
         int max_gt_qphred;
-        boost::array<double,DIGT::SIZE> pprob; // note this is intentionally stored at higher float resolution than the rest of the computation
+        std::array<double,DIGT::SIZE> pprob; // note this is intentionally stored at higher float resolution than the rest of the computation
     };
 
     bool is_snp;
@@ -123,7 +120,7 @@ write_diploid_genotype_snp(const blt_options& opt,
 //
 struct pprob_digt_caller : private boost::noncopyable
 {
-
+    explicit
     pprob_digt_caller(const blt_float_t theta);
 
     /// \brief call a snp @ pos by calculating the posterior probability
@@ -177,5 +174,3 @@ private:
 
     prior_set _lnprior[N_BASE+1];
 };
-
-#endif

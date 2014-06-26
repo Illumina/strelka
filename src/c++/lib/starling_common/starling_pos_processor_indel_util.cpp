@@ -29,8 +29,6 @@
 #include "blt_util/log.hh"
 #include "starling_common/align_path_util.hh"
 
-#include "boost/foreach.hpp"
-
 #include <cassert>
 
 #include <iostream>

@@ -107,7 +107,7 @@ struct hinfo
         return (total_qual > rhs.total_qual);
     }
 
-    typedef boost::array<uint8_t,hap_cand::HAP_SIZE> hseq_t;
+    typedef std::array<uint8_t,hap_cand::HAP_SIZE> hseq_t;
     hseq_t hseq;
     unsigned total_qual;
 };

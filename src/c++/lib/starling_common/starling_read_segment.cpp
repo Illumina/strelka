@@ -19,8 +19,6 @@
 #include "starling_common/starling_read_segment.hh"
 #include "starling_common/starling_read.hh"
 
-#include "boost/foreach.hpp"
-
 #include <iostream>
 
 

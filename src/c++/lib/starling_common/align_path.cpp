@@ -23,7 +23,6 @@
 #include "blt_util/seq_util.hh"
 #include "starling_common/align_path.hh"
 
-#include "boost/foreach.hpp"
 #include "boost/lexical_cast.hpp"
 
 #include <cassert>

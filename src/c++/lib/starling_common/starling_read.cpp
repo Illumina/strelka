@@ -26,8 +26,6 @@
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_shared.hh"
 
-#include "boost/foreach.hpp"
-
 #include <iostream>
 
 
@@ -370,7 +368,7 @@ update_full_segment()
             fal.path.push_back(ps);
         }
         ref_pos=ral.pos;
-        BOOST_FOREACH(const path_segment& ps, ral.path)
+        for (const path_segment& ps : ral.path)
         {
             if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
             fal.path.push_back(ps);

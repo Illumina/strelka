@@ -11,21 +11,21 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __VCF_STREAMER_HH
-#define __VCF_STREAMER_HH
+
+#pragma once
 
 #include "blt_util/bam_util.hh"
 #include "blt_util/tabix_util.hh"
 #include "blt_util/vcf_record.hh"
 
+#include "boost/utility.hpp"
 
-struct vcf_streamer
+
+struct vcf_streamer : private boost::noncopyable
 {
-
     // optionally provide a BAM header to validate vcf chromosome names against
     //
     explicit
@@ -73,6 +73,3 @@ private:
 
     vcf_record _vcfrec;
 };
-
-
-#endif

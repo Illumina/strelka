@@ -398,7 +398,7 @@ struct site_info
     std::string phased_ref, phased_alt, phased_AD;
     unsigned n_used_calls;
     unsigned n_unused_calls;
-    boost::array<unsigned,N_BASE> known_counts;
+    std::array<unsigned,N_BASE> known_counts;
     diploid_genotype dgt;
     unsigned hpol;
     double hapscore;

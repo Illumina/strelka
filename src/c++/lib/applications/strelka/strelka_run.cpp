@@ -28,8 +28,6 @@
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
-#include "boost/shared_ptr.hpp"
-
 #include <sstream>
 
 
@@ -95,7 +93,7 @@ strelka_run(const strelka_options& opt)
     sdata.register_reads(tumor_read_stream,STRELKA_SAMPLE_TYPE::TUMOR);
 
     // hold zero-to-many vcf streams open:
-    typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
+    typedef std::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
 
     for (const auto& vcf_filename : opt.input_candidate_indel_vcf)

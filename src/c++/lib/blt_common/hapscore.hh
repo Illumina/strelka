@@ -20,8 +20,6 @@
 #include "blt_util/bam_seq.hh"
 #include "blt_util/seq_util.hh"
 
-#include "boost/array.hpp"
-
 #include "stdint.h"
 
 #include <iosfwd>
@@ -72,7 +70,7 @@ struct hap_cand
 
 private:
     uint16_t _total_qual;
-    boost::array<uint8_t,HAP_SIZE> _bq;
+    std::array<uint8_t,HAP_SIZE> _bq;
 };
 
 
