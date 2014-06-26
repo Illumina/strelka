@@ -71,7 +71,7 @@ strelka_pos_processor(const strelka_options& opt,
 
     // setup indel avg window:
     _indelRegionIndexNormal=sample(NORMAL).wav.add_win(opt.sfilter.indelRegionFlankSize*2);
-    _indelRegionIndexTumor=sample(NORMAL).wav.add_win(opt.sfilter.indelRegionFlankSize*2);
+    _indelRegionIndexTumor=sample(TUMOR).wav.add_win(opt.sfilter.indelRegionFlankSize*2);
 }
 
 
@@ -385,7 +385,7 @@ run_post_call_step(
         return;
     }
 
-    if (_indelWriter.testPos(pos)==0) return;
+    if (! _indelWriter.testPos(pos)) return;
 
     const win_avg_set& was_normal(sample(STRELKA_SAMPLE_TYPE::NORMAL).wav.get_win_avg_set(_indelRegionIndexNormal));
     const win_avg_set& was_tumor(sample(STRELKA_SAMPLE_TYPE::TUMOR).wav.get_win_avg_set(_indelRegionIndexTumor));
