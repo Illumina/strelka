@@ -15,8 +15,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __PROB_UTIL_HH
-#define __PROB_UTIL_HH
+
+#pragma once
 
 #include <cassert>
 #include <cmath>
@@ -201,6 +201,3 @@ check_ln_distro(It i,
     }
     return sum;
 }
-
-
-#endif

@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __BAM_SEQ_HH
-#define __BAM_SEQ_HH
+
+#pragma once
 
 #include "blt_util/blt_types.hh"
 #include "blt_util/reference_contig_segment.hh"
@@ -230,6 +229,3 @@ struct rc_segment_bam_seq : public bam_seq_base
 private:
     const reference_contig_segment& _r;
 };
-
-
-#endif

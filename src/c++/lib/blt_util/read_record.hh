@@ -15,8 +15,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __READ_RECORD_HH
-#define __READ_RECORD_HH
+
+#pragma once
 
 
 #include "boost/utility.hpp"
@@ -35,6 +35,3 @@ struct read_record : private boost::noncopyable
 
     virtual int pos() const = 0;
 };
-
-
-#endif

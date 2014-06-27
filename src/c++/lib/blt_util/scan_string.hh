@@ -16,8 +16,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __SCAN_STRING_HH
-#define __SCAN_STRING_HH
+#pragma once
 
 #include "boost/static_assert.hpp"
 
@@ -47,6 +46,3 @@ scan_string<long>()
 {
     return "%ld";
 }
-
-
-#endif

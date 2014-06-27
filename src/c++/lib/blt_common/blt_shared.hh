@@ -110,7 +110,6 @@ struct gvcf_deriv_options
 
 struct blt_options
 {
-
     blt_options()
         : lsnp_alpha(0),
           bsnp_diploid_theta(0.001),

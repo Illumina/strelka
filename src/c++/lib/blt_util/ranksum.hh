@@ -15,6 +15,9 @@
 
 /// \author Morten Kallberg
 ///
+
+#pragma once
+
 #include <cmath>
 #include <algorithm>
 #include <iosfwd>
@@ -22,7 +25,6 @@
 #include <vector>
 
 
-#pragma once
 
 
 // Calculates the Mann-Whitney rank-sum statistic from two populations with

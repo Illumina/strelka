@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __BINOMIAL_TEST_HH
-#define __BINOMIAL_TEST_HH
+
+#pragma once
 
 #include <ciso646>
 
@@ -43,5 +42,3 @@ is_reject_binomial_p(const double alpha,
                      const double p,
                      const unsigned n_success,
                      const unsigned n_failure);
-
-#endif

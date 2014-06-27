@@ -23,7 +23,6 @@
 #include "blt_common/blt_arg_parse_util.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
-#include "blt_util/sig_handler.hh"
 #include "common/Exceptions.hh"
 #include "starling_common/starling_arg_parse.hh"
 #include "starling_common/starling_option_parser.hh"
@@ -57,8 +56,6 @@ runInternal(int argc,char* argv[]) const
         opt.cmdline += argv[i];
     }
 
-    initialize_blt_signals(pinfo.name(),opt.cmdline.c_str());
-
     std::vector<std::string> legacy_starling_args;
     po::variables_map vm;
     try
@@ -79,7 +76,7 @@ runInternal(int argc,char* argv[]) const
         pinfo.usage(e.what());
     }
 
-    if ((argc==1) or vm.count("help"))
+    if ((argc==1) || vm.count("help"))
     {
         pinfo.usage();
     }

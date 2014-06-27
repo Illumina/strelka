@@ -15,13 +15,11 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __SIG_HANDLER_HH
-#define __SIG_HANDLER_HH
+
+#pragma once
 
 /// \brief logs sigint/sigterm events (with cmdline):
 ///
 void
 initialize_blt_signals(const char* progname,
                        const char* cmdline);
-
-#endif

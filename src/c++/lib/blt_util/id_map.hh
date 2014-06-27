@@ -17,8 +17,7 @@
 ///
 
 
-#ifndef __ID_MAP_HH
-#define __ID_MAP_HH
+#pragma once
 
 #include "blt_util/blt_exception.hh"
 
@@ -181,7 +180,3 @@ private:
     k2id_t _k2id;
     std::vector<std::pair<K,V> > _id2kv;
 };
-
-
-
-#endif
