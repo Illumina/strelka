@@ -122,25 +122,29 @@ writeSomaticIndelVcfGrid(
 
     const pos_t output_pos(pos+1);
 
+    static const char sep('\t');
     // CHROM
     os << opt.bam_seq_name;
 
     // POS+
-    os << '\t' << output_pos;
+    os << sep << output_pos;
+
+    // ID
+    os << sep << ".";
 
     // REF/ALT
-    os << '\t' << siInfo.iri.vcf_ref_seq
-       << '\t' << siInfo.iri.vcf_indel_seq;
+    os << sep << siInfo.iri.vcf_ref_seq
+       << sep << siInfo.iri.vcf_indel_seq;
 
     //QUAL:
-    os << "\t.";
+    os << sep << ".";
 
     //FILTER:
-    os << "\t";
+    os << sep;
     smod.write_filters(os);
 
     //INFO
-    os << '\t'
+    os << sep
        << "SOMATIC"
        << ";QSI=" << rs.sindel_qphred
        << ";TQSI=" << (siInfo.sindel.sindel_tier+1)
@@ -167,14 +171,14 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << '\t' << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50";
+    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50";
 
     // write normal sample info:
-    os << '\t';
+    os << sep;
     write_vcf_isri_tiers(siInfo.nisri[0],siInfo.nisri[1], wasNormal,os);
 
     // write tumor sample info:
-    os << '\t';
+    os << sep;
     write_vcf_isri_tiers(siInfo.tisri[0],siInfo.tisri[1], wasTumor,os);
 
     os << '\n';

@@ -414,9 +414,16 @@ class StrelkaWorkflow(WorkflowRunner) :
         if self.params.tumorBamList is None : self.params.tumorBamList = []
 
         # format other:
-        self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
-        self.params.isWriteCallableRegion = argToBool(self.params.isWriteCallableRegion)
-        self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
+        # format other:
+        def safeSetBool(obj,dataname) :
+            if hasattr(obj, dataname) :
+                setattr(obj, dataname, argToBool(getattr(obj, dataname)))
+            else :
+                setattr(obj, dataname, False)
+
+        safeSetBool(self.params,"isWriteRealignedBam")
+        safeSetBool(self.params,"isWriteCallableRegion")
+        safeSetBool(self.params,"isSkipDepthFilters")
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)

@@ -61,8 +61,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               "'--region chr2:100-2000 --region chr3:2500-3000' (two regions)'")
 
         ConfigureWorkflowOptions.addExtendedGroupOptions(self,group)
- 
-        
+
+
     def getOptionDefaults(self) :
         """
         Set option defaults.
@@ -101,7 +101,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         runDir = "variantCallWorkflow"
         scanSizeMb = 12
-        
+
 
         return cleanLocals(locals())
 
