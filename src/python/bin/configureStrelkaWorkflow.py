@@ -26,8 +26,8 @@ version="@STARKA_FULL_VERSION@"
 
 sys.path.append(workflowDir)
 
-from strelkaOptions import StrelkaWorkflowOptionsBase
-from configureUtil import assertOptionExists, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
+from starkaOptions import StarkaWorkflowOptionsBase
+from configureUtil import assertOptionExists, groomBamList, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
 from workflowUtil import ensureDir, isValidSampleId, parseGenomeRegion
@@ -35,7 +35,7 @@ from checkChromSet import checkChromSet
 
 
 
-class StrelkaWorkflowOptions(StrelkaWorkflowOptionsBase) :
+class StrelkaWorkflowOptions(StarkaWorkflowOptionsBase) :
 
     def workflowDescription(self) :
         return """Version: %s
@@ -62,49 +62,23 @@ You must specify BAM file(s) for a pair of samples.
         group.add_option("--referenceFasta",type="string",dest="referenceFasta",metavar="FILE",
                          help="samtools-indexed reference fasta file [required] (default: %default)")
 
-        StrelkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
-
-
-    def addExtendedGroupOptions(self,group) :
-        group.add_option("--scanSizeMb",type="int",dest="scanSizeMb",metavar="scanSizeMb",
-                         help="Maximum sequence region size (in Mb) scanned by each task during "
-                         "SV locus graph generation. (default: %default)")
-        group.add_option("--region",type="string",dest="regionStrList",metavar="samtoolsRegion", action="append",
-                         help="Limit the SV analysis to a region of the genome for debugging purposes. "
-                              "If this argument is provided multiple times all specified regions will "
-                              "be analyzed together. All regions must be non-overlapping to get a "
-                              "meaningful result. Examples: '--region chr20' (whole chromosome), "
-                              "'--region chr2:100-2000 --region chr3:2500-3000' (two translocation regions)'")
-
-        StrelkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
+        StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
-        defaults=StrelkaWorkflowOptionsBase.getOptionDefaults(self)
+        defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
         defaults.update({
             'alignerMode' : "isaac",
             'runDir' : 'StrelkaWorkflow',
             "minTier2Mapq" : 5,
-            'scanSizeMb' : 12
             })
         return defaults
 
 
 
     def validateAndSanitizeExistingOptions(self,options) :
-
-        def checkForBamIndex(bamFile):
-            baiFile=bamFile + ".bai"
-            if not os.path.isfile(baiFile) :
-                raise OptParseException("Can't find expected BAM index file: '%s'" % (baiFile))
-
-        def groomBamList(bamList, sampleLabel):
-            if bamList is None : return
-            for (index,bamFile) in enumerate(bamList) :
-                bamList[index]=validateFixExistingFileArg(bamFile,"%s BAM file" % (sampleLabel))
-                checkForBamIndex(bamList[index])
 
         groomBamList(options.normalBamList,"normal sample")
         groomBamList(options.tumorBamList, "tumor sample")
@@ -128,7 +102,7 @@ You must specify BAM file(s) for a pair of samples.
         else :
             options.genomeRegionList = [parseGenomeRegion(r) for r in options.regionStrList]
 
-        StrelkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
+        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
 
 
 
@@ -150,7 +124,7 @@ You must specify BAM file(s) for a pair of samples.
         assertOptionExists(options.alignerMode,"aligner mode")
         assertOptionExists(options.referenceFasta,"reference fasta file")
 
-        StrelkaWorkflowOptionsBase.validateOptionExistence(self,options)
+        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
         # check that the reference and all bams are using the same
         # set of chromosomes:

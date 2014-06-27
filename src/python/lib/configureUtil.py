@@ -178,6 +178,25 @@ def validateFixExistingFileArg(argFile,label) :
 
 
 
+def checkForBamIndex(bamFile):
+    """
+    make sure bam file has an index
+    """
+    baiFile=bamFile + ".bai"
+    if not os.path.isfile(baiFile) :
+        raise OptParseException("Can't find expected BAM index file: '%s'" % (baiFile))
+
+
+def groomBamList(bamList, sampleLabel):
+    """
+    check that bam files exist and have an index, convert ot abs path if they check out
+    """
+    if bamList is None : return
+    for (index,bamFile) in enumerate(bamList) :
+        bamList[index]=validateFixExistingFileArg(bamFile,"%s BAM file" % (sampleLabel))
+        checkForBamIndex(bamList[index])
+
+
 def checkListArgRepeats(listName,itemLabel) :
     """
     screen a list argument for repeated entries

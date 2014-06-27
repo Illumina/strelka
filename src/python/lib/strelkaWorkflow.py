@@ -272,7 +272,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
         graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
 
     # create a checkpoint for all segments:
-    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegmetns"),dependencies=graphTasks)
+    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=graphTasks)
 
     finishTasks = set()
 
