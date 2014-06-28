@@ -226,7 +226,7 @@ strelka_streams(
                 }
                 {
                     std::ostringstream oss;
-                    oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << " ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
+                    oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << ", ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
                     write_vcf_filter(fos, get_label(QSI_ref), oss.str().c_str());
                 }
             }

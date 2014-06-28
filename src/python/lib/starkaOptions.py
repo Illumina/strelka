@@ -46,6 +46,8 @@ def joinFile(*arg) :
 class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
     def addWorkflowGroupOptions(self,group) :
+        group.add_option("--referenceFasta",type="string",dest="referenceFasta",metavar="FILE",
+                         help="samtools-indexed reference fasta file [required]")
         group.add_option("--runDir", type="string",dest="runDir",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
 

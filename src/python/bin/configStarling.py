@@ -50,8 +50,6 @@ You must specify a BAM file.
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
                          help="Sample BAM file. [required] (no default)")
-        group.add_option("--referenceFasta",type="string",dest="referenceFasta",metavar="FILE",
-                         help="samtools-indexed reference fasta file [required] (default: %default)")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 

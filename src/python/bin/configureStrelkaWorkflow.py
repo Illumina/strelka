@@ -52,15 +52,8 @@ You must specify BAM file(s) for a pair of samples.
                          help="Normal sample BAM file. [required] (no default)")
         group.add_option("--tumorBam","--tumourBam", type="string",dest="tumorBamList",metavar="FILE", action="append",
                           help="Tumor sample BAM file. [required] (no default)")
-#         group.add_option("--aligner", type="string",dest="alignerMode",metavar="ALIGNER",
-#                          help="Aligner type. Accepted option are {%s} [required] (no default)" % (",".join(['%s' % (x) for x in self.validAlignerModes])))
         #group.add_option("--exome", dest="isExome", action="store_true",
         #                 help="Set options for WES input: turn off depth filters")
-        #group.add_option("--rna", dest="isRNA", action="store_true",
-        #                 help="Set options for RNA-Seq input: turn off depth filters and don't treat "
-        #                      "anomalous reads as SV evidence when the proper-pair bit is set.")
-        group.add_option("--referenceFasta",type="string",dest="referenceFasta",metavar="FILE",
-                         help="samtools-indexed reference fasta file [required] (default: %default)")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
