@@ -19,6 +19,8 @@
 #include "somatic_indel_grid.hh"
 #include "strelka_vcf_locus_info.hh"
 
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 
 
@@ -45,12 +47,19 @@ write_vcf_isri_tiers(
        << isri1.n_other_reads << ','
        << isri2.n_other_reads;
 
-    const int used(was.ss_used_win.avg());
-    const int filt(was.ss_filt_win.avg());
-    const int submap(was.ss_submap_win.avg());
+    const float used(was.ss_used_win.avg());
+    const float filt(was.ss_filt_win.avg());
+    const float submap(was.ss_submap_win.avg());
+
+    std::ofstream tmp_os;
+    tmp_os.copyfmt(os);
+    os << std::fixed << std::setprecision(2);
+
     os << sep << (used+filt)
        << sep << filt
        << sep << submap;
+
+    os.copyfmt(tmp_os);
 }
 
 
