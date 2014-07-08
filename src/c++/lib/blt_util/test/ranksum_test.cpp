@@ -44,5 +44,23 @@ BOOST_AUTO_TEST_CASE( test_ranksum )
 }
 
 
+#if 0
+BOOST_AUTO_TEST_CASE( test_ranksum_runtime )
+{
+    ranksum r;
+    for (unsigned i(0);i<10000000;++i)
+    {
+        r.add_observation(true,44);
+        r.add_observation(true,45);
+        r.add_observation(true,46);
+        r.add_observation(false,45);
+        r.add_observation(false,46);
+        r.add_observation(false,47);
+    }
+    r.get_u_stat();
+}
+#endif
+
+
 BOOST_AUTO_TEST_SUITE_END()
 
