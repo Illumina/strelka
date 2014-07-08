@@ -21,7 +21,7 @@
 #include <cmath>
 #include <algorithm>
 #include <iosfwd>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 
@@ -44,7 +44,7 @@ struct ranksumObs
 class ranksum
 {
 private:
-    std::unordered_map<int,ranksumObs> _obsMap;  // observations for ref/alt bases
+    std::map<int,ranksumObs> _obsMap;  // observations for ref/alt bases
 
 public:
 
