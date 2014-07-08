@@ -149,9 +149,6 @@ struct snp_pos_info
     set_ref_base(char base)
     {
         ref_base = base;
-        mq_ranksum.set_ref_base(base);
-        baseq_ranksum.set_ref_base(base);
-        read_pos_ranksum.set_ref_base(base);
     }
 
     char

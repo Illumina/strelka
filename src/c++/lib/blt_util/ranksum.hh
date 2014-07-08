@@ -21,9 +21,20 @@
 #include <cmath>
 #include <algorithm>
 #include <iosfwd>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
+
+struct ranksumObs
+{
+    ranksumObs() :
+        ref(0),
+        nonRef(0)
+    {}
+
+    unsigned ref;
+    unsigned nonRef;
+};
 
 
 
@@ -33,92 +44,61 @@
 class ranksum
 {
 private:
-    char ref_base;
+    std::unordered_map<int,ranksumObs> _obsMap;  // observations for ref/alt bases
 
 public:
-    int N1;
-    int N2;
-    double R1;
-    double R2;
-    std::map<int,int> l1;  // observations for reference base
-    std::map<int,int> l2;  // observations for alternate base
-    std::map<int,int> space;// full key space
-    //constructor
-
-    ranksum()
-    {
-        set_ref_base('N');
-    }
-
-    ranksum(char base)
-    {
-        set_ref_base(base);
-//    	N1(0);
-//		N2(0);
-//		U1(0.0);
-//		U2(0.0);
-//		R1(0.0);
-//		R2(0.0);
-    }
 
     // insert an observation for base-call case
-    void add_observation(bool is_ref, int obs);
-
-    //return rank-sum U statistic
-    double get_u_stat();
-
-    void set_ref_base(char base)
+    void
+    add_observation(
+        const bool is_ref,
+        const int obs)
     {
-        ref_base = base;
-    }
-
-    std::vector<int> getSpace()
-    {
-        std::vector<int> res;
-        for (std::map<int, int>::iterator it = space.begin(); it != space.end(); ++it)
-        {
-            res.push_back((*it).first);
-        }
-
-        std::sort(res.begin(), res.end());
-        return res;
-    }
-
-    // returns the count for a given base and observation
-    int get_obs_count(bool is_ref, int obs)
-    {
-
-        int res = 0;
-        std::map<int,int>::iterator it;
-
-        //check for observation in reference map
+        auto& val(_obsMap[obs]);
         if (is_ref)
         {
-            it = l1.find(obs);
-            if (it != l1.end())
-                res = it->second;
+             val.ref++;
         }
         else
         {
-            it = l2.find(obs);
-            if (it != l2.end())
-                res = it->second;
+             val.nonRef++;
         }
-        return res;
     }
 
-    void clear()
+    //return rank-sum U statistic
+    double get_u_stat() const;
+
+    void
+    clear()
     {
-        l1.clear();
-        l2.clear();
-        space.clear();
-
+        _obsMap.clear();
     }
 
-    char get_refbase()
+private:
+    std::vector<int>
+    getSpace() const
     {
-        return ref_base;
+        std::vector<int> res;
+        for (const auto& val : _obsMap)
+        {
+            res.push_back(val.first);
+        }
+
+        std::sort(res.begin(), res.end());
+        return std::move(res);
     }
+
+    // returns the count for a given base and observation
+    ranksumObs
+    get_obs_count(
+        const int obs) const
+    {
+        const auto it = _obsMap.find(obs);
+        if (it == _obsMap.end()) return ranksumObs();
+        return it->second;
+    }
+
+    friend std::ostream& operator<< (std::ostream& out, const ranksum& r);
 };
 
-std::ostream& operator<< (std::ostream& out, ranksum& r);
+std::ostream& operator<< (std::ostream& out, const ranksum& r);
