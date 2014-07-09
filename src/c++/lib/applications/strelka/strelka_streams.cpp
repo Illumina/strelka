@@ -216,7 +216,7 @@ strelka_streams(
                 }
                 {
                     std::ostringstream oss;
-                    oss << "Indel overlaps an interupted homopolymer longer than " << opt.sfilter.indelMaxIntHpolLength << "x in the reference sequence";
+                    oss << "Indel overlaps an interrupted homopolymer longer than " << opt.sfilter.indelMaxIntHpolLength << "x in the reference sequence";
                     write_vcf_filter(fos, get_label(iHpol), oss.str().c_str());
                 }
                 {

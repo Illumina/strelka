@@ -1,3 +1,4 @@
+- STARKA-118 fix GSNAP alignment example: leading deletion in exon
 - STARKA-111 transfer full strelka workflow v1 logic into starka
 
 ????v2.1????
