@@ -200,7 +200,7 @@ export_md_to_apath(const char* md,
             path_t apath2;
             for (unsigned i(0); i<as; ++i)
             {
-                if (((i==0) or ((i+1)==as)) and
+                if (((i==0) || ((i+1)==as)) &&
                     apath[i].type == DELETE) continue;
                 apath2.push_back(apath[i]);
             }

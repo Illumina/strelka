@@ -262,7 +262,7 @@ add_site_internal(const site_info& si)
         {
             while (_site_buffer.size() <= _site_buffer_size)
             {
-                _site_buffer.push_back(site_info());
+                _site_buffer.emplace_back();
             }
             _site_buffer[_site_buffer_size++] = si;
             return;
@@ -318,7 +318,7 @@ add_indel(const pos_t pos,
 
     while (_indel_buffer.size() <= _indel_buffer_size)
     {
-        _indel_buffer.push_back(indel_info());
+        _indel_buffer.emplace_back();
     }
     _indel_buffer[_indel_buffer_size++].init(pos,ik,dindel,iri,isri);
     _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());

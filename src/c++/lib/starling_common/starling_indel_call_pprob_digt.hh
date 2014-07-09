@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __STARLING_INDEL_CALL_PPROB_DIGT_HH
-#define __STARLING_INDEL_CALL_PPROB_DIGT_HH
+
+#pragma once
 
 #include "starling_common/starling_diploid_indel.hh"
 #include "starling_common/starling_indel_report_info.hh"
@@ -130,6 +129,3 @@ private:
     double _lnprior_genomic[STAR_DIINDEL::SIZE];
     double _lnprior_polymorphic[STAR_DIINDEL::SIZE];
 };
-
-
-#endif

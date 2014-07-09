@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -41,7 +40,6 @@
 indel_digt_caller::
 indel_digt_caller(const double theta)
 {
-
     _lnprior_genomic[STAR_DIINDEL::NOINDEL]=log1p_switch(-(3.*theta)/2.);
     _lnprior_genomic[STAR_DIINDEL::HOM]=std::log(theta/2.);
     _lnprior_genomic[STAR_DIINDEL::HET]=std::log(theta);
@@ -141,13 +139,9 @@ get_high_low_het_ratio_lhood(const starling_options& /*opt*/,
     het_lhood_high=0;
     het_lhood_low=0;
 
-    //    typedef read_path_scores::alt_indel_t::const_iterator aiter;
-
-    typedef indel_data::score_t::const_iterator siter;
-    siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-    for (; i!=i_end; ++i)
+    for (const auto& score : id.read_path_lnp)
     {
-        const read_path_scores& path_lnp(i->second);
+        const read_path_scores& path_lnp(score.second);
 
         // optionally skip tier2 data:
         if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
@@ -163,11 +157,9 @@ get_high_low_het_ratio_lhood(const starling_options& /*opt*/,
 #else
         if (is_use_alt_indel && (! path_lnp.alt_indel.empty()) )
         {
-            typedef read_path_scores::alt_indel_t::const_iterator aiter;
-            aiter j(path_lnp.alt_indel.begin()), j_end(path_lnp.alt_indel.end());
-            for (; j!=j_end; ++j)
+            for (const auto& alt : path_lnp.alt_indel)
             {
-                if (j->second>alt_path_lnp) alt_path_lnp=j->second;
+                if (alt.second>alt_path_lnp) alt_path_lnp=alt.second;
             }
         }
 #endif
@@ -265,11 +257,9 @@ get_sum_path_pprob(const starling_deriv_options& dopt,
     typedef std::map<indel_key,unsigned> aimap_t;
     aimap_t alt_indel_index;
 
-    typedef indel_data::score_t::const_iterator siter;
-    const siter i_start(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-    for (siter i(i_start); i!=i_end; ++i)
+    for (const auto& score : id.read_path_lnp)
     {
-        const read_path_scores& path_lnp(i->second);
+        const read_path_scores& path_lnp(score.second);
 
         // optionally skip tier2 data:
         if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
@@ -281,19 +271,17 @@ get_sum_path_pprob(const starling_deriv_options& dopt,
 
         if (! is_use_alt_indel) continue;
 
-        typedef read_path_scores::alt_indel_t::const_iterator aciter;
-        aciter j(path_pprob.alt_indel.begin()), j_end(path_pprob.alt_indel.end());
-        for (; j!=j_end; ++j)
+        for (const auto& alt : path_pprob.alt_indel)
         {
-            aimap_t::iterator tj(alt_indel_index.find(j->first));
+            aimap_t::iterator tj(alt_indel_index.find(alt.first));
             if (tj==alt_indel_index.end())
             {
-                alt_indel_index[j->first]=total_pprob.alt_indel.size();
-                total_pprob.alt_indel.push_back(*j);
+                alt_indel_index[alt.first]=total_pprob.alt_indel.size();
+                total_pprob.alt_indel.push_back(alt);
             }
             else
             {
-                total_pprob.alt_indel[tj->second].second += j->second;
+                total_pprob.alt_indel[tj->second].second += alt.second;
             }
         }
     }

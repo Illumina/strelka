@@ -31,7 +31,6 @@
 ///
 struct hap_cand
 {
-
     hap_cand(const bam_seq_base& read_seq,
              const uint8_t* init_qual,
              const int offset);  // the offset into read of the pileup base
