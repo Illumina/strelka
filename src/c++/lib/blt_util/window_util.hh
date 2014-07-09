@@ -116,7 +116,7 @@ private:
     uint32_t _size;
     uint32_t _null_size;
     uint32_t _head;
-    const uint32_t _full_size;
+    uint32_t _full_size;
     std::vector<int32_t> _buf;
     std::vector<bool> _is_buf;
 };

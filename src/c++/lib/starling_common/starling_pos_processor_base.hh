@@ -220,7 +220,7 @@ protected:
         add_win(
             const unsigned winsize)
         {
-            _wav.push_back(win_avg_set(winsize));
+            _wav.emplace_back(winsize);
             if (winsize>_max_winsize) _max_winsize=winsize;
             return (_wav.size()-1);
         }
