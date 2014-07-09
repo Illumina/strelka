@@ -150,7 +150,6 @@ get_indel_het_grid_lhood(const starling_options& opt,
                          const bool is_use_alt_indel,
                          double* const lhood)
 {
-
     static const unsigned lsize(STAR_DIINDEL_GRID::HET_RES*2);
     for (unsigned gt(0); gt<(lsize); ++gt) lhood[gt] = 0.;
 
@@ -355,7 +354,6 @@ is_multi_indel_allele(const starling_deriv_options& dopt,
                       const bool is_include_tier2,
                       bool& is_overlap)
 {
-
     static const bool is_use_alt_indel(true);
     static const double min_explained_count_fraction(.9);
 
@@ -442,7 +440,6 @@ get_somatic_indel(const strelka_options& opt,
                   const bool is_use_alt_indel,
                   somatic_indel_call& sindel) const
 {
-
     // for now, lhood calculation of tumor and normal are independent:
 
     // get likelihood of each genotype
@@ -461,7 +458,7 @@ get_somatic_indel(const strelka_options& opt,
     const double ref_real_lnp(std::log(1.-ref_error_prob));
 
     static const unsigned n_tier(2);
-    result_set tier_rs[n_tier];
+    std::array<result_set,n_tier> tier_rs;
     for (unsigned i(0); i<n_tier; ++i)
     {
         const bool is_include_tier2(i==1);

@@ -64,7 +64,7 @@ struct indel_digt_caller : private boost::noncopyable
 
     indel_digt_caller(const double theta);
 
-    // \brief call an indel @ pos by calculating the posterior probability
+    /// \brief call an indel @ pos by calculating the posterior probability
     /// of all possible genotypes for a diploid individual.
     ///
     void

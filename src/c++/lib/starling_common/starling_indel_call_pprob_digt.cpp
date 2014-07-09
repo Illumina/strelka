@@ -58,7 +58,6 @@ integrate_out_sites(const starling_deriv_options& dopt,
                     const double p_on_site,
                     const bool is_tier2_pass)
 {
-
     return log_sum((p_on_site + dopt.site_lnprior),
                    (dopt.get_nonsite_path_lnp(is_tier2_pass,nsite) + dopt.nonsite_lnprior));
 }
@@ -81,7 +80,6 @@ get_het_observed_allele_ratio(const unsigned read_length,
                               double& log_ref_prob,
                               double& log_indel_prob)
 {
-
     assert((ik.type==INDEL::INSERT) ||
            (ik.type==INDEL::DELETE) ||
            (ik.type == INDEL::SWAP));
@@ -127,7 +125,6 @@ get_high_low_het_ratio_lhood(const starling_options& /*opt*/,
                              double& het_lhood_high,
                              double& het_lhood_low)
 {
-
     // handle het ratio and its complement in one step:
     const double chet_ratio(1.-het_ratio);
 
@@ -155,7 +152,7 @@ get_high_low_het_ratio_lhood(const starling_options& /*opt*/,
             alt_path_lnp=path_lnp.alt;
         }
 #else
-        if (is_use_alt_indel && (! path_lnp.alt_indel.empty()) )
+        if (is_use_alt_indel)
         {
             for (const auto& alt : path_lnp.alt_indel)
             {
@@ -216,7 +213,6 @@ increment_het_ratio_lhood(const starling_options& opt,
                           const bool is_use_alt_indel,
                           double* const lhood)
 {
-
     // high and low allele ratio variants:
     double het_lhood_high;
     double het_lhood_low;
@@ -244,7 +240,6 @@ get_sum_path_pprob(const starling_deriv_options& dopt,
                    read_path_scores& total_pprob,
                    const bool is_init_total)
 {
-
     static const double initval(0);
 
     if (is_init_total)
@@ -304,7 +299,6 @@ is_diploid_indel_noise(const starling_deriv_options& dopt,
                        const indel_data& id,
                        const bool is_tier2_pass)
 {
-
     static const bool is_use_alt_indel(true);
 
     // test is to *sum* the likelihoods supporting each indel:
@@ -387,7 +381,6 @@ get_indel_digt_lhood(const starling_options& opt,
                      const bool is_use_alt_indel,
                      double* const lhood)
 {
-
     static const double loghalf(-std::log(2.));
 
     for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt) lhood[gt] = 0.;
@@ -399,13 +392,9 @@ get_indel_digt_lhood(const starling_options& opt,
     const double ref_error_lnp(std::log(ref_error_prob));
     const double ref_real_lnp(std::log(1.-ref_error_prob));
 
-    //    typedef read_path_scores::alt_indel_t::const_iterator aiter;
-
-    typedef indel_data::score_t::const_iterator siter;
-    siter it(id.read_path_lnp.begin()), it_end(id.read_path_lnp.end());
-    for (; it!=it_end; ++it)
+    for (const auto& score : id.read_path_lnp)
     {
-        const read_path_scores& path_lnp(it->second);
+        const read_path_scores& path_lnp(score.second);
 
         // optionally skip tier2 data:
         if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
@@ -419,13 +408,11 @@ get_indel_digt_lhood(const starling_options& opt,
             alt_path_lnp=path_lnp.alt;
         }
 #else
-        if (is_use_alt_indel && (! path_lnp.alt_indel.empty()) )
+        if (is_use_alt_indel)
         {
-            typedef read_path_scores::alt_indel_t::const_iterator aiter;
-            aiter j(path_lnp.alt_indel.begin()), j_end(path_lnp.alt_indel.end());
-            for (; j!=j_end; ++j)
+            for (const auto& alt : path_lnp.alt_indel)
             {
-                if (j->second>alt_path_lnp) alt_path_lnp=j->second;
+                if (alt.second>alt_path_lnp) alt_path_lnp=alt.second;
             }
         }
 #endif
@@ -494,7 +481,6 @@ starling_indel_call_pprob_digt(const starling_options& opt,
                                const bool is_use_alt_indel,
                                starling_diploid_indel& dindel) const
 {
-
     // no immediate plans to include this for regular indel-calling:
     static const bool is_tier2_pass(false);
 
@@ -518,7 +504,6 @@ starling_indel_call_pprob_digt(const starling_options& opt,
     }
 
     normalize_ln_distro(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt);
-
 
 #ifdef DEBUG_INDEL_CALL
     log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << dindel.pprob[STAR_DIINDEL::NOINDEL] << " " << dindel.pprob[STAR_DIINDEL::HOM] << " " << dindel.pprob[STAR_DIINDEL::HET] << "\n";
@@ -544,7 +529,6 @@ write_starling_diploid_indel(const starling_diploid_indel& dindel,
                              const starling_indel_sample_report_info& isri,
                              std::ostream& os)
 {
-
     os << "type: " << iri.desc
        << " ref_upstream: " << iri.ref_upstream
        << " ref/indel: " << iri.ref_seq << "/" << iri.indel_seq
@@ -569,7 +553,6 @@ write_starling_diploid_indel_file(const starling_diploid_indel& dindel,
                                   const starling_indel_sample_report_info& isri,
                                   std::ostream& os)
 {
-
     os << iri.desc
        << '\t' << iri.ref_upstream
        << '\t' << iri.ref_seq << "/" << iri.indel_seq

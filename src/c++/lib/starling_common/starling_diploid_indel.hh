@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __STARLING_DIPLOID_INDEL_HH
-#define __STARLING_DIPLOID_INDEL_HH
 
+#pragma once
 
 #include "blt_util/qscore.hh"
 
@@ -160,5 +158,3 @@ struct starling_diploid_indel : public starling_diploid_indel_core, private boos
     double pprob[STAR_DIINDEL::SIZE];
 };
 
-
-#endif
