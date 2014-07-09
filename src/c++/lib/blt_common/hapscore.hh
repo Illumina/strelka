@@ -22,6 +22,7 @@
 
 #include "stdint.h"
 
+#include <array>
 #include <iosfwd>
 #include <vector>
 

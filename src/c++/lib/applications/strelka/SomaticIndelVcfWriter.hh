@@ -23,6 +23,7 @@
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_win_avg_set.hh"
 
+#include <array>
 #include <map>
 
 
