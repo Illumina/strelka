@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -35,7 +34,6 @@ void
 parse_chrom_depth(const std::string& chrom_depth_file,
                   cdmap_t& chrom_depth)
 {
-
     if (chrom_depth_file.empty()) return;
 
     std::ifstream depth_is(chrom_depth_file.c_str());

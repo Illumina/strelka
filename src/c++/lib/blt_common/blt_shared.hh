@@ -43,7 +43,6 @@ struct gvcf_options
 
     gvcf_options()
         : is_skip_header(false)
-        , is_max_depth_factor(true)
         , max_depth_factor(3.)
         , is_min_gqx(true)
         , min_gqx(30.)
@@ -69,7 +68,6 @@ struct gvcf_options
     bool is_skip_header;
 
     // filters:
-    bool is_max_depth_factor;
     double max_depth_factor;
     bool is_min_gqx;
     double min_gqx;
@@ -112,7 +110,6 @@ struct gvcf_deriv_options
 
 struct blt_options
 {
-
     blt_options()
         : lsnp_alpha(0),
           bsnp_diploid_theta(0.001),
@@ -385,7 +382,6 @@ struct pprob_digt_caller;
 //
 struct blt_deriv_options
 {
-
     /// @param ref_end this is either the full reference contig size,
     /// or the end position of the acquired reference segment if
     /// -report-range-end was used
@@ -405,7 +401,7 @@ struct blt_deriv_options
     }
 
 private:
-    std::auto_ptr<pprob_digt_caller> _pdcaller; // object to precalculate bsnp_diploid priors..
+    std::unique_ptr<pprob_digt_caller> _pdcaller; // object to precalculate bsnp_diploid priors..
 };
 
 

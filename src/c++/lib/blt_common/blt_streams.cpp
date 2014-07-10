@@ -252,7 +252,6 @@ write_vcf_audit(const blt_options& opt,
                 const bam_header_t* const header,
                 std::ostream& os)
 {
-
     ::write_vcf_audit(opt,pinfo,cmdline,header,os);
 }
 
@@ -266,7 +265,6 @@ open_ofstream(const prog_info& pinfo,
               const bool is_clobber,
               std::ofstream& fos)
 {
-
     ::open_ofstream(pinfo,filename,label,is_clobber,fos);
 }
 
@@ -277,7 +275,6 @@ blt_streams(const blt_options& opt,
             const prog_info& pinfo,
             const bool is_include_seq_name)
 {
-
     const char* const cmdline(opt.cmdline.c_str());
 
     if (! opt.report_filename.empty())
@@ -351,9 +348,3 @@ blt_streams(const blt_options& opt,
                         opt.bsnp_diploid_allele_filename,"bsnp-diploid sites",is_include_seq_name);
     }
 }
-
-
-
-// this should remain in the cpp so that auto_ptr works correctly
-blt_streams::
-~blt_streams() { }

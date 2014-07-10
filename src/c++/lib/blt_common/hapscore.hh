@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -21,10 +20,9 @@
 #include "blt_util/bam_seq.hh"
 #include "blt_util/seq_util.hh"
 
-#include "boost/array.hpp"
-
 #include "stdint.h"
 
+#include <array>
 #include <iosfwd>
 #include <vector>
 
@@ -33,7 +31,6 @@
 ///
 struct hap_cand
 {
-
     hap_cand(const bam_seq_base& read_seq,
              const uint8_t* init_qual,
              const int offset);  // the offset into read of the pileup base
@@ -73,7 +70,7 @@ struct hap_cand
 
 private:
     uint16_t _total_qual;
-    boost::array<uint8_t,HAP_SIZE> _bq;
+    std::array<uint8_t,HAP_SIZE> _bq;
 };
 
 

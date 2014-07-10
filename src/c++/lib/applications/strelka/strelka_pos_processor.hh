@@ -28,6 +28,7 @@
 #include "strelka_streams.hh"
 #include "CallableProcessor.hh"
 #include "strelka_shared.hh"
+#include "SomaticIndelVcfWriter.hh"
 
 #include "starling_common/starling_pos_processor_base.hh"
 
@@ -67,7 +68,18 @@ private:
     process_pos_indel_somatic(const pos_t pos);
 
     void
+    run_post_call_step(
+        const int stage_no,
+        const pos_t pos);
+
+    void
     write_counts(const pos_range& output_report_range) const;
+
+    bool
+    derived_empty() const
+    {
+        return _indelWriter.empty();
+    }
 
     /////////////////////////////
 
@@ -80,4 +92,10 @@ private:
     extra_position_data _tier2_epd[MAX_SAMPLE];
 
     CallableProcessor _callProcessor;
+
+    // enables delayed indel write:
+    SomaticIndelVcfWriter _indelWriter;
+
+    unsigned _indelRegionIndexNormal;
+    unsigned _indelRegionIndexTumor;
 };

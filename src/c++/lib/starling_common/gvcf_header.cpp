@@ -33,17 +33,6 @@
 
 static
 void
-write_vcf_filter(std::ostream& os,
-                 const char* id,
-                 const char* desc)
-{
-    os << "##FILTER=<ID=" << id << ",Description=\"" << desc << "\">\n";
-}
-
-
-
-static
-void
 add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options and starling_options
                  const starling_options& sopt,
                  const cdmap_t& chrom_depth,
@@ -121,7 +110,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
     }
 
 
-    if (opt.is_max_depth_factor && (! chrom_depth.empty()) && do_rule_filters)
+    if ((! chrom_depth.empty()) && do_rule_filters)
     {
         std::ostringstream oss;
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";

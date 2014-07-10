@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -24,21 +23,16 @@
 #include "starling_common/starling_shared.hh"
 #include "starling_common/starling_types.hh"
 
-#include "boost/shared_ptr.hpp"
-
 #include <vector>
 
 
 struct starling_streams_base : public blt_streams
 {
-
     typedef blt_streams base_t;
 
     starling_streams_base(const starling_options& opt,
                           const prog_info& pinfo,
                           const sample_info& si);
-
-    ~starling_streams_base();
 
     std::ostream*
     bindel_diploid_osptr(const unsigned sample_no) const
@@ -114,5 +108,5 @@ private:
     std::unique_ptr<std::ostream> _candidate_indel_osptr;
     unsigned _n_samples;
 
-    std::vector<boost::shared_ptr<std::ostream>> _window_osptr;
+    std::vector<std::shared_ptr<std::ostream>> _window_osptr;
 };

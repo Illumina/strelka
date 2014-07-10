@@ -11,19 +11,60 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
+#include "starling_common/chrom_depth_map.hh"
 #include "starling_common/starling_shared.hh"
+
+
+/// variant call filtration options used only for somatic snvs and indels
+///
+/// these are isolated from starling gvcf options to avoid conflicts
+///
+struct somatic_filter_options
+{
+    somatic_filter_options()
+        : is_skip_header(false)
+        , max_depth_factor(3.)
+        , snv_max_filtered_basecall_frac(0.4)
+        , snv_max_spanning_deletion_frac(0.75)
+        , snv_min_qss_ref(15)
+        , indelMaxRefRepeat(8)
+        , indelMaxIntHpolLength(14)
+        , indelMaxWindowFilteredBasecallFrac(0.3)
+        , sindelQuality_LowerBound(30)
+        , indelRegionFlankSize(50)
+    {}
+
+    bool
+    is_depth_filter() const
+    {
+        return (! chrom_depth_file.empty());
+    }
+
+    std::string chrom_depth_file;
+    bool is_skip_header;
+    double max_depth_factor;
+    double snv_max_filtered_basecall_frac;
+    double snv_max_spanning_deletion_frac;
+    int snv_min_qss_ref;
+
+    unsigned indelMaxRefRepeat;
+    unsigned indelMaxIntHpolLength;
+    double indelMaxWindowFilteredBasecallFrac;
+    int sindelQuality_LowerBound;
+
+    unsigned indelRegionFlankSize;
+};
+
 
 
 struct strelka_options : public starling_options
 {
-
     typedef starling_options base_t;
 
     strelka_options()
@@ -115,7 +156,32 @@ struct strelka_options : public starling_options
     double tumor_sample_min_small_candidate_indel_read_frac;
 
     std::string somatic_callable_filename;
+
+    somatic_filter_options sfilter;
 };
+
+
+
+/// somatic filter options computed after user input is finished:
+///
+struct somatic_filter_deriv_options
+{
+    somatic_filter_deriv_options()
+        : max_depth(0.),
+          indelRegionStage(0)
+    {}
+
+    bool
+    is_max_depth() const
+    {
+        return (! chrom_depth.empty());
+    }
+
+    double max_depth;
+    cdmap_t chrom_depth;
+    unsigned indelRegionStage;
+};
+
 
 
 //struct somatic_snv_caller;
@@ -129,11 +195,11 @@ struct somatic_indel_caller_grid;
 //
 struct strelka_deriv_options : public starling_deriv_options
 {
-
     typedef starling_deriv_options base_t;
 
-    strelka_deriv_options(const strelka_options& opt,
-                          const reference_contig_segment& ref);
+    strelka_deriv_options(
+        const strelka_options& opt,
+        const reference_contig_segment& ref);
 
     ~strelka_deriv_options();
 
@@ -149,7 +215,10 @@ struct strelka_deriv_options : public starling_deriv_options
         return *(_sicaller_grid.get());
     }
 
+/// data:
+    somatic_filter_deriv_options sfilter;
+
 private:
-    std::auto_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;
-    std::auto_ptr<somatic_indel_caller_grid> _sicaller_grid;
+    std::unique_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;
+    std::unique_ptr<somatic_indel_caller_grid> _sicaller_grid;
 };

@@ -1,3 +1,8 @@
+- STARKA-118 fix GSNAP alignment example: leading deletion in exon
+- STARKA-111 transfer full strelka workflow v1 logic into starka
+
+????v2.1????
+
 - STARKA-53 remove grouper legacy contig logic
 - STARKA-29 short-range SNP phasing and arbitrary phasing window
 - STARKA-57 HighRefRep should not be default rule-based filter for indels

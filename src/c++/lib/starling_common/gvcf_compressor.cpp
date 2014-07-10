@@ -35,7 +35,7 @@
 #include <stdlib.h>     /* atof */
 
 
-#define DEBUG_GVCFCOMP
+//#define DEBUG_GVCFCOMP
 
 #ifdef DEBUG_GVCFCOMP
 #include "blt_util/log.hh"

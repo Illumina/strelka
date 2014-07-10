@@ -15,8 +15,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __NPLOID_GENOTYPE_UTIL_HH
-#define __NPLOID_GENOTYPE_UTIL_HH
+
+#pragma once
 
 #include "blt_util/seq_util.hh"
 
@@ -138,6 +138,3 @@ private:
     std::vector<gtype_info> _ginfo;
     unsigned _ref_gtype[N_BASE];
 };
-
-
-#endif

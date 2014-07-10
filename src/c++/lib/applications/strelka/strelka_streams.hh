@@ -28,11 +28,11 @@ struct strelka_streams : public starling_streams_base
 
     typedef starling_streams_base base_t;
 
-    strelka_streams(const strelka_options& opt,
-                    const prog_info& pinfo,
-                    const bam_header_t* const bam_header);
-
-    ~strelka_streams();
+    strelka_streams(
+        const strelka_options& opt,
+        const strelka_deriv_options& dopt,
+        const prog_info& pinfo,
+        const bam_header_t* const bam_header);
 
     std::ostream*
     somatic_snv_osptr() const

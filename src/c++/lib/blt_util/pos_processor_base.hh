@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -28,7 +27,6 @@
 ///
 struct pos_processor_base
 {
-
     pos_processor_base()
         : _is_skip_process_pos(false) {}
 

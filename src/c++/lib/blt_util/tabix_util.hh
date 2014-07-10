@@ -19,11 +19,8 @@
 /// bam record manipulation functions
 ///
 
-#ifndef __TABIX_UTIL_HH
-#define __TABIX_UTIL_HH
+#pragma once
 
 extern "C" {
 #include "tabix.h"
 }
-
-#endif

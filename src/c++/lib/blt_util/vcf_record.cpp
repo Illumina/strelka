@@ -88,7 +88,7 @@ set(const char* s)
                 {
                     if ((*p2==',') || (p2==p))
                     {
-                        alt.push_back(std::string(start,p2-start));
+                        alt.emplace_back(start,p2-start);
                         stoupper(alt.back());
                         start=p2+1;
                     }

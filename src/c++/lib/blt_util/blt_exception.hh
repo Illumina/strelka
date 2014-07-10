@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __BLT_EXCEPTION_HH
-#define __BLT_EXCEPTION_HH
+
+#pragma once
 
 #include <exception>
 #include <string>
@@ -36,7 +35,3 @@ struct blt_exception : public std::exception
 
     std::string message;
 };
-
-
-#endif
-

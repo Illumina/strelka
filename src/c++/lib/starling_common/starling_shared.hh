@@ -11,12 +11,14 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
 #pragma once
+
+#include "starling_pos_processor_base_stages.hh"
+
 
 #include "blt_common/blt_shared.hh"
 #include "blt_util/reference_contig_segment.hh"
@@ -33,7 +35,6 @@ enum { STARLING_MAX_READ_SIZE = 25000 };
 
 struct avg_window_data
 {
-
     bool
     operator<(const avg_window_data& rhs) const
     {
@@ -51,7 +52,6 @@ operator<<(std::ostream& os, const avg_window_data& awd);
 
 struct starling_options : public blt_options
 {
-
     starling_options()
         : bindel_diploid_theta(0.0001),
           bindel_diploid_het_bias(0),
@@ -113,7 +113,7 @@ struct starling_options : public blt_options
     bool
     is_write_candidate_indels() const
     {
-        return (not candidate_indel_filename.empty());
+        return (! candidate_indel_filename.empty());
     }
 
     unsigned htype_buffer_segment() const
@@ -263,7 +263,6 @@ struct starling_options : public blt_options
 //
 struct starling_sample_options
 {
-
     starling_sample_options(const starling_options& opt)
         : min_read_bp_flank(opt.default_min_read_bp_flank)
         , min_candidate_indel_reads(opt.default_min_candidate_indel_reads)
@@ -284,13 +283,10 @@ struct indel_digt_caller;
 //
 struct starling_deriv_options : public blt_deriv_options
 {
-
     typedef blt_deriv_options base_t;
 
     starling_deriv_options(const starling_options& opt,
                            const reference_contig_segment& ref);
-
-    ~starling_deriv_options();
 
     const indel_digt_caller&
     incaller() const
@@ -308,6 +304,22 @@ struct starling_deriv_options : public blt_deriv_options
         return nonsite_match_lnp*nsite;
     }
 
+    const std::vector<unsigned>&
+    getPostCalLStage() const
+    {
+        return _postCallStage;
+    }
+
+protected:
+    unsigned
+    addPostCallStage(
+        const unsigned size)
+    {
+        _postCallStage.push_back(size);
+        return STAGE::SIZE+_postCallStage.size()-1;
+    }
+
+public:
     double indel_nonsite_match_lnp;
     double tier2_indel_nonsite_match_lnp;
 
@@ -318,15 +330,19 @@ struct starling_deriv_options : public blt_deriv_options
 
     std::string bam_header_data; // the full bam header, read in from bam file. Used for setting the sample name in
 
+    unsigned variant_window_first_stage;
+    unsigned variant_window_last_stage;
+
 private:
-    std::auto_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
+    std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
+
+    std::vector<unsigned> _postCallStage;
 };
 
 
 
 struct starling_read_counts : public blt_read_counts
 {
-
     starling_read_counts() :
         normal_indel_used(0),
         normal_indel_intersect(0)

@@ -18,8 +18,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __SOMATIC_CALL_SHARED_HH
-#define __SOMATIC_CALL_SHARED_HH
+
+#pragma once
 
 // a simplification of diploid calls down to types relative to the reference:
 //
@@ -52,5 +52,3 @@ label(const unsigned idx)
     }
 }
 }
-
-#endif

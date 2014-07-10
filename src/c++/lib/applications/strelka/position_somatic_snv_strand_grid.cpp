@@ -16,6 +16,7 @@
 
 #include "position_somatic_snv_strand_grid.hh"
 #include "somatic_call_shared.hh"
+#include "strelka_vcf_locus_info.hh"
 
 #include "blt_common/snp_util.hh"
 #include "blt_util/log.hh"
@@ -1457,9 +1458,19 @@ write_vcf_sample_info(const blt_options& opt,
 
 
 
+static
+double
+safeFrac(const unsigned num, const unsigned denom)
+{
+    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
+}
+
+
+
 void
 write_vcf_somatic_snv_genotype_strand_grid(
     const strelka_options& opt,
+    const strelka_deriv_options& dopt,
     const somatic_snv_genotype_grid& sgt,
     const bool is_write_nqss,
     const extended_pos_data& n1_epd,
@@ -1468,8 +1479,57 @@ write_vcf_somatic_snv_genotype_strand_grid(
     const extended_pos_data& t2_epd,
     std::ostream& os)
 {
-
     const result_set& rs(sgt.rs);
+
+    strelka_shared_modifiers smod;
+    {
+        // compute all site filters:
+        const unsigned normalDP(n1_epd.n_calls);
+        const unsigned tumorDP(t1_epd.n_calls);
+
+        if (dopt.sfilter.is_max_depth())
+        {
+            if (normalDP > dopt.sfilter.max_depth)
+            {
+                smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
+            }
+        }
+
+        {
+            const unsigned normalFDP(n1_epd.n_unused_calls);
+            const unsigned tumorFDP(t1_epd.n_unused_calls);
+
+            const double normalFilt(safeFrac(normalFDP,normalDP));
+            const double tumorFilt(safeFrac(tumorFDP,tumorDP));
+
+            if ((normalFilt >=opt.sfilter.snv_max_filtered_basecall_frac) ||
+                (tumorFilt >=opt.sfilter.snv_max_filtered_basecall_frac))
+            {
+                smod.set_filter(STRELKA_VCF_FILTERS::BCNoise);
+            }
+        }
+
+        {
+            const unsigned normalSDP(n1_epd.pi.n_spandel);
+            const unsigned tumorSDP(t1_epd.pi.n_spandel);
+            const unsigned normalSpanTot(normalDP + normalSDP);
+            const unsigned tumorSpanTot(tumorDP + tumorSDP);
+
+            const double normalSpanDelFrac(safeFrac(normalSDP, normalSpanTot));
+            const double tumorSpanDelFrac(safeFrac(tumorSDP, tumorSpanTot));
+
+            if ((normalSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac) ||
+                (tumorSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac))
+            {
+                smod.set_filter(STRELKA_VCF_FILTERS::SpanDel);
+            }
+        }
+
+        if ((rs.ntype != NTYPE::REF) || (rs.snv_from_ntype_qphred < opt.sfilter.snv_min_qss_ref))
+        {
+            smod.set_filter(STRELKA_VCF_FILTERS::QSS_ref);
+        }
+    }
 
     //REF:
     os << '\t' << n1_epd.pi.ref_base
@@ -1478,9 +1538,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
     DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
                                    sgt.ref_gt,os);
     //QUAL:
-    os << "\t."
-       //FILTER:
-       << "\t.";
+    os << "\t.";
+
+    //FILTER:
+    os << "\t";
+    smod.write_filters(os);
 
     //INFO:
     os << '\t'

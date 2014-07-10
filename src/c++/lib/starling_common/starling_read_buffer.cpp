@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -36,9 +35,7 @@ const starling_read_buffer::segment_group_t starling_read_buffer::_empty_segment
 starling_read_buffer::
 ~starling_read_buffer()
 {
-    read_data_t::iterator i(_read_data.begin());
-    const read_data_t::iterator i_end(_read_data.end());
-    for (; i!=i_end; ++i) delete i->second;
+    for (auto& val : _read_data) delete val.second;
 }
 
 
@@ -51,7 +48,6 @@ add_read_alignment(const starling_options& opt,
                    const MAPLEVEL::index_t maplev,
                    const READ_ALIGN::index_t rat)
 {
-
     assert(! br.is_unmapped());
 
     const bool is_genomic(READ_ALIGN::GENOME == rat);
@@ -148,7 +144,6 @@ rebuffer_read_segment(const align_id_t read_id,
                       const seg_id_t seg_id,
                       const pos_t new_buffer_pos)
 {
-
     // double check that the read exists:
     const read_data_t::iterator i(_read_data.find(read_id));
     if (i == _read_data.end()) return;
@@ -189,16 +184,14 @@ starling_read_buffer::
 clear_pos(const bool is_ignore_read_names,
           const pos_t pos)
 {
-
     const pos_group_t::iterator i(_pos_group.find(pos));
     if (i == _pos_group.end()) return;
 
     segment_group_t& seg_group(i->second);
-    segment_group_t::const_iterator j(seg_group.begin()),j_end(seg_group.end());
-    for (; j!=j_end; ++j)
+    for (const auto& val : seg_group)
     {
-        const align_id_t read_id(j->first);
-        const seg_id_t seg_id(j->second);
+        const align_id_t read_id(val.first);
+        const seg_id_t seg_id(val.second);
 
         const read_data_t::iterator k(_read_data.find(read_id));
         if (k == _read_data.end()) continue;
@@ -226,7 +219,6 @@ starling_read_buffer::
 dump_pos(const pos_t pos,
          std::ostream& os) const
 {
-
     const pos_group_t::const_iterator i(_pos_group.find(pos));
     if (i == _pos_group.end()) return;
 

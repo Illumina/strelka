@@ -21,8 +21,6 @@
 #include "starling_common/alignment.hh"
 #include "starling_common/starling_shared.hh"
 
-#include "boost/foreach.hpp"
-
 #include <iostream>
 
 

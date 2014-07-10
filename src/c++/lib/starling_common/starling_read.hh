@@ -48,7 +48,6 @@ label(const index_t i);
 //
 struct starling_segmented_read
 {
-
     starling_segmented_read(const seg_id_t size);
 
     void
@@ -83,11 +82,8 @@ private:
 //
 struct starling_read : private boost::noncopyable
 {
-
     starling_read(const bam_record& br,
                   const bool is_bam_record_genomic);
-
-    ~starling_read();
 
     // bool
     // is_bam_record_genomic() {
@@ -145,7 +141,7 @@ struct starling_read : private boost::noncopyable
     bool
     is_segmented() const
     {
-        return (NULL!=_segment_ptr.get());
+        return static_cast<bool>(_segment_ptr);
     }
 
     seg_id_t
@@ -231,7 +227,7 @@ private:
     align_id_t _id;
     bam_record _read_rec;
     read_segment _full_read;
-    std::auto_ptr<starling_segmented_read> _segment_ptr;
+    std::unique_ptr<starling_segmented_read> _segment_ptr;
 };
 
 

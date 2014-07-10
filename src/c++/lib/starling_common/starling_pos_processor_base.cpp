@@ -45,6 +45,7 @@
 #include "starling_common/starling_pos_processor_base.hh"
 #include "starling_common/gvcf_aggregator.hh"
 
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -78,7 +79,6 @@ report_counts(const snp_pos_info& pi,
               const pos_t output_pos,
               std::ostream& os)
 {
-
     unsigned base_count[N_BASE];
 
     for (unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
@@ -104,7 +104,6 @@ void
 report_pos_range(const pos_range& pr,
                  std::ostream& os)
 {
-
     // convert pos_range to 1-indexed inclusive interval for output:
     os << "begin: ";
     if (pr.is_begin_pos)
@@ -138,7 +137,6 @@ write_snp_prefix_info_file(const std::string& seq_name,
                            const unsigned n_unused_calls,
                            std::ostream& os)
 {
-
     os << seq_name << "\t"
        << output_pos << "\t"
        << n_used_calls << "\t"
@@ -181,7 +179,6 @@ write_bsnp_diploid_allele(const blt_options& client_opt,
                           const diploid_genotype& dgt,
                           const unsigned hpol = 0)
 {
-
     std::ostream& os(*client_io.bsnp_diploid_allele_osptr());
 
     write_snp_prefix_info_file(seq_name,output_pos,ref,n_used_calls,n_unused_calls,os);
@@ -227,7 +224,6 @@ report_stream_stat(const depth_stream_stat_range& ss,
                    const pos_range& pr,
                    std::ostream& os)
 {
-
     os << label << " ";
     report_pos_range(pr,os);
     os << " " << ss << "\n";
@@ -242,15 +238,6 @@ report_stream_stat(const depth_stream_stat_range& ss,
 
 namespace STAGE
 {
-enum index_t
-{
-    HEAD,
-    READ_BUFFER,
-    POST_ALIGN,
-    POST_REGION, // haplotype specific stage
-    POST_READ,  // haplotype specific stage
-    POST_CALL
-};
 
 // stage into which pileup entries must fit:
 static
@@ -279,9 +266,9 @@ static
 stage_data
 get_stage_data(const unsigned largest_read_size,
                const unsigned largest_total_indel_ref_span_per_read,
-               const starling_options& opt)
+               const starling_options& opt,
+               const starling_deriv_options& dopt)
 {
-
     stage_data sdata;
 
     //
@@ -370,18 +357,17 @@ get_stage_data(const unsigned largest_read_size,
         sdata.add_stage(POST_READ,POST_REGION,post_read_to_post_region);
     }
 
-    // dynamic stages after POST_CALL are used to provide window
-    // average statistics around the call site, each window
-    // running at a different flank_size after the post_align stage
+    // dynamic stages after POST_CALL are used to region based information around a site
     //
     // TODO this will not work correctly for the haplotype calling right now:
     //
-    const unsigned vs(opt.variant_windows.size());
     const int pileup_stage(get_pileup_stage_no(opt));
-    for (unsigned i(0); i<vs; ++i)
+
+    const auto& stages(dopt.getPostCalLStage());
+    const unsigned stageCount(stages.size());
+    for (unsigned i(0); i<stageCount; ++i)
     {
-        const unsigned flank_size(opt.variant_windows[i].flank_size);
-        sdata.add_stage(POST_CALL+i+1,pileup_stage,flank_size);
+        sdata.add_stage(SIZE+i,pileup_stage,stages[i]);
     }
 
     return sdata;
@@ -403,13 +389,12 @@ starling_pos_processor_base(const starling_options& client_opt,
     //, _largest_indel_size(std::min(client_opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
     , _largest_indel_ref_span(client_opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
-    , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE,get_largest_total_indel_ref_span_per_read(),_client_opt),client_dopt.report_range,*this)
+    , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _client_opt, _client_dopt),client_dopt.report_range,*this)
     , _chrom_name(_client_opt.bam_seq_name)
     , _n_samples(n_samples)
     , _ws(0)
     , _is_variant_windows(_client_opt.variant_windows.size())
 {
-
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
     const unsigned report_size(_client_dopt.report_range.size());
@@ -487,7 +472,11 @@ void
 starling_pos_processor_base::
 update_stageman()
 {
-    _stageman.revise_stage_data(STAGE::get_stage_data(get_largest_read_size(),get_largest_total_indel_ref_span_per_read(),_client_opt));
+    _stageman.revise_stage_data(
+        STAGE::get_stage_data(get_largest_read_size(),
+                              get_largest_total_indel_ref_span_per_read(),
+                              _client_opt,
+                              _client_dopt));
 }
 
 
@@ -537,7 +526,7 @@ starling_pos_processor_base::
     for (unsigned i(0); i<_n_samples; ++i)
     {
         delete _sample[i];
-        _sample[i] = NULL;
+        _sample[i] = nullptr;
     }
 }
 
@@ -578,7 +567,6 @@ starling_pos_processor_base::
 insert_indel(const indel_observation& obs,
              const unsigned sample_no)
 {
-
     //
     // ppr advance is controlled by the start positions of reads and
     // contigs, not indels. The rationale for this is that indels are
@@ -604,7 +592,6 @@ insert_indel(const indel_observation& obs,
         log_os << "Exception caught while attempting to insert indel: " << obs << "\n";
         throw;
     }
-
 }
 
 
@@ -613,7 +600,6 @@ void
 starling_pos_processor_base::
 insert_forced_output_pos(const pos_t pos)
 {
-
     _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
     _forced_output_pos.insert(pos);
 }
@@ -625,7 +611,6 @@ starling_pos_processor_base::
 get_estimated_depth(const pos_t pos,
                     const unsigned sample_no) const
 {
-
     return sample(sample_no).estdepth_buff.val(pos);
 }
 
@@ -820,7 +805,6 @@ void
 starling_pos_processor_base::
 init_read_segment_pos(const pos_t pos)
 {
-
     for (unsigned s(0); s<_n_samples; ++s)
     {
         read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
@@ -893,7 +877,6 @@ void
 starling_pos_processor_base::
 align_pos(const pos_t pos)
 {
-
     const known_pos_range realign_pr(get_realignment_range(pos, _stageman.get_stage_data()));
 
     for (unsigned s(0); s<_n_samples; ++s)
@@ -957,7 +940,6 @@ starling_pos_processor_base::
 process_pos(const int stage_no,
             const pos_t pos)
 {
-
 #if 0
     log_os << "pos,stage_no: " << pos << " " << stage_no << "\n";
 #endif
@@ -1086,8 +1068,7 @@ process_pos(const int stage_no,
     }
     else if (stage_no>STAGE::POST_CALL)
     {
-        print_delayed_results(stage_no,pos);
-
+        run_post_call_step(stage_no,pos);
     }
     else
     {
@@ -1103,7 +1084,6 @@ starling_pos_processor_base::
 insert_pos_submap_count(const pos_t pos,
                         const unsigned sample_no)
 {
-
     if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
@@ -1118,7 +1098,6 @@ starling_pos_processor_base::
 insert_pos_spandel_count(const pos_t pos,
                          const unsigned sample_no)
 {
-
     if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
@@ -1133,7 +1112,6 @@ insert_mapq_count(const pos_t pos,
                   const unsigned sample_no,
                   const uint8_t mapq)
 {
-
     if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
@@ -1145,7 +1123,6 @@ void
 starling_pos_processor_base::
 update_ranksum(const pos_t pos,const unsigned sample_no,const base_call& bc, const uint8_t mapq, const int cycle)
 {
-
     if (! is_pos_reportable(pos)) return;
 //	log_os << "updating ranksum" << endl;
 
@@ -1162,7 +1139,6 @@ insert_pos_basecall(const pos_t pos,
                     const bool is_tier1,
                     const base_call& bc)
 {
-
     if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
@@ -1181,7 +1157,6 @@ insert_hap_cand(const pos_t pos,
                 const uint8_t* qual,
                 const unsigned offset)
 {
-
     if (! is_pos_reportable(pos)) return;
 
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
@@ -1195,7 +1170,6 @@ void
 starling_pos_processor_base::
 write_candidate_indels_pos(const pos_t pos)
 {
-
     static const unsigned sample_no(0);
 
     const pos_t output_pos(pos+1);
@@ -1231,7 +1205,6 @@ starling_pos_processor_base::
 process_pos_indel_single_sample(const pos_t pos,
                                 const unsigned sample_no)
 {
-
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
@@ -1352,7 +1325,6 @@ static
 pos_t
 get_new_read_pos(const read_segment& rseg)
 {
-
     // get the best alignment for the read:
     const alignment* best_al_ptr(&(rseg.genome_align()));
     if (rseg.is_realigned) best_al_ptr=&(rseg.realignment);
@@ -1370,7 +1342,6 @@ void
 starling_pos_processor_base::
 rebuffer_pos_reads(const pos_t pos)
 {
-
     // need to queue up read changes and run at the end so that we
     // don't invalidate read buffer iterators
     //
@@ -1414,7 +1385,6 @@ void
 starling_pos_processor_base::
 write_reads(const pos_t pos)
 {
-
     for (unsigned s(0); s<_n_samples; ++s)
     {
         bam_dumper* bamd_ptr(_client_io.realign_bam_ptr(s));
@@ -1427,7 +1397,7 @@ write_reads(const pos_t pos)
         while (true)
         {
             r=ri.get_ptr();
-            if (NULL==r.first) break;
+            if (nullptr==r.first) break;
             if (r.first->segment_count()==r.second)
             {
                 r.first->write_bam(bamd);
@@ -1455,7 +1425,7 @@ pileup_pos_reads(const pos_t pos)
         while (true)
         {
             r=ri.get_ptr();
-            if (NULL==r.first) break;
+            if (nullptr==r.first) break;
             const read_segment& rseg(r.first->get_segment(r.second));
             if (is_include_submapped || rseg.is_treated_as_anytier_mapping())
             {
@@ -1471,7 +1441,6 @@ starling_pos_processor_base::
 pileup_read_segment(const read_segment& rseg,
                     const unsigned sample_no)
 {
-
     // get the best alignment for the read:
     const alignment* best_al_ptr(&(rseg.genome_align()));
     if (rseg.is_realigned)
@@ -1733,7 +1702,6 @@ starling_pos_processor_base::
 process_pos_snp_single_sample(const pos_t pos,
                               const unsigned sample_no)
 {
-
     try
     {
         process_pos_snp_single_sample_impl(pos,sample_no);
@@ -1757,10 +1725,10 @@ process_pos_snp_single_sample(const pos_t pos,
 
 void
 starling_pos_processor_base::
-process_pos_snp_single_sample_impl(const pos_t pos,
-                                   const unsigned sample_no)
+process_pos_snp_single_sample_impl(
+    const pos_t pos,
+    const unsigned sample_no)
 {
-
     // TODO:
     //
     // note this might not matter wrt larger changes taking place, but here goes:
@@ -1843,7 +1811,7 @@ process_pos_snp_single_sample_impl(const pos_t pos,
     //lrt_snp_call lsc;
     _site_info.dgt.reset();
     //monoploid_genotype mgt;
-    //std::auto_ptr<nploid_genotype> ngt_ptr;
+    //std::unique_ptr<nploid_genotype> ngt_ptr;
 
     if (_client_opt.is_counts)
     {
@@ -2071,17 +2039,20 @@ get_empty_dgt(const char ref) const
 
 void
 starling_pos_processor_base::
-print_delayed_results(const int stage_no,
-                      const pos_t pos)
+run_post_call_step(
+    const int stage_no,
+    const pos_t pos)
 {
-
     if (_variant_print_pos.count(pos)==0) return;
 
     const int pcn(STAGE::get_last_static_stage_no(_client_opt));
     assert(stage_no>pcn);
 
     // convert stage_no to window_no:
-    const unsigned window_no(stage_no-(pcn+1));
+    assert(stage_no >= static_cast<int>(_client_dopt.variant_window_first_stage));
+    assert(stage_no <= static_cast<int>(_client_dopt.variant_window_last_stage));
+
+    const unsigned window_no(stage_no-_client_dopt.variant_window_first_stage);
     const unsigned vs(_client_opt.variant_windows.size());
 
     assert(window_no<vs);
@@ -2089,21 +2060,24 @@ print_delayed_results(const int stage_no,
     const pos_t output_pos(pos+1);
     std::ostream& bos(*_client_io.variant_window_osptr(window_no));
 
-    bos << _chrom_name << "\t" << output_pos;
+    bos << _chrom_name << '\t' << output_pos;
+
+    std::ofstream tmp_os;
+    tmp_os.copyfmt(bos);
 
     bos << std::setprecision(2) << std::fixed;
 
     for (unsigned s(0); s<_n_samples; ++s)
     {
         const win_avg_set& was(sample(s).wav.get_win_avg_set(window_no));
-        bos << "\t" << was.ss_used_win.avg()
-            << "\t" << was.ss_filt_win.avg()
-            << "\t" << was.ss_submap_win.avg();
+        bos << '\t' << was.ss_used_win.avg()
+            << '\t' << was.ss_filt_win.avg()
+            << '\t' << was.ss_submap_win.avg();
     }
 
-    bos.unsetf(std::ios::fixed);
+    bos.copyfmt(tmp_os);
 
-    bos << "\n";
+    bos << '\n';
 
     if ((window_no+1) == vs)
     {

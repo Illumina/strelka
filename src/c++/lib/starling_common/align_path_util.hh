@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __ALIGN_PATH_UTIL_HH
-#define __ALIGN_PATH_UTIL_HH
+#pragma once
 
 #include "starling_common/align_path.hh"
 #include "blt_util/blt_types.hh"
@@ -102,6 +100,3 @@ struct swap_info
     unsigned delete_length;
 };
 }
-
-
-#endif

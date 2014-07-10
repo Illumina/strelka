@@ -43,11 +43,27 @@ def joinFile(*arg) :
 
 
 
-class MantaWorkflowOptionsBase(ConfigureWorkflowOptions) :
+class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
     def addWorkflowGroupOptions(self,group) :
+        group.add_option("--referenceFasta",type="string",dest="referenceFasta",metavar="FILE",
+                         help="samtools-indexed reference fasta file [required]")
         group.add_option("--runDir", type="string",dest="runDir",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
+
+    def addExtendedGroupOptions(self,group) :
+        group.add_option("--scanSizeMb",type="int",dest="scanSizeMb",metavar="scanSizeMb",
+                         help="Maximum sequence region size (in Mb) scanned by each task during "
+                         "genome variant calling. (default: %default)")
+        group.add_option("--region",type="string",dest="regionStrList",metavar="samtoolsRegion", action="append",
+                         help="Limit the analysis to a region of the genome for debugging purposes. "
+                              "If this argument is provided multiple times all specified regions will "
+                              "be analyzed together. All regions must be non-overlapping to get a "
+                              "meaningful result. Examples: '--region chr20' (whole chromosome), "
+                              "'--region chr2:100-2000 --region chr3:2500-3000' (two regions)'")
+
+        ConfigureWorkflowOptions.addExtendedGroupOptions(self,group)
+
 
     def getOptionDefaults(self) :
         """
@@ -55,24 +71,20 @@ class MantaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         Every local variable in this method becomes part of the default hash
         """
-        libexecDir=os.path.abspath(os.path.join(scriptDir,"@STARKA_RELATIVE_LIBEXECDIR@"))
+        libexecDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_LIBEXECDIR@"))
         assert os.path.isdir(libexecDir)
 
         bgzipBin=joinFile(libexecDir,"bgzip")
         samtoolsBin=joinFile(libexecDir,"samtools")
         tabixBin=joinFile(libexecDir,"tabix")
 
-        mantaStatsBin=joinFile(libexecDir,"GetAlignmentStats")
-        mantaGraphBin=joinFile(libexecDir,"EstimateSVLoci")
-        mantaGraphMergeBin=joinFile(libexecDir,"MergeSVLoci")
-        mantaGraphCheckBin=joinFile(libexecDir,"CheckSVLoci")
-        mantaHyGenBin=joinFile(libexecDir,"GenerateSVCandidates")
-        mantaGraphStatsBin=joinFile(libexecDir,"SummarizeSVLoci")
-        mantaStatsSummaryBin=joinFile(libexecDir,"SummarizeAlignmentStats")
+        countFastaBin=joinFile(libexecDir,"countFastaBases")
+        starlingBin=joinFile(libexecDir,"starling2")
+        strelkaBin=joinFile(libexecDir,"strelka2")
 
-        mantaChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
-        mantaSortVcf=joinFile(libexecDir,"sortVcf.py")
-        mantaExtraSmallVcf=joinFile(libexecDir,"extractSmallIndelCandidates.py")
+        getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
+        #mantaSortVcf=joinFile(libexecDir,"sortVcf.py")
+        #mantaExtraSmallVcf=joinFile(libexecDir,"extractSmallIndelCandidates.py")
 
         # default memory request per process-type
         #
@@ -84,10 +96,14 @@ class MantaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         #       use ever expected in a production run. The consequence of exceeding the mean is
         #       a slow run due to swapping.
         #
-        estimateMemMb=2*1024
-        mergeMemMb=4*1024
-        hyGenSGEMemMb=4*1024
-        hyGenLocalMemMb=2*1024
+        callMemMb=2*1024
+        #mergeMemMb=4*1024
+        #hyGenSGEMemMb=4*1024
+        #hyGenLocalMemMb=2*1024
+
+        runDir = "variantCallWorkflow"
+        scanSizeMb = 12
+
 
         return cleanLocals(locals())
 

@@ -11,7 +11,7 @@
 #
 
 """
-Manta SV discovery workflow
+Strelka somatic small variant calling workflow
 """
 
 
@@ -32,7 +32,7 @@ from pyflow import WorkflowRunner
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getChromIntervals, getFastaChromOrderSize
 
-from configureUtil import getIniSections,dumpIniSections
+from configureUtil import argToBool, getIniSections, dumpIniSections
 
 
 
@@ -71,6 +71,8 @@ class GenomeSegment(object) :
         arguments are the 4 genomic interval descriptors detailed in class documentation
         """
         self.chromLabel = chromLabel
+        self.beginPos = beginPos
+        self.endPos = endPos
         self.bamRegion = chromLabel + ':' + str(beginPos) + '-' + str(endPos)
         self.binId = binId
         self.binStr = str(binId).zfill(4)
@@ -101,30 +103,13 @@ def getNextGenomeSegment(params) :
 
 
 
-def runStats(self,taskPrefix="",dependencies=None) :
-
-    statsPath=self.paths.getStatsPath()
-
-    cmd = [ self.params.mantaStatsBin ]
-    cmd.extend(["--output-file",statsPath])
-    for bamPath in self.params.normalBamList :
-        cmd.extend(["--align-file",bamPath])
-    for bamPath in self.params.tumorBamList :
-        cmd.extend(["--tumor-align-file",bamPath])
-
-    statsTask = self.addTask(preJoin(taskPrefix,"generateStats"),cmd,dependencies=dependencies)
+def runCount(self, taskPrefix="", dependencies=None) :
+    cmd  = "%s %s > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
-    nextStepWait.add(statsTask)
-
-    # summarize stats for humans, no need for follow-up tasks to wait for this:
-    cmd  = self.params.mantaStatsSummaryBin
-    cmd += " --align-stats " + statsPath
-    cmd += " > " + self.paths.getStatsSummaryPath()
-    self.addTask(preJoin(taskPrefix,"summarizeStats"),cmd,dependencies=statsTask)
+    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
 
     return nextStepWait
-
 
 
 def runDepth(self,taskPrefix="",dependencies=None) :
@@ -141,7 +126,7 @@ def runDepth(self,taskPrefix="",dependencies=None) :
         return set()
 
 
-    cmd  = "%s -E %s" % (sys.executable, self.params.mantaChromDepth)
+    cmd  = "%s -E %s" % (sys.executable, self.params.getChromDepth)
     cmd += " --bam '%s'" % (bamFile)
     cmd += " > %s" % (self.paths.getChromDepth())
 
@@ -152,188 +137,207 @@ def runDepth(self,taskPrefix="",dependencies=None) :
 
 
 
-def runLocusGraph(self,taskPrefix="",dependencies=None):
-    """
-    Create the full SV locus graph
-    """
+class TempSegmentFiles :
+    def __init__(self) :
+        self.snv = []
+        self.indel = []
+        self.callable = []
+        self.normalRealign = []
+        self.tumorRealign = []
 
-    statsPath=self.paths.getStatsPath()
-    graphPath=self.paths.getGraphPath()
-    graphStatsPath=self.paths.getGraphStatsPath()
 
-    graphFilename=os.path.basename(graphPath)
-    tmpGraphDir=os.path.join(self.params.workDir,graphFilename+".tmpdir")
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), "mkdir -p "+tmpGraphDir, dependencies=dependencies, isForceLocal=True)
 
-    tmpGraphFiles = []
-    graphTasks = set()
+def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
-    for gseg in getNextGenomeSegment(self.params) :
+    isFirstSegment = (len(segFiles.snv) == 0)
 
-        tmpGraphFiles.append(os.path.join(tmpGraphDir,graphFilename+"."+gseg.id+".bin"))
-        graphCmd = [ self.params.mantaGraphBin ]
-        graphCmd.extend(["--output-file", tmpGraphFiles[-1]])
-        graphCmd.extend(["--align-stats",statsPath])
-        graphCmd.extend(["--region",gseg.bamRegion])
-        graphCmd.extend(["--min-candidate-sv-size", self.params.minCandidateVariantSize])
-        graphCmd.extend(["--ref",self.params.referenceFasta])
-        for bamPath in self.params.normalBamList :
-            graphCmd.extend(["--align-file",bamPath])
-        for bamPath in self.params.tumorBamList :
-            graphCmd.extend(["--tumor-align-file",bamPath])
+    segStr = str(gseg.id)
 
-        if self.params.isHighDepthFilter :
-            graphCmd.extend(["--chrom-depth", self.paths.getChromDepth()])
+    segCmd = [ self.params.strelkaBin ]
+    segCmd.append("-clobber")
+    segCmd.append("-filter-unanchored")
+    segCmd.extend(["-min-paired-align-score",str(self.params.minTier1Mapq)])
+    segCmd.extend(["-min-single-align-score","10"])
+    segCmd.extend(["-min-qscore","0"])
+    segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
+    segCmd.extend(["-report-range-end", str(gseg.endPos) ])
+    segCmd.extend(["-samtools-reference", self.params.referenceFasta ])
+    segCmd.extend(["-max-window-mismatch", "3", "20" ])
+    segCmd.append("-print-used-allele-counts")
+    segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
+    segCmd.extend(["-genome-size", str(self.params.knownSize)] )
+    segCmd.extend(["-max-indel-size", "50"] )
+    segCmd.extend(["-indel-nonsite-match-prob", "0.5"] )
+    segCmd.extend(["--somatic-snv-rate", str(self.params.ssnvPrior) ] )
+    segCmd.extend(["--shared-site-error-rate", str(self.params.ssnvNoise) ] )
+    segCmd.extend(["--shared-site-error-strand-bias-fraction", str(self.params.ssnvNoiseStrandBiasFrac) ] )
+    segCmd.extend(["--somatic-indel-rate", str(self.params.sindelPrior) ] )
+    segCmd.extend(["--shared-indel-error-rate", str(self.params.sindelNoise) ] )
+    segCmd.extend(["--tier2-min-single-align-score", str(self.params.minTier2Mapq) ] )
+    segCmd.extend(["--tier2-min-paired-align-score", str(self.params.minTier2Mapq) ] )
+    segCmd.append("--tier2-single-align-score-rescue-mode")
+    segCmd.extend(["--tier2-mismatch-density-filter-count", "10"] )
+    segCmd.append("--tier2-no-filter-unanchored")
+    segCmd.extend(["--tier2-indel-nonsite-match-prob", "0.25"] )
+    segCmd.append("--tier2-include-singleton")
+    segCmd.append("--tier2-include-anomalous")
 
-        if self.params.isIgnoreAnomProperPair :
-            graphCmd.append("--ignore-anom-proper-pair")
+    segCmd.extend(["--strelka-snv-max-filtered-basecall-frac", str(self.params.snvMaxFilteredBasecallFrac)])
+    segCmd.extend(["--strelka-snv-max-spanning-deletion-frac", str(self.params.snvMaxSpanningDeletionFrac)])
+    segCmd.extend(["--strelka-snv-min-qss-ref", str(self.params.ssnvQuality_LowerBound)])
 
-        graphTaskLabel=preJoin(taskPrefix,"makeLocusGraph_"+gseg.pyflowId)
-        graphTasks.add(self.addTask(graphTaskLabel,graphCmd,dependencies=dirTask,memMb=self.params.estimateMemMb))
+    segCmd.extend(["--strelka-indel-max-ref-repeat", str(self.params.indelMaxRefRepeat)])
+    segCmd.extend(["--strelka-indel-max-int-hpol-length", str(self.params.indelMaxIntHpolLength)])
+    segCmd.extend(["--strelka-indel-max-window-filtered-basecall-frac", str(self.params.indelMaxWindowFilteredBasecallFrac)])
+    segCmd.extend(["--strelka-indel-min-qsi-ref", str(self.params.sindelQuality_LowerBound)])
 
-    mergeCmd = [ self.params.mantaGraphMergeBin ]
-    mergeCmd.extend(["--output-file", graphPath])
-    for gfile in tmpGraphFiles :
-        mergeCmd.extend(["--graph-file", gfile])
+    for bamPath in self.params.normalBamList :
+        segCmd.extend(["-bam-file",bamPath])
+    for bamPath in self.params.tumorBamList :
+        segCmd.extend(["--tumor-bam-file",bamPath])
 
-    mergeTask = self.addTask(preJoin(taskPrefix,"mergeLocusGraph"),mergeCmd,dependencies=graphTasks,memMb=self.params.mergeMemMb)
+    tmpSnvPath = self.paths.getTmpSegmentSnvPath(segStr)
+    segFiles.snv.append(tmpSnvPath)
+    segCmd.extend(["--somatic-snv-file ", tmpSnvPath ] )
 
-    # Run a separate process to rigorously check that the final graph is valid, the sv candidate generators will check as well, but
-    # this makes the check much more clear:
+    tmpIndelPath = self.paths.getTmpSegmentIndelPath(segStr)
+    segFiles.indel.append(tmpIndelPath)
+    segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
 
-    checkCmd = [ self.params.mantaGraphCheckBin ]
-    checkCmd.extend(["--graph-file", graphPath])
-    checkTask = self.addTask(preJoin(taskPrefix,"checkLocusGraph"),checkCmd,dependencies=mergeTask,memMb=self.params.mergeMemMb)
+    if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
+        segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
 
-    rmGraphTmpCmd = "rm -rf " + tmpGraphDir
-    rmTask=self.addTask(preJoin(taskPrefix,"rmGraphTmp"),rmGraphTmpCmd,dependencies=mergeTask)
+    if self.params.isWriteCallableRegion :
+        tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
+        segFiles.callable.append(tmpCallablePath)
+        segCmd.extend(["--somatic-callable-region-file", tmpCallablePath ])
 
-    graphStatsCmd  = self.params.mantaGraphStatsBin
-    graphStatsCmd += " --global"
-    graphStatsCmd += " --graph-file " + graphPath
-    graphStatsCmd += " >| " + graphStatsPath
+    if self.params.isWriteRealignedBam :
+        segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr, "normal")])
+        segCmd.extend(["--tumor-realigned-read-file",self.paths.getTmpUnsortRealignBamPath(segStr, "tumor")])
 
-    graphStatsTask = self.addTask(preJoin(taskPrefix,"locusGraphStats"),graphStatsCmd,dependencies=mergeTask,memMb=self.params.mergeMemMb)
+    if self.params.extraStrelkaArguments is not None :
+        for arg in self.params.extraStrelkaArguments.strip().split() :
+            segCmd.append(arg)
+
+    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+
+    if not isFirstSegment :
+        segCmd.append("--strelka-skip-header")
+
+    if not self.params.isSkipDepthFilters :
+        segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
+        segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
 
     nextStepWait = set()
-    nextStepWait.add(checkTask)
+
+    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
+    self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
+    nextStepWait.add(setTaskLabel)
+
+    if self.params.isWriteRealignedBam :
+        def sortRealignBam(label, sortList) :
+            unsorted = self.paths.getTmpUnsortRealignBamPath(segStr, label)
+            sorted   = self.paths.getTmpRealignBamPath(segStr, label)
+            sortList.append(sorted)
+
+            # adjust sorted to remove the ".bam" suffix
+            sorted = sorted[:-4]
+            sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
+
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.pyflowId)
+            self.addTask(sortTaskLabel,sortCmd,dependencies=setTaskLabel,memMb=self.params.callMemMb)
+            nextStepWait.add(sortTaskLabel)
+
+        sortRealignBam("normal", segFiles.normalRealign)
+        sortRealignBam("tumor", segFiles.tumorRealign)
+
+    return nextStepWait
+
+
+
+def callGenome(self,taskPrefix="",dependencies=None):
+    """
+    run strelka on all genome segments
+    """
+
+    tmpGraphDir=self.paths.getTmpSegmentDir()
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), "mkdir -p "+tmpGraphDir, dependencies=dependencies, isForceLocal=True)
+
+    graphTasks = set()
+
+    segFiles = TempSegmentFiles()
+    for gseg in getNextGenomeSegment(self.params) :
+
+        graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+
+    # create a checkpoint for all segments:
+    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=graphTasks)
+
+    finishTasks = set()
+
+    def finishVcf(tmpList, output, label) :
+        cmd  = "cat " + " ".join(tmpList)
+        cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
+        cmd += " && %s -p vcf %s" % (self.params.tabixBin, output)
+        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeVCF"), cmd, dependencies=completeSegmentsTask))
+
+    finishVcf(segFiles.snv, self.paths.getSnvOutputPath(),"SNV")
+    finishVcf(segFiles.indel, self.paths.getIndelOutputPath(),"Indel")
+
+    if self.params.isWriteCallableRegion :
+        def finishBed(tmpList, output, label):
+            cmd  = "cat " + " ".join(tmpList)
+            cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
+            cmd += " && %s -p bed %s" % (self.params.tabixBin, output)
+            finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBED"), cmd, dependencies=completeSegmentsTask))
+
+        finishBed(segFiles.callable, self.paths.getRegionOutputPath(), "callableRegions")
+
+    if self.params.isWriteRealignedBam :
+        def finishBam(tmpList, output, label) :
+            assert(len(tmpList) > 0)
+            headerTmp = tmpList[0] + "header"
+            cmd  = "%s view -H %s >| %s" % (self.params.samtoolsBin, tmpList[0], headerTmp)
+            cmd += " && %s merge  -h %s %s " % (self.params.samtoolsBin, headerTmp, output)
+            cmd += " ".join(tmpList)
+            cmd += " && %s index %s" % (self.params.samtoolsBin, output)
+            finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
+
+        finishBam(segFiles.normalRealign, self.paths.getRealignedBamPath("normal"), "realignedNormal")
+        finishBam(segFiles.tumorRealign, self.paths.getRealignedBamPath("tumor"), "realignedTumor")
+
+    # add a tmp folder rm step here....
+
+    nextStepWait = finishTasks
+
     return nextStepWait
 
 
 
-def runHyGen(self, taskPrefix="", dependencies=None) :
-    """
-    Run hypothesis generation on each SV locus
-    """
+"""
+A separate call workflow is setup so that we can delay the workflow execution until
+the ref count file exists
+"""
+class CallWorkflow(WorkflowRunner) :
 
-    import copy
+    def __init__(self,params,paths) :
+        self.params = params
+        self.paths = paths
 
-    statsPath=self.paths.getStatsPath()
-    graphPath=self.paths.getGraphPath()
-    hygenDir=self.paths.getHyGenDir()
+    def workflow(self) :
 
-    dirTask=self.addTask(preJoin(taskPrefix,"makeHyGenDir"), "mkdir -p "+ hygenDir, dependencies=dependencies, isForceLocal=True)
+        if True :
+            knownSize = 0
+            for line in open(self.paths.getRefCountFile()) :
+                word = line.strip().split('\t')
+                if len(word) != 4 :
+                    raise Exception("Unexpected format in ref count file: '%s'" % (self.paths.getRefCountFile()))
+                knownSize += int(word[2])
 
-    isSomatic = (len(self.params.normalBamList) and len(self.params.tumorBamList))
+            self.params.knownSize = knownSize
 
-    hyGenMemMb = self.params.hyGenLocalMemMb
-    if self.getRunMode() == "sge" :
-        hyGenMemMb = self.params.hyGenSGEMemMb
-
-    hygenTasks=set()
-    candidateVcfPaths = []
-    diploidVcfPaths = []
-    somaticVcfPaths = []
-
-    edgeLogPaths = []
-
-    for binId in range(self.params.nonlocalWorkBins) :
-        binStr = str(binId).zfill(4)
-        candidateVcfPaths.append(self.paths.getHyGenCandidatePath(binStr))
-        diploidVcfPaths.append(self.paths.getHyGenDiploidPath(binStr))
-        if isSomatic :
-            somaticVcfPaths.append(self.paths.getHyGenSomaticPath(binStr))
-
-        edgeLogPaths.append(self.paths.getHyGenEdgeLogPath(binStr))
-
-        hygenCmd = [ self.params.mantaHyGenBin ]
-        hygenCmd.extend(["--align-stats",statsPath])
-        hygenCmd.extend(["--graph-file",graphPath])
-        hygenCmd.extend(["--bin-index", str(binId)])
-        hygenCmd.extend(["--bin-count", str(self.params.nonlocalWorkBins)])
-        hygenCmd.extend(["--min-candidate-sv-size", self.params.minCandidateVariantSize])
-        hygenCmd.extend(["--min-scored-sv-size", self.params.minScoredVariantSize])
-        hygenCmd.extend(["--ref",self.params.referenceFasta])
-        hygenCmd.extend(["--candidate-output-file", candidateVcfPaths[-1]])
-        hygenCmd.extend(["--diploid-output-file", diploidVcfPaths[-1]])
-        hygenCmd.extend(["--min-qual-score", self.params.minDiploidVariantScore])
-        hygenCmd.extend(["--min-pass-gt-score", self.params.minPassGTScore])
-        if isSomatic :
-            hygenCmd.extend(["--somatic-output-file", somaticVcfPaths[-1]])
-            hygenCmd.extend(["--min-somatic-score", self.params.minSomaticScore])
-            hygenCmd.extend(["--min-pass-somatic-score", self.params.minPassSomaticScore])
-
-        if self.params.isHighDepthFilter :
-            hygenCmd.extend(["--chrom-depth", self.paths.getChromDepth()])
-
-        hygenCmd.extend(["--edge-runtime-log", edgeLogPaths[-1]])
-
-        for bamPath in self.params.normalBamList :
-            hygenCmd.extend(["--align-file", bamPath])
-        for bamPath in self.params.tumorBamList :
-            hygenCmd.extend(["--tumor-align-file", bamPath])
-
-        if self.params.isIgnoreAnomProperPair :
-            hygenCmd.append("--ignore-anom-proper-pair")
-        if self.params.isRNA :
-            hygenCmd.append("--rna")
-
-        hygenTaskLabel=preJoin(taskPrefix,"generateCandidateSV_"+binStr)
-        hygenTasks.add(self.addTask(hygenTaskLabel,hygenCmd,dependencies=dirTask, memMb=hyGenMemMb))
-
-    nextStepWait = copy.deepcopy(hygenTasks)
-
-    def getVcfSortCmd(vcfPaths, outPath) :
-        cmd  = "%s -E %s -u " % (sys.executable,self.params.mantaSortVcf)
-        cmd += " ".join(vcfPaths)
-        cmd += " | %s -c > %s && %s -p vcf %s" % (self.params.bgzipBin, outPath, self.params.tabixBin, outPath)
-        return cmd
-
-    def sortVcfs(pathList, outPath, label) :
-        if len(pathList) == 0 : return set()
-
-        sortCmd = getVcfSortCmd(pathList,outPath)
-        sortLabel=preJoin(taskPrefix,label)
-        nextStepWait.add(self.addTask(sortLabel,sortCmd,dependencies=hygenTasks))
-        return sortLabel
-
-    candSortTask = sortVcfs(candidateVcfPaths, self.paths.getSortedCandidatePath(), "sortCandidateSV")
-    sortVcfs(diploidVcfPaths, self.paths.getSortedDiploidPath(), "sortDiploidSV")
-    sortVcfs(somaticVcfPaths, self.paths.getSortedSomaticPath(), "sortSomaticSV")
-
-    def getExtractSmallCmd(maxSize, inPath, outPath) :
-        cmd  = "%s -dc %s" % (self.params.bgzipBin, inPath)
-        cmd += " | %s -E %s --maxSize %i" % (sys.executable, self.params.mantaExtraSmallVcf, maxSize)
-        cmd += " | %s -c > %s" % (self.params.bgzipBin, outPath)
-        cmd += " && %s -p vcf %s" % (self.params.tabixBin, outPath)
-        return cmd
-
-    def extractSmall(inPath, outPath) :
-        maxSize = int(self.params.minScoredVariantSize) - 1
-        if maxSize < 1 : return
-
-        smallCmd = getExtractSmallCmd(maxSize, inPath, outPath)
-        smallLabel=preJoin(taskPrefix,"extractSmallIndels")
-        nextStepWait.add(self.addTask(smallLabel, smallCmd, dependencies=candSortTask, isForceLocal=True))
-
-    extractSmall(self.paths.getSortedCandidatePath(), self.paths.getSortedCandidateSmallIndelsPath())
-
-    # sort edge logs:
-    edgeSortLabel=preJoin(taskPrefix,"sortEdgeLogs")
-    edgeSortCmd="sort -rnk2 " + " ".join(edgeLogPaths) + " >| " + self.paths.getSortedEdgeLogPath()
-    self.addTask(edgeSortLabel, edgeSortCmd, dependencies=hygenTasks, isForceLocal=True)
-
-    return nextStepWait
+        callGenome(self)
 
 
 
@@ -345,56 +349,53 @@ class PathInfo:
     def __init__(self, params) :
         self.params = params
 
-    def getStatsPath(self) :
-        return os.path.join(self.params.workDir,"alignmentStats.xml")
-
-    def getStatsSummaryPath(self) :
-        return os.path.join(self.params.statsDir,"alignmentStatsSummary.txt")
-
     def getChromDepth(self) :
         return os.path.join(self.params.workDir,"chromDepth.txt")
 
-    def getGraphPath(self) :
-        return os.path.join(self.params.workDir,"svLocusGraph.bin")
+    def getTmpSegmentDir(self) :
+        return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
 
-    def getHyGenDir(self) :
-        return os.path.join(self.params.workDir,"svHyGen")
+    def getTmpSegmentSnvPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "somatic.snvs.unfiltered.%s.vcf" % (segStr))
 
-    def getHyGenCandidatePath(self, binStr) :
-        return os.path.join(self.getHyGenDir(),"candidateSV.%s.vcf" % (binStr))
+    def getTmpSegmentIndelPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "somatic.indels.unfiltered.%s.vcf" % (segStr))
 
-    def getSortedCandidatePath(self) :
-        return os.path.join(self.params.variantsDir,"candidateSV.vcf.gz")
+    def getTmpSegmentRegionPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "somatic.callable.region.%s.bed" % (segStr))
 
-    def getSortedCandidateSmallIndelsPath(self) :
-        return os.path.join(self.params.variantsDir,"candidateSmallIndels.vcf.gz")
+    def getTmpUnsortRealignBamPath(self, segStr, label) :
+        return os.path.join( self.getTmpSegmentDir(), "%s.%s.unsorted.realigned.bam" % (label, segStr))
 
-    def getHyGenDiploidPath(self, binStr) :
-        return os.path.join(self.getHyGenDir(),"diploidSV.%s.vcf" % (binStr))
+    def getTmpRealignBamPath(self, segStr, label) :
+        return os.path.join( self.getTmpSegmentDir(), "%s.%s.realigned.bam" % (label, segStr))
 
-    def getSortedDiploidPath(self) :
-        return os.path.join(self.params.variantsDir,"diploidSV.vcf.gz")
+    def getTmpSegmentReportPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
-    def getHyGenSomaticPath(self, binStr) :
-        return os.path.join(self.getHyGenDir(),"somaticSV.%s.vcf" % (binStr))
+    def getVariantsDir(self) :
+        return self.params.variantsDir
 
-    def getSortedSomaticPath(self) :
-        return os.path.join(self.params.variantsDir,"somaticSV.vcf.gz")
+    def getSnvOutputPath(self) :
+        return os.path.join( self.getVariantsDir(), "somatic.snvs.vcf.gz")
 
-    def getHyGenEdgeLogPath(self, binStr) :
-        return os.path.join(self.getHyGenDir(),"edgeRuntimeLog.%s.txt" % (binStr))
+    def getIndelOutputPath(self) :
+        return os.path.join( self.getVariantsDir(), "somatic.indels.vcf.gz")
 
-    def getSortedEdgeLogPath(self) :
-        return os.path.join(self.params.workDir,"edgeRuntimeLog.txt")
+    def getRegionOutputPath(self) :
+        return os.path.join( self.params.regionsDir, 'somatic.callable.region.bed.gz');
 
-    def getGraphStatsPath(self) :
-        return os.path.join(self.params.statsDir,"svLocusGraphStats.tsv")
+    def getRealignedBamPath(self, label) :
+        return os.path.join( self.params.realignedDir, '%s.realigned.bam' % (label));
+
+    def getRefCountFile(self) :
+        return os.path.join( self.params.workDir, "refCount.txt")
 
 
 
-class MantaWorkflow(WorkflowRunner) :
+class StrelkaWorkflow(WorkflowRunner) :
     """
-    Manta SV discovery workflow
+    Strelka somatic small variant calling workflow
     """
 
     def __init__(self,params,iniSections) :
@@ -412,6 +413,18 @@ class MantaWorkflow(WorkflowRunner) :
         if self.params.normalBamList is None : self.params.normalBamList = []
         if self.params.tumorBamList is None : self.params.tumorBamList = []
 
+        # format other:
+        # format other:
+        def safeSetBool(obj,dataname) :
+            if hasattr(obj, dataname) :
+                setattr(obj, dataname, argToBool(getattr(obj, dataname)))
+            else :
+                setattr(obj, dataname, False)
+
+        safeSetBool(self.params,"isWriteRealignedBam")
+        safeSetBool(self.params,"isWriteCallableRegion")
+        safeSetBool(self.params,"isSkipDepthFilters")
+
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
         ensureDir(self.params.runDir)
@@ -423,12 +436,16 @@ class MantaWorkflow(WorkflowRunner) :
         # all finalized pretty results get transfered to resultsDir
         self.params.resultsDir=os.path.join(self.params.runDir,"results")
         ensureDir(self.params.resultsDir)
-        self.params.statsDir=os.path.join(self.params.resultsDir,"stats")
-        ensureDir(self.params.statsDir)
         self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
         ensureDir(self.params.variantsDir)
-#         self.params.reportsDir=os.path.join(self.params.resultsDir,"reports")
-#         ensureDir(self.params.reportsDir)
+
+        if self.params.isWriteCallableRegion :
+            self.params.regionsDir=os.path.join(self.params.resultsDir,"regions")
+            ensureDir(self.params.regionsDir)
+
+        if self.params.isWriteRealignedBam :
+            self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
+            ensureDir(self.params.realignedDir)
 
         indexRefFasta=self.params.referenceFasta+".fai"
 
@@ -444,37 +461,25 @@ class MantaWorkflow(WorkflowRunner) :
         # sanity check some parameter typing:
         MEGABASE = 1000000
         self.params.scanSize = int(self.params.scanSizeMb) * MEGABASE
-        self.params.nonlocalWorkBins = int(self.params.nonlocalWorkBins)
 
         self.paths = PathInfo(self.params)
-
-        self.params.isHighDepthFilter = (not (self.params.isExome or self.params.isRNA))
-        self.params.isIgnoreAnomProperPair = (self.params.isRNA)
-
 
 
     def getSuccessMessage(self) :
         "Message to be included in email for successful runs"
 
-        msg  = "Manta workflow successfully completed.\n\n"
+        msg  = "Strelka workflow successfully completed.\n\n"
         msg += "\tworkflow version: %s\n" % (__version__)
         return msg
 
 
 
     def workflow(self) :
-        self.flowLog("Initiating Manta workflow version: %s" % (__version__))
+        self.flowLog("Initiating Strelka workflow version: %s" % (__version__))
 
-        graphTaskDependencies = set()
+        callPreReqs = set()
+        callPreReqs |= runCount(self)
+        if not self.params.isSkipDepthFilters :
+            callPreReqs |= runDepth(self)
 
-        if not self.params.useExistingAlignStats :
-            statsTasks = runStats(self)
-            graphTaskDependencies |= statsTasks
-
-        if not ((not self.params.isHighDepthFilter) or self.params.useExistingChromDepths) :
-            depthTasks = runDepth(self)
-            graphTaskDependencies |= depthTasks
-
-        graphTasks = runLocusGraph(self,dependencies=graphTaskDependencies)
-
-        hygenTasks = runHyGen(self,dependencies=graphTasks)
+        self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __SAMPLE_RANGE_HH
-#define __SAMPLE_RANGE_HH
+
+#pragma once
 
 
 // Interface for sample function object, sampled function should be
@@ -45,5 +44,3 @@ sample_uniform_range(const blt_float_t min_x,
 
 
 #include "sample_range.hpp"
-
-#endif

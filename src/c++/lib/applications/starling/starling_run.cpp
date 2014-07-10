@@ -33,8 +33,6 @@
 #include "starling_common/starling_pos_processor_util.hh"
 #include "starling_common/starling_shared.hh"
 
-#include "boost/shared_ptr.hpp"
-
 #include <sstream>
 
 
@@ -77,7 +75,7 @@ starling_run(const starling_options& opt)
     sdata.register_reads(read_stream);
 
     // hold zero-to-many vcf streams open:
-    typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
+    typedef std::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
 
     for (const auto& vcf_filename : opt.input_candidate_indel_vcf)

@@ -16,8 +16,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __DEPTH_BUFFER_HH
-#define __DEPTH_BUFFER_HH
+#pragma once
 
 #include "blt_util/blt_types.hh"
 
@@ -30,7 +29,6 @@
 ///
 struct depth_buffer
 {
-
     unsigned
     val(const pos_t pos) const
     {
@@ -74,6 +72,3 @@ private:
 
     count_t _data;
 };
-
-
-#endif

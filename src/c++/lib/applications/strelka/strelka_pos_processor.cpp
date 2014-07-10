@@ -41,6 +41,9 @@ strelka_pos_processor(const strelka_options& opt,
     , _dopt(dopt)
     , _client_io(client_io)
     , _callProcessor(client_io.somatic_callable_osptr())
+    , _indelWriter(opt, dopt, client_io.somatic_indel_osptr())
+    , _indelRegionIndexNormal(0)
+    , _indelRegionIndexTumor(0)
 {
     using namespace STRELKA_SAMPLE_TYPE;
 
@@ -65,6 +68,10 @@ strelka_pos_processor(const strelka_options& opt,
     isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.sample_opt,TUMOR);
     normal_sif.indel_sync_ptr = (new indel_synchronizer(isdata,NORMAL));
     tumor_sif.indel_sync_ptr = (new indel_synchronizer(isdata,TUMOR));
+
+    // setup indel avg window:
+    _indelRegionIndexNormal=sample(NORMAL).wav.add_win(opt.sfilter.indelRegionFlankSize*2);
+    _indelRegionIndexTumor=sample(TUMOR).wav.add_win(opt.sfilter.indelRegionFlankSize*2);
 }
 
 
@@ -80,12 +87,10 @@ strelka_pos_processor::
 
 
 
-
 void
 strelka_pos_processor::
 process_pos_snp_somatic(const pos_t pos)
 {
-
     using namespace STRELKA_SAMPLE_TYPE;
 
     const pos_t output_pos(pos+1);
@@ -188,7 +193,7 @@ process_pos_snp_somatic(const pos_t pos)
             << ".";
 
         static const bool is_write_nqss(false);
-        write_vcf_somatic_snv_genotype_strand_grid(_opt,sgtg,is_write_nqss,
+        write_vcf_somatic_snv_genotype_strand_grid(_opt,_dopt,sgtg,is_write_nqss,
                                                    *(normald_ptr[0]),
                                                    *(tumord_ptr[0]),
                                                    *(normald_ptr[1]),
@@ -214,7 +219,6 @@ void
 strelka_pos_processor::
 process_pos_indel_somatic(const pos_t pos)
 {
-
     using namespace STRELKA_SAMPLE_TYPE;
 
     //    std::ostream& report_os(get_report_os());
@@ -284,17 +288,19 @@ process_pos_indel_somatic(const pos_t pos)
             if (sindel.is_output())
             {
                 // get sample specific info:
-                starling_indel_sample_report_info normal_isri[2];
-                starling_indel_sample_report_info tumor_isri[2];
+                SomaticIndelVcfInfo siInfo;
+                siInfo.sindel = sindel;
+                siInfo.iri = iri;
+
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);
                     get_starling_indel_sample_report_info(_dopt,ik,normal_id,normal_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
-                                                          normal_isri[t]);
+                                                          siInfo.nisri[t]);
                     get_starling_indel_sample_report_info(_dopt,ik,tumor_id,tumor_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
-                                                          tumor_isri[t]);
+                                                          siInfo.tisri[t]);
                 }
 
                 pos_t indel_pos(ik.pos);
@@ -303,15 +309,7 @@ process_pos_indel_somatic(const pos_t pos)
                     indel_pos -= 1;
                 }
 
-                const pos_t output_pos(indel_pos+1);
-
-                std::ostream& bos(*_client_io.somatic_indel_osptr());
-                bos << _chrom_name << '\t'
-                    << output_pos << '\t' << '.';
-                write_somatic_indel_vcf_grid(sindel,iri,normal_isri,tumor_isri,bos);
-                bos << '\n';
-
-                _variant_print_pos.insert(indel_pos);
+                _indelWriter.cacheIndel(indel_pos,siInfo);
             }
 
 #if 0
@@ -372,4 +370,25 @@ write_counts(const pos_range& output_report_range) const
             report_stream_stat(sif.used_ssn,(label+"_NO_REF_N_COVERAGE_USED").c_str(),output_report_range,report_os);
         }
     }
+}
+
+
+void
+strelka_pos_processor::
+run_post_call_step(
+    const int stage_no,
+    const pos_t pos)
+{
+    if (stage_no != static_cast<int>(_dopt.sfilter.indelRegionStage))
+    {
+        base_t::run_post_call_step(stage_no, pos);
+        return;
+    }
+
+    if (! _indelWriter.testPos(pos)) return;
+
+    const win_avg_set& was_normal(sample(STRELKA_SAMPLE_TYPE::NORMAL).wav.get_win_avg_set(_indelRegionIndexNormal));
+    const win_avg_set& was_tumor(sample(STRELKA_SAMPLE_TYPE::TUMOR).wav.get_win_avg_set(_indelRegionIndexTumor));
+
+    _indelWriter.addIndelWindowData(pos, was_normal, was_tumor);
 }

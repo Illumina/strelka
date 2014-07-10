@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __INDEL_SET_HH
-#define __INDEL_SET_HH
+#pragma once
 
 #include "starling_common/indel.hh"
 
@@ -31,5 +29,3 @@ typedef std::set<indel_key> indel_set_t;
 void
 dump_indel_set(const indel_set_t& is,
                std::ostream& os);
-
-#endif

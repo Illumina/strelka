@@ -11,10 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
+
 #include "blt_common/hapscore.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/qscore.hh"
@@ -107,7 +107,7 @@ struct hinfo
         return (total_qual > rhs.total_qual);
     }
 
-    typedef boost::array<uint8_t,hap_cand::HAP_SIZE> hseq_t;
+    typedef std::array<uint8_t,hap_cand::HAP_SIZE> hseq_t;
     hseq_t hseq;
     unsigned total_qual;
 };
@@ -200,29 +200,24 @@ get_align_score(const hap_cand& hc,
 double
 get_hapscore(hap_set_t& hap_set)
 {
-
     std::sort(hap_set.begin(),hap_set.end());
 
     std::vector<hinfo> haps;
 
-    typedef hap_set_t::const_iterator hiter;
+    for (const auto& hap : hap_set)
     {
-        hiter i(hap_set.begin()), i_end(hap_set.end());
-        for (; i!=i_end; ++i)
+        // 1: check if we match any types; add new type if not
+        bool is_match(false);
+        const unsigned hs(haps.size());
+        for (unsigned j(0); j<hs; ++j)
         {
-            // 1: check if we match any types; add new type if not
-            bool is_match(false);
-            const unsigned hs(haps.size());
-            for (unsigned j(0); j<hs; ++j)
+            if (is_hap_match(hap,haps[j]))
             {
-                if (is_hap_match(*i,haps[j]))
-                {
-                    is_match=true;
-                    break;
-                }
+                is_match=true;
+                break;
             }
-            if (! is_match) haps.push_back(hinfo(*i));
         }
+        if (! is_match) haps.emplace_back(hap);
     }
 
     const bool is_2hap(haps.size()>1);
@@ -236,24 +231,21 @@ get_hapscore(hap_set_t& hap_set)
     // 3: calculate average read alignment score restricted to two best haplotypes:
     //static const double neginf(std::log(0));
     double ln2hapratio(0);
+    for (const auto& hap : hap_set)
     {
-        hiter i(hap_set.begin()), i_end(hap_set.end());
-        for (; i!=i_end; ++i)
+        double als(get_align_score(hap,haps[0]));
+        if (is_2hap)
         {
-            double als(get_align_score(*i,haps[0]));
-            if (is_2hap)
-            {
-                als=std::max(als,get_align_score(*i,haps[1]));
-            }
-            //ln2hapratio = log_sum(ln2hapratio,als);
-            ln2hapratio += als;
+            als=std::max(als,get_align_score(hap,haps[1]));
         }
-
-        // target is log(avg(read_prob_ratio)), not avg(log(read_prob_ratio)):
-        //
-        //ln2hapratio -= std::log(static_cast<double>(hap_set.size()));
-        ln2hapratio /= static_cast<double>(hap_set.size());
+        //ln2hapratio = log_sum(ln2hapratio,als);
+        ln2hapratio += als;
     }
+
+    // target is log(avg(read_prob_ratio)), not avg(log(read_prob_ratio)):
+    //
+    //ln2hapratio -= std::log(static_cast<double>(hap_set.size()));
+    ln2hapratio /= static_cast<double>(hap_set.size());
 
     return ln2hapratio;
 }

@@ -207,7 +207,7 @@ _finalize()
     unsigned count(0);
     std::string& candidate(_consensus_seq);
 
-    for(const auto& val : _obs)
+    for (const auto& val : _obs)
     {
         if (val.first.size() < candidate.size()) continue;
         if (val.first.size() == candidate.size())

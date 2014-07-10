@@ -23,20 +23,22 @@
 
 
 po::options_description
-get_strelka_option_parser(strelka_options& opt)
+get_strelka_option_parser(
+    strelka_options& opt)
 {
-
     po::options_description strelka_parse_opt_ti("Tumor-sample input");
     strelka_parse_opt_ti.add_options()
     ("tumor-bam-file",
      po::value(&opt.tumor_bam_filename),
-     "BAM file containing read alignments for the tumor sample (required)");
+     "BAM file containing read alignments for the tumor sample (required)")
+    ;
 
     po::options_description strelka_parse_opt_to("Tumor-sample output");
     strelka_parse_opt_to.add_options()
     ("tumor-realigned-read-file",
      po::value(&opt.tumor_realigned_read_filename),
-     "Write tumor reads which have had their alignments altered during realignment to a BAM file.");
+     "Write tumor reads which have had their alignments altered during realignment to a BAM file.")
+    ;
 
     po::options_description strelka_parse_opt_sv("Somatic variant-calling");
     strelka_parse_opt_sv.add_options()
@@ -113,8 +115,34 @@ get_strelka_option_parser(strelka_options& opt)
      "Output a bed file of regions which are confidently somatic or non-somatic for SNVs at allele frequencies of 10% or greater.")
     ;
 
+    po::options_description strelka_parse_opt_filter("Somatic variant-calling filters");
+    strelka_parse_opt_filter.add_options()
+    ("strelka-chrom-depth-file", po::value(&opt.sfilter.chrom_depth_file),
+     "If provided, the mean depth for each chromosome will be read from file, and these values will be used for high depth filtration. File should contain one line per chromosome, where each line begins with: \"chrom_name<TAB>depth\" (default: no chrom depth filtration)")
+    ("strelka-max-depth-factor", po::value(&opt.sfilter.max_depth_factor)->default_value(opt.sfilter.max_depth_factor),
+     "If a chrom depth file is supplied then loci with depth exceeding the mean chromosome depth times this value are filtered")
+    ("strelka-skip-header", po::value(&opt.sfilter.is_skip_header)->zero_tokens(),
+     "Skip writing header info for the somatic vcf/bed files (usually used to simplify segment concatenation)")
+    // snv only:
+    ("strelka-snv-max-filtered-basecall-frac", po::value(&opt.sfilter.snv_max_filtered_basecall_frac)->default_value(opt.sfilter.snv_max_filtered_basecall_frac),
+     "max filtered call fraction")
+    ("strelka-snv-max-spanning-deletion-frac", po::value(&opt.sfilter.snv_max_spanning_deletion_frac)->default_value(opt.sfilter.snv_max_spanning_deletion_frac),
+     "max fraction of overlapping deletion reads")
+    ("strelka-snv-min-qss-ref", po::value(&opt.sfilter.snv_min_qss_ref)->default_value(opt.sfilter.snv_min_qss_ref),
+     "min QSS_ref value")
+    // indel only:
+    ("strelka-indel-max-ref-repeat",  po::value(&opt.sfilter.indelMaxRefRepeat)->default_value(opt.sfilter.indelMaxRefRepeat),
+     "indels expand/contracting pattterns with greater than this repeat will be filtered out")
+    ("strelka-indel-max-int-hpol-length",  po::value(&opt.sfilter.indelMaxIntHpolLength)->default_value(opt.sfilter.indelMaxIntHpolLength),
+     "indels are filtered if they overlap 'interrupted homopolymers' greater than this length")
+    ("strelka-indel-max-window-filtered-basecall-frac",  po::value(&opt.sfilter.indelMaxWindowFilteredBasecallFrac)->default_value(opt.sfilter.indelMaxWindowFilteredBasecallFrac),
+     "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
+    ("strelka-indel-min-qsi-ref", po::value(&opt.sfilter.sindelQuality_LowerBound)->default_value(opt.sfilter.sindelQuality_LowerBound),
+     "min QSI_ref value")
+    ;
+
     po::options_description strelka_parse_opt("Two-sample options");
-    strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv);
+    strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv).add(strelka_parse_opt_filter);
 
     po::options_description help_parse_opt("Help");
     help_parse_opt.add_options()
@@ -133,11 +161,6 @@ finalize_strelka_options(const prog_info& pinfo,
                          const po::variables_map& vm,
                          strelka_options& opt)
 {
-
-    // base class handler:
-    //
-    //finalize_starling_options(pinfo,vm,opt);
-
     if (opt.tumor_bam_filename.empty())
     {
         pinfo.usage("Must specify a sorted BAM file containing aligned tumor sample reads");
@@ -215,6 +238,12 @@ finalize_strelka_options(const prog_info& pinfo,
     if (vm.count("tumor-min-small-candidate-indel-read-frac"))
     {
         opt.is_tumor_sample_min_small_candidate_indel_read_frac=true;
+    }
+
+    // deal with sfilter options:
+    if (opt.sfilter.max_depth_factor < 0)
+    {
+        pinfo.usage("Strelka depth factor must not be less than 0");
     }
 
     finalize_starling_options(pinfo,vm,opt);

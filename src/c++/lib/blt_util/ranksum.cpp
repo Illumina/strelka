@@ -17,120 +17,79 @@
 ///
 
 #include "blt_util/ranksum.hh"
-#include <cmath>
-#include <algorithm>
+
 #include <iostream>
-#include <vector>
-#include <iostream>
-#include <map>
 
 using namespace std;
 
 
 static
 double
-get_z_score(int n1, int n2, double w1)
+get_z_score(const int n1, const int n2, const double w1)
 {
-    double mean = n1*(n1+n2+1)/2.0;
-    double var  = sqrt(n1*n2*(n1+n2+1)/12.0);
+    const double mean = n1*(n1+n2+1)/2.0;
+    const double var  = sqrt(n2*mean/6.0);
     if (static_cast<int>(var)==0)
     {
         return 0.0;
     }
-    double z = (w1-mean)/var;
-    return z;
+    return (w1-mean)/var;
 }
+
+
 
 // return the U statistic
 double
-ranksum::get_u_stat()
+ranksum::get_u_stat() const
 {
     //	cout << "doing U stat" << endl;
-    vector<int> myvector = this->getSpace();
-    int current_rank = 1;
-    R1 = 0.0;
-    R2 = 0.0;
-    N1 = 0;
-    N2 = 0;
-    //loop over all observations
-    for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
-    {
-        int key = *it;
+    double R1 = 0;
+    double R2 = 0;
+    int N1 = 0;
+    int N2 = 0;
 
+    //loop over all observations
+    vector<int> myvector = this->getSpace();
+    for (const auto& key : myvector)
+    {
         // get the observation counts for reference and alt
-        int obs1= this->get_obs_count(true,key);
-        int obs2= this->get_obs_count(false,key);
-        int obs = obs1 + obs2;
-        double rank_weight = (2*current_rank + obs -1)/2.0;
+        const ranksumObs robs = this->get_obs_count(key);
+        int obs1 = robs.ref;
+        int obs2 = robs.nonRef;
+        double rank_weight = (2*(N1+N2+1) + (obs1+obs2)-1)/2.0;
         R1 += rank_weight*obs1;
         R2 += rank_weight*obs2;
         N1 += obs1;
         N2 += obs2;
-        current_rank += obs;
         //		cout << key << "\t{"<< obs1 << ", " << obs2 << "}" << " sum: " << obs ;
         //		cout << " weight " << rank_weight << " U1: " << U1 << " U2: " << U2 << endl;
-        //		cout << "updated rank " << current_rank << endl;
     }
 
     //return the z-score for the smaller of U1 and U2 assuming a gaussian approx.
-    double z;
     if (R1>R2)
     {
-        z = get_z_score(N2,N1,R2);
+        return get_z_score(N2,N1,R2);
     }
     else
     {
-        z = get_z_score(N1,N2,R1);
-    }
-
-    return z;
-}
-
-void
-ranksum::add_observation(bool is_ref, int obs)
-{
-    space[obs] =1;
-    if (is_ref)
-    {
-        l1[obs]++;
-        //		cout << "ref case" << endl;
-    }
-    else
-    {
-        l2[obs]++;
-        //		cout << "alt case" << endl;
-        //		cout << "ref_base: " << ref_base << " alt_base: " << base <<   endl;
+        return get_z_score(N1,N2,R1);
     }
 }
+
 
 
 // output specification
-static
 ostream&
-operator<< (ostream& out, map<int, int>& l)
-{
-    out << "Elements in l: " << endl;
-    for (map<int, int>::iterator it = l.begin(); it != l.end(); ++it)
-        out << "\t" <<(*it).first << " => " << (*it).second <<  endl;
-    return out;
-}
-
-ostream&
-operator<< (ostream& out, ranksum& r)
+operator<< (ostream& out, const ranksum& r)
 {
     double z = r.get_u_stat();
-    out << endl << "My reference base: " << r.get_refbase() << endl;
-    out << "elements in space: " << endl;
+    out << "elements in space:\n";
     out << "[";
-    vector<int> myvector = r.getSpace();
-    for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
-        std::cout << ' ' << *it;
-    out << "]" << endl;
-    out << r.l1;
-    out << r.l2;
-    out << "N1: " << r.N1 << "\tR1: " << r.R1 <<  endl;
-    out << "N2: " << r.N2 << "\tR2: " << r.R2 <<  endl;
-    out << "Z-score: " << z << endl;
+    const vector<int> myvector = r.getSpace();
+    for (const int& val : myvector)
+        out << ' ' << val;
+    out << "]\n";
+    out << "Z-score: " << z << '\n';
     return out;
 }
 

@@ -115,24 +115,13 @@ set(THIS_PYTHON_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/python")
 set(THIS_DATADIR "${CMAKE_INSTALL_PREFIX}/share")
 set(THIS_DOCDIR "${CMAKE_INSTALL_PREFIX}/doc")
 set(THIS_CONFIGDIR "${THIS_DATADIR}/config")
+set(THIS_DEMODIR "${THIS_DATADIR}/demo")
 
 message (STATUS "install prefix: ${CMAKE_INSTALL_PREFIX}")
 
 add_custom_target(STARKA_OPT ALL)
 
 set(THIS_REDIST_DIR "${CMAKE_SOURCE_DIR}/../redist")
-
-# required boost libraries
-set (THIS_BOOST_VERSION 1.53.0)
-set (THIS_BOOST_COMPONENTS filesystem program_options
-                           system unit_test_framework)
-
-# the name given to boost.build and the library name are the same for all libraries, except
-# for test, so we need two lists now:
-set (THIS_BOOST_BUILD_COMPONENTS filesystem program_options
-                                 system test)
-set (Boost_USE_MULTITHREADED OFF)
-set (Boost_USE_STATIC_LIBS ON)
 
 set (THIS_GLOBALS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/globals.cmake")
 set (THIS_MACROS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/macros.cmake")
@@ -161,6 +150,7 @@ add_subdirectory (opt)
 add_subdirectory (c++)
 add_subdirectory (python)
 add_subdirectory (config)
+add_subdirectory (demo)
 add_subdirectory (markdown)
 add_subdirectory (cmake/postInstall)
 

@@ -343,7 +343,6 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
         debug_dump_ddigt_lhood(pprob,log_os);
     }
 #endif
-
 }
 
 
@@ -353,7 +352,6 @@ void
 write_result_set(const result_set& rs,
                  std::ostream& os)
 {
-
     os << rs.snv_qphred
        << '\t' << rs.snv_from_ref_qphred
        << '\t' << rs.snv_from_het_qphred
@@ -374,7 +372,6 @@ write_somatic_snv_genotype(const strelka_options& opt,
                            const snp_pos_info& tumor_pi,
                            std::ostream& os)
 {
-
     os << std::setprecision(10) << std::fixed;
 
     const result_set& ge(sgt.genome);

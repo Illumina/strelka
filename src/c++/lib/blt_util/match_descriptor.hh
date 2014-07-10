@@ -15,8 +15,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __MATCH_DESCRIPTOR_HH
-#define __MATCH_DESCRIPTOR_HH
+
+#pragma once
 
 /// \brief expand match descriptor to get reference sequence
 ///
@@ -37,5 +37,3 @@ expand_match_descriptor(const char* const read,
                         unsigned* pos,
                         const unsigned read_length,
                         unsigned& ref_read_length);
-
-#endif

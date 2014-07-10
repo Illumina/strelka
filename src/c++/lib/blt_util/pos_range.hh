@@ -16,8 +16,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __POS_RANGE_HH
-#define __POS_RANGE_HH
+#pragma once
 
 #include "blt_util/blt_types.hh"
 
@@ -132,7 +131,3 @@ private:
 
 
 std::ostream& operator<<(std::ostream& os, const pos_range& pr);
-
-
-
-#endif

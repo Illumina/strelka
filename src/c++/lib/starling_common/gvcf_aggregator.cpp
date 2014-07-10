@@ -143,12 +143,12 @@ gvcf_aggregator(const starling_options& opt,
     this->CM.load_models(opt.calibration_models_filename);
     this->CM.set_model(opt.calibration_model);
 
-    assert(NULL != _osptr);
-    assert((NULL !=_chrom) && (strlen(_chrom)>0));
+    assert(nullptr != _osptr);
+    assert((nullptr !=_chrom) && (strlen(_chrom)>0));
 
     //initialize gvcf deriv options:
     cdmap_t chrom_depth;
-    if (_opt.gvcf.is_max_depth_factor && (! _opt.gvcf.chrom_depth_file.empty()))
+    if (! _opt.gvcf.chrom_depth_file.empty())
     {
         parse_chrom_depth(_opt.gvcf.chrom_depth_file,chrom_depth);
         //TODO, verify that chroms match bam chroms
@@ -258,7 +258,7 @@ add_site_internal(const site_info& si)
         {
             while (_site_buffer.size() <= _site_buffer_size)
             {
-                _site_buffer.push_back(site_info());
+                _site_buffer.emplace_back();
             }
             _site_buffer[_site_buffer_size++] = si;
             return;
@@ -314,7 +314,7 @@ add_indel(const pos_t pos,
 
     while (_indel_buffer.size() <= _indel_buffer_size)
     {
-        _indel_buffer.push_back(indel_info());
+        _indel_buffer.emplace_back();
     }
     _indel_buffer[_indel_buffer_size++].init(pos,ik,dindel,iri,isri);
     _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());

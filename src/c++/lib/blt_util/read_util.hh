@@ -16,8 +16,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __READ_UTIL_HH
-#define __READ_UTIL_HH
+#pragma once
 
 #include "bam_seq.hh"
 
@@ -42,5 +41,3 @@ get_read_fwd_strand_skip(const bam_seq& bseq,
                          const bool is_fwd_strand,
                          unsigned& begin_skip,
                          unsigned& end_skip);
-
-#endif

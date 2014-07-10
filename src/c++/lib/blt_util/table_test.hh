@@ -28,8 +28,7 @@
 /// table[] =  { 1, 2, 3, 4, 5, 6 }
 ///
 
-#ifndef __TABLE_TEST_HH
-#define __TABLE_TEST_HH
+#pragma once
 
 #include <ciso646>
 
@@ -80,6 +79,4 @@ is_reject_table(const double alpha,
                 const double* table,
                 const unsigned n_row,
                 const unsigned n_col);
-#endif
-
 #endif

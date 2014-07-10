@@ -15,8 +15,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __MONOGT_HH
-#define __MONOGT_HH
+
+#pragma once
 
 
 namespace MONOGT
@@ -67,6 +67,3 @@ expect(const int base_id,
     return ex[gt][base_id];
 }
 }
-
-
-#endif

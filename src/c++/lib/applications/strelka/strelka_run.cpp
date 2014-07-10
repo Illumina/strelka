@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -29,8 +28,6 @@
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
-#include "boost/shared_ptr.hpp"
-
 #include <sstream>
 
 
@@ -46,7 +43,6 @@ strelka_run(const strelka_options& opt)
 {
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
-
     const strelka_deriv_options dopt(opt,ref);
 
     const pos_range& rlimit(dopt.report_range_limit);
@@ -88,7 +84,7 @@ strelka_run(const strelka_options& opt)
         }
     }
 
-    strelka_streams client_io(opt,pinfo,normal_read_stream.get_header());
+    strelka_streams client_io(opt, dopt, pinfo,normal_read_stream.get_header());
     strelka_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
@@ -97,7 +93,7 @@ strelka_run(const strelka_options& opt)
     sdata.register_reads(tumor_read_stream,STRELKA_SAMPLE_TYPE::TUMOR);
 
     // hold zero-to-many vcf streams open:
-    typedef boost::shared_ptr<vcf_streamer> vcf_ptr;
+    typedef std::shared_ptr<vcf_streamer> vcf_ptr;
     std::vector<vcf_ptr> indel_stream;
 
     for (const auto& vcf_filename : opt.input_candidate_indel_vcf)

@@ -45,7 +45,7 @@ struct strelka_pile_caller
 
 private:
     strelka_options& _opt;
-    std::auto_ptr<strelka_deriv_options> _dopt_ptr;
+    std::unique_ptr<strelka_deriv_options> _dopt_ptr;
     std::ostream& _os;
 };
 

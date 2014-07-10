@@ -13,6 +13,7 @@
 
 /// \author Chris Saunders
 ///
+
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
 
@@ -149,7 +150,6 @@ get_indel_het_grid_lhood(const starling_options& opt,
                          const bool is_use_alt_indel,
                          double* const lhood)
 {
-
     static const unsigned lsize(STAR_DIINDEL_GRID::HET_RES*2);
     for (unsigned gt(0); gt<(lsize); ++gt) lhood[gt] = 0.;
 
@@ -354,7 +354,6 @@ is_multi_indel_allele(const starling_deriv_options& dopt,
                       const bool is_include_tier2,
                       bool& is_overlap)
 {
-
     static const bool is_use_alt_indel(true);
     static const double min_explained_count_fraction(.9);
 
@@ -441,7 +440,6 @@ get_somatic_indel(const strelka_options& opt,
                   const bool is_use_alt_indel,
                   somatic_indel_call& sindel) const
 {
-
     // for now, lhood calculation of tumor and normal are independent:
 
     // get likelihood of each genotype
@@ -460,7 +458,7 @@ get_somatic_indel(const strelka_options& opt,
     const double ref_real_lnp(std::log(1.-ref_error_prob));
 
     static const unsigned n_tier(2);
-    result_set tier_rs[n_tier];
+    std::array<result_set,n_tier> tier_rs;
     for (unsigned i(0); i<n_tier; ++i)
     {
         const bool is_include_tier2(i==1);
@@ -590,84 +588,4 @@ get_somatic_indel(const strelka_options& opt,
     }
 
     sindel.rs.sindel_qphred = tier_rs[sindel.sindel_tier].sindel_qphred;
-}
-
-
-
-static
-void
-write_vcf_isri_tiers(const starling_indel_sample_report_info& isri1,
-                     const starling_indel_sample_report_info& isri2,
-                     std::ostream& os)
-{
-
-    os << isri1.depth
-       << ':'
-       << isri2.depth
-       << ':'
-       << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
-       << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
-       << ':'
-       << isri1.n_q30_indel_reads << ','
-       << isri2.n_q30_indel_reads
-       << ':'
-       << isri1.n_other_reads << ','
-       << isri2.n_other_reads;
-}
-
-
-
-void
-write_somatic_indel_vcf_grid(const somatic_indel_call& sindel,
-                             const starling_indel_report_info& iri,
-                             const starling_indel_sample_report_info* nisri,
-                             const starling_indel_sample_report_info* tisri,
-                             std::ostream& os)
-{
-
-    const somatic_indel_call::result_set& rs(sindel.rs);
-
-    os << '\t' << iri.vcf_ref_seq
-       << '\t' << iri.vcf_indel_seq
-       << '\t' << '.'
-       << '\t' << '.';
-
-    //INFO
-    os << '\t'
-       << "SOMATIC"
-       << ";QSI=" << rs.sindel_qphred
-       << ";TQSI=" << (sindel.sindel_tier+1)
-       << ";NT=" << NTYPE::label(rs.ntype)
-       << ";QSI_NT=" << rs.sindel_from_ntype_qphred
-       << ";TQSI_NT=" << (sindel.sindel_from_ntype_tier+1)
-       << ";SGT=" << static_cast<DDIINDEL_GRID::index_t>(rs.max_gt);
-    if (iri.repeat_unit != "N/A")
-    {
-        os << ";RU=" << iri.repeat_unit
-           << ";RC=" << iri.ref_repeat_count
-           << ";IC=" << iri.indel_repeat_count;
-    }
-    os << ";IHP=" << iri.ihpol;
-    if ((iri.it == INDEL::BP_LEFT) ||
-        (iri.it == INDEL::BP_RIGHT))
-    {
-        os << ";SVTYPE=BND";
-    }
-    if (rs.is_overlap)
-    {
-        os << ";OVERLAP";
-    }
-
-
-    //FORMAT
-    os << '\t' << "DP:DP2:TAR:TIR:TOR";
-
-    // write normal sample info:
-    os << '\t';
-    write_vcf_isri_tiers(nisri[0],nisri[1],os);
-
-    // write tumor sample info:
-    os << '\t';
-    write_vcf_isri_tiers(tisri[0],tisri[1],os);
-
 }

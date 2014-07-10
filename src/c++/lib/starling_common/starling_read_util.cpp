@@ -22,8 +22,6 @@
 #include "blt_util/blt_exception.hh"
 #include "starling_common/starling_shared.hh"
 
-#include "boost/foreach.hpp"
-
 #include <cassert>
 
 #include <sstream>
@@ -236,9 +234,8 @@ get_valid_alignment_range(const alignment& al,
 
     using namespace ALIGNPATH;
 
-    BOOST_FOREACH(const path_segment& ps, al.path)
+    for (const path_segment& ps : al.path)
     {
-
         if       ((ps.type == INSERT) || (ps.type == SOFT_CLIP))
         {
             if (ps.type == INSERT)

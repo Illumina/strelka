@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __STARLING_INDEL_CALL_PPROB_DIGT_HH
-#define __STARLING_INDEL_CALL_PPROB_DIGT_HH
+
+#pragma once
 
 #include "starling_common/starling_diploid_indel.hh"
 #include "starling_common/starling_indel_report_info.hh"
@@ -65,7 +64,7 @@ struct indel_digt_caller : private boost::noncopyable
 
     indel_digt_caller(const double theta);
 
-    // \brief call an indel @ pos by calculating the posterior probability
+    /// \brief call an indel @ pos by calculating the posterior probability
     /// of all possible genotypes for a diploid individual.
     ///
     void
@@ -130,6 +129,3 @@ private:
     double _lnprior_genomic[STAR_DIINDEL::SIZE];
     double _lnprior_polymorphic[STAR_DIINDEL::SIZE];
 };
-
-
-#endif

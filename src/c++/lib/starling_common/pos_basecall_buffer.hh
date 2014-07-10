@@ -80,10 +80,9 @@ struct pos_basecall_buffer
                     const uint8_t* qual,
                     const unsigned offset)
     {
-
         // TODO write this for multi-tier:
         assert(is_tier1);
-        _pdata[pos].hap_set.push_back(hap_cand(read_seq,qual,offset));
+        _pdata[pos].hap_set.emplace_back(read_seq,qual,offset);
     }
 
     // returns NULL for empty pos

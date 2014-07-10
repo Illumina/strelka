@@ -16,8 +16,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STRINGER_HH
-#define __STRINGER_HH
+#pragma once
 
 #include "compat_util.hh"
 #include "scan_string.hh"
@@ -77,6 +76,3 @@ struct stringer : public stringer_base
         return _buff32;
     }
 };
-
-
-#endif

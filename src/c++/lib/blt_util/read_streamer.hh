@@ -15,8 +15,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __READ_STREAMER_HH
-#define __READ_STREAMER_HH
+
+#pragma once
 
 #include "blt_util/read_record.hh"
 
@@ -29,8 +29,7 @@
 //
 struct read_streamer : private boost::noncopyable
 {
-
-    virtual ~read_stream() {}
+    virtual ~read_streamer() {}
 
     virtual bool next() = 0;
     //    virtual const read_record* get_record_ptr() const = 0;
@@ -38,7 +37,3 @@ struct read_streamer : private boost::noncopyable
     virtual unsigned record_no() const = 0;
     virtual void report_state(std::ostream& os) const = 0;
 };
-
-
-
-#endif

@@ -15,8 +15,8 @@
 
 /// \author Chris Saunders
 ///
-#ifndef __DIGT_HH
-#define __DIGT_HH
+
+#pragma once
 
 
 namespace DIGT
@@ -211,4 +211,3 @@ get_vcf_gt(const int gt,
     return gtstr[ex[gt][ref_gt]];
 }
 }
-#endif
