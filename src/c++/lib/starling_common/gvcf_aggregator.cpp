@@ -179,6 +179,22 @@ gvcf_aggregator::
     flush();
 }
 
+void
+gvcf_aggregator::
+add_site(site_info& si) {
+    add_site_modifiers(_opt.gvcf, _dopt, si, this->CM);
+    if (_opt.do_codon_phasing
+            && (si.is_het() || codon_phaser.is_in_block)) {
+        bool emptyBuffer = codon_phaser.add_site(si);
+        if (!codon_phaser.is_in_block || emptyBuffer)
+            this->output_phased_blocked();
+    } else {
+        skip_to_pos(si.pos);
+        add_site_internal(si);
+    }
+}
+
+
 // fill in missing sites
 void
 gvcf_aggregator::
@@ -218,27 +234,7 @@ output_phased_blocked()
     codon_phaser.clear_buffer();
 }
 
-void
-gvcf_aggregator::
-add_site(site_info& si)
-{
 
-    add_site_modifiers(_opt.gvcf,_dopt,si,this->CM);
-
-    // TODO move to pos_processor instead
-    if (_opt.do_codon_phasing && (si.is_het()||codon_phaser.is_in_block))
-    {
-        bool emptyBuffer = codon_phaser.add_site(si);
-        //  Was site absorbed, if not release all buffered sites and add these into the gVCF pipeline
-        if (!codon_phaser.is_in_block || emptyBuffer)
-            this->output_phased_blocked();
-    }
-    else
-    {
-        skip_to_pos(si.pos);
-        add_site_internal(si);
-    }
-}
 
 //Add sites to queue for writing to gVCF
 void
