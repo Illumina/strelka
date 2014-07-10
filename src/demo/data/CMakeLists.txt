@@ -16,13 +16,17 @@
 ##
 ################################################################################
 
-# starling VQSR config files:
-file (GLOB JSON_CONFIG_LIST [a-zA-Z0-9]*.json)
+# run at cmake time
+set(FA_FILE "chr20_860k_only.fa")
+execute_process(
+    COMMAND bzip2 -dc ${CMAKE_CURRENT_SOURCE_DIR}/${FA_FILE}.bz2 
+    OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/${FA_FILE}
+    )
 
-install(FILES ${JSON_CONFIG_LIST} DESTINATION ${THIS_CONFIGDIR})
+file (GLOB DATA_LIST *)
+list (REMOVE_ITEM DATA_LIST ${CMAKE_CURRENT_SOURCE_DIR}/${FA_FILE}.bz2)
+list (REMOVE_ITEM DATA_LIST ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt)
+list (APPEND DATA_LIST ${CMAKE_CURRENT_BINARY_DIR}/${FA_FILE})
 
-# strelka user config file templates:
-file (GLOB STRELKA_CONFIG_LIST strelka_[a-zA-Z0-9]*.ini)
-
-install(FILES ${STRELKA_CONFIG_LIST} DESTINATION ${THIS_CONFIGDIR})
+install(FILES ${DATA_LIST} DESTINATION ${THIS_STRELKADEMODIR}/data)
 

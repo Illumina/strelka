@@ -16,13 +16,14 @@
 ##
 ################################################################################
 
-# starling VQSR config files:
-file (GLOB JSON_CONFIG_LIST [a-zA-Z0-9]*.json)
+include ("${THIS_GLOBALS_CMAKE}")
 
-install(FILES ${JSON_CONFIG_LIST} DESTINATION ${THIS_CONFIGDIR})
+set (THIS_STRELKADEMODIR "${THIS_DEMODIR}/strelka")
+install(FILES "README.txt" DESTINATION ${THIS_STRELKADEMODIR})
+install(FILES "strelkaDemoConfig.ini" DESTINATION ${THIS_STRELKADEMODIR})
+install(DIRECTORY "expectedResults" DESTINATION ${THIS_STRELKADEMODIR})
 
-# strelka user config file templates:
-file (GLOB STRELKA_CONFIG_LIST strelka_[a-zA-Z0-9]*.ini)
+install(FILES "runStrelkaWorkflowDemo.bash"  DESTINATION ${THIS_BINDIR} PERMISSIONS ${THIS_EXECUTABLE_PERMISSIONS})
 
-install(FILES ${STRELKA_CONFIG_LIST} DESTINATION ${THIS_CONFIGDIR})
+add_subdirectory (data)
 
