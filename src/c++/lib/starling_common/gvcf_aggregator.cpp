@@ -479,6 +479,7 @@ write_site_record(const site_info& si) const
         if (si.smod.is_phased_region)
         {
             os << si.phased_alt;
+
         }
         else
             print_vcf_alt(si.smod.max_gt,si.dgt.ref_gt,os);

@@ -20,7 +20,7 @@
 #include "codon_phaser.hh"
 #include <vector>
 
-//#define DEBUG_CODON
+#define DEBUG_CODON
 
 
 #ifdef DEBUG_CODON
@@ -181,6 +181,8 @@ Codon_phaser::create_phased_record()
     base.phased_ref = this->reference;
     bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
 
+    base.smod.is_block = false;
+    base.smod.is_unknown = false;
     base.smod.max_gt = 4;
     base.dgt.ref_gt  = 0; // hacking  the gt method to 0/1
     if (!is_ref) base.dgt.ref_gt = 2; // hacking the gt method to 1/2
@@ -243,8 +245,9 @@ Codon_phaser::make_record()
     this->collect_read_evidence();
     this->create_phased_record();
     this->clear_read_buffer(this->block_start);
+//    log_os << "writting out allele " << "\n";
 #ifdef DEBUG_CODON
-    this->write_out_alleles();
+//    this->write_out_alleles();
 #endif
 }
 
