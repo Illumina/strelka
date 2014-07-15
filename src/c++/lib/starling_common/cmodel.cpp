@@ -32,7 +32,7 @@
 //#define DEBUG_MODEL
 
 #ifdef DEBUG_MODEL
-#include "blt_util/log.hh"
+    #include "blt_util/log.hh"
 #endif
 
 // add model paramaters
@@ -190,11 +190,21 @@ int prior_adjustment(
 void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
 {
 //    most_predictive.size();
+
+    const double dpfExtreme(0.9);
+    const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
+    if (total_calls>0)
+    {
+        const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
+        if (filt>dpfExtreme) si.Qscore=3;
+    }
+
     if (si.Qscore < qscore_cut)
     {
 //        log_os << CALIBRATION_MODEL::get_label(my_case) << "\n";
         si.smod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(my_case)); // more sophisticated filter setting here
     }
+
 }
 
 void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
