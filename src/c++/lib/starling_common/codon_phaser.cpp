@@ -75,7 +75,7 @@ Codon_phaser::add_site(site_info& si)
     {
 //        log_os << "!!!het count " << het_count << "\n";
 #ifdef DEBUG_CODON
-        this->write_out_buffer();
+//        this->write_out_buffer();
 #endif
         make_record();
     }
@@ -245,7 +245,7 @@ Codon_phaser::make_record()
     this->collect_read_evidence();
     this->create_phased_record();
     this->clear_read_buffer(this->block_start);
-//    log_os << "writting out allele " << "\n";
+    log_os << "writting out allele " << "\n";
 #ifdef DEBUG_CODON
 //    this->write_out_alleles();
 #endif

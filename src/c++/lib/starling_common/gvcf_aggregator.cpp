@@ -469,7 +469,7 @@ write_site_record(const site_info& si) const
         os  << si.ref << '\t'; // REF
 
     // ALT
-    if (si.smod.is_unknown || si.smod.is_block)
+    if ((si.smod.is_unknown || si.smod.is_block) && !si.smod.is_phased_region)
     {
         os << '.';
     }
@@ -574,7 +574,7 @@ write_site_record(const site_info& si) const
         os << ":GQ";
     }
     os << ":GQX:DP:DPF";
-    if (! si.smod.is_block)
+    if (! si.smod.is_block || si.smod.is_phased_region)
     {
         os << ":AD";
     }
@@ -588,7 +588,7 @@ write_site_record(const site_info& si) const
     }
     if (si.smod.is_gqx())
     {
-        if (si.smod.is_block)
+        if (si.smod.is_block && !si.smod.is_phased_region)
         {
             os << _block.block_gqx.min();
         }
@@ -606,7 +606,7 @@ write_site_record(const site_info& si) const
     }
     os << ':';
     //print DP:DPF
-    if (si.smod.is_block)
+    if (si.smod.is_block && !si.smod.is_phased_region)
     {
         os << _block.block_dpu.min() << ':'
            << _block.block_dpf.min();
@@ -624,7 +624,6 @@ write_site_record(const site_info& si) const
         os << ':';
         print_site_ad(si,os);
     }
-
     os << '\n';
 }
 
