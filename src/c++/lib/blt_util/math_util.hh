@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -31,7 +30,6 @@ template <typename FloatType>
 FloatType
 log1p_switch(const FloatType x)
 {
-
     // better number??
     static const FloatType smallx_thresh(0.01);
 

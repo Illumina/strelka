@@ -18,10 +18,12 @@
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
 #include "strelka_vcf_locus_info.hh"
+#include "blt_util/blt_exception.hh"
 
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
 
 
@@ -200,8 +202,17 @@ cacheIndel(
     const pos_t pos,
     const SomaticIndelVcfInfo& siInfo)
 {
-    assert(_data.count(pos) == 0);
-    _data[pos] = siInfo;
+#if 0
+    if (_data.count(pos) != 0)
+    {
+        std::ostringstream oss;
+        oss << "ERROR: Attempting to cache 2 indels at one site.\n";
+        oss << "\texisting indel REF/ALT:\t" << siInfo.iri.ref_seq << " " << siInfo.iri.indel_seq << "\n";
+        oss << "\tnew indel REF/ALT:\t" << _data[pos].iri.ref_seq << " " << _data[pos].iri.indel_seq << "\n";
+        throw blt_exception(oss.str().c_str());
+    }
+#endif
+    _data[pos].push_back(siInfo);
 }
 
 
@@ -213,8 +224,10 @@ addIndelWindowData(
     const win_avg_set& wasNormal,
     const win_avg_set& wasTumor)
 {
-    assert( _data.count(pos) != 0);
-    writeSomaticIndelVcfGrid(_opt, _dopt, pos, _data[pos], wasNormal, wasTumor, *_osptr);
-
+    assert(testPos(pos));
+    for (const auto& indelInfo : _data[pos])
+    {
+        writeSomaticIndelVcfGrid(_opt, _dopt, pos, indelInfo, wasNormal, wasTumor, *_osptr);
+    }
     _data.erase(pos);
 }

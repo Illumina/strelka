@@ -81,5 +81,5 @@ private:
     const strelka_options& _opt;
     const strelka_deriv_options& _dopt;
     std::ostream* _osptr;
-    std::map<pos_t,SomaticIndelVcfInfo> _data;
+    std::map<pos_t,std::vector<SomaticIndelVcfInfo>> _data;
 };
