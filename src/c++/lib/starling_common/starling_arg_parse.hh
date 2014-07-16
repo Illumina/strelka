@@ -31,3 +31,4 @@
 void
 legacy_starling_arg_parse(arg_data& ad,
                           starling_options& client_opt);
+

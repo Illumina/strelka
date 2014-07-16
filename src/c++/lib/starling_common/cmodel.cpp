@@ -191,7 +191,7 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
 {
 //    most_predictive.size();
 
-    const double dpfExtreme(0.9);
+    const double dpfExtreme(0.85);
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
     if (total_calls>0)
     {

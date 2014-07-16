@@ -21,6 +21,11 @@
 #include "starling_common/starling_shared.hh"
 #include "starling_common/starling_arg_parse.hh"
 
+//#define DEBUG_PARSER
+
+#ifdef DEBUG_PARSER
+    #include "blt_util/log.hh"
+#endif
 
 void
 legacy_starling_arg_parse(arg_data& ad,
@@ -59,6 +64,8 @@ legacy_starling_arg_parse(arg_data& ad,
 
     bool is_uacmq_set(false);
 
+    // specify parameters that are always default in ISIS
+
     const unsigned as(ad.size());
     for (unsigned i(0); i<as; ++i)
     {
@@ -82,6 +89,8 @@ legacy_starling_arg_parse(arg_data& ad,
         }
         else if (ad.argstr[i]=="-bsnp-ssd-no-mismatch")
         {
+//            log_os << "testing -bsnp-ssd-no-mismatch \n";
+//            log_os << "i ad,is_bsnp_ssd_no_mismatch :"<< i << " " << ad << "\n "; //<< ad << " " << is_bsnp_ssd_no_mismatch << "\n";
             set_xrange_arg(i,ad,is_bsnp_ssd_no_mismatch,opt.bsnp_ssd_no_mismatch,true);
         }
         else if (ad.argstr[i]=="-bsnp-ssd-one-mismatch")

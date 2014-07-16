@@ -60,10 +60,10 @@ struct gvcf_options
         , is_block_compression(true)
         , block_max_nonref(.2)
         , minor_allele_file("")
+        , out_file("-")
     {}
 
     // admin/other:
-    std::string out_file;
     std::string chrom_depth_file;
     bool is_skip_header;
 
@@ -92,6 +92,7 @@ struct gvcf_options
 
     double block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
     std::string minor_allele_file; //
+    std::string out_file;
 };
 
 
@@ -116,8 +117,8 @@ struct blt_options
           bsnp_monoploid_theta(0),
           bsnp_nploid_ploidy(0),
           bsnp_nploid_snp_prob(0),
-          bsnp_ssd_no_mismatch(0),
-          bsnp_ssd_one_mismatch(0),
+          bsnp_ssd_no_mismatch(0.35),
+          bsnp_ssd_one_mismatch(0.6),
           bsnp_diploid_het_bias(0),
           adis_lrt_alpha(0),
           adis_table_alpha(0),
@@ -135,7 +136,7 @@ struct blt_options
           is_adis_win_lrt(false),
           is_acov(false),
           min_qscore(17),
-          min_single_align_score(10),
+          min_single_align_score(20),
           min_paired_align_score(6),
           single_align_score_exclude_mode(false),
           single_align_score_rescue_mode(false),
@@ -158,8 +159,8 @@ struct blt_options
           min_win_qscore(0),
           min_win_qscore_flank_size(0),
           is_max_win_mismatch(false),
-          max_win_mismatch(0),
-          max_win_mismatch_flank_size(0),
+          max_win_mismatch(2),
+          max_win_mismatch_flank_size(20),
           is_counts(false),
           is_print_evidence(false),
           is_print_all_site_evidence(false),
@@ -169,15 +170,15 @@ struct blt_options
           is_filter_anom_calls(false),
           is_include_singleton(false),
           is_include_anomalous(false),
-          is_clobber(false),
+          is_clobber(true),
           is_report_range_ref(false),
           is_print_all_poly_gt(false),
           is_print_used_allele_counts(false),
           used_allele_count_min_qscore(0),
           max_basecall_filter_fraction(1.),
           max_vexp_iterations(0),
-          is_min_vexp(false),
-          min_vexp(0),
+          is_min_vexp(true),
+          min_vexp(0.25),
           verbosity(LOG_LEVEL::DEFAULT)
           , is_write_variable_metadata(true)
           , het_bias_inc_fudge(0.0001)
