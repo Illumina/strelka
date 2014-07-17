@@ -20,7 +20,7 @@
 #include "codon_phaser.hh"
 #include <vector>
 
-#define DEBUG_CODON
+//#define DEBUG_CODON
 
 
 #ifdef DEBUG_CODON
