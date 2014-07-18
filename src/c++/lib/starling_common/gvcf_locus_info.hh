@@ -330,6 +330,7 @@ struct site_info
         , BaseQRankSum(0)
         , MQRankSum(0)
         , Qscore(-1)
+        , Unphasable(false)
     {
         for (unsigned i(0); i<N_BASE; ++i) known_counts[i] = 0;
     }
@@ -405,10 +406,11 @@ struct site_info
     double MQ;				 // RMS of mapping qualities
 
     //only meaningful for het calls
-    double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
-    double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
-    double MQRankSum;        // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
-    int Qscore;           // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
+    double ReadPosRankSum;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
+    double BaseQRankSum;    // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
+    double MQRankSum;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
+    int Qscore;             // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
+    bool Unphasable;        // Set to true if the site should never be included in a phasing block
 
     site_modifiers smod;
 };

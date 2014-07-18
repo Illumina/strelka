@@ -200,12 +200,11 @@ void
 gvcf_aggregator::
 skip_to_pos(const pos_t target_pos)
 {
-
     // advance through any indel region by adding individual sites
     while (_head_pos<target_pos)
     {
-//        const site_info& si = get_empty_site(_head_pos);
-        add_site_internal(get_empty_site(_head_pos));
+        const site_info& si = get_empty_site(_head_pos);
+        add_site_internal(si);
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
         if (0 != _indel_buffer_size) continue;
@@ -327,7 +326,6 @@ bool
 is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
                         const unsigned size)
 {
-
     return (size==2 &&
             is_het_indel(indel_buffer[0].dindel) &&
             is_het_indel(indel_buffer[1].dindel));

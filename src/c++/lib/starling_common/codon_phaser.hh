@@ -44,7 +44,7 @@ public:
     void collect_read_evidence();       // fill in allele counter
     void construct_reference();         // assemble the reference allele for the record
     void create_phased_record();        // fill in the si record and decide if we have sufficient evidence for a phased call
-    int get_block_length()
+    unsigned get_block_length()
     {
         return (this->block_end-this->block_start+1);
     }

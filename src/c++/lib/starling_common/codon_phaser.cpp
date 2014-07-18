@@ -24,7 +24,7 @@
 
 
 #ifdef DEBUG_CODON
-#include "blt_util/log.hh"
+    #include "blt_util/log.hh"
 #endif
 
 Codon_phaser::Codon_phaser()
@@ -45,9 +45,10 @@ Codon_phaser::Codon_phaser()
 bool
 Codon_phaser::add_site(site_info& si)
 {
-    // case: extending block with het call, update block_end position
+
     buffer.push_back(si);
 
+    // case: extending block with het call, update block_end position
     if (si.is_het())
     {
         if (!is_in_block)
@@ -56,16 +57,24 @@ Codon_phaser::add_site(site_info& si)
         block_end = si.pos;
         het_count ++;
 #ifdef DEBUG_CODON
-//            log_os << "starting block @ " << (this->block_start+1) << " with " << si << "\n";
+            log_os << "starting block @ " << (this->block_start+1) << " with " << si << "\n";
 #endif
         return false;
+    }
+
+    //case: we get a record that is explicitly set a unphaseable
+    if(si.Unphasable){
+        #ifdef DEBUG_CODON
+                    log_os << "I shouldn't phase this record " << si << "\n";
+        #endif
+        return true;
     }
 
     // case: extending block with none-het call based on the phasing range
     if (is_in_block && (si.pos-block_end+1)<this->opt->phasing_window)
     {
 #ifdef DEBUG_CODON
-//            log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
+            log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
 #endif
         return false;
     }
@@ -93,6 +102,10 @@ Codon_phaser::construct_reference()
 void
 Codon_phaser::create_phased_record()
 {
+    // sanity check do we have all record we expect or are there un-accounted no-calls
+    if (this->get_block_length()>this->buffer.size())
+        return;
+
     if (this->total_reads<10)
     {
         // some initial minimum conditions, look for at least 10 spanning reads support
@@ -127,8 +140,8 @@ Codon_phaser::create_phased_record()
     }
 
 #ifdef DEBUG_CODON
-//        log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
-//        log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
+        log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
+        log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
 #endif
 
     // some add hoc metrics to measure consistency with diploid model
@@ -205,10 +218,18 @@ Codon_phaser::create_phased_record()
 
     // set GQ and GQX
     int min_gq(INT_MAX), min_qual(INT_MAX), min_qscore(INT_MAX);
-    for (int i(0); i<this->get_block_length(); i++)
+
+#ifdef DEBUG_CODON
+    log_os << "buffer size " << buffer.size() << "\n";
+    log_os << "block length " << get_block_length() << "\n";
+#endif
+
+
+    for (unsigned i(0); i<this->get_block_length(); i++)
     {
         if (this->buffer.at(i).is_het())
         {
+
             min_gq      = std::min(this->buffer.at(i).smod.gq,min_gq);
             min_qual      = std::min(this->buffer.at(i).dgt.genome.snp_qphred,min_qual);
             min_qscore  = std::min(this->buffer.at(i).Qscore,min_qscore);
@@ -230,11 +251,11 @@ Codon_phaser::create_phased_record()
     base.n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
 
     // case we want to report the phased record clean out buffer and push on the phased record only
-//    log_os << "buffer size " << buffer.size() << "\n";
-//    this->write_out_buffer();
+#ifdef DEBUG_CODON
+    log_os << "buffer size " << buffer.size() << "\n";
+    this->write_out_buffer();
+#endif
     buffer.erase(buffer.begin()+1,buffer.begin()+this->get_block_length());
-//    log_os << "buffer size " << buffer.size() << "\n";
-//    this->write_out_buffer();
 }
 
 // makes the phased VCF record from the buffered sites list
@@ -244,11 +265,10 @@ Codon_phaser::make_record()
     this->construct_reference();
     this->collect_read_evidence();
     this->create_phased_record();
-    this->clear_read_buffer(this->block_start);
-    log_os << "writting out allele " << "\n";
-#ifdef DEBUG_CODON
+//    this->clear_read_buffer(this->block_start);
+//#ifdef DEBUG_CODON
 //    this->write_out_alleles();
-#endif
+//#endif
 }
 
 void
@@ -377,8 +397,8 @@ Codon_phaser::write_out_buffer()
 void
 Codon_phaser::write_out_alleles()
 {
-    log_os << "Ref: " << this->reference << "=" << this->observations[this->reference] << "\n";
-    log_os << "Alt: ";
+//    log_os << "Ref: " << this->reference << "=" << this->observations[this->reference] << "\n";
+//    log_os << "Alt: ";
     for (allele_map::const_iterator it = this->observations.begin(); it != this->observations.end(); ++it)   // only normalize the features that are needed
     {
         if (it->first!=this->reference)
