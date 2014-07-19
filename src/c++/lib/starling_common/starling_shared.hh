@@ -87,7 +87,7 @@ struct starling_options : public blt_options
           , is_skip_realignment(false)
           , is_baby_elephant(false)
           , is_ignore_read_names(false)
-          , upstream_oligo_size(10)
+          , upstream_oligo_size(0)
           , is_htype_calling(false)
           , hytpe_count(2)
           , htype_call_segment(1000)
