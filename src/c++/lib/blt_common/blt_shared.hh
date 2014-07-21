@@ -14,6 +14,7 @@
 ///
 /// \author Chris Saunders
 ///
+
 #pragma once
 
 #include "blt_util/blt_types.hh"
@@ -60,7 +61,6 @@ struct gvcf_options
         , is_block_compression(true)
         , block_max_nonref(.2)
         , minor_allele_file("")
-        , out_file("-")
     {}
 
     // admin/other:
@@ -117,8 +117,8 @@ struct blt_options
           bsnp_monoploid_theta(0),
           bsnp_nploid_ploidy(0),
           bsnp_nploid_snp_prob(0),
-          bsnp_ssd_no_mismatch(0.35),
-          bsnp_ssd_one_mismatch(0.6),
+          bsnp_ssd_no_mismatch(0),
+          bsnp_ssd_one_mismatch(0),
           bsnp_diploid_het_bias(0),
           adis_lrt_alpha(0),
           adis_table_alpha(0),
@@ -136,8 +136,8 @@ struct blt_options
           is_adis_win_lrt(false),
           is_acov(false),
           min_qscore(17),
-          min_single_align_score(20),
-          min_paired_align_score(20),
+          min_single_align_score(10),
+          min_paired_align_score(6),
           single_align_score_exclude_mode(false),
           single_align_score_rescue_mode(false),
 
@@ -158,9 +158,9 @@ struct blt_options
           is_min_win_qscore(false),
           min_win_qscore(0),
           min_win_qscore_flank_size(0),
-          is_max_win_mismatch(false),       // if not supplied on command-line set to true as default
-          max_win_mismatch(2),
-          max_win_mismatch_flank_size(20),
+          is_max_win_mismatch(false),
+          max_win_mismatch(0),
+          max_win_mismatch_flank_size(0),
           is_counts(false),
           is_print_evidence(false),
           is_print_all_site_evidence(false),
@@ -177,8 +177,8 @@ struct blt_options
           used_allele_count_min_qscore(0),
           max_basecall_filter_fraction(1.),
           max_vexp_iterations(0),
-          is_min_vexp(false),               // if not supplied on command-line set to true as default
-          min_vexp(0.25),
+          is_min_vexp(false),
+          min_vexp(0),
           verbosity(LOG_LEVEL::DEFAULT)
           , is_write_variable_metadata(true)
           , het_bias_inc_fudge(0.0001)
@@ -193,7 +193,7 @@ struct blt_options
           , is_compute_hapscore(false)
           , is_compute_VQSRmetrics(false)
           , is_compute_calibration_features(false)
-          , calibration_model("default") // default model reports rule-based metrics
+          , calibration_model("QScoreHpolmodel") // default model reports rule-based metrics
           , do_codon_phasing(false)
           , phasing_window(3)
 

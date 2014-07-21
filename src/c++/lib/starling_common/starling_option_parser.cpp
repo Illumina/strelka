@@ -113,7 +113,7 @@ get_starling_shared_option_parser(starling_options& opt)
      "Output all features used for calibration model training, development only.")
     ("minor-allele-bed-file",  po::value(&opt.minor_allele_bed)->default_value(""),
      "Bed file with sites that should not be block-compressed if hom-ref.")
-    ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("old"),
+    ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("new"),
      "Choose indel error model to use, available option old,new, new_stratified (development option only)")
 
 

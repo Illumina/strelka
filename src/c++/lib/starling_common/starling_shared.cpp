@@ -41,7 +41,7 @@ starling_options::set_isis_defaults()
     if(!this->is_min_vexp)
         this->is_min_vexp = true;
     if(!this->is_max_win_mismatch)
-            this->is_max_win_mismatch = true;
+        this->is_max_win_mismatch = true;
 }
 
 
