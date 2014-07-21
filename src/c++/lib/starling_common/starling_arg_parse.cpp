@@ -65,8 +65,6 @@ legacy_starling_arg_parse(arg_data& ad,
 
     bool is_uacmq_set(false);
 
-    // specify parameters that are always default in ISIS
-
     const unsigned as(ad.size());
     for (unsigned i(0); i<as; ++i)
     {
@@ -313,8 +311,6 @@ legacy_starling_arg_parse(arg_data& ad,
     }
 
     ad.finalize_args();
-
-    opt.set_isis_defaults(); // if not set on the command-line, set parameters to Isis default expectation
 
     // although we've tried to separate parameter parsing and
     // validation, this validation code is stuck here for now:
