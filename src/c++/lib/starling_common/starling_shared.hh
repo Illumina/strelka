@@ -121,6 +121,8 @@ struct starling_options : public blt_options
         return max_indel_size;
     }
 
+    void set_isis_defaults();
+
     // parameters inherited from varling caller:
     //
     double bindel_diploid_theta;

@@ -137,7 +137,7 @@ struct blt_options
           is_acov(false),
           min_qscore(17),
           min_single_align_score(20),
-          min_paired_align_score(6),
+          min_paired_align_score(20),
           single_align_score_exclude_mode(false),
           single_align_score_rescue_mode(false),
 
@@ -158,7 +158,7 @@ struct blt_options
           is_min_win_qscore(false),
           min_win_qscore(0),
           min_win_qscore_flank_size(0),
-          is_max_win_mismatch(false),
+          is_max_win_mismatch(false),       // if not supplied on command-line set to true as default
           max_win_mismatch(2),
           max_win_mismatch_flank_size(20),
           is_counts(false),
@@ -177,7 +177,7 @@ struct blt_options
           used_allele_count_min_qscore(0),
           max_basecall_filter_fraction(1.),
           max_vexp_iterations(0),
-          is_min_vexp(true),
+          is_min_vexp(false),               // if not supplied on command-line set to true as default
           min_vexp(0.25),
           verbosity(LOG_LEVEL::DEFAULT)
           , is_write_variable_metadata(true)

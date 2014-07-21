@@ -48,6 +48,7 @@ arg_data(const std::vector<std::string>& arg,
     , cmdline(init_cmdline)
     , pinfo(init_pinfo) {}
 
+
 void
 arg_data::
 finalize_args()
@@ -57,6 +58,9 @@ finalize_args()
     {
         if (! argmark[i]) pinfo.usage((std::string("Invalid argument: ")+argstr[i]).c_str());
     }
+
+
+
 }
 
 

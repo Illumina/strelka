@@ -27,6 +27,7 @@
     #include "blt_util/log.hh"
 #endif
 
+
 void
 legacy_starling_arg_parse(arg_data& ad,
                           starling_options& opt)
@@ -313,6 +314,7 @@ legacy_starling_arg_parse(arg_data& ad,
 
     ad.finalize_args();
 
+    opt.set_isis_defaults(); // if not set on the command-line, set parameters to Isis default expectation
 
     // although we've tried to separate parameter parsing and
     // validation, this validation code is stuck here for now:
