@@ -42,11 +42,12 @@ struct gvcf_aggregator
     ~gvcf_aggregator();
 
     void add_indel(const pos_t pos, const indel_key ik,
-            const starling_diploid_indel_core& dindel,
-            const starling_indel_report_info& iri,
-            const starling_indel_sample_report_info& isri);
+                   const starling_diploid_indel_core& dindel,
+                   const starling_indel_report_info& iri,
+                   const starling_indel_sample_report_info& isri);
 
-    void flush() {
+    void flush()
+    {
         skip_to_pos(_report_range.end_pos);
         process_overlaps();
         write_block_site_record();
@@ -64,7 +65,8 @@ private:
     void write_indel_record(const unsigned write_index = 0);
     void skip_to_pos(const pos_t target_pos);
 
-    const site_info& get_empty_site(const pos_t pos) {
+    const site_info& get_empty_site(const pos_t pos)
+    {
         _empty_site.pos = pos;
         _empty_site.ref = _ref.get_base(pos);
         _empty_site.Unphasable = true;

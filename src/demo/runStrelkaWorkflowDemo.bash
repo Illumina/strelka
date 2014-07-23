@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+#
+# Starka
+# Copyright (c) 2009-2014 Illumina, Inc.
+#
+# This software is provided under the terms and conditions of the
+# Illumina Open Source Software License 1.
+#
+# You should have received a copy of the Illumina Open Source
+# Software License 1 along with this program. If not, see
+# <https://github.com/sequencing/licenses/>
+#
 
 #
 # Execute small strelka demonstration/verification run
@@ -38,7 +49,7 @@ fi
 if [ -e $analysisDir ]; then
     cat<<END 1>&2
 
-ERROR: Demo analysis directory already exists: '$analysisDir' 
+ERROR: Demo analysis directory already exists: '$analysisDir'
        Please remove/move this to rerun demo.
 
 END
@@ -112,7 +123,7 @@ filterVariableMetadata() {
 }
 
 for f in $(ls $expectedDir); do
-    efile=$expectedDir/$f 
+    efile=$expectedDir/$f
     rfile=$resultsDir/$f
     diff <(gzip -dc $efile | filterVariableMetadata) <(gzip -dc $rfile | filterVariableMetadata)
 

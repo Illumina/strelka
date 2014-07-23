@@ -385,7 +385,8 @@ make_start_pos_alignment(const pos_t ref_start_pos,
         else if (ik.type==INDEL::DELETE)
         {
             add_path_segment(apath,DELETE,ref_head_pos,ik.length);
-            if (match_segment==0) {
+            if (match_segment==0)
+            {
                 cal.leading_indel_key=ik;
             }
             else

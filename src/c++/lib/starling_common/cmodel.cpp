@@ -32,7 +32,7 @@
 //#define DEBUG_MODEL
 
 #ifdef DEBUG_MODEL
-    #include "blt_util/log.hh"
+#include "blt_util/log.hh"
 #endif
 
 // add model paramaters

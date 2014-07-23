@@ -129,7 +129,8 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
         BOOST_CHECK_EQUAL(cal.al.pos,1000);
     }
 
-    {   // leading edge delete:
+    {
+        // leading edge delete:
         indel_key ik(1000,INDEL::DELETE,10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("10D65M1D35M",cal.al.path);
@@ -137,7 +138,8 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
         BOOST_CHECK_EQUAL(cal.al.pos,1000);
     }
 
-    {   // trailing edge delete:
+    {
+        // trailing edge delete:
         indel_key ik(1101,INDEL::DELETE,10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("75M1D25M10D",cal.al.path);
@@ -145,7 +147,8 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
         BOOST_CHECK_EQUAL(cal.al.pos,1000);
     }
 
-    {   // trailing off-edge delete:
+    {
+        // trailing off-edge delete:
         indel_key ik(1102,INDEL::DELETE,10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("75M1D25M",cal.al.path);

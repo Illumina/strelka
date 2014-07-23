@@ -34,7 +34,7 @@
 //#define DEBUG_CAL
 
 #ifdef DEBUG_CAL
-    #include "blt_util/log.hh"
+#include "blt_util/log.hh"
 #endif
 
 calibration_models::calibration_models()

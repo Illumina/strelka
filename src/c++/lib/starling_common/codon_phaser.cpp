@@ -24,7 +24,7 @@
 
 
 #ifdef DEBUG_CODON
-    #include "blt_util/log.hh"
+#include "blt_util/log.hh"
 #endif
 
 Codon_phaser::Codon_phaser()
@@ -57,16 +57,17 @@ Codon_phaser::add_site(site_info& si)
         block_end = si.pos;
         het_count ++;
 #ifdef DEBUG_CODON
-            log_os << "starting block @ " << (this->block_start+1) << " with " << si << "\n";
+        log_os << "starting block @ " << (this->block_start+1) << " with " << si << "\n";
 #endif
         return false;
     }
 
     //case: we get a record that is explicitly set a unphaseable
-    if(si.Unphasable){
-        #ifdef DEBUG_CODON
-                    log_os << "I shouldn't phase this record " << si << "\n";
-        #endif
+    if (si.Unphasable)
+    {
+#ifdef DEBUG_CODON
+        log_os << "I shouldn't phase this record " << si << "\n";
+#endif
         return true;
     }
 
@@ -74,7 +75,7 @@ Codon_phaser::add_site(site_info& si)
     if (is_in_block && (si.pos-block_end+1)<this->opt->phasing_window)
     {
 #ifdef DEBUG_CODON
-            log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
+        log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
 #endif
         return false;
     }
@@ -140,8 +141,8 @@ Codon_phaser::create_phased_record()
     }
 
 #ifdef DEBUG_CODON
-        log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
-        log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
+    log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
+    log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
 #endif
 
     // some add hoc metrics to measure consistency with diploid model

@@ -57,11 +57,11 @@ public:
         auto& val(_obsMap[obs]);
         if (is_ref)
         {
-             val.ref++;
+            val.ref++;
         }
         else
         {
-             val.nonRef++;
+            val.nonRef++;
         }
     }
 

@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE( test_ranksum )
 BOOST_AUTO_TEST_CASE( test_ranksum_runtime )
 {
     ranksum r;
-    for (unsigned i(0);i<10000000;++i)
+    for (unsigned i(0); i<10000000; ++i)
     {
         r.add_observation(true,44);
         r.add_observation(true,45);

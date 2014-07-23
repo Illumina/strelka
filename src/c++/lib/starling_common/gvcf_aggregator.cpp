@@ -181,14 +181,18 @@ gvcf_aggregator::
 
 void
 gvcf_aggregator::
-add_site(site_info& si) {
+add_site(site_info& si)
+{
     add_site_modifiers(_opt.gvcf, _dopt, si, this->CM);
     if (_opt.do_codon_phasing
-            && (si.is_het() || codon_phaser.is_in_block)) {
+        && (si.is_het() || codon_phaser.is_in_block))
+    {
         bool emptyBuffer = codon_phaser.add_site(si);
         if (!codon_phaser.is_in_block || emptyBuffer)
             this->output_phased_blocked();
-    } else {
+    }
+    else
+    {
         skip_to_pos(si.pos);
         add_site_internal(si);
     }

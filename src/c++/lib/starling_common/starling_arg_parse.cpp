@@ -24,7 +24,7 @@
 //#define DEBUG_PARSER
 
 #ifdef DEBUG_PARSER
-    #include "blt_util/log.hh"
+#include "blt_util/log.hh"
 #endif
 
 

@@ -19,7 +19,7 @@
 # run at cmake time
 set(FA_FILE "chr20_860k_only.fa")
 execute_process(
-    COMMAND bzip2 -dc ${CMAKE_CURRENT_SOURCE_DIR}/${FA_FILE}.bz2 
+    COMMAND bzip2 -dc ${CMAKE_CURRENT_SOURCE_DIR}/${FA_FILE}.bz2
     OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/${FA_FILE}
     )
 
