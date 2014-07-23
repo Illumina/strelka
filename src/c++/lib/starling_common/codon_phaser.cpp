@@ -265,7 +265,7 @@ Codon_phaser::make_record()
     this->construct_reference();
     this->collect_read_evidence();
     this->create_phased_record();
-//    this->clear_read_buffer(this->block_start);
+    this->clear_read_buffer(this->block_start);
 //#ifdef DEBUG_CODON
 //    this->write_out_alleles();
 //#endif
