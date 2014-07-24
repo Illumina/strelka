@@ -61,10 +61,10 @@ You must specify a BAM file.
         defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
 
         libexecDir=defaults["libexecDir"]
-        
+
         configDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_CONFIGDIR@"))
         assert os.path.isdir(configDir)
-        
+
         defaults.update({
             'runDir' : 'StarlingWorkflow',
             'bgcatBin' : joinFile(libexecDir,"bgzf_cat"),

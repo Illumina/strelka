@@ -93,7 +93,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segStr = str(gseg.id)
 
     segCmd = [ self.params.starlingBin ]
-    
+
     segCmd.append("-clobber")
     segCmd.extend(["-min-paired-align-score",self.params.minMapq])
     segCmd.extend(["-min-single-align-score",self.params.minMapq])
@@ -114,12 +114,12 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['--scoring-model',self.params.vqsrModel])
     segCmd.extend(['--calibration-model-file', self.params.vqsrModelFile])
-    
+
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",bamPath])
- 
+
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
- 
+
     if not isFirstSegment :
         segCmd.append("--gvcf-skip-header")
 
@@ -128,10 +128,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
         segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
- 
+
     if self.params.isWriteRealignedBam :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr)])
- 
+
     if self.params.indelCandidates is not None :
         segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
 
@@ -141,19 +141,19 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.extraStarlingArguments is not None :
         for arg in self.params.extraStarlingArguments.strip().split() :
             segCmd.append(arg)
- 
-     # gvcf is written to stdout so we need shell features:    
+
+     # gvcf is written to stdout so we need shell features:
     segCmd = " ".join(segCmd)
-    
+
     segFiles.gvcf.append(self.paths.getTmpSegmentGvcfPath(segStr))
     segCmd += " | %s -c >| %s" % (self.params.bgzip9Bin, segFiles.gvcf[-1])
-    
+
     nextStepWait = set()
 
     setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
     self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
     nextStepWait.add(setTaskLabel)
- 
+
     if self.params.isWriteRealignedBam :
         def sortRealignBam(sortList) :
             unsorted = self.paths.getTmpUnsortRealignBamPath(segStr)
@@ -196,14 +196,14 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     def finishVcf(tmpList, output, label) :
         assert(len(tmpList) > 0)
-        
+
         if len(tmpList) > 1 :
             catCmd=[self.params.bgcatBin,"-o",output]
             catCmd.extend(tmpList)
             catCmd = " ".join(catCmd)
         else :
             catCmd="mv -f %s %s" % (tmpList[0],output)
-            
+
         catCmd += " && %s -p vcf %s" % (self.params.tabixBin, output)
         finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeGVCF"), catCmd, dependencies=completeSegmentsTask))
 

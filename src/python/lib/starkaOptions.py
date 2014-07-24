@@ -72,7 +72,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         Every local variable in this method becomes part of the default hash
         """
-        
+
         alignerMode = "isaac"
 
         libexecDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_LIBEXECDIR@"))
@@ -140,7 +140,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
     def validateOptionExistence(self,options) :
 
         assertOptionExists(options.runDir,"run directory")
-        
+
         assertOptionExists(options.alignerMode,"aligner mode")
         assertOptionExists(options.referenceFasta,"reference fasta file")
 
