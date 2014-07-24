@@ -11,7 +11,7 @@
 #
 
 """
-Strelka somatic small variant calling workflow
+Starling germline small variant calling workflow
 """
 
 
@@ -30,7 +30,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from pyflow import WorkflowRunner
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getChromIntervals, getFastaChromOrderSize
+                         getNextGenomeSegment, getFastaChromOrderSize
 
 from configureUtil import argToBool, getIniSections, dumpIniSections
 
@@ -44,66 +44,10 @@ __version__ = getVersion()
 
 
 
-def cleanId(input_id) :
-    """
-    filter id so that it's safe to use as a pyflow indentifier
-    """
-    import re
-    return re.sub(r'([^a-zA-Z0-9_\-])', "_", input_id)
-
-
-
-class GenomeSegment(object) :
-    """
-    organizes all variables which can change
-    with each genomic segment.
-
-    The genomic segment is defined by:
-
-    1. chromosome
-    2. begin position (1-indexed closed)
-    3. end position (1-indexed closed)
-    4. chromosome segment (ie. bin) number (0-indexed)
-    """
-
-    def __init__(self,chromIndex,chromLabel,beginPos,endPos,binId,genomeRegion) :
-        """
-        arguments are the 4 genomic interval descriptors detailed in class documentation
-        """
-        self.chromLabel = chromLabel
-        self.beginPos = beginPos
-        self.endPos = endPos
-        self.bamRegion = chromLabel + ':' + str(beginPos) + '-' + str(endPos)
-        self.binId = binId
-        self.binStr = str(binId).zfill(4)
-        self.id = chromLabel + "_" + self.binStr
-
-        regionId=cleanId(chromLabel)
-        if genomeRegion is not None :
-            if genomeRegion['start'] is not None :
-                regionId += "-"+str(genomeRegion['start'])
-                if genomeRegion['end'] is not None :
-                    regionId += "-"+str(genomeRegion['end'])
-        self.pyflowId = "chromId_%s_%s_%s" % (str(chromIndex).zfill(3), regionId, self.binStr)
-
-
-
-def getNextGenomeSegment(params) :
-    """
-    generator which iterates through all genomic segments and
-    returns a segmentValues object for each one.
-    """
-    if params.genomeRegionList is None :
-        for segval in getChromIntervals(params.chromOrder,params.chromSizes,params.scanSize) :
-            yield GenomeSegment(*segval)
-    else :
-        for genomeRegion in params.genomeRegionList :
-            for segval in getChromIntervals(params.chromOrder,params.chromSizes,params.scanSize, genomeRegion) :
-                yield GenomeSegment(*segval)
-
-
-
 def runCount(self, taskPrefix="", dependencies=None) :
+    """
+    count size of fasta chromosomes
+    """
     cmd  = "%s %s > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
