@@ -41,6 +41,8 @@ struct gvcf_aggregator
 
     ~gvcf_aggregator();
 
+    void add_site(site_info& si);
+
     void add_indel(const pos_t pos, const indel_key ik,
                    const starling_diploid_indel_core& dindel,
                    const starling_indel_report_info& iri,
@@ -74,6 +76,7 @@ private:
     }
 
     void output_phased_blocked();
+
     const starling_options& _opt;
     const known_pos_range _report_range;
     const reference_contig_segment& _ref;
@@ -93,7 +96,6 @@ private:
     gvcf_compressor gvcf_comp;
 
 public:
-    void add_site(site_info& si);
     Codon_phaser codon_phaser;
 };
 

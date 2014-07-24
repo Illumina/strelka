@@ -45,7 +45,6 @@ Codon_phaser::Codon_phaser()
 bool
 Codon_phaser::add_site(site_info& si)
 {
-
     buffer.push_back(si);
 
     // case: extending block with het call, update block_end position

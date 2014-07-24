@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -29,18 +28,15 @@
 
 struct pos_basecall_buffer
 {
-
     void
     insert_pos_submap_count(const pos_t pos)
     {
-
         _pdata[pos].n_submapped++;
     }
 
     void
     insert_pos_spandel_count(const pos_t pos)
     {
-
         _pdata[pos].n_spandel++;
     }
 
@@ -48,15 +44,19 @@ struct pos_basecall_buffer
     void
     insert_mapq_count(const pos_t pos, const uint8_t mapq)
     {
-
-        _pdata[pos].n_mapq++;
-        _pdata[pos].cumm_mapq += (mapq*mapq);
-        //we calculate the RMS, so store squared mapq
+        auto& posdata(_pdata[pos]);
+        posdata.n_mapq++;
+        posdata.cumm_mapq += (mapq*mapq);
     }
 
     // add single base meta-data to rank-sum pile-up data-structures
     void
-    update_ranksums(char refpos, const pos_t pos,const base_call& bc, const uint8_t mapq, const int cycle);
+    update_ranksums(
+        char refpos,
+        const pos_t pos,
+        const base_call& bc,
+        const uint8_t mapq,
+        const unsigned cycle);
 
     void
     insert_pos_basecall(const pos_t pos,
@@ -91,7 +91,7 @@ struct pos_basecall_buffer
     get_pos(const pos_t pos)
     {
         const piter i(_pdata.find(pos));
-        if (i==_pdata.end()) return NULL;
+        if (i==_pdata.end()) return nullptr;
         return &(i->second);
     }
 
@@ -99,7 +99,7 @@ struct pos_basecall_buffer
     get_pos(const pos_t pos) const
     {
         const pciter i(_pdata.find(pos));
-        if (i==_pdata.end()) return NULL;
+        if (i==_pdata.end()) return nullptr;
         return &(i->second);
     }
 
@@ -115,7 +115,6 @@ struct pos_basecall_buffer
     {
         return _pdata.empty();
     }
-
 
 #if 0
     iterator pos_iter(const pos_t pos)

@@ -11,10 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
+
 #pragma once
 
 #include <cmath>
@@ -31,7 +31,6 @@
 ///
 struct stream_stat
 {
-
     // Accumulate mean and standard dev using a single pass formula
     // Uses the cancellation-friendly formulae on p.26 of
     // Higham, Accuracy & Stability of Numerical Algorithms

@@ -11,10 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
+
 #include "stream_stat.hh"
 
 #include <iostream>
@@ -24,10 +24,8 @@
 std::ostream&
 operator<<(std::ostream& os,const stream_stat& ss)
 {
-
     os << "sample_size: " << ss.size() << " min: " << ss.min() << " max: " << ss.max()
        << " mean: " << ss.mean() << " sd: " << ss.sd() << " se: " << ss.stderror();
-
 
     return os;
 }

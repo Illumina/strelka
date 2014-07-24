@@ -1106,29 +1106,22 @@ insert_pos_spandel_count(const pos_t pos,
 }
 
 
-void
-starling_pos_processor_base::
-insert_mapq_count(const pos_t pos,
-                  const unsigned sample_no,
-                  const uint8_t mapq)
-{
-    if (! is_pos_reportable(pos)) return;
-
-    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
-//    log_os << "Inserting mapq at " << pos << '\n';
-    sample(sample_no).bc_buff.insert_mapq_count(pos,mapq);
-}
 
 void
 starling_pos_processor_base::
-update_ranksum(const pos_t pos,const unsigned sample_no,const base_call& bc, const uint8_t mapq, const int cycle)
+update_ranksum_and_mapq_count(
+    const pos_t pos,
+    const unsigned sample_no,
+    const base_call& bc,
+    const uint8_t mapq,
+    const unsigned cycle)
 {
     if (! is_pos_reportable(pos)) return;
-//	log_os << "updating ranksum" << endl;
-
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
 
-    sample(sample_no).bc_buff.update_ranksums(_ref.get_base(pos),pos,bc,mapq,cycle);
+    auto& bcbuff(sample(sample_no).bc_buff);
+    bcbuff.insert_mapq_count(pos,mapq);
+    bcbuff.update_ranksums(_ref.get_base(pos),pos,bc,mapq,cycle);
 }
 
 
@@ -1645,8 +1638,7 @@ pileup_read_segment(const read_segment& rseg,
                     // update mapq and rank-sum metrics
                     if (_client_opt.is_compute_VQSRmetrics || _client_opt.calibration_model!="default")
                     {
-                        insert_mapq_count(ref_pos,sample_no,mapq);
-                        update_ranksum(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
+                        update_ranksum_and_mapq_count(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
                     }
 
                     if (_client_opt.is_compute_hapscore)
@@ -1906,7 +1898,6 @@ process_pos_snp_single_sample_impl(
 
         // hpol filter
         _site_info.hpol=get_snp_hpol_size(pos,_ref);
-
     }
 
     if (_client_opt.is_all_sites())

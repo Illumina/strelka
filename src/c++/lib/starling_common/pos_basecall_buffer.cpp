@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -27,20 +26,25 @@ void
 pos_basecall_buffer::
 dump(std::ostream& os) const
 {
-
-    pciter i(_pdata.begin()), i_end(_pdata.end());
-    for (; i!=i_end; ++i)
+    for(const auto& val : _pdata)
     {
-        os << "pc_buff pos: " << i->first << "\n";
+        os << "pc_buff pos: " << val.first << "\n";
     }
 }
 
 void
-pos_basecall_buffer::update_ranksums(char refpos, const pos_t pos,const base_call& bc, const uint8_t mapq, const int cycle)
+pos_basecall_buffer::
+update_ranksums(
+    char refpos,
+    const pos_t pos,
+    const base_call& bc,
+    const uint8_t mapq,
+    const unsigned cycle)
 {
     const bool is_reference(refpos==id_to_base(bc.base_id));
 
-    _pdata[pos].baseq_ranksum.add_observation(is_reference,static_cast<int>(bc.get_qscore()));
-    _pdata[pos].mq_ranksum.add_observation(is_reference,static_cast<int>(mapq));
-    _pdata[pos].read_pos_ranksum.add_observation(is_reference,cycle);
+    auto& posdata(_pdata[pos]);
+    posdata.baseq_ranksum.add_observation(is_reference,static_cast<unsigned>(bc.get_qscore()));
+    posdata.mq_ranksum.add_observation(is_reference,static_cast<unsigned>(mapq));
+    posdata.read_pos_ranksum.add_observation(is_reference,cycle);
 }

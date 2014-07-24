@@ -108,7 +108,6 @@ int gvcf_compressor::max_compressible_nocall_range(const int start, const int en
 
 bool gvcf_compressor::is_site_compressable(const gvcf_options& opt, const site_info& si)
 {
-
     if (! opt.is_block_compression) return false;
 
     if (si.dgt.is_snp) return false;

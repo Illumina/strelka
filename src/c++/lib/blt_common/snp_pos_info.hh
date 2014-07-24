@@ -19,7 +19,7 @@
 
 #include "blt_common/hapscore.hh"
 #include "blt_util/qscore.hh"
-#include "blt_util/ranksum.hh"
+#include "blt_util/fastRanksum.hh"
 #include "blt_util/seq_util.hh"
 
 #include "stdint.h"
@@ -201,9 +201,9 @@ public:
     hap_set_t hap_set;
 
     //for calculating various rank-sum statistics
-    ranksum mq_ranksum;
-    ranksum baseq_ranksum;
-    ranksum read_pos_ranksum;
+    fastRanksum mq_ranksum;
+    fastRanksum baseq_ranksum;
+    fastRanksum read_pos_ranksum;
 };
 
 std::ostream& operator<<(std::ostream& os,const snp_pos_info& pci);
