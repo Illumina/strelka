@@ -65,6 +65,25 @@ add_custom_target(STARKA_TABIX DEPENDS "${TABIX_PROG}")
 install(PROGRAMS "${TABIX_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 
 #
+# bgzf_extras
+#
+set(BGZFX_PREFIX "bgzf_extras-v0.1")
+superset(BGZFX_DIR "${CMAKE_CURRENT_BINARY_DIR}/${BGZFX_PREFIX}")
+set(BGCAT_PROG "${BGZFX_DIR}/bgzf_cat")
+set(BGZIP9_PROG "${BGZFX_DIR}/bgzip9")
+
+add_custom_command(
+    OUTPUT ${BGCAT_PROG}
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${BGZFX_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${BGZFX_PREFIX}.tar.bz2"
+    COMMAND $(MAKE) -C "${BGZFX_DIR}" all 2>| bgzf_extras.build.log
+    COMMENT "Building bgzf_extras")
+add_custom_target(STARKA_BGZFX DEPENDS "${BGCAT_PROG}")
+
+install(PROGRAMS "${BGCAT_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
+install(PROGRAMS "${BGZIP9_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
+
+#
 # codemin
 #
 set(CODEMIN_PREFIX "CodeMin-1.0.2")
@@ -105,7 +124,7 @@ endforeach ()
 
 # tie results back to parent:
 #
-add_dependencies(STARKA_OPT STARKA_SAMTOOLS STARKA_TABIX STARKA_CODEMIN STARKA_PYFLOW)
+add_dependencies(STARKA_OPT STARKA_SAMTOOLS STARKA_TABIX STARKA_BGZFX STARKA_CODEMIN STARKA_PYFLOW)
 
 
 #
