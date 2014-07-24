@@ -210,3 +210,10 @@ def checkListArgRepeats(listName,itemLabel) :
 def assertOptionExists(arg,label) :
     if arg is None:
         raise OptParseException("No %s specified" % (label))
+
+
+
+def joinFile(*arg) :
+    filePath = os.path.join(*arg)
+    assert os.path.isfile(filePath)
+    return filePath

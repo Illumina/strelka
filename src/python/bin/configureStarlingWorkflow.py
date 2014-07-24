@@ -27,7 +27,7 @@ version="@STARKA_FULL_VERSION@"
 sys.path.append(workflowDir)
 
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import assertOptionExists, groomBamList, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
+from configureUtil import assertOptionExists, groomBamList, joinFile, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
 from makeRunScript import makeRunScript
 from starlingWorkflow import StarlingWorkflow
 from workflowUtil import ensureDir, isValidSampleId, parseGenomeRegion
@@ -44,12 +44,12 @@ This script configures the Starling small variant calling pipeline.
 You must specify a BAM file.
 """ % (version)
 
-    validAlignerModes = ["bwa","isaac"]
-
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
                          help="Sample BAM file. [required] (no default)")
+        group.add_option("--minorAllele", type="string", metavar="FILE",
+                         help="Provide minor allele bed file. Must be tabix indexed. (no default)")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
@@ -59,10 +59,18 @@ You must specify a BAM file.
 
         self.configScriptDir=scriptDir
         defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
+
+        libexecDir=defaults["libexecDir"]
+        
+        configDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_CONFIGDIR@"))
+        assert os.path.isdir(configDir)
+        
         defaults.update({
-            'alignerMode' : "isaac",
             'runDir' : 'StarlingWorkflow',
-            "minTier2Mapq" : 5,
+            'bgcatBin' : joinFile(libexecDir,"bgzf_cat"),
+            'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
+            'vqsrModel' : "QScoreHpolmodel",
+            'vqsrModelFile' : joinFile(configDir,'model.json')
             })
         return defaults
 
@@ -70,32 +78,19 @@ You must specify a BAM file.
 
     def validateAndSanitizeExistingOptions(self,options) :
 
-        groomBamList(options.normalBamList,"input")
-
-        # check alignerMode:
-        if options.alignerMode is not None :
-            options.alignerMode = options.alignerMode.lower()
-            if options.alignerMode not in self.validAlignerModes :
-                raise OptParseException("Invalid aligner mode: '%s'" % options.alignerMode)
-
-        options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference")
-
-        # check for reference fasta index file:
-        if options.referenceFasta is not None :
-            faiFile=options.referenceFasta + ".fai"
-            if not os.path.isfile(faiFile) :
-                raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
-
-        if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
-            options.genomeRegionList = None
-        else :
-            options.genomeRegionList = [parseGenomeRegion(r) for r in options.regionStrList]
+        groomBamList(options.bamList,"input")
 
         StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
 
 
 
     def validateOptionExistence(self,options) :
+
+        if options.minorAllele is not None :
+            alleleTabixFile = options.minorAllele + ".tbi"
+            if not os.path.isfile(alleleTabixFile) :
+                raise OptParseException("Can't find expected minor allele index file: '%s'" % (alleleTabixFile))
+
 
         # note that we inherit a multi-bam capable infrastructure from manta, but then restrict usage
         # to one bam from each sample (hopefully temporarily)
@@ -107,13 +102,7 @@ You must specify a BAM file.
             if len(bamList) > 1 :
                 raise OptParseException("More than one %s sample BAM files specified" % (label))
 
-        checkBamList(options.normalBamList, "normal")
-        checkBamList(options.tumorBamList, "tumor")
-
-        assertOptionExists(options.alignerMode,"aligner mode")
-        assertOptionExists(options.referenceFasta,"reference fasta file")
-
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
+        checkBamList(options.bamList, "input")
 
         # check that the reference and all bams are using the same
         # set of chromosomes:
@@ -141,6 +130,9 @@ You must specify a BAM file.
             if bamFile in bamSet :
                 raise OptParseException("Repeated input BAM file: %s" % (bamFile))
             bamSet.add(bamFile)
+
+        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
+
 
 
 

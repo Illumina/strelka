@@ -157,6 +157,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr, "normal")])
         segCmd.extend(["--tumor-realigned-read-file",self.paths.getTmpUnsortRealignBamPath(segStr, "tumor")])
 
+    if self.params.indelCandidates is not None :
+        segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
+
     if self.params.extraStrelkaArguments is not None :
         for arg in self.params.extraStrelkaArguments.strip().split() :
             segCmd.append(arg)

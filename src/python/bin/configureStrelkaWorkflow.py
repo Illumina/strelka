@@ -27,7 +27,7 @@ version="@STARKA_FULL_VERSION@"
 sys.path.append(workflowDir)
 
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import assertOptionExists, groomBamList, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
+from configureUtil import assertOptionExists, groomBamList, OptParseException
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
 from workflowUtil import ensureDir, isValidSampleId, parseGenomeRegion
@@ -43,8 +43,6 @@ class StrelkaWorkflowOptions(StarkaWorkflowOptionsBase) :
 This script configures the Strelka somatic small variant calling pipeline.
 You must specify BAM file(s) for a pair of samples.
 """ % (version)
-
-    validAlignerModes = ["bwa","isaac"]
 
 
     def addWorkflowGroupOptions(self,group) :
@@ -63,7 +61,6 @@ You must specify BAM file(s) for a pair of samples.
         self.configScriptDir=scriptDir
         defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
         defaults.update({
-            'alignerMode' : "isaac",
             'runDir' : 'StrelkaWorkflow',
             "minTier2Mapq" : 5,
             })
@@ -75,25 +72,6 @@ You must specify BAM file(s) for a pair of samples.
 
         groomBamList(options.normalBamList,"normal sample")
         groomBamList(options.tumorBamList, "tumor sample")
-
-        # check alignerMode:
-        if options.alignerMode is not None :
-            options.alignerMode = options.alignerMode.lower()
-            if options.alignerMode not in self.validAlignerModes :
-                raise OptParseException("Invalid aligner mode: '%s'" % options.alignerMode)
-
-        options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference")
-
-        # check for reference fasta index file:
-        if options.referenceFasta is not None :
-            faiFile=options.referenceFasta + ".fai"
-            if not os.path.isfile(faiFile) :
-                raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
-
-        if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
-            options.genomeRegionList = None
-        else :
-            options.genomeRegionList = [parseGenomeRegion(r) for r in options.regionStrList]
 
         StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
 
@@ -113,11 +91,6 @@ You must specify BAM file(s) for a pair of samples.
 
         checkBamList(options.normalBamList, "normal")
         checkBamList(options.tumorBamList, "tumor")
-
-        assertOptionExists(options.alignerMode,"aligner mode")
-        assertOptionExists(options.referenceFasta,"reference fasta file")
-
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
         # check that the reference and all bams are using the same
         # set of chromosomes:
@@ -146,6 +119,9 @@ You must specify BAM file(s) for a pair of samples.
             if bamFile in bamSet :
                 raise OptParseException("Repeated input BAM file: %s" % (bamFile))
             bamSet.add(bamFile)
+
+        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
+
 
 
 
