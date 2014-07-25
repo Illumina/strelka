@@ -1,3 +1,4 @@
+- STARKA-127 fix strelka workflow config file interface
 - STARKA-128 fix build with gcc-4.9.0, finally get rid of solexa q-scores
 - STARKA-125 add starling workflow and demo
 - STARKA-124 fix strelka overlapping indel issue

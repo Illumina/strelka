@@ -20,6 +20,7 @@ import os,sys
 scriptDir=os.path.abspath(os.path.dirname(__file__))
 scriptName=os.path.basename(__file__)
 workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR@"))
+templateConfigDir=os.path.abspath(os.path.join(scriptDir,'@THIS_RELATIVE_CONFIGDIR@'))
 
 version="@STARKA_FULL_VERSION@"
 
@@ -79,6 +80,9 @@ You must specify BAM file(s) for a pair of samples.
 
     def validateOptionExistence(self,options) :
 
+        if options.userConfigPath is None :
+            raise OptParseException("A config file must be specified for strelka workflow")
+
         # note that we inherit a multi-bam capable infrastructure from manta, but then restrict usage
         # to one bam from each sample (hopefully temporarily)
         #
@@ -128,7 +132,13 @@ You must specify BAM file(s) for a pair of samples.
 def main() :
 
     primarySectionName="strelka"
-    options,iniSections=StrelkaWorkflowOptions().getRunOptions(primarySectionName, version=version)
+
+    # change the config help text for strelka:
+    configHelp="Provide strelka workflow configuration file, see template configuration files in: '%s' (required)" % (templateConfigDir)
+
+    options,iniSections=StrelkaWorkflowOptions().getRunOptions(primarySectionName,
+                                                               version=version,
+                                                               configHelp=configHelp)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
