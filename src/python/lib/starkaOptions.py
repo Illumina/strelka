@@ -24,7 +24,7 @@ sys.path.append(scriptDir)
 
 from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
-
+from workflowUtil import parseGenomeRegion
 
 
 def cleanLocals(locals_dict) :

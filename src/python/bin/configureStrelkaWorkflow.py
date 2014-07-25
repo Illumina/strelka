@@ -30,7 +30,7 @@ from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import assertOptionExists, groomBamList, OptParseException
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
-from workflowUtil import ensureDir, isValidSampleId, parseGenomeRegion
+from workflowUtil import ensureDir, isValidSampleId
 from checkChromSet import checkChromSet
 
 

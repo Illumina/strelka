@@ -30,7 +30,7 @@ from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import assertOptionExists, groomBamList, joinFile, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
 from makeRunScript import makeRunScript
 from starlingWorkflow import StarlingWorkflow
-from workflowUtil import ensureDir, isValidSampleId, parseGenomeRegion
+from workflowUtil import ensureDir, isValidSampleId
 from checkChromSet import checkChromSet
 
 
