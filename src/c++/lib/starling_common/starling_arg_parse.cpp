@@ -65,6 +65,8 @@ legacy_starling_arg_parse(arg_data& ad,
 
     bool is_uacmq_set(false);
 
+    bool local_is_min_vexp(false);
+
     const unsigned as(ad.size());
     for (unsigned i(0); i<as; ++i)
     {
@@ -256,7 +258,8 @@ legacy_starling_arg_parse(arg_data& ad,
         }
         else if (ad.argstr[i]=="-min-vexp")
         {
-            set_xrange_arg(i,ad,opt.is_min_vexp,opt.min_vexp,true);
+            set_xrange_arg(i,ad,local_is_min_vexp,opt.min_vexp,true);
+            opt.is_min_vexp=local_is_min_vexp;
         }
         else if (ad.argstr[i]=="-no-ambiguous-path-clip")
         {
