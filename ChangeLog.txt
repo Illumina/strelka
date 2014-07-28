@@ -1,12 +1,21 @@
+v2.1.3
 - STARKA-127 fix strelka workflow config file interface
 - STARKA-128 fix build with gcc-4.9.0, finally get rid of solexa q-scores
 - STARKA-125 add starling workflow and demo
+v2.1.2
 - STARKA-124 fix strelka overlapping indel issue
-- STARKA-118 fix GSNAP alignment example: leading deletion in exon
+- Rolled back elimination of min-vexp and min-mismatch-window default settings, these are again required as command-line 
+- Set refitted hpol indel model as default
+- STARKA-113 Set parameter values according to Isis defaults
+- STARKA-130 Read buffer not being cleared in certain phasing context
+- STARKA-131 Codon-phasing crash when run with external indel candidates
+v2.1.1
 - STARKA-111 transfer full strelka workflow v1 logic into starka
-
-????v2.1????
-
+- STARKA-58 Refit indel homopolymer model
+- STARKA-89 LowGQX filters for no-calls in reference/depth records around indels is not se
+- STARKA-91 Investigate low-depth passing hom alt calls in VQSR model
+- STARKA-112 bwamem + starling 2.1 crash
+v2.1
 - STARKA-53 remove grouper legacy contig logic
 - STARKA-29 short-range SNP phasing and arbitrary phasing window
 - STARKA-57 HighRefRep should not be default rule-based filter for indels
