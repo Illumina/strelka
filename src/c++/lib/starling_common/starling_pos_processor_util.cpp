@@ -298,7 +298,6 @@ is_al_overdepth(const starling_options& opt,
                 const unsigned sample_no,
                 const alignment& al)
 {
-
     using namespace ALIGNPATH;
 
     if (! opt.is_max_input_depth) return false;

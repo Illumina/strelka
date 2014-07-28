@@ -114,17 +114,17 @@ struct snp_pos_info
     clear()
     {
         ref_base='N';
+        is_n_ref_warn=false;
         calls.clear();
         tier2_calls.clear();
-        is_n_ref_warn=false;
         n_spandel=0;
         n_submapped=0;
         n_mapq=0;
         cumm_mapq=0;
+        hap_set.clear();
         mq_ranksum.clear();
         baseq_ranksum.clear();
         read_pos_ranksum.clear();
-        hap_set.clear();
     }
 
     template <typename T>

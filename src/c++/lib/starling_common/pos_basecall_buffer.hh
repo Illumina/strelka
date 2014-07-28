@@ -19,9 +19,9 @@
 
 #include "blt_common/snp_pos_info.hh"
 #include "blt_util/blt_types.hh"
+#include "blt_util/rangeMap.hh"
 
 #include <iosfwd>
-#include <map>
 #include <cmath>
 #include <string>
 
@@ -31,20 +31,20 @@ struct pos_basecall_buffer
     void
     insert_pos_submap_count(const pos_t pos)
     {
-        _pdata[pos].n_submapped++;
+        _pdata.getRef(pos).n_submapped++;
     }
 
     void
     insert_pos_spandel_count(const pos_t pos)
     {
-        _pdata[pos].n_spandel++;
+        _pdata.getRef(pos).n_spandel++;
     }
 
     // update mapQ sum for MQ calculation
     void
     insert_mapq_count(const pos_t pos, const uint8_t mapq)
     {
-        auto& posdata(_pdata[pos]);
+        auto& posdata(_pdata.getRef(pos));
         posdata.n_mapq++;
         posdata.cumm_mapq += (mapq*mapq);
     }
@@ -65,11 +65,11 @@ struct pos_basecall_buffer
     {
         if (is_tier1)
         {
-            _pdata[pos].calls.push_back(bc);
+            _pdata.getRef(pos).calls.push_back(bc);
         }
         else
         {
-            _pdata[pos].tier2_calls.push_back(bc);
+            _pdata.getRef(pos).tier2_calls.push_back(bc);
         }
     }
 
@@ -82,7 +82,7 @@ struct pos_basecall_buffer
     {
         // TODO write this for multi-tier:
         assert(is_tier1);
-        _pdata[pos].hap_set.emplace_back(read_seq,qual,offset);
+        _pdata.getRef(pos).hap_set.emplace_back(read_seq,qual,offset);
     }
 
     // returns NULL for empty pos
@@ -90,24 +90,21 @@ struct pos_basecall_buffer
     snp_pos_info*
     get_pos(const pos_t pos)
     {
-        const piter i(_pdata.find(pos));
-        if (i==_pdata.end()) return nullptr;
-        return &(i->second);
+        if (! _pdata.isKeyPresent(pos)) return nullptr;
+        return &_pdata.getRef(pos);
     }
 
     const snp_pos_info*
     get_pos(const pos_t pos) const
     {
-        const pciter i(_pdata.find(pos));
-        if (i==_pdata.end()) return nullptr;
-        return &(i->second);
+        if (! _pdata.isKeyPresent(pos)) return nullptr;
+        return &_pdata.getConstRef(pos);
     }
 
     void
     clear_pos(const pos_t pos)
     {
-        const piter i(_pdata.find(pos));
-        if (i!=_pdata.end()) _pdata.erase(i);
+        if (_pdata.isKeyPresent(pos)) _pdata.erase(pos);
     }
 
     bool
@@ -135,9 +132,7 @@ struct pos_basecall_buffer
     dump(std::ostream& os) const;
 
 private:
-    typedef std::map<pos_t,snp_pos_info> pdata_t;
-    typedef pdata_t::iterator piter;
-    typedef pdata_t::const_iterator pciter;
+    typedef rangeMap<pos_t,snp_pos_info,ClearT<snp_pos_info>> pdata_t;
 
     pdata_t _pdata;
 };
