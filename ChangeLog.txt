@@ -1,3 +1,4 @@
+- runtime opt: reduce excessive syscalls from position based std::map's
 v2.1.3
 - STARKA-127 fix strelka workflow config file interface
 - STARKA-128 fix build with gcc-4.9.0, finally get rid of solexa q-scores
