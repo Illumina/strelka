@@ -5,6 +5,7 @@ v2.1.3
 - STARKA-125 add starling workflow and demo
 v2.1.2
 - STARKA-124 fix strelka overlapping indel issue
+- STARKA-118 fix GSNAP alignment example: leading deletion in exon
 - Rolled back elimination of min-vexp and min-mismatch-window default settings, these are again required as command-line 
 - Set refitted hpol indel model as default
 - STARKA-113 Set parameter values according to Isis defaults
