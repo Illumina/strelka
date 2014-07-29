@@ -45,7 +45,6 @@ struct ClearT
 };
 
 
-
 /// this object provides map-like storage for a set of positions which are
 /// assumed to cluster in a small range
 ///
@@ -83,8 +82,6 @@ struct rangeMap
     getRef(
         const KeyType& k)
     {
-       // dump("before gr",std::cerr);
-
         if (_isEmpty)
         {
             _minKey=k;
@@ -104,23 +101,21 @@ struct rangeMap
             _isEmpty=false;
         }
 
+
         const unsigned kindex(getKeyIndex(k));
         if (! _occup[kindex])
         {
             _clearFunc(_data[kindex]);
             _occup[kindex]=true;
         }
-       // dump("after gr",std::cerr);
 
-        return _data[getKeyIndex(k)];
+        return _data[kindex];
     }
 
     const ValType&
     getConstRef(
         const KeyType& k) const
     {
-      //  dump("before gcr",std::cerr);
-
         enforceKeyPresent(k);
         return _data[getKeyIndex(k)];
     }
@@ -138,8 +133,6 @@ struct rangeMap
     erase(
         const KeyType& k)
     {
-     //   dump("before erase",std::cerr);
-
         enforceKeyPresent(k);
         const unsigned kindex(getKeyIndex(k));
         _occup[kindex]=false;
@@ -149,7 +142,7 @@ struct rangeMap
         // we have to shift minKey up to the next valid value:
         const unsigned keySize(_maxKey-_minKey);
         const unsigned dataSize(_data.size());
-        for (unsigned offset(1);offset<keySize;++offset)
+        for (unsigned offset(1);offset<=keySize;++offset)
         {
             if (! _occup[(kindex+offset) % dataSize]) continue;
             _minKeyIndex=(kindex+offset) % dataSize;
@@ -158,12 +151,9 @@ struct rangeMap
         }
 
         _isEmpty=true;
-     //   dump("after erase",std::cerr);
-
     }
 
 private:
-
 #ifdef DEBUG_RMAP
     /// debug dumper:
     void
@@ -200,14 +190,11 @@ private:
     expand(
         const unsigned minSize)
     {
-      // dump("before expand",std::cerr);
         if (minSize <= _data.size()) return;
         const unsigned newSize(std::max(static_cast<unsigned>(2*_data.size()),minSize+_minChunk));
         normRotate();
         _data.resize(newSize);
         _occup.resize(newSize,false);
-
-    //  dump("after expand",std::cerr);
     }
 
     void

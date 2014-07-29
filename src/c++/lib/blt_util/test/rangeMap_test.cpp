@@ -57,5 +57,23 @@ BOOST_AUTO_TEST_CASE( test_rangeMap2 )
     BOOST_REQUIRE_EQUAL(rm.getConstRef(10000), 12);
 }
 
+BOOST_AUTO_TEST_CASE( test_rangeMap3 )
+{
+    rangeMap<int,int> rm;
+
+    rm.getRef(0) += 1;
+    rm.getRef(20) += 1;
+    rm.getRef(21) += 1;
+    rm.erase(0);
+    rm.erase(20);
+    rm.erase(21);
+    rm.getRef(0) += 1;
+    rm.getRef(20) += 1;
+    rm.getRef(21) += 1;
+
+    BOOST_REQUIRE_EQUAL(rm.getConstRef(20), 1);
+    BOOST_REQUIRE_EQUAL(rm.getConstRef(21), 1);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
