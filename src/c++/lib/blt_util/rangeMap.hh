@@ -19,6 +19,7 @@
 
 #include "blt_util/blt_exception.hh"
 
+#include <algorithm>
 #include <sstream>
 #include <vector>
 
@@ -69,7 +70,6 @@ struct rangeMap
     {
         return _isEmpty;
     }
-
 
     bool
     isKeyPresent(
