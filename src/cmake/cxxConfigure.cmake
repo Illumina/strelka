@@ -64,6 +64,11 @@ else  ()
     message(FATAL_ERROR "No support for gzip compression")
 endif ()
 
+# samtools 0.2.x forces pthreads in link:
+find_package( Threads )
+
+
+
 # Force static linking
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
