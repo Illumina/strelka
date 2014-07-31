@@ -92,8 +92,8 @@ private:
 
     bool _is_record_set;
     samfile_t* _bfp;
-    bam_index_t* _bidx;
-    bam_iter_t _biter;
+    hts_idx_t* _hidx;
+    hts_itr_t* _hitr;
     bam_record _brec;
 
     // track for debug only:

@@ -19,6 +19,7 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 
+#include <cassert>
 #include <cstdlib>
 
 #include <fstream>
@@ -31,8 +32,8 @@ bam_streamer(const char* filename,
              const char* region)
     : _is_record_set(false),
       _bfp(nullptr),
-      _bidx(nullptr),
-      _biter(nullptr),
+      _hidx(nullptr),
+      _hitr(nullptr),
       _record_no(0),
       _stream_name(filename),
       _is_region(false)
@@ -47,7 +48,7 @@ bam_streamer(const char* filename,
 
     if (nullptr == _bfp)
     {
-        log_os << "ERROR: Failed to open SAM/BAM file: " << filename << "\n";
+        log_os << "ERROR: Failed to open SAM/BAM/CRAM file: " << filename << "\n";
         exit(EXIT_FAILURE);
     }
 
@@ -75,8 +76,8 @@ bam_streamer(const char* filename,
 bam_streamer::
 ~bam_streamer()
 {
-    if (nullptr != _biter) bam_iter_destroy(_biter);
-    if (nullptr != _bidx) bam_index_destroy(_bidx);
+    if (nullptr != _hitr) hts_itr_destroy(_hitr);
+    if (nullptr != _hidx) hts_idx_destroy(_hidx);
     if (nullptr != _bfp) samclose(_bfp);
 }
 
@@ -109,22 +110,18 @@ void
 bam_streamer::
 _load_index()
 {
-
-    if (nullptr != _bidx) return;
-
-    // use the BAM index to read a region of the BAM file
-    if (! (_bfp->type&0x01))
-    {
-        log_os << "ERROR: file must be in BAM format for region lookup: " << name() << "\n";
-        exit(EXIT_FAILURE);
-    }
-
-    /// TODO: Find out whether _bidx can be destroyed after the BAM
+    /// TODO: Find out whether _hidx can be destroyed after the HTS
     /// iterator is created, in which case this could be a local
-    /// variable. Until we know, _bidx should persist for the lifetime
-    /// of _biter
+    /// variable. Until we know, _hidx should persist for the lifetime
+    /// of _hiter
+    if (nullptr != _hidx) return;
+
     std::string index_base(name());
-    if (! fexists((index_base+".bai").c_str()))
+
+    // hack to allow GATK/Picard bai name convention:
+    if ((! fexists((index_base+".bai").c_str())) &&
+        (! fexists((index_base+".csa").c_str())) &&
+        (! fexists((index_base+".crai").c_str())))
     {
         static const std::string bamext(".bam");
         if (hasEnding(index_base,bamext))
@@ -133,10 +130,10 @@ _load_index()
         }
     }
 
-    _bidx = bam_index_load(index_base.c_str()); // load BAM index
-    if (nullptr == _bidx)
+    _hidx = sam_index_load(_bfp->file, index_base.c_str());
+    if (nullptr == _hidx)
     {
-        log_os << "ERROR: BAM index is not available for file: " << name() << "\n";
+        log_os << "ERROR: BAM/CRAM index is not available for file: " << name() << "\n";
         exit(EXIT_FAILURE);
     }
 }
@@ -160,8 +157,7 @@ void
 bam_streamer::
 set_new_region(const int ref, const int beg, const int end)
 {
-
-    if (nullptr != _biter) bam_iter_destroy(_biter);
+    if (nullptr != _hitr) hts_itr_destroy(_hitr);
 
     _load_index();
 
@@ -171,7 +167,7 @@ set_new_region(const int ref, const int beg, const int end)
         exit(EXIT_FAILURE);
     }
 
-    _biter = bam_iter_query(_bidx,ref,beg,end);
+    _hitr = sam_itr_queryi(_hidx,ref,beg,end);
     _is_region = true;
     _region.clear();
 
@@ -187,13 +183,13 @@ next()
     if (nullptr == _bfp) return false;
 
     int ret;
-    if (nullptr == _biter)
+    if (nullptr == _hitr)
     {
         ret = samread(_bfp, _brec._bp);
     }
     else
     {
-        ret = bam_iter_read(_bfp->x.bam, _biter, _brec._bp);
+        ret = sam_itr_next(_bfp->file, _hitr, _brec._bp);
     }
 
     _is_record_set=(ret >= 0);
@@ -232,7 +228,6 @@ void
 bam_streamer::
 report_state(std::ostream& os) const
 {
-
     const bam_record* bamp(get_record_ptr());
 
     os << "\tbam_stream_label: " << name() << "\n";
