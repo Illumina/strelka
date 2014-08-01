@@ -1,3 +1,4 @@
+- Added CRAM input support
 v2.1.4
 - Turned ON DP filter for rule filters as default
 - Made scoring-model a configurable option for starling pyflow

@@ -30,7 +30,7 @@ get_strelka_option_parser(
     strelka_parse_opt_ti.add_options()
     ("tumor-bam-file",
      po::value(&opt.tumor_bam_filename),
-     "BAM file containing read alignments for the tumor sample (required)")
+     "BAM/CRAM file containing read alignments for the tumor sample (required)")
     ;
 
     po::options_description strelka_parse_opt_to("Tumor-sample output");
@@ -163,7 +163,7 @@ finalize_strelka_options(const prog_info& pinfo,
 {
     if (opt.tumor_bam_filename.empty())
     {
-        pinfo.usage("Must specify a sorted BAM file containing aligned tumor sample reads");
+        pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned tumor sample reads");
     }
 
     if (vm.count("skip-realignment"))

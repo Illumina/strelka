@@ -326,12 +326,12 @@ legacy_starling_arg_parse(arg_data& ad,
 
         if (opt.bam_filename.empty())
         {
-            pinfo.usage("Must specify a sorted BAM file containing aligned sample reads");
+            pinfo.usage("Must specify a sorted & indexed BAM/CREAM file containing aligned sample reads");
         }
 
         if ((! opt.bam_filename.empty()) && opt.bam_seq_name.empty())
         {
-            pinfo.usage("must specify -bam-seq-name when a bam file is provided");
+            pinfo.usage("must specify -bam-seq-name when an input reads file is provided");
         }
     }
 

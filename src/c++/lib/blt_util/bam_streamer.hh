@@ -25,8 +25,8 @@
 #include <string>
 
 
-
-/// convenient bam record iterator for whole genome or chromosome segments
+/// Stream bam records from CRAM/BAM/SAM files. For CRAM/BAM
+/// files you can run an indexed stream from a specific genome region.
 ///
 //
 // Example use:
@@ -37,6 +37,9 @@
 //
 struct bam_streamer : public boost::noncopyable
 {
+    /// \param filename CRAM/BAM/SAM input file
+    /// \param region if filename is indexed CRAM or BAM, you can
+    ///        restrict the stream to a specific region
     explicit
     bam_streamer(const char* filename,
                  const char* region = nullptr);
@@ -44,6 +47,9 @@ struct bam_streamer : public boost::noncopyable
     ~bam_streamer();
 
     /// \brief set new or first region for file:
+    ///
+    /// \param region if ctor filename is indexed CRAM or BAM, you can
+    ///        restrict the stream to a specific region
     void
     set_new_region(const char* region);
 

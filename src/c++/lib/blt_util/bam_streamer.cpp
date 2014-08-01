@@ -28,8 +28,9 @@
 
 
 bam_streamer::
-bam_streamer(const char* filename,
-             const char* region)
+bam_streamer(
+    const char* filename,
+    const char* region)
     : _is_record_set(false),
       _bfp(nullptr),
       _hidx(nullptr),
