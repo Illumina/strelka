@@ -1,0 +1,69 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
+
+#include "boost/test/unit_test.hpp"
+
+#include "vcf_streamer.hh"
+
+
+BOOST_AUTO_TEST_SUITE( test_vcf_streamer )
+
+
+BOOST_AUTO_TEST_CASE( test_pos_range_is_pos_intersect )
+{
+    std::string vcfPath("@CMAKE_CURRENT_SOURCE_DIR@/vcf_streamer_test.vcf.gz");
+    vcf_streamer vcfs(vcfPath.c_str(),"chr1:750000-822000");
+
+    const vcf_record* vptr(nullptr);
+
+    BOOST_REQUIRE( vcfs.next() );
+    vptr = vcfs.get_record_ptr();
+    assert(vptr != nullptr);
+
+    BOOST_REQUIRE( vptr->is_valid() );
+    BOOST_REQUIRE( vptr->is_indel() );
+    BOOST_REQUIRE( ! vptr->is_snv() );
+
+    BOOST_REQUIRE_EQUAL(vptr->pos, 757807);
+    BOOST_REQUIRE_EQUAL(vptr->ref,"CCCTGGCCAGCAGATCCACCCTGTCTATACTACCTG");
+
+    BOOST_REQUIRE( vcfs.next() );
+    vptr = vcfs.get_record_ptr();
+    assert(vptr != nullptr);
+
+    BOOST_REQUIRE( vptr->is_valid() );
+    BOOST_REQUIRE( ! vptr->is_indel() );
+    BOOST_REQUIRE( vptr->is_snv() );
+    BOOST_REQUIRE_EQUAL(vptr->pos, 758807);
+    BOOST_REQUIRE_EQUAL(vptr->alt.size(),2u);
+    BOOST_REQUIRE_EQUAL(vptr->alt[0],"T");
+
+    BOOST_REQUIRE( vcfs.next() );
+    vptr = vcfs.get_record_ptr();
+    assert(vptr != nullptr);
+
+    BOOST_REQUIRE( vptr->is_valid() );
+    BOOST_REQUIRE( vptr->is_indel() );
+    BOOST_REQUIRE( ! vptr->is_snv() );
+    BOOST_REQUIRE_EQUAL(vptr->pos, 821604);
+    BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
+    BOOST_REQUIRE_EQUAL(vptr->alt[0],"TGCCCTTTGGCAGAGCAGGTGTGCTGTGCTG");
+
+    BOOST_REQUIRE( ! vcfs.next() );
+    vptr = vcfs.get_record_ptr();
+    assert(vptr == nullptr);
+}
+
+
+BOOST_AUTO_TEST_SUITE_END()
+

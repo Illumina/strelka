@@ -21,7 +21,6 @@ BOOST_AUTO_TEST_SUITE( test_pos_range )
 
 BOOST_AUTO_TEST_CASE( test_pos_range_is_pos_intersect )
 {
-
     // this corresponds to zero-index range [9,19] :
     const pos_range pr(9,20);
 
@@ -34,7 +33,6 @@ BOOST_AUTO_TEST_CASE( test_pos_range_is_pos_intersect )
 
 BOOST_AUTO_TEST_CASE( test_pos_range_semibound_is_pos_intersect )
 {
-
     // this corresponds to zero-index range [-inf,19] :
     pos_range pr;
     pr.set_end_pos(20);
@@ -47,7 +45,6 @@ BOOST_AUTO_TEST_CASE( test_pos_range_semibound_is_pos_intersect )
 
 BOOST_AUTO_TEST_CASE( test_pos_range_is_range_intersect )
 {
-
     // this corresponds to zero-index range [9,19] :
     const pos_range pr(9,20);
 
@@ -68,7 +65,6 @@ BOOST_AUTO_TEST_CASE( test_pos_range_is_range_intersect )
 
 BOOST_AUTO_TEST_CASE( test_pos_range_is_superset_of )
 {
-
     // this corresponds to zero-index range [9,19] :
     const known_pos_range pr(9,20);
 
