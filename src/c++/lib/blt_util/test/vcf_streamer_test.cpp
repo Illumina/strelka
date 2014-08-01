@@ -18,11 +18,18 @@
 
 BOOST_AUTO_TEST_SUITE( test_vcf_streamer )
 
-
-BOOST_AUTO_TEST_CASE( test_pos_range_is_pos_intersect )
+static
+const char*
+getTestpath()
 {
-    std::string vcfPath("@CMAKE_CURRENT_SOURCE_DIR@/vcf_streamer_test.vcf.gz");
-    vcf_streamer vcfs(vcfPath.c_str(),"chr1:750000-822000");
+    static const std::string testPath("@CMAKE_CURRENT_SOURCE_DIR@/vcf_streamer_test.vcf.gz");
+    return testPath.c_str();
+}
+
+
+BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
+{
+    vcf_streamer vcfs(getTestpath(),"chr1:750000-822000");
 
     const vcf_record* vptr(nullptr);
 
@@ -62,6 +69,26 @@ BOOST_AUTO_TEST_CASE( test_pos_range_is_pos_intersect )
     BOOST_REQUIRE( ! vcfs.next() );
     vptr = vcfs.get_record_ptr();
     assert(vptr == nullptr);
+}
+
+
+BOOST_AUTO_TEST_CASE( test_vcf_streamer_noregion )
+{
+    vcf_streamer vcfs(getTestpath());
+
+    const vcf_record* vptr(nullptr);
+
+    BOOST_REQUIRE( vcfs.next() );
+    vptr = vcfs.get_record_ptr();
+    assert(vptr != nullptr);
+
+    BOOST_REQUIRE( vptr->is_valid() );
+    BOOST_REQUIRE( vptr->is_indel() );
+    BOOST_REQUIRE( ! vptr->is_snv() );
+
+    BOOST_REQUIRE_EQUAL(vptr->pos, 54712);
+
+    BOOST_REQUIRE( vcfs.next() );
 }
 
 
