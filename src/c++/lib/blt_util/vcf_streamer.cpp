@@ -90,6 +90,11 @@ vcf_streamer(
         throw blt_exception("VCF filename is null ptr");
     }
 
+    if (nullptr == region)
+    {
+        throw blt_exception("VCF region is null ptr");
+    }
+
     if ('\0' == *filename)
     {
         throw blt_exception("VCF filename is empty string");
@@ -122,13 +127,6 @@ vcf_streamer(
         check_bam_bcf_header_compatability(filename, _hdr, bh);
     }
 
-    static const char allRegions[] = ".";
-    if (nullptr == region)
-    {
-        // read the whole B/VCF file:
-        region = allRegions;
-    }
-
     // read only a region of VCF file:
     _titr = tbx_itr_querys(_tidx, region);
     if (nullptr == _titr)
@@ -156,7 +154,7 @@ next(const bool is_indel_only)
 {
     if (_is_stream_end || (nullptr==_hfp) || (nullptr==_titr)) return false;
 
-    const char* vcf_record_string(_kstr.s);
+    char*& vcf_record_string(_kstr.s);
     while (true)
     {
         if (tbx_itr_next(_hfp, _tidx, _titr, &_kstr) < 0)

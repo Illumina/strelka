@@ -31,7 +31,7 @@ struct vcf_streamer : private boost::noncopyable
     explicit
     vcf_streamer(
         const char* filename,
-        const char* region = nullptr,
+        const char* region,
         const bam_header_t* bh = nullptr);
 
     ~vcf_streamer();

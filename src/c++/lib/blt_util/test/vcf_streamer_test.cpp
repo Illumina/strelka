@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     assert(vptr == nullptr);
 }
 
-
+#if 0
 BOOST_AUTO_TEST_CASE( test_vcf_streamer_noregion )
 {
     vcf_streamer vcfs(getTestpath());
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_noregion )
 
     BOOST_REQUIRE( vcfs.next() );
 }
-
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 
