@@ -35,19 +35,22 @@ public:
     calibration_models();
     virtual ~calibration_models();
 
+    // set options
     void set_model(const std::string& name);  // set the calibration model to use
-    void load_models(std::string model_file);                       // read in model parameters
+    void load_models(std::string model_file); // read in model parameters
 
-    void clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si);
-    void clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii);
+    void clasify_site(site_info& si);
+    void clasify_site(indel_info& ii);
 
     c_model& get_model(std::string& name);
 
     // mimics behavior of previous hard filters
-    void default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, site_info& si);
-    void default_clasify_site(const gvcf_options& opt, const gvcf_deriv_options& dopt, indel_info& ii);
+    void default_clasify_site(site_info& si);
+    void default_clasify_site(indel_info& ii);
 
     void add_model_pars(std::string& name,parmap& my_pars);
+    const gvcf_deriv_options* dopt;
+    const gvcf_options* opt;
 private:
     typedef std::map<std::string,c_model> modelmap;
     typedef std::map<std::string, double> featuremap;

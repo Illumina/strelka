@@ -117,10 +117,14 @@ std::map<std::string, double> site_info::get_qscore_features()
     res["F_GQ"]               = smod.gq;
     res["I_SNVSB"]            = dgt.sb;
     res["I_SNVHPOL"]          = hpol;
+
+    //we need to handle he scalling of DP better for high depth cases
     res["F_DP"]               = n_used_calls;
     res["F_DPF"]              = n_unused_calls;
     res["AD0"]                = known_counts[dgt.ref_gt];
     res["AD1"]                = 0.0;          // set below
+
+
     res["I_MQ"]               = MQ;
     res["I_ReadPosRankSum"]   = ReadPosRankSum;
     res["I_BaseQRankSum"]     = BaseQRankSum;

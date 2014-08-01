@@ -45,30 +45,24 @@ set_site_gt(const diploid_genotype::result_set& rs,
 
 static
 void
-set_site_filters_CM(const gvcf_options& opt,
-                    const gvcf_deriv_options& dopt,
-                    site_info& si,
+set_site_filters_CM(site_info& si,
                     calibration_models& model)
 {
     // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
-    model.clasify_site(opt,dopt,si);
+    model.clasify_site(si);
 }
 
 static
 void
-add_indel_modifiers_CM(const gvcf_options& opt,
-                       const gvcf_deriv_options& dopt,
-                       indel_info& ii, calibration_models& model)
+add_indel_modifiers_CM(indel_info& ii, calibration_models& model)
 {
     // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
-    model.clasify_site(opt,dopt,ii);
+    model.clasify_site(ii);
 }
 
 static
 void
-add_site_modifiers(const gvcf_options& opt,
-                   const gvcf_deriv_options& dopt,
-                   site_info& si,
+add_site_modifiers(site_info& si,
                    calibration_models& model)
 {
 
@@ -101,7 +95,7 @@ add_site_modifiers(const gvcf_options& opt,
         }
         si.smod.gq=si.dgt.poly.max_gt_qphred;
     }
-    set_site_filters_CM(opt,dopt,si,model);
+    set_site_filters_CM(si,model);
 }
 
 void gvcf_aggregator::write_block_site_record()
@@ -140,6 +134,8 @@ gvcf_aggregator(const starling_options& opt,
     if (! opt.is_gvcf_output()) return;
 
     // initialize calibration model
+    this->CM.dopt = &_dopt;
+    this->CM.opt = &_opt.gvcf;
     this->CM.load_models(opt.calibration_models_filename);
     this->CM.set_model(opt.calibration_model);
 
@@ -170,7 +166,7 @@ gvcf_aggregator(const starling_options& opt,
         finish_gvcf_header(_opt,_dopt, chrom_depth,dopt.bam_header_data,*_osptr);
     }
 
-    add_site_modifiers(_opt.gvcf,_dopt,_empty_site,this->CM);
+    add_site_modifiers(_empty_site,this->CM);
 }
 
 gvcf_aggregator::
@@ -183,7 +179,7 @@ void
 gvcf_aggregator::
 add_site(site_info& si)
 {
-    add_site_modifiers(_opt.gvcf, _dopt, si, this->CM);
+    add_site_modifiers(si, this->CM);
     if (_opt.do_codon_phasing
         && (si.is_het() || codon_phaser.is_in_block))
     {
@@ -639,14 +635,12 @@ modify_single_indel_record()
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
 
-    add_indel_modifiers_CM(_opt.gvcf,_dopt,ii,this->CM);
+    add_indel_modifiers_CM(ii,this->CM);
 }
 
 static
 void
-modify_indel_overlap_site(const gvcf_options& opt,
-                          const gvcf_deriv_options& dopt,
-                          const indel_info& ii,
+modify_indel_overlap_site(const indel_info& ii,
                           const unsigned ploidy,
                           site_info& si,calibration_models& CM)
 {
@@ -705,7 +699,7 @@ modify_indel_overlap_site(const gvcf_options& opt,
     }
 
     // after all those changes we need to rerun the site filters:
-    set_site_filters_CM(opt,dopt,si,CM); //TODO needs to go into calibration model
+    set_site_filters_CM(si,CM); //TODO needs to go into calibration model
 
 }
 
@@ -772,7 +766,7 @@ modify_overlap_indel_record()
 
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
-        add_indel_modifiers_CM(_opt.gvcf,_dopt,_indel_buffer[hap],this->CM);
+        add_indel_modifiers_CM(_indel_buffer[hap],this->CM);
         if (hap>0)
         {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
@@ -796,7 +790,7 @@ modify_conflict_indel_record()
 
         ii.imod.set_filter(VCF_FILTERS::IndelConflict);
 
-        add_indel_modifiers_CM(_opt.gvcf,_dopt,ii,this->CM);
+        add_indel_modifiers_CM(ii,this->CM);
     }
 }
 
@@ -983,8 +977,7 @@ process_overlaps()
         assert(offset>=0);
         if (! is_conflict_print)
         {
-            modify_indel_overlap_site(_opt.gvcf,_dopt,
-                                      _indel_buffer[0],
+            modify_indel_overlap_site( _indel_buffer[0],
                                       _indel_buffer[0].get_ploidy(offset),
                                       _site_buffer[i], this->CM);
         }

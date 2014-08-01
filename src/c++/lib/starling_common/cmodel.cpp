@@ -47,7 +47,7 @@ void c_model::do_rule_model(featuremap& cutoffs, site_info& si)
     if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
     if (cutoffs["DP"]>0)
     {
-        if ((si.n_used_calls+si.n_unused_calls) > cutoffs["DP"]) si.smod.set_filter(VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > 150) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
@@ -69,16 +69,14 @@ void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii)
     ii.imod.max_gt=ii.dindel.max_gt_poly;
     ii.imod.gq=ii.dindel.max_gt_poly_qphred;
 
-
-
     if (cutoffs["GQX"]>0)
     {
         if (ii.imod.gqx<cutoffs["GQX"]) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if (cutoffs["DP"]>0)
+    if (cutoffs["DP"]>1)
     {
-        if (ii.isri.depth > cutoffs["DP"]) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+        if (ii.isri.depth > 150) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }
 
 //    if (cutoffs["HighSNVSB"]>0) {
@@ -177,10 +175,12 @@ int prior_adjustment(
     // cap the score at 60
     if (qscore>60)
         qscore = 60;
-    if (qscore<1)
+    if (qscore<1 || qscore>60)
     {
-//       log_os << "Raw score " << raw_score << std::endl;
-//       log_os << "Qscore "<< qscore << std::endl;
+    #ifdef DEBUG_MODEL
+       log_os << "Raw score " << raw_score << std::endl;
+       log_os << "Qscore "<< qscore << std::endl;
+    #endif
         qscore = 1;
     }
     // TODO check for inf and NaN artifacts
