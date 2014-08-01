@@ -183,7 +183,7 @@ def checkForBamIndex(bamFile):
     """
     make sure bam file has an index
     """
-    for ext in ("bai", "csi", "crai") :
+    for ext in (".bai", ".csi", ".crai") :
         indexFile=bamFile + ext
         if os.path.isfile(indexFile) : return
     raise OptParseException("Can't find any expected BAM/CRAM index files for: '%s'" % (bamFile))
@@ -233,14 +233,14 @@ class BamSetChecker(object):
 
         checkChromSet(samtoolsBin,
                       referenceFasta,
-                      bamList,
-                      bamLabels,
+                      self.bamList,
+                      self.bamLabels,
                       isReferenceLocked=True)
 
         # check for repeated bam entries:
         #
         bamSet=set()
-        for bamFile in bamList :
+        for bamFile in self.bamList :
             if bamFile in bamSet :
                 raise OptParseException("Repeated input BAM/CRAM file: %s" % (bamFile))
             bamSet.add(bamFile)
