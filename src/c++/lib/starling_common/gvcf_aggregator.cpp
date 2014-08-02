@@ -16,7 +16,7 @@
 ///
 
 #include "blt_util/blt_exception.hh"
-#include "starling_common/chrom_depth_map.hh"
+#include "blt_util/chrom_depth_map.hh"
 #include "starling_common/gvcf_aggregator.hh"
 #include "starling_common/gvcf_header.hh"
 

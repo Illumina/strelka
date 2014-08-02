@@ -29,7 +29,6 @@ bam_dumper::
 bam_dumper(const char* filename,
            const bam_header_t* header)
 {
-
     _bfp = samopen(filename, "wb", header);
 
     if (NULL == _bfp)

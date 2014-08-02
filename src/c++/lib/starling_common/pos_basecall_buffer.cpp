@@ -27,7 +27,7 @@ pos_basecall_buffer::
 dump(std::ostream& /*os*/) const
 {
 #if 0
-    for(const auto& val : _pdata)
+    for (const auto& val : _pdata)
     {
         os << "pc_buff pos: " << val.first << "\n";
     }

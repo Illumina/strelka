@@ -16,27 +16,23 @@
 
 #pragma once
 
-extern "C" {
-#include "sam.h"
-}
+#include <iosfwd>
+#include <string>
 
 
-struct bam_dumper
+/// pretty print sequence in such a way that it's easy to locate position number
+///
+void
+printSeq(
+    const char* seq,
+    std::ostream& os);
+
+
+inline
+void
+printSeq(
+    const std::string& seq,
+    std::ostream& os)
 {
-    bam_dumper(const char* filename,
-               const bam_header_t* header);
-
-    ~bam_dumper()
-    {
-        if (NULL != _bfp) samclose(_bfp);
-    }
-
-    void
-    put_record(const bam1_t* brec)
-    {
-        samwrite(_bfp,brec);
-    }
-
-private:
-    samfile_t* _bfp;
-};
+    printSeq(seq.c_str(),os);
+}

@@ -52,7 +52,7 @@ struct depth_buffer
                      const unsigned depth) const
     {
         assert(begin <= end);
-        for (pos_t i(begin);i<=end;++i)
+        for (pos_t i(begin); i<=end; ++i)
         {
             if (val(i) >= depth) return true;
         }

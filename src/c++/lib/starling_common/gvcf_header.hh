@@ -11,16 +11,14 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
-#ifndef __GVCF_HEADER
-#define __GVCF_HEADER
+#pragma once
 
 #include "blt_common/blt_shared.hh"
-#include "starling_common/chrom_depth_map.hh"
+#include "blt_util/chrom_depth_map.hh"
 #include "starling_common/starling_shared.hh"
 
 #include <iosfwd>
@@ -32,5 +30,3 @@ finish_gvcf_header(const starling_options& opt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,
                    std::ostream& os);
-
-#endif

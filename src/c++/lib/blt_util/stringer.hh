@@ -26,10 +26,8 @@
 #include <typeinfo>
 
 
-
 struct stringer_base
 {
-
     stringer_base()
         : _scanstr(NULL)
     {}
@@ -53,7 +51,6 @@ protected:
 template <typename T>
 struct stringer : public stringer_base
 {
-
     stringer<T>()
     {
         _scanstr=scan_string<T>();
@@ -62,7 +59,6 @@ struct stringer : public stringer_base
             type_error(typeid(T).name());
         }
     }
-
 
     const char*
     get32(const T val) const

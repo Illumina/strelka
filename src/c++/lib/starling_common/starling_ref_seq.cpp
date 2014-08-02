@@ -22,7 +22,6 @@
 
 extern "C" {
 #include "faidx.h"
-    //#include "sam.h"
 }
 
 #include <cstdlib>
@@ -38,7 +37,6 @@ get_samtools_ref_seq(const char* ref_file,
                      std::string& ref_seq,
                      const pos_range& pr)
 {
-
     faidx_t* fai(fai_load(ref_file));
     std::ostringstream fa_region_oss;
     fa_region_oss << chr_name;
@@ -69,7 +67,6 @@ void
 get_starling_ref_seq(const starling_options& opt,
                      reference_contig_segment& ref)
 {
-
     assert(opt.is_ref_set());
 
     // make a temp copy of report_range here to determine how much we

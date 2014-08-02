@@ -11,32 +11,20 @@
 // <https://github.com/sequencing/licenses/>
 //
 
+///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-extern "C" {
-#include "sam.h"
-}
+#include <map>
+#include <string>
 
 
-struct bam_dumper
-{
-    bam_dumper(const char* filename,
-               const bam_header_t* header);
+typedef std::map<std::string,double> cdmap_t;
 
-    ~bam_dumper()
-    {
-        if (NULL != _bfp) samclose(_bfp);
-    }
 
-    void
-    put_record(const bam1_t* brec)
-    {
-        samwrite(_bfp,brec);
-    }
-
-private:
-    samfile_t* _bfp;
-};
+// parse the chrom depth file
+void
+parse_chrom_depth(const std::string& chrom_depth_file,
+                  cdmap_t& chrom_depth);

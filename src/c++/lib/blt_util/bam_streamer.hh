@@ -19,10 +19,22 @@
 
 #include "blt_util/bam_record.hh"
 
+#include "boost/utility.hpp"
+
 #include <string>
 
 
-struct bam_streamer
+
+/// convenient bam record iterator for whole genome or chromosome segments
+///
+//
+// Example use:
+// while (stream.next()) {
+//     const bam_record& read(*(stream.get_record_ptr()));
+//     if(read.is_unmapped) foo++;
+// }
+//
+struct bam_streamer : public boost::noncopyable
 {
 
     explicit
@@ -31,12 +43,17 @@ struct bam_streamer
 
     ~bam_streamer();
 
-    /// set new or first region for same filename:
+    /// \brief set new or first region for file:
     void
     set_new_region(const char* region);
 
+    /// \brief set new or first region for file:
+    ///
+    /// \param beg zero-indexed start pos
+    /// \param end zero-indexed end pos
     void
-    set_new_region(int reg, int beg, int end);
+    set_new_region(
+        int reg, int beg, int end);
 
     bool next();
 
