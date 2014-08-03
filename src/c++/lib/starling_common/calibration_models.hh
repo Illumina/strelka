@@ -56,5 +56,6 @@ private:
     typedef std::map<std::string, double> featuremap;
     std::string model_name;
     modelmap models;
+    bool is_default_model=true;
 };
 

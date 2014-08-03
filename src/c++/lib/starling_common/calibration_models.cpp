@@ -27,6 +27,7 @@
 #include <iterator>
 #include <map>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <stdlib.h>     /* atof */
 
@@ -39,14 +40,14 @@
 
 calibration_models::calibration_models()
 {
-    this->set_model("default");
+//    this->set_model("DEFAULT");
 }
 calibration_models::~calibration_models() {}
 
 void calibration_models::clasify_site(site_info& si)
 {
 
-    if (si.dgt.is_snp && this->model_name!="default")
+    if (si.dgt.is_snp && !this->is_default_model)
     {
         featuremap features = si.get_qscore_features();     // create site value feature dict
         c_model myModel = this->get_model(this->model_name);
@@ -61,14 +62,12 @@ void calibration_models::clasify_site(site_info& si)
 
 void calibration_models::clasify_site(indel_info& ii)
 {
-    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && this->model_name!="default")
+    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && !this->is_default_model)
     {
         featuremap features = ii.get_qscore_features();
         c_model myModel = this->get_model(this->model_name);
-
         myModel.score_instance(features,ii);
     }
-    else
     {
         this->default_clasify_site(ii);
     }
@@ -148,15 +147,16 @@ void calibration_models::default_clasify_site(indel_info& ii)
 
 void calibration_models::set_model(const std::string& name)
 {
-    modelmap::iterator it = this->models.find(name);
+    modelmap::iterator it = this->models.find(boost::to_upper_copy(name));
+    assert("Unrecognized calibration model given using --scoring-model option in set_model" && it != this->models.end());
+
     if (it != this->models.end())
     {
-        this->model_name = name;
+        this->model_name = boost::to_upper_copy(name);
+        this->is_default_model = false;
     }
-    else
-    {
-        this->model_name = "default";
-    }
+//    log_os << "Calibration model set to '" << this->model_name << "'\n";
+//    log_os << "Calibration model is default '" << this->is_default_model << "'\n";
 #ifdef DEBUG_CAL
     log_os << "Calibration model set to '" << this->model_name << "'\n";
 #endif
@@ -164,11 +164,9 @@ void calibration_models::set_model(const std::string& name)
 
 c_model& calibration_models::get_model(std::string& name)
 {
-//    modelmap::iterator it = this->models.find(name);
-//    assert(it != this->models.end() && "I don't know the specified calibration model");
-
-//    this->models.find(name)->second.set_depth_filter(this->dopt.max_depth);
-    return this->models.find(name)->second;
+    modelmap::iterator it = this->models.find(boost::to_upper_copy(name));
+    assert("Unrecognized calibration model given using --scoring-model option" && it != this->models.end());
+    return this->models.find(boost::to_upper_copy(name))->second;
 }
 
 void calibration_models::add_model_pars(std::string& name,parmap& my_pars)
@@ -210,8 +208,12 @@ void calibration_models::load_models(std::string model_file)
                 {
                     this->add_model_pars(current_name,pars);
                 }
-                current_name = tokens.at(1);
-                c_model current_model(tokens.at(1),tokens.at(2));
+                current_name = boost::to_upper_copy(tokens.at(1));
+                c_model current_model(current_name,tokens.at(2));
+
+                current_model.dopt = this->dopt;
+                current_model.opt = this->opt;
+
                 this->models.insert(modelmap::value_type(current_name, current_model));
 #ifdef DEBUG_CAL
                 log_os << "Loading model: " << tokens.at(1) << " Type: " << tokens.at(2) << "\n";

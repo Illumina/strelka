@@ -45,9 +45,9 @@ void c_model::add_parameters(const parmap& myPars)
 void c_model::do_rule_model(featuremap& cutoffs, site_info& si)
 {
     if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
-    if (cutoffs["DP"]>0)
+    if (cutoffs["DP"]>0 && dopt->is_max_depth)
     {
-        if ((si.n_used_calls+si.n_unused_calls) > 150) si.smod.set_filter(VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > dopt->max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
@@ -74,9 +74,9 @@ void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii)
         if (ii.imod.gqx<cutoffs["GQX"]) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if (cutoffs["DP"]>1)
+    if (cutoffs["DP"]>0 && dopt->is_max_depth)
     {
-        if (ii.isri.depth > 150) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+        if (ii.isri.depth > dopt->max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }
 
 //    if (cutoffs["HighSNVSB"]>0) {
@@ -167,29 +167,31 @@ int prior_adjustment(
     int qscore          = error_prob_to_qphred(pFPrescale);
 #ifdef DEBUG_MODEL
 //        log_os << "minorityPrior " << minorityPrior << "\n";
-//        log_os << "pFP=" << pFP << "\n";
+//        log_os << "raw_score=" << raw_score << "\n";
 //        log_os << "rescale=" << pFPrescale << "\n";
-//        log_os << "experimental=" << qscore_test << "\n";
+//        log_os << "experimental=" << qscore << "\n";
 #endif
-
-    // cap the score at 60
-    if (qscore>60)
-        qscore = 60;
-    if (qscore<1 || qscore>60)
-    {
-    #ifdef DEBUG_MODEL
-       log_os << "Raw score " << raw_score << std::endl;
-       log_os << "Qscore "<< qscore << std::endl;
-    #endif
-        qscore = 1;
-    }
-    // TODO check for inf and NaN artifacts
 
     return qscore;
 }
 void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
 {
 //    most_predictive.size();
+    #ifdef DEBUG_MODEL
+       log_os << "Qscore "<< si.Qscore << std::endl;
+    #endif
+
+    // do extreme case handeling better
+    if (si.Qscore<1 ||si.Qscore>60){
+        featuremap cutoffs = {{"GQX", 30}, {"DP", 1}, {"DPFratio", 0.4}, {"HighSNVSB", 10}};
+        this->do_rule_model(cutoffs,si);
+        if (si.smod.filters.count()>0){
+            si.Qscore = 1;
+        }
+        else{
+            si.Qscore = 35;
+        }
+    }
 
     const double dpfExtreme(0.85);
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
@@ -204,11 +206,22 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
 //        log_os << CALIBRATION_MODEL::get_label(my_case) << "\n";
         si.smod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(my_case)); // more sophisticated filter setting here
     }
-
 }
 
 void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
 {
+    // do extreme case handeling better
+    if (ii.Qscore<1 ||ii.Qscore>40){
+        featuremap cutoffs = {{"GQX", 30}, {"DP", 1}};
+        this->do_rule_model(cutoffs,ii);
+        if (ii.imod.filters.count()>0){
+            ii.Qscore = 1;
+        }
+        else{
+            ii.Qscore = 15;
+        }
+    }
+
 //    most_predictive.size();
     if (ii.Qscore < qscore_cut)
     {

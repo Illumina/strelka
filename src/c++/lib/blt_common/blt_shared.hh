@@ -193,7 +193,7 @@ struct blt_options
           , is_compute_hapscore(false)
           , is_compute_VQSRmetrics(false)
           , is_compute_calibration_features(false)
-          , calibration_model("QScoreHpolmodel") // default model reports rule-based metrics
+          , calibration_model("") // default model reports rule-based metrics
           , do_codon_phasing(false)
           , phasing_window(3)
 

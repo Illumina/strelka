@@ -124,10 +124,8 @@ public:
     void add_parameters(const parmap& myPars);
     void score_instance(featuremap features, site_info& si);
     void score_instance(featuremap features, indel_info& ii);
-//    void set_depth_filter(const double my_cutoff){
-//        this->depth_cutoff = my_cutoff;
-//        this->is_depth_cutoff = true;
-//    }
+    const gvcf_deriv_options* dopt;
+    const gvcf_options* opt;
 private:
     int logistic_score(const CALIBRATION_MODEL::var_case var_case, featuremap features);
     void do_rule_model(featuremap& cutoffs, site_info& si);  //snp case

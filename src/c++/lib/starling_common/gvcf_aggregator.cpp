@@ -137,7 +137,10 @@ gvcf_aggregator(const starling_options& opt,
     this->CM.dopt = &_dopt;
     this->CM.opt = &_opt.gvcf;
     this->CM.load_models(opt.calibration_models_filename);
-    this->CM.set_model(opt.calibration_model);
+    if (static_cast<int>(opt.calibration_model.length())>0){
+        this->CM.set_model(opt.calibration_model);
+//        log_os << "Setting calimodel " << opt.calibration_model << "\n";
+    }
 
     assert(nullptr != _osptr);
     assert((nullptr !=_chrom) && (strlen(_chrom)>0));
