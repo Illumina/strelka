@@ -94,7 +94,7 @@ struct starling_read : private boost::noncopyable
     set_genomic_bam_record(const bam_record& br)
     {
         assert(! _is_bam_record_genomic);
-        _read_rec.copy(br);
+        _read_rec = br;
         _is_bam_record_genomic=true;
     }
 
@@ -198,7 +198,7 @@ private:
     const bam1_t*
     get_brp() const
     {
-        return _read_rec._bp;
+        return _read_rec.get_data();
     }
 
 #if 0

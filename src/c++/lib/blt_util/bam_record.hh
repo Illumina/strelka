@@ -17,33 +17,52 @@
 
 #pragma once
 
-
 #include "blt_util/bam_util.hh"
 #include "blt_util/bam_seq.hh"
+
+#include <iosfwd>
 
 
 struct bam_record
 {
-
     bam_record()
         : _bp(bam_init1()) {}
 
     ~bam_record()
     {
-        if (NULL != _bp)
-        {
-            if (NULL != _bp->data) free(_bp->data);
-            free(_bp);
-        }
+        freeBam();
     }
 
     bam_record(const bam_record& br)
-        : _bp(bam_dup1(br._bp)) {}
+        : _bp(br.empty() ? bam_init1() : bam_dup1(br._bp)) {}
 
-    void
-    copy(const bam_record& br)
+    const bam_record&
+    operator=(const bam_record& br)
     {
-        bam_copy1(_bp,br._bp);
+        if (this == &br) return (*this);
+
+        if (empty())
+        {
+            if (! br.empty())
+            {
+                freeBam();
+                _bp=bam_dup1(br._bp);
+            }
+            // else empty->empty : do nothing...
+        }
+        else
+        {
+            if (! br.empty())
+            {
+                bam_copy1(_bp,br._bp);
+            }
+            else
+            {
+                freeBam();
+                _bp=bam_init1();
+            }
+        }
+        return (*this);
     }
 
 private:
@@ -196,6 +215,11 @@ public:
         return alt_map_qual(astag);
     }
 
+    int32_t template_size() const
+    {
+        return _bp->core.isize;
+    }
+
 
     // Test if SM and AM fields both exist and are equal to zero. Any
     // other result returns false:
@@ -230,11 +254,20 @@ public:
     {
         return _bp->core.l_qseq;
     }
+
     bam_seq get_bam_read() const
     {
         return bam_seq(bam1_seq(_bp),read_size());
     }
+
+    /// get string AUX field, return NULL if field is not found, or field is not a string
+    ///
+    /// \param[in] tag AUX field tag. This is a char array of length two, null term is not required
+    ///
+    /// example tag: static const char smtag[] = {'S','M'};
+    ///
     const char* get_string_tag(const char* tag) const;
+
     bool get_num_tag(const char* tag, int32_t& num) const;
 
     const uint8_t* qual() const
@@ -270,9 +303,15 @@ public:
         return _bp;
     }
 
+    bool
+    empty() const
+    {
+        assert(NULL != _bp);
+        return (_bp->data_len == 0);
+    }
+
 private:
     friend struct bam_streamer;
-    friend struct starling_read;
 
     unsigned alt_map_qual(const char* tag) const;
 
@@ -294,5 +333,20 @@ private:
         }
     }
 
+    void
+    freeBam()
+    {
+        if (NULL != _bp)
+        {
+            if (NULL != _bp->data) free(_bp->data);
+            free(_bp);
+        }
+    }
+
     bam1_t* _bp;
 };
+
+
+std::ostream&
+operator<<(std::ostream& os, const bam_record& br);
+
