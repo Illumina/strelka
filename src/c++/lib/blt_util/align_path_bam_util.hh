@@ -11,34 +11,34 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "blt_util/align_path.hh"
 #include "blt_util/bam_util.hh"
+#include "blt_util/align_path.hh"
 
 
-// convert internal BAM cigar representation directly into a path:
-//
+/// convert internal BAM cigar representation directly into a path:
+///
 void
 bam_cigar_to_apath(const uint32_t* bam_cigar,
                    const unsigned n_cigar,
                    ALIGNPATH::path_t& apath);
 
-// convert apath to internal BAM cigar representation:
-//
-// bam_cigar should already be set to apath.size() capacity
-//
+/// convert apath to internal BAM cigar representation:
+///
+/// bam_cigar should already be set to apath.size() capacity
+///
 void
 apath_to_bam_cigar(const ALIGNPATH::path_t& apath,
                    uint32_t* bam_cigar);
 
-// convert apath into a CIGAR string and replace CIGAR in BAM record
-//
+/// convert apath into a CIGAR string and replace CIGAR in BAM record
+///
 void
 edit_bam_cigar(const ALIGNPATH::path_t& apath,
                bam1_t& br);
+
