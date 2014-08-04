@@ -17,11 +17,11 @@
 ///
 
 
+#include "blt_util/align_path.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/parse_util.hh"
 #include "blt_util/seq_util.hh"
-#include "starling_common/align_path.hh"
 
 #include "boost/lexical_cast.hpp"
 

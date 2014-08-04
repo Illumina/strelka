@@ -21,8 +21,8 @@
 
 #include "starling_read_util.hh"
 
+#include "blt_util/align_path_bam_util.hh"
 #include "blt_util/log.hh"
-#include "starling_common/align_path_bam_util.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_shared.hh"
 

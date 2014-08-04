@@ -16,7 +16,7 @@
 ///
 
 #include "alignment_util.hh"
-#include "starling_common/align_path.hh"
+#include "blt_util/align_path.hh"
 #include "starling_common/align_path_util.hh"
 
 #include <cassert>

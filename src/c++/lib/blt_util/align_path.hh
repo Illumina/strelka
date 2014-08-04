@@ -20,7 +20,6 @@
 
 #include "blt_util/pos_range.hh"
 
-#include <ciso646>
 #include <iosfwd>
 #include <stdint.h>
 #include <string>

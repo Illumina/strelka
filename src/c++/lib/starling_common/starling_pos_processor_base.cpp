@@ -11,7 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
+///
 /// \author Chris Saunders
 ///
 
@@ -35,10 +35,10 @@
 #include "blt_common/position_strand_distro_anomaly.hh"
 #include "blt_common/position_strand_distro_anomaly_lrt.hh"
 #include "blt_common/ref_context.hh"
+#include "blt_util/align_path.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/read_util.hh"
-#include "starling_common/align_path.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 #include "starling_common/starling_indel_report_info.hh"
