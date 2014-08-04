@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -23,10 +22,10 @@
 #include "blt_util/parse_util.hh"
 #include "blt_util/seq_util.hh"
 
+#include "boost/foreach.hpp"
 #include "boost/lexical_cast.hpp"
 
 #include <cassert>
-#include <cctype>
 
 #include <algorithm>
 #include <iostream>
@@ -39,7 +38,6 @@ void
 unknown_cigar_error(const char* const cigar,
                     const char* const cptr)
 {
-
     std::ostringstream oss;
     oss << "ERROR: can't parse cigar string: " << cigar << "\n"
         << "\tunexpected character: '" << *cptr << "' at position: " << (cptr-cigar+1) << "\n";
@@ -56,13 +54,9 @@ void
 apath_to_cigar(const path_t& apath,
                std::string& cigar)
 {
-
     cigar.clear();
-
-    const unsigned as(apath.size());
-    for (unsigned i(0); i<as; ++i)
+    BOOST_FOREACH(const path_segment& ps, apath)
     {
-        const path_segment& ps(apath[i]);
         cigar += boost::lexical_cast<std::string>(ps.length);
         cigar.push_back(segment_type_to_cigar_code(ps.type));
     }
@@ -73,10 +67,9 @@ apath_to_cigar(const path_t& apath,
 std::ostream&
 operator<<(std::ostream& os, const path_t& apath)
 {
-    const unsigned as(apath.size());
-    for (unsigned i(0); i<as; ++i)
+    BOOST_FOREACH(const path_segment& ps, apath)
     {
-        os << apath[i].length << segment_type_to_cigar_code(apath[i].type);
+        os << ps.length << segment_type_to_cigar_code(ps.type);
     }
     return os;
 }
@@ -87,7 +80,6 @@ void
 cigar_to_apath(const char* cigar,
                path_t& apath)
 {
-
     using illumina::blt_util::parse_unsigned;
 
     assert(NULL != cigar);
@@ -126,12 +118,9 @@ cigar_to_apath(const char* cigar,
 unsigned
 apath_read_length(const path_t& apath)
 {
-
     unsigned val(0);
-    const unsigned as(apath.size());
-    for (unsigned i(0); i<as; ++i)
+    BOOST_FOREACH(const path_segment& ps, apath)
     {
-        const path_segment& ps(apath[i]);
         if (! is_segment_type_read_length(ps.type)) continue;
         val += ps.length;
     }
@@ -143,12 +132,9 @@ apath_read_length(const path_t& apath)
 unsigned
 apath_ref_length(const path_t& apath)
 {
-
     unsigned val(0);
-    const unsigned as(apath.size());
-    for (unsigned i(0); i<as; ++i)
+    BOOST_FOREACH(const path_segment& ps, apath)
     {
-        const path_segment& ps(apath[i]);
         if (! is_segment_type_ref_length(ps.type)) continue;
         val += ps.length;
     }
@@ -179,10 +165,8 @@ unsigned
 apath_read_lead_size(const path_t& apath)
 {
     unsigned val(0);
-    const unsigned as(apath.size());
-    for (unsigned i(0); i<as; ++i)
+    BOOST_FOREACH(const path_segment& ps, apath)
     {
-        const path_segment& ps(apath[i]);
         if (! is_segment_type_unaligned_read_edge(ps.type)) return val;
         if (is_segment_type_read_length(ps.type)) val += ps.length;
     }
@@ -211,10 +195,8 @@ unsigned
 apath_soft_clip_lead_size(const path_t& apath)
 {
     unsigned val(0);
-    const unsigned as(apath.size());
-    for (unsigned i(0); i<as; ++i)
+    BOOST_FOREACH(const path_segment& ps, apath)
     {
-        const path_segment& ps(apath[i]);
         if       (HARD_CLIP == ps.type)
         {
             // do nothing:
@@ -263,10 +245,8 @@ unsigned
 apath_insert_lead_size(const path_t& apath)
 {
     unsigned val(0);
-    const unsigned as(apath.size());
-    for (unsigned i(0); i<as; ++i)
+    BOOST_FOREACH(const path_segment& ps, apath)
     {
-        const path_segment& ps(apath[i]);
         if ((HARD_CLIP == ps.type) || (SOFT_CLIP == ps.type))
         {
             // do nothing:
@@ -312,13 +292,102 @@ apath_insert_trail_size(const path_t& apath)
 
 
 void
+apath_limit_ref_length(
+    const unsigned target_ref_length,
+    path_t& apath)
+{
+    unsigned ref_length(0);
+    const unsigned as(apath.size());
+    for (unsigned i(0); i<as; ++i)
+    {
+        path_segment& ps(apath[i]);
+        if (! is_segment_type_ref_length(ps.type)) continue;
+        ref_length += ps.length;
+
+        if (ref_length < target_ref_length) continue;
+
+        if (ref_length > target_ref_length)
+        {
+            const unsigned extra(ref_length - target_ref_length);
+            assert(ps.length > extra);
+            ps.length -= extra;
+        }
+        apath.resize(i+1);
+        break;
+    }
+}
+
+
+void
+apath_limit_read_length(
+    const unsigned target_read_start,
+    const unsigned target_read_end,
+    path_t& apath)
+{
+    bool isStartSet(false);
+
+    unsigned read_length(0);
+    const unsigned as(apath.size());
+    unsigned startSegment(0);
+    unsigned endSegment(as);
+    for (unsigned i(0); i<as; ++i)
+    {
+        path_segment& ps(apath[i]);
+        if (! is_segment_type_read_length(ps.type)) continue;
+        read_length += ps.length;
+
+        if ((! isStartSet) && (read_length > target_read_start))
+        {
+            {
+                const unsigned extra(ps.length - (read_length - target_read_start));
+                assert(ps.length > extra);
+                ps.length -= extra;
+            }
+            startSegment=i;
+            isStartSet=true;
+        }
+
+        if (read_length >= target_read_end)
+        {
+            if (read_length > target_read_end)
+            {
+                const unsigned extra(read_length - target_read_end);
+                assert(ps.length > extra);
+                ps.length -= extra;
+            }
+            endSegment=i+1;
+            break;
+        }
+    }
+    apath = path_t(apath.begin()+startSegment,apath.begin()+endSegment);
+}
+
+
+void
+apath_append(
+    path_t& apath,
+    const align_t seg_type,
+    const unsigned length)
+{
+    if (apath.size() && apath.back().type == seg_type)
+    {
+        apath.back().length += length;
+    }
+    else
+    {
+        apath.push_back(path_segment(seg_type,length));
+    }
+}
+
+
+
+void
 apath_clip_clipper(path_t& apath,
                    unsigned& hc_lead,
                    unsigned& hc_trail,
                    unsigned& sc_lead,
                    unsigned& sc_trail)
 {
-
     hc_lead=0;
     hc_trail=0;
     sc_lead=0;
@@ -326,10 +395,8 @@ apath_clip_clipper(path_t& apath,
 
     bool is_lead(true);
     path_t apath2;
-    const unsigned as(apath.size());
-    for (unsigned i(0); i<as; ++i)
+    BOOST_FOREACH(const path_segment& ps, apath)
     {
-        const path_segment& ps(apath[i]);
         if       (HARD_CLIP == ps.type)
         {
             if (is_lead)
@@ -372,7 +439,6 @@ apath_clip_adder(path_t& apath,
                  const unsigned sc_lead,
                  const unsigned sc_trail)
 {
-
     path_t apath2;
     path_segment ps;
     if (hc_lead>0)
@@ -515,6 +581,38 @@ apath_cleaner(path_t& apath)
 }
 
 
+
+void
+apath_clean_seqmatch(path_t& apath)
+{
+    path_t apath2;
+    bool is_match(false);
+    const unsigned as(apath.size());
+    for (unsigned i(0); i<as; ++i)
+    {
+        const path_segment& ps(apath[i]);
+        if (is_segment_align_match(ps.type))
+        {
+            if (is_match)
+            {
+                apath2.back().length += ps.length;
+            }
+            else
+            {
+                apath2.push_back(path_segment(MATCH,ps.length));
+            }
+            is_match=true;
+        }
+        else
+        {
+            apath2.push_back(ps);
+            is_match=false;
+        }
+    }
+
+    apath = apath2;
+}
+
 #if 0
 std::pair<unsigned,unsigned>
 get_nonclip_end_segments(const path_t& apath)
@@ -576,7 +674,7 @@ get_match_edge_segments(const path_t& apath)
     for (unsigned i(0); i<as; ++i)
     {
         const path_segment& ps(apath[i]);
-        if (MATCH == ps.type)
+        if (is_segment_align_match(ps.type))
         {
             if (! is_first_match) res.first=i;
             is_first_match=true;
@@ -613,6 +711,36 @@ is_clipped(const path_t& apath)
         if ((apath[as-1].type == SOFT_CLIP) || (apath[as-1].type == HARD_CLIP)) return true;
     }
     return false;
+}
+
+bool
+is_clipped_front(const path_t& apath)
+{
+    const unsigned as(apath.size());
+    if (as==0) return false;
+    if ((apath[0].type == SOFT_CLIP) || (apath[0].type == HARD_CLIP)) return true;
+    return false;
+}
+
+
+
+unsigned
+get_clip_len(const path_t& apath)
+{
+    const unsigned as(apath.size());
+    if (as==0) return 0;
+    if ((apath[0].type == SOFT_CLIP) || (apath[0].type == HARD_CLIP))
+    {
+        return apath[0].length;
+    }
+    if (as>1)
+    {
+        if ((apath[as-1].type == SOFT_CLIP) || (apath[as-1].type == HARD_CLIP))
+        {
+            return apath[as-1].length;
+        }
+    }
+    return 0;
 }
 
 
@@ -674,7 +802,6 @@ bool
 is_segment_swap_start(const path_t& apath,
                       unsigned i)
 {
-
     using namespace ALIGNPATH;
 
     bool is_insert(false);
@@ -705,10 +832,9 @@ is_segment_swap_start(const path_t& apath,
 bool
 is_apath_floating(const path_t& apath)
 {
-
     for (const auto& ps : apath)
     {
-        if (ps.type==MATCH) return false;
+        if (is_segment_align_match(ps.type)) return false;
     }
     return true;
 }
@@ -718,7 +844,6 @@ std::string
 get_apath_invalid_reason(const path_t& apath,
                          const unsigned seq_length)
 {
-
     const ALIGN_ISSUE::issue_t ai(get_apath_invalid_type(apath,seq_length));
 
     if (ALIGN_ISSUE::LENGTH == ai)
@@ -737,7 +862,6 @@ ALIGN_ISSUE::issue_t
 get_apath_invalid_type(const path_t& apath,
                        const unsigned seq_length)
 {
-
     bool is_match(false);
     align_t last_type(NONE);
     const unsigned as(apath.size());
@@ -784,7 +908,7 @@ get_apath_invalid_type(const path_t& apath,
             }
         }
 
-        if ((! is_match) && (ps.type==MATCH)) is_match=true;
+        if ((! is_match) && (is_segment_align_match(ps.type))) is_match=true;
 
         last_type=ps.type;
     }
@@ -795,7 +919,7 @@ get_apath_invalid_type(const path_t& apath,
     for (unsigned i(0); i<as; ++i)
     {
         const path_segment& ps(apath[as-(i+1)]);
-        if (ps.type==MATCH) break;
+        if (is_segment_align_match(ps.type)) break;
         //if(ps.type==DELETE) return ALIGN_ISSUE::EDGE_DELETE;
         if (ps.type==SKIP) return ALIGN_ISSUE::EDGE_SKIP;
     }
@@ -820,7 +944,6 @@ is_apath_starling_invalid(const path_t& apath)
     }
     return false;
 }
-
 
 
 }  // namespace ALIGNPATH

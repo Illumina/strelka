@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -43,7 +42,9 @@ enum align_t
     SKIP,
     SOFT_CLIP,
     HARD_CLIP,
-    PAD
+    PAD,
+    SEQ_MATCH,
+    SEQ_MISMATCH
 };
 
 inline
@@ -66,6 +67,10 @@ segment_type_to_cigar_code(const align_t id)
         return 'H';
     case PAD       :
         return 'P';
+    case SEQ_MATCH  :
+        return '=';
+    case SEQ_MISMATCH  :
+        return 'X';
     default :
         return 'X';
     }
@@ -91,6 +96,10 @@ cigar_code_to_segment_type(const char c)
         return HARD_CLIP;
     case 'P' :
         return PAD;
+    case '=' :
+        return SEQ_MATCH;
+    case 'X' :
+        return SEQ_MISMATCH;
     default  :
         return NONE;
     }
@@ -105,6 +114,8 @@ is_segment_type_read_length(const align_t id)
     case MATCH     :
     case INSERT    :
     case SOFT_CLIP :
+    case SEQ_MATCH :
+    case SEQ_MISMATCH :
         return true;
     default        :
         return false;
@@ -120,6 +131,23 @@ is_segment_type_ref_length(const align_t id)
     case MATCH  :
     case DELETE :
     case SKIP   :
+    case SEQ_MATCH :
+    case SEQ_MISMATCH :
+        return true;
+    default     :
+        return false;
+    }
+}
+
+inline
+bool
+is_segment_align_match(const align_t id)
+{
+    switch (id)
+    {
+    case MATCH :
+    case SEQ_MATCH :
+    case SEQ_MISMATCH :
         return true;
     default     :
         return false;
@@ -191,45 +219,73 @@ apath_to_cigar(const path_t& apath)
     return cigar;
 }
 
-// Convert cigar string into apath format
-//
-// any padding in the CIGAR string is removed
+/// Convert cigar string into apath format
+///
+/// any padding in the CIGAR string is removed
 void
 cigar_to_apath(const char* cigar,
                path_t& apath);
 
+/// \return the read length spanned by the path
 unsigned
 apath_read_length(const path_t& apath);
 
+/// \return the reference length spanned by the path
 unsigned
 apath_ref_length(const path_t& apath);
 
-// how much unaligned sequence (soft_clip or insert) occurs before the first aligned base?
+/// how much unaligned sequence (soft_clip or insert) occurs before the first aligned base?
 unsigned
 apath_read_lead_size(const path_t& apath);
 
-// how much unaligned sequence (soft_clip or insert) occurs after the last aligned base?
+/// how much unaligned sequence (soft_clip or insert) occurs after the last aligned base?
 unsigned
 apath_read_trail_size(const path_t& apath);
 
-// how much soft_clip occurs before the first aligned base?
+/// how much soft_clip occurs before the first aligned base?
 unsigned
 apath_soft_clip_lead_size(const path_t& apath);
 
-// how much soft_clip occurs after the last aligned base?
+/// how much soft_clip occurs after the last aligned base?
 unsigned
 apath_soft_clip_trail_size(const path_t& apath);
 
-// how much insert occurs before the first aligned base?
+/// how much insert occurs before the first aligned base?
 unsigned
 apath_insert_lead_size(const path_t& apath);
 
-// how much insert occurs after the last aligned base?
+/// how much insert occurs after the last aligned base?
 unsigned
 apath_insert_trail_size(const path_t& apath);
 
-// remove any edge clip from apath and return the amount
-// removed from each side. if ambiguous, lead is favored over trail
+/// append segment to end of apath
+void
+apath_append(
+    path_t& apath,
+    const align_t seg_type,
+    const unsigned length = 1);
+
+/// trim the end off of the alignment so that the reference span
+/// is no greater than target_ref_length. The edited path could contain
+/// edge deletions
+///
+void
+apath_limit_ref_length(
+    const unsigned target_ref_length,
+    path_t& apath);
+
+/// trim the start and end off of the alignment so that the read span
+/// is no greater than target_read_length. The edited path could contain
+/// edge insertions
+///
+void
+apath_limit_read_length(
+    const unsigned target_read_start,
+    const unsigned target_read_end,
+    path_t& apath);
+
+/// remove any edge clip from apath and return the amount
+/// removed from each side. if ambiguous, lead is favored over trail
 void
 apath_clip_clipper(path_t& apath,
                    unsigned& hc_lead,
@@ -237,9 +293,9 @@ apath_clip_clipper(path_t& apath,
                    unsigned& sc_lead,
                    unsigned& sc_trail);
 
-// adds lead clip to front of alignment and trail clip
-// to back -- assumes no clipping exists on the path already.
-//
+/// adds lead clip to front of alignment and trail clip
+/// to back -- assumes no clipping exists on the path already.
+///
 void
 apath_clip_adder(path_t& apath,
                  const unsigned hc_lead,
@@ -247,21 +303,38 @@ apath_clip_adder(path_t& apath,
                  const unsigned sc_lead,
                  const unsigned sc_trail);
 
-// 'cleans' the path so that it can be used, or used more consistently, in starka
-//
-// note this does not try to correct or work around anything
-// which can't be unambiguously reinterpreted to a simpler form
-//
-// 1. remove zero length alignment segments
-// 2. remove pad segments
-// 3. remove repeated segments
-// 4. for any combined insertion/deletion pair, reduce this to
-//    a single segment pair (in either order)
-//
-//  \return true if path has been altered
-//
+/// 'cleans' the path so that it can be used, or used more consistently
+///
+/// note this does not try to correct or work around anything
+/// which can't be unambiguously reinterpreted to a simpler form
+///
+/// 1. remove zero length alignment segments
+/// 2. remove pad segments
+/// 3. remove repeated segments
+/// 4. for any combined insertion/deletion pair, reduce this to
+///    a single segment pair (in either order)
+///
+///  \return true if path has been altered
+///
 bool
 apath_cleaner(path_t& apath);
+
+/// Convert any cigar string using the seq_match/seq_mismatch operators (=/X) to the
+/// more widely accepted align match "M"
+void
+apath_clean_seqmatch(path_t& apath);
+
+/// convert the input alignpath to use seq match '=' and mismatch 'X' instead of align-match 'M'
+///
+template <typename symIter1,typename symIter2>
+void
+apath_add_seqmatch(
+    const symIter1 queryBegin,
+    const symIter1 queryEnd,
+    const symIter2 refBegin,
+    const symIter2 refEnd,
+    path_t& apath);
+
 
 #if 0
 // Get the match descriptor segment numbers for the first and last
@@ -271,20 +344,20 @@ std::pair<unsigned,unsigned>
 get_nonclip_end_segments(const path_t& apath);
 #endif
 
-// return the read coordinate range after clipping:
+/// return the read coordinate range after clipping:
 pos_range
 get_nonclip_range(const path_t& apath);
 
-// Get the match descriptor segment numbers for the first and last
-// match segments. Return total segment size on error.
+/// Get the match descriptor segment numbers for the first and last
+/// match segments. Return total segment size on error.
 std::pair<unsigned,unsigned>
 get_match_edge_segments(const path_t& apath);
 
 unsigned
 apath_exon_count(const path_t& apath);
 
-// provide reference offsets for the begining of each exon:
-//
+/// provide reference offsets for the beginning of each exon:
+///
 struct exon_offsets
 {
     exon_offsets(const path_t& apath)
@@ -329,6 +402,14 @@ is_soft_clipped(const path_t& apath);
 bool
 is_clipped(const path_t& apath);
 
+/// is the first edge of the alignment soft-clipped or hard-clipped?
+bool
+is_clipped_front(const path_t& apath);
+
+/// return length of clipped pre- or postfix
+unsigned
+get_clip_len(const path_t& apath);
+
 /// does either edge of the alignment
 /// contain a segment which impacts read length or reference positions?
 /// (INSERT,DELETE,SKIP,SOFT_CLIP)
@@ -339,17 +420,17 @@ is_clipped(const path_t& apath);
 bool
 is_edge_readref_len_segment(const path_t& apath);
 
-// does alignment contain an adjacent insertion/deletion event?
-//
+/// does alignment contain an adjacent insertion/deletion event?
+///
 bool
 is_seq_swap(const path_t& apath);
 
-// is the given segment the begining of a seq swap?
+/// is the given segment the beginning of a seq swap?
 bool
 is_segment_swap_start(const path_t& apath,
                       const unsigned i);
 
-// test if alignment has no match:
+/// test if alignment has no match:
 bool
 is_apath_floating(const path_t& apath);
 
@@ -420,12 +501,12 @@ bool
 is_apath_invalid(const path_t& apath,
                  const unsigned seq_length)
 {
-
     return (ALIGN_ISSUE::NONE != get_apath_invalid_type(apath,seq_length));
 }
 
-// check for conditions on an otherwise valid path which starling
-// does not handle:
+/// check for conditions on an otherwise valid path which starling
+/// does not handle:
+/// TODO: move  this into starling-specific library
 bool
 is_apath_starling_invalid(const path_t& apath);
 
@@ -433,4 +514,7 @@ is_apath_starling_invalid(const path_t& apath);
 normalize_path();
 #endif
 }
+
+
+#include "align_path_impl.hh"
 
