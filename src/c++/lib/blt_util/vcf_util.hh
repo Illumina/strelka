@@ -18,7 +18,6 @@
 
 #pragma once
 
-
 #include <cstring>
 #include <iosfwd>
 #include <vector>
@@ -93,7 +92,6 @@ const char*
 get_format_string_nocopy(const char* const* word,
                          const char* key)
 {
-
     unsigned keynum(0);
     if (! get_format_key_index(word[VCFID::FORMAT],key,keynum)) return NULL;
 

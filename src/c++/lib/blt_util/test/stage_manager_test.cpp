@@ -41,7 +41,6 @@ static
 stage_data
 get_test_stage_data()
 {
-
     stage_data sd;
     sd.add_stage(0);
     sd.add_stage(1,0,10);
@@ -58,7 +57,6 @@ stage_data_shift_test(const stage_data& sd,
                       const int stage_id,
                       const unsigned expect)
 {
-
     const unsigned result(sd.get_stage_id_shift(stage_id));
     BOOST_CHECK_EQUAL(result,expect);
 }
@@ -66,7 +64,6 @@ stage_data_shift_test(const stage_data& sd,
 
 BOOST_AUTO_TEST_CASE( test_stage_data_dist )
 {
-
     const stage_data sd(get_test_stage_data());
 
     stage_data_shift_test(sd,0,0);
@@ -78,7 +75,6 @@ BOOST_AUTO_TEST_CASE( test_stage_data_dist )
 
 BOOST_AUTO_TEST_CASE( test_stage_data_bad_parent )
 {
-
     stage_data sd;
     BOOST_CHECK_THROW(sd.add_stage(1,0,10),std::exception);
 }
@@ -86,7 +82,6 @@ BOOST_AUTO_TEST_CASE( test_stage_data_bad_parent )
 
 BOOST_AUTO_TEST_CASE( test_stage_data_bad_id )
 {
-
     stage_data sd;
     sd.add_stage(1);
 
@@ -106,7 +101,6 @@ BOOST_AUTO_TEST_CASE( test_stage_data_bad_id )
 ///
 struct test_pos_processor : public pos_processor_base
 {
-
     //
     // TODO: finish setting up stage relationship checking...
     //
@@ -142,7 +136,6 @@ struct test_pos_processor : public pos_processor_base
 
 BOOST_AUTO_TEST_CASE( test_stage_manager )
 {
-
     const stage_data sd(get_test_stage_data());
     const pos_range report_range(0,60);
     test_pos_processor tpp;
@@ -160,7 +153,6 @@ BOOST_AUTO_TEST_CASE( test_stage_manager )
 
 BOOST_AUTO_TEST_CASE( test_stage_manager_reset )
 {
-
     const stage_data sd(get_test_stage_data());
     const pos_range report_range(0,60);
     test_pos_processor tpp;
@@ -174,7 +166,6 @@ BOOST_AUTO_TEST_CASE( test_stage_manager_reset )
         BOOST_CHECK_EQUAL(tpp.stage_pos[i],59);
     }
 }
-
 
 
 BOOST_AUTO_TEST_SUITE_END()

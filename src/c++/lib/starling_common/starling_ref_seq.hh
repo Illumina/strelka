@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_REF_SEQ_HH
-#define __STARLING_REF_SEQ_HH
+#pragma once
 
 #include "starling_common/starling_shared.hh"
 
@@ -28,5 +26,3 @@ void
 get_starling_ref_seq(const starling_options& opt,
                      reference_contig_segment& ref);
 
-
-#endif

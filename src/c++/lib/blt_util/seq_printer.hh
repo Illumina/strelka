@@ -11,24 +11,28 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "blt_common/blt_shared.hh"
-#include "blt_util/chrom_depth_map.hh"
-#include "starling_common/starling_shared.hh"
-#include "starling_common/calibration_models.hh"
-
 #include <iosfwd>
+#include <string>
 
 
+/// pretty print sequence in such a way that it's easy to locate position number
+///
 void
-finish_gvcf_header(const starling_options& opt,
-                   const gvcf_deriv_options& dopt,
-                   const cdmap_t& chrom_depth,
-                   const std::string& bam_header_data,
-                   std::ostream& os,
-                   calibration_models& CM);
+printSeq(
+    const char* seq,
+    std::ostream& os);
+
+
+inline
+void
+printSeq(
+    const std::string& seq,
+    std::ostream& os)
+{
+    printSeq(seq.c_str(),os);
+}

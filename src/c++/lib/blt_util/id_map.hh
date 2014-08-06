@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -21,6 +20,7 @@
 
 #include "blt_util/blt_exception.hh"
 
+#include "boost/optional.hpp"
 
 #include <map>
 #include <vector>
@@ -58,6 +58,18 @@ struct id_set
     }
 
     /// \brief Get id of inserted key
+    boost::optional<unsigned>
+    get_optional_id(const K& key) const
+    {
+        const typename k2id_t::const_iterator i(_k2id.find(key));
+        if (i==_k2id.end())
+        {
+            return boost::optional<unsigned>();
+        }
+        return boost::optional<unsigned>(i->second);
+    }
+
+    /// \brief Get id of inserted key
     unsigned get_id(const K& key) const
     {
         const typename k2id_t::const_iterator i(_k2id.find(key));
@@ -78,12 +90,20 @@ struct id_set
         return _id2k[id];
     }
 
-    unsigned size() const
+    bool
+    empty() const
+    {
+        return _id2k.empty();
+    }
+
+    unsigned
+    size() const
     {
         return _id2k.size();
     }
 
-    void clear()
+    void
+    clear()
     {
         _k2id.clear();
         _id2k.clear();
@@ -108,8 +128,8 @@ template <typename K, typename V>
 struct id_map
 {
 
-    /// \brief Add key and value to map if key not present, and
-    /// return id number in either case
+    /// \brief Update map with (key,value) and return id
+    ///
     unsigned insert(const K& key, const V& value)
     {
         const typename k2id_t::const_iterator i(_k2id.find(key));
@@ -122,6 +142,7 @@ struct id_map
         }
         else
         {
+            _id2kv[i->second] = std::make_pair(key,value);
             return i->second;
         }
     }
@@ -130,6 +151,18 @@ struct id_map
     bool test_key(const K& key) const
     {
         return (_k2id.find(key) != _k2id.end());
+    }
+
+    /// \brief Get id of inserted key
+    boost::optional<unsigned>
+    get_optional_id(const K& key) const
+    {
+        const typename k2id_t::const_iterator i(_k2id.find(key));
+        if (i==_k2id.end())
+        {
+            return boost::optional<unsigned>();
+        }
+        return boost::optional<unsigned>(i->second);
     }
 
     /// \brief Get id of inserted key
@@ -163,12 +196,20 @@ struct id_map
         return _id2kv[id].second;
     }
 
-    unsigned size() const
+    bool
+    empty() const
+    {
+        return _id2kv.empty();
+    }
+
+    unsigned
+    size() const
     {
         return _id2kv.size();
     }
 
-    void clear()
+    void
+    clear()
     {
         _k2id.clear();
         _id2kv.clear();
@@ -180,3 +221,4 @@ private:
     k2id_t _k2id;
     std::vector<std::pair<K,V> > _id2kv;
 };
+

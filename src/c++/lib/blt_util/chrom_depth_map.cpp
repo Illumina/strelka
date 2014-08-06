@@ -11,15 +11,16 @@
 // <https://github.com/sequencing/licenses/>
 //
 
+/// \file
 ///
 /// \author Chris Saunders
 ///
 
 
 #include "blt_util/blt_exception.hh"
+#include "blt_util/chrom_depth_map.hh"
 #include "blt_util/log.hh"
 #include "blt_util/parse_util.hh"
-#include "starling_common/chrom_depth_map.hh"
 
 #include <cstdlib>
 #include <cstring>
@@ -34,6 +35,7 @@ void
 parse_chrom_depth(const std::string& chrom_depth_file,
                   cdmap_t& chrom_depth)
 {
+
     if (chrom_depth_file.empty()) return;
 
     std::ifstream depth_is(chrom_depth_file.c_str());
@@ -77,10 +79,16 @@ parse_chrom_depth(const std::string& chrom_depth_file,
             const char* s(word2);
             chrom_depth[buff] = illumina::blt_util::parse_double(s);
         }
-        catch (const blt_exception& /*e*/)
+        catch (const blt_exception&)
         {
             log_os << "ERROR: unexpected format in read chrom depth file line " << (line_no) << "\n";
             throw;
+        }
+        if (chrom_depth[buff] < 0)
+        {
+            log_os << "ERROR: Chromosome depth estimate is negative. Chromosome: '" << buff
+                   << "' Depth: " << chrom_depth[buff] << "\n";
+            exit(EXIT_FAILURE);
         }
     }
 }

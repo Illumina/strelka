@@ -16,7 +16,7 @@
 ///
 
 #include "blt_util/blt_exception.hh"
-#include "starling_common/chrom_depth_map.hh"
+#include "blt_util/chrom_depth_map.hh"
 #include "starling_common/gvcf_aggregator.hh"
 #include "starling_common/gvcf_header.hh"
 
@@ -137,7 +137,8 @@ gvcf_aggregator(const starling_options& opt,
     this->CM.dopt = &_dopt;
     this->CM.opt = &_opt.gvcf;
     this->CM.load_models(opt.calibration_models_filename);
-    if (static_cast<int>(opt.calibration_model.length())>0){
+    if (static_cast<int>(opt.calibration_model.length())>0)
+    {
         this->CM.set_model(opt.calibration_model);
 //        log_os << "Setting calimodel " << opt.calibration_model << "\n";
     }
@@ -981,8 +982,8 @@ process_overlaps()
         if (! is_conflict_print)
         {
             modify_indel_overlap_site( _indel_buffer[0],
-                                      _indel_buffer[0].get_ploidy(offset),
-                                      _site_buffer[i], this->CM);
+                                       _indel_buffer[0].get_ploidy(offset),
+                                       _site_buffer[i], this->CM);
         }
         else
         {

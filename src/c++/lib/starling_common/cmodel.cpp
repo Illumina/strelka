@@ -177,19 +177,22 @@ int prior_adjustment(
 void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
 {
 //    most_predictive.size();
-    #ifdef DEBUG_MODEL
-       log_os << "Qscore "<< si.Qscore << std::endl;
-    #endif
+#ifdef DEBUG_MODEL
+    log_os << "Qscore "<< si.Qscore << std::endl;
+#endif
 
     // do extreme case handeling better
-    if (si.Qscore<1 ||si.Qscore>60){
+    if (si.Qscore<1 ||si.Qscore>60)
+    {
         featuremap cutoffs = {{"GQX", 30}, {"DP", 1}, {"DPFratio", 0.4}, {"HighSNVSB", 10}};
         this->do_rule_model(cutoffs,si);
-        if (si.smod.filters.count()>0){
+        if (si.smod.filters.count()>0)
+        {
             si.Qscore = 1;
             si.smod.filters.reset();
         }
-        else{
+        else
+        {
             si.Qscore = 35;
         }
     }
@@ -212,15 +215,18 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
 void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
 {
     // do extreme case handeling better
-    if (ii.Qscore<1 ||ii.Qscore>60){
+    if (ii.Qscore<1 ||ii.Qscore>40)
+    {
         featuremap cutoffs = {{"GQX", 30}, {"DP", 1}};
         this->do_rule_model(cutoffs,ii);
-        if (ii.imod.filters.count()>0){
+        if (ii.imod.filters.count()>0)
+        {
             ii.Qscore = 1;
             ii.imod.filters.reset();
         }
-        else{
-            ii.Qscore = 12;
+        else
+        {
+            ii.Qscore = 15;
         }
     }
 

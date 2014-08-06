@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -25,7 +24,6 @@ void
 add_alignment_to_depth_buffer(const alignment& al,
                               depth_buffer& db)
 {
-
     using namespace ALIGNPATH;
 
     pos_t ref_head_pos(al.pos);

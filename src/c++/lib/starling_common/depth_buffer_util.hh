@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __DEPTH_BUFFER_UTIL_HH
-#define __DEPTH_BUFFER_UTIL_HH
+#pragma once
 
 #include "starling_common/alignment.hh"
 #include "starling_common/depth_buffer.hh"
@@ -26,6 +24,3 @@
 void
 add_alignment_to_depth_buffer(const alignment& al,
                               depth_buffer& db);
-
-
-#endif

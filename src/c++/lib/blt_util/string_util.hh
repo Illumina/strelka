@@ -17,15 +17,23 @@
 
 #pragma once
 
-
-#include <map>
 #include <string>
+#include <vector>
 
 
-typedef std::map<std::string,double> cdmap_t;
-
-
-// parse the chrom depth file
 void
-parse_chrom_depth(const std::string& chrom_depth_file,
-                  cdmap_t& chrom_depth);
+split_string(const char* str,
+             const char delimiter,
+             std::vector<std::string>& v);
+
+void
+split_string(const std::string& str,
+             const char delimiter,
+             std::vector<std::string>& v);
+
+// check for exact match to pattern after delimiting str by delimiter
+bool
+split_match(const std::string& str,
+            const char delimiter,
+            const char* needle);
+

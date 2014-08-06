@@ -125,7 +125,7 @@ struct rangeMap
         const KeyType& k,
         const ValType& defaultVal) const
     {
-        if(! isKeyPresent(k)) return defaultVal;
+        if (! isKeyPresent(k)) return defaultVal;
         return _data[getKeyIndex(k)];
     }
 
@@ -142,7 +142,7 @@ struct rangeMap
         // we have to shift minKey up to the next valid value:
         const unsigned keySize(_maxKey-_minKey);
         const unsigned dataSize(_data.size());
-        for (unsigned offset(1);offset<=keySize;++offset)
+        for (unsigned offset(1); offset<=keySize; ++offset)
         {
             if (! _occup[(kindex+offset) % dataSize]) continue;
             _minKeyIndex=(kindex+offset) % dataSize;

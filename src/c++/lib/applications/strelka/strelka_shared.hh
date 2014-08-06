@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "starling_common/chrom_depth_map.hh"
+#include "blt_util/chrom_depth_map.hh"
 #include "starling_common/starling_shared.hh"
 
 

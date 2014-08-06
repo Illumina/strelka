@@ -20,7 +20,7 @@
 
 #include "blt_util/bam_dumper.hh"
 #include "blt_util/vcf_util.hh"
-#include "starling_common/chrom_depth_map.hh"
+#include "blt_util/chrom_depth_map.hh"
 
 #include <cassert>
 
