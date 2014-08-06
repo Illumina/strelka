@@ -187,6 +187,7 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
         this->do_rule_model(cutoffs,si);
         if (si.smod.filters.count()>0){
             si.Qscore = 1;
+            si.smod.filters.reset();
         }
         else{
             si.Qscore = 35;
@@ -211,18 +212,18 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
 void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
 {
     // do extreme case handeling better
-    if (ii.Qscore<1 ||ii.Qscore>40){
+    if (ii.Qscore<1 ||ii.Qscore>60){
         featuremap cutoffs = {{"GQX", 30}, {"DP", 1}};
         this->do_rule_model(cutoffs,ii);
         if (ii.imod.filters.count()>0){
             ii.Qscore = 1;
+            ii.imod.filters.reset();
         }
         else{
-            ii.Qscore = 15;
+            ii.Qscore = 12;
         }
     }
 
-//    most_predictive.size();
     if (ii.Qscore < qscore_cut)
     {
 //        log_os << CALIBRATION_MODEL::get_label(my_case) << "\n";
@@ -246,7 +247,13 @@ int c_model::logistic_score(const CALIBRATION_MODEL::var_case var_case, featurem
     return Qscore;
 }
 
+int c_model::get_var_threshold(CALIBRATION_MODEL::var_case& my_case){
+    return this->pars[CALIBRATION_MODEL::get_label(my_case)]["PassThreshold"]["Q"];
+}
 
+bool c_model::is_logitic_model(){
+    return this->model_type=="LOGISTIC";
+}
 
 //score snp case
 void c_model::score_instance(featuremap features, site_info& si)

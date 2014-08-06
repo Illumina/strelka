@@ -2,12 +2,12 @@
 # indel cutoff
 HighSNVSB 10
 DPFratio 0.2
-DP 0
+DP 1
 GQX 30.0
 # snp cutoff
 HighSNVSB 10
-DPFratio 0.4
-DP 0
+DPFratio 0.38
+DP 1
 GQX 30.0
 ### Qscore LOGISTIC
 # hetsnp qcutoff

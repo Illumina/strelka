@@ -124,6 +124,8 @@ public:
     void add_parameters(const parmap& myPars);
     void score_instance(featuremap features, site_info& si);
     void score_instance(featuremap features, indel_info& ii);
+    int  get_var_threshold(CALIBRATION_MODEL::var_case& my_case);
+    bool is_logitic_model();
     const gvcf_deriv_options* dopt;
     const gvcf_options* opt;
 private:

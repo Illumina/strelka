@@ -88,7 +88,7 @@ endmacro()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     get_compiler_version(compiler_version)
-    test_min_compiler(${compiler_version} "4.6" "g++")
+    test_min_compiler(${compiler_version} "4.7" "g++")
     message (STATUS "using compiler: g++ version ${compiler_version}")
 
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

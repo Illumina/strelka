@@ -166,7 +166,7 @@ gvcf_aggregator(const starling_options& opt,
 
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt,_dopt, chrom_depth,dopt.bam_header_data,*_osptr);
+        finish_gvcf_header(_opt,_dopt, chrom_depth,dopt.bam_header_data,*_osptr,this->CM);
     }
 
     add_site_modifiers(_empty_site,this->CM);

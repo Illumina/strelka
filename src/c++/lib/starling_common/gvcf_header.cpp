@@ -31,12 +31,14 @@
 
 
 
+
 static
 void
 add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options and starling_options
                  const starling_options& sopt,
                  const cdmap_t& chrom_depth,
-                 std::ostream& os)
+                 std::ostream& os,
+                 calibration_models& CM)
 {
     using namespace VCF_FILTERS;
 
@@ -79,26 +81,27 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    if (true)
+    // check that we are not doing default filtering and that we are in the logistic regression case
+    if (!CM.is_default_model && 1)
     {
         std::ostringstream oss;
-        oss << "Locus quality is less than 15 for het SNP";
+        oss << "Locus quality is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetSNP)  << " for het SNP";
         write_vcf_filter(os,get_label(LowQscoreHetSNP),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than 17 for hom SNP";
+        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomSNP) << " for hom SNP";
         write_vcf_filter(os,get_label(LowQscoreHomSNP),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than 5 for het insertion";
+        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetIns) << " for het insertion";
         write_vcf_filter(os,get_label(LowQscoreHetIns),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than 11 for hom insertion";
+        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomIns) << " for hom insertion";
         write_vcf_filter(os,get_label(LowQscoreHomIns),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than 13 for het deletion";
+        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetDel) << " for het deletion";
         write_vcf_filter(os,get_label(LowQscoreHetDel),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is than 20 for hom deletion";
-        write_vcf_filter(os,get_label(LowQscoreHomIns),oss.str().c_str());
+        oss << "Locus GQX is than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << " for hom deletion";
+        write_vcf_filter(os,get_label(LowQscoreHomDel),oss.str().c_str());
         oss.str("");
     }
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
@@ -160,7 +163,8 @@ finish_gvcf_header(const starling_options& opt,
                    const gvcf_deriv_options& dopt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,
-                   std::ostream& os)
+                   std::ostream& os,
+                   calibration_models& CM)
 {
 
 //    bool do_rule_filters  = (opt.calibration_model=="default" || opt.calibration_model=="Qrule");
@@ -212,7 +216,7 @@ finish_gvcf_header(const starling_options& opt,
 
     // FILTER:
 
-    add_gvcf_filters(opt.gvcf,opt,chrom_depth,os);
+    add_gvcf_filters(opt.gvcf,opt,chrom_depth,os,CM);
 
     // try to determine the sample_name from the BAM header
     std::string sample_name = determine_sample(bam_header_data);

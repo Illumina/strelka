@@ -44,6 +44,10 @@ calibration_models::calibration_models()
 }
 calibration_models::~calibration_models() {}
 
+int calibration_models::get_case_cutoff(CALIBRATION_MODEL::var_case my_case){
+    return this->get_model(this->model_name).get_var_threshold(my_case);
+}
+
 void calibration_models::clasify_site(site_info& si)
 {
 
