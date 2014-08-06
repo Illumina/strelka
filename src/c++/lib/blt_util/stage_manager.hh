@@ -11,14 +11,13 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "pos_processor_base.hh"
+#include "blt_util/pos_processor_base.hh"
 
 #include "blt_util/pos_range.hh"
 
@@ -29,7 +28,7 @@
 #include <vector>
 
 
-/// \brief describes stages to the stage_manager/
+/// \brief describes stages to the stage_manager
 ///
 /// Each stage has an integer id.
 ///

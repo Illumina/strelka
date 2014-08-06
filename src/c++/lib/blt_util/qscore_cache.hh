@@ -96,7 +96,6 @@ private:
     get_error_prob_imp(const int qscore) const
     {
         qscore_check_int(qscore);
-
         return q2p[qscore];
     }
 
