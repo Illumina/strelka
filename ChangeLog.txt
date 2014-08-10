@@ -1,4 +1,10 @@
-- runtime opt: reduce excessive syscalls from position based std::map's
+v2.1.4
+- Turned ON DP filter for rule filters as default
+- Made scoring-model a configurable option for starling pyflow
+- Sync many blt_util changes with manta
+- Changed scoring model names to be case insensitive, added assertion for unknown model
+- Change minimum support gcc version to 4.7
+- Runtime opt: reduce excessive syscalls from position based std::map's
 v2.1.3
 - STARKA-127 fix strelka workflow config file interface
 - STARKA-128 fix build with gcc-4.9.0, finally get rid of solexa q-scores
