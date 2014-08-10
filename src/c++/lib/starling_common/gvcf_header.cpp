@@ -45,36 +45,35 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
     write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion");
 
-    bool do_rule_filters  = true;//(sopt.calibration_model=="default" || sopt.calibration_model=="Qrule");
 
-    if (opt.is_min_gqx && do_rule_filters)
+    if (opt.is_min_gqx)
     {
         std::ostringstream oss;
         oss << "Locus GQX is less than " << opt.min_gqx << " or not present";
         write_vcf_filter(os,get_label(LowGQX),oss.str().c_str());
     }
 
-    if (opt.is_max_base_filt && do_rule_filters)
+    if ( opt.is_max_base_filt && !CM.is_current_logistic())
     {
         std::ostringstream oss;
         oss << "The fraction of basecalls filtered out at a site is greater than " << opt.max_base_filt;
         write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
     }
 
-    if (opt.is_max_snv_sb && do_rule_filters)
+    if (opt.is_max_snv_sb && !CM.is_current_logistic())
     {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
         write_vcf_filter(os,get_label(HighSNVSB),oss.str().c_str());
     }
-    if (opt.is_max_snv_hpol && do_rule_filters)
+    if (opt.is_max_snv_hpol)
     {
         std::ostringstream oss;
         oss << "SNV contextual homopolymer length (SNVHPOL) exceeds " << opt.max_snv_hpol;
         write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
     }
 
-    if (opt.is_max_ref_rep && do_rule_filters)
+    if (opt.is_max_ref_rep && !CM.is_current_logistic())
     {
         std::ostringstream oss;
         oss << "Locus contains an indel allele occurring in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
@@ -82,7 +81,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
     }
 
     // check that we are not doing default filtering and that we are in the logistic regression case
-    if (!CM.is_default_model && 1)
+    if (CM.is_current_logistic())
     {
         std::ostringstream oss;
         oss << "Locus quality is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetSNP)  << " for het SNP";
@@ -100,9 +99,10 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetDel) << " for het deletion";
         write_vcf_filter(os,get_label(LowQscoreHetDel),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << " for hom deletion";
+        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << " for hom deletion";
         write_vcf_filter(os,get_label(LowQscoreHomDel),oss.str().c_str());
         oss.str("");
+        os << "##IndelScoringModel=" << CM.model_name << "\n";
     }
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
     if (sopt.do_codon_phasing)
@@ -112,8 +112,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
     }
 
-
-    if ((! chrom_depth.empty()) && do_rule_filters)
+    if ((! chrom_depth.empty()))
     {
         std::ostringstream oss;
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";

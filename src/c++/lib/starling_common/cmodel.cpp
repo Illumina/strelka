@@ -25,6 +25,7 @@
 #include <string>
 #include <fstream>
 #include <iterator>
+//#include <boost/property_tree/ptree.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include "blt_util/qscore.hh"
@@ -65,7 +66,6 @@ void c_model::do_rule_model(featuremap& cutoffs, site_info& si)
 // rule-based filtering for INDELs
 void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii)
 {
-
     ii.imod.max_gt=ii.dindel.max_gt_poly;
     ii.imod.gq=ii.dindel.max_gt_poly_qphred;
 
@@ -78,15 +78,6 @@ void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii)
     {
         if (ii.isri.depth > dopt->max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }
-
-//    if (cutoffs["HighSNVSB"]>0) {
-//        if (ii.iri.is_repeat_unit) {
-//            if ((ii.iri.repeat_unit.size() <= 2) &&
-//                (static_cast<int>(ii.iri.ref_repeat_count) > cutoffs["HighSNVSB"])) {
-//                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
-//            }
-//        }
-//    }
 }
 
 //Transform the features with the specified scaling parameters that were used to standardize
@@ -138,7 +129,7 @@ double c_model::log_odds(featuremap features, featuremap& coeffs)
 //            log_os << tokens.size() << "\n";
         }
     }
-    //TO-DO sort map to find most predictive feature for setting filter for
+    //TO-DO sort map to find most predictive feature for setting filter
     return sum;
 }
 
@@ -226,7 +217,7 @@ void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const C
         }
         else
         {
-            ii.Qscore = 15;
+            ii.Qscore = 8;
         }
     }
 

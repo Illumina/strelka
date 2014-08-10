@@ -48,6 +48,13 @@ int calibration_models::get_case_cutoff(CALIBRATION_MODEL::var_case my_case){
     return this->get_model(this->model_name).get_var_threshold(my_case);
 }
 
+bool calibration_models::is_current_logistic(){
+    if (this->is_default_model)
+        return false;
+    return this->get_model(this->model_name).is_logitic_model();
+}
+
+
 void calibration_models::clasify_site(site_info& si)
 {
 

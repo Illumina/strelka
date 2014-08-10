@@ -47,6 +47,7 @@ public:
     // mimics behavior of previous hard filters
     void default_clasify_site(site_info& si);
     void default_clasify_site(indel_info& ii);
+    bool is_current_logistic();
 
     // for setting the vcf header filters
     int get_case_cutoff(CALIBRATION_MODEL::var_case my_case);
@@ -54,11 +55,11 @@ public:
     void add_model_pars(std::string& name,parmap& my_pars);
     const gvcf_deriv_options* dopt;
     const gvcf_options* opt;
+    std::string model_name;
     bool is_default_model=true;
 private:
     typedef std::map<std::string,c_model> modelmap;
     typedef std::map<std::string, double> featuremap;
-    std::string model_name;
     modelmap models;
 };
 
