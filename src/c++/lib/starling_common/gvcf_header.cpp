@@ -102,7 +102,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << " for hom deletion";
         write_vcf_filter(os,get_label(LowQscoreHomDel),oss.str().c_str());
         oss.str("");
-        os << "##IndelScoringModel=" << CM.model_name << "\n";
+        os << "##VariantQualityScoringModel=" << CM.model_name << "\n";
     }
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
     if (sopt.do_codon_phasing)
