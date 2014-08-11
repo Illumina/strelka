@@ -53,7 +53,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         write_vcf_filter(os,get_label(LowGQX),oss.str().c_str());
     }
 
-    if ( opt.is_max_base_filt && !CM.is_current_logistic())
+    if ( opt.is_max_base_filt)
     {
         std::ostringstream oss;
         oss << "The fraction of basecalls filtered out at a site is greater than " << opt.max_base_filt;
