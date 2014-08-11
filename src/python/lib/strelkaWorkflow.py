@@ -241,11 +241,15 @@ def callGenome(self,taskPrefix="",dependencies=None):
     if self.params.isWriteRealignedBam :
         def finishBam(tmpList, output, label) :
             assert(len(tmpList) > 0)
-            headerTmp = tmpList[0] + "header"
-            cmd  = "%s view -H %s >| %s" % (self.params.samtoolsBin, tmpList[0], headerTmp)
-            cmd += " && %s merge  -h %s %s " % (self.params.samtoolsBin, headerTmp, output)
-            cmd += " ".join(tmpList)
-            cmd += " && %s index %s" % (self.params.samtoolsBin, output)
+            if len(tmpList) > 1:
+                headerTmp = tmpList[0] + "header"
+                cmd  = "%s view -H %s >| %s" % (self.params.samtoolsBin, tmpList[0], headerTmp)
+                cmd += " && %s merge  -h %s %s " % (self.params.samtoolsBin, headerTmp, output)
+                cmd += " ".join(tmpList)
+                cmd += " && %s index %s" % (self.params.samtoolsBin, output)
+            else:
+                cmd = "cp %s %s" % (tmpList[0], output)
+                cmd += " && %s index %s" % (self.params.samtoolsBin, output)
             finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
 
         finishBam(segFiles.normalRealign, self.paths.getRealignedBamPath("normal"), "realignedNormal")
