@@ -23,6 +23,7 @@
 #include "starling_common/gvcf_block_site_record.hh"
 #include "starling_common/gvcf_locus_info.hh"
 #include "starling_common/cmodel.hh"
+#include "blt_util/chrom_depth_map.hh"
 
 
 //forward declaration
@@ -51,13 +52,17 @@ public:
 
     // for setting the vcf header filters
     int get_case_cutoff(CALIBRATION_MODEL::var_case my_case);
+    void load_chr_depth_stats();
 
     void add_model_pars(std::string& name,parmap& my_pars);
     const gvcf_deriv_options* dopt;
     const gvcf_options* opt;
-    std::string model_name;
+    std::string model_name="DEFAULT";
     bool is_default_model=true;
 private:
+    cdmap_t chrom_depth;
+    bool has_depth=false;
+    int chr_avg=30, chr_median=30;
     typedef std::map<std::string,c_model> modelmap;
     typedef std::map<std::string, double> featuremap;
     modelmap models;

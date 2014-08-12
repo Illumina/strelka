@@ -40,7 +40,6 @@
 
 calibration_models::calibration_models()
 {
-//    this->set_model("DEFAULT");
 }
 calibration_models::~calibration_models() {}
 
@@ -156,14 +155,47 @@ void calibration_models::default_clasify_site(indel_info& ii)
     }
 }
 
+void
+calibration_models::load_chr_depth_stats(){
+    this->opt->chrom_depth_file.empty();
+    if (! this->opt->chrom_depth_file.empty())
+    {
+        parse_chrom_depth(this->opt->chrom_depth_file,chrom_depth);
+        std::vector<double> depths;
+        for(cdmap_t::const_iterator iter = this->chrom_depth.begin(); iter != this->chrom_depth.end() ; ++iter)
+        {
+            if (!(iter->first=="chrM" ||iter->first=="chrY"||iter->first=="chrX")){
+//                log_os << iter->first << "=" << iter->second << "\n";
+                depths.push_back(iter->second);
+            }
+        }
+        std::sort(depths.begin(), depths.end());
+        int sum = 0;
+        for (unsigned i=0;i<depths.size();i++){
+//            log_os << depths.at(i) << "\n";
+            sum += depths.at(i);
+        }
+        this->chr_median    = depths.at(depths.size()/2);
+        this->chr_avg       = sum/depths.size();
+//        log_os << "median " << this->chr_median << "\n";
+//        log_os << "mean " << this->chr_avg << "\n";
+        this->has_depth = true;
+    }
+}
+
 void calibration_models::set_model(const std::string& name)
 {
     modelmap::iterator it = this->models.find(boost::to_upper_copy(name));
     assert("Unrecognized calibration model given using --scoring-model option in set_model" && it != this->models.end());
+    this->load_chr_depth_stats();
 
     if (it != this->models.end())
     {
-        this->model_name = boost::to_upper_copy(name);
+        if (this->has_depth && this->chr_median>70){
+            this->model_name = "QRULE";     //TODO hacky fix for defaulting to qrule if we have a high median chromosome depth (VQSR not trained to handle these cases yet)
+        }
+        else
+            this->model_name = boost::to_upper_copy(name);
         this->is_default_model = false;
     }
 //    log_os << "Calibration model set to '" << this->model_name << "'\n";

@@ -173,7 +173,18 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
 #endif
 
     // do extreme case handeling better
-    if (si.Qscore<1 ||si.Qscore>60)
+    if (si.Qscore>60)
+        si.Qscore = 60;
+
+    const double dpfExtreme(0.85);
+    const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
+    if (total_calls>0)
+    {
+        const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
+        if (filt>dpfExtreme) si.Qscore=3;
+    }
+
+    if (si.Qscore<1 && total_calls>150)
     {
         featuremap cutoffs = {{"GQX", 30}, {"DP", 1}, {"DPFratio", 0.4}, {"HighSNVSB", 10}};
         this->do_rule_model(cutoffs,si);
@@ -188,14 +199,6 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
         }
     }
 
-    const double dpfExtreme(0.85);
-    const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
-    if (total_calls>0)
-    {
-        const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-        if (filt>dpfExtreme) si.Qscore=3;
-    }
-
     if (si.Qscore < qscore_cut)
     {
 //        log_os << CALIBRATION_MODEL::get_label(my_case) << "\n";
@@ -206,20 +209,23 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
 void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
 {
     // do extreme case handeling better
-    if (ii.Qscore<1 ||ii.Qscore>40)
-    {
-        featuremap cutoffs = {{"GQX", 30}, {"DP", 1}};
-        this->do_rule_model(cutoffs,ii);
-        if (ii.imod.filters.count()>0)
-        {
-            ii.Qscore = 1;
-            ii.imod.filters.reset();
-        }
-        else
-        {
-            ii.Qscore = 8;
-        }
-    }
+    if (ii.Qscore>60)
+        ii.Qscore = 60;
+
+//    if (ii.Qscore<1)
+//    {
+//        featuremap cutoffs = {{"GQX", 30}, {"DP", 1},{"DPFratio", 0.2}};
+//        this->do_rule_model(cutoffs,ii);
+//        if (ii.imod.filters.count()>0)
+//        {
+//            ii.Qscore = 1;
+//            ii.imod.filters.reset();
+//        }
+//        else
+//        {
+//            ii.Qscore = 12;
+//        }
+//    }
 
     if (ii.Qscore < qscore_cut)
     {
