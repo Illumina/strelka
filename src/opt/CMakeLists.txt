@@ -64,7 +64,7 @@ add_custom_command(
     COMMENT "Building samtools package")
 add_custom_target(STARKA_SAMTOOLS DEPENDS "${SAMTOOLS_PROG}")
 
-install(PROGRAMS "${SAMTOOLS_DIR}/samtools" DESTINATION "${THIS_LIBEXECDIR}")
+install(PROGRAMS "${SAMTOOLS_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 
 #
 # bgzf_extras

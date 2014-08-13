@@ -53,6 +53,7 @@ def runCount(self, taskPrefix="", dependencies=None) :
     return nextStepWait
 
 
+
 def runDepth(self,taskPrefix="",dependencies=None) :
     """
     estimate chrom depth

@@ -68,7 +68,6 @@ endif ()
 find_package( Threads )
 
 
-
 # Force static linking
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
