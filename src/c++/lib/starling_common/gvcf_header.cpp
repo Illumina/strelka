@@ -30,8 +30,6 @@
 #include <boost/tokenizer.hpp>
 
 
-
-
 static
 void
 add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options and starling_options

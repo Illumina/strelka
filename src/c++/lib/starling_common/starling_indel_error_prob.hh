@@ -34,6 +34,5 @@ get_indel_error_prob(const starling_options& client_opt,
                      const starling_indel_report_info& iri,
                      double& indel_error_prob,
                      double& ref_error_prob);
-
 #endif
 

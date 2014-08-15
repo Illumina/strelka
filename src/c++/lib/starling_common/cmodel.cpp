@@ -184,7 +184,7 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
         if (filt>dpfExtreme) si.Qscore=3;
     }
 
-    if (si.Qscore<1 && total_calls>150)
+    if (si.Qscore<1 && total_calls>70)
     {
         featuremap cutoffs = {{"GQX", 30}, {"DP", 1}, {"DPFratio", 0.4}, {"HighSNVSB", 10}};
         this->do_rule_model(cutoffs,si);
