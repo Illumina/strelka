@@ -18,6 +18,7 @@
 #pragma once
 
 #include "blt_util/bam_record.hh"
+#include "blt_util/sam_util.hh"
 
 #include "boost/utility.hpp"
 
@@ -36,10 +37,9 @@
 //
 struct bam_streamer : public boost::noncopyable
 {
-
     explicit
     bam_streamer(const char* filename,
-                 const char* region = NULL);
+                 const char* region = nullptr);
 
     ~bam_streamer();
 
@@ -60,7 +60,7 @@ struct bam_streamer : public boost::noncopyable
     const bam_record* get_record_ptr() const
     {
         if (_is_record_set) return &_brec;
-        else               return NULL;
+        else                return nullptr;
     }
 
     const char* name() const
@@ -102,4 +102,3 @@ private:
     bool _is_region;
     std::string _region;
 };
-

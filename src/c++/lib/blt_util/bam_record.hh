@@ -240,7 +240,6 @@ public:
                 (0 == bam_aux2i(sm_ptr)));
     }
 
-
     const uint32_t* raw_cigar() const
     {
         return bam1_cigar(_bp);

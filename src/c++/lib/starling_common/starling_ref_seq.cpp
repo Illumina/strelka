@@ -21,7 +21,7 @@
 #include "starling_common/starling_ref_seq.hh"
 
 extern "C" {
-#include "faidx.h"
+#include "htslib/faidx.h"
 }
 
 #include <cstdlib>

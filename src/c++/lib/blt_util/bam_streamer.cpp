@@ -11,8 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
@@ -30,27 +29,29 @@
 bam_streamer::
 bam_streamer(const char* filename,
              const char* region)
-    : _is_record_set(false), _bfp(NULL), _bidx(NULL), _biter(NULL),
-      _record_no(0), _stream_name(filename), _is_region(false)
+    : _is_record_set(false),
+      _bfp(nullptr),
+      _bidx(nullptr),
+      _biter(nullptr),
+      _record_no(0),
+      _stream_name(filename),
+      _is_region(false)
 {
-
-    assert(NULL != filename);
+    assert(nullptr != filename);
     if ('\0' == *filename)
     {
         throw blt_exception("Can't initialize bam_streamer with empty filename\n");
     }
 
-
     _bfp = samopen(filename, "rb", 0);
 
-    if (NULL == _bfp)
+    if (nullptr == _bfp)
     {
         log_os << "ERROR: Failed to open SAM/BAM file: " << filename << "\n";
         exit(EXIT_FAILURE);
     }
 
-
-    if (NULL == region)
+    if (nullptr == region)
     {
         // read the whole BAM file:
 
@@ -74,15 +75,16 @@ bam_streamer(const char* filename,
 bam_streamer::
 ~bam_streamer()
 {
-    if (NULL != _biter) bam_iter_destroy(_biter);
-    if (NULL != _bidx) bam_index_destroy(_bidx);
-    if (NULL != _bfp) samclose(_bfp);
+    if (nullptr != _biter) bam_iter_destroy(_biter);
+    if (nullptr != _bidx) bam_index_destroy(_bidx);
+    if (nullptr != _bfp) samclose(_bfp);
 }
 
 
 
 static
-bool fexists(const char* filename)
+bool
+fexists(const char* filename)
 {
     std::ifstream ifile(filename);
     return ifile;
@@ -91,7 +93,8 @@ bool fexists(const char* filename)
 
 
 static
-bool hasEnding(
+bool
+hasEnding(
     const std::string& fullString,
     const std::string& ending)
 {
@@ -107,7 +110,7 @@ bam_streamer::
 _load_index()
 {
 
-    if (NULL != _bidx) return;
+    if (nullptr != _bidx) return;
 
     // use the BAM index to read a region of the BAM file
     if (! (_bfp->type&0x01))
@@ -131,7 +134,7 @@ _load_index()
     }
 
     _bidx = bam_index_load(index_base.c_str()); // load BAM index
-    if (NULL == _bidx)
+    if (nullptr == _bidx)
     {
         log_os << "ERROR: BAM index is not available for file: " << name() << "\n";
         exit(EXIT_FAILURE);
@@ -144,7 +147,6 @@ void
 bam_streamer::
 set_new_region(const char* region)
 {
-
     int ref,beg,end;
     bam_parse_region(_bfp->header, region, &ref, &beg, &end); // parse the region
 
@@ -159,7 +161,7 @@ bam_streamer::
 set_new_region(const int ref, const int beg, const int end)
 {
 
-    if (NULL != _biter) bam_iter_destroy(_biter);
+    if (nullptr != _biter) bam_iter_destroy(_biter);
 
     _load_index();
 
@@ -182,10 +184,10 @@ bool
 bam_streamer::
 next()
 {
-    if (NULL==_bfp) return false;
+    if (nullptr == _bfp) return false;
 
     int ret;
-    if (NULL == _biter)
+    if (nullptr == _biter)
     {
         ret = samread(_bfp, _brec._bp);
     }
@@ -238,7 +240,7 @@ report_state(std::ostream& os) const
     {
         os << "\tbam_stream_selected_region: " << _region << "\n";
     }
-    if (NULL != bamp)
+    if (nullptr != bamp)
     {
         os << "\tbam_stream_record_no: " << record_no() << "\n";
         os << "\tbam_record QNAME/read_number: " << bamp->qname() << "/" << bamp->read_no() << "\n";
