@@ -22,7 +22,7 @@
 #include "blt_util/fastRanksum.hh"
 #include "blt_util/seq_util.hh"
 
-#include "stdint.h"
+#include <cstdint>
 
 #include <iosfwd>
 #include <vector>
