@@ -30,7 +30,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from pyflow import WorkflowRunner
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, getFastaChromOrderSize
+                         getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
 
 from configureUtil import argToBool, getIniSections, dumpIniSections
 
@@ -241,16 +241,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     if self.params.isWriteRealignedBam :
         def finishBam(tmpList, output, label) :
-            assert(len(tmpList) > 0)
-            if len(tmpList) > 1:
-                headerTmp = tmpList[0] + "header"
-                cmd  = "%s view -H %s >| %s" % (self.params.samtoolsBin, tmpList[0], headerTmp)
-                cmd += " && %s merge  -h %s %s " % (self.params.samtoolsBin, headerTmp, output)
-                cmd += " ".join(tmpList)
-                cmd += " && %s index %s" % (self.params.samtoolsBin, output)
-            else:
-                cmd = "cp %s %s" % (tmpList[0], output)
-                cmd += " && %s index %s" % (self.params.samtoolsBin, output)
+            cmd = bamListCatCmd(self.params.samtoolsBin,tmpList,output)
             finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
 
         finishBam(segFiles.normalRealign, self.paths.getRealignedBamPath("normal"), "realignedNormal")
