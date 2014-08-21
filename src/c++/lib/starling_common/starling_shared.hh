@@ -257,6 +257,7 @@ struct starling_options : public blt_options
 
     // if true, treat all soft-clipped segments on the egdes of reads as realignable
     bool is_remap_input_softclip;
+
 };
 
 
