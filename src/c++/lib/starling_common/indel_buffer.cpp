@@ -77,7 +77,6 @@ insert_indel(const indel_observation& obs,
              const bool is_shared,
              bool& is_repeat_obs)
 {
-
     assert(obs.key.type != INDEL::NONE);
 
     // if not previously observed

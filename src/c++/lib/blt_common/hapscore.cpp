@@ -68,7 +68,6 @@ hap_cand(const bam_seq_base& read_seq,
 std::ostream&
 operator<<(std::ostream& os, const hap_cand& hc)
 {
-
     os << "hap_cand:\n";
     os << "total_qual: " << hc.total_qual() << "\n";
     os << "read: ";
@@ -113,25 +112,22 @@ struct hinfo
 };
 
 
-std::ostream&
-operator<<(std::ostream& os, const hinfo& hi);
 
-
-
+#ifdef DEBUG_HAP
 std::ostream&
 operator<<(std::ostream& os, const hinfo& hi)
 {
-
     os << "hinfo:\n";
     os << "total_qual: " << hi.total_qual << "\n";
     os << "read: ";
-    for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i)
+    for (const auto& val : hi.hseq)
     {
-        os << id_to_base(hi.hseq[i]);
+        os << id_to_base(val);
     }
     os << "\n";
     return os;
 }
+#endif
 
 
 
@@ -144,12 +140,11 @@ bool
 is_hap_match(const hap_cand& hc,
              hinfo& hi)
 {
-
     for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i)
     {
         if (hi.hseq[i] != hc.base_id(i))
         {
-            if ((hi.hseq[i] != BASE_ID::ANY) and
+            if ((hi.hseq[i] != BASE_ID::ANY) &&
                 (hc.base_id(i) != BASE_ID::ANY)) return false;
         }
     }
@@ -157,7 +152,7 @@ is_hap_match(const hap_cand& hc,
     // match!
     for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i)
     {
-        if ((hi.hseq[i] == hc.base_id(i)) or
+        if ((hi.hseq[i] == hc.base_id(i)) ||
             (hi.hseq[i] != BASE_ID::ANY)) continue;
         hi.hseq[i] = hc.base_id(i);
     }
@@ -174,7 +169,6 @@ double
 get_align_score(const hap_cand& hc,
                 const hinfo& hi)
 {
-
     //static const double lnany(std::log(0.25));
     static const double ln_one_third(-std::log(3.0));
 
@@ -208,14 +202,11 @@ get_hapscore(hap_set_t& hap_set)
     {
         // 1: check if we match any types; add new type if not
         bool is_match(false);
-        const unsigned hs(haps.size());
-        for (unsigned j(0); j<hs; ++j)
+        for (auto& hapinfo : haps)
         {
-            if (is_hap_match(hap,haps[j]))
-            {
-                is_match=true;
-                break;
-            }
+            if (! is_hap_match(hap,hapinfo)) continue;
+            is_match=true;
+            break;
         }
         if (! is_match) haps.emplace_back(hap);
     }

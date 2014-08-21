@@ -71,7 +71,7 @@ get_snp_hpol_size(const pos_t pos,
 
 
 
-// helper class for finding interupted homopolymers:
+// helper class for finding interrupted homopolymers:
 //
 struct ihpol_data
 {
@@ -128,7 +128,7 @@ struct ihpol_data
 
 
 unsigned
-get_interupted_hpol_size(const pos_t pos,
+get_interrupted_hpol_size(const pos_t pos,
                          const reference_contig_segment& ref)
 {
 

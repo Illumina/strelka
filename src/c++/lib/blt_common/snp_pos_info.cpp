@@ -60,7 +60,7 @@ get_rms_mq()
 {
     if (n_mapq==0)
         return 0.0;
-    return sqrt(1.0*cumm_mapq/n_mapq);
+    return std::sqrt(1.0*cumm_mapq/n_mapq);
 }
 
 
@@ -68,7 +68,6 @@ double
 snp_pos_info::
 get_read_pos_ranksum()
 {
-
     //	cout << read_pos_ranksum << endl;
     return read_pos_ranksum.get_u_stat();
 
@@ -105,13 +104,12 @@ snp_pos_info::
 print_known_counts(std::ostream& os,
                    const int min_qscore) const
 {
-
-    unsigned base_count[N_BASE];
+    std::array<unsigned,N_BASE> base_count;
     get_known_counts(base_count,min_qscore);
 
-    for (unsigned b(0); b<N_BASE; ++b)
+    for (const unsigned bc : base_count)
     {
-        os << '\t' << base_count[b];
+        os << '\t' << bc;
     }
 }
 
@@ -121,20 +119,18 @@ snp_pos_info::
 print_known_qscore(std::ostream& os,
                    const int min_qscore) const
 {
-
     double qscore_tot[N_BASE];
     for (unsigned i(0); i<N_BASE; ++i) qscore_tot[i] = 0;
     unsigned qscore_count[N_BASE];
     for (unsigned i(0); i<N_BASE; ++i) qscore_count[i] = 0;
 
-    const unsigned n_calls(calls.size());
-    for (unsigned i(0); i<n_calls; ++i)
+    for (const auto& call : calls)
     {
-        if (calls[i].base_id==BASE_ID::ANY) continue;
-        if (calls[i].get_qscore()<min_qscore) continue;
-        qscore_tot[calls[i].base_id] += calls[i].get_qscore();
-        os << calls[i] << '\n';
-        qscore_count[calls[i].base_id]++;
+        if (call.base_id==BASE_ID::ANY) continue;
+        if (call.get_qscore()<min_qscore) continue;
+        qscore_tot[call.base_id] += call.get_qscore();
+        os << call << '\n';
+        qscore_count[call.base_id]++;
     }
 
     os << std::setprecision(2) << std::fixed;

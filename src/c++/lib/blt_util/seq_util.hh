@@ -72,7 +72,6 @@ uint8_t
 bam_seq_code_to_id(const uint8_t a,
                    const uint8_t ref = BAM_BASE::ANY)
 {
-
     using namespace BAM_BASE;
 
     switch (a)
@@ -225,7 +224,6 @@ get_seq_base(const char* seq,
              const pos_t size,
              const pos_t pos)
 {
-
     if ((pos<0) || (pos>=size))
     {
         return 'N';
@@ -241,7 +239,6 @@ char
 get_seq_base(const std::string& seq,
              const pos_t pos)
 {
-
     return get_seq_base(seq.c_str(),seq.size(),pos);
 }
 

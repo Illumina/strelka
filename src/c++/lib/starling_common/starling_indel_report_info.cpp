@@ -355,13 +355,13 @@ get_starling_indel_report_info(const indel_key& ik,
     // repeat analysis:
     set_repeat_info(ik,ref,iri);
 
-    // interupted hpol compuation:
-    iri.ihpol=get_interupted_hpol_size(indel_begin_pos-1,ref);
-    iri.ihpol=std::max(iri.ihpol,get_interupted_hpol_size(indel_begin_pos,ref));
+    // interrupted hpol compuation:
+    iri.ihpol=get_interrupted_hpol_size(indel_begin_pos-1,ref);
+    iri.ihpol=std::max(iri.ihpol,get_interrupted_hpol_size(indel_begin_pos,ref));
     if (indel_begin_pos != indel_end_pos)
     {
-        iri.ihpol=std::max(iri.ihpol,get_interupted_hpol_size(indel_end_pos-1,ref));
-        iri.ihpol=std::max(iri.ihpol,get_interupted_hpol_size(indel_end_pos,ref));
+        iri.ihpol=std::max(iri.ihpol,get_interrupted_hpol_size(indel_end_pos-1,ref));
+        iri.ihpol=std::max(iri.ihpol,get_interrupted_hpol_size(indel_end_pos,ref));
     }
 }
 

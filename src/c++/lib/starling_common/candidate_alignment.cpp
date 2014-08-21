@@ -31,7 +31,6 @@ std::ostream&
 operator<<(std::ostream& os,
            const candidate_alignment& cal)
 {
-
     os << "CANDIDATE_ALIGNMENT: " << cal.al;
     os << "CANDIDATE_ALIGNMENT_LEAD: " << cal.leading_indel_key;
     os << "CANDIDATE_ALIGNMENT_TRAIL: " << cal.trailing_indel_key;
@@ -48,7 +47,6 @@ get_alignment_indels(const candidate_alignment& cal,
                      const unsigned max_indel_size,
                      indel_set_t& indels)
 {
-
     using namespace ALIGNPATH;
 
     indels.clear();

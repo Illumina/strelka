@@ -21,16 +21,17 @@
 #include "blt_util/reference_contig_segment.hh"
 
 
-// Get the length of the longest homopolymer containing the current
-// position if this position can be treated as any base.
-//
+/// Get the length of the longest homopolymer containing the current
+/// position if this position can be treated as any base.
+///
 unsigned
 get_snp_hpol_size(const pos_t pos,
                   const reference_contig_segment& ref);
 
-// find the largest homopolymer extending from pos where one
-// occurance of an alternate base is allowed
-//
+/// find the largest homopolymer extending from pos where one
+/// occurrence of an alternate base is allowed
+///
 unsigned
-get_interupted_hpol_size(const pos_t pos,
-                         const reference_contig_segment& ref);
+get_interrupted_hpol_size(
+    const pos_t pos,
+    const reference_contig_segment& ref);

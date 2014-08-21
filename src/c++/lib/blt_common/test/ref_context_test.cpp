@@ -49,12 +49,12 @@ single_ihpol_test(const pos_t pos,
                   const unsigned expect)
 {
 
-    const unsigned result(get_interupted_hpol_size(pos,ref));
+    const unsigned result(get_interrupted_hpol_size(pos,ref));
     BOOST_CHECK_EQUAL(result,expect);
 }
 
 
-BOOST_AUTO_TEST_CASE( test_interupted_hpol_size )
+BOOST_AUTO_TEST_CASE( test_interrupted_hpol_size )
 {
     reference_contig_segment ref;
     ref.seq() = "TGTTTGAGATTT";
