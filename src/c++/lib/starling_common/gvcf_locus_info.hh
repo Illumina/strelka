@@ -72,7 +72,7 @@ get_label(const unsigned idx)
     case LowQscoreHetDel:
         return "LowGQXHetDel";
     case LowQscoreHomDel:
-        return "LowGQXHetDel";
+        return "LowGQXHomDel";
     case PhasingConflict:
         return "PhasingConflict";
     case HighSNVSB:
