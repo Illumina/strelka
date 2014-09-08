@@ -16,7 +16,7 @@
 ///
 
 #include "alignment_util.hh"
-#include "starling_common/align_path.hh"
+#include "blt_util/align_path.hh"
 #include "starling_common/align_path_util.hh"
 
 #include <cassert>
@@ -27,7 +27,6 @@
 known_pos_range
 get_strict_alignment_range(const alignment& al)
 {
-
     const pos_t asize(apath_ref_length(al.path));
 
     return known_pos_range(al.pos,al.pos+asize);

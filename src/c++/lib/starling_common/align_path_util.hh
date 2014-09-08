@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include "starling_common/align_path.hh"
+#include "blt_util/align_path.hh"
 #include "blt_util/blt_types.hh"
-#include "starling_common/starling_types.hh"
+//#include "starling_common/starling_types.hh"
 
 
 #include <cassert>

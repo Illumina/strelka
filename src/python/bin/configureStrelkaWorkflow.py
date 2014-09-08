@@ -28,11 +28,10 @@ version="@STARKA_FULL_VERSION@"
 sys.path.append(workflowDir)
 
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import assertOptionExists, groomBamList, OptParseException
+from configureUtil import BamSetChecker, groomBamList, OptParseException
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
-from workflowUtil import ensureDir, isValidSampleId
-from checkChromSet import checkChromSet
+from workflowUtil import ensureDir
 
 
 
@@ -42,15 +41,15 @@ class StrelkaWorkflowOptions(StarkaWorkflowOptionsBase) :
         return """Version: %s
 
 This script configures the Strelka somatic small variant calling pipeline.
-You must specify BAM file(s) for a pair of samples.
+You must specify BAM/CRAM file(s) for a pair of samples.
 """ % (version)
 
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--normalBam", type="string",dest="normalBamList",metavar="FILE", action="append",
-                         help="Normal sample BAM file. [required] (no default)")
+                         help="Normal sample BAM or CRAM file. [required] (no default)")
         group.add_option("--tumorBam","--tumourBam", type="string",dest="tumorBamList",metavar="FILE", action="append",
-                          help="Tumor sample BAM file. [required] (no default)")
+                          help="Tumor sample BAM or CRAM file. [required] (no default)")
         #group.add_option("--exome", dest="isExome", action="store_true",
         #                 help="Set options for WES input: turn off depth filters")
 
@@ -83,46 +82,11 @@ You must specify BAM file(s) for a pair of samples.
         if options.userConfigPath is None :
             raise OptParseException("A config file must be specified for strelka workflow")
 
-        # note that we inherit a multi-bam capable infrastructure from manta, but then restrict usage
-        # to one bam from each sample (hopefully temporarily)
-        #
-        def checkBamList(bamList, label) :
-            if (bamList is None) or (len(bamList) == 0) :
-                raise OptParseException("No %s sample BAM files specified" % (label))
-
-            if len(bamList) > 1 :
-                raise OptParseException("More than one %s sample BAM files specified" % (label))
-
-        checkBamList(options.normalBamList, "normal")
-        checkBamList(options.tumorBamList, "tumor")
-
-        # check that the reference and all bams are using the same
-        # set of chromosomes:
-        bamList=[]
-        bamLabels=[]
-
-        def appendBams(inputBamList,inputLabel) :
-            if inputBamList is None : return
-            for inputBamFile in inputBamList :
-                bamList.append(inputBamFile)
-                bamLabels.append(inputLabel)
-
-        appendBams(options.normalBamList,"Normal")
-        appendBams(options.tumorBamList,"Tumor")
-
-        checkChromSet(options.samtoolsBin,
-                      options.referenceFasta,
-                      bamList,
-                      bamLabels,
-                      isReferenceLocked=True)
-
-        # check for repeated bam entries:
-        #
-        bamSet=set()
-        for bamFile in bamList :
-            if bamFile in bamSet :
-                raise OptParseException("Repeated input BAM file: %s" % (bamFile))
-            bamSet.add(bamFile)
+        bcheck = BamSetChecker()
+        bcheck.appendBams(options.normalBamList,"Normal")
+        bcheck.appendBams(options.tumorBamList,"Tumor")
+        bcheck.check(options.samtoolsBin,
+                     options.referenceFasta)
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 

@@ -17,14 +17,8 @@
 
 #pragma once
 
-#include <cstdint>
 
+extern "C" {
+#include "sam.h"
+}
 
-typedef uint32_t align_id_t;
-typedef int32_t sample_id_t;
-
-// So long as the sample count required by multi-sample applications
-// remains small, any typoe of heap allocation is a waste, so we use
-// this to create stack arrays:
-//
-enum { MAX_SAMPLE=2 };

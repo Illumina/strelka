@@ -16,10 +16,47 @@
 /// \author Chris Saunders
 ///
 
+#include "blt_util/align_path_bam_util.hh"
 #include "blt_util/bam_record.hh"
 #include "blt_util/blt_exception.hh"
 
+#include <iostream>
 #include <sstream>
+
+
+
+std::ostream&
+operator<<(std::ostream& os, const bam_record& br)
+{
+    if (br.empty())
+    {
+        os << "NONE";
+    }
+    else
+    {
+        os << br.qname() << "/" << br.read_no()
+           << " tid:pos:strand " << br.target_id() << ":" << (br.pos()-1) << ":" << (br.is_fwd_strand() ? '+' : '-');
+
+        ALIGNPATH::path_t apath;
+        bam_cigar_to_apath(br.raw_cigar(),br.n_cigar(),apath);
+        os << " cigar: " << apath;
+
+        /// print SAtag if present:
+        static const char satag[] = {'S','A'};
+        const char* saStr(br.get_string_tag(satag));
+        if (NULL != saStr)
+        {
+            os  << " sa: " << saStr;
+        }
+
+        if (br.is_paired())
+        {
+            os  << " mate_tid:pos:strand " << br.mate_target_id() << ":" << (br.mate_pos()-1) << ":" << (br.is_mate_fwd_strand() ? '+' : '-');
+        }
+
+    }
+    return os;
+}
 
 
 
@@ -35,7 +72,7 @@ alt_map_qual(const char* tag) const
         {
             std::ostringstream oss;
             oss << "ERROR: Unexpected negative value in optional BAM tag: '" << std::string(tag,2) << "'\n"
-                << "\tRemove the --eland-compatability flag to stop using this tag.\n";
+                << "\tRemove the --eland-compatibility flag to stop using this tag.\n";
             throw blt_exception(oss.str().c_str());
         }
         return static_cast<unsigned>(alt_map);

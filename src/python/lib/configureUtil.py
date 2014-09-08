@@ -18,6 +18,7 @@ util -- simple utilities shared by workflow configurations
 import os.path
 
 from optparse import OptionParser
+from checkChromSet import checkChromSet
 
 
 
@@ -182,19 +183,67 @@ def checkForBamIndex(bamFile):
     """
     make sure bam file has an index
     """
-    baiFile=bamFile + ".bai"
-    if not os.path.isfile(baiFile) :
-        raise OptParseException("Can't find expected BAM index file: '%s'" % (baiFile))
+    for ext in (".bai", ".csi", ".crai") :
+        indexFile=bamFile + ext
+        if os.path.isfile(indexFile) : return
+    raise OptParseException("Can't find any expected BAM/CRAM index files for: '%s'" % (bamFile))
 
 
 def groomBamList(bamList, sampleLabel):
     """
-    check that bam files exist and have an index, convert ot abs path if they check out
+    check that bam/cram files exist and have an index, convert ot abs path if they check out
     """
     if bamList is None : return
     for (index,bamFile) in enumerate(bamList) :
-        bamList[index]=validateFixExistingFileArg(bamFile,"%s BAM file" % (sampleLabel))
+        bamList[index]=validateFixExistingFileArg(bamFile,"%s BAM/CRAM file" % (sampleLabel))
         checkForBamIndex(bamList[index])
+
+
+class BamSetChecker(object):
+    """
+    check properties of the input bams as an aggregate set
+
+    for instance, same chrom order, no repeated files, etc...
+    """
+
+    def  __init__(self) :
+        self.bamList=[]
+        self.bamLabels=[]
+
+    def appendBams(self,inputBamList,inputLabel) :
+
+        # note that we inherit a multi-bam capable infrastructure from manta, but then restrict usage
+        # to one bam from each sample (hopefully temporarily)
+        #
+        def checkBamList(bamList, label) :
+            if (bamList is None) or (len(bamList) == 0) :
+                raise OptParseException("No %s sample BAM/CRAM files specified" % (label))
+
+            if len(bamList) > 1 :
+                raise OptParseException("More than one %s sample BAM/CRAM files specified" % (label))
+
+        checkBamList(inputBamList,inputLabel)
+
+        if inputBamList is None : return
+        for inputBamFile in inputBamList :
+            self.bamList.append(inputBamFile)
+            self.bamLabels.append(inputLabel)
+
+    def check(self, samtoolsBin, referenceFasta) :
+
+        checkChromSet(samtoolsBin,
+                      referenceFasta,
+                      self.bamList,
+                      self.bamLabels,
+                      isReferenceLocked=True)
+
+        # check for repeated bam entries:
+        #
+        bamSet=set()
+        for bamFile in self.bamList :
+            if bamFile in bamSet :
+                raise OptParseException("Repeated input BAM/CRAM file: %s" % (bamFile))
+            bamSet.add(bamFile)
 
 
 def checkListArgRepeats(listName,itemLabel) :

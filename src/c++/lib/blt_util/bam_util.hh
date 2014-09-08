@@ -22,7 +22,7 @@
 
 
 extern "C" {
-#include "sam.h"
+#include "bam.h"
 }
 
 
@@ -88,7 +88,6 @@ inline
 void
 bam_update_bin(bam1_t& br)
 {
-
     // set bin value:
     //
     // Test for position rather than looking at the unmapped flag

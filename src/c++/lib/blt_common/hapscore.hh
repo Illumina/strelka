@@ -20,7 +20,7 @@
 #include "blt_util/bam_seq.hh"
 #include "blt_util/seq_util.hh"
 
-#include "stdint.h"
+#include <cstdint>
 
 #include <array>
 #include <iosfwd>

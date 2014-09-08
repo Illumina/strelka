@@ -27,11 +27,10 @@ version="@STARKA_FULL_VERSION@"
 sys.path.append(workflowDir)
 
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import assertOptionExists, groomBamList, joinFile, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
+from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException
 from makeRunScript import makeRunScript
 from starlingWorkflow import StarlingWorkflow
-from workflowUtil import ensureDir, isValidSampleId
-from checkChromSet import checkChromSet
+from workflowUtil import ensureDir
 
 
 
@@ -41,13 +40,13 @@ class StarlingWorkflowOptions(StarkaWorkflowOptionsBase) :
         return """Version: %s
 
 This script configures the Starling small variant calling pipeline.
-You must specify a BAM file.
+You must specify a BAM or CRAM file.
 """ % (version)
 
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
-                         help="Sample BAM file. [required] (no default)")
+                         help="Sample BAM or CRAM file. [required] (no default)")
         group.add_option("--minorAllele", type="string", metavar="FILE",
                          help="Provide minor allele bed file. Must be tabix indexed. (no default)")
 
@@ -91,45 +90,10 @@ You must specify a BAM file.
             if not os.path.isfile(alleleTabixFile) :
                 raise OptParseException("Can't find expected minor allele index file: '%s'" % (alleleTabixFile))
 
-
-        # note that we inherit a multi-bam capable infrastructure from manta, but then restrict usage
-        # to one bam from each sample (hopefully temporarily)
-        #
-        def checkBamList(bamList, label) :
-            if (bamList is None) or (len(bamList) == 0) :
-                raise OptParseException("No %s sample BAM files specified" % (label))
-
-            if len(bamList) > 1 :
-                raise OptParseException("More than one %s sample BAM files specified" % (label))
-
-        checkBamList(options.bamList, "input")
-
-        # check that the reference and all bams are using the same
-        # set of chromosomes:
-        bamList=[]
-        bamLabels=[]
-
-        def appendBams(inputBamList,inputLabel) :
-            if inputBamList is None : return
-            for inputBamFile in inputBamList :
-                bamList.append(inputBamFile)
-                bamLabels.append(inputLabel)
-
-        appendBams(options.bamList,"Input")
-
-        checkChromSet(options.samtoolsBin,
-                      options.referenceFasta,
-                      bamList,
-                      bamLabels,
-                      isReferenceLocked=True)
-
-        # check for repeated bam entries:
-        #
-        bamSet=set()
-        for bamFile in bamList :
-            if bamFile in bamSet :
-                raise OptParseException("Repeated input BAM file: %s" % (bamFile))
-            bamSet.add(bamFile)
+        bcheck = BamSetChecker()
+        bcheck.appendBams(options.bamList,"Input")
+        bcheck.check(options.samtoolsBin,
+                     options.referenceFasta)
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 

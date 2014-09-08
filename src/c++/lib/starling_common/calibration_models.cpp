@@ -43,11 +43,13 @@ calibration_models::calibration_models()
 }
 calibration_models::~calibration_models() {}
 
-int calibration_models::get_case_cutoff(CALIBRATION_MODEL::var_case my_case){
+int calibration_models::get_case_cutoff(CALIBRATION_MODEL::var_case my_case)
+{
     return this->get_model(this->model_name).get_var_threshold(my_case);
 }
 
-bool calibration_models::is_current_logistic(){
+bool calibration_models::is_current_logistic()
+{
     if (this->is_default_model)
         return false;
     return this->get_model(this->model_name).is_logitic_model();
@@ -156,22 +158,25 @@ void calibration_models::default_clasify_site(indel_info& ii)
 }
 
 void
-calibration_models::load_chr_depth_stats(){
+calibration_models::load_chr_depth_stats()
+{
     this->opt->chrom_depth_file.empty();
     if (! this->opt->chrom_depth_file.empty())
     {
         parse_chrom_depth(this->opt->chrom_depth_file,chrom_depth);
         std::vector<double> depths;
-        for(cdmap_t::const_iterator iter = this->chrom_depth.begin(); iter != this->chrom_depth.end() ; ++iter)
+        for (cdmap_t::const_iterator iter = this->chrom_depth.begin(); iter != this->chrom_depth.end() ; ++iter)
         {
-            if (!(iter->first=="chrM" ||iter->first=="chrY"||iter->first=="chrX")){
+            if (!(iter->first=="chrM" ||iter->first=="chrY"||iter->first=="chrX"))
+            {
 //                log_os << iter->first << "=" << iter->second << "\n";
                 depths.push_back(iter->second);
             }
         }
         std::sort(depths.begin(), depths.end());
         int sum = 0;
-        for (unsigned i=0;i<depths.size();i++){
+        for (unsigned i=0; i<depths.size(); i++)
+        {
 //            log_os << depths.at(i) << "\n";
             sum += depths.at(i);
         }
@@ -191,7 +196,8 @@ void calibration_models::set_model(const std::string& name)
 
     if (it != this->models.end())
     {
-        if (this->has_depth && (this->chr_median>70 || this->chr_median<10)){
+        if (this->has_depth && (this->chr_median>70 || this->chr_median<10))
+        {
             this->model_name = "QRULE";     //TODO hacky fix for defaulting to qrule if we have a high median chromosome depth (VQSR not trained to handle these cases yet)
         }
         else

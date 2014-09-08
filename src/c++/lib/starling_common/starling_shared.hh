@@ -209,7 +209,7 @@ struct starling_options : public blt_options
     bool is_filter_unanchored;
 
     std::string realigned_read_filename;
-    std::string bam_filename;
+    std::string bam_filename; // BAM/CRAM input file
     std::string bam_seq_name;
 
     std::string candidate_indel_filename;

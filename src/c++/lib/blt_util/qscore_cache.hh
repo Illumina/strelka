@@ -17,10 +17,9 @@
 
 #pragma once
 
-#include <stdint.h>
-
 #include <cassert>
 #include <ciso646>
+#include <cstdint>
 
 #include <array>
 
@@ -96,7 +95,6 @@ private:
     get_error_prob_imp(const int qscore) const
     {
         qscore_check_int(qscore);
-
         return q2p[qscore];
     }
 

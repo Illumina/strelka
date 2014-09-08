@@ -30,7 +30,6 @@
 ///
 struct depth_stream_stat
 {
-
     // Accumulate mean and standard dev using a single pass formula
     // Uses the cancellation-friendly formulae on p.26 of
     // Higham, Accuracy & Stability of Numerical Algorithms

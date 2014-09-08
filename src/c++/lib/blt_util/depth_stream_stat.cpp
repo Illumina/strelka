@@ -24,7 +24,6 @@
 std::ostream&
 operator<<(std::ostream& os,const depth_stream_stat& ss)
 {
-
     os << "sample_size: " << ss.sample_size() << " nonzero: " << ss.nonzero() << " min: " << ss.min() << " max: " << ss.max()
        << " mean: " << ss.mean() << " sd: " << ss.sd();
 

@@ -29,40 +29,42 @@ macro(superset symbol value)
 endmacro()
 
 #
+# htslib
+#
+set(HTSLIB_PREFIX "htslib-1.0")
+superset(HTSLIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/${HTSLIB_PREFIX}")
+superset(HTSLIB_LIBRARY "${HTSLIB_DIR}/libhts.a")
+
+add_custom_command(
+    OUTPUT ${HTSLIB_LIBRARY}
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${HTSLIB_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${HTSLIB_PREFIX}.tar.bz2"
+    COMMAND $(MAKE) -C "${HTSLIB_DIR}" lib-static tabix bgzip 2>| htslib.build.log
+    COMMENT "Building htslib library")
+add_custom_target(STARKA_HTSLIB DEPENDS "${HTSLIB_LIBRARY}")
+
+install(PROGRAMS "${HTSLIB_DIR}/tabix" DESTINATION "${THIS_LIBEXECDIR}")
+install(PROGRAMS "${HTSLIB_DIR}/bgzip" DESTINATION "${THIS_LIBEXECDIR}")
+
+#
 # samtools
 #
-set(SAMTOOLS_PREFIX "samtools-0.1.18_no_tview")
+set(SAMTOOLS_PREFIX "samtools-1.0")
 superset(SAMTOOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${SAMTOOLS_PREFIX}")
 superset(SAMTOOLS_LIBRARY "${SAMTOOLS_DIR}/libbam.a")
+superset(SAMTOOLS_PROG "${SAMTOOLS_DIR}/samtools")
 
 add_custom_command(
-    OUTPUT ${SAMTOOLS_LIBRARY}
+    OUTPUT ${SAMTOOLS_PROG}
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${SAMTOOLS_DIR}"
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${SAMTOOLS_PREFIX}.tar.bz2"
-    COMMAND $(MAKE) -C "${SAMTOOLS_DIR}" all bgzip 2>| samtools.build.log
-    COMMENT "Building the SAM/BAM library and tools")
-add_custom_target(STARKA_SAMTOOLS DEPENDS "${SAMTOOLS_LIBRARY}")
+    COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_BINARY_DIR}" ln -sf "${HTSLIB_PREFIX}" htslib
+    COMMAND ${CMAKE_COMMAND} -E chdir "${SAMTOOLS_DIR}" $(MAKE) all 2>| samtools.build.log
+    DEPENDS "${HTSLIB_LIBRARY}"
+    COMMENT "Building samtools package")
+add_custom_target(STARKA_SAMTOOLS DEPENDS "${SAMTOOLS_PROG}")
 
-install(PROGRAMS "${SAMTOOLS_DIR}/samtools" DESTINATION "${THIS_LIBEXECDIR}")
-install(PROGRAMS "${SAMTOOLS_DIR}/bgzip"    DESTINATION "${THIS_LIBEXECDIR}")
-
-#
-# tabix
-#
-set(TABIX_PREFIX "tabix-0.2.5_new_libz_order")
-superset(TABIX_DIR "${CMAKE_CURRENT_BINARY_DIR}/${TABIX_PREFIX}")
-set(TABIX_PROG "${TABIX_DIR}/tabix")
-superset(TABIX_LIBRARY "${TABIX_DIR}/libtabix.a")
-
-add_custom_command(
-    OUTPUT ${TABIX_PROG}
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${TABIX_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${TABIX_PREFIX}.tar.bz2"
-    COMMAND $(MAKE) -C "${TABIX_DIR}" all 2>| tabix.build.log
-    COMMENT "Building tabix")
-add_custom_target(STARKA_TABIX DEPENDS "${TABIX_PROG}")
-
-install(PROGRAMS "${TABIX_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
+install(PROGRAMS "${SAMTOOLS_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 
 #
 # bgzf_extras
@@ -124,7 +126,7 @@ endforeach ()
 
 # tie results back to parent:
 #
-add_dependencies(STARKA_OPT STARKA_SAMTOOLS STARKA_TABIX STARKA_BGZFX STARKA_CODEMIN STARKA_PYFLOW)
+add_dependencies(STARKA_OPT STARKA_SAMTOOLS STARKA_BGZFX STARKA_CODEMIN STARKA_PYFLOW)
 
 
 #

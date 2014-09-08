@@ -308,3 +308,19 @@ def getNextGenomeSegment(params) :
         for genomeRegion in params.genomeRegionList :
             for segval in getChromIntervals(params.chromOrder,params.chromSizes,params.scanSize, genomeRegion) :
                 yield GenomeSegment(*segval)
+
+
+
+def bamListCatCmd(samtoolsBin, bamList, output) :
+    assert(len(bamList) > 0)
+
+    if len(bamList) > 1:
+        headerTmp = bamList[0] + "header"
+        cmd  = "%s view -H %s >| %s" % (samtoolsBin, bamList[0], headerTmp)
+        cmd += " && %s merge  -h %s %s " % (samtoolsBin, headerTmp, output)
+        cmd += " ".join(bamList)
+    else:
+        cmd = "mv -f %s %s" % (bamList[0], output)
+    return cmd + " && %s index %s" % (samtoolsBin, output)
+
+

@@ -33,7 +33,6 @@ float
 max_candidate_alignment_count(const unsigned n_indel,
                               const unsigned n_toggle)
 {
-
     const float n(n_indel);
 
     float sum(1);
@@ -56,7 +55,6 @@ unsigned
 max_candidate_alignment_toggle(const unsigned n_indel,
                                const unsigned max_alignments)
 {
-
     const float max(max_alignments);
 
     float sum(1.);
@@ -74,7 +72,6 @@ max_candidate_alignment_toggle(const unsigned n_indel,
 starling_align_limit::
 starling_align_limit(const unsigned mac)
 {
-
     static const unsigned max_indels(100);
     for (unsigned i(0); i<max_indels; ++i)
     {

@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -25,11 +24,11 @@
 #include "starling_pos_processor_indel_util.hh"
 #include "starling_read_util.hh"
 
+#include "blt_util/align_path.hh"
+#include "blt_util/align_path_bam_util.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
-#include "starling_common/align_path.hh"
-#include "starling_common/align_path_bam_util.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
 #include <cassert>
@@ -42,7 +41,6 @@ std::string
 get_starling_bam_region_string(const starling_options& opt,
                                const starling_deriv_options& dopt)
 {
-
     const int zsize(opt.max_indel_size);
     const pos_t begin_pos(std::max(0,dopt.report_range.begin_pos-zsize));
     const pos_t end_pos(dopt.report_range.end_pos+zsize);
@@ -63,7 +61,6 @@ static
 bool
 is_valid_bam_code(const uint8_t a)
 {
-
     using namespace BAM_BASE;
 
     switch (a)
@@ -98,7 +95,6 @@ bool
 check_bam_record(const bam_streamer& read_stream,
                  const bam_record& read)
 {
-
     const unsigned rs(read.read_size());
 
     if (rs==0)
@@ -162,7 +158,6 @@ is_usable_read_mapping(const starling_options& opt,
                        const bam_record& read,
                        const bool is_tier2 =false)
 {
-
     // Legacy map scores are the separate SE and PE mapping scores
     // from ELAND. Non-legacy mode uses the MAPQ score from the BAM
     // file alone.
@@ -276,7 +271,6 @@ MAPLEVEL::index_t
 get_map_level(const starling_options& opt,
               const bam_record& read)
 {
-
     using namespace MAPLEVEL;
 
     if (read.is_unmapped()) return UNMAPPED;
@@ -340,7 +334,6 @@ process_genomic_read(const starling_options& opt,
                      starling_pos_processor_base& sppr,
                      const unsigned sample_no)
 {
-
     // read filters which are *always* on, because starling/strelka
     // can't do anything sensible with this information:
     //
@@ -469,7 +462,6 @@ std::pair<unsigned,unsigned>
 common_xfix_length(const std::string& s1,
                    const std::string& s2)
 {
-
     const unsigned s1s(s1.size());
     const unsigned s2s(s2.size());
 
@@ -501,7 +493,6 @@ process_candidate_indel(
     const unsigned sample_no,
     const bool is_forced_output)
 {
-
     const unsigned rs(vcf_indel.ref.size());
     for (const auto& alt : vcf_indel.alt)
     {

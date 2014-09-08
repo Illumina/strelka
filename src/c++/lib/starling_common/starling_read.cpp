@@ -21,8 +21,8 @@
 
 #include "starling_read_util.hh"
 
+#include "blt_util/align_path_bam_util.hh"
 #include "blt_util/log.hh"
-#include "starling_common/align_path_bam_util.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_shared.hh"
 
@@ -420,10 +420,9 @@ write_bam(bam_dumper& bamd)
         return;
     }
 
-
     // write out realigned record:
     //
-    bam1_t& br(*_read_rec._bp);
+    bam1_t& br(*_read_rec.get_data());
     bam1_core_t& ca(br.core);
 
     const bool is_orig_unmapped((! _is_bam_record_genomic) || _read_rec.is_unmapped());

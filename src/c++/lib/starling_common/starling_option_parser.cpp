@@ -235,8 +235,8 @@ write_starling_legacy_options(std::ostream& os)
     static const starling_options default_opt;
 
     os <<
-       " -bam-file file     - Analyze reads from 'file' in sorted BAM format (required) \n" // (use \"" << STDIN_FILENAME << "\" for stdin)\n"
-       " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the bam file (required)\n"
+       " -bam-file file     - Analyze reads from 'file' in sorted & indexed BAM/CRAM format (required) \n" // (use \"" << STDIN_FILENAME << "\" for stdin)\n"
+       " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the reads file (required)\n"
        " -samtools-reference file\n"
        "                    - Get the reference sequence from the multi-sequence fasta 'file' following samtools reference conventions (single-seq or samtools reference required)\n"
        "\n"

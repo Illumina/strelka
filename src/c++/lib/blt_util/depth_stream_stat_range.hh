@@ -29,7 +29,6 @@
 ///
 struct depth_stream_stat_range
 {
-
     depth_stream_stat_range(const unsigned total_obs)
         : _kprior(total_obs)
         , _is_pstat(false) {}

@@ -250,11 +250,13 @@ int c_model::logistic_score(const CALIBRATION_MODEL::var_case var_case, featurem
     return Qscore;
 }
 
-int c_model::get_var_threshold(CALIBRATION_MODEL::var_case& my_case){
+int c_model::get_var_threshold(CALIBRATION_MODEL::var_case& my_case)
+{
     return this->pars[CALIBRATION_MODEL::get_label(my_case)]["PassThreshold"]["Q"];
 }
 
-bool c_model::is_logitic_model(){
+bool c_model::is_logitic_model()
+{
     return this->model_type=="LOGISTIC";
 }
 
