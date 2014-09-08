@@ -4,24 +4,15 @@
  *  Created on: Aug 20, 2014
  *      Author: mkallberg
  */
-
-#include <stdlib.h>     /* atof */
-#include <iostream>
-#include <sstream>
-#include <cassert>
-#include <string>
-//#include <fstream>
-//#include <iterator>
-#include <boost/property_tree/ptree.hpp>
-//#include <boost/algorithm/string/split.hpp>
-//#include <boost/algorithm/string/classification.hpp>
 #include "blt_util/scoringmodels.hh"
 
-
-#define DEBUG_SCORINGMODELS
+//#define DEBUG_SCORINGMODELS
 #ifdef DEBUG_SCORINGMODELS
     #include "blt_util/log.hh"
 #endif
+
+static const std::string imodels="IndelModels";
+static const std::string cmodels="CalibrationModels";
 
 // Global static pointer used to ensure a single instance of the class.
 scoring_models* scoring_models::m_pInstance = nullptr;
@@ -37,7 +28,51 @@ scoring_models* scoring_models::Instance()
    return m_pInstance;
 }
 
+void indel_model::add_prop(const unsigned hpol_case, const double prop){
+    if (hpol_case>0 && hpol_case<max_hpol_len){
+        this->emodel[hpol_case-1] = prop;
+        #ifdef DEBUG_SCORINGMODELS
+            log_os << "Adding case " << hpol_case << " with prop " << prop << std::endl;
+        #endif
+    }
+ }
+
+double indel_model::get_prop(const unsigned hpol_case){
+    if (hpol_case>40)
+        return this->emodel[max_hpol_len-1];
+    return this->emodel[hpol_case-1];
+
+}
+
+void scoring_models::load_indel_models(boost::property_tree::ptree pt,const std::string model_name){
+    std::string s = imodels + "." + model_name;
+//    log_os << s << std::endl;
+    indel_model temp_model;
+    unsigned i=0;
+    BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(s))
+    {
+        temp_model.add_prop(i,atof(v.second.data().c_str()));
+        i++;
+    }
+    this->models[model_name] = temp_model;
+}
+
 void scoring_models::load_models(const std::string& model_file){
-//    if (model_file.length()>2)
-    log_os << "loading file " << model_file << "\n";
+    // assume file exists has been checked
+    std::stringstream ss;
+    std::ifstream file( model_file );
+    ss << file.rdbuf();
+    file.close();
+
+     boost::property_tree::ptree pt;
+     boost::property_tree::read_json(ss, pt);
+
+     //load indel models
+     BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(imodels))
+         this->load_indel_models(pt,v.first);
+
+     //load calibration models
+//     BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(cmodels))
+//         this->load_indel_models(pt,v.first);
+
 }
