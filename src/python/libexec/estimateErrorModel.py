@@ -19,7 +19,7 @@ def error(hpol_len,indel_length=1):
     delete_g = delete_A/ (1 + exp((delete_B-hpol_len)/delete_C))+delete_D
     delete_error_prob=(1.-exp(-delete_g/hpol_len))
         
-    return [delete_error_prob,insert_error_prob] 
+    return [insert_error_prob,delete_error_prob] 
 
         
 
@@ -29,10 +29,10 @@ def writeModelFile(path,models={}):
     s = {'IndelModels':{'Hiseq':[],'HiseqPCR':[],'Nextseq':[],'Xten':[],},}
     s['CalibrationModels'] = {'qscorehpol':[]}
     for i in xrange(1,41):
-        s['IndelModels']['Hiseq'].append(error(i)[0])
-        s['IndelModels']['HiseqPCR'].append(error(i)[0])
-        s['IndelModels']['Nextseq'].append(error(i)[0])
-        s['IndelModels']['Xten'].append(error(i)[0])
+        s['IndelModels']['Hiseq'].append(error(i))
+        s['IndelModels']['HiseqPCR'].append(error(i))
+        s['IndelModels']['Nextseq'].append(error(i))
+        s['IndelModels']['Xten'].append(error(i))
         s['CalibrationModels']['qscorehpol'].append(0.1)
     json.dump(s,f)
     f.close()    

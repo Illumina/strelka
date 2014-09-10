@@ -20,6 +20,7 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "starling_common/starling_indel_error_prob.hh"
+#include "blt_util/scoringmodels.hh"
 
 #include <cmath>
 
@@ -89,9 +90,6 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
 }
 
 // return the pre-calculated indel error rate for a given repeat-context and hpol length
-static const unsigned max_hpol_len(40);
-typedef std::pair<double,double> error_model[max_hpol_len];
-
 struct PatternErrorModel
 {
     PatternErrorModel()
@@ -117,30 +115,38 @@ struct PatternErrorModel
         const std::string& overall_error_model,
         const std::string& pattern) const
     {
+
+
+        // we are using estimated error model from json input
+        if (scoring_models::Instance()->indel_init){
+//            return scoring_models::Instance()->get_indel_model(const std::string& pattern);
+        }
+
+
+        //backwards compatibility
         // choose the error model based on
         if (overall_error_model=="old")
         {
             //        log_os << "Using indel error model: " << overall_error_model << "\n";
             return indel_error_prob_len_CG; // for now this is the old polynomial model
         }
-        else if (overall_error_model=="stratified")
-        {
-
-            if ("G"==pattern || "C"==pattern)
-            {
-                return indel_error_prob_len_CG;
-            }
-            else
-            {
-                return indel_error_prob_len_AT;
-            }
-        }
+//        else if (overall_error_model=="stratified")
+//        {
+//
+//            if ("G"==pattern || "C"==pattern)
+//            {
+//                return indel_error_prob_len_CG;
+//            }
+//            else
+//            {
+//                return indel_error_prob_len_AT;
+//            }
+//        }
         else
         {
             return indel_error_prob_len_AT;
         }
     }
-
     error_model indel_error_prob_len_AT;
     error_model indel_error_prob_len_CG;
 };

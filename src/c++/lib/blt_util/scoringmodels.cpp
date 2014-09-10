@@ -6,13 +6,12 @@
  */
 #include "blt_util/scoringmodels.hh"
 
-//#define DEBUG_SCORINGMODELS
+#define DEBUG_SCORINGMODELS
 #ifdef DEBUG_SCORINGMODELS
     #include "blt_util/log.hh"
 #endif
 
-static const std::string imodels="IndelModels";
-static const std::string cmodels="CalibrationModels";
+
 
 // Global static pointer used to ensure a single instance of the class.
 scoring_models* scoring_models::m_pInstance = nullptr;
@@ -28,21 +27,29 @@ scoring_models* scoring_models::Instance()
    return m_pInstance;
 }
 
-void indel_model::add_prop(const unsigned hpol_case, const double prop){
+void indel_model::add_prop(const unsigned hpol_case, const double prop_ins,const double prop_del){
     if (hpol_case>0 && hpol_case<max_hpol_len){
-        this->emodel[hpol_case-1] = prop;
+        this->model[hpol_case-1] = std::make_pair(prop_ins,prop_del);
         #ifdef DEBUG_SCORINGMODELS
-            log_os << "Adding case " << hpol_case << " with prop " << prop << std::endl;
+//            log_os << "Adding case " << hpol_case << " with prop " << prop << std::endl;
         #endif
     }
  }
 
 double indel_model::get_prop(const unsigned hpol_case){
     if (hpol_case>40)
-        return this->emodel[max_hpol_len-1];
-    return this->emodel[hpol_case-1];
+        return this->model[max_hpol_len-1][0];
+    return this->model[hpol_case-1][0];
 
 }
+
+error_model& scoring_models::get_indel_model(const std::string& pattern){
+    if (pattern=="f"){
+
+    }
+    return this->models[this->current_indel_model].model;
+}
+
 
 void scoring_models::load_indel_models(boost::property_tree::ptree pt,const std::string model_name){
     std::string s = imodels + "." + model_name;
@@ -51,10 +58,12 @@ void scoring_models::load_indel_models(boost::property_tree::ptree pt,const std:
     unsigned i=0;
     BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(s))
     {
-        temp_model.add_prop(i,atof(v.second.data().c_str()));
+        log_os << "Adding case " << i << " with prop " << v.second.data().c_str() << std::endl;
+//        temp_model.add_prop(i,atof(v.second.data().c_str()));
         i++;
     }
-    this->models[model_name] = temp_model;
+//    this->models[model_name] = temp_model;
+//    this->indel_init = true;
 }
 
 void scoring_models::load_models(const std::string& model_file){
