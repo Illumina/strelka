@@ -53,7 +53,7 @@ write_filters(std::ostream& os) const
 }
 
 
-std::map<std::string, double> indel_info::get_qscore_features()
+std::map<std::string, double> indel_info::get_qscore_features(int chrom_depth)
 {
     this->calc_vqsr_metrics();
 
@@ -89,9 +89,9 @@ std::map<std::string, double> indel_info::get_qscore_features()
     }
     unsigned ref_count(0);
     ref_count = std::max(ref_count,isri.n_q30_ref_reads);
-    res["AD0"]              = ref_count;
-    res["AD1"]              = isri.n_q30_indel_reads;
-    res["F_DPI"]            = isri.depth;
+    res["AD0"]              = ref_count/(1.0*chrom_depth);
+    res["AD1"]              = isri.n_q30_indel_reads/(1.0*chrom_depth);
+    res["F_DPI"]            = isri.depth/(1.0*chrom_depth);
 //    res["MQ"]               = MQ;
 //    res["ReadPosRankSum"]   = ReadPosRankSum;
 //    res["BaseQRankSum"]     = BaseQRankSum;
@@ -109,19 +109,20 @@ void indel_info::calc_vqsr_metrics()
 }
 
 
-std::map<std::string, double> site_info::get_qscore_features()
+std::map<std::string, double> site_info::get_qscore_features(int chrom_depth)
 {
     std::map<std::string, double> res;
+
     res["QUAL"]               = dgt.genome.snp_qphred;;
     res["F_GQX"]              = smod.gqx;
     res["F_GQ"]               = smod.gq;
     res["I_SNVSB"]            = dgt.sb;
     res["I_SNVHPOL"]          = hpol;
 
-    //we need to handle he scalling of DP better for high depth cases
-    res["F_DP"]               = n_used_calls;
-    res["F_DPF"]              = n_unused_calls;
-    res["AD0"]                = known_counts[dgt.ref_gt];
+    //we need to handle he scaling of DP better for high depth cases
+    res["F_DP"]               = n_used_calls/(1.0*chrom_depth);
+    res["F_DPF"]              = n_unused_calls/(1.0*chrom_depth);
+    res["AD0"]                = known_counts[dgt.ref_gt]/(1.0*chrom_depth);
     res["AD1"]                = 0.0;          // set below
 
 
@@ -133,7 +134,7 @@ std::map<std::string, double> site_info::get_qscore_features()
     {
         if (b==dgt.ref_gt) continue;
         if (DIGT::expect2(b,smod.max_gt))
-            res["AD1"] =  known_counts[b];
+            res["AD1"] =  known_counts[b]/(1.0*chrom_depth);
     }
     if ((res["F_DP"]+res["F_DPF"])>0.0)
     {
@@ -141,7 +142,7 @@ std::map<std::string, double> site_info::get_qscore_features()
     }
     else
     {
-        res["VFStar"]           = res["AD1"]/(30.0); //default hack for
+        res["VFStar"]           = res["AD1"]/(1.0*chrom_depth); //default hack for
     }
     return res;
 }

@@ -22,6 +22,7 @@
 #include "blt_util/align_path.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "starling_common/starling_shared.hh"
+#include "blt_util/chrom_depth_map.hh"
 
 #include <bitset>
 #include <iosfwd>
@@ -292,7 +293,7 @@ struct indel_info
 
     void calc_vqsr_metrics(); //calculate the final VQSR metrics from the indel_key data
 
-    std::map<std::string, double> get_qscore_features();
+    std::map<std::string, double> get_qscore_features(int chrom_depth);
 
     pos_t pos;
     indel_key ik;
@@ -329,6 +330,7 @@ struct site_info
         , ReadPosRankSum(0)
         , BaseQRankSum(0)
         , MQRankSum(0)
+        , RawPos(0)
         , Qscore(-1)
         , Unphasable(false)
     {
@@ -372,7 +374,7 @@ struct site_info
         }
     }
 
-    std::map<std::string, double> get_qscore_features();
+    std::map<std::string, double> get_qscore_features(int chrom_depth);
 
     bool
     is_het() const
@@ -409,6 +411,7 @@ struct site_info
     double ReadPosRankSum;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
     double BaseQRankSum;    // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
     double MQRankSum;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
+    double RawPos;          // Raw position within the read
     int Qscore;             // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
     bool Unphasable;        // Set to true if the site should never be included in a phasing block
 
