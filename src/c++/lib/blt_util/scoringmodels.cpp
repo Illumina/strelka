@@ -47,7 +47,13 @@ error_model& scoring_models::get_indel_model(const std::string& pattern){
     if (pattern=="f"){
 
     }
-    return this->models[this->current_indel_model].model;
+    return this->indel_models[this->current_indel_model].model;
+}
+
+double scoring_models::score_instance(const std::map<std::string,double> features){
+
+
+    return 1.0; // returns calibration score
 }
 
 
@@ -63,7 +69,11 @@ void scoring_models::load_indel_models(boost::property_tree::ptree pt,const std:
         i++;
     }
 //    this->models[model_name] = temp_model;
-//    this->indel_init = true;
+    this->indel_init = true;
+}
+
+void scoring_models::load_calibration_models(boost::property_tree::ptree pt,const std::string model_name){
+    this->calibration_init = true;
 }
 
 void scoring_models::load_models(const std::string& model_file){
@@ -82,6 +92,6 @@ void scoring_models::load_models(const std::string& model_file){
 
      //load calibration models
 //     BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(cmodels))
-//         this->load_indel_models(pt,v.first);
+//         this->load_calibration_models(pt,v.first);
 
 }

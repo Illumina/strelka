@@ -59,12 +59,24 @@ private:
     std::string name;
 };
 
+class calibration_model{
+public:
+    calibration_model(){};
+    void add_prop(const unsigned hpol_case, const double prop);
+    double get_prop(const unsigned hpol_case);
+    error_model model; // some datastructure for feature parameters
+private:
+    std::string name;
+};
+
 class scoring_models{
 public:
    static scoring_models* Instance();
    void load_models(const std::string& model_file);
    void load_indel_models(boost::property_tree::ptree pt,const std::string model_name);
+   void load_calibration_models(boost::property_tree::ptree pt,const std::string model_name);
    error_model& get_indel_model(const std::string& pattern);
+   double score_instance(const std::map<std::string,double> features);
    bool indel_init=false;
    bool calibration_init=false;
 
@@ -73,8 +85,10 @@ private:
    scoring_models(scoring_models const&){};             // copy constructor is private
    scoring_models& operator=(scoring_models const&);  // assignment operator is private
    static scoring_models* m_pInstance;
-   typedef std::map<std::string,indel_model> modelmap;
-   modelmap models;
+   typedef std::map<std::string,indel_model> indel_modelmap;
+   typedef std::map<std::string,calibration_model> calibration_modelmap;
+   indel_modelmap indel_models;
+   calibration_modelmap calibration_models;
    std::string current_indel_model;
 };
 
