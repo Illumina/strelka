@@ -19,7 +19,6 @@
 
 #include <vector>
 
-
 // Calculates the Mann-Whitney rank-sum statistic from two populations with
 // sparse (and similar) observation spaces
 //
@@ -41,13 +40,15 @@ struct fastRanksum
     //return rank-sum U statistic
     double get_u_stat() const;
 
+    // return the raw position score
+    double get_raw_score() const;
+
     void
     clear()
     {
         _obs.resize(0);
     }
 
-    double get_raw_score();
 
 private:
 

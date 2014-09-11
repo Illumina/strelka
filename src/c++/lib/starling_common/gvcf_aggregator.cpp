@@ -546,7 +546,7 @@ write_site_record(const site_info& si) const
                 os << ';';
                 os << "ReadPosRankSum=" << si.ReadPosRankSum;
                 os << ';';
-                os << "RawPos=" << si.RawPos;
+                os << "RawPosWeight=" << si.RawPos;
             }
 //            //reported q-score
 //            if (si.Qscore>0) {

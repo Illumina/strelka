@@ -173,6 +173,10 @@ struct snp_pos_info
     double
     get_baseq_ranksum();
 
+    // return the raw pos sum
+    double
+    get_raw_pos();
+
     void
     print_known_counts(std::ostream& os,
                        const int min_qscore) const;

@@ -20,6 +20,7 @@
 
 #include <cmath>
 
+#include "blt_util/log.hh"
 
 
 static
@@ -37,8 +38,30 @@ get_z_score(const int n1, const int n2, const double w1)
 
 double
 fastRanksum::
-get_raw_score(){
-    return 1.0;
+get_raw_score() const{
+    double R1 = 0;
+    double R2 = 0;
+    int N1 = 0;
+    int N2 = 0;
+
+    //loop over all observations
+    for (const auto& robs : _obs)
+    {
+        if (robs.empty()) continue;
+        const int obs1 = robs.A;
+        const int obs2 = robs.B;
+        double rank_weight = (2*(N1+N2+1) + (obs1+obs2)-1)/2.0;
+
+        R1 += rank_weight*obs1;
+        R2 += rank_weight*obs2;
+        N1 += obs1;
+        N2 += obs2;
+    }
+
+    //return the average rank weight of case with most observations
+    if (N1>N2)
+        return R1/N1;
+    return R2/N2;
 }
 
 // return the U statistic
@@ -63,7 +86,6 @@ get_u_stat() const
         N1 += obs1;
         N2 += obs2;
     }
-    //ergerger ergerg
     //return the z-score for the smaller of U1 and U2 assuming a gaussian approx.
     if (R1>R2)
     {

@@ -1894,7 +1894,7 @@ process_pos_snp_single_sample_impl(
             _site_info.ReadPosRankSum 	= pi.get_read_pos_ranksum();
             _site_info.MQRankSum 		= pi.get_mq_ranksum();
             _site_info.BaseQRankSum 	= pi.get_baseq_ranksum();
-            _site_info.RawPos           =
+            _site_info.RawPos           = pi.get_raw_pos();
         }
 
         // hpol filter
