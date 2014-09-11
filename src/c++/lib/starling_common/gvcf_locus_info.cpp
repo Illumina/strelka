@@ -130,6 +130,7 @@ std::map<std::string, double> site_info::get_qscore_features(int chrom_depth)
     res["I_ReadPosRankSum"]   = ReadPosRankSum;
     res["I_BaseQRankSum"]     = BaseQRankSum;
     res["I_MQRankSum"]        = MQRankSum;
+    res["I_RawPos"]           = RawPos;         //the average position value within a read of a variant
     for (unsigned b(0); b<N_BASE; ++b)
     {
         if (b==dgt.ref_gt) continue;

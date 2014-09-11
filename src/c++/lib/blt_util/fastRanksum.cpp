@@ -35,7 +35,11 @@ get_z_score(const int n1, const int n2, const double w1)
     return (w1-mean)/var;
 }
 
-
+double
+fastRanksum::
+get_raw_score(){
+    return 1.0;
+}
 
 // return the U statistic
 double

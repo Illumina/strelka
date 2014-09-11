@@ -47,6 +47,8 @@ struct fastRanksum
         _obs.resize(0);
     }
 
+    double get_raw_score();
+
 private:
 
     struct ranksumObs
