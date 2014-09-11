@@ -63,7 +63,7 @@ get_u_stat() const
         N1 += obs1;
         N2 += obs2;
     }
-
+    //ergerger
     //return the z-score for the smaller of U1 and U2 assuming a gaussian approx.
     if (R1>R2)
     {
