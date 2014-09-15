@@ -14,6 +14,8 @@
 //#include <fstream>
 //#include <iterator>
 #include <map>
+#include <vector>
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
@@ -48,11 +50,12 @@ static const std::string cmodels="CalibrationModels";
 static const unsigned max_hpol_len(40);
 static const unsigned max_indel_len(15);
 typedef std::pair<double,double> error_model[max_hpol_len];
+typedef std::map<int, double> feature_type;
 
 class indel_model{
 public:
     indel_model(){};
-    void add_prop(const unsigned hpol_case, const double prop);
+    void add_prop(const unsigned hpol_case, const double prop_ins, const double prop_del);
     double get_prop(const unsigned hpol_case);
     error_model model;
 private:
@@ -62,9 +65,29 @@ private:
 class calibration_model{
 public:
     calibration_model(){};
-    void add_prop(const unsigned hpol_case, const double prop);
-    double get_prop(const unsigned hpol_case);
-    error_model model; // some datastructure for feature parameters
+
+    typedef std::map<int, std::vector<double> > calibration_type;
+    typedef std::vector< calibration_type > set_of_calibrations_type;
+
+    int n_trees = 10;
+    std::vector<std::string> calibration_data_names;
+    set_of_calibrations_type all_trees;
+    set_of_calibrations_type all_node_votes;
+    set_of_calibrations_type all_decisions;
+    std::vector< set_of_calibrations_type > all_rf_json_data;
+
+
+    void populate_storage_metadata();
+    void read_calibration_models(const std::string calibration_json_file,
+                                 std::vector<std::string> variable_names);
+
+    double get_randomforest_proba(const feature_type features);
+private:
+    double get_single_dectree_proba(const feature_type, int tree_index);
+
+
+
+
 private:
     std::string name;
 };
@@ -74,11 +97,26 @@ public:
    static scoring_models* Instance();
    void load_models(const std::string& model_file);
    void load_indel_models(boost::property_tree::ptree pt,const std::string model_name);
-   void load_calibration_models(boost::property_tree::ptree pt,const std::string model_name);
+
+   //modified.
+   ////////////////
+
+
+   void load_calibration_models(const std::string calibration_json_file);
+   double score_instance(const feature_type features);
+
+   /////////////////
+
    error_model& get_indel_model(const std::string& pattern);
-   double score_instance(const std::map<std::string,double> features);
    bool indel_init=false;
+
+
+   //modified.
+   ////////////
+
    bool calibration_init=false;
+
+   ////////////
 
 private:
    scoring_models(){};  // Private so that it can  not be called
@@ -86,10 +124,18 @@ private:
    scoring_models& operator=(scoring_models const&);  // assignment operator is private
    static scoring_models* m_pInstance;
    typedef std::map<std::string,indel_model> indel_modelmap;
-   typedef std::map<std::string,calibration_model> calibration_modelmap;
    indel_modelmap indel_models;
-   calibration_modelmap calibration_models;
    std::string current_indel_model;
+
+   //typedef std::map<int,calibration_model> calibration_modelmap;
+   //calibration_modelmap calibration_models;
+   calibration_model randomforest_model;
+
+
+   //
+   //std::map< std::map<int, std::vector<double> >, double> proba_for_features;
+
+
 };
 
 

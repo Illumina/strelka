@@ -110,11 +110,20 @@ struct PatternErrorModel
         }
     }
 
+    
+
+
     const error_model&
     getModel(
         const std::string& overall_error_model,
         const std::string& pattern) const
     {
+
+
+        if(pattern=="")
+        {
+            //dummy usage of pattern for suppressing the -Werror.
+        }
 
 
         // we are using estimated error model from json input
