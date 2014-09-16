@@ -7,6 +7,7 @@
 #include "blt_util/scoringmodels.hh"
 
 #define DEBUG_SCORINGMODELS
+
 #ifdef DEBUG_SCORINGMODELS
     #include "blt_util/log.hh"
 #endif
@@ -38,8 +39,10 @@ void indel_model::add_prop(const unsigned hpol_case, const double prop_ins,const
 
 double indel_model::get_prop(const unsigned hpol_case){
     if (hpol_case>40)
-        return this->model[max_hpol_len-1][0];
-    return this->model[hpol_case-1][0];
+        return 1.0;
+    return 1.0;
+//        return this->model[max_hpol_len-1][0];
+//    return this->model[hpol_case-1][0];
 
 }
 
@@ -52,8 +55,12 @@ error_model& scoring_models::get_indel_model(const std::string& pattern){
 
 double scoring_models::score_instance(const std::map<std::string,double> features){
 
+    double score = 0.5;
+    if(features.empty()){
 
-    return 1.0; // returns calibration score
+    }
+
+    return score; // returns calibration score
 }
 
 
@@ -65,16 +72,18 @@ void scoring_models::load_indel_models(boost::property_tree::ptree pt,const std:
     BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(s))
     {
         log_os << "Adding case " << i << " with prop " << v.second.data().c_str() << std::endl;
-//        temp_model.add_prop(i,atof(v.second.data().c_str()));
+        temp_model.add_prop(i,atof(v.second.data().c_str()),atof(v.second.data().c_str()));
         i++;
     }
-//    this->models[model_name] = temp_model;
+    this->indel_models[model_name] = temp_model;
     this->indel_init = true;
 }
 
-void scoring_models::load_calibration_models(boost::property_tree::ptree pt,const std::string model_name){
-    this->calibration_init = true;
-}
+//void scoring_models::load_calibration_models(boost::property_tree::ptree pt,const std::string model_name){
+//    if(model_name==""){}
+//
+//    this->calibration_init = true;
+//}
 
 void scoring_models::load_models(const std::string& model_file){
     // assume file exists has been checked

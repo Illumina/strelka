@@ -1562,6 +1562,12 @@ write_vcf_somatic_snv_genotype_strand_grid(
     DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
                              sgt.ref_gt,os);
 
+    // write out somatic VQSR metrics
+    if (opt.sfilter.compute_VQSR_options){
+        os << ";VQSROTPS=" << "val";
+    }
+
+
     //FORMAT:
     os << '\t'
        << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";

@@ -116,6 +116,9 @@ struct PatternErrorModel
         const std::string& pattern) const
     {
 
+        if(pattern==""){
+
+        }
 
         // we are using estimated error model from json input
         if (scoring_models::Instance()->indel_init){

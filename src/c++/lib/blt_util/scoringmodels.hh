@@ -52,7 +52,7 @@ typedef std::pair<double,double> error_model[max_hpol_len];
 class indel_model{
 public:
     indel_model(){};
-    void add_prop(const unsigned hpol_case, const double prop);
+    void add_prop(const unsigned hpol_case, const double prop_ins,const double prop_del);
     double get_prop(const unsigned hpol_case);
     error_model model;
 private:
