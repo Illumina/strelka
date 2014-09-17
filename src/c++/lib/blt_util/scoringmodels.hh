@@ -98,25 +98,13 @@ public:
    void load_models(const std::string& model_file);
    void load_indel_models(boost::property_tree::ptree pt,const std::string& model_name);
 
-   //modified.
-   ////////////////
-
-
    void load_calibration_models(const std::string& calibration_json_file);
    double score_instance(const feature_type& features);
-
-   /////////////////
 
    error_model& get_indel_model(const std::string& pattern);
    bool indel_init=false;
 
-
-   //modified.
-   ////////////
-
    bool calibration_init=false;
-
-   ////////////
 
 private:
    scoring_models(){};  // Private so that it can  not be called

@@ -9,7 +9,7 @@
 #define DEBUG_SCORINGMODELS
 
 #ifdef DEBUG_SCORINGMODELS
-
+    #include "blt_util/log.hh"
 #endif
 
 
@@ -60,17 +60,14 @@ void calibration_model::read_calibration_models(const std::string& calibration_j
        set_of_calibrations_type dummy_arr;
        all_data.push_back(dummy_arr);
     }
-
    try
    {
-
        boost::property_tree::ptree doc;
        std::string json_filename = calibration_json_file;
        boost::property_tree::read_json(json_filename, doc);
 
        BOOST_FOREACH(boost::property_tree::ptree::value_type &each_tree, doc)
        {
-           ////////////////////////////////////////////////////
            for (unsigned int vn=0; vn < variable_names.size(); vn++)
            {
 
@@ -83,31 +80,22 @@ void calibration_model::read_calibration_models(const std::string& calibration_j
                    {
                        double p = i.second.get_value<double>();
                        prob_tuple[ind++] = p;
-
                    }
                    node_votes[atoi(v.first.c_str())] = prob_tuple;
                }
                all_data[vn].push_back(node_votes);
-
            }
-           ///////////////////////////////////////////////////
        }
-
     int ind = 0;
     this->all_trees = all_data[ind++];
     this->all_node_votes = all_data[ind++];
     this->all_decisions = all_data[ind++];
-
    }
 
    catch (std::exception const& e)
    {
        std::cerr << e.what() << std::endl;
    }
-
-   return;
-
-
 }
 
 
@@ -165,10 +153,6 @@ void scoring_models::load_indel_models(boost::property_tree::ptree pt,const std:
     BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(s))
     {
         temp_model.add_prop(i,atof(v.second.data().c_str()),atof(v.second.data().c_str()));
-        if (v.first == "")
-        {
-            //dummy error suppressor for unused variable v.
-        }
         i++;
     }
     this->indel_models[model_name] = temp_model;
@@ -177,7 +161,7 @@ void scoring_models::load_indel_models(boost::property_tree::ptree pt,const std:
 
 
 
-void scoring_models::load_calibration_models(const std::string& calibration_json_file)
+void scoring_models::load_calibration_models(boost::property_tree::ptree pt,const std::string& model_name)
 {
     this->randomforest_model.populate_storage_metadata();
 
@@ -204,6 +188,6 @@ void scoring_models::load_models(const std::string& model_file){
 
 
      //load calibration models
-     //this->load_calibration_models(calibration_json_file);
+     this->load_calibration_models(calibration_json_file);
 
 }
