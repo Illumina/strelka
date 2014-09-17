@@ -110,6 +110,9 @@ struct PatternErrorModel
         }
     }
 
+    
+
+
     const error_model&
     getModel(
         const std::string& overall_error_model,
@@ -119,6 +122,12 @@ struct PatternErrorModel
         if(pattern==""){
 
         }
+
+        if(pattern=="")
+        {
+            //dummy usage of pattern for suppressing the -Werror.
+        }
+
 
         // we are using estimated error model from json input
         if (scoring_models::Instance()->indel_init){
