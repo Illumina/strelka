@@ -38,10 +38,10 @@ const prog_info& pinfo(starling_info::get());
 
 
 void
-strelkaNoiseExtractor::
+StrelkaNoiseExtractor::
 runInternal(int argc, char* argv[]) const
 {
-    starling_options opt;
+    snoise_options opt;
 
     // set command-line defaults for starling only:
     opt.gvcf.out_file = "-";
@@ -52,10 +52,6 @@ runInternal(int argc, char* argv[]) const
     opt.max_win_mismatch_flank_size = 20;
     opt.is_min_vexp = true;
     opt.min_vexp = 0.25;
-
-
-    // TODO double-check with MK:
-    ///opt.upstream_oligo_size = 10;
 
     for (int i(0); i<argc; ++i)
     {
@@ -94,6 +90,6 @@ runInternal(int argc, char* argv[]) const
 
     finalize_starling_options(pinfo,vm,opt);
 
-    starling_run(opt);
+    snoise_run(opt);
 }
 

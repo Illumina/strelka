@@ -21,20 +21,19 @@
 #include "starling_common/version.hh"
 
 
-struct starling_info : public prog_info
+struct snoise_info : public prog_info
 {
-
     static
     const prog_info& get()
     {
-        static const starling_info vci;
+        static const snoise_info vci;
         return vci;
     }
 
 private:
     const char* name() const
     {
-        static const char NAME[] = "IsaacVariantCaller";
+        static const char NAME[] = "StrelkaNoiseExtractor";
         return NAME;
     }
 
@@ -43,10 +42,10 @@ private:
         return starka::getFullVersion();
     }
 
-    void usage(const char* xmessage = 0) const;
+    void usage(const char* xmessage = nullptr) const;
 
     void doc() const {};
 
-    starling_info() {}
-    virtual ~starling_info() {}
+    snoise_info() {}
+    virtual ~snoise_info() {}
 };

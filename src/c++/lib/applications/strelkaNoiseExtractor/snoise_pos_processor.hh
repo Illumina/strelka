@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "snoise_streams.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 
 

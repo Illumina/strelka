@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "starling_common/starling_shared.hh"
+#include "snoise_shared.hh"
 
 
 void

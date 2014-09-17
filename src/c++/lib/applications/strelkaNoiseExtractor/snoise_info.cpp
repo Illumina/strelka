@@ -15,7 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#include "starling_info.hh"
+#include "snoise_info.hh"
 #include "starling_common/starling_option_parser.hh"
 #include "starling_common/starling_shared.hh"
 
@@ -75,10 +75,9 @@ static starling_info::time_t compile_time(time_when_compiled);
 #endif
 
 void
-starling_info::
+snoise_info::
 usage(const char* xmessage) const
 {
-
     std::ostream& os(log_os);
 
     os <<

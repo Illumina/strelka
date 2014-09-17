@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <array>
 #include <iomanip>
+#include <iostream>
 
 
 
@@ -52,43 +53,39 @@ process_pos_snp_snoise(
 
     snp_pos_info null_pi;
     snp_pos_info* pi_ptr(sif.bc_buff.get_pos(pos));
-    if (NULL==pi_ptr) pi_ptr=&null_pi;
+    if (nullptr==pi_ptr) pi_ptr=&null_pi;
     snp_pos_info& pi(*pi_ptr);
 
     const unsigned n_calls(pi.calls.size());
-    const unsigned n_spandel(pi.n_spandel);
-    const unsigned n_submapped(pi.n_submapped);
 
     const pos_t output_pos(pos+1);
 
     pi.set_ref_base(_ref.get_base(pos));
-
-    std::ostream& bos(*_client_io.snoise_osptr());
 
     // for all but coverage-tests, we use a high-quality subset of the basecalls:
     //
     snp_pos_info& good_pi(sif.epd.good_pi);
     good_pi.clear();
     good_pi.set_ref_base(pi.get_ref_base());
-    for (unsigned i(0); i<n_calls; ++i)
+    for (const auto& bc : pi.calls )
     {
-        if (pi.calls[i].is_call_filter) continue;
-        good_pi.calls.push_back(pi.calls[i]);
+        if (bc.is_call_filter) continue;
+        good_pi.calls.push_back(bc);
     }
 
-    const unsigned n_used_calls=(good_pi.calls.size());
-    const unsigned n_unused_calls=(n_calls-_site_info.n_used_calls);
+    _site_info.n_used_calls=(good_pi.calls.size());
+    _site_info.n_unused_calls=(n_calls-_site_info.n_used_calls);
 
 
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if (sample_no!=0) return;
+    if (sample_no != 0) return;
 
     if (pi.calls.empty()) return;
 
-    // approximate the the site is not germline and contains noise instead:
-    if (n_used_calls < 15) return;
+    // make early filtration decision -- then get the allele distribution:
+    if (_site_info.n_used_calls < 15) return;
 
     std::array<unsigned,N_BASE> base_count;
     std::fill(base_count.begin(),base_count.end(),0);
@@ -99,28 +96,83 @@ process_pos_snp_snoise(
         base_count[bc.base_id]++;
     }
 
+    const auto ref_id(base_to_id(good_pi.get_ref_base()));
+    const unsigned ref_count(base_count[ref_id]);
 
-    report_counts(good_pi,_site_info.n_unused_calls,output_pos,*_client_io.counts_osptr());
+    if (ref_count == _site_info.n_used_calls) return;
 
-
-    static
-    void
-    report_counts(const snp_pos_info& pi,
-                  const unsigned n_unused_calls,
-                  const pos_t output_pos,
-                  std::ostream& os)
+    unsigned alt_id( (ref_id==0) ? 1 : 0);
+    for (unsigned i(1);i<N_BASE;e++i)
     {
+        if (i == ref_id) continue;
+        if (i == alt_id) continue;
+        if (base_count[i] > base_count[alt_id]) alt_id = i;
+    }
+    const unsigned alt_count(base_count[alt_id]);
 
-        for (unsigned i(0); i<N_BASE; ++i) base_count[i] = 0;
+#if 0
+    // go ahead and get regular snp call probs to determine if it's likely to be a het:
+    adjust_joint_eprob(_client_opt,_dpcache,good_pi,sif.epd.dependent_eprob,_is_dependent_eprob);
 
+    const extended_pos_info good_epi(good_pi,sif.epd.dependent_eprob);
 
+    _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
 
-        os << output_pos << '\t';
-        for (unsigned i(0); i<N_BASE; ++i)
-        {
-            os << base_count[i] << '\t';
-        }
-        os << n_unused_calls << '\n';
+    // if there's enough information to be confident this is not non-ref then include the call in the noise set:
+#endif
+
+    const double ref_ratio(static_cast<double>(ref_count)/_site_info.n_used_calls);
+
+    if (ref_ratio > 0.2) return;
+
+    {
+        std::ostream& os(*_client_io.snoise_osptr());
+
+        // CHROM POS ID:
+        os << _chrom_name << '\t'
+            << output_pos << '\t'
+            << ".";
+
+        //REF:
+        os << '\t' << good_pi.ref_base;
+        //ALT:
+        os << '\t' <<
+    DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
+                                   sgt.ref_gt,os);
+    //QUAL:
+    os << "\t.";
+
+    //FILTER:
+    os << "\t.";
+
+    //INFO:
+    os << "\t.";
+
+    if (is_write_nqss)
+    {
+        os << ";NQSS=" << rs.nonsomatic_qphred;
+    }
+
+    os << ";TQSS=" << (sgt.snv_tier+1)
+       << ";NT=" << NTYPE::label(rs.ntype)
+       << ";QSS_NT=" << rs.snv_from_ntype_qphred
+       << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1)
+       << ";SGT=";
+    DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
+                             sgt.ref_gt,os);
+
+    //FORMAT:
+    os << '\t'
+       << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";
+
+    // normal sample info:
+    os << "\t";
+    write_vcf_sample_info(opt,n1_epd,n2_epd,os);
+
+    // tumor sample info:
+    os << "\t";
+    write_vcf_sample_info(opt,t1_epd,t2_epd,os);
+
     }
 
 
