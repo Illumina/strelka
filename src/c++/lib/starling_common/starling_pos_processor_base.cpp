@@ -1256,7 +1256,7 @@ process_pos_indel_single_sample(const pos_t pos,
                                                                    ik,id,is_use_alt_indel,dindel);
 
             bool is_indel(false);
-            if (dindel.is_indel)
+            if ((dindel.is_indel) or (id.is_forced_output))
             {
                 is_indel=true;
 
