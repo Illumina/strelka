@@ -18,6 +18,8 @@
 #pragma once
 
 #include <vector>
+#include <iosfwd>
+#include <iostream>
 
 // Calculates the Mann-Whitney rank-sum statistic from two populations with
 // sparse (and similar) observation spaces
@@ -35,13 +37,22 @@ struct fastRanksum
     {
         if (obs >= _obs.size()) _obs.resize(obs+16);
         _obs[obs].inc(isA);
+        if (!isA){
+            this->total_alt+=obs;
+            this->total_alt_count++;
+        }
     }
 
     //return rank-sum U statistic
     double get_u_stat() const;
 
-    // return the raw position score
+    //
+    double get_u_stat_uniform() const;
+
+    // return average cycle of the alternate allele
     double get_raw_score() const;
+
+    double get_avg_alt() const;
 
     void
     clear()
@@ -62,8 +73,10 @@ private:
         void
         inc(const bool isA)
         {
-            if (isA) A++;
-            else     B++;
+            if (isA) A++; // case
+            else{
+                B++;
+            }
         }
 
         bool
@@ -77,4 +90,6 @@ private:
     };
 
     std::vector<ranksumObs> _obs; // observations for ref/alt bases
+    unsigned total_alt=0;
+    unsigned total_alt_count=0;
 };

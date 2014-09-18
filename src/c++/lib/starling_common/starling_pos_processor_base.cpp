@@ -569,8 +569,7 @@ insert_indel(const indel_observation& obs,
 {
     //
     // ppr advance is controlled by the start positions of reads and
-    // contigs, not indels. The rationale for this is that indels are
-    // relatively cheap to store (so long as we aren't including
+    // relatively cheap to store (so long as we aren't includingu
     // gigantic insert sequences) and do not scale up linearly with
     // increased coverage like reads do. For this reason our strategy
     // is to buffer the indels as far ahead as possible while leaving
