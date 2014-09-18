@@ -25,7 +25,6 @@
 //
 std::ostream& operator<<(std::ostream& os, const pos_range& pr)
 {
-
     os << "[";
     if (pr.is_begin_pos)
     {

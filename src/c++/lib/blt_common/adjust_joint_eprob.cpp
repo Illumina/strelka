@@ -106,7 +106,7 @@ adjust_icalls_eprob(const blt_options& opt,
     static const bool is_use_vexp_frac(true);
 
     // produce weighted fraction of reads with a neighboring mismatch:
-    blt_float_t vexp_frac(opt.bsnp_ssd_no_mismatch);
+    blt_float_t vexp_frac;
     if (is_use_vexp_frac)
     {
         static const blt_float_t lnran(std::log(0.75));
@@ -126,6 +126,10 @@ adjust_icalls_eprob(const blt_options& opt,
         blt_float_t mismatch_frac(0);
         if (ic_size && (den>0.)) mismatch_frac=(num/den);
         vexp_frac=(1.-mismatch_frac)*opt.bsnp_ssd_no_mismatch+mismatch_frac*opt.bsnp_ssd_one_mismatch;
+    }
+    else
+    {
+        vexp_frac=opt.bsnp_ssd_no_mismatch;
     }
 
     const bool is_limit_vexp_iterations(opt.max_vexp_iterations>0);

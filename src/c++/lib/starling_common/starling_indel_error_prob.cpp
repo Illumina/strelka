@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -34,7 +33,6 @@ get_indel_error_prob_hpol_len(const unsigned hpol_len,
                               double& insert_error_prob,
                               double& delete_error_prob, const std::string& context)
 {
-
     // Calculate p(error) of
     //    CASE: del
     //    FIT pars: [  1.49133831e-03   1.03348683e+01   1.13646811e+00   1.18488282e-05]
@@ -146,7 +144,7 @@ struct PatternErrorModel
 };
 
 
-PatternErrorModel emodel;
+static PatternErrorModel emodel;
 
 #if 0
 error_model&
@@ -226,7 +224,6 @@ get_indel_error_prob(const starling_options& client_opt,
                      double& indel_error_prob,
                      double& ref_error_prob)
 {
-
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
 //    log_os << "Indel model " << client_opt.indel_error_model << "\n";

@@ -45,7 +45,7 @@ private:
 
     void usage(const char* xmessage = 0) const;
 
-    void doc() const {};
+    void doc() const {}
 
     starling_info() {}
     virtual ~starling_info() {}

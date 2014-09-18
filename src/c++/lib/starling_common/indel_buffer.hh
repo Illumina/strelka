@@ -34,7 +34,6 @@
 ///
 struct indel_buffer
 {
-
     typedef indel_data idata_value_t;
     typedef std::map<indel_key,idata_value_t> idata_t;
     typedef idata_t::iterator iterator;

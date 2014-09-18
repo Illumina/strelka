@@ -35,7 +35,6 @@ add_stage(const int id,
           const unsigned parent_distance,
           const bool is_parent)
 {
-
     unsigned pos(0);
     if (is_parent)
     {
@@ -79,13 +78,10 @@ void
 stage_data::
 dump(std::ostream& os) const
 {
-    typedef stage_pos_t::const_iterator siter;
-
     os << "stage_pos:\n";
-    siter i(_stage_pos.begin()), i_end(_stage_pos.end());
-    for (; i!=i_end; ++i)
+    for (const auto& val : _stage_pos)
     {
-        os << "pos: " << i->first << " id: " << i->second << "\n";
+        os << "pos: " << val.first << " id: " << val.second << "\n";
     }
 }
 
@@ -113,7 +109,6 @@ void
 stage_manager::
 revise_stage_data(const stage_data& sdata)
 {
-
     // check to see if new sdata qualifies against the restrictions
     // of data revision:
     const stage_data::stage_pos_t& sp(sdata.stage_pos());
@@ -199,7 +194,6 @@ void
 stage_manager::
 handle_new_pos_value(const pos_t pos)
 {
-
     if (! _is_first_pos_set)
     {
         _max_pos = pos;
@@ -241,7 +235,6 @@ stage_manager::
 is_new_pos_value_valid(const pos_t pos,
                        const int stage_id)
 {
-
     // get fshift first to validate stage_id:
     const pos_t fshift(_sdata.get_stage_id_shift(stage_id));
     if (! _is_first_pos_set) return true;
@@ -329,7 +322,6 @@ void
 stage_manager::
 finish_process_pos()
 {
-
     if (! _is_head_pos) return;
 
     if (_is_any_minpos)

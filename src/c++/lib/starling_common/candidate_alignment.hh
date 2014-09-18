@@ -24,7 +24,6 @@
 
 struct candidate_alignment
 {
-
     bool
     operator<(const candidate_alignment& rhs) const
     {

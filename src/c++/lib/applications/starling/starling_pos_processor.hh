@@ -25,7 +25,6 @@
 ///
 struct starling_pos_processor : public starling_pos_processor_base
 {
-
     typedef starling_pos_processor_base base_t;
 
     starling_pos_processor(const starling_options& client_opt,
