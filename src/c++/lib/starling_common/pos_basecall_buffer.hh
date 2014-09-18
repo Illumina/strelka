@@ -42,11 +42,15 @@ struct pos_basecall_buffer
 
     // update mapQ sum for MQ calculation
     void
-    insert_mapq_count(const pos_t pos, const uint8_t mapq)
+    insert_mapq_count(
+        const pos_t pos,
+        const uint8_t mapq,
+        const uint8_t adjustedMapq)
     {
-        auto& posdata(_pdata.getRef(pos));
+        snp_pos_info& posdata(_pdata.getRef(pos));
         posdata.n_mapq++;
-        posdata.cumm_mapq += (mapq*mapq);
+        posdata.cumm_mapq += (adjustedMapq*adjustedMapq);
+        if (mapq==0) posdata.n_mapq0++;
     }
 
     // add single base meta-data to rank-sum pile-up data-structures
@@ -55,7 +59,7 @@ struct pos_basecall_buffer
         char refpos,
         const pos_t pos,
         const base_call& bc,
-        const uint8_t mapq,
+        const uint8_t adjustedMapq,
         const unsigned cycle);
 
     void

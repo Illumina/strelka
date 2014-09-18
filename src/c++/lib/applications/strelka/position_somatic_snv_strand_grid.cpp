@@ -28,16 +28,17 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <map>
 
 //#define SOMATIC_DEBUG
 
-const blt_float_t one_third(1./3.);
-const blt_float_t ln_one_third(std::log(one_third));
-const blt_float_t one_half(1./2.);
-const blt_float_t ln_one_half(std::log(one_half));
+constexpr blt_float_t one_third(1./3.);
+constexpr blt_float_t ln_one_third(std::log(one_third));
+constexpr blt_float_t one_half(1./2.);
+constexpr blt_float_t ln_one_half(std::log(one_half));
 
 
 
@@ -102,7 +103,6 @@ write_state(const DDIGT_SGRID::index_t dgt,
             const unsigned ref_gt,
             std::ostream& os)
 {
-
     unsigned normal_gt;
     unsigned tumor_gt;
     DDIGT_SGRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
@@ -117,7 +117,6 @@ write_full_state(const DDIGT_SGRID::index_t dgt,
                  const unsigned ref_gt,
                  std::ostream& os)
 {
-
     unsigned normal_gt;
     unsigned tumor_gt;
     DDIGT_SGRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
@@ -133,7 +132,6 @@ write_alt_alleles(const DDIGT_SGRID::index_t dgt,
                   const unsigned ref_gt,
                   std::ostream& os)
 {
-
     unsigned normal_gt;
     unsigned tumor_gt;
     DDIGT_SGRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
@@ -182,7 +180,6 @@ get_nostrand_marginal_prior(const blt_float_t* normal_lnprior,
                             const blt_float_t sseb_fraction,
                             std::vector<blt_float_t>& grid_normal_lnprior)
 {
-
     const blt_float_t strand_sse_rate(sse_rate*sseb_fraction);
     const blt_float_t nostrand_sse_rate(sse_rate-strand_sse_rate);
 
@@ -262,7 +259,6 @@ get_prior(const blt_float_t* normal_lnprior,
           std::vector<blt_float_t>& grid_normal_lnprior,
           std::vector<blt_float_t>& somatic_marginal_lnprior)
 {
-
     get_nostrand_marginal_prior(normal_lnprior,ref_gt,sse_rate,sseb_fraction,grid_normal_lnprior);
     if (is_somatic_normal_noise_rate)
     {
@@ -341,7 +337,6 @@ somatic_snv_caller_strand_grid(const strelka_options& opt,
                                const pprob_digt_caller& pd_caller)
     : _opt(opt)
 {
-
     _ln_som_match=(log1p_switch(-opt.somatic_snv_rate));
     _ln_som_mismatch=(std::log(opt.somatic_snv_rate/(static_cast<blt_float_t>((DIGT_SGRID::PRESTRAND_SIZE)-1))));
 
@@ -781,7 +776,6 @@ void
 debug_dump_ddigt_lhood(const blt_float_t* lhood,
                        std::ostream& os)
 {
-
     double pprob[DDIGT::SIZE]; //intentionally run at higher float-resolution
     for (unsigned gt(0); gt<DDIGT::SIZE; ++gt)
     {
@@ -814,7 +808,6 @@ sort_n_dump(const std::string& label,
             std::vector<double>& distro2,
             const unsigned ref_gt)
 {
-
     static const unsigned topn(25);
     std::ostream& os(log_os);
 
@@ -1006,7 +999,6 @@ calculate_result_set_grid(
                 prior=pset.somatic_marginal[ngt]+lnmismatch;
             }
             pprob[dgt] = normal_lhood[ngt]+tumor_lhood[tgt]+prior;
-
 #endif
         }
     }
@@ -1527,6 +1519,26 @@ write_vcf_somatic_snv_genotype_strand_grid(
     DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
                              sgt.ref_gt,os);
 
+    {
+        std::ofstream tmp_os;
+        tmp_os.copyfmt(os);
+        os << std::fixed << std::setprecision(3);
+
+        const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
+        {
+            const double cumm_mapq2(n1_epd.pi.cumm_mapq + t1_epd.pi.cumm_mapq);
+
+            os << ";MQ=" << std::sqrt(cumm_mapq2/n_mapq);
+        }
+
+        {
+            const unsigned n_mapq0(n1_epd.pi.n_mapq0+t1_epd.pi.n_mapq0);
+
+            os << ";MQ0FRAC=" << safeFrac(n_mapq0,n_mapq);
+        }
+
+        os.copyfmt(tmp_os);
+    }
     //FORMAT:
     os << '\t'
        << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";

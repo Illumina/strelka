@@ -1113,14 +1113,15 @@ update_ranksum_and_mapq_count(
     const unsigned sample_no,
     const base_call& bc,
     const uint8_t mapq,
+    const uint8_t adjustedMapq,
     const unsigned cycle)
 {
     if (! is_pos_reportable(pos)) return;
     _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
 
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.insert_mapq_count(pos,mapq);
-    bcbuff.update_ranksums(_ref.get_base(pos),pos,bc,mapq,cycle);
+    bcbuff.insert_mapq_count(pos,mapq,adjustedMapq);
+    bcbuff.update_ranksums(_ref.get_base(pos),pos,bc,adjustedMapq,cycle);
 }
 
 
@@ -1476,8 +1477,9 @@ pileup_read_segment(const read_segment& rseg,
     const uint8_t* qual(rseg.qual());
 
     static const uint8_t min_adjust_mapq(5);
-    const uint8_t mapq(std::max(min_adjust_mapq,rseg.map_qual()));
-    const bool is_mapq_adjust(mapq<=80);
+    const uint8_t mapq(rseg.map_qual());
+    const uint8_t adjustedMapq(std::max(min_adjust_mapq,mapq));
+    const bool is_mapq_adjust(adjustedMapq<=80);
     // test read against max indel size (this is a backup, should have been taken care of upstream):
     const unsigned read_ref_mapped_size(apath_ref_length(best_al.path));
     if (read_ref_mapped_size > (read_size+get_largest_total_indel_ref_span_per_read()))
@@ -1580,7 +1582,7 @@ pileup_read_segment(const read_segment& rseg,
 
                 if (is_mapq_adjust)
                 {
-                    qscore = qphred_to_mapped_qphred(qscore,mapq);
+                    qscore = qphred_to_mapped_qphred(qscore,adjustedMapq);
                 }
 //                log_os << static_cast<int>(qscore) << "\n";
                 bool is_call_filter((call_code == BAM_BASE::ANY) ||
@@ -1636,8 +1638,7 @@ pileup_read_segment(const read_segment& rseg,
                     // update mapq and rank-sum metrics
                     if (_client_opt.is_compute_VQSRmetrics || _client_opt.calibration_model!="default")
                     {
-
-                        update_ranksum_and_mapq_count(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
+                        update_ranksum_and_mapq_count(ref_pos,sample_no,bc,mapq,adjustedMapq,align_strand_read_pos);
                     }
 
                     if (_client_opt.is_compute_hapscore)

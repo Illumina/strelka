@@ -404,7 +404,6 @@ process_genomic_read(const starling_options& opt,
         alignment al;
         al.pos=base_pos;
 
-
         // if mapped, sanity check alignment:
         if (maplev != MAPLEVEL::UNMAPPED)
         {

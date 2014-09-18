@@ -313,10 +313,9 @@ public:
             , used_ssn(knownref_report_size)
             , wav()
         {
-            const unsigned vs(opt.variant_windows.size());
-            for (unsigned i(0); i<vs; ++i)
+            for (const auto& val : opt.variant_windows)
             {
-                wav.add_win(opt.variant_windows[i].flank_size*2);
+                wav.add_win(val.flank_size*2);
             }
         }
 
@@ -423,6 +422,7 @@ private:
         const unsigned sample_no,
         const base_call& bc,
         const uint8_t mapq,
+        const uint8_t adjustedMapq,
         const unsigned cycle);
 
     void

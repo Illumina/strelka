@@ -24,7 +24,6 @@
 
 struct somatic_snv_genotype_grid
 {
-
     somatic_snv_genotype_grid()
         : is_forced_output(false) {}
 

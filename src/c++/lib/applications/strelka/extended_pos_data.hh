@@ -45,11 +45,10 @@ struct sample_pos_data
                     dependent_prob_cache& dpcache,
                     const bool is_dependent_eprob,
                     const bool is_include_tier2)
-        : pi((NULL==pi_ptr) ? _null_pi : *pi_ptr),
+        : pi((nullptr==pi_ptr) ? _null_pi : *pi_ptr),
           epd(epd_init),
           n_calls(0)
     {
-
         pi.ref_base=ref_base;
 
         // for all but coverage-tests, we use a high-quality subset of the basecalls:
@@ -101,7 +100,6 @@ public:
 
 struct extended_pos_data : public sample_pos_data
 {
-
     typedef sample_pos_data base_t;
 
     extended_pos_data(snp_pos_info* pi_ptr,
