@@ -46,7 +46,7 @@ class ExceptionData : public boost::exception
 {
 public:
     ExceptionData(int errorNumber=0, const std::string& message="");
-    ExceptionData(const ExceptionData& e) = default; 
+    ExceptionData(const ExceptionData&) = default;
     ExceptionData& operator=(const ExceptionData&) = delete;
 
     int getErrorNumber() const
