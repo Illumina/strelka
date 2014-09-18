@@ -26,8 +26,8 @@
 #include <string>
 
 
-std::string _progname;
-std::string _cmdline;
+static std::string _progname;
+static std::string _cmdline;
 
 
 

@@ -32,7 +32,7 @@ class Codon_phaser
 {
 public:
     Codon_phaser();
-    virtual ~Codon_phaser() {};
+    virtual ~Codon_phaser() {}
 
 public:
     bool add_site(site_info& si);       // add site to buffer

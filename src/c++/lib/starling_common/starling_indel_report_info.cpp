@@ -373,14 +373,9 @@ indel_lnp_to_pprob(const starling_deriv_options& dopt,
                    const bool is_tier2_pass,
                    const bool is_use_alt_indel)
 {
-
-    typedef read_path_scores::alt_indel_t::const_iterator aciter;
-    typedef read_path_scores::alt_indel_t::iterator aiter;
-
     unsigned n_alleles(2);
     if (is_use_alt_indel)
     {
-        //if(path_lnp.is_alt) n_alleles++;
         n_alleles += path_lnp.alt_indel.size();
     }
 
@@ -388,42 +383,26 @@ indel_lnp_to_pprob(const starling_deriv_options& dopt,
     static const double allele_lnprior(std::log(allele_prior));
 
     read_path_scores pprob;
-    read_path_scores::score_t pprob_nonsite = dopt.get_nonsite_path_lnp(is_tier2_pass,path_lnp.nsite) + dopt.nonsite_lnprior;;
+    read_path_scores::score_t pprob_nonsite = dopt.get_nonsite_path_lnp(is_tier2_pass,path_lnp.nsite) + dopt.nonsite_lnprior;
     pprob.ref     = path_lnp.ref     + dopt.site_lnprior + allele_lnprior;
     pprob.indel   = path_lnp.indel   + dopt.site_lnprior + allele_lnprior;
 
     if (is_use_alt_indel)
     {
-#if 0
-        if (path_lnp.is_alt)
+        for (const auto& val : path_lnp.alt_indel)
         {
-            pprob.insert_alt(path_lnp.alt + dopt.site_lnprior + allele_lnprior);
+            pprob.alt_indel.push_back(std::make_pair(val.first,(val.second + dopt.site_lnprior + allele_lnprior)));
         }
-#else
-        aciter j(path_lnp.alt_indel.begin()), j_end(path_lnp.alt_indel.end());
-        for (; j!=j_end; ++j)
-        {
-            pprob.alt_indel.push_back(std::make_pair(j->first,(j->second + dopt.site_lnprior + allele_lnprior)));
-        }
-#endif
     }
 
     double scale(std::max(pprob_nonsite,std::max(pprob.ref,pprob.indel)));
 
     if (is_use_alt_indel)
     {
-#if 0
-        if (pprob.is_alt)
+        for (const auto& val : pprob.alt_indel)
         {
-            if (scale < pprob.alt) scale = pprob.alt;
+            if (scale < val.second) scale = val.second;
         }
-#else
-        aiter j(pprob.alt_indel.begin()), j_end(pprob.alt_indel.end());
-        for (; j!=j_end; ++j)
-        {
-            if (scale < j->second) scale = j->second;
-        }
-#endif
     }
 
     pprob_nonsite = std::exp(pprob_nonsite-scale);
@@ -431,56 +410,31 @@ indel_lnp_to_pprob(const starling_deriv_options& dopt,
     pprob.indel = std::exp(pprob.indel-scale);
     if (is_use_alt_indel)
     {
-#if 0
-        if (pprob.is_alt)
+        for (auto& val : pprob.alt_indel)
         {
-            pprob.alt = std::exp(pprob.alt-scale);
+            val.second = std::exp((val.second)-scale);
         }
-#else
-        aiter j(pprob.alt_indel.begin()), j_end(pprob.alt_indel.end());
-        for (; j!=j_end; ++j)
-        {
-            j->second = std::exp((j->second)-scale);
-        }
-#endif
     }
 
 
     double sum(pprob_nonsite+pprob.ref+pprob.indel);
     if (is_use_alt_indel)
     {
-#if 0
-        if (pprob.is_alt)
+        for (const auto& val : pprob.alt_indel)
         {
-            sum += pprob.alt;
+            sum += val.second;
         }
-#else
-        aciter j(pprob.alt_indel.begin()), j_end(pprob.alt_indel.end());
-        for (; j!=j_end; ++j)
-        {
-            sum += j->second;
-        }
-#endif
     }
 
-
-    pprob_nonsite /= sum;
+    // pprob_nonsite /= sum; /// no point in normalizing this if we aren't adding it back into pprob
     pprob.ref /= sum;
     pprob.indel /= sum;
     if (is_use_alt_indel)
     {
-#if 0
-        if (pprob.is_alt)
+        for (auto& val : pprob.alt_indel)
         {
-            pprob.alt /= sum;
+            val.second /= sum;
         }
-#else
-        aiter j(pprob.alt_indel.begin()), j_end(pprob.alt_indel.end());
-        for (; j!=j_end; ++j)
-        {
-            j->second /= sum;
-        }
-#endif
     }
 
     return pprob;

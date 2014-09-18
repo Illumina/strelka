@@ -295,15 +295,10 @@ get_prior(const blt_float_t* normal_lnprior,
     static const unsigned n_strand_het_axes(3);
     blt_float_t strand_axis_prior[n_strand_het_axes];
 
-    double throwaway_sum(0);
     for (unsigned sgt(0); sgt<n_strand_het_axes; ++sgt)
     {
         strand_axis_prior[sgt] = normal_lnprior[ref_gt]+ln_one_third;
-        throwaway_sum += std::exp(strand_axis_prior[sgt]);
     }
-
-    throwaway_sum /= 2.; // we're only using half-axes for the states represented
-    throwaway_sum = 1. - throwaway_sum;
 
     // flaw in using error mod -- because strand state could exist and
     // be detectable at the canonical gt frequencies, we leave it the
@@ -320,6 +315,15 @@ get_prior(const blt_float_t* normal_lnprior,
     }
 
 #ifdef SOMATIC_DEBUG
+    double throwaway_sum(0);
+    for (unsigned sgt(0); sgt<n_strand_het_axes; ++sgt)
+    {
+        throwaway_sum += std::exp(strand_axis_prior[sgt]);
+    }
+
+    throwaway_sum /= 2.; // we're only using half-axes for the states represented
+    throwaway_sum = 1. - throwaway_sum;
+
     throwaway_sum *= std::exp(ln_strand_sse_rate);
 
     check_ln_distro(grid_normal_lnprior.begin(),

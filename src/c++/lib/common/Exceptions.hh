@@ -46,15 +46,14 @@ class ExceptionData : public boost::exception
 {
 public:
     ExceptionData(int errorNumber=0, const std::string& message="");
-    ExceptionData(const ExceptionData& e) : boost::exception(e), errorNumber_(e.errorNumber_), message_(e.message_) {}
-    virtual ~ExceptionData() throw ()
-    {
-    }
+    ExceptionData(const ExceptionData& e) = default; 
+    ExceptionData& operator=(const ExceptionData&) = delete;
+
     int getErrorNumber() const
     {
         return errorNumber_;
     }
-    std::string getMessage() const
+    const std::string& getMessage() const
     {
         return message_;
     }
@@ -62,7 +61,6 @@ public:
 private:
     const int errorNumber_;
     const std::string message_;
-    ExceptionData& operator=(const ExceptionData&);
 };
 
 class IlluminaException: public std::exception, public ExceptionData

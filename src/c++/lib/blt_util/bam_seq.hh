@@ -117,7 +117,14 @@ get_bam_seq_code(const char c)
 //
 struct bam_seq_base
 {
-    virtual ~bam_seq_base() {}
+    bam_seq_base() = default;
+    virtual ~bam_seq_base() = default;
+
+    bam_seq_base(const bam_seq_base&) = default; // support copying
+    bam_seq_base& operator=(const bam_seq_base&) = default;
+
+    bam_seq_base(bam_seq_base&&) = default; // support moving
+    bam_seq_base& operator=(bam_seq_base&&) = default;
 
     virtual uint8_t get_code(pos_t i) const = 0;
 

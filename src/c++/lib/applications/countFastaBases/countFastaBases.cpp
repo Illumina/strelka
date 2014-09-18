@@ -22,8 +22,8 @@
 #include <string>
 
 
-std::ostream& log_os(std::cerr);
-std::ostream& report_os(std::cout);
+static std::ostream& log_os(std::cerr);
+static std::ostream& report_os(std::cout);
 
 
 
