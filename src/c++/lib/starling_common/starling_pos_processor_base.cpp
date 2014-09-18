@@ -1250,13 +1250,14 @@ process_pos_indel_single_sample(const pos_t pos,
             static const bool is_use_alt_indel(true);
 
             starling_diploid_indel dindel;
+            dindel.is_forced_output = id.is_forced_output;
             _client_dopt.incaller().starling_indel_call_pprob_digt(_client_opt,_client_dopt,
                                                                    sif.sample_opt,
                                                                    indel_error_prob,ref_error_prob,
                                                                    ik,id,is_use_alt_indel,dindel);
 
             bool is_indel(false);
-            if ((dindel.is_indel) or (id.is_forced_output))
+            if ((dindel.is_indel) or (dindel.is_forced_output))
             {
                 is_indel=true;
 

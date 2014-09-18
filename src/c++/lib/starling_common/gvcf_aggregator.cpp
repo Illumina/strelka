@@ -302,8 +302,8 @@ add_indel(const pos_t pos,
     // we can't handle breakends at all right now:
     if (ik.is_breakpoint()) return;
 
-    // don't handle homozygous reference calls for now:
-    if (is_no_indel(dindel)) return;
+    // don't handle homozygous reference calls unless genotyping is forced
+    if (is_no_indel(dindel) && !dindel.is_forced_output) return;
 
     skip_to_pos(pos);
 
