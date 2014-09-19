@@ -547,8 +547,8 @@ write_site_record(const site_info& si) const
                 os << "BaseQRankSum=" << si.BaseQRankSum;
                 os << ';';
                 os << "ReadPosRankSum=" << si.ReadPosRankSum;
-//                os << ';';
-//                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
+                os << ';';
+                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
 //                os << ';';
 //                os << "GQ=" << si.smod.gq;
 //                os << ';';
