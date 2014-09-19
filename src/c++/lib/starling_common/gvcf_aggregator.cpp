@@ -690,7 +690,7 @@ modify_indel_overlap_site(const indel_info& ii,
             si.smod.set_filter(VCF_FILTERS::SiteConflict);
         }
     }
-    else
+    else if (ploidy!=2)
     {
         assert(0);
     }
