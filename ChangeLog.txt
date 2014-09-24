@@ -1,3 +1,5 @@
+- STARKA-136 add mapping info values to strelka output
+v2.1.5
 - Add CRAM input support
 v2.1.4
 - Turned ON DP filter for rule filters as default
