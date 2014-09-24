@@ -1226,7 +1226,7 @@ process_pos_indel_single_sample(const pos_t pos,
         const indel_key& ik(it->first);
         const indel_data& id(get_indel_data(it));
         if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
-        if (id.read_path_lnp.empty()) continue;
+        if (id.read_path_lnp.empty() && !id.is_forced_output) continue;
 
         // TODO implement indel overlap resolution
         //
