@@ -46,7 +46,6 @@ struct diploid_genotype
 
     struct result_set
     {
-
         result_set()
         {
             reset();
@@ -56,14 +55,11 @@ struct diploid_genotype
         reset()
         {
             max_gt=0;
-            static const blt_float_t p(1./static_cast<blt_float_t>(DIGT::SIZE));
+            static const double p(1./static_cast<double>(pprob.size()));
             static const int qp(error_prob_to_qphred((1.-p)));
             snp_qphred=qp;
             max_gt_qphred=qp;
-            for (unsigned i(0); i<DIGT::SIZE; ++i)
-            {
-                pprob[i] = p;
-            }
+            std::fill(pprob.begin(),pprob.end(),p);
         }
 
         unsigned max_gt;

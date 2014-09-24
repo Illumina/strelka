@@ -208,7 +208,7 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
 
 void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
 {
-    // do extreme case handeling better
+    // do extreme case handling better
     if (ii.Qscore>60)
         ii.Qscore = 60;
 
