@@ -160,13 +160,6 @@ struct snp_pos_info
     double
     get_rms_mq();
 
-    double
-    get_mq0_frac()
-    {
-        if (n_mapq==0) return 0.;
-        return (static_cast<double>(n_mapq0)/n_mapq);
-    }
-
     /// \returns the read-position rank sum
     double
     get_read_pos_ranksum();

@@ -41,56 +41,34 @@ enum index_t
 
 struct gvcf_options
 {
-
-    gvcf_options()
-        : is_skip_header(false)
-        , max_depth_factor(3.)
-        , is_min_gqx(true)
-        , min_gqx(30.)
-        , is_max_base_filt(true)
-        , max_base_filt(.4)  // DPFratio
-        , is_max_snv_sb(true)
-        , max_snv_sb(10)
-        , is_max_snv_hpol(true)
-        , max_snv_hpol(-1)
-        , is_max_ref_rep(true)
-        , max_ref_rep(-1)
-        , block_label_prefix("BLOCKAVG_min")
-        , block_percent_tol(30)
-        , block_abs_tol(3)
-        , is_block_compression(true)
-        , block_max_nonref(.2)
-        , minor_allele_file("")
-    {}
-
     // admin/other:
     std::string chrom_depth_file;
-    bool is_skip_header;
+    bool is_skip_header = false;
 
     // filters:
-    double max_depth_factor;
-    bool is_min_gqx;
-    double min_gqx;
-    bool is_max_base_filt;
-    double max_base_filt;
-    bool is_max_snv_sb;
-    double max_snv_sb;
-    bool is_max_snv_hpol;
-    int max_snv_hpol;
-    bool is_max_ref_rep;
-    int max_ref_rep;
+    double max_depth_factor = 3.;
+    bool is_min_gqx = true;
+    double min_gqx = 30.;
+    bool is_max_base_filt = true;
+    double max_base_filt = .4; //DPFratio
+    bool is_max_snv_sb = true;
+    double max_snv_sb = 10;
+    bool is_max_snv_hpol = true;
+    int max_snv_hpol = -1;
+    bool is_max_ref_rep = true;
+    int max_ref_rep = -1;
 
     // blocking scheme:
     //
     // NOTE: bool inserted in this line causes some type of struct initialization error in gcc (4.1 and 4.7)... in blt_options and starling options
     //       as if the struct was sliced. This smells like a compiler error but those should be rare... possible other struct layout error here?
     //
-    std::string block_label_prefix;
-    unsigned block_percent_tol;
-    unsigned block_abs_tol;
-    bool is_block_compression;
+    std::string block_label_prefix = "BLOCKAVG_min";
+    unsigned block_percent_tol = 30;
+    unsigned block_abs_tol = 3;
+    bool is_block_compression = true;
 
-    double block_max_nonref; // what percentage of non-ref bases can a site have and still be included in a non-variant block
+    double block_max_nonref = .2; // what percentage of non-ref bases can a site have and still be included in a non-variant block
     std::string minor_allele_file; //
     std::string out_file;
 };
@@ -111,94 +89,6 @@ struct gvcf_deriv_options
 
 struct blt_options
 {
-    blt_options()
-        : lsnp_alpha(0),
-          bsnp_diploid_theta(0.001),
-          bsnp_monoploid_theta(0),
-          bsnp_nploid_ploidy(0),
-          bsnp_nploid_snp_prob(0),
-          bsnp_ssd_no_mismatch(0),
-          bsnp_ssd_one_mismatch(0),
-          bsnp_diploid_het_bias(0),
-          adis_lrt_alpha(0),
-          adis_table_alpha(0),
-          adis_win_lrt_alpha(0),
-          adis_win_lrt_flank_size(0),
-          acov_alpha(0),
-          is_lsnp(false),
-          is_bsnp_monoploid(false),
-          is_bsnp_nploid(false),
-          is_bsnp_diploid_file(false),
-          is_bsnp_diploid_allele_file(false),
-          is_bsnp_diploid_het_bias(false),
-          is_adis_lrt(false),
-          is_adis_table(false),
-          is_adis_win_lrt(false),
-          is_acov(false),
-          min_qscore(17),
-          min_single_align_score(10),
-          min_paired_align_score(6),
-          single_align_score_exclude_mode(false),
-          single_align_score_rescue_mode(false),
-
-          tier2_min_single_align_score(0),
-          is_tier2_min_single_align_score(false),
-          tier2_min_paired_align_score(0),
-          is_tier2_min_paired_align_score(false),
-          is_tier2_single_align_score_rescue_mode(false),
-
-          tier2_mismatch_density_filter_count(0),
-          is_tier2_mismatch_density_filter_count(false),
-
-          is_tier2_no_mismatch_density_filter(false),
-          is_tier2_no_filter_unanchored(false),
-          is_tier2_include_singleton(false),
-          is_tier2_include_anomalous(false),
-
-          is_min_win_qscore(false),
-          min_win_qscore(0),
-          min_win_qscore_flank_size(0),
-          is_max_win_mismatch(false),
-          max_win_mismatch(0),
-          max_win_mismatch_flank_size(0),
-          is_counts(false),
-          is_print_evidence(false),
-          is_print_all_site_evidence(false),
-          is_read_sample(false),
-          read_sample_rate(0),
-          is_samtools_ref_set(false),
-          is_filter_anom_calls(false),
-          is_include_singleton(false),
-          is_include_anomalous(false),
-          is_clobber(true),
-          is_report_range_ref(false),
-          is_print_all_poly_gt(false),
-          is_print_used_allele_counts(false),
-          used_allele_count_min_qscore(0),
-          max_basecall_filter_fraction(1.),
-          max_vexp_iterations(0),
-          is_min_vexp(false),
-          min_vexp(0),
-          verbosity(LOG_LEVEL::DEFAULT)
-          , is_write_variable_metadata(true)
-          , het_bias_inc_fudge(0.0001)
-          , het_bias_max_ratio_inc(0.05+het_bias_inc_fudge)
-          , nonref_variant_rate(0.000001)
-          , min_nonref_freq(0)
-          , nonref_site_error_rate(0.0001)
-          , nonref_site_error_decay_freq(0.01)
-          , is_eland_compat(false)
-          , is_max_input_depth(false)
-          , max_input_depth(0)
-          , is_compute_hapscore(false)
-          , is_compute_VQSRmetrics(false)
-          , is_compute_calibration_features(false)
-          , calibration_model("") // default model reports rule-based metrics
-          , do_codon_phasing(false)
-          , phasing_window(3)
-
-    {}
-
     virtual ~blt_options() {}
 
     bool
@@ -254,86 +144,89 @@ struct blt_options
              is_tier2_include_anomalous);
     }
 
-    double lsnp_alpha;
-    double bsnp_diploid_theta;
-    double bsnp_monoploid_theta;
-    int bsnp_nploid_ploidy;
-    double bsnp_nploid_snp_prob;
-    double bsnp_ssd_no_mismatch;
-    double bsnp_ssd_one_mismatch;
-    double bsnp_diploid_het_bias;
-    double adis_lrt_alpha;
-    double adis_table_alpha;
-    double adis_win_lrt_alpha;
-    unsigned adis_win_lrt_flank_size;
-    double acov_alpha;
-    bool is_lsnp;
-    bool is_bsnp_monoploid;
-    bool is_bsnp_nploid;
-    bool is_bsnp_diploid_file;
-    bool is_bsnp_diploid_allele_file;
-    bool is_bsnp_diploid_het_bias;
-    bool is_adis_lrt;
-    bool is_adis_table;
-    bool is_adis_win_lrt;
-    bool is_acov;
-    int min_qscore;
-    int min_single_align_score;
-    int min_paired_align_score;
-    bool single_align_score_exclude_mode;
-    bool single_align_score_rescue_mode;
+    double lsnp_alpha = 0;
+    double bsnp_diploid_theta = 0.001;
+    double bsnp_monoploid_theta = 0;
+    int bsnp_nploid_ploidy = 0;
+    double bsnp_nploid_snp_prob = 0;
+    double bsnp_ssd_no_mismatch = 0;
+    double bsnp_ssd_one_mismatch = 0;
+    double bsnp_diploid_het_bias = 0;
 
-    int tier2_min_single_align_score;
-    bool is_tier2_min_single_align_score;
-    int tier2_min_paired_align_score;
-    bool is_tier2_min_paired_align_score;
-    bool is_tier2_single_align_score_rescue_mode;
+    double adis_lrt_alpha = 0;
+    double adis_table_alpha = 0;
+    double adis_win_lrt_alpha = 0;
+    unsigned adis_win_lrt_flank_size = 0;
+    double acov_alpha = 0;
+    bool is_lsnp = false;
+    bool is_bsnp_monoploid = false;
+    bool is_bsnp_nploid = false;
+    bool is_bsnp_diploid_file = false;
+    bool is_bsnp_diploid_allele_file = false;
+    bool is_bsnp_diploid_het_bias = false;
+    bool is_adis_lrt = false;
+    bool is_adis_table = false;
+    bool is_adis_win_lrt = false;
+    bool is_acov = false;
 
-    int tier2_mismatch_density_filter_count;
-    bool is_tier2_mismatch_density_filter_count;
+    int min_qscore = 17;
+    int min_single_align_score = 10;
+    int min_paired_align_score = 6;
+    bool single_align_score_exclude_mode = false;
+    bool single_align_score_rescue_mode = false;
 
-    bool is_tier2_no_mismatch_density_filter;
-    bool is_tier2_no_filter_unanchored;
-    bool is_tier2_include_singleton;
-    bool is_tier2_include_anomalous;
+    int tier2_min_single_align_score = 0;
+    bool is_tier2_min_single_align_score = false;
+    int tier2_min_paired_align_score = 0;
+    bool is_tier2_min_paired_align_score = false;
+    bool is_tier2_single_align_score_rescue_mode = false;
 
-    bool is_min_win_qscore;
-    int min_win_qscore;
-    unsigned min_win_qscore_flank_size;
-    bool is_max_win_mismatch;
-    unsigned max_win_mismatch;
-    unsigned max_win_mismatch_flank_size;
-    bool is_counts;
-    bool is_print_evidence;
-    bool is_print_all_site_evidence;
+    int tier2_mismatch_density_filter_count = 0;
+    bool is_tier2_mismatch_density_filter_count = false;
+
+    bool is_tier2_no_mismatch_density_filter = false;
+    bool is_tier2_no_filter_unanchored = false;
+    bool is_tier2_include_singleton = false;
+    bool is_tier2_include_anomalous = false;
+
+    bool is_min_win_qscore = false;
+    int min_win_qscore = 0;
+    unsigned min_win_qscore_flank_size = 0;
+    bool is_max_win_mismatch = false;
+    unsigned max_win_mismatch = 0;
+    unsigned max_win_mismatch_flank_size = 0;
+    bool is_counts = false;
+    bool is_print_evidence = false;
+    bool is_print_all_site_evidence = false;
     pos_range user_report_range;   // requested report range
-    bool is_read_sample;
-    double read_sample_rate;
+    bool is_read_sample = false;
+    double read_sample_rate = 0;
 
-    bool is_samtools_ref_set;
+    bool is_samtools_ref_set = false;
     std::string samtools_ref_seq_file;
 
-    bool is_filter_anom_calls;
-    bool is_include_singleton;
-    bool is_include_anomalous;
+    bool is_filter_anom_calls = false;
+    bool is_include_singleton = false;
+    bool is_include_anomalous = false;
 
     std::string counts_filename;
     std::string bsnp_diploid_filename;
     std::string bsnp_diploid_allele_filename;
 
-    bool is_clobber;
-    bool is_report_range_ref;
-    bool is_print_all_poly_gt; // print the posterior probabilities for all genotypes
-    bool is_print_used_allele_counts; // print allele counts as in CASAVA 1.7 output
-    int used_allele_count_min_qscore; // print the above with a qscore cutoff...
-    double max_basecall_filter_fraction; // if more than this fraction of basecalls are filtered out, than filter the snp
-    int max_vexp_iterations;
-    bool is_min_vexp;
-    double min_vexp;
+    bool is_clobber = true;
+    bool is_report_range_ref = false;
+    bool is_print_all_poly_gt = false; // print the posterior probabilities for all genotypes
+    bool is_print_used_allele_counts = false; // print allele counts as in CASAVA 1.7 output
+    int used_allele_count_min_qscore = 0; // print the above with a qscore cutoff...
+    double max_basecall_filter_fraction = 1.; // if more than this fraction of basecalls are filtered out, than filter the snp
 
-    LOG_LEVEL::index_t verbosity;
+    int max_vexp_iterations = 0;
+    bool is_min_vexp = false;
+    double min_vexp = 0;
 
-    bool is_write_variable_metadata;
+    LOG_LEVEL::index_t verbosity = LOG_LEVEL::DEFAULT;
+
+    bool is_write_variable_metadata = true;
 
     std::string cmdline;
 
@@ -343,27 +236,34 @@ struct blt_options
     // which are also the least efficient points in terms of increment
     // size -- fudge removes this trend from the computation:
     //
-    const double het_bias_inc_fudge;
-    const double het_bias_max_ratio_inc;
+    static constexpr double het_bias_inc_fudge = 0.0001;
+    static constexpr double het_bias_max_ratio_inc = 0.05 + het_bias_inc_fudge;
 
-    double nonref_variant_rate;
-    double min_nonref_freq;
-    double nonref_site_error_rate;
-    double nonref_site_error_decay_freq;
+    double nonref_variant_rate = 0.000001;
+    double min_nonref_freq = 0;
+    double nonref_site_error_rate = 0.0001;
+    double nonref_site_error_decay_freq = 0.01;
     std::string nonref_test_filename;
     std::string nonref_sites_filename;
 
-    bool is_eland_compat;
+    bool is_eland_compat = false;
 
-    bool is_max_input_depth;
-    unsigned max_input_depth;
+    bool is_max_input_depth = false;
+    unsigned max_input_depth = 0;
 
-    bool is_compute_hapscore;
-    bool is_compute_VQSRmetrics;
-    bool is_compute_calibration_features;// For development only, out all features needed im
-    std::string calibration_model;       // Which calibration model should we use
-    bool do_codon_phasing;               // Apply codon phasing
-    int phasing_window;                  // Size of the window we are phasing in, default is codon range (=3)
+    bool is_compute_hapscore = false;
+    bool is_compute_VQSRmetrics = false;
+    bool is_compute_calibration_features = false;// For development only, out all features needed im
+
+    // Which calibration model should we use?
+    // model value "default" reports rule-based metrics
+    std::string calibration_model;
+
+    // Apply codon phasing:
+    bool do_codon_phasing = false;
+
+    // Size of the window we are phasing in, default is codon range (=3)
+    int phasing_window = 3;
 
 
     std::string report_filename;

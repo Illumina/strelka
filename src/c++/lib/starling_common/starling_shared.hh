@@ -52,48 +52,6 @@ operator<<(std::ostream& os, const avg_window_data& awd);
 
 struct starling_options : public blt_options
 {
-    starling_options()
-        : bindel_diploid_theta(0.0001),
-          bindel_diploid_het_bias(0),
-          is_bindel_diploid_het_bias(false),
-          is_test_indels(false),
-          is_bindel_diploid_file(false),
-          user_genome_size(0),
-          is_user_genome_size(false),
-//          is_simple_indel_error(false),
-//          simple_indel_error(0),
-          default_min_read_bp_flank(6),
-          is_realign_submapped_reads(false),
-          max_indel_size(150),
-          default_min_candidate_indel_reads(3),
-          min_candidate_indel_read_frac(0.02),
-          max_small_candidate_indel_size(4),
-          default_min_small_candidate_indel_read_frac(0.1),
-          max_read_indel_toggle(5),
-          max_candidate_indel_density(0.15),
-          max_candidate_indel_depth(10000),
-          min_candidate_indel_open_length(20),
-          max_realignment_candidates(5000),
-          is_clip_ambiguous_path(true),
-          is_realigned_read_file(false),
-          is_smoothed_alignments(true),
-          smoothed_lnp_range(std::log(10.))
-          , is_filter_unanchored(false)
-          , is_write_candidate_indels_only(false)
-          , indel_nonsite_match_prob(0.25)
-          , is_tier2_indel_nonsite_match_prob(false)
-          , tier2_indel_nonsite_match_prob(0.25)
-          , is_noise_indel_filter(false)
-          , is_skip_realignment(false)
-          , is_baby_elephant(false)
-          , is_ignore_read_names(false)
-          , upstream_oligo_size(0)
-          , is_htype_calling(false)
-          , hytpe_count(2)
-          , htype_call_segment(1000)
-          , is_remap_input_softclip(false)
-    {}
-
     // report whether any type of indel-caller is running (including
     // checks from child class options):
     virtual
@@ -125,13 +83,13 @@ struct starling_options : public blt_options
 
     // parameters inherited from varling caller:
     //
-    double bindel_diploid_theta;
-    double bindel_diploid_het_bias;
-    bool is_bindel_diploid_het_bias;
-    bool is_test_indels;
-    bool is_bindel_diploid_file;
-    uint32_t user_genome_size; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
-    bool is_user_genome_size;
+    double bindel_diploid_theta = 0.0001;
+    double bindel_diploid_het_bias = 0;
+    bool is_bindel_diploid_het_bias = false;
+    bool is_test_indels = false;
+    bool is_bindel_diploid_file = false;
+    uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
+    bool is_user_genome_size = false;
 //    bool is_simple_indel_error;
 //    double simple_indel_error;
 
@@ -140,7 +98,7 @@ struct starling_options : public blt_options
     ///
     /// This is the default used in all samples unless an override is provided for the sample.
     ///
-    int default_min_read_bp_flank;
+    int default_min_read_bp_flank = 6;
 
     std::string bindel_diploid_filename;
 
@@ -150,48 +108,48 @@ struct starling_options : public blt_options
     // should reads falling below the snp-caller's mapping criteria be
     // realigned? (note this only makes sense if writing out realigned
     // reads
-    bool is_realign_submapped_reads;
+    bool is_realign_submapped_reads = false;
 
     // maximum indel size which can be represented by starling
     // (formerly a static value)
-    unsigned max_indel_size;
+    unsigned max_indel_size = 150;
 
     // indel cannot become candidate unless at least min reads which
     // meet mapping threshold support it
     //
     // this is the default used for all samples until overridden
-    int default_min_candidate_indel_reads;
+    int default_min_candidate_indel_reads = 3;
 
     // indel cannot become candidate unless at least frac of reads
     // which meet mapping thresholds support it (num is reads
     // supporting indel/den in aligner reads aligning to adjacent
     // position).
-    double min_candidate_indel_read_frac;
+    double min_candidate_indel_read_frac = 0.02;
 
     // indels this size or lower have additional 'small indel'
     // candidacy criteria
-    int max_small_candidate_indel_size;
+    int max_small_candidate_indel_size = 4;
 
     // same as for min_candidate_indel_read_frac, but for small indels
     //
     // this is the default used for all samples until overridden
-    double default_min_small_candidate_indel_read_frac;
+    double default_min_small_candidate_indel_read_frac = 0.1;
 
-    int max_read_indel_toggle; // if a read samples more than max indel changes, we skip realignment
-    double max_candidate_indel_density; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
-    unsigned max_candidate_indel_depth; // max estimated read depth for indels to reach candidacy for realignment and indel calling.
+    int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
+    double max_candidate_indel_density = 0.15; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
+    unsigned max_candidate_indel_depth = 10000; // max estimated read depth for indels to reach candidacy for realignment and indel calling.
 
     // min length of the 'inserted' portion of an open-ended breakpoint:
-    unsigned min_candidate_indel_open_length;
+    unsigned min_candidate_indel_open_length = 20;
 
     // the maximum number of candidate re-alignments for each read:
-    unsigned max_realignment_candidates;
+    unsigned max_realignment_candidates = 5000;
 
     // clip the section of a read which aligns equally well to two or
     // more paths before pileup or realigned read output
-    bool is_clip_ambiguous_path;
+    bool is_clip_ambiguous_path = true;
 
-    bool is_realigned_read_file;
+    bool is_realigned_read_file = false;
 
     // this option imposes a consistency criteria on alignments with
     // nearly equal score to favor certain alignments even if they do
@@ -201,24 +159,24 @@ struct starling_options : public blt_options
     // alignment that is not more than smoothed_lnp_range from the
     // highest scoring alignment.
     //
-    bool is_smoothed_alignments;
-    double smoothed_lnp_range;
+    bool is_smoothed_alignments = true;
+    double smoothed_lnp_range = std::log(10.);
 
     // filter reads where both reads of pair have SE score 0, temp fix
     // for internal analysis:
-    bool is_filter_unanchored;
+    bool is_filter_unanchored = false;
 
     std::string realigned_read_filename;
     std::string bam_filename; // BAM/CRAM input file
     std::string bam_seq_name;
 
     std::string candidate_indel_filename;
-    bool is_write_candidate_indels_only;
+    bool is_write_candidate_indels_only = false;
 
-    double indel_nonsite_match_prob;
+    double indel_nonsite_match_prob = 0.25;
 
-    bool is_tier2_indel_nonsite_match_prob;
-    double tier2_indel_nonsite_match_prob;
+    bool is_tier2_indel_nonsite_match_prob = false;
+    double tier2_indel_nonsite_match_prob = 0.25;
 
     std::vector<avg_window_data> variant_windows;
 
@@ -226,10 +184,10 @@ struct starling_options : public blt_options
     // among a conflicting set.  if not remove from variant
     // calling. This option is for single sample calling only.
     //
-    bool is_noise_indel_filter;
+    bool is_noise_indel_filter = false;
 
     // only allowed when no indel output is selected
-    bool is_skip_realignment;
+    bool is_skip_realignment = false;
 
     // vcfs can be input to specify candidate indels:
     std::vector<std::string> input_candidate_indel_vcf;
@@ -238,25 +196,25 @@ struct starling_options : public blt_options
     std::vector<std::string> force_output_vcf;
 
     // Internal development option - not for production use:
-    bool is_baby_elephant;
+    bool is_baby_elephant = false;
 
     // if not using grouper, you can optionally turn off the restriction that each qname occurs once in the bam:
-    bool is_ignore_read_names;
+    bool is_ignore_read_names = false;
 
     // Indicates that an upstream oligo is present on reads, which can be used to increase confidence for indels near the edge of the read
-    unsigned upstream_oligo_size;
+    unsigned upstream_oligo_size = 0;
 
     // turn on haplotype based calling:
-    bool is_htype_calling;
+    bool is_htype_calling = false;
 
     // number of allowed haplotypes:
-    unsigned hytpe_count;
+    unsigned hytpe_count = 2;
 
     // multiple of max-indel-size used for haplotyping:
-    unsigned htype_call_segment;
+    unsigned htype_call_segment = 1000;
 
     // if true, treat all soft-clipped segments on the egdes of reads as realignable
-    bool is_remap_input_softclip;
+    bool is_remap_input_softclip = false;
 };
 
 

@@ -25,7 +25,6 @@
 
 struct strelka_streams : public starling_streams_base
 {
-
     typedef starling_streams_base base_t;
 
     strelka_streams(

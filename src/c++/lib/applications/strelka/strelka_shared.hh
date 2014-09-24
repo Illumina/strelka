@@ -27,19 +27,6 @@
 ///
 struct somatic_filter_options
 {
-    somatic_filter_options()
-        : is_skip_header(false)
-        , max_depth_factor(3.)
-        , snv_max_filtered_basecall_frac(0.4)
-        , snv_max_spanning_deletion_frac(0.75)
-        , snv_min_qss_ref(15)
-        , indelMaxRefRepeat(8)
-        , indelMaxIntHpolLength(14)
-        , indelMaxWindowFilteredBasecallFrac(0.3)
-        , sindelQuality_LowerBound(30)
-        , indelRegionFlankSize(50)
-    {}
-
     bool
     is_depth_filter() const
     {
@@ -47,18 +34,18 @@ struct somatic_filter_options
     }
 
     std::string chrom_depth_file;
-    bool is_skip_header;
-    double max_depth_factor;
-    double snv_max_filtered_basecall_frac;
-    double snv_max_spanning_deletion_frac;
-    int snv_min_qss_ref;
+    bool is_skip_header = false;
+    double max_depth_factor = 3.;
+    double snv_max_filtered_basecall_frac = 0.4;
+    double snv_max_spanning_deletion_frac = 0.75;
+    int snv_min_qss_ref = 15;
 
-    unsigned indelMaxRefRepeat;
-    unsigned indelMaxIntHpolLength;
-    double indelMaxWindowFilteredBasecallFrac;
-    int sindelQuality_LowerBound;
+    unsigned indelMaxRefRepeat = 8;
+    unsigned indelMaxIntHpolLength = 14;
+    double indelMaxWindowFilteredBasecallFrac = 0.3;
+    int sindelQuality_LowerBound = 30;
 
-    unsigned indelRegionFlankSize;
+    unsigned indelRegionFlankSize = 50;
 };
 
 
@@ -66,24 +53,6 @@ struct somatic_filter_options
 struct strelka_options : public starling_options
 {
     typedef starling_options base_t;
-
-    strelka_options()
-        : somatic_snv_rate  (0.000001)
-        , somatic_indel_rate(0.000001)
-        , shared_site_error_rate(0.000005)
-        , shared_site_error_strand_bias_fraction(0.5)
-        , site_somatic_normal_noise_rate(0)
-        , is_site_somatic_normal_noise_rate(false)
-        , shared_indel_error_rate(0.0000001)
-        , shared_indel_error_strand_bias_fraction(0.1)
-        , indel_somatic_normal_noise_rate(0)
-        , is_indel_somatic_normal_noise_rate(false)
-        , normal_sample_min_read_bp_flank(1)
-        , is_tumor_sample_min_candidate_indel_reads(false)
-        , is_tumor_sample_min_small_candidate_indel_read_frac(false)
-        , tumor_sample_min_candidate_indel_reads(2)
-        , tumor_sample_min_small_candidate_indel_read_frac(0.02)
-    {}
 
     bool is_tumor_bindel_diploid() const
     {
@@ -125,35 +94,35 @@ struct strelka_options : public starling_options
     std::string tumor_bindel_diploid_filename;
     std::string tumor_realigned_read_filename;
 
-    double somatic_snv_rate;
+    double somatic_snv_rate = 0.000001;
     std::string somatic_snv_filename;
 
-    double somatic_indel_rate;
+    double somatic_indel_rate = 0.000001;
     std::string somatic_indel_filename;
 
-    double shared_site_error_rate;
-    double shared_site_error_strand_bias_fraction;
-    double site_somatic_normal_noise_rate;
-    bool is_site_somatic_normal_noise_rate;
+    double shared_site_error_rate = 0.000005;
+    double shared_site_error_strand_bias_fraction = 0.5;
+    double site_somatic_normal_noise_rate = 0;
+    bool is_site_somatic_normal_noise_rate = false;
 
-    double shared_indel_error_rate;
-    double shared_indel_error_strand_bias_fraction;
-    double indel_somatic_normal_noise_rate;
-    bool is_indel_somatic_normal_noise_rate;
+    double shared_indel_error_rate = 0.0000001;
+    double shared_indel_error_strand_bias_fraction = 0.1;
+    double indel_somatic_normal_noise_rate = 0;
+    bool is_indel_somatic_normal_noise_rate = false;
 
     // We provide a lower flank requirement for normal sample reads
     // during somatic variant calling, to ensure that all evidence
     // potentially used against a somatic call in the normal is
     // available:
-    int normal_sample_min_read_bp_flank;
+    int normal_sample_min_read_bp_flank = 1;
 
     // Lower the candidate indel threshold on the tumor side to
     // increase sensitivity in case of low purity:
     //
-    bool is_tumor_sample_min_candidate_indel_reads;
-    bool is_tumor_sample_min_small_candidate_indel_read_frac;
-    int tumor_sample_min_candidate_indel_reads;
-    double tumor_sample_min_small_candidate_indel_read_frac;
+    bool is_tumor_sample_min_candidate_indel_reads = false;
+    bool is_tumor_sample_min_small_candidate_indel_read_frac = false;
+    int tumor_sample_min_candidate_indel_reads = 2;
+    double tumor_sample_min_small_candidate_indel_read_frac = 0.02;
 
     std::string somatic_callable_filename;
 
