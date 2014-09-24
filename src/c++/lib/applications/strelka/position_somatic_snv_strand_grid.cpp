@@ -1522,10 +1522,20 @@ write_vcf_somatic_snv_genotype_strand_grid(
     {
         std::ofstream tmp_os;
         tmp_os.copyfmt(os);
-        os << std::fixed << std::setprecision(3);
+        os << std::fixed << std::setprecision(2);
 
-        const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
         {
+            const unsigned n_calls(n1_epd.n_calls+t1_epd.n_calls);
+
+            /// \TODO remove this after initial sanity check:
+            const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
+            assert(n_calls == n_mapq);
+
+            os << ";DP=" << n_calls;
+        }
+
+        {
+            const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
             const double cumm_mapq2(n1_epd.pi.cumm_mapq + t1_epd.pi.cumm_mapq);
 
             os << ";MQ=" << std::sqrt(cumm_mapq2/n_mapq);
@@ -1534,11 +1544,12 @@ write_vcf_somatic_snv_genotype_strand_grid(
         {
             const unsigned n_mapq0(n1_epd.pi.n_mapq0+t1_epd.pi.n_mapq0);
 
-            os << ";MQ0FRAC=" << safeFrac(n_mapq0,n_mapq);
+            os << ";MQ0=" << n_mapq0;
         }
 
         os.copyfmt(tmp_os);
     }
+
     //FORMAT:
     os << '\t'
        << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";
