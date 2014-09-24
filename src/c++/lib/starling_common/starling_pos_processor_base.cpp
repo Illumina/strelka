@@ -1251,6 +1251,7 @@ process_pos_indel_single_sample(const pos_t pos,
 
             starling_diploid_indel dindel;
             dindel.is_forced_output = id.is_forced_output;
+            dindel.is_zero_coverage = id.read_path_lnp.empty();
             _client_dopt.incaller().starling_indel_call_pprob_digt(_client_opt,_client_dopt,
                                                                    sif.sample_opt,
                                                                    indel_error_prob,ref_error_prob,

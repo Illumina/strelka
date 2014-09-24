@@ -143,6 +143,7 @@ public:
     int max_gt_poly_qphred;
 
     bool is_forced_output;
+    bool is_zero_coverage;
 };
 
 
