@@ -1225,8 +1225,10 @@ process_pos_indel_single_sample(const pos_t pos,
     {
         const indel_key& ik(it->first);
         const indel_data& id(get_indel_data(it));
+        const bool forcedOutput(id.is_forced_output);
+        const bool zeroCoverage(id.read_path_lnp.empty());
         if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
-        if (id.read_path_lnp.empty() && !id.is_forced_output) continue;
+        if (zeroCoverage && !forcedOutput) continue;
 
         // TODO implement indel overlap resolution
         //
@@ -1250,8 +1252,8 @@ process_pos_indel_single_sample(const pos_t pos,
             static const bool is_use_alt_indel(true);
 
             starling_diploid_indel dindel;
-            dindel.is_forced_output = id.is_forced_output;
-            dindel.is_zero_coverage = id.read_path_lnp.empty();
+            dindel.is_forced_output = forcedOutput;
+            dindel.is_zero_coverage = zeroCoverage;
             _client_dopt.incaller().starling_indel_call_pprob_digt(_client_opt,_client_dopt,
                                                                    sif.sample_opt,
                                                                    indel_error_prob,ref_error_prob,
