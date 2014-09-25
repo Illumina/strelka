@@ -51,45 +51,48 @@ void calibration_model::populate_storage_metadata()
 
 
 //modified
-void calibration_model::read_calibration_models(const std::string& calibration_json_file,
-                                                std::vector<std::string> variable_names)
+void calibration_model::load(boost::property_tree::ptree pt)
 {
     std::vector< set_of_calibrations_type > all_data;
-    for (unsigned int v = 0; v < variable_names.size(); v++)
+    for (unsigned int v = 0; v < this->calibration_data_names.size(); v++)
     {
        set_of_calibrations_type dummy_arr;
        all_data.push_back(dummy_arr);
     }
    try
    {
-       boost::property_tree::ptree doc;
-       std::string json_filename = calibration_json_file;
-       boost::property_tree::read_json(json_filename, doc);
+       boost::property_tree::ptree pt2;
+       boost::property_tree::read_json("/home/mkallberg/workspace/starka_debug/data/model_test2.json", pt2);
 
-       BOOST_FOREACH(boost::property_tree::ptree::value_type &each_tree, doc)
+       int t_count = 0;
+
+       BOOST_FOREACH(boost::property_tree::ptree::value_type &each_tree, pt)
        {
-           for (unsigned int vn=0; vn < variable_names.size(); vn++)
-           {
+           t_count ++;
+           log_os << t_count << "\n";
 
-               std::map<int, std::vector<double> > node_votes;
-               BOOST_FOREACH(boost::property_tree::ptree::value_type &v, each_tree.second.get_child(variable_names[vn]))
-               {
-                   std::vector<double> prob_tuple (2,0);
-                   int ind = 0;
-                   BOOST_FOREACH(boost::property_tree::ptree::value_type &i, v.second)
-                   {
-                       double p = i.second.get_value<double>();
-                       prob_tuple[ind++] = p;
-                   }
-                   node_votes[atoi(v.first.c_str())] = prob_tuple;
-               }
-               all_data[vn].push_back(node_votes);
-           }
+//           for (unsigned int vn=0; vn < variable_names.size(); vn++)
+//           {
+//
+//               std::map<int, std::vector<double> > node_votes;
+//               BOOST_FOREACH(boost::property_tree::ptree::value_type &v, each_tree.second.get_child(variable_names[vn]))
+//               {
+//                   std::vector<double> prob_tuple (2,0);
+//                   int ind = 0;
+//                   BOOST_FOREACH(boost::property_tree::ptree::value_type &i, v.second)
+//                   {
+//                       double p = i.second.get_value<double>();
+//                       prob_tuple[ind++] = p;
+//                   }
+//                   node_votes[atoi(v.first.c_str())] = prob_tuple;
+//               }
+//               all_data[vn].push_back(node_votes);
+//           }
        }
-    int ind = 0;
-    this->all_trees = all_data[ind++];
-    this->all_node_votes = all_data[ind++];
-    this->all_decisions = all_data[ind++];
+//    int ind = 0;
+//    this->all_trees = all_data[ind++];
+//    this->all_node_votes = all_data[ind++];
+//    this->all_decisions = all_data[ind++];
    }
 
    catch (std::exception const& e)
@@ -145,7 +148,7 @@ error_model& scoring_models::get_indel_model(const std::string& pattern){
 
 
 
-void scoring_models::load_indel_models(boost::property_tree::ptree pt,const std::string& model_name){
+void scoring_models::load_indel_model(boost::property_tree::ptree pt,const std::string& model_name){
     std::string s = imodels + "." + model_name;
 //    log_os << s << std::endl;
     indel_model temp_model;
@@ -161,13 +164,14 @@ void scoring_models::load_indel_models(boost::property_tree::ptree pt,const std:
 
 
 
-void scoring_models::load_calibration_models(boost::property_tree::ptree pt,const std::string& model_name)
+void scoring_models::load_calibration_model(boost::property_tree::ptree pt,const std::string& model_name,const std::string& model_type)
 {
     this->randomforest_model.populate_storage_metadata();
+    if (model_name!="" && model_type!=""){
+        log_os << "Loading cali model: " << model_name << std::endl;
+    }
 
-    this->randomforest_model.read_calibration_models(calibration_json_file,
-                                                     this->randomforest_model.calibration_data_names);
-
+    this->randomforest_model.load(pt);
     this->calibration_init = true;
 }
 
@@ -183,11 +187,13 @@ void scoring_models::load_models(const std::string& model_file){
      boost::property_tree::read_json(ss, pt);
 
      //load indel models
-     BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(imodels))
-         this->load_indel_models(pt,v.first);
-
+     BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(imodels)){
+         this->load_indel_model(pt,v.first);
+     }
 
      //load calibration models
-     this->load_calibration_models(calibration_json_file);
+     BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(cmodels)){
+         this->load_calibration_model(pt,v.first);
+     }
 
 }

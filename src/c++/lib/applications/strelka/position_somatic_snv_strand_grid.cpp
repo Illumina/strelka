@@ -1558,15 +1558,14 @@ write_vcf_somatic_snv_genotype_strand_grid(
        << ";NT=" << NTYPE::label(rs.ntype)
        << ";QSS_NT=" << rs.snv_from_ntype_qphred
        << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1)
-       << ";SGT=";
+       << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1);
+       // write out somatic VQSR metrics
+       if (true){
+           os << ";VQSR=" << sgt.vqsr_q;
+       }
+       os << ";SGT=";
     DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
                              sgt.ref_gt,os);
-
-    // write out somatic VQSR metrics
-    if (opt.sfilter.compute_VQSR_options){
-        os << ";VQSROTPS=" << "val";
-    }
-
 
     //FORMAT:
     os << '\t'

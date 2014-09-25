@@ -26,7 +26,9 @@ struct somatic_snv_genotype_grid
 {
 
     somatic_snv_genotype_grid()
-        : is_forced_output(false) {}
+        : is_forced_output(false)
+        , vqsr_q(1)
+        {}
 
     typedef bool tier_t;
 
@@ -62,4 +64,5 @@ struct somatic_snv_genotype_grid
     unsigned ref_gt;
     result_set rs;
     bool is_forced_output;
+    unsigned vqsr_q;
 };

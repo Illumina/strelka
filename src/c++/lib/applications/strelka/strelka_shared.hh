@@ -38,7 +38,6 @@ struct somatic_filter_options
         , indelMaxWindowFilteredBasecallFrac(0.3)
         , sindelQuality_LowerBound(30)
         , indelRegionFlankSize(50)
-        , compute_VQSR_options(false)
     {}
 
     bool
@@ -60,8 +59,6 @@ struct somatic_filter_options
     int sindelQuality_LowerBound;
 
     unsigned indelRegionFlankSize;
-
-    bool compute_VQSR_options;
 };
 
 
