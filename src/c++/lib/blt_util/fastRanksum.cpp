@@ -38,16 +38,23 @@ get_z_score(const int n1, const int n2, const double w1)
 
 double
 fastRanksum::
-get_avg_alt() const{
-        if(total_alt_count>0)
-            return total_alt/total_alt_count;
-        return 0;
+get_raw_score() const{
+    double R2 = 0;
+    int N2 = 0;
+
+    for (unsigned i=0;i<_obs.size();i++)
+    {
+        if (_obs[i].empty()) continue;
+        const int obs2 = _obs[i].B;
+        R2 += i*obs2;
+        N2 += obs2;
     }
 
-double
-fastRanksum::
-get_raw_score() const{
-    return get_avg_alt();
+    //return the z-score for the smaller of U1 and U2 assuming a gaussian approx.
+    if (N2>0)
+        return 1.0*R2/N2;
+    return 0;
+    //    return get_avg_alt();
 }
 
 // return the U statistic

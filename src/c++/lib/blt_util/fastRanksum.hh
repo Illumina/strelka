@@ -37,10 +37,13 @@ struct fastRanksum
     {
         if (obs >= _obs.size()) _obs.resize(obs+16);
         _obs[obs].inc(isA);
-        if (!isA){
-            this->total_alt+=obs;
-            this->total_alt_count++;
-        }
+//        if (!isA){
+//            this->total_alt+=obs;
+//            this->total_alt_count++;
+//            std::cerr << "obs: " << obs << std::endl;
+//            std::cerr << "sum: " <<this->total_alt << std::endl;
+//            std::cerr << "count: " << this->total_alt_count << std::endl;
+//        }
     }
 
     //return rank-sum U statistic
@@ -58,6 +61,8 @@ struct fastRanksum
     clear()
     {
         _obs.resize(0);
+//        this->total_alt = 0;
+//        this->total_alt_count = 0;
     }
 
 
@@ -90,6 +95,6 @@ private:
     };
 
     std::vector<ranksumObs> _obs; // observations for ref/alt bases
-    unsigned total_alt=0;
-    unsigned total_alt_count=0;
+//    unsigned total_alt=0;
+//    unsigned total_alt_count=0;
 };

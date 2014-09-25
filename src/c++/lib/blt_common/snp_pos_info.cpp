@@ -94,9 +94,17 @@ snp_pos_info::
 get_raw_pos()
 {
 //  cout << baseq_ranksum << endl;
-    return baseq_ranksum.get_raw_score();
+    return read_pos_ranksum.get_raw_score();
 }
 
+
+double
+snp_pos_info::
+get_raw_baseQ()
+{
+//  cout << baseq_ranksum << endl;
+    return baseq_ranksum.get_raw_score();
+}
 
 
 void

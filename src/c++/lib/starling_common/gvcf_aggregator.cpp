@@ -546,7 +546,9 @@ write_site_record(const site_info& si) const
                 os << ';';
                 os << "ReadPosRankSum=" << si.ReadPosRankSum;
                 os << ';';
-                os << "PosAvg=" << si.RawPos;
+                os << "AvgBaseQ=" << si.avgBaseQ;
+                os << ';';
+                os << "AvgPos=" << si.rawPos;
                 os << ';';
                 os << "MapQ0Count=" << si.mapq_zero;
 

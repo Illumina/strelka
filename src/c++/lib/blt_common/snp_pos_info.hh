@@ -171,6 +171,9 @@ struct snp_pos_info
     double
     get_baseq_ranksum();
 
+    double
+    get_raw_baseQ();
+
     // return the raw pos sum
     double
     get_raw_pos();
