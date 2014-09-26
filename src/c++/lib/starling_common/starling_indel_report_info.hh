@@ -47,7 +47,7 @@ struct starling_indel_report_info
     std::string repeat_unit;
     unsigned ref_repeat_count;
     unsigned indel_repeat_count;
-    unsigned ihpol; // interupted homopolymer length
+    unsigned ihpol; // interrupted homopolymer length
 
     // not directly reported, but handy to have pre-calculated:
     INDEL::index_t it;

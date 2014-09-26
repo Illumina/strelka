@@ -45,7 +45,6 @@
 ///
 struct stage_data
 {
-
     // position,stage_id pair, where position is total distance of this stage from the root stage:
     typedef std::pair<unsigned,int> pos_stage_id;
     // pos_stage_ids, sorted by increasing position and stage id:
@@ -126,7 +125,6 @@ private:
 ///
 struct stage_manager
 {
-
     // stage_data structure is described above
     //
     // report_range is what is sounds like
@@ -145,7 +143,7 @@ struct stage_manager
     // Handle new pos value is used to indicate a possible advance of
     // the head position -- this represents the position of the input
     // information. Note that you must explicitly check whether pos is
-    // too low for nay particular stage using the methods further
+    // too low for any particular stage using the methods further
     // below, handle_new_pos_value does not do this for you.
     //
     // When the head position is advanced, it triggers a series of

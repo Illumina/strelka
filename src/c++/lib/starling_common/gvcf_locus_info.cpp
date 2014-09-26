@@ -130,7 +130,8 @@ std::map<std::string, double> site_info::get_qscore_features(int chrom_depth)
     res["I_ReadPosRankSum"]   = ReadPosRankSum;
     res["I_BaseQRankSum"]     = BaseQRankSum;
     res["I_MQRankSum"]        = MQRankSum;
-    res["I_RawPos"]           = RawPos;         //the average position value within a read of a variant
+    res["I_RawPos"]           = rawPos;         //the average position value within a read of alt allele
+    res["I_RawBaseQ"]         = avgBaseQ;       //The average baseQ of the position of alt allele
     for (unsigned b(0); b<N_BASE; ++b)
     {
         if (b==dgt.ref_gt) continue;

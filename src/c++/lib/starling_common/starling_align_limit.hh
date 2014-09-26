@@ -28,7 +28,6 @@
 ///
 struct starling_align_limit
 {
-
     starling_align_limit(const unsigned max_alignment_count);
 
     unsigned

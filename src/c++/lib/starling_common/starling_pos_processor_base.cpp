@@ -569,8 +569,7 @@ insert_indel(const indel_observation& obs,
 {
     //
     // ppr advance is controlled by the start positions of reads and
-    // contigs, not indels. The rationale for this is that indels are
-    // relatively cheap to store (so long as we aren't including
+    // relatively cheap to store (so long as we aren't includingu
     // gigantic insert sequences) and do not scale up linearly with
     // increased coverage like reads do. For this reason our strategy
     // is to buffer the indels as far ahead as possible while leaving
@@ -1617,7 +1616,6 @@ pileup_read_segment(const read_segment& rseg,
                     align_strand_read_pos=read_size-(read_pos+1);
                     end_trimmed_read_len=read_size-fwd_strand_begin_skip;
                 }
-
                 if (_client_opt.is_max_win_mismatch)
                 {
                     is_neighbor_mismatch=(_rmi[read_pos].mismatch_count_ns>0);
@@ -1642,6 +1640,7 @@ pileup_read_segment(const read_segment& rseg,
                     // update mapq and rank-sum metrics
                     if (_client_opt.is_compute_VQSRmetrics || _client_opt.calibration_model!="default")
                     {
+
                         update_ranksum_and_mapq_count(ref_pos,sample_no,bc,mapq,align_strand_read_pos);
                     }
 
@@ -1898,7 +1897,8 @@ process_pos_snp_single_sample_impl(
             _site_info.ReadPosRankSum 	= pi.get_read_pos_ranksum();
             _site_info.MQRankSum 		= pi.get_mq_ranksum();
             _site_info.BaseQRankSum 	= pi.get_baseq_ranksum();
-            _site_info.RawPos           = pi.get_raw_pos();
+            _site_info.rawPos           = pi.get_raw_pos();
+            _site_info.avgBaseQ         = pi.get_raw_baseQ();
         }
 
         // hpol filter

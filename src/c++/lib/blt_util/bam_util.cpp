@@ -31,7 +31,6 @@ void
 change_bam_data_len(const int new_len,
                     bam1_t& br)
 {
-
     assert(new_len>=0);
 
     if (new_len > br.m_data)
@@ -55,7 +54,6 @@ change_bam_data_segment_len(const int end,
                             const int delta,
                             bam1_t& br)
 {
-
     assert(end>=0);
     if (0==delta) return;
     const int old_len(br.data_len);
@@ -77,7 +75,6 @@ void
 edit_bam_qname(const char* name,
                bam1_t& br)
 {
-
     bam1_core_t& bc(br.core);
 
     const uint32_t tmp_size(strlen(name)+1);
@@ -113,7 +110,6 @@ edit_bam_read_and_quality(const char* read,
                           const uint8_t* qual,
                           bam1_t& br)
 {
-
     const int new_len(strlen(read));
     const int old_size(seq_size(br.core.l_qseq));
     const int new_size(seq_size(new_len));
@@ -142,7 +138,6 @@ void
 nuke_bam_aux_field(bam1_t& br,
                    const char* tag)
 {
-
     while (true)
     {
         uint8_t* p(bam_aux_get(&br,tag));
@@ -159,7 +154,6 @@ bam_aux_append_unsigned(bam1_t& br,
                         const char* tag,
                         uint32_t x)
 {
-
     if       (x & 0xffff0000)
     {
         bam_aux_append(&br,tag,'I',4,reinterpret_cast<uint8_t*>(&x));
@@ -182,7 +176,6 @@ bool
 check_header_compatibility(const bam_header_t* h1,
                            const bam_header_t* h2)
 {
-
     if (h1->n_targets != h2->n_targets)
     {
         return false;

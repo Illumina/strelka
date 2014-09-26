@@ -65,8 +65,6 @@ get_genomic_prior(const unsigned ref_gt,
     prior[ref_gt] = (1.-prior_sum);
 }
 
-
-
 static
 void
 get_poly_prior(const unsigned ref_gt,
@@ -313,15 +311,9 @@ get_diploid_gt_lhood(const blt_options& opt,
             lhood[gt] += subgt_log_prior;
         }
     }
-
-
 }
 
-
-
 typedef diploid_genotype::result_set result_set;
-
-
 
 void
 debug_dump_digt_lhood(const blt_float_t* lhood,

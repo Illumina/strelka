@@ -295,15 +295,10 @@ get_prior(const blt_float_t* normal_lnprior,
     static const unsigned n_strand_het_axes(3);
     blt_float_t strand_axis_prior[n_strand_het_axes];
 
-    double throwaway_sum(0);
     for (unsigned sgt(0); sgt<n_strand_het_axes; ++sgt)
     {
         strand_axis_prior[sgt] = normal_lnprior[ref_gt]+ln_one_third;
-        throwaway_sum += std::exp(strand_axis_prior[sgt]);
     }
-
-    throwaway_sum /= 2.; // we're only using half-axes for the states represented
-    throwaway_sum = 1. - throwaway_sum;
 
     // flaw in using error mod -- because strand state could exist and
     // be detectable at the canonical gt frequencies, we leave it the
@@ -320,6 +315,15 @@ get_prior(const blt_float_t* normal_lnprior,
     }
 
 #ifdef SOMATIC_DEBUG
+    double throwaway_sum(0);
+    for (unsigned sgt(0); sgt<n_strand_het_axes; ++sgt)
+    {
+        throwaway_sum += std::exp(strand_axis_prior[sgt]);
+    }
+
+    throwaway_sum /= 2.; // we're only using half-axes for the states represented
+    throwaway_sum = 1. - throwaway_sum;
+
     throwaway_sum *= std::exp(ln_strand_sse_rate);
 
     check_ln_distro(grid_normal_lnprior.begin(),
@@ -379,29 +383,7 @@ somatic_snv_caller_strand_grid(const strelka_options& opt,
 template <unsigned NVAL>
 struct cache_val
 {
-
-    cache_val() {}
-
-    cache_val(const cache_val<NVAL>& x)
-    {
-        for (unsigned i(0); i<NVAL; ++i)
-        {
-            val[i] = x.val[i];
-        }
-    }
-
-    cache_val&
-    operator=(const cache_val<NVAL>& rhs)
-    {
-        if (&rhs==this) return *this;
-        for (unsigned i(0); i<NVAL; ++i)
-        {
-            val[i] = rhs.val[i];
-        }
-        return *this;
-    }
-
-    blt_float_t val[NVAL];
+    std::array<blt_float_t,NVAL> val;
 };
 
 
@@ -423,7 +405,6 @@ struct cache_val
 template <unsigned NVAL>
 struct het_ratio_cache
 {
-
     het_ratio_cache()
         : _is_cached(MAX_QSCORE* MAX_INDEX,false)
         , _cache(MAX_QSCORE* MAX_INDEX)
@@ -433,7 +414,6 @@ struct het_ratio_cache
     get_val(const unsigned qscore,
             const unsigned ratio_index)
     {
-
         if (qscore>=MAX_QSCORE ||
             ratio_index>=MAX_INDEX)
         {
@@ -478,7 +458,6 @@ get_high_low_het_ratio_lhood_spi(const snp_pos_info& pi,
                                  blt_float_t* lhood_high,
                                  blt_float_t* lhood_low)
 {
-
     const blt_float_t chet_ratio(1.-het_ratio);
 
     const unsigned n_calls(pi.calls.size());
@@ -528,7 +507,6 @@ increment_het_ratio_lhood_spi(const snp_pos_info& pi,
                               het_ratio_cache<3>& hrcache,
                               blt_float_t* all_het_lhood)
 {
-
     // multiply probs of alternate ratios into local likelihoods, then
     // *add* them to the global tally (effectively this is the sum lhood of
     // many different heterozygous genotypes).
@@ -548,7 +526,7 @@ increment_het_ratio_lhood_spi(const snp_pos_info& pi,
 
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
     {
-        if (not DIGT::is_het(gt)) continue;
+        if (! DIGT::is_het(gt)) continue;
         all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_high[gt]);
         all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_low[gt]);
     }
@@ -569,18 +547,14 @@ get_diploid_gt_lhood_spi(const blt_options& opt,
                          const blt_float_t het_bias,
                          blt_float_t* const lhood)
 {
-
     // ! not thread-safe !
     static het_ratio_cache<3> hrcache;
 
     // get likelihood of each genotype
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt) lhood[gt] = 0.;
 
-    const unsigned n_calls(pi.calls.size());
-    for (unsigned i(0); i<n_calls; ++i)
+    for (const base_call& bc : pi.calls)
     {
-        const base_call& bc(pi.calls[i]);
-
         std::pair<bool,cache_val<3>*> ret(hrcache.get_val(bc.get_qscore(),0));
         cache_val<3>& cv(*ret.second);
         if (! ret.first)
@@ -596,7 +570,7 @@ get_diploid_gt_lhood_spi(const blt_options& opt,
             cv.val[2] = lnce;
         }
 
-        const uint8_t obs_id(pi.calls[i].base_id);
+        const uint8_t obs_id(bc.base_id);
         for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
         {
             lhood[gt] += cv.val[DIGT::expect2(obs_id,gt)];
@@ -643,7 +617,6 @@ void
 get_diploid_het_grid_lhood_spi(const snp_pos_info& pi,
                                blt_float_t* const lhood)
 {
-
     // ! not thread-safe !
     static het_ratio_cache<3> hrcache;
 
@@ -679,16 +652,12 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
                            het_ratio_cache<2>& hrcache,
                            blt_float_t* lhood)
 {
-
     // het_ratio is the expected allele frequency of noise on the
     // noise-strand, or "on-strand" below. All possible ratio values
     // (there should be very few), have an associated index value for
     // caching.
     //
     const blt_float_t chet_ratio(1.-het_ratio);
-
-    const unsigned n_calls(pi.calls.size());
-
 
     // In this situation every basecall falls into 1 of 4 states:
     //
@@ -711,10 +680,8 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
 
     static const unsigned n_strand_het_axes(3);
 
-    for (unsigned i(0); i<n_calls; ++i)
+    for (const base_call& bc : pi.calls)
     {
-        const base_call& bc(pi.calls[i]);
-
         std::pair<bool,cache_val<2>*> ret(hrcache.get_val(bc.get_qscore(),het_ratio_index));
         cache_val<2>& cv(*ret.second);
         if (! ret.first)
@@ -785,7 +752,6 @@ get_diploid_strand_grid_lhood_spi(const snp_pos_info& pi,
                                   const unsigned ref_gt,
                                   blt_float_t* const lhood)
 {
-
     // TODO: make this thread safe...
     //
     static het_ratio_cache<2> hrcache;
@@ -1435,7 +1401,6 @@ write_vcf_sample_info(const blt_options& opt,
                       const extended_pos_data& tier2_epd,
                       std::ostream& os)
 {
-
     os << tier1_epd.n_calls
        << ':'
        << tier1_epd.n_unused_calls
@@ -1444,12 +1409,12 @@ write_vcf_sample_info(const blt_options& opt,
        << ':'
        << tier1_epd.pi.n_submapped;
 
-    unsigned tier1_base_counts[N_BASE];
-    unsigned tier2_base_counts[N_BASE];
+    std::array<unsigned,N_BASE> tier1_base_counts;
+    std::array<unsigned,N_BASE> tier2_base_counts;
+    tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+    tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
     for (unsigned b(0); b<N_BASE; ++b)
     {
-        tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-        tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
         os << ':'
            << tier1_base_counts[b] << ','
            << tier2_base_counts[b];

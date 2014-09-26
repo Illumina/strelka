@@ -330,7 +330,9 @@ struct site_info
         , ReadPosRankSum(0)
         , BaseQRankSum(0)
         , MQRankSum(0)
-        , RawPos(0)
+        , avgBaseQ(0)
+        , rawPos(0)
+        , mapq_zero(0)
         , Qscore(-1)
         , Unphasable(false)
     {
@@ -411,7 +413,9 @@ struct site_info
     double ReadPosRankSum;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
     double BaseQRankSum;    // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
     double MQRankSum;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
-    double RawPos;          // Raw position within the read
+    double avgBaseQ;
+    double rawPos;
+    unsigned mapq_zero;     // The number of spanning reads that do not pass the command-line mapq test
     int Qscore;             // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
     bool Unphasable;        // Set to true if the site should never be included in a phasing block
 

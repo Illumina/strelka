@@ -47,17 +47,17 @@ typedef boost::variate_generator<gen_t&,dist_t> vgen_t;
 
 
 // shared rng:
-gen_t gen;//(static_cast<unsigned> (std::time(0));
+static gen_t gen;//(static_cast<unsigned> (std::time(0));
 
 // shared [0,1]
 typedef boost::uniform_real<> rdist_t;
-rdist_t rdist;
-boost::variate_generator<gen_t&,rdist_t> uran(gen,rdist);
+static rdist_t rdist;
+static boost::variate_generator<gen_t&,rdist_t> uran(gen,rdist);
 
 // shared 3range:
 typedef boost::uniform_smallint<> sudist_t;
-sudist_t dist3i(0,2);
-boost::variate_generator<gen_t&,sudist_t> ran3i(gen,dist3i);
+static sudist_t dist3i(0,2);
+static boost::variate_generator<gen_t&,sudist_t> ran3i(gen,dist3i);
 
 
 
@@ -120,7 +120,6 @@ random_cdf_variate(const double cdf[],
 
 struct qval_distro
 {
-
     qval_distro(
         const uint8_t constval = 30)
         : _is_const(true),
