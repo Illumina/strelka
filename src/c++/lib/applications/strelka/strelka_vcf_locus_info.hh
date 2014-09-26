@@ -17,17 +17,6 @@
 
 #pragma once
 
-#if 0
-#include "blt_common/position_snp_call_pprob_digt.hh"
-#include "starling_common/align_path.hh"
-#include "starling_common/starling_indel_call_pprob_digt.hh"
-#include "starling_common/starling_shared.hh"
-
-#include <bitset>
-#include <iosfwd>
-#include <map>
-#endif
-
 #include <cassert>
 
 #include <bitset>

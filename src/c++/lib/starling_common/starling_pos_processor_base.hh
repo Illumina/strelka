@@ -420,17 +420,20 @@ private:
     update_ranksum_and_mapq_count(
         const pos_t pos,
         const unsigned sample_no,
-        const base_call& bc,
+        const uint8_t call_id,
+        const uint8_t qscore,
         const uint8_t mapq,
         const uint8_t adjustedMapq,
-        const unsigned cycle);
+        const unsigned cycle,
+        const bool is_submapped);
 
     void
     update_somatic_features(
         const pos_t pos,
         const unsigned sample_no,
         const bool is_teir1,
-        const base_call& bc,
+        const uint8_t call_id,
+        const bool is_call_filter,
         const uint8_t mapq,
         const uint16_t readPos,
         const uint16_t readLength);

@@ -135,28 +135,20 @@ struct strelka_options : public starling_options
 ///
 struct somatic_filter_deriv_options
 {
-    somatic_filter_deriv_options()
-        : max_depth(0.),
-          indelRegionStage(0)
-    {}
-
     bool
     is_max_depth() const
     {
         return (! chrom_depth.empty());
     }
 
-    double max_depth;
+    double max_depth = 0;
     cdmap_t chrom_depth;
-    unsigned indelRegionStage;
+    unsigned indelRegionStage = 0;
 };
 
 
 
-//struct somatic_snv_caller;
-//struct somatic_snv_caller_grid;
 struct somatic_snv_caller_strand_grid;
-//struct somatic_indel_caller;
 struct somatic_indel_caller_grid;
 
 

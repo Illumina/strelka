@@ -1518,13 +1518,9 @@ write_vcf_somatic_snv_genotype_strand_grid(
         os << std::fixed << std::setprecision(2);
 
         {
-            const unsigned n_calls(n1_epd.n_calls+t1_epd.n_calls);
-
-            /// \TODO remove this after initial sanity check:
+            // m_mapq includes all calls, even from reads below the mapq threshold:
             const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
-            assert(n_calls == n_mapq);
-
-            os << ";DP=" << n_calls;
+            os << ";DP=" << n_mapq;
         }
 
         {

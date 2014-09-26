@@ -1083,9 +1083,7 @@ starling_pos_processor_base::
 insert_pos_submap_count(const pos_t pos,
                         const unsigned sample_no)
 {
-    if (! is_pos_reportable(pos)) return;
-
-    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+    // assume pos has been pre-checked:
 
     sample(sample_no).bc_buff.insert_pos_submap_count(pos);
 }
@@ -1097,9 +1095,7 @@ starling_pos_processor_base::
 insert_pos_spandel_count(const pos_t pos,
                          const unsigned sample_no)
 {
-    if (! is_pos_reportable(pos)) return;
-
-    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+    // assume pos has been pre-checked:
 
     sample(sample_no).bc_buff.insert_pos_spandel_count(pos);
 }
@@ -1111,17 +1107,18 @@ starling_pos_processor_base::
 update_ranksum_and_mapq_count(
     const pos_t pos,
     const unsigned sample_no,
-    const base_call& bc,
+    const uint8_t call_id,
+    const uint8_t qscore,
     const uint8_t mapq,
     const uint8_t adjustedMapq,
-    const unsigned cycle)
+    const unsigned cycle,
+    const bool is_submapped)
 {
-    if (! is_pos_reportable(pos)) return;
-    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+    // assume pos is already valid:
 
     auto& bcbuff(sample(sample_no).bc_buff);
     bcbuff.insert_mapq_count(pos,mapq,adjustedMapq);
-    bcbuff.update_ranksums(_ref.get_base(pos),pos,bc,adjustedMapq,cycle);
+    bcbuff.update_ranksums(_ref.get_base(pos),pos,call_id,qscore,adjustedMapq,cycle,is_submapped);
 }
 
 
@@ -1131,21 +1128,21 @@ update_somatic_features(
     const pos_t pos,
     const unsigned sample_no,
     const bool is_tier1,
-    const base_call& bc,
+    const uint8_t call_id,
+    const bool is_call_filter,
     const uint8_t mapq,
     const uint16_t readPos,
     const uint16_t readLength)
 {
-    if (! is_pos_reportable(pos)) return;
-    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+    // assume pos is already valid:
 
     auto& bcbuff(sample(sample_no).bc_buff);
     bcbuff.insert_mapq_count(pos,mapq,mapq);
 
-    if (is_tier1 && (sample_no != 0) && (! bc.is_call_filter))
+    if (is_tier1 && (sample_no != 0) && (! is_call_filter))
     {
-        bcbuff.update_read_pos_ranksum(_ref.get_base(pos),pos,bc,readPos);
-        bcbuff.insert_alt_read_pos(pos,bc,readPos,readLength);
+        bcbuff.update_read_pos_ranksum(_ref.get_base(pos),pos,call_id,readPos);
+        bcbuff.insert_alt_read_pos(pos,call_id,readPos,readLength);
     }
 }
 
@@ -1157,9 +1154,7 @@ insert_pos_basecall(const pos_t pos,
                     const bool is_tier1,
                     const base_call& bc)
 {
-    if (! is_pos_reportable(pos)) return;
-
-    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+    // assume pos is already valid:
 
     sample(sample_no).bc_buff.insert_pos_basecall(pos,is_tier1,bc);
 }
@@ -1175,9 +1170,7 @@ insert_hap_cand(const pos_t pos,
                 const uint8_t* qual,
                 const unsigned offset)
 {
-    if (! is_pos_reportable(pos)) return;
-
-    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+    // assume pos is already valid:
 
     sample(sample_no).bc_buff.insert_hap_cand(pos,is_tier1,read_seq,qual,offset);
 }
@@ -1596,40 +1589,17 @@ pileup_read_segment(const read_segment& rseg,
                 log_os << "j,ref,read: " << j << " " << ref_pos <<  " " << read_pos << "\n";
 #endif
 
-                if (is_submapped)
-                {
-                    insert_pos_submap_count(ref_pos,sample_no);
-                    continue;
-                }
-//                const char ref(get_seq_base(_ref_seq,ref_pos));
-                const uint8_t call_code(bseq.get_code(read_pos));
-                uint8_t qscore(qual[read_pos]);
+                // skip position outside of report range:
+                if (! is_pos_reportable(ref_pos)) continue;
+                _stageman.validate_new_pos_value(ref_pos,STAGE::get_pileup_stage_no(_client_opt));
 
+                const uint8_t call_code(bseq.get_code(read_pos));
+                const uint8_t call_id(bam_seq_code_to_id(call_code));
+
+                uint8_t qscore(qual[read_pos]);
                 if (is_mapq_adjust)
                 {
                     qscore = qphred_to_mapped_qphred(qscore,adjustedMapq);
-                }
-//                log_os << static_cast<int>(qscore) << "\n";
-                bool is_call_filter((call_code == BAM_BASE::ANY) ||
-                                    (qscore < _client_opt.min_qscore));
-
-                assert(! _client_opt.is_min_win_qscore);
-
-                bool is_tier2_call_filter(is_call_filter);
-                if (! is_call_filter && _client_opt.is_max_win_mismatch)
-                {
-                    is_call_filter = _rmi[read_pos].mismatch_filter_map;
-                    if (! _client_opt.is_tier2_no_mismatch_density_filter)
-                    {
-                        if (_client_opt.is_tier2_mismatch_density_filter_count)
-                        {
-                            is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map;
-                        }
-                        else
-                        {
-                            is_tier2_call_filter = is_call_filter;
-                        }
-                    }
                 }
 
                 unsigned align_strand_read_pos(read_pos);
@@ -1639,18 +1609,74 @@ pileup_read_segment(const read_segment& rseg,
                     align_strand_read_pos=read_size-(read_pos+1);
                     end_trimmed_read_len=read_size-fwd_strand_begin_skip;
                 }
-                if (_client_opt.is_max_win_mismatch)
+
+                bool current_call_filter( true );
+                bool is_tier_specific_filter( false );
+                if (! is_submapped)
                 {
-                    is_neighbor_mismatch=(_rmi[read_pos].mismatch_count_ns>0);
+                    bool is_call_filter((call_code == BAM_BASE::ANY) ||
+                                        (qscore < _client_opt.min_qscore));
+
+                    assert(! _client_opt.is_min_win_qscore);
+
+                    bool is_tier2_call_filter(is_call_filter);
+                    if (! is_call_filter && _client_opt.is_max_win_mismatch)
+                    {
+                        is_call_filter = _rmi[read_pos].mismatch_filter_map;
+                        if (! _client_opt.is_tier2_no_mismatch_density_filter)
+                        {
+                            if (_client_opt.is_tier2_mismatch_density_filter_count)
+                            {
+                                is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map;
+                            }
+                            else
+                            {
+                                is_tier2_call_filter = is_call_filter;
+                            }
+                        }
+                    }
+                    current_call_filter = ( is_tier1 ? is_call_filter : is_tier2_call_filter );
+                    is_tier_specific_filter = ( is_tier1 && is_call_filter && (! is_tier2_call_filter) );
+
+                    if (_client_opt.is_max_win_mismatch)
+                    {
+                        is_neighbor_mismatch=(_rmi[read_pos].mismatch_count_ns>0);
+                    }
+                }
+
+                // update extended feature metrics (including submapped reads):
+                if (_client_opt.is_compute_germline_VQSRmetrics())
+                {
+                    /// \TODO Morten -- consider improving MQ, MQ0 and RankSumMQ by:
+                    ///  1) removing the if (! submapped) here
+                    ///  2) collapsing mapq and adjustedMapq to just mapq
+                    ///
+                    if (! is_submapped)
+                    {
+                        update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,adjustedMapq,align_strand_read_pos,is_submapped);
+                    }
+                }
+                else if (_client_opt.is_compute_somatic_VQSRmetrics)
+                {
+                    update_somatic_features(ref_pos,sample_no,is_tier1,call_id,current_call_filter,mapq,read_pos,read_size);
+                }
+
+                if (is_submapped)
+                {
+                    insert_pos_submap_count(ref_pos,sample_no);
+                    continue;
+                }
+
+                /// include only data meeting mapping criteria after this point:
+
+                if (_client_opt.is_compute_hapscore)
+                {
+                    insert_hap_cand(ref_pos,sample_no,is_tier1,
+                                    bseq,qual,read_pos);
                 }
 
                 try
                 {
-
-                    const uint8_t call_id(bam_seq_code_to_id(call_code));
-                    const bool current_call_filter( is_tier1 ? is_call_filter : is_tier2_call_filter );
-                    const bool is_tier_specific_filter( is_tier1 && is_call_filter && (! is_tier2_call_filter) );
-
                     const base_call bc = base_call(call_id,qscore,best_al.is_fwd_strand,
                                                    align_strand_read_pos,end_trimmed_read_len,
                                                    current_call_filter,is_neighbor_mismatch,is_tier_specific_filter);
@@ -1659,22 +1685,6 @@ pileup_read_segment(const read_segment& rseg,
                                         sample_no,
                                         is_tier1,
                                         bc);
-
-                    // update extended feature metrics:
-                    if (_client_opt.is_compute_germline_VQSRmetrics())
-                    {
-                        update_ranksum_and_mapq_count(ref_pos,sample_no,bc,mapq,adjustedMapq,align_strand_read_pos);
-                    }
-                    else if (_client_opt.is_compute_somatic_VQSRmetrics)
-                    {
-                        update_somatic_features(ref_pos,sample_no,is_tier1,bc,mapq,read_pos,read_size);
-                    }
-
-                    if (_client_opt.is_compute_hapscore)
-                    {
-                        insert_hap_cand(ref_pos,sample_no,is_tier1,
-                                        bseq,qual,read_pos);
-                    }
                 }
                 catch (...)
                 {
@@ -1695,6 +1705,10 @@ pileup_read_segment(const read_segment& rseg,
                 for (unsigned j(0); j<ps.length; ++j)
                 {
                     const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
+
+                    // skip position outside of report range:
+                    if (! is_pos_reportable(ref_pos)) continue;
+                    _stageman.validate_new_pos_value(ref_pos,STAGE::get_pileup_stage_no(_client_opt));
 
                     if (is_submapped)
                     {

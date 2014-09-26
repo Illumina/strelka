@@ -26,7 +26,6 @@ strelka_shared_modifiers::
 write_filters(
     std::ostream& os) const
 {
-
     if (filters.none())
     {
         os << "PASS";
