@@ -1,7 +1,7 @@
 - STARKA-138 add read position features to strelka SNV output
 - STARKA-136 add mapping info values to strelka SNV output
 v2.1.5
-- Add CRAM input support
+- Add CRAM input support (still experimental pending samtools idxstats fix)
 v2.1.4
 - Turned ON DP filter for rule filters as default
 - Made scoring-model a configurable option for starling pyflow
