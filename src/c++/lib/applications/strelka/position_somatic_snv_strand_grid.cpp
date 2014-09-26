@@ -1585,7 +1585,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
         {
             const double ReadPosRankSum = t1_epd.pi.read_pos_ranksum.get_u_stat();
-            os << "ReadPosRankSum=" << ReadPosRankSum;
+            os << ";ReadPosRankSum=" << ReadPosRankSum;
         }
 
         os.copyfmt(tmp_os);

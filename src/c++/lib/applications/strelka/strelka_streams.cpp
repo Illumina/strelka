@@ -126,7 +126,7 @@ strelka_streams(
             fos << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
             fos << "##INFO=<ID=ALTPOS,Number=1,Type=Integer,Description=\"Tumor alternate allele read position median\">\n";
             fos << "##INFO=<ID=ALTMAP,Number=1,Type=Integer,Description=\"Tumor alternate allele read position MAP\">\n";
-            fos << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\" Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position in the tumor.\">\n";
+            fos << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position in the tumor\">\n";
 
 
             // FORMAT:
