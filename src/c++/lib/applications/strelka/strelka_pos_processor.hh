@@ -37,7 +37,6 @@
 ///
 struct strelka_pos_processor : public starling_pos_processor_base
 {
-
     typedef starling_pos_processor_base base_t;
 
     strelka_pos_processor(const strelka_options& opt,
@@ -48,8 +47,9 @@ struct strelka_pos_processor : public starling_pos_processor_base
     ~strelka_pos_processor();
 
 private:
+
     void
-    process_pos_variants(const pos_t pos)
+    process_pos_variants(const pos_t pos) override
     {
         process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
         process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
@@ -70,10 +70,10 @@ private:
     void
     run_post_call_step(
         const int stage_no,
-        const pos_t pos);
+        const pos_t pos) override;
 
     void
-    write_counts(const pos_range& output_report_range) const;
+    write_counts(const pos_range& output_report_range) const override;
 
     bool
     derived_empty() const

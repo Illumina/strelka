@@ -89,6 +89,7 @@ struct gvcf_deriv_options
 
 struct blt_options
 {
+    blt_options() {}
     virtual ~blt_options() {}
 
     bool
@@ -128,6 +129,12 @@ struct blt_options
     is_gvcf_output() const
     {
         return (! gvcf.out_file.empty());
+    }
+
+    bool
+    is_compute_germline_VQSRmetrics() const
+    {
+        return (is_report_germline_VQSRmetrics || (! calibration_model.empty()));
     }
 
     bool
@@ -237,7 +244,7 @@ struct blt_options
     // size -- fudge removes this trend from the computation:
     //
     static constexpr double het_bias_inc_fudge = 0.0001;
-    static constexpr double het_bias_max_ratio_inc = 0.05 + het_bias_inc_fudge;
+    const double het_bias_max_ratio_inc = 0.05 + het_bias_inc_fudge;
 
     double nonref_variant_rate = 0.000001;
     double min_nonref_freq = 0;
@@ -252,11 +259,13 @@ struct blt_options
     unsigned max_input_depth = 0;
 
     bool is_compute_hapscore = false;
-    bool is_compute_VQSRmetrics = false;
+    bool is_report_germline_VQSRmetrics = false;
     bool is_compute_calibration_features = false;// For development only, out all features needed im
 
+    bool is_compute_somatic_VQSRmetrics = false;
+
     // Which calibration model should we use?
-    // model value "default" reports rule-based metrics
+    // leave blank to select default rule-based metric option
     std::string calibration_model;
 
     // Apply codon phasing:
@@ -309,42 +318,27 @@ private:
 
 struct blt_read_counts
 {
-
-    blt_read_counts()
-        : subsample_filter(0),
-          primary_filter(0),
-          duplicate(0),
-          unmapped(0),
-          secondary(0),
-          supplement(0),
-          unanchored(0),
-          large_ref_deletion(0),
-          align_score_filter(0),
-          floating(0),
-          max_depth(0),
-          used(0) {}
-
     void
     report(std::ostream& os) const;
 
-    unsigned subsample_filter;
-    unsigned primary_filter;
-    unsigned duplicate;
-    unsigned unmapped;
-    unsigned secondary;
-    unsigned supplement;
-    unsigned unanchored;
-    unsigned large_ref_deletion;
-    unsigned align_score_filter;
+    unsigned subsample_filter = 0;
+    unsigned primary_filter = 0;
+    unsigned duplicate = 0;
+    unsigned unmapped = 0;
+    unsigned secondary = 0;
+    unsigned supplement = 0;
+    unsigned unanchored = 0;
+    unsigned large_ref_deletion = 0;
+    unsigned align_score_filter = 0;
 
     // Floating means the read is indicated as mapped, but has no "M"
     // in the cigar string. Typically inside of an insertion.
-    unsigned floating;
+    unsigned floating = 0;
 
     // if optional setting is given to filter out reads once a certain depth
     // is exceeded, the number of reads filtered are enumerated here:
-    unsigned max_depth;
-    unsigned used;
+    unsigned max_depth = 0;
+    unsigned used = 0;
 };
 
 

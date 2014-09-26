@@ -56,6 +56,9 @@ runInternal(int argc,char* argv[]) const
         opt.cmdline += argv[i];
     }
 
+    // hack in VQSR for strelka only:
+    opt.is_compute_somatic_VQSRmetrics = true;
+
     std::vector<std::string> legacy_starling_args;
     po::variables_map vm;
     try

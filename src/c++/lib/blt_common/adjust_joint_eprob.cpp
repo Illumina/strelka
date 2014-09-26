@@ -53,7 +53,6 @@ blt_float_t
 get_dependent_eprob(const unsigned qscore,
                     const blt_float_t vexp)
 {
-
     static const blt_float_t dep_converge_prob(0.75);
 
     const blt_float_t eprob(qphred_to_error_prob(static_cast<int>(qscore)));
@@ -69,7 +68,6 @@ dependent_prob_cache::
 get_dependent_val(const unsigned qscore,
                   const blt_float_t vexp)
 {
-
     assert(qscore <= MAX_QSCORE);
     if (! _is_init[qscore])
     {
@@ -92,7 +90,6 @@ adjust_icalls_eprob(const blt_options& opt,
                     const snp_pos_info& pi,
                     std::vector<float>& dependent_eprob)
 {
-
     const unsigned ic_size(ic.size());
 
 #ifdef DEBUG_ADJUST
@@ -205,7 +202,6 @@ adjust_joint_eprob(const blt_options& opt,
                    std::vector<float>& dependent_eprob,
                    const bool is_dependent)
 {
-
     const unsigned n_calls(pi.calls.size());
     dependent_eprob.clear();
     for (unsigned i(0); i<n_calls; ++i)

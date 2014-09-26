@@ -52,6 +52,8 @@ operator<<(std::ostream& os, const avg_window_data& awd);
 
 struct starling_options : public blt_options
 {
+    starling_options() {}
+
     // report whether any type of indel-caller is running (including
     // checks from child class options):
     virtual
@@ -79,8 +81,6 @@ struct starling_options : public blt_options
         return max_indel_size;
     }
 
-    void set_isis_defaults();
-
     // parameters inherited from varling caller:
     //
     double bindel_diploid_theta = 0.0001;
@@ -90,8 +90,6 @@ struct starling_options : public blt_options
     bool is_bindel_diploid_file = false;
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
-//    bool is_simple_indel_error;
-//    double simple_indel_error;
 
     /// to contribute to a breakpoint likelihood, a read must have at least
     /// this many bases on each side of the breakpoint:
@@ -303,14 +301,9 @@ private:
 
 struct starling_read_counts : public blt_read_counts
 {
-    starling_read_counts() :
-        normal_indel_used(0),
-        normal_indel_intersect(0)
-    {}
-
     void
     report(std::ostream& os) const;
 
-    unsigned normal_indel_used;
-    unsigned normal_indel_intersect;
+    unsigned normal_indel_used = 0;
+    unsigned normal_indel_intersect = 0;
 };

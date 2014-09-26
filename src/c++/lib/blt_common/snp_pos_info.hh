@@ -126,6 +126,7 @@ struct snp_pos_info
         mq_ranksum.clear();
         baseq_ranksum.clear();
         read_pos_ranksum.clear();
+        altReadPos.clear();
     }
 
     template <typename T>
@@ -215,6 +216,14 @@ public:
     fastRanksum mq_ranksum;
     fastRanksum baseq_ranksum;
     fastRanksum read_pos_ranksum;
+
+    // for computing somatic cluster stats:
+    struct ReadPosInfo
+    {
+        uint16_t readPos;
+        uint16_t readPosLength;
+    };
+    std::vector<ReadPosInfo> altReadPos;
 };
 
 std::ostream& operator<<(std::ostream& os,const snp_pos_info& pci);

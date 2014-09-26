@@ -130,7 +130,6 @@ strelka_run(const strelka_options& opt)
 
         if       (current.itype == INPUT_TYPE::READ)   // handle reads from the primary mapper (as opposed to the local assembler)
         {
-
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
             // range by the bam reading functions

@@ -50,3 +50,18 @@ update_ranksums(
     posdata.mq_ranksum.add_observation(is_reference,static_cast<unsigned>(adjustedMapq));
     posdata.read_pos_ranksum.add_observation(is_reference,cycle);
 }
+
+
+void
+pos_basecall_buffer::
+update_read_pos_ranksum(
+    char refchar,
+    const pos_t pos,
+    const base_call& bc,
+    const unsigned read_pos)
+{
+    const bool is_reference(refchar==id_to_base(bc.base_id));
+
+    auto& posdata(_pdata.getRef(pos));
+    posdata.read_pos_ranksum.add_observation(is_reference,read_pos);
+}

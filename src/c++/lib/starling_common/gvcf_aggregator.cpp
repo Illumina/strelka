@@ -120,6 +120,7 @@ gvcf_aggregator(const starling_options& opt,
     , _site_buffer_size(0)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
+    , CM(_opt,_dopt)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -131,16 +132,6 @@ gvcf_aggregator(const starling_options& opt,
     }
 
     if (! opt.is_gvcf_output()) return;
-
-    // initialize calibration model
-    this->CM.dopt = &_dopt;
-    this->CM.opt = &_opt.gvcf;
-    this->CM.load_models(opt.calibration_models_filename);
-    if (static_cast<int>(opt.calibration_model.length())>0)
-    {
-        this->CM.set_model(opt.calibration_model);
-//        log_os << "Setting calimodel " << opt.calibration_model << "\n";
-    }
 
     assert(nullptr != _osptr);
     assert((nullptr !=_chrom) && (strlen(_chrom)>0));
@@ -525,7 +516,7 @@ write_site_record(const site_info& si) const
             }
 
             // TODO only report VQSR metrics if flag explicitly set, not for calibration model
-            if (_opt.is_compute_VQSRmetrics)
+            if (_opt.is_report_germline_VQSRmetrics)
             {
                 os << ';';
                 os << "MQ=" << si.MQ;

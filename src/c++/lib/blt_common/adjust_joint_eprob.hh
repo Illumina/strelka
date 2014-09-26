@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __ADJUST_JOINT_EPROB_HH
-#define __ADJUST_JOINT_EPROB_HH
+#pragma once
 
 #include "blt_common/blt_shared.hh"
 #include "blt_common/snp_pos_info.hh"
@@ -55,5 +53,3 @@ adjust_joint_eprob(const blt_options& opt,
                    const snp_pos_info& pi,
                    std::vector<float>& dependent_eprob,
                    const bool is_depenent);
-
-#endif

@@ -426,6 +426,16 @@ private:
         const unsigned cycle);
 
     void
+    update_somatic_features(
+        const pos_t pos,
+        const unsigned sample_no,
+        const bool is_teir1,
+        const base_call& bc,
+        const uint8_t mapq,
+        const uint16_t readPos,
+        const uint16_t readLength);
+
+    void
     insert_pos_basecall(const pos_t pos,
                         const unsigned sample_no,
                         const bool is_tier1,
@@ -441,7 +451,7 @@ private:
 
     void
     process_pos(const int stage_no,
-                const pos_t pos);
+                const pos_t pos) override;
 
     void
     load_read_in_depth_buffer(const read_segment& rseg,

@@ -38,10 +38,6 @@
 #include "blt_util/log.hh"
 #endif
 
-calibration_models::calibration_models()
-{
-}
-calibration_models::~calibration_models() {}
 
 int calibration_models::get_case_cutoff(CALIBRATION_MODEL::var_case my_case)
 {
@@ -190,6 +186,8 @@ calibration_models::load_chr_depth_stats()
 
 void calibration_models::set_model(const std::string& name)
 {
+    if (name.empty()) return;
+
     modelmap::iterator it = this->models.find(boost::to_upper_copy(name));
     assert("Unrecognized calibration model given using --scoring-model option in set_model" && it != this->models.end());
     this->load_chr_depth_stats();

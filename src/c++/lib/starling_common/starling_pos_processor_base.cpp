@@ -1127,6 +1127,31 @@ update_ranksum_and_mapq_count(
 
 void
 starling_pos_processor_base::
+update_somatic_features(
+    const pos_t pos,
+    const unsigned sample_no,
+    const bool is_tier1,
+    const base_call& bc,
+    const uint8_t mapq,
+    const uint16_t readPos,
+    const uint16_t readLength)
+{
+    if (! is_pos_reportable(pos)) return;
+    _stageman.validate_new_pos_value(pos,STAGE::get_pileup_stage_no(_client_opt));
+
+    auto& bcbuff(sample(sample_no).bc_buff);
+    bcbuff.insert_mapq_count(pos,mapq,mapq);
+
+    if (is_tier1 && (sample_no != 0) && (! bc.is_call_filter))
+    {
+        bcbuff.update_read_pos_ranksum(_ref.get_base(pos),pos,bc,readPos);
+        bcbuff.insert_alt_read_pos(pos,bc,readPos,readLength);
+    }
+}
+
+
+void
+starling_pos_processor_base::
 insert_pos_basecall(const pos_t pos,
                     const unsigned sample_no,
                     const bool is_tier1,
@@ -1635,10 +1660,14 @@ pileup_read_segment(const read_segment& rseg,
                                         is_tier1,
                                         bc);
 
-                    // update mapq and rank-sum metrics
-                    if (_client_opt.is_compute_VQSRmetrics || _client_opt.calibration_model!="default")
+                    // update extended feature metrics:
+                    if (_client_opt.is_compute_germline_VQSRmetrics())
                     {
                         update_ranksum_and_mapq_count(ref_pos,sample_no,bc,mapq,adjustedMapq,align_strand_read_pos);
+                    }
+                    else if(_client_opt.is_compute_somatic_VQSRmetrics)
+                    {
+                        update_somatic_features(ref_pos,sample_no,is_tier1,bc,mapq,read_pos,read_size);
                     }
 
                     if (_client_opt.is_compute_hapscore)
@@ -1646,7 +1675,6 @@ pileup_read_segment(const read_segment& rseg,
                         insert_hap_cand(ref_pos,sample_no,is_tier1,
                                         bseq,qual,read_pos);
                     }
-
                 }
                 catch (...)
                 {
@@ -1888,7 +1916,7 @@ process_pos_snp_single_sample_impl(
         }
 
         // do calculate VQSR metrics
-        if (_client_opt.is_compute_VQSRmetrics || _client_opt.calibration_model!="default")
+        if (_client_opt.is_compute_germline_VQSRmetrics())
         {
             _site_info.MQ 				= pi.get_rms_mq();
             _site_info.ReadPosRankSum 	= pi.get_read_pos_ranksum();

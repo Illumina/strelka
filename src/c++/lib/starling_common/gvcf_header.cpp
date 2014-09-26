@@ -183,7 +183,7 @@ finish_gvcf_header(const starling_options& opt,
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
 
     // ranksums
-    if (opt.is_compute_VQSRmetrics)
+    if (opt.is_report_germline_VQSRmetrics)
     {
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
         os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities.\">\n";

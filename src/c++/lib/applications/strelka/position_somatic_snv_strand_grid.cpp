@@ -36,9 +36,9 @@
 //#define SOMATIC_DEBUG
 
 constexpr blt_float_t one_third(1./3.);
-constexpr blt_float_t ln_one_third(std::log(one_third));
+static const blt_float_t ln_one_third(std::log(one_third));
 constexpr blt_float_t one_half(1./2.);
-constexpr blt_float_t ln_one_half(std::log(one_half));
+static const blt_float_t ln_one_half(std::log(one_half));
 
 
 
@@ -1362,29 +1362,6 @@ position_somatic_snv_call(
 }
 
 
-#if 0
-static
-void
-write_result_set(const result_set& rs,
-                 const unsigned ref_gt,
-                 std::ostream& os)
-{
-
-    os << rs.snv_qphred
-       << '\t' << rs.snv_from_ref_qphred
-       << '\t' << rs.snv_from_het_qphred
-       << '\t' << rs.snv_from_het_loh_qphred
-       << '\t' << rs.snv_from_het_nonloh_qphred
-       << '\t' << rs.snv_from_hom_qphred
-       << '\t' << rs.snv_from_anyhom_qphred
-       << '\t';
-    DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
-                             ref_gt,os);
-    os << '\t' << rs.max_gt_qphred;
-}
-#endif
-
-
 
 static
 void
@@ -1411,6 +1388,22 @@ write_vcf_sample_info(const blt_options& opt,
            << tier1_base_counts[b] << ','
            << tier2_base_counts[b];
     }
+}
+
+
+
+/// returns median, partially reorders elements in specified range
+///
+template <typename Iter>
+typename std::iterator_traits<Iter>::value_type
+median(
+    Iter begin,
+    Iter end)
+{
+    assert(begin != end);
+    const auto size(std::distance(begin,end));
+    std::nth_element(begin,begin+size/2, end);
+    return *(begin+size/2);
 }
 
 
@@ -1545,6 +1538,52 @@ write_vcf_somatic_snv_genotype_strand_grid(
             const unsigned n_mapq0(n1_epd.pi.n_mapq0+t1_epd.pi.n_mapq0);
 
             os << ";MQ0=" << n_mapq0;
+        }
+
+        {
+            // don't worry about efficiency for median calc right now:
+            bool isAltpos(false);
+            bool isAltmap(false);
+            uint16_t altpos=0;
+            uint16_t altmap=0;
+            if (! t1_epd.pi.altReadPos.empty())
+            {
+                const auto& apos(t1_epd.pi.altReadPos);
+                std::vector<uint16_t> readpos;
+                std::for_each(apos.begin(),apos.end(),
+                    [&] (const snp_pos_info::ReadPosInfo& r) { readpos.push_back(r.readPos); });
+                std::vector<uint16_t> readposcomp;
+                std::for_each(apos.begin(),apos.end(),
+                    [&] (const snp_pos_info::ReadPosInfo& r) { readposcomp.push_back(r.readPosLength-r.readPos); });
+
+                const auto pmedian(median(readpos.begin(),readpos.end()));
+                const auto lmedian(median(readposcomp.begin(),readposcomp.end()));
+
+                isAltpos=true;
+                altpos=std::min(pmedian,lmedian);
+
+                if (readpos.size() >= 3)
+                {
+                    std::for_each(readpos.begin(), readpos.end(),
+                        [&] (uint16_t& p) { return std::abs(p-pmedian); });
+
+                    isAltmap=true;
+                    altmap=median(readpos.begin(),readpos.end());
+                }
+            }
+
+            os << ";ALTPOS=";
+            if (isAltpos) os << altpos;
+            else          os << '.';
+
+            os << ";ALTMAP=";
+            if (isAltmap) os << altmap;
+            else          os << '.';
+        }
+
+        {
+            const double ReadPosRankSum = t1_epd.pi.read_pos_ranksum.get_u_stat();
+            os << "ReadPosRankSum=" << ReadPosRankSum;
         }
 
         os.copyfmt(tmp_os);
