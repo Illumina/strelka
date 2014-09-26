@@ -38,11 +38,12 @@ get_z_score(const int n1, const int n2, const double w1)
 
 double
 fastRanksum::
-get_raw_score() const{
+get_raw_score() const
+{
     double R2 = 0;
     int N2 = 0;
 
-    for (unsigned i=0;i<_obs.size();i++)
+    for (unsigned i=0; i<_obs.size(); i++)
     {
         if (_obs[i].empty()) continue;
         const int obs2 = _obs[i].B;
@@ -91,13 +92,14 @@ get_u_stat() const
 
 double
 fastRanksum::
-get_u_stat_uniform() const{
+get_u_stat_uniform() const
+{
     double R1 = 0;
     double R2 = 0;
     int N1 = 0;
     int N2 = 0;
     //loop over all observations
-    for (unsigned i=0;i<_obs.size();i++)
+    for (unsigned i=0; i<_obs.size(); i++)
     {
         if (_obs[i].empty()) continue;
         const int obs1 = _obs[i].A;

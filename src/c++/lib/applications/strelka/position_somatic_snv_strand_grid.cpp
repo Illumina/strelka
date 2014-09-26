@@ -1550,11 +1550,15 @@ write_vcf_somatic_snv_genotype_strand_grid(
             {
                 const auto& apos(t1_epd.pi.altReadPos);
                 std::vector<uint16_t> readpos;
-                std::for_each(apos.begin(),apos.end(),
-                    [&] (const snp_pos_info::ReadPosInfo& r) { readpos.push_back(r.readPos); });
+                for (const auto& r : apos)
+                {
+                    readpos.push_back(r.readPos);
+                }
                 std::vector<uint16_t> readposcomp;
-                std::for_each(apos.begin(),apos.end(),
-                    [&] (const snp_pos_info::ReadPosInfo& r) { readposcomp.push_back(r.readPosLength-r.readPos); });
+                for (const auto& r : apos)
+                {
+                    readposcomp.push_back(r.readPosLength-r.readPos);
+                }
 
                 const auto pmedian(median(readpos.begin(),readpos.end()));
                 const auto lmedian(median(readposcomp.begin(),readposcomp.end()));
@@ -1564,8 +1568,10 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
                 if (readpos.size() >= 3)
                 {
-                    std::for_each(readpos.begin(), readpos.end(),
-                        [&] (uint16_t& p) { return std::abs(p-pmedian); });
+                    for (auto& p : readpos)
+                    {
+                        p = std::abs(p-pmedian);
+                    }
 
                     isAltmap=true;
                     altmap=median(readpos.begin(),readpos.end());

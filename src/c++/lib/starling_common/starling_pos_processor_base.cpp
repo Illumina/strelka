@@ -1665,7 +1665,7 @@ pileup_read_segment(const read_segment& rseg,
                     {
                         update_ranksum_and_mapq_count(ref_pos,sample_no,bc,mapq,adjustedMapq,align_strand_read_pos);
                     }
-                    else if(_client_opt.is_compute_somatic_VQSRmetrics)
+                    else if (_client_opt.is_compute_somatic_VQSRmetrics)
                     {
                         update_somatic_features(ref_pos,sample_no,is_tier1,bc,mapq,read_pos,read_size);
                     }

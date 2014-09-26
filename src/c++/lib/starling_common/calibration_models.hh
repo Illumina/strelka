@@ -37,8 +37,8 @@ public:
     calibration_models(
         const starling_options& init_opt,
         const gvcf_deriv_options& init_dopt)
-      : opt(&init_opt.gvcf),
-        dopt(&init_dopt)
+        : opt(&init_opt.gvcf),
+          dopt(&init_dopt)
     {
         load_models(init_opt.calibration_models_filename);
         set_model(init_opt.calibration_model);

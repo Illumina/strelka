@@ -79,7 +79,8 @@ private:
         inc(const bool isA)
         {
             if (isA) A++; // case
-            else{
+            else
+            {
                 B++;
             }
         }
