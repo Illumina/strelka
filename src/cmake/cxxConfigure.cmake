@@ -99,6 +99,12 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     get_clang_version(compiler_version)
     test_min_compiler(${compiler_version} "3.2" "clang++")
     message (STATUS "using compiler: clang++ version ${compiler_version}")
+
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    get_compiler_version(compiler_version)
+    test_min_compiler(${compiler_version} "12.0" "icc")  # guestimate based on c++11 support documentation
+    message (STATUS "using compiler: Intel version ${compiler_version}")
+
 else ()
     message (STATUS "using compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif ()
@@ -107,11 +113,14 @@ endif ()
 #
 # set compile flags, and modify by compiler/version:
 #
-set (GNU_COMPAT_COMPILER ( (CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") ))
+set (GNU_COMPAT_COMPILER ( (CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")))
 
 # start with warning flags:
 if (GNU_COMPAT_COMPILER)
-    set (CXX_WARN_FLAGS "-Wall -Wextra -Wshadow -Wunused -Wpointer-arith -Winit-self -Wredundant-decls -pedantic -Wunused-parameter -Wundef -Wdisabled-optimization")
+    set (CXX_WARN_FLAGS "-Wall -Wextra -Wshadow -Wunused -Wpointer-arith -Winit-self -pedantic -Wunused-parameter -Wundef -Wdisabled-optimization")
+    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+        set (CXX_WARN_FLAGS "-Wredundant-decls")
+    endif ()
 
     if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wuninitialized")
@@ -155,6 +164,13 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Weverything -Wno-sign-conversion -Wno-weak-vtables -Wno-conversion -Wno-cast-align -Wno-padded -Wno-switch-enum -Wno-missing-noreturn -Wno-covered-switch-default -Wno-unreachable-code -Wno-global-constructors -Wno-exit-time-destructors")
     ### new disabled everything-warnings in clang 3.5 (or these might be c++11 warnings):
     # set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-c++98-compat -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-unused-member-function -Wno-documentation -Wno-float-equal")
+
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    # suppress errors in boost headers:
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -diag-disable 177,193,869,1599,3280")
+
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wunused-variable -Wpointer-arith -Wuninitialized")
+    #set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wmissing-prototypes -Wmissing-declarations -Wunused-variable -Wpointer-arith -Wuninitialized")
 endif()
 
 
@@ -230,8 +246,8 @@ if (GNU_COMPAT_COMPILER)
 
 endif()
 
-set(THIS_CXX_CONFIG_H_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib/common)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lib/common/config.h.in ${THIS_CXX_CONFIG_H_DIR}/config.h @ONLY)
+set(THIS_CXX_CONFIG_H_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lib/common/config.h.in ${THIS_CXX_CONFIG_H_DIR}/common/config.h @ONLY)
 
 
 #

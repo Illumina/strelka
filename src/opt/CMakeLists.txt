@@ -88,7 +88,7 @@ install(PROGRAMS "${BGZIP9_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 #
 # codemin
 #
-set(CODEMIN_PREFIX "CodeMin-1.0.2")
+set(CODEMIN_PREFIX "CodeMin-1.0.3")
 superset(CODEMIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CODEMIN_PREFIX}/include")
 set(CODEMIN_MARK "${CODEMIN_DIR}/minimize_1d.h")
 
