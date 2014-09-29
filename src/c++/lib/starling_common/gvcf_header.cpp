@@ -39,7 +39,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
                  calibration_models& CM)
 {
     using namespace VCF_FILTERS;
-    os << "##VariantQualityScoringModel=" << CM.model_name << "\n";
+    os << "##VariantQualityScoringModel=" << CM.get_model_name() << "\n";
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
     write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion");
 
