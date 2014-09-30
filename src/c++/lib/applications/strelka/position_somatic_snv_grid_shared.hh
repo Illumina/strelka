@@ -24,24 +24,17 @@
 
 struct somatic_snv_genotype_grid
 {
-    somatic_snv_genotype_grid()
-        : is_forced_output(false) {}
-
     typedef bool tier_t;
 
     struct result_set
     {
-        result_set()
-            : snv_qphred(0)
-            , snv_from_ntype_qphred(0)
-            , nonsomatic_qphred(0)
-        {}
-
         unsigned ntype;
         unsigned max_gt;
-        int snv_qphred;
-        int snv_from_ntype_qphred;
-        int nonsomatic_qphred;
+        int snv_qphred = 0;
+        int snv_from_ntype_qphred = 0;
+        int nonsomatic_qphred = 0;
+
+        double strandBias = 0;
     };
 
     bool
@@ -60,5 +53,5 @@ struct somatic_snv_genotype_grid
     tier_t snv_from_ntype_tier;
     unsigned ref_gt;
     result_set rs;
-    bool is_forced_output;
+    bool is_forced_output = false;
 };

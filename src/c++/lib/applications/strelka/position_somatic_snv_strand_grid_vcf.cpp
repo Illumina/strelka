@@ -17,27 +17,7 @@
 #include "position_somatic_snv_strand_grid_vcf.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "somatic_call_shared.hh"
-#if 0
 
-#include "blt_common/snp_util.hh"
-#include "blt_util/log.hh"
-#include "blt_util/math_util.hh"
-#include "blt_util/prob_util.hh"
-#include "blt_util/seq_util.hh"
-
-#include <cassert>
-#include <cmath>
-#include <cstdlib>
-
-#include <map>
-
-//#define SOMATIC_DEBUG
-
-constexpr blt_float_t one_third(1./3.);
-static const blt_float_t ln_one_third(std::log(one_third));
-constexpr blt_float_t one_half(1./2.);
-static const blt_float_t ln_one_half(std::log(one_half));
-#endif
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -269,6 +249,10 @@ write_vcf_somatic_snv_genotype_strand_grid(
         {
             const double ReadPosRankSum = t1_epd.pi.read_pos_ranksum.get_u_stat();
             os << ";ReadPosRankSum=" << ReadPosRankSum;
+        }
+
+        {
+            os << ";SNVSB=" << rs.strandBias;
         }
 
         os.copyfmt(tmp_os);

@@ -27,12 +27,15 @@
 #include <cmath>
 #include <cstdlib>
 
-//#include <fstream>
-//#include <iostream>
-//#include <iomanip>
 #include <map>
 
 //#define SOMATIC_DEBUG
+
+#ifdef SOMATIC_DEBUG
+#include <iostream>
+#include <iomanip>
+#endif
+
 
 constexpr blt_float_t one_third(1./3.);
 static const blt_float_t ln_one_third(std::log(one_third));
@@ -1008,6 +1011,49 @@ calculate_result_set_grid(
         }
 
         rs.nonsomatic_qphred=error_prob_to_qphred(1.-sgvcf_nonsomatic_sum);
+    }
+
+    constexpr bool is_compute_sb(true);
+    if(is_compute_sb)
+    {
+        // get ratio of strand bias vs. non-strand-bias version of max_gt, if max_gt does not correspond to a het state, then
+        // set sb to 0
+        unsigned normal_gt,tumor_gt;
+        DDIGT_SGRID::get_digt_grid_states(
+            rs.max_gt,
+            normal_gt,
+            tumor_gt);
+
+        const unsigned het_count(DIGT_SGRID::get_het_count(tumor_gt));
+
+        if((het_count > 0) && (het_count < DIGT_SGRID::STRAND_COUNT))
+        {
+#if 0
+            const bool is_strand_state(DIGT_SGRID::is_strand_state(tumor_gt));
+
+            unsigned symm_tumor_gt(0);
+            unsigned strand_tumor_gt(0);
+            if (! is_strand_state)
+            {
+                strand_tumor_gt=DIGT_SGRID::toggle_strand_state(tumor_gt, ref_base);
+                symm_tumor_gt=tumor_gt;
+            }
+            else
+            {
+                strand_tumor_gt=tumor_gt;
+                symm_tumor_gt=DIGT_SGRID::toggle_strand_state(tumor_gt, ref_base);
+            }
+            rs.strandBias = tumor_lhood[strand_tumor_gt] - tumor_lhood[symm_tumor_gt];+
+#endif
+
+            const blt_float_t symm_lhood(*std::max_element(tumor_lhood+N_BASE, tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE));
+            const blt_float_t strand_lhood(*std::max_element(tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE, tumor_lhood+DIGT_SGRID::SIZE));
+            rs.strandBias = (strand_lhood - symm_lhood);
+        }
+        else
+        {
+            rs.strandBias = 0.;
+        }
     }
 }
 

@@ -17,24 +17,6 @@
 #include "position_somatic_snv_strand_grid_states.hh"
 #include "blt_util/digt.hh"
 
-#if 0
-#include "somatic_call_shared.hh"
-#include "strelka_vcf_locus_info.hh"
-
-#include "blt_common/snp_util.hh"
-#include "blt_util/log.hh"
-#include "blt_util/math_util.hh"
-#include "blt_util/prob_util.hh"
-#include "blt_util/seq_util.hh"
-
-#include <cassert>
-#include <cmath>
-#include <cstdlib>
-
-#include <fstream>
-#include <iomanip>
-#include <map>
-#endif
 #include <iostream>
 
 
@@ -65,22 +47,24 @@ strand_state_tables()
 {
     for (unsigned ref(0); ref<N_BASE; ++ref)
     {
-        unsigned strand_state(0);
+        unsigned local_strand_state(0);
         for (unsigned alt(0); alt<N_BASE; ++alt)
         {
             if (alt==ref) continue;
-            digt_state[ref][strand_state] = 0;
+            bool is_found(false);
             for (unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt)
             {
                 if (DIGT::expect2(ref,gt) &&
                     DIGT::expect2(alt,gt))
                 {
-                    digt_state[ref][strand_state] = gt;
+                    digt_state[ref][local_strand_state] = gt;
+                    strand_state[ref][gt] = local_strand_state;
+                    is_found=true;
                     break;
                 }
             }
-            assert(digt_state[ref][strand_state] != 0);
-            strand_state++;
+            assert(is_found);
+            local_strand_state++;
         }
     }
 }

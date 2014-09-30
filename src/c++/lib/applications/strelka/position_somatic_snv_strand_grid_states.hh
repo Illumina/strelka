@@ -21,25 +21,11 @@
 
 #pragma once
 
-#if 0
-#include "extended_pos_data.hh"
-#include "position_somatic_snv_grid_shared.hh"
-#include "strelka_shared.hh"
-
-#include "blt_common/snp_pos_info.hh"
-#include "blt_common/position_snp_call_pprob_digt.hh"
-#include "blt_util/qscore.hh"
-
-#include <boost/utility.hpp>
-#endif
-
 #include "blt_util/digt.hh"
 #include "blt_util/seq_util.hh"
 
 #include <iosfwd>
 #include <vector>
-
-//#define SOMATIC_DEBUG
 
 
 namespace DIGT_SGRID
@@ -54,6 +40,21 @@ namespace DIGT_SGRID
 // allele. The "STRAND_STATE_SIZE" appended to the PRESTAND_SIZE
 // represents these additional strand-specific error states.
 //
+// Full layout:
+//
+// N_BASE - homozygous genotypes:
+// AA, CC, GG, TT
+//
+// HET_STATE_SIZE - number of het types x number of frequency levels:
+// AC 10%, AG 10%, AT 10%, CG 10%...
+// AC 20%...
+//
+// STRAND_STATE_SIZE - strand bias states:
+// REF+1 10%, REF+2 10%, REF+3 10%
+// REF+1 20%...
+//
+
+
 enum constants { HET_RES = 4,
                  HET_COUNT = HET_RES*2+1,
                  HET_SIZE = DIGT::SIZE-N_BASE,
@@ -66,19 +67,23 @@ enum constants { HET_RES = 4,
 
 enum index_t { SIZE = PRESTRAND_SIZE+STRAND_STATE_SIZE };
 
-// generates fast lookup-table to translate between stranded ref-only
-// het states and DIGT het states:
-//
+/// generates fast lookup-table to translate between stranded ref-only
+/// het states and DIGT het states:
+///
 struct strand_state_tables
 {
     strand_state_tables();
 
+    // translate from stranded types to digt types:
     unsigned digt_state[N_BASE][STRAND_SIZE];
+
+    // translate from digt types to strand types:
+    unsigned strand_state[N_BASE][HET_SIZE];
 };
 
 extern const strand_state_tables stables;
 
-/// return mixture frequency index (ie. 1= 10% 2= 20%, etc...)
+/// return mixture frequency index (ie. 0= 10% 1= 20%, etc...)
 inline
 unsigned
 get_het_count(const unsigned state)
@@ -116,22 +121,30 @@ get_digt_state(const unsigned state,
     return stables.digt_state[ref_base][get_strand_state(state)];
 }
 
+
+// convert between strand symmetric and corresponding strand bias states
+//
 inline
 unsigned
-toggle_strand_state(const unsigned state)
+toggle_strand_state(
+    const unsigned state,
+    const unsigned ref_base)
 {
     const bool is_strand_state(DIGT_SGRID::is_strand_state(state));
-    const unsigned het_count(DIGT_SGRID::get_het_count(state));
+    unsigned het_count(DIGT_SGRID::get_het_count(state));
 
     if (het_count==0) return state;
 
     if (! is_strand_state)
     {
-
+        if (het_count >= STRAND_COUNT) het_count = STRAND_COUNT-1;
+        const unsigned digt_state(get_digt_state(state,ref_base));
+        return (PRESTRAND_SIZE + (het_count*STRAND_SIZE) + stables.strand_state[ref_base][digt_state]);
     }
     else
     {
-        
+        const unsigned strand_state(get_strand_state(state));
+        return (N_BASE + (het_count*HET_SIZE) + stables.digt_state[ref_base][strand_state]);
     }
 }
 
@@ -148,6 +161,7 @@ write_full_state(
     const DIGT_SGRID::index_t gt,
     const unsigned ref_gt,
     std::ostream& os);
+
 }
 
 
