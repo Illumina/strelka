@@ -22,6 +22,7 @@
 #include <sstream>
 
 //#define DEBUG_ID
+#define FORCED_GT
 
 
 void
@@ -64,6 +65,12 @@ indel_data::add_observation(const indel_observation_data& obs_data,
     log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
     log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
 #endif
+
+#ifdef FORCED_GT
+    log_os << "Forced adding: " << _ik;
+    log_os << "Forced adding: " << obs_data;
+#endif
+
 
     if (! is_shared)
     {
