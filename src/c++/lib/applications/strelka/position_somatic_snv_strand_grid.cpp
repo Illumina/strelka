@@ -16,7 +16,6 @@
 
 #include "position_somatic_snv_strand_grid.hh"
 #include "somatic_call_shared.hh"
-#include "strelka_vcf_locus_info.hh"
 
 #include "blt_common/snp_util.hh"
 #include "blt_util/log.hh"
@@ -28,9 +27,9 @@
 #include <cmath>
 #include <cstdlib>
 
-#include <fstream>
-#include <iostream>
-#include <iomanip>
+//#include <fstream>
+//#include <iostream>
+//#include <iomanip>
 #include <map>
 
 //#define SOMATIC_DEBUG
@@ -39,133 +38,6 @@ constexpr blt_float_t one_third(1./3.);
 static const blt_float_t ln_one_third(std::log(one_third));
 constexpr blt_float_t one_half(1./2.);
 static const blt_float_t ln_one_half(std::log(one_half));
-
-
-
-
-namespace DIGT_SGRID
-{
-
-void
-write_state(const DIGT_SGRID::index_t gt,
-            const unsigned ref_gt,
-            std::ostream& os)
-{
-    os << DIGT::label(DIGT_SGRID::get_digt_state(gt,ref_gt));
-}
-
-void
-write_full_state(const DIGT_SGRID::index_t gt,
-                 const unsigned ref_gt,
-                 std::ostream& os)
-{
-
-    write_state(gt,ref_gt,os);
-    os << "_" << get_het_count(gt);
-    if (is_strand_state(gt)) os << "_strand";
-}
-
-strand_state_tables::
-strand_state_tables()
-{
-    for (unsigned ref(0); ref<N_BASE; ++ref)
-    {
-        unsigned strand_state(0);
-        for (unsigned alt(0); alt<N_BASE; ++alt)
-        {
-            if (alt==ref) continue;
-            digt_state[ref][strand_state] = 0;
-            for (unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt)
-            {
-                if (DIGT::expect2(ref,gt) &&
-                    DIGT::expect2(alt,gt))
-                {
-                    digt_state[ref][strand_state] = gt;
-                    break;
-                }
-            }
-            assert(digt_state[ref][strand_state] != 0);
-            strand_state++;
-        }
-    }
-}
-
-const strand_state_tables stables;
-}
-
-
-
-namespace DDIGT_SGRID
-{
-
-void
-write_state(const DDIGT_SGRID::index_t dgt,
-            const unsigned ref_gt,
-            std::ostream& os)
-{
-    unsigned normal_gt;
-    unsigned tumor_gt;
-    DDIGT_SGRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
-
-    DIGT_SGRID::write_state(static_cast<DIGT_SGRID::index_t>(normal_gt),ref_gt,os);
-    os << "->";
-    DIGT_SGRID::write_state(static_cast<DIGT_SGRID::index_t>(tumor_gt),ref_gt,os);
-}
-
-void
-write_full_state(const DDIGT_SGRID::index_t dgt,
-                 const unsigned ref_gt,
-                 std::ostream& os)
-{
-    unsigned normal_gt;
-    unsigned tumor_gt;
-    DDIGT_SGRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
-
-    DIGT_SGRID::write_full_state(static_cast<DIGT_SGRID::index_t>(normal_gt),ref_gt,os);
-    os << "->";
-    DIGT_SGRID::write_full_state(static_cast<DIGT_SGRID::index_t>(tumor_gt),ref_gt,os);
-}
-
-
-void
-write_alt_alleles(const DDIGT_SGRID::index_t dgt,
-                  const unsigned ref_gt,
-                  std::ostream& os)
-{
-    unsigned normal_gt;
-    unsigned tumor_gt;
-    DDIGT_SGRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
-
-    unsigned normal_digt(DIGT_SGRID::get_digt_state(normal_gt,ref_gt));
-    unsigned tumor_digt(DIGT_SGRID::get_digt_state(tumor_gt,ref_gt));
-
-    bool is_print(false);
-    for (unsigned b(0); b<N_BASE; ++b)
-    {
-        if (b==ref_gt) continue;
-        if (DIGT::expect2(b,normal_digt) ||
-            DIGT::expect2(b,tumor_digt))
-        {
-            if (is_print) os << ",";
-            os << id_to_base(b);
-            is_print=true;
-        }
-    }
-    if (! is_print) os << ".";
-}
-
-is_nonsom_maker_t::
-is_nonsom_maker_t()
-    : val(SIZE,false)
-{
-    for (unsigned gt(0); gt<DIGT_SGRID::SIZE; ++gt)
-    {
-        val[get_state(gt,gt)] = true;
-    }
-}
-
-const is_nonsom_maker_t is_nonsom;
-}
 
 
 
@@ -573,7 +445,7 @@ get_diploid_gt_lhood_spi(const blt_options& opt,
     }
 
     // het bias here refers to an expanded frequency range for the
-    // heterozygous state, refered to as the myrax snp calling with in
+    // heterozygous state, referred to as the myrax snp calling with in
     // single-sample analysis and not currently used for somatic
     // calls (as of strelka proto3/4)
     //
@@ -640,12 +512,13 @@ get_diploid_het_grid_lhood_spi(const snp_pos_info& pi,
 //
 static
 void
-get_strand_ratio_lhood_spi(const snp_pos_info& pi,
-                           const unsigned ref_gt,
-                           const blt_float_t het_ratio,
-                           const unsigned het_ratio_index,
-                           het_ratio_cache<2>& hrcache,
-                           blt_float_t* lhood)
+get_strand_ratio_lhood_spi(
+    const snp_pos_info& pi,
+    const unsigned ref_gt,
+    const blt_float_t het_ratio,
+    const unsigned het_ratio_index,
+    het_ratio_cache<2>& hrcache,
+    blt_float_t* lhood)
 {
     // het_ratio is the expected allele frequency of noise on the
     // noise-strand, or "on-strand" below. All possible ratio values
@@ -673,12 +546,15 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
         lhood_rev[i] = 0;
     }
 
-    static const unsigned n_strand_het_axes(3);
+    static const unsigned n_strand_het_axes(DIGT_SGRID::STRAND_SIZE);
 
     for (const base_call& bc : pi.calls)
     {
         std::pair<bool,cache_val<2>*> ret(hrcache.get_val(bc.get_qscore(),het_ratio_index));
         cache_val<2>& cv(*ret.second);
+
+        // compute results only if they aren't already cached:
+        //
         if (! ret.first)
         {
             const blt_float_t eprob(bc.error_prob());
@@ -695,7 +571,6 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
 
         if (obs_id==ref_gt)
         {
-            //const double val_onstr(std::log((ceprob)*chet_ratio+((eprob)*one_third)*het_ratio));
             const blt_float_t val_off_strand(bc.ln_comp_error_prob());
             const blt_float_t val_fwd(bc.is_fwd_strand ? cv.val[0] : val_off_strand);
             const blt_float_t val_rev(bc.is_fwd_strand ? val_off_strand : cv.val[0]);
@@ -707,7 +582,6 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
         }
         else
         {
-            //const double val_onstr(std::log((ceprob)*het_ratio+((eprob)*one_third)*chet_ratio));
             const blt_float_t val_off_strand(bc.ln_error_prob()+ln_one_third);
             const blt_float_t val_fwd(bc.is_fwd_strand ? cv.val[1] : val_off_strand);
             const blt_float_t val_rev(bc.is_fwd_strand ? val_off_strand : cv.val[1]);
@@ -743,9 +617,10 @@ get_strand_ratio_lhood_spi(const snp_pos_info& pi,
 //
 static
 void
-get_diploid_strand_grid_lhood_spi(const snp_pos_info& pi,
-                                  const unsigned ref_gt,
-                                  blt_float_t* const lhood)
+get_diploid_strand_grid_lhood_spi(
+    const snp_pos_info& pi,
+    const unsigned ref_gt,
+    blt_float_t* const lhood)
 {
     // TODO: make this thread safe...
     //
@@ -969,7 +844,7 @@ calculate_result_set_grid(
                     "somatic snv full prior");
 #endif
 
-    // intentionally use higher float res for this structure:
+    // intentionally use higher float res (and heap alloc) for this structure:
     std::vector<double> pprob(DDIGT_SGRID::SIZE);
 
     // mult by prior distro to get unnormalized pprob for states in
@@ -1193,10 +1068,10 @@ position_somatic_snv_call(
 
         // get likelihood of each genotype
         //
-        static const bool is_normal_het_bias(false);
-        static const blt_float_t normal_het_bias(0.0);
-        static const bool is_tumor_het_bias(false);
-        static const blt_float_t tumor_het_bias(0.0);
+        static constexpr bool is_normal_het_bias(false);
+        static constexpr blt_float_t normal_het_bias(0.0);
+        static constexpr bool is_tumor_het_bias(false);
+        static constexpr blt_float_t tumor_het_bias(0.0);
 
         const extended_pos_info& nepi(is_include_tier2 ? *normal_epi_t2_ptr : normal_epi );
         const extended_pos_info& tepi(is_include_tier2 ? *tumor_epi_t2_ptr : tumor_epi );
@@ -1359,247 +1234,4 @@ position_somatic_snv_call(
 
     /// somatic gVCF, always use tier1 to keep things simple:
     sgt.rs.nonsomatic_qphred = tier_rs[0].nonsomatic_qphred;
-}
-
-
-
-static
-void
-write_vcf_sample_info(const blt_options& opt,
-                      const extended_pos_data& tier1_epd,
-                      const extended_pos_data& tier2_epd,
-                      std::ostream& os)
-{
-    os << tier1_epd.n_calls
-       << ':'
-       << tier1_epd.n_unused_calls
-       << ':'
-       << tier1_epd.pi.n_spandel
-       << ':'
-       << tier1_epd.pi.n_submapped;
-
-    std::array<unsigned,N_BASE> tier1_base_counts;
-    std::array<unsigned,N_BASE> tier2_base_counts;
-    tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-    tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
-    for (unsigned b(0); b<N_BASE; ++b)
-    {
-        os << ':'
-           << tier1_base_counts[b] << ','
-           << tier2_base_counts[b];
-    }
-}
-
-
-
-/// returns median, partially reorders elements in specified range
-///
-template <typename Iter>
-typename std::iterator_traits<Iter>::value_type
-median(
-    Iter begin,
-    Iter end)
-{
-    assert(begin != end);
-    const auto size(std::distance(begin,end));
-    std::nth_element(begin,begin+size/2, end);
-    return *(begin+size/2);
-}
-
-
-
-static
-double
-safeFrac(const unsigned num, const unsigned denom)
-{
-    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
-}
-
-
-
-void
-write_vcf_somatic_snv_genotype_strand_grid(
-    const strelka_options& opt,
-    const strelka_deriv_options& dopt,
-    const somatic_snv_genotype_grid& sgt,
-    const bool is_write_nqss,
-    const extended_pos_data& n1_epd,
-    const extended_pos_data& t1_epd,
-    const extended_pos_data& n2_epd,
-    const extended_pos_data& t2_epd,
-    std::ostream& os)
-{
-    const result_set& rs(sgt.rs);
-
-    strelka_shared_modifiers smod;
-    {
-        // compute all site filters:
-        const unsigned normalDP(n1_epd.n_calls);
-        const unsigned tumorDP(t1_epd.n_calls);
-
-        if (dopt.sfilter.is_max_depth())
-        {
-            if (normalDP > dopt.sfilter.max_depth)
-            {
-                smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
-            }
-        }
-
-        {
-            const unsigned normalFDP(n1_epd.n_unused_calls);
-            const unsigned tumorFDP(t1_epd.n_unused_calls);
-
-            const double normalFilt(safeFrac(normalFDP,normalDP));
-            const double tumorFilt(safeFrac(tumorFDP,tumorDP));
-
-            if ((normalFilt >=opt.sfilter.snv_max_filtered_basecall_frac) ||
-                (tumorFilt >=opt.sfilter.snv_max_filtered_basecall_frac))
-            {
-                smod.set_filter(STRELKA_VCF_FILTERS::BCNoise);
-            }
-        }
-
-        {
-            const unsigned normalSDP(n1_epd.pi.n_spandel);
-            const unsigned tumorSDP(t1_epd.pi.n_spandel);
-            const unsigned normalSpanTot(normalDP + normalSDP);
-            const unsigned tumorSpanTot(tumorDP + tumorSDP);
-
-            const double normalSpanDelFrac(safeFrac(normalSDP, normalSpanTot));
-            const double tumorSpanDelFrac(safeFrac(tumorSDP, tumorSpanTot));
-
-            if ((normalSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac) ||
-                (tumorSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac))
-            {
-                smod.set_filter(STRELKA_VCF_FILTERS::SpanDel);
-            }
-        }
-
-        if ((rs.ntype != NTYPE::REF) || (rs.snv_from_ntype_qphred < opt.sfilter.snv_min_qss_ref))
-        {
-            smod.set_filter(STRELKA_VCF_FILTERS::QSS_ref);
-        }
-    }
-
-    //REF:
-    os << '\t' << n1_epd.pi.ref_base
-       //ALT:
-       << "\t";
-    DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
-                                   sgt.ref_gt,os);
-    //QUAL:
-    os << "\t.";
-
-    //FILTER:
-    os << "\t";
-    smod.write_filters(os);
-
-    //INFO:
-    os << '\t'
-       << "SOMATIC"
-       << ";QSS=" << rs.snv_qphred;
-
-    if (is_write_nqss)
-    {
-        os << ";NQSS=" << rs.nonsomatic_qphred;
-    }
-
-    os << ";TQSS=" << (sgt.snv_tier+1)
-       << ";NT=" << NTYPE::label(rs.ntype)
-       << ";QSS_NT=" << rs.snv_from_ntype_qphred
-       << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1)
-       << ";SGT=";
-    DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
-                             sgt.ref_gt,os);
-
-    {
-        std::ofstream tmp_os;
-        tmp_os.copyfmt(os);
-        os << std::fixed << std::setprecision(2);
-
-        {
-            // m_mapq includes all calls, even from reads below the mapq threshold:
-            const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
-            os << ";DP=" << n_mapq;
-        }
-
-        {
-            const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
-            const double cumm_mapq2(n1_epd.pi.cumm_mapq + t1_epd.pi.cumm_mapq);
-
-            os << ";MQ=" << std::sqrt(cumm_mapq2/n_mapq);
-        }
-
-        {
-            const unsigned n_mapq0(n1_epd.pi.n_mapq0+t1_epd.pi.n_mapq0);
-
-            os << ";MQ0=" << n_mapq0;
-        }
-
-        {
-            // don't worry about efficiency for median calc right now:
-            bool isAltpos(false);
-            bool isAltmap(false);
-            uint16_t altpos=0;
-            uint16_t altmap=0;
-            if (! t1_epd.pi.altReadPos.empty())
-            {
-                const auto& apos(t1_epd.pi.altReadPos);
-                std::vector<uint16_t> readpos;
-                for (const auto& r : apos)
-                {
-                    readpos.push_back(r.readPos);
-                }
-                std::vector<uint16_t> readposcomp;
-                for (const auto& r : apos)
-                {
-                    readposcomp.push_back(r.readPosLength-r.readPos);
-                }
-
-                const auto pmedian(median(readpos.begin(),readpos.end()));
-                const auto lmedian(median(readposcomp.begin(),readposcomp.end()));
-
-                isAltpos=true;
-                altpos=std::min(pmedian,lmedian);
-
-                if (readpos.size() >= 3)
-                {
-                    for (auto& p : readpos)
-                    {
-                        p = std::abs(p-pmedian);
-                    }
-
-                    isAltmap=true;
-                    altmap=median(readpos.begin(),readpos.end());
-                }
-            }
-
-            os << ";ALTPOS=";
-            if (isAltpos) os << altpos;
-            else          os << '.';
-
-            os << ";ALTMAP=";
-            if (isAltmap) os << altmap;
-            else          os << '.';
-        }
-
-        {
-            const double ReadPosRankSum = t1_epd.pi.read_pos_ranksum.get_u_stat();
-            os << ";ReadPosRankSum=" << ReadPosRankSum;
-        }
-
-        os.copyfmt(tmp_os);
-    }
-
-    //FORMAT:
-    os << '\t'
-       << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";
-
-    // normal sample info:
-    os << "\t";
-    write_vcf_sample_info(opt,n1_epd,n2_epd,os);
-
-    // tumor sample info:
-    os << "\t";
-    write_vcf_sample_info(opt,t1_epd,t2_epd,os);
 }

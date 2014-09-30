@@ -21,6 +21,7 @@
 
 
 #include "position_somatic_snv_strand_grid.hh"
+#include "position_somatic_snv_strand_grid_vcf.hh"
 #include "strelka_sample_type.hh"
 #include "strelka_pile_test_run.hh"
 

@@ -261,7 +261,6 @@ get_diploid_gt_lhood(const blt_options& opt,
                      const bool is_strand_specific,
                      const bool is_ss_fwd)
 {
-
     // get likelihood of each genotype
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt) lhood[gt] = 0.;
 
