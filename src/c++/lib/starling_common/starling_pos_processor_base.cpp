@@ -1230,7 +1230,7 @@ process_pos_indel_single_sample(const pos_t pos,
         const indel_data& id(get_indel_data(it));
         const bool forcedOutput(id.is_forced_output);
         const bool zeroCoverage(id.read_path_lnp.empty());
-        if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id))
+        if (!sif.indel_sync().is_candidate_indel(_client_opt,ik,id) && !forcedOutput)
         {
 #ifdef DEBUG_FORCED_GT
         log_os << "FORCED_ALL: skipped " << ik;

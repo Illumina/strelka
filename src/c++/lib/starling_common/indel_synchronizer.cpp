@@ -105,7 +105,7 @@ is_candidate_indel_int(const starling_options& opt,
     bool is_external_candidate=false;
     for (unsigned i(0); i<isds; ++i)
     {
-        if ((idsp[i]->is_external_candidate) || (idsp[i]->is_forced_output))
+        if (idsp[i]->is_external_candidate)
         {
             is_external_candidate=true;
             break;
