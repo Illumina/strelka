@@ -315,7 +315,7 @@ add_indel(const pos_t pos,
 #ifdef DEBUG_FORCED_GT
 	if (dindel.is_forced_output)
 	{
-		log_os << "FORCED: " << "Start processing the indel... << ik";
+		log_os << "FORCED: " << "Start processing the indel... " << ik;
 	}
 #endif
 
