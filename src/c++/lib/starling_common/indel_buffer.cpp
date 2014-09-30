@@ -84,7 +84,7 @@ insert_indel(const indel_observation& obs,
     if (i == _idata.end())
     {
 #ifdef FORCED_GT
-    	log_os << "Forced inserting: Add observation at the end. isShared=" << is_shared << "\n";
+    	log_os << "Forced inserting: Add observation at the end. \n";
 #endif
         indel_data id(obs.key);
         id.add_observation(obs.data,is_shared,is_repeat_obs);
@@ -93,7 +93,7 @@ insert_indel(const indel_observation& obs,
     }
 
 #ifdef FORCED_GT
-    	log_os << "Forced inserting: Add observation at existing buffer. isShared=" << is_shared << "\n";
+    	log_os << "Forced inserting: Add observation at existing buffer. \n";
 #endif
     indel_data& id(get_indel_data(i));
     id.add_observation(obs.data,is_shared,is_repeat_obs);

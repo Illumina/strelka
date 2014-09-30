@@ -97,6 +97,11 @@ indel_data::add_observation_core(const indel_observation_data& obs_data,
     log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
 #endif
 
+#ifdef FORCED_GT
+    log_os << "Forced adding core: " << _ik;
+    log_os << "Forced adding core: is_external=" << obs_data.is_external_candidate << " is_forced=" << obs_data.is_forced_output << "\n";
+#endif
+
     is_external_candidate=obs_data.is_external_candidate;
     is_forced_output=obs_data.is_forced_output;
 

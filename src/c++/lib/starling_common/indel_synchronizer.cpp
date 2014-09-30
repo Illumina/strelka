@@ -53,7 +53,7 @@ insert_indel(const indel_observation& obs)
     bool is_synced_sample(false);
     bool is_repeat_obs(false);
 #ifdef FORCED_GT
-    log_os << "Forced inserting: sampleOrder=" << _sample_order << "isShared=" << is_synced_sample << "\n";
+    log_os << "Forced inserting: sample_order=" << _sample_order << " is_shared=" << is_synced_sample << " is_forced=" << obs.data.is_forced_output << "\n";
 #endif
     const bool is_novel(ibuff(_sample_order).insert_indel(obs,is_synced_sample,is_repeat_obs));
 
@@ -64,7 +64,7 @@ insert_indel(const indel_observation& obs)
     {
         if (i == _sample_order) continue;
 #ifdef FORCED_GT
-    log_os << "Forced inserting: sampleOrder=" << i << "isShared=" << is_synced_sample << "\n";
+    log_os << "Forced inserting: sample_order=" << _sample_order << " is_shared=" << is_synced_sample << " is_forced=" << obs.data.is_forced_output << "\n";
 #endif
         ibuff(i).insert_indel(obs,is_synced_sample,is_repeat_obs);
     }
