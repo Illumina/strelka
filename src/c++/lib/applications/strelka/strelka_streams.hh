@@ -31,7 +31,8 @@ struct strelka_streams : public starling_streams_base
         const strelka_options& opt,
         const strelka_deriv_options& dopt,
         const prog_info& pinfo,
-        const bam_header_t* const bam_header);
+        const bam_header_t* const bam_header,
+        const strelka_sample_info& ssi);
 
     std::ostream*
     somatic_snv_osptr() const

@@ -75,13 +75,17 @@ struct strelka_sample_info : public sample_info
         return STRELKA_SAMPLE_TYPE::SIZE;
     }
 
-    const char* get_label(const unsigned i) const override
+    const char*
+    get_label(
+        const unsigned i) const override
     {
         return STRELKA_SAMPLE_TYPE::get_label(i);
     }
 
-    const char* get_prefix(const unsigned i,
-                           const bool is_tier1) const override
+    const char*
+    get_prefix(
+        const unsigned i,
+        const bool is_tier1) const override
     {
         using namespace STRELKA_SAMPLE_TYPE;
 

@@ -30,8 +30,6 @@
 #include <sstream>
 
 
-const strelka_sample_info ssi;
-
 /// add vcf filter tags shared by all vcf types:
 static
 void
@@ -71,7 +69,8 @@ strelka_streams(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const prog_info& pinfo,
-    const bam_header_t* const header)
+    const bam_header_t* const header,
+    const strelka_sample_info& ssi)
     : base_t(opt,pinfo,ssi)
 {
     {

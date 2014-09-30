@@ -84,7 +84,8 @@ strelka_run(const strelka_options& opt)
         }
     }
 
-    strelka_streams client_io(opt, dopt, pinfo,normal_read_stream.get_header());
+    const strelka_sample_info ssi;
+    strelka_streams client_io(opt, dopt, pinfo,normal_read_stream.get_header(),ssi);
     strelka_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
@@ -140,7 +141,7 @@ strelka_run(const strelka_options& opt)
 
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
-            const bam_streamer* streamptr(NULL);
+            const bam_streamer* streamptr(nullptr);
             if        (current.sample_no == STRELKA_SAMPLE_TYPE::NORMAL)
             {
                 streamptr = &normal_read_stream;
