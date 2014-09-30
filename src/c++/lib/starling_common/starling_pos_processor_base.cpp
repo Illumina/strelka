@@ -1233,7 +1233,7 @@ process_pos_indel_single_sample(const pos_t pos,
         if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id))
         {
 #ifdef DEBUG_FORCED_GT
-        log_os << "FORCED_ALL: skipped" << ik;
+        log_os << "FORCED_ALL: skipped " << ik;
 #endif
         	continue;
         }
