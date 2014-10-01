@@ -46,7 +46,7 @@ struct pos_processor_base
         if (_is_skip_process_pos)
         {
 #ifdef FORCED_GT
-        	std::cerr << "Forced process pos base: pos=" << pos << "skipped. \n";
+        	std::cerr << "Forced process pos base: pos=" << pos << " skipped. \n";
 #endif
         	return;
         }
