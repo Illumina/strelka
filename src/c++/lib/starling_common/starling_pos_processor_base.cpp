@@ -1007,7 +1007,12 @@ process_pos(const int stage_no,
         {
             if (! _client_opt.is_write_candidate_indels_only)
             {
-                if (is_pos_reportable(pos))
+#ifdef DEBUG_FORCED_GT
+            	log_os << "Forced process pos: post_align pos=" << pos
+            		   << " is_reportable=" << is_pos_reportable(pos) << "\n";
+#endif
+
+            	if (is_pos_reportable(pos))
                 {
 
                     process_pos_variants(pos);

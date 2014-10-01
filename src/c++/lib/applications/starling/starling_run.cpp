@@ -137,7 +137,7 @@ starling_run(const starling_options& opt)
         else if (current.itype == INPUT_TYPE::FORCED_OUTPUT)     // process forced genotype tests from vcf file(s)
         {
             const vcf_record& vcf_variant(*(foutput_stream[current.get_order()]->get_record_ptr()));
-            if       (vcf_variant.is_indel())
+            if (vcf_variant.is_indel())
             {
                 static const unsigned sample_no(0);
                 static const bool is_forced_output(true);
