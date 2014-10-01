@@ -19,6 +19,7 @@
 
 #include "blt_util/blt_types.hh"
 
+#include <iostream>
 #define FORCED_GT
 
 
@@ -40,12 +41,12 @@ struct pos_processor_base
                       const pos_t pos)
     {
 #ifdef FORCED_GT
-    	log_os << "Forced process pos base: pos=" << pos << "\n";
+    	std::cerr << "Forced process pos base: pos=" << pos << "\n";
 #endif
         if (_is_skip_process_pos)
         {
 #ifdef FORCED_GT
-    	log_os << "Forced process pos base: pos=" << pos << "skipped. \n";
+        	std::cerr << "Forced process pos base: pos=" << pos << "skipped. \n";
 #endif
         	return;
         }
