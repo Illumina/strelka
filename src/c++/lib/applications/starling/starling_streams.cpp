@@ -19,17 +19,14 @@
 #include <iostream>
 
 
-const sample_info starling_sample_info;
-
-
 
 starling_streams::
 starling_streams(const starling_options& opt,
                  const prog_info& pinfo,
-                 const bam_header_t* const header)
-    : base_t(opt,pinfo,starling_sample_info)
+                 const bam_header_t* const header,
+                 const sample_info& ssi)
+    : base_t(opt,pinfo,ssi)
 {
-
     if (opt.is_bindel_diploid_file)
     {
         _bindel_diploid_osptr[0].reset(initialize_bindel_file(opt,pinfo,opt.bindel_diploid_filename));

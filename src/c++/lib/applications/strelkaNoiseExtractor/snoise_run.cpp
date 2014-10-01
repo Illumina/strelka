@@ -22,7 +22,6 @@
 #include "snoise_run.hh"
 #include "snoise_pos_processor.hh"
 #include "snoise_streams.hh"
-#include "snoise_info.hh"
 
 #include "blt_util/bam_streamer.hh"
 #include "blt_util/blt_exception.hh"
@@ -37,15 +36,10 @@
 
 
 
-namespace
-{
-const prog_info& pinfo(starling_info::get());
-}
-
-
-
 void
-snoise_run(const snoise_options& opt)
+snoise_run(
+    const prog_info& pinfo,
+    const snoise_options& opt)
 {
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
@@ -66,7 +60,8 @@ snoise_run(const snoise_options& opt)
         throw blt_exception(oss.str().c_str());
     }
 
-    snoise_streams client_io(opt,pinfo,read_stream.get_header());
+    sample_info ssi;
+    snoise_streams client_io(opt,pinfo,read_stream.get_header(),ssi);
 
     snoise_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;

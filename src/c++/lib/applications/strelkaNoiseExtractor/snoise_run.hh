@@ -16,8 +16,11 @@
 
 #pragma once
 
+#include "blt_util/prog_info.hh"
 #include "snoise_shared.hh"
 
 
 void
-snoise_run(const snoise_options& client_opt);
+snoise_run(
+    const prog_info& pinfo,
+    const snoise_options& client_opt);

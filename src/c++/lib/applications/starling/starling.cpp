@@ -74,7 +74,6 @@ runInternal(int argc, char* argv[]) const
 
         // allow remaining options to be parsed using old starling command-line parser:
         legacy_starling_args = po::collect_unrecognized(parsed.options,po::include_positional);
-
     }
     catch (const boost::program_options::error& e)
     {
@@ -94,6 +93,6 @@ runInternal(int argc, char* argv[]) const
 
     finalize_starling_options(pinfo,vm,opt);
 
-    starling_run(opt);
+    starling_run(pinfo,opt);
 }
 

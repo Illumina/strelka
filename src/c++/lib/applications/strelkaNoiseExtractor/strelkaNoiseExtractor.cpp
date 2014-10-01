@@ -32,9 +32,8 @@
 
 namespace
 {
-const prog_info& pinfo(starling_info::get());
+const prog_info& pinfo(snoise_info::get());
 }
-
 
 
 void
@@ -44,7 +43,6 @@ runInternal(int argc, char* argv[]) const
     snoise_options opt;
 
     // set command-line defaults for starling only:
-    opt.gvcf.out_file = "-";
     opt.bsnp_ssd_no_mismatch = 0.35;
     opt.bsnp_ssd_one_mismatch = 0.6;
     opt.min_single_align_score = 20;
@@ -70,7 +68,6 @@ runInternal(int argc, char* argv[]) const
 
         // allow remaining options to be parsed using old starling command-line parser:
         legacy_starling_args = po::collect_unrecognized(parsed.options,po::include_positional);
-
     }
     catch (const boost::program_options::error& e)
     {
@@ -90,6 +87,6 @@ runInternal(int argc, char* argv[]) const
 
     finalize_starling_options(pinfo,vm,opt);
 
-    snoise_run(opt);
+    snoise_run(pinfo,opt);
 }
 

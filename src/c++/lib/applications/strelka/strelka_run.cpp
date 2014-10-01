@@ -17,7 +17,6 @@
 
 #include "strelka_pos_processor.hh"
 #include "strelka_streams.hh"
-#include "strelka_info.hh"
 #include "strelka_run.hh"
 
 #include "blt_util/bam_streamer.hh"
@@ -31,15 +30,10 @@
 #include <sstream>
 
 
-namespace
-{
-const prog_info& pinfo(strelka_info::get());
-}
-
-
 
 void
 strelka_run(
+    const prog_info& pinfo,
     const strelka_options& opt)
 {
     reference_contig_segment ref;

@@ -11,10 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-#include "applications/starling/strelkaNoiseExtractor.hh"
+#include "applications/strelkaNoiseExtractor/strelkaNoiseExtractor.hh"
 
 int
 main(int argc, char* argv[])
 {
-    return strelkaNoiseExtractor().run(argc,argv);
+    return StrelkaNoiseExtractor().run(argc,argv);
 }
