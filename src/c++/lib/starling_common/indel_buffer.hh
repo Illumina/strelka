@@ -109,6 +109,12 @@ struct indel_buffer
     void
     clear_pos(const pos_t pos);
 
+    bool
+    empty() const
+    {
+    	return _idata.empty();
+    }
+
     // debug dumpers:
     void
     dump_pos(const pos_t pos, std::ostream& os) const;

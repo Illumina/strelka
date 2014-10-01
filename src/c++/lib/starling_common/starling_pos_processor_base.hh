@@ -371,6 +371,7 @@ public:
                 const sample_info& sif(sample(s));
                 if (! sif.read_buff.empty()) return false;
                 if (! sif.bc_buff.empty()) return false;
+                if (! sif.indel_buff.empty()) return false;
             }
             if (! _variant_print_pos.empty()) return false;
             if (! _forced_output_pos.empty()) return false;

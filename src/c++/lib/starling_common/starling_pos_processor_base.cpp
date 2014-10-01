@@ -585,7 +585,10 @@ insert_indel(const indel_observation& obs,
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_client_opt.max_indel_size));
         update_largest_indel_ref_span(len);
 
-        return sample(sample_no).indel_sync().insert_indel(obs);
+        bool is_novel(sample(sample_no).indel_sync().insert_indel(obs));
+        if (obs.data.is_forced_output) _is_skip_process_pos=false;
+
+        return is_novel;
     }
     catch (...)
     {
