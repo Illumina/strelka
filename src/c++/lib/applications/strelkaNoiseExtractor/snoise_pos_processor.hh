@@ -33,13 +33,13 @@ struct snoise_pos_processor : public starling_pos_processor_base
         const reference_contig_segment& ref,
         const snoise_streams& client_io)
         : base_t(client_opt,client_dopt,ref,client_io,1),
-          _client_io(client_io){}
+          _client_io(client_io) {}
 
 private:
     void
     process_pos_variants(const pos_t pos) override
     {
-       process_pos_snp_snoise(pos);
+        process_pos_snp_snoise(pos);
     }
 
     void

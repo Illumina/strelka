@@ -104,7 +104,7 @@ process_pos_snp_snoise(
     if (ref_count == _site_info.n_used_calls) return;
 
     unsigned alt_id( (ref_id==0) ? 1 : 0);
-    for (unsigned i(1);i<N_BASE;++i)
+    for (unsigned i(1); i<N_BASE; ++i)
     {
         if (i == ref_id) continue;
         if (i == alt_id) continue;
@@ -130,8 +130,8 @@ process_pos_snp_snoise(
 
         // CHROM POS ID:
         os << _chrom_name << '\t'
-            << output_pos << '\t'
-            << ".";
+           << output_pos << '\t'
+           << ".";
 
         //REF:
         os << '\t' << good_pi.ref_base;
