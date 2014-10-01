@@ -52,7 +52,6 @@
 
 
 //#define DEBUG_PPOS
-#define DEBUG_FORCED_GT
 
 // largest_read_size grows dynamically with observed read size, this
 // is used to initialize the setting prior to observing any reads:
@@ -1010,11 +1009,6 @@ process_pos(const int stage_no,
         {
             if (! _client_opt.is_write_candidate_indels_only)
             {
-#ifdef DEBUG_FORCED_GT
-            	log_os << "Forced process pos: post_align pos=" << pos
-            		   << " is_reportable=" << is_pos_reportable(pos) << "\n";
-#endif
-
             	if (is_pos_reportable(pos))
                 {
 
@@ -1232,22 +1226,11 @@ process_pos_indel_single_sample(const pos_t pos,
     for (; it!=it_end; ++it)
     {
         const indel_key& ik(it->first);
-#ifdef DEBUG_FORCED_GT
-        log_os << "FORCED_ALL: " << ik;
-#endif
         const indel_data& id(get_indel_data(it));
         const bool forcedOutput(id.is_forced_output);
-#ifdef DEBUG_FORCED_GT
-        log_os << "FORCED_ALL: " << id << "\n";
-#endif
         const bool zeroCoverage(id.read_path_lnp.empty());
-        if (!sif.indel_sync().is_candidate_indel(_client_opt,ik,id) && !forcedOutput)
-        {
-#ifdef DEBUG_FORCED_GT
-        log_os << "FORCED_ALL: skipped " << ik;
-#endif
-        	continue;
-        }
+
+        if (!sif.indel_sync().is_candidate_indel(_client_opt,ik,id) && !forcedOutput) continue;
         if (zeroCoverage && !forcedOutput) continue;
 
         // TODO implement indel overlap resolution

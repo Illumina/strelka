@@ -27,7 +27,6 @@
 
 
 //#define DEBUG_GVCF
-#define DEBUG_FORCED_GT
 
 
 #ifdef DEBUG_GVCF
@@ -295,13 +294,6 @@ add_indel(const pos_t pos,
           const starling_indel_report_info& iri,
           const starling_indel_sample_report_info& isri)
 {
-#ifdef DEBUG_FORCED_GT
-	if (dindel.is_forced_output)
-	{
-		log_os << "FORCED: " << ik;
-	}
-#endif
-
     // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
     if (_opt.do_codon_phasing && this->codon_phaser.is_in_block)
         this->output_phased_blocked();
@@ -311,13 +303,6 @@ add_indel(const pos_t pos,
 
     // don't handle homozygous reference calls unless genotyping is forced
     if (is_no_indel(dindel) && !dindel.is_forced_output) return;
-
-#ifdef DEBUG_FORCED_GT
-	if (dindel.is_forced_output)
-	{
-		log_os << "FORCED: " << "Start processing the indel... " << ik;
-	}
-#endif
 
     skip_to_pos(pos);
 

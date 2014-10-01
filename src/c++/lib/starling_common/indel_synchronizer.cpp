@@ -24,8 +24,6 @@
 #include <iostream>
 #include <sstream>
 
-#define FORCED_GT
-
 
 void
 indel_sync_data::
@@ -52,9 +50,7 @@ insert_indel(const indel_observation& obs)
     // first insert indel into this sample:
     bool is_synced_sample(false);
     bool is_repeat_obs(false);
-#ifdef FORCED_GT
-    log_os << "Forced inserting: sample_order=" << _sample_order << " is_shared=" << is_synced_sample << " is_forced=" << obs.data.is_forced_output << "\n";
-#endif
+
     const bool is_novel(ibuff(_sample_order).insert_indel(obs,is_synced_sample,is_repeat_obs));
 
     // then insert indel into synchronized samples:
@@ -63,9 +59,6 @@ insert_indel(const indel_observation& obs)
     for (unsigned i(0); i<isds; ++i)
     {
         if (i == _sample_order) continue;
-#ifdef FORCED_GT
-    log_os << "Forced inserting: sample_order=" << _sample_order << " is_shared=" << is_synced_sample << " is_forced=" << obs.data.is_forced_output << "\n";
-#endif
         ibuff(i).insert_indel(obs,is_synced_sample,is_repeat_obs);
     }
     return is_novel;

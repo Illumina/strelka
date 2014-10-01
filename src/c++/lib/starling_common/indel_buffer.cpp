@@ -24,7 +24,6 @@
 
 
 //#define IB_DEBUG
-#define FORCED_GT
 
 
 std::pair<indel_buffer::iterator,indel_buffer::iterator>
@@ -83,18 +82,12 @@ insert_indel(const indel_observation& obs,
     idata_t::iterator i(_idata.find(obs.key));
     if (i == _idata.end())
     {
-#ifdef FORCED_GT
-    	log_os << "Forced inserting: Add observation at the end. \n";
-#endif
         indel_data id(obs.key);
         id.add_observation(obs.data,is_shared,is_repeat_obs);
         _idata.insert(std::make_pair(obs.key,id));
         return true;
     }
 
-#ifdef FORCED_GT
-    	log_os << "Forced inserting: Add observation at existing buffer. \n";
-#endif
     indel_data& id(get_indel_data(i));
     id.add_observation(obs.data,is_shared,is_repeat_obs);
     return false;

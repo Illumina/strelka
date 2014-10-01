@@ -19,9 +19,6 @@
 
 #include "blt_util/blt_types.hh"
 
-#include <iostream>
-#define FORCED_GT
-
 
 /// \brief base for objects designed to perform work in a single pass over a position range
 ///
@@ -40,16 +37,7 @@ struct pos_processor_base
     check_process_pos(const int stage_no,
                       const pos_t pos)
     {
-#ifdef FORCED_GT
-    	std::cerr << "Forced process pos base: pos=" << pos << "\n";
-#endif
-        if (_is_skip_process_pos)
-        {
-#ifdef FORCED_GT
-        	std::cerr << "Forced process pos base: pos=" << pos << " skipped. \n";
-#endif
-        	return;
-        }
+        if (_is_skip_process_pos) return;
         process_pos(stage_no,pos);
     }
 
