@@ -26,6 +26,7 @@
 #include <iostream>
 #include <sstream>
 
+#define FORCED_GT
 
 
 void
@@ -276,7 +277,11 @@ void
 stage_manager::
 process_pos(const pos_t pos)
 {
-    if (! _is_head_pos)
+#ifdef FORCED_GT
+    	log_os << "Forced process pos manager: pos=" << pos << "\n";
+#endif
+
+	if (! _is_head_pos)
     {
         _head_pos = pos;
         _is_head_pos = true;
