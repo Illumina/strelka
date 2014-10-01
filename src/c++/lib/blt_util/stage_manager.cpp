@@ -299,7 +299,7 @@ process_pos(const pos_t pos)
 
 #ifdef FORCED_GT
 		if (stage_pos == 82823347)
-			log_os << "Forced process pos manager1: pos=" << pos << "\n";
+			log_os << "Forced process pos manager1: pos=" << stage_pos << "\n";
 #endif
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
@@ -316,7 +316,7 @@ process_pos(const pos_t pos)
                 if (stage_pos<_min_pos) break;
 #ifdef FORCED_GT
 		if (stage_pos == 82823347)
-			log_os << "Forced process pos manager2: pos=" << pos << "\n";
+			log_os << "Forced process pos manager2: pos=" << stage_pos << "\n";
 #endif
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
@@ -351,7 +351,7 @@ finish_process_pos()
                 }
 #ifdef FORCED_GT
 		if (stage_pos == 82823347)
-			log_os << "Forced process pos manager3: pos=" << pos << "\n";
+			log_os << "Forced process pos manager3: pos=" << stage_pos << "\n";
 #endif
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
@@ -372,7 +372,7 @@ finish_process_pos()
                 if (stage_pos<_min_pos) break;
 #ifdef FORCED_GT
 		if (stage_pos == 82823347)
-			log_os << "Forced process pos manager4: pos=" << pos << "\n";
+			log_os << "Forced process pos manager4: pos=" << stage_pos << "\n";
 #endif
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
