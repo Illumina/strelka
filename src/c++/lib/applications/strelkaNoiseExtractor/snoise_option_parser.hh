@@ -17,10 +17,25 @@
 
 #pragma once
 
-#include "starling_common/starling_shared.hh"
+#include "snoise_shared.hh"
+
+#include "blt_util/prog_info.hh"
+
+#include "boost/program_options.hpp"
 
 
-struct snoise_options : public starling_options
-{
-    bool is_skip_header = false;
-};
+namespace po = boost::program_options;
+
+
+po::options_description
+get_snoise_option_parser(snoise_options& opt);
+
+
+// validate options and process any required quick consistency
+// adjustments
+//
+void
+finalize_snoise_options(
+    const prog_info& pinfo,
+    const po::variables_map& vm,
+    snoise_options& opt);

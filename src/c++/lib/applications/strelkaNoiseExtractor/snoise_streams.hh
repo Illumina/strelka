@@ -33,8 +33,8 @@ struct snoise_streams : public starling_streams_base
     std::ostream*
     snoise_osptr() const
     {
-        return _snoise_osptr.get();
+        return _snoise_osptr;
     }
 
-    std::unique_ptr<std::ostream> _snoise_osptr;
+    std::ostream* _snoise_osptr;
 };

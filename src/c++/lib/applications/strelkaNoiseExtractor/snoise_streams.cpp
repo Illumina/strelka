@@ -15,6 +15,7 @@
 ///
 
 #include "snoise_streams.hh"
+#include "blt_util/bam_header_util.hh"
 #include "blt_util/vcf_util.hh"
 
 #include <fstream>
@@ -28,18 +29,14 @@ snoise_streams(
     const prog_info& pinfo,
     const bam_header_t* const header,
     const sample_info& ssi)
-    : base_t(opt,pinfo,ssi)
+    : base_t(opt,pinfo,ssi),
+      _snoise_osptr(&std::cout)
 {
     const char* const cmdline(opt.cmdline.c_str());
 
-    std::ofstream* fosptr(new std::ofstream);
-    _snoise_osptr.reset(fosptr);
-    std::ofstream& fos(*fosptr);
-    open_ofstream(pinfo,opt.snoise_filename,"snoise",opt.is_clobber,fos);
+    std::ostream& fos(*_snoise_osptr);
 
-    static const bool is_skip_header(false);
-
-    if (! is_skip_header)
+    if (! opt.is_skip_header)
     {
         write_vcf_audit(opt,pinfo,cmdline,header,fos);
         fos << "##content=strelka sequencing noise extraction\n";
@@ -52,7 +49,7 @@ snoise_streams(
 
         // FILTERS:
 
-
-        fos << vcf_col_label() << "\tFORMAT\tSAMPLE\n";
+        const std::string sample_name = get_bam_header_sample_name(header->text);
+        fos << vcf_col_label() << "\tFORMAT\t" << sample_name << "\n";
     }
 }

@@ -16,8 +16,9 @@
 ///
 
 #include "snoise_info.hh"
+#include "snoise_option_parser.hh"
+#include "snoise_shared.hh"
 #include "starling_common/starling_option_parser.hh"
-#include "starling_common/starling_shared.hh"
 
 #include "blt_util/log.hh"
 
@@ -74,24 +75,28 @@ time_when_compiled()
 static starling_info::time_t compile_time(time_when_compiled);
 #endif
 
+
+
 void
 snoise_info::
-usage(const char* xmessage) const
+usage(
+    const char* xmessage) const
 {
     std::ostream& os(log_os);
 
+    static snoise_options default_opt;
+    static const po::options_description visible(get_snoise_option_parser(default_opt));
+
     os <<
-       "\n" << name() << " - joint snp/small-indel caller\n"
+       "\n" << name() << " - strelka noise extractorn"
        "\tversion: " << version() << "\n"
        "\n"
-       "usage: " << name() << " -bam-file file [options] > event_report\n"
-       "\n";
+       "usage: " << name() << " [options]\n\n" << visible
+       << "\n\n[ ***** new single-sample options ***** ]\n\n";
 
-    static starling_options default_opt;
-    static const po::options_description visible(get_starling_option_parser(default_opt));
-    os << "\n\n[ ***** new options ***** ]\n\n";
-    os << visible
-       << "\n\n\n[ ***** legacy options ***** ]\n\n";
+    static const po::options_description visible2(get_starling_shared_option_parser(default_opt));
+    os << visible2
+       << "\n\n\n[ ***** legacy single-sample options ***** ]\n\n";
     write_starling_legacy_options(os);
     os << "\n";
 

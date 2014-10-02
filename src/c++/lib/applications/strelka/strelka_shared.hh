@@ -82,9 +82,8 @@ struct strelka_options : public starling_options
 
     // report whether any type of indel-caller is running (including
     // checks from child class options):
-    virtual
     bool
-    is_call_indels() const
+    is_call_indels() const override
     {
         return (is_somatic_indel() || base_t::is_call_indels());
     }

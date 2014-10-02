@@ -36,7 +36,6 @@ open_ofstream(const prog_info& pinfo,
               const bool is_clobber,
               std::ofstream& fos)
 {
-
     std::ifstream tis(filename.c_str());
     if (tis && (! is_clobber))
     {

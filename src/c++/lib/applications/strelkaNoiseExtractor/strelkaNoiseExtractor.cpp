@@ -18,6 +18,7 @@
 #include "strelkaNoiseExtractor.hh"
 #include "snoise_info.hh"
 #include "snoise_run.hh"
+#include "snoise_option_parser.hh"
 
 #include "blt_common/blt_arg_parse_util.hh"
 #include "blt_util/blt_exception.hh"
@@ -34,6 +35,7 @@ namespace
 {
 const prog_info& pinfo(snoise_info::get());
 }
+
 
 
 void
@@ -61,7 +63,9 @@ runInternal(int argc, char* argv[]) const
     po::variables_map vm;
     try
     {
-        po::options_description visible(get_starling_option_parser(opt));
+        po::options_description visible(get_snoise_option_parser(opt));
+        po::options_description visible2(get_starling_shared_option_parser(opt));
+        visible.add(visible2);
         po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).allow_unregistered().run());
         po::store(parsed,vm);
         po::notify(vm);

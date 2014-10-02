@@ -113,11 +113,3 @@ bam_update_bin(bam1_t& br)
         brc.bin = 0;
     }
 }
-
-
-// return true only if the headers refer to the same reference
-// sequences in the same order.
-//
-bool
-check_header_compatibility(const bam_header_t* h1,
-                           const bam_header_t* h2);
