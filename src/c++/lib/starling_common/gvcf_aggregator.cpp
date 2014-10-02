@@ -290,15 +290,16 @@ add_indel(const pos_t pos,
     // we can't handle breakends at all right now:
     if (ik.is_breakpoint()) return;
 
-    // don't handle homozygous reference calls for now:
-    if (is_no_indel(dindel)) return;
+    // don't handle homozygous reference calls unless genotyping is forced
+    if (is_no_indel(dindel) && !dindel.is_forced_output) return;
 
     skip_to_pos(pos);
 
-    // check if an indel is already buffered and we done't overlap it,
+    // check if an indel is already buffered and
+    // either we don't overlap it or we get homRef for the forced-genotyped indel,
     // in which case we need to clear it first -- note this definition
     // of overlap deliberately picks up adjacent deletions:
-    if ((0 != _indel_buffer_size) && (pos>_indel_end_pos))
+    if ((0 != _indel_buffer_size) && ((pos>_indel_end_pos) || is_no_indel(dindel)))
     {
         process_overlaps();
     }
@@ -309,6 +310,12 @@ add_indel(const pos_t pos,
     }
     _indel_buffer[_indel_buffer_size++].init(pos,ik,dindel,iri,isri);
     _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
+
+    // clear the current homRef indel
+    if (is_no_indel(dindel))
+    {
+    	process_overlaps();
+    }
 }
 
 
@@ -318,7 +325,7 @@ bool
 is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
                         const unsigned size)
 {
-    return (size==2 &&
+	return (size==2 &&
             is_het_indel(indel_buffer[0].dindel) &&
             is_het_indel(indel_buffer[1].dindel));
 }
@@ -676,7 +683,7 @@ modify_indel_overlap_site(const indel_info& ii,
             si.smod.set_filter(VCF_FILTERS::SiteConflict);
         }
     }
-    else
+    else if (ploidy!=2)
     {
         assert(0);
     }

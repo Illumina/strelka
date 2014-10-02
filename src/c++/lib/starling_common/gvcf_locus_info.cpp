@@ -55,7 +55,7 @@ std::map<std::string, double> indel_info::get_qscore_features(int chrom_depth)
     this->calc_vqsr_metrics();
 
     // set GQ and GQX
-    if (dindel.max_gt != dindel.max_gt_poly)
+    if ((dindel.max_gt != dindel.max_gt_poly) || dindel.is_zero_coverage)
     {
         imod.gqx=0;
     }

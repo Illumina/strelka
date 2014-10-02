@@ -117,7 +117,7 @@ void calibration_models::default_clasify_site(site_info& si)
 // default rules based indel model
 void calibration_models::default_clasify_site(indel_info& ii)
 {
-    if (ii.dindel.max_gt != ii.dindel.max_gt_poly)
+    if ((ii.dindel.max_gt != ii.dindel.max_gt_poly) || ii.dindel.is_zero_coverage)
     {
         ii.imod.gqx=0;
     }

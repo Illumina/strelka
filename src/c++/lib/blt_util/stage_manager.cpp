@@ -27,7 +27,6 @@
 #include <sstream>
 
 
-
 void
 stage_data::
 add_stage(const int id,
@@ -276,7 +275,7 @@ void
 stage_manager::
 process_pos(const pos_t pos)
 {
-    if (! _is_head_pos)
+	if (! _is_head_pos)
     {
         _head_pos = pos;
         _is_head_pos = true;
@@ -295,6 +294,7 @@ process_pos(const pos_t pos)
                     if (stage_pos<_minpos[s]) continue;
                     _is_minpos[s]=0;
                 }
+
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
         }
@@ -308,6 +308,7 @@ process_pos(const pos_t pos)
             {
                 const pos_t stage_pos(p-static_cast<pos_t>(_stage_pos_ptr->operator[](s).first));
                 if (stage_pos<_min_pos) break;
+
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
         }
@@ -339,6 +340,7 @@ finish_process_pos()
                     if (stage_pos<_minpos[s]) continue;
                     _is_minpos[s]=0;
                 }
+
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
 
@@ -356,6 +358,7 @@ finish_process_pos()
                 stage_pos=(p-static_cast<pos_t>(_stage_pos_ptr->operator[](s).first));
                 if (stage_pos>=_head_pos) continue;
                 if (stage_pos<_min_pos) break;
+
                 _ppb.check_process_pos(_stage_pos_ptr->operator[](s).second,stage_pos);
             }
 

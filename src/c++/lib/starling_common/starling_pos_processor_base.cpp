@@ -584,7 +584,10 @@ insert_indel(const indel_observation& obs,
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_client_opt.max_indel_size));
         update_largest_indel_ref_span(len);
 
-        return sample(sample_no).indel_sync().insert_indel(obs);
+        bool is_novel(sample(sample_no).indel_sync().insert_indel(obs));
+        if (obs.data.is_forced_output) _is_skip_process_pos=false;
+
+        return is_novel;
     }
     catch (...)
     {
@@ -1006,7 +1009,7 @@ process_pos(const int stage_no,
         {
             if (! _client_opt.is_write_candidate_indels_only)
             {
-                if (is_pos_reportable(pos))
+            	if (is_pos_reportable(pos))
                 {
 
                     process_pos_variants(pos);
@@ -1243,8 +1246,11 @@ process_pos_indel_single_sample(const pos_t pos,
     {
         const indel_key& ik(it->first);
         const indel_data& id(get_indel_data(it));
-        if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
-        if (id.read_path_lnp.empty()) continue;
+        const bool forcedOutput(id.is_forced_output);
+        const bool zeroCoverage(id.read_path_lnp.empty());
+
+        if (!sif.indel_sync().is_candidate_indel(_client_opt,ik,id) && !forcedOutput) continue;
+        if (zeroCoverage && !forcedOutput) continue;
 
         // TODO implement indel overlap resolution
         //
@@ -1268,13 +1274,15 @@ process_pos_indel_single_sample(const pos_t pos,
             static const bool is_use_alt_indel(true);
 
             starling_diploid_indel dindel;
+            dindel.is_forced_output = forcedOutput;
+            dindel.is_zero_coverage = zeroCoverage;
             _client_dopt.incaller().starling_indel_call_pprob_digt(_client_opt,_client_dopt,
                                                                    sif.sample_opt,
                                                                    indel_error_prob,ref_error_prob,
                                                                    ik,id,is_use_alt_indel,dindel);
 
             bool is_indel(false);
-            if (dindel.is_indel)
+            if ((dindel.is_indel) or (dindel.is_forced_output))
             {
                 is_indel=true;
 

@@ -26,7 +26,6 @@
 //#define IB_DEBUG
 
 
-
 std::pair<indel_buffer::iterator,indel_buffer::iterator>
 indel_buffer::
 pos_range_iter(const pos_t begin_pos,

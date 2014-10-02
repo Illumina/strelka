@@ -90,10 +90,11 @@ indel_data::add_observation_core(const indel_observation_data& obs_data,
     log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
 #endif
 
-    is_external_candidate=obs_data.is_external_candidate;
-    is_forced_output=obs_data.is_forced_output;
+    // never reset the flags to false if they are true already
+    if (! is_external_candidate) is_external_candidate=obs_data.is_external_candidate;
+    if (! is_forced_output) is_forced_output=obs_data.is_forced_output;
 
-    if (! is_external_candidate)
+    if (!is_external_candidate && !is_forced_output)
     {
         using namespace INDEL_ALIGN_TYPE;
 

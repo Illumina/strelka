@@ -25,7 +25,6 @@
 #include <sstream>
 
 
-
 void
 indel_sync_data::
 register_sample(indel_buffer& ib,
@@ -48,10 +47,10 @@ bool
 indel_synchronizer::
 insert_indel(const indel_observation& obs)
 {
-
     // first insert indel into this sample:
     bool is_synced_sample(false);
     bool is_repeat_obs(false);
+
     const bool is_novel(ibuff(_sample_order).insert_indel(obs,is_synced_sample,is_repeat_obs));
 
     // then insert indel into synchronized samples:
