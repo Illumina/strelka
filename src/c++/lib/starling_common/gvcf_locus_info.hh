@@ -99,7 +99,6 @@ get_label(const unsigned idx)
 
 struct shared_modifiers
 {
-
     shared_modifiers()
     {
         clear();
@@ -186,7 +185,6 @@ get_label(const unsigned idx)
 
 struct site_modifiers : public shared_modifiers
 {
-
     site_modifiers()
     {
         clear();
@@ -228,7 +226,6 @@ std::ostream& operator<<(std::ostream& os,const site_modifiers& smod);
 
 struct indel_info
 {
-
     void
     init(const pos_t init_pos,
          const indel_key& init_ik,
@@ -315,28 +312,9 @@ struct indel_info
 //Data structure defining parameters for a single site to be used for writing in gvcf_aggregator
 struct site_info
 {
-
     site_info()
-        : pos(0)
-        , ref('N')
-        , phased_ref("")
-        , phased_alt("")
-        , phased_AD("")
-        , n_used_calls(0)
-        , n_unused_calls(0)
-        , hpol(0)
-        , hapscore(0)
-        , MQ(0)
-        , ReadPosRankSum(0)
-        , BaseQRankSum(0)
-        , MQRankSum(0)
-        , avgBaseQ(0)
-        , rawPos(0)
-        , mapq_zero(0)
-        , Qscore(-1)
-        , Unphasable(false)
     {
-        for (unsigned i(0); i<N_BASE; ++i) known_counts[i] = 0;
+        std::fill(known_counts.begin(),known_counts.end(),0);
     }
 
     void
@@ -345,7 +323,6 @@ struct site_info
          const snp_pos_info& good_pi,
          const bool used_allele_count_min_qscore)
     {
-
         pos=(init_pos);
         ref=(init_ref);
         good_pi.get_known_counts(known_counts,used_allele_count_min_qscore);
@@ -398,26 +375,26 @@ struct site_info
         return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (dgt.ref_gt != smod.max_gt));
     }
 
-    pos_t pos;
-    char ref;
+    pos_t pos = 0;
+    char ref = 'N';
     std::string phased_ref, phased_alt, phased_AD;
-    unsigned n_used_calls;
-    unsigned n_unused_calls;
+    unsigned n_used_calls = 0;
+    unsigned n_unused_calls = 0;
     std::array<unsigned,N_BASE> known_counts;
     diploid_genotype dgt;
-    unsigned hpol;
-    double hapscore;
-    double MQ;				 // RMS of mapping qualities
+    unsigned hpol = 0;
+    double hapscore = 0;
+    double MQ = 0;				 // RMS of mapping qualities
 
     //only meaningful for het calls
-    double ReadPosRankSum;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
-    double BaseQRankSum;    // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
-    double MQRankSum;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
-    double avgBaseQ;
-    double rawPos;
-    unsigned mapq_zero;     // The number of spanning reads that do not pass the command-line mapq test
-    int Qscore;             // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
-    bool Unphasable;        // Set to true if the site should never be included in a phasing block
+    double ReadPosRankSum = 0;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
+    double BaseQRankSum = 0;    // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
+    double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
+    double avgBaseQ = 0;
+    double rawPos = 0;
+    unsigned mapq_zero = 0;     // The number of spanning reads that do not pass the command-line mapq test
+    int Qscore = -1;             // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
+    bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
 
     site_modifiers smod;
 };
