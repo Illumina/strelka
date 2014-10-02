@@ -129,7 +129,7 @@ struct ihpol_data
 
 unsigned
 get_interrupted_hpol_size(const pos_t pos,
-                         const reference_contig_segment& ref)
+                          const reference_contig_segment& ref)
 {
 
     // count current base + upstream repeats:

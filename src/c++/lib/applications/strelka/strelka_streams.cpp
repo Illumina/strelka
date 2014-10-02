@@ -30,8 +30,6 @@
 #include <sstream>
 
 
-const strelka_sample_info ssi;
-
 /// add vcf filter tags shared by all vcf types:
 static
 void
@@ -71,7 +69,8 @@ strelka_streams(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const prog_info& pinfo,
-    const bam_header_t* const header)
+    const bam_header_t* const header,
+    const strelka_sample_info& ssi)
     : base_t(opt,pinfo,ssi)
 {
     {
@@ -121,6 +120,14 @@ strelka_streams(
             fos << "##INFO=<ID=TQSS_NT,Number=1,Type=Integer,Description=\"Data tier used to compute QSS_NT\">\n";
             fos << "##INFO=<ID=SGT,Number=1,Type=String,Description=\"Most likely somatic genotype excluding normal noise states\">\n";
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
+            fos << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
+            fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
+            fos << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
+            fos << "##INFO=<ID=ALTPOS,Number=1,Type=Integer,Description=\"Tumor alternate allele read position median\">\n";
+            fos << "##INFO=<ID=ALTMAP,Number=1,Type=Integer,Description=\"Tumor alternate allele read position MAP\">\n";
+            fos << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position in the tumor\">\n";
+            fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
+
 
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1 (used+filtered)\">\n";

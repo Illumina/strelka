@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -27,7 +26,6 @@ void
 shared_modifiers::
 write_filters(std::ostream& os) const
 {
-
     if (filters.none())
     {
         os << "PASS";
@@ -37,18 +35,17 @@ write_filters(std::ostream& os) const
     bool is_sep(false);
     for (unsigned i(0); i<VCF_FILTERS::SIZE; ++i)
     {
-        if (filters.test(i))
+        if (! filters.test(i)) continue;
+
+        if (is_sep)
         {
-            if (is_sep)
-            {
-                os << ";";
-            }
-            else
-            {
-                is_sep=true;
-            }
-            os << VCF_FILTERS::get_label(i);
+            os << ";";
         }
+        else
+        {
+            is_sep=true;
+        }
+        os << VCF_FILTERS::get_label(i);
     }
 }
 
@@ -154,7 +151,6 @@ std::ostream&
 operator<<(std::ostream& os,
            const shared_modifiers& shmod)
 {
-
     os << "gqx: " << shmod.gqx
        << " gq: " << shmod.gq
        << " max_gt: " << DIGT::label(shmod.max_gt);
@@ -169,7 +165,6 @@ std::ostream&
 operator<<(std::ostream& os,
            const site_modifiers& smod)
 {
-
     os << static_cast<shared_modifiers>(smod) << '\n';
 
     os << "is_unknown: " << smod.is_unknown;

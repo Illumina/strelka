@@ -39,7 +39,7 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
                  calibration_models& CM)
 {
     using namespace VCF_FILTERS;
-    os << "##VariantQualityScoringModel=" << CM.model_name << "\n";
+    os << "##VariantQualityScoringModel=" << CM.get_model_name() << "\n";
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
     write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion");
 
@@ -183,12 +183,12 @@ finish_gvcf_header(const starling_options& opt,
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
 
     // ranksums
-    if (opt.is_compute_VQSRmetrics)
+    if (opt.is_report_germline_VQSRmetrics)
     {
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
         os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities.\">\n";
         os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities.\">\n";
-        os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\" Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position. \">\n";
+        os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position. \">\n";
     }
 
     // Qscore

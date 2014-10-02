@@ -120,11 +120,13 @@ struct snp_pos_info
         n_spandel=0;
         n_submapped=0;
         n_mapq=0;
+        n_mapq0=0;
         cumm_mapq=0;
         hap_set.clear();
         mq_ranksum.clear();
         baseq_ranksum.clear();
         read_pos_ranksum.clear();
+        altReadPos.clear();
     }
 
     template <typename T>
@@ -155,26 +157,26 @@ struct snp_pos_info
         return ref_base;
     }
 
-    // returns the RMS of the read mapQs
+    /// \returns the RMS of the read mapQs
     double
     get_rms_mq();
 
-    // returns the read-position rank sum
+    /// \returns the read-position rank sum
     double
     get_read_pos_ranksum();
 
-    // returns the mapQ rank sum
+    /// \returns the mapQ rank sum
     double
     get_mq_ranksum();
 
-    // return the baseq rank sum
+    /// \return the baseq rank sum
     double
     get_baseq_ranksum();
 
     double
     get_raw_baseQ();
 
-    // return the raw pos sum
+    /// \return the raw pos sum
     double
     get_raw_pos();
 
@@ -193,6 +195,7 @@ public:
     std::vector<base_call> tier2_calls; // call not passing stringent quality criteria
     // number of spanning deletions crossing the site:
     unsigned n_spandel;
+
     // number of submapped reads crossing the site.
     // note this could be usable,filtered or spanning deletion,
     // all submapped reads get counted here:
@@ -200,8 +203,12 @@ public:
 
     // number of mapq observations, meaning coverage at position
     unsigned n_mapq;
-    // sum of mapq for all reads at this position
-    int cumm_mapq;
+
+    // number of mapq==0 observations
+    unsigned n_mapq0;
+
+    // sum of mapq squared for all reads at this position
+    double cumm_mapq;
 
     hap_set_t hap_set;
 
@@ -209,6 +216,14 @@ public:
     fastRanksum mq_ranksum;
     fastRanksum baseq_ranksum;
     fastRanksum read_pos_ranksum;
+
+    // for computing somatic cluster stats:
+    struct ReadPosInfo
+    {
+        uint16_t readPos;
+        uint16_t readPosLength;
+    };
+    std::vector<ReadPosInfo> altReadPos;
 };
 
 std::ostream& operator<<(std::ostream& os,const snp_pos_info& pci);

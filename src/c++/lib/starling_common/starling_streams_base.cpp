@@ -33,7 +33,6 @@ initialize_bindel_file(const starling_options& opt,
                        const std::string& filename,
                        const char* label)
 {
-
     const char* const cmdline(opt.cmdline.c_str());
 
     std::ofstream* fosptr(new std::ofstream);
@@ -61,7 +60,6 @@ initialize_gvcf_file(const starling_options& opt,
                      const bam_header_t* const header,
                      std::unique_ptr<std::ostream>& os_ptr_auto)
 {
-
     std::ostream* osptr(&std::cout);
     if (filename != "-")
     {
@@ -95,15 +93,14 @@ initialize_realign_bam(const bool is_clobber,
                        const char* label,
                        const bam_header_t* const header)
 {
-
-    assert(NULL != header);
+    assert(nullptr != header);
 
     // \TODO consider putting extra info into BAM header:
     //
     //fp->header = bam_header_dup((const bam_header_t*)aux);
     //fos << "@PG\tID:" << pinfo.name() << "\tVN:" << pinfo.version() << "\tCL:" << cmdline << "\n";
 
-    if (not is_clobber)   // weak clobber test:
+    if (! is_clobber)   // weak clobber test:
     {
         std::ofstream fos;
         open_ofstream(pinfo,filename,label,is_clobber,fos);
@@ -119,7 +116,6 @@ initialize_candidate_indel_file(const starling_options& opt,
                                 const prog_info& pinfo,
                                 const std::string& filename)
 {
-
     const char* const cmdline(opt.cmdline.c_str());
 
     std::ofstream* fosptr(new std::ofstream);
@@ -144,7 +140,6 @@ initialize_window_file(const starling_options& opt,
                        const avg_window_data& awd,
                        const sample_info& si)
 {
-
     const char* const cmdline(opt.cmdline.c_str());
 
     std::ofstream* fosptr(new std::ofstream);
@@ -187,7 +182,7 @@ starling_streams_base(const starling_options& opt,
 {
     assert((_n_samples>0) && (_n_samples<=MAX_SAMPLE));
 
-    for (unsigned i(0); i<_n_samples; ++i) _gvcf_osptr[i] = NULL;
+    for (unsigned i(0); i<_n_samples; ++i) _gvcf_osptr[i] = nullptr;
 
     if (opt.is_write_candidate_indels())
     {

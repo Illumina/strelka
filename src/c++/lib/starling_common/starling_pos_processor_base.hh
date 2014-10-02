@@ -313,10 +313,9 @@ public:
             , used_ssn(knownref_report_size)
             , wav()
         {
-            const unsigned vs(opt.variant_windows.size());
-            for (unsigned i(0); i<vs; ++i)
+            for (const auto& val : opt.variant_windows)
             {
-                wav.add_win(opt.variant_windows[i].flank_size*2);
+                wav.add_win(val.flank_size*2);
             }
         }
 
@@ -422,9 +421,23 @@ private:
     update_ranksum_and_mapq_count(
         const pos_t pos,
         const unsigned sample_no,
-        const base_call& bc,
+        const uint8_t call_id,
+        const uint8_t qscore,
         const uint8_t mapq,
-        const unsigned cycle);
+        const uint8_t adjustedMapq,
+        const unsigned cycle,
+        const bool is_submapped);
+
+    void
+    update_somatic_features(
+        const pos_t pos,
+        const unsigned sample_no,
+        const bool is_teir1,
+        const uint8_t call_id,
+        const bool is_call_filter,
+        const uint8_t mapq,
+        const uint16_t readPos,
+        const uint16_t readLength);
 
     void
     insert_pos_basecall(const pos_t pos,
@@ -442,7 +455,7 @@ private:
 
     void
     process_pos(const int stage_no,
-                const pos_t pos);
+                const pos_t pos) override;
 
     void
     load_read_in_depth_buffer(const read_segment& rseg,

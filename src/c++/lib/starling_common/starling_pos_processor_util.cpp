@@ -15,7 +15,7 @@
 /// \author Chris Saunders
 ///
 /// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
+/// XXX_begin_pos is zero-indexed position at the beginning of the range
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
@@ -298,10 +298,8 @@ is_al_overdepth(const starling_options& opt,
 
     pos_t ref_head_pos(al.pos);
 
-    const unsigned as(al.path.size());
-    for (unsigned i(0); i<as; ++i)
+    for (const auto& ps : al.path)
     {
-        const path_segment& ps(al.path[i]);
         if (ps.type == MATCH)
         {
             if (sppr.is_estimated_depth_range_ge_than(ref_head_pos,
@@ -403,7 +401,6 @@ process_genomic_read(const starling_options& opt,
         //
         alignment al;
         al.pos=base_pos;
-
 
         // if mapped, sanity check alignment:
         if (maplev != MAPLEVEL::UNMAPPED)

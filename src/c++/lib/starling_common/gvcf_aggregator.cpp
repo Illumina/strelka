@@ -65,7 +65,6 @@ void
 add_site_modifiers(site_info& si,
                    calibration_models& model)
 {
-
     si.smod.clear();
     si.smod.is_unknown=(si.ref=='N');
     si.smod.is_used_covered=(si.n_used_calls!=0);
@@ -121,6 +120,7 @@ gvcf_aggregator(const starling_options& opt,
     , _site_buffer_size(0)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
+    , CM(_opt,_dopt)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -132,16 +132,6 @@ gvcf_aggregator(const starling_options& opt,
     }
 
     if (! opt.is_gvcf_output()) return;
-
-    // initialize calibration model
-    this->CM.dopt = &_dopt;
-    this->CM.opt = &_opt.gvcf;
-    this->CM.load_models(opt.calibration_models_filename);
-    if (static_cast<int>(opt.calibration_model.length())>0)
-    {
-        this->CM.set_model(opt.calibration_model);
-//        log_os << "Setting calimodel " << opt.calibration_model << "\n";
-    }
 
     assert(nullptr != _osptr);
     assert((nullptr !=_chrom) && (strlen(_chrom)>0));
@@ -244,7 +234,6 @@ void
 gvcf_aggregator::
 add_site_internal(const site_info& si)
 {
-
     if (si.smod.is_phased_region)
         _head_pos=si.pos+si.phased_ref.length();
     else
@@ -349,7 +338,6 @@ get_hap_cigar(ALIGNPATH::path_t& apath,
               const unsigned lead=1,
               const unsigned trail=0)
 {
-
     using namespace ALIGNPATH;
 
     apath.clear();
@@ -377,7 +365,6 @@ void
 add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
                     std::vector<unsigned>& ploidy)
 {
-
     using namespace ALIGNPATH;
     int offset(-1);
     for (const auto& ps : apath)
@@ -404,7 +391,6 @@ void
 gvcf_aggregator::
 queue_site_record(const site_info& si)
 {
-
     //test for basic blocking criteria
     if (! this->gvcf_comp.is_site_compressable(_opt.gvcf,si))
     {
@@ -445,7 +431,6 @@ void
 print_site_ad(const site_info& si,
               std::ostream& os)
 {
-
     os << si.known_counts[si.dgt.ref_gt];
 
     for (unsigned b(0); b<N_BASE; ++b)
@@ -464,7 +449,6 @@ void
 gvcf_aggregator::
 write_site_record(const site_info& si) const
 {
-
     std::ostream& os(*_osptr);
 
     os << _chrom << '\t'  // CHROM
@@ -483,7 +467,6 @@ write_site_record(const site_info& si) const
     }
     else
     {
-
         if (si.smod.is_phased_region)
         {
             os << si.phased_alt;
@@ -540,7 +523,7 @@ write_site_record(const site_info& si) const
             }
 
             // TODO only report VQSR metrics if flag explicitly set, not for calibration model
-            if (_opt.is_compute_VQSRmetrics)
+            if (_opt.is_report_germline_VQSRmetrics)
             {
                 os << ';';
                 os << "MQ=" << si.MQ;
@@ -652,7 +635,6 @@ modify_indel_overlap_site(const indel_info& ii,
                           const unsigned ploidy,
                           site_info& si,calibration_models& CM)
 {
-
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
     log_os << "CHIRP: indel_overlap_site imod before: " << ii.imod << "\n";
@@ -722,7 +704,6 @@ void
 gvcf_aggregator::
 modify_overlap_indel_record()
 {
-
     // can only handle simple 2-indel overlaps right now:
     assert(_indel_buffer_size==2);
 
@@ -808,7 +789,6 @@ void
 gvcf_aggregator::
 write_indel_record(const unsigned write_index)
 {
-
     assert(_indel_buffer_size>0);
 
     // flush any non-variant block before starting:
@@ -946,7 +926,6 @@ void
 gvcf_aggregator::
 process_overlaps()
 {
-
     if (0==_indel_buffer_size) return;
 
     bool is_conflict_print(false);
@@ -977,7 +956,6 @@ process_overlaps()
     // process sites to be consistent with overlapping indels:
     for (unsigned i(0); i<_site_buffer_size; ++i)
     {
-
 #ifdef DEBUG_GVCF
         log_os << "CHIRP: indel overlapping site: " << _site_buffer[i].pos << "\n";
 #endif

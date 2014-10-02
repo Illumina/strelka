@@ -21,37 +21,19 @@
 
 #pragma once
 
+#include "position_somatic_snv_strand_grid.hh"
 
-struct somatic_snv_genotype_grid
-{
-    typedef bool tier_t;
 
-    struct result_set
-    {
-        unsigned ntype;
-        unsigned max_gt;
-        int snv_qphred = 0;
-        int snv_from_ntype_qphred = 0;
-        int nonsomatic_qphred = 0;
-
-        double strandBias = 0;
-    };
-
-    bool
-    is_snv() const
-    {
-        return (0 != rs.snv_qphred);
-    }
-
-    bool
-    is_output() const
-    {
-        return (is_snv() || is_forced_output);
-    }
-
-    tier_t snv_tier;
-    tier_t snv_from_ntype_tier;
-    unsigned ref_gt;
-    result_set rs;
-    bool is_forced_output = false;
-};
+// vcf output:
+//
+void
+write_vcf_somatic_snv_genotype_strand_grid(
+    const strelka_options& opt,
+    const strelka_deriv_options& dopt,
+    const somatic_snv_genotype_grid& sgt,
+    const bool is_write_nqss,
+    const extended_pos_data& n1_epd,
+    const extended_pos_data& t1_epd,
+    const extended_pos_data& n2_epd,
+    const extended_pos_data& t2_epd,
+    std::ostream& os);

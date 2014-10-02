@@ -46,9 +46,9 @@ void c_model::add_parameters(const parmap& myPars)
 void c_model::do_rule_model(featuremap& cutoffs, site_info& si)
 {
     if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
-    if (cutoffs["DP"]>0 && dopt->is_max_depth)
+    if (cutoffs["DP"]>0 && dopt.is_max_depth)
     {
-        if ((si.n_used_calls+si.n_unused_calls) > dopt->max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
@@ -74,9 +74,9 @@ void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii)
         if (ii.imod.gqx<cutoffs["GQX"]) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if (cutoffs["DP"]>0 && dopt->is_max_depth)
+    if (cutoffs["DP"]>0 && dopt.is_max_depth)
     {
-        if (ii.isri.depth > dopt->max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+        if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }
 }
 
@@ -208,7 +208,7 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
 
 void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case)   //, featuremap& most_predictive) {
 {
-    // do extreme case handeling better
+    // do extreme case handling better
     if (ii.Qscore>60)
         ii.Qscore = 60;
 
@@ -237,7 +237,6 @@ void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const C
 // joint logistic regression for both SNPs and INDELs
 int c_model::logistic_score(const CALIBRATION_MODEL::var_case var_case, featuremap features)
 {
-
     std::string var_case_label(CALIBRATION_MODEL::get_label(var_case));
     // normalize
     featuremap norm_features = this->normalize(features,this->pars[var_case_label]["CenterVal"],this->pars[var_case_label]["ScaleVal"]);
@@ -255,7 +254,7 @@ int c_model::get_var_threshold(CALIBRATION_MODEL::var_case& my_case)
     return this->pars[CALIBRATION_MODEL::get_label(my_case)]["PassThreshold"]["Q"];
 }
 
-bool c_model::is_logitic_model()
+bool c_model::is_logitic_model() const
 {
     return this->model_type=="LOGISTIC";
 }
@@ -263,7 +262,6 @@ bool c_model::is_logitic_model()
 //score snp case
 void c_model::score_instance(featuremap features, site_info& si)
 {
-
     if (this->model_type=="LOGISTIC")   //case we are using a logistic regression mode
     {
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HomSNP);

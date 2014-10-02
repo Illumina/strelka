@@ -30,11 +30,8 @@
 struct CallableProcessor
 {
     CallableProcessor(
-        std::ostream* osptr = NULL) :
-        _minQSS(15),
-        _minNQSS(15),
-        _osptr(osptr),
-        _is_range(false)
+        std::ostream* osptr = nullptr) :
+        _osptr(osptr)
     {}
 
     ~CallableProcessor()
@@ -53,11 +50,11 @@ struct CallableProcessor
     flush();
 
 private:
-    const int _minQSS;
-    const int _minNQSS;
+    static constexpr int _minQSS = 15;
+    static constexpr int _minNQSS = 15;
     std::ostream* _osptr;
 
-    bool _is_range;
+    bool _is_range = false;
     std::string _chrom;
     pos_range _prange;
 };

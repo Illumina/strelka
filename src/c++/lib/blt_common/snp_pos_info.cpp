@@ -60,7 +60,7 @@ get_rms_mq()
 {
     if (n_mapq==0)
         return 0.0;
-    return std::sqrt(1.0*cumm_mapq/n_mapq);
+    return std::sqrt(cumm_mapq/n_mapq);
 }
 
 

@@ -67,27 +67,26 @@ get_char_label(const unsigned i)
 //
 struct strelka_sample_info : public sample_info
 {
-
     strelka_sample_info() : sample_info() {}
 
-    virtual
     unsigned
-    sample_size() const
+    sample_size() const override
     {
         return STRELKA_SAMPLE_TYPE::SIZE;
     }
 
-    virtual
-    const char* get_label(const unsigned i) const
+    const char*
+    get_label(
+        const unsigned i) const override
     {
         return STRELKA_SAMPLE_TYPE::get_label(i);
     }
 
-    virtual
-    const char* get_prefix(const unsigned i,
-                           const bool is_tier1) const
+    const char*
+    get_prefix(
+        const unsigned i,
+        const bool is_tier1) const override
     {
-
         using namespace STRELKA_SAMPLE_TYPE;
 
         switch (static_cast<index_t>(i))

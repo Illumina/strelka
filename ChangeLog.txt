@@ -1,4 +1,8 @@
-- Add CRAM input support
+- STARKA-135 add strand bias feature
+- STARKA-138 add read position features to strelka SNV output
+- STARKA-136 add mapping info values to strelka SNV output
+v2.1.5
+- Add CRAM input support (still experimental pending samtools idxstats fix)
 v2.1.4
 - Turned ON DP filter for rule filters as default
 - Made scoring-model a configurable option for starling pyflow
@@ -8,7 +12,7 @@ v2.1.4
 - Runtime opt: reduce excessive syscalls from position based std::map's
 v2.1.3
 - STARKA-127 fix strelka workflow config file interface
-- STARKA-128 fix build with gcc-4.9.0, finally get rid of solexa q-scores
+- STARKA-128 fix build with gcc-4.9.0, remove solexa q-scores
 - STARKA-125 add starling workflow and demo
 v2.1.2
 - STARKA-124 fix strelka overlapping indel issue

@@ -39,7 +39,7 @@ get_sum_path_pprob(const starling_deriv_options& dopt,
                    const bool is_init_total = true);
 
 
-// debuging output -- produces labels
+// Debugging output -- produces labels
 //
 void
 write_starling_diploid_indel(const starling_diploid_indel& dgt,
@@ -61,7 +61,6 @@ write_starling_diploid_indel_file(const starling_diploid_indel& dgt,
 //
 struct indel_digt_caller : private boost::noncopyable
 {
-
     indel_digt_caller(const double theta);
 
     /// \brief call an indel @ pos by calculating the posterior probability

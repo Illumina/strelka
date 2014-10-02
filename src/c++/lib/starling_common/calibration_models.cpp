@@ -38,17 +38,13 @@
 #include "blt_util/log.hh"
 #endif
 
-calibration_models::calibration_models()
-{
-}
-calibration_models::~calibration_models() {}
 
 int calibration_models::get_case_cutoff(CALIBRATION_MODEL::var_case my_case)
 {
     return this->get_model(this->model_name).get_var_threshold(my_case);
 }
 
-bool calibration_models::is_current_logistic()
+bool calibration_models::is_current_logistic() const
 {
     if (this->is_default_model)
         return false;
@@ -58,7 +54,6 @@ bool calibration_models::is_current_logistic()
 
 void calibration_models::clasify_site(site_info& si)
 {
-
     if (si.dgt.is_snp && !this->is_default_model)
     {
         featuremap features = si.get_qscore_features(this->chr_median);     // create site value feature dict
@@ -190,6 +185,8 @@ calibration_models::load_chr_depth_stats()
 
 void calibration_models::set_model(const std::string& name)
 {
+    if (name.empty()) return;
+
     modelmap::iterator it = this->models.find(boost::to_upper_copy(name));
     assert("Unrecognized calibration model given using --scoring-model option in set_model" && it != this->models.end());
     this->load_chr_depth_stats();
@@ -211,11 +208,18 @@ void calibration_models::set_model(const std::string& name)
 #endif
 }
 
-c_model& calibration_models::get_model(std::string& name)
+c_model& calibration_models::get_model(const std::string& name)
 {
-    modelmap::iterator it = this->models.find(boost::to_upper_copy(name));
+    auto it = this->models.find(boost::to_upper_copy(name));
     assert("Unrecognized calibration model given using --scoring-model option" && it != this->models.end());
-    return this->models.find(boost::to_upper_copy(name))->second;
+    return it->second;
+}
+
+const c_model& calibration_models::get_model(const std::string& name) const
+{
+    auto it = this->models.find(boost::to_upper_copy(name));
+    assert("Unrecognized calibration model given using --scoring-model option" && it != this->models.end());
+    return it->second;
 }
 
 void calibration_models::add_model_pars(std::string& name,parmap& my_pars)
@@ -258,10 +262,7 @@ void calibration_models::load_models(std::string model_file)
                     this->add_model_pars(current_name,pars);
                 }
                 current_name = boost::to_upper_copy(tokens.at(1));
-                c_model current_model(current_name,tokens.at(2));
-
-                current_model.dopt = this->dopt;
-                current_model.opt = this->opt;
+                c_model current_model(current_name,tokens.at(2),*dopt);
 
                 this->models.insert(modelmap::value_type(current_name, current_model));
 #ifdef DEBUG_CAL

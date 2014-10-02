@@ -69,7 +69,7 @@ integrate_out_sites(const starling_deriv_options& dopt,
 // to match the sample allele ratio, however for indels this can
 // change as a funciton of indel and read length.
 //
-// Note this routine does not accoung for overlapping indels
+// Note this routine does not account for overlapping indels
 //
 static
 void

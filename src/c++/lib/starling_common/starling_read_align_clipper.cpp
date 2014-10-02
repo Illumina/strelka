@@ -53,6 +53,7 @@ struct ref_map_type
                  const pos_t p = 0)
         : type(t), pos(p) {}
 
+#ifdef DEBUG_ALIGN_CLIP
     static
     char
     get_type_label(const map_t t)
@@ -74,6 +75,7 @@ struct ref_map_type
             return '\0';
         }
     }
+#endif
 
     map_t type;
     pos_t pos;

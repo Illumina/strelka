@@ -111,7 +111,6 @@ starling_run(const starling_options& opt)
 
         if       (current.itype == INPUT_TYPE::READ)   // handle regular ELAND reads
         {
-
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
             // range by the bam reading functions
@@ -126,13 +125,11 @@ starling_run(const starling_options& opt)
             const bam_record& read(*(read_stream.get_record_ptr()));
 
             process_genomic_read(opt,ref,read_stream,read,current.pos,rlimit.begin_pos,brc,sppr);
-
         }
         else if (current.itype == INPUT_TYPE::INDEL)     // process candidate indels input from vcf file(s)
         {
             const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
             process_candidate_indel(opt.max_indel_size, vcf_indel,sppr);
-
         }
         else if (current.itype == INPUT_TYPE::FORCED_OUTPUT)     // process forced genotype tests from vcf file(s)
         {

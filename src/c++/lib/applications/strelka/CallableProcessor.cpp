@@ -58,7 +58,7 @@ void
 CallableProcessor::
 flush()
 {
-    if (NULL == _osptr) return;
+    if (nullptr == _osptr) return;
     if (! _is_range) return;
 
     (*_osptr) << _chrom << '\t' << _prange.begin_pos << '\t' << _prange.end_pos << '\n';

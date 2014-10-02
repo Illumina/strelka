@@ -35,15 +35,6 @@ operator<<(std::ostream& os, const avg_window_data& awd)
     return os;
 }
 
-void
-starling_options::set_isis_defaults()
-{
-    if (!this->is_min_vexp)
-        this->is_min_vexp = true;
-    if (!this->is_max_win_mismatch)
-        this->is_max_win_mismatch = true;
-}
-
 
 
 starling_deriv_options::

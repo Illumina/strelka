@@ -116,19 +116,21 @@ class c_model
 public:
     c_model(
         const std::string& name,
-        const std::string& type) :
+        const std::string& type,
+        const gvcf_deriv_options& init_dopt) :
         model_name(name),
-        model_type(type)
+        model_type(type),
+        dopt(init_dopt)
     {}
+
     // add parameters to the model
     void add_parameters(const parmap& myPars);
     void score_instance(featuremap features, site_info& si);
     void score_instance(featuremap features, indel_info& ii);
     int  get_var_threshold(CALIBRATION_MODEL::var_case& my_case);
-    bool is_logitic_model();
-    const gvcf_deriv_options* dopt;
-    const gvcf_options* opt;
+    bool is_logitic_model() const;
 private:
+    const gvcf_deriv_options& dopt;
     int logistic_score(const CALIBRATION_MODEL::var_case var_case, featuremap features);
     void do_rule_model(featuremap& cutoffs, site_info& si);  //snp case
     void do_rule_model(featuremap& cutoffs, indel_info& ii); //indel case
