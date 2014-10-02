@@ -108,7 +108,9 @@ gvcf_aggregator::
 gvcf_aggregator(const starling_options& opt,
                 const starling_deriv_options& dopt,
                 const reference_contig_segment& ref,
-                std::ostream* osptr)
+                std::ostream* osptr,
+                starling_read_buffer& read_buffer,
+                const unsigned max_read_len)
     : _opt(opt)
     , _report_range(dopt.report_range.begin_pos,dopt.report_range.end_pos)
     , _ref(ref)
@@ -121,6 +123,7 @@ gvcf_aggregator(const starling_options& opt,
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
     , CM(_opt, dopt.gvcf)
+    , codon_phaser(opt, dopt, read_buffer, max_read_len)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -200,10 +203,10 @@ void
 gvcf_aggregator::
 output_phased_blocked()
 {
-    for (std::vector<site_info>::iterator it = codon_phaser.buffer.begin(); it != codon_phaser.buffer.end(); ++it)
+    for (const site_info& si : codon_phaser.buffer)
     {
-        this->skip_to_pos((*it).pos);
-        add_site_internal(*it);
+        this->skip_to_pos(si.pos);
+        add_site_internal(si);
     }
     codon_phaser.clear_buffer();
 }

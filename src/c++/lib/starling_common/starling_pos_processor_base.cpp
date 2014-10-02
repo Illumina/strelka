@@ -406,14 +406,9 @@ starling_pos_processor_base(const starling_options& client_opt,
     // setup gvcf aggregator
     if (_client_opt.gvcf.is_gvcf_output())
     {
-        gvcf_aggregator* temp_agg = new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0));
-        if (_client_opt.do_codon_phasing)
-        {
-            temp_agg->codon_phaser.read_buffer = &_sample[0]->read_buff; // give codon-phaser access to the read-buffer
-            temp_agg->codon_phaser.set_options(client_opt,client_dopt);
-            temp_agg->codon_phaser.max_read_len = get_largest_read_size();
-        }
-        _gvcfer.reset(temp_agg);
+        _gvcfer.reset(new gvcf_aggregator(
+                client_opt,client_dopt,ref,client_io.gvcf_osptr(0),
+                sample(0).read_buff,get_largest_read_size()));
     }
 
 #ifdef HAVE_FISHER_EXACT_TEST
