@@ -1013,8 +1013,8 @@ calculate_result_set_grid(
         rs.nonsomatic_qphred=error_prob_to_qphred(1.-sgvcf_nonsomatic_sum);
     }
 
-    constexpr bool is_compute_sb(true);
-    if(is_compute_sb)
+    static const bool is_compute_sb(true);
+    if (is_compute_sb)
     {
         // get ratio of strand bias vs. non-strand-bias version of max_gt, if max_gt does not correspond to a het state, then
         // set sb to 0
@@ -1024,9 +1024,9 @@ calculate_result_set_grid(
             normal_gt,
             tumor_gt);
 
-        const unsigned het_count(DIGT_SGRID::get_het_count(tumor_gt));
+//        const unsigned het_count(DIGT_SGRID::get_het_count(tumor_gt));
 
-        if((het_count > 0) && (het_count < DIGT_SGRID::STRAND_COUNT))
+//        if ((tumor_gt>=N_BASE) && (het_count < DIGT_SGRID::STRAND_COUNT))
         {
 #if 0
             const bool is_strand_state(DIGT_SGRID::is_strand_state(tumor_gt));
@@ -1048,12 +1048,14 @@ calculate_result_set_grid(
 
             const blt_float_t symm_lhood(*std::max_element(tumor_lhood+N_BASE, tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE));
             const blt_float_t strand_lhood(*std::max_element(tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE, tumor_lhood+DIGT_SGRID::SIZE));
-            rs.strandBias = (strand_lhood - symm_lhood);
+            rs.strandBias = std::max(0.f,(strand_lhood - symm_lhood));
         }
+#if 0
         else
         {
             rs.strandBias = 0.;
         }
+#endif
     }
 }
 
