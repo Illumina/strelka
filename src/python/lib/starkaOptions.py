@@ -47,6 +47,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Run script and run output will be written to this directory [required] (default: %default)")
         group.add_option("--indelCandidates", type="string", metavar="FILE",
                          help="Specify a candidate indel vcf. File must be tabix indexed (default: None)")
+        group.add_option("--forcedGTIndels", type="string", metavar="FILE",
+                         help="Specify an indel vcf. File must be tabix indexed (default: None)")
 
     def addExtendedGroupOptions(self,group) :
         group.add_option("--scanSizeMb", type="int", metavar="scanSizeMb",

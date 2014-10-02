@@ -136,6 +136,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.indelCandidates is not None :
         segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
 
+    if self.params.forcedGTIndels is not None :
+        segCmd.extend(['--force-output-vcf', self.params.forcedGTIndels])
+
     if self.params.minorAllele is not None :
         segCmd.extend(['--minor-allele-bed-file', self.params.minorAllele])
 
