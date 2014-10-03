@@ -128,10 +128,14 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
             if not os.path.isfile(faiFile) :
                 raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
 
-        if options.indelCandidates is not None :
-            indelTabixFile = options.indelCandidates + ".tbi"
-            if not os.path.isfile(indelTabixFile) :
-                raise OptParseException("Can't find expected candidate indel index file: '%s'" % (indelTabixFile))
+        def checkOptionalVcf(vcfname,desc) :
+            if vcfname is None : return
+            tabixFile = vcfname + ".tbi"
+            if os.path.isfile(tabixFile) : return
+            raise OptParseException("Can't find expected %s index file: '%s'" % (desc,tabixFile))
+
+        checkOptionalVcf(options.indelCandidates,"candidate indel")
+        checkOptionalVcf(options.forcedGTIndels,"forced genotype vcf")
 
         if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
             options.genomeRegionList = None
