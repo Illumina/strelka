@@ -18,7 +18,7 @@
 
 #include "candidate_alignment.hh"
 
-#include "starling_common/align_path_util.hh"
+#include "blt_util/align_path_util.hh"
 #include "starling_common/starling_shared.hh"
 
 #include <cassert>

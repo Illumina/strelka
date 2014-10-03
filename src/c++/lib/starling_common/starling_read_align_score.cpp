@@ -22,7 +22,7 @@
 #include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/seq_util.hh"
-#include "starling_common/align_path_util.hh"
+#include "blt_util/align_path_util.hh"
 
 #include <cassert>
 

@@ -43,19 +43,11 @@
 ///
 struct indel_observation_data
 {
-    indel_observation_data()
-        : is_noise(false)
-        , is_external_candidate(false)
-        , is_forced_output(false)
-        , iat(INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ)
-        , id(0)
-    {}
-
-    bool is_noise;
-    bool is_external_candidate;
-    bool is_forced_output; // results of gt tests must be output even for very unlikely cases
-    INDEL_ALIGN_TYPE::index_t iat;
-    align_id_t id;
+    bool is_noise = false;
+    bool is_external_candidate = false;
+    bool is_forced_output = false; // results of gt tests must be output even for very unlikely cases
+    INDEL_ALIGN_TYPE::index_t iat = INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ;
+    align_id_t id = 0;
     std::string insert_seq;
 };
 

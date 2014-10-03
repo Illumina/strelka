@@ -17,7 +17,7 @@
 
 #include "alignment_util.hh"
 #include "blt_util/align_path.hh"
-#include "starling_common/align_path_util.hh"
+#include "blt_util/align_path_util.hh"
 
 #include <cassert>
 
@@ -37,7 +37,6 @@ get_strict_alignment_range(const alignment& al)
 known_pos_range
 get_soft_clip_alignment_range(const alignment& al)
 {
-
     const pos_t lead(apath_insert_lead_size(al.path));
     const pos_t trail(apath_insert_trail_size(al.path));
     const pos_t asize(apath_ref_length(al.path));
@@ -53,7 +52,6 @@ get_soft_clip_alignment_range(const alignment& al)
 known_pos_range
 get_alignment_range(const alignment& al)
 {
-
     const pos_t lead(apath_read_lead_size(al.path));
     const pos_t trail(apath_read_trail_size(al.path));
     const pos_t asize(apath_ref_length(al.path));
@@ -70,7 +68,6 @@ known_pos_range
 get_alignment_zone(const alignment& al,
                    const unsigned seq_length)
 {
-
     const known_pos_range ps(get_alignment_range(al));
     known_pos_range ps2(ps);
     ps2.begin_pos=std::max(0,std::min(ps.begin_pos,ps.end_pos-static_cast<pos_t>(seq_length)));
@@ -86,7 +83,6 @@ is_indel_in_alignment(const alignment& al,
                       const indel_key& ik,
                       pos_range& read_indel_pr)
 {
-
     using namespace ALIGNPATH;
 
     read_indel_pr.clear();
@@ -99,7 +95,6 @@ is_indel_in_alignment(const alignment& al,
     const unsigned aps(path.size());
     while (path_index<aps)
     {
-
         if (ref_head_pos > ik.right_pos()) return false;
 
         const path_segment& ps(path[path_index]);
@@ -198,7 +193,6 @@ remove_edge_deletions(const alignment& al,
                       const bool is_remove_leading_edge,
                       const bool is_remove_trailing_edge)
 {
-
     using namespace ALIGNPATH;
 
     alignment al2;
