@@ -1,3 +1,4 @@
+- Add starling option to always genotype indels provided in vcf
 - STARKA-135 add strand bias feature
 - STARKA-138 add read position features to strelka SNV output
 - STARKA-136 add mapping info values to strelka SNV output
