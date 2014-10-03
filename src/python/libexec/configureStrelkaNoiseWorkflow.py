@@ -12,7 +12,7 @@
 #
 
 """
-This script configures the starling small variant calling workflow
+This script configures the strelka noise estimation workflow
 """
 
 import os,sys
@@ -29,17 +29,17 @@ sys.path.append(workflowDir)
 from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException
 from makeRunScript import makeRunScript
-from starlingWorkflow import StarlingWorkflow
+from snoiseWorkflow import snoiseWorkflow
 from workflowUtil import ensureDir
 
 
 
-class StarlingWorkflowOptions(StarkaWorkflowOptionsBase) :
+class snoiseWorkflowOptions(StarkaWorkflowOptionsBase) :
 
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the Starling small variant calling pipeline.
+This script configures the Strelka noise estimation pipeline.
 You must specify a BAM or CRAM file.
 """ % (version)
 
@@ -47,8 +47,6 @@ You must specify a BAM or CRAM file.
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
                          help="Sample BAM or CRAM file. [required] (no default)")
-        group.add_option("--minorAllele", type="string", metavar="FILE",
-                         help="Provide minor allele bed file. Must be tabix indexed. (no default)")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
@@ -61,15 +59,11 @@ You must specify a BAM or CRAM file.
 
         libexecDir=defaults["libexecDir"]
 
-        configDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_CONFIGDIR@"))
-        assert os.path.isdir(configDir)
-
         defaults.update({
-            'runDir' : 'StarlingWorkflow',
+            'runDir' : 'StrelkaNoiseWorkflow',
             'bgcatBin' : joinFile(libexecDir,"bgzf_cat"),
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
-            'vqsrModel' : "QScoreHpolmodel",
-            'vqsrModelFile' : joinFile(configDir,'model.json')
+            'snoiseBin' : joinFile(libexecDir,"strelkaNoiseExtractor")
             })
         return defaults
 
@@ -85,12 +79,6 @@ You must specify a BAM or CRAM file.
     def validateOptionExistence(self,options) :
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
-
-        if options.minorAllele is not None :
-            alleleTabixFile = options.minorAllele + ".tbi"
-            if not os.path.isfile(alleleTabixFile) :
-                raise OptParseException("Can't find expected minor allele index file: '%s'" % (alleleTabixFile))
-
         bcheck = BamSetChecker()
         bcheck.appendBams(options.bamList,"Input")
         bcheck.check(options.samtoolsBin,
@@ -100,20 +88,20 @@ You must specify a BAM or CRAM file.
 
 def main() :
 
-    primarySectionName="starling"
-    options,iniSections=StarlingWorkflowOptions().getRunOptions(primarySectionName, version=version)
+    primarySectionName="snoise"
+    options,iniSections=snoiseWorkflowOptions().getRunOptions(primarySectionName, version=version)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    StarlingWorkflow(options,iniSections)
+    snoiseWorkflow(options,iniSections)
 
     # generate runscript:
     #
     ensureDir(options.runDir)
     scriptFile=os.path.join(options.runDir,"runWorkflow.py")
 
-    makeRunScript(scriptFile,os.path.join(workflowDir,"starlingWorkflow.py"),"StarlingWorkflow",primarySectionName,iniSections)
+    makeRunScript(scriptFile,os.path.join(workflowDir,"snoiseWorkflow.py"),"snoiseWorkflow",primarySectionName,iniSections)
 
     notefp=sys.stdout
     notefp.write("""

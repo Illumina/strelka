@@ -70,14 +70,15 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
     def validateAndSanitizeExistingOptions(self,options) :
 
+        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.normalBamList,"normal sample")
         groomBamList(options.tumorBamList, "tumor sample")
-
-        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
 
 
 
     def validateOptionExistence(self,options) :
+
+        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
         if options.userConfigPath is None :
             raise OptParseException("A config file must be specified for strelka workflow")
@@ -87,9 +88,6 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         bcheck.appendBams(options.tumorBamList,"Tumor")
         bcheck.check(options.samtoolsBin,
                      options.referenceFasta)
-
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
-
 
 
 
