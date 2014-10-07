@@ -87,10 +87,9 @@ operator<<(std::ostream& os, const hap_cand& hc)
 
 
 
+/// represents a consensus haplotype (rather than a single observation a la hap_cand)
 struct hinfo
 {
-    hinfo() : total_qual(0) {}
-
     hinfo(const hap_cand& hc)
     {
         total_qual = hc.total_qual();
@@ -108,7 +107,9 @@ struct hinfo
 
     typedef std::array<uint8_t,hap_cand::HAP_SIZE> hseq_t;
     hseq_t hseq;
-    unsigned total_qual;
+
+    /// the total quality of all basecalls from all haplotype observations
+    unsigned total_qual = 0;
 };
 
 
@@ -137,8 +138,9 @@ operator<<(std::ostream& os, const hinfo& hi)
 //
 static
 bool
-is_hap_match(const hap_cand& hc,
-             hinfo& hi)
+is_hap_match(
+    const hap_cand& hc,
+    hinfo& hi)
 {
     for (unsigned i(0); i<hap_cand::HAP_SIZE; ++i)
     {
@@ -166,8 +168,9 @@ is_hap_match(const hap_cand& hc,
 // alignment score is log(P(S|hap))
 static
 double
-get_align_score(const hap_cand& hc,
-                const hinfo& hi)
+get_align_score(
+    const hap_cand& hc,
+    const hinfo& hi)
 {
     //static const double lnany(std::log(0.25));
     static const double ln_one_third(-std::log(3.0));
@@ -192,15 +195,17 @@ get_align_score(const hap_cand& hc,
 
 
 double
-get_hapscore(hap_set_t& hap_set)
+get_hapscore(
+    hap_set_t& hap_set)
 {
     std::sort(hap_set.begin(),hap_set.end());
 
+    // consensus haplotypes
     std::vector<hinfo> haps;
 
     for (const auto& hap : hap_set)
     {
-        // 1: check if we match any types; add new type if not
+        // 1: check if we match any consensus htypes; add new htype if not
         bool is_match(false);
         for (auto& hapinfo : haps)
         {
