@@ -30,25 +30,15 @@
 #include <memory>
 
 
-namespace READ_ALIGN
-{
-enum index_t
-{
-    GENOME
-};
-
-const char*
-label(const index_t i);
-}
-
-
 
 // helper class for starling_read to support the recently nailed-on
 // notion of exons
 //
 struct starling_segmented_read
 {
-    starling_segmented_read(const seg_id_t size);
+    explicit
+    starling_segmented_read(const seg_id_t size)
+      : _seg_info(size) {}
 
     void
     set_segment(const seg_id_t seg_no,
@@ -85,11 +75,6 @@ struct starling_read : private boost::noncopyable
     starling_read(const bam_record& br,
                   const bool is_bam_record_genomic);
 
-    // bool
-    // is_bam_record_genomic() {
-    //     return _is_bam_record_genomic;
-    // }
-
     void
     set_genomic_bam_record(const bam_record& br)
     {
@@ -97,13 +82,6 @@ struct starling_read : private boost::noncopyable
         _read_rec = br;
         _is_bam_record_genomic=true;
     }
-
-    // is new alignment compatible with pre-existing information?
-    //
-    bool
-    is_compatible_alignment(const alignment& al,
-                            const READ_ALIGN::index_t rat,
-                            const starling_options& opt) const;
 
     // enters full alignment, and handles segment setup for splice
     // sites:
@@ -200,12 +178,6 @@ private:
     {
         return _read_rec.get_data();
     }
-
-#if 0
-    // returns as tier1 mapped if only a contig alignment exists
-    MAPLEVEL::index_t
-    effective_maplevel() const;
-#endif
 
     bool
     is_treated_as_anytier_mapping() const;

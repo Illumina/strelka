@@ -616,12 +616,12 @@ is_estimated_depth_range_ge_than(
 //
 std::pair<bool,align_id_t>
 starling_pos_processor_base::
-insert_read(const bam_record& br,
-            const alignment& al,
-            const READ_ALIGN::index_t rat,
-            const char* chrom_name,
-            const MAPLEVEL::index_t maplev,
-            const unsigned sample_no)
+insert_read(
+    const bam_record& br,
+    const alignment& al,
+    const char* chrom_name,
+    const MAPLEVEL::index_t maplev,
+    const unsigned sample_no)
 {
     if (0 != strcmp(_chrom_name.c_str(),chrom_name))
     {
@@ -659,15 +659,13 @@ insert_read(const bam_record& br,
 
     starling_read_buffer& rbuff(sample(sample_no).read_buff);
     const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(_client_opt,
-                                                                  br,al,maplev,
-                                                                  rat));
+                                                                  br,al,maplev));
     if (! res.first) return res;
 
-    // must initialize initial genomic read_segments "by-hand":
+    // must initialize initial read_segments "by-hand":
     //
     // TODO get this streamlined into the pos-processor
     //
-    if (READ_ALIGN::GENOME==rat)
     {
         const starling_read* sread_ptr(rbuff.get_read(res.second));
         assert(NULL!=sread_ptr);

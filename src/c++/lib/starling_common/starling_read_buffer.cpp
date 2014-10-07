@@ -42,15 +42,15 @@ starling_read_buffer::
 
 std::pair<bool,align_id_t>
 starling_read_buffer::
-add_read_alignment(const starling_options& opt,
-                   const bam_record& br,
-                   const alignment& al,
-                   const MAPLEVEL::index_t maplev,
-                   const READ_ALIGN::index_t rat)
+add_read_alignment(
+    const starling_options& opt,
+    const bam_record& br,
+    const alignment& al,
+    const MAPLEVEL::index_t maplev)
 {
     assert(! br.is_unmapped());
 
-    const bool is_genomic(READ_ALIGN::GENOME == rat);
+    static const bool is_genomic(true);
     align_id_t this_read_id;
     bool is_key_found(false);
 

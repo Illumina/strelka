@@ -30,12 +30,6 @@
 
 
 
-starling_segmented_read::
-starling_segmented_read(const seg_id_t size)
-    : _seg_info(size) {}
-
-
-
 void
 starling_segmented_read::
 set_segment(const seg_id_t seg_no,
@@ -67,51 +61,6 @@ get_segment(const seg_id_t seg_no) const
 
 
 
-namespace READ_ALIGN
-{
-
-const char*
-label(const index_t i)
-{
-    switch (i)
-    {
-    case GENOME:
-        return "GENOME";
-    }
-    log_os << "ERROR: unknown READ_ALIGN index: " << i << "\n";
-    exit(EXIT_FAILURE);
-    return NULL;
-}
-
-}
-
-
-
-static
-void
-newalign_dump(const starling_read& sr,
-              const alignment& al,
-              const READ_ALIGN::index_t rat)
-{
-    log_os << "\tread: " << sr << "\n"
-           << "\tnew-alignment: " << al << "\n"
-           << "\tnew-alignment-type: " << READ_ALIGN::label(rat) << "\n";
-}
-
-
-
-static
-void
-death_dump(const starling_read& sr,
-           const alignment& al,
-           const READ_ALIGN::index_t rat)
-{
-    newalign_dump(sr,al,rat);
-    exit(EXIT_FAILURE);
-}
-
-
-
 starling_read::
 starling_read(const bam_record& br,
               const bool is_bam_record_genomic)
@@ -121,24 +70,6 @@ starling_read(const bam_record& br,
       _read_rec(br),
       _full_read(_read_rec.read_size(),0,this)
 {}
-
-
-
-#if 0
-MAPLEVEL::index_t
-starling_read::
-effective_maplevel() const
-{
-    if (get_full_segment().genome_align().empty())
-    {
-        return MAPLEVEL::TIER1_MAPPED;
-    }
-    else
-    {
-        return genome_align_maplev;
-    }
-}
-#endif
 
 
 
@@ -181,81 +112,6 @@ map_qual() const
     {
         return 255;
     }
-}
-
-
-
-//
-//
-static
-bool
-is_alignment_in_range(const pos_t pos,
-                      const alignment& al,
-                      const unsigned max_indel_size)
-{
-    return (std::abs(pos-get_alignment_buffer_pos(al)) <= static_cast<pos_t>(max_indel_size));
-}
-
-
-
-//
-//
-bool
-starling_read::
-is_compatible_alignment(const alignment& al,
-                        const READ_ALIGN::index_t rat,
-                        const starling_options& opt) const
-{
-    if (is_fwd_strand() != al.is_fwd_strand)
-    {
-        if (opt.is_baby_elephant)
-        {
-            log_os << "WARNING: Disallowed internal development option in use (baby-elephant).\n";
-            log_os << "WARNING: ";
-        }
-        else
-        {
-            log_os << "ERROR: ";
-        }
-
-        log_os << "multiple suggested alignments for read are not same-strand.\n";
-        newalign_dump(*this,al,rat);
-
-        if (opt.is_baby_elephant)
-        {
-            return false;
-        }
-        else
-        {
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    const read_segment& rseg(get_full_segment());
-
-    if (READ_ALIGN::GENOME == rat)
-    {
-        if (! rseg.genome_align().empty())
-        {
-            log_os << "ERROR: multiple suggested genomic alignments for read.\n";
-            death_dump(*this,al,rat);
-        }
-    }
-    else
-    {
-        assert(false && "Unknown alignment type");
-    }
-
-    // al_buffer_pos must be compatible with all non-empty alignemnts
-    // stored for this read to be used -- this is treated as a warning
-    // for now:
-    const pos_t new_pos(get_alignment_buffer_pos(al));
-    if (! rseg.genome_align().empty())
-    {
-        if (! is_alignment_in_range(new_pos,rseg.genome_align(),opt.max_indel_size)) return false;
-    }
-
-    return true;
 }
 
 

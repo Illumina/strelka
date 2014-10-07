@@ -322,15 +322,16 @@ is_al_overdepth(const starling_options& opt,
 // are extracted and buffered, and the reads themselves are buffered
 //
 void
-process_genomic_read(const starling_options& opt,
-                     const reference_contig_segment& /*ref*/,
-                     const bam_streamer& read_stream,
-                     const bam_record& read,
-                     const pos_t base_pos,
-                     const pos_t /*report_begin_pos*/,
-                     starling_read_counts& brc,
-                     starling_pos_processor_base& sppr,
-                     const unsigned sample_no)
+process_genomic_read(
+    const starling_options& opt,
+    const reference_contig_segment& /*ref*/,
+    const bam_streamer& read_stream,
+    const bam_record& read,
+    const pos_t base_pos,
+    const pos_t /*report_begin_pos*/,
+    starling_read_counts& brc,
+    starling_pos_processor_base& sppr,
+    const unsigned sample_no)
 {
     // read filters which are *always* on, because starling/strelka
     // can't do anything sensible with this information:
@@ -434,11 +435,10 @@ process_genomic_read(const starling_options& opt,
         }
 
 
-        static const READ_ALIGN::index_t rat(READ_ALIGN::GENOME);
         try
         {
             const char* chrom_name(read_stream.target_id_to_name(read.target_id()));
-            sppr.insert_read(read,al,rat,chrom_name,maplev,sample_no);
+            sppr.insert_read(read,al,chrom_name,maplev,sample_no);
         }
         catch (...)
         {
