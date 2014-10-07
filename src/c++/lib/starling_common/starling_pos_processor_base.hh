@@ -128,18 +128,14 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     insert_indel(const indel_observation& obs,
                  const unsigned sample_no);
 
-    unsigned
-    get_estimated_depth(const pos_t pos,
-                        const unsigned sample_no) const;
-
-
     // in range [begin,end), is the estimated depth always below
     // depth?
     bool
-    is_estimated_depth_range_ge_than(const pos_t begin,
-                                     const pos_t end,
-                                     const unsigned depth,
-                                     const unsigned sample_no) const;
+    is_estimated_depth_range_ge_than(
+        const pos_t begin,
+        const pos_t end,
+        const unsigned depth,
+        const unsigned sample_no) const;
 
     // first return value is true if the alignment is accepted into
     // the buffer (alignments can fail a number of quality checks --
@@ -298,10 +294,11 @@ protected:
 public:
     struct sample_info
     {
-        sample_info(const starling_options& opt,
-                    const unsigned report_size,
-                    const unsigned knownref_report_size,
-                    read_id_counter* ricp)
+        sample_info(
+            const starling_options& opt,
+            const unsigned report_size,
+            const unsigned knownref_report_size,
+            read_id_counter* ricp)
             : indel_buff(opt.max_indel_size)
             , read_buff(ricp)
             , sample_opt(opt)
@@ -596,14 +593,14 @@ protected:
     read_id_counter _ric;
 
     unsigned _n_samples;
-    sample_info* _sample[MAX_SAMPLE];
+    std::array<std::unique_ptr<sample_info>,MAX_SAMPLE> _sample;
 
     bool _is_dependent_eprob;
     dependent_prob_cache _dpcache;
 
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
     std::unique_ptr<nploid_info> _ninfo;
-    double* _ws;
+    std::unique_ptr<double> _ws;
 
     std::set<pos_t> _variant_print_pos;
     std::set<pos_t> _forced_output_pos;

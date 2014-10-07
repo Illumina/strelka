@@ -237,14 +237,16 @@ struct starling_sample_options
 struct indel_digt_caller;
 
 
+
 // data deterministically derived from the input options:
 //
 struct starling_deriv_options : public blt_deriv_options
 {
     typedef blt_deriv_options base_t;
 
-    starling_deriv_options(const starling_options& opt,
-                           const reference_contig_segment& ref);
+    starling_deriv_options(
+        const starling_options& opt,
+        const reference_contig_segment& ref);
 
     const indel_digt_caller&
     incaller() const

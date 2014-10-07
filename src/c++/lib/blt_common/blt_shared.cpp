@@ -118,8 +118,9 @@ get_report_range_limit(const pos_range& report_range,
 
 
 blt_deriv_options::
-blt_deriv_options(const blt_options& opt,
-                  const pos_t ref_end)
+blt_deriv_options(
+    const blt_options& opt,
+    const pos_t ref_end)
     : _pdcaller(new pprob_digt_caller(opt.bsnp_diploid_theta))
 {
     set_report_range(opt,ref_end,report_range);

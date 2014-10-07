@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -47,7 +46,6 @@ check_and_update_iks(iks_map_t& iks_map,
                      const double path_lnp,
                      const candidate_alignment* cal_ptr)
 {
-
     const indel_status_t mkey(std::make_pair(ik_call,std::make_pair(is_indel_present,ik_present)));
 
     // check to see if the path score is better than what we already have:
@@ -79,7 +77,6 @@ bool
 is_interfering_indel(const indel_set_t& current_indels,
                      const indel_key& new_indel)
 {
-
     if (current_indels.count(new_indel) != 0) return false;
 
     for (const indel_key& ik : current_indels)
@@ -108,7 +105,6 @@ get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
                                const alignment& al,
                                const indel_key& ik)
 {
-
     using namespace ALIGNPATH;
 
     // all read positions are expressed in unclipped read coordinates!
@@ -215,7 +211,6 @@ is_equiv_candidate(const candidate_alignment& cal1,
                    const unsigned max_indel_size,
                    indel_pair_set& equiv_keys)
 {
-
     equiv_keys.clear();
 
     indel_set_t is1,is2;
@@ -281,7 +276,6 @@ score_indels(const starling_options& opt,
              double max_path_lnp,
              const candidate_alignment* max_cal_ptr)
 {
-
     static const bool is_safe_mode(true);
 
     // (1) score candidate alignments -- already done before calling this function

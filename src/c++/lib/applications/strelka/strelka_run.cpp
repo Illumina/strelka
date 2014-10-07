@@ -39,7 +39,8 @@ const prog_info& pinfo(strelka_info::get());
 
 
 void
-strelka_run(const strelka_options& opt)
+strelka_run(
+    const strelka_options& opt)
 {
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
@@ -160,7 +161,6 @@ strelka_run(const strelka_options& opt)
 
             process_genomic_read(opt,ref,read_stream,read,current.pos,
                                  rlimit.begin_pos,brc,sppr,current.sample_no);
-
         }
         else if (current.itype == INPUT_TYPE::INDEL)     // process candidate indels input from vcf file(s)
         {

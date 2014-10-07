@@ -32,10 +32,11 @@
 
 
 strelka_pos_processor::
-strelka_pos_processor(const strelka_options& opt,
-                      const strelka_deriv_options& dopt,
-                      const reference_contig_segment& ref,
-                      const strelka_streams& client_io)
+strelka_pos_processor(
+    const strelka_options& opt,
+    const strelka_deriv_options& dopt,
+    const reference_contig_segment& ref,
+    const strelka_streams& client_io)
     : base_t(opt,dopt,ref,client_io,STRELKA_SAMPLE_TYPE::SIZE)
     , _opt(opt)
     , _dopt(dopt)

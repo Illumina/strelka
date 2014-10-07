@@ -38,8 +38,9 @@ operator<<(std::ostream& os, const avg_window_data& awd)
 
 
 starling_deriv_options::
-starling_deriv_options(const starling_options& opt,
-                       const reference_contig_segment& ref)
+starling_deriv_options(
+    const starling_options& opt,
+    const reference_contig_segment& ref)
     : base_t(opt,ref.end())
     , sal(opt.max_realignment_candidates)
     , variant_window_first_stage(0)

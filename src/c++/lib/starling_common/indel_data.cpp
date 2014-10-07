@@ -55,9 +55,11 @@ read_path_scores::insert_alt(const indel_key& ik,
 
 
 void
-indel_data::add_observation(const indel_observation_data& obs_data,
-                            const bool is_shared,
-                            bool& is_repeat_obs)
+indel_data::
+add_observation(
+    const indel_observation_data& obs_data,
+    const bool is_shared,
+    bool& is_repeat_obs)
 {
 #ifdef DEBUG_ID
     log_os << "KATTER: adding obs for indel: " << _ik;
@@ -81,8 +83,10 @@ indel_data::add_observation(const indel_observation_data& obs_data,
 
 // add observation for the non-shared case
 void
-indel_data::add_observation_core(const indel_observation_data& obs_data,
-                                 bool& is_repeat_obs)
+indel_data::
+add_observation_core(
+    const indel_observation_data& obs_data,
+    bool& is_repeat_obs)
 {
 #ifdef DEBUG_ID
     log_os << "KATTER: adding obs for indel: " << _ik;

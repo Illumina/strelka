@@ -38,10 +38,9 @@ struct starling_read;
 //
 struct read_segment
 {
-
     read_segment(const uint16_t size=0,
                  const uint16_t offset=0,
-                 const starling_read* sread_ptr=NULL)
+                 const starling_read* sread_ptr=nullptr)
         : is_realigned(false),
           is_invalid_realignment(false),
           buffer_pos(0),

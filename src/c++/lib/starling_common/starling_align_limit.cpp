@@ -77,6 +77,6 @@ starling_align_limit(const unsigned mac)
     {
         const unsigned mt(max_candidate_alignment_toggle(i,mac));
         if ((i>1) && (mt<2)) break;
-        _max_toggle.push_back(max_candidate_alignment_toggle(i,mac));
+        _max_toggle.push_back(mt);
     }
 }

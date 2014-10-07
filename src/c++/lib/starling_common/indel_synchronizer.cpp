@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -32,7 +31,6 @@ register_sample(indel_buffer& ib,
                 const starling_sample_options& sample_opt,
                 const sample_id_t sample_no)
 {
-
     if (_idata.test_key(sample_no))
     {
         log_os << "ERROR: sample_no " << sample_no << " repeated in indel sync registration\n";
@@ -69,11 +67,11 @@ insert_indel(const indel_observation& obs)
 
 void
 indel_synchronizer::
-is_candidate_indel_int(const starling_options& opt,
-                       const indel_key& ik,
-                       const indel_data& id) const
+is_candidate_indel_int(
+    const starling_options& opt,
+    const indel_key& ik,
+    const indel_data& id) const
 {
-
     //////////////////////////////////////
     // lookup all indel_data objects:
     //
@@ -89,7 +87,7 @@ is_candidate_indel_int(const starling_options& opt,
         else
         {
             idsp[i] = ibuff(i).get_indel_data_ptr(ik);
-            assert(NULL != idsp[i]);
+            assert(nullptr != idsp[i]);
         }
     }
 
@@ -101,23 +99,25 @@ is_candidate_indel_int(const starling_options& opt,
     }
 
     // check whether the candidate has been externally specified:
-    bool is_external_candidate=false;
-    for (unsigned i(0); i<isds; ++i)
     {
-        if (idsp[i]->is_external_candidate)
-        {
-            is_external_candidate=true;
-            break;
-        }
-    }
-
-    if (is_external_candidate)
-    {
+        bool is_external_candidate=false;
         for (unsigned i(0); i<isds; ++i)
         {
-            idsp[i]->status.is_candidate_indel=true;
+            if (idsp[i]->is_external_candidate)
+            {
+                is_external_candidate=true;
+                break;
+            }
         }
-        return;
+
+        if (is_external_candidate)
+        {
+            for (unsigned i(0); i<isds; ++i)
+            {
+                idsp[i]->status.is_candidate_indel=true;
+            }
+            return;
+        }
     }
 
     //////////////////////////////////////

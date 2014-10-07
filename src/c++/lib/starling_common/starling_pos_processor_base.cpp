@@ -392,7 +392,6 @@ starling_pos_processor_base(const starling_options& client_opt,
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _client_opt, _client_dopt),client_dopt.report_range,*this)
     , _chrom_name(_client_opt.bam_seq_name)
     , _n_samples(n_samples)
-    , _ws(0)
     , _is_variant_windows(_client_opt.variant_windows.size())
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
@@ -401,7 +400,7 @@ starling_pos_processor_base(const starling_options& client_opt,
     const unsigned knownref_report_size(get_ref_seq_known_size(_ref,_client_dopt.report_range));
     for (unsigned i(0); i<_n_samples; ++i)
     {
-        _sample[i] = new sample_info(_client_opt,report_size,knownref_report_size,&_ric);
+        _sample[i].reset(new sample_info(_client_opt,report_size,knownref_report_size,&_ric));
     }
 
     // setup gvcf aggregator
@@ -420,7 +419,7 @@ starling_pos_processor_base(const starling_options& client_opt,
 #ifdef HAVE_FISHER_EXACT_TEST
     if (_client_opt.is_adis_table)
     {
-        _ws = get_exact_test_ws();
+        _ws.reset(get_exact_test_ws());
     }
 #endif
 
@@ -521,13 +520,6 @@ update_largest_total_indel_ref_span_per_read(const unsigned is)
 starling_pos_processor_base::
 ~starling_pos_processor_base()
 {
-    if (_ws) free(_ws);
-
-    for (unsigned i(0); i<_n_samples; ++i)
-    {
-        delete _sample[i];
-        _sample[i] = nullptr;
-    }
 }
 
 
@@ -608,21 +600,13 @@ insert_forced_output_pos(const pos_t pos)
 
 
 
-unsigned
-starling_pos_processor_base::
-get_estimated_depth(const pos_t pos,
-                    const unsigned sample_no) const
-{
-    return sample(sample_no).estdepth_buff.val(pos);
-}
-
-
 bool
 starling_pos_processor_base::
-is_estimated_depth_range_ge_than(const pos_t begin,
-                                 const pos_t end,
-                                 const unsigned depth,
-                                 const unsigned sample_no) const
+is_estimated_depth_range_ge_than(
+    const pos_t begin,
+    const pos_t end,
+    const unsigned depth,
+    const unsigned sample_no) const
 {
     return sample(sample_no).estdepth_buff.is_range_ge_than(begin,end,depth);
 }
@@ -888,7 +872,7 @@ align_pos(const pos_t pos)
         for (read_segment_iter::ret_val r; true; ri.next())
         {
             r=ri.get_ptr();
-            if (NULL==r.first) break;
+            if (nullptr == r.first) break;
             read_segment& rseg(r.first->get_segment(r.second));
             if (_client_opt.is_realign_submapped_reads ||
                 rseg.is_treated_as_anytier_mapping())

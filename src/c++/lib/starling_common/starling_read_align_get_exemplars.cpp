@@ -227,7 +227,6 @@ get_exemplar_alignments(const starling_options& opt,
                         const read_segment& rseg,
                         std::vector<alignment>& exal)
 {
-
     const bool is_remove_mapper_soft_clip(opt.is_remap_input_softclip);
 
     exal.clear();

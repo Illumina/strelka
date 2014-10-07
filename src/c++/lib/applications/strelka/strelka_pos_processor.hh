@@ -76,7 +76,7 @@ private:
     write_counts(const pos_range& output_report_range) const override;
 
     bool
-    derived_empty() const
+    derived_empty() const override
     {
         return _indelWriter.empty();
     }

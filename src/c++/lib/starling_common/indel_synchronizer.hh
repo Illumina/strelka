@@ -28,7 +28,6 @@ struct indel_synchronizer;
 
 struct indel_sync_data
 {
-
     void
     register_sample(indel_buffer& ib,
                     const depth_buffer& db,
@@ -40,13 +39,6 @@ private:
 
     struct indel_sample_data
     {
-
-        indel_sample_data()
-            : ibp(0)
-            , dbp(0)
-            , sample_optp(0)
-        {}
-
         indel_sample_data(indel_buffer& ib,
                           const depth_buffer& db,
                           const starling_sample_options& sample_opt)
@@ -67,16 +59,15 @@ private:
 
 
 
-// this structure helps to sync the indel information from multiple
-// samples, currently used for tumor/normal indel-calling.
-//
-// There is one indel synchronizer associated with each sample
-// (referred to as the primary sample below). The synchronizer defines
-// the primary sample's synchronization policy with any other sample.
-//
+/// helps to sync the indel information from multiple
+/// samples, currently used for tumor/normal indel-calling.
+///
+/// There is one indel synchronizer associated with each sample
+/// (referred to as the primary sample below). The synchronizer defines
+/// the primary sample's synchronization policy with any other sample.
+///
 struct indel_synchronizer
 {
-
     // ctor for simple single-sample operation:
     //
     indel_synchronizer(indel_buffer& ib,
@@ -112,7 +103,6 @@ struct indel_synchronizer
         return ibuff(_sample_order);
     }
 
-
     // returns true if this indel is novel to the buffer
     //
     // indel is fully inserted into the primary sample buffer, but
@@ -128,7 +118,6 @@ struct indel_synchronizer
                        const indel_key& ik,
                        const indel_data& id) const
     {
-
         if (! id.status.is_candidate_indel_cached)
         {
             is_candidate_indel_int(opt,ik,id);
@@ -144,7 +133,7 @@ struct indel_synchronizer
                        const indel_key& ik) const
     {
         const indel_data* id_ptr(ibuff().get_indel_data_ptr(ik));
-        if (NULL == id_ptr) find_data_exception(ik);
+        if (nullptr == id_ptr) find_data_exception(ik);
         return is_candidate_indel(opt,ik,*id_ptr);
     }
 

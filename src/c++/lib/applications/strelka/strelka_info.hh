@@ -24,7 +24,6 @@
 
 struct strelka_info : public prog_info
 {
-
     static
     const prog_info& get()
     {

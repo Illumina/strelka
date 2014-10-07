@@ -296,8 +296,9 @@ struct blt_deriv_options
     /// or the end position of the acquired reference segment if
     /// -report-range-end was used
     ///
-    blt_deriv_options(const blt_options& opt,
-                      const pos_t ref_end);
+    blt_deriv_options(
+        const blt_options& opt,
+        const pos_t ref_end);
 
     ~blt_deriv_options();
 

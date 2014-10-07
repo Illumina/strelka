@@ -41,13 +41,8 @@
 /// information associated with each candidate indel intersecting an alignment
 struct starling_align_indel_info
 {
-    starling_align_indel_info() :
-        is_present(false),
-        is_remove_only(false)
-    {}
-
-    bool is_present;
-    bool is_remove_only; // candidate can be toggled off during search but not added
+    bool is_present = false;
+    bool is_remove_only = false; // candidate can be toggled off during search but not added
 };
 
 
@@ -172,12 +167,13 @@ is_usable_indel(const indel_synchronizer& isync,
 /// meet candidacy/usability requirements)
 static
 void
-add_indels_in_range(const starling_options& opt,
-                    const align_id_t read_id,
-                    const indel_synchronizer& isync,
-                    const known_pos_range& pr,
-                    starling_align_indel_status& indel_status_map,
-                    std::vector<indel_key>& indel_order)
+add_indels_in_range(
+    const starling_options& opt,
+    const align_id_t read_id,
+    const indel_synchronizer& isync,
+    const known_pos_range& pr,
+    starling_align_indel_status& indel_status_map,
+    std::vector<indel_key>& indel_order)
 {
     const indel_buffer& ibuff(isync.ibuff());
     const std::pair<ciiter,ciiter> ipair(ibuff.pos_range_iter(pr.begin_pos,pr.end_pos));
@@ -584,9 +580,8 @@ sort_remove_only_indels_last(const starling_align_indel_status& indel_status_map
 
 struct mca_warnings
 {
-    mca_warnings() : origin_skip(false), max_toggle_depth(false) {}
-    bool origin_skip;
-    bool max_toggle_depth;
+    bool origin_skip = false;
+    bool max_toggle_depth = false;
 };
 
 
@@ -622,20 +617,21 @@ add_pin_exception_info(
 ///
 static
 void
-make_candidate_alignments(const starling_options& client_opt,
-                          const starling_deriv_options& client_dopt,
-                          const align_id_t read_id,
-                          const unsigned read_length,
-                          const indel_synchronizer& isync,
-                          std::set<candidate_alignment>& cal_set,
-                          mca_warnings& warn,
-                          starling_align_indel_status indel_status_map,
-                          std::vector<indel_key> indel_order,
-                          const unsigned depth,
-                          const unsigned toggle_depth, // total number of changes made to the exemplar alignment
-                          known_pos_range read_range,
-                          int max_read_indel_toggle,
-                          const candidate_alignment& cal)
+make_candidate_alignments(
+    const starling_options& client_opt,
+    const starling_deriv_options& client_dopt,
+    const align_id_t read_id,
+    const unsigned read_length,
+    const indel_synchronizer& isync,
+    std::set<candidate_alignment>& cal_set,
+    mca_warnings& warn,
+    starling_align_indel_status indel_status_map,
+    std::vector<indel_key> indel_order,
+    const unsigned depth,
+    const unsigned toggle_depth, // total number of changes made to the exemplar alignment
+    known_pos_range read_range,
+    int max_read_indel_toggle,
+    const candidate_alignment& cal)
 {
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT starting MCA depth: " << depth << "\n";
@@ -741,7 +737,7 @@ make_candidate_alignments(const starling_options& client_opt,
         // Check for very high candidate indel density. If found, indel
         // search toggling is turned down to the minimum level which still
         // allows simple calls (distance 1 from exemplar). The intention
-        // is to allow basic indel calling to procede in practical time
+        // is to allow basic indel calling to proceed in practical time
         // through regions with very high numbers of candidate indels.
         //
         // This filter was introduced to handle a large set of predictions
@@ -914,12 +910,10 @@ make_candidate_alignments(const starling_options& client_opt,
 
 struct extra_path_info
 {
-    extra_path_info() : indel_count(0), del_size(0), ins_size(0), sum_pos(0) {}
-
-    unsigned indel_count;
-    unsigned del_size;
-    unsigned ins_size;
-    unsigned sum_pos;
+    unsigned indel_count = 0;
+    unsigned del_size = 0;
+    unsigned ins_size = 0;
+    unsigned sum_pos = 0;
 };
 
 
@@ -1313,14 +1307,15 @@ score_candidate_alignments(
 //
 static
 void
-score_candidate_alignments_and_indels(const starling_options& opt,
-                                      const starling_deriv_options& dopt,
-                                      const starling_sample_options& sample_opt,
-                                      const reference_contig_segment& ref,
-                                      read_segment& rseg,
-                                      indel_synchronizer& isync,
-                                      std::set<candidate_alignment>& cal_set,
-                                      const bool is_incomplete_search)
+score_candidate_alignments_and_indels(
+    const starling_options& opt,
+    const starling_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const reference_contig_segment& ref,
+    read_segment& rseg,
+    indel_synchronizer& isync,
+    std::set<candidate_alignment>& cal_set,
+    const bool is_incomplete_search)
 {
     assert(! cal_set.empty());
 
@@ -1426,14 +1421,15 @@ load_cal_with_edge_indels(const alignment& al,
 
 static
 void
-get_exemplar_candidate_alignments(const starling_options& opt,
-                                  const starling_deriv_options& dopt,
-                                  const read_segment& rseg,
-                                  const indel_synchronizer& isync,
-                                  const alignment& exemplar,
-                                  const known_pos_range realign_pr,
-                                  mca_warnings& warn,
-                                  std::set<candidate_alignment>& cal_set)
+get_exemplar_candidate_alignments(
+    const starling_options& opt,
+    const starling_deriv_options& dopt,
+    const read_segment& rseg,
+    const indel_synchronizer& isync,
+    const alignment& exemplar,
+    const known_pos_range realign_pr,
+    mca_warnings& warn,
+    std::set<candidate_alignment>& cal_set)
 {
     const unsigned read_length(rseg.read_size());
 
@@ -1481,18 +1477,14 @@ get_exemplar_candidate_alignments(const starling_options& opt,
     // to prevent incompatible alignments, we must put all indels present in the exemplar first in the order list:
     //
     {
-        typedef starling_align_indel_status::const_iterator siter;
-        const siter i_begin(indel_status_map.begin());
-        const siter i_end(indel_status_map.end());
-
         indel_order.clear();
-        for (siter i(i_begin); i!=i_end; ++i)
+        for (const auto& val : indel_status_map)
         {
-            if (i->second.is_present) indel_order.push_back(i->first);
+            if (val.second.is_present) indel_order.push_back(val.first);
         }
-        for (siter i(i_begin); i!=i_end; ++i)
+        for (const auto& val : indel_status_map)
         {
-            if (! i->second.is_present) indel_order.push_back(i->first);
+            if (! val.second.is_present) indel_order.push_back(val.first);
         }
     }
 
@@ -1582,17 +1574,15 @@ get_exemplar_candidate_alignments(const starling_options& opt,
 
 
 
-// search for optimal realignments of the read and score alternate
-// indel states in preparation for indel genotype calling
-//
 void
-realign_and_score_read(const starling_options& opt,
-                       const starling_deriv_options& dopt,
-                       const starling_sample_options& sample_opt,
-                       const reference_contig_segment& ref,
-                       const known_pos_range& realign_pr,
-                       read_segment& rseg,
-                       indel_synchronizer& isync)
+realign_and_score_read(
+    const starling_options& opt,
+    const starling_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const reference_contig_segment& ref,
+    const known_pos_range& realign_pr,
+    read_segment& rseg,
+    indel_synchronizer& isync)
 {
     if (! rseg.is_valid())
     {

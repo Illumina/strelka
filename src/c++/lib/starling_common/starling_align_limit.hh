@@ -21,7 +21,7 @@
 #include <vector>
 
 
-/// Object which helps to control realignment complexity.
+/// helps to control realignment complexity.
 ///
 /// complexity is restricted as a function of the number of
 /// indel candidates intersecting a read

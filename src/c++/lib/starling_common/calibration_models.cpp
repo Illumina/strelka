@@ -155,7 +155,6 @@ void calibration_models::default_clasify_site(indel_info& ii)
 void
 calibration_models::load_chr_depth_stats()
 {
-    this->opt->chrom_depth_file.empty();
     if (! this->opt->chrom_depth_file.empty())
     {
         parse_chrom_depth(this->opt->chrom_depth_file,chrom_depth);

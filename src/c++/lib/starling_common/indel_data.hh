@@ -116,11 +116,6 @@ struct read_path_scores
 ///
 struct insert_seq_manager
 {
-    insert_seq_manager()
-        : _is_consensus(false)
-        , _obs_count(0)
-    {}
-
     // get final consensus sequence:
     const std::string&
     get()
@@ -185,9 +180,9 @@ private:
 
 
     typedef std::map<std::string,unsigned> obs_t;
-    bool _is_consensus;
+    bool _is_consensus = false;
     std::string _consensus_seq;
-    unsigned _obs_count;
+    unsigned _obs_count = 0;
     obs_t _obs;
 };
 
@@ -197,8 +192,8 @@ private:
 //
 struct indel_data
 {
-
-    indel_data(const indel_key& ik)
+    indel_data(
+        const indel_key& ik)
         : _ik(ik),
           is_external_candidate(false),
           is_forced_output(false),
@@ -208,17 +203,15 @@ struct indel_data
 
     /// add an observation for this indel
     ///
-    /// is_repeat_obs - has this read_id been observed before? this is both
+    /// \param is_repeat_obs has this read_id been observed before? this is both
     ///                 read and set by this method. Read ids are allowed to be
     ///                 repeated due to suggested alternate alignments from
     ///                 GROUPER
     void
-    add_observation(const indel_observation_data& obs_data,
-                    const bool is_shared,
-                    bool& is_repeat_obs);
-
-
-
+    add_observation(
+        const indel_observation_data& obs_data,
+        const bool is_shared,
+        bool& is_repeat_obs);
 
 #if 0
     // add read evidence from another indel_data
@@ -328,13 +321,8 @@ public:
 
     struct status_t
     {
-        status_t()
-            : is_candidate_indel_cached(false)
-            , is_candidate_indel(false)
-        {}
-
-        bool is_candidate_indel_cached;
-        bool is_candidate_indel;
+        bool is_candidate_indel_cached = false;
+        bool is_candidate_indel = false;
     };
 
     mutable status_t status;

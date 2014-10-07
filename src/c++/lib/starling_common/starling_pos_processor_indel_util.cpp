@@ -194,7 +194,6 @@ process_swap(const unsigned max_indel_size,
     }
     else
     {
-
         // left side BP:
         {
             obs.key.pos=ref_head_pos;
