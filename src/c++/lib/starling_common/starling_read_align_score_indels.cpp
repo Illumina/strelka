@@ -247,9 +247,8 @@ is_first_indel_dominant(const starling_options& opt,
                         const indel_key& ik1,
                         const indel_key& ik2)
 {
-
-    const bool ic1(isync.is_candidate_indel(opt,ik1));
-    const bool ic2(isync.is_candidate_indel(opt,ik2));
+    const bool ic1(isync.is_candidate_indel(ik1));
+    const bool ic2(isync.is_candidate_indel(ik2));
 
     if (ic2 && (! ic1)) return false;
     if (ic2==ic1)
@@ -518,7 +517,7 @@ score_indels(const starling_options& opt,
             log_os << "VARMIT: max path eval indel candidate: " << ik;
 #endif
 
-            if (! isync.is_candidate_indel(opt,ik,id)) continue;
+            if (! isync.is_candidate_indel(ik,id)) continue;
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path indel is candidate\n";

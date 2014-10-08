@@ -35,18 +35,6 @@ const unsigned MAX_FLANK_SIZE(50);
 
 
 
-gvcf_deriv_options::
-gvcf_deriv_options(const gvcf_options& opt)
-    : is_max_depth(false)
-    , max_depth(0)
-{
-    std::ostringstream oss;
-    oss << opt.block_label_prefix << opt.block_percent_tol << "p" << opt.block_abs_tol << "a";
-    block_label = oss.str();
-}
-
-
-
 static
 void
 set_report_range(const blt_options& opt,
@@ -128,6 +116,8 @@ blt_deriv_options(
     report_range_limit=get_report_range_limit(report_range,
                                               opt.is_ref_set(),
                                               ref_end);
+
+
 }
 
 

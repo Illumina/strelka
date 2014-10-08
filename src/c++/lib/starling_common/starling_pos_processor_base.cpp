@@ -404,7 +404,7 @@ starling_pos_processor_base(const starling_options& client_opt,
     }
 
     // setup gvcf aggregator
-    if (_client_opt.is_gvcf_output())
+    if (_client_opt.gvcf.is_gvcf_output())
     {
         gvcf_aggregator* temp_agg = new gvcf_aggregator(client_opt,client_dopt,ref,client_io.gvcf_osptr(0));
         if (_client_opt.do_codon_phasing)
@@ -546,7 +546,7 @@ reset()
 
     write_counts(output_report_range);
 
-    if (_client_opt.is_gvcf_output())
+    if (_client_opt.gvcf.is_gvcf_output())
     {
         _gvcfer->flush();
     }
@@ -1194,7 +1194,7 @@ write_candidate_indels_pos(const pos_t pos)
     {
         const indel_key& ik(i->first);
         const indel_data& id(get_indel_data(i));
-        if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
+        if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
         bos << _chrom_name << "\t"
             << output_pos << "\t"
             << INDEL::get_index_label(ik.type) << "\t"
@@ -1244,7 +1244,7 @@ process_pos_indel_single_sample(const pos_t pos,
         const bool forcedOutput(id.is_forced_output);
         const bool zeroCoverage(id.read_path_lnp.empty());
 
-        if (!sif.indel_sync().is_candidate_indel(_client_opt,ik,id) && !forcedOutput) continue;
+        if (!sif.indel_sync().is_candidate_indel(ik,id) && !forcedOutput) continue;
         if (zeroCoverage && !forcedOutput) continue;
 
         // TODO implement indel overlap resolution
@@ -1287,7 +1287,7 @@ process_pos_indel_single_sample(const pos_t pos,
                 get_starling_indel_sample_report_info(_client_dopt,ik,id,sif.bc_buff,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
-                if (_client_opt.is_gvcf_output())
+                if (_client_opt.gvcf.is_gvcf_output())
                 {
                     _gvcfer->add_indel(pos,ik,dindel,iri,isri);
                 }
@@ -1958,7 +1958,7 @@ process_pos_snp_single_sample_impl(
 #endif
 
         //Add site to gvcf
-        if (_client_opt.is_gvcf_output())
+        if (_client_opt.gvcf.is_gvcf_output())
         {
             _site_info.init(pos,pi.get_ref_base(),good_pi,_client_opt.used_allele_count_min_qscore);
             _gvcfer->add_site(_site_info);

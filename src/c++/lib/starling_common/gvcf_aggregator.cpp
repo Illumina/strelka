@@ -114,13 +114,13 @@ gvcf_aggregator(const starling_options& opt,
     , _ref(ref)
     , _osptr(osptr)
     , _chrom(opt.bam_seq_name.c_str())
-    , _dopt(_opt.gvcf)
+    , _dopt(dopt.gvcf)
     , _indel_end_pos(0)
     , _indel_buffer_size(0)
     , _site_buffer_size(0)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
-    , CM(_opt,_dopt)
+    , CM(_opt, dopt.gvcf)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -131,33 +131,14 @@ gvcf_aggregator(const starling_options& opt,
 //        log_os << "I've got minor allele \n";
     }
 
-    if (! opt.is_gvcf_output()) return;
+    if (! opt.gvcf.is_gvcf_output()) return;
 
     assert(nullptr != _osptr);
     assert((nullptr !=_chrom) && (strlen(_chrom)>0));
 
-    //initialize gvcf deriv options:
-    cdmap_t chrom_depth;
-    if (! _opt.gvcf.chrom_depth_file.empty())
-    {
-        parse_chrom_depth(_opt.gvcf.chrom_depth_file,chrom_depth);
-        //TODO, verify that chroms match bam chroms
-
-        cdmap_t::const_iterator cdi(chrom_depth.find(std::string(_chrom)));
-        if (cdi == chrom_depth.end())
-        {
-            std::ostringstream oss;
-            oss << "ERROR: Can't find chromosome: '" << _chrom << "' in chrom depth file: " << _opt.gvcf.chrom_depth_file << "\n";
-            throw blt_exception(oss.str().c_str());
-        }
-        _dopt.max_depth=(cdi->second*_opt.gvcf.max_depth_factor);
-        assert(_dopt.max_depth>=0.);
-        _dopt.is_max_depth=true;
-    }
-
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt,_dopt, chrom_depth,dopt.bam_header_data,*_osptr,this->CM);
+        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data,*_osptr,this->CM);
     }
 
     add_site_modifiers(_empty_site,this->CM);

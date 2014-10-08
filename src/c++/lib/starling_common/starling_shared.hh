@@ -19,7 +19,7 @@
 
 #include "starling_pos_processor_base_stages.hh"
 
-
+#include "gvcf_options.hh"
 #include "blt_common/blt_shared.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "starling_common/starling_align_limit.hh"
@@ -52,6 +52,8 @@ operator<<(std::ostream& os, const avg_window_data& awd);
 
 struct starling_options : public blt_options
 {
+    typedef blt_options base_t;
+
     starling_options() {}
 
     // report whether any type of indel-caller is running (including
@@ -67,13 +69,26 @@ struct starling_options : public blt_options
     bool
     is_bindel_diploid() const
     {
-        return (is_bindel_diploid_file || is_gvcf_output());
+        return (is_bindel_diploid_file || gvcf.is_gvcf_output());
     }
 
     bool
     is_write_candidate_indels() const
     {
         return (! candidate_indel_filename.empty());
+    }
+
+    bool
+    is_bsnp_diploid() const
+    {
+        return (base_t::is_bsnp_diploid() ||
+                gvcf.is_gvcf_output());
+    }
+
+    bool
+    is_all_sites() const
+    {
+        return (is_bsnp_diploid_allele_file || gvcf.is_gvcf_output());
     }
 
     unsigned htype_buffer_segment() const
@@ -135,7 +150,10 @@ struct starling_options : public blt_options
 
     int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
     double max_candidate_indel_density = 0.15; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
-    unsigned max_candidate_indel_depth = 10000; // max estimated read depth for indels to reach candidacy for realignment and indel calling.
+
+    // depth factor above filtration filter cutoff where
+    // indel candidacy is disallowed:
+    double max_candidate_indel_depth_factor = 3.;
 
     // min length of the 'inserted' portion of an open-ended breakpoint:
     unsigned min_candidate_indel_open_length = 20;
@@ -213,6 +231,8 @@ struct starling_options : public blt_options
 
     // if true, treat all soft-clipped segments on the egdes of reads as realignable
     bool is_remap_input_softclip = false;
+
+    gvcf_options gvcf;
 };
 
 
@@ -292,6 +312,8 @@ public:
 
     unsigned variant_window_first_stage;
     unsigned variant_window_last_stage;
+
+    gvcf_deriv_options gvcf;
 
 private:
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..

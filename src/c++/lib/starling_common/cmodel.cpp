@@ -46,7 +46,7 @@ void c_model::add_parameters(const parmap& myPars)
 void c_model::do_rule_model(featuremap& cutoffs, site_info& si)
 {
     if (si.smod.gqx<cutoffs["GQX"]) si.smod.set_filter(VCF_FILTERS::LowGQX);
-    if (cutoffs["DP"]>0 && dopt.is_max_depth)
+    if (cutoffs["DP"]>0 && dopt.is_max_depth())
     {
         if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
@@ -74,7 +74,7 @@ void c_model::do_rule_model(featuremap& cutoffs, indel_info& ii)
         if (ii.imod.gqx<cutoffs["GQX"]) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if (cutoffs["DP"]>0 && dopt.is_max_depth)
+    if (cutoffs["DP"]>0 && dopt.is_max_depth())
     {
         if (ii.isri.depth > dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }

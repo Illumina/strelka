@@ -87,7 +87,7 @@ void calibration_models::default_clasify_site(site_info& si)
     {
         if (si.smod.gqx<this->opt->min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
     }
-    if (this->dopt->is_max_depth)
+    if (this->dopt->is_max_depth())
     {
         if ((si.n_used_calls+si.n_unused_calls) > this->dopt->max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
@@ -134,7 +134,7 @@ void calibration_models::default_clasify_site(indel_info& ii)
         if (ii.imod.gqx<opt->min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if (this->dopt->is_max_depth)
+    if (this->dopt->is_max_depth())
     {
         if (ii.isri.depth > this->dopt->max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }

@@ -115,7 +115,7 @@ check_for_candidate_indel_overlap(const starling_options& opt,
 #endif
 
         // check if indel qualifies as candidate indel:
-        if (isync.is_candidate_indel(opt,ik,id))
+        if (isync.is_candidate_indel(ik,id))
         {
 #ifdef DEBUG_ALIGN
             std::cerr << "VARMIT read segment intersects at least one qualifying indel.\n";
@@ -154,7 +154,7 @@ is_usable_indel(const indel_synchronizer& isync,
                 const indel_data& id,
                 const align_id_t read_id)
 {
-    return (isync.is_candidate_indel(opt,ik,id) ||
+    return (isync.is_candidate_indel(ik,id) ||
             (id.all_read_ids.count(read_id)>0) ||
             (id.tier2_map_read_ids.count(read_id)>0) ||
             (id.submap_read_ids.count(read_id)>0) ||
@@ -992,7 +992,7 @@ get_candidate_indel_count(const starling_options& client_opt,
     unsigned val(0);
     for (const indel_key& ik : is)
     {
-        if (isync.is_candidate_indel(client_opt,ik)) val++;
+        if (isync.is_candidate_indel(ik)) val++;
     }
     return val;
 }

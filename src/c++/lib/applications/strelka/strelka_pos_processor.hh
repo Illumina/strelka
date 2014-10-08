@@ -39,12 +39,11 @@ struct strelka_pos_processor : public starling_pos_processor_base
 {
     typedef starling_pos_processor_base base_t;
 
-    strelka_pos_processor(const strelka_options& opt,
-                          const strelka_deriv_options& dopt,
-                          const reference_contig_segment& ref,
-                          const strelka_streams& client_io);
-
-    ~strelka_pos_processor();
+    strelka_pos_processor(
+        const strelka_options& opt,
+        const strelka_deriv_options& dopt,
+        const reference_contig_segment& ref,
+        const strelka_streams& client_io);
 
 private:
 

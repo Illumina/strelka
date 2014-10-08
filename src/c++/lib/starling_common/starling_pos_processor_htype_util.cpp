@@ -532,7 +532,7 @@ get_region_haplotypes(const known_pos_range full_pr,
                full_pr.is_pos_intersect(ik.right_pos()))) continue;
 
         // only consider candidates:
-        if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
+        if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
 
         get_htypes_for_indel(_client_dopt,sif.read_buff,_ref,ik,id,hdata);
 

@@ -33,6 +33,7 @@ struct indel_sync_data
                     const depth_buffer& db,
                     const depth_buffer& db2,
                     const starling_sample_options& sample_opt,
+                    const double max_depth,
                     const sample_id_t sample_no);
 
 private:
@@ -44,17 +45,20 @@ private:
             indel_buffer& ib,
             const depth_buffer& db,
             const depth_buffer& db2,
-            const starling_sample_options& sample_opt)
+            const starling_sample_options& sample_opt,
+            const double init_max_depth)
             : ibp(&ib)
             , dbp(&db)
             , dbp2(&db2)
             , sample_optp(&sample_opt)
+            , max_depth(init_max_depth)
         {}
 
         indel_buffer* ibp;
         const depth_buffer* dbp;
         const depth_buffer* dbp2;
         const starling_sample_options* sample_optp;
+        double max_depth;
     };
 
     typedef id_map<sample_id_t,indel_sample_data> idata_t;
@@ -75,15 +79,20 @@ struct indel_synchronizer
 {
     // ctor for simple single-sample operation:
     //
+    // \max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the filter.
+    //
     indel_synchronizer(
+        const starling_options& opt,
+        const double max_candidate_depth,
         indel_buffer& ib,
         const depth_buffer& db,
         const depth_buffer& db2,
         const starling_sample_options& init_sample_opt)
-        : _sample_no(0)
+        : _opt(opt)
+        , _sample_no(0)
         , _sample_order(0)
     {
-        _isd.register_sample(ib,db,db2,init_sample_opt,_sample_no);
+        _isd.register_sample(ib,db,db2,init_sample_opt, max_candidate_depth,_sample_no);
     }
 
     // ctor for multi-sample synced cases:
@@ -92,12 +101,13 @@ struct indel_synchronizer
     // for this synchronizer.
     //
     indel_synchronizer(
+        const starling_options& opt,
         const indel_sync_data& isd,
         const sample_id_t sample_no)
-        : _isd(isd)
+        : _opt(opt)
+        , _isd(isd)
         , _sample_no(sample_no)
         , _sample_order(_isd._idata.get_id(sample_no)) {}
-
 
     indel_buffer&
     ibuff()
@@ -122,13 +132,13 @@ struct indel_synchronizer
     // realignment or as a "private" (ie. noise) indel?
     //
     bool
-    is_candidate_indel(const starling_options& opt,
-                       const indel_key& ik,
-                       const indel_data& id) const
+    is_candidate_indel(
+        const indel_key& ik,
+        const indel_data& id) const
     {
         if (! id.status.is_candidate_indel_cached)
         {
-            is_candidate_indel_int(opt,ik,id);
+            is_candidate_indel_impl(ik,id);
         }
         return id.status.is_candidate_indel;
     }
@@ -137,12 +147,12 @@ struct indel_synchronizer
     // beforehand, but provided for convenience:
     //
     bool
-    is_candidate_indel(const starling_options& opt,
-                       const indel_key& ik) const
+    is_candidate_indel(
+        const indel_key& ik) const
     {
         const indel_data* id_ptr(ibuff().get_indel_data_ptr(ik));
         if (nullptr == id_ptr) find_data_exception(ik);
-        return is_candidate_indel(opt,ik,*id_ptr);
+        return is_candidate_indel(ik,*id_ptr);
     }
 
     // used for debug output:
@@ -154,10 +164,17 @@ struct indel_synchronizer
 
 private:
 
+    bool
+    is_candidate_indel_impl_test(
+        const indel_key& ik,
+        const indel_data& id,
+        const indel_data* idsp[],
+        const unsigned isds) const;
+
     void
-    is_candidate_indel_int(const starling_options& opt,
-                           const indel_key& ik,
-                           const indel_data& id) const;
+    is_candidate_indel_impl(
+        const indel_key& ik,
+        const indel_data& id) const;
 
     indel_buffer&
     ibuff(const unsigned s)
@@ -205,6 +222,9 @@ private:
 
     void
     find_data_exception(const indel_key& ik) const;
+
+
+    const starling_options& _opt;
 
     indel_sync_data _isd;
 

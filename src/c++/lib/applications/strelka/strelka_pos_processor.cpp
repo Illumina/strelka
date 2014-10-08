@@ -64,26 +64,24 @@ strelka_pos_processor(
     }
 
     // setup indel syncronizers:
-    indel_sync_data isdata;
-    isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,normal_sif.sample_opt,NORMAL);
-    isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,tumor_sif.sample_opt,TUMOR);
-    normal_sif.indel_sync_ptr = (new indel_synchronizer(isdata,NORMAL));
-    tumor_sif.indel_sync_ptr = (new indel_synchronizer(isdata,TUMOR));
+    {
+        double max_candidate_normal_sample_depth(-1.);
+        if (dopt.sfilter.is_max_depth())
+        {
+            max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_depth);
+        }
+        indel_sync_data isdata;
+        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
+                normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
+        isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
+                tumor_sif.sample_opt, -1., TUMOR);
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,NORMAL));
+        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,TUMOR));
+    }
 
     // setup indel avg window:
-    _indelRegionIndexNormal=sample(NORMAL).wav.add_win(opt.sfilter.indelRegionFlankSize*2);
-    _indelRegionIndexTumor=sample(TUMOR).wav.add_win(opt.sfilter.indelRegionFlankSize*2);
-}
-
-
-
-strelka_pos_processor::
-~strelka_pos_processor()
-{
-    for (unsigned i(0); i<_n_samples; ++i)
-    {
-        delete sample(i).indel_sync_ptr;
-    }
+    _indelRegionIndexNormal=normal_sif.wav.add_win(opt.sfilter.indelRegionFlankSize*2);
+    _indelRegionIndexTumor=tumor_sif.wav.add_win(opt.sfilter.indelRegionFlankSize*2);
 }
 
 
@@ -243,7 +241,7 @@ process_pos_indel_somatic(const pos_t pos)
         if (ik.is_breakpoint()) continue;
 
         const indel_data& tumor_id(get_indel_data(i));
-        if (! tumor_sif.indel_sync().is_candidate_indel(_opt,ik,tumor_id)) continue;
+        if (! tumor_sif.indel_sync().is_candidate_indel(ik,tumor_id)) continue;
 
         const indel_data* normal_id_ptr(normal_sif.indel_buff.get_indel_data_ptr(ik));
         assert(NULL != normal_id_ptr);

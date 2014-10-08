@@ -27,11 +27,11 @@ struct starling_pos_processor : public starling_pos_processor_base
 {
     typedef starling_pos_processor_base base_t;
 
-    starling_pos_processor(const starling_options& client_opt,
-                           const starling_deriv_options& client_dopt,
-                           const reference_contig_segment& ref,
-                           const starling_streams_base& client_io)
-        : base_t(client_opt,client_dopt,ref,client_io,1) {}
+    starling_pos_processor(
+        const starling_options& opt,
+        const starling_deriv_options& dopt,
+        const reference_contig_segment& ref,
+        const starling_streams_base& client_io);
 
 private:
     void

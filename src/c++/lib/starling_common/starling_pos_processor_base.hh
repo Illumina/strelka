@@ -302,8 +302,6 @@ public:
             : indel_buff(opt.max_indel_size)
             , read_buff(ricp)
             , sample_opt(opt)
-            , isync_default(indel_buff,estdepth_buff,estdepth_buff_tier2,sample_opt)
-            , indel_sync_ptr(&isync_default)
             , ss(report_size)
             , used_ss(report_size)
             , ssn(knownref_report_size)
@@ -331,8 +329,7 @@ public:
 
         starling_sample_options sample_opt;
 
-        indel_synchronizer isync_default;
-        indel_synchronizer* indel_sync_ptr;
+        std::unique_ptr<indel_synchronizer> indel_sync_ptr;
 
         depth_stream_stat_range ss;
         depth_stream_stat_range used_ss;

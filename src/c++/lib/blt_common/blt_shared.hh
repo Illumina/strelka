@@ -39,53 +39,6 @@ enum index_t
 }
 
 
-struct gvcf_options
-{
-    // admin/other:
-    std::string chrom_depth_file;
-    bool is_skip_header = false;
-
-    // filters:
-    double max_depth_factor = 3.;
-    bool is_min_gqx = true;
-    double min_gqx = 30.;
-    bool is_max_base_filt = true;
-    double max_base_filt = .4; //DPFratio
-    bool is_max_snv_sb = true;
-    double max_snv_sb = 10;
-    bool is_max_snv_hpol = true;
-    int max_snv_hpol = -1;
-    bool is_max_ref_rep = true;
-    int max_ref_rep = -1;
-
-    // blocking scheme:
-    //
-    // NOTE: bool inserted in this line causes some type of struct initialization error in gcc (4.1 and 4.7)... in blt_options and starling options
-    //       as if the struct was sliced. This smells like a compiler error but those should be rare... possible other struct layout error here?
-    //
-    std::string block_label_prefix = "BLOCKAVG_min";
-    unsigned block_percent_tol = 30;
-    unsigned block_abs_tol = 3;
-    bool is_block_compression = true;
-
-    double block_max_nonref = .2; // what percentage of non-ref bases can a site have and still be included in a non-variant block
-    std::string minor_allele_file; //
-    std::string out_file;
-};
-
-
-
-struct gvcf_deriv_options
-{
-    gvcf_deriv_options(const gvcf_options& opt);
-
-    bool is_max_depth;
-    double max_depth;
-
-    std::string block_label;
-};
-
-
 
 struct blt_options
 {
@@ -110,31 +63,17 @@ struct blt_options
         return (! nonref_sites_filename.empty());
     }
 
-    // is the diploid snp model being used?
-    bool
-    is_bsnp_diploid() const
-    {
-        return (is_bsnp_diploid_file ||
-                is_bsnp_diploid_allele_file ||
-                is_gvcf_output());
-    }
-
-    bool
-    is_all_sites() const
-    {
-        return (is_bsnp_diploid_allele_file || is_gvcf_output());
-    }
-
-    bool
-    is_gvcf_output() const
-    {
-        return (! gvcf.out_file.empty());
-    }
-
     bool
     is_compute_germline_VQSRmetrics() const
     {
         return (is_report_germline_VQSRmetrics || (! calibration_model.empty()));
+    }
+
+    bool
+    is_bsnp_diploid() const
+    {
+        return (is_bsnp_diploid_file ||
+                is_bsnp_diploid_allele_file);
     }
 
     bool
@@ -279,8 +218,6 @@ struct blt_options
     std::string calibration_models_filename;
     std::string minor_allele_bed;
     std::string indel_error_model;      // which baseline prior should be used for candidate indel genotyping
-
-    gvcf_options gvcf;
 };
 
 

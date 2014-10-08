@@ -31,6 +31,7 @@ register_sample(
     const depth_buffer& db,
     const depth_buffer& db2,
     const starling_sample_options& sample_opt,
+    const double max_depth,
     const sample_id_t sample_no)
 {
     if (_idata.test_key(sample_no))
@@ -38,7 +39,7 @@ register_sample(
         log_os << "ERROR: sample_no " << sample_no << " repeated in indel sync registration\n";
         exit(EXIT_FAILURE);
     }
-    _idata.insert(sample_no,indel_sample_data(ib,db,db2,sample_opt));
+    _idata.insert(sample_no,indel_sample_data(ib,db,db2,sample_opt,max_depth));
 }
 
 
@@ -66,60 +67,18 @@ insert_indel(const indel_observation& obs)
 
 
 
-
-void
+bool
 indel_synchronizer::
-is_candidate_indel_int(
-    const starling_options& opt,
+is_candidate_indel_impl_test(
     const indel_key& ik,
-    const indel_data& id) const
+    const indel_data& id,
+    const indel_data* idsp[],
+    const unsigned isds) const
 {
-    //////////////////////////////////////
-    // lookup all indel_data objects:
-    //
-    const indel_data* idsp[MAX_SAMPLE];
-
-    const unsigned isds(idata().size());
-    for (unsigned i(0); i<isds; ++i)
-    {
-        if (i==_sample_order)
-        {
-            idsp[i] = &id;
-        }
-        else
-        {
-            idsp[i] = ibuff(i).get_indel_data_ptr(ik);
-            assert(nullptr != idsp[i]);
-        }
-    }
-
-    // pre-set result to false until candidacy is shown:
-    for (unsigned i(0); i<isds; ++i)
-    {
-        idsp[i]->status.is_candidate_indel=false;
-        idsp[i]->status.is_candidate_indel_cached=true;
-    }
-
     // check whether the candidate has been externally specified:
+    for (unsigned i(0); i<isds; ++i)
     {
-        bool is_external_candidate=false;
-        for (unsigned i(0); i<isds; ++i)
-        {
-            if (idsp[i]->is_external_candidate)
-            {
-                is_external_candidate=true;
-                break;
-            }
-        }
-
-        if (is_external_candidate)
-        {
-            for (unsigned i(0); i<isds; ++i)
-            {
-                idsp[i]->status.is_candidate_indel=true;
-            }
-            return;
-        }
+        if (idsp[i]->is_external_candidate) return true;
     }
 
     //////////////////////////////////////
@@ -144,9 +103,9 @@ is_candidate_indel_int(
         }
 
         // do reads from all samples exceed the default threshold?:
-        if (n_total_reads >= opt.default_min_candidate_indel_reads) is_min_count=true;
+        if (n_total_reads >= _opt.default_min_candidate_indel_reads) is_min_count=true;
 
-        if (! is_min_count) return;
+        if (! is_min_count) return false;
     }
 
     //////////////////////////////////////
@@ -155,8 +114,8 @@ is_candidate_indel_int(
     {
         bool is_min_frac(false);
 
-        double min_large_indel_frac(opt.min_candidate_indel_read_frac);
-        const bool is_small_indel(static_cast<int>(std::max(ik.length,ik.swap_dlength)) <= opt.max_small_candidate_indel_size);
+        double min_large_indel_frac(_opt.min_candidate_indel_read_frac);
+        const bool is_small_indel(static_cast<int>(std::max(ik.length,ik.swap_dlength)) <= _opt.max_small_candidate_indel_size);
 
         // this value is used to get around type-mismatch error in
         // std::max() below
@@ -186,20 +145,7 @@ is_candidate_indel_int(
             }
         }
 
-        if (! is_min_frac) return;
-    }
-
-    /////////////////////////////////////////
-    // test against max_depth:
-    //
-    {
-        const double max_depth(opt.max_candidate_indel_depth);
-        for (unsigned i(0); i<isds; ++i)
-        {
-            const unsigned estdepth(ebuff(i).val(ik.pos-1));
-            const unsigned estdepth2(ebuff2(i).val(ik.pos-1));
-            if ((estdepth+estdepth2) > max_depth) return;
-        }
+        if (! is_min_frac) return false;
     }
 
     /////////////////////////////////////////
@@ -207,18 +153,61 @@ is_candidate_indel_int(
     //
     // call get_insert_size() instead of asking for the insert seq
     // so as to not finalize any incomplete insertions:
+    if (ik.is_breakpoint() &&
+        (_opt.min_candidate_indel_open_length > id.get_insert_size()))
     {
-        if (ik.is_breakpoint() &&
-            (opt.min_candidate_indel_open_length > id.get_insert_size()))
+        return false;
+    }
+
+    /////////////////////////////////////////
+    // test against max_depth:
+    //
+    for (unsigned i(0); i<isds; ++i)
+    {
+        const double max_depth(idata().get_value(i).max_depth);
+        if (max_depth < 0.) continue;
+
+        const unsigned estdepth(ebuff(i).val(ik.pos-1));
+        const unsigned estdepth2(ebuff2(i).val(ik.pos-1));
+        if ((estdepth+estdepth2) > max_depth) return false;
+    }
+
+    return true;
+}
+
+
+
+void
+indel_synchronizer::
+is_candidate_indel_impl(
+    const indel_key& ik,
+    const indel_data& id) const
+{
+    //////////////////////////////////////
+    // lookup all indel_data objects:
+    //
+    const indel_data* idsp[MAX_SAMPLE];
+
+    const unsigned isds(idata().size());
+    for (unsigned i(0); i<isds; ++i)
+    {
+        if (i==_sample_order)
         {
-            return;
+            idsp[i] = &id;
+        }
+        else
+        {
+            idsp[i] = ibuff(i).get_indel_data_ptr(ik);
+            assert(nullptr != idsp[i]);
         }
     }
 
-    // made it!
+    const bool is_candidate(is_candidate_indel_impl_test(ik,id,idsp,isds));
+
     for (unsigned i(0); i<isds; ++i)
     {
-        idsp[i]->status.is_candidate_indel=true;
+        idsp[i]->status.is_candidate_indel=is_candidate;
+        idsp[i]->status.is_candidate_indel_cached=true;
     }
 }
 
