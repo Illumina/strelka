@@ -42,7 +42,7 @@ starling_pos_processor(
         {
             if (max_candidate_normal_sample_depth > 0.)
             {
-                max_candidate_normal_sample_depth = std::min(max_candidate_normal_sample_depth,opt.max_candidate_indel_depth);
+                max_candidate_normal_sample_depth = std::min(max_candidate_normal_sample_depth,static_cast<double>(opt.max_candidate_indel_depth));
             }
             else
             {
