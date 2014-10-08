@@ -116,8 +116,6 @@ blt_deriv_options(
     report_range_limit=get_report_range_limit(report_range,
                                               opt.is_ref_set(),
                                               ref_end);
-
-
 }
 
 

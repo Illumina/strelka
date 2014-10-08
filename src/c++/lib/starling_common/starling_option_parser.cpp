@@ -154,9 +154,12 @@ get_starling_shared_option_parser(starling_options& opt)
 
     po::options_description indel_opt("indel-options");
     indel_opt.add_options()
+    ("max-candidate-indel-depth",
+     po::value(&opt.max_candidate_indel_depth)->default_value(opt.max_candidate_indel_depth),
+     "Maximum estimated read depth for an indel to reach candidacy. If any one sample exceeds this depth at the indel, the indel will not reach candidacy in all indel-syncronized samples. A non-positive value disables the filter")
     ("max-candidate-indel-depth-factor",
      po::value(&opt.max_candidate_indel_depth_factor)->default_value(opt.max_candidate_indel_depth_factor),
-     "If a chromosome maximum depth filter is in use, then at this factor of the filtration depth cutoff no indels will reach candidacy in all indel-synchronized samples. A negative value disables the filter")
+     "If a chromosome maximum depth filter is in use, then at this factor of the filtration depth cutoff no indels will reach candidacy in all indel-synchronized samples. A non-positive value disables the filter")
     ("min-candidate-open-length",
      po::value(&opt.min_candidate_indel_open_length)->default_value(opt.min_candidate_indel_open_length),
      "Minimum open-ended breakpoint sequence length required to become a breakpoint candidate")

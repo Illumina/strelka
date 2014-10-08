@@ -165,7 +165,7 @@ is_candidate_indel_impl_test(
     for (unsigned i(0); i<isds; ++i)
     {
         const double max_depth(idata().get_value(i).max_depth);
-        if (max_depth < 0.) continue;
+        if (max_depth <= 0.) continue;
 
         const unsigned estdepth(ebuff(i).val(ik.pos-1));
         const unsigned estdepth2(ebuff2(i).val(ik.pos-1));

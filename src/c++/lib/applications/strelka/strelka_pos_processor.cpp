@@ -68,8 +68,24 @@ strelka_pos_processor(
         double max_candidate_normal_sample_depth(-1.);
         if (dopt.sfilter.is_max_depth())
         {
-            max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_depth);
+            if (opt.max_candidate_indel_depth_factor > 0.)
+            {
+                max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_depth);
+            }
         }
+
+        if (opt.max_candidate_indel_depth > 0.)
+        {
+            if (max_candidate_normal_sample_depth > 0.)
+            {
+                max_candidate_normal_sample_depth = std::min(max_candidate_normal_sample_depth,opt.max_candidate_indel_depth);
+            }
+            else
+            {
+                max_candidate_normal_sample_depth = opt.max_candidate_indel_depth;
+            }
+        }
+
         indel_sync_data isdata;
         isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
                 normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
