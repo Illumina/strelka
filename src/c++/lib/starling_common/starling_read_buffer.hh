@@ -79,10 +79,10 @@ struct starling_read_buffer : private boost::noncopyable
     //
     std::pair<bool,align_id_t>
     add_read_alignment(
-            const starling_options& opt,
-            const bam_record& br,
-            const alignment& al,
-            const MAPLEVEL::index_t maplev);
+        const starling_options& opt,
+        const bam_record& br,
+        const alignment& al,
+        const MAPLEVEL::index_t maplev);
 
 #if 1
     // adjust read segment's buffer position to new_buffer_pos,

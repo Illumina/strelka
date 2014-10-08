@@ -112,7 +112,7 @@ struct indel_buffer
     bool
     empty() const
     {
-    	return _idata.empty();
+        return _idata.empty();
     }
 
     // debug dumpers:

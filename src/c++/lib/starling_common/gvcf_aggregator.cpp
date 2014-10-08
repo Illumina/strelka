@@ -295,7 +295,7 @@ add_indel(const pos_t pos,
     // clear the current homRef indel
     if (is_no_indel(dindel))
     {
-    	process_overlaps();
+        process_overlaps();
     }
 }
 
@@ -306,7 +306,7 @@ bool
 is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
                         const unsigned size)
 {
-	return (size==2 &&
+    return (size==2 &&
             is_het_indel(indel_buffer[0].dindel) &&
             is_het_indel(indel_buffer[1].dindel));
 }

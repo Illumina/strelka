@@ -1043,7 +1043,7 @@ calculate_result_set_grid(
                 strand_tumor_gt=tumor_gt;
                 symm_tumor_gt=DIGT_SGRID::toggle_strand_state(tumor_gt, ref_base);
             }
-            rs.strandBias = tumor_lhood[strand_tumor_gt] - tumor_lhood[symm_tumor_gt];+
+            rs.strandBias = tumor_lhood[strand_tumor_gt] - tumor_lhood[symm_tumor_gt];
 #endif
 
             const blt_float_t symm_lhood(*std::max_element(tumor_lhood+N_BASE, tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE));

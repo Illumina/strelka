@@ -146,11 +146,11 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     //
     std::pair<bool,align_id_t>
     insert_read(
-            const bam_record& br,
-            const alignment& al,
-            const char* chrom_name,
-            const MAPLEVEL::index_t maplev,
-            const unsigned sample_no);
+        const bam_record& br,
+        const alignment& al,
+        const char* chrom_name,
+        const MAPLEVEL::index_t maplev,
+        const unsigned sample_no);
 
     /// snv gt and stats must be reported for this pos (not only honored in strelka right now)
     void

@@ -38,7 +38,7 @@ struct starling_segmented_read
 {
     explicit
     starling_segmented_read(const seg_id_t size)
-      : _seg_info(size) {}
+        : _seg_info(size) {}
 
     void
     set_segment(const seg_id_t seg_no,

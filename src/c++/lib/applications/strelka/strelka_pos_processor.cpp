@@ -88,9 +88,9 @@ strelka_pos_processor(
 
         indel_sync_data isdata;
         isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
+                               normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
         isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
-                tumor_sif.sample_opt, -1., TUMOR);
+                               tumor_sif.sample_opt, -1., TUMOR);
         normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,NORMAL));
         tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,TUMOR));
     }

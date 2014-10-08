@@ -275,7 +275,7 @@ void
 stage_manager::
 process_pos(const pos_t pos)
 {
-	if (! _is_head_pos)
+    if (! _is_head_pos)
     {
         _head_pos = pos;
         _is_head_pos = true;

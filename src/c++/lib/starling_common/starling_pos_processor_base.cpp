@@ -1003,7 +1003,7 @@ process_pos(const int stage_no,
         {
             if (! _client_opt.is_write_candidate_indels_only)
             {
-            	if (is_pos_reportable(pos))
+                if (is_pos_reportable(pos))
                 {
 
                     process_pos_variants(pos);
