@@ -26,17 +26,19 @@
 
 void
 indel_sync_data::
-register_sample(indel_buffer& ib,
-                const depth_buffer& db,
-                const starling_sample_options& sample_opt,
-                const sample_id_t sample_no)
+register_sample(
+    indel_buffer& ib,
+    const depth_buffer& db,
+    const depth_buffer& db2,
+    const starling_sample_options& sample_opt,
+    const sample_id_t sample_no)
 {
     if (_idata.test_key(sample_no))
     {
         log_os << "ERROR: sample_no " << sample_no << " repeated in indel sync registration\n";
         exit(EXIT_FAILURE);
     }
-    _idata.insert(sample_no,indel_sample_data(ib,db,sample_opt));
+    _idata.insert(sample_no,indel_sample_data(ib,db,db2,sample_opt));
 }
 
 
@@ -195,7 +197,8 @@ is_candidate_indel_int(
         for (unsigned i(0); i<isds; ++i)
         {
             const unsigned estdepth(ebuff(i).val(ik.pos-1));
-            if (estdepth > max_depth) return;
+            const unsigned estdepth2(ebuff2(i).val(ik.pos-1));
+            if ((estdepth+estdepth2) > max_depth) return;
         }
     }
 

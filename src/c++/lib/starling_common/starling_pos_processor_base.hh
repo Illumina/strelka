@@ -302,7 +302,7 @@ public:
             : indel_buff(opt.max_indel_size)
             , read_buff(ricp)
             , sample_opt(opt)
-            , isync_default(indel_buff,estdepth_buff,sample_opt)
+            , isync_default(indel_buff,estdepth_buff,estdepth_buff_tier2,sample_opt)
             , indel_sync_ptr(&isync_default)
             , ss(report_size)
             , used_ss(report_size)
@@ -327,6 +327,7 @@ public:
         pos_basecall_buffer bc_buff;
         starling_read_buffer read_buff;
         depth_buffer estdepth_buff; // provide an early estimate of read depth before realignment.
+        depth_buffer estdepth_buff_tier2; // provide an early estimate of read depth before realignment.
 
         starling_sample_options sample_opt;
 

@@ -608,7 +608,15 @@ is_estimated_depth_range_ge_than(
     const unsigned depth,
     const unsigned sample_no) const
 {
-    return sample(sample_no).estdepth_buff.is_range_ge_than(begin,end,depth);
+    const auto& est1(sample(sample_no).estdepth_buff);
+    const auto& est2(sample(sample_no).estdepth_buff_tier2);
+
+    assert(begin <= end);
+    for (pos_t i(begin); i<=end; ++i)
+    {
+        if ((est1.val(i)+est2.val(i)) >= depth) return true;
+    }
+    return false;
 }
 
 
@@ -744,6 +752,10 @@ load_read_in_depth_buffer(const read_segment& rseg,
     if (is_usable_mapping)
     {
         add_alignment_to_depth_buffer(al,sample(sample_no).estdepth_buff);
+    }
+    else if (maplev == MAPLEVEL::TIER2_MAPPED)
+    {
+        add_alignment_to_depth_buffer(al,sample(sample_no).estdepth_buff_tier2);
     }
 }
 
@@ -1033,6 +1045,7 @@ process_pos(const int stage_no,
         {
             sample_info& sif(sample(s));
             sif.estdepth_buff.clear_pos(pos);
+            sif.estdepth_buff_tier2.clear_pos(pos);
             sif.bc_buff.clear_pos(pos);
         }
     }

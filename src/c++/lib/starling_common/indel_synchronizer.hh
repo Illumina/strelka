@@ -31,6 +31,7 @@ struct indel_sync_data
     void
     register_sample(indel_buffer& ib,
                     const depth_buffer& db,
+                    const depth_buffer& db2,
                     const starling_sample_options& sample_opt,
                     const sample_id_t sample_no);
 
@@ -39,16 +40,20 @@ private:
 
     struct indel_sample_data
     {
-        indel_sample_data(indel_buffer& ib,
-                          const depth_buffer& db,
-                          const starling_sample_options& sample_opt)
+        indel_sample_data(
+            indel_buffer& ib,
+            const depth_buffer& db,
+            const depth_buffer& db2,
+            const starling_sample_options& sample_opt)
             : ibp(&ib)
             , dbp(&db)
+            , dbp2(&db2)
             , sample_optp(&sample_opt)
         {}
 
         indel_buffer* ibp;
         const depth_buffer* dbp;
+        const depth_buffer* dbp2;
         const starling_sample_options* sample_optp;
     };
 
@@ -70,13 +75,15 @@ struct indel_synchronizer
 {
     // ctor for simple single-sample operation:
     //
-    indel_synchronizer(indel_buffer& ib,
-                       const depth_buffer& db,
-                       const starling_sample_options& init_sample_opt)
+    indel_synchronizer(
+        indel_buffer& ib,
+        const depth_buffer& db,
+        const depth_buffer& db2,
+        const starling_sample_options& init_sample_opt)
         : _sample_no(0)
         , _sample_order(0)
     {
-        _isd.register_sample(ib,db,init_sample_opt,_sample_no);
+        _isd.register_sample(ib,db,db2,init_sample_opt,_sample_no);
     }
 
     // ctor for multi-sample synced cases:
@@ -84,8 +91,9 @@ struct indel_synchronizer
     // sample_no is the sample that is 'primary'
     // for this synchronizer.
     //
-    indel_synchronizer(const indel_sync_data& isd,
-                       const sample_id_t sample_no)
+    indel_synchronizer(
+        const indel_sync_data& isd,
+        const sample_id_t sample_no)
         : _isd(isd)
         , _sample_no(sample_no)
         , _sample_order(_isd._idata.get_id(sample_no)) {}
@@ -167,6 +175,12 @@ private:
     ebuff(const unsigned s) const
     {
         return *(idata().get_value(s).dbp);
+    }
+
+    const depth_buffer&
+    ebuff2(const unsigned s) const
+    {
+        return *(idata().get_value(s).dbp2);
     }
 
     const starling_sample_options&

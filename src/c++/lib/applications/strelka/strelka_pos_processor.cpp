@@ -65,8 +65,8 @@ strelka_pos_processor(
 
     // setup indel syncronizers:
     indel_sync_data isdata;
-    isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.sample_opt,NORMAL);
-    isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.sample_opt,TUMOR);
+    isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,normal_sif.sample_opt,NORMAL);
+    isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,tumor_sif.sample_opt,TUMOR);
     normal_sif.indel_sync_ptr = (new indel_synchronizer(isdata,NORMAL));
     tumor_sif.indel_sync_ptr = (new indel_synchronizer(isdata,TUMOR));
 
