@@ -19,6 +19,48 @@
 #include <iostream>
 
 
+snoise_pos_processor::
+snoise_pos_processor(
+    const starling_options& opt,
+    const starling_deriv_options& dopt,
+    const reference_contig_segment& ref,
+    const snoise_streams& client_io)
+    : base_t(opt,dopt,ref,client_io,1),
+      _client_io(client_io)
+{
+    // setup indel syncronizers:
+    {
+        sample_info& normal_sif(sample(0));
+
+        double max_candidate_normal_sample_depth(-1.);
+        if (dopt.gvcf.is_max_depth())
+        {
+            if (opt.max_candidate_indel_depth_factor > 0.)
+            {
+                max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.gvcf.max_depth);
+            }
+        }
+
+        if (opt.max_candidate_indel_depth > 0.)
+        {
+            if (max_candidate_normal_sample_depth > 0.)
+            {
+                max_candidate_normal_sample_depth = std::min(max_candidate_normal_sample_depth,static_cast<double>(opt.max_candidate_indel_depth));
+            }
+            else
+            {
+                max_candidate_normal_sample_depth = opt.max_candidate_indel_depth;
+            }
+        }
+
+        indel_sync_data isdata;
+        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
+                               normal_sif.sample_opt, max_candidate_normal_sample_depth, 0);
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,0));
+    }
+}
+
+
 
 void
 snoise_pos_processor::
