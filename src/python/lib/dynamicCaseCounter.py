@@ -1,3 +1,187 @@
+from collections import *
+from pysam import *
+from dynamicModelUtil import *
+
+class job:
+    def __init__(self,opt):
+        self.chr            = opt.genomicRegion.split(":")[0]           # chromosomal coordinates to sample
+        self.start          = int(opt.genomicRegion.split(":")[1].split('-')[0])
+        self.end            = int(opt.genomicRegion.split(":")[1].split('-')[1])
+        self.bam            = opt.inputBam          # path of input bam
+        self.outputDir      = opt.output            # directory to output temp files
+        self.reference      = opt.reference         # Path of reference fasta
+        self.countEveryBase = opt.countEveryBase    # count on base-by-base case, rather than each homopolymer
+        self.ignoreStrand   = opt.ignoreStrand      # do not consider if a read is forward or reverse strand 
+        self.naiveProject   = opt.naiveProject      # do fast but simple counting, OFF as default
+        self.countUnspanned = opt.countUnspanned    # Consider reads that do not span the full length of the hpol as evidence, OFF by default
+        self.refOffset      = 500                   # additional up and downstream BPs to buffer reference
+        self.verbose        = 1
+        self.bufferRef()
+        self.setDatastructures()
+        
+    def bufferRef(self):
+        refStart = self.start-self.refOffset
+        if refStart < 0: self.refStart = 0
+        refEnd = self.end+self.refOffset
+        fa = Fastafile(self.reference)
+        self.refInterval = fa.fetch(reference=self.chr,start=refStart,end=refEnd)
+        self.buffer = ReferenceBuffer(self.refInterval,self.numericChr(),start=refStart,end=refEnd)
+        self.buffer.buffer()
+        
+    def setDatastructures(self):
+        self.calls       = []
+        self.events      = {'ins':{},'del':{}}
+        self.eventCount  = {'tot':Counter(),'ins':Counter(),'del':Counter(),}
+        for base in ['A','C','T','G','N']: self.eventCount[base] = Counter()
+    
+    def run(self):
+        readRecords(self)
+    
+    def numericChr(self):
+        return int(self.chr.replace('chr',''))
+    
+    def __repr__(self):
+        return str(self)
+    def __str__(self):
+        return self.chr + ":" + str(self.start) + "-" + str(self.end) + " - " + str(self.eventCount)  
+
+# cigar str numbering def. by pysam 
+#BAM_CMATCH=0, BAM_CINS=1,
+#DEF BAM_CDEL       = 2
+#DEF BAM_CREF_SKIP  = 3
+#DEF BAM_CSOFT_CLIP = 4
+#DEF BAM_CHARD_CLIP = 5
+#DEF BAM_CPAD       = 6
+def readRecords(job,seqContext='All'):
+
+#    mychr, start, end, countEveryBase, ignoreStrand, naiveProject, countUnspanned = job
+    print "Collecting data "
+    f = Samfile(job.bam)
+    i = 0    
+    for r in f.fetch(job.chr,job.start,job.end):
+        if r.mapq>20 and r.is_paired:# only concerned with reads of high quality so we don't count alignment errors 
+            myEvent = 'm'       # treat clipped reads as matches
+            myPos = r.pos
+            if len(r.cigar)>1:
+                for event in r.cigar:
+                    if event[0]==1 or event[0]==2:
+                        myEvent = 'ins'
+                        if event[0]==2: myEvent = 'del'
+#                        print myEvent + "  at " + str(myPos)
+                        break
+                    myPos += event[1]
+#                # add in information
+                if job.buffer.hpolMap.has_key(myPos):
+                    hpoleCase,repeat = job.buffer.hpolMap[myPos]
+                    if r.is_reverse and not job.ignoreStrand:
+                        repeat = RC(repeat)
+                    if not myEvent=='m':
+                        if not job.events[myEvent].has_key(myPos):
+#                                                    # count, event length, hpol length, seq repeatted
+##                            print [1,event[1],hpoleCase,repeat]
+                            if seqContext=='All' or seqContext==repeat.upper():
+                                myLength = event[1]
+                                job.eventCount[myEvent][hpoleCase] +=1
+                                job.events[myEvent][myPos] = [1,myLength,hpoleCase,repeat]
+                        else: 
+                            if seqContext=='All' or seqContext==repeat.upper():
+                                job.eventCount[myEvent][hpoleCase] +=1
+                                job.events[myEvent][myPos][0] +=1
+
+
+            if job.countUnspanned: # i.e. skip logic to check whether alignment extends past the homopolymer
+                # we can either count only reference bases actually covered or we can project based on nominal length of the read
+                # first, set according to the actual alignment
+                countCoverStart = r.pos+1  # r.pos+1 so we know we have at least one base before the hpol; r.alen handles trimming and indel adjustments
+                countCoverEnd = r.pos+r.alen
+                if job.naiveProject:
+                    # if user so requests, reset to projection based on read length
+                    countCoverStart = r.pos
+                    countCoverEnd = r.pos+100 # assume a 100 bp readlength
+
+                for ii in xrange(countCoverStart,countCoverEnd):   
+                    if job.buffer.hpolStartsMap.has_key(ii) or (job.countEveryBase and job.buffer.hpolMap.has_key(ii)):
+                        hpoleCase,repeat = job.buffer.hpolMap[ii] # note hpol has same data as hpolStarts where hpolStarts is defined
+                        if r.is_reverse and not job.ignoreStrand:
+                            repeat = RC(repeat)
+                        if not job.eventCount.has_key(repeat): job.eventCount[repeat] = Counter()  
+                        job.eventCount['tot'][hpoleCase]  +=1
+                        job.eventCount[repeat][hpoleCase] +=1
+
+            else:
+                refOffset = job.start-job.refOffset
+                alignedPairs = r.aligned_pairs
+                numpairs = len(alignedPairs)
+    
+                prevMatch = False
+                for ii in xrange(0,numpairs):
+                    (x,y) = alignedPairs[ii]
+                    if x != None:
+                        readbase = r.query[x]
+                    else:
+                        readbase = '-'
+                    if y != None:
+                        refbase = job.refInterval[y-refOffset].upper()
+                    else:
+                        refbase = '-'
+    
+    
+                    rpos = None
+                    qpos = None
+    
+                    ###### count only events we can have confidence in:
+                    ###### require that the alignment extend beyond a homopolymer by at least one base in each direction
+                    ###### require that the base after the homopolymer (in the direction of sequencing) match
+    
+                    # if current position is the start of a homopolymer run
+                    if job.buffer.hpolStartsMap.has_key(y) or (job.countEveryBase and job.buffer.hpolMap.has_key(y)):
+                        hpoleCase,repeat = job.buffer.hpolMap[y] # note hpol[y] == hpolStarts[y] if the latter is defined
+
+                        # make sure we align past the end of the hpol regions
+                        if y+hpoleCase >= r.pos+r.alen:
+                            continue
+
+                        ok = False # do not use this alignment position unless we satisfy conditions below
+                        
+                        # if reverse strand alignment:
+                        if r.is_reverse:
+                            # require previous position to match (and hence also that the alignment goes beyond the homopolymer
+                            if prevMatch:
+                                ### we can use it!
+                                if not job.ignoreStrand: repeat = RC(repeat)
+                                ok = True
+                        else: # forward strand alignment
+                            # require this to not be the first aligned base of the read
+                            if ii > 0:
+                                rpos = None
+                                qpos = None
+                                # find alignment of first base past homopolymer, or an interior indel
+                                for iii in xrange(ii+1,numpairs):
+                                    rpos = alignedPairs[iii][1]
+                                    qpos = alignedPairs[iii][0]
+                                    if (not rpos) or (not qpos) or rpos == y+hpoleCase:
+                                        break
+                                # require that we be at the right position and it be an alignment of bases and they match
+                                if rpos == y+hpoleCase and qpos and job.refInterval[rpos-refOffset].upper() == r.query[qpos]:
+                                    ### we can use it!
+                                    ok = True
+
+                        if ok:
+                            if not job.eventCount.has_key(repeat): job.eventCount[repeat] = Counter()  
+                            job.eventCount['tot'][hpoleCase] +=1
+                            job.eventCount[repeat][hpoleCase] +=1
+    
+                    if readbase == refbase:
+                        prevMatch = True
+                    else:
+                        prevMatch = False
+                        
+            i+=1
+#    events = validateRecords(events,job)
+#    return events,eventCount 
+
+
+
 def rec_dd(): return defaultdict(rec_dd)
 class caseCounter:
     def __init__(self,totalCounts,opt):

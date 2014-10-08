@@ -23,6 +23,7 @@
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/seq_util.hh"
+#include "blt_util/scoringmodels.hh"
 
 #include <cassert>
 #include <cmath>
@@ -1525,6 +1526,15 @@ write_vcf_somatic_snv_genotype_strand_grid(
             }
         }
 
+        //TODO add VQSR filtering here, currently model still assumes QSS_ref filter has been added
+        if (scoring_models::Instance()->calibration_init){
+            smod.clear();       // clear application of rule model and use qscore filtering instead
+//            scoring_models::Instance().set_qscore(sgt);
+            if (sgt.Qscore<opt.sfilter.minimumQscore){
+                smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
+            }
+        }
+
         if ((rs.ntype != NTYPE::REF) || (rs.snv_from_ntype_qphred < opt.sfilter.snv_min_qss_ref))
         {
             smod.set_filter(STRELKA_VCF_FILTERS::QSS_ref);
@@ -1559,9 +1569,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
        << ";QSS_NT=" << rs.snv_from_ntype_qphred
        << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1)
        << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1);
-       // write out somatic VQSR metrics
-       if (true){
-           os << ";VQSR=" << sgt.vqsr_q;
+       if (scoring_models::Instance()->calibration_init){ // write out somatic VQSR metrics
+           os << ";VQSR=" << sgt.Qscore;
        }
        os << ";SGT=";
     DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),

@@ -1,3 +1,5 @@
+from collections import *
+
 def verifyInput(opt):    
     '''
     Verify that input parameters are legit
@@ -46,13 +48,13 @@ def verifyInput(opt):
 
 class ReferenceBuffer():
     def __init__(self,fetch,c,start,end,force=1):
-        self.chr             = c
+        self.chr             = str(c)
         self.start           = start
         self.end             = end
-        self.force           = force
         self.hpolMap         = {}        # store hpol information  
         self.hpolStartsMap   = {}        # store hpol information  
         self.dinucMap        = {}        # store di-nuc information TODO
+        self.entropyMap        = {}        # store entropy information TODO
         self.count           = Counter() # summary stats
         self.fetch           = fetch
 
@@ -61,7 +63,7 @@ class ReferenceBuffer():
         current     = "N"
         l           = 1
         for c in self.fetch:
-            if self.chr.upper()==current: 
+            if c.upper()==current: 
                 l +=1
             else:
                 if not current=='N':
@@ -69,9 +71,9 @@ class ReferenceBuffer():
                     for t in xrange(i-l,i): 
                         self.hpolMap[t]  = [l,current]
                     self.count[l]    +=1
-    #                print 'pos ' + str(i-l) + " " +  current + ': ' + str(l) 
+#                    print 'pos ' + str(i-l) + " " +  current + ': ' + str(l) 
                 l = 1 
-                self.current = self.c.upper()
+                current = c.upper()
             i+=1
     #        print c.upper()
 
@@ -97,3 +99,27 @@ def entropy(s):
     '''
     p, lns = Counter(s), float(len(s))
     return -sum( count/lns * math.log(count/lns, 2) for count in p.values())
+
+def RC(base):
+    if len(base) != 1:
+        logging.info("RC called on bad string: " + base)
+        sys.exit(-1)
+    if base.upper() == "A":
+        return "T"
+    if base.upper() == "C":
+        return "G"
+    if base.upper() == "G":
+        return "C"
+    if base.upper() == "T":
+        return "A"
+    if base.upper() == "N":
+        return "N"
+    logging.info("RC called on bad character: " + base)
+    sys.exit(-1)
+    
+def validateRecordByFreq(freqCut=0.07):
+    myFreq = 0.01
+    if
+    
+    
+    return 1
