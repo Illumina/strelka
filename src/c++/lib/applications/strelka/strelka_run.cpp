@@ -109,6 +109,15 @@ strelka_run(
         sdata.register_forced_output(*(foutput_stream.back()));
     }
 
+    std::vector<vcf_ptr> noise_stream;
+
+    for (const auto& vcf_filename : opt.noise_vcf)
+    {
+        noise_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
+                                                        bam_region.c_str(),normal_read_stream.get_header())));
+        sdata.register_noise(*(noise_stream.back()));
+    }
+
     starling_input_stream_handler sinput(sdata);
 
     while (sinput.next())
@@ -177,6 +186,9 @@ strelka_run(
                 sppr.insert_forced_output_pos(vcf_variant.pos-1);
             }
 
+        }
+        else if (current.itype == INPUT_TYPE::NOISE)
+        {
         }
         else
         {

@@ -152,9 +152,12 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const MAPLEVEL::index_t maplev,
         const unsigned sample_no);
 
-    /// snv gt and stats must be reported for this pos (not only honored in strelka right now)
+    /// snv gt and stats must be reported for this pos (note only honored in strelka right now)
     void
     insert_forced_output_pos(const pos_t pos);
+
+    void
+    insert_noise_pos(const pos_t pos);
 
 #if 0
     starling_read*
@@ -549,6 +552,12 @@ private:
         _forced_output_pos.erase(pos);
     }
 
+    void
+    clear_noise_pos(const pos_t pos)
+    {
+        _noise_pos.erase(pos);
+    }
+
     /// allow a derived class to declare non-empty status:
     virtual
     bool
@@ -602,6 +611,7 @@ protected:
 
     std::set<pos_t> _variant_print_pos;
     std::set<pos_t> _forced_output_pos;
+    std::set<pos_t> _noise_pos;
 
     htype_region_data _hregion;
 

@@ -584,13 +584,24 @@ insert_indel(const indel_observation& obs,
 }
 
 
-// snv gt and stats must be reported for this pos (not only honored in strelka right now)
+
 void
 starling_pos_processor_base::
 insert_forced_output_pos(const pos_t pos)
 {
     _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
     _forced_output_pos.insert(pos);
+}
+
+
+
+// snv gt and stats must be reported for this pos (not only honored in strelka right now)
+void
+starling_pos_processor_base::
+insert_noise_pos(const pos_t pos)
+{
+    _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
+    _noise_pos.insert(pos);
 }
 
 
@@ -1009,12 +1020,15 @@ process_pos(const int stage_no,
             // if we are doing short-range phasing, the codon_phaser
             // is responsible or clearing the read buffer
             if (!this->_client_opt.do_codon_phasing)
+            {
                 for (unsigned s(0); s<_n_samples; ++s)
                 {
                     sample(s).read_buff.clear_pos(_client_opt.is_ignore_read_names,pos);
                 }
+            }
 
             clear_forced_output_pos(pos);
+            clear_noise_pos(pos);
 
             for (unsigned s(0); s<_n_samples; ++s)
             {

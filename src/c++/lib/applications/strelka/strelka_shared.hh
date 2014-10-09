@@ -125,6 +125,9 @@ struct strelka_options : public starling_options
 
     std::string somatic_callable_filename;
 
+    // positions/indels in vcf are used to estimate low-frequency sequencing noise:
+    std::vector<std::string> noise_vcf;
+
     somatic_filter_options sfilter;
 };
 
