@@ -1,3 +1,4 @@
+- STARKA-144 add initial site-noise strelka feature
 - STARKA-73 add strelka noise extractor workflow
 - STARKA-143 Improve runtime for high-depth centromere regions, especially for strelka
 - Add starling option to always genotype indels provided in vcf
