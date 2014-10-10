@@ -161,6 +161,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.indelCandidates is not None :
         segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
 
+    if self.params.noiseVcfList is not None :
+        for vcffile in self.params.noiseVcfList :
+            segCmd.extend(['--noise-vcf', vcffile])
+            
+
     if self.params.extraStrelkaArguments is not None :
         for arg in self.params.extraStrelkaArguments.strip().split() :
             segCmd.append(arg)
