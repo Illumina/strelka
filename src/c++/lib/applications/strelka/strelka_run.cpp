@@ -193,6 +193,7 @@ strelka_run(
             if (vcf_variant.is_snv())
             {
                 SiteNoise sn;
+                set_noise_from_vcf(vcf_variant.line,sn);
                 sppr.insert_noise_pos(vcf_variant.pos-1,sn);
             }
 

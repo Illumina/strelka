@@ -25,10 +25,31 @@ struct SiteNoise
     void
     clear()
     {
+        total = 0;
         noise = 0;
-        clean = 0;
+        noise2 = 0;
     }
 
+    double
+    nfrac() const
+    {
+        return static_cast<double>(noise)/total;
+    }
+
+    double
+    n2frac() const
+    {
+        return static_cast<double>(noise2)/total;
+    }
+
+    uint16_t total = 0;
     uint16_t noise = 0;
-    uint16_t clean = 0;
+    uint16_t noise2 = 0;
 };
+
+
+void
+set_noise_from_vcf(
+    const char* line,
+    SiteNoise& sn);
+
