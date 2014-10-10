@@ -255,6 +255,15 @@ write_vcf_somatic_snv_genotype_strand_grid(
             os << ";SNVSB=" << rs.strandBias;
         }
 
+        {
+            double pnoise(0.);
+            if ((sgt.sn.clean+sgt.sn.noise) > 1 && sgt.sn.noise > 1)
+            {
+                pnoise = static_cast<double>(sgt.sn.noise)/(sgt.sn.clean+sgt.sn.noise);
+            }
+            os << ";PNOISE=" << pnoise;
+        }
+
         os.copyfmt(tmp_os);
     }
 

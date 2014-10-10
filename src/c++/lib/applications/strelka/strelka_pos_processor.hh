@@ -24,11 +24,12 @@
 #pragma once
 
 
-#include "strelka_sample_type.hh"
-#include "strelka_streams.hh"
 #include "CallableProcessor.hh"
+#include "NoiseBuffer.hh"
 #include "strelka_shared.hh"
 #include "SomaticIndelVcfWriter.hh"
+#include "strelka_sample_type.hh"
+#include "strelka_streams.hh"
 
 #include "starling_common/starling_pos_processor_base.hh"
 
@@ -44,6 +45,12 @@ struct strelka_pos_processor : public starling_pos_processor_base
         const strelka_deriv_options& dopt,
         const reference_contig_segment& ref,
         const strelka_streams& client_io);
+
+
+    void
+    insert_noise_pos(
+        const pos_t pos,
+        const SiteNoise& sn);
 
 private:
 
@@ -65,6 +72,12 @@ private:
 
     void
     process_pos_indel_somatic(const pos_t pos);
+
+    void
+    post_align_clear_pos(const pos_t pos) override
+    {
+        _noisePos.clear_pos(pos);
+    }
 
     void
     run_post_call_step(
@@ -97,4 +110,6 @@ private:
 
     unsigned _indelRegionIndexNormal;
     unsigned _indelRegionIndexTumor;
+
+    NoiseBuffer _noisePos;
 };

@@ -12,10 +12,6 @@
 //
 
 ///
-/// object which accepts as input bam files from multiple
-/// samples and presents them in the order expected by
-/// starling_pos_processor
-///
 /// \author Chris Saunders
 ///
 /// note coding convention for all ranges '_pos fields' is:
@@ -163,9 +159,7 @@ private:
 //
 struct starling_input_stream_handler
 {
-    starling_input_stream_handler(const starling_input_stream_data& data,
-                                  const pos_t indel_lead = 100,
-                                  const pos_t output_lead = 100);
+    starling_input_stream_handler(const starling_input_stream_data& data);
 
     bool next();
 
@@ -191,19 +185,18 @@ private:
 ///////////////////////////////// data:
     const starling_input_stream_data& _data;
 
-    // indel/output_lead controls the amount by which we read the
-    // vcf buffer ahead of the bam reads:
+    // vcf_lead controls the amount by which we read the
+    // vcf buffer(s) ahead of the bam reads:
     //
-    const pos_t _indel_lead;
-    const pos_t _output_lead;
+    const pos_t _vcf_lead = 100;
 
     input_record_info _current;
     input_record_info _last;
 
-    bool _is_end;
+    bool _is_end = false;
 
-    bool _is_head_pos;
-    pos_t _head_pos;
+    bool _is_head_pos = false;
+    pos_t _head_pos = 0;
 
     std::priority_queue<input_record_info> _stream_queue;
 };

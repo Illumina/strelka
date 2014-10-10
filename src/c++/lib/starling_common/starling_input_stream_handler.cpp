@@ -48,6 +48,8 @@ input_type_label(const INPUT_TYPE::index_t i)
         return "INDEL";
     case FORCED_OUTPUT  :
         return "FORCED_OUTPUT";
+    case NOISE  :
+        return "NOISE";
     default :
         log_os << "ERROR: unrecognized event type.\n";
         exit(EXIT_FAILURE);
@@ -71,15 +73,8 @@ register_error(const char* label,
 
 
 starling_input_stream_handler::
-starling_input_stream_handler(const starling_input_stream_data& data,
-                              const pos_t indel_lead,
-                              const pos_t output_lead)
+starling_input_stream_handler(const starling_input_stream_data& data)
     : _data(data)
-    , _indel_lead(indel_lead)
-    , _output_lead(output_lead)
-    , _is_end(false)
-    , _is_head_pos(false)
-    , _head_pos(0)
 {
     // initial loading for _stream_queue:
     const unsigned rs(_data._reads.size());
@@ -96,6 +91,11 @@ starling_input_stream_handler(const starling_input_stream_data& data,
     for (unsigned i(0); i<os; ++i)
     {
         push_next(INPUT_TYPE::FORCED_OUTPUT,_data._output[i].first,i);
+    }
+    const unsigned ns(_data._noise.size());
+    for (unsigned i(0); i<ns; ++i)
+    {
+        push_next(INPUT_TYPE::NOISE,_data._noise[i].first,i);
     }
 }
 
@@ -139,7 +139,9 @@ next()
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
                 throw blt_exception(oss.str().c_str());
             }
-            else if ((_current.itype == INPUT_TYPE::INDEL) || (_current.itype == INPUT_TYPE::FORCED_OUTPUT))
+            else if ((_current.itype == INPUT_TYPE::INDEL) ||
+                     (_current.itype == INPUT_TYPE::FORCED_OUTPUT) ||
+                     (_current.itype == INPUT_TYPE::NOISE))
             {
                 std::ostringstream oss;
                 oss << "ERROR: unexpected vcf record order:\n"
@@ -178,7 +180,6 @@ get_next_read_pos(bool& is_next_read,
                   pos_t& next_read_pos,
                   bam_streamer& read_stream)
 {
-
     is_next_read=read_stream.next();
     if (is_next_read)
     {
@@ -200,7 +201,6 @@ get_next_indel_pos(bool& is_next_indel,
                    pos_t& next_indel_pos,
                    vcf_streamer& indel_stream)
 {
-
     static const bool is_indel_only(true);
     is_next_indel=indel_stream.next(is_indel_only);
     if (is_next_indel)
@@ -223,7 +223,29 @@ get_next_forced_output_pos(bool& is_next_variant,
                            pos_t& next_variant_pos,
                            vcf_streamer& variant_stream)
 {
+    static const bool is_indel_only(false);
+    is_next_variant=variant_stream.next(is_indel_only);
+    if (is_next_variant)
+    {
+        const vcf_record& vcf_rec(*(variant_stream.get_record_ptr()));
+        next_variant_pos=(vcf_rec.pos-1);
+    }
+    else
+    {
+        next_variant_pos=0;
+    }
+}
 
+
+
+//
+static
+void
+get_next_noise_pos(
+    bool& is_next_variant,
+    pos_t& next_variant_pos,
+    vcf_streamer& variant_stream)
+{
     static const bool is_indel_only(false);
     is_next_variant=variant_stream.next(is_indel_only);
     if (is_next_variant)
@@ -245,7 +267,6 @@ push_next(const INPUT_TYPE::index_t itype,
           const sample_id_t sample_no,
           const unsigned order)
 {
-
     bool is_next(false);
     pos_t next_pos;
     if       (itype == INPUT_TYPE::READ)
@@ -253,23 +274,30 @@ push_next(const INPUT_TYPE::index_t itype,
         bam_streamer& read_stream(*(_data._reads.get_value(order)));
         get_next_read_pos(is_next,next_pos,read_stream);
     }
-    else if (itype == INPUT_TYPE::INDEL)
-    {
-        vcf_streamer& indel_stream(*(_data._indels[order].second));
-        get_next_indel_pos(is_next,next_pos,indel_stream);
-        next_pos -= std::min(_indel_lead,next_pos);
-    }
-    else if (itype == INPUT_TYPE::FORCED_OUTPUT)
-    {
-        vcf_streamer& fo_stream(*(_data._output[order].second));
-        get_next_forced_output_pos(is_next,next_pos,fo_stream);
-        next_pos -= std::min(_output_lead,next_pos);
-    }
     else
     {
-        assert(false && "Unknown input type");
+        if (itype == INPUT_TYPE::INDEL)
+        {
+            vcf_streamer& vcf_stream(*(_data._indels[order].second));
+            get_next_indel_pos(is_next,next_pos,vcf_stream);
+        }
+        else if (itype == INPUT_TYPE::FORCED_OUTPUT)
+        {
+            vcf_streamer& vcf_stream(*(_data._output[order].second));
+            get_next_forced_output_pos(is_next,next_pos,vcf_stream);
+        }
+        else if (itype == INPUT_TYPE::NOISE)
+        {
+            vcf_streamer& vcf_stream(*(_data._noise[order].second));
+            get_next_noise_pos(is_next,next_pos,vcf_stream);
+        }
+        else
+        {
+            assert(false && "Unknown input type");
+        }
+        next_pos -= std::min(_vcf_lead,next_pos);
     }
-    if (not is_next) return;
+    if (! is_next) return;
     _stream_queue.push(input_record_info(next_pos,itype,sample_no,order));
 }
 

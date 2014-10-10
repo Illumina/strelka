@@ -189,6 +189,13 @@ strelka_run(
         }
         else if (current.itype == INPUT_TYPE::NOISE)
         {
+            const vcf_record& vcf_variant(*(noise_stream[current.get_order()]->get_record_ptr()));
+            if (vcf_variant.is_snv())
+            {
+                SiteNoise sn;
+                sppr.insert_noise_pos(vcf_variant.pos-1,sn);
+            }
+
         }
         else
         {

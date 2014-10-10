@@ -595,17 +595,6 @@ insert_forced_output_pos(const pos_t pos)
 
 
 
-// snv gt and stats must be reported for this pos (not only honored in strelka right now)
-void
-starling_pos_processor_base::
-insert_noise_pos(const pos_t pos)
-{
-    _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
-    _noise_pos.insert(pos);
-}
-
-
-
 bool
 starling_pos_processor_base::
 is_estimated_depth_range_ge_than(
@@ -1011,7 +1000,6 @@ process_pos(const int stage_no,
             {
                 if (is_pos_reportable(pos))
                 {
-
                     process_pos_variants(pos);
                 }
             }
@@ -1028,12 +1016,14 @@ process_pos(const int stage_no,
             }
 
             clear_forced_output_pos(pos);
-            clear_noise_pos(pos);
 
             for (unsigned s(0); s<_n_samples; ++s)
             {
                 sample(s).indel_buff.clear_pos(pos);
             }
+
+            // everything else:
+            post_align_clear_pos(pos);
         }
 
     }

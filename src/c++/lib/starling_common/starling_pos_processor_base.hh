@@ -156,9 +156,6 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     void
     insert_forced_output_pos(const pos_t pos);
 
-    void
-    insert_noise_pos(const pos_t pos);
-
 #if 0
     starling_read*
     get_read(const align_id_t read_id,
@@ -552,11 +549,9 @@ private:
         _forced_output_pos.erase(pos);
     }
 
+    virtual
     void
-    clear_noise_pos(const pos_t pos)
-    {
-        _noise_pos.erase(pos);
-    }
+    post_align_clear_pos(const pos_t pos) {}
 
     /// allow a derived class to declare non-empty status:
     virtual
@@ -611,7 +606,6 @@ protected:
 
     std::set<pos_t> _variant_print_pos;
     std::set<pos_t> _forced_output_pos;
-    std::set<pos_t> _noise_pos;
 
     htype_region_data _hregion;
 
