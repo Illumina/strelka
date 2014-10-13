@@ -150,7 +150,8 @@ vcf_streamer::
 
 bool
 vcf_streamer::
-next(const bool is_indel_only)
+next(
+    const bool is_indel_only)
 {
     if (_is_stream_end || (nullptr==_hfp) || (nullptr==_titr)) return false;
 

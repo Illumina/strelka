@@ -38,7 +38,6 @@ check_block_tolerance(const stream_stat& ss,
                       const double frac_tol,
                       const int abs_tol)
 {
-
     const int min(static_cast<int>(compat_round(ss.min())));
 //    log_os << min << "\n";
 //    return true;
@@ -59,7 +58,6 @@ is_new_value_blockable(const int new_val,
                        const bool is_new_val = true,
                        const bool is_old_val = true)
 {
-
     if (!(is_new_val && is_old_val)) return (is_new_val == is_old_val);
 
     stream_stat ss2(ss);
@@ -73,7 +71,6 @@ bool
 gvcf_block_site_record::
 test(const site_info& si) const
 {
-
     if (count==0) return true;
 
     // pos must be +1 from end of record:

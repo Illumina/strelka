@@ -77,13 +77,14 @@ You must specify a BAM or CRAM file.
 
     def validateAndSanitizeExistingOptions(self,options) :
 
-        groomBamList(options.bamList,"input")
-
         StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
+        groomBamList(options.bamList,"input")
 
 
 
     def validateOptionExistence(self,options) :
+
+        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
         if options.minorAllele is not None :
             alleleTabixFile = options.minorAllele + ".tbi"
@@ -94,9 +95,6 @@ You must specify a BAM or CRAM file.
         bcheck.appendBams(options.bamList,"Input")
         bcheck.check(options.samtoolsBin,
                      options.referenceFasta)
-
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
-
 
 
 

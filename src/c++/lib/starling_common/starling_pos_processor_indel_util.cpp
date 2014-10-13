@@ -27,7 +27,7 @@
 
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
-#include "starling_common/align_path_util.hh"
+#include "blt_util/align_path_util.hh"
 
 #include <cassert>
 

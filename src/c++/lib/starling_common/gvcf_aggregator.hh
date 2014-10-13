@@ -37,7 +37,9 @@ struct gvcf_aggregator
     gvcf_aggregator(const starling_options& opt,
                     const starling_deriv_options& dopt,
                     const reference_contig_segment& ref,
-                    std::ostream* os);
+                    std::ostream* os,
+                    starling_read_buffer& read_buffer,
+                    const unsigned max_read_len);
 
     ~gvcf_aggregator();
 
@@ -95,7 +97,6 @@ private:
     calibration_models CM;
     gvcf_compressor gvcf_comp;
 
-public:
     Codon_phaser codon_phaser;
 };
 

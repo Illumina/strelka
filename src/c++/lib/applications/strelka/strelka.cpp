@@ -92,6 +92,6 @@ runInternal(int argc,char* argv[]) const
 
     finalize_strelka_options(pinfo,vm,opt);
 
-    strelka_run(opt);
+    strelka_run(pinfo,opt);
 }
 

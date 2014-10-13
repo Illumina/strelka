@@ -17,13 +17,13 @@
 
 #include "strelka_pos_processor.hh"
 #include "strelka_streams.hh"
-#include "strelka_info.hh"
 #include "strelka_run.hh"
 
 #include "blt_util/bam_streamer.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/vcf_streamer.hh"
+#include "blt_util/bam_header_util.hh"
 #include "starling_common/starling_input_stream_handler.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
@@ -31,15 +31,10 @@
 #include <sstream>
 
 
-namespace
-{
-const prog_info& pinfo(strelka_info::get());
-}
-
-
 
 void
 strelka_run(
+    const prog_info& pinfo,
     const strelka_options& opt)
 {
     reference_contig_segment ref;
@@ -114,6 +109,15 @@ strelka_run(
         sdata.register_forced_output(*(foutput_stream.back()));
     }
 
+    std::vector<vcf_ptr> noise_stream;
+
+    for (const auto& vcf_filename : opt.noise_vcf)
+    {
+        noise_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
+                                                        bam_region.c_str(),normal_read_stream.get_header())));
+        sdata.register_noise(*(noise_stream.back()));
+    }
+
     starling_input_stream_handler sinput(sdata);
 
     while (sinput.next())
@@ -180,6 +184,17 @@ strelka_run(
             else if (vcf_variant.is_snv())
             {
                 sppr.insert_forced_output_pos(vcf_variant.pos-1);
+            }
+
+        }
+        else if (current.itype == INPUT_TYPE::NOISE)
+        {
+            const vcf_record& vcf_variant(*(noise_stream[current.get_order()]->get_record_ptr()));
+            if (vcf_variant.is_snv())
+            {
+                SiteNoise sn;
+                set_noise_from_vcf(vcf_variant.line,sn);
+                sppr.insert_noise_pos(vcf_variant.pos-1,sn);
             }
 
         }

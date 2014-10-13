@@ -16,8 +16,11 @@
 
 #pragma once
 
+#include "blt_util/prog_info.hh"
 #include "strelka_shared.hh"
 
 
 void
-strelka_run(const strelka_options& opt);
+strelka_run(
+    const prog_info& pinfo,
+    const strelka_options& opt);

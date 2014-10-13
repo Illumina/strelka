@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "SiteNoise.hh"
+
 
 struct somatic_snv_genotype_grid
 {
@@ -54,4 +56,5 @@ struct somatic_snv_genotype_grid
     unsigned ref_gt;
     result_set rs;
     bool is_forced_output = false;
+    SiteNoise sn;
 };

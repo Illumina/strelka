@@ -34,7 +34,6 @@ void
 strelka_info::
 usage(const char* xmessage) const
 {
-
     std::ostream& os(log_os);
 
     static strelka_options default_opt;

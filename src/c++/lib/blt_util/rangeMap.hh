@@ -201,15 +201,13 @@ private:
     enforceKeyPresent(
         const KeyType& k) const
     {
-        if (! isKeyPresent(k))
-        {
-            std::ostringstream oss;
-            oss << "Attempting to retrieve an invalid key '" << k << "'\n";
-            throw blt_exception(oss.str().c_str());
-        }
+        if (isKeyPresent(k)) return;
+        std::ostringstream oss;
+        oss << "Attempting to retrieve an invalid key '" << k << "'\n";
+        throw blt_exception(oss.str().c_str());
     }
 
-    static const unsigned _minChunk = 1024;
+    static constexpr unsigned _minChunk = 1024;
 
     bool _isEmpty;
     unsigned _minKeyIndex;

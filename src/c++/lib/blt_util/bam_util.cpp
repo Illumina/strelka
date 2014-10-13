@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -169,23 +168,3 @@ bam_aux_append_unsigned(bam1_t& br,
         bam_aux_append(&br,tag,'C',1,&z);
     }
 }
-
-
-
-bool
-check_header_compatibility(const bam_header_t* h1,
-                           const bam_header_t* h2)
-{
-    if (h1->n_targets != h2->n_targets)
-    {
-        return false;
-    }
-
-    for (int32_t i(0); i<h1->n_targets; ++i)
-    {
-        if (h1->target_len[i] != h2->target_len[i]) return false;
-        if (0 != strcmp(h1->target_name[i],h2->target_name[i])) return false;
-    }
-    return true;
-}
-

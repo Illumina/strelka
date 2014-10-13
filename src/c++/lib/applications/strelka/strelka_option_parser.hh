@@ -28,13 +28,15 @@ namespace po = boost::program_options;
 
 
 po::options_description
-get_strelka_option_parser(strelka_options& opt);
+get_strelka_option_parser(
+    strelka_options& opt);
 
 
 // validate options and process any required quick consistency
 // adjustments
 //
 void
-finalize_strelka_options(const prog_info& pinfo,
-                         const po::variables_map& vm,
-                         strelka_options& opt);
+finalize_strelka_options(
+    const prog_info& pinfo,
+    const po::variables_map& vm,
+    strelka_options& opt);

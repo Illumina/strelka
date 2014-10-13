@@ -11,20 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-///
-/// object which accepts as input bam files from multiple
-/// samples and presents them in the order expected by
-/// starling_pos_processor
-///
-/// note the design carries some legacy crud from also syncing grouper
-/// contig input in with the bams, this should be removed
-///
 ///
 /// \author Chris Saunders
 ///
 /// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
+/// XXX_begin_pos is zero-indexed position at the beginning of the range
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
@@ -42,14 +33,19 @@
 
 namespace INPUT_TYPE
 {
-enum index_t { NONE, READ, INDEL, FORCED_OUTPUT };
+enum index_t {
+    NONE,
+    READ,
+    INDEL,
+    FORCED_OUTPUT,
+    NOISE
+};
 }
 
 struct starling_input_stream_hander;
 
 struct starling_input_stream_data
 {
-
     void
     register_reads(bam_streamer& bs,
                    const sample_id_t sample_no = 0)
@@ -58,22 +54,31 @@ struct starling_input_stream_data
         _reads.insert(sample_no,&bs);
     }
 
+    /// unlike reads/contigs, we allow multiple files associated with the same
+    /// sample_no for input indels:
     void
     register_indels(vcf_streamer& vr,
                     const sample_id_t sample_no = 0)
     {
-        // unlike reads/contigs, we allow multiple files associated with the same
-        // sample_no for input indels:
         _indels.push_back(std::make_pair(sample_no,&vr));
     }
 
+    /// sites and indels in these files must be included in the snv/indel output, this means that
+    /// any indels in these files are also candidate indels:
     void
     register_forced_output(vcf_streamer& vr,
                            const sample_id_t sample_no = 0)
     {
-        // sites and indels in these files must be included in the snv/indel output, this means that
-        // any indels in these files are also candidate indels:
         _output.push_back(std::make_pair(sample_no,&vr));
+    }
+
+    /// sites and indels in these files will be used to estimate low-freqeuncy noise
+    void
+    register_noise(
+        vcf_streamer& vr,
+        const sample_id_t sample_no = 0)
+    {
+        _noise.push_back(std::make_pair(sample_no,&vr));
     }
 
 private:
@@ -91,6 +96,7 @@ private:
     reads_t _reads;
     indels_t _indels;
     indels_t _output;
+    indels_t _noise;
 };
 
 
@@ -100,7 +106,6 @@ private:
 ///
 struct input_record_info
 {
-
     input_record_info(const pos_t p = 0,
                       const INPUT_TYPE::index_t t = INPUT_TYPE::NONE,
                       const sample_id_t i = 0,
@@ -154,10 +159,7 @@ private:
 //
 struct starling_input_stream_handler
 {
-
-    starling_input_stream_handler(const starling_input_stream_data& data,
-                                  const pos_t indel_lead = 100,
-                                  const pos_t output_lead = 100);
+    starling_input_stream_handler(const starling_input_stream_data& data);
 
     bool next();
 
@@ -180,23 +182,21 @@ private:
               const sample_id_t sample_no,
               const unsigned order);
 
-
 ///////////////////////////////// data:
     const starling_input_stream_data& _data;
 
-    // indel/output_lead controls the amount by which we read the
-    // vcf buffer ahead of the bam reads:
+    // vcf_lead controls the amount by which we read the
+    // vcf buffer(s) ahead of the bam reads:
     //
-    const pos_t _indel_lead;
-    const pos_t _output_lead;
+    const pos_t _vcf_lead = 100;
 
     input_record_info _current;
     input_record_info _last;
 
-    bool _is_end;
+    bool _is_end = false;
 
-    bool _is_head_pos;
-    pos_t _head_pos;
+    bool _is_head_pos = false;
+    pos_t _head_pos = 0;
 
     std::priority_queue<input_record_info> _stream_queue;
 };

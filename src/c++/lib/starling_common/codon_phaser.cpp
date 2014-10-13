@@ -27,19 +27,6 @@
 #include "blt_util/log.hh"
 #endif
 
-Codon_phaser::Codon_phaser()
-{
-    block_start     = -1;
-    block_end       = -1;
-    is_in_block     = false;
-    het_count       = 0;
-    phase_indels    = false;              //TODO not used; if false we break the block when encountering an indel
-    last_cleared    = -1;
-    this->opt       = NULL;
-    this->clear_buffer();
-}
-
-//Codon_phaser::~Codon_phaser() {}
 
 // Add a SNP site to the phasing buffer
 bool
@@ -71,7 +58,7 @@ Codon_phaser::add_site(site_info& si)
     }
 
     // case: extending block with none-het call based on the phasing range
-    if (is_in_block && (si.pos-block_end+1)<this->opt->phasing_window)
+    if (is_in_block && (si.pos-block_end+1)<this->opt.phasing_window)
     {
 #ifdef DEBUG_CODON
         log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
@@ -95,7 +82,7 @@ void
 Codon_phaser::construct_reference()
 {
     this->reference = "";
-    for (unsigned i=0; i<this->buffer.size()-(this->opt->phasing_window-1); i++)
+    for (unsigned i=0; i<this->buffer.size()-(this->opt.phasing_window-1); i++)
         this->reference += buffer.at(i).ref;
 }
 
@@ -279,7 +266,7 @@ Codon_phaser::collect_read_evidence()
     // extract evidence for all reads that span the entire phasing range
     for (int i=buffer_start; i<buffer_end; i++)
     {
-        read_segment_iter ri(read_buffer->get_pos_read_segment_iter(i));
+        read_segment_iter ri(read_buffer.get_pos_read_segment_iter(i));
         read_segment_iter::ret_val r;
         while (true)
         {
@@ -294,7 +281,7 @@ Codon_phaser::collect_read_evidence()
             const bam_seq bseq(rseg.get_bam_read());
 
             // read quality checks
-            if (static_cast<int>(rseg.map_qual())<this->opt->min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid())
+            if (static_cast<int>(rseg.map_qual())<this->opt.min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid())
             {
 //                this->total_reads_unused++; // do not count filtered reads in DPF
                 break;
@@ -316,7 +303,7 @@ Codon_phaser::collect_read_evidence()
                 std::string sub_str("");
                 for (int t=sub_start; t<(sub_end+1); t++) //pull out substring of read
                 {
-                    if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->opt->min_qscore))
+                    if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->opt.min_qscore))
                     {
                         do_include = false; // do qual check of individual bases here, kick out entire read if we dont meet cut-off
                         break;
@@ -368,12 +355,7 @@ Codon_phaser::clear_buffer()
     AD.str("");
 }
 
-void
-Codon_phaser::set_options(const starling_options& client_opt, const starling_deriv_options& client_dopt)
-{
-    this->opt = &client_opt;
-    this->last_cleared = client_dopt.report_range.begin_pos-this->max_read_len;
-}
+
 
 void
 Codon_phaser::clear_read_buffer(const int& pos)
@@ -382,27 +364,29 @@ Codon_phaser::clear_read_buffer(const int& pos)
     int clear_to = pos-(this->max_read_len+1);
     for (int i=this->last_cleared; i<clear_to; i++)
     {
-        this->read_buffer->clear_pos(false,i);
+        this->read_buffer.clear_pos(false,i);
     }
     this->last_cleared = clear_to;
 }
 
 void
-Codon_phaser::write_out_buffer()
+Codon_phaser::write_out_buffer() const
 {
-    for (std::vector<site_info>::iterator it = buffer.begin(); it != buffer.end(); ++it)
-        log_os << *it << " ref " << it.base()->ref << "\n";
+    for (const auto& val : buffer)
+    {
+        log_os << val << " ref " << val.ref << "\n";
+    }
 }
 
 void
-Codon_phaser::write_out_alleles()
+Codon_phaser::write_out_alleles() const
 {
 //    log_os << "Ref: " << this->reference << "=" << this->observations[this->reference] << "\n";
 //    log_os << "Alt: ";
-    for (allele_map::const_iterator it = this->observations.begin(); it != this->observations.end(); ++it)   // only normalize the features that are needed
+    for (const auto& val : observations)
     {
-        if (it->first!=this->reference)
-            log_os << it->first << "=" << this->observations[it->first] << " ";
+        if (val.first == this->reference) continue;
+        log_os << val.first << "=" << val.second << " ";
     }
     log_os << "\n";
 }

@@ -50,6 +50,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                          help="Normal sample BAM or CRAM file. [required] (no default)")
         group.add_option("--tumorBam","--tumourBam", type="string",dest="tumorBamList",metavar="FILE", action="append",
                           help="Tumor sample BAM or CRAM file. [required] (no default)")
+        group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
+                          help="Noise vcf file (submit argument multiple times for more than one file)")
         #group.add_option("--exome", dest="isExome", action="store_true",
         #                 help="Set options for WES input: turn off depth filters")
 
@@ -70,14 +72,21 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
     def validateAndSanitizeExistingOptions(self,options) :
 
+        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.normalBamList,"normal sample")
         groomBamList(options.tumorBamList, "tumor sample")
-
-        StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
+        
+        if options.noiseVcfList is not None :
+            for vcfname in options.noiseVcfList :
+                tabixFile = vcfname + ".tbi"
+                if os.path.isfile(tabixFile) : return
+                raise OptParseException("Can't find expected noise vcf index file: '%s'" % (tabixFile))
 
 
 
     def validateOptionExistence(self,options) :
+
+        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
         if options.userConfigPath is None :
             raise OptParseException("A config file must be specified for strelka workflow")
@@ -87,9 +96,6 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         bcheck.appendBams(options.tumorBamList,"Tumor")
         bcheck.check(options.samtoolsBin,
                      options.referenceFasta)
-
-        StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
-
 
 
 

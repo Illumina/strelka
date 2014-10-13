@@ -29,11 +29,15 @@
 
 /// the next two structures are used to generate the GATK haplotype score:
 ///
+
+/// represents a single haplotype observation, centered on the site of interest
+/// as defined by 'offset'
 struct hap_cand
 {
+    /// \param offset the offset into read of the pileup base
     hap_cand(const bam_seq_base& read_seq,
              const uint8_t* init_qual,
-             const int offset);  // the offset into read of the pileup base
+             const int offset);
 
     uint16_t
     total_qual() const
@@ -70,6 +74,8 @@ struct hap_cand
 
 private:
     uint16_t _total_qual;
+
+    // basecalls and qualities are packed together into one bit for each position in the haplotype
     std::array<uint8_t,HAP_SIZE> _bq;
 };
 
@@ -77,8 +83,10 @@ private:
 std::ostream& operator<<(std::ostream& os, const hap_cand& hc);
 
 
+/// a set of haplotype observations
 typedef std::vector<hap_cand> hap_set_t;
 
 
+/// produce haplotype score from set of haplotype observations
 double
 get_hapscore(hap_set_t& hap_set);

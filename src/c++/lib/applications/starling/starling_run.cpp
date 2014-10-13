@@ -22,7 +22,6 @@
 #include "starling_run.hh"
 #include "starling_pos_processor.hh"
 #include "starling_streams.hh"
-#include "starling_info.hh"
 
 #include "blt_util/bam_streamer.hh"
 #include "blt_util/blt_exception.hh"
@@ -37,15 +36,10 @@
 
 
 
-namespace
-{
-const prog_info& pinfo(starling_info::get());
-}
-
-
-
 void
-starling_run(const starling_options& opt)
+starling_run(
+    const prog_info& pinfo,
+    const starling_options& opt)
 {
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
@@ -66,7 +60,8 @@ starling_run(const starling_options& opt)
         throw blt_exception(oss.str().c_str());
     }
 
-    starling_streams client_io(opt,pinfo,read_stream.get_header());
+    sample_info ssi;
+    starling_streams client_io(opt,pinfo,read_stream.get_header(),ssi);
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;

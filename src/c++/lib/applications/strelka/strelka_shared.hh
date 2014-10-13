@@ -82,9 +82,8 @@ struct strelka_options : public starling_options
 
     // report whether any type of indel-caller is running (including
     // checks from child class options):
-    virtual
     bool
-    is_call_indels() const
+    is_call_indels() const override
     {
         return (is_somatic_indel() || base_t::is_call_indels());
     }
@@ -125,6 +124,9 @@ struct strelka_options : public starling_options
     double tumor_sample_min_small_candidate_indel_read_frac = 0.02;
 
     std::string somatic_callable_filename;
+
+    // positions/indels in vcf are used to estimate low-frequency sequencing noise:
+    std::vector<std::string> noise_vcf;
 
     somatic_filter_options sfilter;
 };

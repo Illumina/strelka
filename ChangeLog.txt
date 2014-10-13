@@ -1,10 +1,13 @@
+- STARKA-144 add initial site-noise strelka feature
+- STARKA-73 add strelka noise extractor workflow
 - STARKA-143 Improve runtime for high-depth centromere regions, especially for strelka
 - Add starling option to always genotype indels provided in vcf
 - STARKA-135 add strand bias feature
 - STARKA-138 add read position features to strelka SNV output
 - STARKA-136 add mapping info values to strelka SNV output
 v2.1.5
-- Add CRAM input support (still experimental pending samtools idxstats fix)
+- Add CRAM input support (still experimental pending samtools idxstats
+capability for CRAM)
 v2.1.4
 - Turned ON DP filter for rule filters as default
 - Made scoring-model a configurable option for starling pyflow

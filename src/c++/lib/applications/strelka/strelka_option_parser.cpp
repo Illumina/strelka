@@ -113,6 +113,8 @@ get_strelka_option_parser(
     ("somatic-callable-region-file",
      po::value(&opt.somatic_callable_filename),
      "Output a bed file of regions which are confidently somatic or non-somatic for SNVs at allele frequencies of 10% or greater.")
+    ("noise-vcf", po::value(&opt.noise_vcf)->multitoken(),
+      "Noise panel VCF for low-frequency noise")
     ;
 
     po::options_description strelka_parse_opt_filter("Somatic variant-calling filters");

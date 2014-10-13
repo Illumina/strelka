@@ -26,6 +26,7 @@
 #include "blt_util/log.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 #include "starling_common/starling_indel_report_info.hh"
+#include "starling_common/starling_pos_processor_base_stages.hh"
 
 #include <iomanip>
 
@@ -100,6 +101,17 @@ strelka_pos_processor(
     _indelRegionIndexTumor=tumor_sif.wav.add_win(opt.sfilter.indelRegionFlankSize*2);
 }
 
+
+
+void
+strelka_pos_processor::
+insert_noise_pos(
+    const pos_t pos,
+    const SiteNoise& sn)
+{
+    _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
+    _noisePos.insertSiteNoise(pos,sn);
+}
 
 
 void
@@ -196,6 +208,18 @@ process_pos_snp_somatic(const pos_t pos)
     if (sgtg.is_output())
     {
         std::ostream& bos(*_client_io.somatic_snv_osptr());
+
+        {
+            const SiteNoise* snp(_noisePos.getPos(pos));
+            if (snp == nullptr)
+            {
+                sgtg.sn.clear();
+            }
+            else
+            {
+                sgtg.sn = *snp;
+            }
+        }
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG

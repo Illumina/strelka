@@ -17,6 +17,7 @@
 ///
 
 #include "blt_util/vcf_util.hh"
+#include "blt_util/bam_header_util.hh"
 #include "starling_common/gvcf_header.hh"
 #include "starling_common/gvcf_locus_info.hh"
 
@@ -27,7 +28,6 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <boost/tokenizer.hpp>
 
 
 static
@@ -133,27 +133,6 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
 }
 
 
-// try to determine the sample_name from the BAM header
-// if none found return 'SAMPLE' to be used as sample name
-static
-std::string
-determine_sample(const std::string& bam_header_text)
-{
-    static const std::string default_res_name("SAMPLE");
-
-    using namespace boost;
-    char_separator<char> sep("\t\n");
-    tokenizer< char_separator<char> > tokens(bam_header_text, sep);
-    for (const auto& t : tokens)
-    {
-        if (std::string::npos != t.find("SM:"))
-        {
-            return t.substr(t.find("SM:")+3);
-        }
-    }
-    return default_res_name;
-}
-
 
 void
 finish_gvcf_header(const starling_options& opt,
@@ -163,7 +142,6 @@ finish_gvcf_header(const starling_options& opt,
                    std::ostream& os,
                    calibration_models& CM)
 {
-
 //    bool do_rule_filters  = (opt.calibration_model=="default" || opt.calibration_model=="Qrule");
 
     //INFO:
@@ -215,8 +193,7 @@ finish_gvcf_header(const starling_options& opt,
 
     add_gvcf_filters(opt.gvcf,opt,chrom_depth,os,CM);
 
-    // try to determine the sample_name from the BAM header
-    std::string sample_name = determine_sample(bam_header_data);
+    const std::string sample_name = get_bam_header_sample_name(bam_header_data);
 
     os << vcf_col_label() << "\tFORMAT\t" << sample_name << "\n";
 }

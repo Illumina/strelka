@@ -49,11 +49,12 @@ bool
 vcf_record::
 set(const char* s)
 {
-
     static const char sep('\t');
     static const unsigned maxword(5);
 
     clear();
+
+    line = s;
 
     // simple tab parse:
     const char* start(s);
@@ -114,7 +115,6 @@ set(const char* s)
 
 std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr)
 {
-
     os << vcfr.chrom << '\t'
        << vcfr.pos << '\t'
        << '.' << '\t'
