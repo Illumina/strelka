@@ -139,7 +139,7 @@ toggle_strand_state(
     {
         if (het_count >= STRAND_COUNT) het_count = STRAND_COUNT-1;
         const unsigned digt_state(get_digt_state(state,ref_base));
-        return (PRESTRAND_SIZE + (het_count*STRAND_SIZE) + stables.strand_state[ref_base][digt_state]);
+        return (PRESTRAND_SIZE + (het_count*STRAND_SIZE) + stables.strand_state[ref_base][digt_state-N_BASE]);
     }
     else
     {
