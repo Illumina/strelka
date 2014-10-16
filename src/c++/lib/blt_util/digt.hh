@@ -11,13 +11,13 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
+#include <cassert>
 
 namespace DIGT
 {
@@ -102,12 +102,12 @@ hom_base(const unsigned idx)
     }
 }
 
+/// provide the alelle frequency for base_id given a diploid genotype gt
 inline
 double
 expect(const int base_id,
        const int gt)
 {
-
     static const unsigned N_BASE(4);
 
     static const double ex[SIZE][N_BASE] = {{ 1.0, 0.0, 0.0, 0.0},
@@ -125,7 +125,7 @@ expect(const int base_id,
     return ex[gt][base_id];
 }
 
-/// coded form of expect function:
+/// coded form of expect function above:
 /// 0 is 0.0
 /// 1 is 0.5
 /// 2 is 1.0
@@ -134,7 +134,6 @@ unsigned
 expect2(const int base_id,
         const int gt)
 {
-
     static const unsigned N_BASE(4);
 
     static const unsigned ex[SIZE][N_BASE] = {{ 2, 0, 0, 0},
@@ -168,7 +167,6 @@ unsigned
 expect2_bias(const int base_id,
              const int gt)
 {
-
     static const unsigned N_BASE(4);
 
     static const unsigned ex[SIZE][N_BASE] = {{ 3, 0, 0, 0},
@@ -191,7 +189,6 @@ const char*
 get_vcf_gt(const int gt,
            const int ref_gt)
 {
-
     static const unsigned N_BASE(4);
 
     static const char* gtstr[N_BASE] = { "0/0","0/1","1/1","1/2" };
@@ -210,4 +207,30 @@ get_vcf_gt(const int gt,
 
     return gtstr[ex[gt][ref_gt]];
 }
+
+/// return diploid gt of two base_ids
+// \TODO replace this with a table
+inline
+unsigned
+get_gt_with_alleles(
+    const unsigned base1,
+    const unsigned base2)
+{
+    static const unsigned N_BASE(4);
+    assert(base1 < N_BASE);
+    assert(base2 < N_BASE);
+
+    if(base1==base2) return base1;
+
+    for (unsigned gt(N_BASE); gt<SIZE; ++gt)
+    {
+        if ((DIGT::expect2(base1,gt)==0) ||
+            (DIGT::expect2(base2,gt)==0)) continue;
+        return gt;
+    }
+
+    assert(false && "Can't find diploid genotype");
+    return 0;
+}
+
 }

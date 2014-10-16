@@ -1,3 +1,4 @@
+- Extend address sanitizer build support, improve build option checks
 - STARKA-144 add initial site-noise strelka feature
 - STARKA-73 add strelka noise extractor workflow
 - STARKA-143 Improve runtime for high-depth centromere regions, especially for strelka

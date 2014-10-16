@@ -51,19 +51,15 @@ strand_state_tables()
         for (unsigned alt(0); alt<N_BASE; ++alt)
         {
             if (alt==ref) continue;
-            bool is_found(false);
-            for (unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt)
-            {
-                if (DIGT::expect2(ref,gt) &&
-                    DIGT::expect2(alt,gt))
-                {
-                    digt_state[ref][local_strand_state] = gt;
-                    strand_state[ref][gt] = local_strand_state;
-                    is_found=true;
-                    break;
-                }
-            }
-            assert(is_found);
+
+            // search for the DIGT het state which contains
+            // the given alt and ref allele:
+            const unsigned gt(DIGT::get_gt_with_alleles(ref,alt));
+            assert(gt>=N_BASE && gt<DIGT::SIZE);
+
+            digt_state[ref][local_strand_state] = gt;
+            strand_state[ref][gt-N_BASE] = local_strand_state;
+
             local_strand_state++;
         }
     }
