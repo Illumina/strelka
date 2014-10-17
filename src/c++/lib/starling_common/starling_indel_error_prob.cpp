@@ -267,14 +267,14 @@ get_indel_error_prob(const starling_options& client_opt,
                 //reverse prob that true allele has been masked as reference by chance
                 //may want to leave this term for now.
                 ref_error_prob=std::max(indel_error_prob_len[0].second,
-                                        std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
+                                        std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size))*100.;
             }
             else if (iri.it == INDEL::DELETE)
             {
                 indel_error_prob=std::max(indel_error_prob_len[0].second,
                                           std::pow(indel_error_prob_len[ref_hpol_len-1].second,indel_size));
                 ref_error_prob=std::max(indel_error_prob_len[0].first,
-                                        std::pow(indel_error_prob_len[indel_hpol_len-1].first,indel_size));
+                                        std::pow(indel_error_prob_len[indel_hpol_len-1].first,indel_size))*100.;
             }
             else
             {
