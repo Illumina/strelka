@@ -207,7 +207,8 @@ process_pos_snp_somatic(const pos_t pos)
 
     if (sgtg.is_output())
     {
-        std::ostream& bos(*_client_io.somatic_snv_osptr());
+//        std::ostream& bos(*_client_io.somatic_snv_osptr());
+        std::ostream& bos = std::cout;
 
         {
             const SiteNoise* snp(_noisePos.getPos(pos));
