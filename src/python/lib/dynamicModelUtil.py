@@ -119,7 +119,5 @@ def RC(base):
     
 def validateRecordByFreq(freqCut=0.07):
     myFreq = 0.01
-    if
-    
     
     return 1
