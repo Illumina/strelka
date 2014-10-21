@@ -18,14 +18,15 @@
 #include "blt_common/blt_arg_validate.hh"
 #include "blt_util/compat_util.hh"
 #include "starling_common/starling_option_parser.hh"
+#include "blt_util/scoringmodels.hh"
 
 #include "boost/format.hpp"
 
 #include <iostream>
-//#define DEBUG_OPTIONPARSER
+#define DEBUG_OPTIONPARSER
 
 #ifdef DEBUG_OPTIONPARSER
-#include "blt_util/log.hh"
+    #include "blt_util/log.hh"
 #endif
 
 
@@ -196,6 +197,9 @@ get_starling_shared_option_parser(starling_options& opt)
     ("calibration-model-file", po::value(&opt.calibration_models_filename),
      "File containing calibration model parameters")
 
+     ("testing-model-file", po::value(&opt.testing_models_filename),
+      "DEBUG: Adaptive model option.")
+
     ("scoring-model", po::value(&opt.calibration_model),
      "The calibration model for quality filtering variants")
 
@@ -208,8 +212,6 @@ get_starling_shared_option_parser(starling_options& opt)
 
     return new_opt;
 }
-
-
 
 po::options_description
 get_starling_option_parser(starling_options& opt)
@@ -374,7 +376,6 @@ finalize_legacy_starling_options(const prog_info& pinfo,
                                  starling_options& opt)
 {
 
-
     if (! opt.is_ref_set())
     {
         pinfo.usage("a reference sequence must be specified");
@@ -420,6 +421,9 @@ finalize_legacy_starling_options(const prog_info& pinfo,
     {
         pinfo.usage("Cannot specify -write-candidate-indels-only without providing candidate indel filename.");
     }
+
+
+
 }
 
 
@@ -496,6 +500,10 @@ finalize_starling_options(const prog_info& pinfo,
             pinfo.usage((boost::format("Repeated flank size of %u provided to variant-window-flank-file") % fs).str().c_str());
         }
         last_fs=fs;
+    }
+
+    if(opt.testing_models_filename.length()>2){
+        scoring_models::Instance()->load_models(opt.testing_models_filename);
     }
 
     finalize_legacy_starling_options(pinfo,opt);

@@ -292,6 +292,8 @@ void c_model::score_instance(featuremap features, indel_info& ii)
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
         if (!ii.is_het())
             var_case = CALIBRATION_MODEL::HomDel;
+
+
         if (ii.iri.it==INDEL::INSERT)
         {
             if (ii.is_het())
@@ -299,6 +301,10 @@ void c_model::score_instance(featuremap features, indel_info& ii)
             else
                 var_case = CALIBRATION_MODEL::HomIns;
         }
+
+//        if (ii.imod.is_overlap)
+//                var_case = CALIBRATION_MODEL::HetAltDel;
+
         ii.Qscore = logistic_score(var_case, features);
         this->apply_qscore_filters(ii,static_cast<int>(this->pars[CALIBRATION_MODEL::get_label(var_case)]["PassThreshold"]["Q"]),var_case);
     }

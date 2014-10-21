@@ -34,6 +34,7 @@ enum index_t
     BCNoise,
     SpanDel,
     QSS_ref,
+    LowQscore,
     // indels only:
     Repeat,
     iHpol,
@@ -65,6 +66,8 @@ get_label(const unsigned idx)
         return "BCNoise";
     case QSI_ref:
         return "QSI_ref";
+    case LowQscore:
+            return "LowQscore";
     default:
         assert(false && "Unknown vcf filter id");
         return nullptr;

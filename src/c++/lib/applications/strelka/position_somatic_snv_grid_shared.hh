@@ -57,4 +57,5 @@ struct somatic_snv_genotype_grid
     result_set rs;
     bool is_forced_output = false;
     SiteNoise sn;
+    int Qscore=0;
 };

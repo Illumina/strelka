@@ -170,8 +170,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
     os << ";TQSS=" << (sgt.snv_tier+1)
        << ";NT=" << NTYPE::label(rs.ntype)
        << ";QSS_NT=" << rs.snv_from_ntype_qphred
-       << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1)
-       << ";SGT=";
+       << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1);
+       if (scoring_models::Instance()->calibration_init){ // write out somatic VQSR metrics
+           os << ";VQSR=" << sgt.Qscore;
+       }
+       os << ";SGT=";
     DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
                              sgt.ref_gt,os);
 

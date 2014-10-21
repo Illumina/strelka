@@ -30,7 +30,7 @@
 
 #include <iomanip>
 
-
+#define SOMATIC_STDOUT
 
 strelka_pos_processor::
 strelka_pos_processor(
@@ -207,8 +207,7 @@ process_pos_snp_somatic(const pos_t pos)
 
     if (sgtg.is_output())
     {
-//        std::ostream& bos(*_client_io.somatic_snv_osptr());
-        std::ostream& bos = std::cout;
+
 
         {
             const SiteNoise* snp(_noisePos.getPos(pos));
@@ -221,6 +220,11 @@ process_pos_snp_somatic(const pos_t pos)
                 sgtg.sn = *snp;
             }
         }
+        #ifdef SOMATIC_STDOUT
+                std::ostream& bos = std::cout;
+        #else
+                std::ostream& bos(*_client_io.somatic_snv_osptr());
+        #endif
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG
