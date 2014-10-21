@@ -192,12 +192,12 @@ void calibration_models::set_model(const std::string& name)
 
     if (it != this->models.end())
     {
-        if (this->has_depth && (this->chr_median>70 || this->chr_median<10))
-        {
-            this->model_name = "QRULE";     //TODO hacky fix for defaulting to qrule if we have a high median chromosome depth (VQSR not trained to handle these cases yet)
-        }
-        else
-            this->model_name = boost::to_upper_copy(name);
+//        if (this->has_depth && (this->chr_median>70 || this->chr_median<10))
+//        {
+//            this->model_name = "QRULE";     //TODO hacky fix for defaulting to qrule if we have a high median chromosome depth (VQSR not trained to handle these cases yet)
+//        }
+//        else
+        this->model_name = boost::to_upper_copy(name);
         this->is_default_model = false;
     }
 //    log_os << "Calibration model set to '" << this->model_name << "'\n";
