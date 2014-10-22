@@ -30,10 +30,13 @@ enum var_case
 {
     HetSNP,
     HomSNP,
+    HetAltSNP,
     HetIns,
     HomIns,
+    HetAltIns,
     HetDel,
-    HomDel
+    HomDel,
+    HetAltDel,
 };
 
 inline
@@ -46,14 +49,20 @@ get_label(const unsigned idx)
         return "snphet";
     case HomSNP:
         return "snphom";
+    case HetAltSNP:
+        return "snphetalt";
     case HetIns:
         return "inshet";
     case HomIns:
         return "inshom";
+    case HetAltIns:
+        return "inshetalt";
     case HetDel:
         return "delhet";
     case HomDel:
         return "delhom";
+    case HetAltDel:
+        return "delhetalt";
     default:
         assert(0);
         return NULL;
@@ -70,14 +79,20 @@ get_label_header(const unsigned idx)
         return "het SNP";
     case HomSNP:
         return "hom SNP";
+    case HetAltSNP:
+        return "hetalt SNP";
     case HetIns:
         return "het insertion";
     case HomIns:
         return "hom insertion";
+    case HetAltIns:
+        return "hetalt insertion";
     case HetDel:
         return "het deletion";
     case HomDel:
         return "hom deletion";
+    case HetAltDel:
+        return "hetalt deletion";
     default:
         assert(0);
         return NULL;
@@ -94,14 +109,20 @@ get_Qscore_filter(const unsigned var_case)
         return VCF_FILTERS::LowQscoreHetSNP;
     case HomSNP:
         return VCF_FILTERS::LowQscoreHomSNP;
+    case HetAltSNP:
+        return VCF_FILTERS::LowQscoreHetAltSNP;
     case HetIns:
         return VCF_FILTERS::LowQscoreHetIns;
     case HomIns:
         return VCF_FILTERS::LowQscoreHomIns;
+    case HetAltIns:
+        return VCF_FILTERS::LowQscoreHetAltIns;
     case HetDel:
         return VCF_FILTERS::LowQscoreHetDel;
     case HomDel:
         return VCF_FILTERS::LowQscoreHomDel;
+    case HetAltDel:
+        return VCF_FILTERS::LowQscoreHetAltDel;
     default:
         assert(0);
         return VCF_FILTERS::LowGQX;

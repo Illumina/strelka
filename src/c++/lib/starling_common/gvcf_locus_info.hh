@@ -39,10 +39,13 @@ enum index_t
     LowGQX,
     LowQscoreHetSNP,
     LowQscoreHomSNP,
+    LowQscoreHetAltSNP,
     LowQscoreHetIns,
     LowQscoreHomIns,
+    LowQscoreHetAltIns,
     LowQscoreHetDel,
     LowQscoreHomDel,
+    LowQscoreHetAltDel,
     PhasingConflict,
     HighBaseFilt,
     HighDepth,
@@ -66,14 +69,20 @@ get_label(const unsigned idx)
         return "LowGQXHetSNP";
     case LowQscoreHomSNP:
         return "LowGQXHomSNP";
+    case LowQscoreHetAltSNP:
+        return "LowGQXHetAltSNP";
     case LowQscoreHetIns:
         return "LowGQXHetIns";
     case LowQscoreHomIns:
         return "LowGQXHomIns";
+    case LowQscoreHetAltIns:
+        return "LowGQXHetAltIns";
     case LowQscoreHetDel:
         return "LowGQXHetDel";
     case LowQscoreHomDel:
         return "LowGQXHomDel";
+    case LowQscoreHetAltDel:
+        return "LowGQXHetAltDel";
     case PhasingConflict:
         return "PhasingConflict";
     case HighSNVSB:
@@ -260,6 +269,12 @@ struct indel_info
     }
 
     bool
+    is_hetalt()
+    {
+        return (imod.is_overlap);
+    }
+
+    bool
     is_het()
     {
         return (static_cast<int>(imod.max_gt)>1);
@@ -383,6 +398,14 @@ struct site_info
     {
         unsigned print_gt(smod.max_gt);
         return DIGT::is_het(print_gt);
+    }
+
+
+    bool
+    is_hetalt() const
+    {
+        unsigned print_gt(smod.max_gt);
+        return DIGT::is_het(print_gt) && ref != DIGT::label(print_gt)[0] && ref != DIGT::label(print_gt)[1];
     }
 
 

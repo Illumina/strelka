@@ -247,6 +247,13 @@ int c_model::logistic_score(const CALIBRATION_MODEL::var_case var_case, featurem
 
     // adjust by prior and calculate q-score
     int Qscore = prior_adjustment(raw_score,this->pars[var_case_label]["Priors"]["fp.prior"]);
+
+    // not active, but a good sanity-check:
+    // assert(Qscore>=0);
+
+    // not active, but possibly the safe thing to do, to avoid special-case treatment elsewhere that we no longer want:
+    // if(Qscore == 0) Qscore = 1;
+
     return Qscore;
 }
 
@@ -267,6 +274,12 @@ void c_model::score_instance(featuremap features, site_info& si)
     if (this->model_type=="LOGISTIC")   //case we are using a logistic regression mode
     {
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HomSNP);
+#undef HETALTSNPMODEL
+#ifdef HETALTSNPMODEL // future-proofing: do not remove unless you are sure we will not be adding hetalt SNP model to VQSR
+        if (si.is_hetalt())
+            var_case = CALIBRATION_MODEL::HetAltSNP;
+        else
+#endif
         if (si.is_het())
             var_case = CALIBRATION_MODEL::HetSNP;
 
@@ -292,14 +305,27 @@ void c_model::score_instance(featuremap features, indel_info& ii)
     {
         //TODO put into enum context
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
-        if (!ii.is_het())
-            var_case = CALIBRATION_MODEL::HomDel;
-        if (ii.iri.it==INDEL::INSERT)
+        if (ii.iri.it==INDEL::DELETE)
         {
-            if (ii.is_het())
+          if (ii.is_hetalt())
+            var_case = CALIBRATION_MODEL::HetAltDel;
+          else if (! ii.is_het())
+            var_case = CALIBRATION_MODEL::HomDel;
+        }
+        else if (ii.iri.it==INDEL::INSERT)
+        {
+            if (ii.is_hetalt())
+                var_case = CALIBRATION_MODEL::HetAltIns;
+            else if (ii.is_het())
                 var_case = CALIBRATION_MODEL::HetIns;
             else
                 var_case = CALIBRATION_MODEL::HomIns;
+        }
+        else
+        {
+          // block substitutions???
+          this->do_rule_model(this->pars["indel"]["cutoff"],ii);
+          return;
         }
         ii.Qscore = logistic_score(var_case, features);
         this->apply_qscore_filters(ii,static_cast<int>(this->pars[CALIBRATION_MODEL::get_label(var_case)]["PassThreshold"]["Q"]),var_case);
