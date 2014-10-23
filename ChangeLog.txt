@@ -1,3 +1,4 @@
+- STARKA-152 add ref indel error multiplier to reduce undercalling of homozygous indels
 - STARKA-148 add support for hetalt ins and del VQSR models to starling
 - STARKA-149 fix Qrule/default filtering being applied even when a VQSR model is specified
 - STARKA-150 allow tabs as separators in scoring model (model.json) file

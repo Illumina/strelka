@@ -113,6 +113,8 @@ get_starling_shared_option_parser(starling_options& opt)
      "Bed file with sites that should not be block-compressed if hom-ref.")
     ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("new"),
      "Choose indel error model to use, available option old,new, new_stratified (development option only)")
+    ("indel-ref-error-factor",  po::value(&opt.indel_ref_error_factor)->default_value(opt.indel_ref_error_factor),
+     "Choose multiplier for ref error rate to use; 1 would be expected to be correct, but higher values counteract a bias away from homozygous indels (undercalling)")
 
 
     ("do-short-range-phasing", po::value(&opt.do_codon_phasing)->zero_tokens(),
