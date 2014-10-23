@@ -59,8 +59,8 @@ void calibration_model::load(boost::property_tree::ptree pt)
        set_of_calibrations_type dummy_arr;
        all_data.push_back(dummy_arr);
     }
-   try
-   {
+//   try
+//   {
        int t_count = 0;
 
        BOOST_FOREACH(boost::property_tree::ptree::value_type &each_tree, pt)
@@ -90,22 +90,26 @@ void calibration_model::load(boost::property_tree::ptree pt)
     this->all_trees = all_data[ind++];
     this->all_node_votes = all_data[ind++];
     this->all_decisions = all_data[ind++];
-   }
-
-   catch (std::exception const& e)
-   {
-       std::cerr << e.what() << std::endl;
-   }
+//   }
+//
+//   catch (std::exception const& e)
+//   {
+//       std::cerr << e.what() << std::endl;
+//   }
 }
 
 
 double calibration_model::get_single_dectree_proba(const feature_type& features, int tree_index)
 {
     int node = 0;
-    while (this->all_trees[tree_index][node][0] != -1)
+
+    //traverse a single tree
+    while (this->all_trees[tree_index][node][0] != -1)  // test condition signifies we've reached a leaf node
     {
+//        log_os << "Looking for feature number " << STRELKA_VQSR_FEATURES::get_feature_label((int)this->all_decisions[tree_index][node][0]) << std::endl;
         if (features.find((int)this->all_decisions[tree_index][node][0])->second <= this->all_decisions[tree_index][node][1])
         {
+//            log_os << "Looking for feature " << STRELKA_VQSR_FEATURES::get_feature_label((int)this->all_decisions[tree_index][node][0]) << std::endl;
             node = (int)this->all_trees[tree_index][node][0];
         }
         else
@@ -113,10 +117,10 @@ double calibration_model::get_single_dectree_proba(const feature_type& features,
             node = (int)this->all_trees[tree_index][node][1];
         }
     }
-    //node captures the index in the tree.
 
+    // normalize the vote of the lead split
     double total = this->all_node_votes[tree_index][node][0] + this->all_node_votes[tree_index][node][1];
-    double proba1 = this->all_node_votes[tree_index][node][1] / total;
+    double proba1 = 1.0*this->all_node_votes[tree_index][node][1] / total;
 
     return proba1;
 
@@ -128,14 +132,18 @@ double calibration_model::get_randomforest_proba(const feature_type& features)
     double final_proba = 0;
     for (int t = 0; t < this->n_trees; t++)
     {
+//       log_os << "Applying tree " << t << std::endl;
        final_proba += this->get_single_dectree_proba(features, t);
     }
-    return final_proba/this->n_trees; // returns calibration score
+//    log_os << "Final prop " << 1-final_proba/this->n_trees << std::endl;
+    return (1.0-final_proba/this->n_trees); // returns calibration score
 }
 
-double scoring_models::score_instance(const feature_type& features)
+int scoring_models::score_instance(const feature_type& features)
 {
-    return this->randomforest_model.get_randomforest_proba(features);
+    double score = this->randomforest_model.get_randomforest_proba(features);
+    int Q = error_prob_to_qphred(score);
+    return Q;
 }
 
 error_model& scoring_models::get_indel_model(const std::string& pattern){

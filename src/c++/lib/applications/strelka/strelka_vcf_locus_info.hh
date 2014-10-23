@@ -21,6 +21,7 @@
 
 #include <bitset>
 #include <iosfwd>
+#include "blt_util/scoringmodels.hh"
 
 
 namespace STRELKA_VCF_FILTERS
@@ -73,9 +74,7 @@ get_label(const unsigned idx)
         return nullptr;
     }
 }
-}
-
-
+};
 
 struct strelka_shared_modifiers
 {
@@ -91,15 +90,40 @@ struct strelka_shared_modifiers
     }
 
     void
+    set_feature(const STRELKA_VQSR_FEATURES::index_t i,double val)
+    {
+//        log_os << "setting feature" << std::endl;
+        this->ft[i] = val;
+        feature_is_set.set(i);
+    }
+
+    double
+    get_feature(const STRELKA_VQSR_FEATURES::index_t i)
+    {
+        return this->ft[i];
+    }
+
+    void
     write_filters(std::ostream& os) const;
+
+    //For debug only
+    void
+    write_feature(std::ostream& os) const;
+
 
     void
     clear()
     {
         filters.reset();
+        feature_is_set.reset();
+        ft.clear();
+        Qscore = 0;
     }
 
     std::bitset<STRELKA_VCF_FILTERS::SIZE> filters;
+    std::bitset<STRELKA_VQSR_FEATURES::SIZE> feature_is_set;
+    feature_type ft; // holds VQSR features
+    int Qscore;
 };
 
 

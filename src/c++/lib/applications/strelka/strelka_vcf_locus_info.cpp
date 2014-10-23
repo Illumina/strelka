@@ -49,6 +49,17 @@ write_filters(
     }
 }
 
+void
+strelka_shared_modifiers::
+write_feature(
+    std::ostream& os) const
+{
+    os << "\n #FEAT ";
+    for(auto it = ft.cbegin(); it != ft.cend(); ++it)
+        os << STRELKA_VQSR_FEATURES::get_feature_label(it->first) << "=" << it->second << "; ";
+    os << "\n";
+}
+
 
 
 std::ostream&

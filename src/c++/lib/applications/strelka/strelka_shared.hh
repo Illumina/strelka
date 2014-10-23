@@ -47,7 +47,7 @@ struct somatic_filter_options
     int sindelQuality_LowerBound = 30;
 
     unsigned indelRegionFlankSize = 50;
-    int minimumQscore=7;
+    int minimumQscore=6;
 
 };
 
