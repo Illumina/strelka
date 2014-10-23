@@ -94,11 +94,17 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomIns) << " for hom insertion";
         write_vcf_filter(os,get_label(LowQscoreHomIns),oss.str().c_str());
         oss.str("");
+        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltIns) << " for het-alt insertion";
+        write_vcf_filter(os,get_label(LowQscoreHetAltIns),oss.str().c_str());
+        oss.str("");
         oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetDel) << " for het deletion";
         write_vcf_filter(os,get_label(LowQscoreHetDel),oss.str().c_str());
         oss.str("");
         oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << " for hom deletion";
         write_vcf_filter(os,get_label(LowQscoreHomDel),oss.str().c_str());
+        oss.str("");
+        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltDel) << " for het-alt deletion";
+        write_vcf_filter(os,get_label(LowQscoreHetAltDel),oss.str().c_str());
         oss.str("");
     }
 
