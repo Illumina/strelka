@@ -252,7 +252,7 @@ void calibration_models::load_models(std::string model_file)
         {
             std::getline (myReadFile,output);
             std::vector<std::string> tokens;
-            split(tokens, output, is_any_of(" ")); // tokenize string
+            split(tokens, output, is_any_of(" \t")); // tokenize string
             //case new model
             if (tokens.at(0).substr(0,3)=="###")
             {

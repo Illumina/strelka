@@ -1,3 +1,4 @@
+- STARKA-150 allow tabs as separators in scoring model (model.json) file
 - Extend address sanitizer build support, improve build option checks
 - STARKA-144 add initial site-noise strelka feature
 - STARKA-73 add strelka noise extractor workflow
