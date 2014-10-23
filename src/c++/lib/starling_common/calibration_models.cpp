@@ -75,6 +75,7 @@ void calibration_models::clasify_site(indel_info& ii)
         c_model myModel = this->get_model(this->model_name);
         myModel.score_instance(features,ii);
     }
+    else
     {
         this->default_clasify_site(ii);
     }
