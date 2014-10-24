@@ -184,7 +184,7 @@ void c_model::apply_qscore_filters(site_info& si, const int qscore_cut, const CA
         if (filt>dpfExtreme) si.Qscore=3;
     }
 
-    if (si.Qscore<1) // && total_calls>70
+    if (si.Qscore<0)
     {
         featuremap cutoffs = {{"GQX", 30}, {"DP", 1}, {"DPFratio", 0.4}, {"HighSNVSB", 10}};
         this->do_rule_model(cutoffs,si);
@@ -212,20 +212,20 @@ void c_model::apply_qscore_filters(indel_info& ii, const int qscore_cut, const C
     if (ii.Qscore>60)
         ii.Qscore = 60;
 
-//    if (ii.Qscore<1)
-//    {
-//        featuremap cutoffs = {{"GQX", 30}, {"DP", 1},{"DPFratio", 0.2}};
-//        this->do_rule_model(cutoffs,ii);
-//        if (ii.imod.filters.count()>0)
-//        {
-//            ii.Qscore = 1;
-//            ii.imod.filters.reset();
-//        }
-//        else
-//        {
-//            ii.Qscore = 12;
-//        }
-//    }
+    if (ii.Qscore<0)
+    {
+        featuremap cutoffs = {{"GQX", 30}, {"DP", 1},{"DPFratio", 0.2}};
+        this->do_rule_model(cutoffs,ii);
+        if (ii.imod.filters.count()>0)
+        {
+            ii.Qscore = 1;
+            ii.imod.filters.reset();
+        }
+        else
+        {
+            ii.Qscore = 12;
+        }
+    }
 
     if (ii.Qscore < qscore_cut)
     {
