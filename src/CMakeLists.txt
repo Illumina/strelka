@@ -74,6 +74,8 @@ if(TINDEX EQUAL -1)
     message (FATAL_ERROR "Selected build type, '${CMAKE_BUILD_TYPE}', is not in the set of available types: {${CMAKE_BUILD_TYPES_STRING}}")
 endif()
 
+message (STATUS "BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+
 #
 # setup cpack
 #

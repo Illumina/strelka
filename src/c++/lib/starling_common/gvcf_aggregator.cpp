@@ -568,7 +568,7 @@ write_site_record(const site_info& si) const
         }
         else
         {
-            if (si.Qscore>0)
+            if (si.Qscore>=0)
                 os << si.Qscore ;
             else
                 os << si.smod.gqx;
@@ -884,7 +884,7 @@ write_indel_record(const unsigned write_index)
     os << ii.get_gt() << ':'
        << ii.imod.gq << ':';
 
-    if (ii.Qscore>0)
+    if (ii.Qscore>=0)
         os << ii.Qscore  << ':';
     else
         os << ii.imod.gqx  << ':';

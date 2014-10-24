@@ -213,6 +213,8 @@ struct blt_options
     // Size of the window we are phasing in, default is codon range (=3)
     int phasing_window = 3;
 
+    //multiplier for ref error rate to use; 1 would be expected to be correct, but higher values counteract a bias away from homozygous indels (undercalling)
+    double indel_ref_error_factor = 1.;
 
     std::string report_filename;
     std::string calibration_models_filename;
