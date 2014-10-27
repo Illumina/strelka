@@ -218,7 +218,7 @@ struct blt_options
 
     std::string report_filename;
     std::string calibration_models_filename;
-    std::string testing_models_filename;
+    std::string scoring_models;
     std::string minor_allele_bed;
     std::string indel_error_model;      // which baseline prior should be used for candidate indel genotyping
 };
