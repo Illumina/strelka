@@ -69,7 +69,8 @@ You must specify a BAM or CRAM file.
             'bgcatBin' : joinFile(libexecDir,"bgzf_cat"),
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'vqsrModel' : "QScoreHpolmodel",
-            'vqsrModelFile' : joinFile(configDir,'model.json')
+            'vqsrModelFile' : joinFile(configDir,'model.json'),
+            'scoringModelFile' : joinFile(configDir,'indel_models.json')
             })
         return defaults
 
