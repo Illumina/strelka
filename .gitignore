@@ -4,35 +4,30 @@
 *.class
 *.dll
 *.exe
+*.slo
+*.lo
 *.o
-*.a
+
+# Compiled Dynamic libraries
 *.so
-.gitignore~
-.gitignore
-starka/.cproject
-starka/.gitignore
-starka/.gitignore~
-starka/.project
-starka/StarlingVCFgen/
-starka/bin/
-starka/redist/CodeMin-1.0.2/
-starka/redist/boost
-starka/redist/boost_1_44_0_subset/
-starka/redist/samtools
-starka/redist/samtools-0.1.18_no_tview/
-starka/redist/tabix
-starka/redist/tabix-0.2.5_new_libz_order/
-starka/src/bin/starling2
-starka/src/bin/strelka2
-starka/src/bin/strelkaSiteSimulator
-starka/src/lib/blt_common/libblt_common_unittest
-starka/src/lib/blt_util/libblt_util_unittest
-starka/src/lib/common/libcommon_unittest
-starka/src/lib/starling_common/libstarling_common_unittest
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# emacs
+*~
+
+# Eclipse:
+.project
+.cproject
+.settings
+.pydevproject
+
 src/.cproject
 src/.project
-
-
 
 # Packages #
 ############
