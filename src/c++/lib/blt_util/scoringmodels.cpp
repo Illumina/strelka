@@ -6,7 +6,7 @@
  */
 #include "scoringmodels.hh"
 
-#define DEBUG_SCORINGMODELS
+//#define DEBUG_SCORINGMODELS
 
 #ifdef DEBUG_SCORINGMODELS
     #include "blt_util/log.hh"

@@ -23,7 +23,7 @@
 #include "boost/format.hpp"
 
 #include <iostream>
-#define DEBUG_OPTIONPARSER
+//#define DEBUG_OPTIONPARSER
 
 #ifdef DEBUG_OPTIONPARSER
     #include "blt_util/log.hh"
