@@ -52,8 +52,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                           help="Tumor sample BAM or CRAM file. [required] (no default)")
         group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
                           help="Noise vcf file (submit argument multiple times for more than one file)")
-        group.add_option("--scoringModel", type="string",dest="scoringModel",metavar="FILE", action="append",
-                          help="Json file specifying filtering and indel model parameters")
+#        group.add_option("--scoringModel", type="string",dest="scoringModel",metavar="FILE", action="append",
+#                          help="Json file specifying filtering and indel model parameters")
         #group.add_option("--exome", dest="isExome", action="store_true",
         #                 help="Set options for WES input: turn off depth filters")
 
