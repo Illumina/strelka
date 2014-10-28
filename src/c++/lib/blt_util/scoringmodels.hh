@@ -117,6 +117,8 @@ private:
     std::string name;
 };
 
+
+
 class calibration_model{
 public:
     calibration_model(){};
@@ -153,7 +155,7 @@ public:
    void load_calibration_model(boost::property_tree::ptree pt,const std::string& model_name,const std::string& model_type="RF");
    int score_instance(const feature_type& features);
 
-   error_model& get_indel_model(const std::string& pattern);
+   const error_model& get_indel_model(const std::string& pattern);
    bool indel_init=false;
 
    bool calibration_init=false;

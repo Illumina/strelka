@@ -146,7 +146,7 @@ int scoring_models::score_instance(const feature_type& features)
     return Q;
 }
 
-error_model& scoring_models::get_indel_model(const std::string& pattern){
+const error_model& scoring_models::get_indel_model(const std::string& pattern){
     if (pattern=="f"){}
     return this->indel_models[this->current_indel_model].model;
 }
@@ -194,6 +194,7 @@ void scoring_models::load_models(const std::string& model_file){
 
      //load indel models
      BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(imodels)){
+//         log_os << "Reading indel model " << v.first <<  std::endl;
          this->load_indel_model(pt,v.first);
      }
 

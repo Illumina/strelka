@@ -113,8 +113,8 @@ struct PatternErrorModel
 
     const error_model&
     getModel(
-        const std::string& overall_error_model,
-        const std::string& pattern) const
+    const std::string& overall_error_model,
+    const std::string& pattern)
     {
 
         if(pattern==""){
@@ -129,7 +129,8 @@ struct PatternErrorModel
 
         // we are using estimated error model from json input
         if (scoring_models::Instance()->indel_init){
-//            return scoring_models::Instance()->get_indel_model(const std::string& pattern);
+//            log_os << "Getting indel error model " << overall_error_model << std::endl;
+//            return scoring_models::Instance()->get_indel_model(overall_error_model);
         }
 
 
@@ -157,6 +158,7 @@ struct PatternErrorModel
             return indel_error_prob_len_AT;
         }
     }
+
     error_model indel_error_prob_len_AT;
     error_model indel_error_prob_len_CG;
 };
@@ -243,8 +245,6 @@ get_indel_error_prob(const starling_options& client_opt,
                      double& ref_error_prob)
 {
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
-
-//    log_os << "Indel model " << client_opt.indel_error_model << "\n";
 
     const error_model& indel_error_prob_len(emodel.getModel(client_opt.indel_error_model,iri.repeat_unit));
 

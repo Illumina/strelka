@@ -199,7 +199,7 @@ get_starling_shared_option_parser(starling_options& opt)
     ("calibration-model-file", po::value(&opt.calibration_models_filename),
      "File containing calibration model parameters")
 
-     ("scoring-models", po::value(&opt.scoring_models),
+     ("indel-scoring-models", po::value(&opt.indel_scoring_models),
       "DEBUG: Adaptive model option.")
 
     ("scoring-model", po::value(&opt.calibration_model),
@@ -504,8 +504,9 @@ finalize_starling_options(const prog_info& pinfo,
         last_fs=fs;
     }
 
-    if(opt.scoring_models.length()>2){
-        scoring_models::Instance()->load_models(opt.scoring_models);
+    if(opt.indel_scoring_models.length()>2){
+//        log_os << "I got a model";
+        scoring_models::Instance()->load_models(opt.indel_scoring_models);
     }
 
     finalize_legacy_starling_options(pinfo,opt);

@@ -30,7 +30,7 @@
 
 #include <iomanip>
 
-#define SOMATIC_STDOUT
+//#define SOMATIC_STDOUT
 
 strelka_pos_processor::
 strelka_pos_processor(
