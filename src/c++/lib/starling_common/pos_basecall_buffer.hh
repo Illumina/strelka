@@ -19,11 +19,10 @@
 
 #include "blt_common/snp_pos_info.hh"
 #include "blt_util/blt_types.hh"
-#include "blt_util/rangeMap.hh"
-
 #include <iosfwd>
 #include <cmath>
 #include <string>
+#include "../blt_util/RangeMap.hh"
 
 
 struct pos_basecall_buffer
@@ -158,7 +157,7 @@ struct pos_basecall_buffer
     dump(std::ostream& os) const;
 
 private:
-    typedef rangeMap<pos_t,snp_pos_info,ClearT<snp_pos_info>> pdata_t;
+    typedef RangeMap<pos_t,snp_pos_info,ClearT<snp_pos_info>> pdata_t;
 
     pdata_t _pdata;
 };

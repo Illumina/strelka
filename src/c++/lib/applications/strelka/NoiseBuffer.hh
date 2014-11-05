@@ -17,9 +17,9 @@
 
 #pragma once
 
+#include "../../blt_util/RangeMap.hh"
 #include "SiteNoise.hh"
 #include "blt_util/blt_types.hh"
-#include "blt_util/rangeMap.hh"
 
 
 struct NoiseBuffer
@@ -57,7 +57,7 @@ struct NoiseBuffer
 //    dump(std::ostream& os) const;
 
 private:
-    typedef rangeMap<pos_t,SiteNoise,ClearT<SiteNoise>> ndata_t;
+    typedef RangeMap<pos_t,SiteNoise,ClearT<SiteNoise>> ndata_t;
 
     ndata_t _ndata;
 };
