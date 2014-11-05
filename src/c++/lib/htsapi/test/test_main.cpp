@@ -11,6 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-#define BOOST_TEST_MODULE libblt_util
+#define BOOST_TEST_MODULE libhtsapi
 #include "boost/test/unit_test.hpp"
 
