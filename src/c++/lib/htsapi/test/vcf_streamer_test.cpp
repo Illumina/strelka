@@ -11,9 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
+#include "htsapi/vcf_streamer.hh"
+
 #include "boost/test/unit_test.hpp"
 
-#include "vcf_streamer.hh"
 
 
 BOOST_AUTO_TEST_SUITE( test_vcf_streamer )

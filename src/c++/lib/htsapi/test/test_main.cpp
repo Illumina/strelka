@@ -11,14 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-///
-/// \author Chris Saunders
-///
+#define BOOST_TEST_MODULE libblt_util
+#include "boost/test/unit_test.hpp"
 
-#pragma once
-
-/// \brief logs sigint/sigterm events (with cmdline):
-///
-void
-initialize_blt_signals(const char* progname,
-                       const char* cmdline);

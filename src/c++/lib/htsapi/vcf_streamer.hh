@@ -17,14 +17,11 @@
 
 #pragma once
 
-#include "blt_util/bam_util.hh"
-#include "blt_util/tabix_util.hh"
-#include "blt_util/vcf_record.hh"
-
-#include "boost/utility.hpp"
+#include "hts_streamer.hh"
+#include "vcf_record.hh"
 
 
-struct vcf_streamer : private boost::noncopyable
+struct vcf_streamer : private hts_streamer
 {
     // optionally provide a BAM header to validate vcf chromosome names against
     //
@@ -62,16 +59,6 @@ struct vcf_streamer : private boost::noncopyable
     void report_state(std::ostream& os) const;
 
 private:
-    bool _is_record_set;
-    bool _is_stream_end;
-    unsigned _record_no;
-    std::string _stream_name;
-
-    htsFile* _hfp;
     bcf_hdr_t* _hdr;
-    tbx_t* _tidx;
-    hts_itr_t* _titr;
-    kstring_t _kstr;
-
     vcf_record _vcfrec;
 };

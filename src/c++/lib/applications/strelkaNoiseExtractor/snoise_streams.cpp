@@ -15,8 +15,8 @@
 ///
 
 #include "snoise_streams.hh"
-#include "blt_util/bam_header_util.hh"
-#include "blt_util/vcf_util.hh"
+#include "htsapi/bam_header_util.hh"
+#include "htsapi/vcf_util.hh"
 
 #include <fstream>
 #include <iostream>

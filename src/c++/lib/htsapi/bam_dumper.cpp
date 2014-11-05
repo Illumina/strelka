@@ -11,13 +11,12 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
-#include "blt_util/bam_dumper.hh"
 #include "blt_util/log.hh"
+#include "htsapi/bam_dumper.hh"
 
 #include <cstdlib>
 

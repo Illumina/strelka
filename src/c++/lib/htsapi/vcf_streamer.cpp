@@ -15,10 +15,11 @@
 /// \author Chris Saunders
 ///
 
+#include "vcf_streamer.hh"
+
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/seq_util.hh"
-#include "blt_util/vcf_streamer.hh"
 
 #include <cassert>
 #include <cstdlib>
@@ -69,43 +70,14 @@ vcf_streamer(
     const char* filename,
     const char* region,
     const bam_header_t* bh) :
-    _is_record_set(false),
-    _is_stream_end(false),
-    _record_no(0),
-    _stream_name(filename),
-    _hfp(nullptr),
-    _hdr(nullptr),
-    _tidx(nullptr),
-    _titr(nullptr),
-    _kstr({0,0,0})
+    hts_streamer(filename,region),
+    _hdr(nullptr)
 {
     //
-    // note with the switch to samtools 0.2.X vcf/bcf still involve predominantly separate
+    // note with the switch to samtools 1.X vcf/bcf still involve predominantly separate
     // apis -- no bcf support added here, but a shared function has been chosen where possible
     // ... for_instance hts_open/bcf_hdr_read should work with both vcf and bcf
     //
-
-    if (nullptr == filename)
-    {
-        throw blt_exception("VCF filename is null ptr");
-    }
-
-    if (nullptr == region)
-    {
-        throw blt_exception("VCF region is null ptr");
-    }
-
-    if ('\0' == *filename)
-    {
-        throw blt_exception("VCF filename is empty string");
-    }
-
-    _hfp = hts_open(filename, "r");
-    if (nullptr == _hfp)
-    {
-        log_os << "ERROR: Failed to open VCF file: '" << filename << "'\n";
-        exit(EXIT_FAILURE);
-    }
 
     _hdr = bcf_hdr_read(_hfp);
     if (nullptr == _hdr)
@@ -114,24 +86,9 @@ vcf_streamer(
         exit(EXIT_FAILURE);
     }
 
-    // read from a specific region:
-    _tidx = tbx_index_load(filename);
-    if (nullptr == _tidx)
-    {
-        log_os << "ERROR: Failed to load index for VCF file: '" << filename << "'\n";
-        exit(EXIT_FAILURE);
-    }
-
     if (nullptr != bh)
     {
         check_bam_bcf_header_compatability(filename, _hdr, bh);
-    }
-
-    // read only a region of VCF file:
-    _titr = tbx_itr_querys(_tidx, region);
-    if (nullptr == _titr)
-    {
-        _is_stream_end=true;
     }
 }
 
@@ -140,10 +97,7 @@ vcf_streamer(
 vcf_streamer::
 ~vcf_streamer()
 {
-    if (nullptr != _titr) tbx_itr_destroy(_titr);
-    if (nullptr != _tidx) tbx_destroy(_tidx);
     if (nullptr != _hdr) bcf_hdr_destroy(_hdr);
-    if (nullptr != _hfp) hts_close(_hfp);
 }
 
 

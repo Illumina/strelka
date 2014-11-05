@@ -18,8 +18,9 @@
 #pragma once
 
 #include "blt_util/blt_types.hh"
+#include "blt_util/RangeMap.hh"
+
 #include <cassert>
-#include "../blt_util/RangeMap.hh"
 
 
 /// simple pos->depth map

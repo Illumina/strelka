@@ -25,10 +25,10 @@
 #include "starling_read_util.hh"
 
 #include "blt_util/align_path.hh"
-#include "blt_util/align_path_bam_util.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
+#include "htsapi/align_path_bam_util.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
 #include <cassert>

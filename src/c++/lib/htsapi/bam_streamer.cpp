@@ -15,9 +15,9 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/bam_streamer.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
+#include "htsapi/bam_streamer.hh"
 
 #include <cassert>
 #include <cstdlib>

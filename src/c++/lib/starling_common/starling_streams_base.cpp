@@ -16,7 +16,7 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/bam_dumper.hh"
+#include "htsapi/bam_dumper.hh"
 #include "starling_common/starling_streams_base.hh"
 
 #include <cassert>

@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "blt_util/bam_util.hh"
-#include "blt_util/bam_seq.hh"
+#include "bam_util.hh"
+#include "bam_seq.hh"
 
 #include <iosfwd>
 
@@ -36,7 +36,7 @@ struct bam_record
     bam_record(const bam_record& br)
         : _bp(br.empty() ? bam_init1() : bam_dup1(br._bp)) {}
 
-    const bam_record&
+    bam_record&
     operator=(const bam_record& br)
     {
         if (this == &br) return (*this);

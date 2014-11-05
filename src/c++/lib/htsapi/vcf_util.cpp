@@ -15,9 +15,9 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_exception.hh"
-#include "vcf_util.hh"
+#include "htsapi/vcf_util.hh"
 
+#include "blt_util/blt_exception.hh"
 #include <cassert>
 #include <cctype>
 #include <ctime>

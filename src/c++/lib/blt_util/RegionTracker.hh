@@ -23,6 +23,7 @@
 #include <set>
 
 
+/// sort pos range using end_pos as the primary sort key
 struct PosRangeEndSort
 {
     bool
@@ -40,25 +41,27 @@ struct PosRangeEndSort
 };
 
 
-/// facilitate 'rolling' region track and query
+/// facilitate 'rolling' region tracking and position intersect queries
 ///
 struct RegionTracker
 {
     bool
     isInRegion(const unsigned pos) const;
 
-    /// add [beginPos,endPos]
+    /// add region
+    ///
+    /// any overlaps with existing regions in the tracker will be collapsed
     void
     addRegion(known_pos_range2 range);
 
-    /// remove all regions up to and including pos
+    /// remove all regions which end (inclusive) before pos+1
     void
     removeToPos(const unsigned pos);
 
+    // debug util
     void
     dump(std::ostream& os) const;
 
 private:
-
     std::set<known_pos_range2,PosRangeEndSort> _regions;
 };

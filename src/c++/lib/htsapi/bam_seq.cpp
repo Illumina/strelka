@@ -11,32 +11,25 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-///
+/// \file
+
 /// \author Chris Saunders
 ///
 
-// take care of some (mostly C99) functions not available in VS C++
-//
+#include "htsapi/bam_seq.hh"
 
-#pragma once
-
-#include <string>
+#include <iostream>
 
 
-#ifdef _WIN32
-#define snprintf _snprintf
-#endif
+std::ostream&
+operator<<(std::ostream& os,
+           const bam_seq_base& bs)
+{
 
-
-double
-compat_round(const double x);
-
-
-const char*
-compat_basename(const char* s);
-
-
-// gets canonical name of paths, but only when these refer to existing items
-// returns false on error.
-bool
-compat_realpath(std::string& path);
+    const unsigned rs(bs.size());
+    for (unsigned i(0); i<rs; ++i)
+    {
+        os << bs.get_char(i);
+    }
+    return os;
+}

@@ -16,33 +16,30 @@
 ///
 
 
-#include "blt_util/read_util.hh"
-
-#include <cstring>
+#include "bam_seq_read_util.hh"
 
 
 
+static
 void
-get_read_align_strand_end_skip(const char* const read,
-                               const unsigned read_size,
+get_read_align_strand_end_skip(const bam_seq& bseq,
                                unsigned& end_skip)
 {
-    unsigned read_end(read_size);
+    unsigned read_end(bseq.size());
 
     while (read_end>0)
     {
-        if (read[read_end-1]=='N') read_end--;
+        if (bseq.get_char(read_end-1)=='N') read_end--;
         else break;
     }
 
-    end_skip=read_size-read_end;
+    end_skip=bseq.size()-read_end;
 }
 
 
 
 void
-get_read_fwd_strand_skip(const char* const read,
-                         const unsigned read_size,
+get_read_fwd_strand_skip(const bam_seq& bseq,
                          const bool is_fwd_strand,
                          unsigned& begin_skip,
                          unsigned& end_skip)
@@ -50,14 +47,15 @@ get_read_fwd_strand_skip(const char* const read,
     begin_skip=0;
     if (is_fwd_strand)
     {
-        get_read_align_strand_end_skip(read,read_size,end_skip);
+        get_read_align_strand_end_skip(bseq,end_skip);
     }
     else
     {
         end_skip=0;
-        while (begin_skip<read_size)
+        const unsigned bsize(bseq.size());
+        while (begin_skip<bsize)
         {
-            if (read[begin_skip]=='N') begin_skip++;
+            if (bseq.get_char(begin_skip)=='N') begin_skip++;
             else break;
         }
     }

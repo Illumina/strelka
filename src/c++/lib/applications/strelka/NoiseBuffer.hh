@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include "../../blt_util/RangeMap.hh"
 #include "SiteNoise.hh"
 #include "blt_util/blt_types.hh"
+#include "blt_util/RangeMap.hh"
 
 
 struct NoiseBuffer

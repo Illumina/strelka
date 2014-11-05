@@ -23,10 +23,10 @@
 #include "snoise_pos_processor.hh"
 #include "snoise_streams.hh"
 
-#include "blt_util/bam_streamer.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
-#include "blt_util/vcf_streamer.hh"
+#include "htsapi/bam_streamer.hh"
+#include "htsapi/vcf_streamer.hh"
 #include "starling_common/starling_input_stream_handler.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"

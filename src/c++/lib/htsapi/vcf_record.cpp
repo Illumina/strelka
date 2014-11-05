@@ -16,8 +16,8 @@
 /// \author Chris Saunders
 ///
 
+#include "vcf_record.hh"
 #include "blt_util/parse_util.hh"
-#include "blt_util/vcf_record.hh"
 
 #include <cassert>
 #include <cctype>

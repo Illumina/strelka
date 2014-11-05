@@ -15,8 +15,8 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/bam_util.hh"
-#include "blt_util/bam_seq.hh"
+#include "bam_seq.hh"
+#include "bam_util.hh"
 #include "blt_util/log.hh"
 
 #include <cassert>

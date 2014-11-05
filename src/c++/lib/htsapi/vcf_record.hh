@@ -26,7 +26,7 @@
 
 struct vcf_record
 {
-    vcf_record() : pos(0), line(nullptr)
+    vcf_record()
     {
         clear();
     }
@@ -36,9 +36,9 @@ struct vcf_record
 
     void clear()
     {
-        chrom="";
+        chrom.clear();
         pos=0;
-        ref="";
+        ref.clear();
         alt.clear();
         line=nullptr;
     }
@@ -79,10 +79,10 @@ struct vcf_record
     }
 
     std::string chrom;
-    int pos;
+    int pos = 0;
     std::string ref;
     std::vector<std::string> alt;
-    const char* line;
+    const char* line = nullptr;
 };
 
 

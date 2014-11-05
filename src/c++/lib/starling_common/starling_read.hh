@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -19,7 +18,7 @@
 #pragma once
 
 #include "blt_common/map_level.hh"
-#include "blt_util/bam_dumper.hh"
+#include "htsapi/bam_dumper.hh"
 #include "starling_common/starling_read_key.hh"
 #include "starling_common/starling_read_segment.hh"
 #include "starling_common/starling_shared.hh"
@@ -28,7 +27,6 @@
 
 #include <iosfwd>
 #include <memory>
-
 
 
 // helper class for starling_read to support the recently nailed-on

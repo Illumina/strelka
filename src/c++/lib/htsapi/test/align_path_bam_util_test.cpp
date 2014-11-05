@@ -11,10 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
+#include "htsapi/align_path_bam_util.hh"
+#include "htsapi/bam_record.hh"
+
 #include "boost/test/unit_test.hpp"
 
-#include "blt_util/align_path_bam_util.hh"
-#include "blt_util/bam_record.hh"
 
 
 BOOST_AUTO_TEST_SUITE( test_align_path_bam_util )

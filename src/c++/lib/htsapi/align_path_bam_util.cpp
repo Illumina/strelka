@@ -15,7 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/align_path_bam_util.hh"
+#include "htsapi/align_path_bam_util.hh"
 
 #include <cassert>
 

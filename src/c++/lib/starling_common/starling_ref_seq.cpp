@@ -24,6 +24,7 @@ extern "C" {
 #include "htslib/faidx.h"
 }
 
+#include <cassert>
 #include <cstdlib>
 
 #include <iostream>

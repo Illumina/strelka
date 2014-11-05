@@ -16,9 +16,9 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/align_path_bam_util.hh"
-#include "blt_util/bam_record.hh"
 #include "blt_util/blt_exception.hh"
+#include "htsapi/align_path_bam_util.hh"
+#include "htsapi/bam_record.hh"
 
 #include <iostream>
 #include <sstream>

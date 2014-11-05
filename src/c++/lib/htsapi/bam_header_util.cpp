@@ -15,7 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/bam_header_util.hh"
+#include "htsapi/bam_header_util.hh"
 
 #include "boost/tokenizer.hpp"
 

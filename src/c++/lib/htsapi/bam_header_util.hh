@@ -20,13 +20,13 @@
 
 #pragma once
 
-#include "bam_util.hh"
+#include "htsapi/bam_util.hh"
 
 #include <string>
 
 
-/// return true only if the headers refer to the same reference
-/// sequences in the same order.
+/// return true only if the headers refer to the same
+/// reference sequences in the same order.
 ///
 bool
 check_header_compatibility(

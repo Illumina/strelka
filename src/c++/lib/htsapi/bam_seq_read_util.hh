@@ -12,24 +12,17 @@
 //
 
 /// \file
-
+///
 /// \author Chris Saunders
 ///
 
-#include "blt_util/bam_seq.hh"
+#pragma once
 
-#include <iostream>
+#include "htsapi/bam_seq.hh"
 
 
-std::ostream&
-operator<<(std::ostream& os,
-           const bam_seq_base& bs)
-{
-
-    const unsigned rs(bs.size());
-    for (unsigned i(0); i<rs; ++i)
-    {
-        os << bs.get_char(i);
-    }
-    return os;
-}
+void
+get_read_fwd_strand_skip(const bam_seq& bseq,
+                         const bool is_fwd_strand,
+                         unsigned& begin_skip,
+                         unsigned& end_skip);

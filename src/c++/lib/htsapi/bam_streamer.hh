@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "blt_util/bam_record.hh"
-#include "blt_util/sam_util.hh"
+#include "htsapi/bam_record.hh"
+#include "htsapi/sam_util.hh"
 
 #include "boost/utility.hpp"
 

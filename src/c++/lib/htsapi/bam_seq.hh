@@ -19,6 +19,7 @@
 
 #include "blt_util/blt_types.hh"
 #include "blt_util/reference_contig_segment.hh"
+#include "blt_util/seq_util.hh"
 
 #include <cassert>
 #include <ciso646>
@@ -62,6 +63,7 @@ get_bam_seq_char(const uint8_t a)
         return 'N';
     }
 }
+
 
 inline
 char
@@ -107,6 +109,34 @@ get_bam_seq_code(const char c)
         return T;
     default:
         return ANY;
+    }
+}
+
+
+inline
+uint8_t
+bam_seq_code_to_id(const uint8_t a,
+                   const uint8_t ref = BAM_BASE::ANY)
+{
+    using namespace BAM_BASE;
+
+    switch (a)
+    {
+    case REF:
+        return bam_seq_code_to_id(ref);
+    case A:
+        return 0;
+    case C:
+        return 1;
+    case G:
+        return 2;
+    case T:
+        return 3;
+    case ANY:
+        return 4;
+    default:
+        base_error("bam_seq_code_to_id",a);
+        return 4;
     }
 }
 

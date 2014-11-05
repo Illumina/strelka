@@ -19,10 +19,11 @@
 
 #include "blt_common/snp_pos_info.hh"
 #include "blt_util/blt_types.hh"
+#include "blt_util/RangeMap.hh"
+
 #include <iosfwd>
 #include <cmath>
 #include <string>
-#include "../blt_util/RangeMap.hh"
 
 
 struct pos_basecall_buffer

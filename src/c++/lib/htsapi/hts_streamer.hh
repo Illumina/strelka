@@ -15,28 +15,30 @@
 /// \author Chris Saunders
 ///
 
-// take care of some (mostly C99) functions not available in VS C++
-//
-
 #pragma once
 
-#include <string>
+#include "bam_util.hh"
+#include "tabix_util.hh"
+
+#include "boost/utility.hpp"
 
 
-#ifdef _WIN32
-#define snprintf _snprintf
-#endif
+struct hts_streamer : private boost::noncopyable
+{
+    hts_streamer(
+        const char* filename,
+        const char* region);
 
+    ~hts_streamer();
 
-double
-compat_round(const double x);
+protected:
+    bool _is_record_set;
+    bool _is_stream_end;
+    unsigned _record_no;
+    std::string _stream_name;
 
-
-const char*
-compat_basename(const char* s);
-
-
-// gets canonical name of paths, but only when these refer to existing items
-// returns false on error.
-bool
-compat_realpath(std::string& path);
+    htsFile* _hfp;
+    tbx_t* _tidx;
+    hts_itr_t* _titr;
+    kstring_t _kstr;
+};

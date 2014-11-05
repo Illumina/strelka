@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "blt_util/bam_util.hh"
 #include "blt_util/align_path.hh"
+#include "htsapi/bam_util.hh"
 
 
 /// convert internal BAM cigar representation directly into a path:
