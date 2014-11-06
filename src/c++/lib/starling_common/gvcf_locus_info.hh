@@ -252,7 +252,7 @@ struct indel_info
         ReadPosRankSum = 0.0;
         BaseQRankSum = 0.0;
         MQRankSum = 0.0;
-        Qscore = 0;
+        Qscore = -1;
     }
 
     const char*
