@@ -319,7 +319,7 @@ struct indel_info
     double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
     double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
     double MQRankSum;
-    int Qscore;
+    int Qscore = -1;
 
 };
 
