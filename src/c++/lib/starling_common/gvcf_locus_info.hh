@@ -98,8 +98,8 @@ get_label(const unsigned idx)
     case SiteConflict:
         return "SiteConflict";
     default:
-        assert(0);
-        return NULL;
+        assert(false && "Unknown VCF filter value");
+        return nullptr;
     }
 }
 }
@@ -186,8 +186,8 @@ get_label(const unsigned idx)
     case UNKNOWN:
         return ".";
     default:
-        assert(0);
-        return NULL;
+        assert(false && "Unknown site GT value");
+        return nullptr;
     }
 }
 }

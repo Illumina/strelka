@@ -25,6 +25,7 @@
 
 #include <boost/utility.hpp>
 
+#include <array>
 #include <iosfwd>
 
 
@@ -39,6 +40,7 @@ struct diploid_genotype
     void reset()
     {
         is_snp=false;
+        is_haploid=false;
         ref_gt=0;
         genome.reset();
         poly.reset();
@@ -69,6 +71,12 @@ struct diploid_genotype
     };
 
     bool is_snp;
+
+    /// a cheap way to add haploid calling capability, better solution: either haploid calls have their own object
+    /// or this object is generalized to any ploidy
+    ///
+    bool is_haploid;
+
     unsigned ref_gt;
     result_set genome;
     result_set poly;
@@ -117,7 +125,8 @@ write_diploid_genotype_snp(const blt_options& opt,
 struct pprob_digt_caller : private boost::noncopyable
 {
     explicit
-    pprob_digt_caller(const blt_float_t theta);
+    pprob_digt_caller(
+        const blt_float_t theta);
 
     /// \brief call a snp @ pos by calculating the posterior probability
     /// of all possible genotypes for a diploid individual.
@@ -126,47 +135,72 @@ struct pprob_digt_caller : private boost::noncopyable
     /// when a snp could not exist at the site.
     ///
     void
-    position_snp_call_pprob_digt(const blt_options& opt,
-                                 const extended_pos_info& epi,
-                                 diploid_genotype& dgt,
-                                 const bool is_always_test = false) const;
+    position_snp_call_pprob_digt(
+        const blt_options& opt,
+        const extended_pos_info& epi,
+        diploid_genotype& dgt,
+        const bool is_always_test = false,
+        const bool is_haploid = false) const;
 
 
     const blt_float_t*
-    lnprior_genomic(const unsigned ref_id) const
+    lnprior_genomic(
+        const unsigned ref_id,
+        const bool is_haploid = false) const
     {
-        return _lnprior[ref_id].genome;
+        return get_prior(is_haploid)[ref_id].genome;
     }
 
     const blt_float_t*
-    lnprior_polymorphic(const unsigned ref_id) const
+    lnprior_polymorphic(
+        const unsigned ref_id,
+        const bool is_haploid = false) const
     {
-        return _lnprior[ref_id].poly;
+        return get_prior(is_haploid)[ref_id].poly;
     }
 
     static
     void
-    get_diploid_gt_lhood(const blt_options& opt,
-                         const extended_pos_info& epi,
-                         const bool is_het_bias,
-                         const blt_float_t het_bias,
-                         blt_float_t* const lhood,
-                         const bool is_strand_specific = false,
-                         const bool is_ss_fwd = false);
+    get_diploid_gt_lhood(
+        const blt_options& opt,
+        const extended_pos_info& epi,
+        const bool is_het_bias,
+        const blt_float_t het_bias,
+        blt_float_t* const lhood,
+        const bool is_strand_specific = false,
+        const bool is_ss_fwd = false);
 
     static
     void
-    calculate_result_set(const blt_float_t* lhood,
-                         const blt_float_t* lnprior,
-                         const unsigned ref_gt,
-                         diploid_genotype::result_set& rs);
+    calculate_result_set(
+        const blt_float_t* lhood,
+        const blt_float_t* lnprior,
+        const unsigned ref_gt,
+        diploid_genotype::result_set& rs);
 
-private:
     struct prior_set
     {
+        prior_set()
+        {
+            std::fill(genome,genome+DIGT::SIZE,0);
+            std::fill(poly,poly+DIGT::SIZE,0);
+        }
+
         blt_float_t genome[DIGT::SIZE];
         blt_float_t poly[DIGT::SIZE];
     };
 
-    prior_set _lnprior[N_BASE+1];
+    typedef std::array<prior_set,N_BASE+1> prior_group;
+
+private:
+
+    const prior_group&
+    get_prior(
+        const bool is_haploid) const
+    {
+        return (is_haploid ? _lnprior_haploid : _lnprior);
+    }
+
+    prior_group _lnprior;
+    prior_group _lnprior_haploid;
 };

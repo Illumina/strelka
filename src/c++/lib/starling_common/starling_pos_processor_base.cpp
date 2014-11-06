@@ -1862,6 +1862,9 @@ process_pos_snp_single_sample_impl(
     //monoploid_genotype mgt;
     //std::unique_ptr<nploid_genotype> ngt_ptr;
 
+    // check whether we're in a haploid region:
+    const bool isHapSite(_haploid_regions.isInRegion(pos));
+
     if (_client_opt.is_counts)
     {
         report_counts(good_pi,_site_info.n_unused_calls,output_pos,*_client_io.counts_osptr());
@@ -1893,7 +1896,14 @@ process_pos_snp_single_sample_impl(
 #endif
     if (_client_opt.is_bsnp_diploid())
     {
-        _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
+        if (isHapSite)
+        {
+
+        }
+        else
+        {
+            _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
+        }
     }
 #if 0
     if (_client_opt.is_bsnp_monoploid)
