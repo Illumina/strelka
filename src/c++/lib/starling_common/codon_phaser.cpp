@@ -30,7 +30,7 @@
 
 // Add a SNP site to the phasing buffer
 bool
-Codon_phaser::add_site(site_info& si)
+Codon_phaser::add_site(const site_info& si)
 {
     buffer.push_back(si);
 

@@ -54,7 +54,7 @@ bool calibration_models::is_current_logistic() const
 
 void calibration_models::clasify_site(site_info& si)
 {
-    if (si.dgt.is_snp && !this->is_default_model)
+    if (si.dgt.is_snp && (!this->is_default_model) && (! si.dgt.is_haploid))
     {
         featuremap features = si.get_qscore_features(this->chr_median);     // create site value feature dict
         c_model myModel = this->get_model(this->model_name);

@@ -47,7 +47,7 @@ public:
         this->clear_buffer();
     }
 
-    bool add_site(site_info& si);       // add site to buffer
+    bool add_site(const site_info& si);       // add site to buffer
     void clear_buffer();                // clear site buffer
     void write_out_buffer() const;      // debugging feature, print current buffer to std
     void write_out_alleles() const;     // print allele evidence

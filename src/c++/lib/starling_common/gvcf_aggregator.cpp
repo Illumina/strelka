@@ -33,6 +33,8 @@
 #include "blt_util/log.hh"
 #endif
 
+
+
 static
 void
 set_site_gt(const diploid_genotype::result_set& rs,
@@ -43,22 +45,7 @@ set_site_gt(const diploid_genotype::result_set& rs,
     smod.gq  = 2;
 }
 
-static
-void
-set_site_filters_CM(site_info& si,
-                    calibration_models& model)
-{
-    // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
-    model.clasify_site(si);
-}
 
-static
-void
-add_indel_modifiers_CM(indel_info& ii, calibration_models& model)
-{
-    // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
-    model.clasify_site(ii);
-}
 
 static
 void
@@ -94,8 +81,11 @@ add_site_modifiers(site_info& si,
         }
         si.smod.gq=si.dgt.poly.max_gt_qphred;
     }
-    set_site_filters_CM(si,model);
+
+    model.clasify_site(si);
 }
+
+
 
 void gvcf_aggregator::write_block_site_record()
 {
@@ -158,6 +148,19 @@ gvcf_aggregator::
 add_site(site_info& si)
 {
     add_site_modifiers(si, this->CM);
+
+    if (si.dgt.is_haploid)
+    {
+        if (si.smod.max_gt == si.dgt.ref_gt)
+        {
+            si.smod.modified_gt=MODIFIED_SITE_GT::ZERO;
+        }
+        else
+        {
+            si.smod.modified_gt=MODIFIED_SITE_GT::ONE;
+        }
+    }
+
     if (_opt.do_codon_phasing
         && (si.is_het() || codon_phaser.is_in_block))
     {
@@ -382,12 +385,15 @@ queue_site_record(const site_info& si)
         write_site_record(si);
         return;
     }
+
     if (! _block.test(si))
     {
         write_block_site_record();
     }
     _block.join(si);
 }
+
+
 
 static
 void
@@ -408,6 +414,7 @@ print_vcf_alt(const unsigned gt,
     }
     if (! is_print) os << '.';
 }
+
 
 
 static
@@ -611,7 +618,7 @@ modify_single_indel_record()
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
 
-    add_indel_modifiers_CM(ii,this->CM);
+    CM.clasify_site(ii);
 }
 
 static
@@ -674,7 +681,7 @@ modify_indel_overlap_site(const indel_info& ii,
     }
 
     // after all those changes we need to rerun the site filters:
-    set_site_filters_CM(si,CM); //TODO needs to go into calibration model
+    CM.clasify_site(si);
 
 }
 
@@ -740,7 +747,7 @@ modify_overlap_indel_record()
 
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
-        add_indel_modifiers_CM(_indel_buffer[hap],this->CM);
+        CM.clasify_site(_indel_buffer[hap]);
         if (hap>0)
         {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
@@ -764,7 +771,7 @@ modify_conflict_indel_record()
 
         ii.imod.set_filter(VCF_FILTERS::IndelConflict);
 
-        add_indel_modifiers_CM(ii,this->CM);
+        CM.clasify_site(ii);
     }
 }
 
