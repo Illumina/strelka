@@ -34,21 +34,24 @@
 
 static
 const char*
-input_type_label(const INPUT_TYPE::index_t i)
+input_type_label(
+    const INPUT_TYPE::index_t i)
 {
     using namespace INPUT_TYPE;
 
     switch (i)
     {
-    case NONE   :
+    case NONE :
         return "NONE";
-    case READ   :
+    case READ :
         return "READ";
-    case INDEL  :
+    case INDEL :
         return "INDEL";
-    case FORCED_OUTPUT  :
+    case FORCED_OUTPUT :
         return "FORCED_OUTPUT";
-    case NOISE  :
+    case HAPLOID_REGION :
+        return "HAPLOID_REGION";
+    case NOISE :
         return "NOISE";
     default :
         log_os << "ERROR: unrecognized event type.\n";
@@ -60,8 +63,9 @@ input_type_label(const INPUT_TYPE::index_t i)
 
 void
 starling_input_stream_data::
-register_error(const char* label,
-               const sample_id_t sample_no) const
+register_error(
+    const char* label,
+    const sample_id_t sample_no) const
 {
     log_os << "ERROR: attempting to register " << label
            << " with sample number: " << sample_no
@@ -91,6 +95,11 @@ starling_input_stream_handler(const starling_input_stream_data& data)
     for (unsigned i(0); i<os; ++i)
     {
         push_next(INPUT_TYPE::FORCED_OUTPUT,_data._output[i].first,i);
+    }
+    const unsigned hs(_data._hapreg.size());
+    for (unsigned i(0); i<hs; ++i)
+    {
+        push_next(INPUT_TYPE::HAPLOID_REGION,_data._hapreg[i].first,i);
     }
     const unsigned ns(_data._noise.size());
     for (unsigned i(0); i<ns; ++i)
@@ -241,6 +250,27 @@ get_next_forced_output_pos(bool& is_next_variant,
 //
 static
 void
+get_next_haploid_region(
+    bool& is_next_hapreg,
+    pos_t& next_hapreg_pos,
+    bed_streamer& hapreg_stream)
+{
+    is_next_hapreg=hapreg_stream.next();
+    if (is_next_hapreg)
+    {
+        const bed_record& bed_rec(*(hapreg_stream.get_record_ptr()));
+        next_hapreg_pos=(bed_rec.begin-1);
+    }
+    else
+    {
+        next_hapreg_pos=0;
+    }
+}
+
+
+//
+static
+void
 get_next_noise_pos(
     bool& is_next_variant,
     pos_t& next_variant_pos,
@@ -273,6 +303,13 @@ push_next(const INPUT_TYPE::index_t itype,
     {
         bam_streamer& read_stream(*(_data._reads.get_value(order)));
         get_next_read_pos(is_next,next_pos,read_stream);
+    }
+    else if (itype == INPUT_TYPE::HAPLOID_REGION)
+    {
+        bed_streamer& bed_stream(*(_data._hapreg[order].second));
+        get_next_haploid_region(is_next,next_pos,bed_stream);
+
+        next_pos -= std::min(_bed_lead,next_pos);
     }
     else
     {

@@ -236,7 +236,10 @@ struct starling_options : public blt_options
     // if true, treat all soft-clipped segments on the egdes of reads as realignable
     bool is_remap_input_softclip = false;
 
+    /// TODO can we move these options and associated impl to starling-only instead of starling_common?
     gvcf_options gvcf;
+
+    std::string haploid_region_bedfile;
 };
 
 

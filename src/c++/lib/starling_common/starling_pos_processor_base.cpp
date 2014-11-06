@@ -596,6 +596,17 @@ insert_forced_output_pos(const pos_t pos)
 
 
 
+void
+starling_pos_processor_base::
+insert_haploid_region(
+    const known_pos_range2& hapRange)
+{
+    _stageman.validate_new_pos_value(hapRange.begin_pos(),STAGE::READ_BUFFER);
+    this->_haploid_regions.addRegion(hapRange);
+}
+
+
+
 bool
 starling_pos_processor_base::
 is_estimated_depth_range_ge_than(
@@ -1017,6 +1028,7 @@ process_pos(const int stage_no,
             }
 
             clear_forced_output_pos(pos);
+            clear_haploid_regions(pos);
 
             for (unsigned s(0); s<_n_samples; ++s)
             {

@@ -28,6 +28,7 @@
 #include "blt_common/map_level.hh"
 #include "blt_util/depth_stream_stat_range.hh"
 #include "blt_util/pos_processor_base.hh"
+#include "blt_util/RegionTracker.hh"
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
 #include "starling_common/depth_buffer.hh"
@@ -155,6 +156,10 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     /// snv gt and stats must be reported for this pos (note only honored in strelka right now)
     void
     insert_forced_output_pos(const pos_t pos);
+
+    /// specify region to treat as haploid
+    void
+    insert_haploid_region(const known_pos_range2& hapRange);
 
 #if 0
     starling_read*
@@ -549,6 +554,12 @@ private:
         _forced_output_pos.erase(pos);
     }
 
+    void
+    clear_haploid_regions(const pos_t pos)
+    {
+        _haploid_regions.removeToPos(pos);
+    }
+
     virtual
     void
     post_align_clear_pos(const pos_t pos) {}
@@ -615,4 +626,6 @@ protected:
 
     // a caching term used for gvcf:
     site_info _site_info;
+
+    RegionTracker _haploid_regions;
 };

@@ -26,6 +26,7 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "htsapi/bam_streamer.hh"
+#include "htsapi/bed_streamer.hh"
 #include "htsapi/vcf_streamer.hh"
 #include "starling_common/starling_input_stream_handler.hh"
 #include "starling_common/starling_ref_seq.hh"
@@ -89,6 +90,14 @@ starling_run(
         sdata.register_forced_output(*(foutput_stream.back()));
     }
 
+    std::unique_ptr<bed_streamer> hap_regions;
+    if (! opt.haploid_region_bedfile.empty())
+    {
+        hap_regions.reset(new bed_streamer(opt.haploid_region_bedfile.c_str(),
+                                           bam_region.c_str()));
+        sdata.register_haploid_region(*hap_regions);
+    }
+
     starling_input_stream_handler sinput(sdata);
 
     while (sinput.next())
@@ -140,6 +149,13 @@ starling_run(
                 sppr.insert_forced_output_pos(vcf_variant.pos-1);
             }
         }
+        else if (current.itype == INPUT_TYPE::HAPLOID_REGION)
+        {
+            const bed_record& bedr(*(hap_regions->get_record_ptr()));
+            known_pos_range2 hapRange(bedr.begin,bedr.end);
+            sppr.insert_haploid_region(hapRange);
+        }
+
         else
         {
             log_os << "ERROR: invalid input condition.\n";

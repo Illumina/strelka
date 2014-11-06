@@ -24,6 +24,7 @@
 
 #include "blt_util/id_map.hh"
 #include "htsapi/bam_streamer.hh"
+#include "htsapi/bed_streamer.hh"
 #include "htsapi/vcf_streamer.hh"
 #include "starling_common/starling_types.hh"
 
@@ -38,6 +39,7 @@ enum index_t {
     READ,
     INDEL,
     FORCED_OUTPUT,
+    HAPLOID_REGION,
     NOISE
 };
 }
@@ -72,6 +74,15 @@ struct starling_input_stream_data
         _output.push_back(std::make_pair(sample_no,&vr));
     }
 
+    /// sites and indels in these files must be included in the snv/indel output, this means that
+    /// any indels in these files are also candidate indels:
+    void
+    register_haploid_region(bed_streamer& br,
+                           const sample_id_t sample_no = 0)
+    {
+        _hapreg.push_back(std::make_pair(sample_no,&br));
+    }
+
     /// sites and indels in these files will be used to estimate low-freqeuncy noise
     void
     register_noise(
@@ -91,17 +102,19 @@ private:
 /////////// data:
     friend struct starling_input_stream_handler;
     typedef id_map<sample_id_t,bam_streamer*> reads_t;
-    typedef std::vector<std::pair<sample_id_t, vcf_streamer*> > indels_t;
+    typedef std::vector<std::pair<sample_id_t, vcf_streamer*>> indels_t;
+    typedef std::vector<std::pair<sample_id_t, bed_streamer*>> regions_t;
 
     reads_t _reads;
     indels_t _indels;
     indels_t _output;
+    regions_t _hapreg;
     indels_t _noise;
 };
 
 
 
-/// abstracts different record types (bam/contig/vcf, etc...) so that these can be
+/// abstracts different record types (bam/bed/contig/vcf, etc...) so that these can be
 /// sorted and handled in order
 ///
 struct input_record_info
@@ -153,10 +166,10 @@ private:
 
 
 
-// streams multiple bams, contig and vcf files to present the data
-// in positional order (but with offsets for contigs and vcfs to
-// run ahead of the bam reads)
-//
+/// streams multiple bam, bed, contig and vcf files to present the data
+/// in positional order (but with offsets for contigs and vcfs to
+/// run ahead of the bam reads)
+///
 struct starling_input_stream_handler
 {
     starling_input_stream_handler(const starling_input_stream_data& data);
@@ -183,12 +196,13 @@ private:
               const unsigned order);
 
 ///////////////////////////////// data:
-    const starling_input_stream_data& _data;
-
-    // vcf_lead controls the amount by which we read the
-    // vcf buffer(s) ahead of the bam reads:
+    // {x}_lead controls the amount by which we read the
+    // {x} buffer(s) ahead of the bam reads:
     //
-    const pos_t _vcf_lead = 100;
+    static constexpr pos_t _vcf_lead = 100;
+    static constexpr pos_t _bed_lead = 100;
+
+    const starling_input_stream_data& _data;
 
     input_record_info _current;
     input_record_info _last;

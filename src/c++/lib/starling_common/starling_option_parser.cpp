@@ -174,10 +174,18 @@ get_starling_shared_option_parser(starling_options& opt)
     ("upstream-oligo-size", po::value(&opt.upstream_oligo_size),
      "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.");
 
+    po::options_description ploidy_opt("ploidy-options");
+    ploidy_opt.add_options()
+    ("haploid-region-bedfile",
+     po::value(&opt.haploid_region_bedfile),
+     "Specify bed file describing regions to treat as haploid (file must be bgzip compressed and tabix indexed)")
+     ;
+
     po::options_description window_opt("window-options");
     window_opt.add_options()
     ("variant-window-flank-file", po::value(&opt.variant_windows)->multitoken(),
-     "Print out regional average basecall statistics at variant sites within a window of the variant call. Must provide arguments for window flank size and output file. Option can be specified multiple times. (example: '--variant-window-flank-file 10 window10.txt')");
+     "Print out regional average basecall statistics at variant sites within a window of the variant call. Must provide arguments for window flank size and output file. Option can be specified multiple times. (example: '--variant-window-flank-file 10 window10.txt')")
+     ;
 
     po::options_description compat_opt("compatibility-options");
     compat_opt.add_options()
@@ -210,15 +218,18 @@ get_starling_shared_option_parser(starling_options& opt)
 
     po::options_description new_opt("New options");
 
-    new_opt.add(geno_opt).add(gvcf_opt).add(hap_opt).add(blt_nonref_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt).add(other_opt);
+    new_opt.add(geno_opt).add(gvcf_opt).add(hap_opt).add(blt_nonref_opt);
+    new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt).add(window_opt);
+    new_opt.add(compat_opt).add(input_opt).add(other_opt);
 
     return new_opt;
 }
 
+
+
 po::options_description
 get_starling_option_parser(starling_options& opt)
 {
-
     po::options_description starling_parse_opt(get_starling_shared_option_parser(opt));
 
     po::options_description help_parse_opt("Help");
@@ -377,7 +388,6 @@ void
 finalize_legacy_starling_options(const prog_info& pinfo,
                                  starling_options& opt)
 {
-
     if (! opt.is_ref_set())
     {
         pinfo.usage("a reference sequence must be specified");
@@ -423,9 +433,6 @@ finalize_legacy_starling_options(const prog_info& pinfo,
     {
         pinfo.usage("Cannot specify -write-candidate-indels-only without providing candidate indel filename.");
     }
-
-
-
 }
 
 
@@ -472,7 +479,6 @@ finalize_starling_options(const prog_info& pinfo,
 
     if (opt.gvcf.block_percent_tol > 100)
     {
-//        log_os << "block tolerance: " << opt.gvcf.block_percent_tol << std::endl;
         pinfo.usage("block-percent-tol must be in range [0-100].");
     }
 
@@ -511,6 +517,3 @@ finalize_starling_options(const prog_info& pinfo,
 
     finalize_legacy_starling_options(pinfo,opt);
 }
-
-
-
