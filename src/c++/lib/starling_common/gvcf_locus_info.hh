@@ -157,6 +157,8 @@ struct indel_modifiers : public shared_modifiers
     ALIGNPATH::path_t cigar;
 
     bool is_overlap;
+
+    /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
     std::vector<unsigned> ploidy;
 };
 
@@ -262,6 +264,19 @@ struct indel_info
         {
             return "1/2";
         }
+        else if (dindel.is_haploid)
+        {
+            using namespace STAR_DIINDEL;
+
+            switch (imod.max_gt)
+            {
+            case NOINDEL: return "0";
+            case HOM: return "1";
+            default:
+                assert(false && "Invalid indel genotype index");
+                return "X";
+            }
+        }
         return STAR_DIINDEL::get_gt_label(imod.max_gt);
     }
 
@@ -291,7 +306,7 @@ struct indel_info
             case HET:
                 return 1;
             case NOINDEL:
-                return 2;
+                return (dindel.is_haploid ? 1 : 2);
             }
             assert(0);
         }

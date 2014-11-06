@@ -62,8 +62,8 @@ get_gt_label(const unsigned idx)
     case HET:
         return "0/1";
     default:
-        assert(0);
-        return NULL;
+        assert(false && "Unknown Indel GT");
+        return nullptr;
     }
 }
 
