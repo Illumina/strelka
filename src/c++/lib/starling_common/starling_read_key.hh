@@ -16,10 +16,9 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_READ_KEY_HH
-#define __STARLING_READ_KEY_HH
+#pragma once
 
-#include "blt_util/bam_record.hh"
+#include "htsapi/bam_record.hh"
 #include "starling_common/starling_types.hh"
 
 #include <iosfwd>
@@ -66,9 +65,5 @@ private:
 };
 
 
-
 // debugging output:
 std::ostream& operator<<(std::ostream& os, const read_key& rk);
-
-
-#endif

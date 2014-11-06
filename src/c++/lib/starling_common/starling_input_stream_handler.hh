@@ -23,8 +23,8 @@
 
 
 #include "blt_util/id_map.hh"
-#include "blt_util/bam_streamer.hh"
-#include "blt_util/vcf_streamer.hh"
+#include "htsapi/bam_streamer.hh"
+#include "htsapi/vcf_streamer.hh"
 #include "starling_common/starling_types.hh"
 
 #include <map>

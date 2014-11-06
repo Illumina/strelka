@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "blt_util/bam_record.hh"
-#include "blt_util/bam_streamer.hh"
-#include "blt_util/vcf_record.hh"
+#include "htsapi/bam_record.hh"
+#include "htsapi/bam_streamer.hh"
+#include "htsapi/vcf_record.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 
 

@@ -39,6 +39,7 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/read_util.hh"
+#include "htsapi/bam_seq_read_util.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 #include "starling_common/starling_indel_report_info.hh"

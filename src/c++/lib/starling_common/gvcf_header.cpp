@@ -16,8 +16,8 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/vcf_util.hh"
-#include "blt_util/bam_header_util.hh"
+#include "htsapi/bam_header_util.hh"
+#include "htsapi/vcf_util.hh"
 #include "starling_common/gvcf_header.hh"
 #include "starling_common/gvcf_locus_info.hh"
 
@@ -28,6 +28,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+
 
 
 static

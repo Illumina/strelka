@@ -132,6 +132,8 @@ get_strelka_option_parser(
      "max fraction of overlapping deletion reads")
     ("strelka-snv-min-qss-ref", po::value(&opt.sfilter.snv_min_qss_ref)->default_value(opt.sfilter.snv_min_qss_ref),
      "min QSS_ref value")
+//     ("compute-VQSR-metrics", po::value(&opt.sfilter.compute_VQSR_options)->default_value(opt.sfilter.compute_VQSR_options),
+//      "report VQSR metrics in variant records")
     // indel only:
     ("strelka-indel-max-ref-repeat",  po::value(&opt.sfilter.indelMaxRefRepeat)->default_value(opt.sfilter.indelMaxRefRepeat),
      "indels expand/contracting pattterns with greater than this repeat will be filtered out")

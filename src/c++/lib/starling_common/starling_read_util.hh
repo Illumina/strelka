@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -19,8 +18,8 @@
 #pragma once
 
 #include "blt_common/blt_shared.hh"
-#include "blt_util/bam_seq.hh"
 #include "blt_util/blt_types.hh"
+#include "htsapi/bam_seq.hh"
 #include "starling_common/alignment.hh"
 #include "starling_common/read_mismatch_info.hh"
 

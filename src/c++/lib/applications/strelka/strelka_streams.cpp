@@ -18,9 +18,9 @@
 #include "strelka_vcf_locus_info.hh"
 #include "strelka_streams.hh"
 
-#include "blt_util/bam_dumper.hh"
-#include "blt_util/vcf_util.hh"
 #include "blt_util/chrom_depth_map.hh"
+#include "htsapi/vcf_util.hh"
+#include "htsapi/bam_dumper.hh"
 
 #include <cassert>
 

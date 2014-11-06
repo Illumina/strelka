@@ -11,10 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
+
 #pragma once
 
 #include "depth_stream_stat.hh"

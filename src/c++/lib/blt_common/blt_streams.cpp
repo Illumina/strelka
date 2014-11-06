@@ -18,7 +18,7 @@
 
 #include "blt_common/blt_streams.hh"
 #include "blt_util/digt.hh"
-#include "blt_util/vcf_util.hh"
+#include "htsapi/vcf_util.hh"
 
 #include <ctime>
 

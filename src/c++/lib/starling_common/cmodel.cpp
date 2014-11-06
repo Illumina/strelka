@@ -319,6 +319,7 @@ void c_model::score_instance(featuremap features, indel_info& ii)
             else
                 var_case = CALIBRATION_MODEL::HomIns;
         }
+
         else
         {
           // block substitutions???

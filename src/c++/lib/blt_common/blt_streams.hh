@@ -18,8 +18,8 @@
 #pragma once
 
 #include "blt_common/blt_shared.hh"
-#include "blt_util/bam_util.hh"
 #include "blt_util/prog_info.hh"
+#include "htsapi/bam_util.hh"
 
 #include <iosfwd>
 #include <memory>

@@ -22,10 +22,13 @@
 #pragma once
 
 #include "position_somatic_snv_strand_grid.hh"
+#include "blt_util/scoringmodels.hh"
 
 
 // vcf output:
 //
+typedef somatic_snv_genotype_grid::result_set result_set;
+
 void
 write_vcf_somatic_snv_genotype_strand_grid(
     const strelka_options& opt,

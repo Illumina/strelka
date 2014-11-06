@@ -27,6 +27,7 @@
 ///
 struct somatic_filter_options
 {
+
     bool
     is_depth_filter() const
     {
@@ -46,6 +47,8 @@ struct somatic_filter_options
     int sindelQuality_LowerBound = 30;
 
     unsigned indelRegionFlankSize = 50;
+    int minimumQscore=6;
+
 };
 
 

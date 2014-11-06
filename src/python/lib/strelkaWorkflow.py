@@ -132,6 +132,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--strelka-indel-max-int-hpol-length", str(self.params.indelMaxIntHpolLength)])
     segCmd.extend(["--strelka-indel-max-window-filtered-basecall-frac", str(self.params.indelMaxWindowFilteredBasecallFrac)])
     segCmd.extend(["--strelka-indel-min-qsi-ref", str(self.params.sindelQuality_LowerBound)])
+    segCmd.extend(['--indel-scoring-models', self.params.scoringModelFile])
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["-bam-file",bamPath])
@@ -160,6 +161,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     if self.params.indelCandidates is not None :
         segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
+
+    if self.params.forcedGTIndels is not None :
+        segCmd.extend(['--force-output-vcf', self.params.forcedGTIndels])
 
     if self.params.noiseVcfList is not None :
         for vcffile in self.params.noiseVcfList :

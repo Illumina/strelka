@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "blt_util/bam_seq.hh"
 #include "blt_util/seq_util.hh"
+#include "htsapi/bam_seq.hh"
 
 #include <cstdint>
 

@@ -18,7 +18,7 @@
 #pragma once
 
 #include "blt_common/blt_streams.hh"
-#include "blt_util/bam_dumper.hh"
+#include "htsapi/bam_dumper.hh"
 #include "starling_common/sample_info.hh"
 #include "starling_common/starling_shared.hh"
 #include "starling_common/starling_types.hh"

@@ -523,7 +523,8 @@ write_site_record(const site_info& si) const
                 os << ';';
                 os << "AvgPos=" << si.rawPos;
                 os << ';';
-                os << "MapQ0Count=" << si.mapq_zero;
+//                os << "MapQ0Count=" << si.mapq_zero;
+                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
 
             }
 //            //reported q-score

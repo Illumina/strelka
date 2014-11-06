@@ -71,9 +71,14 @@ find_package( Threads )
 # Force static linking
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
+function(get_compiler_name_version compiler_name compiler_version)
+    execute_process(COMMAND ${compiler_name} -dumpversion OUTPUT_VARIABLE this_version)
+    STRING(REGEX REPLACE "(\r?\n)+$" "" this_version "${this_version}")
+    set(${compiler_version} ${this_version} PARENT_SCOPE)
+endfunction()
+
 macro(get_compiler_version compiler_version)
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE ${compiler_version})
-    STRING(REGEX REPLACE "(\r?\n)+$" "" ${compiler_version} "${${compiler_version}}")
+    get_compiler_name_version(${CMAKE_CXX_COMPILER} compiler_version)
 endmacro()
 
 # clang doesn't make finding the version easy for us...
@@ -84,26 +89,36 @@ endmacro()
 
 macro(test_min_compiler compiler_version min_compiler_version compiler_label)
     if (${compiler_version} VERSION_LESS ${min_compiler_version})
-        message (FATAL_ERROR "Unsupported ${compiler_label} version: ${compiler_version}: "
+        message (FATAL_ERROR "Unsupported version for ${compiler_label}: ${compiler_version}: "
                              "only versions >= ${min_compiler_version} are supported")
     endif ()
 endmacro()
 
 
+set(min_gxx_version "4.7")
+set(min_clang_version "3.2")
+set(min_intel_version "12.0") # guestimate based on intel support documentation
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     get_compiler_version(compiler_version)
-    test_min_compiler(${compiler_version} "4.7" "g++")
+    test_min_compiler(${compiler_version} "${min_gxx_version}" "g++")
     message (STATUS "using compiler: g++ version ${compiler_version}")
 
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     get_clang_version(compiler_version)
-    test_min_compiler(${compiler_version} "3.2" "clang++")
+    test_min_compiler(${compiler_version} "${min_clang_version}" "clang++")
     message (STATUS "using compiler: clang++ version ${compiler_version}")
 
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     get_compiler_version(compiler_version)
-    test_min_compiler(${compiler_version} "12.0" "icc")  # guestimate based on c++11 support documentation
+    test_min_compiler(${compiler_version} "${min_intel_version}" "icpc") 
     message (STATUS "using compiler: Intel version ${compiler_version}")
+
+    # for intel we also need to test the minimum version of g++ currently
+    # in the path (because this is the stdc++ library that # intel will use):
+    get_compiler_name_version("g++" gxx_compiler_version)
+    test_min_compiler(${gxx_compiler_version} "${min_gxx_version}" "g++ libstdc++ (library used by icpc)")
+    message (STATUS "using libstdc++: gnu version ${gxx_compiler_version}")
 
 else ()
     message (STATUS "using compiler: ${CMAKE_CXX_COMPILER_ID}")
@@ -170,6 +185,8 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -diag-disable 177,193,869,1599,3280")
 
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wunused-variable -Wpointer-arith -Wuninitialized")
+
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
     #set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wmissing-prototypes -Wmissing-declarations -Wunused-variable -Wpointer-arith -Wuninitialized")
 endif()
 

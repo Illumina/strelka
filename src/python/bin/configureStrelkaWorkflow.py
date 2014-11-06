@@ -28,7 +28,7 @@ version="@STARKA_FULL_VERSION@"
 sys.path.append(workflowDir)
 
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import BamSetChecker, groomBamList, OptParseException
+from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
 from workflowUtil import ensureDir
@@ -52,6 +52,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                           help="Tumor sample BAM or CRAM file. [required] (no default)")
         group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
                           help="Noise vcf file (submit argument multiple times for more than one file)")
+#        group.add_option("--scoringModel", type="string",dest="scoringModel",metavar="FILE", action="append",
+#                          help="Json file specifying filtering and indel model parameters")
         #group.add_option("--exome", dest="isExome", action="store_true",
         #                 help="Set options for WES input: turn off depth filters")
 
@@ -62,9 +64,14 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         self.configScriptDir=scriptDir
         defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
+        
+        configDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_CONFIGDIR@"))
+        assert os.path.isdir(configDir)
+        
         defaults.update({
             'runDir' : 'StrelkaWorkflow',
             "minTier2Mapq" : 5,
+            'scoringModelFile' : joinFile(configDir,'indel_models.json')
             })
         return defaults
 

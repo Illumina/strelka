@@ -77,7 +77,21 @@ def runDepth(self,taskPrefix="",dependencies=None) :
 
     return nextStepWait
 
+def runIndelModel(self,taskPrefix="",dependencies=None) :
+    """
+    estimate indel error paramters
+    """
 
+    bamFile=""
+    if len(self.params.bamList) :
+        bamFile = self.params.bamList[0]
+    else :
+        return set()
+
+    nextStepWait = set()
+    nextStepWait.add(self.addWorkflowTask("GenerateIndelModel", indelErrorWorkflow(self.params, self.paths), dependencies=dependencies))
+
+    return nextStepWait
 
 class TempSegmentFiles :
     def __init__(self) :
@@ -113,8 +127,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
-#    segCmd.extend(['--scoring-model',self.params.vqsrModel])
-    segCmd.extend(['--calibration-model-file', self.params.vqsrModelFile])
+    segCmd.extend(['--calibration-model-file',self.params.vqsrModel])
+    segCmd.extend(['--scoring-models', self.params.scoringModelFile])
 
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",bamPath])
@@ -316,6 +330,7 @@ class StarlingWorkflow(WorkflowRunner) :
         # format other:
         self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
         self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
+        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipDepthFilters)
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
@@ -369,5 +384,7 @@ class StarlingWorkflow(WorkflowRunner) :
         callPreReqs |= runCount(self)
         if not self.params.isSkipDepthFilters :
             callPreReqs |= runDepth(self)
-
+        if not self.params.isSkipIndelErrorModel :
+            callPreReqs |= runIndelModel(self)      
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
+

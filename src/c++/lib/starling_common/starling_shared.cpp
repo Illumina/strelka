@@ -11,13 +11,12 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
-#include "blt_util/bam_streamer.hh"
 #include "blt_util/math_util.hh"
+#include "htsapi/bam_streamer.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "starling_common/starling_shared.hh"
 
@@ -30,7 +29,6 @@
 std::ostream&
 operator<<(std::ostream& os, const avg_window_data& awd)
 {
-
     os << "flank_size: " << awd.flank_size << " file: " << awd.filename << "\n";
     return os;
 }

@@ -36,7 +36,7 @@ enum var_case
     HetAltIns,
     HetDel,
     HomDel,
-    HetAltDel,
+    HetAltDel
 };
 
 inline
