@@ -1259,6 +1259,15 @@ process_pos_indel_single_sample(const pos_t pos,
         if (!sif.indel_sync().is_candidate_indel(ik,id) && !forcedOutput) continue;
         if (zeroCoverage && !forcedOutput) continue;
 
+        // check whether we're in a haploid region, for indels just check
+        // start position and end position, approximating that the whole
+        // region in between has the same ploidy, for any anomalous state
+        // revert to diploid:
+        const bool isHapIndelLeft(_haploid_regions.isInRegion(ik.pos));
+        const bool isHapIndelRight(_haploid_regions.isInRegion(ik.right_pos()));
+
+        const bool isHapIndel(isHapIndelLeft && (isHapIndelLeft==isHapIndelRight));
+
         // TODO implement indel overlap resolution
         //
         // punt conflict resolution for now....
@@ -1283,13 +1292,14 @@ process_pos_indel_single_sample(const pos_t pos,
             starling_diploid_indel dindel;
             dindel.is_forced_output = forcedOutput;
             dindel.is_zero_coverage = zeroCoverage;
-            _client_dopt.incaller().starling_indel_call_pprob_digt(_client_opt,_client_dopt,
-                                                                   sif.sample_opt,
-                                                                   indel_error_prob,ref_error_prob,
-                                                                   ik,id,is_use_alt_indel,dindel);
+            _client_dopt.incaller().starling_indel_call_pprob_digt(
+                    _client_opt,_client_dopt,
+                    sif.sample_opt,
+                    indel_error_prob,ref_error_prob,
+                    ik,id,is_use_alt_indel,dindel,isHapIndel);
 
             bool is_indel(false);
-            if ((dindel.is_indel) or (dindel.is_forced_output))
+            if ((dindel.is_indel) || (dindel.is_forced_output))
             {
                 is_indel=true;
 
@@ -1324,12 +1334,10 @@ process_pos_indel_single_sample(const pos_t pos,
             {
                 report_os << "INDEL_EVIDENCE " << ik;
 
-                typedef indel_data::score_t::const_iterator siter;
-                siter it2(id.read_path_lnp.begin()), it2_end(id.read_path_lnp.end());
-                for (; it2!=it2_end; ++it2)
+                for (const auto& val : id.read_path_lnp)
                 {
-                    const align_id_t read_id(it2->first);
-                    const read_path_scores& lnp(it2->second);
+                    const align_id_t read_id(val.first);
+                    const read_path_scores& lnp(val.second);
                     const read_path_scores pprob(indel_lnp_to_pprob(_client_dopt,lnp,is_tier2_pass,is_use_alt_indel));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 

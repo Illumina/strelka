@@ -112,7 +112,6 @@ label(const unsigned idx)
 //
 struct starling_diploid_indel_core
 {
-
     starling_diploid_indel_core()
         : is_indel(false), max_gt(0), max_gt_poly(0)
     {
@@ -135,6 +134,10 @@ protected:
 public:
 
     bool is_indel;
+
+    // hack haploid model into diploid data structure:
+    bool is_haploid;
+
     unsigned max_gt;
     int indel_qphred;
     int max_gt_qphred;
@@ -150,7 +153,6 @@ public:
 
 struct starling_diploid_indel : public starling_diploid_indel_core, private boost::noncopyable
 {
-
     starling_diploid_indel()
         : starling_diploid_indel_core()
     {

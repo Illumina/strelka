@@ -23,18 +23,10 @@
 #include <string>
 
 
-// indel summary information which is shared between all samples:
-//
+/// indel summary information which is shared between all samples:
+///
 struct starling_indel_report_info
 {
-
-    starling_indel_report_info()
-        : is_repeat_unit(false)
-        , ref_repeat_count(0)
-        , indel_repeat_count(0)
-        , ihpol(0)
-        , it(INDEL::NONE) {}
-
     std::string desc;
     std::string ref_seq;
     std::string indel_seq;
@@ -43,45 +35,32 @@ struct starling_indel_report_info
     std::string ref_upstream;
     std::string ref_downstream;
 
-    bool is_repeat_unit;
+    bool is_repeat_unit = false;
     std::string repeat_unit;
-    unsigned ref_repeat_count;
-    unsigned indel_repeat_count;
-    unsigned ihpol; // interrupted homopolymer length
+    unsigned ref_repeat_count = 0;
+    unsigned indel_repeat_count = 0;
+    unsigned ihpol = 0; ///< interrupted homopolymer length
 
     // not directly reported, but handy to have pre-calculated:
-    INDEL::index_t it;
-
-//    bool is_deletion(){
-//        if ()
-//        return false;
-//    }
+    INDEL::index_t it = INDEL::NONE;
 };
 
 
-// indel summary information which is specific to each sample:
-//
+/// indel summary information which is specific to each sample:
+///
 struct starling_indel_sample_report_info
 {
-
-    starling_indel_sample_report_info()
-        : n_q30_ref_reads(0)
-        , n_q30_indel_reads(0)
-        , n_q30_alt_reads(0)
-        , n_other_reads(0)
-        , depth(0) {}
-
-    unsigned n_q30_ref_reads;
-    unsigned n_q30_indel_reads;
-    unsigned n_q30_alt_reads;
-    unsigned n_other_reads;
-    unsigned depth;
+    unsigned n_q30_ref_reads = 0;
+    unsigned n_q30_indel_reads = 0;
+    unsigned n_q30_alt_reads = 0;
+    unsigned n_other_reads = 0;
+    unsigned depth = 0;
 };
 
 
 
-// translate read path likelihoods to posterior probs
-//
+/// translate read path likelihoods to posterior probs
+///
 read_path_scores
 indel_lnp_to_pprob(const starling_deriv_options& client_dopt,
                    const read_path_scores& read_path_lnp,

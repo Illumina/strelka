@@ -61,6 +61,7 @@ write_starling_diploid_indel_file(const starling_diploid_indel& dgt,
 //
 struct indel_digt_caller : private boost::noncopyable
 {
+    explicit
     indel_digt_caller(const double theta);
 
     /// \brief call an indel @ pos by calculating the posterior probability
@@ -75,21 +76,22 @@ struct indel_digt_caller : private boost::noncopyable
                                    const indel_key& ik,
                                    const indel_data& id,
                                    const bool is_use_alt_indel,
-                                   starling_diploid_indel& dindel) const;
+                                   starling_diploid_indel& dindel,
+                                   const bool is_haploid = false) const;
 
     const double*
-    lnprior_genomic() const
+    lnprior_genomic(const bool is_haploid = false) const
     {
-        return _lnprior_genomic;
+        return get_prior(is_haploid).genome;
     }
 
     // this prior isn't current used for single-sample indel calling
     // itself, but is available for indel_digt_caller clients:
     //
     const double*
-    lnprior_polymorphic() const
+    lnprior_polymorphic(const bool is_haploid = false) const
     {
-        return _lnprior_polymorphic;
+        return get_prior(is_haploid).poly;
     }
 
     static
@@ -124,7 +126,20 @@ struct indel_digt_caller : private boost::noncopyable
                          const bool is_use_alt_indel,
                          double* const lhood);
 
+    struct prior_group
+    {
+        double genome[STAR_DIINDEL::SIZE];
+        double poly[STAR_DIINDEL::SIZE];
+    };
+
 private:
-    double _lnprior_genomic[STAR_DIINDEL::SIZE];
-    double _lnprior_polymorphic[STAR_DIINDEL::SIZE];
+
+    const prior_group&
+    get_prior(const bool is_haploid) const
+    {
+        return (is_haploid ? _lnprior_haploid : _lnprior);
+    }
+
+    prior_group _lnprior;
+    prior_group _lnprior_haploid;
 };
