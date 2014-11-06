@@ -84,33 +84,33 @@ void calibration_models::clasify_site(indel_info& ii)
 
 void calibration_models::default_clasify_site(site_info& si)
 {
-    if (this->opt->is_min_gqx)
+    if (this->opt.is_min_gqx)
     {
-        if (si.smod.gqx<this->opt->min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
+        if (si.smod.gqx<this->opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
     }
-    if (this->dopt->is_max_depth())
+    if (this->dopt.is_max_depth())
     {
-        if ((si.n_used_calls+si.n_unused_calls) > this->dopt->max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > this->dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
-    if (this->opt->is_max_base_filt)
+    if (this->opt.is_max_base_filt)
     {
         const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
         if (total_calls>0)
         {
             const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>this->opt->max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
+            if (filt>this->opt.max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
         }
     }
     if (si.dgt.is_snp)
     {
-        if (this->opt->is_max_snv_sb)
+        if (this->opt.is_max_snv_sb)
         {
-            if (si.dgt.sb>opt->max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
+            if (si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
         }
-        if (this->opt->is_max_snv_hpol)
+        if (this->opt.is_max_snv_hpol)
         {
-            if (static_cast<int>(si.hpol)>this->opt->max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
+            if (static_cast<int>(si.hpol)>this->opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
         }
     }
 }
@@ -130,22 +130,22 @@ void calibration_models::default_clasify_site(indel_info& ii)
     ii.imod.gq=ii.dindel.max_gt_poly_qphred;
 
 
-    if (this->opt->is_min_gqx)
+    if (this->opt.is_min_gqx)
     {
-        if (ii.imod.gqx<opt->min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+        if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
-    if (this->dopt->is_max_depth())
+    if (this->dopt.is_max_depth())
     {
-        if (ii.isri.depth > this->dopt->max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+        if (ii.isri.depth > this->dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
     }
 
-    if (this->opt->is_max_ref_rep)
+    if (this->opt.is_max_ref_rep)
     {
         if (ii.iri.is_repeat_unit)
         {
             if ((ii.iri.repeat_unit.size() <= 2) &&
-                (static_cast<int>(ii.iri.ref_repeat_count) > this->opt->max_ref_rep))
+                (static_cast<int>(ii.iri.ref_repeat_count) > this->opt.max_ref_rep))
             {
                 ii.imod.set_filter(VCF_FILTERS::HighRefRep);
             }
@@ -156,9 +156,9 @@ void calibration_models::default_clasify_site(indel_info& ii)
 void
 calibration_models::load_chr_depth_stats()
 {
-    if (! this->opt->chrom_depth_file.empty())
+    if (! this->opt.chrom_depth_file.empty())
     {
-        parse_chrom_depth(this->opt->chrom_depth_file,chrom_depth);
+        parse_chrom_depth(this->opt.chrom_depth_file,chrom_depth);
         std::vector<double> depths;
         for (cdmap_t::const_iterator iter = this->chrom_depth.begin(); iter != this->chrom_depth.end() ; ++iter)
         {
@@ -262,7 +262,7 @@ void calibration_models::load_models(std::string model_file)
                     this->add_model_pars(current_name,pars);
                 }
                 current_name = boost::to_upper_copy(tokens.at(1));
-                c_model current_model(current_name,tokens.at(2),*dopt);
+                c_model current_model(current_name,tokens.at(2),dopt);
 
                 this->models.insert(modelmap::value_type(current_name, current_model));
 #ifdef DEBUG_CAL
