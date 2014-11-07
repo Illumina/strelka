@@ -63,9 +63,8 @@ struct read_segment_iter;
 //
 struct starling_read_buffer : private boost::noncopyable
 {
-
-    starling_read_buffer(read_id_counter* ricp = NULL)
-        : _ricp( (NULL==ricp) ? &_ric : ricp ) {}
+    starling_read_buffer(read_id_counter* ricp = nullptr)
+        : _ricp( (nullptr==ricp) ? &_ric : ricp ) {}
 
     ~starling_read_buffer();
 
@@ -174,7 +173,6 @@ private:
 //
 struct read_segment_iter
 {
-
     typedef std::pair<starling_read*,seg_id_t> ret_val;
 
     // returns first=NULL if no read segments left:
