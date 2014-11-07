@@ -46,7 +46,7 @@ def verifyInput(opt):
         return overAndOut("Invalid core number " + opt.cores)
     return 1
 
-class ReferenceBuffer():
+class ReferenceBuffer:
     def __init__(self,fetch,c,start,end,force=1):
         self.chr             = str(c)
         self.start           = start
