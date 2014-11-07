@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_SUITE( test_RegionTracker )
 
 BOOST_AUTO_TEST_CASE( test_RegionTracker )
 {
-    // simplist test
+    // Simplest test
     RegionTracker rt;
 
     rt.addRegion(known_pos_range2(0,1));
@@ -114,6 +114,122 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker3 )
     BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
     rt.removeToPos(16);
     BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+}
+
+
+
+BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker )
+{
+    // Simplest test
+    RegionPayloadTracker<int> rt;
+
+    rt.addRegion(known_pos_range2(0,1),25);
+    auto val = rt.isPayloadInRegion(0);
+    BOOST_REQUIRE(val);
+    BOOST_REQUIRE_EQUAL(*val,25);
+    BOOST_REQUIRE(! rt.isPayloadInRegion(1));
+}
+
+BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker2 )
+{
+    // region overlap tests
+    {
+        RegionPayloadTracker<int> rt;
+
+        BOOST_REQUIRE(rt.addRegion(known_pos_range2(5,10),5));
+        BOOST_REQUIRE(rt.addRegion(known_pos_range2(2,3),5));
+        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE(  rt.isPayloadInRegion(2));
+        BOOST_REQUIRE(! rt.isPayloadInRegion(3));
+        BOOST_REQUIRE(! rt.isPayloadInRegion(4));
+        BOOST_REQUIRE(  rt.isPayloadInRegion(5));
+
+        BOOST_REQUIRE(rt.addRegion(known_pos_range2(3,7),5));
+        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE(  rt.isPayloadInRegion(4));
+    }
+    {
+        RegionPayloadTracker<int> rt;
+        BOOST_REQUIRE(rt.addRegion(known_pos_range2(5,10),5));
+        BOOST_REQUIRE(rt.addRegion(known_pos_range2(2,3),5));
+        BOOST_REQUIRE(rt.addRegion(known_pos_range2(2,5),5));
+        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE(  rt.isPayloadInRegion(4));
+    }
+
+    {
+        RegionPayloadTracker<int> rt;
+        rt.addRegion(known_pos_range2(5,10),5);
+        rt.addRegion(known_pos_range2(2,3),5);
+        rt.addRegion(known_pos_range2(2,4),5);
+        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE(  rt.isPayloadInRegion(3));
+    }
+
+    {
+        RegionPayloadTracker<int> rt;
+        rt.addRegion(known_pos_range2(5,10),5);
+        rt.addRegion(known_pos_range2(2,3),5);
+        rt.addRegion(known_pos_range2(4,5),5);
+        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE(  rt.isPayloadInRegion(4));
+    }
+
+    {
+        RegionPayloadTracker<int> rt;
+        rt.addRegion(known_pos_range2(1,10),5);
+        rt.addRegion(known_pos_range2(4,5),5);
+        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE(  rt.isPayloadInRegion(4));
+    }
+
+    {
+        RegionPayloadTracker<int> rt;
+        rt.addRegion(known_pos_range2(4,5),5);
+        rt.addRegion(known_pos_range2(1,10),5);
+        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE(  rt.isPayloadInRegion(4));
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker3 )
+{
+    // region remove tests
+    RegionPayloadTracker<int> rt;
+
+    rt.addRegion(known_pos_range2(5,10),5);
+    rt.addRegion(known_pos_range2(2,3),5);
+    rt.addRegion(known_pos_range2(14,15),5);
+    rt.addRegion(known_pos_range2(24,25),5);
+    BOOST_REQUIRE_EQUAL(rt._regions.size(),4);
+
+    rt.removeToPos(2);
+    BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
+    rt.removeToPos(2);
+    BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
+    rt.removeToPos(6);
+    BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
+    rt.removeToPos(16);
+    BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+}
+
+
+BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker4 )
+{
+    // payload conflict tests
+    {
+        RegionPayloadTracker<int> rt;
+
+        BOOST_REQUIRE( rt.addRegion(known_pos_range2(5,10),5));
+        BOOST_REQUIRE(! rt.addRegion(known_pos_range2(8,14),4));
+        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE(rt.addRegion(known_pos_range2(10,14),4));
+        BOOST_REQUIRE(rt.addRegion(known_pos_range2(3,5),3));
+
+        BOOST_REQUIRE(  rt.isPayloadInRegion(3));
+        BOOST_REQUIRE_EQUAL(  *rt.isPayloadInRegion(3), 3);
+    }
 }
 
 

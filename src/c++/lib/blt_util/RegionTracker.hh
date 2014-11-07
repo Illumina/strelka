@@ -19,7 +19,10 @@
 
 #include "blt_util/known_pos_range2.hh"
 
+#include "boost/optional.hpp"
+
 #include <iosfwd>
+#include <map>
 #include <set>
 
 
@@ -50,18 +53,61 @@ struct RegionTracker
 
     /// add region
     ///
-    /// any overlaps with existing regions in the tracker will be collapsed
+    /// any overlaps and adjacencies with existing regions in the tracker will be collapsed
     void
     addRegion(known_pos_range2 range);
 
     /// remove all regions which end (inclusive) before pos+1
     void
-    removeToPos(const unsigned pos);
+    removeToPos(
+        const unsigned pos);
 
     // debug util
     void
     dump(std::ostream& os) const;
 
+    typedef std::set<known_pos_range2,PosRangeEndSort>  region_t;
+
 private:
-    std::set<known_pos_range2,PosRangeEndSort> _regions;
+    region_t _regions;
 };
+
+
+/// facilitate 'rolling' region tracking and position intersect queries
+///
+/// this version of RegionTracker carries a payload associated with each region
+///
+template <typename T>
+struct RegionPayloadTracker
+{
+    boost::optional<T>
+    isPayloadInRegion(const unsigned pos) const;
+
+    /// add region
+    ///
+    /// any non-conflicting overlaps and adjacencies with existing regions in the tracker will be collapsed
+    ///
+    /// \returns false when there is an overlapping payload conflict. in this case the region is not inserted
+    bool
+    addRegion(
+        known_pos_range2 range,
+        const T payload);
+
+    /// remove all regions which end (inclusive) before pos+1
+    void
+    removeToPos(
+        const unsigned pos);
+
+    // debug util
+    void
+    dump(std::ostream& os) const;
+
+    typedef typename std::map<known_pos_range2,T,PosRangeEndSort> region_t;
+
+private:
+    region_t _regions;
+};
+
+
+#include "RegionTrackerImpl.hh"
+

@@ -17,8 +17,6 @@
 
 #include "blt_util/RegionTracker.hh"
 
-#include <iostream>
-
 
 
 bool
