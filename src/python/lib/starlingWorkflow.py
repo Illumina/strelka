@@ -155,6 +155,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.minorAllele is not None :
         segCmd.extend(['--minor-allele-bed-file', self.params.minorAllele])
 
+    if self.params.ploidy is not None :
+        segCmd.extend(['--ploidy-region-bed', self.params.ploidy])
+
     if self.params.extraStarlingArguments is not None :
         for arg in self.params.extraStarlingArguments.strip().split() :
             segCmd.append(arg)
