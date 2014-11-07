@@ -147,7 +147,7 @@ void
 gvcf_aggregator::
 add_site(site_info& si)
 {
-    add_site_modifiers(si, this->CM);
+    add_site_modifiers(si, CM);
 
     if (si.dgt.is_haploid())
     {
@@ -159,6 +159,10 @@ add_site(site_info& si)
         {
             si.smod.modified_gt=MODIFIED_SITE_GT::ONE;
         }
+    }
+    else if (si.dgt.is_noploid())
+    {
+        si.smod.set_filter(VCF_FILTERS::PloidyConflict);
     }
 
     if (_opt.do_codon_phasing
@@ -196,11 +200,10 @@ skip_to_pos(const pos_t target_pos)
             _block.count += (target_pos-_head_pos);
             _head_pos= target_pos;
         }
-//                    else {
-//                _head_pos++;
-//            }
     }
 }
+
+
 
 void
 gvcf_aggregator::
