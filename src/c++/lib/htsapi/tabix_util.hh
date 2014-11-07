@@ -19,6 +19,7 @@
 
 
 extern "C" {
+#define __STDC_LIMIT_MACROS
 #include "htslib/vcf.h"
 #include "htslib/tbx.h"
 }
