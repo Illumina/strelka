@@ -176,9 +176,9 @@ get_starling_shared_option_parser(starling_options& opt)
 
     po::options_description ploidy_opt("ploidy-options");
     ploidy_opt.add_options()
-    ("haploid-region-bedfile",
-     po::value(&opt.haploid_region_bedfile),
-     "Specify bed file describing regions to treat as haploid (file must be bgzip compressed and tabix indexed)")
+    ("ploidy-region-bedfile",
+     po::value(&opt.ploidy_region_bedfile),
+     "Specify bed file describing ploidy of regions. Ploidy must be in 4th field. Any value besides 1 and 0 are ignored at present. (bed file must be bgzip compressed and tabix indexed)")
      ;
 
     po::options_description window_opt("window-options");

@@ -37,6 +37,36 @@
 
 
 
+/// TODO: tmp hackin -- put this somewhere else!!
+#include "blt_util/parse_util.hh"
+
+#include "boost/optional.hpp"
+
+static
+boost::optional<int>
+parsePloidyFromBed(const char* line)
+{
+    boost::optional<int> result;
+
+    if (line == nullptr) return result;
+
+    unsigned tabcount(0);
+    while(true)
+    {
+        if (*line=='\0' || *line=='\n') return result;
+        if (*line=='\t') tabcount++;
+        line++;
+        if (tabcount>=3) break;
+    }
+
+    const char* s(line);
+    int val = illumina::blt_util::parse_int(s);
+    if (s != line) result.reset(val);
+
+    return result;
+}
+
+
 void
 starling_run(
     const prog_info& pinfo,
@@ -90,12 +120,12 @@ starling_run(
         sdata.register_forced_output(*(foutput_stream.back()));
     }
 
-    std::unique_ptr<bed_streamer> hap_regions;
-    if (! opt.haploid_region_bedfile.empty())
+    std::unique_ptr<bed_streamer> ploidy_regions;
+    if (! opt.ploidy_region_bedfile.empty())
     {
-        hap_regions.reset(new bed_streamer(opt.haploid_region_bedfile.c_str(),
+        ploidy_regions.reset(new bed_streamer(opt.ploidy_region_bedfile.c_str(),
                                            bam_region.c_str()));
-        sdata.register_haploid_region(*hap_regions);
+        sdata.register_ploidy_regions(*ploidy_regions);
     }
 
     starling_input_stream_handler sinput(sdata);
@@ -149,11 +179,21 @@ starling_run(
                 sppr.insert_forced_output_pos(vcf_variant.pos-1);
             }
         }
-        else if (current.itype == INPUT_TYPE::HAPLOID_REGION)
+        else if (current.itype == INPUT_TYPE::PLOIDY_REGION)
         {
-            const bed_record& bedr(*(hap_regions->get_record_ptr()));
-            known_pos_range2 hapRange(bedr.begin,bedr.end);
-            sppr.insert_haploid_region(hapRange);
+            const bed_record& bedr(*(ploidy_regions->get_record_ptr()));
+            known_pos_range2 ploidyRange(bedr.begin,bedr.end);
+            const auto ploidy = parsePloidyFromBed(bedr.line);
+            if (ploidy && ((*ploidy == 0) || (*ploidy == 1)))
+            {
+                const bool retval(sppr.insert_ploidy_region(ploidyRange,*ploidy));
+                if (! retval)
+                {
+                    std::ostringstream oss;
+                    oss << "ERROR: ploidy bedfile record conflicts with prior record. Bedfile line: '" << bedr.line << "'\n";
+                    throw blt_exception(oss.str().c_str());
+                }
+            }
         }
 
         else

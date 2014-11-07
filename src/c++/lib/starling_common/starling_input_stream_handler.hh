@@ -39,7 +39,7 @@ enum index_t {
     READ,
     INDEL,
     FORCED_OUTPUT,
-    HAPLOID_REGION,
+    PLOIDY_REGION,
     NOISE
 };
 }
@@ -74,13 +74,13 @@ struct starling_input_stream_data
         _output.push_back(std::make_pair(sample_no,&vr));
     }
 
-    /// sites and indels in these files must be included in the snv/indel output, this means that
-    /// any indels in these files are also candidate indels:
+    /// ploidy info from bed file:
     void
-    register_haploid_region(bed_streamer& br,
-                           const sample_id_t sample_no = 0)
+    register_ploidy_regions(
+        bed_streamer& br,
+        const sample_id_t sample_no = 0)
     {
-        _hapreg.push_back(std::make_pair(sample_no,&br));
+        _ploidy.push_back(std::make_pair(sample_no,&br));
     }
 
     /// sites and indels in these files will be used to estimate low-freqeuncy noise
@@ -108,7 +108,7 @@ private:
     reads_t _reads;
     indels_t _indels;
     indels_t _output;
-    regions_t _hapreg;
+    regions_t _ploidy;
     indels_t _noise;
 };
 

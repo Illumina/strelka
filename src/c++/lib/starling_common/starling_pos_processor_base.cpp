@@ -596,13 +596,15 @@ insert_forced_output_pos(const pos_t pos)
 
 
 
-void
+bool
 starling_pos_processor_base::
-insert_haploid_region(
-    const known_pos_range2& hapRange)
+insert_ploidy_region(
+    const known_pos_range2& range,
+    const int ploidy)
 {
-    _stageman.validate_new_pos_value(hapRange.begin_pos(),STAGE::READ_BUFFER);
-    this->_haploid_regions.addRegion(hapRange);
+    assert(ploidy==0 || ploidy==1);
+    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    return _ploidy_regions.addRegion(range,ploidy);
 }
 
 
@@ -1263,8 +1265,8 @@ process_pos_indel_single_sample(const pos_t pos,
         // start position and end position, approximating that the whole
         // region in between has the same ploidy, for any anomalous state
         // revert to diploid:
-        const bool isHapIndelLeft(_haploid_regions.isInRegion(ik.pos));
-        const bool isHapIndelRight(_haploid_regions.isInRegion(ik.right_pos()));
+        const bool isHapIndelLeft(1 == get_ploidy(ik.pos));
+        const bool isHapIndelRight(1 == get_ploidy(ik.right_pos()));
 
         const bool isHapIndel(isHapIndelLeft && (isHapIndelLeft==isHapIndelRight));
 
@@ -1871,7 +1873,7 @@ process_pos_snp_single_sample_impl(
     //std::unique_ptr<nploid_genotype> ngt_ptr;
 
     // check whether we're in a haploid region:
-    const bool isHapSite(_haploid_regions.isInRegion(pos));
+    _site_info.dgt.ploidy=(get_ploidy(pos));
 
     if (_client_opt.is_counts)
     {
@@ -1904,14 +1906,8 @@ process_pos_snp_single_sample_impl(
 #endif
     if (_client_opt.is_bsnp_diploid())
     {
-        if (isHapSite)
-        {
-
-        }
-        else
-        {
-            _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
-        }
+        _client_dopt.pdcaller().position_snp_call_pprob_digt(
+                _client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
     }
 #if 0
     if (_client_opt.is_bsnp_monoploid)

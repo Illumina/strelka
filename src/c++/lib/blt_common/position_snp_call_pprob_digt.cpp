@@ -463,15 +463,13 @@ position_snp_call_pprob_digt(
         const blt_options& opt,
         const extended_pos_info& epi,
         diploid_genotype& dgt,
-        const bool is_always_test,
-        const bool is_haploid) const
+        const bool is_always_test) const
 {
     const snp_pos_info& pi(epi.pi);
 
     if (pi.ref_base=='N') return;
 
     dgt.ref_gt=base_to_id(pi.ref_base);
-    dgt.is_haploid=is_haploid;
 
     // check that a non-reference call meeting quality criteria even exists:
     if (! is_always_test)
@@ -480,17 +478,17 @@ position_snp_call_pprob_digt(
     }
 
     // don't spend time on the het bias model for haploid sites:
-    const bool is_het_bias((! is_haploid) && opt.is_bsnp_diploid_het_bias);
+    const bool is_het_bias((! dgt.is_haploid()) && opt.is_bsnp_diploid_het_bias);
 
     // get likelihood of each genotype
     blt_float_t lhood[DIGT::SIZE];
     get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood);
 
     // get genomic site results:
-    calculate_result_set(lhood,lnprior_genomic(dgt.ref_gt,is_haploid),dgt.ref_gt,dgt.genome);
+    calculate_result_set(lhood,lnprior_genomic(dgt.ref_gt,dgt.is_haploid()),dgt.ref_gt,dgt.genome);
 
     // get polymorphic site results:
-    calculate_result_set(lhood,lnprior_polymorphic(dgt.ref_gt,is_haploid),dgt.ref_gt,dgt.poly);
+    calculate_result_set(lhood,lnprior_polymorphic(dgt.ref_gt,dgt.is_haploid()),dgt.ref_gt,dgt.poly);
 
     dgt.is_snp=(dgt.genome.snp_qphred != 0);
 

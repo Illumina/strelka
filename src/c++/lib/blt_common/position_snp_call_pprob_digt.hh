@@ -37,10 +37,22 @@ struct diploid_genotype
         reset();
     }
 
+    bool
+    is_haploid() const
+    {
+        return (ploidy==1);
+    }
+
+    bool
+    is_noploid() const
+    {
+        return (ploidy==0);
+    }
+
     void reset()
     {
         is_snp=false;
-        is_haploid=false;
+        ploidy=2;
         ref_gt=0;
         genome.reset();
         poly.reset();
@@ -75,7 +87,7 @@ struct diploid_genotype
     /// a cheap way to add haploid calling capability, better solution: either haploid calls have their own object
     /// or this object is generalized to any ploidy
     ///
-    bool is_haploid;
+    int ploidy;
 
     unsigned ref_gt;
     result_set genome;
@@ -139,8 +151,7 @@ struct pprob_digt_caller : private boost::noncopyable
         const blt_options& opt,
         const extended_pos_info& epi,
         diploid_genotype& dgt,
-        const bool is_always_test = false,
-        const bool is_haploid = false) const;
+        const bool is_always_test = false) const;
 
 
     const blt_float_t*

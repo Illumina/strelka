@@ -86,7 +86,7 @@ test(const site_info& si) const
     if (record.smod.is_used_covered != si.smod.is_used_covered) return false;
 
     // ploidy must match
-    if (record.dgt.is_haploid != si.dgt.is_haploid) return false;
+    if (record.dgt.ploidy != si.dgt.ploidy) return false;
 
     // test blocking values:
     if (! is_new_value_blockable(si.smod.gqx,

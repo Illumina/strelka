@@ -157,9 +157,12 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     void
     insert_forced_output_pos(const pos_t pos);
 
-    /// specify region to treat as haploid
-    void
-    insert_haploid_region(const known_pos_range2& hapRange);
+    /// specify ploidy of region (only 0 or 1 is used now)
+    /// \returns false if this conflicts with an existing region
+    bool
+    insert_ploidy_region(
+        const known_pos_range2& range,
+        const int ploidy);
 
 #if 0
     starling_read*
@@ -557,7 +560,7 @@ private:
     void
     clear_haploid_regions(const pos_t pos)
     {
-        _haploid_regions.removeToPos(pos);
+        _ploidy_regions.removeToPos(pos);
     }
 
     virtual
@@ -578,6 +581,13 @@ protected:
     is_forced_output_pos(const pos_t pos) const
     {
         return (_forced_output_pos.find(pos) != _forced_output_pos.end());
+    }
+
+    int
+    get_ploidy(const pos_t pos) const
+    {
+        const auto val(_ploidy_regions.isPayloadInRegion(pos));
+        return (val ? *val : 2);
     }
 
     //////////////////////////////////
@@ -627,5 +637,5 @@ protected:
     // a caching term used for gvcf:
     site_info _site_info;
 
-    RegionTracker _haploid_regions;
+    RegionPayloadTracker<int> _ploidy_regions;
 };

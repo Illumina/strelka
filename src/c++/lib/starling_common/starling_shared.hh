@@ -239,7 +239,7 @@ struct starling_options : public blt_options
     /// TODO can we move these options and associated impl to starling-only instead of starling_common?
     gvcf_options gvcf;
 
-    std::string haploid_region_bedfile;
+    std::string ploidy_region_bedfile;
 };
 
 

@@ -49,8 +49,8 @@ input_type_label(
         return "INDEL";
     case FORCED_OUTPUT :
         return "FORCED_OUTPUT";
-    case HAPLOID_REGION :
-        return "HAPLOID_REGION";
+    case PLOIDY_REGION :
+        return "PLOIDY_REGION";
     case NOISE :
         return "NOISE";
     default :
@@ -96,10 +96,10 @@ starling_input_stream_handler(const starling_input_stream_data& data)
     {
         push_next(INPUT_TYPE::FORCED_OUTPUT,_data._output[i].first,i);
     }
-    const unsigned hs(_data._hapreg.size());
-    for (unsigned i(0); i<hs; ++i)
+    const unsigned ps(_data._ploidy.size());
+    for (unsigned i(0); i<ps; ++i)
     {
-        push_next(INPUT_TYPE::HAPLOID_REGION,_data._hapreg[i].first,i);
+        push_next(INPUT_TYPE::PLOIDY_REGION,_data._ploidy[i].first,i);
     }
     const unsigned ns(_data._noise.size());
     for (unsigned i(0); i<ns; ++i)
@@ -138,32 +138,38 @@ next()
         if (_is_head_pos &&
             (_current.pos < _head_pos))
         {
+            std::ostringstream oss;
             if (_current.itype == INPUT_TYPE::READ)
             {
-                std::ostringstream oss;
                 oss << "ERROR: unexpected read order:\n"
                     << "\tInput-record with pos/type/sample_no: "
                     << (_current.pos+1) << "/" << input_type_label(_current.itype) << "/" << _current.sample_no
                     << " follows pos/type/sample_no: "
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
-                throw blt_exception(oss.str().c_str());
             }
             else if ((_current.itype == INPUT_TYPE::INDEL) ||
                      (_current.itype == INPUT_TYPE::FORCED_OUTPUT) ||
                      (_current.itype == INPUT_TYPE::NOISE))
             {
-                std::ostringstream oss;
                 oss << "ERROR: unexpected vcf record order:\n"
                     << "\tInput-record with pos/type/sample_no: "
                     << (_current.pos+1) << "/" << input_type_label(_current.itype) << "/" << _current.sample_no
                     << " follows pos/type/sample_no: "
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
-                throw blt_exception(oss.str().c_str());
+            }
+            else if (_current.itype == INPUT_TYPE::PLOIDY_REGION)
+            {
+                oss << "ERROR: unexpected bed record order:\n"
+                    << "\tInput-record with begin/type/sample_no: "
+                    << (_current.pos+1) << "/" << input_type_label(_current.itype) << "/" << _current.sample_no
+                    << " follows record with begin/type/sample_no: "
+                    << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
             }
             else
             {
                 assert(false && "Unknown input type");
             }
+            throw blt_exception(oss.str().c_str());
         }
 
         if (_is_head_pos)
@@ -250,20 +256,20 @@ get_next_forced_output_pos(bool& is_next_variant,
 //
 static
 void
-get_next_haploid_region(
-    bool& is_next_hapreg,
-    pos_t& next_hapreg_pos,
-    bed_streamer& hapreg_stream)
+get_next_ploidy_region(
+    bool& is_next_ploidy,
+    pos_t& next_ploidy_pos,
+    bed_streamer& ploidy_stream)
 {
-    is_next_hapreg=hapreg_stream.next();
-    if (is_next_hapreg)
+    is_next_ploidy=ploidy_stream.next();
+    if (is_next_ploidy)
     {
-        const bed_record& bed_rec(*(hapreg_stream.get_record_ptr()));
-        next_hapreg_pos=(bed_rec.begin-1);
+        const bed_record& bed_rec(*(ploidy_stream.get_record_ptr()));
+        next_ploidy_pos=(bed_rec.begin-1);
     }
     else
     {
-        next_hapreg_pos=0;
+        next_ploidy_pos=0;
     }
 }
 
@@ -304,10 +310,10 @@ push_next(const INPUT_TYPE::index_t itype,
         bam_streamer& read_stream(*(_data._reads.get_value(order)));
         get_next_read_pos(is_next,next_pos,read_stream);
     }
-    else if (itype == INPUT_TYPE::HAPLOID_REGION)
+    else if (itype == INPUT_TYPE::PLOIDY_REGION)
     {
-        bed_streamer& bed_stream(*(_data._hapreg[order].second));
-        get_next_haploid_region(is_next,next_pos,bed_stream);
+        bed_streamer& bed_stream(*(_data._ploidy[order].second));
+        get_next_ploidy_region(is_next,next_pos,bed_stream);
 
         next_pos -= std::min(_bed_lead,next_pos);
     }

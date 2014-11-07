@@ -149,7 +149,7 @@ add_site(site_info& si)
 {
     add_site_modifiers(si, this->CM);
 
-    if (si.dgt.is_haploid)
+    if (si.dgt.is_haploid())
     {
         if (si.smod.max_gt == si.dgt.ref_gt)
         {
