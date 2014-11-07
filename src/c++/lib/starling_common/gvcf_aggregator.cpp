@@ -273,15 +273,15 @@ add_indel(const pos_t pos,
           const starling_indel_report_info& iri,
           const starling_indel_sample_report_info& isri)
 {
-    // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
-    if (_opt.do_codon_phasing && this->codon_phaser.is_in_block)
-        this->output_phased_blocked();
-
     // we can't handle breakends at all right now:
     if (ik.is_breakpoint()) return;
 
     // don't handle homozygous reference calls unless genotyping is forced
     if (is_no_indel(dindel) && !dindel.is_forced_output) return;
+
+    // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
+    if (_opt.do_codon_phasing && this->codon_phaser.is_in_block)
+        this->output_phased_blocked();
 
     skip_to_pos(pos);
 
@@ -300,6 +300,13 @@ add_indel(const pos_t pos,
     }
     _indel_buffer[_indel_buffer_size++].init(pos,ik,dindel,iri,isri);
     _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
+
+    // add filter for all indels in no-ploid regions:
+    if (dindel.is_noploid())
+    {
+        indel_info& ii(_indel_buffer[_indel_buffer_size-1]);
+        ii.imod.set_filter(VCF_FILTERS::PloidyConflict);
+    }
 
     // clear the current homRef indel
     if (is_no_indel(dindel))
@@ -685,7 +692,6 @@ modify_indel_overlap_site(const indel_info& ii,
 
     // after all those changes we need to rerun the site filters:
     CM.clasify_site(si);
-
 }
 
 static

@@ -1261,15 +1261,6 @@ process_pos_indel_single_sample(const pos_t pos,
         if (!sif.indel_sync().is_candidate_indel(ik,id) && !forcedOutput) continue;
         if (zeroCoverage && !forcedOutput) continue;
 
-        // check whether we're in a haploid region, for indels just check
-        // start position and end position, approximating that the whole
-        // region in between has the same ploidy, for any anomalous state
-        // revert to diploid:
-        const bool isHapIndelLeft(1 == get_ploidy(ik.pos));
-        const bool isHapIndelRight(1 == get_ploidy(ik.right_pos()));
-
-        const bool isHapIndel(isHapIndelLeft && (isHapIndelLeft==isHapIndelRight));
-
         // TODO implement indel overlap resolution
         //
         // punt conflict resolution for now....
@@ -1294,11 +1285,30 @@ process_pos_indel_single_sample(const pos_t pos,
             starling_diploid_indel dindel;
             dindel.is_forced_output = forcedOutput;
             dindel.is_zero_coverage = zeroCoverage;
+
+            {
+                // check whether we're in a haploid/noploid region, for indels just check
+                // start position and end position, approximating that the whole
+                // region in between has the same ploidy, for any anomalous state
+                // revert to 'noploid':
+                const int indelLeftPloidy(get_ploidy(ik.pos));
+                const int indelRightPloidy(get_ploidy(ik.right_pos()));
+
+                if (indelLeftPloidy == indelRightPloidy)
+                {
+                    dindel.ploidy = indelLeftPloidy;
+                }
+                else
+                {
+                    dindel.ploidy = 0;
+                }
+            }
+
             _client_dopt.incaller().starling_indel_call_pprob_digt(
                     _client_opt,_client_dopt,
                     sif.sample_opt,
                     indel_error_prob,ref_error_prob,
-                    ik,id,is_use_alt_indel,dindel,isHapIndel);
+                    ik,id,is_use_alt_indel,dindel);
 
             bool is_indel(false);
             if ((dindel.is_indel) || (dindel.is_forced_output))

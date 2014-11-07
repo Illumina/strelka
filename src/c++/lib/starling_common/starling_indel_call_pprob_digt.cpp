@@ -514,13 +514,12 @@ starling_indel_call_pprob_digt(const starling_options& opt,
                                const indel_key& ik,
                                const indel_data& id,
                                const bool is_use_alt_indel,
-                               starling_diploid_indel& dindel,
-                               const bool is_haploid) const
+                               starling_diploid_indel& dindel) const
 {
     // no immediate plans to include this for regular indel-calling:
     static const bool is_tier2_pass(false);
 
-    dindel.is_haploid=is_haploid;
+    const bool is_haploid(dindel.is_haploid());
 
     if (opt.is_noise_indel_filter && is_diploid_indel_noise(dopt,id,is_tier2_pass))
     {

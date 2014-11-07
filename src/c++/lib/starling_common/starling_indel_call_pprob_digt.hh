@@ -76,8 +76,7 @@ struct indel_digt_caller : private boost::noncopyable
                                    const indel_key& ik,
                                    const indel_data& id,
                                    const bool is_use_alt_indel,
-                                   starling_diploid_indel& dindel,
-                                   const bool is_haploid = false) const;
+                                   starling_diploid_indel& dindel) const;
 
     const double*
     lnprior_genomic(const bool is_haploid = false) const

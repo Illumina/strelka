@@ -267,7 +267,7 @@ struct indel_info
         {
             return "1/2";
         }
-        else if (dindel.is_haploid)
+        else if (dindel.is_haploid())
         {
             using namespace STAR_DIINDEL;
 
@@ -299,6 +299,8 @@ struct indel_info
     unsigned
     get_ploidy(const unsigned offset)
     {
+        if (dindel.is_noploid()) return 0;
+
         if (! imod.is_overlap)
         {
             using namespace STAR_DIINDEL;
@@ -309,7 +311,7 @@ struct indel_info
             case HET:
                 return 1;
             case NOINDEL:
-                return (dindel.is_haploid ? 1 : 2);
+                return (dindel.is_haploid() ? 1 : 2);
             }
             assert(0);
         }
