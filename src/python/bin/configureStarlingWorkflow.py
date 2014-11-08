@@ -47,7 +47,7 @@ You must specify a BAM file.
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
                          help="Sample BAM file. [required] (no default)")
-        group.add_option("--ploidy", type="string", metavar="BedFile",
+        group.add_option("--ploidy", type="string", metavar="FILE",
                          help="Provide ploidy bed file. The bed records should provide either 1 or 0 in column 4 to "
                          "indicate haploid or deleted status respectively. File be tabix indexed. (no default)")
         #group.add_option("--minorAllele", type="string", metavar="FILE",

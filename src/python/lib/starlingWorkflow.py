@@ -152,8 +152,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.forcedGTIndels is not None :
         segCmd.extend(['--force-output-vcf', self.params.forcedGTIndels])
 
-    if self.params.minorAllele is not None :
-        segCmd.extend(['--minor-allele-bed-file', self.params.minorAllele])
+#    if self.params.minorAllele is not None :
+#        segCmd.extend(['--minor-allele-bed-file', self.params.minorAllele])
 
     if self.params.ploidy is not None :
         segCmd.extend(['--ploidy-region-bed', self.params.ploidy])

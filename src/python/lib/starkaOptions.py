@@ -23,7 +23,9 @@ scriptName=os.path.basename(__file__)
 sys.path.append(scriptDir)
 
 from configureOptions import ConfigureWorkflowOptions
-from configureUtil import assertOptionExists, joinFile, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
+from configureUtil import assertOptionExists, joinFile, OptParseException, \
+                          validateFixExistingDirArg, validateFixExistingFileArg, \
+                          checkOptionalTabixIndexedFile
 from workflowUtil import parseGenomeRegion
 
 
@@ -43,7 +45,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--referenceFasta",type="string",metavar="FILE",
                          help="samtools-indexed reference fasta file [required]")
-        group.add_option("--runDir", type="string",
+        group.add_option("--runDir", type="string",metavar="DIR",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
         group.add_option("--indelCandidates", type="string", metavar="FILE",
                          help="Specify a candidate indel vcf. File must be tabix indexed (default: None)")
@@ -128,8 +130,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
             if not os.path.isfile(faiFile) :
                 raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
 
-        checkOptionalTabixedIndexFile(options.indelCandidates,"candidate indel vcf")
-        checkOptionalTabixedIndexFile(options.forcedGTIndels,"forced genotype vcf")
+        checkOptionalTabixIndexedFile(options.indelCandidates,"candidate indel vcf")
+        checkOptionalTabixIndexedFile(options.forcedGTIndels,"forced genotype vcf")
 
         if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
             options.genomeRegionList = None
