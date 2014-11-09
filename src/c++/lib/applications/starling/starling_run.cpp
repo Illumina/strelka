@@ -67,6 +67,7 @@ parsePloidyFromBed(const char* line)
 }
 
 
+
 void
 starling_run(
     const prog_info& pinfo,
@@ -126,6 +127,14 @@ starling_run(
         ploidy_regions.reset(new bed_streamer(opt.ploidy_region_bedfile.c_str(),
                                            bam_region.c_str()));
         sdata.register_ploidy_regions(*ploidy_regions);
+    }
+
+    std::unique_ptr<bed_streamer> nocompress_regions;
+    if (! opt.gvcf.nocompress_region_bedfile.empty())
+    {
+        nocompress_regions.reset(new bed_streamer(opt.gvcf.nocompress_region_bedfile.c_str(),
+                                           bam_region.c_str()));
+        sdata.register_nocompress_regions(*nocompress_regions);
     }
 
     starling_input_stream_handler sinput(sdata);

@@ -40,6 +40,7 @@ enum index_t {
     INDEL,
     FORCED_OUTPUT,
     PLOIDY_REGION,
+    NOCOMPRESS_REGION,
     NOISE
 };
 }
@@ -83,6 +84,15 @@ struct starling_input_stream_data
         _ploidy.push_back(std::make_pair(sample_no,&br));
     }
 
+    /// ploidy info from bed file:
+    void
+    register_nocompress_regions(
+        bed_streamer& br,
+        const sample_id_t sample_no = 0)
+    {
+        _nocompress.push_back(std::make_pair(sample_no,&br));
+    }
+
     /// sites and indels in these files will be used to estimate low-freqeuncy noise
     void
     register_noise(
@@ -109,6 +119,7 @@ private:
     indels_t _indels;
     indels_t _output;
     regions_t _ploidy;
+    regions_t _nocompress;
     indels_t _noise;
 };
 
@@ -191,9 +202,10 @@ struct starling_input_stream_handler
 private:
 
     void
-    push_next(const INPUT_TYPE::index_t itype,
-              const sample_id_t sample_no,
-              const unsigned order);
+    push_next(
+        const INPUT_TYPE::index_t itype,
+        const sample_id_t sample_no,
+        const unsigned order);
 
 ///////////////////////////////// data:
     // {x}_lead controls the amount by which we read the

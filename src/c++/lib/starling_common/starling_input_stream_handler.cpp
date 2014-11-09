@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -51,6 +50,8 @@ input_type_label(
         return "FORCED_OUTPUT";
     case PLOIDY_REGION :
         return "PLOIDY_REGION";
+    case NOCOMPRESS_REGION :
+        return "NOCOMPRESS_REGION";
     case NOISE :
         return "NOISE";
     default :
@@ -72,7 +73,6 @@ register_error(
            << " more than once\n";
     exit(EXIT_FAILURE);
 }
-
 
 
 
@@ -100,6 +100,11 @@ starling_input_stream_handler(const starling_input_stream_data& data)
     for (unsigned i(0); i<ps; ++i)
     {
         push_next(INPUT_TYPE::PLOIDY_REGION,_data._ploidy[i].first,i);
+    }
+    const unsigned cs(_data._nocompress.size());
+    for (unsigned i(0); i<cs; ++i)
+    {
+        push_next(INPUT_TYPE::NOCOMPRESS_REGION,_data._nocompress[i].first,i);
     }
     const unsigned ns(_data._noise.size());
     for (unsigned i(0); i<ns; ++i)
@@ -157,7 +162,8 @@ next()
                     << " follows pos/type/sample_no: "
                     << (_last.pos+1) << "/" << input_type_label(_last.itype) << "/" << _current.sample_no << "\n";
             }
-            else if (_current.itype == INPUT_TYPE::PLOIDY_REGION)
+            else if ((_current.itype == INPUT_TYPE::PLOIDY_REGION) ||
+                     (_current.itype == INPUT_TYPE::NOCOMPRESS_REGION))
             {
                 oss << "ERROR: unexpected bed record order:\n"
                     << "\tInput-record with begin/type/sample_no: "
@@ -212,77 +218,12 @@ get_next_read_pos(bool& is_next_read,
 //
 static
 void
-get_next_indel_pos(bool& is_next_indel,
-                   pos_t& next_indel_pos,
-                   vcf_streamer& indel_stream)
-{
-    static const bool is_indel_only(true);
-    is_next_indel=indel_stream.next(is_indel_only);
-    if (is_next_indel)
-    {
-        const vcf_record& vcf_rec(*(indel_stream.get_record_ptr()));
-        next_indel_pos=(vcf_rec.pos-1);
-    }
-    else
-    {
-        next_indel_pos=0;
-    }
-}
-
-
-
-//
-static
-void
-get_next_forced_output_pos(bool& is_next_variant,
-                           pos_t& next_variant_pos,
-                           vcf_streamer& variant_stream)
-{
-    static const bool is_indel_only(false);
-    is_next_variant=variant_stream.next(is_indel_only);
-    if (is_next_variant)
-    {
-        const vcf_record& vcf_rec(*(variant_stream.get_record_ptr()));
-        next_variant_pos=(vcf_rec.pos-1);
-    }
-    else
-    {
-        next_variant_pos=0;
-    }
-}
-
-
-
-//
-static
-void
-get_next_ploidy_region(
-    bool& is_next_ploidy,
-    pos_t& next_ploidy_pos,
-    bed_streamer& ploidy_stream)
-{
-    is_next_ploidy=ploidy_stream.next();
-    if (is_next_ploidy)
-    {
-        const bed_record& bed_rec(*(ploidy_stream.get_record_ptr()));
-        next_ploidy_pos=(bed_rec.begin-1);
-    }
-    else
-    {
-        next_ploidy_pos=0;
-    }
-}
-
-
-//
-static
-void
-get_next_noise_pos(
+get_next_variant_pos(
+    const bool is_indel_only,
     bool& is_next_variant,
     pos_t& next_variant_pos,
     vcf_streamer& variant_stream)
 {
-    static const bool is_indel_only(false);
     is_next_variant=variant_stream.next(is_indel_only);
     if (is_next_variant)
     {
@@ -292,6 +233,28 @@ get_next_noise_pos(
     else
     {
         next_variant_pos=0;
+    }
+}
+
+
+
+//
+static
+void
+get_next_region(
+    bool& is_next_region,
+    pos_t& next_region_pos,
+    bed_streamer& region_stream)
+{
+    is_next_region=region_stream.next();
+    if (is_next_region)
+    {
+        const bed_record& bed_rec(*(region_stream.get_record_ptr()));
+        next_region_pos=(bed_rec.begin-1);
+    }
+    else
+    {
+        next_region_pos=0;
     }
 }
 
@@ -299,9 +262,10 @@ get_next_noise_pos(
 
 void
 starling_input_stream_handler::
-push_next(const INPUT_TYPE::index_t itype,
-          const sample_id_t sample_no,
-          const unsigned order)
+push_next(
+    const INPUT_TYPE::index_t itype,
+    const sample_id_t sample_no,
+    const unsigned order)
 {
     bool is_next(false);
     pos_t next_pos;
@@ -310,34 +274,47 @@ push_next(const INPUT_TYPE::index_t itype,
         bam_streamer& read_stream(*(_data._reads.get_value(order)));
         get_next_read_pos(is_next,next_pos,read_stream);
     }
-    else if (itype == INPUT_TYPE::PLOIDY_REGION)
+    else if ((itype == INPUT_TYPE::PLOIDY_REGION) ||
+             (itype == INPUT_TYPE::NOCOMPRESS_REGION))
     {
-        bed_streamer& bed_stream(*(_data._ploidy[order].second));
-        get_next_ploidy_region(is_next,next_pos,bed_stream);
-
+        bed_streamer* bed_stream(nullptr);
+        if (itype == INPUT_TYPE::PLOIDY_REGION)
+        {
+            bed_stream=(_data._ploidy[order].second);
+        }
+        else if (itype == INPUT_TYPE::NOCOMPRESS_REGION)
+        {
+            bed_stream=(_data._nocompress[order].second);
+        }
+        else
+        {
+            assert(false && "Unknown input region type");
+        }
+        get_next_region(is_next,next_pos,*bed_stream);
         next_pos -= std::min(_bed_lead,next_pos);
     }
     else
     {
+        vcf_streamer* vcf_stream(nullptr);
+        bool is_indel_only(false);
         if (itype == INPUT_TYPE::INDEL)
         {
-            vcf_streamer& vcf_stream(*(_data._indels[order].second));
-            get_next_indel_pos(is_next,next_pos,vcf_stream);
+            vcf_stream=((_data._indels[order].second));
+            is_indel_only=true;
         }
         else if (itype == INPUT_TYPE::FORCED_OUTPUT)
         {
-            vcf_streamer& vcf_stream(*(_data._output[order].second));
-            get_next_forced_output_pos(is_next,next_pos,vcf_stream);
+            vcf_stream=((_data._output[order].second));
         }
         else if (itype == INPUT_TYPE::NOISE)
         {
-            vcf_streamer& vcf_stream(*(_data._noise[order].second));
-            get_next_noise_pos(is_next,next_pos,vcf_stream);
+            vcf_stream=((_data._noise[order].second));
         }
         else
         {
-            assert(false && "Unknown input type");
+            assert(false && "Unknown input variant type");
         }
+        get_next_variant_pos(is_indel_only,is_next,next_pos,*vcf_stream);
         next_pos -= std::min(_vcf_lead,next_pos);
     }
     if (! is_next) return;
