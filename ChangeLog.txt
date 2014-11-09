@@ -12,6 +12,7 @@
 - STARKA-138 add read position features to strelka SNV output
 - STARKA-136 add mapping info values to strelka SNV output
 v2.1.5
+- Improve VQSR depth normalization
 - Add CRAM input support (still experimental pending samtools idxstats
 capability for CRAM)
 v2.1.4
