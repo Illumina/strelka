@@ -147,9 +147,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segFiles.indel.append(tmpIndelPath)
     segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
 
-    if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
-        segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
-
     if self.params.isWriteCallableRegion :
         tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
         segFiles.callable.append(tmpCallablePath)

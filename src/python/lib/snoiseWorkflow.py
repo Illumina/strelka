@@ -96,9 +96,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if not isFirstSegment :
         segCmd.append("--skip-vcf-header")
 
-    if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
-        segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
-
     if self.params.indelCandidates is not None :
         segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
 

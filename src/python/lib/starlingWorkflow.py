@@ -141,9 +141,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if not self.params.isSkipDepthFilters :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
 
-    if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
-        segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
-
     if self.params.isWriteRealignedBam :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr)])
 
