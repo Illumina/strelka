@@ -30,6 +30,14 @@
 #include <sstream>
 
 
+//#define DEBUG_HEADER
+
+#ifdef DEBUG_HEADER
+    #include "blt_util/log.hh"
+#endif
+
+
+
 /// add vcf filter tags shared by all vcf types:
 static
 void
@@ -102,8 +110,12 @@ strelka_streams(
 
         std::ofstream* fosptr(new std::ofstream);
         _somatic_snv_osptr.reset(fosptr);
-        std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",opt.is_clobber,fos);
+        #ifdef DEBUG_HEADER
+                std::ostream& fos = std::cout;
+        #else
+                std::ofstream& fos(*fosptr);
+                open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",opt.is_clobber,fos);
+        #endif
 
         if (! opt.sfilter.is_skip_header)
         {
@@ -129,7 +141,7 @@ strelka_streams(
             fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
             fos << "##INFO=<ID=PNOISE,Number=1,Type=Float,Description=\"Fraction of panel containing non-reference noise at this site\">\n";
             fos << "##INFO=<ID=PNOISE2,Number=1,Type=Float,Description=\"Fraction of panel containing more than one non-reference noise obs at this site\">\n";
-
+            fos << "##INFO=<ID=VQSR,Number=1,Type=Integer,Description=\"Recalibrated quality score expressing the phred scaled probability of the somatic call being a FP observation.\">\n";
 
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1 (used+filtered)\">\n";
@@ -158,6 +170,11 @@ strelka_streams(
                     std::ostringstream oss;
                     oss << "Normal sample is not homozygous ref or ssnv Q-score < " << opt.sfilter.snv_min_qss_ref << ", ie calls with NT!=ref or QSS_NT < " << opt.sfilter.snv_min_qss_ref;
                     write_vcf_filter(fos, get_label(QSS_ref), oss.str().c_str());
+                }
+                {
+                    std::ostringstream oss;
+                    oss << "The empirically fitted VQSR score is less than " << opt.sfilter.minimumQscore;
+                    write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
                 }
             }
 
