@@ -82,29 +82,42 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
     // check that we are not doing default filtering and that we are in the logistic regression case
     if (CM.is_current_logistic())
     {
+        const std::string gqx_str       = "Locus GQX is less than ";
+        const std::string ins_str       = "insertion";
+        const std::string del_str       = "deletion";
+        const std::string snp_str       = "SNP";
+        const std::string het_str       = "het";
+        const std::string hom_str       = "hom";
+        const std::string hetalt_str    = "het-alt";
+        const std::string for_str       = " for ";
         std::ostringstream oss;
-        oss << "Locus quality is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetSNP)  << " for het SNP";
+
+
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetSNP)  << for_str << het_str << " " << snp_str;
         write_vcf_filter(os,get_label(LowQscoreHetSNP),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomSNP) << " for hom SNP";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomSNP) << for_str << hom_str << " " << snp_str;
         write_vcf_filter(os,get_label(LowQscoreHomSNP),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetIns) << " for het insertion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltSNP) << for_str << hetalt_str << " " << snp_str;
+        write_vcf_filter(os,get_label(LowQscoreHetAltSNP),oss.str().c_str());
+        oss.str("");
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetIns) << for_str << het_str << " " << ins_str;
         write_vcf_filter(os,get_label(LowQscoreHetIns),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomIns) << " for hom insertion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomIns) << for_str << hom_str << " " << ins_str;
         write_vcf_filter(os,get_label(LowQscoreHomIns),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltIns) << " for het-alt insertion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltIns) << for_str << hetalt_str << " " << ins_str;
         write_vcf_filter(os,get_label(LowQscoreHetAltIns),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetDel) << " for het deletion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetDel) << for_str << het_str << " " << del_str;
         write_vcf_filter(os,get_label(LowQscoreHetDel),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << " for hom deletion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << for_str << hom_str << " " << del_str;
         write_vcf_filter(os,get_label(LowQscoreHomDel),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltDel) << " for het-alt deletion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltDel) << for_str << hetalt_str << " " << del_str;
         write_vcf_filter(os,get_label(LowQscoreHetAltDel),oss.str().c_str());
         oss.str("");
     }

@@ -207,8 +207,6 @@ process_pos_snp_somatic(const pos_t pos)
 
     if (sgtg.is_output())
     {
-
-
         {
             const SiteNoise* snp(_noisePos.getPos(pos));
             if (snp == nullptr)
