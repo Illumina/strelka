@@ -36,7 +36,7 @@ bool
 Codon_phaser::
 add_site(const site_info& si)
 {
-    buffer.push_back(si);
+    _buffer.push_back(si);
 
     // case: extending block with het call, update block_end position
     if (si.is_het())
@@ -86,15 +86,15 @@ void
 Codon_phaser::construct_reference()
 {
     this->reference = "";
-    for (unsigned i=0; i<this->buffer.size()-(this->opt.phasing_window-1); i++)
-        this->reference += buffer.at(i).ref;
+    for (unsigned i=0; i<this->_buffer.size()-(this->opt.phasing_window-1); i++)
+        this->reference += _buffer.at(i).ref;
 }
 
 void
 Codon_phaser::create_phased_record()
 {
     // sanity check do we have all record we expect or are there un-accounted no-calls
-    if (this->get_block_length()>this->buffer.size())
+    if (this->get_block_length()>this->_buffer.size())
         return;
 
     if (this->total_reads<10)
@@ -107,7 +107,7 @@ Codon_phaser::create_phased_record()
         return;
     }
 
-    assert(buffer.size()>0);
+    assert(_buffer.size()>0);
 
     //Decide if we accept the novel alleles, very hacky criteria for now
     //at least 80% of the reads have to support a diploid model
@@ -162,7 +162,7 @@ Codon_phaser::create_phased_record()
 
     if (phasing_inconsistent)
     {
-        for (auto& val : buffer)
+        for (auto& val : _buffer)
         {
             if (! val.is_het()) continue;
             val.smod.set_filter(VCF_FILTERS::PhasingConflict);
@@ -171,7 +171,7 @@ Codon_phaser::create_phased_record()
     }
 
     // we have a phased record, modify site buffer to reflect the changes
-    site_info& base = (this->buffer.at(0));
+    site_info& base = (this->_buffer.at(0));
 
     base.phased_ref = this->reference;
     const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
@@ -193,7 +193,7 @@ Codon_phaser::create_phased_record()
     }
 
  #ifdef DEBUG_CODON
-    log_os << "buffer size " << buffer.size() << "\n";
+    log_os << "buffer size " << _buffer.size() << "\n";
     log_os << "block length " << get_block_length() << "\n";
 #endif
 
@@ -201,7 +201,7 @@ Codon_phaser::create_phased_record()
     int min_gq(INT_MAX), min_qual(INT_MAX), min_qscore(INT_MAX);
     for (unsigned i(0); i<this->get_block_length(); i++)
     {
-        const site_info& si(buffer.at(i));
+        const site_info& si(_buffer.at(i));
         if (! si.is_het()) continue;
         min_gq = std::min(si.smod.gq,min_gq);
         min_qual = std::min(si.dgt.genome.snp_qphred,min_qual);
@@ -224,10 +224,10 @@ Codon_phaser::create_phased_record()
 
     // case we want to report the phased record clean out buffer and push on the phased record only
 #ifdef DEBUG_CODON
-    log_os << "buffer size " << buffer.size() << "\n";
+    log_os << "buffer size " << _buffer.size() << "\n";
     this->write_out_buffer();
 #endif
-    buffer.erase(buffer.begin()+1,buffer.begin()+this->get_block_length());
+    _buffer.erase(_buffer.begin()+1,_buffer.begin()+this->get_block_length());
 }
 
 // makes the phased VCF record from the buffered sites list
@@ -243,58 +243,49 @@ Codon_phaser::make_record()
 //#endif
 }
 
+
+
 void
-Codon_phaser::collect_read_evidence()
+Codon_phaser::
+collect_read_segment_evidence(
+    const read_segment& rseg)
 {
-    int buffer_start = (block_start-this->max_read_len);
-    int buffer_end = (block_start);
-    // extract evidence for all reads that span the entire phasing range
-    for (int i=buffer_start; i<buffer_end; i++)
+    //check if we are covering the block range
+    if (static_cast<unsigned>(abs(rseg.buffer_pos-this->block_end))>rseg.read_size())
+        return;
+
+    const bam_seq bseq(rseg.get_bam_read());
+
+    // read quality checks
+    if (static_cast<int>(rseg.map_qual())<this->opt.min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid())
     {
-        read_segment_iter ri(read_buffer.get_pos_read_segment_iter(i));
-        read_segment_iter::ret_val r;
-        while (true)
-        {
-            r=ri.get_ptr();
-            if (NULL==r.first) break;
-            const read_segment& rseg(r.first->get_segment(r.second));
-
-            //check if we are covering the block range
-            if (static_cast<unsigned>(abs(rseg.buffer_pos-this->block_end))>rseg.read_size())
-                break;
-
-            const bam_seq bseq(rseg.get_bam_read());
-
-            // read quality checks
-            if (static_cast<int>(rseg.map_qual())<this->opt.min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid())
-            {
 //                this->total_reads_unused++; // do not count filtered reads in DPF
+        return;
+    }
+
+    const int sub_start((this->block_start-rseg.buffer_pos));
+    const int sub_end((this->block_end-rseg.buffer_pos));
+#ifdef DEBUG_CODON
+    int pad(0); // add context to extracted alleles for debugging
+    sub_start -= pad;
+    sub_end += pad;
+#endif
+    using namespace BAM_BASE;
+
+    if (sub_start>=0 && sub_end<max_read_len)
+    {
+        bool do_include(true);
+        //instead make bit array counting the number of times het pos co-occur
+        std::string sub_str("");
+        for (int t=sub_start; t<(sub_end+1); t++) //pull out substring of read
+        {
+            if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->opt.min_qscore))
+            {
+                do_include = false; // do qual check of individual bases here, kick out entire read if we dont meet cut-off
                 break;
             }
-
-            int sub_start((this->block_start-rseg.buffer_pos));
-            int sub_end((this->block_end-rseg.buffer_pos));
-#ifdef DEBUG_CODON
-            int pad(0); // add context to extracted alleles for debugging
-            sub_start -= pad;
-            sub_end += pad;
-#endif
-            using namespace BAM_BASE;
-
-            if (sub_start>=0 && sub_end<max_read_len)
-            {
-                bool do_include(true);
-                //instead make bit array counting the number of times het pos co-occur
-                std::string sub_str("");
-                for (int t=sub_start; t<(sub_end+1); t++) //pull out substring of read
-                {
-                    if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->opt.min_qscore))
-                    {
-                        do_include = false; // do qual check of individual bases here, kick out entire read if we dont meet cut-off
-                        break;
-                    }
-                    sub_str+= bseq.get_char(t); //TODO use more efficient data structure here
-                }
+            sub_str+= bseq.get_char(t); //TODO use more efficient data structure here
+        }
 #ifdef DEBUG_CODON
 //                    log_os << "substart " << sub_start << "\n";
 //                    log_os << "subend " << sub_end << "\n";
@@ -304,17 +295,38 @@ Codon_phaser::collect_read_evidence()
 //                    log_os << "do_include " << do_include << "\n";
 //                    log_os << "read seq " << bseq << "\n\n";
 #endif
-                if (do_include)
-                {
-                    this->observations[sub_str]++;
-                    total_reads++;
-                }
-                else
-                    this->total_reads_unused++;
-            }
+        if (do_include)
+        {
+            this->observations[sub_str]++;
+            total_reads++;
+        }
+        else
+            this->total_reads_unused++;
+    }
+}
+
+
+
+void
+Codon_phaser::
+collect_read_evidence()
+{
+    const int buffer_start = (block_start-this->max_read_len);
+    const int buffer_end = (block_start);
+    // extract evidence for all reads that span the entire phasing range
+    for (int i=buffer_start; i<buffer_end; i++)
+    {
+        read_segment_iter ri(read_buffer.get_pos_read_segment_iter(i));
+        read_segment_iter::ret_val r;
+        while (true)
+        {
+            r=ri.get_ptr();
+            if (nullptr==r.first) break;
+            collect_read_segment_evidence(r.first->get_segment(r.second));
             ri.next();
         }
     }
+
 #ifdef DEBUG_CODON
     log_os << "max read len " << max_read_len << "\n";
 #endif
@@ -328,7 +340,7 @@ Codon_phaser::collect_read_evidence()
 void
 Codon_phaser::clear_buffer()
 {
-    buffer.clear();
+    _buffer.clear();
     observations.clear();
     block_end                   = -1;
     _is_in_block                 = false;
@@ -344,10 +356,10 @@ void
 Codon_phaser::clear_read_buffer(const int& pos)
 {
     // clear read buffer up to next feasible position
-    int clear_to = pos-(this->max_read_len+1);
+    const int clear_to = pos-(this->max_read_len+1);
     for (int i=this->last_cleared; i<clear_to; i++)
     {
-        this->read_buffer.clear_pos(false,i);
+        this->read_buffer.clear_pos(opt.is_ignore_read_names,i);
     }
     this->last_cleared = clear_to;
 }
@@ -355,7 +367,7 @@ Codon_phaser::clear_read_buffer(const int& pos)
 void
 Codon_phaser::write_out_buffer() const
 {
-    for (const auto& val : buffer)
+    for (const auto& val : _buffer)
     {
         log_os << val << " ref " << val.ref << "\n";
     }
@@ -364,8 +376,6 @@ Codon_phaser::write_out_buffer() const
 void
 Codon_phaser::write_out_alleles() const
 {
-//    log_os << "Ref: " << this->reference << "=" << this->observations[this->reference] << "\n";
-//    log_os << "Alt: ";
     for (const auto& val : observations)
     {
         if (val.first == this->reference) continue;

@@ -25,11 +25,12 @@
 #include "starling_common/starling_read_buffer.hh"
 #include "starling_common/starling_shared.hh"
 #include "starling_common/gvcf_locus_info.hh"
+
 #include <climits>
 
-class Codon_phaser
+
+struct Codon_phaser
 {
-public:
     Codon_phaser(
         const starling_options& init_opt,
         const starling_deriv_options& init_dopt,
@@ -46,16 +47,34 @@ public:
         this->clear_buffer();
     }
 
-    bool add_site(const site_info& si);       // add site to buffer
+    /// add site to buffer
+    ///
+    /// \returns true when the buffer should be printed as a phased block
+    bool add_site(const site_info& si);
+
     void clear_buffer();                // clear site buffer
     void write_out_buffer() const;      // debugging feature, print current buffer to std
     void write_out_alleles() const;     // print allele evidence
 
+    /// Are we currently in a phasing block?
     bool is_in_block() const { return _is_in_block; }
+
+    /// buffer of het snp calls
+    ///
+    const std::vector<site_info>&
+    buffer() const
+    {
+        return _buffer;
+    }
 
 private:
     void make_record();                 // make phased record
     void clear_read_buffer(const int& pos);    // free up read that are no longer in phasing evidence, up to and including this position
+
+    void
+    collect_read_segment_evidence(
+        const read_segment& rseg);
+
     void collect_read_evidence();       // fill in allele counter
     void construct_reference();         // assemble the reference allele for the record
     void create_phased_record();        // fill in the si record and decide if we have sufficient evidence for a phased call
@@ -64,10 +83,8 @@ private:
         return (this->block_end-this->block_start+1);
     }
 
-    bool _is_in_block;                   // Are we currently in a phasing block
-public:
-    std::vector<site_info> buffer;      // buffer of het snp calls
-private:
+    bool _is_in_block;
+    std::vector<site_info> _buffer;
     const starling_options& opt;
     starling_read_buffer& read_buffer;  // pass along the relevant read-buffer
     int max_read_len;                   // the length of the input reads

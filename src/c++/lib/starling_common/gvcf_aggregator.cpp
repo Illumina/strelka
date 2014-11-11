@@ -209,7 +209,7 @@ void
 gvcf_aggregator::
 output_phased_blocked()
 {
-    for (const site_info& si : codon_phaser.buffer)
+    for (const site_info& si : codon_phaser.buffer())
     {
         this->skip_to_pos(si.pos);
         add_site_internal(si);
