@@ -166,10 +166,10 @@ add_site(site_info& si)
     }
 
     if (_opt.do_codon_phasing
-        && (si.is_het() || codon_phaser.is_in_block))
+        && (si.is_het() || codon_phaser.is_in_block()))
     {
-        bool emptyBuffer = codon_phaser.add_site(si);
-        if (!codon_phaser.is_in_block || emptyBuffer)
+        const bool emptyBuffer = codon_phaser.add_site(si);
+        if (!codon_phaser.is_in_block() || emptyBuffer)
             this->output_phased_blocked();
     }
     else
@@ -280,7 +280,7 @@ add_indel(const pos_t pos,
     if (is_no_indel(dindel) && !dindel.is_forced_output) return;
 
     // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
-    if (_opt.do_codon_phasing && this->codon_phaser.is_in_block)
+    if (_opt.do_codon_phasing && this->codon_phaser.is_in_block())
         this->output_phased_blocked();
 
     skip_to_pos(pos);

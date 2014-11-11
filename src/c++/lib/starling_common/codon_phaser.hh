@@ -26,7 +26,6 @@
 #include "starling_common/starling_shared.hh"
 #include "starling_common/gvcf_locus_info.hh"
 #include <climits>
-#include <sstream>
 
 class Codon_phaser
 {
@@ -52,6 +51,8 @@ public:
     void write_out_buffer() const;      // debugging feature, print current buffer to std
     void write_out_alleles() const;     // print allele evidence
 
+    bool is_in_block() const { return _is_in_block; }
+
 private:
     void make_record();                 // make phased record
     void clear_read_buffer(const int& pos);    // free up read that are no longer in phasing evidence, up to and including this position
@@ -63,8 +64,8 @@ private:
         return (this->block_end-this->block_start+1);
     }
 
+    bool _is_in_block;                   // Are we currently in a phasing block
 public:
-    bool is_in_block;                   // Are we currently in a phasing block
     std::vector<site_info> buffer;      // buffer of het snp calls
 private:
     const starling_options& opt;
@@ -78,6 +79,5 @@ private:
     bool phase_indels;                  // should we attempt to phase indels as well? For now false, thus returning any block upon encountering an indel
     std::string reference;              // the phased allele reference
     typedef std::map<std::string,int> allele_map;
-    std::stringstream AD,alt;           // for collecting the AD and ALT fields for phased record
     allele_map observations;
 };

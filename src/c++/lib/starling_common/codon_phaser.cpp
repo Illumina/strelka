@@ -18,6 +18,9 @@
  */
 
 #include "codon_phaser.hh"
+
+#include <array>
+#include <sstream>
 #include <vector>
 
 //#define DEBUG_CODON
@@ -30,16 +33,17 @@
 
 // Add a SNP site to the phasing buffer
 bool
-Codon_phaser::add_site(const site_info& si)
+Codon_phaser::
+add_site(const site_info& si)
 {
     buffer.push_back(si);
 
     // case: extending block with het call, update block_end position
     if (si.is_het())
     {
-        if (!is_in_block)
+        if (!_is_in_block)
             block_start = si.pos;
-        is_in_block = true;
+        _is_in_block = true;
         block_end = si.pos;
         het_count ++;
 #ifdef DEBUG_CODON
@@ -58,7 +62,7 @@ Codon_phaser::add_site(const site_info& si)
     }
 
     // case: extending block with none-het call based on the phasing range
-    if (is_in_block && (si.pos-block_end+1)<this->opt.phasing_window)
+    if (_is_in_block && (si.pos-block_end+1)<this->opt.phasing_window)
     {
 #ifdef DEBUG_CODON
         log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
@@ -103,26 +107,27 @@ Codon_phaser::create_phased_record()
         return;
     }
 
+    assert(buffer.size()>0);
+
     //Decide if we accept the novel alleles, very hacky criteria for now
     //at least 80% of the reads have to support a diploid model
     //TODO unphased genotype corresponds to as many phased genotypes as there are permutations of
     //the observed alleles. Thus, for a given unphased genotyping G1, . . . ,Gn,
     //we need to to calculate probability of sampling a particular unphased genotype combinations
     //given a set of allele frequencies...
-    typedef std::pair<std::string, int> allele_count;
-    allele_count max_alleles[2] = {allele_count("N",0),allele_count("N",0)};
-    for (allele_map::const_iterator it = this->observations.begin(); it != this->observations.end(); ++it)   // only normalize the features that are needed
+    typedef std::pair<std::string, int> allele_count_t;
+    //static constexpr unsigned alleleCount(2);
+    std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
+    for (auto& obs : observations)
     {
-        if (this->observations[it->first]>max_alleles[0].second)
+        if (obs.second>max_alleles[0].second)
         {
             max_alleles[1]  = max_alleles[0];
-            max_alleles[0].first  = it->first;
-            max_alleles[0].second = it->second;
+            max_alleles[0]  = obs;
         }
-        if (this->observations[it->first]>max_alleles[1].second && max_alleles[0].first!=it->first)
+        if (obs.second>max_alleles[1].second && max_alleles[0].first!=obs.first)
         {
-            max_alleles[1].first  = it->first;
-            max_alleles[1].second = it->second;
+            max_alleles[1] = obs;
         }
     }
 
@@ -131,10 +136,10 @@ Codon_phaser::create_phased_record()
     log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
 #endif
 
-    // some add hoc metrics to measure consistency with diploid model
-    int allele_sum = max_alleles[0].second + max_alleles[1].second;
-    float max_allele_frac = (1.0*allele_sum)/this->total_reads;
-    float relative_allele_frac  = 1.0*max_alleles[1].second/max_alleles[0].second;
+    // some ad hoc metrics to measure consistency with diploid model
+    const int allele_sum = max_alleles[0].second + max_alleles[1].second;
+    const float max_allele_frac = (1.0*allele_sum)/this->total_reads;
+    const float relative_allele_frac  = 1.0*max_alleles[1].second/max_alleles[0].second;
 
 #ifdef DEBUG_CODON
     log_os << "max alleles sum " << allele_sum << "\n";
@@ -145,32 +150,22 @@ Codon_phaser::create_phased_record()
     bool phasing_inconsistent(false);
     if (max_allele_frac<0.8)
     {
-#ifdef DEBUG_CODON
-        log_os << "doesnt seem like a clear diploid site \n";
-#endif
+        // non-diploid?
         phasing_inconsistent = true;
     }
 
     if (relative_allele_frac<0.5)
     {
-#ifdef DEBUG_CODON
-        log_os << "allele imbalance \n";
-#endif
+        // allele imbalance?
         phasing_inconsistent = true;
     }
 
-#ifdef DEBUG_CODON
-    log_os << "Phasing inconsistent value " << phasing_inconsistent << "\n";
-#endif
-
     if (phasing_inconsistent)
     {
-        for (unsigned i=0; i<this->buffer.size(); i++)
+        for (auto& val : buffer)
         {
-            if (this->buffer.at(i).is_het())
-            {
-                this->buffer.at(i).smod.set_filter(VCF_FILTERS::PhasingConflict);
-            }
+            if (! val.is_het()) continue;
+            val.smod.set_filter(VCF_FILTERS::PhasingConflict);
         }
         return;
     }
@@ -179,7 +174,7 @@ Codon_phaser::create_phased_record()
     site_info& base = (this->buffer.at(0));
 
     base.phased_ref = this->reference;
-    bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
+    const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
 
     base.smod.is_block = false;
     base.smod.is_unknown = false;
@@ -187,40 +182,30 @@ Codon_phaser::create_phased_record()
     base.dgt.ref_gt  = 0; // hacking  the gt method to 0/1
     if (!is_ref) base.dgt.ref_gt = 2; // hacking the gt method to 1/2
 
-    AD << this->observations[this->reference] << ",";
-
-//    log_os << "my max gt " << base.smod.max_gt << "\n";
-//    log_os << "my max ref gt " << base.dgt.ref_gt << "\n";
-
-    for (unsigned i(0); i<2; i++)
+    std::stringstream AD,alt;
+    AD << this->observations[this->reference];
+    for (const auto& val : max_alleles)
     {
-        if (i>0 && !is_ref) AD << ",";
-        if (max_alleles[i].first!=this->reference)
-        {
-            if (i>0 && !is_ref) alt << ",";
-            alt << max_alleles[i].first;
-            AD << this->observations[max_alleles[i].first];
-        }
+        if (val.first==reference) continue;
+        if (! alt.str().empty()) alt << ',';
+        alt << val.first;
+        AD << ',' << val.second;
     }
 
-    // set GQ and GQX
-    int min_gq(INT_MAX), min_qual(INT_MAX), min_qscore(INT_MAX);
-
-#ifdef DEBUG_CODON
+ #ifdef DEBUG_CODON
     log_os << "buffer size " << buffer.size() << "\n";
     log_os << "block length " << get_block_length() << "\n";
 #endif
 
-
+    // set GQ and GQX
+    int min_gq(INT_MAX), min_qual(INT_MAX), min_qscore(INT_MAX);
     for (unsigned i(0); i<this->get_block_length(); i++)
     {
-        if (this->buffer.at(i).is_het())
-        {
-
-            min_gq      = std::min(this->buffer.at(i).smod.gq,min_gq);
-            min_qual      = std::min(this->buffer.at(i).dgt.genome.snp_qphred,min_qual);
-            min_qscore  = std::min(this->buffer.at(i).Qscore,min_qscore);
-        }
+        const site_info& si(buffer.at(i));
+        if (! si.is_het()) continue;
+        min_gq = std::min(si.smod.gq,min_gq);
+        min_qual = std::min(si.dgt.genome.snp_qphred,min_qual);
+        min_qscore = std::min(si.Qscore,min_qscore);
     }
 
     // set various quality fields conservatively
@@ -346,13 +331,11 @@ Codon_phaser::clear_buffer()
     buffer.clear();
     observations.clear();
     block_end                   = -1;
-    is_in_block                 = false;
+    _is_in_block                 = false;
     het_count                   = 0;
     total_reads                 = 0;
     total_reads_unused          = 0;
     reference                   = "";
-    alt.str("");
-    AD.str("");
 }
 
 
