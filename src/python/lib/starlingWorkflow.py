@@ -327,7 +327,7 @@ class StarlingWorkflow(WorkflowRunner) :
         # format other:
         self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
         self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
-        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipDepthFilters)
+        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipIndelErrorModel)
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
