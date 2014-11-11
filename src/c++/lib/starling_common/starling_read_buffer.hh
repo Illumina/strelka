@@ -83,14 +83,12 @@ struct starling_read_buffer : private boost::noncopyable
         const alignment& al,
         const MAPLEVEL::index_t maplev);
 
-#if 1
     // adjust read segment's buffer position to new_buffer_pos,
     // and change buffer pos:
     void
     rebuffer_read_segment(const align_id_t read_id,
                           const seg_id_t seg_id,
                           const pos_t new_buffer_pos);
-#endif
 
     read_segment_iter
     get_pos_read_segment_iter(const pos_t pos);
@@ -113,9 +111,16 @@ struct starling_read_buffer : private boost::noncopyable
         return (k->second);
     }
 
+    /// clear contents of read buffer up to and including position pos
     void
-    clear_pos(const bool is_ignore_read_names,
-              const pos_t pos);
+    clear_to_pos(
+        const pos_t pos)
+    {
+        pos_group_t::iterator iter(_pos_group.begin());
+        const pos_group_t::iterator end(_pos_group.upper_bound(pos));
+
+        for(; iter != end; ++iter) clear_iter(iter);
+    }
 
     void
     dump_pos(const pos_t pos, std::ostream& os) const;
@@ -127,14 +132,6 @@ struct starling_read_buffer : private boost::noncopyable
     }
 
 private:
-    align_id_t
-    next_id() const
-    {
-        return _ricp->next();
-    }
-
-    friend struct read_segment_iter;
-
     //
     typedef read_key read_key_t;
     typedef std::map<align_id_t,starling_read*> read_data_t;
@@ -142,6 +139,18 @@ private:
     typedef std::pair<align_id_t,seg_id_t> segment_t;
     typedef std::set<segment_t> segment_group_t;
     typedef std::map<pos_t,segment_group_t> pos_group_t;
+
+    void
+    clear_iter(
+        const pos_group_t::iterator i);
+
+    align_id_t
+    next_id() const
+    {
+        return _ricp->next();
+    }
+
+    friend struct read_segment_iter;
 
     static const segment_group_t _empty_segment_group;
 

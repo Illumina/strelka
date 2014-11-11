@@ -359,7 +359,7 @@ Codon_phaser::clear_read_buffer(const int& pos)
     const int clear_to = pos-(this->max_read_len+1);
     for (int i=this->last_cleared; i<clear_to; i++)
     {
-        this->read_buffer.clear_pos(opt.is_ignore_read_names,i);
+        this->read_buffer.clear_to_pos(i);
     }
     this->last_cleared = clear_to;
 }

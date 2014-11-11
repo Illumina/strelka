@@ -28,7 +28,7 @@
 //
 struct read_key
 {
-
+    explicit
     read_key(const bam_record& br) : _br_ptr(&br) {}
 
     int

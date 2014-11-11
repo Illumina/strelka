@@ -1025,7 +1025,7 @@ process_pos(const int stage_no,
             {
                 for (unsigned s(0); s<_n_samples; ++s)
                 {
-                    sample(s).read_buff.clear_pos(_client_opt.is_ignore_read_names,pos);
+                    sample(s).read_buff.clear_to_pos(pos);
                 }
             }
 
@@ -1069,7 +1069,7 @@ process_pos(const int stage_no,
 
         for (unsigned s(0); s<_n_samples; ++s)
         {
-            sample(s).read_buff.clear_pos(_client_opt.is_ignore_read_names,pos);
+            sample(s).read_buff.clear_to_pos(pos);
         }
         for (unsigned s(0); s<_n_samples; ++s)
         {
