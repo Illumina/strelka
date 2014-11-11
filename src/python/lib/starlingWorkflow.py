@@ -130,6 +130,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--calibration-model-file',self.params.vqsrModel])
 #    segCmd.extend(['--scoring-models', self.params.scoringModelFile])
 
+    segCmd.extend(['--do-short-range-phasing'])
+
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",bamPath])
 
