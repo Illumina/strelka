@@ -265,10 +265,11 @@ get_last_static_stage_no(const starling_options& opt)
 //
 static
 stage_data
-get_stage_data(const unsigned largest_read_size,
-               const unsigned largest_total_indel_ref_span_per_read,
-               const starling_options& opt,
-               const starling_deriv_options& dopt)
+get_stage_data(
+    const unsigned largest_read_size,
+    const unsigned largest_total_indel_ref_span_per_read,
+    const starling_options& opt,
+    const starling_deriv_options& dopt)
 {
     stage_data sdata;
 
@@ -312,6 +313,14 @@ get_stage_data(const unsigned largest_read_size,
     // realigned read output
     //
     sdata.add_stage(POST_ALIGN,READ_BUFFER,largest_total_indel_ref_span_per_read);
+
+    unsigned clear_readbuf_dist(0);
+    if (opt.do_codon_phasing)
+    {
+        clear_readbuf_dist += largest_read_size;
+    }
+    sdata.add_stage(CLEAR_READ_BUFFER,POST_ALIGN,clear_readbuf_dist);
+
 
     if (! opt.is_htype_calling)
     {
@@ -1018,15 +1027,8 @@ process_pos(const int stage_no,
                 }
             }
 
-            // clear read buffer here as oppose to READ_BUFFER stage.
-            // if we are doing short-range phasing, the codon_phaser
-            // is responsible or clearing the read buffer
             if (!this->_client_opt.do_codon_phasing)
             {
-                for (unsigned s(0); s<_n_samples; ++s)
-                {
-                    sample(s).read_buff.clear_to_pos(pos);
-                }
             }
 
             clear_forced_output_pos(pos);
@@ -1041,6 +1043,21 @@ process_pos(const int stage_no,
             post_align_clear_pos(pos);
         }
 
+    }
+    else if (stage_no==STAGE::CLEAR_READ_BUFFER)
+    {
+        if (! _client_opt.is_htype_calling)
+        {
+            // if we are doing short-range phasing, suspend read clear
+            // while phasing block is being built:
+            if (! (_gvcfer && _gvcfer->is_phasing_block()))
+            {
+                for (unsigned s(0); s<_n_samples; ++s)
+                {
+                    sample(s).read_buff.clear_to_pos(pos);
+                }
+            }
+        }
     }
     else if (stage_no==STAGE::POST_REGION)
     {
@@ -1077,7 +1094,7 @@ process_pos(const int stage_no,
         }
 
     }
-    else if (stage_no>STAGE::POST_CALL)
+    else if (stage_no>=STAGE::SIZE)
     {
         run_post_call_step(stage_no,pos);
     }

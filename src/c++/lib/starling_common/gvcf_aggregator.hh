@@ -42,6 +42,13 @@ struct gvcf_aggregator
 
     ~gvcf_aggregator();
 
+    /// provide the phasing block status, if true, read buffers are
+    /// preserved until the block is completed
+    bool is_phasing_block() const
+    {
+        return codon_phaser.is_in_block();
+    }
+
     void add_site(site_info& si);
 
     void add_indel(const pos_t pos, const indel_key ik,

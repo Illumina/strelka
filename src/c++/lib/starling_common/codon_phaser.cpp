@@ -41,9 +41,8 @@ add_site(const site_info& si)
     // case: extending block with het call, update block_end position
     if (si.is_het())
     {
-        if (!_is_in_block)
+        if (! is_in_block())
             block_start = si.pos;
-        _is_in_block = true;
         block_end = si.pos;
         het_count ++;
 #ifdef DEBUG_CODON
@@ -62,7 +61,7 @@ add_site(const site_info& si)
     }
 
     // case: extending block with none-het call based on the phasing range
-    if (_is_in_block && (si.pos-block_end+1)<this->opt.phasing_window)
+    if (is_in_block() && (si.pos-block_end+1)<this->opt.phasing_window)
     {
 #ifdef DEBUG_CODON
         log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
@@ -227,6 +226,8 @@ Codon_phaser::create_phased_record()
     log_os << "buffer size " << _buffer.size() << "\n";
     this->write_out_buffer();
 #endif
+
+    // erase buffer sites which are now combined in the buffer[0] record
     _buffer.erase(_buffer.begin()+1,_buffer.begin()+this->get_block_length());
 }
 
@@ -237,10 +238,6 @@ Codon_phaser::make_record()
     this->construct_reference();
     this->collect_read_evidence();
     this->create_phased_record();
-    this->clear_read_buffer(this->block_start);
-//#ifdef DEBUG_CODON
-//    this->write_out_alleles();
-//#endif
 }
 
 
@@ -311,12 +308,12 @@ void
 Codon_phaser::
 collect_read_evidence()
 {
-    const int buffer_start = (block_start-this->max_read_len);
+    int buffer_pos = (block_start-this->max_read_len);
     const int buffer_end = (block_start);
     // extract evidence for all reads that span the entire phasing range
-    for (int i=buffer_start; i<buffer_end; i++)
+    for (; buffer_pos<buffer_end; buffer_pos++)
     {
-        read_segment_iter ri(read_buffer.get_pos_read_segment_iter(i));
+        read_segment_iter ri(read_buffer.get_pos_read_segment_iter(buffer_pos));
         read_segment_iter::ret_val r;
         while (true)
         {
@@ -338,12 +335,12 @@ collect_read_evidence()
 }
 
 void
-Codon_phaser::clear_buffer()
+Codon_phaser::clear()
 {
     _buffer.clear();
     observations.clear();
-    block_end                   = -1;
-    _is_in_block                 = false;
+    block_start = -1;
+    block_end   = -1;
     het_count                   = 0;
     total_reads                 = 0;
     total_reads_unused          = 0;
@@ -351,18 +348,6 @@ Codon_phaser::clear_buffer()
 }
 
 
-
-void
-Codon_phaser::clear_read_buffer(const int& pos)
-{
-    // clear read buffer up to next feasible position
-    const int clear_to = pos-(this->max_read_len+1);
-    for (int i=this->last_cleared; i<clear_to; i++)
-    {
-        this->read_buffer.clear_to_pos(i);
-    }
-    this->last_cleared = clear_to;
-}
 
 void
 Codon_phaser::write_out_buffer() const

@@ -98,7 +98,7 @@ struct starling_read_buffer : private boost::noncopyable
     get_read(const align_id_t read_id)
     {
         const read_data_t::iterator k(_read_data.find(read_id));
-        if (k == _read_data.end()) return NULL;
+        if (k == _read_data.end()) return nullptr;
         return (k->second);
     }
 
@@ -107,7 +107,7 @@ struct starling_read_buffer : private boost::noncopyable
     get_read(const align_id_t read_id) const
     {
         const read_data_t::const_iterator k(_read_data.find(read_id));
-        if (k == _read_data.end()) return NULL;
+        if (k == _read_data.end()) return nullptr;
         return (k->second);
     }
 
@@ -119,7 +119,7 @@ struct starling_read_buffer : private boost::noncopyable
         pos_group_t::iterator iter(_pos_group.begin());
         const pos_group_t::iterator end(_pos_group.upper_bound(pos));
 
-        for(; iter != end; ++iter) clear_iter(iter);
+        while (iter != end) { clear_iter(iter++); }
     }
 
     void
@@ -140,6 +140,8 @@ private:
     typedef std::set<segment_t> segment_group_t;
     typedef std::map<pos_t,segment_group_t> pos_group_t;
 
+
+    /// the input iterator will be invalidated by this method!
     void
     clear_iter(
         const pos_group_t::iterator i);

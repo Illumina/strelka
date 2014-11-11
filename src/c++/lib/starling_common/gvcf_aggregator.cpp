@@ -113,7 +113,7 @@ gvcf_aggregator(const starling_options& opt,
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
     , CM(_opt, dopt.gvcf)
-    , codon_phaser(opt, dopt, read_buffer, max_read_len)
+    , codon_phaser(opt, read_buffer, max_read_len)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -214,7 +214,7 @@ output_phased_blocked()
         this->skip_to_pos(si.pos);
         add_site_internal(si);
     }
-    codon_phaser.clear_buffer();
+    codon_phaser.clear();
 }
 
 
