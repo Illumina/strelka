@@ -45,12 +45,14 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--referenceFasta",type="string",metavar="FILE",
                          help="samtools-indexed reference fasta file [required]")
+        group.add_option("--indelCandidates", type="string", metavar="FILE",
+                         help="Specify a vcf describing indel candidates. Candidates are always evaluated but only output"
+                              " to gVCF if the genotype is likely to be non-refernce. File must be tabix indexed (default: None)")
+        group.add_option("--forcedGTIndels", type="string", metavar="FILE",
+                         help="Specify a vcf describing indels which must be genotyped and output to gVCF."
+                              " File must be tabix indexed (default: None)")
         group.add_option("--runDir", type="string",metavar="DIR",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
-        group.add_option("--indelCandidates", type="string", metavar="FILE",
-                         help="Specify a candidate indel vcf. File must be tabix indexed (default: None)")
-        group.add_option("--forcedGTIndels", type="string", metavar="FILE",
-                         help="Specify an indel vcf. File must be tabix indexed (default: None)")
 
     def addExtendedGroupOptions(self,group) :
         group.add_option("--scanSizeMb", type="int", metavar="scanSizeMb",
