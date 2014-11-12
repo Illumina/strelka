@@ -164,6 +164,11 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const known_pos_range2& range,
         const int ploidy);
 
+    /// specify gvcf nocompress status of region
+    void
+    insert_nocompress_region(
+        const known_pos_range2& range);
+
 #if 0
     starling_read*
     get_read(const align_id_t read_id,
@@ -551,18 +556,6 @@ private:
     void
     update_stageman();
 
-    void
-    clear_forced_output_pos(const pos_t pos)
-    {
-        _forced_output_pos.erase(pos);
-    }
-
-    void
-    clear_haploid_regions(const pos_t pos)
-    {
-        _ploidy_regions.removeToPos(pos);
-    }
-
     virtual
     void
     post_align_clear_pos(const pos_t pos) {}
@@ -638,4 +631,5 @@ protected:
     site_info _site_info;
 
     RegionPayloadTracker<int> _ploidy_regions;
+    RegionTracker _nocompress_regions;
 };

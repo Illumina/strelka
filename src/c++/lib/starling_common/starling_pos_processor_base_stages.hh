@@ -27,6 +27,7 @@ enum index_t
     POST_ALIGN,
     POST_REGION, // haplotype specific stage
     POST_READ,  // haplotype specific stage
+    CLEAR_SITE_ANNOTATION, // non-haplotype mode
     CLEAR_READ_BUFFER, // non-haplotype mode: placement depends on various options:
     POST_CALL,
     SIZE

@@ -314,6 +314,8 @@ get_stage_data(
     //
     sdata.add_stage(POST_ALIGN,READ_BUFFER,largest_total_indel_ref_span_per_read);
 
+    sdata.add_stage(CLEAR_SITE_ANNOTATION,POST_ALIGN,largest_total_indel_ref_span_per_read);
+
     unsigned clear_readbuf_dist(0);
     if (opt.do_codon_phasing)
     {
@@ -417,7 +419,7 @@ starling_pos_processor_base(const starling_options& client_opt,
     if (_client_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
-                client_opt,client_dopt,ref,client_io.gvcf_osptr(0),
+                client_opt,client_dopt,ref,_nocompress_regions,client_io.gvcf_osptr(0),
                 sample(0).read_buff,get_largest_read_size()));
     }
 
@@ -614,6 +616,17 @@ insert_ploidy_region(
     assert(ploidy==0 || ploidy==1);
     _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
     return _ploidy_regions.addRegion(range,ploidy);
+}
+
+
+
+void
+starling_pos_processor_base::
+insert_nocompress_region(
+    const known_pos_range2& range)
+{
+    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _nocompress_regions.addRegion(range);
 }
 
 
@@ -1027,13 +1040,6 @@ process_pos(const int stage_no,
                 }
             }
 
-            if (!this->_client_opt.do_codon_phasing)
-            {
-            }
-
-            clear_forced_output_pos(pos);
-            clear_haploid_regions(pos);
-
             for (unsigned s(0); s<_n_samples; ++s)
             {
                 sample(s).indel_buff.clear_pos(pos);
@@ -1043,6 +1049,14 @@ process_pos(const int stage_no,
             post_align_clear_pos(pos);
         }
 
+    }
+    else if (stage_no==STAGE::CLEAR_SITE_ANNOTATION)
+    {
+        assert (! _client_opt.is_htype_calling);
+
+        _forced_output_pos.erase(pos);
+        _ploidy_regions.removeToPos(pos);
+        _nocompress_regions.removeToPos(pos);
     }
     else if (stage_no==STAGE::CLEAR_READ_BUFFER)
     {
@@ -1066,9 +1080,8 @@ process_pos(const int stage_no,
         if (! _client_opt.is_write_candidate_indels_only)
         {
             process_htype_pos(pos);
-            clear_forced_output_pos(pos);
+            _forced_output_pos.erase(pos);
         }
-
     }
     else if (stage_no==STAGE::POST_CALL)
     {

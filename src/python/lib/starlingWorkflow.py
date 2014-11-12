@@ -152,11 +152,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.forcedGTIndels is not None :
         segCmd.extend(['--force-output-vcf', self.params.forcedGTIndels])
 
-#    if self.params.minorAllele is not None :
-#        segCmd.extend(['--minor-allele-bed-file', self.params.minorAllele])
+    if self.params.noCompressBed is not None :
+        segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
 
-    if self.params.ploidy is not None :
-        segCmd.extend(['--ploidy-region-bed', self.params.ploidy])
+    if self.params.ploidyBed is not None :
+        segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
 
     if self.params.extraStarlingArguments is not None :
         for arg in self.params.extraStarlingArguments.strip().split() :

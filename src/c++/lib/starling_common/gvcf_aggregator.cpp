@@ -95,12 +95,14 @@ void gvcf_aggregator::write_block_site_record()
 }
 
 gvcf_aggregator::
-gvcf_aggregator(const starling_options& opt,
-                const starling_deriv_options& dopt,
-                const reference_contig_segment& ref,
-                std::ostream* osptr,
-                starling_read_buffer& read_buffer,
-                const unsigned max_read_len)
+gvcf_aggregator(
+    const starling_options& opt,
+    const starling_deriv_options& dopt,
+    const reference_contig_segment& ref,
+    const RegionTracker& nocompress_regions,
+    std::ostream* osptr,
+    starling_read_buffer& read_buffer,
+    const unsigned max_read_len)
     : _opt(opt)
     , _report_range(dopt.report_range.begin_pos,dopt.report_range.end_pos)
     , _ref(ref)
@@ -113,16 +115,11 @@ gvcf_aggregator(const starling_options& opt,
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
     , CM(_opt, dopt.gvcf)
+    , _gvcf_comp(opt.gvcf,nocompress_regions)
     , codon_phaser(opt, read_buffer, max_read_len)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
-    // read in sites that should not be block-compressed
-    if (static_cast<int>(opt.minor_allele_bed.length())>2)    // hacky, check if the bed file has been set
-    {
-        this->gvcf_comp.read_bed(opt.minor_allele_bed,opt.bam_seq_name.c_str());
-//        log_os << "I've got minor allele \n";
-    }
 
     if (! opt.gvcf.is_gvcf_output()) return;
 
@@ -194,7 +191,7 @@ skip_to_pos(const pos_t target_pos)
         // then extend the block size of that one site as required:
         if (0 != _indel_buffer_size) continue;
 
-        if (_opt.gvcf.is_block_compression && !this->gvcf_comp.minor_allele_loaded)
+        if (_gvcf_comp.is_range_compressable(known_pos_range2(_head_pos,target_pos)))
         {
             assert(_block.count!=0);
             _block.count += (target_pos-_head_pos);
@@ -389,7 +386,7 @@ gvcf_aggregator::
 queue_site_record(const site_info& si)
 {
     //test for basic blocking criteria
-    if (! this->gvcf_comp.is_site_compressable(_opt.gvcf,si))
+    if (! _gvcf_comp.is_site_compressable(si))
     {
         write_block_site_record();
         write_site_record(si);

@@ -110,8 +110,8 @@ get_starling_shared_option_parser(starling_options& opt)
      "Report metrics used for VQSR: BaseQRankSum, ReadPosRankSum, MQRankSum and MQ.")
     ("gvcf-compute-calibration-features", po::value(&opt.is_compute_calibration_features)->zero_tokens(),
      "Output all features used for calibration model training, development only.")
-    ("minor-allele-bed-file",  po::value(&opt.minor_allele_bed)->default_value(""),
-     "Bed file with sites that should not be block-compressed if hom-ref.")
+    ("nocompress-bed",  po::value(&opt.gvcf.nocompress_region_bedfile),
+     "Bed file with sites that should not be block-compressed in gVCF (must be bgzip compressed and tabix indexed).")
     ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("new"),
      "Choose indel error model to use, available option old,new, new_stratified (development option only)")
     ("indel-ref-error-factor",  po::value(&opt.indel_ref_error_factor)->default_value(opt.indel_ref_error_factor),
@@ -178,7 +178,7 @@ get_starling_shared_option_parser(starling_options& opt)
     ploidy_opt.add_options()
     ("ploidy-region-bed",
      po::value(&opt.ploidy_region_bedfile),
-     "Specify bed file describing ploidy of regions. Ploidy must be in 4th field. Any value besides 1 and 0 are ignored at present. (bed file must be bgzip compressed and tabix indexed)")
+     "Specify bed file describing ploidy of regions. Ploidy must be in 4th field. Any value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
      ;
 
     po::options_description window_opt("window-options");

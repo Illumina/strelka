@@ -204,7 +204,12 @@ starling_run(
                 }
             }
         }
-
+        else if (current.itype == INPUT_TYPE::NOCOMPRESS_REGION)
+        {
+            const bed_record& bedr(*(nocompress_regions->get_record_ptr()));
+            known_pos_range2 range(bedr.begin,bedr.end);
+            sppr.insert_nocompress_region(range);
+        }
         else
         {
             log_os << "ERROR: invalid input condition.\n";
