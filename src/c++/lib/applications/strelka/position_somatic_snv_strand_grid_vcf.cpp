@@ -17,6 +17,7 @@
 #include "position_somatic_snv_strand_grid_vcf.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "somatic_call_shared.hh"
+#include "blt_util/math_util.hh"
 
 #include <fstream>
 #include <iomanip>
@@ -91,19 +92,7 @@ set_VQSR_sample_info(const blt_options& opt,
        }
 }
 
-/// returns median, partially reorders elements in specified range
-///
-template <typename Iter>
-typename std::iterator_traits<Iter>::value_type
-median(
-    Iter begin,
-    Iter end)
-{
-    assert(begin != end);
-    const auto size(std::distance(begin,end));
-    std::nth_element(begin,begin+size/2, end);
-    return *(begin+size/2);
-}
+
 
 // Prepare feature vector in case we are using VQSR, the individual values will be set
 // feature_type ft;
