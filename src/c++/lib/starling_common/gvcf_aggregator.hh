@@ -48,7 +48,7 @@ struct gvcf_aggregator
     /// preserved until the block is completed
     bool is_phasing_block() const
     {
-        return codon_phaser.is_in_block();
+        return _codon_phaser.is_in_block();
     }
 
     void add_site(site_info& si);
@@ -104,9 +104,9 @@ private:
     pos_t _head_pos;
     site_info _empty_site;
 
-    calibration_models CM;
+    calibration_models _CM;
     gvcf_compressor _gvcf_comp;
 
-    Codon_phaser codon_phaser;
+    Codon_phaser _codon_phaser;
 };
 

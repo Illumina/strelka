@@ -114,9 +114,9 @@ gvcf_aggregator(
     , _site_buffer_size(0)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
-    , CM(_opt, dopt.gvcf)
+    , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
-    , codon_phaser(opt, read_buffer, max_read_len)
+    , _codon_phaser(opt, read_buffer, max_read_len)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -128,10 +128,10 @@ gvcf_aggregator(
 
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data,*_osptr,this->CM);
+        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data,*_osptr,this->_CM);
     }
 
-    add_site_modifiers(_empty_site,this->CM);
+    add_site_modifiers(_empty_site,this->_CM);
 }
 
 gvcf_aggregator::
@@ -144,7 +144,7 @@ void
 gvcf_aggregator::
 add_site(site_info& si)
 {
-    add_site_modifiers(si, CM);
+    add_site_modifiers(si, _CM);
 
     if (si.dgt.is_haploid())
     {
@@ -163,10 +163,10 @@ add_site(site_info& si)
     }
 
     if (_opt.do_codon_phasing
-        && (si.is_het() || codon_phaser.is_in_block()))
+        && (si.is_het() || _codon_phaser.is_in_block()))
     {
-        const bool emptyBuffer = codon_phaser.add_site(si);
-        if (!codon_phaser.is_in_block() || emptyBuffer)
+        const bool emptyBuffer = _codon_phaser.add_site(si);
+        if (!_codon_phaser.is_in_block() || emptyBuffer)
             this->output_phased_blocked();
     }
     else
@@ -206,12 +206,12 @@ void
 gvcf_aggregator::
 output_phased_blocked()
 {
-    for (const site_info& si : codon_phaser.buffer())
+    for (const site_info& si : _codon_phaser.buffer())
     {
         this->skip_to_pos(si.pos);
         add_site_internal(si);
     }
-    codon_phaser.clear();
+    _codon_phaser.clear();
 }
 
 
@@ -277,7 +277,7 @@ add_indel(const pos_t pos,
     if (is_no_indel(dindel) && !dindel.is_forced_output) return;
 
     // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
-    if (_opt.do_codon_phasing && this->codon_phaser.is_in_block())
+    if (_opt.do_codon_phasing && this->_codon_phaser.is_in_block())
         this->output_phased_blocked();
 
     skip_to_pos(pos);
@@ -625,7 +625,7 @@ modify_single_indel_record()
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
 
-    CM.clasify_site(ii);
+    _CM.clasify_site(ii);
 }
 
 static
@@ -753,7 +753,7 @@ modify_overlap_indel_record()
 
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
-        CM.clasify_site(_indel_buffer[hap]);
+        _CM.clasify_site(_indel_buffer[hap]);
         if (hap>0)
         {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
@@ -777,7 +777,7 @@ modify_conflict_indel_record()
 
         ii.imod.set_filter(VCF_FILTERS::IndelConflict);
 
-        CM.clasify_site(ii);
+        _CM.clasify_site(ii);
     }
 }
 
@@ -963,7 +963,7 @@ process_overlaps()
         {
             modify_indel_overlap_site( _indel_buffer[0],
                                        _indel_buffer[0].get_ploidy(offset),
-                                       _site_buffer[i], this->CM);
+                                       _site_buffer[i], this->_CM);
         }
         else
         {
