@@ -411,6 +411,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
         os << ";SNVSB=" << smod.get_feature(STRELKA_VQSR_FEATURES::strandBias);
         os << ";PNOISE=" << smod.get_feature(STRELKA_VQSR_FEATURES::pnoise);
         os << ";PNOISE2=" << smod.get_feature(STRELKA_VQSR_FEATURES::pnoise2);
+
         if (scoring_models::Instance()->calibration_init)
             os << ";VQSR=" << smod.Qscore;
 
