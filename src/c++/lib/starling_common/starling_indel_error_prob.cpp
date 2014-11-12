@@ -107,26 +107,13 @@ struct PatternErrorModel
 //            log_os << i << "_AT: " << itmp <<  " " << dtmp <<  "\n"; //print out test
         }
     }
-
     
-
 
     const error_model&
     getModel(
-    const std::string& overall_error_model,
-    const std::string& pattern)
+        const std::string& overall_error_model,
+        const std::string& /*pattern*/)
     {
-
-        if(pattern==""){
-
-        }
-
-        if(pattern=="")
-        {
-            //dummy usage of pattern for suppressing the -Werror.
-        }
-
-
         // we are using estimated error model from json input
         if (scoring_models::Instance()->indel_init){
 //            log_os << "Getting indel error model " << overall_error_model << std::endl;
