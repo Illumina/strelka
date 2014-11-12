@@ -191,7 +191,7 @@ Codon_phaser::create_phased_record()
         AD << ',' << val.second;
     }
 
- #ifdef DEBUG_CODON
+#ifdef DEBUG_CODON
     log_os << "buffer size " << _buffer.size() << "\n";
     log_os << "block length " << get_block_length() << "\n";
 #endif

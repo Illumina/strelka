@@ -387,6 +387,6 @@ class StarlingWorkflow(WorkflowRunner) :
         if not self.params.isSkipDepthFilters :
             callPreReqs |= runDepth(self)
         if not self.params.isSkipIndelErrorModel :
-            callPreReqs |= runIndelModel(self)      
+            callPreReqs |= runIndelModel(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
 

@@ -34,7 +34,8 @@
 
 namespace INPUT_TYPE
 {
-enum index_t {
+enum index_t
+{
     NONE,
     READ,
     INDEL,

@@ -33,7 +33,7 @@
 //#define DEBUG_HEADER
 
 #ifdef DEBUG_HEADER
-    #include "blt_util/log.hh"
+#include "blt_util/log.hh"
 #endif
 
 
@@ -110,12 +110,12 @@ strelka_streams(
 
         std::ofstream* fosptr(new std::ofstream);
         _somatic_snv_osptr.reset(fosptr);
-        #ifdef DEBUG_HEADER
-                std::ostream& fos = std::cout;
-        #else
-                std::ofstream& fos(*fosptr);
-                open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",opt.is_clobber,fos);
-        #endif
+#ifdef DEBUG_HEADER
+        std::ostream& fos = std::cout;
+#else
+        std::ofstream& fos(*fosptr);
+        open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",opt.is_clobber,fos);
+#endif
 
         if (! opt.sfilter.is_skip_header)
         {

@@ -51,7 +51,7 @@ parsePloidyFromBed(const char* line)
     if (line == nullptr) return result;
 
     unsigned tabcount(0);
-    while(true)
+    while (true)
     {
         if (*line=='\0' || *line=='\n') return result;
         if (*line=='\t') tabcount++;
@@ -125,7 +125,7 @@ starling_run(
     if (! opt.ploidy_region_bedfile.empty())
     {
         ploidy_regions.reset(new bed_streamer(opt.ploidy_region_bedfile.c_str(),
-                                           bam_region.c_str()));
+                                              bam_region.c_str()));
         sdata.register_ploidy_regions(*ploidy_regions);
     }
 
@@ -133,7 +133,7 @@ starling_run(
     if (! opt.gvcf.nocompress_region_bedfile.empty())
     {
         nocompress_regions.reset(new bed_streamer(opt.gvcf.nocompress_region_bedfile.c_str(),
-                                           bam_region.c_str()));
+                                                  bam_region.c_str()));
         sdata.register_nocompress_regions(*nocompress_regions);
     }
 

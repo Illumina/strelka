@@ -119,7 +119,10 @@ struct starling_read_buffer : private boost::noncopyable
         pos_group_t::iterator iter(_pos_group.begin());
         const pos_group_t::iterator end(_pos_group.upper_bound(pos));
 
-        while (iter != end) { clear_iter(iter++); }
+        while (iter != end)
+        {
+            clear_iter(iter++);
+        }
     }
 
     void

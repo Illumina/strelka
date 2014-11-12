@@ -62,7 +62,7 @@ addRegion(
                 continue;
             }
         }
-        if(startOlap->first.begin_pos() <= (range.begin_pos()-1))
+        if (startOlap->first.begin_pos() <= (range.begin_pos()-1))
         {
             // start intersects range:
             range.set_begin_pos(startOlap->first.begin_pos());
@@ -93,7 +93,7 @@ addRegion(
     }
 
     // check for overlap conflicts:
-    for(auto iter(startOlap); iter != endOlap; ++iter)
+    for (auto iter(startOlap); iter != endOlap; ++iter)
     {
         if (iter->second != payload) return false;
     }
@@ -110,7 +110,7 @@ void
 RegionPayloadTracker<T>::
 removeToPos(const unsigned pos)
 {
-    for(auto iter(_regions.begin()) ; iter != _regions.end() ; ++iter)
+    for (auto iter(_regions.begin()) ; iter != _regions.end() ; ++iter)
     {
         if (iter->first.end_pos() > (pos+1)) return;
         _regions.erase(iter);

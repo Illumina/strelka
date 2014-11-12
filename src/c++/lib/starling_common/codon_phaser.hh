@@ -66,7 +66,10 @@ struct Codon_phaser
     void write_out_alleles() const;     // print allele evidence
 
     /// Are we currently in a phasing block?
-    bool is_in_block() const { return block_start != -1; }
+    bool is_in_block() const
+    {
+        return block_start != -1;
+    }
 
     /// buffer of het snp calls
     ///

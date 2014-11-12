@@ -26,7 +26,7 @@
 //#define DEBUG_OPTIONPARSER
 
 #ifdef DEBUG_OPTIONPARSER
-    #include "blt_util/log.hh"
+#include "blt_util/log.hh"
 #endif
 
 
@@ -179,13 +179,13 @@ get_starling_shared_option_parser(starling_options& opt)
     ("ploidy-region-bed",
      po::value(&opt.ploidy_region_bedfile),
      "Specify bed file describing ploidy of regions. Ploidy value is read from the 5th 'score' field. Any value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
-     ;
+    ;
 
     po::options_description window_opt("window-options");
     window_opt.add_options()
     ("variant-window-flank-file", po::value(&opt.variant_windows)->multitoken(),
      "Print out regional average basecall statistics at variant sites within a window of the variant call. Must provide arguments for window flank size and output file. Option can be specified multiple times. (example: '--variant-window-flank-file 10 window10.txt')")
-     ;
+    ;
 
     po::options_description compat_opt("compatibility-options");
     compat_opt.add_options()
@@ -207,8 +207,8 @@ get_starling_shared_option_parser(starling_options& opt)
     ("calibration-model-file", po::value(&opt.calibration_models_filename),
      "File containing calibration model parameters")
 
-     ("indel-scoring-models", po::value(&opt.indel_scoring_models),
-      "DEBUG: Adaptive model option.")
+    ("indel-scoring-models", po::value(&opt.indel_scoring_models),
+     "DEBUG: Adaptive model option.")
 
     ("scoring-model", po::value(&opt.calibration_model),
      "The calibration model for quality filtering variants")
@@ -510,7 +510,8 @@ finalize_starling_options(const prog_info& pinfo,
         last_fs=fs;
     }
 
-    if(opt.indel_scoring_models.length()>2){
+    if (opt.indel_scoring_models.length()>2)
+    {
 //        log_os << "I got a model";
         scoring_models::Instance()->load_models(opt.indel_scoring_models);
     }

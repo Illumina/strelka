@@ -460,10 +460,10 @@ calculate_result_set(const blt_float_t* lhood,
 void
 pprob_digt_caller::
 position_snp_call_pprob_digt(
-        const blt_options& opt,
-        const extended_pos_info& epi,
-        diploid_genotype& dgt,
-        const bool is_always_test) const
+    const blt_options& opt,
+    const extended_pos_info& epi,
+    diploid_genotype& dgt,
+    const bool is_always_test) const
 {
     const snp_pos_info& pi(epi.pi);
 

@@ -278,8 +278,8 @@ void c_model::score_instance(featuremap features, site_info& si)
             var_case = CALIBRATION_MODEL::HetAltSNP;
         else
 #endif
-        if (si.is_het())
-            var_case = CALIBRATION_MODEL::HetSNP;
+            if (si.is_het())
+                var_case = CALIBRATION_MODEL::HetSNP;
 
 #ifdef DEBUG_MODEL
         //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
@@ -305,10 +305,10 @@ void c_model::score_instance(featuremap features, indel_info& ii)
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
         if (ii.iri.it==INDEL::DELETE)
         {
-          if (ii.is_hetalt())
-            var_case = CALIBRATION_MODEL::HetAltDel;
-          else if (! ii.is_het())
-            var_case = CALIBRATION_MODEL::HomDel;
+            if (ii.is_hetalt())
+                var_case = CALIBRATION_MODEL::HetAltDel;
+            else if (! ii.is_het())
+                var_case = CALIBRATION_MODEL::HomDel;
         }
         else if (ii.iri.it==INDEL::INSERT)
         {
@@ -322,9 +322,9 @@ void c_model::score_instance(featuremap features, indel_info& ii)
 
         else
         {
-          // block substitutions???
-          this->do_rule_model(this->pars["indel"]["cutoff"],ii);
-          return;
+            // block substitutions???
+            this->do_rule_model(this->pars["indel"]["cutoff"],ii);
+            return;
         }
         ii.Qscore = logistic_score(var_case, features);
         this->apply_qscore_filters(ii,static_cast<int>(this->pars[CALIBRATION_MODEL::get_label(var_case)]["PassThreshold"]["Q"]),var_case);

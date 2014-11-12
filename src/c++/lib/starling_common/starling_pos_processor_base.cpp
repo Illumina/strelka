@@ -419,8 +419,8 @@ starling_pos_processor_base(const starling_options& client_opt,
     if (_client_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
-                client_opt,client_dopt,ref,_nocompress_regions,client_io.gvcf_osptr(0),
-                sample(0).read_buff,get_largest_read_size()));
+                          client_opt,client_dopt,ref,_nocompress_regions,client_io.gvcf_osptr(0),
+                          sample(0).read_buff,get_largest_read_size()));
     }
 
 #ifdef HAVE_FISHER_EXACT_TEST
@@ -1335,10 +1335,10 @@ process_pos_indel_single_sample(const pos_t pos,
             }
 
             _client_dopt.incaller().starling_indel_call_pprob_digt(
-                    _client_opt,_client_dopt,
-                    sif.sample_opt,
-                    indel_error_prob,ref_error_prob,
-                    ik,id,is_use_alt_indel,dindel);
+                _client_opt,_client_dopt,
+                sif.sample_opt,
+                indel_error_prob,ref_error_prob,
+                ik,id,is_use_alt_indel,dindel);
 
             bool is_indel(false);
             if ((dindel.is_indel) || (dindel.is_forced_output))
@@ -1947,7 +1947,7 @@ process_pos_snp_single_sample_impl(
     if (_client_opt.is_bsnp_diploid())
     {
         _client_dopt.pdcaller().position_snp_call_pprob_digt(
-                _client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
+            _client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
     }
 #if 0
     if (_client_opt.is_bsnp_monoploid)

@@ -273,8 +273,10 @@ struct indel_info
 
             switch (imod.max_gt)
             {
-            case NOINDEL: return "0";
-            case HOM: return "1";
+            case NOINDEL:
+                return "0";
+            case HOM:
+                return "1";
             default:
                 assert(false && "Invalid indel genotype index");
                 return "X";

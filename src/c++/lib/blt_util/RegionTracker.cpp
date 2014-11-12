@@ -67,7 +67,7 @@ void
 RegionTracker::
 removeToPos(const unsigned pos)
 {
-    for(auto iter(_regions.begin()) ; iter != _regions.end() ; ++iter)
+    for (auto iter(_regions.begin()) ; iter != _regions.end() ; ++iter)
     {
         if (iter->end_pos() > (pos+1)) return;
         _regions.erase(iter);
