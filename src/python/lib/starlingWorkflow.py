@@ -130,6 +130,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--calibration-model-file',self.params.vqsrModel])
 #    segCmd.extend(['--scoring-models', self.params.scoringModelFile])
 
+    segCmd.extend(['--do-short-range-phasing'])
+
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",bamPath])
 
@@ -327,7 +329,7 @@ class StarlingWorkflow(WorkflowRunner) :
         # format other:
         self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
         self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
-        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipDepthFilters)
+        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipIndelErrorModel)
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
