@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -78,6 +77,8 @@ test(const site_info& si) const
 
     // filters must match:
     if (record.smod.filters != si.smod.filters) return false;
+
+    if (record.is_nonref() || si.is_nonref()) return false;
 
     if (0!=strcmp(record.get_gt(),si.get_gt())) return false;
 

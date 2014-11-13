@@ -191,7 +191,7 @@ skip_to_pos(const pos_t target_pos)
         // then extend the block size of that one site as required:
         if (0 != _indel_buffer_size) continue;
 
-        if (_gvcf_comp.is_range_compressable(known_pos_range2(_head_pos,target_pos)))
+        if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
         {
             assert(_block.count!=0);
             _block.count += (target_pos-_head_pos);
