@@ -146,11 +146,13 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.isWriteRealignedBam :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr)])
 
-    if self.params.indelCandidates is not None :
-        segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
-
-    if self.params.forcedGTIndels is not None :
-        segCmd.extend(['--force-output-vcf', self.params.forcedGTIndels])
+    def addListCmdOption(optList,arg) :
+        if optList is None : return
+        for val in optList :
+            segCmd.extend([arg, val])
+    
+    addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
     if self.params.noCompressBed is not None :
         segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
