@@ -178,7 +178,7 @@ get_starling_shared_option_parser(starling_options& opt)
     ploidy_opt.add_options()
     ("ploidy-region-bed",
      po::value(&opt.ploidy_region_bedfile),
-     "Specify bed file describing ploidy of regions. Ploidy must be in 4th field. Any value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
+     "Specify bed file describing ploidy of regions. Ploidy value is read from the 5th 'score' field. Any value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
      ;
 
     po::options_description window_opt("window-options");

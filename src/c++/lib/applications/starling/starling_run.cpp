@@ -37,7 +37,7 @@
 
 
 
-/// TODO: tmp hackin -- put this somewhere else!!
+/// TODO: tmp hack -- put this somewhere else!!
 #include "blt_util/parse_util.hh"
 
 #include "boost/optional.hpp"
@@ -56,7 +56,7 @@ parsePloidyFromBed(const char* line)
         if (*line=='\0' || *line=='\n') return result;
         if (*line=='\t') tabcount++;
         line++;
-        if (tabcount>=3) break;
+        if (tabcount>=4) break;
     }
 
     const char* s(line);

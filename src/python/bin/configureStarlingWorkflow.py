@@ -48,7 +48,7 @@ You must specify a BAM file.
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
                          help="Sample BAM file. [required] (no default)")
         group.add_option("--ploidy", type="string", dest="ploidyBed", metavar="FILE",
-                         help="Provide ploidy bed file. The bed records should provide either 1 or 0 in column 4 to "
+                         help="Provide ploidy bed file. The bed records should provide either 1 or 0 in the 5th 'score' column to "
                          "indicate haploid or deleted status respectively. File must be tabix indexed. (no default)")
         group.add_option("--noCompress", type="string", dest="noCompressBed", metavar="FILE",
                          help="Provide bed file of regions where gVCF block compress is disallowed. File must be tabix indexed. (no default)")
