@@ -36,26 +36,26 @@ increment_path(const path_t& path,
 {
     const path_segment& ps(path[path_index]);
 
-    if       (ps.type == MATCH)
+    if       ((ps.type == MATCH) || (ps.type == SEQ_MATCH) || (ps.type == SEQ_MISMATCH))
     {
         read_offset += ps.length;
         ref_offset += ps.length;
     }
-    else if (ps.type == DELETE || ps.type == SKIP)
+    else if ((ps.type == DELETE) || (ps.type == SKIP))
     {
         ref_offset += ps.length;
     }
-    else if (ps.type == INSERT || ps.type == SOFT_CLIP)
+    else if ((ps.type == INSERT) || (ps.type == SOFT_CLIP))
     {
         read_offset += ps.length;
     }
-    else if (ps.type == HARD_CLIP || ps.type == PAD)
+    else if ((ps.type == HARD_CLIP) || (ps.type == PAD))
     {
         // do nothing
     }
     else
     {
-        assert(0); // can't handle other CIGAR types yet
+        assert(false && "Unexpected alignment type"); // can't handle other CIGAR types yet
     }
 
     path_index++;
@@ -88,7 +88,7 @@ struct swap_info
             }
             else
             {
-                assert(0);
+                assert(false && "Unexpected alignment type");
             }
         }
         n_seg -= path_index;
