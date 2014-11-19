@@ -26,6 +26,7 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "htsapi/bam_streamer.hh"
+#include "htsapi/bed_streamer.hh"
 #include "htsapi/vcf_streamer.hh"
 #include "starling_common/starling_input_stream_handler.hh"
 #include "starling_common/starling_ref_seq.hh"
@@ -33,6 +34,37 @@
 #include "starling_common/starling_shared.hh"
 
 #include <sstream>
+
+
+
+/// TODO: tmp hack -- put this somewhere else!!
+#include "blt_util/parse_util.hh"
+
+#include "boost/optional.hpp"
+
+static
+boost::optional<int>
+parsePloidyFromBed(const char* line)
+{
+    boost::optional<int> result;
+
+    if (line == nullptr) return result;
+
+    unsigned tabcount(0);
+    while (true)
+    {
+        if (*line=='\0' || *line=='\n') return result;
+        if (*line=='\t') tabcount++;
+        line++;
+        if (tabcount>=4) break;
+    }
+
+    const char* s(line);
+    int val = illumina::blt_util::parse_int(s);
+    if (s != line) result.reset(val);
+
+    return result;
+}
 
 
 
@@ -89,6 +121,22 @@ starling_run(
         sdata.register_forced_output(*(foutput_stream.back()));
     }
 
+    std::unique_ptr<bed_streamer> ploidy_regions;
+    if (! opt.ploidy_region_bedfile.empty())
+    {
+        ploidy_regions.reset(new bed_streamer(opt.ploidy_region_bedfile.c_str(),
+                                              bam_region.c_str()));
+        sdata.register_ploidy_regions(*ploidy_regions);
+    }
+
+    std::unique_ptr<bed_streamer> nocompress_regions;
+    if (! opt.gvcf.nocompress_region_bedfile.empty())
+    {
+        nocompress_regions.reset(new bed_streamer(opt.gvcf.nocompress_region_bedfile.c_str(),
+                                                  bam_region.c_str()));
+        sdata.register_nocompress_regions(*nocompress_regions);
+    }
+
     starling_input_stream_handler sinput(sdata);
 
     while (sinput.next())
@@ -139,6 +187,28 @@ starling_run(
             {
                 sppr.insert_forced_output_pos(vcf_variant.pos-1);
             }
+        }
+        else if (current.itype == INPUT_TYPE::PLOIDY_REGION)
+        {
+            const bed_record& bedr(*(ploidy_regions->get_record_ptr()));
+            known_pos_range2 ploidyRange(bedr.begin,bedr.end);
+            const auto ploidy = parsePloidyFromBed(bedr.line);
+            if (ploidy && ((*ploidy == 0) || (*ploidy == 1)))
+            {
+                const bool retval(sppr.insert_ploidy_region(ploidyRange,*ploidy));
+                if (! retval)
+                {
+                    std::ostringstream oss;
+                    oss << "ERROR: ploidy bedfile record conflicts with prior record. Bedfile line: '" << bedr.line << "'\n";
+                    throw blt_exception(oss.str().c_str());
+                }
+            }
+        }
+        else if (current.itype == INPUT_TYPE::NOCOMPRESS_REGION)
+        {
+            const bed_record& bedr(*(nocompress_regions->get_record_ptr()));
+            known_pos_range2 range(bedr.begin,bedr.end);
+            sppr.insert_nocompress_region(range);
         }
         else
         {

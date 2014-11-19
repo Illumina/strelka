@@ -17,20 +17,22 @@
 
 #include "blt_util/RegionTracker.hh"
 
-#include <iostream>
-
 
 
 bool
 RegionTracker::
-isInRegion(const unsigned pos) const
+isInRegionImpl(
+    const pos_t beginPos,
+    const pos_t endPos) const
 {
-    // 1. find first region where endPos > pos
-    const auto posIter(_regions.upper_bound(known_pos_range2(pos,pos)));
+    if (_regions.empty()) return false;
+
+    // 1. find first region where endPos > beginPos
+    const auto posIter(_regions.upper_bound(known_pos_range2(beginPos,beginPos)));
     if (posIter == _regions.end()) return false;
 
     // 2. conclusion based on non-overlapping region constraint
-    return (posIter->begin_pos() <= pos);
+    return (posIter->begin_pos() < endPos);
 }
 
 
@@ -65,7 +67,7 @@ void
 RegionTracker::
 removeToPos(const unsigned pos)
 {
-    for(auto iter(_regions.begin()) ; iter != _regions.end() ; ++iter)
+    for (auto iter(_regions.begin()) ; iter != _regions.end() ; ++iter)
     {
         if (iter->end_pos() > (pos+1)) return;
         _regions.erase(iter);

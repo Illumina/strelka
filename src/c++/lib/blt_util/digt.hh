@@ -220,7 +220,7 @@ get_gt_with_alleles(
     assert(base1 < N_BASE);
     assert(base2 < N_BASE);
 
-    if(base1==base2) return base1;
+    if (base1==base2) return base1;
 
     for (unsigned gt(N_BASE); gt<SIZE; ++gt)
     {

@@ -22,7 +22,7 @@ for ddir in doc more status; do
 done
 
 # remove unused headers for larger sub-libraries:
-for f in asio chrono function_types geometry gil graph interprocess phoenix polygon proto python signals signals2 spirit typeof wave; do
+for f in asio chrono function_types geometry gil graph interprocess phoenix polygon proto python signals signals2 typeof wave; do
     rm -rf $subset_name/boost/$f*
 done
 

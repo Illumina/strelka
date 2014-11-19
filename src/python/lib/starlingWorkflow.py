@@ -128,7 +128,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--calibration-model-file',self.params.vqsrModel])
-    segCmd.extend(['--scoring-models', self.params.scoringModelFile])
+#    segCmd.extend(['--scoring-models', self.params.scoringModelFile])
+
+    segCmd.extend(['--do-short-range-phasing'])
 
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",bamPath])
@@ -141,20 +143,22 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if not self.params.isSkipDepthFilters :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
 
-    if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
-        segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
-
     if self.params.isWriteRealignedBam :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr)])
 
-    if self.params.indelCandidates is not None :
-        segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
+    def addListCmdOption(optList,arg) :
+        if optList is None : return
+        for val in optList :
+            segCmd.extend([arg, val])
+    
+    addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
-    if self.params.forcedGTIndels is not None :
-        segCmd.extend(['--force-output-vcf', self.params.forcedGTIndels])
+    if self.params.noCompressBed is not None :
+        segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
 
-    if self.params.minorAllele is not None :
-        segCmd.extend(['--minor-allele-bed-file', self.params.minorAllele])
+    if self.params.ploidyBed is not None :
+        segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
 
     if self.params.extraStarlingArguments is not None :
         for arg in self.params.extraStarlingArguments.strip().split() :
@@ -330,7 +334,7 @@ class StarlingWorkflow(WorkflowRunner) :
         # format other:
         self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
         self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
-        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipDepthFilters)
+        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipIndelErrorModel)
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
@@ -385,6 +389,6 @@ class StarlingWorkflow(WorkflowRunner) :
         if not self.params.isSkipDepthFilters :
             callPreReqs |= runDepth(self)
         if not self.params.isSkipIndelErrorModel :
-            callPreReqs |= runIndelModel(self)      
+            callPreReqs |= runIndelModel(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
 

@@ -1,3 +1,5 @@
+- STARKA-158 generalize gvcf nocompress to support regions/compression/tabix index
+- STARKA-155 add ploidy specification via bedfile (supporting haploid and deleted states only_
 - STARKA-151 add VQSR model trained using RefError*100 and median of chromosome means for depth normalization
 - STARKA-152 add ref indel error multiplier to reduce undercalling of homozygous indels
 - STARKA-148 add support for hetalt ins and del VQSR models to starling
@@ -12,6 +14,7 @@
 - STARKA-138 add read position features to strelka SNV output
 - STARKA-136 add mapping info values to strelka SNV output
 v2.1.5
+- Improve VQSR depth normalization
 - Add CRAM input support (still experimental pending samtools idxstats
 capability for CRAM)
 v2.1.4

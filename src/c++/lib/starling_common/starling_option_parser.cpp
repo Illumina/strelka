@@ -26,7 +26,7 @@
 //#define DEBUG_OPTIONPARSER
 
 #ifdef DEBUG_OPTIONPARSER
-    #include "blt_util/log.hh"
+#include "blt_util/log.hh"
 #endif
 
 
@@ -110,8 +110,8 @@ get_starling_shared_option_parser(starling_options& opt)
      "Report metrics used for VQSR: BaseQRankSum, ReadPosRankSum, MQRankSum and MQ.")
     ("gvcf-compute-calibration-features", po::value(&opt.is_compute_calibration_features)->zero_tokens(),
      "Output all features used for calibration model training, development only.")
-    ("minor-allele-bed-file",  po::value(&opt.minor_allele_bed)->default_value(""),
-     "Bed file with sites that should not be block-compressed if hom-ref.")
+    ("nocompress-bed",  po::value(&opt.gvcf.nocompress_region_bedfile),
+     "Bed file with sites that should not be block-compressed in gVCF (must be bgzip compressed and tabix indexed).")
     ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("new"),
      "Choose indel error model to use, available option old,new, new_stratified (development option only)")
     ("indel-ref-error-factor",  po::value(&opt.indel_ref_error_factor)->default_value(opt.indel_ref_error_factor),
@@ -119,9 +119,9 @@ get_starling_shared_option_parser(starling_options& opt)
 
 
     ("do-short-range-phasing", po::value(&opt.do_codon_phasing)->zero_tokens(),
-     "Do short-range SNP phasing, default window phasing window considered is 3.")
+     "Enable short-range SNP phasing")
     ("phasing-window", po::value(&opt.phasing_window)->default_value(opt.phasing_window),
-     "The maximum window to consider for short-range phasing (default 3).")
+     "The maximum window to consider for short-range phasing")
 
 
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
@@ -174,10 +174,17 @@ get_starling_shared_option_parser(starling_options& opt)
     ("upstream-oligo-size", po::value(&opt.upstream_oligo_size),
      "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.");
 
+    po::options_description ploidy_opt("ploidy-options");
+    ploidy_opt.add_options()
+    ("ploidy-region-bed", po::value(&opt.ploidy_region_bedfile),
+     "Specify bed file describing ploidy of regions. Ploidy value is read from the 5th 'score' field. Any value besides 1 and 0 are ignored at present. (must be bgzip compressed and tabix indexed)")
+    ;
+
     po::options_description window_opt("window-options");
     window_opt.add_options()
     ("variant-window-flank-file", po::value(&opt.variant_windows)->multitoken(),
-     "Print out regional average basecall statistics at variant sites within a window of the variant call. Must provide arguments for window flank size and output file. Option can be specified multiple times. (example: '--variant-window-flank-file 10 window10.txt')");
+     "Print out regional average basecall statistics at variant sites within a window of the variant call. Must provide arguments for window flank size and output file. Option can be specified multiple times. (example: '--variant-window-flank-file 10 window10.txt')")
+    ;
 
     po::options_description compat_opt("compatibility-options");
     compat_opt.add_options()
@@ -199,8 +206,8 @@ get_starling_shared_option_parser(starling_options& opt)
     ("calibration-model-file", po::value(&opt.calibration_models_filename),
      "File containing calibration model parameters")
 
-     ("indel-scoring-models", po::value(&opt.indel_scoring_models),
-      "DEBUG: Adaptive model option.")
+    ("indel-scoring-models", po::value(&opt.indel_scoring_models),
+     "DEBUG: Adaptive model option.")
 
     ("scoring-model", po::value(&opt.calibration_model),
      "The calibration model for quality filtering variants")
@@ -210,15 +217,18 @@ get_starling_shared_option_parser(starling_options& opt)
 
     po::options_description new_opt("New options");
 
-    new_opt.add(geno_opt).add(gvcf_opt).add(hap_opt).add(blt_nonref_opt).add(realign_opt).add(indel_opt).add(window_opt).add(compat_opt).add(input_opt).add(other_opt);
+    new_opt.add(geno_opt).add(gvcf_opt).add(hap_opt).add(blt_nonref_opt);
+    new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt).add(window_opt);
+    new_opt.add(compat_opt).add(input_opt).add(other_opt);
 
     return new_opt;
 }
 
+
+
 po::options_description
 get_starling_option_parser(starling_options& opt)
 {
-
     po::options_description starling_parse_opt(get_starling_shared_option_parser(opt));
 
     po::options_description help_parse_opt("Help");
@@ -377,7 +387,6 @@ void
 finalize_legacy_starling_options(const prog_info& pinfo,
                                  starling_options& opt)
 {
-
     if (! opt.is_ref_set())
     {
         pinfo.usage("a reference sequence must be specified");
@@ -423,9 +432,6 @@ finalize_legacy_starling_options(const prog_info& pinfo,
     {
         pinfo.usage("Cannot specify -write-candidate-indels-only without providing candidate indel filename.");
     }
-
-
-
 }
 
 
@@ -472,7 +478,6 @@ finalize_starling_options(const prog_info& pinfo,
 
     if (opt.gvcf.block_percent_tol > 100)
     {
-//        log_os << "block tolerance: " << opt.gvcf.block_percent_tol << std::endl;
         pinfo.usage("block-percent-tol must be in range [0-100].");
     }
 
@@ -504,13 +509,11 @@ finalize_starling_options(const prog_info& pinfo,
         last_fs=fs;
     }
 
-    if(opt.indel_scoring_models.length()>2){
+    if (opt.indel_scoring_models.length()>2)
+    {
 //        log_os << "I got a model";
         scoring_models::Instance()->load_models(opt.indel_scoring_models);
     }
 
     finalize_legacy_starling_options(pinfo,opt);
 }
-
-
-

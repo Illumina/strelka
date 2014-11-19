@@ -22,6 +22,8 @@
 #include "starling_common/gvcf_locus_info.hh"
 
 
+/// manages compressed site record blocks output in the gVCF
+///
 struct gvcf_block_site_record
 {
     gvcf_block_site_record(const gvcf_options& opt)
@@ -40,11 +42,11 @@ struct gvcf_block_site_record
         record.smod.clear(); //clear filter as well
     }
 
-    // determine if the site could be joined to this block:
+    /// determine if the given site could be joined to this block:
     bool
     test(const site_info& si) const;
 
-    // add record to this block
+    /// add site to the current block
     void
     join(const site_info& si);
 
@@ -58,4 +60,3 @@ struct gvcf_block_site_record
     stream_stat block_dpf;
     //stream_stat _blockMQ;
 };
-

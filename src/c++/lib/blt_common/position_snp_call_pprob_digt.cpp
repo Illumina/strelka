@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#include "blt_common/position_snp_call_pprob_digt.hh"
 
+#include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_common/snp_util.hh"
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
@@ -41,11 +40,11 @@ const blt_float_t log_one_half(std::log(one_half));
 
 static
 void
-get_genomic_prior(const unsigned ref_gt,
-                  const blt_float_t theta,
-                  blt_float_t* const prior)
+get_genomic_prior(
+    const unsigned ref_gt,
+    const blt_float_t theta,
+    blt_float_t* const prior)
 {
-
     blt_float_t prior_sum(0.);
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
     {
@@ -65,13 +64,42 @@ get_genomic_prior(const unsigned ref_gt,
     prior[ref_gt] = (1.-prior_sum);
 }
 
+
+
 static
 void
-get_poly_prior(const unsigned ref_gt,
-               const blt_float_t theta,
-               blt_float_t* const prior)
+get_haploid_genomic_prior(
+    const unsigned ref_gt,
+    const blt_float_t theta,
+    blt_float_t* const prior)
 {
+    blt_float_t prior_sum(0.);
+    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+    {
+        if (gt==ref_gt) continue;
+        if (DIGT::is_het(gt))
+        {
+            prior[gt]=0;
+        }
+        else
+        {
+            prior[gt]=(theta*one_third);
+        }
+        prior_sum += prior[gt];
+    }
+    assert(prior_sum <= 1.);
+    prior[ref_gt] = (1.-prior_sum);
+}
 
+
+
+static
+void
+get_poly_prior(
+    const unsigned ref_gt,
+    const blt_float_t theta,
+    blt_float_t* const prior)
+{
     blt_float_t prior_sum(0.);
     const blt_float_t ctheta(1.-theta);
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
@@ -94,6 +122,35 @@ get_poly_prior(const unsigned ref_gt,
         else
         {
             prior[gt] = 0.25*one_third*ctheta;
+        }
+        prior_sum += prior[gt];
+    }
+    assert(std::abs(1.-prior_sum) < 0.0001);
+}
+
+
+
+static
+void
+get_haploid_poly_prior(
+    const unsigned ref_gt,
+    const blt_float_t /*theta*/,
+    blt_float_t* const prior)
+{
+    blt_float_t prior_sum(0.);
+    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+    {
+        if (gt==ref_gt)
+        {
+            prior[gt]=0.5;
+        }
+        else if (DIGT::is_het(gt))
+        {
+            prior[gt]=0;
+        }
+        else
+        {
+            prior[gt] = 0.5*one_third;
         }
         prior_sum += prior[gt];
     }
@@ -145,29 +202,16 @@ log_gt(blt_float_t* const x)
 
 
 
-pprob_digt_caller::
-pprob_digt_caller(const blt_float_t theta)
+static
+void
+finish_prior(
+    pprob_digt_caller::prior_group& prior)
 {
-
-    for (unsigned i(0); i<(N_BASE+1); ++i)
-    {
-        prior_set& ps(_lnprior[i]);
-        std::fill(ps.genome,ps.genome+DIGT::SIZE,0);
-        std::fill(ps.poly,ps.poly+DIGT::SIZE,0);
-    }
-
-    for (unsigned i(0); i<N_BASE; ++i)
-    {
-        prior_set& ps(_lnprior[i]);
-        get_genomic_prior(i,theta,ps.genome);
-        get_poly_prior(i,theta,ps.poly);
-    }
-
     // 'N' prior is the average:
-    prior_set& nps(_lnprior[N_BASE]);
+    auto& nps(prior[N_BASE]);
     for (unsigned i(0); i<N_BASE; ++i)
     {
-        prior_set& ps(_lnprior[i]);
+        auto& ps(prior[i]);
         sum_gt(nps.genome,ps.genome);
         sum_gt(nps.poly,ps.poly);
     }
@@ -177,10 +221,31 @@ pprob_digt_caller(const blt_float_t theta)
     // take logs:
     for (unsigned i(0); i<(N_BASE+1); ++i)
     {
-        prior_set& ps(_lnprior[i]);
+        auto& ps(prior[i]);
         log_gt(ps.genome);
         log_gt(ps.poly);
     }
+}
+
+
+
+pprob_digt_caller::
+pprob_digt_caller(
+    const blt_float_t theta)
+{
+    for (unsigned i(0); i<N_BASE; ++i)
+    {
+        prior_set& ps(_lnprior[i]);
+        get_genomic_prior(i,theta,ps.genome);
+        get_poly_prior(i,theta,ps.poly);
+
+        prior_set& psh(_lnprior_haploid[i]);
+        get_haploid_genomic_prior(i,theta,psh.genome);
+        get_haploid_poly_prior(i,theta,psh.poly);
+    }
+
+    finish_prior(_lnprior);
+    finish_prior(_lnprior_haploid);
 }
 
 
@@ -193,7 +258,6 @@ increment_het_ratio_lhood(const extended_pos_info& epi,
                           const bool is_strand_specific,
                           const bool is_ss_fwd)
 {
-
     const blt_float_t chet_ratio(1.-het_ratio);
 
     // multiply probs of alternate ratios into local likelihoods, then
@@ -318,7 +382,6 @@ void
 debug_dump_digt_lhood(const blt_float_t* lhood,
                       std::ostream& os)
 {
-
     blt_float_t pprob[DIGT::SIZE];
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
     {
@@ -345,7 +408,6 @@ calculate_result_set(const blt_float_t* lhood,
                      const unsigned ref_gt,
                      result_set& rs)
 {
-
     // mult by prior distro to get unnormalized pprob:
     //
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
@@ -397,12 +459,12 @@ calculate_result_set(const blt_float_t* lhood,
 ///
 void
 pprob_digt_caller::
-position_snp_call_pprob_digt(const blt_options& opt,
-                             const extended_pos_info& epi,
-                             diploid_genotype& dgt,
-                             const bool is_always_test) const
+position_snp_call_pprob_digt(
+    const blt_options& opt,
+    const extended_pos_info& epi,
+    diploid_genotype& dgt,
+    const bool is_always_test) const
 {
-
     const snp_pos_info& pi(epi.pi);
 
     if (pi.ref_base=='N') return;
@@ -415,15 +477,18 @@ position_snp_call_pprob_digt(const blt_options& opt,
         if (is_spi_allref(pi,dgt.ref_gt)) return;
     }
 
+    // don't spend time on the het bias model for haploid sites:
+    const bool is_het_bias((! dgt.is_haploid()) && opt.is_bsnp_diploid_het_bias);
+
     // get likelihood of each genotype
     blt_float_t lhood[DIGT::SIZE];
-    get_diploid_gt_lhood(opt,epi,opt.is_bsnp_diploid_het_bias,opt.bsnp_diploid_het_bias,lhood);
+    get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood);
 
     // get genomic site results:
-    calculate_result_set(lhood,lnprior_genomic(dgt.ref_gt),dgt.ref_gt,dgt.genome);
+    calculate_result_set(lhood,lnprior_genomic(dgt.ref_gt,dgt.is_haploid()),dgt.ref_gt,dgt.genome);
 
     // get polymorphic site results:
-    calculate_result_set(lhood,lnprior_polymorphic(dgt.ref_gt),dgt.ref_gt,dgt.poly);
+    calculate_result_set(lhood,lnprior_polymorphic(dgt.ref_gt,dgt.is_haploid()),dgt.ref_gt,dgt.poly);
 
     dgt.is_snp=(dgt.genome.snp_qphred != 0);
 
@@ -432,9 +497,9 @@ position_snp_call_pprob_digt(const blt_options& opt,
     if (is_compute_sb && dgt.is_snp)
     {
         blt_float_t lhood_fwd[DIGT::SIZE];
-        get_diploid_gt_lhood(opt,epi,opt.is_bsnp_diploid_het_bias,opt.bsnp_diploid_het_bias,lhood_fwd,true,true);
+        get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood_fwd,true,true);
         blt_float_t lhood_rev[DIGT::SIZE];
-        get_diploid_gt_lhood(opt,epi,opt.is_bsnp_diploid_het_bias,opt.bsnp_diploid_het_bias,lhood_rev,true,false);
+        get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood_rev,true,false);
 
         // If max_gt is equal to reference, then go ahead and use it
         // for consistency, even though this makes the SB value
@@ -446,10 +511,8 @@ position_snp_call_pprob_digt(const blt_options& opt,
 
 
 
-
 std::ostream& operator<<(std::ostream& os,const diploid_genotype& dgt)
 {
-
     const result_set& ge(dgt.genome);
     const result_set& po(dgt.poly);
 
@@ -471,7 +534,6 @@ write_diploid_genotype_allele(const blt_options& opt,
                               std::ostream& os,
                               const unsigned hpol)
 {
-
     const result_set& ge(dgt.genome);
     const result_set& po(dgt.poly);
 

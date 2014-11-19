@@ -147,9 +147,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segFiles.indel.append(tmpIndelPath)
     segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
 
-    if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
-        segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
-
     if self.params.isWriteCallableRegion :
         tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
         segFiles.callable.append(tmpCallablePath)
@@ -159,16 +156,14 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr, "normal")])
         segCmd.extend(["--tumor-realigned-read-file",self.paths.getTmpUnsortRealignBamPath(segStr, "tumor")])
 
-    if self.params.indelCandidates is not None :
-        segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
-
-    if self.params.forcedGTIndels is not None :
-        segCmd.extend(['--force-output-vcf', self.params.forcedGTIndels])
-
-    if self.params.noiseVcfList is not None :
-        for vcffile in self.params.noiseVcfList :
-            segCmd.extend(['--noise-vcf', vcffile])
-            
+    def addListCmdOption(optList,arg) :
+        if optList is None : return
+        for val in optList :
+            segCmd.extend([arg, val])
+    
+    addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
+    addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
 
     if self.params.extraStrelkaArguments is not None :
         for arg in self.params.extraStrelkaArguments.strip().split() :

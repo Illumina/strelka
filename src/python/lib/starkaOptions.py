@@ -23,7 +23,9 @@ scriptName=os.path.basename(__file__)
 sys.path.append(scriptDir)
 
 from configureOptions import ConfigureWorkflowOptions
-from configureUtil import assertOptionExists, joinFile, OptParseException, validateFixExistingDirArg, validateFixExistingFileArg
+from configureUtil import assertOptionExists, joinFile, OptParseException, \
+                          validateFixExistingDirArg, validateFixExistingFileArg, \
+                          checkOptionalTabixIndexedFile
 from workflowUtil import parseGenomeRegion
 
 
@@ -43,12 +45,19 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--referenceFasta",type="string",metavar="FILE",
                          help="samtools-indexed reference fasta file [required]")
-        group.add_option("--runDir", type="string",
+        group.add_option("--indelCandidates", type="string", dest="indelCandidatesList", metavar="FILE", action="append",
+                         help="Specify a vcf describing indel candidates. Candidates are always evaluated but only output"
+                              " if a variant genotype is likely."
+                              " File must be tabix indexed."
+                              " Option may be specified more than once, multiple inputs will be merged."
+                              " (default: None)")
+        group.add_option("--forcedGT", type="string", dest="forcedGTList", metavar="FILE", action="append",
+                         help="Specify a vcf describing indels which must be genotyped and output even if a variant genotype is unlikely."
+                              " File must be tabix indexed."
+                              " Option may be specified more than once, multiple inputs will be merged."
+                              " (default: None)")
+        group.add_option("--runDir", type="string",metavar="DIR",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
-        group.add_option("--indelCandidates", type="string", metavar="FILE",
-                         help="Specify a candidate indel vcf. File must be tabix indexed (default: None)")
-        group.add_option("--forcedGTIndels", type="string", metavar="FILE",
-                         help="Specify an indel vcf. File must be tabix indexed (default: None)")
 
     def addExtendedGroupOptions(self,group) :
         group.add_option("--scanSizeMb", type="int", metavar="scanSizeMb",
@@ -128,14 +137,13 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
             if not os.path.isfile(faiFile) :
                 raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
 
-        def checkOptionalVcf(vcfname,desc) :
-            if vcfname is None : return
-            tabixFile = vcfname + ".tbi"
-            if os.path.isfile(tabixFile) : return
-            raise OptParseException("Can't find expected %s index file: '%s'" % (desc,tabixFile))
-
-        checkOptionalVcf(options.indelCandidates,"candidate indel")
-        checkOptionalVcf(options.forcedGTIndels,"forced genotype vcf")
+        def checkTabixListOption(opt,label) :
+            if opt is None : return
+            for val in opt :
+                checkOptionalTabixIndexedFile(val,label)
+                    
+        checkTabixListOption(options.indelCandidatesList,"candidate indel vcf")
+        checkTabixListOption(options.forcedGTList,"forced genotype vcf")
 
         if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
             options.genomeRegionList = None

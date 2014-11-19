@@ -27,7 +27,7 @@ version="@STARKA_FULL_VERSION@"
 sys.path.append(workflowDir)
 
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException
+from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkOptionalTabixIndexedFile
 from makeRunScript import makeRunScript
 from starlingWorkflow import StarlingWorkflow
 from workflowUtil import ensureDir
@@ -40,15 +40,18 @@ class StarlingWorkflowOptions(StarkaWorkflowOptionsBase) :
         return """Version: %s
 
 This script configures the Starling small variant calling pipeline.
-You must specify a BAM or CRAM file.
+You must specify a BAM file.
 """ % (version)
 
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
-                         help="Sample BAM or CRAM file. [required] (no default)")
-        group.add_option("--minorAllele", type="string", metavar="FILE",
-                         help="Provide minor allele bed file. Must be tabix indexed. (no default)")
+                         help="Sample BAM file. [required] (no default)")
+        group.add_option("--ploidy", type="string", dest="ploidyBed", metavar="FILE",
+                         help="Provide ploidy bed file. The bed records should provide either 1 or 0 in the 5th 'score' column to "
+                         "indicate haploid or deleted status respectively. File must be tabix indexed. (no default)")
+        group.add_option("--noCompress", type="string", dest="noCompressBed", metavar="FILE",
+                         help="Provide bed file of regions where gVCF block compress is disallowed. File must be tabix indexed. (no default)")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
@@ -71,7 +74,8 @@ You must specify a BAM or CRAM file.
             'indel-ref-error-factor' : "100",
             'vqsrModel' : "QScoreHPDRE100",
             'vqsrModelFile' : joinFile(configDir,'model.json'),
-            'scoringModelFile' : joinFile(configDir,'indel_models.json')
+            'scoringModelFile' : joinFile(configDir,'indel_models.json'),
+            'isSkipIndelErrorModel' : True
             })
         return defaults
 
@@ -88,10 +92,8 @@ You must specify a BAM or CRAM file.
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
-        if options.minorAllele is not None :
-            alleleTabixFile = options.minorAllele + ".tbi"
-            if not os.path.isfile(alleleTabixFile) :
-                raise OptParseException("Can't find expected minor allele index file: '%s'" % (alleleTabixFile))
+        checkOptionalTabixIndexedFile(options.ploidyBed,"ploidy bed")
+        checkOptionalTabixIndexedFile(options.noCompressBed,"no-compress bed")
 
         bcheck = BamSetChecker()
         bcheck.appendBams(options.bamList,"Input")

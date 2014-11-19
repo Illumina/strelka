@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -79,11 +78,16 @@ test(const site_info& si) const
     // filters must match:
     if (record.smod.filters != si.smod.filters) return false;
 
+    if (record.is_nonref() || si.is_nonref()) return false;
+
     if (0!=strcmp(record.get_gt(),si.get_gt())) return false;
 
     // coverage states must match:
     if (record.smod.is_covered != si.smod.is_covered) return false;
     if (record.smod.is_used_covered != si.smod.is_used_covered) return false;
+
+    // ploidy must match
+    if (record.dgt.ploidy != si.dgt.ploidy) return false;
 
     // test blocking values:
     if (! is_new_value_blockable(si.smod.gqx,
