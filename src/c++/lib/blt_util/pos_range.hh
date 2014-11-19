@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -23,7 +22,8 @@
 #include <algorithm>
 #include <iosfwd>
 
-/// \brief number ranges which are potentially unbounded
+
+/// \brief integer ranges which are potentially unbounded
 ///
 /// Object handles representation, including intersection with positions
 /// and other ranges.
@@ -62,6 +62,14 @@ struct pos_range
     {
         end_pos=pos;
         is_end_pos=true;
+    }
+
+    void
+    set_range(const pos_t begin,
+              const pos_t end)
+    {
+        set_begin_pos(begin);
+        set_end_pos(end);
     }
 
     bool

@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include <stdint.h>
-
 #include <cassert>
+#include <cstdint>
 #include <iosfwd>
 #include <vector>
 

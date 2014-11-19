@@ -37,7 +37,7 @@ namespace common
 {
 
 /**
- ** \brief Virtual base class to all the exception classes in CASAVA.
+ ** \brief Virtual base class to all the exception classes
  **
  ** Use BOOST_THROW_EXCEPTION to get the contect info (file, function, line)
  ** at the throw site.
@@ -63,7 +63,7 @@ private:
     const std::string message_;
 };
 
-class IlluminaException: public std::exception, public ExceptionData
+class IlluminaException : public std::exception, public ExceptionData
 {
 public:
     IlluminaException(int errorNumber, const std::string& message) : ExceptionData(errorNumber, message) {}
@@ -72,6 +72,9 @@ private:
     IlluminaException& operator=(const IlluminaException&);
 };
 
+/**
+ * \brief Exception thrown when there are problems with the IO operations
+ */
 class IoException: public std::ios_base::failure, public ExceptionData
 {
 public:

@@ -111,7 +111,7 @@ private:
 /// assumes that information related to each position will be
 /// available in an approximately sequential fashion, where all
 /// position values submitted after position X will be greater than
-/// X-first_stage_buffer_size+1. A violation of this assumption will
+/// (X - first_stage_buffer_size + 1). A violation of this assumption will
 /// trigger a runtime error.
 ///
 /// range policy:
@@ -233,7 +233,7 @@ private:
     pos_t _min_pos;
     bool _is_first_pos_set;
 
-    const pos_range& _report_range;
+    const pos_range _report_range;
     pos_processor_base& _ppb;
 
     const stage_data::stage_pos_t* _stage_pos_ptr;

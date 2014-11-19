@@ -370,7 +370,7 @@ apath_append(
     }
     else
     {
-        apath.push_back(path_segment(seg_type,length));
+        apath.emplace_back(seg_type,length);
     }
 }
 
@@ -592,7 +592,7 @@ apath_clean_seqmatch(path_t& apath)
             }
             else
             {
-                apath2.push_back(path_segment(MATCH,ps.length));
+                apath2.emplace_back(MATCH,ps.length);
             }
             is_match=true;
         }
@@ -738,7 +738,7 @@ get_clip_len(const path_t& apath)
 bool
 is_soft_clipped(const path_t& apath)
 {
-    for (const auto& ps : apath)
+    for (const path_segment& ps : apath)
     {
         if (SOFT_CLIP == ps.type) return true;
     }
@@ -822,7 +822,7 @@ is_segment_swap_start(const path_t& apath,
 bool
 is_apath_floating(const path_t& apath)
 {
-    for (const auto& ps : apath)
+    for (const path_segment& ps : apath)
     {
         if (is_segment_align_match(ps.type)) return false;
     }
@@ -928,7 +928,7 @@ get_apath_invalid_type(const path_t& apath,
 bool
 is_apath_starling_invalid(const path_t& apath)
 {
-    for (const auto& ps : apath)
+    for (const path_segment& ps : apath)
     {
         if (ps.type==PAD) return true;
     }

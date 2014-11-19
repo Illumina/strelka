@@ -33,7 +33,6 @@ is_reject_binomial_p_exact(const double alpha,
                            const unsigned n_success,
                            const unsigned n_failure)
 {
-
     const unsigned n_trial(n_success+n_failure);
     const double obs_p((double)n_success/(double)n_trial);
 
@@ -58,7 +57,6 @@ is_reject_binomial_p_chi_sqr(const double alpha,
                              const unsigned n_success,
                              const unsigned n_failure)
 {
-
     assert((p>0.) && (p<1.));
 
     const unsigned n_trial(n_success+n_failure);
@@ -81,7 +79,6 @@ is_reject_binomial_p(const double alpha,
                      const unsigned n_success,
                      const unsigned n_failure)
 {
-
     static const unsigned exact_test_threshold(250);
 
     const unsigned n_trial(n_success+n_failure);
