@@ -48,7 +48,7 @@ bool calibration_models::is_current_logistic() const
 {
     if (this->is_default_model)
         return false;
-    return this->get_model(this->model_name).is_logitic_model();
+    return this->get_model(this->model_name).is_logistic_model();
 }
 
 
@@ -56,8 +56,8 @@ void calibration_models::clasify_site(site_info& si)
 {
     if (si.dgt.is_snp && !this->is_default_model)
     {
-        featuremap features = si.get_qscore_features(this->chr_median);     // create site value feature dict
         c_model myModel = this->get_model(this->model_name);
+        featuremap features = si.get_qscore_features(myModel.normal_depth());     // create site value feature dict
         myModel.score_instance(features,si);
     }
     else
@@ -71,8 +71,8 @@ void calibration_models::clasify_site(indel_info& ii)
 {
     if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && !this->is_default_model)
     {
-        featuremap features = ii.get_qscore_features(this->chr_median);
         c_model myModel = this->get_model(this->model_name);
+        featuremap features = ii.get_qscore_features(myModel.normal_depth());
         myModel.score_instance(features,ii);
     }
     else

@@ -68,7 +68,8 @@ You must specify a BAM or CRAM file.
             'runDir' : 'StarlingWorkflow',
             'bgcatBin' : joinFile(libexecDir,"bgzf_cat"),
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
-            'vqsrModel' : "QScoreHpolmodel",
+            'indel-ref-error-factor' : "100",
+            'vqsrModel' : "QScoreHPDRE100",
             'vqsrModelFile' : joinFile(configDir,'model.json'),
             'scoringModelFile' : joinFile(configDir,'indel_models.json')
             })

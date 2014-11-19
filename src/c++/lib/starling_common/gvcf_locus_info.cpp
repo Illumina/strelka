@@ -50,7 +50,7 @@ write_filters(std::ostream& os) const
 }
 
 
-std::map<std::string, double> indel_info::get_qscore_features(int chrom_depth)
+std::map<std::string, double> indel_info::get_qscore_features(double chrom_depth)
 {
     this->calc_vqsr_metrics();
 
@@ -68,9 +68,9 @@ std::map<std::string, double> indel_info::get_qscore_features(int chrom_depth)
     //F_DPI   F_GQ    F_GQX   CLASS   RULEN1  REFREP1 IDREP1  AD0     AD1
 
     std::map<std::string, double> res;
-    res["QUAL"]             = dindel.indel_qphred;
-    res["F_GQX"]            = imod.gqx;
-    res["F_GQ"]             = imod.gq;
+    res["QUAL"]             = dindel.indel_qphred /(1.*chrom_depth);
+    res["F_GQX"]            = imod.gqx /(1.*chrom_depth);
+    res["F_GQ"]             = imod.gq /(1.*chrom_depth); // N.B. Not used at time of writing; normalization uncertain
     res["REFREP1"]          = iri.ref_repeat_count;
 
     //res["LENGTH"]           = ik.length;
@@ -88,6 +88,7 @@ std::map<std::string, double> indel_info::get_qscore_features(int chrom_depth)
     ref_count = std::max(ref_count,isri.n_q30_ref_reads);
     res["AD0"]              = ref_count/(1.0*chrom_depth);
     res["AD1"]              = isri.n_q30_indel_reads/(1.0*chrom_depth);
+    res["AD2"]              = isri.n_q30_alt_reads/(1.0*chrom_depth);
     res["F_DPI"]            = isri.depth/(1.0*chrom_depth);
 //    res["MQ"]               = MQ;
 //    res["ReadPosRankSum"]   = ReadPosRankSum;
@@ -106,13 +107,13 @@ void indel_info::calc_vqsr_metrics()
 }
 
 
-std::map<std::string, double> site_info::get_qscore_features(int chrom_depth)
+std::map<std::string, double> site_info::get_qscore_features(double chrom_depth)
 {
     std::map<std::string, double> res;
 
-    res["QUAL"]               = dgt.genome.snp_qphred;;
-    res["F_GQX"]              = smod.gqx;
-    res["F_GQ"]               = smod.gq;
+    res["QUAL"]               = dgt.genome.snp_qphred / (1.*chrom_depth);
+    res["F_GQX"]              = smod.gqx / (1.*chrom_depth);
+    res["F_GQ"]               = smod.gq / (1.*chrom_depth);
     res["I_SNVSB"]            = dgt.sb;
     res["I_SNVHPOL"]          = hpol;
 

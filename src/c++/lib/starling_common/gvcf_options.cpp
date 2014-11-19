@@ -51,6 +51,8 @@ gvcf_deriv_options(
             throw blt_exception(oss.str().c_str());
         }
         max_depth=(cdi->second*opt.max_depth_factor);
+        norm_depth=(cdi->second);
         assert(max_depth>=0.);
+        assert(norm_depth>=0.);
     }
 }

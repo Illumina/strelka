@@ -305,7 +305,7 @@ struct indel_info
 
     void calc_vqsr_metrics(); //calculate the final VQSR metrics from the indel_key data
 
-    std::map<std::string, double> get_qscore_features(int chrom_depth);
+    std::map<std::string, double> get_qscore_features(double chrom_depth);
 
     pos_t pos;
     indel_key ik;
@@ -368,7 +368,7 @@ struct site_info
         }
     }
 
-    std::map<std::string, double> get_qscore_features(int chrom_depth);
+    std::map<std::string, double> get_qscore_features(double chrom_depth);
 
     bool
     is_het() const

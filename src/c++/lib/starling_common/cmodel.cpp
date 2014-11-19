@@ -261,7 +261,7 @@ int c_model::get_var_threshold(CALIBRATION_MODEL::var_case& my_case)
     return this->pars[CALIBRATION_MODEL::get_label(my_case)]["PassThreshold"]["Q"];
 }
 
-bool c_model::is_logitic_model() const
+bool c_model::is_logistic_model() const
 {
     return this->model_type=="LOGISTIC";
 }
@@ -337,3 +337,6 @@ void c_model::score_instance(featuremap features, indel_info& ii)
         this->do_rule_model(this->pars["indel"]["cutoff"],ii);
     }
 }
+
+// give the normal depth for this model; used to depth-normalize various features in logistic model
+double c_model::normal_depth() const { return this->dopt.norm_depth; }
