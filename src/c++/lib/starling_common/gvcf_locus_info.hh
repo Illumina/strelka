@@ -36,6 +36,7 @@ enum index_t
 {
     IndelConflict,
     SiteConflict,
+    PloidyConflict,
     LowGQX,
     LowQscoreHetSNP,
     LowQscoreHomSNP,
@@ -97,9 +98,11 @@ get_label(const unsigned idx)
         return "IndelConflict";
     case SiteConflict:
         return "SiteConflict";
+    case PloidyConflict:
+        return "PLOIDY_CONFLICT";
     default:
-        assert(0);
-        return NULL;
+        assert(false && "Unknown VCF filter value");
+        return nullptr;
     }
 }
 }
@@ -157,6 +160,8 @@ struct indel_modifiers : public shared_modifiers
     ALIGNPATH::path_t cigar;
 
     bool is_overlap;
+
+    /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
     std::vector<unsigned> ploidy;
 };
 
@@ -186,8 +191,8 @@ get_label(const unsigned idx)
     case UNKNOWN:
         return ".";
     default:
-        assert(0);
-        return NULL;
+        assert(false && "Unknown site GT value");
+        return nullptr;
     }
 }
 }
@@ -262,6 +267,21 @@ struct indel_info
         {
             return "1/2";
         }
+        else if (dindel.is_haploid())
+        {
+            using namespace STAR_DIINDEL;
+
+            switch (imod.max_gt)
+            {
+            case NOINDEL:
+                return "0";
+            case HOM:
+                return "1";
+            default:
+                assert(false && "Invalid indel genotype index");
+                return "X";
+            }
+        }
         return STAR_DIINDEL::get_gt_label(imod.max_gt);
     }
 
@@ -281,6 +301,8 @@ struct indel_info
     unsigned
     get_ploidy(const unsigned offset)
     {
+        if (dindel.is_noploid()) return 0;
+
         if (! imod.is_overlap)
         {
             using namespace STAR_DIINDEL;
@@ -291,7 +313,7 @@ struct indel_info
             case HET:
                 return 1;
             case NOINDEL:
-                return 2;
+                return (dindel.is_haploid() ? 1 : 2);
             }
             assert(0);
         }
@@ -385,17 +407,22 @@ struct site_info
         return DIGT::is_het(print_gt) && ref != DIGT::label(print_gt)[0] && ref != DIGT::label(print_gt)[1];
     }
 
+    bool
+    is_nonref() const
+    {
+        return (smod.max_gt != dgt.ref_gt);
+    }
 
     bool
     is_deletion() const
     {
-        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (dgt.ref_gt != smod.max_gt));
+        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
     }
 
     bool
     is_qual() const
     {
-        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (dgt.ref_gt != smod.max_gt));
+        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
     }
 
     pos_t pos = 0;

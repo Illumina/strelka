@@ -39,20 +39,20 @@ set_noise_from_vcf(
             {
                 sn.total++;
                 const char* p2(p+1);
-                if(*p2=='.')
+                if (*p2=='.')
                 {
                     ++p;
                     continue;
                 }
 
                 sn.noise++;
-                while(true)
+                while (true)
                 {
                     if (*p2=='\0' || *p2=='\n' || *p2=='\t') break;
                     if (*p2==':')
                     {
                         const char* p3(p2+1);
-                        while(true)
+                        while (true)
                         {
                             if (*p3=='\0' || *p3=='\n' || *p3=='\t' || *p3==':') break;
                             if (*p3==',')

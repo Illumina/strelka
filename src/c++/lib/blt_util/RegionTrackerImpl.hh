@@ -24,11 +24,13 @@ boost::optional<T>
 RegionPayloadTracker<T>::
 isPayloadInRegion(const unsigned pos) const
 {
+    boost::optional<T> result;
+    if (_regions.empty()) return result;
+
     // 1. find first region where endPos > pos
     const auto posIter(_regions.upper_bound(known_pos_range2(pos,pos)));
 
     // 2. conclusion based on non-overlapping region constraint
-    boost::optional<T> result;
     if ((posIter != _regions.end()) && (posIter->first.begin_pos() <= pos))
     {
         result.reset(posIter->second);
@@ -60,7 +62,7 @@ addRegion(
                 continue;
             }
         }
-        if(startOlap->first.begin_pos() <= (range.begin_pos()-1))
+        if (startOlap->first.begin_pos() <= (range.begin_pos()-1))
         {
             // start intersects range:
             range.set_begin_pos(startOlap->first.begin_pos());
@@ -91,7 +93,7 @@ addRegion(
     }
 
     // check for overlap conflicts:
-    for(auto iter(startOlap); iter != endOlap; ++iter)
+    for (auto iter(startOlap); iter != endOlap; ++iter)
     {
         if (iter->second != payload) return false;
     }
@@ -108,7 +110,7 @@ void
 RegionPayloadTracker<T>::
 removeToPos(const unsigned pos)
 {
-    for(auto iter(_regions.begin()) ; iter != _regions.end() ; ++iter)
+    for (auto iter(_regions.begin()) ; iter != _regions.end() ; ++iter)
     {
         if (iter->first.end_pos() > (pos+1)) return;
         _regions.erase(iter);

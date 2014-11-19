@@ -64,10 +64,10 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         self.configScriptDir=scriptDir
         defaults=StarkaWorkflowOptionsBase.getOptionDefaults(self)
-        
+
         configDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_CONFIGDIR@"))
         assert os.path.isdir(configDir)
-        
+
         defaults.update({
             'runDir' : 'StrelkaWorkflow',
             "minTier2Mapq" : 5,
@@ -82,7 +82,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.normalBamList,"normal sample")
         groomBamList(options.tumorBamList, "tumor sample")
-        
+
         if options.noiseVcfList is not None :
             for vcfname in options.noiseVcfList :
                 tabixFile = vcfname + ".tbi"

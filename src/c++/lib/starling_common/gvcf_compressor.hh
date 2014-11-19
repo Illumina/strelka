@@ -19,25 +19,57 @@
 
 #pragma once
 
-#include <map>
 #include "starling_common/gvcf_locus_info.hh"
 #include "blt_common/blt_shared.hh"
+#include "blt_util/RegionTracker.hh"
 
 
-typedef std::map<int, bool> posmap;
-typedef std::map<std::string,posmap> chrposmap;
-class gvcf_compressor
+/// manage gVCF non-reference block compressability criteria
+struct gvcf_compressor
 {
-public:
-    gvcf_compressor();
-    void read_bed(const std::string& input_file, const std::string& chrom);
-    bool is_minor_allele_site(const int pos); //determine if the reference is the minor allele
-    bool is_site_compressable(const gvcf_options& opt, const site_info& si); //determine if a site should be added to current block or if the block should be written out
-    //determine the maximum no-call range that can be compressed, return the number of loci the block can be extended by
-    int max_compressible_nocall_range(const int start, const int end);
-    bool minor_allele_loaded;
-//    void sanity_check();
+    gvcf_compressor(
+        const gvcf_options& opt,
+        const RegionTracker& nocompress_regions)
+        : _opt(opt),
+          _nocompress_regions(nocompress_regions)
+    {}
+
+    /// determine if a site should be added to current block
+    /// or if the block should be written out
+    bool
+    is_site_compressable(
+        const site_info& si) const;
+
+    /// determine if a range of positions could be excluded
+    /// (in the absence of variant signal)
+    bool
+    is_range_compressable(
+        const known_pos_range2 range) const
+    {
+        if (! _opt.is_block_compression) return false;
+
+        // check if range is in the pre-specified region that are not to be block-compressed
+        return (! is_nocompress_range(range));
+    }
+
 private:
-    chrposmap chr_to_pos;
-    std::string my_chrom;
+
+    /// is site non-compressable according to external bedfile input?:
+    bool
+    is_nocompress_site(
+        const pos_t pos) const
+    {
+        return _nocompress_regions.isInRegion(pos);
+    }
+
+    /// is any part of range non-compressable according to external bedfile input?:
+    bool
+    is_nocompress_range(
+        const known_pos_range2 range) const
+    {
+        return _nocompress_regions.isInRegion(range);
+    }
+
+    const gvcf_options& _opt;
+    const RegionTracker& _nocompress_regions;
 };

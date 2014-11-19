@@ -108,7 +108,7 @@ struct read_segment
         {
             return &(genome_align());
         }
-        return NULL;
+        return nullptr;
     }
 
 //    const bool is_mate_unmapped(){return this->sread().is_mate_unmapped();}

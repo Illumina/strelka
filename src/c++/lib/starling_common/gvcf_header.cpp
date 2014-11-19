@@ -33,12 +33,14 @@
 
 static
 void
-add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options and starling_options
-                 const starling_options& sopt,
-                 const cdmap_t& chrom_depth,
-                 std::ostream& os,
-                 calibration_models& CM)
+add_gvcf_filters(
+    const starling_options& sopt,
+    const cdmap_t& chrom_depth,
+    std::ostream& os,
+    calibration_models& CM)
 {
+    const gvcf_options& opt(sopt.gvcf);
+
     using namespace VCF_FILTERS;
     os << "##VariantQualityScoringModel=" << CM.get_model_name() << "\n";
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
@@ -140,16 +142,21 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         tmp_os.copyfmt(os);
         os << std::fixed << std::setprecision(2);
 
-        cdmap_t::const_iterator i(chrom_depth.begin()), i_end(chrom_depth.end());
-        for (; i!=i_end; ++i)
+        for (const auto& val : chrom_depth)
         {
-            const std::string& chrom(i->first);
-            const double max_depth(opt.max_depth_factor*i->second);
+            const std::string& chrom(val.first);
+            const double max_depth(opt.max_depth_factor*val.second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
         }
         os.copyfmt(tmp_os);
     }
 
+    // even if no ploidy bed file is provided, this filter should still exist in principal, so I don't
+    // see any reason to leave it in the header for all cases:
+    if (true)
+    {
+        write_vcf_filter(os,get_label(PloidyConflict),"Genotype call from variant caller not consistent with chromosome ploidy");
+    }
 }
 
 
@@ -211,7 +218,7 @@ finish_gvcf_header(const starling_options& opt,
 
     // FILTER:
 
-    add_gvcf_filters(opt.gvcf,opt,chrom_depth,os,CM);
+    add_gvcf_filters(opt,chrom_depth,os,CM);
 
     const std::string sample_name = get_bam_header_sample_name(bam_header_data);
 

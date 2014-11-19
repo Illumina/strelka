@@ -181,12 +181,9 @@ get_pos_read_segment_iter(const pos_t pos)
 
 void
 starling_read_buffer::
-clear_pos(const bool is_ignore_read_names,
-          const pos_t pos)
+clear_iter(
+    const pos_group_t::iterator i)
 {
-    const pos_group_t::iterator i(_pos_group.find(pos));
-    if (i == _pos_group.end()) return;
-
     segment_group_t& seg_group(i->second);
     for (const auto& val : seg_group)
     {
@@ -206,7 +203,13 @@ clear_pos(const bool is_ignore_read_names,
 
         // remove from simple lookup structures and delete read itself:
         _read_data.erase(k);
-        if (! is_ignore_read_names) _read_key.erase(srp->key());
+
+        // key might not exist if opt.is_ignore_read_names is set:
+        const read_key_lup_t::iterator keyIter(_read_key.find(srp->key()));
+        if (keyIter != _read_key.end())
+        {
+            _read_key.erase(keyIter);
+        }
         delete srp;
     }
     _pos_group.erase(i);

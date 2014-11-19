@@ -28,6 +28,7 @@
 #include "blt_common/map_level.hh"
 #include "blt_util/depth_stream_stat_range.hh"
 #include "blt_util/pos_processor_base.hh"
+#include "blt_util/RegionTracker.hh"
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
 #include "starling_common/depth_buffer.hh"
@@ -155,6 +156,18 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     /// snv gt and stats must be reported for this pos (note only honored in strelka right now)
     void
     insert_forced_output_pos(const pos_t pos);
+
+    /// specify ploidy of region (only 0 or 1 is used now)
+    /// \returns false if this conflicts with an existing region
+    bool
+    insert_ploidy_region(
+        const known_pos_range2& range,
+        const int ploidy);
+
+    /// specify gvcf nocompress status of region
+    void
+    insert_nocompress_region(
+        const known_pos_range2& range);
 
 #if 0
     starling_read*
@@ -543,12 +556,6 @@ private:
     void
     update_stageman();
 
-    void
-    clear_forced_output_pos(const pos_t pos)
-    {
-        _forced_output_pos.erase(pos);
-    }
-
     virtual
     void
     post_align_clear_pos(const pos_t pos) {}
@@ -567,6 +574,13 @@ protected:
     is_forced_output_pos(const pos_t pos) const
     {
         return (_forced_output_pos.find(pos) != _forced_output_pos.end());
+    }
+
+    int
+    get_ploidy(const pos_t pos) const
+    {
+        const auto val(_ploidy_regions.isPayloadInRegion(pos));
+        return (val ? *val : 2);
     }
 
     //////////////////////////////////
@@ -615,4 +629,7 @@ protected:
 
     // a caching term used for gvcf:
     site_info _site_info;
+
+    RegionPayloadTracker<int> _ploidy_regions;
+    RegionTracker _nocompress_regions;
 };

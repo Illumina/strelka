@@ -62,8 +62,8 @@ get_gt_label(const unsigned idx)
     case HET:
         return "0/1";
     default:
-        assert(0);
-        return NULL;
+        assert(false && "Unknown Indel GT");
+        return nullptr;
     }
 }
 
@@ -112,14 +112,25 @@ label(const unsigned idx)
 //
 struct starling_diploid_indel_core
 {
-
     starling_diploid_indel_core()
-        : is_indel(false), max_gt(0), max_gt_poly(0)
+        : is_indel(false), ploidy(2), max_gt(0), max_gt_poly(0)
     {
         static const int qp(error_prob_to_qphred((1.-init_p())));
         indel_qphred=qp;
         max_gt_qphred=qp;
         max_gt_poly_qphred=qp;
+    }
+
+    bool
+    is_haploid() const
+    {
+        return (1 == ploidy);
+    }
+
+    bool
+    is_noploid() const
+    {
+        return (0 == ploidy);
     }
 
 protected:
@@ -135,6 +146,11 @@ protected:
 public:
 
     bool is_indel;
+
+    // hack haploid/'noploid' model into diploid data structure:
+    // only {2,1,0} are actually used at present
+    int ploidy;
+
     unsigned max_gt;
     int indel_qphred;
     int max_gt_qphred;
@@ -150,7 +166,6 @@ public:
 
 struct starling_diploid_indel : public starling_diploid_indel_core, private boost::noncopyable
 {
-
     starling_diploid_indel()
         : starling_diploid_indel_core()
     {

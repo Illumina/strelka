@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -34,14 +33,23 @@
 ///
 struct gvcf_aggregator
 {
-    gvcf_aggregator(const starling_options& opt,
-                    const starling_deriv_options& dopt,
-                    const reference_contig_segment& ref,
-                    std::ostream* os,
-                    starling_read_buffer& read_buffer,
-                    const unsigned max_read_len);
+    gvcf_aggregator(
+        const starling_options& opt,
+        const starling_deriv_options& dopt,
+        const reference_contig_segment& ref,
+        const RegionTracker& nocompress_regions,
+        std::ostream* os,
+        starling_read_buffer& read_buffer,
+        const unsigned max_read_len);
 
     ~gvcf_aggregator();
+
+    /// provide the phasing block status, if true, read buffers are
+    /// preserved until the block is completed
+    bool is_phasing_block() const
+    {
+        return _codon_phaser.is_in_block();
+    }
 
     void add_site(site_info& si);
 
@@ -67,6 +75,8 @@ private:
     void modify_conflict_indel_record();
     void process_overlaps();
     void write_indel_record(const unsigned write_index = 0);
+
+    /// fill in missing sites
     void skip_to_pos(const pos_t target_pos);
 
     const site_info& get_empty_site(const pos_t pos)
@@ -84,7 +94,7 @@ private:
     const reference_contig_segment& _ref;
     std::ostream* _osptr;
     const char* _chrom;
-    gvcf_deriv_options _dopt;
+    const gvcf_deriv_options _dopt;
     pos_t _indel_end_pos;
     unsigned _indel_buffer_size;
     std::vector<indel_info> _indel_buffer;
@@ -94,9 +104,9 @@ private:
     pos_t _head_pos;
     site_info _empty_site;
 
-    calibration_models CM;
-    gvcf_compressor gvcf_comp;
+    calibration_models _CM;
+    gvcf_compressor _gvcf_comp;
 
-    Codon_phaser codon_phaser;
+    Codon_phaser _codon_phaser;
 };
 

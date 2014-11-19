@@ -37,16 +37,51 @@
 
 
 
+static
+void
+set_diploid_prior(
+    const double theta,
+    indel_digt_caller::prior_group& prior)
+{
+    using namespace STAR_DIINDEL;
+
+    prior.genome[NOINDEL]=log1p_switch(-(3.*theta)/2.);
+    prior.genome[HOM]=std::log(theta/2.);
+    prior.genome[HET]=std::log(theta);
+
+    prior.poly[NOINDEL]=std::log(0.25);
+    prior.poly[HOM]=std::log(0.25);
+    prior.poly[HET]=std::log(0.5);
+}
+
+
+
+static
+void
+set_haploid_prior(
+    const double theta,
+    indel_digt_caller::prior_group& prior)
+{
+    static const double log0(-std::numeric_limits<double>::infinity());
+
+    using namespace STAR_DIINDEL;
+
+    prior.genome[NOINDEL]=log1p_switch(-theta);
+    prior.genome[HOM]=std::log(theta);
+    prior.genome[HET]=log0;
+
+    prior.poly[NOINDEL]=std::log(0.5);
+    prior.poly[HOM]=std::log(0.5);
+    prior.poly[HET]=log0;
+}
+
+
+
 indel_digt_caller::
 indel_digt_caller(const double theta)
 {
-    _lnprior_genomic[STAR_DIINDEL::NOINDEL]=log1p_switch(-(3.*theta)/2.);
-    _lnprior_genomic[STAR_DIINDEL::HOM]=std::log(theta/2.);
-    _lnprior_genomic[STAR_DIINDEL::HET]=std::log(theta);
-
-    _lnprior_polymorphic[STAR_DIINDEL::NOINDEL]=0.25;
-    _lnprior_polymorphic[STAR_DIINDEL::HOM]=0.25;
-    _lnprior_polymorphic[STAR_DIINDEL::HET]=0.5;
+    set_diploid_prior(theta,_lnprior);
+    set_haploid_prior(theta,_lnprior_haploid);
 }
 
 
@@ -484,23 +519,30 @@ starling_indel_call_pprob_digt(const starling_options& opt,
     // no immediate plans to include this for regular indel-calling:
     static const bool is_tier2_pass(false);
 
+    const bool is_haploid(dindel.is_haploid());
+
     if (opt.is_noise_indel_filter && is_diploid_indel_noise(dopt,id,is_tier2_pass))
     {
         dindel.is_indel=false;
         return;
     }
 
+    // turn off het bias in haploid case:
+    const bool is_het_bias((!is_haploid) && opt.is_bindel_diploid_het_bias);
+
     // get likelihood of each genotype:
     double lhood[STAR_DIINDEL::SIZE];
     get_indel_digt_lhood(opt,dopt,sample_opt,indel_error_prob,ref_error_prob,ik,id,
-                         opt.is_bindel_diploid_het_bias,opt.bindel_diploid_het_bias,
+                         is_het_bias,opt.bindel_diploid_het_bias,
                          is_tier2_pass,is_use_alt_indel,lhood);
 
     // mult by prior distro to get unnormalized pprob:
-    const double* indel_lnprior(lnprior_genomic());
-    for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt)
     {
-        dindel.pprob[gt] = lhood[gt] + indel_lnprior[gt];
+        const double* indel_lnprior(lnprior_genomic(is_haploid));
+        for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt)
+        {
+            dindel.pprob[gt] = lhood[gt] + indel_lnprior[gt];
+        }
     }
 
     normalize_ln_distro(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt);
@@ -513,6 +555,13 @@ starling_indel_call_pprob_digt(const starling_options& opt,
     dindel.max_gt_qphred=error_prob_to_qphred(prob_comp(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt));
 
     // add new poly calls:
+    {
+        const double* indel_lnprior(lnprior_polymorphic(is_haploid));
+        for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt)
+        {
+            lhood[gt] += indel_lnprior[gt];
+        }
+    }
     normalize_ln_distro(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly);
     dindel.max_gt_poly_qphred=error_prob_to_qphred(prob_comp(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly));
 

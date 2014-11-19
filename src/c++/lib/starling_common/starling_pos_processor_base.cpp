@@ -265,10 +265,11 @@ get_last_static_stage_no(const starling_options& opt)
 //
 static
 stage_data
-get_stage_data(const unsigned largest_read_size,
-               const unsigned largest_total_indel_ref_span_per_read,
-               const starling_options& opt,
-               const starling_deriv_options& dopt)
+get_stage_data(
+    const unsigned largest_read_size,
+    const unsigned largest_total_indel_ref_span_per_read,
+    const starling_options& opt,
+    const starling_deriv_options& dopt)
 {
     stage_data sdata;
 
@@ -312,6 +313,16 @@ get_stage_data(const unsigned largest_read_size,
     // realigned read output
     //
     sdata.add_stage(POST_ALIGN,READ_BUFFER,largest_total_indel_ref_span_per_read);
+
+    sdata.add_stage(CLEAR_SITE_ANNOTATION,POST_ALIGN,largest_total_indel_ref_span_per_read);
+
+    unsigned clear_readbuf_dist(0);
+    if (opt.do_codon_phasing)
+    {
+        clear_readbuf_dist += largest_read_size;
+    }
+    sdata.add_stage(CLEAR_READ_BUFFER,POST_ALIGN,clear_readbuf_dist);
+
 
     if (! opt.is_htype_calling)
     {
@@ -408,8 +419,8 @@ starling_pos_processor_base(const starling_options& client_opt,
     if (_client_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
-                client_opt,client_dopt,ref,client_io.gvcf_osptr(0),
-                sample(0).read_buff,get_largest_read_size()));
+                          client_opt,client_dopt,ref,_nocompress_regions,client_io.gvcf_osptr(0),
+                          sample(0).read_buff,get_largest_read_size()));
     }
 
 #ifdef HAVE_FISHER_EXACT_TEST
@@ -592,6 +603,30 @@ insert_forced_output_pos(const pos_t pos)
 {
     _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
     _forced_output_pos.insert(pos);
+}
+
+
+
+bool
+starling_pos_processor_base::
+insert_ploidy_region(
+    const known_pos_range2& range,
+    const int ploidy)
+{
+    assert(ploidy==0 || ploidy==1);
+    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    return _ploidy_regions.addRegion(range,ploidy);
+}
+
+
+
+void
+starling_pos_processor_base::
+insert_nocompress_region(
+    const known_pos_range2& range)
+{
+    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _nocompress_regions.addRegion(range);
 }
 
 
@@ -1005,19 +1040,6 @@ process_pos(const int stage_no,
                 }
             }
 
-            // clear read buffer here as oppose to READ_BUFFER stage.
-            // if we are doing short-range phasing, the codon_phaser
-            // is responsible or clearing the read buffer
-            if (!this->_client_opt.do_codon_phasing)
-            {
-                for (unsigned s(0); s<_n_samples; ++s)
-                {
-                    sample(s).read_buff.clear_pos(_client_opt.is_ignore_read_names,pos);
-                }
-            }
-
-            clear_forced_output_pos(pos);
-
             for (unsigned s(0); s<_n_samples; ++s)
             {
                 sample(s).indel_buff.clear_pos(pos);
@@ -1028,6 +1050,29 @@ process_pos(const int stage_no,
         }
 
     }
+    else if (stage_no==STAGE::CLEAR_SITE_ANNOTATION)
+    {
+        assert (! _client_opt.is_htype_calling);
+
+        _forced_output_pos.erase(pos);
+        _ploidy_regions.removeToPos(pos);
+        _nocompress_regions.removeToPos(pos);
+    }
+    else if (stage_no==STAGE::CLEAR_READ_BUFFER)
+    {
+        if (! _client_opt.is_htype_calling)
+        {
+            // if we are doing short-range phasing, suspend read clear
+            // while phasing block is being built:
+            if (! (_gvcfer && _gvcfer->is_phasing_block()))
+            {
+                for (unsigned s(0); s<_n_samples; ++s)
+                {
+                    sample(s).read_buff.clear_to_pos(pos);
+                }
+            }
+        }
+    }
     else if (stage_no==STAGE::POST_REGION)
     {
         assert(_client_opt.is_htype_calling);
@@ -1035,9 +1080,8 @@ process_pos(const int stage_no,
         if (! _client_opt.is_write_candidate_indels_only)
         {
             process_htype_pos(pos);
-            clear_forced_output_pos(pos);
+            _forced_output_pos.erase(pos);
         }
-
     }
     else if (stage_no==STAGE::POST_CALL)
     {
@@ -1055,7 +1099,7 @@ process_pos(const int stage_no,
 
         for (unsigned s(0); s<_n_samples; ++s)
         {
-            sample(s).read_buff.clear_pos(_client_opt.is_ignore_read_names,pos);
+            sample(s).read_buff.clear_to_pos(pos);
         }
         for (unsigned s(0); s<_n_samples; ++s)
         {
@@ -1063,7 +1107,7 @@ process_pos(const int stage_no,
         }
 
     }
-    else if (stage_no>STAGE::POST_CALL)
+    else if (stage_no>=STAGE::SIZE)
     {
         run_post_call_step(stage_no,pos);
     }
@@ -1271,13 +1315,33 @@ process_pos_indel_single_sample(const pos_t pos,
             starling_diploid_indel dindel;
             dindel.is_forced_output = forcedOutput;
             dindel.is_zero_coverage = zeroCoverage;
-            _client_dopt.incaller().starling_indel_call_pprob_digt(_client_opt,_client_dopt,
-                                                                   sif.sample_opt,
-                                                                   indel_error_prob,ref_error_prob,
-                                                                   ik,id,is_use_alt_indel,dindel);
+
+            {
+                // check whether we're in a haploid/noploid region, for indels just check
+                // start position and end position, approximating that the whole
+                // region in between has the same ploidy, for any anomalous state
+                // revert to 'noploid':
+                const int indelLeftPloidy(get_ploidy(ik.pos));
+                const int indelRightPloidy(get_ploidy(ik.right_pos()));
+
+                if (indelLeftPloidy == indelRightPloidy)
+                {
+                    dindel.ploidy = indelLeftPloidy;
+                }
+                else
+                {
+                    dindel.ploidy = 0;
+                }
+            }
+
+            _client_dopt.incaller().starling_indel_call_pprob_digt(
+                _client_opt,_client_dopt,
+                sif.sample_opt,
+                indel_error_prob,ref_error_prob,
+                ik,id,is_use_alt_indel,dindel);
 
             bool is_indel(false);
-            if ((dindel.is_indel) or (dindel.is_forced_output))
+            if ((dindel.is_indel) || (dindel.is_forced_output))
             {
                 is_indel=true;
 
@@ -1312,12 +1376,10 @@ process_pos_indel_single_sample(const pos_t pos,
             {
                 report_os << "INDEL_EVIDENCE " << ik;
 
-                typedef indel_data::score_t::const_iterator siter;
-                siter it2(id.read_path_lnp.begin()), it2_end(id.read_path_lnp.end());
-                for (; it2!=it2_end; ++it2)
+                for (const auto& val : id.read_path_lnp)
                 {
-                    const align_id_t read_id(it2->first);
-                    const read_path_scores& lnp(it2->second);
+                    const align_id_t read_id(val.first);
+                    const read_path_scores& lnp(val.second);
                     const read_path_scores pprob(indel_lnp_to_pprob(_client_dopt,lnp,is_tier2_pass,is_use_alt_indel));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 
@@ -1850,6 +1912,9 @@ process_pos_snp_single_sample_impl(
     //monoploid_genotype mgt;
     //std::unique_ptr<nploid_genotype> ngt_ptr;
 
+    // check whether we're in a haploid region:
+    _site_info.dgt.ploidy=(get_ploidy(pos));
+
     if (_client_opt.is_counts)
     {
         report_counts(good_pi,_site_info.n_unused_calls,output_pos,*_client_io.counts_osptr());
@@ -1881,7 +1946,8 @@ process_pos_snp_single_sample_impl(
 #endif
     if (_client_opt.is_bsnp_diploid())
     {
-        _client_dopt.pdcaller().position_snp_call_pprob_digt(_client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
+        _client_dopt.pdcaller().position_snp_call_pprob_digt(
+            _client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
     }
 #if 0
     if (_client_opt.is_bsnp_monoploid)
