@@ -105,7 +105,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     isFirstSegment = (len(segFiles.gvcf) == 0)
 
     segStr = str(gseg.id)
-    
+
     # we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
     def quote(instr):
         return "'%s'" % (instr)
@@ -154,7 +154,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         if optList is None : return
         for val in optList :
             segCmd.extend([arg, val])
-    
+
     addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 

@@ -141,7 +141,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
             if opt is None : return
             for val in opt :
                 checkOptionalTabixIndexedFile(val,label)
-                    
+
         checkTabixListOption(options.indelCandidatesList,"candidate indel vcf")
         checkTabixListOption(options.forcedGTList,"forced genotype vcf")
 

@@ -160,7 +160,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         if optList is None : return
         for val in optList :
             segCmd.extend([arg, val])
-    
+
     addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
     addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
