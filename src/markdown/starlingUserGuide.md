@@ -9,17 +9,13 @@ Version: @STARKA_VERSION@
 
 ## Introduction
 
-Manta is a structural variant caller for short sequencing reads. It is capable
-of discovering structural variants of any size and scoring these using both a
-diploid genotype model and a somatic model (when separate tumor and normal
-samples are specified). Structural variant discovery and scoring incorporate
-both paired-read fragment spanning and split read evidence.
+Starling (IsaacVariantCaller) is a small variant caller for short sequencing reads. It is capable of calling snps and small indels. Starling will call simple and complex indels up to a specified maximum size, currently defaulting to 50 bases or shorter.
 
 ## Method Overview
 
-Manta works by dividing the structural variant (SV) discovery process into two
-primary steps: (1) scanning the genome to find SV associated regions and (2)
-analysis, scoring and output of SVs found in such regions.
+For any genomic regions, starling works in multiple phases. Its calling process starts with
+candidate indel discovery, followed by read realignment, SNP and indel genotyping, and finally
+filtration and scoring. These steps are described in more detail below:
 
 1. **Build SV association graph** In this step the entire genome is scanned to
 discover evidence of possible SVs and large indels. This evidence is enumerated
@@ -39,6 +35,8 @@ SVs breakends, scoring and filtration of the SV under various biological models
 (currently diploid germline and somatic), and finally, output to VCF.
 
 ## Capabilities
+
+WGS. WES. RNA-Seq. Amplicon
 
 Manta is capable of detecting all structural variant types which are
 identifiable in the absence of copy number analysis and large-scale de-novo
@@ -68,74 +66,20 @@ this case.
 levels and take other RNA-specific filtration and intron handling steps.
 
 
-### Detected variant classes
-
-Manta is able to detect all variation classes which can be explained as
-novel DNA adjacencies in the genome. Simple insertion/deletion events can be
-detected down to a configurable minimum size cutoff (defaulting to 8). All DNA
-adjacencies are classified into the following categories based on the breakend
-pattern:
-
-* Deletions
-* Insertions
-    * Fully-assembled insertions
-    * Partially-assembled 'inferred' insertions
-* Inversions
-* Tandem Duplications
-* Interchromosomal Translocations
-
-### Known Limitations
-
-Manta should not be able to detect the following variant types:
-
-* Dispersed duplications
-* Most expansion/contraction variants of a reference tandem repeat
-* Small inversions
-    * The limiting size is not tested, but in theory detection falls off
-  below ~200bases. So-called micro-inversions might be detected indirectly as
-  combined insertion/deletion variants.
-* Fully-assembled large insertions
-    * The maximum fully-assembled insertions size should correspond to
-  approximately twice the read-pair fragment size, but note that power to fully
-  assemble the insertion should fall off to impractical levels before this
-  size
-    * Note that manta does detect and report very large insertions when the breakend
-  signature of such an event is found, even though the inserted sequence cannot
-  be fully assembled.  
-
-More general repeat-based limitations exist for all variant types:
-
-* Power to assemble variants to breakend resolution falls to zero as breakend
-  repeat length approaches the read size.
-* Power to detect any breakend falls to (nearly) zero as the breakend repeat
-  length approaches the fragment size.
-
-Note that while manta classifies novel DNA-adjacencies, it does not infer the
-higher level constructs implied by the classification. For instance, a variant
-marked as a deletion by manta indicates an intrachromosomal translocation with a
-deletion-like breakend pattern, however there is no test of depth, b-allele
-frequency or intersecting adjacencies to directly infer the SV type.
-
 ## Input requirements
 
-The sequencing reads provided as input to Manta are expected to be from a
+The sequencing reads provided as input to starling are expected to be from a
 paired-end sequencing assay with an "innie" orientation between the two reads of
 each DNA fragment, each presenting a read from the outer edge of the fragment
 insert inward.
 
-Manta can tolerate non-paired reads in the input, so long as sufficient paired-end
-reads exist to estimate the paired fragment size distribution. Non-paired reads
-will still be used in discovery, assembly and split-read scoring if their alignment
-(or SA tag split alignments) support a large indel or SV, or mismatch/clipping 
-suggests a possible breakend location.
+Starling can tolerate non-paired reads in the input, but these will be ignored for
+during variant calling by default.
 
-Manta requires input sequencing reads to be mapped by an external tool and
+Starling requires input sequencing reads to be mapped by an external tool and
 provided as input in BAM format.
 
-At configuration time, at least one bam file must be provided for the normal
-sample. A matched tumor sample can optionally be provided as well. If multiple
-bams are provided for the normal or tumor sample, these are merged and treated
-as a single normal or tumor sample.
+At configuration time, a bam file must be provided for the query sample.
 
 The following limitations exist on the input BAMs provided to Manta:
 
@@ -150,34 +94,13 @@ The following limitations exist on the input BAMs provided to Manta:
 
 ### Structural Variant predictions
 
-The primary manta outputs are a set of [VCF 4.1][1] files, found in
-`${RUNFOLDER}/results/variants`. Currently there are at least two vcf files
-created for any manta run, and a third somatic vcf is produced when tumor input
-is provided. These files are:
+The primary starling output is a [VCF 4.1][1] file found in
+`${RUNFOLDER}/results/variants`:
 
-* __diploidSV.vcf.gz__
+* __genome.vcf.gz__
     * SVs and indels scored and genotyped under a diploid model for the normal
   sample. The scores in this file do not reflect any information in the tumor
   bams
-* __somaticSV.vcf.gz__
-    * SVs and indels scored under a somatic variant model. This file
-  will only be produced if at least one tumor bam argument is supplied during
-  configuration
-* __candidateSV.vcf.gz__
-    * Unscored SV and indel candidates. Only a minimal amount of supporting
-  evidence is required for an SV to be entered as a candidate. An SV or indel
-  must be a candidate to be considered for scoring, therefore an SV cannot
-  appear in the other VCF outputs if it is not present in this file. Note that
-  by default this file includes indels down to a very small size (>= 8 bases).
-  These are intended to be passed on to a small variant caller without scoring
-  by manta itself (by default manta scoring starts at size 51).
-* __candidateSmallIndels.vcf.gz__
-    * Subset of the candidateSV.vcf.gz file containing only simple insertion and
-  deletion variants of size 50 or less. Passing this file to a small variant caller
-  like strelka or starling (Isaac Variant Caller) will provide continuous
-  coverage over all indel sizes when the small variant caller and manta outputs are
-  evaluated together. Alternate small indel candidate sets can be parted out of the
-  candidateSV.vcf.gz file if this candidate set is not appropriate.
 
 All variants are reported in the vcf using symbolic alleles unless they are classified 
 as a small indel, in which case full sequences are provided for the vcf `REF` and `ALT`
@@ -190,28 +113,24 @@ allele fields. A variant is classified as a small indel if all of these criteria
 When vcf records are printed in the small indel format, they will also include
 the `CIGAR` INFO tag describing the combined insertion and deletion event.
 
-### Statistics
-
-Additional secondary output is provided in `${RUNFOLDER}/results/stats`
-
-* __alignmentStatsSummary.txt__
-    * fragment length quantiles for each input bam
-* __svLocusGraphStats.tsv__
-    * statistics pertaining to the SV locus graph
 
 ## Run configuration and Execution
 
-Manta is run in a two step procedure: (1) configuration and (2) workflow
+Starling is run in a two step procedure: (1) configuration and (2) workflow
 execution. The configuration step is used to specify the input data and any
 options pertaining to the variant calling methods themselves. The execution
-step is used to specify any parameters pertaining to _how_ manta is executed
+step is used to specify any parameters pertaining to _how_ starling is executed
 (such as the total number of cores or SGE nodes over which the jobs should be
 parallelized). The second execution step can also be interrupted and restarted
 without changing the final result of the workflow.
 
+Note in the guidelines below that starling is made available as part of the STARKA
+package, which also includes the strelka somatic small variant caller. For this reason
+the root installation referenced below is `${STARKA_INSTALL_DIR}`.
+
 ### Configuration
 
-The workflow is configured with the script: `${MANTA_INSTALL_DIR}/bin/configManta.py`
+The workflow is configured with the script: `${STARKA_INSTALL_DIR}/bin/configureStarlingWorkflow.py`
 . Running this script with no arguments will display all standard configuration
 options to specify input BAM files, the reference sequence and the output run folder.
 Note that all input BAMs and reference sequence must contain the same chromosome names
