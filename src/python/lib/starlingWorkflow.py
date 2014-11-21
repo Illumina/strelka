@@ -48,7 +48,7 @@ def runCount(self, taskPrefix="", dependencies=None) :
     """
     count size of fasta chromosomes
     """
-    cmd  = "%s %s > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
@@ -105,6 +105,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     isFirstSegment = (len(segFiles.gvcf) == 0)
 
     segStr = str(gseg.id)
+    
+    # we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
+    def quote(instr):
+        return "'%s'" % (instr)
 
     segCmd = [ self.params.starlingBin ]
 
@@ -114,7 +118,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
-    segCmd.extend(["-samtools-reference", self.params.referenceFasta ])
+    segCmd.extend(["-samtools-reference", quote(self.params.referenceFasta) ])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
@@ -133,7 +137,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--do-short-range-phasing'])
 
     for bamPath in self.params.bamList :
-        segCmd.extend(["-bam-file",bamPath])
+        segCmd.extend(["-bam-file",quote(bamPath)])
 
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
 

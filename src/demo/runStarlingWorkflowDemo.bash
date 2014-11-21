@@ -55,8 +55,8 @@ END
 fi
 
 cmd="$configScript \
---bam=$dataDir/NA12891_dupmark_chr20_region.bam \
---referenceFasta=$dataDir/chr20_860k_only.fa \
+--bam='$dataDir/NA12891_dupmark_chr20_region.bam' \
+--referenceFasta='$dataDir/chr20_860k_only.fa' \
 --callMemMb=1024 \
 --config=$demoConfigFile \
 --runDir=$analysisDir"
@@ -65,7 +65,7 @@ echo 1>&2
 echo "**** Starting demo configuration and run." 1>&2
 echo "**** Configuration cmd: '$cmd'" 1>&2
 echo 1>&2
-$cmd
+eval $cmd
 
 if [ $? -ne 0 ]; then
     echo 1>&2
