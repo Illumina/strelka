@@ -45,7 +45,7 @@ __version__ = getVersion()
 
 
 def runCount(self, taskPrefix="", dependencies=None) :
-    cmd  = "%s %s > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
@@ -135,9 +135,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--indel-scoring-models', self.params.scoringModelFile])
 
     for bamPath in self.params.normalBamList :
-        segCmd.extend(["-bam-file",bamPath])
+        segCmd.extend(["-bam-file", bamPath])
     for bamPath in self.params.tumorBamList :
-        segCmd.extend(["--tumor-bam-file",bamPath])
+        segCmd.extend(["--tumor-bam-file", bamPath])
 
     tmpSnvPath = self.paths.getTmpSegmentSnvPath(segStr)
     segFiles.snv.append(tmpSnvPath)
@@ -160,7 +160,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         if optList is None : return
         for val in optList :
             segCmd.extend([arg, val])
-    
+
     addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
     addListCmdOption(self.params.noiseVcfList, '--noise-vcf')

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "blt_util/pos_range.hh"
+#include "blt_util/known_pos_range2.hh"
 
 #include <iosfwd>
 #include <string>
@@ -282,6 +283,18 @@ apath_limit_read_length(
     const unsigned target_read_start,
     const unsigned target_read_end,
     path_t& apath);
+
+inline
+void
+apath_limit_read_length(
+    const known_pos_range2& target_read_range,
+    path_t& apath)
+{
+    apath_limit_read_length(
+        static_cast<unsigned>(std::max(target_read_range.begin_pos(),0)),
+        static_cast<unsigned>(std::max(target_read_range.end_pos(),0)),
+        apath);
+}
 
 /// remove any edge clip from apath and return the amount
 /// removed from each side. if ambiguous, lead is favored over trail

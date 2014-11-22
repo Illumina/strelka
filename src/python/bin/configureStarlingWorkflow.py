@@ -39,7 +39,7 @@ class StarlingWorkflowOptions(StarkaWorkflowOptionsBase) :
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the Starling small variant calling pipeline.
+This script configures the starling small variant calling pipeline.
 You must specify a BAM file.
 """ % (version)
 

@@ -274,7 +274,7 @@ get_indel_error_prob(const starling_options& client_opt,
                 //may want to leave this term for now.
                 ref_error_prob=client_opt.indel_ref_error_factor
                                * std::max(indel_error_prob_len[0].second,
-                                        std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
+                                          std::pow(indel_error_prob_len[indel_hpol_len-1].second,indel_size));
             }
             else if (iri.it == INDEL::DELETE)
             {
@@ -282,7 +282,7 @@ get_indel_error_prob(const starling_options& client_opt,
                                           std::pow(indel_error_prob_len[ref_hpol_len-1].second,indel_size));
                 ref_error_prob=client_opt.indel_ref_error_factor
                                * std::max(indel_error_prob_len[0].first,
-                                        std::pow(indel_error_prob_len[indel_hpol_len-1].first,indel_size));
+                                          std::pow(indel_error_prob_len[indel_hpol_len-1].first,indel_size));
             }
             else
             {

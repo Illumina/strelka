@@ -23,7 +23,9 @@
 
 #include <cstring>
 
+#include <iterator>
 #include <string>
+
 
 namespace BASE_ID
 {
@@ -65,7 +67,6 @@ base_to_id(const char a)
         return 4;
     }
 }
-
 
 void
 id_to_base_error(const uint8_t i);
@@ -235,11 +236,21 @@ reverseComp(Iter b,Iter e)
     }
 }
 
+// easy string version:
+inline
+void
+reverseCompStr(std::string& seq)
+{
+    reverseComp(seq.begin(),seq.end());
+}
+
+
 template <typename T> void fixCstring(T) {}
 inline void fixCstring(char* b)
 {
     *b='\0';
 }
+
 
 // generalized copy revcomp -- requires bidirectional iterators
 //
@@ -252,6 +263,28 @@ reverseCompCopy(ConstIter cb,ConstIter ce,Iter b)
         *b++ = comp_base(*--ce);
     }
     fixCstring(b);
+}
+
+// easy char*->string version:
+inline
+std::string
+reverseCompCopyCStr(const char* str)
+{
+    std::string result;
+    reverseCompCopy(str,str+strlen(str),
+                    std::back_insert_iterator<std::string>(result));
+    return result;
+}
+
+// easy string->string version:
+inline
+std::string
+reverseCompCopyStr(const std::string& seq)
+{
+    std::string result;
+    reverseCompCopy(seq.begin(),seq.end(),
+                    std::back_insert_iterator<std::string>(result));
+    return result;
 }
 
 // Get single sequence from a fasta file, there must be only one
