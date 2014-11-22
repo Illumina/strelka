@@ -152,7 +152,6 @@ const error_model& scoring_models::get_indel_model(const std::string& pattern){
 }
 
 
-
 void scoring_models::load_indel_model(boost::property_tree::ptree pt,const std::string& model_name){
     std::string s = imodels + "." + model_name;
 //    log_os << s << std::endl;

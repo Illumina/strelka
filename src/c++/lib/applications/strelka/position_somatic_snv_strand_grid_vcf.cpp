@@ -338,6 +338,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
         {
             smod.Qscore = scoring_models::Instance()->score_instance(smod.ft);
             smod.filters.reset();
+
+            // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
+            if(rs.ntype==2)
+                smod.Qscore=0;
+
             if (smod.Qscore < opt.sfilter.minimumQscore)
                 smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
         }
