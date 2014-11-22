@@ -736,6 +736,9 @@ modify_overlap_indel_record()
             {
                 ii.dindel.max_gt_qphred = _indel_buffer[hap].dindel.max_gt_qphred;
             }
+
+            _indel_buffer[hap].imod.is_overlap=true;
+
         }
 
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq

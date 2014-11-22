@@ -1,3 +1,5 @@
+- STARKA-166 add binomial-distribution-based allele bias predictors for Starling VQSR models
+- STARKA-162 revise depth normalization in Starling VQSR
 - STARKA-158 generalize gvcf nocompress to support regions/compression/tabix index
 - STARKA-155 add ploidy specification via bedfile (supporting haploid and deleted states only_
 - STARKA-151 add VQSR model trained using RefError*100 and median of chromosome means for depth normalization

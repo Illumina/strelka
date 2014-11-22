@@ -72,7 +72,7 @@ You must specify a BAM file.
             'bgcatBin' : joinFile(libexecDir,"bgzf_cat"),
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'indel-ref-error-factor' : "100",
-            'vqsrModel' : "QScoreHPDRE100",
+            'vqsrModel' : "QScoreHPDRE100_v4",
             'vqsrModelFile' : joinFile(configDir,'model.json'),
             'scoringModelFile' : joinFile(configDir,'indel_models.json'),
             'isSkipIndelErrorModel' : True
