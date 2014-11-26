@@ -537,6 +537,7 @@ write_site_record(const site_info& si) const
                 os << ';';
                 os << "AvgPos=" << si.rawPos;
                 os << ';';
+                // if you uncomment the following, make sure you also uncomment the matching INFO header entry in gvcf_header.cpp
 //                os << "MapQ0Count=" << si.mapq_zero;
                 os << "DP=" << (si.n_used_calls+si.n_unused_calls);
 
