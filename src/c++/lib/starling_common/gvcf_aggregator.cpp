@@ -536,10 +536,13 @@ write_site_record(const site_info& si) const
                 os << "AvgBaseQ=" << si.avgBaseQ;
                 os << ';';
                 os << "AvgPos=" << si.rawPos;
-                os << ';';
-                // if you uncomment the following, make sure you also uncomment the matching INFO header entry in gvcf_header.cpp
+// if you uncomment the following, make sure you also uncomment the matching INFO header entry in gvcf_header.cpp
+//                os << ';';
 //                os << "MapQ0Count=" << si.mapq_zero;
-                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
+
+// N.B. DP is in FORMAT already, and that seems to be where Nondas's code expects to find it, so suppress it here:
+//                os << ';';
+//                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
 
             }
 //            //reported q-score
