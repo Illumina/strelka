@@ -48,7 +48,7 @@ def runCount(self, taskPrefix="", dependencies=None) :
     """
     count size of fasta chromosomes
     """
-    cmd  = "%s %s > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
@@ -106,6 +106,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segStr = str(gseg.id)
 
+    # we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
+    def quote(instr):
+        return "'%s'" % (instr)
+
     segCmd = [ self.params.starlingBin ]
 
     segCmd.append("-clobber")
@@ -114,7 +118,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
-    segCmd.extend(["-samtools-reference", self.params.referenceFasta ])
+    segCmd.extend(["-samtools-reference", quote(self.params.referenceFasta) ])
     segCmd.extend(["-max-window-mismatch", "2", "20" ])
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
@@ -127,11 +131,14 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
-    segCmd.extend(['--calibration-model-file',self.params.vqsrModel])
-    segCmd.extend(['--scoring-models', self.params.scoringModelFile])
+    segCmd.extend(['--calibration-model-file',self.params.scoringModelFile])
+    segCmd.extend(['--scoring-models',self.params.vqsrModel ])
+    segCmd.append("--gvcf-compute-VQSRmetrics")
+
+    segCmd.extend(['--do-short-range-phasing'])
 
     for bamPath in self.params.bamList :
-        segCmd.extend(["-bam-file",bamPath])
+        segCmd.extend(["-bam-file",quote(bamPath)])
 
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
 
@@ -141,20 +148,22 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if not self.params.isSkipDepthFilters :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
 
-    if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
-        segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
-
     if self.params.isWriteRealignedBam :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr)])
 
-    if self.params.indelCandidates is not None :
-        segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
+    def addListCmdOption(optList,arg) :
+        if optList is None : return
+        for val in optList :
+            segCmd.extend([arg, val])
 
-    if self.params.forcedGTIndels is not None :
-        segCmd.extend(['--force-output-vcf', self.params.forcedGTIndels])
+    addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
-    if self.params.minorAllele is not None :
-        segCmd.extend(['--minor-allele-bed-file', self.params.minorAllele])
+    if self.params.noCompressBed is not None :
+        segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
+
+    if self.params.ploidyBed is not None :
+        segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
 
     if self.params.extraStarlingArguments is not None :
         for arg in self.params.extraStarlingArguments.strip().split() :
@@ -330,7 +339,7 @@ class StarlingWorkflow(WorkflowRunner) :
         # format other:
         self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
         self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
-        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipDepthFilters)
+        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipIndelErrorModel)
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
@@ -385,6 +394,6 @@ class StarlingWorkflow(WorkflowRunner) :
         if not self.params.isSkipDepthFilters :
             callPreReqs |= runDepth(self)
         if not self.params.isSkipIndelErrorModel :
-            callPreReqs |= runIndelModel(self)      
+            callPreReqs |= runIndelModel(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
 

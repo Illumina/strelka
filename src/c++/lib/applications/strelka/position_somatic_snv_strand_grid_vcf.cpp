@@ -17,6 +17,7 @@
 #include "position_somatic_snv_strand_grid_vcf.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "somatic_call_shared.hh"
+#include "blt_util/math_util.hh"
 
 #include <fstream>
 #include <iomanip>
@@ -26,13 +27,14 @@
 // TODO consolidate this dual calculation step
 static
 void
-set_VQSR_sample_info(const blt_options& opt,
-        const strelka_deriv_options& dopt,
-        const extended_pos_data& tier1_epd,
-        const extended_pos_data& tier2_epd,
-        strelka_shared_modifiers& smod,
-        char& ref_base,
-        bool isNormal=true)
+set_VQSR_sample_info(
+    const blt_options& opt,
+    const strelka_deriv_options& dopt,
+    const extended_pos_data& tier1_epd,
+    const extended_pos_data& tier2_epd,
+    strelka_shared_modifiers& smod,
+    char& ref_base,
+    bool isNormal=true)
 {
     // add in VQSR features
     // {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
@@ -44,11 +46,13 @@ set_VQSR_sample_info(const blt_options& opt,
     if ((tier1_epd.n_calls+tier1_epd.pi.n_spandel)>0)
         SDP_ratio = 1.0*tier1_epd.pi.n_spandel/(tier1_epd.n_calls+tier1_epd.pi.n_spandel); // t_SDP/(t_DP + t_SDP ) if (t_DP + t_SDP) != 0 else 0
 
-    if (isNormal){
+    if (isNormal)
+    {
         smod.set_feature(STRELKA_VQSR_FEATURES::N_FDP_RATE,FDP_ratio);
         smod.set_feature(STRELKA_VQSR_FEATURES::N_SDP_RATE,SDP_ratio);
     }
-    else{
+    else
+    {
         smod.set_feature(STRELKA_VQSR_FEATURES::T_FDP_RATE,FDP_ratio);
         smod.set_feature(STRELKA_VQSR_FEATURES::T_SDP_RATE,SDP_ratio);
     }
@@ -57,53 +61,42 @@ set_VQSR_sample_info(const blt_options& opt,
         smod.set_feature(STRELKA_VQSR_FEATURES::N_DP_RATE,1.0*tier1_epd.n_calls/dopt.sfilter.max_depth);
 
     int ref=0;
-       int alt=0;
+    int alt=0;
 
-       // base order
-       std::map<char,unsigned> ref_to_index = {{'A',0},{'C',1},{'G',2},{'T',3}};
-       unsigned ref_index = ref_to_index[ref_base];
+    // base order
+    std::map<char,unsigned> ref_to_index = {{'A',0},{'C',1},{'G',2},{'T',3}};
+    unsigned ref_index = ref_to_index[ref_base];
 
-       std::array<unsigned,N_BASE> tier1_base_counts;
-       std::array<unsigned,N_BASE> tier2_base_counts;
-       tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-       tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
+    std::array<unsigned,N_BASE> tier1_base_counts;
+    std::array<unsigned,N_BASE> tier2_base_counts;
+    tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+    tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
 
-       for (unsigned b(0); b<N_BASE; ++b)
-       {
-           if (b==ref_index)
-               ref += tier1_base_counts[b];
-           else
-               alt += tier1_base_counts[b];
+    for (unsigned b(0); b<N_BASE; ++b)
+    {
+        if (b==ref_index)
+            ref += tier1_base_counts[b];
+        else
+            alt += tier1_base_counts[b];
 
-       }
+    }
 
-       //    Allele count logic
-       //    if t_allele_alt_counts[0] + t_allele_ref_counts[0] == 0:
-       //        t_tier1_allele_rate = 0
-       //    else:
-       //        t_tier1_allele_rate = t_allele_alt_counts[0] / float(t_allele_alt_counts[0] + t_allele_ref_counts[0])
+    //    Allele count logic
+    //    if t_allele_alt_counts[0] + t_allele_ref_counts[0] == 0:
+    //        t_tier1_allele_rate = 0
+    //    else:
+    //        t_tier1_allele_rate = t_allele_alt_counts[0] / float(t_allele_alt_counts[0] + t_allele_ref_counts[0])
 
-       if(!isNormal){      //report tier1_allele count for tumor case
-           double allele_freq =0.0;
-           if ((ref+alt)>0)
-               allele_freq = 1.0*alt/(ref+alt);
-          smod.set_feature(STRELKA_VQSR_FEATURES::TIER1_ALLELE_RATE,allele_freq);
-       }
+    if (!isNormal)      //report tier1_allele count for tumor case
+    {
+        double allele_freq =0.0;
+        if ((ref+alt)>0)
+            allele_freq = 1.0*alt/(ref+alt);
+        smod.set_feature(STRELKA_VQSR_FEATURES::TIER1_ALLELE_RATE,allele_freq);
+    }
 }
 
-/// returns median, partially reorders elements in specified range
-///
-template <typename Iter>
-typename std::iterator_traits<Iter>::value_type
-median(
-    Iter begin,
-    Iter end)
-{
-    assert(begin != end);
-    const auto size(std::distance(begin,end));
-    std::nth_element(begin,begin+size/2, end);
-    return *(begin+size/2);
-}
+
 
 // Prepare feature vector in case we are using VQSR, the individual values will be set
 // feature_type ft;
@@ -132,16 +125,16 @@ median(
 //          {9,n_mapq0},{10,rs.strandBias},{11,ReadPosRankSum},{12,altmap},{13,altpos},{14,pnoise},{15,pnoise2}};
 static
 void
-calc_VQSR_features(const blt_options& opt,
-        const strelka_deriv_options& dopt,
-        const somatic_snv_genotype_grid& sgt,
-        strelka_shared_modifiers& smod,
-        const extended_pos_data& n1_epd,
-        const extended_pos_data& t1_epd,
-        const extended_pos_data& n2_epd,
-        const extended_pos_data& t2_epd,
-
-        const result_set& rs)
+calc_VQSR_features(
+    const blt_options& opt,
+    const strelka_deriv_options& dopt,
+    const somatic_snv_genotype_grid& sgt,
+    strelka_shared_modifiers& smod,
+    const extended_pos_data& n1_epd,
+    const extended_pos_data& t1_epd,
+    const extended_pos_data& n2_epd,
+    const extended_pos_data& t2_epd,
+    const result_set& rs)
 {
     // don't worry about efficiency for median calc right now:
     bool isAltpos(false);
@@ -226,17 +219,18 @@ calc_VQSR_features(const blt_options& opt,
         pnoise2 = sgt.sn.n2frac();
     }
     smod.set_feature(STRELKA_VQSR_FEATURES::pnoise2,pnoise2);
-
-
 }
+
+
 
 static
 void
-write_vcf_sample_info(const blt_options& opt,
-                      const strelka_deriv_options& dopt,
-                      const extended_pos_data& tier1_epd,
-                      const extended_pos_data& tier2_epd,
-                      std::ostream& os)
+write_vcf_sample_info(
+    const blt_options& opt,
+    const strelka_deriv_options& dopt,
+    const extended_pos_data& tier1_epd,
+    const extended_pos_data& tier2_epd,
+    std::ostream& os)
 {
     //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
     os << tier1_epd.n_calls
@@ -340,9 +334,15 @@ write_vcf_somatic_snv_genotype_strand_grid(
         set_VQSR_sample_info(opt,dopt,t1_epd,t2_epd,smod,n1_epd.pi.ref_base,false);
 
         // case we are doing VQSR, clear filters and apply single LowQscore filter
-        if (scoring_models::Instance()->calibration_init){ // write out somatic VQSR metrics
+        if (scoring_models::Instance()->calibration_init)  // write out somatic VQSR metrics
+        {
             smod.Qscore = scoring_models::Instance()->score_instance(smod.ft);
             smod.filters.reset();
+
+            // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
+            if(rs.ntype>0)
+                smod.Qscore=0;
+
             if (smod.Qscore < opt.sfilter.minimumQscore)
                 smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
         }
@@ -375,7 +375,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
        << ";NT=" << NTYPE::label(rs.ntype)
        << ";QSS_NT=" << rs.snv_from_ntype_qphred
        << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1);
-       os << ";SGT=";
+    os << ";SGT=";
 
     DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
                              sgt.ref_gt,os);
@@ -411,6 +411,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
         os << ";SNVSB=" << smod.get_feature(STRELKA_VQSR_FEATURES::strandBias);
         os << ";PNOISE=" << smod.get_feature(STRELKA_VQSR_FEATURES::pnoise);
         os << ";PNOISE2=" << smod.get_feature(STRELKA_VQSR_FEATURES::pnoise2);
+
         if (scoring_models::Instance()->calibration_init)
             os << ";VQSR=" << smod.Qscore;
 

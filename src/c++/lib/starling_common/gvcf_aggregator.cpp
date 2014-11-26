@@ -33,6 +33,8 @@
 #include "blt_util/log.hh"
 #endif
 
+
+
 static
 void
 set_site_gt(const diploid_genotype::result_set& rs,
@@ -43,22 +45,7 @@ set_site_gt(const diploid_genotype::result_set& rs,
     smod.gq  = 2;
 }
 
-static
-void
-set_site_filters_CM(site_info& si,
-                    calibration_models& model)
-{
-    // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
-    model.clasify_site(si);
-}
 
-static
-void
-add_indel_modifiers_CM(indel_info& ii, calibration_models& model)
-{
-    // Code for old command-line parameterized filter behaviour has been moved to calibration_models.cpp
-    model.clasify_site(ii);
-}
 
 static
 void
@@ -94,8 +81,11 @@ add_site_modifiers(site_info& si,
         }
         si.smod.gq=si.dgt.poly.max_gt_qphred;
     }
-    set_site_filters_CM(si,model);
+
+    model.clasify_site(si);
 }
+
+
 
 void gvcf_aggregator::write_block_site_record()
 {
@@ -105,12 +95,14 @@ void gvcf_aggregator::write_block_site_record()
 }
 
 gvcf_aggregator::
-gvcf_aggregator(const starling_options& opt,
-                const starling_deriv_options& dopt,
-                const reference_contig_segment& ref,
-                std::ostream* osptr,
-                starling_read_buffer& read_buffer,
-                const unsigned max_read_len)
+gvcf_aggregator(
+    const starling_options& opt,
+    const starling_deriv_options& dopt,
+    const reference_contig_segment& ref,
+    const RegionTracker& nocompress_regions,
+    std::ostream* osptr,
+    starling_read_buffer& read_buffer,
+    const unsigned max_read_len)
     : _opt(opt)
     , _report_range(dopt.report_range.begin_pos,dopt.report_range.end_pos)
     , _ref(ref)
@@ -122,17 +114,12 @@ gvcf_aggregator(const starling_options& opt,
     , _site_buffer_size(0)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
-    , CM(_opt, dopt.gvcf)
-    , codon_phaser(opt, dopt, read_buffer, max_read_len)
+    , _CM(_opt, dopt.gvcf)
+    , _gvcf_comp(opt.gvcf,nocompress_regions)
+    , _codon_phaser(opt, read_buffer, max_read_len)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
-    // read in sites that should not be block-compressed
-    if (static_cast<int>(opt.minor_allele_bed.length())>2)    // hacky, check if the bed file has been set
-    {
-        this->gvcf_comp.read_bed(opt.minor_allele_bed,opt.bam_seq_name.c_str());
-//        log_os << "I've got minor allele \n";
-    }
 
     if (! opt.gvcf.is_gvcf_output()) return;
 
@@ -141,10 +128,10 @@ gvcf_aggregator(const starling_options& opt,
 
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data,*_osptr,this->CM);
+        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data,*_osptr,this->_CM);
     }
 
-    add_site_modifiers(_empty_site,this->CM);
+    add_site_modifiers(_empty_site,this->_CM);
 }
 
 gvcf_aggregator::
@@ -157,12 +144,29 @@ void
 gvcf_aggregator::
 add_site(site_info& si)
 {
-    add_site_modifiers(si, this->CM);
-    if (_opt.do_codon_phasing
-        && (si.is_het() || codon_phaser.is_in_block))
+    add_site_modifiers(si, _CM);
+
+    if (si.dgt.is_haploid())
     {
-        bool emptyBuffer = codon_phaser.add_site(si);
-        if (!codon_phaser.is_in_block || emptyBuffer)
+        if (si.smod.max_gt == si.dgt.ref_gt)
+        {
+            si.smod.modified_gt=MODIFIED_SITE_GT::ZERO;
+        }
+        else
+        {
+            si.smod.modified_gt=MODIFIED_SITE_GT::ONE;
+        }
+    }
+    else if (si.dgt.is_noploid())
+    {
+        si.smod.set_filter(VCF_FILTERS::PloidyConflict);
+    }
+
+    if (_opt.do_codon_phasing
+        && (si.is_het() || _codon_phaser.is_in_block()))
+    {
+        const bool emptyBuffer = _codon_phaser.add_site(si);
+        if (!_codon_phaser.is_in_block() || emptyBuffer)
             this->output_phased_blocked();
     }
     else
@@ -187,28 +191,27 @@ skip_to_pos(const pos_t target_pos)
         // then extend the block size of that one site as required:
         if (0 != _indel_buffer_size) continue;
 
-        if (_opt.gvcf.is_block_compression && !this->gvcf_comp.minor_allele_loaded)
+        if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
         {
             assert(_block.count!=0);
             _block.count += (target_pos-_head_pos);
             _head_pos= target_pos;
         }
-//                    else {
-//                _head_pos++;
-//            }
     }
 }
+
+
 
 void
 gvcf_aggregator::
 output_phased_blocked()
 {
-    for (const site_info& si : codon_phaser.buffer)
+    for (const site_info& si : _codon_phaser.buffer())
     {
         this->skip_to_pos(si.pos);
         add_site_internal(si);
     }
-    codon_phaser.clear_buffer();
+    _codon_phaser.clear();
 }
 
 
@@ -267,15 +270,15 @@ add_indel(const pos_t pos,
           const starling_indel_report_info& iri,
           const starling_indel_sample_report_info& isri)
 {
-    // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
-    if (_opt.do_codon_phasing && this->codon_phaser.is_in_block)
-        this->output_phased_blocked();
-
     // we can't handle breakends at all right now:
     if (ik.is_breakpoint()) return;
 
     // don't handle homozygous reference calls unless genotyping is forced
     if (is_no_indel(dindel) && !dindel.is_forced_output) return;
+
+    // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
+    if (_opt.do_codon_phasing && this->_codon_phaser.is_in_block())
+        this->output_phased_blocked();
 
     skip_to_pos(pos);
 
@@ -294,6 +297,13 @@ add_indel(const pos_t pos,
     }
     _indel_buffer[_indel_buffer_size++].init(pos,ik,dindel,iri,isri);
     _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
+
+    // add filter for all indels in no-ploid regions:
+    if (dindel.is_noploid())
+    {
+        indel_info& ii(_indel_buffer[_indel_buffer_size-1]);
+        ii.imod.set_filter(VCF_FILTERS::PloidyConflict);
+    }
 
     // clear the current homRef indel
     if (is_no_indel(dindel))
@@ -376,18 +386,21 @@ gvcf_aggregator::
 queue_site_record(const site_info& si)
 {
     //test for basic blocking criteria
-    if (! this->gvcf_comp.is_site_compressable(_opt.gvcf,si))
+    if (! _gvcf_comp.is_site_compressable(si))
     {
         write_block_site_record();
         write_site_record(si);
         return;
     }
+
     if (! _block.test(si))
     {
         write_block_site_record();
     }
     _block.join(si);
 }
+
+
 
 static
 void
@@ -408,6 +421,7 @@ print_vcf_alt(const unsigned gt,
     }
     if (! is_print) os << '.';
 }
+
 
 
 static
@@ -611,7 +625,7 @@ modify_single_indel_record()
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
 
-    add_indel_modifiers_CM(ii,this->CM);
+    _CM.clasify_site(ii);
 }
 
 static
@@ -674,8 +688,7 @@ modify_indel_overlap_site(const indel_info& ii,
     }
 
     // after all those changes we need to rerun the site filters:
-    set_site_filters_CM(si,CM); //TODO needs to go into calibration model
-
+    CM.clasify_site(si);
 }
 
 static
@@ -723,6 +736,9 @@ modify_overlap_indel_record()
             {
                 ii.dindel.max_gt_qphred = _indel_buffer[hap].dindel.max_gt_qphred;
             }
+
+            _indel_buffer[hap].imod.is_overlap=true;
+
         }
 
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
@@ -740,7 +756,7 @@ modify_overlap_indel_record()
 
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
-        add_indel_modifiers_CM(_indel_buffer[hap],this->CM);
+        _CM.clasify_site(_indel_buffer[hap]);
         if (hap>0)
         {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
@@ -764,7 +780,7 @@ modify_conflict_indel_record()
 
         ii.imod.set_filter(VCF_FILTERS::IndelConflict);
 
-        add_indel_modifiers_CM(ii,this->CM);
+        _CM.clasify_site(ii);
     }
 }
 
@@ -950,7 +966,7 @@ process_overlaps()
         {
             modify_indel_overlap_site( _indel_buffer[0],
                                        _indel_buffer[0].get_ploidy(offset),
-                                       _site_buffer[i], this->CM);
+                                       _site_buffer[i], this->_CM);
         }
         else
         {

@@ -6,10 +6,14 @@
 # Date: March 3rd, 2014
 #
 ########################################
+
+DEBUG=0
+
+if DEBUG:
+    sys.path.append('/illumina/scripts/PGtools-master-dev/src')
+
 import os
 import sys
-sys.path.append('/illumina/scripts/PGtools-master-dev/src')
-
 import cPickle as pickle
 from optparse import OptionParser
 import logging
@@ -39,9 +43,3 @@ logging.info("This is the indel error fitting script, we are in business")
 
 j = job(opt)
 j.run()
-print j
-
-
-
-
-

@@ -207,8 +207,6 @@ process_pos_snp_somatic(const pos_t pos)
 
     if (sgtg.is_output())
     {
-
-
         {
             const SiteNoise* snp(_noisePos.getPos(pos));
             if (snp == nullptr)
@@ -220,11 +218,11 @@ process_pos_snp_somatic(const pos_t pos)
                 sgtg.sn = *snp;
             }
         }
-        #ifdef SOMATIC_STDOUT
-                std::ostream& bos = std::cout;
-        #else
-                std::ostream& bos(*_client_io.somatic_snv_osptr());
-        #endif
+#ifdef SOMATIC_STDOUT
+        std::ostream& bos = std::cout;
+#else
+        std::ostream& bos(*_client_io.somatic_snv_osptr());
+#endif
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG

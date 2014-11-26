@@ -11,18 +11,19 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
 #include "blt_util/io_util.hh"
-#include "blt_util/log.hh"
+
+#include "blt_util/blt_exception.hh"
 
 #include <cstdlib>
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 
 
@@ -33,7 +34,8 @@ open_ifstream(std::ifstream& ifs,
     ifs.open(filename);
     if (! ifs)
     {
-        log_os << "ERROR: Can't open file: " << filename << "\n";
-        exit(EXIT_FAILURE);
+        std::ostringstream oss;
+        oss << "ERROR: Can't open file: " << filename << "\n";
+        throw blt_exception(oss.str().c_str());
     }
 }

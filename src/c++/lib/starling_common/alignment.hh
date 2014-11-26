@@ -31,11 +31,6 @@
 //
 struct alignment
 {
-
-    alignment()
-        : pos(0),
-          is_fwd_strand(true) {}
-
     bool
     empty() const
     {
@@ -102,8 +97,8 @@ struct alignment
 
     /////
     ALIGNPATH::path_t path;
-    pos_t pos;
-    bool is_fwd_strand;
+    pos_t pos = 0;
+    bool is_fwd_strand = true;
 };
 
 

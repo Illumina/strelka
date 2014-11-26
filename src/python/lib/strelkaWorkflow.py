@@ -45,7 +45,7 @@ __version__ = getVersion()
 
 
 def runCount(self, taskPrefix="", dependencies=None) :
-    cmd  = "%s %s > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
@@ -135,9 +135,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--indel-scoring-models', self.params.scoringModelFile])
 
     for bamPath in self.params.normalBamList :
-        segCmd.extend(["-bam-file",bamPath])
+        segCmd.extend(["-bam-file", bamPath])
     for bamPath in self.params.tumorBamList :
-        segCmd.extend(["--tumor-bam-file",bamPath])
+        segCmd.extend(["--tumor-bam-file", bamPath])
 
     tmpSnvPath = self.paths.getTmpSegmentSnvPath(segStr)
     segFiles.snv.append(tmpSnvPath)
@@ -146,9 +146,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     tmpIndelPath = self.paths.getTmpSegmentIndelPath(segStr)
     segFiles.indel.append(tmpIndelPath)
     segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
-
-    if (self.params.maxInputDepth is not None) and (self.params.maxInputDepth > 0) :
-        segCmd.extend(["--max-input-depth", str(self.params.maxInputDepth)])
 
     if self.params.isWriteCallableRegion :
         tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
@@ -159,16 +156,14 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr, "normal")])
         segCmd.extend(["--tumor-realigned-read-file",self.paths.getTmpUnsortRealignBamPath(segStr, "tumor")])
 
-    if self.params.indelCandidates is not None :
-        segCmd.extend(['--candidate-indel-input-vcf', self.params.indelCandidates])
+    def addListCmdOption(optList,arg) :
+        if optList is None : return
+        for val in optList :
+            segCmd.extend([arg, val])
 
-    if self.params.forcedGTIndels is not None :
-        segCmd.extend(['--force-output-vcf', self.params.forcedGTIndels])
-
-    if self.params.noiseVcfList is not None :
-        for vcffile in self.params.noiseVcfList :
-            segCmd.extend(['--noise-vcf', vcffile])
-            
+    addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
+    addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
 
     if self.params.extraStrelkaArguments is not None :
         for arg in self.params.extraStrelkaArguments.strip().split() :

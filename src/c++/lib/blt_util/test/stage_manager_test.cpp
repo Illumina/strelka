@@ -114,7 +114,6 @@ struct test_pos_processor : public pos_processor_base
     process_pos(const int stage_no,
                 const pos_t pos)
     {
-
 #ifdef DEBUG_SM_TEST
         log_os << "process_pos stage_no: " << stage_no << " pos: " << pos << "\n";
 #endif
@@ -131,7 +130,6 @@ struct test_pos_processor : public pos_processor_base
     typedef std::map<int,pos_t> spos_t;
     spos_t stage_pos;
 };
-
 
 
 BOOST_AUTO_TEST_CASE( test_stage_manager )

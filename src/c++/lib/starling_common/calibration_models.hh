@@ -37,8 +37,8 @@ public:
     calibration_models(
         const starling_options& init_opt,
         const gvcf_deriv_options& init_dopt)
-        : opt(&init_opt.gvcf),
-          dopt(&init_dopt)
+        : opt(init_opt.gvcf),
+          dopt(init_dopt)
     {
         load_models(init_opt.calibration_models_filename);
         set_model(init_opt.calibration_model);
@@ -72,8 +72,8 @@ private:
     void default_clasify_site(indel_info& ii);
 
     // for setting the vcf header filters
-    const gvcf_options* opt;
-    const gvcf_deriv_options* dopt;
+    const gvcf_options& opt;
+    const gvcf_deriv_options& dopt;
     std::string model_name="DEFAULT";
     bool is_default_model=true;
 

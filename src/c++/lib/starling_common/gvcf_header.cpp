@@ -33,12 +33,14 @@
 
 static
 void
-add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options and starling_options
-                 const starling_options& sopt,
-                 const cdmap_t& chrom_depth,
-                 std::ostream& os,
-                 calibration_models& CM)
+add_gvcf_filters(
+    const starling_options& sopt,
+    const cdmap_t& chrom_depth,
+    std::ostream& os,
+    calibration_models& CM)
 {
+    const gvcf_options& opt(sopt.gvcf);
+
     using namespace VCF_FILTERS;
     os << "##VariantQualityScoringModel=" << CM.get_model_name() << "\n";
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
@@ -82,29 +84,42 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
     // check that we are not doing default filtering and that we are in the logistic regression case
     if (CM.is_current_logistic())
     {
+        const std::string gqx_str       = "Locus GQX is less than ";
+        const std::string ins_str       = "insertion";
+        const std::string del_str       = "deletion";
+        const std::string snp_str       = "SNP";
+        const std::string het_str       = "het";
+        const std::string hom_str       = "hom";
+        const std::string hetalt_str    = "het-alt";
+        const std::string for_str       = " for ";
         std::ostringstream oss;
-        oss << "Locus quality is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetSNP)  << " for het SNP";
+
+
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetSNP)  << for_str << het_str << " " << snp_str;
         write_vcf_filter(os,get_label(LowQscoreHetSNP),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomSNP) << " for hom SNP";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomSNP) << for_str << hom_str << " " << snp_str;
         write_vcf_filter(os,get_label(LowQscoreHomSNP),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetIns) << " for het insertion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltSNP) << for_str << hetalt_str << " " << snp_str;
+        write_vcf_filter(os,get_label(LowQscoreHetAltSNP),oss.str().c_str());
+        oss.str("");
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetIns) << for_str << het_str << " " << ins_str;
         write_vcf_filter(os,get_label(LowQscoreHetIns),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomIns) << " for hom insertion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomIns) << for_str << hom_str << " " << ins_str;
         write_vcf_filter(os,get_label(LowQscoreHomIns),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltIns) << " for het-alt insertion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltIns) << for_str << hetalt_str << " " << ins_str;
         write_vcf_filter(os,get_label(LowQscoreHetAltIns),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetDel) << " for het deletion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetDel) << for_str << het_str << " " << del_str;
         write_vcf_filter(os,get_label(LowQscoreHetDel),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << " for hom deletion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << for_str << hom_str << " " << del_str;
         write_vcf_filter(os,get_label(LowQscoreHomDel),oss.str().c_str());
         oss.str("");
-        oss << "Locus GQX is less than " << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltDel) << " for het-alt deletion";
+        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltDel) << for_str << hetalt_str << " " << del_str;
         write_vcf_filter(os,get_label(LowQscoreHetAltDel),oss.str().c_str());
         oss.str("");
     }
@@ -127,16 +142,21 @@ add_gvcf_filters(const gvcf_options& opt, // TODO no need for both gvcf_options 
         tmp_os.copyfmt(os);
         os << std::fixed << std::setprecision(2);
 
-        cdmap_t::const_iterator i(chrom_depth.begin()), i_end(chrom_depth.end());
-        for (; i!=i_end; ++i)
+        for (const auto& val : chrom_depth)
         {
-            const std::string& chrom(i->first);
-            const double max_depth(opt.max_depth_factor*i->second);
+            const std::string& chrom(val.first);
+            const double max_depth(opt.max_depth_factor*val.second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
         }
         os.copyfmt(tmp_os);
     }
 
+    // even if no ploidy bed file is provided, this filter should still exist in principal, so I don't
+    // see any reason to leave it in the header for all cases:
+    if (true)
+    {
+        write_vcf_filter(os,get_label(PloidyConflict),"Genotype call from variant caller not consistent with chromosome ploidy");
+    }
 }
 
 
@@ -173,7 +193,10 @@ finish_gvcf_header(const starling_options& opt,
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
         os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities.\">\n";
         os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities.\">\n";
-        os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position. \">\n";
+        os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position.\">\n";
+        os << "##INFO=<ID=MapQ0Count,Number=1,Type=Integer,Description=\"PLACEHOLDER=Number of overlapping reads with MAPQ=0\">\n";
+        os << "##INFO=<ID=AvgBaseQ,Number=1,Type=Integer,Description=\"PLACEHOLDER=Mean base Qscore\">\n";
+        os << "##INFO=<ID=AvgPos,Number=1,Type=Integer,Description=\"PLACEHOLDER=Mean position in aligned reads\">\n";
     }
 
     // Qscore
@@ -198,7 +221,7 @@ finish_gvcf_header(const starling_options& opt,
 
     // FILTER:
 
-    add_gvcf_filters(opt.gvcf,opt,chrom_depth,os,CM);
+    add_gvcf_filters(opt,chrom_depth,os,CM);
 
     const std::string sample_name = get_bam_header_sample_name(bam_header_data);
 
