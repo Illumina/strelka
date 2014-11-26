@@ -132,7 +132,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--calibration-model-file',self.params.scoringModelFile])
-    segCmd.extend(['--scoring-models',self.params.vqsrModel ])
+    segCmd.extend(['--scoring-model',self.params.vqsrModel ])
     segCmd.append("--gvcf-compute-VQSRmetrics")
 
     segCmd.extend(['--do-short-range-phasing'])
