@@ -133,7 +133,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--calibration-model-file',self.params.vqsrModelFile])
     segCmd.extend(['--scoring-model',self.params.vqsrModel ])
-    segCmd.append("--gvcf-compute-VQSRmetrics")
+    
+    if self.params.isReportVQSRMetrics :
+        segCmd.append("--gvcf-report-VQSRmetrics")
 
     segCmd.extend(['--do-short-range-phasing'])
 

@@ -56,6 +56,12 @@ You must specify a BAM file.
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
+    def addExtendedGroupOptions(self,group) :
+        group.add_option("--reportVQSRMetrics", dest="isReportVQSRMetrics", action="store_true",
+                         help="Report all VQSR features in VCF output.")
+
+        StarkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
+
 
     def getOptionDefaults(self) :
 
@@ -75,7 +81,8 @@ You must specify a BAM file.
             'vqsrModel' : "QScoreHPDRE100_v4",
             'vqsrModelFile' : joinFile(configDir,'model.json'),
             'scoringModelFile' : joinFile(configDir,'indel_models.json'),
-            'isSkipIndelErrorModel' : True
+            'isSkipIndelErrorModel' : True,
+            'isReportVQSRMetrics' : False
             })
         return defaults
 

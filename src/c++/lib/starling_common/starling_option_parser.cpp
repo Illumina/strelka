@@ -106,8 +106,8 @@ get_starling_shared_option_parser(starling_options& opt)
      "Non-variant blocks are chosen to constrain sample values to range [x,y], y <= max(x+3,x*(100+block-percent-tol)/100)")
     ("gvcf-no-block-compression", po::value(&opt.gvcf.is_block_compression)->zero_tokens()->implicit_value(false),
      "Turn off block compression in gVCF output")
-    ("gvcf-compute-VQSRmetrics", po::value(&opt.is_report_germline_VQSRmetrics)->zero_tokens(),
-     "Report metrics used for VQSR: BaseQRankSum, ReadPosRankSum, MQRankSum and MQ.")
+    ("gvcf-report-VQSRmetrics", po::value(&opt.is_report_germline_VQSRmetrics)->zero_tokens(),
+     "Report metrics used for germline VQSR")
     ("gvcf-compute-calibration-features", po::value(&opt.is_compute_calibration_features)->zero_tokens(),
      "Output all features used for calibration model training, development only.")
     ("nocompress-bed",  po::value(&opt.gvcf.nocompress_region_bedfile),
