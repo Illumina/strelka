@@ -162,7 +162,10 @@ calibration_models::load_chr_depth_stats()
         std::vector<double> depths;
         for (cdmap_t::const_iterator iter = this->chrom_depth.begin(); iter != this->chrom_depth.end() ; ++iter)
         {
+#if 0
+            /// NO HARD CODED CHROMOSOME NAMES!!!!!!!!!!!!
             if (!(iter->first=="chrM" ||iter->first=="chrY"||iter->first=="chrX"))
+#endif
             {
 //                log_os << iter->first << " is " << iter->second << "\n";
                 depths.push_back(iter->second);
