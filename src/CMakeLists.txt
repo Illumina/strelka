@@ -53,8 +53,11 @@ set(STARKA_FULL_VERSION "${THIS_PROJECT_NAME}-${STARKA_VERSION}")
 message (STATUS "STARKA_VERSION: ${STARKA_VERSION}")
 
 
+set (THIS_GLOBALS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/globals.cmake")
+set (THIS_MACROS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/macros.cmake")
+
 # add custom functions:
-include ("${CMAKE_SOURCE_DIR}/cmake/macros.cmake")
+include ("${THIS_MACROS_CMAKE}")
 
 #
 # setup build type
@@ -136,8 +139,6 @@ add_custom_target(STARKA_OPT ALL)
 
 set(THIS_REDIST_DIR "${CMAKE_SOURCE_DIR}/../redist")
 
-set (THIS_GLOBALS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/globals.cmake")
-set (THIS_MACROS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/macros.cmake")
 
 # redist includes
 include ("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
