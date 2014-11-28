@@ -212,8 +212,9 @@ private:
     // {x}_lead controls the amount by which we read the
     // {x} buffer(s) ahead of the bam reads:
     //
-    static constexpr pos_t _vcf_lead = 100;
-    static constexpr pos_t _bed_lead = 100;
+    /// TODO link problems with clang 3.5 when this is static and/or constexpr (??)
+    const pos_t _vcf_lead = 100;
+    const pos_t _bed_lead = 100;
 
     const starling_input_stream_data& _data;
 
