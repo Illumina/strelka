@@ -63,7 +63,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E chdir "${SAMTOOLS_DIR}" $(MAKE) all 2>| samtools.build.log
     DEPENDS "${HTSLIB_LIBRARY}"
     COMMENT "Building samtools package")
-add_custom_target(STARKA_SAMTOOLS DEPENDS "${SAMTOOLS_PROG}")
+add_custom_target(THIS_SAMTOOLS DEPENDS "${SAMTOOLS_PROG}")
 
 install(PROGRAMS "${SAMTOOLS_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 
@@ -81,7 +81,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${BGZFX_PREFIX}.tar.bz2"
     COMMAND $(MAKE) -C "${BGZFX_DIR}" all 2>| bgzf_extras.build.log
     COMMENT "Building bgzf_extras")
-add_custom_target(STARKA_BGZFX DEPENDS "${BGCAT_PROG}")
+add_custom_target(THIS_BGZFX DEPENDS "${BGCAT_PROG}")
 
 install(PROGRAMS "${BGCAT_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 install(PROGRAMS "${BGZIP9_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
@@ -98,7 +98,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${CODEMIN_DIR}"
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${CODEMIN_PREFIX}.tar.bz2"
     COMMENT "Unpacking CodeMin")
-add_custom_target(STARKA_CODEMIN DEPENDS "${CODEMIN_MARK}")
+add_custom_target(THIS_CODEMIN DEPENDS "${CODEMIN_MARK}")
 
 #
 # pyflow
@@ -119,12 +119,12 @@ add_custom_command(
 
 install_python_lib_dir("${PYFLOW_DIR}/src" "${THIS_PYTHON_LIBDIR}/pyflow")
 
-add_custom_target(STARKA_PYFLOW DEPENDS "${PYFLOW_SCRIPT}")
+add_custom_target(THIS_PYFLOW DEPENDS "${PYFLOW_SCRIPT}")
 
 
 # tie results back to parent:
 #
-add_dependencies(STARKA_OPT STARKA_SAMTOOLS STARKA_BGZFX STARKA_CODEMIN STARKA_PYFLOW)
+add_dependencies(THIS_OPT THIS_SAMTOOLS THIS_BGZFX THIS_CODEMIN THIS_PYFLOW)
 
 
 #
@@ -140,5 +140,5 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${HOEDOWN_PREFIX}.tar.bz2"
     COMMAND $(MAKE) -C "${HOEDOWN_DIR}"
     COMMENT "Building hoedown markdown parser")
-add_custom_target(STARKA_MARKDOWN DEPENDS "${HOEDOWN_PROG}")
+add_custom_target(THIS_MARKDOWN DEPENDS "${HOEDOWN_PROG}")
 

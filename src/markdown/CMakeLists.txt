@@ -34,7 +34,7 @@ function(process_user_guide name)
         OUTPUT ${UL}
         COMMAND ${HOEDOWN_PROG} ${CMAKE_CURRENT_BINARY_DIR}/${UG} > ${UL}
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${UG}
-        DEPENDS STARKA_MARKDOWN
+        DEPENDS THIS_MARKDOWN
         COMMENT "Converting ${name} to html")
 
     add_custom_target(STARKA_${name} ALL DEPENDS ${UL})
