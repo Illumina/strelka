@@ -142,7 +142,7 @@ void calibration_models::default_clasify_site(indel_info& ii)
 
     if (this->opt.is_max_ref_rep)
     {
-        if (ii.iri.is_repeat_unit)
+        if (ii.iri.is_repeat_unit())
         {
             if ((ii.iri.repeat_unit.size() <= 2) &&
                 (static_cast<int>(ii.iri.ref_repeat_count) > this->opt.max_ref_rep))

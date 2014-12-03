@@ -839,7 +839,7 @@ write_indel_record(const unsigned write_index)
     for (unsigned i(write_index); i<=end_index; ++i)
     {
         if (i!=write_index) os << ',';
-        if (_indel_buffer[i].iri.is_repeat_unit &&
+        if (_indel_buffer[i].iri.is_repeat_unit() &&
             (_indel_buffer[i].iri.repeat_unit.size() <= 20))
         {
             os << _indel_buffer[i].iri.repeat_unit;
@@ -854,7 +854,7 @@ write_indel_record(const unsigned write_index)
     for (unsigned i(write_index); i<=end_index; ++i)
     {
         if (i!=write_index) os << ',';
-        if (_indel_buffer[i].iri.is_repeat_unit)
+        if (_indel_buffer[i].iri.is_repeat_unit())
         {
             os << _indel_buffer[i].iri.ref_repeat_count;
         }
@@ -868,7 +868,7 @@ write_indel_record(const unsigned write_index)
     for (unsigned i(write_index); i<=end_index; ++i)
     {
         if (i!=write_index) os << ',';
-        if (_indel_buffer[i].iri.is_repeat_unit)
+        if (_indel_buffer[i].iri.is_repeat_unit())
         {
             os << _indel_buffer[i].iri.indel_repeat_count;
         }

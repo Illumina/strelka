@@ -163,7 +163,7 @@ writeSomaticIndelVcfGrid(
        << ";QSI_NT=" << rs.sindel_from_ntype_qphred
        << ";TQSI_NT=" << (siInfo.sindel.sindel_from_ntype_tier+1)
        << ";SGT=" << static_cast<DDIINDEL_GRID::index_t>(rs.max_gt);
-    if (siInfo.iri.repeat_unit != "N/A")
+    if (siInfo.iri.is_repeat_unit())
     {
         os << ";RU=" << siInfo.iri.repeat_unit
            << ";RC=" << siInfo.iri.ref_repeat_count
