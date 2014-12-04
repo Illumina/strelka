@@ -63,7 +63,9 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E chdir "${SAMTOOLS_DIR}" $(MAKE) all 2>| samtools.build.log
     DEPENDS "${HTSLIB_LIBRARY}"
     COMMENT "Building samtools package")
-add_custom_target(THIS_SAMTOOLS DEPENDS "${SAMTOOLS_PROG}")
+
+set(THIS_SAMTOOLS "${THIS_PROJECT_NAME}_samtools")
+add_custom_target(${THIS_SAMTOOLS} DEPENDS "${SAMTOOLS_PROG}")
 
 install(PROGRAMS "${SAMTOOLS_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 
@@ -81,7 +83,9 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${BGZFX_PREFIX}.tar.bz2"
     COMMAND $(MAKE) -C "${BGZFX_DIR}" all 2>| bgzf_extras.build.log
     COMMENT "Building bgzf_extras")
-add_custom_target(THIS_BGZFX DEPENDS "${BGCAT_PROG}")
+
+set(THIS_BGZFX "${THIS_PROJECT_NAME}_bgzfx")
+add_custom_target(${THIS_BGZFX} DEPENDS "${BGCAT_PROG}")
 
 install(PROGRAMS "${BGCAT_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 install(PROGRAMS "${BGZIP9_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
@@ -98,7 +102,9 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${CODEMIN_DIR}"
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${CODEMIN_PREFIX}.tar.bz2"
     COMMENT "Unpacking CodeMin")
-add_custom_target(THIS_CODEMIN DEPENDS "${CODEMIN_MARK}")
+
+set(THIS_CODEMIN "${THIS_PROJECT_NAME}_codemin")
+add_custom_target(${THIS_CODEMIN} DEPENDS "${CODEMIN_MARK}")
 
 #
 # pyflow
@@ -119,12 +125,13 @@ add_custom_command(
 
 install_python_lib_dir("${PYFLOW_DIR}/src" "${THIS_PYTHON_LIBDIR}/pyflow")
 
-add_custom_target(THIS_PYFLOW DEPENDS "${PYFLOW_SCRIPT}")
+set (THIS_PYFLOW "${THIS_PROJECT_NAME}_pyflow")
+add_custom_target(${THIS_PYFLOW} DEPENDS "${PYFLOW_SCRIPT}")
 
 
 # tie results back to parent:
 #
-add_dependencies(THIS_OPT THIS_SAMTOOLS THIS_BGZFX THIS_CODEMIN THIS_PYFLOW)
+add_dependencies(${THIS_OPT} ${THIS_SAMTOOLS} ${THIS_BGZFX} ${THIS_CODEMIN} ${THIS_PYFLOW})
 
 
 #
@@ -140,5 +147,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${HOEDOWN_PREFIX}.tar.bz2"
     COMMAND $(MAKE) -C "${HOEDOWN_DIR}"
     COMMENT "Building hoedown markdown parser")
-add_custom_target(THIS_MARKDOWN DEPENDS "${HOEDOWN_PROG}")
+
+superset(THIS_MARKDOWN "${THIS_PROJECT_NAME}_markdown")
+add_custom_target(${THIS_MARKDOWN} DEPENDS "${HOEDOWN_PROG}")
 

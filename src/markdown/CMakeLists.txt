@@ -34,10 +34,10 @@ function(process_user_guide name)
         OUTPUT ${UL}
         COMMAND ${HOEDOWN_PROG} ${CMAKE_CURRENT_BINARY_DIR}/${UG} > ${UL}
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${UG}
-        DEPENDS THIS_MARKDOWN
+        DEPENDS ${THIS_MARKDOWN}
         COMMENT "Converting ${name} to html")
 
-    add_custom_target(STARKA_${name} ALL DEPENDS ${UL})
+    add_custom_target(${THIS_PROJECT_NAME}_${name} ALL DEPENDS ${UL})
 
     install(FILES ${UL} DESTINATION ${THIS_DOCDIR}/html)
 endfunction()
