@@ -30,9 +30,9 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from pyflow import WorkflowRunner
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
+                         getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd, cleanPyEnv
 
-from configureUtil import argToBool, getIniSections, dumpIniSections
+from configureUtil import safeSetBool, getIniSections, dumpIniSections
 
 
 
@@ -147,7 +147,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if not isFirstSegment :
         segCmd.append("--gvcf-skip-header")
 
-    if not self.params.isSkipDepthFilters :
+    if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
 
     if self.params.isWriteRealignedBam :
@@ -326,11 +326,7 @@ class StarlingWorkflow(WorkflowRunner) :
 
     def __init__(self,params,iniSections) :
 
-        # clear out some potentially destabilizing env variables:
-        clearList = [ "PYTHONPATH", "PYTHONHOME"]
-        for key in clearList :
-            if key in os.environ :
-                del os.environ[key]
+        cleanPyEnv()
 
         self.params=params
         self.iniSections=iniSections
@@ -339,9 +335,8 @@ class StarlingWorkflow(WorkflowRunner) :
         if self.params.bamList is None : self.params.bamList = []
 
         # format other:
-        self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
-        self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
-        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipIndelErrorModel)
+        safeSetBool(self.params,"isWriteRealignedBam")
+        safeSetBool(self.params,"isSkipIndelErrorModel")
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
@@ -372,11 +367,10 @@ class StarlingWorkflow(WorkflowRunner) :
         # read fasta index
         (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
 
-        # sanity check some parameter typing:
-        MEGABASE = 1000000
-        self.params.scanSize = int(self.params.scanSizeMb) * MEGABASE
-
         self.paths = PathInfo(self.params)
+
+        self.params.isHighDepthFilter = (not self.params.isExome)
+
 
 
     def getSuccessMessage(self) :
@@ -393,7 +387,7 @@ class StarlingWorkflow(WorkflowRunner) :
 
         callPreReqs = set()
         callPreReqs |= runCount(self)
-        if not self.params.isSkipDepthFilters :
+        if self.params.isHighDepthFilter :
             callPreReqs |= runDepth(self)
         if not self.params.isSkipIndelErrorModel :
             callPreReqs |= runIndelModel(self)

@@ -56,21 +56,23 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               " File must be tabix indexed."
                               " Option may be specified more than once, multiple inputs will be merged."
                               " (default: None)")
+        group.add_option("--exome", dest="isExome", action="store_true",
+                         help="Set options for WES input: turn off depth filters")
         group.add_option("--runDir", type="string",metavar="DIR",
                          help="Run script and run output will be written to this directory [required] (default: %default)")
 
     def addExtendedGroupOptions(self,group) :
-        group.add_option("--scanSizeMb", type="int", metavar="scanSizeMb",
-                         help="Maximum sequence region size (in Mb) scanned by each task during "
+        group.add_option("--scanSizeMb", type="int", metavar="INT",
+                         help="Maximum sequence region size (in megabases) scanned by each task during "
                          "genome variant calling. (default: %default)")
-        group.add_option("--region", type="string",dest="regionStrList",metavar="samtoolsRegion", action="append",
+        group.add_option("--region", type="string",dest="regionStrList",metavar="REGION", action="append",
                          help="Limit the analysis to a region of the genome for debugging purposes. "
                               "If this argument is provided multiple times all specified regions will "
                               "be analyzed together. All regions must be non-overlapping to get a "
                               "meaningful result. Examples: '--region chr20' (whole chromosome), "
                               "'--region chr2:100-2000 --region chr3:2500-3000' (two regions)'")
-        group.add_option("--callMemMb",type="int",metavar="MegaBytes",
-                         help="Set variant calling task memory limit (in MegaBytes). It is not "
+        group.add_option("--callMemMb",type="int",metavar="INT",
+                         help="Set variant calling task memory limit (in megabytes). It is not "
                               "recommended to change the default in most cases, but this might be required "
                               "for a sample of unusual depth. (default: %default)")
 
@@ -114,6 +116,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         runDir = "variantCallWorkflow"
         scanSizeMb = 12
+
+        isExome = False
 
         return cleanLocals(locals())
 

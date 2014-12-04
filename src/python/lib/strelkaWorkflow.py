@@ -30,9 +30,9 @@ sys.path.append(os.path.abspath(pyflowDir))
 
 from pyflow import WorkflowRunner
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
+                         getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd, cleanPyEnv
 
-from configureUtil import argToBool, getIniSections, dumpIniSections
+from configureUtil import safeSetBool, getIniSections, dumpIniSections
 
 
 
@@ -174,7 +174,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if not isFirstSegment :
         segCmd.append("--strelka-skip-header")
 
-    if not self.params.isSkipDepthFilters :
+    if self.params.isHighDepthFilter :
         segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
         segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
 
@@ -344,11 +344,7 @@ class StrelkaWorkflow(WorkflowRunner) :
 
     def __init__(self,params,iniSections) :
 
-        # clear out some potentially destabilizing env variables:
-        clearList = [ "PYTHONPATH", "PYTHONHOME"]
-        for key in clearList :
-            if key in os.environ :
-                del os.environ[key]
+        cleanPyEnv()
 
         self.params=params
         self.iniSections=iniSections
@@ -357,17 +353,8 @@ class StrelkaWorkflow(WorkflowRunner) :
         if self.params.normalBamList is None : self.params.normalBamList = []
         if self.params.tumorBamList is None : self.params.tumorBamList = []
 
-        # format other:
-        # format other:
-        def safeSetBool(obj,dataname) :
-            if hasattr(obj, dataname) :
-                setattr(obj, dataname, argToBool(getattr(obj, dataname)))
-            else :
-                setattr(obj, dataname, False)
-
         safeSetBool(self.params,"isWriteRealignedBam")
         safeSetBool(self.params,"isWriteCallableRegion")
-        safeSetBool(self.params,"isSkipDepthFilters")
 
         # make sure run directory is setup:
         self.params.runDir=os.path.abspath(self.params.runDir)
@@ -402,11 +389,10 @@ class StrelkaWorkflow(WorkflowRunner) :
         # read fasta index
         (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
 
-        # sanity check some parameter typing:
-        MEGABASE = 1000000
-        self.params.scanSize = int(self.params.scanSizeMb) * MEGABASE
-
         self.paths = PathInfo(self.params)
+
+        self.params.isHighDepthFilter = (not self.params.isExome)
+
 
 
     def getSuccessMessage(self) :
@@ -423,7 +409,7 @@ class StrelkaWorkflow(WorkflowRunner) :
 
         callPreReqs = set()
         callPreReqs |= runCount(self)
-        if not self.params.isSkipDepthFilters :
+        if self.params.isHighDepthFilter :
             callPreReqs |= runDepth(self)
 
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
