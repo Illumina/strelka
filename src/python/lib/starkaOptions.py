@@ -25,7 +25,7 @@ sys.path.append(scriptDir)
 from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, \
                           validateFixExistingDirArg, validateFixExistingFileArg, \
-                          checkOptionalTabixIndexedFile
+                          checkTabixListOption
 from workflowUtil import parseGenomeRegion
 
 
@@ -140,11 +140,6 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
             faiFile=options.referenceFasta + ".fai"
             if not os.path.isfile(faiFile) :
                 raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
-
-        def checkTabixListOption(opt,label) :
-            if opt is None : return
-            for val in opt :
-                checkOptionalTabixIndexedFile(val,label)
 
         checkTabixListOption(options.indelCandidatesList,"candidate indel vcf")
         checkTabixListOption(options.forcedGTList,"forced genotype vcf")

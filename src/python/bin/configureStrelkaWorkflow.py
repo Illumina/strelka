@@ -28,7 +28,7 @@ version="@STARKA_FULL_VERSION@"
 sys.path.append(workflowDir)
 
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile
+from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, checkTabixListOption
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
 from workflowUtil import ensureDir
@@ -83,11 +83,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         groomBamList(options.normalBamList,"normal sample")
         groomBamList(options.tumorBamList, "tumor sample")
 
-        if options.noiseVcfList is not None :
-            for vcfname in options.noiseVcfList :
-                tabixFile = vcfname + ".tbi"
-                if os.path.isfile(tabixFile) : return
-                raise OptParseException("Can't find expected noise vcf index file: '%s'" % (tabixFile))
+        checkTabixListOption(options.noiseVcfList,"noise vcf")
 
 
 
