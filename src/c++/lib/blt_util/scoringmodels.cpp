@@ -64,7 +64,7 @@ void indel_model::add_prop(const unsigned hpol_case, const double prop_ins,const
 
 double indel_model::get_prop(const unsigned hpol_case)
 {
-    if (hpol_case>40)
+    if (hpol_case>max_hpol_len)
         return this->model[max_hpol_len-1].first;
     return this->model[hpol_case-1].first;
 }
