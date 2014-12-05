@@ -156,7 +156,7 @@ public:
     typedef std::vector< calibration_type > set_of_calibrations_type;
 
     void populate_storage_metadata();
-    void load(boost::property_tree::ptree pt);
+    void load(const boost::property_tree::ptree& pt);
 
     double get_randomforest_proba(const feature_type& features);
 private:
@@ -180,9 +180,9 @@ class scoring_models
 public:
     static scoring_models* Instance();
     void load_models(const std::string& model_file);
-    void load_indel_model(boost::property_tree::ptree pt,const std::string& model_name);
+    void load_indel_model(const boost::property_tree::ptree& pt,const std::string& model_name);
 
-    void load_calibration_model(boost::property_tree::ptree pt,const std::string& model_name,const std::string& model_type="RF");
+    void load_calibration_model(const boost::property_tree::ptree& pt,const std::string& model_name,const std::string& model_type="RF");
     int score_instance(const feature_type& features);
 
     const error_model& get_indel_model(const std::string& pattern);
