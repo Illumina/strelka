@@ -19,18 +19,9 @@
 
 #pragma once
 
-#include "blt_util/qscore.hh"
-
 #include "boost/property_tree/ptree.hpp"
-#include "boost/property_tree/json_parser.hpp"
-#include "boost/foreach.hpp"
 
-#include <cassert>
-#include <cstdlib>     /* atof */
-
-#include <iostream>
 #include <map>
-#include <sstream>
 #include <string>
 #include <vector>
 

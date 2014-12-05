@@ -18,6 +18,17 @@
  */
 #include "scoringmodels.hh"
 
+#include "blt_util/qscore.hh"
+
+#include "boost/property_tree/json_parser.hpp"
+#include "boost/foreach.hpp"
+
+#include <cassert>
+#include <cstdlib>     /* atof */
+
+#include <iostream>
+#include <sstream>
+
 //#define DEBUG_SCORINGMODELS
 
 #ifdef DEBUG_SCORINGMODELS
