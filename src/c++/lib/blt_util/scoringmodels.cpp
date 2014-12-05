@@ -79,13 +79,10 @@ void calibration_model::populate_storage_metadata()
 //modified
 void calibration_model::load(const boost::property_tree::ptree& pt)
 {
-    std::vector< set_of_calibrations_type > all_data;
-    for (unsigned int v = 0; v < this->calibration_data_names.size(); v++)
-    {
-        set_of_calibrations_type dummy_arr;
-        all_data.push_back(dummy_arr);
-    }
-//   try
+    const unsigned nameSize(calibration_data_names.size());
+    std::vector< set_of_calibrations_type > all_data(nameSize);
+
+    //   try
 //   {
     int t_count = 0;
 
@@ -94,7 +91,7 @@ void calibration_model::load(const boost::property_tree::ptree& pt)
         t_count ++;
 //           log_os << "Tree count: " << t_count << "\n";
 
-        for (unsigned int vn=0; vn < this->calibration_data_names.size(); vn++)
+        for (unsigned int vn=0; vn < nameSize; vn++)
         {
 
             std::map<int, std::vector<double> > node_votes;
