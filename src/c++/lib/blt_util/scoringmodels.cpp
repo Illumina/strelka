@@ -172,9 +172,8 @@ int scoring_models::score_instance(const feature_type& features)
     return Q;
 }
 
-const error_model& scoring_models::get_indel_model(const std::string& pattern)
+const error_model& scoring_models::get_indel_model(const std::string& /*pattern*/)
 {
-    if (pattern=="f") {}
     return this->indel_models[this->current_indel_model].model;
 }
 
