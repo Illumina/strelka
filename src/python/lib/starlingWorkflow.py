@@ -19,18 +19,18 @@ import os.path
 import shutil
 import sys
 
-# add script path to pull in utils in same directory:
+# add this path to pull in utils in same directory:
 scriptDir=os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.abspath(scriptDir))
+sys.path.append(scriptDir)
 
 # add pyflow path:
-# TODO: get a more robust link to the pyflow dir at config time:
-pyflowDir=os.path.join(scriptDir,"pyflow")
-sys.path.append(os.path.abspath(pyflowDir))
+sys.path.append(os.path.join(scriptDir,"pyflow"))
+
 
 from pyflow import WorkflowRunner
+from starkaWorkflow import StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd, cleanPyEnv
+                         getNextGenomeSegment, bamListCatCmd
 
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 
@@ -319,17 +319,14 @@ class PathInfo:
 
 
 
-class StarlingWorkflow(WorkflowRunner) :
+class StarlingWorkflow(StarkaWorkflow) :
     """
     germline small variant calling workflow
     """
 
     def __init__(self,params,iniSections) :
 
-        cleanPyEnv()
-
-        self.params=params
-        self.iniSections=iniSections
+        super(StarlingWorkflow,self).__init__(params,iniSections)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []
@@ -338,38 +335,11 @@ class StarlingWorkflow(WorkflowRunner) :
         safeSetBool(self.params,"isWriteRealignedBam")
         safeSetBool(self.params,"isSkipIndelErrorModel")
 
-        # make sure run directory is setup:
-        self.params.runDir=os.path.abspath(self.params.runDir)
-        ensureDir(self.params.runDir)
-
-        # everything that's not intended to be a final result should dump directories/files in workDir
-        self.params.workDir=os.path.join(self.params.runDir,"workspace")
-        ensureDir(self.params.workDir)
-
-        # all finalized pretty results get transfered to resultsDir
-        self.params.resultsDir=os.path.join(self.params.runDir,"results")
-        ensureDir(self.params.resultsDir)
-        self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
-        ensureDir(self.params.variantsDir)
-
         if self.params.isWriteRealignedBam :
             self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
             ensureDir(self.params.realignedDir)
 
-        indexRefFasta=self.params.referenceFasta+".fai"
-
-        if self.params.referenceFasta is None:
-            raise Exception("No reference fasta defined.")
-        else:
-            checkFile(self.params.referenceFasta,"reference fasta")
-            checkFile(indexRefFasta,"reference fasta index")
-
-        # read fasta index
-        (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
-
         self.paths = PathInfo(self.params)
-
-        self.params.isHighDepthFilter = (not self.params.isExome)
 
 
 
