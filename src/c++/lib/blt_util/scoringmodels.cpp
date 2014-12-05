@@ -21,7 +21,6 @@
 #include "blt_util/qscore.hh"
 
 #include "boost/property_tree/json_parser.hpp"
-#include "boost/foreach.hpp"
 
 #include <cassert>
 #include <cstdlib>     /* atof */
@@ -86,7 +85,7 @@ void calibration_model::load(const ptree& pt)
 //   {
     int t_count = 0;
 
-    BOOST_FOREACH(const ptree::value_type& each_tree, pt)
+    for(const ptree::value_type& each_tree : pt)
     {
         t_count ++;
 //           log_os << "Tree count: " << t_count << "\n";
@@ -95,11 +94,11 @@ void calibration_model::load(const ptree& pt)
         {
 
             std::map<int, std::vector<double> > node_votes;
-            BOOST_FOREACH(const ptree::value_type& v, each_tree.second.get_child(this->calibration_data_names[vn]))
+            for (const ptree::value_type& v : each_tree.second.get_child(this->calibration_data_names[vn]))
             {
                 std::vector<double> prob_tuple (2,0);
                 int ind = 0;
-                BOOST_FOREACH(const ptree::value_type& i, v.second)
+                for (const ptree::value_type& i : v.second)
                 {
                     double p = i.second.get_value<double>();
                     prob_tuple[ind++] = p;
@@ -181,7 +180,7 @@ void scoring_models::load_indel_model(const ptree& pt,const std::string& model_n
 //    log_os << s << std::endl;
     indel_model temp_model;
     unsigned i=0;
-    BOOST_FOREACH(const ptree::value_type &v, pt.get_child(s))
+    for (const ptree::value_type &v : pt.get_child(s))
     {
         temp_model.add_prop(i,atof(v.second.data().c_str()),atof(v.second.data().c_str()));
         i++;
@@ -218,16 +217,15 @@ void scoring_models::load_models(const std::string& model_file)
     boost::property_tree::read_json(ss, pt);
 
     //load indel models
-    BOOST_FOREACH(const ptree::value_type &v, pt.get_child(imodels))
+    for (const ptree::value_type &v : pt.get_child(imodels))
     {
 //         log_os << "Reading indel model " << v.first <<  std::endl;
         this->load_indel_model(pt,v.first);
     }
 
     //load calibration models
-    BOOST_FOREACH(const ptree::value_type &v, pt.get_child(cmodels))
+    for (const ptree::value_type &v : pt.get_child(cmodels))
     {
         this->load_calibration_model(pt.get_child(cmodels),v.first);
     }
-
 }
