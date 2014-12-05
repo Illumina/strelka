@@ -223,11 +223,6 @@ set_repeat_info(const indel_key& ik,
                 const reference_contig_segment& ref,
                 starling_indel_report_info& iri)
 {
-    iri.is_repeat_unit = false;
-    iri.repeat_unit = "N/A";
-    iri.ref_repeat_count = 0;
-    iri.indel_repeat_count = 0;
-
     if (! ((iri.it == INDEL::INSERT) ||
            (iri.it == INDEL::DELETE) ||
            (iri.it == INDEL::SWAP))) return;
@@ -255,7 +250,7 @@ set_repeat_info(const indel_key& ik,
     }
     else
     {
-        assert(0);
+        assert(false && "Unexpected indel type");
     }
 
     // count repeats in contextual sequence:
@@ -299,7 +294,6 @@ set_repeat_info(const indel_key& ik,
         }
     }
 
-    iri.is_repeat_unit = true;
     iri.ref_repeat_count = indel_context_repeat_count+delete_repeat_count;
     iri.indel_repeat_count = indel_context_repeat_count+insert_repeat_count;
 }
@@ -312,7 +306,6 @@ get_starling_indel_report_info(const indel_key& ik,
                                const reference_contig_segment& ref,
                                starling_indel_report_info& iri)
 {
-
     // indel summary info
     get_indel_summary_strings(ik,id,ref,iri.desc,iri.indel_seq,iri.ref_seq);
     get_vcf_summary_strings(ik,id,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
@@ -451,7 +444,6 @@ get_starling_indel_sample_report_info(const starling_deriv_options& dopt,
                                       const bool is_use_alt_indel,
                                       starling_indel_sample_report_info& isri)
 {
-
     // get read info:
     {
         static const double path_pprob_thresh(0.999);

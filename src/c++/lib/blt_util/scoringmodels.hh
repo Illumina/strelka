@@ -17,23 +17,23 @@
  *      Author: mkallberg
  */
 
+#pragma once
 
-#include <stdlib.h>     /* atof */
-#include <iostream>
-#include <sstream>
+#include "blt_util/qscore.hh"
+
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/json_parser.hpp"
+#include "boost/foreach.hpp"
+
 #include <cassert>
-#include <string>
-//#include <fstream>
-//#include <iterator>
+#include <cstdlib>     /* atof */
+
+#include <iostream>
 #include <map>
+#include <sstream>
+#include <string>
 #include <vector>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/foreach.hpp>
-#ifndef SCORINGMODELS_HH_
-#define SCORINGMODELS_HH_
-#include "blt_util/qscore.hh"
 
 
 namespace STRELKA_VQSR_FEATURES
@@ -137,7 +137,7 @@ typedef std::pair<double,double> error_model[max_hpol_len];
 class indel_model
 {
 public:
-    indel_model() {};
+    indel_model() {}
     void add_prop(const unsigned hpol_case, const double prop_ins,const double prop_del);
     double get_prop(const unsigned hpol_case);
     error_model model;
@@ -150,7 +150,7 @@ private:
 class calibration_model
 {
 public:
-    calibration_model() {};
+    calibration_model() {}
 
     typedef std::map<int, std::vector<double> > calibration_type;
     typedef std::vector< calibration_type > set_of_calibrations_type;
@@ -191,8 +191,8 @@ public:
     bool calibration_init=false;
 
 private:
-    scoring_models() {}; // Private so that it can  not be called
-    scoring_models(scoring_models const&) {};            // copy constructor is private
+    scoring_models() {} // Private so that it can  not be called
+    scoring_models(scoring_models const&) {}            // copy constructor is private
     scoring_models& operator=(scoring_models const&);  // assignment operator is private
     static scoring_models* m_pInstance;
     typedef std::map<std::string,indel_model> indel_modelmap;
@@ -210,5 +210,3 @@ private:
 
 };
 
-
-#endif /* SCORINGMODELS_HH_ */

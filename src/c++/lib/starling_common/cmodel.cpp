@@ -339,4 +339,7 @@ void c_model::score_instance(featuremap features, indel_info& ii)
 }
 
 // give the normal depth for this model; used to depth-normalize various features in logistic model
-double c_model::normal_depth() const { return this->dopt.norm_depth; }
+double c_model::normal_depth() const
+{
+    return this->dopt.norm_depth;
+}

@@ -35,7 +35,12 @@ struct starling_indel_report_info
     std::string ref_upstream;
     std::string ref_downstream;
 
-    bool is_repeat_unit = false;
+    bool
+    is_repeat_unit() const
+    {
+        return (! repeat_unit.empty());
+    }
+
     std::string repeat_unit;
     unsigned ref_repeat_count = 0;
     unsigned indel_repeat_count = 0;

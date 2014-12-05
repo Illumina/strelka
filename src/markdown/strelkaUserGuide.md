@@ -58,30 +58,10 @@ The primary strelka outputs are a set of [VCF 4.1][1] files, found in
 `${RUNFOLDER}/results/variants`. Currently there are at least two vcf files
 created for any run. These files are:
 
-* __diploidSV.vcf.gz__
-    * SVs and indels scored and genotyped under a diploid model for the normal
-  sample. The scores in this file do not reflect any information in the tumor
-  bams
-* __somaticSV.vcf.gz__
-    * SVs and indels scored under a somatic variant model. This file
-  will only be produced if at least one tumor bam argument is supplied during
-  configuration
-* __candidateSV.vcf.gz__
-    * Unscored SV and indel candidates. Only a minimal amount of supporting
-  evidence is required for an SV to be entered as a candidate. An SV or indel
-  must be a candidate to be considered for scoring, therefore an SV cannot
-  appear in the other VCF outputs if it is not present in this file. Note that
-  by default this file includes indels down to a very small size (>= 8 bases).
-  These are intended to be passed on to a small variant caller without scoring
-  by manta itself (by default manta scoring starts at size 51).
-* __candidateSmallIndels.vcf.gz__
-    * Subset of the candidateSV.vcf.gz file containing only simple insertion and
-  deletion variants of size 50 or less. Passing this file to a small variant caller
-  like strelka or starling (Isaac Variant Caller) will provide continuous
-  coverage over all indel sizes when the small variant caller and manta outputs are
-  evaluated together. Alternate small indel candidate sets can be parted out of the
-  candidateSV.vcf.gz file if this candidate set is not appropriate.
-
+* __somatic.snvs.vcf.gz__
+    * snvs
+* __somatic.indels.vcf.gz__
+    * indels
 
 ## Run configuration and Execution
 
@@ -99,19 +79,16 @@ The workflow is configured with the script: `${INSTALL_DIR}/bin/configureStrelka
 . Running this script with no arguments will display all standard configuration
 options to specify input BAM files, the reference sequence and the output run folder.
 Note that all input BAMs and reference sequence must contain the same chromosome names
-in the same order. Manta's default settings assume a whole genome DNA-Seq analysis, but there
-are configuration options for exome/targeted sequencing analysis in addition to RNA-Seq.
+in the same order. Strelka's default settings assume a whole genome DNA-Seq analysis.
 
 Example Configuration:
 
-```
-${INSTALL_DIR}/bin/configureStrelkaWorkflow.py \
---normalBam HCC1187BL.bam \
---tumorBam HCC1187C.bam \
---referenceFasta hg19.fa \
---runDir ${ANALYSIS_RUN_DIR}
-
-```
+    ${INSTALL_DIR}/bin/configureStrelkaWorkflow.py \
+    --config ${INSTALL_DIR}/share/config/strelka_config_isaac_default.ini \
+    --normalBam HCC1187BL.bam \
+    --tumorBam HCC1187C.bam \
+    --referenceFasta hg19.fa \
+    --runDir ${ANALYSIS_RUN_DIR}
 
 On completion, the configuration script will create the workflow run script `${ANALYSIS_RUN_DIR}/runWorkflow.py`
 . This can be used to run the workflow in various parallel compute modes per the
@@ -119,18 +96,10 @@ instructions in the [Execution] section below.
 
 #### Advanced configuration options
 
-There are two sources of advanced configuration options:
-
-* Options listed in the file: `${INSTALL_DIR}/bin/configManta.py.ini`
-    * These parameters are not expected to change frequently. Changing the file
-  listed above will re-configure all manta runs for the installation. To change
-  parameters for a single run, copy the configManta.py.ini file to another location,
-  change the desired parameter values and supply the new file using the configuration
-  script's `--config FILE` option.
-* Advanced options listed in: `${INSTALL_DIR}/bin/configManta.py --allHelp`
+* Advanced options listed in: `${INSTALL_DIR}/bin/configureStrelkaWorkflow.py -- allHelp`
     * These options are indented primarily for workflow development and
-  debugging, but could be useful for runtime optimization in some specialized
-  cases.
+      debugging, but could be useful for runtime optimization in some specialized
+      cases.
 
 ### Execution
 
@@ -155,15 +124,11 @@ For a full list of execution options, see:
 
 Example execution on a single node:
 
-```
-${ANALYSIS_RUN_DIR}/runWorkflow.py -m local -j 8
-```
+`${ANALYSIS_RUN_DIR}/runWorkflow.py -m local -j 8`
 
 Example execution on an SGE cluster:
 
-```
-${ANALYSIS_RUN_DIR}/runWorkflow.py -m sge -j 36
-```
+`${ANALYSIS_RUN_DIR}/runWorkflow.py -m sge -j 36`
 
 #### Advanced execution options
 

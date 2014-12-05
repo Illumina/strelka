@@ -58,7 +58,7 @@ cmd="$configScript \
 --bam='$dataDir/NA12891_dupmark_chr20_region.bam' \
 --referenceFasta='$dataDir/chr20_860k_only.fa' \
 --callMemMb=1024 \
---config=$demoConfigFile \
+--exome \
 --runDir=$analysisDir"
 
 echo 1>&2

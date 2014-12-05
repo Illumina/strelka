@@ -44,7 +44,7 @@ private:
 
     void usage(const char* xmessage = nullptr) const;
 
-    void doc() const {};
+    void doc() const {}
 
     snoise_info() {}
     virtual ~snoise_info() {}

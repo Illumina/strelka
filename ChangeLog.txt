@@ -1,4 +1,8 @@
+v2.2.1
+- STARKA-170 Add "--exome" config option for starling/strelka
+v2.2.0
 - STARKA-166 add binomial-distribution-based allele bias predictors for Starling VQSR models
+- STARKA-165 patch LOH artifact in somatic VQSR output
 - STARKA-162 revise depth normalization in Starling VQSR
 - STARKA-161 refine somatic VQSR settings
 - STARKA-158 generalize gvcf nocompress to support regions/compression/tabix index

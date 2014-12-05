@@ -536,9 +536,13 @@ write_site_record(const site_info& si) const
                 os << "AvgBaseQ=" << si.avgBaseQ;
                 os << ';';
                 os << "AvgPos=" << si.rawPos;
-                os << ';';
+// if you uncomment the following, make sure you also uncomment the matching INFO header entry in gvcf_header.cpp
+//                os << ';';
 //                os << "MapQ0Count=" << si.mapq_zero;
-                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
+
+// N.B. DP is in FORMAT already, and that seems to be where Nondas's code expects to find it, so suppress it here:
+//                os << ';';
+//                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
 
             }
 //            //reported q-score
@@ -835,7 +839,7 @@ write_indel_record(const unsigned write_index)
     for (unsigned i(write_index); i<=end_index; ++i)
     {
         if (i!=write_index) os << ',';
-        if (_indel_buffer[i].iri.is_repeat_unit &&
+        if (_indel_buffer[i].iri.is_repeat_unit() &&
             (_indel_buffer[i].iri.repeat_unit.size() <= 20))
         {
             os << _indel_buffer[i].iri.repeat_unit;
@@ -850,7 +854,7 @@ write_indel_record(const unsigned write_index)
     for (unsigned i(write_index); i<=end_index; ++i)
     {
         if (i!=write_index) os << ',';
-        if (_indel_buffer[i].iri.is_repeat_unit)
+        if (_indel_buffer[i].iri.is_repeat_unit())
         {
             os << _indel_buffer[i].iri.ref_repeat_count;
         }
@@ -864,7 +868,7 @@ write_indel_record(const unsigned write_index)
     for (unsigned i(write_index); i<=end_index; ++i)
     {
         if (i!=write_index) os << ',';
-        if (_indel_buffer[i].iri.is_repeat_unit)
+        if (_indel_buffer[i].iri.is_repeat_unit())
         {
             os << _indel_buffer[i].iri.indel_repeat_count;
         }

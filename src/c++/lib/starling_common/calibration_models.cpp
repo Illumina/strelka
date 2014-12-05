@@ -142,7 +142,7 @@ void calibration_models::default_clasify_site(indel_info& ii)
 
     if (this->opt.is_max_ref_rep)
     {
-        if (ii.iri.is_repeat_unit)
+        if (ii.iri.is_repeat_unit())
         {
             if ((ii.iri.repeat_unit.size() <= 2) &&
                 (static_cast<int>(ii.iri.ref_repeat_count) > this->opt.max_ref_rep))
@@ -162,7 +162,10 @@ calibration_models::load_chr_depth_stats()
         std::vector<double> depths;
         for (cdmap_t::const_iterator iter = this->chrom_depth.begin(); iter != this->chrom_depth.end() ; ++iter)
         {
+#if 0
+            /// NO HARD CODED CHROMOSOME NAMES!!!!!!!!!!!!
             if (!(iter->first=="chrM" ||iter->first=="chrY"||iter->first=="chrX"))
+#endif
             {
 //                log_os << iter->first << " is " << iter->second << "\n";
                 depths.push_back(iter->second);

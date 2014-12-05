@@ -150,7 +150,8 @@ std::map<std::string, double> site_info::get_qscore_features(double chrom_depth)
     for (unsigned b(0); b<N_BASE; ++b)
     {
         if (b==dgt.ref_gt) continue;
-        if (DIGT::expect2(b,smod.max_gt)){
+        if (DIGT::expect2(b,smod.max_gt))
+        {
             res["AD1"] =  known_counts[b]/(1.0*chrom_depth);
             // allele bias metrics
             double r0 = known_counts[dgt.ref_gt];

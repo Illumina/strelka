@@ -33,8 +33,9 @@ set(DEVELOPER_MODE true)
 # setup project/version
 #
 
-project (starka)
 set(THIS_PROJECT_NAME "starka")
+
+project (${THIS_PROJECT_NAME})
 
 # find interpreters
 find_package(PythonInterp)
@@ -53,8 +54,11 @@ set(STARKA_FULL_VERSION "${THIS_PROJECT_NAME}-${STARKA_VERSION}")
 message (STATUS "STARKA_VERSION: ${STARKA_VERSION}")
 
 
+set (THIS_GLOBALS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/globals.cmake")
+set (THIS_MACROS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/macros.cmake")
+
 # add custom functions:
-include ("${CMAKE_SOURCE_DIR}/cmake/macros.cmake")
+include ("${THIS_MACROS_CMAKE}")
 
 #
 # setup build type
@@ -132,28 +136,28 @@ set(THIS_DEMODIR "${THIS_DATADIR}/demo")
 
 message (STATUS "install prefix: ${CMAKE_INSTALL_PREFIX}")
 
-add_custom_target(STARKA_OPT ALL)
+set(THIS_OPT "${THIS_PROJECT_NAME}_opt")
+add_custom_target(${THIS_OPT} ALL)
 
 set(THIS_REDIST_DIR "${CMAKE_SOURCE_DIR}/../redist")
-
-set (THIS_GLOBALS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/globals.cmake")
-set (THIS_MACROS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/macros.cmake")
 
 # redist includes
 include ("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 
 # global source QC -- don't allow non-ascii chars in source files:
-add_custom_target(STARKA_SOURCE_CHECK
+set(THIS_SOURCE_CHECK "${THIS_PROJECT_NAME}_source_check")
+add_custom_target(${THIS_SOURCE_CHECK}
     ALL
     COMMAND bash ${THIS_SOURCE_QC_DIR}/check_for_nonascii_source.bash
     )
 
-# force this to run earlY:
-add_dependencies(STARKA_OPT STARKA_SOURCE_CHECK)
+# force this to run early:
+add_dependencies(${THIS_OPT} ${THIS_SOURCE_CHECK})
 
 # force unit tests at compile time, and set them to be more verbose than
 # cmake's default "test" target:
-add_custom_target(STARKA_UNITTESTS
+set(THIS_UNITTESTS "${THIS_PROJECT_NAME}_unittests")
+add_custom_target(${THIS_UNITTESTS}
     ALL
     COMMAND ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --output-on-failure
     )
@@ -166,4 +170,3 @@ add_subdirectory (config)
 add_subdirectory (demo)
 add_subdirectory (markdown)
 add_subdirectory (cmake/postInstall)
-

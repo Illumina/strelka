@@ -21,7 +21,6 @@
 
 struct somatic_indel_call
 {
-
     somatic_indel_call()
         : is_forced_output(false)
     {}

@@ -19,20 +19,20 @@ import os.path
 import shutil
 import sys
 
-# add script path to pull in utils in same directory:
+# add this path to pull in utils in same directory:
 scriptDir=os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.abspath(scriptDir))
+sys.path.append(scriptDir)
 
 # add pyflow path:
-# TODO: get a more robust link to the pyflow dir at config time:
-pyflowDir=os.path.join(scriptDir,"pyflow")
-sys.path.append(os.path.abspath(pyflowDir))
+sys.path.append(os.path.join(scriptDir,"pyflow"))
+
 
 from pyflow import WorkflowRunner
+from starkaWorkflow import StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
+                         getNextGenomeSegment, bamListCatCmd
 
-from configureUtil import argToBool, getIniSections, dumpIniSections
+from configureUtil import safeSetBool, getIniSections, dumpIniSections
 
 
 
@@ -131,9 +131,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
-    segCmd.extend(['--calibration-model-file',self.params.scoringModelFile])
-    segCmd.extend(['--scoring-models',self.params.vqsrModel ])
-    segCmd.append("--gvcf-compute-VQSRmetrics")
+    segCmd.extend(['--calibration-model-file',self.params.vqsrModelFile])
+    segCmd.extend(['--scoring-model',self.params.vqsrModel ])
+
+    if self.params.isReportVQSRMetrics :
+        segCmd.append("--gvcf-report-VQSRmetrics")
 
     segCmd.extend(['--do-short-range-phasing'])
 
@@ -145,7 +147,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if not isFirstSegment :
         segCmd.append("--gvcf-skip-header")
 
-    if not self.params.isSkipDepthFilters :
+    if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
 
     if self.params.isWriteRealignedBam :
@@ -317,64 +319,28 @@ class PathInfo:
 
 
 
-class StarlingWorkflow(WorkflowRunner) :
+class StarlingWorkflow(StarkaWorkflow) :
     """
     germline small variant calling workflow
     """
 
     def __init__(self,params,iniSections) :
 
-        # clear out some potentially destabilizing env variables:
-        clearList = [ "PYTHONPATH", "PYTHONHOME"]
-        for key in clearList :
-            if key in os.environ :
-                del os.environ[key]
-
-        self.params=params
-        self.iniSections=iniSections
+        super(StarlingWorkflow,self).__init__(params,iniSections)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []
 
         # format other:
-        self.params.isWriteRealignedBam = argToBool(self.params.isWriteRealignedBam)
-        self.params.isSkipDepthFilters = argToBool(self.params.isSkipDepthFilters)
-        self.params.isSkipIndelErrorModel = argToBool(self.params.isSkipIndelErrorModel)
-
-        # make sure run directory is setup:
-        self.params.runDir=os.path.abspath(self.params.runDir)
-        ensureDir(self.params.runDir)
-
-        # everything that's not intended to be a final result should dump directories/files in workDir
-        self.params.workDir=os.path.join(self.params.runDir,"workspace")
-        ensureDir(self.params.workDir)
-
-        # all finalized pretty results get transfered to resultsDir
-        self.params.resultsDir=os.path.join(self.params.runDir,"results")
-        ensureDir(self.params.resultsDir)
-        self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
-        ensureDir(self.params.variantsDir)
+        safeSetBool(self.params,"isWriteRealignedBam")
+        safeSetBool(self.params,"isSkipIndelErrorModel")
 
         if self.params.isWriteRealignedBam :
             self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
             ensureDir(self.params.realignedDir)
 
-        indexRefFasta=self.params.referenceFasta+".fai"
-
-        if self.params.referenceFasta is None:
-            raise Exception("No reference fasta defined.")
-        else:
-            checkFile(self.params.referenceFasta,"reference fasta")
-            checkFile(indexRefFasta,"reference fasta index")
-
-        # read fasta index
-        (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
-
-        # sanity check some parameter typing:
-        MEGABASE = 1000000
-        self.params.scanSize = int(self.params.scanSizeMb) * MEGABASE
-
         self.paths = PathInfo(self.params)
+
 
 
     def getSuccessMessage(self) :
@@ -391,7 +357,7 @@ class StarlingWorkflow(WorkflowRunner) :
 
         callPreReqs = set()
         callPreReqs |= runCount(self)
-        if not self.params.isSkipDepthFilters :
+        if self.params.isHighDepthFilter :
             callPreReqs |= runDepth(self)
         if not self.params.isSkipIndelErrorModel :
             callPreReqs |= runIndelModel(self)
