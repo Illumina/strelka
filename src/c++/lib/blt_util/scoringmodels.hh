@@ -19,18 +19,9 @@
 
 #pragma once
 
-#include "blt_util/qscore.hh"
-
 #include "boost/property_tree/ptree.hpp"
-#include "boost/property_tree/json_parser.hpp"
-#include "boost/foreach.hpp"
 
-#include <cassert>
-#include <cstdlib>     /* atof */
-
-#include <iostream>
 #include <map>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -139,7 +130,7 @@ class indel_model
 public:
     indel_model() {}
     void add_prop(const unsigned hpol_case, const double prop_ins,const double prop_del);
-    double get_prop(const unsigned hpol_case);
+    double get_prop(const unsigned hpol_case) const;
     error_model model;
 private:
     std::string name;
@@ -156,11 +147,11 @@ public:
     typedef std::vector< calibration_type > set_of_calibrations_type;
 
     void populate_storage_metadata();
-    void load(boost::property_tree::ptree pt);
+    void load(const boost::property_tree::ptree& pt);
 
-    double get_randomforest_proba(const feature_type& features);
+    double get_randomforest_proba(const feature_type& features) const;
 private:
-    double get_single_dectree_proba(const feature_type& features, int tree_index);
+    double get_single_dectree_proba(const feature_type& features, int tree_index) const;
 
     int n_trees = 10;
     std::vector<std::string> calibration_data_names;
@@ -169,9 +160,6 @@ private:
     set_of_calibrations_type all_decisions;
     std::vector< set_of_calibrations_type > all_rf_json_data;
 
-
-
-private:
     std::string name;
 };
 
@@ -180,12 +168,12 @@ class scoring_models
 public:
     static scoring_models* Instance();
     void load_models(const std::string& model_file);
-    void load_indel_model(boost::property_tree::ptree pt,const std::string& model_name);
+    void load_indel_model(const boost::property_tree::ptree& pt,const std::string& model_name);
 
-    void load_calibration_model(boost::property_tree::ptree pt,const std::string& model_name,const std::string& model_type="RF");
-    int score_instance(const feature_type& features);
+    void load_calibration_model(const boost::property_tree::ptree& pt,const std::string& model_name,const std::string& model_type="RF");
+    int score_instance(const feature_type& features) const;
 
-    const error_model& get_indel_model(const std::string& pattern);
+    const error_model& get_indel_model(const std::string& pattern) const;
     bool indel_init=false;
 
     bool calibration_init=false;

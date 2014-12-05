@@ -18,6 +18,18 @@
  */
 #include "scoringmodels.hh"
 
+#include "blt_util/qscore.hh"
+
+#include "boost/property_tree/json_parser.hpp"
+
+#include <cassert>
+#include <cstdlib>     /* atof */
+
+#include <iostream>
+#include <sstream>
+
+using boost::property_tree::ptree;
+
 //#define DEBUG_SCORINGMODELS
 
 #ifdef DEBUG_SCORINGMODELS
@@ -49,11 +61,9 @@ void indel_model::add_prop(const unsigned hpol_case, const double prop_ins,const
     }
 }
 
-double indel_model::get_prop(const unsigned hpol_case)
+double indel_model::get_prop(const unsigned hpol_case) const
 {
-    if (hpol_case>40)
-        return this->model[max_hpol_len-1].first;
-    return this->model[hpol_case-1].first;
+    return model[std::min(hpol_case,max_hpol_len)-1].first;
 }
 
 void calibration_model::populate_storage_metadata()
@@ -66,32 +76,29 @@ void calibration_model::populate_storage_metadata()
 
 
 //modified
-void calibration_model::load(boost::property_tree::ptree pt)
+void calibration_model::load(const ptree& pt)
 {
-    std::vector< set_of_calibrations_type > all_data;
-    for (unsigned int v = 0; v < this->calibration_data_names.size(); v++)
-    {
-        set_of_calibrations_type dummy_arr;
-        all_data.push_back(dummy_arr);
-    }
-//   try
+    const unsigned nameSize(calibration_data_names.size());
+    std::vector< set_of_calibrations_type > all_data(nameSize);
+
+    //   try
 //   {
     int t_count = 0;
 
-    BOOST_FOREACH(boost::property_tree::ptree::value_type &each_tree, pt)
+    for(const ptree::value_type& each_tree : pt)
     {
         t_count ++;
 //           log_os << "Tree count: " << t_count << "\n";
 
-        for (unsigned int vn=0; vn < this->calibration_data_names.size(); vn++)
+        for (unsigned int vn=0; vn < nameSize; vn++)
         {
 
             std::map<int, std::vector<double> > node_votes;
-            BOOST_FOREACH(boost::property_tree::ptree::value_type &v, each_tree.second.get_child(this->calibration_data_names[vn]))
+            for (const ptree::value_type& v : each_tree.second.get_child(this->calibration_data_names[vn]))
             {
                 std::vector<double> prob_tuple (2,0);
                 int ind = 0;
-                BOOST_FOREACH(boost::property_tree::ptree::value_type &i, v.second)
+                for (const ptree::value_type& i : v.second)
                 {
                     double p = i.second.get_value<double>();
                     prob_tuple[ind++] = p;
@@ -114,34 +121,34 @@ void calibration_model::load(boost::property_tree::ptree pt)
 }
 
 
-double calibration_model::get_single_dectree_proba(const feature_type& features, int tree_index)
+double calibration_model::get_single_dectree_proba(const feature_type& features, int tree_index) const
 {
+    const calibration_type& tree(all_trees[tree_index]);
+    const calibration_type& decision(all_decisions[tree_index]);
     int node = 0;
 
     //traverse a single tree
-    while (this->all_trees[tree_index][node][0] != -1)  // test condition signifies we've reached a leaf node
+    while (tree.at(node)[0] != -1)  // test condition signifies we've reached a leaf node
     {
 //        log_os << "Looking for feature number " << STRELKA_VQSR_FEATURES::get_feature_label((int)this->all_decisions[tree_index][node][0]) << std::endl;
-        if (features.find((int)this->all_decisions[tree_index][node][0])->second <= this->all_decisions[tree_index][node][1])
+        if (features.at((int)decision.at(node)[0]) <= decision.at(node)[1])
         {
 //            log_os << "Looking for feature " << STRELKA_VQSR_FEATURES::get_feature_label((int)this->all_decisions[tree_index][node][0]) << std::endl;
-            node = (int)this->all_trees[tree_index][node][0];
+            node = (int)tree.at(node)[0];
         }
         else
         {
-            node = (int)this->all_trees[tree_index][node][1];
+            node = (int)tree.at(node)[1];
         }
     }
 
     // normalize the vote of the lead split
-    double total = this->all_node_votes[tree_index][node][0] + this->all_node_votes[tree_index][node][1];
-    double proba1 = 1.0*this->all_node_votes[tree_index][node][1] / total;
-
-    return proba1;
-
+    const std::vector<double>& votes(all_node_votes[tree_index].at(node));
+    const double total = votes[0] + votes[1];
+    return (votes[1] / total);
 }
 
-double calibration_model::get_randomforest_proba(const feature_type& features)
+double calibration_model::get_randomforest_proba(const feature_type& features) const
 {
     //get the probability for every tree and average them out.
     double final_proba = 0;
@@ -154,28 +161,26 @@ double calibration_model::get_randomforest_proba(const feature_type& features)
     return (1.0-final_proba/this->n_trees); // returns calibration score
 }
 
-int scoring_models::score_instance(const feature_type& features)
+int scoring_models::score_instance(const feature_type& features) const
 {
-    double score = this->randomforest_model.get_randomforest_proba(features);
-    int Q = error_prob_to_qphred(score);
-    return Q;
+    const double score = this->randomforest_model.get_randomforest_proba(features);
+    return error_prob_to_qphred(score);
 }
 
-const error_model& scoring_models::get_indel_model(const std::string& pattern)
+const error_model& scoring_models::get_indel_model(const std::string& /*pattern*/) const
 {
-    if (pattern=="f") {}
-    return this->indel_models[this->current_indel_model].model;
+    return this->indel_models.at(this->current_indel_model).model;
 }
 
 
-void scoring_models::load_indel_model(boost::property_tree::ptree pt,const std::string& model_name)
+void scoring_models::load_indel_model(const ptree& pt,const std::string& model_name)
 {
 
     std::string s = imodels + "." + model_name;
 //    log_os << s << std::endl;
     indel_model temp_model;
     unsigned i=0;
-    BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(s))
+    for (const ptree::value_type &v : pt.get_child(s))
     {
         temp_model.add_prop(i,atof(v.second.data().c_str()),atof(v.second.data().c_str()));
         i++;
@@ -186,7 +191,7 @@ void scoring_models::load_indel_model(boost::property_tree::ptree pt,const std::
 
 
 
-void scoring_models::load_calibration_model(boost::property_tree::ptree pt,const std::string& model_name,const std::string& model_type)
+void scoring_models::load_calibration_model(const ptree& pt,const std::string& model_name,const std::string& model_type)
 {
     this->randomforest_model.populate_storage_metadata();
     if (model_name!="" && model_type!="")
@@ -208,20 +213,19 @@ void scoring_models::load_models(const std::string& model_file)
     ss << file.rdbuf();
     file.close();
 
-    boost::property_tree::ptree pt;
+    ptree pt;
     boost::property_tree::read_json(ss, pt);
 
     //load indel models
-    BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(imodels))
+    for (const ptree::value_type &v : pt.get_child(imodels))
     {
 //         log_os << "Reading indel model " << v.first <<  std::endl;
         this->load_indel_model(pt,v.first);
     }
 
     //load calibration models
-    BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child(cmodels))
+    for (const ptree::value_type &v : pt.get_child(cmodels))
     {
         this->load_calibration_model(pt.get_child(cmodels),v.first);
     }
-
 }
