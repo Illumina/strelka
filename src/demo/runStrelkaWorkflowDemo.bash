@@ -19,7 +19,8 @@ set -o nounset
 set -o pipefail
 
 scriptDir=$(dirname $0)
-demoDir=$scriptDir/../share/demo/strelka
+shareDir=$scriptDir/../share
+demoDir=$shareDir/demo/strelka
 dataDir=$demoDir/data
 expectedDir=$demoDir/expectedResults
 
@@ -27,7 +28,7 @@ analysisDir=./strelkaDemoAnalysis
 
 configScript=$scriptDir/configureStrelkaWorkflow.py
 
-demoConfigFile=$demoDir/strelkaDemoConfig.ini
+demoConfigFile=$shareDir/config/strelka_config_isaac_default.ini
 
 
 
@@ -58,6 +59,7 @@ cmd="$configScript \
 --normalBam='$dataDir/NA12892_dupmark_chr20_region.bam' \
 --referenceFasta='$dataDir/chr20_860k_only.fa' \
 --callMemMb=1024 \
+--exome \
 --config=$demoConfigFile \
 --runDir=$analysisDir"
 
