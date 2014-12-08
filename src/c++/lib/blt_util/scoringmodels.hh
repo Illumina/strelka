@@ -125,10 +125,8 @@ static const unsigned max_hpol_len(40);
 static const unsigned max_indel_len(15);
 typedef std::pair<double,double> error_model[max_hpol_len];
 
-class indel_model
+struct indel_model
 {
-public:
-    indel_model() {}
     void add_prop(const unsigned hpol_case, const double prop_ins,const double prop_del);
     double get_prop(const unsigned hpol_case) const;
     error_model model;
@@ -138,11 +136,8 @@ private:
 
 
 
-class calibration_model
+struct calibration_model
 {
-public:
-    calibration_model() {}
-
     typedef std::map<int, std::vector<double> > calibration_type;
     typedef std::vector< calibration_type > set_of_calibrations_type;
 
@@ -163,9 +158,8 @@ private:
     std::string name;
 };
 
-class scoring_models
+struct scoring_models
 {
-public:
     static scoring_models* Instance();
     void load_models(const std::string& model_file);
     void load_indel_model(const boost::property_tree::ptree& pt,const std::string& model_name);
