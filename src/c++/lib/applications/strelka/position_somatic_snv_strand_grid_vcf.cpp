@@ -198,11 +198,18 @@ calc_VQSR_features(
     //StrandBias
     smod.set_feature(STRELKA_VQSR_FEATURES::strandBias,rs.strandBias);
 
+    //TODO better handling of default values for in cases where alpos or altmap are not defined
     //Altpos
-    if (isAltpos) smod.set_feature(STRELKA_VQSR_FEATURES::altpos,altpos);
+    if (isAltpos)
+        smod.set_feature(STRELKA_VQSR_FEATURES::altpos,altpos);
+    else
+        smod.set_feature(STRELKA_VQSR_FEATURES::altpos,0);
 
     //Altmap
-    if (isAltmap) smod.set_feature(STRELKA_VQSR_FEATURES::altmap,altmap);
+    if (isAltmap)
+        smod.set_feature(STRELKA_VQSR_FEATURES::altmap,altmap);
+    else
+        smod.set_feature(STRELKA_VQSR_FEATURES::altmap,0);
 
     //Pnoise
     double pnoise(0.);
@@ -220,8 +227,6 @@ calc_VQSR_features(
     }
     smod.set_feature(STRELKA_VQSR_FEATURES::pnoise2,pnoise2);
 }
-
-
 
 static
 void
