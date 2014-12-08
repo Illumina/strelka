@@ -512,7 +512,7 @@ finalize_starling_options(const prog_info& pinfo,
     if (opt.indel_scoring_models.length()>2)
     {
 //        log_os << "I got a model";
-        scoring_models::Instance()->load_models(opt.indel_scoring_models);
+        scoring_models::Instance().load_models(opt.indel_scoring_models);
     }
 
     finalize_legacy_starling_options(pinfo,opt);

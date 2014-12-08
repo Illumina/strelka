@@ -115,7 +115,7 @@ struct PatternErrorModel
         const std::string& /*pattern*/)
     {
         // we are using estimated error model from json input
-        if (scoring_models::Instance()->indel_init)
+        if (scoring_models::Instance().indel_init)
         {
 //            log_os << "Getting indel error model " << overall_error_model << std::endl;
 //            return scoring_models::Instance()->get_indel_model(overall_error_model);

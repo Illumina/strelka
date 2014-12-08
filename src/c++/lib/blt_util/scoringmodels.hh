@@ -160,7 +160,7 @@ private:
 
 struct scoring_models
 {
-    static scoring_models* Instance();
+    static scoring_models& Instance();
     void load_models(const std::string& model_file);
     void load_indel_model(const boost::property_tree::ptree& pt,const std::string& model_name);
 

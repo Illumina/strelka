@@ -39,20 +39,6 @@ using boost::property_tree::ptree;
 
 
 
-// Global static pointer used to ensure a single instance of the class.
-scoring_models* scoring_models::m_pInstance = nullptr;
-
-/** This function is called to create an instance of the class.
-    Calling the constructor publicly is not allowed. The constructor
-    is private and is only called by this Instance function.
-*/
-scoring_models* scoring_models::Instance()
-{
-    if (!m_pInstance)   // Only allow one instance of class to be generated.
-        m_pInstance = new scoring_models;
-    return m_pInstance;
-}
-
 void indel_model::add_prop(const unsigned hpol_case, const double prop_ins,const double prop_del)
 {
     if (hpol_case>0 && hpol_case<max_hpol_len)
@@ -176,6 +162,21 @@ double calibration_model::get_randomforest_proba(const feature_type& features) c
     return retval;
 }
 
+
+
+// Global static pointer used to ensure a single instance of the class.
+scoring_models* scoring_models::m_pInstance = nullptr;
+
+/** This function is called to create an instance of the class.
+    Calling the constructor publicly is not allowed. The constructor
+    is private and is only called by this Instance function.
+*/
+scoring_models& scoring_models::Instance()
+{
+    if (!m_pInstance)   // Only allow one instance of class to be generated.
+        m_pInstance = new scoring_models;
+    return *m_pInstance;
+}
 
 
 double scoring_models::score_instance(const feature_type& features) const

@@ -132,10 +132,12 @@ struct strelka_shared_modifiers
         filters.reset();
         _isFeatureSet.reset();
         _featureVal.clear();
+        isQscore=false;
         Qscore = 0;
     }
 
     std::bitset<STRELKA_VCF_FILTERS::SIZE> filters;
+    bool isQscore;
     double Qscore;
 
 private:
