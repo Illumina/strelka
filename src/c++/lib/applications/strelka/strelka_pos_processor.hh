@@ -55,17 +55,7 @@ struct strelka_pos_processor : public starling_pos_processor_base
 private:
 
     void
-    process_pos_variants(const pos_t pos) override
-    {
-        process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
-        process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
-
-        process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
-        process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
-
-        process_pos_snp_somatic(pos);
-        process_pos_indel_somatic(pos);
-    }
+    process_pos_variants(const pos_t pos) override;
 
     void
     process_pos_snp_somatic(const pos_t pos);

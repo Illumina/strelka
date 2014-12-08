@@ -18,6 +18,7 @@
  */
 #include "scoringmodels.hh"
 
+#include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
 
 #include "boost/property_tree/json_parser.hpp"
@@ -148,18 +149,34 @@ double calibration_model::get_single_dectree_proba(const feature_type& features,
     return (votes[1] / total);
 }
 
+
+
 double calibration_model::get_randomforest_proba(const feature_type& features) const
 {
-    //get the probability for every tree and average them out.
-    double final_proba = 0;
-    for (int t = 0; t < this->n_trees; t++)
+    double retval(0);
+    try
     {
-//       log_os << "Applying tree " << t << std::endl;
-        final_proba += this->get_single_dectree_proba(features, t);
+        //get the probability for every tree and average them out.
+        double final_proba = 0;
+        for (int t = 0; t < this->n_trees; t++)
+        {
+            final_proba += this->get_single_dectree_proba(features, t);
+        }
+        retval = (1.0-final_proba/this->n_trees);
     }
-//    log_os << "Final prop " << 1-final_proba/this->n_trees << std::endl;
-    return (1.0-final_proba/this->n_trees); // returns calibration score
+    catch (...)
+    {
+        log_os << "Except caught in random forest while scoring feature:\n";
+        for (const auto val : features)
+        {
+            log_os << "K:V " << val.first << " : " << val.second << "\n";
+        }
+        throw;
+    }
+    return retval;
 }
+
+
 
 int scoring_models::score_instance(const feature_type& features) const
 {

@@ -256,6 +256,38 @@ process_pos_snp_somatic(const pos_t pos)
 }
 
 
+void
+strelka_pos_processor::
+process_pos_variants(const pos_t pos)
+{
+    process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
+    process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
+
+    process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
+    process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
+
+    try
+    {
+        process_pos_snp_somatic(pos);
+    }
+    catch (...)
+    {
+        log_os << "Exception caught while attempting to call somatic SNV at position: " << (pos+1) << "\n";
+        throw;
+    }
+
+    try
+    {
+        process_pos_indel_somatic(pos);
+    }
+    catch (...)
+    {
+        log_os << "Exception caught while attempting to call somatic indel at position: " << (pos+1) << "\n";
+        throw;
+    }
+}
+
+
 
 void
 strelka_pos_processor::
