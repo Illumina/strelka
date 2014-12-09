@@ -20,6 +20,8 @@
 #include "somatic_call_shared.hh"
 #include "blt_util/io_util.hh"
 #include "blt_util/math_util.hh"
+#include "calibration/scoringmodels.hh"
+
 
 #include <iomanip>
 #include <iostream>

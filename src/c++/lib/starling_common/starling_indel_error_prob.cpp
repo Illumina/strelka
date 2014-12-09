@@ -18,8 +18,8 @@
 
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
+#include "calibration/scoringmodels.hh"
 #include "starling_common/starling_indel_error_prob.hh"
-#include "blt_util/scoringmodels.hh"
 
 #include <cmath>
 

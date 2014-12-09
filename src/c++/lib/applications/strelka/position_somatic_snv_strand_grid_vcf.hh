@@ -22,7 +22,6 @@
 #pragma once
 
 #include "position_somatic_snv_strand_grid.hh"
-#include "blt_util/scoringmodels.hh"
 
 
 // vcf output:

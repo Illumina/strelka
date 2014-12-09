@@ -17,8 +17,8 @@
 
 #include "blt_common/blt_arg_validate.hh"
 #include "blt_util/compat_util.hh"
+#include "calibration/scoringmodels.hh"
 #include "starling_common/starling_option_parser.hh"
-#include "blt_util/scoringmodels.hh"
 
 #include "boost/format.hpp"
 

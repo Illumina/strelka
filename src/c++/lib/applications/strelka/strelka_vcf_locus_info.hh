@@ -17,11 +17,13 @@
 
 #pragma once
 
+#include "strelkaVQSRFeatures.hh"
+#include "calibration/CalibrationModel.hh"
+
 #include <cassert>
 
 #include <bitset>
 #include <iosfwd>
-#include "blt_util/scoringmodels.hh"
 
 
 namespace STRELKA_VCF_FILTERS
