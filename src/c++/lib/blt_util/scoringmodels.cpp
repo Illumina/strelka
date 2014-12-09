@@ -20,16 +20,17 @@
 
 #include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
+#include "blt_util/parse_util.hh"
 
 #include "boost/property_tree/json_parser.hpp"
 
 #include <cassert>
-#include <cstdlib>     /* atof */
 
 #include <iostream>
 #include <sstream>
 
 using boost::property_tree::ptree;
+using namespace illumina::blt_util;
 
 //#define DEBUG_SCORINGMODELS
 
@@ -53,106 +54,156 @@ double indel_model::get_prop(const unsigned hpol_case) const
     return model[std::min(hpol_case,max_hpol_len)-1].first;
 }
 
-void calibration_model::populate_storage_metadata()
+////////////// random forest model:
+
+
+namespace DTREE_NODE_TYPE
 {
-    this->calibration_data_names.push_back("tree");
-    this->calibration_data_names.push_back("node_votes");
-    this->calibration_data_names.push_back("decisions");
-
-}
-
-
-//modified
-void calibration_model::load(const ptree& pt)
-{
-    const unsigned nameSize(calibration_data_names.size());
-    std::vector< set_of_calibrations_type > all_data(nameSize);
-
-    //   try
-//   {
-    int t_count = 0;
-
-    for (const ptree::value_type& each_tree : pt)
+    enum index_t
     {
-        t_count ++;
-//           log_os << "Tree count: " << t_count << "\n";
+        TREE,
+        VOTE,
+        DECISION,
+        SIZE
+    };
 
-        for (unsigned int vn=0; vn < nameSize; vn++)
+    const char*
+    get_label(const index_t i)
+    {
+        switch(i)
         {
-
-            std::map<int, std::vector<double> > node_votes;
-            for (const ptree::value_type& v : each_tree.second.get_child(this->calibration_data_names[vn]))
-            {
-                std::vector<double> prob_tuple (2,0);
-                int ind = 0;
-                for (const ptree::value_type& i : v.second)
-                {
-                    double p = i.second.get_value<double>();
-                    prob_tuple[ind++] = p;
-                }
-                node_votes[atoi(v.first.c_str())] = prob_tuple;
-            }
-            all_data[vn].push_back(node_votes);
+        case TREE: return "tree";
+        case VOTE: return "node_votes";
+        case DECISION: return "decisions";
+        default:
+            assert(false && "Unknown node type");
+            return nullptr;
         }
     }
-    int ind = 0;
-    this->all_trees = all_data[ind++];
-    this->all_node_votes = all_data[ind++];
-    this->all_decisions = all_data[ind++];
-//   }
-//
-//   catch (std::exception const& e)
-//   {
-//       std::cerr << e.what() << std::endl;
-//   }
 }
 
 
-double calibration_model::get_single_dectree_proba(const feature_type& features, int tree_index) const
+
+template <typename L, typename R>
+void
+RandomForestModel::
+parseTreeNode(
+    const ptree::value_type& v,
+    TreeNode<L,R>& val)
 {
-    const calibration_type& tree(all_trees[tree_index]);
-    const calibration_type& decision(all_decisions[tree_index]);
-    int node = 0;
+    assert(! val.isInit);
+    assert(v.second.size() == 2);
+
+    val.isInit = true;
+    ptree::const_iterator viter(v.second.begin());
+    val.left = viter->second.get_value<L>();
+    ++viter;
+    val.right = viter->second.get_value<R>();
+}
+
+
+
+void
+RandomForestModel::
+load(const ptree& pt)
+{
+    // trees:
+    for (const ptree::value_type& tree_pt : pt)
+    {
+        _forest.emplace_back();
+        DecisionTree& dtree(_forest.back());
+
+        using namespace DTREE_NODE_TYPE;
+
+        // node types:
+        for (int i(0); i<SIZE;++i)
+        {
+            const index_t nodeTypeIndex(static_cast<index_t>(i));
+            // nodes:
+            for (const ptree::value_type& v : tree_pt.second.get_child(get_label(nodeTypeIndex)))
+            {
+                const unsigned nodeIndex(parse_unsigned_str(v.first));
+                if (dtree.data.size() <= nodeIndex)
+                {
+                    dtree.data.resize(nodeIndex+1);
+                }
+                DecisionTreeNode& node(dtree.data[nodeIndex]);
+
+                switch(nodeTypeIndex)
+                {
+                case TREE:
+                    parseTreeNode(v,node.tree);
+                    break;
+                case VOTE:
+                    parseTreeNode(v,node.vote);
+                    break;
+                case DECISION:
+                    parseTreeNode(v,node.decision);
+                    break;
+                default:
+                    assert(false && "Unknown node type");
+                }
+            }
+        }
+    }
+}
+
+
+
+double
+RandomForestModel::
+getDecisionTreeProb(
+    const feature_type& features,
+    const DecisionTree& dtree) const
+{
+    unsigned nodeIndex(0);
 
     //traverse a single tree
-    while (tree.at(node)[0] != -1)  // test condition signifies we've reached a leaf node
+    while(true)
     {
-//        log_os << "Looking for feature number " << STRELKA_VQSR_FEATURES::get_feature_label((int)this->all_decisions[tree_index][node][0]) << std::endl;
-        if (features.at((int)decision.at(node)[0]) <= decision.at(node)[1])
+        const DecisionTreeNode& node(dtree.getNode(nodeIndex));
+        assert(node.tree.isInit);
+        // test condition signifies we've reached a leaf node
+        if (node.tree.left == -1)
         {
-//            log_os << "Looking for feature " << STRELKA_VQSR_FEATURES::get_feature_label((int)this->all_decisions[tree_index][node][0]) << std::endl;
-            node = (int)tree.at(node)[0];
+            assert(node.vote.isInit);
+            const double total = node.vote.left + node.vote.right;
+            return (node.vote.right / total);
+        }
+
+        assert(node.decision.isInit);
+        if (features.at(node.decision.left) <= node.decision.right)
+        {
+            nodeIndex=node.tree.left;
         }
         else
         {
-            node = (int)tree.at(node)[1];
+            nodeIndex=node.tree.right;
         }
     }
-
-    // normalize the vote of the lead split
-    const std::vector<double>& votes(all_node_votes[tree_index].at(node));
-    const double total = votes[0] + votes[1];
-    return (votes[1] / total);
 }
 
 
 
-double calibration_model::get_randomforest_proba(const feature_type& features) const
+double
+RandomForestModel::
+getProb(
+    const feature_type& features) const
 {
     double retval(0);
     try
     {
-        //get the probability for every tree and average them out.
-        double final_proba = 0;
-        for (int t = 0; t < this->n_trees; t++)
+        // get the probability for every tree and average them out.
+        double prob(0);
+        for (const DecisionTree& dtree : _forest)
         {
-            final_proba += this->get_single_dectree_proba(features, t);
+            prob += getDecisionTreeProb(features, dtree);
         }
-        retval = (1.0-final_proba/this->n_trees);
+        retval = (1-(prob/_forest.size()));
     }
     catch (...)
     {
-        log_os << "Except caught in random forest while scoring feature:\n";
+        log_os << "Exception caught in random forest while scoring features:\n";
         for (const auto val : features)
         {
             log_os << "K:V " << val.first << " : " << val.second << "\n";
@@ -181,7 +232,7 @@ scoring_models& scoring_models::Instance()
 
 double scoring_models::score_instance(const feature_type& features) const
 {
-    const double score = this->randomforest_model.get_randomforest_proba(features);
+    const double score = this->randomforest_model.getProb(features);
     return error_prob_to_phred(score);
 }
 
@@ -211,7 +262,6 @@ void scoring_models::load_indel_model(const ptree& pt,const std::string& model_n
 
 void scoring_models::load_calibration_model(const ptree& pt,const std::string& model_name,const std::string& model_type)
 {
-    this->randomforest_model.populate_storage_metadata();
     if (model_name!="" && model_type!="")
     {
 //        log_os << "Loading cali model: " << model_name << std::endl;

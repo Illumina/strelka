@@ -96,29 +96,6 @@ get_feature_label(const unsigned idx)
 typedef std::map<int, double> feature_type;
 
 
-//namespace CALIBRATION_MODEL
-//{
-//
-//    enum model_case
-//    {
-//        HetSNP,
-//    };
-//
-//    inline
-//    const char*
-//    get_label(const unsigned idx)
-//    {
-//        switch (idx)
-//        {
-//        case HetSNP:
-//            return "snphet";
-//        default:
-//            assert(0);
-//            return NULL;
-//        }
-//    }
-//}
-
 static const std::string imodels="IndelModels";
 static const std::string cmodels="CalibrationModels";
 static const unsigned max_hpol_len(40);
@@ -136,27 +113,57 @@ private:
 
 
 
-struct calibration_model
+struct RandomForestModel
 {
-    typedef std::map<int, std::vector<double> > calibration_type;
-    typedef std::vector< calibration_type > set_of_calibrations_type;
-
-    void populate_storage_metadata();
     void load(const boost::property_tree::ptree& pt);
 
-    double get_randomforest_proba(const feature_type& features) const;
+    double getProb(const feature_type& features) const;
+
 private:
-    double get_single_dectree_proba(const feature_type& features, int tree_index) const;
+    template <typename L, typename R>
+    struct TreeNode
+    {
+        bool isInit = false;
+        L left;
+        R right;
+    };
 
-    int n_trees = 10;
-    std::vector<std::string> calibration_data_names;
-    set_of_calibrations_type all_trees;
-    set_of_calibrations_type all_node_votes;
-    set_of_calibrations_type all_decisions;
-    std::vector< set_of_calibrations_type > all_rf_json_data;
+    struct DecisionTreeNode
+    {
+        TreeNode<int,int> tree;
+        TreeNode<double,double> vote;
+        TreeNode<int,double> decision; // (feature index, feature value)
+    };
 
-    std::string name;
+    struct DecisionTree
+    {
+        const DecisionTreeNode&
+        getNode(const unsigned i) const
+        {
+            assert(i<data.size());
+            return data[i];
+        }
+
+        std::vector<DecisionTreeNode> data;
+    };
+
+
+    template <typename L, typename R>
+    void
+    parseTreeNode(
+        const boost::property_tree::ptree::value_type& v,
+        TreeNode<L,R>& nmap);
+
+    double
+    getDecisionTreeProb(
+        const feature_type& features,
+        const DecisionTree& dtree) const;
+
+////////data:
+    std::vector<DecisionTree> _forest;
 };
+
+
 
 struct scoring_models
 {
@@ -183,7 +190,7 @@ private:
 
     //typedef std::map<int,calibration_model> calibration_modelmap;
     //calibration_modelmap calibration_models;
-    calibration_model randomforest_model;
+    RandomForestModel randomforest_model;
 
 
     //
