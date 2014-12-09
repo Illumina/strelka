@@ -149,6 +149,12 @@ struct starling_options : public blt_options
     // this is the default used for all samples until overridden
     double default_min_small_candidate_indel_read_frac = 0.1;
 
+    // indels in homopolymers use a one-sided binomial exact test to
+    // determine whether they are eligible for candidacy, based on the
+    // expected per-read error rate, total coverage, and indel coverage
+    // this sets the p-value threshold for determining homopolymer candidacy
+    double tumor_min_hpol_pval = 1e-9;
+
     int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
     double max_candidate_indel_density = 0.15; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
 
