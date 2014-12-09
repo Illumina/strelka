@@ -42,7 +42,6 @@ finish_indel_sppr(indel_observation& obs,
                   starling_pos_processor_base& sppr,
                   const unsigned sample_no)
 {
-
     sppr.insert_indel(obs,sample_no);
 }
 

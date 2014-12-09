@@ -12,6 +12,7 @@
 //
 
 /// \author Chris Saunders
+/// \author Morten Kallberg
 ///
 
 #include "position_somatic_snv_strand_grid_vcf.hh"
@@ -22,6 +23,8 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+
+
 
 // similar to 'write_vcf_sample_info' below, redundancy needed to get order of output right
 // TODO consolidate this dual calculation step
@@ -34,7 +37,7 @@ set_VQSR_sample_info(
     const extended_pos_data& tier2_epd,
     strelka_shared_modifiers& smod,
     char& ref_base,
-    bool isNormal=true)
+    bool isNormal)
 {
     // add in VQSR features
     // {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
@@ -179,11 +182,8 @@ calc_VQSR_features(
     set_VQSR_sample_info(opt,dopt,n1_epd,n2_epd,smod,n1_epd.pi.ref_base,true);
     set_VQSR_sample_info(opt,dopt,t1_epd,t2_epd,smod,n1_epd.pi.ref_base,false);
 
-    //N_DP_RATE
-    const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
-    smod.set_feature(STRELKA_VQSR_FEATURES::N_DP_RATE,1.0*n_mapq/dopt.sfilter.max_depth);
-
     //MQ
+    const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
     const double cumm_mapq2(n1_epd.pi.cumm_mapq + t1_epd.pi.cumm_mapq);
     smod.set_feature(STRELKA_VQSR_FEATURES::MQ,std::sqrt(cumm_mapq2/n_mapq));
 
@@ -227,6 +227,8 @@ calc_VQSR_features(
     }
     smod.set_feature(STRELKA_VQSR_FEATURES::pnoise2,pnoise2);
 }
+
+
 
 static
 void
@@ -283,6 +285,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
     const result_set& rs(sgt.rs);
 
     strelka_shared_modifiers smod;
+
     {
         // compute all site filters:
         const unsigned normalDP(n1_epd.n_calls);
@@ -330,18 +333,18 @@ write_vcf_somatic_snv_genotype_strand_grid(
         {
             smod.set_filter(STRELKA_VCF_FILTERS::QSS_ref);
         }
+    }
 
+    {
         // Make sure the VQSR feature vector is populated
         // this is done even if not running with VQSR as some intermediate
         // calculations are still needed for VCF reporting
         calc_VQSR_features(opt,dopt,sgt,smod,n1_epd,t1_epd,n2_epd,t2_epd,rs);
-        set_VQSR_sample_info(opt,dopt,n1_epd,n2_epd,smod,n1_epd.pi.ref_base,true);
-        set_VQSR_sample_info(opt,dopt,t1_epd,t2_epd,smod,n1_epd.pi.ref_base,false);
 
         // case we are doing VQSR, clear filters and apply single LowQscore filter
         if (scoring_models::Instance()->calibration_init)  // write out somatic VQSR metrics
         {
-            smod.Qscore = scoring_models::Instance()->score_instance(smod.ft);
+            smod.Qscore = scoring_models::Instance()->score_instance(smod.get_features());
             smod.filters.reset();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
@@ -400,13 +403,13 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         os << ";ALTPOS=";
-        if (smod.feature_is_set.test(STRELKA_VQSR_FEATURES::altpos))
+        if (smod.test_feature(STRELKA_VQSR_FEATURES::altpos))
             os << (int)smod.get_feature(STRELKA_VQSR_FEATURES::altpos);
         else
             os << '.';
 
         os << ";ALTMAP=";
-        if (smod.feature_is_set.test(STRELKA_VQSR_FEATURES::altmap))
+        if (smod.test_feature(STRELKA_VQSR_FEATURES::altmap))
             os << (int)smod.get_feature(STRELKA_VQSR_FEATURES::altmap);
         else
             os << '.';

@@ -92,15 +92,31 @@ struct strelka_shared_modifiers
     void
     set_feature(const STRELKA_VQSR_FEATURES::index_t i,double val)
     {
-//        log_os << "setting feature" << std::endl;
-        this->ft[i] = val;
-        feature_is_set.set(i);
+        if (_isFeatureSet.test(i))
+        {
+            assert(false && "Set VQSR feature twice");
+        }
+        _featureVal[i] = val;
+        _isFeatureSet.set(i);
     }
 
     double
-    get_feature(const STRELKA_VQSR_FEATURES::index_t i)
+    get_feature(const STRELKA_VQSR_FEATURES::index_t i) const
     {
-        return this->ft[i];
+        assert(_isFeatureSet.test(i));
+        return this->_featureVal.at(i);
+    }
+
+    bool
+    test_feature(const STRELKA_VQSR_FEATURES::index_t i) const
+    {
+        return _isFeatureSet[i];
+    }
+
+    const feature_type&
+    get_features() const
+    {
+        return _featureVal;
     }
 
     void
@@ -110,20 +126,21 @@ struct strelka_shared_modifiers
     void
     write_feature(std::ostream& os) const;
 
-
     void
     clear()
     {
         filters.reset();
-        feature_is_set.reset();
-        ft.clear();
+        _isFeatureSet.reset();
+        _featureVal.clear();
         Qscore = 0;
     }
 
     std::bitset<STRELKA_VCF_FILTERS::SIZE> filters;
-    std::bitset<STRELKA_VQSR_FEATURES::SIZE> feature_is_set;
-    feature_type ft; // holds VQSR features
     int Qscore;
+
+private:
+    std::bitset<STRELKA_VQSR_FEATURES::SIZE> _isFeatureSet;
+    feature_type _featureVal; // holds VQSR features
 };
 
 
