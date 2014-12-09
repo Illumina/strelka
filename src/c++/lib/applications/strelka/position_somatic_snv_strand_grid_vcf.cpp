@@ -179,7 +179,7 @@ calc_VQSR_features(
 
     //n_mapq0
     const unsigned n_mapq0(n1_epd.pi.n_mapq0+t1_epd.pi.n_mapq0);
-    smod.set_feature(STRELKA_VQSR_FEATURES::n_mapq0,1.0*n_mapq0/dopt.sfilter.max_depth);
+    smod.set_feature(STRELKA_VQSR_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq0+n_mapq));
 
     //ReadPosRankSum
     const double ReadPosRankSum = t1_epd.pi.read_pos_ranksum.get_u_stat();
