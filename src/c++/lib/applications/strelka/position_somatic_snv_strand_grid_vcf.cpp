@@ -25,6 +25,15 @@
 #include <iostream>
 
 
+template <typename D>
+static
+double
+safeFrac(const unsigned num, const D denom)
+{
+    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
+}
+
+
 
 // similar to 'write_vcf_sample_info' below, redundancy needed to get order of output right
 // TODO consolidate this dual calculation step
@@ -36,66 +45,47 @@ set_VQSR_sample_info(
     const extended_pos_data& tier1_epd,
     const extended_pos_data& tier2_epd,
     strelka_shared_modifiers& smod,
-    char& ref_base,
-    bool isNormal)
+    const char ref_base,
+    bool isNormalSample)
 {
+    using namespace STRELKA_VQSR_FEATURES;
+
     // add in VQSR features
     // {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
     // {5,T_SDP_RATE},{6,N_DP_RATE},{7,TIER1_ALLELE_RATE}
-    double FDP_ratio = 0.0;
-    double SDP_ratio = 0.0;
-    if (tier1_epd.n_calls>0)
-        FDP_ratio = 1.0*tier1_epd.n_unused_calls/tier1_epd.n_calls; // n_FDP_ratio=n_FDP/n_DP  if n_DP != 0 else 0
-    if ((tier1_epd.n_calls+tier1_epd.pi.n_spandel)>0)
-        SDP_ratio = 1.0*tier1_epd.pi.n_spandel/(tier1_epd.n_calls+tier1_epd.pi.n_spandel); // t_SDP/(t_DP + t_SDP ) if (t_DP + t_SDP) != 0 else 0
+    const double FDP_ratio(safeFrac(tier1_epd.n_unused_calls, tier1_epd.n_calls));
+    const double SDP_ratio(safeFrac(tier1_epd.pi.n_spandel, tier1_epd.n_calls+tier1_epd.pi.n_spandel));
 
-    if (isNormal)
+    smod.set_feature((isNormalSample ? N_FDP_RATE : T_FDP_RATE), FDP_ratio);
+    smod.set_feature((isNormalSample ? N_SDP_RATE : T_SDP_RATE), SDP_ratio);
+
+    if (isNormalSample)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
     {
-        smod.set_feature(STRELKA_VQSR_FEATURES::N_FDP_RATE,FDP_ratio);
-        smod.set_feature(STRELKA_VQSR_FEATURES::N_SDP_RATE,SDP_ratio);
-    }
-    else
-    {
-        smod.set_feature(STRELKA_VQSR_FEATURES::T_FDP_RATE,FDP_ratio);
-        smod.set_feature(STRELKA_VQSR_FEATURES::T_SDP_RATE,SDP_ratio);
+        smod.set_feature(N_DP_RATE, safeFrac(tier1_epd.n_calls,dopt.sfilter.max_depth));
     }
 
-    if (isNormal)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
-        smod.set_feature(STRELKA_VQSR_FEATURES::N_DP_RATE,1.0*tier1_epd.n_calls/dopt.sfilter.max_depth);
-
-    int ref=0;
-    int alt=0;
-
-    // base order
-    std::map<char,unsigned> ref_to_index = {{'A',0},{'C',1},{'G',2},{'T',3}};
-    unsigned ref_index = ref_to_index[ref_base];
-
-    std::array<unsigned,N_BASE> tier1_base_counts;
-    std::array<unsigned,N_BASE> tier2_base_counts;
-    tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-    tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
-
-    for (unsigned b(0); b<N_BASE; ++b)
+    if (!isNormalSample)      //report tier1_allele count for tumor case
     {
-        if (b==ref_index)
-            ref += tier1_base_counts[b];
-        else
-            alt += tier1_base_counts[b];
+        std::array<unsigned,N_BASE> tier1_base_counts;
+        tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
-    }
+        const unsigned ref_index(base_to_id(ref_base));
+        unsigned ref=0;
+        unsigned alt=0;
+        for (unsigned b(0); b<N_BASE; ++b)
+        {
+            if (b==ref_index)
+            {
+                ref += tier1_base_counts[b];
+            }
+            else
+            {
+                alt += tier1_base_counts[b];
+            }
+        }
 
-    //    Allele count logic
-    //    if t_allele_alt_counts[0] + t_allele_ref_counts[0] == 0:
-    //        t_tier1_allele_rate = 0
-    //    else:
-    //        t_tier1_allele_rate = t_allele_alt_counts[0] / float(t_allele_alt_counts[0] + t_allele_ref_counts[0])
-
-    if (!isNormal)      //report tier1_allele count for tumor case
-    {
-        double allele_freq =0.0;
-        if ((ref+alt)>0)
-            allele_freq = 1.0*alt/(ref+alt);
-        smod.set_feature(STRELKA_VQSR_FEATURES::TIER1_ALLELE_RATE,allele_freq);
+        const double allele_freq(safeFrac(alt,ref+alt));
+        smod.set_feature(TIER1_ALLELE_RATE,allele_freq);
     }
 }
 
@@ -140,8 +130,8 @@ calc_VQSR_features(
     const result_set& rs)
 {
     // don't worry about efficiency for median calc right now:
-    bool isAltpos(false);
-    bool isAltmap(false);
+    //bool isAltpos(false);
+    //bool isAltmap(false);
     uint16_t altpos=0;
     uint16_t altmap=0;
     if (! t1_epd.pi.altReadPos.empty())
@@ -161,7 +151,7 @@ calc_VQSR_features(
         const auto pmedian(median(readpos.begin(),readpos.end()));
         const auto lmedian(median(readposcomp.begin(),readposcomp.end()));
 
-        isAltpos=true;
+       // isAltpos=true;
         altpos=std::min(pmedian,lmedian);
 
         if (readpos.size() >= 3)
@@ -171,7 +161,7 @@ calc_VQSR_features(
                 p = std::abs(p-pmedian);
             }
 
-            isAltmap=true;
+            //isAltmap=true;
             altmap=median(readpos.begin(),readpos.end());
         }
     }
@@ -198,21 +188,14 @@ calc_VQSR_features(
     //StrandBias
     smod.set_feature(STRELKA_VQSR_FEATURES::strandBias,rs.strandBias);
 
-    //TODO better handling of default values for in cases where alpos or altmap are not defined
+    /// TODO better handling of default values for in cases where alpos or altmap are not defined (0 is not a good default)
+    ///
     //Altpos
-    if (isAltpos)
-        smod.set_feature(STRELKA_VQSR_FEATURES::altpos,altpos);
-    else
-        smod.set_feature(STRELKA_VQSR_FEATURES::altpos,0);
-
-    //Altmap
-    if (isAltmap)
-        smod.set_feature(STRELKA_VQSR_FEATURES::altmap,altmap);
-    else
-        smod.set_feature(STRELKA_VQSR_FEATURES::altmap,0);
+    smod.set_feature(STRELKA_VQSR_FEATURES::altpos,altpos);
+    smod.set_feature(STRELKA_VQSR_FEATURES::altmap,altmap);
 
     //Pnoise
-    double pnoise(0.);
+    double pnoise(0);
     if (sgt.sn.total > 1 && sgt.sn.noise > 1)
     {
         pnoise = sgt.sn.nfrac();
@@ -220,7 +203,7 @@ calc_VQSR_features(
     smod.set_feature(STRELKA_VQSR_FEATURES::pnoise,pnoise);
 
     //Pnoise2
-    double pnoise2(0.);
+    double pnoise2(0);
     if (sgt.sn.total > 1 && sgt.sn.noise2 > 1)
     {
         pnoise2 = sgt.sn.n2frac();
@@ -263,12 +246,6 @@ write_vcf_sample_info(
 }
 
 
-static
-double
-safeFrac(const unsigned num, const unsigned denom)
-{
-    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
-}
 
 void
 write_vcf_somatic_snv_genotype_strand_grid(
