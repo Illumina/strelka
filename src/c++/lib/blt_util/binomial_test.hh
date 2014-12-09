@@ -19,7 +19,6 @@
 
 #include <ciso646>
 
-
 bool
 is_reject_binomial_p_exact(const double alpha,
                            const double p,
@@ -31,6 +30,17 @@ is_reject_binomial_p_chi_sqr(const double alpha,
                              const double p,
                              const unsigned n_success,
                              const unsigned n_failure);
+
+bool
+is_reject_binomial_pval(const double threshold,
+                        const double p,
+                        const unsigned n_success,
+                        const unsigned n_trials);
+
+double
+get_binomial_pval(const double p,
+                  const unsigned n_success,
+                  const unsigned n_trials);
 
 /// \brief test to reject a binomial with p='p' at FPR<='alpha'
 ///
