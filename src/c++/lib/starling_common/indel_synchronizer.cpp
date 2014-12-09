@@ -15,11 +15,13 @@
 /// \author Chris Saunders
 ///
 
-#include "blt_util/blt_exception.hh"
-#include "blt_util/log.hh"
 #include "starling_common/indel_synchronizer.hh"
 
+#include "blt_util/blt_exception.hh"
+#include "blt_util/log.hh"
+
 #include <cstdlib>
+
 #include <iostream>
 #include <sstream>
 
@@ -81,71 +83,73 @@ is_candidate_indel_impl_test(
         if (idsp[i]->is_external_candidate) return true;
     }
 
-    //////////////////////////////////////
-    // test against min read count:
-    //
     {
-        bool is_min_count(false);
-
-        int n_total_reads(0);
-        for (unsigned i(0); i<isds; ++i)
+        //////////////////////////////////////
+        // test against min read count:
+        //
         {
-            const int n_reads(idsp[i]->all_read_ids.size());
+            bool is_min_count(false);
 
-            // do the candidate reads exceed the (possibly lower than
-            // default) sample specific threshold?:
-            if (n_reads >= sample_opt(i).min_candidate_indel_reads)
+            int n_total_reads(0);
+            for (unsigned i(0); i<isds; ++i)
             {
-                is_min_count=true;
-                break;
+                const int n_reads(idsp[i]->all_read_ids.size());
+
+                // do the candidate reads exceed the (possibly lower than
+                // default) sample specific threshold?:
+                if (n_reads >= sample_opt(i).min_candidate_indel_reads)
+                {
+                    is_min_count=true;
+                    break;
+                }
+                n_total_reads += n_reads;
             }
-            n_total_reads += n_reads;
+
+            // do reads from all samples exceed the default threshold?:
+            if (n_total_reads >= _opt.default_min_candidate_indel_reads) is_min_count=true;
+
+            if (! is_min_count) return false;
         }
 
-        // do reads from all samples exceed the default threshold?:
-        if (n_total_reads >= _opt.default_min_candidate_indel_reads) is_min_count=true;
-
-        if (! is_min_count) return false;
-    }
-
-    //////////////////////////////////////
-    // test against min read frac:
-    //
-    {
-        bool is_min_frac(false);
-
-        double min_large_indel_frac(_opt.min_candidate_indel_read_frac);
-        const bool is_small_indel(static_cast<int>(std::max(ik.length,ik.swap_dlength)) <= _opt.max_small_candidate_indel_size);
-
-        // this value is used to get around type-mismatch error in
-        // std::max() below
-        static const unsigned one(1);
-
-        for (unsigned i(0); i<isds; ++i)
+        //////////////////////////////////////
+        // test against min read frac:
+        //
         {
-            // note estdepth is based on genomic reads only, so
-            // readfrac can be > 1:
-            //
-            const unsigned n_reads(idsp[i]->all_read_ids.size());
-            const unsigned estdepth(std::max(one,ebuff(i).val(ik.pos-1)));
-            const double readfrac(static_cast<double>(n_reads)/static_cast<double>(estdepth));
+            bool is_min_frac(false);
 
-            double min_indel_frac(min_large_indel_frac);
-            if (is_small_indel)
+            double min_large_indel_frac(_opt.min_candidate_indel_read_frac);
+            const bool is_small_indel(static_cast<int>(std::max(ik.length,ik.swap_dlength)) <= _opt.max_small_candidate_indel_size);
+
+            // this value is used to get around type-mismatch error in
+            // std::max() below
+            static const unsigned one(1);
+
+            for (unsigned i(0); i<isds; ++i)
             {
-                min_indel_frac=std::max(min_indel_frac,sample_opt(i).min_small_candidate_indel_read_frac);
+                // note estdepth is based on genomic reads only, so
+                // readfrac can be > 1:
+                //
+                const unsigned n_reads(idsp[i]->all_read_ids.size());
+                const unsigned estdepth(std::max(one,ebuff(i).val(ik.pos-1)));
+                const double readfrac(static_cast<double>(n_reads)/static_cast<double>(estdepth));
+
+                double min_indel_frac(min_large_indel_frac);
+                if (is_small_indel)
+                {
+                    min_indel_frac=std::max(min_indel_frac,sample_opt(i).min_small_candidate_indel_read_frac);
+                }
+
+                // min_frac threshold only needs to pass in one sample to
+                // be a candidate in all synchronized samples:
+                if (readfrac >= min_indel_frac)
+                {
+                    is_min_frac=true;
+                    break;
+                }
             }
 
-            // min_frac threshold only needs to pass in one sample to
-            // be a candidate in all synchronized samples:
-            if (readfrac >= min_indel_frac)
-            {
-                is_min_frac=true;
-                break;
-            }
+            if (! is_min_frac) return false;
         }
-
-        if (! is_min_frac) return false;
     }
 
     /////////////////////////////////////////
