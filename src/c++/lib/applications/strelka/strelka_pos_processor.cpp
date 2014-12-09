@@ -92,8 +92,8 @@ strelka_pos_processor(
                                normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
         isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
                                tumor_sif.sample_opt, -1., TUMOR);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,NORMAL));
-        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,TUMOR));
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,NORMAL));
+        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,TUMOR));
     }
 
     // setup indel avg window:
@@ -316,6 +316,7 @@ process_pos_indel_somatic(const pos_t pos)
         if (ik.is_breakpoint()) continue;
 
         const indel_data& tumor_id(get_indel_data(i));
+
         if (! tumor_sif.indel_sync().is_candidate_indel(ik,tumor_id)) continue;
 
         const indel_data* normal_id_ptr(normal_sif.indel_buff.get_indel_data_ptr(ik));
@@ -341,14 +342,6 @@ process_pos_indel_somatic(const pos_t pos)
             get_indel_error_prob(_opt,iri,indel_error_prob,ref_error_prob);
 
             somatic_indel_call sindel;
-#ifdef USE_ORIG_SINDEL
-            static const bool is_use_alt_indel(true);
-            _dopt.sicaller().get_somatic_indel(_opt,_dopt,
-                                               indel_error_prob,ref_error_prob,
-                                               ik,normal_id,tumor_id,
-                                               is_use_alt_indel,
-                                               sindel);
-#else
             static const bool is_use_alt_indel(true);
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
                                                     normal_sif.sample_opt,
@@ -357,7 +350,6 @@ process_pos_indel_somatic(const pos_t pos)
                                                     ik,normal_id,tumor_id,
                                                     is_use_alt_indel,
                                                     sindel);
-#endif
 
             if (sindel.is_output())
             {

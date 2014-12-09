@@ -56,7 +56,7 @@ snoise_pos_processor(
         indel_sync_data isdata;
         isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
                                normal_sif.sample_opt, max_candidate_normal_sample_depth, 0);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,0));
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, ref, isdata, 0));
     }
 }
 

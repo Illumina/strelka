@@ -77,34 +77,37 @@ private:
 ///
 struct indel_synchronizer
 {
-    // ctor for simple single-sample operation:
-    //
-    // \max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the filter.
-    //
+    /// instantiate for simple single-sample operation:
+    ///
+    /// \param[in] max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the filter.
+    ///
     indel_synchronizer(
         const starling_options& opt,
+        const reference_contig_segment& ref,
         const double max_candidate_depth,
         indel_buffer& ib,
         const depth_buffer& db,
         const depth_buffer& db2,
         const starling_sample_options& init_sample_opt)
         : _opt(opt)
+        , _ref(ref)
         , _sample_no(0)
         , _sample_order(0)
     {
         _isd.register_sample(ib,db,db2,init_sample_opt, max_candidate_depth,_sample_no);
     }
 
-    // ctor for multi-sample synced cases:
-    //
-    // sample_no is the sample that is 'primary'
-    // for this synchronizer.
-    //
+    /// instantiate for multi-sample synced cases:
+    ///
+    /// \param[in] sample_no is the sample that is 'primary' for this synchronizer.
+    ///
     indel_synchronizer(
         const starling_options& opt,
+        const reference_contig_segment& ref,
         const indel_sync_data& isd,
         const sample_id_t sample_no)
         : _opt(opt)
+        , _ref(ref)
         , _isd(isd)
         , _sample_no(sample_no)
         , _sample_order(_isd._idata.get_id(sample_no)) {}
@@ -121,16 +124,16 @@ struct indel_synchronizer
         return ibuff(_sample_order);
     }
 
-    // returns true if this indel is novel to the buffer
-    //
-    // indel is fully inserted into the primary sample buffer, but
-    // only the key is inserted into other sample buffers.
+    /// \returns true if this indel is novel to the buffer
+    ///
+    /// indel is fully inserted into the primary sample buffer, but
+    /// only the key is inserted into other sample buffers.
     bool
     insert_indel(const indel_observation& obs);
 
-    // is an indel treated as a candidate for genotype calling and
-    // realignment or as a "private" (ie. noise) indel?
-    //
+    /// is an indel treated as a candidate for genotype calling and
+    /// realignment or as a "private" (ie. noise) indel?
+    ///
     bool
     is_candidate_indel(
         const indel_key& ik,
@@ -188,16 +191,18 @@ private:
         return *(idata().get_value(s).ibp);
     }
 
+    /// return object which provides estimated depth of tier1 reads
     const depth_buffer&
-    ebuff(const unsigned s) const
+    ebuff(const unsigned sample) const
     {
-        return *(idata().get_value(s).dbp);
+        return *(idata().get_value(sample).dbp);
     }
 
+    /// return object which provides estimated depth of tier2 reads
     const depth_buffer&
-    ebuff2(const unsigned s) const
+    ebuff2(const unsigned sample) const
     {
-        return *(idata().get_value(s).dbp2);
+        return *(idata().get_value(sample).dbp2);
     }
 
     const starling_sample_options&
@@ -225,6 +230,7 @@ private:
 
 
     const starling_options& _opt;
+    const reference_contig_segment& _ref;
 
     indel_sync_data _isd;
 
