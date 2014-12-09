@@ -117,6 +117,16 @@ struct RandomForestModel
 {
     void load(const boost::property_tree::ptree& pt);
 
+    bool isInit() const
+    {
+        return (! _forest.empty());
+    }
+
+    unsigned expectedFeatureCount() const
+    {
+        return _nFeatures;
+    }
+
     double getProb(const feature_type& features) const;
 
 private:
@@ -159,7 +169,15 @@ private:
         const feature_type& features,
         const DecisionTree& dtree) const;
 
+    void
+    clear()
+    {
+        _nFeatures=0;
+        _forest.clear();
+    }
+
 ////////data:
+    unsigned _nFeatures = 0;
     std::vector<DecisionTree> _forest;
 };
 

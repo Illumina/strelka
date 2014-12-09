@@ -107,6 +107,8 @@ void
 RandomForestModel::
 load(const ptree& pt)
 {
+    clear();
+
     // trees:
     for (const ptree::value_type& tree_pt : pt)
     {
@@ -139,6 +141,10 @@ load(const ptree& pt)
                     break;
                 case DECISION:
                     parseTreeNode(v,node.decision);
+                    if (node.decision.left >= static_cast<int>(_nFeatures))
+                    {
+                        _nFeatures=node.decision.left+1;
+                    }
                     break;
                 default:
                     assert(false && "Unknown node type");
