@@ -904,7 +904,11 @@ void
 starling_pos_processor_base::
 align_pos(const pos_t pos)
 {
-    const known_pos_range realign_pr(get_realignment_range(pos, _stageman.get_stage_data()));
+    known_pos_range realign_buffer_range(get_realignment_range(pos, _stageman.get_stage_data()));
+
+    // shrink range by 1 to protect against off by one errors in the buffer boundary matchup:
+    realign_buffer_range.begin_pos += 1;
+    realign_buffer_range.end_pos -= 1;
 
     for (unsigned s(0); s<_n_samples; ++s)
     {
@@ -920,7 +924,7 @@ align_pos(const pos_t pos)
             {
                 try
                 {
-                    realign_and_score_read(_client_opt,_client_dopt,sif.sample_opt,_ref,realign_pr,rseg,sif.indel_sync());
+                    realign_and_score_read(_client_opt,_client_dopt,sif.sample_opt,_ref,realign_buffer_range,rseg,sif.indel_sync());
                 }
                 catch (...)
                 {

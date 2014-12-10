@@ -26,7 +26,7 @@
 /// search for optimal realignments of the read and score alternate
 /// indel states in preparation for indel genotype calling
 ///
-/// \param realign_pr range in reference coordinates in which read is allowed to realign to (due to buffering constraints)
+/// \param realign_buffer_range range in reference coordinates in which read is allowed to realign to (due to buffering constraints)
 ///
 void
 realign_and_score_read(
@@ -34,6 +34,6 @@ realign_and_score_read(
     const starling_deriv_options& dopt,
     const starling_sample_options& sample_opt,
     const reference_contig_segment& ref,
-    const known_pos_range& realign_pr,
+    const known_pos_range& realign_buffer_range,
     read_segment& rseg,
     indel_synchronizer& isync);

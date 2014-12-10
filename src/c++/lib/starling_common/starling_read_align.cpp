@@ -59,48 +59,55 @@ typedef std::map<indel_key,starling_align_indel_info> starling_align_indel_statu
 
 
 
-// Check to see if an alignment overlaps any candidate indels (but not
-// private indels) over the maximum range suggested by its discovery
-// alignment. If at least one overlap is discovered, then the read
-// goes into full re-alignment.
-//
+/// Check to see if an alignment overlaps any candidate indels (but not
+/// private indels) over the maximum range suggested by its discovery
+/// alignment. If at least one overlap is discovered, then the read
+/// goes into full re-alignment.
+///
 static
 bool
-check_for_candidate_indel_overlap(const starling_options& opt,
-                                  const read_segment& rseg,
-                                  const indel_synchronizer& isync)
+check_for_candidate_indel_overlap(
+    const starling_options& opt,
+    const known_pos_range realign_buffer_range,
+    const read_segment& rseg,
+    const indel_synchronizer& isync)
 {
 #ifdef DEBUG_ALIGN
     std::cerr << "BUGBUG testing read_segment for indel overlap, sample_no: " << isync.get_sample_id() << " rseg: " << rseg;
 #endif
 
-    const pos_t seq_length(rseg.read_size());
 
     //get min,max bounds for each discovery alignment;
-    bool is_pr_set(false);
-    known_pos_range pr(0,0);
-    const alignment& al(rseg.genome_align());
-    if (! al.empty())
+    known_pos_range read_range(0,0);
     {
-        pr=get_alignment_zone(al,seq_length);
-        is_pr_set=true;
+        const alignment& al(rseg.genome_align());
+        assert (! al.empty());
+
+        const pos_t seq_length(rseg.read_size());
+        read_range=get_alignment_zone(al,seq_length);
 
         if (! opt.is_remap_input_softclip)
         {
             // for the genomic alignment only we subtract off any edge soft-clip:
-            pr.begin_pos+=apath_soft_clip_lead_size(al.path);
-            pr.end_pos-=static_cast<pos_t>(apath_soft_clip_trail_size(al.path));
+            read_range.begin_pos+=apath_soft_clip_lead_size(al.path);
+            read_range.end_pos-=static_cast<pos_t>(apath_soft_clip_trail_size(al.path));
         }
     }
 
-    assert(is_pr_set);
+    // read range of interest (pr), must be overlapped by the realignment buffer (realign_pr)
+    // to allow us to continue with the candidate check:
+    if (! realign_buffer_range.is_superset_of(read_range))
+    {
+        return false;
+    }
+
 
 #ifdef DEBUG_ALIGN
-    std::cerr << "VARMIT read extends: " << pr << "\n";
+    std::cerr << "VARMIT read extends: " << read_range << "\n";
 #endif
 
     const indel_buffer& ibuff(isync.ibuff());
-    const std::pair<ciiter,ciiter> ipair(ibuff.pos_range_iter(pr.begin_pos,pr.end_pos));
+    const std::pair<ciiter,ciiter> ipair(ibuff.pos_range_iter(read_range.begin_pos,read_range.end_pos));
     for (ciiter i(ipair.first); i!=ipair.second; ++i)
     {
         const indel_key& ik(i->first);
@@ -109,7 +116,7 @@ check_for_candidate_indel_overlap(const starling_options& opt,
         std::cerr << "VARMIT key: " << ik;
 #endif
         // check if read intersects with indel breakpoint:
-        if (! is_range_intersect_indel_breakpoints(pr,ik)) continue;
+        if (! is_range_intersect_indel_breakpoints(read_range,ik)) continue;
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT intersects indel: " << ik << id;
 #endif
@@ -623,6 +630,7 @@ make_candidate_alignments(
     const align_id_t read_id,
     const unsigned read_length,
     const indel_synchronizer& isync,
+    const known_pos_range& realign_buffer_range,
     std::set<candidate_alignment>& cal_set,
     mca_warnings& warn,
     starling_align_indel_status indel_status_map,
@@ -650,6 +658,10 @@ make_candidate_alignments(
     {
         const unsigned start_ism_size(indel_status_map.size());
         const known_pos_range pr(get_soft_clip_alignment_range(cal.al));
+
+        // check to make sure we don't realign outside of the realign buffer:
+        if (! realign_buffer_range.is_superset_of(pr)) return;
+
         if (pr.begin_pos < read_range.begin_pos)
         {
             add_indels_in_range(client_opt,read_id,isync,
@@ -705,9 +717,11 @@ make_candidate_alignments(
     // alignment 1) --> unchanged case:
     try
     {
-        make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
-                                  indel_status_map,indel_order,depth+1,toggle_depth,read_range,
-                                  max_read_indel_toggle,cal);
+        make_candidate_alignments(
+                client_opt,client_dopt,read_id,read_length,isync,
+                realign_buffer_range,cal_set,warn,
+                indel_status_map,indel_order,depth+1,toggle_depth,read_range,
+                max_read_indel_toggle,cal);
     }
     catch (...)
     {
@@ -826,9 +840,11 @@ make_candidate_alignments(
                                                      read_length,
                                                      current_indels);
 
-                make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
-                                          indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
-                                          max_read_indel_toggle,start_cal);
+                make_candidate_alignments(
+                    client_opt,client_dopt,read_id,read_length,isync,
+                    realign_buffer_range,cal_set,warn,
+                    indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
+                    max_read_indel_toggle,start_cal);
             }
             catch (...)
             {
@@ -890,9 +906,11 @@ make_candidate_alignments(
                                                          read_length,
                                                          current_indels);
 
-                    make_candidate_alignments(client_opt,client_dopt,read_id,read_length,isync,cal_set,warn,
-                                              indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
-                                              max_read_indel_toggle,start_cal);
+                    make_candidate_alignments(
+                        client_opt,client_dopt,read_id,read_length,isync,
+                        realign_buffer_range, cal_set,warn,
+                        indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
+                        max_read_indel_toggle,start_cal);
                 }
                 catch (...)
                 {
@@ -1427,7 +1445,7 @@ get_exemplar_candidate_alignments(
     const read_segment& rseg,
     const indel_synchronizer& isync,
     const alignment& exemplar,
-    const known_pos_range realign_pr,
+    const known_pos_range realign_buffer_range,
     mca_warnings& warn,
     std::set<candidate_alignment>& cal_set)
 {
@@ -1537,9 +1555,11 @@ get_exemplar_candidate_alignments(
     // launch recursive re-alignment routine starting from the current exemplar alignment:
     static const unsigned start_depth(0);
     static const unsigned start_toggle_depth(0);
-    make_candidate_alignments(opt,dopt,rseg.id(),cal_read_length,isync,cal_set,warn,
-                              indel_status_map,indel_order,start_depth,start_toggle_depth,
-                              exemplar_pr,opt.max_read_indel_toggle,cal);
+    make_candidate_alignments(
+        opt,dopt,rseg.id(),cal_read_length,isync,
+        realign_buffer_range, cal_set,warn,
+        indel_status_map,indel_order,start_depth,start_toggle_depth,
+        exemplar_pr,opt.max_read_indel_toggle,cal);
 
     if (is_exemplar_clip)
     {
@@ -1564,7 +1584,7 @@ get_exemplar_candidate_alignments(
         for (const candidate_alignment& ical : cal_set2)
         {
             // check that the alignment is within realign bounds
-            if (is_alignment_spanned_by_range(realign_pr,ical.al))
+            if (is_alignment_spanned_by_range(realign_buffer_range,ical.al))
             {
                 cal_set.insert(ical);
             }
@@ -1580,7 +1600,7 @@ realign_and_score_read(
     const starling_deriv_options& dopt,
     const starling_sample_options& sample_opt,
     const reference_contig_segment& ref,
-    const known_pos_range& realign_pr,
+    const known_pos_range& realign_buffer_range,
     read_segment& rseg,
     indel_synchronizer& isync)
 {
@@ -1590,13 +1610,14 @@ realign_and_score_read(
         exit(EXIT_FAILURE);
     }
 
-    // check that the original alignment is within realign bounds
-    if (! is_alignment_spanned_by_range(realign_pr,rseg.genome_align())) return;
-
     // check that there are any candidate indels within bounds of the
-    // discovery alignments for this read:
+    // discovery alignments for this read
     //
-    if (! check_for_candidate_indel_overlap(opt,rseg,isync)) return;
+    // also run a preliminary check to make sure alignment doesn't spill outside
+    // of the realignment buffer (realign_pr), if so it returns false before
+    // checking for any candidate overlap:
+    //
+    if (! check_for_candidate_indel_overlap(opt, realign_buffer_range, rseg,isync)) return;
 
 
     // Reduce discovery alignments to a set of non-redundant exemplars.
@@ -1654,7 +1675,7 @@ realign_and_score_read(
 
     for (const alignment& al : exemplars)
     {
-        get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,realign_pr,warn,cal_set);
+        get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,realign_buffer_range,warn,cal_set);
     }
 
     assert(! cal_set.empty());
