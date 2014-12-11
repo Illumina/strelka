@@ -185,6 +185,10 @@ if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-unused-function")
     endif ()
 
+    if ((${compiler_version} VERSION_EQUAL "4.7") OR (${compiler_version} VERSION_EQUAL "4.8"))
+        # workaround for: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58800
+        add_definitions( -DBROKEN_NTH_ELEMENT )
+    endif ()
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wmissing-prototypes -Wunused-exception-parameter -Wbool-conversion -Wempty-body -Wimplicit-fallthrough -Wsizeof-array-argument -Wstring-conversion")
 
