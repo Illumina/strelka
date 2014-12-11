@@ -11,11 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
+#include "blt_util/io_util.hh"
 #include "htsapi/bam_header_util.hh"
 #include "htsapi/vcf_util.hh"
 #include "starling_common/gvcf_header.hh"
@@ -23,7 +23,6 @@
 
 #include <cassert>
 
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -138,8 +137,7 @@ add_gvcf_filters(
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";
         write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
 
-        std::ofstream tmp_os;
-        tmp_os.copyfmt(os);
+        const StreamScoper ss(os);
         os << std::fixed << std::setprecision(2);
 
         for (const auto& val : chrom_depth)
@@ -148,7 +146,6 @@ add_gvcf_filters(
             const double max_depth(opt.max_depth_factor*val.second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
         }
-        os.copyfmt(tmp_os);
     }
 
     // even if no ploidy bed file is provided, this filter should still exist in principal, so I don't
@@ -174,9 +171,10 @@ finish_gvcf_header(const starling_options& opt,
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
 
-    os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.gvcf.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.gvcf.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
-    os.precision(6); // reset precision for output to not affect high DP/GQX values in variant records
-
+    {
+        const StreamScoper ss(os);// scope precision changes for output to not affect high DP/GQX values in variant records
+        os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.gvcf.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.gvcf.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
+    }
 
     os << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"SNV site strand bias\">\n";
     os << "##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description=\"SNV contextual homopolymer length\">\n";

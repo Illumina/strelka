@@ -11,12 +11,13 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
 #include "blt_common/snp_pos_info.hh"
+#include "blt_util/io_util.hh"
+
 #include <iomanip>
 #include <iostream>
 
@@ -27,15 +28,18 @@ operator<<(std::ostream& os,
            const base_call& bc)
 {
     const char strand(bc.is_fwd_strand ? 'F' : 'R');
-    os << "base: " << id_to_base(bc.base_id)
-       << " P(error) " << std::setw(14) << std::setprecision(8) << std::left << bc.error_prob()
-       << " strand: " << strand
+    {
+        const StreamScoper ss(os);
+        os << "base: " << id_to_base(bc.base_id)
+           << " P(error) " << std::setw(14) << std::setprecision(8) << std::left << bc.error_prob()
+           << " strand: " << strand
 #ifdef BC_DEBUG
-       << " read_pos: " << (bc.read_pos+1)
-       << " read_size: " << bc.read_size
+           << " read_pos: " << (bc.read_pos+1)
+           << " read_size: " << bc.read_size
 #endif
-       << " is_call_filter: " << bc.is_call_filter
-       << " is_tscf?: " << bc.is_tier_specific_call_filter;
+           << " is_call_filter: " << bc.is_call_filter
+           << " is_tscf?: " << bc.is_tier_specific_call_filter;
+    }
     return os;
 }
 
@@ -141,6 +145,7 @@ print_known_qscore(std::ostream& os,
         qscore_count[call.base_id]++;
     }
 
+    const StreamScoper ss(os);
     os << std::setprecision(2) << std::fixed;
     for (unsigned b(0); b<N_BASE; ++b)
     {
@@ -153,5 +158,4 @@ print_known_qscore(std::ostream& os,
             os << "\tNA";
         }
     }
-    os.unsetf(std::ios::fixed);
 }

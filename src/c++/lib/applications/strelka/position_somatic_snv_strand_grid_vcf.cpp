@@ -18,9 +18,9 @@
 #include "position_somatic_snv_strand_grid_vcf.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "somatic_call_shared.hh"
+#include "blt_util/io_util.hh"
 #include "blt_util/math_util.hh"
 
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 
@@ -365,8 +365,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
                              sgt.ref_gt,os);
 
     {
-        std::ofstream tmp_os;
-        tmp_os.copyfmt(os);
+        const StreamScoper ss(os);
         os << std::fixed << std::setprecision(2);
 
         // m_mapq includes all calls, even from reads below the mapq threshold:
@@ -397,9 +396,9 @@ write_vcf_somatic_snv_genotype_strand_grid(
         os << ";PNOISE2=" << smod.get_feature(STRELKA_VQSR_FEATURES::pnoise2);
 
         if (scoring_models::Instance()->calibration_init)
+        {
             os << ";VQSR=" << smod.Qscore;
-
-        os.copyfmt(tmp_os);
+        }
     }
 
     //FORMAT:

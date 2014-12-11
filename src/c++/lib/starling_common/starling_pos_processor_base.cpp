@@ -37,6 +37,7 @@
 #include "blt_common/ref_context.hh"
 #include "blt_util/align_path.hh"
 #include "blt_util/blt_exception.hh"
+#include "blt_util/io_util.hh"
 #include "blt_util/log.hh"
 #include "blt_util/read_util.hh"
 #include "htsapi/bam_seq_read_util.hh"
@@ -46,7 +47,6 @@
 #include "starling_common/starling_pos_processor_base.hh"
 #include "starling_common/gvcf_aggregator.hh"
 
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -2170,20 +2170,18 @@ run_post_call_step(
 
     bos << _chrom_name << '\t' << output_pos;
 
-    std::ofstream tmp_os;
-    tmp_os.copyfmt(bos);
-
-    bos << std::setprecision(2) << std::fixed;
-
-    for (unsigned s(0); s<_n_samples; ++s)
     {
-        const win_avg_set& was(sample(s).wav.get_win_avg_set(window_no));
-        bos << '\t' << was.ss_used_win.avg()
-            << '\t' << was.ss_filt_win.avg()
-            << '\t' << was.ss_submap_win.avg();
-    }
+        const StreamScoper ss(bos);
+        bos << std::setprecision(2) << std::fixed;
 
-    bos.copyfmt(tmp_os);
+        for (unsigned s(0); s<_n_samples; ++s)
+        {
+            const win_avg_set& was(sample(s).wav.get_win_avg_set(window_no));
+            bos << '\t' << was.ss_used_win.avg()
+                << '\t' << was.ss_filt_win.avg()
+                << '\t' << was.ss_submap_win.avg();
+        }
+    }
 
     bos << '\n';
 
