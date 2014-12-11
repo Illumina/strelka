@@ -171,7 +171,7 @@ public:
     void load_indel_model(const boost::property_tree::ptree& pt,const std::string& model_name);
 
     void load_calibration_model(const boost::property_tree::ptree& pt,const std::string& model_name,const std::string& model_type="RF");
-    int score_instance(const feature_type& features) const;
+    double score_instance(const feature_type& features) const;
 
     const error_model& get_indel_model(const std::string& pattern) const;
     bool indel_init=false;

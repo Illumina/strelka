@@ -141,7 +141,7 @@ strelka_streams(
             fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
             fos << "##INFO=<ID=PNOISE,Number=1,Type=Float,Description=\"Fraction of panel containing non-reference noise at this site\">\n";
             fos << "##INFO=<ID=PNOISE2,Number=1,Type=Float,Description=\"Fraction of panel containing more than one non-reference noise obs at this site\">\n";
-            fos << "##INFO=<ID=VQSR,Number=1,Type=Integer,Description=\"Recalibrated quality score expressing the phred scaled probability of the somatic call being a FP observation.\">\n";
+            fos << "##INFO=<ID=VQSR,Number=1,Type=Float,Description=\"Recalibrated quality score expressing the phred scaled probability of the somatic call being a FP observation.\">\n";
 
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1 (used+filtered)\">\n";

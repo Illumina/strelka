@@ -136,7 +136,7 @@ struct strelka_shared_modifiers
     }
 
     std::bitset<STRELKA_VCF_FILTERS::SIZE> filters;
-    int Qscore;
+    double Qscore;
 
 private:
     std::bitset<STRELKA_VQSR_FEATURES::SIZE> _isFeatureSet;

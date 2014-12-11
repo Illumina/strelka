@@ -178,10 +178,10 @@ double calibration_model::get_randomforest_proba(const feature_type& features) c
 
 
 
-int scoring_models::score_instance(const feature_type& features) const
+double scoring_models::score_instance(const feature_type& features) const
 {
     const double score = this->randomforest_model.get_randomforest_proba(features);
-    return error_prob_to_qphred(score);
+    return error_prob_to_phred(score);
 }
 
 const error_model& scoring_models::get_indel_model(const std::string& /*pattern*/) const
