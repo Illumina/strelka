@@ -1,3 +1,4 @@
+- STARKA-163 Use indel error estimates to improve indel candidate selection
 - STARKA-179 Provide config option for somatic callability track 
 - STARKA-178 Consolidate single strelka config for all aligners
 - Expand random forest tree count in somatic SNV VQSR
