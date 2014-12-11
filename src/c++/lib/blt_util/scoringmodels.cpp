@@ -86,7 +86,7 @@ void calibration_model::load(const ptree& pt)
 //   {
     int t_count = 0;
 
-    for(const ptree::value_type& each_tree : pt)
+    for (const ptree::value_type& each_tree : pt)
     {
         t_count ++;
 //           log_os << "Tree count: " << t_count << "\n";

@@ -1,3 +1,9 @@
+v2.2.2
+- STARKA-175 Update somatic SNV VQSR model to include MAPQ0 with improved
+normalization
+- STARKA-176 Prevent large deletions from locking indels outside of the 
+realignment buffer.
+- STARKA-174 Prevent segfault due to libstdc++ bug in certain gcc versions 
 v2.2.1
 - STARKA-170 Add "--exome" config option for starling/strelka
 v2.2.0

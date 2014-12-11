@@ -718,10 +718,10 @@ make_candidate_alignments(
     try
     {
         make_candidate_alignments(
-                client_opt,client_dopt,read_id,read_length,isync,
-                realign_buffer_range,cal_set,warn,
-                indel_status_map,indel_order,depth+1,toggle_depth,read_range,
-                max_read_indel_toggle,cal);
+            client_opt,client_dopt,read_id,read_length,isync,
+            realign_buffer_range,cal_set,warn,
+            indel_status_map,indel_order,depth+1,toggle_depth,read_range,
+            max_read_indel_toggle,cal);
     }
     catch (...)
     {

@@ -151,7 +151,7 @@ calc_VQSR_features(
         const auto pmedian(median(readpos.begin(),readpos.end()));
         const auto lmedian(median(readposcomp.begin(),readposcomp.end()));
 
-       // isAltpos=true;
+        // isAltpos=true;
         altpos=std::min(pmedian,lmedian);
 
         if (readpos.size() >= 3)
