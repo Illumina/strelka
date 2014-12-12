@@ -234,7 +234,7 @@ struct starling_options : public blt_options
     unsigned htype_call_segment = 1000;
 
     // if true, treat all soft-clipped segments on the egdes of reads as realignable
-    bool is_remap_input_softclip = false;
+    bool is_remap_input_softclip = true;
 
     /// TODO can we move these options and associated impl to starling-only instead of starling_common?
     gvcf_options gvcf;

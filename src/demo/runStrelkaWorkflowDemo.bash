@@ -28,9 +28,6 @@ analysisDir=./strelkaDemoAnalysis
 
 configScript=$scriptDir/configureStrelkaWorkflow.py
 
-demoConfigFile=$shareDir/config/strelka_config_isaac_default.ini
-
-
 
 if [ ! -e $configScript ]; then
     cat<<END 1>&2
@@ -60,7 +57,6 @@ cmd="$configScript \
 --referenceFasta='$dataDir/chr20_860k_only.fa' \
 --callMemMb=1024 \
 --exome \
---config=$demoConfigFile \
 --runDir=$analysisDir"
 
 echo 1>&2

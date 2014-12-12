@@ -91,9 +91,6 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
-        if options.userConfigPath is None :
-            raise OptParseException("A config file must be specified for strelka workflow")
-
         bcheck = BamSetChecker()
         bcheck.appendBams(options.normalBamList,"Normal")
         bcheck.appendBams(options.tumorBamList,"Tumor")
@@ -106,12 +103,8 @@ def main() :
 
     primarySectionName="strelka"
 
-    # change the config help text for strelka:
-    configHelp="Provide strelka workflow configuration file, see template configuration files in: '%s' (required)" % (templateConfigDir)
-
     options,iniSections=StrelkaWorkflowOptions().getRunOptions(primarySectionName,
-                                                               version=version,
-                                                               configHelp=configHelp)
+                                                               version=version)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:

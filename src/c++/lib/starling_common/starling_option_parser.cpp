@@ -213,7 +213,7 @@ get_starling_shared_option_parser(starling_options& opt)
      "The calibration model for quality filtering variants")
 
     ("remap-input-softclip", po::value(&opt.is_remap_input_softclip)->zero_tokens(),
-     "Attempt to realign all soft-clipped segments in input reads");
+     "Attempt to realign all soft-clipped segments in input reads (DEPRECATED)");
 
     po::options_description new_opt("New options");
 
