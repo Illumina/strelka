@@ -350,8 +350,8 @@ class StrelkaWorkflow(StarkaWorkflow) :
         if self.params.normalBamList is None : self.params.normalBamList = []
         if self.params.tumorBamList is None : self.params.tumorBamList = []
 
+        # bools coming from the ini file need to be cleaned up:
         safeSetBool(self.params,"isWriteRealignedBam")
-        safeSetBool(self.params,"isWriteCallableRegion")
 
         if self.params.isWriteCallableRegion :
             self.params.regionsDir=os.path.join(self.params.resultsDir,"regions")

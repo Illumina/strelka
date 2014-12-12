@@ -62,6 +62,10 @@ created for any run. These files are:
     * snvs
 * __somatic.indels.vcf.gz__
     * indels
+    
+Strelka can also optionally produce a somatic callability track in:
+
+'${RUNFOLDER}/results/regions/somatic.callable.region.bed.gz'
 
 ## Run configuration and Execution
 
