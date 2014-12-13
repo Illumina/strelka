@@ -146,7 +146,7 @@ getDecisionTreeProb(
         {
             assert(node.vote.isInit);
             const double total = node.vote.left + node.vote.right;
-            return (node.vote.right / total);
+            return (node.vote.left / total);
         }
 
         assert(node.decision.isInit);
@@ -177,7 +177,7 @@ getProb(
         {
             prob += getDecisionTreeProb(features, dtree);
         }
-        retval = (1-(prob/_forest.size()));
+        retval = prob/_forest.size();
     }
     catch (...)
     {
