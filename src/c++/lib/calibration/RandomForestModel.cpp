@@ -28,27 +28,30 @@ using namespace illumina::blt_util;
 
 namespace DTREE_NODE_TYPE
 {
-    enum index_t
-    {
-        TREE,
-        VOTE,
-        DECISION,
-        SIZE
-    };
+enum index_t
+{
+    TREE,
+    VOTE,
+    DECISION,
+    SIZE
+};
 
-    const char*
-    get_label(const index_t i)
+const char*
+get_label(const index_t i)
+{
+    switch (i)
     {
-        switch(i)
-        {
-        case TREE: return "tree";
-        case VOTE: return "node_votes";
-        case DECISION: return "decisions";
-        default:
-            assert(false && "Unknown node type");
-            return nullptr;
-        }
+    case TREE:
+        return "tree";
+    case VOTE:
+        return "node_votes";
+    case DECISION:
+        return "decisions";
+    default:
+        assert(false && "Unknown node type");
+        return nullptr;
     }
+}
 }
 
 
@@ -87,7 +90,7 @@ load(const ptree& pt)
         using namespace DTREE_NODE_TYPE;
 
         // node types:
-        for (int i(0); i<SIZE;++i)
+        for (int i(0); i<SIZE; ++i)
         {
             const index_t nodeTypeIndex(static_cast<index_t>(i));
             // nodes:
@@ -100,7 +103,7 @@ load(const ptree& pt)
                 }
                 DecisionTreeNode& node(dtree.data[nodeIndex]);
 
-                switch(nodeTypeIndex)
+                switch (nodeTypeIndex)
                 {
                 case TREE:
                     parseTreeNode(v,node.tree);
@@ -134,7 +137,7 @@ getDecisionTreeProb(
     unsigned nodeIndex(0);
 
     //traverse a single tree
-    while(true)
+    while (true)
     {
         const DecisionTreeNode& node(dtree.getNode(nodeIndex));
         assert(node.tree.isInit);
