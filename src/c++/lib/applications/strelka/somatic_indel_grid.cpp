@@ -108,7 +108,7 @@ somatic_indel_caller_grid(const strelka_options& opt,
     const double ln_csie_rate( log1p_switch(-opt.shared_indel_error_rate) );
 
     const double* normal_lnprior_genomic(in_caller.lnprior_genomic());
-    const double* normal_lnprior_polymorphic(in_caller.lnprior_polymorphic());
+    // const double* normal_lnprior_polymorphic(in_caller.lnprior_polymorphic());
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
         _lnprior.normal[ngt] = (normal_lnprior_genomic[ngt]+ln_csie_rate);
