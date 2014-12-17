@@ -104,22 +104,27 @@ somatic_indel_caller_grid(const strelka_options& opt,
     std::fill(_lnprior.normal.begin(),_lnprior.normal.end(),0);
     std::fill(_lnprior.normal_poly.begin(),_lnprior.normal_poly.end(),0);
 
+    std::fill(_bare_lnprior.normal.begin(),_bare_lnprior.normal.end(),0);
+    std::fill(_bare_lnprior.normal_poly.begin(),_bare_lnprior.normal_poly.end(),0);
+
     const double ln_sie_rate( std::log(opt.shared_indel_error_rate) );
     const double ln_csie_rate( log1p_switch(-opt.shared_indel_error_rate) );
 
     const double* normal_lnprior_genomic(in_caller.lnprior_genomic());
-    const double* normal_lnprior_polymorphic(in_caller.lnprior_polymorphic());
+    // const double* normal_lnprior_polymorphic(in_caller.lnprior_polymorphic());
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
         _lnprior.normal[ngt] = (normal_lnprior_genomic[ngt]+ln_csie_rate);
-        _lnprior.normal_poly[ngt] = (normal_lnprior_polymorphic[ngt]+ln_csie_rate);
+        _bare_lnprior.normal[ngt] = normal_lnprior_genomic[ngt];
+        // _lnprior.normal_poly[ngt] = (normal_lnprior_polymorphic[ngt]+ln_csie_rate);
         //         _lnprior_normal_nonoise[ngt] = normal_lnprior[ngt];
     }
 
     for (unsigned ngt(STAR_DIINDEL::SIZE); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
     {
         _lnprior.normal[ngt] = ln_sie_rate+error_mod;
-        _lnprior.normal_poly[ngt] = ln_sie_rate+error_mod;
+        _bare_lnprior.normal[ngt] = error_mod;
+        // _lnprior.normal_poly[ngt] = ln_sie_rate+error_mod;
     }
 
 #ifdef SOMATIC_DEBUG
@@ -129,6 +134,23 @@ somatic_indel_caller_grid(const strelka_options& opt,
 #endif
 }
 
+void
+somatic_indel_caller_grid::
+set_normal_prior(std::vector<blt_float_t> & normal_prior,
+                 const double ref_error_prob) const
+{
+    const double ln_sie_rate(1.5 * std::log(ref_error_prob));
+    const double ln_csie_rate(log1p_switch(-ln_sie_rate));
+
+    for(unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
+    {
+        normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_csie_rate;
+    }
+    for(unsigned ngt(STAR_DIINDEL::SIZE); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
+    {
+        normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_sie_rate;
+    }
+}
 
 
 typedef somatic_indel_call::result_set result_set;
@@ -449,6 +471,7 @@ get_somatic_indel(const strelka_options& opt,
     static const double tumor_het_bias(0.0);
     double normal_lhood[STAR_DIINDEL_GRID::SIZE];
     double tumor_lhood[STAR_DIINDEL_GRID::SIZE];
+    std::vector<blt_float_t> normal_prior(STAR_DIINDEL_GRID::SIZE,0);
 
     sindel.is_forced_output=(normal_id.is_forced_output || tumor_id.is_forced_output);
 
@@ -515,9 +538,11 @@ get_somatic_indel(const strelka_options& opt,
                                  ik,tumor_id,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+STAR_DIINDEL::SIZE);
+        
+        set_normal_prior(normal_prior,ref_error_prob);
 
         calculate_result_set(opt,
-                             lnprior_genomic(),
+                             normal_prior,
                              lnprior_polymorphic(),
                              _ln_som_match,_ln_som_mismatch,
                              normal_lhood,tumor_lhood,tier_rs[i]);

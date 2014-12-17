@@ -122,6 +122,9 @@ struct somatic_indel_caller_grid : private boost::noncopyable
                       const indel_data& tumor_id,
                       const bool is_use_alt_indel,
                       somatic_indel_call& sindel) const;
+    void
+    set_normal_prior(std::vector<blt_float_t> & normal_prior,
+                     const double ref_error_prob) const;
 
 private:
     const std::vector<blt_float_t>&
@@ -149,6 +152,7 @@ private:
 
     //const indel_digt_caller& _in_caller;
     prior_set _lnprior;
+    prior_set _bare_lnprior;
     //    double _lnprior_normal[STAR_DIINDEL_GRID::SIZE];
     double _ln_som_match;
     double _ln_som_mismatch;
