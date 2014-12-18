@@ -139,7 +139,7 @@ somatic_indel_caller_grid::
 set_normal_prior(std::vector<blt_float_t> & normal_prior,
                  const double ref_error_prob) const
 {
-    const double ln_sie_rate(1.4 * std::log(ref_error_prob));
+    const double ln_sie_rate(1.25 * std::log(ref_error_prob));
 
     const double ln_csie_rate(log1p_switch(-ln_sie_rate));
 
