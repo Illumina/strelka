@@ -540,7 +540,7 @@ get_somatic_indel(const strelka_options& opt,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+STAR_DIINDEL::SIZE);
         
-        set_normal_prior(normal_prior,ref_error_prob);
+        set_normal_prior(normal_prior,ref_error_prob, opt);
 
         calculate_result_set(opt,
                              normal_prior,
