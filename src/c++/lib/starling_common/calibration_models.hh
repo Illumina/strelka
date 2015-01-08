@@ -49,7 +49,7 @@ public:
 
     bool is_current_logistic() const;
 
-    int get_case_cutoff(CALIBRATION_MODEL::var_case my_case);
+    int get_case_cutoff(const CALIBRATION_MODEL::var_case my_case);
 
     const char* get_model_name() const
     {

@@ -39,7 +39,7 @@
 #endif
 
 
-int calibration_models::get_case_cutoff(CALIBRATION_MODEL::var_case my_case)
+int calibration_models::get_case_cutoff(const CALIBRATION_MODEL::var_case my_case)
 {
     return this->get_model(this->model_name).get_var_threshold(my_case);
 }
