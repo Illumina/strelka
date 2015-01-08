@@ -100,9 +100,6 @@ add_gvcf_filters(
         oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomSNP) << for_str << hom_str << " " << snp_str;
         write_vcf_filter(os,get_label(LowQscoreHomSNP),oss.str().c_str());
         oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltSNP) << for_str << hetalt_str << " " << snp_str;
-        write_vcf_filter(os,get_label(LowQscoreHetAltSNP),oss.str().c_str());
-        oss.str("");
         oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetIns) << for_str << het_str << " " << ins_str;
         write_vcf_filter(os,get_label(LowQscoreHetIns),oss.str().c_str());
         oss.str("");
