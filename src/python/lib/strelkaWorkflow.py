@@ -115,7 +115,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--shared-site-error-strand-bias-fraction", str(self.params.ssnvNoiseStrandBiasFrac) ] )
     segCmd.extend(["--somatic-indel-rate", str(self.params.sindelPrior) ] )
     segCmd.extend(["--shared-indel-error-rate", str(self.params.sindelNoise) ] )
-    segCmd.extend(["--shared-indel-error-factor", str(self.params.sindelNoiseFactor)])
     segCmd.extend(["--tier2-min-single-align-score", str(self.params.minTier2Mapq) ] )
     segCmd.extend(["--tier2-min-paired-align-score", str(self.params.minTier2Mapq) ] )
     segCmd.append("--tier2-single-align-score-rescue-mode")

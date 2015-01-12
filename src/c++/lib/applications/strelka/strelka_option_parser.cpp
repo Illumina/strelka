@@ -101,9 +101,6 @@ get_strelka_option_parser(
     ("shared-indel-error-rate",
      po::value(&opt.shared_indel_error_rate)->default_value(opt.shared_indel_error_rate),
      "Expected rate of site-specific spurious indel errors shared in the tumor and normal data.")
-    ("shared-indel-error-factor",
-     po::value(&opt.shared_indel_error_factor),
-     "Factor affecting the expected rate of site-specific spurious indel errors shared in the tumor and normal data.")
     ("tumor-min-candidate-indel-reads",
      po::value(&opt.tumor_sample_min_candidate_indel_reads),
      "Unless an indel is supported by at least this many reads in the tumor sample, it cannot become a candidate unless the global read count test passes for all samples. (default: not used)")
