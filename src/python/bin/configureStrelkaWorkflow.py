@@ -54,6 +54,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                           help="Noise vcf file (submit argument multiple times for more than one file)")
         group.add_option("--isWriteCallableRegion", action="store_true",
                          help="Write out a bed file describing somatic callable regions of the genome")
+        group.add_option("--exome", action="store_true",
+                         help="Turn on exome run specific features")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
@@ -96,12 +98,9 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         bcheck.check(options.samtoolsBin,
                      options.referenceFasta)
 
-
-
 def main() :
 
     primarySectionName="strelka"
-
     options,iniSections=StrelkaWorkflowOptions().getRunOptions(primarySectionName,
                                                                version=version)
 
@@ -128,4 +127,3 @@ To execute the workflow, run the following script and set appropriate options:
 
 if __name__ == "__main__" :
     main()
-
