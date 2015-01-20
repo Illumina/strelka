@@ -54,7 +54,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                           help="Noise vcf file (submit argument multiple times for more than one file)")
         group.add_option("--isWriteCallableRegion", action="store_true",
                          help="Write out a bed file describing somatic callable regions of the genome")
-        group.add_option("--exome", action="store_true",
+        group.add_option("--isExome", action="store_true",
                          help="Turn on exome run specific features")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)

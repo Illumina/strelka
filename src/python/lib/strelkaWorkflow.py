@@ -132,7 +132,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--strelka-indel-max-int-hpol-length", str(self.params.indelMaxIntHpolLength)])
     segCmd.extend(["--strelka-indel-max-window-filtered-basecall-frac", str(self.params.indelMaxWindowFilteredBasecallFrac)])
     segCmd.extend(["--strelka-indel-min-qsi-ref", str(self.params.sindelQuality_LowerBound)])
-    segCmd.extend(['--indel-scoring-models', self.params.scoringModelFile])
+    
+    # do not apply VQSR in exome case
+    if not self.params.isExome :
+        segCmd.extend(['--indel-scoring-models', self.params.scoringModelFile])
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["-bam-file", bamPath])
