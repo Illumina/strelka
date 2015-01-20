@@ -25,6 +25,8 @@
 
 struct RandomForestModel
 {
+    RandomForestModel(){}
+
     void load(const boost::property_tree::ptree& pt);
 
     bool isInit() const
