@@ -129,18 +129,18 @@ somatic_indel_caller_grid(const strelka_options& opt,
 
 void
 somatic_indel_caller_grid::
-set_normal_prior(std::vector<blt_float_t> & normal_prior,
+set_normal_prior(std::vector<blt_float_t>& normal_prior,
                  const double ref_error_prob,
                  const strelka_options& opt) const
 {
     const double ln_sie_rate(opt.shared_indel_error_factor * std::log(ref_error_prob));
     const double ln_csie_rate(log1p_switch(-ln_sie_rate));
 
-    for(unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
+    for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
         normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_csie_rate;
     }
-    for(unsigned ngt(STAR_DIINDEL::SIZE); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
+    for (unsigned ngt(STAR_DIINDEL::SIZE); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
     {
         normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_sie_rate;
     }
@@ -489,7 +489,7 @@ get_somatic_indel(const strelka_options& opt,
                                  ik,tumor_id,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+STAR_DIINDEL::SIZE);
-        
+
         set_normal_prior(normal_prior,ref_error_prob, opt);
 
         calculate_result_set(normal_prior,
