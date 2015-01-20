@@ -80,44 +80,18 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    // check that we are not doing default filtering and that we are in the logistic regression case
     if (CM.is_current_logistic())
     {
-        const std::string gqx_str       = "Locus GQX is less than ";
-        const std::string ins_str       = "insertion";
-        const std::string del_str       = "deletion";
-        const std::string snp_str       = "SNP";
-        const std::string het_str       = "het";
-        const std::string hom_str       = "hom";
-        const std::string hetalt_str    = "het-alt";
-        const std::string for_str       = " for ";
-        std::ostringstream oss;
+        for (unsigned varType(0); varType<CALIBRATION_MODEL::SIZE; ++varType)
+        {
+            using namespace CALIBRATION_MODEL;
+            if (varType == HetAltSNP) continue;
 
-
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetSNP)  << for_str << het_str << " " << snp_str;
-        write_vcf_filter(os,get_label(LowQscoreHetSNP),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomSNP) << for_str << hom_str << " " << snp_str;
-        write_vcf_filter(os,get_label(LowQscoreHomSNP),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetIns) << for_str << het_str << " " << ins_str;
-        write_vcf_filter(os,get_label(LowQscoreHetIns),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomIns) << for_str << hom_str << " " << ins_str;
-        write_vcf_filter(os,get_label(LowQscoreHomIns),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltIns) << for_str << hetalt_str << " " << ins_str;
-        write_vcf_filter(os,get_label(LowQscoreHetAltIns),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetDel) << for_str << het_str << " " << del_str;
-        write_vcf_filter(os,get_label(LowQscoreHetDel),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << for_str << hom_str << " " << del_str;
-        write_vcf_filter(os,get_label(LowQscoreHomDel),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltDel) << for_str << hetalt_str << " " << del_str;
-        write_vcf_filter(os,get_label(LowQscoreHetAltDel),oss.str().c_str());
-        oss.str("");
+            const var_case vti(static_cast<var_case>(varType));
+            std::ostringstream oss;
+            oss << "Locus GQX is less than " << CM.get_case_cutoff(vti)  << " for " << get_label_header(vti);
+            write_vcf_filter(os,VCF_FILTERS::get_label(get_Qscore_filter(vti)),oss.str().c_str());
+        }
     }
 
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
