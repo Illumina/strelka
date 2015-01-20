@@ -92,15 +92,15 @@ get_strelka_option_parser(
     ("shared-site-error-rate",
      po::value(&opt.shared_site_error_rate)->default_value(opt.shared_site_error_rate),
      "Expected rate of site specific errors shared in the tumor and normal data.")
+    ("shared-indel-error-factor",
+     po::value(&opt.shared_indel_error_factor)->default_value(opt.shared_indel_error_factor),
+     "Factor affecting the expected rate of context-specific spurious indel errors shared in the tumor and normal data.")
     ("shared-site-error-strand-bias-fraction",
      po::value(&opt.shared_site_error_strand_bias_fraction)->default_value(opt.shared_site_error_strand_bias_fraction),
      "Expected fraction of site-specific errors which are single-stranded.")
     ("site-somatic-normal-noise-rate",
      po::value(&opt.site_somatic_normal_noise_rate),
      "Expected rate of 'noise' in the normal sample at somatic call sites -- this allows for some degree of tumor contamination in the normal for raw somatic Q-scores (default: use shared site error instead)")
-    ("shared-indel-error-rate",
-     po::value(&opt.shared_indel_error_rate)->default_value(opt.shared_indel_error_rate),
-     "Expected rate of site-specific spurious indel errors shared in the tumor and normal data.")
     ("tumor-min-candidate-indel-reads",
      po::value(&opt.tumor_sample_min_candidate_indel_reads),
      "Unless an indel is supported by at least this many reads in the tumor sample, it cannot become a candidate unless the global read count test passes for all samples. (default: not used)")
@@ -184,7 +184,6 @@ finalize_strelka_options(const prog_info& pinfo,
     check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"site-somatic-normal-noise-rate",0.,1.);
 
     check_option_arg_range(pinfo,opt.somatic_indel_rate,"somatic-indel-rate",0.,1.);
-    check_option_arg_range(pinfo,opt.shared_indel_error_rate,"shared-indel-error-rate",0.,1.);
     check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"indel-somatic-normal-noise-rate",0.,1.);
     check_option_arg_range(pinfo,opt.tier2_indel_nonsite_match_prob,"tier2-indel-nonsite-match-prob",0.,1.);
 

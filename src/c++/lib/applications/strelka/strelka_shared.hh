@@ -106,7 +106,6 @@ struct strelka_options : public starling_options
     double site_somatic_normal_noise_rate = 0;
     bool is_site_somatic_normal_noise_rate = false;
 
-    double shared_indel_error_rate = 0.0000001;
     double shared_indel_error_factor = 1.4;
     double shared_indel_error_strand_bias_fraction = 0.1;
     double indel_somatic_normal_noise_rate = 0;
