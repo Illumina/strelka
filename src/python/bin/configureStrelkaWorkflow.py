@@ -72,7 +72,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
             'runDir' : 'StrelkaWorkflow',
             "minTier2Mapq" : 0,
             'scoringModelFile' : joinFile(configDir,'indel_models.json'),
-            'isWriteCallableRegion' : False
+            'isWriteCallableRegion' : False,
+            'isExome' : False
             })
         return defaults
 
