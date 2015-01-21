@@ -124,7 +124,7 @@ get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
         pos_t next_read_head_pos(read_head_pos);
         pos_t next_ref_head_pos(ref_head_pos);
 
-        if       (ps.type == MATCH)
+        if       (is_segment_align_match(ps.type))
         {
             next_read_head_pos += ps.length;
             next_ref_head_pos += ps.length;

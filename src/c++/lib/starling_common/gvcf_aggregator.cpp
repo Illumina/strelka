@@ -363,7 +363,7 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
     int offset(-1);
     for (const auto& ps : apath)
     {
-        if (ps.type==MATCH)
+        if (is_segment_align_match(ps.type))
         {
             for (unsigned j(0); j<ps.length; ++j)
             {

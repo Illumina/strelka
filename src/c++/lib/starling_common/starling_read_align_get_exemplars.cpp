@@ -66,7 +66,6 @@ matchify_edge_segment_type(const alignment& al,
                            const bool is_match_leading_edge = true,
                            const bool is_match_trailing_edge = true)
 {
-
     using namespace ALIGNPATH;
 
     assert(is_segment_type_read_length(segment_type));
@@ -87,9 +86,9 @@ matchify_edge_segment_type(const alignment& al,
                                      (is_match_trailing_edge && is_trailing_edge_segment));
         const bool is_edge_target(is_candidate_edge && is_target_type);
         if (is_edge_target && is_leading_edge_segment) al2.pos-=ps.length;
-        if (is_edge_target || (ps.type==MATCH))
+        if (is_edge_target || (is_segment_align_match(ps.type)))
         {
-            if ((! al2.path.empty()) && (al2.path.back().type == MATCH))
+            if ((! al2.path.empty()) && (is_segment_align_match(al2.path.back().type)))
             {
                 al2.path.back().length += ps.length;
             }
@@ -121,7 +120,6 @@ matchify_edge_insertions(const alignment& al,
                          const bool is_match_leading_edge,
                          const bool is_match_trailing_edge)
 {
-
     return matchify_edge_segment_type(al, ALIGNPATH::INSERT,is_match_leading_edge,is_match_trailing_edge);
 }
 
@@ -136,7 +134,6 @@ static
 alignment
 matchify_edge_soft_clip(const alignment& al)
 {
-
     return matchify_edge_segment_type(al, ALIGNPATH::SOFT_CLIP);
 }
 
@@ -152,7 +149,6 @@ matchify_edge_indel(const alignment& al,
                     const bool is_match_leading_edge,
                     const bool is_match_trailing_edge)
 {
-
     const alignment al2(remove_edge_deletions(al,is_match_leading_edge,is_match_trailing_edge));
     return matchify_edge_insertions(al2,is_match_leading_edge,is_match_trailing_edge);
 }
@@ -172,7 +168,6 @@ add_exemplar_alignment(const alignment& al,
                        const bool is_remove_soft_clip,
                        std::vector<alignment>& exal)
 {
-
     if (! al.is_realignable(max_indel_size)) return;
 
 #ifdef DEBUG_ALIGN

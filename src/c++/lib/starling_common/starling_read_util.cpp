@@ -163,7 +163,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
             ref_head_pos += ps.length;
 
         }
-        else if (ps.type == MATCH)
+        else if (is_segment_align_match(ps.type))
         {
             for (unsigned j(0); j<ps.length; ++j)
             {
@@ -179,7 +179,6 @@ create_mismatch_filter_map(const blt_options& client_opt,
             }
             read_head_pos += ps.length;
             ref_head_pos += ps.length;
-
         }
         else if (ps.type == SOFT_CLIP)
         {
@@ -190,7 +189,6 @@ create_mismatch_filter_map(const blt_options& client_opt,
         else if (ps.type == HARD_CLIP)
         {
             // do nothing
-
         }
         else
         {
@@ -219,7 +217,6 @@ get_valid_alignment_range(const alignment& al,
                           const bam_seq_base& read_seq,
                           pos_range& valid_pr)
 {
-
     static const int match_score(2);
     static const int mismatch_score(-5);
     static const int min_segment_score(-11);
@@ -261,7 +258,7 @@ get_valid_alignment_range(const alignment& al,
             ref_head_pos += ps.length;
 
         }
-        else if (ps.type == MATCH)
+        else if (is_segment_align_match(ps.type))
         {
             for (unsigned j(0); j<ps.length; ++j)
             {
@@ -291,7 +288,6 @@ get_valid_alignment_range(const alignment& al,
         else if (ps.type == HARD_CLIP)
         {
             // do nothing:
-
         }
         else
         {

@@ -947,7 +947,7 @@ get_extra_path_info(const ALIGNPATH::path_t& p)
     extra_path_info epi;
     for (const path_segment& ps : p)
     {
-        if (ps.type != MATCH) epi.indel_count++;
+        if (! is_segment_align_match(ps.type)) epi.indel_count++;
         if (ps.type == DELETE)
         {
             epi.del_size += ps.length;

@@ -1,5 +1,5 @@
+- STARKA-186 support CIGAR sequence match/mismatch (=/X) in input BAM
 - STARKA-185 turn off somatic VQSR when exome configuration is selected for
-strelka
 v2.3.0
 - STARKA-181 Use indel error estimates to improve indel quality computation
 - Update germline indel error settings to reflect MIB defaults

@@ -313,7 +313,6 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const unsigned sample_no,
                              const std::pair<bool,bool>& edge_pin)
 {
-
     using namespace ALIGNPATH;
 
     const unsigned seq_len(read_seq.size());
@@ -363,7 +362,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         obs.data.iat = iat;
         obs.data.id = id;
 
-        if (MATCH != ps.type)
+        if (! is_segment_align_match(ps.type))
         {
 //            log_os << al.path <<" \n";
             pos_range indel_read_pr;

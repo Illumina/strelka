@@ -1646,7 +1646,7 @@ pileup_read_segment(const read_segment& rseg,
         log_os << "seg,ref,read: " << i << " " << ref_head_pos << " " << read_head_pos << "\n";
 #endif
 
-        if (ps.type == MATCH)
+        if (is_segment_align_match(ps.type))
         {
             for (unsigned j(0); j<ps.length; ++j)
             {

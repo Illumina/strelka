@@ -242,7 +242,7 @@ score_candidate_alignment(const starling_options& opt,
 #endif
 
         }
-        else if (ps.type==MATCH)
+        else if (is_segment_align_match(ps.type))
         {
             score_segment(opt,
                           ps.length,

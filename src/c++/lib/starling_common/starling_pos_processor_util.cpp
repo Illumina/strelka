@@ -300,7 +300,7 @@ is_al_overdepth(const starling_options& opt,
 
     for (const auto& ps : al.path)
     {
-        if (ps.type == MATCH)
+        if (is_segment_align_match(ps.type))
         {
             if (sppr.is_estimated_depth_range_ge_than(ref_head_pos,
                                                       ref_head_pos+static_cast<pos_t>(ps.length),
