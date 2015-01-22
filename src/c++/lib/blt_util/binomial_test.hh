@@ -31,12 +31,26 @@ is_reject_binomial_p_chi_sqr(const double alpha,
                              const unsigned n_success,
                              const unsigned n_failure);
 
+// brief test to reject a p-value from a binomial exact
+// test with a target p-value.  Returns true when p-value
+// is equal to or less than the threshold (i.e. null
+// hypothesis is rejected) and false if the p-value is
+// above threshold
+// N.B. currently only evaluates a one-sided binomial
+// exact test estimating the probability that a value
+// less than n_success could have been generated from
+// n_trials given a probability of p
 bool
 is_reject_binomial_pval(const double threshold,
                         const double p,
                         const unsigned n_success,
                         const unsigned n_trials);
 
+
+// a one-sided binomial exact test
+// Currently only estimates the probability that a value
+// less than n_success could have been generated from
+// n_trials given a probability of p
 double
 get_binomial_pval(const double p,
                   const unsigned n_success,
