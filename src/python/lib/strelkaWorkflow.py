@@ -223,6 +223,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
         graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
 
+    if len(graphTasks) == 0 :
+        raise Exception("No genome regions to analyze. Possible target region parse error.")
+
     # create a checkpoint for all segments:
     completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=graphTasks)
 
