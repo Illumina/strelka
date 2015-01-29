@@ -23,7 +23,11 @@
 #include <cassert>
 
 
-/// simple pos->depth map
+
+/// simple map of position to depth
+///
+/// assumes that a narrow list of positions is maintained so that
+/// array based lookup optimizations can be used
 ///
 struct depth_buffer
 {

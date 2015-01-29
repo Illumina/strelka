@@ -81,6 +81,8 @@ struct indel_synchronizer
     ///
     /// \param[in] max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the filter.
     ///
+    /// \max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the fi
+    ///
     indel_synchronizer(
         const starling_options& opt,
         const reference_contig_segment& ref,
