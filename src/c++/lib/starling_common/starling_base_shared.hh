@@ -51,11 +51,11 @@ operator<<(std::ostream& os, const avg_window_data& awd);
 
 
 
-struct starling_options : public blt_options
+struct starling_base_options : public blt_options
 {
     typedef blt_options base_t;
 
-    starling_options() {}
+    starling_base_options() {}
 
     // report whether any type of indel-caller is running (including
     // checks from child class options):
@@ -74,12 +74,6 @@ struct starling_options : public blt_options
     }
 
     bool
-    is_write_candidate_indels() const
-    {
-        return (! candidate_indel_filename.empty());
-    }
-
-    bool
     is_bsnp_diploid() const
     {
         return (base_t::is_bsnp_diploid() ||
@@ -90,6 +84,15 @@ struct starling_options : public blt_options
     is_all_sites() const
     {
         return (is_bsnp_diploid_allele_file || gvcf.is_gvcf_output());
+    }
+
+    gvcf_options gvcf;
+
+
+    bool
+    is_write_candidate_indels() const
+    {
+        return (! candidate_indel_filename.empty());
     }
 
     unsigned htype_buffer_segment() const
@@ -242,9 +245,6 @@ struct starling_options : public blt_options
     // if true, treat all soft-clipped segments on the egdes of reads as realignable
     bool is_remap_input_softclip = true;
 
-    /// TODO can we move these options and associated impl to starling-only instead of starling_common?
-    gvcf_options gvcf;
-
     /// file specifying haploid and deleted regions as 1/0 in bed col 4
     std::string ploidy_region_bedfile;
 };
@@ -255,7 +255,7 @@ struct starling_options : public blt_options
 //
 struct starling_sample_options
 {
-    starling_sample_options(const starling_options& opt)
+    starling_sample_options(const starling_base_options& opt)
         : min_read_bp_flank(opt.default_min_read_bp_flank)
         , min_candidate_indel_reads(opt.default_min_candidate_indel_reads)
         , min_small_candidate_indel_read_frac(opt.default_min_small_candidate_indel_read_frac)
@@ -274,13 +274,15 @@ struct indel_digt_caller;
 
 // data deterministically derived from the input options:
 //
-struct starling_deriv_options : public blt_deriv_options
+struct starling_base_deriv_options : public blt_deriv_options
 {
     typedef blt_deriv_options base_t;
 
-    starling_deriv_options(
-        const starling_options& opt,
+    starling_base_deriv_options(
+        const starling_base_options& opt,
         const reference_contig_segment& ref);
+
+    ~starling_base_deriv_options();
 
     const indel_digt_caller&
     incaller() const
@@ -314,6 +316,9 @@ protected:
     }
 
 public:
+
+    gvcf_deriv_options gvcf;
+
     double indel_nonsite_match_lnp;
     double tier2_indel_nonsite_match_lnp;
 
@@ -326,8 +331,6 @@ public:
 
     unsigned variant_window_first_stage;
     unsigned variant_window_last_stage;
-
-    gvcf_deriv_options gvcf;
 
 private:
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..

@@ -153,8 +153,8 @@ typedef somatic_indel_call::result_set result_set;
 
 static
 void
-get_indel_het_grid_lhood(const starling_options& opt,
-                         const starling_deriv_options& dopt,
+get_indel_het_grid_lhood(const starling_base_options& opt,
+                         const starling_base_deriv_options& dopt,
                          const starling_sample_options& sample_opt,
                          const double indel_error_lnp,
                          const double indel_real_lnp,
@@ -321,7 +321,7 @@ debug_dump_indel_lhood(const double* lhood,
 
 static
 bool
-is_multi_indel_allele(const starling_deriv_options& dopt,
+is_multi_indel_allele(const starling_base_deriv_options& dopt,
                       const indel_data& normal_id,
                       const indel_data& tumor_id,
                       const bool is_include_tier2,

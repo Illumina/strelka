@@ -19,10 +19,9 @@
 
 #include "blt_common/map_level.hh"
 #include "htsapi/bam_dumper.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_key.hh"
 #include "starling_common/starling_read_segment.hh"
-#include "starling_common/starling_shared.hh"
-
 #include "boost/utility.hpp"
 
 #include <iosfwd>

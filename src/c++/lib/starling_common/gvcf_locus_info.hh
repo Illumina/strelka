@@ -20,8 +20,8 @@
 
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
-#include "starling_common/starling_shared.hh"
 #include "blt_util/chrom_depth_map.hh"
 
 #include <bitset>

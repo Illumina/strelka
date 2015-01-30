@@ -242,7 +242,7 @@ is_equiv_candidate(const candidate_alignment& cal1,
 //
 static
 bool
-is_first_indel_dominant(const starling_options& opt,
+is_first_indel_dominant(const starling_base_options& opt,
                         const indel_synchronizer& isync,
                         const indel_key& ik1,
                         const indel_key& ik2)
@@ -264,8 +264,8 @@ is_first_indel_dominant(const starling_options& opt,
 // in indel_status_map to generate data needed in indel calling:
 //
 void
-score_indels(const starling_options& opt,
-             const starling_deriv_options& /*dopt*/,
+score_indels(const starling_base_options& opt,
+             const starling_base_deriv_options& /*dopt*/,
              const starling_sample_options& sample_opt,
              const read_segment& rseg,
              indel_synchronizer& isync,

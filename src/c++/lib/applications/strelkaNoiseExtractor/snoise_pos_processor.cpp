@@ -21,8 +21,8 @@
 
 snoise_pos_processor::
 snoise_pos_processor(
-    const starling_options& opt,
-    const starling_deriv_options& dopt,
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
     const reference_contig_segment& ref,
     const snoise_streams& client_io)
     : base_t(opt,dopt,ref,client_io,1),

@@ -67,7 +67,7 @@ typedef std::map<indel_key,starling_align_indel_info> starling_align_indel_statu
 static
 bool
 check_for_candidate_indel_overlap(
-    const starling_options& opt,
+    const starling_base_options& opt,
     const known_pos_range realign_buffer_range,
     const read_segment& rseg,
     const indel_synchronizer& isync)
@@ -156,7 +156,7 @@ dump_indel_status(const starling_align_indel_status& ismap,
 static
 bool
 is_usable_indel(const indel_synchronizer& isync,
-                const starling_options& opt,
+                const starling_base_options& opt,
                 const indel_key& ik,
                 const indel_data& id,
                 const align_id_t read_id)
@@ -175,7 +175,7 @@ is_usable_indel(const indel_synchronizer& isync,
 static
 void
 add_indels_in_range(
-    const starling_options& opt,
+    const starling_base_options& opt,
     const align_id_t read_id,
     const indel_synchronizer& isync,
     const known_pos_range& pr,
@@ -625,8 +625,8 @@ add_pin_exception_info(
 static
 void
 make_candidate_alignments(
-    const starling_options& client_opt,
-    const starling_deriv_options& client_dopt,
+    const starling_base_options& client_opt,
+    const starling_base_deriv_options& client_dopt,
     const align_id_t read_id,
     const unsigned read_length,
     const indel_synchronizer& isync,
@@ -1000,7 +1000,7 @@ is_first_path_preferred(const ALIGNPATH::path_t& p1,
 
 static
 unsigned
-get_candidate_indel_count(const starling_options& client_opt,
+get_candidate_indel_count(const starling_base_options& client_opt,
                           const indel_synchronizer& isync,
                           const candidate_alignment& cal)
 {
@@ -1026,7 +1026,7 @@ get_candidate_indel_count(const starling_options& client_opt,
 //
 static
 bool
-is_first_cal_preferred(const starling_options& client_opt,
+is_first_cal_preferred(const starling_base_options& client_opt,
                        const indel_synchronizer& isync,
                        const candidate_alignment& c1,
                        const candidate_alignment& c2)
@@ -1062,7 +1062,7 @@ is_first_cal_preferred(const starling_options& client_opt,
 // make sure the cal pool contains at least one candidate indel:
 static
 bool
-is_cal_pool_contains_candidate(const starling_options& client_opt,
+is_cal_pool_contains_candidate(const starling_base_options& client_opt,
                                const depth_buffer& db,
                                const indel_buffer& ibuff,
                                const cal_pool_t& max_cal_pool)
@@ -1081,7 +1081,7 @@ is_cal_pool_contains_candidate(const starling_options& client_opt,
 
 static
 void
-finish_realignment(const starling_options& client_opt,
+finish_realignment(const starling_base_options& client_opt,
                    read_segment& rseg,
                    const cal_pool_t& cal_pool,
                    const double /*path_lnp*/,
@@ -1141,7 +1141,7 @@ is_alignment_spanned_by_range(const known_pos_range pr,
 static
 void
 score_candidate_alignments(
-    const starling_options& client_opt,
+    const starling_base_options& client_opt,
     const reference_contig_segment& ref,
     read_segment& rseg,
     indel_synchronizer& isync,
@@ -1326,8 +1326,8 @@ score_candidate_alignments(
 static
 void
 score_candidate_alignments_and_indels(
-    const starling_options& opt,
-    const starling_deriv_options& dopt,
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
     const reference_contig_segment& ref,
     read_segment& rseg,
@@ -1440,8 +1440,8 @@ load_cal_with_edge_indels(const alignment& al,
 static
 void
 get_exemplar_candidate_alignments(
-    const starling_options& opt,
-    const starling_deriv_options& dopt,
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
     const read_segment& rseg,
     const indel_synchronizer& isync,
     const alignment& exemplar,
@@ -1596,8 +1596,8 @@ get_exemplar_candidate_alignments(
 
 void
 realign_and_score_read(
-    const starling_options& opt,
-    const starling_deriv_options& dopt,
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
     const reference_contig_segment& ref,
     const known_pos_range& realign_buffer_range,

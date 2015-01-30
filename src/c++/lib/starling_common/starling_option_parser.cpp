@@ -70,7 +70,7 @@ void validate(boost::any& v,
 
 
 po::options_description
-get_starling_shared_option_parser(starling_options& opt)
+get_starling_shared_option_parser(starling_base_options& opt)
 {
     po::options_description geno_opt("genotyping options");
     geno_opt.add_options()
@@ -227,7 +227,7 @@ get_starling_shared_option_parser(starling_options& opt)
 
 
 po::options_description
-get_starling_option_parser(starling_options& opt)
+get_starling_option_parser(starling_base_options& opt)
 {
     po::options_description starling_parse_opt(get_starling_shared_option_parser(opt));
 
@@ -246,7 +246,7 @@ get_starling_option_parser(starling_options& opt)
 void
 write_starling_legacy_options(std::ostream& os)
 {
-    static const starling_options default_opt;
+    static const starling_base_options default_opt;
 
     os <<
        " -bam-file file     - Analyze reads from 'file' in sorted & indexed BAM/CRAM format (required) \n" // (use \"" << STDIN_FILENAME << "\" for stdin)\n"
@@ -385,7 +385,7 @@ write_starling_legacy_options(std::ostream& os)
 static
 void
 finalize_legacy_starling_options(const prog_info& pinfo,
-                                 starling_options& opt)
+                                 starling_base_options& opt)
 {
     if (! opt.is_ref_set())
     {
@@ -439,7 +439,7 @@ finalize_legacy_starling_options(const prog_info& pinfo,
 void
 finalize_starling_options(const prog_info& pinfo,
                           const po::variables_map& vm,
-                          starling_options& opt)
+                          starling_base_options& opt)
 {
     // blt section:
     check_option_arg_range(pinfo,opt.nonref_variant_rate,"nonref-variant-rate",0.,1.);

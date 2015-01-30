@@ -243,7 +243,7 @@ namespace STAGE
 // stage into which pileup entries must fit:
 static
 int
-get_pileup_stage_no(const starling_options& opt)
+get_pileup_stage_no(const starling_base_options& opt)
 {
     return (opt.is_htype_calling ?
             static_cast<int>(POST_REGION) :
@@ -253,7 +253,7 @@ get_pileup_stage_no(const starling_options& opt)
 // stage into which pileup entries must fit:
 static
 int
-get_last_static_stage_no(const starling_options& opt)
+get_last_static_stage_no(const starling_base_options& opt)
 {
     return (opt.is_htype_calling ?
             static_cast<int>(POST_CALL) :
@@ -268,8 +268,8 @@ stage_data
 get_stage_data(
     const unsigned largest_read_size,
     const unsigned largest_total_indel_ref_span_per_read,
-    const starling_options& opt,
-    const starling_deriv_options& dopt)
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt)
 {
     stage_data sdata;
 
@@ -387,8 +387,8 @@ get_stage_data(
 }
 
 starling_pos_processor_base::
-starling_pos_processor_base(const starling_options& client_opt,
-                            const starling_deriv_options& client_dopt,
+starling_pos_processor_base(const starling_base_options& client_opt,
+                            const starling_base_deriv_options& client_dopt,
                             const reference_contig_segment& ref,
                             const starling_streams_base& client_io,
                             const unsigned n_samples)

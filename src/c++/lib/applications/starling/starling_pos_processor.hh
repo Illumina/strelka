@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "starling_shared.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 
 

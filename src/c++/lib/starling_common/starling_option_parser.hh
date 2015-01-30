@@ -19,9 +19,8 @@
 
 
 #include "blt_util/prog_info.hh"
-#include "starling_common/starling_shared.hh"
-
 #include "boost/program_options.hpp"
+#include "starling_common/starling_base_shared.hh"
 
 #include <iosfwd>
 
@@ -37,10 +36,10 @@ void validate(boost::any& v,
 
 
 po::options_description
-get_starling_shared_option_parser(starling_options& opt);
+get_starling_shared_option_parser(starling_base_options& opt);
 
 po::options_description
-get_starling_option_parser(starling_options& opt);
+get_starling_option_parser(starling_base_options& opt);
 
 
 void
@@ -53,4 +52,4 @@ write_starling_legacy_options(std::ostream& os);
 void
 finalize_starling_options(const prog_info& pinfo,
                           const po::variables_map& vm,
-                          starling_options& opt);
+                          starling_base_options& opt);

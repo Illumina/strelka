@@ -19,8 +19,8 @@
 
 #include "blt_common/blt_streams.hh"
 #include "htsapi/bam_dumper.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/sample_info.hh"
-#include "starling_common/starling_shared.hh"
 #include "starling_common/starling_types.hh"
 
 #include <vector>
@@ -30,7 +30,7 @@ struct starling_streams_base : public blt_streams
 {
     typedef blt_streams base_t;
 
-    starling_streams_base(const starling_options& opt,
+    starling_streams_base(const starling_base_options& opt,
                           const prog_info& pinfo,
                           const sample_info& si);
 
@@ -67,14 +67,14 @@ struct starling_streams_base : public blt_streams
 protected:
     static
     std::ostream*
-    initialize_bindel_file(const starling_options& client_opt,
+    initialize_bindel_file(const starling_base_options& client_opt,
                            const prog_info& pinfo,
                            const std::string& filename,
                            const char* label=NULL);
 
     static
     std::ostream*
-    initialize_gvcf_file(const starling_options& opt,
+    initialize_gvcf_file(const starling_base_options& opt,
                          const prog_info& pinfo,
                          const std::string& filename,
                          const bam_header_t* const header,
@@ -89,13 +89,13 @@ protected:
 
     static
     std::ostream*
-    initialize_candidate_indel_file(const starling_options& client_opt,
+    initialize_candidate_indel_file(const starling_base_options& client_opt,
                                     const prog_info& pinfo,
                                     const std::string& filename);
 
     static
     std::ostream*
-    initialize_window_file(const starling_options& opt,
+    initialize_window_file(const starling_base_options& opt,
                            const prog_info& pinfo,
                            const avg_window_data& awd,
                            const sample_info& si);

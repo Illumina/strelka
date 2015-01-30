@@ -28,8 +28,8 @@ struct snoise_pos_processor : public starling_pos_processor_base
     typedef starling_pos_processor_base base_t;
 
     snoise_pos_processor(
-        const starling_options& opt,
-        const starling_deriv_options& dopt,
+        const starling_base_options& opt,
+        const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
         const snoise_streams& client_io);
 

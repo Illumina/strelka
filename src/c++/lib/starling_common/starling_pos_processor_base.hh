@@ -38,11 +38,10 @@
 #include "starling_common/indel_synchronizer.hh"
 #include "starling_common/pos_basecall_buffer.hh"
 #include "starling_common/read_mismatch_info.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_pos_processor_win_avg_set.hh"
 #include "starling_common/starling_read_buffer.hh"
-#include "starling_common/starling_shared.hh"
 #include "starling_common/starling_streams_base.hh"
-#include "starling_common/gvcf_aggregator.hh"
 
 #include "boost/utility.hpp"
 
@@ -108,8 +107,8 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 {
     typedef pos_processor_base base_t;
 
-    starling_pos_processor_base(const starling_options& client_opt,
-                                const starling_deriv_options& client_dopt,
+    starling_pos_processor_base(const starling_base_options& client_opt,
+                                const starling_base_deriv_options& client_dopt,
                                 const reference_contig_segment& ref,
                                 const starling_streams_base& client_io,
                                 const unsigned n_samples);
@@ -308,7 +307,7 @@ public:
     struct sample_info
     {
         sample_info(
-            const starling_options& opt,
+            const starling_base_options& opt,
             const reference_contig_segment& ref,
             const unsigned report_size,
             const unsigned knownref_report_size,
@@ -597,8 +596,8 @@ protected:
     //////////////////////////////////
     // data:
     //
-    const starling_options& _client_opt;
-    const starling_deriv_options& _client_dopt;
+    const starling_base_options& _client_opt;
+    const starling_base_deriv_options& _client_dopt;
     const reference_contig_segment& _ref;
     const starling_streams_base& _client_io;
 

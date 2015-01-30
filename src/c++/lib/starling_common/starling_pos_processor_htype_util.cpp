@@ -452,7 +452,7 @@ convert_indel_to_htype(const indel_key& ik,
 
 static
 void
-get_htypes_for_indel(const starling_deriv_options& dopt,
+get_htypes_for_indel(const starling_base_deriv_options& dopt,
                      const starling_read_buffer& rbuff,
                      const reference_contig_segment& ref,
                      const indel_key& ik,

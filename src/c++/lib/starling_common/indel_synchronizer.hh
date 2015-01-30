@@ -20,7 +20,7 @@
 #include "blt_util/id_map.hh"
 #include "starling_common/depth_buffer.hh"
 #include "starling_common/indel_buffer.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 
 struct indel_synchronizer;
@@ -84,7 +84,7 @@ struct indel_synchronizer
     /// \max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the fi
     ///
     indel_synchronizer(
-        const starling_options& opt,
+        const starling_base_options& opt,
         const reference_contig_segment& ref,
         const double max_candidate_depth,
         indel_buffer& ib,
@@ -104,7 +104,7 @@ struct indel_synchronizer
     /// \param[in] sample_no is the sample that is 'primary' for this synchronizer.
     ///
     indel_synchronizer(
-        const starling_options& opt,
+        const starling_base_options& opt,
         const reference_contig_segment& ref,
         const indel_sync_data& isd,
         const sample_id_t sample_no)
@@ -231,7 +231,7 @@ private:
     find_data_exception(const indel_key& ik) const;
 
 
-    const starling_options& _opt;
+    const starling_base_options& _opt;
     const reference_contig_segment& _ref;
 
     indel_sync_data _isd;

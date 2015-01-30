@@ -227,7 +227,7 @@ get_pattern_error_model(
 // "ref_error" is the probability that the read supporting the ref case is an error
 //
 void
-get_indel_error_prob(const starling_options& client_opt,
+get_indel_error_prob(const starling_base_options& client_opt,
                      const starling_indel_report_info& iri,
                      double& indel_error_prob,
                      double& ref_error_prob)

@@ -18,8 +18,8 @@
 
 #include "blt_common/blt_arg_parse_util.hh"
 #include "blt_common/blt_arg_validate.hh"
-#include "starling_common/starling_shared.hh"
 #include "starling_common/starling_arg_parse.hh"
+#include "starling_common/starling_base_shared.hh"
 
 //#define DEBUG_PARSER
 
@@ -30,7 +30,7 @@
 
 void
 legacy_starling_arg_parse(arg_data& ad,
-                          starling_options& opt)
+                          starling_base_options& opt)
 {
 
     const prog_info& pinfo(ad.pinfo);

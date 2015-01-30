@@ -17,11 +17,10 @@
 
 #pragma once
 
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_diploid_indel.hh"
 #include "starling_common/starling_indel_report_info.hh"
-
 #include "starling_common/indel.hh"
-#include "starling_common/starling_shared.hh"
 
 #include <iosfwd>
 
@@ -31,7 +30,7 @@
 // utility used for indel filtration...
 //
 void
-get_sum_path_pprob(const starling_deriv_options& dopt,
+get_sum_path_pprob(const starling_base_deriv_options& dopt,
                    const indel_data& id,
                    const bool is_include_tier2,
                    const bool is_use_alt_indel,
@@ -68,8 +67,8 @@ struct indel_digt_caller : private boost::noncopyable
     /// of all possible genotypes for a diploid individual.
     ///
     void
-    starling_indel_call_pprob_digt(const starling_options& client_opt,
-                                   const starling_deriv_options& client_dopt,
+    starling_indel_call_pprob_digt(const starling_base_options& client_opt,
+                                   const starling_base_deriv_options& client_dopt,
                                    const starling_sample_options& sample_opt,
                                    const double indel_error_prob,
                                    const double ref_error_prob,
@@ -95,8 +94,8 @@ struct indel_digt_caller : private boost::noncopyable
 
     static
     void
-    get_high_low_het_ratio_lhood(const starling_options& opt,
-                                 const starling_deriv_options& dopt,
+    get_high_low_het_ratio_lhood(const starling_base_options& opt,
+                                 const starling_base_deriv_options& dopt,
                                  const starling_sample_options& sample_opt,
                                  const double indel_error_lnp,
                                  const double indel_real_lnp,
@@ -112,8 +111,8 @@ struct indel_digt_caller : private boost::noncopyable
 
     static
     void
-    get_indel_digt_lhood(const starling_options& opt,
-                         const starling_deriv_options& dopt,
+    get_indel_digt_lhood(const starling_base_options& opt,
+                         const starling_base_deriv_options& dopt,
                          const starling_sample_options& sample_opt,
                          const double indel_error_prob,
                          const double ref_error_prob,

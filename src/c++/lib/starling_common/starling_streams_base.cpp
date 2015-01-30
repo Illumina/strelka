@@ -28,7 +28,7 @@
 
 std::ostream*
 starling_streams_base::
-initialize_bindel_file(const starling_options& opt,
+initialize_bindel_file(const starling_base_options& opt,
                        const prog_info& pinfo,
                        const std::string& filename,
                        const char* label)
@@ -54,7 +54,7 @@ initialize_bindel_file(const starling_options& opt,
 
 std::ostream*
 starling_streams_base::
-initialize_gvcf_file(const starling_options& opt,
+initialize_gvcf_file(const starling_base_options& opt,
                      const prog_info& pinfo,
                      const std::string& filename,
                      const bam_header_t* const header,
@@ -112,7 +112,7 @@ initialize_realign_bam(const bool is_clobber,
 
 std::ostream*
 starling_streams_base::
-initialize_candidate_indel_file(const starling_options& opt,
+initialize_candidate_indel_file(const starling_base_options& opt,
                                 const prog_info& pinfo,
                                 const std::string& filename)
 {
@@ -135,7 +135,7 @@ initialize_candidate_indel_file(const starling_options& opt,
 
 std::ostream*
 starling_streams_base::
-initialize_window_file(const starling_options& opt,
+initialize_window_file(const starling_base_options& opt,
                        const prog_info& pinfo,
                        const avg_window_data& awd,
                        const sample_info& si)
@@ -173,7 +173,7 @@ initialize_window_file(const starling_options& opt,
 
 
 starling_streams_base::
-starling_streams_base(const starling_options& opt,
+starling_streams_base(const starling_base_options& opt,
                       const prog_info& pinfo,
                       const sample_info& si)
     : base_t(opt,pinfo,true)

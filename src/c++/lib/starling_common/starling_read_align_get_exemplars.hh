@@ -18,9 +18,8 @@
 #pragma once
 
 #include "starling_common/alignment.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_segment.hh"
-#include "starling_common/starling_shared.hh"
-
 #include <vector>
 
 
@@ -28,7 +27,7 @@
 /// for alignment search based on read mapper and grouper proposals
 ///
 void
-get_exemplar_alignments(const starling_options& opt,
+get_exemplar_alignments(const starling_base_options& opt,
                         const read_segment& rseg,
                         std::vector<alignment>& exal);
 

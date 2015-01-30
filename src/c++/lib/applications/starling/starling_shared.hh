@@ -17,18 +17,28 @@
 
 #pragma once
 
-#include "candidate_alignment.hh"
-
-#include "starling_common/indel_buffer.hh"
-#include "starling_common/starling_read.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
 
-double
-score_candidate_alignment(const starling_base_options& client_opt,
-                          const indel_buffer& ibuff,
-                          const read_segment& rseg,
-                          const candidate_alignment& cal,
-                          const reference_contig_segment& ref);
+struct starling_options : public starling_base_options
+{
+    typedef starling_options base_t;
+
+    starling_options() {}
+};
+
+
+// data deterministically derived from the input options:
+//
+struct starling_deriv_options : public starling_base_deriv_options
+{
+    typedef starling_base_deriv_options base_t;
+
+    starling_deriv_options(
+        const starling_options& opt,
+        const reference_contig_segment& ref)
+        : base_t(opt,ref)
+    {}
+};
 

@@ -218,7 +218,7 @@ add_exemplar_alignment(const alignment& al,
 // reduce discovery alignments to a set of non-redundant exemplars:
 //
 void
-get_exemplar_alignments(const starling_options& opt,
+get_exemplar_alignments(const starling_base_options& opt,
                         const read_segment& rseg,
                         std::vector<alignment>& exal)
 {

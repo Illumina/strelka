@@ -17,9 +17,8 @@
 
 #include "blt_util/math_util.hh"
 #include "htsapi/bam_streamer.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
-#include "starling_common/starling_shared.hh"
-
 #include <cmath>
 
 #include <iostream>
@@ -35,9 +34,9 @@ operator<<(std::ostream& os, const avg_window_data& awd)
 
 
 
-starling_deriv_options::
-starling_deriv_options(
-    const starling_options& opt,
+starling_base_deriv_options::
+starling_base_deriv_options(
+    const starling_base_options& opt,
     const reference_contig_segment& ref)
     : base_t(opt,ref.end())
     , sal(opt.max_realignment_candidates)
@@ -103,6 +102,10 @@ starling_deriv_options(
     }
 }
 
+
+// required for unique_ptr
+starling_base_deriv_options::
+~starling_base_deriv_options() {}
 
 
 void

@@ -25,7 +25,6 @@
 #include "common/Exceptions.hh"
 #include "htsapi/align_path_bam_util.hh"
 #include "starling_common/starling_read.hh"
-#include "starling_common/starling_shared.hh"
 
 #include <iostream>
 

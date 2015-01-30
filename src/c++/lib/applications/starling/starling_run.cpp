@@ -31,7 +31,6 @@
 #include "starling_common/starling_input_stream_handler.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
-#include "starling_common/starling_shared.hh"
 
 #include <sstream>
 

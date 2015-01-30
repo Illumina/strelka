@@ -33,15 +33,15 @@
 /// 'influence zones' defined by sppr.
 ///
 std::string
-get_starling_bam_region_string(const starling_options& opt,
-                               const starling_deriv_options& dopt);
+get_starling_bam_region_string(const starling_base_options& opt,
+                               const starling_base_deriv_options& dopt);
 
 
 // handles genomic read alignments -- reads are parsed, their indels
 // are extracted and buffered, and the reads themselves are buffered
 //
 void
-process_genomic_read(const starling_options& client_opt,
+process_genomic_read(const starling_base_options& client_opt,
                      const reference_contig_segment&, // ref,
                      const bam_streamer& read_stream,
                      const bam_record& read,

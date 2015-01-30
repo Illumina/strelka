@@ -18,7 +18,7 @@
 #pragma once
 
 #include "blt_util/chrom_depth_map.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 
 /// variant call filtration options used only for somatic snvs and indels
@@ -52,9 +52,9 @@ struct somatic_filter_options
 
 
 
-struct strelka_options : public starling_options
+struct strelka_options : public starling_base_options
 {
-    typedef starling_options base_t;
+    typedef starling_base_options base_t;
 
     bool is_tumor_bindel_diploid() const
     {
@@ -158,9 +158,9 @@ struct somatic_indel_caller_grid;
 
 // data deterministically derived from the input options:
 //
-struct strelka_deriv_options : public starling_deriv_options
+struct strelka_deriv_options : public starling_base_deriv_options
 {
-    typedef starling_deriv_options base_t;
+    typedef starling_base_deriv_options base_t;
 
     strelka_deriv_options(
         const strelka_options& opt,

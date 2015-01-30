@@ -20,7 +20,7 @@
 
 #include "starling_common/indel_synchronizer.hh"
 #include "starling_common/starling_read.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 
 /// search for optimal realignments of the read and score alternate
@@ -30,8 +30,8 @@
 ///
 void
 realign_and_score_read(
-    const starling_options& opt,
-    const starling_deriv_options& dopt,
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
     const reference_contig_segment& ref,
     const known_pos_range& realign_buffer_range,

@@ -38,8 +38,8 @@
 
 
 std::string
-get_starling_bam_region_string(const starling_options& opt,
-                               const starling_deriv_options& dopt)
+get_starling_bam_region_string(const starling_base_options& opt,
+                               const starling_base_deriv_options& dopt)
 {
     const int zsize(opt.max_indel_size);
     const pos_t begin_pos(std::max(0,dopt.report_range.begin_pos-zsize));
@@ -154,7 +154,7 @@ check_bam_record(const bam_streamer& read_stream,
 
 static
 bool
-is_usable_read_mapping(const starling_options& opt,
+is_usable_read_mapping(const starling_base_options& opt,
                        const bam_record& read,
                        const bool is_tier2 =false)
 {
@@ -268,7 +268,7 @@ is_usable_read_mapping(const starling_options& opt,
 
 static
 MAPLEVEL::index_t
-get_map_level(const starling_options& opt,
+get_map_level(const starling_base_options& opt,
               const bam_record& read)
 {
     using namespace MAPLEVEL;
@@ -287,7 +287,7 @@ get_map_level(const starling_options& opt,
 
 static
 bool
-is_al_overdepth(const starling_options& opt,
+is_al_overdepth(const starling_base_options& opt,
                 const starling_pos_processor_base& sppr,
                 const unsigned sample_no,
                 const alignment& al)
@@ -323,7 +323,7 @@ is_al_overdepth(const starling_options& opt,
 //
 void
 process_genomic_read(
-    const starling_options& opt,
+    const starling_base_options& opt,
     const reference_contig_segment& /*ref*/,
     const bam_streamer& read_stream,
     const bam_record& read,

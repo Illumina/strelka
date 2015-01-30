@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "starling_shared.hh"
 #include "starling_common/starling_streams_base.hh"
 
 

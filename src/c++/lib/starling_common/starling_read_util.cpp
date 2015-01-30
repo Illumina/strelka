@@ -20,7 +20,7 @@
 #include "starling_read_util.hh"
 
 #include "blt_util/blt_exception.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 #include <cassert>
 

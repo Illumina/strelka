@@ -88,7 +88,7 @@ indel_digt_caller(const double theta)
 
 static
 double
-integrate_out_sites(const starling_deriv_options& dopt,
+integrate_out_sites(const starling_base_deriv_options& dopt,
                     const uint16_t nsite,
                     const double p_on_site,
                     const bool is_tier2_pass)
@@ -145,8 +145,8 @@ get_het_observed_allele_ratio(const unsigned read_length,
 
 void
 indel_digt_caller::
-get_high_low_het_ratio_lhood(const starling_options& /*opt*/,
-                             const starling_deriv_options& dopt,
+get_high_low_het_ratio_lhood(const starling_base_options& /*opt*/,
+                             const starling_base_deriv_options& dopt,
                              const starling_sample_options& sample_opt,
                              const double indel_error_lnp,
                              const double indel_real_lnp,
@@ -234,8 +234,8 @@ get_high_low_het_ratio_lhood(const starling_options& /*opt*/,
 
 static
 void
-increment_het_ratio_lhood(const starling_options& opt,
-                          const starling_deriv_options& dopt,
+increment_het_ratio_lhood(const starling_base_options& opt,
+                          const starling_base_deriv_options& dopt,
                           const starling_sample_options& sample_opt,
                           const double indel_error_lnp,
                           const double indel_real_lnp,
@@ -268,7 +268,7 @@ increment_het_ratio_lhood(const starling_options& opt,
 // total the path likelihoods of ref,indel and alt_indel states
 //
 void
-get_sum_path_pprob(const starling_deriv_options& dopt,
+get_sum_path_pprob(const starling_base_deriv_options& dopt,
                    const indel_data& id,
                    const bool is_tier2_pass,
                    const bool is_use_alt_indel,
@@ -330,7 +330,7 @@ get_sum_path_pprob(const starling_deriv_options& dopt,
 //
 static
 bool
-is_diploid_indel_noise(const starling_deriv_options& dopt,
+is_diploid_indel_noise(const starling_base_deriv_options& dopt,
                        const indel_data& id,
                        const bool is_tier2_pass)
 {
@@ -403,8 +403,8 @@ is_diploid_indel_noise(const starling_deriv_options& dopt,
 
 void
 indel_digt_caller::
-get_indel_digt_lhood(const starling_options& opt,
-                     const starling_deriv_options& dopt,
+get_indel_digt_lhood(const starling_base_options& opt,
+                     const starling_base_deriv_options& dopt,
                      const starling_sample_options& sample_opt,
                      const double indel_error_prob,
                      const double ref_error_prob,
@@ -506,8 +506,8 @@ get_indel_digt_lhood(const starling_options& opt,
 ///
 void
 indel_digt_caller::
-starling_indel_call_pprob_digt(const starling_options& opt,
-                               const starling_deriv_options& dopt,
+starling_indel_call_pprob_digt(const starling_base_options& opt,
+                               const starling_base_deriv_options& dopt,
                                const starling_sample_options& sample_opt,
                                const double indel_error_prob,
                                const double ref_error_prob,

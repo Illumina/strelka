@@ -16,15 +16,14 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __STARLING_READ_ALIGN_SCORE_INDELS_HH
-#define __STARLING_READ_ALIGN_SCORE_INDELS_HH
+#pragma once
 
 
 #include "candidate_alignment.hh"
 
 #include "starling_common/indel_synchronizer.hh"
 #include "starling_common/starling_read_segment.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 #include <set>
 #include <vector>
@@ -40,8 +39,8 @@ typedef std::map<indel_key,bool> indel_status_map_t;
 // in indel_status_map to generate data needed in indel calling:
 //
 void
-score_indels(const starling_options& opt,
-             const starling_deriv_options& dopt,
+score_indels(const starling_base_options& opt,
+             const starling_base_deriv_options& dopt,
              const starling_sample_options& sample_opt,
              const read_segment& rseg,
              indel_synchronizer& isync,
@@ -51,4 +50,3 @@ score_indels(const starling_options& opt,
              double max_path_lnp,
              const candidate_alignment* max_cal_ptr);
 
-#endif

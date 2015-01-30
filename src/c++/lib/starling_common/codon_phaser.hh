@@ -22,8 +22,8 @@
 #pragma once
 
 #include "starling_common/gvcf_locus_info.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"
-#include "starling_common/starling_shared.hh"
 #include "starling_common/gvcf_locus_info.hh"
 
 #include <climits>
@@ -44,7 +44,7 @@
 struct Codon_phaser
 {
     Codon_phaser(
-        const starling_options& init_opt,
+        const starling_base_options& init_opt,
         starling_read_buffer& init_read_buffer,
         const unsigned init_max_read_len)
         : opt(init_opt),
@@ -95,7 +95,7 @@ private:
     }
 
     std::vector<site_info> _buffer;
-    const starling_options& opt;
+    const starling_base_options& opt;
     starling_read_buffer& read_buffer;  // pass along the relevant read-buffer
     int max_read_len;                   // the length of the input reads
 

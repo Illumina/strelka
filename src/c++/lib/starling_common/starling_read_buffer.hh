@@ -78,7 +78,7 @@ struct starling_read_buffer : private boost::noncopyable
     //
     std::pair<bool,align_id_t>
     add_read_alignment(
-        const starling_options& opt,
+        const starling_base_options& opt,
         const bam_record& br,
         const alignment& al,
         const MAPLEVEL::index_t maplev);

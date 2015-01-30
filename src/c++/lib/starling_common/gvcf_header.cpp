@@ -33,7 +33,7 @@
 static
 void
 add_gvcf_filters(
-    const starling_options& sopt,
+    const starling_base_options& sopt,
     const cdmap_t& chrom_depth,
     std::ostream& os,
     calibration_models& CM)
@@ -130,7 +130,7 @@ add_gvcf_filters(
 
 
 void
-finish_gvcf_header(const starling_options& opt,
+finish_gvcf_header(const starling_base_options& opt,
                    const gvcf_deriv_options& dopt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,
