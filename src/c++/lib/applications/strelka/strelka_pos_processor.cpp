@@ -19,7 +19,6 @@
 #include "position_somatic_snv.hh"
 #include "position_somatic_snv_strand_grid.hh"
 #include "position_somatic_snv_strand_grid_vcf.hh"
-#include "somatic_indel.hh"
 #include "somatic_indel_grid.hh"
 #include "strelka_pos_processor.hh"
 
