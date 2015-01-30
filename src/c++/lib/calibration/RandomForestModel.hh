@@ -45,7 +45,9 @@ private:
     template <typename L, typename R>
     struct TreeNode
     {
-        bool isInit = false;
+        TreeNode() : isInit(false) {}
+
+        bool isInit;
         L left;
         R right;
     };

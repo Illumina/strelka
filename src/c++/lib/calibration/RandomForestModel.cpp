@@ -36,6 +36,7 @@ enum index_t
     SIZE
 };
 
+static
 const char*
 get_label(const index_t i)
 {
