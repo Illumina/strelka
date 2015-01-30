@@ -30,9 +30,9 @@ struct starling_streams : public starling_streams_base
                      const sample_info& ssi);
 
     std::ostream*
-    gvcf_osptr(const unsigned sample_no) const
+    gvcf_osptr() const
     {
-        return _gvcf_osptr[sample_no];
+        return _gvcf_osptr;
     }
 
 private:
@@ -45,6 +45,6 @@ private:
         const bam_header_t* const header,
         std::unique_ptr<std::ostream>& os_ptr_auto);
 
-    std::ostream* _gvcf_osptr[MAX_SAMPLE];
-    std::unique_ptr<std::ostream> _gvcf_osptr_auto[MAX_SAMPLE];
+    std::ostream* _gvcf_osptr;
+    std::unique_ptr<std::ostream> _gvcf_osptr_auto;
 };

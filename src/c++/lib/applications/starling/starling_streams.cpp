@@ -62,11 +62,12 @@ starling_streams(
     const sample_info& ssi)
     : base_t(opt,pinfo,ssi)
 {
-    for (unsigned i(0); i<_n_samples; ++i) _gvcf_osptr[i] = nullptr;
+    assert(n_samples() == 1)
+    _gvcf_osptr = nullptr;
 
     if (opt.gvcf.is_gvcf_output())
     {
-        _gvcf_osptr[0] = initialize_gvcf_file(opt,pinfo,opt.gvcf.out_file,header,_gvcf_osptr_auto[0]);
+        _gvcf_osptr = initialize_gvcf_file(opt,pinfo,opt.gvcf.out_file,header,_gvcf_osptr_auto);
     }
 
     if (opt.is_realigned_read_file)

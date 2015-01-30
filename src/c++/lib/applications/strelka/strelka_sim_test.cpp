@@ -404,7 +404,7 @@ strelka_pile_test_run(strelka_options& opt)
     // recreate data caches:
     extra_position_data norm_epd;
     extra_position_data tumor_epd;
-    extra_position_data tier2_epd[MAX_SAMPLE];
+    extra_position_data tier2_epd[STRELKA_SAMPLE_TYPE::SIZE];
 
     static dependent_prob_cache dpcache;
 

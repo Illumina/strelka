@@ -1,17 +1,14 @@
-blt_common:
-shared snv-calling logic (from old 'blt' snp-caller)
+countFastaBases:
+common tool to several workflows
 
-blt_util:
-shared general utilities
-
-common:
-shared general utilites from isaac
-
-starling_common:
-shared small variant calling logic
+inovo:
+de-novo variant caller
 
 starling:
 germline caller
 
 strelka:
 somatic caller
+
+strelkaNoiseExtractor:
+strelka utiltity to develop 'panel of normal' noise profiles
