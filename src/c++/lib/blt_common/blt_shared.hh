@@ -72,8 +72,7 @@ struct blt_options
     bool
     is_bsnp_diploid() const
     {
-        return (is_bsnp_diploid_file ||
-                is_bsnp_diploid_allele_file);
+        return (is_bsnp_diploid_file);
     }
 
     bool
@@ -108,7 +107,6 @@ struct blt_options
     bool is_bsnp_monoploid = false;
     bool is_bsnp_nploid = false;
     bool is_bsnp_diploid_file = false;
-    bool is_bsnp_diploid_allele_file = false;
     bool is_bsnp_diploid_het_bias = false;
     bool is_adis_lrt = false;
     bool is_adis_table = false;
@@ -157,7 +155,6 @@ struct blt_options
 
     std::string counts_filename;
     std::string bsnp_diploid_filename;
-    std::string bsnp_diploid_allele_filename;
 
     bool is_clobber = true;
     bool is_report_range_ref = false;

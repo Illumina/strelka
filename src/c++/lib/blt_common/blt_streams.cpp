@@ -340,10 +340,4 @@ blt_streams(const blt_options& opt,
         setup_bsnp_file(opt,pinfo,cmdline,_bsnp_diploid_osptr,
                         opt.bsnp_diploid_filename,"bsnp-diploid",is_include_seq_name);
     }
-
-    if (opt.is_bsnp_diploid_allele_file)
-    {
-        setup_bsnp_file(opt,pinfo,cmdline,_bsnp_diploid_allele_osptr,
-                        opt.bsnp_diploid_allele_filename,"bsnp-diploid sites",is_include_seq_name);
-    }
 }

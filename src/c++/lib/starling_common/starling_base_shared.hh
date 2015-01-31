@@ -74,7 +74,7 @@ struct starling_base_options : public blt_options
     bool
     is_all_sites() const
     {
-        return (is_bsnp_diploid_allele_file || gvcf.is_gvcf_output());
+        return (gvcf.is_gvcf_output());
     }
 
     gvcf_options gvcf;

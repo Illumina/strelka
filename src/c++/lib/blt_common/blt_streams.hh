@@ -44,10 +44,6 @@ struct blt_streams
     {
         return _bsnp_diploid_osptr.get();
     }
-    std::ostream* bsnp_diploid_allele_osptr() const
-    {
-        return _bsnp_diploid_allele_osptr.get();
-    }
     std::ostream* nonref_test_osptr() const
     {
         return _nonref_test_osptr.get();
@@ -91,7 +87,6 @@ private:
     std::unique_ptr<std::ostream> _report_osptr;
     std::unique_ptr<std::ostream> _counts_osptr;
     std::unique_ptr<std::ostream> _bsnp_diploid_osptr;
-    std::unique_ptr<std::ostream> _bsnp_diploid_allele_osptr;
     std::unique_ptr<std::ostream> _nonref_test_osptr;
     std::unique_ptr<std::ostream> _nonref_sites_osptr;
 };

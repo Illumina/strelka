@@ -67,29 +67,6 @@ write_snp_prefix_info_file(const std::string& seq_name,
 
 
 
-static
-void
-write_bsnp_diploid_allele(const blt_options& opt,
-                          const blt_streams& streams,
-                          const std::string& seq_name,
-                          const pos_t output_pos,
-                          const char ref,
-                          const unsigned n_used_calls,
-                          const unsigned n_unused_calls,
-                          const snp_pos_info& good_pi,
-                          const diploid_genotype& dgt,
-                          const unsigned hpol = 0)
-{
-    std::ostream& os(*streams.bsnp_diploid_allele_osptr());
-
-    write_snp_prefix_info_file(seq_name,output_pos,ref,n_used_calls,n_unused_calls,os);
-    os << "\t";
-    write_diploid_genotype_allele(opt,good_pi,dgt,os,hpol);
-    os << "\n";
-}
-
-
-
 starling_pos_processor::
 starling_pos_processor(
     const starling_options& opt,
@@ -364,12 +341,6 @@ process_pos_snp_single_sample_impl(
         {
             _site_info.init(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore);
             _gvcfer->add_site(_site_info);
-        }
-
-
-        if (_opt.is_bsnp_diploid_allele_file)
-        {
-            write_bsnp_diploid_allele(_opt,_streams,_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
         }
     }
 
