@@ -69,8 +69,8 @@ write_snp_prefix_info_file(const std::string& seq_name,
 
 static
 void
-write_bsnp_diploid_allele(const blt_options& client_opt,
-                          const blt_streams& client_io,
+write_bsnp_diploid_allele(const blt_options& opt,
+                          const blt_streams& streams,
                           const std::string& seq_name,
                           const pos_t output_pos,
                           const char ref,
@@ -80,11 +80,11 @@ write_bsnp_diploid_allele(const blt_options& client_opt,
                           const diploid_genotype& dgt,
                           const unsigned hpol = 0)
 {
-    std::ostream& os(*client_io.bsnp_diploid_allele_osptr());
+    std::ostream& os(*streams.bsnp_diploid_allele_osptr());
 
     write_snp_prefix_info_file(seq_name,output_pos,ref,n_used_calls,n_unused_calls,os);
     os << "\t";
-    write_diploid_genotype_allele(client_opt,good_pi,dgt,os,hpol);
+    write_diploid_genotype_allele(opt,good_pi,dgt,os,hpol);
     os << "\n";
 }
 
@@ -95,8 +95,8 @@ starling_pos_processor(
     const starling_options& opt,
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const starling_streams_base& client_io)
-    : base_t(opt,dopt,ref,client_io,1),
+    const starling_streams_base& streams)
+    : base_t(opt,dopt,ref,streams,1),
       _opt(opt),
       _dopt(dopt)
 {
@@ -192,14 +192,14 @@ process_pos_snp_single_sample_impl(
 
     if (pi.calls.empty()) return;
 
-    adjust_joint_eprob(_client_opt,_dpcache,good_pi,sif.epd.dependent_eprob,_is_dependent_eprob);
+    adjust_joint_eprob(_opt,_dpcache,good_pi,sif.epd.dependent_eprob,_is_dependent_eprob);
 
     const extended_pos_info good_epi(good_pi,sif.epd.dependent_eprob);
 
     // get fraction of filtered bases:
 #if 0
     const double filter_fraction(static_cast<double>(n_unused_calls)/static_cast<double>(n_calls));
-    const bool is_overfilter(filter_fraction > _client_opt.max_basecall_filter_fraction);
+    const bool is_overfilter(filter_fraction > _opt.max_basecall_filter_fraction);
 #endif
 
     // delay writing any snpcalls so that anomaly tests can (optionally) be applied as filters:
@@ -213,23 +213,23 @@ process_pos_snp_single_sample_impl(
     // check whether we're in a haploid region:
     _site_info.dgt.ploidy=(get_ploidy(pos));
 
-    if (_client_opt.is_counts)
+    if (_opt.is_counts)
     {
-        report_counts(good_pi,_site_info.n_unused_calls,output_pos,*_client_io.counts_osptr());
+        report_counts(good_pi,_site_info.n_unused_calls,output_pos,*_streams.counts_osptr());
     }
 
-    if (_client_opt.is_nonref_test() || _client_opt.is_nonref_sites())
+    if (_opt.is_nonref_test() || _opt.is_nonref_sites())
     {
         position_nonref_2allele_test(good_pi,
-                                     _client_opt,
-                                     _client_opt.is_nonref_sites(),
+                                     _opt,
+                                     _opt.is_nonref_sites(),
                                      nrc);
 #if 0
         static const bool is_mle_freq(false);
 
         position_nonref_test(good_pi,
-                             _client_opt.nonref_variant_rate,
-                             _client_opt.min_nonref_freq,
+                             _opt.nonref_variant_rate,
+                             _opt.min_nonref_freq,
                              is_mle_freq,
                              nrc);
 #endif
@@ -237,25 +237,25 @@ process_pos_snp_single_sample_impl(
     }
 
 #if 0
-    if (_client_opt.is_lsnp)
+    if (_opt.is_lsnp)
     {
-        position_snp_call_lrt(_client_opt.lsnp_alpha,good_pi,lsc);
+        position_snp_call_lrt(_opt.lsnp_alpha,good_pi,lsc);
     }
 #endif
-    if (_client_opt.is_bsnp_diploid())
+    if (_opt.is_bsnp_diploid())
     {
-        _client_dopt.pdcaller().position_snp_call_pprob_digt(
-            _client_opt,good_epi,_site_info.dgt,_client_opt.is_all_sites());
+        _dopt.pdcaller().position_snp_call_pprob_digt(
+            _opt,good_epi,_site_info.dgt,_opt.is_all_sites());
     }
 #if 0
-    if (_client_opt.is_bsnp_monoploid)
+    if (_opt.is_bsnp_monoploid)
     {
-        position_snp_call_pprob_monogt(_client_opt.bsnp_monoploid_theta,good_pi,mgt);
+        position_snp_call_pprob_monogt(_opt.bsnp_monoploid_theta,good_pi,mgt);
     }
-    if (_client_opt.is_bsnp_nploid)
+    if (_opt.is_bsnp_nploid)
     {
         ngt_ptr.reset(new nploid_genotype(*_ninfo));
-        position_snp_call_pprob_nploid(_client_opt.bsnp_nploid_snp_prob,good_pi,*_ninfo,*ngt_ptr);
+        position_snp_call_pprob_nploid(_opt.bsnp_nploid_snp_prob,good_pi,*_ninfo,*ngt_ptr);
     }
 #endif
 
@@ -268,36 +268,36 @@ process_pos_snp_single_sample_impl(
     bool is_pos_adis(false);
     bool is_pos_acov(false);
 
-    if ((_client_opt.is_adis_table || _client_opt.is_adis_lrt) && is_snp)
+    if ((_opt.is_adis_table || _opt.is_adis_lrt) && is_snp)
     {
-        if (_client_opt.is_adis_table)
+        if (_opt.is_adis_table)
         {
-            is_pos_adis = (is_pos_adis || position_strand_distro_anomaly(_client_opt.adis_table_alpha,good_pi,_ws));
+            is_pos_adis = (is_pos_adis || position_strand_distro_anomaly(_opt.adis_table_alpha,good_pi,_ws));
         }
-        if (_client_opt.is_adis_lrt)
+        if (_opt.is_adis_lrt)
         {
-            is_pos_adis = (is_pos_adis || position_strand_distro_anomaly_lrt(_client_opt.adis_lrt_alpha,good_pi));
+            is_pos_adis = (is_pos_adis || position_strand_distro_anomaly_lrt(_opt.adis_lrt_alpha,good_pi));
         }
     }
-    if (_client_opt.is_acov)
+    if (_opt.is_acov)
     {
-        is_pos_acov = position_strand_coverage_anomaly(_client_opt.acov_alpha,pi);
+        is_pos_acov = position_strand_coverage_anomaly(_opt.acov_alpha,pi);
     }
 #endif
 
     //const bool is_anomaly(is_pos_adis || is_pos_acov);
-    //const bool is_filter_snp(is_overfilter || (_client_opt.is_filter_anom_calls && is_anomaly));
+    //const bool is_filter_snp(is_overfilter || (_opt.is_filter_anom_calls && is_anomaly));
 
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
     if (is_snp)
     {
-        if (_client_opt.is_compute_hapscore)
+        if (_opt.is_compute_hapscore)
         {
             _site_info.hapscore=get_hapscore(pi.hap_set);
         }
 
         // do calculate VQSR metrics
-        if (_client_opt.is_compute_germline_VQSRmetrics())
+        if (_opt.is_compute_germline_VQSRmetrics())
         {
             _site_info.MQ               = pi.get_rms_mq();
             _site_info.ReadPosRankSum   = pi.get_read_pos_ranksum();
@@ -311,7 +311,7 @@ process_pos_snp_single_sample_impl(
         _site_info.hpol=get_snp_hpol_size(pos,_ref);
     }
 
-    if (_client_opt.is_all_sites())
+    if (_opt.is_all_sites())
     {
 #if 0
         const diploid_genotype* dgt_ptr(&_site_info.dgt);
@@ -322,25 +322,25 @@ process_pos_snp_single_sample_impl(
 #endif
 
         //Add site to gvcf
-        if (_client_opt.gvcf.is_gvcf_output())
+        if (_opt.gvcf.is_gvcf_output())
         {
-            _site_info.init(pos,pi.get_ref_base(),good_pi,_client_opt.used_allele_count_min_qscore);
+            _site_info.init(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore);
             _gvcfer->add_site(_site_info);
         }
 
 
-        if (_client_opt.is_bsnp_diploid_allele_file)
+        if (_opt.is_bsnp_diploid_allele_file)
         {
-            write_bsnp_diploid_allele(_client_opt,_client_io,_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
+            write_bsnp_diploid_allele(_opt,_streams,_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,good_pi,_site_info.dgt,_site_info.hpol);
         }
     }
 
-    if (_client_opt.is_nonref_sites())
+    if (_opt.is_nonref_sites())
     {
-        std::ostream& bos(*_client_io.nonref_sites_osptr());
+        std::ostream& bos(*_streams.nonref_sites_osptr());
         write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
         bos << "\t";
-        write_nonref_2allele_test(_client_opt,good_pi,nrc,bos);
+        write_nonref_2allele_test(_opt,good_pi,nrc,bos);
         bos << "\n";
     }
 
@@ -354,12 +354,12 @@ process_pos_snp_single_sample_impl(
     {
         if (nrc.is_snp)
         {
-            std::ostream& bos(*_client_io.nonref_test_osptr());
+            std::ostream& bos(*_streams.nonref_test_osptr());
             write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
             bos << "\t";
-            write_nonref_2allele_test(_client_opt,good_pi,nrc,bos);
+            write_nonref_2allele_test(_opt,good_pi,nrc,bos);
 #if 0
-            write_nonref_test(_client_opt,good_pi,nrc,bos);
+            write_nonref_test(_opt,good_pi,nrc,bos);
 #endif
             bos << "\n";
         }
@@ -372,12 +372,12 @@ process_pos_snp_single_sample_impl(
 #endif
         if (_site_info.dgt.is_snp)
         {
-            if (_client_opt.is_bsnp_diploid_file)
+            if (_opt.is_bsnp_diploid_file)
             {
-                std::ostream& bos(*_client_io.bsnp_diploid_osptr());
+                std::ostream& bos(*_streams.bsnp_diploid_osptr());
                 write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
                 bos << "\t";
-                write_diploid_genotype_snp(_client_opt,good_pi,_site_info.dgt,bos,_site_info.hpol);
+                write_diploid_genotype_snp(_opt,good_pi,_site_info.dgt,bos,_site_info.hpol);
                 bos << "\n";
             }
 
@@ -403,7 +403,7 @@ process_pos_snp_single_sample_impl(
     }
 
 #if 0
-    if (is_anomaly && (! _client_opt.is_filter_anom_calls))
+    if (is_anomaly && (! _opt.is_filter_anom_calls))
     {
         if (is_pos_adis) report_os << "ANOM_DIS pos: " << output_pos << "\n";
         if (is_pos_acov) report_os << "ANOM_COV pos: " << output_pos << "\n";
@@ -412,7 +412,7 @@ process_pos_snp_single_sample_impl(
     }
 #endif
 
-    if (_client_opt.is_print_all_site_evidence || (_client_opt.is_print_evidence && is_reported_event))
+    if (_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event))
     {
         report_os << "EVIDENCE pos: " << output_pos << "\n"
                   << "is_snp: " << is_snp << "\n"
@@ -465,7 +465,7 @@ process_pos_indel_single_sample(
         //
         // punt conflict resolution for now....
 
-        if (_client_opt.is_bindel_diploid())
+        if (_opt.is_bindel_diploid())
         {
             // indel_report_info needs to be run first now so that
             // local small repeat info is available to the indel
@@ -477,7 +477,7 @@ process_pos_indel_single_sample(
 
             double indel_error_prob(0);
             double ref_error_prob(0);
-            get_indel_error_prob(_client_opt,iri,indel_error_prob,ref_error_prob);
+            get_indel_error_prob(_opt,iri,indel_error_prob,ref_error_prob);
 
             static const bool is_tier2_pass(false);
             static const bool is_use_alt_indel(true);
@@ -504,8 +504,8 @@ process_pos_indel_single_sample(
                 }
             }
 
-            _client_dopt.incaller().starling_indel_call_pprob_digt(
-                _client_opt,_client_dopt,
+            _dopt.incaller().starling_indel_call_pprob_digt(
+                _opt,_dopt,
                 sif.sample_opt,
                 indel_error_prob,ref_error_prob,
                 ik,id,is_use_alt_indel,dindel);
@@ -518,18 +518,18 @@ process_pos_indel_single_sample(
                 // sample-specific info: (division doesn't really matter
                 // in single-sample case)
                 starling_indel_sample_report_info isri;
-                get_starling_indel_sample_report_info(_client_dopt,ik,id,sif.bc_buff,
+                get_starling_indel_sample_report_info(_dopt,ik,id,sif.bc_buff,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
-                if (_client_opt.gvcf.is_gvcf_output())
+                if (_opt.gvcf.is_gvcf_output())
                 {
                     _gvcfer->add_indel(pos,ik,dindel,iri,isri);
                 }
 
-                if (_client_opt.is_bindel_diploid_file)
+                if (_opt.is_bindel_diploid_file)
                 {
 
-                    std::ostream& bos(*_client_io.bindel_diploid_osptr(sample_no));
+                    std::ostream& bos(*_streams.bindel_diploid_osptr(sample_no));
                     bos << _chrom_name << "\t" << output_pos << "\t";
                     write_starling_diploid_indel_file(dindel,iri,isri,bos);
                     bos << "\n";
@@ -550,7 +550,7 @@ process_pos_indel_single_sample(
                 {
                     const align_id_t read_id(val.first);
                     const read_path_scores& lnp(val.second);
-                    const read_path_scores pprob(indel_lnp_to_pprob(_client_dopt,lnp,is_tier2_pass,is_use_alt_indel));
+                    const read_path_scores pprob(indel_lnp_to_pprob(_dopt,lnp,is_tier2_pass,is_use_alt_indel));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 
                     report_os << "read key: ";
@@ -582,7 +582,7 @@ write_counts(const pos_range& output_report_range) const
     report_stream_stat(sif.ss,"ALLSITES_COVERAGE",output_report_range,report_os);
     report_stream_stat(sif.used_ss,"ALLSITES_COVERAGE_USED",output_report_range,report_os);
 
-    if (_client_opt.is_ref_set())
+    if (_opt.is_ref_set())
     {
         report_stream_stat(sif.ssn,"NO_REF_N_COVERAGE",output_report_range,report_os);
         report_stream_stat(sif.used_ssn,"NO_REF_N_COVERAGE_USED",output_report_range,report_os);

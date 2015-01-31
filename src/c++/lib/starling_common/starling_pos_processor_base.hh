@@ -107,11 +107,12 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 {
     typedef pos_processor_base base_t;
 
-    starling_pos_processor_base(const starling_base_options& client_opt,
-                                const starling_base_deriv_options& client_dopt,
-                                const reference_contig_segment& ref,
-                                const starling_streams_base& client_io,
-                                const unsigned n_samples);
+    starling_pos_processor_base(
+        const starling_base_options& opt,
+        const starling_base_deriv_options& dopt,
+        const reference_contig_segment& ref,
+        const starling_streams_base& streams,
+        const unsigned n_samples);
 
     virtual
     ~starling_pos_processor_base();
@@ -195,14 +196,14 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     bool
     is_range_outside_report_zone(const pos_range& pr) const
     {
-        return (! _client_dopt.report_range_limit.is_range_intersect(pr));
+        return (! _dopt.report_range_limit.is_range_intersect(pr));
     }
 
 protected:
     std::ostream*
     get_report_osptr() const
     {
-        return _client_io.report_osptr();
+        return _streams.report_osptr();
     }
 
     struct pos_win_avgs
@@ -405,7 +406,7 @@ private:
     bool
     is_pos_reportable(const pos_t pos)
     {
-        return _client_dopt.report_range_limit.is_pos_intersect(pos);
+        return _dopt.report_range_limit.is_pos_intersect(pos);
     }
 
     void
@@ -582,10 +583,10 @@ protected:
     //////////////////////////////////
     // data:
     //
-    const starling_base_options& _client_opt;
-    const starling_base_deriv_options& _client_dopt;
+    const starling_base_options& _opt;
+    const starling_base_deriv_options& _dopt;
     const reference_contig_segment& _ref;
-    const starling_streams_base& _client_io;
+    const starling_streams_base& _streams;
 
     // read-length data structure used to compute mismatch density filter:
     read_mismatch_info _rmi;

@@ -44,7 +44,7 @@ struct strelka_pos_processor : public starling_pos_processor_base
         const strelka_options& opt,
         const strelka_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const strelka_streams& client_io);
+        const strelka_streams& streams);
 
 
     void
@@ -89,7 +89,7 @@ private:
     // have to down-cast:
     const strelka_options& _opt;
     const strelka_deriv_options& _dopt;
-    const strelka_streams& _client_io;
+    const strelka_streams& _streams;
 
     extra_position_data _tier2_epd[MAX_SAMPLE];
 

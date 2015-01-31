@@ -31,7 +31,7 @@ struct snoise_pos_processor : public starling_pos_processor_base
         const starling_base_options& opt,
         const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const snoise_streams& client_io);
+        const snoise_streams& streams);
 
 private:
     void
@@ -46,5 +46,5 @@ private:
     void
     write_counts(const pos_range& output_report_range) const;
 
-    const snoise_streams& _client_io;
+    const snoise_streams& _streams;
 };

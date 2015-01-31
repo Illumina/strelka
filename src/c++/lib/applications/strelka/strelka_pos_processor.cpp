@@ -36,13 +36,13 @@ strelka_pos_processor(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const strelka_streams& client_io)
-    : base_t(opt,dopt,ref,client_io,STRELKA_SAMPLE_TYPE::SIZE)
+    const strelka_streams& streams)
+    : base_t(opt,dopt,ref,streams,STRELKA_SAMPLE_TYPE::SIZE)
     , _opt(opt)
     , _dopt(dopt)
-    , _client_io(client_io)
-    , _callProcessor(client_io.somatic_callable_osptr())
-    , _indelWriter(opt, dopt, client_io.somatic_indel_osptr())
+    , _streams(streams)
+    , _callProcessor(streams.somatic_callable_osptr())
+    , _indelWriter(opt, dopt, streams.somatic_indel_osptr())
     , _indelRegionIndexNormal(0)
     , _indelRegionIndexTumor(0)
 {
@@ -216,11 +216,7 @@ process_pos_snp_somatic(const pos_t pos)
                 sgtg.sn = *snp;
             }
         }
-#ifdef SOMATIC_STDOUT
-        std::ostream& bos = std::cout;
-#else
-        std::ostream& bos(*_client_io.somatic_snv_osptr());
-#endif
+        std::ostream& bos(*_streams.somatic_snv_osptr());
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG

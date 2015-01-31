@@ -24,9 +24,9 @@ snoise_pos_processor(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const snoise_streams& client_io)
-    : base_t(opt,dopt,ref,client_io,1),
-      _client_io(client_io)
+    const snoise_streams& streams)
+    : base_t(opt,dopt,ref,streams,1),
+      _streams(streams)
 {
     // setup indel syncronizers:
     {
@@ -77,7 +77,7 @@ write_counts(
     report_stream_stat(sif.ss,"ALLSITES_COVERAGE",output_report_range,report_os);
     report_stream_stat(sif.used_ss,"ALLSITES_COVERAGE_USED",output_report_range,report_os);
 
-    if (_client_opt.is_ref_set())
+    if (_opt.is_ref_set())
     {
         report_stream_stat(sif.ssn,"NO_REF_N_COVERAGE",output_report_range,report_os);
         report_stream_stat(sif.used_ssn,"NO_REF_N_COVERAGE_USED",output_report_range,report_os);
@@ -147,7 +147,7 @@ process_pos_snp_snoise(
     if (alt_ratio > max_alt_ratio) return;
 
     {
-        std::ostream& os(*_client_io.snoise_osptr());
+        std::ostream& os(*_streams.snoise_osptr());
 
         // CHROM POS ID:
         os << _chrom_name << '\t'
