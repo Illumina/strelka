@@ -28,6 +28,9 @@ struct starling_options : public starling_base_options
 
     starling_options() {}
 
+    bool
+    is_bsnp_diploid() const override { return true; }
+
     //gvcf_options gvcf;
 };
 

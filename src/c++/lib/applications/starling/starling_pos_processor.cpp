@@ -381,15 +381,6 @@ process_pos_snp_single_sample_impl(
 #endif
         if (_site_info.dgt.is_snp)
         {
-            if (_opt.is_bsnp_diploid_file)
-            {
-                std::ostream& bos(*_streams.bsnp_diploid_osptr());
-                write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
-                bos << "\t";
-                write_diploid_genotype_snp(_opt,good_pi,_site_info.dgt,bos,_site_info.hpol);
-                bos << "\n";
-            }
-
             // this needs to be updated no matter where the snp-call is written to:
             if (_is_variant_windows) _variant_print_pos.insert(pos);
         }

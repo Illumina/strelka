@@ -69,11 +69,9 @@ struct blt_options
         return (is_report_germline_VQSRmetrics || (! calibration_model.empty()));
     }
 
+    virtual
     bool
-    is_bsnp_diploid() const
-    {
-        return (is_bsnp_diploid_file);
-    }
+    is_bsnp_diploid() const { return false; }
 
     bool
     is_tier2() const
@@ -106,7 +104,6 @@ struct blt_options
     bool is_lsnp = false;
     bool is_bsnp_monoploid = false;
     bool is_bsnp_nploid = false;
-    bool is_bsnp_diploid_file = false;
     bool is_bsnp_diploid_het_bias = false;
     bool is_adis_lrt = false;
     bool is_adis_table = false;
@@ -154,7 +151,6 @@ struct blt_options
     bool is_include_anomalous = false;
 
     std::string counts_filename;
-    std::string bsnp_diploid_filename;
 
     bool is_clobber = true;
     bool is_report_range_ref = false;

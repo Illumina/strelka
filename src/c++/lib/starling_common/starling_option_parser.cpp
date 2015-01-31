@@ -260,12 +260,6 @@ write_starling_legacy_options(std::ostream& os)
        " -bsnp-monoploid x  - Use Bayesian monoploid genotype snp caller with theta=x\n"
        " -bsnp-nploid n x   - Use Bayesian nploid genotype snp caller with ploidy=n and prior(snp)=x\n"
        " -lsnp-alpha x      - Use likelihood ratio test snp caller with alpha=x\n"
-#endif
-       " -bsnp-diploid-file file\n"
-       "                    - Run bayesian diploid genotype model, write results to 'file'\n"
-       " -bsnp-diploid-allele-file file\n"
-       "                    - Write the most probable genotype at every position to file\n"
-#if 0
        " -anom-distro-table-alpha x\n"
        "                    - Test whether strands were sampled from different distributions at snp\n"
        "                      call sites. The test has a false positive rate of x over all snp calls.\n"

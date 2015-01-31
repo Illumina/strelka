@@ -28,7 +28,7 @@
 
 struct blt_streams
 {
-    blt_streams(const blt_options& client_opt,
+    blt_streams(const blt_options& opt,
                 const prog_info& pinfo,
                 const bool is_include_seq_name=false);
 
@@ -39,10 +39,6 @@ struct blt_streams
     std::ostream* counts_osptr() const
     {
         return _counts_osptr.get();
-    }
-    std::ostream* bsnp_diploid_osptr() const
-    {
-        return _bsnp_diploid_osptr.get();
     }
     std::ostream* nonref_test_osptr() const
     {
@@ -86,7 +82,6 @@ protected:
 private:
     std::unique_ptr<std::ostream> _report_osptr;
     std::unique_ptr<std::ostream> _counts_osptr;
-    std::unique_ptr<std::ostream> _bsnp_diploid_osptr;
     std::unique_ptr<std::ostream> _nonref_test_osptr;
     std::unique_ptr<std::ostream> _nonref_sites_osptr;
 };

@@ -76,10 +76,6 @@ legacy_starling_arg_parse(arg_data& ad,
         {
             set_xrange_arg(i,ad,opt.is_lsnp,opt.lsnp_alpha);
         }
-        else if (ad.argstr[i]=="-bsnp-diploid-file")
-        {
-            set_filename_arg(i,ad,opt.is_bsnp_diploid_file,opt.bsnp_diploid_filename);
-        }
         else if (ad.argstr[i]=="-bsnp-monoploid")
         {
             set_xrange_arg(i,ad,opt.is_bsnp_monoploid,opt.bsnp_monoploid_theta);

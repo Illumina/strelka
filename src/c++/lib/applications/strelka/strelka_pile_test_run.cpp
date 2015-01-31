@@ -43,7 +43,6 @@ strelka_pile_caller(strelka_options& opt,
     , _os(os)
 {
     // set default parameters:
-    opt.is_bsnp_diploid_file = true;
     opt.bsnp_diploid_theta = 0.001;
     opt.somatic_snv_rate       = 0.000001;
     opt.shared_site_error_rate = 0.0000005;

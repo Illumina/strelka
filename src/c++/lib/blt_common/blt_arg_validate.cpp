@@ -54,7 +54,6 @@ void
 validate_blt_opt(const prog_info& pinfo,
                  const blt_options& opt)
 {
-
     if (opt.is_min_win_qscore && opt.min_win_qscore_flank_size > MAX_FLANK_SIZE)
     {
         std::ostringstream oss;
