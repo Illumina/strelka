@@ -77,14 +77,6 @@ struct strelka_options : public starling_base_options
         return (! somatic_callable_filename.empty());
     }
 
-    // report whether any type of indel-caller is running (including
-    // checks from child class options):
-    bool
-    is_call_indels() const override
-    {
-        return (is_somatic_indel() || base_t::is_call_indels());
-    }
-
     std::string tumor_bam_filename;
 
     std::string tumor_realigned_read_filename;

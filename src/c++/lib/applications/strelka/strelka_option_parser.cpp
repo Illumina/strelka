@@ -170,14 +170,6 @@ finalize_strelka_options(const prog_info& pinfo,
         pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned tumor sample reads");
     }
 
-    if (vm.count("skip-realignment"))
-    {
-        if (opt.is_call_indels())
-        {
-            pinfo.usage("Cannot disable realignment when indel-calling is selected.");
-        }
-    }
-
     check_option_arg_range(pinfo,opt.somatic_snv_rate,"somatic-snv-rate",0.,1.);
     check_option_arg_range(pinfo,opt.shared_site_error_rate,"shared-site-error-rate",0.,1.);
     check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"shared-site-strand-strand-bias-fraction",0.,1.);

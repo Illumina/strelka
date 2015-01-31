@@ -152,8 +152,7 @@ get_starling_shared_option_parser(starling_base_options& opt)
     realign_opt.add_options()
     ("max-indel-toggle-depth", po::value(&opt.max_read_indel_toggle)->default_value(opt.max_read_indel_toggle),
      "Controls the realignment stringency. Lowering this value will increase the realignment speed at the expense of indel-call quality")
-    ("skip-realignment", po::value(&opt.is_skip_realignment)->zero_tokens(),
-     "Turns off read realignment. Only accepted when there are no indel calling options turned on");
+     ;
 
     po::options_description indel_opt("indel-options");
     indel_opt.add_options()
@@ -420,13 +419,6 @@ finalize_legacy_starling_options(const prog_info& pinfo,
         }
     }
 
-// not longer supporting is_simple_indel_error option
-//    if (! opt.is_call_indels()) {
-//        if (opt.is_simple_indel_error) {
-//            pinfo.usage("--indel-error-rate has no effect when not calling indels");
-//        }
-//    }
-
     if (opt.is_write_candidate_indels_only &&
         opt.candidate_indel_filename.empty())
     {
@@ -461,14 +453,6 @@ finalize_starling_options(const prog_info& pinfo,
     if (vm.count("max-input-depth"))
     {
         opt.is_max_input_depth=true;
-    }
-
-    if (opt.is_skip_realignment)
-    {
-        if (opt.is_call_indels())
-        {
-            pinfo.usage("Cannot disable realignment when indel-calling is selected.");
-        }
     }
 
     // gvcf option handlers:

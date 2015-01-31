@@ -57,15 +57,6 @@ struct starling_base_options : public blt_options
 
     starling_base_options() {}
 
-    // report whether any type of indel-caller is running (including
-    // checks from child class options):
-    virtual
-    bool
-    is_call_indels() const
-    {
-        return is_bindel_diploid();
-    }
-
     // is diploid indel model being used?
     bool
     is_bindel_diploid() const
@@ -211,9 +202,6 @@ struct starling_base_options : public blt_options
     // calling. This option is for single sample calling only.
     //
     bool is_noise_indel_filter = false;
-
-    // only allowed when no indel output is selected
-    bool is_skip_realignment = false;
 
     // vcfs can be input to specify candidate indels:
     std::vector<std::string> input_candidate_indel_vcf;

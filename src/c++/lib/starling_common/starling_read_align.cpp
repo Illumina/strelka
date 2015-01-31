@@ -1364,11 +1364,6 @@ score_candidate_alignments_and_indels(
     // by the indel calling model.
     //
 
-    // First determine if we even need to continue
-    //
-
-    if (! opt.is_call_indels()) return;
-
     // if calling indels, we only need reads with tier1 and tier2
     // mappings. if tier2 mappings aren't being used, they won't be in
     // the data, so there's no reason to check for usage here:

@@ -909,10 +909,7 @@ process_pos(const int stage_no,
             if (! _opt.is_write_candidate_indels_only)
             {
                 //        clean_pos(pos);
-                if (! _opt.is_skip_realignment)
-                {
-                    align_pos(pos);
-                }
+                align_pos(pos);
                 pileup_pos_reads(pos);
                 // if(_opt.is_realigned_read_file) {
                 //     rebuffer_pos_reads(pos);
