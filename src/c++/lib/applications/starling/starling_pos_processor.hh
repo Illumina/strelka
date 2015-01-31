@@ -53,5 +53,13 @@ private:
         const unsigned sample_no);
 
     void
+    process_pos_indel_single_sample(
+        const pos_t pos,
+        const unsigned sample_no);
+
+    void
     write_counts(const pos_range& output_report_range) const override;
+
+    const starling_options& _opt;
+    const starling_deriv_options& _dopt;
 };

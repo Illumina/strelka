@@ -205,11 +205,6 @@ protected:
         return _client_io.report_osptr();
     }
 
-    void
-    process_pos_indel_single_sample(const pos_t pos,
-                                    const unsigned sample_no);
-
-
     struct pos_win_avgs
     {
         pos_win_avgs()
