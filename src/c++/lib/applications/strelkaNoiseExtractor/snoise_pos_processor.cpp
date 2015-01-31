@@ -92,26 +92,11 @@ process_pos_snp_snoise(
     const pos_t pos)
 {
     const unsigned sample_no(0);
-    sample_info& sif(sample(sample_no));
+    const sample_info& sif(sample(sample_no));
 
     const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
-    const unsigned n_calls(pi.calls.size());
-
+    const snp_pos_info& good_pi(sif.epd.good_pi);
     const pos_t output_pos(pos+1);
-
-    // for all but coverage-tests, we use a high-quality subset of the basecalls:
-    //
-    snp_pos_info& good_pi(sif.epd.good_pi);
-    good_pi.clear();
-    good_pi.set_ref_base(pi.get_ref_base());
-    for (const auto& bc : pi.calls )
-    {
-        if (bc.is_call_filter) continue;
-        good_pi.calls.push_back(bc);
-    }
-
-    _site_info.n_used_calls=(good_pi.calls.size());
-    _site_info.n_unused_calls=(n_calls-_site_info.n_used_calls);
 
 
     // note multi-sample status -- can still be called only for one sample

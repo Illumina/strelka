@@ -1822,27 +1822,23 @@ process_pos_snp_single_sample(const pos_t pos,
 
 void
 starling_pos_processor_base::
-process_pos_snp_single_sample_impl(
+process_pos_variants(const pos_t pos)
+{
+    for (unsigned sampleId(0);sampleId<_n_samples;++sampleId)
+    {
+        process_pos_site_stats(pos,sampleId);
+    }
+    process_pos_variants_impl(pos);
+}
+
+
+
+void
+starling_pos_processor_base::
+process_pos_site_stats(
     const pos_t pos,
     const unsigned sample_no)
 {
-    // TODO:
-    //
-    // note this might not matter wrt larger changes taking place, but here goes:
-    //
-    // change filters to support vcf concept of 1..N filters which are added to the genotype information
-    //
-    // generalize site tests with an object
-    //
-    // genotype_test {
-    //    ctor(); // setup any cached values
-    //
-    //    test(site_info);
-    //
-    //    write()?? (do we need to even bother with this?)
-    // }
-    //
-
     sample_info& sif(sample(sample_no));
 
     const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
@@ -1850,8 +1846,6 @@ process_pos_snp_single_sample_impl(
     const unsigned n_calls(pi.calls.size());
     const unsigned n_spandel(pi.n_spandel);
     const unsigned n_submapped(pi.n_submapped);
-
-    const pos_t output_pos(pos+1);
 
     // for all but coverage-tests, we use a high-quality subset of the basecalls:
     //
@@ -1879,6 +1873,38 @@ process_pos_snp_single_sample_impl(
     {
         sif.wav.insert_null(pos);
     }
+}
+
+
+
+void
+starling_pos_processor_base::
+process_pos_snp_single_sample_impl(
+    const pos_t pos,
+    const unsigned sample_no)
+{
+    // TODO:
+    //
+    // note this might not matter wrt larger changes taking place, but here goes:
+    //
+    // change filters to support vcf concept of 1..N filters which are added to the genotype information
+    //
+    // generalize site tests with an object
+    //
+    // genotype_test {
+    //    ctor(); // setup any cached values
+    //
+    //    test(site_info);
+    //
+    //    write()?? (do we need to even bother with this?)
+    // }
+    //
+
+    sample_info& sif(sample(sample_no));
+
+    const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
+    const snp_pos_info& good_pi(sif.epd.good_pi);
+    const pos_t output_pos(pos+1);
 
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:

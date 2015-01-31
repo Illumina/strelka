@@ -35,7 +35,7 @@ struct starling_pos_processor : public starling_pos_processor_base
 
 private:
     void
-    process_pos_variants(const pos_t pos) override
+    process_pos_variants_impl(const pos_t pos) override
     {
         process_pos_indel_single_sample(pos,0);
         process_pos_snp_single_sample(pos,0);

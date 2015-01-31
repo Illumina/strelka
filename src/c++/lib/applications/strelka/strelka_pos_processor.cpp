@@ -256,14 +256,8 @@ process_pos_snp_somatic(const pos_t pos)
 
 void
 strelka_pos_processor::
-process_pos_variants(const pos_t pos)
+process_pos_variants_impl(const pos_t pos)
 {
-    //process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
-    //process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
-
-    //process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
-    //process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
-
     try
     {
         process_pos_snp_somatic(pos);

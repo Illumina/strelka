@@ -508,13 +508,22 @@ private:
     process_pos_snp_single_sample_impl(const pos_t pos,
                                        const unsigned sample_no);
 
+    /// maintain stats for depth, etc...
+    void
+    process_pos_site_stats(
+        const pos_t pos,
+        const unsigned sample_no);
+
     const diploid_genotype&
     get_empty_dgt(const char ref) const;
+
+    void
+    process_pos_variants(const pos_t pos);
 
     //////
     virtual
     void
-    process_pos_variants(const pos_t pos) = 0;
+    process_pos_variants_impl(const pos_t pos) = 0;
 
 protected:
     virtual

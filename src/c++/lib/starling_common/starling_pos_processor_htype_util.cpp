@@ -675,7 +675,7 @@ process_htype_pos(const pos_t begin_pos)
         write_reads(pos);
         if (is_pos_reportable(pos))
         {
-            process_pos_variants(pos);
+            process_pos_variants_impl(pos);
         }
     }
 }

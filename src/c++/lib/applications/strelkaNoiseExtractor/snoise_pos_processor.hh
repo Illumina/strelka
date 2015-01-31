@@ -35,7 +35,7 @@ struct snoise_pos_processor : public starling_pos_processor_base
 
 private:
     void
-    process_pos_variants(const pos_t pos) override
+    process_pos_variants_impl(const pos_t pos) override
     {
         process_pos_snp_snoise(pos);
     }
