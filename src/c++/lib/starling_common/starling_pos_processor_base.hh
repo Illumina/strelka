@@ -205,11 +205,6 @@ protected:
         return _client_io.report_osptr();
     }
 
-
-    void
-    process_pos_snp_single_sample(const pos_t pos,
-                                  const unsigned sample_no);
-
     void
     process_pos_indel_single_sample(const pos_t pos,
                                     const unsigned sample_no);
@@ -502,10 +497,6 @@ private:
 
     void
     write_candidate_indels_pos(const pos_t pos);
-
-    void
-    process_pos_snp_single_sample_impl(const pos_t pos,
-                                       const unsigned sample_no);
 
     /// maintain stats for depth, etc...
     void

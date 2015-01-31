@@ -43,5 +43,15 @@ private:
     }
 
     void
+    process_pos_snp_single_sample(
+        const pos_t pos,
+        const unsigned sample_no);
+
+    void
+    process_pos_snp_single_sample_impl(
+        const pos_t pos,
+        const unsigned sample_no);
+
+    void
     write_counts(const pos_range& output_report_range) const override;
 };
