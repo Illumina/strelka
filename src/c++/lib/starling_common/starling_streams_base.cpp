@@ -28,32 +28,6 @@
 
 std::ostream*
 starling_streams_base::
-initialize_bindel_file(const starling_base_options& opt,
-                       const prog_info& pinfo,
-                       const std::string& filename,
-                       const char* label)
-{
-    const char* const cmdline(opt.cmdline.c_str());
-
-    std::ofstream* fosptr(new std::ofstream);
-    std::ofstream& fos(*fosptr);
-    open_ofstream(pinfo,filename,"bindel-diploid",opt.is_clobber,fos);
-
-    fos << "# ** " << pinfo.name();
-    if (label) fos << " " << label;
-    fos << " bindel-diploid file **\n";
-    write_file_audit(opt,pinfo,cmdline,fos);
-    fos << "#$ INDEL_THETA " << opt.bindel_diploid_theta << "\n";
-    fos << "#\n";
-    fos << "#$ COLUMNS seq_name pos type ref_upstream ref/indel ref_downstream Q(indel) max_gtype Q(max_gtype) depth alt_reads indel_reads other_reads repeat_unit ref_repeat_count indel_repeat_count\n";
-
-    return fosptr;
-}
-
-
-
-std::ostream*
-starling_streams_base::
 initialize_gvcf_file(const starling_base_options& opt,
                      const prog_info& pinfo,
                      const std::string& filename,

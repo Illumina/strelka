@@ -38,23 +38,6 @@ get_sum_path_pprob(const starling_base_deriv_options& dopt,
                    const bool is_init_total = true);
 
 
-// Debugging output -- produces labels
-//
-void
-write_starling_diploid_indel(const starling_diploid_indel& dgt,
-                             const starling_indel_report_info& iri,
-                             const starling_indel_sample_report_info& isri,
-                             std::ostream& os);
-
-// file output -- data only
-//
-void
-write_starling_diploid_indel_file(const starling_diploid_indel& dgt,
-                                  const starling_indel_report_info& iri,
-                                  const starling_indel_sample_report_info& isri,
-                                  std::ostream& os);
-
-
 // Use caller object to precalculate prior distributions based on
 // theta value:
 //

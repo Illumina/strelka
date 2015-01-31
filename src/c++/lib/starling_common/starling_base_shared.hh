@@ -70,7 +70,7 @@ struct starling_base_options : public blt_options
     bool
     is_bindel_diploid() const
     {
-        return (is_bindel_diploid_file || gvcf.is_gvcf_output());
+        return (gvcf.is_gvcf_output());
     }
 
     bool
@@ -106,7 +106,6 @@ struct starling_base_options : public blt_options
     double bindel_diploid_het_bias = 0;
     bool is_bindel_diploid_het_bias = false;
     bool is_test_indels = false;
-    bool is_bindel_diploid_file = false;
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
 
@@ -116,8 +115,6 @@ struct starling_base_options : public blt_options
     /// This is the default used in all samples unless an override is provided for the sample.
     ///
     int default_min_read_bp_flank = 6;
-
-    std::string bindel_diploid_filename;
 
     // starling parameters:
     //

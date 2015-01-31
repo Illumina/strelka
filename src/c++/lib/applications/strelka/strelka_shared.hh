@@ -56,11 +56,6 @@ struct strelka_options : public starling_base_options
 {
     typedef starling_base_options base_t;
 
-    bool is_tumor_bindel_diploid() const
-    {
-        return (! tumor_bindel_diploid_filename.empty());
-    }
-
     bool is_tumor_realigned_read() const
     {
         return (! tumor_realigned_read_filename.empty());
@@ -92,7 +87,6 @@ struct strelka_options : public starling_base_options
 
     std::string tumor_bam_filename;
 
-    std::string tumor_bindel_diploid_filename;
     std::string tumor_realigned_read_filename;
 
     double somatic_snv_rate = 0.000001;

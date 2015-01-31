@@ -17,6 +17,7 @@
 
 #pragma once
 
+//#include "gvcf_options.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
@@ -26,6 +27,8 @@ struct starling_options : public starling_base_options
     typedef starling_options base_t;
 
     starling_options() {}
+
+    //gvcf_options gvcf;
 };
 
 
@@ -40,5 +43,7 @@ struct starling_deriv_options : public starling_base_deriv_options
         const reference_contig_segment& ref)
         : base_t(opt,ref)
     {}
+
+//    gvcf_deriv_options gvcf;
 };
 

@@ -81,16 +81,6 @@ strelka_streams(
 {
     {
         using namespace STRELKA_SAMPLE_TYPE;
-
-        if (opt.is_bindel_diploid_file)
-        {
-            _bindel_diploid_osptr[NORMAL].reset(initialize_bindel_file(opt,pinfo,opt.bindel_diploid_filename,"normal-sample"));
-        }
-        if (opt.is_tumor_bindel_diploid())
-        {
-            _bindel_diploid_osptr[TUMOR].reset(initialize_bindel_file(opt,pinfo,opt.tumor_bindel_diploid_filename,"tumor-sample"));
-        }
-
         if (opt.is_realigned_read_file)
         {
             _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"normal sample realigned-read BAM",header));

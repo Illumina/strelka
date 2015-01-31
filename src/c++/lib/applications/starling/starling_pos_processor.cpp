@@ -564,14 +564,6 @@ process_pos_indel_single_sample(
                     _gvcfer->add_indel(pos,ik,dindel,iri,isri);
                 }
 
-                if (_opt.is_bindel_diploid_file)
-                {
-
-                    std::ostream& bos(*_streams.bindel_diploid_osptr(sample_no));
-                    bos << _chrom_name << "\t" << output_pos << "\t";
-                    write_starling_diploid_indel_file(dindel,iri,isri,bos);
-                    bos << "\n";
-                }
                 if (_is_variant_windows) _variant_print_pos.insert(pos);
             }
 

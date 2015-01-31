@@ -35,12 +35,6 @@ struct starling_streams_base : public blt_streams
                           const sample_info& si);
 
     std::ostream*
-    bindel_diploid_osptr(const unsigned sample_no) const
-    {
-        return _bindel_diploid_osptr[sample_no].get();
-    }
-
-    std::ostream*
     gvcf_osptr(const unsigned sample_no) const
     {
         return _gvcf_osptr[sample_no];
@@ -65,13 +59,6 @@ struct starling_streams_base : public blt_streams
     }
 
 protected:
-    static
-    std::ostream*
-    initialize_bindel_file(const starling_base_options& client_opt,
-                           const prog_info& pinfo,
-                           const std::string& filename,
-                           const char* label=NULL);
-
     static
     std::ostream*
     initialize_gvcf_file(const starling_base_options& opt,
@@ -100,7 +87,6 @@ protected:
                            const avg_window_data& awd,
                            const sample_info& si);
 
-    std::unique_ptr<std::ostream> _bindel_diploid_osptr[MAX_SAMPLE];
     std::ostream* _gvcf_osptr[MAX_SAMPLE];
     std::unique_ptr<std::ostream> _gvcf_osptr_auto[MAX_SAMPLE];
     std::unique_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];

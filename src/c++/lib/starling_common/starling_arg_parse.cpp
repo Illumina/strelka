@@ -110,10 +110,6 @@ legacy_starling_arg_parse(arg_data& ad,
         {
             set_xrange_arg(i,ad,opt.is_bindel_diploid_het_bias,opt.bindel_diploid_het_bias,true);
         }
-        else if (ad.argstr[i]=="-bindel-diploid-file")
-        {
-            set_filename_arg(i,ad,opt.is_bindel_diploid_file,opt.bindel_diploid_filename);
-        }
         else if (ad.argstr[i]=="-anom-distro-table-alpha")
         {
             set_xrange_arg(i,ad,opt.is_adis_table,opt.adis_table_alpha);
