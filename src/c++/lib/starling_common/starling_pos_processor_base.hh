@@ -309,10 +309,12 @@ public:
     {
         sample_info(
             const starling_options& opt,
+            const reference_contig_segment& ref,
             const unsigned report_size,
             const unsigned knownref_report_size,
             read_id_counter* ricp)
             : indel_buff(opt.max_indel_size)
+            , bc_buff(ref)
             , read_buff(ricp)
             , sample_opt(opt)
             , ss(report_size)

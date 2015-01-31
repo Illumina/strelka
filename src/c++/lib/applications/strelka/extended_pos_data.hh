@@ -38,19 +38,16 @@ struct null_snp_pos_info
 
 struct sample_pos_data
 {
-    sample_pos_data(snp_pos_info* pi_ptr,
+    sample_pos_data(const snp_pos_info& pi_init,
                     extra_position_data& epd_init,
-                    const char ref_base,
                     const blt_options& opt,
                     dependent_prob_cache& dpcache,
                     const bool is_dependent_eprob,
                     const bool is_include_tier2)
-        : pi((nullptr==pi_ptr) ? _null_pi : *pi_ptr),
+        : pi(pi_init),
           epd(epd_init),
           n_calls(0)
     {
-        pi.ref_base=ref_base;
-
         // for all but coverage-tests, we use a high-quality subset of the basecalls:
         //
         epd.good_pi.clear();
@@ -86,11 +83,7 @@ struct sample_pos_data
         n_unused_calls=(n_calls-n_used_calls);
     }
 
-private:
-    //static null_snp_pos_info;
-    snp_pos_info _null_pi;
-public:
-    snp_pos_info& pi;
+    const snp_pos_info& pi;
     extra_position_data& epd;
     unsigned n_calls;
     unsigned n_used_calls;
@@ -102,14 +95,13 @@ struct extended_pos_data : public sample_pos_data
 {
     typedef sample_pos_data base_t;
 
-    extended_pos_data(snp_pos_info* pi_ptr,
+    extended_pos_data(const snp_pos_info& pi,
                       extra_position_data& epd_init,
-                      const char ref_base,
                       const blt_options& opt,
                       dependent_prob_cache& dpc,
                       const bool is_dependent_eprob,
                       const bool is_include_tier2)
-        : base_t(pi_ptr,epd_init,ref_base,opt,dpc,is_dependent_eprob,is_include_tier2)
+        : base_t(pi,epd_init,opt,dpc,is_dependent_eprob,is_include_tier2)
         , good_epi(epd.good_pi,epd.dependent_eprob) {}
 
     extended_pos_info good_epi;

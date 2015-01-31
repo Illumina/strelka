@@ -26,8 +26,27 @@
 #include <string>
 
 
+struct EmptyPosSet
+{
+    EmptyPosSet()
+    {
+        for (unsigned i(0);i<BASE_ID::SIZE;++i)
+        {
+            pis[i].set_ref_base(id_to_base(i));
+        }
+    }
+    std::array<snp_pos_info,BASE_ID::SIZE> pis;
+};
+
+
+
 struct pos_basecall_buffer
 {
+    pos_basecall_buffer(
+        const reference_contig_segment& ref)
+        : _ref(ref)
+    {}
+
     void
     insert_pos_submap_count(const pos_t pos)
     {
@@ -111,20 +130,15 @@ struct pos_basecall_buffer
         _pdata.getRef(pos).hap_set.emplace_back(read_seq,qual,offset);
     }
 
-    // returns NULL for empty pos
-    //
-    snp_pos_info*
-    get_pos(const pos_t pos)
-    {
-        if (! _pdata.isKeyPresent(pos)) return nullptr;
-        return &_pdata.getRef(pos);
-    }
-
-    const snp_pos_info*
+    const snp_pos_info&
     get_pos(const pos_t pos) const
     {
-        if (! _pdata.isKeyPresent(pos)) return nullptr;
-        return &_pdata.getConstRef(pos);
+        static const EmptyPosSet empty;
+        if (! _pdata.isKeyPresent(pos))
+        {
+            return empty.pis[base_to_id(_ref.get_base(pos))];
+        }
+        return _pdata.getConstRef(pos);
     }
 
     void
@@ -160,6 +174,7 @@ struct pos_basecall_buffer
 private:
     typedef RangeMap<pos_t,snp_pos_info,ClearT<snp_pos_info>> pdata_t;
 
+    const reference_contig_segment& _ref;
     pdata_t _pdata;
 };
 

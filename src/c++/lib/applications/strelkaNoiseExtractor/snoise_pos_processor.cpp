@@ -94,16 +94,10 @@ process_pos_snp_snoise(
     const unsigned sample_no(0);
     sample_info& sif(sample(sample_no));
 
-    snp_pos_info null_pi;
-    snp_pos_info* pi_ptr(sif.bc_buff.get_pos(pos));
-    if (nullptr==pi_ptr) pi_ptr=&null_pi;
-    snp_pos_info& pi(*pi_ptr);
-
+    const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
     const unsigned n_calls(pi.calls.size());
 
     const pos_t output_pos(pos+1);
-
-    pi.set_ref_base(_ref.get_base(pos));
 
     // for all but coverage-tests, we use a high-quality subset of the basecalls:
     //

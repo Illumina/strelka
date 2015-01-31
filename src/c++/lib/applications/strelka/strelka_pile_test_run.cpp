@@ -67,18 +67,16 @@ call(
 {
     static dependent_prob_cache dpcache;
 
-    const char ref_base(norm_pi.ref_base);
-
     // recreate data caches:
     extra_position_data norm_epd;
     extra_position_data tumor_epd;
 
     static const bool is_dep(false);
     const bool is_include_tier2(false);
-    extended_pos_data normald(&norm_pi,norm_epd,
-                              ref_base,_opt,dpcache,is_dep,is_include_tier2);
-    extended_pos_data tumord(&tumor_pi,tumor_epd,
-                             ref_base,_opt,dpcache,is_dep,is_include_tier2);
+    extended_pos_data normald(norm_pi,norm_epd,
+                              _opt,dpcache,is_dep,is_include_tier2);
+    extended_pos_data tumord(tumor_pi,tumor_epd,
+                             _opt,dpcache,is_dep,is_include_tier2);
 
     //    somatic_snv_genotype sgt;
     somatic_snv_genotype_grid sgtg;

@@ -120,7 +120,6 @@ process_pos_snp_somatic(const pos_t pos)
     using namespace STRELKA_SAMPLE_TYPE;
 
     const pos_t output_pos(pos+1);
-    const char ref_base(_ref.get_base(pos));
 
     sample_info& normal_sif(sample(NORMAL));
     sample_info& tumor_sif(sample(TUMOR));
@@ -146,9 +145,9 @@ process_pos_snp_somatic(const pos_t pos)
         const bool is_include_tier2(t!=0);
         if (is_include_tier2 && (! _opt.is_tier2())) continue;
         normald_ptr[t].reset(new extended_pos_data(normal_sif.bc_buff.get_pos(pos),*(normal_epd_ptr[t]),
-                                                   ref_base,_opt,_dpcache,is_dep,is_include_tier2));
+                                                   _opt,_dpcache,is_dep,is_include_tier2));
         tumord_ptr[t].reset(new extended_pos_data(tumor_sif.bc_buff.get_pos(pos),*(tumor_epd_ptr[t]),
-                                                  ref_base,_opt,_dpcache,is_dep,is_include_tier2));
+                                                  _opt,_dpcache,is_dep,is_include_tier2));
     }
 
 #if 0

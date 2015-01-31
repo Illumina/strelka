@@ -514,14 +514,7 @@ get_starling_indel_sample_report_info(const starling_deriv_options& dopt,
         // get depth of indel:
         pos_t depth_pos(ik.pos-1);
         if (ik.type==INDEL::BP_RIGHT) depth_pos=ik.pos;
-        const snp_pos_info* spi_ptr(bc_buff.get_pos(depth_pos));
-        if (NULL==spi_ptr)
-        {
-            isri.depth=0;
-        }
-        else
-        {
-            isri.depth=spi_ptr->calls.size();
-        }
+        const snp_pos_info& spi(bc_buff.get_pos(depth_pos));
+        isri.depth=spi.calls.size();
     }
 }

@@ -152,33 +152,33 @@ struct snp_pos_info
     }
 
     char
-    get_ref_base()
+    get_ref_base() const
     {
         return ref_base;
     }
 
     /// \returns the RMS of the read mapQs
     double
-    get_rms_mq();
+    get_rms_mq() const;
 
     /// \returns the read-position rank sum
     double
-    get_read_pos_ranksum();
+    get_read_pos_ranksum() const;
 
     /// \returns the mapQ rank sum
     double
-    get_mq_ranksum();
+    get_mq_ranksum() const;
 
     /// \return the baseq rank sum
     double
-    get_baseq_ranksum();
+    get_baseq_ranksum() const;
 
     double
-    get_raw_baseQ();
+    get_raw_baseQ() const;
 
     /// \return the raw pos sum
     double
-    get_raw_pos();
+    get_raw_pos() const;
 
     void
     print_known_counts(std::ostream& os,
@@ -210,7 +210,7 @@ public:
     // sum of mapq squared for all reads at this position
     double cumm_mapq;
 
-    hap_set_t hap_set;
+    mutable hap_set_t hap_set;
 
     //for calculating various rank-sum statistics
     fastRanksum mq_ranksum;

@@ -412,14 +412,14 @@ starling_pos_processor_base(const starling_options& client_opt,
     const unsigned knownref_report_size(get_ref_seq_known_size(_ref,_client_dopt.report_range));
     for (unsigned i(0); i<_n_samples; ++i)
     {
-        _sample[i].reset(new sample_info(_client_opt,report_size,knownref_report_size,&_ric));
+        _sample[i].reset(new sample_info(_client_opt, ref, report_size,knownref_report_size,&_ric));
     }
 
     // setup gvcf aggregator
     if (_client_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
-                          client_opt,client_dopt,ref,_nocompress_regions,client_io.gvcf_osptr(0),
+                          _client_opt,_client_dopt,ref,_nocompress_regions,_client_io.gvcf_osptr(0),
                           sample(0).read_buff,get_largest_read_size()));
     }
 
@@ -1813,13 +1813,7 @@ process_pos_snp_single_sample(const pos_t pos,
     {
         log_os << "Exception caught in starling_pos_processor_base.process_pos_snp_single_sample_impl() while processing chromosome position: " << (pos+1) << "\n"
                << "snp_pos_info:\n";
-        const snp_pos_info* spi_ptr(sample(sample_no).bc_buff.get_pos(pos));
-        if (NULL==spi_ptr)
-        {
-            static const snp_pos_info spi_null;
-            spi_ptr=&spi_null;
-        }
-        log_os << *spi_ptr << "\n";
+        log_os << sample(sample_no).bc_buff.get_pos(pos) << "\n";
         throw;
     }
 }
@@ -1851,18 +1845,13 @@ process_pos_snp_single_sample_impl(
 
     sample_info& sif(sample(sample_no));
 
-    snp_pos_info null_pi;
-    snp_pos_info* pi_ptr(sif.bc_buff.get_pos(pos));
-    if (NULL==pi_ptr) pi_ptr=&null_pi;
-    snp_pos_info& pi(*pi_ptr);
+    const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
 
     const unsigned n_calls(pi.calls.size());
     const unsigned n_spandel(pi.n_spandel);
     const unsigned n_submapped(pi.n_submapped);
 
     const pos_t output_pos(pos+1);
-
-    pi.set_ref_base(_ref.get_base(pos));
 
     // for all but coverage-tests, we use a high-quality subset of the basecalls:
     //
