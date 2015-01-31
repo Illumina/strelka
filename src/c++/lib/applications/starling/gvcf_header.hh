@@ -17,9 +17,10 @@
 
 #pragma once
 
+#include "calibration_models.hh"
+
 #include "blt_common/blt_shared.hh"
 #include "blt_util/chrom_depth_map.hh"
-#include "starling_common/calibration_models.hh"
 #include "starling_common/starling_base_shared.hh"
 
 #include <iosfwd>

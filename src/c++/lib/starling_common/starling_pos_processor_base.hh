@@ -32,7 +32,6 @@
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
 #include "starling_common/depth_buffer.hh"
-#include "starling_common/gvcf_aggregator.hh"
 #include "starling_common/indel_buffer.hh"
 #include "starling_common/indel_set.hh"
 #include "starling_common/indel_synchronizer.hh"
@@ -163,11 +162,6 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     insert_ploidy_region(
         const known_pos_range2& range,
         const int ploidy);
-
-    /// specify gvcf nocompress status of region
-    void
-    insert_nocompress_region(
-        const known_pos_range2& range);
 
 #if 0
     starling_read*
@@ -511,12 +505,26 @@ private:
     void
     process_pos_variants_impl(const pos_t pos) = 0;
 
+    virtual
+    void
+    clear_pos_annotation(const pos_t pos) {}
+
+    virtual
+    bool
+    is_suspend_read_buffer_clear() { return false; }
+
 protected:
     virtual
     void
     run_post_call_step(
         const int stage_no,
         const pos_t pos);
+
+    unsigned
+    get_largest_read_size() const
+    {
+        return _rmi.size();
+    }
 
 private:
     //////
@@ -527,12 +535,6 @@ private:
     virtual
     void
     write_counts(const pos_range& output_report_range) const = 0;
-
-    unsigned
-    get_largest_read_size() const
-    {
-        return _rmi.size();
-    }
 
     // return false if read is too large
     bool
@@ -622,11 +624,5 @@ protected:
 
     bool _is_variant_windows;
 
-    std::unique_ptr<gvcf_aggregator> _gvcfer;
-
-    // a caching term used for gvcf:
-    site_info _site_info;
-
     RegionPayloadTracker<int> _ploidy_regions;
-    RegionTracker _nocompress_regions;
 };

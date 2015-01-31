@@ -260,7 +260,7 @@ void calibration_models::load_models(std::string model_file)
             //case new model
             if (tokens.at(0).substr(0,3)=="###")
             {
-                if (pars.size()>0)
+                if (! pars.empty())
                 {
                     this->add_model_pars(current_name,pars);
                 }

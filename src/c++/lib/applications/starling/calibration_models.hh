@@ -19,10 +19,10 @@
 
 #pragma once
 
+#include "cmodel.hh"
+#include "gvcf_block_site_record.hh"
+#include "gvcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
-#include "starling_common/gvcf_block_site_record.hh"
-#include "starling_common/gvcf_locus_info.hh"
-#include "starling_common/cmodel.hh"
 #include "blt_util/chrom_depth_map.hh"
 
 #include "boost/utility.hpp"

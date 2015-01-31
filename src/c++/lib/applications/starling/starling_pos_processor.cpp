@@ -100,6 +100,14 @@ starling_pos_processor(
       _opt(opt),
       _dopt(dopt)
 {
+    // setup gvcf aggregator
+    if (_opt.gvcf.is_gvcf_output())
+    {
+        _gvcfer.reset(new gvcf_aggregator(
+                          _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(0),
+                          sample(0).read_buff,get_largest_read_size()));
+    }
+
     // setup indel syncronizers:
     {
         sample_info& normal_sif(sample(0));
@@ -129,6 +137,31 @@ starling_pos_processor(
         isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
                                normal_sif.sample_opt, max_candidate_normal_sample_depth, 0);
         normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, ref, isdata, 0));
+    }
+}
+
+
+
+void
+starling_pos_processor::
+insert_nocompress_region(
+    const known_pos_range2& range)
+{
+    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
+    _nocompress_regions.addRegion(range);
+}
+
+
+
+void
+starling_pos_processor::
+reset()
+{
+    base_t::reset();
+
+    if (_opt.gvcf.is_gvcf_output())
+    {
+        _gvcfer->flush();
     }
 }
 
@@ -183,6 +216,11 @@ process_pos_snp_single_sample_impl(
 
     const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
     const snp_pos_info& good_pi(sif.epd.good_pi);
+
+    _site_info.n_used_calls=(good_pi.calls.size());
+    _site_info.n_unused_calls=(pi.calls.size()-_site_info.n_used_calls);
+
+
     const pos_t output_pos(pos+1);
 
     // note multi-sample status -- can still be called only for one sample

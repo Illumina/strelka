@@ -15,11 +15,11 @@
 /// \author Chris Saunders
 ///
 
+#include "gvcf_aggregator.hh"
+#include "gvcf_header.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/chrom_depth_map.hh"
 #include "blt_util/io_util.hh"
-#include "starling_common/gvcf_aggregator.hh"
-#include "starling_common/gvcf_header.hh"
 
 #include <iomanip>
 #include <iostream>

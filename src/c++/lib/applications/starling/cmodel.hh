@@ -19,9 +19,10 @@
 
 #pragma once
 
+#include "gvcf_locus_info.hh"
+
 #include <vector>
 #include <map>
-#include "starling_common/gvcf_locus_info.hh"
 
 namespace CALIBRATION_MODEL
 {

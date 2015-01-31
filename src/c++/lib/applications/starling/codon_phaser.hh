@@ -21,10 +21,9 @@
 
 #pragma once
 
-#include "starling_common/gvcf_locus_info.hh"
+#include "gvcf_locus_info.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"
-#include "starling_common/gvcf_locus_info.hh"
 
 #include <climits>
 

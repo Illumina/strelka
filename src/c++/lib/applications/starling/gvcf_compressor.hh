@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "starling_common/gvcf_locus_info.hh"
+#include "gvcf_locus_info.hh"
 #include "blt_common/blt_shared.hh"
 #include "blt_util/RegionTracker.hh"
 

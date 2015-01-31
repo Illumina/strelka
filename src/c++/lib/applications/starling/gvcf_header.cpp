@@ -15,11 +15,11 @@
 /// \author Chris Saunders
 ///
 
+#include "gvcf_header.hh"
+#include "gvcf_locus_info.hh"
 #include "blt_util/io_util.hh"
 #include "htsapi/bam_header_util.hh"
 #include "htsapi/vcf_util.hh"
-#include "starling_common/gvcf_header.hh"
-#include "starling_common/gvcf_locus_info.hh"
 
 #include <cassert>
 

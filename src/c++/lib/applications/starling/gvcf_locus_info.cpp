@@ -16,7 +16,7 @@
 ///
 
 
-#include "starling_common/gvcf_locus_info.hh"
+#include "gvcf_locus_info.hh"
 
 #include <iostream>
 #include <map>

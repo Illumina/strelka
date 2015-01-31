@@ -39,7 +39,6 @@
 #include "htsapi/bam_seq_read_util.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_base.hh"
-#include "starling_common/gvcf_aggregator.hh"
 
 #include <iomanip>
 #include <iostream>
@@ -343,14 +342,6 @@ starling_pos_processor_base(const starling_base_options& opt,
         _sample[i].reset(new sample_info(_opt, ref, report_size,knownref_report_size,&_ric));
     }
 
-    // setup gvcf aggregator
-    if (_opt.gvcf.is_gvcf_output())
-    {
-        _gvcfer.reset(new gvcf_aggregator(
-                          _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(0),
-                          sample(0).read_buff,get_largest_read_size()));
-    }
-
 #ifdef HAVE_FISHER_EXACT_TEST
     if (_opt.is_adis_table)
     {
@@ -480,11 +471,6 @@ reset()
     }
 
     write_counts(output_report_range);
-
-    if (_opt.gvcf.is_gvcf_output())
-    {
-        _gvcfer->flush();
-    }
 }
 
 
@@ -544,17 +530,6 @@ insert_ploidy_region(
     assert(ploidy==0 || ploidy==1);
     _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
     return _ploidy_regions.addRegion(range,ploidy);
-}
-
-
-
-void
-starling_pos_processor_base::
-insert_nocompress_region(
-    const known_pos_range2& range)
-{
-    _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
-    _nocompress_regions.addRegion(range);
 }
 
 
@@ -988,7 +963,7 @@ process_pos(const int stage_no,
 
         _forced_output_pos.erase(pos);
         _ploidy_regions.removeToPos(pos);
-        _nocompress_regions.removeToPos(pos);
+        clear_pos_annotation(pos);
     }
     else if (stage_no==STAGE::CLEAR_READ_BUFFER)
     {
@@ -996,7 +971,7 @@ process_pos(const int stage_no,
         {
             // if we are doing short-range phasing, suspend read clear
             // while phasing block is being built:
-            if (! (_gvcfer && _gvcfer->is_phasing_block()))
+            if (! is_suspend_read_buffer_clear())
             {
                 for (unsigned s(0); s<_n_samples; ++s)
                 {
@@ -1625,16 +1600,16 @@ process_pos_site_stats(
         good_pi.calls.push_back(pi.calls[i]);
     }
 
-    _site_info.n_used_calls=(good_pi.calls.size());
-    _site_info.n_unused_calls=(n_calls-_site_info.n_used_calls);
+    const unsigned n_used_calls=(good_pi.calls.size());
+    const unsigned n_unused_calls=(n_calls-n_used_calls);
 
     sif.ss.update(n_calls);
-    sif.used_ss.update(_site_info.n_used_calls);
+    sif.used_ss.update(n_used_calls);
     if (pi.get_ref_base() != 'N')
     {
         sif.ssn.update(n_calls);
-        sif.used_ssn.update(_site_info.n_used_calls);
-        sif.wav.insert(pos,_site_info.n_used_calls,_site_info.n_unused_calls,n_spandel,n_submapped);
+        sif.used_ssn.update(n_used_calls);
+        sif.wav.insert(pos,n_used_calls,n_unused_calls,n_spandel,n_submapped);
     }
     else
     {

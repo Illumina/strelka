@@ -108,7 +108,9 @@ process_pos_snp_snoise(
 
     // make early filtration decision -- then get the allele distribution:
     constexpr unsigned min_used_calls(12);
-    if (_site_info.n_used_calls < min_used_calls) return;
+
+    const unsigned n_used_calls(good_pi.calls.size());
+    if (n_used_calls < min_used_calls) return;
 
     std::array<unsigned,N_BASE> base_count;
     std::fill(base_count.begin(),base_count.end(),0);
@@ -122,7 +124,7 @@ process_pos_snp_snoise(
     const auto ref_id(base_to_id(good_pi.get_ref_base()));
     const unsigned ref_count(base_count[ref_id]);
 
-    if (ref_count == _site_info.n_used_calls) return;
+    if (ref_count == n_used_calls) return;
 
     unsigned alt_id( (ref_id==0) ? 1 : 0);
     for (unsigned i(1); i<N_BASE; ++i)
@@ -139,7 +141,7 @@ process_pos_snp_snoise(
     if (ref_ratio > 0.2) return;
 #endif
 
-    const double alt_ratio(static_cast<double>(alt_count)/_site_info.n_used_calls);
+    const double alt_ratio(static_cast<double>(alt_count)/n_used_calls);
 
     constexpr double max_alt_ratio(0.2);
 
@@ -175,7 +177,7 @@ process_pos_snp_snoise(
 
         // SAMPLE:
         os << "\t";
-        os << _site_info.n_used_calls << ':' << ref_count << ',' << alt_count;
+        os << n_used_calls << ':' << ref_count << ',' << alt_count;
         os << "\n";
     }
 }
