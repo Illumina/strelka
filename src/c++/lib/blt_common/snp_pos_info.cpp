@@ -49,7 +49,7 @@ std::ostream&
 operator<<(std::ostream& os,
            const snp_pos_info& pci)
 {
-    os << "ref: " << pci.ref_base;
+    os << "ref: " << pci.get_ref_base();
     const unsigned bs(pci.calls.size());
     for (unsigned i(0); i<bs; ++i) os << "\nt1: " << pci.calls[i];
     const unsigned bs2(pci.tier2_calls.size());

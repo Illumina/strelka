@@ -51,7 +51,7 @@ struct sample_pos_data
         // for all but coverage-tests, we use a high-quality subset of the basecalls:
         //
         epd.good_pi.clear();
-        epd.good_pi.ref_base = pi.ref_base;
+        epd.good_pi.set_ref_base(pi.get_ref_base());
 
         n_calls += pi.calls.size();
         for (const auto& bc : pi.calls)

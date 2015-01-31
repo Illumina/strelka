@@ -171,8 +171,8 @@ calc_VQSR_features(
     //QSS_NT
     smod.set_feature(STRELKA_VQSR_FEATURES::QSS_NT,rs.snv_from_ntype_qphred);
 
-    set_VQSR_sample_info(opt,dopt,n1_epd,n2_epd,smod,n1_epd.pi.ref_base,true);
-    set_VQSR_sample_info(opt,dopt,t1_epd,t2_epd,smod,n1_epd.pi.ref_base,false);
+    set_VQSR_sample_info(opt,dopt,n1_epd,n2_epd,smod,n1_epd.pi.get_ref_base(),true);
+    set_VQSR_sample_info(opt,dopt,t1_epd,t2_epd,smod,n1_epd.pi.get_ref_base(),false);
 
     //MQ
     const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
@@ -338,7 +338,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
     }
 
     //REF:
-    os << '\t' << n1_epd.pi.ref_base
+    os << '\t' << n1_epd.pi.get_ref_base()
        //ALT:
        << "\t";
     DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),

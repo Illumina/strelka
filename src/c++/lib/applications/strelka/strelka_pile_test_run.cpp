@@ -114,7 +114,7 @@ load_pi(const char ref_base,
         snp_pos_info& pi)
 {
     pi.clear();
-    pi.ref_base=ref_base;
+    pi.set_ref_base(ref_base);
 
     const unsigned len(strlen(read));
     for (unsigned i(0); i<len; ++i)

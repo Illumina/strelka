@@ -44,7 +44,7 @@ struct pos_basecall_buffer
 {
     pos_basecall_buffer(
         const reference_contig_segment& ref)
-        : _ref(ref)
+        : _ref(ref), _pdata(ref)
     {}
 
     void
@@ -80,7 +80,7 @@ struct pos_basecall_buffer
         const uint16_t readLength)
     {
         snp_pos_info& posdata(_pdata.getRef(pos));
-        if (posdata.ref_base == id_to_base(call_id)) return;
+        if (posdata.get_ref_base() == id_to_base(call_id)) return;
 
         posdata.altReadPos.push_back({readPos,readLength});
     }
@@ -153,28 +153,30 @@ struct pos_basecall_buffer
         return _pdata.empty();
     }
 
-#if 0
-    iterator pos_iter(const pos_t pos)
-    {
-        return _pdata.lower_bound(pos);
-    }
-    const_iterator pos_iter(const pos_t pos) const
-    {
-        return _pdata.lower_bound(pos);
-    }
-
-    // debug dumpers:
-    void
-    dump_pos(const pos_t pos, std::ostream& os) const;
-#endif
-
     void
     dump(std::ostream& os) const;
 
 private:
     typedef RangeMap<pos_t,snp_pos_info,ClearT<snp_pos_info>> pdata_t;
 
+    // inherit so that we can intercept the getRef calls:
+    struct PosData : public pdata_t
+    {
+        PosData(const reference_contig_segment& ref_init) : ref(ref_init) {}
+
+        snp_pos_info&
+        getRef(
+            const pos_t& pos)
+        {
+            snp_pos_info& pi(pdata_t::getRef(pos));
+            if (! pi.is_ref_set()) pi.set_ref_base(ref.get_base(pos));
+            return pi;
+        }
+
+        const reference_contig_segment& ref;
+    };
+
     const reference_contig_segment& _ref;
-    pdata_t _pdata;
+    PosData _pdata;
 };
 

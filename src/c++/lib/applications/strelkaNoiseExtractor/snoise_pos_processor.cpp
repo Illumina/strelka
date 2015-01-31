@@ -170,7 +170,7 @@ process_pos_snp_snoise(
            << ".";
 
         //REF:
-        os << '\t' << good_pi.ref_base;
+        os << '\t' << good_pi.get_ref_base();
         //ALT:
         os << '\t' << id_to_base(alt_id);
 

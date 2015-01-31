@@ -99,7 +99,7 @@ calc_pos_nonref_freq_loghood(const snp_pos_info& pi,
 
     blt_float_t loghood(0.);
 
-    const uint8_t ref_id(base_to_id(pi.ref_base));
+    const uint8_t ref_id(base_to_id(pi.get_ref_base()));
     const blt_float_t ref_freq(1.-nonref_freq);
 
     for (unsigned i(0); i<n_calls; ++i)
@@ -225,7 +225,7 @@ calc_pos_nonref_allele_freq_loghood(const snp_pos_info& pi,
 
     blt_float_t loghood(0.);
 
-    const uint8_t ref_id(base_to_id(pi.ref_base));
+    const uint8_t ref_id(base_to_id(pi.get_ref_base()));
     const blt_float_t ref_freq(1.-nonref_freq);
 
     for (unsigned i(0); i<n_calls; ++i)

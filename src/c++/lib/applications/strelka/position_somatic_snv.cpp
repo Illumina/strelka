@@ -235,8 +235,8 @@ position_somatic_snv_call(const extended_pos_info& normal_epi,
         const snp_pos_info& normal_pi(normal_epi.pi);
         const snp_pos_info& tumor_pi(tumor_epi.pi);
 
-        if (normal_pi.ref_base=='N') return;
-        sgt.ref_gt=base_to_id(normal_pi.ref_base);
+        if (normal_pi.get_ref_base()=='N') return;
+        sgt.ref_gt=base_to_id(normal_pi.get_ref_base());
 
         // check that a non-reference call meeting quality criteria even
         // exists:

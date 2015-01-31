@@ -113,7 +113,8 @@ struct snp_pos_info
     void
     clear()
     {
-        ref_base='N';
+        _is_ref_set=false;
+        _ref_base='N';
         is_n_ref_warn=false;
         calls.clear();
         tier2_calls.clear();
@@ -144,17 +145,24 @@ struct snp_pos_info
         }
     }
 
+    bool
+    is_ref_set() const
+    {
+        return _is_ref_set;
+    }
 
     void
     set_ref_base(char base)
     {
-        ref_base = base;
+        _is_ref_set = true;
+        _ref_base = base;
     }
 
     char
     get_ref_base() const
     {
-        return ref_base;
+        assert(_is_ref_set);
+        return _ref_base;
     }
 
     /// \returns the RMS of the read mapQs
@@ -188,8 +196,10 @@ struct snp_pos_info
     print_known_qscore(std::ostream& os,
                        const int min_qscore) const;
 
+private:
+    bool _is_ref_set;
+    char _ref_base; // always fwd-strand base
 public:
-    char ref_base; // always fwd-strand base
     bool is_n_ref_warn;
     std::vector<base_call> calls;
     std::vector<base_call> tier2_calls; // call not passing stringent quality criteria

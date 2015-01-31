@@ -37,10 +37,10 @@ position_snp_call_pprob_monogt(const double theta,
                                monoploid_genotype& mgt)
 {
 
-    if (pi.ref_base=='N') return;
+    if (pi.get_ref_base()=='N') return;
 
     const unsigned n_calls(pi.calls.size());
-    mgt.ref_gt=base_to_id(pi.ref_base);
+    mgt.ref_gt=base_to_id(pi.get_ref_base());
 
     // check that a non-reference call meeting quality criteria even exists:
     bool is_test(false);

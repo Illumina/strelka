@@ -82,10 +82,10 @@ position_snp_call_pprob_nploid(const double snp_prob,
                                nploid_genotype& ngt)
 {
 
-    if (pi.ref_base=='N') return;
+    if (pi.get_ref_base()=='N') return;
 
     const unsigned n_calls(pi.calls.size());
-    const unsigned ref_id(base_to_id(pi.ref_base));
+    const unsigned ref_id(base_to_id(pi.get_ref_base()));
 
     // check that a non-reference call meeting quality criteria even exists:
     bool is_test(false);
@@ -102,7 +102,7 @@ position_snp_call_pprob_nploid(const double snp_prob,
 
     if (! is_test) return;
 
-    ngt.ref_gt=ninfo.get_ref_gtype(pi.ref_base);
+    ngt.ref_gt=ninfo.get_ref_gtype(pi.get_ref_base());
 
     const unsigned n_gt(ninfo.gtype_size());
 
