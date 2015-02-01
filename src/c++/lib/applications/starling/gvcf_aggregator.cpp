@@ -96,8 +96,8 @@ void gvcf_aggregator::write_block_site_record()
 
 gvcf_aggregator::
 gvcf_aggregator(
-    const starling_base_options& opt,
-    const starling_base_deriv_options& dopt,
+    const starling_options& opt,
+    const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
     std::ostream* osptr,

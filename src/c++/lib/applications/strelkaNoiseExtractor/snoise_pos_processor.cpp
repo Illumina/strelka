@@ -21,7 +21,7 @@
 
 snoise_pos_processor::
 snoise_pos_processor(
-    const starling_base_options& opt,
+    const snoise_options& opt,
     const starling_base_deriv_options& dopt,
     const reference_contig_segment& ref,
     const snoise_streams& streams)
@@ -33,6 +33,7 @@ snoise_pos_processor(
         sample_info& normal_sif(sample(0));
 
         double max_candidate_normal_sample_depth(-1.);
+#if 0
         if (dopt.gvcf.is_max_depth())
         {
             if (opt.max_candidate_indel_depth_factor > 0.)
@@ -40,6 +41,7 @@ snoise_pos_processor(
                 max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.gvcf.max_depth);
             }
         }
+#endif
 
         if (opt.max_candidate_indel_depth > 0.)
         {

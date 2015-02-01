@@ -34,8 +34,8 @@
 struct gvcf_aggregator
 {
     gvcf_aggregator(
-        const starling_base_options& opt,
-        const starling_base_deriv_options& dopt,
+        const starling_options& opt,
+        const starling_deriv_options& dopt,
         const reference_contig_segment& ref,
         const RegionTracker& nocompress_regions,
         std::ostream* os,
@@ -89,7 +89,7 @@ private:
 
     void output_phased_blocked();
 
-    const starling_base_options& _opt;
+    const starling_options& _opt;
     const known_pos_range _report_range;
     const reference_contig_segment& _ref;
     std::ostream* _osptr;

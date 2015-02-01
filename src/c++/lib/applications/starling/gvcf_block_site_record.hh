@@ -19,6 +19,7 @@
 
 
 #include "gvcf_locus_info.hh"
+#include "gvcf_options.hh"
 #include "blt_util/stream_stat.hh"
 
 

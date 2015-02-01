@@ -18,16 +18,15 @@
 #pragma once
 
 #include "calibration_models.hh"
-
+#include "starling_shared.hh"
 #include "blt_common/blt_shared.hh"
 #include "blt_util/chrom_depth_map.hh"
-#include "starling_common/starling_base_shared.hh"
 
 #include <iosfwd>
 
 
 void
-finish_gvcf_header(const starling_base_options& opt,
+finish_gvcf_header(const starling_options& opt,
                    const gvcf_deriv_options& dopt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,

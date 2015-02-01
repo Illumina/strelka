@@ -30,15 +30,10 @@ struct starling_streams_base : public blt_streams
 {
     typedef blt_streams base_t;
 
-    starling_streams_base(const starling_base_options& opt,
-                          const prog_info& pinfo,
-                          const sample_info& si);
-
-    std::ostream*
-    gvcf_osptr(const unsigned sample_no) const
-    {
-        return _gvcf_osptr[sample_no];
-    }
+    starling_streams_base(
+        const starling_base_options& opt,
+        const prog_info& pinfo,
+        const sample_info& si);
 
     bam_dumper*
     realign_bam_ptr(const unsigned sample_no) const
@@ -59,14 +54,6 @@ struct starling_streams_base : public blt_streams
     }
 
 protected:
-    static
-    std::ostream*
-    initialize_gvcf_file(const starling_base_options& opt,
-                         const prog_info& pinfo,
-                         const std::string& filename,
-                         const bam_header_t* const header,
-                         std::unique_ptr<std::ostream>& os_ptr_auto);
-
     bam_dumper*
     initialize_realign_bam(const bool is_clobber,
                            const prog_info& pinfo,
@@ -87,12 +74,11 @@ protected:
                            const avg_window_data& awd,
                            const sample_info& si);
 
-    std::ostream* _gvcf_osptr[MAX_SAMPLE];
-    std::unique_ptr<std::ostream> _gvcf_osptr_auto[MAX_SAMPLE];
     std::unique_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];
 private:
     std::unique_ptr<std::ostream> _candidate_indel_osptr;
+protected:
     unsigned _n_samples;
-
+private:
     std::vector<std::shared_ptr<std::ostream>> _window_osptr;
 };

@@ -20,7 +20,7 @@
 #pragma once
 
 #include "gvcf_locus_info.hh"
-#include "blt_common/blt_shared.hh"
+#include "gvcf_options.hh"
 #include "blt_util/RegionTracker.hh"
 
 

@@ -20,22 +20,17 @@
 #pragma once
 
 #include "cmodel.hh"
-#include "gvcf_block_site_record.hh"
-#include "gvcf_locus_info.hh"
-#include "blt_util/blt_exception.hh"
-#include "blt_util/chrom_depth_map.hh"
+#include "starling_shared.hh"
 
 #include "boost/utility.hpp"
 
-//forward declaration
-struct gvcf_options;
-struct gvcf_deriv_options;
+
 
 class calibration_models : private boost::noncopyable
 {
 public:
     calibration_models(
-        const starling_base_options& init_opt,
+        const starling_options& init_opt,
         const gvcf_deriv_options& init_dopt)
         : opt(init_opt.gvcf),
           dopt(init_dopt)

@@ -60,9 +60,9 @@ snoise_run(
     }
 
     sample_info ssi;
-    snoise_streams client_io(opt,pinfo,read_stream.get_header(),ssi);
+    snoise_streams streams(opt,pinfo,read_stream.get_header(),ssi);
 
-    snoise_pos_processor sppr(opt,dopt,ref,client_io);
+    snoise_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;
 
     starling_input_stream_data sdata;

@@ -20,6 +20,7 @@
 #pragma once
 
 #include "gvcf_locus_info.hh"
+#include "gvcf_options.hh"
 
 #include <vector>
 #include <map>

@@ -17,7 +17,7 @@
 
 #pragma once
 
-//#include "gvcf_options.hh"
+#include "gvcf_options.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
@@ -45,7 +45,11 @@ struct starling_options : public starling_base_options
     bool
     is_bsnp_diploid() const override { return true; }
 
-    //gvcf_options gvcf;
+    bool
+    is_all_sites() const override { return true; }
+
+
+    gvcf_options gvcf;
 };
 
 
@@ -58,9 +62,10 @@ struct starling_deriv_options : public starling_base_deriv_options
     starling_deriv_options(
         const starling_options& opt,
         const reference_contig_segment& ref)
-        : base_t(opt,ref)
+        : base_t(opt,ref),
+          gvcf(opt.gvcf,opt.bam_seq_name)
     {}
 
-//    gvcf_deriv_options gvcf;
+    gvcf_deriv_options gvcf;
 };
 

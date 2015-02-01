@@ -72,10 +72,11 @@ starling_pos_processor(
     const starling_options& opt,
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const starling_streams_base& streams)
+    const starling_streams& streams)
     : base_t(opt,dopt,ref,streams,1),
       _opt(opt),
-      _dopt(dopt)
+      _dopt(dopt),
+      _streams(streams)
 {
     // setup gvcf aggregator
     if (_opt.gvcf.is_gvcf_output())
@@ -326,22 +327,11 @@ process_pos_snp_single_sample_impl(
         _site_info.hpol=get_snp_hpol_size(pos,_ref);
     }
 
-    if (_opt.is_all_sites())
+    //Add site to gvcf
+    if (_opt.gvcf.is_gvcf_output())
     {
-#if 0
-        const diploid_genotype* dgt_ptr(&_site_info.dgt);
-        if (is_filter_snp)
-        {
-            dgt_ptr=&get_empty_dgt(pi.ref_base);
-        }
-#endif
-
-        //Add site to gvcf
-        if (_opt.gvcf.is_gvcf_output())
-        {
-            _site_info.init(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore);
-            _gvcfer->add_site(_site_info);
-        }
+        _site_info.init(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore);
+        _gvcfer->add_site(_site_info);
     }
 
     if (_opt.is_nonref_sites())
@@ -464,8 +454,6 @@ process_pos_indel_single_sample(
         // TODO implement indel overlap resolution
         //
         // punt conflict resolution for now....
-
-        if (_opt.is_bindel_diploid())
         {
             // indel_report_info needs to be run first now so that
             // local small repeat info is available to the indel

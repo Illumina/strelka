@@ -19,7 +19,6 @@
 
 #include "starling_pos_processor_base_stages.hh"
 
-#include "gvcf_options.hh"
 #include "blt_common/blt_shared.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "starling_common/starling_align_limit.hh"
@@ -57,28 +56,9 @@ struct starling_base_options : public blt_options
 
     starling_base_options() {}
 
-    // is diploid indel model being used?
+    virtual
     bool
-    is_bindel_diploid() const
-    {
-        return (gvcf.is_gvcf_output());
-    }
-
-    bool
-    is_bsnp_diploid() const
-    {
-        return (base_t::is_bsnp_diploid() ||
-                gvcf.is_gvcf_output());
-    }
-
-    bool
-    is_all_sites() const
-    {
-        return (gvcf.is_gvcf_output());
-    }
-
-    gvcf_options gvcf;
-
+    is_all_sites() const { return false; }
 
     bool
     is_write_candidate_indels() const
@@ -301,9 +281,6 @@ protected:
     }
 
 public:
-
-    gvcf_deriv_options gvcf;
-
     double indel_nonsite_match_lnp;
     double tier2_indel_nonsite_match_lnp;
 
