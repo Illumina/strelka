@@ -25,8 +25,6 @@
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 #include "starling_common/starling_arg_parse.hh"
-#include "starling_common/starling_option_parser.hh"
-
 #include "boost/program_options.hpp"
 
 #include <cassert>
@@ -34,6 +32,7 @@
 
 #include <fstream>
 #include <sstream>
+#include "../../starling_common/starling_base_option_parser.hh"
 
 
 
@@ -56,16 +55,11 @@ runInternal(int argc,char* argv[]) const
         opt.cmdline += argv[i];
     }
 
-    // hack in VQSR for strelka only:
-    opt.is_compute_somatic_VQSRmetrics = true;
-
     std::vector<std::string> legacy_starling_args;
     po::variables_map vm;
     try
     {
         po::options_description visible(get_strelka_option_parser(opt));
-        po::options_description visible2(get_starling_shared_option_parser(opt));
-        visible.add(visible2);
         po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).allow_unregistered().run());
         po::store(parsed,vm);
         po::notify(vm);

@@ -25,10 +25,9 @@
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 #include "starling_common/starling_arg_parse.hh"
-#include "starling_common/starling_option_parser.hh"
-
 #include <cassert>
 #include <cstdlib>
+#include "../../starling_common/starling_base_option_parser.hh"
 
 
 namespace
@@ -64,7 +63,7 @@ runInternal(int argc, char* argv[]) const
     try
     {
         po::options_description visible(get_snoise_option_parser(opt));
-        po::options_description visible2(get_starling_shared_option_parser(opt));
+        po::options_description visible2(get_starling_base_option_parser(opt));
         visible.add(visible2);
         po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).allow_unregistered().run());
         po::store(parsed,vm);
@@ -89,7 +88,7 @@ runInternal(int argc, char* argv[]) const
     arg_data ad(legacy_starling_args,pinfo,opt.cmdline);
     legacy_starling_arg_parse(ad,opt);
 
-    finalize_starling_options(pinfo,vm,opt);
+    finalize_starling_base_options(pinfo,vm,opt);
 
     snoise_run(pinfo,opt);
 }

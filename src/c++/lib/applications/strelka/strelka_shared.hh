@@ -56,6 +56,12 @@ struct strelka_options : public starling_base_options
 {
     typedef starling_base_options base_t;
 
+    strelka_options()
+    {
+        // turn on VQSR for strelka only:
+        is_compute_somatic_VQSRmetrics = true;
+    }
+
     bool is_tumor_realigned_read() const
     {
         return (! tumor_realigned_read_filename.empty());

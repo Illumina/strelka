@@ -17,8 +17,8 @@
 
 #include "strelka_option_parser.hh"
 
+#include "../../starling_common/starling_base_option_parser.hh"
 #include "blt_common/blt_arg_validate.hh"
-#include "starling_common/starling_option_parser.hh"
 
 
 
@@ -148,12 +148,19 @@ get_strelka_option_parser(
     po::options_description strelka_parse_opt("Two-sample options");
     strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv).add(strelka_parse_opt_filter);
 
+    // final assembly
+    po::options_description visible("Options");
+    visible.add(strelka_parse_opt);
+
+    // add starling base options:
+    po::options_description visible2(get_starling_base_option_parser(opt));
+    visible.add(visible2);
+
     po::options_description help_parse_opt("Help");
     help_parse_opt.add_options()
     ("help,h","print this message");
 
-    po::options_description visible("Options");
-    visible.add(strelka_parse_opt).add(help_parse_opt);
+    visible.add(help_parse_opt);
 
     return visible;
 }
@@ -161,9 +168,10 @@ get_strelka_option_parser(
 
 
 void
-finalize_strelka_options(const prog_info& pinfo,
-                         const po::variables_map& vm,
-                         strelka_options& opt)
+finalize_strelka_options(
+    const prog_info& pinfo,
+    const po::variables_map& vm,
+    strelka_options& opt)
 {
     if (opt.tumor_bam_filename.empty())
     {
@@ -241,5 +249,5 @@ finalize_strelka_options(const prog_info& pinfo,
         pinfo.usage("Strelka depth factor must not be less than 0");
     }
 
-    finalize_starling_options(pinfo,vm,opt);
+    finalize_starling_base_options(pinfo,vm,opt);
 }

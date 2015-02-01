@@ -26,7 +26,21 @@ struct starling_options : public starling_base_options
 {
     typedef starling_options base_t;
 
-    starling_options() {}
+    starling_options()
+    {
+        // set command-line defaults for starling only:
+        gvcf.out_file = "-";
+        bsnp_ssd_no_mismatch = 0.35;
+        bsnp_ssd_one_mismatch = 0.6;
+        min_single_align_score = 20;
+        max_win_mismatch = 2;
+        max_win_mismatch_flank_size = 20;
+        is_min_vexp = true;
+        min_vexp = 0.25;
+
+        // TODO double-check with MK:
+        ///upstream_oligo_size = 10;
+    }
 
     bool
     is_bsnp_diploid() const override { return true; }

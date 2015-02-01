@@ -17,15 +17,13 @@
 
 #include "starling.hh"
 #include "starling_info.hh"
+#include "starling_option_parser.hh"
 #include "starling_run.hh"
 
-#include "blt_common/blt_arg_parse_util.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 #include "starling_common/starling_arg_parse.hh"
-#include "starling_common/starling_option_parser.hh"
-
 #include <cassert>
 #include <cstdlib>
 
@@ -42,20 +40,6 @@ starling::
 runInternal(int argc, char* argv[]) const
 {
     starling_options opt;
-
-    // set command-line defaults for starling only:
-    opt.gvcf.out_file = "-";
-    opt.bsnp_ssd_no_mismatch = 0.35;
-    opt.bsnp_ssd_one_mismatch = 0.6;
-    opt.min_single_align_score = 20;
-    opt.max_win_mismatch = 2;
-    opt.max_win_mismatch_flank_size = 20;
-    opt.is_min_vexp = true;
-    opt.min_vexp = 0.25;
-
-
-    // TODO double-check with MK:
-    ///opt.upstream_oligo_size = 10;
 
     for (int i(0); i<argc; ++i)
     {
@@ -95,4 +79,3 @@ runInternal(int argc, char* argv[]) const
 
     starling_run(pinfo,opt);
 }
-
