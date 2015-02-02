@@ -79,7 +79,7 @@ starling_streams_base::
 initialize_window_file(const starling_base_options& opt,
                        const prog_info& pinfo,
                        const avg_window_data& awd,
-                       const sample_info& si)
+                       const SampleSetSummary& si)
 {
     const char* const cmdline(opt.cmdline.c_str());
 
@@ -98,7 +98,7 @@ initialize_window_file(const starling_base_options& opt,
     static const bool is_tier1(true);
     static const char* win_type[] = {"used","filt","submap"};
     static unsigned n_win_type(sizeof(win_type)/sizeof(char*));
-    const unsigned n_samples(si.sample_size());
+    const unsigned n_samples(si.size());
     for (unsigned s(0); s<n_samples; ++s)
     {
         for (unsigned i(0); i<n_win_type; ++i)
@@ -116,9 +116,9 @@ initialize_window_file(const starling_base_options& opt,
 starling_streams_base::
 starling_streams_base(const starling_base_options& opt,
                       const prog_info& pinfo,
-                      const sample_info& si)
-    : base_t(opt,pinfo)
-    , _n_samples(si.sample_size())
+                      const SampleSetSummary& si)
+    : base_t(opt,pinfo,true)
+    , _n_samples(si.size())
     , _window_osptr(opt.variant_windows.size())
 {
     assert((_n_samples>0) && (_n_samples<=MAX_SAMPLE));

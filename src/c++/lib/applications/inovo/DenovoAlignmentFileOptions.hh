@@ -17,14 +17,17 @@
 
 #pragma once
 
-#include <cstdint>
+#include "InovoSampleInfo.hh"
+
+#include <string>
+#include <vector>
 
 
-typedef uint32_t align_id_t;
-typedef int32_t sample_id_t;
+struct  DenovoAlignmentFileOptions
+{
+    std::vector<std::string> alignmentFilename;
 
-// So long as the sample count required by multi-sample applications
-// remains small, any type of heap allocation is a waste, so we use
-// this to create stack arrays:
-//
-enum { MAX_SAMPLE=4 };
+    // for now assume a 1-1 mapping from alignment files to samples:
+    SampleInfoManager alignmentSampleInfo;
+};
+

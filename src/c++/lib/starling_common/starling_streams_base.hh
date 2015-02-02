@@ -20,10 +20,10 @@
 #include "blt_common/blt_streams.hh"
 #include "htsapi/bam_dumper.hh"
 #include "starling_common/starling_base_shared.hh"
-#include "starling_common/sample_info.hh"
 #include "starling_common/starling_types.hh"
 
 #include <vector>
+#include "SampleSetSummary.hh"
 
 
 struct starling_streams_base : public blt_streams
@@ -33,7 +33,7 @@ struct starling_streams_base : public blt_streams
     starling_streams_base(
         const starling_base_options& opt,
         const prog_info& pinfo,
-        const sample_info& si);
+        const SampleSetSummary& si);
 
     bam_dumper*
     realign_bam_ptr(const unsigned sample_no) const
@@ -72,7 +72,7 @@ protected:
     initialize_window_file(const starling_base_options& opt,
                            const prog_info& pinfo,
                            const avg_window_data& awd,
-                           const sample_info& si);
+                           const SampleSetSummary& si);
 
     std::unique_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];
 private:

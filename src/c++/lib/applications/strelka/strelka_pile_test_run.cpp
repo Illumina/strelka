@@ -22,7 +22,6 @@
 
 #include "position_somatic_snv_strand_grid.hh"
 #include "position_somatic_snv_strand_grid_vcf.hh"
-#include "strelka_sample_type.hh"
 #include "strelka_pile_test_run.hh"
 
 #include "blt_util/istream_line_splitter.hh"
@@ -34,6 +33,8 @@
 #include <cctype>
 
 #include <iostream>
+
+#include "StrelkaSampleSetSummary.hh"
 
 
 

@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "DenovoAlignmentFileOptions.hh"
 #include "blt_util/chrom_depth_map.hh"
 #include "starling_common/starling_base_shared.hh"
 
@@ -53,50 +54,14 @@ struct denovo_filter_options
 };
 
 
-namespace INOVO_SAMPLETYPE
-{
-    enum index_t
-    {
-        PROBAND,
-        PARENT,
-        SIBLING,
-        SIZE
-    };
-}
-
-namespace INOVO_GENDER
-{
-    enum index_t
-    {
-        UNKNOWN,
-        MALE,
-        FEMALE,
-        SIZE
-    };
-}
-
-/// tracks all sample information provided by the user
-struct SampleInfo
-{
-    /// the id is only used to tell samples apart, this allows for future expansion beyond a 1-1 mapping of samples to bam files
-    unsigned id = 0;
-
-    /// relationship of sample to proband there's no use for an unknown value here:
-    INOVO_SAMPLETYPE::index_t stype = INOVO_SAMPLETYPE::PROBAND;
-
-    /// gender of sample, this is provided for future expansions but will be ignored for POC
-    INOVO_GENDER::index_t gtype = INOVO_GENDER::UNKNOWN;
-};
-
-
-
 struct inovo_options : public starling_base_options
 {
     typedef starling_base_options base_t;
 
-    std::vector<std::string> alignmentFilename;
+    DenovoAlignmentFileOptions alignFileOpt;
 
-    std::vector<SampleInfo> alignmentSampleInfo;
+    // output file:
+    std::string denovo_filename;
 
 #if 0
     bool is_tumor_bindel_diploid() const
@@ -178,7 +143,7 @@ struct inovo_options : public starling_base_options
 
 
 
-/// somatic filter options computed after user input is finished:
+/// denovo filter options computed after user input is finished:
 ///
 struct denovo_filter_deriv_options
 {

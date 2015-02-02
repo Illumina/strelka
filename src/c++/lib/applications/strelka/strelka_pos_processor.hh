@@ -21,12 +21,12 @@
 #include "NoiseBuffer.hh"
 #include "strelka_shared.hh"
 #include "SomaticIndelVcfWriter.hh"
-#include "strelka_sample_type.hh"
 #include "strelka_streams.hh"
 
 #include "starling_common/PileupCleaner.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 #include "SomaticCallableProcessor.hh"
+#include "StrelkaSampleSetSummary.hh"
 
 
 ///

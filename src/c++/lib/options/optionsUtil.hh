@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Manta
+// Copyright (c) 2013-2014 Illumina, Inc.
 //
 // This software is provided under the terms and conditions of the
 // Illumina Open Source Software License 1.
@@ -11,16 +11,18 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \author Chris Saunders
-///
-
 #pragma once
 
-#include "inovo_shared.hh"
-#include "blt_util/prog_info.hh"
+#include <string>
 
 
-void
-inovo_run(
-    const prog_info& pinfo,
-    const inovo_options& opt);
+/// check if input file exists and is usable as
+/// input, if so canonicalize the name
+///
+/// In case of error return true and provide error
+/// message
+bool
+checkStandardizeInputFile(
+    std::string& filename,
+    const char* fileLabel,
+    std::string& errorMsg);

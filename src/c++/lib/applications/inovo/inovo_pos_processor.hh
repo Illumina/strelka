@@ -25,7 +25,6 @@
 
 
 #include "inovo_shared.hh"
-#include "inovo_sample_type.hh"
 #include "inovo_streams.hh"
 
 #include "starling_common/starling_pos_processor_base.hh"
@@ -46,18 +45,13 @@ struct inovo_pos_processor : public starling_pos_processor_base
 private:
 
     void
-    process_pos_variants(const pos_t pos) override;
+    process_pos_variants_impl(const pos_t pos) override;
 
     void
     process_pos_snp_denovo(const pos_t pos);
 
     void
     process_pos_indel_denovo(const pos_t pos);
-
-    void
-    run_post_call_step(
-        const int stage_no,
-        const pos_t pos) override;
 
     void
     write_counts(const pos_range& output_report_range) const override;

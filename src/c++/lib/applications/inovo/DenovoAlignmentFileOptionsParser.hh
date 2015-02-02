@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Manta
+// Copyright (c) 2013-2014 Illumina, Inc.
 //
 // This software is provided under the terms and conditions of the
 // Illumina Open Source Software License 1.
@@ -17,14 +17,18 @@
 
 #pragma once
 
-#include <cstdint>
+#include "DenovoAlignmentFileOptions.hh"
+
+#include "boost/program_options.hpp"
 
 
-typedef uint32_t align_id_t;
-typedef int32_t sample_id_t;
+boost::program_options::options_description
+getOptionsDescription(
+    DenovoAlignmentFileOptions& opt);
 
-// So long as the sample count required by multi-sample applications
-// remains small, any type of heap allocation is a waste, so we use
-// this to create stack arrays:
-//
-enum { MAX_SAMPLE=4 };
+
+bool
+parseOptions(
+    const boost::program_options::variables_map& vm,
+    DenovoAlignmentFileOptions& opt,
+    std::string& errorMsg);

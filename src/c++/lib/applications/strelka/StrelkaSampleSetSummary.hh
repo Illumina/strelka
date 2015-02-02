@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "starling_common/sample_info.hh"
+#include "starling_common/SampleSetSummary.hh"
 
 
 namespace STRELKA_SAMPLE_TYPE
@@ -65,12 +65,12 @@ get_char_label(const unsigned i)
 
 // same thing, but easier to pass around as an argument:
 //
-struct inovo_sample_info : public sample_info
+struct StrelkaSampleSetSummary : public SampleSetSummary
 {
-    inovo_sample_info() : sample_info() {}
+    StrelkaSampleSetSummary() : SampleSetSummary() {}
 
     unsigned
-    sample_size() const override
+    size() const override
     {
         return STRELKA_SAMPLE_TYPE::SIZE;
     }

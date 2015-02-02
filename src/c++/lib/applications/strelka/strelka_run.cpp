@@ -80,7 +80,7 @@ strelka_run(
         }
     }
 
-    const strelka_sample_info ssi;
+    const StrelkaSampleSetSummary ssi;
     strelka_streams client_io(opt, dopt, pinfo,normal_read_stream.get_header(),ssi);
     strelka_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;

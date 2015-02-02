@@ -61,7 +61,7 @@ starling_run(
         throw blt_exception(oss.str().c_str());
     }
 
-    sample_info ssi;
+    SampleSetSummary ssi;
     starling_streams client_io(opt,pinfo,read_stream.get_header(),ssi);
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);

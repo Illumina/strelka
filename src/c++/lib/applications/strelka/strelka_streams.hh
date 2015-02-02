@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "strelka_sample_type.hh"
 #include "strelka_shared.hh"
 
 #include "starling_common/starling_streams_base.hh"
+#include "StrelkaSampleSetSummary.hh"
 
 
 
@@ -32,7 +32,7 @@ struct strelka_streams : public starling_streams_base
         const strelka_deriv_options& dopt,
         const prog_info& pinfo,
         const bam_header_t* const bam_header,
-        const strelka_sample_info& ssi);
+        const StrelkaSampleSetSummary& ssi);
 
     std::ostream*
     somatic_snv_osptr() const

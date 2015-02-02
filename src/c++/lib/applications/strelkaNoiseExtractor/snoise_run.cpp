@@ -59,7 +59,7 @@ snoise_run(
         throw blt_exception(oss.str().c_str());
     }
 
-    sample_info ssi;
+    SampleSetSummary ssi;
     snoise_streams streams(opt,pinfo,read_stream.get_header(),ssi);
 
     snoise_pos_processor sppr(opt,dopt,ref,streams);

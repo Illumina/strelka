@@ -21,7 +21,6 @@
 
 
 #include "position_somatic_snv_strand_grid.hh"
-#include "strelka_sample_type.hh"
 #include "strelka_pile_test_run.hh"
 #include "strelka_sim_test.hh"
 
@@ -39,6 +38,8 @@
 
 #include <fstream>
 #include <iostream>
+
+#include "StrelkaSampleSetSummary.hh"
 
 
 typedef boost::mt19937 gen_t;

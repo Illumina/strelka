@@ -43,24 +43,40 @@ inovo_run(
 
     const pos_range& rlimit(dopt.report_range_limit);
 
-    assert(! opt.bam_filename.empty());
-    assert(! opt.tumor_bam_filename.empty());
+    assert(opt.bam_filename.empty());
 
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-    bam_streamer normal_read_stream(opt.bam_filename.c_str(),bam_region.c_str());
-    bam_streamer tumor_read_stream(opt.tumor_bam_filename.c_str(),bam_region.c_str());
 
-    // check for header consistency:
-    if (! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header()))
+    typedef std::shared_ptr<bam_streamer> stream_ptr;
+    std::vector<stream_ptr> bamStreams;
+
+    // setup all alignment data for main scan loop:
+    for (const std::string& afile : opt.alignFileOpt.alignmentFilename)
     {
-        std::ostringstream oss;
-        oss << "ERROR: Normal and tumor BAM files have incompatible headers.\n";
-        oss << "\tnormal_bam_file:\t'" << opt.bam_filename << "'\n";
-        oss << "\ttumor_bam_file:\t'" << opt.tumor_bam_filename << "'\n";
-        throw blt_exception(oss.str().c_str());
+        stream_ptr tmp(new bam_streamer(afile.c_str(), bam_region.c_str()));
+        bamStreams.push_back(tmp);
     }
 
-    const int32_t tid(normal_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
+    // check bam header compatibility:
+    const unsigned bamCount(bamStreams.size());
+    if (bamCount > 1)
+    {
+        /// TODO: provide a better error exception for failed bam header check:
+        const bam_header_t* compareHeader(bamStreams[0]->get_header());
+        for (unsigned bamIndex(1); bamIndex<bamCount; ++bamIndex)
+        {
+            const bam_header_t* indexHeader(bamStreams[bamIndex]->get_header());
+            if (! check_header_compatibility(compareHeader,indexHeader))
+            {
+                log_os << "ERROR: incompatible bam headers between files:\n"
+                       << "\t" << opt.alignFileOpt.alignmentFilename[0] << "\n"
+                       << "\t" << opt.alignFileOpt.alignmentFilename[bamIndex] << "\n";
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+    const int32_t tid(bamStreams[0]->target_name_to_id(opt.bam_seq_name.c_str()));
     if (tid < 0)
     {
         std::ostringstream oss;
@@ -68,26 +84,30 @@ inovo_run(
         throw blt_exception(oss.str().c_str());
     }
 
-    // We make the assumption that the normal and tumor files have the
+    // We make the assumption that all alignment files have the
     // same set of reference chromosomes (and thus tid matches for the
     // same chrom label in the binary records). Check this constraint
     // here:
+    for (unsigned bamIndex(1); bamIndex<bamCount; ++bamIndex)
     {
-        const int32_t tumor_tid(tumor_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
-        if (tid != tumor_tid)
+        const int32_t other_tid(bamStreams[bamIndex]->target_name_to_id(opt.bam_seq_name.c_str()));
+        if (tid != other_tid)
         {
-            throw blt_exception("ERROR: tumor and normal BAM files have mis-matched reference sequence dictionaries.\n");
+            throw blt_exception("ERROR: sample BAM files have mis-matched reference sequence dictionaries.\n");
         }
     }
 
-    const inovo_sample_info ssi;
-    inovo_streams client_io(opt, dopt, pinfo,normal_read_stream.get_header(),ssi);
-    inovo_pos_processor sppr(opt,dopt,ref,client_io);
+    const InovoSampleSetSummary ssi(opt);
+    const bam_header_t& header(*(bamStreams[0]->get_header()));
+    inovo_streams streams(opt, dopt, pinfo, header, ssi);
+    inovo_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;
 
     starling_input_stream_data sdata;
-    sdata.register_reads(normal_read_stream,STRELKA_SAMPLE_TYPE::NORMAL);
-    sdata.register_reads(tumor_read_stream,STRELKA_SAMPLE_TYPE::TUMOR);
+    for (unsigned bamIndex(0); bamIndex<bamCount; ++bamIndex)
+    {
+        sdata.register_reads(*bamStreams[bamIndex],bamIndex);
+    }
 
     // hold zero-to-many vcf streams open:
     typedef std::shared_ptr<vcf_streamer> vcf_ptr;
@@ -96,7 +116,7 @@ inovo_run(
     for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
     {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),normal_read_stream.get_header())));
+                                                        bam_region.c_str(),header)));
         sdata.register_indels(*(indel_stream.back()));
     }
 
@@ -105,17 +125,8 @@ inovo_run(
     for (const auto& vcf_filename : opt.force_output_vcf)
     {
         foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                          bam_region.c_str(),normal_read_stream.get_header())));
+                                                          bam_region.c_str(),header)));
         sdata.register_forced_output(*(foutput_stream.back()));
-    }
-
-    std::vector<vcf_ptr> noise_stream;
-
-    for (const auto& vcf_filename : opt.noise_vcf)
-    {
-        noise_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),normal_read_stream.get_header())));
-        sdata.register_noise(*(noise_stream.back()));
     }
 
     starling_input_stream_handler sinput(sdata);
@@ -146,24 +157,11 @@ inovo_run(
 
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
-            const bam_streamer* streamptr(nullptr);
-            if        (current.sample_no == STRELKA_SAMPLE_TYPE::NORMAL)
-            {
-                streamptr = &normal_read_stream;
-            }
-            else if (current.sample_no == STRELKA_SAMPLE_TYPE::TUMOR)
-            {
-                streamptr = &tumor_read_stream;
-            }
-            else
-            {
-                log_os << "ERROR: unrecognized sample_no: " << current.sample_no << "\n";
-                exit(EXIT_FAILURE);
-            }
-            const bam_streamer& read_stream(*streamptr);
-            const bam_record& read(*(read_stream.get_record_ptr()));
 
-            process_genomic_read(opt,ref,read_stream,read,current.pos,
+            const bam_streamer& readStream(*bamStreams[current.sample_no]);
+            const bam_record& read(*(readStream.get_record_ptr()));
+
+            process_genomic_read(opt,ref,readStream,read,current.pos,
                                  rlimit.begin_pos,brc,sppr,current.sample_no);
         }
         else if (current.itype == INPUT_TYPE::INDEL)     // process candidate indels input from vcf file(s)
@@ -187,17 +185,6 @@ inovo_run(
             }
 
         }
-        else if (current.itype == INPUT_TYPE::NOISE)
-        {
-            const vcf_record& vcf_variant(*(noise_stream[current.get_order()]->get_record_ptr()));
-            if (vcf_variant.is_snv())
-            {
-                SiteNoise sn;
-                set_noise_from_vcf(vcf_variant.line,sn);
-                sppr.insert_noise_pos(vcf_variant.pos-1,sn);
-            }
-
-        }
         else
         {
             log_os << "ERROR: invalid input condition.\n";
@@ -206,6 +193,4 @@ inovo_run(
     }
 
     sppr.reset();
-
-    //    brc.report(client_io.report_os());
 }

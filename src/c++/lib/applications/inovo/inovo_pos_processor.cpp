@@ -33,13 +33,11 @@ inovo_pos_processor(
     const inovo_deriv_options& dopt,
     const reference_contig_segment& ref,
     const inovo_streams& streams)
-    : base_t(opt,dopt,ref,streams,dopt.sample_size())
+    : base_t(opt,dopt,ref,streams,opt.alignFileOpt.alignmentSampleInfo.size())
     , _opt(opt)
     , _dopt(dopt)
     , _streams(streams)
 {
-    using namespace STRELKA_SAMPLE_TYPE;
-
     /// get max proband depth
     double max_candidate_proband_sample_depth(-1.);
     {
@@ -64,46 +62,35 @@ inovo_pos_processor(
         }
     }
 
-    for (x in n_samples)
-    {
-        if (x==PROBAND)
-    }
+    using namespace INOVO_SAMPLETYPE;
 
     // setup indel syncronizers:
     {
-        sample_info& normal_sif(sample(NORMAL));
         indel_sync_data isdata;
-        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, max_candidate_proband_sample_depth, NORMAL);
-        isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
-                               tumor_sif.sample_opt, -1., TUMOR);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,NORMAL));
-        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,TUMOR));
+        for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
+        {
+            const bool isProband(_opt.alignFileOpt.alignmentSampleInfo.getSampleInfo(sampleIndex).stype == PROBAND);
+            double max_candidate_sample_depth(isProband ? max_candidate_proband_sample_depth : -1);
+            sample_info& sif(sample(sampleIndex));
+            isdata.register_sample(sif.indel_buff,sif.estdepth_buff,sif.estdepth_buff_tier2,
+                                   sif.sample_opt, max_candidate_sample_depth, sampleIndex);
+        }
+
+        for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
+        {
+            sample_info& sif(sample(sampleIndex));
+            sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,sampleIndex));
+        }
     }
-
-    // setup indel avg window:
-    _indelRegionIndexNormal=normal_sif.wav.add_win(opt.sfilter.indelRegionFlankSize*2);
-    _indelRegionIndexTumor=tumor_sif.wav.add_win(opt.sfilter.indelRegionFlankSize*2);
 }
 
 
 
 void
 inovo_pos_processor::
-insert_noise_pos(
-    const pos_t pos,
-    const SiteNoise& sn)
+process_pos_snp_denovo(const pos_t pos)
 {
-    _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
-    _noisePos.insertSiteNoise(pos,sn);
-}
-
-
-void
-inovo_pos_processor::
-process_pos_snp_somatic(const pos_t pos)
-{
-    using namespace STRELKA_SAMPLE_TYPE;
+    using namespace INOVO_SAMPLETYPE;
 
     const pos_t output_pos(pos+1);
     const char ref_base(_ref.get_base(pos));
@@ -243,40 +230,35 @@ process_pos_snp_somatic(const pos_t pos)
 
 void
 inovo_pos_processor::
-process_pos_variants(const pos_t pos)
+process_pos_variants_impl(const pos_t pos)
 {
-    process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
-    process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
-
-    process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
-    process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
-
     try
     {
-        process_pos_snp_somatic(pos);
+        process_pos_indel_denovo(pos);
     }
     catch (...)
     {
-        log_os << "Exception caught while attempting to call somatic SNV at position: " << (pos+1) << "\n";
+        log_os << "Exception caught while attempting to call denovo indel at position: " << (pos+1) << "\n";
         throw;
     }
 
     try
     {
-        process_pos_indel_somatic(pos);
+        process_pos_snp_denovo(pos);
     }
     catch (...)
     {
-        log_os << "Exception caught while attempting to call somatic indel at position: " << (pos+1) << "\n";
+        log_os << "Exception caught while attempting to call denovo SNV at position: " << (pos+1) << "\n";
         throw;
     }
+
 }
 
 
 
 void
 inovo_pos_processor::
-process_pos_indel_somatic(const pos_t pos)
+process_pos_indel_denovo(const pos_t pos)
 {
     using namespace STRELKA_SAMPLE_TYPE;
 
@@ -399,17 +381,18 @@ process_pos_indel_somatic(const pos_t pos)
 
 void
 inovo_pos_processor::
-write_counts(const pos_range& output_report_range) const
+write_counts(
+    const pos_range& output_report_range) const
 {
 
     std::ostream* report_os_ptr(get_report_osptr());
-    if (NULL==report_os_ptr) return;
+    if (nullptr==report_os_ptr) return;
     std::ostream& report_os(*report_os_ptr);
 
     for (unsigned i(0); i<STRELKA_SAMPLE_TYPE::SIZE; ++i)
     {
         const sample_info& sif(sample(i));
-        const std::string label(STRELKA_SAMPLE_TYPE::get_label(i));
+        const std::string label(INOVO_SAMPLETYPE::get_label(i));
 
         report_os << std::setprecision(8);
         report_stream_stat(sif.ss,(label+"_ALLSITES_COVERAGE").c_str(),output_report_range,report_os);
@@ -421,25 +404,4 @@ write_counts(const pos_range& output_report_range) const
             report_stream_stat(sif.used_ssn,(label+"_NO_REF_N_COVERAGE_USED").c_str(),output_report_range,report_os);
         }
     }
-}
-
-
-void
-inovo_pos_processor::
-run_post_call_step(
-    const int stage_no,
-    const pos_t pos)
-{
-    if (stage_no != static_cast<int>(_dopt.sfilter.indelRegionStage))
-    {
-        base_t::run_post_call_step(stage_no, pos);
-        return;
-    }
-
-    if (! _indelWriter.testPos(pos)) return;
-
-    const win_avg_set& was_normal(sample(STRELKA_SAMPLE_TYPE::NORMAL).wav.get_win_avg_set(_indelRegionIndexNormal));
-    const win_avg_set& was_tumor(sample(STRELKA_SAMPLE_TYPE::TUMOR).wav.get_win_avg_set(_indelRegionIndexTumor));
-
-    _indelWriter.addIndelWindowData(pos, was_normal, was_tumor);
 }

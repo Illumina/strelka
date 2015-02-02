@@ -33,7 +33,7 @@ write_filters(
     }
 
     bool is_sep(false);
-    for (unsigned i(0); i<STRELKA_VCF_FILTERS::SIZE; ++i)
+    for (unsigned i(0); i<INOVO_VCF_FILTERS::SIZE; ++i)
     {
         if (! filters.test(i)) continue;
 
@@ -45,19 +45,8 @@ write_filters(
         {
             is_sep=true;
         }
-        os << STRELKA_VCF_FILTERS::get_label(i);
+        os << INOVO_VCF_FILTERS::get_label(i);
     }
-}
-
-void
-inovo_shared_modifiers::
-write_feature(
-    std::ostream& os) const
-{
-    os << "\n #FEAT ";
-    for (auto it = _featureVal.cbegin(); it != _featureVal.cend(); ++it)
-        os << STRELKA_VQSR_FEATURES::get_feature_label(it->first) << "=" << it->second << "; ";
-    os << "\n";
 }
 
 

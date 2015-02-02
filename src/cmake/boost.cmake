@@ -35,7 +35,6 @@ macro (initBoostParams)
     # for test, so we need two lists now:
     set (THIS_BOOST_BUILD_COMPONENTS filesystem program_options
                                      system test)
-
     set (Boost_USE_MULTITHREADED OFF)
     set (Boost_USE_STATIC_LIBS ON)
 endmacro()
