@@ -15,7 +15,6 @@
 /// \author Chris Saunders
 ///
 
-#include "extended_pos_data.hh"
 #include "position_somatic_snv.hh"
 #include "position_somatic_snv_strand_grid.hh"
 #include "position_somatic_snv_strand_grid_vcf.hh"
@@ -29,7 +28,7 @@
 
 #include <iomanip>
 
-//#define SOMATIC_STDOUT
+
 
 strelka_pos_processor::
 strelka_pos_processor(
@@ -113,6 +112,7 @@ insert_noise_pos(
 }
 
 
+
 void
 strelka_pos_processor::
 process_pos_snp_somatic(const pos_t pos)
@@ -126,37 +126,17 @@ process_pos_snp_somatic(const pos_t pos)
 
     // TODO this is ridiculous -- if the tier2 data scheme works then come back and clean this up:
     static const unsigned n_tier(2);
-    std::unique_ptr<extended_pos_data> normald_ptr[n_tier];
-    std::unique_ptr<extended_pos_data> tumord_ptr[n_tier];
-
-    extra_position_data* normal_epd_ptr[n_tier] = { &(normal_sif.epd) , &(_tier2_epd[NORMAL]) };
-    extra_position_data* tumor_epd_ptr[n_tier] = { &(tumor_sif.epd) , &(_tier2_epd[TUMOR]) };
-#if 0
-    normald_ptr[0].reset(normal_sif.bc_buff.get_pos(pos),normal_sif.epd,
-                         ref_base,_opt,_dpcache,is_dep,is_include_tier2);
-    tumord_ptr[0].reset(tumor_sif.bc_buff.get_pos(pos),tumor_sif.epd,
-                        ref_base,_opt,_dpcache,is_dep,is_include_tier2);
-#endif
+    CleanedPileup* normal_cpi_ptr[n_tier] = { &(normal_sif.cpi) , &(_tier2_cpi[NORMAL]) };
+    CleanedPileup* tumor_cpi_ptr[n_tier] = { &(tumor_sif.cpi) , &(_tier2_cpi[TUMOR]) };
 
     for (unsigned t(0); t<n_tier; ++t)
     {
         const bool is_include_tier2(t!=0);
         if (is_include_tier2 && (! _opt.is_tier2())) continue;
-        normald_ptr[t].reset(new extended_pos_data(normal_sif.bc_buff.get_pos(pos),*(normal_epd_ptr[t]),
-                                                   _opt,_dpcache,is_include_tier2));
-        tumord_ptr[t].reset(new extended_pos_data(tumor_sif.bc_buff.get_pos(pos),*(tumor_epd_ptr[t]),
-                                                  _opt,_dpcache,is_include_tier2));
+        _pileupCleaner.CleanPileup(normal_sif.bc_buff.get_pos(pos),is_include_tier2,*(normal_cpi_ptr[t]));
+        _pileupCleaner.CleanPileup(tumor_sif.bc_buff.get_pos(pos),is_include_tier2,*(tumor_cpi_ptr[t]));
     }
 
-#if 0
-    sif.ss.update(n_calls);
-    sif.used_ss.update(n_used_calls);
-    if (pi.ref_base != 'N')
-    {
-        sif.ssn.update(n_calls);
-        sif.used_ssn.update(n_used_calls);
-    }
-#endif
 
     // note single-sample anomaly filtration won't apply here (more of
     // a vestigial blt feature anyway)
@@ -173,19 +153,19 @@ process_pos_snp_somatic(const pos_t pos)
     {
         sgtg.is_forced_output=is_forced_output_pos(pos);
 
-        const extended_pos_info* normal_epi_t2_ptr(NULL);
-        const extended_pos_info* tumor_epi_t2_ptr(NULL);
+        const extended_pos_info* normal_epi_t2_ptr(nullptr);
+        const extended_pos_info* tumor_epi_t2_ptr(nullptr);
         if (_opt.is_tier2())
         {
-            normal_epi_t2_ptr=(&(normald_ptr[1]->good_epi));
-            tumor_epi_t2_ptr=(&(tumord_ptr[1]->good_epi));
+            normal_epi_t2_ptr=&(normal_cpi_ptr[1]->getExtendedPosInfo());
+            tumor_epi_t2_ptr=&(tumor_cpi_ptr[1]->getExtendedPosInfo());
         }
 
         const bool isComputeNonSomatic(_opt.is_somatic_callable());
 
         _dopt.sscaller_strand_grid().position_somatic_snv_call(
-            normald_ptr[0]->good_epi,
-            tumord_ptr[0]->good_epi,
+            normal_cpi_ptr[0]->getExtendedPosInfo(),
+            tumor_cpi_ptr[0]->getExtendedPosInfo(),
             normal_epi_t2_ptr,
             tumor_epi_t2_ptr,
             isComputeNonSomatic,
@@ -228,10 +208,10 @@ process_pos_snp_somatic(const pos_t pos)
 
         static const bool is_write_nqss(false);
         write_vcf_somatic_snv_genotype_strand_grid(_opt,_dopt,sgtg,is_write_nqss,
-                                                   *(normald_ptr[0]),
-                                                   *(tumord_ptr[0]),
-                                                   *(normald_ptr[1]),
-                                                   *(tumord_ptr[1]),
+                                                   *(normal_cpi_ptr[0]),
+                                                   *(tumor_cpi_ptr[0]),
+                                                   *(normal_cpi_ptr[1]),
+                                                   *(tumor_cpi_ptr[1]),
                                                    bos);
         bos << "\n";
 
@@ -242,8 +222,8 @@ process_pos_snp_somatic(const pos_t pos)
     {
         log_os << "TUMOR/NORMAL EVIDENCE pos: " << output_pos << "\n"
                << "is_snv: " << sgtg.is_snv() << "\n"
-               << "normal-data:\n" << normald_ptr[0]->epd.good_pi << "\n"
-               << "tumor-data:\n" << tumord_ptr[0]->epd.good_pi << "\n";
+               << "normal-data:\n" << static_cast<const CleanedPileup&>(*normal_cpi_ptr[0]).cleanedPileup() << "\n"
+               << "tumor-data:\n" << static_cast<const CleanedPileup&>(*tumor_cpi_ptr[0]).cleanedPileup() << "\n";
     }
 }
 

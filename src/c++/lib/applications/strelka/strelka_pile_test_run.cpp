@@ -28,6 +28,7 @@
 #include "blt_util/istream_line_splitter.hh"
 #include "blt_util/parse_util.hh"
 #include "blt_util/seq_util.hh"
+#include "starling_common/PileupCleaner.hh"
 
 #include <cassert>
 #include <cctype>
@@ -64,24 +65,22 @@ call(
     snp_pos_info& norm_pi,
     snp_pos_info& tumor_pi)
 {
-    static dependent_prob_cache dpcache;
+    static PileupCleaner pileupCleaner(_opt);
 
     // recreate data caches:
-    extra_position_data norm_epd;
-    extra_position_data tumor_epd;
+    CleanedPileup norm_cpi;
+    CleanedPileup tumor_cpi;
 
     const bool is_include_tier2(false);
-    extended_pos_data normald(norm_pi,norm_epd,
-                              _opt,dpcache,is_include_tier2);
-    extended_pos_data tumord(tumor_pi,tumor_epd,
-                             _opt,dpcache,is_include_tier2);
+    pileupCleaner.CleanPileup(norm_pi,is_include_tier2,norm_cpi);
+    pileupCleaner.CleanPileup(tumor_pi,is_include_tier2,tumor_cpi);
 
     //    somatic_snv_genotype sgt;
     somatic_snv_genotype_grid sgtg;
-    _dopt_ptr->sscaller_strand_grid().position_somatic_snv_call(normald.good_epi,
-                                                                tumord.good_epi,
-                                                                NULL,
-                                                                NULL,
+    _dopt_ptr->sscaller_strand_grid().position_somatic_snv_call(norm_cpi.getExtendedPosInfo(),
+                                                                tumor_cpi.getExtendedPosInfo(),
+                                                                nullptr,
+                                                                nullptr,
                                                                 is_somatic_gvcf,
                                                                 sgtg);
 
@@ -93,10 +92,10 @@ call(
         << ".";
 
     write_vcf_somatic_snv_genotype_strand_grid(_opt,*(_dopt_ptr),sgtg,is_somatic_gvcf,
-                                               normald,
-                                               tumord,
-                                               normald,
-                                               tumord,
+                                               norm_cpi,
+                                               tumor_cpi,
+                                               norm_cpi,
+                                               tumor_cpi,
                                                _os);
 
     _os << "\n";
@@ -128,7 +127,8 @@ load_pi(const char ref_base,
 
 // call sites from an external simulator:
 void
-strelka_pile_test_run(strelka_options& opt)
+strelka_pile_test_run(
+    strelka_options& opt)
 {
     strelka_pile_caller pcall(opt,std::cout);
 

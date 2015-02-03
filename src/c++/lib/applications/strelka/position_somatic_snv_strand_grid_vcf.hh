@@ -22,6 +22,7 @@
 #pragma once
 
 #include "position_somatic_snv_strand_grid.hh"
+#include "starling_common/PileupCleaner.hh"
 
 
 // vcf output:
@@ -34,8 +35,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
     const strelka_deriv_options& dopt,
     const somatic_snv_genotype_grid& sgt,
     const bool is_write_nqss,
-    const extended_pos_data& n1_epd,
-    const extended_pos_data& t1_epd,
-    const extended_pos_data& n2_epd,
-    const extended_pos_data& t2_epd,
+    const CleanedPileup& n1_epd,
+    const CleanedPileup& t1_epd,
+    const CleanedPileup& n2_epd,
+    const CleanedPileup& t2_epd,
     std::ostream& os);

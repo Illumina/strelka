@@ -332,6 +332,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _chrom_name(_opt.bam_seq_name)
     , _n_samples(n_samples)
     , _is_variant_windows(_opt.variant_windows.size())
+    , _pileupCleaner(opt)
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 

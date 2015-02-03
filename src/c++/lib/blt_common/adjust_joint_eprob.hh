@@ -28,7 +28,6 @@
 //
 struct dependent_prob_cache
 {
-
     enum { MAX_QSCORE = 64 };
 
     dependent_prob_cache() : _val(MAX_QSCORE+1), _is_init(MAX_QSCORE+1,false) {}

@@ -44,10 +44,9 @@ void
 set_VQSR_sample_info(
     const blt_options& opt,
     const strelka_deriv_options& dopt,
-    const extended_pos_data& tier1_epd,
-    const extended_pos_data& tier2_epd,
+    const CleanedPileup& tier1_cpi,
+    const CleanedPileup& tier2_cpi,
     strelka_shared_modifiers& smod,
-    const char ref_base,
     bool isNormalSample)
 {
     using namespace STRELKA_VQSR_FEATURES;
@@ -55,23 +54,23 @@ set_VQSR_sample_info(
     // add in VQSR features
     // {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
     // {5,T_SDP_RATE},{6,N_DP_RATE},{7,TIER1_ALLELE_RATE}
-    const double FDP_ratio(safeFrac(tier1_epd.n_unused_calls, tier1_epd.n_calls));
-    const double SDP_ratio(safeFrac(tier1_epd.pi.n_spandel, tier1_epd.n_calls+tier1_epd.pi.n_spandel));
+    const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
+    const double SDP_ratio(safeFrac(tier1_cpi.rawPileup().n_spandel, tier1_cpi.n_calls()+tier1_cpi.rawPileup().n_spandel));
 
     smod.set_feature((isNormalSample ? N_FDP_RATE : T_FDP_RATE), FDP_ratio);
     smod.set_feature((isNormalSample ? N_SDP_RATE : T_SDP_RATE), SDP_ratio);
 
     if (isNormalSample)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
     {
-        smod.set_feature(N_DP_RATE, safeFrac(tier1_epd.n_calls,dopt.sfilter.max_depth));
+        smod.set_feature(N_DP_RATE, safeFrac(tier1_cpi.n_calls(),dopt.sfilter.max_depth));
     }
 
     if (!isNormalSample)      //report tier1_allele count for tumor case
     {
         std::array<unsigned,N_BASE> tier1_base_counts;
-        tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+        tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
-        const unsigned ref_index(base_to_id(ref_base));
+        const unsigned ref_index(base_to_id(tier1_cpi.cleanedPileup().get_ref_base()));
         unsigned ref=0;
         unsigned alt=0;
         for (unsigned b(0); b<N_BASE; ++b)
@@ -125,10 +124,10 @@ calc_VQSR_features(
     const strelka_deriv_options& dopt,
     const somatic_snv_genotype_grid& sgt,
     strelka_shared_modifiers& smod,
-    const extended_pos_data& n1_epd,
-    const extended_pos_data& t1_epd,
-    const extended_pos_data& n2_epd,
-    const extended_pos_data& t2_epd,
+    const CleanedPileup& n1_cpi,
+    const CleanedPileup& t1_cpi,
+    const CleanedPileup& n2_cpi,
+    const CleanedPileup& t2_cpi,
     const result_set& rs)
 {
     // don't worry about efficiency for median calc right now:
@@ -136,9 +135,9 @@ calc_VQSR_features(
     //bool isAltmap(false);
     uint16_t altpos=0;
     uint16_t altmap=0;
-    if (! t1_epd.pi.altReadPos.empty())
+    if (! t1_cpi.rawPileup().altReadPos.empty())
     {
-        const auto& apos(t1_epd.pi.altReadPos);
+        const auto& apos(t1_cpi.rawPileup().altReadPos);
         std::vector<uint16_t> readpos;
         for (const auto& r : apos)
         {
@@ -171,20 +170,20 @@ calc_VQSR_features(
     //QSS_NT
     smod.set_feature(STRELKA_VQSR_FEATURES::QSS_NT,rs.snv_from_ntype_qphred);
 
-    set_VQSR_sample_info(opt,dopt,n1_epd,n2_epd,smod,n1_epd.pi.get_ref_base(),true);
-    set_VQSR_sample_info(opt,dopt,t1_epd,t2_epd,smod,n1_epd.pi.get_ref_base(),false);
+    set_VQSR_sample_info(opt,dopt,n1_cpi,n2_cpi,smod,true);
+    set_VQSR_sample_info(opt,dopt,t1_cpi,t2_cpi,smod,false);
 
     //MQ
-    const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
-    const double cumm_mapq2(n1_epd.pi.cumm_mapq + t1_epd.pi.cumm_mapq);
+    const unsigned n_mapq(n1_cpi.rawPileup().n_mapq+t1_cpi.rawPileup().n_mapq);
+    const double cumm_mapq2(n1_cpi.rawPileup().cumm_mapq + t1_cpi.rawPileup().cumm_mapq);
     smod.set_feature(STRELKA_VQSR_FEATURES::MQ,std::sqrt(cumm_mapq2/n_mapq));
 
     //n_mapq0
-    const unsigned n_mapq0(n1_epd.pi.n_mapq0+t1_epd.pi.n_mapq0);
+    const unsigned n_mapq0(n1_cpi.rawPileup().n_mapq0+t1_cpi.rawPileup().n_mapq0);
     smod.set_feature(STRELKA_VQSR_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq0+n_mapq));
 
     //ReadPosRankSum
-    const double ReadPosRankSum = t1_epd.pi.read_pos_ranksum.get_u_stat();
+    const double ReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_u_stat();
     smod.set_feature(STRELKA_VQSR_FEATURES::ReadPosRankSum,ReadPosRankSum);
 
     //StrandBias
@@ -220,24 +219,24 @@ void
 write_vcf_sample_info(
     const blt_options& opt,
     const strelka_deriv_options& dopt,
-    const extended_pos_data& tier1_epd,
-    const extended_pos_data& tier2_epd,
+    const CleanedPileup& tier1_cpi,
+    const CleanedPileup& tier2_cpi,
     std::ostream& os)
 {
     //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
-    os << tier1_epd.n_calls
+    os << tier1_cpi.n_calls()
        << ':'
-       << tier1_epd.n_unused_calls
+       << tier1_cpi.n_unused_calls()
        << ':'
-       << tier1_epd.pi.n_spandel
+       << tier1_cpi.rawPileup().n_spandel
        << ':'
-       << tier1_epd.pi.n_submapped;
+       << tier1_cpi.rawPileup().n_submapped;
 
 
     std::array<unsigned,N_BASE> tier1_base_counts;
     std::array<unsigned,N_BASE> tier2_base_counts;
-    tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-    tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
+    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+    tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
 
     for (unsigned b(0); b<N_BASE; ++b)
     {
@@ -255,10 +254,10 @@ write_vcf_somatic_snv_genotype_strand_grid(
     const strelka_deriv_options& dopt,
     const somatic_snv_genotype_grid& sgt,
     const bool is_write_nqss,
-    const extended_pos_data& n1_epd,
-    const extended_pos_data& t1_epd,
-    const extended_pos_data& n2_epd,
-    const extended_pos_data& t2_epd,
+    const CleanedPileup& n1_epd,
+    const CleanedPileup& t1_epd,
+    const CleanedPileup& n2_epd,
+    const CleanedPileup& t2_epd,
     std::ostream& os)
 {
     const result_set& rs(sgt.rs);
@@ -267,8 +266,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
     {
         // compute all site filters:
-        const unsigned normalDP(n1_epd.n_calls);
-        const unsigned tumorDP(t1_epd.n_calls);
+        const unsigned normalDP(n1_epd.n_calls());
+        const unsigned tumorDP(t1_epd.n_calls());
 
         if (dopt.sfilter.is_max_depth())
         {
@@ -279,8 +278,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         {
-            const unsigned normalFDP(n1_epd.n_unused_calls);
-            const unsigned tumorFDP(t1_epd.n_unused_calls);
+            const unsigned normalFDP(n1_epd.n_unused_calls());
+            const unsigned tumorFDP(t1_epd.n_unused_calls());
 
             const double normalFilt(safeFrac(normalFDP,normalDP));
             const double tumorFilt(safeFrac(tumorFDP,tumorDP));
@@ -293,8 +292,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         {
-            const unsigned normalSDP(n1_epd.pi.n_spandel);
-            const unsigned tumorSDP(t1_epd.pi.n_spandel);
+            const unsigned normalSDP(n1_epd.rawPileup().n_spandel);
+            const unsigned tumorSDP(t1_epd.rawPileup().n_spandel);
             const unsigned normalSpanTot(normalDP + normalSDP);
             const unsigned tumorSpanTot(tumorDP + tumorSDP);
 
@@ -338,7 +337,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
     }
 
     //REF:
-    os << '\t' << n1_epd.pi.get_ref_base()
+    os << '\t' << n1_epd.rawPileup().get_ref_base()
        //ALT:
        << "\t";
     DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
@@ -374,12 +373,12 @@ write_vcf_somatic_snv_genotype_strand_grid(
         os << std::fixed << std::setprecision(2);
 
         // m_mapq includes all calls, even from reads below the mapq threshold:
-        const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
+        const unsigned n_mapq(n1_epd.cleanedPileup().n_mapq+t1_epd.cleanedPileup().n_mapq);
         os << ";DP=" << n_mapq;
         os << ";MQ=" << smod.get_feature(STRELKA_VQSR_FEATURES::MQ);
 
         {
-            const unsigned n_mapq0(n1_epd.pi.n_mapq0+t1_epd.pi.n_mapq0);
+            const unsigned n_mapq0(n1_epd.rawPileup().n_mapq0+t1_epd.rawPileup().n_mapq0);
             os << ";MQ0=" << n_mapq0;
         }
 

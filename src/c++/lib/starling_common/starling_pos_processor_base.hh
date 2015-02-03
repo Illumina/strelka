@@ -24,6 +24,7 @@
 
 #pragma once
 
+// s195 remove this include
 #include "blt_common/adjust_joint_eprob.hh"
 #include "blt_common/map_level.hh"
 #include "blt_util/depth_stream_stat_range.hh"
@@ -35,6 +36,7 @@
 #include "starling_common/indel_buffer.hh"
 #include "starling_common/indel_set.hh"
 #include "starling_common/indel_synchronizer.hh"
+#include "starling_common/PileupCleaner.hh"
 #include "starling_common/pos_basecall_buffer.hh"
 #include "starling_common/read_mismatch_info.hh"
 #include "starling_common/starling_base_shared.hh"
@@ -55,6 +57,7 @@ struct nploid_info;
 //get_influence_zone_size(const unsigned max_indel_size);
 
 
+/// s195 remove this struct
 /// keep a single copy of this struct to reuse for every site to lower alloc costs:
 struct extra_position_data
 {
@@ -339,7 +342,10 @@ public:
         pos_win_avgs wav;
 
         // keep a single copy of this struct to reuse for every site to lower alloc costs:
+        // s195 remove this
         extra_position_data epd;
+
+        CleanedPileup cpi;
     };
 
     sample_info&
@@ -610,7 +616,10 @@ protected:
     unsigned _n_samples;
     std::array<std::unique_ptr<sample_info>,MAX_SAMPLE> _sample;
 
+    // s195 - remove this:
     dependent_prob_cache _dpcache;
+
+    PileupCleaner _pileupCleaner;
 
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
     std::unique_ptr<nploid_info> _ninfo;
