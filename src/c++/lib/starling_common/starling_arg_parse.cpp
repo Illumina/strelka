@@ -29,10 +29,10 @@
 
 
 void
-legacy_starling_arg_parse(arg_data& ad,
-                          starling_base_options& opt)
+legacy_starling_arg_parse(
+    arg_data& ad,
+    starling_base_options& opt)
 {
-
     const prog_info& pinfo(ad.pinfo);
 
     if ((ad.size()==1) ||

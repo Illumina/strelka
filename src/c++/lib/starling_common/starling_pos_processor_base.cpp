@@ -1580,31 +1580,19 @@ process_pos_site_stats(
 
     const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
 
-    const unsigned n_calls(pi.calls.size());
+    static const bool is_include_tier2(false);
+    _pileupCleaner.CleanPileupFilter(pi,is_include_tier2,sif.cpi);
+
     const unsigned n_spandel(pi.n_spandel);
     const unsigned n_submapped(pi.n_submapped);
 
-    // for all but coverage-tests, we use a high-quality subset of the basecalls:
-    //
-    snp_pos_info& good_pi(sif.epd.good_pi);
-    good_pi.clear();
-    good_pi.set_ref_base(pi.get_ref_base());
-    for (unsigned i(0); i<n_calls; ++i)
-    {
-        if (pi.calls[i].is_call_filter) continue;
-        good_pi.calls.push_back(pi.calls[i]);
-    }
-
-    const unsigned n_used_calls=(good_pi.calls.size());
-    const unsigned n_unused_calls=(n_calls-n_used_calls);
-
-    sif.ss.update(n_calls);
-    sif.used_ss.update(n_used_calls);
+    sif.ss.update(sif.cpi.n_calls());
+    sif.used_ss.update(sif.cpi.n_used_calls());
     if (pi.get_ref_base() != 'N')
     {
-        sif.ssn.update(n_calls);
-        sif.used_ssn.update(n_used_calls);
-        sif.wav.insert(pos,n_used_calls,n_unused_calls,n_spandel,n_submapped);
+        sif.ssn.update(sif.cpi.n_calls());
+        sif.used_ssn.update(sif.cpi.n_used_calls());
+        sif.wav.insert(pos,sif.cpi.n_used_calls(),sif.cpi.n_unused_calls(),n_spandel,n_submapped);
     }
     else
     {

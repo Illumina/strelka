@@ -96,8 +96,8 @@ process_pos_snp_snoise(
     const unsigned sample_no(0);
     const sample_info& sif(sample(sample_no));
 
-    const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
-    const snp_pos_info& good_pi(sif.epd.good_pi);
+    const snp_pos_info& pi(sif.cpi.rawPileup());
+    const snp_pos_info& good_pi(sif.cpi.cleanedPileup());
     const pos_t output_pos(pos+1);
 
 

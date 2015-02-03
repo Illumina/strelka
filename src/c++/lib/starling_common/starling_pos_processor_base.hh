@@ -24,8 +24,6 @@
 
 #pragma once
 
-// s195 remove this include
-#include "blt_common/adjust_joint_eprob.hh"
 #include "blt_common/map_level.hh"
 #include "blt_util/depth_stream_stat_range.hh"
 #include "blt_util/pos_processor_base.hh"
@@ -56,20 +54,6 @@ struct nploid_info;
 //int
 //get_influence_zone_size(const unsigned max_indel_size);
 
-
-/// s195 remove this struct
-/// keep a single copy of this struct to reuse for every site to lower alloc costs:
-struct extra_position_data
-{
-    /// stores the column of basecalls actually used for snp-calling after the
-    /// mismatch density filter and other quality filters have been applied:
-    snp_pos_info good_pi;
-
-    /// stores information on approximate qscore reductions implemented to represent
-    /// site-specific basecalling dependency, note this is not applied in somatic
-    /// calling:
-    std::vector<float> dependent_eprob;
-};
 
 
 /// \brief accumulate sequential position specific information and
@@ -342,9 +326,6 @@ public:
         pos_win_avgs wav;
 
         // keep a single copy of this struct to reuse for every site to lower alloc costs:
-        // s195 remove this
-        extra_position_data epd;
-
         CleanedPileup cpi;
     };
 
@@ -615,9 +596,6 @@ protected:
 
     unsigned _n_samples;
     std::array<std::unique_ptr<sample_info>,MAX_SAMPLE> _sample;
-
-    // s195 - remove this:
-    dependent_prob_cache _dpcache;
 
     PileupCleaner _pileupCleaner;
 

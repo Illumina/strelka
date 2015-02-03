@@ -192,11 +192,11 @@ process_pos_snp_single_sample_impl(
 
     sample_info& sif(sample(sample_no));
 
-    const snp_pos_info& pi(sif.bc_buff.get_pos(pos));
-    const snp_pos_info& good_pi(sif.epd.good_pi);
+    const CleanedPileup& cpi(sif.cpi);
+    const snp_pos_info& pi(cpi.rawPileup());
 
-    _site_info.n_used_calls=(good_pi.calls.size());
-    _site_info.n_unused_calls=(pi.calls.size()-_site_info.n_used_calls);
+    _site_info.n_used_calls=cpi.n_used_calls();
+    _site_info.n_unused_calls=cpi.n_unused_calls();
 
 
     const pos_t output_pos(pos+1);
@@ -208,15 +208,10 @@ process_pos_snp_single_sample_impl(
 
     if (pi.calls.empty()) return;
 
-    adjust_joint_eprob(_opt,_dpcache,good_pi,sif.epd.dependent_eprob);
+    _pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
-    const extended_pos_info good_epi(good_pi,sif.epd.dependent_eprob);
-
-    // get fraction of filtered bases:
-#if 0
-    const double filter_fraction(static_cast<double>(n_unused_calls)/static_cast<double>(n_calls));
-    const bool is_overfilter(filter_fraction > _opt.max_basecall_filter_fraction);
-#endif
+    const snp_pos_info& good_pi(cpi.cleanedPileup());
+    const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
     // delay writing any snpcalls so that anomaly tests can (optionally) be applied as filters:
     //
