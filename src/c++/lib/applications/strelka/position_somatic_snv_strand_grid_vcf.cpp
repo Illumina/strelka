@@ -373,7 +373,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
         os << std::fixed << std::setprecision(2);
 
         // m_mapq includes all calls, even from reads below the mapq threshold:
-        const unsigned n_mapq(n1_epd.cleanedPileup().n_mapq+t1_epd.cleanedPileup().n_mapq);
+        const unsigned n_mapq(n1_epd.rawPileup().n_mapq+t1_epd.rawPileup().n_mapq);
         os << ";DP=" << n_mapq;
         os << ";MQ=" << smod.get_feature(STRELKA_VQSR_FEATURES::MQ);
 
