@@ -81,7 +81,7 @@ struct SampleInfoManager
     }
 
     const std::vector<unsigned>&
-    getTypeIndexList(const INOVO_SAMPLETYPE::index_t i)
+    getTypeIndexList(const INOVO_SAMPLETYPE::index_t i) const
     {
         assert((i >= 0) && (i < INOVO_SAMPLETYPE::SIZE));
         return _sindex[i];

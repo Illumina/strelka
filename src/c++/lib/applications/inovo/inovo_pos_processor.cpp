@@ -15,15 +15,15 @@
 /// \author Chris Saunders
 ///
 
-#include "extended_pos_data.hh"
 #include "inovo_pos_processor.hh"
 
 #include "blt_util/log.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 #include "starling_common/starling_indel_report_info.hh"
-#include "starling_common/starling_pos_processor_base_stages.hh"
 
 #include <iomanip>
+#include "denovo_snv_caller.hh"
+#include "denovo_snv_call_vcf.hh"
 
 
 
@@ -92,69 +92,40 @@ process_pos_snp_denovo(const pos_t pos)
 {
     using namespace INOVO_SAMPLETYPE;
 
+    // skip site if proband depth is zero:
+    {
+        const unsigned probandIndex(_opt.alignFileOpt.alignmentSampleInfo.getTypeIndexList(PROBAND)[0]);
+        const CleanedPileup& probandCpi(sample(probandIndex).cpi);
+
+        // note this is a more expansive skipping criteria then we use for germline calling
+        // (this is because there's no gvcf output)
+        if (probandCpi.cleanedPileup().calls.empty()) return;
+    }
+
+    // finish formatting pileups for all samples:
+    for (unsigned i(0); i<_n_samples; ++i)
+    {
+        sample_info& sif(sample(i));
+        _pileupCleaner.CleanPileupErrorProb(sif.cpi);
+    }
+
     const pos_t output_pos(pos+1);
     const char ref_base(_ref.get_base(pos));
 
-    for (unsigned i(0); i<_opt.alignFileOpt.alignmentSampleInfo.size(); ++i)
+    // make cleaned pileups of all samples easily accessible to the variant caller:
+    std::vector<const CleanedPileup*> pileups(_n_samples);
+    for (unsigned i(0); i<_n_samples; ++i)
     {
-        const sample_info& sif(sample(i));
-
-    sample_info& normal_sif(sample(NORMAL));
-    sample_info& tumor_sif(sample(TUMOR));
-
-    const bool is_dep(_is_dependent_eprob);
-
-    // TODO this is ridiculous -- if the tier2 data scheme works then come back and clean this up:
-    static const unsigned n_tier(2);
-    std::unique_ptr<extended_pos_data> normald_ptr[n_tier];
-    std::unique_ptr<extended_pos_data> tumord_ptr[n_tier];
-
-    extra_position_data* normal_epd_ptr[n_tier] = { &(normal_sif.epd) , &(_tier2_epd[NORMAL]) };
-    extra_position_data* tumor_epd_ptr[n_tier] = { &(tumor_sif.epd) , &(_tier2_epd[TUMOR]) };
-#if 0
-    normald_ptr[0].reset(normal_sif.bc_buff.get_pos(pos),normal_sif.epd,
-                         ref_base,_opt,_dpcache,is_dep,is_include_tier2);
-    tumord_ptr[0].reset(tumor_sif.bc_buff.get_pos(pos),tumor_sif.epd,
-                        ref_base,_opt,_dpcache,is_dep,is_include_tier2);
-#endif
-
-    for (unsigned t(0); t<n_tier; ++t)
-    {
-        const bool is_include_tier2(t!=0);
-        if (is_include_tier2 && (! _opt.is_tier2())) continue;
-        normald_ptr[t].reset(new extended_pos_data(normal_sif.bc_buff.get_pos(pos),*(normal_epd_ptr[t]),
-                                                   ref_base,_opt,_dpcache,is_dep,is_include_tier2));
-        tumord_ptr[t].reset(new extended_pos_data(tumor_sif.bc_buff.get_pos(pos),*(tumor_epd_ptr[t]),
-                                                  ref_base,_opt,_dpcache,is_dep,is_include_tier2));
+        pileups[i] = &(sample[i]);
     }
-
-#if 0
-    sif.ss.update(n_calls);
-    sif.used_ss.update(n_used_calls);
-    if (pi.ref_base != 'N')
-    {
-        sif.ssn.update(n_calls);
-        sif.used_ssn.update(n_used_calls);
-    }
-#endif
 
     denovo_snv_call dsc;
 
-    const extended_pos_info* normal_epi_t2_ptr(NULL);
-    const extended_pos_info* tumor_epi_t2_ptr(NULL);
-    if (_opt.is_tier2())
-    {
-        normal_epi_t2_ptr=(&(normald_ptr[1]->good_epi));
-        tumor_epi_t2_ptr=(&(tumord_ptr[1]->good_epi));
-    }
-
-    position_denovo_snv_call(
-        normald_ptr[0]->good_epi,
-        tumord_ptr[0]->good_epi,
-        normal_epi_t2_ptr,
-        tumor_epi_t2_ptr,
+    get_denovo_snv_call(
+        _opt,
+        _opt.alignFileOpt.alignmentSampleInfo,
+        pileups,
         dsc);
-
 
     // report events:
     //
@@ -167,17 +138,18 @@ process_pos_snp_denovo(const pos_t pos)
             << output_pos << '\t'
             << ".";
 
-        write_vcf_denovo_snv(_opt,_dopt,dsc,
-                           *(normald_ptr[0]),
-                           *(tumord_ptr[0]),
-                           *(normald_ptr[1]),
-                           *(tumord_ptr[1]),
-                           bos);
+        denovo_snv_call_vcf(
+            _opt,_dopt,
+            _opt.alignFileOpt.alignmentSampleInfo,
+            pileups,
+            dsc,
+            bos);
         bos << "\n";
 
         is_reported_event = true;
     }
 }
+
 
 
 void
@@ -219,14 +191,9 @@ process_pos_indel_denovo(const pos_t pos)
     sample_info& normal_sif(sample(NORMAL));
     sample_info& tumor_sif(sample(TUMOR));
 
-    // with indel synchronization turned on in this model, we should
-    // only need to iterate through one sample or the other -- for now
-    // we just pick one -- would be nicer in the future to have a way
-    // to
-    //
     typedef indel_buffer::const_iterator ciiter;
-    ciiter i(tumor_sif.indel_buff.pos_iter(pos));
-    const ciiter i_end(tumor_sif.indel_buff.pos_iter(pos+1));
+    ciiter i(proband_sif.indel_buff.pos_iter(pos));
+    const ciiter i_end(proband_sif.indel_buff.pos_iter(pos+1));
 
     for (; i!=i_end; ++i)
     {

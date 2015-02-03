@@ -201,8 +201,6 @@ process_pos_snp_single_sample_impl(
     _site_info.n_unused_calls=cpi.n_unused_calls();
 
 
-    const pos_t output_pos(pos+1);
-
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
@@ -225,6 +223,8 @@ process_pos_snp_single_sample_impl(
 
     // check whether we're in a haploid region:
     _site_info.dgt.ploidy=(get_ploidy(pos));
+
+    const pos_t output_pos(pos+1);
 
     if (_opt.is_counts)
     {
