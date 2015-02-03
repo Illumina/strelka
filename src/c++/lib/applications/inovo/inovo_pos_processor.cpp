@@ -95,6 +95,10 @@ process_pos_snp_denovo(const pos_t pos)
     const pos_t output_pos(pos+1);
     const char ref_base(_ref.get_base(pos));
 
+    for (unsigned i(0); i<_opt.alignFileOpt.alignmentSampleInfo.size(); ++i)
+    {
+        const sample_info& sif(sample(i));
+
     sample_info& normal_sif(sample(NORMAL));
     sample_info& tumor_sif(sample(TUMOR));
 
@@ -134,96 +138,44 @@ process_pos_snp_denovo(const pos_t pos)
     }
 #endif
 
-    // note single-sample anomaly filtration won't apply here (more of
-    // a vestigial blt feature anyway)
-    //
+    denovo_snv_call dsc;
 
-    // retain original blt loop structure from the single-sample case
-    // to allow for multiple interacting tests at one site
-    //
-
-    //    somatic_snv_genotype sgt;
-    somatic_snv_genotype_grid sgtg;
-
-    if (_opt.is_somatic_snv())
+    const extended_pos_info* normal_epi_t2_ptr(NULL);
+    const extended_pos_info* tumor_epi_t2_ptr(NULL);
+    if (_opt.is_tier2())
     {
-        sgtg.is_forced_output=is_forced_output_pos(pos);
-
-        const extended_pos_info* normal_epi_t2_ptr(NULL);
-        const extended_pos_info* tumor_epi_t2_ptr(NULL);
-        if (_opt.is_tier2())
-        {
-            normal_epi_t2_ptr=(&(normald_ptr[1]->good_epi));
-            tumor_epi_t2_ptr=(&(tumord_ptr[1]->good_epi));
-        }
-
-        const bool isComputeNonSomatic(_opt.is_somatic_callable());
-
-        _dopt.sscaller_strand_grid().position_somatic_snv_call(
-            normald_ptr[0]->good_epi,
-            tumord_ptr[0]->good_epi,
-            normal_epi_t2_ptr,
-            tumor_epi_t2_ptr,
-            isComputeNonSomatic,
-            sgtg);
-
-        if (_opt.is_somatic_callable())
-        {
-            _callProcessor.add(_chrom_name,output_pos,sgtg);
-        }
+        normal_epi_t2_ptr=(&(normald_ptr[1]->good_epi));
+        tumor_epi_t2_ptr=(&(tumord_ptr[1]->good_epi));
     }
+
+    position_denovo_snv_call(
+        normald_ptr[0]->good_epi,
+        tumord_ptr[0]->good_epi,
+        normal_epi_t2_ptr,
+        tumor_epi_t2_ptr,
+        dsc);
+
 
     // report events:
     //
     bool is_reported_event(false);
 
-    if (sgtg.is_output())
+    if (dsc.is_output())
     {
-        {
-            const SiteNoise* snp(_noisePos.getPos(pos));
-            if (snp == nullptr)
-            {
-                sgtg.sn.clear();
-            }
-            else
-            {
-                sgtg.sn = *snp;
-            }
-        }
-#ifdef SOMATIC_STDOUT
-        std::ostream& bos = std::cout;
-#else
-        std::ostream& bos(*_client_io.somatic_snv_osptr());
-#endif
-
-        // have to keep tier1 counts for filtration purposes:
-#ifdef SOMATIC_DEBUG
-        write_snv_prefix_info_file(_chrom_name,output_pos,ref_base,normald,tumord,log_os);
-        log_os << "\n";
-#endif
-
+        std::ostream& bos(*_streams.denovo_osptr());
         bos << _chrom_name << '\t'
             << output_pos << '\t'
             << ".";
 
-        static const bool is_write_nqss(false);
-        write_vcf_somatic_snv_genotype_strand_grid(_opt,_dopt,sgtg,is_write_nqss,
-                                                   *(normald_ptr[0]),
-                                                   *(tumord_ptr[0]),
-                                                   *(normald_ptr[1]),
-                                                   *(tumord_ptr[1]),
-                                                   bos);
+        write_vcf_denovo_snv(_opt,_dopt,dsc,
+                           *(normald_ptr[0]),
+                           *(tumord_ptr[0]),
+                           *(normald_ptr[1]),
+                           *(tumord_ptr[1]),
+                           bos);
         bos << "\n";
 
         is_reported_event = true;
-    }
-
-    if (_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event))
-    {
-        log_os << "TUMOR/NORMAL EVIDENCE pos: " << output_pos << "\n"
-               << "is_snv: " << sgtg.is_snv() << "\n"
-               << "normal-data:\n" << normald_ptr[0]->epd.good_pi << "\n"
-               << "tumor-data:\n" << tumord_ptr[0]->epd.good_pi << "\n";
     }
 }
 
@@ -260,6 +212,7 @@ void
 inovo_pos_processor::
 process_pos_indel_denovo(const pos_t pos)
 {
+#if 0
     using namespace STRELKA_SAMPLE_TYPE;
 
     //    std::ostream& report_os(get_report_os());
@@ -375,6 +328,7 @@ process_pos_indel_denovo(const pos_t pos)
 #endif
         }
     }
+#endif
 }
 
 
@@ -384,12 +338,11 @@ inovo_pos_processor::
 write_counts(
     const pos_range& output_report_range) const
 {
-
     std::ostream* report_os_ptr(get_report_osptr());
     if (nullptr==report_os_ptr) return;
     std::ostream& report_os(*report_os_ptr);
 
-    for (unsigned i(0); i<STRELKA_SAMPLE_TYPE::SIZE; ++i)
+    for (unsigned i(0); i<_opt.alignFileOpt.alignmentSampleInfo.size(); ++i)
     {
         const sample_info& sif(sample(i));
         const std::string label(INOVO_SAMPLETYPE::get_label(i));

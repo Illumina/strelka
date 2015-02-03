@@ -23,9 +23,9 @@
 #include <vector>
 
 
-// cache dependent probs at a fixed vexp value (cache should be
-// associated with a specific blt_options object):
-//
+/// cache dependent probs at a fixed vexp value (cache should be
+/// associated with a specific blt_options object):
+///
 struct dependent_prob_cache
 {
     enum { MAX_QSCORE = 64 };

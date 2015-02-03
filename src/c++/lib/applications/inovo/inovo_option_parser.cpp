@@ -92,5 +92,10 @@ finalize_inovo_options(
         pinfo.usage("standard bam input not accepted for de-novo calling");
     }
 
+    if (opt.denovo_filename.empty())
+    {
+        pinfo.usage("de-novo variant output filename is required");
+    }
+
     finalize_starling_base_options(pinfo,vm,opt);
 }
