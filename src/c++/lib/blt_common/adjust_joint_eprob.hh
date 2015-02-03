@@ -51,5 +51,4 @@ void
 adjust_joint_eprob(const blt_options& opt,
                    dependent_prob_cache& dpc,
                    const snp_pos_info& pi,
-                   std::vector<float>& dependent_eprob,
-                   const bool is_depenent);
+                   std::vector<float>& dependent_eprob);

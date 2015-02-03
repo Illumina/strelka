@@ -370,9 +370,6 @@ starling_pos_processor_base(const starling_base_options& opt,
         }
     }
 
-    _is_dependent_eprob = ((_opt.is_bsnp_diploid() || _opt.is_bsnp_monoploid) &&
-                           (_opt.bsnp_ssd_no_mismatch>0. || _opt.bsnp_ssd_one_mismatch>0));
-
     // define an expanded indel influence zone around the report range:
     //
     // note that we don't know the max indel ref span per read at this point, so a fudge factor is

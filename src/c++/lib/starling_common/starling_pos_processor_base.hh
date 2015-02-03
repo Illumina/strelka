@@ -610,7 +610,6 @@ protected:
     unsigned _n_samples;
     std::array<std::unique_ptr<sample_info>,MAX_SAMPLE> _sample;
 
-    bool _is_dependent_eprob;
     dependent_prob_cache _dpcache;
 
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];

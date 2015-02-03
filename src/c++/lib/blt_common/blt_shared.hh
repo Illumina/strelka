@@ -87,6 +87,13 @@ struct blt_options
              is_tier2_include_anomalous);
     }
 
+    bool
+    is_dependent_eprob() const
+    {
+        return ((is_bsnp_diploid() || is_bsnp_monoploid) &&
+                (bsnp_ssd_no_mismatch>0. || bsnp_ssd_one_mismatch>0));
+    }
+
     double lsnp_alpha = 0;
     double bsnp_diploid_theta = 0.001;
     double bsnp_monoploid_theta = 0;

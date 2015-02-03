@@ -124,8 +124,6 @@ process_pos_snp_somatic(const pos_t pos)
     sample_info& normal_sif(sample(NORMAL));
     sample_info& tumor_sif(sample(TUMOR));
 
-    const bool is_dep(_is_dependent_eprob);
-
     // TODO this is ridiculous -- if the tier2 data scheme works then come back and clean this up:
     static const unsigned n_tier(2);
     std::unique_ptr<extended_pos_data> normald_ptr[n_tier];
@@ -145,9 +143,9 @@ process_pos_snp_somatic(const pos_t pos)
         const bool is_include_tier2(t!=0);
         if (is_include_tier2 && (! _opt.is_tier2())) continue;
         normald_ptr[t].reset(new extended_pos_data(normal_sif.bc_buff.get_pos(pos),*(normal_epd_ptr[t]),
-                                                   _opt,_dpcache,is_dep,is_include_tier2));
+                                                   _opt,_dpcache,is_include_tier2));
         tumord_ptr[t].reset(new extended_pos_data(tumor_sif.bc_buff.get_pos(pos),*(tumor_epd_ptr[t]),
-                                                  _opt,_dpcache,is_dep,is_include_tier2));
+                                                  _opt,_dpcache,is_include_tier2));
     }
 
 #if 0

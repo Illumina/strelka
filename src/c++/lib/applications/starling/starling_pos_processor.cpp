@@ -208,7 +208,7 @@ process_pos_snp_single_sample_impl(
 
     if (pi.calls.empty()) return;
 
-    adjust_joint_eprob(_opt,_dpcache,good_pi,sif.epd.dependent_eprob,_is_dependent_eprob);
+    adjust_joint_eprob(_opt,_dpcache,good_pi,sif.epd.dependent_eprob);
 
     const extended_pos_info good_epi(good_pi,sif.epd.dependent_eprob);
 

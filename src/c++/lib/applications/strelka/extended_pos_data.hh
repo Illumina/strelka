@@ -42,7 +42,6 @@ struct sample_pos_data
                     extra_position_data& epd_init,
                     const blt_options& opt,
                     dependent_prob_cache& dpcache,
-                    const bool is_dependent_eprob,
                     const bool is_include_tier2)
         : pi(pi_init),
           epd(epd_init),
@@ -77,7 +76,7 @@ struct sample_pos_data
             }
         }
 
-        adjust_joint_eprob(opt,dpcache,epd.good_pi,epd.dependent_eprob,is_dependent_eprob);
+        adjust_joint_eprob(opt,dpcache,epd.good_pi,epd.dependent_eprob);
 
         n_used_calls=(epd.good_pi.calls.size());
         n_unused_calls=(n_calls-n_used_calls);
@@ -99,9 +98,8 @@ struct extended_pos_data : public sample_pos_data
                       extra_position_data& epd_init,
                       const blt_options& opt,
                       dependent_prob_cache& dpc,
-                      const bool is_dependent_eprob,
                       const bool is_include_tier2)
-        : base_t(pi,epd_init,opt,dpc,is_dependent_eprob,is_include_tier2)
+        : base_t(pi,epd_init,opt,dpc,is_include_tier2)
         , good_epi(epd.good_pi,epd.dependent_eprob) {}
 
     extended_pos_info good_epi;

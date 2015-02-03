@@ -199,8 +199,7 @@ void
 adjust_joint_eprob(const blt_options& opt,
                    dependent_prob_cache& dpc,
                    const snp_pos_info& pi,
-                   std::vector<float>& dependent_eprob,
-                   const bool is_dependent)
+                   std::vector<float>& dependent_eprob)
 {
     const unsigned n_calls(pi.calls.size());
     dependent_eprob.clear();
@@ -209,7 +208,7 @@ adjust_joint_eprob(const blt_options& opt,
         dependent_eprob.push_back(static_cast<float>(pi.calls[i].error_prob()));
     }
 
-    if (! is_dependent) return;
+    if (! opt.is_dependent_eprob()) return;
 
     // split icalls into fwd and reverse strand and allele types:
     //
