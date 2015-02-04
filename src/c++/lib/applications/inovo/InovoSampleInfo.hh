@@ -19,6 +19,8 @@
 
 #include <cassert>
 
+#include <vector>
+
 
 namespace INOVO_SAMPLETYPE
 {
@@ -48,7 +50,8 @@ namespace INOVO_SAMPLETYPE
     }
 }
 
-namespace INOVO_GENDER
+/// possible future expansion of type def:
+namespace INOVO_SEX
 {
     enum index_t
     {
@@ -65,9 +68,6 @@ struct SampleInfo
 {
     /// relationship of sample to proband there's no use for an unknown value here:
     INOVO_SAMPLETYPE::index_t stype = INOVO_SAMPLETYPE::PROBAND;
-
-    /// gender of sample, this is provided for future expansions but will be ignored for POC
-    INOVO_GENDER::index_t gtype = INOVO_GENDER::UNKNOWN;
 };
 
 

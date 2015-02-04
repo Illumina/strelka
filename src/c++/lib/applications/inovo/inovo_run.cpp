@@ -98,7 +98,7 @@ inovo_run(
     }
 
     const InovoSampleSetSummary ssi(opt);
-    const bam_header_t& header(*(bamStreams[0]->get_header()));
+    const bam_header_t* const header(bamStreams[0]->get_header());
     inovo_streams streams(opt, dopt, pinfo, header, ssi);
     inovo_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;

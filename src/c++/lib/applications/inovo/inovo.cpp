@@ -25,7 +25,6 @@
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 #include "starling_common/starling_arg_parse.hh"
-#include "starling_common/starling_option_parser.hh"
 
 #include "boost/program_options.hpp"
 
@@ -64,8 +63,6 @@ runInternal(int argc,char* argv[]) const
     try
     {
         po::options_description visible(get_inovo_option_parser(opt));
-        po::options_description visible2(get_starling_shared_option_parser(opt));
-        visible.add(visible2);
         po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).allow_unregistered().run());
         po::store(parsed,vm);
         po::notify(vm);

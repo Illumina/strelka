@@ -52,13 +52,15 @@ addSampleGroup(
     const INOVO_SAMPLETYPE::index_t stype,
     DenovoAlignmentFileOptions& opt)
 {
-    if (! vm.count(vmkey)) continue;
+    if (! vm.count(vmkey)) return;
 
     files_t tmpfiles=(boost::any_cast<files_t>(vm[vmkey].value()));
     for (const auto& tfile : tmpfiles)
     {
         opt.alignmentFilename.push_back(tfile);
-        opt.alignmentSampleInfo.push_back(SampleInfo{stype});
+        SampleInfo si;
+        si.stype = stype;
+        opt.alignmentSampleInfo.push_back(si);
     }
 }
 

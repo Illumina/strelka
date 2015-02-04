@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -20,9 +19,8 @@
 #include "inovo_option_parser.hh"
 #include "inovo_shared.hh"
 
-#include "starling_common/starling_option_parser.hh"
-
 #include "blt_util/log.hh"
+#include "starling_common/starling_base_option_parser.hh"
 
 #include <cstdlib>
 
@@ -46,7 +44,7 @@ usage(const char* xmessage) const
        "usage: " << name() << " [options]\n\n" << visible
        << "\n\n[ ***** new single-sample options ***** ]\n\n";
 
-    static const po::options_description visible2(get_starling_shared_option_parser(default_opt));
+    static const po::options_description visible2(get_starling_base_option_parser(default_opt));
     os << visible2
        << "\n\n\n[ ***** legacy single-sample options ***** ]\n\n";
     write_starling_legacy_options(os);

@@ -16,6 +16,8 @@
 
 #include "starling_streams.hh"
 
+#include <cassert>
+
 #include <fstream>
 #include <iostream>
 
@@ -62,7 +64,7 @@ starling_streams(
     const SampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
-    assert(n_samples() == 1)
+    assert(_n_samples == 1);
     _gvcf_osptr = nullptr;
 
     if (opt.gvcf.is_gvcf_output())

@@ -73,7 +73,7 @@ struct inovo_shared_modifiers
         filters.reset();
     }
 
-    std::bitset<STRELKA_VCF_FILTERS::SIZE> filters;
+    std::bitset<INOVO_VCF_FILTERS::SIZE> filters;
 };
 
 

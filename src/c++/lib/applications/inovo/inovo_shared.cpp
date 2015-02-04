@@ -16,9 +16,12 @@
 ///
 
 #include "inovo_shared.hh"
-#include "blt_util/chrom_depth_map.cpp"
+#include "blt_util/blt_exception.hh"
+#include "blt_util/chrom_depth_map.hh"
 
 #include <cassert>
+
+#include <sstream>
 
 
 inovo_deriv_options::
@@ -37,7 +40,7 @@ inovo_deriv_options(
         if (cdi == dfilter.chrom_depth.end())
         {
             std::ostringstream oss;
-            oss << "ERROR: Can't find chromosome: '" << chrom_name << "' in chrom depth file: " << opt.sfilter.chrom_depth_file << "\n";
+            oss << "ERROR: Can't find chromosome: '" << chrom_name << "' in chrom depth file: " << opt.dfilter.chrom_depth_file << "\n";
             throw blt_exception(oss.str().c_str());
         }
         dfilter.max_depth=(cdi->second*opt.dfilter.max_depth_factor);

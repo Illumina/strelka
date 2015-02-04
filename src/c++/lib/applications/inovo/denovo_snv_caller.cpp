@@ -14,8 +14,6 @@
 /// \author Chris Saunders
 ///
 
-#pragma once
-
 #include "denovo_snv_caller.hh"
 
 #include <array>
@@ -128,5 +126,5 @@ get_denovo_snv_call(
         }
     }
 
-    dsc.isCall = true;
+    dsc.rs.isCall = true;
 }

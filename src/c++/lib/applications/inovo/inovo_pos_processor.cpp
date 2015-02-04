@@ -114,9 +114,9 @@ process_pos_snp_denovo(const pos_t pos)
 
     // make cleaned pileups of all samples easily accessible to the variant caller:
     std::vector<const CleanedPileup*> pileups(_n_samples);
-    for (unsigned i(0); i<_n_samples; ++i)
+    for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
     {
-        pileups[i] = &(sample[i]);
+        pileups[sampleIndex] = &(sample(sampleIndex).cpi);
     }
 
     denovo_snv_call dsc;

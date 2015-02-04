@@ -123,9 +123,12 @@ inovo_streams(
         write_shared_vcf_header_info(opt.dfilter,dopt.dfilter,fos);
 
         fos << vcf_col_label() << "\tFORMAT";
-        for (unsigned s(0); s<opt.alignmentSampleInfo.size(); ++s)
         {
-            fos << "\t" << INOVO_SAMPLETYPE::get_label(opt.alignmentSampleInfo.getSampleInfo(s).stype);
+            const SampleInfoManager& si(opt.alignFileOpt.alignmentSampleInfo);
+            for (unsigned sampleIndex(0); sampleIndex<si.size(); ++sampleIndex)
+            {
+                fos << "\t" << INOVO_SAMPLETYPE::get_label(si.getSampleInfo(sampleIndex).stype);
+            }
         }
         fos << "\n";
     }

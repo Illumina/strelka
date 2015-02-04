@@ -17,6 +17,7 @@
 
 #include "denovo_snv_call_vcf.hh"
 #include "inovo_vcf_locus_info.hh"
+#include "blt_util/io_util.hh"
 
 #include <array>
 #include <iomanip>
@@ -53,7 +54,7 @@ write_vcf_sample_info(
 
 
 void
-denovo_snv_caller_vcf(
+denovo_snv_call_vcf(
     const inovo_options& opt,
     const inovo_deriv_options& dopt,
     const SampleInfoManager& sinfo,
@@ -97,7 +98,7 @@ denovo_snv_caller_vcf(
     smod.write_filters(os);
 
     //INFO:
-    os << '\t.';
+    os << "\t.";
 
     {
         const StreamScoper ss(os);
