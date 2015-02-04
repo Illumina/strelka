@@ -66,7 +66,7 @@ denovo_snv_caller_vcf(
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
     const CleanedPileup& probandCpi(*pileups[probandIndex]);
 
-    const result_set& rs(dsc.rs);
+    //const result_set& rs(dsc.rs);
 
     inovo_shared_modifiers smod;
 

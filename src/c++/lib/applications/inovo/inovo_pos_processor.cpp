@@ -110,7 +110,7 @@ process_pos_snp_denovo(const pos_t pos)
     }
 
     const pos_t output_pos(pos+1);
-    const char ref_base(_ref.get_base(pos));
+    //const char ref_base(_ref.get_base(pos));
 
     // make cleaned pileups of all samples easily accessible to the variant caller:
     std::vector<const CleanedPileup*> pileups(_n_samples);
@@ -129,8 +129,6 @@ process_pos_snp_denovo(const pos_t pos)
 
     // report events:
     //
-    bool is_reported_event(false);
-
     if (dsc.is_output())
     {
         std::ostream& bos(*_streams.denovo_osptr());
@@ -145,8 +143,6 @@ process_pos_snp_denovo(const pos_t pos)
             dsc,
             bos);
         bos << "\n";
-
-        is_reported_event = true;
     }
 }
 
