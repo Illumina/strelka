@@ -304,8 +304,6 @@ write_starling_legacy_options(std::ostream& os)
        "                      (default: " << default_opt.max_indel_size << ")\n"
        "\n"
        " -print-all-poly-gt - Print all polymorphic-site genotype probabilties in the diploid sites and snps files\n"
-       " -print-used-allele-counts\n"
-       "                    - Print used base counts for each allele in the diploid sites and snps files\n"
        " -used-allele-count-min-qscore x\n"
        "                    - If printing used allele counts, filter them for qscore >= x\n"
        "\n"

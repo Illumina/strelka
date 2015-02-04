@@ -62,7 +62,6 @@ std::ostream& operator<<(std::ostream& os,const DDIGT::index_t dgt);
 
 struct somatic_snv_genotype : private boost::noncopyable
 {
-
     somatic_snv_genotype()
         : is_snv(false), tier(0), ref_gt(0) {}
 
@@ -109,16 +108,6 @@ struct somatic_snv_genotype : private boost::noncopyable
     result_set poly;
 };
 
-
-
-// snv call output:
-//
-void
-write_somatic_snv_genotype(const strelka_options& opt,
-                           const somatic_snv_genotype& sgt,
-                           const snp_pos_info& normal_pi,
-                           const snp_pos_info& tumor_pi,
-                           std::ostream& os);
 
 
 // object used to pre-compute priors:

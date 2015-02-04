@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -29,7 +28,6 @@ bool
 alignment::
 is_overmax(const unsigned max_indel_size) const
 {
-
     // test if any individual indel exceeds max_indel_size
     using namespace ALIGNPATH;
     const unsigned as(path.size());
@@ -52,7 +50,6 @@ std::ostream&
 operator<<(std::ostream& os,
            const alignment& al)
 {
-
     os << "ALIGNMENT pos: " << al.pos
        << " strand: " << (al.is_fwd_strand? 'F' : 'R')
        << " path: " << apath_to_cigar(al.path);

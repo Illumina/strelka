@@ -204,10 +204,6 @@ legacy_starling_arg_parse(
         {
             opt.is_print_all_poly_gt=true;
         }
-        else if (ad.argstr[i]=="-print-used-allele-counts")
-        {
-            opt.is_print_used_allele_counts=true;
-        }
         else if (ad.argstr[i]=="-used-allele-count-min-qscore")
         {
             set_arg(i,ad,is_uacmq_set,opt.used_allele_count_min_qscore);
