@@ -87,7 +87,7 @@ denovo_snv_call_vcf(
     //REF:
     os << '\t' << probandCpi.rawPileup().get_ref_base()
        //ALT:
-       << "\t" << '.';
+       << "\t.";
 //    DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
  //                                  dsc.ref_gt,os);
     //QUAL:
@@ -98,7 +98,7 @@ denovo_snv_call_vcf(
     smod.write_filters(os);
 
     //INFO:
-    os << "\t.";
+    os << "\t";
 
     {
         const StreamScoper ss(os);
@@ -113,7 +113,7 @@ denovo_snv_call_vcf(
             n_mapq += pi.n_mapq;
             n_mapq0 += pi.n_mapq0;
         }
-        os << ";DP=" << n_mapq;
+        os << "DP=" << n_mapq;
         os << ";MQ0=" << n_mapq0;
     }
 

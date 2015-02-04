@@ -120,7 +120,7 @@ get_denovo_snv_call(
             // scenario 2: max1 -> parent2, max2 -> parent1
             isValid = checkME(max1,max2,p2Count,p1Count);
         }
-        if (! isValid)
+        if (isValid)
         {
             return;
         }
