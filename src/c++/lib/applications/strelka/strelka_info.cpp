@@ -19,13 +19,13 @@
 #include "strelka_info.hh"
 #include "strelka_option_parser.hh"
 #include "strelka_shared.hh"
+#include "starling_common/starling_base_option_parser.hh"
 
 #include "blt_util/log.hh"
 
 #include <cstdlib>
 
 #include <iostream>
-#include "../../starling_common/starling_base_option_parser.hh"
 
 
 
@@ -44,7 +44,7 @@ usage(const char* xmessage) const
        "\n"
        "usage: " << name() << " [options]\n\n" << visible
        << "\n\n\n[ ***** legacy single-sample options ***** ]\n\n";
-    write_starling_legacy_options(os);
+    write_starling_legacy_options(default_opt, os);
     os << "\n";
 
     if (xmessage)

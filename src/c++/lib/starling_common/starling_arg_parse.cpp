@@ -17,7 +17,6 @@
 ///
 
 #include "blt_common/blt_arg_parse_util.hh"
-#include "blt_common/blt_arg_validate.hh"
 #include "starling_common/starling_arg_parse.hh"
 #include "starling_common/starling_base_shared.hh"
 
@@ -166,8 +165,15 @@ legacy_starling_arg_parse(
         }
         else if (ad.argstr[i]=="-bam-file")
         {
-            bool is_bam_filename(! opt.bam_filename.empty());
-            set_filename_arg(i,ad,is_bam_filename,opt.bam_filename);
+            if (opt.is_bam_filename_used)
+            {
+                bool is_bam_filename(! opt.bam_filename.empty());
+                set_filename_arg(i,ad,is_bam_filename,opt.bam_filename);
+            }
+            else
+            {
+                pinfo.usage("unrecognized argument -bam-file");
+            }
         }
         else if (ad.argstr[i]=="-bam-seq-name")
         {
@@ -298,36 +304,4 @@ legacy_starling_arg_parse(
     }
 
     ad.finalize_args();
-
-    // although we've tried to separate parameter parsing and
-    // validation, this validation code is stuck here for now:
-    //
-
-    // sanity check argument settings:
-    //
-    {
-        // sanity check input read info:
-
-        if (opt.bam_filename.empty())
-        {
-            pinfo.usage("Must specify a sorted & indexed BAM/CREAM file containing aligned sample reads");
-        }
-
-        if ((! opt.bam_filename.empty()) && opt.bam_seq_name.empty())
-        {
-            pinfo.usage("must specify -bam-seq-name when an input reads file is provided");
-        }
-    }
-
-    if (! opt.is_ref_set())
-    {
-        pinfo.usage("must specify either single-seq-reference or samtools-reference");
-    }
-
-    if (opt.is_samtools_ref_set && opt.bam_seq_name.empty())
-    {
-        pinfo.usage("must specify bam-seq-name when using samtools-reference");
-    }
-
-    validate_blt_opt(pinfo,opt);
 }

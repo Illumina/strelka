@@ -163,6 +163,9 @@ struct starling_base_options : public blt_options
     // for internal analysis:
     bool is_filter_unanchored = false;
 
+    // some newer applications will not use the "bam_filename" input:
+    bool is_bam_filename_used = true;
+
     std::string realigned_read_filename;
     std::string bam_filename; // BAM/CRAM input file
     std::string bam_seq_name;

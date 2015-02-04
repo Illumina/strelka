@@ -19,12 +19,13 @@
 #include "snoise_option_parser.hh"
 #include "snoise_shared.hh"
 #include "blt_util/log.hh"
+#include "starling_common/starling_base_option_parser.hh"
 
 #include <cstdlib>
 
-
 #include <iostream>
-#include "../../starling_common/starling_base_option_parser.hh"
+
+
 
 #if 0
 static
@@ -87,16 +88,12 @@ usage(
     static const po::options_description visible(get_snoise_option_parser(default_opt));
 
     os <<
-       "\n" << name() << " - strelka noise extractorn"
+       "\n" << name() << " - strelka noise extractor\n"
        "\tversion: " << version() << "\n"
        "\n"
        "usage: " << name() << " [options]\n\n" << visible
-       << "\n\n[ ***** new single-sample options ***** ]\n\n";
-
-    static const po::options_description visible2(get_starling_base_option_parser(default_opt));
-    os << visible2
        << "\n\n\n[ ***** legacy single-sample options ***** ]\n\n";
-    write_starling_legacy_options(os);
+    write_starling_legacy_options(default_opt,os);
     os << "\n";
 
     if (xmessage)

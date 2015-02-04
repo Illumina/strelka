@@ -11,13 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#ifndef __BLT_ARG_VALIDATE_HH
-#define __BLT_ARG_VALIDATE_HH
+#pragma once
 
 
 #include "blt_common/blt_shared.hh"
@@ -37,7 +35,6 @@ check_option_arg_range(const prog_info& pinfo,
 
 
 void
-validate_blt_opt(const prog_info& pinfo,
-                 const blt_options& client_opt);
-
-#endif
+validate_blt_opt(
+    const prog_info& pinfo,
+    const blt_options& client_opt);

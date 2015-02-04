@@ -58,6 +58,11 @@ struct inovo_options : public starling_base_options
 {
     typedef starling_base_options base_t;
 
+    inovo_options()
+    {
+        is_bam_filename_used = false;
+    }
+
     DenovoAlignmentFileOptions alignFileOpt;
 
     // output file:
@@ -98,9 +103,6 @@ struct inovo_options : public starling_base_options
         return (is_somatic_indel() || base_t::is_call_indels());
     }
 
-    std::string tumor_bam_filename;
-
-    std::string tumor_bindel_diploid_filename;
     std::string tumor_realigned_read_filename;
 
     double somatic_snv_rate = 0.000001;

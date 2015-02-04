@@ -90,7 +90,7 @@ usage(const char* xmessage) const
     os << "\n\n[ ***** new options ***** ]\n\n";
     os << visible
        << "\n\n\n[ ***** legacy options ***** ]\n\n";
-    write_starling_legacy_options(os);
+    write_starling_legacy_options(default_opt,os);
     os << "\n";
 
     if (xmessage)

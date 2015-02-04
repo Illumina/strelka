@@ -80,7 +80,7 @@ inovo_run(
     if (tid < 0)
     {
         std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" << opt.bam_filename << "'\n";
+        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" <<  opt.alignFileOpt.alignmentFilename[0] << "'\n";
         throw blt_exception(oss.str().c_str());
     }
 

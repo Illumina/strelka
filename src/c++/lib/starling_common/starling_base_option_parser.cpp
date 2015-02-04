@@ -187,12 +187,16 @@ get_starling_base_option_parser(starling_base_options& opt)
 
 
 void
-write_starling_legacy_options(std::ostream& os)
+write_starling_legacy_options(
+    const starling_base_options& default_opt,
+    std::ostream& os)
 {
-    static const starling_base_options default_opt;
-
+    if (default_opt.is_bam_filename_used)
+    {
+        os <<
+           " -bam-file file     - Analyze reads from 'file' in sorted & indexed BAM/CRAM format (required) \n"; // (use \"" << STDIN_FILENAME << "\" for stdin)\n"
+    }
     os <<
-       " -bam-file file     - Analyze reads from 'file' in sorted & indexed BAM/CRAM format (required) \n" // (use \"" << STDIN_FILENAME << "\" for stdin)\n"
        " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the reads file (required)\n"
        " -samtools-reference file\n"
        "                    - Get the reference sequence from the multi-sequence fasta 'file' following samtools reference conventions (single-seq or samtools reference required)\n"
@@ -323,9 +327,24 @@ finalize_legacy_starling_options(
     const prog_info& pinfo,
     starling_base_options& opt)
 {
+    // sanity check argument settings:
+    //
+    if (opt.is_bam_filename_used)
+    {
+        if (opt.bam_filename.empty())
+        {
+            pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned sample reads");
+        }
+    }
+
+    if (opt.bam_seq_name.empty())
+    {
+        pinfo.usage("must specify -bam-seq-name");
+    }
+
     if (! opt.is_ref_set())
     {
-        pinfo.usage("a reference sequence must be specified");
+        pinfo.usage("must specify samtools-reference");
     }
 
     // canonicalize the reference sequence path:
@@ -361,6 +380,8 @@ finalize_legacy_starling_options(
     {
         pinfo.usage("Cannot specify -write-candidate-indels-only without providing candidate indel filename.");
     }
+
+    validate_blt_opt(pinfo,opt);
 }
 
 
