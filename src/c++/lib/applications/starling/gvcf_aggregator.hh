@@ -21,6 +21,7 @@
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "codon_phaser.hh"
+#include "assembler.hh"
 #include "calibration_models.hh"
 #include "gvcf_compressor.hh"
 
@@ -108,5 +109,6 @@ private:
     gvcf_compressor _gvcf_comp;
 
     Codon_phaser _codon_phaser;
+    assembler _assembler;
 };
 

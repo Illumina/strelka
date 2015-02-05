@@ -117,6 +117,7 @@ gvcf_aggregator(
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _codon_phaser(opt, read_buffer, max_read_len)
+    , _assembler(opt, read_buffer, max_read_len)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -169,6 +170,14 @@ add_site(site_info& si)
         if (!_codon_phaser.is_in_block() || emptyBuffer)
             this->output_phased_blocked();
     }
+    else if (_opt.do_assemble
+        && (_assembler.is_in_block()))
+    {
+        const bool emptyBuffer = _assembler.add_site(si);
+        if (!_assembler.is_in_block() || emptyBuffer)
+            this->output_phased_blocked();
+    }
+
     else
     {
         skip_to_pos(si.pos);
@@ -206,12 +215,24 @@ void
 gvcf_aggregator::
 output_phased_blocked()
 {
-    for (const site_info& si : _codon_phaser.buffer())
-    {
-        this->skip_to_pos(si.pos);
-        add_site_internal(si);
-    }
-    _codon_phaser.clear();
+    // output the codon-phaser or assembler buffer to gVCF queue
+
+
+    //case assembler
+    for (const site_info& si : _assembler.buffer())
+        {
+            this->skip_to_pos(si.pos);
+            add_site_internal(si);
+        }
+        _assembler.clear();
+
+    // case codon-phaser
+//    for (const site_info& si : _codon_phaser.buffer())
+//    {
+//        this->skip_to_pos(si.pos);
+//        add_site_internal(si);
+//    }
+//    _codon_phaser.clear();
 }
 
 
