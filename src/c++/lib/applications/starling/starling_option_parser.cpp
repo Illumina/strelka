@@ -80,7 +80,7 @@ get_starling_option_parser(
      "Enable local assembly of variant dense regions")
     ("assemble-aggresiveness", po::value(&opt.assemble_aggresiveness)->default_value(opt.assemble_aggresiveness),
      "How frequent should we attempt to assemble")
-     ("do-assemble-bed",  po::value(&opt.gvcf.),
+     ("do-assemble-bed",  po::value(&opt.assembly_regions_filename),
       "Bed file with regions we should always to assemble.")
      ;
 
