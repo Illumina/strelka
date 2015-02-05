@@ -102,7 +102,13 @@ You must specify a BAM file.
         checkOptionalTabixIndexedFile(options.noCompressBed,"no-compress bed")
 
         bcheck = BamSetChecker()
-        bcheck.appendBams(options.bamList,"Input")
+        
+        def singleAppender(bamList,label):
+            if len(bamList) > 1 :
+                raise OptParseException("More than one %s sample BAM/CRAM files specified" % (label))
+            bcheck.appendBams(bamList,label)
+
+        singleAppender(options.bamList,"Input")
         bcheck.check(options.samtoolsBin,
                      options.referenceFasta)
 

@@ -87,10 +87,16 @@ You must specify BAM file(s) for the proband and additional related samples.
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
+        if len(options.probandBamList) != 1 :
+            raise OptParseException("Must specify one proband sample BAM/CRAM file")
+
+        if len(options.parentBamList) != 2 :
+            raise OptParseException("Must specify two parent sample BAM/CRAM files")
+
         bcheck = BamSetChecker()
-        bcheck.appendBams(options.probandBamList,"Proband")
-        bcheck.appendBams(options.parentBamList,"Parent")
-        bcheck.appendBams(options.siblingBamList,"Sibling")
+        bcheck.appendBams(options.probandBamList,"proband")
+        bcheck.appendBams(options.parentBamList,"parent")
+        bcheck.appendBams(options.siblingBamList,"sibling",isAllowEmpty=True)
         bcheck.check(options.samtoolsBin,
                      options.referenceFasta)
 

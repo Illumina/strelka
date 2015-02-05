@@ -91,8 +91,14 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
         bcheck = BamSetChecker()
-        bcheck.appendBams(options.normalBamList,"Normal")
-        bcheck.appendBams(options.tumorBamList,"Tumor")
+        
+        def singleAppender(bamList,label):
+            if len(bamList) > 1 :
+                raise OptParseException("More than one %s sample BAM/CRAM files specified" % (label))
+            bcheck.appendBams(bamList,label)
+
+        singleAppender(options.normalBamList,"Normal")
+        singleAppender(options.tumorBamList,"Tumor")
         bcheck.check(options.samtoolsBin,
                      options.referenceFasta)
 

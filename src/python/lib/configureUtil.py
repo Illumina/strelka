@@ -225,7 +225,7 @@ def checkForBamIndex(bamFile):
 
 def groomBamList(bamList, sampleLabel):
     """
-    check that bam/cram files exist and have an index, convert ot abs path if they check out
+    check that bam/cram files exist and have an index, convert to abs path if they check out
     """
     if bamList is None : return
     for (index,bamFile) in enumerate(bamList) :
@@ -244,7 +244,7 @@ class BamSetChecker(object):
         self.bamList=[]
         self.bamLabels=[]
 
-    def appendBams(self,inputBamList,inputLabel) :
+    def appendBams(self,inputBamList,inputLabel, isAllowEmpty = False) :
 
         # note that we inherit a multi-bam capable infrastructure from manta, but then restrict usage
         # to one bam from each sample (hopefully temporarily)
@@ -253,10 +253,8 @@ class BamSetChecker(object):
             if (bamList is None) or (len(bamList) == 0) :
                 raise OptParseException("No %s sample BAM/CRAM files specified" % (label))
 
-            if len(bamList) > 1 :
-                raise OptParseException("More than one %s sample BAM/CRAM files specified" % (label))
-
-        checkBamList(inputBamList,inputLabel)
+        if not isAllowEmpty :
+            checkBamList(inputBamList,inputLabel)
 
         if inputBamList is None : return
         for inputBamFile in inputBamList :
