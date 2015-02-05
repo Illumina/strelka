@@ -99,6 +99,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         countFastaBin=joinFile(libexecDir,"countFastaBases")
         starlingBin=joinFile(libexecDir,"starling2")
         strelkaBin=joinFile(libexecDir,"strelka2")
+        inovoBin=joinFile(libexecDir,"inovo")
 
         getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
 
