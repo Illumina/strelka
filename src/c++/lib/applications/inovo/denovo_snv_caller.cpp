@@ -59,7 +59,7 @@ get_denovo_snv_call(
     for (const auto sampleIndex : allIndex)
     {
         const CleanedPileup& cpi(*pileups[sampleIndex]);
-        if (cpi.cleanedPileup().calls.size() < 10)
+        if (cpi.cleanedPileup().calls.size() < 18)
         {
             return;
         }
@@ -78,7 +78,7 @@ get_denovo_snv_call(
         {
             total += count;
         }
-        const unsigned min_allele_count(total*.2);
+        const unsigned min_allele_count(total*.25);
 
         for (unsigned i(0);i<N_BASE;++i)
         {
