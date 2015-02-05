@@ -82,7 +82,7 @@ class TempSegmentFiles :
 
 def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
-    isFirstSegment = (len(segFiles.snv) == 0)
+    isFirstSegment = (len(segFiles.denovo) == 0)
 
     segStr = str(gseg.id)
 
