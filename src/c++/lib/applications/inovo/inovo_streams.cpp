@@ -136,11 +136,13 @@ inovo_streams(
 
         open_ofstream(pinfo,opt.denovo_callable_filename,"denovo-callable-regions",opt.is_clobber,fos);
 
+        // post samtools 1.0 tabix doesn't handle header information anymore, so take this out entirely:
+#if 0
         if (! opt.dfilter.is_skip_header)
         {
             fos << "track name=\"DenovoCallableSites\"\t"
                 << "description=\"Sites with sufficient information to call denovo variants.\"\n";
         }
+#endif
     }
-
 }
