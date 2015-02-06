@@ -306,6 +306,12 @@ public:
             return *indel_sync_ptr;
         }
 
+        const indel_synchronizer&
+        indel_sync() const
+        {
+            return *indel_sync_ptr;
+        }
+
 
         indel_buffer indel_buff;
         pos_basecall_buffer bc_buff;

@@ -450,11 +450,9 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
 
         unsigned n_subscore_reads(0);
 
-        typedef indel_data::score_t::const_iterator siter;
-        siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-        for (; i!=i_end; ++i)
+        for (const auto& val : id.read_path_lnp)
         {
-            const read_path_scores& path_lnp(i->second);
+            const read_path_scores& path_lnp(val.second);
 
             // optionally skip tier2 data:
             if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
@@ -470,8 +468,6 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
             }
             else
             {
-                typedef read_path_scores::alt_indel_t::const_iterator aciter;
-
                 bool is_alt_found(false);
 #if 0
                 if (pprob.is_alt && (pprob.alt >= path_pprob_thresh))
@@ -480,10 +476,9 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
                     is_alt_found=true;
                 }
 #else
-                aciter j(pprob.alt_indel.begin()), j_end(pprob.alt_indel.end());
-                for (; j!=j_end; ++j)
+                for (const auto& palt : pprob.alt_indel)
                 {
-                    if (j->second >= path_pprob_thresh)
+                    if (palt.second >= path_pprob_thresh)
                     {
                         isri.n_q30_alt_reads++;
                         is_alt_found=true;

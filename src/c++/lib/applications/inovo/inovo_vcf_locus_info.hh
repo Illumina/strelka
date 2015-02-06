@@ -31,6 +31,9 @@ enum index_t
     // SNVs and indels:
     HighDepth,
     WrongCount,
+    // indels only:
+    Repeat,
+    iHpol,
     SIZE
 };
 
@@ -44,6 +47,10 @@ get_label(const unsigned idx)
         return "HighDepth";
     case WrongCount:
         return "WrongCount";
+    case Repeat:
+        return "Repeat";
+    case iHpol:
+        return "iHpol";
     default:
         assert(false && "Unknown vcf filter id");
         return nullptr;

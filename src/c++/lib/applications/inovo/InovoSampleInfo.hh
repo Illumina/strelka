@@ -74,10 +74,27 @@ struct SampleInfo
 
 struct SampleInfoManager
 {
+private:
+    typedef std::vector<SampleInfo> dtype;
+public:
+    typedef dtype::const_iterator const_iterator;
+
     unsigned
     size() const
     {
         return _data.size();
+    }
+
+    const_iterator
+    begin() const
+    {
+        return _data.cbegin();
+    }
+
+    const_iterator
+    end() const
+    {
+        return _data.cend();
     }
 
     const std::vector<unsigned>&
@@ -105,5 +122,5 @@ private:
     typedef std::vector<unsigned> stypeIndex;
     stypeIndex _sindex[INOVO_SAMPLETYPE::SIZE];
 
-    std::vector<SampleInfo> _data;
+    dtype _data;
 };

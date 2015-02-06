@@ -18,7 +18,6 @@
 
 #include "denovo_snv_call.hh"
 #include "inovo_shared.hh"
-#include "blt_util/prog_info.hh"
 #include "starling_common/PileupCleaner.hh"
 
 void

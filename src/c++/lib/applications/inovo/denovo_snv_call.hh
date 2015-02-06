@@ -34,9 +34,10 @@ struct denovo_snv_call
     bool
     is_output() const
     {
-        return (is_snv());
+        return (is_snv() || is_forced_output);
     }
 
     unsigned ref_gt;
     result_set rs;
+    bool is_forced_output = false;
 };

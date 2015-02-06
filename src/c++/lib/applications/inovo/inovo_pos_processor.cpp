@@ -16,14 +16,16 @@
 ///
 
 #include "inovo_pos_processor.hh"
+#include "denovo_indel_caller.hh"
+#include "denovo_indel_call_vcf.hh"
+#include "denovo_snv_caller.hh"
+#include "denovo_snv_call_vcf.hh"
 
 #include "blt_util/log.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
-#include "denovo_snv_caller.hh"
-#include "denovo_snv_call_vcf.hh"
 
 
 
@@ -186,12 +188,14 @@ void
 inovo_pos_processor::
 process_pos_indel_denovo(const pos_t pos)
 {
-#if 0
-    using namespace STRELKA_SAMPLE_TYPE;
+    using namespace INOVO_SAMPLETYPE;
 
-    //    std::ostream& report_os(get_report_os());
-    sample_info& normal_sif(sample(NORMAL));
-    sample_info& tumor_sif(sample(TUMOR));
+    // because of indel syncronization we should get all the indels by iterating
+    // through any of our samples. The proband is the only sample that's guaranteed
+    // to exist, so we standardize on it here:
+    const SampleInfoManager& sinfo(_opt.alignFileOpt.alignmentSampleInfo);
+    const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
+    const sample_info& proband_sif(sample(probandIndex));
 
     typedef indel_buffer::const_iterator ciiter;
     ciiter i(proband_sif.indel_buff.pos_iter(pos));
@@ -204,100 +208,81 @@ process_pos_indel_denovo(const pos_t pos)
         // don't write breakpoint output:
         if (ik.is_breakpoint()) continue;
 
-        const indel_data& tumor_id(get_indel_data(i));
+        const indel_data& proband_id(get_indel_data(i));
 
-        if (! tumor_sif.indel_sync().is_candidate_indel(ik,tumor_id)) continue;
+        if (! proband_sif.indel_sync().is_candidate_indel(ik,proband_id)) continue;
 
-        const indel_data* normal_id_ptr(normal_sif.indel_buff.get_indel_data_ptr(ik));
-        assert(NULL != normal_id_ptr);
-        const indel_data& normal_id(*normal_id_ptr);
-
-        if (normal_id.read_path_lnp.empty() && tumor_id.read_path_lnp.empty()) continue;
-
-        //bool is_indel(false);
-
-        if (_opt.is_somatic_indel())
+        // assert that indel data exists for all samples, make sure alt alignments are scored in at least one sample:
+        bool isAllEmpty(true);
+        std::vector<const indel_data*> allIndelData(_n_samples);
+        for (unsigned sampleIndex(0); sampleIndex<_n_samples; sampleIndex++)
         {
-            // indel_report_info needs to be run first now so that
-            // local small repeat info is available to the indel
-            // caller
+            const indel_data* idp = sample(sampleIndex).indel_buff.get_indel_data_ptr(ik);
+            allIndelData[sampleIndex] = idp;
+            assert(nullptr != idp);
+            if (! idp->read_path_lnp.empty()) isAllEmpty = false;
+        }
 
-            // get iri from either sample:
-            starling_indel_report_info iri;
-            get_starling_indel_report_info(ik,tumor_id,_ref,iri);
+        if (isAllEmpty) continue;
 
-            double indel_error_prob(0);
-            double ref_error_prob(0);
-            get_indel_error_prob(_opt,iri,indel_error_prob,ref_error_prob);
+        // indel_report_info needs to be run first now so that
+        // local small repeat info is available to the indel
+        // caller
 
-            somatic_indel_call sindel;
-            static const bool is_use_alt_indel(true);
-            _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
-                                                    normal_sif.sample_opt,
-                                                    tumor_sif.sample_opt,
-                                                    indel_error_prob,ref_error_prob,
-                                                    ik,normal_id,tumor_id,
-                                                    is_use_alt_indel,
-                                                    sindel);
+        // get iri from either sample:
+        starling_indel_report_info iri;
+        get_starling_indel_report_info(ik,proband_id,_ref,iri);
 
-            if (sindel.is_output())
+        double indel_error_prob(0);
+        double ref_error_prob(0);
+        get_indel_error_prob(_opt,iri,indel_error_prob,ref_error_prob);
+
+        denovo_indel_call dindel;
+
+        // considate sample_options:
+        std::vector<const starling_sample_options*> sampleOptions(_n_samples);
+        for (unsigned sampleIndex(0); sampleIndex<_n_samples; sampleIndex++)
+        {
+            sampleOptions[sampleIndex] = &(sample(sampleIndex).sample_opt);
+        }
+
+        static const bool is_use_alt_indel(true);
+        get_denovo_indel_call(
+            _opt,
+            sinfo,
+            sampleOptions,
+            indel_error_prob,ref_error_prob,
+            ik,allIndelData,
+            is_use_alt_indel,
+            dindel);
+
+        if (dindel.is_output())
+        {
+            // get sample specific info:
+            std::vector<starling_indel_sample_report_info> isri(_n_samples);
+            const bool is_include_tier2(false);
+            for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
             {
-                // get sample specific info:
-                SomaticIndelVcfInfo siInfo;
-                siInfo.sindel = sindel;
-                siInfo.iri = iri;
-
-                for (unsigned t(0); t<2; ++t)
-                {
-                    const bool is_include_tier2(t!=0);
-                    get_starling_indel_sample_report_info(_dopt,ik,normal_id,normal_sif.bc_buff,
+                get_starling_indel_sample_report_info(_dopt,ik,*(allIndelData[sampleIndex]),sample(sampleIndex).bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
-                                                          siInfo.nisri[t]);
-                    get_starling_indel_sample_report_info(_dopt,ik,tumor_id,tumor_sif.bc_buff,
-                                                          is_include_tier2,is_use_alt_indel,
-                                                          siInfo.tisri[t]);
-                }
-
-                pos_t indel_pos(ik.pos);
-                if (ik.type != INDEL::BP_RIGHT)
-                {
-                    indel_pos -= 1;
-                }
-
-                _indelWriter.cacheIndel(indel_pos,siInfo);
+                                                          isri[sampleIndex]);
             }
 
-#if 0
-            /// TODO put this option under runtime control...
-            /// TODO setup option so that read keys persist longer when needed for this case...
-            ///
-            static const bool is_print_indel_evidence(false);
-
-            if (is_print_indel_evidence and is_indel)
+            pos_t indel_pos(ik.pos);
+            if (ik.type != INDEL::BP_RIGHT)
             {
-                report_os << "INDEL_EVIDENCE " << ik;
-
-                typedef indel_data::score_t::const_iterator siter;
-                siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-                for (; i!=i_end; ++i)
-                {
-                    const align_id_t read_id(i->first);
-                    const read_path_scores& lnp(i->second);
-                    const read_path_scores pprob(indel_lnp_to_pprob(_dopt,lnp));
-                    const starling_read* srptr(sif.read_buff.get_read(read_id));
-
-                    report_os << "read key: ";
-                    if (NULL==srptr) report_os << "UNKNOWN_KEY";
-                    else            report_os << srptr->key();
-                    report_os << "\n"
-                              << "read log_lhoods: " << lnp << "\n"
-                              << "read pprobs: " << pprob << "\n";
-                }
+                indel_pos -= 1;
             }
-#endif
+
+            std::ostream& bos(*_streams.denovo_osptr());
+            bos << _chrom_name << '\t'
+                << indel_pos << '\t'
+                << ".";
+
+            denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, iri, isri, bos);
+            bos << "\n";
         }
     }
-#endif
 }
 
 
