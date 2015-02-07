@@ -67,6 +67,19 @@ get_gt_label(const unsigned idx)
     }
 }
 
+inline
+uint8_t
+get_allele(
+    const unsigned idx,
+    const unsigned chromidx)
+{
+    assert(idx<SIZE);
+    assert(chromidx<2);
+    static const uint8_t res[SIZE][2] = {{0,0},{1,1},{0,1}};
+    return res[idx][chromidx];
+}
+
+
 #if 0
 // states are the number of copies of I,R,NR
 // I=called indel allele

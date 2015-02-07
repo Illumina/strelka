@@ -16,6 +16,8 @@
 
 #include "denovo_indel_caller.hh"
 
+#include <array>
+
 
 #ifdef DEBUG_INDEL_CALL
 #include "blt_util/log.hh"
@@ -134,42 +136,73 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
                                                         lhood[lsize-(i+1)]);
     }
 }
+#endif
+
+
+
+
+typedef double indel_state_t[STAR_DIINDEL::SIZE];
+
+
+namespace TRANSMISSION_STATE
+{
+    // "ERROR" represents a de-novo event that is incredibly unlikely (multiple events) -- we could also put it in the denovo state and just use the
+    // de-novo prior squared to get the same result -- then the dominant term would actually be the probably of an erroneous copy
+    // number observation in the sample instead.
+    enum
+    {
+        INHERITED,
+        DENOVO,
+        ERROR
+    } index_t;
+
+    index_t
+    get_state(
+        const STAR_DIINDEL::index_t parent0GT,
+        const STAR_DIINDEL::index_t parent1GT,
+        const STAR_DIINDEL::index_t childGT)
+    {
+        static const unsigned alleleCount(2);
+        const uint8_t ca[alleleCount];
+        const uint8_t p0a[alleleCount];
+        const uint8_t p1a[alleleCount];
+        for (unsigned a(0;;;;;;;))
+        (STAR_DIINDEL::get_allele(childGT,0));
+        const uint8_t ca1(STAR_DIINDEL::get_allele(childGT,1));
+
+        const uint8_t p0a0(STAR_DIINDEL::get_allele(childGT,0));
+        const uint8_t p0a1(STAR_DIINDEL::get_allele(childGT,1));
+
+
+    }
+
+}
 
 
 
 static
 void
 calculate_result_set(
-    const std::vector<blt_float_t>& normal_lnprior,
-    const double lnmatch,
-    const double lnmismatch,
-    const double* normal_lhood,
-    const double* tumor_lhood,
-    result_set& rs)
+    const SampleInfoManager& sinfo,
+    const std::vector<indel_state_t>& sampleLhood,
+    denovo_indel_call::result_set& rs)
 {
+    using namespace INOVO_SAMPLETYPE;
 
-#ifdef SOMATIC_DEBUG
-    std::vector<double> check_prior(DDIINDEL_GRID::SIZE);
+    const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
+    const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
 
-    for (unsigned ngt(0); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
+    // just go for total brute force as a first pass at this:
+    for (unsigned p1(0); p1<STAR_DIINDEL::SIZE; ++p1)
     {
-        const double base_prior(normal_lnprior[ngt]);
-        for (unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt)
+        for (unsigned p2(0); p2<STAR_DIINDEL::SIZE; ++p2)
         {
-            const unsigned dgt(DDIINDEL_GRID::get_state(ngt,tgt));
-            check_prior[dgt] =
-                base_prior+
-                ((tgt==ngt) ? lnmatch : lnmismatch);
+            for (unsigned pro(0); pro<STAR_DIINDEL::SIZE; ++pro)
+            {
+
+            }
         }
     }
-
-    check_ln_distro(check_prior.begin(),
-                    check_prior.end(),
-                    "somatic indel full prior");
-#endif
-
-    // get unnormalized posterior:
-    std::vector<double> pprob(DDIINDEL_GRID::SIZE);
 
     for (unsigned ngt(0); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
     {
@@ -245,10 +278,10 @@ calculate_result_set(
 #ifdef SOMATIC_DEBUG
 static
 void
-debug_dump_indel_lhood(const double* lhood,
-                       std::ostream& os)
+debug_dump_indel_lhood(
+    const double* lhood,
+    std::ostream& os)
 {
-
     double pprob[STAR_DIINDEL_GRID::SIZE];
     for (unsigned gt(0); gt<STAR_DIINDEL_GRID::SIZE; ++gt)
     {
@@ -270,13 +303,14 @@ debug_dump_indel_lhood(const double* lhood,
 
 
 
+
 static
 bool
-is_multi_indel_allele(const starling_base_deriv_options& dopt,
-                      const indel_data& normal_id,
-                      const indel_data& tumor_id,
-                      const bool is_include_tier2,
-                      bool& is_overlap)
+is_multi_indel_allele(
+    const starling_base_deriv_options& dopt,
+    const std::vector<const indel_data*>& allIndelData,
+    const bool is_include_tier2,
+    bool& is_overlap)
 {
     static const bool is_use_alt_indel(true);
     static const double min_explained_count_fraction(.9);
@@ -289,8 +323,12 @@ is_multi_indel_allele(const starling_base_deriv_options& dopt,
 
     // get total pprob:
     read_path_scores total_pprob;
-    get_sum_path_pprob(dopt,normal_id,is_include_tier2,is_use_alt_indel,total_pprob,true);
-    get_sum_path_pprob(dopt,tumor_id,is_include_tier2,is_use_alt_indel,total_pprob,false);
+    const unsigned sampleSize(allIndelData.size());
+    for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
+    {
+        const bool isInit(sampleIndex==0);
+        get_sum_path_pprob(dopt, *(allIndelData[sampleIndex]), is_include_tier2, is_use_alt_indel, total_pprob, isInit);
+    }
 
     // next determine the top two indel alleles:
     std::vector<std::pair<double,int> > scores;
@@ -346,8 +384,6 @@ is_multi_indel_allele(const starling_base_deriv_options& dopt,
     return false;
 }
 
-#endif
-
 
 
 ///
@@ -355,6 +391,7 @@ is_multi_indel_allele(const starling_base_deriv_options& dopt,
 void
 get_denovo_indel_call(
     const inovo_options& opt,
+    const inovo_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const std::vector<const starling_sample_options*>& sampleOptions,
     const double indel_error_prob,
@@ -364,17 +401,13 @@ get_denovo_indel_call(
     const bool is_use_alt_indel,
     denovo_indel_call& dinc)
 {
-
-#if 0
     // for now, lhood calculation of each sample is independent:
 
     // get likelihood of each genotype
     static const bool is_het_bias(false);
     static const double het_bias(0.0);
-    double normal_lhood[STAR_DIINDEL_GRID::SIZE];
-    double tumor_lhood[STAR_DIINDEL_GRID::SIZE];
-    std::vector<blt_float_t> normal_prior(STAR_DIINDEL_GRID::SIZE,0);
 
+    // set is_forced_output
     for (const indel_data* idp : allIndelData)
     {
         if (! idp->is_forced_output) continue;
@@ -382,6 +415,60 @@ get_denovo_indel_call(
         break;
     }
 
+    // put some tier structure in for future, but only use 1 at present:
+    static const unsigned n_tier(1);
+    std::array<denovo_indel_call::result_set,n_tier> tier_rs;
+    for (unsigned tierIndex(0); tierIndex<n_tier; ++tierIndex)
+    {
+        const bool is_include_tier2(tierIndex==1);
+
+        // early escape filter borrowed directly from somatic case
+        static const bool is_denovo_multi_indel_filter(true);
+#if 0
+        std::cerr << "BUG: testing tier/ik: " << i << " " << ik;
+#endif
+        if (is_denovo_multi_indel_filter)
+        {
+            const bool ismulti(is_multi_indel_allele(dopt,allIndelData,is_include_tier2,dinc.rs.is_overlap));
+            if (ismulti)
+            {
+                tier_rs[tierIndex].dindel_qphred=0;
+#if 0
+                std::cerr << "BUG: rejected\n";
+#endif
+                continue;
+            }
+        }
+
+        const unsigned sampleSize(allIndelData.size());
+        typedef double indel_state_t[STAR_DIINDEL::SIZE];
+        std::vector<indel_state_t> sampleLhood(sampleSize);
+
+        for (unsigned sampleIndex(0);sampleIndex<sampleSize;++sampleIndex)
+        {
+            indel_digt_caller::get_indel_digt_lhood(
+                opt,dopt,sampleOptions(sampleIndex),
+                indel_error_prob,ref_error_prob,ik,
+                *(allIndelData(sampleIndex)),
+                is_het_bias, het_bias,
+                is_include_tier2, is_use_alt_indel,
+                sampleLhood(sampleIndex));
+        }
+
+        calculate_result_set(sinfo, sampleLhood, tier_rs[tierIndex]);
+    }
+
+    if (! dinc.is_forced_output)
+    {
+        for (const auto& val : tier_rs)
+        {
+            if (val.dindel_qphred==0) return;
+        }
+    }
+
+    dinc.rs=tier_rs[0];
+
+#if 0
     const double indel_error_lnp(std::log(indel_error_prob));
     const double indel_real_lnp(std::log(1.-indel_error_prob));
     const double ref_error_lnp(std::log(ref_error_prob));

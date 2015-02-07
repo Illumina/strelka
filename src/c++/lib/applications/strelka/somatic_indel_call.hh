@@ -29,7 +29,6 @@ struct somatic_indel_call
 
     struct result_set
     {
-
         result_set()
             : sindel_qphred(0),
               is_overlap(false)

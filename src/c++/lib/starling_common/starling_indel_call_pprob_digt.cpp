@@ -268,12 +268,13 @@ increment_het_ratio_lhood(const starling_base_options& opt,
 // total the path likelihoods of ref,indel and alt_indel states
 //
 void
-get_sum_path_pprob(const starling_base_deriv_options& dopt,
-                   const indel_data& id,
-                   const bool is_tier2_pass,
-                   const bool is_use_alt_indel,
-                   read_path_scores& total_pprob,
-                   const bool is_init_total)
+get_sum_path_pprob(
+    const starling_base_deriv_options& dopt,
+    const indel_data& id,
+    const bool is_tier2_pass,
+    const bool is_use_alt_indel,
+    read_path_scores& total_pprob,
+    const bool is_init_total)
 {
     static const double initval(0);
 

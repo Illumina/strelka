@@ -30,12 +30,13 @@
 // utility used for indel filtration...
 //
 void
-get_sum_path_pprob(const starling_base_deriv_options& dopt,
-                   const indel_data& id,
-                   const bool is_include_tier2,
-                   const bool is_use_alt_indel,
-                   read_path_scores& total_pprob,
-                   const bool is_init_total = true);
+get_sum_path_pprob(
+    const starling_base_deriv_options& dopt,
+    const indel_data& id,
+    const bool is_include_tier2,
+    const bool is_use_alt_indel,
+    read_path_scores& total_pprob,
+    const bool is_init_total = true);
 
 
 // Use caller object to precalculate prior distributions based on

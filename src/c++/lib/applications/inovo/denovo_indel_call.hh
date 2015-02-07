@@ -22,16 +22,17 @@ struct denovo_indel_call
 {
     struct result_set
     {
-        unsigned ntype;
-        unsigned max_gt;
+        std::vector<unsigned> max_gt;
+        int dindel_qphred = 0;
         bool is_overlap = false;
-        bool is_call = false;
     };
 
+    /// this is (one of) the criteria for writing out to a file rather than
+    /// an indication the indel is PASS'd
     bool
     is_indel() const
     {
-        return (rs.is_call);
+        return (rs.dindel_qphred != 0);
     }
 
     // should this indel be written out?

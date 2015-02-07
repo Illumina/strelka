@@ -24,6 +24,7 @@
 void
 get_denovo_indel_call(
     const inovo_options& opt,
+    const inovo_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const std::vector<const starling_sample_options*>& sampleOptions,
     const double indel_error_prob,
