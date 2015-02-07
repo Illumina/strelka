@@ -18,6 +18,7 @@
 
 #include "denovo_indel_call.hh"
 #include "inovo_shared.hh"
+#include "starling_common/indel.hh"
 
 
 void

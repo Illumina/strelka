@@ -68,9 +68,10 @@ denovo_indel_call_vcf(
         // compute all site filters:
         if (dopt.dfilter.is_max_depth())
         {
+            using namespace INOVO_SAMPLETYPE;
             const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
 
-            const unsigned& depth(siInfo.nisri[0].depth);
+            const unsigned& depth(isri[probandIndex].depth);
             if (depth > dopt.dfilter.max_depth)
             {
                 smod.set_filter(INOVO_VCF_FILTERS::HighDepth);
