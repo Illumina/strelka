@@ -23,8 +23,9 @@
 
 #include <array>
 
+#define DENOVO_INDEL_DEBUG
 
-#ifdef DEBUG_INDEL_CALL
+#ifdef DENOVO_INDEL_DEBUG
 #include "blt_util/log.hh"
 #endif
 
@@ -162,6 +163,22 @@ namespace TRANSMISSION_STATE
         SIZE
     };
 
+    static
+    const char*
+    getLabel(
+        const index_t idx)
+    {
+        switch (idx)
+        {
+        case INHERITED: return "INHERITED";
+        case DENOVO: return "DENOVO";
+        case ERROR: return "ERROR";
+        default:
+            assert(false && "Unknown transmission state");
+            return nullptr;
+        }
+    }
+
     // temporary fixed priors:
     static
     double
@@ -242,10 +259,7 @@ calculate_result_set(
     const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
 
     std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
-    for (unsigned a(0);a<TRANSMISSION_STATE::SIZE;++a)
-    {
-        stateLhood[a] = 0;
-    }
+    std::fill(stateLhood.begin(),stateLhood.end(),0);
 
     // just go for total brute force as a first pass at this:
     for (unsigned p0(0); p0<STAR_DIINDEL::SIZE; ++p0)
@@ -256,6 +270,15 @@ calculate_result_set(
             {
                 const double pedigreeLhood = sampleLhood[parentIndex[0]][p0] + sampleLhood[parentIndex[1]][p1] + sampleLhood[probandIndex][pro];
                 const TRANSMISSION_STATE::index_t tran(TRANSMISSION_STATE::get_state(p0,p1,pro));
+#ifdef DENOVO_INDEL_DEBUG
+                {
+                    using namespace TRANSMISSION_STATE;
+                    log_os << "p0/p1/c: "
+                            << STAR_DIINDEL::get_gt_label(p0) << " "
+                            << STAR_DIINDEL::get_gt_label(p1) << " "
+                            << STAR_DIINDEL::get_gt_label(pro) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
+#endif
+                }
                 stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
             }
         }
