@@ -22,7 +22,8 @@ struct denovo_indel_call
 {
     struct result_set
     {
-        std::vector<unsigned> max_gt;
+//        std::vector<unsigned> max_gt;
+        unsigned max_gt; // this is the de-novo state, still need a mechanism to capture sample states
         int dindel_qphred = 0;
         bool is_overlap = false;
     };

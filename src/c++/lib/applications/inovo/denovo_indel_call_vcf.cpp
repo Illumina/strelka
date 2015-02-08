@@ -77,6 +77,12 @@ denovo_indel_call_vcf(
                 smod.set_filter(INOVO_VCF_FILTERS::HighDepth);
             }
         }
+
+        if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
+        {
+            smod.set_filter(INOVO_VCF_FILTERS::QDI);
+        }
+
 #if 0
         if (siInfo.iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
         {
@@ -138,7 +144,8 @@ denovo_indel_call_vcf(
     }
 
     os << sep
-       << "DP="<< totalDepth;
+       << "DP="<< totalDepth
+       << ";QDI=" << rs.dindel_qphred;
 
     if (iri.is_repeat_unit())
     {

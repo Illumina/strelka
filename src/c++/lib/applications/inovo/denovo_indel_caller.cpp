@@ -15,6 +15,11 @@
 ///
 
 #include "denovo_indel_caller.hh"
+#include "blt_util/math_util.hh"
+#include "blt_util/prob_util.hh"
+#include "starling_common/indel_util.hh"
+#include "starling_common/starling_diploid_indel.hh"
+#include "starling_common/starling_indel_call_pprob_digt.hh"
 
 #include <array>
 
@@ -141,7 +146,7 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
 
 
 
-typedef double indel_state_t[STAR_DIINDEL::SIZE];
+typedef std::array<double,STAR_DIINDEL::SIZE> indel_state_t;
 
 
 namespace TRANSMISSION_STATE
@@ -149,33 +154,77 @@ namespace TRANSMISSION_STATE
     // "ERROR" represents a de-novo event that is incredibly unlikely (multiple events) -- we could also put it in the denovo state and just use the
     // de-novo prior squared to get the same result -- then the dominant term would actually be the probably of an erroneous copy
     // number observation in the sample instead.
-    enum
+    enum index_t
     {
         INHERITED,
         DENOVO,
-        ERROR
-    } index_t;
+        ERROR,
+        SIZE
+    };
 
-    index_t
-    get_state(
-        const STAR_DIINDEL::index_t parent0GT,
-        const STAR_DIINDEL::index_t parent1GT,
-        const STAR_DIINDEL::index_t childGT)
+    // temporary fixed priors:
+    static
+    double
+    getPrior(
+        const index_t idx)
     {
-        static const unsigned alleleCount(2);
-        const uint8_t ca[alleleCount];
-        const uint8_t p0a[alleleCount];
-        const uint8_t p1a[alleleCount];
-        for (unsigned a(0;;;;;;;))
-        (STAR_DIINDEL::get_allele(childGT,0));
-        const uint8_t ca1(STAR_DIINDEL::get_allele(childGT,1));
-
-        const uint8_t p0a0(STAR_DIINDEL::get_allele(childGT,0));
-        const uint8_t p0a1(STAR_DIINDEL::get_allele(childGT,1));
-
-
+        // as currently defined background exp is I: 15/27 E: 2/27 D: 10/27 -- compared to drate this doesn't matter
+        static const double lndrate(std::log(1e-8));
+        switch (idx)
+        {
+        case INHERITED: return 0.;
+        case DENOVO: return lndrate;
+        case ERROR: return lndrate;
+        default:
+            assert(false && "Undefined inheritance state");
+        }
     }
 
+    static
+    unsigned
+    getEcount(
+        const uint8_t* c,
+        const uint8_t* px,
+        const uint8_t* py)
+    {
+        static const unsigned alleleCount(2);
+
+        unsigned val(0);
+        for (unsigned alleleIndex(0); alleleIndex<alleleCount; ++alleleIndex)
+        {
+            if ((c[alleleIndex] != px[0]) && (c[alleleIndex] != px[1])) val += 1;
+        }
+        return val;
+    }
+
+    static
+    index_t
+    get_state(
+        const unsigned parent0GT,
+        const unsigned parent1GT,
+        const unsigned childGT)
+    {
+        static const unsigned alleleCount(2);
+        uint8_t ca[alleleCount];
+        uint8_t p0a[alleleCount];
+        uint8_t p1a[alleleCount];
+        for (unsigned alleleIndex(0); alleleIndex<alleleCount; ++alleleIndex)
+        {
+            ca[alleleIndex] = STAR_DIINDEL::get_allele(childGT,alleleIndex);
+            p0a[alleleIndex] = STAR_DIINDEL::get_allele(parent0GT,alleleIndex);
+            p1a[alleleIndex] = STAR_DIINDEL::get_allele(parent1GT,alleleIndex);
+        }
+        const unsigned ecount(std::min(getEcount(ca,p0a,p1a),getEcount(ca,p1a,p0a)));
+        switch (ecount)
+        {
+        case 0: return INHERITED;
+        case 1: return DENOVO;
+        case 2: return ERROR;
+        default:
+            assert(false && "Unexpected count value");
+            return ERROR;
+        }
+    }
 }
 
 
@@ -192,86 +241,39 @@ calculate_result_set(
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
     const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
 
-    // just go for total brute force as a first pass at this:
-    for (unsigned p1(0); p1<STAR_DIINDEL::SIZE; ++p1)
+    std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
+    for (unsigned a(0);a<TRANSMISSION_STATE::SIZE;++a)
     {
-        for (unsigned p2(0); p2<STAR_DIINDEL::SIZE; ++p2)
+        stateLhood[a] = 0;
+    }
+
+    // just go for total brute force as a first pass at this:
+    for (unsigned p0(0); p0<STAR_DIINDEL::SIZE; ++p0)
+    {
+        for (unsigned p1(0); p1<STAR_DIINDEL::SIZE; ++p1)
         {
             for (unsigned pro(0); pro<STAR_DIINDEL::SIZE; ++pro)
             {
-
+                const double pedigreeLhood = sampleLhood[parentIndex[0]][p0] + sampleLhood[parentIndex[1]][p1] + sampleLhood[probandIndex][pro];
+                const TRANSMISSION_STATE::index_t tran(TRANSMISSION_STATE::get_state(p0,p1,pro));
+                stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
             }
         }
     }
 
-    for (unsigned ngt(0); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
+    std::array<double,TRANSMISSION_STATE::SIZE> statePprob;
+    for (unsigned tstate(0); tstate<TRANSMISSION_STATE::SIZE; ++tstate)
     {
-        const double base_prior(normal_lnprior[ngt]);
-        for (unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt)
-        {
-            const unsigned dgt(DDIINDEL_GRID::get_state(ngt,tgt));
-            pprob[dgt] =
-                normal_lhood[ngt]+
-                tumor_lhood[tgt]+
-                base_prior+
-                ((tgt==ngt) ? lnmatch : lnmismatch);
-        }
+        statePprob[tstate] = stateLhood[tstate] + TRANSMISSION_STATE::getPrior(static_cast<TRANSMISSION_STATE::index_t>(tstate));
     }
 
     //opt_normalize_ln_distro(pprob.begin(),pprob.end(),DDIINDEL_GRID::is_nonsom.val.begin(),rs.max_gt);
-    normalize_ln_distro(pprob.begin(),pprob.end(),rs.max_gt);
+    normalize_ln_distro(statePprob.begin(),statePprob.end(),rs.max_gt);
 
 #ifdef DEBUG_INDEL_CALL
     log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
 #endif
-    double nonsomatic_sum(0);
-    for (unsigned gt(0); gt<STAR_DIINDEL_GRID::SIZE; ++gt)
-    {
-        nonsomatic_sum += pprob[DDIINDEL_GRID::get_state(gt,gt)];
-    }
-    rs.sindel_qphred=error_prob_to_qphred(nonsomatic_sum);
-
-    if (0 == rs.sindel_qphred) return;
-
-    // reset max_gt to the most likely state excluding normal noise states:
-    //
-    rs.max_gt=0;
-    for (unsigned sgt(0); sgt<STAR_DIINDEL::SIZE; ++sgt)
-    {
-        for (unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt)
-        {
-            const unsigned dstate(DDIINDEL_GRID::get_state(sgt,tgt));
-            if (pprob[dstate] > pprob[rs.max_gt]) rs.max_gt=dstate;
-        }
-    }
-
-    // now compute the probability that the event is notsomatic or notfrom each of
-    // the three reference states:
-    //
-    double min_not_somfrom_sum(0);
-    for (unsigned sgt(0); sgt<STAR_DIINDEL::SIZE; ++sgt)
-    {
-        double not_somfrom_sum(nonsomatic_sum);
-        for (unsigned ngt(0); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
-        {
-            // skip this case because we want events where the normal
-            // state is NOT sgt:
-            if (sgt==ngt) continue;
-            for (unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt)
-            {
-                // skip this case because we've already summed
-                // nonsomatic prob:
-                if (tgt==ngt) continue;
-                not_somfrom_sum += pprob[DDIINDEL_GRID::get_state(ngt,tgt)];
-            }
-        }
-        if ((sgt==0) || (not_somfrom_sum<min_not_somfrom_sum))
-        {
-            min_not_somfrom_sum=not_somfrom_sum;
-            rs.sindel_from_ntype_qphred=error_prob_to_qphred(not_somfrom_sum);
-            rs.ntype=sgt;
-        }
-    }
+    rs.dindel_qphred=error_prob_to_qphred(statePprob[TRANSMISSION_STATE::INHERITED] + statePprob[TRANSMISSION_STATE::ERROR]);
 }
 
 
@@ -441,18 +443,17 @@ get_denovo_indel_call(
         }
 
         const unsigned sampleSize(allIndelData.size());
-        typedef double indel_state_t[STAR_DIINDEL::SIZE];
         std::vector<indel_state_t> sampleLhood(sampleSize);
 
         for (unsigned sampleIndex(0);sampleIndex<sampleSize;++sampleIndex)
         {
             indel_digt_caller::get_indel_digt_lhood(
-                opt,dopt,sampleOptions(sampleIndex),
+                opt,dopt,*(sampleOptions[sampleIndex]),
                 indel_error_prob,ref_error_prob,ik,
-                *(allIndelData(sampleIndex)),
+                *(allIndelData[sampleIndex]),
                 is_het_bias, het_bias,
                 is_include_tier2, is_use_alt_indel,
-                sampleLhood(sampleIndex));
+                sampleLhood[sampleIndex].data());
         }
 
         calculate_result_set(sinfo, sampleLhood, tier_rs[tierIndex]);

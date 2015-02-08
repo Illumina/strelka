@@ -38,6 +38,8 @@ struct denovo_filter_options
     std::string chrom_depth_file;
     bool is_skip_header = false;
     double max_depth_factor = 3.;
+
+    double dindel_qual_lowerbound = 20;
 #if 0
     double snv_max_filtered_basecall_frac = 0.4;
     double snv_max_spanning_deletion_frac = 0.75;

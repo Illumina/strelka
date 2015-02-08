@@ -32,6 +32,7 @@ enum index_t
     HighDepth,
     WrongCount,
     // indels only:
+    QDI,
     Repeat,
     iHpol,
     SIZE
@@ -47,6 +48,8 @@ get_label(const unsigned idx)
         return "HighDepth";
     case WrongCount:
         return "WrongCount";
+    case QDI:
+        return "LowQDI";
     case Repeat:
         return "Repeat";
     case iHpol:

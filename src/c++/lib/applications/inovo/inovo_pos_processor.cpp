@@ -249,6 +249,7 @@ process_pos_indel_denovo(const pos_t pos)
         static const bool is_use_alt_indel(true);
         get_denovo_indel_call(
             _opt,
+            _dopt,
             sinfo,
             sampleOptions,
             indel_error_prob,ref_error_prob,
