@@ -162,16 +162,6 @@ process_pos_variants_impl(const pos_t pos)
 {
     try
     {
-        process_pos_indel_denovo(pos);
-    }
-    catch (...)
-    {
-        log_os << "Exception caught while attempting to call denovo indel at position: " << (pos+1) << "\n";
-        throw;
-    }
-
-    try
-    {
         process_pos_snp_denovo(pos);
     }
     catch (...)
@@ -180,6 +170,15 @@ process_pos_variants_impl(const pos_t pos)
         throw;
     }
 
+    try
+    {
+        process_pos_indel_denovo(pos);
+    }
+    catch (...)
+    {
+        log_os << "Exception caught while attempting to call denovo indel at position: " << (pos+1) << "\n";
+        throw;
+    }
 }
 
 
@@ -275,9 +274,12 @@ process_pos_indel_denovo(const pos_t pos)
                 indel_pos -= 1;
             }
 
+
+            const pos_t output_pos(indel_pos+1);
+
             std::ostream& bos(*_streams.denovo_osptr());
             bos << _chrom_name << '\t'
-                << indel_pos << '\t'
+                << output_pos << '\t'
                 << ".";
 
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, iri, isri, bos);
