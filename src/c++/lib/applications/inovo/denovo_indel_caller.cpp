@@ -200,17 +200,15 @@ namespace TRANSMISSION_STATE
     static
     unsigned
     getEcount(
-        const uint8_t* c,
         const uint8_t* px,
-        const uint8_t* py)
+        const uint8_t* py,
+        const uint8_t* c)
     {
         static const unsigned alleleCount(2);
 
         unsigned val(0);
-        for (unsigned alleleIndex(0); alleleIndex<alleleCount; ++alleleIndex)
-        {
-            if ((c[alleleIndex] != px[0]) && (c[alleleIndex] != px[1])) val += 1;
-        }
+        if ((c[0] != px[0]) && (c[0] != px[1])) val += 1;
+        if ((c[1] != py[0]) && (c[1] != py[1])) val += 1;
         return val;
     }
 
@@ -222,16 +220,16 @@ namespace TRANSMISSION_STATE
         const unsigned childGT)
     {
         static const unsigned alleleCount(2);
-        uint8_t ca[alleleCount];
         uint8_t p0a[alleleCount];
         uint8_t p1a[alleleCount];
+        uint8_t ca[alleleCount];
         for (unsigned alleleIndex(0); alleleIndex<alleleCount; ++alleleIndex)
         {
-            ca[alleleIndex] = STAR_DIINDEL::get_allele(childGT,alleleIndex);
             p0a[alleleIndex] = STAR_DIINDEL::get_allele(parent0GT,alleleIndex);
             p1a[alleleIndex] = STAR_DIINDEL::get_allele(parent1GT,alleleIndex);
+            ca[alleleIndex] = STAR_DIINDEL::get_allele(childGT,alleleIndex);
         }
-        const unsigned ecount(std::min(getEcount(ca,p0a,p1a),getEcount(ca,p1a,p0a)));
+        const unsigned ecount(std::min(getEcount(p0a,p1a,ca),getEcount(p1a,p0a,ca)));
         switch (ecount)
         {
         case 0: return INHERITED;
