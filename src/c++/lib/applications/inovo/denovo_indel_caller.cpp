@@ -23,7 +23,7 @@
 
 #include <array>
 
-#define DENOVO_INDEL_DEBUG
+//#define DENOVO_INDEL_DEBUG
 
 #ifdef DENOVO_INDEL_DEBUG
 #include "blt_util/log.hh"
@@ -273,8 +273,9 @@ calculate_result_set(
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
     const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
 
+    static const double ln0(std::log(0));
     std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
-    std::fill(stateLhood.begin(),stateLhood.end(),0);
+    std::fill(stateLhood.begin(),stateLhood.end(),ln0);
 
 #ifdef DENOVO_INDEL_DEBUG
     dumpIndelLhood("parent0", sampleLhood[parentIndex[0]].data(), log_os);
@@ -298,8 +299,8 @@ calculate_result_set(
                             << STAR_DIINDEL::get_gt_label(p0) << " "
                             << STAR_DIINDEL::get_gt_label(p1) << " "
                             << STAR_DIINDEL::get_gt_label(pro) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
-#endif
                 }
+#endif
                 stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
             }
         }
@@ -309,6 +310,12 @@ calculate_result_set(
     for (unsigned tstate(0); tstate<TRANSMISSION_STATE::SIZE; ++tstate)
     {
         statePprob[tstate] = stateLhood[tstate] + TRANSMISSION_STATE::getPrior(static_cast<TRANSMISSION_STATE::index_t>(tstate));
+#ifdef DENOVO_INDEL_DEBUG
+        const TRANSMISSION_STATE::index_t tidx(static_cast<TRANSMISSION_STATE::index_t>(tstate));
+        log_os << "denovo state pprob/lhood/prior: " << TRANSMISSION_STATE::getLabel(tidx)
+               << " " << statePprob[tstate] << " " << stateLhood[tstate]
+               << " " << TRANSMISSION_STATE::getPrior(tidx) << "\n";
+#endif
     }
 
     //opt_normalize_ln_distro(pprob.begin(),pprob.end(),DDIINDEL_GRID::is_nonsom.val.begin(),rs.max_gt);
