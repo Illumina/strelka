@@ -32,20 +32,35 @@ const double MAX_DIPLOID_THETA(0.38068); // solution of: 0 = 1/3*(theta**2) + (5
 
 
 void
-check_option_arg_range(const prog_info& pinfo,
-                       const double val,
+check_option_arg_range(const double val,
                        const char* label,
                        const double min,
-                       const double max)
+                       const double max,
+                       std::string& errorMsg)
 {
-
+    errorMsg.clear();
     if ((val >= min) && (val <= max)) return;
 
     std::ostringstream oss;
     oss << std::setprecision(10);
     oss << "Value provided for '" << label << "': '" << val
         << "', is not in expected range: [ " << min << " , " << max << " ]";
-    pinfo.usage(oss.str().c_str());
+    errorMsg = oss.str();
+}
+
+
+
+void
+check_option_arg_range(const prog_info& pinfo,
+                       const double val,
+                       const char* label,
+                       const double min,
+                       const double max)
+{
+    std::string errorMsg;
+    check_option_arg_range(val,label,min,max,errorMsg);
+    if (errorMsg.empty()) return;
+    pinfo.usage(errorMsg.c_str());
 }
 
 

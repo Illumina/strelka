@@ -16,8 +16,7 @@
 /// \author Chris Saunders
 ///
 
-#ifndef __BLT_ARG_PARSE_UTIL_HH
-#define __BLT_ARG_PARSE_UTIL_HH
+#pragma once
 
 #include "blt_util/blt_types.hh"
 #include "blt_util/prog_info.hh"
@@ -29,10 +28,8 @@
 #include <vector>
 
 
-
 struct arg_data
 {
-
     arg_data(int init_argc,
              char* init_argv[],
              const prog_info& init_pinfo);
@@ -138,5 +135,3 @@ set_xrange_win_arg(unsigned& argi,
                    bool& is_val_set,
                    double& val1,
                    unsigned& val2);
-
-#endif

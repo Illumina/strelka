@@ -51,6 +51,4 @@ struct Tier2Options
 
     bool is_tier2_indel_nonsite_match_prob = false;
     double tier2_indel_nonsite_match_prob = 0.25;
-
-
 };

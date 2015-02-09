@@ -16,11 +16,12 @@
 ///
 
 #include "Tier2OptionsParser.hh"
+#include "blt_common/blt_arg_validate.hh"
 
 
 
 boost::program_options::options_description
-getOptionsDescription(
+getTier2OptionsDescription(
     Tier2Options& opt)
 {
     namespace po = boost::program_options;
@@ -60,13 +61,12 @@ getOptionsDescription(
 
 
 bool
-parseOptions(
+parseTier2Options(
     const boost::program_options::variables_map& vm,
     Tier2Options& opt,
     std::string& errorMsg)
 {
     errorMsg.clear();
-    check_option_arg_range(pinfo,opt.tier2_indel_nonsite_match_prob,"tier2-indel-nonsite-match-prob",0.,1.);
 
     if (vm.count("tier2-indel-nonsite-match-prob"))
     {
@@ -75,30 +75,19 @@ parseOptions(
 
     if (vm.count("tier2-min-single-align-score"))
     {
-        if (opt.tier2_min_single_align_score >= opt.min_single_align_score)
-         {
-             std::ostringstream oss;
-             oss << "Invalid tier2 single align score. Value must be lower than primary single align score: '" << opt.min_single_align_score << "'";
-             pinfo.usage(oss.str().c_str());
-         }
-         opt.is_tier2_min_single_align_score=true;
-     }
+        opt.is_tier2_min_single_align_score=true;
+    }
 
-     if (vm.count("tier2-min-paired-align-score"))
-     {
-         if (opt.tier2_min_paired_align_score >= opt.min_paired_align_score)
-         {
-             std::ostringstream oss;
-             oss << "Invalid tier2 paired align score. Value must be lower than primary paired align score: '" << opt.min_paired_align_score << "'";
-             pinfo.usage(oss.str().c_str());
-         }
-         opt.is_tier2_min_paired_align_score=true;
-     }
+    if (vm.count("tier2-min-paired-align-score"))
+    {
+        opt.is_tier2_min_paired_align_score=true;
+    }
 
-     if (vm.count("tier2-mismatch-density-filter-count"))
-     {
-         opt.is_tier2_mismatch_density_filter_count=true;
-     }
+    if (vm.count("tier2-mismatch-density-filter-count"))
+    {
+        opt.is_tier2_mismatch_density_filter_count=true;
+    }
 
+    check_option_arg_range(opt.tier2_indel_nonsite_match_prob,"tier2-indel-nonsite-match-prob",0.,1.,errorMsg);
     return (! errorMsg.empty());
 }

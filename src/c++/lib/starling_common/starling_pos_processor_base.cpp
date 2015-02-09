@@ -1391,9 +1391,9 @@ pileup_read_segment(const read_segment& rseg,
     {
         const rc_segment_bam_seq ref_bseq(_ref);
         create_mismatch_filter_map(_opt,best_al,ref_bseq,bseq,read_begin,read_end,_rmi);
-        if (_opt.is_tier2_mismatch_density_filter_count)
+        if (_opt.tier2.is_tier2_mismatch_density_filter_count)
         {
-            const int max_pass(_opt.tier2_mismatch_density_filter_count);
+            const int max_pass(_opt.tier2.tier2_mismatch_density_filter_count);
             for (unsigned i(0); i<read_size; ++i)
             {
                 _rmi[i].tier2_mismatch_filter_map = (max_pass < _rmi[i].mismatch_count);
@@ -1466,9 +1466,9 @@ pileup_read_segment(const read_segment& rseg,
                     if (! is_call_filter && _opt.is_max_win_mismatch)
                     {
                         is_call_filter = _rmi[read_pos].mismatch_filter_map;
-                        if (! _opt.is_tier2_no_mismatch_density_filter)
+                        if (! _opt.tier2.is_tier2_no_mismatch_density_filter)
                         {
-                            if (_opt.is_tier2_mismatch_density_filter_count)
+                            if (_opt.tier2.is_tier2_mismatch_density_filter_count)
                             {
                                 is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map;
                             }

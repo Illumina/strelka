@@ -150,8 +150,6 @@ check_bam_record(const bam_streamer& read_stream,
 
 
 
-
-
 static
 bool
 is_usable_read_mapping(const starling_base_options& opt,
@@ -171,27 +169,27 @@ is_usable_read_mapping(const starling_base_options& opt,
     bool is_include_anomalous(opt.is_include_anomalous);
     if (is_tier2)
     {
-        if (opt.is_tier2_min_single_align_score)
+        if (opt.tier2.is_tier2_min_single_align_score)
         {
-            current_min_single_align_score=opt.tier2_min_single_align_score;
+            current_min_single_align_score=opt.tier2.tier2_min_single_align_score;
         }
-        if (opt.is_tier2_min_paired_align_score)
+        if (opt.tier2.is_tier2_min_paired_align_score)
         {
-            current_min_paired_align_score=opt.tier2_min_paired_align_score;
+            current_min_paired_align_score=opt.tier2.tier2_min_paired_align_score;
         }
-        if (opt.is_tier2_single_align_score_rescue_mode)
+        if (opt.tier2.is_tier2_single_align_score_rescue_mode)
         {
             is_rescue_mode=true;
         }
-        if (opt.is_tier2_no_filter_unanchored)
+        if (opt.tier2.is_tier2_no_filter_unanchored)
         {
             is_filter_unanchored=false;
         }
-        if (opt.is_tier2_include_singleton)
+        if (opt.tier2.is_tier2_include_singleton)
         {
             is_include_singleton=true;
         }
-        if (opt.is_tier2_include_anomalous)
+        if (opt.tier2.is_tier2_include_anomalous)
         {
             is_include_anomalous=true;
         }
@@ -276,7 +274,7 @@ get_map_level(const starling_base_options& opt,
     if (read.is_unmapped()) return UNMAPPED;
 
     if (is_usable_read_mapping(opt,read)) return TIER1_MAPPED;
-    if (opt.is_tier2())
+    if (opt.tier2.is_tier2())
     {
         if (is_usable_read_mapping(opt,read,true)) return TIER2_MAPPED;
     }

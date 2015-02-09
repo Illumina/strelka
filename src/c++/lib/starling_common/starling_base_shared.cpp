@@ -45,9 +45,9 @@ starling_base_deriv_options(
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);
-    if (opt.is_tier2_indel_nonsite_match_prob)
+    if (opt.tier2.is_tier2_indel_nonsite_match_prob)
     {
-        tier2_indel_nonsite_match_lnp=std::log(opt.tier2_indel_nonsite_match_prob);
+        tier2_indel_nonsite_match_lnp=std::log(opt.tier2.tier2_indel_nonsite_match_prob);
     }
     else
     {

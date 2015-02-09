@@ -23,12 +23,12 @@
 
 
 boost::program_options::options_description
-getOptionsDescription(
+getTier2OptionsDescription(
     Tier2Options& opt);
 
 
 bool
-parseOptions(
+parseTier2Options(
     const boost::program_options::variables_map& vm,
     Tier2Options& opt,
     std::string& errorMsg);

@@ -448,5 +448,25 @@ finalize_starling_base_options(
         scoring_models::Instance().load_models(opt.indel_scoring_models);
     }
 
+    if (opt.tier2.is_tier2_min_single_align_score)
+    {
+        if (opt.tier2.tier2_min_single_align_score >= opt.min_single_align_score)
+         {
+             std::ostringstream oss;
+             oss << "Invalid tier2 single align score. Value must be lower than primary single align score: '" << opt.min_single_align_score << "'";
+             pinfo.usage(oss.str().c_str());
+         }
+     }
+
+     if (opt.tier2.is_tier2_min_paired_align_score)
+     {
+         if (opt.tier2.tier2_min_paired_align_score >= opt.min_paired_align_score)
+         {
+             std::ostringstream oss;
+             oss << "Invalid tier2 paired align score. Value must be lower than primary paired align score: '" << opt.min_paired_align_score << "'";
+             pinfo.usage(oss.str().c_str());
+         }
+     }
+
     finalize_legacy_starling_options(pinfo,opt);
 }

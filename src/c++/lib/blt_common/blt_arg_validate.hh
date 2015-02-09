@@ -27,6 +27,13 @@ extern const double MAX_DIPLOID_THETA;
 
 
 void
+check_option_arg_range(const double val,
+                       const char* label,
+                       const double min,
+                       const double max,
+                       std::string& errorMsg);
+
+void
 check_option_arg_range(const prog_info& pinfo,
                        const double val,
                        const char* label,

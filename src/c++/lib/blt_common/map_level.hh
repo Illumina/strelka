@@ -11,12 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
-#ifndef __MAP_LEVEL_HH
-#define __MAP_LEVEL_HH
+
+#pragma once
 
 #include <cassert>
 
@@ -57,6 +55,3 @@ get_label(const index_t i)
     }
 }
 }
-
-
-#endif

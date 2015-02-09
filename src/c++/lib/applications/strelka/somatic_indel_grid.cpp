@@ -438,7 +438,7 @@ get_somatic_indel(const strelka_options& opt,
         const bool is_include_tier2(i==1);
         if (is_include_tier2)
         {
-            if (! opt.is_tier2()) continue;
+            if (! opt.tier2.is_tier2()) continue;
             if (tier_rs[0].sindel_qphred==0)
             {
                 if (! sindel.is_forced_output)   // if forced output then there's still a point to computing tier2
@@ -504,7 +504,7 @@ get_somatic_indel(const strelka_options& opt,
     }
 
     sindel.sindel_tier=0;
-    if (opt.is_tier2())
+    if (opt.tier2.is_tier2())
     {
         if (tier_rs[0].sindel_qphred > tier_rs[1].sindel_qphred)
         {
@@ -513,7 +513,7 @@ get_somatic_indel(const strelka_options& opt,
     }
 
     sindel.sindel_from_ntype_tier=0;
-    if (opt.is_tier2())
+    if (opt.tier2.is_tier2())
     {
         if (tier_rs[0].sindel_from_ntype_qphred > tier_rs[1].sindel_from_ntype_qphred)
         {

@@ -204,8 +204,6 @@ namespace TRANSMISSION_STATE
         const uint8_t* py,
         const uint8_t* c)
     {
-        static const unsigned alleleCount(2);
-
         unsigned val(0);
         if ((c[0] != px[0]) && (c[0] != px[1])) val += 1;
         if ((c[1] != py[0]) && (c[1] != py[1])) val += 1;
@@ -271,9 +269,9 @@ calculate_result_set(
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
     const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
 
-    static const double ln0(std::log(0));
+    static const double lnzero(-std::numeric_limits<double>::infinity());
     std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
-    std::fill(stateLhood.begin(),stateLhood.end(),ln0);
+    std::fill(stateLhood.begin(),stateLhood.end(),lnzero);
 
 #ifdef DENOVO_INDEL_DEBUG
     dumpIndelLhood("parent0", sampleLhood[parentIndex[0]].data(), log_os);

@@ -19,6 +19,7 @@
 
 #include "../../starling_common/starling_base_option_parser.hh"
 #include "blt_common/blt_arg_validate.hh"
+#include "starling_common/Tier2OptionsParser.hh"
 
 
 
@@ -118,8 +119,10 @@ get_strelka_option_parser(
      "min QSI_ref value")
     ;
 
+    po::options_description tier2_opt(getTier2OptionsDescription(opt.tier2));
+
     po::options_description strelka_parse_opt("Two-sample options");
-    strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv).add(strelka_parse_opt_filter);
+    strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv).add(strelka_parse_opt_filter).add(tier2_opt);
 
     // final assembly
     po::options_description visible("Options");
@@ -158,7 +161,6 @@ finalize_strelka_options(
 
     check_option_arg_range(pinfo,opt.somatic_indel_rate,"somatic-indel-rate",0.,1.);
     check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"indel-somatic-normal-noise-rate",0.,1.);
-    check_option_arg_range(pinfo,opt.tier2_indel_nonsite_match_prob,"tier2-indel-nonsite-match-prob",0.,1.);
 
     if (vm.count("site-somatic-normal-noise-rate"))
     {
@@ -168,42 +170,6 @@ finalize_strelka_options(
     if (vm.count("indel-somatic-normal-noise-rate"))
     {
         opt.is_indel_somatic_normal_noise_rate=true;
-    }
-
-    if (vm.count("tier2-indel-nonsite-match-prob"))
-    {
-        opt.is_tier2_indel_nonsite_match_prob=true;
-    }
-
-    if (vm.count("tier2-min-single-align-score"))
-    {
-        if (opt.tier2_min_single_align_score >= opt.min_single_align_score)
-        {
-            std::ostringstream oss;
-            oss << "Invalid tier2 single align score. Value must be lower than primary single align score: '" << opt.min_single_align_score << "'";
-            pinfo.usage(oss.str().c_str());
-        }
-        opt.is_tier2_min_single_align_score=true;
-    }
-
-    if (vm.count("tier2-min-paired-align-score"))
-    {
-        if (opt.tier2_min_paired_align_score >= opt.min_paired_align_score)
-        {
-            std::ostringstream oss;
-            oss << "Invalid tier2 paired align score. Value must be lower than primary paired align score: '" << opt.min_paired_align_score << "'";
-            pinfo.usage(oss.str().c_str());
-        }
-        opt.is_tier2_min_paired_align_score=true;
-    }
-
-    if (vm.count("tier2-mismatch-density-filter-count"))
-    {
-        if (opt.is_tier2_no_mismatch_density_filter)
-        {
-            pinfo.usage("Only one tier2 mismatch density filter setting allowed");
-        }
-        opt.is_tier2_mismatch_density_filter_count=true;
     }
 
     if (vm.count("tumor-min-candidate-indel-reads"))
@@ -220,6 +186,12 @@ finalize_strelka_options(
     if (opt.sfilter.max_depth_factor < 0)
     {
         pinfo.usage("Strelka depth factor must not be less than 0");
+    }
+
+    std::string errorMsg;
+    if (parseTier2Options(vm,opt.tier2,errorMsg))
+    {
+        pinfo.usage(errorMsg.c_str());
     }
 
     finalize_starling_base_options(pinfo,vm,opt);
