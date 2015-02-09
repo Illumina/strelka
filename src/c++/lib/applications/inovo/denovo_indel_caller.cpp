@@ -246,6 +246,21 @@ namespace TRANSMISSION_STATE
 
 
 
+#ifdef DENOVO_INDEL_DEBUG
+static
+void
+dumpIndelLhood(
+    const char* label,
+    const double* lhood,
+    std::ostream& os)
+{
+    using namespace STAR_DIINDEL;
+    os << label << " indel lhood: ref/het/hom: " << lhood[NOINDEL] << " " << lhood[HET] << " " << lhood[HOM] << "\n";
+}
+#endif
+
+
+
 static
 void
 calculate_result_set(
@@ -260,6 +275,12 @@ calculate_result_set(
 
     std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
     std::fill(stateLhood.begin(),stateLhood.end(),0);
+
+#ifdef DENOVO_INDEL_DEBUG
+    dumpIndelLhood("parent0", sampleLhood[parentIndex[0]].data(), log_os);
+    dumpIndelLhood("parent1", sampleLhood[parentIndex[1]].data(), log_os);
+    dumpIndelLhood("proband", sampleLhood[probandIndex].data(), log_os);
+#endif
 
     // just go for total brute force as a first pass at this:
     for (unsigned p0(0); p0<STAR_DIINDEL::SIZE; ++p0)
