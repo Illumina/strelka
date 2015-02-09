@@ -22,6 +22,7 @@
 #include "blt_common/blt_shared.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "starling_common/starling_align_limit.hh"
+#include "starling_common/Tier2Options.hh"
 
 #include <cmath>
 
@@ -175,9 +176,6 @@ struct starling_base_options : public blt_options
 
     double indel_nonsite_match_prob = 0.25;
 
-    bool is_tier2_indel_nonsite_match_prob = false;
-    double tier2_indel_nonsite_match_prob = 0.25;
-
     std::vector<avg_window_data> variant_windows;
 
     // Test if an indel is not in the two most likely indel alleles
@@ -226,6 +224,8 @@ struct starling_base_options : public blt_options
     ///
     /// set to zero to disable limit
     unsigned maxBufferedReads = 100000;
+
+    Tier2Options tier2;
 };
 
 

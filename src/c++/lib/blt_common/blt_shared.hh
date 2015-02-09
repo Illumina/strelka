@@ -74,20 +74,6 @@ struct blt_options
     is_bsnp_diploid() const { return false; }
 
     bool
-    is_tier2() const
-    {
-        return
-            (is_tier2_min_single_align_score ||
-             is_tier2_min_paired_align_score ||
-             is_tier2_single_align_score_rescue_mode ||
-             is_tier2_mismatch_density_filter_count ||
-             is_tier2_no_mismatch_density_filter ||
-             is_tier2_no_filter_unanchored ||
-             is_tier2_include_singleton ||
-             is_tier2_include_anomalous);
-    }
-
-    bool
     is_dependent_eprob() const
     {
         return ((is_bsnp_diploid() || is_bsnp_monoploid) &&
@@ -122,20 +108,6 @@ struct blt_options
     int min_paired_align_score = 6;
     bool single_align_score_exclude_mode = false;
     bool single_align_score_rescue_mode = false;
-
-    int tier2_min_single_align_score = 0;
-    bool is_tier2_min_single_align_score = false;
-    int tier2_min_paired_align_score = 0;
-    bool is_tier2_min_paired_align_score = false;
-    bool is_tier2_single_align_score_rescue_mode = false;
-
-    int tier2_mismatch_density_filter_count = 0;
-    bool is_tier2_mismatch_density_filter_count = false;
-
-    bool is_tier2_no_mismatch_density_filter = false;
-    bool is_tier2_no_filter_unanchored = false;
-    bool is_tier2_include_singleton = false;
-    bool is_tier2_include_anomalous = false;
 
     bool is_min_win_qscore = false;
     int min_win_qscore = 0;
