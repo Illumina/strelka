@@ -12,7 +12,7 @@
 #
 
 #
-# Execute small starling demonstration/verification run
+# Execute small somatic variant calling demonstration/verification run
 #
 
 set -o nounset

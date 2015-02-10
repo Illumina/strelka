@@ -20,6 +20,7 @@
 
 #include "blt_common/blt_arg_validate.hh"
 #include "starling_common/starling_base_option_parser.hh"
+#include "starling_common/Tier2OptionsParser.hh"
 
 
 
@@ -49,8 +50,11 @@ get_inovo_option_parser(
      "Output a bed file of regions which are confidently denovo or non-denovo for SNVs")
     ;
 
+
+    po::options_description tier2_opt(getTier2OptionsDescription(opt.tier2));
+
     po::options_description inovo_parse_opt("De-novo caller options");
-    inovo_parse_opt.add(inovo_parse_opt_ti).add(inovo_parse_opt_sv).add(inovo_parse_opt_filter);
+    inovo_parse_opt.add(inovo_parse_opt_ti).add(inovo_parse_opt_sv).add(inovo_parse_opt_filter).add(tier2_opt);
 
     // final assembly
     po::options_description visible("Options");

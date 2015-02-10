@@ -188,11 +188,5 @@ finalize_strelka_options(
         pinfo.usage("Strelka depth factor must not be less than 0");
     }
 
-    std::string errorMsg;
-    if (parseTier2Options(vm,opt.tier2,errorMsg))
-    {
-        pinfo.usage(errorMsg.c_str());
-    }
-
     finalize_starling_base_options(pinfo,vm,opt);
 }

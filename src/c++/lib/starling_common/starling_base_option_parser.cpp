@@ -15,14 +15,17 @@
 /// \author Chris Saunders
 ///
 
+#include "starling_base_option_parser.hh"
+
 #include "blt_common/blt_arg_validate.hh"
 #include "blt_util/compat_util.hh"
 #include "calibration/scoringmodels.hh"
+#include "starling_common/Tier2OptionsParser.hh"
+
 #include "boost/format.hpp"
 
 #include <iostream>
 
-#include "starling_base_option_parser.hh"
 //#define DEBUG_OPTIONPARSER
 
 #ifdef DEBUG_OPTIONPARSER
@@ -359,7 +362,7 @@ finalize_legacy_starling_options(
     }
     else
     {
-        assert(0);
+        assert(false && "must specify samtools reference");
     }
 
     if (! opt.is_user_genome_size)
@@ -446,6 +449,14 @@ finalize_starling_base_options(
     {
 //        log_os << "I got a model";
         scoring_models::Instance().load_models(opt.indel_scoring_models);
+    }
+
+    /// tier2 options are not parsed by starling_base, but need to live up here for now,
+    /// so validate them together with the rest of starling_base
+    std::string errorMsg;
+    if (parseTier2Options(vm,opt.tier2,errorMsg))
+    {
+        pinfo.usage(errorMsg.c_str());
     }
 
     if (opt.tier2.is_tier2_min_single_align_score)
