@@ -259,13 +259,17 @@ process_pos_indel_denovo(const pos_t pos)
         if (dindel.is_output())
         {
             // get sample specific info:
-            std::vector<starling_indel_sample_report_info> isri(_n_samples);
-            const bool is_include_tier2(false);
-            for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
+            std::vector<isriTiers_t> isri(_n_samples);
+            for (unsigned tierIndex(0); tierIndex<INOVO_TIERS::SIZE;++tierIndex)
             {
-                get_starling_indel_sample_report_info(_dopt,ik,*(allIndelData[sampleIndex]),sample(sampleIndex).bc_buff,
-                                                          is_include_tier2,is_use_alt_indel,
-                                                          isri[sampleIndex]);
+                const bool is_include_tier2(tierIndex==1);
+                for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
+                {
+                    get_starling_indel_sample_report_info(
+                            _dopt,ik,*(allIndelData[sampleIndex]),sample(sampleIndex).bc_buff,
+                            is_include_tier2,is_use_alt_indel,
+                            isri[sampleIndex][tierIndex]);
+                }
             }
 
             pos_t indel_pos(ik.pos);

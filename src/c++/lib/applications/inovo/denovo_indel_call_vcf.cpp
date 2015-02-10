@@ -27,17 +27,23 @@
 static
 void
 write_vcf_sample_info(
-    const starling_indel_sample_report_info& isri,
+    const starling_indel_sample_report_info& isri1,
+    const starling_indel_sample_report_info& isri2,
     std::ostream& os)
 {
     static const char sep(':');
-    os << isri.depth
+    os << isri1.depth
        << sep
-       << isri.n_q30_ref_reads+isri.n_q30_alt_reads
+       << isri2.depth
        << sep
-       << isri.n_q30_indel_reads
+       << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
+       << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
        << sep
-       << isri.n_other_reads;
+       << isri1.n_q30_indel_reads << ','
+       << isri2.n_q30_indel_reads
+       << sep
+       << isri1.n_other_reads << ','
+       << isri2.n_other_reads;
 }
 
 
@@ -51,6 +57,7 @@ safeFrac(const int num, const int denom)
 #endif
 
 
+
 void
 denovo_indel_call_vcf(
     const inovo_options& opt,
@@ -58,7 +65,7 @@ denovo_indel_call_vcf(
     const SampleInfoManager& sinfo,
     const denovo_indel_call& dinc,
     const starling_indel_report_info& iri,
-    const std::vector<starling_indel_sample_report_info>& isri,
+    const std::vector<isriTiers_t>& isri,
     std::ostream& os)
 {
     const denovo_indel_call::result_set& rs(dinc.rs);
@@ -71,7 +78,7 @@ denovo_indel_call_vcf(
             using namespace INOVO_SAMPLETYPE;
             const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
 
-            const unsigned& depth(isri[probandIndex].depth);
+            const unsigned& depth(isri[probandIndex][INOVO_TIERS::TIER1].depth);
             if (depth > dopt.dfilter.max_depth)
             {
                 smod.set_filter(INOVO_VCF_FILTERS::HighDepth);
@@ -140,12 +147,14 @@ denovo_indel_call_vcf(
     unsigned totalDepth(0);
     for (const auto& sampleIsri : isri)
     {
-        totalDepth += sampleIsri.depth;
+        totalDepth += sampleIsri[INOVO_TIERS::TIER1].depth;
     }
 
     os << sep
        << "DP="<< totalDepth
-       << ";QDI=" << rs.dindel_qphred;
+       << ";QDI=" << rs.dindel_qphred
+       << ";TQDI=" << (dinc.dindel_tier+1)
+;
 
     if (iri.is_repeat_unit())
     {
@@ -165,12 +174,12 @@ denovo_indel_call_vcf(
     }
 
     //FORMAT
-    os << sep << "DP:TAR:TIR:TOR";
+    os << sep << "DP:DP2:TAR:TIR:TOR";
 
     // write sample info:
     for (const auto& sampleIsri : isri)
     {
         os << sep;
-        write_vcf_sample_info(sampleIsri, os);
+        write_vcf_sample_info(sampleIsri[INOVO_TIERS::TIER1],sampleIsri[INOVO_TIERS::TIER2], os);
     }
 }

@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 
 struct denovo_indel_call
 {
@@ -44,5 +46,6 @@ struct denovo_indel_call
     }
 
     result_set rs;
+    uint8_t dindel_tier = 0;
     bool is_forced_output = false;
 };

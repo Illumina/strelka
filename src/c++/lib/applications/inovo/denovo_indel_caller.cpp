@@ -464,12 +464,24 @@ get_denovo_indel_call(
         break;
     }
 
-    // put some tier structure in for future, but only use 1 at present:
-    static const unsigned n_tier(1);
+    static const unsigned n_tier(2);
     std::array<denovo_indel_call::result_set,n_tier> tier_rs;
     for (unsigned tierIndex(0); tierIndex<n_tier; ++tierIndex)
     {
         const bool is_include_tier2(tierIndex==1);
+
+        if (is_include_tier2)
+        {
+            if (! opt.tier2.is_tier2()) continue;
+            if (tier_rs[0].dindel_qphred==0)
+            {
+                if (! dinc.is_forced_output)   // if forced output then there's still a point to computing tier2
+                {
+                    tier_rs[1].dindel_qphred=0;
+                    continue;
+                }
+            }
+        }
 
         // early escape filter borrowed directly from somatic case
         static const bool is_denovo_multi_indel_filter(true);
@@ -514,7 +526,16 @@ get_denovo_indel_call(
         }
     }
 
-    dinc.rs=tier_rs[0];
+    dinc.dindel_tier=0;
+    if (opt.tier2.is_tier2())
+    {
+        if (tier_rs[0].dindel_qphred > tier_rs[1].dindel_qphred)
+        {
+            dinc.dindel_tier=1;
+        }
+    }
+
+    dinc.rs=tier_rs[dinc.dindel_tier];
 
 #if 0
     const double indel_error_lnp(std::log(indel_error_prob));

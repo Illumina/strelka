@@ -20,7 +20,20 @@
 #include "denovo_indel_call.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
+#include <array>
 #include <iosfwd>
+
+
+namespace INOVO_TIERS
+{
+    enum index_t{
+        TIER1,
+        TIER2,
+        SIZE
+    };
+}
+
+typedef std::array<starling_indel_sample_report_info,INOVO_TIERS::SIZE> isriTiers_t;
 
 
 void
@@ -30,5 +43,5 @@ denovo_indel_call_vcf(
     const SampleInfoManager& sinfo,
     const denovo_indel_call& dinc,
     const starling_indel_report_info& iri,
-    const std::vector<starling_indel_sample_report_info>& isri,
+    const std::vector<isriTiers_t>& isri,
     std::ostream& os);
