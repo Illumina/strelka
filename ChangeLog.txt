@@ -1,3 +1,6 @@
+v2.3.2
+- STARKA-190 apply VQSR to haploid regions
+- Fix somatic callability track tabix index generation
 v2.3.1
 - STARKA-186 support CIGAR sequence match/mismatch (=/X) in input BAM
 - STARKA-185 turn off somatic VQSR when exome configuration is selected for
