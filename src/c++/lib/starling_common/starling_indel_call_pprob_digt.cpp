@@ -145,20 +145,21 @@ get_het_observed_allele_ratio(const unsigned read_length,
 
 void
 indel_digt_caller::
-get_high_low_het_ratio_lhood(const starling_base_options& /*opt*/,
-                             const starling_base_deriv_options& dopt,
-                             const starling_sample_options& sample_opt,
-                             const double indel_error_lnp,
-                             const double indel_real_lnp,
-                             const double ref_error_lnp,
-                             const double ref_real_lnp,
-                             const indel_key& ik,
-                             const indel_data& id,
-                             const double het_ratio,
-                             const bool is_tier2_pass,
-                             const bool is_use_alt_indel,
-                             double& het_lhood_high,
-                             double& het_lhood_low)
+get_high_low_het_ratio_lhood(
+    const starling_base_options& /*opt*/,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const double indel_error_lnp,
+    const double indel_real_lnp,
+    const double ref_error_lnp,
+    const double ref_real_lnp,
+    const indel_key& ik,
+    const indel_data& id,
+    const double het_ratio,
+    const bool is_tier2_pass,
+    const bool is_use_alt_indel,
+    double& het_lhood_high,
+    double& het_lhood_low)
 {
     // handle het ratio and its complement in one step:
     const double chet_ratio(1.-het_ratio);
@@ -234,19 +235,20 @@ get_high_low_het_ratio_lhood(const starling_base_options& /*opt*/,
 
 static
 void
-increment_het_ratio_lhood(const starling_base_options& opt,
-                          const starling_base_deriv_options& dopt,
-                          const starling_sample_options& sample_opt,
-                          const double indel_error_lnp,
-                          const double indel_real_lnp,
-                          const double ref_error_lnp,
-                          const double ref_real_lnp,
-                          const indel_key& ik,
-                          const indel_data& id,
-                          const double het_ratio,
-                          const bool is_tier2_pass,
-                          const bool is_use_alt_indel,
-                          double* const lhood)
+increment_het_ratio_lhood(
+       const starling_base_options& opt,
+       const starling_base_deriv_options& dopt,
+       const starling_sample_options& sample_opt,
+       const double indel_error_lnp,
+       const double indel_real_lnp,
+       const double ref_error_lnp,
+       const double ref_real_lnp,
+       const indel_key& ik,
+       const indel_data& id,
+       const double het_ratio,
+       const bool is_tier2_pass,
+       const bool is_use_alt_indel,
+       double* const lhood)
 {
     // high and low allele ratio variants:
     double het_lhood_high;
@@ -331,9 +333,10 @@ get_sum_path_pprob(
 //
 static
 bool
-is_diploid_indel_noise(const starling_base_deriv_options& dopt,
-                       const indel_data& id,
-                       const bool is_tier2_pass)
+is_diploid_indel_noise(
+    const starling_base_deriv_options& dopt,
+    const indel_data& id,
+    const bool is_tier2_pass)
 {
     static const bool is_use_alt_indel(true);
 
@@ -404,18 +407,19 @@ is_diploid_indel_noise(const starling_base_deriv_options& dopt,
 
 void
 indel_digt_caller::
-get_indel_digt_lhood(const starling_base_options& opt,
-                     const starling_base_deriv_options& dopt,
-                     const starling_sample_options& sample_opt,
-                     const double indel_error_prob,
-                     const double ref_error_prob,
-                     const indel_key& ik,
-                     const indel_data& id,
-                     const bool is_het_bias,
-                     const double het_bias,
-                     const bool is_tier2_pass,
-                     const bool is_use_alt_indel,
-                     double* const lhood)
+get_indel_digt_lhood(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const double indel_error_prob,
+    const double ref_error_prob,
+    const indel_key& ik,
+    const indel_data& id,
+    const bool is_het_bias,
+    const double het_bias,
+    const bool is_tier2_pass,
+    const bool is_use_alt_indel,
+    double* const lhood)
 {
     static const double loghalf(-std::log(2.));
 

@@ -24,15 +24,6 @@
 #include <iosfwd>
 
 
-namespace INOVO_TIERS
-{
-    enum index_t{
-        TIER1,
-        TIER2,
-        SIZE
-    };
-}
-
 typedef std::array<starling_indel_sample_report_info,INOVO_TIERS::SIZE> isriTiers_t;
 
 

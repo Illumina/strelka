@@ -104,50 +104,90 @@ set_normal_prior(std::vector<blt_float_t>& normal_prior,
         normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_sie_rate;
     }
 }
+#endif
 
 
-typedef somatic_indel_call::result_set result_set;
+
+/// components related to the INOVO indel noise model
+namespace INOVO_INOISE
+{
+// HET_RES is the number of frequency points sampled on a
+// half-axis (that is between 0-0.5)
+//
+enum constants { HET_RES = 4,
+                 HET_COUNT = HET_RES*2,
+                 HET_SIZE = 1,
+                 HOM_SIZE = 2
+               };
+
+// The first three states are designed to overlap with
+// STAR_DIINDEL (ie. conventional diploid indel model), after this
+// the grid frequency (ie. approximations of continuous frequency)
+// states are added. The grid states are treated just like the
+// STAR_DIINDEL het state for certain purposes (printing, for
+// instance)
+//
+enum index_t { SIZE = HOM_SIZE+HET_SIZE*HET_COUNT };
+
+inline
+unsigned
+get_star_diindel_state (const unsigned state)
+{
+    if (state<HOM_SIZE) return state;
+    return STAR_DIINDEL::HET;
+}
+
+inline
+unsigned
+get_het_count(const unsigned state)
+{
+    if (state<HOM_SIZE) return 0;
+    return (state-HOM_SIZE)/HET_SIZE;
+}
+}
 
 
 
 static
 void
-get_indel_het_grid_lhood(const starling_base_options& opt,
-                         const starling_base_deriv_options& dopt,
-                         const starling_sample_options& sample_opt,
-                         const double indel_error_lnp,
-                         const double indel_real_lnp,
-                         const double ref_error_lnp,
-                         const double ref_real_lnp,
-                         const indel_key& ik,
-                         const indel_data& id,
-                         const bool is_include_tier2,
-                         const bool is_use_alt_indel,
-                         double* const lhood)
+get_indel_het_grid_lhood(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const double indel_error_lnp,
+    const double indel_real_lnp,
+    const double ref_error_lnp,
+    const double ref_real_lnp,
+    const indel_key& ik,
+    const indel_data& id,
+    const bool is_include_tier2,
+    const bool is_use_alt_indel,
+    double* const lhood)
 {
-    static const unsigned lsize(STAR_DIINDEL_GRID::HET_RES*2);
-    for (unsigned gt(0); gt<(lsize); ++gt) lhood[gt] = 0.;
+    static const unsigned halfRatioCount(INOVO_INOISE::HET_RES);
+    static const unsigned ratioCount(halfRatioCount*2);
+    for (unsigned ratioIndex(0); ratioIndex<(ratioCount); ++ratioIndex) lhood[ratioIndex] = 0.;
 
-    static const double ratio_increment(0.5/static_cast<double>(STAR_DIINDEL_GRID::HET_RES+1));
-    for (unsigned i(0); i<STAR_DIINDEL_GRID::HET_RES; ++i)
+    static const double ratio_increment(0.5/static_cast<double>(INOVO_INOISE::HET_RES+1));
+    for (unsigned ratioIndex(0); ratioIndex<halfRatioCount; ++ratioIndex)
     {
-        const double het_ratio((i+1)*ratio_increment);
-        indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,
-                                                        sample_opt,
-                                                        indel_error_lnp,indel_real_lnp,
-                                                        ref_error_lnp,ref_real_lnp,
-                                                        ik,id,het_ratio,
-                                                        is_include_tier2,is_use_alt_indel,
-                                                        lhood[i],
-                                                        lhood[lsize-(i+1)]);
+        const double het_ratio((ratioIndex+1)*ratio_increment);
+        indel_digt_caller::get_high_low_het_ratio_lhood(
+            opt,dopt,
+            sample_opt,
+            indel_error_lnp,indel_real_lnp,
+            ref_error_lnp,ref_real_lnp,
+            ik,id,het_ratio,
+            is_include_tier2,is_use_alt_indel,
+            lhood[ratioIndex],
+            lhood[ratioCount-(ratioIndex+1)]);
     }
 }
-#endif
 
 
 
 
-typedef std::array<double,STAR_DIINDEL::SIZE> indel_state_t;
+typedef std::array<double,INOVO_INOISE::SIZE> indel_state_t;
 
 
 namespace TRANSMISSION_STATE
@@ -300,6 +340,20 @@ calculate_result_set(
                 stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
             }
         }
+    }
+
+    // apart from the regular genotype analysis, we go through a bunch of noise states and dump these into the "error' transmission state
+    //
+    // these are all shared non-standared allele frequencies shared among all samples -- 99% of the time this is meant to catch low-frequency
+    // alt noise shared in all three sample but spuriously more prevelant in the proband:
+    static const unsigned ratioCount(INOVO_INOISE::HET_RES*2);
+    for (unsigned ratioIndex(0); ratioIndex<ratioCount; ++ratioIndex)
+    {
+        const unsigned noiseState(STAR_DIINDEL::SIZE+ratioIndex);
+        stateLhood[TRANSMISSION_STATE::ERROR] =
+                sampleLhood[parentIndex[0]][noiseState] +
+                sampleLhood[parentIndex[1]][noiseState] +
+                sampleLhood[probandIndex][noiseState];
     }
 
     std::array<double,TRANSMISSION_STATE::SIZE> statePprob;
@@ -464,9 +518,17 @@ get_denovo_indel_call(
         break;
     }
 
-    static const unsigned n_tier(2);
-    std::array<denovo_indel_call::result_set,n_tier> tier_rs;
-    for (unsigned tierIndex(0); tierIndex<n_tier; ++tierIndex)
+    /// TODO: stop computing this stuff three times for every indel (other two are in get_indel_digt_lhood)
+    const double indel_error_lnp(std::log(indel_error_prob));
+    const double indel_real_lnp(std::log(1.-indel_error_prob));
+    const double ref_error_lnp(std::log(ref_error_prob));
+    const double ref_real_lnp(std::log(1.-ref_error_prob));
+
+    const unsigned sampleSize(allIndelData.size());
+    std::vector<indel_state_t> sampleLhood(sampleSize);
+
+    std::array<denovo_indel_call::result_set,INOVO_TIERS::SIZE> tier_rs;
+    for (unsigned tierIndex(0); tierIndex<INOVO_TIERS::SIZE; ++tierIndex)
     {
         const bool is_include_tier2(tierIndex==1);
 
@@ -501,18 +563,25 @@ get_denovo_indel_call(
             }
         }
 
-        const unsigned sampleSize(allIndelData.size());
-        std::vector<indel_state_t> sampleLhood(sampleSize);
-
         for (unsigned sampleIndex(0);sampleIndex<sampleSize;++sampleIndex)
         {
+            const starling_sample_options& sampleOpt(*(sampleOptions[sampleIndex]));
+            const indel_data& sid(*(allIndelData[sampleIndex]));
             indel_digt_caller::get_indel_digt_lhood(
-                opt,dopt,*(sampleOptions[sampleIndex]),
+                opt,dopt,sampleOpt,
                 indel_error_prob,ref_error_prob,ik,
-                *(allIndelData[sampleIndex]),
+                sid,
                 is_het_bias, het_bias,
                 is_include_tier2, is_use_alt_indel,
                 sampleLhood[sampleIndex].data());
+
+            get_indel_het_grid_lhood(
+                opt,dopt,sampleOpt,
+                indel_error_lnp,indel_real_lnp,
+                ref_error_lnp,ref_real_lnp,
+                ik,sid,
+                is_include_tier2,is_use_alt_indel,
+                sampleLhood[sampleIndex].data()+STAR_DIINDEL::SIZE);
         }
 
         calculate_result_set(sinfo, sampleLhood, tier_rs[tierIndex]);
