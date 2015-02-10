@@ -16,6 +16,7 @@
 ///
 
 #include "inovo_pos_processor.hh"
+#include "denovo_call.hh"
 #include "denovo_indel_caller.hh"
 #include "denovo_indel_call_vcf.hh"
 #include "denovo_snv_caller.hh"
@@ -40,6 +41,7 @@ inovo_pos_processor(
     , _dopt(dopt)
     , _streams(streams)
     , _icallProcessor(streams.denovo_callable_osptr())
+    , _tier2_cpi(_n_samples)
 {
     /// get max proband depth
     double max_candidate_proband_sample_depth(-1.);
@@ -105,22 +107,26 @@ process_pos_snp_denovo(const pos_t pos)
         if (probandCpi.cleanedPileup().calls.empty()) return;
     }
 
-    // finish formatting pileups for all samples:
-    for (unsigned i(0); i<_n_samples; ++i)
+    const unsigned sampleCount(_n_samples);
+    cpiPtrTiers_t pileups(sampleCount);
+
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        sample_info& sif(sample(i));
-        _pileupCleaner.CleanPileupErrorProb(sif.cpi);
+        pileups[sampleIndex][INOVO_TIERS::TIER1] = &(sample(sampleIndex).cpi);
+        pileups[sampleIndex][INOVO_TIERS::TIER2] = &(_tier2_cpi[sampleIndex]);
+
+        for (unsigned tierIndex(0); tierIndex<INOVO_TIERS::SIZE; ++tierIndex)
+        {
+            const bool is_include_tier2(tierIndex!=0);
+            if (is_include_tier2 && (! _opt.tier2.is_tier2())) continue;
+            sample_info& sif(sample(sampleIndex));
+            _pileupCleaner.CleanPileup(sif.bc_buff.get_pos(pos),is_include_tier2,*(pileups[sampleIndex][tierIndex]));
+        }
     }
 
     const pos_t output_pos(pos+1);
     //const char ref_base(_ref.get_base(pos));
-
-    // make cleaned pileups of all samples easily accessible to the variant caller:
-    std::vector<const CleanedPileup*> pileups(_n_samples);
-    for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
-    {
-        pileups[sampleIndex] = &(sample(sampleIndex).cpi);
-    }
+    const cpiPtrTiersConst_t pileupsConst(pileups);
 
     denovo_snv_call dsc;
 
@@ -132,7 +138,8 @@ process_pos_snp_denovo(const pos_t pos)
 
     if (_opt.is_denovo_callable())
     {
-        _icallProcessor.addToRegion(_chrom_name, output_pos, _opt.alignFileOpt.alignmentSampleInfo, pileups);
+        _icallProcessor.addToRegion(_chrom_name, output_pos,
+                _opt.alignFileOpt.alignmentSampleInfo, pileups[INOVO_TIERS::TIER1]);
     }
 
     // report events:

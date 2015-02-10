@@ -67,6 +67,8 @@ private:
 
     DenovoCallableProcessor _icallProcessor;
 
+    std::vector<CleanedPileup> _tier2_cpi;
+
 //    extra_position_data _tier2_epd[MAX_SAMPLE];
 
 //    unsigned _indelRegionIndexNormal;

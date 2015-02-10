@@ -20,16 +20,6 @@
 #include <cstdint>
 
 
-namespace INOVO_TIERS
-{
-    enum index_t{
-        TIER1,
-        TIER2,
-        SIZE
-    };
-}
-
-
 struct denovo_indel_call
 {
     struct result_set

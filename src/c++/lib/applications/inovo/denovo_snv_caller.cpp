@@ -38,18 +38,9 @@ void
 get_denovo_snv_call(
     const inovo_options& opt,
     const SampleInfoManager& sinfo,
-    const std::vector<const CleanedPileup*>& pileups,
+    const cpiPtrTiersConst_t& pileups,
     denovo_snv_call& dsc)
 {
-    // simple count based rules:
-    // depth must be at least 10 in all of proband and parents
-    // enumerate alleles in proband, take the top two which occur at a rate higher than 20%
-    // if two alleles, find at least 2 observations of each allele coming from each parent
-    // if one allele, find at least 2 observation of the allele coming from each parent
-    //
-
-    static const unsigned minDepth(18);
-
     using namespace INOVO_SAMPLETYPE;
 
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
@@ -58,14 +49,31 @@ get_denovo_snv_call(
     std::vector<unsigned> allIndex(parentIndex);
     allIndex.push_back(probandIndex);
 
-    for (const auto sampleIndex : allIndex)
+    // escape in case of low sample depth:
+    // depth must be at least minDepth in all of proband and parents
     {
-        const CleanedPileup& cpi(*pileups[sampleIndex]);
-        if (cpi.cleanedPileup().calls.size() < minDepth)
+        static const unsigned minDepth(10);
+        for (const auto sampleIndex : allIndex)
         {
-            return;
+            const CleanedPileup& cpi(*pileups[INOVO_TIERS::TIER1][sampleIndex]);
+            if (cpi.cleanedPileup().calls.size() < minDepth)
+            {
+                return;
+            }
         }
     }
+
+    // setup ref GT
+    const CleanedPileup& probandCpi(*pileups[INOVO_TIERS::TIER1][probandIndex]);
+    const char refBase(probandCpi.cleanedPileup().get_ref_base());
+    if (refBase=='N')
+    {
+        return;
+    }
+    dsc.ref_gt=base_to_id(refBase);
+
+
+
 
     // top two alleles;
     uint8_t max1(0), max2(0);

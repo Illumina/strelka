@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -40,7 +39,6 @@ void
 get_indel_desc(const indel_key& ik,
                std::string& indel_desc)
 {
-
     indel_desc.clear();
 
     if ((ik.type == INDEL::INSERT) ||
@@ -189,7 +187,6 @@ get_vcf_summary_strings(const indel_key& ik,
                         std::string& vcf_indel_seq,
                         std::string& vcf_ref_seq)
 {
-
     if       (ik.is_breakpoint())
     {
         if       (ik.type == INDEL::BP_LEFT)

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "inovo_shared.hh"
+#include "denovo_call.hh"
 #include "denovo_snv_call.hh"
 #include "starling_common/PileupCleaner.hh"
 
@@ -29,6 +30,6 @@ denovo_snv_call_vcf(
     const inovo_options& opt,
     const inovo_deriv_options& dopt,
     const SampleInfoManager& sinfo,
-    const std::vector<const CleanedPileup*>& pileups,
+    const cpiPtrTiersConst_t& pileups,
     const denovo_snv_call& dsc,
     std::ostream& os);

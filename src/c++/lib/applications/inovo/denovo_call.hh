@@ -17,28 +17,18 @@
 
 #pragma once
 
-
-
-struct denovo_snv_call
+namespace INOVO_TIERS
 {
-    struct result_set
-    {
-        bool isCall = false;
+    enum index_t{
+        TIER1,
+        TIER2,
+        SIZE
     };
+}
 
-    bool
-    is_snv() const
-    {
-        return rs.isCall;
-    }
+#include <array>
+#include <vector>
 
-    bool
-    is_output() const
-    {
-        return (is_snv() || is_forced_output);
-    }
+typedef std::array<std::vector<CleanedPileup*>,INOVO_TIERS::SIZE> cpiPtrTiers_t;
+typedef std::array<std::vector<const CleanedPileup*>,INOVO_TIERS::SIZE> cpiPtrTiersConst_t;
 
-    unsigned ref_gt;
-    result_set rs;
-    bool is_forced_output = false;
-};

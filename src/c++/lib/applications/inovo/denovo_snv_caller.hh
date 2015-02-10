@@ -17,12 +17,14 @@
 #pragma once
 
 #include "denovo_snv_call.hh"
+#include "denovo_call.hh"
 #include "inovo_shared.hh"
 #include "starling_common/PileupCleaner.hh"
+
 
 void
 get_denovo_snv_call(
     const inovo_options& opt,
     const SampleInfoManager& sinfo,
-    const std::vector<const CleanedPileup*>& pileups,
+    const cpiPtrTiersConst_t& pileups,
     denovo_snv_call& dsc);
