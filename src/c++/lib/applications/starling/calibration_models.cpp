@@ -54,6 +54,7 @@ bool calibration_models::is_current_logistic() const
 
 void calibration_models::clasify_site(site_info& si)
 {
+    si.smod.filters.reset(); // make sure no filters have been applied prior
     if ((si.dgt.is_snp || si.is_nonref()) && (!this->is_default_model))
     {
 //        log_os << si.is_nonref() << std::endl;
