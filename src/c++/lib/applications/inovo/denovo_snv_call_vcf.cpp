@@ -29,25 +29,29 @@ static
 void
 write_vcf_sample_info(
     const blt_options& opt,
-    const CleanedPileup& cpi,
+    const CleanedPileup& tier1_cpi,
+    const CleanedPileup& tier2_cpi,
     std::ostream& os)
 {
     //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
-    os << cpi.n_calls()
+    os << tier1_cpi.n_calls()
        << ':'
-       << cpi.n_unused_calls()
+       << tier1_cpi.n_unused_calls()
        << ':'
-       << cpi.rawPileup().n_spandel
+       << tier1_cpi.rawPileup().n_spandel
        << ':'
-       << cpi.rawPileup().n_submapped;
+       << tier1_cpi.rawPileup().n_submapped;
 
-    std::array<unsigned,N_BASE> base_counts;
-    cpi.cleanedPileup().get_known_counts(base_counts,opt.used_allele_count_min_qscore);
+    std::array<unsigned,N_BASE> tier1_base_counts;
+    std::array<unsigned,N_BASE> tier2_base_counts;
+    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+    tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
 
     for (unsigned b(0); b<N_BASE; ++b)
     {
         os << ':'
-           << base_counts[b];
+           << tier1_base_counts[b] << ','
+           << tier2_base_counts[b];
     }
 }
 
@@ -58,14 +62,14 @@ denovo_snv_call_vcf(
     const inovo_options& opt,
     const inovo_deriv_options& dopt,
     const SampleInfoManager& sinfo,
-    const cpiPtrTiersConst_t& pileups,
+    const cpiPtrTiers_t& pileups,
     const denovo_snv_call& dsc,
     std::ostream& os)
 {
     using namespace INOVO_SAMPLETYPE;
 
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
-    const CleanedPileup& probandCpi(*pileups[probandIndex]);
+    const CleanedPileup& probandCpi(*pileups[INOVO_TIERS::TIER1][probandIndex]);
 
     //const result_set& rs(dsc.rs);
 
@@ -109,7 +113,7 @@ denovo_snv_call_vcf(
         unsigned n_mapq0(0);
         for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); ++sampleIndex)
         {
-            const snp_pos_info& pi(pileups[sampleIndex]->rawPileup());
+            const snp_pos_info& pi(pileups[INOVO_TIERS::TIER1][sampleIndex]->rawPileup());
             n_mapq += pi.n_mapq;
             n_mapq0 += pi.n_mapq0;
         }
@@ -123,8 +127,9 @@ denovo_snv_call_vcf(
 
     for (unsigned sampleIndex(0);sampleIndex<sinfo.size();sampleIndex++)
     {
-        const CleanedPileup& cpi(*pileups[sampleIndex]);
+        const CleanedPileup& cpi1(*pileups[INOVO_TIERS::TIER1][sampleIndex]);
+        const CleanedPileup& cpi2(*pileups[INOVO_TIERS::TIER2][sampleIndex]);
         os << "\t";
-        write_vcf_sample_info(opt,cpi,os);
+        write_vcf_sample_info(opt,cpi1,cpi2,os);
     }
 }

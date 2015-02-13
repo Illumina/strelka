@@ -17,6 +17,7 @@
 
 #pragma once
 
+
 namespace INOVO_TIERS
 {
     enum index_t{
@@ -25,10 +26,3 @@ namespace INOVO_TIERS
         SIZE
     };
 }
-
-#include <array>
-#include <vector>
-
-typedef std::array<std::vector<CleanedPileup*>,INOVO_TIERS::SIZE> cpiPtrTiers_t;
-typedef std::array<std::vector<const CleanedPileup*>,INOVO_TIERS::SIZE> cpiPtrTiersConst_t;
-

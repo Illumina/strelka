@@ -17,19 +17,20 @@
 
 #pragma once
 
+#include <cstdint>
 
 
 struct denovo_snv_call
 {
     struct result_set
     {
-        bool isCall = false;
+        int snv_qphred = 0;
     };
 
     bool
     is_snv() const
     {
-        return rs.isCall;
+        return (0 != rs.snv_qphred);
     }
 
     bool
@@ -38,7 +39,8 @@ struct denovo_snv_call
         return (is_snv() || is_forced_output);
     }
 
-    unsigned ref_gt;
-    result_set rs;
+    unsigned ref_gt = 0;
+    uint8_t snv_tier = 0;
     bool is_forced_output = false;
+    result_set rs;
 };

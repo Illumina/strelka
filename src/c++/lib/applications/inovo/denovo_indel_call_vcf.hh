@@ -16,8 +16,9 @@
 
 #pragma once
 
-#include "inovo_shared.hh"
+#include "denovo_call.hh"
 #include "denovo_indel_call.hh"
+#include "inovo_shared.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <array>

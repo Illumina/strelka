@@ -129,9 +129,6 @@ denovo_indel_call_vcf(
 
     static const char sep('\t');
 
-    // ID
-    os << sep << ".";
-
     // REF/ALT
     os << sep << iri.vcf_ref_seq
        << sep << iri.vcf_indel_seq;

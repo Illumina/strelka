@@ -14,6 +14,7 @@
 /// \author Chris Saunders
 ///
 
+#include "denovo_call.hh"
 #include "denovo_indel_caller.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
