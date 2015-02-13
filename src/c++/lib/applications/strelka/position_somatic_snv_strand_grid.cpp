@@ -16,12 +16,12 @@
 
 #include "position_somatic_snv_strand_grid.hh"
 #include "somatic_call_shared.hh"
-
 #include "blt_common/snp_util.hh"
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/seq_util.hh"
+#include "strelka_common/position_snp_call_grid_lhood_cached.hh"
 
 #include <cassert>
 #include <cmath>
@@ -243,265 +243,6 @@ somatic_snv_caller_strand_grid(const strelka_options& opt,
         // special nostrand distro is used for somatic_gvcf:
         get_nostrand_marginal_prior(pd_caller.lnprior_genomic(i),i,opt.shared_site_error_rate,0,ps.normal_nostrand);
         get_nostrand_marginal_prior(pd_caller.lnprior_polymorphic(i),i,opt.shared_site_error_rate,0,ps.normal_poly_nostrand);
-    }
-}
-
-
-
-// A simple static sized array with deep copy semantics:
-//
-template <unsigned NVAL>
-struct cache_val
-{
-    std::array<blt_float_t,NVAL> val;
-};
-
-
-
-// This structure manages the caching of arrays of type:
-// blt_float_t[NVAL] which are each associated with one value of
-// (qscore,ratio_index).
-//
-// The get_val() function returns a tuple, the first value of which is
-// a bool indicating whether the returned data structure has already
-// been called, and thus is (presumably) cached. Note that the client is
-// responsible for setting any values into the returned array for
-// caching.
-//
-//
-// this value caching didn't do much for the grid model -- better to
-// leave it out for now... (how up to date is this comment?)
-//
-template <unsigned NVAL>
-struct het_ratio_cache
-{
-    het_ratio_cache()
-        : _is_cached(MAX_QSCORE* MAX_INDEX,false)
-        , _cache(MAX_QSCORE* MAX_INDEX)
-    {}
-
-    std::pair<bool,cache_val<NVAL>*>
-    get_val(const unsigned qscore,
-            const unsigned ratio_index)
-    {
-        if (qscore>=MAX_QSCORE ||
-            ratio_index>=MAX_INDEX)
-        {
-            return std::make_pair(false,&_any_val);
-        }
-
-        const unsigned index(ratio_index + qscore*MAX_INDEX);
-        if (_is_cached[index])
-        {
-            return std::make_pair(true,&(_cache[index]));
-        }
-        else
-        {
-            _is_cached[index] = true;
-            return std::make_pair(false,&(_cache[index]));
-        }
-    }
-
-private:
-    enum contanst { MAX_QSCORE = 64, MAX_INDEX = 12 };
-
-    typedef cache_val<NVAL> cache_val_n;
-
-    cache_val_n _any_val; // return this if a request is outside of cached range
-    std::vector<bool> _is_cached;
-    std::vector<cache_val_n> _cache;
-};
-
-
-
-
-// accelerated version with no hyrax q-val mods:
-//
-// the ratio key can be used as a proxy for the het ratio to look up cached results:
-//
-static
-void
-get_high_low_het_ratio_lhood_spi(const snp_pos_info& pi,
-                                 const blt_float_t het_ratio,
-                                 const unsigned het_ratio_index,
-                                 het_ratio_cache<3>& hrcache,
-                                 blt_float_t* lhood_high,
-                                 blt_float_t* lhood_low)
-{
-    const blt_float_t chet_ratio(1.-het_ratio);
-
-    const unsigned n_calls(pi.calls.size());
-
-    //    cache_val cv;
-    static const uint8_t remap[3] = {0,2,1};
-
-    for (unsigned i(0); i<n_calls; ++i)
-    {
-        const base_call& bc(pi.calls[i]);
-
-        std::pair<bool,cache_val<3>*> ret(hrcache.get_val(bc.get_qscore(),het_ratio_index));
-        cache_val<3>& cv(*ret.second);
-        if (! ret.first)
-        {
-            const blt_float_t eprob(bc.error_prob());
-            const blt_float_t ceprob(1.-eprob);
-            //const blt_float_t lne(bc.ln_error_prob());
-            //const blt_float_t lnce(bc.ln_comp_error_prob());
-
-            // precalculate the result for expect values of 0.0, het_ratio, chet_ratio, 1.0
-            cv.val[0] = bc.ln_error_prob()+ln_one_third;
-            cv.val[1] = std::log((ceprob)*het_ratio+((eprob)*one_third)*chet_ratio);
-            cv.val[2] = std::log((ceprob)*chet_ratio+((eprob)*one_third)*het_ratio);
-        }
-
-        const uint8_t obs_id(bc.base_id);
-
-        for (unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt)
-        {
-            const unsigned key(DIGT::expect2_bias(obs_id,gt));
-            lhood_high[gt] += cv.val[key];
-            lhood_low[gt] += cv.val[remap[key]];
-        }
-    }
-}
-
-
-
-// accelerated version with no hyrax q-val mods:
-//
-static
-void
-increment_het_ratio_lhood_spi(const snp_pos_info& pi,
-                              const blt_float_t het_ratio,
-                              const unsigned het_ratio_index,
-                              het_ratio_cache<3>& hrcache,
-                              blt_float_t* all_het_lhood)
-{
-    // multiply probs of alternate ratios into local likelihoods, then
-    // *add* them to the global tally (effectively this is the sum lhood of
-    // many different heterozygous genotypes).
-    //
-    // in the gt_high genotype, the first allele (in lexicographical
-    // order) is expected at het_ratio and the second allele is
-    // expected at chet_ratio.  gt_low genotype is vice versa.
-    //
-    blt_float_t lhood_high[DIGT::SIZE];
-    blt_float_t lhood_low[DIGT::SIZE];
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        lhood_high[gt] = 0.;
-        lhood_low[gt] = 0.;
-    }
-    get_high_low_het_ratio_lhood_spi(pi,het_ratio,het_ratio_index,hrcache,lhood_high,lhood_low);
-
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        if (! DIGT::is_het(gt)) continue;
-        all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_high[gt]);
-        all_het_lhood[gt] = log_sum(all_het_lhood[gt],lhood_low[gt]);
-    }
-}
-
-
-
-// Fill in canonical dipliod positions in the likelihood
-// function. This version is similar to the single sample version of
-// the code, except that it doesn't allow any hyrax q-val adjustment
-// shenanigans...
-//
-static
-void
-get_diploid_gt_lhood_spi(const blt_options& opt,
-                         const snp_pos_info& pi,
-                         const bool is_het_bias,
-                         const blt_float_t het_bias,
-                         blt_float_t* const lhood)
-{
-    // ! not thread-safe !
-    static het_ratio_cache<3> hrcache;
-
-    // get likelihood of each genotype
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt) lhood[gt] = 0.;
-
-    for (const base_call& bc : pi.calls)
-    {
-        std::pair<bool,cache_val<3>*> ret(hrcache.get_val(bc.get_qscore(),0));
-        cache_val<3>& cv(*ret.second);
-        if (! ret.first)
-        {
-            const blt_float_t eprob(bc.error_prob());
-            const blt_float_t ceprob(1.-eprob);
-            const blt_float_t lne(bc.ln_error_prob());
-            const blt_float_t lnce(bc.ln_comp_error_prob());
-
-            // precalculate the result for expect values of 0.0, 0.5 & 1.0
-            cv.val[0] = lne+ln_one_third;
-            cv.val[1] = std::log((ceprob)+((eprob)*one_third))+ln_one_half;
-            cv.val[2] = lnce;
-        }
-
-        const uint8_t obs_id(bc.base_id);
-        for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-        {
-            lhood[gt] += cv.val[DIGT::expect2(obs_id,gt)];
-        }
-    }
-
-    // het bias here refers to an expanded frequency range for the
-    // heterozygous state, referred to as the myrax snp calling with in
-    // single-sample analysis and not currently used for somatic
-    // calls (as of strelka proto3/4)
-    //
-    if (is_het_bias)
-    {
-        // ! not thread-safe !
-        static het_ratio_cache<3> hrcache_bias;
-
-        // loop is currently setup to assume a uniform het ratio subgenotype prior
-        const unsigned n_bias_steps(1+static_cast<unsigned>(het_bias/opt.het_bias_max_ratio_inc));
-        const blt_float_t ratio_increment(het_bias/static_cast<blt_float_t>(n_bias_steps));
-        for (unsigned i(0); i<n_bias_steps; ++i)
-        {
-            const blt_float_t het_ratio(0.5+(i+1)*ratio_increment);
-            increment_het_ratio_lhood_spi(pi,het_ratio,i,hrcache_bias,lhood);
-        }
-
-        const unsigned n_het_subgt(1+2*n_bias_steps);
-        const blt_float_t subgt_log_prior(std::log(1./static_cast<blt_float_t>(n_het_subgt)));
-
-        for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-        {
-            if (! DIGT::is_het(gt)) continue;
-            lhood[gt] += subgt_log_prior;
-        }
-    }
-}
-
-
-
-// fill in noise portions of the likelihood distro for non-strand
-// noise
-//
-static
-void
-get_diploid_het_grid_lhood_spi(const snp_pos_info& pi,
-                               blt_float_t* const lhood)
-{
-    // ! not thread-safe !
-    static het_ratio_cache<3> hrcache;
-
-    // get likelihood of each genotype
-    for (unsigned gt(0); gt<(DIGT_SGRID::PRESTRAND_SIZE-DIGT::SIZE); ++gt) lhood[gt] = 0.;
-
-    blt_float_t* lhood_off=lhood-N_BASE;
-
-    static const blt_float_t ratio_increment(0.5/static_cast<blt_float_t>(DIGT_SGRID::HET_RES+1));
-    for (unsigned i(0); i<DIGT_SGRID::HET_RES; ++i)
-    {
-        const blt_float_t het_ratio((i+1)*ratio_increment);
-        get_high_low_het_ratio_lhood_spi(pi,het_ratio,i,hrcache,
-                                         lhood_off+(i*DIGT_SGRID::HET_SIZE),
-                                         lhood_off+((2*DIGT_SGRID::HET_RES-1-i)*DIGT_SGRID::HET_SIZE));
     }
 }
 
@@ -1123,11 +864,11 @@ position_somatic_snv_call(
 
         const extended_pos_info& nepi(is_include_tier2 ? *normal_epi_t2_ptr : normal_epi );
         const extended_pos_info& tepi(is_include_tier2 ? *tumor_epi_t2_ptr : tumor_epi );
-        get_diploid_gt_lhood_spi(_opt,nepi.pi,is_normal_het_bias,normal_het_bias,normal_lhood);
-        get_diploid_gt_lhood_spi(_opt,tepi.pi,is_tumor_het_bias,tumor_het_bias,tumor_lhood);
+        get_diploid_gt_lhood_cached(_opt,nepi.pi,is_normal_het_bias,normal_het_bias,normal_lhood);
+        get_diploid_gt_lhood_cached(_opt,tepi.pi,is_tumor_het_bias,tumor_het_bias,tumor_lhood);
 
-        get_diploid_het_grid_lhood_spi(nepi.pi,normal_lhood+DIGT::SIZE);
-        get_diploid_het_grid_lhood_spi(tepi.pi,tumor_lhood+DIGT::SIZE);
+        get_diploid_het_grid_lhood_cached(nepi.pi, DIGT_SGRID::HET_RES, normal_lhood+DIGT::SIZE);
+        get_diploid_het_grid_lhood_cached(tepi.pi, DIGT_SGRID::HET_RES, tumor_lhood+DIGT::SIZE);
 
         get_diploid_strand_grid_lhood_spi(nepi.pi,sgt.ref_gt,normal_lhood+DIGT_SGRID::PRESTRAND_SIZE);
         get_diploid_strand_grid_lhood_spi(tepi.pi,sgt.ref_gt,tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE);

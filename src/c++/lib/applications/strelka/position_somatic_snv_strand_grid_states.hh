@@ -57,10 +57,9 @@ namespace DIGT_SGRID
 
 enum constants { HET_RES = 4,
                  HET_COUNT = HET_RES*2+1,
-                 HET_SIZE = DIGT::SIZE-N_BASE,
                  STRAND_COUNT = HET_RES,
-                 STRAND_SIZE = HET_SIZE/2,
-                 HET_STATE_SIZE = HET_SIZE*HET_COUNT,
+                 STRAND_SIZE = DIGT::HET_SIZE/2,
+                 HET_STATE_SIZE = DIGT::HET_SIZE*HET_COUNT,
                  PRESTRAND_SIZE = N_BASE+HET_STATE_SIZE,
                  STRAND_STATE_SIZE = STRAND_COUNT*STRAND_SIZE
                };
@@ -78,7 +77,7 @@ struct strand_state_tables
     unsigned digt_state[N_BASE][STRAND_SIZE];
 
     // translate from digt types to strand types:
-    unsigned strand_state[N_BASE][HET_SIZE];
+    unsigned strand_state[N_BASE][DIGT::HET_SIZE];
 };
 
 extern const strand_state_tables stables;
@@ -89,7 +88,7 @@ unsigned
 get_het_count(const unsigned state)
 {
     if (state<N_BASE)         return 0;
-    if (state<PRESTRAND_SIZE) return (state-N_BASE)/HET_SIZE;
+    if (state<PRESTRAND_SIZE) return (state-N_BASE)/DIGT::HET_SIZE;
     return (state-PRESTRAND_SIZE)/STRAND_SIZE;
 }
 
@@ -117,7 +116,7 @@ get_digt_state(const unsigned state,
                const unsigned ref_base)
 {
     if (state<N_BASE)         return state;
-    if (state<PRESTRAND_SIZE) return N_BASE+((state-N_BASE)%HET_SIZE);
+    if (state<PRESTRAND_SIZE) return N_BASE+((state-N_BASE)%DIGT::HET_SIZE);
     return stables.digt_state[ref_base][get_strand_state(state)];
 }
 
@@ -144,7 +143,7 @@ toggle_strand_state(
     else
     {
         const unsigned strand_state(get_strand_state(state));
-        return (N_BASE + (het_count*HET_SIZE) + stables.digt_state[ref_base][strand_state]);
+        return (N_BASE + (het_count*DIGT::HET_SIZE) + stables.digt_state[ref_base][strand_state]);
     }
 }
 

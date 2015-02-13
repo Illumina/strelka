@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "seq_util.hh"
+
 #include <cassert>
 
 namespace DIGT
@@ -34,6 +36,10 @@ enum index_t
     CT,
     GT,
     SIZE
+};
+
+enum constants {
+    HET_SIZE = SIZE-N_BASE,
 };
 
 inline
@@ -71,46 +77,26 @@ inline
 bool
 is_het(const unsigned idx)
 {
-    switch (idx)
-    {
-    case AA:
-    case CC:
-    case GG:
-    case TT:
-        return false;
-    default:
-        return true;
-    }
+    return (idx>=N_BASE);
 }
 
 inline
 char
 hom_base(const unsigned idx)
 {
-    switch (idx)
-    {
-    case AA:
-        return 'A';
-    case CC:
-        return 'C';
-    case GG:
-        return 'G';
-    case TT:
-        return 'T';
-    default:
-        return 'X';
-    }
+    if (is_het(idx)) return 'X';
+    return id_to_base(idx);
 }
 
 /// provide the alelle frequency for base_id given a diploid genotype gt
 inline
 double
-expect(const int base_id,
-       const int gt)
+expect(
+    const int base_id,
+    const int gt)
 {
-    static const unsigned N_BASE(4);
-
-    static const double ex[SIZE][N_BASE] = {{ 1.0, 0.0, 0.0, 0.0},
+    static const double ex[SIZE][N_BASE] = {
+        { 1.0, 0.0, 0.0, 0.0},
         { 0.0, 1.0, 0.0, 0.0},
         { 0.0, 0.0, 1.0, 0.0},
         { 0.0, 0.0, 0.0, 1.0},
@@ -134,9 +120,8 @@ unsigned
 expect2(const int base_id,
         const int gt)
 {
-    static const unsigned N_BASE(4);
-
-    static const unsigned ex[SIZE][N_BASE] = {{ 2, 0, 0, 0},
+    static const unsigned ex[SIZE][N_BASE] = {
+        { 2, 0, 0, 0},
         { 0, 2, 0, 0},
         { 0, 0, 2, 0},
         { 0, 0, 0, 2},
@@ -167,9 +152,8 @@ unsigned
 expect2_bias(const int base_id,
              const int gt)
 {
-    static const unsigned N_BASE(4);
-
-    static const unsigned ex[SIZE][N_BASE] = {{ 3, 0, 0, 0},
+    static const unsigned ex[SIZE][N_BASE] = {
+        { 3, 0, 0, 0},
         { 0, 3, 0, 0},
         { 0, 0, 3, 0},
         { 0, 0, 0, 3},
@@ -189,11 +173,10 @@ const char*
 get_vcf_gt(const int gt,
            const int ref_gt)
 {
-    static const unsigned N_BASE(4);
-
     static const char* gtstr[N_BASE] = { "0/0","0/1","1/1","1/2" };
 
-    static const unsigned ex[SIZE][N_BASE] = {{ 0, 2, 2, 2},
+    static const unsigned ex[SIZE][N_BASE] = {
+        { 0, 2, 2, 2},
         { 2, 0, 2, 2},
         { 2, 2, 0, 2},
         { 2, 2, 2, 0},
@@ -216,7 +199,6 @@ get_gt_with_alleles(
     const unsigned base1,
     const unsigned base2)
 {
-    static const unsigned N_BASE(4);
     assert(base1 < N_BASE);
     assert(base2 < N_BASE);
 

@@ -23,7 +23,7 @@
 ##
 ## note that order approximates dependency chain, where libraries are listed
 ## after libraries upon which they depend:
-set (THIS_ALL_LIBRARIES options blt_util common calibration htsapi blt_common starling_common)
+set (THIS_ALL_LIBRARIES options blt_util common calibration htsapi blt_common starling_common strelka_common)
 
 ##
 ## Build all the libraries for the project
