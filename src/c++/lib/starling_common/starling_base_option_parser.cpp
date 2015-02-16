@@ -77,12 +77,14 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("snp-theta", po::value(&opt.bsnp_diploid_theta)->default_value(opt.bsnp_diploid_theta),
      "Set snp theta.")
     ("indel-theta", po::value(&opt.bindel_diploid_theta)->default_value(opt.bindel_diploid_theta),
-     "Set indel theta");
+     "Set indel theta")
+     ;
 
     po::options_description hap_opt("haplotype-options");
     hap_opt.add_options()
     ("hap-model", po::value(&opt.is_htype_calling)->zero_tokens(),
-     "Turn on haplotype-based variant calling");
+     "Turn on haplotype-based variant calling")
+     ;
 
     po::options_description blt_nonref_opt("nonref-model-options");
     blt_nonref_opt.add_options()
@@ -98,7 +100,8 @@ get_starling_base_option_parser(starling_base_options& opt)
      "The expected rate of erroneous non-reference allele sites applied to the nonref model. At error sites a nonref allele is expected in the frequency range [0,decay_freq], with a probability that linearly decays to zero at decay_freq.")
     ("nonref-site-error-decay-freq",
      po::value(&opt.nonref_site_error_decay_freq)->default_value(opt.nonref_site_error_decay_freq),
-     "The decay_freq used for the site-error state as described above.");
+     "The decay_freq used for the site-error state as described above.")
+     ;
 
     po::options_description realign_opt("realignment-options");
     realign_opt.add_options()
@@ -123,7 +126,8 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("force-output-vcf", po::value(&opt.force_output_vcf)->multitoken(),
      "For each site or indel in the vcf file to be written to the snv or indel output, even if no variant is found. An indels submitted will also be treated as candidate indels. Option can be provided multiple times to combine multiple vcf files.")
     ("upstream-oligo-size", po::value(&opt.upstream_oligo_size),
-     "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.");
+     "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.")
+     ;
 
     po::options_description ploidy_opt("ploidy-options");
     ploidy_opt.add_options()
@@ -140,14 +144,18 @@ get_starling_base_option_parser(starling_base_options& opt)
     po::options_description compat_opt("compatibility-options");
     compat_opt.add_options()
     ("eland-compatibility", po::value(&opt.is_eland_compat)->zero_tokens(),
-     "When argument is provided the input reads are checked for an optional AS field corresponding to the ELAND PE map score.");
+     "When argument is provided the input reads are checked for an optional AS field corresponding to the ELAND PE map score.")
+     ;
 
     po::options_description input_opt("input-options");
     input_opt.add_options()
     ("max-input-depth", po::value(&opt.max_input_depth),
      "Maximum allowed read depth per sample (prior to realignment). Input reads which would exceed this depth are filtered out.  (default: no limit)")
     ("ignore-conflicting-read-names", po::value(&opt.is_ignore_read_names)->zero_tokens(),
-     "Do not report an error if two input reads share the same QNAME and read number");
+     "Do not report an error if two input reads share the same QNAME and read number")
+    ("max-sample-read-buffer", po::value(&opt.maxBufferedReads)->default_value(opt.maxBufferedReads),
+     "Maximum reads buffered for each sample")
+     ;
 
     po::options_description other_opt("other-options");
     other_opt.add_options()
@@ -164,7 +172,8 @@ get_starling_base_option_parser(starling_base_options& opt)
      "The calibration model for quality filtering variants")
 
     ("remap-input-softclip", po::value(&opt.is_remap_input_softclip)->zero_tokens(),
-     "Attempt to realign all soft-clipped segments in input reads (DEPRECATED)");
+     "Attempt to realign all soft-clipped segments in input reads (DEPRECATED)")
+     ;
 
     po::options_description new_opt("Shared small-variant options");
 

@@ -93,7 +93,7 @@ struct starling_read_buffer : private boost::noncopyable
     read_segment_iter
     get_pos_read_segment_iter(const pos_t pos);
 
-    // returns NULL if read_id isn't present:
+    // returns nullptr if read_id isn't present:
     starling_read*
     get_read(const align_id_t read_id)
     {
@@ -102,7 +102,7 @@ struct starling_read_buffer : private boost::noncopyable
         return (k->second);
     }
 
-    // returns NULL if read_id isn't present:
+    // returns nullptr if read_id isn't present:
     const starling_read*
     get_read(const align_id_t read_id) const
     {
@@ -127,6 +127,13 @@ struct starling_read_buffer : private boost::noncopyable
 
     void
     dump_pos(const pos_t pos, std::ostream& os) const;
+
+    /// return total reads buffered
+    unsigned
+    size() const
+    {
+        return _read_data.size();
+    }
 
     bool
     empty() const
@@ -159,7 +166,7 @@ private:
 
     static const segment_group_t _empty_segment_group;
 
-    // used to produce unique, sequential read ids accross multiple
+    // used to produce unique, sequential read ids across multiple
     // starling_read_buffer objects (where there would typically be one
     // buffer per sample):
     //

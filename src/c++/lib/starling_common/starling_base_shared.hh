@@ -212,6 +212,17 @@ struct starling_base_options : public blt_options
 
     /// file specifying haploid and deleted regions as 1/0 in bed col 4
     std::string ploidy_region_bedfile;
+
+    bool
+    isMaxBufferedReads() const
+    {
+        return (maxBufferedReads != 0);
+    }
+
+    /// maximum number of reads which can be buffered for any one sample
+    ///
+    /// set to zero to disable limit
+    unsigned maxBufferedReads = 100000;
 };
 
 
@@ -220,7 +231,8 @@ struct starling_base_options : public blt_options
 //
 struct starling_sample_options
 {
-    starling_sample_options(const starling_base_options& opt)
+    starling_sample_options(
+        const starling_base_options& opt)
         : min_read_bp_flank(opt.default_min_read_bp_flank)
         , min_candidate_indel_reads(opt.default_min_candidate_indel_reads)
         , min_small_candidate_indel_read_frac(opt.default_min_small_candidate_indel_read_frac)

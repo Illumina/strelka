@@ -583,6 +583,18 @@ insert_read(
         return std::make_pair(false,0);
     }
 
+
+    starling_read_buffer& rbuff(sample(sample_no).read_buff);
+
+    // check whether the read buffer has reached max capacity
+    if (_opt.isMaxBufferedReads())
+    {
+        if (rbuff.size() >= _opt.maxBufferedReads)
+        {
+            return std::make_pair(false,0);
+        }
+    }
+
     // assume that pos_procesor, as a container, is no longer empty...
     _is_skip_process_pos=false;
 
@@ -597,7 +609,6 @@ insert_read(
         }
     }
 
-    starling_read_buffer& rbuff(sample(sample_no).read_buff);
     const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(_opt,
                                                                   br,al,maplev));
     if (! res.first) return res;
