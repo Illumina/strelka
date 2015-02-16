@@ -358,6 +358,7 @@ class StarlingWorkflow(StarkaWorkflow) :
 
     def workflow(self) :
         self.flowLog("Initiating Starling workflow version: %s" % (__version__))
+        self.setCallMemMb()
 
         callPreReqs = set()
         callPreReqs |= runCount(self)

@@ -382,6 +382,7 @@ class StrelkaWorkflow(StarkaWorkflow) :
 
     def workflow(self) :
         self.flowLog("Initiating Strelka workflow version: %s" % (__version__))
+        self.setCallMemMb()
 
         callPreReqs = set()
         callPreReqs |= runCount(self)
