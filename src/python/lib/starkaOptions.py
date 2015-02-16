@@ -111,7 +111,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         #       use ever expected in a production run. The consequence of exceeding the mean is
         #       a slow run due to swapping.
         #
-        callMemMb=4*1024
+        callSGEMemMb=4*1024
+        callLocalMemMb=2*1024
 
 
         runDir = "variantCallWorkflow"

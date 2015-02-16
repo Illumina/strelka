@@ -1,3 +1,4 @@
+- STARKA-201 set memory requirements based on run context
 v2.3.2
 - STARKA-190 apply VQSR to haploid regions
 - Fix somatic callability track tabix index generation

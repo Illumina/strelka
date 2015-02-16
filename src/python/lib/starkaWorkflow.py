@@ -56,6 +56,11 @@ class StarkaWorkflow(WorkflowRunner) :
         self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
         ensureDir(self.params.variantsDir)
 
+        # set default mem requirements:
+        self.params.callMemMb = self.params.callLocalMemMb
+        if self.getRunMode() == "sge" :
+            self.params.callMemMb = self.params.callSGEMemMb
+
         indexRefFasta=self.params.referenceFasta+".fai"
 
         if self.params.referenceFasta is None:
