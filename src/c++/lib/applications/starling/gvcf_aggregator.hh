@@ -65,6 +65,12 @@ struct gvcf_aggregator
         write_block_site_record();
     }
 
+    pos_t
+    headPos() const
+    {
+        return _head_pos;
+    }
+
 private:
     void add_site_internal(const site_info& si);
     void write_block_site_record();

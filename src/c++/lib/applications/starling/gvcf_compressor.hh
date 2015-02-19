@@ -24,7 +24,7 @@
 #include "blt_util/RegionTracker.hh"
 
 
-/// manage gVCF non-reference block compressability criteria
+/// manage gVCF non-reference block compressibility criteria
 struct gvcf_compressor
 {
     gvcf_compressor(
@@ -54,7 +54,7 @@ struct gvcf_compressor
 
 private:
 
-    /// is site non-compressable according to external bedfile input?:
+    /// is site non-compressible according to external bedfile input?:
     bool
     is_nocompress_site(
         const pos_t pos) const
@@ -62,7 +62,7 @@ private:
         return _nocompress_regions.isInRegion(pos);
     }
 
-    /// is any part of range non-compressable according to external bedfile input?:
+    /// is any part of range non-compressible according to external bedfile input?:
     bool
     is_nocompress_range(
         const known_pos_range2 range) const

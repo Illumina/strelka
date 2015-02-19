@@ -56,7 +56,11 @@ private:
     void
     clear_pos_annotation(const pos_t pos) override
     {
-        _nocompress_regions.removeToPos(pos);
+        if (! _nocompress_regions.empty())
+        {
+            const pos_t clearPos(std::min(pos,_gvcfer->headPos()));
+            _nocompress_regions.removeToPos(clearPos);
+        }
     }
 
     bool
