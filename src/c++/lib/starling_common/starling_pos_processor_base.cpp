@@ -515,6 +515,7 @@ insert_forced_output_pos(const pos_t pos)
 {
     _stageman.validate_new_pos_value(pos,STAGE::READ_BUFFER);
     _forced_output_pos.insert(pos);
+    _is_skip_process_pos=false;
 }
 
 

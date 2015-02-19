@@ -48,6 +48,12 @@ struct PosRangeEndSort
 ///
 struct RegionTracker
 {
+    bool
+    empty() const
+    {
+        return _regions.empty();
+    }
+
     /// is single position in a tracked region?
     bool
     isInRegion(const unsigned pos) const
@@ -97,6 +103,12 @@ private:
 template <typename T>
 struct RegionPayloadTracker
 {
+    bool
+    empty() const
+    {
+        return _regions.empty();
+    }
+
     boost::optional<T>
     isPayloadInRegion(const unsigned pos) const;
 

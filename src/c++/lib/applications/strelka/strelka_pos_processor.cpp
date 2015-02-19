@@ -342,6 +342,7 @@ process_pos_indel_somatic(const pos_t pos)
                 }
 
                 _indelWriter.cacheIndel(indel_pos,siInfo);
+                _is_skip_process_pos=false;
             }
 
 #if 0

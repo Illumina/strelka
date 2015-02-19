@@ -127,6 +127,7 @@ insert_nocompress_region(
 {
     _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);
     _nocompress_regions.addRegion(range);
+    _is_skip_process_pos=false;
 }
 
 
@@ -367,7 +368,11 @@ process_pos_snp_single_sample_impl(
         if (_site_info.dgt.is_snp)
         {
             // this needs to be updated no matter where the snp-call is written to:
-            if (_is_variant_windows) _variant_print_pos.insert(pos);
+            if (_is_variant_windows)
+            {
+                _variant_print_pos.insert(pos);
+                _is_skip_process_pos=false;
+            }
         }
 #if 0
         if (mgt.is_snp)
@@ -509,7 +514,11 @@ process_pos_indel_single_sample(
                     _gvcfer->add_indel(pos,ik,dindel,iri,isri);
                 }
 
-                if (_is_variant_windows) _variant_print_pos.insert(pos);
+                if (_is_variant_windows)
+                {
+                    _variant_print_pos.insert(pos);
+                    _is_skip_process_pos=false;
+                }
             }
 
             /// \TODO put this option under runtime control...

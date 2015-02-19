@@ -341,26 +341,6 @@ public:
         return *_sample[sample_no];
     }
 
-    bool
-    empty() const
-    {
-        if (! _is_skip_process_pos)
-        {
-            for (unsigned s(0); s<_n_samples; ++s)
-            {
-                const sample_info& sif(sample(s));
-                if (! sif.read_buff.empty()) return false;
-                if (! sif.bc_buff.empty()) return false;
-                if (! sif.indel_buff.empty()) return false;
-            }
-            if (! _variant_print_pos.empty()) return false;
-            if (! _forced_output_pos.empty()) return false;
-            if (! derived_empty()) return false;
-            _is_skip_process_pos=true;
-        }
-        return true;
-    }
-
     // data for haplotoype regions, shared between all samples:
     //
     struct htype_region_data
@@ -545,6 +525,26 @@ private:
     virtual
     void
     post_align_clear_pos(const pos_t pos) {}
+
+    bool
+    empty() const
+    {
+        if (! _is_skip_process_pos)
+        {
+            for (unsigned s(0); s<_n_samples; ++s)
+            {
+                const sample_info& sif(sample(s));
+                if (! sif.read_buff.empty()) return false;
+                if (! sif.bc_buff.empty()) return false;
+                if (! sif.indel_buff.empty()) return false;
+            }
+            if (! _variant_print_pos.empty()) return false;
+            if (! _forced_output_pos.empty()) return false;
+            if (! derived_empty()) return false;
+            _is_skip_process_pos=true;
+        }
+        return true;
+    }
 
     /// allow a derived class to declare non-empty status:
     virtual

@@ -44,6 +44,13 @@ struct starling_pos_processor : public starling_pos_processor_base
 
     void reset();
 
+    bool
+    derived_empty() const override
+    {
+        return _nocompress_regions.empty();
+    }
+
+
 private:
 
     void
