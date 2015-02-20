@@ -366,18 +366,6 @@ struct site_info
         phased_alt.clear();
         phased_AD.clear();
 
-        n_used_calls = 0;
-        n_unused_calls = 0;
-        dgt.reset();
-        hpol = 0;
-        hapscore = 0;
-        MQ = 0;
-        ReadPosRankSum = 0;
-        BaseQRankSum = 0;
-        MQRankSum = 0;
-        avgBaseQ = 0;
-        rawPos = 0;
-        mapq_zero = 0;
         Qscore = -1;
         Unphasable = false;
 

@@ -1,5 +1,6 @@
 v2.3.4
-- STARKA-196 fix nocompress in empty regions
+- STARKA-204 remove inconsistent filters at homref sites
+- STARKA-196 fix nocompress sites in empty regions
 v2.3.3
 - STARKA-202 limit total read buffer size to prevent ultra-high depth memory exhuastion
 - STARKA-201 set memory requirements based on run context
