@@ -25,7 +25,6 @@ bool
 position_strand_coverage_anomaly(const double alpha,
                                  const snp_pos_info& pi)
 {
-
     static const double expect_binomial_p(0.5);
 
     if (pi.calls.empty()) return false;
@@ -41,5 +40,5 @@ position_strand_coverage_anomaly(const double alpha,
         if (pi.calls[i].is_fwd_strand) n_fwd_calls += 1;
     }
 
-    return is_reject_binomial_p(alpha,expect_binomial_p,n_fwd_calls,n_calls-n_fwd_calls);
+    return is_reject_binomial_twosided(alpha,expect_binomial_p,n_fwd_calls,n_calls);
 }
