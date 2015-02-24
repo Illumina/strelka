@@ -38,8 +38,8 @@ add_site(const site_info& si)
 {
     _buffer.push_back(si);
 
-    // case: extending block with het call, update block_end position
-    if (si.is_het())
+    // case: extending block with variant call
+    if (si.is_nonref())
     {
         if (! is_in_block())
             block_start = si.pos;
@@ -164,7 +164,7 @@ assembler::create_contig_record()
         for (auto& val : _buffer)
         {
             if (! val.is_het()) continue;
-            val.smod.set_filter(VCF_FILTERS::PhasingConflict);
+            val.smod.set_filter(VCF_FILTERS::PhasingConflict); // switch to custom filter for assembly conlfict.
         }
         return;
     }
@@ -239,8 +239,6 @@ assembler::make_record()
     this->collect_read_evidence();
     this->create_contig_record();
 }
-
-
 
 void
 assembler::
