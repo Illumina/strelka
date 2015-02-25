@@ -44,10 +44,8 @@ add_site(const site_info& si)
         if (! is_in_block())
             block_start = si.pos;
         block_end = si.pos;
-        het_count ++;
-#ifdef DEBUG_ASSEMBLE
-        log_os << "starting block @ " << (this->block_start+1) << " with " << si << "\n";
-#endif
+        var_count ++;
+
         return false;
     }
 
@@ -61,7 +59,7 @@ add_site(const site_info& si)
     }
 
     // case: extending block with none-het call based on the phasing range
-    if (is_in_block() && (si.pos-block_end+1)<this->opt.phasing_window)
+    if (is_in_block() && this->keep_collecting())
     {
 #ifdef DEBUG_ASSEMBLE
         log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
@@ -331,6 +329,16 @@ collect_read_evidence()
     log_os << "total reads unused " << total_reads_unused << "\n";
 #endif
 }
+
+
+bool
+assembler::
+keep_collecting()
+{
+    th
+    return true;
+}
+
 
 void
 assembler::clear()

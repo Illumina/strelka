@@ -48,7 +48,8 @@ struct assembler
         const unsigned init_max_read_len)
         : opt(init_opt),
           read_buffer(init_read_buffer),
-          max_read_len(init_max_read_len)
+          max_read_len(init_max_read_len),
+          myPredictor("")
     {
         this->clear();
     }
@@ -78,6 +79,8 @@ struct assembler
         return _buffer;
     }
 
+    int block_start,block_end;                  // position of the first and last added variant site
+
 private:
     void make_record();                 // make contig VCF record
 
@@ -93,16 +96,19 @@ private:
         return (this->block_end-this->block_start+1);
     }
 
+    bool keep_collecting();                 // make contig VCF record
+
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
     starling_read_buffer& read_buffer;          // pass along the relevant read-buffer
     int max_read_len;                           // the length of the input reads
 
-    int block_start,block_end;                  // position of the first and last added variant site
-    int het_count;                              // total variant count
+//    int block_start,block_end;                  // position of the first and last added variant site
+    int var_count;                              // total variant count
     int total_reads,total_reads_unused;         // total used and unused reads spanning assembled region
     bool phase_indels = false;                  // should we attempt to phase indels as well? For now false, thus returning any block upon encountering an indel
     std::string reference;                      // the phased allele reference
     typedef std::map<std::string,int> allele_map;
     allele_map observations;
+    predictor myPredictor;
 };

@@ -35,16 +35,16 @@
 struct predictor
 {
     predictor(
-        const std::string regions)
+       const std::string& regions)
         : regions_file(regions)
     {
         //init regions file bed_streamer, TODO move this code to Starling_run
-//        std::unique_ptr<bed_streamer> nocompress_regions;
+//        std::unique_ptr<bed_streamer> assemble_regions;
 //        if (! opt.gvcf.nocompress_region_bedfile.empty())
 //        {
 //            nocompress_regions.reset(new bed_streamer(opt.gvcf.nocompress_region_bedfile.c_str(),
 //                                                      bam_region.c_str()));
-//            sdata.register_nocompress_regions(*nocompress_regions);
+//            sdata.register_assemble_regions(*assemble_regions);
 //        }
         //add region from bed to region-tracker
 //        while(bedtrack){
@@ -58,8 +58,10 @@ struct predictor
 
     }
 
-    /// given an assembler with a region buffered, predict if it should be assembeled
+    /// given an assembler with a region buffered, predict if it should it be assembeled
     bool do_assemble(const assembler& as);
+    /// given an assembler with a region buffered, predict if it should it be extended
+    bool keep_extending(const assembler& as);
 
 
 private:

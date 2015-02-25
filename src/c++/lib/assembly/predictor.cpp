@@ -16,3 +16,34 @@
  *  Created on: Sep 10, 2013
  *  Author: Morten Kallberg
  */
+
+#include "predictor.hh"
+
+bool
+predictor::keep_extending(const assembler& as)
+{
+    //overlap with bed track
+    known_pos_range2 range(as.block_start,as.block_end);
+    if (this->rt.isInRegion(range))
+        return true;
+    //more assembly condition based on reference, and other buffered metrics
+
+
+    //do not assemble
+    return false;
+}
+
+
+bool
+predictor::do_assemble(const assembler& as)
+{
+    //overlap with bed track
+    known_pos_range2 range(as.block_start,as.block_end);
+    if (this->rt.isInRegion(range))
+        return true;
+    //more assembly condition based on reference, and other buffered metrics
+
+
+    //do not assemble
+    return false;
+}
