@@ -1673,7 +1673,12 @@ realign_and_score_read(
         get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,realign_buffer_range,warn,cal_set);
     }
 
-    assert(! cal_set.empty());
+    if( cal_set.empty() )
+    {
+      std::ostringstream oss;
+      oss << "Empty candidate alignment set while realigning read_seg.\n" ;
+      throw blt_exception(oss.str().c_str());
+    }
 
     const bool is_incomplete_search(warn.origin_skip || warn.max_toggle_depth);
 
