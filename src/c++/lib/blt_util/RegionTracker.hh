@@ -56,14 +56,14 @@ struct RegionTracker
 
     /// is single position in a tracked region?
     bool
-    isInRegion(const unsigned pos) const
+    isIntersectRegion(const unsigned pos) const
     {
         return isInRegionImpl(pos,pos+1);
     }
 
     /// does range intersect any tracked region?
     bool
-    isInRegion(const known_pos_range2 range) const
+    isIntersectRegion(const known_pos_range2 range) const
     {
         return isInRegionImpl(range.begin_pos(),range.end_pos());
     }

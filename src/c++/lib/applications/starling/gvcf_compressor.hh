@@ -59,7 +59,7 @@ private:
     is_nocompress_site(
         const pos_t pos) const
     {
-        return _nocompress_regions.isInRegion(pos);
+        return _nocompress_regions.isIntersectRegion(pos);
     }
 
     /// is any part of range non-compressible according to external bedfile input?:
@@ -67,7 +67,7 @@ private:
     is_nocompress_range(
         const known_pos_range2 range) const
     {
-        return _nocompress_regions.isInRegion(range);
+        return _nocompress_regions.isIntersectRegion(range);
     }
 
     const gvcf_options& _opt;
