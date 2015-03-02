@@ -21,18 +21,36 @@
 
 bool
 RegionTracker::
-isInRegionImpl(
+isIntersectRegionImpl(
     const pos_t beginPos,
     const pos_t endPos) const
 {
     if (_regions.empty()) return false;
 
-    // 1. find first region where endPos > beginPos
+    // 1. find first region where region.endPos > query.beginPos
     const auto posIter(_regions.upper_bound(known_pos_range2(beginPos,beginPos)));
     if (posIter == _regions.end()) return false;
 
     // 2. conclusion based on non-overlapping region constraint
     return (posIter->begin_pos() < endPos);
+}
+
+
+bool
+RegionTracker::
+isSubsetOfRegionImpl(
+    const pos_t beginPos,
+    const pos_t endPos) const
+{
+    if (_regions.empty()) return false;
+
+    // 1. find first region where region.endPos > query.beginPos
+    const auto posIter(_regions.upper_bound(known_pos_range2(beginPos,beginPos)));
+    if (posIter == _regions.end()) return false;
+    if (posIter->end_pos() < endPos) return false;
+
+    // 2. conclusion based on non-overlapping region constraint
+    return (posIter->begin_pos() <= beginPos);
 }
 
 

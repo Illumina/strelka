@@ -24,7 +24,7 @@
 #include <vector>
 
 
-/// two predefined options for ValClear type below:
+/// two predefined options for the ValClear type parameter to RangeMap:
 template <typename T>
 struct ZeroT
 {

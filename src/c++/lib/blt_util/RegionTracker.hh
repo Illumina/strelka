@@ -54,25 +54,42 @@ struct RegionTracker
         return _regions.empty();
     }
 
+    void
+    clear()
+    {
+        _regions.clear();
+    }
+
     /// is single position in a tracked region?
     bool
-    isIntersectRegion(const unsigned pos) const
+    isIntersectRegion(
+        const unsigned pos) const
     {
-        return isInRegionImpl(pos,pos+1);
+        return isIntersectRegionImpl(pos,pos+1);
     }
 
     /// does range intersect any tracked region?
     bool
-    isIntersectRegion(const known_pos_range2 range) const
+    isIntersectRegion(
+        const known_pos_range2 range) const
     {
-        return isInRegionImpl(range.begin_pos(),range.end_pos());
+        return isIntersectRegionImpl(range.begin_pos(),range.end_pos());
+    }
+
+    /// is range entirely contained in a region?
+    bool
+    isSubsetOfRegion(
+        const known_pos_range2 range) const
+    {
+        return isSubsetOfRegionImpl(range.begin_pos(),range.end_pos());
     }
 
     /// add region
     ///
     /// any overlaps and adjacencies with existing regions in the tracker will be collapsed
     void
-    addRegion(known_pos_range2 range);
+    addRegion(
+        known_pos_range2 range);
 
     /// remove all regions which end (inclusive) before pos+1
     void
@@ -88,7 +105,12 @@ struct RegionTracker
 private:
 
     bool
-    isInRegionImpl(
+    isIntersectRegionImpl(
+        const pos_t beginPos,
+        const pos_t endPos) const;
+
+    bool
+    isSubsetOfRegionImpl(
         const pos_t beginPos,
         const pos_t endPos) const;
 

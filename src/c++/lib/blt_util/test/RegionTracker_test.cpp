@@ -118,6 +118,27 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker3 )
 
 
 
+BOOST_AUTO_TEST_CASE( test_RegionTracker4 )
+{
+    // region remove tests
+    RegionTracker rt;
+
+    rt.addRegion(known_pos_range2(5,10));
+    rt.addRegion(known_pos_range2(2,3));
+    rt.addRegion(known_pos_range2(14,15));
+    rt.addRegion(known_pos_range2(24,25));
+    BOOST_REQUIRE_EQUAL(rt._regions.size(),4);
+
+    BOOST_REQUIRE(rt.isSubsetOfRegion(known_pos_range2(5,10)));
+    BOOST_REQUIRE(rt.isSubsetOfRegion(known_pos_range2(6,7)));
+    BOOST_REQUIRE(! rt.isSubsetOfRegion(known_pos_range2(4,10)));
+    BOOST_REQUIRE(! rt.isSubsetOfRegion(known_pos_range2(5,11)));
+    BOOST_REQUIRE(! rt.isSubsetOfRegion(known_pos_range2(0,1)));
+    BOOST_REQUIRE(! rt.isSubsetOfRegion(known_pos_range2(30,31)));
+}
+
+
+
 BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker )
 {
     // Simplest test
