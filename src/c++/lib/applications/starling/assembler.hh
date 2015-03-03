@@ -25,6 +25,7 @@
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"
 #include "assembly/predictor.hh"
+#include "applications/starling/gvcf_block_site_record.hh"
 #include <climits>
 
 
@@ -48,8 +49,8 @@ struct assembler
         const unsigned init_max_read_len)
         : opt(init_opt),
           read_buffer(init_read_buffer),
-          max_read_len(init_max_read_len)
-//          myPredictor("")
+          max_read_len(init_max_read_len),
+          myPredictor("")
     {
 //        this->clear();
     }
@@ -57,7 +58,7 @@ struct assembler
     /// add site to buffer
     ///
     /// returns true when the buffer should be printed as a phased block
-    bool add_site(const site_info& si);
+    bool add_site(const site_info& si, const gvcf_block_site_record& empty_block);
 
     // clear all object data
     void clear();
@@ -96,7 +97,9 @@ private:
         return (this->block_end-this->block_start+1);
     }
 
-    bool keep_collecting();                 // make contig VCF record
+    bool keep_collecting();                 // keep the block going
+    bool do_assemble();                     // Assemble the region that is currently in the buffer
+
 
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
@@ -110,5 +113,5 @@ private:
     std::string reference;                      // the phased allele reference
     typedef std::map<std::string,int> allele_map;
     allele_map observations;
-//    predictor myPredictor;
+    predictor myPredictor;
 };

@@ -34,41 +34,38 @@
 // Add a SNP site to the phasing buffer
 bool
 assembler::
-add_site(const site_info& si)
+add_site(const site_info& si,const gvcf_block_site_record& empty_block)
 {
     _buffer.push_back(si);
 
-    // case: extending block with variant call
+    //CASE: Start a new potential assembly block
+    block_end = si.pos;
+    if (! is_in_block()){
+        block_start = si.pos;
+        return false;
+    }
+
+    // Case: Add the incoming site to the buffer, we can never end a block immediatly on a variant
+    // always return false if it's a var site
     if (si.is_nonref())
     {
-        if (! is_in_block())
-            block_start = si.pos;
-        block_end = si.pos;
         var_count ++;
-
         return false;
     }
 
-    //case: we get a record that is explicitly set to not be assembled
-    if (si.Unphasable)
-    {
-#ifdef DEBUG_ASSEMBLE
-        log_os << "I shouldn't assemble this record " << si << "\n";
-#endif
-        return true;
-    }
+    // if it's a ref site make sure the block end is extended appropriatly
+    if (si.smod.is_block)
+        block_end += empty_block.count;
 
-    // case: extending block with none-het call based on the phasing range
-    if (is_in_block() && this->keep_collecting())
+    // First check if we should be extending the block further
+    if (this->keep_collecting())
     {
-#ifdef DEBUG_ASSEMBLE
-        log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
-#endif
+        // TODO update stats
         return false;
     }
 
-    // case: setup the assembled records
-    if (this->var_count>1)
+    // First check if we should be extending the block further
+    if (this->do_assemble())
     {
         make_record();
     }
@@ -330,6 +327,13 @@ collect_read_evidence()
 bool
 assembler::
 keep_collecting()
+{
+    return true;
+}
+
+bool
+assembler::
+do_assemble()
 {
     return true;
 }
