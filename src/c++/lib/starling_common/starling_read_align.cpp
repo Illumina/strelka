@@ -1671,13 +1671,13 @@ realign_and_score_read(
     for (const alignment& al : exemplars)
     {
         get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,realign_buffer_range,warn,cal_set);
-    }
 
-    if( cal_set.empty() )
-    {
-      std::ostringstream oss;
-      oss << "Empty candidate alignment set while realigning read_seg.\n" ;
-      throw blt_exception(oss.str().c_str());
+        if( cal_set.empty() )
+        {
+            std::ostringstream oss;
+            oss << "Empty candidate alignment set while realigning read segment from exemplar alignment: " << al << "\n";
+            throw blt_exception(oss.str().c_str());
+        }
     }
 
     const bool is_incomplete_search(warn.origin_skip || warn.max_toggle_depth);
@@ -1686,16 +1686,20 @@ realign_and_score_read(
     // default warning:
     //
     const bool is_max_toggle_warn_enabled(opt.verbosity >= LOG_LEVEL::ALLWARN);
+    const bool is_max_toggle_warn(warn.max_toggle_depth && is_max_toggle_warn_enabled);
 
-    if (warn.origin_skip || (warn.max_toggle_depth && is_max_toggle_warn_enabled))
+    if (warn.origin_skip || (is_max_toggle_warn))
     {
-        static const char* osr="alignments crossed chromosome origin";
-        static const char* mir="exceeded max number of indel switches";
-        const char* reason(warn.origin_skip ? osr : mir );
+        auto writeSkipWarning = [&rseg](
+                const char* reason)
+        {
+            log_os << "WARNING: re-alignment skipped some alternate alignments for read: "  << rseg.key()
+                   //               << " at buffer_pos: " << (sread.buffer_pos+1) << "\n"
+                   << "\treason: " << reason << "\n";
+        };
 
-        log_os << "WARNING: re-alignment skipped some alternate alignments for read: "  << rseg.key()
-               //               << " at buffer_pos: " << (sread.buffer_pos+1) << "\n"
-               << "\treason: " << reason << "\n";
+        if (warn.origin_skip) writeSkipWarning("alignments crossed chromosome origin");
+        if (is_max_toggle_warn) writeSkipWarning("exceeded max number of indel switches");
     }
 
     score_candidate_alignments_and_indels(opt,dopt,sample_opt,ref,rseg,isync,cal_set,is_incomplete_search);

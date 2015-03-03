@@ -794,8 +794,17 @@ get_realignment_range(const pos_t pos,
     assert(buffer_offset>head_offset);
     assert(post_offset>buffer_offset);
 
-    const pos_t min_pos(std::max(static_cast<pos_t>(0),pos-static_cast<pos_t>(post_offset-buffer_offset)));
-    const pos_t max_pos(pos+1+(buffer_offset-head_offset));
+    pos_t min_offset(static_cast<pos_t>(post_offset-buffer_offset));
+    pos_t max_offset(static_cast<pos_t>(buffer_offset-head_offset));
+
+    // shrink values by one to be safe. We aren't allowed to step outside of the realign boundary at all
+    /// \TODO get exact answer on buffer range boundary so that uncertainty is eliminated here:
+    min_offset = std::max(0,min_offset-1);
+    max_offset = std::max(0,max_offset-1);
+
+    const pos_t min_pos(std::max(static_cast<pos_t>(0),pos-min_offset));
+    const pos_t max_pos(pos+1+max_offset); // +1 to follow right-open range convention
+
     return known_pos_range(min_pos, max_pos);
 }
 
@@ -818,10 +827,6 @@ starling_pos_processor_base::
 align_pos(const pos_t pos)
 {
     known_pos_range realign_buffer_range(get_realignment_range(pos, _stageman.get_stage_data()));
-
-    // shrink range by 1 to protect against off by one errors in the buffer boundary matchup:
-    realign_buffer_range.begin_pos += 1;
-    realign_buffer_range.end_pos -= 1;
 
     for (unsigned s(0); s<_n_samples; ++s)
     {
