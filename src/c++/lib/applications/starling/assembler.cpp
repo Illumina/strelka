@@ -68,12 +68,8 @@ add_site(const site_info& si)
     }
 
     // case: setup the assembled records
-    if (het_count>1)
+    if (this->var_count>1)
     {
-//        log_os << "!!!record count " << het_count << "\n";
-#ifdef DEBUG_ASSEMBLE
-//        this->write_out_buffer();
-#endif
         make_record();
     }
     return true;
@@ -335,7 +331,6 @@ bool
 assembler::
 keep_collecting()
 {
-    th
     return true;
 }
 
@@ -347,7 +342,7 @@ assembler::clear()
     observations.clear();
     block_start = -1;
     block_end   = -1;
-    het_count                   = 0;
+    var_count                   = 0;
     total_reads                 = 0;
     total_reads_unused          = 0;
     reference                   = "";

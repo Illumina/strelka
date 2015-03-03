@@ -24,7 +24,7 @@
 #include "gvcf_locus_info.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"
-
+#include "assembly/predictor.hh"
 #include <climits>
 
 
@@ -48,10 +48,10 @@ struct assembler
         const unsigned init_max_read_len)
         : opt(init_opt),
           read_buffer(init_read_buffer),
-          max_read_len(init_max_read_len),
-          myPredictor("")
+          max_read_len(init_max_read_len)
+//          myPredictor("")
     {
-        this->clear();
+//        this->clear();
     }
 
     /// add site to buffer
@@ -110,5 +110,5 @@ private:
     std::string reference;                      // the phased allele reference
     typedef std::map<std::string,int> allele_map;
     allele_map observations;
-    predictor myPredictor;
+//    predictor myPredictor;
 };

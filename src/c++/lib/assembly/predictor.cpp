@@ -20,12 +20,12 @@
 #include "predictor.hh"
 
 bool
-predictor::keep_extending(const assembler& as)
+predictor::keep_extending()
 {
     //overlap with bed track
-    known_pos_range2 range(as.block_start,as.block_end);
-    if (this->rt.isInRegion(range))
-        return true;
+//    known_pos_range2 range(as.block_start,as.block_end);
+//    if (this->rt.isInRegion(range))
+//        return true;
     //more assembly condition based on reference, and other buffered metrics
 
 
@@ -35,12 +35,12 @@ predictor::keep_extending(const assembler& as)
 
 
 bool
-predictor::do_assemble(const assembler& as)
+predictor::do_assemble()
 {
     //overlap with bed track
-    known_pos_range2 range(as.block_start,as.block_end);
-    if (this->rt.isInRegion(range))
-        return true;
+//    known_pos_range2 range(as.block_start,as.block_end);
+//    if (this->rt.isInRegion(range))
+//        return true;
     //more assembly condition based on reference, and other buffered metrics
 
 

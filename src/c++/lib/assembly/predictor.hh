@@ -23,7 +23,6 @@
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"
 #include "blt_util/RegionTracker.hh"
-#include "assembler.hh"
 
 //#define DEBUG_predictor
 
@@ -58,10 +57,11 @@ struct predictor
 
     }
 
-    /// given an assembler with a region buffered, predict if it should it be assembeled
-    bool do_assemble(const assembler& as);
-    /// given an assembler with a region buffered, predict if it should it be extended
-    bool keep_extending(const assembler& as);
+    /// given an assembler with a region buffered, predict if it should it be assembled
+    bool do_assemble();
+
+    /// given an with a region buffered, predict if it should it be extended
+    bool keep_extending();
 
 
 private:
