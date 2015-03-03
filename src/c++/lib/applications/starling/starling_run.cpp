@@ -19,6 +19,7 @@
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
+#include "ploidy_util.hh"
 #include "starling_run.hh"
 #include "starling_pos_processor.hh"
 #include "starling_streams.hh"
@@ -33,37 +34,6 @@
 #include "starling_common/starling_pos_processor_util.hh"
 
 #include <sstream>
-
-
-
-/// TODO: tmp hack -- put this somewhere else!!
-#include "blt_util/parse_util.hh"
-
-#include "boost/optional.hpp"
-
-static
-boost::optional<int>
-parsePloidyFromBed(const char* line)
-{
-    boost::optional<int> result;
-
-    if (line == nullptr) return result;
-
-    unsigned tabcount(0);
-    while (true)
-    {
-        if (*line=='\0' || *line=='\n') return result;
-        if (*line=='\t') tabcount++;
-        line++;
-        if (tabcount>=4) break;
-    }
-
-    const char* s(line);
-    int val = illumina::blt_util::parse_int(s);
-    if (s != line) result.reset(val);
-
-    return result;
-}
 
 
 
