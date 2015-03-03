@@ -1,3 +1,4 @@
+- STARKA-210 fix v low frequency realigner assertion on contig edges
 v2.3.4
 - STARKA-204 remove inconsistent filters at homref sites
 - STARKA-196 fix nocompress sites in empty regions
