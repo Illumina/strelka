@@ -133,10 +133,10 @@ struct pos_basecall_buffer
     const snp_pos_info&
     get_pos(const pos_t pos) const
     {
-        static const EmptyPosSet empty;
+        static const EmptyPosSet emptyPosSet;
         if (! _pdata.isKeyPresent(pos))
         {
-            return empty.pis[base_to_id(_ref.get_base(pos))];
+            return emptyPosSet.pis[base_to_id(_ref.get_base(pos))];
         }
         return _pdata.getConstRef(pos);
     }

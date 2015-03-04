@@ -142,9 +142,9 @@ public:
         const std::string& name,
         const std::string& type,
         const gvcf_deriv_options& init_dopt) :
+        dopt(init_dopt),
         model_name(name),
-        model_type(type),
-        dopt(init_dopt)
+        model_type(type)
     {}
 
     // add parameters to the model

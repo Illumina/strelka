@@ -57,7 +57,8 @@ isSubsetOfRegionImpl(
 
 void
 RegionTracker::
-addRegion(known_pos_range2 range)
+addRegion(
+    known_pos_range2 range)
 {
     // check for potential set of intersecting ranges,
     // if found expand range size to represent intersection
@@ -83,7 +84,8 @@ addRegion(known_pos_range2 range)
 
 void
 RegionTracker::
-removeToPos(const unsigned pos)
+removeToPos(
+    const pos_t pos)
 {
     for (auto iter(_regions.begin()) ; iter != _regions.end() ; ++iter)
     {
@@ -96,7 +98,8 @@ removeToPos(const unsigned pos)
 
 void
 RegionTracker::
-dump(std::ostream& os) const
+dump(
+    std::ostream& os) const
 {
     os << "RegionTracker\n";
     for (const auto& val : _regions)

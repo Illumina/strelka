@@ -433,7 +433,6 @@ process_pos_indel_single_sample(
     //
 
     std::ostream& report_os(std::cerr);
-    const pos_t output_pos(pos+1);
 
     typedef indel_buffer::const_iterator ciiter;
 

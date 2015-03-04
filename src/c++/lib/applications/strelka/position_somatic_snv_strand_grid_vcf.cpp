@@ -45,7 +45,7 @@ set_VQSR_sample_info(
     const blt_options& opt,
     const strelka_deriv_options& dopt,
     const CleanedPileup& tier1_cpi,
-    const CleanedPileup& tier2_cpi,
+    const CleanedPileup& /*tier2_cpi*/,
     strelka_shared_modifiers& smod,
     bool isNormalSample)
 {
@@ -218,7 +218,7 @@ static
 void
 write_vcf_sample_info(
     const blt_options& opt,
-    const strelka_deriv_options& dopt,
+    const strelka_deriv_options& /*dopt*/,
     const CleanedPileup& tier1_cpi,
     const CleanedPileup& tier2_cpi,
     std::ostream& os)

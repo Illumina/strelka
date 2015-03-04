@@ -117,7 +117,7 @@ starling_streams_base::
 starling_streams_base(const starling_base_options& opt,
                       const prog_info& pinfo,
                       const sample_info& si)
-    : base_t(opt,pinfo,true)
+    : base_t(opt,pinfo)
     , _n_samples(si.sample_size())
     , _window_osptr(opt.variant_windows.size())
 {

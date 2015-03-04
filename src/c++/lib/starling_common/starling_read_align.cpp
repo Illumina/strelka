@@ -155,11 +155,11 @@ dump_indel_status(const starling_align_indel_status& ismap,
 //
 static
 bool
-is_usable_indel(const indel_synchronizer& isync,
-                const starling_base_options& opt,
-                const indel_key& ik,
-                const indel_data& id,
-                const align_id_t read_id)
+is_usable_indel(
+    const indel_synchronizer& isync,
+    const indel_key& ik,
+    const indel_data& id,
+    const align_id_t read_id)
 {
     return (isync.is_candidate_indel(ik,id) ||
             (id.all_read_ids.count(read_id)>0) ||
@@ -175,7 +175,6 @@ is_usable_indel(const indel_synchronizer& isync,
 static
 void
 add_indels_in_range(
-    const starling_base_options& opt,
     const align_id_t read_id,
     const indel_synchronizer& isync,
     const known_pos_range& pr,
@@ -194,7 +193,7 @@ add_indels_in_range(
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT INDEL CANDIDATE " << ik;
         std::cerr << "Intersect?: " << is_range_intersect_indel_breakpoints(pr,ik) << "\n";
-        std::cerr << "Usable?: " <<  is_usable_indel(isync,opt,ik,get_indel_data(i),read_id) << "\n";
+        std::cerr << "Usable?: " <<  is_usable_indel(isync,ik,get_indel_data(i),read_id) << "\n";
         std::cerr << "Count: " << indel_status_map.count(ik) << "\n";
 #endif
         // check if the indel is not intersecting or adjacent -- if neither we don't need to
@@ -220,7 +219,7 @@ add_indels_in_range(
         else
         {
             const indel_data& id(get_indel_data(i));
-            if (is_usable_indel(isync,opt,ik,id,read_id))
+            if (is_usable_indel(isync,ik,id,read_id))
             {
                 indel_status_map[ik].is_present = false;
                 indel_status_map[ik].is_remove_only = is_remove_only;
@@ -664,14 +663,14 @@ make_candidate_alignments(
 
         if (pr.begin_pos < read_range.begin_pos)
         {
-            add_indels_in_range(client_opt,read_id,isync,
+            add_indels_in_range(read_id,isync,
                                 known_pos_range(pr.begin_pos,read_range.begin_pos+1),
                                 indel_status_map,indel_order);
             read_range.begin_pos = pr.begin_pos;
         }
         if (pr.end_pos > read_range.end_pos)
         {
-            add_indels_in_range(client_opt,read_id,isync,
+            add_indels_in_range(read_id,isync,
                                 known_pos_range(read_range.end_pos-1,pr.end_pos),
                                 indel_status_map,indel_order);
             read_range.end_pos = pr.end_pos;
@@ -1458,7 +1457,7 @@ get_exemplar_candidate_alignments(
 
     // Get indel set and indel order for the exemplar alignment:
     const known_pos_range exemplar_pr(get_soft_clip_alignment_range(cal.al));
-    add_indels_in_range(opt,rseg.id(),isync,exemplar_pr,indel_status_map,indel_order);
+    add_indels_in_range(rseg.id(),isync,exemplar_pr,indel_status_map,indel_order);
 
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT exemplar alignment range: " << exemplar_pr << "\n";

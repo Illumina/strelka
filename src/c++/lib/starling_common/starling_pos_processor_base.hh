@@ -474,7 +474,7 @@ private:
 
     virtual
     void
-    clear_pos_annotation(const pos_t pos) {}
+    clear_pos_annotation(const pos_t /*pos*/) {}
 
     virtual
     bool
@@ -524,7 +524,7 @@ private:
 
     virtual
     void
-    post_align_clear_pos(const pos_t pos) {}
+    post_align_clear_pos(const pos_t /*pos*/) {}
 
     bool
     empty() const
@@ -597,8 +597,6 @@ protected:
     unsigned _n_samples;
     std::array<std::unique_ptr<sample_info>,MAX_SAMPLE> _sample;
 
-    PileupCleaner _pileupCleaner;
-
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
     std::unique_ptr<nploid_info> _ninfo;
     std::unique_ptr<double> _ws;
@@ -609,6 +607,8 @@ protected:
     htype_region_data _hregion;
 
     bool _is_variant_windows;
+
+    PileupCleaner _pileupCleaner;
 
     RegionPayloadTracker<int> _ploidy_regions;
 };

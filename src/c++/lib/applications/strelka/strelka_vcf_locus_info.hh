@@ -76,7 +76,7 @@ get_label(const unsigned idx)
         return nullptr;
     }
 }
-};
+}
 
 struct strelka_shared_modifiers
 {

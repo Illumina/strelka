@@ -29,8 +29,7 @@
 struct blt_streams
 {
     blt_streams(const blt_options& opt,
-                const prog_info& pinfo,
-                const bool is_include_seq_name=false);
+                const prog_info& pinfo);
 
     std::ostream* report_osptr() const
     {

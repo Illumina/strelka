@@ -63,7 +63,7 @@ struct RegionTracker
     /// is single position in a tracked region?
     bool
     isIntersectRegion(
-        const unsigned pos) const
+        const pos_t pos) const
     {
         return isIntersectRegionImpl(pos,pos+1);
     }
@@ -94,7 +94,7 @@ struct RegionTracker
     /// remove all regions which end (inclusive) before pos+1
     void
     removeToPos(
-        const unsigned pos);
+        const pos_t pos);
 
     // debug util
     void
@@ -132,7 +132,8 @@ struct RegionPayloadTracker
     }
 
     boost::optional<T>
-    isPayloadInRegion(const unsigned pos) const;
+    isPayloadInRegion(
+            const pos_t pos) const;
 
     /// add region
     ///
@@ -147,11 +148,12 @@ struct RegionPayloadTracker
     /// remove all regions which end (inclusive) before pos+1
     void
     removeToPos(
-        const unsigned pos);
+        const pos_t pos);
 
     // debug util
     void
-    dump(std::ostream& os) const;
+    dump(
+        std::ostream& os) const;
 
     typedef typename std::map<known_pos_range2,T,PosRangeEndSort> region_t;
 

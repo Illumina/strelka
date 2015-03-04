@@ -242,10 +242,10 @@ is_equiv_candidate(const candidate_alignment& cal1,
 //
 static
 bool
-is_first_indel_dominant(const starling_base_options& opt,
-                        const indel_synchronizer& isync,
-                        const indel_key& ik1,
-                        const indel_key& ik2)
+is_first_indel_dominant(
+    const indel_synchronizer& isync,
+    const indel_key& ik1,
+    const indel_key& ik2)
 {
     const bool ic1(isync.is_candidate_indel(ik1));
     const bool ic2(isync.is_candidate_indel(ik2));
@@ -397,7 +397,7 @@ score_indels(const starling_base_options& opt,
                 bool is_removed(false);
                 for (; ip!=ip_end; ++ip)
                 {
-                    const bool is1(is_first_indel_dominant(opt,isync,ip->first,ip->second));
+                    const bool is1(is_first_indel_dominant(isync,ip->first,ip->second));
 
 #ifdef DEBUG_ALIGN
                     log_os << "COWSLIP: indel1: " << ip->first << "\n";
