@@ -98,7 +98,8 @@ struct RegionTracker
 
     // debug util
     void
-    dump(std::ostream& os) const;
+    dump(
+        std::ostream& os) const;
 
     typedef std::set<known_pos_range2,PosRangeEndSort>  region_t;
 

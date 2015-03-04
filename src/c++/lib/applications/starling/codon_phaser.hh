@@ -101,7 +101,6 @@ private:
     int block_start,block_end;          // position of the first and last added het site to block
     int het_count;                      // total hets observed in buffer
     int total_reads,total_reads_unused; // total used and unused reads spanning phasing region
-    bool phase_indels = false;                  // should we attempt to phase indels as well? For now false, thus returning any block upon encountering an indel
     std::string reference;              // the phased allele reference
     typedef std::map<std::string,int> allele_map;
     allele_map observations;

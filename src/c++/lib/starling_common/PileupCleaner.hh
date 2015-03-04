@@ -26,7 +26,7 @@
 /// filtered pileup with processed qualities and summary stats
 struct CleanedPileup
 {
-    friend class PileupCleaner;
+    friend struct PileupCleaner;
 
     CleanedPileup()
         : _epi(cleanedPileup(),dependentErrorProb())
