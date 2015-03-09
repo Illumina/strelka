@@ -150,15 +150,51 @@ else ()
 endif ()
 
 
-#
-# set compile flags, and modify by compiler/version:
-#
-set (GNU_COMPAT_COMPILER ( (CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")))
 
-# start with warning flags:
+#
+# set compile flags
+#
+
+
+##
+## set static linking of standard libraries for binary redistribution:
+##
+set (IS_STANDARD_STATIC FALSE)
+if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if (NOT (${compiler_version} VERSION_LESS "4.5"))
+        set (IS_STANDARD_STATIC TRUE)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+    endif ()
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    set (IS_STANDARD_STATIC TRUE)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+endif ()
+
+if (${IS_STANDARD_STATIC})
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+endif ()
+
+
+##
+## set bug workarounds:
+##
+if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if (((${compiler_version} VERSION_EQUAL "4.7") OR (${compiler_version} VERSION_EQUAL "4.7.3")) OR
+        ((${compiler_version} VERSION_EQUAL "4.8") OR (${compiler_version} VERSION_EQUAL "4.8.2")))
+        # workaround for: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58800
+        add_definitions( -DBROKEN_NTH_ELEMENT )
+    endif ()
+endif ()
+
+
+##
+## set warning flags:
+##
+set (GNU_COMPAT_COMPILER ( (CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")))
 if (GNU_COMPAT_COMPILER)
     set (CXX_WARN_FLAGS "-Wall -Wextra -Wshadow -Wunused -Wpointer-arith -Winit-self -pedantic -Wunused-parameter")
-    set (CXX_WARN_FLAGS "-Wundef -Wdisabled-optimization -Wno-unknown-pragmas")
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wundef -Wdisabled-optimization -Wno-unknown-pragmas")
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wempty-body -Wdeprecated -Wno-missing-braces")
     if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wredundant-decls")
     endif ()
@@ -168,17 +204,9 @@ if (GNU_COMPAT_COMPILER)
     endif ()
 endif ()
 
-#
-# add extra compiler specific flags:
-#
 if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (NOT (${compiler_version} VERSION_LESS "4.2"))
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wlogical-op")
-    endif ()
-
-    if (NOT (${compiler_version} VERSION_LESS "4.5"))
-        # Force static linking of standard libraries:
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
     endif ()
 
     if ((${compiler_version} VERSION_LESS "4.8") AND (NOT (${compiler_version} VERSION_LESS "4.7")))
@@ -186,24 +214,17 @@ if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # don't know which patch levels are affected, so marking out all gcc 4.7.X
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-unused-function")
     endif ()
-
-    if (((${compiler_version} VERSION_EQUAL "4.7") OR (${compiler_version} VERSION_EQUAL "4.7.3")) OR
-        ((${compiler_version} VERSION_EQUAL "4.8") OR (${compiler_version} VERSION_EQUAL "4.8.2")))
-        # workaround for: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58800
-        add_definitions( -DBROKEN_NTH_ELEMENT )
-    endif ()
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set (IS_WARN_EVERYTHING FALSE)
-    
+
     if (${IS_WARN_EVERYTHING})
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Weverything")
     endif ()
 
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wmissing-prototypes -Wunused-exception-parameter -Wbool-conversion")
-    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wempty-body -Wimplicit-fallthrough -Wsizeof-array-argument -Wstring-conversion")
-    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wloop-analysis -Wextra-semi -Wdeprecated -Wmissing-variable-declarations")
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wimplicit-fallthrough -Wsizeof-array-argument -Wstring-conversion")
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wloop-analysis -Wextra-semi -Wmissing-variable-declarations")
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wheader-hygiene -Wmismatched-tags -Wunused-private-field")
-    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-missing-braces")
 
     if (${IS_WARN_EVERYTHING})
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-sign-conversion -Wno-weak-vtables -Wno-conversion -Wno-cast-align -Wno-padded")
@@ -212,10 +233,10 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-c++98-compat -Wno-old-style-cast -Wno-unused-member-function")
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-documentation -Wno-float-equal")
     endif ()
-    
+
     if (NOT (${compiler_version} VERSION_LESS "3.3"))
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Woverloaded-shift-op-parentheses")
-        
+
         if (${IS_WARN_EVERYTHING})
             set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-documentation-unknown-command")
         endif ()
@@ -237,25 +258,30 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     # suppress errors in boost headers:
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -diag-disable 177,193,869,1599,3280")
 
-    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wunused-variable -Wpointer-arith -Wuninitialized")
-
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wunused-variable -Wpointer-arith")
+    
     #set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wmissing-prototypes -Wmissing-declarations -Wunused-variable -Wpointer-arith -Wuninitialized")
 endif()
 
 
-# The NDEBUG macro is intentionally removed from release. One discussion on this is:
-# http://www.drdobbs.com/an-exception-or-a-bug/184401686
-
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_WARN_FLAGS}")
+
 
 if (GNU_COMPAT_COMPILER)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
     set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+
+    # The NDEBUG macro is intentionally removed from release. One discussion on this is:
+    # http://www.drdobbs.com/an-exception-or-a-bug/184401686    
     set (CMAKE_CXX_FLAGS_RELEASE "-O3 -fomit-frame-pointer")
     set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
     set (CMAKE_CXX_FLAGS_ASAN "-O1 -g -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls")
     #set (CMAKE_CXX_FLAGS_PROFILE "-O0 -g -pg -fprofile-arcs -ftest-coverage")
+    
+    # this doesn't seem to impact performance, taking out for now:
+    #if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    #    set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
+    #endif ()
 endif()
 
 # if ASan build type is requested, check that the compiler supports it:
