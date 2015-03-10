@@ -38,15 +38,17 @@ struct predictor
     {
 
         //add in dummy dev regions
-        known_pos_range2 range(239691269,239691280);
-        this->rt.addRegion(range);
+        //known_pos_range2 range(239691269,239691280);
+        //known_pos_range2 range(1670569,1670572);
+        //this->rt.addRegion(range);
     }
     bool keep_extending(int st, int end){
-    	return (this->rt.isInRegion(st) && this->rt.isInRegion(end));
+        //return (this->rt.isInRegion(st) && this->rt.isInRegion(end));
+        return (_assembly_regions.isInRegion(st) && _assembly_regions.isInRegion(end));
     }
     bool do_assemble(int st, int end)
     {
-        return (this->rt.isInRegion(st));
+        return (_assembly_regions.isInRegion(st));
     }
 
 private:
