@@ -117,7 +117,7 @@ gvcf_aggregator(
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _codon_phaser(opt, read_buffer, max_read_len)
-    , _assembler(opt, read_buffer, max_read_len)
+    , _assembler(opt, read_buffer, max_read_len,nocompress_regions)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);

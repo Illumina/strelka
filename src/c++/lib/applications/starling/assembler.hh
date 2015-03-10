@@ -46,11 +46,12 @@ struct assembler
     assembler(
         const starling_base_options& init_opt,
         starling_read_buffer& init_read_buffer,
-        const unsigned init_max_read_len)
+        const unsigned init_max_read_len,
+		const RegionTracker& assembly_regions)
         : opt(init_opt),
           read_buffer(init_read_buffer),
           max_read_len(init_max_read_len),
-          myPredictor(opt.assembly_regions_filename)
+          myPredictor(assembly_regions)
     {
         this->clear();
     }
@@ -91,7 +92,7 @@ private:
 
     void collect_read_evidence();       // 2. Fill in allele counter based on assembled graph
     void construct_reference();         // 1. Determine the reference allele for the record
-    void create_contig_records();       // 3. Fill in the si record and decide if we have sufficient evidence for a phased call
+    void create_contig_records();       // 3. ill in the si record and decide if we have sufficient evidence for a phased call
     unsigned get_block_length() const
     {
         return (this->block_end-this->block_start+1);

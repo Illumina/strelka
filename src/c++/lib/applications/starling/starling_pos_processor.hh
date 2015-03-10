@@ -93,4 +93,5 @@ private:
     site_info _site_info;
 
     RegionTracker _nocompress_regions;
+    RegionTracker _assembly_regions;
 };
