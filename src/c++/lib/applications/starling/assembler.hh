@@ -50,7 +50,7 @@ struct assembler
         : opt(init_opt),
           read_buffer(init_read_buffer),
           max_read_len(init_max_read_len),
-          myPredictor("")
+          myPredictor(opt.assembly_regions_filename)
     {
         this->clear();
     }

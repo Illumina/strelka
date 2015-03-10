@@ -17,11 +17,23 @@
  *  Author: Morten Kallberg
  */
 
-#include "predictor.hh"
+#include "assembly/predictor.hh"
 
-bool
-predictor::keep_extending()
-{
+//bool
+//predictor::keep_extending(int st, int end){
+//	if (this->rt.isInRegion(st) && this->rt.isInRegion(end))
+//		return true;
+	//    //more assembly condition based on reference, and other buffered metrics
+	//
+	//    //do not assemble
+	//    return false;
+//}
+
+
+
+//bool
+//predictor::do_assemble(int st,int end)
+//{
     //overlap with bed track
 //    known_pos_range2 range(as.block_start,as.block_end);
 //    if (this->rt.isInRegion(range))
@@ -30,20 +42,5 @@ predictor::keep_extending()
 
 
     //do not assemble
-    return false;
-}
-
-
-bool
-predictor::do_assemble()
-{
-    //overlap with bed track
-//    known_pos_range2 range(as.block_start,as.block_end);
-//    if (this->rt.isInRegion(range))
-//        return true;
-    //more assembly condition based on reference, and other buffered metrics
-
-
-    //do not assemble
-    return false;
-}
+//    return false;
+//}

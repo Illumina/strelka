@@ -39,18 +39,16 @@ add_site(const site_info& si,const gvcf_block_site_record& empty_block)
     _buffer.push_back(si);
 
     //CASE: Start a new potential assembly block
-    block_end = si.pos;
+    block_end = si.pos+1;
     if (!is_in_block()){
         block_start = si.pos;
-        log_os << "New block case - starting @ " << block_start  << std::endl;
-        return false;
+//        log_os << "New block case - starting @ " << si.pos  << std::endl;
+//        return false;
     }
 
     // Update block info
     if (si.is_nonref())
         var_count ++;
-	else
-        block_end =  si.pos+empty_block.count;
 
     // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
     if (this->keep_collecting())
@@ -58,18 +56,18 @@ add_site(const site_info& si,const gvcf_block_site_record& empty_block)
 //    	log_os << "Started @ " << this->block_start << std::endl;
 //    	log_os << "keep collecting - @ " << si  << std::endl;
 //    	log_os << "var count " << var_count << std::endl;
+//    	this->write_out_buffer();
+//    	log_os << "var count " << var_count << std::endl;
     	return false;
     }
 
-    // We are not collecting furter, check if we want to assemble what is in the buffer
+    // We are not collecting further, check if we want to assemble what is in the buffer
     if (this->do_assemble())
     {
-//    	// if we decide to assemble, generate contig-space and modify gVCF records accordingly
-    	log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
+    	// if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
+//    	log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
     	make_record();
-//    	log_os << this->reference << std::endl;
     }
-
     return true;
 }
 
@@ -86,7 +84,7 @@ void
 assembler::construct_reference()
 {
     this->reference = "";
-    for (unsigned i=0; i<this->_buffer.size()-(this->opt.phasing_window-1); i++)
+    for (unsigned i=0; i<(this->_buffer.size()); i++)
         this->reference += _buffer.at(i).ref;
 }
 
@@ -95,6 +93,7 @@ assembler::create_contig_records()
 {
     // pick first records in buffer as our anchoring point for the assembled record
     site_info& base = (this->_buffer.at(0));
+    _buffer.clear();
 
     // Dummy determine two allele with most counts in observation counter
     typedef std::pair<std::string, int> allele_count_t;
@@ -112,8 +111,8 @@ assembler::create_contig_records()
 		}
 	}
 
-    log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
-    log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
+//    log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
+//    log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
 
     base.phased_ref = this->reference;
     const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
@@ -122,6 +121,8 @@ assembler::create_contig_records()
     base.smod.max_gt = 4;
     base.dgt.ref_gt  = 0; // setting the gt method to 0/1
 
+
+    // add information from the alleles selected for output
     std::stringstream AD,alt;
     AD << this->observations[this->reference];
     for (const auto& val : max_alleles)
@@ -134,11 +135,14 @@ assembler::create_contig_records()
 
     // set GQ and GQX - hard-coded for illustration
     base.smod.gq                = 30;
-    base.dgt.genome.snp_qphred  = 800;
+    base.dgt.genome.snp_qphred  = 1000;
     base.smod.gqx               = 30;
     base.Qscore                 = 20;
     base.phased_alt = alt.str();
     base.phased_AD  = AD.str();
+
+    //set any filters
+    base.smod.filters.reset();
 
     // specify that we are covering multiple records, and make the needed modification in the output
     base.smod.is_phased_region = true;
@@ -148,13 +152,10 @@ assembler::create_contig_records()
     base.n_used_calls 	= 15;
     base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
 
-    log_os << "buffer size " << _buffer.size() << "\n";
-    this->write_out_buffer();
 
-    // erase buffer sites which are now combined in the buffer[0] record
-    _buffer.erase(_buffer.begin()+1,_buffer.begin()+this->get_block_length());
+    // Add in assembled records
+    _buffer.push_back(base);
 }
-
 
 void
 assembler::
@@ -214,7 +215,7 @@ assembler::
 collect_read_evidence()
 {
 	this->observations[this->reference] = 10;
-	std::string altAllele = "NNNNNNNNNNNNNNNNNNNNNNNNNNNN";
+	std::string altAllele(this->reference.length(), 'N');;
 	this->observations[altAllele] = 15;
 }
 
@@ -222,19 +223,17 @@ bool
 assembler::
 keep_collecting()
 {
-	if (this->block_start>239691270 && this->block_end<239691300){
-		return true;
-	}
-	return false;
+	//extend with more data structures to determine is assembly criteriea is met
+	return this->myPredictor.keep_extending(this->block_start,this->block_end);
 }
 
 bool
 assembler::
 do_assemble()
 {
-	if (this->block_start>239691270 && this->block_start<239691300)
-		return true;
-	return false;
+	//extend with more data structures to determine is assembly criteriea is met
+
+	return this->myPredictor.do_assemble(this->block_start,this->block_end);
 }
 
 

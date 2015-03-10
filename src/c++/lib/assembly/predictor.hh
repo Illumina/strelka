@@ -39,10 +39,9 @@ struct predictor
     {
         //init regions file bed_streamer, TODO move this code to Starling_run
 //        std::unique_ptr<bed_streamer> assemble_regions;
-//        if (! opt.gvcf.nocompress_region_bedfile.empty())
-//        {
-//            nocompress_regions.reset(new bed_streamer(opt.gvcf.nocompress_region_bedfile.c_str(),
-//                                                      bam_region.c_str()));
+//        std::string bamregion = "chr1";
+//        rt.
+//        nocompress_regions.reset(new bed_streamer(regions.c_str(),"chr1"));
 //            sdata.register_assemble_regions(*assemble_regions);
 //        }
         //add region from bed to region-tracker
@@ -52,20 +51,21 @@ struct predictor
 //        }
 
         //add in dummy dev regions
-        known_pos_range2 range(239692924,239695935);
+        known_pos_range2 range(239691265,239691280);
         this->rt.addRegion(range);
 
     }
-
-    /// given an assembler with a region buffered, predict if it should it be assembled
-    bool do_assemble();
-
-    /// given an with a region buffered, predict if it should it be extended
-    bool keep_extending();
-
+    bool keep_extending(int st, int end){
+    	return (this->rt.isInRegion(st) && this->rt.isInRegion(end));
+    }
+    bool do_assemble(int st, int end)
+    {
+        return (this->rt.isInRegion(st));
+    }
 
 private:
     int assembleCount, assembleContigLength;          // count of regions to assemble, cummulative length of assembled regions
     std::string regions_file;
     RegionTracker rt;
+    /// given an assembler with a region buffered, predict if it should it be assembled
 };

@@ -173,7 +173,7 @@ add_site(site_info& si)
     else if (_opt.do_assemble)
     {
     	const bool emptyBuffer = _assembler.add_site(si,this->_block);
-        if (!_assembler.is_in_block() || emptyBuffer)
+        if (emptyBuffer)
         	this->output_phased_blocked();
     }
 
