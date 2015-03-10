@@ -170,12 +170,11 @@ add_site(site_info& si)
         if (!_codon_phaser.is_in_block() || emptyBuffer)
             this->output_phased_blocked();
     }
-    else if (_opt.do_assemble
-        && (_assembler.is_in_block()))
+    else if (_opt.do_assemble)
     {
-        const bool emptyBuffer = _assembler.add_site(si,this->_block);
+    	const bool emptyBuffer = _assembler.add_site(si,this->_block);
         if (!_assembler.is_in_block() || emptyBuffer)
-            this->output_phased_blocked();
+        	this->output_phased_blocked();
     }
 
     else
@@ -219,13 +218,14 @@ output_phased_blocked()
 
 
     //case assembler
-    for (const site_info& si : _assembler.buffer())
-        {
-            this->skip_to_pos(si.pos);
-            add_site_internal(si);
-        }
-        _assembler.clear();
-
+	if (_opt.do_assemble){
+		for (const site_info& si : _assembler.buffer())
+			{
+				this->skip_to_pos(si.pos);
+				add_site_internal(si);
+			}
+			_assembler.clear();
+	}
     // case codon-phaser
 //    for (const site_info& si : _codon_phaser.buffer())
 //    {
@@ -659,10 +659,10 @@ modify_indel_overlap_site(const indel_info& ii,
                           const unsigned ploidy,
                           site_info& si,calibration_models& CM)
 {
-#ifdef DEBUG_GVCF
-    log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
-    log_os << "CHIRP: indel_overlap_site imod before: " << ii.imod << "\n";
-#endif
+//#ifdef DEBUG_GVCF
+//    log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
+//    log_os << "CHIRP: indel_overlap_site imod before: " << ii.imod << "\n";
+//#endif
 
     // inherit any filters from the indel:
     si.smod.filters |= ii.imod.filters;

@@ -40,36 +40,46 @@ add_site(const site_info& si,const gvcf_block_site_record& empty_block)
 
     //CASE: Start a new potential assembly block
     block_end = si.pos;
-    if (! is_in_block()){
+    if (!is_in_block()){
         block_start = si.pos;
+        log_os << "New block case - starting @ " << block_start  << std::endl;
         return false;
     }
 
-    // Case: Add the incoming site to the buffer, we can never end a block immediatly on a variant
-    // always return false if it's a var site
+    // Update block info
     if (si.is_nonref())
-    {
         var_count ++;
-        return false;
-    }
+	else
+        block_end =  si.pos+empty_block.count;
 
-    // if it's a ref site make sure the block end is extended appropriatly
-    if (si.smod.is_block)
-        block_end += empty_block.count;
-
-    // First check if we should be extending the block further
+    // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
     if (this->keep_collecting())
     {
-        // TODO update stats
-        return false;
+//    	log_os << "Started @ " << this->block_start << std::endl;
+//    	log_os << "keep collecting - @ " << si  << std::endl;
+//    	log_os << "var count " << var_count << std::endl;
+    	return false;
     }
 
-    // First check if we should be extending the block further
+    // We are not collecting furter, check if we want to assemble what is in the buffer
     if (this->do_assemble())
     {
-        make_record();
+//    	// if we decide to assemble, generate contig-space and modify gVCF records accordingly
+    	log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
+    	make_record();
+//    	log_os << this->reference << std::endl;
     }
+
     return true;
+}
+
+// makes the phased VCF record from the buffered sites list
+void
+assembler::make_record()
+{
+    this->construct_reference();
+    this->collect_read_evidence();
+    this->create_contig_records();
 }
 
 void
@@ -81,96 +91,36 @@ assembler::construct_reference()
 }
 
 void
-assembler::create_contig_record()
+assembler::create_contig_records()
 {
-    // sanity check do we have all record we expect or are there un-accounted no-calls
-    if (this->get_block_length()>this->_buffer.size())
-        return;
+    // pick first records in buffer as our anchoring point for the assembled record
+    site_info& base = (this->_buffer.at(0));
 
-    if (this->total_reads<10)
-    {
-        // some initial minimum conditions, look for at least 10 spanning reads support
-        // set flag on records saying too little evidence to phase
-        //        for (int i=0;i<this->buffer.size();i++)
-        //            if(this->buffer.at(i).is_het())
-        //                this->buffer.at(i).smod.;
-        return;
-    }
-
-    assert(_buffer.size()>0);
-
-    //Decide if we accept the novel alleles, very hacky criteria for now
-    //at least 80% of the reads have to support a diploid model
-    //TODO unphased genotype corresponds to as many phased genotypes as there are permutations of
-    //the observed alleles. Thus, for a given unphased genotyping G1, . . . ,Gn,
-    //we need to to calculate probability of sampling a particular unphased genotype combinations
-    //given a set of allele frequencies...
+    // Dummy determine two allele with most counts in observation counter
     typedef std::pair<std::string, int> allele_count_t;
-    //static constexpr unsigned alleleCount(2);
-    std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
-    for (auto& obs : observations)
-    {
-        if (obs.second>max_alleles[0].second)
-        {
-            max_alleles[1]  = max_alleles[0];
-            max_alleles[0]  = obs;
-        }
-        if (obs.second>max_alleles[1].second && max_alleles[0].first!=obs.first)
-        {
-            max_alleles[1] = obs;
-        }
-    }
+	std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
+	for (auto& obs : observations)
+	{
+		if (obs.second>max_alleles[0].second)
+		{
+			max_alleles[1]  = max_alleles[0];
+			max_alleles[0]  = obs;
+		}
+		if (obs.second>max_alleles[1].second && max_alleles[0].first!=obs.first)
+		{
+			max_alleles[1] = obs;
+		}
+	}
 
-#ifdef DEBUG_ASSEMBLE
     log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
     log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
-#endif
-
-    // some ad hoc metrics to measure consistency with diploid model
-    const int allele_sum = max_alleles[0].second + max_alleles[1].second;
-    const float max_allele_frac = (1.0*allele_sum)/this->total_reads;
-    const float relative_allele_frac  = 1.0*max_alleles[1].second/max_alleles[0].second;
-
-#ifdef DEBUG_ASSEMBLE
-    log_os << "max alleles sum " << allele_sum << "\n";
-    log_os << "max alleles frac " << max_allele_frac << "\n";
-    log_os << "relative_allele_frac " << relative_allele_frac << "\n";
-#endif
-
-    bool phasing_inconsistent(false);
-    if (max_allele_frac<0.8)
-    {
-        // non-diploid?
-        phasing_inconsistent = true;
-    }
-
-    if (relative_allele_frac<0.5)
-    {
-        // allele imbalance?
-        phasing_inconsistent = true;
-    }
-
-    if (phasing_inconsistent)
-    {
-        for (auto& val : _buffer)
-        {
-            if (! val.is_het()) continue;
-            val.smod.set_filter(VCF_FILTERS::PhasingConflict); // switch to custom filter for assembly conlfict.
-        }
-        return;
-    }
-
-    // we have a phased record, modify site buffer to reflect the changes
-    site_info& base = (this->_buffer.at(0));
 
     base.phased_ref = this->reference;
     const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
-
-    base.smod.is_block = false;
-    base.smod.is_unknown = false;
+    base.smod.is_block 			= false;
+    base.smod.is_unknown 		= false;
     base.smod.max_gt = 4;
-    base.dgt.ref_gt  = 0; // hacking  the gt method to 0/1
-    if (!is_ref) base.dgt.ref_gt = 2; // hacking the gt method to 1/2
+    base.dgt.ref_gt  = 0; // setting the gt method to 0/1
 
     std::stringstream AD,alt;
     AD << this->observations[this->reference];
@@ -182,54 +132,29 @@ assembler::create_contig_record()
         AD << ',' << val.second;
     }
 
-#ifdef DEBUG_ASSEMBLE
-    log_os << "buffer size " << _buffer.size() << "\n";
-    log_os << "block length " << get_block_length() << "\n";
-#endif
-
-    // set GQ and GQX
-    int min_gq(INT_MAX), min_qual(INT_MAX), min_qscore(INT_MAX);
-    for (unsigned i(0); i<this->get_block_length(); i++)
-    {
-        const site_info& si(_buffer.at(i));
-        if (! si.is_het()) continue;
-        min_gq = std::min(si.smod.gq,min_gq);
-        min_qual = std::min(si.dgt.genome.snp_qphred,min_qual);
-        min_qscore = std::min(si.Qscore,min_qscore);
-    }
-
-    // set various quality fields conservatively
-    base.smod.gq                = min_gq;
-    base.dgt.genome.snp_qphred  = min_qual;
-    base.smod.gqx               = std::min(min_gq,min_qual);
-    base.Qscore                 = min_qscore;
-
+    // set GQ and GQX - hard-coded for illustration
+    base.smod.gq                = 30;
+    base.dgt.genome.snp_qphred  = 800;
+    base.smod.gqx               = 30;
+    base.Qscore                 = 20;
     base.phased_alt = alt.str();
     base.phased_AD  = AD.str();
 
+    // specify that we are covering multiple records, and make the needed modification in the output
     base.smod.is_phased_region = true;
-    int reads_ignored = (this->total_reads-allele_sum);
-    base.n_used_calls = this->total_reads - reads_ignored;
-    base.n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
 
-    // case we want to report the phased record clean out buffer and push on the phased record only
-#ifdef DEBUG_ASSEMBLE
+    // set more vcf record fields
+    int reads_ignored 	= 10;
+    base.n_used_calls 	= 15;
+    base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
+
     log_os << "buffer size " << _buffer.size() << "\n";
     this->write_out_buffer();
-#endif
 
     // erase buffer sites which are now combined in the buffer[0] record
     _buffer.erase(_buffer.begin()+1,_buffer.begin()+this->get_block_length());
 }
 
-// makes the phased VCF record from the buffered sites list
-void
-assembler::make_record()
-{
-    this->construct_reference();
-    this->collect_read_evidence();
-    this->create_contig_record();
-}
 
 void
 assembler::
@@ -237,58 +162,49 @@ collect_read_segment_evidence(
     const read_segment& rseg)
 {
     //check if we are covering the block range
-    if (static_cast<unsigned>(abs(rseg.buffer_pos-this->block_end))>rseg.read_size())
-        return;
-
-    const bam_seq bseq(rseg.get_bam_read());
-
-    // read quality checks
-    if (static_cast<int>(rseg.map_qual())<this->opt.min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid())
-    {
-//                this->total_reads_unused++; // do not count filtered reads in DPF
-        return;
-    }
-
-    const int sub_start((this->block_start-rseg.buffer_pos));
-    const int sub_end((this->block_end-rseg.buffer_pos));
-#ifdef DEBUG_ASSEMBLE
-    int pad(0); // add context to extracted alleles for debugging
-    sub_start -= pad;
-    sub_end += pad;
-#endif
-    using namespace BAM_BASE;
-
-    if (sub_start>=0 && sub_end<max_read_len)
-    {
-        bool do_include(true);
-        //instead make bit array counting the number of times het pos co-occur
-        std::string sub_str("");
-        for (int t=sub_start; t<(sub_end+1); t++) //pull out substring of read
-        {
-            if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->opt.min_qscore))
-            {
-                do_include = false; // do qual check of individual bases here, kick out entire read if we dont meet cut-off
-                break;
-            }
-            sub_str+= bseq.get_char(t); //TODO use more efficient data structure here
-        }
-#ifdef DEBUG_ASSEMBLE
-//                    log_os << "substart " << sub_start << "\n";
-//                    log_os << "subend " << sub_end << "\n";
-//                    log_os << "substr " << sub_str << "\n";
-//                    log_os << "read key " << rseg.key() << "\n";
-//                    log_os << "read pos " << rseg.buffer_pos << "\n";
-//                    log_os << "do_include " << do_include << "\n";
-//                    log_os << "read seq " << bseq << "\n\n";
-#endif
-        if (do_include)
-        {
-            this->observations[sub_str]++;
-            total_reads++;
-        }
-        else
-            this->total_reads_unused++;
-    }
+//    if (static_cast<unsigned>(abs(rseg.buffer_pos-this->block_end))>rseg.read_size())
+//        return;
+//
+//    const bam_seq bseq(rseg.get_bam_read());
+//
+//    // read quality checks
+//    if (static_cast<int>(rseg.map_qual())<this->opt.min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid())
+//    {
+////                this->total_reads_unused++; // do not count filtered reads in DPF
+//        return;
+//    }
+//
+//    const int sub_start((this->block_start-rseg.buffer_pos));
+//    const int sub_end((this->block_end-rseg.buffer_pos));
+////#ifdef DEBUG_ASSEMBLE
+////    int pad(0); // add context to extracted alleles for debugging
+////    sub_start -= pad;
+////    sub_end += pad;
+////#endif
+//    using namespace BAM_BASE;
+//
+//    if (sub_start>=0 && sub_end<max_read_len)
+//    {
+//        bool do_include(true);
+//        //instead make bit array counting the number of times het pos co-occur
+//        std::string sub_str("");
+//        for (int t=sub_start; t<(sub_end+1); t++) //pull out substring of read
+//        {
+//            if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->opt.min_qscore))
+//            {
+//                do_include = false; // do qual check of individual bases here, kick out entire read if we dont meet cut-off
+//                break;
+//            }
+//            sub_str+= bseq.get_char(t); //TODO use more efficient data structure here
+//        }
+//        if (do_include)
+//        {
+//            this->observations[sub_str]++;
+//            total_reads++;
+//        }
+//        else
+//            this->total_reads_unused++;
+//    }
 }
 
 
@@ -297,45 +213,28 @@ void
 assembler::
 collect_read_evidence()
 {
-    int buffer_pos = (block_start-this->max_read_len);
-    const int buffer_end = (block_start);
-    // extract evidence for all reads that span the entire phasing range
-    for (; buffer_pos<buffer_end; buffer_pos++)
-    {
-        read_segment_iter ri(read_buffer.get_pos_read_segment_iter(buffer_pos));
-        read_segment_iter::ret_val r;
-        while (true)
-        {
-            r=ri.get_ptr();
-            if (nullptr==r.first) break;
-            collect_read_segment_evidence(r.first->get_segment(r.second));
-            ri.next();
-        }
-    }
-
-#ifdef DEBUG_ASSEMBLE
-    log_os << "max read len " << max_read_len << "\n";
-#endif
-
-#ifdef DEBUG_ASSEMBLE
-    log_os << "total reads " << total_reads << "\n";
-    log_os << "total reads unused " << total_reads_unused << "\n";
-#endif
+	this->observations[this->reference] = 10;
+	std::string altAllele = "NNNNNNNNNNNNNNNNNNNNNNNNNNNN";
+	this->observations[altAllele] = 15;
 }
-
 
 bool
 assembler::
 keep_collecting()
 {
-    return true;
+	if (this->block_start>239691270 && this->block_end<239691300){
+		return true;
+	}
+	return false;
 }
 
 bool
 assembler::
 do_assemble()
 {
-    return true;
+	if (this->block_start>239691270 && this->block_start<239691300)
+		return true;
+	return false;
 }
 
 
@@ -344,8 +243,8 @@ assembler::clear()
 {
     _buffer.clear();
     observations.clear();
-    block_start = -1;
-    block_end   = -1;
+    block_start 				= -1;
+    block_end   				= -1;
     var_count                   = 0;
     total_reads                 = 0;
     total_reads_unused          = 0;

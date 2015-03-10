@@ -52,7 +52,7 @@ struct assembler
           max_read_len(init_max_read_len),
           myPredictor("")
     {
-//        this->clear();
+        this->clear();
     }
 
     /// add site to buffer
@@ -89,9 +89,9 @@ private:
     collect_read_segment_evidence(
         const read_segment& rseg);
 
-    void collect_read_evidence();       // 2. fill in allele counter based on assembled graph
-    void construct_reference();         // 1. assemble the reference allele for the record
-    void create_contig_record();        // 3. fill in the si record and decide if we have sufficient evidence for a phased call
+    void collect_read_evidence();       // 2. Fill in allele counter based on assembled graph
+    void construct_reference();         // 1. Determine the reference allele for the record
+    void create_contig_records();       // 3. Fill in the si record and decide if we have sufficient evidence for a phased call
     unsigned get_block_length() const
     {
         return (this->block_end-this->block_start+1);
