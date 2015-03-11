@@ -91,7 +91,7 @@ starling_pos_processor(
     		assembly_streamer *myAssembler = new assembly_streamer(_opt, sample(0).read_buff, get_largest_read_size(),_nocompress_regions);
     		assembly_record_processor *myRecordProcessor = new assembly_record_processor();
 
-    		    		// register more components of the assembly pipeline here as needed
+    		// register more components of the assembly pipeline here as needed
     		// assembler -> recordProcessor -> gVCFAggregator
     		myAssembler->register_consumer(myRecordProcessor);
     		myRecordProcessor->register_consumer(myAggregator);
@@ -100,8 +100,7 @@ starling_pos_processor(
 
         }
     	else if(_opt.do_codon_phasing){
-    		// register aggregator with the codon phasing code
-
+    		//TODO register aggregator with the codon phasing code here
     		_gvcfer.reset(myAggregator);
     	}
         else{

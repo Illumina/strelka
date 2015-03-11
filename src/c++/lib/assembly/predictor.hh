@@ -40,8 +40,9 @@ struct predictor
         //add in dummy dev regions
         known_pos_range2 range(239691265,239691280);
         this->rt.addRegion(range);
-        known_pos_range2 range2(239691285,239691289);
+        known_pos_range2 range2(239691282,239691285);
         this->rt.addRegion(range2);
+//        log_os << this->rt.regionCount() << std::endl;
     }
     bool keep_extending(int st, int end){
     	return (this->rt.isInRegion(st) && this->rt.isInRegion(end));
