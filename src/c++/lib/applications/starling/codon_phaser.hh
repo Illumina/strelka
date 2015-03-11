@@ -58,6 +58,14 @@ struct Codon_phaser
     /// \returns true when the buffer should be printed as a phased block
     bool add_site(const site_info& si);
 
+    static
+    bool
+    is_phasable_site(
+        const site_info& si)
+    {
+        return (si.dgt.is_snp && si.is_het());
+    }
+
     // clear all object data
     void clear();
 

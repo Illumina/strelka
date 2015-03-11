@@ -39,7 +39,7 @@ add_site(const site_info& si)
     _buffer.push_back(si);
 
     // case: extending block with het call, update block_end position
-    if (si.is_het())
+    if (is_phasable_site(si))
     {
         if (! is_in_block())
             block_start = si.pos;
@@ -164,7 +164,7 @@ create_phased_record()
     {
         for (auto& val : _buffer)
         {
-            if (! val.is_het()) continue;
+            if (! is_phasable_site(val)) continue;
             val.smod.set_filter(VCF_FILTERS::PhasingConflict);
         }
         return;
@@ -202,7 +202,7 @@ create_phased_record()
     for (unsigned i(0); i<this->get_block_length(); i++)
     {
         const site_info& si(_buffer.at(i));
-        if (! si.is_het()) continue;
+        if (! is_phasable_site(si)) continue;
         min_gq = std::min(si.smod.gq,min_gq);
         min_qual = std::min(si.dgt.genome.snp_qphred,min_qual);
         min_qscore = std::min(si.smod.Qscore,min_qscore);

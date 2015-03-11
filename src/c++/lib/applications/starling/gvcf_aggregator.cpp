@@ -168,7 +168,7 @@ add_site(
     }
 
     if (_opt.do_codon_phasing
-        && (si.is_het() || _codon_phaser.is_in_block()))
+        && (Codon_phaser::is_phasable_site(si) || _codon_phaser.is_in_block()))
     {
         const bool emptyBuffer = _codon_phaser.add_site(si);
         if ((!_codon_phaser.is_in_block()) || emptyBuffer)
