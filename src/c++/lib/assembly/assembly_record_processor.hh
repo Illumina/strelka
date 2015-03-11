@@ -17,8 +17,14 @@ public:
 
 	bool add_site(site_info& si){
 		//TODO do something intelligent with the incoming site_info contigs starting here....
+		if (si.smod.is_assembled_contig){
+			si.smod.filters.set(VCF_FILTERS::AssembledRecord);
+			si.smod.is_unknown = false;
+			si.smod.is_used_covered = true;
+		}
+
 		return this->_consumer->add_site(si);
-	};
+	}
 
 	bool add_indel(const pos_t pos,
 						  const indel_key ik,

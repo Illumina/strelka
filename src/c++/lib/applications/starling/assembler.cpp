@@ -48,13 +48,12 @@ add_site(site_info& si)
 //	return this->_consumer->add_site(si);
 
 	this->_site_buffer.push_back(si);
-    //CASE: Start a new potential assembly block
 
+	//CASE: Start a new potential assembly block
 	block_end = si.pos+1;
     if (!is_in_block()){
         block_start = si.pos;
-        log_os << "New block case - starting @ " << si.pos  << std::endl;
-//        return false;
+//        log_os << "New block case - starting @ " << si.pos  << std::endl;
     }
 
     // Update block info
@@ -64,11 +63,10 @@ add_site(site_info& si)
     // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
     if (this->keep_collecting())
     {
-    	log_os << "Started @ " << this->block_start << std::endl;
-    	log_os << "keep collecting - @ " << si  << std::endl;
-    	log_os << "var count " << var_count << std::endl;
-    	this->write_out_buffer();
-    	log_os << "var count " << var_count << std::endl;
+//    	log_os << "Started @ " << this->block_start << std::endl;
+//    	log_os << "keep collecting - @ " << si  << std::endl;
+//    	log_os << "var count " << var_count << std::endl;
+//    	this->write_out_buffer();
     	return false;
     }
 
@@ -76,10 +74,10 @@ add_site(site_info& si)
     if (this->do_assemble())
     {
     	// if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
-    	log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
     	make_record();
     }
     this->notify_consumer();
+    this->clear();
     return true;
 }
 
@@ -158,6 +156,7 @@ assembly_streamer::create_contig_records()
 
     // specify that we are covering multiple records, and make the needed modification in the output
     base.smod.is_phased_region = true;
+    base.smod.is_assembled_contig = true;
 
     // set more vcf record fields
     int reads_ignored 	= 10;
@@ -245,7 +244,6 @@ assembly_streamer::
 do_assemble()
 {
 	//extend with more data structures to determine is assembly criteriea is met
-
 	return this->myPredictor.do_assemble(this->block_start,this->block_end);
 }
 
