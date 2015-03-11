@@ -11,8 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 /*
- * calbrationmodels.h
- *
  *  Created on: Oct 10, 2013
  *  Author: Morten Kallberg
  */
@@ -39,12 +37,20 @@ public:
         set_model(init_opt.calibration_model);
     }
 
-    void clasify_site(site_info& si);
-    void clasify_site(indel_info& ii);
+    void
+    clasify_site(
+        const site_info& si,
+        site_modifiers& smod) const;
+
+    void
+    clasify_indel(
+        const indel_info& ii,
+        indel_modifiers& imod) const;
 
     bool is_current_logistic() const;
 
-    int get_case_cutoff(const CALIBRATION_MODEL::var_case my_case);
+    int
+    get_case_cutoff(const CALIBRATION_MODEL::var_case my_case) const;
 
     const char* get_model_name() const
     {
@@ -63,8 +69,15 @@ private:
     void add_model_pars(std::string& name,parmap& my_pars);
 
     // mimics behavior of previous hard filters
-    void default_clasify_site(site_info& si);
-    void default_clasify_site(indel_info& ii);
+    void
+    default_clasify_site(
+        const site_info& si,
+        site_modifiers& smod) const;
+
+    void
+    default_clasify_indel(
+        const indel_info& ii,
+        indel_modifiers& imod) const;
 
     // for setting the vcf header filters
     const gvcf_options& opt;

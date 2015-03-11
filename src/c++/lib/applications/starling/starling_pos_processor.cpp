@@ -24,10 +24,11 @@
 
 static
 void
-report_counts(const snp_pos_info& pi,
-              const unsigned n_unused_calls,
-              const pos_t output_pos,
-              std::ostream& os)
+report_counts(
+    const snp_pos_info& pi,
+    const unsigned n_unused_calls,
+    const pos_t output_pos,
+    std::ostream& os)
 {
     unsigned base_count[N_BASE];
 

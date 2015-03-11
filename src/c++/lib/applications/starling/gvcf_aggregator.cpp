@@ -49,40 +49,42 @@ set_site_gt(const diploid_genotype::result_set& rs,
 
 static
 void
-add_site_modifiers(site_info& si,
-                   calibration_models& model)
+add_site_modifiers(
+    const site_info& si,
+    site_modifiers& smod,
+    const calibration_models& model)
 {
-    si.smod.clear();
-    si.smod.is_unknown=(si.ref=='N');
-    si.smod.is_used_covered=(si.n_used_calls!=0);
-    si.smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
+    smod.clear();
+    smod.is_unknown=(si.ref=='N');
+    smod.is_used_covered=(si.n_used_calls!=0);
+    smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
 
-    if     (si.smod.is_unknown)
+    if     (smod.is_unknown)
     {
-        si.smod.gqx=0;
-        si.smod.gq=0;
-        si.smod.max_gt=0;
+        smod.gqx=0;
+        smod.gq=0;
+        smod.max_gt=0;
     }
     else if (si.dgt.genome.max_gt != si.dgt.poly.max_gt)
     {
-        si.smod.gqx=0;
-        si.smod.gq=si.dgt.poly.max_gt_qphred;
-        si.smod.max_gt=si.dgt.poly.max_gt;
+        smod.gqx=0;
+        smod.gq=si.dgt.poly.max_gt_qphred;
+        smod.max_gt=si.dgt.poly.max_gt;
     }
     else
     {
         if (si.dgt.genome.max_gt_qphred<si.dgt.poly.max_gt_qphred)
         {
-            set_site_gt(si.dgt.genome,si.smod);
+            set_site_gt(si.dgt.genome,smod);
         }
         else
         {
-            set_site_gt(si.dgt.poly,si.smod);
+            set_site_gt(si.dgt.poly,smod);
         }
-        si.smod.gq=si.dgt.poly.max_gt_qphred;
+        smod.gq=si.dgt.poly.max_gt_qphred;
     }
 
-    model.clasify_site(si);
+    model.clasify_site(si, smod);
 }
 
 
@@ -128,11 +130,13 @@ gvcf_aggregator(
 
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data,*_osptr,this->_CM);
+        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data, *_osptr, _CM);
     }
 
-    add_site_modifiers(_empty_site,this->_CM);
+    add_site_modifiers(_empty_site, _empty_site.smod, _CM);
 }
+
+
 
 gvcf_aggregator::
 ~gvcf_aggregator()
@@ -142,9 +146,10 @@ gvcf_aggregator::
 
 void
 gvcf_aggregator::
-add_site(site_info& si)
+add_site(
+    site_info& si)
 {
-    add_site_modifiers(si, _CM);
+    add_site_modifiers(si, si.smod, _CM);
 
     if (si.dgt.is_haploid())
     {
@@ -166,8 +171,10 @@ add_site(site_info& si)
         && (si.is_het() || _codon_phaser.is_in_block()))
     {
         const bool emptyBuffer = _codon_phaser.add_site(si);
-        if (!_codon_phaser.is_in_block() || emptyBuffer)
-            this->output_phased_blocked();
+        if ((!_codon_phaser.is_in_block()) || emptyBuffer)
+        {
+            output_phased_blocked();
+        }
     }
     else
     {
@@ -219,14 +226,19 @@ output_phased_blocked()
 //Add sites to queue for writing to gVCF
 void
 gvcf_aggregator::
-add_site_internal(const site_info& si)
+add_site_internal(
+    const site_info& si)
 {
     if (si.smod.is_phased_region)
+    {
         _head_pos=si.pos+si.phased_ref.length();
+    }
     else
+    {
         _head_pos=si.pos+1;
+    }
 
-    // resolve any current or previous indels before queue-ing site:
+    // resolve any current or previous indels before queuing site:
     if (0 != _indel_buffer_size)
     {
         if (si.pos>=_indel_end_pos)
@@ -327,10 +339,11 @@ is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
 
 static
 void
-get_hap_cigar(ALIGNPATH::path_t& apath,
-              const indel_key& ik,
-              const unsigned lead=1,
-              const unsigned trail=0)
+get_hap_cigar(
+    ALIGNPATH::path_t& apath,
+    const indel_key& ik,
+    const unsigned lead=1,
+    const unsigned trail=0)
 {
     using namespace ALIGNPATH;
 
@@ -356,8 +369,9 @@ get_hap_cigar(ALIGNPATH::path_t& apath,
 // figure out the per-site ploidy inside of indel based on each haplotype's match descriptor:
 static
 void
-add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
-                    std::vector<unsigned>& ploidy)
+add_cigar_to_ploidy(
+    const ALIGNPATH::path_t& apath,
+    std::vector<unsigned>& ploidy)
 {
     using namespace ALIGNPATH;
     int offset(-1);
@@ -378,12 +392,15 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
     }
 }
 
+
+
 // queue site record for writing, after
 // possibly joining it into a compressed non-variant block
 //
 void
 gvcf_aggregator::
-queue_site_record(const site_info& si)
+queue_site_record(
+    const site_info& si)
 {
     //test for basic blocking criteria
     if (! _gvcf_comp.is_site_compressable(si))
@@ -445,7 +462,8 @@ print_site_ad(const site_info& si,
 //writes out a SNP or block record
 void
 gvcf_aggregator::
-write_site_record(const site_info& si) const
+write_site_record(
+    const site_info& si) const
 {
     std::ostream& os(*_osptr);
 
@@ -454,9 +472,13 @@ write_site_record(const site_info& si) const
        << ".\t";           // ID
 
     if (si.smod.is_phased_region)
+    {
         os  << si.phased_ref << '\t'; // REF
+    }
     else
+    {
         os  << si.ref << '\t'; // REF
+    }
 
     // ALT
     if ((si.smod.is_unknown || si.smod.is_block) && !si.smod.is_phased_region)
@@ -520,12 +542,10 @@ write_site_record(const site_info& si) const
                 os << "HaplotypeScore=" << si.hapscore;
             }
 
-            // TODO only report VQSR metrics if flag explicitly set, not for calibration model
             if (_opt.is_report_germline_VQSRmetrics)
             {
                 os << ';';
                 os << "MQ=" << si.MQ;
-
                 os << ';';
                 os << "MQRankSum=" << si.MQRankSum;
                 os << ';';
@@ -580,16 +600,20 @@ write_site_record(const site_info& si) const
     }
     if (si.smod.is_gqx())
     {
-        if (si.smod.is_block && !si.smod.is_phased_region)
+        if (si.smod.is_block)
         {
             os << _block.block_gqx.min();
         }
         else
         {
-            if (si.Qscore>=0)
-                os << si.Qscore ;
+            if (si.smod.Qscore>=0)
+            {
+                os << si.smod.Qscore;
+            }
             else
+            {
                 os << si.smod.gqx;
+            }
         }
     }
     else
@@ -629,14 +653,18 @@ modify_single_indel_record()
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
 
-    _CM.clasify_site(ii);
+    _CM.clasify_indel(ii, ii.imod);
 }
+
+
 
 static
 void
-modify_indel_overlap_site(const indel_info& ii,
-                          const unsigned ploidy,
-                          site_info& si,calibration_models& CM)
+modify_indel_overlap_site(
+    const indel_info& ii,
+    const unsigned ploidy,
+    site_info& si,
+    calibration_models& CM)
 {
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
@@ -692,8 +720,10 @@ modify_indel_overlap_site(const indel_info& ii,
     }
 
     // after all those changes we need to rerun the site filters:
-    CM.clasify_site(si);
+    CM.clasify_site(si, si.smod);
 }
+
+
 
 static
 void
@@ -701,6 +731,8 @@ modify_indel_conflict_site(site_info& si)
 {
     si.smod.set_filter(VCF_FILTERS::IndelConflict);
 }
+
+
 
 void
 gvcf_aggregator::
@@ -760,7 +792,8 @@ modify_overlap_indel_record()
 
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
-        _CM.clasify_site(_indel_buffer[hap]);
+        _CM.clasify_indel(_indel_buffer[hap], _indel_buffer[hap].imod);
+
         if (hap>0)
         {
             ii.imod.filters |= _indel_buffer[hap].imod.filters;
@@ -784,7 +817,7 @@ modify_conflict_indel_record()
 
         ii.imod.set_filter(VCF_FILTERS::IndelConflict);
 
-        _CM.clasify_site(ii);
+        _CM.clasify_indel(ii, ii.imod);
     }
 }
 
@@ -904,8 +937,8 @@ write_indel_record(const unsigned write_index)
     os << ii.get_gt() << ':'
        << ii.imod.gq << ':';
 
-    if (ii.Qscore>=0)
-        os << ii.Qscore  << ':';
+    if (ii.imod.Qscore>=0)
+        os << ii.imod.Qscore  << ':';
     else
         os << ii.imod.gqx  << ':';
 
@@ -970,7 +1003,7 @@ process_overlaps()
         {
             modify_indel_overlap_site( _indel_buffer[0],
                                        _indel_buffer[0].get_ploidy(offset),
-                                       _site_buffer[i], this->_CM);
+                                       _site_buffer[i], _CM);
         }
         else
         {
