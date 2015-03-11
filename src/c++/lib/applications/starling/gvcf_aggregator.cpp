@@ -421,20 +421,43 @@ queue_site_record(
 
 static
 void
-print_vcf_alt(const unsigned gt,
-              const unsigned ref_gt,
-              std::ostream& os)
+get_visible_alt_order(
+    const site_info& si,
+    std::vector<uint8_t>& altOrder)
 {
-    bool is_print(false);
+    altOrder.clear();
+
+    // list max_gt alts first:
     for (unsigned b(0); b<N_BASE; ++b)
     {
-        if (b==ref_gt) continue;
-        if (DIGT::expect2(b,gt))
-        {
-            if (is_print) os << ',';
-            os << id_to_base(b);
-            is_print=true;
-        }
+        if (b==si.dgt.ref_gt) continue;
+        if (! DIGT::expect2(b,si.smod.max_gt)) continue;
+        altOrder.push_back(b);
+    }
+
+    // include other alts based on known count:
+    for (unsigned b(0); b<N_BASE; ++b)
+    {
+        if (b==si.dgt.ref_gt) continue;
+        if (DIGT::expect2(b,si.smod.max_gt)) continue;
+        if (si.known_counts[b] > 0) altOrder.push_back(b);
+    }
+}
+
+
+
+static
+void
+print_vcf_alt(
+    const std::vector<uint8_t>& altOrder,
+    std::ostream& os)
+{
+    bool is_print(false);
+    for (const auto& b : altOrder)
+    {
+        if (is_print) os << ',';
+        os << id_to_base(b);
+        is_print=true;
     }
     if (! is_print) os << '.';
 }
@@ -443,18 +466,16 @@ print_vcf_alt(const unsigned gt,
 
 static
 void
-print_site_ad(const site_info& si,
-              std::ostream& os)
+print_site_ad(
+    const site_info& si,
+    const std::vector<uint8_t>& altOrder,
+    std::ostream& os)
 {
     os << si.known_counts[si.dgt.ref_gt];
 
-    for (unsigned b(0); b<N_BASE; ++b)
+    for (const auto& b : altOrder)
     {
-        if (b==si.dgt.ref_gt) continue;
-        if (DIGT::expect2(b,si.smod.max_gt))
-        {
-            os << ',' << si.known_counts[b];
-        }
+        os << ',' << si.known_counts[b];
     }
 }
 
@@ -481,19 +502,20 @@ write_site_record(
     }
 
     // ALT
-    if ((si.smod.is_unknown || si.smod.is_block) && !si.smod.is_phased_region)
+    std::vector<uint8_t> altOrder;
+    const bool isNoAlt(si.smod.is_unknown || (si.smod.is_block));
+    if (isNoAlt)
     {
         os << '.';
     }
+    else if (si.smod.is_phased_region)
+    {
+        os << si.phased_alt;
+    }
     else
     {
-        if (si.smod.is_phased_region)
-        {
-            os << si.phased_alt;
-
-        }
-        else
-            print_vcf_alt(si.smod.max_gt,si.dgt.ref_gt,os);
+        get_visible_alt_order(si,altOrder);
+        print_vcf_alt(altOrder,os);
     }
     os << '\t';
 
@@ -586,7 +608,7 @@ write_site_record(
         os << ":GQ";
     }
     os << ":GQX:DP:DPF";
-    if (! si.smod.is_block || si.smod.is_phased_region)
+    if (! isNoAlt)
     {
         os << ":AD";
     }
@@ -622,7 +644,7 @@ write_site_record(
     }
     os << ':';
     //print DP:DPF
-    if (si.smod.is_block && !si.smod.is_phased_region)
+    if (si.smod.is_block)
     {
         os << _block.block_dpu.min() << ':'
            << _block.block_dpf.min();
@@ -633,12 +655,15 @@ write_site_record(
            << si.n_unused_calls;
     }
 
-    if (si.smod.is_phased_region)
+    if (isNoAlt) {}
+    else if (si.smod.is_phased_region)
+    {
         os << ':' << si.phased_AD;
-    else if (! si.smod.is_block)
+    }
+    else
     {
         os << ':';
-        print_site_ad(si,os);
+        print_site_ad(si, altOrder, os);
     }
     os << '\n';
 }
