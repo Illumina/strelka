@@ -38,8 +38,10 @@ struct predictor
     {
 
         //add in dummy dev regions
-        known_pos_range2 range(239691269,239691280);
+        known_pos_range2 range(239691265,239691280);
         this->rt.addRegion(range);
+        known_pos_range2 range2(239691285,239691289);
+        this->rt.addRegion(range2);
     }
     bool keep_extending(int st, int end){
     	return (this->rt.isInRegion(st) && this->rt.isInRegion(end));
@@ -54,5 +56,5 @@ private:
     std::string regions_file;
     RegionTracker rt;
     const RegionTracker& _assembly_regions;
-    /// given an assembler with a region buffered, predict if it should it be assembled
+    /// given an assembler with a region buffer, predict if it should be assembled
 };

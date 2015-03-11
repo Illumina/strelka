@@ -117,7 +117,7 @@ gvcf_aggregator(
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _codon_phaser(opt, read_buffer, max_read_len)
-    , _assembler(opt, read_buffer, max_read_len,nocompress_regions)
+    , _assemble_stream(opt, read_buffer, max_read_len,nocompress_regions)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -141,7 +141,7 @@ gvcf_aggregator::
     flush();
 }
 
-void
+bool
 gvcf_aggregator::
 add_site(site_info& si)
 {
@@ -170,18 +170,19 @@ add_site(site_info& si)
         if (!_codon_phaser.is_in_block() || emptyBuffer)
             this->output_phased_blocked();
     }
-    else if (_opt.do_assemble)
-    {
-    	const bool emptyBuffer = _assembler.add_site(si,this->_block);
-        if (emptyBuffer)
-        	this->output_phased_blocked();
-    }
+//    else if (_opt.do_assemble)
+//    {
+//    	const bool emptyBuffer = _assembler.add_site(si);
+//        if (emptyBuffer)
+//        	this->output_phased_blocked();
+//    }
 
     else
     {
         skip_to_pos(si.pos);
         add_site_internal(si);
     }
+    return true;
 }
 
 
@@ -216,16 +217,15 @@ output_phased_blocked()
 {
     // output the codon-phaser or assembler buffer to gVCF queue
 
-
     //case assembler
-	if (_opt.do_assemble){
-		for (const site_info& si : _assembler.buffer())
-			{
-				this->skip_to_pos(si.pos);
-				add_site_internal(si);
-			}
-			_assembler.clear();
-	}
+//	if (_opt.do_assemble){
+//		for (const site_info& si : _assembler.buffer())
+//			{
+//				this->skip_to_pos(si.pos);
+//				add_site_internal(si);
+//			}
+//			_assembler.clear();
+//	}
     // case codon-phaser
 //    for (const site_info& si : _codon_phaser.buffer())
 //    {
@@ -234,8 +234,6 @@ output_phased_blocked()
 //    }
 //    _codon_phaser.clear();
 }
-
-
 
 //Add sites to queue for writing to gVCF
 void
@@ -283,7 +281,7 @@ is_no_indel(const starling_diploid_indel_core& dindel)
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
 
-void
+bool
 gvcf_aggregator::
 add_indel(const pos_t pos,
           const indel_key ik,
@@ -292,10 +290,10 @@ add_indel(const pos_t pos,
           const starling_indel_sample_report_info& isri)
 {
     // we can't handle breakends at all right now:
-    if (ik.is_breakpoint()) return;
+    if (ik.is_breakpoint()) return true;
 
     // don't handle homozygous reference calls unless genotyping is forced
-    if (is_no_indel(dindel) && !dindel.is_forced_output) return;
+    if (is_no_indel(dindel) && !dindel.is_forced_output) return true;
 
     // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
     if (_opt.do_codon_phasing && this->_codon_phaser.is_in_block())
@@ -331,9 +329,8 @@ add_indel(const pos_t pos,
     {
         process_overlaps();
     }
+    return true;
 }
-
-
 
 static
 bool

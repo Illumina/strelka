@@ -81,9 +81,23 @@ starling_pos_processor(
     // setup gvcf aggregator
     if (_opt.gvcf.is_gvcf_output())
     {
-        _gvcfer.reset(new gvcf_aggregator(
-                          _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(0),
-                          sample(0).read_buff,get_largest_read_size()));
+    	gvcf_aggregator *myAgg = new gvcf_aggregator(
+    						  _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(0),
+    						  sample(0).read_buff,get_largest_read_size());
+    	if(_opt.do_assemble){
+        	//register assembler site_info_stream as the primary consumer from pos_proc
+        	// add gVCFagg as a consumer on the
+    		// assembly_streamer myAssembler();
+    		// register more components of the assembly pipeline here as needed
+
+			_gvcfer.reset(myAgg);
+
+
+
+        }
+        else{
+			_gvcfer.reset(myAgg);
+        }
     }
 
     // setup indel syncronizers:

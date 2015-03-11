@@ -17,8 +17,7 @@
  *  Author: Morten Kallberg
  */
 
-#include "assembler.hh"
-
+#include <assembler.hh>
 #include <array>
 #include <sstream>
 #include <vector>
@@ -32,9 +31,19 @@
 
 
 // Add a SNP site to the phasing buffer
+//,const gvcf_block_site_record& empty_block)
+
+//bool add_indel(const pos_t pos,
+//			  const indel_key ik,
+//			  const starling_diploid_indel_core& dindel,
+//			  const starling_indel_report_info& iri,
+//			  const starling_indel_sample_report_info& isri){
+//	return true;
+//}
+
 bool
-assembler::
-add_site(const site_info& si,const gvcf_block_site_record& empty_block)
+assembly_streamer::
+add_site(site_info& si)
 {
     _buffer.push_back(si);
 
@@ -73,7 +82,7 @@ add_site(const site_info& si,const gvcf_block_site_record& empty_block)
 
 // makes the phased VCF record from the buffered sites list
 void
-assembler::make_record()
+assembly_streamer::make_record()
 {
     this->construct_reference();
     this->collect_read_evidence();
@@ -81,7 +90,7 @@ assembler::make_record()
 }
 
 void
-assembler::construct_reference()
+assembly_streamer::construct_reference()
 {
     this->reference = "";
     for (unsigned i=0; i<(this->_buffer.size()); i++)
@@ -89,7 +98,7 @@ assembler::construct_reference()
 }
 
 void
-assembler::create_contig_records()
+assembly_streamer::create_contig_records()
 {
     // pick first records in buffer as our anchoring point for the assembled record
     site_info& base = (this->_buffer.at(0));
@@ -153,12 +162,12 @@ assembler::create_contig_records()
     base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
 
 
-    // Add in assembled records
+    // Add in assembled record(s)
     _buffer.push_back(base);
 }
 
 void
-assembler::
+assembly_streamer::
 collect_read_segment_evidence(
     const read_segment& rseg)
 {
@@ -211,16 +220,17 @@ collect_read_segment_evidence(
 
 
 void
-assembler::
+assembly_streamer::
 collect_read_evidence()
 {
+	// TODO hook in for assembler contigs
 	this->observations[this->reference] = 10;
 	std::string altAllele(this->reference.length(), 'N');;
 	this->observations[altAllele] = 15;
 }
 
 bool
-assembler::
+assembly_streamer::
 keep_collecting()
 {
 	//extend with more data structures to determine is assembly criteriea is met
@@ -228,7 +238,7 @@ keep_collecting()
 }
 
 bool
-assembler::
+assembly_streamer::
 do_assemble()
 {
 	//extend with more data structures to determine is assembly criteriea is met
@@ -238,7 +248,7 @@ do_assemble()
 
 
 void
-assembler::clear()
+assembly_streamer::clear()
 {
     _buffer.clear();
     observations.clear();
@@ -253,7 +263,7 @@ assembler::clear()
 
 
 void
-assembler::write_out_buffer() const
+assembly_streamer::write_out_buffer() const
 {
     for (const auto& val : _buffer)
     {
@@ -262,7 +272,7 @@ assembler::write_out_buffer() const
 }
 
 void
-assembler::write_out_alleles() const
+assembly_streamer::write_out_alleles() const
 {
     for (const auto& val : observations)
     {

@@ -22,6 +22,7 @@
 #pragma once
 
 #include "gvcf_locus_info.hh"
+#include "site_info_stream.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"
 #include "assembly/predictor.hh"
@@ -29,21 +30,9 @@
 #include <climits>
 
 
-/// short-range phasing utility for het-snps
-///
-/// this object requires extended preservation of the read buffer so that it
-/// can go back and recover phase information form a phasing block
-///
-/// \TODO generally recognized development direction is to record some kind of
-///       read id in SNP pileups and indel support info so that we can go back
-///       and phase from the hets without having to keep the whole read buffer (and so
-///       read filtration, etc. is an exact match to the pileup).
-///       Will this be worth doing before we transition to a haplotype assembly model
-///       for short-range phasing?
-///
-struct assembler
+struct assembly_streamer : public site_info_stream
 {
-    assembler(
+	assembly_streamer(
         const starling_base_options& init_opt,
         starling_read_buffer& init_read_buffer,
         const unsigned init_max_read_len,
@@ -56,11 +45,16 @@ struct assembler
         this->clear();
     }
 
-    /// add site to buffer
-    ///
-    /// returns true when the buffer should be printed as a phased block
-    bool add_site(const site_info& si, const gvcf_block_site_record& empty_block);
+    // implement site_info_stream methods
+    bool add_site(site_info& si);
+	bool add_indel(const pos_t pos,
+				  const indel_key ik,
+				  const starling_diploid_indel_core& dindel,
+				  const starling_indel_report_info& iri,
+				  const starling_indel_sample_report_info& isri){return true;}
+//	void notify_consumer();
 
+	void flush(){} //TODO
     // clear all object data
     void clear();
 

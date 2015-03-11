@@ -18,10 +18,11 @@
 #pragma once
 
 
+#include <assembler.hh>
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "codon_phaser.hh"
-#include "assembler.hh"
+#include "site_info_stream.hh"
 #include "calibration_models.hh"
 #include "gvcf_compressor.hh"
 
@@ -32,7 +33,7 @@
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
-struct gvcf_aggregator
+struct gvcf_aggregator : public site_info_stream
 {
     gvcf_aggregator(
         const starling_options& opt,
@@ -52,9 +53,9 @@ struct gvcf_aggregator
         return _codon_phaser.is_in_block();
     }
 
-    void add_site(site_info& si);
+    bool add_site(site_info& si);
 
-    void add_indel(const pos_t pos, const indel_key ik,
+    bool add_indel(const pos_t pos, const indel_key ik,
                    const starling_diploid_indel_core& dindel,
                    const starling_indel_report_info& iri,
                    const starling_indel_sample_report_info& isri);
@@ -65,6 +66,7 @@ struct gvcf_aggregator
         process_overlaps();
         write_block_site_record();
     }
+//    void notify_consumer(){}
 
 private:
     void add_site_internal(const site_info& si);
@@ -109,6 +111,6 @@ private:
     gvcf_compressor _gvcf_comp;
 
     Codon_phaser _codon_phaser;
-    assembler _assembler;
+    assembly_streamer _assemble_stream;
 };
 
