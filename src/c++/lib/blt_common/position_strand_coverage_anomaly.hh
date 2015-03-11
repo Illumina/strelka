@@ -11,12 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_STRAND_COVERAGE_ANOMALY_HH
-#define __POSITION_STRAND_COVERAGE_ANOMALY_HH
+
+#pragma once
 
 #include "blt_common/snp_pos_info.hh"
 
@@ -32,6 +30,4 @@ position_strand_coverage_anomaly(const double alpha,
 ///
 double
 position_strand_coverage_anomaly_pval(const snp_pos_info& pi);
-#endif
-
 #endif

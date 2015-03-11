@@ -102,7 +102,7 @@ private:
 //
 static
 void
-score_segment(const starling_options& /*opt*/,
+score_segment(const starling_base_options& /*opt*/,
               const unsigned seg_length,
               const bam_seq_base& seq,
               const uint8_t* qual,
@@ -135,7 +135,7 @@ score_segment(const starling_options& /*opt*/,
 
 
 double
-score_candidate_alignment(const starling_options& opt,
+score_candidate_alignment(const starling_base_options& opt,
                           const indel_buffer& ibuff,
                           const read_segment& rseg,
                           const candidate_alignment& cal,
@@ -242,7 +242,7 @@ score_candidate_alignment(const starling_options& opt,
 #endif
 
         }
-        else if (ps.type==MATCH)
+        else if (is_segment_align_match(ps.type))
         {
             score_segment(opt,
                           ps.length,

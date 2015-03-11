@@ -23,7 +23,7 @@
 ##
 ## note that order approximates dependency chain, where libraries are listed
 ## after libraries upon which they depend:
-set (THIS_ALL_LIBRARIES blt_util common htsapi blt_common starling_common)
+set (THIS_ALL_LIBRARIES blt_util common calibration htsapi blt_common starling_common)
 
 ##
 ## Build all the libraries for the project
@@ -33,7 +33,7 @@ set (THIS_AVAILABLE_LIBRARIES "")
 foreach (THIS_LIB_DIR ${THIS_ALL_LIBRARIES})
     add_subdirectory(${THIS_LIB_DIR})
 
-    set(THIS_AVAILABLE_LIBRARIES starka_${THIS_LIB_DIR} ${THIS_AVAILABLE_LIBRARIES})
+    set(THIS_AVAILABLE_LIBRARIES ${THIS_PROJECT_NAME}_${THIS_LIB_DIR} ${THIS_AVAILABLE_LIBRARIES})
 endforeach ()
 
 set (THIS_AVAILABLE_LIBRARIES ${THIS_AVAILABLE_LIBRARIES} PARENT_SCOPE)

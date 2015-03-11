@@ -19,11 +19,10 @@
 #include "somatic_indel_grid.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
+#include "blt_util/io_util.hh"
 
-#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 
 
 
@@ -53,15 +52,12 @@ write_vcf_isri_tiers(
     const float filt(was.ss_filt_win.avg());
     const float submap(was.ss_submap_win.avg());
 
-    std::ofstream tmp_os;
-    tmp_os.copyfmt(os);
+    const StreamScoper ss(os);
     os << std::fixed << std::setprecision(2);
 
     os << sep << (used+filt)
        << sep << filt
        << sep << submap;
-
-    os.copyfmt(tmp_os);
 }
 
 

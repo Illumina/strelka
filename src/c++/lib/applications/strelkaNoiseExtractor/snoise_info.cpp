@@ -18,14 +18,13 @@
 #include "snoise_info.hh"
 #include "snoise_option_parser.hh"
 #include "snoise_shared.hh"
-#include "starling_common/starling_option_parser.hh"
-
 #include "blt_util/log.hh"
 
 #include <cstdlib>
 
 
 #include <iostream>
+#include "../../starling_common/starling_base_option_parser.hh"
 
 #if 0
 static
@@ -94,7 +93,7 @@ usage(
        "usage: " << name() << " [options]\n\n" << visible
        << "\n\n[ ***** new single-sample options ***** ]\n\n";
 
-    static const po::options_description visible2(get_starling_shared_option_parser(default_opt));
+    static const po::options_description visible2(get_starling_base_option_parser(default_opt));
     os << visible2
        << "\n\n\n[ ***** legacy single-sample options ***** ]\n\n";
     write_starling_legacy_options(os);

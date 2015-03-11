@@ -114,7 +114,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--shared-site-error-rate", str(self.params.ssnvNoise) ] )
     segCmd.extend(["--shared-site-error-strand-bias-fraction", str(self.params.ssnvNoiseStrandBiasFrac) ] )
     segCmd.extend(["--somatic-indel-rate", str(self.params.sindelPrior) ] )
-    segCmd.extend(["--shared-indel-error-rate", str(self.params.sindelNoise) ] )
+    segCmd.extend(["--shared-indel-error-factor", str(self.params.sindelNoiseFactor)])
     segCmd.extend(["--tier2-min-single-align-score", str(self.params.minTier2Mapq) ] )
     segCmd.extend(["--tier2-min-paired-align-score", str(self.params.minTier2Mapq) ] )
     segCmd.append("--tier2-single-align-score-rescue-mode")
@@ -132,7 +132,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--strelka-indel-max-int-hpol-length", str(self.params.indelMaxIntHpolLength)])
     segCmd.extend(["--strelka-indel-max-window-filtered-basecall-frac", str(self.params.indelMaxWindowFilteredBasecallFrac)])
     segCmd.extend(["--strelka-indel-min-qsi-ref", str(self.params.sindelQuality_LowerBound)])
-    segCmd.extend(['--indel-scoring-models', self.params.scoringModelFile])
+
+    # do not apply VQSR in exome case
+    if not self.params.isExome :
+        segCmd.extend(['--indel-scoring-models', self.params.scoringModelFile])
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["-bam-file", bamPath])
@@ -219,6 +222,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
     for gseg in getNextGenomeSegment(self.params) :
 
         graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+
+    if len(graphTasks) == 0 :
+        raise Exception("No genome regions to analyze. Possible target region parse error.")
 
     # create a checkpoint for all segments:
     completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=graphTasks)
@@ -350,8 +356,8 @@ class StrelkaWorkflow(StarkaWorkflow) :
         if self.params.normalBamList is None : self.params.normalBamList = []
         if self.params.tumorBamList is None : self.params.tumorBamList = []
 
+        # bools coming from the ini file need to be cleaned up:
         safeSetBool(self.params,"isWriteRealignedBam")
-        safeSetBool(self.params,"isWriteCallableRegion")
 
         if self.params.isWriteCallableRegion :
             self.params.regionsDir=os.path.join(self.params.resultsDir,"regions")
@@ -376,6 +382,7 @@ class StrelkaWorkflow(StarkaWorkflow) :
 
     def workflow(self) :
         self.flowLog("Initiating Strelka workflow version: %s" % (__version__))
+        self.setCallMemMb()
 
         callPreReqs = set()
         callPreReqs |= runCount(self)

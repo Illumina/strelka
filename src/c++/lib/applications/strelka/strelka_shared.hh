@@ -18,7 +18,7 @@
 #pragma once
 
 #include "blt_util/chrom_depth_map.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 
 /// variant call filtration options used only for somatic snvs and indels
@@ -47,19 +47,19 @@ struct somatic_filter_options
     int sindelQuality_LowerBound = 30;
 
     unsigned indelRegionFlankSize = 50;
-    int minimumQscore=3;
-
+    double minimumQscore = 3.0;
 };
 
 
 
-struct strelka_options : public starling_options
+struct strelka_options : public starling_base_options
 {
-    typedef starling_options base_t;
+    typedef starling_base_options base_t;
 
-    bool is_tumor_bindel_diploid() const
+    strelka_options()
     {
-        return (! tumor_bindel_diploid_filename.empty());
+        // turn on VQSR for strelka only:
+        is_compute_somatic_VQSRmetrics = true;
     }
 
     bool is_tumor_realigned_read() const
@@ -83,17 +83,8 @@ struct strelka_options : public starling_options
         return (! somatic_callable_filename.empty());
     }
 
-    // report whether any type of indel-caller is running (including
-    // checks from child class options):
-    bool
-    is_call_indels() const override
-    {
-        return (is_somatic_indel() || base_t::is_call_indels());
-    }
-
     std::string tumor_bam_filename;
 
-    std::string tumor_bindel_diploid_filename;
     std::string tumor_realigned_read_filename;
 
     double somatic_snv_rate = 0.000001;
@@ -107,7 +98,7 @@ struct strelka_options : public starling_options
     double site_somatic_normal_noise_rate = 0;
     bool is_site_somatic_normal_noise_rate = false;
 
-    double shared_indel_error_rate = 0.0000001;
+    double shared_indel_error_factor = 1.4;
     double shared_indel_error_strand_bias_fraction = 0.1;
     double indel_somatic_normal_noise_rate = 0;
     bool is_indel_somatic_normal_noise_rate = false;
@@ -159,9 +150,9 @@ struct somatic_indel_caller_grid;
 
 // data deterministically derived from the input options:
 //
-struct strelka_deriv_options : public starling_deriv_options
+struct strelka_deriv_options : public starling_base_deriv_options
 {
-    typedef starling_deriv_options base_t;
+    typedef starling_base_deriv_options base_t;
 
     strelka_deriv_options(
         const strelka_options& opt,

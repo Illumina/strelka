@@ -23,12 +23,14 @@
 #pragma once
 
 #include "blt_common/blt_arg_parse_util.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 
-// this combines starling argument parsing and validation:
-//
+/// starling argument parsing and validation:
+///
+/// this is confined to the older "pre-boost" arguments
 void
-legacy_starling_arg_parse(arg_data& ad,
-                          starling_options& client_opt);
+legacy_starling_arg_parse(
+    arg_data& ad,
+    starling_base_options& client_opt);
 

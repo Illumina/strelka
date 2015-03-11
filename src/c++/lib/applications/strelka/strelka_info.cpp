@@ -20,13 +20,12 @@
 #include "strelka_option_parser.hh"
 #include "strelka_shared.hh"
 
-#include "starling_common/starling_option_parser.hh"
-
 #include "blt_util/log.hh"
 
 #include <cstdlib>
 
 #include <iostream>
+#include "../../starling_common/starling_base_option_parser.hh"
 
 
 
@@ -44,10 +43,6 @@ usage(const char* xmessage) const
        "\tversion: " << version() << "\n"
        "\n"
        "usage: " << name() << " [options]\n\n" << visible
-       << "\n\n[ ***** new single-sample options ***** ]\n\n";
-
-    static const po::options_description visible2(get_starling_shared_option_parser(default_opt));
-    os << visible2
        << "\n\n\n[ ***** legacy single-sample options ***** ]\n\n";
     write_starling_legacy_options(os);
     os << "\n";

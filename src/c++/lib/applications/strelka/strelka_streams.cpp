@@ -19,6 +19,7 @@
 #include "strelka_streams.hh"
 
 #include "blt_util/chrom_depth_map.hh"
+#include "blt_util/io_util.hh"
 #include "htsapi/vcf_util.hh"
 #include "htsapi/bam_dumper.hh"
 
@@ -55,8 +56,7 @@ write_shared_vcf_header_info(
         //oss << "Greater than " << opt.max_depth_factor << "x chromosomal mean depth in Normal sample
         write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
 
-        std::ofstream tmp_os;
-        tmp_os.copyfmt(os);
+        const StreamScoper ss(os);
         os << std::fixed << std::setprecision(2);
 
         for (const auto& val : dopt.chrom_depth)
@@ -65,8 +65,6 @@ write_shared_vcf_header_info(
             const double max_depth(opt.max_depth_factor*val.second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
         }
-
-        os.copyfmt(tmp_os);
     }
 }
 
@@ -83,16 +81,6 @@ strelka_streams(
 {
     {
         using namespace STRELKA_SAMPLE_TYPE;
-
-        if (opt.is_bindel_diploid_file)
-        {
-            _bindel_diploid_osptr[NORMAL].reset(initialize_bindel_file(opt,pinfo,opt.bindel_diploid_filename,"normal-sample"));
-        }
-        if (opt.is_tumor_bindel_diploid())
-        {
-            _bindel_diploid_osptr[TUMOR].reset(initialize_bindel_file(opt,pinfo,opt.tumor_bindel_diploid_filename,"tumor-sample"));
-        }
-
         if (opt.is_realigned_read_file)
         {
             _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"normal sample realigned-read BAM",header));
@@ -141,7 +129,7 @@ strelka_streams(
             fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
             fos << "##INFO=<ID=PNOISE,Number=1,Type=Float,Description=\"Fraction of panel containing non-reference noise at this site\">\n";
             fos << "##INFO=<ID=PNOISE2,Number=1,Type=Float,Description=\"Fraction of panel containing more than one non-reference noise obs at this site\">\n";
-            fos << "##INFO=<ID=VQSR,Number=1,Type=Integer,Description=\"Recalibrated quality score expressing the phred scaled probability of the somatic call being a FP observation.\">\n";
+            fos << "##INFO=<ID=VQSR,Number=1,Type=Float,Description=\"Recalibrated quality score expressing the phred scaled probability of the somatic call being a FP observation.\">\n";
 
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1 (used+filtered)\">\n";
@@ -275,10 +263,13 @@ strelka_streams(
 
         open_ofstream(pinfo,opt.somatic_callable_filename,"somatic-callable-regions",opt.is_clobber,fos);
 
+        // post samtools 1.0 tabix doesn't handle header information anymore, so take this out entirely:
+#if 0
         if (! opt.sfilter.is_skip_header)
         {
             fos << "track name=\"StrelkaCallableSites\"\t"
                 << "description=\"Sites with sufficient information to call somatic alleles at 10% frequency or greater.\"\n";
         }
+#endif
     }
 }

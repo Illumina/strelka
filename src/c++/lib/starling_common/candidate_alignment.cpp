@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -19,7 +18,7 @@
 #include "candidate_alignment.hh"
 
 #include "blt_util/align_path_util.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 #include <cassert>
 

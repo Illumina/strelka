@@ -19,10 +19,9 @@
 
 #include "blt_common/map_level.hh"
 #include "htsapi/bam_dumper.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_key.hh"
 #include "starling_common/starling_read_segment.hh"
-#include "starling_common/starling_shared.hh"
-
 #include "boost/utility.hpp"
 
 #include <iosfwd>
@@ -76,7 +75,10 @@ struct starling_read : private boost::noncopyable
     void
     set_genomic_bam_record(const bam_record& br)
     {
-        assert(! _is_bam_record_genomic);
+        if (_is_bam_record_genomic)
+        {
+            repeatError(br);
+        }
         _read_rec = br;
         _is_bam_record_genomic=true;
     }
@@ -187,6 +189,8 @@ private:
     void
     update_full_segment();
 
+    void
+    repeatError(const bam_record& br) const;
 
 public:
     // mapping qualities of ELAND reads, does not apply to GROUPER:

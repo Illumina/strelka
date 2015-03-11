@@ -50,8 +50,8 @@ get_alignment_range(const alignment& al);
 /// Provides the largest reasonable bounds of an alignment by
 /// including any leading and trailing edge sequence and requiring that
 /// the end of the alignment range is equal to at least the
-/// start+read_length and the start of the alignment range is
-/// equal to at least orig_end-read_length:
+/// start+seq_length and the start of the alignment range is
+/// equal to at least orig_end-seq_length:
 ///
 known_pos_range
 get_alignment_zone(const alignment& al,

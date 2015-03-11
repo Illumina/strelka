@@ -20,9 +20,3 @@
 file (GLOB JSON_CONFIG_LIST [a-zA-Z0-9]*.json)
 
 install(FILES ${JSON_CONFIG_LIST} DESTINATION ${THIS_CONFIGDIR})
-
-# strelka user config file templates:
-file (GLOB STRELKA_CONFIG_LIST strelka_[a-zA-Z0-9]*.ini)
-
-install(FILES ${STRELKA_CONFIG_LIST} DESTINATION ${THIS_CONFIGDIR})
-

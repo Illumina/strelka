@@ -16,13 +16,11 @@
 ///
 
 #include "starling_info.hh"
-#include "starling_common/starling_option_parser.hh"
-#include "starling_common/starling_shared.hh"
-
+#include "starling_option_parser.hh"
+#include "starling_shared.hh"
 #include "blt_util/log.hh"
 
 #include <cstdlib>
-
 
 #include <iostream>
 
@@ -78,7 +76,6 @@ void
 starling_info::
 usage(const char* xmessage) const
 {
-
     std::ostream& os(log_os);
 
     os <<

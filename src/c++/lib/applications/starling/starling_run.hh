@@ -16,11 +16,11 @@
 
 #pragma once
 
+#include "starling_shared.hh"
 #include "blt_util/prog_info.hh"
-#include "starling_common/starling_shared.hh"
 
 
 void
 starling_run(
     const prog_info& pinfo,
-    const starling_options& client_opt);
+    const starling_options& opt);

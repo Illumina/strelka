@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 
-struct snoise_options : public starling_options
+struct snoise_options : public starling_base_options
 {
     bool is_skip_header = false;
 };

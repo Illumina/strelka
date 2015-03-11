@@ -15,12 +15,12 @@
 /// \author Chris Saunders
 ///
 
+#include "gvcf_aggregator.hh"
+#include "gvcf_header.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/chrom_depth_map.hh"
-#include "starling_common/gvcf_aggregator.hh"
-#include "starling_common/gvcf_header.hh"
+#include "blt_util/io_util.hh"
 
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -363,7 +363,7 @@ add_cigar_to_ploidy(const ALIGNPATH::path_t& apath,
     int offset(-1);
     for (const auto& ps : apath)
     {
-        if (ps.type==MATCH)
+        if (is_segment_align_match(ps.type))
         {
             for (unsigned j(0); j<ps.length; ++j)
             {
@@ -508,10 +508,10 @@ write_site_record(const site_info& si) const
         if (si.dgt.is_snp)
         {
             os << "SNVSB=";
-            std::ofstream tmp_os;
-            tmp_os.copyfmt(os);
-            os << std::fixed << std::setprecision(1) << si.dgt.sb;
-            os.copyfmt(tmp_os);
+            {
+                const StreamScoper ss(os);
+                os << std::fixed << std::setprecision(1) << si.dgt.sb;
+            }
             os << ';';
             os << "SNVHPOL=" << si.hpol;
             if (_opt.is_compute_hapscore)

@@ -25,7 +25,7 @@ sys.path.append(scriptDir)
 from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, \
                           validateFixExistingDirArg, validateFixExistingFileArg, \
-                          checkOptionalTabixIndexedFile
+                          checkTabixListOption
 from workflowUtil import parseGenomeRegion
 
 
@@ -111,7 +111,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         #       use ever expected in a production run. The consequence of exceeding the mean is
         #       a slow run due to swapping.
         #
-        callMemMb=4*1024
+        callSGEMemMb=4*1024
+        callLocalMemMb=2*1024
 
 
         runDir = "variantCallWorkflow"
@@ -140,11 +141,6 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
             faiFile=options.referenceFasta + ".fai"
             if not os.path.isfile(faiFile) :
                 raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
-
-        def checkTabixListOption(opt,label) :
-            if opt is None : return
-            for val in opt :
-                checkOptionalTabixIndexedFile(val,label)
 
         checkTabixListOption(options.indelCandidatesList,"candidate indel vcf")
         checkTabixListOption(options.forcedGTList,"forced genotype vcf")

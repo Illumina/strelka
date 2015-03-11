@@ -133,6 +133,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--calibration-model-file',self.params.vqsrModelFile])
     segCmd.extend(['--scoring-model',self.params.vqsrModel ])
+    segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
 
     if self.params.isReportVQSRMetrics :
         segCmd.append("--gvcf-report-VQSRmetrics")
@@ -217,6 +218,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
     for gseg in getNextGenomeSegment(self.params) :
 
         graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+
+    if len(graphTasks) == 0 :
+        raise Exception("No genome regions to analyze. Possible target region parse error.")
 
     # create a checkpoint for all segments:
     completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=graphTasks)
@@ -354,6 +358,7 @@ class StarlingWorkflow(StarkaWorkflow) :
 
     def workflow(self) :
         self.flowLog("Initiating Starling workflow version: %s" % (__version__))
+        self.setCallMemMb()
 
         callPreReqs = set()
         callPreReqs |= runCount(self)

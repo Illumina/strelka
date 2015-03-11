@@ -19,7 +19,6 @@
 
 #include "starling_pos_processor_base_stages.hh"
 
-#include "gvcf_options.hh"
 #include "blt_common/blt_shared.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "starling_common/starling_align_limit.hh"
@@ -51,45 +50,20 @@ operator<<(std::ostream& os, const avg_window_data& awd);
 
 
 
-struct starling_options : public blt_options
+struct starling_base_options : public blt_options
 {
     typedef blt_options base_t;
 
-    starling_options() {}
+    starling_base_options() {}
 
-    // report whether any type of indel-caller is running (including
-    // checks from child class options):
     virtual
     bool
-    is_call_indels() const
-    {
-        return is_bindel_diploid();
-    }
-
-    // is diploid indel model being used?
-    bool
-    is_bindel_diploid() const
-    {
-        return (is_bindel_diploid_file || gvcf.is_gvcf_output());
-    }
+    is_all_sites() const { return false; }
 
     bool
     is_write_candidate_indels() const
     {
         return (! candidate_indel_filename.empty());
-    }
-
-    bool
-    is_bsnp_diploid() const
-    {
-        return (base_t::is_bsnp_diploid() ||
-                gvcf.is_gvcf_output());
-    }
-
-    bool
-    is_all_sites() const
-    {
-        return (is_bsnp_diploid_allele_file || gvcf.is_gvcf_output());
     }
 
     unsigned htype_buffer_segment() const
@@ -103,7 +77,6 @@ struct starling_options : public blt_options
     double bindel_diploid_het_bias = 0;
     bool is_bindel_diploid_het_bias = false;
     bool is_test_indels = false;
-    bool is_bindel_diploid_file = false;
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
 
@@ -113,8 +86,6 @@ struct starling_options : public blt_options
     /// This is the default used in all samples unless an override is provided for the sample.
     ///
     int default_min_read_bp_flank = 6;
-
-    std::string bindel_diploid_filename;
 
     // starling parameters:
     //
@@ -148,6 +119,12 @@ struct starling_options : public blt_options
     //
     // this is the default used for all samples until overridden
     double default_min_small_candidate_indel_read_frac = 0.1;
+
+    // indels in homopolymers use a one-sided binomial exact test to
+    // determine whether they are eligible for candidacy, based on the
+    // expected per-read error rate, total coverage, and indel coverage
+    // this sets the p-value threshold for determining homopolymer candidacy
+    double tumor_min_hpol_pval = std::pow(10,-9);
 
     int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
     double max_candidate_indel_density = 0.15; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
@@ -206,9 +183,6 @@ struct starling_options : public blt_options
     //
     bool is_noise_indel_filter = false;
 
-    // only allowed when no indel output is selected
-    bool is_skip_realignment = false;
-
     // vcfs can be input to specify candidate indels:
     std::vector<std::string> input_candidate_indel_vcf;
 
@@ -234,13 +208,21 @@ struct starling_options : public blt_options
     unsigned htype_call_segment = 1000;
 
     // if true, treat all soft-clipped segments on the egdes of reads as realignable
-    bool is_remap_input_softclip = false;
-
-    /// TODO can we move these options and associated impl to starling-only instead of starling_common?
-    gvcf_options gvcf;
+    bool is_remap_input_softclip = true;
 
     /// file specifying haploid and deleted regions as 1/0 in bed col 4
     std::string ploidy_region_bedfile;
+
+    bool
+    isMaxBufferedReads() const
+    {
+        return (maxBufferedReads != 0);
+    }
+
+    /// maximum number of reads which can be buffered for any one sample
+    ///
+    /// set to zero to disable limit
+    unsigned maxBufferedReads = 100000;
 };
 
 
@@ -249,7 +231,8 @@ struct starling_options : public blt_options
 //
 struct starling_sample_options
 {
-    starling_sample_options(const starling_options& opt)
+    starling_sample_options(
+        const starling_base_options& opt)
         : min_read_bp_flank(opt.default_min_read_bp_flank)
         , min_candidate_indel_reads(opt.default_min_candidate_indel_reads)
         , min_small_candidate_indel_read_frac(opt.default_min_small_candidate_indel_read_frac)
@@ -268,13 +251,15 @@ struct indel_digt_caller;
 
 // data deterministically derived from the input options:
 //
-struct starling_deriv_options : public blt_deriv_options
+struct starling_base_deriv_options : public blt_deriv_options
 {
     typedef blt_deriv_options base_t;
 
-    starling_deriv_options(
-        const starling_options& opt,
+    starling_base_deriv_options(
+        const starling_base_options& opt,
         const reference_contig_segment& ref);
+
+    ~starling_base_deriv_options();
 
     const indel_digt_caller&
     incaller() const
@@ -320,8 +305,6 @@ public:
 
     unsigned variant_window_first_stage;
     unsigned variant_window_last_stage;
-
-    gvcf_deriv_options gvcf;
 
 private:
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..

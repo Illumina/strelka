@@ -19,17 +19,12 @@
 
 #pragma once
 
-#include "blt_util/blt_exception.hh"
-#include "starling_common/gvcf_block_site_record.hh"
-#include "starling_common/gvcf_locus_info.hh"
-#include "starling_common/cmodel.hh"
-#include "blt_util/chrom_depth_map.hh"
+#include "cmodel.hh"
+#include "starling_shared.hh"
 
 #include "boost/utility.hpp"
 
-//forward declaration
-struct gvcf_options;
-struct gvcf_deriv_options;
+
 
 class calibration_models : private boost::noncopyable
 {
@@ -49,7 +44,7 @@ public:
 
     bool is_current_logistic() const;
 
-    int get_case_cutoff(CALIBRATION_MODEL::var_case my_case);
+    int get_case_cutoff(const CALIBRATION_MODEL::var_case my_case);
 
     const char* get_model_name() const
     {

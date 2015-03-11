@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "snoise_shared.hh"
 #include "snoise_streams.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 
@@ -28,14 +29,14 @@ struct snoise_pos_processor : public starling_pos_processor_base
     typedef starling_pos_processor_base base_t;
 
     snoise_pos_processor(
-        const starling_options& opt,
-        const starling_deriv_options& dopt,
+        const snoise_options& opt,
+        const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const snoise_streams& client_io);
+        const snoise_streams& streams);
 
 private:
     void
-    process_pos_variants(const pos_t pos) override
+    process_pos_variants_impl(const pos_t pos) override
     {
         process_pos_snp_snoise(pos);
     }
@@ -44,7 +45,7 @@ private:
     process_pos_snp_snoise(const pos_t pos);
 
     void
-    write_counts(const pos_range& output_report_range) const;
+    write_counts(const pos_range& output_report_range) const override;
 
-    const snoise_streams& _client_io;
+    const snoise_streams& _streams;
 };

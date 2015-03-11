@@ -27,11 +27,10 @@
 #include "blt_util/log.hh"
 #include "htsapi/bam_streamer.hh"
 #include "htsapi/vcf_streamer.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_input_stream_handler.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
-#include "starling_common/starling_shared.hh"
-
 #include <sstream>
 
 
@@ -44,7 +43,7 @@ snoise_run(
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
 
-    const starling_deriv_options dopt(opt,ref);
+    const starling_base_deriv_options dopt(opt,ref);
     const pos_range& rlimit(dopt.report_range_limit);
 
     assert(! opt.bam_filename.empty());
@@ -61,9 +60,9 @@ snoise_run(
     }
 
     sample_info ssi;
-    snoise_streams client_io(opt,pinfo,read_stream.get_header(),ssi);
+    snoise_streams streams(opt,pinfo,read_stream.get_header(),ssi);
 
-    snoise_pos_processor sppr(opt,dopt,ref,client_io);
+    snoise_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;
 
     starling_input_stream_data sdata;

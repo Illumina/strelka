@@ -18,8 +18,9 @@
 #pragma once
 
 
+#include "gvcf_locus_info.hh"
+#include "gvcf_options.hh"
 #include "blt_util/stream_stat.hh"
-#include "starling_common/gvcf_locus_info.hh"
 
 
 /// manages compressed site record blocks output in the gVCF

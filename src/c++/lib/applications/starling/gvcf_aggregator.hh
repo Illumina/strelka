@@ -18,11 +18,11 @@
 #pragma once
 
 
-#include "starling_common/gvcf_block_site_record.hh"
-#include "starling_common/gvcf_locus_info.hh"
-#include "starling_common/codon_phaser.hh"
-#include "starling_common/calibration_models.hh"
-#include "starling_common/gvcf_compressor.hh"
+#include "gvcf_block_site_record.hh"
+#include "gvcf_locus_info.hh"
+#include "codon_phaser.hh"
+#include "calibration_models.hh"
+#include "gvcf_compressor.hh"
 
 #include <iosfwd>
 
@@ -63,6 +63,12 @@ struct gvcf_aggregator
         skip_to_pos(_report_range.end_pos);
         process_overlaps();
         write_block_site_record();
+    }
+
+    pos_t
+    headPos() const
+    {
+        return _head_pos;
     }
 
 private:

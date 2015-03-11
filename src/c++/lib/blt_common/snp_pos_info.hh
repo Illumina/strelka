@@ -113,7 +113,8 @@ struct snp_pos_info
     void
     clear()
     {
-        ref_base='N';
+        _is_ref_set=false;
+        _ref_base='N';
         is_n_ref_warn=false;
         calls.clear();
         tier2_calls.clear();
@@ -144,41 +145,48 @@ struct snp_pos_info
         }
     }
 
+    bool
+    is_ref_set() const
+    {
+        return _is_ref_set;
+    }
 
     void
     set_ref_base(char base)
     {
-        ref_base = base;
+        _is_ref_set = true;
+        _ref_base = base;
     }
 
     char
-    get_ref_base()
+    get_ref_base() const
     {
-        return ref_base;
+        assert(_is_ref_set);
+        return _ref_base;
     }
 
     /// \returns the RMS of the read mapQs
     double
-    get_rms_mq();
+    get_rms_mq() const;
 
     /// \returns the read-position rank sum
     double
-    get_read_pos_ranksum();
+    get_read_pos_ranksum() const;
 
     /// \returns the mapQ rank sum
     double
-    get_mq_ranksum();
+    get_mq_ranksum() const;
 
     /// \return the baseq rank sum
     double
-    get_baseq_ranksum();
+    get_baseq_ranksum() const;
 
     double
-    get_raw_baseQ();
+    get_raw_baseQ() const;
 
     /// \return the raw pos sum
     double
-    get_raw_pos();
+    get_raw_pos() const;
 
     void
     print_known_counts(std::ostream& os,
@@ -188,8 +196,10 @@ struct snp_pos_info
     print_known_qscore(std::ostream& os,
                        const int min_qscore) const;
 
+private:
+    bool _is_ref_set;
+    char _ref_base; // always fwd-strand base
 public:
-    char ref_base; // always fwd-strand base
     bool is_n_ref_warn;
     std::vector<base_call> calls;
     std::vector<base_call> tier2_calls; // call not passing stringent quality criteria
@@ -210,7 +220,7 @@ public:
     // sum of mapq squared for all reads at this position
     double cumm_mapq;
 
-    hap_set_t hap_set;
+    mutable hap_set_t hap_set;
 
     //for calculating various rank-sum statistics
     fastRanksum mq_ranksum;

@@ -21,10 +21,9 @@
 
 #pragma once
 
-#include "starling_common/gvcf_locus_info.hh"
+#include "gvcf_locus_info.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"
-#include "starling_common/starling_shared.hh"
-#include "starling_common/gvcf_locus_info.hh"
 
 #include <climits>
 
@@ -44,7 +43,7 @@
 struct Codon_phaser
 {
     Codon_phaser(
-        const starling_options& init_opt,
+        const starling_base_options& init_opt,
         starling_read_buffer& init_read_buffer,
         const unsigned init_max_read_len)
         : opt(init_opt),
@@ -95,14 +94,13 @@ private:
     }
 
     std::vector<site_info> _buffer;
-    const starling_options& opt;
+    const starling_base_options& opt;
     starling_read_buffer& read_buffer;  // pass along the relevant read-buffer
     int max_read_len;                   // the length of the input reads
 
     int block_start,block_end;          // position of the first and last added het site to block
     int het_count;                      // total hets observed in buffer
     int total_reads,total_reads_unused; // total used and unused reads spanning phasing region
-    bool phase_indels = false;                  // should we attempt to phase indels as well? For now false, thus returning any block upon encountering an indel
     std::string reference;              // the phased allele reference
     typedef std::map<std::string,int> allele_map;
     allele_map observations;

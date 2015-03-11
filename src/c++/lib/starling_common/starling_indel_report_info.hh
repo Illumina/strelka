@@ -17,9 +17,8 @@
 
 #pragma once
 
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/indel.hh"
-#include "starling_common/starling_shared.hh"
-
 #include <string>
 
 
@@ -67,7 +66,7 @@ struct starling_indel_sample_report_info
 /// translate read path likelihoods to posterior probs
 ///
 read_path_scores
-indel_lnp_to_pprob(const starling_deriv_options& client_dopt,
+indel_lnp_to_pprob(const starling_base_deriv_options& client_dopt,
                    const read_path_scores& read_path_lnp,
                    const bool is_tier2_pass,
                    const bool is_use_alt_indel);
@@ -87,7 +86,7 @@ get_starling_indel_report_info(const indel_key& ik,
 struct pos_basecall_buffer;
 
 void
-get_starling_indel_sample_report_info(const starling_deriv_options& dopt,
+get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
                                       const indel_key& ik,
                                       const indel_data& id,
                                       const pos_basecall_buffer& bc_buff,

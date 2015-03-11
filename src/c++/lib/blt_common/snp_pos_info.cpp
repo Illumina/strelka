@@ -11,12 +11,13 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
 #include "blt_common/snp_pos_info.hh"
+#include "blt_util/io_util.hh"
+
 #include <iomanip>
 #include <iostream>
 
@@ -27,15 +28,18 @@ operator<<(std::ostream& os,
            const base_call& bc)
 {
     const char strand(bc.is_fwd_strand ? 'F' : 'R');
-    os << "base: " << id_to_base(bc.base_id)
-       << " P(error) " << std::setw(14) << std::setprecision(8) << std::left << bc.error_prob()
-       << " strand: " << strand
+    {
+        const StreamScoper ss(os);
+        os << "base: " << id_to_base(bc.base_id)
+           << " P(error) " << std::setw(14) << std::setprecision(8) << std::left << bc.error_prob()
+           << " strand: " << strand
 #ifdef BC_DEBUG
-       << " read_pos: " << (bc.read_pos+1)
-       << " read_size: " << bc.read_size
+           << " read_pos: " << (bc.read_pos+1)
+           << " read_size: " << bc.read_size
 #endif
-       << " is_call_filter: " << bc.is_call_filter
-       << " is_tscf?: " << bc.is_tier_specific_call_filter;
+           << " is_call_filter: " << bc.is_call_filter
+           << " is_tscf?: " << bc.is_tier_specific_call_filter;
+    }
     return os;
 }
 
@@ -45,7 +49,7 @@ std::ostream&
 operator<<(std::ostream& os,
            const snp_pos_info& pci)
 {
-    os << "ref: " << pci.ref_base;
+    os << "ref: " << pci.get_ref_base();
     const unsigned bs(pci.calls.size());
     for (unsigned i(0); i<bs; ++i) os << "\nt1: " << pci.calls[i];
     const unsigned bs2(pci.tier2_calls.size());
@@ -56,7 +60,7 @@ operator<<(std::ostream& os,
 
 double
 snp_pos_info::
-get_rms_mq()
+get_rms_mq() const
 {
     if (n_mapq==0)
         return 0.0;
@@ -66,7 +70,7 @@ get_rms_mq()
 
 double
 snp_pos_info::
-get_read_pos_ranksum()
+get_read_pos_ranksum() const
 {
     //	cout << read_pos_ranksum << endl;
     return read_pos_ranksum.get_u_stat();
@@ -75,7 +79,7 @@ get_read_pos_ranksum()
 
 double
 snp_pos_info::
-get_mq_ranksum()
+get_mq_ranksum() const
 {
 //	cout << mq_ranksum << endl;
     return mq_ranksum.get_u_stat();
@@ -83,7 +87,7 @@ get_mq_ranksum()
 
 double
 snp_pos_info::
-get_baseq_ranksum()
+get_baseq_ranksum() const
 {
 //	cout << baseq_ranksum << endl;
     return baseq_ranksum.get_u_stat();
@@ -91,7 +95,7 @@ get_baseq_ranksum()
 
 double
 snp_pos_info::
-get_raw_pos()
+get_raw_pos() const
 {
 //  cout << baseq_ranksum << endl;
     return read_pos_ranksum.get_raw_score();
@@ -100,7 +104,7 @@ get_raw_pos()
 
 double
 snp_pos_info::
-get_raw_baseQ()
+get_raw_baseQ() const
 {
 //  cout << baseq_ranksum << endl;
     return baseq_ranksum.get_raw_score();
@@ -141,6 +145,7 @@ print_known_qscore(std::ostream& os,
         qscore_count[call.base_id]++;
     }
 
+    const StreamScoper ss(os);
     os << std::setprecision(2) << std::fixed;
     for (unsigned b(0); b<N_BASE; ++b)
     {
@@ -153,5 +158,4 @@ print_known_qscore(std::ostream& os,
             os << "\tNA";
         }
     }
-    os.unsetf(std::ios::fixed);
 }

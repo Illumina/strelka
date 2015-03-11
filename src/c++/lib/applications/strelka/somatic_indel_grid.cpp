@@ -101,25 +101,23 @@ somatic_indel_caller_grid(const strelka_options& opt,
     _ln_som_match=(log1p_switch(-opt.somatic_indel_rate));
     _ln_som_mismatch=(std::log(opt.somatic_indel_rate/(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1))));
 
-    std::fill(_lnprior.normal.begin(),_lnprior.normal.end(),0);
-    std::fill(_lnprior.normal_poly.begin(),_lnprior.normal_poly.end(),0);
-
-    const double ln_sie_rate( std::log(opt.shared_indel_error_rate) );
-    const double ln_csie_rate( log1p_switch(-opt.shared_indel_error_rate) );
+    std::fill(_bare_lnprior.normal.begin(),_bare_lnprior.normal.end(),0);
+    std::fill(_bare_lnprior.normal_poly.begin(),_bare_lnprior.normal_poly.end(),0);
 
     const double* normal_lnprior_genomic(in_caller.lnprior_genomic());
     const double* normal_lnprior_polymorphic(in_caller.lnprior_polymorphic());
+
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
-        _lnprior.normal[ngt] = (normal_lnprior_genomic[ngt]+ln_csie_rate);
-        _lnprior.normal_poly[ngt] = (normal_lnprior_polymorphic[ngt]+ln_csie_rate);
+        _bare_lnprior.normal[ngt] = normal_lnprior_genomic[ngt];
+        _bare_lnprior.normal_poly[ngt] = normal_lnprior_polymorphic[ngt];
         //         _lnprior_normal_nonoise[ngt] = normal_lnprior[ngt];
     }
 
     for (unsigned ngt(STAR_DIINDEL::SIZE); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
     {
-        _lnprior.normal[ngt] = ln_sie_rate+error_mod;
-        _lnprior.normal_poly[ngt] = ln_sie_rate+error_mod;
+        _bare_lnprior.normal[ngt] = error_mod;
+        _bare_lnprior.normal_poly[ngt] = error_mod;
     }
 
 #ifdef SOMATIC_DEBUG
@@ -129,6 +127,24 @@ somatic_indel_caller_grid(const strelka_options& opt,
 #endif
 }
 
+void
+somatic_indel_caller_grid::
+set_normal_prior(std::vector<blt_float_t>& normal_prior,
+                 const double ref_error_prob,
+                 const strelka_options& opt) const
+{
+    const double ln_sie_rate(opt.shared_indel_error_factor * std::log(ref_error_prob));
+    const double ln_csie_rate(log1p_switch(-ln_sie_rate));
+
+    for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
+    {
+        normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_csie_rate;
+    }
+    for (unsigned ngt(STAR_DIINDEL::SIZE); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
+    {
+        normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_sie_rate;
+    }
+}
 
 
 typedef somatic_indel_call::result_set result_set;
@@ -137,8 +153,8 @@ typedef somatic_indel_call::result_set result_set;
 
 static
 void
-get_indel_het_grid_lhood(const starling_options& opt,
-                         const starling_deriv_options& dopt,
+get_indel_het_grid_lhood(const starling_base_options& opt,
+                         const starling_base_deriv_options& dopt,
                          const starling_sample_options& sample_opt,
                          const double indel_error_lnp,
                          const double indel_real_lnp,
@@ -172,14 +188,13 @@ get_indel_het_grid_lhood(const starling_options& opt,
 
 static
 void
-calculate_result_set(const strelka_options& /*opt*/,
-                     const std::vector<blt_float_t>& normal_lnprior,
-                     const std::vector<blt_float_t>& /*normal_lnprior_poly*/,
-                     const double lnmatch,
-                     const double lnmismatch,
-                     const double* normal_lhood,
-                     const double* tumor_lhood,
-                     result_set& rs)
+calculate_result_set(
+    const std::vector<blt_float_t>& normal_lnprior,
+    const double lnmatch,
+    const double lnmismatch,
+    const double* normal_lhood,
+    const double* tumor_lhood,
+    result_set& rs)
 {
 
 #ifdef SOMATIC_DEBUG
@@ -246,7 +261,6 @@ calculate_result_set(const strelka_options& /*opt*/,
         }
     }
 
-#ifndef USE_POLYNORMAL_SINDEL
     // now compute the probability that the event is notsomatic or notfrom each of
     // the three reference states:
     //
@@ -274,47 +288,6 @@ calculate_result_set(const strelka_options& /*opt*/,
             rs.ntype=sgt;
         }
     }
-
-    // double not_somfromanyhom_sum(nonsomatic_sum);
-    // for(unsigned ngt(0);ngt<STAR_DIINDEL::SIZE;++ngt){
-    //     if(STAR_DIINDEL::HET != ngt) continue;
-    //     for(unsigned tgt(0);tgt<STAR_DIINDEL::SIZE;++tgt){
-    //         if(tgt==ngt) continue;
-    //         not_somfromanyhom_sum += pprob[DDIINDEL::get_state(ngt,tgt)];
-    //     }
-    // }
-    // rs.sindel_from_anyhom_qphred=error_prob_to_qphred(not_somfromanyhom_sum);
-
-    //    rs.max_gt_qphred=error_prob_to_qphred(prob_comp(pprob.begin(),pprob.end(),rs.max_gt));
-
-#else
-
-    // Calculate normal distribution alone so that we can classify this call:
-    //
-    // Polymorphic prior is used because in this situation we want to
-    // be conservative about the reference classification --
-    // ie. conditioned on only looking at putative somatic sites, we
-    // require evidence to show that the normal is in fact reference
-    // and not simply an unsampled copy of the somatic variation.
-    //
-    std::vector<double> normal_pprob(STAR_DIINDEL_GRID::SIZE);
-    for (unsigned ngt(0); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
-    {
-        normal_pprob[ngt] = normal_lhood[ngt]+normal_lnprior_poly[ngt];
-    }
-
-    unsigned max_norm_gt(0);
-    normalize_ln_distro(normal_pprob.begin(),normal_pprob.end(),max_norm_gt);
-
-    // find the probability of comp(max_norm_gt):
-    const double ngt_prob(prob_comp(normal_pprob.begin(),normal_pprob.end(),max_norm_gt));
-
-    // (1-(1-a)(1-b)) -> a+b-(ab)
-    double not_somfrom_sum(nonsomatic_sum+ngt_prob-(nonsomatic_sum*ngt_prob));
-
-    rs.sindel_from_ntype_qphred=error_prob_to_qphred(not_somfrom_sum);
-    rs.ntype=max_norm_gt;
-#endif
 }
 
 
@@ -348,7 +321,7 @@ debug_dump_indel_lhood(const double* lhood,
 
 static
 bool
-is_multi_indel_allele(const starling_deriv_options& dopt,
+is_multi_indel_allele(const starling_base_deriv_options& dopt,
                       const indel_data& normal_id,
                       const indel_data& tumor_id,
                       const bool is_include_tier2,
@@ -449,6 +422,7 @@ get_somatic_indel(const strelka_options& opt,
     static const double tumor_het_bias(0.0);
     double normal_lhood[STAR_DIINDEL_GRID::SIZE];
     double tumor_lhood[STAR_DIINDEL_GRID::SIZE];
+    std::vector<blt_float_t> normal_prior(STAR_DIINDEL_GRID::SIZE,0);
 
     sindel.is_forced_output=(normal_id.is_forced_output || tumor_id.is_forced_output);
 
@@ -516,9 +490,9 @@ get_somatic_indel(const strelka_options& opt,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+STAR_DIINDEL::SIZE);
 
-        calculate_result_set(opt,
-                             lnprior_genomic(),
-                             lnprior_polymorphic(),
+        set_normal_prior(normal_prior,ref_error_prob, opt);
+
+        calculate_result_set(normal_prior,
                              _ln_som_match,_ln_som_mismatch,
                              normal_lhood,tumor_lhood,tier_rs[i]);
     }

@@ -21,7 +21,7 @@
 
 #include "blt_util/log.hh"
 #include "starling_common/starling_read_buffer.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 #include <cassert>
 
@@ -43,7 +43,7 @@ starling_read_buffer::
 std::pair<bool,align_id_t>
 starling_read_buffer::
 add_read_alignment(
-    const starling_options& opt,
+    const starling_base_options& opt,
     const bam_record& br,
     const alignment& al,
     const MAPLEVEL::index_t maplev)

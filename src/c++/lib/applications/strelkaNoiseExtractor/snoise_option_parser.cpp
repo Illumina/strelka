@@ -16,8 +16,9 @@
 ///
 
 #include "snoise_option_parser.hh"
+
+#include "../../starling_common/starling_base_option_parser.hh"
 #include "blt_common/blt_arg_validate.hh"
-#include "starling_common/starling_option_parser.hh"
 
 
 
@@ -47,5 +48,5 @@ finalize_snoise_options(
 {
     // nothing to validate in this layer:
 
-    finalize_starling_options(pinfo,vm,opt);
+    finalize_starling_base_options(pinfo,vm,opt);
 }

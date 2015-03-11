@@ -12,16 +12,30 @@
 //
 
 /// \author Chris Saunders
+/// \author Morten Kallberg
 ///
 
 #include "position_somatic_snv_strand_grid_vcf.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "somatic_call_shared.hh"
+#include "blt_util/io_util.hh"
 #include "blt_util/math_util.hh"
+#include "calibration/scoringmodels.hh"
 
-#include <fstream>
+
 #include <iomanip>
 #include <iostream>
+
+
+template <typename D>
+static
+double
+safeFrac(const unsigned num, const D denom)
+{
+    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
+}
+
+
 
 // similar to 'write_vcf_sample_info' below, redundancy needed to get order of output right
 // TODO consolidate this dual calculation step
@@ -30,69 +44,49 @@ void
 set_VQSR_sample_info(
     const blt_options& opt,
     const strelka_deriv_options& dopt,
-    const extended_pos_data& tier1_epd,
-    const extended_pos_data& tier2_epd,
+    const CleanedPileup& tier1_cpi,
+    const CleanedPileup& /*tier2_cpi*/,
     strelka_shared_modifiers& smod,
-    char& ref_base,
-    bool isNormal=true)
+    bool isNormalSample)
 {
+    using namespace STRELKA_VQSR_FEATURES;
+
     // add in VQSR features
     // {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
     // {5,T_SDP_RATE},{6,N_DP_RATE},{7,TIER1_ALLELE_RATE}
-    double FDP_ratio = 0.0;
-    double SDP_ratio = 0.0;
-    if (tier1_epd.n_calls>0)
-        FDP_ratio = 1.0*tier1_epd.n_unused_calls/tier1_epd.n_calls; // n_FDP_ratio=n_FDP/n_DP  if n_DP != 0 else 0
-    if ((tier1_epd.n_calls+tier1_epd.pi.n_spandel)>0)
-        SDP_ratio = 1.0*tier1_epd.pi.n_spandel/(tier1_epd.n_calls+tier1_epd.pi.n_spandel); // t_SDP/(t_DP + t_SDP ) if (t_DP + t_SDP) != 0 else 0
+    const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
+    const double SDP_ratio(safeFrac(tier1_cpi.rawPileup().n_spandel, tier1_cpi.n_calls()+tier1_cpi.rawPileup().n_spandel));
 
-    if (isNormal)
+    smod.set_feature((isNormalSample ? N_FDP_RATE : T_FDP_RATE), FDP_ratio);
+    smod.set_feature((isNormalSample ? N_SDP_RATE : T_SDP_RATE), SDP_ratio);
+
+    if (isNormalSample)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
     {
-        smod.set_feature(STRELKA_VQSR_FEATURES::N_FDP_RATE,FDP_ratio);
-        smod.set_feature(STRELKA_VQSR_FEATURES::N_SDP_RATE,SDP_ratio);
-    }
-    else
-    {
-        smod.set_feature(STRELKA_VQSR_FEATURES::T_FDP_RATE,FDP_ratio);
-        smod.set_feature(STRELKA_VQSR_FEATURES::T_SDP_RATE,SDP_ratio);
+        smod.set_feature(N_DP_RATE, safeFrac(tier1_cpi.n_calls(),dopt.sfilter.max_depth));
     }
 
-    if (isNormal)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
-        smod.set_feature(STRELKA_VQSR_FEATURES::N_DP_RATE,1.0*tier1_epd.n_calls/dopt.sfilter.max_depth);
-
-    int ref=0;
-    int alt=0;
-
-    // base order
-    std::map<char,unsigned> ref_to_index = {{'A',0},{'C',1},{'G',2},{'T',3}};
-    unsigned ref_index = ref_to_index[ref_base];
-
-    std::array<unsigned,N_BASE> tier1_base_counts;
-    std::array<unsigned,N_BASE> tier2_base_counts;
-    tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-    tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
-
-    for (unsigned b(0); b<N_BASE; ++b)
+    if (!isNormalSample)      //report tier1_allele count for tumor case
     {
-        if (b==ref_index)
-            ref += tier1_base_counts[b];
-        else
-            alt += tier1_base_counts[b];
+        std::array<unsigned,N_BASE> tier1_base_counts;
+        tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
-    }
+        const unsigned ref_index(base_to_id(tier1_cpi.cleanedPileup().get_ref_base()));
+        unsigned ref=0;
+        unsigned alt=0;
+        for (unsigned b(0); b<N_BASE; ++b)
+        {
+            if (b==ref_index)
+            {
+                ref += tier1_base_counts[b];
+            }
+            else
+            {
+                alt += tier1_base_counts[b];
+            }
+        }
 
-    //    Allele count logic
-    //    if t_allele_alt_counts[0] + t_allele_ref_counts[0] == 0:
-    //        t_tier1_allele_rate = 0
-    //    else:
-    //        t_tier1_allele_rate = t_allele_alt_counts[0] / float(t_allele_alt_counts[0] + t_allele_ref_counts[0])
-
-    if (!isNormal)      //report tier1_allele count for tumor case
-    {
-        double allele_freq =0.0;
-        if ((ref+alt)>0)
-            allele_freq = 1.0*alt/(ref+alt);
-        smod.set_feature(STRELKA_VQSR_FEATURES::TIER1_ALLELE_RATE,allele_freq);
+        const double allele_freq(safeFrac(alt,ref+alt));
+        smod.set_feature(TIER1_ALLELE_RATE,allele_freq);
     }
 }
 
@@ -130,20 +124,20 @@ calc_VQSR_features(
     const strelka_deriv_options& dopt,
     const somatic_snv_genotype_grid& sgt,
     strelka_shared_modifiers& smod,
-    const extended_pos_data& n1_epd,
-    const extended_pos_data& t1_epd,
-    const extended_pos_data& n2_epd,
-    const extended_pos_data& t2_epd,
+    const CleanedPileup& n1_cpi,
+    const CleanedPileup& t1_cpi,
+    const CleanedPileup& n2_cpi,
+    const CleanedPileup& t2_cpi,
     const result_set& rs)
 {
     // don't worry about efficiency for median calc right now:
-    bool isAltpos(false);
-    bool isAltmap(false);
+    //bool isAltpos(false);
+    //bool isAltmap(false);
     uint16_t altpos=0;
     uint16_t altmap=0;
-    if (! t1_epd.pi.altReadPos.empty())
+    if (! t1_cpi.rawPileup().altReadPos.empty())
     {
-        const auto& apos(t1_epd.pi.altReadPos);
+        const auto& apos(t1_cpi.rawPileup().altReadPos);
         std::vector<uint16_t> readpos;
         for (const auto& r : apos)
         {
@@ -158,7 +152,7 @@ calc_VQSR_features(
         const auto pmedian(median(readpos.begin(),readpos.end()));
         const auto lmedian(median(readposcomp.begin(),readposcomp.end()));
 
-        isAltpos=true;
+        // isAltpos=true;
         altpos=std::min(pmedian,lmedian);
 
         if (readpos.size() >= 3)
@@ -168,7 +162,7 @@ calc_VQSR_features(
                 p = std::abs(p-pmedian);
             }
 
-            isAltmap=true;
+            //isAltmap=true;
             altmap=median(readpos.begin(),readpos.end());
         }
     }
@@ -176,36 +170,33 @@ calc_VQSR_features(
     //QSS_NT
     smod.set_feature(STRELKA_VQSR_FEATURES::QSS_NT,rs.snv_from_ntype_qphred);
 
-    set_VQSR_sample_info(opt,dopt,n1_epd,n2_epd,smod,n1_epd.pi.ref_base,true);
-    set_VQSR_sample_info(opt,dopt,t1_epd,t2_epd,smod,n1_epd.pi.ref_base,false);
-
-    //N_DP_RATE
-    const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
-    smod.set_feature(STRELKA_VQSR_FEATURES::N_DP_RATE,1.0*n_mapq/dopt.sfilter.max_depth);
+    set_VQSR_sample_info(opt,dopt,n1_cpi,n2_cpi,smod,true);
+    set_VQSR_sample_info(opt,dopt,t1_cpi,t2_cpi,smod,false);
 
     //MQ
-    const double cumm_mapq2(n1_epd.pi.cumm_mapq + t1_epd.pi.cumm_mapq);
+    const unsigned n_mapq(n1_cpi.rawPileup().n_mapq+t1_cpi.rawPileup().n_mapq);
+    const double cumm_mapq2(n1_cpi.rawPileup().cumm_mapq + t1_cpi.rawPileup().cumm_mapq);
     smod.set_feature(STRELKA_VQSR_FEATURES::MQ,std::sqrt(cumm_mapq2/n_mapq));
 
     //n_mapq0
-    const unsigned n_mapq0(n1_epd.pi.n_mapq0+t1_epd.pi.n_mapq0);
-    smod.set_feature(STRELKA_VQSR_FEATURES::n_mapq0,1.0*n_mapq0/dopt.sfilter.max_depth);
+    const unsigned n_mapq0(n1_cpi.rawPileup().n_mapq0+t1_cpi.rawPileup().n_mapq0);
+    smod.set_feature(STRELKA_VQSR_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq0+n_mapq));
 
     //ReadPosRankSum
-    const double ReadPosRankSum = t1_epd.pi.read_pos_ranksum.get_u_stat();
+    const double ReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_u_stat();
     smod.set_feature(STRELKA_VQSR_FEATURES::ReadPosRankSum,ReadPosRankSum);
 
     //StrandBias
     smod.set_feature(STRELKA_VQSR_FEATURES::strandBias,rs.strandBias);
 
+    /// TODO better handling of default values for in cases where alpos or altmap are not defined (0 is not a good default)
+    ///
     //Altpos
-    if (isAltpos) smod.set_feature(STRELKA_VQSR_FEATURES::altpos,altpos);
-
-    //Altmap
-    if (isAltmap) smod.set_feature(STRELKA_VQSR_FEATURES::altmap,altmap);
+    smod.set_feature(STRELKA_VQSR_FEATURES::altpos,altpos);
+    smod.set_feature(STRELKA_VQSR_FEATURES::altmap,altmap);
 
     //Pnoise
-    double pnoise(0.);
+    double pnoise(0);
     if (sgt.sn.total > 1 && sgt.sn.noise > 1)
     {
         pnoise = sgt.sn.nfrac();
@@ -213,7 +204,7 @@ calc_VQSR_features(
     smod.set_feature(STRELKA_VQSR_FEATURES::pnoise,pnoise);
 
     //Pnoise2
-    double pnoise2(0.);
+    double pnoise2(0);
     if (sgt.sn.total > 1 && sgt.sn.noise2 > 1)
     {
         pnoise2 = sgt.sn.n2frac();
@@ -227,25 +218,25 @@ static
 void
 write_vcf_sample_info(
     const blt_options& opt,
-    const strelka_deriv_options& dopt,
-    const extended_pos_data& tier1_epd,
-    const extended_pos_data& tier2_epd,
+    const strelka_deriv_options& /*dopt*/,
+    const CleanedPileup& tier1_cpi,
+    const CleanedPileup& tier2_cpi,
     std::ostream& os)
 {
     //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
-    os << tier1_epd.n_calls
+    os << tier1_cpi.n_calls()
        << ':'
-       << tier1_epd.n_unused_calls
+       << tier1_cpi.n_unused_calls()
        << ':'
-       << tier1_epd.pi.n_spandel
+       << tier1_cpi.rawPileup().n_spandel
        << ':'
-       << tier1_epd.pi.n_submapped;
+       << tier1_cpi.rawPileup().n_submapped;
 
 
     std::array<unsigned,N_BASE> tier1_base_counts;
     std::array<unsigned,N_BASE> tier2_base_counts;
-    tier1_epd.epd.good_pi.get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-    tier2_epd.epd.good_pi.get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
+    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+    tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
 
     for (unsigned b(0); b<N_BASE; ++b)
     {
@@ -256,12 +247,6 @@ write_vcf_sample_info(
 }
 
 
-static
-double
-safeFrac(const unsigned num, const unsigned denom)
-{
-    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
-}
 
 void
 write_vcf_somatic_snv_genotype_strand_grid(
@@ -269,19 +254,20 @@ write_vcf_somatic_snv_genotype_strand_grid(
     const strelka_deriv_options& dopt,
     const somatic_snv_genotype_grid& sgt,
     const bool is_write_nqss,
-    const extended_pos_data& n1_epd,
-    const extended_pos_data& t1_epd,
-    const extended_pos_data& n2_epd,
-    const extended_pos_data& t2_epd,
+    const CleanedPileup& n1_epd,
+    const CleanedPileup& t1_epd,
+    const CleanedPileup& n2_epd,
+    const CleanedPileup& t2_epd,
     std::ostream& os)
 {
     const result_set& rs(sgt.rs);
 
     strelka_shared_modifiers smod;
+
     {
         // compute all site filters:
-        const unsigned normalDP(n1_epd.n_calls);
-        const unsigned tumorDP(t1_epd.n_calls);
+        const unsigned normalDP(n1_epd.n_calls());
+        const unsigned tumorDP(t1_epd.n_calls());
 
         if (dopt.sfilter.is_max_depth())
         {
@@ -292,8 +278,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         {
-            const unsigned normalFDP(n1_epd.n_unused_calls);
-            const unsigned tumorFDP(t1_epd.n_unused_calls);
+            const unsigned normalFDP(n1_epd.n_unused_calls());
+            const unsigned tumorFDP(t1_epd.n_unused_calls());
 
             const double normalFilt(safeFrac(normalFDP,normalDP));
             const double tumorFilt(safeFrac(tumorFDP,tumorDP));
@@ -306,8 +292,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         {
-            const unsigned normalSDP(n1_epd.pi.n_spandel);
-            const unsigned tumorSDP(t1_epd.pi.n_spandel);
+            const unsigned normalSDP(n1_epd.rawPileup().n_spandel);
+            const unsigned tumorSDP(t1_epd.rawPileup().n_spandel);
             const unsigned normalSpanTot(normalDP + normalSDP);
             const unsigned tumorSpanTot(tumorDP + tumorSDP);
 
@@ -325,18 +311,21 @@ write_vcf_somatic_snv_genotype_strand_grid(
         {
             smod.set_filter(STRELKA_VCF_FILTERS::QSS_ref);
         }
+    }
 
+    {
         // Make sure the VQSR feature vector is populated
         // this is done even if not running with VQSR as some intermediate
         // calculations are still needed for VCF reporting
         calc_VQSR_features(opt,dopt,sgt,smod,n1_epd,t1_epd,n2_epd,t2_epd,rs);
-        set_VQSR_sample_info(opt,dopt,n1_epd,n2_epd,smod,n1_epd.pi.ref_base,true);
-        set_VQSR_sample_info(opt,dopt,t1_epd,t2_epd,smod,n1_epd.pi.ref_base,false);
+
+        const scoring_models& models(scoring_models::Instance());
 
         // case we are doing VQSR, clear filters and apply single LowQscore filter
-        if (scoring_models::Instance()->calibration_init)  // write out somatic VQSR metrics
+        if (models.calibration_init)  // write out somatic VQSR metrics
         {
-            smod.Qscore = scoring_models::Instance()->score_instance(smod.ft);
+            smod.isQscore = true;
+            smod.Qscore = models.score_instance(smod.get_features());
             smod.filters.reset();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
@@ -348,7 +337,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
     }
 
     //REF:
-    os << '\t' << n1_epd.pi.ref_base
+    os << '\t' << n1_epd.rawPileup().get_ref_base()
        //ALT:
        << "\t";
     DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
@@ -380,28 +369,27 @@ write_vcf_somatic_snv_genotype_strand_grid(
                              sgt.ref_gt,os);
 
     {
-        std::ofstream tmp_os;
-        tmp_os.copyfmt(os);
+        const StreamScoper ss(os);
         os << std::fixed << std::setprecision(2);
 
         // m_mapq includes all calls, even from reads below the mapq threshold:
-        const unsigned n_mapq(n1_epd.pi.n_mapq+t1_epd.pi.n_mapq);
+        const unsigned n_mapq(n1_epd.rawPileup().n_mapq+t1_epd.rawPileup().n_mapq);
         os << ";DP=" << n_mapq;
         os << ";MQ=" << smod.get_feature(STRELKA_VQSR_FEATURES::MQ);
 
         {
-            const unsigned n_mapq0(n1_epd.pi.n_mapq0+t1_epd.pi.n_mapq0);
+            const unsigned n_mapq0(n1_epd.rawPileup().n_mapq0+t1_epd.rawPileup().n_mapq0);
             os << ";MQ0=" << n_mapq0;
         }
 
         os << ";ALTPOS=";
-        if (smod.feature_is_set.test(STRELKA_VQSR_FEATURES::altpos))
+        if (smod.test_feature(STRELKA_VQSR_FEATURES::altpos))
             os << (int)smod.get_feature(STRELKA_VQSR_FEATURES::altpos);
         else
             os << '.';
 
         os << ";ALTMAP=";
-        if (smod.feature_is_set.test(STRELKA_VQSR_FEATURES::altmap))
+        if (smod.test_feature(STRELKA_VQSR_FEATURES::altmap))
             os << (int)smod.get_feature(STRELKA_VQSR_FEATURES::altmap);
         else
             os << '.';
@@ -411,10 +399,10 @@ write_vcf_somatic_snv_genotype_strand_grid(
         os << ";PNOISE=" << smod.get_feature(STRELKA_VQSR_FEATURES::pnoise);
         os << ";PNOISE2=" << smod.get_feature(STRELKA_VQSR_FEATURES::pnoise2);
 
-        if (scoring_models::Instance()->calibration_init)
+        if (smod.isQscore)
+        {
             os << ";VQSR=" << smod.Qscore;
-
-        os.copyfmt(tmp_os);
+        }
     }
 
     //FORMAT:

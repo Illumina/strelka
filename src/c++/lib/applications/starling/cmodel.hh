@@ -17,11 +17,13 @@
  *      Author: Morten Kallberg
  */
 
-#ifndef CMODEL_HH_
-#define CMODEL_HH_
+#pragma once
+
+#include "gvcf_locus_info.hh"
+#include "gvcf_options.hh"
+
 #include <vector>
 #include <map>
-#include "starling_common/gvcf_locus_info.hh"
 
 namespace CALIBRATION_MODEL
 {
@@ -36,7 +38,8 @@ enum var_case
     HetAltIns,
     HetDel,
     HomDel,
-    HetAltDel
+    HetAltDel,
+    SIZE
 };
 
 inline
@@ -80,19 +83,19 @@ get_label_header(const unsigned idx)
     case HomSNP:
         return "hom SNP";
     case HetAltSNP:
-        return "hetalt SNP";
+        return "het-alt SNP";
     case HetIns:
         return "het insertion";
     case HomIns:
         return "hom insertion";
     case HetAltIns:
-        return "hetalt insertion";
+        return "het-alt insertion";
     case HetDel:
         return "het deletion";
     case HomDel:
         return "hom deletion";
     case HetAltDel:
-        return "hetalt deletion";
+        return "het-alt deletion";
     default:
         assert(0);
         return NULL;
@@ -139,16 +142,16 @@ public:
         const std::string& name,
         const std::string& type,
         const gvcf_deriv_options& init_dopt) :
+        dopt(init_dopt),
         model_name(name),
-        model_type(type),
-        dopt(init_dopt)
+        model_type(type)
     {}
 
     // add parameters to the model
     void add_parameters(const parmap& myPars);
     void score_instance(featuremap features, site_info& si);
     void score_instance(featuremap features, indel_info& ii);
-    int  get_var_threshold(CALIBRATION_MODEL::var_case& my_case);
+    int  get_var_threshold(const CALIBRATION_MODEL::var_case& my_case);
     bool is_logistic_model() const;
     // expose private info
     double normal_depth() const;
@@ -167,4 +170,3 @@ private:
     std::string model_type;
     parmap pars;
 };
-#endif /* CMODEL_HH_ */

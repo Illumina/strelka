@@ -28,7 +28,7 @@ version="@STARKA_FULL_VERSION@"
 sys.path.append(workflowDir)
 
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile
+from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, checkTabixListOption
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
 from workflowUtil import ensureDir
@@ -52,10 +52,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                           help="Tumor sample BAM or CRAM file. [required] (no default)")
         group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
                           help="Noise vcf file (submit argument multiple times for more than one file)")
-#        group.add_option("--scoringModel", type="string",dest="scoringModel",metavar="FILE", action="append",
-#                          help="Json file specifying filtering and indel model parameters")
-        #group.add_option("--exome", dest="isExome", action="store_true",
-        #                 help="Set options for WES input: turn off depth filters")
+        group.add_option("--isWriteCallableRegion", action="store_true",
+                         help="Write out a bed file describing somatic callable regions of the genome")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
@@ -70,8 +68,9 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         defaults.update({
             'runDir' : 'StrelkaWorkflow',
-            "minTier2Mapq" : 5,
-            'scoringModelFile' : joinFile(configDir,'indel_models.json')
+            "minTier2Mapq" : 0,
+            'scoringModelFile' : joinFile(configDir,'indel_models.json'),
+            'isWriteCallableRegion' : False
             })
         return defaults
 
@@ -83,11 +82,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         groomBamList(options.normalBamList,"normal sample")
         groomBamList(options.tumorBamList, "tumor sample")
 
-        if options.noiseVcfList is not None :
-            for vcfname in options.noiseVcfList :
-                tabixFile = vcfname + ".tbi"
-                if os.path.isfile(tabixFile) : return
-                raise OptParseException("Can't find expected noise vcf index file: '%s'" % (tabixFile))
+        checkTabixListOption(options.noiseVcfList,"noise vcf")
 
 
 
@@ -95,27 +90,17 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
-        if options.userConfigPath is None :
-            raise OptParseException("A config file must be specified for strelka workflow")
-
         bcheck = BamSetChecker()
         bcheck.appendBams(options.normalBamList,"Normal")
         bcheck.appendBams(options.tumorBamList,"Tumor")
         bcheck.check(options.samtoolsBin,
                      options.referenceFasta)
 
-
-
 def main() :
 
     primarySectionName="strelka"
-
-    # change the config help text for strelka:
-    configHelp="Provide strelka workflow configuration file, see template configuration files in: '%s' (required)" % (templateConfigDir)
-
     options,iniSections=StrelkaWorkflowOptions().getRunOptions(primarySectionName,
-                                                               version=version,
-                                                               configHelp=configHelp)
+                                                               version=version)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
@@ -140,4 +125,3 @@ To execute the workflow, run the following script and set appropriate options:
 
 if __name__ == "__main__" :
     main()
-

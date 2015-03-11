@@ -18,8 +18,8 @@
 
 #include "blt_common/blt_arg_parse_util.hh"
 #include "blt_common/blt_arg_validate.hh"
-#include "starling_common/starling_shared.hh"
 #include "starling_common/starling_arg_parse.hh"
+#include "starling_common/starling_base_shared.hh"
 
 //#define DEBUG_PARSER
 
@@ -29,10 +29,10 @@
 
 
 void
-legacy_starling_arg_parse(arg_data& ad,
-                          starling_options& opt)
+legacy_starling_arg_parse(
+    arg_data& ad,
+    starling_base_options& opt)
 {
-
     const prog_info& pinfo(ad.pinfo);
 
     if ((ad.size()==1) ||
@@ -76,14 +76,6 @@ legacy_starling_arg_parse(arg_data& ad,
         {
             set_xrange_arg(i,ad,opt.is_lsnp,opt.lsnp_alpha);
         }
-        else if (ad.argstr[i]=="-bsnp-diploid-file")
-        {
-            set_filename_arg(i,ad,opt.is_bsnp_diploid_file,opt.bsnp_diploid_filename);
-        }
-        else if (ad.argstr[i]=="-bsnp-diploid-allele-file")
-        {
-            set_filename_arg(i,ad,opt.is_bsnp_diploid_allele_file,opt.bsnp_diploid_allele_filename);
-        }
         else if (ad.argstr[i]=="-bsnp-monoploid")
         {
             set_xrange_arg(i,ad,opt.is_bsnp_monoploid,opt.bsnp_monoploid_theta);
@@ -109,10 +101,6 @@ legacy_starling_arg_parse(arg_data& ad,
         else if (ad.argstr[i]=="-bindel-diploid-het-bias")
         {
             set_xrange_arg(i,ad,opt.is_bindel_diploid_het_bias,opt.bindel_diploid_het_bias,true);
-        }
-        else if (ad.argstr[i]=="-bindel-diploid-file")
-        {
-            set_filename_arg(i,ad,opt.is_bindel_diploid_file,opt.bindel_diploid_filename);
         }
         else if (ad.argstr[i]=="-anom-distro-table-alpha")
         {

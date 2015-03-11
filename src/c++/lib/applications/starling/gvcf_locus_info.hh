@@ -21,8 +21,6 @@
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
-#include "starling_common/starling_shared.hh"
-#include "blt_util/chrom_depth_map.hh"
 
 #include <bitset>
 #include <iosfwd>
@@ -363,6 +361,13 @@ struct site_info
         pos=(init_pos);
         ref=(init_ref);
         good_pi.get_known_counts(known_counts,used_allele_count_min_qscore);
+
+        phased_ref.clear();
+        phased_alt.clear();
+        phased_AD.clear();
+
+        Qscore = -1;
+        Unphasable = false;
 
         smod.clear();
     }

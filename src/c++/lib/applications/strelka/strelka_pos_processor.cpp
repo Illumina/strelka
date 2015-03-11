@@ -15,11 +15,9 @@
 /// \author Chris Saunders
 ///
 
-#include "extended_pos_data.hh"
 #include "position_somatic_snv.hh"
 #include "position_somatic_snv_strand_grid.hh"
 #include "position_somatic_snv_strand_grid_vcf.hh"
-#include "somatic_indel.hh"
 #include "somatic_indel_grid.hh"
 #include "strelka_pos_processor.hh"
 
@@ -30,20 +28,20 @@
 
 #include <iomanip>
 
-//#define SOMATIC_STDOUT
+
 
 strelka_pos_processor::
 strelka_pos_processor(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const strelka_streams& client_io)
-    : base_t(opt,dopt,ref,client_io,STRELKA_SAMPLE_TYPE::SIZE)
+    const strelka_streams& streams)
+    : base_t(opt,dopt,ref,streams,STRELKA_SAMPLE_TYPE::SIZE)
     , _opt(opt)
     , _dopt(dopt)
-    , _client_io(client_io)
-    , _callProcessor(client_io.somatic_callable_osptr())
-    , _indelWriter(opt, dopt, client_io.somatic_indel_osptr())
+    , _streams(streams)
+    , _callProcessor(streams.somatic_callable_osptr())
+    , _indelWriter(opt, dopt, streams.somatic_indel_osptr())
     , _indelRegionIndexNormal(0)
     , _indelRegionIndexTumor(0)
 {
@@ -92,8 +90,8 @@ strelka_pos_processor(
                                normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
         isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
                                tumor_sif.sample_opt, -1., TUMOR);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,NORMAL));
-        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,isdata,TUMOR));
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,NORMAL));
+        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,TUMOR));
     }
 
     // setup indel avg window:
@@ -114,6 +112,7 @@ insert_noise_pos(
 }
 
 
+
 void
 strelka_pos_processor::
 process_pos_snp_somatic(const pos_t pos)
@@ -121,46 +120,23 @@ process_pos_snp_somatic(const pos_t pos)
     using namespace STRELKA_SAMPLE_TYPE;
 
     const pos_t output_pos(pos+1);
-    const char ref_base(_ref.get_base(pos));
 
     sample_info& normal_sif(sample(NORMAL));
     sample_info& tumor_sif(sample(TUMOR));
 
-    const bool is_dep(_is_dependent_eprob);
-
     // TODO this is ridiculous -- if the tier2 data scheme works then come back and clean this up:
     static const unsigned n_tier(2);
-    std::unique_ptr<extended_pos_data> normald_ptr[n_tier];
-    std::unique_ptr<extended_pos_data> tumord_ptr[n_tier];
-
-    extra_position_data* normal_epd_ptr[n_tier] = { &(normal_sif.epd) , &(_tier2_epd[NORMAL]) };
-    extra_position_data* tumor_epd_ptr[n_tier] = { &(tumor_sif.epd) , &(_tier2_epd[TUMOR]) };
-#if 0
-    normald_ptr[0].reset(normal_sif.bc_buff.get_pos(pos),normal_sif.epd,
-                         ref_base,_opt,_dpcache,is_dep,is_include_tier2);
-    tumord_ptr[0].reset(tumor_sif.bc_buff.get_pos(pos),tumor_sif.epd,
-                        ref_base,_opt,_dpcache,is_dep,is_include_tier2);
-#endif
+    CleanedPileup* normal_cpi_ptr[n_tier] = { &(normal_sif.cpi) , &(_tier2_cpi[NORMAL]) };
+    CleanedPileup* tumor_cpi_ptr[n_tier] = { &(tumor_sif.cpi) , &(_tier2_cpi[TUMOR]) };
 
     for (unsigned t(0); t<n_tier; ++t)
     {
         const bool is_include_tier2(t!=0);
         if (is_include_tier2 && (! _opt.is_tier2())) continue;
-        normald_ptr[t].reset(new extended_pos_data(normal_sif.bc_buff.get_pos(pos),*(normal_epd_ptr[t]),
-                                                   ref_base,_opt,_dpcache,is_dep,is_include_tier2));
-        tumord_ptr[t].reset(new extended_pos_data(tumor_sif.bc_buff.get_pos(pos),*(tumor_epd_ptr[t]),
-                                                  ref_base,_opt,_dpcache,is_dep,is_include_tier2));
+        _pileupCleaner.CleanPileup(normal_sif.bc_buff.get_pos(pos),is_include_tier2,*(normal_cpi_ptr[t]));
+        _pileupCleaner.CleanPileup(tumor_sif.bc_buff.get_pos(pos),is_include_tier2,*(tumor_cpi_ptr[t]));
     }
 
-#if 0
-    sif.ss.update(n_calls);
-    sif.used_ss.update(n_used_calls);
-    if (pi.ref_base != 'N')
-    {
-        sif.ssn.update(n_calls);
-        sif.used_ssn.update(n_used_calls);
-    }
-#endif
 
     // note single-sample anomaly filtration won't apply here (more of
     // a vestigial blt feature anyway)
@@ -177,19 +153,19 @@ process_pos_snp_somatic(const pos_t pos)
     {
         sgtg.is_forced_output=is_forced_output_pos(pos);
 
-        const extended_pos_info* normal_epi_t2_ptr(NULL);
-        const extended_pos_info* tumor_epi_t2_ptr(NULL);
+        const extended_pos_info* normal_epi_t2_ptr(nullptr);
+        const extended_pos_info* tumor_epi_t2_ptr(nullptr);
         if (_opt.is_tier2())
         {
-            normal_epi_t2_ptr=(&(normald_ptr[1]->good_epi));
-            tumor_epi_t2_ptr=(&(tumord_ptr[1]->good_epi));
+            normal_epi_t2_ptr=&(normal_cpi_ptr[1]->getExtendedPosInfo());
+            tumor_epi_t2_ptr=&(tumor_cpi_ptr[1]->getExtendedPosInfo());
         }
 
         const bool isComputeNonSomatic(_opt.is_somatic_callable());
 
         _dopt.sscaller_strand_grid().position_somatic_snv_call(
-            normald_ptr[0]->good_epi,
-            tumord_ptr[0]->good_epi,
+            normal_cpi_ptr[0]->getExtendedPosInfo(),
+            tumor_cpi_ptr[0]->getExtendedPosInfo(),
             normal_epi_t2_ptr,
             tumor_epi_t2_ptr,
             isComputeNonSomatic,
@@ -218,11 +194,7 @@ process_pos_snp_somatic(const pos_t pos)
                 sgtg.sn = *snp;
             }
         }
-#ifdef SOMATIC_STDOUT
-        std::ostream& bos = std::cout;
-#else
-        std::ostream& bos(*_client_io.somatic_snv_osptr());
-#endif
+        std::ostream& bos(*_streams.somatic_snv_osptr());
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG
@@ -236,10 +208,10 @@ process_pos_snp_somatic(const pos_t pos)
 
         static const bool is_write_nqss(false);
         write_vcf_somatic_snv_genotype_strand_grid(_opt,_dopt,sgtg,is_write_nqss,
-                                                   *(normald_ptr[0]),
-                                                   *(tumord_ptr[0]),
-                                                   *(normald_ptr[1]),
-                                                   *(tumord_ptr[1]),
+                                                   *(normal_cpi_ptr[0]),
+                                                   *(tumor_cpi_ptr[0]),
+                                                   *(normal_cpi_ptr[1]),
+                                                   *(tumor_cpi_ptr[1]),
                                                    bos);
         bos << "\n";
 
@@ -250,8 +222,34 @@ process_pos_snp_somatic(const pos_t pos)
     {
         log_os << "TUMOR/NORMAL EVIDENCE pos: " << output_pos << "\n"
                << "is_snv: " << sgtg.is_snv() << "\n"
-               << "normal-data:\n" << normald_ptr[0]->epd.good_pi << "\n"
-               << "tumor-data:\n" << tumord_ptr[0]->epd.good_pi << "\n";
+               << "normal-data:\n" << static_cast<const CleanedPileup&>(*normal_cpi_ptr[0]).cleanedPileup() << "\n"
+               << "tumor-data:\n" << static_cast<const CleanedPileup&>(*tumor_cpi_ptr[0]).cleanedPileup() << "\n";
+    }
+}
+
+
+void
+strelka_pos_processor::
+process_pos_variants_impl(const pos_t pos)
+{
+    try
+    {
+        process_pos_snp_somatic(pos);
+    }
+    catch (...)
+    {
+        log_os << "Exception caught while attempting to call somatic SNV at position: " << (pos+1) << "\n";
+        throw;
+    }
+
+    try
+    {
+        process_pos_indel_somatic(pos);
+    }
+    catch (...)
+    {
+        log_os << "Exception caught while attempting to call somatic indel at position: " << (pos+1) << "\n";
+        throw;
     }
 }
 
@@ -284,6 +282,7 @@ process_pos_indel_somatic(const pos_t pos)
         if (ik.is_breakpoint()) continue;
 
         const indel_data& tumor_id(get_indel_data(i));
+
         if (! tumor_sif.indel_sync().is_candidate_indel(ik,tumor_id)) continue;
 
         const indel_data* normal_id_ptr(normal_sif.indel_buff.get_indel_data_ptr(ik));
@@ -309,14 +308,6 @@ process_pos_indel_somatic(const pos_t pos)
             get_indel_error_prob(_opt,iri,indel_error_prob,ref_error_prob);
 
             somatic_indel_call sindel;
-#ifdef USE_ORIG_SINDEL
-            static const bool is_use_alt_indel(true);
-            _dopt.sicaller().get_somatic_indel(_opt,_dopt,
-                                               indel_error_prob,ref_error_prob,
-                                               ik,normal_id,tumor_id,
-                                               is_use_alt_indel,
-                                               sindel);
-#else
             static const bool is_use_alt_indel(true);
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
                                                     normal_sif.sample_opt,
@@ -325,7 +316,6 @@ process_pos_indel_somatic(const pos_t pos)
                                                     ik,normal_id,tumor_id,
                                                     is_use_alt_indel,
                                                     sindel);
-#endif
 
             if (sindel.is_output())
             {
@@ -352,6 +342,7 @@ process_pos_indel_somatic(const pos_t pos)
                 }
 
                 _indelWriter.cacheIndel(indel_pos,siInfo);
+                _is_skip_process_pos=false;
             }
 
 #if 0

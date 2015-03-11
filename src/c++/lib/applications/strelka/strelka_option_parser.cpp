@@ -17,8 +17,8 @@
 
 #include "strelka_option_parser.hh"
 
+#include "../../starling_common/starling_base_option_parser.hh"
 #include "blt_common/blt_arg_validate.hh"
-#include "starling_common/starling_option_parser.hh"
 
 
 
@@ -92,15 +92,15 @@ get_strelka_option_parser(
     ("shared-site-error-rate",
      po::value(&opt.shared_site_error_rate)->default_value(opt.shared_site_error_rate),
      "Expected rate of site specific errors shared in the tumor and normal data.")
+    ("shared-indel-error-factor",
+     po::value(&opt.shared_indel_error_factor)->default_value(opt.shared_indel_error_factor),
+     "Factor affecting the expected rate of context-specific spurious indel errors shared in the tumor and normal data.")
     ("shared-site-error-strand-bias-fraction",
      po::value(&opt.shared_site_error_strand_bias_fraction)->default_value(opt.shared_site_error_strand_bias_fraction),
      "Expected fraction of site-specific errors which are single-stranded.")
     ("site-somatic-normal-noise-rate",
      po::value(&opt.site_somatic_normal_noise_rate),
      "Expected rate of 'noise' in the normal sample at somatic call sites -- this allows for some degree of tumor contamination in the normal for raw somatic Q-scores (default: use shared site error instead)")
-    ("shared-indel-error-rate",
-     po::value(&opt.shared_indel_error_rate)->default_value(opt.shared_indel_error_rate),
-     "Expected rate of site-specific spurious indel errors shared in the tumor and normal data.")
     ("tumor-min-candidate-indel-reads",
      po::value(&opt.tumor_sample_min_candidate_indel_reads),
      "Unless an indel is supported by at least this many reads in the tumor sample, it cannot become a candidate unless the global read count test passes for all samples. (default: not used)")
@@ -148,12 +148,19 @@ get_strelka_option_parser(
     po::options_description strelka_parse_opt("Two-sample options");
     strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv).add(strelka_parse_opt_filter);
 
+    // final assembly
+    po::options_description visible("Options");
+    visible.add(strelka_parse_opt);
+
+    // add starling base options:
+    po::options_description visible2(get_starling_base_option_parser(opt));
+    visible.add(visible2);
+
     po::options_description help_parse_opt("Help");
     help_parse_opt.add_options()
     ("help,h","print this message");
 
-    po::options_description visible("Options");
-    visible.add(strelka_parse_opt).add(help_parse_opt);
+    visible.add(help_parse_opt);
 
     return visible;
 }
@@ -161,21 +168,14 @@ get_strelka_option_parser(
 
 
 void
-finalize_strelka_options(const prog_info& pinfo,
-                         const po::variables_map& vm,
-                         strelka_options& opt)
+finalize_strelka_options(
+    const prog_info& pinfo,
+    const po::variables_map& vm,
+    strelka_options& opt)
 {
     if (opt.tumor_bam_filename.empty())
     {
         pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned tumor sample reads");
-    }
-
-    if (vm.count("skip-realignment"))
-    {
-        if (opt.is_call_indels())
-        {
-            pinfo.usage("Cannot disable realignment when indel-calling is selected.");
-        }
     }
 
     check_option_arg_range(pinfo,opt.somatic_snv_rate,"somatic-snv-rate",0.,1.);
@@ -184,7 +184,6 @@ finalize_strelka_options(const prog_info& pinfo,
     check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"site-somatic-normal-noise-rate",0.,1.);
 
     check_option_arg_range(pinfo,opt.somatic_indel_rate,"somatic-indel-rate",0.,1.);
-    check_option_arg_range(pinfo,opt.shared_indel_error_rate,"shared-indel-error-rate",0.,1.);
     check_option_arg_range(pinfo,opt.shared_site_error_strand_bias_fraction,"indel-somatic-normal-noise-rate",0.,1.);
     check_option_arg_range(pinfo,opt.tier2_indel_nonsite_match_prob,"tier2-indel-nonsite-match-prob",0.,1.);
 
@@ -250,5 +249,5 @@ finalize_strelka_options(const prog_info& pinfo,
         pinfo.usage("Strelka depth factor must not be less than 0");
     }
 
-    finalize_starling_options(pinfo,vm,opt);
+    finalize_starling_base_options(pinfo,vm,opt);
 }

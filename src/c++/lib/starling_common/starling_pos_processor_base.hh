@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "blt_common/adjust_joint_eprob.hh"
 #include "blt_common/map_level.hh"
 #include "blt_util/depth_stream_stat_range.hh"
 #include "blt_util/pos_processor_base.hh"
@@ -32,17 +31,16 @@
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
 #include "starling_common/depth_buffer.hh"
-#include "starling_common/gvcf_aggregator.hh"
 #include "starling_common/indel_buffer.hh"
 #include "starling_common/indel_set.hh"
 #include "starling_common/indel_synchronizer.hh"
+#include "starling_common/PileupCleaner.hh"
 #include "starling_common/pos_basecall_buffer.hh"
 #include "starling_common/read_mismatch_info.hh"
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_pos_processor_win_avg_set.hh"
 #include "starling_common/starling_read_buffer.hh"
-#include "starling_common/starling_shared.hh"
 #include "starling_common/starling_streams_base.hh"
-#include "starling_common/gvcf_aggregator.hh"
 
 #include "boost/utility.hpp"
 
@@ -56,19 +54,6 @@ struct nploid_info;
 //int
 //get_influence_zone_size(const unsigned max_indel_size);
 
-
-/// keep a single copy of this struct to reuse for every site to lower alloc costs:
-struct extra_position_data
-{
-    /// stores the column of basecalls actually used for snp-calling after the
-    /// mismatch density filter and other quality filters have been applied:
-    snp_pos_info good_pi;
-
-    /// stores information on approximate qscore reductions implemented to represent
-    /// site-specific basecalling dependency, note this is not applied in somatic
-    /// calling:
-    std::vector<float> dependent_eprob;
-};
 
 
 /// \brief accumulate sequential position specific information and
@@ -108,11 +93,12 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 {
     typedef pos_processor_base base_t;
 
-    starling_pos_processor_base(const starling_options& client_opt,
-                                const starling_deriv_options& client_dopt,
-                                const reference_contig_segment& ref,
-                                const starling_streams_base& client_io,
-                                const unsigned n_samples);
+    starling_pos_processor_base(
+        const starling_base_options& opt,
+        const starling_base_deriv_options& dopt,
+        const reference_contig_segment& ref,
+        const starling_streams_base& streams,
+        const unsigned n_samples);
 
     virtual
     ~starling_pos_processor_base();
@@ -164,11 +150,6 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const known_pos_range2& range,
         const int ploidy);
 
-    /// specify gvcf nocompress status of region
-    void
-    insert_nocompress_region(
-        const known_pos_range2& range);
-
 #if 0
     starling_read*
     get_read(const align_id_t read_id,
@@ -196,25 +177,15 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     bool
     is_range_outside_report_zone(const pos_range& pr) const
     {
-        return (! _client_dopt.report_range_limit.is_range_intersect(pr));
+        return (! _dopt.report_range_limit.is_range_intersect(pr));
     }
 
 protected:
     std::ostream*
     get_report_osptr() const
     {
-        return _client_io.report_osptr();
+        return _streams.report_osptr();
     }
-
-
-    void
-    process_pos_snp_single_sample(const pos_t pos,
-                                  const unsigned sample_no);
-
-    void
-    process_pos_indel_single_sample(const pos_t pos,
-                                    const unsigned sample_no);
-
 
     struct pos_win_avgs
     {
@@ -308,11 +279,13 @@ public:
     struct sample_info
     {
         sample_info(
-            const starling_options& opt,
+            const starling_base_options& opt,
+            const reference_contig_segment& ref,
             const unsigned report_size,
             const unsigned knownref_report_size,
             read_id_counter* ricp)
             : indel_buff(opt.max_indel_size)
+            , bc_buff(ref)
             , read_buff(ricp)
             , sample_opt(opt)
             , ss(report_size)
@@ -353,7 +326,7 @@ public:
         pos_win_avgs wav;
 
         // keep a single copy of this struct to reuse for every site to lower alloc costs:
-        extra_position_data epd;
+        CleanedPileup cpi;
     };
 
     sample_info&
@@ -366,26 +339,6 @@ public:
     sample(const unsigned sample_no = 0) const
     {
         return *_sample[sample_no];
-    }
-
-    bool
-    empty() const
-    {
-        if (! _is_skip_process_pos)
-        {
-            for (unsigned s(0); s<_n_samples; ++s)
-            {
-                const sample_info& sif(sample(s));
-                if (! sif.read_buff.empty()) return false;
-                if (! sif.bc_buff.empty()) return false;
-                if (! sif.indel_buff.empty()) return false;
-            }
-            if (! _variant_print_pos.empty()) return false;
-            if (! _forced_output_pos.empty()) return false;
-            if (! derived_empty()) return false;
-            _is_skip_process_pos=true;
-        }
-        return true;
     }
 
     // data for haplotoype regions, shared between all samples:
@@ -414,7 +367,7 @@ private:
     bool
     is_pos_reportable(const pos_t pos)
     {
-        return _client_dopt.report_range_limit.is_pos_intersect(pos);
+        return _dopt.report_range_limit.is_pos_intersect(pos);
     }
 
     void
@@ -502,17 +455,30 @@ private:
     void
     write_candidate_indels_pos(const pos_t pos);
 
+    /// maintain stats for depth, etc...
     void
-    process_pos_snp_single_sample_impl(const pos_t pos,
-                                       const unsigned sample_no);
+    process_pos_site_stats(
+        const pos_t pos,
+        const unsigned sample_no);
 
     const diploid_genotype&
     get_empty_dgt(const char ref) const;
 
+    void
+    process_pos_variants(const pos_t pos);
+
     //////
     virtual
     void
-    process_pos_variants(const pos_t pos) = 0;
+    process_pos_variants_impl(const pos_t pos) = 0;
+
+    virtual
+    void
+    clear_pos_annotation(const pos_t /*pos*/) {}
+
+    virtual
+    bool
+    is_suspend_read_buffer_clear() { return false; }
 
 protected:
     virtual
@@ -520,6 +486,12 @@ protected:
     run_post_call_step(
         const int stage_no,
         const pos_t pos);
+
+    unsigned
+    get_largest_read_size() const
+    {
+        return _rmi.size();
+    }
 
 private:
     //////
@@ -530,12 +502,6 @@ private:
     virtual
     void
     write_counts(const pos_range& output_report_range) const = 0;
-
-    unsigned
-    get_largest_read_size() const
-    {
-        return _rmi.size();
-    }
 
     // return false if read is too large
     bool
@@ -558,7 +524,27 @@ private:
 
     virtual
     void
-    post_align_clear_pos(const pos_t pos) {}
+    post_align_clear_pos(const pos_t /*pos*/) {}
+
+    bool
+    empty() const
+    {
+        if (! _is_skip_process_pos)
+        {
+            for (unsigned s(0); s<_n_samples; ++s)
+            {
+                const sample_info& sif(sample(s));
+                if (! sif.read_buff.empty()) return false;
+                if (! sif.bc_buff.empty()) return false;
+                if (! sif.indel_buff.empty()) return false;
+            }
+            if (! _variant_print_pos.empty()) return false;
+            if (! _forced_output_pos.empty()) return false;
+            if (! derived_empty()) return false;
+            _is_skip_process_pos=true;
+        }
+        return true;
+    }
 
     /// allow a derived class to declare non-empty status:
     virtual
@@ -586,10 +572,10 @@ protected:
     //////////////////////////////////
     // data:
     //
-    const starling_options& _client_opt;
-    const starling_deriv_options& _client_dopt;
+    const starling_base_options& _opt;
+    const starling_base_deriv_options& _dopt;
     const reference_contig_segment& _ref;
-    const starling_streams_base& _client_io;
+    const starling_streams_base& _streams;
 
     // read-length data structure used to compute mismatch density filter:
     read_mismatch_info _rmi;
@@ -611,9 +597,6 @@ protected:
     unsigned _n_samples;
     std::array<std::unique_ptr<sample_info>,MAX_SAMPLE> _sample;
 
-    bool _is_dependent_eprob;
-    dependent_prob_cache _dpcache;
-
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
     std::unique_ptr<nploid_info> _ninfo;
     std::unique_ptr<double> _ws;
@@ -625,11 +608,7 @@ protected:
 
     bool _is_variant_windows;
 
-    std::unique_ptr<gvcf_aggregator> _gvcfer;
-
-    // a caching term used for gvcf:
-    site_info _site_info;
+    PileupCleaner _pileupCleaner;
 
     RegionPayloadTracker<int> _ploidy_regions;
-    RegionTracker _nocompress_regions;
 };

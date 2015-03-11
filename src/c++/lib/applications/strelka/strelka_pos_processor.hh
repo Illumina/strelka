@@ -15,12 +15,6 @@
 /// \author Chris Saunders
 ///
 
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the beginning of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
-///
-
 #pragma once
 
 
@@ -31,6 +25,7 @@
 #include "strelka_sample_type.hh"
 #include "strelka_streams.hh"
 
+#include "starling_common/PileupCleaner.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 
 
@@ -44,7 +39,7 @@ struct strelka_pos_processor : public starling_pos_processor_base
         const strelka_options& opt,
         const strelka_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const strelka_streams& client_io);
+        const strelka_streams& streams);
 
 
     void
@@ -55,17 +50,7 @@ struct strelka_pos_processor : public starling_pos_processor_base
 private:
 
     void
-    process_pos_variants(const pos_t pos) override
-    {
-        process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
-        process_pos_indel_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
-
-        process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::NORMAL);
-        process_pos_snp_single_sample(pos,STRELKA_SAMPLE_TYPE::TUMOR);
-
-        process_pos_snp_somatic(pos);
-        process_pos_indel_somatic(pos);
-    }
+    process_pos_variants_impl(const pos_t pos) override;
 
     void
     process_pos_snp_somatic(const pos_t pos);
@@ -99,9 +84,9 @@ private:
     // have to down-cast:
     const strelka_options& _opt;
     const strelka_deriv_options& _dopt;
-    const strelka_streams& _client_io;
+    const strelka_streams& _streams;
 
-    extra_position_data _tier2_epd[MAX_SAMPLE];
+    CleanedPileup _tier2_cpi[STRELKA_SAMPLE_TYPE::SIZE];
 
     CallableProcessor _callProcessor;
 

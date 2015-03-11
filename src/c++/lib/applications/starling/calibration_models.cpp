@@ -39,7 +39,7 @@
 #endif
 
 
-int calibration_models::get_case_cutoff(CALIBRATION_MODEL::var_case my_case)
+int calibration_models::get_case_cutoff(const CALIBRATION_MODEL::var_case my_case)
 {
     return this->get_model(this->model_name).get_var_threshold(my_case);
 }
@@ -54,7 +54,7 @@ bool calibration_models::is_current_logistic() const
 
 void calibration_models::clasify_site(site_info& si)
 {
-    if (si.dgt.is_snp && (!this->is_default_model) && (! si.dgt.is_haploid()))
+    if (si.dgt.is_snp && (!this->is_default_model))
     {
         c_model myModel = this->get_model(this->model_name);
         featuremap features = si.get_qscore_features(myModel.normal_depth());     // create site value feature dict
@@ -260,7 +260,7 @@ void calibration_models::load_models(std::string model_file)
             //case new model
             if (tokens.at(0).substr(0,3)=="###")
             {
-                if (pars.size()>0)
+                if (! pars.empty())
                 {
                     this->add_model_pars(current_name,pars);
                 }

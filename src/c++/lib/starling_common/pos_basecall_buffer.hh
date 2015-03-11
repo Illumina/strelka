@@ -26,8 +26,27 @@
 #include <string>
 
 
+struct EmptyPosSet
+{
+    EmptyPosSet()
+    {
+        for (unsigned i(0);i<BASE_ID::SIZE;++i)
+        {
+            pis[i].set_ref_base(id_to_base(i));
+        }
+    }
+    std::array<snp_pos_info,BASE_ID::SIZE> pis;
+};
+
+
+
 struct pos_basecall_buffer
 {
+    pos_basecall_buffer(
+        const reference_contig_segment& ref)
+        : _ref(ref), _pdata(ref)
+    {}
+
     void
     insert_pos_submap_count(const pos_t pos)
     {
@@ -61,7 +80,7 @@ struct pos_basecall_buffer
         const uint16_t readLength)
     {
         snp_pos_info& posdata(_pdata.getRef(pos));
-        if (posdata.ref_base == id_to_base(call_id)) return;
+        if (posdata.get_ref_base() == id_to_base(call_id)) return;
 
         posdata.altReadPos.push_back({readPos,readLength});
     }
@@ -111,20 +130,15 @@ struct pos_basecall_buffer
         _pdata.getRef(pos).hap_set.emplace_back(read_seq,qual,offset);
     }
 
-    // returns NULL for empty pos
-    //
-    snp_pos_info*
-    get_pos(const pos_t pos)
-    {
-        if (! _pdata.isKeyPresent(pos)) return nullptr;
-        return &_pdata.getRef(pos);
-    }
-
-    const snp_pos_info*
+    const snp_pos_info&
     get_pos(const pos_t pos) const
     {
-        if (! _pdata.isKeyPresent(pos)) return nullptr;
-        return &_pdata.getConstRef(pos);
+        static const EmptyPosSet emptyPosSet;
+        if (! _pdata.isKeyPresent(pos))
+        {
+            return emptyPosSet.pis[base_to_id(_ref.get_base(pos))];
+        }
+        return _pdata.getConstRef(pos);
     }
 
     void
@@ -139,27 +153,30 @@ struct pos_basecall_buffer
         return _pdata.empty();
     }
 
-#if 0
-    iterator pos_iter(const pos_t pos)
-    {
-        return _pdata.lower_bound(pos);
-    }
-    const_iterator pos_iter(const pos_t pos) const
-    {
-        return _pdata.lower_bound(pos);
-    }
-
-    // debug dumpers:
-    void
-    dump_pos(const pos_t pos, std::ostream& os) const;
-#endif
-
     void
     dump(std::ostream& os) const;
 
 private:
     typedef RangeMap<pos_t,snp_pos_info,ClearT<snp_pos_info>> pdata_t;
 
-    pdata_t _pdata;
+    // inherit so that we can intercept the getRef calls:
+    struct PosData : public pdata_t
+    {
+        PosData(const reference_contig_segment& ref_init) : ref(ref_init) {}
+
+        snp_pos_info&
+        getRef(
+            const pos_t& pos)
+        {
+            snp_pos_info& pi(pdata_t::getRef(pos));
+            if (! pi.is_ref_set()) pi.set_ref_base(ref.get_base(pos));
+            return pi;
+        }
+
+        const reference_contig_segment& ref;
+    };
+
+    const reference_contig_segment& _ref;
+    PosData _pdata;
 };
 

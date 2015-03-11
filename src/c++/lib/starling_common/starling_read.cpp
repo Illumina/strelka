@@ -22,9 +22,9 @@
 #include "starling_read_util.hh"
 
 #include "blt_util/log.hh"
+#include "common/Exceptions.hh"
 #include "htsapi/align_path_bam_util.hh"
 #include "starling_common/starling_read.hh"
-#include "starling_common/starling_shared.hh"
 
 #include <iostream>
 
@@ -415,3 +415,17 @@ operator<<(std::ostream& os,
 
     return os;
 }
+
+void
+starling_read::
+repeatError(const bam_record& br) const
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: adding conflicting record to existing starling_read.\n";
+    oss << "\tNew record: " << br << "\n";
+    oss << "\tExisting read: " << *this << "\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+

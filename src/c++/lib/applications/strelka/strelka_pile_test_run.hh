@@ -51,4 +51,5 @@ private:
 
 
 void
-strelka_pile_test_run(strelka_options& opt);
+strelka_pile_test_run(
+    strelka_options& opt);

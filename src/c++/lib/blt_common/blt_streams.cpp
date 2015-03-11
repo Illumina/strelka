@@ -133,65 +133,6 @@ write_file_audit(const blt_options& opt,
 
 
 
-static
-void
-setup_bsnp_file(const blt_options& opt,
-                const prog_info& pinfo,
-                const char* const cmdline,
-                std::unique_ptr<std::ostream>& apo,
-                const std::string& filename,
-                const char* label,
-                const bool is_include_seq_name,
-                const char* append_label=NULL)
-{
-
-    std::ofstream* fosptr(new std::ofstream);
-    apo.reset(fosptr);
-    std::ofstream& fos(*fosptr);
-    open_ofstream(pinfo,filename,label,opt.is_clobber,fos);
-
-    fos << "# ** " << pinfo.name() << " " << label << " file **\n";
-    write_file_audit(opt,pinfo,cmdline,fos);
-    fos << "#$ SNP_THETA " << opt.bsnp_diploid_theta << "\n";
-    if (opt.is_bsnp_diploid_het_bias)
-    {
-        fos << "#$ BSNP_DIPLOID_HET_BIAS " << opt.bsnp_diploid_het_bias << "\n";
-    }
-    fos << "#\n";
-    fos << "#$ COLUMNS ";
-    if (is_include_seq_name)
-    {
-        fos << "seq_name ";
-    }
-    fos << "pos bcalls_used bcalls_filt ref Q(snp) max_gt Q(max_gt) max_gt|poly_site Q(max_gt|poly_site)";
-
-    if (opt.is_print_used_allele_counts)
-    {
-        for (unsigned b(0); b<N_BASE; ++b)
-        {
-            fos << " " << id_to_base(b) << "_used";
-        }
-    }
-
-    fos << " snv_sb snv_hpol";
-
-    if (opt.is_print_all_poly_gt)
-    {
-        for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-        {
-            fos << " P(" << DIGT::label(gt) << "|ps)";
-        }
-    }
-
-    if (NULL != append_label)
-    {
-        fos << " " << append_label;
-    }
-
-    fos << "\n";
-}
-
-
 
 static
 void
@@ -201,7 +142,6 @@ setup_nonref_output(const blt_options& opt,
                     const char* filename,
                     const char* label)
 {
-
     const char* const cmdline(opt.cmdline.c_str());
 
     std::ofstream* fosptr(new std::ofstream);
@@ -237,7 +177,6 @@ write_file_audit(const blt_options& opt,
                  const char* const cmdline,
                  std::ostream& os)
 {
-
     ::write_file_audit(opt,pinfo,cmdline,os);
 }
 
@@ -270,9 +209,9 @@ open_ofstream(const prog_info& pinfo,
 
 
 blt_streams::
-blt_streams(const blt_options& opt,
-            const prog_info& pinfo,
-            const bool is_include_seq_name)
+blt_streams(
+    const blt_options& opt,
+    const prog_info& pinfo)
 {
     const char* const cmdline(opt.cmdline.c_str());
 
@@ -333,17 +272,5 @@ blt_streams(const blt_options& opt,
         //}
 
         fos << "\n";
-    }
-
-    if (opt.is_bsnp_diploid_file)
-    {
-        setup_bsnp_file(opt,pinfo,cmdline,_bsnp_diploid_osptr,
-                        opt.bsnp_diploid_filename,"bsnp-diploid",is_include_seq_name);
-    }
-
-    if (opt.is_bsnp_diploid_allele_file)
-    {
-        setup_bsnp_file(opt,pinfo,cmdline,_bsnp_diploid_allele_osptr,
-                        opt.bsnp_diploid_allele_filename,"bsnp-diploid sites",is_include_seq_name);
     }
 }

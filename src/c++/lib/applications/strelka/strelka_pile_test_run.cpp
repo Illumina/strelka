@@ -15,7 +15,7 @@
 /// \author Chris Saunders
 ///
 /// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
+/// XXX_begin_pos is zero-indexed position at the beginning of the range
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
@@ -28,6 +28,7 @@
 #include "blt_util/istream_line_splitter.hh"
 #include "blt_util/parse_util.hh"
 #include "blt_util/seq_util.hh"
+#include "starling_common/PileupCleaner.hh"
 
 #include <cassert>
 #include <cctype>
@@ -43,7 +44,6 @@ strelka_pile_caller(strelka_options& opt,
     , _os(os)
 {
     // set default parameters:
-    opt.is_bsnp_diploid_file = true;
     opt.bsnp_diploid_theta = 0.001;
     opt.somatic_snv_rate       = 0.000001;
     opt.shared_site_error_rate = 0.0000005;
@@ -65,27 +65,22 @@ call(
     snp_pos_info& norm_pi,
     snp_pos_info& tumor_pi)
 {
-    static dependent_prob_cache dpcache;
-
-    const char ref_base(norm_pi.ref_base);
+    static PileupCleaner pileupCleaner(_opt);
 
     // recreate data caches:
-    extra_position_data norm_epd;
-    extra_position_data tumor_epd;
+    CleanedPileup norm_cpi;
+    CleanedPileup tumor_cpi;
 
-    static const bool is_dep(false);
     const bool is_include_tier2(false);
-    extended_pos_data normald(&norm_pi,norm_epd,
-                              ref_base,_opt,dpcache,is_dep,is_include_tier2);
-    extended_pos_data tumord(&tumor_pi,tumor_epd,
-                             ref_base,_opt,dpcache,is_dep,is_include_tier2);
+    pileupCleaner.CleanPileup(norm_pi,is_include_tier2,norm_cpi);
+    pileupCleaner.CleanPileup(tumor_pi,is_include_tier2,tumor_cpi);
 
     //    somatic_snv_genotype sgt;
     somatic_snv_genotype_grid sgtg;
-    _dopt_ptr->sscaller_strand_grid().position_somatic_snv_call(normald.good_epi,
-                                                                tumord.good_epi,
-                                                                NULL,
-                                                                NULL,
+    _dopt_ptr->sscaller_strand_grid().position_somatic_snv_call(norm_cpi.getExtendedPosInfo(),
+                                                                tumor_cpi.getExtendedPosInfo(),
+                                                                nullptr,
+                                                                nullptr,
                                                                 is_somatic_gvcf,
                                                                 sgtg);
 
@@ -97,10 +92,10 @@ call(
         << ".";
 
     write_vcf_somatic_snv_genotype_strand_grid(_opt,*(_dopt_ptr),sgtg,is_somatic_gvcf,
-                                               normald,
-                                               tumord,
-                                               normald,
-                                               tumord,
+                                               norm_cpi,
+                                               tumor_cpi,
+                                               norm_cpi,
+                                               tumor_cpi,
                                                _os);
 
     _os << "\n";
@@ -116,7 +111,7 @@ load_pi(const char ref_base,
         snp_pos_info& pi)
 {
     pi.clear();
-    pi.ref_base=ref_base;
+    pi.set_ref_base(ref_base);
 
     const unsigned len(strlen(read));
     for (unsigned i(0); i<len; ++i)
@@ -132,7 +127,8 @@ load_pi(const char ref_base,
 
 // call sites from an external simulator:
 void
-strelka_pile_test_run(strelka_options& opt)
+strelka_pile_test_run(
+    strelka_options& opt)
 {
     strelka_pile_caller pcall(opt,std::cout);
 

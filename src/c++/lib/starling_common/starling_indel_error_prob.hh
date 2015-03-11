@@ -18,8 +18,8 @@
 #pragma once
 
 
+#include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_indel_report_info.hh"
-#include "starling_common/starling_shared.hh"
 
 
 //
@@ -27,7 +27,7 @@
 // "ref_error" is the probability that the read supporting the ref case is an error
 //
 void
-get_indel_error_prob(const starling_options& client_opt,
+get_indel_error_prob(const starling_base_options& client_opt,
                      const starling_indel_report_info& iri,
                      double& indel_error_prob,
                      double& ref_error_prob);

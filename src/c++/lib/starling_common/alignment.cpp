@@ -19,7 +19,7 @@
 #include "alignment_util.hh"
 
 #include "starling_common/alignment.hh"
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 #include <iostream>
 

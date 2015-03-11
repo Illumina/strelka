@@ -124,7 +124,7 @@ get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
         pos_t next_read_head_pos(read_head_pos);
         pos_t next_ref_head_pos(ref_head_pos);
 
-        if       (ps.type == MATCH)
+        if       (is_segment_align_match(ps.type))
         {
             next_read_head_pos += ps.length;
             next_ref_head_pos += ps.length;
@@ -242,10 +242,10 @@ is_equiv_candidate(const candidate_alignment& cal1,
 //
 static
 bool
-is_first_indel_dominant(const starling_options& opt,
-                        const indel_synchronizer& isync,
-                        const indel_key& ik1,
-                        const indel_key& ik2)
+is_first_indel_dominant(
+    const indel_synchronizer& isync,
+    const indel_key& ik1,
+    const indel_key& ik2)
 {
     const bool ic1(isync.is_candidate_indel(ik1));
     const bool ic2(isync.is_candidate_indel(ik2));
@@ -264,8 +264,8 @@ is_first_indel_dominant(const starling_options& opt,
 // in indel_status_map to generate data needed in indel calling:
 //
 void
-score_indels(const starling_options& opt,
-             const starling_deriv_options& /*dopt*/,
+score_indels(const starling_base_options& opt,
+             const starling_base_deriv_options& /*dopt*/,
              const starling_sample_options& sample_opt,
              const read_segment& rseg,
              indel_synchronizer& isync,
@@ -397,7 +397,7 @@ score_indels(const starling_options& opt,
                 bool is_removed(false);
                 for (; ip!=ip_end; ++ip)
                 {
-                    const bool is1(is_first_indel_dominant(opt,isync,ip->first,ip->second));
+                    const bool is1(is_first_indel_dominant(isync,ip->first,ip->second));
 
 #ifdef DEBUG_ALIGN
                     log_os << "COWSLIP: indel1: " << ip->first << "\n";

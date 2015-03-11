@@ -217,7 +217,7 @@ sim_sample_pi(vgen_t& cov_gen,
     }
 
     pi.clear();
-    pi.ref_base=id_to_base(ref_id);
+    pi.set_ref_base(id_to_base(ref_id));
 
     for (unsigned i(0); i<all_cov; ++i)
     {

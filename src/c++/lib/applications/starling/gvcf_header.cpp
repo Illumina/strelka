@@ -11,19 +11,18 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 
+#include "gvcf_header.hh"
+#include "gvcf_locus_info.hh"
+#include "blt_util/io_util.hh"
 #include "htsapi/bam_header_util.hh"
 #include "htsapi/vcf_util.hh"
-#include "starling_common/gvcf_header.hh"
-#include "starling_common/gvcf_locus_info.hh"
 
 #include <cassert>
 
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -81,47 +80,18 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    // check that we are not doing default filtering and that we are in the logistic regression case
     if (CM.is_current_logistic())
     {
-        const std::string gqx_str       = "Locus GQX is less than ";
-        const std::string ins_str       = "insertion";
-        const std::string del_str       = "deletion";
-        const std::string snp_str       = "SNP";
-        const std::string het_str       = "het";
-        const std::string hom_str       = "hom";
-        const std::string hetalt_str    = "het-alt";
-        const std::string for_str       = " for ";
-        std::ostringstream oss;
+        for (unsigned varType(0); varType<CALIBRATION_MODEL::SIZE; ++varType)
+        {
+            using namespace CALIBRATION_MODEL;
+            if (varType == HetAltSNP) continue;
 
-
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetSNP)  << for_str << het_str << " " << snp_str;
-        write_vcf_filter(os,get_label(LowQscoreHetSNP),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomSNP) << for_str << hom_str << " " << snp_str;
-        write_vcf_filter(os,get_label(LowQscoreHomSNP),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltSNP) << for_str << hetalt_str << " " << snp_str;
-        write_vcf_filter(os,get_label(LowQscoreHetAltSNP),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetIns) << for_str << het_str << " " << ins_str;
-        write_vcf_filter(os,get_label(LowQscoreHetIns),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomIns) << for_str << hom_str << " " << ins_str;
-        write_vcf_filter(os,get_label(LowQscoreHomIns),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltIns) << for_str << hetalt_str << " " << ins_str;
-        write_vcf_filter(os,get_label(LowQscoreHetAltIns),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetDel) << for_str << het_str << " " << del_str;
-        write_vcf_filter(os,get_label(LowQscoreHetDel),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HomDel) << for_str << hom_str << " " << del_str;
-        write_vcf_filter(os,get_label(LowQscoreHomDel),oss.str().c_str());
-        oss.str("");
-        oss << gqx_str << CM.get_case_cutoff(CALIBRATION_MODEL::HetAltDel) << for_str << hetalt_str << " " << del_str;
-        write_vcf_filter(os,get_label(LowQscoreHetAltDel),oss.str().c_str());
-        oss.str("");
+            const var_case vti(static_cast<var_case>(varType));
+            std::ostringstream oss;
+            oss << "Locus GQX is less than " << CM.get_case_cutoff(vti)  << " for " << get_label_header(vti);
+            write_vcf_filter(os,VCF_FILTERS::get_label(get_Qscore_filter(vti)),oss.str().c_str());
+        }
     }
 
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
@@ -138,8 +108,7 @@ add_gvcf_filters(
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";
         write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
 
-        std::ofstream tmp_os;
-        tmp_os.copyfmt(os);
+        const StreamScoper ss(os);
         os << std::fixed << std::setprecision(2);
 
         for (const auto& val : chrom_depth)
@@ -148,7 +117,6 @@ add_gvcf_filters(
             const double max_depth(opt.max_depth_factor*val.second);
             os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
         }
-        os.copyfmt(tmp_os);
     }
 
     // even if no ploidy bed file is provided, this filter should still exist in principal, so I don't
@@ -174,9 +142,10 @@ finish_gvcf_header(const starling_options& opt,
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
 
-    os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.gvcf.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.gvcf.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
-    os.precision(6); // reset precision for output to not affect high DP/GQX values in variant records
-
+    {
+        const StreamScoper ss(os);// scope precision changes for output to not affect high DP/GQX values in variant records
+        os << "##INFO=<ID=" << dopt.block_label << ",Number=0,Type=Flag,Description=\"Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+" << opt.gvcf.block_abs_tol << ",(x*" << std::setprecision(2) << static_cast<double>(100+opt.gvcf.block_percent_tol)/100. << ")). All printed site block sample values are the minimum observed in the region spanned by the block\">\n";
+    }
 
     os << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"SNV site strand bias\">\n";
     os << "##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description=\"SNV contextual homopolymer length\">\n";

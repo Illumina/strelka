@@ -28,7 +28,6 @@
 //
 struct dependent_prob_cache
 {
-
     enum { MAX_QSCORE = 64 };
 
     dependent_prob_cache() : _val(MAX_QSCORE+1), _is_init(MAX_QSCORE+1,false) {}
@@ -51,5 +50,4 @@ void
 adjust_joint_eprob(const blt_options& opt,
                    dependent_prob_cache& dpc,
                    const snp_pos_info& pi,
-                   std::vector<float>& dependent_eprob,
-                   const bool is_depenent);
+                   std::vector<float>& dependent_eprob);

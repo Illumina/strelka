@@ -48,41 +48,70 @@ struct PosRangeEndSort
 ///
 struct RegionTracker
 {
+    bool
+    empty() const
+    {
+        return _regions.empty();
+    }
+
+    void
+    clear()
+    {
+        _regions.clear();
+    }
+
     /// is single position in a tracked region?
     bool
-    isInRegion(const unsigned pos) const
+    isIntersectRegion(
+        const pos_t pos) const
     {
-        return isInRegionImpl(pos,pos+1);
+        return isIntersectRegionImpl(pos,pos+1);
     }
 
     /// does range intersect any tracked region?
     bool
-    isInRegion(const known_pos_range2 range) const
+    isIntersectRegion(
+        const known_pos_range2 range) const
     {
-        return isInRegionImpl(range.begin_pos(),range.end_pos());
+        return isIntersectRegionImpl(range.begin_pos(),range.end_pos());
+    }
+
+    /// is range entirely contained in a region?
+    bool
+    isSubsetOfRegion(
+        const known_pos_range2 range) const
+    {
+        return isSubsetOfRegionImpl(range.begin_pos(),range.end_pos());
     }
 
     /// add region
     ///
     /// any overlaps and adjacencies with existing regions in the tracker will be collapsed
     void
-    addRegion(known_pos_range2 range);
+    addRegion(
+        known_pos_range2 range);
 
     /// remove all regions which end (inclusive) before pos+1
     void
     removeToPos(
-        const unsigned pos);
+        const pos_t pos);
 
     // debug util
     void
-    dump(std::ostream& os) const;
+    dump(
+        std::ostream& os) const;
 
     typedef std::set<known_pos_range2,PosRangeEndSort>  region_t;
 
 private:
 
     bool
-    isInRegionImpl(
+    isIntersectRegionImpl(
+        const pos_t beginPos,
+        const pos_t endPos) const;
+
+    bool
+    isSubsetOfRegionImpl(
         const pos_t beginPos,
         const pos_t endPos) const;
 
@@ -97,8 +126,15 @@ private:
 template <typename T>
 struct RegionPayloadTracker
 {
+    bool
+    empty() const
+    {
+        return _regions.empty();
+    }
+
     boost::optional<T>
-    isPayloadInRegion(const unsigned pos) const;
+    isPayloadInRegion(
+            const pos_t pos) const;
 
     /// add region
     ///
@@ -113,11 +149,12 @@ struct RegionPayloadTracker
     /// remove all regions which end (inclusive) before pos+1
     void
     removeToPos(
-        const unsigned pos);
+        const pos_t pos);
 
     // debug util
     void
-    dump(std::ostream& os) const;
+    dump(
+        std::ostream& os) const;
 
     typedef typename std::map<known_pos_range2,T,PosRangeEndSort> region_t;
 

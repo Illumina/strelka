@@ -50,7 +50,8 @@ get_soft_clip_alignment_range(const alignment& al)
 
 
 known_pos_range
-get_alignment_range(const alignment& al)
+get_alignment_range(
+    const alignment& al)
 {
     const pos_t lead(apath_read_lead_size(al.path));
     const pos_t trail(apath_read_trail_size(al.path));

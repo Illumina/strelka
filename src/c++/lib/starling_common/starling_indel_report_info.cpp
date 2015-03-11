@@ -361,7 +361,7 @@ get_starling_indel_report_info(const indel_key& ik,
 
 
 read_path_scores
-indel_lnp_to_pprob(const starling_deriv_options& dopt,
+indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
                    const read_path_scores& path_lnp,
                    const bool is_tier2_pass,
                    const bool is_use_alt_indel)
@@ -436,7 +436,7 @@ indel_lnp_to_pprob(const starling_deriv_options& dopt,
 
 
 void
-get_starling_indel_sample_report_info(const starling_deriv_options& dopt,
+get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
                                       const indel_key& ik,
                                       const indel_data& id,
                                       const pos_basecall_buffer& bc_buff,
@@ -514,14 +514,7 @@ get_starling_indel_sample_report_info(const starling_deriv_options& dopt,
         // get depth of indel:
         pos_t depth_pos(ik.pos-1);
         if (ik.type==INDEL::BP_RIGHT) depth_pos=ik.pos;
-        const snp_pos_info* spi_ptr(bc_buff.get_pos(depth_pos));
-        if (NULL==spi_ptr)
-        {
-            isri.depth=0;
-        }
-        else
-        {
-            isri.depth=spi_ptr->calls.size();
-        }
+        const snp_pos_info& spi(bc_buff.get_pos(depth_pos));
+        isri.depth=spi.calls.size();
     }
 }

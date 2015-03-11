@@ -123,19 +123,12 @@ struct somatic_indel_caller_grid : private boost::noncopyable
                       const bool is_use_alt_indel,
                       somatic_indel_call& sindel) const;
 
+    void
+    set_normal_prior(std::vector<blt_float_t>& normal_prior,
+                     const double ref_error_prob,
+                     const strelka_options& opt) const;
+
 private:
-    const std::vector<blt_float_t>&
-    lnprior_genomic() const
-    {
-        return _lnprior.normal;
-    }
-
-    const std::vector<blt_float_t>&
-    lnprior_polymorphic() const
-    {
-        return _lnprior.normal_poly;
-    }
-
     struct prior_set
     {
         prior_set()
@@ -147,9 +140,8 @@ private:
         std::vector<blt_float_t> normal_poly;
     };
 
-    //const indel_digt_caller& _in_caller;
-    prior_set _lnprior;
-    //    double _lnprior_normal[STAR_DIINDEL_GRID::SIZE];
+    prior_set _bare_lnprior;
+
     double _ln_som_match;
     double _ln_som_mismatch;
 };

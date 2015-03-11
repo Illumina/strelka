@@ -74,7 +74,7 @@ position_nonref_2allele_test(const snp_pos_info& pi,
 
     static const bool is_mle_freq(false);
 
-    if (pi.ref_base=='N') return;
+    if (pi.get_ref_base()=='N') return;
 
     // add early escape test here?
 
@@ -110,7 +110,7 @@ position_nonref_2allele_test(const snp_pos_info& pi,
             }
         }
 
-        const unsigned ref_id=base_to_id(pi.ref_base);
+        const unsigned ref_id=base_to_id(pi.get_ref_base());
         if       (ref_id==max_id)
         {
             nrc.nonref_id=max2_id;

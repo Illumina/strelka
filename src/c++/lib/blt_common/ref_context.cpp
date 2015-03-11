@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -26,7 +25,6 @@ unsigned
 get_snp_hpol_size(const pos_t pos,
                   const reference_contig_segment& ref)
 {
-
     // count upstream repeats:
     bool is_up_repeat(false);
     char up_repeat('N');
@@ -75,7 +73,6 @@ get_snp_hpol_size(const pos_t pos,
 //
 struct ihpol_data
 {
-
     ihpol_data()
         : r1('N'), r2('N')
         , nr1(0), nr2(0)
@@ -131,7 +128,6 @@ unsigned
 get_interrupted_hpol_size(const pos_t pos,
                           const reference_contig_segment& ref)
 {
-
     // count current base + upstream repeats:
     ihpol_data up_ihd;
     for (pos_t i(pos); i>=0; i--)

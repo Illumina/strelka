@@ -13,6 +13,7 @@
 
 #include "boost/test/unit_test.hpp"
 
+#pragma clang diagnostic ignored "-Wkeyword-macro"
 #define private public
 
 #include "RegionTracker.hh"
@@ -27,8 +28,8 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker )
     RegionTracker rt;
 
     rt.addRegion(known_pos_range2(0,1));
-    BOOST_REQUIRE(rt.isInRegion(0));
-    BOOST_REQUIRE(! rt.isInRegion(1));
+    BOOST_REQUIRE(rt.isIntersectRegion(0));
+    BOOST_REQUIRE(! rt.isIntersectRegion(1));
 }
 
 
@@ -41,14 +42,14 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker2 )
         rt.addRegion(known_pos_range2(5,10));
         rt.addRegion(known_pos_range2(2,3));
         BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
-        BOOST_REQUIRE(  rt.isInRegion(2));
-        BOOST_REQUIRE(! rt.isInRegion(3));
-        BOOST_REQUIRE(! rt.isInRegion(4));
-        BOOST_REQUIRE(  rt.isInRegion(5));
+        BOOST_REQUIRE(  rt.isIntersectRegion(2));
+        BOOST_REQUIRE(! rt.isIntersectRegion(3));
+        BOOST_REQUIRE(! rt.isIntersectRegion(4));
+        BOOST_REQUIRE(  rt.isIntersectRegion(5));
 
         rt.addRegion(known_pos_range2(3,7));
         BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
-        BOOST_REQUIRE(  rt.isInRegion(4));
+        BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
     {
         RegionTracker rt;
@@ -56,7 +57,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker2 )
         rt.addRegion(known_pos_range2(2,3));
         rt.addRegion(known_pos_range2(2,5));
         BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
-        BOOST_REQUIRE(  rt.isInRegion(4));
+        BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 
     {
@@ -65,7 +66,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker2 )
         rt.addRegion(known_pos_range2(2,3));
         rt.addRegion(known_pos_range2(2,4));
         BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
-        BOOST_REQUIRE(  rt.isInRegion(3));
+        BOOST_REQUIRE(  rt.isIntersectRegion(3));
     }
 
     {
@@ -74,7 +75,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker2 )
         rt.addRegion(known_pos_range2(2,3));
         rt.addRegion(known_pos_range2(4,5));
         BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
-        BOOST_REQUIRE(  rt.isInRegion(4));
+        BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 
     {
@@ -82,7 +83,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker2 )
         rt.addRegion(known_pos_range2(1,10));
         rt.addRegion(known_pos_range2(4,5));
         BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
-        BOOST_REQUIRE(  rt.isInRegion(4));
+        BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 
     {
@@ -90,7 +91,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker2 )
         rt.addRegion(known_pos_range2(4,5));
         rt.addRegion(known_pos_range2(1,10));
         BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
-        BOOST_REQUIRE(  rt.isInRegion(4));
+        BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 }
 
@@ -114,6 +115,27 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker3 )
     BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
     rt.removeToPos(16);
     BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+}
+
+
+
+BOOST_AUTO_TEST_CASE( test_RegionTracker4 )
+{
+    // region remove tests
+    RegionTracker rt;
+
+    rt.addRegion(known_pos_range2(5,10));
+    rt.addRegion(known_pos_range2(2,3));
+    rt.addRegion(known_pos_range2(14,15));
+    rt.addRegion(known_pos_range2(24,25));
+    BOOST_REQUIRE_EQUAL(rt._regions.size(),4);
+
+    BOOST_REQUIRE(rt.isSubsetOfRegion(known_pos_range2(5,10)));
+    BOOST_REQUIRE(rt.isSubsetOfRegion(known_pos_range2(6,7)));
+    BOOST_REQUIRE(! rt.isSubsetOfRegion(known_pos_range2(4,10)));
+    BOOST_REQUIRE(! rt.isSubsetOfRegion(known_pos_range2(5,11)));
+    BOOST_REQUIRE(! rt.isSubsetOfRegion(known_pos_range2(0,1)));
+    BOOST_REQUIRE(! rt.isSubsetOfRegion(known_pos_range2(30,31)));
 }
 
 

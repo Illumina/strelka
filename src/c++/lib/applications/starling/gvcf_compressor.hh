@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include "starling_common/gvcf_locus_info.hh"
-#include "blt_common/blt_shared.hh"
+#include "gvcf_locus_info.hh"
+#include "gvcf_options.hh"
 #include "blt_util/RegionTracker.hh"
 
 
-/// manage gVCF non-reference block compressability criteria
+/// manage gVCF non-reference block compressibility criteria
 struct gvcf_compressor
 {
     gvcf_compressor(
@@ -54,20 +54,20 @@ struct gvcf_compressor
 
 private:
 
-    /// is site non-compressable according to external bedfile input?:
+    /// is site non-compressible according to external bedfile input?:
     bool
     is_nocompress_site(
         const pos_t pos) const
     {
-        return _nocompress_regions.isInRegion(pos);
+        return _nocompress_regions.isIntersectRegion(pos);
     }
 
-    /// is any part of range non-compressable according to external bedfile input?:
+    /// is any part of range non-compressible according to external bedfile input?:
     bool
     is_nocompress_range(
         const known_pos_range2 range) const
     {
-        return _nocompress_regions.isInRegion(range);
+        return _nocompress_regions.isIntersectRegion(range);
     }
 
     const gvcf_options& _opt;

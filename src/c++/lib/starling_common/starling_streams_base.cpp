@@ -26,65 +26,6 @@
 
 
 
-std::ostream*
-starling_streams_base::
-initialize_bindel_file(const starling_options& opt,
-                       const prog_info& pinfo,
-                       const std::string& filename,
-                       const char* label)
-{
-    const char* const cmdline(opt.cmdline.c_str());
-
-    std::ofstream* fosptr(new std::ofstream);
-    std::ofstream& fos(*fosptr);
-    open_ofstream(pinfo,filename,"bindel-diploid",opt.is_clobber,fos);
-
-    fos << "# ** " << pinfo.name();
-    if (label) fos << " " << label;
-    fos << " bindel-diploid file **\n";
-    write_file_audit(opt,pinfo,cmdline,fos);
-    fos << "#$ INDEL_THETA " << opt.bindel_diploid_theta << "\n";
-    fos << "#\n";
-    fos << "#$ COLUMNS seq_name pos type ref_upstream ref/indel ref_downstream Q(indel) max_gtype Q(max_gtype) depth alt_reads indel_reads other_reads repeat_unit ref_repeat_count indel_repeat_count\n";
-
-    return fosptr;
-}
-
-
-
-std::ostream*
-starling_streams_base::
-initialize_gvcf_file(const starling_options& opt,
-                     const prog_info& pinfo,
-                     const std::string& filename,
-                     const bam_header_t* const header,
-                     std::unique_ptr<std::ostream>& os_ptr_auto)
-{
-    std::ostream* osptr(&std::cout);
-    if (filename != "-")
-    {
-        std::ofstream* fos_ptr(new std::ofstream);
-        open_ofstream(pinfo,filename,"gvcf",opt.is_clobber,*fos_ptr);
-        os_ptr_auto.reset(fos_ptr);
-        osptr=os_ptr_auto.get();
-    }
-    std::ostream& os(*osptr);
-
-    if (! opt.gvcf.is_skip_header)
-    {
-        const char* const cmdline(opt.cmdline.c_str());
-
-        write_vcf_audit(opt,pinfo,cmdline,header,os);
-
-        os << "##content=" << pinfo.name() << " small-variant calls\n"
-           << "##SnvTheta=" << opt.bsnp_diploid_theta << "\n"
-           << "##IndelTheta=" << opt.bindel_diploid_theta << "\n";
-    }
-    return osptr;
-}
-
-
-
 bam_dumper*
 starling_streams_base::
 initialize_realign_bam(const bool is_clobber,
@@ -112,7 +53,7 @@ initialize_realign_bam(const bool is_clobber,
 
 std::ostream*
 starling_streams_base::
-initialize_candidate_indel_file(const starling_options& opt,
+initialize_candidate_indel_file(const starling_base_options& opt,
                                 const prog_info& pinfo,
                                 const std::string& filename)
 {
@@ -135,7 +76,7 @@ initialize_candidate_indel_file(const starling_options& opt,
 
 std::ostream*
 starling_streams_base::
-initialize_window_file(const starling_options& opt,
+initialize_window_file(const starling_base_options& opt,
                        const prog_info& pinfo,
                        const avg_window_data& awd,
                        const sample_info& si)
@@ -173,16 +114,14 @@ initialize_window_file(const starling_options& opt,
 
 
 starling_streams_base::
-starling_streams_base(const starling_options& opt,
+starling_streams_base(const starling_base_options& opt,
                       const prog_info& pinfo,
                       const sample_info& si)
-    : base_t(opt,pinfo,true)
+    : base_t(opt,pinfo)
     , _n_samples(si.sample_size())
     , _window_osptr(opt.variant_windows.size())
 {
     assert((_n_samples>0) && (_n_samples<=MAX_SAMPLE));
-
-    for (unsigned i(0); i<_n_samples; ++i) _gvcf_osptr[i] = nullptr;
 
     if (opt.is_write_candidate_indels())
     {

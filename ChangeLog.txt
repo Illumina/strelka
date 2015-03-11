@@ -1,3 +1,31 @@
+- STARKA-215 roll back STARKA-198 (due to trio conflict elevation and anomolous gVCF records)
+- STARKA-210 fix v low frequency realigner assertion on contig edges
+v2.3.4
+- STARKA-204 remove inconsistent filters at homref sites
+- STARKA-196 fix nocompress sites in empty regions
+v2.3.3
+- STARKA-202 limit total read buffer size to prevent ultra-high depth memory exhuastion
+- STARKA-201 set memory requirements based on run context
+- STARKA-198 SNP records with FILTER LowGQX and GQX>30 (when running VQSR) fixed
+v2.3.2
+- STARKA-190 apply VQSR to haploid regions
+- Fix somatic callability track tabix index generation
+v2.3.1
+- STARKA-186 support CIGAR sequence match/mismatch (=/X) in input BAM
+- STARKA-185 turn off somatic VQSR when exome configuration is selected for
+v2.3.0
+- STARKA-181 Use indel error estimates to improve indel quality computation
+- Update germline indel error settings to reflect MIB defaults
+- STARKA-163 Use indel error estimates to improve indel candidate selection
+- STARKA-179 Provide config option for somatic callability track 
+- STARKA-178 Consolidate single strelka config for all aligners
+- Expand random forest tree count in somatic SNV VQSR
+v2.2.2
+- STARKA-175 Update somatic SNV VQSR model to include MAPQ0 with improved
+normalization
+- STARKA-176 Prevent large deletions from locking indels outside of the 
+realignment buffer.
+- STARKA-174 Prevent segfault due to libstdc++ bug in certain gcc versions 
 v2.2.1
 - STARKA-170 Add "--exome" config option for starling/strelka
 v2.2.0

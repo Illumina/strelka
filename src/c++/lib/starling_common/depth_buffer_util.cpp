@@ -32,7 +32,7 @@ add_alignment_to_depth_buffer(const alignment& al,
     for (unsigned i(0); i<as; ++i)
     {
         const path_segment& ps(al.path[i]);
-        if (ps.type == MATCH)
+        if (is_segment_align_match(ps.type))
         {
             for (unsigned j(0); j<ps.length; ++j) db.inc(ref_head_pos+static_cast<pos_t>(j));
         }

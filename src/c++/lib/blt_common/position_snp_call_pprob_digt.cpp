@@ -277,7 +277,7 @@ increment_het_ratio_lhood(const extended_pos_info& epi,
     }
 
     const snp_pos_info& pi(epi.pi);
-    const unsigned ref_gt(base_to_id(pi.ref_base));
+    const unsigned ref_gt(base_to_id(pi.get_ref_base()));
 
     const unsigned n_calls(pi.calls.size());
 
@@ -329,7 +329,7 @@ get_diploid_gt_lhood(const blt_options& opt,
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt) lhood[gt] = 0.;
 
     const snp_pos_info& pi(epi.pi);
-    const unsigned ref_gt(base_to_id(pi.ref_base));
+    const unsigned ref_gt(base_to_id(pi.get_ref_base()));
 
     const unsigned n_calls(pi.calls.size());
     for (unsigned i(0); i<n_calls; ++i)
@@ -467,9 +467,9 @@ position_snp_call_pprob_digt(
 {
     const snp_pos_info& pi(epi.pi);
 
-    if (pi.ref_base=='N') return;
+    if (pi.get_ref_base()=='N') return;
 
-    dgt.ref_gt=base_to_id(pi.ref_base);
+    dgt.ref_gt=base_to_id(pi.get_ref_base());
 
     // check that a non-reference call meeting quality criteria even exists:
     if (! is_always_test)

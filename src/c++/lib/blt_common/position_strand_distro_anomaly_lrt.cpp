@@ -114,8 +114,8 @@ position_strand_distro_anomaly_lrt_expert(const snp_pos_info& pi,
     snp_pos_info fstrand_pi;
     snp_pos_info rstrand_pi;
 
-    fstrand_pi.ref_base = pi.ref_base;
-    rstrand_pi.ref_base = pi.ref_base;
+    fstrand_pi.set_ref_base(pi.get_ref_base());
+    rstrand_pi.set_ref_base(pi.get_ref_base());
     for (unsigned i(0); i<n_calls; ++i)
     {
         if (pi.calls[i].is_fwd_strand)

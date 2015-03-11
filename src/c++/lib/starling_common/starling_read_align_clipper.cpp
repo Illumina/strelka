@@ -104,22 +104,19 @@ dump_ref_map(const std::vector<ref_map_type>& ref_map,
 
 static
 void
-get_alignment_ref_map(const alignment& al,
-                      std::vector<ref_map_type>& ref_map)
+get_alignment_ref_map(
+    const alignment& al,
+    std::vector<ref_map_type>& ref_map)
 {
-
     using namespace ALIGNPATH;
 
     ref_map.clear();
 
     pos_t ref_head_pos(al.pos);
 
-    const unsigned as(al.path.size());
-    for (unsigned i(0); i<as; ++i)
+    for (const auto& ps : al.path)
     {
-        const path_segment& ps(al.path[i]);
-
-        if       (ps.type == MATCH)
+        if       (is_segment_align_match(ps.type))
         {
             for (unsigned j(0); j<ps.length; ++j)
             {
@@ -134,7 +131,7 @@ get_alignment_ref_map(const alignment& al,
                 ref_map.push_back(ref_map_type(ref_map_type::INSERT,0));
             }
         }
-        else if ((ps.type == DELETE) or (ps.type == SKIP))
+        else if ((ps.type == DELETE) || (ps.type == SKIP))
         {
             ref_head_pos += ps.length;
         }
@@ -165,24 +162,20 @@ void
 mark_ref_map_conflicts(const alignment& al,
                        std::vector<ref_map_type>& ref_map)
 {
-
     using namespace ALIGNPATH;
 
     pos_t ref_head_pos(al.pos);
     pos_t read_head_pos(0);
 
-    const unsigned as(al.path.size());
-    for (unsigned i(0); i<as; ++i)
+    for (const auto& ps : al.path)
     {
-        const path_segment& ps(al.path[i]);
-
-        if       (ps.type == MATCH)
+        if       (is_segment_align_match(ps.type))
         {
             for (unsigned j(0); j<ps.length; ++j)
             {
                 ref_map_type& rm(ref_map[read_head_pos+j]);
                 if (rm.type == ref_map_type::CONFLICT) continue;
-                if ((rm.type != ref_map_type::MATCH) or
+                if ((rm.type != ref_map_type::MATCH) ||
                     (rm.pos != (ref_head_pos+static_cast<pos_t>(j))))
                 {
                     rm.type=ref_map_type::CONFLICT;
@@ -204,7 +197,7 @@ mark_ref_map_conflicts(const alignment& al,
             }
             read_head_pos += ps.length;
         }
-        else if ((ps.type == DELETE) or (ps.type == SKIP))
+        else if ((ps.type == DELETE) || (ps.type == SKIP))
         {
             ref_head_pos += ps.length;
         }
@@ -255,13 +248,14 @@ extend_or_add_sc(alignment& al,
 
 
 
+/// transform an alignment to contain the specified leading and trailing soft-clip lengths
+///
 static
 void
 soft_clip_alignment(alignment& al,
                     const unsigned leading_clip,
                     const unsigned trailing_clip)
 {
-
     using namespace ALIGNPATH;
 
     assert(leading_clip < trailing_clip);
@@ -272,18 +266,15 @@ soft_clip_alignment(alignment& al,
     new_al.pos=al.pos;
     new_al.is_fwd_strand=al.is_fwd_strand;
 
-    const unsigned as(al.path.size());
-    for (unsigned i(0); i<as; ++i)
+    for (const path_segment& ps : al.path)
     {
-        path_segment& ps(al.path[i]);
-
-        if ((ps.type == MATCH) or (ps.type == INSERT))
+        if ((is_segment_align_match(ps.type)) || (ps.type == INSERT))
         {
             if (leading_clip > read_head_pos)
             {
                 const unsigned clip_length(std::min(ps.length,(leading_clip-read_head_pos)));
                 extend_or_add_sc(new_al,clip_length);
-                if (ps.type == MATCH) new_al.pos += static_cast<pos_t>(clip_length);
+                if (is_segment_align_match(ps.type)) new_al.pos += static_cast<pos_t>(clip_length);
                 if (clip_length < ps.length)
                 {
                     const unsigned frac_length(ps.length-clip_length);
@@ -306,7 +297,7 @@ soft_clip_alignment(alignment& al,
             }
             read_head_pos += ps.length;
         }
-        else if ((ps.type == DELETE) or (ps.type == SKIP))
+        else if ((ps.type == DELETE) || (ps.type == SKIP))
         {
             if (leading_clip >= read_head_pos)
             {

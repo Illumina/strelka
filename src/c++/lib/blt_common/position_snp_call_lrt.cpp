@@ -35,8 +35,7 @@ position_snp_call_lrt(const double alpha,
                       const snp_pos_info& pi,
                       lrt_snp_call& sc)
 {
-
-    if (pi.ref_base=='N') return;
+    if (pi.get_ref_base()=='N') return;
 
     unsigned ecount(0);
     const unsigned n_calls(pi.calls.size());
@@ -90,7 +89,7 @@ position_snp_call_lrt(const double alpha,
     static const double end_tol(1e-7);
     static const unsigned max_iter(200);
 
-    const unsigned ref_base_id(base_to_id(pi.ref_base));
+    const unsigned ref_base_id(base_to_id(pi.get_ref_base()));
 
     const double ref_freq(1.-x_nonref_freq);
     const double nonref_freq((x_nonref_freq)/3.);

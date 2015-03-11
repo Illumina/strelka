@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "extended_pos_data.hh"
 #include "position_somatic_snv_grid_shared.hh"
 #include "position_somatic_snv_strand_grid_states.hh"
 #include "strelka_shared.hh"

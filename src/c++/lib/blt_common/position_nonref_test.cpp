@@ -71,7 +71,7 @@ position_nonref_test(const snp_pos_info& pi,
                      nonref_test_call& nrc)
 {
 
-    if (pi.ref_base=='N') return;
+    if (pi.get_ref_base()=='N') return;
 
     // add early escape test here?
 

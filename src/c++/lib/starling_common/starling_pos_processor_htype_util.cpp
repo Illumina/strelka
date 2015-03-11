@@ -452,7 +452,7 @@ convert_indel_to_htype(const indel_key& ik,
 
 static
 void
-get_htypes_for_indel(const starling_deriv_options& dopt,
+get_htypes_for_indel(const starling_base_deriv_options& dopt,
                      const starling_read_buffer& rbuff,
                      const reference_contig_segment& ref,
                      const indel_key& ik,
@@ -534,7 +534,7 @@ get_region_haplotypes(const known_pos_range full_pr,
         // only consider candidates:
         if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
 
-        get_htypes_for_indel(_client_dopt,sif.read_buff,_ref,ik,id,hdata);
+        get_htypes_for_indel(_dopt,sif.read_buff,_ref,ik,id,hdata);
 
         // convert indel to htype_element and insert:
         //  convert_indel_to_htype(ik,id,_ref_seq);
@@ -546,7 +546,7 @@ get_region_haplotypes(const known_pos_range full_pr,
 
 #if 0
     // get expanded region for read search:
-    const known_pos_range expanded_pr(full_pr.begin_pos-(_client_opt.max_indel_size+XXXMAX_READ_SIZE),full_pr.end_pos);
+    const known_pos_range expanded_pr(full_pr.begin_pos-(_opt.max_indel_size+XXXMAX_READ_SIZE),full_pr.end_pos);
 
     // iterate through reads in region:
     for (pos_t pos(begin); pos<end; ++pos)
@@ -581,7 +581,7 @@ get_region_haplotypes(const known_pos_range full_pr,
                full_pr.is_pos_intersect(ik.right_pos()))) continue;
 
         // only consider candidates:
-        if (! sif.indel_sync().is_candidate_indel(_client_opt,ik,id)) continue;
+        if (! sif.indel_sync().is_candidate_indel(_opt,ik,id)) continue;
 
         // convert indel to htype_element and insert:
         convert_indel_to_htype(ik,id,_ref_seq);
@@ -637,14 +637,14 @@ process_htype_pos(const pos_t begin_pos)
     if (_hregion.is_first_region)
     {
         _hregion.is_first_region=false;
-        _hregion.region_alignment=begin_pos%static_cast<pos_t>(_client_opt.htype_call_segment);
+        _hregion.region_alignment=begin_pos%static_cast<pos_t>(_opt.htype_call_segment);
     }
     else
     {
-        if ((begin_pos%static_cast<pos_t>(_client_opt.htype_call_segment))!=_hregion.region_alignment) return;
+        if ((begin_pos%static_cast<pos_t>(_opt.htype_call_segment))!=_hregion.region_alignment) return;
     }
 
-    const known_pos_range active_pr(begin_pos,begin_pos+_client_opt.htype_call_segment);
+    const known_pos_range active_pr(begin_pos,begin_pos+_opt.htype_call_segment);
 
     // see if there's anything reportable in the central region:
     bool is_reportable(false);
@@ -660,11 +660,11 @@ process_htype_pos(const pos_t begin_pos)
     if (! is_reportable) return;
 
     // do haplotypeing routines:
-    const unsigned full_htype_segment(_client_opt.htype_buffer_segment()+
-                                      _client_opt.htype_call_segment+
-                                      _client_opt.htype_buffer_segment());
+    const unsigned full_htype_segment(_opt.htype_buffer_segment()+
+                                      _opt.htype_call_segment+
+                                      _opt.htype_buffer_segment());
 
-    const pos_t full_begin_pos(begin_pos-_client_opt.htype_buffer_segment());
+    const pos_t full_begin_pos(begin_pos-_opt.htype_buffer_segment());
     const known_pos_range full_pr(full_begin_pos,full_begin_pos+full_htype_segment);
     get_region_haplotypes(full_pr,active_pr);
 
@@ -675,7 +675,7 @@ process_htype_pos(const pos_t begin_pos)
         write_reads(pos);
         if (is_pos_reportable(pos))
         {
-            process_pos_variants(pos);
+            process_pos_variants_impl(pos);
         }
     }
 }

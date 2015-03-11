@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include "starling_common/starling_shared.hh"
+#include "starling_common/starling_base_shared.hh"
 
 #include <string>
 
 
 void
-get_starling_ref_seq(const starling_options& opt,
+get_starling_ref_seq(const starling_base_options& opt,
                      reference_contig_segment& ref);
 

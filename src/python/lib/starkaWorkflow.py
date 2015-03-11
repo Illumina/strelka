@@ -69,3 +69,11 @@ class StarkaWorkflow(WorkflowRunner) :
 
         self.params.isHighDepthFilter = (not self.params.isExome)
 
+
+    def setCallMemMb(self) :
+        # set default mem requirements:
+        self.params.callMemMb = self.params.callLocalMemMb
+        if self.getRunMode() == "sge" :
+            self.params.callMemMb = self.params.callSGEMemMb
+
+
