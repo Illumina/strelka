@@ -77,6 +77,10 @@ struct RegionTracker
     void
     dump(std::ostream& os) const;
 
+    int regionCount() const{
+        return _regions.size();
+    }
+
     typedef std::set<known_pos_range2,PosRangeEndSort>  region_t;
 
 private:

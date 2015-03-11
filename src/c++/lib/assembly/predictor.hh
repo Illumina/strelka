@@ -64,11 +64,13 @@ struct predictor
         else
         {
             //add in dummy dev regions
-            known_pos_range2 range(239692924,239695935);
+            known_pos_range2 range(239691265,239691280);
             this->rt.addRegion(range,std::vector<std::string>());
-            known_pos_range2 range2(239692945,239695950);
+            known_pos_range2 range2(239691282,239691285);
             this->rt.addRegion(range2,std::vector<std::string>());
         }
+
+        // log_os << this->rt.regionCount() << std::endl;
 
     }
 

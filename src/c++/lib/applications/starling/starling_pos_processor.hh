@@ -20,6 +20,8 @@
 #include "gvcf_aggregator.hh"
 #include "starling_shared.hh"
 #include "starling_streams.hh"
+#include "site_info_stream.hh"
+#include "assembly/assembly_record_processor.hh"
 
 #include "starling_common/starling_pos_processor_base.hh"
 
@@ -87,7 +89,7 @@ private:
     const starling_deriv_options& _dopt;
     const starling_streams& _streams;
 
-    std::unique_ptr<gvcf_aggregator> _gvcfer;
+    std::unique_ptr<site_info_stream> _gvcfer;
 
     // a caching term used for gvcf:
     site_info _site_info;

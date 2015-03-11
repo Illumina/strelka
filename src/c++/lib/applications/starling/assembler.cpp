@@ -17,8 +17,7 @@
  *  Author: Morten Kallberg
  */
 
-#include "assembler.hh"
-
+#include <assembler.hh>
 #include <array>
 #include <sstream>
 #include <vector>
@@ -32,18 +31,29 @@
 
 
 // Add a SNP site to the phasing buffer
-bool
-assembler::
-add_site(const site_info& si,const gvcf_block_site_record& empty_block)
-{
-    _buffer.push_back(si);
+//,const gvcf_block_site_record& empty_block)
 
-    //CASE: Start a new potential assembly block
-    block_end = si.pos+1;
+//bool add_indel(const pos_t pos,
+//                        const indel_key ik,
+//                        const starling_diploid_indel_core& dindel,
+//                        const starling_indel_report_info& iri,
+//                        const starling_indel_sample_report_info& isri){
+//      return true;
+//}
+
+bool
+assembly_streamer::
+add_site(site_info& si)
+{
+//      return this->_consumer->add_site(si);
+
+        this->_site_buffer.push_back(si);
+
+        //CASE: Start a new potential assembly block
+        block_end = si.pos+1;
     if (!is_in_block()){
         block_start = si.pos;
 //        log_os << "New block case - starting @ " << si.pos  << std::endl;
-//        return false;
     }
 
     // Update block info
@@ -53,11 +63,10 @@ add_site(const site_info& si,const gvcf_block_site_record& empty_block)
     // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
     if (this->keep_collecting())
     {
-//     log_os << "Started @ " << this->block_start << std::endl;
+//      log_os << "Started @ " << this->block_start << std::endl;
 //      log_os << "keep collecting - @ " << si  << std::endl;
 //      log_os << "var count " << var_count << std::endl;
 //      this->write_out_buffer();
-//      log_os << "var count " << var_count << std::endl;
         return false;
     }
 
@@ -65,15 +74,17 @@ add_site(const site_info& si,const gvcf_block_site_record& empty_block)
     if (this->do_assemble())
     {
         // if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
-//      log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
         make_record();
+//      log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
     }
+    this->notify_consumer();
+    this->clear();
     return true;
 }
 
 // makes the phased VCF record from the buffered sites list
 void
-assembler::make_record()
+assembly_streamer::make_record()
 {
     this->construct_reference();
     this->collect_read_evidence();
@@ -82,16 +93,16 @@ assembler::make_record()
 }
 
 void
-assembler::construct_reference()
+assembly_streamer::construct_reference()
 {
     this->reference = "";
     // TODO: the following will need to be revised to handle indels!
-    for (unsigned i=0; i<(this->_buffer.size()); i++)
-        this->reference += _buffer.at(i).ref;
+    for (unsigned i=0; i<(_site_buffer.size()); i++)
+        this->reference += _site_buffer.at(i).ref;
 }
 
 void
-assembler::assemble()
+assembly_streamer::assemble()
 {
 
   // THIS IS A STUB ASSEMBLER: IT ASSUMES THAT THE PREDICTOR CAN PROVIDE THE DESIRED ASSEMBLY
@@ -123,7 +134,7 @@ assembler::assemble()
 }
 
 void
-assembler::rescore(std::stringstream &AD)
+assembly_streamer::rescore(std::stringstream &AD)
 {
     // TODO: some sort of read realignment-based scoring
     // TODO SOON: add score information here
@@ -143,11 +154,11 @@ assembler::rescore(std::stringstream &AD)
 
 
 void
-assembler::create_contig_records()
+assembly_streamer::create_contig_records()
 {
     // pick first records in buffer as our anchoring point for the assembled record
-    site_info& base = (this->_buffer.at(0));
-    _buffer.clear();
+    site_info& base = (this->_site_buffer.at(0));
+    this->clear_buffer();
 
 
 
@@ -231,6 +242,7 @@ assembler::create_contig_records()
 
     // specify that we are covering multiple records, and make the needed modification in the output
     base.smod.is_phased_region = true;
+    base.smod.is_assembled_contig = true;
 
     // set more vcf record fields
     int reads_ignored   = 10;
@@ -238,12 +250,12 @@ assembler::create_contig_records()
     base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
 
 
-    // Add in assembled records
-    _buffer.push_back(base);
+    // Add in assembled record(s)
+    _site_buffer.push_back(base);
 }
 
 void
-assembler::
+assembly_streamer::
 collect_read_segment_evidence(
     const read_segment& rseg)
 {
@@ -296,16 +308,17 @@ collect_read_segment_evidence(
 
 
 void
-assembler::
+assembly_streamer::
 collect_read_evidence()
 {
+        // TODO hook in for assembler contigs
         this->observations[this->reference] = 10;
-        std::string altAllele(this->reference.length(), 'N');;
+        std::string altAllele(this->reference.length(), 'N');
         this->observations[altAllele] = 15;
 }
 
 bool
-assembler::
+assembly_streamer::
 keep_collecting()
 {
         //extend with more data structures to determine is assembly criteriea is met
@@ -313,19 +326,18 @@ keep_collecting()
 }
 
 bool
-assembler::
+assembly_streamer::
 do_assemble()
 {
         //extend with more data structures to determine is assembly criteriea is met
-
         return this->myPredictor.do_assemble(this->block_start,this->block_end);
 }
 
 
 void
-assembler::clear()
+assembly_streamer::clear()
 {
-    _buffer.clear();
+    this->clear_buffer();
     observations.clear();
     block_start                                 = -1;
     block_end                                   = -1;
@@ -338,16 +350,16 @@ assembler::clear()
 
 
 void
-assembler::write_out_buffer() const
+assembly_streamer::write_out_buffer() const
 {
-    for (const auto& val : _buffer)
+    for (const auto& val : _site_buffer)
     {
         log_os << val << " ref " << val.ref << "\n";
     }
 }
 
 void
-assembler::write_out_alleles() const
+assembly_streamer::write_out_alleles() const
 {
     for (const auto& val : observations)
     {

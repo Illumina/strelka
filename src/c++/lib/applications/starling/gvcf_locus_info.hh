@@ -51,6 +51,7 @@ enum index_t
     HighSNVSB,
     HighSNVHPOL,
     HighRefRep,
+	AssembledRecord,
     SIZE
 };
 
@@ -98,6 +99,8 @@ get_label(const unsigned idx)
         return "SiteConflict";
     case PloidyConflict:
         return "PLOIDY_CONFLICT";
+    case AssembledRecord:
+        return "AssembledRec";
     default:
         assert(false && "Unknown VCF filter value");
         return nullptr;
@@ -212,6 +215,7 @@ struct site_modifiers : public shared_modifiers
         is_zero_ploidy=false;
         is_block=false;
         is_phased_region=false;
+        is_assembled_contig=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
     }
 
@@ -227,6 +231,7 @@ struct site_modifiers : public shared_modifiers
     bool is_zero_ploidy;
     bool is_block;
     bool is_phased_region;
+    bool is_assembled_contig;
 
     MODIFIED_SITE_GT::index_t modified_gt;
 };
@@ -441,8 +446,8 @@ struct site_info
     double avgBaseQ = 0;
     double rawPos = 0;
     unsigned mapq_zero = 0;     // The number of spanning reads that do not pass the command-line mapq test
-    int Qscore = -1;             // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
-    bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
+    int Qscore = -1;            // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
+    bool Unphasable = false;    // Set to true if the site should never be included in a phasing block
 
     site_modifiers smod;
 };
