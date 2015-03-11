@@ -231,14 +231,16 @@ def callGenome(self,taskPrefix="",dependencies=None):
         assert(len(tmpList) > 0)
 
         if len(tmpList) > 1 :
-            catCmd=[self.params.bgcatBin,"-o",output]
-            catCmd.extend(tmpList)
-            catCmd = " ".join(catCmd)
+            catGVCFCmd = [self.params.bgcatBin,"-o",output]
+            catGVCFCmd.extend(tmpList)
         else :
-            catCmd="mv -f %s %s" % (tmpList[0],output)
+            catGVCFCmd = "mv -f %s %s" % (tmpList[0],output)
 
-        catCmd += " && %s -p vcf %s" % (self.params.tabixBin, output)
-        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeGVCF"), catCmd, dependencies=completeSegmentsTask))
+        indexGVCFCmd = "%s -p vcf %s" % (self.params.tabixBin, output)
+        catGVCFTask = self.addTask(preJoin(taskPrefix,label+"_cat"), catGVCFCmd,
+                                   dependencies=completeSegmentsTask, isForceLocal=True)
+        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_index"), indexGVCFCmd,
+                                     dependencies=catGVCFTask, isForceLocal=True))
 
     finishVcf(segFiles.gvcf, self.paths.getGvcfOutputPath(),"gVCF")
 
