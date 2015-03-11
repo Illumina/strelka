@@ -36,6 +36,38 @@
 #include "blt_util/log.hh"
 #endif
 
+
+namespace ASSEMBLY_TRIGER
+{
+
+enum index_t
+{
+    bedTrack,
+    highVarDensity,
+	indelConflicts,
+	NONE,
+    SIZE
+};
+
+inline
+const char*
+get_label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case bedTrack:
+        return "BedTrack";
+    case highVarDensity:
+        return "highDensity";
+    case indelConflicts:
+        return "indelConflict";
+    default:
+        assert(false && "Unknown trigger");
+        return nullptr;
+    }
+}
+}
+
 struct predictor
 {
     predictor(
@@ -61,14 +93,14 @@ struct predictor
           }
           delete bedstr;
         }
-        else
-        {
+//        else
+//        {
             //add in dummy dev regions
-            known_pos_range2 range(239691265,239691280);
-            this->rt.addRegion(range,std::vector<std::string>());
-            known_pos_range2 range2(239691282,239691285);
-            this->rt.addRegion(range2,std::vector<std::string>());
-        }
+//            known_pos_range2 range(239691265,239691280);
+//            this->rt.addRegion(range,std::vector<std::string>());
+//            known_pos_range2 range2(239691282,239691285);
+//            this->rt.addRegion(range2,std::vector<std::string>());
+//        }
 
         // log_os << this->rt.regionCount() << std::endl;
 
@@ -79,11 +111,15 @@ struct predictor
     }
     bool do_assemble(int st, int end)
     {
-        return (rt.isPayloadInRegion(st));
+        if (rt.isPayloadInRegion(st)){
+        	this->assemblyReason = ASSEMBLY_TRIGER::bedTrack;
+        	return true;
+        }
+        return false;
     }
 
     RegionPayloadTracker< std::vector< std::string > >  rt;
-
+    ASSEMBLY_TRIGER::index_t assemblyReason;
 private:
     int assembleCount, assembleContigLength;          // count of regions to assemble, cummulative length of assembled regions
     std::string regions_file;

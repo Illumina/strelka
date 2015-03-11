@@ -239,6 +239,7 @@ assembly_streamer::create_contig_records()
 
     //set any filters
     base.smod.filters.reset();
+    base.smod.assemblyReason = this->myPredictor.assemblyReason;
 
     // specify that we are covering multiple records, and make the needed modification in the output
     base.smod.is_phased_region = true;

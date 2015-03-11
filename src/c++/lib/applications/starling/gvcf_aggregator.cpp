@@ -20,6 +20,7 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/chrom_depth_map.hh"
 #include "blt_util/io_util.hh"
+#include "assembly/predictor.hh"
 
 #include <iomanip>
 #include <iostream>
@@ -535,6 +536,9 @@ write_site_record(const site_info& si) const
 //            }
 
         }
+        else if(si.smod.is_assembled_contig){
+        	os << "asmblReason=" << ASSEMBLY_TRIGER::get_label(si.smod.assemblyReason);
+        }
         else
         {
             os << '.';
@@ -860,6 +864,7 @@ write_indel_record(const unsigned write_index)
             os << '.';
         }
     }
+
 
 //    if (ii.Qscore>0) {
 //        os << ';';

@@ -21,6 +21,7 @@
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
+#include "assembly/predictor.hh"
 
 #include <bitset>
 #include <iosfwd>
@@ -217,6 +218,8 @@ struct site_modifiers : public shared_modifiers
         is_phased_region=false;
         is_assembled_contig=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
+        assemblyReason = ASSEMBLY_TRIGER::NONE;
+
     }
 
     bool
@@ -234,6 +237,7 @@ struct site_modifiers : public shared_modifiers
     bool is_assembled_contig;
 
     MODIFIED_SITE_GT::index_t modified_gt;
+    ASSEMBLY_TRIGER::index_t assemblyReason;
 };
 
 
