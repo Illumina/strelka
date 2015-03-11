@@ -53,20 +53,20 @@ add_site(const site_info& si,const gvcf_block_site_record& empty_block)
     // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
     if (this->keep_collecting())
     {
-//    	log_os << "Started @ " << this->block_start << std::endl;
-//    	log_os << "keep collecting - @ " << si  << std::endl;
-//    	log_os << "var count " << var_count << std::endl;
-//    	this->write_out_buffer();
-//    	log_os << "var count " << var_count << std::endl;
-    	return false;
+//     log_os << "Started @ " << this->block_start << std::endl;
+//      log_os << "keep collecting - @ " << si  << std::endl;
+//      log_os << "var count " << var_count << std::endl;
+//      this->write_out_buffer();
+//      log_os << "var count " << var_count << std::endl;
+        return false;
     }
 
     // We are not collecting further, check if we want to assemble what is in the buffer
     if (this->do_assemble())
     {
-    	// if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
-//    	log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
-    	make_record();
+        // if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
+//      log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
+        make_record();
     }
     return true;
 }
@@ -77,6 +77,7 @@ assembler::make_record()
 {
     this->construct_reference();
     this->collect_read_evidence();
+    this->assemble();
     this->create_contig_records();
 }
 
@@ -84,9 +85,62 @@ void
 assembler::construct_reference()
 {
     this->reference = "";
+    // TODO: the following will need to be revised to handle indels!
     for (unsigned i=0; i<(this->_buffer.size()); i++)
         this->reference += _buffer.at(i).ref;
 }
+
+void
+assembler::assemble()
+{
+
+  // THIS IS A STUB ASSEMBLER: IT ASSUMES THAT THE PREDICTOR CAN PROVIDE THE DESIRED ASSEMBLY
+
+  int regionCount(0);
+  bool inRegion(false);
+  unsigned aPosInRegion=0;
+  for(unsigned i=block_start;i<=block_end;++i){
+    if (this->myPredictor.rt.isPayloadInRegion(i)){
+      if(!inRegion){
+        ++regionCount;
+        if(regionCount==1){
+          aPosInRegion=i;
+        }
+        inRegion=true;
+      }
+    } else {
+      inRegion=false;
+    }
+  }
+  assert(regionCount==1);
+
+  boost::optional<std::vector<std::string> > ctgs(myPredictor.rt.isPayloadInRegion(aPosInRegion));
+  if (ctgs){
+    asm_contigs = *ctgs;
+  } else {
+    asm_contigs.clear();
+  }
+}
+
+void
+assembler::rescore(std::stringstream &AD)
+{
+    // TODO: some sort of read realignment-based scoring
+    // TODO SOON: add score information here
+
+
+    // add information from the alleles selected for output
+    AD << 10;
+    bool hasAlt(false);
+    for (const auto& val : asm_contigs)
+    {
+        if (val==reference) continue;
+        AD << ',' << 15;
+    }
+
+    return;
+}
+
 
 void
 assembler::create_contig_records()
@@ -95,43 +149,74 @@ assembler::create_contig_records()
     site_info& base = (this->_buffer.at(0));
     _buffer.clear();
 
+
+
+#if 0
     // Dummy determine two allele with most counts in observation counter
     typedef std::pair<std::string, int> allele_count_t;
-	std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
-	for (auto& obs : observations)
-	{
-		if (obs.second>max_alleles[0].second)
-		{
-			max_alleles[1]  = max_alleles[0];
-			max_alleles[0]  = obs;
-		}
-		if (obs.second>max_alleles[1].second && max_alleles[0].first!=obs.first)
-		{
-			max_alleles[1] = obs;
-		}
-	}
-
-//    log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
-//    log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
-
-    base.phased_ref = this->reference;
-    const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
-    base.smod.is_block 			= false;
-    base.smod.is_unknown 		= false;
-    base.smod.max_gt = 4;
-    base.dgt.ref_gt  = 0; // setting the gt method to 0/1
+    std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
+    for (auto& obs : observations)
+    {
+        if (obs.second>max_alleles[0].second)
+        {
+                max_alleles[1]  = max_alleles[0];
+                max_alleles[0]  = obs;
+        }
+        if (obs.second>max_alleles[1].second && max_alleles[0].first!=obs.first)
+        {
+                max_alleles[1] = obs;
+        }
+    }
 
 
     // add information from the alleles selected for output
     std::stringstream AD,alt;
     AD << this->observations[this->reference];
+    bool hasAlt(false);
     for (const auto& val : max_alleles)
     {
         if (val.first==reference) continue;
+        hasAlt = true;
         if (! alt.str().empty()) alt << ',';
         alt << val.first;
         AD << ',' << val.second;
     }
+    if ( ! hasAlt )
+    {
+        alt << ".";
+    }
+
+
+#else
+    // add information from the alleles selected for output
+    std::stringstream alt;
+    bool hasAlt(false);
+    for (const auto& val : asm_contigs)
+    {
+        if (val==reference) continue;
+        hasAlt = true;
+        if (! alt.str().empty()) alt << ',';
+        alt << val;
+    }
+    if ( ! hasAlt )
+    {
+        alt << ".";
+    }
+
+    std::stringstream AD;
+    rescore(AD);
+
+#endif
+//    log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
+//    log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
+
+    base.phased_ref = this->reference;
+    //const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
+    base.smod.is_block                  = false;
+    base.smod.is_unknown                = false;
+    // TODO: make this do reasonable things for GT
+    base.smod.max_gt = 4;
+    base.dgt.ref_gt  = 0; // setting the gt method to 0/1
 
     // set GQ and GQX - hard-coded for illustration
     base.smod.gq                = 30;
@@ -148,8 +233,8 @@ assembler::create_contig_records()
     base.smod.is_phased_region = true;
 
     // set more vcf record fields
-    int reads_ignored 	= 10;
-    base.n_used_calls 	= 15;
+    int reads_ignored   = 10;
+    base.n_used_calls   = 15;
     base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
 
 
@@ -214,26 +299,26 @@ void
 assembler::
 collect_read_evidence()
 {
-	this->observations[this->reference] = 10;
-	std::string altAllele(this->reference.length(), 'N');;
-	this->observations[altAllele] = 15;
+        this->observations[this->reference] = 10;
+        std::string altAllele(this->reference.length(), 'N');;
+        this->observations[altAllele] = 15;
 }
 
 bool
 assembler::
 keep_collecting()
 {
-	//extend with more data structures to determine is assembly criteriea is met
-	return this->myPredictor.keep_extending(this->block_start,this->block_end);
+        //extend with more data structures to determine is assembly criteriea is met
+        return this->myPredictor.keep_extending(this->block_start,this->block_end);
 }
 
 bool
 assembler::
 do_assemble()
 {
-	//extend with more data structures to determine is assembly criteriea is met
+        //extend with more data structures to determine is assembly criteriea is met
 
-	return this->myPredictor.do_assemble(this->block_start,this->block_end);
+        return this->myPredictor.do_assemble(this->block_start,this->block_end);
 }
 
 
@@ -242,8 +327,8 @@ assembler::clear()
 {
     _buffer.clear();
     observations.clear();
-    block_start 				= -1;
-    block_end   				= -1;
+    block_start                                 = -1;
+    block_end                                   = -1;
     var_count                   = 0;
     total_reads                 = 0;
     total_reads_unused          = 0;

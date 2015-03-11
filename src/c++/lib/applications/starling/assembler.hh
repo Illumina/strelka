@@ -45,13 +45,15 @@ struct assembler
 {
     assembler(
         const starling_base_options& init_opt,
+        const starling_deriv_options& init_dopt,
         starling_read_buffer& init_read_buffer,
         const unsigned init_max_read_len,
-		const RegionTracker& assembly_regions)
+		const RegionTracker& nocompress_regions)
         : opt(init_opt),
+          dopt(init_dopt),
           read_buffer(init_read_buffer),
           max_read_len(init_max_read_len),
-          myPredictor(assembly_regions)
+          myPredictor(opt,dopt,nocompress_regions)
     {
         this->clear();
     }
@@ -90,9 +92,11 @@ private:
     collect_read_segment_evidence(
         const read_segment& rseg);
 
-    void collect_read_evidence();       // 2. Fill in allele counter based on assembled graph
     void construct_reference();         // 1. Determine the reference allele for the record
-    void create_contig_records();       // 3. ill in the si record and decide if we have sufficient evidence for a phased call
+    void collect_read_evidence();       // 2. Fill in allele counter based on assembled graph
+    void assemble();                    // 3. Generate contigs from reads using some assembly method
+    void rescore(std::stringstream &AD);// 4. Score based on reads realigned to contigs
+    void create_contig_records();       // 5. Fill in the si record and decide if we have sufficient evidence for a phased call
     unsigned get_block_length() const
     {
         return (this->block_end-this->block_start+1);
@@ -104,6 +108,7 @@ private:
 
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
+    const starling_deriv_options& dopt;
     starling_read_buffer& read_buffer;          // pass along the relevant read-buffer
     int max_read_len;                           // the length of the input reads
 
@@ -115,4 +120,5 @@ private:
     typedef std::map<std::string,int> allele_map;
     allele_map observations;
     predictor myPredictor;
+    std::vector<std::string> asm_contigs;
 };
