@@ -63,7 +63,7 @@ clasify_site(
     site_modifiers& smod) const
 {
     //si.smod.filters.reset(); // make sure no filters have been applied prior
-    if ((si.dgt.is_snp || si.is_nonref()) && (!this->is_default_model))
+    if ((si.dgt.is_snp) && (!is_default_model))
     {
         get_model(model_name).score_site_instance(si, smod);
     }
