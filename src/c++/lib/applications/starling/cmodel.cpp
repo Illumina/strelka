@@ -199,11 +199,12 @@ apply_site_qscore_filters(
     if (smod.Qscore<0)
     {
         static const featuremap cutoffs = {{"GQX", 30}, {"DP", 1}, {"DPFratio", 0.4}, {"HighSNVSB", 10}};
+        const auto orig_filters(smod.filters);
         do_site_rule_model(cutoffs, si, smod);
         if (smod.filters.count()>0)
         {
             smod.Qscore = 1;
-            smod.filters.reset();
+            smod.filters = orig_filters;
         }
         else
         {
@@ -231,11 +232,12 @@ apply_indel_qscore_filters(
     if (imod.Qscore<0)
     {
         static const featuremap cutoffs = {{"GQX", 30}, {"DP", 1},{"DPFratio", 0.2}};
+        const auto orig_filters(imod.filters);
         do_indel_rule_model(cutoffs, ii, imod);
         if (imod.filters.count()>0)
         {
             imod.Qscore = 1;
-            imod.filters.reset();
+            imod.filters = orig_filters;
         }
         else
         {

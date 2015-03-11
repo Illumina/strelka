@@ -671,8 +671,13 @@ modify_indel_overlap_site(
     log_os << "CHIRP: indel_overlap_site imod before: " << ii.imod << "\n";
 #endif
 
-    // inherit any filters from the indel:
-    si.smod.filters |= ii.imod.filters;
+    // if overlapping indel has any filters, mark as site conflict
+    // (note that we formerly had the site inherit indel filters, but
+    // this interacts poorly with VQSR
+    if (! ii.imod.filters.none())
+    {
+        si.smod.set_filter(VCF_FILTERS::SiteConflict);
+    }
 
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: indel_overlap_site smod after: " << si.smod << "\n";
