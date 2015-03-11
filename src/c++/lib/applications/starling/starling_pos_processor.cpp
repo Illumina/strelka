@@ -81,22 +81,31 @@ starling_pos_processor(
     // setup gvcf aggregator
     if (_opt.gvcf.is_gvcf_output())
     {
-    	gvcf_aggregator *myAgg = new gvcf_aggregator(
+    	gvcf_aggregator *myAggregator = new gvcf_aggregator(
     						  _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(0),
     						  sample(0).read_buff,get_largest_read_size());
+
     	if(_opt.do_assemble){
-        	//register assembler site_info_stream as the primary consumer from pos_proc
-        	// add gVCFagg as a consumer on the
-    		// assembly_streamer myAssembler();
-    		// register more components of the assembly pipeline here as needed
 
-			_gvcfer.reset(myAgg);
+    		//Initialize site_info_streamers
+    		assembly_streamer *myAssembler = new assembly_streamer(_opt, sample(0).read_buff, get_largest_read_size(),_nocompress_regions);
+    		assembly_record_processor *myRecordProcessor = new assembly_record_processor();
 
+    		    		// register more components of the assembly pipeline here as needed
+    		// assembler -> recordProcessor -> gVCFAggregator
+    		myAssembler->register_consumer(myRecordProcessor);
+    		myRecordProcessor->register_consumer(myAggregator);
 
+			_gvcfer.reset(myAssembler);
 
         }
+    	else if(_opt.do_codon_phasing){
+    		// register aggregator with the codon phasing code
+
+    		_gvcfer.reset(myAggregator);
+    	}
         else{
-			_gvcfer.reset(myAgg);
+			_gvcfer.reset(myAggregator);
         }
     }
 

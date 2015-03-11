@@ -117,7 +117,7 @@ gvcf_aggregator(
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _codon_phaser(opt, read_buffer, max_read_len)
-    , _assemble_stream(opt, read_buffer, max_read_len,nocompress_regions)
+//    , _assemble_stream(opt, read_buffer, max_read_len,nocompress_regions)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -163,13 +163,13 @@ add_site(site_info& si)
         si.smod.set_filter(VCF_FILTERS::PloidyConflict);
     }
 
-    if (_opt.do_codon_phasing
-        && (si.is_het() || _codon_phaser.is_in_block()))
-    {
-        const bool emptyBuffer = _codon_phaser.add_site(si);
-        if (!_codon_phaser.is_in_block() || emptyBuffer)
-            this->output_phased_blocked();
-    }
+//    if (_opt.do_codon_phasing
+//        && (si.is_het() || _codon_phaser.is_in_block()))
+//    {
+//        const bool emptyBuffer = _codon_phaser.add_site(si);
+//        if (!_codon_phaser.is_in_block() || emptyBuffer)
+//            this->output_phased_blocked();
+//    }
 //    else if (_opt.do_assemble)
 //    {
 //    	const bool emptyBuffer = _assembler.add_site(si);

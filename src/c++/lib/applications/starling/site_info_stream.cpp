@@ -16,8 +16,5 @@ site_info_stream::~site_info_stream() {
 	// TODO Auto-generated destructor stub
 }
 
-void site_info_stream::clear_buffer(){
-	this->_indel_buffer.clear();
-	this->_site_buffer.clear();
-}
+
 

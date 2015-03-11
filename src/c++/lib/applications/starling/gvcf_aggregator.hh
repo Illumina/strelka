@@ -111,6 +111,6 @@ private:
     gvcf_compressor _gvcf_comp;
 
     Codon_phaser _codon_phaser;
-    assembly_streamer _assemble_stream;
+//    assembly_streamer _assemble_stream;
 };
 

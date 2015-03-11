@@ -12,7 +12,3 @@ assembly_record_processor::assembly_record_processor() {
 
 }
 
-assembly_record_processor::~assembly_record_processor() {
-	// TODO Auto-generated destructor stub
-}
-

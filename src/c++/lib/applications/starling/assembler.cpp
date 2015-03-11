@@ -45,13 +45,15 @@ bool
 assembly_streamer::
 add_site(site_info& si)
 {
-    _buffer.push_back(si);
+//	return this->_consumer->add_site(si);
 
+	this->_site_buffer.push_back(si);
     //CASE: Start a new potential assembly block
-    block_end = si.pos+1;
+
+	block_end = si.pos+1;
     if (!is_in_block()){
         block_start = si.pos;
-//        log_os << "New block case - starting @ " << si.pos  << std::endl;
+        log_os << "New block case - starting @ " << si.pos  << std::endl;
 //        return false;
     }
 
@@ -62,11 +64,11 @@ add_site(site_info& si)
     // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
     if (this->keep_collecting())
     {
-//    	log_os << "Started @ " << this->block_start << std::endl;
-//    	log_os << "keep collecting - @ " << si  << std::endl;
-//    	log_os << "var count " << var_count << std::endl;
-//    	this->write_out_buffer();
-//    	log_os << "var count " << var_count << std::endl;
+    	log_os << "Started @ " << this->block_start << std::endl;
+    	log_os << "keep collecting - @ " << si  << std::endl;
+    	log_os << "var count " << var_count << std::endl;
+    	this->write_out_buffer();
+    	log_os << "var count " << var_count << std::endl;
     	return false;
     }
 
@@ -74,9 +76,10 @@ add_site(site_info& si)
     if (this->do_assemble())
     {
     	// if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
-//    	log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
+    	log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
     	make_record();
     }
+    this->notify_consumer();
     return true;
 }
 
@@ -93,16 +96,16 @@ void
 assembly_streamer::construct_reference()
 {
     this->reference = "";
-    for (unsigned i=0; i<(this->_buffer.size()); i++)
-        this->reference += _buffer.at(i).ref;
+    for (unsigned i=0; i<(_site_buffer.size()); i++)
+        this->reference += _site_buffer.at(i).ref;
 }
 
 void
 assembly_streamer::create_contig_records()
 {
     // pick first records in buffer as our anchoring point for the assembled record
-    site_info& base = (this->_buffer.at(0));
-    _buffer.clear();
+    site_info& base = (this->_site_buffer.at(0));
+    this->clear_buffer();
 
     // Dummy determine two allele with most counts in observation counter
     typedef std::pair<std::string, int> allele_count_t;
@@ -163,7 +166,7 @@ assembly_streamer::create_contig_records()
 
 
     // Add in assembled record(s)
-    _buffer.push_back(base);
+    _site_buffer.push_back(base);
 }
 
 void
@@ -250,7 +253,7 @@ do_assemble()
 void
 assembly_streamer::clear()
 {
-    _buffer.clear();
+    this->clear_buffer();
     observations.clear();
     block_start 				= -1;
     block_end   				= -1;
@@ -265,7 +268,7 @@ assembly_streamer::clear()
 void
 assembly_streamer::write_out_buffer() const
 {
-    for (const auto& val : _buffer)
+    for (const auto& val : _site_buffer)
     {
         log_os << val << " ref " << val.ref << "\n";
     }

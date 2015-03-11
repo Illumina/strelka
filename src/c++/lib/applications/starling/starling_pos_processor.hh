@@ -21,6 +21,7 @@
 #include "starling_shared.hh"
 #include "starling_streams.hh"
 #include "site_info_stream.hh"
+#include "assembly/assembly_record_processor.hh"
 
 #include "starling_common/starling_pos_processor_base.hh"
 

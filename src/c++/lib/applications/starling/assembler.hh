@@ -52,7 +52,6 @@ struct assembly_streamer : public site_info_stream
 				  const starling_diploid_indel_core& dindel,
 				  const starling_indel_report_info& iri,
 				  const starling_indel_sample_report_info& isri){return true;}
-//	void notify_consumer();
 
 	void flush(){} //TODO
     // clear all object data
@@ -72,7 +71,7 @@ struct assembly_streamer : public site_info_stream
     const std::vector<site_info>&
     buffer() const
     {
-        return _buffer;
+        return this->_site_buffer;
     }
 
     int block_start,block_end;                  // position of the first and last added variant site
@@ -96,7 +95,6 @@ private:
     bool do_assemble();                     // Assemble the region that is currently in the buffer
 
 
-    std::vector<site_info> _buffer;
     const starling_base_options& opt;
     starling_read_buffer& read_buffer;          // pass along the relevant read-buffer
     int max_read_len;                           // the length of the input reads
