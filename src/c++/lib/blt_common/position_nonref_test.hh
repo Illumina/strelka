@@ -11,12 +11,11 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
-#ifndef __POSITION_NONREF_TEST_HH
-#define __POSITION_NONREF_TEST_HH
+
+#pragma once
 
 #include "blt_common/blt_shared.hh"
 #include "blt_common/nonref_test_call.hh"
@@ -68,5 +67,3 @@ write_nonref_test(const blt_options& opt,
                   const snp_pos_info& pi,
                   const nonref_test_call& nrc,
                   std::ostream& os);
-
-#endif

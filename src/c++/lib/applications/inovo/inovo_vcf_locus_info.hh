@@ -59,7 +59,7 @@ get_label(const unsigned idx)
         return nullptr;
     }
 }
-};
+}
 
 struct inovo_shared_modifiers
 {

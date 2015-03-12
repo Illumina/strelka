@@ -204,6 +204,7 @@ namespace TRANSMISSION_STATE
         SIZE
     };
 
+#if 0
     static
     const char*
     getLabel(
@@ -219,6 +220,7 @@ namespace TRANSMISSION_STATE
             return nullptr;
         }
     }
+#endif
 
     // temporary fixed priors:
     static

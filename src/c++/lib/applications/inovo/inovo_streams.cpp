@@ -84,24 +84,28 @@ inovo_streams(
 
     const char* const cmdline(opt.cmdline.c_str());
 
-    std::ofstream* fosptr(new std::ofstream);
-    _denovo_osptr.reset(fosptr);
-    std::ofstream& fos(*fosptr);
-    open_ofstream(pinfo,opt.denovo_filename,"denovo-small-variants",opt.is_clobber,fos);
+    {
+        std::ofstream* fosptr(new std::ofstream);
+        _denovo_osptr.reset(fosptr);
+        std::ofstream& fos(*fosptr);
+        open_ofstream(pinfo,opt.denovo_filename,"denovo-small-variants",opt.is_clobber,fos);
+    }
 
     if (! opt.dfilter.is_skip_header)
     {
-        write_vcf_audit(opt,pinfo,cmdline,header,fos);
-        fos << "##content=inovo somatic snv calls\n"
+        std::ostream& os(*_denovo_osptr);
+
+        write_vcf_audit(opt,pinfo,cmdline,header,os);
+        os << "##content=inovo somatic snv calls\n"
             << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n";
 
         // INFO:
-        fos << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
-        fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
-        fos << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
+        os << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
+        os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
+        os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
 
         // FORMAT:
-        fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">\n";
+        os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">\n";
 
         // FILTERS:
         {
@@ -110,22 +114,22 @@ inovo_streams(
             {
                 std::ostringstream oss;
                 oss << "Fraction of basecalls filtered at this site in either sample is at or above " << opt.sfilter.snv_max_filtered_basecall_frac;
-                write_vcf_filter(fos, get_label(BCNoise), oss.str().c_str());
+                write_vcf_filter(os, get_label(BCNoise), oss.str().c_str());
             }
 #endif
         }
 
-        write_shared_vcf_header_info(opt.dfilter,dopt.dfilter,fos);
+        write_shared_vcf_header_info(opt.dfilter,dopt.dfilter,os);
 
-        fos << vcf_col_label() << "\tFORMAT";
+        os << vcf_col_label() << "\tFORMAT";
         {
             const SampleInfoManager& si(opt.alignFileOpt.alignmentSampleInfo);
             for (unsigned sampleIndex(0); sampleIndex<si.size(); ++sampleIndex)
             {
-                fos << "\t" << INOVO_SAMPLETYPE::get_label(si.getSampleInfo(sampleIndex).stype);
+                os << "\t" << INOVO_SAMPLETYPE::get_label(si.getSampleInfo(sampleIndex).stype);
             }
         }
-        fos << "\n";
+        os << "\n";
     }
 
     if (opt.is_denovo_callable())

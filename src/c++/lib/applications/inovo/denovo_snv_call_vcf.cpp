@@ -71,7 +71,7 @@ denovo_snv_call_vcf(
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
     const CleanedPileup& probandCpi(*pileups[INOVO_TIERS::TIER1][probandIndex]);
 
-    //const result_set& rs(dsc.rs);
+    const denovo_snv_call::result_set& rs(dsc.rs);
 
     inovo_shared_modifiers smod;
 
@@ -96,6 +96,7 @@ denovo_snv_call_vcf(
  //                                  dsc.ref_gt,os);
     //QUAL:
     os << "\t.";
+    os << rs.snv_qphred;
 
     //FILTER:
     os << "\t";
