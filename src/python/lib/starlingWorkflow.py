@@ -237,7 +237,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
             catGVCFCmd = "mv -f %s %s" % (tmpList[0],output)
 
         indexGVCFCmd = "%s -p vcf %s" % (self.params.tabixBin, output)
-        catGVCFTask = self.addTask(preJoin(taskPrefix,label+"_cat"), catGVCFCmd,
+        catGVCFTask = self.addTask(preJoin(taskPrefix,label+"_concat"), catGVCFCmd,
                                    dependencies=completeSegmentsTask, isForceLocal=True)
         finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_index"), indexGVCFCmd,
                                      dependencies=catGVCFTask, isForceLocal=True))

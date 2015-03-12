@@ -94,6 +94,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         bgzipBin=joinFile(libexecDir,"bgzip")
         samtoolsBin=joinFile(libexecDir,"samtools")
         tabixBin=joinFile(libexecDir,"tabix")
+        bgcatBin=joinFile(libexecDir,"bgzf_cat")
 
         countFastaBin=joinFile(libexecDir,"countFastaBases")
         starlingBin=joinFile(libexecDir,"starling2")
