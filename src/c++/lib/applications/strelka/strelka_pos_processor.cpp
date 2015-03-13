@@ -40,7 +40,7 @@ strelka_pos_processor(
     , _opt(opt)
     , _dopt(dopt)
     , _streams(streams)
-    , _callProcessor(streams.somatic_callable_osptr())
+    , _scallProcessor(streams.somatic_callable_osptr())
     , _indelWriter(opt, dopt, streams.somatic_indel_osptr())
     , _indelRegionIndexNormal(0)
     , _indelRegionIndexTumor(0)
@@ -173,7 +173,7 @@ process_pos_snp_somatic(const pos_t pos)
 
         if (_opt.is_somatic_callable())
         {
-            _callProcessor.add(_chrom_name,output_pos,sgtg);
+            _scallProcessor.addToRegion(_chrom_name,output_pos,sgtg);
         }
     }
 

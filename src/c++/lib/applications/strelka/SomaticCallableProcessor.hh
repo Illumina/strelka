@@ -19,42 +19,30 @@
 
 #include "position_somatic_snv_grid_shared.hh"
 
-#include "blt_util/blt_types.hh"
-#include "blt_util/pos_range.hh"
-
-#include <iosfwd>
-#include <string>
+#include "blt_util/RegionProcessor.hh"
 
 
-/// manage creation of a callable bed track
-struct CallableProcessor
+/// manage creation of a somatic callable bed track
+struct SomaticCallableProcessor : public RegionProcessor
 {
-    CallableProcessor(
-        std::ostream* osptr = nullptr) :
-        _osptr(osptr)
+    typedef RegionProcessor base_t;
+
+    SomaticCallableProcessor(
+        std::ostream* osptr) :
+        base_t(osptr)
     {}
 
-    ~CallableProcessor()
-    {
-        flush();
-    }
-
     void
-    add(
+    addToRegion(
         const std::string& chrom,
         const pos_t outputPos,
-        const somatic_snv_genotype_grid& sgtg);
-
-    // write out any pending ranges:
-    void
-    flush();
+        const somatic_snv_genotype_grid& sgtg)
+    {
+        if ((sgtg.rs.snv_qphred < _minQSS) && (sgtg.rs.nonsomatic_qphred < _minNQSS)) return;
+        base_t::addToRegion(chrom,outputPos);
+    }
 
 private:
     static constexpr int _minQSS = 15;
     static constexpr int _minNQSS = 15;
-    std::ostream* _osptr;
-
-    bool _is_range = false;
-    std::string _chrom;
-    pos_range _prange;
 };

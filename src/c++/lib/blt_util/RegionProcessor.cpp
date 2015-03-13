@@ -15,20 +15,19 @@
 /// \author Chris Saunders
 ///
 
-#include "CallableProcessor.hh"
+#include "RegionProcessor.hh"
 
 #include <iostream>
 
 
 
 void
-CallableProcessor::
-add(
+RegionProcessor::
+addToRegion(
     const std::string& chrom,
-    const pos_t outputPos,
-    const somatic_snv_genotype_grid& sgtg)
+    const pos_t outputPos)
 {
-    if ((sgtg.rs.snv_qphred < _minQSS) && (sgtg.rs.nonsomatic_qphred < _minNQSS)) return;
+    if (nullptr == _osptr) return;
 
     // determine if we need to flush current range:
     if (_is_range)
@@ -55,7 +54,7 @@ add(
 
 
 void
-CallableProcessor::
+RegionProcessor::
 flush()
 {
     if (nullptr == _osptr) return;

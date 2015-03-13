@@ -18,7 +18,6 @@
 #pragma once
 
 
-#include "CallableProcessor.hh"
 #include "NoiseBuffer.hh"
 #include "strelka_shared.hh"
 #include "SomaticIndelVcfWriter.hh"
@@ -27,6 +26,7 @@
 
 #include "starling_common/PileupCleaner.hh"
 #include "starling_common/starling_pos_processor_base.hh"
+#include "SomaticCallableProcessor.hh"
 
 
 ///
@@ -88,7 +88,7 @@ private:
 
     CleanedPileup _tier2_cpi[STRELKA_SAMPLE_TYPE::SIZE];
 
-    CallableProcessor _callProcessor;
+    SomaticCallableProcessor _scallProcessor;
 
     // enables delayed indel write:
     SomaticIndelVcfWriter _indelWriter;
