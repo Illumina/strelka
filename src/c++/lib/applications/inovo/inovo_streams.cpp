@@ -79,13 +79,8 @@ inovo_streams(
     const InovoSampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
-    {
-         if (opt.is_realigned_read_file)
-        {
-            assert(false);
-        }
+    assert(! opt.is_realigned_read_file);
 
-    }
 
     const char* const cmdline(opt.cmdline.c_str());
 
@@ -132,20 +127,20 @@ inovo_streams(
         }
         fos << "\n";
     }
-#if 0
-    if (opt.is_somatic_callable())
+
+    if (opt.is_denovo_callable())
     {
         std::ofstream* fosptr(new std::ofstream);
-        _somatic_callable_osptr.reset(fosptr);
+        _denovo_callable_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
 
-        open_ofstream(pinfo,opt.somatic_callable_filename,"somatic-callable-regions",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.denovo_callable_filename,"denovo-callable-regions",opt.is_clobber,fos);
 
-        if (! opt.sfilter.is_skip_header)
+        if (! opt.dfilter.is_skip_header)
         {
-            fos << "track name=\"StrelkaCallableSites\"\t"
-                << "description=\"Sites with sufficient information to call somatic alleles at 10% frequency or greater.\"\n";
+            fos << "track name=\"DenovoCallableSites\"\t"
+                << "description=\"Sites with sufficient information to call denovo variants.\"\n";
         }
     }
-#endif
+
 }

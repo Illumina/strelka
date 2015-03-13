@@ -24,6 +24,7 @@
 #pragma once
 
 
+#include "DenovoCallableProcessor.hh"
 #include "inovo_shared.hh"
 #include "inovo_streams.hh"
 
@@ -63,6 +64,8 @@ private:
     const inovo_options& _opt;
     const inovo_deriv_options& _dopt;
     const inovo_streams& _streams;
+
+    DenovoCallableProcessor _icallProcessor;
 
 //    extra_position_data _tier2_epd[MAX_SAMPLE];
 

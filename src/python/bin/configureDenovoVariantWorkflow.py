@@ -52,8 +52,8 @@ You must specify BAM file(s) for the proband and additional related samples.
                           help="BAM file for a parent sample. (no default, submit argument one time for each parent)")
         group.add_option("--siblingAlignment", type="string",dest="siblingBamList",metavar="FILE", action="append",
                           help="BAM file for a sibling sample. (no default, submit argument one time for each sibling)")
-#        group.add_option("--isWriteCallableRegion", action="store_true",
-#                         help="Write out a bed file describing de-novo callable regions of the genome")
+        group.add_option("--isWriteCallableRegion", action="store_true",
+                         help="Write out a bed file describing de-novo callable regions of the genome")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 

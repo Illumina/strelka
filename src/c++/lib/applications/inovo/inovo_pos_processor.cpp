@@ -37,6 +37,7 @@ inovo_pos_processor(
     , _opt(opt)
     , _dopt(dopt)
     , _streams(streams)
+    , _icallProcessor(streams.denovo_callable_osptr())
 {
     /// get max proband depth
     double max_candidate_proband_sample_depth(-1.);
@@ -126,6 +127,11 @@ process_pos_snp_denovo(const pos_t pos)
         _opt.alignFileOpt.alignmentSampleInfo,
         pileups,
         dsc);
+
+    if (_opt.is_denovo_callable())
+    {
+        _icallProcessor.addToRegion(_chrom_name, output_pos, _opt.alignFileOpt.alignmentSampleInfo, pileups);
+    }
 
     // report events:
     //

@@ -48,6 +48,8 @@ get_denovo_snv_call(
     // if one allele, find at least 2 observation of the allele coming from each parent
     //
 
+    static const unsigned minDepth(18);
+
     using namespace INOVO_SAMPLETYPE;
 
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
@@ -59,7 +61,7 @@ get_denovo_snv_call(
     for (const auto sampleIndex : allIndex)
     {
         const CleanedPileup& cpi(*pileups[sampleIndex]);
-        if (cpi.cleanedPileup().calls.size() < 18)
+        if (cpi.cleanedPileup().calls.size() < minDepth)
         {
             return;
         }

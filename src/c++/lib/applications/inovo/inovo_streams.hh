@@ -40,6 +40,13 @@ struct inovo_streams : public starling_streams_base
         return _denovo_osptr.get();
     }
 
+    std::ostream*
+    denovo_callable_osptr() const
+    {
+        return _denovo_callable_osptr.get();
+    }
+
 private:
     std::unique_ptr<std::ostream> _denovo_osptr;
+    std::unique_ptr<std::ostream> _denovo_callable_osptr;
 };

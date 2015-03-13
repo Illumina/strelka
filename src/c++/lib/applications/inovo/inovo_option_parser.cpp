@@ -44,6 +44,9 @@ get_inovo_option_parser(
      "If a chrom depth file is supplied then loci with depth exceeding the mean chromosome depth times this value are filtered")
     ("inovo-skip-header", po::value(&opt.dfilter.is_skip_header)->zero_tokens(),
      "Skip writing header info for all de-novo vcf/bed files (usually used to simplify segment concatenation)")
+    ("denovo-callable-region-file",
+     po::value(&opt.denovo_callable_filename),
+     "Output a bed file of regions which are confidently denovo or non-denovo for SNVs")
     ;
 
     po::options_description inovo_parse_opt("De-novo caller options");

@@ -63,10 +63,20 @@ struct inovo_options : public starling_base_options
         is_bam_filename_used = false;
     }
 
+    bool
+    is_denovo_callable() const
+    {
+        return (! denovo_callable_filename.empty());
+    }
+
+
     DenovoAlignmentFileOptions alignFileOpt;
 
-    // output file:
+    /// variant vcf output file:
     std::string denovo_filename;
+
+    /// callable bed track:
+    std::string denovo_callable_filename;
 
 #if 0
     bool is_tumor_bindel_diploid() const
@@ -87,12 +97,6 @@ struct inovo_options : public starling_base_options
     bool is_somatic_indel() const
     {
         return (! somatic_indel_filename.empty());
-    }
-
-    bool
-    is_somatic_callable() const
-    {
-        return (! somatic_callable_filename.empty());
     }
 
     // report whether any type of indel-caller is running (including
@@ -134,8 +138,6 @@ struct inovo_options : public starling_base_options
     bool is_tumor_sample_min_small_candidate_indel_read_frac = false;
     int tumor_sample_min_candidate_indel_reads = 2;
     double tumor_sample_min_small_candidate_indel_read_frac = 0.02;
-
-    std::string somatic_callable_filename;
 
     // positions/indels in vcf are used to estimate low-frequency sequencing noise:
     std::vector<std::string> noise_vcf;
