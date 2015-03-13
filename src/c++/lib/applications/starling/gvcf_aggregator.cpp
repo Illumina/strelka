@@ -435,6 +435,7 @@ get_visible_alt_order(
         altOrder.push_back(b);
     }
 
+#if 0
     // include other alts based on known count:
     for (unsigned b(0); b<N_BASE; ++b)
     {
@@ -442,6 +443,7 @@ get_visible_alt_order(
         if (DIGT::expect2(b,si.smod.max_gt)) continue;
         if (si.known_counts[b] > 0) altOrder.push_back(b);
     }
+#endif
 }
 
 
