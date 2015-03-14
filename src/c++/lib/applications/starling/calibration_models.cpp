@@ -11,13 +11,12 @@
 // <https://github.com/sequencing/licenses/>
 //
 /*
- * calbrationmodels.cpp
- *
 *  Created on: Oct 10, 2013
  * Author: Morten Kallberg
  */
 
 #include "calibration_models.hh"
+
 #include <cassert>
 #include <exception>
 #include <sstream>
@@ -39,105 +38,126 @@
 #endif
 
 
-int calibration_models::get_case_cutoff(const CALIBRATION_MODEL::var_case my_case)
+
+int
+calibration_models::
+get_case_cutoff(
+    const CALIBRATION_MODEL::var_case my_case) const
 {
-    return this->get_model(this->model_name).get_var_threshold(my_case);
+    return get_model(model_name).get_var_threshold(my_case);
 }
+
+
 
 bool calibration_models::is_current_logistic() const
 {
-    if (this->is_default_model)
-        return false;
-    return this->get_model(this->model_name).is_logistic_model();
+    if (is_default_model) return false;
+    return get_model(model_name).is_logistic_model();
 }
 
 
-void calibration_models::clasify_site(site_info& si)
+void
+calibration_models::
+clasify_site(
+    const site_info& si,
+    site_modifiers& smod) const
 {
-    if (si.dgt.is_snp && (!this->is_default_model))
+    //si.smod.filters.reset(); // make sure no filters have been applied prior
+    if ((si.dgt.is_snp) && (!is_default_model))
     {
-        c_model myModel = this->get_model(this->model_name);
-        featuremap features = si.get_qscore_features(myModel.normal_depth());     // create site value feature dict
-        myModel.score_instance(features,si);
+        get_model(model_name).score_site_instance(si, smod);
     }
     else
     {
         // don't know what to do with this site, throw it to the old default filters
-        this->default_clasify_site(si);
+        default_clasify_site(si, smod);
     }
 }
 
-void calibration_models::clasify_site(indel_info& ii)
+void
+calibration_models::
+clasify_indel(
+    const indel_info& ii,
+    indel_modifiers& imod) const
 {
-    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && !this->is_default_model)
+    if ((ii.dindel.max_gt != ii.dindel.max_gt_poly) || ii.dindel.is_zero_coverage)
     {
-        c_model myModel = this->get_model(this->model_name);
-        featuremap features = ii.get_qscore_features(myModel.normal_depth());
-        myModel.score_instance(features,ii);
+        imod.gqx=0;
     }
     else
     {
-        this->default_clasify_site(ii);
+        imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
+    }
+    imod.max_gt=ii.dindel.max_gt_poly;
+    imod.gq=ii.dindel.max_gt_poly_qphred;
+
+
+    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && (!is_default_model))
+    {
+        get_model(model_name).score_indel_instance(ii, imod);
+    }
+    else
+    {
+        default_clasify_indel(ii, imod);
     }
 }
 
 
-void calibration_models::default_clasify_site(site_info& si)
+
+void
+calibration_models::
+default_clasify_site(
+    const site_info& si,
+    site_modifiers& smod) const
 {
-    if (this->opt.is_min_gqx)
+    if (opt.is_min_gqx)
     {
-        if (si.smod.gqx<this->opt.min_gqx) si.smod.set_filter(VCF_FILTERS::LowGQX);
+        if (si.smod.gqx<opt.min_gqx) smod.set_filter(VCF_FILTERS::LowGQX);
     }
-    if (this->dopt.is_max_depth())
+    if (dopt.is_max_depth())
     {
-        if ((si.n_used_calls+si.n_unused_calls) > this->dopt.max_depth) si.smod.set_filter(VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) smod.set_filter(VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
-    if (this->opt.is_max_base_filt)
+    if (opt.is_max_base_filt)
     {
         const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
         if (total_calls>0)
         {
             const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>this->opt.max_base_filt) si.smod.set_filter(VCF_FILTERS::HighBaseFilt);
+            if (filt>opt.max_base_filt) smod.set_filter(VCF_FILTERS::HighBaseFilt);
         }
     }
     if (si.dgt.is_snp)
     {
-        if (this->opt.is_max_snv_sb)
+        if (opt.is_max_snv_sb)
         {
-            if (si.dgt.sb>opt.max_snv_sb) si.smod.set_filter(VCF_FILTERS::HighSNVSB);
+            if (si.dgt.sb>opt.max_snv_sb) smod.set_filter(VCF_FILTERS::HighSNVSB);
         }
-        if (this->opt.is_max_snv_hpol)
+        if (opt.is_max_snv_hpol)
         {
-            if (static_cast<int>(si.hpol)>this->opt.max_snv_hpol) si.smod.set_filter(VCF_FILTERS::HighSNVHPOL);
+            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) smod.set_filter(VCF_FILTERS::HighSNVHPOL);
         }
     }
 }
 
+
+
 // default rules based indel model
-void calibration_models::default_clasify_site(indel_info& ii)
+void
+calibration_models::
+default_clasify_indel(
+    const indel_info& ii,
+    indel_modifiers& imod) const
 {
-    if ((ii.dindel.max_gt != ii.dindel.max_gt_poly) || ii.dindel.is_zero_coverage)
-    {
-        ii.imod.gqx=0;
-    }
-    else
-    {
-        ii.imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
-    }
-    ii.imod.max_gt=ii.dindel.max_gt_poly;
-    ii.imod.gq=ii.dindel.max_gt_poly_qphred;
-
-
     if (this->opt.is_min_gqx)
     {
-        if (ii.imod.gqx<opt.min_gqx) ii.imod.set_filter(VCF_FILTERS::LowGQX);
+        if (ii.imod.gqx<opt.min_gqx) imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
     if (this->dopt.is_max_depth())
     {
-        if (ii.isri.depth > this->dopt.max_depth) ii.imod.set_filter(VCF_FILTERS::HighDepth);
+        if (ii.isri.depth > this->dopt.max_depth) imod.set_filter(VCF_FILTERS::HighDepth);
     }
 
     if (this->opt.is_max_ref_rep)
@@ -147,11 +167,13 @@ void calibration_models::default_clasify_site(indel_info& ii)
             if ((ii.iri.repeat_unit.size() <= 2) &&
                 (static_cast<int>(ii.iri.ref_repeat_count) > this->opt.max_ref_rep))
             {
-                ii.imod.set_filter(VCF_FILTERS::HighRefRep);
+                imod.set_filter(VCF_FILTERS::HighRefRep);
             }
         }
     }
 }
+
+
 
 void
 calibration_models::load_chr_depth_stats()
@@ -211,14 +233,16 @@ void calibration_models::set_model(const std::string& name)
 #endif
 }
 
-c_model& calibration_models::get_model(const std::string& name)
+c_model&
+calibration_models::get_model(const std::string& name)
 {
     auto it = this->models.find(boost::to_upper_copy(name));
     assert("Unrecognized calibration model given using --scoring-model option" && it != this->models.end());
     return it->second;
 }
 
-const c_model& calibration_models::get_model(const std::string& name) const
+const c_model&
+calibration_models::get_model(const std::string& name) const
 {
     auto it = this->models.find(boost::to_upper_copy(name));
     assert("Unrecognized calibration model given using --scoring-model option" && it != this->models.end());

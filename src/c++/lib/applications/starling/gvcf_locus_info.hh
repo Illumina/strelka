@@ -153,6 +153,7 @@ struct indel_modifiers : public shared_modifiers
         shared_modifiers::clear();
         is_overlap=false;
         ploidy.clear();
+        Qscore = -1;
     }
 
     ALIGNPATH::path_t cigar;
@@ -161,6 +162,9 @@ struct indel_modifiers : public shared_modifiers
 
     /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
     std::vector<unsigned> ploidy;
+
+    // The empirically calibrated quality-score of an indel, if -1 no q-score has been reported
+    int Qscore = -1;
 };
 
 
@@ -213,6 +217,7 @@ struct site_modifiers : public shared_modifiers
         is_block=false;
         is_phased_region=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
+        Qscore = -1;
     }
 
     bool
@@ -229,6 +234,9 @@ struct site_modifiers : public shared_modifiers
     bool is_phased_region;
 
     MODIFIED_SITE_GT::index_t modified_gt;
+
+    // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
+    int Qscore = -1;
 };
 
 
@@ -251,15 +259,10 @@ struct indel_info
         iri=(init_iri);
         isri=(init_isri);
         imod.clear();
-        MQ = 0.0;
-        ReadPosRankSum = 0.0;
-        BaseQRankSum = 0.0;
-        MQRankSum = 0.0;
-        Qscore = -1;
     }
 
     const char*
-    get_gt()
+    get_gt() const
     {
         if (imod.is_overlap)
         {
@@ -284,20 +287,20 @@ struct indel_info
     }
 
     bool
-    is_hetalt()
+    is_hetalt() const
     {
         return (imod.is_overlap);
     }
 
     bool
-    is_het()
+    is_het() const
     {
         return (static_cast<int>(imod.max_gt)>1);
     }
 
     // the site ploidy within the indel at offset x
     unsigned
-    get_ploidy(const unsigned offset)
+    get_ploidy(const unsigned offset) const
     {
         if (dindel.is_noploid()) return 0;
 
@@ -323,9 +326,8 @@ struct indel_info
         return 2;
     }
 
-    void calc_vqsr_metrics(); //calculate the final VQSR metrics from the indel_key data
-
-    std::map<std::string, double> get_qscore_features(double chrom_depth);
+    std::map<std::string, double>
+    get_indel_qscore_features(const double chrom_depth) const;
 
     pos_t pos;
     indel_key ik;
@@ -333,14 +335,6 @@ struct indel_info
     starling_indel_report_info iri;
     starling_indel_sample_report_info isri;
     indel_modifiers imod;
-    double MQ;               // RMS of mapping qualities
-
-    //only meaningful for het calls
-    double ReadPosRankSum;   // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
-    double BaseQRankSum;     // Uses Mann-Whitney Rank Sum Test for BQs (ref bases vs alternate alleles)
-    double MQRankSum;
-    int Qscore = -1;
-
 };
 
 
@@ -366,7 +360,6 @@ struct site_info
         phased_alt.clear();
         phased_AD.clear();
 
-        Qscore = -1;
         Unphasable = false;
 
         smod.clear();
@@ -395,7 +388,8 @@ struct site_info
         }
     }
 
-    std::map<std::string, double> get_qscore_features(double chrom_depth);
+    std::map<std::string, double>
+    get_site_qscore_features(const double chrom_depth) const;
 
     bool
     is_het() const
@@ -448,7 +442,6 @@ struct site_info
     double avgBaseQ = 0;
     double rawPos = 0;
     unsigned mapq_zero = 0;     // The number of spanning reads that do not pass the command-line mapq test
-    int Qscore = -1;             // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
     bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
 
     site_modifiers smod;

@@ -39,7 +39,7 @@ add_site(const site_info& si)
     _buffer.push_back(si);
 
     // case: extending block with het call, update block_end position
-    if (si.is_het())
+    if (is_phasable_site(si))
     {
         if (! is_in_block())
             block_start = si.pos;
@@ -90,7 +90,8 @@ Codon_phaser::construct_reference()
 }
 
 void
-Codon_phaser::create_phased_record()
+Codon_phaser::
+create_phased_record()
 {
     // sanity check do we have all record we expect or are there un-accounted no-calls
     if (this->get_block_length()>this->_buffer.size())
@@ -163,7 +164,7 @@ Codon_phaser::create_phased_record()
     {
         for (auto& val : _buffer)
         {
-            if (! val.is_het()) continue;
+            if (! is_phasable_site(val)) continue;
             val.smod.set_filter(VCF_FILTERS::PhasingConflict);
         }
         return;
@@ -201,23 +202,23 @@ Codon_phaser::create_phased_record()
     for (unsigned i(0); i<this->get_block_length(); i++)
     {
         const site_info& si(_buffer.at(i));
-        if (! si.is_het()) continue;
+        if (! is_phasable_site(si)) continue;
         min_gq = std::min(si.smod.gq,min_gq);
         min_qual = std::min(si.dgt.genome.snp_qphred,min_qual);
-        min_qscore = std::min(si.Qscore,min_qscore);
+        min_qscore = std::min(si.smod.Qscore,min_qscore);
     }
 
     // set various quality fields conservatively
     base.smod.gq                = min_gq;
     base.dgt.genome.snp_qphred  = min_qual;
     base.smod.gqx               = std::min(min_gq,min_qual);
-    base.Qscore                 = min_qscore;
+    base.smod.Qscore            = min_qscore;
 
     base.phased_alt = alt.str();
     base.phased_AD  = AD.str();
 
     base.smod.is_phased_region = true;
-    int reads_ignored = (this->total_reads-allele_sum);
+    const int reads_ignored = (this->total_reads-allele_sum);
     base.n_used_calls = this->total_reads - reads_ignored;
     base.n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
 
@@ -233,7 +234,8 @@ Codon_phaser::create_phased_record()
 
 // makes the phased VCF record from the buffered sites list
 void
-Codon_phaser::make_record()
+Codon_phaser::
+make_record()
 {
     this->construct_reference();
     this->collect_read_evidence();

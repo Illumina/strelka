@@ -60,7 +60,7 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
     }
 
-    if (opt.is_max_snv_sb && !CM.is_current_logistic())
+    if (opt.is_max_snv_sb && (!CM.is_current_logistic()))
     {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;

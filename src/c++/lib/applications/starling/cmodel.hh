@@ -11,8 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 /*
- * cmodel.hh
- *
  *  Created on: Jan 15, 2014
  *      Author: Morten Kallberg
  */
@@ -135,9 +133,9 @@ get_Qscore_filter(const unsigned var_case)
 
 typedef std::map<std::string, double> featuremap;
 typedef std::map<std::string, std::map<std::string, featuremap > > parmap;
-class c_model
+
+struct c_model
 {
-public:
     c_model(
         const std::string& name,
         const std::string& type,
@@ -147,25 +145,72 @@ public:
         model_type(type)
     {}
 
-    // add parameters to the model
-    void add_parameters(const parmap& myPars);
-    void score_instance(featuremap features, site_info& si);
-    void score_instance(featuremap features, indel_info& ii);
-    int  get_var_threshold(const CALIBRATION_MODEL::var_case& my_case);
+    void
+    add_parameters(const parmap& myPars);
+
+    void
+    score_site_instance(
+        const site_info& si,
+        site_modifiers& smod) const;
+
+    void
+    score_indel_instance(
+        const indel_info& ii,
+        indel_modifiers& imod) const;
+
     bool is_logistic_model() const;
-    // expose private info
-    double normal_depth() const;
+
+    int
+    get_var_threshold(
+        const CALIBRATION_MODEL::var_case& my_case) const;
+
 private:
+
+    double normal_depth() const;
+
+    int
+    logistic_score(
+        const CALIBRATION_MODEL::var_case var_case,
+        const featuremap& features) const;
+
+    void
+    do_site_rule_model(
+        const featuremap& cutoffs,
+        const site_info& si,
+        site_modifiers& smod) const;
+
+    void
+    do_indel_rule_model(
+        const featuremap& cutoffs,
+        const indel_info& ii,
+        indel_modifiers& imod) const;
+
+    /// Transform the features with the specified scaling parameters that were used to standardize
+    /// the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
+    featuremap
+    normalize(
+        const featuremap& features,
+        const featuremap& adjust_factor,
+        const featuremap& norm_factor) const;
+
+    double
+    log_odds(
+        const featuremap& features,
+        const featuremap& coeffs) const;
+
+    void
+    apply_site_qscore_filters(
+        const CALIBRATION_MODEL::var_case my_case,
+        const site_info& si,
+        site_modifiers& smod) const;
+
+    void
+    apply_indel_qscore_filters(
+        const CALIBRATION_MODEL::var_case my_case,
+        const indel_info& ii,
+        indel_modifiers& imod) const;
+
     const gvcf_deriv_options& dopt;
-    int logistic_score(const CALIBRATION_MODEL::var_case var_case, featuremap features);
-    void do_rule_model(featuremap& cutoffs, site_info& si);  //snp case
-    void do_rule_model(featuremap& cutoffs, indel_info& ii); //indel case
-//    void do_rule_model(featuremap& cutoffs, phased_info& ii); //phased record TODO
-    featuremap normalize(featuremap features, featuremap& adjust_factor, featuremap& norm_factor);
-    double log_odds(featuremap features, featuremap& coeffs);
-    void apply_qscore_filters(site_info& si, const int qscore_cut, const CALIBRATION_MODEL::var_case my_case);
-    void apply_qscore_filters(indel_info& ii, const int qscore_cut,const CALIBRATION_MODEL::var_case my_case);
-    void sanity_check();
     std::string model_name;
     std::string model_type;
     parmap pars;
