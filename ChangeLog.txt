@@ -1,5 +1,6 @@
+- STARKA-214 fix vcf and bed concat for very high contig counts, including human ref w/ decoys
 - STARKA-215 roll back STARKA-198 (due to trio conflict elevation and anomolous gVCF records)
-- STARKA-210 fix v low frequency realigner assertion on contig edges
+- STARKA-210 fix very low frequency realigner assertion on contig edges
 v2.3.4
 - STARKA-204 remove inconsistent filters at homref sites
 - STARKA-196 fix nocompress sites in empty regions

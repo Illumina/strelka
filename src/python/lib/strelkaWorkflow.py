@@ -105,7 +105,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
     segCmd.extend(["-samtools-reference", self.params.referenceFasta ])
     segCmd.extend(["-max-window-mismatch", "3", "20" ])
-    segCmd.append("-print-used-allele-counts")
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
@@ -183,9 +182,16 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     nextStepWait = set()
 
-    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
-    self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
-    nextStepWait.add(setTaskLabel)
+    callTask=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
+    self.addTask(callTask,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
+
+    compressLabel=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
+    compressCmd="%s %s && %s %s" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
+    if self.params.isWriteCallableRegion :
+        compressCmd += " && %s %s" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
+
+    self.addTask(compressLabel, compressCmd, dependencies=callTask, isForceLocal=True)
+    nextStepWait.add(compressLabel)
 
     if self.params.isWriteRealignedBam :
         def sortRealignBam(label, sortList) :
@@ -198,7 +204,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
             sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
             sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.pyflowId)
-            self.addTask(sortTaskLabel,sortCmd,dependencies=setTaskLabel,memMb=self.params.callMemMb)
+            self.addTask(sortTaskLabel,sortCmd,dependencies=callTask,memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
         sortRealignBam("normal", segFiles.normalRealign)
@@ -231,22 +237,36 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     finishTasks = set()
 
-    def finishVcf(tmpList, output, label) :
-        cmd  = "cat " + " ".join(tmpList)
-        cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
-        cmd += " && %s -p vcf %s" % (self.params.tabixBin, output)
-        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeVCF"), cmd, dependencies=completeSegmentsTask))
+    def finishTabixIndexedFile(tmpList, output, label, fileType) :
+        assert(len(tmpList) > 0)
+
+        if len(tmpList) > 1 :
+            catCmd = [self.params.bgcatBin,"-o",output]
+            catCmd.extend(tmpList)
+        else :
+            catCmd = "mv -f %s %s" % (tmpList[0],output)
+
+        indexCmd = "%s -p %s %s" % (self.params.tabixBin, fileType, output)
+        catTask = self.addTask(preJoin(taskPrefix,label+"_concat_"+fileType), catCmd,
+                               dependencies=completeSegmentsTask, isForceLocal=True)
+        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_index_"+fileType), indexCmd,
+                                     dependencies=catTask, isForceLocal=True))
+
+    def finishVcf(inputList, output, label) :
+        assert(len(inputList) > 0)
+        tmpList = [file + ".gz" for file in inputList]
+        finishTabixIndexedFile(tmpList, output, label, "vcf")
+
+    def finishBed(inputList, output, label) :
+        assert(len(inputList) > 0)
+        tmpList = [file + ".gz" for file in inputList]
+        finishTabixIndexedFile(tmpList, output, label, "bed")
+
 
     finishVcf(segFiles.snv, self.paths.getSnvOutputPath(),"SNV")
     finishVcf(segFiles.indel, self.paths.getIndelOutputPath(),"Indel")
 
     if self.params.isWriteCallableRegion :
-        def finishBed(tmpList, output, label):
-            cmd  = "cat " + " ".join(tmpList)
-            cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
-            cmd += " && %s -p bed %s" % (self.params.tabixBin, output)
-            finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBED"), cmd, dependencies=completeSegmentsTask))
-
         finishBed(segFiles.callable, self.paths.getRegionOutputPath(), "callableRegions")
 
     if self.params.isWriteRealignedBam :

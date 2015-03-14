@@ -75,7 +75,6 @@ You must specify a BAM file.
 
         defaults.update({
             'runDir' : 'StarlingWorkflow',
-            'bgcatBin' : joinFile(libexecDir,"bgzf_cat"),
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'indelRefErrorFactor' : "100",
             'vqsrModel' : "QScoreHPDRE100_v4",

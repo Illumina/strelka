@@ -37,12 +37,12 @@ struct alignment
         return path.empty();
     }
 
-    // is there an indel exceeding max_indel_size?
+    /// is there an indel exceeding max_indel_size?
     bool
     is_overmax(const unsigned max_indel_size) const;
 
-    // is there an adjacent insertion/deletion event in this
-    // alignment?
+    /// is there an adjacent insertion/deletion event in this
+    /// alignment?
     bool
     is_seq_swap() const
     {

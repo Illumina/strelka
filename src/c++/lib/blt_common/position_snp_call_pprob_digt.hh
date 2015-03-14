@@ -107,29 +107,6 @@ debug_dump_digt_lhood(const blt_float_t* lhood,
                       std::ostream& os);
 
 
-// allele call output:
-//
-void
-write_diploid_genotype_allele(const blt_options& opt,
-                              const snp_pos_info& pi,
-                              const diploid_genotype& dgt,
-                              std::ostream& os,
-                              const unsigned hpol);
-
-// snp call output:
-//
-inline
-void
-write_diploid_genotype_snp(const blt_options& opt,
-                           const snp_pos_info& pi,
-                           const diploid_genotype& dgt,
-                           std::ostream& os,
-                           const unsigned hpol)
-{
-
-    write_diploid_genotype_allele(opt,pi,dgt,os,hpol);
-}
-
 
 // Use caller object to precalculate prior distributions based on
 // theta value:

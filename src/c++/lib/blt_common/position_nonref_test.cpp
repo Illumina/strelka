@@ -199,8 +199,8 @@ position_nonref_test(const snp_pos_info& pi,
 
 
 void
-write_nonref_test(const blt_options& opt,
-                  const snp_pos_info& pi,
+write_nonref_test(const blt_options& /*opt*/,
+                  const snp_pos_info& /*pi*/,
                   const nonref_test_call& nrc,
                   std::ostream& os)
 {
@@ -208,12 +208,6 @@ write_nonref_test(const blt_options& opt,
     os << nrc.snp_qphred
        << '\t' << NRTEST::label(static_cast<NRTEST::index_t>(nrc.max_gt))
        << '\t' << nrc.max_gt_qphred;
-
-    if (opt.is_print_used_allele_counts)
-    {
-        pi.print_known_counts(os,opt.used_allele_count_min_qscore);
-        pi.print_known_qscore(os,opt.used_allele_count_min_qscore);
-    }
 
 #if 0
     if (opt.is_print_all_poly_gt)
