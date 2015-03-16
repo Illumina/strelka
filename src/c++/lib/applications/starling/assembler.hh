@@ -26,6 +26,8 @@
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"
 #include "assembly/predictor.hh"
+#include "assembly/contigAssembler.hh"
+#include "assembly/dummy_assembler.hh"
 #include "applications/starling/gvcf_block_site_record.hh"
 #include <climits>
 
@@ -37,14 +39,33 @@ struct assembly_streamer : public site_info_stream
         const starling_deriv_options& init_dopt,
         starling_read_buffer& init_read_buffer,
         const unsigned init_max_read_len,
-		const RegionTracker& nocompress_regions)
+		const RegionTracker& nocompress_regions
+		)
         : opt(init_opt),
           dopt(init_dopt),
           read_buffer(init_read_buffer),
           max_read_len(init_max_read_len),
           myPredictor(opt,dopt,nocompress_regions)
     {
-        this->clear();
+
+		if (opt.assembly_model=="bed"){
+			// log_os << "Initializing bed assembler" << std::endl;
+			this->myAssembler = new dummy_assembler();
+		}
+//		else if (opt.assembly_model=="string-graph"){
+//			//log_os << "Initializing default assembler" << std::endl;
+//			this->myAssembler = new string_graph_assembler();
+//		}
+		else if (opt.assembly_model=="de-bruijn"){
+			//log_os << "Initializing default assembler" << std::endl;
+			this->myAssembler = new dummy_assembler();
+		}
+		else{
+			//log_os << "Initializing default assembler" << std::endl;
+			this->myAssembler = new dummy_assembler();
+		}
+
+		this->clear();
     }
 
     // implement site_info_stream methods
@@ -112,5 +133,6 @@ private:
     typedef std::map<std::string,int> allele_map;
     allele_map observations;
     predictor myPredictor;
+    contigAssembler* myAssembler;
     std::vector<std::string> asm_contigs;
 };

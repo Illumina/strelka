@@ -12,9 +12,9 @@ site_info_stream::site_info_stream() {
 
 }
 
-site_info_stream::~site_info_stream() {
-	// TODO Auto-generated destructor stub
-}
+//site_info_stream::~site_info_stream() {
+//	// TODO Auto-generated destructor stub
+//}
 
 
 

@@ -7,12 +7,12 @@
 
 #include <assembly/contigAssembler.hh>
 
-contigAssembler::contigAssembler() {
-	// TODO Auto-generated constructor stub
-
-}
-
-contigAssembler::~contigAssembler() {
-	// TODO Auto-generated destructor stub
-}
+//contigAssembler::contigAssembler() {
+//	// TODO Auto-generated constructor stub
+//
+//}
+//
+//contigAssembler::~contigAssembler() {
+//	// TODO Auto-generated destructor stub
+//}
 

@@ -31,16 +31,6 @@
 
 
 // Add a SNP site to the phasing buffer
-//,const gvcf_block_site_record& empty_block)
-
-//bool add_indel(const pos_t pos,
-//                        const indel_key ik,
-//                        const starling_diploid_indel_core& dindel,
-//                        const starling_indel_report_info& iri,
-//                        const starling_indel_sample_report_info& isri){
-//      return true;
-//}
-
 bool
 assembly_streamer::
 add_site(site_info& si)
@@ -148,7 +138,6 @@ assembly_streamer::rescore(std::stringstream &AD)
         if (val==reference) continue;
         AD << ',' << 15;
     }
-
     return;
 }
 
@@ -160,45 +149,6 @@ assembly_streamer::create_contig_records()
     site_info& base = (this->_site_buffer.at(0));
     this->clear_buffer();
 
-
-
-#if 0
-    // Dummy determine two allele with most counts in observation counter
-    typedef std::pair<std::string, int> allele_count_t;
-    std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
-    for (auto& obs : observations)
-    {
-        if (obs.second>max_alleles[0].second)
-        {
-                max_alleles[1]  = max_alleles[0];
-                max_alleles[0]  = obs;
-        }
-        if (obs.second>max_alleles[1].second && max_alleles[0].first!=obs.first)
-        {
-                max_alleles[1] = obs;
-        }
-    }
-
-
-    // add information from the alleles selected for output
-    std::stringstream AD,alt;
-    AD << this->observations[this->reference];
-    bool hasAlt(false);
-    for (const auto& val : max_alleles)
-    {
-        if (val.first==reference) continue;
-        hasAlt = true;
-        if (! alt.str().empty()) alt << ',';
-        alt << val.first;
-        AD << ',' << val.second;
-    }
-    if ( ! hasAlt )
-    {
-        alt << ".";
-    }
-
-
-#else
     // add information from the alleles selected for output
     std::stringstream alt;
     bool hasAlt(false);
@@ -216,10 +166,6 @@ assembly_streamer::create_contig_records()
 
     std::stringstream AD;
     rescore(AD);
-
-#endif
-//    log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
-//    log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
 
     base.phased_ref = this->reference;
     //const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);

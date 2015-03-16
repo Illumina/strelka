@@ -16,7 +16,7 @@
 
 class site_info_stream {
 public:
-	site_info_stream(){};
+	site_info_stream();
 
 
 	virtual bool add_site(site_info& si) = 0;

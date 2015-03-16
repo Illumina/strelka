@@ -218,6 +218,7 @@ struct blt_options
     std::string calibration_models_filename;
     std::string indel_scoring_models;   // file containing all indel scoring models
     std::string indel_error_model;      // which baseline prior should be used for candidate indel genotyping
+    std::string assembly_model;      	// which assembly strategy should we use
 };
 
 

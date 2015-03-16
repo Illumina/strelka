@@ -76,8 +76,10 @@ get_starling_option_parser(
 	      "Enable local assembly of variant dense regions")
 	 ("assemble-aggresiveness", po::value(&opt.assemble_aggresiveness)->default_value(opt.assemble_aggresiveness),
 	  "How aggresive should we be when selecting regions to assemble")
-	  ("assembly-bed",  po::value(&opt.assembly_regions_filename),
+	 ("assembly-bed",  po::value(&opt.assembly_regions_filename),
 	   "Bed file with regions we should always to assemble.")
+	 ("assembly-model", po::value(&opt.assembly_model)->default_value("bed"),
+	  "he assembly strategy to utilize (options: bed, string-graph, de-bruijn)")
      ;
 
 //    po::options_description assemble_opt("Assembly options");
