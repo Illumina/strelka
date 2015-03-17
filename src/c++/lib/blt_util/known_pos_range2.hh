@@ -129,6 +129,13 @@ struct known_pos_range2
         return ((_begin_pos==rhs._begin_pos) && (_end_pos==rhs._end_pos));
     }
 
+
+    bool
+    operator!=(const known_pos_range2& rhs) const
+    {
+      return ((_begin_pos!=rhs._begin_pos) && (_end_pos!=rhs._end_pos));
+    }
+
     // expand range to extend of a second range:
     void
     merge_range(const known_pos_range2& kpr)

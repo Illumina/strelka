@@ -16,7 +16,11 @@
 
 class site_info_stream {
 public:
-	site_info_stream(){};
+	site_info_stream(){}
+
+	~site_info_stream(){
+	  notify_consumer();
+	}
 
 
 	virtual bool add_site(site_info& si) = 0;
@@ -36,16 +40,69 @@ public:
 		this->_site_buffer.clear();
 	}
 
+        void clear_site_buffer_up_to(std::deque<site_info>::iterator & endIt){
+	    _site_buffer.erase(_site_buffer.begin(),endIt);
+	}
+
+        void clear_site_buffer_to_pos(int stopPos){
+	    std::deque<site_info>::iterator sit;
+	    for (sit =  this->_site_buffer.begin();sit < this->_site_buffer.end();++sit)
+	    {
+		if ( sit->pos >= stopPos)
+		{
+		    break;
+		}
+	    }
+	    clear_site_buffer_up_to(sit);
+	}
+
 	void notify_consumer(){
 		if (!this->has_listner)
 			return;
+
+		//for (const auto& val : _site_buffer)
+	        //  {
+		//    log_os << val << " ref " << val.ref << "\n";
+		//  }
+
 		for (auto& si : this->_site_buffer)
-				this->_consumer->add_site(si);
+                {
+		    this->_consumer->add_site(si);
+		}
 		// TODO add indel component
 		//		for (auto& ii : this->_indel_buffer)
 		//						this->_consumer->add_indel();
 		this->clear_buffer();
 	}
+
+	void notify_consumer_up_to(int stopPos){
+		if (!this->has_listner)
+			return;
+
+		//  for (const auto& val : _site_buffer)
+	        //  {
+		//    log_os << val << " ref " << val.ref << "\n";
+		//  }
+
+		std::deque<site_info>::iterator sit;
+                for (sit =  this->_site_buffer.begin();sit < this->_site_buffer.end();++sit)
+                {
+                    if ( sit->pos < stopPos)
+		    {
+		        this->_consumer->add_site(*sit);
+		    }
+		    else
+		    {
+		        break;
+		    }
+
+		}
+		clear_site_buffer_up_to(sit);
+		// TODO add indel component
+		//		for (auto& ii : this->_indel_buffer)
+		//						this->_consumer->add_indel();
+	}
+
 
 	void register_consumer(site_info_stream *consumer){
 		this->_consumer = consumer;
@@ -54,8 +111,8 @@ public:
 
 protected:
 	site_info_stream* _consumer;
-	std::vector<site_info> _site_buffer;
-	std::vector<indel_info> _indel_buffer;
+	std::deque<site_info> _site_buffer;
+	std::deque<indel_info> _indel_buffer;
 
 private:
 	//always make buffers available but do not populate as default

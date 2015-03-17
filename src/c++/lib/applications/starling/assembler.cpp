@@ -57,28 +57,29 @@ add_site(site_info& si)
     }
 
     // Update block info
-    if (si.is_nonref())
+    if (si.dgt.is_snp)
         var_count ++;
+
+    myPredictor.add_site(si.pos,si.dgt.is_snp);
 
     // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
     if (this->keep_collecting())
     {
-//      log_os << "Started @ " << this->block_start << std::endl;
-//      log_os << "keep collecting - @ " << si  << std::endl;
-//      log_os << "var count " << var_count << std::endl;
-//      this->write_out_buffer();
+      //      log_os << "Started @ " << this->block_start << std::endl;
+      //      log_os << "keep collecting - @ " << si  << std::endl;
+      //      log_os << "var count " << var_count << std::endl;
+      //      this->write_out_buffer();
         return false;
     }
 
     // We are not collecting further, check if we want to assemble what is in the buffer
-    if (this->do_assemble())
+    asmRegion = do_assemble();
+    if (asmRegion != known_pos_range2(-1,-1))
     {
         // if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
         make_record();
 //      log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
     }
-    this->notify_consumer();
-    this->clear();
     return true;
 }
 
@@ -98,34 +99,27 @@ assembly_streamer::construct_reference()
     this->reference = "";
     // TODO: the following will need to be revised to handle indels!
     for (unsigned i=0; i<(_site_buffer.size()); i++)
-        this->reference += _site_buffer.at(i).ref;
+    {
+        if(_site_buffer.at(i).pos >= asmRegion.end_pos())
+        {
+            break;
+        }
+        if(_site_buffer.at(i).pos >= asmRegion.begin_pos())
+        {
+            this->reference += _site_buffer.at(i).ref;
+        }
+    }
 }
 
 void
 assembly_streamer::assemble()
 {
 
+  //std::cerr<< "Assembling from " << asmRegion.begin_pos() << " to " << asmRegion.end_pos() <<"\n";
+
   // THIS IS A STUB ASSEMBLER: IT ASSUMES THAT THE PREDICTOR CAN PROVIDE THE DESIRED ASSEMBLY
 
-  int regionCount(0);
-  bool inRegion(false);
-  unsigned aPosInRegion=0;
-  for(unsigned i=block_start;i<=block_end;++i){
-    if (this->myPredictor.rt.isPayloadInRegion(i)){
-      if(!inRegion){
-        ++regionCount;
-        if(regionCount==1){
-          aPosInRegion=i;
-        }
-        inRegion=true;
-      }
-    } else {
-      inRegion=false;
-    }
-  }
-  assert(regionCount==1);
-
-  boost::optional<std::vector<std::string> > ctgs(myPredictor.rt.isPayloadInRegion(aPosInRegion));
+  boost::optional<std::vector<std::string> > ctgs(myPredictor.rt.isPayloadInRegion(asmRegion.begin_pos()));
   if (ctgs){
     asm_contigs = *ctgs;
   } else {
@@ -157,48 +151,10 @@ void
 assembly_streamer::create_contig_records()
 {
     // pick first records in buffer as our anchoring point for the assembled record
-    site_info& base = (this->_site_buffer.at(0));
-    this->clear_buffer();
+    notify_consumer_up_to(asmRegion.begin_pos());
+    site_info base = _site_buffer.at(0);
+    clear_site_buffer_to_pos(asmRegion.end_pos());
 
-
-
-#if 0
-    // Dummy determine two allele with most counts in observation counter
-    typedef std::pair<std::string, int> allele_count_t;
-    std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
-    for (auto& obs : observations)
-    {
-        if (obs.second>max_alleles[0].second)
-        {
-                max_alleles[1]  = max_alleles[0];
-                max_alleles[0]  = obs;
-        }
-        if (obs.second>max_alleles[1].second && max_alleles[0].first!=obs.first)
-        {
-                max_alleles[1] = obs;
-        }
-    }
-
-
-    // add information from the alleles selected for output
-    std::stringstream AD,alt;
-    AD << this->observations[this->reference];
-    bool hasAlt(false);
-    for (const auto& val : max_alleles)
-    {
-        if (val.first==reference) continue;
-        hasAlt = true;
-        if (! alt.str().empty()) alt << ',';
-        alt << val.first;
-        AD << ',' << val.second;
-    }
-    if ( ! hasAlt )
-    {
-        alt << ".";
-    }
-
-
-#else
     // add information from the alleles selected for output
     std::stringstream alt;
     bool hasAlt(false);
@@ -217,7 +173,6 @@ assembly_streamer::create_contig_records()
     std::stringstream AD;
     rescore(AD);
 
-#endif
 //    log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
 //    log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
 
@@ -252,7 +207,11 @@ assembly_streamer::create_contig_records()
 
 
     // Add in assembled record(s)
-    _site_buffer.push_back(base);
+
+
+    _site_buffer.push_front(base);
+    this->notify_consumer_up_to(asmRegion.end_pos());
+    //    _site_buffer.pop_front();
 }
 
 void
@@ -323,15 +282,16 @@ assembly_streamer::
 keep_collecting()
 {
         //extend with more data structures to determine is assembly criteriea is met
-        return this->myPredictor.keep_extending(this->block_start,this->block_end);
+        return this->myPredictor.keep_extending();
 }
 
-bool
+known_pos_range2
 assembly_streamer::
 do_assemble()
 {
-        //extend with more data structures to determine is assembly criteriea is met
-        return this->myPredictor.do_assemble(this->block_start,this->block_end);
+    //extend with more data structures to determine is assembly criteriea is met
+    known_pos_range2 predAsmRegion = myPredictor.do_assemble_and_update();
+    return predAsmRegion;
 }
 
 
@@ -346,6 +306,7 @@ assembly_streamer::clear()
     total_reads                 = 0;
     total_reads_unused          = 0;
     reference                   = "";
+    asmRegion = known_pos_range2(-1,-1);
 }
 
 

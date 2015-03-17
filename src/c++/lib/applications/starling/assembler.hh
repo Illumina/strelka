@@ -70,7 +70,7 @@ struct assembly_streamer : public site_info_stream
 
     /// buffer of variant calls
     ///
-    const std::vector<site_info>&
+    const std::deque<site_info>&
     buffer() const
     {
         return this->_site_buffer;
@@ -96,7 +96,7 @@ private:
     }
 
     bool keep_collecting();                 // keep the block going
-    bool do_assemble();                     // Assemble the region that is currently in the buffer
+    known_pos_range2 do_assemble();                     // Assemble the region that is currently in the buffer
 
 
     const starling_base_options& opt;
@@ -111,6 +111,7 @@ private:
     std::string reference;                      // the phased allele reference
     typedef std::map<std::string,int> allele_map;
     allele_map observations;
+    known_pos_range2 asmRegion;
     predictor myPredictor;
     std::vector<std::string> asm_contigs;
 };

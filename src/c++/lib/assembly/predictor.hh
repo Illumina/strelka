@@ -77,8 +77,18 @@ struct predictor
       : regions_file(init_opt.assembly_regions_filename), opt(init_opt), dopt(init_dopt),
         _nocompress_regions(init_nocompress_regions)
     {
+
+        beginNotFullyProcessed = -1;
+        beginPossibleAssemblyRegion = -1;
+        numVarsInPossibleAssemblyRegion = 0;
+        lastVarPos = -1;
+        lastPos = -1;
+        lengthToBreakRegion = 20;
+        varCountCutoff = 3;
+
         //init regions file bed_streamer, TODO move this code to Starling_run
-        std::unique_ptr<bed_streamer> assemble_regions;
+        // JUNK: std::unique_ptr<bed_streamer> assemble_regions;
+
         if (! regions_file.empty())
         {
           const std::string bam_region(get_starling_bam_region_string(opt,dopt));
@@ -106,19 +116,63 @@ struct predictor
 
     }
 
-    bool keep_extending(int st, int end){
-        return (this->rt.isPayloadInRegion(st) && this->rt.isPayloadInRegion(end));
-    }
-    bool do_assemble(int st, int end)
+    void add_site( int pos, bool isVar )
     {
-        if (rt.isPayloadInRegion(st)){
-        	this->assemblyReason = ASSEMBLY_TRIGER::bedTrack;
-        	return true;
+
+      if (beginNotFullyProcessed == -1)
+      {
+          beginNotFullyProcessed = pos;
+      }
+
+      if (isVar)
+      {
+          if (beginPossibleAssemblyRegion == -1)
+          {
+              beginPossibleAssemblyRegion = pos;
+          }
+          ++numVarsInPossibleAssemblyRegion;
+          lastVarPos = pos;
+      }
+      lastPos = pos;
+
+      //std::cerr << beginNotFullyProcessed << " : "
+      //          <<  beginPossibleAssemblyRegion << " : "
+      //          << numVarsInPossibleAssemblyRegion << " : "
+      //          << lastVarPos << " : "
+      //          << lastPos << " : "
+      //          <<  isVar << "\n";
+
+    }
+
+    bool keep_extending(){
+        return ( lastPos-lastVarPos >= lengthToBreakRegion);
+    }
+
+    known_pos_range2 do_assemble_and_update()
+    {
+        known_pos_range2 asmRange(-1,-1);
+        if (numVarsInPossibleAssemblyRegion >= varCountCutoff)
+        {
+            asmRange.set_begin_pos(beginPossibleAssemblyRegion);
+            beginNotFullyProcessed = lastVarPos+1;
+            asmRange.set_end_pos( beginNotFullyProcessed);
+            numVarsInPossibleAssemblyRegion = 0;
+            beginPossibleAssemblyRegion = -1;
+            lastVarPos = -1;
         }
-        return false;
+        return asmRange;
     }
 
     RegionPayloadTracker< std::vector< std::string > >  rt;
+
+    int beginNotFullyProcessed;
+    int beginPossibleAssemblyRegion;
+    int numVarsInPossibleAssemblyRegion;
+    int lastVarPos;
+    int lastPos;
+    int lengthToBreakRegion;
+    int varCountCutoff;
+
     ASSEMBLY_TRIGER::index_t assemblyReason;
 private:
     int assembleCount, assembleContigLength;          // count of regions to assemble, cummulative length of assembled regions
