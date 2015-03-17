@@ -1,4 +1,5 @@
 v2.3.5
+- WGSW-293, WGSW-297 update germline VQSR cutoffs to decrease excessive het/hom ratios, and hopefully reduce trio conflicts
 - STARKA-214 fix vcf and bed concat for very high contig counts, including human ref w/ decoys
 - STARKA-215 roll back STARKA-198 (due to trio conflict elevation and anomolous gVCF records)
 - STARKA-210 fix very low frequency realigner assertion on contig edges
