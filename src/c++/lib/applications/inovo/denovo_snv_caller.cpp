@@ -15,6 +15,8 @@
 ///
 
 #include "denovo_snv_caller.hh"
+#include "denovo_snv_grid_states.hh"
+#include "strelka_common/position_snp_call_grid_lhood_cached.hh"
 
 #include <array>
 
@@ -34,6 +36,8 @@ checkME(
 
 #endif
 
+
+typedef std::array<blt_float_t,DIGT_DGRID::SIZE> dsnv_state_t;
 
 
 
@@ -76,6 +80,7 @@ get_denovo_snv_call(
     dsc.ref_gt=base_to_id(refBase);
 
     const unsigned sampleSize(sinfo.size());
+    std::vector<dsnv_state_t> sampleLhood(sampleSize);
 
 
     std::array<denovo_snv_call::result_set,INOVO_TIERS::SIZE> tier_rs;
@@ -99,6 +104,12 @@ get_denovo_snv_call(
         for (unsigned sampleIndex(0);sampleIndex<sampleSize;++sampleIndex)
         {
             // get likelihoods for each sample
+            const CleanedPileup& cpi(*pileups[tierIndex][sampleIndex]);
+            const snp_pos_info& pi(cpi.cleanedPileup());
+            blt_float_t* lhood(sampleLhood[sampleIndex].data());
+            get_diploid_gt_lhood_cached(opt, pi, lhood);
+            get_diploid_het_grid_lhood_cached(pi, DIGT_DGRID::HET_RES, lhood);
+
         }
 
         //calculate_result_set();
@@ -191,3 +202,116 @@ get_denovo_snv_call(
     dsc.rs.isCall = true;
 #endif
 }
+
+
+#if 0
+// strawman model treats normal and tumor as independent, so
+// calculate separate lhoods:
+blt_float_t normal_lhood[DIGT_SGRID::SIZE];
+blt_float_t tumor_lhood[DIGT_SGRID::SIZE];
+
+const bool is_tier2(NULL != normal_epi_t2_ptr);
+
+static const unsigned n_tier(2);
+result_set tier_rs[n_tier];
+for (unsigned i(0); i<n_tier; ++i)
+{
+    const bool is_include_tier2(i==1);
+    if (is_include_tier2)
+    {
+        if (! is_tier2) continue;
+        if (tier_rs[0].snv_qphred==0)
+        {
+            tier_rs[1] = tier_rs[0];
+            continue;
+        }
+    }
+
+    // get likelihood of each genotype
+    //
+    static constexpr bool is_normal_het_bias(false);
+    static constexpr blt_float_t normal_het_bias(0.0);
+    static constexpr bool is_tumor_het_bias(false);
+    static constexpr blt_float_t tumor_het_bias(0.0);
+
+    const extended_pos_info& nepi(is_include_tier2 ? *normal_epi_t2_ptr : normal_epi );
+    const extended_pos_info& tepi(is_include_tier2 ? *tumor_epi_t2_ptr : tumor_epi );
+    get_diploid_gt_lhood_cached(_opt,nepi.pi,is_normal_het_bias,normal_het_bias,normal_lhood);
+    get_diploid_gt_lhood_cached(_opt,tepi.pi,is_tumor_het_bias,tumor_het_bias,tumor_lhood);
+
+    get_diploid_het_grid_lhood_cached(nepi.pi, DIGT_SGRID::HET_RES, normal_lhood+DIGT::SIZE);
+    get_diploid_het_grid_lhood_cached(tepi.pi, DIGT_SGRID::HET_RES, tumor_lhood+DIGT::SIZE);
+
+    get_diploid_strand_grid_lhood_spi(nepi.pi,sgt.ref_gt,normal_lhood+DIGT_SGRID::PRESTRAND_SIZE);
+    get_diploid_strand_grid_lhood_spi(tepi.pi,sgt.ref_gt,tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE);
+
+    // genomic site results:
+    calculate_result_set_grid(isComputeNonSomatic,
+                              normal_lhood,
+                              tumor_lhood,
+                              get_prior_set(sgt.ref_gt),
+                              _ln_som_match,_ln_som_mismatch,
+                              sgt.ref_gt,
+                              sgt.is_forced_output,
+                              tier_rs[i]);
+
+
+}
+
+if (! (sgt.is_forced_output || isComputeNonSomatic))
+{
+    if ((tier_rs[0].snv_qphred==0) ||
+        (is_tier2 && (tier_rs[1].snv_qphred==0))) return;
+}
+
+sgt.snv_tier=0;
+sgt.snv_from_ntype_tier=0;
+if (is_tier2)
+{
+    if (tier_rs[0].snv_qphred > tier_rs[1].snv_qphred)
+    {
+        sgt.snv_tier=1;
+    }
+
+    if (tier_rs[0].snv_from_ntype_qphred > tier_rs[1].snv_from_ntype_qphred)
+    {
+        sgt.snv_from_ntype_tier=1;
+    }
+}
+
+sgt.rs=tier_rs[sgt.snv_from_ntype_tier];
+
+if (is_tier2 && (tier_rs[0].ntype != tier_rs[1].ntype))
+{
+    // catch NTYPE conflict states:
+    sgt.rs.ntype = NTYPE::CONFLICT;
+    sgt.rs.snv_from_ntype_qphred = 0;
+}
+else
+{
+    // classify NTYPE:
+    //
+
+    // convert diploid genotype into more limited ntype set:
+    //
+    if       (sgt.rs.ntype==sgt.ref_gt)
+    {
+        sgt.rs.ntype=NTYPE::REF;
+    }
+    else if (DIGT::is_het(sgt.rs.ntype))
+    {
+        sgt.rs.ntype=NTYPE::HET;
+    }
+    else
+    {
+        sgt.rs.ntype=NTYPE::HOM;
+    }
+}
+
+sgt.rs.snv_qphred = tier_rs[sgt.snv_tier].snv_qphred;
+
+/// somatic gVCF, always use tier1 to keep things simple:
+sgt.rs.nonsomatic_qphred = tier_rs[0].nonsomatic_qphred;
+}
+
+#endif

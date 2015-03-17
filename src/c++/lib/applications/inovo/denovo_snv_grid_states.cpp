@@ -11,37 +11,35 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-///
 /// \author Chris Saunders
 ///
 
-#pragma once
+#include "denovo_snv_grid_states.hh"
 
-#include <cstdint>
+#include "blt_util/digt.hh"
+
+#include <iostream>
 
 
-struct denovo_snv_call
+
+namespace DIGT_DGRID
 {
-    struct result_set
-    {
-        unsigned max_gt;
-        int snv_qphred = 0;
-    };
 
-    bool
-    is_snv() const
-    {
-        return (0 != rs.snv_qphred);
-    }
+void
+write_state(const DIGT_DGRID::index_t gt,
+            std::ostream& os)
+{
+    os << DIGT::label(DIGT_DGRID::get_digt_state(gt));
+}
 
-    bool
-    is_output() const
-    {
-        return (is_snv() || is_forced_output);
-    }
 
-    unsigned ref_gt = 0;
-    uint8_t snv_tier = 0;
-    bool is_forced_output = false;
-    result_set rs;
-};
+
+void
+write_full_state(const DIGT_DGRID::index_t gt,
+                 std::ostream& os)
+{
+    write_state(gt,os);
+    os << "_" << get_het_count(gt);
+}
+
+}

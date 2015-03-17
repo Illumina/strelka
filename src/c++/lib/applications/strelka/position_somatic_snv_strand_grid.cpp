@@ -722,11 +722,11 @@ calculate_result_set_grid(
     // add new somatic gVCF value -- note this is an expanded definition of 'non-somatic' beyond just f_N == f_T
     if (isComputeNonSomatic)
     {
-        /// process regular tumor/normal lhood, but:
-        /// (1) use uniform probability for {somatic,non-somatic} states
-        /// (2) simply computation to remove strand-specific logic
-        /// (3) ignore normal genotype
-        ///
+        // process regular tumor/normal lhood, but:
+        // (1) use uniform probability for {somatic,non-somatic} states
+        // (2) simply computation to remove strand-specific logic
+        // (3) ignore normal genotype
+        //
         for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt)
         {
             for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt)
@@ -857,15 +857,10 @@ position_somatic_snv_call(
 
         // get likelihood of each genotype
         //
-        static constexpr bool is_normal_het_bias(false);
-        static constexpr blt_float_t normal_het_bias(0.0);
-        static constexpr bool is_tumor_het_bias(false);
-        static constexpr blt_float_t tumor_het_bias(0.0);
-
         const extended_pos_info& nepi(is_include_tier2 ? *normal_epi_t2_ptr : normal_epi );
         const extended_pos_info& tepi(is_include_tier2 ? *tumor_epi_t2_ptr : tumor_epi );
-        get_diploid_gt_lhood_cached(_opt,nepi.pi,is_normal_het_bias,normal_het_bias,normal_lhood);
-        get_diploid_gt_lhood_cached(_opt,tepi.pi,is_tumor_het_bias,tumor_het_bias,tumor_lhood);
+        get_diploid_gt_lhood_cached(_opt, nepi.pi, normal_lhood);
+        get_diploid_gt_lhood_cached(_opt, tepi.pi, tumor_lhood);
 
         get_diploid_het_grid_lhood_cached(nepi.pi, DIGT_SGRID::HET_RES, normal_lhood+DIGT::SIZE);
         get_diploid_het_grid_lhood_cached(tepi.pi, DIGT_SGRID::HET_RES, tumor_lhood+DIGT::SIZE);

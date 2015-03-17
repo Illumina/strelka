@@ -40,6 +40,18 @@ get_diploid_gt_lhood_cached(
     blt_float_t* const lhood);
 
 
+/// same as above but with het_bias conveniently taken out of the interface
+inline
+void
+get_diploid_gt_lhood_cached(
+    const blt_options& opt,
+    const snp_pos_info& pi,
+    blt_float_t* const lhood)
+{
+    get_diploid_gt_lhood_cached(opt, pi, false, 0, lhood);
+}
+
+
 /// get lhood for nonstandard diploid het allele ratios
 ///
 /// lhood ordering follows (undocumented) strelka conventions
