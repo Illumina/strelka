@@ -136,6 +136,29 @@ expect2(const int base_id,
     return ex[gt][base_id];
 }
 
+inline
+uint8_t
+get_allele(const int gt,
+           const unsigned chrom_idx)
+{
+    static const unsigned ex[SIZE][2] = {
+        { 0, 0},
+        { 1, 1},
+        { 2, 2},
+        { 3, 3},
+        { 0, 1},
+        { 0, 2},
+        { 0, 3},
+        { 1, 2},
+        { 1, 3},
+        { 2, 3}
+    };
+
+    assert(gt<SIZE);
+    assert(chrom_idx<2);
+    return ex[gt][chrom_idx];
+}
+
 /// expect2_bias is a copy of the expect2 function for biased het
 /// allele calculations
 ///

@@ -90,7 +90,10 @@ get_indel_het_grid_lhood(
 {
     static const unsigned halfRatioCount(INOVO_INOISE::HET_RES);
     static const unsigned ratioCount(halfRatioCount*2);
-    for (unsigned ratioIndex(0); ratioIndex<(ratioCount); ++ratioIndex) lhood[ratioIndex] = 0.;
+    for (unsigned ratioIndex(0); ratioIndex<(ratioCount); ++ratioIndex)
+    {
+        lhood[ratioIndex] = 0.;
+    }
 
     static const double ratio_increment(0.5/static_cast<double>(INOVO_INOISE::HET_RES+1));
     for (unsigned ratioIndex(0); ratioIndex<halfRatioCount; ++ratioIndex)
@@ -152,12 +155,13 @@ namespace TRANSMISSION_STATE
         const index_t idx)
     {
         // as currently defined background exp is I: 15/27 E: 2/27 D: 10/27 -- compared to drate this doesn't matter
-        static const double lndrate(std::log(1e-8));
+        static const double lndrate(std::log(1e-7));
+        static const double noiserate(std::log(1e-8));
         switch (idx)
         {
         case INHERITED: return 0.;
         case DENOVO: return lndrate;
-        case ERROR: return lndrate;
+        case ERROR: return noiserate;
         default:
             assert(false && "Undefined inheritance state");
         }
@@ -165,7 +169,7 @@ namespace TRANSMISSION_STATE
 
     static
     unsigned
-    getEcount(
+    getTransmissionErrorCount(
         const uint8_t* px,
         const uint8_t* py,
         const uint8_t* c)
@@ -181,7 +185,7 @@ namespace TRANSMISSION_STATE
     get_state(
         const unsigned parent0GT,
         const unsigned parent1GT,
-        const unsigned childGT)
+        const unsigned probandGT)
     {
         static const unsigned alleleCount(2);
         uint8_t p0a[alleleCount];
@@ -191,16 +195,16 @@ namespace TRANSMISSION_STATE
         {
             p0a[alleleIndex] = STAR_DIINDEL::get_allele(parent0GT,alleleIndex);
             p1a[alleleIndex] = STAR_DIINDEL::get_allele(parent1GT,alleleIndex);
-            ca[alleleIndex] = STAR_DIINDEL::get_allele(childGT,alleleIndex);
+            ca[alleleIndex] = STAR_DIINDEL::get_allele(probandGT,alleleIndex);
         }
-        const unsigned ecount(std::min(getEcount(p0a,p1a,ca),getEcount(p1a,p0a,ca)));
-        switch (ecount)
+        const unsigned errorCount(std::min(getTransmissionErrorCount(p0a,p1a,ca),getTransmissionErrorCount(p1a,p0a,ca)));
+        switch (errorCount)
         {
         case 0: return INHERITED;
         case 1: return DENOVO;
         case 2: return ERROR;
         default:
-            assert(false && "Unexpected count value");
+            assert(false && "Unexpected error count value");
             return ERROR;
         }
     }
@@ -270,16 +274,20 @@ calculate_result_set(
 
     // apart from the regular genotype analysis, we go through a bunch of noise states and dump these into the "error' transmission state
     //
-    // these are all shared non-standared allele frequencies shared among all samples -- 99% of the time this is meant to catch low-frequency
-    // alt noise shared in all three sample but spuriously more prevelant in the proband:
+    // these are all shared non-standard allele frequencies shared among all samples -- 99% of the time this is meant to catch low-frequency
+    // alt noise shared in all three samples (if all were sequenced to a very high depth) but spuriously more prevalent in the proband due
+    // to low-depth sampling issues:
     static const unsigned ratioCount(INOVO_INOISE::HET_RES*2);
     for (unsigned ratioIndex(0); ratioIndex<ratioCount; ++ratioIndex)
     {
         const unsigned noiseState(STAR_DIINDEL::SIZE+ratioIndex);
-        stateLhood[TRANSMISSION_STATE::ERROR] =
+        const double errorLhood =
                 sampleLhood[parentIndex[0]][noiseState] +
                 sampleLhood[parentIndex[1]][noiseState] +
                 sampleLhood[probandIndex][noiseState];
+
+        using namespace TRANSMISSION_STATE;
+        stateLhood[ERROR] = log_sum(stateLhood[ERROR], errorLhood);
     }
 
     std::array<double,TRANSMISSION_STATE::SIZE> statePprob;
@@ -367,7 +375,7 @@ is_multi_indel_allele(
     const int ais(ai.size());
     for (int i(0); i<ais; ++i)
     {
-        scores.push_back(std::make_pair(-ai[i].second,i));
+        scores.push_back(std::make_pair(-ai[i].second, i));
     }
 
     sort(scores.begin(),scores.end());
@@ -444,7 +452,8 @@ get_denovo_indel_call(
         break;
     }
 
-    /// TODO: stop computing this stuff three times for every indel (other two are in get_indel_digt_lhood)
+    /// TODO: stop computing this stuff three times for every indel
+    /// (other two are in get_indel_digt_lhood)
     const double indel_error_lnp(std::log(indel_error_prob));
     const double indel_real_lnp(std::log(1.-indel_error_prob));
     const double ref_error_lnp(std::log(ref_error_prob));
