@@ -86,7 +86,14 @@ denovo_snv_call_vcf(
                 smod.set_filter(INOVO_VCF_FILTERS::HighDepth);
             }
         }
+
+        if (rs.dsnv_qphred < opt.dfilter.dsnv_qual_lowerbound)
+        {
+            smod.set_filter(INOVO_VCF_FILTERS::QDS);
+        }
+
     }
+
 
     //REF:
     os << '\t' << probandCpi.rawPileup().get_ref_base()
@@ -96,7 +103,7 @@ denovo_snv_call_vcf(
  //                                  dsc.ref_gt,os);
     //QUAL:
     os << "\t.";
-    os << rs.snv_qphred;
+    os << rs.dsnv_qphred;
 
     //FILTER:
     os << "\t";
@@ -120,6 +127,9 @@ denovo_snv_call_vcf(
         }
         os << "DP=" << n_mapq;
         os << ";MQ0=" << n_mapq0;
+        os << ";QDS=" << rs.dsnv_qphred
+           << ";TQSI=" << (dsc.dsnv_tier+1);
+
     }
 
     //FORMAT:

@@ -25,13 +25,13 @@ struct denovo_snv_call
     struct result_set
     {
         unsigned max_gt;
-        int snv_qphred = 0;
+        int dsnv_qphred = 0;
     };
 
     bool
     is_snv() const
     {
-        return (0 != rs.snv_qphred);
+        return (0 != rs.dsnv_qphred);
     }
 
     bool
@@ -41,7 +41,7 @@ struct denovo_snv_call
     }
 
     unsigned ref_gt = 0;
-    uint8_t snv_tier = 0;
+    uint8_t dsnv_tier = 0;
     bool is_forced_output = false;
     result_set rs;
 };

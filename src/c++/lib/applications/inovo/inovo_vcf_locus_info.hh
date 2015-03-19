@@ -31,6 +31,8 @@ enum index_t
     // SNVs and indels:
     HighDepth,
     WrongCount,
+    // snvs only:
+    QDS,
     // indels only:
     QDI,
     Repeat,
@@ -48,6 +50,8 @@ get_label(const unsigned idx)
         return "HighDepth";
     case WrongCount:
         return "WrongCount";
+    case QDS:
+        return "LowQDS";
     case QDI:
         return "LowQDI";
     case Repeat:
