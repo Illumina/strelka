@@ -23,7 +23,6 @@
 #include <sstream>
 #include <vector>
 
-
 /// two predefined options for the ValClear type parameter to RangeMap:
 template <typename T>
 struct ZeroT
@@ -64,6 +63,14 @@ struct RangeMap
         _data(_minChunk),
         _occup(_minChunk,false)
     {}
+
+    void
+    clear()
+    {
+        _isEmpty=true;
+        _minKeyIndex=0;
+        std::fill(_occup.begin(),_occup.end(),false);
+    }
 
     bool
     empty() const
@@ -144,12 +151,52 @@ struct RangeMap
         const unsigned dataSize(_data.size());
         for (unsigned offset(1); offset<=keySize; ++offset)
         {
-            if (! _occup[(kindex+offset) % dataSize]) continue;
-            _minKeyIndex=(kindex+offset) % dataSize;
+            if (! _occup[(_minKeyIndex+offset) % dataSize]) continue;
+            _minKeyIndex=(_minKeyIndex+offset) % dataSize;
             _minKey += offset;
             return;
         }
 
+        _isEmpty=true;
+    }
+
+    /// erase all contents with keys sorting less than or equal to k
+    void
+    eraseTo(
+        const KeyType& k)
+    {
+        // special cases:
+        if (_isEmpty) return;
+        if (_minKey > k) return;
+        if (_maxKey <= k)
+        {
+            clear();
+            return;
+        }
+
+        // clear _occup values up to k:
+        const unsigned kindex(getKeyIndex(k));
+        if (_minKeyIndex<=kindex)
+        {
+            std::fill(_occup.begin()+_minKeyIndex,_occup.begin()+kindex+1,false);
+        }
+        else
+        {
+            std::fill(_occup.begin(),_occup.begin()+kindex+1,false);
+            std::fill(_occup.begin()+_minKeyIndex,_occup.end(),false);
+        }
+
+
+        // we have to shift minKey up to the next valid value:
+        const unsigned keySize(_maxKey-_minKey);
+        const unsigned dataSize(_data.size());
+        for (unsigned offset(1); offset<=keySize; ++offset)
+        {
+            if (! _occup[(_minKeyIndex+offset) % dataSize]) continue;
+            _minKeyIndex=(_minKeyIndex+offset) % dataSize;
+            _minKey += offset;
+            return;
+        }
         _isEmpty=true;
     }
 
