@@ -30,7 +30,8 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 from pyflow import WorkflowRunner
 from starkaWorkflow import StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, bamListCatCmd
+                         getNextGenomeSegment, bamListCatCmd, \
+                         concatIndexBed, concatIndexVcf
 
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 
@@ -142,16 +143,16 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--tumor-bam-file", bamPath])
 
     tmpSnvPath = self.paths.getTmpSegmentSnvPath(segStr)
-    segFiles.snv.append(tmpSnvPath)
+    segFiles.snv.append(tmpSnvPath+".gz")
     segCmd.extend(["--somatic-snv-file ", tmpSnvPath ] )
 
     tmpIndelPath = self.paths.getTmpSegmentIndelPath(segStr)
-    segFiles.indel.append(tmpIndelPath)
+    segFiles.indel.append(tmpIndelPath+".gz")
     segCmd.extend(["--somatic-indel-file", tmpIndelPath ] )
 
     if self.params.isWriteCallableRegion :
         tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
-        segFiles.callable.append(tmpCallablePath)
+        segFiles.callable.append(tmpCallablePath+".gz")
         segCmd.extend(["--somatic-callable-region-file", tmpCallablePath ])
 
     if self.params.isWriteRealignedBam :
@@ -237,37 +238,11 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     finishTasks = set()
 
-    def finishTabixIndexedFile(tmpList, output, label, fileType) :
-        assert(len(tmpList) > 0)
-
-        if len(tmpList) > 1 :
-            catCmd = [self.params.bgcatBin,"-o",output]
-            catCmd.extend(tmpList)
-        else :
-            catCmd = "mv -f %s %s" % (tmpList[0],output)
-
-        indexCmd = "%s -p %s %s" % (self.params.tabixBin, fileType, output)
-        catTask = self.addTask(preJoin(taskPrefix,label+"_concat_"+fileType), catCmd,
-                               dependencies=completeSegmentsTask, isForceLocal=True)
-        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_index_"+fileType), indexCmd,
-                                     dependencies=catTask, isForceLocal=True))
-
-    def finishVcf(inputList, output, label) :
-        assert(len(inputList) > 0)
-        tmpList = [file + ".gz" for file in inputList]
-        finishTabixIndexedFile(tmpList, output, label, "vcf")
-
-    def finishBed(inputList, output, label) :
-        assert(len(inputList) > 0)
-        tmpList = [file + ".gz" for file in inputList]
-        finishTabixIndexedFile(tmpList, output, label, "bed")
-
-
-    finishVcf(segFiles.snv, self.paths.getSnvOutputPath(),"SNV")
-    finishVcf(segFiles.indel, self.paths.getIndelOutputPath(),"Indel")
+    concatIndexVcf(segFiles.snv, self.paths.getSnvOutputPath(),"SNV")
+    concatIndexVcf(segFiles.indel, self.paths.getIndelOutputPath(),"Indel")
 
     if self.params.isWriteCallableRegion :
-        finishBed(segFiles.callable, self.paths.getRegionOutputPath(), "callableRegions")
+        concatIndexBed(segFiles.callable, self.paths.getRegionOutputPath(), "callableRegions")
 
     if self.params.isWriteRealignedBam :
         def finishBam(tmpList, output, label) :

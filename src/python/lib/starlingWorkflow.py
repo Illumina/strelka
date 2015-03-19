@@ -30,7 +30,8 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 from pyflow import WorkflowRunner
 from starkaWorkflow import StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, bamListCatCmd
+                         getNextGenomeSegment, bamListCatCmd,
+                         concatIndexVcf
 
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 
@@ -227,22 +228,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     finishTasks = set()
 
-    def finishVcf(tmpList, output, label) :
-        assert(len(tmpList) > 0)
-
-        if len(tmpList) > 1 :
-            catGVCFCmd = [self.params.bgcatBin,"-o",output]
-            catGVCFCmd.extend(tmpList)
-        else :
-            catGVCFCmd = "mv -f %s %s" % (tmpList[0],output)
-
-        indexGVCFCmd = "%s -p vcf %s" % (self.params.tabixBin, output)
-        catGVCFTask = self.addTask(preJoin(taskPrefix,label+"_concat"), catGVCFCmd,
-                                   dependencies=completeSegmentsTask, isForceLocal=True)
-        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_index"), indexGVCFCmd,
-                                     dependencies=catGVCFTask, isForceLocal=True))
-
-    finishVcf(segFiles.gvcf, self.paths.getGvcfOutputPath(),"gVCF")
+    concatIndexVcf(segFiles.gvcf, self.paths.getGvcfOutputPath(),"gVCF")
 
     if self.params.isWriteRealignedBam :
         def finishBam(tmpList, output, label) :

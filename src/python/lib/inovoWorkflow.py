@@ -30,7 +30,8 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 from pyflow import WorkflowRunner
 from starkaWorkflow import StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, bamListCatCmd
+                         getNextGenomeSegment, bamListCatCmd, \
+                         concatIndexBed, concatIndexVcf
 
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 
@@ -118,7 +119,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.append("--tier2-include-anomalous")
 
     tmpDenovoPath = self.paths.getTmpSegmentDenovoPath(segStr)
-    segFiles.denovo.append(tmpDenovoPath)
+    segFiles.denovo.append(tmpDenovoPath+".gz")
     segCmd.extend(["--denovo-file",tmpDenovoPath])
 
     for bamPath in self.params.probandBamList :
@@ -130,7 +131,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     if self.params.isWriteCallableRegion :
         tmpCallablePath = self.paths.getTmpSegmentRegionPath(segStr)
-        segFiles.callable.append(tmpCallablePath)
+        segFiles.callable.append(tmpCallablePath+".gz")
         segCmd.extend(["--denovo-callable-region-file", tmpCallablePath ])
 
     def addListCmdOption(optList,arg) :
@@ -155,9 +156,16 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     nextStepWait = set()
 
-    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
-    self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
-    nextStepWait.add(setTaskLabel)
+    callTask=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
+    self.addTask(callTask,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
+    
+    compressLabel=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
+    compressCmd="%s %s" % (self.params.bgzipBin, tmpDenovoPath)
+    if self.params.isWriteCallableRegion :
+        compressCmd += " && %s %s" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
+
+    self.addTask(compressLabel, compressCmd, dependencies=callTask, isForceLocal=True)
+    nextStepWait.add(compressLabel)
 
     return nextStepWait
 
@@ -186,22 +194,10 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     finishTasks = set()
 
-    def finishVcf(tmpList, output, label) :
-        cmd  = "cat " + " ".join(tmpList)
-        cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
-        cmd += " && %s -p vcf %s" % (self.params.tabixBin, output)
-        finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeVCF"), cmd, dependencies=completeSegmentsTask))
-
-    finishVcf(segFiles.denovo, self.paths.getDenovoOutputPath(),"denovo")
+    concatIndexVcf(segFiles.denovo, self.paths.getDenovoOutputPath(),"denovo")
 
     if self.params.isWriteCallableRegion :
-        def finishBed(tmpList, output, label):
-            cmd  = "cat " + " ".join(tmpList)
-            cmd += " | %s -c >| %s" % (self.params.bgzipBin, output)
-            cmd += " && %s -p bed %s" % (self.params.tabixBin, output)
-            finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBED"), cmd, dependencies=completeSegmentsTask))
-
-        finishBed(segFiles.callable, self.paths.getRegionOutputPath(), "callableRegions")
+        concatIndexBed(segFiles.callable, self.paths.getRegionOutputPath(), "callableRegions")
 
     nextStepWait = finishTasks
 
@@ -321,7 +317,8 @@ class InovoWorkflow(StarkaWorkflow) :
 
     def workflow(self) :
         self.flowLog("Initiating Inovo workflow version: %s" % (__version__))
-
+        self.setCallMemMb()
+        
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :

@@ -338,3 +338,50 @@ def bamListCatCmd(samtoolsBin, bamList, output) :
     return cmd + " && %s index %s" % (samtoolsBin, output)
 
 
+
+def concatIndexBgzipFile(inputList, output, label, fileType) :
+    """
+    Internal helper function
+    @param inputList files to be concatenated (in order), already bgzipped
+    @param output output filename
+    @param label used for error task id
+    @param fileType provided to tabix
+    """
+    assert(len(inputList) > 0)
+
+    if len(inputList) > 1 :
+        catCmd = [self.params.bgcatBin,"-o",output]
+        catCmd.extend(tmpList)
+    else :
+        catCmd = "mv -f %s %s" % (tmpList[0],output)
+
+    indexCmd = "%s -p %s %s" % (self.params.tabixBin, fileType, output)
+    catTask = self.addTask(preJoin(taskPrefix,label+"_concat_"+fileType), catCmd,
+                           dependencies=completeSegmentsTask, isForceLocal=True)
+    finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_index_"+fileType), indexCmd,
+                                 dependencies=catTask, isForceLocal=True))
+
+
+
+def concatIndexVcf(inputList, output, label) :
+    """
+    Concatenate bgzipped vcf segments
+    @param inputList files to be concatenated (in order), already bgzipped
+    @param output output filename
+    @param label used for error task id
+    """
+    assert(len(inputList) > 0)
+    concatIndexBgzipFile(inputList, output, label, "vcf")
+
+
+
+def concatIndexBed(inputList, output, label) :
+    """
+    Concatenate bgzipped bed segments
+    @param inputList files to be concatenated (in order), already bgzipped
+    @param output output filename
+    @param label used for error task id
+    """
+    assert(len(inputList) > 0)
+    concatIndexBgzipFile(inputList, output, label, "bed")
+
