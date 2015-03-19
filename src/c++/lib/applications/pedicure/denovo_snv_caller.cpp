@@ -279,7 +279,7 @@ get_denovo_snv_call(
     // escape in case of low sample depth:
     // depth must be at least minDepth in all of proband and parents
     {
-        static const unsigned minDepth(10);
+        static const unsigned minDepth(3);
         for (const auto sampleIndex : allIndex)
         {
             const CleanedPileup& cpi(*pileups[PEDICURE_TIERS::TIER1][sampleIndex]);
@@ -330,7 +330,7 @@ get_denovo_snv_call(
             const snp_pos_info& pi(cpi.cleanedPileup());
             blt_float_t* lhood(sampleLhood[sampleIndex].data());
             get_diploid_gt_lhood_cached(opt, pi, lhood);
-            get_diploid_het_grid_lhood_cached(pi, DIGT_DGRID::HET_RES, lhood);
+            get_diploid_het_grid_lhood_cached(pi, DIGT_DGRID::HET_RES, lhood+DIGT::SIZE);
 
         }
 

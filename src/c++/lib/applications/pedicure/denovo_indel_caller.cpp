@@ -155,8 +155,8 @@ namespace TRANSMISSION_STATE
         const index_t idx)
     {
         // as currently defined background exp is I: 15/27 E: 2/27 D: 10/27 -- compared to drate this doesn't matter
-        static const double lndrate(std::log(1e-7));
-        static const double noiserate(std::log(1e-8));
+        static const double lndrate(std::log(5e-7));
+        static const double noiserate(std::log(5e-8));
         switch (idx)
         {
         case INHERITED: return 0.;
