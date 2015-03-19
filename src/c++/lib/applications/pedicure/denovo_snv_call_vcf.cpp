@@ -103,7 +103,6 @@ denovo_snv_call_vcf(
  //                                  dsc.ref_gt,os);
     //QUAL:
     os << "\t.";
-    os << rs.dsnv_qphred;
 
     //FILTER:
     os << "\t";

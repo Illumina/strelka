@@ -147,117 +147,158 @@ max_element_index(Iter b, Iter e)
 /// Given the likelihood, go through the final computations to get the
 /// posterior and derived values.
 ///
-static
-void
-calculate_result_set_grid(
-    const SampleInfoManager& sinfo,
-    const std::vector<dsnv_state_t>& sampleLhood,
-    denovo_snv_call::result_set& rs)
+/// setup as an object to allow early escape while only computing partial likelihoods (runtime optimization)
+///
+struct DenovoResultMaker
 {
-    using namespace PEDICURE_SAMPLETYPE;
-
-    const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
-    const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
-
-    static const double lnzero(-std::numeric_limits<double>::infinity());
-    std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
-    std::fill(stateLhood.begin(),stateLhood.end(),lnzero);
-
-    // partial brute force enumeration of all parent-child genotypes:
-    //  find max_gt from parents and children, translate this into a candidate allele pool
-    //   enumerate all genotypes in all samples from the candidate allele pool only.
-    std::vector<unsigned> trioIndex(parentIndex);
-    trioIndex.push_back(probandIndex);
-
-    std::array<bool,N_BASE> max_alleles;
-    std::fill(max_alleles.begin(),max_alleles.end(),false);
-    for (const auto sampleIndex : trioIndex)
+    /// first step doesn't use noise lhoods, provides a chance to early escape non denovo sites without needing to compute them:
+    void
+    calculate_result_set_grid1(
+        const SampleInfoManager& sinfo,
+        const std::vector<dsnv_state_t>& sampleLhood,
+        denovo_snv_call::result_set& rs)
     {
-        const auto& lhood(sampleLhood[sampleIndex]);
-        const unsigned maxGT(max_element_index(lhood.begin(),lhood.begin()+DIGT::SIZE));
-        for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex)
-        {
-            max_alleles[DIGT::get_allele(maxGT,chromCopyIndex)] = true;
-        }
-    }
+        using namespace PEDICURE_SAMPLETYPE;
 
-    auto isFilterGT = [&](const unsigned gt)
-        {
-            return (! (max_alleles[DIGT::get_allele(gt,0)] && max_alleles[DIGT::get_allele(gt,1)]));
-        };
+        const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
+        const std::vector<unsigned>& parentIndices(sinfo.getTypeIndexList(PARENT));
 
-    for (unsigned parent0GT(0); parent0GT<DIGT::SIZE; ++parent0GT)
-    {
-        if (isFilterGT(parent0GT)) continue;
-        for (unsigned parent1GT(0); parent1GT<DIGT::SIZE; ++parent1GT)
+        static const double lnzero(-std::numeric_limits<double>::infinity());
+        std::fill(stateLhood.begin(),stateLhood.end(),lnzero);
+
+        // partial brute force enumeration of all parent-child genotypes:
+        //  find max_gt from parents and children, translate this into a candidate allele pool
+        //   enumerate all genotypes in all samples from the candidate allele pool only.
+        std::fill(max_alleles.begin(),max_alleles.end(),false);
+
         {
-            if (isFilterGT(parent1GT)) continue;
-            for (unsigned probandGT(0); probandGT<DIGT::SIZE; ++probandGT)
-            {
-                if (isFilterGT(probandGT)) continue;
-                const double pedigreeLhood = sampleLhood[parentIndex[0]][parent0GT] + sampleLhood[parentIndex[1]][parent1GT] + sampleLhood[probandIndex][probandGT];
-                const TRANSMISSION_STATE::index_t tran(TRANSMISSION_STATE::get_state(parent0GT,parent1GT,probandGT));
-#ifdef DENOVO_SNV_DEBUG
+            auto addAlleles = [&](const unsigned sampleIndex)
                 {
-                    using namespace TRANSMISSION_STATE;
-                    log_os << "p0gt/p1/c: "
-                            << DIGT::get_gt_label(parent0GT) << " "
-                            << DIGT::get_gt_label(parent1GT) << " "
-                            << DIGT::get_gt_label(probandGT) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
+                    const auto& lhood(sampleLhood[sampleIndex]);
+                    const unsigned maxGT(max_element_index(lhood.begin(),lhood.begin()+DIGT::SIZE));
+                    for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex)
+                    {
+                        max_alleles[DIGT::get_allele(maxGT,chromCopyIndex)] = true;
+                    }
+                };
+
+            addAlleles(probandIndex);
+            for (const unsigned parentIndex : parentIndices) { addAlleles(parentIndex); }
+        }
+
+        auto isFilterGT = [&](const unsigned gt)
+            {
+                return (! (max_alleles[DIGT::get_allele(gt,0)] && max_alleles[DIGT::get_allele(gt,1)]));
+            };
+
+        for (unsigned parent0GT(0); parent0GT<DIGT::SIZE; ++parent0GT)
+        {
+            if (isFilterGT(parent0GT)) continue;
+            for (unsigned parent1GT(0); parent1GT<DIGT::SIZE; ++parent1GT)
+            {
+                if (isFilterGT(parent1GT)) continue;
+                for (unsigned probandGT(0); probandGT<DIGT::SIZE; ++probandGT)
+                {
+                    if (isFilterGT(probandGT)) continue;
+                    const double pedigreeLhood = sampleLhood[parentIndices[0]][parent0GT] + sampleLhood[parentIndices[1]][parent1GT] + sampleLhood[probandIndex][probandGT];
+                    const TRANSMISSION_STATE::index_t tran(TRANSMISSION_STATE::get_state(parent0GT,parent1GT,probandGT));
+    #ifdef DENOVO_SNV_DEBUG
+                    {
+                        using namespace TRANSMISSION_STATE;
+                        log_os << "p0gt/p1/c: "
+                                << DIGT::get_gt_label(parent0GT) << " "
+                                << DIGT::get_gt_label(parent1GT) << " "
+                                << DIGT::get_gt_label(probandGT) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
+                    }
+    #endif
+                    stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
                 }
-#endif
-                stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
             }
         }
+
+        processStateLhood(rs);
     }
 
-    // apart from the regular genotype analysis, we go through a bunch of noise states and
-    // dump these into the "error' transmission state
-    //
-    // these are all non-standard allele frequencies shared among all samples --
-    // 99% of the time this is meant to catch low-frequency alt noise shared in all three
-    // samples (if all were sequenced to a very high depth) but spuriously more prevalent
-    // in the proband due to low-depth sampling issues:
-    static const unsigned ratioCount(DIGT_DGRID::HET_RES*2);
-    for (unsigned hetIndex(0); hetIndex<(DIGT::HET_SIZE); hetIndex++)
+
+
+    /// in step2 we refine the original computation with a richer noise model:
+    void
+    calculate_result_set_grid2(
+        const SampleInfoManager& sinfo,
+        const std::vector<dsnv_state_t>& sampleLhood,
+        denovo_snv_call::result_set& rs)
     {
-        const unsigned hetGT(hetIndex+N_BASE);
-        if (isFilterGT(hetGT)) continue;
-        for (unsigned ratioIndex(0); ratioIndex<ratioCount; ++ratioIndex)
+        using namespace PEDICURE_SAMPLETYPE;
+
+        const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
+        const std::vector<unsigned>& parentIndices(sinfo.getTypeIndexList(PARENT));
+
+        auto isFilterGT = [&](const unsigned gt)
+            {
+                return (! (max_alleles[DIGT::get_allele(gt,0)] && max_alleles[DIGT::get_allele(gt,1)]));
+            };
+
+        // apart from the regular genotype analysis, we go through a bunch of noise states and
+        // dump these into the "error' transmission state
+        //
+        // these are all non-standard allele frequencies shared among all samples --
+        // 99% of the time this is meant to catch low-frequency alt noise shared in all three
+        // samples (if all were sequenced to a very high depth) but spuriously more prevalent
+        // in the proband due to low-depth sampling issues:
+        static const unsigned ratioCount(DIGT_DGRID::HET_RES*2);
+        for (unsigned hetIndex(0); hetIndex<(DIGT::HET_SIZE); hetIndex++)
         {
-            const unsigned noiseState(DIGT::SIZE+(ratioIndex*DIGT::HET_SIZE)+hetIndex);
-            const double errorLhood =
-                    sampleLhood[parentIndex[0]][noiseState] +
-                    sampleLhood[parentIndex[1]][noiseState] +
-                    sampleLhood[probandIndex][noiseState];
+            const unsigned hetGT(hetIndex+N_BASE);
+            if (isFilterGT(hetGT)) continue;
+            for (unsigned ratioIndex(0); ratioIndex<ratioCount; ++ratioIndex)
+            {
+                const unsigned noiseState(DIGT::SIZE+(ratioIndex*DIGT::HET_SIZE)+hetIndex);
+                const double errorLhood =
+                        sampleLhood[parentIndices[0]][noiseState] +
+                        sampleLhood[parentIndices[1]][noiseState] +
+                        sampleLhood[probandIndex][noiseState];
 
-            using namespace TRANSMISSION_STATE;
-            stateLhood[ERROR] = log_sum(stateLhood[ERROR], errorLhood);
+                using namespace TRANSMISSION_STATE;
+                stateLhood[ERROR] = log_sum(stateLhood[ERROR], errorLhood);
+            }
         }
+
+        processStateLhood(rs);
     }
 
-    std::array<double,TRANSMISSION_STATE::SIZE> statePprob;
-    for (unsigned tstate(0); tstate<TRANSMISSION_STATE::SIZE; ++tstate)
+
+
+    /// translate current state lhood into result_set
+    void
+    processStateLhood(
+        denovo_snv_call::result_set& rs) const
     {
-        statePprob[tstate] = stateLhood[tstate] + TRANSMISSION_STATE::getPrior(static_cast<TRANSMISSION_STATE::index_t>(tstate));
-#ifdef DENOVO_SNV_DEBUG
-        const TRANSMISSION_STATE::index_t tidx(static_cast<TRANSMISSION_STATE::index_t>(tstate));
-        log_os << "denovo state pprob/lhood/prior: " << TRANSMISSION_STATE::getLabel(tidx)
-               << " " << statePprob[tstate] << " " << stateLhood[tstate]
-               << " " << TRANSMISSION_STATE::getPrior(tidx) << "\n";
-#endif
+        std::array<double,TRANSMISSION_STATE::SIZE> statePprob;
+        for (unsigned tstate(0); tstate<TRANSMISSION_STATE::SIZE; ++tstate)
+        {
+            statePprob[tstate] = stateLhood[tstate] + TRANSMISSION_STATE::getPrior(static_cast<TRANSMISSION_STATE::index_t>(tstate));
+    #ifdef DENOVO_SNV_DEBUG
+            const TRANSMISSION_STATE::index_t tidx(static_cast<TRANSMISSION_STATE::index_t>(tstate));
+            log_os << "denovo state pprob/lhood/prior: " << TRANSMISSION_STATE::getLabel(tidx)
+                   << " " << statePprob[tstate] << " " << stateLhood[tstate]
+                   << " " << TRANSMISSION_STATE::getPrior(tidx) << "\n";
+    #endif
+        }
+
+        //opt_normalize_ln_distro(pprob.begin(),pprob.end(),DDIINDEL_GRID::is_nonsom.val.begin(),rs.max_gt);
+        normalize_ln_distro(statePprob.begin(),statePprob.end(),rs.max_gt);
+
+    #ifdef DEBUG_INDEL_CALL
+        log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
+    #endif
+        rs.dsnv_qphred=error_prob_to_qphred(statePprob[TRANSMISSION_STATE::INHERITED] + statePprob[TRANSMISSION_STATE::ERROR]);
     }
 
-    //opt_normalize_ln_distro(pprob.begin(),pprob.end(),DDIINDEL_GRID::is_nonsom.val.begin(),rs.max_gt);
-    normalize_ln_distro(statePprob.begin(),statePprob.end(),rs.max_gt);
 
-#ifdef DEBUG_INDEL_CALL
-    log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
-#endif
-    rs.dsnv_qphred=error_prob_to_qphred(statePprob[TRANSMISSION_STATE::INHERITED] + statePprob[TRANSMISSION_STATE::ERROR]);
-
-}
-
+private:
+    std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
+    std::array<bool,N_BASE> max_alleles;
+};
 
 
 
@@ -277,9 +318,9 @@ get_denovo_snv_call(
     allIndex.push_back(probandIndex);
 
     // escape in case of low sample depth:
-    // depth must be at least minDepth in all of proband and parents
+    // depth must be at least minDepth in all samples (proband and parents)
     {
-        static const unsigned minDepth(3);
+        static const unsigned minDepth(8);
         for (const auto sampleIndex : allIndex)
         {
             const CleanedPileup& cpi(*pileups[PEDICURE_TIERS::TIER1][sampleIndex]);
@@ -298,6 +339,8 @@ get_denovo_snv_call(
         return;
     }
     dsc.ref_gt=base_to_id(refBase);
+
+    DenovoResultMaker dmaker;
 
     const unsigned sampleSize(sinfo.size());
     std::vector<dsnv_state_t> sampleLhood(sampleSize);
@@ -330,11 +373,24 @@ get_denovo_snv_call(
             const snp_pos_info& pi(cpi.cleanedPileup());
             blt_float_t* lhood(sampleLhood[sampleIndex].data());
             get_diploid_gt_lhood_cached(opt, pi, lhood);
-            get_diploid_het_grid_lhood_cached(pi, DIGT_DGRID::HET_RES, lhood+DIGT::SIZE);
-
         }
 
-        calculate_result_set_grid(sinfo, sampleLhood, tier_rs[tierIndex]);
+        denovo_snv_call::result_set& trs(tier_rs[tierIndex]);
+
+        dmaker.calculate_result_set_grid1(sinfo, sampleLhood, trs);
+
+        // don't bother to compute the noise likelihoods unless there's signal:
+        if (trs.dsnv_qphred == 0) continue;
+
+        for (unsigned sampleIndex(0);sampleIndex<sampleSize;++sampleIndex)
+        {
+            // get likelihoods for each sample
+            const CleanedPileup& cpi(*sampleCpi[sampleIndex]);
+            const snp_pos_info& pi(cpi.cleanedPileup());
+            blt_float_t* lhood(sampleLhood[sampleIndex].data());
+            get_diploid_het_grid_lhood_cached(pi, DIGT_DGRID::HET_RES, lhood+DIGT::SIZE);
+        }
+        dmaker.calculate_result_set_grid2(sinfo, sampleLhood, trs);
     }
 
 
