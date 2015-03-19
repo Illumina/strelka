@@ -15,8 +15,8 @@
 /// \author Chris Saunders
 ///
 
-#include "inovo_vcf_locus_info.hh"
-#include "inovo_streams.hh"
+#include "pedicure_vcf_locus_info.hh"
+#include "pedicure_streams.hh"
 
 #include "blt_util/chrom_depth_map.hh"
 #include "blt_util/io_util.hh"
@@ -49,7 +49,7 @@ write_shared_vcf_header_info(
 {
     if (dopt.is_max_depth())
     {
-        using namespace INOVO_VCF_FILTERS;
+        using namespace PEDICURE_VCF_FILTERS;
 
         std::ostringstream oss;
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth in the normal sample";
@@ -70,13 +70,13 @@ write_shared_vcf_header_info(
 
 
 
-inovo_streams::
-inovo_streams(
-    const inovo_options& opt,
-    const inovo_deriv_options& dopt,
+pedicure_streams::
+pedicure_streams(
+    const pedicure_options& opt,
+    const pedicure_deriv_options& dopt,
     const prog_info& pinfo,
     const bam_header_t* const header,
-    const InovoSampleSetSummary& ssi)
+    const PedicureSampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
     assert(! opt.is_realigned_read_file);
@@ -96,7 +96,7 @@ inovo_streams(
         std::ostream& os(*_denovo_osptr);
 
         write_vcf_audit(opt,pinfo,cmdline,header,os);
-        os << "##content=inovo somatic snv calls\n"
+        os << "##content=pedicure somatic snv calls\n"
             << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n";
 
         // INFO:
@@ -110,7 +110,7 @@ inovo_streams(
         // FILTERS:
         {
 #if 0
-            using namespace INOVO_VCF_FILTERS;
+            using namespace PEDICURE_VCF_FILTERS;
             {
                 std::ostringstream oss;
                 oss << "Fraction of basecalls filtered at this site in either sample is at or above " << opt.sfilter.snv_max_filtered_basecall_frac;
@@ -126,7 +126,7 @@ inovo_streams(
             const SampleInfoManager& si(opt.alignFileOpt.alignmentSampleInfo);
             for (unsigned sampleIndex(0); sampleIndex<si.size(); ++sampleIndex)
             {
-                os << "\t" << INOVO_SAMPLETYPE::get_label(si.getSampleInfo(sampleIndex).stype);
+                os << "\t" << PEDICURE_SAMPLETYPE::get_label(si.getSampleInfo(sampleIndex).stype);
             }
         }
         os << "\n";

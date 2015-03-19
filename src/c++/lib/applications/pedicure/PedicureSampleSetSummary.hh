@@ -11,27 +11,20 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the beginning of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
-///
-
 #pragma once
 
-#include "inovo_shared.hh"
+#include "pedicure_shared.hh"
 #include "starling_common/SampleSetSummary.hh"
 
 
-struct InovoSampleSetSummary : public SampleSetSummary
+struct PedicureSampleSetSummary : public SampleSetSummary
 {
-    InovoSampleSetSummary(
-        const inovo_options& opt)
+    PedicureSampleSetSummary(
+        const pedicure_options& opt)
     : SampleSetSummary(),
       _sinfo(opt.alignFileOpt.alignmentSampleInfo)
     {}
@@ -47,7 +40,7 @@ struct InovoSampleSetSummary : public SampleSetSummary
         const unsigned i) const override
     {
         assert(i<size());
-        return INOVO_SAMPLETYPE::get_label(_sinfo.getSampleInfo(i).stype);
+        return PEDICURE_SAMPLETYPE::get_label(_sinfo.getSampleInfo(i).stype);
     }
 
     const char*

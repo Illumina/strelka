@@ -97,11 +97,13 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         bgcatBin=joinFile(libexecDir,"bgzf_cat")
 
         countFastaBin=joinFile(libexecDir,"countFastaBases")
-        starlingBin=joinFile(libexecDir,"starling2")
-        strelkaBin=joinFile(libexecDir,"strelka2")
-        inovoBin=joinFile(libexecDir,"inovo")
 
         getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
+
+        # TODO: these aren't shared and should go into child classes:
+        starlingBin=joinFile(libexecDir,"starling2")
+        strelkaBin=joinFile(libexecDir,"strelka2")
+        pedicureBin=joinFile(libexecDir,"pedicure")
 
         # default memory request per process-type
         #

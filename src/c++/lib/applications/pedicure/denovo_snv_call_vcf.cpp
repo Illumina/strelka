@@ -16,7 +16,7 @@
 ///
 
 #include "denovo_snv_call_vcf.hh"
-#include "inovo_vcf_locus_info.hh"
+#include "pedicure_vcf_locus_info.hh"
 #include "blt_util/io_util.hh"
 
 #include <array>
@@ -59,21 +59,21 @@ write_vcf_sample_info(
 
 void
 denovo_snv_call_vcf(
-    const inovo_options& opt,
-    const inovo_deriv_options& dopt,
+    const pedicure_options& opt,
+    const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const cpiPtrTiers_t& pileups,
     const denovo_snv_call& dsc,
     std::ostream& os)
 {
-    using namespace INOVO_SAMPLETYPE;
+    using namespace PEDICURE_SAMPLETYPE;
 
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
-    const CleanedPileup& probandCpi(*pileups[INOVO_TIERS::TIER1][probandIndex]);
+    const CleanedPileup& probandCpi(*pileups[PEDICURE_TIERS::TIER1][probandIndex]);
 
     const denovo_snv_call::result_set& rs(dsc.rs);
 
-    inovo_shared_modifiers smod;
+    pedicure_shared_modifiers smod;
 
     {
         // compute all site filters:
@@ -83,13 +83,13 @@ denovo_snv_call_vcf(
         {
             if (probandDP > dopt.dfilter.max_depth)
             {
-                smod.set_filter(INOVO_VCF_FILTERS::HighDepth);
+                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
             }
         }
 
         if (rs.dsnv_qphred < opt.dfilter.dsnv_qual_lowerbound)
         {
-            smod.set_filter(INOVO_VCF_FILTERS::QDS);
+            smod.set_filter(PEDICURE_VCF_FILTERS::QDS);
         }
 
     }
@@ -121,7 +121,7 @@ denovo_snv_call_vcf(
         unsigned n_mapq0(0);
         for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); ++sampleIndex)
         {
-            const snp_pos_info& pi(pileups[INOVO_TIERS::TIER1][sampleIndex]->rawPileup());
+            const snp_pos_info& pi(pileups[PEDICURE_TIERS::TIER1][sampleIndex]->rawPileup());
             n_mapq += pi.n_mapq;
             n_mapq0 += pi.n_mapq0;
         }
@@ -138,8 +138,8 @@ denovo_snv_call_vcf(
 
     for (unsigned sampleIndex(0);sampleIndex<sinfo.size();sampleIndex++)
     {
-        const CleanedPileup& cpi1(*pileups[INOVO_TIERS::TIER1][sampleIndex]);
-        const CleanedPileup& cpi2(*pileups[INOVO_TIERS::TIER2][sampleIndex]);
+        const CleanedPileup& cpi1(*pileups[PEDICURE_TIERS::TIER1][sampleIndex]);
+        const CleanedPileup& cpi2(*pileups[PEDICURE_TIERS::TIER2][sampleIndex]);
         os << "\t";
         write_vcf_sample_info(opt,cpi1,cpi2,os);
     }

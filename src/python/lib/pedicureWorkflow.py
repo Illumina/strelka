@@ -11,7 +11,7 @@
 #
 
 """
-Inovo de-novo small variant calling workflow
+Pedicure de-novo small variant calling workflow
 """
 
 
@@ -86,7 +86,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segStr = str(gseg.id)
 
-    segCmd = [ self.params.inovoBin ]
+    segCmd = [ self.params.pedicureBin ]
     segCmd.append("-clobber")
     segCmd.extend(["-min-paired-align-score",str(self.params.minTier1Mapq)])
     segCmd.extend(["-min-single-align-score","10"])
@@ -147,11 +147,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
 
     if not isFirstSegment :
-        segCmd.append("--inovo-skip-header")
+        segCmd.append("--pedicure-skip-header")
 
     if self.params.isHighDepthFilter :
-        segCmd.extend(["--inovo-chrom-depth-file", self.paths.getChromDepth()])
-        segCmd.extend(["--inovo-max-depth-factor", self.params.depthFilterMultiple])
+        segCmd.extend(["--pedicure-chrom-depth-file", self.paths.getChromDepth()])
+        segCmd.extend(["--pedicure-max-depth-factor", self.params.depthFilterMultiple])
 
     nextStepWait = set()
 
@@ -278,14 +278,14 @@ class PathInfo:
 
 
 
-class InovoWorkflow(StarkaWorkflow) :
+class PedicureWorkflow(StarkaWorkflow) :
     """
-    Inovo de-novo small variant calling workflow
+    Pedicure de-novo small variant calling workflow
     """
 
     def __init__(self,params,iniSections) :
 
-        super(InovoWorkflow,self).__init__(params,iniSections)
+        super(PedicureWorkflow,self).__init__(params,iniSections)
 
         # format bam lists:
         if self.params.probandBamList is None : self.params.probandBamList = []
@@ -310,14 +310,14 @@ class InovoWorkflow(StarkaWorkflow) :
     def getSuccessMessage(self) :
         "Message to be included in email for successful runs"
 
-        msg  = "Inovo de-novo variant workflow successfully completed.\n\n"
+        msg  = "Pedicure de-novo variant workflow successfully completed.\n\n"
         msg += "\tworkflow version: %s\n" % (__version__)
         return msg
 
 
 
     def workflow(self) :
-        self.flowLog("Initiating Inovo workflow version: %s" % (__version__))
+        self.flowLog("Initiating Pedicure workflow version: %s" % (__version__))
         self.setCallMemMb()
         
         callPreReqs = set()

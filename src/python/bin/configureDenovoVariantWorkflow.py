@@ -30,17 +30,17 @@ sys.path.append(workflowDir)
 from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, checkTabixListOption
 from makeRunScript import makeRunScript
-from inovoWorkflow import InovoWorkflow
+from pedicureWorkflow import PedicureWorkflow
 from workflowUtil import ensureDir
 
 
 
-class InovoWorkflowOptions(StarkaWorkflowOptionsBase) :
+class PedicureWorkflowOptions(StarkaWorkflowOptionsBase) :
 
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the Inovo de-novo small variant calling pipeline.
+This script configures the Pedicure de-novo small variant calling pipeline.
 You must specify BAM file(s) for the proband and additional related samples.
 """ % (version)
 
@@ -67,7 +67,7 @@ You must specify BAM file(s) for the proband and additional related samples.
         assert os.path.isdir(configDir)
 
         defaults.update({
-            'runDir' : 'InovoWorkflow',
+            'runDir' : 'PedicureWorkflow',
             'isWriteCallableRegion' : False
             })
         return defaults
@@ -102,21 +102,21 @@ You must specify BAM file(s) for the proband and additional related samples.
 
 def main() :
 
-    primarySectionName="inovo"
-    options,iniSections=InovoWorkflowOptions().getRunOptions(primarySectionName,
+    primarySectionName="pedicure"
+    options,iniSections=PedicureWorkflowOptions().getRunOptions(primarySectionName,
                                                                version=version)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
     #
-    InovoWorkflow(options,iniSections)
+    PedicureWorkflow(options,iniSections)
 
     # generate runscript:
     #
     ensureDir(options.runDir)
     scriptFile=os.path.join(options.runDir,"runWorkflow.py")
 
-    makeRunScript(scriptFile,os.path.join(workflowDir,"inovoWorkflow.py"),"InovoWorkflow",primarySectionName,iniSections)
+    makeRunScript(scriptFile,os.path.join(workflowDir,"pedicureWorkflow.py"),"PedicureWorkflow",primarySectionName,iniSections)
 
     notefp=sys.stdout
     notefp.write("""

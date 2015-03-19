@@ -23,4 +23,4 @@
 #include <array>
 #include <vector>
 
-typedef std::array<std::vector<const CleanedPileup*>,INOVO_TIERS::SIZE> cpiPtrTiers_t;
+typedef std::array<std::vector<const CleanedPileup*>,PEDICURE_TIERS::SIZE> cpiPtrTiers_t;

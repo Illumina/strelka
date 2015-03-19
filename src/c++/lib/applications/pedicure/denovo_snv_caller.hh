@@ -18,12 +18,12 @@
 
 #include "denovo_snv_call.hh"
 #include "denovo_snv_call_info.hh"
-#include "inovo_shared.hh"
+#include "pedicure_shared.hh"
 
 
 void
 get_denovo_snv_call(
-    const inovo_options& opt,
+    const pedicure_options& opt,
     const SampleInfoManager& sinfo,
     const cpiPtrTiers_t& pileups,
     denovo_snv_call& dsc);

@@ -18,20 +18,20 @@
 
 #include "denovo_call.hh"
 #include "denovo_indel_call.hh"
-#include "inovo_shared.hh"
+#include "pedicure_shared.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <array>
 #include <iosfwd>
 
 
-typedef std::array<starling_indel_sample_report_info,INOVO_TIERS::SIZE> isriTiers_t;
+typedef std::array<starling_indel_sample_report_info,PEDICURE_TIERS::SIZE> isriTiers_t;
 
 
 void
 denovo_indel_call_vcf(
-    const inovo_options& opt,
-    const inovo_deriv_options& dopt,
+    const pedicure_options& opt,
+    const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const denovo_indel_call& dinc,
     const starling_indel_report_info& iri,

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "inovo_shared.hh"
+#include "pedicure_shared.hh"
 #include "starling_common/PileupCleaner.hh"
 
 #include "blt_util/RegionProcessor.hh"
@@ -40,7 +40,7 @@ struct DenovoCallableProcessor : public RegionProcessor
         const SampleInfoManager& sinfo,
         const std::vector<const CleanedPileup*>& pileups)
     {
-        using namespace INOVO_SAMPLETYPE;
+        using namespace PEDICURE_SAMPLETYPE;
 
         const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
         if (testIndex(pileups,probandIndex)) return;

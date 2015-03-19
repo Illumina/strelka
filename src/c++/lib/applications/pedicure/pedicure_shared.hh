@@ -57,11 +57,11 @@ struct denovo_filter_options
 };
 
 
-struct inovo_options : public starling_base_options
+struct pedicure_options : public starling_base_options
 {
     typedef starling_base_options base_t;
 
-    inovo_options()
+    pedicure_options()
     {
         is_bam_filename_used = false;
     }
@@ -168,15 +168,15 @@ struct denovo_filter_deriv_options
 
 // data deterministically derived from the input options:
 //
-struct inovo_deriv_options : public starling_base_deriv_options
+struct pedicure_deriv_options : public starling_base_deriv_options
 {
     typedef starling_base_deriv_options base_t;
 
-    inovo_deriv_options(
-        const inovo_options& opt,
+    pedicure_deriv_options(
+        const pedicure_options& opt,
         const reference_contig_segment& ref);
 
-    ~inovo_deriv_options();
+    ~pedicure_deriv_options();
 
     denovo_filter_deriv_options dfilter;
 };

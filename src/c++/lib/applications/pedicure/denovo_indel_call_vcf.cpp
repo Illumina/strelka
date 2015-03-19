@@ -15,7 +15,7 @@
 ///
 
 #include "denovo_indel_call_vcf.hh"
-#include "inovo_vcf_locus_info.hh"
+#include "pedicure_vcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/io_util.hh"
 
@@ -60,8 +60,8 @@ safeFrac(const int num, const int denom)
 
 void
 denovo_indel_call_vcf(
-    const inovo_options& opt,
-    const inovo_deriv_options& dopt,
+    const pedicure_options& opt,
+    const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const denovo_indel_call& dinc,
     const starling_indel_report_info& iri,
@@ -70,30 +70,30 @@ denovo_indel_call_vcf(
 {
     const denovo_indel_call::result_set& rs(dinc.rs);
 
-    inovo_shared_modifiers smod;
+    pedicure_shared_modifiers smod;
     {
         // compute all site filters:
         if (dopt.dfilter.is_max_depth())
         {
-            using namespace INOVO_SAMPLETYPE;
+            using namespace PEDICURE_SAMPLETYPE;
             const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
 
-            const unsigned& depth(isri[probandIndex][INOVO_TIERS::TIER1].depth);
+            const unsigned& depth(isri[probandIndex][PEDICURE_TIERS::TIER1].depth);
             if (depth > dopt.dfilter.max_depth)
             {
-                smod.set_filter(INOVO_VCF_FILTERS::HighDepth);
+                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
             }
         }
 
         if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
         {
-            smod.set_filter(INOVO_VCF_FILTERS::QDI);
+            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
 
 #if 0
         if (siInfo.iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
         {
-            smod.set_filter(INOVO_VCF_FILTERS::Repeat);
+            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
         }
 
         if (siInfo.iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
@@ -144,7 +144,7 @@ denovo_indel_call_vcf(
     unsigned totalDepth(0);
     for (const auto& sampleIsri : isri)
     {
-        totalDepth += sampleIsri[INOVO_TIERS::TIER1].depth;
+        totalDepth += sampleIsri[PEDICURE_TIERS::TIER1].depth;
     }
 
     os << sep
@@ -177,6 +177,6 @@ denovo_indel_call_vcf(
     for (const auto& sampleIsri : isri)
     {
         os << sep;
-        write_vcf_sample_info(sampleIsri[INOVO_TIERS::TIER1],sampleIsri[INOVO_TIERS::TIER2], os);
+        write_vcf_sample_info(sampleIsri[PEDICURE_TIERS::TIER1],sampleIsri[PEDICURE_TIERS::TIER2], os);
     }
 }

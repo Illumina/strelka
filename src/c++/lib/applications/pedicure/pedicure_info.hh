@@ -21,19 +21,19 @@
 #include "starling_common/version.hh"
 
 
-struct inovo_info : public prog_info
+struct pedicure_info : public prog_info
 {
     static
     const prog_info& get()
     {
-        static const inovo_info vci;
+        static const pedicure_info vci;
         return vci;
     }
 
 private:
     const char* name() const
     {
-        static const char NAME[] = "inovo";
+        static const char NAME[] = "pedicure";
         return NAME;
     }
 
@@ -46,6 +46,6 @@ private:
 
     void doc() const;
 
-    inovo_info() {}
-    virtual ~inovo_info() {}
+    pedicure_info() {}
+    virtual ~pedicure_info() {}
 };

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "InovoSampleInfo.hh"
+#include "PedicureSampleInfo.hh"
 
 #include <string>
 #include <vector>

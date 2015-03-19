@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "inovo_shared.hh"
+#include "pedicure_shared.hh"
 #include "blt_util/prog_info.hh"
 
 
 void
-inovo_run(
+pedicure_run(
     const prog_info& pinfo,
-    const inovo_options& opt);
+    const pedicure_options& opt);

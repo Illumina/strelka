@@ -15,10 +15,10 @@
 /// \author Chris Saunders
 ///
 
-#include "inovo_info.hh"
-#include "inovo_option_parser.hh"
-#include "inovo_run.hh"
-#include "inovo.hh"
+#include "pedicure_info.hh"
+#include "pedicure_option_parser.hh"
+#include "pedicure_run.hh"
+#include "pedicure.hh"
 
 #include "blt_common/blt_arg_parse_util.hh"
 #include "blt_util/blt_exception.hh"
@@ -38,16 +38,16 @@
 
 namespace
 {
-const prog_info& pinfo(inovo_info::get());
+const prog_info& pinfo(pedicure_info::get());
 }
 
 
 
 void
-inovo::
+pedicure::
 runInternal(int argc,char* argv[]) const
 {
-    inovo_options opt;
+    pedicure_options opt;
 
     for (int i(0); i<argc; ++i)
     {
@@ -55,14 +55,14 @@ runInternal(int argc,char* argv[]) const
         opt.cmdline += argv[i];
     }
 
-    // hack in VQSR for inovo only:
+    // hack in VQSR for pedicure only:
     opt.is_compute_somatic_VQSRmetrics = true;
 
     std::vector<std::string> legacy_starling_args;
     po::variables_map vm;
     try
     {
-        po::options_description visible(get_inovo_option_parser(opt));
+        po::options_description visible(get_pedicure_option_parser(opt));
         po::parsed_options parsed(po::command_line_parser(argc,argv).options(visible).allow_unregistered().run());
         po::store(parsed,vm);
         po::notify(vm);
@@ -86,8 +86,7 @@ runInternal(int argc,char* argv[]) const
     arg_data ad(legacy_starling_args,pinfo,opt.cmdline);
     legacy_starling_arg_parse(ad,opt);
 
-    finalize_inovo_options(pinfo,vm,opt);
+    finalize_pedicure_options(pinfo,vm,opt);
 
-    inovo_run(pinfo,opt);
+    pedicure_run(pinfo,opt);
 }
-

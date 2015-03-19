@@ -15,7 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#include "inovo_pos_processor.hh"
+#include "pedicure_pos_processor.hh"
 #include "denovo_call.hh"
 #include "denovo_indel_caller.hh"
 #include "denovo_indel_call_vcf.hh"
@@ -30,12 +30,12 @@
 
 
 
-inovo_pos_processor::
-inovo_pos_processor(
-    const inovo_options& opt,
-    const inovo_deriv_options& dopt,
+pedicure_pos_processor::
+pedicure_pos_processor(
+    const pedicure_options& opt,
+    const pedicure_deriv_options& dopt,
     const reference_contig_segment& ref,
-    const inovo_streams& streams)
+    const pedicure_streams& streams)
     : base_t(opt,dopt,ref,streams,opt.alignFileOpt.alignmentSampleInfo.size())
     , _opt(opt)
     , _dopt(dopt)
@@ -67,7 +67,7 @@ inovo_pos_processor(
         }
     }
 
-    using namespace INOVO_SAMPLETYPE;
+    using namespace PEDICURE_SAMPLETYPE;
 
     // setup indel syncronizers:
     {
@@ -92,10 +92,10 @@ inovo_pos_processor(
 
 
 void
-inovo_pos_processor::
+pedicure_pos_processor::
 process_pos_snp_denovo(const pos_t pos)
 {
-    using namespace INOVO_SAMPLETYPE;
+    using namespace PEDICURE_SAMPLETYPE;
 
     // skip site if proband depth is zero:
     {
@@ -109,15 +109,15 @@ process_pos_snp_denovo(const pos_t pos)
 
     const unsigned sampleCount(_n_samples);
     cpiPtrTiers_t pileups;
-    pileups[INOVO_TIERS::TIER1].resize(sampleCount);
-    pileups[INOVO_TIERS::TIER2].resize(sampleCount);
+    pileups[PEDICURE_TIERS::TIER1].resize(sampleCount);
+    pileups[PEDICURE_TIERS::TIER2].resize(sampleCount);
     {
 
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             CleanedPileup* tier_cpi[] = { &(sample(sampleIndex).cpi), &(_tier2_cpi[sampleIndex])};
 
-            for (unsigned tierIndex(0); tierIndex<INOVO_TIERS::SIZE; ++tierIndex)
+            for (unsigned tierIndex(0); tierIndex<PEDICURE_TIERS::SIZE; ++tierIndex)
             {
                 pileups[tierIndex][sampleIndex] = tier_cpi[tierIndex];
 
@@ -144,7 +144,7 @@ process_pos_snp_denovo(const pos_t pos)
     if (_opt.is_denovo_callable())
     {
         _icallProcessor.addToRegion(_chrom_name, output_pos,
-                sinfo, pileups[INOVO_TIERS::TIER1]);
+                sinfo, pileups[PEDICURE_TIERS::TIER1]);
     }
 
     // report events:
@@ -169,7 +169,7 @@ process_pos_snp_denovo(const pos_t pos)
 
 
 void
-inovo_pos_processor::
+pedicure_pos_processor::
 process_pos_variants_impl(const pos_t pos)
 {
     try
@@ -196,10 +196,10 @@ process_pos_variants_impl(const pos_t pos)
 
 
 void
-inovo_pos_processor::
+pedicure_pos_processor::
 process_pos_indel_denovo(const pos_t pos)
 {
-    using namespace INOVO_SAMPLETYPE;
+    using namespace PEDICURE_SAMPLETYPE;
 
     // because of indel syncronization we should get all the indels by iterating
     // through any of our samples. The proband is the only sample that's guaranteed
@@ -272,7 +272,7 @@ process_pos_indel_denovo(const pos_t pos)
         {
             // get sample specific info:
             std::vector<isriTiers_t> isri(_n_samples);
-            for (unsigned tierIndex(0); tierIndex<INOVO_TIERS::SIZE;++tierIndex)
+            for (unsigned tierIndex(0); tierIndex<PEDICURE_TIERS::SIZE;++tierIndex)
             {
                 const bool is_include_tier2(tierIndex==1);
                 for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
@@ -307,7 +307,7 @@ process_pos_indel_denovo(const pos_t pos)
 
 
 void
-inovo_pos_processor::
+pedicure_pos_processor::
 write_counts(
     const pos_range& output_report_range) const
 {
@@ -318,7 +318,7 @@ write_counts(
     for (unsigned i(0); i<_opt.alignFileOpt.alignmentSampleInfo.size(); ++i)
     {
         const sample_info& sif(sample(i));
-        const std::string label(INOVO_SAMPLETYPE::get_label(i));
+        const std::string label(PEDICURE_SAMPLETYPE::get_label(i));
 
         report_os << std::setprecision(8);
         report_stream_stat(sif.ss,(label+"_ALLSITES_COVERAGE").c_str(),output_report_range,report_os);

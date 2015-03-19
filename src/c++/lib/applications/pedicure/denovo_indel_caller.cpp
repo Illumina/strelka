@@ -32,8 +32,8 @@
 
 
 
-/// components related to the INOVO indel noise model
-namespace INOVO_INOISE
+/// components related to the PEDICURE indel noise model
+namespace PEDICURE_INOISE
 {
 // HET_RES is the number of frequency points sampled on a
 // half-axis (that is between 0-0.5)
@@ -88,14 +88,14 @@ get_indel_het_grid_lhood(
     const bool is_use_alt_indel,
     double* const lhood)
 {
-    static const unsigned halfRatioCount(INOVO_INOISE::HET_RES);
+    static const unsigned halfRatioCount(PEDICURE_INOISE::HET_RES);
     static const unsigned ratioCount(halfRatioCount*2);
     for (unsigned ratioIndex(0); ratioIndex<(ratioCount); ++ratioIndex)
     {
         lhood[ratioIndex] = 0.;
     }
 
-    static const double ratio_increment(0.5/static_cast<double>(INOVO_INOISE::HET_RES+1));
+    static const double ratio_increment(0.5/static_cast<double>(PEDICURE_INOISE::HET_RES+1));
     for (unsigned ratioIndex(0); ratioIndex<halfRatioCount; ++ratioIndex)
     {
         const double het_ratio((ratioIndex+1)*ratio_increment);
@@ -114,7 +114,7 @@ get_indel_het_grid_lhood(
 
 
 
-typedef std::array<double,INOVO_INOISE::SIZE> indel_state_t;
+typedef std::array<double,PEDICURE_INOISE::SIZE> indel_state_t;
 
 
 namespace TRANSMISSION_STATE
@@ -234,7 +234,7 @@ calculate_result_set(
     const std::vector<indel_state_t>& sampleLhood,
     denovo_indel_call::result_set& rs)
 {
-    using namespace INOVO_SAMPLETYPE;
+    using namespace PEDICURE_SAMPLETYPE;
 
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
     const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
@@ -277,7 +277,7 @@ calculate_result_set(
     // these are all shared non-standard allele frequencies shared among all samples -- 99% of the time this is meant to catch low-frequency
     // alt noise shared in all three samples (if all were sequenced to a very high depth) but spuriously more prevalent in the proband due
     // to low-depth sampling issues:
-    static const unsigned ratioCount(INOVO_INOISE::HET_RES*2);
+    static const unsigned ratioCount(PEDICURE_INOISE::HET_RES*2);
     for (unsigned ratioIndex(0); ratioIndex<ratioCount; ++ratioIndex)
     {
         const unsigned noiseState(STAR_DIINDEL::SIZE+ratioIndex);
@@ -427,8 +427,8 @@ is_multi_indel_allele(
 ///
 void
 get_denovo_indel_call(
-    const inovo_options& opt,
-    const inovo_deriv_options& dopt,
+    const pedicure_options& opt,
+    const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const std::vector<const starling_sample_options*>& sampleOptions,
     const double indel_error_prob,
@@ -462,8 +462,8 @@ get_denovo_indel_call(
     const unsigned sampleSize(allIndelData.size());
     std::vector<indel_state_t> sampleLhood(sampleSize);
 
-    std::array<denovo_indel_call::result_set,INOVO_TIERS::SIZE> tier_rs;
-    for (unsigned tierIndex(0); tierIndex<INOVO_TIERS::SIZE; ++tierIndex)
+    std::array<denovo_indel_call::result_set,PEDICURE_TIERS::SIZE> tier_rs;
+    for (unsigned tierIndex(0); tierIndex<PEDICURE_TIERS::SIZE; ++tierIndex)
     {
         const bool is_include_tier2(tierIndex==1);
 

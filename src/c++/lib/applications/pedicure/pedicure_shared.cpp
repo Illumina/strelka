@@ -15,7 +15,7 @@
 /// \author Chris Saunders
 ///
 
-#include "inovo_shared.hh"
+#include "pedicure_shared.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/chrom_depth_map.hh"
 
@@ -24,9 +24,9 @@
 #include <sstream>
 
 
-inovo_deriv_options::
-inovo_deriv_options(
-    const inovo_options& opt,
+pedicure_deriv_options::
+pedicure_deriv_options(
+    const pedicure_options& opt,
     const reference_contig_segment& ref)
     : base_t(opt,ref)
 {
@@ -49,5 +49,5 @@ inovo_deriv_options(
 }
 
 /// dtor required to be in the cpp so that unique ptr can access complete data type
-inovo_deriv_options::
-~inovo_deriv_options() {}
+pedicure_deriv_options::
+~pedicure_deriv_options() {}

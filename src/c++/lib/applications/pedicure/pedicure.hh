@@ -20,12 +20,12 @@
 #include "starling_common/Program.hh"
 
 
-struct inovo : public starka::Program
+struct pedicure : public starka::Program
 {
     const char*
     name() const
     {
-        return "inovo";
+        return "pedicure";
     }
 
     void

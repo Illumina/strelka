@@ -17,14 +17,14 @@
 #pragma once
 
 #include "denovo_indel_call.hh"
-#include "inovo_shared.hh"
+#include "pedicure_shared.hh"
 #include "starling_common/indel.hh"
 
 
 void
 get_denovo_indel_call(
-    const inovo_options& opt,
-    const inovo_deriv_options& dopt,
+    const pedicure_options& opt,
+    const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const std::vector<const starling_sample_options*>& sampleOptions,
     const double indel_error_prob,

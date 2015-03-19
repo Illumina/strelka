@@ -15,9 +15,9 @@
 /// \author Chris Saunders
 ///
 
-#include "inovo_pos_processor.hh"
-#include "inovo_streams.hh"
-#include "inovo_run.hh"
+#include "pedicure_pos_processor.hh"
+#include "pedicure_streams.hh"
+#include "pedicure_run.hh"
 
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
@@ -33,13 +33,13 @@
 
 
 void
-inovo_run(
+pedicure_run(
     const prog_info& pinfo,
-    const inovo_options& opt)
+    const pedicure_options& opt)
 {
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
-    const inovo_deriv_options dopt(opt,ref);
+    const pedicure_deriv_options dopt(opt,ref);
 
     const pos_range& rlimit(dopt.report_range_limit);
 
@@ -97,10 +97,10 @@ inovo_run(
         }
     }
 
-    const InovoSampleSetSummary ssi(opt);
+    const PedicureSampleSetSummary ssi(opt);
     const bam_header_t* const header(bamStreams[0]->get_header());
-    inovo_streams streams(opt, dopt, pinfo, header, ssi);
-    inovo_pos_processor sppr(opt,dopt,ref,streams);
+    pedicure_streams streams(opt, dopt, pinfo, header, ssi);
+    pedicure_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;
 
     starling_input_stream_data sdata;

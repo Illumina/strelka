@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "inovo_shared.hh"
+#include "pedicure_shared.hh"
 
 #include "blt_util/prog_info.hh"
 
@@ -28,15 +28,15 @@ namespace po = boost::program_options;
 
 
 po::options_description
-get_inovo_option_parser(
-    inovo_options& opt);
+get_pedicure_option_parser(
+    pedicure_options& opt);
 
 
 // validate options and process any required quick consistency
 // adjustments
 //
 void
-finalize_inovo_options(
+finalize_pedicure_options(
     const prog_info& pinfo,
     const po::variables_map& vm,
-    inovo_options& opt);
+    pedicure_options& opt);

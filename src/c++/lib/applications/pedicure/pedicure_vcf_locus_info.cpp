@@ -16,13 +16,13 @@
 ///
 
 
-#include "inovo_vcf_locus_info.hh"
+#include "pedicure_vcf_locus_info.hh"
 
 #include <iostream>
 
 
 void
-inovo_shared_modifiers::
+pedicure_shared_modifiers::
 write_filters(
     std::ostream& os) const
 {
@@ -33,7 +33,7 @@ write_filters(
     }
 
     bool is_sep(false);
-    for (unsigned i(0); i<INOVO_VCF_FILTERS::SIZE; ++i)
+    for (unsigned i(0); i<PEDICURE_VCF_FILTERS::SIZE; ++i)
     {
         if (! filters.test(i)) continue;
 
@@ -45,7 +45,7 @@ write_filters(
         {
             is_sep=true;
         }
-        os << INOVO_VCF_FILTERS::get_label(i);
+        os << PEDICURE_VCF_FILTERS::get_label(i);
     }
 }
 
@@ -54,7 +54,7 @@ write_filters(
 std::ostream&
 operator<<(
     std::ostream& os,
-    const inovo_shared_modifiers& shmod)
+    const pedicure_shared_modifiers& shmod)
 {
     os << " filters: ";
     shmod.write_filters(os);

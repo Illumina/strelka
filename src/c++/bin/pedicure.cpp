@@ -11,10 +11,10 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-#include "applications/inovo/inovo.hh"
+#include "applications/pedicure/pedicure.hh"
 
 int
 main(int argc, char* argv[])
 {
-    return inovo().run(argc,argv);
+    return pedicure().run(argc,argv);
 }

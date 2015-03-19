@@ -154,7 +154,7 @@ calculate_result_set_grid(
     const std::vector<dsnv_state_t>& sampleLhood,
     denovo_snv_call::result_set& rs)
 {
-    using namespace INOVO_SAMPLETYPE;
+    using namespace PEDICURE_SAMPLETYPE;
 
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
     const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
@@ -263,12 +263,12 @@ calculate_result_set_grid(
 
 void
 get_denovo_snv_call(
-    const inovo_options& opt,
+    const pedicure_options& opt,
     const SampleInfoManager& sinfo,
     const cpiPtrTiers_t& pileups,
     denovo_snv_call& dsc)
 {
-    using namespace INOVO_SAMPLETYPE;
+    using namespace PEDICURE_SAMPLETYPE;
 
     const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
     const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
@@ -282,7 +282,7 @@ get_denovo_snv_call(
         static const unsigned minDepth(10);
         for (const auto sampleIndex : allIndex)
         {
-            const CleanedPileup& cpi(*pileups[INOVO_TIERS::TIER1][sampleIndex]);
+            const CleanedPileup& cpi(*pileups[PEDICURE_TIERS::TIER1][sampleIndex]);
             if (cpi.cleanedPileup().calls.size() < minDepth)
             {
                 return;
@@ -291,7 +291,7 @@ get_denovo_snv_call(
     }
 
     // setup ref GT
-    const CleanedPileup& probandCpi(*pileups[INOVO_TIERS::TIER1][probandIndex]);
+    const CleanedPileup& probandCpi(*pileups[PEDICURE_TIERS::TIER1][probandIndex]);
     const char refBase(probandCpi.cleanedPileup().get_ref_base());
     if (refBase=='N')
     {
@@ -303,8 +303,8 @@ get_denovo_snv_call(
     std::vector<dsnv_state_t> sampleLhood(sampleSize);
 
 
-    std::array<denovo_snv_call::result_set,INOVO_TIERS::SIZE> tier_rs;
-    for (unsigned tierIndex(0); tierIndex<INOVO_TIERS::SIZE; ++tierIndex)
+    std::array<denovo_snv_call::result_set,PEDICURE_TIERS::SIZE> tier_rs;
+    for (unsigned tierIndex(0); tierIndex<PEDICURE_TIERS::SIZE; ++tierIndex)
     {
         const bool is_include_tier2(tierIndex==1);
 

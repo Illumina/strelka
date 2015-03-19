@@ -23,7 +23,7 @@
 #include <iosfwd>
 
 
-namespace INOVO_VCF_FILTERS
+namespace PEDICURE_VCF_FILTERS
 {
 
 enum index_t
@@ -65,15 +65,15 @@ get_label(const unsigned idx)
 }
 }
 
-struct inovo_shared_modifiers
+struct pedicure_shared_modifiers
 {
-    inovo_shared_modifiers()
+    pedicure_shared_modifiers()
     {
         clear();
     }
 
     void
-    set_filter(const INOVO_VCF_FILTERS::index_t i)
+    set_filter(const PEDICURE_VCF_FILTERS::index_t i)
     {
         filters.set(i);
     }
@@ -87,8 +87,8 @@ struct inovo_shared_modifiers
         filters.reset();
     }
 
-    std::bitset<INOVO_VCF_FILTERS::SIZE> filters;
+    std::bitset<PEDICURE_VCF_FILTERS::SIZE> filters;
 };
 
 
-std::ostream& operator<<(std::ostream& os,const inovo_shared_modifiers& shmod);
+std::ostream& operator<<(std::ostream& os,const pedicure_shared_modifiers& shmod);

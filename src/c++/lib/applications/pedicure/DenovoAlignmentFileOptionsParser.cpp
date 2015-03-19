@@ -49,7 +49,7 @@ void
 addSampleGroup(
     const boost::program_options::variables_map& vm,
     const char* vmkey,
-    const INOVO_SAMPLETYPE::index_t stype,
+    const PEDICURE_SAMPLETYPE::index_t stype,
     DenovoAlignmentFileOptions& opt)
 {
     if (! vm.count(vmkey)) return;
@@ -72,7 +72,7 @@ parseOptions(
     DenovoAlignmentFileOptions& opt,
     std::string& errorMsg)
 {
-    using namespace INOVO_SAMPLETYPE;
+    using namespace PEDICURE_SAMPLETYPE;
 
     // combine all sample types into one sample list:
     addSampleGroup(vm, "proband-align-file", PROBAND, opt);

@@ -16,23 +16,23 @@
 
 #pragma once
 
-#include "inovo_shared.hh"
-#include "InovoSampleSetSummary.hh"
+#include "pedicure_shared.hh"
+#include "PedicureSampleSetSummary.hh"
 
 #include "starling_common/starling_streams_base.hh"
 
 
 
-struct inovo_streams : public starling_streams_base
+struct pedicure_streams : public starling_streams_base
 {
     typedef starling_streams_base base_t;
 
-    inovo_streams(
-        const inovo_options& opt,
-        const inovo_deriv_options& dopt,
+    pedicure_streams(
+        const pedicure_options& opt,
+        const pedicure_deriv_options& dopt,
         const prog_info& pinfo,
         const bam_header_t* const bam_header,
-        const InovoSampleSetSummary& ssi);
+        const PedicureSampleSetSummary& ssi);
 
     std::ostream*
     denovo_osptr() const

@@ -15,9 +15,9 @@
 /// \author Chris Saunders
 ///
 
-#include "inovo_info.hh"
-#include "inovo_option_parser.hh"
-#include "inovo_shared.hh"
+#include "pedicure_info.hh"
+#include "pedicure_option_parser.hh"
+#include "pedicure_shared.hh"
 
 #include "blt_util/log.hh"
 #include "starling_common/starling_base_option_parser.hh"
@@ -29,13 +29,13 @@
 
 
 void
-inovo_info::
+pedicure_info::
 usage(const char* xmessage) const
 {
     std::ostream& os(log_os);
 
-    static inovo_options default_opt;
-    static const po::options_description visible(get_inovo_option_parser(default_opt));
+    static pedicure_options default_opt;
+    static const po::options_description visible(get_pedicure_option_parser(default_opt));
 
     os <<
        "\n" << name() << " - de-novo small-variant caller\n"
@@ -60,7 +60,7 @@ usage(const char* xmessage) const
 
 
 void
-inovo_info::
+pedicure_info::
 doc() const
 {
 

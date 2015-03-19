@@ -25,23 +25,23 @@
 
 
 #include "DenovoCallableProcessor.hh"
-#include "inovo_shared.hh"
-#include "inovo_streams.hh"
+#include "pedicure_shared.hh"
+#include "pedicure_streams.hh"
 
 #include "starling_common/starling_pos_processor_base.hh"
 
 
 ///
 ///
-struct inovo_pos_processor : public starling_pos_processor_base
+struct pedicure_pos_processor : public starling_pos_processor_base
 {
     typedef starling_pos_processor_base base_t;
 
-    inovo_pos_processor(
-        const inovo_options& opt,
-        const inovo_deriv_options& dopt,
+    pedicure_pos_processor(
+        const pedicure_options& opt,
+        const pedicure_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const inovo_streams& streams);
+        const pedicure_streams& streams);
 
 private:
 
@@ -59,11 +59,11 @@ private:
 
     /////////////////////////////
 
-    // keep some of the original inovo classes handy so we don't
+    // keep some of the original pedicure classes handy so we don't
     // have to down-cast:
-    const inovo_options& _opt;
-    const inovo_deriv_options& _dopt;
-    const inovo_streams& _streams;
+    const pedicure_options& _opt;
+    const pedicure_deriv_options& _dopt;
+    const pedicure_streams& _streams;
 
     DenovoCallableProcessor _icallProcessor;
 

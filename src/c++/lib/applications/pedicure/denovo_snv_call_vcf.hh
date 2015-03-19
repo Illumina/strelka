@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "inovo_shared.hh"
+#include "pedicure_shared.hh"
 #include "denovo_snv_call.hh"
 #include "denovo_snv_call_info.hh"
 #include "starling_common/PileupCleaner.hh"
@@ -27,8 +27,8 @@
 
 void
 denovo_snv_call_vcf(
-    const inovo_options& opt,
-    const inovo_deriv_options& dopt,
+    const pedicure_options& opt,
+    const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const cpiPtrTiers_t& pileups,
     const denovo_snv_call& dsc,

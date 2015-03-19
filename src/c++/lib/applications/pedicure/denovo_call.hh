@@ -18,7 +18,7 @@
 #pragma once
 
 
-namespace INOVO_TIERS
+namespace PEDICURE_TIERS
 {
     enum index_t{
         TIER1,

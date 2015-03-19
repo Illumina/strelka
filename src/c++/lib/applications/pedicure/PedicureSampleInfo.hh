@@ -22,7 +22,7 @@
 #include <vector>
 
 
-namespace INOVO_SAMPLETYPE
+namespace PEDICURE_SAMPLETYPE
 {
     enum index_t
     {
@@ -51,7 +51,7 @@ namespace INOVO_SAMPLETYPE
 }
 
 /// possible future expansion of type def:
-namespace INOVO_SEX
+namespace PEDICURE_SEX
 {
     enum index_t
     {
@@ -67,7 +67,7 @@ namespace INOVO_SEX
 struct SampleInfo
 {
     /// relationship of sample to proband there's no use for an unknown value here:
-    INOVO_SAMPLETYPE::index_t stype = INOVO_SAMPLETYPE::PROBAND;
+    PEDICURE_SAMPLETYPE::index_t stype = PEDICURE_SAMPLETYPE::PROBAND;
 };
 
 
@@ -98,9 +98,9 @@ public:
     }
 
     const std::vector<unsigned>&
-    getTypeIndexList(const INOVO_SAMPLETYPE::index_t i) const
+    getTypeIndexList(const PEDICURE_SAMPLETYPE::index_t i) const
     {
-        assert((i >= 0) && (i < INOVO_SAMPLETYPE::SIZE));
+        assert((i >= 0) && (i < PEDICURE_SAMPLETYPE::SIZE));
         return _sindex[i];
     }
 
@@ -120,7 +120,7 @@ public:
 
 private:
     typedef std::vector<unsigned> stypeIndex;
-    stypeIndex _sindex[INOVO_SAMPLETYPE::SIZE];
+    stypeIndex _sindex[PEDICURE_SAMPLETYPE::SIZE];
 
     dtype _data;
 };
