@@ -255,12 +255,18 @@ collect_read_segment_evidence(
 
     const bam_seq bseq(rseg.get_bam_read());
 
+    /// TODO!!!!!!!!!!!!: The read and basecall filtration here is completely out of sync with the regular pileup function
+    /// the pileup filter/scanner needs to be abstracted and used by both components to make the phaser results
+    /// sane wrt requested filters, etc.
+
+
     // read quality checks
     if (static_cast<int>(rseg.map_qual())<this->opt.min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid())
     {
 //                this->total_reads_unused++; // do not count filtered reads in DPF
         return;
     }
+
 
     const int sub_start((this->block_start-rseg.buffer_pos));
     const int sub_end((this->block_end-rseg.buffer_pos));

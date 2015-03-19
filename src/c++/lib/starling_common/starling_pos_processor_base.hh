@@ -484,7 +484,7 @@ private:
 
     virtual
     bool
-    is_suspend_read_buffer_clear() { return false; }
+    is_save_pileup_buffer() { return false; }
 
 protected:
     virtual

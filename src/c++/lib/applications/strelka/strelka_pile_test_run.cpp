@@ -121,7 +121,7 @@ load_pi(const char ref_base,
         const uint8_t base_id(base_to_id(toupper(read[i])));
         assert(qual[i]>=33);
         pi.calls.push_back(base_call(base_id,qual[i]-33,is_fwd,
-                                     1,1,false,false));
+                                     1,1,false,false,false,false,false));
     }
 }
 

@@ -233,7 +233,7 @@ sim_sample_pi(vgen_t& cov_gen,
         const uint8_t obs_id(get_obs_base_id(true_id,qval));
         const bool is_fwd(i < fwd_cov);
         pi.calls.push_back(base_call(obs_id,qval,is_fwd,
-                                     1,1,false,false));
+                                     1,1,false,false,false,false,false));
     }
 }
 

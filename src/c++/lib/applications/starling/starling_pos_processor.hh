@@ -64,7 +64,7 @@ private:
     }
 
     bool
-    is_suspend_read_buffer_clear() override
+    is_save_pileup_buffer() override
     {
         return (_gvcfer && _gvcfer->is_phasing_block());
     }

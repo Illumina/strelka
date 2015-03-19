@@ -44,7 +44,7 @@ struct gvcf_aggregator
 
     ~gvcf_aggregator();
 
-    /// provide the phasing block status, if true, read buffers are
+    /// provide the phasing block status, if true, pileup buffer is
     /// preserved until the block is completed
     bool is_phasing_block() const
     {

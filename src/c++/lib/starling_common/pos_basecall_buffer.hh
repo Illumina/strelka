@@ -147,6 +147,13 @@ struct pos_basecall_buffer
         if (_pdata.isKeyPresent(pos)) _pdata.erase(pos);
     }
 
+    /// clear all data up to and including pos
+    void
+    clear_to_pos(const pos_t pos)
+    {
+        _pdata.eraseTo(pos);
+    }
+
     bool
     empty() const
     {

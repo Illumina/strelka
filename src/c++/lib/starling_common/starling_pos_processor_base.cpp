@@ -981,14 +981,9 @@ process_pos(const int stage_no,
     {
         if (! _opt.is_htype_calling)
         {
-            // if we are doing short-range phasing, suspend read clear
-            // while phasing block is being built:
-            if (! is_suspend_read_buffer_clear())
+            for (unsigned s(0); s<_n_samples; ++s)
             {
-                for (unsigned s(0); s<_n_samples; ++s)
-                {
-                    sample(s).read_buff.clear_to_pos(pos);
-                }
+                sample(s).read_buff.clear_to_pos(pos);
             }
         }
     }
@@ -1009,7 +1004,13 @@ process_pos(const int stage_no,
             sample_info& sif(sample(s));
             sif.estdepth_buff.clear_pos(pos);
             sif.estdepth_buff_tier2.clear_pos(pos);
-            sif.bc_buff.clear_pos(pos);
+
+            // if we are doing short-range phasing, suspend pileup buffer clear
+            // while phasing block is being built:
+            if (! is_save_pileup_buffer())
+            {
+                sif.bc_buff.clear_to_pos(pos);
+            }
         }
     }
     else if (stage_no==STAGE::POST_READ)
@@ -1410,6 +1411,7 @@ pileup_read_segment(const read_segment& rseg,
     pos_t ref_head_pos(best_al.pos);
     unsigned read_head_pos(0);
 
+    // used to phase from the pileup:
     using namespace ALIGNPATH;
     const unsigned as(best_al.path.size());
     for (unsigned i(0); i<as; ++i)
@@ -1424,6 +1426,35 @@ pileup_read_segment(const read_segment& rseg,
         {
             for (unsigned j(0); j<ps.length; ++j)
             {
+                bool isFirstBaseCallFromMatchSeg(false);
+                if (j==0)
+                {
+                    if (i==0)
+                    {
+                        isFirstBaseCallFromMatchSeg=true;
+                    }
+                    else
+                    {
+                        const path_segment& last_ps(best_al.path[i-1]);
+                        if (! is_segment_type_read_length(last_ps.type)) isFirstBaseCallFromMatchSeg=true;
+                    }
+
+                }
+
+                bool isLastBaseCallFromMatchSeg(false);
+                if ((j+1) == ps.length)
+                {
+                    if ((i+1) == as)
+                    {
+                        isLastBaseCallFromMatchSeg=true;
+                    }
+                    else
+                    {
+                        const path_segment& next_ps(best_al.path[i+1]);
+                        if (! is_segment_type_read_length(next_ps.type)) isLastBaseCallFromMatchSeg=true;
+                    }
+                }
+
                 const unsigned read_pos(read_head_pos+j);
                 if ((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
@@ -1522,12 +1553,16 @@ pileup_read_segment(const read_segment& rseg,
                 {
                     const base_call bc = base_call(call_id,qscore,best_al.is_fwd_strand,
                                                    align_strand_read_pos,end_trimmed_read_len,
-                                                   current_call_filter,is_neighbor_mismatch,is_tier_specific_filter);
+                                                   current_call_filter,is_neighbor_mismatch,is_tier_specific_filter,
+                                                   isFirstBaseCallFromMatchSeg,
+                                                   isLastBaseCallFromMatchSeg);
 
                     insert_pos_basecall(ref_pos,
                                         sample_no,
                                         is_tier1,
                                         bc);
+
+                    isFirstBaseCallFromReadSeg = false;
                 }
                 catch (...)
                 {

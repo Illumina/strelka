@@ -44,11 +44,9 @@ struct Codon_phaser
 {
     Codon_phaser(
         const starling_base_options& init_opt,
-        starling_read_buffer& init_read_buffer,
-        const unsigned init_max_read_len)
+        pos_basecall_buffer& init_bc_buff)
         : opt(init_opt),
-          read_buffer(init_read_buffer),
-          max_read_len(init_max_read_len)
+          bc_buff(init_bc_buff),
     {
         clear();
     }
@@ -103,8 +101,7 @@ private:
 
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
-    starling_read_buffer& read_buffer;  // pass along the relevant read-buffer
-    int max_read_len;                   // the length of the input reads
+    pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
 
     int block_start,block_end;          // position of the first and last added het site to block
     int het_count;                      // total hets observed in buffer
