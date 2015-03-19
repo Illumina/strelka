@@ -28,10 +28,9 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
 from pyflow import WorkflowRunner
-from starkaWorkflow import StarkaWorkflow
+from starkaWorkflow import StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
-                         getNextGenomeSegment, bamListCatCmd,
-                         concatIndexVcf
+                         getNextGenomeSegment, bamListCatCmd
 
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 
@@ -228,7 +227,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     finishTasks = set()
 
-    concatIndexVcf(segFiles.gvcf, self.paths.getGvcfOutputPath(),"gVCF")
+    finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.gvcf, self.paths.getGvcfOutputPath(),"gVCF"))
 
     if self.params.isWriteRealignedBam :
         def finishBam(tmpList, output, label) :
@@ -249,10 +248,10 @@ def callGenome(self,taskPrefix="",dependencies=None):
 A separate call workflow is setup so that we can delay the workflow execution until
 the ref count file exists
 """
-class CallWorkflow(WorkflowRunner) :
+class CallWorkflow(StarkaCallWorkflow) :
 
     def __init__(self,params,paths) :
-        self.params = params
+        super(CallWorkflow,self).__init__(params)
         self.paths = paths
 
     def workflow(self) :

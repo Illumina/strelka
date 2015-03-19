@@ -26,7 +26,60 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
 from pyflow import WorkflowRunner
-from workflowUtil import checkFile, ensureDir, getFastaChromOrderSize, cleanPyEnv
+from workflowUtil import checkFile, ensureDir, getFastaChromOrderSize, cleanPyEnv, preJoin
+
+
+class StarkaCallWorkflow(WorkflowRunner) :
+
+    def __init__(self,params) :
+        self.params = params
+        
+        
+    def concatIndexBgzipFile(self, taskPrefix, dependencies, inputList, output, label, fileType) :
+        """
+        Internal helper function
+        @param inputList files to be concatenated (in order), already bgzipped
+        @param output output filename
+        @param label used for error task id
+        @param fileType provided to tabix
+        """
+        assert(len(inputList) > 0)
+    
+        if len(inputList) > 1 :
+            catCmd = [self.params.bgcatBin,"-o",output]
+            catCmd.extend(inputList)
+        else :
+            catCmd = "mv -f %s %s" % (inputList[0],output)
+    
+        indexCmd = "%s -p %s %s" % (self.params.tabixBin, fileType, output)
+        catTask = self.addTask(preJoin(taskPrefix,label+"_concat_"+fileType), catCmd,
+                               dependencies=dependencies, isForceLocal=True)
+        return self.addTask(preJoin(taskPrefix,label+"_index_"+fileType), indexCmd,
+                                    dependencies=catTask, isForceLocal=True)
+
+
+
+    def concatIndexVcf(self, taskPrefix, dependencies, inputList, output, label) :
+        """
+        Concatenate bgzipped vcf segments
+        @param inputList files to be concatenated (in order), already bgzipped
+        @param output output filename
+        @param label used for error task id
+        """
+        assert(len(inputList) > 0)
+        return self.concatIndexBgzipFile(taskPrefix, dependencies, inputList, output, label, "vcf")
+
+
+
+    def concatIndexBed(self, taskPrefix, dependencies, inputList, output, label) :
+        """
+        Concatenate bgzipped bed segments
+        @param inputList files to be concatenated (in order), already bgzipped
+        @param output output filename
+        @param label used for error task id
+        """
+        assert(len(inputList) > 0)
+        return self.concatIndexBgzipFile(taskPrefix, dependencies, inputList, output, label, "bed")
 
 
 
@@ -72,8 +125,11 @@ class StarkaWorkflow(WorkflowRunner) :
 
     def setCallMemMb(self) :
         # set default mem requirements:
-        self.params.callMemMb = self.params.callLocalMemMb
-        if self.getRunMode() == "sge" :
-            self.params.callMemMb = self.params.callSGEMemMb
-
+        if self.params.callMemMbOverride is not None :
+            self.params.callMemMb = self.params.callMemMbOverride
+        else :
+            if self.getRunMode() == "sge" :
+                self.params.callMemMb = self.params.callSGEMemMb
+            else :
+                self.params.callMemMb = self.params.callLocalMemMb
 

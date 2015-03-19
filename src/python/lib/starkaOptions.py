@@ -71,11 +71,10 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               "be analyzed together. All regions must be non-overlapping to get a "
                               "meaningful result. Examples: '--region chr20' (whole chromosome), "
                               "'--region chr2:100-2000 --region chr3:2500-3000' (two regions)'")
-        # re-rig this to work with SGE/local selection scheme
-        #group.add_option("--callMemMb",type="int",metavar="INT",
-        #                 help="Set variant calling task memory limit (in megabytes). It is not "
-        #                      "recommended to change the default in most cases, but this might be required "
-        #                      "for a sample of unusual depth. (default: %default)")
+        group.add_option("--callMemMb",dest="callMemMbOverride",type="int",metavar="INT",
+                         help="Set variant calling task memory limit (in megabytes). It is not "
+                              "recommended to change the default in most cases, but this might be required "
+                              "for a sample of unusual depth.")
 
         ConfigureWorkflowOptions.addExtendedGroupOptions(self,group)
 
