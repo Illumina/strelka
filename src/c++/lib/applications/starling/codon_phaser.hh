@@ -11,8 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 /*
- * Codonphaser.hh
- *
  *  Test for codon-phasing.
  *
  *  Created on: Aug 10, 2013
@@ -22,16 +20,13 @@
 #pragma once
 
 #include "gvcf_locus_info.hh"
-#include "starling_common/starling_base_shared.hh"
-#include "starling_common/starling_read_buffer.hh"
-
-#include <climits>
+#include "starling_common/pos_basecall_buffer.hh"
 
 
 /// short-range phasing utility for het-snps
 ///
-/// this object requires extended preservation of the read buffer so that it
-/// can go back and recover phase information form a phasing block
+/// requires extended preservation of the pileup buffer so that it
+/// can go back and recover phase information form a candidate phasing block
 ///
 /// \TODO generally recognized development direction is to record some kind of
 ///       read id in SNP pileups and indel support info so that we can go back
@@ -44,9 +39,9 @@ struct Codon_phaser
 {
     Codon_phaser(
         const starling_base_options& init_opt,
-        pos_basecall_buffer& init_bc_buff)
+        const pos_basecall_buffer& init_bc_buff)
         : opt(init_opt),
-          bc_buff(init_bc_buff),
+          bc_buff(init_bc_buff)
     {
         clear();
     }
@@ -87,11 +82,7 @@ struct Codon_phaser
 private:
     void make_record();                 // make phased record
 
-    void
-    collect_read_segment_evidence(
-        const read_segment& rseg);
-
-    void collect_read_evidence();       // fill in allele counter
+    void collect_pileup_evidence();       // fill in allele counter
     void construct_reference();         // assemble the reference allele for the record
     void create_phased_record();        // fill in the si record and decide if we have sufficient evidence for a phased call
     unsigned get_block_length() const
@@ -101,7 +92,7 @@ private:
 
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
-    pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
+    const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
 
     int block_start,block_end;          // position of the first and last added het site to block
     int het_count;                      // total hets observed in buffer

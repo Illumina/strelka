@@ -29,10 +29,21 @@
 
 //#define BC_DEBUG
 
+/// max 0-indexed value available with bitCount bits
+inline
+constexpr
+unsigned
+bitMaxval(const unsigned bitCount)
+{
+    return ((1 << bitCount) - 1);
+}
 
 
 struct base_call
 {
+    static constexpr unsigned qscore_bits = 6;
+    static constexpr unsigned qscore_max = bitMaxval(qscore_bits);
+
     base_call(const uint8_t init_base_id,
               const uint8_t init_qscore,
               const bool init_ifs,
@@ -49,7 +60,7 @@ struct base_call
               const bool init_isFirstBaseCallFromMatchSeg,
               const bool init_isLastBaseCallFromMatchSeg
              )
-        : qscore(init_qscore),
+        : qscore(std::min(static_cast<unsigned>(init_qscore),qscore_max)),
 #ifdef BC_DEBUG
           read_pos(init_read_pos), read_size(init_read_size),
 #endif
@@ -90,7 +101,7 @@ struct base_call
     }
 
 private:
-    uint16_t qscore:6;
+    uint16_t qscore:qscore_bits;
 public:
     uint16_t base_id:4;
     uint16_t is_fwd_strand:1;

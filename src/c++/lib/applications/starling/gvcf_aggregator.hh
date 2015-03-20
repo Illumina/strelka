@@ -39,8 +39,7 @@ struct gvcf_aggregator
         const reference_contig_segment& ref,
         const RegionTracker& nocompress_regions,
         std::ostream* os,
-        starling_read_buffer& read_buffer,
-        const unsigned max_read_len);
+        const pos_basecall_buffer& bc_buff);
 
     ~gvcf_aggregator();
 

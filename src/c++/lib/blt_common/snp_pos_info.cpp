@@ -20,7 +20,11 @@
 
 #include <iomanip>
 #include <iostream>
+#include <type_traits>
 
+#ifndef BC_DEBUG
+static_assert(sizeof(base_call)==2, "Unexpected base_call object size");
+#endif
 
 
 std::ostream&

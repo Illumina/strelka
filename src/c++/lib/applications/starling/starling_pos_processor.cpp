@@ -84,7 +84,7 @@ starling_pos_processor(
     {
         _gvcfer.reset(new gvcf_aggregator(
                           _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(),
-                          sample(0).read_buff,get_largest_read_size()));
+                          sample(0).bc_buff));
     }
 
     // setup indel syncronizers:

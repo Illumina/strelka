@@ -97,7 +97,7 @@ create_phased_record()
     if (this->get_block_length()>this->_buffer.size())
         return;
 
-    if (this->total_reads<10)
+    if (total_reads<10)
     {
         // some initial minimum conditions, look for at least 10 spanning reads support
         // set flag on records saying too little evidence to phase
@@ -198,7 +198,8 @@ create_phased_record()
 #endif
 
     // set GQ and GQX
-    int min_gq(INT_MAX), min_qual(INT_MAX), min_qscore(INT_MAX);
+    static const int maxInt(std::numeric_limits<int>::max());
+    int min_gq(maxInt), min_qual(maxInt), min_qscore(maxInt);
     for (unsigned i(0); i<this->get_block_length(); i++)
     {
         const site_info& si(_buffer.at(i));
@@ -238,7 +239,7 @@ Codon_phaser::
 make_record()
 {
     this->construct_reference();
-    this->collect_read_evidence();
+    this->collect_pileup_evidence();
     this->create_phased_record();
 }
 
@@ -246,101 +247,70 @@ make_record()
 
 void
 Codon_phaser::
-collect_read_segment_evidence(
-    const read_segment& rseg)
+collect_pileup_evidence()
 {
-    //check if we are covering the block range
-    if (static_cast<unsigned>(abs(rseg.buffer_pos-this->block_end))>rseg.read_size())
-        return;
-
-    const bam_seq bseq(rseg.get_bam_read());
-
-    /// TODO!!!!!!!!!!!!: The read and basecall filtration here is completely out of sync with the regular pileup function
-    /// the pileup filter/scanner needs to be abstracted and used by both components to make the phaser results
-    /// sane wrt requested filters, etc.
-
-
-    // read quality checks
-    if (static_cast<int>(rseg.map_qual())<this->opt.min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid())
+    // build quick pileup index over phase range:
+    std::vector<const snp_pos_info*> spi;
+    for (int blockPos(block_start); blockPos<=block_end; ++blockPos)
     {
-//                this->total_reads_unused++; // do not count filtered reads in DPF
-        return;
+        const snp_pos_info& pi(bc_buff.get_pos(blockPos));
+        spi.push_back(&pi);
     }
 
+    const unsigned blockWidth(spi.size());
+    std::vector<int> callOffset(blockWidth,0);
 
-    const int sub_start((this->block_start-rseg.buffer_pos));
-    const int sub_end((this->block_end-rseg.buffer_pos));
-#ifdef DEBUG_CODON
-    int pad(0); // add context to extracted alleles for debugging
-    sub_start -= pad;
-    sub_end += pad;
-#endif
-    using namespace BAM_BASE;
-
-    if (sub_start>=0 && sub_end<max_read_len)
+    // analyze as virtual reads -- to do so treat the first pileup column as a privilaged refernece point:
+    const snp_pos_info& beginPi(*spi[0]);
+    const unsigned n_calls(beginPi.calls.size());
+    for (unsigned callIndex(0); callIndex<n_calls; ++callIndex)
     {
-        bool do_include(true);
-        //instead make bit array counting the number of times het pos co-occur
-        std::string sub_str("");
-        for (int t=sub_start; t<(sub_end+1); t++) //pull out substring of read
+        std::string sub_str;
+        bool isPass(true);
+        for (unsigned blockIndex(0);blockIndex<blockWidth;blockIndex++)
         {
-            if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->opt.min_qscore))
+            const snp_pos_info& pi(*spi[blockIndex]);
+            while (true)
             {
-                do_include = false; // do qual check of individual bases here, kick out entire read if we dont meet cut-off
+                const base_call& bc(pi.calls[callIndex+callOffset[blockIndex]]);
+                if (bc.isLastBaseCallFromMatchSeg)
+                {
+                    for (unsigned blockIndex2(blockIndex+1);blockIndex2<blockWidth;++blockIndex2)
+                    {
+                        callOffset[blockIndex2]--;
+                    }
+                }
+                if (bc.isFirstBaseCallFromMatchSeg && (blockIndex != 0))
+                {
+                    for (unsigned blockIndex2(blockIndex);blockIndex2<blockWidth;++blockIndex2)
+                    {
+                        callOffset[blockIndex2]++;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            const base_call& bc(pi.calls[callIndex+callOffset[blockIndex]]);
+            if (bc.is_call_filter || (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth)))
+            {
+                isPass=false;
                 break;
             }
-            sub_str+= bseq.get_char(t); //TODO use more efficient data structure here
+            sub_str += id_to_base(bc.base_id);
         }
-#ifdef DEBUG_CODON
-//                    log_os << "substart " << sub_start << "\n";
-//                    log_os << "subend " << sub_end << "\n";
-//                    log_os << "substr " << sub_str << "\n";
-//                    log_os << "read key " << rseg.key() << "\n";
-//                    log_os << "read pos " << rseg.buffer_pos << "\n";
-//                    log_os << "do_include " << do_include << "\n";
-//                    log_os << "read seq " << bseq << "\n\n";
-#endif
-        if (do_include)
-        {
-            this->observations[sub_str]++;
-            total_reads++;
-        }
-        else
-            this->total_reads_unused++;
+
+        if (! isPass) continue;
+
+        observations[sub_str]++;
+        total_reads++;
     }
+
+    total_reads_unused=n_calls-total_reads;
 }
 
 
-
-void
-Codon_phaser::
-collect_read_evidence()
-{
-    int buffer_pos = (block_start-this->max_read_len);
-    const int buffer_end = (block_start);
-    // extract evidence for all reads that span the entire phasing range
-    for (; buffer_pos<buffer_end; buffer_pos++)
-    {
-        read_segment_iter ri(read_buffer.get_pos_read_segment_iter(buffer_pos));
-        read_segment_iter::ret_val r;
-        while (true)
-        {
-            r=ri.get_ptr();
-            if (nullptr==r.first) break;
-            collect_read_segment_evidence(r.first->get_segment(r.second));
-            ri.next();
-        }
-    }
-
-#ifdef DEBUG_CODON
-    log_os << "max read len " << max_read_len << "\n";
-#endif
-
-#ifdef DEBUG_CODON
-    log_os << "total reads " << total_reads << "\n";
-    log_os << "total reads unused " << total_reads_unused << "\n";
-#endif
-}
 
 void
 Codon_phaser::clear()

@@ -34,12 +34,12 @@ usage(
 {
     std::ostream& os(log_os);
 
-    os <<
-       "\n" << pname << " - count bases in a fasta file\n"
-       "\n"
-       "usage: \n" << pname << " < fasta_file\nor:\n" << pname << " fasta_file1 [[fasta_file2]...]\n"
-       "\n"
-       "Prints tab-delimited pair of known and total base counts, where known={ACGTacgt}.\n";
+    os << "\n" << pname << " - count bases in a fasta file\n"
+       << "\n"
+       << "usage: \n"
+       << pname << " fasta_file1 [[fasta_file2]...]\n"
+       << "\n"
+       << "Prints tab-delimited pair of known and total base counts, where known={ACGTacgt}.\n";
 
     exit(EXIT_FAILURE);
 }

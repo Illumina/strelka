@@ -1561,8 +1561,6 @@ pileup_read_segment(const read_segment& rseg,
                                         sample_no,
                                         is_tier1,
                                         bc);
-
-                    isFirstBaseCallFromReadSeg = false;
                 }
                 catch (...)
                 {

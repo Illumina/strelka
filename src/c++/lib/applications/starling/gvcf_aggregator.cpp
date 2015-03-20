@@ -103,8 +103,7 @@ gvcf_aggregator(
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
     std::ostream* osptr,
-    starling_read_buffer& read_buffer,
-    const unsigned max_read_len)
+    const pos_basecall_buffer& bc_buff)
     : _opt(opt)
     , _report_range(dopt.report_range.begin_pos,dopt.report_range.end_pos)
     , _ref(ref)
@@ -118,7 +117,7 @@ gvcf_aggregator(
     , _head_pos(dopt.report_range.begin_pos)
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
-    , _codon_phaser(opt, read_buffer, max_read_len)
+    , _codon_phaser(opt, bc_buff)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
