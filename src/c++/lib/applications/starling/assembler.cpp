@@ -33,14 +33,6 @@
 // Add a SNP site to the phasing buffer
 //,const gvcf_block_site_record& empty_block)
 
-//bool add_indel(const pos_t pos,
-//                        const indel_key ik,
-//                        const starling_diploid_indel_core& dindel,
-//                        const starling_indel_report_info& iri,
-//                        const starling_indel_sample_report_info& isri){
-//      return true;
-//}
-
 bool
 assembly_streamer::
 add_site(site_info& si)
@@ -82,6 +74,46 @@ add_site(site_info& si)
     }
     return true;
 }
+
+
+bool
+assembly_streamer::
+add_indel(const indel_info& ii)
+{
+    this->_indel_buffer.push_back(ii);
+
+    //CASE: Start a new potential assembly block
+    block_end = ii.pos+ii.ref_length()-1;
+    if (!is_in_block()){
+        block_start = ii.pos;
+//        log_os << "New block case - starting @ " << si.pos  << std::endl;
+    }
+
+    //std::cerr << "adding indel from " << ii.pos << " to " << block_end << " with length = " << ii.ref_length() << "\n";
+
+    // Update block info
+    var_count ++;
+
+    myPredictor.add_indel(ii.pos,block_end);
+
+    // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
+    assert (keep_collecting());
+    return false;
+
+
+    // We are not collecting further, check if we want to assemble what is in the buffer
+    asmRegion = do_assemble();
+    if (asmRegion != known_pos_range2(-1,-1))
+    {
+        // if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
+        // std::cout <<"assembling " << asmRegion.begin_pos() << " to " << asmRegion.end_pos() << "\n";
+
+        make_record();
+//      log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
+    }
+    return true;
+}
+
 
 // makes the phased VCF record from the buffered sites list
 void
@@ -154,6 +186,8 @@ assembly_streamer::create_contig_records()
     notify_consumer_up_to(asmRegion.begin_pos());
     site_info base = _site_buffer.at(0);
     clear_site_buffer_to_pos(asmRegion.end_pos());
+    clear_indel_buffer_to_pos(asmRegion.end_pos());
+    //assert("site buffer not empty" && _site_buffer.size() > 0);
 
     // add information from the alleles selected for output
     std::stringstream alt;

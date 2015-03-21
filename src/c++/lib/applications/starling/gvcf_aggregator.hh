@@ -55,6 +55,8 @@ struct gvcf_aggregator : public site_info_stream
 
     bool add_site(site_info& si);
 
+    bool add_indel(const indel_info& ii);
+
     bool add_indel(const pos_t pos, const indel_key ik,
                    const starling_diploid_indel_core& dindel,
                    const starling_indel_report_info& iri,
