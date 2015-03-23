@@ -1436,7 +1436,7 @@ pileup_read_segment(const read_segment& rseg,
                     else
                     {
                         const path_segment& last_ps(best_al.path[i-1]);
-                        if (! is_segment_type_read_length(last_ps.type)) isFirstBaseCallFromMatchSeg=true;
+                        if (! is_segment_align_match(last_ps.type)) isFirstBaseCallFromMatchSeg=true;
                     }
 
                 }
@@ -1451,7 +1451,7 @@ pileup_read_segment(const read_segment& rseg,
                     else
                     {
                         const path_segment& next_ps(best_al.path[i+1]);
-                        if (! is_segment_type_read_length(next_ps.type)) isLastBaseCallFromMatchSeg=true;
+                        if (! is_segment_align_match(next_ps.type)) isLastBaseCallFromMatchSeg=true;
                     }
                 }
 

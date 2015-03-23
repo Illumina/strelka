@@ -160,6 +160,14 @@ create_phased_record()
         phasing_inconsistent = true;
     }
 
+    // sanity check that we have one het on each end of the block:
+    {
+        assert(! max_alleles[0].first.empty());
+        assert(max_alleles[0].first.size() == max_alleles[1].first.size());
+        if (max_alleles[0].first.front() == max_alleles[1].first.front()) phasing_inconsistent=true;
+        if (max_alleles[0].first.back() == max_alleles[1].first.back()) phasing_inconsistent=true;
+    }
+
     if (phasing_inconsistent)
     {
         for (auto& val : _buffer)
@@ -293,13 +301,26 @@ collect_pileup_evidence()
                 }
             }
             const base_call& bc(pi.calls[callIndex+callOffset[blockIndex]]);
-            if (bc.is_call_filter || (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth)))
+            if (bc.is_call_filter)
+            {
+                isPass=false;
+            }
+            if (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth))
             {
                 isPass=false;
                 break;
             }
             sub_str += id_to_base(bc.base_id);
         }
+#ifdef DEBUG_CODON
+        log_os << __FUNCTION__ << ": callOffset:";
+        for (const auto off : callOffset)
+        {
+            log_os << "\t" << off;
+        }
+        log_os << "\n";
+        log_os << __FUNCTION__ << ": callIndex, isPass, substr: " << callIndex << " " << isPass << " " << sub_str << "\n";
+#endif
 
         if (! isPass) continue;
 
