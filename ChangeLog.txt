@@ -1,3 +1,5 @@
+- STARKA-217 adjust codon phaser to match read and basecall filtration of
+non-phased variants, and align phased candidates near indels correctly
 - STARKA-191 add denovo calling model for parent/child trios
 v2.3.5
 - WGSW-293, WGSW-297 update germline VQSR cutoffs to decrease excessive het/hom ratios, and hopefully reduce trio conflicts
