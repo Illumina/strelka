@@ -37,17 +37,28 @@ Codon_phaser::
 add_site(const site_info& si)
 {
     _buffer.push_back(si);
+#ifdef DEBUG_CODON
+    log_os << __FUNCTION__ << ": input si " << si << "\n";
+#endif
 
     // case: extending block with het call, update block_end position
     if (is_phasable_site(si))
     {
         if (! is_in_block())
+        {
             block_start = si.pos;
-        block_end = si.pos;
-        het_count ++;
 #ifdef DEBUG_CODON
-        log_os << "starting block @ " << (this->block_start+1) << " with " << si << "\n";
+            log_os << __FUNCTION__ << ": phasable & starting block @ " << block_start << "\n";
 #endif
+        }
+#ifdef DEBUG_CODON
+        else
+        {
+            log_os << __FUNCTION__ << ": phasable & continuing block to " << si.pos << "\n";
+        }
+#endif
+        block_end = si.pos;
+        het_count++;
         return false;
     }
 
@@ -55,7 +66,7 @@ add_site(const site_info& si)
     if (si.Unphasable)
     {
 #ifdef DEBUG_CODON
-        log_os << "I shouldn't phase this record " << si << "\n";
+        log_os << __FUNCTION__ << ": I shouldn't phase this record " << si << "\n";
 #endif
         return true;
     }
@@ -64,7 +75,7 @@ add_site(const site_info& si)
     if (is_in_block() && (si.pos-block_end+1)<this->opt.phasing_window)
     {
 #ifdef DEBUG_CODON
-        log_os << "Extending block with @ " << (this->block_start+1) << " with " << si << "\n";
+        log_os << __FUNCTION__ << ": notphasable & continuing block to " << si.pos << "\n";
 #endif
         return false;
     }
@@ -152,12 +163,18 @@ create_phased_record()
     {
         // non-diploid?
         phasing_inconsistent = true;
+#ifdef DEBUG_CODON
+        log_os << __FUNCTION__ << "; non-diploid\n";
+#endif
     }
 
     if (relative_allele_frac<0.5)
     {
         // allele imbalance?
         phasing_inconsistent = true;
+#ifdef DEBUG_CODON
+        log_os << __FUNCTION__ << "; allele imbalance\n";
+#endif
     }
 
     // sanity check that we have one het on each end of the block:
@@ -166,6 +183,9 @@ create_phased_record()
         assert(max_alleles[0].first.size() == max_alleles[1].first.size());
         if (max_alleles[0].first.front() == max_alleles[1].first.front()) phasing_inconsistent=true;
         if (max_alleles[0].first.back() == max_alleles[1].first.back()) phasing_inconsistent=true;
+#ifdef DEBUG_CODON
+        log_os << __FUNCTION__ << "; non-sane\n";
+#endif
     }
 
     if (phasing_inconsistent)
