@@ -36,7 +36,7 @@ struct bam_record
     bam_record(const bam_record& br)
         : _bp(br.empty() ? bam_init1() : bam_dup1(br._bp)) {}
 
-    bam_record&
+    const bam_record&
     operator=(const bam_record& br)
     {
         if (this == &br) return (*this);

@@ -23,6 +23,7 @@
 #include <sstream>
 #include <vector>
 
+
 /// two predefined options for the ValClear type parameter to RangeMap:
 template <typename T>
 struct ZeroT

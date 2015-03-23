@@ -151,7 +151,7 @@ report_state(std::ostream& os) const
     const vcf_record* vcfp(get_record_ptr());
 
     os << "\tvcf_stream_label: " << name() << "\n";
-    if (NULL != vcfp)
+    if (nullptr != vcfp)
     {
         os << "\tvcf_stream_record_no: " << record_no() << "\n"
            << "\tvcf_record: " << *(vcfp) << "\n";

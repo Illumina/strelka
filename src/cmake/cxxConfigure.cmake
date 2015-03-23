@@ -259,7 +259,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -diag-disable 177,193,869,1599,3280")
 
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wunused-variable -Wpointer-arith")
-    
+
     #set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wmissing-prototypes -Wmissing-declarations -Wunused-variable -Wpointer-arith -Wuninitialized")
 endif()
 
@@ -272,12 +272,12 @@ if (GNU_COMPAT_COMPILER)
     set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 
     # The NDEBUG macro is intentionally removed from release. One discussion on this is:
-    # http://www.drdobbs.com/an-exception-or-a-bug/184401686    
+    # http://www.drdobbs.com/an-exception-or-a-bug/184401686
     set (CMAKE_CXX_FLAGS_RELEASE "-O3 -fomit-frame-pointer")
     set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
     set (CMAKE_CXX_FLAGS_ASAN "-O1 -g -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls")
     #set (CMAKE_CXX_FLAGS_PROFILE "-O0 -g -pg -fprofile-arcs -ftest-coverage")
-    
+
     # this doesn't seem to impact performance, taking out for now:
     #if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     #    set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
