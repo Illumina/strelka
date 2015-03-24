@@ -129,6 +129,7 @@ flush()
         if(_consumer)
         {
             notify_one_consumer(_consumer, min_pos + 1, true);
+            _consumer->flush();
         }
         else
         {
@@ -185,6 +186,7 @@ flush()
             if((output.any & current) && ((output.none & current) == 0))
             {
                 notify_one_consumer(output.consumer, max_pos+1, false);
+                output.consumer->flush();
             }
         }
         min_pos = max_pos;
@@ -204,6 +206,7 @@ flush()
         }
 
         notify_one_consumer(_consumer, std::max(lastSitePos, lastIndelPos) + 1, true);
+        _consumer->flush();
     }
 
     _site_buffer.clear();
