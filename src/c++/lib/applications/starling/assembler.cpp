@@ -67,6 +67,7 @@ add_site(site_info& si)
         make_record();
 //      log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
     }
+//    this->write_out_buffer();
     this->notify_consumer();
     this->clear();
     return true;
@@ -183,6 +184,11 @@ assembly_streamer::create_contig_records()
     base.phased_alt = alt.str();
     base.phased_AD  = AD.str();
 
+    // set more vcf record fields
+    int reads_ignored   = 10;
+    base.n_used_calls   = 15;
+    base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
+
     //set any filters
     base.smod.filters.reset();
     base.smod.assemblyReason = this->myPredictor.assemblyReason;
@@ -190,12 +196,6 @@ assembly_streamer::create_contig_records()
     // specify that we are covering multiple records, and make the needed modification in the output
     base.smod.is_phased_region = true;
     base.smod.is_assembled_contig = true;
-
-    // set more vcf record fields
-    int reads_ignored   = 10;
-    base.n_used_calls   = 15;
-    base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
-
 
     // Add in assembled record(s)
     _site_buffer.push_back(base);
@@ -284,7 +284,7 @@ do_assemble()
 void
 assembly_streamer::clear()
 {
-    this->clear_buffer();
+//    this->clear_buffer();
     observations.clear();
     block_start                                 = -1;
     block_end                                   = -1;

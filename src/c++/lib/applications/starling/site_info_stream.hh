@@ -37,8 +37,10 @@ public:
 	}
 
 	void notify_consumer(){
-		if (!this->has_listner)
+		if (!this->has_listner){
+//			this->clear_buffer();
 			return;
+		}
 		for (auto& si : this->_site_buffer)
 				this->_consumer->add_site(si);
 		// TODO add indel component

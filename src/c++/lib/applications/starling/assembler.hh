@@ -28,6 +28,7 @@
 #include "assembly/predictor.hh"
 #include "assembly/contigAssembler.hh"
 #include "assembly/dummy_assembler.hh"
+#include "assembly/string_graph_assembler.hh"
 #include "applications/starling/gvcf_block_site_record.hh"
 #include <climits>
 
@@ -52,10 +53,10 @@ struct assembly_streamer : public site_info_stream
 			// log_os << "Initializing bed assembler" << std::endl;
 			this->myAssembler = new dummy_assembler();
 		}
-//		else if (opt.assembly_model=="string-graph"){
-//			//log_os << "Initializing default assembler" << std::endl;
-//			this->myAssembler = new string_graph_assembler();
-//		}
+		else if (opt.assembly_model=="string-graph"){
+			//log_os << "Initializing default assembler" << std::endl;
+			this->myAssembler = new string_graph_assembler();
+		}
 		else if (opt.assembly_model=="de-bruijn"){
 			//log_os << "Initializing default assembler" << std::endl;
 			this->myAssembler = new dummy_assembler();

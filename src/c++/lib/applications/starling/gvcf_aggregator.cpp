@@ -53,6 +53,7 @@ void
 add_site_modifiers(site_info& si,
                    calibration_models& model)
 {
+
 	//TODO special treatment for phased records, assume that all appropriate smods have been set upstream
 	if (si.smod.is_phased_region){
 		return;
@@ -206,8 +207,10 @@ void
 gvcf_aggregator::
 add_site_internal(const site_info& si)
 {
-    if (si.smod.is_phased_region)
+
+    if (si.smod.is_phased_region){
         _head_pos=si.pos+si.phased_ref.length();
+    }
     else
         _head_pos=si.pos+1;
 
@@ -376,7 +379,7 @@ queue_site_record(const site_info& si)
         write_site_record(si);
         return;
     }
-
+    log_os << si << std::endl;
     if (! _block.test(si))
     {
         write_block_site_record();

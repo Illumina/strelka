@@ -12,8 +12,8 @@
 
 class bed_assembler: public contigAssembler {
 public:
-	bed_assembler();
-	virtual ~bed_assembler();
+	bed_assembler(){};
+//	virtual ~bed_assembler();
 };
 
 #endif /* C___LIB_ASSEMBLY_BED_ASSEMBLER_HH_ */
