@@ -11,7 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 /*
- * Codon_phaser.cpp
  *
  *  Created on: Sep 10, 2013
  *  Author: Morten Kallberg
@@ -98,6 +97,9 @@ Codon_phaser::construct_reference()
     this->reference = "";
     for (unsigned i=0; i<this->_buffer.size()-(this->opt.phasing_window-1); i++)
         this->reference += _buffer.at(i).ref;
+#ifdef DEBUG_CODON
+    log_os << __FUNCTION__ << ": reference " << reference << "\n";
+#endif
 }
 
 void
@@ -178,13 +180,21 @@ create_phased_record()
     }
 
     // sanity check that we have one het on each end of the block:
+    if (! phasing_inconsistent)
     {
-        assert(! max_alleles[0].first.empty());
-        assert(max_alleles[0].first.size() == max_alleles[1].first.size());
-        if (max_alleles[0].first.front() == max_alleles[1].first.front()) phasing_inconsistent=true;
-        if (max_alleles[0].first.back() == max_alleles[1].first.back()) phasing_inconsistent=true;
+        if (max_alleles[0].second == 0) phasing_inconsistent=true;
+        if (max_alleles[1].second == 0) phasing_inconsistent=true;
+
+        if (! phasing_inconsistent)
+        {
+            assert(! max_alleles[0].first.empty());
+            assert(max_alleles[0].first.size() == max_alleles[1].first.size());
+            if (max_alleles[0].first.front() == max_alleles[1].first.front()) phasing_inconsistent=true;
+            if (max_alleles[0].first.back() == max_alleles[1].first.back()) phasing_inconsistent=true;
+        }
+
 #ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << "; non-sane\n";
+        if (phasing_inconsistent) log_os << __FUNCTION__ << "; non-sane\n";
 #endif
     }
 
