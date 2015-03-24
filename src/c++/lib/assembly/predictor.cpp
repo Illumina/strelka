@@ -63,6 +63,7 @@ add_site(site_info& si)
     bool still_collecting = false;
     for(auto & predictor : predictors)
     {
+        // TODO add site to predictor
         still_collecting = still_collecting || predictor->keep_extending();
     }
 
@@ -82,6 +83,7 @@ add_indel(const indel_info& ii)
     bool still_collecting = false;
     for(auto & predictor : predictors)
     {
+        // TODO add site to predictor
         still_collecting = still_collecting || predictor->keep_extending();
     }
 
@@ -181,11 +183,15 @@ flush()
             cm <<= 1;
         }
 
+        // TODO determine if no consumer notified, then send to default
+        // rewrite such that only single consumer. flush on consumer switch.
         for (auto & output : consumers)
         {
             if((output.any & current) && ((output.none & current) == 0))
             {
                 notify_one_consumer(output.consumer, max_pos+1, false);
+                // TODO collect all consumers which received variants, 
+                // flush ones that haven't received at the end.
                 output.consumer->flush();
             }
         }

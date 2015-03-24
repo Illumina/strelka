@@ -92,6 +92,8 @@ class predictor_stream_splitter : public site_info_stream
 public:
     ~predictor_stream_splitter()
     {
+        // rather than flush put in assert() to check if buffers empty
+        // 
         flush();
     }
 
