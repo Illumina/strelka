@@ -7,7 +7,8 @@
 
 #ifndef C___LIB_ASSEMBLY_CONTIGASSEMBLER_HH_
 #define C___LIB_ASSEMBLY_CONTIGASSEMBLER_HH_
-#include "site_info_stream.hh"
+
+#include "applications/starling/site_info_stream.hh"
 
 class contigAssembler{
 public:

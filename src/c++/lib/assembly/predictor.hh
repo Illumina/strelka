@@ -14,224 +14,126 @@
  * predictor.hh
  *
  *  Created on: Aug 10, 2013
- *  Author: Morten Kallberg
+ *  Author: Morten Kallberg / Peter Krusche
  */
 
 #pragma once
 
-#include "gvcf_locus_info.hh"
+#include "applications/starling/site_info_stream.hh"
+
+#include "applications/starling/gvcf_locus_info.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"
 #include "starling_common/starling_pos_processor_util.hh"
-#include "blt_util/RegionTracker.hh"
-#include "htsapi/bed_streamer.hh"
 #include "applications/starling/starling_shared.hh"
 
-#include <boost/algorithm/string.hpp>
+#include <list>
 
-//#define DEBUG_predictor
-
-
-#ifdef DEBUG_predictor
-#include "blt_util/log.hh"
-#endif
-
-
-namespace ASSEMBLY_TRIGGER
+/**
+ * @brief Predictor interface class
+ * 
+ * Defines that basic interface all predictors have to implement.
+ * 
+ * Implementations are hidden in predictor.cpp
+ * 
+ * The basic class 
+ */
+class predictor_interface
 {
+public:
+    /** add sites / update positions */
+    virtual void add_site(int /*pos*/, bool /*isVar*/) {}
+    virtual void add_indel(int /*begpos*/, int /*endpos*/) {}
 
-enum index_t
-{
-    bedTrack,
-    highVarDensity,
-	indelConflicts,
-	NONE,
-    SIZE
+    /** keep extending the current block of variants
+        (this tells assembler to not forward things on to 
+         the gVCF aggregator)
+     */
+    virtual bool keep_extending() 
+    {
+        return false;
+    }
+
+    /**
+     * @brief Return ranges to assemble
+     * 
+     * Last range will be [-1, -1)
+     * 
+     * Returned string can contain information in prediction reasons.
+     */
+    std::pair<known_pos_range2, std::string> next_range()
+    {        
+        return std::make_pair(known_pos_range2(-1, -1), std::string());
+    }
 };
 
-inline
-const char*
-get_label(const unsigned idx)
+enum class PredictorType { bedfile, density };
+
+/**
+ * @brief Predictor Factory
+ * 
+ * @param init_opt Starling command line options  
+ * @param init_dopt Starling command line options 
+ * @return new predictor interface (free using delete)
+ * 
+ * This might get more arguments as more predictors get implemented
+ * (ideally, we'd do this using perfect forwarding, but then we can't
+ *  link externally).
+ * 
+ */
+extern std::unique_ptr<predictor_interface> make_predictor(
+    PredictorType _type, 
+    const starling_base_options& init_opt, 
+    const starling_deriv_options& init_dopt);
+
+/** split a stream using predictions */
+class predictor_stream_splitter : public site_info_stream
 {
-    switch (idx)
+public:
+    ~predictor_stream_splitter()
     {
-    case bedTrack:
-        return "BedTrack";
-    case highVarDensity:
-        return "highDensity";
-    case indelConflicts:
-        return "indelConflict";
-    default:
-        assert(false && "Unknown trigger");
-        return nullptr;
-    }
-}
-}
-
-struct predictor
-{
-    predictor(
-              const starling_base_options& init_opt,
-              const starling_deriv_options& init_dopt,
-              const RegionTracker& init_nocompress_regions)
-      : regions_file(init_opt.assembly_regions_filename), opt(init_opt), dopt(init_dopt),
-        _nocompress_regions(init_nocompress_regions),
-        lengthToBreakRegion(20),
-        varCountCutoff(3)
-
-    {
-
-        beginNotFullyProcessed = -1;
-        beginPossibleAssemblyRegion = -1;
-        numVarsInPossibleAssemblyRegion = 0;
-        lastVarPos = -1;
-        lastPos = -1;
-
-        //init regions file bed_streamer, TODO move this code to Starling_run
-        // JUNK: std::unique_ptr<bed_streamer> assemble_regions;
-
-        if (! regions_file.empty())
-        {
-          const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-          bed_streamer *bedstr = new bed_streamer(regions_file.c_str(),bam_region.c_str());
-          while ( bedstr->next() ){
-            const bed_record *br = bedstr->get_record_ptr();
-            known_pos_range2 range(br->begin,br->end);
-            std::vector<std::string> words;
-            boost::split(words,br->line,boost::is_any_of("\t"));
-            std::vector<std::string> contigs(words.begin()+3,words.end());
-            this->rt.addRegion(range,contigs);
-          }
-          delete bedstr;
-        }
-//        else
-//        {
-            //add in dummy dev regions
-//            known_pos_range2 range(239691265,239691280);
-//            this->rt.addRegion(range,std::vector<std::string>());
-//            known_pos_range2 range2(239691282,239691285);
-//            this->rt.addRegion(range2,std::vector<std::string>());
-//        }
-
-        // log_os << this->rt.regionCount() << std::endl;
-
+        flush();
     }
 
-    void add_site( int pos, bool isVar )
-    {
+    /** implement site_info_stream */
+    bool add_site(site_info& si);
+    bool add_indel(const indel_info& ii);
+    void flush();
 
-      if (beginNotFullyProcessed == -1)
-      {
-          beginNotFullyProcessed = pos;
-      }
+    /** add predictor 
+     *  Maximally 64 predictors are supported as consumers are fed
+     *  a mask 
+     */
+    uint64_t add_predictor(std::unique_ptr<predictor_interface> pred);
 
-      if (isVar)
-      {
-          if (beginPossibleAssemblyRegion == -1)
-          {
-              beginPossibleAssemblyRegion = pos;
-          }
-          ++numVarsInPossibleAssemblyRegion;
-          if(lastVarPos < pos)
-          {
-              lastVarPos = pos;
-          }
-      }
-      if (lastPos < pos) // test this in case an indel already pushed us past here
-      {
-          lastPos = pos;
-      }
+    /** add consumer 
+     *  
+     *  Predictor is chosen by matching either the predictor masks.
+     *  
+     *  predictor_mask_any_of gives a mask of predictors which can "say yes"
+     *  to trigger this consumer.
+     *  
+     *  predictor_mask_none_of requires that none of the given predictors to "say yes"
+     *  
+     *  Variants that don't match any consumer get discarded. To add a default
+     *  consumer use register_consumer()
+     */
+    void add_consumer(std::shared_ptr<site_info_stream> consumer,
+                      uint64_t predictor_mask_any_of,
+                      uint64_t predictor_mask_none_of = 0);
 
-#if 0
-      if ( isVar )
-      std::cerr << " site addition: "
-                << beginNotFullyProcessed << " : "
-                <<  beginPossibleAssemblyRegion << " : "
-                << numVarsInPossibleAssemblyRegion << " : "
-                << lastVarPos << " : "
-                << lastPos << " : "
-                <<  isVar << "\n";
-#endif
-    }
-
-
-
-    void add_indel( int begpos, int endpos )
-    {
-
-      if (beginNotFullyProcessed == -1)
-      {
-          beginNotFullyProcessed = begpos;
-      }
-
-      if (beginPossibleAssemblyRegion == -1)
-      {
-          beginPossibleAssemblyRegion = begpos;
-      }
-      ++numVarsInPossibleAssemblyRegion;
-      lastVarPos = endpos;
-
-      lastPos = endpos;
-
-#if 0
-      std::cerr << " indel addition: "
-                << beginNotFullyProcessed << " : "
-                <<  beginPossibleAssemblyRegion << " : "
-                << numVarsInPossibleAssemblyRegion << " : "
-                << lastVarPos << " : "
-                << lastPos << "\n";
-#endif
-    }
-
-    bool keep_extending(){
-        return ( lastPos-lastVarPos < lengthToBreakRegion);
-    }
-
-    known_pos_range2 do_assemble_and_update()
-    {
-        known_pos_range2 asmRange(-1,-1);
-        if (numVarsInPossibleAssemblyRegion >= varCountCutoff)
-        {
-
-
-#if 0
-      std::cerr << beginNotFullyProcessed << " : "
-                <<  beginPossibleAssemblyRegion << " : "
-                << numVarsInPossibleAssemblyRegion << " : "
-                << lastVarPos << " : "
-                << lastPos << "\n";
-#endif
-
-            asmRange.set_begin_pos(beginPossibleAssemblyRegion);
-            asmRange.set_end_pos( lastVarPos+1 );
-            assemblyReason = ASSEMBLY_TRIGGER::highVarDensity;
-        }
-        beginNotFullyProcessed = lastVarPos+1;
-        numVarsInPossibleAssemblyRegion = 0;
-        beginPossibleAssemblyRegion = -1;
-        lastVarPos = -1;
-        return asmRange;
-    }
-
-    RegionPayloadTracker< std::vector< std::string > >  rt;
-
-    // predictor state
-    int beginNotFullyProcessed;              // positions before here have already been fully processed: assembled or not assembled, but are no longer pending
-    int beginPossibleAssemblyRegion;         // bases from here on might be involved in assembly
-    int numVarsInPossibleAssemblyRegion;
-    int lastVarPos;                          // last position that would encourage assembly
-    int lastPos;                             // last position that has been incorporated into predictor so far
-
-    // predictor parameters
-    const int lengthToBreakRegion;           // if we see this many homref bases in a row, we know there is no assembly involving that interval
-    const int varCountCutoff;                // if we see this many separate variations called without achieving lengthToBreakRegion, we should assemble
-
-    ASSEMBLY_TRIGGER::index_t assemblyReason;
 private:
-    int assembleCount, assembleContigLength;          // count of regions to assemble, cummulative length of assembled regions
-    std::string regions_file;
-    const RegionTracker& _nocompress_regions;
-    /// given an assembler with a region buffered, predict if it should it be assembled
-    const starling_base_options& opt;
-    const starling_deriv_options& dopt;
+    // list of predictors
+    std::vector< std::unique_ptr<predictor_interface> > predictors; 
+
+    // list of returned predictor segments with info (same size as predictors)
+    typedef std::vector< std::pair<known_pos_range2, std::string> > seglist;    
+    std::vector<seglist> seglists;
+
+    // consumer list
+    typedef struct _stream_output {
+        uint64_t any; uint64_t none; std::shared_ptr<site_info_stream> consumer;
+    } stream_output;
+
+    std::list<stream_output> consumers; 
 };

@@ -89,7 +89,7 @@ private:
     const starling_deriv_options& _dopt;
     const starling_streams& _streams;
 
-    std::unique_ptr<site_info_stream> _gvcfer;
+    std::shared_ptr<site_info_stream> _gvcfer;
 
     // a caching term used for gvcf:
     site_info _site_info;

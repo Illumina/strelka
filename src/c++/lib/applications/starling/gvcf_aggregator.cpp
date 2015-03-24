@@ -549,9 +549,10 @@ write_site_record(const site_info& si) const
 //            }
 
         }
-        else if(si.smod.is_assembled_contig){
-            os << "asmblReason=" << ASSEMBLY_TRIGGER::get_label(si.smod.assemblyReason);
-        }
+        // removed -- trigger info passed differently in refactored code (PK)
+        // else if(si.smod.is_assembled_contig){
+        //     os << "asmblReason=" << ASSEMBLY_TRIGGER::get_label(si.smod.assemblyReason);
+        // }
         else
         {
             os << '.';

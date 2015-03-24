@@ -7,6 +7,7 @@
 *.slo
 *.lo
 *.o
+*.pyc
 
 # Compiled Dynamic libraries
 *.so
@@ -40,3 +41,9 @@ src/.project
 *.rar
 *.tar
 *.zip
+
+# ycm / vim
+.ycm_extra_conf.*
+*.swp
+*.swo
+tags

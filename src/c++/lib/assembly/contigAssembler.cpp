@@ -5,7 +5,7 @@
  *      Author: mkallberg
  */
 
-#include <assembly/contigAssembler.hh>
+#include "assembly/contigAssembler.hh"
 
 contigAssembler::contigAssembler() {
 	// TODO Auto-generated constructor stub
