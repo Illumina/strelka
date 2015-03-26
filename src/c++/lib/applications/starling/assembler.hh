@@ -71,13 +71,23 @@ struct assembly_streamer : public site_info_stream
 
     // implement site_info_stream methods
     bool add_site(site_info& si);
-	bool add_indel(const pos_t pos,
-				  const indel_key ik,
-				  const starling_diploid_indel_core& dindel,
-				  const starling_indel_report_info& iri,
-				  const starling_indel_sample_report_info& isri){return true;}
 
-	void flush(){} //TODO
+    bool add_indel(const indel_info& ii);
+
+    bool add_indel(const pos_t pos,
+                   const indel_key ik,
+                   const starling_diploid_indel_core& dindel,
+                   const starling_indel_report_info& iri,
+                   const starling_indel_sample_report_info& isri)
+    {
+      //TODO: is this inefficient enough to avoid the extra copy?
+      indel_info ii;
+      ii.init(pos,ik,dindel,iri,isri);
+      return add_indel(ii);
+    }
+
+    void flush(){} //TODO
+
     // clear all object data
     void clear();
 
@@ -92,7 +102,7 @@ struct assembly_streamer : public site_info_stream
 
     /// buffer of variant calls
     ///
-    const std::vector<site_info>&
+    const std::deque<site_info>&
     buffer() const
     {
         return this->_site_buffer;
@@ -118,7 +128,7 @@ private:
     }
 
     bool keep_collecting();                 // keep the block going
-    bool do_assemble();                     // Assemble the region that is currently in the buffer
+    known_pos_range2 do_assemble();                     // Assemble the region that is currently in the buffer
 
 
     const starling_base_options& opt;
@@ -133,6 +143,7 @@ private:
     std::string reference;                      // the phased allele reference
     typedef std::map<std::string,int> allele_map;
     allele_map observations;
+    known_pos_range2 asmRegion;
     predictor myPredictor;
     contigAssembler* myAssembler;
     std::vector<std::string> asm_contigs;

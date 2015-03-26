@@ -218,7 +218,7 @@ struct site_modifiers : public shared_modifiers
         is_phased_region=false;
         is_assembled_contig=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
-        assemblyReason = ASSEMBLY_TRIGER::NONE;
+        assemblyReason = ASSEMBLY_TRIGGER::NONE;
 
     }
 
@@ -237,7 +237,7 @@ struct site_modifiers : public shared_modifiers
     bool is_assembled_contig;
 
     MODIFIED_SITE_GT::index_t modified_gt;
-    ASSEMBLY_TRIGER::index_t assemblyReason;
+    ASSEMBLY_TRIGGER::index_t assemblyReason;
 };
 
 
@@ -335,6 +335,11 @@ struct indel_info
     void calc_vqsr_metrics(); //calculate the final VQSR metrics from the indel_key data
 
     std::map<std::string, double> get_qscore_features(double chrom_depth);
+
+    int ref_length() const
+    {
+      return iri.ref_seq.size();
+    }
 
     pos_t pos;
     indel_key ik;

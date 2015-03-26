@@ -250,6 +250,19 @@ is_no_indel(const starling_diploid_indel_core& dindel)
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
 
+
+bool
+gvcf_aggregator::
+add_indel(const indel_info & ii)
+{
+    return add_indel(ii.pos,
+                     ii.ik,
+                     ii.dindel,
+                     ii.iri,
+                     ii.isri);
+}
+
+
 bool
 gvcf_aggregator::
 add_indel(const pos_t pos,
@@ -540,7 +553,7 @@ write_site_record(const site_info& si) const
 
         }
         else if(si.smod.is_assembled_contig){
-        	os << "asmblReason=" << ASSEMBLY_TRIGER::get_label(si.smod.assemblyReason);
+            os << "asmblReason=" << ASSEMBLY_TRIGGER::get_label(si.smod.assemblyReason);
         }
         else
         {

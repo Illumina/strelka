@@ -37,7 +37,7 @@
 #endif
 
 
-namespace ASSEMBLY_TRIGER
+namespace ASSEMBLY_TRIGGER
 {
 
 enum index_t
@@ -75,10 +75,21 @@ struct predictor
               const starling_deriv_options& init_dopt,
               const RegionTracker& init_nocompress_regions)
       : regions_file(init_opt.assembly_regions_filename), opt(init_opt), dopt(init_dopt),
-        _nocompress_regions(init_nocompress_regions)
+        _nocompress_regions(init_nocompress_regions),
+        lengthToBreakRegion(20),
+        varCountCutoff(3)
+
     {
+
+        beginNotFullyProcessed = -1;
+        beginPossibleAssemblyRegion = -1;
+        numVarsInPossibleAssemblyRegion = 0;
+        lastVarPos = -1;
+        lastPos = -1;
+
         //init regions file bed_streamer, TODO move this code to Starling_run
-        std::unique_ptr<bed_streamer> assemble_regions;
+        // JUNK: std::unique_ptr<bed_streamer> assemble_regions;
+
         if (! regions_file.empty())
         {
           const std::string bam_region(get_starling_bam_region_string(opt,dopt));
@@ -106,20 +117,116 @@ struct predictor
 
     }
 
-    bool keep_extending(int st, int end){
-        return (this->rt.isPayloadInRegion(st) && this->rt.isPayloadInRegion(end));
-    }
-    bool do_assemble(int st, int end)
+    void add_site( int pos, bool isVar )
     {
-        if (rt.isPayloadInRegion(st)){
-        	this->assemblyReason = ASSEMBLY_TRIGER::bedTrack;
-        	return true;
+
+      if (beginNotFullyProcessed == -1)
+      {
+          beginNotFullyProcessed = pos;
+      }
+
+      if (isVar)
+      {
+          if (beginPossibleAssemblyRegion == -1)
+          {
+              beginPossibleAssemblyRegion = pos;
+          }
+          ++numVarsInPossibleAssemblyRegion;
+          if(lastVarPos < pos)
+          {
+              lastVarPos = pos;
+          }
+      }
+      if (lastPos < pos) // test this in case an indel already pushed us past here
+      {
+          lastPos = pos;
+      }
+
+#if 0
+      if ( isVar )
+      std::cerr << " site addition: "
+                << beginNotFullyProcessed << " : "
+                <<  beginPossibleAssemblyRegion << " : "
+                << numVarsInPossibleAssemblyRegion << " : "
+                << lastVarPos << " : "
+                << lastPos << " : "
+                <<  isVar << "\n";
+#endif
+    }
+
+
+
+    void add_indel( int begpos, int endpos )
+    {
+
+      if (beginNotFullyProcessed == -1)
+      {
+          beginNotFullyProcessed = begpos;
+      }
+
+      if (beginPossibleAssemblyRegion == -1)
+      {
+          beginPossibleAssemblyRegion = begpos;
+      }
+      ++numVarsInPossibleAssemblyRegion;
+      lastVarPos = endpos;
+
+      lastPos = endpos;
+
+#if 0
+      std::cerr << " indel addition: "
+                << beginNotFullyProcessed << " : "
+                <<  beginPossibleAssemblyRegion << " : "
+                << numVarsInPossibleAssemblyRegion << " : "
+                << lastVarPos << " : "
+                << lastPos << "\n";
+#endif
+    }
+
+    bool keep_extending(){
+        return ( lastPos-lastVarPos < lengthToBreakRegion);
+    }
+
+    known_pos_range2 do_assemble_and_update()
+    {
+        known_pos_range2 asmRange(-1,-1);
+        if (numVarsInPossibleAssemblyRegion >= varCountCutoff)
+        {
+
+
+#if 0
+      std::cerr << beginNotFullyProcessed << " : "
+                <<  beginPossibleAssemblyRegion << " : "
+                << numVarsInPossibleAssemblyRegion << " : "
+                << lastVarPos << " : "
+                << lastPos << "\n";
+#endif
+
+            asmRange.set_begin_pos(beginPossibleAssemblyRegion);
+            asmRange.set_end_pos( lastVarPos+1 );
+            assemblyReason = ASSEMBLY_TRIGGER::highVarDensity;
         }
-        return false;
+        beginNotFullyProcessed = lastVarPos+1;
+        numVarsInPossibleAssemblyRegion = 0;
+        beginPossibleAssemblyRegion = -1;
+        lastVarPos = -1;
+        return asmRange;
     }
 
     RegionPayloadTracker< std::vector< std::string > >  rt;
-    ASSEMBLY_TRIGER::index_t assemblyReason;
+
+    // predictor state
+    int beginNotFullyProcessed;              // positions before here have already been fully processed: assembled or not assembled, but are no longer pending
+    int beginPossibleAssemblyRegion;         // bases from here on might be involved in assembly
+    int numVarsInPossibleAssemblyRegion;
+    int lastVarPos;                          // last position that would encourage assembly
+    int lastPos;                             // last position that has been incorporated into predictor so far
+
+    // predictor parameters
+    const int lengthToBreakRegion;           // if we see this many homref bases in a row, we know there is no assembly involving that interval
+    const int varCountCutoff;                // if we see this many separate variations called without achieving lengthToBreakRegion, we should assemble
+
+    ASSEMBLY_TRIGGER::index_t assemblyReason;
 private:
     int assembleCount, assembleContigLength;          // count of regions to assemble, cummulative length of assembled regions
     std::string regions_file;
