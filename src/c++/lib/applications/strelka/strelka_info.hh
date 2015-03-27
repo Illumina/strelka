@@ -18,11 +18,10 @@
 
 #pragma once
 
-#include "blt_util/prog_info.hh"
-#include "starling_common/version.hh"
+#include "starling_common/prog_info_base.hh"
 
 
-struct strelka_info : public prog_info
+struct strelka_info : public prog_info_base
 {
     static
     const prog_info& get()
@@ -32,15 +31,10 @@ struct strelka_info : public prog_info
     }
 
 private:
-    const char* name() const
+    const char* name() const override
     {
         static const char NAME[] = "strelka";
         return NAME;
-    }
-
-    const char* version() const
-    {
-        return starka::getVersion();
     }
 
     void usage(const char* xmessage = 0) const;

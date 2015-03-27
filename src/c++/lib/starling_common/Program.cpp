@@ -19,6 +19,7 @@
 #include "blt_util/sig_handler.hh"
 #include "common/Exceptions.hh"
 #include "starling_common/Program.hh"
+#include "starling_common/version.hh"
 
 #include <cstdlib>
 
@@ -48,7 +49,6 @@ post_catch(int argc,
            char* argv[],
            std::ostream& os)
 {
-
     os << "...caught in program.run()\n";
     dump_cl(argc,argv,log_os);
     exit(EXIT_FAILURE);
@@ -59,6 +59,12 @@ namespace starka
 {
 
 
+const char*
+Program::
+version() const
+{
+    return starka::getVersion();
+}
 
 int
 Program::

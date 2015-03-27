@@ -11,36 +11,17 @@
 // <https://github.com/sequencing/licenses/>
 //
 
+///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-namespace starka
+#include "blt_util/prog_info.hh"
+
+
+struct prog_info_base : public prog_info
 {
-
-/// base-class for all command-line programs
-///
-/// this is used to standardize bottom-level exception handling
-struct Program
-{
-    virtual
-    ~Program() {}
-
-    int
-    run(int argc, char* argv[]) const;
-
-    virtual
-    const char*
-    name() const = 0;
-
-    const char*
-    version() const;
-
 protected:
-    virtual
-    void
-    runInternal(int argc, char* argv[]) const = 0;
+    const char* version() const override;
 };
-
-}

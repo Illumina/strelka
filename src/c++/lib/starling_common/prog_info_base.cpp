@@ -15,31 +15,13 @@
 /// \author Chris Saunders
 ///
 
-#pragma once
-
 #include "starling_common/prog_info_base.hh"
+#include "starling_common/version.hh"
 
 
-struct starling_info : public prog_info_base
+const char*
+prog_info_base::
+version() const
 {
-    static
-    const prog_info& get()
-    {
-        static const starling_info vci;
-        return vci;
-    }
-
-private:
-    const char* name() const override
-    {
-        static const char NAME[] = "IsaacVariantCaller";
-        return NAME;
-    }
-
-    void usage(const char* xmessage = 0) const;
-
-    void doc() const {}
-
-    starling_info() {}
-    virtual ~starling_info() {}
-};
+    return starka::getVersion();
+}
