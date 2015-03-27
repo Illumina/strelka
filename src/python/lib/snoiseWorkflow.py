@@ -28,6 +28,7 @@ sys.path.append(os.path.abspath(scriptDir))
 pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
+from buildConfig import version
 from pyflow import WorkflowRunner
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
@@ -35,12 +36,7 @@ from workflowUtil import checkFile, ensureDir, preJoin, which, \
 from configureUtil import argToBool, getIniSections, dumpIniSections
 
 
-
-def getVersion() :
-    return "@STARKA_VERSION@"
-
-
-__version__ = getVersion()
+__version__ = version
 
 
 

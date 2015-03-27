@@ -27,6 +27,7 @@ sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
+from buildConfig import version
 from pyflow import WorkflowRunner
 from starkaWorkflow import StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
@@ -36,11 +37,7 @@ from configureUtil import safeSetBool, getIniSections, dumpIniSections
 
 
 
-def getVersion() :
-    return "@STARKA_VERSION@"
-
-
-__version__ = getVersion()
+__version__ = version
 
 
 

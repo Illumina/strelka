@@ -22,11 +22,9 @@ scriptName=os.path.basename(__file__)
 workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR@"))
 templateConfigDir=os.path.abspath(os.path.join(scriptDir,'@THIS_RELATIVE_CONFIGDIR@'))
 
-version="@STARKA_FULL_VERSION@"
-
-
 sys.path.append(workflowDir)
 
+from buildConfig import fullVersion
 from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, checkTabixListOption
 from makeRunScript import makeRunScript
@@ -42,7 +40,7 @@ class PedicureWorkflowOptions(StarkaWorkflowOptionsBase) :
 
 This script configures the Pedicure de-novo small variant calling pipeline.
 You must specify BAM file(s) for the proband and additional related samples.
-""" % (version)
+""" % (fullVersion)
 
 
     def addWorkflowGroupOptions(self,group) :
@@ -104,7 +102,7 @@ def main() :
 
     primarySectionName="pedicure"
     options,iniSections=PedicureWorkflowOptions().getRunOptions(primarySectionName,
-                                                               version=version)
+                                                               version=fullVersion)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:

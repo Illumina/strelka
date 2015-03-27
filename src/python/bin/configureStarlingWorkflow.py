@@ -21,11 +21,9 @@ scriptDir=os.path.abspath(os.path.dirname(__file__))
 scriptName=os.path.basename(__file__)
 workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR@"))
 
-version="@STARKA_FULL_VERSION@"
-
-
 sys.path.append(workflowDir)
 
+from buildConfig import fullVersion
 from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkOptionalTabixIndexedFile
 from makeRunScript import makeRunScript
@@ -41,7 +39,7 @@ class StarlingWorkflowOptions(StarkaWorkflowOptionsBase) :
 
 This script configures the starling small variant calling pipeline.
 You must specify a BAM file.
-""" % (version)
+""" % (fullVersion)
 
 
     def addWorkflowGroupOptions(self,group) :
@@ -117,7 +115,7 @@ You must specify a BAM file.
 def main() :
 
     primarySectionName="starling"
-    options,iniSections=StarlingWorkflowOptions().getRunOptions(primarySectionName, version=version)
+    options,iniSections=StarlingWorkflowOptions().getRunOptions(primarySectionName, version=fullVersion)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:

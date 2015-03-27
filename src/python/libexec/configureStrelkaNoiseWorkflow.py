@@ -21,11 +21,10 @@ scriptDir=os.path.abspath(os.path.dirname(__file__))
 scriptName=os.path.basename(__file__)
 workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR@"))
 
-version="@STARKA_FULL_VERSION@"
-
 
 sys.path.append(workflowDir)
 
+from buildConfig import fullVersion
 from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException
 from makeRunScript import makeRunScript
@@ -41,7 +40,7 @@ class snoiseWorkflowOptions(StarkaWorkflowOptionsBase) :
 
 This script configures the Strelka noise estimation pipeline.
 You must specify a BAM or CRAM file.
-""" % (version)
+""" % (fullVersion)
 
 
     def addWorkflowGroupOptions(self,group) :
@@ -89,7 +88,7 @@ You must specify a BAM or CRAM file.
 def main() :
 
     primarySectionName="snoise"
-    options,iniSections=snoiseWorkflowOptions().getRunOptions(primarySectionName, version=version)
+    options,iniSections=snoiseWorkflowOptions().getRunOptions(primarySectionName, version=fullVersion)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:

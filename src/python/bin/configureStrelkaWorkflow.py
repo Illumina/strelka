@@ -22,11 +22,9 @@ scriptName=os.path.basename(__file__)
 workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR@"))
 templateConfigDir=os.path.abspath(os.path.join(scriptDir,'@THIS_RELATIVE_CONFIGDIR@'))
 
-version="@STARKA_FULL_VERSION@"
-
-
 sys.path.append(workflowDir)
 
+from buildConfig import fullVersion
 from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, checkTabixListOption
 from makeRunScript import makeRunScript
@@ -42,7 +40,7 @@ class StrelkaWorkflowOptions(StarkaWorkflowOptionsBase) :
 
 This script configures the Strelka somatic small variant calling pipeline.
 You must specify BAM/CRAM file(s) for a pair of samples.
-""" % (version)
+""" % (fullVersion)
 
 
     def addWorkflowGroupOptions(self,group) :
@@ -106,7 +104,7 @@ def main() :
 
     primarySectionName="strelka"
     options,iniSections=StrelkaWorkflowOptions().getRunOptions(primarySectionName,
-                                                               version=version)
+                                                               version=fullVersion)
 
     # we don't need to instantiate the workflow object during configuration,
     # but this is done here to trigger additional parameter validation:
