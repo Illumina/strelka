@@ -1,0 +1,6 @@
+
+# update file with WORKFLOW_VERSION
+# requires VERSION_FILE SOURCE_FILE DEST_FILE
+
+file(READ ${VERSION_FILE} WORKFLOW_VERSION)
+configure_file(${SOURCE_FILE} ${DEST_FILE} @ONLY)

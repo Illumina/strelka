@@ -340,9 +340,24 @@ if (GNU_COMPAT_COMPILER)
 
 endif()
 
+# cmake configure-time c++ configuration:
 set(THIS_CXX_CONFIG_H_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lib/common/config.h.in ${THIS_CXX_CONFIG_H_DIR}/common/config.h @ONLY)
+set (CONFIG_DEST_FILE ${THIS_CXX_CONFIG_H_DIR}/common/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lib/common/config.h.in ${CONFIG_DEST_FILE} @ONLY)
 
+# build-time c++ configuration:
+# note: (csaunders) tried to do this as add_custom_command every which way, can't get cmake to figure out
+#       dependency chain in this case
+set (CONFIG_VERSION_SOURCE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/lib/common/configWorkflowVersion.h.in)
+set (CONFIG_VERSION_DEST_FILE ${THIS_CXX_CONFIG_H_DIR}/common/configWorkflowVersion.h)
+set (CONFIG_VERSION_TARGET "${THIS_PROJECT_NAME}_config_version")
+add_custom_target(${CONFIG_VERSION_TARGET}
+    DEPENDS ${THIS_VERSION_TARGET}
+    COMMAND ${CMAKE_COMMAND}
+    -D VERSION_FILE=${THIS_VERSION_FILE} 
+    -D SOURCE_FILE=${CONFIG_VERSION_SOURCE_FILE}
+    -D DEST_FILE=${CONFIG_VERSION_DEST_FILE}
+    -P ${THIS_MODULE_DIR}/buildTimeConfigure.cmake)
 
 #
 # include dirs:

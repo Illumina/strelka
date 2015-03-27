@@ -29,6 +29,10 @@ set (THIS_CXX_TEST_LIBRARY_CMAKE "${CMAKE_SOURCE_DIR}/cmake/cxxTestLibrary.cmake
 
 include ("${THIS_CXX_CONFIGURE_CMAKE}")
 
+##
+## refresh git label at build-time
+##
+add_dependencies(${THIS_OPT} ${CONFIG_VERSION_TARGET})
 
 ##
 ## run cppcheck if any cxx source has been updated:

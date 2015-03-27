@@ -56,12 +56,11 @@ add_custom_target(
     ${THIS_VERSION_TARGET}
     ALL
     COMMAND ${CMAKE_COMMAND}
-    -D THIS_REDIST_DIR:INTERNAL=${THIS_REDIST_DIR}
-    -D THIS_VERSION_FILE:INTERNAL=${THIS_VERSION_FILE} 
+    -D REDIST_DIR=${THIS_REDIST_DIR}
+    -D VERSION_FILE=${THIS_VERSION_FILE} 
     -P ${THIS_MODULE_DIR}/getWorkflowVersion.cmake
     COMMENT "Updating workflow version")
 
-file(READ ${THIS_VERSION_FILE} THIS_GIT_VERSION)
 set (THIS_GETGIT_CMAKE "${THIS_REDIST_DIR}/cmake-modules-c99fd3/GetGitRevisionDescription.cmake")
 include ("${THIS_GETGIT_CMAKE}")
 git_describe(THIS_GIT_VERSION --match "v[0-9]*")
