@@ -3,7 +3,7 @@
 Strelka User Guide
 ==================
 
-Version: @STARKA_VERSION@
+Version: @WORKFLOW_VERSION@
 
 <script src="tableOfContents.js"></script>
 

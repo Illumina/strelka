@@ -56,7 +56,7 @@ tmp_file=$(mktemp)
 cml=$pname/src/CMakeLists.txt
 awk -v gver=$gitversion '
 {
-    if      ($1=="set\(STARKA_VERSION") printf "set(STARKA_VERSION \"%s\")\n",gver;
+    if      ($1=="set\(WORKFLOW_VERSION") printf "set(WORKFLOW_VERSION \"%s\")\n",gver;
     else if ($1=="set\(DEVELOPER_MODE") printf "set(DEVELOPER_MODE false)\n";
     else print;
 }' $cml >| $tmp_file

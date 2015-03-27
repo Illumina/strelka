@@ -24,15 +24,7 @@ inline
 const char*
 getVersion()
 {
-    return STARKA_VERSION;
-}
-
-
-inline
-const char*
-getFullVersion()
-{
-    return STARKA_FULL_VERSION;
+    return WORKFLOW_VERSION;
 }
 
 }

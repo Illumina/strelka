@@ -15,5 +15,4 @@ This module consolidates all pythonbuild-time configuration data,
 except for relative import paths
 """
 
-version="@STARKA_VERSION@"
-fullVersion="@STARKA_FULL_VERSION@"
+workflowVersion="@WORKLOW_VERSION@"

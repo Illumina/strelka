@@ -39,7 +39,7 @@ struct Program
     const char*
     version() const
     {
-        return starka::getFullVersion();
+        return starka::getVersion();
     }
 
 protected:

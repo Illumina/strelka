@@ -40,7 +40,7 @@ private:
 
     const char* version() const
     {
-        return starka::getFullVersion();
+        return starka::getVersion();
     }
 
     void usage(const char* xmessage = 0) const;
