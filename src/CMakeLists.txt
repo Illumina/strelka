@@ -45,10 +45,9 @@ endif()
 
 # paths:
 set(THIS_REDIST_DIR "${CMAKE_SOURCE_DIR}/../redist")
-set(THIS_BOOTSTRAP_DIR "${CMAKE_SOURCE_DIR}/cmake/bootstrap")
+set(THIS_MODULE_DIR "${CMAKE_SOURCE_DIR}/cmake")
 set(THIS_SOURCE_QC_DIR "${CMAKE_SOURCE_DIR}/srcqc")
 
-# get version
 set (THIS_GETGIT_CMAKE "${THIS_REDIST_DIR}/cmake-modules-c99fd3/GetGitRevisionDescription.cmake")
 include ("${THIS_GETGIT_CMAKE}")
 git_describe(THIS_GIT_VERSION --match "v[0-9]*")
@@ -59,8 +58,8 @@ set(STARKA_VERSION "${THIS_GIT_VERSION}")
 set(STARKA_FULL_VERSION "${THIS_PROJECT_NAME}-${STARKA_VERSION}")
 message (STATUS "STARKA_VERSION: ${STARKA_VERSION}")
 
-set (THIS_GLOBALS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/globals.cmake")
-set (THIS_MACROS_CMAKE "${CMAKE_SOURCE_DIR}/cmake/macros.cmake")
+set (THIS_GLOBALS_CMAKE "${THIS_MODULE_DIR}/globals.cmake")
+set (THIS_MACROS_CMAKE "${THIS_MODULE_DIR}/macros.cmake")
 
 # add custom functions:
 include ("${THIS_MACROS_CMAKE}")
@@ -145,7 +144,7 @@ set(THIS_OPT "${THIS_PROJECT_NAME}_opt")
 add_custom_target(${THIS_OPT} ALL)
 
 # redist includes
-include ("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
+include ("${THIS_MODULE_DIR}/boost.cmake")
 
 # global source QC -- don't allow non-ascii chars in source files:
 set(THIS_SOURCE_CHECK "${THIS_PROJECT_NAME}_source_check")
