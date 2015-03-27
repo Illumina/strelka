@@ -48,6 +48,20 @@ set(THIS_REDIST_DIR "${CMAKE_SOURCE_DIR}/../redist")
 set(THIS_MODULE_DIR "${CMAKE_SOURCE_DIR}/cmake")
 set(THIS_SOURCE_QC_DIR "${CMAKE_SOURCE_DIR}/srcqc")
 
+# Create package versioning target - version derived from git describe except for
+# release tarballs. Version file is treated as always out of date.
+set(THIS_VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/workflowVersion.txt")
+set(THIS_VERSION_TARGET "${THIS_PROJECT_NAME}_version")
+add_custom_target(
+    ${THIS_VERSION_TARGET}
+    ALL
+    COMMAND ${CMAKE_COMMAND}
+    -D THIS_REDIST_DIR:INTERNAL=${THIS_REDIST_DIR}
+    -D THIS_VERSION_FILE:INTERNAL=${THIS_VERSION_FILE} 
+    -P ${THIS_MODULE_DIR}/getWorkflowVersion.cmake
+    COMMENT "Updating workflow version")
+
+file(READ ${THIS_VERSION_FILE} THIS_GIT_VERSION)
 set (THIS_GETGIT_CMAKE "${THIS_REDIST_DIR}/cmake-modules-c99fd3/GetGitRevisionDescription.cmake")
 include ("${THIS_GETGIT_CMAKE}")
 git_describe(THIS_GIT_VERSION --match "v[0-9]*")
@@ -55,8 +69,8 @@ if (NOT THIS_GIT_VERSION)
     set(THIS_GIT_VERSION "UNKNOWN")
 endif ()
 
-set(STARKA_VERSION "${THIS_GIT_VERSION}")
-message (STATUS "STARKA_VERSION: ${STARKA_VERSION}")
+set(WORKFLOW_VERSION_VERSION "${THIS_GIT_VERSION}")
+message (STATUS "WORKFLOW_VERSION: ${WORKFLOW_VERSION}")
 
 set (THIS_GLOBALS_CMAKE "${THIS_MODULE_DIR}/globals.cmake")
 set (THIS_MACROS_CMAKE "${THIS_MODULE_DIR}/macros.cmake")
