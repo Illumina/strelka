@@ -10,6 +10,8 @@
 # <https://github.com/sequencing/licenses/>
 #
 
+# \author Chris Saunders
+
 #
 # get various build-time configuration values -- this is information not available
 # at cmake configuration time
@@ -25,15 +27,17 @@ git_describe(GIT_VERSION --match "v[0-9]*")
 if (NOT GIT_VERSION)
     set(GIT_VERSION "UNKNOWN")
 endif ()
-set (WORKFLOW_VERSION ${GIT_VERSION})
+set(WORKFLOW_VERSION ${GIT_VERSION})
 message(STATUS "Detected workflow version: ${WORKFLOW_VERSION}")
 file(WRITE ${CONFIG_FILE} "WORKFLOW_VERSION\t${WORKFLOW_VERSION}\n")
 
 #
 # get build timestamp
 #
-# find interpreters
-find_package(PythonInterp)
+# python is a cross platform way to do this without newer cmake,
+# we have compile and runtime python req anyway.
+#
+find_package(PythonInterp QUIET)
 if (NOT PYTHONINTERP_FOUND)
     message (FATAL_ERROR "No python interpreter found")
 endif()

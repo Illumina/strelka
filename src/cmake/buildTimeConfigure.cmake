@@ -10,8 +10,15 @@
 # <https://github.com/sequencing/licenses/>
 #
 
+# \author Chris Saunders
+
 # update file with various build-time properties
 # requires CONFIG_FILE SOURCE_FILE DEST_FILE
+#
+# expected CONFIG_FILE format is:
+# "key1\tvalue1\n"
+# "key2\tvalue2\n" ...
+#
 
 file (READ ${CONFIG_FILE} CONFIG_LINES)
 STRING(REPLACE "\n" ";" CONFIG_LINES "${CONFIG_LINES}")
