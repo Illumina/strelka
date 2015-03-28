@@ -11,8 +11,9 @@
 #
 
 """
-This module consolidates all pythonbuild-time configuration data,
-except for relative import paths
+This module consolidates build-time config data such as git status
+and build date. This is in contrast to cmake configuration-time
+config data like relative paths and library/header availability.
 """
 
-workflowVersion="@WORKLOW_VERSION@"
+workflowVersion="@WORKFLOW_VERSION@"
