@@ -24,6 +24,7 @@
 #include <cstdlib>
 
 #include <iostream>
+#include <string>
 
 
 static
@@ -63,7 +64,8 @@ const char*
 Program::
 version() const
 {
-    return starka::getVersion();
+    static const std::string versionStr(starka::getVersion() + std::string(" ") + starka::buildTime());
+    return versionStr.c_str();
 }
 
 int

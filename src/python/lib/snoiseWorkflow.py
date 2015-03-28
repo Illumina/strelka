@@ -28,7 +28,7 @@ sys.path.append(os.path.abspath(scriptDir))
 pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
-from buildConfig import workflowVersion
+from configBuildTimeInfo import workflowVersion
 from pyflow import WorkflowRunner
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd

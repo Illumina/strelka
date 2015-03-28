@@ -11,13 +11,12 @@
 // <https://github.com/downloads/sequencing/licenses/>.
 //
  
- ///
- /// \brief Workflow build version (configured by cmake)
- ///
- /// This is intended for inclusion in config.h it is in a separate file
- /// because the value is updated at compile time rather than
- /// cmake configure-time (which is the case for the remainder of
- /// config.h values)
- ///
+///
+/// This consolidates compile-time config data such as git status
+/// and build date. This is in contrast to cmake configuration-time
+/// config data like relative paths and library/header availability.
+///
+
+#define BUILD_TIME "@BUILD_TIME@"
 
 #define WORKFLOW_VERSION "@WORKFLOW_VERSION@"

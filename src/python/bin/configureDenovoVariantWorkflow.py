@@ -24,7 +24,7 @@ templateConfigDir=os.path.abspath(os.path.join(scriptDir,'@THIS_RELATIVE_CONFIGD
 
 sys.path.append(workflowDir)
 
-from buildConfig import workflowVersion
+from configBuildTimeInfo import workflowVersion
 from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, checkTabixListOption
 from makeRunScript import makeRunScript

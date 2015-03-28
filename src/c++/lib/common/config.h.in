@@ -15,7 +15,7 @@
  /// \brief Various system-specific definitions (configured by cmake)
  ///
 
-#include "configWorkflowVersion.h"
+#include "configBuildTimeInfo.h"
 
 /* c++/include/config.h.cmake. Manually edited */
 /* c++/include/config.h.in.  Generated from configure.ac by autoheader.  */

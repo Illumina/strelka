@@ -89,7 +89,7 @@ def get_run_options(workflowClassName) :
 
     from optparse import OptionGroup
 
-    from buildConfig import workflowVersion
+    from configBuildTimeInfo import workflowVersion
     from configureUtil import EpilogOptionParser
     from estimateHardware import EstException, getNodeHyperthreadCoreCount, getNodeMemMb
 

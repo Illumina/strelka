@@ -27,7 +27,7 @@ sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
-from buildConfig import workflowVersion
+from configBuildTimeInfo import workflowVersion
 from pyflow import WorkflowRunner
 from starkaWorkflow import StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \

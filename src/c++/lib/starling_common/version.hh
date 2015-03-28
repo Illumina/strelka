@@ -27,4 +27,11 @@ getVersion()
     return WORKFLOW_VERSION;
 }
 
+inline
+const char*
+buildTime()
+{
+    return BUILD_TIME;
+}
+
 }

@@ -50,26 +50,16 @@ set(THIS_SOURCE_QC_DIR "${CMAKE_SOURCE_DIR}/srcqc")
 
 # Create package versioning target - version derived from git describe except for
 # release tarballs. Version file is treated as always out of date.
-set(THIS_VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/workflowVersion.txt")
-set(THIS_VERSION_TARGET "${THIS_PROJECT_NAME}_version")
+set(THIS_BUILDTIME_CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/buildTimeConfigInfo.txt")
+set(THIS_BUILDTIME_CONFIG_TARGET "${THIS_PROJECT_NAME}_buildtime_config")
 add_custom_target(
-    ${THIS_VERSION_TARGET}
+    ${THIS_BUILDTIME_CONFIG_TARGET}
     ALL
     COMMAND ${CMAKE_COMMAND}
     -D REDIST_DIR=${THIS_REDIST_DIR}
-    -D VERSION_FILE=${THIS_VERSION_FILE} 
-    -P ${THIS_MODULE_DIR}/getWorkflowVersion.cmake
-    COMMENT "Updating workflow version")
-
-set (THIS_GETGIT_CMAKE "${THIS_REDIST_DIR}/cmake-modules-c99fd3/GetGitRevisionDescription.cmake")
-include ("${THIS_GETGIT_CMAKE}")
-git_describe(THIS_GIT_VERSION --match "v[0-9]*")
-if (NOT THIS_GIT_VERSION)
-    set(THIS_GIT_VERSION "UNKNOWN")
-endif ()
-
-set(WORKFLOW_VERSION_VERSION "${THIS_GIT_VERSION}")
-message (STATUS "WORKFLOW_VERSION: ${WORKFLOW_VERSION}")
+    -D CONFIG_FILE=${THIS_BUILDTIME_CONFIG_FILE} 
+    -P ${THIS_MODULE_DIR}/getBuildTimeConfigInfo.cmake
+    COMMENT "Updating buildtime config info")
 
 set (THIS_GLOBALS_CMAKE "${THIS_MODULE_DIR}/globals.cmake")
 set (THIS_MACROS_CMAKE "${THIS_MODULE_DIR}/macros.cmake")

@@ -11,9 +11,10 @@
 #
 
 """
-This module consolidates build-time config data such as git status
+This consolidates build-time config data such as git status
 and build date. This is in contrast to cmake configuration-time
 config data like relative paths and library/header availability.
 """
 
 workflowVersion="@WORKFLOW_VERSION@"
+buildTime="@BUILD_TIME@"

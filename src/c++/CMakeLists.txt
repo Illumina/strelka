@@ -32,7 +32,7 @@ include ("${THIS_CXX_CONFIGURE_CMAKE}")
 ##
 ## refresh git label at build-time
 ##
-add_dependencies(${THIS_OPT} ${CONFIG_VERSION_TARGET})
+add_dependencies(${THIS_OPT} ${CXX_BUILDTIME_CONFIG_TARGET})
 
 ##
 ## run cppcheck if any cxx source has been updated:

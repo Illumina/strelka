@@ -23,7 +23,7 @@ workflowDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_PYTHON_LIBDIR
 
 sys.path.append(workflowDir)
 
-from buildConfig import workflowVersion
+from configBuildTimeInfo import workflowVersion
 from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, joinFile, OptParseException, checkOptionalTabixIndexedFile
 from makeRunScript import makeRunScript

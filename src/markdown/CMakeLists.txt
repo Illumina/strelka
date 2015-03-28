@@ -33,9 +33,9 @@ function(process_user_guide name)
     
     add_custom_target(
         ${UG_TARGET}
-        DEPENDS ${THIS_VERSION_TARGET}
+        DEPENDS ${THIS_BUILDTIME_CONFIG_TARGET}
         COMMAND ${CMAKE_COMMAND}
-        -D VERSION_FILE=${THIS_VERSION_FILE} 
+        -D CONFIG_FILE=${THIS_BUILDTIME_CONFIG_FILE}
         -D SOURCE_FILE=${CMAKE_CURRENT_SOURCE_DIR}/${UG}
         -D DEST_FILE=${CMAKE_CURRENT_BINARY_DIR}/${UG}
         -P ${THIS_MODULE_DIR}/buildTimeConfigure.cmake)

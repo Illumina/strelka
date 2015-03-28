@@ -18,10 +18,13 @@
 #include "starling_common/prog_info_base.hh"
 #include "starling_common/version.hh"
 
+#include <string>
+
 
 const char*
 prog_info_base::
 version() const
 {
-    return starka::getVersion();
+    static const std::string versionStr(starka::getVersion() + std::string(" ") + starka::buildTime());
+    return versionStr.c_str();
 }
