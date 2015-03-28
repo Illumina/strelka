@@ -112,5 +112,9 @@
 /* Version number of package */
 #cmakedefine VERSION @VERSION@
 
+#define CXX_COMPILER_NAME "@CXX_COMPILER_NAME@"
+
+#define COMPILER_VERSION "@COMPILER_VERSION@"
+
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

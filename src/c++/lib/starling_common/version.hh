@@ -34,4 +34,18 @@ buildTime()
     return BUILD_TIME;
 }
 
+inline
+const char*
+cxxCompilerName()
+{
+    return CXX_COMPILER_NAME;
+}
+
+inline
+const char*
+compilerVersion()
+{
+    return COMPILER_VERSION;
+}
+
 }

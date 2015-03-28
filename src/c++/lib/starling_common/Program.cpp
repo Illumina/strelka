@@ -33,7 +33,6 @@ dump_cl(int argc,
         char* argv[],
         std::ostream& os)
 {
-
     os << "cmdline:";
     for (int i(0); i<argc; ++i)
     {
@@ -64,7 +63,14 @@ const char*
 Program::
 version() const
 {
-    static const std::string versionStr(starka::getVersion() + std::string(" ") + starka::buildTime());
+    static const std::string versionStr(
+        starka::getVersion() +
+        std::string(" ") +
+        starka::buildTime() +
+        std::string(" ") +
+        starka::cxxCompilerName() +
+        std::string("-") +
+        starka::compilerVersion());
     return versionStr.c_str();
 }
 

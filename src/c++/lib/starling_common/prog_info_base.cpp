@@ -25,6 +25,13 @@ const char*
 prog_info_base::
 version() const
 {
-    static const std::string versionStr(starka::getVersion() + std::string(" ") + starka::buildTime());
+    static const std::string versionStr(
+        starka::getVersion() +
+        std::string(" ") +
+        starka::buildTime() +
+        std::string(" ") +
+        starka::cxxCompilerName() +
+        std::string("-") +
+        starka::compilerVersion());
     return versionStr.c_str();
 }
