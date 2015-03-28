@@ -93,7 +93,7 @@ message (STATUS "BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 if (CPACK_GENERATOR)
     message (STATUS "Configuring to produce the following package types: ${CPACK_GENERATOR}")
     set(CPACK_PACKAGE_VENDOR "Illumina")
-    set(CPACK_PACKAGE_VERSION "${STARKA_VERSION}")
+    #set(CPACK_PACKAGE_VERSION "${WORKFLOW_VERSION}")
     set(CPAKC_PACKAGE_CONTACT "csaunders@illumina.com")
 
     if (CPACK_GENERATOR STREQUAL "RPM")

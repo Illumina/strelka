@@ -74,7 +74,6 @@ awk -v gver=$gitversion '
 }' $cml >| $tmp_file
 mv $tmp_file $cml
 
-
 rme=$pname/README.md
 awk -v gver=$gitversion '
 {
@@ -83,7 +82,6 @@ awk -v gver=$gitversion '
     else print;
 }' $rme >| $tmp_file
 mv $tmp_file $rme
-exit
 
 # tar it up:
 (
