@@ -90,12 +90,12 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
 #    segCmd.extend(["-min-qscore","0"])  # consider this once we go back to a quality based scoring model
     segCmd.extend(['-min-qscore','17'])
-    
+
     # next three parameters describe same quality dependency structure as starling
-    segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])  
+    segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
-    
+
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
     segCmd.extend(["-samtools-reference", self.params.referenceFasta ])
@@ -154,7 +154,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     callTask=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
     self.addTask(callTask,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
-    
+
     compressLabel=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
     compressCmd="%s %s" % (self.params.bgzipBin, tmpDenovoPath)
     if self.params.isWriteCallableRegion :
@@ -316,7 +316,7 @@ class PedicureWorkflow(StarkaWorkflow) :
     def workflow(self) :
         self.flowLog("Initiating Pedicure workflow version: %s" % (__version__))
         self.setCallMemMb()
-        
+
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :

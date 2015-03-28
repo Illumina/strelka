@@ -298,7 +298,7 @@ score_site_instance(
         if (si.is_het())
             var_case = CALIBRATION_MODEL::HetSNP;
 
-        #undef HETALTSNPMODEL
+#undef HETALTSNPMODEL
 #ifdef HETALTSNPMODEL // future-proofing: do not remove unless you are sure we will not be adding hetalt SNP model to VQSR
         if (si.is_hetalt())
             var_case = CALIBRATION_MODEL::HetAltSNP;
@@ -306,10 +306,10 @@ score_site_instance(
 #endif
 
 #ifdef DEBUG_MODEL
-        //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
+            //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
 #endif
 
-        const featuremap features = si.get_site_qscore_features(normal_depth());
+            const featuremap features = si.get_site_qscore_features(normal_depth());
         smod.Qscore = logistic_score(var_case, features);
         apply_site_qscore_filters(var_case, si, smod);
     }

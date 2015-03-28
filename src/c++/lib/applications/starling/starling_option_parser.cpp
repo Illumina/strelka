@@ -64,7 +64,7 @@ get_starling_option_parser(
 
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)")
-     ;
+    ;
 
     po::options_description phase_opt("Read-backed phasing options");
     phase_opt.add_options()
@@ -72,7 +72,7 @@ get_starling_option_parser(
      "Enable short-range SNP phasing")
     ("phasing-window", po::value(&opt.phasing_window)->default_value(opt.phasing_window),
      "The maximum window to consider for short-range phasing")
-     ;
+    ;
 
     po::options_description starling_parse_opt("Germline calling options");
     starling_parse_opt.add(gvcf_opt).add(phase_opt);

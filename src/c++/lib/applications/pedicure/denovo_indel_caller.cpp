@@ -119,95 +119,104 @@ typedef std::array<double,PEDICURE_INOISE::SIZE> indel_state_t;
 
 namespace TRANSMISSION_STATE
 {
-    // "ERROR" represents a de-novo event that is incredibly unlikely (multiple events) -- we could also put it in the denovo state and just use the
-    // de-novo prior squared to get the same result -- then the dominant term would actually be the probably of an erroneous copy
-    // number observation in the sample instead.
-    enum index_t
-    {
-        INHERITED,
-        DENOVO,
-        ERROR,
-        SIZE
-    };
+// "ERROR" represents a de-novo event that is incredibly unlikely (multiple events) -- we could also put it in the denovo state and just use the
+// de-novo prior squared to get the same result -- then the dominant term would actually be the probably of an erroneous copy
+// number observation in the sample instead.
+enum index_t
+{
+    INHERITED,
+    DENOVO,
+    ERROR,
+    SIZE
+};
 
 #if 0
-    static
-    const char*
-    getLabel(
-        const index_t idx)
+static
+const char*
+getLabel(
+    const index_t idx)
+{
+    switch (idx)
     {
-        switch (idx)
-        {
-        case INHERITED: return "INHERITED";
-        case DENOVO: return "DENOVO";
-        case ERROR: return "ERROR";
-        default:
-            assert(false && "Unknown transmission state");
-            return nullptr;
-        }
+    case INHERITED:
+        return "INHERITED";
+    case DENOVO:
+        return "DENOVO";
+    case ERROR:
+        return "ERROR";
+    default:
+        assert(false && "Unknown transmission state");
+        return nullptr;
     }
+}
 #endif
 
-    // temporary fixed priors:
-    static
-    double
-    getPrior(
-        const index_t idx)
+// temporary fixed priors:
+static
+double
+getPrior(
+    const index_t idx)
+{
+    // as currently defined background exp is I: 15/27 E: 2/27 D: 10/27 -- compared to drate this doesn't matter
+    static const double lndrate(std::log(5e-7));
+    static const double noiserate(std::log(5e-8));
+    switch (idx)
     {
-        // as currently defined background exp is I: 15/27 E: 2/27 D: 10/27 -- compared to drate this doesn't matter
-        static const double lndrate(std::log(5e-7));
-        static const double noiserate(std::log(5e-8));
-        switch (idx)
-        {
-        case INHERITED: return 0.;
-        case DENOVO: return lndrate;
-        case ERROR: return noiserate;
-        default:
-            assert(false && "Undefined inheritance state");
-        }
+    case INHERITED:
+        return 0.;
+    case DENOVO:
+        return lndrate;
+    case ERROR:
+        return noiserate;
+    default:
+        assert(false && "Undefined inheritance state");
     }
+}
 
-    static
-    unsigned
-    getTransmissionErrorCount(
-        const uint8_t* px,
-        const uint8_t* py,
-        const uint8_t* c)
-    {
-        unsigned val(0);
-        if ((c[0] != px[0]) && (c[0] != px[1])) val += 1;
-        if ((c[1] != py[0]) && (c[1] != py[1])) val += 1;
-        return val;
-    }
+static
+unsigned
+getTransmissionErrorCount(
+    const uint8_t* px,
+    const uint8_t* py,
+    const uint8_t* c)
+{
+    unsigned val(0);
+    if ((c[0] != px[0]) && (c[0] != px[1])) val += 1;
+    if ((c[1] != py[0]) && (c[1] != py[1])) val += 1;
+    return val;
+}
 
-    static
-    index_t
-    get_state(
-        const unsigned parent0GT,
-        const unsigned parent1GT,
-        const unsigned probandGT)
+static
+index_t
+get_state(
+    const unsigned parent0GT,
+    const unsigned parent1GT,
+    const unsigned probandGT)
+{
+    static const unsigned alleleCount(2);
+    uint8_t p0a[alleleCount];
+    uint8_t p1a[alleleCount];
+    uint8_t ca[alleleCount];
+    for (unsigned alleleIndex(0); alleleIndex<alleleCount; ++alleleIndex)
     {
-        static const unsigned alleleCount(2);
-        uint8_t p0a[alleleCount];
-        uint8_t p1a[alleleCount];
-        uint8_t ca[alleleCount];
-        for (unsigned alleleIndex(0); alleleIndex<alleleCount; ++alleleIndex)
-        {
-            p0a[alleleIndex] = STAR_DIINDEL::get_allele(parent0GT,alleleIndex);
-            p1a[alleleIndex] = STAR_DIINDEL::get_allele(parent1GT,alleleIndex);
-            ca[alleleIndex] = STAR_DIINDEL::get_allele(probandGT,alleleIndex);
-        }
-        const unsigned errorCount(std::min(getTransmissionErrorCount(p0a,p1a,ca),getTransmissionErrorCount(p1a,p0a,ca)));
-        switch (errorCount)
-        {
-        case 0: return INHERITED;
-        case 1: return DENOVO;
-        case 2: return ERROR;
-        default:
-            assert(false && "Unexpected error count value");
-            return ERROR;
-        }
+        p0a[alleleIndex] = STAR_DIINDEL::get_allele(parent0GT,alleleIndex);
+        p1a[alleleIndex] = STAR_DIINDEL::get_allele(parent1GT,alleleIndex);
+        ca[alleleIndex] = STAR_DIINDEL::get_allele(probandGT,alleleIndex);
     }
+    const unsigned errorCount(std::min(getTransmissionErrorCount(p0a,p1a,ca),getTransmissionErrorCount(p1a,p0a,ca)));
+    switch (errorCount)
+    {
+    case 0:
+        return INHERITED;
+    case 1:
+        return DENOVO;
+    case 2:
+        return ERROR;
+    default:
+        assert(false && "Unexpected error count value");
+        return ERROR;
+    }
+}
 }
 
 
@@ -262,9 +271,9 @@ calculate_result_set(
                 {
                     using namespace TRANSMISSION_STATE;
                     log_os << "p0/p1/c: "
-                            << STAR_DIINDEL::get_gt_label(p0) << " "
-                            << STAR_DIINDEL::get_gt_label(p1) << " "
-                            << STAR_DIINDEL::get_gt_label(pro) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
+                           << STAR_DIINDEL::get_gt_label(p0) << " "
+                           << STAR_DIINDEL::get_gt_label(p1) << " "
+                           << STAR_DIINDEL::get_gt_label(pro) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
                 }
 #endif
                 stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
@@ -282,9 +291,9 @@ calculate_result_set(
     {
         const unsigned noiseState(STAR_DIINDEL::SIZE+ratioIndex);
         const double errorLhood =
-                sampleLhood[parentIndex[0]][noiseState] +
-                sampleLhood[parentIndex[1]][noiseState] +
-                sampleLhood[probandIndex][noiseState];
+            sampleLhood[parentIndex[0]][noiseState] +
+            sampleLhood[parentIndex[1]][noiseState] +
+            sampleLhood[probandIndex][noiseState];
 
         using namespace TRANSMISSION_STATE;
         stateLhood[ERROR] = log_sum(stateLhood[ERROR], errorLhood);
@@ -498,7 +507,7 @@ get_denovo_indel_call(
             }
         }
 
-        for (unsigned sampleIndex(0);sampleIndex<sampleSize;++sampleIndex)
+        for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
         {
             const starling_sample_options& sampleOpt(*(sampleOptions[sampleIndex]));
             const indel_data& sid(*(allIndelData[sampleIndex]));

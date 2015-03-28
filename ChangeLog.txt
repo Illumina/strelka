@@ -1,3 +1,4 @@
+- STARKA-220 improve build system versioning
 - STARKA-217 adjust codon phaser to match read and basecall filtration of
 non-phased variants, and align phased candidates near indels correctly
 - STARKA-191 add denovo calling model for parent/child trios

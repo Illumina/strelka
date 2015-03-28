@@ -63,7 +63,7 @@ get_strelka_option_parser(
     ("somatic-indel-rate",
      po::value(&opt.somatic_indel_rate)->default_value(opt.somatic_indel_rate),
      "Expected rate of somatic indels (allowed range: [0-1])")
-     ("shared-site-error-rate",
+    ("shared-site-error-rate",
      po::value(&opt.shared_site_error_rate)->default_value(opt.shared_site_error_rate),
      "Expected rate of site specific errors shared in the tumor and normal data.")
     ("shared-indel-error-factor",

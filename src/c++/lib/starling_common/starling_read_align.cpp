@@ -1671,7 +1671,7 @@ realign_and_score_read(
     {
         get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,realign_buffer_range,warn,cal_set);
 
-        if( cal_set.empty() )
+        if ( cal_set.empty() )
         {
             std::ostringstream oss;
             oss << "Empty candidate alignment set while realigning read segment from exemplar alignment: " << al << "\n";
@@ -1690,7 +1690,7 @@ realign_and_score_read(
     if (warn.origin_skip || (is_max_toggle_warn))
     {
         auto writeSkipWarning = [&rseg](
-                const char* reason)
+                                    const char* reason)
         {
             log_os << "WARNING: re-alignment skipped some alternate alignments for read: "  << rseg.key()
                    //               << " at buffer_pos: " << (sread.buffer_pos+1) << "\n"

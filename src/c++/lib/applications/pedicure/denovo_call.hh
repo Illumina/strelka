@@ -20,9 +20,10 @@
 
 namespace PEDICURE_TIERS
 {
-    enum index_t{
-        TIER1,
-        TIER2,
-        SIZE
-    };
+enum index_t
+{
+    TIER1,
+    TIER2,
+    SIZE
+};
 }

@@ -325,7 +325,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _ref(ref)
     , _streams(streams)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
-    //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
+      //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
     , _largest_indel_ref_span(opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)
@@ -367,7 +367,7 @@ starling_pos_processor_base(const starling_base_options& opt,
             good_pi.set_ref_base(id_to_base(b));
             _empty_dgt[b].reset(new diploid_genotype);
             _dopt.pdcaller().position_snp_call_pprob_digt(_opt,good_epi,
-                                                                 *_empty_dgt[b],_opt.is_all_sites());
+                                                          *_empty_dgt[b],_opt.is_all_sites());
         }
     }
 
@@ -1611,7 +1611,7 @@ void
 starling_pos_processor_base::
 process_pos_variants(const pos_t pos)
 {
-    for (unsigned sampleId(0);sampleId<_n_samples;++sampleId)
+    for (unsigned sampleId(0); sampleId<_n_samples; ++sampleId)
     {
         process_pos_site_stats(pos,sampleId);
     }

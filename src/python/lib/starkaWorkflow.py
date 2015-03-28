@@ -33,8 +33,8 @@ class StarkaCallWorkflow(WorkflowRunner) :
 
     def __init__(self,params) :
         self.params = params
-        
-        
+
+
     def concatIndexBgzipFile(self, taskPrefix, dependencies, inputList, output, label, fileType) :
         """
         Internal helper function
@@ -44,13 +44,13 @@ class StarkaCallWorkflow(WorkflowRunner) :
         @param fileType provided to tabix
         """
         assert(len(inputList) > 0)
-    
+
         if len(inputList) > 1 :
             catCmd = [self.params.bgcatBin,"-o",output]
             catCmd.extend(inputList)
         else :
             catCmd = "mv -f %s %s" % (inputList[0],output)
-    
+
         indexCmd = "%s -p %s %s" % (self.params.tabixBin, fileType, output)
         catTask = self.addTask(preJoin(taskPrefix,label+"_concat_"+fileType), catCmd,
                                dependencies=dependencies, isForceLocal=True)

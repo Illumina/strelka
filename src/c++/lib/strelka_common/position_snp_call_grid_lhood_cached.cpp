@@ -213,7 +213,7 @@ get_diploid_het_grid_lhood_cached(
     {
         const blt_float_t het_ratio((hetIndex+1)*ratio_increment);
         get_high_low_het_ratio_lhood_cached(pi,het_ratio,hetIndex,hrcache,
-                                         lhood_off+(hetIndex*DIGT::HET_SIZE),
-                                         lhood_off+((totalHetRatios-(hetIndex+1))*DIGT::HET_SIZE));
+                                            lhood_off+(hetIndex*DIGT::HET_SIZE),
+                                            lhood_off+((totalHetRatios-(hetIndex+1))*DIGT::HET_SIZE));
     }
 }

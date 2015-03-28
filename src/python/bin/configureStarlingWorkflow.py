@@ -100,7 +100,7 @@ You must specify a BAM file.
         checkOptionalTabixIndexedFile(options.noCompressBed,"no-compress bed")
 
         bcheck = BamSetChecker()
-        
+
         def singleAppender(bamList,label):
             if len(bamList) > 1 :
                 raise OptParseException("More than one %s sample BAM/CRAM files specified" % (label))

@@ -24,42 +24,42 @@
 
 namespace PEDICURE_SAMPLETYPE
 {
-    enum index_t
-    {
-        PROBAND,
-        PARENT,
-        SIBLING,
-        SIZE
-    };
+enum index_t
+{
+    PROBAND,
+    PARENT,
+    SIBLING,
+    SIZE
+};
 
-    inline
-    const char*
-    get_label(const unsigned i)
+inline
+const char*
+get_label(const unsigned i)
+{
+    switch (static_cast<index_t>(i))
     {
-        switch (static_cast<index_t>(i))
-        {
-        case PROBAND:
-            return "PROBAND";
-        case PARENT:
-            return "PARENT";
-        case SIBLING:
-            return "SIBLING";
-        default:
-            return "UNKNOWN";
-        }
+    case PROBAND:
+        return "PROBAND";
+    case PARENT:
+        return "PARENT";
+    case SIBLING:
+        return "SIBLING";
+    default:
+        return "UNKNOWN";
     }
+}
 }
 
 /// possible future expansion of type def:
 namespace PEDICURE_SEX
 {
-    enum index_t
-    {
-        UNKNOWN,
-        MALE,
-        FEMALE,
-        SIZE
-    };
+enum index_t
+{
+    UNKNOWN,
+    MALE,
+    FEMALE,
+    SIZE
+};
 }
 
 

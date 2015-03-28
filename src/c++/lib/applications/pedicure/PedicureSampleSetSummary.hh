@@ -25,8 +25,8 @@ struct PedicureSampleSetSummary : public SampleSetSummary
 {
     PedicureSampleSetSummary(
         const pedicure_options& opt)
-    : SampleSetSummary(),
-      _sinfo(opt.alignFileOpt.alignmentSampleInfo)
+        : SampleSetSummary(),
+          _sinfo(opt.alignFileOpt.alignmentSampleInfo)
     {}
 
     unsigned

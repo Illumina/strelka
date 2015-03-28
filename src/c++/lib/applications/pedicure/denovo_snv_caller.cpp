@@ -39,98 +39,107 @@ typedef std::array<blt_float_t,DIGT_DGRID::SIZE> dsnv_state_t;
 
 namespace TRANSMISSION_STATE
 {
-    // "ERROR" represents a de-novo event that is incredibly unlikely (multiple events)
-    //  -- we could also put it in the denovo state and just use the denovo prior
-    // squared to get the same result -- then the dominant term would actually be the
-    // probably of an erroneous copy number observation in the sample instead.
-    enum index_t
-    {
-        INHERITED,
-        DENOVO,
-        ERROR,
-        SIZE
-    };
+// "ERROR" represents a de-novo event that is incredibly unlikely (multiple events)
+//  -- we could also put it in the denovo state and just use the denovo prior
+// squared to get the same result -- then the dominant term would actually be the
+// probably of an erroneous copy number observation in the sample instead.
+enum index_t
+{
+    INHERITED,
+    DENOVO,
+    ERROR,
+    SIZE
+};
 
 #ifdef DENOVO_SNV_DEBUG
-    static
-    const char*
-    getLabel(
-        const index_t idx)
+static
+const char*
+getLabel(
+    const index_t idx)
+{
+    switch (idx)
     {
-        switch (idx)
-        {
-        case INHERITED: return "INHERITED";
-        case DENOVO: return "DENOVO";
-        case ERROR: return "ERROR";
-        default:
-            assert(false && "Unknown transmission state");
-            return nullptr;
-        }
+    case INHERITED:
+        return "INHERITED";
+    case DENOVO:
+        return "DENOVO";
+    case ERROR:
+        return "ERROR";
+    default:
+        assert(false && "Unknown transmission state");
+        return nullptr;
     }
+}
 #endif
 
-    // temporary fixed priors:
-    static
-    double
-    getPrior(
-        const index_t idx)
+// temporary fixed priors:
+static
+double
+getPrior(
+    const index_t idx)
+{
+    // as currently defined background exp is I: 15/27 E: 2/27 D: 10/27 -- compared to drate this doesn't matter
+    static const double lndrate(std::log(1e-6));
+    static const double noiserate(std::log(1e-7));
+    switch (idx)
     {
-        // as currently defined background exp is I: 15/27 E: 2/27 D: 10/27 -- compared to drate this doesn't matter
-        static const double lndrate(std::log(1e-6));
-        static const double noiserate(std::log(1e-7));
-        switch (idx)
-        {
-        case INHERITED: return 0.;
-        case DENOVO: return lndrate;
-        case ERROR: return noiserate;
-        default:
-            assert(false && "Undefined inheritance state");
-        }
+    case INHERITED:
+        return 0.;
+    case DENOVO:
+        return lndrate;
+    case ERROR:
+        return noiserate;
+    default:
+        assert(false && "Undefined inheritance state");
     }
+}
 
-    static const unsigned alleleCount(2);
-    typedef std::array<uint8_t,alleleCount> alleleSet_t;
+static const unsigned alleleCount(2);
+typedef std::array<uint8_t,alleleCount> alleleSet_t;
 
-    static
-    unsigned
-    getTransmissionErrorCount(
-        const alleleSet_t& pA,
-        const alleleSet_t& pB,
-        const alleleSet_t& c)
+static
+unsigned
+getTransmissionErrorCount(
+    const alleleSet_t& pA,
+    const alleleSet_t& pB,
+    const alleleSet_t& c)
+{
+    unsigned val(0);
+    if ((c[0] != pA[0]) && (c[0] != pA[1])) val += 1;
+    if ((c[1] != pB[0]) && (c[1] != pB[1])) val += 1;
+    return val;
+}
+
+static
+index_t
+get_state(
+    const unsigned parent0GT,
+    const unsigned parent1GT,
+    const unsigned probandGT)
+{
+    alleleSet_t parent0Alleles;
+    alleleSet_t parent1Alleles;
+    alleleSet_t probandAlleles;
+    for (unsigned alleleIndex(0); alleleIndex<alleleCount; ++alleleIndex)
     {
-        unsigned val(0);
-        if ((c[0] != pA[0]) && (c[0] != pA[1])) val += 1;
-        if ((c[1] != pB[0]) && (c[1] != pB[1])) val += 1;
-        return val;
+        parent0Alleles[alleleIndex] = DIGT::get_allele(parent0GT,alleleIndex);
+        parent1Alleles[alleleIndex] = DIGT::get_allele(parent1GT,alleleIndex);
+        probandAlleles[alleleIndex] = DIGT::get_allele(probandGT,alleleIndex);
     }
-
-    static
-    index_t
-    get_state(
-        const unsigned parent0GT,
-        const unsigned parent1GT,
-        const unsigned probandGT)
+    const unsigned errorCount(std::min(getTransmissionErrorCount(parent0Alleles,parent1Alleles,probandAlleles),getTransmissionErrorCount(parent1Alleles,parent0Alleles,probandAlleles)));
+    switch (errorCount)
     {
-        alleleSet_t parent0Alleles;
-        alleleSet_t parent1Alleles;
-        alleleSet_t probandAlleles;
-        for (unsigned alleleIndex(0); alleleIndex<alleleCount; ++alleleIndex)
-        {
-            parent0Alleles[alleleIndex] = DIGT::get_allele(parent0GT,alleleIndex);
-            parent1Alleles[alleleIndex] = DIGT::get_allele(parent1GT,alleleIndex);
-            probandAlleles[alleleIndex] = DIGT::get_allele(probandGT,alleleIndex);
-        }
-        const unsigned errorCount(std::min(getTransmissionErrorCount(parent0Alleles,parent1Alleles,probandAlleles),getTransmissionErrorCount(parent1Alleles,parent0Alleles,probandAlleles)));
-        switch (errorCount)
-        {
-        case 0: return INHERITED;
-        case 1: return DENOVO;
-        case 2: return ERROR;
-        default:
-            assert(false && "Unexpected error count value");
-            return ERROR;
-        }
+    case 0:
+        return INHERITED;
+    case 1:
+        return DENOVO;
+    case 2:
+        return ERROR;
+    default:
+        assert(false && "Unexpected error count value");
+        return ERROR;
     }
+}
 }
 
 
@@ -173,23 +182,26 @@ struct DenovoResultMaker
 
         {
             auto addAlleles = [&](const unsigned sampleIndex)
+            {
+                const auto& lhood(sampleLhood[sampleIndex]);
+                const unsigned maxGT(max_element_index(lhood.begin(),lhood.begin()+DIGT::SIZE));
+                for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex)
                 {
-                    const auto& lhood(sampleLhood[sampleIndex]);
-                    const unsigned maxGT(max_element_index(lhood.begin(),lhood.begin()+DIGT::SIZE));
-                    for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex)
-                    {
-                        max_alleles[DIGT::get_allele(maxGT,chromCopyIndex)] = true;
-                    }
-                };
+                    max_alleles[DIGT::get_allele(maxGT,chromCopyIndex)] = true;
+                }
+            };
 
             addAlleles(probandIndex);
-            for (const unsigned parentIndex : parentIndices) { addAlleles(parentIndex); }
+            for (const unsigned parentIndex : parentIndices)
+            {
+                addAlleles(parentIndex);
+            }
         }
 
         auto isFilterGT = [&](const unsigned gt)
-            {
-                return (! (max_alleles[DIGT::get_allele(gt,0)] && max_alleles[DIGT::get_allele(gt,1)]));
-            };
+        {
+            return (! (max_alleles[DIGT::get_allele(gt,0)] && max_alleles[DIGT::get_allele(gt,1)]));
+        };
 
         for (unsigned parent0GT(0); parent0GT<DIGT::SIZE; ++parent0GT)
         {
@@ -202,15 +214,15 @@ struct DenovoResultMaker
                     if (isFilterGT(probandGT)) continue;
                     const double pedigreeLhood = sampleLhood[parentIndices[0]][parent0GT] + sampleLhood[parentIndices[1]][parent1GT] + sampleLhood[probandIndex][probandGT];
                     const TRANSMISSION_STATE::index_t tran(TRANSMISSION_STATE::get_state(parent0GT,parent1GT,probandGT));
-    #ifdef DENOVO_SNV_DEBUG
+#ifdef DENOVO_SNV_DEBUG
                     {
                         using namespace TRANSMISSION_STATE;
                         log_os << "p0gt/p1/c: "
-                                << DIGT::get_gt_label(parent0GT) << " "
-                                << DIGT::get_gt_label(parent1GT) << " "
-                                << DIGT::get_gt_label(probandGT) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
+                               << DIGT::get_gt_label(parent0GT) << " "
+                               << DIGT::get_gt_label(parent1GT) << " "
+                               << DIGT::get_gt_label(probandGT) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
                     }
-    #endif
+#endif
                     stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
                 }
             }
@@ -234,9 +246,9 @@ struct DenovoResultMaker
         const std::vector<unsigned>& parentIndices(sinfo.getTypeIndexList(PARENT));
 
         auto isFilterGT = [&](const unsigned gt)
-            {
-                return (! (max_alleles[DIGT::get_allele(gt,0)] && max_alleles[DIGT::get_allele(gt,1)]));
-            };
+        {
+            return (! (max_alleles[DIGT::get_allele(gt,0)] && max_alleles[DIGT::get_allele(gt,1)]));
+        };
 
         // apart from the regular genotype analysis, we go through a bunch of noise states and
         // dump these into the "error' transmission state
@@ -254,9 +266,9 @@ struct DenovoResultMaker
             {
                 const unsigned noiseState(DIGT::SIZE+(ratioIndex*DIGT::HET_SIZE)+hetIndex);
                 const double errorLhood =
-                        sampleLhood[parentIndices[0]][noiseState] +
-                        sampleLhood[parentIndices[1]][noiseState] +
-                        sampleLhood[probandIndex][noiseState];
+                    sampleLhood[parentIndices[0]][noiseState] +
+                    sampleLhood[parentIndices[1]][noiseState] +
+                    sampleLhood[probandIndex][noiseState];
 
                 using namespace TRANSMISSION_STATE;
                 stateLhood[ERROR] = log_sum(stateLhood[ERROR], errorLhood);
@@ -277,20 +289,20 @@ struct DenovoResultMaker
         for (unsigned tstate(0); tstate<TRANSMISSION_STATE::SIZE; ++tstate)
         {
             statePprob[tstate] = stateLhood[tstate] + TRANSMISSION_STATE::getPrior(static_cast<TRANSMISSION_STATE::index_t>(tstate));
-    #ifdef DENOVO_SNV_DEBUG
+#ifdef DENOVO_SNV_DEBUG
             const TRANSMISSION_STATE::index_t tidx(static_cast<TRANSMISSION_STATE::index_t>(tstate));
             log_os << "denovo state pprob/lhood/prior: " << TRANSMISSION_STATE::getLabel(tidx)
                    << " " << statePprob[tstate] << " " << stateLhood[tstate]
                    << " " << TRANSMISSION_STATE::getPrior(tidx) << "\n";
-    #endif
+#endif
         }
 
         //opt_normalize_ln_distro(pprob.begin(),pprob.end(),DDIINDEL_GRID::is_nonsom.val.begin(),rs.max_gt);
         normalize_ln_distro(statePprob.begin(),statePprob.end(),rs.max_gt);
 
-    #ifdef DEBUG_INDEL_CALL
+#ifdef DEBUG_INDEL_CALL
         log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
-    #endif
+#endif
         rs.dsnv_qphred=error_prob_to_qphred(statePprob[TRANSMISSION_STATE::INHERITED] + statePprob[TRANSMISSION_STATE::ERROR]);
     }
 
@@ -366,7 +378,7 @@ get_denovo_snv_call(
 
         const auto& sampleCpi(pileups[tierIndex]);
 
-        for (unsigned sampleIndex(0);sampleIndex<sampleSize;++sampleIndex)
+        for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
         {
             // get likelihoods for each sample
             const CleanedPileup& cpi(*sampleCpi[sampleIndex]);
@@ -382,7 +394,7 @@ get_denovo_snv_call(
         // don't bother to compute the noise likelihoods unless there's signal:
         if (trs.dsnv_qphred == 0) continue;
 
-        for (unsigned sampleIndex(0);sampleIndex<sampleSize;++sampleIndex)
+        for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
         {
             // get likelihoods for each sample
             const CleanedPileup& cpi(*sampleCpi[sampleIndex]);

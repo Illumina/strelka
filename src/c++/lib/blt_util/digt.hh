@@ -38,7 +38,8 @@ enum index_t
     SIZE
 };
 
-enum constants {
+enum constants
+{
     HET_SIZE = SIZE-N_BASE,
 };
 
@@ -95,7 +96,8 @@ expect(
     const int base_id,
     const int gt)
 {
-    static const double ex[SIZE][N_BASE] = {
+    static const double ex[SIZE][N_BASE] =
+    {
         { 1.0, 0.0, 0.0, 0.0},
         { 0.0, 1.0, 0.0, 0.0},
         { 0.0, 0.0, 1.0, 0.0},
@@ -120,7 +122,8 @@ unsigned
 expect2(const int base_id,
         const int gt)
 {
-    static const unsigned ex[SIZE][N_BASE] = {
+    static const unsigned ex[SIZE][N_BASE] =
+    {
         { 2, 0, 0, 0},
         { 0, 2, 0, 0},
         { 0, 0, 2, 0},
@@ -141,7 +144,8 @@ uint8_t
 get_allele(const int gt,
            const unsigned chrom_idx)
 {
-    static const unsigned ex[SIZE][2] = {
+    static const unsigned ex[SIZE][2] =
+    {
         { 0, 0},
         { 1, 1},
         { 2, 2},
@@ -175,7 +179,8 @@ unsigned
 expect2_bias(const int base_id,
              const int gt)
 {
-    static const unsigned ex[SIZE][N_BASE] = {
+    static const unsigned ex[SIZE][N_BASE] =
+    {
         { 3, 0, 0, 0},
         { 0, 3, 0, 0},
         { 0, 0, 3, 0},
@@ -198,7 +203,8 @@ get_vcf_gt(const int gt,
 {
     static const char* gtstr[N_BASE] = { "0/0","0/1","1/1","1/2" };
 
-    static const unsigned ex[SIZE][N_BASE] = {
+    static const unsigned ex[SIZE][N_BASE] =
+    {
         { 0, 2, 2, 2},
         { 2, 0, 2, 2},
         { 2, 2, 0, 2},

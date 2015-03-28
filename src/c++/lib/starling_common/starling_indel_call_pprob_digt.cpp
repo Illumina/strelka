@@ -236,19 +236,19 @@ get_high_low_het_ratio_lhood(
 static
 void
 increment_het_ratio_lhood(
-       const starling_base_options& opt,
-       const starling_base_deriv_options& dopt,
-       const starling_sample_options& sample_opt,
-       const double indel_error_lnp,
-       const double indel_real_lnp,
-       const double ref_error_lnp,
-       const double ref_real_lnp,
-       const indel_key& ik,
-       const indel_data& id,
-       const double het_ratio,
-       const bool is_tier2_pass,
-       const bool is_use_alt_indel,
-       double* const lhood)
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const double indel_error_lnp,
+    const double indel_real_lnp,
+    const double ref_error_lnp,
+    const double ref_real_lnp,
+    const indel_key& ik,
+    const indel_data& id,
+    const double het_ratio,
+    const bool is_tier2_pass,
+    const bool is_use_alt_indel,
+    double* const lhood)
 {
     // high and low allele ratio variants:
     double het_lhood_high;

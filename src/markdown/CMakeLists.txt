@@ -30,7 +30,7 @@ function(process_user_guide name)
 
     # build-time configuration:
     set (UG_TARGET "${THIS_PROJECT_NAME}_${name}_config")
-    
+
     add_custom_target(
         ${UG_TARGET}
         DEPENDS ${THIS_BUILDTIME_CONFIG_TARGET}

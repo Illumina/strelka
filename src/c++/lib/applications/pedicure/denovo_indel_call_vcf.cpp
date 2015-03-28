@@ -151,7 +151,7 @@ denovo_indel_call_vcf(
        << "DP="<< totalDepth
        << ";QDI=" << rs.dindel_qphred
        << ";TQDI=" << (dinc.dindel_tier+1)
-;
+       ;
 
     if (iri.is_repeat_unit())
     {

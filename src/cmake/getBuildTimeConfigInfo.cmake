@@ -1,3 +1,14 @@
+#
+# Starka
+# Copyright (c) 2009-2014 Illumina, Inc.
+#
+# This software is provided under the terms and conditions of the
+# Illumina Open Source Software License 1.
+#
+# You should have received a copy of the Illumina Open Source
+# Software License 1 along with this program. If not, see
+# <https://github.com/sequencing/licenses/>
+#
 
 #
 # get various build-time configuration values -- this is information not available
@@ -31,6 +42,6 @@ execute_process(
     COMMAND ${PYTHON_EXECUTABLE} -c "import datetime;print(datetime.datetime.utcnow().isoformat())"
     OUTPUT_VARIABLE BUILD_TIME
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-   
+
 set (BUILD_TIME "${BUILD_TIME}UTC")
 file(APPEND ${CONFIG_FILE} "BUILD_TIME\t${BUILD_TIME}\n")

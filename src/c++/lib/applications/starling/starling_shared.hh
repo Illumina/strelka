@@ -43,10 +43,16 @@ struct starling_options : public starling_base_options
     }
 
     bool
-    is_bsnp_diploid() const override { return true; }
+    is_bsnp_diploid() const override
+    {
+        return true;
+    }
 
     bool
-    is_all_sites() const override { return true; }
+    is_all_sites() const override
+    {
+        return true;
+    }
 
 
     gvcf_options gvcf;

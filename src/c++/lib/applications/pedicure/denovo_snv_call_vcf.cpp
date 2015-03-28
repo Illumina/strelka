@@ -100,7 +100,7 @@ denovo_snv_call_vcf(
        //ALT:
        << "\t.";
 //    DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
- //                                  dsc.ref_gt,os);
+//                                  dsc.ref_gt,os);
     //QUAL:
     os << "\t.";
 
@@ -135,7 +135,7 @@ denovo_snv_call_vcf(
     os << '\t'
        << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";
 
-    for (unsigned sampleIndex(0);sampleIndex<sinfo.size();sampleIndex++)
+    for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
     {
         const CleanedPileup& cpi1(*pileups[PEDICURE_TIERS::TIER1][sampleIndex]);
         const CleanedPileup& cpi2(*pileups[PEDICURE_TIERS::TIER2][sampleIndex]);

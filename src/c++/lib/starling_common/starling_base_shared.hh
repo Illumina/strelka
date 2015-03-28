@@ -59,7 +59,10 @@ struct starling_base_options : public blt_options
 
     virtual
     bool
-    is_all_sites() const { return false; }
+    is_all_sites() const
+    {
+        return false;
+    }
 
     bool
     is_write_candidate_indels() const

@@ -71,7 +71,10 @@ struct blt_options
 
     virtual
     bool
-    is_bsnp_diploid() const { return false; }
+    is_bsnp_diploid() const
+    {
+        return false;
+    }
 
     bool
     is_dependent_eprob() const

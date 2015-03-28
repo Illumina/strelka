@@ -305,7 +305,7 @@ collect_pileup_evidence()
     {
         std::string sub_str;
         bool isPass(true);
-        for (unsigned blockIndex(0);blockIndex<blockWidth;blockIndex++)
+        for (unsigned blockIndex(0); blockIndex<blockWidth; blockIndex++)
         {
             const snp_pos_info& pi(*spi[blockIndex]);
             while (true)
@@ -313,14 +313,14 @@ collect_pileup_evidence()
                 const base_call& bc(pi.calls[callIndex+callOffset[blockIndex]]);
                 if (bc.isLastBaseCallFromMatchSeg)
                 {
-                    for (unsigned blockIndex2(blockIndex+1);blockIndex2<blockWidth;++blockIndex2)
+                    for (unsigned blockIndex2(blockIndex+1); blockIndex2<blockWidth; ++blockIndex2)
                     {
                         callOffset[blockIndex2]--;
                     }
                 }
                 if (bc.isFirstBaseCallFromMatchSeg && (blockIndex != 0))
                 {
-                    for (unsigned blockIndex2(blockIndex);blockIndex2<blockWidth;++blockIndex2)
+                    for (unsigned blockIndex2(blockIndex); blockIndex2<blockWidth; ++blockIndex2)
                     {
                         callOffset[blockIndex2]++;
                     }

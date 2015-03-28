@@ -484,7 +484,10 @@ private:
 
     virtual
     bool
-    is_save_pileup_buffer() { return false; }
+    is_save_pileup_buffer()
+    {
+        return false;
+    }
 
 protected:
     virtual

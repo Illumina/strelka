@@ -30,7 +30,7 @@ struct EmptyPosSet
 {
     EmptyPosSet()
     {
-        for (unsigned i(0);i<BASE_ID::SIZE;++i)
+        for (unsigned i(0); i<BASE_ID::SIZE; ++i)
         {
             pis[i].set_ref_base(id_to_base(i));
         }

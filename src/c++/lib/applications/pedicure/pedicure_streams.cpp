@@ -97,7 +97,7 @@ pedicure_streams(
 
         write_vcf_audit(opt,pinfo,cmdline,header,os);
         os << "##content=pedicure somatic snv calls\n"
-            << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n";
+           << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n";
 
         // INFO:
         os << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";

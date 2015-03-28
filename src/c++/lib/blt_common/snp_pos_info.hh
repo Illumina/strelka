@@ -101,7 +101,8 @@ struct base_call
     }
 
 private:
-    uint16_t qscore:qscore_bits;
+uint16_t qscore:
+    qscore_bits;
 public:
     uint16_t base_id:4;
     uint16_t is_fwd_strand:1;
