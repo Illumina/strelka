@@ -51,39 +51,17 @@ public:
         }
         delete bedstr;
     }
-
-    /** add sites / update positions */
-    virtual void add_site(int pos, bool) 
+    
+    virtual void add_site(const site_info & si)
     {
-        if(last_site >= pos)
-        {
-            return;
-        }
-
-        int last_site_before = last_site;
-        last_site = pos;
-        
-        boost::optional< known_pos_range2 > pl = rt.isInRegion(last_site_before);
-        if(pl && !this->keep_extending())
-        {
-            rt.removeToPos(last_site);
-            std::string p;
-            boost::optional< std::vector<std::string> > pr = rt.isPayloadInRegion(last_site_before);
-            if(pr)
-            {
-                for(std::string const & s : *pr)
-                {
-                    if(p.size()) { p += ","; }
-                    p += s;
-                }
-            }
-            positions.push_back(std::make_pair(*pl, p));
-        }
+        this->add_site(si.pos);
     }
 
-    virtual void add_indel(int begpos, int endpos)
+    virtual void add_indel(const indel_info & ii)
     {
-        this->add_site(std::max(begpos, endpos), true);
+        int begpos = ii.pos;
+        int endpos = ii.pos + ii.ref_length() - 1;
+        this->add_site(std::max(begpos, endpos));
     }
 
     /** keep extending the current block of variants
@@ -109,6 +87,36 @@ public:
             positions.pop_front();
         }
         return pr;
+    }
+
+protected:
+    /** add sites / update positions */
+    void add_site(int pos) 
+    {
+        if(last_site >= pos)
+        {
+            return;
+        }
+
+        int last_site_before = last_site;
+        last_site = pos;
+        
+        boost::optional< known_pos_range2 > pl = rt.isInRegion(last_site_before);
+        if(pl && !this->keep_extending())
+        {
+            rt.removeToPos(last_site);
+            std::string p;
+            boost::optional< std::vector<std::string> > pr = rt.isPayloadInRegion(last_site_before);
+            if(pr)
+            {
+                for(std::string const & s : *pr)
+                {
+                    if(p.size()) { p += ","; }
+                    p += s;
+                }
+            }
+            positions.push_back(std::make_pair(*pl, p));
+        }
     }
 
 private:

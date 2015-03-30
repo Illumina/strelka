@@ -42,8 +42,8 @@ class predictor_interface
 {
 public:
     /** add sites / update positions */
-    virtual void add_site(int /*pos*/, bool /*isVar*/) {}
-    virtual void add_indel(int /*begpos*/, int /*endpos*/) {}
+    virtual void add_site(site_info const & si) {}
+    virtual void add_indel(indel_info const & ii) {}
 
     /** keep extending the current block of variants
         (this tells assembler to not forward things on to 

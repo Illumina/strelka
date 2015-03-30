@@ -63,7 +63,7 @@ add_site(site_info& si)
     bool still_collecting = false;
     for(auto & predictor : predictors)
     {
-        // TODO add site to predictor
+        predictor->add_site(si);
         still_collecting = still_collecting || predictor->keep_extending();
     }
 
@@ -83,7 +83,7 @@ add_indel(const indel_info& ii)
     bool still_collecting = false;
     for(auto & predictor : predictors)
     {
-        // TODO add site to predictor
+        predictor->add_indel(ii);
         still_collecting = still_collecting || predictor->keep_extending();
     }
 

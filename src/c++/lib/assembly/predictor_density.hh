@@ -38,8 +38,10 @@ public:
         lastVarPos(-1),
         lastPos(-1) {}
 
-    void add_site( int pos, bool isVar )
+    void add_site(const site_info & si)
     {
+        int pos = si.pos;
+        bool isVar = si.dgt.is_snp;
         if (beginNotFullyProcessed == -1)
         {
             beginNotFullyProcessed = pos;
@@ -75,8 +77,10 @@ public:
     }
 
 
-    void add_indel( int begpos, int endpos )
+    void add_indel(const indel_info & ii)
     {
+        int begpos = ii.pos;
+        int endpos = ii.pos + ii.ref_length() - 1;
         if (beginNotFullyProcessed == -1)
         {
             beginNotFullyProcessed = begpos;
