@@ -445,7 +445,7 @@ AD1:AD2	0
 AD1:AB	-0.00453844519977103
 AD2:AB	-0.0406982281606754
 # snphet PassThreshold
-Q	10
+Q	14
 # snphet Predictors
 F_GQX
 QUAL
@@ -529,7 +529,7 @@ F_DPF:AD0	0
 F_DPF:AD1	0
 AD0:AD1	-0.144510022022846
 # snphom PassThreshold
-Q	10
+Q	14
 # snphom Predictors
 F_GQX
 QUAL
