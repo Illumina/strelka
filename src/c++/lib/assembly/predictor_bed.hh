@@ -30,26 +30,53 @@
 #include "htsapi/bed_streamer.hh"
 
 #include <boost/algorithm/string.hpp>
+#include <string>
+#include <fstream>
 
 class predictor_bed : public predictor_interface
 {
 public:
     predictor_bed(const char * bedfile, const char * region) : last_site (-1)
     {
-        bed_streamer *bedstr = new bed_streamer(bedfile, region);
-        while ( bedstr->next() )
+        // read whole text file when not bgzipped
+        if(strlen(bedfile) > 3 && strcmp(bedfile + strlen(bedfile) - 3, ".gz"))
         {
-            const bed_record *br = bedstr->get_record_ptr();
-            known_pos_range2 range(br->begin, br->end);
-            
-            std::vector<std::string> words;
-            boost::split(words, br->line, boost::is_any_of("\t"));
-            
-            std::vector<std::string> contigs(words.begin()+3,words.end());
-            // TODO check return code!
-            this->rt.addRegion(range, contigs);
+            std::ifstream in(bedfile);
+            while(in.good())
+            {
+                std::string line;
+                std::getline(in, line);
+                std::vector<std::string> words;
+                boost::split(words, line, boost::is_any_of("\t"));
+                
+                if(words.size() < 3)
+                {
+                    continue;
+                }
+                known_pos_range2 range(atoi(words[1].c_str()), atoi(words[2].c_str()));
+                std::vector<std::string> contigs(words.begin()+3,words.end());
+                // TODO check return code!
+                this->rt.addRegion(range, contigs);
+            }
         }
-        delete bedstr;
+        else
+        {
+            bed_streamer *bedstr = new bed_streamer(bedfile, region);
+            while ( bedstr->next() )
+            {
+                const bed_record *br = bedstr->get_record_ptr();
+                known_pos_range2 range(br->begin, br->end);
+                
+                std::vector<std::string> words;
+                boost::split(words, br->line, boost::is_any_of("\t"));
+                
+                std::vector<std::string> contigs(words.begin()+3,words.end());
+                // TODO check return code!
+                this->rt.addRegion(range, contigs);
+            }
+            delete bedstr;
+        }
+
     }
     
     virtual void add_site(const site_info & si)
