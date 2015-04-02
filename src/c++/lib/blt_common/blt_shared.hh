@@ -157,7 +157,7 @@ struct blt_options
     // which are also the least efficient points in terms of increment
     // size -- fudge removes this trend from the computation:
     //
-    static constexpr double het_bias_inc_fudge = 0.0001;
+    const double het_bias_inc_fudge = 0.0001;
     const double het_bias_max_ratio_inc = 0.05 + het_bias_inc_fudge;
 
     double nonref_variant_rate = 0.000001;

@@ -43,6 +43,6 @@ struct SomaticCallableProcessor : public RegionProcessor
     }
 
 private:
-    static constexpr int _minQSS = 15;
-    static constexpr int _minNQSS = 15;
+    static const int _minQSS = 15;
+    static const int _minNQSS = 15;
 };

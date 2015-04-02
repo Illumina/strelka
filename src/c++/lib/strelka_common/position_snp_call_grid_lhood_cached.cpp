@@ -22,9 +22,9 @@
 #include <cmath>
 
 
-constexpr blt_float_t one_third(1./3.);
+static const blt_float_t one_third(1./3.);
 static const blt_float_t ln_one_third(std::log(one_third));
-constexpr blt_float_t one_half(1./2.);
+static const blt_float_t one_half(1./2.);
 static const blt_float_t ln_one_half(std::log(one_half));
 
 

@@ -29,6 +29,8 @@
 
 //#define BC_DEBUG
 
+///mothballing this to support VS2013
+#if 0
 /// max 0-indexed value available with bitCount bits
 inline
 constexpr
@@ -37,13 +39,11 @@ bitMaxval(const unsigned bitCount)
 {
     return ((1 << bitCount) - 1);
 }
+#endif
 
 
 struct base_call
 {
-    static constexpr unsigned qscore_bits = 6;
-    static constexpr unsigned qscore_max = bitMaxval(qscore_bits);
-
     base_call(const uint8_t init_base_id,
               const uint8_t init_qscore,
               const bool init_ifs,
@@ -101,8 +101,11 @@ struct base_call
     }
 
 private:
-uint16_t qscore:
-    qscore_bits;
+    static const unsigned qscore_max;
+
+    enum { qscore_bits = 6 };
+
+    uint16_t qscore: qscore_bits;
 public:
     uint16_t base_id:4;
     uint16_t is_fwd_strand:1;

@@ -255,7 +255,7 @@ private:
         throw blt_exception(oss.str().c_str());
     }
 
-    static constexpr unsigned _minChunk = 1024;
+    static const unsigned _minChunk = 1024;
 
     bool _isEmpty;
     unsigned _minKeyIndex;

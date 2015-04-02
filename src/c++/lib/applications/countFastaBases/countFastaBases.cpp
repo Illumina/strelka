@@ -14,6 +14,7 @@
 #include "countFastaBases.hh"
 
 #include <cstdlib>
+#include <cstdint>
 #include <cstring>
 
 #include <algorithm>

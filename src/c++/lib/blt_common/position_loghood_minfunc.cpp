@@ -97,10 +97,10 @@ calc_pos_nonref_freq_loghood(const snp_pos_info& pi,
 
     const unsigned n_calls(pi.calls.size());
 
-    blt_float_t loghood(0.);
+    blt_float_t loghood(0);
 
     const uint8_t ref_id(base_to_id(pi.get_ref_base()));
-    const blt_float_t ref_freq(1.-nonref_freq);
+    const blt_float_t ref_freq(1-nonref_freq);
 
     for (unsigned i(0); i<n_calls; ++i)
     {

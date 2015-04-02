@@ -27,6 +27,9 @@ static_assert(sizeof(base_call)==2, "Unexpected base_call object size");
 #endif
 
 
+const unsigned base_call::qscore_max = ((1 << base_call::qscore_bits) - 1);
+
+
 std::ostream&
 operator<<(std::ostream& os,
            const base_call& bc)

@@ -16,6 +16,11 @@
  *  Created on: Aug 20, 2014
  *      Author: mkallberg
  */
+
+#ifdef _MSC_VER
+#define NOMINMAX
+#endif
+
 #include "scoringmodels.hh"
 
 #include "blt_util/log.hh"
@@ -26,6 +31,7 @@
 
 #include <cassert>
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 

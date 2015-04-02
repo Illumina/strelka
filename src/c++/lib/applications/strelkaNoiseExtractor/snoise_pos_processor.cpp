@@ -109,7 +109,7 @@ process_pos_snp_snoise(
     if (pi.calls.empty()) return;
 
     // make early filtration decision -- then get the allele distribution:
-    constexpr unsigned min_used_calls(12);
+    static const unsigned min_used_calls(12);
 
     const unsigned n_used_calls(good_pi.calls.size());
     if (n_used_calls < min_used_calls) return;
@@ -145,7 +145,7 @@ process_pos_snp_snoise(
 
     const double alt_ratio(static_cast<double>(alt_count)/n_used_calls);
 
-    constexpr double max_alt_ratio(0.2);
+    static const double max_alt_ratio(0.2);
 
     /// too likely to be germline:
     if (alt_ratio > max_alt_ratio) return;
