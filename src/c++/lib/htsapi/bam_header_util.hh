@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "htsapi/bam_util.hh"
+#include "bam_util.hh"
 
 #include <string>
 

@@ -22,12 +22,67 @@ cmake_minimum_required(VERSION 2.8.0)
 
 message (STATUS "==== Initializing project cmake configuration ====")
 
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 enable_testing()
+
+
+# paths:
+set(THIS_REDIST_DIR "${CMAKE_SOURCE_DIR}/../redist")
+set(THIS_MODULE_DIR "${CMAKE_SOURCE_DIR}/cmake")
+set(THIS_SOURCE_QC_DIR "${CMAKE_SOURCE_DIR}/srcqc")
+
+set (THIS_GLOBALS_CMAKE "${THIS_MODULE_DIR}/globals.cmake")
+set (THIS_MACROS_CMAKE "${THIS_MODULE_DIR}/macros.cmake")
+
+# add custom functions:
+include ("${THIS_MACROS_CMAKE}")
 
 #
 # if true, build with very strict error checking (disabled in src release tarballs)
 #
 set(DEVELOPER_MODE true)
+
+#
+# setup build type
+#
+if (NOT WIN32)
+    set(CMAKE_BUILD_TYPES Debug Release RelWithDebInfo ASan)
+    join(CMAKE_BUILD_TYPES ", " CMAKE_BUILD_TYPES_STRING)
+
+    if (NOT CMAKE_BUILD_TYPE)
+        set(DEFAULT_CMAKE_BUILD_TYPE Release)
+        set(CMAKE_BUILD_TYPE ${DEFAULT_CMAKE_BUILD_TYPE} CACHE STRING
+            "Choose the type of build, options are: {${CMAKE_BUILD_TYPES_STRING}} (default: ${DEFAULT_CMAKE_BUILD_TYPE})")
+    endif()
+
+    # check that a valid build type has been selected:
+    list(FIND CMAKE_BUILD_TYPES ${CMAKE_BUILD_TYPE} TINDEX)
+    if(TINDEX EQUAL -1)
+        message (FATAL_ERROR "Selected build type, '${CMAKE_BUILD_TYPE}', is not in the set of available types: {${CMAKE_BUILD_TYPES_STRING}}")
+    endif()
+
+    message (STATUS "BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+else ()
+    set(IS_MSVC_ANALYZE FALSE CACHE BOOL
+        "Turn on Visual Studio /analyze option")
+    set(CMAKE_CONFIGURATION_TYPES "Release" CACHE INTERNAL
+        "Visual Studio build types" FORCE)
+endif ()
+
+#
+# other cache variables
+#
+if (NOT CMAKE_PARALLEL)
+    set(CMAKE_PARALLEL "0" CACHE STRING
+        "Choose the number of cores used by cmake during configuration (no default)")
+
+    # must give user the chance to set this before proceeding, otherwise we force a long wait for boost to compile
+    message (WARNING "\n*** Must set CMAKE_PARALLEL before continuing configuration ***\n")
+    return()
+endif ()
+
+message (STATUS "CMAKE_PARALLEL: ${CMAKE_PARALLEL}")
 
 #
 # setup project/version
@@ -40,13 +95,8 @@ project (${THIS_PROJECT_NAME})
 # find interpreters
 find_package(PythonInterp)
 if (NOT PYTHONINTERP_FOUND)
-    message (FATAL_ERROR "No python interpreter found")
+    message (WARNING "No python interpreter found, disabling optional python build and installation components. Installed workflow requires python interpreter to run")
 endif()
-
-# paths:
-set(THIS_REDIST_DIR "${CMAKE_SOURCE_DIR}/../redist")
-set(THIS_MODULE_DIR "${CMAKE_SOURCE_DIR}/cmake")
-set(THIS_SOURCE_QC_DIR "${CMAKE_SOURCE_DIR}/srcqc")
 
 # Create package versioning target - version derived from git describe except for
 # release tarballs. Version file is treated as always out of date.
@@ -60,32 +110,6 @@ add_custom_target(
     -D CONFIG_FILE=${THIS_BUILDTIME_CONFIG_FILE}
     -P ${THIS_MODULE_DIR}/getBuildTimeConfigInfo.cmake
     COMMENT "Updating buildtime config info")
-
-set (THIS_GLOBALS_CMAKE "${THIS_MODULE_DIR}/globals.cmake")
-set (THIS_MACROS_CMAKE "${THIS_MODULE_DIR}/macros.cmake")
-
-# add custom functions:
-include ("${THIS_MACROS_CMAKE}")
-
-#
-# setup build type
-#
-set(CMAKE_BUILD_TYPES Debug Release RelWithDebInfo ASan)
-join(CMAKE_BUILD_TYPES ", " CMAKE_BUILD_TYPES_STRING)
-
-if (NOT CMAKE_BUILD_TYPE)
-    set(DEFAULT_CMAKE_BUILD_TYPE Release)
-    set(CMAKE_BUILD_TYPE ${DEFAULT_CMAKE_BUILD_TYPE} CACHE STRING
-        "Choose the type of build, options are: {${CMAKE_BUILD_TYPES_STRING}} (default: ${DEFAULT_CMAKE_BUILD_TYPE})" FORCE)
-endif()
-
-# check that a valid build type has been selected:
-list(FIND CMAKE_BUILD_TYPES ${CMAKE_BUILD_TYPE} TINDEX)
-if(TINDEX EQUAL -1)
-    message (FATAL_ERROR "Selected build type, '${CMAKE_BUILD_TYPE}', is not in the set of available types: {${CMAKE_BUILD_TYPES_STRING}}")
-endif()
-
-message (STATUS "BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 #
 # setup cpack
@@ -149,15 +173,17 @@ add_custom_target(${THIS_OPT} ALL)
 # redist includes
 include ("${THIS_MODULE_DIR}/boost.cmake")
 
-# global source QC -- don't allow non-ascii chars in source files:
-set(THIS_SOURCE_CHECK "${THIS_PROJECT_NAME}_source_check")
-add_custom_target(${THIS_SOURCE_CHECK}
-    ALL
-    COMMAND bash ${THIS_SOURCE_QC_DIR}/check_for_nonascii_source.bash
-    )
+if (NOT WIN32)
+    # global source QC -- don't allow non-ascii chars in source files:
+    set(THIS_SOURCE_CHECK "${THIS_PROJECT_NAME}_source_check")
+    add_custom_target(${THIS_SOURCE_CHECK}
+        ALL
+        COMMAND bash ${THIS_SOURCE_QC_DIR}/check_for_nonascii_source.bash
+        )
 
-# force this to run early:
-add_dependencies(${THIS_OPT} ${THIS_SOURCE_CHECK})
+    # force this to run early:
+    add_dependencies(${THIS_OPT} ${THIS_SOURCE_CHECK})
+endif ()
 
 # force unit tests at compile time, and set them to be more verbose than
 # cmake's default "test" target:
@@ -172,6 +198,8 @@ add_subdirectory (opt)
 add_subdirectory (c++)
 add_subdirectory (python)
 add_subdirectory (config)
-add_subdirectory (demo)
-add_subdirectory (markdown)
+if (NOT WIN32)
+    add_subdirectory (demo)
+    add_subdirectory (markdown)
+endif ()
 add_subdirectory (cmake/postInstall)

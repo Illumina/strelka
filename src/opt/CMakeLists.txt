@@ -37,15 +37,29 @@ superset(HTSLIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/${HTSLIB_PREFIX}")
 superset(HTSLIB_LIBRARY "${HTSLIB_DIR}/libhts.a")
 
 add_custom_command(
-    OUTPUT ${HTSLIB_LIBRARY}
+    OUTPUT ${HTSLIB_DIR}
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${HTSLIB_DIR}"
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${HTSLIB_PREFIX}.tar.bz2"
-    COMMAND $(MAKE) -C "${HTSLIB_DIR}" lib-static tabix bgzip 2>| htslib.build.log
-    COMMENT "Building htslib library")
-add_custom_target(STARKA_HTSLIB DEPENDS "${HTSLIB_LIBRARY}")
+    COMMENT "Unpacking htslib library")
 
-install(PROGRAMS "${HTSLIB_DIR}/tabix" DESTINATION "${THIS_LIBEXECDIR}")
-install(PROGRAMS "${HTSLIB_DIR}/bgzip" DESTINATION "${THIS_LIBEXECDIR}")
+set (HTSLIB_FINAL_TASK ${HTSLIB_DIR})
+
+if (NOT WIN32)
+    add_custom_command(
+        OUTPUT ${HTSLIB_LIBRARY}
+        COMMAND $(MAKE) -C "${HTSLIB_DIR}" lib-static tabix bgzip 2>| htslib.build.log
+        DEPENDS ${HTSLIB_DIR}
+        COMMENT "Building htslib library")
+
+    set (HTSLIB_FINAL_TASK ${HTSLIB_LIBRARY})
+endif ()
+
+#add_custom_target(${THIS_PROJECT_NAME}_htslib DEPENDS "${HTSLIB_FINAL_TASK}")
+
+if (NOT WIN32)
+    install(PROGRAMS "${HTSLIB_DIR}/tabix" DESTINATION "${THIS_LIBEXECDIR}")
+    install(PROGRAMS "${HTSLIB_DIR}/bgzip" DESTINATION "${THIS_LIBEXECDIR}")
+endif ()
 
 #
 # samtools
@@ -55,40 +69,58 @@ superset(SAMTOOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${SAMTOOLS_PREFIX}")
 superset(SAMTOOLS_LIBRARY "${SAMTOOLS_DIR}/libbam.a")
 superset(SAMTOOLS_PROG "${SAMTOOLS_DIR}/samtools")
 
+# final directory copy below would ideally be a soft-link, copy is for windows build
 add_custom_command(
-    OUTPUT ${SAMTOOLS_PROG}
+    OUTPUT ${SAMTOOLS_DIR}
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${SAMTOOLS_DIR}"
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${SAMTOOLS_PREFIX}.tar.bz2"
-    COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_BINARY_DIR}" ln -sf "${HTSLIB_PREFIX}" htslib
-    COMMAND ${CMAKE_COMMAND} -E chdir "${SAMTOOLS_DIR}" $(MAKE) all 2>| samtools.build.log
-    DEPENDS "${HTSLIB_LIBRARY}"
-    COMMENT "Building samtools package")
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/htslib"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${HTSLIB_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/htslib"
+    DEPENDS ${HTSLIB_FINAL_TASK}
+    COMMENT "Unpacking samtools package")
+
+set (SAMTOOLS_FINAL_TASK ${SAMTOOLS_DIR})
+
+if (NOT WIN32)
+    add_custom_command(
+        OUTPUT ${SAMTOOLS_PROG}
+        COMMAND ${CMAKE_COMMAND} -E chdir "${SAMTOOLS_DIR}" $(MAKE) all 2>| samtools.build.log
+        DEPENDS ${HTSLIB_LIBRARY}
+        DEPENDS ${SAMTOOLS_DIR}
+        COMMENT "Building samtools package")
+
+    set (SAMTOOLS_FINAL_TASK ${SAMTOOLS_PROG})
+endif ()
 
 set(THIS_SAMTOOLS "${THIS_PROJECT_NAME}_samtools")
-add_custom_target(${THIS_SAMTOOLS} DEPENDS "${SAMTOOLS_PROG}")
+add_custom_target(${THIS_SAMTOOLS} DEPENDS "${SAMTOOLS_FINAL_TASK}")
 
-install(PROGRAMS "${SAMTOOLS_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
+if (NOT WIN32)
+    install(PROGRAMS "${SAMTOOLS_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
+endif ()
 
-#
-# bgzf_extras
-#
-set(BGZFX_PREFIX "bgzf_extras-v0.1")
-superset(BGZFX_DIR "${CMAKE_CURRENT_BINARY_DIR}/${BGZFX_PREFIX}")
-set(BGCAT_PROG "${BGZFX_DIR}/bgzf_cat")
-set(BGZIP9_PROG "${BGZFX_DIR}/bgzip9")
-
-add_custom_command(
-    OUTPUT ${BGCAT_PROG}
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${BGZFX_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${BGZFX_PREFIX}.tar.bz2"
-    COMMAND $(MAKE) -C "${BGZFX_DIR}" all 2>| bgzf_extras.build.log
-    COMMENT "Building bgzf_extras")
-
-set(THIS_BGZFX "${THIS_PROJECT_NAME}_bgzfx")
-add_custom_target(${THIS_BGZFX} DEPENDS "${BGCAT_PROG}")
-
-install(PROGRAMS "${BGCAT_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
-install(PROGRAMS "${BGZIP9_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
+if (NOT WIN32)
+    #
+    # bgzf_extras
+    #
+    set(BGZFX_PREFIX "bgzf_extras-v0.1")
+    superset(BGZFX_DIR "${CMAKE_CURRENT_BINARY_DIR}/${BGZFX_PREFIX}")
+    set(BGCAT_PROG "${BGZFX_DIR}/bgzf_cat")
+    set(BGZIP9_PROG "${BGZFX_DIR}/bgzip9")
+    
+    add_custom_command(
+        OUTPUT ${BGCAT_PROG}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${BGZFX_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${BGZFX_PREFIX}.tar.bz2"
+        COMMAND $(MAKE) -C "${BGZFX_DIR}" all 2>| bgzf_extras.build.log
+        COMMENT "Building bgzf_extras")
+    
+    set(THIS_BGZFX "${THIS_PROJECT_NAME}_bgzfx")
+    add_custom_target(${THIS_BGZFX} DEPENDS "${BGCAT_PROG}")
+    
+    install(PROGRAMS "${BGCAT_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
+    install(PROGRAMS "${BGZIP9_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
+endif ()
 
 #
 # codemin
@@ -115,24 +147,36 @@ set(PYFLOW_PREFIX "pyflow-1.1.3")
 set(PYFLOW_DIR "${CMAKE_CURRENT_BINARY_DIR}/${PYFLOW_PREFIX}")
 set(PYFLOW_SCRIPT "${PYFLOW_DIR}/src/pyflow.py")
 
+set (PYFLOW_DEPENDS "${PYFLOW_SCRIPT}")
 add_custom_command(
     OUTPUT ${PYFLOW_SCRIPT}
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${PYFLOW_DIR}"
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${PYFLOW_PREFIX}.tar.bz2"
     COMMAND ${CMAKE_COMMAND} -E remove -f "${PYFLOW_DIR}/src/__init__.py"
-    COMMAND ${PYTHON_EXECUTABLE} -m compileall -q "${PYFLOW_DIR}/src"
     COMMENT "Extracting pyflow")
+
+if (PYTHONINTERP_FOUND)
+    set (PYFLOW_DEPENDS "${PYFLOW_SCRIPT}c")
+    add_custom_command(
+        OUTPUT ${PYFLOW_SCRIPT}c
+        COMMAND ${PYTHON_EXECUTABLE} -m compileall -q "${PYFLOW_DIR}/src"
+        DEPENDS ${PYFLOW_SCRIPT}
+        COMMENT "Compiling pyflow")
+endif()
 
 install_python_lib_dir("${PYFLOW_DIR}/src" "${THIS_PYTHON_LIBDIR}/pyflow")
 
 set (THIS_PYFLOW "${THIS_PROJECT_NAME}_pyflow")
-add_custom_target(${THIS_PYFLOW} DEPENDS "${PYFLOW_SCRIPT}")
+add_custom_target(${THIS_PYFLOW} DEPENDS "${PYFLOW_DEPENDS}")
 
 
 # tie results back to parent:
 #
-add_dependencies(${THIS_OPT} ${THIS_SAMTOOLS} ${THIS_BGZFX} ${THIS_CODEMIN} ${THIS_PYFLOW})
+add_dependencies(${THIS_OPT} ${THIS_SAMTOOLS} ${THIS_CODEMIN} ${THIS_PYFLOW})
 
+if (NOT WIN32)
+    add_dependencies(${THIS_OPT} ${THIS_BGZFX})
+endif ()
 
 #
 # hoedown
@@ -141,13 +185,14 @@ set(HOEDOWN_PREFIX "hoedown-1.0.2_with_allext")
 set(HOEDOWN_DIR "${CMAKE_CURRENT_BINARY_DIR}/${HOEDOWN_PREFIX}")
 superset(HOEDOWN_PROG "${HOEDOWN_DIR}/hoedown_allext")
 
-add_custom_command(
-    OUTPUT ${HOEDOWN_PROG}
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${HOEDOWN_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${HOEDOWN_PREFIX}.tar.bz2"
-    COMMAND $(MAKE) -C "${HOEDOWN_DIR}"
-    COMMENT "Building hoedown markdown parser")
+if (NOT WIN32)
+    add_custom_command(
+        OUTPUT ${HOEDOWN_PROG}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${HOEDOWN_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${HOEDOWN_PREFIX}.tar.bz2"
+        COMMAND $(MAKE) -C "${HOEDOWN_DIR}"
+        COMMENT "Building hoedown markdown parser")
 
-superset(THIS_MARKDOWN "${THIS_PROJECT_NAME}_markdown")
-add_custom_target(${THIS_MARKDOWN} DEPENDS "${HOEDOWN_PROG}")
-
+    superset(THIS_MARKDOWN "${THIS_PROJECT_NAME}_markdown")
+    add_custom_target(${THIS_MARKDOWN} DEPENDS "${HOEDOWN_PROG}")
+endif ()

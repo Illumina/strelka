@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Manta
+// Copyright (c) 2013-2015 Illumina, Inc.
 //
 // This software is provided under the terms and conditions of the
 // Illumina Open Source Software License 1.
@@ -11,18 +11,13 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-///
-/// \author Chris Saunders
-///
+// special header to 'wrap' third-party libraries with common alt compiler settings
 
-#pragma once
+#ifdef _MSC_VER
 
-#include "blt_util/thirdparty_push.h"
+#include <codeanalysis\warnings.h>
+#pragma warning( push, 0 )
+#pragma warning ( disable : ALL_CODE_ANALYSIS_WARNINGS )
 
-extern "C" {
-#define __STDC_LIMIT_MACROS
-#include "htslib/vcf.h"
-#include "htslib/tbx.h"
-}
+#endif
 
-#include "blt_util/thirdparty_pop.h"

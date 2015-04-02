@@ -1,5 +1,5 @@
 
-C++ genomic coordinate conventions in starka:
+C++ genomic coordinate convention:
 
 All internal position numbers are zero indexed.
 

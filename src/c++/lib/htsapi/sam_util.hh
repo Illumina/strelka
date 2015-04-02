@@ -17,8 +17,10 @@
 
 #pragma once
 
+#include "blt_util/thirdparty_push.h"
 
 extern "C" {
 #include "sam.h"
 }
 
+#include "blt_util/thirdparty_pop.h"

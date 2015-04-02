@@ -10,12 +10,4 @@
 # <https://github.com/sequencing/licenses/>
 #
 
-###############################################################################
-##
-## Configuration file for the c++/blt_util subfolder
-##
-## author Come Raczy
-##
-################################################################################
-
 include(${THIS_CXX_LIBRARY_CMAKE})

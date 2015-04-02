@@ -17,8 +17,11 @@
 
 #include "htsapi/bam_header_util.hh"
 
+#include "blt_util/thirdparty_push.h"
+
 #include "boost/tokenizer.hpp"
 
+#include "blt_util/thirdparty_pop.h"
 
 
 bool
