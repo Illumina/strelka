@@ -40,7 +40,7 @@ current minimum versions enforced by the build system:
 
 * python 2.4+
 
-#### Prerequisite package names (RHEL/Centos)
+#### Prerequisite package names (RHEL/CentOS)
 
 * g++
 * make
