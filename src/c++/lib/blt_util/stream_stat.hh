@@ -20,6 +20,7 @@
 #include <cmath>
 
 #include <iosfwd>
+#include <limits>
 
 
 
@@ -96,8 +97,7 @@ private:
     static
     double nan()
     {
-        double a(0.);    // 'a' supresses compiler warnings
-        return 0./a;
+        return std::numeric_limits<double>::quiet_NaN();
     }
 
     double M_;

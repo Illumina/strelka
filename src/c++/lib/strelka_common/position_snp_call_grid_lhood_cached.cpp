@@ -59,7 +59,7 @@ get_high_low_het_ratio_lhood_cached(
         if (! ret.first)
         {
             const blt_float_t eprob(bc.error_prob());
-            const blt_float_t ceprob(1.-eprob);
+            const blt_float_t ceprob(1-eprob);
             //const blt_float_t lne(bc.ln_error_prob());
             //const blt_float_t lnce(bc.ln_comp_error_prob());
 
@@ -141,7 +141,7 @@ get_diploid_gt_lhood_cached(
         if (! ret.first)
         {
             const blt_float_t eprob(bc.error_prob());
-            const blt_float_t ceprob(1.-eprob);
+            const blt_float_t ceprob(1-eprob);
             const blt_float_t lne(bc.ln_error_prob());
             const blt_float_t lnce(bc.ln_comp_error_prob());
 

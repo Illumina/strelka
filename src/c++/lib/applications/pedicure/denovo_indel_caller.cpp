@@ -170,6 +170,7 @@ getPrior(
         return noiserate;
     default:
         assert(false && "Undefined inheritance state");
+        return 0.;
     }
 }
 

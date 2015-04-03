@@ -28,10 +28,14 @@
 #include "blt_util/qscore.hh"
 #include "blt_util/seq_util.hh"
 
+#include "blt_util/thirdparty_push.h"
+
 #include "boost/lexical_cast.hpp"
 #include "boost/random.hpp"
 #include "boost/random/binomial_distribution.hpp"
 #include "boost/random/variate_generator.hpp"
+
+#include "blt_util/thirdparty_pop.h"
 
 #include <cassert>
 #include <cctype>

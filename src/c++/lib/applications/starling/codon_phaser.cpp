@@ -151,8 +151,8 @@ create_phased_record()
 
     // some ad hoc metrics to measure consistency with diploid model
     const int allele_sum = max_alleles[0].second + max_alleles[1].second;
-    const float max_allele_frac = (1.0*allele_sum)/this->total_reads;
-    const float relative_allele_frac  = 1.0*max_alleles[1].second/max_alleles[0].second;
+    const float max_allele_frac = (static_cast<float>(allele_sum))/this->total_reads;
+    const float relative_allele_frac  = static_cast<float>(max_alleles[1].second)/max_alleles[0].second;
 
 #ifdef DEBUG_CODON
     log_os << "max alleles sum " << allele_sum << "\n";

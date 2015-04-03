@@ -57,7 +57,7 @@ get_dependent_eprob(const unsigned qscore,
 
     const blt_float_t eprob(qphred_to_error_prob(static_cast<int>(qscore)));
     const blt_float_t val(std::pow(eprob,vexp));
-    const blt_float_t frac((1.-val)/(1.-eprob));
+    const blt_float_t frac((1-val)/(1-eprob));
     return std::max(eprob,frac*val+(1-frac)*dep_converge_prob);
 }
 
@@ -122,7 +122,7 @@ adjust_icalls_eprob(const blt_options& opt,
         }
         blt_float_t mismatch_frac(0);
         if (ic_size && (den>0.)) mismatch_frac=(num/den);
-        vexp_frac=(1.-mismatch_frac)*opt.bsnp_ssd_no_mismatch+mismatch_frac*opt.bsnp_ssd_one_mismatch;
+        vexp_frac=(1-mismatch_frac)*opt.bsnp_ssd_no_mismatch+mismatch_frac*opt.bsnp_ssd_one_mismatch;
     }
     else
     {
@@ -152,17 +152,17 @@ adjust_icalls_eprob(const blt_options& opt,
             blt_float_t next_vexp(vexp);
             if (is_use_vexp_frac)
             {
-                next_vexp *= (1.-vexp_frac);
+                next_vexp *= (1-vexp_frac);
             }
             else
             {
                 if (bi.is_neighbor_mismatch)
                 {
-                    next_vexp *= (1.-opt.bsnp_ssd_one_mismatch);
+                    next_vexp *= (1-opt.bsnp_ssd_one_mismatch);
                 }
                 else
                 {
-                    next_vexp *= (1.-opt.bsnp_ssd_no_mismatch);
+                    next_vexp *= (1-opt.bsnp_ssd_no_mismatch);
                 }
             }
             if (is_limit_vexp)

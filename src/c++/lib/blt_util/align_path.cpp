@@ -32,7 +32,6 @@
 #include <sstream>
 
 
-
 static
 void
 unknown_cigar_error(const char* const cigar,

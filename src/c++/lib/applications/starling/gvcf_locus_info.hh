@@ -350,7 +350,7 @@ struct site_info
     init(const pos_t init_pos,
          const char init_ref,
          const snp_pos_info& good_pi,
-         const bool used_allele_count_min_qscore)
+         const int used_allele_count_min_qscore)
     {
         pos=(init_pos);
         ref=(init_ref);

@@ -107,7 +107,7 @@ const char*
 next_word(const char* c,
           const bool is_end=false)
 {
-    while ((*c!='\0') && (is_end ^ static_cast<bool>(isspace(*c))))
+    while ((*c!='\0') && (is_end != (isspace(*c) != 0)))
     {
         c++;
     }

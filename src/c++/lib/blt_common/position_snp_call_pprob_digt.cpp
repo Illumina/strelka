@@ -258,7 +258,7 @@ increment_het_ratio_lhood(const extended_pos_info& epi,
                           const bool is_strand_specific,
                           const bool is_ss_fwd)
 {
-    const blt_float_t chet_ratio(1.-het_ratio);
+    const blt_float_t chet_ratio(1-het_ratio);
 
     // multiply probs of alternate ratios into local likelihoods, then
     // *add* them to the global tally (effictively this is the sum lhood of
@@ -366,7 +366,7 @@ get_diploid_gt_lhood(const blt_options& opt,
         }
 
         const unsigned n_het_subgt(1+2*n_bias_steps);
-        const blt_float_t subgt_log_prior(std::log(1./static_cast<blt_float_t>(n_het_subgt)));
+        const blt_float_t subgt_log_prior(-std::log(static_cast<blt_float_t>(n_het_subgt)));
 
         for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
         {

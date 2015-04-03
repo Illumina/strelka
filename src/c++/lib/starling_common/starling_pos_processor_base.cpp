@@ -331,7 +331,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)
     , _chrom_name(_opt.bam_seq_name)
     , _n_samples(n_samples)
-    , _is_variant_windows(_opt.variant_windows.size())
+    , _is_variant_windows(! _opt.variant_windows.empty())
     , _pileupCleaner(opt)
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));

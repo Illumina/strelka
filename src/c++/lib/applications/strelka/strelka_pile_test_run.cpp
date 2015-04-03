@@ -117,7 +117,7 @@ load_pi(const char ref_base,
     const unsigned len(strlen(read));
     for (unsigned i(0); i<len; ++i)
     {
-        const bool is_fwd(isupper(read[i]));
+        const bool is_fwd(isupper(read[i])!=0);
         const uint8_t base_id(base_to_id(toupper(read[i])));
         assert(qual[i]>=33);
         pi.calls.push_back(base_call(base_id,qual[i]-33,is_fwd,
