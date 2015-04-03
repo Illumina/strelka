@@ -1,3 +1,4 @@
+- STARKA-222 enable partial win32 build/visual studio development
 - WGSW-293, WGSW-297 re-update germline VQSR cutoffs to reduce trio conflicts
 - STARKA-220 improve build system versioning
 - STARKA-217 adjust codon phaser to match read and basecall filtration of

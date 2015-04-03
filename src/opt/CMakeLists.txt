@@ -107,17 +107,17 @@ if (NOT WIN32)
     superset(BGZFX_DIR "${CMAKE_CURRENT_BINARY_DIR}/${BGZFX_PREFIX}")
     set(BGCAT_PROG "${BGZFX_DIR}/bgzf_cat")
     set(BGZIP9_PROG "${BGZFX_DIR}/bgzip9")
-    
+
     add_custom_command(
         OUTPUT ${BGCAT_PROG}
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${BGZFX_DIR}"
         COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${BGZFX_PREFIX}.tar.bz2"
         COMMAND $(MAKE) -C "${BGZFX_DIR}" all 2>| bgzf_extras.build.log
         COMMENT "Building bgzf_extras")
-    
+
     set(THIS_BGZFX "${THIS_PROJECT_NAME}_bgzfx")
     add_custom_target(${THIS_BGZFX} DEPENDS "${BGCAT_PROG}")
-    
+
     install(PROGRAMS "${BGCAT_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
     install(PROGRAMS "${BGZIP9_PROG}" DESTINATION "${THIS_LIBEXECDIR}")
 endif ()
