@@ -12,6 +12,7 @@
 
 class dummy_assembler: public contigAssembler {
 public:
+
 	dummy_assembler(){};
 //	virtual ~dummy_assembler();
 

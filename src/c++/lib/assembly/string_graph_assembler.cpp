@@ -12,7 +12,7 @@
 //
 //}
 
-string_graph_assembler::~string_graph_assembler() {
-	// TODO Auto-generated destructor stub
-}
+//string_graph_assembler::~string_graph_assembler() {
+//	// TODO Auto-generated destructor stub
+//}
 

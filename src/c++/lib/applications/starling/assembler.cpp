@@ -24,11 +24,9 @@
 
 //#define DEBUG_ASSEMBLE
 
-
 #ifdef DEBUG_ASSEMBLE
 #include "blt_util/log.hh"
 #endif
-
 
 // Add a SNP site to the phasing buffer
 
@@ -36,41 +34,25 @@ bool
 assembly_streamer::
 add_site(site_info& si)
 {
-//      return this->_consumer->add_site(si);
-
-        this->_site_buffer.push_back(si);
-
-        //CASE: Start a new potential assembly block
-        block_end = si.pos+1;
-    if (!is_in_block()){
+    this->_site_buffer.push_back(si);
+    
+    if(block_start < 0)
+    {
         block_start = si.pos;
-//        log_os << "New block case - starting @ " << si.pos  << std::endl;
     }
+    else
+    {
+        block_start = std::min(si.pos, block_start);
+    }
+
+    block_end = std::max(si.pos + 1, block_end);
 
     // Update block info
     if (si.dgt.is_snp)
-        var_count ++;
-
-    myPredictor.add_site(si.pos,si.dgt.is_snp);
-
-    // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
-    if (this->keep_collecting())
     {
-      //      log_os << "Started @ " << this->block_start << std::endl;
-      //      log_os << "keep collecting - @ " << si  << std::endl;
-      //      log_os << "var count " << var_count << std::endl;
-      //      this->write_out_buffer();
-        return false;
+        var_count++;
     }
 
-    // We are not collecting further, check if we want to assemble what is in the buffer
-    asmRegion = do_assemble();
-    if (asmRegion != known_pos_range2(-1,-1))
-    {
-        // if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
-        make_record();
-//      log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
-    }
     return true;
 }
 
@@ -81,41 +63,52 @@ add_indel(const indel_info& ii)
 {
     this->_indel_buffer.push_back(ii);
 
-    //CASE: Start a new potential assembly block
-    block_end = ii.pos+ii.ref_length()-1;
-    if (!is_in_block()){
+    if(block_start < 0)
+    {
         block_start = ii.pos;
-//        log_os << "New block case - starting @ " << si.pos  << std::endl;
     }
+    else
+    {
+        block_start = std::min(ii.pos, block_start);
+    }
+
+    //CASE: Start a new potential assembly block
+    block_end = std::max(ii.pos + ii.ref_length() - 1, block_end);
 
     //std::cerr << "adding indel from " << ii.pos << " to " << block_end << " with length = " << ii.ref_length() << "\n";
+    var_count++;
 
-    // Update block info
-    var_count ++;
-
-    myPredictor.add_indel(ii.pos,block_end);
-
-    // CASE: Check if we should be extending the block further based on criteria of what is already in the buffer
-    assert (keep_collecting());
-    return false;
-
-
-    // We are not collecting further, check if we want to assemble what is in the buffer
-    asmRegion = do_assemble();
-    if (asmRegion != known_pos_range2(-1,-1))
-    {
-        // if we decide to assemble, generate contig-space; modify gVCF records and buffer accordingly
-        // std::cout <<"assembling " << asmRegion.begin_pos() << " to " << asmRegion.end_pos() << "\n";
-
-        make_record();
+    make_record();
 //      log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
-    }
+//    }
 //    this->write_out_buffer();
-    this->notify_consumer();
-    this->clear();
-    return true;
+//    this->notify_consumer();
+//    this->clear();
+//    return true;
 }
 
+void
+assembly_streamer::
+flush()
+{
+    // modify gVCF records and buffer accordingly, notify consumer
+    make_record();
+    // log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
+    clear();
+}
+
+void
+assembly_streamer::clear()
+{
+    this->clear_buffer();
+    observations.clear();
+    block_start                 = -1;
+    block_end                   = -1;
+    var_count                   = 0;
+    total_reads                 = 0;
+    total_reads_unused          = 0;
+    reference                   = "";
+}
 
 // makes the phased VCF record from the buffered sites list
 void
@@ -134,11 +127,11 @@ assembly_streamer::construct_reference()
     // TODO: the following will need to be revised to handle indels!
     for (unsigned i=0; i<(_site_buffer.size()); i++)
     {
-        if(_site_buffer.at(i).pos >= asmRegion.end_pos())
+        if(_site_buffer.at(i).pos >= block_end)
         {
             break;
         }
-        if(_site_buffer.at(i).pos >= asmRegion.begin_pos())
+        if(_site_buffer.at(i).pos >= block_start)
         {
             this->reference += _site_buffer.at(i).ref;
         }
@@ -148,17 +141,8 @@ assembly_streamer::construct_reference()
 void
 assembly_streamer::assemble()
 {
-
-  //std::cerr<< "Assembling from " << asmRegion.begin_pos() << " to " << asmRegion.end_pos() <<"\n";
-
-  // THIS IS A STUB ASSEMBLER: IT ASSUMES THAT THE PREDICTOR CAN PROVIDE THE DESIRED ASSEMBLY
-
-  boost::optional<std::vector<std::string> > ctgs(myPredictor.rt.isPayloadInRegion(asmRegion.begin_pos()));
-  if (ctgs){
-    asm_contigs = *ctgs;
-  } else {
-    asm_contigs.clear();
-  }
+    // THIS IS A STUB ASSEMBLER: IT ASSUMES THAT THE PREDICTOR CAN PROVIDE THE DESIRED ASSEMBLY
+    // The contigs have been passed in here already (hopefully) via the contig() function
 }
 
 void
@@ -184,10 +168,10 @@ void
 assembly_streamer::create_contig_records()
 {
     // pick first records in buffer as our anchoring point for the assembled record
-    notify_consumer_up_to(asmRegion.begin_pos());
+    notify_consumer_up_to(block_start);
     site_info base = _site_buffer.at(0);
-    clear_site_buffer_to_pos(asmRegion.end_pos());
-    clear_indel_buffer_to_pos(asmRegion.end_pos());
+    clear_site_buffer_to_pos(block_end);
+    clear_indel_buffer_to_pos(block_end);
     //assert("site buffer not empty" && _site_buffer.size() > 0);
 
 
@@ -232,17 +216,21 @@ assembly_streamer::create_contig_records()
 
     //set any filters
     base.smod.filters.reset();
-    base.smod.assemblyReason = this->myPredictor.assemblyReason;
 
     // specify that we are covering multiple records, and make the needed modification in the output
     base.smod.is_phased_region = true;
     base.smod.is_assembled_contig = true;
 
+    // set more vcf record fields
+//    int reads_ignored   = 10;
+//    base.n_used_calls   = 15;
+//    base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
+
     // Add in assembled record(s)
-
-
     _site_buffer.push_front(base);
-    this->notify_consumer_up_to(asmRegion.end_pos());
+
+    // write remaining site_infos
+    this->notify_consumer_up_to();
     //    _site_buffer.pop_front();
 }
 
@@ -304,17 +292,9 @@ assembly_streamer::
 collect_read_evidence()
 {
         // TODO hook in for assembler contigs
-        this->observations[this->reference] = 10;
-        std::string altAllele(this->reference.length(), 'N');
-        this->observations[altAllele] = 15;
-}
-
-bool
-assembly_streamer::
-keep_collecting()
-{
-        //extend with more data structures to determine is assembly criteriea is met
-        return this->myPredictor.keep_extending();
+    this->observations[this->reference] = 10;
+    std::string altAllele(this->reference.length(), 'N');
+    this->observations[altAllele] = 15;
 }
 
 known_pos_range2
@@ -340,8 +320,6 @@ assembly_streamer::clear()
     reference                   = "";
     asmRegion = known_pos_range2(-1,-1);
 }
-
-
 
 void
 assembly_streamer::write_out_buffer() const

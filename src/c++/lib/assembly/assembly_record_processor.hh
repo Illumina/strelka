@@ -1,14 +1,30 @@
-/*
- * assembly_record_processor.hh
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
+
+/**
+ * \brief Turn assembly records into atomic calls
  *
- *  Created on: Mar 11, 2015
- *      Author: mkallberg
+ * \file assembly_record_processor.hh
+ * \author Morten Kallberg
+ * \email mkallberg@illumina.com
+ *
  */
+
 
 #ifndef C___LIB_ASSEMBLY_ASSEMBLY_RECORD_PROCESSOR_HH_
 #define C___LIB_ASSEMBLY_ASSEMBLY_RECORD_PROCESSOR_HH_
 
-#include <site_info_stream.hh>
+#include "applications/starling/site_info_stream.hh"
 
 class assembly_record_processor: public site_info_stream {
 public:

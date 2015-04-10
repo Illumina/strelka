@@ -23,8 +23,6 @@
 
 #include <iostream>
 
-
-
 hts_streamer::
 hts_streamer(
     const char* filename,

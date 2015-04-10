@@ -7,8 +7,4 @@
 
 #include <assembly/assembly_record_processor.hh>
 
-assembly_record_processor::assembly_record_processor() {
-	// TODO Auto-generated constructor stub
-
-}
 

@@ -7,12 +7,12 @@
 
 #include <assembly/bed_assembler.hh>
 
-bed_assembler::bed_assembler() {
-	// TODO Auto-generated constructor stub
-
-}
-
-bed_assembler::~bed_assembler() {
-	// TODO Auto-generated destructor stub
-}
+//bed_assembler::bed_assembler() {
+//	// TODO Auto-generated constructor stub
+//
+//}
+//
+//bed_assembler::~bed_assembler() {
+//	// TODO Auto-generated destructor stub
+//}
 

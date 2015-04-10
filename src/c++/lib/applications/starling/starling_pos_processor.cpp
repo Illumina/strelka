@@ -18,6 +18,8 @@
 #include "blt_common/ref_context.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 
+#include "assembly/predictor.hh"
+
 #include <iomanip>
 
 
@@ -85,26 +87,59 @@ starling_pos_processor(
                                                   _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(0),
                                                   sample(0).read_buff,get_largest_read_size());
 
-        if(_opt.do_assemble){
+        if(_opt.do_assemble)
+        {
+            //Initialize site_info_streamers
+            predictor_stream_splitter * pagg = new predictor_stream_splitter();
+            std::shared_ptr<site_info_stream> s_pagg;
+            s_pagg.reset(pagg);
 
-                //Initialize site_info_streamers
-                assembly_streamer *myAssembler = new assembly_streamer(_opt, _dopt, sample(0).read_buff, get_largest_read_size(),_nocompress_regions);
-                assembly_record_processor *myRecordProcessor = new assembly_record_processor();
+            assembly_streamer *myAssembler = new assembly_streamer(_opt, _dopt, sample(0).read_buff, get_largest_read_size(),_nocompress_regions);
+            assembly_record_processor *myRecordProcessor = new assembly_record_processor();
 
-                // register more components of the assembly pipeline here as needed
-                // assembler -> recordProcessor -> gVCFAggregator
-                myAssembler->register_consumer(myRecordProcessor);
-                myRecordProcessor->register_consumer(myAggregator);
+            // register more components of the assembly pipeline here as needed
+            // 
+            //    predictor   ---->  assembler -> recordProcessor -> gVCFAggregator
+            //        \                                               ^
+            //         \                                             /
+            //          *-------------------------------------------*
+            //
+            myAssembler->register_consumer(std::shared_ptr<site_info_stream>(myRecordProcessor));
+            myRecordProcessor->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
 
-                        _gvcfer.reset(myAssembler);
+            uint64_t p = 0;
 
+            if (opt.assembly_regions_filename.size())
+            {
+                p |= pagg->add_predictor(
+                    make_predictor(
+                        PredictorType::bedfile, 
+                        opt,
+                        dopt
+                    )
+                );
+            }
+            p |= pagg->add_predictor(
+                make_predictor(
+                    PredictorType::density, 
+                    opt, 
+                    dopt
+                )
+            );
+            pagg->add_consumer(std::shared_ptr<site_info_stream>(myAssembler), p);
+            // default consumer
+            pagg->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
+
+            _gvcfer = std::shared_ptr<site_info_stream>(pagg);
         }
-        else if(_opt.do_codon_phasing){
-                //TODO register aggregator with the codon phasing code here
-                _gvcfer.reset(myAggregator);
-        }
-        else{
-                        _gvcfer.reset(myAggregator);
+        // else if(_opt.do_codon_phasing)
+        // {
+        //     // TODO register aggregator with the codon phasing code here
+        //     _gvcfer = std::shared_ptr<site_info_stream>(myAggregator);
+        // }
+        else
+        {
+            _gvcfer = std::shared_ptr<site_info_stream>(myAggregator);
         }
     }
 

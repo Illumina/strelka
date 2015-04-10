@@ -101,6 +101,9 @@ private:
 template <typename T>
 struct RegionPayloadTracker
 {
+    boost::optional<known_pos_range2>
+    isInRegion(const unsigned pos) const;
+
     boost::optional<T>
     isPayloadInRegion(const unsigned pos) const;
 
