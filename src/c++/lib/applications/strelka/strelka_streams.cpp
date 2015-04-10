@@ -22,6 +22,7 @@
 #include "blt_util/io_util.hh"
 #include "htsapi/vcf_util.hh"
 #include "htsapi/bam_dumper.hh"
+#include "calibration/scoringmodels.hh"
 
 #include <cassert>
 
@@ -54,6 +55,7 @@ write_shared_vcf_header_info(
         std::ostringstream oss;
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth in the normal sample";
         //oss << "Greater than " << opt.max_depth_factor << "x chromosomal mean depth in Normal sample
+
         write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
 
         const StreamScoper ss(os);
@@ -79,7 +81,8 @@ strelka_streams(
     const StrelkaSampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
-    {
+
+	{
         using namespace STRELKA_SAMPLE_TYPE;
         if (opt.is_realigned_read_file)
         {
@@ -144,21 +147,25 @@ strelka_streams(
             // FILTERS:
             {
                 using namespace STRELKA_VCF_FILTERS;
+                if(!scoring_models::Instance().calibration_init)
                 {
                     std::ostringstream oss;
                     oss << "Fraction of basecalls filtered at this site in either sample is at or above " << opt.sfilter.snv_max_filtered_basecall_frac;
                     write_vcf_filter(fos, get_label(BCNoise), oss.str().c_str());
                 }
+                if(!scoring_models::Instance().calibration_init)
                 {
                     std::ostringstream oss;
                     oss << "Fraction of reads crossing site with spanning deletions in either sample exceeds " << opt.sfilter.snv_max_spanning_deletion_frac;
                     write_vcf_filter(fos, get_label(SpanDel), oss.str().c_str());
                 }
+                if(!scoring_models::Instance().calibration_init)
                 {
                     std::ostringstream oss;
                     oss << "Normal sample is not homozygous ref or ssnv Q-score < " << opt.sfilter.snv_min_qss_ref << ", ie calls with NT!=ref or QSS_NT < " << opt.sfilter.snv_min_qss_ref;
                     write_vcf_filter(fos, get_label(QSS_ref), oss.str().c_str());
                 }
+                if(scoring_models::Instance().calibration_init)
                 {
                     std::ostringstream oss;
                     oss << "The empirically fitted VQSR score is less than " << opt.sfilter.minimumQscore;
