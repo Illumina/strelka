@@ -1,3 +1,4 @@
+- STARKA-221 remove non-vqsr depth filter labels in strelka somatic snv vcf
 v2.3.6
 - STARKA-222 enable partial win32 build/visual studio development
 - WGSW-293, WGSW-297 re-update germline VQSR cutoffs to reduce trio conflicts

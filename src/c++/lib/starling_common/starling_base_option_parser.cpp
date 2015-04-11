@@ -168,8 +168,8 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("calibration-model-file", po::value(&opt.calibration_models_filename),
      "File containing calibration model parameters")
 
-    ("indel-scoring-models", po::value(&opt.indel_scoring_models),
-     "DEBUG: Adaptive model option.")
+    ("somatic-scoring-models", po::value(&opt.somatic_scoring_models_filename),
+     "Model file for somatic VQSR")
 
     ("scoring-model", po::value(&opt.calibration_model),
      "The calibration model for quality filtering variants")
@@ -445,10 +445,9 @@ finalize_starling_base_options(
         last_fs=fs;
     }
 
-    if (opt.indel_scoring_models.length()>2)
+    if (! opt.somatic_scoring_models_filename.empty())
     {
-//        log_os << "I got a model";
-        scoring_models::Instance().load_models(opt.indel_scoring_models);
+        scoring_models::Instance().load_models(opt.somatic_scoring_models_filename);
     }
 
     /// tier2 options are not parsed by starling_base, but need to live up here for now,

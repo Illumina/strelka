@@ -178,6 +178,12 @@ struct blt_options
 
     bool is_compute_somatic_VQSRmetrics = false;
 
+    bool
+    isUseSomaticVQSR() const
+    {
+        return (! somatic_scoring_models_filename.empty());
+    }
+
     // Which calibration model should we use?
     // leave blank to select default rule-based metric option
     std::string calibration_model;
@@ -193,7 +199,9 @@ struct blt_options
 
     std::string report_filename;
     std::string calibration_models_filename;
-    std::string indel_scoring_models;   // file containg all indel scoring models
+
+    // all somatic VQSR models (and indel error models)
+    std::string somatic_scoring_models_filename;
     std::string indel_error_model;      // which baseline prior should be used for candidate indel genotyping
 };
 

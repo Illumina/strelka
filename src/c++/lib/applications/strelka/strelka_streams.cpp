@@ -22,7 +22,6 @@
 #include "blt_util/io_util.hh"
 #include "htsapi/vcf_util.hh"
 #include "htsapi/bam_dumper.hh"
-#include "calibration/scoringmodels.hh"
 
 #include <cassert>
 
@@ -46,17 +45,21 @@ void
 write_shared_vcf_header_info(
     const somatic_filter_options& opt,
     const somatic_filter_deriv_options& dopt,
+    const bool isPrintRuleFilters,
     std::ostream& os)
 {
     if (dopt.is_max_depth())
     {
         using namespace STRELKA_VCF_FILTERS;
 
-        std::ostringstream oss;
-        oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth in the normal sample";
-        //oss << "Greater than " << opt.max_depth_factor << "x chromosomal mean depth in Normal sample
+        if (isPrintRuleFilters)
+        {
+            std::ostringstream oss;
+            oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth in the normal sample";
+            //oss << "Greater than " << opt.max_depth_factor << "x chromosomal mean depth in Normal sample
 
-        write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
+            write_vcf_filter(os,get_label(HighDepth),oss.str().c_str());
+        }
 
         const StreamScoper ss(os);
         os << std::fixed << std::setprecision(2);
@@ -64,8 +67,8 @@ write_shared_vcf_header_info(
         for (const auto& val : dopt.chrom_depth)
         {
             const std::string& chrom(val.first);
-            const double max_depth(opt.max_depth_factor*val.second);
-            os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
+            const double meanDepth(val.second);
+            os << "##MeanDepth_" << chrom << '=' << meanDepth << "\n";
         }
     }
 }
@@ -145,35 +148,38 @@ strelka_streams(
             fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
 
             // FILTERS:
+            const bool isUseVQSR(opt.isUseSomaticVQSR());
             {
                 using namespace STRELKA_VCF_FILTERS;
-                if(!scoring_models::Instance().calibration_init)
+                if (isUseVQSR)
                 {
-                    std::ostringstream oss;
-                    oss << "Fraction of basecalls filtered at this site in either sample is at or above " << opt.sfilter.snv_max_filtered_basecall_frac;
-                    write_vcf_filter(fos, get_label(BCNoise), oss.str().c_str());
+                    {
+                        std::ostringstream oss;
+                        oss << "The empirically fitted VQSR score is less than " << opt.sfilter.minimumQscore;
+                        write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
+                    }
                 }
-                if(!scoring_models::Instance().calibration_init)
+                else
                 {
-                    std::ostringstream oss;
-                    oss << "Fraction of reads crossing site with spanning deletions in either sample exceeds " << opt.sfilter.snv_max_spanning_deletion_frac;
-                    write_vcf_filter(fos, get_label(SpanDel), oss.str().c_str());
-                }
-                if(!scoring_models::Instance().calibration_init)
-                {
-                    std::ostringstream oss;
-                    oss << "Normal sample is not homozygous ref or ssnv Q-score < " << opt.sfilter.snv_min_qss_ref << ", ie calls with NT!=ref or QSS_NT < " << opt.sfilter.snv_min_qss_ref;
-                    write_vcf_filter(fos, get_label(QSS_ref), oss.str().c_str());
-                }
-                if(scoring_models::Instance().calibration_init)
-                {
-                    std::ostringstream oss;
-                    oss << "The empirically fitted VQSR score is less than " << opt.sfilter.minimumQscore;
-                    write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
+                    {
+                        std::ostringstream oss;
+                        oss << "Fraction of basecalls filtered at this site in either sample is at or above " << opt.sfilter.snv_max_filtered_basecall_frac;
+                        write_vcf_filter(fos, get_label(BCNoise), oss.str().c_str());
+                    }
+                    {
+                        std::ostringstream oss;
+                        oss << "Fraction of reads crossing site with spanning deletions in either sample exceeds " << opt.sfilter.snv_max_spanning_deletion_frac;
+                        write_vcf_filter(fos, get_label(SpanDel), oss.str().c_str());
+                    }
+                    {
+                        std::ostringstream oss;
+                        oss << "Normal sample is not homozygous ref or ssnv Q-score < " << opt.sfilter.snv_min_qss_ref << ", ie calls with NT!=ref or QSS_NT < " << opt.sfilter.snv_min_qss_ref;
+                        write_vcf_filter(fos, get_label(QSS_ref), oss.str().c_str());
+                    }
                 }
             }
 
-            write_shared_vcf_header_info(opt.sfilter,dopt.sfilter,fos);
+            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseVQSR), fos);
 
             fos << vcf_col_label() << "\tFORMAT";
             for (unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s)
@@ -251,7 +257,9 @@ strelka_streams(
                     write_vcf_filter(fos, get_label(QSI_ref), oss.str().c_str());
                 }
             }
-            write_shared_vcf_header_info(opt.sfilter,dopt.sfilter,fos);
+
+            static const bool isPrintRuleFilters(true);
+            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, isPrintRuleFilters,fos);
 
             fos << vcf_col_label() << "\tFORMAT";
             for (unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s)

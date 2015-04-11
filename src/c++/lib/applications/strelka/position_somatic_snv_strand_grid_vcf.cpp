@@ -319,11 +319,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
         // calculations are still needed for VCF reporting
         calc_VQSR_features(opt,dopt,sgt,smod,n1_epd,t1_epd,n2_epd,t2_epd,rs);
 
-        const scoring_models& models(scoring_models::Instance());
-
         // case we are doing VQSR, clear filters and apply single LowQscore filter
-        if (models.calibration_init)  // write out somatic VQSR metrics
+        if (opt.isUseSomaticVQSR())  // write out somatic VQSR metrics
         {
+            const scoring_models& models(scoring_models::Instance());
+            assert(models.calibration_init);
             smod.isQscore = true;
             smod.Qscore = models.score_instance(smod.get_features());
             smod.filters.reset();
