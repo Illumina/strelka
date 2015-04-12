@@ -218,7 +218,7 @@ if (${GNU_COMPAT_COMPILER})
     endif ()
 elseif (MSVC)
     set (CXX_WARN_FLAGS "/W3 /wd4305 /wd4244")
-	add_definitions(/D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 endif ()
 
 if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
