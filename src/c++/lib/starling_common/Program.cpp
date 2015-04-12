@@ -63,15 +63,7 @@ const char*
 Program::
 version() const
 {
-    static const std::string versionStr(
-        starka::getVersion() +
-        std::string(" ") +
-        starka::buildTime() +
-        std::string(" ") +
-        starka::cxxCompilerName() +
-        std::string("-") +
-        starka::compilerVersion());
-    return versionStr.c_str();
+    return getVersion();
 }
 
 int

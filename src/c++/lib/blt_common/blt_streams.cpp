@@ -90,7 +90,6 @@ write_vcf_audit(const blt_options& opt,
                 const bam_header_t* const header,
                 std::ostream& os)
 {
-
     const time_t t(time(NULL));
 
     os << "##fileformat=VCFv4.1\n";

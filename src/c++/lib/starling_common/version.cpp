@@ -11,18 +11,34 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-/// \brief provide access to cmake project version numbers
+#include "version.hh"
 
-#pragma once
+#include "common/config.h"
 
-const char*
-getVersion();
 
 const char*
-buildTime();
+getVersion()
+{
+    return WORKFLOW_VERSION;
+}
 
+inline
 const char*
-cxxCompilerName();
+buildTime()
+{
+    return BUILD_TIME;
+}
 
+inline
 const char*
-compilerVersion();
+cxxCompilerName()
+{
+    return CXX_COMPILER_NAME;
+}
+
+inline
+const char*
+compilerVersion()
+{
+    return COMPILER_VERSION;
+}
