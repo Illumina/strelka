@@ -1,3 +1,5 @@
+v2.3.7
+- Fix VCF version labels
 - STARKA-221 remove non-vqsr depth filter labels in strelka somatic snv vcf
 v2.3.6
 - STARKA-222 enable partial win32 build/visual studio development
