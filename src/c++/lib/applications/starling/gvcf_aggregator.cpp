@@ -111,8 +111,6 @@ gvcf_aggregator(
     , _chrom(opt.bam_seq_name.c_str())
     , _dopt(dopt.gvcf)
     , _indel_end_pos(0)
-    , _indel_buffer_size(0)
-    , _site_buffer_size(0)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
     , _CM(_opt, dopt.gvcf)
@@ -195,7 +193,7 @@ skip_to_pos(const pos_t target_pos)
         add_site_internal(si);
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
-        if (0 != _indel_buffer_size) continue;
+        if (0 != _indel_buffer.size()) continue;
 
         if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
         {
@@ -238,7 +236,7 @@ add_site_internal(
     }
 
     // resolve any current or previous indels before queuing site:
-    if (0 != _indel_buffer_size)
+    if (0 != _indel_buffer.size())
     {
         if (si.pos>=_indel_end_pos)
         {
@@ -246,11 +244,7 @@ add_site_internal(
         }
         else
         {
-            while (_site_buffer.size() <= _site_buffer_size)
-            {
-                _site_buffer.emplace_back();
-            }
-            _site_buffer[_site_buffer_size++] = si;
+            _site_buffer.push_back(si);
             return;
         }
     }
@@ -297,22 +291,19 @@ add_indel(const pos_t pos,
     // either we don't overlap it or we get homRef for the forced-genotyped indel,
     // in which case we need to clear it first -- note this definition
     // of overlap deliberately picks up adjacent deletions:
-    if ((0 != _indel_buffer_size) && ((pos>_indel_end_pos) || is_no_indel(dindel)))
+    if ((0 != _indel_buffer.size()) && ((pos>_indel_end_pos) || is_no_indel(dindel)))
     {
         process_overlaps();
     }
 
-    while (_indel_buffer.size() <= _indel_buffer_size)
-    {
-        _indel_buffer.emplace_back();
-    }
-    _indel_buffer[_indel_buffer_size++].init(pos,ik,dindel,iri,isri);
+    _indel_buffer.emplace_back();
+    _indel_buffer.back().init(pos,ik,dindel,iri,isri);
     _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
 
     // add filter for all indels in no-ploid regions:
     if (dindel.is_noploid())
     {
-        indel_info& ii(_indel_buffer[_indel_buffer_size-1]);
+        indel_info& ii(_indel_buffer.back());
         ii.imod.set_filter(VCF_FILTERS::PloidyConflict);
     }
 
@@ -327,10 +318,9 @@ add_indel(const pos_t pos,
 
 static
 bool
-is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer,
-                        const unsigned size)
+is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer)
 {
-    return (size==2 &&
+    return (indel_buffer.size()==2 &&
             is_het_indel(indel_buffer[0].dindel) &&
             is_het_indel(indel_buffer[1].dindel));
 }
@@ -674,7 +664,7 @@ void
 gvcf_aggregator::
 modify_single_indel_record()
 {
-    assert(_indel_buffer_size==1);
+    assert(_indel_buffer.size()==1);
 
     indel_info& ii(_indel_buffer[0]);
     get_hap_cigar(ii.imod.cigar,ii.ik);
@@ -770,7 +760,7 @@ gvcf_aggregator::
 modify_overlap_indel_record()
 {
     // can only handle simple 2-indel overlaps right now:
-    assert(_indel_buffer_size==2);
+    assert(_indel_buffer.size()==2);
 
     // accumutate all modification info in the *first* indel record:
     indel_info& ii(_indel_buffer[0]);
@@ -839,11 +829,11 @@ void
 gvcf_aggregator::
 modify_conflict_indel_record()
 {
-    assert(_indel_buffer_size>1);
+    assert(_indel_buffer.size()>1);
 
-    for (unsigned i(0); i<_indel_buffer_size; ++i)
+    for (auto it = _indel_buffer.begin(); it != _indel_buffer.end(); ++it)
     {
-        indel_info& ii(_indel_buffer[i]);
+        indel_info& ii(*it);
         get_hap_cigar(ii.imod.cigar,ii.ik);
 
         ii.imod.set_filter(VCF_FILTERS::IndelConflict);
@@ -858,7 +848,7 @@ void
 gvcf_aggregator::
 write_indel_record(const unsigned write_index)
 {
-    assert(_indel_buffer_size>0);
+    assert(_indel_buffer.size()>0);
 
     // flush any non-variant block before starting:
     write_block_site_record();
@@ -995,19 +985,19 @@ void
 gvcf_aggregator::
 process_overlaps()
 {
-    if (0==_indel_buffer_size) return;
+    if (0==_indel_buffer.size()) return;
 
     bool is_conflict_print(false);
 
     // do the overlap processing:
-    if (_indel_buffer_size==1)
+    if (_indel_buffer.size()==1)
     {
         // simple case of no overlap:
         modify_single_indel_record();
     }
     else
     {
-        if (is_simple_indel_overlap(_indel_buffer,_indel_buffer_size))
+        if (is_simple_indel_overlap(_indel_buffer))
         {
             // handle the simplest possible overlap case (two hets):
             modify_overlap_indel_record();
@@ -1020,25 +1010,25 @@ process_overlaps()
         }
     }
 
-    //    *_osptr << "INDEL_SIZE: " << _indel_buffer_size << "\n";
+    //    *_osptr << "INDEL_SIZE: " << _indel_buffer.size() << "\n";
 
     // process sites to be consistent with overlapping indels:
-    for (unsigned i(0); i<_site_buffer_size; ++i)
+    for (auto it = _site_buffer.begin(); it != _site_buffer.end(); ++it)
     {
 #ifdef DEBUG_GVCF
-        log_os << "CHIRP: indel overlapping site: " << _site_buffer[i].pos << "\n";
+        log_os << "CHIRP: indel overlapping site: " << it->pos << "\n";
 #endif
-        const pos_t offset(_site_buffer[i].pos-_indel_buffer[0].pos);
+        const pos_t offset(it->pos-_indel_buffer[0].pos);
         assert(offset>=0);
         if (! is_conflict_print)
         {
             modify_indel_overlap_site( _indel_buffer[0],
                                        _indel_buffer[0].get_ploidy(offset),
-                                       _site_buffer[i], _CM);
+                                       *it, _CM);
         }
         else
         {
-            modify_indel_conflict_site(_site_buffer[i]);
+            modify_indel_conflict_site(*it);
         }
     }
 
@@ -1047,8 +1037,8 @@ process_overlaps()
 
     while (true)
     {
-        const bool is_indel(indel_index<_indel_buffer_size);
-        const bool is_site(site_index<_site_buffer_size);
+        const bool is_indel(indel_index<_indel_buffer.size());
+        const bool is_site(site_index<_site_buffer.size());
         if (! (is_indel || is_site)) break;
 
         if (is_indel && ((! is_site) || _indel_buffer[indel_index].pos <= _site_buffer[site_index].pos))
@@ -1061,7 +1051,7 @@ process_overlaps()
             }
             else
             {
-                indel_index=_indel_buffer_size;
+                indel_index=_indel_buffer.size();
             }
         }
         else
@@ -1072,6 +1062,6 @@ process_overlaps()
             site_index++;
         }
     }
-    _indel_buffer_size = 0;
-    _site_buffer_size = 0;
+    _indel_buffer.clear();
+    _site_buffer.clear();
 }

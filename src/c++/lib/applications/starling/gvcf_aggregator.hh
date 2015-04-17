@@ -101,9 +101,7 @@ private:
     const char* _chrom;
     const gvcf_deriv_options _dopt;
     pos_t _indel_end_pos;
-    unsigned _indel_buffer_size;
     std::vector<indel_info> _indel_buffer;
-    unsigned _site_buffer_size;
     std::vector<site_info> _site_buffer;
     gvcf_block_site_record _block;
     pos_t _head_pos;
