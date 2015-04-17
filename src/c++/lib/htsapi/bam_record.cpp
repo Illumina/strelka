@@ -43,16 +43,23 @@ operator<<(std::ostream& os, const bam_record& br)
         /// print SAtag if present:
         static const char satag[] = {'S','A'};
         const char* saStr(br.get_string_tag(satag));
-        if (NULL != saStr)
+        if (nullptr != saStr)
         {
             os  << " sa: " << saStr;
+        }
+        if (br.is_secondary())
+        {
+            os << " issec";
+        }
+        if (br.is_supplement())
+        {
+            os << " issupp";
         }
 
         if (br.is_paired())
         {
             os  << " mate_tid:pos:strand " << br.mate_target_id() << ":" << (br.mate_pos()-1) << ":" << (br.is_mate_fwd_strand() ? '+' : '-');
         }
-
     }
     return os;
 }
