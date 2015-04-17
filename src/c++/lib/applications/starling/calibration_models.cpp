@@ -91,8 +91,10 @@ clasify_indel(
     imod.max_gt=ii.dindel.max_gt_poly;
     imod.gq=ii.dindel.max_gt_poly_qphred;
 
-
-    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && (!is_default_model))
+    
+    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && 
+		(!is_default_model) && 
+		(ii.dindel.max_gt != STAR_DIINDEL::NOINDEL) ) // VQSR does not handle homref sites properly
     {
         get_model(model_name).score_indel_instance(ii, imod);
     }
