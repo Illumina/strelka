@@ -74,11 +74,17 @@ clasify_site(
     }
 }
 
+bool 
+calibration_models::can_use_model(const indel_info& ii) const
+{
+    return ((ii.iri.it == INDEL::INSERT || ii.iri.it == INDEL::DELETE) &&
+		(!is_default_model) && 
+		(ii.dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // VQSR does not handle homref sites properly
+}
+
 void
 calibration_models::
-clasify_indel(
-    const indel_info& ii,
-    indel_modifiers& imod) const
+set_indel_modifiers(const indel_info& ii, indel_modifiers& imod) const
 {
     if ((ii.dindel.max_gt != ii.dindel.max_gt_poly) || ii.dindel.is_zero_coverage)
     {
@@ -90,11 +96,18 @@ clasify_indel(
     }
     imod.max_gt=ii.dindel.max_gt_poly;
     imod.gq=ii.dindel.max_gt_poly_qphred;
+}
 
+
+void
+calibration_models::
+clasify_indel(
+    const indel_info& ii,
+    indel_modifiers& imod) const
+{
+    set_indel_modifiers(ii, imod);
     
-    if ( (ii.iri.it==INDEL::INSERT || ii.iri.it==INDEL::DELETE) && 
-		(!is_default_model) && 
-		(ii.dindel.max_gt != STAR_DIINDEL::NOINDEL) ) // VQSR does not handle homref sites properly
+    if ( can_use_model(ii) )
     {
         get_model(model_name).score_indel_instance(ii, imod);
     }
@@ -103,6 +116,33 @@ clasify_indel(
         default_clasify_indel(ii, imod);
     }
 }
+
+void
+calibration_models::
+clasify_indels(
+        std::vector<indel_info>& indels) const
+{
+    bool use_model = true;
+    for (auto it = indels.begin(); it != indels.end() && use_model; ++it)
+    {
+        use_model = can_use_model(*it);
+    }
+    for (auto it = indels.begin(); it != indels.end(); ++it)
+    {
+        indel_info& ii(*it);
+        
+        set_indel_modifiers(ii, ii.imod);
+        if ( use_model )
+        {
+            get_model(model_name).score_indel_instance(ii, ii.imod);
+        }
+        else
+        {
+            default_clasify_indel(ii, ii.imod);
+        }
+    }
+}
+
 
 
 

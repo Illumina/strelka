@@ -766,6 +766,7 @@ modify_overlap_indel_record()
     indel_info& ii(_indel_buffer[0]);
 
     ii.imod.is_overlap=true;
+    ii.imod.filters.reset();
 
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
@@ -779,24 +780,10 @@ modify_overlap_indel_record()
 
     ii.imod.ploidy.resize(_indel_end_pos-ii.pos,0);
 
-    // add per-haplotype information:
+    // add per-haplotype information required for the scoring to work correctly (specifically, the hap cigar)
     for (unsigned hap(0); hap<2; ++hap)
     {
-        //reduce qual and gt to the lowest of the set:
-        if (hap)
-        {
-            if (ii.dindel.indel_qphred>_indel_buffer[hap].dindel.indel_qphred)
-            {
-                ii.dindel.indel_qphred = _indel_buffer[hap].dindel.indel_qphred;
-            }
-            if (ii.dindel.max_gt_qphred>_indel_buffer[hap].dindel.max_gt_qphred)
-            {
-                ii.dindel.max_gt_qphred = _indel_buffer[hap].dindel.max_gt_qphred;
-            }
-
-            _indel_buffer[hap].imod.is_overlap=true;
-
-        }
+        _indel_buffer[hap].imod.is_overlap=true;
 
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         _ref.get_substring(indel_begin_pos,(_indel_buffer[hap].pos-indel_begin_pos)-1,leading_seq);
@@ -813,13 +800,18 @@ modify_overlap_indel_record()
 
         // add to the ploidy object:
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
-        _CM.clasify_indel(_indel_buffer[hap], _indel_buffer[hap].imod);
-
-        if (hap>0)
-        {
-            ii.imod.filters |= _indel_buffer[hap].imod.filters;
-        }
     }
+
+    _CM.clasify_indels(_indel_buffer);
+    
+    
+    //reduce qual and gt to the lowest of the set:
+    ii.dindel.indel_qphred = std::min(ii.dindel.indel_qphred, _indel_buffer[1].dindel.indel_qphred);
+    ii.dindel.max_gt_qphred = std::min(ii.dindel.max_gt_qphred, _indel_buffer[1].dindel.max_gt_qphred);
+
+           
+    // combine filter flags
+    ii.imod.filters |= _indel_buffer[1].imod.filters;
 }
 
 

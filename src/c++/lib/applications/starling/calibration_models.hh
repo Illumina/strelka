@@ -47,6 +47,11 @@ public:
         const indel_info& ii,
         indel_modifiers& imod) const;
 
+    void
+    clasify_indels(
+        std::vector<indel_info>& indels) const;
+
+
     bool is_current_logistic() const;
 
     int
@@ -60,6 +65,9 @@ public:
 private:
     c_model& get_model(const std::string& name);
     const c_model& get_model(const std::string& name) const;
+
+    bool can_use_model(const indel_info& ii) const;
+    void set_indel_modifiers(const indel_info& ii, indel_modifiers& imod) const;
 
     // set options
     void set_model(const std::string& name);  // set the calibration model to use
