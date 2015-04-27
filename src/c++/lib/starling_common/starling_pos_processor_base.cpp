@@ -1426,8 +1426,16 @@ pileup_read_segment(const read_segment& rseg,
         {
             for (unsigned j(0); j<ps.length; ++j)
             {
+                const unsigned read_pos(read_head_pos+j);
+                if ((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
+                const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
+                // skip position outside of report range:
+                if (! is_pos_reportable(ref_pos)) continue;
+
+
                 bool isFirstBaseCallFromMatchSeg(false);
-                if (j==0)
+                const bool isFirstFromMatchSeg((j==0) || (read_pos==read_begin) || (! is_pos_reportable(ref_pos-1)));
+                if (isFirstFromMatchSeg)
                 {
                     if (i==0)
                     {
@@ -1442,7 +1450,8 @@ pileup_read_segment(const read_segment& rseg,
                 }
 
                 bool isLastBaseCallFromMatchSeg(false);
-                if ((j+1) == ps.length)
+                const bool isLastFromMatchSeg(((j+1) == ps.length) || ((read_pos+1) == read_end) || (! is_pos_reportable(ref_pos+1)));
+                if (isLastFromMatchSeg)
                 {
                     if ((i+1) == as)
                     {
@@ -1455,16 +1464,10 @@ pileup_read_segment(const read_segment& rseg,
                     }
                 }
 
-                const unsigned read_pos(read_head_pos+j);
-                if ((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
-                const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
-
 #ifdef DEBUG_PPOS
                 log_os << "j,ref,read: " << j << " " << ref_pos <<  " " << read_pos << "\n";
 #endif
 
-                // skip position outside of report range:
-                if (! is_pos_reportable(ref_pos)) continue;
                 _stageman.validate_new_pos_value(ref_pos,STAGE::get_pileup_stage_no(_opt));
 
                 const uint8_t call_code(bseq.get_code(read_pos));
