@@ -298,7 +298,7 @@ collect_pileup_evidence()
     const unsigned blockWidth(spi.size());
     std::vector<int> callOffset(blockWidth,0);
 
-    // analyze as virtual reads -- to do so treat the first pileup column as a privilaged refernece point:
+    // analyze as virtual reads -- to do so treat the first pileup column as a privileged reference point:
     const snp_pos_info& beginPi(*spi[0]);
     const unsigned n_calls(beginPi.calls.size());
     for (unsigned callIndex(0); callIndex<n_calls; ++callIndex)
@@ -330,7 +330,7 @@ collect_pileup_evidence()
                     break;
                 }
             }
-            const base_call& bc(pi.calls[callIndex+callOffset[blockIndex]]);
+            const base_call& bc(pi.calls.at(callIndex+callOffset[blockIndex]));
             if (bc.is_call_filter)
             {
                 isPass=false;
