@@ -1,9 +1,9 @@
 - STARKA-226 codon phaser does not account for read N-trimming
+- WGSW-370 - force overlapping indels to use the same scoring model. If either is a complex indel (i.e. contains both an insertion and a deletion), then both uise the default model. Otherwise, both use the VQSR model, if enabled.
+- WGSW-358 - Make homref calls (GT=0/0) use the default model, not VQSR. This includes clinical indels/forced output.
 v2.3.7
 - Fix VCF version labels
 - STARKA-221 remove non-vqsr depth filter labels in strelka somatic snv vcf
-- WGSW-370 - force overlapping indels to use the same scoring model. If either is a complex indel (i.e. contains both an insertion and a deletion), then both uise the default model. Otherwise, both use the VQSR model, if enabled.
-- WGSW-358 - Make homref calls (GT=0/0) use the default model, not VQSR. This includes clinical indels/forced output.
 v2.3.6
 - STARKA-222 enable partial win32 build/visual studio development
 - WGSW-293, WGSW-297 re-update germline VQSR cutoffs to reduce trio conflicts

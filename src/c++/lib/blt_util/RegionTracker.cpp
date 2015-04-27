@@ -87,11 +87,12 @@ RegionTracker::
 removeToPos(
     const pos_t pos)
 {
-	auto iter(_regions.begin()) ;
-    while ( iter != _regions.end() && iter->end_pos() <= (pos+1) )
+    auto iter(_regions.begin());
+    while ( (iter != _regions.end()) && (iter->end_pos() <= (pos+1)) )
     {
-        iter = _regions.erase(iter++);
+        ++iter;
     }
+    _regions.erase(_regions.begin(),iter);
 }
 
 
