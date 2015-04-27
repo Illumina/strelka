@@ -1,3 +1,4 @@
+- STARKA-226 codon phaser does not account for read N-trimming
 v2.3.7
 - Fix VCF version labels
 - STARKA-221 remove non-vqsr depth filter labels in strelka somatic snv vcf
