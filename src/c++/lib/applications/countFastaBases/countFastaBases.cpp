@@ -63,6 +63,7 @@ static const bool isBase[128] =
 
 struct scan_result
 {
+    explicit
     scan_result(const char* f)
         : fileName(f), _isSet(false) {}
 

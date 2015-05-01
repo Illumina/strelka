@@ -23,6 +23,7 @@
 
 struct PedicureSampleSetSummary : public SampleSetSummary
 {
+    explicit
     PedicureSampleSetSummary(
         const pedicure_options& opt)
         : SampleSetSummary(),

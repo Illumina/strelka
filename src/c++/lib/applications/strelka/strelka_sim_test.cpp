@@ -125,6 +125,7 @@ random_cdf_variate(const double cdf[],
 
 struct qval_distro
 {
+    explicit
     qval_distro(
         const uint8_t constval = 30)
         : _is_const(true),
@@ -132,6 +133,7 @@ struct qval_distro
           _qsize(0)
     {}
 
+    explicit
     qval_distro(const char* distro_file)
         : _is_const(false),
           _constval(0),

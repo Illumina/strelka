@@ -112,6 +112,7 @@ private:
 /// it meets the criteria for snp calling
 struct PileupCleaner
 {
+    explicit
     PileupCleaner(
         const blt_options& opt)
         : _opt(opt)

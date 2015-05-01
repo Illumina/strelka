@@ -90,6 +90,7 @@ operator<<(std::ostream& os, const hap_cand& hc)
 /// represents a consensus haplotype (rather than a single observation a la hap_cand)
 struct hinfo
 {
+    explicit
     hinfo(const hap_cand& hc)
     {
         total_qual = hc.total_qual();

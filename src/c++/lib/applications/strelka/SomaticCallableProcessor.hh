@@ -27,6 +27,7 @@ struct SomaticCallableProcessor : public RegionProcessor
 {
     typedef RegionProcessor base_t;
 
+    explicit
     SomaticCallableProcessor(
         std::ostream* osptr) :
         base_t(osptr)
