@@ -510,3 +510,45 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
         isri.depth=spi.calls.size();
     }
 }
+
+
+// debug printers
+
+void starling_indel_sample_report_info::dump(std::ostream& os) const
+{
+    os << "n_q30_ref_reads=" << n_q30_ref_reads
+        << ",n_q30_indel_reads=" << n_q30_indel_reads
+        << ",n_q30_alt_reads=" << n_q30_alt_reads
+        << ",n_other_reads=" << n_other_reads
+        << ",depth=" << depth;
+}
+
+std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj)
+{
+    obj.dump(os);
+    return os;
+}
+
+void starling_indel_report_info::dump(std::ostream& os) const
+{
+    os << "desc=" << desc
+        << ",ref_seq=" << ref_seq
+        << ",indel_seq=" << indel_seq
+        << ",vcf_ref_seq=" << vcf_ref_seq
+        << ",vcf_indel_seq=" << vcf_indel_seq
+        << ",ref_upstream=" << ref_upstream
+        << ",ref_downstream=" << ref_downstream
+        << ",repeat_unit=" << repeat_unit
+        << ",ref_repeat_count=" << ref_repeat_count
+        << ",indel_repeat_count=" << indel_repeat_count
+        << ",ihpol=" << ihpol
+        << ",it=" << it;
+}
+
+std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj)
+{
+    obj.dump(os);
+    return os;
+}
+
+    

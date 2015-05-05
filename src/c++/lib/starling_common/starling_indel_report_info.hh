@@ -47,7 +47,11 @@ struct starling_indel_report_info
 
     // not directly reported, but handy to have pre-calculated:
     INDEL::index_t it = INDEL::NONE;
+
+    void dump(std::ostream& os) const;
+    
 };
+std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj);
 
 
 /// indel summary information which is specific to each sample:
@@ -59,7 +63,11 @@ struct starling_indel_sample_report_info
     unsigned n_q30_alt_reads = 0;
     unsigned n_other_reads = 0;
     unsigned depth = 0;
+
+    void dump(std::ostream& os) const;
+    
 };
+std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj);
 
 
 

@@ -299,7 +299,7 @@ add_indel(const pos_t pos,
     _indel_buffer.emplace_back();
     _indel_buffer.back().init(pos,ik,dindel,iri,isri);
     _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
-
+    
     // add filter for all indels in no-ploid regions:
     if (dindel.is_noploid())
     {
@@ -780,7 +780,7 @@ modify_overlap_indel_record()
 
     ii.imod.ploidy.resize(_indel_end_pos-ii.pos,0);
 
-    // add per-haplotype information required for the scoring to work correctly (specifically, the hap cigar)
+        // add per-haplotype information required for the scoring to work correctly (specifically, the hap cigar)
     for (unsigned hap(0); hap<2; ++hap)
     {
         _indel_buffer[hap].imod.is_overlap=true;
@@ -812,6 +812,13 @@ modify_overlap_indel_record()
            
     // combine filter flags
     ii.imod.filters |= _indel_buffer[1].imod.filters;
+    // combine QScores. Since the "unset" value is -1, this complex logic is necessary
+    if (ii.imod.Qscore <0)
+        ii.imod.Qscore = _indel_buffer[1].imod.Qscore;
+    else if (_indel_buffer[1].imod.Qscore >= 0)
+        ii.imod.Qscore = std::min(ii.imod.Qscore, _indel_buffer[1].imod.Qscore);
+
+
 }
 
 
