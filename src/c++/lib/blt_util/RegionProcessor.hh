@@ -27,6 +27,7 @@
 /// manage creation of a region track written out in BED format
 struct RegionProcessor
 {
+    explicit
     RegionProcessor(
         std::ostream* osptr) :
         _osptr(osptr)

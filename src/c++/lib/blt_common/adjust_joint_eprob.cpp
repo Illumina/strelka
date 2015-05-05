@@ -34,6 +34,7 @@ namespace
 
 struct sort_icall_by_eprob
 {
+    explicit
     sort_icall_by_eprob(const snp_pos_info& pi) : _pi(pi) {}
 
     bool

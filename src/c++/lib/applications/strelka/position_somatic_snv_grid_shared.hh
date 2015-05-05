@@ -51,10 +51,10 @@ struct somatic_snv_genotype_grid
         return (is_snv() || is_forced_output);
     }
 
-    tier_t snv_tier;
-    tier_t snv_from_ntype_tier;
-    unsigned ref_gt;
-    result_set rs;
+    tier_t snv_tier = 0;
+    tier_t snv_from_ntype_tier = 0;
+    unsigned ref_gt = 0;
+    result_set rs = result_set();
     bool is_forced_output = false;
     SiteNoise sn;
 };

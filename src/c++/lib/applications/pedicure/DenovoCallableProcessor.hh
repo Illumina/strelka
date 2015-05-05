@@ -28,6 +28,7 @@ struct DenovoCallableProcessor : public RegionProcessor
 {
     typedef RegionProcessor base_t;
 
+    explicit
     DenovoCallableProcessor(
         std::ostream* osptr) :
         base_t(osptr)

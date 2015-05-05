@@ -88,7 +88,8 @@ removeToPos(
     const pos_t pos)
 {
     auto iter(_regions.begin());
-    while ( (iter != _regions.end()) && (iter->end_pos() <= (pos+1)) )
+    const auto endIter(_regions.end());
+    while ( (iter != endIter) && (iter->end_pos() <= (pos+1)) )
     {
         ++iter;
     }

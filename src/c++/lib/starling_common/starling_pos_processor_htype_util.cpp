@@ -78,7 +78,7 @@ namespace
 //
 struct htype_element
 {
-
+    explicit
     htype_element(const pos_t p=0)
         : pos(p)
         , delete_length(0)

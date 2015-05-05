@@ -76,7 +76,7 @@ def main() :
     # manipulate the warning messages so that they look like gcc errors -- this enables IDE parsing of error location:
     checkCmd.append("--template={file}:{line}:1: error: {severity}:{message}")
 
-    suppressList=["unusedFunction", "unmatchedSuppression", "missingInclude"]
+    suppressList=["unusedFunction", "unmatchedSuppression", "missingInclude","purgedConfiguration"]
 
     # extra suppressions only used in starka, these are likely removable:
     extraSuppressList=["uninitMemberVar","unsignedLessThanZero","obsoleteFunctionsasctime"]
