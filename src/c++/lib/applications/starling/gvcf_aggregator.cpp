@@ -762,12 +762,17 @@ modify_overlap_indel_record()
     // can only handle simple 2-indel overlaps right now:
     assert(_indel_buffer.size()==2);
 
-    // accumutate all modification info in the *first* indel record:
+    // set them up for scoring as hetalt & score them
+    for (unsigned hap(0); hap<2; ++hap)
+    {
+        _indel_buffer[hap].imod.is_overlap=true;
+    }
+    _CM.clasify_indels(_indel_buffer);
+
+    // accumulate all modification info in the *first* indel record:
     indel_info& ii(_indel_buffer[0]);
 
-    ii.imod.is_overlap=true;
-    ii.imod.filters.reset();
-
+    
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
     std::string leading_seq,trailing_seq;
@@ -780,11 +785,8 @@ modify_overlap_indel_record()
 
     ii.imod.ploidy.resize(_indel_end_pos-ii.pos,0);
 
-        // add per-haplotype information required for the scoring to work correctly (specifically, the hap cigar)
     for (unsigned hap(0); hap<2; ++hap)
     {
-        _indel_buffer[hap].imod.is_overlap=true;
-
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         _ref.get_substring(indel_begin_pos,(_indel_buffer[hap].pos-indel_begin_pos)-1,leading_seq);
         const unsigned trail_len(_indel_end_pos-_indel_buffer[hap].ik.right_pos());
@@ -802,8 +804,6 @@ modify_overlap_indel_record()
         add_cigar_to_ploidy(_indel_buffer[hap].imod.cigar,ii.imod.ploidy);
     }
 
-    _CM.clasify_indels(_indel_buffer);
-    
     
     //reduce qual and gt to the lowest of the set:
     ii.dindel.indel_qphred = std::min(ii.dindel.indel_qphred, _indel_buffer[1].dindel.indel_qphred);

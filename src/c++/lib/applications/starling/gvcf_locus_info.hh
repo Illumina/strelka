@@ -158,6 +158,7 @@ struct indel_modifiers : public shared_modifiers
 
     ALIGNPATH::path_t cigar;
 
+    // used by scoring to choose the right model (hetalt)
     bool is_overlap;
 
     /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
