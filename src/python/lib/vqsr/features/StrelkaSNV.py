@@ -28,6 +28,8 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
                     "I.NT", "I.SOMATIC", "I.QSS_NT",
                     "I.SGT", "I.MQ", "I.MQ0", "I.PNOISE", "I.PNOISE2",
                     "I.SNVSB", "I.ReadPosRankSum",
+                    "I.ALTPOS",
+                    "I.ALTMAP",
                     "S.1.SDP", "S.2.SDP",
                     "S.1.FDP", "S.2.FDP",
                     "S.1.DP", "S.2.DP",
@@ -90,6 +92,8 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
             t_SDP = float(rec["S.2.SDP"])
             n_DP = float(rec["S.1.DP"])
             t_DP = float(rec["S.2.DP"])
+
+            # TODO: we should read this from the VCF file.
 
             n_FDP_ratio = n_FDP / n_DP if n_DP != 0 else 0
             t_FDP_ratio = t_FDP / t_DP if t_DP != 0 else 0
@@ -183,6 +187,16 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
             except:
                 rprs = 0
 
+            try:
+                altmap = rec["I.ALTMAP"]
+            except:
+                altmap = 0
+
+            try:
+                altpos = rec["I.ALTPOS"]
+            except:
+                altpos = 0
+
             # Gather the computed data into a dict
             qrec = {
                 "CHROM": rec["CHROM"],
@@ -190,37 +204,73 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
                 "REF": rec["REF"],
                 "ALT": ",".join(rec["ALT"]),
                 "FILTER": ",".join(rec["FILTER"]),
+
+                # used in training / hard filtering
                 "NT": NT,
                 "NT_REF": NT_is_ref,
+
+                # These features are used by VQSR
                 "QSS_NT": QSS_NT,
                 "N_FDP_RATE": n_FDP_ratio,
                 "T_FDP_RATE": t_FDP_ratio,
                 "N_SDP_RATE": n_SDP_ratio,
                 "T_SDP_RATE": t_SDP_ratio,
+                "N_DP_RATE": n_DP_ratio,
+                "TIER1_ALT_RATE": t_tier1_allele_rate,
+                "MQ": MQ,
+                "n_mapq0": MQ_ZERO,
+                "strandBias": snvsb,
+                "ReadPosRankSum": rprs,
+                "altmap": altmap,
+                "altpos": altpos,
+                "pnoise": pnoise,
+                "pnoise2": pnoise2,
+
+                # other/experimental features
                 "N_DP": n_DP,
                 "T_DP": t_DP,
-                "N_DP_RATE": n_DP_ratio,
-                "T_DP_RATE": t_DP_ratio,
                 "T_TIER1_ALT_RATE": t_tier1_allele_rate,
                 "T_TIER2_ALT_RATE": t_tier2_allele_rate,
                 "N_TIER1_ALT_RATE": n_tier1_allele_rate,
                 "N_TIER2_ALT_RATE": n_tier2_allele_rate,
-                "MQ_SCORE": MQ,
-                "MQ_ZERO_RATE": MQ_ZERO,
-                "PNOISE": pnoise,
-                "PNOISE2": pnoise2,
-                "SNVSB": snvsb,
-                "ReadPosRankSum": rprs
+                "T_DP_RATE": t_DP_ratio,
             }
             records.append(qrec)
 
-        cols = ["CHROM", "POS", "REF", "ALT",
-                "NT", "NT_REF", "QSS_NT", "FILTER",
-                "N_FDP_RATE", "T_FDP_RATE", "N_SDP_RATE", "T_SDP_RATE",
-                "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE",
-                "T_TIER1_ALT_RATE", "T_TIER2_ALT_RATE", "N_TIER1_ALT_RATE", "N_TIER2_ALT_RATE",
-                "MQ_SCORE", "MQ_ZERO_RATE", "PNOISE", "PNOISE2", "SNVSB",
-                "ReadPosRankSum"]
+        cols = [
+            "CHROM",
+            "POS",
+            "REF",
+            "ALT",
+            "FILTER",
+            # used in training / hard filtering
+            "NT",
+            "NT_REF",
+            # These features are used by VQSR
+            "QSS_NT",
+            "N_FDP_RATE",
+            "T_FDP_RATE",
+            "N_SDP_RATE",
+            "T_SDP_RATE",
+            "N_DP_RATE",
+            "TIER1_ALT_RATE",
+            "MQ",
+            "n_mapq0",
+            "strandBias",
+            "ReadPosRankSum",
+            "altmap",
+            "altpos",
+            "pnoise",
+            "pnoise2",
+            # other features
+            "N_DP",
+            "T_DP",
+            "T_TIER1_ALT_RATE",
+            "T_TIER2_ALT_RATE",
+            "N_TIER1_ALT_RATE",
+            "N_TIER2_ALT_RATE",
+            "T_DP_RATE",
+        ]
 
         if records:
             df = pandas.DataFrame(records, columns=cols)
@@ -230,12 +280,25 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
         return df
 
     def trainingfeatures(self):
-        """ Return a list of columns that are features to use for VQSR training """
-        return ["NT_REF", "QSS_NT",
-                "N_FDP_RATE", "T_FDP_RATE", "N_SDP_RATE", "T_SDP_RATE",
-                "N_DP_RATE", "T_DP_RATE",
-                "T_TIER1_ALT_RATE", "N_TIER1_ALT_RATE",  # could also use Tier2? "N_TIER2_ALT_RATE", "T_TIER2_ALT_RATE",
-                "MQ_SCORE", "MQ_ZERO_RATE",
-                "PNOISE", "PNOISE2",
-                "SNVSB",
-                "ReadPosRankSum"]
+        """ Return a list of columns that are features to
+            use for VQSR training
+
+            Any change here must be done together with changing
+            src/c++/lib/applications/strelka/strelkaVQSRFeatures.hh
+        """
+        return [
+            "QSS_NT",
+            "N_FDP_RATE",
+            "T_FDP_RATE",
+            "N_SDP_RATE",
+            "T_SDP_RATE",
+            "N_DP_RATE",
+            "TIER1_ALT_RATE",
+            "MQ",
+            "n_mapq0",
+            "strandBias",
+            "ReadPosRankSum",
+            "altmap",
+            "altpos",
+            "pnoise",
+            "pnoise2"]

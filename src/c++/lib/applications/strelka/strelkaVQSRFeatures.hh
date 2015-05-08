@@ -21,6 +21,9 @@
 namespace STRELKA_VQSR_FEATURES
 {
 
+/** any change here must be done together with changing
+    src/python/lib/vqsr/StrelkaSNV.py
+ */
 enum index_t
 {
     QSS_NT,
