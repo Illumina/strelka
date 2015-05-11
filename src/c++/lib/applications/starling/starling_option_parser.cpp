@@ -78,7 +78,7 @@ get_starling_option_parser(
 	  "How aggresive should we be when selecting regions to assemble")
 	 ("assembly-bed",  po::value(&opt.assembly_regions_filename),
 	   "Bed file with regions we should always to assemble.")
-	 ("assembly-model", po::value(&opt.assembly_model)->default_value("bed"),
+	 ("assembly-model", po::value(&opt.assembly_model)->default_value("de-bruijn"),
 	  "he assembly strategy to utilize (options: bed, string-graph, de-bruijn)")
      ;
 

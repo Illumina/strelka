@@ -7,6 +7,7 @@
 
 #include <assembly/bed_assembler.hh>
 
+
 //bed_assembler::bed_assembler() {
 //	// TODO Auto-generated constructor stub
 //

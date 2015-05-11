@@ -1,6 +1,6 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Rumovsky
+# Copyright (c) 2013-2014 Illumina, Inc.
 #
 # This software is provided under the terms and conditions of the
 # Illumina Open Source Software License 1.
@@ -18,4 +18,4 @@
 ##
 ################################################################################
 
-#include(${THIS_CXX_TEST_LIBRARY_CMAKE})
+include(${RUMOVSKY_CXX_TEST_LIBRARY_CMAKE})

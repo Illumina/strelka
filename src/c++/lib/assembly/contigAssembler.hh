@@ -10,6 +10,7 @@
 #define C___LIB_ASSEMBLY_CONTIGASSEMBLER_HH_
 
 #include "applications/starling/site_info_stream.hh"
+#include "starling_common/starling_read_buffer.hh"
 
 class contigAssembler{
 public:

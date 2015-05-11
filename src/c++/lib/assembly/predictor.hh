@@ -20,7 +20,6 @@
 #pragma once
 
 #include "applications/starling/site_info_stream.hh"
-
 #include "applications/starling/gvcf_locus_info.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_read_buffer.hh"

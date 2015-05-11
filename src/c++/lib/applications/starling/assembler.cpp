@@ -11,9 +11,9 @@
 // <https://github.com/sequencing/licenses/>
 //
 /*
- * Codon_phaser.cpp
+ * assembler.cpp
  *
- *  Created on: Sep 10, 2013
+ *  Created on: Sep 10, 2014
  *  Author: Morten Kallberg
  */
 
@@ -97,26 +97,13 @@ flush()
     clear();
 }
 
-void
-assembly_streamer::clear()
-{
-    this->clear_buffer();
-    observations.clear();
-    block_start                 = -1;
-    block_end                   = -1;
-    var_count                   = 0;
-    total_reads                 = 0;
-    total_reads_unused          = 0;
-    reference                   = "";
-}
-
 // makes the phased VCF record from the buffered sites list
 void
 assembly_streamer::make_record()
 {
     this->construct_reference();
     this->collect_read_evidence();
-    this->assemble();
+//    this->
     this->create_contig_records();
 }
 
@@ -138,12 +125,12 @@ assembly_streamer::construct_reference()
     }
 }
 
-void
-assembly_streamer::assemble()
-{
-    // THIS IS A STUB ASSEMBLER: IT ASSUMES THAT THE PREDICTOR CAN PROVIDE THE DESIRED ASSEMBLY
-    // The contigs have been passed in here already (hopefully) via the contig() function
-}
+//void
+//assembly_streamer::assemble()
+//{
+//    // THIS IS A STUB ASSEMBLER: IT ASSUMES THAT THE PREDICTOR CAN PROVIDE THE DESIRED ASSEMBLY
+//    // The contigs have been passed in here already (hopefully) via the contig() function
+//}
 
 void
 assembly_streamer::rescore(std::stringstream &AD)
@@ -302,7 +289,7 @@ assembly_streamer::
 do_assemble()
 {
     //extend with more data structures to determine is assembly criteriea is met
-    known_pos_range2 predAsmRegion = myPredictor.do_assemble_and_update();
+    known_pos_range2 predAsmRegion; //= myPredictor.do_assemble_and_update();
     return predAsmRegion;
 }
 
@@ -312,8 +299,8 @@ assembly_streamer::clear()
 {
 //    this->clear_buffer();
     observations.clear();
-    block_start                                 = -1;
-    block_end                                   = -1;
+    block_start                 = -1;
+    block_end                   = -1;
     var_count                   = 0;
     total_reads                 = 0;
     total_reads_unused          = 0;

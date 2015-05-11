@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Rumovsky
+// Copyright (c) 2013-2014 Illumina, Inc.
 //
 // This software is provided under the terms and conditions of the
 // Illumina Open Source Software License 1.
@@ -11,6 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-//#define BOOST_TEST_MODULE libhtsapi
-//#include "boost/test/unit_test.hpp"
+#define BOOST_TEST_MODULE libkmer
+#include "boost/test/unit_test.hpp"
 

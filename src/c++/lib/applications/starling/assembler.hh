@@ -49,7 +49,7 @@ struct assembly_streamer : public site_info_stream
     {
 
 		if (opt.assembly_model=="bed"){
-			// log_os << "Initializing bed assembler" << std::endl;
+			 log_os << "Initializing bed assembler" << std::endl;
 			this->myAssembler = new dummy_assembler();
 		}
 		else if (opt.assembly_model=="string-graph"){
@@ -57,8 +57,8 @@ struct assembly_streamer : public site_info_stream
 			this->myAssembler = new string_graph_assembler();
 		}
 		else if (opt.assembly_model=="de-bruijn"){
-			//log_os << "Initializing default assembler" << std::endl;
-			this->myAssembler = new dummy_assembler();
+			log_os << "Initializing de-bruijn assembler" << std::endl;
+//			this->myAssembler = new de_bruijn_assembler();
 		}
 		else{
 			//log_os << "Initializing default assembler" << std::endl;
@@ -98,7 +98,7 @@ private:
 
     void construct_reference();         // 1. Determine the reference allele for the record
     void collect_read_evidence();       // 2. Fill in allele counter based on assembled graph
-    void assemble();                    // 3. Generate contigs from reads using some assembly method
+    known_pos_range2 do_assemble();     // 3. Generate contigs from reads using some assembly method
     void rescore(std::stringstream &AD);// 4. Score based on reads realigned to contigs
     void create_contig_records();       // 5. Fill in the si record and decide if we have sufficient evidence for a phased call
 
