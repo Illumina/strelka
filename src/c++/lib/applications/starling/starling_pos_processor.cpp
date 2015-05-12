@@ -106,31 +106,33 @@ starling_pos_processor(
             //
             myAssembler->register_consumer(std::shared_ptr<site_info_stream>(myRecordProcessor));
             myRecordProcessor->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
-
-            uint64_t p = 0;
-
-            if (opt.assembly_regions_filename.size())
-            {
-                p |= pagg->add_predictor(
-                    make_predictor(
-                        PredictorType::bedfile, 
-                        opt,
-                        dopt
-                    )
-                );
-            }
-            p |= pagg->add_predictor(
-                make_predictor(
-                    PredictorType::density, 
-                    opt, 
-                    dopt
-                )
-            );
-            pagg->add_consumer(std::shared_ptr<site_info_stream>(myAssembler), p);
+//
+//            uint64_t p = 0;
+//
+//            if (opt.assembly_regions_filename.size())
+//            {
+//                p |= pagg->add_predictor(
+//                    make_predictor(
+//                        PredictorType::bedfile,
+//                        opt,
+//                        dopt
+//                    )
+//                );
+//            }
+//            p |= pagg->add_predictor(
+//                make_predictor(
+//                    PredictorType::density,
+//                    opt,
+//                    dopt
+//                )
+//            );
+//
+//            pagg->add_consumer(std::shared_ptr<site_info_stream>(myAssembler), p);
             // default consumer
             pagg->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
 
-            _gvcfer = std::shared_ptr<site_info_stream>(pagg);
+            _gvcfer = std::shared_ptr<site_info_stream>(myAssembler);
+
         }
         // else if(_opt.do_codon_phasing)
         // {
@@ -246,7 +248,6 @@ process_pos_snp_single_sample_impl(
     //    write()?? (do we need to even bother with this?)
     // }
     //
-
     sample_info& sif(sample(sample_no));
 
     const snp_pos_info& pi(sif.bc_buff.get_pos(pos));

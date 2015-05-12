@@ -16,7 +16,7 @@
 
 class de_bruijn_assembler: public contigAssembler {
 public:
-	de_bruijn_assembler();
+	de_bruijn_assembler(){};
 
 
 	site_info assembleReads(int start,int end, starling_read_buffer& read_buffer,std::string& refSeq){
@@ -110,14 +110,13 @@ public:
 
 		// populate site-info with assembled information /
 		site_info si;
-	    si.phased_ref = refSeq;
+//	    si.phased_ref = refSeq;
 	    //const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
-	    si.smod.is_block                  = false;
-	    si.smod.is_unknown                = false;
+//	    si.smod.is_block                  = false;
+//	    si.smod.is_unknown                = false;
 //	    si.phased_alt = as[0].seq;		// for now just return the first contig
 		return si;
 	}
-//	virtual ~bed_assembler();
 };
 
 #endif /* C___LIB_ASSEMBLY_BED_ASSEMBLER_HH_ */

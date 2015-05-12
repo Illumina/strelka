@@ -16,9 +16,14 @@ class contigAssembler{
 public:
 	contigAssembler(){};
 //	virtual ~contigAssembler();
+	virtual site_info assembleReads(int start,int end, starling_read_buffer& read_buffer,std::string& refSeq) =0;
+//	{
+//		site_info si;
+//		return si;
+//	};
 
-//	virtual site_info assembleReads(const int& start, const int& end, starling_read_buffer& read_buffer) = 0;
-//	void register_read_buffer(starling_read_buffer& read_buffer);
+	// contig assembler should own the read buffer rather than having it on assembler
+	//	void register_read_buffer(starling_read_buffer& read_buffer);
 
 
 };

@@ -54,11 +54,12 @@ struct assembly_streamer : public site_info_stream
 		}
 		else if (opt.assembly_model=="string-graph"){
 			//log_os << "Initializing default assembler" << std::endl;
-			this->myAssembler = new string_graph_assembler();
+//			this->myAssembler = new string_graph_assembler();
 		}
 		else if (opt.assembly_model=="de-bruijn"){
 			log_os << "Initializing de-bruijn assembler" << std::endl;
 //			this->myAssembler = new de_bruijn_assembler();
+			this->myAssembler = new dummy_assembler();
 		}
 		else{
 			//log_os << "Initializing default assembler" << std::endl;

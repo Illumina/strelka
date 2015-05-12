@@ -392,7 +392,7 @@ queue_site_record(const site_info& si)
         write_site_record(si);
         return;
     }
-    log_os << si << std::endl;
+//    log_os << si << std::endl;
     if (! _block.test(si))
     {
         write_block_site_record();

@@ -22,13 +22,13 @@
 #include <sstream>
 #include <vector>
 
-//#define DEBUG_ASSEMBLE
+#define DEBUG_ASSEMBLE
 
 #ifdef DEBUG_ASSEMBLE
 #include "blt_util/log.hh"
 #endif
 
-// Add a SNP site to the phasing buffer
+// Add a SNP site to the assembly buffer
 
 bool
 assembly_streamer::
@@ -78,7 +78,7 @@ add_indel(const indel_info& ii)
     //std::cerr << "adding indel from " << ii.pos << " to " << block_end << " with length = " << ii.ref_length() << "\n";
     var_count++;
 
-    make_record();
+//    make_record();
 //      log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
 //    }
 //    this->write_out_buffer();
@@ -93,7 +93,7 @@ flush()
 {
     // modify gVCF records and buffer accordingly, notify consumer
     make_record();
-    // log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
+//     log_os << "Assembling " << this->block_start << " - " << this->block_end << std::endl;
     clear();
 }
 
@@ -102,9 +102,11 @@ void
 assembly_streamer::make_record()
 {
     this->construct_reference();
+    log_os << this->reference << std::endl;;
     this->collect_read_evidence();
-//    this->
-    this->create_contig_records();
+    site_info si = this->myAssembler->assembleReads(this->block_start,this->block_end,this->read_buffer,this->reference);
+    log_os << si << std::endl;
+//    this->create_contig_records();
 }
 
 void
