@@ -298,6 +298,14 @@ collect_pileup_evidence()
     const unsigned blockWidth(spi.size());
     std::vector<int> callOffset(blockWidth,0);
 
+    /// this function traces individual read fragments out of the pileup structure within the range of the phasing block
+    ///
+    /// given a start offset within the phasing block (startBlockIndex), return a bool indicating whether the read is good (ie.
+    /// complete to the end of the phasing block and all basecalls pass filter. This return val is really only useful for
+    /// startBlockIndex=0, in which case it provides a single allele count for the phaser
+    ///
+    /// this function mutates callOffset over successive calls to progressively jump to the offset of the next read
+    ///
     // can't use auto here b/c of recursion:
     std::function<std::pair<bool,std::string>(const unsigned)> tracePartialRead =
         [&](const unsigned startBlockIndex)
