@@ -16,7 +16,7 @@ class contigAssembler{
 public:
 	contigAssembler(){};
 //	virtual ~contigAssembler();
-	virtual site_info assembleReads(int start,int end, starling_read_buffer& read_buffer,std::string& refSeq) =0;
+	virtual site_info assembleReads(int start,int end, starling_read_buffer& read_buffer,std::string& refSeq,site_info& si) =0;
 //	{
 //		site_info si;
 //		return si;

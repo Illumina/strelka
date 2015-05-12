@@ -102,11 +102,8 @@ void
 assembly_streamer::make_record()
 {
     this->construct_reference();
-    log_os << this->reference << std::endl;;
-    this->collect_read_evidence();
-    site_info si = this->myAssembler->assembleReads(this->block_start,this->block_end,this->read_buffer,this->reference);
-    log_os << si << std::endl;
-//    this->create_contig_records();
+//    this->collect_read_evidence();
+    this->create_contig_records();
 }
 
 void
@@ -156,33 +153,35 @@ assembly_streamer::rescore(std::stringstream &AD)
 void
 assembly_streamer::create_contig_records()
 {
+
     // pick first records in buffer as our anchoring point for the assembled record
     notify_consumer_up_to(block_start);
     site_info base = _site_buffer.at(0);
+    site_info si = this->myAssembler->assembleReads(this->block_start,this->block_end,this->read_buffer,this->reference,base);
     clear_site_buffer_to_pos(block_end);
     clear_indel_buffer_to_pos(block_end);
     //assert("site buffer not empty" && _site_buffer.size() > 0);
 
 
     // add information from the alleles selected for output
-    std::stringstream alt;
-    bool hasAlt(false);
-    for (const auto& val : asm_contigs)
-    {
-        if (val==reference) continue;
-        hasAlt = true;
-        if (! alt.str().empty()) alt << ',';
-        alt << val;
-    }
-    if ( ! hasAlt )
-    {
-        alt << ".";
-    }
+//    std::stringstream alt;
+//    bool hasAlt(false);
+//    for (const auto& val : asm_contigs)
+//    {
+//        if (val==reference) continue;
+//        hasAlt = true;
+//        if (! alt.str().empty()) alt << ',';
+//        alt << val;
+//    }
+//    if ( ! hasAlt )
+//    {
+//        alt << ".";
+//    }
 
     std::stringstream AD;
     rescore(AD);
 
-    base.phased_ref = this->reference;
+//    base.phased_ref = this->reference;
     //const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
     base.smod.is_block                  = false;
     base.smod.is_unknown                = false;
@@ -195,7 +194,7 @@ assembly_streamer::create_contig_records()
     base.dgt.genome.snp_qphred  = 1000;
     base.smod.gqx               = 30;
     base.Qscore                 = 20;
-    base.phased_alt = alt.str();
+//    base.phased_alt = alt.str();
     base.phased_AD  = AD.str();
 
     // set more vcf record fields
@@ -204,7 +203,7 @@ assembly_streamer::create_contig_records()
     base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
 
     //set any filters
-    base.smod.filters.reset();
+//    base.smod.filters.reset();
 
     // specify that we are covering multiple records, and make the needed modification in the output
     base.smod.is_phased_region = true;
@@ -218,62 +217,12 @@ assembly_streamer::create_contig_records()
     // Add in assembled record(s)
     _site_buffer.push_front(base);
 
+//    log_os << base << std::endl;
+//    log_os << base.ref << std::endl;
     // write remaining site_infos
-    this->notify_consumer_up_to();
+    this->notify_consumer_up_to(this->block_end);
     //    _site_buffer.pop_front();
 }
-
-void
-assembly_streamer::
-collect_read_segment_evidence(
-    const read_segment& rseg)
-{
-    //check if we are covering the block range
-//    if (static_cast<unsigned>(abs(rseg.buffer_pos-this->block_end))>rseg.read_size())
-//        return;
-//
-//    const bam_seq bseq(rseg.get_bam_read());
-//
-//    // read quality checks
-//    if (static_cast<int>(rseg.map_qual())<this->opt.min_single_align_score || rseg.is_invalid_realignment || !rseg.is_valid())
-//    {
-////                this->total_reads_unused++; // do not count filtered reads in DPF
-//        return;
-//    }
-//
-//    const int sub_start((this->block_start-rseg.buffer_pos));
-//    const int sub_end((this->block_end-rseg.buffer_pos));
-////#ifdef DEBUG_ASSEMBLE
-////    int pad(0); // add context to extracted alleles for debugging
-////    sub_start -= pad;
-////    sub_end += pad;
-////#endif
-//    using namespace BAM_BASE;
-//
-//    if (sub_start>=0 && sub_end<max_read_len)
-//    {
-//        bool do_include(true);
-//        //instead make bit array counting the number of times het pos co-occur
-//        std::string sub_str("");
-//        for (int t=sub_start; t<(sub_end+1); t++) //pull out substring of read
-//        {
-//            if (bseq.get_char(t)=='N'|| static_cast<int>(rseg.qual()[t]<this->opt.min_qscore))
-//            {
-//                do_include = false; // do qual check of individual bases here, kick out entire read if we dont meet cut-off
-//                break;
-//            }
-//            sub_str+= bseq.get_char(t); //TODO use more efficient data structure here
-//        }
-//        if (do_include)
-//        {
-//            this->observations[sub_str]++;
-//            total_reads++;
-//        }
-//        else
-//            this->total_reads_unused++;
-//    }
-}
-
 
 
 void

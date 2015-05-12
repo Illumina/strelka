@@ -21,13 +21,16 @@
 #include "blt_util/log.hh"
 #endif
 
+
+
+
 class dummy_assembler: public contigAssembler {
 public:
 
 	dummy_assembler(){};
 //	virtual ~dummy_assembler();
 
-	site_info assembleReads(int start,int end, starling_read_buffer& read_buffer,std::string& refSeq){
+	site_info assembleReads(int start,int end, starling_read_buffer& read_buffer,std::string& refSeq, site_info& si){
 		log_os << "Im assembling " << start << "-" << end << std::endl;
 
 		// read collection and conversion to string and populate dummy read-info objects
@@ -35,8 +38,6 @@ public:
 		// use the same read selection method
 		int buffer(200);
 		AssemblyReadInput reads;
-//		const read_segment r1seg;
-//		const read_segment r2seg;
 
 		// loop through all pile-up positions
 		for (int i=start-buffer;i<end+buffer;i++){
@@ -69,13 +70,13 @@ public:
 					ri.next();
 		        }
 		}
-		log_os << "Done collecting " << std::endl;
+//		log_os << "Done collecting " << std::endl;
 
 		// setting up some data place-holders for the assembly process
 		// TO-DO the data structures can used some major cleaning here
 		Assembly as;
 		bool verbose(false);
-		DfsAssemblerOptions opt;
+		const DfsAssemblerOptions opt;
 		AssemblyReadOutput assembledReadInfo;
 		Assembly contigs;
 //
@@ -84,40 +85,25 @@ public:
 		unsigned wordLength(opt.minWordLength);
 		unsigned unusedReads(reads.size());
 
-		log_os << "Read count " << reads.size() << std::endl;
-//
-//		for (unsigned iteration(0); iteration < opt.maxAssemblyIterations; ++iteration)
-//		{
-////			if (unusedReads < opt.minSeedReads) break;
-//
-//			const unsigned lastUnusedReads(unusedReads);
-			unsigned iteration(0);
-			for (; wordLength<=opt.maxWordLength; wordLength+=opt.wordStepSize)
-			{
-				if (verbose)
-				{
-					std::cerr << "Starting assembly with k=" << wordLength << " iter=" << 1 << "\n";
-					std::cerr << "opt.minWordLength=" << opt.minWordLength << " opt.maxWordLength " << opt.maxWordLength << std::endl;
-				}
-				const bool isAssemblySuccess = buildContigs(opt, reads, assembledReadInfo, wordLength,
-															contigs, unusedReads, refSeq, iteration);
-				if (verbose)
-				{
-					std::cerr << "isAssemblySuccess=" << isAssemblySuccess << std::endl;
-				}
-				if (isAssemblySuccess) break;
-			}
+//		log_os << "Read count " << reads.size() << std::endl;
+//		runDfsAssembler(opt,reads,refSeq,assembledReadInfo,contigs);
 
+		// dummy assembly for debugging
+		Contig c1;
+		Contig c2;
+		c1.seq = "rwegerger";
+		c2.seq = "rwegerger";
+		contigs.push_back(c1);
+		contigs.push_back(c2);
 		// populate site-info with assembled information /
-		site_info si;
-//	    si.phased_ref = refSeq;
-	    //const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
-//	    si.smod.is_block                  = false;
-//	    si.smod.is_unknown                = false;
-//	    si.phased_alt = as[0].seq;		// for now just return the first contig
+	    si.phased_ref = refSeq;
+	    si.smod.is_block                  = false;
+	    si.smod.is_unknown                = false;
+	    si.phased_alt = contigs.at(1).seq;		// for now just return the first contig
 		return si;
 	}
 
 };
 
 #endif /* C___LIB_ASSEMBLY_DUMMY_ASSEMBLER_HH_ */
+

@@ -153,6 +153,7 @@ gvcf_aggregator::
 add_site(site_info& si)
 {
     //TODO for phased records
+	log_os << "Agg " << si << std::endl;
 	add_site_modifiers(si, _CM);
 
     if (si.dgt.is_haploid())

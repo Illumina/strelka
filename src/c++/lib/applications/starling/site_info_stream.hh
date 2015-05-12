@@ -48,6 +48,7 @@ public:
     virtual bool add_site(site_info& si) = 0;
     virtual bool add_indel(const indel_info& ii) = 0;
 
+
     /** (PK) this should go away!
      *  ideally remove from interface, move up to caller code
      */
