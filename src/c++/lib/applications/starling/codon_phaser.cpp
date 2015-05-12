@@ -298,6 +298,26 @@ collect_pileup_evidence()
     const unsigned blockWidth(spi.size());
     std::vector<int> callOffset(blockWidth,0);
 
+    // can't use auto here b/c of recursion:
+    std::function<void(const unsigned,const unsigned)> tracePartialRead =
+        [&](const unsigned callIndex, const unsigned startBlockIndex)
+        {
+            for (unsigned blockIndex(startBlockIndex); blockIndex<blockWidth; ++blockIndex)
+            {
+                const snp_pos_info& pi(*spi[blockIndex]);
+                while (true)
+                {
+                    const base_call& bc(pi.calls.at(callIndex+callOffset[blockIndex]));
+                    if ((! bc.isFirstBaseCallFromMatchSeg) || (blockIndex == startBlockIndex)) break;
+                    tracePartialRead(callIndex,blockIndex);
+                }
+                const base_call& bc(pi.calls.at(callIndex+callOffset[blockIndex]));
+                // this represents the 'ordinary' advance of callOffset for a non-interrupted read segment:
+                callOffset[blockIndex]++;
+                if (bc.isLastBaseCallFromMatchSeg) return;
+            }
+        };
+
     // analyze as virtual reads -- to do so treat the first pileup column as a privileged reference point:
     const snp_pos_info& beginPi(*spi[0]);
     const unsigned n_calls(beginPi.calls.size());
@@ -320,10 +340,7 @@ collect_pileup_evidence()
                 }
                 if (bc.isFirstBaseCallFromMatchSeg && (blockIndex != 0))
                 {
-                    for (unsigned blockIndex2(blockIndex); blockIndex2<blockWidth; ++blockIndex2)
-                    {
-                        callOffset[blockIndex2]++;
-                    }
+                    tracePartialRead(callIndex,blockIndex);
                 }
                 else
                 {
