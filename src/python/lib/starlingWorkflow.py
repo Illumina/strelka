@@ -131,6 +131,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--calibration-model-file',self.params.vqsrModelFile])
     segCmd.extend(['--scoring-model',self.params.vqsrModel ])
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
+    if self.params.isSkipIndelErrorModel:
+        segCmd.extend(['--indel-error-model',self.params.indelErrorModel])
 
     if self.params.isReportVQSRMetrics :
         segCmd.append("--gvcf-report-VQSRmetrics")
@@ -329,6 +331,10 @@ class StarlingWorkflow(StarkaWorkflow) :
 
         self.paths = PathInfo(self.params)
 
+        if self.params.isExome:
+            self.params.vqsrModel = "Qrule"
+            self.params.indelRefErrorFactor = 1.
+            self.params.indelErrorModel = "old"
 
 
     def getSuccessMessage(self) :

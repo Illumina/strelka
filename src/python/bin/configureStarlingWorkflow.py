@@ -75,6 +75,7 @@ You must specify a BAM file.
             'runDir' : 'StarlingWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'indelRefErrorFactor' : "100",
+            'indelErrorModel' : "new",
             'vqsrModel' : "QScoreHPDRE100_v4",
             'vqsrModelFile' : joinFile(configDir,'model.json'),
             'scoringModelFile' : joinFile(configDir,'indel_models.json'),
