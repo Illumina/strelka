@@ -19,6 +19,7 @@
 #include "codon_phaser.hh"
 
 #include <array>
+#include <functional>
 #include <sstream>
 #include <vector>
 
