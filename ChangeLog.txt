@@ -1,3 +1,4 @@
+v2.3.9
 - STARKA-231 correct codon phasing for insertions/small-fragments within the
 phasing range
 v2.3.8
