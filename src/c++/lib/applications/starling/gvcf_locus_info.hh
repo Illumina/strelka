@@ -121,6 +121,12 @@ struct shared_modifiers
     }
 
     void
+    unset_filter(const VCF_FILTERS::index_t i)
+    {
+        filters.reset(i);
+    }
+
+    void
     write_filters(std::ostream& os) const;
 
     void
@@ -374,7 +380,7 @@ struct site_info
         {
             return MODIFIED_SITE_GT::get_label(smod.modified_gt);
         }
-        else if (smod.is_unknown || (!smod.is_used_covered))
+        else if (is_print_unknowngt())
         {
             return ".";
         }
@@ -411,6 +417,12 @@ struct site_info
     is_nonref() const
     {
         return (smod.max_gt != dgt.ref_gt);
+    }
+
+    bool
+    is_print_unknowngt() const
+    {
+        return (smod.is_unknown || (!smod.is_used_covered));
     }
 
     bool
