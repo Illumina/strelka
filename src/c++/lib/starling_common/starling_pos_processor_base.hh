@@ -574,7 +574,7 @@ protected:
     int
     get_ploidy(const pos_t pos) const
     {
-        const auto val(_ploidy_regions.isPayloadInRegion(pos));
+        const auto val(_ploidy_regions.isIntersectRegion(pos));
         return (val ? *val : 2);
     }
 
