@@ -1,3 +1,4 @@
+- STARKA-234: make --exome flag affect indel-error-model, scoring-model and indel-ref-error-factor arguments to starling
 v2.3.9
 - STARKA-231 correct codon phasing for insertions/small-fragments within the
 phasing range
