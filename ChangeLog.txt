@@ -1,3 +1,6 @@
+v2.3.9
+- STARKA-231 correct codon phasing for insertions/small-fragments within the
+phasing range
 v2.3.8
 - STARKA-227 Wrong Qscore value reported as GQX in overlapping indels
 - STARKA-226 codon phaser does not account for read N-trimming

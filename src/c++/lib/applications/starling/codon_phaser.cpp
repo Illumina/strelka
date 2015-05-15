@@ -19,6 +19,7 @@
 #include "codon_phaser.hh"
 
 #include <array>
+#include <functional>
 #include <sstream>
 #include <vector>
 
@@ -298,50 +299,49 @@ collect_pileup_evidence()
     const unsigned blockWidth(spi.size());
     std::vector<int> callOffset(blockWidth,0);
 
+    /// this function traces individual read fragments out of the pileup structure within the range of the phasing block
+    ///
+    /// given a start offset within the phasing block (startBlockIndex), return a bool indicating whether the read is good (ie.
+    /// complete to the end of the phasing block and all basecalls pass filter. This return val is really only useful for
+    /// startBlockIndex=0, in which case it provides a single allele count for the phaser
+    ///
+    /// this function mutates callOffset over successive calls to progressively jump to the offset of the next read
+    ///
+    // can't use auto here b/c of recursion:
+    std::function<std::pair<bool,std::string>(const unsigned)> tracePartialRead =
+        [&](const unsigned startBlockIndex)
+        {
+            bool isPass(true);
+            std::string readFrag;
+            for (unsigned blockIndex(startBlockIndex); blockIndex<blockWidth; ++blockIndex)
+            {
+                const snp_pos_info& pi(*spi[blockIndex]);
+                while (true)
+                {
+                    const base_call& bc(pi.calls.at(callOffset[blockIndex]));
+                    if ((! bc.isFirstBaseCallFromMatchSeg) || (blockIndex == startBlockIndex)) break;
+                    tracePartialRead(blockIndex);
+                }
+                const base_call& bc(pi.calls.at(callOffset[blockIndex]));
+                // this represents the 'ordinary' advance of callOffset for a non-interrupted read segment:
+                callOffset[blockIndex]++;
+                if (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth))
+                {
+                    isPass=false;
+                    break;
+                }
+                if (bc.is_call_filter) isPass=false;
+                readFrag += id_to_base(bc.base_id);
+            }
+            return std::make_pair(isPass,readFrag);
+        };
+
     // analyze as virtual reads -- to do so treat the first pileup column as a privileged reference point:
     const snp_pos_info& beginPi(*spi[0]);
     const unsigned n_calls(beginPi.calls.size());
     for (unsigned callIndex(0); callIndex<n_calls; ++callIndex)
     {
-        std::string sub_str;
-        bool isPass(true);
-        for (unsigned blockIndex(0); blockIndex<blockWidth; blockIndex++)
-        {
-            const snp_pos_info& pi(*spi[blockIndex]);
-            while (true)
-            {
-                const base_call& bc(pi.calls[callIndex+callOffset[blockIndex]]);
-                if (bc.isLastBaseCallFromMatchSeg)
-                {
-                    for (unsigned blockIndex2(blockIndex+1); blockIndex2<blockWidth; ++blockIndex2)
-                    {
-                        callOffset[blockIndex2]--;
-                    }
-                }
-                if (bc.isFirstBaseCallFromMatchSeg && (blockIndex != 0))
-                {
-                    for (unsigned blockIndex2(blockIndex); blockIndex2<blockWidth; ++blockIndex2)
-                    {
-                        callOffset[blockIndex2]++;
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-            const base_call& bc(pi.calls.at(callIndex+callOffset[blockIndex]));
-            if (bc.is_call_filter)
-            {
-                isPass=false;
-            }
-            if (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth))
-            {
-                isPass=false;
-                break;
-            }
-            sub_str += id_to_base(bc.base_id);
-        }
+        std::pair<bool,std::string> result = tracePartialRead(0);
 #ifdef DEBUG_CODON
         log_os << __FUNCTION__ << ": callOffset:";
         for (const auto off : callOffset)
@@ -349,12 +349,12 @@ collect_pileup_evidence()
             log_os << "\t" << off;
         }
         log_os << "\n";
-        log_os << __FUNCTION__ << ": callIndex, isPass, substr: " << callIndex << " " << isPass << " " << sub_str << "\n";
+        log_os << __FUNCTION__ << ": callIndex, isPass, substr: " << callIndex << " " << result.first << " " << result.second << "\n";
 #endif
 
-        if (! isPass) continue;
+        if (! result.first) continue;
 
-        observations[sub_str]++;
+        observations[result.second]++;
         total_reads++;
     }
 

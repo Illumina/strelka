@@ -36,9 +36,9 @@ private:
         return NAME;
     }
 
-    void usage(const char* xmessage = nullptr) const;
+    void usage(const char* xmessage = nullptr) const override;
 
-    void doc() const {}
+    void doc() const override {}
 
     snoise_info() {}
     virtual ~snoise_info() {}
