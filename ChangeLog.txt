@@ -1,4 +1,3 @@
-v2.3.10
 - STARKA-234: make --exome flag affect indel-error-model, scoring-model and indel-ref-error-factor arguments to starling
 - WGSW-357 ensure that ploidy conflict filter is consistently applied for all
 records with no coverage/unknown genotype
