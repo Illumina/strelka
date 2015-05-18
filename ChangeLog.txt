@@ -1,4 +1,6 @@
 - STARKA-234: make --exome flag affect indel-error-model, scoring-model and indel-ref-error-factor arguments to starling
+- WGSW-357 ensure that ploidy conflict filter is consistently applied for all
+records with no coverage/unknown genotype
 v2.3.9
 - STARKA-231 correct codon phasing for insertions/small-fragments within the
 phasing range

@@ -161,8 +161,12 @@ add_site(
     }
     else if (si.dgt.is_noploid())
     {
-        si.smod.set_filter(VCF_FILTERS::PloidyConflict);
+        if (! si.is_print_unknowngt())
+        {
+            si.smod.set_filter(VCF_FILTERS::PloidyConflict);
+        }
     }
+
 
     if (_opt.do_codon_phasing
         && (Codon_phaser::is_phasable_site(si) || _codon_phaser.is_in_block()))
@@ -193,7 +197,7 @@ skip_to_pos(const pos_t target_pos)
         add_site_internal(si);
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
-        if (0 != _indel_buffer.size()) continue;
+        if (! _indel_buffer.empty()) continue;
 
         if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
         {
@@ -236,7 +240,7 @@ add_site_internal(
     }
 
     // resolve any current or previous indels before queuing site:
-    if (0 != _indel_buffer.size())
+    if (! _indel_buffer.empty())
     {
         if (si.pos>=_indel_end_pos)
         {
@@ -291,7 +295,7 @@ add_indel(const pos_t pos,
     // either we don't overlap it or we get homRef for the forced-genotyped indel,
     // in which case we need to clear it first -- note this definition
     // of overlap deliberately picks up adjacent deletions:
-    if ((0 != _indel_buffer.size()) && ((pos>_indel_end_pos) || is_no_indel(dindel)))
+    if ((! _indel_buffer.empty()) && ((pos>_indel_end_pos) || is_no_indel(dindel)))
     {
         process_overlaps();
     }
@@ -689,7 +693,7 @@ modify_indel_overlap_site(
 
     // if overlapping indel has any filters, mark as site conflict
     // (note that we formerly had the site inherit indel filters, but
-    // this interacts poorly with VQSR
+    // this interacts poorly with VQSR)
     if (! ii.imod.filters.none())
     {
         si.smod.set_filter(VCF_FILTERS::SiteConflict);
@@ -729,6 +733,10 @@ modify_indel_overlap_site(
         {
             si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
             si.smod.is_zero_ploidy=true;
+            if (si.dgt.is_noploid())
+            {
+                si.smod.unset_filter(VCF_FILTERS::PloidyConflict);
+            }
         }
         else
         {
@@ -737,7 +745,7 @@ modify_indel_overlap_site(
     }
     else if (ploidy!=2)
     {
-        assert(0);
+        assert(false && "Unexpected ploidy value");
     }
 
     // after all those changes we need to rerun the site filters:
@@ -1012,22 +1020,22 @@ process_overlaps()
     //    *_osptr << "INDEL_SIZE: " << _indel_buffer.size() << "\n";
 
     // process sites to be consistent with overlapping indels:
-    for (auto it = _site_buffer.begin(); it != _site_buffer.end(); ++it)
+    for (site_info& si : _site_buffer)
     {
 #ifdef DEBUG_GVCF
         log_os << "CHIRP: indel overlapping site: " << it->pos << "\n";
 #endif
-        const pos_t offset(it->pos-_indel_buffer[0].pos);
+        const pos_t offset(si.pos-_indel_buffer[0].pos);
         assert(offset>=0);
         if (! is_conflict_print)
         {
             modify_indel_overlap_site( _indel_buffer[0],
                                        _indel_buffer[0].get_ploidy(offset),
-                                       *it, _CM);
+                                       si, _CM);
         }
         else
         {
-            modify_indel_conflict_site(*it);
+            modify_indel_conflict_site(si);
         }
     }
 
