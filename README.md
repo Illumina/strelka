@@ -120,3 +120,21 @@ http://gnuwin32.sourceforge.net/packages/zlib.htm
 
 This library will enable building for 32 bit only.
 
+Production Build Environment
+----------------------------
+
+We are required to maintain compatibility with Centos 5.x, which requires building
+on that platform. To make this easier, the process has been moved to Docker.
+
+The docker image has been saved to the public registry. If you need to recreate
+it, perform the following steps:
+
+`
+cd env
+sudo docker build -t YOURNEWTAGNAME .
+`
+
+To do a build:
+`
+sudo docker.io run  -v $WORKSPACE:/src -v $install_path:/install -t jduddy/starka:gcc-4.9.2 /src/env/build_release.sh 
+`
