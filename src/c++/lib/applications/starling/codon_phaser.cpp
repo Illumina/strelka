@@ -282,6 +282,12 @@ make_record()
     this->create_phased_record();
 }
 
+void
+Codon_phaser::collect_records()
+{
+    if (is_in_block() && _buffer.size() > 1)
+        make_record();
+}
 
 
 void

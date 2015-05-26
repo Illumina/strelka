@@ -79,6 +79,8 @@ struct Codon_phaser
         return _buffer;
     }
 
+    void collect_records();
+
 private:
     void make_record();                 // make phased record
 

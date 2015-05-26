@@ -214,6 +214,7 @@ void
 gvcf_aggregator::
 output_phased_blocked()
 {
+    _codon_phaser.collect_records();
     for (const site_info& si : _codon_phaser.buffer())
     {
         this->skip_to_pos(si.pos);
