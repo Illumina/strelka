@@ -285,7 +285,7 @@ make_record()
 void
 Codon_phaser::collect_records()
 {
-    if (is_in_block() && _buffer.size() > 1)
+    if (is_in_block() && het_count > 1)
         make_record();
 }
 
