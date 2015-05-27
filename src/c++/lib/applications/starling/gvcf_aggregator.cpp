@@ -174,7 +174,7 @@ add_site(
         const bool emptyBuffer = _codon_phaser.add_site(si);
         if ((!_codon_phaser.is_in_block()) || emptyBuffer)
         {
-            output_phased_blocked();
+            output_phased_block();
         }
     }
     else
@@ -212,7 +212,7 @@ skip_to_pos(const pos_t target_pos)
 
 void
 gvcf_aggregator::
-output_phased_blocked()
+output_phased_block()
 {
     _codon_phaser.collect_records();
     for (const site_info& si : _codon_phaser.buffer())
@@ -288,7 +288,7 @@ add_indel(const pos_t pos,
 
     // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
     if (_opt.do_codon_phasing && this->_codon_phaser.is_in_block())
-        this->output_phased_blocked();
+        this->output_phased_block();
 
     skip_to_pos(pos);
 

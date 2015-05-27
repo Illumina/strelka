@@ -92,7 +92,7 @@ private:
         return _empty_site;
     }
 
-    void output_phased_blocked();
+    void output_phased_block();
 
     const starling_options& _opt;
     const known_pos_range _report_range;
