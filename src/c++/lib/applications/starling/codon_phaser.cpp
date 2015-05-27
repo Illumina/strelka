@@ -96,7 +96,8 @@ void
 Codon_phaser::construct_reference()
 {
     this->reference = "";
-    for (unsigned i=0; i<this->_buffer.size()-(this->opt.phasing_window-1); i++)
+    unsigned limit = get_block_length(); // _buffer.size() < (unsigned)opt.phasing_window ? _buffer.size() : _buffer.size()-((unsigned)opt.phasing_window-1);
+    for (unsigned i=0; i< limit; i++)
         this->reference += _buffer.at(i).ref;
 #ifdef DEBUG_CODON
     log_os << __FUNCTION__ << ": reference " << reference << "\n";

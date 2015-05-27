@@ -392,27 +392,26 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
 }
 
 
-#if 0
-Still can't turn on forcing the variants to flush when an indel is encoutered. Examples of doing this (< is before, > is after)
-1. Outputting 2 records (easy fix)
-615689,615690c615689,615690
-< chr1  22542339    .   C   A   79  PASS    SNVSB=-7.3;SNVHPOL=12   GT:GQ:GQX:DP:DPF:AD 0/1:112:27:15:5:8,7
-< chr1  22542340    .   C   A   69  PASS    SNVSB=-6.6;SNVHPOL=12   GT:GQ:GQX:DP:DPF:AD 0/1:102:25:15:4:9,6
----
-> chr1  22542339    .       CC,AA   69  PASS    SNVSB=-7.3;SNVHPOL=12   GT:GQ:GQX:DP:DPF:AD 1/2:102:25:14:6:0,8,6
-> chr1  22542339    .   C   .   .   LowGQX  END=22542340;BLOCKAVG_min30p3a  GT:GQX:DP:DPF   .:.:0:0
-2. 3-mer is not correctly handled (same as above?)
-< chr1  54334831    .   T   A   128 PASS    SNVSB=-18.8;SNVHPOL=3   GT:GQ:GQX:DP:DPF:AD 0/1:161:41:26:3:13,13
-< chr1  54334832    .   C   .   .   PASS    .   GT:GQX:DP:DPF   0/0:72:25:2
-< chr1  54334833    .   T   A   141 PASS    SNVSB=-18.6;SNVHPOL=3   GT:GQ:GQX:DP:DPF:AD 0/1:139:45:23:3:10,13
----
-> chr1  54334831    .   T   ACA,TCT 128 PASS    SNVSB=-18.8;SNVHPOL=3   GT:GQ:GQX:DP:DPF:AD 1/2:139:41:22:7:0,12,10
-> chr1  54334832    .   C   .   .   LowGQX  END=54334833;BLOCKAVG_min30p3a  GT:GQX:DP:DPF   .:.:0:0
-3. Phasing conflict (this may actually be correct)
-< chr1  217200252   .   C   G   45  PASS    SNVSB=-6.6;SNVHPOL=3    GT:GQ:GQX:DP:DPF:AD 0/1:78:25:11:4:8,3
----
-> chr1  217200252   .   C   G   45  PhasingConflict SNVSB=-6.6;SNVHPOL=3    GT:GQ:GQX:DP:DPF:AD 0/1:78:25:11:4:8,3
-#endif
+//Still can't turn on forcing the variants to flush when an indel is encoutered.//Examples of doing this (< is before, > is after)
+//1. Outputting 2 records, problem with reference
+//615689,615690c615689,615690
+//< chr1  22542339    .   C   A   79  PASS    SNVSB=-7.3;SNVHPOL=12   GT:GQ:GQX:DP:DPF:AD 0/1:112:27:15:5:8,7
+//< chr1  22542340    .   C   A   69  PASS    SNVSB=-6.6;SNVHPOL=12   GT:GQ:GQX:DP:DPF:AD 0/1:102:25:15:4:9,6
+//---
+//> chr1  22542339    .       CC,AA   69  PASS    SNVSB=-7.3;SNVHPOL=12   GT:GQ:GQX:DP:DPF:AD 1/2:102:25:14:6:0,8,6
+//> chr1  22542339    .   C   .   .   LowGQX  END=22542340;BLOCKAVG_min30p3a  GT:GQX:DP:DPF   .:.:0:0
+// NOTE: construct_reference() seems to require a minimum of phasing_window+1 sites queued
+//2. 3-mer is not correctly handled (same as above?)
+//< chr1  54334831    .   T   A   128 PASS    SNVSB=-18.8;SNVHPOL=3   GT:GQ:GQX:DP:DPF:AD 0/1:161:41:26:3:13,13
+//< chr1  54334832    .   C   .   .   PASS    .   GT:GQX:DP:DPF   0/0:72:25:2
+//< chr1  54334833    .   T   A   141 PASS    SNVSB=-18.6;SNVHPOL=3   GT:GQ:GQX:DP:DPF:AD 0/1:139:45:23:3:10,13
+//---
+//> chr1  54334831    .   T   ACA,TCT 128 PASS    SNVSB=-18.8;SNVHPOL=3   GT:GQ:GQX:DP:DPF:AD 1/2:139:41:22:7:0,12,10
+//> chr1  54334832    .   C   .   .   LowGQX  END=54334833;BLOCKAVG_min30p3a  GT:GQX:DP:DPF   .:.:0:0
+//3. Phasing conflict (this may actually be correct)
+//< chr1  217200252   .   C   G   45  PASS    SNVSB=-6.6;SNVHPOL=3    GT:GQ:GQX:DP:DPF:AD 0/1:78:25:11:4:8,3
+//---
+//> chr1  217200252   .   C   G   45  PhasingConflict SNVSB=-6.6;SNVHPOL=3    GT:GQ:GQX:DP:DPF:AD 0/1:78:25:11:4:8,3
 
 
 BOOST_AUTO_TEST_SUITE_END()
