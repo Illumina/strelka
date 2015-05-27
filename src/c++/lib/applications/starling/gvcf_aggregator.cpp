@@ -214,7 +214,6 @@ void
 gvcf_aggregator::
 output_phased_block()
 {
-    _codon_phaser.collect_records();
     for (const site_info& si : _codon_phaser.buffer())
     {
         this->skip_to_pos(si.pos);
@@ -288,7 +287,11 @@ add_indel(const pos_t pos,
 
     // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
     if (_opt.do_codon_phasing && this->_codon_phaser.is_in_block())
-        this->output_phased_block();
+	{
+        // the phaser may have some accumulated SNPs - force them to be phased
+        _codon_phaser.collect_records();
+        output_phased_block();
+	}
 
     skip_to_pos(pos);
 
