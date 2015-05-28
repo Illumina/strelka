@@ -115,7 +115,7 @@ gvcf_aggregator(
     , _head_pos(dopt.report_range.begin_pos)
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
-    , _codon_phaser(opt, bc_buff)
+    , _codon_phaser(opt, bc_buff, ref)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);

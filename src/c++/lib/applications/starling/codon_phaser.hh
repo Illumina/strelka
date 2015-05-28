@@ -39,9 +39,11 @@ struct Codon_phaser
 {
     Codon_phaser(
         const starling_base_options& init_opt,
-        const pos_basecall_buffer& init_bc_buff)
-        : opt(init_opt),
-          bc_buff(init_bc_buff)
+        const pos_basecall_buffer& init_bc_buff,
+        const reference_contig_segment& init_ref)
+        : opt(init_opt)
+        , bc_buff(init_bc_buff)
+        , ref(init_ref)
     {
         clear();
     }
@@ -95,6 +97,7 @@ private:
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
     const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
+    const reference_contig_segment& ref;
 
     int block_start,block_end;          // position of the first and last added het site to block
     int het_count;                      // total hets observed in buffer

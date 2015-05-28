@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE( simple_3mer )
     starling_base_options opt;
     opt.phasing_window = 3;
 
-    Codon_phaser phaser(opt, bc_buff);
+    Codon_phaser phaser(opt, bc_buff, rcs);
 
     std::string phased_variant;
 
@@ -87,10 +87,6 @@ BOOST_AUTO_TEST_CASE( simple_3mer )
             if ((!phaser.is_in_block()) || emptyBuffer)
             {
                 phased_variant = phaser.buffer()[0].phased_alt;
-                for (auto v : phaser.buffer())
-                {
-                    std::cerr << "JED:" << v.pos << std::endl;
-                }
                 phaser.clear();
             }
         }
@@ -118,7 +114,7 @@ BOOST_AUTO_TEST_CASE( two_adjacent_3mers )
     starling_base_options opt;
     opt.phasing_window = 3;
 
-    Codon_phaser phaser(opt, bc_buff);
+    Codon_phaser phaser(opt, bc_buff, rcs);
 
     std::string phased_variant;
 
@@ -171,7 +167,7 @@ BOOST_AUTO_TEST_CASE( handles_snps_at_start )
     starling_base_options opt;
     opt.phasing_window = 3;
 
-    Codon_phaser phaser(opt, bc_buff);
+    Codon_phaser phaser(opt, bc_buff, rcs);
 
     std::string phased_variant;
 
@@ -225,7 +221,7 @@ BOOST_AUTO_TEST_CASE( respects_phasing_window )
     starling_base_options opt;
     opt.phasing_window = 5;
 
-    Codon_phaser phaser(opt, bc_buff);
+    Codon_phaser phaser(opt, bc_buff, rcs);
 
     std::string phased_variant;
 
@@ -279,7 +275,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
     starling_base_options opt;
     opt.phasing_window = 3;
 
-    Codon_phaser phaser(opt, bc_buff);
+    Codon_phaser phaser(opt, bc_buff, rcs);
     int site_output_count = 0;
 
     for (int i = 0; r1[i]; i++)
@@ -352,7 +348,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     starling_base_options opt;
     opt.phasing_window = 3;
 
-    Codon_phaser phaser(opt, bc_buff);
+    Codon_phaser phaser(opt, bc_buff, rcs);
 
 
     for (int i = 0; r1[i]; i++)

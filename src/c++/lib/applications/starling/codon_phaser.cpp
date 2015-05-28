@@ -95,10 +95,15 @@ add_site(const site_info& si)
 void
 Codon_phaser::construct_reference()
 {
-    this->reference = "";
-    unsigned limit = get_block_length(); // _buffer.size() < (unsigned)opt.phasing_window ? _buffer.size() : _buffer.size()-((unsigned)opt.phasing_window-1);
-    for (unsigned i=0; i< limit; i++)
-        this->reference += _buffer.at(i).ref;
+    reference = "";
+    auto start = _buffer.begin()->pos;
+    auto end = _buffer.rbegin()->pos;
+    auto len = std::min(get_block_length(), (unsigned)(end-start+1));
+    // TODO
+    // abort on discontinuity - can't phase across it
+    // check to see how we handle overlapping SNPs
+    ref.get_substring(start, len, reference);
+
 #ifdef DEBUG_CODON
     log_os << __FUNCTION__ << ": reference " << reference << "\n";
 #endif
