@@ -129,6 +129,8 @@ create_phased_record()
 
     assert(_buffer.size()>0);
 
+
+
     //Decide if we accept the novel alleles, very hacky criteria for now
     //at least 80% of the reads have to support a diploid model
     //TODO unphased genotype corresponds to as many phased genotypes as there are permutations of
@@ -140,6 +142,10 @@ create_phased_record()
     std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
     for (auto& obs : observations)
     {
+#ifdef DEBUG_CODON
+        log_os << "obs:" << obs.first << "(" << obs.second << ")" << std::endl;;
+#endif
+
         if (obs.second>max_alleles[0].second)
         {
             max_alleles[1]  = max_alleles[0];

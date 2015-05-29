@@ -25,18 +25,6 @@ static void insert_read(const char* read, pos_t position,
 
 }
 
-static DIGT::index_t gt_for_base(char base)
-{
-    static std::map<char, DIGT::index_t> gt =
-    {
-        { 'A', DIGT::AA },
-        { 'C', DIGT::CC },
-        { 'G', DIGT::GG },
-        { 'T', DIGT::TT }
-    };
-    return gt[base];
-}
-
 BOOST_AUTO_TEST_SUITE( codon_phaser )
 
 // positive tests
@@ -72,15 +60,11 @@ BOOST_AUTO_TEST_CASE( simple_3mer )
         si.smod.is_covered = si.smod.is_used_covered = true;
         si.dgt.ref_gt = base_to_id(si.ref);
 
-        if (r1[i] != r2[i])
-        {
-            si.dgt.is_snp = true;
-            si.smod.max_gt = DIGT::AG; // TODO: fix this, but doesn't seem to impact results
-        }
-        else
-        {
-            si.smod.max_gt = gt_for_base(r1[i]);
-        }
+        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si.dgt.is_snp = (r1[i] != r2[i]);
+
+
+
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
             bool emptyBuffer = phaser.add_site(si);
@@ -126,15 +110,9 @@ BOOST_AUTO_TEST_CASE( two_adjacent_3mers )
         si.smod.is_covered = si.smod.is_used_covered = true;
         si.dgt.ref_gt = base_to_id(si.ref);
 
-        if (r1[i] != r2[i])
-        {
-            si.dgt.is_snp = true;
-            si.smod.max_gt = DIGT::AG; // TODO: fix this, but doesn't seem to impact results
-        }
-        else
-        {
-            si.smod.max_gt = gt_for_base(r1[i]);
-        }
+        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si.dgt.is_snp = (r1[i] != r2[i]);
+
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
             const bool emptyBuffer = phaser.add_site(si);
@@ -179,15 +157,9 @@ BOOST_AUTO_TEST_CASE( handles_snps_at_start )
         si.smod.is_covered = si.smod.is_used_covered = true;
         si.dgt.ref_gt = base_to_id(si.ref);
 
-        if (r1[i] != r2[i])
-        {
-            si.dgt.is_snp = true;
-            si.smod.max_gt = DIGT::AG; // TODO: fix this, but doesn't seem to impact results
-        }
-        else
-        {
-            si.smod.max_gt = gt_for_base(r1[i]);
-        }
+        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si.dgt.is_snp = (r1[i] != r2[i]);
+
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
             const bool emptyBuffer = phaser.add_site(si);
@@ -233,15 +205,9 @@ BOOST_AUTO_TEST_CASE( respects_phasing_window )
         si.smod.is_covered = si.smod.is_used_covered = true;
         si.dgt.ref_gt = base_to_id(si.ref);
 
-        if (r1[i] != r2[i])
-        {
-            si.dgt.is_snp = true;
-            si.smod.max_gt = DIGT::AG; // TODO: fix this, but doesn't seem to impact results
-        }
-        else
-        {
-            si.smod.max_gt = gt_for_base(r1[i]);
-        }
+        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si.dgt.is_snp = (r1[i] != r2[i]);
+
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
             const bool emptyBuffer = phaser.add_site(si);
@@ -253,6 +219,53 @@ BOOST_AUTO_TEST_CASE( respects_phasing_window )
         }
     }
     BOOST_CHECK_EQUAL ("AGAACGGAG", phased_variant);
+}
+
+BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps)
+{
+    reference_contig_segment rcs;
+    rcs.seq() = "ACGTACGTACGT";
+    pos_basecall_buffer bc_buff(rcs);
+
+    auto r1 = "ACATGCGTAC";
+    auto r2 = "ACCTCCGTAC";
+    pos_t read_pos = 0;
+
+    // add 2 haplotypes of reads
+    for (int i = 0; i < 10; i++)
+        insert_read(r1, read_pos, bc_buff);
+    for (int i = 0; i < 10; i++)
+        insert_read(r2, read_pos, bc_buff);
+
+    starling_base_options opt;
+    opt.phasing_window = 3;
+
+    Codon_phaser phaser(opt, bc_buff, rcs);
+
+    std::string phased_variant;
+
+    for (int i = 0; r1[i]; i++)
+    {
+        site_info si;
+        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
+        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
+        si.smod.is_covered = si.smod.is_used_covered = true;
+        si.dgt.ref_gt = base_to_id(si.ref);
+
+        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si.dgt.is_snp = si.smod.max_gt >= N_BASE;
+
+        if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
+        {
+            bool emptyBuffer = phaser.add_site(si);
+            if ((!phaser.is_in_block()) || emptyBuffer)
+            {
+                phased_variant = phaser.buffer()[0].phased_alt;
+                phaser.clear();
+            }
+        }
+    }
+    BOOST_CHECK_EQUAL("ATG,CTC", phased_variant);
 }
 
 // negative tests
@@ -287,15 +300,9 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
         si.smod.gq = si.dgt.genome.snp_qphred = si.smod.Qscore = 40;
         si.dgt.ref_gt = base_to_id(si.ref);
 
-        if (r1[i] != r2[i])
-        {
-            si.dgt.is_snp = true;
-            si.smod.max_gt = DIGT::AG; // TODO: fix this, but doesn't seem to impact results
-        }
-        else
-        {
-            si.smod.max_gt = gt_for_base(r1[i]);
-        }
+        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si.dgt.is_snp = (r1[i] != r2[i]);
+
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
             const bool emptyBuffer = phaser.add_site(si);
@@ -360,15 +367,9 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         si.smod.gq = si.dgt.genome.snp_qphred = si.smod.Qscore = 40;
         si.dgt.ref_gt = base_to_id(si.ref);
 
-        if (r1[i] != 'N' && r1[i] != r2[i])
-        {
-            si.dgt.is_snp = true;
-            si.smod.max_gt = DIGT::AG; // TODO: fix this, but doesn't seem to impact results
-        }
-        else
-        {
-            si.smod.max_gt = gt_for_base(r1[i]);
-        }
+        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si.dgt.is_snp = (r1[i] != r2[i]);
+
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
             const bool emptyBuffer = phaser.add_site(si);
@@ -388,27 +389,9 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
 }
 
 
-//Still can't turn on forcing the variants to flush when an indel is encoutered.//Examples of doing this (< is before, > is after)
-//1. Outputting 2 records, problem with reference
-//615689,615690c615689,615690
-//< chr1  22542339    .   C   A   79  PASS    SNVSB=-7.3;SNVHPOL=12   GT:GQ:GQX:DP:DPF:AD 0/1:112:27:15:5:8,7
-//< chr1  22542340    .   C   A   69  PASS    SNVSB=-6.6;SNVHPOL=12   GT:GQ:GQX:DP:DPF:AD 0/1:102:25:15:4:9,6
-//---
-//> chr1  22542339    .       CC,AA   69  PASS    SNVSB=-7.3;SNVHPOL=12   GT:GQ:GQX:DP:DPF:AD 1/2:102:25:14:6:0,8,6
-//> chr1  22542339    .   C   .   .   LowGQX  END=22542340;BLOCKAVG_min30p3a  GT:GQX:DP:DPF   .:.:0:0
-// NOTE: construct_reference() seems to require a minimum of phasing_window+1 sites queued
-//2. 3-mer is not correctly handled (same as above?)
-//< chr1  54334831    .   T   A   128 PASS    SNVSB=-18.8;SNVHPOL=3   GT:GQ:GQX:DP:DPF:AD 0/1:161:41:26:3:13,13
-//< chr1  54334832    .   C   .   .   PASS    .   GT:GQX:DP:DPF   0/0:72:25:2
-//< chr1  54334833    .   T   A   141 PASS    SNVSB=-18.6;SNVHPOL=3   GT:GQ:GQX:DP:DPF:AD 0/1:139:45:23:3:10,13
-//---
-//> chr1  54334831    .   T   ACA,TCT 128 PASS    SNVSB=-18.8;SNVHPOL=3   GT:GQ:GQX:DP:DPF:AD 1/2:139:41:22:7:0,12,10
-//> chr1  54334832    .   C   .   .   LowGQX  END=54334833;BLOCKAVG_min30p3a  GT:GQX:DP:DPF   .:.:0:0
-//3. Phasing conflict (this may actually be correct)
-//< chr1  217200252   .   C   G   45  PASS    SNVSB=-6.6;SNVHPOL=3    GT:GQ:GQX:DP:DPF:AD 0/1:78:25:11:4:8,3
-//---
-//> chr1  217200252   .   C   G   45  PhasingConflict SNVSB=-6.6;SNVHPOL=3    GT:GQ:GQX:DP:DPF:AD 0/1:78:25:11:4:8,3
-
+// TODO: write tests for:
+// allele imbalanced phasing
+// nonsense phasing (i.e. the called SNPs are not in the top most common alleles)
 
 BOOST_AUTO_TEST_SUITE_END()
 
