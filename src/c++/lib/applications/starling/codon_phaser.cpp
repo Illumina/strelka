@@ -99,9 +99,7 @@ Codon_phaser::construct_reference()
     auto start = _buffer.begin()->pos;
     auto end = _buffer.rbegin()->pos;
     auto len = std::min(get_block_length(), (unsigned)(end-start+1));
-    // TODO
-    // abort on discontinuity - can't phase across it
-    // check to see how we handle overlapping SNPs
+
     ref.get_substring(start, len, reference);
 
 #ifdef DEBUG_CODON

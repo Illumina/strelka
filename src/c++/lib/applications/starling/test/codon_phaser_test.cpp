@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( simple_3mer )
         si.dgt.ref_gt = base_to_id(si.ref);
 
         si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = (r1[i] != r2[i]);
+        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
 
 
 
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE( two_adjacent_3mers )
         si.dgt.ref_gt = base_to_id(si.ref);
 
         si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = (r1[i] != r2[i]);
+        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
 
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE( handles_snps_at_start )
         si.dgt.ref_gt = base_to_id(si.ref);
 
         si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = (r1[i] != r2[i]);
+        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
 
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE( respects_phasing_window )
         si.dgt.ref_gt = base_to_id(si.ref);
 
         si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = (r1[i] != r2[i]);
+        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
 
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps)
         si.dgt.ref_gt = base_to_id(si.ref);
 
         si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.smod.max_gt >= N_BASE;
+        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
 
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
@@ -267,6 +267,55 @@ BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps)
     }
     BOOST_CHECK_EQUAL("ATG,CTC", phased_variant);
 }
+
+BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps_different_size)
+{
+    std::cerr << "*********************************" << std::endl;
+    reference_contig_segment rcs;
+    rcs.seq() = "ACGTACGTACGT";
+    pos_basecall_buffer bc_buff(rcs);
+
+    auto r1 = "ACGAAAGTAC";
+    auto r2 = "ACATCCGTAC";
+    pos_t read_pos = 0;
+
+    // add 2 haplotypes of reads
+    for (int i = 0; i < 10; i++)
+        insert_read(r1, read_pos, bc_buff);
+    for (int i = 0; i < 10; i++)
+        insert_read(r2, read_pos, bc_buff);
+
+    starling_base_options opt;
+    opt.phasing_window = 5;
+
+    Codon_phaser phaser(opt, bc_buff, rcs);
+
+    std::string phased_variant;
+
+    for (int i = 0; r1[i]; i++)
+    {
+        site_info si;
+        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
+        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
+        si.smod.is_covered = si.smod.is_used_covered = true;
+        si.dgt.ref_gt = base_to_id(si.ref);
+
+        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+
+        if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
+        {
+            bool emptyBuffer = phaser.add_site(si);
+            if ((!phaser.is_in_block()) || emptyBuffer)
+            {
+                phased_variant = phaser.buffer()[0].phased_alt;
+                phaser.clear();
+            }
+        }
+    }
+    BOOST_CHECK_EQUAL("ATCC,GAAA", phased_variant);
+}
+
 
 // negative tests
 BOOST_AUTO_TEST_CASE( just_one_snp )
@@ -301,7 +350,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
         si.dgt.ref_gt = base_to_id(si.ref);
 
         si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = (r1[i] != r2[i]);
+        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
 
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
@@ -368,7 +417,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         si.dgt.ref_gt = base_to_id(si.ref);
 
         si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = (r1[i] != r2[i]);
+        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
 
         if (Codon_phaser::is_phasable_site(si) || phaser.is_in_block())
         {
