@@ -135,6 +135,13 @@ create_phased_record()
     //the observed alleles. Thus, for a given unphased genotyping G1, . . . ,Gn,
     //we need to to calculate probability of sampling a particular unphased genotype combinations
     //given a set of allele frequencies...
+    // TODO: PASSing SNPs are getting filtered during phasing for allele balance issues. Looks like it would benefit from a
+    // model-based approach.
+    // < chr8  70364286    .   G   A   32  PASS    SNVSB=-2.5;SNVHPOL=4    GT:GQ:GQX:DP:DPF:AD 0/1:65:21:15:5:12,3
+    // < chr8  70364287    .   A   G   11  PASS    SNVSB=-2.5;SNVHPOL=2    GT:GQ:GQX:DP:DPF:AD 0/1:44:18:16:3:14,2
+    //---
+    //> chr8  70364286    .   G   A   32  PhasingConflict SNVSB=-2.5;SNVHPOL=4    GT:GQ:GQX:DP:DPF:AD 0/1:65:21:15:5:12,3
+    //> chr8  70364287    .   A   G   11  PhasingConflict SNVSB=-2.5;SNVHPOL=2    GT:GQ:GQX:DP:DPF:AD 0/1:44:18:16:3:14,2
     typedef std::pair<std::string, int> allele_count_t;
     //static constexpr unsigned alleleCount(2);
     std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
@@ -198,6 +205,7 @@ create_phased_record()
 
         if (! phasing_inconsistent)
         {
+            //TODO: If we ever phase HOMALT, this logic needs to change
             assert(! max_alleles[0].first.empty());
             assert(max_alleles[0].first.size() == max_alleles[1].first.size());
             if (max_alleles[0].first.front() == max_alleles[1].first.front()) phasing_inconsistent=true;
