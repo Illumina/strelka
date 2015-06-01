@@ -58,7 +58,7 @@ struct Codon_phaser
     is_phasable_site(
         const site_info& si)
     {
-        return (si.dgt.is_snp && (si.is_het() || si.is_hetalt()));
+        return (si.dgt.is_snp && si.is_het());
     }
 
     // clear all object data
