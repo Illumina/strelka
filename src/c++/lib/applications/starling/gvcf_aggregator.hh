@@ -27,6 +27,8 @@
 #include <iosfwd>
 
 
+class variant_processor;
+
 ///
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
@@ -111,5 +113,7 @@ private:
     gvcf_compressor _gvcf_comp;
 
     Codon_phaser _codon_phaser;
+
+    std::unique_ptr<variant_processor> _processor;
 };
 

@@ -125,6 +125,10 @@ add_gvcf_filters(
     {
         write_vcf_filter(os,get_label(PloidyConflict),"Genotype call from variant caller not consistent with chromosome ploidy");
     }
+    if (!sopt.gvcf.targeted_regions_bedfile.empty())
+    {
+        write_vcf_filter(os,get_label(OffTarget),"Variant was found in a non-targeted region");
+    }
 }
 
 

@@ -17,6 +17,7 @@
 
 #include "gvcf_aggregator.hh"
 #include "gvcf_header.hh"
+#include "bedstreamprocessor.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/chrom_depth_map.hh"
 #include "blt_util/io_util.hh"
@@ -120,6 +121,9 @@ gvcf_aggregator(
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
 
+    if (!opt.gvcf.targeted_regions_bedfile.empty())
+        _processor.reset(new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, _chrom));
+
     if (! opt.gvcf.is_gvcf_output()) return;
 
     assert(nullptr != _osptr);
@@ -131,6 +135,7 @@ gvcf_aggregator(
     }
 
     add_site_modifiers(_empty_site, _empty_site.smod, _CM);
+
 }
 
 
@@ -146,6 +151,9 @@ gvcf_aggregator::
 add_site(
     site_info& si)
 {
+    if (_processor)
+        _processor->process(si);
+    // TODO: Move the rest of these into subclasses of variant_processor
     add_site_modifiers(si, si.smod, _CM);
 
     if (si.dgt.is_haploid())
@@ -310,6 +318,12 @@ add_indel(const pos_t pos,
         indel_info& ii(_indel_buffer.back());
         ii.imod.set_filter(VCF_FILTERS::PloidyConflict);
     }
+    // TODO: Move the rest of these into subclasses of variant_processor
+    if (_processor)
+        _processor->process(_indel_buffer.back());
+
+
+
 
     // clear the current homRef indel
     if (is_no_indel(dindel))
