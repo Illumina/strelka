@@ -116,15 +116,20 @@ gvcf_aggregator(
     , _head_pos(dopt.report_range.begin_pos)
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
-    , _codon_phaser(opt, bc_buff)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
 
+    if (opt.do_codon_phasing)
+    {
+        _codon_phaser.reset(new Codon_phaser(opt, bc_buff, *this));
+    }
+
     if (!opt.gvcf.targeted_regions_bedfile.empty())
-        _processor.reset(new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, _chrom));
+        _targeted_region_processor.reset(new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, _chrom));
 
     if (! opt.gvcf.is_gvcf_output()) return;
+
 
     assert(nullptr != _osptr);
     assert((nullptr !=_chrom) && (strlen(_chrom)>0));
@@ -151,8 +156,8 @@ gvcf_aggregator::
 add_site(
     site_info& si)
 {
-    if (_processor)
-        _processor->process(si);
+    if (_targeted_region_processor)
+        _targeted_region_processor->process(si);
     // TODO: Move the rest of these into subclasses of variant_processor
     add_site_modifiers(si, si.smod, _CM);
 
@@ -176,16 +181,7 @@ add_site(
     }
 
 
-    if (_opt.do_codon_phasing
-        && (Codon_phaser::is_phasable_site(si) || _codon_phaser.is_in_block()))
-    {
-        const bool emptyBuffer = _codon_phaser.add_site(si);
-        if ((!_codon_phaser.is_in_block()) || emptyBuffer)
-        {
-            output_phased_blocked();
-        }
-    }
-    else
+    if (!_codon_phaser || _codon_phaser->process(si))
     {
         skip_to_pos(si.pos);
         add_site_internal(si);
@@ -217,20 +213,19 @@ skip_to_pos(const pos_t target_pos)
 }
 
 
-
-void
-gvcf_aggregator::
-output_phased_blocked()
+bool gvcf_aggregator::process(site_info& si)
 {
-    for (const site_info& si : _codon_phaser.buffer())
-    {
-        this->skip_to_pos(si.pos);
-        add_site_internal(si);
-    }
-    _codon_phaser.clear();
+    this->skip_to_pos(si.pos);
+    add_site_internal(si);
+    return false;
 }
 
-
+bool gvcf_aggregator::process(indel_info& /*ii*/)
+{
+    // TODO - unused
+    assert(false && "Should not get here");
+    return false;
+}
 
 //Add sites to queue for writing to gVCF
 void
@@ -293,12 +288,17 @@ add_indel(const pos_t pos,
     // don't handle homozygous reference calls unless genotyping is forced
     if (is_no_indel(dindel) && !dindel.is_forced_output) return;
 
-    // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
-    if (_opt.do_codon_phasing && this->_codon_phaser.is_in_block())
-        this->output_phased_blocked();
+    indel_info ii;
+    ii.init(pos,ik,dindel,iri,isri);
 
+    // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
+    if (_codon_phaser && !_codon_phaser->process(ii))
+        return; // TODO: this will go away and never happens
+
+    // phase 3
     skip_to_pos(pos);
 
+    // phase 4
     // check if an indel is already buffered and
     // either we don't overlap it or we get homRef for the forced-genotyped indel,
     // in which case we need to clear it first -- note this definition
@@ -308,20 +308,21 @@ add_indel(const pos_t pos,
         process_overlaps();
     }
 
-    _indel_buffer.emplace_back();
-    _indel_buffer.back().init(pos,ik,dindel,iri,isri);
-    _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
-    
     // add filter for all indels in no-ploid regions:
     if (dindel.is_noploid())
     {
-        indel_info& ii(_indel_buffer.back());
         ii.imod.set_filter(VCF_FILTERS::PloidyConflict);
     }
     // TODO: Move the rest of these into subclasses of variant_processor
-    if (_processor)
-        _processor->process(_indel_buffer.back());
 
+    if (_targeted_region_processor)
+        _targeted_region_processor->process(ii);
+
+
+    _indel_buffer.push_back(ii);
+    _indel_end_pos=std::max(_indel_end_pos,ik.right_pos());
+
+    
 
 
 

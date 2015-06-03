@@ -31,6 +31,38 @@
 #endif
 
 
+bool Codon_phaser::process(site_info& si)
+{
+    if (is_phasable_site(si) || is_in_block())
+    {
+        auto emptyBuffer = add_site(si);
+        if ((!is_in_block()) || emptyBuffer)
+        {
+            output_buffer();
+        }
+        return false;
+    }
+    return true;
+}
+
+// the Codon phaser can't work across indels, so flush any in-progress phasing
+bool Codon_phaser::process(indel_info& /*ii*/)
+{
+    if (is_in_block())
+        output_buffer();
+    return true;
+}
+
+void Codon_phaser::output_buffer()
+{
+    for (site_info& si : _buffer)
+    {
+        _sink.process(si);
+    }
+    clear();
+}
+
+
 // Add a SNP site to the phasing buffer
 bool
 Codon_phaser::

@@ -27,13 +27,13 @@
 #include <iosfwd>
 
 
-class variant_processor;
+class variant_sink;
 
 ///
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
-struct gvcf_aggregator
+struct gvcf_aggregator : public variant_sink
 {
     gvcf_aggregator(
         const starling_options& opt,
@@ -49,7 +49,7 @@ struct gvcf_aggregator
     /// preserved until the block is completed
     bool is_phasing_block() const
     {
-        return _codon_phaser.is_in_block();
+        return _codon_phaser && _codon_phaser->is_in_block();
     }
 
     void add_site(site_info& si);
@@ -71,6 +71,10 @@ struct gvcf_aggregator
     {
         return _head_pos;
     }
+
+    // for variant_sink
+    bool process(site_info& si) override;
+    bool process(indel_info& ii) override;
 
 private:
     void add_site_internal(const site_info& si);
@@ -94,8 +98,6 @@ private:
         return _empty_site;
     }
 
-    void output_phased_blocked();
-
     const starling_options& _opt;
     const known_pos_range _report_range;
     const reference_contig_segment& _ref;
@@ -112,8 +114,8 @@ private:
     calibration_models _CM;
     gvcf_compressor _gvcf_comp;
 
-    Codon_phaser _codon_phaser;
+    std::unique_ptr<Codon_phaser> _codon_phaser;
 
-    std::unique_ptr<variant_processor> _processor;
+    std::unique_ptr<variant_sink> _targeted_region_processor;
 };
 

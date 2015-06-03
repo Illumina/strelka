@@ -43,7 +43,7 @@ void bed_stream_processor::load_next_region_if_needed(pos_t position)
         load_next_region();
 }
 
-void bed_stream_processor::process(site_info& si)
+bool bed_stream_processor::process(site_info& si)
 {
     load_next_region_if_needed(si.pos);
     if (_current_record == nullptr || si.pos < _current_record->begin || si.pos >= _current_record->end)
@@ -51,9 +51,10 @@ void bed_stream_processor::process(site_info& si)
         // TODO: make sure we don't apply to stuff we shouldn't? No coverage? I dunno
         si.smod.set_filter(VCF_FILTERS::OffTarget);
     }
+    return true;
 }
 
-void bed_stream_processor::process(indel_info& ii)
+bool bed_stream_processor::process(indel_info& ii)
 {
     load_next_region_if_needed(ii.pos);
     // include indels if they start in a targeted region
@@ -61,4 +62,5 @@ void bed_stream_processor::process(indel_info& ii)
     {
         ii.imod.set_filter(VCF_FILTERS::OffTarget);
     }
+    return true;
 }

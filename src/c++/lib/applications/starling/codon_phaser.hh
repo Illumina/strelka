@@ -21,6 +21,7 @@
 
 #include "gvcf_locus_info.hh"
 #include "starling_common/pos_basecall_buffer.hh"
+#include "variant_sink.hh"
 
 
 /// short-range phasing utility for het-snps
@@ -35,21 +36,19 @@
 ///       Will this be worth doing before we transition to a haplotype assembly model
 ///       for short-range phasing?
 ///
-struct Codon_phaser
+struct Codon_phaser : public variant_sink
 {
     Codon_phaser(
         const starling_base_options& init_opt,
-        const pos_basecall_buffer& init_bc_buff)
+        const pos_basecall_buffer& init_bc_buff,
+        variant_sink& destination)
         : opt(init_opt),
-          bc_buff(init_bc_buff)
+          bc_buff(init_bc_buff),
+          _sink(destination)
     {
         clear();
     }
 
-    /// add site to buffer
-    ///
-    /// \returns true when the buffer should be printed as a phased block
-    bool add_site(const site_info& si);
 
     static
     bool
@@ -71,15 +70,16 @@ struct Codon_phaser
         return block_start != -1;
     }
 
-    /// buffer of het snp calls
-    ///
-    const std::vector<site_info>&
-    buffer() const
-    {
-        return _buffer;
-    }
+        bool process(site_info& si) override;
+    bool process(indel_info& ii) override;
+
 
 private:
+    /// add site to buffer
+    ///
+    /// \returns true when the buffer should be printed as a phased block
+    bool add_site(const site_info& si);
+
     void make_record();                 // make phased record
 
     void collect_pileup_evidence();       // fill in allele counter
@@ -90,9 +90,14 @@ private:
         return (this->block_end-this->block_start+1);
     }
 
+    void output_buffer();
+
+
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
     const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
+
+    variant_sink& _sink;
 
     int block_start,block_end;          // position of the first and last added het site to block
     int het_count;                      // total hets observed in buffer

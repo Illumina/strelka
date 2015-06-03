@@ -14,12 +14,14 @@
 #include "gvcf_locus_info.hh"
 
 
-class variant_processor
+class variant_sink
 {
 public:
     // process the SNV.
-    virtual void process(site_info& si) = 0;
+    // return false if processing of this variant should cease
+    virtual bool process(site_info& si) = 0;
 
     // process the indel.
-    virtual void process(indel_info& ii) = 0;
+    // return false if processing of this variant should cease
+    virtual bool process(indel_info& ii) = 0;
 };
