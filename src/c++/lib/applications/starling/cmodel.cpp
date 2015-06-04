@@ -82,12 +82,12 @@ do_indel_rule_model(
 {
     if (cutoffs.at("GQX")>0)
     {
-        if (ii.imod.gqx<cutoffs.at("GQX")) imod.set_filter(VCF_FILTERS::LowGQX);
+        if (ii.imod().gqx<cutoffs.at("GQX")) imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
     if (cutoffs.at("DP")>0 && dopt.is_max_depth())
     {
-        if (ii.isri.depth > dopt.max_depth) imod.set_filter(VCF_FILTERS::HighDepth);
+        if (ii.isri().depth > dopt.max_depth) imod.set_filter(VCF_FILTERS::HighDepth);
     }
 }
 
@@ -338,14 +338,14 @@ score_indel_instance(
     {
         //TODO put into enum context
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
-        if (ii.iri.it==INDEL::DELETE)
+        if (ii.iri().it==INDEL::DELETE)
         {
             if (ii.is_hetalt())
                 var_case = CALIBRATION_MODEL::HetAltDel;
             else if (! ii.is_het())
                 var_case = CALIBRATION_MODEL::HomDel;
         }
-        else if (ii.iri.it==INDEL::INSERT)
+        else if (ii.iri().it==INDEL::INSERT)
         {
             if (ii.is_hetalt())
                 var_case = CALIBRATION_MODEL::HetAltIns;

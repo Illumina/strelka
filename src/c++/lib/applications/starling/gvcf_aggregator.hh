@@ -23,17 +23,17 @@
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
-
+#include "variant_pipe_stage.hh"
 #include <iosfwd>
 
 
-class variant_sink;
+
 
 ///
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
-struct gvcf_aggregator : public variant_sink
+struct gvcf_aggregator : public variant_pipe_stage
 {
     gvcf_aggregator(
         const starling_options& opt,
@@ -59,10 +59,11 @@ struct gvcf_aggregator : public variant_sink
                    const starling_indel_report_info& iri,
                    const starling_indel_sample_report_info& isri);
 
+    void process(site_info&) override;
+    void process(indel_info&) override;
     void flush()
     {
         skip_to_pos(_report_range.end_pos);
-        process_overlaps();
         write_block_site_record();
     }
 
@@ -72,20 +73,12 @@ struct gvcf_aggregator : public variant_sink
         return _head_pos;
     }
 
-    // for variant_sink
-    bool process(site_info& si) override;
-    bool process(indel_info& ii) override;
-
 private:
     void add_site_internal(const site_info& si);
     void write_block_site_record();
     void write_site_record(const site_info& si) const;
     void queue_site_record(const site_info& si);
-    void modify_single_indel_record();
-    void modify_overlap_indel_record();
-    void modify_conflict_indel_record();
-    void process_overlaps();
-    void write_indel_record(const unsigned write_index = 0);
+    void write_indel_record(const indel_info& ii);
 
     /// fill in missing sites
     void skip_to_pos(const pos_t target_pos);
@@ -104,9 +97,6 @@ private:
     std::ostream* _osptr;
     const char* _chrom;
     const gvcf_deriv_options _dopt;
-    pos_t _indel_end_pos;
-    std::vector<indel_info> _indel_buffer;
-    std::vector<site_info> _site_buffer;
     gvcf_block_site_record _block;
     pos_t _head_pos;
     site_info _empty_site;
@@ -114,8 +104,10 @@ private:
     calibration_models _CM;
     gvcf_compressor _gvcf_comp;
 
-    std::unique_ptr<Codon_phaser> _codon_phaser;
 
-    std::unique_ptr<variant_sink> _targeted_region_processor;
+    std::unique_ptr<Codon_phaser> _codon_phaser;
+    std::unique_ptr<variant_pipe_stage> _overlapper;
+    std::unique_ptr<variant_pipe_stage> _targeted_region_processor;
+    std::unique_ptr<variant_pipe_stage> _head;
 };
 

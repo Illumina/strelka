@@ -23,7 +23,9 @@ BOOST_AUTO_TEST_SUITE( bed_stream_processor_test )
 
 BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
 {
-    bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1");
+    variant_pipe_stage next;
+    bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1", next);
+
 
     site_info site;
 
@@ -52,30 +54,34 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
 
 BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 {
-    bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1");
+    variant_pipe_stage next;
+    bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1", next);
 
-    indel_info site;
+    indel_info site(20, indel_key(),
+         starling_diploid_indel_core(),
+         starling_indel_report_info(),
+         starling_indel_sample_report_info());
 
     site.pos = 50;
     bsp.process(site);
 
-    BOOST_REQUIRE(!site.imod.filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(!site.imod().filters.test(VCF_FILTERS::OffTarget));
     site.pos = 105;
-    site.imod.clear();
+    site.imod().clear();
 
     bsp.process(site);
-    BOOST_REQUIRE(site.imod.filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(site.imod().filters.test(VCF_FILTERS::OffTarget));
 
     site.pos = 150;
-    site.imod.clear();
+    site.imod().clear();
 
     bsp.process(site);
-    BOOST_REQUIRE(!site.imod.filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(!site.imod().filters.test(VCF_FILTERS::OffTarget));
     site.pos = 250;
-    site.imod.clear();
+    site.imod().clear();
 
     bsp.process(site);
-    BOOST_REQUIRE(site.imod.filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(site.imod().filters.test(VCF_FILTERS::OffTarget));
 
 }
 

@@ -7,16 +7,15 @@
 
 #pragma once
 #include "htsapi/bed_streamer.hh"
-#include "variant_sink.hh"
+#include "variant_pipe_stage.hh"
 
-class bed_stream_processor : public variant_sink
+class bed_stream_processor : public variant_pipe_stage
 {
 public:
-    bed_stream_processor(const std::string& bed_file_name, const std::string& region);
+    bed_stream_processor(const std::string& bed_file_name, const std::string& region, variant_pipe_stage& next_stage);
 
-    bool process(site_info& si) override;
-
-    bool process(indel_info& ii) override;
+    void process(site_info& si) override;
+    void process(indel_info& ii) override;
 private:
     bed_streamer _bed_streamer;
     const bed_record* _current_record;

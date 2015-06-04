@@ -31,7 +31,7 @@
 #endif
 
 
-bool Codon_phaser::process(site_info& si)
+void Codon_phaser::process(site_info& si)
 {
     if (is_phasable_site(si) || is_in_block())
     {
@@ -40,24 +40,30 @@ bool Codon_phaser::process(site_info& si)
         {
             output_buffer();
         }
-        return false;
+        return;
     }
-    return true;
+    _sink->process(si);
+}
+
+void Codon_phaser::flush()
+{
+    output_buffer();
+    _sink->flush();
 }
 
 // the Codon phaser can't work across indels, so flush any in-progress phasing
-bool Codon_phaser::process(indel_info& /*ii*/)
+void Codon_phaser::process(indel_info& ii)
 {
     if (is_in_block())
         output_buffer();
-    return true;
+    _sink->process(ii);
 }
 
 void Codon_phaser::output_buffer()
 {
     for (site_info& si : _buffer)
     {
-        _sink.process(si);
+        _sink->process(si);
     }
     clear();
 }

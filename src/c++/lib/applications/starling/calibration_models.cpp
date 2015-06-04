@@ -77,7 +77,7 @@ clasify_site(
 bool 
 calibration_models::can_use_model(const indel_info& ii) const
 {
-    return ((ii.iri.it == INDEL::INSERT || ii.iri.it == INDEL::DELETE) &&
+    return ((ii.iri().it == INDEL::INSERT || ii.iri().it == INDEL::DELETE) &&
 		(!is_default_model) && 
 		(ii.dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // VQSR does not handle homref sites properly
 }
@@ -131,14 +131,14 @@ clasify_indels(
     {
         indel_info& ii(*it);
         
-        set_indel_modifiers(ii, ii.imod);
+        set_indel_modifiers(ii, ii.imod());
         if ( use_model )
         {
-            get_model(model_name).score_indel_instance(ii, ii.imod);
+            get_model(model_name).score_indel_instance(ii, ii.imod());
         }
         else
         {
-            default_clasify_indel(ii, ii.imod);
+            default_clasify_indel(ii, ii.imod());
         }
     }
 }
@@ -194,20 +194,20 @@ default_clasify_indel(
 {
     if (this->opt.is_min_gqx)
     {
-        if (ii.imod.gqx<opt.min_gqx) imod.set_filter(VCF_FILTERS::LowGQX);
+        if (ii.imod().gqx<opt.min_gqx) imod.set_filter(VCF_FILTERS::LowGQX);
     }
 
     if (this->dopt.is_max_depth())
     {
-        if (ii.isri.depth > this->dopt.max_depth) imod.set_filter(VCF_FILTERS::HighDepth);
+        if (ii.isri().depth > this->dopt.max_depth) imod.set_filter(VCF_FILTERS::HighDepth);
     }
 
     if (this->opt.is_max_ref_rep)
     {
-        if (ii.iri.is_repeat_unit())
+        if (ii.iri().is_repeat_unit())
         {
-            if ((ii.iri.repeat_unit.size() <= 2) &&
-                (static_cast<int>(ii.iri.ref_repeat_count) > this->opt.max_ref_rep))
+            if ((ii.iri().repeat_unit.size() <= 2) &&
+                (static_cast<int>(ii.iri().ref_repeat_count) > this->opt.max_ref_rep))
             {
                 imod.set_filter(VCF_FILTERS::HighRefRep);
             }

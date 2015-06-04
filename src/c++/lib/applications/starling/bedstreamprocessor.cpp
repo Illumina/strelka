@@ -8,8 +8,9 @@
 #include "bedstreamprocessor.hh"
 
 
-bed_stream_processor::bed_stream_processor(const std::string& bed_file_name, const std::string& region)
-: _bed_streamer(bed_file_name.c_str(), region.c_str())
+bed_stream_processor::bed_stream_processor(const std::string& bed_file_name, const std::string& region, variant_pipe_stage& next_stage)
+: variant_pipe_stage(next_stage)
+, _bed_streamer(bed_file_name.c_str(), region.c_str())
 , _region(region)
 , _is_end(false)
 {
@@ -43,7 +44,7 @@ void bed_stream_processor::load_next_region_if_needed(pos_t position)
         load_next_region();
 }
 
-bool bed_stream_processor::process(site_info& si)
+void bed_stream_processor::process(site_info& si)
 {
     load_next_region_if_needed(si.pos);
     if (_current_record == nullptr || si.pos < _current_record->begin || si.pos >= _current_record->end)
@@ -51,16 +52,16 @@ bool bed_stream_processor::process(site_info& si)
         // TODO: make sure we don't apply to stuff we shouldn't? No coverage? I dunno
         si.smod.set_filter(VCF_FILTERS::OffTarget);
     }
-    return true;
+    _sink->process(si);
 }
 
-bool bed_stream_processor::process(indel_info& ii)
+void bed_stream_processor::process(indel_info& ii)
 {
     load_next_region_if_needed(ii.pos);
     // include indels if they start in a targeted region
     if (_current_record == nullptr || ii.pos < _current_record->begin || ii.pos >= _current_record->end)
     {
-        ii.imod.set_filter(VCF_FILTERS::OffTarget);
+        ii.imod().set_filter(VCF_FILTERS::OffTarget);
     }
-    return true;
+    _sink->process(ii);
 }

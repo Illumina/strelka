@@ -160,15 +160,12 @@ struct indel_modifiers : public shared_modifiers
     clear()
     {
         shared_modifiers::clear();
-        is_overlap=false;
         ploidy.clear();
+        cigar.clear();
         Qscore = -1;
     }
 
     ALIGNPATH::path_t cigar;
-
-    // used by scoring to choose the right model (hetalt)
-    bool is_overlap;
 
     /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
     std::vector<unsigned> ploidy;
@@ -256,8 +253,7 @@ std::ostream& operator<<(std::ostream& os,const site_modifiers& smod);
 
 struct indel_info
 {
-    void
-    init(const pos_t init_pos,
+    indel_info(const pos_t init_pos,
          const indel_key& init_ik,
          const starling_diploid_indel_core& init_dindel,
          const starling_indel_report_info& init_iri,
@@ -266,15 +262,17 @@ struct indel_info
         pos=(init_pos);
         ik=(init_ik);
         dindel=(init_dindel);
-        iri=(init_iri);
-        isri=(init_isri);
-        imod.clear();
+        _iri.push_back(init_iri);
+        _isri.push_back(init_isri);
+        _imod.emplace_back();
     }
+
+    void add_overlap(const reference_contig_segment& ref, indel_info& overlap);
 
     const char*
     get_gt() const
     {
-        if (imod.is_overlap)
+        if (this->is_hetalt())
         {
             return "1/2";
         }
@@ -282,7 +280,7 @@ struct indel_info
         {
             using namespace STAR_DIINDEL;
 
-            switch (imod.max_gt)
+            switch (imod().max_gt)
             {
             case NOINDEL:
                 return "0";
@@ -293,19 +291,19 @@ struct indel_info
                 return "X";
             }
         }
-        return STAR_DIINDEL::get_gt_label(imod.max_gt);
+        return STAR_DIINDEL::get_gt_label(imod().max_gt);
     }
 
     bool
     is_hetalt() const
     {
-        return (imod.is_overlap);
+        return (_imod.size() > 1);
     }
 
     bool
     is_het() const
     {
-        return (static_cast<int>(imod.max_gt)>1);
+        return (static_cast<int>(imod().max_gt)>1);
     }
 
     // the site ploidy within the indel at offset x
@@ -314,7 +312,7 @@ struct indel_info
     {
         if (dindel.is_noploid()) return 0;
 
-        if (! imod.is_overlap)
+        if (!is_hetalt())
         {
             using namespace STAR_DIINDEL;
             switch (dindel.max_gt)
@@ -330,11 +328,14 @@ struct indel_info
         }
         else
         {
-            assert(offset<imod.ploidy.size());
-            return imod.ploidy[offset];
+            assert(offset<imod().ploidy.size());
+            return imod().ploidy[offset];
         }
         return 2;
     }
+    void set_hap_cigar(
+        const unsigned lead=1,
+        const unsigned trail=0);
 
     std::map<std::string, double>
     get_indel_qscore_features(const double chrom_depth) const;
@@ -342,9 +343,21 @@ struct indel_info
     pos_t pos;
     indel_key ik;
     starling_diploid_indel_core dindel;
-    starling_indel_report_info iri;
-    starling_indel_sample_report_info isri;
-    indel_modifiers imod;
+    std::vector<starling_indel_report_info> _iri;
+    std::vector<starling_indel_sample_report_info> _isri;
+    std::vector<indel_modifiers> _imod;
+
+    indel_modifiers& imod() { return _imod.front(); }
+    const indel_modifiers& imod(unsigned idx=0) const { return _imod[idx]; }
+
+    //starling_indel_report_info& iri() { return _iri.front(); }
+    const starling_indel_report_info& iri(unsigned idx = 0) const { return _iri[idx]; }
+
+    //starling_indel_sample_report_info& isri() { return _isri.front(); }
+    const starling_indel_sample_report_info& isri(unsigned idx=0) const { return _isri[idx]; }
+
+
+
 };
 
 

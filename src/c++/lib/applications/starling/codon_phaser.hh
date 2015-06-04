@@ -21,7 +21,7 @@
 
 #include "gvcf_locus_info.hh"
 #include "starling_common/pos_basecall_buffer.hh"
-#include "variant_sink.hh"
+#include "variant_pipe_stage.hh"
 
 
 /// short-range phasing utility for het-snps
@@ -36,15 +36,15 @@
 ///       Will this be worth doing before we transition to a haplotype assembly model
 ///       for short-range phasing?
 ///
-struct Codon_phaser : public variant_sink
+struct Codon_phaser : public variant_pipe_stage
 {
     Codon_phaser(
         const starling_base_options& init_opt,
         const pos_basecall_buffer& init_bc_buff,
-        variant_sink& destination)
-        : opt(init_opt),
-          bc_buff(init_bc_buff),
-          _sink(destination)
+        variant_pipe_stage& destination)
+        : variant_pipe_stage(destination),
+          opt(init_opt),
+          bc_buff(init_bc_buff)
     {
         clear();
     }
@@ -70,8 +70,10 @@ struct Codon_phaser : public variant_sink
         return block_start != -1;
     }
 
-        bool process(site_info& si) override;
-    bool process(indel_info& ii) override;
+    void process(site_info& si) override;
+    void process(indel_info& ii) override;
+    void flush() override;
+
 
 
 private:
@@ -96,8 +98,6 @@ private:
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
     const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
-
-    variant_sink& _sink;
 
     int block_start,block_end;          // position of the first and last added het site to block
     int het_count;                      // total hets observed in buffer
