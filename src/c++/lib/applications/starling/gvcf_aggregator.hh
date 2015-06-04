@@ -58,14 +58,11 @@ struct gvcf_aggregator : public variant_pipe_stage
                    const starling_diploid_indel_core& dindel,
                    const starling_indel_report_info& iri,
                    const starling_indel_sample_report_info& isri);
+    void reset();
 
     void process(site_info&) override;
     void process(indel_info&) override;
-    void flush()
-    {
-        skip_to_pos(_report_range.end_pos);
-        write_block_site_record();
-    }
+    void flush();
 
     pos_t
     headPos() const

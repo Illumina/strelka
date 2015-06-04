@@ -155,6 +155,17 @@ void gvcf_aggregator::process(indel_info& ii)
     skip_to_pos(ii.pos);
     write_indel_record(ii);
 }
+void gvcf_aggregator::reset()
+{
+    _head->flush();
+}
+
+void gvcf_aggregator::flush()
+{
+    skip_to_pos(_report_range.end_pos);
+    write_block_site_record();
+}
+
 
 //Add sites to queue for writing to gVCF
 void

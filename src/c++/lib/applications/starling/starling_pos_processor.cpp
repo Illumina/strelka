@@ -141,7 +141,7 @@ reset()
 
     if (_opt.gvcf.is_gvcf_output())
     {
-        _gvcfer->flush();
+        _gvcfer->reset();
     }
 }
 

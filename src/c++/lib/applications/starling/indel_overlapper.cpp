@@ -112,13 +112,6 @@ is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer)
 
 
 
-static void write_indel_record(int)
-{
-    // TODO: stub
-}
-
-
-
 void indel_overlapper::process_overlaps()
 {
     if (0==_indel_buffer.size()) return;
@@ -180,14 +173,15 @@ void indel_overlapper::process_overlaps()
 
         if (is_indel && ((! is_site) || _indel_buffer[indel_index].pos <= _site_buffer[site_index].pos))
         {
-            // print indel:
-            write_indel_record(indel_index);
+            _sink->process(_indel_buffer[indel_index]);
             if (is_conflict)
             {
+                // emit each conflict record
                 indel_index++;
             }
             else
             {
+                // just emit the overlapped or single non-conflict record
                 indel_index=_indel_buffer.size();
             }
         }
