@@ -21,6 +21,8 @@ public:
 
     void flush() override;
 
+    bool has_buffered_indels() { return !_indel_buffer.empty(); }
+
 private:
     const calibration_models& _CM;
     const reference_contig_segment& _ref;

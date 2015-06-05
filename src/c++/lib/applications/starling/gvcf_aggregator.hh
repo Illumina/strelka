@@ -27,7 +27,7 @@
 #include <iosfwd>
 
 
-
+class indel_overlapper;
 
 ///
 /// Assembles all site and indel call information into a consistent set, blocks output
@@ -98,12 +98,14 @@ private:
     pos_t _head_pos;
     site_info _empty_site;
 
+    pos_t _last_hetalt_indel_end_pos;
+
     calibration_models _CM;
     gvcf_compressor _gvcf_comp;
 
 
     std::unique_ptr<Codon_phaser> _codon_phaser;
-    std::unique_ptr<variant_pipe_stage> _overlapper;
+    std::unique_ptr<indel_overlapper> _overlapper;
     std::unique_ptr<variant_pipe_stage> _targeted_region_processor;
     std::unique_ptr<variant_pipe_stage> _head;
 };

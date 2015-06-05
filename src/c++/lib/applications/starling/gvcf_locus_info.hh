@@ -260,7 +260,7 @@ struct indel_info
          const starling_indel_sample_report_info& init_isri)
     {
         pos=(init_pos);
-        ik=(init_ik);
+        _ik.push_back(init_ik);
         dindel=(init_dindel);
         _iri.push_back(init_iri);
         _isri.push_back(init_isri);
@@ -341,11 +341,15 @@ struct indel_info
     get_indel_qscore_features(const double chrom_depth) const;
 
     pos_t pos;
-    indel_key ik;
+    std::vector<indel_key> _ik;
     starling_diploid_indel_core dindel;
     std::vector<starling_indel_report_info> _iri;
     std::vector<starling_indel_sample_report_info> _isri;
     std::vector<indel_modifiers> _imod;
+
+    pos_t end() const;
+
+    const indel_key& ik(unsigned idx=0) { return _ik[idx]; }
 
     indel_modifiers& imod() { return _imod.front(); }
     const indel_modifiers& imod(unsigned idx=0) const { return _imod[idx]; }

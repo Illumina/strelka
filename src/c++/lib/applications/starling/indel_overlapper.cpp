@@ -81,7 +81,7 @@ is_no_indel(const starling_diploid_indel_core& dindel)
 void indel_overlapper::process(indel_info& ii)
 {
     // we can't handle breakends at all right now:
-    if (ii.ik.is_breakpoint()) return;
+    if (ii.ik().is_breakpoint()) return;
 
     // don't handle homozygous reference calls unless genotyping is forced
     if (is_no_indel(ii.dindel) && !ii.dindel.is_forced_output) return;
@@ -92,7 +92,7 @@ void indel_overlapper::process(indel_info& ii)
         process_overlaps();
     }
     _indel_buffer.push_back(ii);
-    _indel_end_pos=std::max(_indel_end_pos,ii.ik.right_pos());
+    _indel_end_pos=std::max(_indel_end_pos,ii.ik().right_pos());
      // clear the current homRef indel
      if (is_no_indel(ii.dindel))
      {
@@ -187,7 +187,7 @@ void indel_overlapper::process_overlaps()
         }
         else
         {
-            // print site:
+            // emit site:
             //log_os << "site record" << "\n";
             _sink->process(_site_buffer[site_index]);
             site_index++;

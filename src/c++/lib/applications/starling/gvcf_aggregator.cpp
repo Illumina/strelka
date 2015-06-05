@@ -63,6 +63,7 @@ gvcf_aggregator(
     , _dopt(dopt.gvcf)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
+    , _last_hetalt_indel_end_pos(0)
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
 {
@@ -80,7 +81,7 @@ gvcf_aggregator(
         _codon_phaser.reset(new Codon_phaser(opt, bc_buff, *_overlapper));
     }
 
-    variant_pipe_stage& previous = _codon_phaser ? *_codon_phaser : *_overlapper;
+    variant_pipe_stage& previous = _codon_phaser ? (variant_pipe_stage&)*_codon_phaser : (variant_pipe_stage&)*_overlapper;
     if (!opt.gvcf.targeted_regions_bedfile.empty())
         _targeted_region_processor.reset(new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, _chrom, previous));
     else
@@ -128,11 +129,16 @@ skip_to_pos(const pos_t target_pos)
     // advance through any indel region by adding individual sites
     while (_head_pos<target_pos)
     {
-        const site_info& si = get_empty_site(_head_pos);
+        // TODO: this filtering should be delegated to the block compressor
+        site_info si = get_empty_site(_head_pos);
+        if (_head_pos <= _last_hetalt_indel_end_pos)
+            si.smod.set_filter(VCF_FILTERS::SiteConflict);
+
         add_site_internal(si);
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
-        // TODO: if (! _indel_buffer.empty()) continue;
+        // TODO: this is a hack
+        if (_overlapper->has_buffered_indels()) continue;
 
         if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
         {
@@ -154,6 +160,11 @@ void gvcf_aggregator::process(indel_info& ii)
 {
     skip_to_pos(ii.pos);
     write_indel_record(ii);
+    // TODO: eventually the block compression code would take this responsibility
+    if (ii.is_hetalt()) // TODO: wouldn't homalt also work for SNPs?
+    {
+        _last_hetalt_indel_end_pos = ii.end();
+    }
 }
 void gvcf_aggregator::reset()
 {

@@ -103,13 +103,13 @@ void indel_info::set_hap_cigar(
     {
         apath.push_back(path_segment(MATCH,lead));
     }
-    if (ik.delete_length())
+    if (ik().delete_length())
     {
-        apath.push_back(path_segment(DELETE,ik.delete_length()));
+        apath.push_back(path_segment(DELETE,ik().delete_length()));
     }
-    if (ik.insert_length())
+    if (ik().insert_length())
     {
-        apath.push_back(path_segment(INSERT,ik.insert_length()));
+        apath.push_back(path_segment(INSERT,ik().insert_length()));
     }
     if (trail)
     {
@@ -140,7 +140,13 @@ static void add_cigar_to_ploidy(
     }
 }
 
-
+pos_t indel_info::end() const
+{
+    pos_t result = 0;
+    for (auto x : _ik)
+        result = std::max(result, x.right_pos());
+    return result;
+}
 
 void indel_info::add_overlap(const reference_contig_segment& ref, indel_info& overlap)
 {
@@ -149,7 +155,7 @@ void indel_info::add_overlap(const reference_contig_segment& ref, indel_info& ov
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
     std::string leading_seq,trailing_seq;
-    auto indel_end_pos=std::max(overlap.ik.right_pos(),ik.right_pos());
+    auto indel_end_pos=std::max(overlap.ik().right_pos(),ik().right_pos());
 
     const pos_t indel_begin_pos(pos-1);
 
@@ -166,7 +172,7 @@ void indel_info::add_overlap(const reference_contig_segment& ref, indel_info& ov
     {
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
-        const unsigned trail_len(indel_end_pos-ii.ik.right_pos());
+        const unsigned trail_len(indel_end_pos-ii.ik().right_pos());
         ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
 
 
@@ -195,6 +201,7 @@ void indel_info::add_overlap(const reference_contig_segment& ref, indel_info& ov
     else if (overlap.imod().Qscore >= 0)
         this->imod().Qscore = std::min(this->imod().Qscore, overlap.imod().Qscore);
 
+    _ik.push_back(overlap.ik());
     _iri.push_back(overlap.iri());
     _isri.push_back(overlap.isri());
     _imod.push_back(overlap.imod());
