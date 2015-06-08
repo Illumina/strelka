@@ -52,8 +52,7 @@ write_filters(std::ostream& os) const
 
 
 std::map<std::string, double>
-indel_info::
-get_indel_qscore_features(
+indel_info::get_indel_qscore_features(
     const double chrom_depth) const
 {
     std::map<std::string, double> res;
@@ -79,7 +78,7 @@ get_indel_qscore_features(
     double allelebiaslower = cdf(boost::math::binomial(r0+r1,0.5),r0);
     // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
     double allelebiasupper = cdf(boost::math::binomial(r0+r1,0.5),r1);
-    if ( _imod.size() > 1 )
+    if ( is_hetalt() )
     {
         allelebiaslower = cdf(boost::math::binomial(r2+r1,0.5),r1);
         allelebiasupper = cdf(boost::math::binomial(r2+r1,0.5),r2);

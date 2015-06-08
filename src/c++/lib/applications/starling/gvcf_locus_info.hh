@@ -163,6 +163,7 @@ struct indel_modifiers : public shared_modifiers
         ploidy.clear();
         cigar.clear();
         Qscore = -1;
+        is_overlap = false;
     }
 
     ALIGNPATH::path_t cigar;
@@ -172,6 +173,9 @@ struct indel_modifiers : public shared_modifiers
 
     // The empirically calibrated quality-score of an indel, if -1 no q-score has been reported
     int Qscore = -1;
+
+    // used to flag hetalt
+    bool is_overlap;
 };
 
 
@@ -249,8 +253,6 @@ struct site_modifiers : public shared_modifiers
 
 std::ostream& operator<<(std::ostream& os,const site_modifiers& smod);
 
-
-
 struct indel_info
 {
     indel_info(const pos_t init_pos,
@@ -297,7 +299,7 @@ struct indel_info
     bool
     is_hetalt() const
     {
-        return (_imod.size() > 1);
+        return (_imod.front().is_overlap);
     }
 
     bool

@@ -301,11 +301,14 @@ indel_overlapper::modify_overlap_indel_record()
     // can only handle simple 2-indel overlaps right now:
     assert(_indel_buffer.size()==2);
 
+    // TODO: hackey
+    for (indel_info& ii : _indel_buffer)
+        ii.imod().is_overlap = true;
+
+    _CM.clasify_indels(_indel_buffer);
+
     _indel_buffer[0].add_overlap(_ref, _indel_buffer[1]);
 
-    // TODO: classification uses the overlap stuff - fix setting that
-    // by moving the merging to the output phase
-    _CM.clasify_indels(_indel_buffer);
 }
 
 
