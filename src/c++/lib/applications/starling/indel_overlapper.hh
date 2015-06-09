@@ -6,15 +6,15 @@
 
 #pragma once
 #include "gvcf_locus_info.hh"
-#include "variant_pipe_stage.hh"
+#include "variant_pipe_stage_base.hh"
 
 class calibration_models;
 
 
-class indel_overlapper : public variant_pipe_stage
+class indel_overlapper : public variant_pipe_stage_base
 {
 public:
-    indel_overlapper(const calibration_models& model, const reference_contig_segment& ref, pos_t head_pos, variant_pipe_stage& destination);
+    indel_overlapper(const calibration_models& model, const reference_contig_segment& ref, variant_pipe_stage_base& destination);
 
     void process(site_info& si) override;
     void process(indel_info& ii) override;
@@ -27,7 +27,6 @@ private:
     const calibration_models& _CM;
     const reference_contig_segment& _ref;
     pos_t _indel_end_pos;
-    pos_t _head_pos;
 
     std::vector<indel_info> _indel_buffer;
     std::vector<site_info> _site_buffer;

@@ -23,17 +23,17 @@
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
-#include "variant_pipe_stage.hh"
 #include <iosfwd>
+#include "bedstreamprocessor.hh"
+#include "variant_prefilter_stage.hh"
+#include "indel_overlapper.hh"
 
-
-class indel_overlapper;
 
 ///
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
-struct gvcf_aggregator : public variant_pipe_stage
+struct gvcf_aggregator : public variant_pipe_stage_base
 {
     gvcf_aggregator(
         const starling_options& opt,
@@ -49,7 +49,7 @@ struct gvcf_aggregator : public variant_pipe_stage
     /// preserved until the block is completed
     bool is_phasing_block() const
     {
-        return _codon_phaser && _codon_phaser->is_in_block();
+        return _codon_phaser.is_in_block();
     }
 
     void add_site(site_info& si);
@@ -103,10 +103,11 @@ private:
     calibration_models _CM;
     gvcf_compressor _gvcf_comp;
 
+    indel_overlapper _overlapper;
+    Codon_phaser _codon_phaser;
+    bed_stream_processor _targeted_region_processor;
+    variant_prefilter_stage _head;
 
-    std::unique_ptr<Codon_phaser> _codon_phaser;
-    std::unique_ptr<indel_overlapper> _overlapper;
-    std::unique_ptr<variant_pipe_stage> _targeted_region_processor;
-    std::unique_ptr<variant_pipe_stage> _head;
+
 };
 

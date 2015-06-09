@@ -14,7 +14,7 @@
 #include "gvcf_locus_info.hh"
 
 
-class variant_pipe_stage
+class variant_pipe_stage_base
 {
 public:
     virtual void process(site_info& si) { if (_sink) _sink->process(si); }
@@ -25,14 +25,12 @@ public:
             _sink->flush();
     }
 
-    variant_pipe_stage(variant_pipe_stage& sink) : _sink(&sink) {}
-    variant_pipe_stage() : _sink(nullptr) {}
-
+    variant_pipe_stage_base(variant_pipe_stage_base& sink) : _sink(&sink) {}
 
 protected:
+    variant_pipe_stage_base() : _sink(nullptr) {}
 
 
-
-    variant_pipe_stage* _sink;
+    variant_pipe_stage_base* _sink;
 };
 

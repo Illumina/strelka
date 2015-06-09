@@ -17,9 +17,6 @@
 
 #include "gvcf_aggregator.hh"
 #include "gvcf_header.hh"
-#include "bedstreamprocessor.hh"
-#include "variant_prefilter_stage.hh"
-#include "indel_overlapper.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/chrom_depth_map.hh"
 #include "blt_util/io_util.hh"
@@ -66,31 +63,16 @@ gvcf_aggregator(
     , _last_hetalt_indel_end_pos(0)
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
+    , _overlapper(_CM, _ref, *this)
+    , _codon_phaser(opt, bc_buff, _overlapper)
+    , _targeted_region_processor(opt.gvcf.targeted_regions_bedfile, _chrom, _codon_phaser)
+    , _head(_CM, _targeted_region_processor)
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
 
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
-
-    _overlapper.reset(new indel_overlapper(_CM, _ref, _head_pos, *this));
-
-
-    if (opt.do_codon_phasing)
-    {
-        _codon_phaser.reset(new Codon_phaser(opt, bc_buff, *_overlapper));
-    }
-
-    variant_pipe_stage& previous = _codon_phaser ? (variant_pipe_stage&)*_codon_phaser : (variant_pipe_stage&)*_overlapper;
-    if (!opt.gvcf.targeted_regions_bedfile.empty())
-        _targeted_region_processor.reset(new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, _chrom, previous));
-    else
-        _targeted_region_processor.reset(new variant_pipe_stage(previous));
-
-
-
-    _head.reset(new variant_prefilter_stage(_CM, *_targeted_region_processor));
-
 
     assert(nullptr != _osptr);
     assert((nullptr !=_chrom) && (strlen(_chrom)>0));
@@ -109,7 +91,7 @@ gvcf_aggregator(
 gvcf_aggregator::
 ~gvcf_aggregator()
 {
-    _head->flush();
+    _head.flush();
 }
 
 void
@@ -117,7 +99,7 @@ gvcf_aggregator::
 add_site(
     site_info& si)
 {
-    _head->process(si);
+    _head.process(si);
 }
 
 
@@ -131,14 +113,14 @@ skip_to_pos(const pos_t target_pos)
     {
         // TODO: this filtering should be delegated to the block compressor
         site_info si = get_empty_site(_head_pos);
-        if (_head_pos <= _last_hetalt_indel_end_pos)
+        if (_head_pos < _last_hetalt_indel_end_pos)
             si.smod.set_filter(VCF_FILTERS::SiteConflict);
 
         add_site_internal(si);
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
         // TODO: this is a hack
-        if (_overlapper->has_buffered_indels()) continue;
+        if (_overlapper.has_buffered_indels()) continue;
 
         if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
         {
@@ -168,7 +150,7 @@ void gvcf_aggregator::process(indel_info& ii)
 }
 void gvcf_aggregator::reset()
 {
-    _head->flush();
+    _head.flush();
 }
 
 void gvcf_aggregator::flush()
@@ -207,7 +189,7 @@ add_indel(const pos_t pos,
 {
     indel_info ii(pos,ik,dindel,iri,isri);
     
-    _head->process(ii);
+    _head.process(ii);
 }
 
 // queue site record for writing, after
@@ -492,8 +474,7 @@ write_site_record(
 
 
 void
-gvcf_aggregator::
-write_indel_record(const indel_info& ii)
+gvcf_aggregator::write_indel_record(const indel_info& ii)
 {
     // flush any non-variant block before starting:
     write_block_site_record();

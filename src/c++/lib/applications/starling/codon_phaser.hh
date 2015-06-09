@@ -21,7 +21,7 @@
 
 #include "gvcf_locus_info.hh"
 #include "starling_common/pos_basecall_buffer.hh"
-#include "variant_pipe_stage.hh"
+#include "variant_pipe_stage_base.hh"
 
 
 /// short-range phasing utility for het-snps
@@ -36,13 +36,13 @@
 ///       Will this be worth doing before we transition to a haplotype assembly model
 ///       for short-range phasing?
 ///
-struct Codon_phaser : public variant_pipe_stage
+struct Codon_phaser : public variant_pipe_stage_base
 {
     Codon_phaser(
         const starling_base_options& init_opt,
         const pos_basecall_buffer& init_bc_buff,
-        variant_pipe_stage& destination)
-        : variant_pipe_stage(destination),
+        variant_pipe_stage_base& destination)
+        : variant_pipe_stage_base(destination),
           opt(init_opt),
           bc_buff(init_bc_buff)
     {

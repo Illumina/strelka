@@ -19,12 +19,11 @@
 
 
 
-indel_overlapper::indel_overlapper(const calibration_models& model, const reference_contig_segment& ref, pos_t head_pos, variant_pipe_stage& destination)
-    : variant_pipe_stage(destination)
+indel_overlapper::indel_overlapper(const calibration_models& model, const reference_contig_segment& ref, variant_pipe_stage_base& destination)
+    : variant_pipe_stage_base(destination)
     , _CM(model)
     , _ref(ref)
     , _indel_end_pos(0)
-    , _head_pos(head_pos)
 {
 
 }
@@ -33,20 +32,11 @@ void indel_overlapper::flush()
 {
     // flush out accumulated sites & indels
     process_overlaps();
-    variant_pipe_stage::flush();
+    variant_pipe_stage_base::flush();
 }
 
 void indel_overlapper::process(site_info& si)
 {
-    if (si.smod.is_phased_region)
-    {
-        _head_pos=si.pos+si.phased_ref.length();
-    }
-    else
-    {
-        _head_pos=si.pos+1;
-    }
-
     // resolve any current or previous indels before queuing site:
     if (! _indel_buffer.empty())
     {

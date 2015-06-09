@@ -4,14 +4,14 @@
  *      Author: jduddy
  */
 #pragma once
-#include "variant_pipe_stage.hh"
+#include "variant_pipe_stage_base.hh"
 
 class calibration_models;
 
-class variant_prefilter_stage : public variant_pipe_stage
+class variant_prefilter_stage : public variant_pipe_stage_base
 {
 public:
-    variant_prefilter_stage(const calibration_models& model, variant_pipe_stage& destination);
+    variant_prefilter_stage(const calibration_models& model, variant_pipe_stage_base& destination);
     void process(site_info& si) override;
     void process(indel_info& ii) override;
 

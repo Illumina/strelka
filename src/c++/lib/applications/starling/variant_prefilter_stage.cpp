@@ -6,8 +6,8 @@
 #include "variant_prefilter_stage.hh"
 #include "calibration_models.hh"
 
-variant_prefilter_stage::variant_prefilter_stage(const calibration_models& model, variant_pipe_stage& destination)
-: variant_pipe_stage(destination)
+variant_prefilter_stage::variant_prefilter_stage(const calibration_models& model, variant_pipe_stage_base& destination)
+: variant_pipe_stage_base(destination)
 , _model(model)
 {
 }

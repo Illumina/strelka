@@ -7,17 +7,17 @@
 
 #pragma once
 #include "htsapi/bed_streamer.hh"
-#include "variant_pipe_stage.hh"
+#include "variant_pipe_stage_base.hh"
 
-class bed_stream_processor : public variant_pipe_stage
+class bed_stream_processor : public variant_pipe_stage_base
 {
 public:
-    bed_stream_processor(const std::string& bed_file_name, const std::string& region, variant_pipe_stage& next_stage);
+    bed_stream_processor(const std::string& bed_file_name, const std::string& region, variant_pipe_stage_base& next_stage);
 
     void process(site_info& si) override;
     void process(indel_info& ii) override;
 private:
-    bed_streamer _bed_streamer;
+    std::unique_ptr<bed_streamer> _bed_streamer;
     const bed_record* _current_record;
 
     // TODO: move enforcement of regions into bed_streamer
