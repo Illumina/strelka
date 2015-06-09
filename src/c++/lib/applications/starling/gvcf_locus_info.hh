@@ -349,6 +349,7 @@ struct indel_info
     std::vector<starling_indel_sample_report_info> _isri;
     std::vector<indel_modifiers> _imod;
 
+    // the EXCLUSIVE end of the variant (i.e. open)
     pos_t end() const;
 
     const indel_key& ik(unsigned idx=0) { return _ik[idx]; }

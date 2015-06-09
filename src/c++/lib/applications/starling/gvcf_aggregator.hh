@@ -98,7 +98,7 @@ private:
     pos_t _head_pos;
     site_info _empty_site;
 
-    pos_t _last_hetalt_indel_end_pos;
+    std::unique_ptr<indel_info> _last_indel;
 
     calibration_models _CM;
     gvcf_compressor _gvcf_comp;

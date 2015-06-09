@@ -23,10 +23,19 @@ public:
 
     bool has_buffered_indels() { return !_indel_buffer.empty(); }
 
+    void modify_overlapping_site(const indel_info& ii, site_info& si);
+
 private:
     const calibration_models& _CM;
     const reference_contig_segment& _ref;
     pos_t _indel_end_pos;
+
+    static void modify_indel_conflict_site(site_info& si);
+    void modify_indel_overlap_site(const indel_info& ii,
+            const unsigned ploidy,
+            site_info& si);
+
+
 
     std::vector<indel_info> _indel_buffer;
     std::vector<site_info> _site_buffer;
@@ -36,11 +45,5 @@ private:
     void modify_single_indel_record();
     void modify_conflict_indel_record();
     void modify_overlap_indel_record();
-    static void modify_indel_conflict_site(site_info& si);
-    void modify_indel_overlap_site(const indel_info& ii,
-        const unsigned ploidy,
-        site_info& si);
-
-
 };
 

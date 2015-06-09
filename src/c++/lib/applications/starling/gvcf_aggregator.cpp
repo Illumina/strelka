@@ -60,7 +60,6 @@ gvcf_aggregator(
     , _dopt(dopt.gvcf)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
-    , _last_hetalt_indel_end_pos(0)
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _overlapper(_CM, _ref, *this)
@@ -113,13 +112,23 @@ skip_to_pos(const pos_t target_pos)
     {
         // TODO: this filtering should be delegated to the block compressor
         site_info si = get_empty_site(_head_pos);
-        if (_head_pos < _last_hetalt_indel_end_pos)
-            si.smod.set_filter(VCF_FILTERS::SiteConflict);
+        if (_last_indel)
+        {
+            if (_head_pos > _last_indel->end())
+            {
+                _last_indel.reset(nullptr);
+            }
+            else
+            {
+                _overlapper.modify_overlapping_site(*_last_indel, si);
+            }
+        }
 
         add_site_internal(si);
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
         // TODO: this is a hack
+        assert(!_overlapper.has_buffered_indels());
         if (_overlapper.has_buffered_indels()) continue;
 
         if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
@@ -143,10 +152,7 @@ void gvcf_aggregator::process(indel_info& ii)
     skip_to_pos(ii.pos);
     write_indel_record(ii);
     // TODO: eventually the block compression code would take this responsibility
-    if (ii.is_hetalt()) // TODO: wouldn't homalt also work for SNPs?
-    {
-        _last_hetalt_indel_end_pos = ii.end();
-    }
+    _last_indel.reset(new indel_info(ii));
 }
 void gvcf_aggregator::reset()
 {

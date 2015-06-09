@@ -137,24 +137,12 @@ void indel_overlapper::process_overlaps()
 #ifdef DEBUG_GVCF
         log_os << "CHIRP: indel overlapping site: " << it->pos << "\n";
 #endif
-        const pos_t offset(si.pos-_indel_buffer[0].pos);
-        assert(offset>=0);
-        if (! is_conflict)
-        {
-            modify_indel_overlap_site( _indel_buffer[0],
-                                       _indel_buffer[0].get_ploidy(offset),
-                                       si);
-        }
-        else
-        {
-            modify_indel_conflict_site(si);
-        }
+        modify_overlapping_site(_indel_buffer[0], si);
     }
 
     unsigned indel_index(0);
     unsigned site_index(0);
 
-    // TODO: redo the data structures such that overlapped indels can be passed as a single record to process()
     while (true)
     {
         const bool is_indel(indel_index<_indel_buffer.size());
@@ -185,6 +173,23 @@ void indel_overlapper::process_overlaps()
     }
     _indel_buffer.clear();
     _site_buffer.clear();
+}
+
+void indel_overlapper::modify_overlapping_site(const indel_info& ii, site_info& si)
+{
+    const pos_t offset(si.pos-ii.pos);
+    assert(offset>=0);
+
+    if (ii.imod().filters.test(VCF_FILTERS::IndelConflict))
+    {
+        modify_indel_conflict_site(si);
+    }
+    else
+    {
+        modify_indel_overlap_site( ii,
+                                   ii.get_ploidy(offset),
+                                   si);
+    }
 }
 
 // set the CIGAR string:
