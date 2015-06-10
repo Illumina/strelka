@@ -127,10 +127,9 @@ skip_to_pos(const pos_t target_pos)
         site_info si = get_empty_site(_head_pos);
 
         add_site_internal(si);
-        // only add one empty site after completing any pre-existing indel blocks,
-        // then extend the block size of that one site as required:
-        // TODO: this is a hack. Find a way to break the coupling with the indel_overlapper
-        if (_last_indel || _overlapper.has_buffered_indels()) continue;
+        // Don't do compressed ranges if there is an overlapping indel
+		// filters are being applied to the overlapping positions
+        if (_last_indel) continue;
 
         if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
         {

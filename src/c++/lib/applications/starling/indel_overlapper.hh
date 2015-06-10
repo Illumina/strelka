@@ -21,8 +21,6 @@ public:
 
     void flush() override;
 
-    bool has_buffered_indels() { return !_indel_buffer.empty(); }
-
     void modify_overlapping_site(const indel_info& ii, site_info& si);
 
 private:
