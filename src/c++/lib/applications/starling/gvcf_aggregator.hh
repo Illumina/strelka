@@ -71,7 +71,7 @@ struct gvcf_aggregator : public variant_pipe_stage_base
     }
 
 private:
-    void add_site_internal(const site_info& si);
+    void add_site_internal(site_info& si);
     void write_block_site_record();
     void write_site_record(const site_info& si) const;
     void queue_site_record(const site_info& si);
@@ -99,6 +99,8 @@ private:
     site_info _empty_site;
 
     std::unique_ptr<indel_info> _last_indel;
+
+    void filter_site_by_last_indel_overlap(site_info& si);
 
     calibration_models _CM;
     gvcf_compressor _gvcf_comp;

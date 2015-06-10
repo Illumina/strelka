@@ -100,7 +100,20 @@ add_site(
 {
     _head.process(si);
 }
-
+void gvcf_aggregator::filter_site_by_last_indel_overlap(site_info& si)
+{
+    if (_last_indel)
+    {
+        if (si.pos >= _last_indel->end())
+        {
+            _last_indel.reset(nullptr);
+        }
+        else
+        {
+            _overlapper.modify_overlapping_site(*_last_indel, si);
+        }
+    }
+}
 
 // fill in missing sites
 void
@@ -112,23 +125,12 @@ skip_to_pos(const pos_t target_pos)
     {
         // TODO: this filtering should be delegated to the block compressor
         site_info si = get_empty_site(_head_pos);
-        if (_last_indel)
-        {
-            if (_head_pos > _last_indel->end())
-            {
-                _last_indel.reset(nullptr);
-            }
-            else
-            {
-                _overlapper.modify_overlapping_site(*_last_indel, si);
-            }
-        }
 
         add_site_internal(si);
         // only add one empty site after completing any pre-existing indel blocks,
         // then extend the block size of that one site as required:
-        // TODO: this is a hack
-        if (_overlapper.has_buffered_indels()) continue;
+        // TODO: this is a hack. Find a way to break the coupling with the indel_overlapper
+        if (_last_indel || _overlapper.has_buffered_indels()) continue;
 
         if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))
         {
@@ -169,8 +171,9 @@ void gvcf_aggregator::flush()
 void
 gvcf_aggregator::
 add_site_internal(
-    const site_info& si)
+    site_info& si)
 {
+    filter_site_by_last_indel_overlap(si);
     if (si.smod.is_phased_region)
     {
         _head_pos=si.pos+si.phased_ref.length();
