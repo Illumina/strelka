@@ -160,16 +160,12 @@ struct indel_modifiers : public shared_modifiers
     clear()
     {
         shared_modifiers::clear();
-        ploidy.clear();
         cigar.clear();
         Qscore = -1;
         is_overlap = false;
     }
 
     ALIGNPATH::path_t cigar;
-
-    /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
-    std::vector<unsigned> ploidy;
 
     // The empirically calibrated quality-score of an indel, if -1 no q-score has been reported
     int Qscore = -1;
@@ -330,8 +326,8 @@ struct indel_info
         }
         else
         {
-            assert(offset<imod().ploidy.size());
-            return imod().ploidy[offset];
+            assert(offset<ploidy.size());
+            return ploidy[offset];
         }
         return 2;
     }
@@ -348,6 +344,10 @@ struct indel_info
     std::vector<starling_indel_report_info> _iri;
     std::vector<starling_indel_sample_report_info> _isri;
     std::vector<indel_modifiers> _imod;
+
+    /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
+    std::vector<unsigned> ploidy;
+
 
     // the EXCLUSIVE end of the variant (i.e. open)
     pos_t end() const;

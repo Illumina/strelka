@@ -165,7 +165,7 @@ void indel_info::add_overlap(const reference_contig_segment& ref, indel_info& ov
     ref.get_substring(indel_begin_pos,(indel_end_pos-indel_begin_pos),tmp);
     _iri.front().vcf_ref_seq = tmp;
 
-    imod().ploidy.resize(indel_end_pos-pos,0);
+    ploidy.resize(indel_end_pos-pos,0);
 
     auto munge_indel = [&] (indel_info& ii)
     {
@@ -181,7 +181,7 @@ void indel_info::add_overlap(const reference_contig_segment& ref, indel_info& ov
                       trailing_seq.size());
 
         // add to the ploidy object:
-        add_cigar_to_ploidy(ii.imod().cigar,this->_imod.front().ploidy);
+        add_cigar_to_ploidy(ii.imod().cigar,this->ploidy);
     };
     munge_indel(*this);
     munge_indel(overlap);
