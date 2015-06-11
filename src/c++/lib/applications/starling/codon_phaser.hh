@@ -41,10 +41,12 @@ struct Codon_phaser : public variant_pipe_stage_base
     Codon_phaser(
         const starling_base_options& init_opt,
         const pos_basecall_buffer& init_bc_buff,
+        const reference_contig_segment& init_ref,
         variant_pipe_stage_base& destination)
         : variant_pipe_stage_base(destination),
           opt(init_opt),
-          bc_buff(init_bc_buff)
+          bc_buff(init_bc_buff),
+          ref(init_ref)
     {
         clear();
     }
@@ -76,6 +78,8 @@ struct Codon_phaser : public variant_pipe_stage_base
 
 
 
+    void collect_records();
+
 private:
     /// add site to buffer
     ///
@@ -98,6 +102,7 @@ private:
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
     const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
+    const reference_contig_segment& ref;
 
     int block_start,block_end;          // position of the first and last added het site to block
     int het_count;                      // total hets observed in buffer

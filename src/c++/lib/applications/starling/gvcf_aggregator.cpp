@@ -63,7 +63,7 @@ gvcf_aggregator(
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _overlapper(_CM, _ref, *this)
-    , _codon_phaser(opt, bc_buff, _overlapper)
+    , _codon_phaser(opt, bc_buff, ref, _overlapper)
     , _targeted_region_processor(opt.gvcf.targeted_regions_bedfile, _chrom, _codon_phaser)
     , _head(_CM, _targeted_region_processor)
 {
@@ -195,7 +195,6 @@ add_indel(const pos_t pos,
           const starling_indel_sample_report_info& isri)
 {
     indel_info ii(pos,ik,dindel,iri,isri);
-    
     _head.process(ii);
 }
 
