@@ -21,7 +21,7 @@ public:
 
     void flush() override;
 
-    void modify_overlapping_site(const indel_info& ii, site_info& si);
+    static void modify_overlapping_site(const indel_info& ii, site_info& si, const calibration_models& model);
 
 private:
     const calibration_models& _CM;
@@ -29,9 +29,10 @@ private:
     pos_t _indel_end_pos;
 
     static void modify_indel_conflict_site(site_info& si);
-    void modify_indel_overlap_site(const indel_info& ii,
+    static void modify_indel_overlap_site(const indel_info& ii,
             const unsigned ploidy,
-            site_info& si);
+            site_info& si,
+            const calibration_models& model);
 
 
 

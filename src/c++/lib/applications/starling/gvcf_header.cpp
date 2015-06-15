@@ -36,7 +36,7 @@ add_gvcf_filters(
     const starling_options& sopt,
     const cdmap_t& chrom_depth,
     std::ostream& os,
-    calibration_models& CM)
+    const calibration_models& CM)
 {
     const gvcf_options& opt(sopt.gvcf);
 
@@ -139,7 +139,7 @@ finish_gvcf_header(const starling_options& opt,
                    const cdmap_t& chrom_depth,
                    const std::string& bam_header_data,
                    std::ostream& os,
-                   calibration_models& CM)
+                   const calibration_models& CM)
 {
 //    bool do_rule_filters  = (opt.calibration_model=="default" || opt.calibration_model=="Qrule");
 

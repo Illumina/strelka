@@ -137,7 +137,7 @@ void indel_overlapper::process_overlaps()
 #ifdef DEBUG_GVCF
         log_os << "CHIRP: indel overlapping site: " << it->pos << "\n";
 #endif
-        modify_overlapping_site(_indel_buffer[0], si);
+        modify_overlapping_site(_indel_buffer[0], si, _CM);
     }
 
     unsigned indel_index(0);
@@ -175,7 +175,7 @@ void indel_overlapper::process_overlaps()
     _site_buffer.clear();
 }
 
-void indel_overlapper::modify_overlapping_site(const indel_info& ii, site_info& si)
+void indel_overlapper::modify_overlapping_site(const indel_info& ii, site_info& si, const calibration_models& model)
 {
     const pos_t offset(si.pos-ii.pos);
     assert(offset>=0);
@@ -188,7 +188,7 @@ void indel_overlapper::modify_overlapping_site(const indel_info& ii, site_info& 
     {
         modify_indel_overlap_site( ii,
                                    ii.get_ploidy(offset),
-                                   si);
+                                   si, model);
     }
 }
 
@@ -209,7 +209,8 @@ indel_overlapper::modify_single_indel_record()
 void indel_overlapper::modify_indel_overlap_site(
     const indel_info& ii,
     const unsigned ploidy,
-    site_info& si)
+    site_info& si,
+    const calibration_models& model)
 {
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
@@ -274,7 +275,7 @@ void indel_overlapper::modify_indel_overlap_site(
     }
 
     // after all those changes we need to rerun the site filters:
-    _CM.clasify_site(si, si.smod);
+    model.clasify_site(si, si.smod);
 }
 
 
