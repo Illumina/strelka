@@ -69,51 +69,54 @@ Assembly dummy_assembler::build_contigs(const AssemblyReadInput& reads, std::str
 	static const bool addReverse(false);
 	const AssemblyReadOutput readInfo;
 
-	//build graph from aligned reads, do not include reverse
-	readInfo.resize(reads.size());
-	g.build(reads,readInfo,false);
+	//build graph from aligned reads, do not use reverse
+//	readInfo.resize(reads.size());
+//	g.build(reads,readInfo,false);
 
 	std::string mostFreqKmer;
-	selectMostFrequentKmer(g,mostFreqKmer);
+//	selectMostFrequentKmer(g,mostFreqKmer);
 
 //	log_os << "Setting source to most frequent k-mer " << mostFreqKmer << "\n";
 
-	std::string src(""); // dummy source node
+//	std::string src(""); // dummy source node
 
 	// do graph pruning
-	if (opt.doPruning)
-		g.prune(opt.kmerPruningThreshold);
+//	if (opt.doPruning)
+//		g.prune(opt.kmerPruningThreshold);
 
 	//	log_os << "kmer freq table for DB graph class with size " <<  g.getKmerFreqTable().size() <<  "\n";
 
 	//	log_os << "Starting greedy traversal " << "\n";
-	rumovsky::GraphWalkerGreedy<rumovsky::DeBruijnGraph> walker(g);
+//	rumovsky::GraphWalkerGreedy<rumovsky::DeBruijnGraph> walker(g);
 
-	walker.walk(mostFreqKmer,contigs);
+//	walker.walk(mostFreqKmer,contigs);
 	//	log_os << "Graph traversal resulted in " << contigs.size() << " contigs.\n";
 
-	const unsigned readCount(reads.size());
+//	const unsigned readCount(reads.size());
 
 	// a set of read hashes; each read hash stores the starting positions of all kmers in the read
-	std::vector<str_uint_map_t> readWordOffsets(readCount);
+//	std::vector<str_uint_map_t> readWordOffsets(readCount);
 
 	Assembly finalContigs;
-	countUnalignedReads(opt, reads, readInfo, contigs, finalContigs, readWordOffsets, unusedReads, wordLength);
+//	countUnalignedReads(opt, reads, readInfo, contigs, finalContigs, readWordOffsets, unusedReads, wordLength);
 
 	// needed for scoring eventually
-	computeRead2CtgMappings(contigs,reads,readCount,wordLength,readWordOffsets,readInfo);
+//	computeRead2CtgMappings(contigs,reads,readCount,wordLength,readWordOffsets,readInfo);
 
 //	log_os << "Done building contigs - found x contigs " << contigs.size() << std::endl;
 
 	// dummy contigs for testing
-	//	Contig c0,c1,c2;
-	//	c0.seq = refSeq;
-	//	finalContigs.push_back(c0);
+	Contig c0,c1,c2;
+	c0.seq = refSeq;
+	finalContigs.push_back(c0);
+	c0.avgCoverage  = 10.0;
 
-//	c1.seq = "GTGACAGAGAGACTCCGTCTCAAAAAAAAAAAAAAAAAAAAAAC";
-//	c2.seq = "GTGACAGAGAGACTCCGTCTCAAAAAAAAAC";
-//	finalContigs.push_back(c0);
-//	finalContigs.push_back(c1);
-//	finalContigs.push_back(c2);
+	c1.seq = "GTGACAGAGAGACTCCGTCTCAAAAAAAAAAAAAAAAAAAAAAC";
+	c1.avgCoverage  = 12.0;
+	c2.seq = "GTGACAGAGAGACTCCGTCTCAAAAAAAAAC";
+	c1.avgCoverage  = 2.0;
+	finalContigs.push_back(c0);
+	finalContigs.push_back(c1);
+	finalContigs.push_back(c2);
 	return finalContigs;
 }
