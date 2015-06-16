@@ -1,3 +1,4 @@
+v2.3.12
 - STAR-32: Trigger phasing of SNVs if an indel is encountered within the phasing interval.
 - STAR-14: Add --targeted-regions-bed parameter to Starling for flagging OffTarget positions. Also
   added --targetRegions to the python workflow wrapper.
