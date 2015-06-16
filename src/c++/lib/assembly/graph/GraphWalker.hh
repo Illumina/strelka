@@ -20,10 +20,9 @@
 
 #pragma once
 
+#include <assembly/assembly_common/Contig.hh>
 #include "DeBruijnGraph.hh"
 #include "NodeChoiceFunction.hh"
-
-#include "common/Contig.hh"
 
 #include <iostream>
 

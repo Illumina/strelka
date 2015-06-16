@@ -19,3 +19,9 @@
 ################################################################################
 
 include(${THIS_CXX_LIBRARY_CMAKE})
+
+subdirlist(subdirs ${CMAKE_CURRENT_SOURCE_DIR})
+
+foreach(THIS_LIB_DIR ${subdirs})
+    add_subdirectory(${THIS_LIB_DIR})
+endforeach()

@@ -18,8 +18,7 @@
 
 #pragma once
 
-#include "common/AssemblyReadInfo.hh"
-
+#include <assembly/assembly_common/AssemblyReadInfo.hh>
 #include <string>
 
 enum AFFIX_TYPE { PREFIX, SUFFIX };

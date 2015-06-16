@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include "common/Contig.hh"
-#include "common/BamAddOns.hh"
-#include "common/AssemblyReadInfo.hh"
-#include "kmer/DfsAssemblerOptions.hh"
+#include <assembly/assembly_common/AssemblyReadInfo.hh>
+#include <assembly/assembly_common/BamAddOns.hh>
+#include <assembly/assembly_common/Contig.hh>
+#include "assembly/kmer/DfsAssemblerOptions.hh"
 
-#include "GraphBase.hh"
+#include "assembly/graph/GraphBase.hh"
 
 #include "boost/foreach.hpp"
 #include "boost/unordered_map.hpp"
@@ -40,14 +40,12 @@ namespace rumovsky {
 
 ///
 /// implementation of a de Bruijn graph
-class DeBruijnGraph : public GraphBase {
+class DeBruijnGraph {
 
 public:
     DeBruijnGraph() : wordLength_(0) {}
 
     DeBruijnGraph(const unsigned wl) : wordLength_(wl) {}
-
-    virtual ~DeBruijnGraph() {}
 
     unsigned getWordLength() const { return wordLength_; }
     void setWordLength(const unsigned wl) { wordLength_ = wl; }
@@ -65,7 +63,9 @@ public:
 
     ///
     /// build de-bruijn graph from a set of reads
-    bool build(const AssemblyReadInput& reads, const AssemblyReadOutput& readInfo, const bool addReverse=false);
+    bool build(const AssemblyReadInput& reads, const AssemblyReadOutput& readInfo, const bool addreverse);
+
+
 
     ///
     /// Writes doxygen and json output
@@ -88,6 +88,7 @@ public:
     const str_uint_map_t&  getKmerFreqTable() const { return kmerFreqTable_;}
 
     void contractPaths(const std::string& startVertex);
+
 
 private:
 

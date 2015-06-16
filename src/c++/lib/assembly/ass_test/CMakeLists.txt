@@ -10,13 +10,12 @@
 # <https://github.com/sequencing/licenses/>
 #
 
-###############################################################################
+################################################################################
 ##
-## Configuration file for the c++/assembly subfolder
+## Configuration file for the unit tests subdirectory
 ##
-## author Peter Krusche
+## author Ole Schulz-Trieglaff
 ##
 ################################################################################
 
-include(${THIS_CXX_LIBRARY_CMAKE})
-
+#include(${THIS_CXX_TEST_LIBRARY_CMAKE})

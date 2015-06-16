@@ -9,10 +9,10 @@
 #define C___LIB_ASSEMBLY_BED_ASSEMBLER_HH_
 
 #include <assembly/contigAssembler.hh>
+#include <assembly_common/BamAddOns.hh>
+#include <assembly_common/Contig.hh>
 #include "assembly/kmer/DfsAssembler.hh"
 #include "assembly/kmer/DfsAssemblerOptions.hh"
-#include "common/BamAddOns.hh"
-#include "assembly/common/Contig.hh"
 
 class de_bruijn_assembler: public contigAssembler {
 public:

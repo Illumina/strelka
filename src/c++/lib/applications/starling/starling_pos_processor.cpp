@@ -104,8 +104,8 @@ starling_pos_processor(
             //         \                                             /
             //          *-------------------------------------------*
             //
-            myAssembler->register_consumer(std::shared_ptr<site_info_stream>(myRecordProcessor));
-            myRecordProcessor->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
+//            myAssembler->register_consumer(std::shared_ptr<site_info_stream>(myRecordProcessor));
+//            myRecordProcessor->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
 //
 //            uint64_t p = 0;
 //
@@ -127,11 +127,16 @@ starling_pos_processor(
 //                )
 //            );
 //
-//            pagg->add_consumer(std::shared_ptr<site_info_stream>(myAssembler), p);
-            // default consumer
-            pagg->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
+//          pagg->add_consumer(std::shared_ptr<site_info_stream>(myAssembler), p);
 
+
+            // Entrire pipeline, except predictor
+            myAssembler->register_consumer(std::shared_ptr<site_info_stream>(myRecordProcessor));
+            myRecordProcessor->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
             _gvcfer = std::shared_ptr<site_info_stream>(myAssembler);
+
+            // DEBUG Straight to aggregator
+//            _gvcfer = std::shared_ptr<site_info_stream>(myAggregator);
 
         }
         // else if(_opt.do_codon_phasing)

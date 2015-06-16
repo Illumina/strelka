@@ -6,5 +6,3 @@
  */
 
 #include <assembly/assembly_record_processor.hh>
-
-

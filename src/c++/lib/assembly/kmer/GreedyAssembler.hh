@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "common/Contig.hh"
-#include "common/AssemblyReadInfo.hh"
+#include <assembly/assembly_common/AssemblyReadInfo.hh>
+#include <assembly/assembly_common/Contig.hh>
 #include "GreedyAssemblerOptions.hh"
 
 /// \brief run a de-bruijn graph assembler intended for small-scale allele discovery

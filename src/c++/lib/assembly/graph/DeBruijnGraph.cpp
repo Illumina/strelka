@@ -1,4 +1,4 @@
-#include "DeBruijnGraph.hh"
+#include "assembly/graph/DeBruijnGraph.hh"
 
 #include <algorithm>  
 #include <iterator>  
@@ -55,59 +55,59 @@ bool is_last(Iter iter, const Cont& cont)
 
 bool DeBruijnGraph::build(const AssemblyReadInput& reads,
                           const AssemblyReadOutput& readInfo,
-                          const bool addReverse)
+						  const bool addreverse)
 {
     const unsigned readCount(reads.size());
     readWordOffsets_.resize(readCount);
 
-    for (unsigned readIndex(0); readIndex<readCount; ++readIndex)
-    {
-        const AssemblyReadInfo& rinfo(readInfo[readIndex]);
-        // skip reads used in a previous iteration
-        if (rinfo.isUsed) continue;
-
-        // stores the index of a kmer in a read sequence
-        const std::string& seq(reads[readIndex].second);
-        const unsigned readLen(seq.size());
-
-        // just in case
-        if (readLen < wordLength_) continue;
-
-        str_uint_map_t& readWordOffset(readWordOffsets_[readIndex]);
-
-        for (unsigned j(0); j<=(readLen-wordLength_); ++j)
-        {
-            std::string kmer(seq.substr(j,wordLength_));
-            if (readWordOffset.find(kmer) != readWordOffset.end())
-            {
-                // try again with different k-mer size
-//#ifdef DEBUG_DB_GRAPH
-                std::cerr << "word " << kmer << " repeated in read " << readIndex << "\n";
-                //std::cerr << "res = " << readWordOffset.find(word)->second << "\n";
-//#endif
-                return false;
-            }
-            // record (0-indexed) start point for word in read
-            #ifdef DEBUG_DB_GRAPH
-            std::cerr << "Recording " << kmer << " at " << j << " in " << seq <<  "\n";
-            #endif
-            //std::cerr << "Recording " << word << " at " << j << " in " << seq <<  "\n";
-            readWordOffset[kmer]=j;
-            // count occurrences
-            ++kmerFreqTable_[kmer];
-
-            if (addReverse) {
-                revComplement(kmer); // seqan
-                readWordOffset[kmer]=j;
-                // count occurrences
-                ++kmerFreqTable_[kmer];
-
-            }
-        }
-    }
-
-    // do this at the end
-    buildAdjList_();
+//    for (unsigned readIndex(0); readIndex<readCount; ++readIndex)
+//    {
+//        const AssemblyReadInfo& rinfo(readInfo[readIndex]);
+//        // skip reads used in a previous iteration
+//        if (rinfo.isUsed) continue;
+//
+//        // stores the index of a kmer in a read sequence
+//        const std::string& seq(reads[readIndex].second);
+//        const unsigned readLen(seq.size());
+//
+//        // just in case
+//        if (readLen < wordLength_) continue;
+//
+//        str_uint_map_t& readWordOffset(readWordOffsets_[readIndex]);
+//
+//        for (unsigned j(0); j<=(readLen-wordLength_); ++j)
+//        {
+//            std::string kmer(seq.substr(j,wordLength_));
+//            if (readWordOffset.find(kmer) != readWordOffset.end())
+//            {
+//                // try again with different k-mer size
+////#ifdef DEBUG_DB_GRAPH
+//                std::cerr << "word " << kmer << " repeated in read " << readIndex << "\n";
+//                //std::cerr << "res = " << readWordOffset.find(word)->second << "\n";
+////#endif
+//                return false;
+//            }
+//            // record (0-indexed) start point for word in read
+//            #ifdef DEBUG_DB_GRAPH
+//            std::cerr << "Recording " << kmer << " at " << j << " in " << seq <<  "\n";
+//            #endif
+//            //std::cerr << "Recording " << word << " at " << j << " in " << seq <<  "\n";
+//            readWordOffset[kmer]=j;
+//            // count occurrences
+//            ++kmerFreqTable_[kmer];
+//
+//            if (addReverse) {
+//                revComplement(kmer); // seqan
+//                readWordOffset[kmer]=j;
+//                // count occurrences
+//                ++kmerFreqTable_[kmer];
+//
+//            }
+//        }
+//    }
+//
+//    // do this at the end
+//    buildAdjList_();
     return true;
 }
 
