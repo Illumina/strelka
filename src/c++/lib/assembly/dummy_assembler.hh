@@ -44,17 +44,13 @@ public:
 		// use the same read selection method
 
 		AssemblyReadInput reads = this->collect_reads(start,end,read_buffer);
-		this->build_contigs(reads,refSeq);
-
-
-		// dummy assembly for debugging
-//		rumovsky_contigs rc;
+		Assembly contigs  = this->build_contigs(reads,refSeq);
 
 		// populate site-info with assembled information /
-	    si.phased_ref = refSeq;
+	    si.phased_ref = contigs.at(0).seq;
 	    si.smod.is_block                  = false;
 	    si.smod.is_unknown                = false;
-	    si.phased_alt = "fe"; //contigs.at(1).seq;		// for now just return the first contig
+	    si.phased_alt = contigs.at(1).seq; // for now just return the first alternate contig
 
 		return si;
 	}

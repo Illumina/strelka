@@ -51,7 +51,7 @@ AssemblyReadInput dummy_assembler::collect_reads(int start,int end, starling_rea
 				ri.next();
 	        }
 	}
-	log_os << "Done collecting reads " << reads.size() << std::endl;
+//	log_os << "Done collecting reads " << reads.size() << std::endl;
 	return reads;
 }
 
@@ -69,13 +69,14 @@ Assembly dummy_assembler::build_contigs(const AssemblyReadInput& reads, std::str
 	static const bool addReverse(false);
 	const AssemblyReadOutput readInfo;
 
-//	readInfo.resize(reads.size());
+	//build graph from aligned reads, do not include reverse
+	readInfo.resize(reads.size());
 	g.build(reads,readInfo,false);
 
 	std::string mostFreqKmer;
 	selectMostFrequentKmer(g,mostFreqKmer);
 
-	log_os << "Setting source to most frequent k-mer " << mostFreqKmer << "\n";
+//	log_os << "Setting source to most frequent k-mer " << mostFreqKmer << "\n";
 
 	std::string src(""); // dummy source node
 
@@ -102,6 +103,17 @@ Assembly dummy_assembler::build_contigs(const AssemblyReadInput& reads, std::str
 	// needed for scoring eventually
 	computeRead2CtgMappings(contigs,reads,readCount,wordLength,readWordOffsets,readInfo);
 
-	log_os << "Done building contigs - found x contigs " << contigs.size() << std::endl;
-	return contigs;
+//	log_os << "Done building contigs - found x contigs " << contigs.size() << std::endl;
+
+	// dummy contigs for testing
+	//	Contig c0,c1,c2;
+	//	c0.seq = refSeq;
+	//	finalContigs.push_back(c0);
+
+//	c1.seq = "GTGACAGAGAGACTCCGTCTCAAAAAAAAAAAAAAAAAAAAAAC";
+//	c2.seq = "GTGACAGAGAGACTCCGTCTCAAAAAAAAAC";
+//	finalContigs.push_back(c0);
+//	finalContigs.push_back(c1);
+//	finalContigs.push_back(c2);
+	return finalContigs;
 }
