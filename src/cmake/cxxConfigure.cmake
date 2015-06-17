@@ -238,9 +238,16 @@ endif ()
 set (GNU_COMPAT_COMPILER ( (CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR (${IS_CLANGXX}) OR (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")))
 if (${GNU_COMPAT_COMPILER})
     set (CXX_WARN_FLAGS "-Wall -Wextra -Wshadow -Wunused -Wpointer-arith -Winit-self -pedantic -Wunused-parameter")
-    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wundef -Wdisabled-optimization -Wno-unknown-pragmas")
-    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wempty-body -Wdeprecated -Wno-missing-braces")
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wundef -Wno-unknown-pragmas")
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wdeprecated")
+
+    if ((NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel") OR (NOT ${COMPILER_VERSION} VERSION_LESS "14.0"))
+        set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wdisabled-optimization")
+        set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-missing-braces")
+    endif ()
+
     if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+        set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wempty-body")
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wredundant-decls")
     endif ()
 
@@ -262,6 +269,13 @@ if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # don't know which patch levels are affected, so marking out all gcc 4.7.X
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-unused-function")
     endif ()
+
+    if (NOT (${COMPILER_VERSION} VERSION_LESS "5.1"))
+        # these mostly only make sense with flto:
+        set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wodr")
+        #set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wsuggest-final-types -Wsuggest-final-methods")
+    endif ()
+
 elseif (${IS_CLANGXX})
     set (IS_WARN_EVERYTHING FALSE)
 
@@ -320,7 +334,11 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_WARN_FLAGS}")
 
 
 if (${GNU_COMPAT_COMPILER})
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    if ((NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel") OR (${COMPILER_VERSION} VERSION_LESS "15.0"))
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    else ()
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    endif ()
     set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 
     # The NDEBUG macro is intentionally removed from release. One discussion on this is:
