@@ -325,6 +325,19 @@ def cleanPyEnv() :
 
 
 
+def isLocalSmtp() :
+    """
+    return true if a local smtp server is available
+    """
+    import smtplib
+    try :
+        smtplib.SMTP('localhost')
+    except :
+        return False
+    return True
+
+
+
 def bamListCatCmd(samtoolsBin, bamList, output) :
     assert(len(bamList) > 0)
 
