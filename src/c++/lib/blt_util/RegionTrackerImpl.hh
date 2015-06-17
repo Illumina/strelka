@@ -18,24 +18,24 @@
 #include <iostream>
 
 
-template <typename T>
-boost::optional<known_pos_range2>
-RegionPayloadTracker<T>::
-isInRegion(const unsigned pos) const
-{
-    boost::optional<known_pos_range2> result;
-    if (_regions.empty()) return result;
-
-    // 1. find first region where endPos > pos
-    const auto posIter(_regions.upper_bound(known_pos_range2(pos,pos)));
-
-    // 2. conclusion based on non-overlapping region constraint
-    if ((posIter != _regions.end()) && (posIter->first.begin_pos() <= pos))
-    {
-        result.reset(posIter->first);
-    }
-    return result;
-}
+//template <typename T>
+//boost::optional<known_pos_range2>
+//RegionPayloadTracker<T>::
+//isInRegion(const unsigned pos) const
+//{
+//    boost::optional<known_pos_range2> result;
+//    if (_regions.empty()) return result;
+//
+//    // 1. find first region where endPos > pos
+//    const auto posIter(_regions.upper_bound(known_pos_range2(pos,pos)));
+//
+//    // 2. conclusion based on non-overlapping region constraint
+//    if ((posIter != _regions.end()) && (posIter->first.begin_pos() <= pos))
+//    {
+//        result.reset(posIter->first);
+//    }
+//    return result;
+//}
 
 
 template <typename T>

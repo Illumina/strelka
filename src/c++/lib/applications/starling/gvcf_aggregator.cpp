@@ -51,7 +51,7 @@ set_site_gt(const diploid_genotype::result_set& rs,
 static
 void
 add_site_modifiers(
-    const site_info& si,
+    site_info& si,
     site_modifiers& smod,
     const calibration_models& model)
 {
@@ -61,9 +61,9 @@ add_site_modifiers(
 //	}
 
 	si.smod.clear();
-	si.smod.is_unknown=(si.ref=='N');
-    si.smod.is_used_covered=(si.n_used_calls!=0);
-    si.smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
+	si.smod.is_unknown 		= (si.ref=='N');
+    si.smod.is_used_covered = (si.n_used_calls!=0);
+    si.smod.is_covered 		= (si.smod.is_used_covered || si.n_unused_calls!=0);
 
     if     (smod.is_unknown)
     {

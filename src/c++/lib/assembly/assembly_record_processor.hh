@@ -47,14 +47,14 @@ public:
         return _consumer->add_indel(ii);
     }
 
-    bool add_indel(const pos_t pos,
-		   const indel_key ik,
-		   const starling_diploid_indel_core& dindel,
-		   const starling_indel_report_info& iri,
-		   const starling_indel_sample_report_info& isri)
-   {
-     assert("unfinished method" && 0);
-   }
+//    bool add_indel(const pos_t pos,
+//		   const indel_key ik,
+//		   const starling_diploid_indel_core& dindel,
+//		   const starling_indel_report_info& iri,
+//		   const starling_indel_sample_report_info& isri)
+//   {
+//     assert("unfinished method" && 0);
+//   }
 
    void flush(){}
 };

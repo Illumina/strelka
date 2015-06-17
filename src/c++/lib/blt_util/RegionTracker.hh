@@ -130,7 +130,7 @@ private:
 template <typename T>
 struct RegionPayloadTracker
 {
-<<<<<<< HEAD
+
     bool
     empty() const
     {
@@ -150,11 +150,10 @@ struct RegionPayloadTracker
     // is the payload returned in such a case?
 #if 0
     /// does range intersect any tracked region w/ payload?
-=======
     boost::optional<known_pos_range2>
     isInRegion(const unsigned pos) const;
 
->>>>>>> Ragnarok_2
+
     boost::optional<T>
     isIntersectRegion(
         const known_pos_range2 range) const

@@ -35,6 +35,7 @@
 
 struct assembly_streamer : public site_info_stream
 {
+
 	assembly_streamer(
         const starling_base_options& init_opt,
         const starling_deriv_options& init_dopt,
@@ -65,6 +66,9 @@ struct assembly_streamer : public site_info_stream
 			//log_os << "Initializing default assembler" << std::endl;
 			this->myAssembler = new dummy_assembler();
 		}
+
+		// TODO dummy call
+		nocompress_regions.regionCount();
 
 		this->clear();
     }
