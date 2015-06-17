@@ -72,7 +72,20 @@ get_starling_option_parser(
      "Enable short-range SNP phasing")
     ("phasing-window", po::value(&opt.phasing_window)->default_value(opt.phasing_window),
      "The maximum window to consider for short-range phasing")
-    ;
+	 ("do-assemble", po::value(&opt.do_assemble)->zero_tokens(),
+	      "Enable local assembly of variant dense regions")
+	 ("assemble-aggresiveness", po::value(&opt.assemble_aggresiveness)->default_value(opt.assemble_aggresiveness),
+	  "How aggresive should we be when selecting regions to assemble")
+	 ("assembly-bed",  po::value(&opt.assembly_regions_filename),
+	   "Bed file with regions we should always to assemble.")
+	 ("assembly-model", po::value(&opt.assembly_model)->default_value("de-bruijn"),
+	  "he assembly strategy to utilize (options: bed, string-graph, de-bruijn)")
+     ;
+
+//    po::options_description assemble_opt("Assembly options");
+//    assemble_opt.add_options()
+//
+//     ;
 
     po::options_description starling_parse_opt("Germline calling options");
     starling_parse_opt.add(gvcf_opt).add(phase_opt);

@@ -20,6 +20,7 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/chrom_depth_map.hh"
 #include "blt_util/io_util.hh"
+#include "assembly/predictor.hh"
 
 #include <iomanip>
 #include <iostream>
@@ -54,10 +55,15 @@ add_site_modifiers(
     site_modifiers& smod,
     const calibration_models& model)
 {
-    smod.clear();
-    smod.is_unknown=(si.ref=='N');
-    smod.is_used_covered=(si.n_used_calls!=0);
-    smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
+	//TODO special treatment for phased records, assume that all appropriate smods have been set upstream
+//	if (si.smod.is_phased_region){
+//		return;
+//	}
+
+	si.smod.clear();
+	si.smod.is_unknown=(si.ref=='N');
+    si.smod.is_used_covered=(si.n_used_calls!=0);
+    si.smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
 
     if     (smod.is_unknown)
     {
@@ -116,6 +122,7 @@ gvcf_aggregator(
     , _CM(_opt, dopt.gvcf)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _codon_phaser(opt, bc_buff)
+
 {
     assert(_report_range.is_begin_pos);
     assert(_report_range.is_end_pos);
@@ -141,7 +148,7 @@ gvcf_aggregator::
     flush();
 }
 
-void
+bool
 gvcf_aggregator::
 add_site(
     site_info& si)
@@ -167,7 +174,6 @@ add_site(
         }
     }
 
-
     if (_opt.do_codon_phasing
         && (Codon_phaser::is_phasable_site(si) || _codon_phaser.is_in_block()))
     {
@@ -177,11 +183,13 @@ add_site(
             output_phased_blocked();
         }
     }
+
     else
     {
         skip_to_pos(si.pos);
         add_site_internal(si);
     }
+    return true;
 }
 
 
@@ -207,22 +215,6 @@ skip_to_pos(const pos_t target_pos)
         }
     }
 }
-
-
-
-void
-gvcf_aggregator::
-output_phased_blocked()
-{
-    for (const site_info& si : _codon_phaser.buffer())
-    {
-        this->skip_to_pos(si.pos);
-        add_site_internal(si);
-    }
-    _codon_phaser.clear();
-}
-
-
 
 //Add sites to queue for writing to gVCF
 void
@@ -271,7 +263,20 @@ is_no_indel(const starling_diploid_indel_core& dindel)
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
 
-void
+
+bool
+gvcf_aggregator::
+add_indel(const indel_info & ii)
+{
+    return add_indel(ii.pos,
+                     ii.ik,
+                     ii.dindel,
+                     ii.iri,
+                     ii.isri);
+}
+
+
+bool
 gvcf_aggregator::
 add_indel(const pos_t pos,
           const indel_key ik,
@@ -280,14 +285,14 @@ add_indel(const pos_t pos,
           const starling_indel_sample_report_info& isri)
 {
     // we can't handle breakends at all right now:
-    if (ik.is_breakpoint()) return;
+    if (ik.is_breakpoint()) return true;
 
     // don't handle homozygous reference calls unless genotyping is forced
-    if (is_no_indel(dindel) && !dindel.is_forced_output) return;
+    if (is_no_indel(dindel) && !dindel.is_forced_output) return true;
 
     // if we are in phasing a block and encounter an indel, make sure we empty block before doing anything else
-    if (_opt.do_codon_phasing && this->_codon_phaser.is_in_block())
-        this->output_phased_blocked();
+//    if (_opt.do_codon_phasing && this->_codon_phaser.is_in_block())
+//        this->output_phased_blocked();
 
     skip_to_pos(pos);
 
@@ -316,9 +321,8 @@ add_indel(const pos_t pos,
     {
         process_overlaps();
     }
+    return true;
 }
-
-
 
 static
 bool
@@ -402,7 +406,7 @@ queue_site_record(
         write_site_record(si);
         return;
     }
-
+//    log_os << si << std::endl;
     if (! _block.test(si))
     {
         write_block_site_record();
@@ -589,6 +593,10 @@ write_site_record(
 //            }
 
         }
+        // removed -- trigger info passed differently in refactored code (PK)
+        // else if(si.smod.is_assembled_contig){
+        //     os << "asmblReason=" << ASSEMBLY_TRIGGER::get_label(si.smod.assemblyReason);
+        // }
         else
         {
             os << '.';
@@ -686,10 +694,10 @@ modify_indel_overlap_site(
     site_info& si,
     calibration_models& CM)
 {
-#ifdef DEBUG_GVCF
-    log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
-    log_os << "CHIRP: indel_overlap_site imod before: " << ii.imod << "\n";
-#endif
+//#ifdef DEBUG_GVCF
+//    log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
+//    log_os << "CHIRP: indel_overlap_site imod before: " << ii.imod << "\n";
+//#endif
 
     // if overlapping indel has any filters, mark as site conflict
     // (note that we formerly had the site inherit indel filters, but
@@ -938,6 +946,7 @@ write_indel_record(const unsigned write_index)
             os << '.';
         }
     }
+
 
 //    if (ii.Qscore>0) {
 //        os << ';';

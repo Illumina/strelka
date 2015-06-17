@@ -106,6 +106,13 @@ starling_run(
         sdata.register_nocompress_regions(*nocompress_regions);
     }
 
+    std::unique_ptr<bed_streamer> assembly_regions;
+    //TODO test if file is specified
+	assembly_regions.reset(new bed_streamer(opt.assembly_regions_filename.c_str(),
+											  bam_region.c_str()));
+
+	sdata.register_assembly_regions(*assembly_regions);
+
     starling_input_stream_handler sinput(sdata);
 
     while (sinput.next())

@@ -194,6 +194,11 @@ struct blt_options
     // Size of the window we are phasing in, default is codon range (=3)
     int phasing_window = 3;
 
+    // Apply assembly to qualifying regions
+    bool do_assemble                        = false;
+    unsigned assemble_aggresiveness         = 1;
+    std::string assembly_regions_filename;
+
     //multiplier for ref error rate to use; 1 would be expected to be correct, but higher values counteract a bias away from homozygous indels (undercalling)
     double indel_ref_error_factor = 1.;
 
@@ -202,7 +207,9 @@ struct blt_options
 
     // all somatic VQSR models (and indel error models)
     std::string somatic_scoring_models_filename;
+    std::string indel_scoring_models;   // file containing all indel scoring models
     std::string indel_error_model;      // which baseline prior should be used for candidate indel genotyping
+    std::string assembly_model;      	// which assembly strategy should we use
 };
 
 
