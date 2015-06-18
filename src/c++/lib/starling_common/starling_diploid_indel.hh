@@ -21,6 +21,8 @@
 
 #include "boost/utility.hpp"
 
+#include <iosfwd>
+
 
 namespace STAR_DIINDEL
 {
@@ -146,6 +148,9 @@ struct starling_diploid_indel_core
         return (0 == ploidy);
     }
 
+    // debug
+    void dump(std::ostream& os) const;
+
 protected:
 
     static
@@ -173,26 +178,7 @@ public:
 
     bool is_forced_output;
     bool is_zero_coverage;
-
-    virtual void dump(std::ostream& os) const
-    {
-        os << "ploidy=" << ploidy
-            << ",max_gt=" << max_gt
-            << ",indel_qphred=" << indel_qphred
-            << ",max_gt_qphred=" << max_gt_qphred
-            << ",max_gt_poly=" << max_gt_poly
-            << ",max_gt_poly_qphred=" << max_gt_poly_qphred
-            << ",is_forced_output=" << is_forced_output
-            << ",is_zero_coverage=" << is_zero_coverage;
-    }
 };
-
-inline std::ostream& operator<<(std::ostream& os, const starling_diploid_indel_core& obj)
-{
-    obj.dump(os);
-    return os;
-}
-
 
 
 
@@ -205,20 +191,9 @@ struct starling_diploid_indel : public starling_diploid_indel_core, private boos
         for (unsigned i(0); i<STAR_DIINDEL::SIZE; ++i) pprob[i] = p;
     }
 
+    void dump(std::ostream& os) const;
+
+    // members:
     double pprob[STAR_DIINDEL::SIZE];
-
-    void dump(std::ostream& os) const
-    {
-        starling_diploid_indel_core::dump(os);
-        os << ",pprob=[";
-
-        auto sep = "";
-        for (auto p : pprob)
-        { 
-            os << sep << p;
-            sep = ",";
-        }
-        os << "]";
-    }
 };
 
