@@ -1,3 +1,9 @@
+v2.3.12
+- STAR-32: Trigger phasing of SNVs if an indel is encountered within the phasing interval.
+- STAR-14: Add --targeted-regions-bed parameter to Starling for flagging OffTarget positions. Also
+  added --targetRegions to the python workflow wrapper.
+- Apply SiteConflict filter to block-compressed areas that overlap a filtered indel. This was a 
+  side-effect of a restructuring of the code, but was deemed to be more correct than the previous behavior.
 v2.3.11
 - Modify workflow generation to remove use of reflection
 v2.3.10

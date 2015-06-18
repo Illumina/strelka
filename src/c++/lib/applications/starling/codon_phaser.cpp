@@ -31,10 +31,60 @@
 #endif
 
 
+void Codon_phaser::process(site_info& si)
+{
+    if (opt.do_codon_phasing && (is_phasable_site(si) || is_in_block()))
+    {
+        auto emptyBuffer = add_site(si);
+        if ((!is_in_block()) || emptyBuffer)
+        {
+            output_buffer();
+        }
+        return;
+    }
+    _sink->process(si);
+}
+
+void Codon_phaser::flush()
+{
+    if (opt.do_codon_phasing)
+    {
+        if (het_count>1)
+        {
+            make_record();
+        }
+        output_buffer();
+    }
+    _sink->flush();
+}
+
+// the Codon phaser can't work across indels, so flush any in-progress phasing
+void Codon_phaser::process(indel_info& ii)
+{
+    if (opt.do_codon_phasing && is_in_block())
+    {
+        if (het_count>1)
+        {
+            make_record();
+        }
+        output_buffer();
+    }
+    _sink->process(ii);
+}
+
+void Codon_phaser::output_buffer()
+{
+    for (site_info& si : _buffer)
+    {
+        _sink->process(si);
+    }
+    clear();
+}
+
+
 // Add a SNP site to the phasing buffer
 bool
-Codon_phaser::
-add_site(const site_info& si)
+Codon_phaser::add_site(const site_info& si)
 {
     _buffer.push_back(si);
 #ifdef DEBUG_CODON
@@ -95,9 +145,13 @@ add_site(const site_info& si)
 void
 Codon_phaser::construct_reference()
 {
-    this->reference = "";
-    for (unsigned i=0; i<this->_buffer.size()-(this->opt.phasing_window-1); i++)
-        this->reference += _buffer.at(i).ref;
+    reference = "";
+    auto start = _buffer.begin()->pos;
+    auto end = _buffer.rbegin()->pos;
+    auto len = std::min(get_block_length(), (unsigned)(end-start+1));
+
+    ref.get_substring(start, len, reference);
+
 #ifdef DEBUG_CODON
     log_os << __FUNCTION__ << ": reference " << reference << "\n";
 #endif
@@ -123,17 +177,30 @@ create_phased_record()
 
     assert(_buffer.size()>0);
 
+
+
     //Decide if we accept the novel alleles, very hacky criteria for now
     //at least 80% of the reads have to support a diploid model
     //TODO unphased genotype corresponds to as many phased genotypes as there are permutations of
     //the observed alleles. Thus, for a given unphased genotyping G1, . . . ,Gn,
     //we need to to calculate probability of sampling a particular unphased genotype combinations
     //given a set of allele frequencies...
+    // TODO: PASSing SNPs are getting filtered during phasing for allele balance issues. Looks like it would benefit from a
+    // model-based approach.
+    // < chr8  70364286    .   G   A   32  PASS    SNVSB=-2.5;SNVHPOL=4    GT:GQ:GQX:DP:DPF:AD 0/1:65:21:15:5:12,3
+    // < chr8  70364287    .   A   G   11  PASS    SNVSB=-2.5;SNVHPOL=2    GT:GQ:GQX:DP:DPF:AD 0/1:44:18:16:3:14,2
+    //---
+    //> chr8  70364286    .   G   A   32  PhasingConflict SNVSB=-2.5;SNVHPOL=4    GT:GQ:GQX:DP:DPF:AD 0/1:65:21:15:5:12,3
+    //> chr8  70364287    .   A   G   11  PhasingConflict SNVSB=-2.5;SNVHPOL=2    GT:GQ:GQX:DP:DPF:AD 0/1:44:18:16:3:14,2
     typedef std::pair<std::string, int> allele_count_t;
     //static constexpr unsigned alleleCount(2);
     std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
     for (auto& obs : observations)
     {
+#ifdef DEBUG_CODON
+        log_os << "obs:" << obs.first << "(" << obs.second << ")" << std::endl;;
+#endif
+
         if (obs.second>max_alleles[0].second)
         {
             max_alleles[1]  = max_alleles[0];
@@ -188,6 +255,7 @@ create_phased_record()
 
         if (! phasing_inconsistent)
         {
+            //TODO: If we ever phase HOMALT, this logic needs to change
             assert(! max_alleles[0].first.empty());
             assert(max_alleles[0].first.size() == max_alleles[1].first.size());
             if (max_alleles[0].first.front() == max_alleles[1].first.front()) phasing_inconsistent=true;
@@ -282,6 +350,12 @@ make_record()
     this->create_phased_record();
 }
 
+void
+Codon_phaser::collect_records()
+{
+    if (is_in_block() && het_count > 1)
+        make_record();
+}
 
 
 void

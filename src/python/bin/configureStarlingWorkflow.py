@@ -50,6 +50,9 @@ You must specify a BAM file.
                          "indicate haploid or deleted status respectively. File must be tabix indexed. (no default)")
         group.add_option("--noCompress", type="string", dest="noCompressBed", metavar="FILE",
                          help="Provide bed file of regions where gVCF block compress is disallowed. File must be tabix indexed. (no default)")
+        group.add_option("--targetRegions", type="string", dest="targetRegionsBed", metavar="FILE",
+                         help="Provide bed file of regions to allow variant calls. Calls outside these ares are filtered "
+                         "as OffTarget. File must be tabix indexed. (no default)")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
@@ -99,6 +102,8 @@ You must specify a BAM file.
 
         checkOptionalTabixIndexedFile(options.ploidyBed,"ploidy bed")
         checkOptionalTabixIndexedFile(options.noCompressBed,"no-compress bed")
+        checkOptionalTabixIndexedFile(options.targetRegionsBed,"targeted-regions bed")
+
 
         bcheck = BamSetChecker()
 

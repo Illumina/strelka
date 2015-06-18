@@ -52,25 +52,24 @@ write_filters(std::ostream& os) const
 
 
 std::map<std::string, double>
-indel_info::
-get_indel_qscore_features(
+indel_info::get_indel_qscore_features(
     const double chrom_depth) const
 {
     std::map<std::string, double> res;
     res["QUAL"]             = dindel.indel_qphred /(1.*chrom_depth);
-    res["F_GQX"]            = imod.gqx /(1.*chrom_depth);
-    res["F_GQ"]             = imod.gq /(1.*chrom_depth); // N.B. Not used at time of writing; normalization uncertain
-    res["REFREP1"]          = iri.ref_repeat_count;
+    res["F_GQX"]            = imod().gqx /(1.*chrom_depth);
+    res["F_GQ"]             = imod().gq /(1.*chrom_depth); // N.B. Not used at time of writing; normalization uncertain
+    res["REFREP1"]          = iri().ref_repeat_count;
 
-    res["IDREP1"]           = iri.indel_repeat_count;
-    res["RULEN1"]           = iri.repeat_unit.length(); //isri.depth;               //This feature actually means the length of the RU string
+    res["IDREP1"]           = iri().indel_repeat_count;
+    res["RULEN1"]           = iri().repeat_unit.length(); //isri.depth;               //This feature actually means the length of the RU string
 
     unsigned ref_count(0);
-    ref_count = std::max(ref_count,isri.n_q30_ref_reads);
+    ref_count = std::max(ref_count,isri().n_q30_ref_reads);
 
     const double r0 = ref_count;
-    const double r1 = isri.n_q30_indel_reads;
-    const double r2 = isri.n_q30_alt_reads;
+    const double r1 = isri().n_q30_indel_reads;
+    const double r2 = isri().n_q30_alt_reads;
     res["AD0"]              = r0/(1.0*chrom_depth);
     res["AD1"]              = r1/(1.0*chrom_depth);
     res["AD2"]              = r2/(1.0*chrom_depth);
@@ -79,7 +78,7 @@ get_indel_qscore_features(
     double allelebiaslower = cdf(boost::math::binomial(r0+r1,0.5),r0);
     // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
     double allelebiasupper = cdf(boost::math::binomial(r0+r1,0.5),r1);
-    if ( imod.is_overlap )
+    if ( is_hetalt() )
     {
         allelebiaslower = cdf(boost::math::binomial(r2+r1,0.5),r1);
         allelebiasupper = cdf(boost::math::binomial(r2+r1,0.5),r2);
@@ -87,9 +86,126 @@ get_indel_qscore_features(
     res["ABlower"]          = -std::log(allelebiaslower+1.e-30); // +1e-30 to avoid log(0) in extreme cases
     res["AB"]               = -std::log(std::min(1.,2.*std::min(allelebiaslower,allelebiasupper))+1.e-30);
 
-    res["F_DPI"]            = isri.depth/(1.0*chrom_depth);
+    res["F_DPI"]            = isri().depth/(1.0*chrom_depth);
     return res;
 }
+
+void indel_info::set_hap_cigar(
+        const unsigned lead,
+        const unsigned trail)
+{
+    using namespace ALIGNPATH;
+    ALIGNPATH::path_t& apath(_imod.front().cigar);
+
+    apath.clear();
+    if (lead)
+    {
+        apath.push_back(path_segment(MATCH,lead));
+    }
+    if (ik().delete_length())
+    {
+        apath.push_back(path_segment(DELETE,ik().delete_length()));
+    }
+    if (ik().insert_length())
+    {
+        apath.push_back(path_segment(INSERT,ik().insert_length()));
+    }
+    if (trail)
+    {
+        apath.push_back(path_segment(MATCH,trail));
+    }
+}
+
+static void add_cigar_to_ploidy(
+    const ALIGNPATH::path_t& apath,
+    std::vector<unsigned>& ploidy)
+{
+    using namespace ALIGNPATH;
+    int offset(-1);
+    for (const auto& ps : apath)
+    {
+        if (is_segment_align_match(ps.type))
+        {
+            for (unsigned j(0); j<ps.length; ++j)
+            {
+                if (offset>=0) ploidy[offset]++;
+                offset++;
+            }
+        }
+        else if (ps.type==DELETE)
+        {
+            offset+=ps.length;
+        }
+    }
+}
+
+pos_t indel_info::end() const
+{
+    pos_t result = 0;
+    for (auto x : _ik)
+        result = std::max(result, x.right_pos());
+    return result;
+}
+
+void indel_info::add_overlap(const reference_contig_segment& ref, indel_info& overlap)
+{
+    assert(_imod.size() == 1);
+
+    // there's going to be 1 (possibly empty) fill range in front of one haplotype
+    // and one possibly empty fill range on the back of one haplotype
+    std::string leading_seq,trailing_seq;
+    auto indel_end_pos=std::max(overlap.ik().right_pos(),ik().right_pos());
+
+    const pos_t indel_begin_pos(pos-1);
+
+    // add shared information (to the first indel only)
+    // TODO: Reevaluate this. Since we're merging, we can do this on output
+    // make extended vcf ref seq:
+    std::string tmp;
+    ref.get_substring(indel_begin_pos,(indel_end_pos-indel_begin_pos),tmp);
+    _iri.front().vcf_ref_seq = tmp;
+
+    ploidy.resize(indel_end_pos-pos,0);
+
+    auto munge_indel = [&] (indel_info& ii)
+    {
+        // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
+        ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
+        const unsigned trail_len(indel_end_pos-ii.ik().right_pos());
+        ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
+
+
+        ii._iri.front().vcf_indel_seq = leading_seq + ii.iri().vcf_indel_seq + trailing_seq;
+
+        ii.set_hap_cigar(leading_seq.size()+1,
+                      trailing_seq.size());
+
+        // add to the ploidy object:
+        add_cigar_to_ploidy(ii.imod().cigar,this->ploidy);
+    };
+    munge_indel(*this);
+    munge_indel(overlap);
+
+
+    //reduce qual and gt to the lowest of the set:
+    this->dindel.indel_qphred = std::min(this->dindel.indel_qphred, overlap.dindel.indel_qphred);
+    this->dindel.max_gt_qphred = std::min(this->dindel.max_gt_qphred, overlap.dindel.max_gt_qphred);
+
+
+    // combine filter flags
+    this->imod().filters |= overlap.imod().filters;
+    // combine QScores. Since the "unset" value is -1, this complex logic is necessary
+    if (this->imod().Qscore <0)
+        this->imod().Qscore = overlap.imod().Qscore;
+    else if (overlap.imod().Qscore >= 0)
+        this->imod().Qscore = std::min(this->imod().Qscore, overlap.imod().Qscore);
+
+    _ik.push_back(overlap.ik());
+    _iri.push_back(overlap.iri());
+    _isri.push_back(overlap.isri());
+    _imod.push_back(overlap.imod());
+}
+
 
 
 

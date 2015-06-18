@@ -32,4 +32,4 @@ finish_gvcf_header(
     const cdmap_t& chrom_depth,
     const std::string& bam_header_data,
     std::ostream& os,
-    calibration_models& CM);
+    const calibration_models& CM);

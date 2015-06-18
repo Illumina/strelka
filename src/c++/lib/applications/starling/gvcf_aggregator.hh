@@ -11,10 +11,6 @@
 // <https://github.com/sequencing/licenses/>
 //
 
-///
-/// \author Chris Saunders
-///
-
 #pragma once
 
 
@@ -27,21 +23,27 @@
 #include "calibration_models.hh"
 #include "gvcf_compressor.hh"
 #include <iosfwd>
+#include "bedstreamprocessor.hh"
+#include "variant_prefilter_stage.hh"
+#include "indel_overlapper.hh"
+#include "gvcf_writer.hh"
 
 
 ///
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
-struct gvcf_aggregator : public site_info_stream
+
+class gvcf_aggregator //: public site_info_stream
 {
+public:
     gvcf_aggregator(
-        const starling_options& opt,
-        const starling_deriv_options& dopt,
-        const reference_contig_segment& ref,
-        const RegionTracker& nocompress_regions,
-        std::ostream* os,
-        const pos_basecall_buffer& bc_buff);
+            const starling_options& opt,
+            const starling_deriv_options& dopt,
+            const reference_contig_segment& ref,
+            const RegionTracker& nocompress_regions,
+            std::ostream* os,
+            const pos_basecall_buffer& bc_buff);
 
     ~gvcf_aggregator();
 
@@ -54,65 +56,26 @@ struct gvcf_aggregator : public site_info_stream
 
     bool add_site(site_info& si);
 
-    bool add_indel(const indel_info& ii);
-
+    // changing return value void->bool to be compliant with site_info_stream
     bool add_indel(const pos_t pos, const indel_key ik,
-                   const starling_diploid_indel_core& dindel,
-                   const starling_indel_report_info& iri,
-                   const starling_indel_sample_report_info& isri);
+            const starling_diploid_indel_core& dindel,
+            const starling_indel_report_info& iri,
+            const starling_indel_sample_report_info& isri);
 
-    void flush()
+    void reset();
+    pos_t headPos() const
     {
-        skip_to_pos(_report_range.end_pos);
-        process_overlaps();
-        write_block_site_record();
-    }
-//    void notify_consumer(){}
-
-    pos_t
-    headPos() const
-    {
-        return _head_pos;
+        return _writer.headPos();
     }
 
 private:
-    void add_site_internal(const site_info& si);
-    void write_block_site_record();
-    void write_site_record(const site_info& si) const;
-    void queue_site_record(const site_info& si);
-    void modify_single_indel_record();
-    void modify_overlap_indel_record();
-    void modify_conflict_indel_record();
-    void process_overlaps();
-    void write_indel_record(const unsigned write_index = 0);
-
-    /// fill in missing sites
-    void skip_to_pos(const pos_t target_pos);
-
-    const site_info& get_empty_site(const pos_t pos)
-    {
-        _empty_site.pos = pos;
-        _empty_site.ref = _ref.get_base(pos);
-        _empty_site.Unphasable = true;
-        return _empty_site;
-    }
-
-    const starling_options& _opt;
-    const known_pos_range _report_range;
-    const reference_contig_segment& _ref;
-    std::ostream* _osptr;
-    const char* _chrom;
-    const gvcf_deriv_options _dopt;
-    pos_t _indel_end_pos;
-    std::vector<indel_info> _indel_buffer;
-    std::vector<site_info> _site_buffer;
-    gvcf_block_site_record _block;
-    pos_t _head_pos;
-    site_info _empty_site;
-
     calibration_models _CM;
-    gvcf_compressor _gvcf_comp;
-
+    gvcf_writer _writer;
+    indel_overlapper _overlapper;
     Codon_phaser _codon_phaser;
+    bed_stream_processor _targeted_region_processor;
+    variant_prefilter_stage _head;
+
+
 };
 

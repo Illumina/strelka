@@ -69,7 +69,6 @@ write_snp_prefix_info_file(const std::string& seq_name,
 }
 
 
-
 starling_pos_processor::
 starling_pos_processor(
     const starling_options& opt,
@@ -204,7 +203,7 @@ reset()
 
     if (_opt.gvcf.is_gvcf_output())
     {
-        _gvcfer->flush();
+        _gvcfer->reset();
     }
 }
 

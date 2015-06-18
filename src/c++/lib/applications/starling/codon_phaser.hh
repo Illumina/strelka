@@ -21,6 +21,7 @@
 
 #include "gvcf_locus_info.hh"
 #include "starling_common/pos_basecall_buffer.hh"
+#include "variant_pipe_stage_base.hh"
 
 
 /// short-range phasing utility for het-snps
@@ -35,21 +36,21 @@
 ///       Will this be worth doing before we transition to a haplotype assembly model
 ///       for short-range phasing?
 ///
-struct Codon_phaser
+struct Codon_phaser : public variant_pipe_stage_base
 {
     Codon_phaser(
         const starling_base_options& init_opt,
-        const pos_basecall_buffer& init_bc_buff)
-        : opt(init_opt),
-          bc_buff(init_bc_buff)
+        const pos_basecall_buffer& init_bc_buff,
+        const reference_contig_segment& init_ref,
+        variant_pipe_stage_base& destination)
+        : variant_pipe_stage_base(destination),
+          opt(init_opt),
+          bc_buff(init_bc_buff),
+          ref(init_ref)
     {
         clear();
     }
 
-    /// add site to buffer
-    ///
-    /// \returns true when the buffer should be printed as a phased block
-    bool add_site(const site_info& si);
 
     static
     bool
@@ -71,15 +72,20 @@ struct Codon_phaser
         return block_start != -1;
     }
 
-    /// buffer of het snp calls
-    ///
-    const std::vector<site_info>&
-    buffer() const
-    {
-        return _buffer;
-    }
+    void process(site_info& si) override;
+    void process(indel_info& ii) override;
+    void flush() override;
+
+
+
+    void collect_records();
 
 private:
+    /// add site to buffer
+    ///
+    /// \returns true when the buffer should be printed as a phased block
+    bool add_site(const site_info& si);
+
     void make_record();                 // make phased record
 
     void collect_pileup_evidence();       // fill in allele counter
@@ -90,9 +96,13 @@ private:
         return (this->block_end-this->block_start+1);
     }
 
+    void output_buffer();
+
+
     std::vector<site_info> _buffer;
     const starling_base_options& opt;
     const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
+    const reference_contig_segment& ref;
 
     int block_start,block_end;          // position of the first and last added het site to block
     int het_count;                      // total hets observed in buffer
