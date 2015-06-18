@@ -45,7 +45,7 @@ struct gvcf_writer : public variant_pipe_stage_base
 
     void process(site_info&) override;
     void process(indel_info&) override;
-    void flush();
+    void flush() override;
 
     pos_t
     headPos() const
