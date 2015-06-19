@@ -51,7 +51,7 @@ enum constants { HET_RES = 4,
 // STAR_DIINDEL het state for certain purposes (printing, for
 // instance)
 //
-enum index_t { SIZE = HOM_SIZE+HET_SIZE*HET_COUNT };
+enum index_t { SIZE = HOM_SIZE+HET_SIZE+HET_COUNT };
 
 inline
 unsigned
