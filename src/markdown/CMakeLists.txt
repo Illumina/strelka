@@ -55,7 +55,7 @@ endfunction()
 
 process_user_guide("starlingUserGuide")
 process_user_guide("strelkaUserGuide")
-process_user_guide("strelkaVQSR")
+process_user_guide("strelkaContributorGuideVQSR")
 
 install(FILES "userGuide.css" DESTINATION ${THIS_DOCDIR}/html)
 install(FILES "tableOfContents.js" DESTINATION ${THIS_DOCDIR}/html)

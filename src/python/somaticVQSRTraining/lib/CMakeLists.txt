@@ -10,9 +10,9 @@
 # <https://github.com/sequencing/licenses/>
 #
 
-add_subdirectory (bin)
-add_subdirectory (lib)
-add_subdirectory (libexec)
+set(INSTALL_TO_DIR "${STRELKA_VQSR_LIBDIR}")
 
-add_subdirectory (somaticVQSRTraining)
+include("${THIS_GLOBALS_CMAKE}") # required for *_PERMISSIONS values
+
+install(DIRECTORY "./" DESTINATION "${INSTALL_TO_DIR}" FILE_PERMISSIONS ${THIS_LIBRARY_PERMISSIONS} FILES_MATCHING PATTERN "*.py")
 

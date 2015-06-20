@@ -1,7 +1,7 @@
 <link rel='stylesheet' href='userGuide.css' />
 
-Strelka VQSR User Guide
-=======================
+Strelka Contributor Guide: VQSR training
+========================================
 
 Version: @WORKFLOW_VERSION@
 
@@ -12,6 +12,9 @@ Version: @WORKFLOW_VERSION@
 This document outlines the process of training a VQSR model for Strelka.
 
 ## Requirements
+
+Strelka VQSR training has additional dependencies which are not included
+in the starka build system.
 
 You must have the following Python packages installed:
 
@@ -26,7 +29,7 @@ Given a VCF and a truth list, we can produce a CSV file with features and
 TP/FP/FN annotation like this:
 
 ```
-${STARKA_INSTALL}/bin/vqsr_vcf_to_csv.py \
+python ${STARKA_INSTALL}/vqsr/bin/vqsr_vcf_to_csv.py \
     src/demo/data/strelka_admix_snvs.vcf.gz \
     -o admix_training_data.csv \
     --feature-table=strelka.snv \
@@ -39,7 +42,7 @@ The next command line learns a model given a training dataset. The parameter
 value of `-f` should be the same as the one used above in `--feature-table`.
 
 ```
-${STARKA_INSTALL}/bin/vqsr_learn.py \
+python ${STARKA_INSTALL}/bin/vqsr_learn.py \
     -m strelka.rf \
     -f strelka.snv \
     -o model.pickle \
@@ -79,7 +82,7 @@ should be used), and write VQSR scores given the model we trained in the
 previous step.
 
 ```
-${STARKA_INSTALL}/bin/vqsr_evaluate.py -m strelka.rf -f strelka.snv \
+python ${STARKA_INSTALL}/bin/vqsr_evaluate.py -m strelka.rf -f strelka.snv \
     -c model.pickle \
     -o admix_classified.csv \
     admix_training_data.csv
@@ -101,7 +104,7 @@ TP      0      1  15572
 ## Step 4: Evaluate Precision / Recall for the model
 
 ```
-${STARKA_INSTALL}/bin/vqsr_pr.py \
+python ${STARKA_INSTALL}/bin/vqsr_pr.py \
      -q QSS_NT,qual \
      -o admix_precisionrecall.csv \
      admix_classified.csv
@@ -161,6 +164,6 @@ ggsave("vqsr_test.png", width=4, height=3, dpi=120)
 Strelka uses models in JSON format:
 
 ```
-${STARKA_INSTALL}/bin/vqsr_exportmodel.py \
+python ${STARKA_INSTALL}/bin/vqsr_exportmodel.py \
     -m strelka.rf -c model.pickle -o model.json
 ```

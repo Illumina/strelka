@@ -10,9 +10,11 @@
 # <https://github.com/sequencing/licenses/>
 #
 
+set(STRELKA_VQSR_DIR "${THIS_DATADIR}/somaticVQSRTraining")
+set(STRELKA_VQSR_LIBDIR "${STRELKA_VQSR_DIR}/lib")
+
+install(FILES "README.md" DESTINATION ${STRELKA_VQSR_DIR})
+
 add_subdirectory (bin)
 add_subdirectory (lib)
-add_subdirectory (libexec)
-
-add_subdirectory (somaticVQSRTraining)
 

@@ -24,3 +24,4 @@ install_fileglob("${CMAKE_CURRENT_BINARY_DIR}" "${INSTALL_TO_DIR}" "*.py"
                  "${THIS_EXECUTABLE_PERMISSIONS}")
 install_fileglob("${CMAKE_CURRENT_BINARY_DIR}" "${INSTALL_TO_DIR}" "*.ini"
                  "${THIS_EXECUTABLE_PERMISSIONS}")
+
