@@ -5,7 +5,7 @@
  *      Author: mkallberg
  */
 
-#include <assembly/dummy_assembler.hh>
+#include assembly/dummy_assembler.hh
 
 dummy_assembler::dummy_assembler() {
 	// TODO Auto-generated constructor stub

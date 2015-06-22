@@ -18,7 +18,7 @@
 #include "blt_common/ref_context.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 
-#include "assembly/predictor.hh"
+//#include "assembly/predictor.hh"
 
 #include <iomanip>
 
@@ -90,16 +90,16 @@ starling_pos_processor(
         if(_opt.do_assemble)
         {
             //Initialize site_info_streamers
-            predictor_stream_splitter * pagg = new predictor_stream_splitter();
-            std::shared_ptr<site_info_stream> s_pagg;
-            s_pagg.reset(pagg);
+//            predictor_stream_splitter * pagg = new predictor_stream_splitter();
+//            std::shared_ptr<site_info_stream> s_pagg;
+//            s_pagg.reset(pagg);
 
-            assembly_streamer *myAssembler = new assembly_streamer(_opt, _dopt, sample(0).read_buff, get_largest_read_size(),_nocompress_regions);
-            assembly_record_processor *myRecordProcessor = new assembly_record_processor();
+//            assembly_streamer *myAssembler = new assembly_streamer(_opt, _dopt, sample(0).read_buff, get_largest_read_size(),_nocompress_regions);
+//            assembly_record_processor *myRecordProcessor = new assembly_record_processor();
 
             // register more components of the assembly pipeline here as needed
             // 
-            //    predictor   ---->  assembler -> recordProcessor -> gVCFAggregator
+            //    predictor ->  assembler -> recordProcessor -> gVCFAggregator
             //        \                                               ^
             //         \                                             /
             //          *-------------------------------------------*
@@ -131,14 +131,15 @@ starling_pos_processor(
 
 
             // Entrire pipeline, except predictor
-            myAssembler->register_consumer(std::shared_ptr<site_info_stream>(myRecordProcessor));
-            myRecordProcessor->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
-            _gvcfer = std::shared_ptr<site_info_stream>(myAssembler);
+//            myAssembler->register_consumer(std::shared_ptr<site_info_stream>(myRecordProcessor));
+//            myRecordProcessor->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
+//            _gvcfer = std::shared_ptr<site_info_stream>(myAssembler);
 
             // DEBUG Straight to aggregator
-//            _gvcfer = std::shared_ptr<site_info_stream>(myAggregator);
+            _gvcfer = std::shared_ptr<site_info_stream>(myAggregator);
 
         }
+        //TODO make
         // else if(_opt.do_codon_phasing)
         // {
         //     // TODO register aggregator with the codon phasing code here
@@ -203,7 +204,7 @@ reset()
 
     if (_opt.gvcf.is_gvcf_output())
     {
-        _gvcfer->reset();
+        _gvcfer->flush();
     }
 }
 

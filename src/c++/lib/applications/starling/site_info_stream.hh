@@ -46,29 +46,34 @@ public:
 
     /** interface methods */
     virtual bool add_site(site_info& si) = 0;
-    virtual bool add_indel(const indel_info& ii) = 0;
+    virtual bool add_indel(indel_info& ii) = 0;
 
 
     /** (PK) this should go away!
      *  ideally remove from interface, move up to caller code
+     *  needs better integration with gvcf_aggregatior
      */
+
     virtual bool add_indel(const pos_t pos,
-                   const indel_key ik,
+                   const indel_key& ik,
                    const starling_diploid_indel_core& dindel,
                    const starling_indel_report_info& iri,
-                   const starling_indel_sample_report_info& isri)
-    {
-        //TODO: is this inefficient enough to avoid the extra copy?
-        indel_info ii;
-        ii.init(pos,ik,dindel,iri,isri);
-        return add_indel(ii);
-    }
+                   const starling_indel_sample_report_info& isri) = 0;
+//    {
+//        //TODO: is this inefficient enough to avoid the extra copy?
+//        indel_info ii(pos,ik,dindel,iri,isri);
+//        ii.init(pos,ik,dindel,iri,isri);
+//        return add_indel(ii);
+//    }
 
     /** notify and empty buffer */
     virtual void flush()  = 0;
 
+    //TODO better integration with gvcf_agg
+    virtual pos_t headPos() const = 0;
+
     // TODO this needs to return a sensible value base on what is expected in starling_pos_processor around line 59
-    virtual bool is_phasing_block(){ return true; }
+    virtual bool is_phasing_block(){ return true;}
 
     /** default consumer */
     void register_consumer(std::shared_ptr<site_info_stream> consumer)

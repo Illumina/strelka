@@ -309,6 +309,7 @@ struct indel_info
         return (static_cast<int>(imod().max_gt)>1);
     }
 
+
     // the site ploidy within the indel at offset x
     unsigned
     get_ploidy(const unsigned offset) const

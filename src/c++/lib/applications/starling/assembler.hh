@@ -76,7 +76,7 @@ struct assembly_streamer : public site_info_stream
     // implement site_info_stream methods
     // these buffer sites until flush() is called
     bool add_site(site_info& si);
-    bool add_indel(const indel_info& ii);
+    bool add_indel(indel_info& ii);
 
     // assemble collected sites and output to consumer
     void flush();

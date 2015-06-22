@@ -34,7 +34,8 @@
 /// and writes to a VCF stream
 ///
 
-class gvcf_aggregator //: public site_info_stream
+
+class gvcf_aggregator : public site_info_stream
 {
 public:
     gvcf_aggregator(
@@ -47,6 +48,7 @@ public:
 
     ~gvcf_aggregator();
 
+
     /// provide the phasing block status, if true, pileup buffer is
     /// preserved until the block is completed
     bool is_phasing_block() const
@@ -54,14 +56,19 @@ public:
         return _codon_phaser.is_in_block();
     }
 
+
+// These are declared in site_info_stream
     bool add_site(site_info& si);
+    bool add_indel(indel_info& ii);
 
-    // changing return value void->bool to be compliant with site_info_stream
-    bool add_indel(const pos_t pos, const indel_key ik,
-            const starling_diploid_indel_core& dindel,
-            const starling_indel_report_info& iri,
-            const starling_indel_sample_report_info& isri);
+// changing return value void->bool to be compliant with site_info_stream eventually
+    bool add_indel(const pos_t pos,
+				   const indel_key& ik,
+				   const starling_diploid_indel_core& dindel,
+				   const starling_indel_report_info& iri,
+				   const starling_indel_sample_report_info& isri);
 
+    void flush();
     void reset();
     pos_t headPos() const
     {

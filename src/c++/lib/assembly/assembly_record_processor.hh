@@ -42,7 +42,7 @@ public:
 	return this->_consumer->add_site(si);
     }
 
-    bool add_indel(const indel_info& ii)
+    bool add_indel(indel_info& ii)
     {
         return _consumer->add_indel(ii);
     }

@@ -56,10 +56,9 @@ add_site(site_info& si)
     return true;
 }
 
-
 bool
 assembly_streamer::
-add_indel(const indel_info& ii)
+add_indel(indel_info& ii)
 {
     this->_indel_buffer.push_back(ii);
 
@@ -84,7 +83,7 @@ add_indel(const indel_info& ii)
 //    this->write_out_buffer();
 //    this->notify_consumer();
 //    this->clear();
-//    return true;
+    return true;
 }
 
 void
@@ -140,7 +139,7 @@ assembly_streamer::rescore(std::stringstream &AD)
 
     // add information from the alleles selected for output
     AD << 10;
-    bool hasAlt(false);
+//    bool hasAlt(false);
     for (const auto& val : asm_contigs)
     {
         if (val==reference) continue;
@@ -198,7 +197,7 @@ assembly_streamer::create_contig_records()
     base.phased_AD  = AD.str();
 
     // set more vcf record fields
-    int reads_ignored   = 10;
+//    int reads_ignored   = 10;
     base.n_used_calls   = 15;
     base.n_unused_calls = 20; // second term mark all alleles that we didnt use as unused reads
 
