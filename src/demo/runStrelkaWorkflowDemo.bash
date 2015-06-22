@@ -81,7 +81,7 @@ fi
 # Step 2: run demo (on single local core):
 #
 #stderrlog=$analysis_dir/make.stderr.log
-cmd="$analysisDir/runWorkflow.py -m local -j 1"
+cmd="$analysisDir/runWorkflow.py -m local -j 1 -g 4"
 echo 1>&2
 echo "**** Starting demo workflow execution." 1>&2
 echo "**** Workflow cmd: '$cmd'" 1>&2

@@ -44,7 +44,7 @@ You must specify BAM file(s) for the proband and additional related samples.
 
 
     def addWorkflowGroupOptions(self,group) :
-        group.add_option("--probandAlignmnet", type="string",dest="probandBamList",metavar="FILE", action="append",
+        group.add_option("--probandAlignment", type="string",dest="probandBamList",metavar="FILE", action="append",
                          help="Proband BAM file. [required] (no default)")
         group.add_option("--parentAlignment", type="string",dest="parentBamList",metavar="FILE", action="append",
                           help="BAM file for a parent sample. (no default, submit argument one time for each parent)")
@@ -127,3 +127,4 @@ To execute the workflow, run the following script and set appropriate options:
 
 if __name__ == "__main__" :
     main()
+

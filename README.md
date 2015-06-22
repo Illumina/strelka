@@ -2,132 +2,207 @@
 STARKA: Starling/Strelka small variant callers
 ==============================================
 
-Version: NOT RELEASED
-
 Chris Saunders (csaunders@illumina.com)
 Morten Kallberg (mkallberg@illumina.com)
 
-Starling (Isaac Variant Caller) is a diploid small-variant caller for individual samples.
+Starling (Isaac Variant Caller) is a diploid small-variant caller for
+individual samples.
 
-Strelka is a somatic small-variant caller for matched tumor-normal sample pairs.
+Strelka is a somatic small-variant caller for matched tumor-normal
+sample pairs.
 
 Build instructions
 ------------------
 
-For Starka users it is strongly recommended to start from one of the release
-distributions of the source code. Acquiring the source via a git clone or
-archive could result in missing version number entries, undesirably stringent
-build requirements, or an unstable development intermediate between releases.
-Additional build notes for developers can be found below.
+For Starka users it is strongly recommended to start from one of the
+release distributions of the source code. Acquiring the source via a
+git clone or archive could result in missing version number entries,
+undesirably stringent build requirements, or an unstable development
+intermediate between releases.  Additional build notes for developers
+can be found below.
 
-Note that this README is _NOT_ part of an end-user release distribution.
+Note that this README is _NOT_ part of a tagged source-code release.
 
-### Prerequisites
+### Build prerequisites:
 
-Starka has been built and tested on linux systems only. It is currently
-maintained for CentOS 5,6 and Ubuntu 12.04,14.04 (with gcc updated to meet
-the minimum version where required).
-
-#### Compilation prerequisites:
-
-Starka requires a compiler supporting most of the C++11 standard. These are the
-current minimum versions enforced by the build system:
+Starka requires a compiler supporting most of the C++11 standard. These
+are the current minimum versions enforced by the build system:
 
 * python 2.4+
-* gcc 4.7+ OR clang 3.2+ (OR Visual Studio 2013+, see windev note below)
+* gcc 4.7+ OR clang 3.1+ (OR Visual Studio 2013+, see windev note below)
 * libz (including headers)
 
-#### Runtime prerequisites
+### Runtime prerequisites
 
 * python 2.4+
 
-#### Prerequisite package names (RHEL/CentOS)
+### Operating System Guidelines
 
-* g++
-* make
-* zlib-devel
+##### Linux 
+
+Starka is known to build and run on the following linux distributions
+(with additional packages as described below):
+
+- Ubuntu 12.04,14.04
+- CentOS 5,6,7
+
+##### Windows
+
+Starka does not build or run on windows. Library-level compilation is
+possible for Visual Studio users. See Contributor section below.
+
+### Linux Package Additions
+
+##### Ubuntu 14.04
+
+    apt-get update -qq
+    apt-get install -qq gcc g++ make zlib1g-dev python
+
+##### Ubuntu 12.04
+
+    apt-get update -qq
+    apt-get install -qq bzip2 gcc g++ make zlib1g-dev python python-software-properties
+    # add gcc 4.8 from ubuntu ppa:
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    apt-get update -qq
+    apt-get install -qq gcc-4.8 g++-4.8
+
+    # Prior to build configuration, set CC/CXX to gcc 4.8:
+    export CC=/usr/bin/gcc-4.8
+    export CXX=/usr/bin/g++-4.8
+
+##### CentOS 7
+
+    yum install -y tar bzip2 make gcc gcc-c++ zlib-devel
+
+##### CentOS 5 and 6
+
+    yum install -y tar wget bzip2 make gcc gcc-c++ zlib-devel
+    # add gcc 4.8 from developer tools v2:
+    wget http://people.centos.org/tru/devtools-2/devtools-2.repo -O /etc/yum.repos.d/devtools-2.repo
+    yum install -y devtoolset-2-gcc devtoolset-2-gcc-c++ devtoolset-2-binutils
+
+    # Prior to build configuration, set CC/CXX to gcc 4.8:
+    export CC=/opt/rh/devtoolset-2/root/usr/bin/gcc
+    export CXX=/opt/rh/devtoolset-2/root/usr/bin/g++
 
 ### Build procedure
 
-After acquiring a release distribution of the source code, the build procedure is:
+After acquiring a release distribution of the source code, the build
+procedure is:
 
-* Unpack the source code
-* Create a separate `build` directory (note an out-of-source build is
-  required.)
-* Configure the build
-* Compile
-* Install
+* Unpack source code
+* Create and move to a separate `build` directory (out-of-source build is required.)
+* Configure build
+* Compile & Install
 
-Example:
+Example (building on 4 cores):
 
-    tar -xjf starka-A.B.C.tar.bz2
-    mkdir build
-    cd build
-    ../starka-A.B.C/src/configure --prefix=/path/to/install
-    make
-    make install
+    tar -xjf starka-A.B.C.release_src.tar.bz2
+    mkdir build && cd build
+    # Ensure that CC and CXX are updated to target compiler if needed, e.g.:
+    #     export CC=/path/to/cc
+    #     export CXX=/path/to/c++
+    ../starka-A.B.C.release_src/src/configure --jobs=4 --prefix=/path/to/install
+    make -j4 install
 
-Note that during the configuration step, the following compilation
-dependencies will be built if these are not found:
+Note that during the configuration step, the following dependencies
+will be built from source if they are not found:
 
 * cmake 2.8.0+
-* boost 1.53.0
+* boost 1.53.0+
 
-To optionally avoid this extra step, ensure that (1) cmake is in your PATH and (2)
-BOOST\_ROOT is defined to point to boost 1.53.0 (the boost version is required to
-be an exact match). If either of these dependencies are not found, they will be
-built during the configuration step, To accelerate this process it may be
-desirable to parallelize the configure step over multiple cores. To do so
-provide the `--jobs` argument to the configuration script. For example:
-
-    ${STARKA_SRC_PATH}/configure --prefix=/path/to/install --jobs=4
-
-Compiling Starka itself can also be parallelized by the standard make procedure, e.g.
-
-    make -j4
-    make install
+To accelerate this process the configuration step can be parallelized
+over multiple cores, as demonstrated in the example above with the
+`--jobs=4` argument to configure.
 
 To see more configure options, run:
 
     ${STARKA_SRC_PATH}/configure --help
 
+##### Workflow relocation
 
-Developer build configuration
------------------------------
+After Starka is built the installation directory can be relocated to
+another directory.  All internal paths used in the workflow are
+relative.
 
-When the Starka source is cloned from git, it is configured for development
-rather than end-user distribution. As such, all builds include -Werror. If
-cppcheck is found any detected issue is converted to a build error.
+Contributor build configuration
+-------------------------------
+
+When Starka is cloned from git, it is configured for development
+rather than user distribution. As such, builds are strict: all
+warnings are treated as errors and if cppcheck is found any detected
+issue is converted to a build error.
+
+#### Source documentation
+
+If doxygen is found in the path (and optionally dot as well) during
+build configuration, then c++ documentation is available as an
+additional "doc" target for the makefile:
+
+    make doc
+
+There is no installation for the documentation outside of the build
+directory, the root doxygen page after completing this target will be:
+
+    ${STARKA_BUILD_PATH}/c++/doxygen/html/index.html
+
+#### Improving build time
+
+##### ccache
+
+The build system is configured to use ccache whenever this is
+found in the path
+
+##### Bundled dependencies
+
+Note that during the configuration step, the following dependencies will be
+built from source if they are not found:
+
+* cmake 2.8.0+
+* boost 1.53.0+
+
+To avoid the extra time associated with this step, ensure that (1)
+cmake 2.8.0+ is in your PATH and (2) BOOST\_ROOT is defined to point
+to boost 1.53.0 or newer.
+
+#### Address Sanitizer
+
+The build system offers first-class support for google address sanitizer
+when a supporting compiler is detected. To use this mode, start a fresh
+installation process with the additional configure option `--build-type=ASan`,
+extending from the configuration example in the above build instructions, use:
+
+    ../starka-A.B.C.release_src/src/configure --jobs=4 --prefix=/path/to/install --build-type=ASan
+
+#### Windows development support
+
+Starka does not link or run on windows. However, the build system does
+facilitate Visual Studio (VS) users. When cmake configuration is run
+on windows, all linking is disabled and third party libraries are
+unpacked for header include access, but are not compiled. Cmake VS
+solutions allow the c++ code to be browsed, analyzed and compiled to
+the library level.  Note that unit test codes are compiled to
+libraries but cannot be run.
+
+C++11 features used by starka require at least VS2013. Windows
+installations of cmake and zlib are also required to configure and
+compile. Windows zlib is provided by the [gnuwin32
+package] [gnuwin32] among others.
+
+[gnuwin32]:http://gnuwin32.sourceforge.net/packages/zlib.htm
 
 
-Windows developer support
--------------------------
-
-Starka does not link or run on windows. The build system does however
-facilitate developers preferring to use Visual Studio. During
-windows cmake configuration all final library linking is disabled and all
-third party libraries are unpacked such that their headers can be
-included, but the libraries are not compiled. Cmake generated VS solutions allow
-the c++ code to be browsed, analyzed and compiled to the library level.
-Note that unit tests can not be run under this scheme -- just like the other
-runtime binaries, they can't be linked without building 3rd party libraries.
-
-Note that the c++11 features used by manta require at least Visual Studio
-2013. In addition to VS2013 and cmake, a zlib installation is required. The
-simplist way to do this may be to use the gnuwin32 pacakge here:
-
-http://gnuwin32.sourceforge.net/packages/zlib.htm
-
-This library will enable building for 32 bit only.
 
 Production Build Environment
 ----------------------------
 
-We are required to maintain compatibility with Centos 5.x, which requires building
-on that platform. To make this easier, the process has been moved to Docker.
+We are required to maintain compatibility with Centos 5.x, which
+requires building on that platform. To make this easier, the process
+has been moved to Docker.
 
-The docker image has been saved to the public registry. If you need to recreate
-it, perform the following steps:
+The docker image has been saved to the public registry. If you need to
+recreate it, perform the following steps:
 
 `
 cd env
