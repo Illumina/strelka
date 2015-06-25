@@ -18,8 +18,6 @@
 #include "blt_common/ref_context.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 
-//#include "assembly/predictor.hh"
-
 #include <iomanip>
 
 
@@ -69,6 +67,7 @@ write_snp_prefix_info_file(const std::string& seq_name,
 }
 
 
+
 starling_pos_processor::
 starling_pos_processor(
     const starling_options& opt,
@@ -83,72 +82,9 @@ starling_pos_processor(
     // setup gvcf aggregator
     if (_opt.gvcf.is_gvcf_output())
     {
-        gvcf_aggregator *myAggregator = new gvcf_aggregator(
-                                                  _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(),
-                                                  sample(0).bc_buff);
-
-        if(_opt.do_assemble)
-        {
-            //Initialize site_info_streamers
-//            predictor_stream_splitter * pagg = new predictor_stream_splitter();
-//            std::shared_ptr<site_info_stream> s_pagg;
-//            s_pagg.reset(pagg);
-
-//            assembly_streamer *myAssembler = new assembly_streamer(_opt, _dopt, sample(0).read_buff, get_largest_read_size(),_nocompress_regions);
-//            assembly_record_processor *myRecordProcessor = new assembly_record_processor();
-
-            // register more components of the assembly pipeline here as needed
-            // 
-            //    predictor ->  assembler -> recordProcessor -> gVCFAggregator
-            //        \                                               ^
-            //         \                                             /
-            //          *-------------------------------------------*
-            //
-//            myAssembler->register_consumer(std::shared_ptr<site_info_stream>(myRecordProcessor));
-//            myRecordProcessor->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
-//
-//            uint64_t p = 0;
-//
-//            if (opt.assembly_regions_filename.size())
-//            {
-//                p |= pagg->add_predictor(
-//                    make_predictor(
-//                        PredictorType::bedfile,
-//                        opt,
-//                        dopt
-//                    )
-//                );
-//            }
-//            p |= pagg->add_predictor(
-//                make_predictor(
-//                    PredictorType::density,
-//                    opt,
-//                    dopt
-//                )
-//            );
-//
-//          pagg->add_consumer(std::shared_ptr<site_info_stream>(myAssembler), p);
-
-
-            // Entrire pipeline, except predictor
-//            myAssembler->register_consumer(std::shared_ptr<site_info_stream>(myRecordProcessor));
-//            myRecordProcessor->register_consumer(std::shared_ptr<site_info_stream>(myAggregator));
-//            _gvcfer = std::shared_ptr<site_info_stream>(myAssembler);
-
-            // DEBUG Straight to aggregator
-            _gvcfer = std::shared_ptr<site_info_stream>(myAggregator);
-
-        }
-        //TODO make
-        // else if(_opt.do_codon_phasing)
-        // {
-        //     // TODO register aggregator with the codon phasing code here
-        //     _gvcfer = std::shared_ptr<site_info_stream>(myAggregator);
-        // }
-        else
-        {
-            _gvcfer = std::shared_ptr<site_info_stream>(myAggregator);
-        }
+        _gvcfer.reset(new gvcf_aggregator(
+                          _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(),
+                          sample(0).bc_buff));
     }
 
     // setup indel syncronizers:
@@ -196,6 +132,7 @@ insert_nocompress_region(
 }
 
 
+
 void
 starling_pos_processor::
 reset()
@@ -204,7 +141,7 @@ reset()
 
     if (_opt.gvcf.is_gvcf_output())
     {
-        _gvcfer->flush();
+        _gvcfer->reset();
     }
 }
 
@@ -254,6 +191,7 @@ process_pos_snp_single_sample_impl(
     //    write()?? (do we need to even bother with this?)
     // }
     //
+
     sample_info& sif(sample(sample_no));
 
     const CleanedPileup& cpi(sif.cpi);

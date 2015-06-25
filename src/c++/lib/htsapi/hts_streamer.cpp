@@ -24,7 +24,9 @@
 
 #include <iostream>
 
+
 static const kstring_t kinit = {0,0,0};
+
 
 hts_streamer::
 hts_streamer(

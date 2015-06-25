@@ -23,8 +23,6 @@
 ##
 ## note that order approximates dependency chain, where libraries are listed
 ## after libraries upon which they depend:
-
-# TODO add assembly
 set (THIS_ALL_LIBRARIES options blt_util common calibration htsapi blt_common starling_common strelka_common)
 
 ##

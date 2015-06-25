@@ -7,7 +7,6 @@
 *.slo
 *.lo
 *.o
-*.pyc
 
 # Compiled Dynamic libraries
 *.so
@@ -42,7 +41,6 @@ src/.project
 *.tar
 *.zip
 
-<<<<<<< HEAD
 # IDE and temp files #
 ######################
 *.swp
@@ -51,10 +49,3 @@ tags
 *.sublime-project
 *.sublime-workspace
 src/.idea
-=======
-# ycm / vim
-.ycm_extra_conf.*
-*.swp
-*.swo
-tags
->>>>>>> Ragnarok_2

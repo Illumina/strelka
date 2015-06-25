@@ -14,13 +14,10 @@
 #pragma once
 
 
-
-#include <assembler.hh>
+#include "calibration_models.hh"
+#include "codon_phaser.hh"
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
-#include "codon_phaser.hh"
-#include "site_info_stream.hh"
-#include "calibration_models.hh"
 #include "gvcf_compressor.hh"
 #include <iosfwd>
 #include "bedstreamprocessor.hh"
@@ -33,9 +30,7 @@
 /// Assembles all site and indel call information into a consistent set, blocks output
 /// and writes to a VCF stream
 ///
-
-
-class gvcf_aggregator : public site_info_stream
+class gvcf_aggregator
 {
 public:
     gvcf_aggregator(
@@ -48,7 +43,6 @@ public:
 
     ~gvcf_aggregator();
 
-
     /// provide the phasing block status, if true, pileup buffer is
     /// preserved until the block is completed
     bool is_phasing_block() const
@@ -56,19 +50,12 @@ public:
         return _codon_phaser.is_in_block();
     }
 
+    void add_site(site_info& si);
 
-// These are declared in site_info_stream
-    bool add_site(site_info& si);
-    bool add_indel(indel_info& ii);
-
-// changing return value void->bool to be compliant with site_info_stream eventually
-    bool add_indel(const pos_t pos,
-				   const indel_key& ik,
-				   const starling_diploid_indel_core& dindel,
-				   const starling_indel_report_info& iri,
-				   const starling_indel_sample_report_info& isri);
-
-    void flush();
+    void add_indel(const pos_t pos, const indel_key ik,
+            const starling_diploid_indel_core& dindel,
+            const starling_indel_report_info& iri,
+            const starling_indel_sample_report_info& isri);
     void reset();
     pos_t headPos() const
     {
@@ -77,6 +64,7 @@ public:
 
 private:
     calibration_models _CM;
+
     gvcf_writer _writer;
     indel_overlapper _overlapper;
     Codon_phaser _codon_phaser;

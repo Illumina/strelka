@@ -1,6 +1,5 @@
 
 #include "gvcf_aggregator.hh"
-
 gvcf_aggregator::
 gvcf_aggregator(
     const starling_options& opt,
@@ -18,6 +17,8 @@ gvcf_aggregator(
 {
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
+
+
 }
 
 gvcf_aggregator::~gvcf_aggregator()
@@ -25,47 +26,31 @@ gvcf_aggregator::~gvcf_aggregator()
     _head.flush();
 }
 
-bool
+void
 gvcf_aggregator::
 add_site(
     site_info& si)
 {
     _head.process(si);
-    return true;
 }
 
-bool
-gvcf_aggregator::
-add_indel(indel_info& ii)
-{
-    _head.process(ii);
-    return true;
-//	return add_indel(ii.pos,
-//                     ii.ik,
-//                     ii.dindel,
-//                     ii.iri,
-//                     ii.isri());
-}
-
-bool
+void
 gvcf_aggregator::
 add_indel(const pos_t pos,
-			   const indel_key& ik,
-			   const starling_diploid_indel_core& dindel,
-			   const starling_indel_report_info& iri,
-			   const starling_indel_sample_report_info& isri)
+          const indel_key ik,
+          const starling_diploid_indel_core& dindel,
+          const starling_indel_report_info& iri,
+          const starling_indel_sample_report_info& isri)
 {
     indel_info ii(pos,ik,dindel,iri,isri);
     _head.process(ii);
-    return true;
-}
-
-void gvcf_aggregator::flush()
-{
-    this->reset();
 }
 
 void gvcf_aggregator::reset()
 {
     _head.flush();
 }
+
+
+
+

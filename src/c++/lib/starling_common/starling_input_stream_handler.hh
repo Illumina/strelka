@@ -94,15 +94,6 @@ struct starling_input_stream_data
         _nocompress.push_back(std::make_pair(sample_no,&br));
     }
 
-    /// assembly info from bed file:
-    void
-    register_assembly_regions(
-        bed_streamer& br,
-        const sample_id_t sample_no = 0)
-    {
-        _assembly.push_back(std::make_pair(sample_no,&br));
-    }
-
     /// sites and indels in these files will be used to estimate low-freqeuncy noise
     void
     register_noise(
@@ -124,14 +115,12 @@ private:
     typedef id_map<sample_id_t,bam_streamer*> reads_t;
     typedef std::vector<std::pair<sample_id_t, vcf_streamer*>> indels_t;
     typedef std::vector<std::pair<sample_id_t, bed_streamer*>> regions_t;
-    typedef std::vector<std::pair<sample_id_t, bed_streamer*>> assembly_t;
 
     reads_t _reads;
     indels_t _indels;
     indels_t _output;
     regions_t _ploidy;
     regions_t _nocompress;
-    regions_t _assembly;
     indels_t _noise;
 };
 

@@ -101,10 +101,6 @@ struct RegionTracker
     dump(
         std::ostream& os) const;
 
-    int regionCount() const{
-        return _regions.size();
-    }
-
     typedef std::set<known_pos_range2,PosRangeEndSort>  region_t;
 
 private:
@@ -130,7 +126,6 @@ private:
 template <typename T>
 struct RegionPayloadTracker
 {
-
     bool
     empty() const
     {
@@ -150,10 +145,6 @@ struct RegionPayloadTracker
     // is the payload returned in such a case?
 #if 0
     /// does range intersect any tracked region w/ payload?
-    boost::optional<known_pos_range2>
-    isInRegion(const unsigned pos) const;
-
-
     boost::optional<T>
     isIntersectRegion(
         const known_pos_range2 range) const
@@ -209,3 +200,4 @@ private:
 
 
 #include "RegionTrackerImpl.hh"
+
