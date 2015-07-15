@@ -394,7 +394,10 @@ collect_pileup_evidence()
                 {
                     const base_call& bc(pi.calls.at(callOffset[blockIndex]));
                     if ((! bc.isFirstBaseCallFromMatchSeg) || (blockIndex == startBlockIndex)) break;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuninitialized"
                     tracePartialRead(blockIndex);
+#pragma clang diagnostic pop
                 }
                 const base_call& bc(pi.calls.at(callOffset[blockIndex]));
                 // this represents the 'ordinary' advance of callOffset for a non-interrupted read segment:
