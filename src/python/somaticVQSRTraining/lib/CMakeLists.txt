@@ -10,7 +10,7 @@
 # <https://github.com/sequencing/licenses/>
 #
 
-set(INSTALL_TO_DIR "${STRELKA_VQSR_LIBDIR}")
+set(INSTALL_TO_DIR "${STRELKA_VQSR_LIBDIR}/vqsr")
 
 include("${THIS_GLOBALS_CMAKE}") # required for *_PERMISSIONS values
 

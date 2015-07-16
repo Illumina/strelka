@@ -19,13 +19,16 @@ import sys
 import argparse
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'src')))
+libDir = os.path.abspath(
+    os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
+sys.path.append(libDir)
+
 
 import pandas
 
-from features.ref import getReference
-from features.entropy import getEntropy
-from features.repeat import getRepeats
+from vqsr.features.ref import getReference
+from vqsr.features.entropy import getEntropy
+from vqsr.features.repeat import getRepeats
 
 def main():
     parser = argparse.ArgumentParser("Split a set of CSV files")
