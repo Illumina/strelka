@@ -45,7 +45,6 @@ struct PosRangeEndSort
 
 
 /// facilitate 'rolling' region tracking and position intersect queries
-///
 struct RegionTracker
 {
     bool
