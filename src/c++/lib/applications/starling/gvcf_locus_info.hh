@@ -380,7 +380,8 @@ struct site_info
     init(const pos_t init_pos,
          const char init_ref,
          const snp_pos_info& good_pi,
-         const int used_allele_count_min_qscore)
+         const int used_allele_count_min_qscore,
+         const bool is_forced_output = false)
     {
         pos=(init_pos);
         ref=(init_ref);
@@ -393,6 +394,8 @@ struct site_info
         Unphasable = false;
 
         smod.clear();
+
+        forcedOutput = is_forced_output;
     }
 
 
@@ -479,6 +482,7 @@ struct site_info
     double rawPos = 0;
     unsigned mapq_zero = 0;     // The number of spanning reads that do not pass the command-line mapq test
     bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
+    bool forcedOutput = false;
 
     site_modifiers smod;
 };

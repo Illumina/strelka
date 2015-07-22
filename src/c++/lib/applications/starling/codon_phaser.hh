@@ -57,7 +57,7 @@ struct Codon_phaser : public variant_pipe_stage_base
     is_phasable_site(
         const site_info& si)
     {
-        return (si.dgt.is_snp && si.is_het());
+        return (si.dgt.is_snp && si.is_het() && !si.forcedOutput);
     }
 
     // clear all object data
