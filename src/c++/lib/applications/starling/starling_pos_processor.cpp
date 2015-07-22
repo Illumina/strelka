@@ -170,8 +170,7 @@ process_pos_snp_single_sample(
 
 
 void
-starling_pos_processor::
-process_pos_snp_single_sample_impl(
+starling_pos_processor::process_pos_snp_single_sample_impl(
     const pos_t pos,
     const unsigned sample_no)
 {
@@ -302,7 +301,8 @@ process_pos_snp_single_sample_impl(
     //const bool is_filter_snp(is_overfilter || (_opt.is_filter_anom_calls && is_anomaly));
 
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
-    if (is_snp)
+    const bool is_forced(is_forced_output_pos(pos));
+    if (is_snp || is_forced)
     {
         if (_opt.is_compute_hapscore)
         {
@@ -327,7 +327,7 @@ process_pos_snp_single_sample_impl(
     //Add site to gvcf
     if (_opt.gvcf.is_gvcf_output())
     {
-        _site_info.init(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore);
+        _site_info.init(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced);
         _gvcfer->add_site(_site_info);
     }
 
