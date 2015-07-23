@@ -169,9 +169,11 @@ create_phased_record()
     {
         // some initial minimum conditions, look for at least 10 spanning reads support
         // set flag on records saying too little evidence to phase
-        //        for (int i=0;i<this->buffer.size();i++)
-        //            if(this->buffer.at(i).is_het())
-        //                this->buffer.at(i).smod.;
+        for (site_info& si : _buffer)
+        {
+            if (si.is_het())
+                si.smod.is_phasing_insufficient_depth = true;
+        }
         return;
     }
 

@@ -363,6 +363,11 @@ write_site_record(
 //                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
 
             }
+            if (si.smod.is_phasing_insufficient_depth)
+            {
+                os << ";Unphased";
+            }
+
 //            //reported q-score
 //            if (si.Qscore>0) {
 //                os << ';';

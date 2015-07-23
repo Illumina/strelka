@@ -223,6 +223,7 @@ struct site_modifiers : public shared_modifiers
         is_zero_ploidy=false;
         is_block=false;
         is_phased_region=false;
+        is_phasing_insufficient_depth=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
         Qscore = -1;
     }
@@ -239,6 +240,7 @@ struct site_modifiers : public shared_modifiers
     bool is_zero_ploidy;
     bool is_block;
     bool is_phased_region;
+    bool is_phasing_insufficient_depth;
 
     MODIFIED_SITE_GT::index_t modified_gt;
 
