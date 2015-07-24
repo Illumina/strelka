@@ -1,3 +1,4 @@
+v2.3.13
 - STAR-34: When SNVs are not phased due to low read depth (<10), add
 Unphased to INFO field
 - STAR-42: Support forced-output SNVs in the forced-output VCF.
