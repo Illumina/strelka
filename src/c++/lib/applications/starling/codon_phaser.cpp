@@ -112,8 +112,8 @@ Codon_phaser::add_site(const site_info& si)
         return false;
     }
 
-    //case: we get a record that is explicitly set a unphaseable or forced output
-    if (si.Unphasable || si.forcedOutput)
+    //case: we get a record that is explicitly set a unphaseable
+    if (si.Unphasable)
     {
 #ifdef DEBUG_CODON
         log_os << __FUNCTION__ << ": I shouldn't phase this record " << si << "\n";
