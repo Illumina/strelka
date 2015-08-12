@@ -45,6 +45,7 @@ struct strelka_site_sim_options
         , ncov(35)
         , tcov(35)
         , ssnv_prior(0.000001)
+        , normal_purity(1.)
         , tumor_purity(1.)
         , seed(1)
         , mode(SIM_RANDOM)
@@ -58,6 +59,7 @@ struct strelka_site_sim_options
     std::string oracle_file;
 
     double ssnv_prior;
+    double normal_purity;
     double tumor_purity;
     uint32_t seed;
     sim_mode_t mode;
