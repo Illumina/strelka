@@ -615,7 +615,8 @@ calculate_result_set_grid(
             }
             else
             {
-                prior=pset.somatic_marginal[ngt]+lnmismatch;
+                // Modified by Sangtae to consider normal contamination
+                prior=pset.somatic_marginal[ngt]+lnmismatch+7.95511;
             }
             pprob[dgt] = normal_lhood[ngt]+tumor_lhood[tgt]+prior;
 #endif

@@ -31,7 +31,7 @@ namespace STAR_DIINDEL_GRID
 // HET_RES is the number of frequency points sampled on a
 // half-axis (that is between 0-0.5)
 //
-enum constants { HET_RES = 4,
+enum constants { HET_RES = 9,
                  HET_COUNT = HET_RES*2+1,
                  HET_SIZE = 1,
                  HOM_SIZE = 2

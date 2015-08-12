@@ -327,7 +327,10 @@ strelka_site_sim(strelka_options& opt,
         }
         else if (sim_opt.mode == SIM_SOMATIC)
         {
-            talt_id=get_mut_base_id(nalt_id);
+            nalt_id=get_mut_base_id(nalt_id);
+            nalt_freq=0.5*(1-sim_opt.normal_purity);
+
+            talt_id=nalt_id;
             talt_freq=0.5*sim_opt.tumor_purity;
 
             if (is_ofs) ofs << pos << "\tSOMATIC\t" << talt_freq << "\n";

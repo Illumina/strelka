@@ -142,7 +142,10 @@ set_normal_prior(std::vector<blt_float_t>& normal_prior,
     }
     for (unsigned ngt(STAR_DIINDEL::SIZE); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
     {
-        normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_sie_rate;
+        // Modified by Sangtae to consider normal contamination
+        //normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_sie_rate;
+        normal_prior[ngt] = std::log(4.0*ref_error_prob/static_cast<double>(STAR_DIINDEL_GRID::HET_RES*2)
+                + opt.somatic_indel_rate/(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1)));
     }
 }
 
