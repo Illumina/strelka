@@ -143,8 +143,11 @@ set_normal_prior(std::vector<blt_float_t>& normal_prior,
     for (unsigned ngt(STAR_DIINDEL::SIZE); ngt<STAR_DIINDEL_GRID::SIZE; ++ngt)
     {
         // Modified by Sangtae to consider normal contamination
-        //normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_sie_rate;
-        normal_prior[ngt] = std::log(4.0*ref_error_prob/static_cast<double>(STAR_DIINDEL_GRID::HET_RES*2)
+        normal_prior[ngt] = _bare_lnprior.normal[ngt] + ln_sie_rate;
+
+        // _bare_lnprior.normal[ngt] = error_mod = -std::log(static_cast<double>(STAR_DIINDEL_GRID::HET_RES*2))
+        // ln_sie_rate = opt.shared_indel_error_factor * std::log(ref_error_prob)
+        normal_prior[ngt] = std::log(std::pow(ref_error_prob, opt.shared_indel_error_factor)/static_cast<double>(STAR_DIINDEL_GRID::HET_RES*2)
                 + opt.somatic_indel_rate/(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1)));
     }
 }
@@ -266,6 +269,8 @@ calculate_result_set(
 
     // now compute the probability that the event is notsomatic or notfrom each of
     // the three reference states:
+    // TODO: this is computationally inefficient
+    // TODO: this needs to be modified for liquid tumor
     //
     double min_not_somfrom_sum(0);
     for (unsigned sgt(0); sgt<STAR_DIINDEL::SIZE; ++sgt)
