@@ -199,13 +199,16 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
     _site_info.n_used_calls=cpi.n_used_calls();
     _site_info.n_unused_calls=cpi.n_unused_calls();
 
+    const bool is_forced(is_forced_output_pos(pos));
+
+
 
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
     if (sample_no!=0) return;
 
-    if (pi.calls.empty()) return;
+    if (pi.calls.empty() && !is_forced) return;
 
     _pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
@@ -301,7 +304,6 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
     //const bool is_filter_snp(is_overfilter || (_opt.is_filter_anom_calls && is_anomaly));
 
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
-    const bool is_forced(is_forced_output_pos(pos));
     if (is_snp || is_forced)
     {
         if (_opt.is_compute_hapscore)
