@@ -17,13 +17,12 @@
  *      Author: mkallberg
  */
 
+#pragma once
+
 #include "calibration/SerializedModel.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "blt_util/blt_exception.hh"
-
-#ifndef C___LIB_CALIBRATION_INDELMODEL_HH_
-#define C___LIB_CALIBRATION_INDELMODEL_HH_
 
 static const unsigned max_unit_len(10);
 static const unsigned max_tract_len(40);
@@ -70,76 +69,6 @@ struct Indel_model : public serialized_model
 };
 
 
-// Calculate p(error) of
-//    CASE: del
-//    FIT pars: [  1.49133831e-03   1.03348683e+01   1.13646811e+00   1.18488282e-05]
-//    Function prob(error)=0.00149133830825/ (1 + exp((10.3348683003-x)/1.13646810558))+1.18488281756e-05
-//    --------------------
-//    CASE: ins
-//    FIT pars: [  1.09573511e-03   9.82226042e+00   1.03579658e+00   8.31843836e-06]
-//    Function prob(error)=0.00109573511176/ (1 + exp((9.82226041538-x)/1.03579658224))+8.31843836296e-06
-//    --------------------
+Indel_model generate_new();
 
-static Indel_model generate_new()
-{
-    Indel_model res("new","v1","",1,40);
-
-    const double insert_A(1.49133831e-03);
-    const double insert_B(1.03348683e+01);
-    const double insert_C(1.13646811e+00);
-    const double insert_D(1.18488282e-05);
-
-    const double delete_A(1.09573511e-03);
-    const double delete_B(9.82226042e+00);
-    const double delete_C(1.03579658e+00);
-    const double delete_D(8.31843836e-06);
-
-    for (unsigned hpol_len=1; hpol_len <= res.MaxTractLength; ++hpol_len)
-    {
-        double insert_error_prob, delete_error_prob;
-
-        const double insert_g(insert_A/ (1 + std::exp((insert_B-hpol_len)/insert_C))+insert_D);
-        insert_error_prob=(1.-std::exp(-insert_g/hpol_len));
-        const double delete_g(delete_A/ (1 + std::exp((delete_B-hpol_len)/delete_C))+delete_D);
-        delete_error_prob=(1.-std::exp(-delete_g/hpol_len));
-
-        std::pair<double,double> pair(insert_error_prob,delete_error_prob);
-        res.add_prop(0,hpol_len-1,pair);
-    }
-    return res;
-}
-
-static Indel_model generate_old()
-{
-    Indel_model res("old","v1","",1,40);
-
-    const double insert_A(5.03824e-7);
-    const double insert_B(3.30572e-10);
-    const double insert_C(6.99777);
-
-    const double delete_hpol1_err(5.00057e-5);
-    const double delete_A(1.09814e-5);
-    const double delete_B(5.19742e-10);
-    const double delete_C(6.99256);
-    for (unsigned hpol_len=1; hpol_len <= res.MaxTractLength; ++hpol_len)
-    {
-        double insert_error_prob, delete_error_prob;
-
-        const double insert_g(insert_A*hpol_len+insert_B*std::pow(hpol_len,insert_C));
-        insert_error_prob=(1.-std::exp(-insert_g));
-
-        double delete_g(delete_hpol1_err);
-        if (hpol_len>1)
-        {
-            delete_g = delete_A*hpol_len+delete_B*std::pow(hpol_len,delete_C);
-        }
-        delete_error_prob=(1.-std::exp(-delete_g));
-
-        std::pair<double,double> pair(insert_error_prob,delete_error_prob);
-        res.add_prop(0,hpol_len-1,pair);
-    }
-    return res;
-}
-
-
-#endif /* C___LIB_CALIBRATION_INDELMODEL_HH_ */
+Indel_model generate_old();

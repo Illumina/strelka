@@ -21,13 +21,12 @@
 
 #include "calibration/RandomForestModel.hh"
 #include "calibration/Indelmodel.hh"
+
 #include "json/json.h"
-#include "boost/property_tree/ptree.hpp"
 
 #include <map>
 #include <string>
-#include <vector>
-#pragma GCC diagnostic ignored "-Wunused-function"
+
 
 namespace MODEL_TYPE
 {
@@ -38,7 +37,7 @@ enum index_t
     SIZE
 };
 
-static
+inline
 const std::string
 get_label(const index_t i)
 {
@@ -69,7 +68,6 @@ struct scoring_models
                      const starling_indel_report_info& iri,
                      double& indel_error_prob,
                      double& ref_error_prob);
-//    Indel_model& get_indel_model();
 
 
     const Indel_model& get_indel_model(const std::string& pattern) const;

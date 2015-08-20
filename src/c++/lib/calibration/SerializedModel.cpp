@@ -17,8 +17,8 @@
  *      Author: mkallberg
  */
 
-#include <calibration/SerializedModel.hh>
-#include "blt_util/log.hh"
+#include "calibration/SerializedModel.hh"
+
 #include <cassert>
 
 namespace SMODEL_ENTRY_TYPE
@@ -60,11 +60,31 @@ get_label(const index_t i)
 }
 
 
-std::string serialized_model::get_model_string()
+
+/// remove newline and quotes from string
+static
+std::string
+Clean_string(const std::string& str)
 {
-    std::string out = this->name;
-    return out;
+    std::string temp = str;
+    // strip any trailing newline
+    std::size_t lastNewline = temp.find_last_of("\n\r");
+    temp = temp.substr(0, lastNewline);
+
+    // strip flanking double quotes if present
+    std::size_t doubleQuote = temp.find_last_of("\"");
+    temp = temp.substr(0, doubleQuote);
+
+    doubleQuote = temp.find_first_of("\"");
+    if(doubleQuote != std::string::npos)
+    {
+        temp = temp.substr(doubleQuote);
+    }
+
+    return std::move(temp);
 }
+
+
 
 void serialized_model::Deserialize(const Json::Value& root)
 {
@@ -89,29 +109,3 @@ void serialized_calibration_model::Deserialize( const Json::Value& root)
 
 }
 
-//dummy placeholder
-//bool serialized_calibration_model::doFilter() const{
-//	if (this->FilterCutoff>0)
-//		return true;
-//	return true;
-//}
-
-std::string serialized_model::Clean_string(const std::string& str) const
-{
-    std::string temp = str;
-    // strip any trailing newline
-    std::size_t lastNewline = temp.find_last_of("\n\r");
-    temp = temp.substr(0, lastNewline);
-
-    // strip flanking double quotes if present
-    std::size_t doubleQuote = temp.find_last_of("\"");
-    temp = temp.substr(0, doubleQuote);
-
-    doubleQuote = temp.find_first_of("\"");
-    if (doubleQuote != std::string::npos)
-    {
-        temp = temp.substr(1);
-    }
-
-    return temp;
-}

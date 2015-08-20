@@ -18,15 +18,16 @@
 #include "blt_util/qscore.hh"
 #include "cmodel.hh"
 
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/classification.hpp"
+
+#include <cassert>
+
 #include <iostream>
 #include <sstream>
-#include <cassert>
 #include <string>
 #include <fstream>
 #include <iterator>
-//#include <boost/property_tree/ptree.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/classification.hpp>
 
 //#define DEBUG_MODEL
 

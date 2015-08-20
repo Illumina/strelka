@@ -17,13 +17,14 @@
  *      Author: Morten Kallberg
  */
 
+#pragma once
+
 #include "json/json.h"
+
 #include <cassert>
+
 #include <map>
 
-#ifndef C___LIB_CALIBRATION_SERIALIZEDMODEL_HH_
-#define C___LIB_CALIBRATION_SERIALIZEDMODEL_HH_
-#pragma GCC diagnostic ignored "-Wunused-function"
 
 
 namespace VARIATION_NODE_TYPE
@@ -35,7 +36,7 @@ enum index_t
     SIZE
 };
 
-static
+inline
 const std::string
 get_label(const index_t i)
 {
@@ -59,10 +60,13 @@ public:
     serialized_model() {}
 
     /** methods for serializing */
-//    virtual void Serialize( Json::Value& root );
     void Deserialize( const Json::Value& root);
-    std::string get_model_string();
-    std::string Clean_string(const std::string& str) const;
+
+    const std::string&
+    get_model_string() const
+    {
+        return name;
+    }
 
 protected:
     std::string name;
@@ -89,4 +93,3 @@ protected:
     // add feature sequence
 };
 
-#endif /* C___LIB_CALIBRATION_SERIALIZEDMODEL_HH_ */
