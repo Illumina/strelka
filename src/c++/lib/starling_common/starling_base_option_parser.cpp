@@ -165,16 +165,16 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
 
-    ("calibration-model-file", po::value(&opt.calibration_models_filename),
+    ("calibration-model-file", po::value(&opt.germline_scoring_models_filename),
      "File containing calibration model parameters")
 
     ("somatic-scoring-models", po::value(&opt.somatic_scoring_models_filename),
      "Model file for somatic VQSR")
 
-    ("indel-model-name", po::value(&opt.indel_error_model),
+    ("indel-model-name", po::value(&opt.indel_error_model_name),
      "Indel error model name (corresponds to {name}_{version} in model file)")
 
-    ("scoring-model", po::value(&opt.calibration_model),
+    ("scoring-model", po::value(&opt.germline_scoring_model_name),
      "The calibration model for quality filtering variants")
 
     ("remap-input-softclip", po::value(&opt.is_remap_input_softclip)->zero_tokens(),
@@ -453,10 +453,10 @@ finalize_starling_base_options(
         scoring_models::Instance().load_models(opt.somatic_scoring_models_filename);
     }
 
-    if (! opt.indel_error_model.empty())
+    if (! opt.indel_error_model_name.empty())
     {
 //      log_os << "Setting indel model" << std::endl;
-        scoring_models::Instance().set_indel_model(opt.indel_error_model);
+        scoring_models::Instance().set_indel_model(opt.indel_error_model_name);
     }
 
     /// tier2 options are not parsed by starling_base, but need to live up here for now,

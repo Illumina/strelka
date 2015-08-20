@@ -238,7 +238,7 @@ get_indel_error_prob(const starling_base_options& client_opt,
 {
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
-    const error_model& indel_error_prob_len(emodel.getModel(client_opt.indel_error_model,iri.repeat_unit));
+    const error_model& indel_error_prob_len(emodel.getModel(client_opt.indel_error_model_name,iri.repeat_unit));
 
     if (! is_simple_indel)
     {
