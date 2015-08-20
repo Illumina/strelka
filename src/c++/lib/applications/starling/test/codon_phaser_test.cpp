@@ -1,3 +1,15 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
 #include "boost/test/unit_test.hpp"
 #include "boost/algorithm/string.hpp"
 
@@ -18,13 +30,13 @@
 #include "gvcf_locus_info.cpp"
 
 static void insert_read(const char* read, pos_t position,
-        pos_basecall_buffer& bc_buff)
+                        pos_basecall_buffer& bc_buff)
 {
     pos_t insert_pos = position;
     while (*read)
     {
         base_call bc(base_to_id(*read), 30, true, 0, 0, false, false, false,
-                insert_pos == position, !*(read + 1));
+                     insert_pos == position, !*(read + 1));
         bc_buff.insert_pos_basecall(insert_pos, true, bc);
         insert_pos++;
         read++;
@@ -46,7 +58,10 @@ public:
     {
         if (si.is_het() || si.is_hetalt() ) the_sites.push_back(si);
     }
-    void process(indel_info& ii) override { the_indels.push_back(ii); }
+    void process(indel_info& ii) override
+    {
+        the_indels.push_back(ii);
+    }
 };
 
 // positive tests
@@ -156,7 +171,7 @@ BOOST_AUTO_TEST_CASE( handles_snps_at_start )
     dummy_variant_sink sink;
     Codon_phaser phaser(opt, bc_buff, rcs, sink);
 
-        for (int i = 0; r1[i]; i++)
+    for (int i = 0; r1[i]; i++)
     {
         site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));

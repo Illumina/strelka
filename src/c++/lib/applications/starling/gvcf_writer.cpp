@@ -114,7 +114,7 @@ skip_to_pos(const pos_t target_pos)
 
         add_site_internal(si);
         // Don't do compressed ranges if there is an overlapping indel
-		// filters are being applied to the overlapping positions
+        // filters are being applied to the overlapping positions
         if (_last_indel) continue;
 
         if (_gvcf_comp.is_range_compressable(known_pos_range2(si.pos,target_pos)))

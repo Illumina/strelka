@@ -85,7 +85,7 @@ strelka_streams(
     : base_t(opt,pinfo,ssi)
 {
 
-	{
+    {
         using namespace STRELKA_SAMPLE_TYPE;
         if (opt.is_realigned_read_file)
         {

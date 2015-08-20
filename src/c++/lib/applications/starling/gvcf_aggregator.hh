@@ -34,12 +34,12 @@ class gvcf_aggregator
 {
 public:
     gvcf_aggregator(
-            const starling_options& opt,
-            const starling_deriv_options& dopt,
-            const reference_contig_segment& ref,
-            const RegionTracker& nocompress_regions,
-            std::ostream* os,
-            const pos_basecall_buffer& bc_buff);
+        const starling_options& opt,
+        const starling_deriv_options& dopt,
+        const reference_contig_segment& ref,
+        const RegionTracker& nocompress_regions,
+        std::ostream* os,
+        const pos_basecall_buffer& bc_buff);
 
     ~gvcf_aggregator();
 
@@ -53,9 +53,9 @@ public:
     void add_site(site_info& si);
 
     void add_indel(const pos_t pos, const indel_key ik,
-            const starling_diploid_indel_core& dindel,
-            const starling_indel_report_info& iri,
-            const starling_indel_sample_report_info& isri);
+                   const starling_diploid_indel_core& dindel,
+                   const starling_indel_report_info& iri,
+                   const starling_indel_sample_report_info& isri);
     void reset();
     pos_t headPos() const
     {

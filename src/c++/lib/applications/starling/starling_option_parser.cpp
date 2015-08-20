@@ -58,7 +58,7 @@ get_starling_option_parser(
     ("nocompress-bed",  po::value(&opt.gvcf.nocompress_region_bedfile),
      "Bed file with sites that should not be block-compressed in gVCF (must be bgzip compressed and tabix indexed).")
     ("targeted-regions-bed",  po::value(&opt.gvcf.targeted_regions_bedfile),
-      "Bed file with targeted regions. Variants outside these regions will be filtered. (must be bgzip compressed and tabix indexed).")
+     "Bed file with targeted regions. Variants outside these regions will be filtered. (must be bgzip compressed and tabix indexed).")
     ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("new"),
      "Choose indel error model to use, available option old,new, new_stratified (development option only)")
     ("indel-ref-error-factor",  po::value(&opt.indel_ref_error_factor)->default_value(opt.indel_ref_error_factor),

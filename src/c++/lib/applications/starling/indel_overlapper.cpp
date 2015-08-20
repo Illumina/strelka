@@ -1,4 +1,15 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
 /*
  *
  *  Created on: Jun 3, 2015
@@ -83,11 +94,11 @@ void indel_overlapper::process(indel_info& ii)
     }
     _indel_buffer.push_back(ii);
     _indel_end_pos=std::max(_indel_end_pos,ii.ik().right_pos());
-     // clear the current homRef indel
-     if (is_no_indel(ii.dindel))
-     {
-         process_overlaps();
-     }
+    // clear the current homRef indel
+    if (is_no_indel(ii.dindel))
+    {
+        process_overlaps();
+    }
 }
 
 static

@@ -91,8 +91,8 @@ indel_info::get_indel_qscore_features(
 }
 
 void indel_info::set_hap_cigar(
-        const unsigned lead,
-        const unsigned trail)
+    const unsigned lead,
+    const unsigned trail)
 {
     using namespace ALIGNPATH;
     ALIGNPATH::path_t& apath(_imod.front().cigar);
@@ -178,7 +178,7 @@ void indel_info::add_overlap(const reference_contig_segment& ref, indel_info& ov
         ii._iri.front().vcf_indel_seq = leading_seq + ii.iri().vcf_indel_seq + trailing_seq;
 
         ii.set_hap_cigar(leading_seq.size()+1,
-                      trailing_seq.size());
+                         trailing_seq.size());
 
         // add to the ploidy object:
         add_cigar_to_ploidy(ii.imod().cigar,this->ploidy);

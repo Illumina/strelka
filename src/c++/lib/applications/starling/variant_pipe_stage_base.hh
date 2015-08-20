@@ -17,8 +17,14 @@
 class variant_pipe_stage_base
 {
 public:
-    virtual void process(site_info& si) { if (_sink) _sink->process(si); }
-    virtual void process(indel_info& ii) { if (_sink) _sink->process(ii); }
+    virtual void process(site_info& si)
+    {
+        if (_sink) _sink->process(si);
+    }
+    virtual void process(indel_info& ii)
+    {
+        if (_sink) _sink->process(ii);
+    }
     virtual void flush()
     {
         if (_sink)

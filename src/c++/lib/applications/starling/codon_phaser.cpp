@@ -386,34 +386,34 @@ collect_pileup_evidence()
     // can't use auto here b/c of recursion:
     std::function<std::pair<bool,std::string>(const unsigned)> tracePartialRead =
         [&](const unsigned startBlockIndex)
+    {
+        bool isPass(true);
+        std::string readFrag;
+        for (unsigned blockIndex(startBlockIndex); blockIndex<blockWidth; ++blockIndex)
         {
-            bool isPass(true);
-            std::string readFrag;
-            for (unsigned blockIndex(startBlockIndex); blockIndex<blockWidth; ++blockIndex)
+            const snp_pos_info& pi(*spi[blockIndex]);
+            while (true)
             {
-                const snp_pos_info& pi(*spi[blockIndex]);
-                while (true)
-                {
-                    const base_call& bc(pi.calls.at(callOffset[blockIndex]));
-                    if ((! bc.isFirstBaseCallFromMatchSeg) || (blockIndex == startBlockIndex)) break;
+                const base_call& bc(pi.calls.at(callOffset[blockIndex]));
+                if ((! bc.isFirstBaseCallFromMatchSeg) || (blockIndex == startBlockIndex)) break;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wuninitialized"
-                    tracePartialRead(blockIndex);
+                tracePartialRead(blockIndex);
 #pragma clang diagnostic pop
-                }
-                const base_call& bc(pi.calls.at(callOffset[blockIndex]));
-                // this represents the 'ordinary' advance of callOffset for a non-interrupted read segment:
-                callOffset[blockIndex]++;
-                if (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth))
-                {
-                    isPass=false;
-                    break;
-                }
-                if (bc.is_call_filter) isPass=false;
-                readFrag += id_to_base(bc.base_id);
             }
-            return std::make_pair(isPass,readFrag);
-        };
+            const base_call& bc(pi.calls.at(callOffset[blockIndex]));
+            // this represents the 'ordinary' advance of callOffset for a non-interrupted read segment:
+            callOffset[blockIndex]++;
+            if (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth))
+            {
+                isPass=false;
+                break;
+            }
+            if (bc.is_call_filter) isPass=false;
+            readFrag += id_to_base(bc.base_id);
+        }
+        return std::make_pair(isPass,readFrag);
+    };
 
     // analyze as virtual reads -- to do so treat the first pileup column as a privileged reference point:
     const snp_pos_info& beginPi(*spi[0]);

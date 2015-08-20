@@ -49,7 +49,7 @@ struct starling_indel_report_info
     INDEL::index_t it = INDEL::NONE;
 
     void dump(std::ostream& os) const;
-    
+
 };
 std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj);
 
@@ -65,7 +65,7 @@ struct starling_indel_sample_report_info
     unsigned depth = 0;
 
     void dump(std::ostream& os) const;
-    
+
 };
 std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj);
 

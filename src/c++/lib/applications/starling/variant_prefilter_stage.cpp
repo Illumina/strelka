@@ -1,3 +1,15 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
 /*
  *  Created on: Jun 4, 2015
  *      Author: jduddy
@@ -7,8 +19,8 @@
 #include "calibration_models.hh"
 
 variant_prefilter_stage::variant_prefilter_stage(const calibration_models& model, variant_pipe_stage_base& destination)
-: variant_pipe_stage_base(destination)
-, _model(model)
+    : variant_pipe_stage_base(destination)
+    , _model(model)
 {
 }
 

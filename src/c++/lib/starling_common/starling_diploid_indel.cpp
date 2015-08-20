@@ -20,14 +20,14 @@ void
 starling_diploid_indel_core::
 dump(std::ostream& os) const
 {
-   os << "ploidy=" << ploidy
-        << ",max_gt=" << max_gt
-        << ",indel_qphred=" << indel_qphred
-        << ",max_gt_qphred=" << max_gt_qphred
-        << ",max_gt_poly=" << max_gt_poly
-        << ",max_gt_poly_qphred=" << max_gt_poly_qphred
-        << ",is_forced_output=" << is_forced_output
-        << ",is_zero_coverage=" << is_zero_coverage;
+    os << "ploidy=" << ploidy
+       << ",max_gt=" << max_gt
+       << ",indel_qphred=" << indel_qphred
+       << ",max_gt_qphred=" << max_gt_qphred
+       << ",max_gt_poly=" << max_gt_poly
+       << ",max_gt_poly_qphred=" << max_gt_poly_qphred
+       << ",is_forced_output=" << is_forced_output
+       << ",is_zero_coverage=" << is_zero_coverage;
 }
 
 

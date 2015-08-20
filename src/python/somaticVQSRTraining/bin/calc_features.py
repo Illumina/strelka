@@ -38,7 +38,7 @@ def main():
     parser.add_argument("--ref-fasta", help="Fasta reference sequence file name", dest="ref",
                         default="/illumina/development/iSAAC/iGenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa")
 
-    parser.add_argument("--window", dest="window", help="Window length for entropy calculation", 
+    parser.add_argument("--window", dest="window", help="Window length for entropy calculation",
                         type=int, default=200)
 
     parser.add_argument("-o", "--output", dest="output", required=True,

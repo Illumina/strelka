@@ -1,4 +1,15 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
 /*
  *  Created on: Jun 3, 2015
  *      Author: jduddy
@@ -30,9 +41,9 @@ private:
 
     static void modify_indel_conflict_site(site_info& si);
     static void modify_indel_overlap_site(const indel_info& ii,
-            const unsigned ploidy,
-            site_info& si,
-            const calibration_models& model);
+                                          const unsigned ploidy,
+                                          site_info& si,
+                                          const calibration_models& model);
 
 
 

@@ -100,7 +100,7 @@ get_label(const unsigned idx)
     case PloidyConflict:
         return "PLOIDY_CONFLICT";
     case OffTarget:
-            return "OffTarget";
+        return "OffTarget";
     default:
         assert(false && "Unknown VCF filter value");
         return nullptr;
@@ -254,10 +254,10 @@ std::ostream& operator<<(std::ostream& os,const site_modifiers& smod);
 struct indel_info
 {
     indel_info(const pos_t init_pos,
-         const indel_key& init_ik,
-         const starling_diploid_indel_core& init_dindel,
-         const starling_indel_report_info& init_iri,
-         const starling_indel_sample_report_info& init_isri)
+               const indel_key& init_ik,
+               const starling_diploid_indel_core& init_dindel,
+               const starling_indel_report_info& init_iri,
+               const starling_indel_sample_report_info& init_isri)
     {
         pos=(init_pos);
         _ik.push_back(init_ik);
@@ -354,16 +354,31 @@ struct indel_info
     // the EXCLUSIVE end of the variant (i.e. open)
     pos_t end() const;
 
-    const indel_key& ik(unsigned idx=0) { return _ik[idx]; }
+    const indel_key& ik(unsigned idx=0)
+    {
+        return _ik[idx];
+    }
 
-    indel_modifiers& imod() { return _imod.front(); }
-    const indel_modifiers& imod(unsigned idx=0) const { return _imod[idx]; }
+    indel_modifiers& imod()
+    {
+        return _imod.front();
+    }
+    const indel_modifiers& imod(unsigned idx=0) const
+    {
+        return _imod[idx];
+    }
 
     //starling_indel_report_info& iri() { return _iri.front(); }
-    const starling_indel_report_info& iri(unsigned idx = 0) const { return _iri[idx]; }
+    const starling_indel_report_info& iri(unsigned idx = 0) const
+    {
+        return _iri[idx];
+    }
 
     //starling_indel_sample_report_info& isri() { return _isri.front(); }
-    const starling_indel_sample_report_info& isri(unsigned idx=0) const { return _isri[idx]; }
+    const starling_indel_sample_report_info& isri(unsigned idx=0) const
+    {
+        return _isri[idx];
+    }
 
 
 
