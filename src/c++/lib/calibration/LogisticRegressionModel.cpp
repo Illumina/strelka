@@ -11,11 +11,26 @@
 // <https://github.com/sequencing/licenses/>
 //
 /*
+ * LogisticRegressionModel.cpp
+ *
+ *  Created on: Jun 23, 2015
  *      Author: mkallberg
  */
 
-#pragma once
+#include <LogisticRegressionModel.hh>
 
-#include <map>
+LogisticRegressionModel::LogisticRegressionModel()
+{
+    // TODO Auto-generated constructor stub
 
-typedef std::map<int, double> feature_type;
+}
+
+LogisticRegressionModel::~LogisticRegressionModel()
+{
+    // TODO Auto-generated destructor stub
+}
+
+void LogisticRegressionModel::Deserialize( const Json::Value& root)
+{
+    serialized_model::Deserialize(root);
+}

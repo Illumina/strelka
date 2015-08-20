@@ -171,6 +171,9 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("somatic-scoring-models", po::value(&opt.somatic_scoring_models_filename),
      "Model file for somatic VQSR")
 
+    ("indel-model-name", po::value(&opt.indel_error_model),
+     "Indel error model name (corresponds to {name}_{version} in model file)")
+
     ("scoring-model", po::value(&opt.calibration_model),
      "The calibration model for quality filtering variants")
 
@@ -448,6 +451,12 @@ finalize_starling_base_options(
     if (! opt.somatic_scoring_models_filename.empty())
     {
         scoring_models::Instance().load_models(opt.somatic_scoring_models_filename);
+    }
+
+    if (! opt.indel_error_model.empty())
+    {
+//      log_os << "Setting indel model" << std::endl;
+        scoring_models::Instance().set_indel_model(opt.indel_error_model);
     }
 
     /// tier2 options are not parsed by starling_base, but need to live up here for now,

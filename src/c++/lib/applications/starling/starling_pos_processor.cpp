@@ -16,7 +16,7 @@
 #include "blt_common/position_nonref_2allele_test.hh"
 //#include "blt_common/position_snp_call_lrt.hh"
 #include "blt_common/ref_context.hh"
-#include "starling_common/starling_indel_error_prob.hh"
+#include "calibration/scoringmodels.hh"
 
 #include <iomanip>
 
@@ -465,7 +465,7 @@ process_pos_indel_single_sample(
 
             double indel_error_prob(0);
             double ref_error_prob(0);
-            get_indel_error_prob(_opt,iri,indel_error_prob,ref_error_prob);
+            scoring_models::Instance().get_indel_model().calc_prop(_opt,iri,indel_error_prob,ref_error_prob);
 
             static const bool is_tier2_pass(false);
             static const bool is_use_alt_indel(true);

@@ -22,6 +22,7 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "starling_common/starling_indel_error_prob.hh"
+#include "calibration/scoringmodels.hh"
 
 #include <cstdlib>
 
@@ -90,25 +91,29 @@ is_candidate_indel_impl_test(
     bool is_indel_noise_checked(false);
 
     //////////////////////////////////////
-    // if candidate is in a hompolymer
-    // test against homopolymer error model
+    // if candidate is in an STR that we have
+    // indel error estimates for,
+    // test against the appropriate error model
     //
     {
         starling_indel_report_info iri;
         get_starling_indel_report_info(ik,id,_ref,iri);
 
-        // check to see if indel meets homopolymer criteria
-        if (iri.repeat_unit.size() == 1 && (iri.ref_repeat_count >= 2 || iri.indel_repeat_count >= 2))
+        const Indel_model indel_model = scoring_models::Instance().get_indel_model();
+
+        // check to see if indel meets STR criteria
+        if (indel_model.is_simple_tandem_repeat(iri))
         {
             is_indel_noise_checked=true;
+            bool use_length_dependence=false;
 
             double ref_error_prob(0.);
             double indel_error_prob(0.);
             // indel_error_prob does not factor in to this calculation, but is
             // required by get_indel_error_prob
 
-            // get expected per-read error rate for this homopolymer
-            get_indel_error_prob(_opt,iri,ref_error_prob,indel_error_prob);
+            // get expected per-read error rate for this STR
+            indel_model.calc_prop(_opt,iri,indel_error_prob,ref_error_prob,use_length_dependence);
 
             bool is_pass_indel_noise_check(false);
 

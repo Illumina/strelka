@@ -132,6 +132,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     # do not apply VQSR in exome case
     if not self.params.isExome :
         segCmd.extend(['--somatic-scoring-models', self.params.scoringModelFile])
+        segCmd.extend(['--indel-model-name', self.params.indelModel])
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["-bam-file", bamPath])

@@ -22,6 +22,7 @@
 #include "blt_util/io_util.hh"
 #include "htsapi/vcf_util.hh"
 #include "htsapi/bam_dumper.hh"
+#include "calibration/scoringmodels.hh"
 
 #include <cassert>
 
@@ -118,6 +119,8 @@ strelka_streams(
                 << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n"
                 << "##priorSomaticSnvRate=" << opt.somatic_snv_rate << "\n";
 
+            fos << scoring_models::Instance().getVcfHeaderString();
+
             // INFO:
             fos << "##INFO=<ID=QSS,Number=1,Type=Integer,Description=\"Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal\">\n";
             fos << "##INFO=<ID=TQSS,Number=1,Type=Integer,Description=\"Data tier used to compute QSS\">\n";
@@ -206,6 +209,8 @@ strelka_streams(
             fos << "##content=strelka somatic indel calls\n"
                 << "##germlineIndelTheta=" << opt.bindel_diploid_theta << "\n"
                 << "##priorSomaticIndelRate=" << opt.somatic_indel_rate << "\n";
+
+            fos << scoring_models::Instance().getVcfHeaderString();
 
             // INFO:
             fos << "##INFO=<ID=QSI,Number=1,Type=Integer,Description=\"Quality score for any somatic variant, ie. for the ALT haplotype to be present at a significantly different frequency in the tumor and normal\">\n";

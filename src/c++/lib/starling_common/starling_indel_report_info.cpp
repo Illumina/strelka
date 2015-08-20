@@ -249,6 +249,7 @@ set_repeat_info(const indel_key& ik,
     {
         assert(false && "Unexpected indel type");
     }
+    iri.repeat_unit_length=iri.repeat_unit.size();
 
     // count repeats in contextual sequence:
     unsigned indel_context_repeat_count(0);

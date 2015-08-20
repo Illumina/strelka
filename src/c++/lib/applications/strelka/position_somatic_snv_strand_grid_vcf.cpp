@@ -320,12 +320,12 @@ write_vcf_somatic_snv_genotype_strand_grid(
         calc_VQSR_features(opt,dopt,sgt,smod,n1_epd,t1_epd,n2_epd,t2_epd,rs);
 
         // case we are doing VQSR, clear filters and apply single LowQscore filter
-        if (opt.isUseSomaticVQSR())  // write out somatic VQSR metrics
+        const scoring_models& models(scoring_models::Instance());
+        if (opt.isUseSomaticVQSR() && models.calibration_init)  // write out somatic VQSR metrics
         {
-            const scoring_models& models(scoring_models::Instance());
             assert(models.calibration_init);
             smod.isQscore = true;
-            smod.Qscore = models.score_instance(smod.get_features());
+            smod.Qscore = models.score_instance(smod.get_features(),VARIATION_NODE_TYPE::SNP);
             smod.filters.reset();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default

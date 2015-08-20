@@ -14,7 +14,7 @@
  * scoringmodels.cpp
  *
  *  Created on: Aug 20, 2014
- *      Author: mkallberg
+ *      Author: Morten Kallberg
  */
 
 #ifdef _MSC_VER
@@ -22,20 +22,20 @@
 #endif
 
 #include "scoringmodels.hh"
+#include "Indelmodel.hh"
+#include "SerializedModel.hh"
 
 #include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/parse_util.hh"
-
-#include "boost/property_tree/json_parser.hpp"
+#include "blt_util/blt_exception.hh"
 
 #include <cassert>
-
+#include <fstream>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 
-using boost::property_tree::ptree;
 using namespace illumina::blt_util;
 
 //#define DEBUG_SCORINGMODELS
@@ -43,24 +43,6 @@ using namespace illumina::blt_util;
 #ifdef DEBUG_SCORINGMODELS
 #include "blt_util/log.hh"
 #endif
-
-
-
-void indel_model::add_prop(const unsigned hpol_case, const double prop_ins,const double prop_del)
-{
-    if (hpol_case>0 && hpol_case<max_hpol_len)
-    {
-        this->model[hpol_case-1] = std::make_pair(prop_ins,prop_del);
-
-    }
-}
-
-double indel_model::get_prop(const unsigned hpol_case) const
-{
-    return model[std::min(hpol_case,max_hpol_len)-1].first;
-}
-
-
 
 // Global static pointer used to ensure a single instance of the class.
 scoring_models* scoring_models::m_pInstance = nullptr;
@@ -71,76 +53,173 @@ scoring_models* scoring_models::m_pInstance = nullptr;
 */
 scoring_models& scoring_models::Instance()
 {
-    if (!m_pInstance)   // Only allow one instance of class to be generated.
+    if (!m_pInstance)    // Only allow one instance of class to be generated.
+    {
         m_pInstance = new scoring_models;
+        m_pInstance->filename = "NA";
+    }
     return *m_pInstance;
 }
 
-
-double scoring_models::score_instance(const feature_type& features) const
-{
-    const double score = this->randomforest_model.getProb(features);
-    return error_prob_to_phred(score);
-}
-
-const error_model& scoring_models::get_indel_model(const std::string& /*pattern*/) const
-{
-    return this->indel_models.at(this->current_indel_model).model;
-}
-
-
-void scoring_models::load_indel_model(const ptree& pt,const std::string& model_name)
+void scoring_models::init_default_models()
 {
 
-    std::string s = imodels + "." + model_name;
-//    log_os << s << std::endl;
-    indel_model temp_model;
-    unsigned i=0;
-    for (const ptree::value_type& v : pt.get_child(s))
-    {
-        temp_model.add_prop(i,atof(v.second.data().c_str()),atof(v.second.data().c_str()));
-        i++;
-    }
-    this->indel_models[model_name] = temp_model;
+    // load previously hard-coded logistic regression model
+    Indel_model newModel = generate_new();
+    this->indel_models[newModel.get_model_string()] = newModel;
+
+    // load previously hard-coded polynomial model
+    Indel_model oldModel = generate_old();
+    this->indel_models[oldModel.get_model_string()] = oldModel;
+
     this->indel_init = true;
 }
 
-
-
-void scoring_models::load_calibration_model(const ptree& pt,const std::string& model_name,const std::string& model_type)
+double scoring_models::score_instance(const feature_type& features, const VARIATION_NODE_TYPE::index_t vtype) const
 {
-    if (model_name!="" && model_type!="")
+    double score;
+    switch (vtype)
     {
-//        log_os << "Loading cali model: " << model_name << std::endl;
+    case VARIATION_NODE_TYPE::SNP:
+        score = this->randomforest_model.getProb(features);
+        return error_prob_to_phred(score);
+    case VARIATION_NODE_TYPE::INDEL:
+        score = this->randomforest_model_indel.getProb(features);
+        return error_prob_to_phred(score);
+    default:
+        assert(false && "Unknown variation node type in serializedModel.");
+        return score;
+    }
+}
+
+//TODO for integration into germline calling
+void scoring_models::score_indel(const starling_base_options& client_opt,
+                                 const starling_indel_report_info& iri,
+                                 double& indel_error_prob,
+                                 double& ref_error_prob)
+{
+//	log_os << client_opt.indel_error_model << std::endl;
+    Indel_model tempModel = this->indel_models[this->current_indel_model];
+//	log_os << tempModel.get_model_string() << std::endl;
+    tempModel.calc_prop(client_opt,iri,indel_error_prob,ref_error_prob);
+}
+
+void scoring_models::load_single_model(const Json::Value& data,MODEL_TYPE::index_t type)
+{
+    using namespace MODEL_TYPE;
+    switch (type)
+    {
+    case INDELMODEL:
+        this->load_indel_model(data);
+        break;
+    case CALMODEL:
+        this->load_calibration_model(data);
+        break;
+    default:
+        assert(false && "Unknown model-type in model json.");
+    }
+}
+
+const Indel_model& scoring_models::get_indel_model() const
+{
+    assert(!this->current_indel_model.empty());
+    return this->indel_models.at(this->current_indel_model);
+}
+
+// Generated the header VCF header string specifying which json file and what models were used
+std::string scoring_models::getVcfHeaderString() const
+{
+    std::stringstream vcfHeader;
+    vcfHeader << "##ScoringModelJson=" << this->filename << std::endl;
+    vcfHeader << "##IndelModel=" << this->current_indel_model << std::endl;
+    // vcfHeader << "##CalibrationModel=" << this->current_calibration_model << std::endl;
+    return vcfHeader.str();
+}
+
+
+void scoring_models::set_indel_model(const std::string& model_name)
+{
+    // if indel error model is already set, it cannot be reset
+    assert(this->current_indel_model.empty() && "Cannot reset indel error model once set");
+
+    // check to see that indel error model key is in model map
+    if (indel_models.find(model_name) == indel_models.end())
+    {
+        std::string model_names;
+        possible_indel_models(model_names);
+        std::string errmsg = "Cannot find " + model_name + " in indel model map\n";
+        errmsg += "Possible indel models are: " + model_names;
+        throw blt_exception(errmsg.c_str());
+    }
+    current_indel_model = model_name;
+}
+
+void scoring_models::possible_indel_models(std::string& str) const
+{
+
+    if (this->indel_models.empty())
+    {
+        str = "No indel models loaded";
+        return;
     }
 
-    //TODO add case here for indels, currently only loading snps. Need to add another nesting level here
-    this->randomforest_model.load(pt.get_child(model_name));
-    this->calibration_init = true;
+    std::map<std::string,Indel_model>::const_iterator it = indel_models.begin();
+    str = it->first;
+    for (; it != indel_models.end(); ++it)
+        str += "," + it->first;
+}
+
+void scoring_models::load_indel_model(const Json::Value& data)
+{
+    Indel_model tempModel;
+    tempModel.Deserialize(data);
+    this->indel_models[tempModel.get_model_string()] = tempModel;
+    this->indel_init = true;
+}
+
+void scoring_models::load_calibration_model(const Json::Value& data)
+{
+    using namespace VARIATION_NODE_TYPE;
+    for (int i(0); i<SIZE; ++i)
+    {
+        const index_t modelIndex(static_cast<index_t>(i));
+        Json::Value model = data[get_label(modelIndex)];
+        if (!model.isNull())
+        {
+            //TODO add more logic here for reading other model types than RF
+            RandomForestModel temp_model;
+            temp_model.Deserialize(model);
+            if (modelIndex==SNP)
+                this->randomforest_model = temp_model;
+            else
+                this->randomforest_model_indel = temp_model;
+            this->calibration_init = true;
+        }
+    }
 }
 
 void scoring_models::load_models(const std::string& model_file)
 {
-    // assume file exists has been checked
-
+    // Read in all model data, assume file-exists has been checked
+    //TODO used the jsoncpp reader instead
+    this->filename = model_file;
+    Json::Value root;
+    Json::Reader reader;
     std::stringstream ss;
-    std::ifstream file( model_file );
+    std::ifstream file( this->filename );
     ss << file.rdbuf();
+    ss >> root;
+
+    //loop over all models for a given type (indel or calibratrion)
+    using namespace MODEL_TYPE;
+    for (int i(0); i<SIZE; ++i)
+    {
+        const index_t modelIndex(static_cast<index_t>(i));
+        Json::Value models = root[get_label(modelIndex)];
+        if (!models.isNull())
+            for (Json::Value::iterator it = models.begin(); it != models.end(); ++it)
+                this->load_single_model(*it,modelIndex);
+    }
+
     file.close();
-
-    ptree pt;
-    boost::property_tree::read_json(ss, pt);
-
-    //load indel models
-    for (const ptree::value_type& v : pt.get_child(imodels))
-    {
-//         log_os << "Reading indel model " << v.first <<  std::endl;
-        this->load_indel_model(pt,v.first);
-    }
-
-    //load calibration models
-    for (const ptree::value_type& v : pt.get_child(cmodels))
-    {
-        this->load_calibration_model(pt.get_child(cmodels),v.first);
-    }
 }

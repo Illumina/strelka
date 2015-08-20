@@ -41,6 +41,7 @@ struct starling_indel_report_info
     }
 
     std::string repeat_unit;
+    unsigned repeat_unit_length = 0;
     unsigned ref_repeat_count = 0;
     unsigned indel_repeat_count = 0;
     unsigned ihpol = 0; ///< interrupted homopolymer length
