@@ -106,7 +106,7 @@ Indel_model::Indel_model()
 }
 
 // read in the json
-void Indel_model::Deserialize( const Json::Value& root)
+void Indel_model::Deserialize(const Json::Value& root)
 {
     serialized_model::Deserialize(root);
 
@@ -138,22 +138,7 @@ void Indel_model::Deserialize( const Json::Value& root)
     assert(tract>=this->MaxTractLength && "Unexpected tract length in indel model");
 }
 
-void Indel_model::calc_prop(const starling_base_options& client_opt,
-                            const starling_indel_report_info& iri,
-                            double& indel_error_prob,
-                            double& ref_error_prob) const
-{
-    bool use_length_dependence = false;
-    calc_prop(client_opt,iri,indel_error_prob,ref_error_prob,use_length_dependence);
-}
 
-std::pair<double,double>
-Indel_model::calc_prop(const starling_base_options& client_opt,
-                       const starling_indel_report_info& iri)
-{
-    if (client_opt.acov_alpha>0 && iri.ihpol>0) {}
-    return model[0][0];
-}
 
 void Indel_model::calc_prop(const starling_base_options& client_opt,
                             const starling_indel_report_info& iri,
@@ -161,7 +146,6 @@ void Indel_model::calc_prop(const starling_base_options& client_opt,
                             double& ref_error_prob,
                             bool use_length_dependence) const
 {
-
     // determine simple case
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
@@ -254,12 +238,6 @@ void Indel_model::calc_prop(const starling_base_options& client_opt,
     //     log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
     //     throw blt_exception("Unknown indel type.");
     // }
-
-}
-
-unsigned Indel_model::get_min_tract_length(const starling_indel_report_info& iri) const
-{
-    return iri.repeat_unit_length * 2;
 }
 
 bool Indel_model::is_simple_tandem_repeat(const starling_indel_report_info& iri) const

@@ -42,28 +42,31 @@ struct Indel_model : public serialized_model
     }
 
     void Deserialize(const Json::Value& root);
-    std::pair<double,double> calc_prop(const starling_base_options& client_opt, const starling_indel_report_info& iri);
-    void calc_prop(const starling_base_options& client_opt,
-                   const starling_indel_report_info& iri,
-                   double& indel_error_prob,
-                   double& ref_error_prob) const;
+
     void calc_prop(const starling_base_options& client_opt,
                    const starling_indel_report_info& iri,
                    double& indel_error_prob,
                    double& ref_error_prob,
-                   bool use_length_dependence) const;
-    std::pair<double,double> get_prop(const unsigned& unit, const unsigned& tract)
-    {
-        return model[unit][tract];
-    }
+                   bool use_length_dependence = false) const;
+
+    bool is_simple_tandem_repeat(const starling_indel_report_info& iri) const;
 
     unsigned get_max_motif_length() const
     {
         return MaxMotifLength;
     }
-    unsigned get_min_tract_length(const starling_indel_report_info& iri) const;
-    bool is_simple_tandem_repeat(const starling_indel_report_info& iri) const;
+
     void add_prop(const unsigned& unit, const unsigned& tract, const std::pair<double,double>& myProps);
+
+private:
+     static
+     unsigned
+     get_min_tract_length(const starling_indel_report_info& iri)
+     {
+         return iri.repeat_unit_length * 2;
+     }
+
+public:
     error_model model;
     unsigned MaxMotifLength, MaxTractLength;
 };
