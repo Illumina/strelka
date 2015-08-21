@@ -76,8 +76,16 @@ get_starling_option_parser(
      "The maximum window to consider for short-range phasing")
     ;
 
+    po::options_description score_opt("scoring-options");
+    score_opt.add_options()
+    ("variant-scoring-models-file", po::value(&opt.germline_variant_scoring_models_filename),
+     "Model file for germline small variant scoring (VQSR)")
+    ("variant-scoring-model-name", po::value(&opt.germline_variant_scoring_model_name),
+     "The scoring model for germline small variants")
+    ;
+
     po::options_description starling_parse_opt("Germline calling options");
-    starling_parse_opt.add(gvcf_opt).add(phase_opt);
+    starling_parse_opt.add(gvcf_opt).add(phase_opt).add(score_opt);
 
     // final assembly
     po::options_description visible("Options");

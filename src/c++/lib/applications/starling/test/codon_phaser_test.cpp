@@ -508,8 +508,8 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
 
     RegionTracker regions;
     std::stringstream os;
-    opt.germline_scoring_models_filename = TEST_CONFIG_PATH;
-    opt.germline_scoring_model_name = "QScoreHPDRE100_v4";
+    opt.germline_variant_scoring_models_filename = TEST_CONFIG_PATH;
+    opt.germline_variant_scoring_model_name = "QScoreHPDRE100_v4";
 
     gvcf_deriv_options gvcf_options(opt.gvcf, "dummy");
     gvcf_options.chrom_depth["dummy"] = 30.734;

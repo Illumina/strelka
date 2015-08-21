@@ -74,6 +74,7 @@ def runDepth(self,taskPrefix="",dependencies=None) :
 
     return nextStepWait
 
+
 def runIndelModel(self,taskPrefix="",dependencies=None) :
     """
     estimate indel error parameters and write back a modified model file
@@ -85,7 +86,7 @@ def runIndelModel(self,taskPrefix="",dependencies=None) :
     else :
         return set()
     tempPath  = self.params.getIndelSegmentDir
-    inModel   = self.params.scoringModelFile
+    inModel   = self.params.inputIndelErrorModelFile
     outModel  = self.params.getRunSpecificModel
     reference = self.params.referenceFasta
     scriptDir = os.path.abspath(scriptDir)
@@ -95,9 +96,10 @@ def runIndelModel(self,taskPrefix="",dependencies=None) :
     nextStepWait.add(self.addWorkflowTask("GenerateIndelModel", indelErrorWorkflow(bamFile,tempPath,inModel,outModel,reference,scriptDir,depth), dependencies=dependencies))
 
     # edit the scoring model used to reflect the restated model
-    self.params.scoringModelFile = outModel
+    self.params.dynamicIndelErrorModelFile = outModel
 
     return nextStepWait
+
 
 class TempSegmentFiles :
     def __init__(self) :
@@ -137,21 +139,24 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
-    segCmd.extend(['--calibration-model-file',self.params.vqsrModelFile])
-    segCmd.extend(['--scoring-model',self.params.vqsrModel ])
+    segCmd.extend(['--do-short-range-phasing'])
+    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+    
+    # VQSR:
+    segCmd.extend(['--variant-scoring-models-file',self.params.vqsrModelFile])
+    segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModel ])
+    
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipIndelErrorModel:
         segCmd.extend(['--indel-error-model',self.params.indelErrorModel])
+    else :
+        segCmd.extend(['--scoring-models', self.params.dynamicIndelErrorModelFile])
 
     if self.params.isReportVQSRMetrics :
         segCmd.append("--gvcf-report-VQSRmetrics")
 
-    segCmd.extend(['--do-short-range-phasing'])
-
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",quote(bamPath)])
-
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
 
     if not isFirstSegment :
         segCmd.append("--gvcf-skip-header")
@@ -182,9 +187,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.extraStarlingArguments is not None :
         for arg in self.params.extraStarlingArguments.strip().split() :
             segCmd.append(arg)
-
-    if not self.params.isSkipIndelErrorModel:
-            segCmd.extend(['--scoring-models', self.params.scoringModelFile])
 
      # gvcf is written to stdout so we need shell features:
     segCmd = " ".join(segCmd)

@@ -67,7 +67,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         defaults.update({
             'runDir' : 'StrelkaWorkflow',
             "minTier2Mapq" : 0,
-            'scoringModelFile' : joinFile(configDir,'indel_models.json'),
+            'variantScoringModelFile' : joinFile(configDir,'indel_models.json'),
             'indelModel': 'new',
             'isWriteCallableRegion' : False
             })

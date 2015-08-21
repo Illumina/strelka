@@ -165,17 +165,8 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
 
-    ("calibration-model-file", po::value(&opt.germline_scoring_models_filename),
-     "File containing calibration model parameters")
-
-    ("somatic-scoring-models", po::value(&opt.somatic_scoring_models_filename),
-     "Model file for somatic VQSR")
-
     ("indel-model-name", po::value(&opt.indel_error_model_name),
      "Indel error model name (corresponds to {name}_{version} in model file)")
-
-    ("scoring-model", po::value(&opt.germline_scoring_model_name),
-     "The calibration model for quality filtering variants")
 
     ("remap-input-softclip", po::value(&opt.is_remap_input_softclip)->zero_tokens(),
      "Attempt to realign all soft-clipped segments in input reads (DEPRECATED)")
@@ -448,9 +439,9 @@ finalize_starling_base_options(
         last_fs=fs;
     }
 
-    if (! opt.somatic_scoring_models_filename.empty())
+    if (! opt.somatic_variant_scoring_models_filename.empty())
     {
-        scoring_models::Instance().load_models(opt.somatic_scoring_models_filename);
+        scoring_models::Instance().load_models(opt.somatic_variant_scoring_models_filename);
     }
 
     if (! opt.indel_error_model_name.empty())

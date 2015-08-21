@@ -131,7 +131,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     # do not apply VQSR in exome case
     if not self.params.isExome :
-        segCmd.extend(['--somatic-scoring-models', self.params.scoringModelFile])
+        segCmd.extend(['--variant-scoring-models-file', self.params.variantScoringModelFile])
         segCmd.extend(['--indel-model-name', self.params.indelModel])
 
     for bamPath in self.params.normalBamList :
@@ -165,10 +165,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
     addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
 
-    if self.params.extraStrelkaArguments is not None :
-        for arg in self.params.extraStrelkaArguments.strip().split() :
-            segCmd.append(arg)
-
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
 
     if not isFirstSegment :
@@ -177,6 +173,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.isHighDepthFilter :
         segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
         segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
+
+    if self.params.extraStrelkaArguments is not None :
+        for arg in self.params.extraStrelkaArguments.strip().split() :
+            segCmd.append(arg)
+
 
     nextStepWait = set()
 
