@@ -99,7 +99,7 @@ is_candidate_indel_impl_test(
         starling_indel_report_info iri;
         get_starling_indel_report_info(ik,id,_ref,iri);
 
-        const Indel_model indel_model = scoring_models::Instance().get_indel_model();
+        const IndelErrorModel indel_model = scoring_models::Instance().get_indel_model();
 
         // check to see if indel meets STR criteria
         if (indel_model.is_simple_tandem_repeat(iri))

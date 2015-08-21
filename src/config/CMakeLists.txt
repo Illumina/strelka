@@ -16,7 +16,9 @@
 ##
 ################################################################################
 
-# starling VQSR config files:
+# variant scoring and indel error files:
+file (GLOB TXT_CONFIG_LIST [a-zA-Z0-9]*.txt)
 file (GLOB JSON_CONFIG_LIST [a-zA-Z0-9]*.json)
 
+install(FILES ${TXT_CONFIG_LIST} DESTINATION ${THIS_CONFIGDIR})
 install(FILES ${JSON_CONFIG_LIST} DESTINATION ${THIS_CONFIGDIR})

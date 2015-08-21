@@ -17,8 +17,9 @@
 
 #include "strelka_option_parser.hh"
 
-#include "../../starling_common/starling_base_option_parser.hh"
 #include "blt_common/blt_arg_validate.hh"
+#include "calibration/scoringmodels.hh"
+#include "starling_common/starling_base_option_parser.hh"
 #include "starling_common/Tier2OptionsParser.hh"
 
 
@@ -195,6 +196,11 @@ finalize_strelka_options(
     if (opt.sfilter.max_depth_factor < 0)
     {
         pinfo.usage("Strelka depth factor must not be less than 0");
+    }
+
+    if (! opt.somatic_variant_scoring_models_filename.empty())
+    {
+        scoring_models::Instance().load_variant_scoring_models(opt.somatic_variant_scoring_models_filename);
     }
 
     finalize_starling_base_options(pinfo,vm,opt);

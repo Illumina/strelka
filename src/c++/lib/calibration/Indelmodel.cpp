@@ -33,10 +33,10 @@
 //    FIT pars: [  1.09573511e-03   9.82226042e+00   1.03579658e+00   8.31843836e-06]
 //    Function prob(error)=0.00109573511176/ (1 + exp((9.82226041538-x)/1.03579658224))+8.31843836296e-06
 //    --------------------
-Indel_model
-generate_new()
+IndelErrorModel
+generate_new_indel_error_model()
 {
-    Indel_model res("new","v1","",1,40);
+    IndelErrorModel res("new","v1","",1,40);
 
     const double insert_A(1.49133831e-03);
     const double insert_B(1.03348683e+01);
@@ -64,10 +64,10 @@ generate_new()
 }
 
 
-Indel_model
-generate_old()
+IndelErrorModel
+generate_old_indel_error_model()
 {
-    Indel_model res("old","v1","",1,40);
+    IndelErrorModel res("old","v1","",1,40);
 
     const double insert_A(5.03824e-7);
     const double insert_B(3.30572e-10);
@@ -99,14 +99,14 @@ generate_old()
 
 
 
-Indel_model::Indel_model()
+IndelErrorModel::IndelErrorModel()
 {
     this->MaxMotifLength = 0;
     this->MaxTractLength = 0;
 }
 
 // read in the json
-void Indel_model::Deserialize(const Json::Value& root)
+void IndelErrorModel::Deserialize(const Json::Value& root)
 {
     serialized_model::Deserialize(root);
 
@@ -140,7 +140,7 @@ void Indel_model::Deserialize(const Json::Value& root)
 
 
 
-void Indel_model::calc_prop(const starling_base_options& client_opt,
+void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
                             const starling_indel_report_info& iri,
                             double& indel_error_prob,
                             double& ref_error_prob,
@@ -240,7 +240,7 @@ void Indel_model::calc_prop(const starling_base_options& client_opt,
     // }
 }
 
-bool Indel_model::is_simple_tandem_repeat(const starling_indel_report_info& iri) const
+bool IndelErrorModel::is_simple_tandem_repeat(const starling_indel_report_info& iri) const
 {
     // an STR only has insertions or deletions, has a repeat unit length present in the model,
     // and has a tract length present in the model
@@ -255,7 +255,7 @@ bool Indel_model::is_simple_tandem_repeat(const starling_indel_report_info& iri)
     return false;
 }
 
-void Indel_model::add_prop(const unsigned& unit, const unsigned& tract, const std::pair<double,double>& myProps)
+void IndelErrorModel::add_prop(const unsigned& unit, const unsigned& tract, const std::pair<double,double>& myProps)
 {
     this->model[unit][tract] = myProps;
 }

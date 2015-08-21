@@ -24,6 +24,7 @@
 
 #include "json/json.h"
 
+#include <iosfwd>
 #include <map>
 #include <string>
 
@@ -57,29 +58,31 @@ get_label(const index_t i)
 struct scoring_models
 {
     static scoring_models& Instance();
-    void load_models(const std::string& model_file);
 
-    void load_single_model(const Json::Value& data,MODEL_TYPE::index_t type);
-    void load_indel_model(const Json::Value& data);
-    void load_calibration_model(const Json::Value& data);
-    double score_instance(const feature_type& features, const VARIATION_NODE_TYPE::index_t vtype) const;
-//    void init_default_models();
-    void score_indel(const starling_base_options& client_opt,
-                     const starling_indel_report_info& iri,
-                     double& indel_error_prob,
-                     double& ref_error_prob);
-
-
-    const Indel_model& get_indel_model(const std::string& pattern) const;
-    const Indel_model& get_indel_model() const;
-
-    std::string getVcfHeaderString() const;
+    void load_variant_scoring_models(const std::string& model_file);
+    void load_indel_error_models(const std::string& model_file);
 
     void set_indel_model(const std::string& model_name);
-    void possible_indel_models(std::string& str) const;
-    void init_default_models();
-    bool indel_init=false;
-    bool calibration_init=false;
+
+    double score_variant(
+        const feature_type& features,
+        const VARIATION_NODE_TYPE::index_t vtype) const;
+
+    void get_indel_error(
+        const starling_base_options& client_opt,
+        const starling_indel_report_info& iri,
+        double& indel_error_prob,
+        double& ref_error_prob) const
+    {
+        get_indel_model().calc_prop(client_opt,iri,indel_error_prob,ref_error_prob);
+    }
+
+    const IndelErrorModel& get_indel_model() const;
+
+    void writeVcfHeader(std::ostream& os) const;
+
+    bool isVariantScoringInit() const { return randomforest_model.isInit(); }
+    bool isIndelInit() const { return (! indel_models.empty()); }
 
 private:
     scoring_models()
@@ -89,14 +92,33 @@ private:
     scoring_models(scoring_models const&) {}            // copy constructor is private
     scoring_models& operator=(scoring_models const&);  // assignment operator is private
 
+    void init_default_models();
+
+    void
+    load_models(
+        const std::string& model_file,
+        const MODEL_TYPE::index_t model_type);
+
+    void
+    load_single_model(
+        const Json::Value& data,
+        const MODEL_TYPE::index_t model_type);
+
+    void load_indel_model(const Json::Value& data);
+    void load_calibration_model(const Json::Value& data);
+
+    const IndelErrorModel& get_indel_model(const std::string& pattern) const;
+
+    void possible_indel_models(std::string& str) const;
+
     static scoring_models* m_pInstance;
-    typedef std::map<std::string,Indel_model> indel_modelmap;
+
+    std::string variantScoringModelFilename;
+    std::string indelErrorModelFilename;
+
+    typedef std::map<std::string,IndelErrorModel> indel_modelmap;
     indel_modelmap indel_models;
     std::string current_indel_model;
-    std::string filename;
 
-//    typedef std::map<VARIATION_NODE_TYPE::index_t,serialized_calibration_model> serialized_modelmap;
-//    typedef std::map<std::string,serialized_modelmap> calibration_modelmap;
-//    serialized_modelmap calibration_models;
     RandomForestModel randomforest_model,randomforest_model_indel;
 };

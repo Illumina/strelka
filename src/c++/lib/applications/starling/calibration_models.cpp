@@ -16,8 +16,15 @@
  */
 
 #include "calibration_models.hh"
+#include "common/Exceptions.hh"
+
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string.hpp"
+#include "boost/algorithm/string/classification.hpp"
 
 #include <cassert>
+#include <cstdlib>     /* atof */
+
 #include <exception>
 #include <sstream>
 #include <string>
@@ -25,10 +32,6 @@
 #include <fstream>
 #include <iterator>
 #include <map>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/classification.hpp>
-#include <stdlib.h>     /* atof */
 
 
 //#define DEBUG_CAL
@@ -250,25 +253,41 @@ calibration_models::load_chr_depth_stats()
     }
 }
 
+
+
+static
+void
+nameError(const std::string& name)
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: unrecognized variant scoring model name: '" << name << "'\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+
+
+
 void calibration_models::set_model(const std::string& name)
 {
     if (name.empty()) return;
 
     modelmap::iterator it = this->models.find(boost::to_upper_copy(name));
-    assert("Unrecognized calibration model given using --scoring-model option in set_model" && it != this->models.end());
+    if (it == models.end())
+    {
+        nameError(name);
+    }
     this->load_chr_depth_stats();
 
-    if (it != this->models.end())
-    {
 //        if (this->has_depth && (this->chr_median>70 || this->chr_median<10))
 //        {
 //            this->model_name = "QRULE";     //TODO hacky fix for defaulting to qrule if we have a high median chromosome depth (VQSR not trained to handle these cases yet)
 //        }
 //        else
-        this->model_name = boost::to_upper_copy(name);
-        this->is_default_model = false;
-    }
-//    log_os << "Calibration model set to '" << this->model_name << "'\n";
+    this->model_name = boost::to_upper_copy(name);
+    this->is_default_model = false;
+
+        //    log_os << "Calibration model set to '" << this->model_name << "'\n";
 //    log_os << "Calibration model is default '" << this->is_default_model << "'\n";
 #ifdef DEBUG_CAL
     log_os << "Calibration model set to '" << this->model_name << "'\n";
@@ -311,58 +330,64 @@ void calibration_models::load_models(std::string model_file)
 #endif
     std::ifstream myReadFile;
     myReadFile.open(model_file.c_str());
+
+    if (! myReadFile)
+    {
+        using namespace illumina::common;
+
+        std::ostringstream oss;
+        oss << "ERROR: Failed to load germline variant scoring file '" << model_file << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+
     std::string output;
     std::string parspace;
     std::string submodel;
     std::string current_name;
     parmap pars;
-    if (myReadFile.is_open())
+    while (!myReadFile.eof())
     {
-        while (!myReadFile.eof())
+        std::getline (myReadFile,output);
+        std::vector<std::string> tokens;
+        split(tokens, output, is_any_of(" \t")); // tokenize string
+        //case new model
+        if (tokens.at(0).substr(0,3)=="###")
         {
-            std::getline (myReadFile,output);
-            std::vector<std::string> tokens;
-            split(tokens, output, is_any_of(" \t")); // tokenize string
-            //case new model
-            if (tokens.at(0).substr(0,3)=="###")
+            if (! pars.empty())
             {
-                if (! pars.empty())
-                {
-                    this->add_model_pars(current_name,pars);
-                }
-                current_name = boost::to_upper_copy(tokens.at(1));
-                c_model current_model(current_name,tokens.at(2),dopt);
+                this->add_model_pars(current_name,pars);
+            }
+            current_name = boost::to_upper_copy(tokens.at(1));
+            c_model current_model(current_name,tokens.at(2),dopt);
 
-                this->models.insert(modelmap::value_type(current_name, current_model));
+            this->models.insert(modelmap::value_type(current_name, current_model));
 #ifdef DEBUG_CAL
-                log_os << "Loading model: " << tokens.at(1) << " Type: " << tokens.at(2) << "\n";
+            log_os << "Loading model: " << tokens.at(1) << " Type: " << tokens.at(2) << "\n";
 #endif
-            }
-            //load submodel
-            else if (tokens.at(0)=="#")
+        }
+        //load submodel
+        else if (tokens.at(0)=="#")
+        {
+#ifdef DEBUG_CAL
+            log_os << "submodel: " << tokens.at(1) << " parspace: " << tokens.at(2) << "\n";
+#endif
+            submodel = tokens.at(1);
+            parspace = tokens.at(2);
+        }
+        //case load parameters
+        else
+        {
+            if (tokens.size()>1)
             {
 #ifdef DEBUG_CAL
-                log_os << "submodel: " << tokens.at(1) << " parspace: " << tokens.at(2) << "\n";
+                log_os << " setting " << tokens.at(0) << " = " << tokens.at(1) << "\n";
 #endif
-                submodel = tokens.at(1);
-                parspace = tokens.at(2);
-            }
-            //case load parameters
-            else
-            {
-                if (tokens.size()>1)
-                {
-#ifdef DEBUG_CAL
-                    log_os << " setting " << tokens.at(0) << " = " << tokens.at(1) << "\n";
-#endif
-                    pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
-                }
+                pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
             }
         }
-        this->add_model_pars(current_name,pars);
     }
+    this->add_model_pars(current_name,pars);
 #ifdef DEBUG_CAL
     log_os << "Done loading models" << "\n";
 #endif
-    myReadFile.close();
 }

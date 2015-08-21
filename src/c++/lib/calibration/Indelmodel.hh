@@ -29,10 +29,10 @@ static const unsigned max_tract_len(40);
 typedef std::pair<double,double> error_model[max_unit_len][max_tract_len];
 
 
-struct Indel_model : public serialized_model
+struct IndelErrorModel : public serialized_model
 {
-    Indel_model();
-    Indel_model(std::string n, std::string v, std::string d,int motif, int tract):
+    IndelErrorModel();
+    IndelErrorModel(std::string n, std::string v, std::string d,int motif, int tract):
         MaxMotifLength (motif),
         MaxTractLength (tract)
     {
@@ -72,6 +72,6 @@ public:
 };
 
 
-Indel_model generate_new();
+IndelErrorModel generate_new_indel_error_model();
 
-Indel_model generate_old();
+IndelErrorModel generate_old_indel_error_model();

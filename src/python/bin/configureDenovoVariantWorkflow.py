@@ -66,9 +66,7 @@ You must specify BAM file(s) for the proband and additional related samples.
 
         defaults.update({
             'runDir' : 'PedicureWorkflow',
-            'isWriteCallableRegion' : False,
-            'scoringModelFile' : joinFile(configDir,'indel_models.json'),
-            'indelErrorModel' : "new"
+            'isWriteCallableRegion' : False
             })
         return defaults
 

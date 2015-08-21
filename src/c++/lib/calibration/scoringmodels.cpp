@@ -22,21 +22,18 @@
 #endif
 
 #include "scoringmodels.hh"
-#include "Indelmodel.hh"
-#include "SerializedModel.hh"
 
 #include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
-#include "blt_util/parse_util.hh"
+//#include "blt_util/parse_util.hh"
 #include "blt_util/blt_exception.hh"
 
 #include <cassert>
 #include <fstream>
 #include <algorithm>
 #include <iostream>
-#include <sstream>
 
-using namespace illumina::blt_util;
+//using namespace illumina::blt_util;
 
 //#define DEBUG_SCORINGMODELS
 
@@ -56,26 +53,23 @@ scoring_models& scoring_models::Instance()
     if (!m_pInstance)    // Only allow one instance of class to be generated.
     {
         m_pInstance = new scoring_models;
-        m_pInstance->filename = "NA";
+        m_pInstance->variantScoringModelFilename = "NA";
     }
     return *m_pInstance;
 }
 
 void scoring_models::init_default_models()
 {
-
     // load previously hard-coded logistic regression model
-    Indel_model newModel = generate_new();
+    IndelErrorModel newModel = generate_new_indel_error_model();
     this->indel_models[newModel.get_model_string()] = newModel;
 
     // load previously hard-coded polynomial model
-    Indel_model oldModel = generate_old();
+    IndelErrorModel oldModel = generate_old_indel_error_model();
     this->indel_models[oldModel.get_model_string()] = oldModel;
-
-    this->indel_init = true;
 }
 
-double scoring_models::score_instance(const feature_type& features, const VARIATION_NODE_TYPE::index_t vtype) const
+double scoring_models::score_variant(const feature_type& features, const VARIATION_NODE_TYPE::index_t vtype) const
 {
     double score;
     switch (vtype)
@@ -88,52 +82,36 @@ double scoring_models::score_instance(const feature_type& features, const VARIAT
         return error_prob_to_phred(score);
     default:
         assert(false && "Unknown variation node type in serializedModel.");
-        return score;
+        return 0;
     }
 }
 
-//TODO for integration into germline calling
-void scoring_models::score_indel(const starling_base_options& client_opt,
-                                 const starling_indel_report_info& iri,
-                                 double& indel_error_prob,
-                                 double& ref_error_prob)
-{
-//	log_os << client_opt.indel_error_model << std::endl;
-    Indel_model tempModel = this->indel_models[this->current_indel_model];
-//	log_os << tempModel.get_model_string() << std::endl;
-    tempModel.calc_prop(client_opt,iri,indel_error_prob,ref_error_prob);
-}
-
-void scoring_models::load_single_model(const Json::Value& data,MODEL_TYPE::index_t type)
-{
-    using namespace MODEL_TYPE;
-    switch (type)
-    {
-    case INDELMODEL:
-        this->load_indel_model(data);
-        break;
-    case CALMODEL:
-        this->load_calibration_model(data);
-        break;
-    default:
-        assert(false && "Unknown model-type in model json.");
-    }
-}
-
-const Indel_model& scoring_models::get_indel_model() const
+const IndelErrorModel& scoring_models::get_indel_model() const
 {
     assert(!this->current_indel_model.empty());
     return this->indel_models.at(this->current_indel_model);
 }
 
 // Generated the header VCF header string specifying which json file and what models were used
-std::string scoring_models::getVcfHeaderString() const
+void
+scoring_models::
+writeVcfHeader(
+    std::ostream& os) const
 {
-    std::stringstream vcfHeader;
-    vcfHeader << "##ScoringModelJson=" << this->filename << std::endl;
-    vcfHeader << "##IndelModel=" << this->current_indel_model << std::endl;
-    // vcfHeader << "##CalibrationModel=" << this->current_calibration_model << std::endl;
-    return vcfHeader.str();
+    if (! variantScoringModelFilename.empty())
+    {
+        os << "##VariantScoringModelFilename=" << this->variantScoringModelFilename << "\n";
+    }
+
+    if (! indelErrorModelFilename.empty())
+    {
+        os << "##IndelErrorModelFilename=" << this->indelErrorModelFilename << "\n";
+    }
+
+    if (! current_indel_model.empty())
+    {
+        os << "##IndelModel=" << this->current_indel_model << "\n";
+    }
 }
 
 
@@ -163,7 +141,7 @@ void scoring_models::possible_indel_models(std::string& str) const
         return;
     }
 
-    std::map<std::string,Indel_model>::const_iterator it = indel_models.begin();
+    std::map<std::string,IndelErrorModel>::const_iterator it = indel_models.begin();
     str = it->first;
     for (; it != indel_models.end(); ++it)
         str += "," + it->first;
@@ -171,10 +149,9 @@ void scoring_models::possible_indel_models(std::string& str) const
 
 void scoring_models::load_indel_model(const Json::Value& data)
 {
-    Indel_model tempModel;
+    IndelErrorModel tempModel;
     tempModel.Deserialize(data);
     this->indel_models[tempModel.get_model_string()] = tempModel;
-    this->indel_init = true;
 }
 
 void scoring_models::load_calibration_model(const Json::Value& data)
@@ -193,33 +170,81 @@ void scoring_models::load_calibration_model(const Json::Value& data)
                 this->randomforest_model = temp_model;
             else
                 this->randomforest_model_indel = temp_model;
-            this->calibration_init = true;
         }
     }
 }
 
-void scoring_models::load_models(const std::string& model_file)
+
+
+void
+scoring_models::
+load_single_model(
+    const Json::Value& data,
+    const MODEL_TYPE::index_t model_type)
 {
-    // Read in all model data, assume file-exists has been checked
-    //TODO used the jsoncpp reader instead
-    this->filename = model_file;
-    Json::Value root;
-    Json::Reader reader;
-    std::stringstream ss;
-    std::ifstream file( this->filename );
-    ss << file.rdbuf();
-    ss >> root;
-
-    //loop over all models for a given type (indel or calibratrion)
     using namespace MODEL_TYPE;
-    for (int i(0); i<SIZE; ++i)
+    switch (model_type)
     {
-        const index_t modelIndex(static_cast<index_t>(i));
-        Json::Value models = root[get_label(modelIndex)];
-        if (!models.isNull())
-            for (Json::Value::iterator it = models.begin(); it != models.end(); ++it)
-                this->load_single_model(*it,modelIndex);
+    case INDELMODEL:
+        this->load_indel_model(data);
+        break;
+    case CALMODEL:
+        this->load_calibration_model(data);
+        break;
+    default:
+        assert(false && "Unknown model-type in model json.");
     }
+}
 
-    file.close();
+
+
+static
+void
+loadFileToJson(
+    const std::string& filename,
+    Json::Value& root)
+{
+    std::ifstream file( filename , std::ifstream::binary);
+    file >> root;
+}
+
+
+
+void
+scoring_models::
+load_models(
+    const std::string& model_file,
+    const MODEL_TYPE::index_t model_type)
+{
+    Json::Value root;
+    loadFileToJson(model_file,root);
+
+    Json::Value models = root[get_label(model_type)];
+    if (models.isNull()) return;
+
+    for (auto& modelValue : models)
+    {
+        load_single_model(modelValue, model_type);
+    }
+}
+
+
+void
+scoring_models::
+load_variant_scoring_models(
+    const std::string& model_file)
+{
+    variantScoringModelFilename = model_file;
+    load_models(model_file,MODEL_TYPE::CALMODEL);
+}
+
+
+
+void
+scoring_models::
+load_indel_error_models(
+    const std::string& model_file)
+{
+    indelErrorModelFilename = model_file;
+    load_models(model_file,MODEL_TYPE::INDELMODEL);
 }

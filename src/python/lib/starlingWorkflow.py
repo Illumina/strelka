@@ -86,7 +86,7 @@ def runIndelModel(self,taskPrefix="",dependencies=None) :
     else :
         return set()
     tempPath  = self.params.getIndelSegmentDir
-    inModel   = self.params.inputIndelErrorModelFile
+    inModel   = self.params.inputIndelErrorModelsFile
     outModel  = self.params.getRunSpecificModel
     reference = self.params.referenceFasta
     scriptDir = os.path.abspath(scriptDir)
@@ -96,7 +96,7 @@ def runIndelModel(self,taskPrefix="",dependencies=None) :
     nextStepWait.add(self.addWorkflowTask("GenerateIndelModel", indelErrorWorkflow(bamFile,tempPath,inModel,outModel,reference,scriptDir,depth), dependencies=dependencies))
 
     # edit the scoring model used to reflect the restated model
-    self.params.dynamicIndelErrorModelFile = outModel
+    self.params.dynamicIndelErrorModelsFile = outModel
 
     return nextStepWait
 
@@ -144,13 +144,13 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     
     # VQSR:
     segCmd.extend(['--variant-scoring-models-file',self.params.vqsrModelFile])
-    segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModel ])
+    segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModelName])
     
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipIndelErrorModel:
-        segCmd.extend(['--indel-error-model',self.params.indelErrorModel])
+        segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
     else :
-        segCmd.extend(['--scoring-models', self.params.dynamicIndelErrorModelFile])
+        segCmd.extend(['--indel-error-models-file', self.params.dynamicIndelErrorModelsFile])
 
     if self.params.isReportVQSRMetrics :
         segCmd.append("--gvcf-report-VQSRmetrics")

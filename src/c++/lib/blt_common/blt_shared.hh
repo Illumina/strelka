@@ -197,7 +197,7 @@ struct blt_options
 
     /// indel error options (TODO: move this to starling_base options)
     std::string indel_error_models_filename;
-    std::string indel_error_model_name;      // which baseline prior should be used for candidate indel genotyping (required)
+    std::string indel_error_model_name = "new";      // which baseline prior should be used for candidate indel genotyping (required)
 
     /// starling VQSR options: (TODO: move this down to starling options)
     std::string germline_variant_scoring_models_filename;

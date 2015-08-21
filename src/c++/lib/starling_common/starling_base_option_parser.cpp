@@ -165,7 +165,10 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
 
-    ("indel-model-name", po::value(&opt.indel_error_model_name),
+    ("indel-error-models-file", po::value(&opt.indel_error_models_filename),
+     "File containing indel error models")
+
+    ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
      "Indel error model name (corresponds to {name}_{version} in model file)")
 
     ("remap-input-softclip", po::value(&opt.is_remap_input_softclip)->zero_tokens(),
@@ -439,14 +442,13 @@ finalize_starling_base_options(
         last_fs=fs;
     }
 
-    if (! opt.somatic_variant_scoring_models_filename.empty())
+    if (! opt.indel_error_models_filename.empty())
     {
-        scoring_models::Instance().load_models(opt.somatic_variant_scoring_models_filename);
+        scoring_models::Instance().load_indel_error_models(opt.indel_error_models_filename);
     }
 
     if (! opt.indel_error_model_name.empty())
     {
-//      log_os << "Setting indel model" << std::endl;
         scoring_models::Instance().set_indel_model(opt.indel_error_model_name);
     }
 
