@@ -191,8 +191,6 @@ void Indel_model::calc_prop(const starling_base_options& client_opt,
         // TODO - provide estimates for complex indels NOTE: likely never utilized
         double baseline_ins_prob(this->model[0][0].first);
         double baseline_del_prob(this->model[0][0].second);
-        // double baseline_ins_prob(this->model[repeat_unit - 1][min_tract_length - 1].first);
-        // double baseline_del_prob(this->model[repeat_unit - 1][min_tract_length - 1].second);
 
         indel_error_prob=std::max(baseline_ins_prob,baseline_del_prob);
         ref_error_prob=indel_error_prob;
@@ -201,8 +199,8 @@ void Indel_model::calc_prop(const starling_base_options& client_opt,
 
     // if tract length is too short for repeat unit, set to shortest indel error rate for
     // that repeat unit length
-    const unsigned ref_query_len = std::max(min_tract_length, ref_hpol_len);
-    const unsigned indel_query_len = std::max(min_tract_length, indel_hpol_len);
+    const unsigned ref_query_len = std::min(std::max(min_tract_length, ref_hpol_len), MaxTractLength);
+    const unsigned indel_query_len = std::min(std::max(min_tract_length, indel_hpol_len), MaxTractLength);
 
     if (iri.repeat_unit_length <= MaxMotifLength)
     {
