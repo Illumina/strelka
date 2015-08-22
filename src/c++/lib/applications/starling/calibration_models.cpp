@@ -287,7 +287,7 @@ void calibration_models::set_model(const std::string& name)
     this->model_name = boost::to_upper_copy(name);
     this->is_default_model = false;
 
-        //    log_os << "Calibration model set to '" << this->model_name << "'\n";
+    //    log_os << "Calibration model set to '" << this->model_name << "'\n";
 //    log_os << "Calibration model is default '" << this->is_default_model << "'\n";
 #ifdef DEBUG_CAL
     log_os << "Calibration model set to '" << this->model_name << "'\n";

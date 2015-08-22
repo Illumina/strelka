@@ -76,7 +76,7 @@ Clean_string(const std::string& str)
     temp = temp.substr(0, doubleQuote);
 
     doubleQuote = temp.find_first_of("\"");
-    if(doubleQuote != std::string::npos)
+    if (doubleQuote != std::string::npos)
     {
         temp = temp.substr(doubleQuote);
     }

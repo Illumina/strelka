@@ -59,12 +59,12 @@ struct IndelErrorModel : public serialized_model
     void add_prop(const unsigned& unit, const unsigned& tract, const std::pair<double,double>& myProps);
 
 private:
-     static
-     unsigned
-     get_min_tract_length(const starling_indel_report_info& iri)
-     {
-         return iri.repeat_unit_length * 2;
-     }
+    static
+    unsigned
+    get_min_tract_length(const starling_indel_report_info& iri)
+    {
+        return iri.repeat_unit_length * 2;
+    }
 
 public:
     error_model model;

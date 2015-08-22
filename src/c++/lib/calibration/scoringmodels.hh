@@ -81,8 +81,14 @@ struct scoring_models
 
     void writeVcfHeader(std::ostream& os) const;
 
-    bool isVariantScoringInit() const { return randomforest_model.isInit(); }
-    bool isIndelInit() const { return (! indel_models.empty()); }
+    bool isVariantScoringInit() const
+    {
+        return randomforest_model.isInit();
+    }
+    bool isIndelInit() const
+    {
+        return (! indel_models.empty());
+    }
 
 private:
     scoring_models()

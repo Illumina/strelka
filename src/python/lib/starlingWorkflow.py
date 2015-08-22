@@ -141,11 +141,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--do-short-range-phasing'])
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
-    
+
     # VQSR:
     segCmd.extend(['--variant-scoring-models-file',self.params.vqsrModelFile])
     segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModelName])
-    
+
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipIndelErrorModel:
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])

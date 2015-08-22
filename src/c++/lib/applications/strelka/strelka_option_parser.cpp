@@ -125,14 +125,14 @@ get_strelka_option_parser(
     po::options_description score_opt("scoring-options");
     score_opt.add_options()
     ("variant-scoring-models-file", po::value(&opt.somatic_variant_scoring_models_filename),
-      "Model file for somatic small variant VQSR")
+     "Model file for somatic small variant VQSR")
     ;
 
     po::options_description strelka_parse_opt("Two-sample options");
     strelka_parse_opt
-        .add(strelka_parse_opt_ti).add(strelka_parse_opt_to)
-        .add(strelka_parse_opt_sv).add(strelka_parse_opt_filter)
-        .add(tier2_opt).add(score_opt);
+    .add(strelka_parse_opt_ti).add(strelka_parse_opt_to)
+    .add(strelka_parse_opt_sv).add(strelka_parse_opt_filter)
+    .add(tier2_opt).add(score_opt);
 
     // final assembly
     po::options_description visible("Options");
