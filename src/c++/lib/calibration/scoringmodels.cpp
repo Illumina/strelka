@@ -25,15 +25,12 @@
 
 #include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
-//#include "blt_util/parse_util.hh"
 #include "blt_util/blt_exception.hh"
 
 #include <cassert>
 #include <fstream>
 #include <algorithm>
 #include <iostream>
-
-//using namespace illumina::blt_util;
 
 //#define DEBUG_SCORINGMODELS
 
