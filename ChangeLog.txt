@@ -1,3 +1,4 @@
+- STARKA-248 tolerate reference allele insert/delete alignments in read input
 - STARKA-237 new format for scoring and indel models
 - STARKA-239 update strelka VQSR and parameters for higher recall
 v2.3.13

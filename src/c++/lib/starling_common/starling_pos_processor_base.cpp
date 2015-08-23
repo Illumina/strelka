@@ -480,12 +480,41 @@ insert_indel(const indel_observation& obs,
 {
     //
     // ppr advance is controlled by the start positions of reads and
-    // relatively cheap to store (so long as we aren't includingu
+    // relatively cheap to store (so long as we aren't including
     // gigantic insert sequences) and do not scale up linearly with
     // increased coverage like reads do. For this reason our strategy
     // is to buffer the indels as far ahead as possible while leaving
     // the read buffer sizes fixed at a smaller value.
     //
+
+    // address STARKA-248
+    //
+    // This is designed to filter-out null operations from the cigar string -- that is, matched insert/delete segments that just reinsert the
+    // reference. It is, in principal, better to filter here so that these spurious indels don't gum up the realignment and analysis downstream,
+    // however the risk of instability is  high at this point. Assuming these occur rarely in the input bam, the impact of leaving these in the
+    // process should be relatively low, and keep starka stable in the short term.
+    //
+    // Consider reactivating this filter in the longer term release path
+#if 0
+    if ((!obs.key.is_breakpoint()) && (obs.key.delete_length() == obs.key.insert_length()))
+    {
+        assert(obs.data.insert_seq.size() == obs.key.insert_length());
+
+        std::string dseq;
+        _ref.get_substring(obs.key.pos,obs.key.delete_length(),dseq);
+        if (obs.data.insert_seq == dseq)
+        {
+            // choose to either filter or throw:
+#if 1
+            return true;
+#else
+            std::ostringstream oss;
+            oss << "Read alignment contains indel allele matching reference obs: " << obs << "\n";
+            throw blt_exception(oss.str().c_str());
+#endif
+        }
+    }
+#endif
 
     try
     {

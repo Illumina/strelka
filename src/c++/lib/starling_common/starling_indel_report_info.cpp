@@ -210,6 +210,11 @@ get_vcf_summary_strings(const indel_key& ik,
         copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_indel_seq);
         vcf_indel_seq += id.get_insert_seq();
     }
+
+    // this can occur due to invalid bam input. Don't activate this assert until
+    // we've filtered input bam reads for equal size swaps which match the reference
+    //
+    //assert(vcf_indel_seq != vcf_ref_seq);
 }
 
 
