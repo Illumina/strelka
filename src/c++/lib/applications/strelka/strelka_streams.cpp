@@ -119,7 +119,8 @@ strelka_streams(
                 << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n"
                 << "##priorSomaticSnvRate=" << opt.somatic_snv_rate << "\n";
 
-            scoring_models::Instance().writeVcfHeader(fos);
+            // this is already captured in commandline call to strelka written to the vcf header:
+            //scoring_models::Instance().writeVcfHeader(fos);
 
             // INFO:
             fos << "##INFO=<ID=QSS,Number=1,Type=Integer,Description=\"Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal\">\n";
@@ -210,7 +211,8 @@ strelka_streams(
                 << "##germlineIndelTheta=" << opt.bindel_diploid_theta << "\n"
                 << "##priorSomaticIndelRate=" << opt.somatic_indel_rate << "\n";
 
-            scoring_models::Instance().writeVcfHeader(fos);
+            // this is already captured in commandline call to strelka written to the vcf header:
+            //scoring_models::Instance().writeVcfHeader(fos);
 
             // INFO:
             fos << "##INFO=<ID=QSI,Number=1,Type=Integer,Description=\"Quality score for any somatic variant, ie. for the ALT haplotype to be present at a significantly different frequency in the tumor and normal\">\n";
