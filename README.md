@@ -109,7 +109,7 @@ Example (building on 4 cores):
 Note that during the configuration step, the following dependencies
 will be built from source if they are not found:
 
-* cmake 2.8.0+
+* cmake 2.8.5+
 * boost 1.53.0+
 
 To accelerate this process the configuration step can be parallelized
@@ -159,11 +159,11 @@ found in the path
 Note that during the configuration step, the following dependencies will be
 built from source if they are not found:
 
-* cmake 2.8.0+
+* cmake 2.8.5+
 * boost 1.53.0+
 
 To avoid the extra time associated with this step, ensure that (1)
-cmake 2.8.0+ is in your PATH and (2) BOOST\_ROOT is defined to point
+cmake 2.8.5+ is in your PATH and (2) BOOST\_ROOT is defined to point
 to boost 1.53.0 or newer.
 
 #### Address Sanitizer
