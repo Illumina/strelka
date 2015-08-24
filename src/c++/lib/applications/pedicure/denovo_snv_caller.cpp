@@ -197,6 +197,8 @@ struct DenovoResultMaker
             {
                 addAlleles(parentIndex);
             }
+            
+           
         }
 
         auto isFilterGT = [&](const unsigned gt)
@@ -213,6 +215,8 @@ struct DenovoResultMaker
                 for (unsigned probandGT(0); probandGT<DIGT::SIZE; ++probandGT)
                 {
                     if (isFilterGT(probandGT)) continue;
+                    
+                    
                     const double pedigreeLhood = sampleLhood[parentIndices[0]][parent0GT] + sampleLhood[parentIndices[1]][parent1GT] + sampleLhood[probandIndex][probandGT];
                     const TRANSMISSION_STATE::index_t tran(TRANSMISSION_STATE::get_state(parent0GT,parent1GT,probandGT));
 #ifdef DENOVO_SNV_DEBUG
@@ -228,8 +232,9 @@ struct DenovoResultMaker
                 }
             }
         }
-
         processStateLhood(rs);
+	
+				
     }
 
 
@@ -277,6 +282,7 @@ struct DenovoResultMaker
         }
 
         processStateLhood(rs);
+
     }
 
 
@@ -406,8 +412,6 @@ get_denovo_snv_call(
         dmaker.calculate_result_set_grid2(sinfo, sampleLhood, trs);
     }
 
-
-
     if (! dsc.is_forced_output)
     {
         for (const auto& val : tier_rs)
@@ -426,4 +430,29 @@ get_denovo_snv_call(
     }
 
     dsc.rs=tier_rs[dsc.dsnv_tier];
+	
+	//goes through all samples, computes probability for hom-ref 0/0, het 0/1 or hom-alt 1/1
+	//writes to dsc object.
+	for(unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex){
+		std::array<float,3> pProb;
+		static const double lnzero(-std::numeric_limits<double>::infinity());	//log(0)
+        std::fill(pProb.begin(),pProb.end(),lnzero);
+        
+		const auto& lhood(sampleLhood[sampleIndex]);
+		for (unsigned gt(0); gt<DIGT::SIZE; ++gt)	
+        {
+			std::array<uint8_t,2> alleles;
+			for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex){
+				alleles[chromCopyIndex] = DIGT::get_allele(gt,chromCopyIndex);
+			}
+			uint8_t gt_val = ( dsc.ref_gt != alleles[0] ) + ( dsc.ref_gt != alleles[1] );	//number of bases equal to ref
+			pProb[gt_val] = log_sum(pProb[gt_val],lhood[gt]);	//add log likelihoods
+		}
+		unsigned max_gt;
+		normalize_ln_distro(pProb.begin(),pProb.end(),max_gt);
+        
+		for(int p(0); p<3; ++p){ pProb[p] = error_prob_to_qphred(pProb[p]); }
+		dsc.Sampleplhoods.push_back(pProb);
+	}
+
 }

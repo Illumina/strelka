@@ -18,6 +18,8 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
+#include <vector>
 
 
 struct denovo_snv_call
@@ -44,4 +46,7 @@ struct denovo_snv_call
     uint8_t dsnv_tier = 0;
     bool is_forced_output = false;
     result_set rs;
+    
+    std::vector< std::array<float,3> > Sampleplhoods;
+
 };

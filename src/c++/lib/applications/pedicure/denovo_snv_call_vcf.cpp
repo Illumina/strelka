@@ -31,6 +31,8 @@ write_vcf_sample_info(
     const blt_options& opt,
     const CleanedPileup& tier1_cpi,
     const CleanedPileup& tier2_cpi,
+    const denovo_snv_call& dsc,
+    int sampleIndex,
     std::ostream& os)
 {
     //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
@@ -53,6 +55,8 @@ write_vcf_sample_info(
            << tier1_base_counts[b] << ','
            << tier2_base_counts[b];
     }
+	os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
+	
 }
 
 
@@ -133,13 +137,13 @@ denovo_snv_call_vcf(
 
     //FORMAT:
     os << '\t'
-       << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";
+       << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU:PL";
 
     for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
     {
         const CleanedPileup& cpi1(*pileups[PEDICURE_TIERS::TIER1][sampleIndex]);
         const CleanedPileup& cpi2(*pileups[PEDICURE_TIERS::TIER2][sampleIndex]);
         os << "\t";
-        write_vcf_sample_info(opt,cpi1,cpi2,os);
+        write_vcf_sample_info(opt,cpi1,cpi2,dsc,sampleIndex,os);
     }
 }
