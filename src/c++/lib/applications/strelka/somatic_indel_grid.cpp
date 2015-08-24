@@ -225,6 +225,8 @@ calculate_result_set(
         const double base_prior(normal_lnprior[ngt]);
         for (unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt)
         {
+            // tumor and normal likelihoods are independent -- only need to
+            // adjust prior according to match/mismatch of T vs N allele frequency
             const unsigned dgt(DDIINDEL_GRID::get_state(ngt,tgt));
             pprob[dgt] =
                 normal_lhood[ngt]+
@@ -240,6 +242,10 @@ calculate_result_set(
 #ifdef DEBUG_INDEL_CALL
     log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
 #endif
+
+    // sum up the diagonal of the frequency where f_{tumor} == f_{normal}
+    // Everything off-diagonal is somatic, so this is 'non-somatic'
+    //
     double nonsomatic_sum(0);
     for (unsigned gt(0); gt<STAR_DIINDEL_GRID::SIZE; ++gt)
     {
@@ -261,8 +267,26 @@ calculate_result_set(
         }
     }
 
-    // now compute the probability that the event is notsomatic or notfrom each of
-    // the three reference states:
+    // Compute QSI_NT
+    //
+    // compute the probability that the indel is:
+    //
+    // not_somfrom_sum =
+    //     ((not somatic) OR (not 'from one of the three reference states'))
+    //
+    // ...where we minimize over the values from the 3 ref states
+    //
+    // We're interested in this value b/c it is the complement of:
+    // (somatic AND 'from one of the three reference states')
+    //
+    // which is the value we want to provide a quality score for --
+    // the quality score is an error term, so it is  based on the
+    // the complement value.
+    //
+    //
+    // NOTE this is unnecessarily inefficient, even after controlling
+    // for potential round-off error (which itself might be overkill), we're
+    // still repeatedly summing most of the frequency space 3 times.
     //
     double min_not_somfrom_sum(0);
     for (unsigned sgt(0); sgt<STAR_DIINDEL::SIZE; ++sgt)
@@ -275,8 +299,8 @@ calculate_result_set(
             if (sgt==ngt) continue;
             for (unsigned tgt(0); tgt<STAR_DIINDEL_GRID::SIZE; ++tgt)
             {
-                // skip this case because we've already summed
-                // nonsomatic prob:
+                // skip this case because we've already started from
+                // nonsomatic_sum
                 if (tgt==ngt) continue;
                 not_somfrom_sum += pprob[DDIINDEL_GRID::get_state(ngt,tgt)];
             }
