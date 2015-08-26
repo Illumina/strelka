@@ -133,8 +133,9 @@ set_normal_prior(std::vector<blt_float_t>& normal_prior,
                  const double ref_error_prob,
                  const strelka_options& opt) const
 {
-    const double ln_sie_rate(opt.shared_indel_error_factor * std::log(ref_error_prob));
-    const double ln_csie_rate(log1p_switch(-ln_sie_rate));
+    const double sie_rate(std::pow(ref_error_prob, opt.shared_indel_error_factor));
+    const double ln_sie_rate(std::log(sie_rate));
+    const double ln_csie_rate(log1p_switch(-sie_rate));
 
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
