@@ -95,15 +95,15 @@ writeSomaticIndelVcfGrid(
             }
         }
 
-        if (siInfo.iri.ref_repeat_count > opt.sfilter.indelMaxRefRepeat)
-        {
-            smod.set_filter(STRELKA_VCF_FILTERS::Repeat);
-        }
+        // if (siInfo.iri.ref_repeat_count > opt.sfilter.indelMaxRefRepeat)
+        // {
+        //     smod.set_filter(STRELKA_VCF_FILTERS::Repeat);
+        // }
 
-        if (siInfo.iri.ihpol > opt.sfilter.indelMaxIntHpolLength)
-        {
-            smod.set_filter(STRELKA_VCF_FILTERS::iHpol);
-        }
+        // if (siInfo.iri.ihpol > opt.sfilter.indelMaxIntHpolLength)
+        // {
+        //     smod.set_filter(STRELKA_VCF_FILTERS::iHpol);
+        // }
 
         {
             const int normalFilt(wasNormal.ss_filt_win.avg());
