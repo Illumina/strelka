@@ -101,8 +101,6 @@ struct is_nonsom_maker_t
 
 std::ostream& operator<<(std::ostream& os,const DDIINDEL_GRID::index_t dgt);
 
-
-
 // object used to pre-compute priors:
 struct somatic_indel_caller_grid : private boost::noncopyable
 {
@@ -123,24 +121,45 @@ struct somatic_indel_caller_grid : private boost::noncopyable
                       const bool is_use_alt_indel,
                       somatic_indel_call& sindel) const;
 
-    void
-    set_normal_prior(std::vector<blt_float_t>& normal_prior,
-                     const double ref_error_prob,
-                     const strelka_options& opt) const;
-
 private:
     struct prior_set
     {
         prior_set()
-            : normal(STAR_DIINDEL_GRID::SIZE)
-            , normal_poly(STAR_DIINDEL_GRID::SIZE)
+            : normal(STAR_DIINDEL::SIZE)
         {}
 
         std::vector<blt_float_t> normal;
-        std::vector<blt_float_t> normal_poly;
+        double *normal_purity;
+        double *tumor_purity;
     };
 
     prior_set _bare_lnprior;
+
+    void
+    set_prior(double *lnprior_normal_purity,
+            double *lnprior_tumor_purity,
+            const double ref_error_prob
+            ) const;
+
+    double get_log_prob_fn(
+            unsigned fn,
+            unsigned ngt,
+            unsigned tgt);
+
+    double get_log_prob_ft(
+            unsigned fn,
+            unsigned ngt,
+            unsigned tgt);
+
+    void
+    calculate_result_set(
+        const double *lnprior_normal_purity,
+        const double *lnprior_tumor_purity,
+        const double ref_error_lnp,
+        const double ref_real_lnp,
+        const double* normal_lhood,
+        const double* tumor_lhood,
+        somatic_indel_call::result_set& rs) const;
 
     double _ln_som_match;
     double _ln_som_mismatch;

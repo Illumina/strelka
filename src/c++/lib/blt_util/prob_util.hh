@@ -72,7 +72,7 @@ normalize_ln_distro(const It pbegin,
     float_type sum(0.);
     for (It p(pbegin); p!=pend; ++p)
     {
-        *p = std::exp(*p-max);
+        *p = std::exp(*p-max);  // To alleviate underflow problem
         sum += *p;
     }
 
