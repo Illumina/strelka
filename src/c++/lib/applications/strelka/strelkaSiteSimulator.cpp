@@ -56,6 +56,7 @@ runInternal(int argc,char* argv[]) const
     ("total-sites", po::value(&sim_opt.total_sites)->default_value(sim_opt.total_sites),"number of sites to simulate")
     ("ncov", po::value(&sim_opt.ncov)->default_value(sim_opt.ncov),"normal depth")
     ("tcov", po::value(&sim_opt.tcov)->default_value(sim_opt.tcov),"tumor depth")
+    ("normal-purity", po::value(&sim_opt.normal_purity)->default_value(sim_opt.normal_purity),"normal purity")
     ("tumor-purity", po::value(&sim_opt.tumor_purity)->default_value(sim_opt.tumor_purity),"tumor purity")
     ("somatic-only","only simulate somatic sites")
     ("seed",po::value<uint32_t>(&sim_opt.seed),"seed")
