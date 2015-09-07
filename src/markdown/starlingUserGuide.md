@@ -9,7 +9,7 @@ Version: @WORKFLOW_VERSION@
 
 ## Introduction
 
-Starling is a small variant caller for short sequencing reads. It is capable of calling snps and small indels. Starling will call simple and complex indels up to a specified maximum size. The output of all variant calls is compbined with reference block calls to produce a single gVCF output filef or the genome.
+Starling is a small variant caller for short sequencing reads. It is capable of calling snps and small indels. Starling will call simple and complex indels up to a specified maximum size. The output of all variant calls is combined with reference block calls to produce a single gVCF output file for the genome.
 
 ## Method Overview
 
