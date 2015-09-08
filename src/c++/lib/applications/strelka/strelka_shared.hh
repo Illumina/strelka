@@ -41,8 +41,6 @@ struct somatic_filter_options
     double snv_max_spanning_deletion_frac = 0.75;
     int snv_min_qss_ref = 15;
 
-    unsigned indelMaxRefRepeat = 8;
-    unsigned indelMaxIntHpolLength = 14;
     double indelMaxWindowFilteredBasecallFrac = 0.3;
     int sindelQuality_LowerBound = 30;
 

@@ -245,16 +245,6 @@ strelka_streams(
                 using namespace STRELKA_VCF_FILTERS;
                 {
                     std::ostringstream oss;
-                    oss << "Sequence repeat of more than " << opt.sfilter.indelMaxRefRepeat << "x in the reference sequence";
-                    write_vcf_filter(fos, get_label(Repeat), oss.str().c_str());
-                }
-                {
-                    std::ostringstream oss;
-                    oss << "Indel overlaps an interrupted homopolymer longer than " << opt.sfilter.indelMaxIntHpolLength << "x in the reference sequence";
-                    write_vcf_filter(fos, get_label(iHpol), oss.str().c_str());
-                }
-                {
-                    std::ostringstream oss;
                     oss << "Average fraction of filtered basecalls within " << opt.sfilter.indelRegionFlankSize << " bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
                     write_vcf_filter(fos, get_label(IndelBCNoise), oss.str().c_str());
                 }
