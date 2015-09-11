@@ -1,3 +1,4 @@
+- STARKA-250 Remove hpol and ihpol indel filters
 - STAR-46 Don't block-compress forced GT SNVs in regions of no coverage
 - STARKA-249 Fix minor issue with somatic indel prior
 - STARKA-248 tolerate reference allele insert/delete alignments in read input
