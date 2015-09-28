@@ -13,6 +13,7 @@
 
 ///
 /// \author Chris Saunders
+/// \author Morten Kallberg
 ///
 
 #pragma once

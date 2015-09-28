@@ -12,6 +12,7 @@
 //
 
 /// \author Chris Saunders
+/// \author Morten Kallberg
 ///
 
 #include "denovo_snv_caller.hh"
@@ -25,10 +26,10 @@
 #include <iterator>
 
 
-//#define DENOVO_SNV_DEBUG
+//#define DENOVO_SNV_DEBUG2
 #include "blt_util/log.hh"
 
-#ifdef DENOVO_SNV_DEBUG
+#ifdef DENOVO_SNV_DEBUG2
 #include "blt_util/log.hh"
 #endif
 
@@ -52,7 +53,7 @@ enum index_t
     SIZE
 };
 
-#ifdef DENOVO_SNV_DEBUG
+#ifdef DENOVO_SNV_DEBUG2
 static
 const char*
 getLabel(
@@ -291,7 +292,7 @@ struct DenovoResultMaker
         for (unsigned tstate(0); tstate<TRANSMISSION_STATE::SIZE; ++tstate)
         {
             statePprob[tstate] = stateLhood[tstate] + TRANSMISSION_STATE::getPrior(static_cast<TRANSMISSION_STATE::index_t>(tstate));
-#ifdef DENOVO_SNV_DEBUG
+#ifdef DENOVO_SNV_DEBUG2
             const TRANSMISSION_STATE::index_t tidx(static_cast<TRANSMISSION_STATE::index_t>(tstate));
             log_os << "denovo state pprob/lhood/prior: " << TRANSMISSION_STATE::getLabel(tidx)
                    << " " << statePprob[tstate] << " " << stateLhood[tstate]

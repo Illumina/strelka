@@ -42,7 +42,9 @@ write_vcf_sample_info(
        <<':'
 	   << tier1_cpi.n_calls()
        << ':'
-       << tier1_cpi.n_unused_calls();
+       << tier1_cpi.n_unused_calls()
+       << ':'
+       << "0,30,23";
 //       << ':'
 //       << tier1_cpi.rawPileup().n_spandel
 //       << ':'
@@ -132,7 +134,6 @@ denovo_snv_call_vcf(
         }
         os << "DP=" << n_mapq;
         os << ";MQ0=" << n_mapq0;
-        os << ";PL=" << "[x,y,z]";
 //        os << ";QDS=" << rs.dsnv_qphred
 //           << ";TQSI=" << (dsc.dsnv_tier+1);
 
@@ -140,7 +141,7 @@ denovo_snv_call_vcf(
 
     //FORMAT:
     os << '\t'
-       << "GT:GQ:GQX:DP:FDP"; //:SDP:SUBDP:AU:CU:GU:TU";
+       << "GT:GQ:GQX:DP:FDP:PL"; //:SDP:SUBDP:AU:CU:GU:TU";
 
     for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
     {
