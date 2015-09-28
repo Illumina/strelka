@@ -149,8 +149,7 @@ process_pos_snp_denovo(const pos_t pos)
 
     // report events:
     //
-
-    if (true) //dsc.is_output())
+    if (dsc.is_output())
     {
 
     	//std::ostream& bos(*_streams.denovo_osptr());

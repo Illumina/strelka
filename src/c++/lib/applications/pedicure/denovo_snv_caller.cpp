@@ -26,6 +26,7 @@
 
 
 //#define DENOVO_SNV_DEBUG
+#include "blt_util/log.hh"
 
 #ifdef DENOVO_SNV_DEBUG
 #include "blt_util/log.hh"
@@ -219,9 +220,9 @@ struct DenovoResultMaker
                     {
                         using namespace TRANSMISSION_STATE;
                         log_os << "p0gt/p1/c: "
-                               << DIGT::get_gt_label(parent0GT) << " "
-                               << DIGT::get_gt_label(parent1GT) << " "
-                               << DIGT::get_gt_label(probandGT) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
+                               << DIGT::label(parent0GT) << " "
+                               << DIGT::label(parent1GT) << " "
+                               << DIGT::label(probandGT) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
                     }
 #endif
                     stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
@@ -305,6 +306,8 @@ struct DenovoResultMaker
         log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
 #endif
         rs.dsnv_qphred=error_prob_to_qphred(statePprob[TRANSMISSION_STATE::INHERITED] + statePprob[TRANSMISSION_STATE::ERROR]);
+        rs.snv_qphred= 1.0;//error_prob_to_qphred(statePprob[TRANSMISSION_STATE::INHERITED] + statePprob[TRANSMISSION_STATE::ERROR]);
+
     }
 
 

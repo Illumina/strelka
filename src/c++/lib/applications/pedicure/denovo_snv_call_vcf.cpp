@@ -34,25 +34,31 @@ write_vcf_sample_info(
     std::ostream& os)
 {
     //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
-    os << tier1_cpi.n_calls()
+    os << "0/0"
+	   <<':'
+	   << 10
+	   <<':'
+	   << 50
+       <<':'
+	   << tier1_cpi.n_calls()
        << ':'
-       << tier1_cpi.n_unused_calls()
-       << ':'
-       << tier1_cpi.rawPileup().n_spandel
-       << ':'
-       << tier1_cpi.rawPileup().n_submapped;
+       << tier1_cpi.n_unused_calls();
+//       << ':'
+//       << tier1_cpi.rawPileup().n_spandel
+//       << ':'
+//       << tier1_cpi.rawPileup().n_submapped;
 
     std::array<unsigned,N_BASE> tier1_base_counts;
     std::array<unsigned,N_BASE> tier2_base_counts;
     tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
     tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
 
-    for (unsigned b(0); b<N_BASE; ++b)
-    {
-        os << ':'
-           << tier1_base_counts[b] << ','
-           << tier2_base_counts[b];
-    }
+//    for (unsigned b(0); b<N_BASE; ++b)
+//    {
+//        os << ':'
+//           << tier1_base_counts[b] << ','
+//           << tier2_base_counts[b];
+//    }
 }
 
 
@@ -83,13 +89,13 @@ denovo_snv_call_vcf(
         {
             if (probandDP > dopt.dfilter.max_depth)
             {
-                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
+//                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
             }
         }
 
         if (rs.dsnv_qphred < opt.dfilter.dsnv_qual_lowerbound)
         {
-            smod.set_filter(PEDICURE_VCF_FILTERS::QDS);
+//            smod.set_filter(PEDICURE_VCF_FILTERS::QDS);
         }
 
     }
@@ -126,14 +132,15 @@ denovo_snv_call_vcf(
         }
         os << "DP=" << n_mapq;
         os << ";MQ0=" << n_mapq0;
-        os << ";QDS=" << rs.dsnv_qphred
-           << ";TQSI=" << (dsc.dsnv_tier+1);
+        os << ";PL=" << "[x,y,z]";
+//        os << ";QDS=" << rs.dsnv_qphred
+//           << ";TQSI=" << (dsc.dsnv_tier+1);
 
     }
 
     //FORMAT:
     os << '\t'
-       << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";
+       << "GT:GQ:GQX:DP:FDP"; //:SDP:SUBDP:AU:CU:GU:TU";
 
     for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
     {
