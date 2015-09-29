@@ -311,12 +311,10 @@ struct DenovoResultMaker
 
     }
 
-
 private:
     std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
     std::array<bool,N_BASE> max_alleles;
 };
-
 
 
 void
