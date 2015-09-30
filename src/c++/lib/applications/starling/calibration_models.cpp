@@ -62,8 +62,8 @@ bool calibration_models::is_current_logistic() const
 void
 calibration_models::
 clasify_site(
-    const site_info& si,
-    site_modifiers& smod) const
+    const digt_site_info& si,
+    digt_call_info& smod) const
 {
     //si.smod.filters.reset(); // make sure no filters have been applied prior
     if ((si.dgt.is_snp) && (!is_default_model))
@@ -77,71 +77,73 @@ clasify_site(
     }
 }
 
-bool
-calibration_models::can_use_model(const indel_info& ii) const
+bool 
+calibration_models::can_use_model(const digt_indel_info& ii) const
 {
-    return ((ii.iri().it == INDEL::INSERT || ii.iri().it == INDEL::DELETE) &&
-            (!is_default_model) &&
-            (ii.dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // VQSR does not handle homref sites properly
+    const auto& call(ii.first());
+    return ((call._iri.it == INDEL::INSERT || call._iri.it == INDEL::DELETE) &&
+		(!is_default_model) && 
+		(call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // VQSR does not handle homref sites properly
 }
 
 void
 calibration_models::
-set_indel_modifiers(const indel_info& ii, indel_modifiers& imod) const
+set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const
 {
-    if ((ii.dindel.max_gt != ii.dindel.max_gt_poly) || ii.dindel.is_zero_coverage)
+    const auto& dindel(ii.first()._dindel);
+    if ((dindel.max_gt != dindel.max_gt_poly) || dindel.is_zero_coverage)
     {
-        imod.gqx=0;
+        call.gqx=0;
     }
     else
     {
-        imod.gqx=std::min(ii.dindel.max_gt_poly_qphred,ii.dindel.max_gt_qphred);
+        call.gqx=std::min(dindel.max_gt_poly_qphred,dindel.max_gt_qphred);
     }
-    imod.max_gt=ii.dindel.max_gt_poly;
-    imod.gq=ii.dindel.max_gt_poly_qphred;
+    call.max_gt=dindel.max_gt_poly;
+    call.gq=dindel.max_gt_poly_qphred;
 }
 
 
 void
 calibration_models::
 clasify_indel(
-    const indel_info& ii,
-    indel_modifiers& imod) const
+    const digt_indel_info& ii,
+    digt_indel_call& call) const
 {
-    set_indel_modifiers(ii, imod);
+    set_indel_modifiers(ii, call);
 
     if ( can_use_model(ii) )
     {
-        get_model(model_name).score_indel_instance(ii, imod);
+        get_model(model_name).score_indel_instance(ii, call);
     }
     else
     {
-        default_clasify_indel(ii, imod);
+        default_clasify_indel(call);
     }
 }
 
 void
 calibration_models::
 clasify_indels(
-    std::vector<indel_info>& indels) const
+        std::vector<std::unique_ptr<digt_indel_info>>& indels) const
 {
     bool use_model = true;
     for (auto it = indels.begin(); it != indels.end() && use_model; ++it)
     {
-        use_model = can_use_model(*it);
+        use_model = can_use_model(**it);
     }
     for (auto it = indels.begin(); it != indels.end(); ++it)
     {
-        indel_info& ii(*it);
-
-        set_indel_modifiers(ii, ii.imod());
+        digt_indel_info& ii(**it);
+        
+        set_indel_modifiers(ii, ii.first());
         if ( use_model )
         {
-            get_model(model_name).score_indel_instance(ii, ii.imod());
+            get_model(model_name).score_indel_instance(ii, ii.first());
         }
         else
         {
-            default_clasify_indel(ii, ii.imod());
+            default_clasify_indel(ii.first());
         }
     }
 }
@@ -151,17 +153,16 @@ clasify_indels(
 
 void
 calibration_models::
-default_clasify_site(
-    const site_info& si,
-    site_modifiers& smod) const
+default_clasify_site(const site_info& si,
+            shared_call_info& call) const
 {
     if (opt.is_min_gqx)
     {
-        if (si.smod.gqx<opt.min_gqx) smod.set_filter(VCF_FILTERS::LowGQX);
+        if (call.gqx<opt.min_gqx) call.set_filter(VCF_FILTERS::LowGQX);
     }
     if (dopt.is_max_depth())
     {
-        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) smod.set_filter(VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) call.set_filter(VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     if (opt.is_max_base_filt)
@@ -170,18 +171,18 @@ default_clasify_site(
         if (total_calls>0)
         {
             const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>opt.max_base_filt) smod.set_filter(VCF_FILTERS::HighBaseFilt);
+            if (filt>opt.max_base_filt) call.set_filter(VCF_FILTERS::HighBaseFilt);
         }
     }
-    if (si.dgt.is_snp)
+    if (si.is_snp())
     {
         if (opt.is_max_snv_sb)
         {
-            if (si.dgt.sb>opt.max_snv_sb) smod.set_filter(VCF_FILTERS::HighSNVSB);
+            if (call.strand_bias>opt.max_snv_sb) call.set_filter(VCF_FILTERS::HighSNVSB);
         }
         if (opt.is_max_snv_hpol)
         {
-            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) smod.set_filter(VCF_FILTERS::HighSNVHPOL);
+            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) call.set_filter(VCF_FILTERS::HighSNVHPOL);
         }
     }
 }
@@ -191,33 +192,31 @@ default_clasify_site(
 // default rules based indel model
 void
 calibration_models::
-default_clasify_indel(
-    const indel_info& ii,
-    indel_modifiers& imod) const
+default_clasify_indel(shared_indel_call_info& call) const
 {
     if (this->opt.is_min_gqx)
     {
-        if (ii.imod().gqx<opt.min_gqx) imod.set_filter(VCF_FILTERS::LowGQX);
+        if (call.gqx<opt.min_gqx) call.set_filter(VCF_FILTERS::LowGQX);
     }
 
     if (this->dopt.is_max_depth())
     {
-        if (ii.isri().depth > this->dopt.max_depth) imod.set_filter(VCF_FILTERS::HighDepth);
+        if (call._isri.depth > this->dopt.max_depth) call.set_filter(VCF_FILTERS::HighDepth);
     }
 
     if (this->opt.is_max_ref_rep)
     {
-        if (ii.iri().is_repeat_unit())
+        const auto& iri(call._iri);
+        if (iri.is_repeat_unit())
         {
-            if ((ii.iri().repeat_unit.size() <= 2) &&
-                (static_cast<int>(ii.iri().ref_repeat_count) > this->opt.max_ref_rep))
+            if ((iri.repeat_unit.size() <= 2) &&
+                (static_cast<int>(iri.ref_repeat_count) > this->opt.max_ref_rep))
             {
-                imod.set_filter(VCF_FILTERS::HighRefRep);
+                call.set_filter(VCF_FILTERS::HighRefRep);
             }
         }
     }
 }
-
 
 
 void

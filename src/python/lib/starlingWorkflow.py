@@ -160,6 +160,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     if not isFirstSegment :
         segCmd.append("--gvcf-skip-header")
+    elif len(self.params.callContinuousVf) > 0 :
+        segCmd.extend(["--gvcf-include-header", "VF"])
 
     if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
@@ -183,6 +185,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     if self.params.ploidyBed is not None :
         segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
+
+    if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
+        segCmd.append('--call-continuous-vf')
 
     if self.params.extraStarlingArguments is not None :
         for arg in self.params.extraStarlingArguments.strip().split() :

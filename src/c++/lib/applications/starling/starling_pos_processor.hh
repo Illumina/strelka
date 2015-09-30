@@ -53,16 +53,6 @@ struct starling_pos_processor : public starling_pos_processor_base
 
 private:
 
-    void
-    clear_pos_annotation(const pos_t pos) override
-    {
-        if (! _nocompress_regions.empty())
-        {
-            const pos_t clearPos(std::min(pos,_gvcfer->headPos()));
-            _nocompress_regions.removeToPos(clearPos);
-        }
-    }
-
     bool
     is_save_pileup_buffer() override
     {
@@ -87,9 +77,21 @@ private:
         const unsigned sample_no);
 
     void
+    process_pos_snp_single_sample_continuous(
+            const pos_t pos,
+            const unsigned sample_no);
+
+    void
     process_pos_indel_single_sample(
         const pos_t pos,
         const unsigned sample_no);
+
+    void process_pos_indel_single_sample_digt(
+            const pos_t pos,
+            const unsigned sample_no);
+    void process_pos_indel_single_sample_continuous(
+            const pos_t pos,
+            const unsigned sample_no);
 
     void
     write_counts(const pos_range& output_report_range) const override;
@@ -99,9 +101,6 @@ private:
     const starling_streams& _streams;
 
     std::unique_ptr<gvcf_aggregator> _gvcfer;
-
-    // a caching term used for gvcf:
-    site_info _site_info;
 
     RegionTracker _nocompress_regions;
 };

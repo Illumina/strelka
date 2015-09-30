@@ -25,14 +25,15 @@
 
 /// manages compressed site record blocks output in the gVCF
 ///
-struct gvcf_block_site_record
+struct gvcf_block_site_record : public shared_call_info
 {
     explicit
     gvcf_block_site_record(const gvcf_options& opt)
         : frac_tol(static_cast<double>(opt.block_percent_tol)/100.)
         , abs_tol(opt.block_abs_tol)
-        , count(0)
-    {}
+    {
+        reset();
+    }
 
     void
     reset()
@@ -41,24 +42,50 @@ struct gvcf_block_site_record
         block_gqx.reset();
         block_dpu.reset();
         block_dpf.reset();
-        record.smod.clear(); //clear filter as well
+        pos=-1;
+        ref=(char)0;
+        gt = ".";
+        has_call = is_covered = is_used_covered = is_nonref=false;
+        ploidy = 0;
+
+        shared_call_info::clear();
     }
 
     /// determine if the given site could be joined to this block:
-    bool
-    test(const site_info& si) const;
+    bool test(const digt_site_info& si) const;
 
     /// add site to the current block
-    void
-    join(const site_info& si);
+    void join(const digt_site_info& si);
 
-    site_info record;
+    /// determine if the given site could be joined to this block:
+    bool test(const continuous_site_info& si) const;
+
+    /// add site to the current block
+    void join(const continuous_site_info& si);
+
+    // for GT in block records, it's either a no-call (.) or homref (0/0)
+    const char* get_gt() const
+    {
+        if (gt == ".")
+            return gt.c_str();
+        return "0/0";
+    }
+
 
     const double frac_tol;
     const int abs_tol;
     int count;
+    pos_t pos;
+    char ref;
+    bool is_nonref;
+    bool is_covered;
+    bool is_used_covered;
+    int ploidy;
+    std::string gt;
     stream_stat block_gqx;
     stream_stat block_dpu;
     stream_stat block_dpf;
+
+    bool has_call;
     //stream_stat _blockMQ;
 };

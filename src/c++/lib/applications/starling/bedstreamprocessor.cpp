@@ -20,10 +20,10 @@
 #include "bedstreamprocessor.hh"
 
 
-bed_stream_processor::bed_stream_processor(const std::string& bed_file_name, const std::string& region, variant_pipe_stage_base& next_stage)
-    : variant_pipe_stage_base(next_stage)
-    , _region(region)
-    , _is_end(false)
+bed_stream_processor::bed_stream_processor(const std::string& bed_file_name, const std::string& region, std::shared_ptr<variant_pipe_stage_base> next_stage)
+: variant_pipe_stage_base(next_stage)
+, _region(region)
+, _is_end(false)
 {
     if (!bed_file_name.empty())
     {
@@ -59,30 +59,30 @@ void bed_stream_processor::load_next_region_if_needed(pos_t position)
         load_next_region();
 }
 
-void bed_stream_processor::process(site_info& si)
+void bed_stream_processor::process(std::unique_ptr<site_info> si)
 {
     if (this->_bed_streamer)
     {
-        load_next_region_if_needed(si.pos);
-        if (_current_record == nullptr || si.pos < _current_record->begin || si.pos >= _current_record->end)
+        load_next_region_if_needed(si->pos);
+        if (_current_record == nullptr || si->pos < _current_record->begin || si->pos >= _current_record->end)
         {
             // TODO: make sure we don't apply to stuff we shouldn't? No coverage? I dunno
-            si.smod.set_filter(VCF_FILTERS::OffTarget);
+            si->set_filter(VCF_FILTERS::OffTarget);
         }
     }
-    _sink->process(si);
+    _sink->process(std::move(si));
 }
 
-void bed_stream_processor::process(indel_info& ii)
+void bed_stream_processor::process(std::unique_ptr<indel_info> ii)
 {
     if (this->_bed_streamer)
     {
-        load_next_region_if_needed(ii.pos);
+        load_next_region_if_needed(ii->pos);
         // include indels if they start in a targeted region
-        if (_current_record == nullptr || ii.pos < _current_record->begin || ii.pos >= _current_record->end)
+        if (_current_record == nullptr || ii->pos < _current_record->begin || ii->pos >= _current_record->end)
         {
-            ii.imod().set_filter(VCF_FILTERS::OffTarget);
+            ii->set_filter(VCF_FILTERS::OffTarget);
         }
     }
-    _sink->process(ii);
+    _sink->process(std::move(ii));
 }

@@ -23,13 +23,13 @@ class calibration_models;
 class variant_prefilter_stage : public variant_pipe_stage_base
 {
 public:
-    variant_prefilter_stage(const calibration_models& model, variant_pipe_stage_base& destination);
-    void process(site_info& si) override;
-    void process(indel_info& ii) override;
+    variant_prefilter_stage(const calibration_models& model, std::shared_ptr<variant_pipe_stage_base> destination);
+    void process(std::unique_ptr<site_info> si) override;
+    void process(std::unique_ptr<indel_info> ii) override;
 
     static void  add_site_modifiers(
-        const site_info& si,
-        site_modifiers& smod,
+        const digt_site_info& si,
+        digt_call_info& smod,
         const calibration_models& model);
 
 private:

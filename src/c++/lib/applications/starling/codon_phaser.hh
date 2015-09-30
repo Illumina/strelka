@@ -42,7 +42,7 @@ struct Codon_phaser : public variant_pipe_stage_base
         const starling_base_options& init_opt,
         const pos_basecall_buffer& init_bc_buff,
         const reference_contig_segment& init_ref,
-        variant_pipe_stage_base& destination)
+        std::shared_ptr<variant_pipe_stage_base> destination)
         : variant_pipe_stage_base(destination),
           opt(init_opt),
           bc_buff(init_bc_buff),
@@ -55,9 +55,9 @@ struct Codon_phaser : public variant_pipe_stage_base
     static
     bool
     is_phasable_site(
-        const site_info& si)
+            const std::unique_ptr<digt_site_info>& si)
     {
-        return (si.dgt.is_snp && si.is_het());
+        return (si->dgt.is_snp && si->is_het());
     }
 
     // clear all object data
@@ -72,8 +72,8 @@ struct Codon_phaser : public variant_pipe_stage_base
         return block_start != -1;
     }
 
-    void process(site_info& si) override;
-    void process(indel_info& ii) override;
+    void process(std::unique_ptr<site_info> si) override;
+    void process(std::unique_ptr<indel_info> ii) override;
     void flush() override;
 
 
@@ -84,7 +84,7 @@ private:
     /// add site to buffer
     ///
     /// \returns true when the buffer should be printed as a phased block
-    bool add_site(const site_info& si);
+    bool add_site(std::unique_ptr<digt_site_info> si);
 
     void make_record();                 // make phased record
 
@@ -99,7 +99,7 @@ private:
     void output_buffer();
 
 
-    std::vector<site_info> _buffer;
+    std::vector<std::unique_ptr<digt_site_info>> _buffer;
     const starling_base_options& opt;
     const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
     const reference_contig_segment& ref;

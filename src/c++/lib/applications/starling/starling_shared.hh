@@ -38,6 +38,7 @@ struct starling_options : public starling_base_options
         is_min_vexp = true;
         min_vexp = 0.25;
 
+
         // TODO double-check with MK:
         ///upstream_oligo_size = 10;
     }
@@ -45,7 +46,7 @@ struct starling_options : public starling_base_options
     bool
     is_bsnp_diploid() const override
     {
-        return true;
+        return is_ploidy_prior;
     }
 
     bool

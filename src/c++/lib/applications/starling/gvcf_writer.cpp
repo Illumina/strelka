@@ -44,7 +44,7 @@
 void gvcf_writer::write_block_site_record()
 {
     if (_block.count<=0) return;
-    write_site_record(_block.record);
+    write_site_record(_block);
     _block.reset();
 }
 
@@ -71,7 +71,7 @@ gvcf_writer(
     assert(_report_range.is_end_pos);
 
     if (! opt.gvcf.is_gvcf_output())
-        throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
+        throw std::invalid_argument("gvcf_writer cannot be constructed with nothing to do.");
 
     assert(nullptr != _osptr);
     assert((nullptr !=_chrom) && (strlen(_chrom)>0));
@@ -86,7 +86,7 @@ gvcf_writer(
 }
 
 
-void gvcf_writer::filter_site_by_last_indel_overlap(site_info& si)
+void gvcf_writer::filter_site_by_last_indel_overlap(digt_site_info& si)
 {
     if (_last_indel)
     {
@@ -109,8 +109,7 @@ skip_to_pos(const pos_t target_pos)
     // advance through any indel region by adding individual sites
     while (_head_pos<target_pos)
     {
-        // TODO: this filtering should be delegated to the block compressor
-        site_info si = get_empty_site(_head_pos);
+        digt_site_info si = get_empty_site(_head_pos);
 
         add_site_internal(si);
         // Don't do compressed ranges if there is an overlapping indel
@@ -127,24 +126,46 @@ skip_to_pos(const pos_t target_pos)
 }
 
 
-void gvcf_writer::process(site_info& si)
+void gvcf_writer::process(std::unique_ptr<site_info> si)
 {
-    skip_to_pos(si.pos);
-    add_site_internal(si);
+    skip_to_pos(si->pos);
+
+    if (typeid(*si) == typeid(digt_site_info))
+    {
+        add_site_internal(*downcast<digt_site_info>(std::move(si)));
+    }
+    else
+    {
+        add_site_internal(*downcast<continuous_site_info>(std::move(si)));
+    }
+
 }
 
-void gvcf_writer::process(indel_info& ii)
+void gvcf_writer::process(std::unique_ptr<indel_info> ii)
 {
-    skip_to_pos(ii.pos);
-    write_indel_record(ii);
-    // TODO: eventually the block compression code would take this responsibility
-    _last_indel.reset(new indel_info(ii));
+    if (typeid(*ii) == typeid(digt_indel_info))
+    {
+        skip_to_pos(ii->pos);
+
+        auto ii_digt(downcast<digt_indel_info>(std::move(ii)));
+
+        write_indel_record(*ii_digt);
+        _last_indel = std::move(ii_digt);
+    }
+    else
+    {
+        write_indel_record(*downcast<continuous_indel_info>(std::move(ii)));
+    }
 }
 
 void gvcf_writer::flush()
 {
-    skip_to_pos(_report_range.end_pos);
-    write_block_site_record();
+    if (_opt.is_ploidy_prior)
+    {
+        // not doing any block stuff for continuous variants
+        skip_to_pos(_report_range.end_pos);
+        write_block_site_record();
+    }
 }
 
 
@@ -152,7 +173,7 @@ void gvcf_writer::flush()
 void
 gvcf_writer::
 add_site_internal(
-    site_info& si)
+    digt_site_info& si)
 {
     filter_site_by_last_indel_overlap(si);
     if (si.smod.is_phased_region)
@@ -167,36 +188,24 @@ add_site_internal(
     queue_site_record(si);
 }
 
-
-// queue site record for writing, after
-// possibly joining it into a compressed non-variant block
-//
 void
 gvcf_writer::
-queue_site_record(
-    const site_info& si)
+add_site_internal(
+    continuous_site_info& si)
 {
-    //test for basic blocking criteria
-    if (! _gvcf_comp.is_site_compressable(si))
-    {
-        write_block_site_record();
-        write_site_record(si);
-        return;
-    }
-
-    if (! _block.test(si))
-    {
-        write_block_site_record();
-    }
-    _block.join(si);
+    // TODO: phasing
+    _head_pos=si.pos+1;
+    // write_site
+    queue_site_record(si);
 }
+
 
 
 
 static
 void
 get_visible_alt_order(
-    const site_info& si,
+    const digt_site_info& si,
     std::vector<uint8_t>& altOrder)
 {
     altOrder.clear();
@@ -243,7 +252,7 @@ print_vcf_alt(
 static
 void
 print_site_ad(
-    const site_info& si,
+    const digt_site_info& si,
     const std::vector<uint8_t>& altOrder,
     std::ostream& os)
 {
@@ -255,12 +264,23 @@ print_site_ad(
     }
 }
 
+static
+void
+print_site_ad(
+    const continuous_site_info& si,
+    const continuous_site_call& call,
+    std::ostream& os)
+{
+    os << si.known_counts[base_to_id(si.ref)] << "," << call._alleleDepth;
+}
+
+
 
 //writes out a SNP or block record
 void
 gvcf_writer::
 write_site_record(
-    const site_info& si) const
+    const digt_site_info& si) const
 {
     std::ostream& os(*_osptr);
 
@@ -279,7 +299,7 @@ write_site_record(
 
     // ALT
     std::vector<uint8_t> altOrder;
-    const bool isNoAlt(si.smod.is_unknown || (si.smod.is_block));
+    const bool isNoAlt(si.smod.is_unknown);
     if (isNoAlt)
     {
         os << '.';
@@ -311,74 +331,59 @@ write_site_record(
     os << '\t';
 
     // INFO:
-    if (si.smod.is_block)
+    if (si.dgt.is_snp)
     {
-        if (_block.count>1)
+        os << "SNVSB=";
         {
-            os << "END=" << (si.pos+_block.count) << ';';
-            os << _dopt.block_label;
+            const StreamScoper ss(os);
+            os << std::fixed << std::setprecision(1) << si.smod.strand_bias;
         }
-        else
+        os << ';';
+        os << "SNVHPOL=" << si.hpol;
+        if (_opt.is_compute_hapscore)
         {
-            os << '.';
+            os << ';';
+            os << "HaplotypeScore=" << si.hapscore;
         }
+
+        if (_opt.is_report_germline_VQSRmetrics)
+        {
+            os << ';';
+            os << "MQ=" << si.MQ;
+            os << ';';
+            os << "MQRankSum=" << si.MQRankSum;
+            os << ';';
+            os << "BaseQRankSum=" << si.BaseQRankSum;
+            os << ';';
+            os << "ReadPosRankSum=" << si.ReadPosRankSum;
+            os << ';';
+            os << "AvgBaseQ=" << si.avgBaseQ;
+            os << ';';
+            os << "AvgPos=" << si.rawPos;
+            // if you uncomment the following, make sure you also uncomment the matching INFO header entry in gvcf_header.cpp
+            //                os << ';';
+            //                os << "MapQ0Count=" << si.mapq_zero;
+
+            // N.B. DP is in FORMAT already, and that seems to be where Nondas's code expects to find it, so suppress it here:
+            //                os << ';';
+            //                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
+
+        }
+        if (si.smod.is_phasing_insufficient_depth)
+        {
+            os << ";Unphased";
+        }
+
+        //            //reported q-score
+        //            if (si.Qscore>0) {
+        //                os << ';';
+        //                os << "Qscore=" << si.Qscore;
+        //            }
+
     }
     else
     {
-        if (si.dgt.is_snp)
-        {
-            os << "SNVSB=";
-            {
-                const StreamScoper ss(os);
-                os << std::fixed << std::setprecision(1) << si.dgt.sb;
-            }
-            os << ';';
-            os << "SNVHPOL=" << si.hpol;
-            if (_opt.is_compute_hapscore)
-            {
-                os << ';';
-                os << "HaplotypeScore=" << si.hapscore;
-            }
-
-            if (_opt.is_report_germline_VQSRmetrics)
-            {
-                os << ';';
-                os << "MQ=" << si.MQ;
-                os << ';';
-                os << "MQRankSum=" << si.MQRankSum;
-                os << ';';
-                os << "BaseQRankSum=" << si.BaseQRankSum;
-                os << ';';
-                os << "ReadPosRankSum=" << si.ReadPosRankSum;
-                os << ';';
-                os << "AvgBaseQ=" << si.avgBaseQ;
-                os << ';';
-                os << "AvgPos=" << si.rawPos;
-// if you uncomment the following, make sure you also uncomment the matching INFO header entry in gvcf_header.cpp
-//                os << ';';
-//                os << "MapQ0Count=" << si.mapq_zero;
-
-// N.B. DP is in FORMAT already, and that seems to be where Nondas's code expects to find it, so suppress it here:
-//                os << ';';
-//                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
-
-            }
-            if (si.smod.is_phasing_insufficient_depth)
-            {
-                os << ";Unphased";
-            }
-
-//            //reported q-score
-//            if (si.Qscore>0) {
-//                os << ';';
-//                os << "Qscore=" << si.Qscore;
-//            }
-
-        }
-        else
-        {
-            os << '.';
-        }
+        os << '.';
     }
     os << '\t';
 
@@ -403,20 +408,13 @@ write_site_record(
     }
     if (si.smod.is_gqx())
     {
-        if (si.smod.is_block)
+        if (si.smod.Qscore>=0)
         {
-            os << _block.block_gqx.min();
+            os << si.smod.Qscore;
         }
         else
         {
-            if (si.smod.Qscore>=0)
-            {
-                os << si.smod.Qscore;
-            }
-            else
-            {
-                os << si.smod.gqx;
-            }
+            os << si.smod.gqx;
         }
     }
     else
@@ -425,16 +423,8 @@ write_site_record(
     }
     os << ':';
     //print DP:DPF
-    if (si.smod.is_block)
-    {
-        os << _block.block_dpu.min() << ':'
-           << _block.block_dpf.min();
-    }
-    else
-    {
-        os << si.n_used_calls << ':'
-           << si.n_unused_calls;
-    }
+    os << si.n_used_calls << ':'
+            << si.n_unused_calls;
 
     if (isNoAlt) {}
     else if (si.smod.is_phased_region)
@@ -449,54 +439,194 @@ write_site_record(
     os << '\n';
 }
 
+void
+gvcf_writer::write_site_record(
+    const gvcf_block_site_record& si) const
+{
+    std::ostream& os(*_osptr);
 
+    os << _chrom << '\t'  // CHROM
+       << (si.pos+1) << '\t'  // POS
+       << ".\t";           // ID
 
+    os  << si.ref << '\t'; // REF
+
+    // ALT
+    os << '.';
+    os << '\t';
+
+    // QUAL:
+    os << '.';
+    os << '\t';
+
+    // FILTER:
+    si.write_filters(os);
+    os << '\t';
+
+    // INFO:
+    if (si.count>1)
+    {
+        os << "END=" << (si.pos+si.count) << ';';
+        os << _dopt.block_label;
+    }
+    else
+    {
+        os << '.';
+    }
+    os << '\t';
+
+    //FORMAT
+    os << "GT";
+    os << ":GQX:DP:DPF";
+    os << '\t';
+
+    //SAMPLE
+    os << si.get_gt() << ':';
+    if (si.has_call)
+    {
+        os << _block.block_gqx.min();
+    }
+    else
+    {
+        os << '.';
+    }
+    os << ':';
+    //print DP:DPF
+    os << _block.block_dpu.min() << ':'
+            << _block.block_dpf.min();
+    os << '\n';
+}
 
 
 
 void
-gvcf_writer::write_indel_record(const indel_info& ii)
+gvcf_writer::write_indel_record(const continuous_indel_info& ii)
 {
     // flush any non-variant block before starting:
     write_block_site_record();
 
     std::ostream& os(*_osptr);
 
+
+    for (auto& call : ii.calls)
+    {
+
+        os << _chrom << '\t'   // CHROM
+                << ii.pos << '\t'   // POS
+                << ".\t"            // ID
+                << call._iri.vcf_ref_seq << '\t'; // REF
+
+        // ALT
+        os << call._iri.vcf_indel_seq;
+        os << '\t';
+
+        os << call.gq << '\t'; //QUAL
+
+        // FILTER:
+        call.write_filters(os);
+        os << '\t';
+
+        // INFO
+        os << "CIGAR=";
+        os << call.cigar;
+        os << ';';
+        os << "RU=";
+        if (call._iri.is_repeat_unit() && call._iri.repeat_unit.size() <= 20)
+        {
+            os << call._iri.repeat_unit;
+        }
+        else
+        {
+            os << '.';
+        }
+        os << ';';
+        os << "REFREP=";
+        if (call._iri.is_repeat_unit())
+        {
+            os << call._iri.ref_repeat_count;
+        }
+
+        os << ';';
+        os << "IDREP=";
+        if (call._iri.is_repeat_unit())
+        {
+            os << call._iri.indel_repeat_count;
+        }
+
+
+        os << '\t';
+
+        //FORMAT
+        os << "GT:GQ:GQX:DPI:AD:VF" << '\t';
+
+        //SAMPLE
+        os << ii.get_gt() << ':'
+                << call.gq << ':';
+
+        os << call.gqx  << ':';
+
+        os << call._isri.depth << ':';
+
+        // SAMPLE AD:
+        os << call._totalDepth - call._alleleDepth
+                << ","
+                << call._alleleDepth;
+        // VF
+        {
+            const StreamScoper ss(os);
+            os << ':' << std::setprecision(3) << call.variant_frequency();
+        }
+        os << '\n';
+    }
+
+}
+
+
+void
+gvcf_writer::write_indel_record(const digt_indel_info& ii)
+{
+    // flush any non-variant block before starting:
+    write_block_site_record();
+
+    std::ostream& os(*_osptr);
+    auto& call(ii.first());
+
     os << _chrom << '\t'   // CHROM
        << ii.pos << '\t'   // POS
        << ".\t"            // ID
-       << ii.iri().vcf_ref_seq << '\t'; // REF
+       << call._iri.vcf_ref_seq << '\t'; // REF
 
     // ALT
 
-    for (unsigned i = 0; i <ii._iri.size(); ++i)
+    for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
         if (i > 0) os << ',';
-        os << ii.iri(i).vcf_indel_seq;
+        os << ii._calls[i]._iri.vcf_indel_seq;
     }
     os << '\t';
 
-    os << ii.dindel.indel_qphred << '\t'; //QUAL
+    os << call._dindel.indel_qphred << '\t'; //QUAL
 
     // FILTER:
-    ii.imod().write_filters(os);
+    call.write_filters(os);
     os << '\t';
 
     // INFO
     os << "CIGAR=";
-    for (unsigned i=0; i < ii._imod.size(); ++i)
+    for (unsigned i=0; i < ii._calls.size(); ++i)
     {
         if (i > 0) os << ',';
-        os << ii.imod(i).cigar;
+        os << ii._calls[i].cigar;
     }
     os << ';';
     os << "RU=";
-    for (unsigned i = 0; i <ii._iri.size(); ++i)
+    for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
+        const auto& iri(ii._calls[i]._iri);
         if (i > 0) os << ',';
-        if (ii.iri(i).is_repeat_unit() && ii.iri(i).repeat_unit.size() <= 20)
+        if (iri.is_repeat_unit() && iri.repeat_unit.size() <= 20)
         {
-            os << ii.iri(i).repeat_unit;
+            os << iri.repeat_unit;
         }
         else
         {
@@ -505,13 +635,14 @@ gvcf_writer::write_indel_record(const indel_info& ii)
     }
     os << ';';
     os << "REFREP=";
-    for (unsigned i = 0; i <ii._iri.size(); ++i)
+    for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
+        const auto& iri(ii._calls[i]._iri);
         if (i > 0) os << ',';
 
-        if (ii.iri(i).is_repeat_unit())
+        if (iri.is_repeat_unit())
         {
-            os << ii.iri(i).ref_repeat_count;
+            os << iri.ref_repeat_count;
         }
         else
         {
@@ -520,13 +651,15 @@ gvcf_writer::write_indel_record(const indel_info& ii)
     }
     os << ';';
     os << "IDREP=";
-    for (unsigned i = 0; i <ii._iri.size(); ++i)
+    for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
+        const auto& iri(ii._calls[i]._iri);
+
         if (i > 0) os << ',';
 
-        if (ii.iri(i).is_repeat_unit())
+        if (iri.is_repeat_unit())
         {
-            os << ii.iri(i).indel_repeat_count;
+            os << iri.indel_repeat_count;
         }
         else
         {
@@ -558,26 +691,118 @@ gvcf_writer::write_indel_record(const indel_info& ii)
 
     //SAMPLE
     os << ii.get_gt() << ':'
-       << ii.imod().gq << ':';
+       << call.gq << ':';
 
-    if (ii.imod().Qscore>=0)
-        os << ii.imod().Qscore  << ':';
+    if (call.Qscore>=0)
+        os << call.Qscore  << ':';
     else
-        os << ii.imod().gqx  << ':';
+        os << call.gqx  << ':';
 
-    os << ii.isri().depth << ':';
+    os << call._isri.depth << ':';
 
     // SAMPLE AD:
     unsigned ref_count(0);
-    for (unsigned i = 0; i <ii._isri.size(); ++i)
+    for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
-        ref_count = std::max(ref_count, ii.isri(i).n_q30_ref_reads);
+        ref_count = std::max(ref_count, ii._calls[i]._isri.n_q30_ref_reads);
     }
     os << ref_count;
-    for (unsigned i = 0; i <ii._isri.size(); ++i)
+    for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
-        os << ',' << ii.isri(i).n_q30_indel_reads;
+        os << ',' << ii._calls[i]._isri.n_q30_indel_reads;
     }
     os << '\n';
 }
 
+void
+gvcf_writer::write_site_record(
+    const continuous_site_info& si) const
+{
+    int gqx = std::numeric_limits<int>::max();
+    for (auto&& call : si.calls)
+    {
+        gqx = std::min(gqx, call.gq);
+    }
+
+    for (auto&& call : si.calls)
+    {
+        std::ostream& os(*_osptr);
+
+        os << _chrom << '\t'  // CHROM
+           << (si.pos+1) << '\t'  // POS
+           << ".\t";           // ID
+
+        os  << si.ref << '\t'; // REF
+
+        std::string gt(si.get_gt(call));
+
+        bool is_no_alt(call._base == base_to_id(si.ref));
+
+        // ALT
+        if (is_no_alt)
+            os << ".";
+        else
+            os << id_to_base(call._base);
+        os << '\t';
+
+        // QUAL: TODO - need separate calc?
+        os << call.gq << '\t';
+
+        // FILTER:
+        call.write_filters(os);
+        os << '\t';
+
+        // INFO
+        std::ostringstream info;
+
+        if (si._is_snp)
+        {
+            info << "SNVSB=";
+            {
+                const StreamScoper ss(info);
+                info << std::fixed << std::setprecision(1) << call.strand_bias;
+            }
+            info << ';';
+            info << "SNVHPOL=" << si.hpol;
+        }
+
+        if (!is_no_alt)
+        {
+            if (!info.str().empty())
+                info << ";";
+            info << "Unphased"; // TODO: placeholder
+        }
+
+        os << (info.str().empty() ? "." : info.str()) << "\t";
+
+        //FORMAT
+        os << "GT";
+        os << ":GQ";
+        os << ":GQX";
+        os << ":DP:DPF";
+        if (!is_no_alt)
+            os << ":AD";
+        os << ":VF";
+
+        os << '\t';
+
+        //SAMPLE
+        os << gt << ':';
+        os << call.gq << ':';
+        os << gqx << ':';
+        // DP:DPF
+        os << si.n_used_calls << ':' << si.n_unused_calls;
+
+        if (!is_no_alt)
+        {
+            os << ':';
+            print_site_ad(si, call, os);
+        }
+
+        {
+            const StreamScoper ss(os);
+            os << ':' << std::fixed << std::setprecision(3) << call.variant_frequency();
+        }
+        os << '\n';
+    }
+}

@@ -30,7 +30,7 @@
 
 
 
-indel_overlapper::indel_overlapper(const calibration_models& model, const reference_contig_segment& ref, variant_pipe_stage_base& destination)
+indel_overlapper::indel_overlapper(const calibration_models& model, const reference_contig_segment& ref, std::shared_ptr<variant_pipe_stage_base> destination)
     : variant_pipe_stage_base(destination)
     , _CM(model)
     , _ref(ref)
@@ -46,22 +46,24 @@ void indel_overlapper::flush()
     variant_pipe_stage_base::flush();
 }
 
-void indel_overlapper::process(site_info& si)
+void indel_overlapper::process(std::unique_ptr<site_info> site)
 {
+    std::unique_ptr<digt_site_info> si(downcast<digt_site_info>(std::move(site)));
+
     // resolve any current or previous indels before queuing site:
     if (! _indel_buffer.empty())
     {
-        if (si.pos>=_indel_end_pos)
+        if (si->pos>=_indel_end_pos)
         {
             process_overlaps();
         }
         else
         {
-            _site_buffer.push_back(si);
+            _site_buffer.push_back(std::move(si));
             return;
         }
     }
-    _sink->process(si);
+    _sink->process(std::move(si));
 
 }
 
@@ -79,23 +81,29 @@ is_no_indel(const starling_diploid_indel_core& dindel)
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
 
-void indel_overlapper::process(indel_info& ii)
+void indel_overlapper::process(std::unique_ptr<indel_info> indel)
 {
+    auto ii(downcast<digt_indel_info>(std::move(indel)));
+
+    auto& call(ii->first());
+
     // we can't handle breakends at all right now:
-    if (ii.ik().is_breakpoint()) return;
+    if (call._ik.is_breakpoint()) return;
 
     // don't handle homozygous reference calls unless genotyping is forced
-    if (is_no_indel(ii.dindel) && !ii.dindel.is_forced_output) return;
+    if (is_no_indel(call._dindel) && !call._dindel.is_forced_output) return;
 
 
-    if ((! _indel_buffer.empty()) && ((ii.pos>_indel_end_pos) || is_no_indel(ii.dindel)))
+    bool no_indel = is_no_indel(call._dindel);
+
+    if ((! _indel_buffer.empty()) && ((ii->pos>_indel_end_pos) || no_indel))
     {
         process_overlaps();
     }
-    _indel_buffer.push_back(ii);
-    _indel_end_pos=std::max(_indel_end_pos,ii.ik().right_pos());
+    _indel_end_pos=std::max(_indel_end_pos,call._ik.right_pos());
+    _indel_buffer.push_back(std::move(ii));
     // clear the current homRef indel
-    if (is_no_indel(ii.dindel))
+    if (no_indel)
     {
         process_overlaps();
     }
@@ -103,11 +111,11 @@ void indel_overlapper::process(indel_info& ii)
 
 static
 bool
-is_simple_indel_overlap(const std::vector<indel_info>& indel_buffer)
+is_simple_indel_overlap(const std::vector<std::unique_ptr<digt_indel_info>>& indel_buffer)
 {
     return (indel_buffer.size()==2 &&
-            is_het_indel(indel_buffer[0].dindel) &&
-            is_het_indel(indel_buffer[1].dindel));
+            is_het_indel(indel_buffer[0]->first()._dindel) &&
+            is_het_indel(indel_buffer[1]->first()._dindel));
 }
 
 
@@ -143,12 +151,12 @@ void indel_overlapper::process_overlaps()
     //    *_osptr << "INDEL_SIZE: " << _indel_buffer.size() << "\n";
 
     // process sites to be consistent with overlapping indels:
-    for (site_info& si : _site_buffer)
+    for (auto&& si : _site_buffer)
     {
 #ifdef DEBUG_GVCF
-        log_os << "CHIRP: indel overlapping site: " << it->pos << "\n";
+        log_os << "CHIRP: indel overlapping site: " << si->pos << "\n";
 #endif
-        modify_overlapping_site(_indel_buffer[0], si, _CM);
+        modify_overlapping_site(*_indel_buffer[0], *si, _CM);
     }
 
     unsigned indel_index(0);
@@ -160,9 +168,9 @@ void indel_overlapper::process_overlaps()
         const bool is_site(site_index<_site_buffer.size());
         if (! (is_indel || is_site)) break;
 
-        if (is_indel && ((! is_site) || _indel_buffer[indel_index].pos <= _site_buffer[site_index].pos))
+        if (is_indel && ((! is_site) || _indel_buffer[indel_index]->pos <= _site_buffer[site_index]->pos))
         {
-            _sink->process(_indel_buffer[indel_index]);
+            _sink->process(std::move(_indel_buffer[indel_index]));
             if (is_conflict)
             {
                 // emit each conflict record
@@ -178,7 +186,7 @@ void indel_overlapper::process_overlaps()
         {
             // emit site:
             //log_os << "site record" << "\n";
-            _sink->process(_site_buffer[site_index]);
+            _sink->process(std::move(_site_buffer[site_index]));
             site_index++;
         }
     }
@@ -186,12 +194,12 @@ void indel_overlapper::process_overlaps()
     _site_buffer.clear();
 }
 
-void indel_overlapper::modify_overlapping_site(const indel_info& ii, site_info& si, const calibration_models& model)
+void indel_overlapper::modify_overlapping_site(const digt_indel_info& ii, digt_site_info& si, const calibration_models& model)
 {
     const pos_t offset(si.pos-ii.pos);
     assert(offset>=0);
 
-    if (ii.imod().filters.test(VCF_FILTERS::IndelConflict))
+    if (ii.first().filters.test(VCF_FILTERS::IndelConflict))
     {
         modify_indel_conflict_site(si);
     }
@@ -209,18 +217,18 @@ indel_overlapper::modify_single_indel_record()
 {
     assert(_indel_buffer.size()==1);
 
-    indel_info& ii(_indel_buffer[0]);
-    ii.set_hap_cigar();
+    digt_indel_info& ii(*_indel_buffer[0]);
+    ii.first().set_hap_cigar();
 
-    _CM.clasify_indel(ii, ii.imod());
+    _CM.clasify_indel(ii, ii.first());
 }
 
 
 
 void indel_overlapper::modify_indel_overlap_site(
-    const indel_info& ii,
+    const digt_indel_info& ii,
     const unsigned ploidy,
-    site_info& si,
+    digt_site_info& si,
     const calibration_models& model)
 {
 #ifdef DEBUG_GVCF
@@ -231,7 +239,7 @@ void indel_overlapper::modify_indel_overlap_site(
     // if overlapping indel has any filters, mark as site conflict
     // (note that we formerly had the site inherit indel filters, but
     // this interacts poorly with VQSR)
-    if (! ii.imod().filters.none())
+    if (! ii.first().filters.none())
     {
         si.smod.set_filter(VCF_FILTERS::SiteConflict);
     }
@@ -241,8 +249,8 @@ void indel_overlapper::modify_indel_overlap_site(
 #endif
 
     // limit qual and gq values to those of the indel
-    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred,ii.dindel.indel_qphred);
-    si.smod.gqx = std::min(si.smod.gqx,ii.dindel.max_gt_qphred);
+    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred,ii.first()._dindel.indel_qphred);
+    si.smod.gqx = std::min(si.smod.gqx,ii.first()._dindel.max_gt_qphred);
 
     // change ploidy:
     if (ploidy==1)
@@ -291,7 +299,7 @@ void indel_overlapper::modify_indel_overlap_site(
 
 
 
-void indel_overlapper::modify_indel_conflict_site(site_info& si)
+void indel_overlapper::modify_indel_conflict_site(digt_site_info& si)
 {
     si.smod.set_filter(VCF_FILTERS::IndelConflict);
 }
@@ -309,12 +317,12 @@ indel_overlapper::modify_overlap_indel_record()
     assert(_indel_buffer.size()==2);
 
     // TODO: hackey
-    for (indel_info& ii : _indel_buffer)
-        ii.imod().is_overlap = true;
+    for (auto&& ii : _indel_buffer)
+        ii->_is_overlap = true;
 
     _CM.clasify_indels(_indel_buffer);
 
-    _indel_buffer[0].add_overlap(_ref, _indel_buffer[1]);
+    _indel_buffer[0]->add_overlap(_ref, *_indel_buffer[1]);
 
 }
 
@@ -326,14 +334,13 @@ indel_overlapper::modify_conflict_indel_record()
 {
     assert(_indel_buffer.size()>1);
 
-    for (auto it = _indel_buffer.begin(); it != _indel_buffer.end(); ++it)
+    for (auto&& ii : _indel_buffer)
     {
-        indel_info& ii(*it);
-        ii.set_hap_cigar();
+        ii->first().set_hap_cigar();
 
-        ii._imod.front().set_filter(VCF_FILTERS::IndelConflict);
+        ii->first().set_filter(VCF_FILTERS::IndelConflict);
 
-        _CM.clasify_indel(ii, ii.imod());
+        _CM.clasify_indel(*ii, ii->first());
     }
 }
 

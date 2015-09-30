@@ -44,7 +44,7 @@ provided as input in BAM format.
 
 At configuration time, a bam file must be provided for the query sample.
 
-The following limitations exist on the input BAMs provided to Manta:
+The following limitations exist on the input BAMs provided to Starling:
 
 * Alignments cannot contain the "=" character in the SEQ field.
 * Alignments cannot use the sequence match/mismatch ("="/"X") CIGAR notation
@@ -140,6 +140,27 @@ Example execution on a single node:
 Example execution on an SGE cluster:
 
 `${ANALYSIS_RUN_DIR}/runWorkflow.py -m sge -j 36`
+
+### Extended use cases
+
+#### Exome/Targeted
+
+Supplying the '--exome' flag at configuration time will provide
+appropriate settings for WES and other regional enrichment
+analyses. At present this flag disables all high depth filters, which
+are designed to exclude pericentromeric reference compressions in the
+WGS case but cannot be applied correctly to a targeted analysis. It also
+changes the indel error model and quality scoring to a Qrule, which is
+less tuned for WGS.
+
+#### Heteroplasmic/non-ploidy calling
+
+Supplying the '--callContinuousVf chrName' argument at configuration time will
+change variant calling to not use any ploidy prior assumption on the named chromosome.
+Instead, variants will be called with continuous frequencies and scored using a poisson
+model. This is useful for detecting variants in mixed populations. This
+argument may be passed multiple times to specify multiple chromosomes to
+call in this manner.
 
 #### Advanced execution options
 
