@@ -12,7 +12,6 @@
 //
 
 #include "applications/strelka/strelka.hh"
-
 int
 main(int argc, char* argv[])
 {
