@@ -110,24 +110,8 @@ somatic_indel_caller_grid(const strelka_options& opt,
     }
 }
 
-//static unsigned get_index_from_fraction(float f)
-//{
-//    if(f <= 0.5)
-//    {
-//        int bin = (int)(f*(STAR_DIINDEL_GRID::HET_RES+1)*2+0.5f);
-//        if(bin <= 0) return STAR_DIINDEL::NOINDEL;
-//        else if(bin >= STAR_DIINDEL_GRID::HET_RES+1) return STAR_DIINDEL::HET;
-//        else return STAR_DIINDEL::SIZE-1+bin;
-//    }
-//    else
-//    {
-//        int bin = (int)((f-0.5f)*(STAR_DIINDEL_GRID::HET_RES+1)*2+0.5f);
-//        if(bin <= 0) return STAR_DIINDEL::HET;
-//        else if(bin >= STAR_DIINDEL_GRID::HET_RES+1) return STAR_DIINDEL::HOM;
-//        else return STAR_DIINDEL::SIZE-1+STAR_DIINDEL_GRID::HET_RES + bin;
-//    }
-//}
 
+// Currently the index is reversed (i.e. index == 3 -> fraction == 0.95)
 float get_fraction_from_index(int index)
 {
     const float ratio_increment(0.5/static_cast<float>(STAR_DIINDEL_GRID::HET_RES+1));
@@ -139,29 +123,7 @@ float get_fraction_from_index(int index)
     return 1.0f - ratio_increment*(index-STAR_DIINDEL::SIZE+2);
 }
 
-
-//static float get_fraction_from_purity(float purity, int gt, int alt_gt)
-//{
-//    if(gt == STAR_DIINDEL::NOINDEL)
-//    {
-//        if(alt_gt == STAR_DIINDEL::NOINDEL) returget_fraction_from_indexn 0.f;
-//        if(alt_gt == STAR_DIINDEL::HET) return (1.0f-purity)/2;
-//        return 1.0f-purity;
-//    }
-//    if(gt == STAR_DIINDEL::HET)
-//    {
-//        if(alt_gt == STAR_DIINDEL::NOINDEL) return purity/2;
-//        if(alt_gt == STAR_DIINDEL::HET) return 0.5f;
-//        return 1.0f-purity/2;
-//    }
-//    // gt == STAR_DIINDEL::HET
-//    if(alt_gt == STAR_DIINDEL::NOINDEL) return purity;
-//    if(alt_gt == STAR_DIINDEL::HET) return (1.0f+purity)/2;
-//    return 1.0f;
-//}
-
 typedef somatic_indel_call::result_set result_set;
-
 
 static
 void
@@ -195,18 +157,6 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
                                                         lhood[lsize-(i+1)]);
     }
 }
-
-//static
-//double
-//get_lprob_f_given_ngt_tgt(
-//        const double *prior_lprob,
-//        const unsigned f,
-//        const unsigned ngt,
-//        const unsigned tgt)
-//{
-//    int index = (STAR_DIINDEL::SIZE*ngt + tgt)*STAR_DIINDEL_GRID::SIZE + f;
-//    return prior_lprob[index];
-//}
 
 void
 somatic_indel_caller_grid::calculate_result_set(
@@ -265,7 +215,6 @@ somatic_indel_caller_grid::calculate_result_set(
                             {
                                 lprob_f_given_g = -std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
                                 lprob_f_given_g += (fn == ngt) ? ref_real_lnp : ref_error_lnp-std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
-//                                printf("%d, %d, %d, %d = %lf\n", ngt, tgt, fn, ft, lprob_f_given_g);
                             }
                             else
                             {
@@ -275,17 +224,9 @@ somatic_indel_caller_grid::calculate_result_set(
                                     lprob_f_given_g = -INFINITY;
                                 else
                                 {
-//                                    lprob_f_given_g += std::log(prob_fn_given_somatic[fn]) + std::log(prob_ft_given_somatic[ft]);
-//                                    lprob_f_given_g += std::log(prob_fn_given_somatic[fn]) -std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
-
                                     // uniform fn, ft
-
                                     if(get_fraction_from_index(fn) > 0.09) lprob_f_given_g = -INFINITY;
                                     else lprob_f_given_g += -std::log(3.0) -std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
-
-//                                    if(get_fraction_from_index(fn) > 0.1) lprob_f_given_g = -INFINITY;
-//                                    else lprob_f_given_g += -std::log(3.0)  + std::log(prob_ft_given_somatic[ft]);
-//                                    printf("%d, %d, %d, %d = %lf\n", ngt, tgt, fn, ft, lprob_f_given_g);
                                 }
                             }
                         }
@@ -337,7 +278,6 @@ somatic_indel_caller_grid::calculate_result_set(
         double som_prob_given_ngt(0);
         for (unsigned tgt(0); tgt<STAR_DIINDEL::SIZE; ++tgt)
         {
-//            post_prob[ngt][tgt] /= sum_prob;
             post_prob[ngt][tgt] = std::exp(log_post_prob[ngt][tgt] - max_log_prob - log_sum_prob);
             if(tgt == ngt)
             {
@@ -347,7 +287,6 @@ somatic_indel_caller_grid::calculate_result_set(
             {
                 som_prob_given_ngt += post_prob[ngt][tgt];
             }
-//            printf("%d\t%d\t%lf\n", ngt, tgt, post_prob[ngt][tgt]);
         }
 
         double err_som_and_ngt = 1.0 - som_prob_given_ngt;
