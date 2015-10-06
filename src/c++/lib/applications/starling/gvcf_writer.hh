@@ -43,27 +43,50 @@ struct gvcf_writer : public variant_pipe_stage_base
         const calibration_models& cm);
 
 
-    void process(site_info&) override;
-    void process(indel_info&) override;
+    void process(std::unique_ptr<site_info>) override;
+    void process(std::unique_ptr<indel_info>) override;
     void flush() override;
 
-    pos_t
-    headPos() const
-    {
-        return _head_pos;
-    }
 
 private:
-    void add_site_internal(site_info& si);
+    void add_site_internal(digt_site_info& si);
+    void add_site_internal(continuous_site_info& si);
     void write_block_site_record();
-    void write_site_record(const site_info& si) const;
-    void queue_site_record(const site_info& si);
-    void write_indel_record(const indel_info& ii);
+
+    // queue site record for writing, after
+    // possibly joining it into a compressed non-variant block
+    //
+    template<class TSiteInfo>
+    void queue_site_record(const TSiteInfo& si)
+    {
+        //test for basic blocking criteria
+        if (! _gvcf_comp.is_site_compressable(si))
+        {
+            write_block_site_record();
+            write_site_record(si);
+            return;
+        }
+
+        if (! _block.test(si))
+        {
+            write_block_site_record();
+        }
+        _block.join(si);
+    }
+
+
+    void write_indel_record(const digt_indel_info& ii);
+    void write_indel_record(const continuous_indel_info& ii);
+
+    void write_site_record(const continuous_site_info& si) const;
+    void write_site_record(const gvcf_block_site_record& si) const;
+    void write_site_record(const digt_site_info& si) const;
+
 
     /// fill in missing sites
     void skip_to_pos(const pos_t target_pos);
 
-    const site_info& get_empty_site(const pos_t pos)
+    const digt_site_info& get_empty_site(const pos_t pos)
     {
         _empty_site.pos = pos;
         _empty_site.ref = _ref.get_base(pos);
@@ -79,11 +102,11 @@ private:
     const gvcf_deriv_options _dopt;
     gvcf_block_site_record _block;
     pos_t _head_pos;
-    site_info _empty_site;
+    digt_site_info _empty_site;
 
-    std::unique_ptr<indel_info> _last_indel;
+    std::unique_ptr<digt_indel_info> _last_indel;
 
-    void filter_site_by_last_indel_overlap(site_info& si);
+    void filter_site_by_last_indel_overlap(digt_site_info& si);
 
     gvcf_compressor _gvcf_comp;
     const calibration_models& _CM;

@@ -17,8 +17,9 @@
 
 #include "strelka_option_parser.hh"
 
-#include "../../starling_common/starling_base_option_parser.hh"
 #include "blt_common/blt_arg_validate.hh"
+#include "calibration/scoringmodels.hh"
+#include "starling_common/starling_base_option_parser.hh"
 #include "starling_common/Tier2OptionsParser.hh"
 
 
@@ -109,10 +110,6 @@ get_strelka_option_parser(
 //     ("compute-VQSR-metrics", po::value(&opt.sfilter.compute_VQSR_options)->default_value(opt.sfilter.compute_VQSR_options),
 //      "report VQSR metrics in variant records")
     // indel only:
-    ("strelka-indel-max-ref-repeat",  po::value(&opt.sfilter.indelMaxRefRepeat)->default_value(opt.sfilter.indelMaxRefRepeat),
-     "indels expand/contracting pattterns with greater than this repeat will be filtered out")
-    ("strelka-indel-max-int-hpol-length",  po::value(&opt.sfilter.indelMaxIntHpolLength)->default_value(opt.sfilter.indelMaxIntHpolLength),
-     "indels are filtered if they overlap 'interrupted homopolymers' greater than this length")
     ("strelka-indel-max-window-filtered-basecall-frac",  po::value(&opt.sfilter.indelMaxWindowFilteredBasecallFrac)->default_value(opt.sfilter.indelMaxWindowFilteredBasecallFrac),
      "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
     ("strelka-indel-min-qsi-ref", po::value(&opt.sfilter.sindelQuality_LowerBound)->default_value(opt.sfilter.sindelQuality_LowerBound),
@@ -121,8 +118,17 @@ get_strelka_option_parser(
 
     po::options_description tier2_opt(getTier2OptionsDescription(opt.tier2));
 
+    po::options_description score_opt("scoring-options");
+    score_opt.add_options()
+    ("variant-scoring-models-file", po::value(&opt.somatic_variant_scoring_models_filename),
+     "Model file for somatic small variant VQSR")
+    ;
+
     po::options_description strelka_parse_opt("Two-sample options");
-    strelka_parse_opt.add(strelka_parse_opt_ti).add(strelka_parse_opt_to).add(strelka_parse_opt_sv).add(strelka_parse_opt_filter).add(tier2_opt);
+    strelka_parse_opt
+    .add(strelka_parse_opt_ti).add(strelka_parse_opt_to)
+    .add(strelka_parse_opt_sv).add(strelka_parse_opt_filter)
+    .add(tier2_opt).add(score_opt);
 
     // final assembly
     po::options_description visible("Options");
@@ -186,6 +192,11 @@ finalize_strelka_options(
     if (opt.sfilter.max_depth_factor < 0)
     {
         pinfo.usage("Strelka depth factor must not be less than 0");
+    }
+
+    if (! opt.somatic_variant_scoring_models_filename.empty())
+    {
+        scoring_models::Instance().load_variant_scoring_models(opt.somatic_variant_scoring_models_filename);
     }
 
     finalize_starling_base_options(pinfo,vm,opt);

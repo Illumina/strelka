@@ -18,7 +18,7 @@
 ##
 ################################################################################
 
-cmake_minimum_required(VERSION 2.8.0)
+cmake_minimum_required(VERSION 2.8.5)
 
 message (STATUS "==== Initializing project cmake configuration ====")
 

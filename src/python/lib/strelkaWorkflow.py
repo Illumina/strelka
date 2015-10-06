@@ -124,14 +124,15 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--strelka-snv-max-spanning-deletion-frac", str(self.params.snvMaxSpanningDeletionFrac)])
     segCmd.extend(["--strelka-snv-min-qss-ref", str(self.params.ssnvQuality_LowerBound)])
 
-    segCmd.extend(["--strelka-indel-max-ref-repeat", str(self.params.indelMaxRefRepeat)])
-    segCmd.extend(["--strelka-indel-max-int-hpol-length", str(self.params.indelMaxIntHpolLength)])
     segCmd.extend(["--strelka-indel-max-window-filtered-basecall-frac", str(self.params.indelMaxWindowFilteredBasecallFrac)])
     segCmd.extend(["--strelka-indel-min-qsi-ref", str(self.params.sindelQuality_LowerBound)])
 
+    segCmd.extend(['--indel-error-models-file', self.params.indelErrorModelsFile])
+    segCmd.extend(['--indel-error-model-name', self.params.indelErrorModelName])
+
     # do not apply VQSR in exome case
     if not self.params.isExome :
-        segCmd.extend(['--somatic-scoring-models', self.params.scoringModelFile])
+        segCmd.extend(['--variant-scoring-models-file', self.params.variantScoringModelFile])
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["-bam-file", bamPath])
@@ -164,10 +165,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
     addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
 
-    if self.params.extraStrelkaArguments is not None :
-        for arg in self.params.extraStrelkaArguments.strip().split() :
-            segCmd.append(arg)
-
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
 
     if not isFirstSegment :
@@ -176,6 +173,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.isHighDepthFilter :
         segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
         segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
+
+    if self.params.extraStrelkaArguments is not None :
+        for arg in self.params.extraStrelkaArguments.strip().split() :
+            segCmd.append(arg)
+
 
     nextStepWait = set()
 

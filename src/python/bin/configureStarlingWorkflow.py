@@ -53,6 +53,8 @@ You must specify a BAM file.
         group.add_option("--targetRegions", type="string", dest="targetRegionsBed", metavar="FILE",
                          help="Provide bed file of regions to allow variant calls. Calls outside these ares are filtered "
                          "as OffTarget. File must be tabix indexed. (no default)")
+        group.add_option("--callContinuousVf", type="string", dest="callContinuousVf", metavar="CHROM", action="append",
+                         help="Call variants on CHROM without a ploidy prior assumption, issuing calls with continuous variant frequencies (no default)")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
@@ -78,12 +80,13 @@ You must specify a BAM file.
             'runDir' : 'StarlingWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'indelRefErrorFactor' : "100",
-            'indelErrorModel' : "new",
-            'vqsrModel' : "QScoreHPDRE100_v4",
-            'vqsrModelFile' : joinFile(configDir,'model.json'),
-            'scoringModelFile' : joinFile(configDir,'indel_models.json'),
+            'vqsrModelFile' : joinFile(configDir,'germlineVariantScoringModels.txt'),
+            'vqsrModelName' : "QScoreHPDRE100_v4",
+            'inputIndelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
+            'indelErrorModelName' : "new",
             'isSkipIndelErrorModel' : True,
-            'isReportVQSRMetrics' : False
+            'isReportVQSRMetrics' : False,
+            'callContinuousVf' : []
             })
         return defaults
 

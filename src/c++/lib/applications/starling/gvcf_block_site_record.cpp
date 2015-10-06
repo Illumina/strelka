@@ -68,32 +68,32 @@ is_new_value_blockable(const int new_val,
 
 bool
 gvcf_block_site_record::
-test(const site_info& si) const
+test(const digt_site_info& si) const
 {
     if (count==0) return true;
 
     // pos must be +1 from end of record:
-    if ((record.pos+count) != si.pos) return false;
+    if ((pos+count) != si.pos) return false;
 
     // filters must match:
-    if (record.smod.filters != si.smod.filters) return false;
+    if (filters != si.smod.filters) return false;
 
-    if (record.is_nonref() || si.is_nonref()) return false;
+    if (is_nonref || si.is_nonref()) return false;
 
-    if (0!=strcmp(record.get_gt(),si.get_gt())) return false;
+    if (gt != si.get_gt()) return false;
 
     // coverage states must match:
-    if (record.smod.is_covered != si.smod.is_covered) return false;
-    if (record.smod.is_used_covered != si.smod.is_used_covered) return false;
+    if (is_covered != si.smod.is_covered) return false;
+    if (is_used_covered != si.smod.is_used_covered) return false;
 
     // ploidy must match
-    if (record.dgt.ploidy != si.dgt.ploidy) return false;
+    if (ploidy != si.dgt.ploidy) return false;
 
     // test blocking values:
     if (! is_new_value_blockable(si.smod.gqx,
                                  block_gqx,frac_tol,abs_tol,
                                  si.smod.is_gqx(),
-                                 record.smod.is_gqx()))
+                                 has_call))
     {
         return false;
     }
@@ -116,12 +116,19 @@ test(const site_info& si) const
 
 void
 gvcf_block_site_record::
-join(const site_info& si)
+join(const digt_site_info& si)
 {
     if (count == 0)
     {
-        record = si;
-        record.smod.is_block=true;
+        pos = si.pos;
+        filters = si.smod.filters;
+        is_nonref = si.is_nonref();
+        gt = si.get_gt();
+        is_used_covered = si.smod.is_used_covered;
+        is_covered = si.smod.is_covered;
+        ploidy = si.dgt.ploidy;
+        has_call = si.smod.is_gqx();
+        ref = si.ref;
     }
 
     if (si.smod.is_gqx())
@@ -134,5 +141,100 @@ join(const site_info& si)
 
     count += 1;
 }
+
+bool
+gvcf_block_site_record::
+test(const continuous_site_info& si) const
+{
+    if (si.calls.size() != 1)
+        return false;
+
+    if (count==0) return true;
+
+    if (has_call && si.calls.empty())
+        return false;
+
+
+    // ploidy must match. This catches mixing digt && continuous
+    if (ploidy != -1) return false;
+
+    // pos must be +1 from end of record:
+    if ((pos+count) != si.pos) return false;
+
+    // filters must match:
+    if (filters != si.calls.front().filters) return false;
+
+    if (is_nonref || si.is_nonref()) return false;
+
+    if (gt != si.get_gt(si.calls.front())) return false;
+
+    // coverage states must match:
+    if (is_covered != (si.n_used_calls != 0 || si.n_unused_calls != 0)) return false;
+    if (is_used_covered != (si.n_used_calls != 0)) return false;
+
+    if (has_call)
+    {
+        // test blocking values:
+        if (! is_new_value_blockable(si.calls.front().gqx,
+                block_gqx,frac_tol,abs_tol,
+                true,
+                true))
+        {
+            return false;
+        }
+    }
+
+    if (! is_new_value_blockable(si.n_used_calls,
+                                 block_dpu,frac_tol,abs_tol))
+    {
+        return false;
+    }
+    if (! is_new_value_blockable(si.n_unused_calls,
+                                 block_dpf,frac_tol,abs_tol))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
+
+void
+gvcf_block_site_record::join(const continuous_site_info& si)
+{
+    if (count == 0)
+    {
+        pos = si.pos;
+        if (!si.calls.empty())
+        {
+            filters = si.calls.front().filters;
+            gt = si.get_gt(si.calls.front());
+            is_nonref = si.is_nonref();
+            // TODO: handle no coverage regions in continuous
+            has_call = true;
+        }
+        else
+        {
+            has_call = false;
+        }
+        is_used_covered = si.n_used_calls != 0;
+        is_covered = si.n_used_calls != 0 || si.n_unused_calls != 0;
+        ploidy = -1;
+        ref = si.ref;
+    }
+
+    // TODO: handle no coverage regions in continuous
+    if (si.calls.size() == 1)
+    {
+        block_gqx.add(si.calls.front().gqx);
+    }
+
+    block_dpu.add(si.n_used_calls);
+    block_dpf.add(si.n_unused_calls);
+
+    count += 1;
+}
+
 
 

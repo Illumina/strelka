@@ -20,9 +20,6 @@
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
 #include <iosfwd>
-#include "bedstreamprocessor.hh"
-#include "variant_prefilter_stage.hh"
-#include "indel_overlapper.hh"
 #include "gvcf_writer.hh"
 
 
@@ -34,12 +31,12 @@ class gvcf_aggregator
 {
 public:
     gvcf_aggregator(
-            const starling_options& opt,
-            const starling_deriv_options& dopt,
-            const reference_contig_segment& ref,
-            const RegionTracker& nocompress_regions,
-            std::ostream* os,
-            const pos_basecall_buffer& bc_buff);
+        const starling_options& opt,
+        const starling_deriv_options& dopt,
+        const reference_contig_segment& ref,
+        const RegionTracker& nocompress_regions,
+        std::ostream* os,
+        const pos_basecall_buffer& bc_buff);
 
     ~gvcf_aggregator();
 
@@ -47,29 +44,20 @@ public:
     /// preserved until the block is completed
     bool is_phasing_block() const
     {
-        return _codon_phaser.is_in_block();
+        return _codon_phaser && _codon_phaser->is_in_block();
     }
 
-    void add_site(site_info& si);
+    void add_site(std::unique_ptr<site_info> si);
 
-    void add_indel(const pos_t pos, const indel_key ik,
-            const starling_diploid_indel_core& dindel,
-            const starling_indel_report_info& iri,
-            const starling_indel_sample_report_info& isri);
+    void add_indel(std::unique_ptr<indel_info> info);
     void reset();
-    pos_t headPos() const
-    {
-        return _writer.headPos();
-    }
 
 private:
     calibration_models _CM;
 
-    gvcf_writer _writer;
-    indel_overlapper _overlapper;
-    Codon_phaser _codon_phaser;
-    bed_stream_processor _targeted_region_processor;
-    variant_prefilter_stage _head;
+    std::shared_ptr<gvcf_writer> _writer;
+    std::shared_ptr<Codon_phaser> _codon_phaser;
+    std::shared_ptr<variant_pipe_stage_base> _head;
 
 
 };

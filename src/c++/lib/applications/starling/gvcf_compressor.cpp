@@ -48,11 +48,11 @@ is_site_compressable(
     if (si.forcedOutput) return false;
     if (! _opt.is_block_compression) return false;
 
-    if (si.dgt.is_snp) return false;
+    if (si.is_snp()) return false;
 
-    if (si.ref!='N')
+    if (si.ref!='N' && si.n_used_calls > 0)
     {
-        const double reffrac(static_cast<double>(si.known_counts[si.dgt.ref_gt]) /
+        const double reffrac(static_cast<double>(si.known_counts[base_to_id(si.ref)]) /
                              static_cast<double>(si.n_used_calls));
         if (reffrac+_opt.block_max_nonref <= 1) return false;
     }

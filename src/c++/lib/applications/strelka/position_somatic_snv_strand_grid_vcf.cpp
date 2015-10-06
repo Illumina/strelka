@@ -176,7 +176,7 @@ calc_VQSR_features(
     //MQ
     const unsigned n_mapq(n1_cpi.rawPileup().n_mapq+t1_cpi.rawPileup().n_mapq);
     const double cumm_mapq2(n1_cpi.rawPileup().cumm_mapq + t1_cpi.rawPileup().cumm_mapq);
-    smod.set_feature(STRELKA_VQSR_FEATURES::MQ,std::sqrt(cumm_mapq2/n_mapq));
+    smod.set_feature(STRELKA_VQSR_FEATURES::MQ,std::sqrt(safeFrac(cumm_mapq2,n_mapq)));
 
     //n_mapq0
     const unsigned n_mapq0(n1_cpi.rawPileup().n_mapq0+t1_cpi.rawPileup().n_mapq0);
@@ -320,12 +320,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
         calc_VQSR_features(opt,dopt,sgt,smod,n1_epd,t1_epd,n2_epd,t2_epd,rs);
 
         // case we are doing VQSR, clear filters and apply single LowQscore filter
-        if (opt.isUseSomaticVQSR())  // write out somatic VQSR metrics
+        const scoring_models& models(scoring_models::Instance());
+        if (opt.isUseSomaticVQSR() && models.isVariantScoringInit())  // write out somatic VQSR metrics
         {
-            const scoring_models& models(scoring_models::Instance());
-            assert(models.calibration_init);
             smod.isQscore = true;
-            smod.Qscore = models.score_instance(smod.get_features());
+            smod.Qscore = models.score_variant(smod.get_features(),VARIATION_NODE_TYPE::SNP);
             smod.filters.reset();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default

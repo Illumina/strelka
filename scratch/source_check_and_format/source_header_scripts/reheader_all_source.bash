@@ -77,11 +77,13 @@ python_base_dir=$project_base_dir/src
 cmake_base_dir=$project_base_dir/src
 shell_base_dir=$project_base_dir/src
 
+python_exclude_dir=$python_base_dir/python/somaticVQSRTraining
+
 for file in $(find_cxx_source $cxx_base_dir); do
     reheader_file "python $thisdir/reheader_cxx_file.py" $file
 done
 
-for file in $(find_python_source $python_base_dir) $(find_cmake_source $cmake_base_dir) $(find_shell_source $shell_base_dir); do
+for file in $(find_python_source $python_base_dir | grep -v $python_exclude_dir) $(find_cmake_source $cmake_base_dir) $(find_shell_source $shell_base_dir); do
     reheader_file "python $thisdir/reheader_script_file.py" $file
 done
 

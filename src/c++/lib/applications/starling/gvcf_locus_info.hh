@@ -100,7 +100,7 @@ get_label(const unsigned idx)
     case PloidyConflict:
         return "PLOIDY_CONFLICT";
     case OffTarget:
-            return "OffTarget";
+        return "OffTarget";
     default:
         assert(false && "Unknown VCF filter value");
         return nullptr;
@@ -110,12 +110,13 @@ get_label(const unsigned idx)
 
 
 
-struct shared_modifiers
+struct shared_call_info
 {
-    shared_modifiers()
+    shared_call_info()
     {
         clear();
     }
+    virtual ~shared_call_info() {}
 
     void
     set_filter(const VCF_FILTERS::index_t i)
@@ -136,42 +137,70 @@ struct shared_modifiers
     clear()
     {
         filters.reset();
+        gq = gqx = 0;
     }
 
-    int gqx;
-    int gq;
-    unsigned max_gt;
+    int gqx=0;
+    int gq=0;
+    double strand_bias = 0;
 
     std::bitset<VCF_FILTERS::SIZE> filters;
 };
 
 
-std::ostream& operator<<(std::ostream& os,const shared_modifiers& shmod);
+std::ostream& operator<<(std::ostream& os,const shared_call_info& shmod);
 
-
-struct indel_modifiers : public shared_modifiers
+struct shared_indel_call_info : public shared_call_info
 {
-    indel_modifiers()
+    shared_indel_call_info(const indel_key& ik,
+            const indel_data& id,
+        const starling_indel_report_info iri,
+        const starling_indel_sample_report_info& isri)
+    : _ik(ik)
+    , _id(id)
+    , _iri(iri)
+    , _isri(isri)
     {
-        clear();
     }
+    const indel_key _ik;
+    const indel_data _id;
+    // TODO: make the indel overlapping code create a new call, then revert this to const
+    starling_indel_report_info _iri;
+    const starling_indel_sample_report_info _isri;
 
-    void
-    clear()
-    {
-        shared_modifiers::clear();
-        cigar.clear();
-        Qscore = -1;
-        is_overlap = false;
-    }
+    void set_hap_cigar(
+                const unsigned lead=1,
+                const unsigned trail=0);
 
     ALIGNPATH::path_t cigar;
+
+
+
+
+};
+
+
+
+struct digt_indel_call : public shared_indel_call_info
+{
+    digt_indel_call(const indel_key& ik,
+            const indel_data& id,
+            const starling_indel_report_info& iri,
+            const starling_indel_sample_report_info& isri,
+            const starling_diploid_indel_core& dindel)
+    : shared_indel_call_info(ik, id, iri, isri)
+    , _dindel(dindel)
+    {
+    }
+
+    // TODO: Make indel_overlapper create new call objects, then revert this to const
+    starling_diploid_indel_core _dindel;
 
     // The empirically calibrated quality-score of an indel, if -1 no q-score has been reported
     int Qscore = -1;
 
-    // used to flag hetalt
-    bool is_overlap;
+    unsigned max_gt=0;
+
 };
 
 
@@ -206,9 +235,9 @@ get_label(const unsigned idx)
 }
 }
 
-struct site_modifiers : public shared_modifiers
+struct digt_call_info : public shared_call_info
 {
-    site_modifiers()
+    digt_call_info()
     {
         clear();
     }
@@ -216,12 +245,11 @@ struct site_modifiers : public shared_modifiers
     void
     clear()
     {
-        shared_modifiers::clear();
+        shared_call_info::clear();
         is_unknown=true;
         is_covered=false;
         is_used_covered=false;
         is_zero_ploidy=false;
-        is_block=false;
         is_phased_region=false;
         is_phasing_insufficient_depth=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
@@ -238,36 +266,91 @@ struct site_modifiers : public shared_modifiers
     bool is_covered;
     bool is_used_covered;
     bool is_zero_ploidy;
-    bool is_block;
     bool is_phased_region;
     bool is_phasing_insufficient_depth;
 
     MODIFIED_SITE_GT::index_t modified_gt;
+    unsigned max_gt;
+
 
     // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
     int Qscore = -1;
 };
 
+struct continuous_site_call : public shared_call_info
+{
+    continuous_site_call(int totalDepth, int alleleDepth, BASE_ID::index_t base)
+    : _totalDepth(totalDepth)
+    , _alleleDepth(alleleDepth)
+    , _base(base)
+    {
+    }
 
-std::ostream& operator<<(std::ostream& os,const site_modifiers& smod);
+    double variant_frequency() const { return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0; }
+    int _totalDepth;
+    int _alleleDepth;
+    BASE_ID::index_t _base;
+};
+
+struct continuous_indel_call : public shared_indel_call_info
+{
+    continuous_indel_call(unsigned totalDepth, unsigned alleleDepth,
+            const indel_key& ik, const indel_data& id, const starling_indel_report_info& iri, const starling_indel_sample_report_info& isri)
+    : shared_indel_call_info(ik, id, iri, isri)
+    , _totalDepth(totalDepth)
+    , _alleleDepth(alleleDepth)
+    {
+        set_hap_cigar(0,0);
+    }
+
+    double variant_frequency() const { return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0; }
+    unsigned _totalDepth;
+    unsigned _alleleDepth;
+};
+
+
+
+std::ostream& operator<<(std::ostream& os,const digt_call_info& smod);
 
 struct indel_info
 {
-    indel_info(const pos_t init_pos,
-         const indel_key& init_ik,
-         const starling_diploid_indel_core& init_dindel,
-         const starling_indel_report_info& init_iri,
-         const starling_indel_sample_report_info& init_isri)
+    explicit indel_info(const pos_t init_pos)
+    : pos(init_pos)
     {
-        pos=(init_pos);
-        _ik.push_back(init_ik);
-        dindel=(init_dindel);
-        _iri.push_back(init_iri);
-        _isri.push_back(init_isri);
-        _imod.emplace_back();
     }
 
-    void add_overlap(const reference_contig_segment& ref, indel_info& overlap);
+    virtual bool is_forced_output() const = 0;
+    virtual bool is_indel() const = 0;
+    virtual void set_filter(VCF_FILTERS::index_t filter) = 0;
+    pos_t pos;
+    // the EXCLUSIVE end of the variant (i.e. open)
+    virtual pos_t end() const = 0;
+
+};
+
+
+struct digt_indel_info : public indel_info
+{
+    digt_indel_info(const pos_t init_pos,
+         const indel_key& init_ik,
+         const indel_data& init_id,
+         const starling_diploid_indel_core& init_dindel,
+         const starling_indel_report_info& init_iri,
+         const starling_indel_sample_report_info& init_isri) : indel_info(init_pos)
+    {
+        _calls.emplace_back(init_ik, init_id, init_iri, init_isri, init_dindel);
+    }
+
+    bool is_forced_output() const override
+    {
+        return std::any_of(_calls.begin(), _calls.end(),
+                [](const digt_indel_call& x) { return x._dindel.is_forced_output; });
+    }
+    bool is_indel() const override { return std::any_of(_calls.begin(), _calls.end(), [](const digt_indel_call& x) { return x._dindel.is_indel; });}
+    void set_filter(VCF_FILTERS::index_t filter) override { for (auto&& x : _calls) x.set_filter(filter); }
+    pos_t end() const override;
+
+    void add_overlap(const reference_contig_segment& ref, digt_indel_info& overlap);
 
     const char*
     get_gt() const
@@ -276,11 +359,11 @@ struct indel_info
         {
             return "1/2";
         }
-        else if (dindel.is_haploid())
+        else if (first()._dindel.is_haploid())
         {
             using namespace STAR_DIINDEL;
 
-            switch (imod().max_gt)
+            switch (first().max_gt)
             {
             case NOINDEL:
                 return "0";
@@ -291,25 +374,26 @@ struct indel_info
                 return "X";
             }
         }
-        return STAR_DIINDEL::get_gt_label(imod().max_gt);
+        return STAR_DIINDEL::get_gt_label(first().max_gt);
     }
 
     bool
     is_hetalt() const
     {
-        return (_imod.front().is_overlap);
+        return (_is_overlap);
     }
 
     bool
     is_het() const
     {
-        return (static_cast<int>(imod().max_gt)>1);
+        return (static_cast<int>(_calls.front().max_gt)>1);
     }
 
     // the site ploidy within the indel at offset x
     unsigned
     get_ploidy(const unsigned offset) const
     {
+        auto&& dindel(first()._dindel);
         if (dindel.is_noploid()) return 0;
 
         if (!is_hetalt())
@@ -333,72 +417,74 @@ struct indel_info
         }
         return 2;
     }
-    void set_hap_cigar(
-        const unsigned lead=1,
-        const unsigned trail=0);
-
-    std::map<std::string, double>
+        std::map<std::string, double>
     get_indel_qscore_features(const double chrom_depth) const;
-
-    pos_t pos;
-    std::vector<indel_key> _ik;
-    starling_diploid_indel_core dindel;
-    std::vector<starling_indel_report_info> _iri;
-    std::vector<starling_indel_sample_report_info> _isri;
-    std::vector<indel_modifiers> _imod;
 
     /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
     std::vector<unsigned> ploidy;
 
+    // used to flag hetalt
+    bool _is_overlap=false;
 
-    // the EXCLUSIVE end of the variant (i.e. open)
-    pos_t end() const;
+    std::vector<digt_indel_call> _calls;
 
-    const indel_key& ik(unsigned idx=0) { return _ik[idx]; }
-
-    indel_modifiers& imod() { return _imod.front(); }
-    const indel_modifiers& imod(unsigned idx=0) const { return _imod[idx]; }
-
-    //starling_indel_report_info& iri() { return _iri.front(); }
-    const starling_indel_report_info& iri(unsigned idx = 0) const { return _iri[idx]; }
-
-    //starling_indel_sample_report_info& isri() { return _isri.front(); }
-    const starling_indel_sample_report_info& isri(unsigned idx=0) const { return _isri[idx]; }
-
-
+    const digt_indel_call& first() const { return _calls.front(); }
+    digt_indel_call& first() { return _calls.front(); }
 
 };
+
 
 
 //Data structure defining parameters for a single site to be used for writing in gvcf_aggregator
 struct site_info
 {
-    site_info()
-    {
-        std::fill(known_counts.begin(),known_counts.end(),0);
-    }
-
-    void
-    init(const pos_t init_pos,
-         const char init_ref,
-         const snp_pos_info& good_pi,
-         const int used_allele_count_min_qscore,
-         const bool is_forced_output = false)
+    site_info(const pos_t init_pos,
+            const char init_ref,
+            const snp_pos_info& good_pi,
+            const int used_allele_count_min_qscore,
+            const bool is_forced_output = false)
     {
         pos=(init_pos);
         ref=(init_ref);
-        good_pi.get_known_counts(known_counts,used_allele_count_min_qscore);
-
-        phased_ref.clear();
-        phased_alt.clear();
-        phased_AD.clear();
-
-        Unphasable = false;
-
-        smod.clear();
-
         forcedOutput = is_forced_output;
+        good_pi.get_known_counts(known_counts,used_allele_count_min_qscore);
+        spanning_deletions = good_pi.n_spandel;
     }
+
+    site_info() {}
+
+    virtual bool is_snp() const = 0;
+    virtual void set_filter(VCF_FILTERS::index_t filter) = 0;
+    virtual bool is_nonref() const = 0;
+
+
+    pos_t pos = 0;
+    char ref = 'N';
+    std::array<unsigned,N_BASE> known_counts = {{}};
+    unsigned n_used_calls = 0;
+    unsigned n_unused_calls = 0;
+    unsigned hpol = 0;
+
+
+    unsigned spanning_deletions;
+    bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
+    bool forcedOutput = false;
+};
+
+struct digt_site_info : public site_info
+{
+    digt_site_info(const pos_t init_pos,
+            const char init_ref,
+            const snp_pos_info& good_pi,
+            const int used_allele_count_min_qscore,
+            const bool is_forced_output = false)
+    : site_info(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output)
+    {}
+
+    digt_site_info() {}
+
+    bool is_snp() const override { return dgt.is_snp; }
+    void set_filter (VCF_FILTERS::index_t filter) override { smod.set_filter(filter); }
 
 
     const char*
@@ -415,10 +501,6 @@ struct site_info
         else
         {
             unsigned print_gt(smod.max_gt);
-            if (smod.is_block)
-            {
-                print_gt = dgt.ref_gt;
-            }
             return DIGT::get_vcf_gt(print_gt,dgt.ref_gt);
         }
     }
@@ -442,7 +524,7 @@ struct site_info
     }
 
     bool
-    is_nonref() const
+    is_nonref() const override
     {
         return (smod.max_gt != dgt.ref_gt);
     }
@@ -456,23 +538,17 @@ struct site_info
     bool
     is_deletion() const
     {
-        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
+        return ((!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
     }
 
     bool
     is_qual() const
     {
-        return ((!smod.is_block) && (!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
+        return ((!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
     }
 
-    pos_t pos = 0;
-    char ref = 'N';
     std::string phased_ref, phased_alt, phased_AD;
-    unsigned n_used_calls = 0;
-    unsigned n_unused_calls = 0;
-    std::array<unsigned,N_BASE> known_counts;
     diploid_genotype dgt;
-    unsigned hpol = 0;
     double hapscore = 0;
     double MQ = 0;				 // RMS of mapping qualities
 
@@ -483,10 +559,105 @@ struct site_info
     double avgBaseQ = 0;
     double rawPos = 0;
     unsigned mapq_zero = 0;     // The number of spanning reads that do not pass the command-line mapq test
-    bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
-    bool forcedOutput = false;
 
-    site_modifiers smod;
+    digt_call_info smod;
 };
 
-std::ostream& operator<<(std::ostream& os,const site_info& si);
+std::ostream& operator<<(std::ostream& os,const digt_site_info& si);
+
+struct continuous_site_info : public site_info
+{
+    continuous_site_info(const pos_t init_pos,
+                const char init_ref,
+                const snp_pos_info& good_pi,
+                const int used_allele_count_min_qscore,
+                const double min_het_vf,
+                const bool is_forced_output = false) : site_info(init_pos,
+                init_ref,
+                good_pi,
+                used_allele_count_min_qscore,
+                is_forced_output)
+    , _min_het_vf(min_het_vf)
+    {
+    }
+
+    bool is_snp() const override { return _is_snp; }
+    void set_filter (VCF_FILTERS::index_t filter) override { for (auto&& call : calls) call.set_filter(filter); }
+    bool is_nonref() const override { return (calls.size() > 1) || (!calls.empty() && calls.front()._base != base_to_id(ref)); }
+
+    bool _is_snp = false;
+
+
+    const char* get_gt(const continuous_site_call& call) const
+    {
+        bool is_het = std::count_if(calls.begin(),
+                                    calls.end(), [&](const continuous_site_call& c)
+                                    {
+                                        return c.variant_frequency() >= _min_het_vf;
+                                    })
+                        > 1;
+
+        if (is_het)
+            return "0/1";
+        else if (call._base == base_to_id(ref))
+            return "0/0";
+        else
+            return "1/1";
+    }
+
+    std::vector<continuous_site_call> calls;
+private:
+    double _min_het_vf;
+};
+
+struct continuous_indel_info : public indel_info
+{
+    explicit continuous_indel_info(const pos_t init_pos)
+    : indel_info(init_pos)
+    {
+    }
+
+    void set_filter (VCF_FILTERS::index_t filter) override  { for (auto&& call : calls) call.set_filter(filter); }
+
+
+    bool is_indel() const override
+    {
+        for (auto&& call : calls)
+        {
+            if (call._alleleDepth > 0)
+                return true;
+        }
+        return false;
+    }
+
+    bool is_forced_output() const override
+    {
+        for (auto&& call : calls)
+            if (call._id.is_forced_output)
+                return true;
+        return false;
+    }
+
+    pos_t end() const override
+    {
+        pos_t result = 0;
+        for (auto&& x : calls)
+            result = std::max(result, x._ik.right_pos());
+        return result;
+    }
+
+    const char* get_gt() const
+    {
+        if (is_het)
+            return "0/1";
+        else
+            return "1/1";
+    }
+
+    std::vector<continuous_indel_call> calls;
+    bool is_het=false;
+
+
+};
+
+

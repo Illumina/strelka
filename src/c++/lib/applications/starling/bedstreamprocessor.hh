@@ -1,3 +1,15 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
 /*
  * bedstreamprocessor.hh
  *
@@ -12,10 +24,10 @@
 class bed_stream_processor : public variant_pipe_stage_base
 {
 public:
-    bed_stream_processor(const std::string& bed_file_name, const std::string& region, variant_pipe_stage_base& next_stage);
+    bed_stream_processor(const std::string& bed_file_name, const std::string& region, std::shared_ptr<variant_pipe_stage_base> next_stage);
 
-    void process(site_info& si) override;
-    void process(indel_info& ii) override;
+    void process(std::unique_ptr<site_info> si) override;
+    void process(std::unique_ptr<indel_info> ii) override;
 private:
     std::unique_ptr<bed_streamer> _bed_streamer;
     const bed_record* _current_record;

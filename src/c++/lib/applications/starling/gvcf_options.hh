@@ -20,6 +20,7 @@
 #include "blt_util/chrom_depth_map.hh"
 
 #include <string>
+#include <vector>
 
 
 struct gvcf_options
@@ -72,6 +73,9 @@ struct gvcf_options
 
     /// file specifying targeted regions for calling variants. Used for filtering variants outside for Enrichment
     std::string targeted_regions_bedfile;
+
+    /// conditional header values to include
+    std::vector<std::string> include_headers;
 };
 
 

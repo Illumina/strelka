@@ -187,6 +187,16 @@ struct starling_base_options : public blt_options
     //
     bool is_noise_indel_filter = false;
 
+    // Assume a ploidy-based prior (0%, 50%, 100% or 0% 100% for haploid, diploid
+    // If false, a continuous model is used
+    bool is_ploidy_prior = true;
+
+    // the assumed noise (uniform) in basecalls
+    double noise_floor = -1;
+
+    // the minimum allele frequency to call a heterozygous genotype when not assuming ploidy
+    double min_het_vf = 0.01;
+
     // vcfs can be input to specify candidate indels:
     std::vector<std::string> input_candidate_indel_vcf;
 

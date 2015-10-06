@@ -95,16 +95,6 @@ writeSomaticIndelVcfGrid(
             }
         }
 
-        if (siInfo.iri.ref_repeat_count > opt.sfilter.indelMaxRefRepeat)
-        {
-            smod.set_filter(STRELKA_VCF_FILTERS::Repeat);
-        }
-
-        if (siInfo.iri.ihpol > opt.sfilter.indelMaxIntHpolLength)
-        {
-            smod.set_filter(STRELKA_VCF_FILTERS::iHpol);
-        }
-
         {
             const int normalFilt(wasNormal.ss_filt_win.avg());
             const int normalUsed(wasNormal.ss_used_win.avg());

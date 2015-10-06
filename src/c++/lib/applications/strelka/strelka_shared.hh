@@ -41,13 +41,11 @@ struct somatic_filter_options
     double snv_max_spanning_deletion_frac = 0.75;
     int snv_min_qss_ref = 15;
 
-    unsigned indelMaxRefRepeat = 8;
-    unsigned indelMaxIntHpolLength = 14;
     double indelMaxWindowFilteredBasecallFrac = 0.3;
     int sindelQuality_LowerBound = 30;
 
     unsigned indelRegionFlankSize = 50;
-    double minimumQscore = 3.0;
+    double minimumQscore = 0.54;
 };
 
 
@@ -98,7 +96,7 @@ struct strelka_options : public starling_base_options
     double site_somatic_normal_noise_rate = 0;
     bool is_site_somatic_normal_noise_rate = false;
 
-    double shared_indel_error_factor = 1.4;
+    double shared_indel_error_factor = 1.65;
     double shared_indel_error_strand_bias_fraction = 0.1;
     double indel_somatic_normal_noise_rate = 0;
     bool is_indel_somatic_normal_noise_rate = false;

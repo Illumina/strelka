@@ -41,6 +41,7 @@ struct starling_indel_report_info
     }
 
     std::string repeat_unit;
+    unsigned repeat_unit_length = 0;
     unsigned ref_repeat_count = 0;
     unsigned indel_repeat_count = 0;
     unsigned ihpol = 0; ///< interrupted homopolymer length
@@ -49,7 +50,7 @@ struct starling_indel_report_info
     INDEL::index_t it = INDEL::NONE;
 
     void dump(std::ostream& os) const;
-    
+
 };
 std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj);
 
@@ -61,11 +62,17 @@ struct starling_indel_sample_report_info
     unsigned n_q30_ref_reads = 0;
     unsigned n_q30_indel_reads = 0;
     unsigned n_q30_alt_reads = 0;
+
+    // number of lower-quality reads
     unsigned n_other_reads = 0;
+
+    // the depth of the pileup preceding the indel
     unsigned depth = 0;
 
+    unsigned total_q30_reads() const { return n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads; }
+
     void dump(std::ostream& os) const;
-    
+
 };
 std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj);
 

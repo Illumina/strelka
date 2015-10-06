@@ -22,7 +22,7 @@
 #include "strelka_pos_processor.hh"
 
 #include "blt_util/log.hh"
-#include "starling_common/starling_indel_error_prob.hh"
+#include "calibration/scoringmodels.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_base_stages.hh"
 
@@ -303,9 +303,12 @@ process_pos_indel_somatic(const pos_t pos)
             starling_indel_report_info iri;
             get_starling_indel_report_info(ik,tumor_id,_ref,iri);
 
+            // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
+            if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
+
             double indel_error_prob(0);
             double ref_error_prob(0);
-            get_indel_error_prob(_opt,iri,indel_error_prob,ref_error_prob);
+            scoring_models::Instance().get_indel_model().calc_prop(_opt,iri,indel_error_prob,ref_error_prob);
 
             somatic_indel_call sindel;
             static const bool is_use_alt_indel(true);

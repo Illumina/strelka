@@ -210,6 +210,11 @@ get_vcf_summary_strings(const indel_key& ik,
         copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_indel_seq);
         vcf_indel_seq += id.get_insert_seq();
     }
+
+    // this can occur due to invalid bam input. Don't activate this assert until
+    // we've filtered input bam reads for equal size swaps which match the reference
+    //
+    //assert(vcf_indel_seq != vcf_ref_seq);
 }
 
 
@@ -249,6 +254,7 @@ set_repeat_info(const indel_key& ik,
     {
         assert(false && "Unexpected indel type");
     }
+    iri.repeat_unit_length=iri.repeat_unit.size();
 
     // count repeats in contextual sequence:
     unsigned indel_context_repeat_count(0);
@@ -517,10 +523,10 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
 void starling_indel_sample_report_info::dump(std::ostream& os) const
 {
     os << "n_q30_ref_reads=" << n_q30_ref_reads
-        << ",n_q30_indel_reads=" << n_q30_indel_reads
-        << ",n_q30_alt_reads=" << n_q30_alt_reads
-        << ",n_other_reads=" << n_other_reads
-        << ",depth=" << depth;
+       << ",n_q30_indel_reads=" << n_q30_indel_reads
+       << ",n_q30_alt_reads=" << n_q30_alt_reads
+       << ",n_other_reads=" << n_other_reads
+       << ",depth=" << depth;
 }
 
 std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj)
@@ -532,17 +538,17 @@ std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_in
 void starling_indel_report_info::dump(std::ostream& os) const
 {
     os << "desc=" << desc
-        << ",ref_seq=" << ref_seq
-        << ",indel_seq=" << indel_seq
-        << ",vcf_ref_seq=" << vcf_ref_seq
-        << ",vcf_indel_seq=" << vcf_indel_seq
-        << ",ref_upstream=" << ref_upstream
-        << ",ref_downstream=" << ref_downstream
-        << ",repeat_unit=" << repeat_unit
-        << ",ref_repeat_count=" << ref_repeat_count
-        << ",indel_repeat_count=" << indel_repeat_count
-        << ",ihpol=" << ihpol
-        << ",it=" << it;
+       << ",ref_seq=" << ref_seq
+       << ",indel_seq=" << indel_seq
+       << ",vcf_ref_seq=" << vcf_ref_seq
+       << ",vcf_indel_seq=" << vcf_indel_seq
+       << ",ref_upstream=" << ref_upstream
+       << ",ref_downstream=" << ref_downstream
+       << ",repeat_unit=" << repeat_unit
+       << ",ref_repeat_count=" << ref_repeat_count
+       << ",indel_repeat_count=" << indel_repeat_count
+       << ",ihpol=" << ihpol
+       << ",it=" << it;
 }
 
 std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj)
@@ -551,4 +557,3 @@ std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj
     return os;
 }
 
-    

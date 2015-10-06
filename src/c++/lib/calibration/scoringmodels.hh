@@ -14,61 +14,117 @@
  * scoringmodels.hh
  *
  *  Created on: Aug 20, 2014
- *      Author: mkallberg
+ *      Author: Morten Kallberg
  */
 
 #pragma once
 
 #include "calibration/RandomForestModel.hh"
+#include "calibration/Indelmodel.hh"
 
-#include "boost/property_tree/ptree.hpp"
+#include "json/json.h"
 
+#include <iosfwd>
 #include <map>
 #include <string>
-#include <vector>
 
 
-static const std::string imodels="IndelModels";
-static const std::string cmodels="CalibrationModels";
-static const unsigned max_hpol_len(40);
-static const unsigned max_indel_len(15);
-typedef std::pair<double,double> error_model[max_hpol_len];
-
-struct indel_model
+namespace MODEL_TYPE
 {
-    void add_prop(const unsigned hpol_case, const double prop_ins,const double prop_del);
-    double get_prop(const unsigned hpol_case) const;
-    error_model model;
-private:
-    std::string name;
+enum index_t
+{
+    INDELMODEL,
+    CALMODEL,
+    SIZE
 };
 
-
+inline
+const std::string
+get_label(const index_t i)
+{
+    switch (i)
+    {
+    case INDELMODEL:
+        return "IndelModels";
+    case CALMODEL:
+        return "CalibrationModels";
+    default:
+        assert(false && "Unknown node type in scoringmodels");
+        return nullptr;
+    }
+}
+}
 
 struct scoring_models
 {
     static scoring_models& Instance();
-    void load_models(const std::string& model_file);
-    void load_indel_model(const boost::property_tree::ptree& pt,const std::string& model_name);
 
-    void load_calibration_model(const boost::property_tree::ptree& pt,const std::string& model_name,const std::string& model_type="RF");
-    double score_instance(const feature_type& features) const;
+    void load_variant_scoring_models(const std::string& model_file);
+    void load_indel_error_models(const std::string& model_file);
 
-    const error_model& get_indel_model(const std::string& pattern) const;
-    bool indel_init=false;
+    void set_indel_model(const std::string& model_name);
 
-    bool calibration_init=false;
+    double score_variant(
+        const feature_type& features,
+        const VARIATION_NODE_TYPE::index_t vtype) const;
+
+    void get_indel_error(
+        const starling_base_options& client_opt,
+        const starling_indel_report_info& iri,
+        double& indel_error_prob,
+        double& ref_error_prob) const
+    {
+        get_indel_model().calc_prop(client_opt,iri,indel_error_prob,ref_error_prob);
+    }
+
+    const IndelErrorModel& get_indel_model() const;
+
+    void writeVcfHeader(std::ostream& os) const;
+
+    bool isVariantScoringInit() const
+    {
+        return randomforest_model.isInit();
+    }
+    bool isIndelInit() const
+    {
+        return (! indel_models.empty());
+    }
 
 private:
-    scoring_models() {} // Private so that it can  not be called
+    scoring_models()
+    {
+        this->init_default_models();
+    } // Private so that it cannot be called
     scoring_models(scoring_models const&) {}            // copy constructor is private
     scoring_models& operator=(scoring_models const&);  // assignment operator is private
+
+    void init_default_models();
+
+    void
+    load_models(
+        const std::string& model_file,
+        const MODEL_TYPE::index_t model_type);
+
+    void
+    load_single_model(
+        const Json::Value& data,
+        const MODEL_TYPE::index_t model_type);
+
+    void load_indel_model(const Json::Value& data);
+    void load_calibration_model(const Json::Value& data);
+
+    const IndelErrorModel& get_indel_model(const std::string& pattern) const;
+
+    void possible_indel_models(std::string& str) const;
+
     static scoring_models* m_pInstance;
-    typedef std::map<std::string,indel_model> indel_modelmap;
+
+    std::string variantScoringModelFilename;
+    std::string indelErrorModelFilename;
+
+    typedef std::map<std::string,IndelErrorModel> indel_modelmap;
     indel_modelmap indel_models;
     std::string current_indel_model;
 
-    //typedef std::map<int,calibration_model> calibration_modelmap;
-    //calibration_modelmap calibration_models;
-    RandomForestModel randomforest_model;
+    RandomForestModel randomforest_model,randomforest_model_indel;
 };

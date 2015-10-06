@@ -150,13 +150,13 @@ struct c_model
 
     void
     score_site_instance(
-        const site_info& si,
-        site_modifiers& smod) const;
+        const digt_site_info& si,
+        digt_call_info& smod) const;
 
     void
     score_indel_instance(
-        const indel_info& ii,
-        indel_modifiers& imod) const;
+        const digt_indel_info& ii,
+        digt_indel_call& call) const;
 
     bool is_logistic_model() const;
 
@@ -176,14 +176,14 @@ private:
     void
     do_site_rule_model(
         const featuremap& cutoffs,
-        const site_info& si,
-        site_modifiers& smod) const;
+        const digt_site_info& si,
+        digt_call_info& smod) const;
 
     void
     do_indel_rule_model(
         const featuremap& cutoffs,
-        const indel_info& ii,
-        indel_modifiers& imod) const;
+        const digt_indel_info& ii,
+        digt_indel_call& call) const;
 
     /// Transform the features with the specified scaling parameters that were used to standardize
     /// the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
@@ -201,14 +201,14 @@ private:
     void
     apply_site_qscore_filters(
         const CALIBRATION_MODEL::var_case my_case,
-        const site_info& si,
-        site_modifiers& smod) const;
+        const digt_site_info& si,
+        digt_call_info& smod) const;
 
     void
     apply_indel_qscore_filters(
         const CALIBRATION_MODEL::var_case my_case,
-        const indel_info& ii,
-        indel_modifiers& imod) const;
+        const digt_indel_info& ii,
+        digt_indel_call& call) const;
 
     const gvcf_deriv_options& dopt;
     std::string model_name;

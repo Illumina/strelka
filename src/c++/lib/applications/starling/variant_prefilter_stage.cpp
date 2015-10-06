@@ -1,3 +1,15 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
 /*
  *  Created on: Jun 4, 2015
  *      Author: jduddy
@@ -6,7 +18,7 @@
 #include "variant_prefilter_stage.hh"
 #include "calibration_models.hh"
 
-variant_prefilter_stage::variant_prefilter_stage(const calibration_models& model, variant_pipe_stage_base& destination)
+variant_prefilter_stage::variant_prefilter_stage(const calibration_models& model, std::shared_ptr<variant_pipe_stage_base> destination)
 : variant_pipe_stage_base(destination)
 , _model(model)
 {
@@ -15,7 +27,7 @@ variant_prefilter_stage::variant_prefilter_stage(const calibration_models& model
 static
 void
 set_site_gt(const diploid_genotype::result_set& rs,
-            site_modifiers& smod)
+            digt_call_info& smod)
 {
     smod.max_gt=rs.max_gt;
     smod.gqx=rs.max_gt_qphred;
@@ -24,8 +36,8 @@ set_site_gt(const diploid_genotype::result_set& rs,
 
 
 void variant_prefilter_stage::add_site_modifiers(
-    const site_info& si,
-    site_modifiers& smod,
+    const digt_site_info& si,
+    digt_call_info& smod,
     const calibration_models& model)
 {
     smod.clear();
@@ -64,40 +76,69 @@ void variant_prefilter_stage::add_site_modifiers(
 
 
 
-void variant_prefilter_stage::process(site_info& si)
+void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
 {
-    add_site_modifiers(si, si.smod, _model);
-    if (si.dgt.is_haploid())
+    if (typeid(*info) == typeid(digt_site_info))
     {
-        if (si.smod.max_gt == si.dgt.ref_gt)
+        auto si(downcast<digt_site_info>(std::move(info)));
+
+        add_site_modifiers(*si, si->smod, _model);
+        if (si->dgt.is_haploid())
         {
-            si.smod.modified_gt=MODIFIED_SITE_GT::ZERO;
+            if (si->smod.max_gt == si->dgt.ref_gt)
+            {
+                si->smod.modified_gt=MODIFIED_SITE_GT::ZERO;
+            }
+            else
+            {
+                si->smod.modified_gt=MODIFIED_SITE_GT::ONE;
+            }
         }
-        else
+        else if (si->dgt.is_noploid())
         {
-            si.smod.modified_gt=MODIFIED_SITE_GT::ONE;
+            if (! si->is_print_unknowngt())
+            {
+                si->smod.set_filter(VCF_FILTERS::PloidyConflict);
+            }
         }
+
+        _sink->process(std::move(si));
     }
-    else if (si.dgt.is_noploid())
+    else
     {
-        if (! si.is_print_unknowngt())
+        auto si(downcast<continuous_site_info>(std::move(info)));
+        for (auto& call : si->calls)
         {
-            si.smod.set_filter(VCF_FILTERS::PloidyConflict);
+            _model.default_clasify_site(*si, call);
         }
+
+        _sink->process(std::move(si));
     }
-
-    _sink->process(si);
-
 }
-void variant_prefilter_stage::process(indel_info& ii)
+
+void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
 {
-    // add filter for all indels in no-ploid regions:
-    if (ii.dindel.is_noploid())
+    if (typeid(*info) == typeid(digt_indel_info))
     {
-        ii.imod().set_filter(VCF_FILTERS::PloidyConflict);
+        auto ii(downcast<digt_indel_info>(std::move(info)));
+        // add filter for all indels in no-ploid regions:
+        if (ii->first()._dindel.is_noploid())
+        {
+            ii->set_filter(VCF_FILTERS::PloidyConflict);
+        }
+
+        _sink->process(std::move(ii));
     }
-
-    _sink->process(ii);
-
+    else
+    {
+        auto ii(downcast<continuous_indel_info>(std::move(info)));
+        for (auto& call : ii->calls)
+        {
+            _model.default_clasify_indel(call);
+        }
+        _sink->process(std::move(ii));
+    }
 }
+
+
 

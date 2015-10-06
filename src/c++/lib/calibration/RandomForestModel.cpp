@@ -11,7 +11,7 @@
 // <https://github.com/sequencing/licenses/>
 //
 /*
- *      Author: mkallberg
+ *      Author: Morten Kallberg
  */
 
 #include "RandomForestModel.hh"
@@ -19,12 +19,9 @@
 #include "blt_util/log.hh"
 #include "blt_util/parse_util.hh"
 
-#include <cassert>
+#include <cstdlib>
 
-using boost::property_tree::ptree;
 using namespace illumina::blt_util;
-
-
 
 namespace DTREE_NODE_TYPE
 {
@@ -37,7 +34,7 @@ enum index_t
 };
 
 static
-const char*
+const std::string
 get_label(const index_t i)
 {
     switch (i)
@@ -55,78 +52,77 @@ get_label(const index_t i)
 }
 }
 
-
-
 template <typename L, typename R>
 void
 RandomForestModel::
 parseTreeNode(
-    const ptree::value_type& v,
+    const Json::Value& v,
     TreeNode<L,R>& val)
 {
     assert(! val.isInit);
-    assert(v.second.size() == 2);
+    assert(v.isArray());
+    assert(v.size() == 2);
 
     val.isInit = true;
-    ptree::const_iterator viter(v.second.begin());
-    val.left = viter->second.get_value<L>();
-    ++viter;
-    val.right = viter->second.get_value<R>();
+    val.left = static_cast<L>(v[0].asDouble());
+    val.right = static_cast<R>(v[1].asDouble());
 }
 
-
-
-void
-RandomForestModel::
-load(const ptree& pt)
+void RandomForestModel
+::Deserialize( const Json::Value& root)
 {
     clear();
 
-    // trees:
-    for (const ptree::value_type& tree_pt : pt)
+    using namespace DTREE_NODE_TYPE;
+    serialized_calibration_model::Deserialize(root);
+
+    //TODO read in other RF specific values
+
+    // Loop through all the trees
+    Json::Value jmodels = root["Model"];
+    for ( unsigned tree_count = 0; tree_count < jmodels.size(); ++tree_count)
     {
         _forest.emplace_back();
         DecisionTree& dtree(_forest.back());
 
-        using namespace DTREE_NODE_TYPE;
-
-        // node types:
+        // loop through the three paramter categories (TREE,VOTE, DECISION) for each tree
         for (int i(0); i<SIZE; ++i)
         {
             const index_t nodeTypeIndex(static_cast<index_t>(i));
-            // nodes:
-            for (const ptree::value_type& v : tree_pt.second.get_child(get_label(nodeTypeIndex)))
-            {
-                const unsigned nodeIndex(parse_unsigned_str(v.first));
-                if (dtree.data.size() <= nodeIndex)
-                {
-                    dtree.data.resize(nodeIndex+1);
-                }
-                DecisionTreeNode& node(dtree.data[nodeIndex]);
+            Json::Value tree_cat = jmodels[tree_count][get_label(nodeTypeIndex)];
 
+            // loop over all the nodes in the tree
+            for (Json::Value::iterator it = tree_cat.begin(); it != tree_cat.end(); ++it)
+            {
+                unsigned nodeIndex(std::atoi(it.key().asCString()));
+                if (dtree.data.size() <= nodeIndex)
+                    dtree.data.resize(nodeIndex+1);
+
+                Json::Value value = (*it);
+                DecisionTreeNode& node(dtree.data[nodeIndex]);
                 switch (nodeTypeIndex)
                 {
                 case TREE:
-                    parseTreeNode(v,node.tree);
+                    parseTreeNode(value,node.tree);
                     break;
                 case VOTE:
-                    parseTreeNode(v,node.vote);
+                    parseTreeNode(value,node.vote);
                     break;
                 case DECISION:
-                    parseTreeNode(v,node.decision);
+                    parseTreeNode(value,node.decision);
                     if (node.decision.left >= static_cast<int>(_nFeatures))
                     {
                         _nFeatures=node.decision.left+1;
                     }
                     break;
                 default:
-                    assert(false && "Unknown node type");
+                    assert(false && "Unknown node type when reading in Random Forrest model");
                 }
             }
         }
+
     }
 }
-
 
 
 double
@@ -163,7 +159,6 @@ getDecisionTreeProb(
 }
 
 
-
 double
 RandomForestModel::
 getProb(
@@ -182,13 +177,12 @@ getProb(
     }
     catch (...)
     {
-        log_os << "Exception caught in random forest while scoring features:\n";
-        for (const auto val : features)
-        {
-            log_os << "K:V " << val.first << " : " << val.second << "\n";
-        }
+//        log_os << "Exception caught in random forest while scoring features:\n";
+//        for (const auto val : features)
+//        {
+//            log_os << "K:V " << val.first << " : " << val.second << "\n";
+//        }
         throw;
     }
     return retval;
 }
-

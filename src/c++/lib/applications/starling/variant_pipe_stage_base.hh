@@ -17,20 +17,34 @@
 class variant_pipe_stage_base
 {
 public:
-    virtual void process(site_info& si) { if (_sink) _sink->process(si); }
-    virtual void process(indel_info& ii) { if (_sink) _sink->process(ii); }
+    virtual void process(std::unique_ptr<site_info> si) { if (_sink) _sink->process(std::move(si)); }
+    virtual void process(std::unique_ptr<indel_info> ii) { if (_sink) _sink->process(std::move(ii)); }
     virtual void flush()
     {
         if (_sink)
             _sink->flush();
     }
 
-    variant_pipe_stage_base(variant_pipe_stage_base& sink) : _sink(&sink) {}
+    explicit variant_pipe_stage_base(std::shared_ptr<variant_pipe_stage_base> sink) : _sink(sink) {}
+
+    virtual ~variant_pipe_stage_base() {}
 
 protected:
     variant_pipe_stage_base() : _sink(nullptr) {}
 
+    template <class TDerived, class TBase>
+    static std::unique_ptr<TDerived> downcast(std::unique_ptr<TBase> basePtr)
+    {
+        if (typeid(*basePtr) == typeid(TDerived))
+        {
+            return std::unique_ptr<TDerived>(dynamic_cast<TDerived*>(basePtr.release()));
+        }
+        throw std::bad_cast();
+    }
 
-    variant_pipe_stage_base* _sink;
+
+
+
+    std::shared_ptr<variant_pipe_stage_base> _sink;
 };
 

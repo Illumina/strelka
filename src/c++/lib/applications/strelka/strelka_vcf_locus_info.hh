@@ -18,7 +18,7 @@
 #pragma once
 
 #include "strelkaVQSRFeatures.hh"
-#include "calibration/CalibrationModel.hh"
+#include "calibration/SerializedModel.hh"
 
 #include <cassert>
 

@@ -110,12 +110,14 @@ somatic_indel_caller_grid(const strelka_options& opt,
     }
 }
 
+//    const double sie_rate(std::pow(ref_error_prob, opt.shared_indel_error_factor));
+//    const double ln_sie_rate(std::log(sie_rate));
+//    const double ln_csie_rate(log1p_switch(-sie_rate));
 
 // Currently the index is reversed (i.e. index == 3 -> fraction == 0.95)
 float get_fraction_from_index(int index)
 {
     const float ratio_increment(0.5/static_cast<float>(STAR_DIINDEL_GRID::HET_RES+1));
-
     if(index == 0) return 0.f;
     if(index == 1) return 1.f;
     if(index == 2) return 0.5f;
@@ -257,7 +259,13 @@ somatic_indel_caller_grid::calculate_result_set(
         }
     }
 
-    // log prob to prob, calculate sum
+    //#ifdef DEBUG_INDEL_CALL
+    //    log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
+    //#endif
+
+    // sum up the diagonal
+    // Everything off-diagonal is somatic, so this is 'non-somatic'
+    //
     double post_prob[STAR_DIINDEL::SIZE][STAR_DIINDEL::SIZE];
     double sum_prob = 0.0;
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
@@ -270,6 +278,27 @@ somatic_indel_caller_grid::calculate_result_set(
     }
 
     // normalize probabilities, determine QSI, NT and QSI_NT
+    // Compute QSI_NT
+    //
+    // compute the probability that the indel is:
+    //
+    // not_somfrom_sum =
+    //     ((not somatic) OR (not 'from one of the three reference states'))
+    //
+    // ...where we minimize over the values from the 3 ref states
+    //
+    // We're interested in this value b/c it is the complement of:
+    // (somatic AND 'from one of the three reference states')
+    //
+    // which is the value we want to provide a quality score for --
+    // the quality score is an error term, so it is  based on the
+    // the complement value.
+    //
+    //
+    // NOTE this is unnecessarily inefficient, even after controlling
+    // for potential round-off error (which itself might be overkill), we're
+    // still repeatedly summing most of the frequency space 3 times.
+    //
     double log_sum_prob = std::log(sum_prob);
     double min_not_somfrom_sum(0);
     double nonsom_prob = 0.0;

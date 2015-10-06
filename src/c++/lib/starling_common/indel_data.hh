@@ -267,7 +267,7 @@ private:
 
 public:
 
-    // map_read_ids refers to the read(s) that support the indel
+    // all_read_ids refers to the read(s) that support the indel
     // through their genomic alignments, given that those alignments
     // meet the snp-caller's mapping thresholds.
     //

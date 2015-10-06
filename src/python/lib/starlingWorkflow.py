@@ -74,9 +74,10 @@ def runDepth(self,taskPrefix="",dependencies=None) :
 
     return nextStepWait
 
+
 def runIndelModel(self,taskPrefix="",dependencies=None) :
     """
-    estimate indel error paramters
+    estimate indel error parameters and write back a modified model file
     """
 
     bamFile=""
@@ -84,11 +85,21 @@ def runIndelModel(self,taskPrefix="",dependencies=None) :
         bamFile = self.params.bamList[0]
     else :
         return set()
+    tempPath  = self.params.getIndelSegmentDir
+    inModel   = self.params.inputIndelErrorModelsFile
+    outModel  = self.params.getRunSpecificModel
+    reference = self.params.referenceFasta
+    scriptDir = os.path.abspath(scriptDir)
+    depth     = self.params.getChromDepth
 
     nextStepWait = set()
-    nextStepWait.add(self.addWorkflowTask("GenerateIndelModel", indelErrorWorkflow(self.params, self.paths), dependencies=dependencies))
+    nextStepWait.add(self.addWorkflowTask("GenerateIndelModel", indelErrorWorkflow(bamFile,tempPath,inModel,outModel,reference,scriptDir,depth), dependencies=dependencies))
+
+    # edit the scoring model used to reflect the restated model
+    self.params.dynamicIndelErrorModelsFile = outModel
 
     return nextStepWait
+
 
 class TempSegmentFiles :
     def __init__(self) :
@@ -128,24 +139,29 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
-    segCmd.extend(['--calibration-model-file',self.params.vqsrModelFile])
-    segCmd.extend(['--scoring-model',self.params.vqsrModel ])
+    segCmd.extend(['--do-short-range-phasing'])
+    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+
+    # VQSR:
+    segCmd.extend(['--variant-scoring-models-file',self.params.vqsrModelFile])
+    segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModelName])
+
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipIndelErrorModel:
-        segCmd.extend(['--indel-error-model',self.params.indelErrorModel])
+        segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
+    else :
+        segCmd.extend(['--indel-error-models-file', self.params.dynamicIndelErrorModelsFile])
 
     if self.params.isReportVQSRMetrics :
         segCmd.append("--gvcf-report-VQSRmetrics")
 
-    segCmd.extend(['--do-short-range-phasing'])
-
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",quote(bamPath)])
 
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
-
     if not isFirstSegment :
         segCmd.append("--gvcf-skip-header")
+    elif len(self.params.callContinuousVf) > 0 :
+        segCmd.extend(["--gvcf-include-header", "VF"])
 
     if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
@@ -166,9 +182,12 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     if self.params.targetRegionsBed is not None :
         segCmd.extend(['--targeted-regions-bed', self.params.targetRegionsBed])
-        
+
     if self.params.ploidyBed is not None :
         segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
+
+    if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
+        segCmd.append('--call-continuous-vf')
 
     if self.params.extraStarlingArguments is not None :
         for arg in self.params.extraStarlingArguments.strip().split() :
@@ -283,8 +302,14 @@ class PathInfo:
     def getChromDepth(self) :
         return os.path.join(self.params.workDir,"chromDepth.txt")
 
+    def getRunSpecificModel(self) :
+        return os.path.join(self.params.workDir,"Indel_model_run.json")
+
     def getTmpSegmentDir(self) :
         return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
+
+    def getIndelSegmentDir(self) :
+        return os.path.join(self.params.workDir, "indelSegment.tmpdir")
 
     def getTmpSegmentGvcfPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "genome.%s.vcf.gz" % (segStr))

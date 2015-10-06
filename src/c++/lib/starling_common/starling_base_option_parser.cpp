@@ -165,14 +165,11 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
 
-    ("calibration-model-file", po::value(&opt.calibration_models_filename),
-     "File containing calibration model parameters")
+    ("indel-error-models-file", po::value(&opt.indel_error_models_filename),
+     "File containing indel error models")
 
-    ("somatic-scoring-models", po::value(&opt.somatic_scoring_models_filename),
-     "Model file for somatic VQSR")
-
-    ("scoring-model", po::value(&opt.calibration_model),
-     "The calibration model for quality filtering variants")
+    ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
+     "Indel error model name (corresponds to {name}_{version} in model file)")
 
     ("remap-input-softclip", po::value(&opt.is_remap_input_softclip)->zero_tokens(),
      "Attempt to realign all soft-clipped segments in input reads (DEPRECATED)")
@@ -445,9 +442,14 @@ finalize_starling_base_options(
         last_fs=fs;
     }
 
-    if (! opt.somatic_scoring_models_filename.empty())
+    if (! opt.indel_error_models_filename.empty())
     {
-        scoring_models::Instance().load_models(opt.somatic_scoring_models_filename);
+        scoring_models::Instance().load_indel_error_models(opt.indel_error_models_filename);
+    }
+
+    if (! opt.indel_error_model_name.empty())
+    {
+        scoring_models::Instance().set_indel_model(opt.indel_error_model_name);
     }
 
     /// tier2 options are not parsed by starling_base, but need to live up here for now,

@@ -18,7 +18,7 @@
 
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
-#include "calibration/scoringmodels.hh"
+//#include "calibration/scoringmodels.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 
 #include <cmath>
@@ -27,6 +27,10 @@
 #include <iostream>
 #include <utility>
 
+
+static const unsigned max_hpol_len(40);
+static const unsigned max_indel_len(15);
+typedef std::pair<double,double> error_model[max_hpol_len];
 
 static
 void
@@ -115,11 +119,11 @@ struct PatternErrorModel
         const std::string& /*pattern*/)
     {
         // we are using estimated error model from json input
-        if (scoring_models::Instance().indel_init)
-        {
+//        if (scoring_models::Instance().indel_init)
+//        {
 //            log_os << "Getting indel error model " << overall_error_model << std::endl;
 //            return scoring_models::Instance()->get_indel_model(overall_error_model);
-        }
+//        }
 
 
         //backwards compatibility
@@ -234,7 +238,7 @@ get_indel_error_prob(const starling_base_options& client_opt,
 {
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
-    const error_model& indel_error_prob_len(emodel.getModel(client_opt.indel_error_model,iri.repeat_unit));
+    const error_model& indel_error_prob_len(emodel.getModel(client_opt.indel_error_model_name,iri.repeat_unit));
 
     if (! is_simple_indel)
     {

@@ -22,6 +22,7 @@
 #include "blt_util/io_util.hh"
 #include "htsapi/vcf_util.hh"
 #include "htsapi/bam_dumper.hh"
+#include "calibration/scoringmodels.hh"
 
 #include <cassert>
 
@@ -85,7 +86,7 @@ strelka_streams(
     : base_t(opt,pinfo,ssi)
 {
 
-	{
+    {
         using namespace STRELKA_SAMPLE_TYPE;
         if (opt.is_realigned_read_file)
         {
@@ -117,6 +118,9 @@ strelka_streams(
             fos << "##content=strelka somatic snv calls\n"
                 << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n"
                 << "##priorSomaticSnvRate=" << opt.somatic_snv_rate << "\n";
+
+            // this is already captured in commandline call to strelka written to the vcf header:
+            //scoring_models::Instance().writeVcfHeader(fos);
 
             // INFO:
             fos << "##INFO=<ID=QSS,Number=1,Type=Integer,Description=\"Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal\">\n";
@@ -207,6 +211,9 @@ strelka_streams(
                 << "##germlineIndelTheta=" << opt.bindel_diploid_theta << "\n"
                 << "##priorSomaticIndelRate=" << opt.somatic_indel_rate << "\n";
 
+            // this is already captured in commandline call to strelka written to the vcf header:
+            //scoring_models::Instance().writeVcfHeader(fos);
+
             // INFO:
             fos << "##INFO=<ID=QSI,Number=1,Type=Integer,Description=\"Quality score for any somatic variant, ie. for the ALT haplotype to be present at a significantly different frequency in the tumor and normal\">\n";
             fos << "##INFO=<ID=TQSI,Number=1,Type=Integer,Description=\"Data tier used to compute QSI\">\n";
@@ -236,16 +243,6 @@ strelka_streams(
             // FILTERS:
             {
                 using namespace STRELKA_VCF_FILTERS;
-                {
-                    std::ostringstream oss;
-                    oss << "Sequence repeat of more than " << opt.sfilter.indelMaxRefRepeat << "x in the reference sequence";
-                    write_vcf_filter(fos, get_label(Repeat), oss.str().c_str());
-                }
-                {
-                    std::ostringstream oss;
-                    oss << "Indel overlaps an interrupted homopolymer longer than " << opt.sfilter.indelMaxIntHpolLength << "x in the reference sequence";
-                    write_vcf_filter(fos, get_label(iHpol), oss.str().c_str());
-                }
                 {
                     std::ostringstream oss;
                     oss << "Average fraction of filtered basecalls within " << opt.sfilter.indelRegionFlankSize << " bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;

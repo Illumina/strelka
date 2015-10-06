@@ -11,23 +11,21 @@
 // <https://github.com/sequencing/licenses/>
 //
 /*
- *      Author: mkallberg
+ *      Author: Morten Kallberg
  */
 
 #pragma once
 
-#include "calibration/CalibrationModel.hh"
-
-#include "boost/property_tree/ptree.hpp"
+#include <calibration/SerializedModel.hh>
 
 #include <vector>
+#include <cassert>
 
 
-struct RandomForestModel
+struct RandomForestModel : public serialized_calibration_model
 {
     RandomForestModel() {}
 
-    void load(const boost::property_tree::ptree& pt);
 
     bool isInit() const
     {
@@ -40,6 +38,8 @@ struct RandomForestModel
     }
 
     double getProb(const feature_type& features) const;
+
+    void Deserialize( const Json::Value& root);
 
 private:
     template <typename L, typename R>
@@ -75,7 +75,7 @@ private:
     template <typename L, typename R>
     void
     parseTreeNode(
-        const boost::property_tree::ptree::value_type& v,
+        const Json::Value& v,
         TreeNode<L,R>& val);
 
     double

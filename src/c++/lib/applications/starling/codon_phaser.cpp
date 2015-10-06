@@ -31,18 +31,19 @@
 #endif
 
 
-void Codon_phaser::process(site_info& si)
+void Codon_phaser::process(std::unique_ptr<site_info> site)
 {
+    std::unique_ptr<digt_site_info> si(downcast<digt_site_info>(std::move(site)));
     if (opt.do_codon_phasing && (is_phasable_site(si) || is_in_block()))
     {
-        auto emptyBuffer = add_site(si);
+        auto emptyBuffer = add_site(std::move(si));
         if ((!is_in_block()) || emptyBuffer)
         {
             output_buffer();
         }
         return;
     }
-    _sink->process(si);
+    _sink->process(std::move(si));
 }
 
 void Codon_phaser::flush()
@@ -59,7 +60,7 @@ void Codon_phaser::flush()
 }
 
 // the Codon phaser can't work across indels, so flush any in-progress phasing
-void Codon_phaser::process(indel_info& ii)
+void Codon_phaser::process(std::unique_ptr<indel_info> ii)
 {
     if (opt.do_codon_phasing && is_in_block())
     {
@@ -69,14 +70,14 @@ void Codon_phaser::process(indel_info& ii)
         }
         output_buffer();
     }
-    _sink->process(ii);
+    _sink->process(std::move(ii));
 }
 
 void Codon_phaser::output_buffer()
 {
-    for (site_info& si : _buffer)
+    for (auto&& si : _buffer)
     {
-        _sink->process(si);
+        _sink->process(std::move(si));
     }
     clear();
 }
@@ -84,11 +85,10 @@ void Codon_phaser::output_buffer()
 
 // Add a SNP site to the phasing buffer
 bool
-Codon_phaser::add_site(const site_info& si)
+Codon_phaser::add_site(std::unique_ptr<digt_site_info> si)
 {
-    _buffer.push_back(si);
 #ifdef DEBUG_CODON
-    log_os << __FUNCTION__ << ": input si " << si << "\n";
+    log_os << __FUNCTION__ << ": input si " << *si << "\n";
 #endif
 
     // case: extending block with het call, update block_end position
@@ -96,7 +96,7 @@ Codon_phaser::add_site(const site_info& si)
     {
         if (! is_in_block())
         {
-            block_start = si.pos;
+            block_start = si->pos;
 #ifdef DEBUG_CODON
             log_os << __FUNCTION__ << ": phasable & starting block @ " << block_start << "\n";
 #endif
@@ -107,28 +107,35 @@ Codon_phaser::add_site(const site_info& si)
             log_os << __FUNCTION__ << ": phasable & continuing block to " << si.pos << "\n";
         }
 #endif
-        block_end = si.pos;
+        block_end = si->pos;
         het_count++;
+        _buffer.push_back(std::move(si));
         return false;
     }
 
     //case: we get a record that is explicitly set a unphaseable
-    if (si.Unphasable)
+    if (si->Unphasable)
     {
 #ifdef DEBUG_CODON
         log_os << __FUNCTION__ << ": I shouldn't phase this record " << si << "\n";
 #endif
+        _buffer.push_back(std::move(si));
+
         return true;
     }
 
     // case: extending block with none-het call based on the phasing range
-    if (is_in_block() && (si.pos-block_end+1)<this->opt.phasing_window)
+    if (is_in_block() && (si->pos-block_end+1)<this->opt.phasing_window)
     {
 #ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << ": notphasable & continuing block to " << si.pos << "\n";
+        log_os << __FUNCTION__ << ": notphasable & continuing block to " << si->pos << "\n";
 #endif
+        _buffer.push_back(std::move(si));
+
         return false;
     }
+    _buffer.push_back(std::move(si));
+
 
     // case: setup the phased record and write out
     if (het_count>1)
@@ -146,8 +153,8 @@ void
 Codon_phaser::construct_reference()
 {
     reference = "";
-    auto start = _buffer.begin()->pos;
-    auto end = _buffer.rbegin()->pos;
+    auto start = _buffer.front()->pos;
+    auto end = _buffer.back()->pos;
     auto len = std::min(get_block_length(), (unsigned)(end-start+1));
 
     ref.get_substring(start, len, reference);
@@ -169,10 +176,10 @@ create_phased_record()
     {
         // some initial minimum conditions, look for at least 10 spanning reads support
         // set flag on records saying too little evidence to phase
-        for (site_info& si : _buffer)
+        for (auto&& si : _buffer)
         {
-            if (si.is_het())
-                si.smod.is_phasing_insufficient_depth = true;
+            if (si->is_het())
+                si->smod.is_phasing_insufficient_depth = true;
         }
         return;
     }
@@ -257,7 +264,6 @@ create_phased_record()
 
         if (! phasing_inconsistent)
         {
-            //TODO: If we ever phase HOMALT, this logic needs to change
             assert(! max_alleles[0].first.empty());
             assert(max_alleles[0].first.size() == max_alleles[1].first.size());
             if (max_alleles[0].first.front() == max_alleles[1].first.front()) phasing_inconsistent=true;
@@ -271,25 +277,24 @@ create_phased_record()
 
     if (phasing_inconsistent)
     {
-        for (auto& val : _buffer)
+        for (auto&& val : _buffer)
         {
             if (! is_phasable_site(val)) continue;
-            val.smod.set_filter(VCF_FILTERS::PhasingConflict);
+            val->smod.set_filter(VCF_FILTERS::PhasingConflict);
         }
         return;
     }
 
     // we have a phased record, modify site buffer to reflect the changes
-    site_info& base = (this->_buffer.at(0));
+    auto&& base = this->_buffer.at(0);
 
-    base.phased_ref = this->reference;
+    base->phased_ref = this->reference;
     const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
 
-    base.smod.is_block = false;
-    base.smod.is_unknown = false;
-    base.smod.max_gt = 4;
-    base.dgt.ref_gt  = 0; // hacking  the gt method to 0/1
-    if (!is_ref) base.dgt.ref_gt = 2; // hacking the gt method to 1/2
+    base->smod.is_unknown = false;
+    base->smod.max_gt = 4;
+    base->dgt.ref_gt  = 0; // hacking  the gt method to 0/1
+    if (!is_ref) base->dgt.ref_gt = 2; // hacking the gt method to 1/2
 
     std::stringstream AD,alt;
     AD << this->observations[this->reference];
@@ -311,26 +316,26 @@ create_phased_record()
     int min_gq(maxInt), min_qual(maxInt), min_qscore(maxInt);
     for (unsigned i(0); i<this->get_block_length(); i++)
     {
-        const site_info& si(_buffer.at(i));
+        auto&& si(_buffer.at(i));
         if (! is_phasable_site(si)) continue;
-        min_gq = std::min(si.smod.gq,min_gq);
-        min_qual = std::min(si.dgt.genome.snp_qphred,min_qual);
-        min_qscore = std::min(si.smod.Qscore,min_qscore);
+        min_gq = std::min(si->smod.gq,min_gq);
+        min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
+        min_qscore = std::min(si->smod.Qscore,min_qscore);
     }
 
     // set various quality fields conservatively
-    base.smod.gq                = min_gq;
-    base.dgt.genome.snp_qphred  = min_qual;
-    base.smod.gqx               = std::min(min_gq,min_qual);
-    base.smod.Qscore            = min_qscore;
+    base->smod.gq                = min_gq;
+    base->dgt.genome.snp_qphred  = min_qual;
+    base->smod.gqx               = std::min(min_gq,min_qual);
+    base->smod.Qscore            = min_qscore;
 
-    base.phased_alt = alt.str();
-    base.phased_AD  = AD.str();
+    base->phased_alt = alt.str();
+    base->phased_AD  = AD.str();
 
-    base.smod.is_phased_region = true;
+    base->smod.is_phased_region = true;
     const int reads_ignored = (this->total_reads-allele_sum);
-    base.n_used_calls = this->total_reads - reads_ignored;
-    base.n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
+    base->n_used_calls = this->total_reads - reads_ignored;
+    base->n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
 
     // case we want to report the phased record clean out buffer and push on the phased record only
 #ifdef DEBUG_CODON
@@ -386,34 +391,34 @@ collect_pileup_evidence()
     // can't use auto here b/c of recursion:
     std::function<std::pair<bool,std::string>(const unsigned)> tracePartialRead =
         [&](const unsigned startBlockIndex)
+    {
+        bool isPass(true);
+        std::string readFrag;
+        for (unsigned blockIndex(startBlockIndex); blockIndex<blockWidth; ++blockIndex)
         {
-            bool isPass(true);
-            std::string readFrag;
-            for (unsigned blockIndex(startBlockIndex); blockIndex<blockWidth; ++blockIndex)
+            const snp_pos_info& pi(*spi[blockIndex]);
+            while (true)
             {
-                const snp_pos_info& pi(*spi[blockIndex]);
-                while (true)
-                {
-                    const base_call& bc(pi.calls.at(callOffset[blockIndex]));
-                    if ((! bc.isFirstBaseCallFromMatchSeg) || (blockIndex == startBlockIndex)) break;
+                const base_call& bc(pi.calls.at(callOffset[blockIndex]));
+                if ((! bc.isFirstBaseCallFromMatchSeg) || (blockIndex == startBlockIndex)) break;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wuninitialized"
-                    tracePartialRead(blockIndex);
+                tracePartialRead(blockIndex);
 #pragma clang diagnostic pop
-                }
-                const base_call& bc(pi.calls.at(callOffset[blockIndex]));
-                // this represents the 'ordinary' advance of callOffset for a non-interrupted read segment:
-                callOffset[blockIndex]++;
-                if (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth))
-                {
-                    isPass=false;
-                    break;
-                }
-                if (bc.is_call_filter) isPass=false;
-                readFrag += id_to_base(bc.base_id);
             }
-            return std::make_pair(isPass,readFrag);
-        };
+            const base_call& bc(pi.calls.at(callOffset[blockIndex]));
+            // this represents the 'ordinary' advance of callOffset for a non-interrupted read segment:
+            callOffset[blockIndex]++;
+            if (bc.isLastBaseCallFromMatchSeg && ((blockIndex+1) < blockWidth))
+            {
+                isPass=false;
+                break;
+            }
+            if (bc.is_call_filter) isPass=false;
+            readFrag += id_to_base(bc.base_id);
+        }
+        return std::make_pair(isPass,readFrag);
+    };
 
     // analyze as virtual reads -- to do so treat the first pileup column as a privileged reference point:
     const snp_pos_info& beginPi(*spi[0]);
@@ -462,7 +467,7 @@ Codon_phaser::write_out_buffer() const
 {
     for (const auto& val : _buffer)
     {
-        log_os << val << " ref " << val.ref << "\n";
+        log_os << *val << " ref " << val->ref << "\n";
     }
 }
 

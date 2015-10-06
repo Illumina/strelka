@@ -66,7 +66,7 @@ struct blt_options
     bool
     is_compute_germline_VQSRmetrics() const
     {
-        return (is_report_germline_VQSRmetrics || (! calibration_model.empty()));
+        return (is_report_germline_VQSRmetrics || (! germline_variant_scoring_model_name.empty()));
     }
 
     virtual
@@ -181,12 +181,8 @@ struct blt_options
     bool
     isUseSomaticVQSR() const
     {
-        return (! somatic_scoring_models_filename.empty());
+        return (! somatic_variant_scoring_models_filename.empty());
     }
-
-    // Which calibration model should we use?
-    // leave blank to select default rule-based metric option
-    std::string calibration_model;
 
     // Apply codon phasing:
     bool do_codon_phasing = false;
@@ -198,11 +194,20 @@ struct blt_options
     double indel_ref_error_factor = 1.;
 
     std::string report_filename;
-    std::string calibration_models_filename;
 
-    // all somatic VQSR models (and indel error models)
-    std::string somatic_scoring_models_filename;
-    std::string indel_error_model;      // which baseline prior should be used for candidate indel genotyping
+    /// indel error options (TODO: move this to starling_base options)
+    std::string indel_error_models_filename;
+    std::string indel_error_model_name = "new";      // which baseline prior should be used for candidate indel genotyping (required)
+
+    /// starling VQSR options: (TODO: move this down to starling options)
+    std::string germline_variant_scoring_models_filename;
+
+    /// Which calibration model should we use? (default: rule-based metric)
+    std::string germline_variant_scoring_model_name;
+
+    /// strelka VQSR options: (TODO: move this down to strelka options)
+    // all somatic VQSR models
+    std::string somatic_variant_scoring_models_filename;
 };
 
 

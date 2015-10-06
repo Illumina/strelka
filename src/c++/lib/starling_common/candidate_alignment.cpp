@@ -42,9 +42,10 @@ operator<<(std::ostream& os,
 // get the keys of the indels present in the candidate alignment
 //
 void
-get_alignment_indels(const candidate_alignment& cal,
-                     const unsigned max_indel_size,
-                     indel_set_t& indels)
+get_alignment_indels(
+    const candidate_alignment& cal,
+    const unsigned max_indel_size,
+    indel_set_t& indels)
 {
     using namespace ALIGNPATH;
 

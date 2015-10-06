@@ -92,7 +92,6 @@ struct diploid_genotype
     unsigned ref_gt;
     result_set genome;
     result_set poly;
-    double sb;
 };
 
 
@@ -128,6 +127,7 @@ struct pprob_digt_caller : private boost::noncopyable
         const blt_options& opt,
         const extended_pos_info& epi,
         diploid_genotype& dgt,
+        double& strand_bias,
         const bool is_always_test = false) const;
 
 

@@ -18,6 +18,12 @@
 
 #include "starling_option_parser.hh"
 
+//#define DEBUG_OPTIONS
+#ifdef DEBUG_OPTIONS
+#include "blt_util/log.hh"
+#endif
+
+
 
 
 po::options_description
@@ -58,14 +64,21 @@ get_starling_option_parser(
     ("nocompress-bed",  po::value(&opt.gvcf.nocompress_region_bedfile),
      "Bed file with sites that should not be block-compressed in gVCF (must be bgzip compressed and tabix indexed).")
     ("targeted-regions-bed",  po::value(&opt.gvcf.targeted_regions_bedfile),
-      "Bed file with targeted regions. Variants outside these regions will be filtered. (must be bgzip compressed and tabix indexed).")
-    ("indel-error-model",  po::value(&opt.indel_error_model)->default_value("new"),
+     "Bed file with targeted regions. Variants outside these regions will be filtered. (must be bgzip compressed and tabix indexed).")
+    ("indel-error-model",  po::value(&opt.indel_error_model_name)->default_value("new"),
      "Choose indel error model to use, available option old,new, new_stratified (development option only)")
     ("indel-ref-error-factor",  po::value(&opt.indel_ref_error_factor)->default_value(opt.indel_ref_error_factor),
      "Choose multiplier for ref error rate to use; 1 would be expected to be correct, but higher values counteract a bias away from homozygous indels (undercalling)")
-
+    ("call-continuous-vf",  po::value(&opt.is_ploidy_prior)->zero_tokens()->implicit_value(false),
+          "Instead of a haploid/diploid prior assumption, output a continuous VF")
+    ("noise-floor",  po::value(&opt.noise_floor)->default_value(opt.noise_floor),
+          "The noise rate for basecalls assumed when calling continuous variant frequencies")
+    ("min-het-vf",  po::value(&opt.min_het_vf)->default_value(opt.min_het_vf),
+                    "The minimum allele frequency to call a heterozygous genotype when calling continuous variant frequencies")
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)")
+    ("gvcf-include-header", po::value(&opt.gvcf.include_headers)->multitoken(),
+          "Include the specified field description in the header (usually used to simplify segment concatenation when different segments have different fields)")
     ;
 
     po::options_description phase_opt("Read-backed phasing options");
@@ -76,8 +89,16 @@ get_starling_option_parser(
      "The maximum window to consider for short-range phasing")
     ;
 
+    po::options_description score_opt("scoring-options");
+    score_opt.add_options()
+    ("variant-scoring-models-file", po::value(&opt.germline_variant_scoring_models_filename),
+     "Model file for germline small variant scoring (VQSR)")
+    ("variant-scoring-model-name", po::value(&opt.germline_variant_scoring_model_name),
+     "The scoring model for germline small variants")
+    ;
+
     po::options_description starling_parse_opt("Germline calling options");
-    starling_parse_opt.add(gvcf_opt).add(phase_opt);
+    starling_parse_opt.add(gvcf_opt).add(phase_opt).add(score_opt);
 
     // final assembly
     po::options_description visible("Options");
@@ -111,6 +132,39 @@ finalize_starling_options(
     if (opt.gvcf.block_percent_tol > 100)
     {
         pinfo.usage("block-percent-tol must be in range [0-100].");
+    }
+    if (!opt.is_ploidy_prior)
+    {
+        if (opt.noise_floor < 0)
+        {
+            // not specified - derive from the min qscore
+            opt.noise_floor = pow(10, (-1.0 * opt.min_qscore)/10.0);
+#ifdef DEBUG_OPTIONS
+            log_os << "Setting noise floor to: " << opt.noise_floor << " from min_qscore " << opt.min_qscore << "\n";
+#endif
+        }
+        else if (opt.noise_floor > 0 && opt.noise_floor < 0.5)
+        {
+            // specified explicitly. Override the min_qscore if it is incompatible with the noise floor
+            int min_qscore = (int)round(-10 * log10(opt.noise_floor));
+            if (min_qscore > opt.min_qscore)
+            {
+                opt.min_qscore = min_qscore;
+#ifdef DEBUG_OPTIONS
+                log_os << "Overriding min q_score to: " << min_qscore << " to support noise floor " << opt.noise_floor << "\n";
+#endif
+            }
+
+        }
+        if (opt.noise_floor >= 0.5 || opt.noise_floor <= 0.0)
+        {
+            pinfo.usage("noise-floor must be in range (0, 0.5)");
+        }
+        if (opt.min_het_vf <= 0.0 || opt.min_het_vf >= 0.5)
+        {
+            pinfo.usage("min-het-vf must be in range (0, 0.5)");
+        }
+
     }
 
     finalize_starling_base_options(pinfo,vm,opt);

@@ -1,3 +1,11 @@
+v2.3.14
+- STAR-16 Continuous variant frequency calling (a.k.a. somatic)
+- STARKA-250 Remove hpol and ihpol indel filters
+- STAR-46 Don't block-compress forced GT SNVs in regions of no coverage
+- STARKA-249 Fix minor issue with somatic indel prior
+- STARKA-248 tolerate reference allele insert/delete alignments in read input
+- STARKA-237 new format for scoring and indel models
+- STARKA-239 update strelka VQSR and parameters for higher recall
 v2.3.13
 - STAR-34: When SNVs are not phased due to low read depth (<10), add
 Unphased to INFO field
