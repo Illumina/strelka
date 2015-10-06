@@ -135,11 +135,11 @@ private:
 
     prior_set _bare_lnprior;
 
-    void
-    set_prior(double *lnprior_normal_purity,
-            double *lnprior_tumor_purity,
-            const double ref_error_prob
-            ) const;
+//    void
+//    set_lprob_f(double *lprob_f_given_g,
+//            const double ref_error_prob,
+//            const double normal_contam_ratio
+//            ) const;
 
     double get_log_prob_fn(
             unsigned fn,
@@ -153,8 +153,6 @@ private:
 
     void
     calculate_result_set(
-        const double *lnprior_normal_purity,
-        const double *lnprior_tumor_purity,
         const double ref_error_lnp,
         const double ref_real_lnp,
         const double* normal_lhood,
