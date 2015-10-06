@@ -216,49 +216,11 @@ somatic_indel_caller_grid::calculate_result_set(
     const double* tumor_lhood,
     result_set& rs) const
 {
-//    for (unsigned gt(0); gt<STAR_DIINDEL_GRID::SIZE; ++gt)
-//    {
-//        printf("%lf,", normal_lhood[gt]);
-//    }
-//    printf("\n");
-//    for (unsigned gt(0); gt<STAR_DIINDEL_GRID::SIZE; ++gt)
-//    {
-//        printf("%lf,", tumor_lhood[gt]);
-//    }
-//    printf("\n");
-
     double log_post_prob[STAR_DIINDEL::SIZE][STAR_DIINDEL::SIZE];
     double max_log_prob = -INFINITY;
     rs.max_gt=0;
 
-//    double noise_lprob = -std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1)); // log P_noise(f)
     bool is_normal_contaminated = true;
-//    const float fn_ft_ratio = 0.25f;
-
-//    const double prob_ft_given_somatic[STAR_DIINDEL_GRID::SIZE] =
-//    {
-//        0.001655629, 0.0, 0.163907285,
-//        0.0, 0.0, 0.0, 0.0, 0.001655629, 0.011589404, 0.018211921, 0.036423841, 0.084437086,
-//        0.193708609, 0.193708609, 0.147350993, 0.074503311, 0.03807947, 0.016556291, 0.013245033, 0.001655629, 0.003311258
-////        0.003311258, 0.001655629, 0.013245033, 0.016556291, 0.03807947, 0.074503311, 0.147350993, 0.193708609, 0.193708609,
-////        0.084437086, 0.036423841, 0.018211921, 0.011589404, 0.001655629, 0.0, 0.0, 0.0, 0.0
-//    };
-//
-//    const double prob_fn_given_somatic[STAR_DIINDEL_GRID::SIZE] =
-//    {
-//            0.514900662, 0.0, 0.0,
-//            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-//            0.0, 0.0, 0.0, 0.0, 0.001655629, 0.003311258, 0.001655629, 0.066225166, 0.412251656
-////            0.412251656, 0.066225166, 0.001655629, 0.003311258, 0.001655629, 0.0, 0.0, 0.0, 0.0,
-////            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-//    };
-
-//    const double prob_fn_given_somatic[STAR_DIINDEL_GRID::SIZE] =
-//    {
-//            0.865894, 0.0, 0.0,
-//            0.122517, 0.009934, 0.001656, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-//            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-//    };
 
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
@@ -598,19 +560,6 @@ get_somatic_indel(const strelka_options& opt,
                                  ik,tumor_id,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+STAR_DIINDEL::SIZE);
-
-//        printf("{%lf", normal_lhood[0]);
-//        for(int f=0; f<STAR_DIINDEL_GRID::SIZE; ++f)
-//        {
-//            printf(",%lf", normal_lhood[f]);
-//        }
-//        printf("}\n");
-//        printf("{%lf", normal_lhood[0]);
-//        for(int f=0; f<STAR_DIINDEL_GRID::SIZE; ++f)
-//        {
-//            printf(",%lf", tumor_lhood[f]);
-//        }
-//        printf("}\n");
 
         const double ref_err_prob = 0.000011;
         const double shared_indel_error_factor = 1.4;
