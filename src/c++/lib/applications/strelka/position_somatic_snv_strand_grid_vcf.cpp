@@ -325,6 +325,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
         {
             smod.isQscore = true;
             smod.Qscore = models.score_variant(smod.get_features(),VARIATION_NODE_TYPE::SNP);
+            // Emperically re-maps the RF Qscore to get a better calibration
+            smod.Qscore = models.recal_somatic_snv_score(smod.Qscore);
             smod.filters.reset();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
@@ -332,6 +334,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
             if (smod.Qscore < opt.sfilter.minimumQscore)
                 smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
+
         }
     }
 

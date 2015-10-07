@@ -90,6 +90,11 @@ struct scoring_models
         return (! indel_models.empty());
     }
 
+    // See STARKA-257 github comment for more detail on this fit
+    double recal_somatic_snv_score(double& score) const {
+    	return 2.57*score+0.94;
+    }
+
 private:
     scoring_models()
     {
