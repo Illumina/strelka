@@ -198,6 +198,8 @@ finish_gvcf_header(const starling_options& opt,
 
 
     os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Read depth associated with indel, taken from the site preceding the indel.\">\n";
+    os << "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification.\">\n";
+
 
     // FILTER:
 
