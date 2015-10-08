@@ -362,7 +362,7 @@ class StarlingWorkflow(StarkaWorkflow) :
         if self.params.isExome:
             self.params.vqsrModel = "Qrule"
             self.params.indelRefErrorFactor = "1"
-            self.params.indelErrorModel = "old"
+            self.params.indelErrorModelName = "old"
 
 
     def getSuccessMessage(self) :
