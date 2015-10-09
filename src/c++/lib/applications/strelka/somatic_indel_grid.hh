@@ -134,27 +134,17 @@ private:
     };
 
     prior_set _bare_lnprior;
+    std::vector<double> _somatic_prior;
 
-//    void
-//    set_lprob_f(double *lprob_f_given_g,
-//            const double ref_error_prob,
-//            const double normal_contam_ratio
-//            ) const;
 
-    double get_log_prob_fn(
-            unsigned fn,
-            unsigned ngt,
-            unsigned tgt);
-
-    double get_log_prob_ft(
-            unsigned fn,
-            unsigned ngt,
-            unsigned tgt);
+    void set_somatic_prior(
+            std::vector<double>& somatic_prior,
+            const double ref_error_lnp,
+            const double ref_real_lnp) const;
 
     void
     calculate_result_set(
-        const double ref_error_lnp,
-        const double ref_real_lnp,
+        const std::vector<double>& somatic_prior,
         const double* normal_lhood,
         const double* tumor_lhood,
         somatic_indel_call::result_set& rs) const;
