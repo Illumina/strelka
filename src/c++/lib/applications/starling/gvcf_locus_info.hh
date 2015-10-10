@@ -200,7 +200,6 @@ struct digt_indel_call : public shared_indel_call_info
     int Qscore = -1;
 
     unsigned max_gt=0;
-
 };
 
 
@@ -325,7 +324,6 @@ struct indel_info
     pos_t pos;
     // the EXCLUSIVE end of the variant (i.e. open)
     virtual pos_t end() const = 0;
-
 };
 
 
@@ -375,6 +373,12 @@ struct digt_indel_info : public indel_info
             }
         }
         return STAR_DIINDEL::get_gt_label(first().max_gt);
+    }
+
+    void
+    dump_pl() const
+    {
+
     }
 
     bool
@@ -430,7 +434,6 @@ struct digt_indel_info : public indel_info
 
     const digt_indel_call& first() const { return _calls.front(); }
     digt_indel_call& first() { return _calls.front(); }
-
 };
 
 

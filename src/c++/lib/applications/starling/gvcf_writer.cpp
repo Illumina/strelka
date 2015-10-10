@@ -436,6 +436,43 @@ write_site_record(
         os << ':';
         print_site_ad(si, altOrder, os);
     }
+
+    if (si.dgt.is_snp)
+    {
+        os << ':';
+        if (si.is_hetalt())
+        {
+            const unsigned print_gt(si.smod.max_gt);
+            const uint8_t a0(DIGT::get_allele(print_gt,0));
+            const uint8_t a1(DIGT::get_allele(print_gt,1));
+            os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt,a0)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0,a0)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt,a1)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0,a1)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1,a1)];
+        }
+        else if (si.dgt.is_haploid())
+        {
+            os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
+               << si.dgt.phredLoghood[si.smod.max_gt];
+        }
+        else
+        {
+            const unsigned print_gt(si.smod.max_gt);
+            const uint8_t a0(DIGT::get_allele(print_gt,0));
+            const uint8_t a1(DIGT::get_allele(print_gt,1));
+            uint8_t alt(a0);
+            if (si.dgt.ref_gt == a0)
+            {
+                alt = a1;
+            }
+            os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt,alt)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt,alt)];
+        }
+    }
+
     os << '\n';
 }
 
@@ -711,6 +748,54 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
     {
         os << ',' << ii._calls[i]._isri.n_q30_indel_reads;
     }
+
+    // PL field
+    os << ":";
+    const unsigned icount(ii._calls.size());
+    if (icount == 1)
+    {
+        using namespace STAR_DIINDEL;
+        const auto& dindel(ii._calls[0]._dindel);
+        const auto& pls(dindel.phredLoghood);
+        if (dindel.is_haploid())
+        {
+            os << pls[NOINDEL] << ','
+               << pls[HOM];
+        }
+        else
+        {
+            os << pls[NOINDEL] << ','
+               << pls[HET] << ','
+               << pls[HOM];
+        }
+    }
+    else if (icount == 2)
+    {
+        // very roughly approximate the overlapping indel PL values
+        //
+        // 1. 0/0 - this is always maxQ
+        // 2. 0/1 - set ot 0/0 from indel1
+        // 3. 1/1 - set to 1/1 from indel0
+        // 4. 0/2 - set to 0/0 from indel0
+        // 5. 1/2 - this is always 0
+        // 6. 2/2 - set to 1/1 from indel1
+        //
+        using namespace STAR_DIINDEL;
+        const auto& pls0(ii._calls[0]._dindel.phredLoghood);
+        const auto& pls1(ii._calls[1]._dindel.phredLoghood);
+
+        os << starling_diploid_indel_core::maxQ << ','
+           << pls1[NOINDEL] << ','
+           << pls0[HOM] << ','
+           << pls0[NOINDEL] << ','
+           << 0 << ','
+           << pls1[HOM];
+    }
+    else
+    {
+        assert(false && "Unexpected indel count");
+    }
+
     os << '\n';
 }
 

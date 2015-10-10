@@ -73,9 +73,6 @@ void variant_prefilter_stage::add_site_modifiers(
     model.clasify_site(si, smod);
 }
 
-
-
-
 void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
 {
     if (typeid(*info) == typeid(digt_site_info))
@@ -139,6 +136,4 @@ void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
         _sink->process(std::move(ii));
     }
 }
-
-
 

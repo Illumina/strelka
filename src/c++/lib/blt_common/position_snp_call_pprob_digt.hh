@@ -33,6 +33,7 @@
 struct diploid_genotype
 {
     diploid_genotype()
+      : phredLoghood(DIGT::SIZE,0)
     {
         reset();
     }
@@ -56,6 +57,7 @@ struct diploid_genotype
         ref_gt=0;
         genome.reset();
         poly.reset();
+        std::fill(phredLoghood.begin(), phredLoghood.end(), 0);
     }
 
     struct result_set
@@ -82,6 +84,9 @@ struct diploid_genotype
         std::array<double,DIGT::SIZE> pprob; // note this is intentionally stored at higher float resolution than the rest of the computation
     };
 
+    // only used for PLs
+    static const int maxQ;
+
     bool is_snp;
 
     /// a cheap way to add haploid calling capability, better solution: either haploid calls have their own object
@@ -92,6 +97,8 @@ struct diploid_genotype
     unsigned ref_gt;
     result_set genome;
     result_set poly;
+
+    std::vector<unsigned> phredLoghood;
 };
 
 

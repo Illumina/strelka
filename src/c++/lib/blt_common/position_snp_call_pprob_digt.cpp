@@ -31,6 +31,9 @@
 
 
 
+const int diploid_genotype::maxQ = 999;
+
+
 const blt_float_t one_third(1./3.);
 const blt_float_t log_one_third(std::log(one_third));
 const blt_float_t one_half(1./2.);
@@ -484,6 +487,22 @@ position_snp_call_pprob_digt(
     // get likelihood of each genotype
     blt_float_t lhood[DIGT::SIZE];
     get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood);
+
+    // set phredLoghood:
+    {
+        unsigned gtcount(DIGT::SIZE);
+        if (dgt.is_haploid()) gtcount=N_BASE;
+        unsigned maxIndex(0);
+        for (unsigned gt(1); gt<gtcount; ++gt)
+        {
+            if (lhood[gt] > lhood[maxIndex]) maxIndex = gt;
+        }
+        for (unsigned gt(0); gt<gtcount; ++gt)
+        {
+            dgt.phredLoghood[gt] = std::min(dgt.maxQ,ln_error_prob_to_qphred(lhood[gt]-lhood[maxIndex]));
+        }
+    }
+
 
     // get genomic site results:
     calculate_result_set(lhood,lnprior_genomic(dgt.ref_gt,dgt.is_haploid()),dgt.ref_gt,dgt.genome);

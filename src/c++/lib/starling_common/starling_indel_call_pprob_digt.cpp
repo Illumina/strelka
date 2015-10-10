@@ -559,7 +559,22 @@ starling_indel_call_pprob_digt(const starling_base_options& opt,
     dindel.indel_qphred=error_prob_to_qphred(dindel.pprob[STAR_DIINDEL::NOINDEL]);
     dindel.max_gt_qphred=error_prob_to_qphred(prob_comp(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt));
 
-    // add new poly calls:
+    // set phredLoghood:
+    {
+        unsigned gtcount(STAR_DIINDEL::SIZE);
+        if (is_haploid) gtcount=2;
+        unsigned maxIndex(0);
+        for (unsigned gt(1); gt<gtcount; ++gt)
+        {
+            if (lhood[gt] > lhood[maxIndex]) maxIndex = gt;
+        }
+        for (unsigned gt(0); gt<gtcount; ++gt)
+        {
+            dindel.phredLoghood[gt] = std::min(dindel.maxQ,ln_error_prob_to_qphred(lhood[gt]-lhood[maxIndex]));
+        }
+    }
+
+    // add new poly calls (this trashes lhood):
     {
         const double* indel_lnprior(lnprior_polymorphic(is_haploid));
         for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt)

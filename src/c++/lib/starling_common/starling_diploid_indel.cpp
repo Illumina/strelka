@@ -16,6 +16,11 @@
 #include <iostream>
 
 
+
+const int starling_diploid_indel_core::maxQ = 999;
+
+
+
 void
 starling_diploid_indel_core::
 dump(std::ostream& os) const

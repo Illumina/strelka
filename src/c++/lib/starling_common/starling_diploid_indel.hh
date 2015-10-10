@@ -22,6 +22,7 @@
 #include "boost/utility.hpp"
 
 #include <iosfwd>
+#include <vector>
 
 
 namespace STAR_DIINDEL
@@ -128,7 +129,7 @@ label(const unsigned idx)
 struct starling_diploid_indel_core
 {
     starling_diploid_indel_core()
-        : is_indel(false), ploidy(2), max_gt(0), max_gt_poly(0)
+        : is_indel(false), ploidy(2), max_gt(0), max_gt_poly(0), phredLoghood(STAR_DIINDEL::SIZE,0)
     {
         static const int qp(error_prob_to_qphred((1.-init_p())));
         indel_qphred=qp;
@@ -150,6 +151,9 @@ struct starling_diploid_indel_core
 
     // debug
     void dump(std::ostream& os) const;
+
+    /// only applies to PLs so far:
+    static const int maxQ;
 
 protected:
 
@@ -178,6 +182,8 @@ public:
 
     bool is_forced_output;
     bool is_zero_coverage;
+
+    std::vector<unsigned> phredLoghood;
 };
 
 
