@@ -1,3 +1,4 @@
+- STARKA-254 Add PL values for germline SNV and indel calls
 - STAR-54 Do not output homref call in continuous mode if the site has
   alt alleles
 - STAR-55 Make GT of block compressed areas with overlapping deletions "0"

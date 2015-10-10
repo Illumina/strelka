@@ -398,6 +398,10 @@ write_site_record(
     {
         os << ":AD";
     }
+    if (si.dgt.is_snp)
+    {
+        os << ":PL";
+    }
     os << '\t';
 
     //SAMPLE
@@ -724,7 +728,7 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
     os << '\t';
 
     //FORMAT
-    os << "GT:GQ:GQX:DPI:AD" << '\t';
+    os << "GT:GQ:GQX:DPI:AD:PL" << '\t';
 
     //SAMPLE
     os << ii.get_gt() << ':'
