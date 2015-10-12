@@ -99,6 +99,16 @@ struct is_nonsom_maker_t
 };
 }
 
+namespace TWO_STATE_SOMATIC
+{
+enum index_t
+{
+    NON_SOMATIC,
+    SOMATIC,
+    SIZE
+};
+}
+
 std::ostream& operator<<(std::ostream& os,const DDIINDEL_GRID::index_t dgt);
 
 // object used to pre-compute priors:
@@ -134,13 +144,13 @@ private:
     };
 
     prior_set _bare_lnprior;
-    std::vector<double> _somatic_prior;
+//    std::vector<double> _somatic_prior;
 
 
     void set_somatic_prior(
             std::vector<double>& somatic_prior,
             const double ref_error_lnp,
-            const double ref_real_lnp) const;
+            const strelka_options& opt) const;
 
     void
     calculate_result_set(

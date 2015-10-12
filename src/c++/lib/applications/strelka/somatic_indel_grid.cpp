@@ -94,7 +94,6 @@ operator<<(std::ostream& os,
 somatic_indel_caller_grid::
 somatic_indel_caller_grid(const strelka_options& opt,
                           const indel_digt_caller& in_caller)
-    : _somatic_prior(2*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0)
 {
     _ln_som_match=(log1p_switch(-opt.somatic_indel_rate));
     _ln_som_mismatch=(std::log(opt.somatic_indel_rate));
@@ -107,14 +106,6 @@ somatic_indel_caller_grid(const strelka_options& opt,
     {
         _bare_lnprior.normal[ngt] = normal_lnprior_genomic[ngt];
     }
-
-    const double ref_err_prob = 0.000011;
-    const double shared_indel_error_factor = 1.4;   // 1.4 or 1.65
-    const double sie_rate(std::pow(ref_err_prob, shared_indel_error_factor));
-    const double ln_sie_rate(std::log(sie_rate));
-    const double ln_csie_rate(log1p_switch(-sie_rate));
-
-    set_somatic_prior(_somatic_prior, ln_sie_rate,ln_csie_rate);
 }
 
 // Currently the index is reversed (i.e. index == 3 -> fraction == 0.95)
@@ -165,14 +156,18 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
 
 void somatic_indel_caller_grid::set_somatic_prior(
         std::vector<double>& somatic_prior,
-        const double ref_error_lnp,
-        const double ref_real_lnp)const
+        const double ref_err_prob,
+        const strelka_options& opt) const
 {
     bool is_normal_contaminated = true;
 
+    const double sie_rate(std::pow(ref_err_prob, opt.shared_indel_error_factor));
+    const double ln_sie_rate(std::log(sie_rate));
+    const double ln_csie_rate(log1p_switch(-sie_rate));
+
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
-        for (unsigned tgt(0); tgt<2; ++tgt) // 0: non-somatic, 1: somatic
+        for (unsigned tgt(0); tgt<TWO_STATE_SOMATIC::SIZE; ++tgt) // 0: non-somatic, 1: somatic
         {
             for (unsigned ft(0); ft<STAR_DIINDEL_GRID::SIZE; ++ft)
             {
@@ -184,7 +179,7 @@ void somatic_indel_caller_grid::set_somatic_prior(
                     {
                         if(fn == ft)
                         {
-                            lprob_f_given_g = (fn == ngt) ? ref_real_lnp : ref_error_lnp-std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
+                            lprob_f_given_g = (fn == ngt) ? ln_csie_rate : ln_sie_rate-std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
                         }
                         else
                         {
@@ -202,7 +197,7 @@ void somatic_indel_caller_grid::set_somatic_prior(
                             if(!is_normal_contaminated || ngt != STAR_DIINDEL::NOINDEL)
                             {
                                 lprob_f_given_g = -std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
-                                lprob_f_given_g += (fn == ngt) ? ref_real_lnp : ref_error_lnp-std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
+                                lprob_f_given_g += (fn == ngt) ? ln_csie_rate : ln_sie_rate-std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
                             }
                             else
                             {
@@ -236,7 +231,7 @@ somatic_indel_caller_grid::calculate_result_set(
     const double* tumor_lhood,
     result_set& rs) const
 {
-    double log_post_prob[STAR_DIINDEL::SIZE][2];
+    double log_post_prob[STAR_DIINDEL::SIZE][TWO_STATE_SOMATIC::SIZE];
     double max_log_prob = -INFINITY;
     rs.max_gt=0;
 
@@ -244,7 +239,7 @@ somatic_indel_caller_grid::calculate_result_set(
     {
         // logP(Gn=ngt, Gt=tgt)
         double log_diploid_prior_prob = _bare_lnprior.normal[ngt];  // logP(Gn)
-        for (unsigned tgt(0); tgt<2; ++tgt) // 0: non-somatic, 1: somatic
+        for (unsigned tgt(0); tgt<TWO_STATE_SOMATIC::SIZE; ++tgt) // 0: non-somatic, 1: somatic
         {
             double log_prior_prob = log_diploid_prior_prob + ((tgt == 0) ? _ln_som_match : _ln_som_mismatch);
             double max_log_sum = -INFINITY;
@@ -293,7 +288,7 @@ somatic_indel_caller_grid::calculate_result_set(
     double sum_prob = 0.0;
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
-        for (unsigned tgt(0); tgt<2; ++tgt)
+        for (unsigned tgt(0); tgt<TWO_STATE_SOMATIC::SIZE; ++tgt)
         {
             double prob = std::exp(log_post_prob[ngt][tgt] - max_log_prob); // to prevent underflow
             sum_prob += prob;
@@ -328,7 +323,7 @@ somatic_indel_caller_grid::calculate_result_set(
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
         double som_prob_given_ngt(0);
-        for (unsigned tgt(0); tgt<2; ++tgt)
+        for (unsigned tgt(0); tgt<TWO_STATE_SOMATIC::SIZE; ++tgt)
         {
             post_prob[ngt][tgt] = std::exp(log_post_prob[ngt][tgt] - max_log_prob - log_sum_prob);
             if(tgt == 0)
@@ -485,7 +480,7 @@ get_somatic_indel(const strelka_options& opt,
     static const double tumor_het_bias(0.0);
     double normal_lhood[STAR_DIINDEL_GRID::SIZE];
     double tumor_lhood[STAR_DIINDEL_GRID::SIZE];
-//    std::vector<double> somatic_prior(2*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0);
+    std::vector<double> somatic_prior(TWO_STATE_SOMATIC::SIZE*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0);
 
     sindel.is_forced_output=(normal_id.is_forced_output || tumor_id.is_forced_output);
 
@@ -553,7 +548,15 @@ get_somatic_indel(const strelka_options& opt,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+STAR_DIINDEL::SIZE);
 
-        calculate_result_set(_somatic_prior,
+//        const double ref_err_prob = 0.000011;
+//        const double shared_indel_error_factor = 1.4;   // 1.4 or 1.65
+//        const double sie_rate(std::pow(ref_err_prob, shared_indel_error_factor));
+//        const double ln_sie_rate(std::log(sie_rate));
+//        const double ln_csie_rate(log1p_switch(-sie_rate));
+
+        set_somatic_prior(somatic_prior, ref_error_prob, opt);
+
+        calculate_result_set(somatic_prior,
                 normal_lhood,tumor_lhood,tier_rs[i]);
     }
 
