@@ -151,7 +151,7 @@ void indel_overlapper::process_overlaps()
     //    *_osptr << "INDEL_SIZE: " << _indel_buffer.size() << "\n";
 
     // process sites to be consistent with overlapping indels:
-    for (auto&& si : _site_buffer)
+    for (auto& si : _site_buffer)
     {
 #ifdef DEBUG_GVCF
         log_os << "CHIRP: indel overlapping site: " << si->pos << "\n";
@@ -317,7 +317,7 @@ indel_overlapper::modify_overlap_indel_record()
     assert(_indel_buffer.size()==2);
 
     // TODO: hackey
-    for (auto&& ii : _indel_buffer)
+    for (auto& ii : _indel_buffer)
         ii->_is_overlap = true;
 
     _CM.clasify_indels(_indel_buffer);
@@ -334,7 +334,7 @@ indel_overlapper::modify_conflict_indel_record()
 {
     assert(_indel_buffer.size()>1);
 
-    for (auto&& ii : _indel_buffer)
+    for (auto& ii : _indel_buffer)
     {
         ii->first().set_hap_cigar();
 

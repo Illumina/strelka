@@ -719,12 +719,12 @@ gvcf_writer::write_site_record(
     const continuous_site_info& si) const
 {
     int gqx = std::numeric_limits<int>::max();
-    for (auto&& call : si.calls)
+    for (auto& call : si.calls)
     {
         gqx = std::min(gqx, call.gq);
     }
 
-    for (auto&& call : si.calls)
+    for (auto& call : si.calls)
     {
         std::ostream& os(*_osptr);
 

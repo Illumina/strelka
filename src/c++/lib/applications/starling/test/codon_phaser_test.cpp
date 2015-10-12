@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
         phaser.process(std::move(si));
     }
     phaser.flush();
-    for (auto&& phased_variant : sink.the_sites)
+    for (auto& phased_variant : sink.the_sites)
     {
         BOOST_CHECK(!phased_variant->smod.filters.any());
         BOOST_CHECK(!phased_variant->smod.is_phased_region);
@@ -410,7 +410,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         phaser.process(std::move(si));
     }
     phaser.flush();
-    for (auto&& site : sink.the_sites)
+    for (auto& site : sink.the_sites)
     {
         BOOST_CHECK(! site->is_het() || site->smod.filters.test(VCF_FILTERS::PhasingConflict));
         BOOST_CHECK(!site->smod.is_phased_region);

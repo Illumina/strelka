@@ -347,7 +347,7 @@ struct digt_indel_info : public indel_info
                 [](const digt_indel_call& x) { return x._dindel.is_forced_output; });
     }
     bool is_indel() const override { return std::any_of(_calls.begin(), _calls.end(), [](const digt_indel_call& x) { return x._dindel.is_indel; });}
-    void set_filter(VCF_FILTERS::index_t filter) override { for (auto&& x : _calls) x.set_filter(filter); }
+    void set_filter(VCF_FILTERS::index_t filter) override { for (auto& x : _calls) x.set_filter(filter); }
     pos_t end() const override;
 
     void add_overlap(const reference_contig_segment& ref, digt_indel_info& overlap);
@@ -393,7 +393,7 @@ struct digt_indel_info : public indel_info
     unsigned
     get_ploidy(const unsigned offset) const
     {
-        auto&& dindel(first()._dindel);
+        auto& dindel(first()._dindel);
         if (dindel.is_noploid()) return 0;
 
         if (!is_hetalt())
@@ -582,7 +582,7 @@ struct continuous_site_info : public site_info
     }
 
     bool is_snp() const override { return _is_snp; }
-    void set_filter (VCF_FILTERS::index_t filter) override { for (auto&& call : calls) call.set_filter(filter); }
+    void set_filter (VCF_FILTERS::index_t filter) override { for (auto& call : calls) call.set_filter(filter); }
     bool is_nonref() const override { return (calls.size() > 1) || (!calls.empty() && calls.front()._base != base_to_id(ref)); }
 
     bool _is_snp = false;
@@ -617,12 +617,12 @@ struct continuous_indel_info : public indel_info
     {
     }
 
-    void set_filter (VCF_FILTERS::index_t filter) override  { for (auto&& call : calls) call.set_filter(filter); }
+    void set_filter (VCF_FILTERS::index_t filter) override  { for (auto& call : calls) call.set_filter(filter); }
 
 
     bool is_indel() const override
     {
-        for (auto&& call : calls)
+        for (auto& call : calls)
         {
             if (call._alleleDepth > 0)
                 return true;
@@ -632,7 +632,7 @@ struct continuous_indel_info : public indel_info
 
     bool is_forced_output() const override
     {
-        for (auto&& call : calls)
+        for (auto& call : calls)
             if (call._id.is_forced_output)
                 return true;
         return false;
@@ -641,7 +641,7 @@ struct continuous_indel_info : public indel_info
     pos_t end() const override
     {
         pos_t result = 0;
-        for (auto&& x : calls)
+        for (auto& x : calls)
             result = std::max(result, x._ik.right_pos());
         return result;
     }

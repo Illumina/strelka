@@ -75,7 +75,7 @@ void Codon_phaser::process(std::unique_ptr<indel_info> ii)
 
 void Codon_phaser::output_buffer()
 {
-    for (auto&& si : _buffer)
+    for (auto& si : _buffer)
     {
         _sink->process(std::move(si));
     }
@@ -176,7 +176,7 @@ create_phased_record()
     {
         // some initial minimum conditions, look for at least 10 spanning reads support
         // set flag on records saying too little evidence to phase
-        for (auto&& si : _buffer)
+        for (auto& si : _buffer)
         {
             if (si->is_het())
                 si->smod.is_phasing_insufficient_depth = true;
@@ -277,7 +277,7 @@ create_phased_record()
 
     if (phasing_inconsistent)
     {
-        for (auto&& val : _buffer)
+        for (auto& val : _buffer)
         {
             if (! is_phasable_site(val)) continue;
             val->smod.set_filter(VCF_FILTERS::PhasingConflict);
@@ -286,7 +286,7 @@ create_phased_record()
     }
 
     // we have a phased record, modify site buffer to reflect the changes
-    auto&& base = this->_buffer.at(0);
+    auto& base = this->_buffer.at(0);
 
     base->phased_ref = this->reference;
     const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
@@ -316,7 +316,7 @@ create_phased_record()
     int min_gq(maxInt), min_qual(maxInt), min_qscore(maxInt);
     for (unsigned i(0); i<this->get_block_length(); i++)
     {
-        auto&& si(_buffer.at(i));
+        auto& si(_buffer.at(i));
         if (! is_phasable_site(si)) continue;
         min_gq = std::min(si->smod.gq,min_gq);
         min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);

@@ -55,7 +55,7 @@ write_filters(std::ostream& os) const
 pos_t digt_indel_info::end() const
 {
     pos_t result = 0;
-    for (auto&& x : _calls)
+    for (auto& x : _calls)
         result = std::max(result, x._ik.right_pos());
     return result;
 }

@@ -17,7 +17,7 @@ BOOST_AUTO_TEST_CASE( qscore_calculation )
         {5000,250,100}
     };
 
-    for (auto&& item :  SampleValues)
+    for (auto& item :  SampleValues)
     {
         auto FinalQValue = starling_continuous_variant_caller::poisson_qscore(item[1], item[0], 20, 100);
         BOOST_CHECK_EQUAL(FinalQValue, item[2]);
