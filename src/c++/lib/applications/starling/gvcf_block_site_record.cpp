@@ -124,6 +124,11 @@ join(const digt_site_info& si)
         filters = si.smod.filters;
         is_nonref = si.is_nonref();
         gt = si.get_gt();
+        // sites that are 0/1 can be compressed if their non-ref allele ratios are low enough. So, fix those here
+        if ("0/1" == gt)
+        {
+            gt = "0/0";
+        }
         is_used_covered = si.smod.is_used_covered;
         is_covered = si.smod.is_covered;
         ploidy = si.dgt.ploidy;
@@ -210,6 +215,12 @@ gvcf_block_site_record::join(const continuous_site_info& si)
         {
             filters = si.calls.front().filters;
             gt = si.get_gt(si.calls.front());
+            // sites that are 0/1 can be compressed if their non-ref allele ratios are low enough. So, fix those here
+            if ("0/1" == gt)
+            {
+                gt = "0/0";
+            }
+
             is_nonref = si.is_nonref();
             // TODO: handle no coverage regions in continuous
             has_call = true;
