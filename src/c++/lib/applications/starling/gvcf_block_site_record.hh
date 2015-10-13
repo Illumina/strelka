@@ -63,12 +63,9 @@ struct gvcf_block_site_record : public shared_call_info
     /// add site to the current block
     void join(const continuous_site_info& si);
 
-    // for GT in block records, it's either a no-call (.) or homref (0/0)
     const char* get_gt() const
     {
-        if (gt == ".")
-            return gt.c_str();
-        return "0/0";
+        return gt.c_str();
     }
 
 
