@@ -64,6 +64,14 @@ is_new_value_blockable(const int new_val,
     return check_block_tolerance(ss2,frac_tol,abs_tol);
 }
 
+// sites that are 0/1 can be compressed if their non-ref allele ratios are low enough. So, fix those here
+static const char* map_gt_to_homref(const char* gt)
+{
+    if (0 == std::strcmp("0/1", gt))
+        return "0/0";
+    return gt;
+}
+
 
 
 bool
@@ -80,7 +88,7 @@ test(const digt_site_info& si) const
 
     if (is_nonref || si.is_nonref()) return false;
 
-    if (gt != si.get_gt()) return false;
+    if (gt != map_gt_to_homref(si.get_gt())) return false;
 
     // coverage states must match:
     if (is_covered != si.smod.is_covered) return false;
@@ -123,12 +131,7 @@ join(const digt_site_info& si)
         pos = si.pos;
         filters = si.smod.filters;
         is_nonref = si.is_nonref();
-        gt = si.get_gt();
-        // sites that are 0/1 can be compressed if their non-ref allele ratios are low enough. So, fix those here
-        if ("0/1" == gt)
-        {
-            gt = "0/0";
-        }
+        gt = map_gt_to_homref(si.get_gt());
         is_used_covered = si.smod.is_used_covered;
         is_covered = si.smod.is_covered;
         ploidy = si.dgt.ploidy;
@@ -171,7 +174,7 @@ test(const continuous_site_info& si) const
 
     if (is_nonref || si.is_nonref()) return false;
 
-    if (gt != si.get_gt(si.calls.front())) return false;
+    if (gt != map_gt_to_homref(si.get_gt(si.calls.front()))) return false;
 
     // coverage states must match:
     if (is_covered != (si.n_used_calls != 0 || si.n_unused_calls != 0)) return false;
@@ -214,13 +217,7 @@ gvcf_block_site_record::join(const continuous_site_info& si)
         if (!si.calls.empty())
         {
             filters = si.calls.front().filters;
-            gt = si.get_gt(si.calls.front());
-            // sites that are 0/1 can be compressed if their non-ref allele ratios are low enough. So, fix those here
-            if ("0/1" == gt)
-            {
-                gt = "0/0";
-            }
-
+            gt = map_gt_to_homref(si.get_gt(si.calls.front()));
             is_nonref = si.is_nonref();
             // TODO: handle no coverage regions in continuous
             has_call = true;
