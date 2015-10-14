@@ -94,6 +94,7 @@ operator<<(std::ostream& os,
 somatic_indel_caller_grid::
 somatic_indel_caller_grid(const strelka_options& opt,
                           const indel_digt_caller& in_caller)
+: _somatic_prior(TWO_STATE_SOMATIC::SIZE*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0)
 {
     _ln_som_match=(log1p_switch(-opt.somatic_indel_rate));
     _ln_som_mismatch=(std::log(opt.somatic_indel_rate));
@@ -106,6 +107,10 @@ somatic_indel_caller_grid(const strelka_options& opt,
     {
         _bare_lnprior.normal[ngt] = normal_lnprior_genomic[ngt];
     }
+
+    const double ref_err_prob = 0.000011;
+
+    set_somatic_prior(_somatic_prior, ref_err_prob, opt);
 }
 
 // Currently the index is reversed (i.e. index == 3 -> fraction == 0.95)
@@ -161,9 +166,33 @@ void somatic_indel_caller_grid::set_somatic_prior(
 {
     bool is_normal_contaminated = true;
 
-    const double sie_rate(std::pow(ref_err_prob, opt.shared_indel_error_factor));
+    //    const double shared_indel_error_factor = opt.shared_indel_error_factor;
+    double shared_indel_error_factor = opt.shared_indel_error_factor;
+//    shared_indel_error_factor = 1.5;
+
+    const double sie_rate(std::pow(ref_err_prob, shared_indel_error_factor));
     const double ln_sie_rate(std::log(sie_rate));
     const double ln_csie_rate(log1p_switch(-sie_rate));
+
+    double somatic_prior_normal[STAR_DIINDEL_GRID::SIZE];
+//    somatic_prior_normal[STAR_DIINDEL::NOINDEL] = 0.865894; // fn = 0.0
+//    somatic_prior_normal[STAR_DIINDEL::HET] = 0.0;  // fn=0.5
+//    somatic_prior_normal[STAR_DIINDEL::HOM] = 0.0;  // fn=1.0
+//    somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 1] = 0.122517;  // fn = 0.05
+//    somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 2] = 0.009934;  // fn = 0.1
+//    somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 3] = 0.001656;  // fn = 0.15
+    somatic_prior_normal[STAR_DIINDEL::NOINDEL] = 0.5; // fn = 0.0
+    somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 1] = 0.5;  // fn = 0.05
+//    somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 2] = 0.01;  // fn = 0.1
+
+//    double somatic_prior_tumor[STAR_DIINDEL_GRID::SIZE] = {
+//            0.001656, 0.0, 0.163907,    // 0.0, 1.0, 0.5
+//            0.0, 0.0, 0.0, 0.0, 0.001656, 0.011589, 0.018212, 0.036424, 0.084437,    // 0.95, 0.90, ...
+//            0.193709, 0.193709, 0.147351, 0.074503, 0.038079, 0.016556, 0.013245, 0.001656, 0.003311     // 0.45, 0.40, ...
+//    };
+    double somatic_prior_tumor[STAR_DIINDEL_GRID::SIZE];
+    for(unsigned ft(0); ft<STAR_DIINDEL_GRID::SIZE; ++ft)
+        somatic_prior_tumor[ft] = 1.0/static_cast<double>(STAR_DIINDEL_GRID::SIZE-1);
 
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {
@@ -206,9 +235,7 @@ void somatic_indel_caller_grid::set_somatic_prior(
                                     lprob_f_given_g = -INFINITY;
                                 else
                                 {
-                                    // uniform fn, ft
-                                    if(get_fraction_from_index(fn) > 0.09) lprob_f_given_g = -INFINITY;
-                                    else lprob_f_given_g += -std::log(3.0) -std::log(static_cast<double>(STAR_DIINDEL_GRID::SIZE-1));
+                                    lprob_f_given_g += std::log(somatic_prior_normal[fn]) + std::log(somatic_prior_tumor[ft]);
                                 }
                             }
                         }
@@ -480,7 +507,7 @@ get_somatic_indel(const strelka_options& opt,
     static const double tumor_het_bias(0.0);
     double normal_lhood[STAR_DIINDEL_GRID::SIZE];
     double tumor_lhood[STAR_DIINDEL_GRID::SIZE];
-    std::vector<double> somatic_prior(TWO_STATE_SOMATIC::SIZE*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0);
+//    std::vector<double> somatic_prior(TWO_STATE_SOMATIC::SIZE*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0);
 
     sindel.is_forced_output=(normal_id.is_forced_output || tumor_id.is_forced_output);
 
@@ -548,15 +575,9 @@ get_somatic_indel(const strelka_options& opt,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+STAR_DIINDEL::SIZE);
 
-//        const double ref_err_prob = 0.000011;
-//        const double shared_indel_error_factor = 1.4;   // 1.4 or 1.65
-//        const double sie_rate(std::pow(ref_err_prob, shared_indel_error_factor));
-//        const double ln_sie_rate(std::log(sie_rate));
-//        const double ln_csie_rate(log1p_switch(-sie_rate));
+//        set_somatic_prior(somatic_prior, ref_error_prob, opt);
 
-        set_somatic_prior(somatic_prior, ref_error_prob, opt);
-
-        calculate_result_set(somatic_prior,
+        calculate_result_set(_somatic_prior,
                 normal_lhood,tumor_lhood,tier_rs[i]);
     }
 
