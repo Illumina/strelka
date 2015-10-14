@@ -169,7 +169,7 @@ void somatic_indel_caller_grid::set_somatic_prior(
     const double ln_sie_rate(std::log(sie_rate));
     const double ln_csie_rate(log1p_switch(-sie_rate));
 
-    double somatic_prior_normal[STAR_DIINDEL_GRID::SIZE];
+    double somatic_prior_normal[STAR_DIINDEL_GRID::SIZE] = {};
 //    somatic_prior_normal[STAR_DIINDEL::NOINDEL] = 0.865894; // fn = 0.0
 //    somatic_prior_normal[STAR_DIINDEL::HET] = 0.0;  // fn=0.5
 //    somatic_prior_normal[STAR_DIINDEL::HOM] = 0.0;  // fn=1.0
@@ -230,7 +230,7 @@ void somatic_indel_caller_grid::set_somatic_prior(
                                     lprob_f_given_g = -INFINITY;
                                 else
                                 {
-                                    lprob_f_given_g += std::log(somatic_prior_normal[fn]) + std::log(somatic_prior_tumor[ft]);
+                                    lprob_f_given_g = std::log(somatic_prior_normal[fn]) + std::log(somatic_prior_tumor[ft]);
                                 }
                             }
                         }
