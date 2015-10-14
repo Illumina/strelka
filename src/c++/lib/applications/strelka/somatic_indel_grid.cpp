@@ -94,7 +94,7 @@ operator<<(std::ostream& os,
 somatic_indel_caller_grid::
 somatic_indel_caller_grid(const strelka_options& opt,
                           const indel_digt_caller& in_caller)
-: _somatic_prior(TWO_STATE_SOMATIC::SIZE*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0)
+//: _somatic_prior(TWO_STATE_SOMATIC::SIZE*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0)
 {
     _ln_som_match=(log1p_switch(-opt.somatic_indel_rate));
     _ln_som_mismatch=(std::log(opt.somatic_indel_rate));
@@ -108,9 +108,8 @@ somatic_indel_caller_grid(const strelka_options& opt,
         _bare_lnprior.normal[ngt] = normal_lnprior_genomic[ngt];
     }
 
-    const double ref_err_prob = 0.000011;
-
-    set_somatic_prior(_somatic_prior, ref_err_prob, opt);
+//    const double ref_err_prob = 0.000011;
+//    set_somatic_prior(_somatic_prior, ref_err_prob, opt);
 }
 
 // Currently the index is reversed (i.e. index == 3 -> fraction == 0.95)
@@ -166,11 +165,7 @@ void somatic_indel_caller_grid::set_somatic_prior(
 {
     bool is_normal_contaminated = true;
 
-    //    const double shared_indel_error_factor = opt.shared_indel_error_factor;
-    double shared_indel_error_factor = opt.shared_indel_error_factor;
-//    shared_indel_error_factor = 1.5;
-
-    const double sie_rate(std::pow(ref_err_prob, shared_indel_error_factor));
+    const double sie_rate(std::pow(ref_err_prob, opt.shared_indel_error_factor));
     const double ln_sie_rate(std::log(sie_rate));
     const double ln_csie_rate(log1p_switch(-sie_rate));
 
@@ -507,7 +502,7 @@ get_somatic_indel(const strelka_options& opt,
     static const double tumor_het_bias(0.0);
     double normal_lhood[STAR_DIINDEL_GRID::SIZE];
     double tumor_lhood[STAR_DIINDEL_GRID::SIZE];
-//    std::vector<double> somatic_prior(TWO_STATE_SOMATIC::SIZE*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0);
+    std::vector<double> somatic_prior(TWO_STATE_SOMATIC::SIZE*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0);
 
     sindel.is_forced_output=(normal_id.is_forced_output || tumor_id.is_forced_output);
 
@@ -575,9 +570,9 @@ get_somatic_indel(const strelka_options& opt,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+STAR_DIINDEL::SIZE);
 
-//        set_somatic_prior(somatic_prior, ref_error_prob, opt);
+        set_somatic_prior(somatic_prior, ref_error_prob, opt);
 
-        calculate_result_set(_somatic_prior,
+        calculate_result_set(somatic_prior,
                 normal_lhood,tumor_lhood,tier_rs[i]);
     }
 

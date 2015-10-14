@@ -144,7 +144,7 @@ private:
     };
 
     prior_set _bare_lnprior;
-    std::vector<double> _somatic_prior;
+//    std::vector<double> _somatic_prior;
 
 
     void set_somatic_prior(
