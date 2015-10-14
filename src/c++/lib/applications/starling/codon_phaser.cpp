@@ -314,11 +314,16 @@ create_phased_record()
     // set GQ and GQX
     static const int maxInt(std::numeric_limits<int>::max());
     int min_gq(maxInt), min_qual(maxInt), min_qscore(maxInt);
+    std::vector<unsigned> pls;
     for (unsigned i(0); i<this->get_block_length(); i++)
     {
         auto& si(_buffer.at(i));
         if (! is_phasable_site(si)) continue;
-        min_gq = std::min(si->smod.gq,min_gq);
+        if (si->smod.gq < min_gq)
+        {
+            min_gq = si->smod.gq;
+            pls = si->dgt.phredLoghood;
+        }
         min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
         min_qscore = std::min(si->smod.Qscore,min_qscore);
     }
@@ -326,6 +331,7 @@ create_phased_record()
     // set various quality fields conservatively
     base->smod.gq                = min_gq;
     base->dgt.genome.snp_qphred  = min_qual;
+    base->dgt.phredLoghood       = pls;
     base->smod.gqx               = std::min(min_gq,min_qual);
     base->smod.Qscore            = min_qscore;
 

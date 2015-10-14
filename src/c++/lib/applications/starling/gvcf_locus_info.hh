@@ -503,7 +503,7 @@ struct digt_site_info : public site_info
         }
         else
         {
-            unsigned print_gt(smod.max_gt);
+            const unsigned print_gt(smod.max_gt);
             return DIGT::get_vcf_gt(print_gt,dgt.ref_gt);
         }
     }
@@ -518,12 +518,13 @@ struct digt_site_info : public site_info
         return DIGT::is_het(print_gt);
     }
 
-
     bool
     is_hetalt() const
     {
         unsigned print_gt(smod.max_gt);
-        return DIGT::is_het(print_gt) && ref != DIGT::label(print_gt)[0] && ref != DIGT::label(print_gt)[1];
+        const uint8_t a0(DIGT::get_allele(print_gt,0));
+        const uint8_t a1(DIGT::get_allele(print_gt,1));
+        return ((a0!=a1) && (dgt.ref_gt != a0) && (dgt.ref_gt != a1));
     }
 
     bool
