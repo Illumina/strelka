@@ -1,3 +1,5 @@
+- STAR-54 Do not output homref call in continuous mode if the site has
+  alt alleles
 - STAR-55 Make GT of block compressed areas with overlapping deletions "0"
 v2.3.14
 - STAR-16 Continuous variant frequency calling (a.k.a. somatic)
