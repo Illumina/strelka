@@ -26,7 +26,7 @@ struct starling : public starka::Program
     const char*
     name() const
     {
-        return "IsaacVariantCaller";
+        return "starling";
     }
 
     void

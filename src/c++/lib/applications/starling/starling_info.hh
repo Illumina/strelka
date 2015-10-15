@@ -32,7 +32,7 @@ struct starling_info : public prog_info_base
 private:
     const char* name() const override
     {
-        static const char NAME[] = "IsaacVariantCaller";
+        static const char NAME[] = "starling";
         return NAME;
     }
 
