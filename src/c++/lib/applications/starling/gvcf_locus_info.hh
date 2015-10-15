@@ -583,7 +583,13 @@ struct continuous_site_info : public site_info
 
     bool is_snp() const override { return _is_snp; }
     void set_filter (VCF_FILTERS::index_t filter) override { for (auto& call : calls) call.set_filter(filter); }
-    bool is_nonref() const override { return (calls.size() > 1) || (!calls.empty() && calls.front()._base != base_to_id(ref)); }
+    bool is_nonref() const override
+    {
+        auto ref_id = base_to_id(ref);
+        return calls.end() !=
+                std::find_if(calls.begin(), calls.end(),
+                        [&](const continuous_site_call& call) { return call._base != ref_id; });
+    }
 
     bool _is_snp = false;
 

@@ -719,13 +719,25 @@ gvcf_writer::write_site_record(
     const continuous_site_info& si) const
 {
     int gqx = std::numeric_limits<int>::max();
+    bool site_is_nonref = si.is_nonref();
+    auto ref_base_id = base_to_id(si.ref);
+
     for (auto& call : si.calls)
     {
+        // do not output the call for reference if the site has variants
+        if (site_is_nonref && call._base == ref_base_id)
+            continue;
         gqx = std::min(gqx, call.gq);
     }
 
     for (auto& call : si.calls)
     {
+        bool is_no_alt(call._base == base_to_id(si.ref));
+
+        // do not output the call for reference if the site has variants
+        if (site_is_nonref && is_no_alt)
+            continue;
+
         std::ostream& os(*_osptr);
 
         os << _chrom << '\t'  // CHROM
@@ -735,8 +747,6 @@ gvcf_writer::write_site_record(
         os  << si.ref << '\t'; // REF
 
         std::string gt(si.get_gt(call));
-
-        bool is_no_alt(call._base == base_to_id(si.ref));
 
         // ALT
         if (is_no_alt)
