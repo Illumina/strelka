@@ -456,7 +456,7 @@ write_site_record(
                << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0,a1)] << ','
                << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1,a1)];
         }
-        else if (si.dgt.is_haploid())
+        else if (si.dgt.is_haploid() || (si.smod.modified_gt == MODIFIED_SITE_GT::ONE))
         {
             os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
                << si.dgt.phredLoghood[si.smod.max_gt];

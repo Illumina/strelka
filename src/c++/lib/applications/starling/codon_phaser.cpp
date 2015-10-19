@@ -204,7 +204,7 @@ create_phased_record()
     typedef std::pair<std::string, int> allele_count_t;
     //static constexpr unsigned alleleCount(2);
     std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
-    for (auto& obs : observations)
+    for (const auto& obs : observations)
     {
 #ifdef DEBUG_CODON
         log_os << "obs:" << obs.first << "(" << obs.second << ")" << std::endl;;
@@ -292,9 +292,9 @@ create_phased_record()
     const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
 
     base->smod.is_unknown = false;
-    base->smod.max_gt = 4;
-    base->dgt.ref_gt  = 0; // hacking  the gt method to 0/1
-    if (!is_ref) base->dgt.ref_gt = 2; // hacking the gt method to 1/2
+    base->smod.max_gt = 4; // (A/C)
+    base->dgt.ref_gt  = 0; // (A) hacking  the gt method to 0/1
+    if (!is_ref) base->dgt.ref_gt = 2; // (G) hacking the gt method to 1/2
 
     std::stringstream AD,alt;
     AD << this->observations[this->reference];
