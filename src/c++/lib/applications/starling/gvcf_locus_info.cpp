@@ -61,8 +61,8 @@ pos_t digt_indel_info::end() const
 }
 
 void shared_indel_call_info::set_hap_cigar(
-        const unsigned lead,
-        const unsigned trail)
+    const unsigned lead,
+    const unsigned trail)
 {
     using namespace ALIGNPATH;
 
@@ -189,7 +189,7 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
         this_call._iri.vcf_indel_seq = leading_seq + this_call._iri.vcf_indel_seq + trailing_seq;
 
         this_call.set_hap_cigar(leading_seq.size()+1,
-                      trailing_seq.size());
+                                trailing_seq.size());
 
         // add to the ploidy object:
         add_cigar_to_ploidy(this_call.cigar,this->ploidy);
@@ -283,7 +283,7 @@ operator<<(std::ostream& os,
     {
         auto imod = dynamic_cast<const digt_indel_call&>(shmod);
 
-       os << " max_gt: " << DIGT::label(imod.max_gt);
+        os << " max_gt: " << DIGT::label(imod.max_gt);
     }
 
     os << " filters: ";

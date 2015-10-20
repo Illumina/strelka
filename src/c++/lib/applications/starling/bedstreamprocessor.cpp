@@ -21,9 +21,9 @@
 
 
 bed_stream_processor::bed_stream_processor(const std::string& bed_file_name, const std::string& region, std::shared_ptr<variant_pipe_stage_base> next_stage)
-: variant_pipe_stage_base(next_stage)
-, _region(region)
-, _is_end(false)
+    : variant_pipe_stage_base(next_stage)
+    , _region(region)
+    , _is_end(false)
 {
     if (!bed_file_name.empty())
     {

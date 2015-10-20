@@ -69,7 +69,10 @@ struct starling_indel_sample_report_info
     // the depth of the pileup preceding the indel
     unsigned depth = 0;
 
-    unsigned total_q30_reads() const { return n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads; }
+    unsigned total_q30_reads() const
+    {
+        return n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;
+    }
 
     void dump(std::ostream& os) const;
 

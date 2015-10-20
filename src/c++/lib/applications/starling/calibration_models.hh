@@ -53,7 +53,7 @@ public:
 
     // mimics behavior of previous hard filters
     void  default_clasify_site(const site_info& si,
-            shared_call_info& call) const;
+                               shared_call_info& call) const;
 
     void default_clasify_indel(shared_indel_call_info& call) const;
 

@@ -199,7 +199,7 @@ starling_pos_processor::process_pos_snp_single_sample_continuous(
 
 
     std::unique_ptr<site_info> si(new continuous_site_info(pos,pi.get_ref_base(),good_pi,
-            _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
+                                                           _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
 
     si->n_used_calls=cpi.n_used_calls();
     si->n_unused_calls=cpi.n_unused_calls();
@@ -484,8 +484,8 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
 
 void
 starling_pos_processor::process_pos_indel_single_sample(
-        const pos_t pos,
-        const unsigned sample_no)
+    const pos_t pos,
+    const unsigned sample_no)
 {
     if (_opt.is_bsnp_diploid())
     {
@@ -641,8 +641,8 @@ process_pos_indel_single_sample_digt(
 void
 starling_pos_processor::
 process_pos_indel_single_sample_continuous(
-        const pos_t pos,
-        const unsigned sample_no)
+    const pos_t pos,
+    const unsigned sample_no)
 {
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:

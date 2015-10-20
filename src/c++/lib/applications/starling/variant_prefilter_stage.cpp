@@ -19,8 +19,8 @@
 #include "calibration_models.hh"
 
 variant_prefilter_stage::variant_prefilter_stage(const calibration_models& model, std::shared_ptr<variant_pipe_stage_base> destination)
-: variant_pipe_stage_base(destination)
-, _model(model)
+    : variant_pipe_stage_base(destination)
+    , _model(model)
 {
 }
 

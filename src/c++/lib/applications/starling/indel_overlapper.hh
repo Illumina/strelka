@@ -41,9 +41,9 @@ private:
 
     static void modify_indel_conflict_site(digt_site_info& si);
     static void modify_indel_overlap_site(const digt_indel_info& ii,
-            const unsigned ploidy,
-            digt_site_info& si,
-            const calibration_models& model);
+                                          const unsigned ploidy,
+                                          digt_site_info& si,
+                                          const calibration_models& model);
 
 
 

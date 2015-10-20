@@ -17,8 +17,14 @@
 class variant_pipe_stage_base
 {
 public:
-    virtual void process(std::unique_ptr<site_info> si) { if (_sink) _sink->process(std::move(si)); }
-    virtual void process(std::unique_ptr<indel_info> ii) { if (_sink) _sink->process(std::move(ii)); }
+    virtual void process(std::unique_ptr<site_info> si)
+    {
+        if (_sink) _sink->process(std::move(si));
+    }
+    virtual void process(std::unique_ptr<indel_info> ii)
+    {
+        if (_sink) _sink->process(std::move(ii));
+    }
     virtual void flush()
     {
         if (_sink)

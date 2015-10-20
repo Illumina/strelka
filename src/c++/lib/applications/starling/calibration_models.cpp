@@ -77,13 +77,13 @@ clasify_site(
     }
 }
 
-bool 
+bool
 calibration_models::can_use_model(const digt_indel_info& ii) const
 {
     const auto& call(ii.first());
     return ((call._iri.it == INDEL::INSERT || call._iri.it == INDEL::DELETE) &&
-		(!is_default_model) && 
-		(call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // VQSR does not handle homref sites properly
+            (!is_default_model) &&
+            (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // VQSR does not handle homref sites properly
 }
 
 void
@@ -125,7 +125,7 @@ clasify_indel(
 void
 calibration_models::
 clasify_indels(
-        std::vector<std::unique_ptr<digt_indel_info>>& indels) const
+    std::vector<std::unique_ptr<digt_indel_info>>& indels) const
 {
     bool use_model = true;
     for (auto it = indels.begin(); it != indels.end() && use_model; ++it)
@@ -135,7 +135,7 @@ clasify_indels(
     for (auto it = indels.begin(); it != indels.end(); ++it)
     {
         digt_indel_info& ii(**it);
-        
+
         set_indel_modifiers(ii, ii.first());
         if ( use_model )
         {
@@ -154,7 +154,7 @@ clasify_indels(
 void
 calibration_models::
 default_clasify_site(const site_info& si,
-            shared_call_info& call) const
+                     shared_call_info& call) const
 {
     if (opt.is_min_gqx)
     {

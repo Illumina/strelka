@@ -1,3 +1,15 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Starka
+// Copyright (c) 2009-2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
 #include "starling_continuous_variant_caller.hh"
 
 #include <array>
@@ -15,7 +27,7 @@ static double Likelihood(unsigned coverage, unsigned observedCallCount, double e
 
 // calculate the ratio of the log likelihood of the variants on either strand / both strands
 double starling_continuous_variant_caller::strand_bias(
-        unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double /*noise*/)
+    unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double /*noise*/)
 {
     double expectedVf = (fwdAlt + revAlt) / ((double)fwdOther+revOther+fwdAlt+revAlt);
 
@@ -27,9 +39,9 @@ double starling_continuous_variant_caller::strand_bias(
 }
 
 void starling_continuous_variant_caller::position_snp_call_continuous(
-        const starling_base_options& opt,
-        const snp_pos_info& good_pi,
-        continuous_site_info& info)
+    const starling_base_options& opt,
+    const snp_pos_info& good_pi,
+    continuous_site_info& info)
 {
     unsigned totalDepth = info.spanning_deletions;
     for (auto known : info.known_counts)
@@ -88,19 +100,19 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
 }
 
 void starling_continuous_variant_caller::add_indel_call(
-            const starling_base_options& opt,
-            const indel_key& ik,
-            const indel_data& id,
-            const starling_indel_report_info& iri,
-            const starling_indel_sample_report_info& isri,
-            continuous_indel_info& info)
+    const starling_base_options& opt,
+    const indel_key& ik,
+    const indel_data& id,
+    const starling_indel_report_info& iri,
+    const starling_indel_sample_report_info& isri,
+    continuous_indel_info& info)
 {
     // determine VF
     double vf = isri.n_q30_indel_reads / ((double)isri.total_q30_reads());
     if (vf > opt.min_het_vf)
     {
         info.calls.emplace_back(isri.total_q30_reads(), isri.n_q30_indel_reads,
-                ik, id, iri, isri);
+                                ik, id, iri, isri);
         continuous_indel_call& call = info.calls.back();
         call.gqx = call.gq = poisson_qscore(isri.n_q30_indel_reads, isri.total_q30_reads(), (unsigned)opt.min_qscore, 40);
 

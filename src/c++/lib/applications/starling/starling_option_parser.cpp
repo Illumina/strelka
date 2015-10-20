@@ -70,15 +70,15 @@ get_starling_option_parser(
     ("indel-ref-error-factor",  po::value(&opt.indel_ref_error_factor)->default_value(opt.indel_ref_error_factor),
      "Choose multiplier for ref error rate to use; 1 would be expected to be correct, but higher values counteract a bias away from homozygous indels (undercalling)")
     ("call-continuous-vf",  po::value(&opt.is_ploidy_prior)->zero_tokens()->implicit_value(false),
-          "Instead of a haploid/diploid prior assumption, output a continuous VF")
+     "Instead of a haploid/diploid prior assumption, output a continuous VF")
     ("noise-floor",  po::value(&opt.noise_floor)->default_value(opt.noise_floor),
-          "The noise rate for basecalls assumed when calling continuous variant frequencies")
+     "The noise rate for basecalls assumed when calling continuous variant frequencies")
     ("min-het-vf",  po::value(&opt.min_het_vf)->default_value(opt.min_het_vf),
-                    "The minimum allele frequency to call a heterozygous genotype when calling continuous variant frequencies")
+     "The minimum allele frequency to call a heterozygous genotype when calling continuous variant frequencies")
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)")
     ("gvcf-include-header", po::value(&opt.gvcf.include_headers)->multitoken(),
-          "Include the specified field description in the header (usually used to simplify segment concatenation when different segments have different fields)")
+     "Include the specified field description in the header (usually used to simplify segment concatenation when different segments have different fields)")
     ;
 
     po::options_description phase_opt("Read-backed phasing options");

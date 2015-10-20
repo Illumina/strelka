@@ -25,8 +25,14 @@ public:
     dummy_variant_sink() : variant_pipe_stage_base() {}
     std::vector<std::unique_ptr<digt_site_info>> the_sites;
     std::vector<std::unique_ptr<digt_indel_info>> the_indels;
-    void process(std::unique_ptr<site_info> si) override { the_sites.push_back(downcast<digt_site_info>(std::move(si))); }
-    void process(std::unique_ptr<indel_info> ii) override { the_indels.push_back(downcast<digt_indel_info>(std::move(ii))); }
+    void process(std::unique_ptr<site_info> si) override
+    {
+        the_sites.push_back(downcast<digt_site_info>(std::move(si)));
+    }
+    void process(std::unique_ptr<indel_info> ii) override
+    {
+        the_indels.push_back(downcast<digt_indel_info>(std::move(ii)));
+    }
 };
 
 
@@ -71,39 +77,39 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
     std::unique_ptr<digt_indel_info> site;
     site.reset(new digt_indel_info(50, indel_key(),
-         indel_data(indel_key()),
-         starling_diploid_indel_core(),
-         starling_indel_report_info(),
-         starling_indel_sample_report_info()));
+                                   indel_data(indel_key()),
+                                   starling_diploid_indel_core(),
+                                   starling_indel_report_info(),
+                                   starling_indel_sample_report_info()));
 
     bsp.process(std::move(site));
 
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
 
     site.reset(new digt_indel_info(105, indel_key(),
-             indel_data(indel_key()),
-             starling_diploid_indel_core(),
-             starling_indel_report_info(),
-             starling_indel_sample_report_info()));
+                                   indel_data(indel_key()),
+                                   starling_diploid_indel_core(),
+                                   starling_indel_report_info(),
+                                   starling_indel_sample_report_info()));
 
 
     bsp.process(std::move(site));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
 
     site.reset(new digt_indel_info(150, indel_key(),
-            indel_data(indel_key()),
-             starling_diploid_indel_core(),
-             starling_indel_report_info(),
-             starling_indel_sample_report_info()));
+                                   indel_data(indel_key()),
+                                   starling_diploid_indel_core(),
+                                   starling_indel_report_info(),
+                                   starling_indel_sample_report_info()));
 
 
     bsp.process(std::move(site));
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
     site.reset(new digt_indel_info(250, indel_key(),
-            indel_data(indel_key()),
-             starling_diploid_indel_core(),
-             starling_indel_report_info(),
-             starling_indel_sample_report_info()));
+                                   indel_data(indel_key()),
+                                   starling_diploid_indel_core(),
+                                   starling_indel_report_info(),
+                                   starling_indel_sample_report_info()));
 
     bsp.process(std::move(site));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));

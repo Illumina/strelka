@@ -153,13 +153,13 @@ std::ostream& operator<<(std::ostream& os,const shared_call_info& shmod);
 struct shared_indel_call_info : public shared_call_info
 {
     shared_indel_call_info(const indel_key& ik,
-            const indel_data& id,
-        const starling_indel_report_info iri,
-        const starling_indel_sample_report_info& isri)
-    : _ik(ik)
-    , _id(id)
-    , _iri(iri)
-    , _isri(isri)
+                           const indel_data& id,
+                           const starling_indel_report_info iri,
+                           const starling_indel_sample_report_info& isri)
+        : _ik(ik)
+        , _id(id)
+        , _iri(iri)
+        , _isri(isri)
     {
     }
     const indel_key _ik;
@@ -169,8 +169,8 @@ struct shared_indel_call_info : public shared_call_info
     const starling_indel_sample_report_info _isri;
 
     void set_hap_cigar(
-                const unsigned lead=1,
-                const unsigned trail=0);
+        const unsigned lead=1,
+        const unsigned trail=0);
 
     ALIGNPATH::path_t cigar;
 
@@ -184,12 +184,12 @@ struct shared_indel_call_info : public shared_call_info
 struct digt_indel_call : public shared_indel_call_info
 {
     digt_indel_call(const indel_key& ik,
-            const indel_data& id,
-            const starling_indel_report_info& iri,
-            const starling_indel_sample_report_info& isri,
-            const starling_diploid_indel_core& dindel)
-    : shared_indel_call_info(ik, id, iri, isri)
-    , _dindel(dindel)
+                    const indel_data& id,
+                    const starling_indel_report_info& iri,
+                    const starling_indel_sample_report_info& isri,
+                    const starling_diploid_indel_core& dindel)
+        : shared_indel_call_info(ik, id, iri, isri)
+        , _dindel(dindel)
     {
     }
 
@@ -279,13 +279,16 @@ struct digt_call_info : public shared_call_info
 struct continuous_site_call : public shared_call_info
 {
     continuous_site_call(int totalDepth, int alleleDepth, BASE_ID::index_t base)
-    : _totalDepth(totalDepth)
-    , _alleleDepth(alleleDepth)
-    , _base(base)
+        : _totalDepth(totalDepth)
+        , _alleleDepth(alleleDepth)
+        , _base(base)
     {
     }
 
-    double variant_frequency() const { return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0; }
+    double variant_frequency() const
+    {
+        return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0;
+    }
     int _totalDepth;
     int _alleleDepth;
     BASE_ID::index_t _base;
@@ -294,15 +297,18 @@ struct continuous_site_call : public shared_call_info
 struct continuous_indel_call : public shared_indel_call_info
 {
     continuous_indel_call(unsigned totalDepth, unsigned alleleDepth,
-            const indel_key& ik, const indel_data& id, const starling_indel_report_info& iri, const starling_indel_sample_report_info& isri)
-    : shared_indel_call_info(ik, id, iri, isri)
-    , _totalDepth(totalDepth)
-    , _alleleDepth(alleleDepth)
+                          const indel_key& ik, const indel_data& id, const starling_indel_report_info& iri, const starling_indel_sample_report_info& isri)
+        : shared_indel_call_info(ik, id, iri, isri)
+        , _totalDepth(totalDepth)
+        , _alleleDepth(alleleDepth)
     {
         set_hap_cigar(0,0);
     }
 
-    double variant_frequency() const { return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0; }
+    double variant_frequency() const
+    {
+        return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0;
+    }
     unsigned _totalDepth;
     unsigned _alleleDepth;
 };
@@ -314,7 +320,7 @@ std::ostream& operator<<(std::ostream& os,const digt_call_info& smod);
 struct indel_info
 {
     explicit indel_info(const pos_t init_pos)
-    : pos(init_pos)
+        : pos(init_pos)
     {
     }
 
@@ -330,11 +336,11 @@ struct indel_info
 struct digt_indel_info : public indel_info
 {
     digt_indel_info(const pos_t init_pos,
-         const indel_key& init_ik,
-         const indel_data& init_id,
-         const starling_diploid_indel_core& init_dindel,
-         const starling_indel_report_info& init_iri,
-         const starling_indel_sample_report_info& init_isri) : indel_info(init_pos)
+                    const indel_key& init_ik,
+                    const indel_data& init_id,
+                    const starling_diploid_indel_core& init_dindel,
+                    const starling_indel_report_info& init_iri,
+                    const starling_indel_sample_report_info& init_isri) : indel_info(init_pos)
     {
         _calls.emplace_back(init_ik, init_id, init_iri, init_isri, init_dindel);
     }
@@ -342,10 +348,22 @@ struct digt_indel_info : public indel_info
     bool is_forced_output() const override
     {
         return std::any_of(_calls.begin(), _calls.end(),
-                [](const digt_indel_call& x) { return x._dindel.is_forced_output; });
+                           [](const digt_indel_call& x)
+        {
+            return x._dindel.is_forced_output;
+        });
     }
-    bool is_indel() const override { return std::any_of(_calls.begin(), _calls.end(), [](const digt_indel_call& x) { return x._dindel.is_indel; });}
-    void set_filter(VCF_FILTERS::index_t filter) override { for (auto& x : _calls) x.set_filter(filter); }
+    bool is_indel() const override
+    {
+        return std::any_of(_calls.begin(), _calls.end(), [](const digt_indel_call& x)
+        {
+            return x._dindel.is_indel;
+        });
+    }
+    void set_filter(VCF_FILTERS::index_t filter) override
+    {
+        for (auto& x : _calls) x.set_filter(filter);
+    }
     pos_t end() const override;
 
     void add_overlap(const reference_contig_segment& ref, digt_indel_info& overlap);
@@ -421,7 +439,7 @@ struct digt_indel_info : public indel_info
         }
         return 2;
     }
-        std::map<std::string, double>
+    std::map<std::string, double>
     get_indel_qscore_features(const double chrom_depth) const;
 
     /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
@@ -432,8 +450,14 @@ struct digt_indel_info : public indel_info
 
     std::vector<digt_indel_call> _calls;
 
-    const digt_indel_call& first() const { return _calls.front(); }
-    digt_indel_call& first() { return _calls.front(); }
+    const digt_indel_call& first() const
+    {
+        return _calls.front();
+    }
+    digt_indel_call& first()
+    {
+        return _calls.front();
+    }
 };
 
 
@@ -442,10 +466,10 @@ struct digt_indel_info : public indel_info
 struct site_info
 {
     site_info(const pos_t init_pos,
-            const char init_ref,
-            const snp_pos_info& good_pi,
-            const int used_allele_count_min_qscore,
-            const bool is_forced_output = false)
+              const char init_ref,
+              const snp_pos_info& good_pi,
+              const int used_allele_count_min_qscore,
+              const bool is_forced_output = false)
     {
         pos=(init_pos);
         ref=(init_ref);
@@ -477,17 +501,23 @@ struct site_info
 struct digt_site_info : public site_info
 {
     digt_site_info(const pos_t init_pos,
-            const char init_ref,
-            const snp_pos_info& good_pi,
-            const int used_allele_count_min_qscore,
-            const bool is_forced_output = false)
-    : site_info(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output)
+                   const char init_ref,
+                   const snp_pos_info& good_pi,
+                   const int used_allele_count_min_qscore,
+                   const bool is_forced_output = false)
+        : site_info(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output)
     {}
 
     digt_site_info() {}
 
-    bool is_snp() const override { return dgt.is_snp; }
-    void set_filter (VCF_FILTERS::index_t filter) override { smod.set_filter(filter); }
+    bool is_snp() const override
+    {
+        return dgt.is_snp;
+    }
+    void set_filter (VCF_FILTERS::index_t filter) override
+    {
+        smod.set_filter(filter);
+    }
 
 
     const char*
@@ -572,27 +602,36 @@ std::ostream& operator<<(std::ostream& os,const digt_site_info& si);
 struct continuous_site_info : public site_info
 {
     continuous_site_info(const pos_t init_pos,
-                const char init_ref,
-                const snp_pos_info& good_pi,
-                const int used_allele_count_min_qscore,
-                const double min_het_vf,
-                const bool is_forced_output = false) : site_info(init_pos,
-                init_ref,
-                good_pi,
-                used_allele_count_min_qscore,
-                is_forced_output)
-    , _min_het_vf(min_het_vf)
+                         const char init_ref,
+                         const snp_pos_info& good_pi,
+                         const int used_allele_count_min_qscore,
+                         const double min_het_vf,
+                         const bool is_forced_output = false) : site_info(init_pos,
+                                                                              init_ref,
+                                                                              good_pi,
+                                                                              used_allele_count_min_qscore,
+                                                                              is_forced_output)
+        , _min_het_vf(min_het_vf)
     {
     }
 
-    bool is_snp() const override { return _is_snp; }
-    void set_filter (VCF_FILTERS::index_t filter) override { for (auto& call : calls) call.set_filter(filter); }
+    bool is_snp() const override
+    {
+        return _is_snp;
+    }
+    void set_filter (VCF_FILTERS::index_t filter) override
+    {
+        for (auto& call : calls) call.set_filter(filter);
+    }
     bool is_nonref() const override
     {
         auto ref_id = base_to_id(ref);
         return calls.end() !=
-                std::find_if(calls.begin(), calls.end(),
-                        [&](const continuous_site_call& call) { return call._base != ref_id; });
+               std::find_if(calls.begin(), calls.end(),
+                            [&](const continuous_site_call& call)
+        {
+            return call._base != ref_id;
+        });
     }
 
     bool _is_snp = false;
@@ -602,10 +641,10 @@ struct continuous_site_info : public site_info
     {
         bool is_het = std::count_if(calls.begin(),
                                     calls.end(), [&](const continuous_site_call& c)
-                                    {
-                                        return c.variant_frequency() >= _min_het_vf;
-                                    })
-                        > 1;
+        {
+            return c.variant_frequency() >= _min_het_vf;
+        })
+        > 1;
 
         if (is_het)
             return "0/1";
@@ -623,11 +662,14 @@ private:
 struct continuous_indel_info : public indel_info
 {
     explicit continuous_indel_info(const pos_t init_pos)
-    : indel_info(init_pos)
+        : indel_info(init_pos)
     {
     }
 
-    void set_filter (VCF_FILTERS::index_t filter) override  { for (auto& call : calls) call.set_filter(filter); }
+    void set_filter (VCF_FILTERS::index_t filter) override
+    {
+        for (auto& call : calls) call.set_filter(filter);
+    }
 
 
     bool is_indel() const override

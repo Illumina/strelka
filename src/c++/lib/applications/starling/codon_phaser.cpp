@@ -360,10 +360,10 @@ create_phased_record()
             const uint8_t a1(is_swap ? ax : ay);
 
             ref_gt = 0;
-            for(; true; ref_gt++)
+            for (; true; ref_gt++)
             {
                 assert(ref_gt < N_BASE);
-                if((ref_gt != a0) && (ref_gt != a1)) break;
+                if ((ref_gt != a0) && (ref_gt != a1)) break;
             }
 
             // hetalt site:

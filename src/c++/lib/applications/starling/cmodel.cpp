@@ -338,30 +338,30 @@ score_indel_instance(
     if (is_logistic_model())   //case we are using a logistic regression mode
     {
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
-        switch(ii.first()._iri.it)
+        switch (ii.first()._iri.it)
         {
-            case INDEL::DELETE:
-            {
-                if (ii.is_hetalt())
-                    var_case = CALIBRATION_MODEL::HetAltDel;
-                else if (! ii.is_het())
-                    var_case = CALIBRATION_MODEL::HomDel;
-            }
-            break;
-            case INDEL::INSERT:
-            {
-                if (ii.is_hetalt())
-                    var_case = CALIBRATION_MODEL::HetAltIns;
-                else if (ii.is_het())
-                    var_case = CALIBRATION_MODEL::HetIns;
-                else
-                    var_case = CALIBRATION_MODEL::HomIns;
-            }
-            break;
-            default:
-                // block substitutions???
-                do_indel_rule_model(pars.at("indel").at("cutoff"), ii, call);
-                return;
+        case INDEL::DELETE:
+        {
+            if (ii.is_hetalt())
+                var_case = CALIBRATION_MODEL::HetAltDel;
+            else if (! ii.is_het())
+                var_case = CALIBRATION_MODEL::HomDel;
+        }
+        break;
+        case INDEL::INSERT:
+        {
+            if (ii.is_hetalt())
+                var_case = CALIBRATION_MODEL::HetAltIns;
+            else if (ii.is_het())
+                var_case = CALIBRATION_MODEL::HetIns;
+            else
+                var_case = CALIBRATION_MODEL::HomIns;
+        }
+        break;
+        default:
+            // block substitutions???
+            do_indel_rule_model(pars.at("indel").at("cutoff"), ii, call);
+            return;
         }
 
         const featuremap features = ii.get_indel_qscore_features(normal_depth());

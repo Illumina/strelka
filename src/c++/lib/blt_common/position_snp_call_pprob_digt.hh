@@ -33,7 +33,7 @@
 struct diploid_genotype
 {
     diploid_genotype()
-      : phredLoghood(DIGT::SIZE,0)
+        : phredLoghood(DIGT::SIZE,0)
     {
         reset();
     }

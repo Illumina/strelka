@@ -55,7 +55,7 @@ struct Codon_phaser : public variant_pipe_stage_base
     static
     bool
     is_phasable_site(
-            const std::unique_ptr<digt_site_info>& si)
+        const std::unique_ptr<digt_site_info>& si)
     {
         return (si->dgt.is_snp && si->is_het());
     }

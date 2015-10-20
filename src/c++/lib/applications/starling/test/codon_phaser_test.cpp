@@ -59,7 +59,10 @@ public:
         auto si(downcast<digt_site_info>(std::move(site)));
         if (si->is_het() || si->is_hetalt() ) the_sites.push_back(std::move(si));
     }
-    void process(std::unique_ptr<indel_info> ii) override { the_indels.push_back(std::move(ii)); }
+    void process(std::unique_ptr<indel_info> ii) override
+    {
+        the_indels.push_back(std::move(ii));
+    }
 };
 
 // positive tests

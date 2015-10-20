@@ -184,9 +184,9 @@ test(const continuous_site_info& si) const
     {
         // test blocking values:
         if (! is_new_value_blockable(si.calls.front().gqx,
-                block_gqx,frac_tol,abs_tol,
-                true,
-                true))
+                                     block_gqx,frac_tol,abs_tol,
+                                     true,
+                                     true))
         {
             return false;
         }

@@ -428,7 +428,7 @@ write_site_record(
     os << ':';
     //print DP:DPF
     os << si.n_used_calls << ':'
-            << si.n_unused_calls;
+       << si.n_unused_calls;
 
     if (isNoAlt) {}
     else if (si.smod.is_phased_region)
@@ -534,7 +534,7 @@ gvcf_writer::write_site_record(
     os << ':';
     //print DP:DPF
     os << _block.block_dpu.min() << ':'
-            << _block.block_dpf.min();
+       << _block.block_dpf.min();
     os << '\n';
 }
 
@@ -553,9 +553,9 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
     {
 
         os << _chrom << '\t'   // CHROM
-                << ii.pos << '\t'   // POS
-                << ".\t"            // ID
-                << call._iri.vcf_ref_seq << '\t'; // REF
+           << ii.pos << '\t'   // POS
+           << ".\t"            // ID
+           << call._iri.vcf_ref_seq << '\t'; // REF
 
         // ALT
         os << call._iri.vcf_indel_seq;
@@ -602,7 +602,7 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
 
         //SAMPLE
         os << ii.get_gt() << ':'
-                << call.gq << ':';
+           << call.gq << ':';
 
         os << call.gqx  << ':';
 
@@ -610,8 +610,8 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
 
         // SAMPLE AD:
         os << call._totalDepth - call._alleleDepth
-                << ","
-                << call._alleleDepth;
+           << ","
+           << call._alleleDepth;
         // VF
         {
             const StreamScoper ss(os);
