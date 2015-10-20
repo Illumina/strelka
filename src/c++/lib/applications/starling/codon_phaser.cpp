@@ -285,16 +285,7 @@ create_phased_record()
         return;
     }
 
-    // we have a phased record, modify site buffer to reflect the changes
-    auto& base = this->_buffer.at(0);
-
-    base->phased_ref = this->reference;
     const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
-
-    base->smod.is_unknown = false;
-    base->smod.max_gt = 4; // (A/C)
-    base->dgt.ref_gt  = 0; // (A) hacking  the gt method to 0/1
-    if (!is_ref) base->dgt.ref_gt = 2; // (G) hacking the gt method to 1/2
 
     std::stringstream AD,alt;
     AD << this->observations[this->reference];
@@ -315,6 +306,8 @@ create_phased_record()
     static const int maxInt(std::numeric_limits<int>::max());
     int min_gq(maxInt), min_qual(maxInt), min_qscore(maxInt);
     std::vector<unsigned> pls;
+    unsigned ref_gt(0);
+    unsigned max_gt(0);
     for (unsigned i(0); i<this->get_block_length(); i++)
     {
         auto& si(_buffer.at(i));
@@ -323,10 +316,42 @@ create_phased_record()
         {
             min_gq = si->smod.gq;
             pls = si->dgt.phredLoghood;
+            if (! is_ref)
+            {
+                // hetalt site:
+                max_gt = si->smod.max_gt;
+                ref_gt = si->dgt.ref_gt;
+            }
+            else
+            {
+                max_gt = si->smod.max_gt;
+                ref_gt = si->dgt.ref_gt;
+            }
         }
         min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
         min_qscore = std::min(si->smod.Qscore,min_qscore);
     }
+
+    // we have a phased record, modify site buffer to reflect the changes
+    auto& base = this->_buffer.at(0);
+
+    base->phased_ref = this->reference;
+    base->smod.is_unknown = false;
+    if (!is_ref)
+    {
+        const uint8_t a0(DIGT::get_allele(max_gt,0));
+        const uint8_t a1(DIGT::get_allele(max_gt,1));
+
+        ref_gt = 0;
+        for(; true; ref_gt++)
+        {
+            assert(ref_gt < N_BASE);
+            if((ref_gt != a0) && (ref_gt != a1)) break;
+        }
+    }
+
+    base->smod.max_gt = max_gt;
+    base->dgt.ref_gt = ref_gt;
 
     // set various quality fields conservatively
     base->smod.gq                = min_gq;
