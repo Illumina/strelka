@@ -115,6 +115,9 @@ is_candidate_indel_impl_test(
             // get expected per-read error rate for this STR
             indel_model.calc_prop(_opt,iri,indel_error_prob,ref_error_prob,use_length_dependence);
 
+            // need to undo the reference-error bias term that is used to reduce overcalls
+            ref_error_prob /= _opt.indel_ref_error_factor;
+
             bool is_pass_indel_noise_check(false);
 
             for (unsigned i(0); i<isds; ++i)
