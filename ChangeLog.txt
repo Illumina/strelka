@@ -1,3 +1,4 @@
+v2.4.1
 - STAR-62 - fix setting vqsrModelName on --exome
 v2.4.0
 - STARKA-257 remap somatic SVN VQSR scores
