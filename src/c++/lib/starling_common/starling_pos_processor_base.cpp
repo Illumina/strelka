@@ -1521,7 +1521,6 @@ pileup_read_segment(const read_segment& rseg,
 
                 bool current_call_filter( true );
                 bool is_tier_specific_filter( false );
-                bool is_mmdf_filtered(false);
                 if (! is_submapped)
                 {
                     bool is_call_filter((call_code == BAM_BASE::ANY) ||
@@ -1532,7 +1531,7 @@ pileup_read_segment(const read_segment& rseg,
                     bool is_tier2_call_filter(is_call_filter);
                     if (! is_call_filter && _opt.is_max_win_mismatch)
                     {
-                        is_mmdf_filtered = _rmi[read_pos].mismatch_filter_map;
+                        is_call_filter = _rmi[read_pos].mismatch_filter_map;
                         if (! _opt.tier2.is_tier2_no_mismatch_density_filter)
                         {
                             if (_opt.tier2.is_tier2_mismatch_density_filter_count)
@@ -1585,7 +1584,6 @@ pileup_read_segment(const read_segment& rseg,
                                     bseq,qual,read_pos);
                 }
 
-                if (!is_mmdf_filtered)
                 try
                 {
                     const base_call bc = base_call(call_id,qscore,best_al.is_fwd_strand,
