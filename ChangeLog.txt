@@ -1,3 +1,4 @@
+- WGSW-711 - Make inclusion of Phasing-related headers conditional
 v2.4.1
 - STAR-62 - fix setting vqsrModelName on --exome
 v2.4.0
