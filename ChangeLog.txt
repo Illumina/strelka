@@ -1,5 +1,6 @@
+- WGSW-714 fix PLs not printed at nonref site
 v2.4.1
-- STAR-62 - fix setting vqsrModelName on --exome
+- STAR-62 fix setting vqsrModelName on --exome
 v2.4.0
 - STARKA-257 remap somatic SVN VQSR scores
 - STARKA-254 Add PL values for germline SNV and indel calls
