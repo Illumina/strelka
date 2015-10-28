@@ -1,3 +1,5 @@
+- STAR-60 - Update codon phaser to correctly handle interaction between GT and
+  alleles that are droped due to low phasing support.
 v2.4.1
 - STAR-62 - fix setting vqsrModelName on --exome
 v2.4.0
