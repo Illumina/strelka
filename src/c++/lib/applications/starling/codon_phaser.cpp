@@ -290,26 +290,17 @@ create_phased_record()
 #endif
     }
 
-    if (phasing_inconsistent)
-    {
-        for (auto& val : _buffer)
-        {
-            if (! is_phasable_site(val)) continue;
-            val->smod.set_filter(VCF_FILTERS::PhasingConflict);
-        }
-        return;
-    }
-
-    const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
-
     std::stringstream AD,alt;
-    AD << this->observations[this->reference];
-    for (const auto& val : max_alleles)
+    if (!phasing_inconsistent)
     {
-        if (val.first==reference) continue;
-        if (! alt.str().empty()) alt << ',';
-        alt << val.first;
-        AD << ',' << val.second;
+        AD << this->observations[this->reference];
+        for (const auto& val : max_alleles)
+        {
+            if (val.first==reference) continue;
+            if (! alt.str().empty()) alt << ',';
+            alt << val.first;
+            AD << ',' << val.second;
+        }
     }
 
 #ifdef DEBUG_CODON
@@ -327,35 +318,58 @@ create_phased_record()
     bool is_min_gq_idx1(false);
     unsigned min_gq_idx0(0);
     unsigned min_gq_idx1(0);
-    for (unsigned i(0); i<this->get_block_length(); i++)
+    if (!phasing_inconsistent)
     {
-        const auto& si(_buffer.at(i));
-        if (! is_phasable_site(si)) continue;
-        // It is possible for a weak hetalt call and a strong het call to be phased into a het
-        // call, particularly at a site that is triallelic with one ref allele. In that case, it is
-        // important to skip those calls' contribution to the resultant statistics. This logic causes
-        // us to skip over these variants.
-        if (!is_genotype_represented(si->smod.max_gt, unsigned(si->pos - _buffer[0]->pos),
-                max_alleles[0].first, max_alleles[1].first))
+        for (unsigned i(0); i<this->get_block_length(); i++)
         {
-            continue;
-        }
+            const auto& si(_buffer.at(i));
+            if (! is_phasable_site(si)) continue;
+            // It is possible for a weak hetalt call and a strong het call to be phased into a het
+            // call, particularly at a site that is triallelic with one ref allele. In that case, it is
+            // important to skip those calls' contribution to the resultant statistics. This logic causes
+            // us to skip over these variants.
+            if (!is_genotype_represented(si->smod.max_gt, unsigned(si->pos - _buffer[0]->pos),
+                    max_alleles[0].first, max_alleles[1].first))
+            {
+                continue;
+            }
 
-        if ((! is_min_gq_idx0) || (si->smod.gq < _buffer.at(min_gq_idx0)->smod.gq))
-        {
-            min_gq_idx1 = min_gq_idx0;
-            if (is_min_gq_idx0) is_min_gq_idx1 = true;
-            min_gq_idx0 = i;
-            is_min_gq_idx0 = true;
+            if ((! is_min_gq_idx0) || (si->smod.gq < _buffer.at(min_gq_idx0)->smod.gq))
+            {
+                min_gq_idx1 = min_gq_idx0;
+                if (is_min_gq_idx0) is_min_gq_idx1 = true;
+                min_gq_idx0 = i;
+                is_min_gq_idx0 = true;
+            }
+            if ((i != min_gq_idx0) && ( (! is_min_gq_idx1) || (si->smod.gq < _buffer.at(min_gq_idx1)->smod.gq)))
+            {
+                min_gq_idx1 = i;
+                is_min_gq_idx1 = true;
+            }
+            min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
+            min_qscore = std::min(si->smod.Qscore,min_qscore);
         }
-        if ((i != min_gq_idx0) && ( (! is_min_gq_idx1) || (si->smod.gq < _buffer.at(min_gq_idx1)->smod.gq)))
-        {
-            min_gq_idx1 = i;
-            is_min_gq_idx1 = true;
-        }
-        min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
-        min_qscore = std::min(si->smod.Qscore,min_qscore);
     }
+    if (!is_min_gq_idx0)
+    {
+#ifdef DEBUG_CODON
+        if (phasing_inconsistent) log_os << __FUNCTION__ << "; no variants left\n";
+#endif
+        phasing_inconsistent = true;
+    }
+
+
+    if (phasing_inconsistent)
+    {
+        for (auto& val : _buffer)
+        {
+            if (! is_phasable_site(val)) continue;
+            val->smod.set_filter(VCF_FILTERS::PhasingConflict);
+        }
+        return;
+    }
+
+    const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
 
     int min_gq(maxInt);
     {
@@ -365,7 +379,7 @@ create_phased_record()
         pls = minsi0.dgt.phredLoghood;
         ref_gt = minsi0.dgt.ref_gt;
 
-        if (! is_ref)
+        if (! is_ref && is_min_gq_idx1)
         {
             //
             // hetalt case
