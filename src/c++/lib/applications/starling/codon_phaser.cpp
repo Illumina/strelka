@@ -353,7 +353,7 @@ create_phased_record()
     if (!is_min_gq_idx0)
     {
 #ifdef DEBUG_CODON
-        if (phasing_inconsistent) log_os << __FUNCTION__ << "; no variants left\n";
+        log_os << __FUNCTION__ << "; no variants left\n";
 #endif
         phasing_inconsistent = true;
     }
