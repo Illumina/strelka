@@ -387,6 +387,8 @@ write_site_record(
     }
     os << '\t';
 
+    const bool is_nonref_gt(si.smod.max_gt != si.dgt.ref_gt);
+
     //FORMAT
     os << "GT";
     if (si.dgt.is_snp)
@@ -398,7 +400,7 @@ write_site_record(
     {
         os << ":AD";
     }
-    if (si.dgt.is_snp)
+    if (is_nonref_gt)
     {
         os << ":PL";
     }
@@ -441,8 +443,9 @@ write_site_record(
         print_site_ad(si, altOrder, os);
     }
 
-    if (si.dgt.is_snp)
+    if (is_nonref_gt)
     {
+        // print PL values
         os << ':';
         if (si.is_hetalt())
         {
