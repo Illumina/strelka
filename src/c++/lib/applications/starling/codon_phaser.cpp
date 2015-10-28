@@ -164,6 +164,21 @@ Codon_phaser::construct_reference()
 #endif
 }
 
+static bool is_genotype_represented(int genotype, unsigned offset, const std::string& allele1, const std::string& allele2)
+{
+    const char* gt = DIGT::label(genotype);
+    for (int i = 0; i < 2; i++)
+    {
+        char base = gt[i];
+        if ( (allele1.length() <= offset || allele1[offset] != base) &&
+                (allele2.length() <= offset || allele2[offset] != base))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 void
 Codon_phaser::
 create_phased_record()
@@ -316,6 +331,16 @@ create_phased_record()
     {
         const auto& si(_buffer.at(i));
         if (! is_phasable_site(si)) continue;
+        // It is possible for a weak hetalt call and a strong het call to be phased into a het
+        // call, particularly at a site that is triallelic with one ref allele. In that case, it is
+        // important to skip those calls' contribution to the resultant statistics. This logic causes
+        // us to skip over these variants.
+        if (!is_genotype_represented(si->smod.max_gt, unsigned(si->pos - _buffer[0]->pos),
+                max_alleles[0].first, max_alleles[1].first))
+        {
+            continue;
+        }
+
         if ((! is_min_gq_idx0) || (si->smod.gq < _buffer.at(min_gq_idx0)->smod.gq))
         {
             min_gq_idx1 = min_gq_idx0;
