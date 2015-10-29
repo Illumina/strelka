@@ -95,7 +95,8 @@ add_gvcf_filters(
     }
 
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
-    if (sopt.do_codon_phasing)
+    if (sopt.do_codon_phasing ||
+            (opt.include_headers.end() != std::find(opt.include_headers.begin(), opt.include_headers.end(), "Phasing")))
     {
         std::ostringstream oss;
         oss << "Locus read evidence displays unbalanced phasing patterns";
@@ -178,8 +179,11 @@ finish_gvcf_header(const starling_options& opt,
 //        os << "##INFO=<ID=Qscore,Number=1,Type=Integer,Description=\"Calibrated quality score indicating expected empirical FP-rate for variant site.\">\n";
 
     // Unphased, flag if a site that is within a phasing window hasn't been phased
-    if (opt.do_codon_phasing)
+    if (opt.do_codon_phasing ||
+        opt.gvcf.include_headers.end() != std::find(opt.gvcf.include_headers.begin(), opt.gvcf.include_headers.end(), "Phasing"))
+    {
         os << "##INFO=<ID=Unphased,Number=0,Type=Flag,Description=\"Indicates a record that is within the specified phasing window of another variant but could not be phased due to lack of minimum read support.\">\n";
+    }
 
     //FORMAT:
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
