@@ -867,9 +867,12 @@ gvcf_writer::write_site_record(
 
         if (!is_no_alt)
         {
-            if (!info.str().empty())
-                info << ";";
-            info << "Unphased"; // TODO: placeholder
+            if (_opt.do_codon_phasing)
+            {
+                if (!info.str().empty())
+                    info << ";";
+                info << "Unphased"; // TODO: placeholder until we do phasing on continuous variants
+            }
         }
 
         os << (info.str().empty() ? "." : info.str()) << "\t";

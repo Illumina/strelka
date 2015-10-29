@@ -140,6 +140,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--do-short-range-phasing'])
+    # currently short-range phasing is not enabled with continuous variant calling. This ensures
+    # the header value for the relevant phasing filters is still emitted
+    if len(self.params.callContinuousVf) > 0 :
+        segCmd.extend(["--gvcf-include-header", "Phasing"])
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
 
     # VQSR:
