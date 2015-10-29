@@ -143,10 +143,10 @@ void gvcf_writer::process(std::unique_ptr<site_info> si)
 
 void gvcf_writer::process(std::unique_ptr<indel_info> ii)
 {
+    skip_to_pos(ii->pos);
+
     if (typeid(*ii) == typeid(digt_indel_info))
     {
-        skip_to_pos(ii->pos);
-
         auto ii_digt(downcast<digt_indel_info>(std::move(ii)));
 
         write_indel_record(*ii_digt);
