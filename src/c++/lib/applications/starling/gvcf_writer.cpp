@@ -160,12 +160,8 @@ void gvcf_writer::process(std::unique_ptr<indel_info> ii)
 
 void gvcf_writer::flush()
 {
-    if (_opt.is_ploidy_prior)
-    {
-        // not doing any block stuff for continuous variants
-        skip_to_pos(_report_range.end_pos);
-        write_block_site_record();
-    }
+    skip_to_pos(_report_range.end_pos);
+    write_block_site_record();
 }
 
 
@@ -811,24 +807,15 @@ void
 gvcf_writer::write_site_record(
     const continuous_site_info& si) const
 {
-    int gqx = std::numeric_limits<int>::max();
     bool site_is_nonref = si.is_nonref();
     auto ref_base_id = base_to_id(si.ref);
 
     for (auto& call : si.calls)
     {
-        // do not output the call for reference if the site has variants
-        if (site_is_nonref && call._base == ref_base_id)
-            continue;
-        gqx = std::min(gqx, call.gq);
-    }
+        bool is_no_alt(call._base == ref_base_id);
 
-    for (auto& call : si.calls)
-    {
-        bool is_no_alt(call._base == base_to_id(si.ref));
-
-        // do not output the call for reference if the site has variants
-        if (site_is_nonref && is_no_alt)
+        // do not output the call for reference if the site has variants unless it is forced output
+        if (!si.forcedOutput && site_is_nonref && is_no_alt)
             continue;
 
         std::ostream& os(*_osptr);
@@ -895,7 +882,7 @@ gvcf_writer::write_site_record(
         //SAMPLE
         os << gt << ':';
         os << call.gq << ':';
-        os << gqx << ':';
+        os << call.gqx << ':';
         // DP:DPF
         os << si.n_used_calls << ':' << si.n_unused_calls;
 
