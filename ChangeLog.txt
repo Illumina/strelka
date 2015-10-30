@@ -1,3 +1,4 @@
+v2.4.2
 - STAR-65 Take the minimum GQ/GQX when overlapping indels
 - WGSW-714 fix PLs not printed at nonref site
 - STAR-60 Update codon phaser to correctly handle interaction between GT and
