@@ -210,6 +210,8 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
         call.Qscore = overlap.first().Qscore;
     else if (overlap.first().Qscore >= 0)
         call.Qscore = std::min(call.Qscore, overlap.first().Qscore);
+    call.gqx = std::min(call.gqx, overlap.first().gqx);
+    call.gq = std::min(call.gq, overlap.first().gq);
 
     _calls.push_back(overlap.first());
 }
