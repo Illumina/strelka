@@ -639,19 +639,12 @@ struct continuous_site_info : public site_info
 
     const char* get_gt(const continuous_site_call& call) const
     {
-        bool is_het = std::count_if(calls.begin(),
-                                    calls.end(), [&](const continuous_site_call& c)
-        {
-            return c.variant_frequency() >= _min_het_vf;
-        })
-        > 1;
-
-        if (is_het)
-            return "0/1";
-        else if (call._base == base_to_id(ref))
+        if (call._base == base_to_id(ref))
             return "0/0";
-        else
+        else if (call.variant_frequency() >= (1 -_min_het_vf))
             return "1/1";
+        else
+            return "0/1";
     }
 
     std::vector<continuous_site_call> calls;

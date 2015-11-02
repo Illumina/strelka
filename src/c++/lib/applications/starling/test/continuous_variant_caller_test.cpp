@@ -136,6 +136,68 @@ BOOST_AUTO_TEST_CASE( do_not_call_low_vf )
     BOOST_CHECK_EQUAL(2, info.calls.size());
 }
 
+BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
+{
+    starling_base_options opt;
+    snp_pos_info pileup;
+
+    opt.min_het_vf = 0.03; // 3% threshold
+
+    // insert C at 2%, should not be called normally, but it will be if forced
+    for (int i=0; i<2; i++)
+        pileup.calls.emplace_back(base_to_id('C'), 30, false, 0, 0, false, false, false, false, false);
+
+    for (int i=0; i<5; i++)
+        pileup.calls.emplace_back(base_to_id('T'), 30, false, 0, 0, false, false, false, false, false);
+
+    for (int i=0; i<93; i++)
+        pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
+
+
+    continuous_site_info info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf, true);
+
+    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
+    auto C = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    {
+        return call._base == BASE_ID::C;
+    });
+    BOOST_CHECK(C != info.calls.end());
+    BOOST_CHECK(0 == strcmp(info.get_gt(*C), "0/1"));
+
+    auto A = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    {
+        return call._base == BASE_ID::A;
+    });
+    BOOST_CHECK(A != info.calls.end());
+    BOOST_CHECK_EQUAL(93, A->_alleleDepth);
+    BOOST_CHECK_EQUAL(40, A->gq);
+    BOOST_CHECK_EQUAL(100, A->_totalDepth);
+    BOOST_CHECK(0 == strcmp(info.get_gt(*A), "0/0"));
+
+    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    {
+        return call._base == BASE_ID::T;
+    });
+    BOOST_CHECK(T != info.calls.end());
+    BOOST_CHECK_EQUAL(5, T->_alleleDepth);
+    BOOST_CHECK_EQUAL(13, T->gq);
+    BOOST_CHECK_EQUAL(100, T->_totalDepth);
+    BOOST_CHECK(0 == strcmp(info.get_gt(*T), "0/1"));
+
+    // G will be called since it is forced output
+    auto G = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    {
+        return call._base == BASE_ID::G;
+    });
+    BOOST_CHECK(G != info.calls.end());
+    BOOST_CHECK_EQUAL(0, G->_alleleDepth);
+    BOOST_CHECK_EQUAL(100, G->_totalDepth);
+    BOOST_CHECK(0 == strcmp(info.get_gt(*G), "0/1"));
+
+    BOOST_CHECK_EQUAL(4, info.calls.size());
+}
+
+
 BOOST_AUTO_TEST_CASE( compute_vf )
 {
     // TODO: diploid one returns -11776.1. chrM 14213
