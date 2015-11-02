@@ -197,8 +197,39 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     BOOST_CHECK_EQUAL(4, info.calls.size());
 }
 
+BOOST_AUTO_TEST_CASE( homalt_called_correctly )
+{
+    starling_base_options opt;
+    snp_pos_info pileup;
 
-BOOST_AUTO_TEST_CASE( compute_vf )
+    opt.min_het_vf = 0.03; // 3% threshold
+
+    // insert A at 2%, should not be called normally
+    for (int i=0; i<2; i++)
+        pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
+
+    for (int i=0; i<98; i++)
+        pileup.calls.emplace_back(base_to_id('T'), 30, false, 0, 0, false, false, false, false, false);
+
+
+    continuous_site_info info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
+
+    starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
+
+    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    {
+        return call._base == BASE_ID::T;
+    });
+    BOOST_CHECK(T != info.calls.end());
+    BOOST_CHECK_EQUAL(98, T->_alleleDepth);
+    BOOST_CHECK_EQUAL(100, T->_totalDepth);
+    BOOST_CHECK(0 == strcmp(info.get_gt(*T), "1/1"));
+
+    BOOST_CHECK_EQUAL(1, info.calls.size());
+}
+
+
+BOOST_AUTO_TEST_CASE( compute_sb )
 {
     // TODO: diploid one returns -11776.1. chrM 14213
     BOOST_CHECK_CLOSE_FRACTION(0.246095, starling_continuous_variant_caller::strand_bias(4769,4058, 2, 4, .01), 0.0001);
