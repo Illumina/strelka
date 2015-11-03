@@ -69,7 +69,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
             "minTier2Mapq" : 0,
             'variantScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'indelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
-            'indelErrorModelName': 'new',
+            'indelErrorModelName': 'Binom',
             'isWriteCallableRegion' : False
             })
         return defaults
