@@ -1,3 +1,4 @@
+- WGSW-714 Do not print PLs for homref sites
 v2.4.2
 - STAR-65 Take the minimum GQ/GQX when overlapping indels
 - STAR-64 Output forced indels & SNPs in continuous calling mode. Modify

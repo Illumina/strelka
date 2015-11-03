@@ -384,7 +384,7 @@ write_site_record(
     os << '\t';
 
     const bool is_nonref_gt(si.smod.max_gt != si.dgt.ref_gt);
-    const bool is_print_pl(is_nonref_gt || si.dgt.is_snp || si.forcedOutput);
+    const bool is_print_pl(is_nonref_gt || si.dgt.is_snp);
 
     //FORMAT
     os << "GT";
