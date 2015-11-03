@@ -162,7 +162,8 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
         return call._base == BASE_ID::C;
     });
     BOOST_CHECK(C != info.calls.end());
-    BOOST_CHECK(0 == strcmp(info.get_gt(*C), "0/1"));
+    // below min het vf GT should be 0/0 (STAR-66)
+    BOOST_CHECK(0 == strcmp(info.get_gt(*C), "0/0"));
 
     auto A = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
     {
@@ -185,6 +186,7 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     BOOST_CHECK(0 == strcmp(info.get_gt(*T), "0/1"));
 
     // G will be called since it is forced output
+    // below min het vf GT should be 0/0 (STAR-66)
     auto G = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
     {
         return call._base == BASE_ID::G;
@@ -192,7 +194,7 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     BOOST_CHECK(G != info.calls.end());
     BOOST_CHECK_EQUAL(0, G->_alleleDepth);
     BOOST_CHECK_EQUAL(100, G->_totalDepth);
-    BOOST_CHECK(0 == strcmp(info.get_gt(*G), "0/1"));
+    BOOST_CHECK(0 == strcmp(info.get_gt(*G), "0/0"));
 
     BOOST_CHECK_EQUAL(4, info.calls.size());
 }

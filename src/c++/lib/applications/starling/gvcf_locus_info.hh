@@ -643,6 +643,8 @@ struct continuous_site_info : public site_info
             return "0/0";
         else if (call.variant_frequency() >= (1 -_min_het_vf))
             return "1/1";
+        else if (call.variant_frequency() < _min_het_vf)
+            return "0/0"; // STAR-66 - desired behavior
         else
             return "0/1";
     }
