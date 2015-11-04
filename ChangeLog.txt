@@ -1,5 +1,6 @@
 - STAR-66 Correct GT reported for ALT alleles at forced-output sites in
   continuous vf mode from "1/1" to "0/1" as appropriate.
+- WGSW-724 Do not print PLs for homref sites
 v2.4.2
 - STAR-65 Take the minimum GQ/GQX when overlapping indels
 - STAR-64 Output forced indels & SNPs in continuous calling mode. Modify
