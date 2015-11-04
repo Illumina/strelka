@@ -153,6 +153,8 @@ process_pos_snp_denovo(const pos_t pos)
     {
 
     	//std::ostream& bos(*_streams.denovo_osptr());
+
+    	//For debugging write to std::out
     	std::ostream& bos(std::cout);
 
         bos << _chrom_name << '\t'

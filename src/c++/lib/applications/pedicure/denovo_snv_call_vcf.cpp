@@ -31,8 +31,8 @@ write_vcf_sample_info(
     const blt_options& opt,
     const CleanedPileup& tier1_cpi,
     const CleanedPileup& tier2_cpi,
-    const denovo_snv_call& dsc,
-    int sampleIndex,
+    const denovo_snv_call& /*dsc*/,
+    int /*sampleIndex*/,
     std::ostream& os)
 {
     //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
@@ -56,24 +56,6 @@ write_vcf_sample_info(
     std::array<unsigned,N_BASE> tier2_base_counts;
     tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
     tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
-
-//<<<<<<< HEAD
-//    for (unsigned b(0); b<N_BASE; ++b)
-//    {
-//        os << ':'
-//           << tier1_base_counts[b] << ','
-//           << tier2_base_counts[b];
-//    }
-//=======
-//    for (unsigned b(0); b<N_BASE; ++b)
-//    {
-//        os << ':'
-//           << tier1_base_counts[b] << ','
-//           << tier2_base_counts[b];
-//    }
-//	os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
-	
-//>>>>>>> PED-18
 }
 
 
