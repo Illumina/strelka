@@ -94,7 +94,6 @@ operator<<(std::ostream& os,
 somatic_indel_caller_grid::
 somatic_indel_caller_grid(const strelka_options& opt,
                           const indel_digt_caller& in_caller)
-//: _somatic_prior(TWO_STATE_SOMATIC::SIZE*STAR_DIINDEL::SIZE*DDIINDEL_GRID::SIZE, 0)
 {
     _ln_som_match=(log1p_switch(-opt.somatic_indel_rate));
     _ln_som_mismatch=(std::log(opt.somatic_indel_rate));
@@ -107,9 +106,6 @@ somatic_indel_caller_grid(const strelka_options& opt,
     {
         _bare_lnprior.normal[ngt] = normal_lnprior_genomic[ngt];
     }
-
-//    const double ref_err_prob = 0.000011;
-//    set_somatic_prior(_somatic_prior, ref_err_prob, opt);
 }
 
 // Currently the index is reversed (i.e. index == 3 -> fraction == 0.95)
@@ -550,7 +546,8 @@ get_somatic_indel(const strelka_options& opt,
                                                 indel_error_prob,ref_error_prob,ik,normal_id,
                                                 is_normal_het_bias,normal_het_bias,
                                                 is_include_tier2,is_use_alt_indel,
-                                                normal_lhood);
+                                                normal_lhood
+                                                );
         indel_digt_caller::get_indel_digt_lhood(opt,dopt,tumor_opt,
                                                 indel_error_prob,ref_error_prob,ik,tumor_id,
                                                 is_tumor_het_bias,tumor_het_bias,
