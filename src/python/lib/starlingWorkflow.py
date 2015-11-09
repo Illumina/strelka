@@ -153,8 +153,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipIndelErrorModel:
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
-    else :
         segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
+    else :
         segCmd.extend(['--indel-error-models-file', self.params.dynamicIndelErrorModelsFile])
 
     if self.params.isReportVQSRMetrics :
