@@ -240,6 +240,8 @@ strelka_streams(
             fos << "##FORMAT=<ID=FDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average tier1 number of basecalls filtered from original read depth within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
             fos << "##FORMAT=<ID=SUBDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average number of reads below tier1 mapping quality threshold aligned across sites within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
 
+            fos << "##FORMAT=<ID=AF,Number=2,Type=Float,Description=\"Estimated Indel AF for tiers 1,2\">\n";
+            fos << "##FORMAT=<ID=SOR,Number=2,Type=Float,Description=\"Strand odds ratio for tiers 1,2\">\n";
             // FILTERS:
             {
                 using namespace STRELKA_VCF_FILTERS;

@@ -464,10 +464,26 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
             if       (pprob.ref >= path_pprob_thresh)
             {
                 isri.n_q30_ref_reads++;
+                if(path_lnp.is_fwd_strand)
+                {
+                    ++isri.n_q30_ref_reads_fwd;
+                }
+                else
+                {
+                    ++isri.n_q30_ref_reads_rev;
+                }
             }
             else if (pprob.indel >= path_pprob_thresh)
             {
                 isri.n_q30_indel_reads++;
+                if(path_lnp.is_fwd_strand)
+                {
+                    ++isri.n_q30_indel_reads_fwd;
+                }
+                else
+                {
+                    ++isri.n_q30_indel_reads_rev;
+                }
             }
             else
             {
@@ -484,6 +500,14 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
                     if (palt.second >= path_pprob_thresh)
                     {
                         isri.n_q30_alt_reads++;
+                        if(path_lnp.is_fwd_strand)
+                        {
+                            ++isri.n_q30_alt_reads_fwd;
+                        }
+                        else
+                        {
+                            ++isri.n_q30_alt_reads_rev;
+                        }
                         is_alt_found=true;
                         break;
                     }
@@ -492,6 +516,14 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
                 if (! is_alt_found)
                 {
                     n_subscore_reads++;
+                    if(path_lnp.is_fwd_strand)
+                    {
+                        ++isri.n_other_reads_fwd;
+                    }
+                    else
+                    {
+                        ++isri.n_other_reads_rev;
+                    }
                 }
             }
         }

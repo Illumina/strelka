@@ -23,8 +23,58 @@
 
 #include <iomanip>
 #include <iostream>
+#include <limits>
 
 
+
+static inline
+double
+safeFrac(const int num, const int denom)
+{
+    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
+}
+
+
+/**
+ * Approximate indel AF from high-quality reads
+ */
+static
+double
+calculateIndelAF(
+    const starling_indel_sample_report_info &isri
+)
+{
+    return safeFrac(isri.n_q30_indel_reads, isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
+}
+
+/**
+ * Similar to
+ * https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
+ *
+ * We return
+ *
+ * R = n_ref_fwd * n_indel_rev / (n_ref_rev*n_indel_fwd)
+ *
+ * If the denominator is zero, we return the maximum double value
+ */
+static
+double
+calculateSOR(
+    const starling_indel_sample_report_info &isri
+)
+{
+    unsigned int num  = isri.n_q30_ref_reads_fwd*isri.n_q30_indel_reads_rev;
+    unsigned int denom = isri.n_q30_ref_reads_rev*isri.n_q30_indel_reads_fwd;
+
+    if(denom == 0)
+    {
+        return std::numeric_limits<double>::max();
+    }
+    else
+    {
+        return log(num/static_cast<double>(denom));
+    }
+}
 
 static
 void
@@ -55,19 +105,33 @@ write_vcf_isri_tiers(
     const StreamScoper ss(os);
     os << std::fixed << std::setprecision(2);
 
+    double sor_t1 = calculateSOR(isri1);
+    double sor_t2 = calculateSOR(isri2);
     os << sep << (used+filt)
        << sep << filt
-       << sep << submap;
+       << sep << submap
+       << sep << calculateIndelAF(isri1) << "," << calculateIndelAF(isri2)
+       << sep;
+
+    if(sor_t1 >= std::numeric_limits<double>::max())
+    {
+        os << ".";
+    }
+    else
+    {
+        os << sor_t1;
+    }
+    os << ",";
+    if(sor_t2 >= std::numeric_limits<double>::max())
+    {
+        os << ".";
+    }
+    else
+    {
+        os << sor_t2;
+    }
 }
 
-
-
-static
-double
-safeFrac(const int num, const int denom)
-{
-    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
-}
 
 
 static
@@ -168,7 +232,7 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50";
+    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:AF:SOR";
 
     // write normal sample info:
     os << sep;

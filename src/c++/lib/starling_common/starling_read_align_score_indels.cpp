@@ -750,7 +750,7 @@ score_indels(const starling_base_options& opt,
             const bool is_indel_present_on_max_path(max_cal_indels.count(eval_ik)!=0);
 
 #ifdef DEBUG_ALIGN
-            log_os << "VARMIT: final indel scan: " << ik;
+            log_os << "VARMIT: final indel scan: " << eval_ik;
             log_os << "VARMIT: is_present_on_max_path?: " << is_indel_present_on_max_path << "\n";
 #endif
 
@@ -861,7 +861,7 @@ score_indels(const starling_base_options& opt,
 
             // assemble basic score data:
             //
-            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read);
+            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read,max_cal.al.is_fwd_strand);
 
 
             // start adding alternate indel alleles, if present:
@@ -871,7 +871,7 @@ score_indels(const starling_base_options& opt,
                 const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,overlap_ik))));
 
 #ifdef DEBUG_ALIGN
-                log_os << "VARMIT: alternate_indel " << *k;
+                log_os << "VARMIT: alternate_indel " << overlap_ik;
 #endif
 
                 // TODO consider a way that the basic stores
