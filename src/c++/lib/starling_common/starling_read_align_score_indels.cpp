@@ -861,8 +861,15 @@ score_indels(const starling_base_options& opt,
 
             // assemble basic score data:
             //
-            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read,max_cal.al.is_fwd_strand);
+            int readpos = max_cal.al.is_fwd_strand ? ((signed) (eval_ik.pos - max_cal.al.pos)) :
+                          ((signed) (read_length - eval_ik.pos + max_cal.al.pos - 1));
 
+#ifdef DEBUG_ALIGN
+            //            correct for strandedness
+            log_os << "indelpos: " << eval_ik.pos << " readpos: + " << rseg.genome_align().pos << " rp: " << readpos << "\n";
+#endif
+            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read,max_cal.al.is_fwd_strand,
+                                 (int16_t) readpos);
 
             // start adding alternate indel alleles, if present:
 
@@ -911,10 +918,13 @@ score_indels(const starling_base_options& opt,
 #endif
             }
 
-//            correct for strandedness
-//            eval_ik.pos - max_cal.al.pos
-//            max_cal.al.is_fwd_strand
             id_ptr->read_path_lnp[rseg.id()] = rps;
+            id_ptr->n_mapq++;
+            id_ptr->cumm_mapq += rseg.map_qual();
+            if(rseg.map_qual() == 0)
+            {
+                id_ptr->n_mapq0++;
+            }
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: modified indel data: " << *(id_ptr);

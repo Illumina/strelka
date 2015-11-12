@@ -67,13 +67,16 @@ struct read_path_scores
                      const uint16_t ns=0,
                      const uint16_t rlen=0,
                      const bool is_t1=true,
-                     const bool is_fwd=true)
+                     const bool is_fwd=true,
+                     const int16_t rp=0
+    )
         : ref(r)
         , indel(i)
         , nsite(ns)
         , read_length(rlen)
         , is_tier1_read(is_t1)
         , is_fwd_strand(is_fwd)
+        , read_pos(rp)
     {}
 
     void
@@ -98,6 +101,9 @@ struct read_path_scores
 
     // so we're able to collect scores by strand
     bool is_fwd_strand;
+
+    // this is used in strelka to calculate read pos ranksums for indels
+    int16_t read_pos;
 };
 
 
@@ -195,6 +201,7 @@ struct indel_data
           is_external_candidate(false),
           is_forced_output(false),
           n_mapq(0),
+          n_mapq0(0),
           cumm_mapq(0)
     {}
 
@@ -309,10 +316,8 @@ public:
     // to be entered into the scores list
     evidence_t suboverlap_tier2_read_ids;
 
-    ranksum mq_ranksum;
-    ranksum baseq_ranksum;
-    ranksum read_pos_ranksum;
     unsigned n_mapq;
+    unsigned n_mapq0;
     // sum of mapq for all reads at this position
     int cumm_mapq;
 

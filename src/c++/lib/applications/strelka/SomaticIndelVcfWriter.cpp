@@ -70,7 +70,7 @@ calculateSOR(
 
     if(denom == 0)
     {
-        return std::numeric_limits<double>::max();
+        return std::numeric_limits<double>::infinity();
     }
     else
     {
@@ -116,33 +116,16 @@ write_vcf_isri_tiers(
 
     const StreamScoper ss(os);
     os << std::fixed << std::setprecision(2);
-
-    double sor_t1 = calculateSOR(isri1);
-    double sor_t2 = calculateSOR(isri2);
     os << sep << (used+filt)
        << sep << filt
        << sep << submap
-       << sep << std::max(calculateIndelAF(isri1), calculateIndelAF(isri2))
-       << sep;
-
-    if(sor_t1 < std::numeric_limits<double>::max())
-    {
-        os << sor_t1;
-    }
-    else
-    {
-        os << ".";
-    }
-    os << ",";
-    if(sor_t2 < std::numeric_limits<double>::max())
-    {
-        os << sor_t2;
-    }
-    else
-    {
-        os << ".";
-    }
-    os << sep << calculateFS(isri1) << "," << calculateFS(isri2);
+       << sep << calculateIndelAF(isri1) << "," << calculateIndelAF(isri2)
+       << sep << calculateSOR(isri1) << "," << calculateSOR(isri2)
+       << sep << calculateFS(isri1) << "," << calculateFS(isri2)
+       << sep << isri1.readpos_ranksum.get_u_stat() << "," << isri2.readpos_ranksum.get_u_stat()
+       << sep << isri1.mean_mapq << "," << isri2.mean_mapq
+       << sep << isri1.mapq0_frac << "," << isri2.mapq0_frac
+            ;
 }
 
 
@@ -245,7 +228,7 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:AF:SOR:FS";
+    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:AF:SOR:FS:RR:MQ:MQ0";
 
     // write normal sample info:
     os << sep;

@@ -79,6 +79,11 @@ struct starling_indel_sample_report_info
     unsigned n_q30_alt_reads_rev = 0;
     unsigned n_other_reads_rev = 0;
 
+    double mean_mapq = 0.0;
+    double mapq0_frac = 0.0;
+
+    ranksum readpos_ranksum;
+
     unsigned total_q30_reads() const
     {
         return n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;

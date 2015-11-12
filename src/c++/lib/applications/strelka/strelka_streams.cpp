@@ -243,6 +243,9 @@ strelka_streams(
             fos << "##FORMAT=<ID=AF,Number=2,Type=Float,Description=\"Estimated Indel AF (tiers 1,2)\">\n";
             fos << "##FORMAT=<ID=SOR,Number=2,Type=Float,Description=\"Strand odds ratio (tiers 1,2)\">\n";
             fos << "##FORMAT=<ID=FS,Number=2,Type=Float,Description=\"Phred-scaled p-value using Fisher's exact test to detect strand bias (tiers 1,2)\">\n";
+            fos << "##FORMAT=<ID=RR,Number=2,Type=Float,Description=\"Read position ranksum (U statistic)\">\n";
+            fos << "##FORMAT=<ID=MQ,Number=2,Type=Float,Description=\"Average MapQ for tiers 1, 2\">\n";
+            fos << "##FORMAT=<ID=MQ0,Number=2,Type=Float,Description=\"Fraction of MapQ0 reads for tiers 1, 2\">\n";
             // FILTERS:
             {
                 using namespace STRELKA_VCF_FILTERS;
