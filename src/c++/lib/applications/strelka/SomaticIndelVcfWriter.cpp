@@ -20,6 +20,8 @@
 #include "strelka_vcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/io_util.hh"
+#include "blt_util/qscore.hh"
+#include "blt_util/fisher_exact_test.hh"
 
 #include <iomanip>
 #include <iostream>
@@ -72,9 +74,19 @@ calculateSOR(
     }
     else
     {
-        return log(num/static_cast<double>(denom));
+        return log10(num/static_cast<double>(denom));
     }
 }
+
+
+static
+double
+calculateFS(const starling_indel_sample_report_info & isri)
+{
+    return error_prob_to_phred(fisher_exact_test_pval_2x2(isri.n_q30_ref_reads_fwd, isri.n_q30_indel_reads_fwd,
+                                                          isri.n_q30_ref_reads_rev, isri.n_q30_indel_reads_rev));
+}
+
 
 static
 void
@@ -110,26 +122,27 @@ write_vcf_isri_tiers(
     os << sep << (used+filt)
        << sep << filt
        << sep << submap
-       << sep << calculateIndelAF(isri1) << "," << calculateIndelAF(isri2)
+       << sep << std::max(calculateIndelAF(isri1), calculateIndelAF(isri2))
        << sep;
 
-    if(sor_t1 >= std::numeric_limits<double>::max())
-    {
-        os << ".";
-    }
-    else
+    if(sor_t1 < std::numeric_limits<double>::max())
     {
         os << sor_t1;
     }
-    os << ",";
-    if(sor_t2 >= std::numeric_limits<double>::max())
+    else
     {
         os << ".";
     }
-    else
+    os << ",";
+    if(sor_t2 < std::numeric_limits<double>::max())
     {
         os << sor_t2;
     }
+    else
+    {
+        os << ".";
+    }
+    os << sep << calculateFS(isri1) << "," << calculateFS(isri2);
 }
 
 
@@ -232,7 +245,7 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:AF:SOR";
+    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:AF:SOR:FS";
 
     // write normal sample info:
     os << sep;
