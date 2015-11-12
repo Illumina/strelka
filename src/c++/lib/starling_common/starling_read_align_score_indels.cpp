@@ -911,7 +911,9 @@ score_indels(const starling_base_options& opt,
 #endif
             }
 
-
+//            correct for strandedness
+//            eval_ik.pos - max_cal.al.pos
+//            max_cal.al.is_fwd_strand
             id_ptr->read_path_lnp[rseg.id()] = rps;
 
 #ifdef DEBUG_ALIGN
