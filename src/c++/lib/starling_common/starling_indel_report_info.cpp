@@ -453,8 +453,16 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
 
         unsigned n_subscore_reads(0);
 
-        isri.mean_mapq = (double)(id.cumm_mapq) / id.n_mapq;
-        isri.mapq0_frac = (double)(id.n_mapq0) / id.n_mapq;
+        if(id.n_mapq > 0)
+        {
+            isri.mean_mapq = (double)(id.cumm_mapq) / id.n_mapq;
+            isri.mapq0_frac = (double)(id.n_mapq0) / id.n_mapq;
+        }
+        else
+        {
+            isri.mean_mapq = 0;
+            isri.mapq0_frac= 0;
+        }
 
         for (const auto& val : id.read_path_lnp)
         {
