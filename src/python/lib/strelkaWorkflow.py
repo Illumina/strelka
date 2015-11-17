@@ -174,6 +174,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
         segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
 
+    if self.params.allowDuplicateReadIDs:
+        segCmd.append("--ignore-conflicting-read-names")
+
     if self.params.extraStrelkaArguments is not None :
         for arg in self.params.extraStrelkaArguments.strip().split() :
             segCmd.append(arg)
