@@ -84,7 +84,7 @@ You must specify a BAM file.
             'vqsrModelName' : "QScoreHPDRE100_v4",
             'inputIndelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
             'indelErrorModelName' : "new",
-            'isSkipIndelErrorModel' : True,
+            'isSkipDynamicIndelErrorModel' : True,
             'isReportVQSRMetrics' : False,
             'callContinuousVf' : []
             })
