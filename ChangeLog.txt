@@ -1,3 +1,5 @@
+- WGSW-765 Failed SNV phasing if any of the original SNVs are not represented
+  in the most common alleles
 - STARKA-241 turned on binom indel error model in starling and strelka
 v2.4.3
 - STAR-66 Correct GT reported for ALT alleles at forced-output sites in
