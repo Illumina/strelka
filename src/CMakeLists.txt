@@ -140,7 +140,7 @@ if (CPACK_GENERATOR)
 
     if (CPACK_GENERATOR STREQUAL "RPM")
         set(CPACK_RPM_PACKAGE_RELOCATABLE TRUE)
-        set(CPACK_RPM_PACKAGE_LICENSE "Illumina Open Source Software License 1")
+        set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
         set(CPACK_RPM_PACKAGE_REQUIRES "python >= 2.4.0")
     else ()
         set(CPACK_SET_DESTDIR ON)

@@ -24,6 +24,6 @@
 #
 
 # Installing top level components
-foreach(topfile ChangeLog.txt COPYRIGHT.txt Illumina_Open_Source_License_1.pdf)
+foreach(topfile ChangeLog.txt COPYRIGHT.txt LICENSE.txt)
     install(FILES "${CMAKE_SOURCE_DIR}/../${topfile}" DESTINATION "${THIS_DATADIR}")
 endforeach()
