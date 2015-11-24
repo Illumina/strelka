@@ -11,7 +11,6 @@
 # <https://github.com/sequencing/licenses/>
 #
 
-#!/illumina/development/pgtools/pgt-virtualenv/bin/python
 ########################################
 # Tool for estimating indel error paramters from a bam file
 #

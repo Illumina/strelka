@@ -1,4 +1,16 @@
 #!/illumina/thirdparty/python/python-2.7.5/bin/python
+#
+# Starka
+# Copyright (c) 2009-2014 Illumina, Inc.
+#
+# This software is provided under the terms and conditions of the
+# Illumina Open Source Software License 1.
+#
+# You should have received a copy of the Illumina Open Source
+# Software License 1 along with this program. If not, see
+# <https://github.com/sequencing/licenses/>
+#
+
 ########################################
 # Tool for aggregating multiple indel error sampling result and 
 #
@@ -6,6 +18,7 @@
 # Date: March 3rd, 2014
 #
 ########################################
+
 import os
 import sys
 

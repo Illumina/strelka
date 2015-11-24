@@ -1,4 +1,5 @@
 #!/illumina/thirdparty/python/python-2.7.5/bin/python
+#
 # Starka
 # Copyright (c) 2009-2014 Illumina, Inc.
 #
@@ -9,6 +10,7 @@
 # Software License 1 along with this program. If not, see
 # <https://github.com/sequencing/licenses/>
 #
+
 ########################################
 # Pyflow for running error-model estimator in parallele
 #
@@ -16,6 +18,7 @@
 # Date: September 16th, 2014
 #
 ########################################
+
 DEBUG=0
 
 import os.path

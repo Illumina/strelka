@@ -1,3 +1,4 @@
+#
 # Starka
 # Copyright (c) 2009-2014 Illumina, Inc.
 #
@@ -8,6 +9,7 @@
 # Software License 1 along with this program. If not, see
 # <https://github.com/sequencing/licenses/>
 #
+
 # 12/11/2014
 #
 # Formatting of model json files for Strelka/Starling variant callers
