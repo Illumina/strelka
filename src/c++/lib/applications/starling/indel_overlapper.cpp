@@ -82,7 +82,7 @@ is_het_indel(const starling_diploid_indel_core& dindel)
 
 static
 bool
-is_no_indel(const starling_diploid_indel_core& dindel)
+check_is_no_indel(const starling_diploid_indel_core& dindel)
 {
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
@@ -96,20 +96,19 @@ void indel_overlapper::process(std::unique_ptr<indel_info> indel)
     // we can't handle breakends at all right now:
     if (call._ik.is_breakpoint()) return;
 
+    const bool is_no_indel = check_is_no_indel(call._dindel);
+
     // don't handle homozygous reference calls unless genotyping is forced
-    if (is_no_indel(call._dindel) && !call._dindel.is_forced_output) return;
+    if (is_no_indel && !call._dindel.is_forced_output) return;
 
-
-    bool no_indel = is_no_indel(call._dindel);
-
-    if ((! _indel_buffer.empty()) && ((ii->pos>_indel_end_pos) || no_indel))
+    if ((! _indel_buffer.empty()) && ((ii->pos>_indel_end_pos) || is_no_indel))
     {
         process_overlaps();
     }
     _indel_end_pos=std::max(_indel_end_pos,call._ik.right_pos());
     _indel_buffer.push_back(std::move(ii));
     // clear the current homRef indel
-    if (no_indel)
+    if (is_no_indel)
     {
         process_overlaps();
     }
@@ -119,7 +118,13 @@ static
 bool
 is_simple_indel_overlap(const std::vector<std::unique_ptr<digt_indel_info>>& indel_buffer)
 {
-    return (indel_buffer.size()==2 &&
+    // check for very very simple overlap condition -- these are the cases thet are easy to
+    // glue together, although many more non-simple cases could be resolved if we wanted to
+    // put in the work
+    //
+    // check for 2 overlapping hets, and make sure we don't create two matching alt sequences
+    // (two matching ALTs will fail vcf output
+    return ((indel_buffer.size()==2) &&
             is_het_indel(indel_buffer[0]->first()._dindel) &&
             is_het_indel(indel_buffer[1]->first()._dindel));
 }

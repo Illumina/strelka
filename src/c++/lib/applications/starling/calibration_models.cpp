@@ -85,7 +85,7 @@ clasify_site(
 }
 
 bool
-calibration_models::can_use_model(const digt_indel_info& ii) const
+calibration_models::check_is_model_usable(const digt_indel_info& ii) const
 {
     const auto& call(ii.first());
     return ((call._iri.it == INDEL::INSERT || call._iri.it == INDEL::DELETE) &&
@@ -111,15 +111,17 @@ set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const
 }
 
 
+
 void
 calibration_models::
-clasify_indel(
+clasify_indel_impl(
+    const bool is_model_usable,
     const digt_indel_info& ii,
     digt_indel_call& call) const
 {
     set_indel_modifiers(ii, call);
 
-    if ( can_use_model(ii) )
+    if ( is_model_usable )
     {
         get_model(model_name).score_indel_instance(ii, call);
     }
@@ -129,29 +131,32 @@ clasify_indel(
     }
 }
 
+
+void
+calibration_models::
+clasify_indel(
+    const digt_indel_info& ii,
+    digt_indel_call& call) const
+{
+    clasify_indel_impl(check_is_model_usable(ii),ii,call);
+}
+
 void
 calibration_models::
 clasify_indels(
     std::vector<std::unique_ptr<digt_indel_info>>& indels) const
 {
-    bool use_model = true;
-    for (auto it = indels.begin(); it != indels.end() && use_model; ++it)
+    bool is_model_usable = true;
+    for (const auto& indel : indels)
     {
-        use_model = can_use_model(**it);
+        if (! is_model_usable) break;
+        is_model_usable = check_is_model_usable(*indel);
     }
-    for (auto it = indels.begin(); it != indels.end(); ++it)
-    {
-        digt_indel_info& ii(**it);
 
-        set_indel_modifiers(ii, ii.first());
-        if ( use_model )
-        {
-            get_model(model_name).score_indel_instance(ii, ii.first());
-        }
-        else
-        {
-            default_clasify_indel(ii.first());
-        }
+    for (auto& indel : indels)
+    {
+        digt_indel_info& ii(*indel);
+        clasify_indel_impl(is_model_usable,ii,ii.first());
     }
 }
 

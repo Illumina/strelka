@@ -79,8 +79,14 @@ private:
     c_model& get_model(const std::string& name);
     const c_model& get_model(const std::string& name) const;
 
-    bool can_use_model(const digt_indel_info& ii) const;
+    bool check_is_model_usable(const digt_indel_info& ii) const;
     void set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const;
+
+    void
+    clasify_indel_impl(
+        const bool is_model_usable,
+        const digt_indel_info& ii,
+        digt_indel_call& call) const;
 
     // set options
     void set_model(const std::string& name);  // set the calibration model to use
