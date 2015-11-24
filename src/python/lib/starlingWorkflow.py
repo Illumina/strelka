@@ -156,7 +156,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
         segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
     else :
-        # use dynamic indel error modeling to choose the appropritate model 
+        # use dynamic indel error modeling to choose the appropritate model
         segCmd.extend(['--indel-error-models-file', self.params.dynamicIndelErrorModelsFile])
 
     if self.params.isReportVQSRMetrics :

@@ -171,7 +171,7 @@ static bool is_genotype_represented(int genotype, unsigned offset, const std::st
     {
         char base = gt[i];
         if ( (allele1.length() <= offset || allele1[offset] != base) &&
-                (allele2.length() <= offset || allele2[offset] != base))
+             (allele2.length() <= offset || allele2[offset] != base))
         {
             return false;
         }
@@ -329,14 +329,14 @@ create_phased_record()
             // important to skip those calls' contribution to the resultant statistics. This logic causes
             // us to skip over these variants.
             if (!is_genotype_represented(si->smod.max_gt, unsigned(si->pos - _buffer[0]->pos),
-                    max_alleles[0].first, max_alleles[1].first))
+                                         max_alleles[0].first, max_alleles[1].first))
             {
 #ifdef DEBUG_CODON
                 log_os << "Variant at offset i lacks support in phased alleles - failing phasing\n"
 #endif
-                // TODO: This is a blunt instrument. Refine this solution to select the minimum set of
-                // ALTs that support the buffered variants
-                phasing_inconsistent = true;
+                       // TODO: This is a blunt instrument. Refine this solution to select the minimum set of
+                       // ALTs that support the buffered variants
+                       phasing_inconsistent = true;
                 continue;
             }
 
