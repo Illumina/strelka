@@ -10,7 +10,7 @@
 // Software License 1 along with this program. If not, see
 // <https://github.com/downloads/sequencing/licenses/>.
 //
- 
+
 ///
 /// This consolidates compile-time config data such as git status
 /// and build date. This is in contrast to cmake configuration-time

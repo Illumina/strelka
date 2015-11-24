@@ -1,14 +1,15 @@
 #!/illumina/development/haplocompare/hc-virtualenv/bin/python
-# coding=utf-8
 #
-# Copyright (c) 2010-2015 Illumina, Inc.
-# All rights reserved.
+# Starka
+# Copyright (c) 2009-2014 Illumina, Inc.
 #
-# This file is distributed under the simplified BSD license.
-# The full text can be found here (and in LICENSE.txt in the root folder of
-# this distribution):
+# This software is provided under the terms and conditions of the
+# Illumina Open Source Software License 1.
 #
-# https://github.com/sequencing/licenses/blob/master/Simplified-BSD-License.txt
+# You should have received a copy of the Illumina Open Source
+# Software License 1 along with this program. If not, see
+# <https://github.com/sequencing/licenses/>
+#
 
 import pandas
 

@@ -10,10 +10,10 @@
 // Software License 1 along with this program. If not, see
 // <https://github.com/downloads/sequencing/licenses/>.
 //
- 
- ///
- /// \brief Various system-specific definitions (configured by cmake)
- ///
+
+///
+/// \brief Various system-specific definitions (configured by cmake)
+///
 
 #include "configBuildTimeInfo.h"
 
