@@ -330,9 +330,10 @@ struct indel_info
     virtual bool is_forced_output() const = 0;
     virtual bool is_indel() const = 0;
     virtual void set_filter(VCF_FILTERS::index_t filter) = 0;
-    pos_t pos;
     // the EXCLUSIVE end of the variant (i.e. open)
     virtual pos_t end() const = 0;
+
+    pos_t pos;
 };
 
 
@@ -445,14 +446,6 @@ struct digt_indel_info : public indel_info
     std::map<std::string, double>
     get_indel_qscore_features(const double chrom_depth) const;
 
-    /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
-    std::vector<unsigned> ploidy;
-
-    // used to flag hetalt
-    bool _is_overlap=false;
-
-    std::vector<digt_indel_call> _calls;
-
     const digt_indel_call& first() const
     {
         return _calls.front();
@@ -461,6 +454,15 @@ struct digt_indel_info : public indel_info
     {
         return _calls.front();
     }
+
+    /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
+    std::vector<unsigned> ploidy;
+
+    // used to flag hetalt
+    bool _is_overlap=false;
+
+    std::vector<digt_indel_call> _calls;
+
 };
 
 
