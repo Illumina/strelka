@@ -21,7 +21,9 @@ find_cxx_source() {
     find $base_dir -type f \
         -name "*.cpp" -or \
         -name "*.hpp" -or \
-        -name "*.hh"
+        -name "*.hh" -or \
+        -name "*.h" -or \
+        -name "*.h.in"
 }
 
 
