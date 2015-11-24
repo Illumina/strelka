@@ -20,6 +20,7 @@ find_cxx_source() {
     base_dir=$1
     find $base_dir -type f \
         -name "*.cpp" -or \
+        -name "*.hpp" -or \
         -name "*.hh"
 }
 
@@ -74,16 +75,24 @@ reheader_file() {
 project_base_dir=$(rel2abs $thisdir/../../..)
 cxx_base_dir=$project_base_dir/src/c++
 python_base_dir=$project_base_dir/src
+python_scratch_dir=$project_base_dir/scratch/error_fitting
 cmake_base_dir=$project_base_dir/src
 shell_base_dir=$project_base_dir/src
-
-python_exclude_dir=$python_base_dir/python/somaticVQSRTraining
 
 for file in $(find_cxx_source $cxx_base_dir); do
     reheader_file "python $thisdir/reheader_cxx_file.py" $file
 done
 
-for file in $(find_python_source $python_base_dir | grep -v $python_exclude_dir) $(find_cmake_source $cmake_base_dir) $(find_shell_source $shell_base_dir); do
+
+get_script_files() {
+    #echo $(find_python_source $python_base_dir | grep -v $python_exclude_dir) \
+    echo $(find_python_source $python_base_dir) \
+        $(find_python_source $python_scratch_dir) \
+        $(find_cmake_source $cmake_base_dir) \
+        $(find_shell_source $shell_base_dir)
+}
+
+for file in $(get_script_files); do
     reheader_file "python $thisdir/reheader_script_file.py" $file
 done
 
