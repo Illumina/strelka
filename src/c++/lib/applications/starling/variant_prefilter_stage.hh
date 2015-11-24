@@ -42,5 +42,3 @@ public:
 private:
     const calibration_models& _model;
 };
-
-

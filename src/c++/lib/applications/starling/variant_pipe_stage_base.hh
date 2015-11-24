@@ -55,9 +55,6 @@ protected:
         throw std::bad_cast();
     }
 
-
-
-
     std::shared_ptr<variant_pipe_stage_base> _sink;
 };
 

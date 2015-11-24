@@ -43,7 +43,6 @@ indel_overlapper::indel_overlapper(const calibration_models& model, const refere
     , _ref(ref)
     , _indel_end_pos(0)
 {
-
 }
 
 void indel_overlapper::flush()
@@ -330,7 +329,6 @@ indel_overlapper::modify_overlap_indel_record()
     _CM.clasify_indels(_indel_buffer);
 
     _indel_buffer[0]->add_overlap(_ref, *_indel_buffer[1]);
-
 }
 
 

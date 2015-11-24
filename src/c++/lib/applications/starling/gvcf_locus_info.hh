@@ -180,10 +180,6 @@ struct shared_indel_call_info : public shared_call_info
         const unsigned trail=0);
 
     ALIGNPATH::path_t cigar;
-
-
-
-
 };
 
 
