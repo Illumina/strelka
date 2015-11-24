@@ -68,7 +68,7 @@ bool calibration_models::is_current_logistic() const
 
 void
 calibration_models::
-clasify_site(
+classify_site(
     const digt_site_info& si,
     digt_call_info& smod) const
 {
@@ -80,7 +80,7 @@ clasify_site(
     else
     {
         // don't know what to do with this site, throw it to the old default filters
-        default_clasify_site(si, smod);
+        default_classify_site(si, smod);
     }
 }
 
@@ -114,7 +114,7 @@ set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const
 
 void
 calibration_models::
-clasify_indel_impl(
+classify_indel_impl(
     const bool is_model_usable,
     const digt_indel_info& ii,
     digt_indel_call& call) const
@@ -127,23 +127,23 @@ clasify_indel_impl(
     }
     else
     {
-        default_clasify_indel(call);
+        default_classify_indel(call);
     }
 }
 
 
 void
 calibration_models::
-clasify_indel(
+classify_indel(
     const digt_indel_info& ii,
     digt_indel_call& call) const
 {
-    clasify_indel_impl(check_is_model_usable(ii),ii,call);
+    classify_indel_impl(check_is_model_usable(ii),ii,call);
 }
 
 void
 calibration_models::
-clasify_indels(
+classify_indels(
     std::vector<std::unique_ptr<digt_indel_info>>& indels) const
 {
     bool is_model_usable = true;
@@ -156,7 +156,7 @@ clasify_indels(
     for (auto& indel : indels)
     {
         digt_indel_info& ii(*indel);
-        clasify_indel_impl(is_model_usable,ii,ii.first());
+        classify_indel_impl(is_model_usable,ii,ii.first());
     }
 }
 
@@ -165,7 +165,7 @@ clasify_indels(
 
 void
 calibration_models::
-default_clasify_site(const site_info& si,
+default_classify_site(const site_info& si,
                      shared_call_info& call) const
 {
     if (opt.is_min_gqx)
@@ -204,7 +204,7 @@ default_clasify_site(const site_info& si,
 // default rules based indel model
 void
 calibration_models::
-default_clasify_indel(shared_indel_call_info& call) const
+default_classify_indel(shared_indel_call_info& call) const
 {
     if (this->opt.is_min_gqx)
     {

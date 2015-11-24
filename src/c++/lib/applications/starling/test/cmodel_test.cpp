@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     ii.imod.is_overlap = true;
 
 
-    cm.clasify_indel(ii, ii.imod);
+    cm.classify_indel(ii, ii.imod);
     //BOOST_CHECK_EQUAL(ii.imod.gqx, 219);
     BOOST_CHECK_EQUAL(ii.imod.filters.none(), true);
 
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     cigar_to_apath("1M8I", ii2.imod.cigar);
     ii2.imod.is_overlap = true;
 
-    cm.clasify_indel(ii2, ii2.imod);
+    cm.classify_indel(ii2, ii2.imod);
     // BOOST_CHECK_EQUAL(ii2.imod.gqx, 120);
     BOOST_CHECK_EQUAL(ii2.imod.filters.none(), true);
 

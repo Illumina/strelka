@@ -231,7 +231,7 @@ indel_overlapper::modify_single_indel_record()
     digt_indel_info& ii(*_indel_buffer[0]);
     ii.first().set_hap_cigar();
 
-    _CM.clasify_indel(ii, ii.first());
+    _CM.classify_indel(ii, ii.first());
 }
 
 
@@ -305,7 +305,7 @@ void indel_overlapper::modify_indel_overlap_site(
     }
 
     // after all those changes we need to rerun the site filters:
-    model.clasify_site(si, si.smod);
+    model.classify_site(si, si.smod);
 }
 
 
@@ -331,7 +331,7 @@ indel_overlapper::modify_overlap_indel_record()
     for (auto& ii : _indel_buffer)
         ii->_is_overlap = true;
 
-    _CM.clasify_indels(_indel_buffer);
+    _CM.classify_indels(_indel_buffer);
 
     _indel_buffer[0]->add_overlap(_ref, *_indel_buffer[1]);
 }
@@ -350,7 +350,7 @@ indel_overlapper::modify_conflict_indel_record()
 
         ii->first().set_filter(VCF_FILTERS::IndelConflict);
 
-        _CM.clasify_indel(*ii, ii->first());
+        _CM.classify_indel(*ii, ii->first());
     }
 }
 
