@@ -1,11 +1,16 @@
-<link rel='stylesheet' href='userGuide.css' />
+<link rel='stylesheet' href='guideStyle.css' />
 
 Strelka User Guide
 ==================
 
-Version: @WORKFLOW_VERSION@
-
-<script src="tableOfContents.js"></script>
+## Table of Contents
+* [Introduction](#introduction)
+* [Method Overview](#method-overview)
+* [Capabilities](#capabilities)
+* [Input requirements](#input-requirements)
+* [Outputs](#outputs)
+* [Run configuration and execution](#run-configuration-and-execution)
+* [Special Topics](#special-topics)
 
 ## Introduction
 
@@ -14,7 +19,7 @@ a tumor and matched normal sample. It is designed to handle impurity in the tumo
 
 ## Method Overview
 
-The strelka calling algorithm fully is described in
+The strelka somatic variant calling algorithm fully is described in
 [Strelka: Accurate somatic small-variant calling from sequenced tumor-normal sample pairs.][3]
 
 In summary strelka scans throught the tumor and normal sample alignments, discovering SNV
@@ -142,6 +147,14 @@ These options are useful for workflow development and debugging:
   replicated to `${ANALYSIS_RUN_DIR}/workspace/pyflow.data/logs/pyflow_log.txt`
   so there is no loss of log information.
 
+## Special Topics
+
+The following items provide an in-depth focus on a special topic or procedure 
+
+* [Training Procedure for Somatic Empirical Score](strelkaUserGuideTrainingSomaticEmpiricalScore.md)
+
+
+
 [1]: http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41
-[2]: http://ctsa.github.io/pyflow/
+[2]: http://Illumina.github.io/pyflow/
 [3]: http://bioinformatics.oxfordjournals.org/content/28/14/1811

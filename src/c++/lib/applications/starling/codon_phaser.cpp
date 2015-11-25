@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *
@@ -171,7 +178,7 @@ static bool is_genotype_represented(int genotype, unsigned offset, const std::st
     {
         char base = gt[i];
         if ( (allele1.length() <= offset || allele1[offset] != base) &&
-                (allele2.length() <= offset || allele2[offset] != base))
+             (allele2.length() <= offset || allele2[offset] != base))
         {
             return false;
         }
@@ -329,8 +336,14 @@ create_phased_record()
             // important to skip those calls' contribution to the resultant statistics. This logic causes
             // us to skip over these variants.
             if (!is_genotype_represented(si->smod.max_gt, unsigned(si->pos - _buffer[0]->pos),
-                    max_alleles[0].first, max_alleles[1].first))
+                                         max_alleles[0].first, max_alleles[1].first))
             {
+#ifdef DEBUG_CODON
+                log_os << "Variant at offset i lacks support in phased alleles - failing phasing\n"
+#endif
+                       // TODO: This is a blunt instrument. Refine this solution to select the minimum set of
+                       // ALTs that support the buffered variants
+                       phasing_inconsistent = true;
                 continue;
             }
 
