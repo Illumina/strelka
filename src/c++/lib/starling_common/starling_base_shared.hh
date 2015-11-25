@@ -214,7 +214,8 @@ struct starling_base_options : public blt_options
     bool is_baby_elephant = false;
 
     // if not using grouper, you can optionally turn off the restriction that each qname occurs once in the bam:
-    bool is_ignore_read_names = false;
+    // STARKA-265 this has been set to true by default to make starka compatible with alignments from BWA-mem 0.7.12.
+    bool is_ignore_read_names = true;
 
     // Indicates that an upstream oligo is present on reads, which can be used to increase confidence for indels near the edge of the read
     unsigned upstream_oligo_size = 0;
