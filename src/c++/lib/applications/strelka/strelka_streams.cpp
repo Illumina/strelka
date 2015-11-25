@@ -232,13 +232,15 @@ strelka_streams(
             fos << "##INFO=<ID=RC,Number=1,Type=Integer,Description=\"Number of times RU repeats in the reference allele\">\n";
             fos << "##INFO=<ID=IC,Number=1,Type=Integer,Description=\"Number of times RU repeats in the indel allele\">\n";
             fos << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Largest reference interrupted homopolymer length intersecting with the indel\">\n";
+            fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
+            fos << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
             fos << "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">\n";
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
 
             // FORMAT:
-            fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1\">\n";
-            fos << "##FORMAT=<ID=DP2,Number=1,Type=Integer,Description=\"Read depth for tier2\">\n";
+            fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Total read depth\">\n";
+            fos << "##FORMAT=<ID=DP2,Number=2,Type=Integer,Description=\"Read depth for tier1 and tier2\">\n";
             fos << "##FORMAT=<ID=TAR,Number=2,Type=Integer,Description=\"Reads strongly supporting alternate allele for tiers 1,2\">\n";
             fos << "##FORMAT=<ID=TIR,Number=2,Type=Integer,Description=\"Reads strongly supporting indel allele for tiers 1,2\">\n";
             fos << "##FORMAT=<ID=TOR,Number=2,Type=Integer,Description=\"Other reads (weak support or insufficient indel breakpoint overlap) for tiers 1,2\">\n";
@@ -247,12 +249,12 @@ strelka_streams(
             fos << "##FORMAT=<ID=FDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average tier1 number of basecalls filtered from original read depth within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
             fos << "##FORMAT=<ID=SUBDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average number of reads below tier1 mapping quality threshold aligned across sites within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
 
-            fos << "##FORMAT=<ID=AF,Number=2,Type=Float,Description=\"Estimated Indel AF (tiers 1,2)\">\n";
-            fos << "##FORMAT=<ID=SOR,Number=2,Type=Float,Description=\"Strand odds ratio (tiers 1,2)\">\n";
-            fos << "##FORMAT=<ID=FS,Number=2,Type=Float,Description=\"Phred-scaled p-value using Fisher's exact test to detect strand bias (tiers 1,2)\">\n";
-            fos << "##FORMAT=<ID=RR,Number=2,Type=Float,Description=\"Read position ranksum (U statistic)\">\n";
-            fos << "##FORMAT=<ID=MQ,Number=2,Type=Float,Description=\"Average MapQ for tiers 1, 2\">\n";
-            fos << "##FORMAT=<ID=MQ0,Number=2,Type=Float,Description=\"Fraction of MapQ0 reads for tiers 1, 2\">\n";
+            fos << "##FORMAT=<ID=AF,Number=1,Type=Float,Description=\"Estimated Indel AF (tiers 1,2)\">\n";
+            fos << "##FORMAT=<ID=SOR,Number=1,Type=Float,Description=\"Strand odds ratio, capped at [+/-]2 for tier2\">\n";
+            fos << "##FORMAT=<ID=FS,Number=1,Type=Float,Description=\"Log p-value using Fisher's exact test to detect strand bias, based on tier1\">\n";
+            fos << "##FORMAT=<ID=BSR,Number=1,Type=Float,Description=\"Binomial test log-pvalue for REF allele in tier1\">\n";
+            fos << "##FORMAT=<ID=BSA,Number=1,Type=Float,Description=\"Binomial test log-pvalue for ALT allele in tier1\">\n";
+            fos << "##FORMAT=<ID=RR,Number=1,Type=Float,Description=\"Read position ranksum for ALT allele in tier1 reads (U-statistic)\">\n";
             // FILTERS:
             {
                 using namespace STRELKA_VCF_FILTERS;
