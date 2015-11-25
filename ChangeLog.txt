@@ -1,3 +1,4 @@
+- STARKA-284 update license to GPLv3
 - WGSW-765 Failed SNV phasing if any of the original SNVs are not represented
   in the most common alleles
 - STARKA-241 turned on binom indel error model in starling and strelka

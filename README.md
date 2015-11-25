@@ -1,15 +1,20 @@
+Strelka Small Variant Caller
+============================
 
-STARKA: Starling/Strelka small variant callers
-==============================================
+Strelka calls small variants from mapped sequencing reads.
 
-Chris Saunders (csaunders@illumina.com)
-Morten Kallberg (mkallberg@illumina.com)
+See the [user guide] [StrelkaUserGuide] for a full description of capabilities and limitations.
 
-Starling (Isaac Variant Caller) is a diploid small-variant caller for
-individual samples.
+[StrelkaUserGuide]:src/markdown/strelkaUserGuide.md
 
-Strelka is a somatic small-variant caller for matched tumor-normal
-sample pairs.
+License
+-------
+
+Strelka source code is provided under the [GPLv3 license] (LICENSE.txt).
+Strelka includes several third party packages provided under other
+open source licenses, please see [COPYRIGHT.txt] (COPYRIGHT.txt)
+for additional details.
+
 
 Build instructions
 ------------------
