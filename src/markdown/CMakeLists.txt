@@ -62,7 +62,7 @@ endfunction()
 
 process_user_guide("starlingUserGuide")
 process_user_guide("strelkaUserGuide")
-process_user_guide("strelkaUserGuideTrainingSomaticVQSR")
+process_user_guide("strelkaUserGuideTrainingSomaticEmpiricalScore")
 
 install(FILES "guideStyle.css" DESTINATION ${THIS_DOCDIR}/html)
 
