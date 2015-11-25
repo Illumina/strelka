@@ -19,7 +19,7 @@ for additional details.
 Build instructions
 ------------------
 
-For Starka users it is strongly recommended to start from one of the
+For Strelka users it is strongly recommended to start from one of the
 release distributions of the source code. Acquiring the source via a
 git clone or archive could result in missing version number entries,
 undesirably stringent build requirements, or an unstable development
@@ -30,7 +30,7 @@ Note that this README is _NOT_ part of a tagged source-code release.
 
 ### Build prerequisites:
 
-Starka requires a compiler supporting most of the C++11 standard. These
+Strelka requires a compiler supporting most of the C++11 standard. These
 are the current minimum versions enforced by the build system:
 
 * python 2.4+
@@ -45,7 +45,7 @@ are the current minimum versions enforced by the build system:
 
 ##### Linux 
 
-Starka is known to build and run on the following linux distributions
+Strelka is known to build and run on the following linux distributions
 (with additional packages as described below):
 
 - Ubuntu 12.04,14.04
@@ -53,7 +53,7 @@ Starka is known to build and run on the following linux distributions
 
 ##### Windows
 
-Starka does not build or run on windows. Library-level compilation is
+Strelka does not build or run on windows. Library-level compilation is
 possible for Visual Studio users. See Contributor section below.
 
 ### Linux Package Additions
@@ -103,12 +103,12 @@ procedure is:
 
 Example (building on 4 cores):
 
-    tar -xjf starka-A.B.C.release_src.tar.bz2
+    tar -xjf strelka-A.B.C.release_src.tar.bz2
     mkdir build && cd build
     # Ensure that CC and CXX are updated to target compiler if needed, e.g.:
     #     export CC=/path/to/cc
     #     export CXX=/path/to/c++
-    ../starka-A.B.C.release_src/src/configure --jobs=4 --prefix=/path/to/install
+    ../strelka-A.B.C.release_src/src/configure --jobs=4 --prefix=/path/to/install
     make -j4 install
 
 Note that during the configuration step, the following dependencies
@@ -123,98 +123,22 @@ over multiple cores, as demonstrated in the example above with the
 
 To see more configure options, run:
 
-    ${STARKA_SRC_PATH}/configure --help
+    ${STRELKA_SRC_PATH}/configure --help
 
 ##### Workflow relocation
 
-After Starka is built the installation directory can be relocated to
+After Strelka is built the installation directory can be relocated to
 another directory.  All internal paths used in the workflow are
 relative.
 
-Contributor build configuration
--------------------------------
 
-When Starka is cloned from git, it is configured for development
-rather than user distribution. As such, builds are strict: all
-warnings are treated as errors and if cppcheck is found any detected
-issue is converted to a build error.
+Strelka Code Development
+------------------------
 
-#### Source documentation
+For strelka code development and debugging details, please see the
+[Strelka developer guide] [DeveloperGuide]. This includes details
+on Strelka's developement protocols, special build instructions,
+and internal documentation details.
 
-If doxygen is found in the path (and optionally dot as well) during
-build configuration, then c++ documentation is available as an
-additional "doc" target for the makefile:
+[DeveloperGuide]:src/markdown/strelkaDeveloperGuide.md
 
-    make doc
-
-There is no installation for the documentation outside of the build
-directory, the root doxygen page after completing this target will be:
-
-    ${STARKA_BUILD_PATH}/c++/doxygen/html/index.html
-
-#### Improving build time
-
-##### ccache
-
-The build system is configured to use ccache whenever this is
-found in the path
-
-##### Bundled dependencies
-
-Note that during the configuration step, the following dependencies will be
-built from source if they are not found:
-
-* cmake 2.8.5+
-* boost 1.53.0+
-
-To avoid the extra time associated with this step, ensure that (1)
-cmake 2.8.5+ is in your PATH and (2) BOOST\_ROOT is defined to point
-to boost 1.53.0 or newer.
-
-#### Address Sanitizer
-
-The build system offers first-class support for google address sanitizer
-when a supporting compiler is detected. To use this mode, start a fresh
-installation process with the additional configure option `--build-type=ASan`,
-extending from the configuration example in the above build instructions, use:
-
-    ../starka-A.B.C.release_src/src/configure --jobs=4 --prefix=/path/to/install --build-type=ASan
-
-#### Windows development support
-
-Starka does not link or run on windows. However, the build system does
-facilitate Visual Studio (VS) users. When cmake configuration is run
-on windows, all linking is disabled and third party libraries are
-unpacked for header include access, but are not compiled. Cmake VS
-solutions allow the c++ code to be browsed, analyzed and compiled to
-the library level.  Note that unit test codes are compiled to
-libraries but cannot be run.
-
-C++11 features used by starka require at least VS2013. Windows
-installations of cmake and zlib are also required to configure and
-compile. Windows zlib is provided by the [gnuwin32
-package] [gnuwin32] among others.
-
-[gnuwin32]:http://gnuwin32.sourceforge.net/packages/zlib.htm
-
-
-
-Production Build Environment
-----------------------------
-
-We are required to maintain compatibility with Centos 5.x, which
-requires building on that platform. To make this easier, the process
-has been moved to Docker.
-
-The docker image has been saved to the public registry. If you need to
-recreate it, perform the following steps:
-
-`
-cd env
-sudo docker build -t YOURNEWTAGNAME .
-`
-
-To do a build:
-`
-sudo docker.io run  -v $WORKSPACE:/src -v $install_path:/install -t jduddy/starka:gcc-4.9.2 /src/env/build_release.sh 
-`
