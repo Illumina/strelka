@@ -81,6 +81,7 @@ struct read_segment
     // check that information is valid and self-consistent;
     bool is_valid() const;
 
+    /// original alignment before re-aligning
     const alignment&
     genome_align() const
     {

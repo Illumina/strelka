@@ -69,10 +69,8 @@ get_segment(const seg_id_t seg_no) const
 
 
 starling_read::
-starling_read(const bam_record& br,
-              const bool is_bam_record_genomic)
+starling_read(const bam_record& br)
     : genome_align_maplev(MAPLEVEL::UNKNOWN),
-      _is_bam_record_genomic(is_bam_record_genomic),
       _id(0),
       _read_rec(br),
       _full_read(_read_rec.read_size(),0,this)
@@ -110,8 +108,7 @@ uint8_t
 starling_read::
 map_qual() const
 {
-    if ((! get_full_segment().genome_align().empty()) &&
-        _is_bam_record_genomic)
+    if (! get_full_segment().genome_align().empty())
     {
         return _read_rec.map_qual();
     }
@@ -288,7 +285,7 @@ write_bam(bam_dumper& bamd)
     bam1_t& br(*_read_rec.get_data());
     bam1_core_t& ca(br.core);
 
-    const bool is_orig_unmapped((! _is_bam_record_genomic) || _read_rec.is_unmapped());
+    const bool is_orig_unmapped(_read_rec.is_unmapped());
 
     // mark mapped bit if necessary:
     if (is_orig_unmapped)
@@ -406,7 +403,7 @@ operator<<(std::ostream& os,
            const starling_read& sr)
 {
     os << "STARLING_READ id: " << sr.id()
-       << " genomic_mapping?: " << MAPLEVEL::get_label(sr.genome_align_maplev)
+       << " mapping_type: " << MAPLEVEL::get_label(sr.genome_align_maplev)
        << "\n";
 
     os << "full_segment_info:\n";
@@ -422,17 +419,3 @@ operator<<(std::ostream& os,
 
     return os;
 }
-
-void
-starling_read::
-repeatError(const bam_record& br) const
-{
-    using namespace illumina::common;
-
-    std::ostringstream oss;
-    oss << "ERROR: adding conflicting record to existing starling_read.\n";
-    oss << "\tNew record: " << br << "\n";
-    oss << "\tExisting read: " << *this << "\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-}
-

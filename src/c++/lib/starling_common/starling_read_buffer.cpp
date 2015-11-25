@@ -50,89 +50,36 @@ starling_read_buffer::
 std::pair<bool,align_id_t>
 starling_read_buffer::
 add_read_alignment(
-    const starling_base_options& opt,
     const bam_record& br,
     const alignment& al,
     const MAPLEVEL::index_t maplev)
 {
     assert(! br.is_unmapped());
 
-    static const bool is_genomic(true);
     align_id_t this_read_id;
-    bool is_key_found(false);
 
-    if (opt.is_ignore_read_names)
-    {
-        this_read_id=next_id();
-        _read_data[this_read_id] = new starling_read(br,is_genomic);
-    }
-    else
-    {
-        const read_key tmp_key(br);
-        const read_key_lup_t::const_iterator i(_read_key.find(tmp_key));
-        is_key_found=(i!=_read_key.end());
-
-        if (! is_key_found)
-        {
-            this_read_id=next_id();
-            _read_data[this_read_id] = new starling_read(br,is_genomic);
-        }
-        else
-        {
-            this_read_id=i->second;
-        }
-
-        starling_read& sread(*(_read_data[this_read_id]));
-
-        if (! is_key_found)
-        {
-            _read_key[sread.key()]=this_read_id;
-        }
-        else
-        {
-            assert(sread.key() == tmp_key);
-        }
-    }
-
+    this_read_id=next_id();
+    _read_data[this_read_id] = new starling_read(br);
     starling_read& sread(*(_read_data[this_read_id]));
 
-    if (! is_key_found)
-    {
-        sread.id() = this_read_id;
+    sread.id() = this_read_id;
 
-    }
-    else
-    {
-        // contig BAM records are incomplete, so we want to fill in
-        // the full record if there's a mapped genomic alignment
-        // available:
-        if (is_genomic) sread.set_genomic_bam_record(br);
-    }
+    sread.set_genome_align(al);
+    sread.genome_align_maplev = maplev;
 
-    if (is_genomic)
+    // deal with segmented reads now:
+    if (sread.is_segmented())
     {
-        sread.set_genome_align(al);
-        sread.genome_align_maplev = maplev;
-
-        // deal with segmented reads now:
-        if (sread.is_segmented())
+        const uint8_t n_seg(sread.segment_count());
+        for (unsigned i(0); i<n_seg; ++i)
         {
-            const uint8_t n_seg(sread.segment_count());
-            for (unsigned i(0); i<n_seg; ++i)
-            {
-                const uint8_t seg_no(i+1);
-                const pos_t seg_buffer_pos(get_alignment_buffer_pos(sread.get_segment(seg_no).genome_align()));
-                sread.get_segment(seg_no).buffer_pos = seg_buffer_pos;
-                (_pos_group[seg_buffer_pos]).insert(std::make_pair(this_read_id,seg_no));
-            }
+            const uint8_t seg_no(i+1);
+            const pos_t seg_buffer_pos(get_alignment_buffer_pos(sread.get_segment(seg_no).genome_align()));
+            sread.get_segment(seg_no).buffer_pos = seg_buffer_pos;
+            (_pos_group[seg_buffer_pos]).insert(std::make_pair(this_read_id,seg_no));
         }
     }
     else
-    {
-        assert(false && "no other alignment type");
-    }
-
-    if ((! is_key_found) && (! sread.is_segmented()))
     {
         const pos_t buffer_pos(get_alignment_buffer_pos(al));
         const seg_id_t seg_id(0);
@@ -211,12 +158,6 @@ clear_iter(
         // remove from simple lookup structures and delete read itself:
         _read_data.erase(k);
 
-        // key might not exist if opt.is_ignore_read_names is set:
-        const read_key_lup_t::iterator keyIter(_read_key.find(srp->key()));
-        if (keyIter != _read_key.end())
-        {
-            _read_key.erase(keyIter);
-        }
         delete srp;
     }
     _pos_group.erase(i);

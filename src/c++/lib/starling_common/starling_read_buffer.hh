@@ -85,7 +85,6 @@ struct starling_read_buffer : private boost::noncopyable
     //
     std::pair<bool,align_id_t>
     add_read_alignment(
-        const starling_base_options& opt,
         const bam_record& br,
         const alignment& al,
         const MAPLEVEL::index_t maplev);
@@ -149,10 +148,7 @@ struct starling_read_buffer : private boost::noncopyable
     }
 
 private:
-    //
-    typedef read_key read_key_t;
     typedef std::map<align_id_t,starling_read*> read_data_t;
-    typedef std::map<read_key_t, align_id_t> read_key_lup_t;
     typedef std::pair<align_id_t,seg_id_t> segment_t;
     typedef std::set<segment_t> segment_group_t;
     typedef std::map<pos_t,segment_group_t> pos_group_t;
@@ -182,9 +178,6 @@ private:
 
     // read id to read data structure pointer map:
     read_data_t _read_data;
-
-    // read name (eg. QNAME) to read id map:
-    read_key_lup_t _read_key;
 
     // storage position to read segment id map
     //
