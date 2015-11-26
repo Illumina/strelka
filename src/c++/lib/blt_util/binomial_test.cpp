@@ -27,25 +27,13 @@
 
 #include <boost/math/distributions/binomial.hpp>
 #include <boost/math/distributions/complement.hpp>
-#include <boost/iterator/counting_iterator.hpp>
-#include <boost/iterator/transform_iterator.hpp>
 
 using boost::math::binomial;
 using boost::math::cdf;
 using boost::math::complement;
 
 #include <algorithm>
-#include <functional>
 
-template <typename I, typename F>
-boost::transform_iterator<
-    F,
-    boost::counting_iterator<I>>
-make_sequence_iterator(I i, F f)
-{
-    return boost::make_transform_iterator(
-        boost::counting_iterator<I>(i), f);
-}
 
 double
 get_binomial_twosided_exact_pval(
@@ -82,6 +70,11 @@ get_binomial_twosided_exact_pval(
     else
     {
         // naive implementation -- this can be improved
+        // in two ways:
+        // * find upper / lower bound so we don't have to
+        //   evaluate the pdf for every single value
+        //   between 0 and n_trials
+        // * be smarter about additive error
         binomial dist = binomial(n_trials, p);
         double exact_prob = pdf(dist, n_success);
         double result = 0;
