@@ -27,14 +27,25 @@
 
 #include <boost/math/distributions/binomial.hpp>
 #include <boost/math/distributions/complement.hpp>
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 
 using boost::math::binomial;
 using boost::math::cdf;
 using boost::math::complement;
 
 #include <algorithm>
+#include <functional>
 
-
+template <typename I, typename F>
+boost::transform_iterator<
+    F,
+    boost::counting_iterator<I>>
+make_sequence_iterator(I i, F f)
+{
+    return boost::make_transform_iterator(
+        boost::counting_iterator<I>(i), f);
+}
 
 double
 get_binomial_twosided_exact_pval(
@@ -51,20 +62,37 @@ get_binomial_twosided_exact_pval(
         return 1;
     }
 
-    const unsigned n_failure(n_trials-n_success);
-    const double obs_p((double)n_success/(double)n_trials);
-
-    double exact_prob;
-    if (obs_p <= p)
+    if(fabs(p - 0.5) < DBL_EPSILON)
     {
-        exact_prob=cdf(binomial(n_trials,p),n_success);
+        const unsigned n_failure(n_trials-n_success);
+        const double obs_p((double)n_success/(double)n_trials);
+
+        double exact_prob;
+        if (obs_p <= p)
+        {
+            exact_prob=cdf(binomial(n_trials,p),n_success);
+        }
+        else
+        {
+             exact_prob=cdf(binomial(n_trials,1.-p),n_failure);
+        }
+
+        return std::min(1.0, 2.*exact_prob);
     }
     else
     {
-        exact_prob=cdf(binomial(n_trials,1.-p),n_failure);
+        // naive implementation -- this can be improved
+        binomial dist = binomial(n_trials, p);
+        double exact_prob = pdf(dist, n_success);
+        double result = 0;
+        for (unsigned j = 0; j <= n_trials; ++j) {
+            double pp = pdf(dist, j);
+            if (pp <= exact_prob) {
+                result += pp;
+            }
+        }
+        return result;
     }
-
-    return (2.*exact_prob);
 }
 
 
