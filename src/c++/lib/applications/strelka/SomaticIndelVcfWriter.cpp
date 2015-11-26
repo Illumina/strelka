@@ -29,6 +29,7 @@
 #include "blt_util/io_util.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/fisher_exact_test.hh"
+#include "blt_util/binomial_test.hh"
 
 #include <iomanip>
 #include <iostream>
@@ -60,11 +61,8 @@ calculateIndelAF(
  * Similar to
  * https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
  *
- * We return
- *
- * R = n_ref_fwd * n_indel_rev / (n_ref_rev*n_indel_fwd)
- *
- * If the denominator is zero, we return the maximum double value
+ * We adjust the counts for low coverage/low AF by adding 0.5 -- this deals with the
+ * case where we don't actually observe reads on one strand.
  */
 static
 double
@@ -72,17 +70,16 @@ calculateSOR(
     const starling_indel_sample_report_info &isri
 )
 {
-    unsigned int num  = isri.n_q30_ref_reads_fwd*isri.n_q30_indel_reads_rev;
-    unsigned int denom = isri.n_q30_ref_reads_rev*isri.n_q30_indel_reads_fwd;
 
-    if(denom == 0)
-    {
-        return std::numeric_limits<double>::infinity();
-    }
-    else
-    {
-        return log10(num/static_cast<double>(denom));
-    }
+    // from
+    // http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
+    // we add .5 to each count to deal with the case of 0 / inf outcomes
+    double Y1  = isri.n_q30_ref_reads_fwd + 0.5;
+    double n1_minus_Y1 = isri.n_q30_indel_reads_fwd + 0.5;
+    double Y2  = isri.n_q30_ref_reads_rev + 0.5;
+    double n2_minus_Y2 = isri.n_q30_indel_reads_rev + 0.5;
+
+    return log10((Y1*n1_minus_Y1)/(Y2*n2_minus_Y2));
 }
 
 
@@ -126,12 +123,11 @@ write_vcf_isri_tiers(
     os << sep << (used+filt)
        << sep << filt
        << sep << submap
-       << sep << calculateIndelAF(isri1) << "," << calculateIndelAF(isri2)
-       << sep << calculateSOR(isri1) << "," << calculateSOR(isri2)
-       << sep << calculateFS(isri1) << "," << calculateFS(isri2)
-       << sep << isri1.readpos_ranksum.get_u_stat() << "," << isri2.readpos_ranksum.get_u_stat()
-       << sep << isri1.mean_mapq << "," << isri2.mean_mapq
-       << sep << isri1.mapq0_frac << "," << isri2.mapq0_frac
+       << sep << calculateIndelAF(isri1)
+       << sep << calculateSOR(isri1)
+       << sep << calculateFS(isri1)
+       << sep << get_binomial_twosided_exact_pval(0.5, isri1.n_q30_indel_reads_fwd, isri1.n_q30_indel_reads)  // BSA
+       << sep << isri1.readpos_ranksum.get_u_stat()
             ;
 }
 
@@ -207,6 +203,7 @@ writeSomaticIndelVcfGrid(
     os << sep;
     smod.write_filters(os);
 
+
     //INFO
     os << sep
        << "SOMATIC"
@@ -216,6 +213,18 @@ writeSomaticIndelVcfGrid(
        << ";QSI_NT=" << rs.sindel_from_ntype_qphred
        << ";TQSI_NT=" << (siInfo.sindel.sindel_from_ntype_tier+1)
        << ";SGT=" << static_cast<DDIINDEL_GRID::index_t>(rs.max_gt);
+
+    {
+        const StreamScoper ss(os);
+        os << std::fixed << std::setprecision(2);
+        double mean_mapq = (siInfo.nisri[1].mean_mapq + siInfo.tisri[1].mean_mapq) / 2;
+        double mean_mapq0 = (siInfo.nisri[1].mapq0_frac*siInfo.nisri[1].n_mapq +
+                             siInfo.tisri[1].mapq0_frac*siInfo.tisri[1].n_mapq) / (
+                                    siInfo.nisri[1].n_mapq + siInfo.tisri[1].n_mapq);
+        os << ";MQ=" << mean_mapq
+           << ";MQ0=" << mean_mapq0
+                ;
+    }
     if (siInfo.iri.is_repeat_unit())
     {
         os << ";RU=" << siInfo.iri.repeat_unit
@@ -235,7 +244,7 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:AF:SOR:FS:RR:MQ:MQ0";
+    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:AF:SOR:FS:BSA:RR";
 
     // write normal sample info:
     os << sep;

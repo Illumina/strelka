@@ -45,6 +45,12 @@ get_binomial_twosided_exact_pval(
     assert((p>0.) && (p<1.));
     assert(n_success <= n_trials);
 
+    // otherwise we get p == 2
+    if(n_trials == 0)
+    {
+        return 1;
+    }
+
     const unsigned n_failure(n_trials-n_success);
     const double obs_p((double)n_success/(double)n_trials);
 

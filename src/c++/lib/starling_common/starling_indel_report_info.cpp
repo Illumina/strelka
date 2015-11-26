@@ -460,6 +460,7 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
 
         unsigned n_subscore_reads(0);
 
+        isri.n_mapq = id.n_mapq;
         if(id.n_mapq > 0)
         {
             isri.mean_mapq = (double)(id.cumm_mapq) / id.n_mapq;
