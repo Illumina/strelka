@@ -165,7 +165,7 @@ void gvcf_writer::process(std::unique_ptr<indel_info> ii)
     }
 }
 
-void gvcf_writer::flush()
+void gvcf_writer::flush_impl()
 {
     skip_to_pos(_report_range.end_pos);
     write_block_site_record();

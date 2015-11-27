@@ -45,13 +45,6 @@ indel_overlapper::indel_overlapper(const calibration_models& model, const refere
 {
 }
 
-void indel_overlapper::flush()
-{
-    // flush out accumulated sites & indels
-    process_overlaps();
-    variant_pipe_stage_base::flush();
-}
-
 void indel_overlapper::process(std::unique_ptr<site_info> site)
 {
     std::unique_ptr<digt_site_info> si(downcast<digt_site_info>(std::move(site)));

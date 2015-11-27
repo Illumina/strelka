@@ -52,10 +52,11 @@ struct gvcf_writer : public variant_pipe_stage_base
 
     void process(std::unique_ptr<site_info>) override;
     void process(std::unique_ptr<indel_info>) override;
-    void flush() override;
 
 
 private:
+    void flush_impl() override;
+
     void add_site_internal(digt_site_info& si);
     void add_site_internal(continuous_site_info& si);
     void write_block_site_record();
