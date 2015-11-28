@@ -397,12 +397,6 @@ struct digt_indel_info : public indel_info
         return STAR_DIINDEL::get_gt_label(first().max_gt);
     }
 
-    void
-    dump_pl() const
-    {
-
-    }
-
     bool
     is_hetalt() const
     {
@@ -443,6 +437,7 @@ struct digt_indel_info : public indel_info
         }
         return 2;
     }
+
     std::map<std::string, double>
     get_indel_qscore_features(const double chrom_depth) const;
 

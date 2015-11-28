@@ -555,10 +555,8 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
 
     std::ostream& os(*_osptr);
 
-
     for (auto& call : ii.calls)
     {
-
         os << _chrom << '\t'   // CHROM
            << ii.pos << '\t'   // POS
            << ".\t"            // ID
@@ -626,7 +624,6 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
         }
         os << '\n';
     }
-
 }
 
 
