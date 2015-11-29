@@ -1,3 +1,6 @@
+v2.4.4
+- STARKA-275 prevent phaser from causing memory exaustion for amplicon input
+- STARKA-279 prevent rare vcf syntax error in gVCF when ALT is repeated
 - WGSW-765 Failed SNV phasing if any of the original SNVs are not represented
   in the most common alleles
 v2.4.3

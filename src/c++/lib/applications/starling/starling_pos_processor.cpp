@@ -269,8 +269,13 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
 
     const bool is_forced(is_forced_output_pos(pos));
 
+    // the second term in is_skippable below forces sites to go through the pipeline
+    // if phaser has put a hold on buffer cleanup. This ensures that the phaser will be turned back off
+    //
+    // TODO: there must be a way to force correct usage into the phaser's API instead of requiring this brittle hack
+    const bool is_skippable(! (is_forced || is_save_pileup_buffer()));
 
-    if (pi.calls.empty()&& !is_forced) return;
+    if (pi.calls.empty() && is_skippable) return;
 
     _pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
