@@ -76,8 +76,10 @@ else  ()
     endif ()
     message(FATAL_ERROR "${TMP_MSG}")
 endif ()
-# samtools 1.x forces pthreads in link:
+
+# htslib 1.x forces pthreads in link:
 find_package( Threads )
+set  (THIS_ADDITIONAL_LIB ${THIS_ADDITIONAL_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
 # setup ccache if found in path
 if (NOT WIN32)
@@ -213,7 +215,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 endif ()
 
 if (${IS_STANDARD_STATIC})
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+    append_args (CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 endif ()
 
 
