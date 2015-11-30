@@ -46,7 +46,7 @@ safeFrac(const int num, const int denom)
 
 
 /**
- * Approximate indel AF from high-quality reads
+ * Approximate indel AF from reads
  */
 static
 double
@@ -57,6 +57,17 @@ calculateIndelAF(
     return safeFrac(isri.n_q30_indel_reads, isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
 }
 
+/**
+ * Approximate indel "other" frequency (OF) from reads
+ */
+static
+double
+calculateIndelOF(
+        const starling_indel_sample_report_info &isri
+)
+{
+    return safeFrac(isri.n_other_reads, isri.n_other_reads + isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
+}
 /**
  * Similar to
  * https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
@@ -97,10 +108,11 @@ void
 write_vcf_isri_tiers(
     const starling_indel_sample_report_info& isri1,
     const starling_indel_sample_report_info& isri2,
-    const win_avg_set& was,
+    const win_avg_set& /* was */,
     std::ostream& os)
 {
     static const char sep(':');
+//  DP:DP2:TAR:TIR:TOR...
     os << isri1.depth
        << sep
        << isri2.depth
@@ -114,16 +126,11 @@ write_vcf_isri_tiers(
        << isri1.n_other_reads << ','
        << isri2.n_other_reads;
 
-    const float used(was.ss_used_win.avg());
-    const float filt(was.ss_filt_win.avg());
-    const float submap(was.ss_submap_win.avg());
-
+    // AF:OF:SOR:FS:BSA:RR
     const StreamScoper ss(os);
-    os << std::fixed << std::setprecision(2);
-    os << sep << (used+filt)
-       << sep << filt
-       << sep << submap
-       << sep << calculateIndelAF(isri1)
+    os << std::fixed << std::setprecision(3);
+    os << sep << calculateIndelAF(isri1)
+       << sep << calculateIndelOF(isri1)
        << sep << calculateSOR(isri1)
        << sep << calculateFS(isri1)
        << sep << get_binomial_twosided_exact_pval(0.5, isri1.n_q30_indel_reads_fwd, isri1.n_q30_indel_reads)  // BSA
@@ -244,7 +251,7 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:AF:SOR:FS:BSA:RR";
+    os << sep << "DP:DP2:TAR:TIR:TOR:AF:OF:SOR:FS:BSA:RR";
 
     // write normal sample info:
     os << sep;
