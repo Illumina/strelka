@@ -121,16 +121,12 @@ writeSomaticIndelVcfGrid(
         if (rs.ntype != NTYPE::REF)
         {
             smod.set_filter(STRELKA_VCF_FILTERS::Nonref);
-            // VQSR model isn't calibrated on non-ref calls
-            doVQSRScore = false;
         }
 
         calculateVQSRFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
         if(smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::T_OF) > smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::T_AF))
         {
             smod.set_filter(STRELKA_VCF_FILTERS::TOR);
-            // VQSR model isn't calibrated on noisy calls
-            doVQSRScore = false;
         }
 
         const scoring_models& models(scoring_models::Instance());
@@ -206,6 +202,12 @@ writeSomaticIndelVcfGrid(
         os << std::fixed << std::setprecision(2);
         os << ";MQ=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::MQ)
            << ";MQ0=" << mean_mapq0
+                ;
+    }
+    {
+        const StreamScoper ss(os);
+        os << std::fixed << std::setprecision(4);
+        os << ";N_DP_RATE=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::N_DP_RATE)
                 ;
     }
     if (siInfo.iri.is_repeat_unit())
