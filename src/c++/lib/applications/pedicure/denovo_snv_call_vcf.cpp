@@ -46,16 +46,17 @@ write_vcf_sample_info(
 	if (dsc.gts[sampleIndex]==2)
 		os << "1/1";
 	os <<':'
-	   << "." //GQ
+	   << "1" //GQ
 	   <<':'
-	   << 50  //GQX
+	   << dsc.gqx[sampleIndex]  //GQX
        <<':'
 	   << tier1_cpi.n_calls()
        << ':'
-       << tier1_cpi.n_unused_calls();
-//       << ':'
-//       << "0,30,23";
-//       << ':'
+       << tier1_cpi.n_unused_calls()
+       << ':'
+       << "0,23"
+       << ':'
+       << "1,2";
 //       << tier1_cpi.rawPileup().n_spandel
 //       << ':'
 //       << tier1_cpi.rawPileup().n_submapped;
@@ -107,7 +108,9 @@ denovo_snv_call_vcf(
     //REF:
     os << '\t' << probandCpi.rawPileup().get_ref_base()
        //ALT:
-       << "\t.";
+       << "\t"
+	   << "N";
+
 //    DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
 //                                  dsc.ref_gt,os);
     //QUAL:
@@ -142,7 +145,7 @@ denovo_snv_call_vcf(
 
     //FORMAT:
     os << '\t'
-       << "GT:GQ:GQX:DP:FDP"; //:PL
+       << "GT:GQ:GQX:DP:FDP:AD:PL"; //:AD:PL
 
     for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
     {

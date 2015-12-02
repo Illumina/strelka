@@ -48,10 +48,14 @@ struct denovo_snv_call
     consolidate_genotype(){
     	for(unsigned i=0; i<Sampleplhoods.size();i++){
     		unsigned current_min = 0;
-    		for (unsigned t=1; t<3; t++)
+    		unsigned sum = Sampleplhoods[i][0];
+    		for (unsigned t=1; t<3; t++){
     			if (Sampleplhoods[i][t] < Sampleplhoods[i][current_min])
     				current_min = t;
+    			sum += Sampleplhoods[i][t];
+    		}
     		gts.push_back(current_min);
+    		gqx.push_back(sum);
     		gt_sum += current_min;
     	}
     }
@@ -65,5 +69,6 @@ struct denovo_snv_call
     
     std::vector< std::array<float,3> > Sampleplhoods;
     std::vector< unsigned > gts;
+    std::vector< unsigned > gqx;
 
 };
