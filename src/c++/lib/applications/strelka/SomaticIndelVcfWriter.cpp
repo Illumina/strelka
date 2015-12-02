@@ -24,6 +24,7 @@
 #include "SomaticIndelVcfWriter.hh"
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
+#include "somatic_indel_vqsr_features.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/io_util.hh"
@@ -34,73 +35,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-
-
-
-static inline
-double
-safeFrac(const int num, const int denom)
-{
-    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
-}
-
-
-/**
- * Approximate indel AF from reads
- */
-static
-double
-calculateIndelAF(
-    const starling_indel_sample_report_info &isri
-)
-{
-    return safeFrac(isri.n_q30_indel_reads, isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
-}
-
-/**
- * Approximate indel "other" frequency (OF) from reads
- */
-static
-double
-calculateIndelOF(
-        const starling_indel_sample_report_info &isri
-)
-{
-    return safeFrac(isri.n_other_reads, isri.n_other_reads + isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
-}
-/**
- * Similar to
- * https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
- *
- * We adjust the counts for low coverage/low AF by adding 0.5 -- this deals with the
- * case where we don't actually observe reads on one strand.
- */
-static
-double
-calculateSOR(
-    const starling_indel_sample_report_info &isri
-)
-{
-
-    // from
-    // http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
-    // we add .5 to each count to deal with the case of 0 / inf outcomes
-    double Y1  = isri.n_q30_ref_reads_fwd + 0.5;
-    double n1_minus_Y1 = isri.n_q30_indel_reads_fwd + 0.5;
-    double Y2  = isri.n_q30_ref_reads_rev + 0.5;
-    double n2_minus_Y2 = isri.n_q30_indel_reads_rev + 0.5;
-
-    return log10((Y1*n1_minus_Y1)/(Y2*n2_minus_Y2));
-}
-
-
-static
-double
-calculateFS(const starling_indel_sample_report_info & isri)
-{
-    return error_prob_to_phred(fisher_exact_test_pval_2x2(isri.n_q30_ref_reads_fwd, isri.n_q30_indel_reads_fwd,
-                                                          isri.n_q30_ref_reads_rev, isri.n_q30_indel_reads_rev));
-}
+#include <calibration/scoringmodels.hh>
 
 
 static
@@ -108,7 +43,7 @@ void
 write_vcf_isri_tiers(
     const starling_indel_sample_report_info& isri1,
     const starling_indel_sample_report_info& isri2,
-    const win_avg_set& /* was */,
+    const win_avg_set& was,
     std::ostream& os)
 {
     static const char sep(':');
@@ -126,15 +61,16 @@ write_vcf_isri_tiers(
        << isri1.n_other_reads << ','
        << isri2.n_other_reads;
 
-    // AF:OF:SOR:FS:BSA:RR
+    // AF:OF:SOR:FS:BSA:RR:BCN
     const StreamScoper ss(os);
     os << std::fixed << std::setprecision(3);
     os << sep << calculateIndelAF(isri1)
-       << sep << calculateIndelOF(isri1)
-       << sep << calculateSOR(isri1)
-       << sep << calculateFS(isri1)
-       << sep << get_binomial_twosided_exact_pval(0.5, isri1.n_q30_indel_reads_fwd, isri1.n_q30_indel_reads)  // BSA
-       << sep << isri1.readpos_ranksum.get_u_stat()
+              << sep << calculateIndelOF(isri1)
+              << sep << calculateSOR(isri1)
+              << sep << calculateFS(isri1)
+              << sep << calculateBSA(isri1)
+              << sep << isri1.readpos_ranksum.get_u_stat()
+              << sep << calculateBCNoise(was)
             ;
 }
 
@@ -153,37 +89,70 @@ writeSomaticIndelVcfGrid(
 {
     const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
 
-    strelka_shared_modifiers smod;
+    const bool isUseVQSR(opt.isUseSomaticVQSR());
+    strelka_shared_modifiers_indel smod;
+    if (dopt.sfilter.is_max_depth())
     {
-        // compute all site filters:
-        if (dopt.sfilter.is_max_depth())
+        const unsigned& depth(siInfo.nisri[0].depth);
+        if (depth > dopt.sfilter.max_depth)
         {
-            const unsigned& depth(siInfo.nisri[0].depth);
-            if (depth > dopt.sfilter.max_depth)
-            {
-                smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
-            }
+            smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
         }
+    }
+    if (!isUseVQSR) {
+        // compute all site filters:
+        const double normalWinFrac = calculateBCNoise(wasNormal);
+        const double tumorWinFrac = calculateBCNoise(wasTumor);
 
+        if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
+            (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
         {
-            const int normalFilt(wasNormal.ss_filt_win.avg());
-            const int normalUsed(wasNormal.ss_used_win.avg());
-            const float normalWinFrac(safeFrac(normalFilt,(normalFilt+normalUsed)));
-
-            const int tumorFilt(wasTumor.ss_filt_win.avg());
-            const int tumorUsed(wasTumor.ss_used_win.avg());
-            const float tumorWinFrac(safeFrac(tumorFilt,(tumorFilt+tumorUsed)));
-
-            if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
-                (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
-            {
-                smod.set_filter(STRELKA_VCF_FILTERS::IndelBCNoise);
-            }
+            smod.set_filter(STRELKA_VCF_FILTERS::IndelBCNoise);
         }
 
         if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
         {
             smod.set_filter(STRELKA_VCF_FILTERS::QSI_ref);
+        }
+    }
+    else
+    {
+        bool doVQSRScore = true;
+        if (rs.ntype != NTYPE::REF)
+        {
+            smod.set_filter(STRELKA_VCF_FILTERS::Nonref);
+            // VQSR model isn't calibrated on non-ref calls
+            doVQSRScore = false;
+        }
+
+        calculateVQSRFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
+        if(smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::T_OF) > smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::T_AF))
+        {
+            smod.set_filter(STRELKA_VCF_FILTERS::TOR);
+            // VQSR model isn't calibrated on noisy calls
+            doVQSRScore = false;
+        }
+
+        const scoring_models& models(scoring_models::Instance());
+        if(!models.isVariantScoringInit())
+        {
+            doVQSRScore = false;
+        }
+
+        smod.isQscore = true;
+        if(doVQSRScore)
+        {
+            smod.Qscore = models.score_variant(smod.get_features(), VARIATION_NODE_TYPE::INDEL);
+            // Emperically re-maps the RF Qscore to get a better calibration
+        }
+        else
+        {
+            smod.Qscore = 0;
+        }
+
+        if(smod.Qscore < models.score_threshold(VARIATION_NODE_TYPE::INDEL))
+        {
+            smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
         }
     }
 
@@ -213,8 +182,16 @@ writeSomaticIndelVcfGrid(
 
     //INFO
     os << sep
-       << "SOMATIC"
-       << ";QSI=" << rs.sindel_qphred
+       << "SOMATIC";
+
+    if(smod.isQscore)
+    {
+        const StreamScoper ss(os);
+        os << std::fixed << std::setprecision(4);
+        os << ";VQSR=" << smod.Qscore;
+    }
+
+    os << ";QSI=" << rs.sindel_qphred
        << ";TQSI=" << (siInfo.sindel.sindel_tier+1)
        << ";NT=" << NTYPE::label(rs.ntype)
        << ";QSI_NT=" << rs.sindel_from_ntype_qphred
@@ -223,12 +200,11 @@ writeSomaticIndelVcfGrid(
 
     {
         const StreamScoper ss(os);
-        os << std::fixed << std::setprecision(2);
-        double mean_mapq = (siInfo.nisri[1].mean_mapq + siInfo.tisri[1].mean_mapq) / 2;
         double mean_mapq0 = (siInfo.nisri[1].mapq0_frac*siInfo.nisri[1].n_mapq +
                              siInfo.tisri[1].mapq0_frac*siInfo.tisri[1].n_mapq) / (
                                     siInfo.nisri[1].n_mapq + siInfo.tisri[1].n_mapq);
-        os << ";MQ=" << mean_mapq
+        os << std::fixed << std::setprecision(2);
+        os << ";MQ=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::MQ)
            << ";MQ0=" << mean_mapq0
                 ;
     }
@@ -252,6 +228,7 @@ writeSomaticIndelVcfGrid(
 
     //FORMAT
     os << sep << "DP:DP2:TAR:TIR:TOR:AF:OF:SOR:FS:BSA:RR";
+    os << ":BCN" << opt.sfilter.indelRegionFlankSize;
 
     // write normal sample info:
     os << sep;

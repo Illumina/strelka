@@ -40,16 +40,18 @@ enum index_t
 {
     // SNVs and indels:
     HighDepth,
+    LowQscore,
     // SNVs only:
     BCNoise,
     SpanDel,
     QSS_ref,
-    LowQscore,
     // indels only:
     Repeat,
     iHpol,
     IndelBCNoise,
     QSI_ref,
+    Nonref,
+    TOR,
     SIZE
 };
 
@@ -78,6 +80,10 @@ get_label(const unsigned idx)
         return "QSI_ref";
     case LowQscore:
         return "LowQscore";
+    case TOR:
+        return "TOR";
+    case Nonref:
+        return "Nonref";
     default:
         assert(false && "Unknown vcf filter id");
         return nullptr;
@@ -85,6 +91,7 @@ get_label(const unsigned idx)
 }
 }
 
+template<class _vqsr_featureset = STRELKA_SNV_VQSR_FEATURES>
 struct strelka_shared_modifiers
 {
     strelka_shared_modifiers()
@@ -99,7 +106,7 @@ struct strelka_shared_modifiers
     }
 
     void
-    set_feature(const STRELKA_VQSR_FEATURES::index_t i,double val)
+    set_feature(const typename _vqsr_featureset::index_t i,double val)
     {
         if (_isFeatureSet.test(i))
         {
@@ -110,14 +117,14 @@ struct strelka_shared_modifiers
     }
 
     double
-    get_feature(const STRELKA_VQSR_FEATURES::index_t i) const
+    get_feature(const typename _vqsr_featureset::index_t i) const
     {
         assert(_isFeatureSet.test(i));
         return this->_featureVal.at(i);
     }
 
     bool
-    test_feature(const STRELKA_VQSR_FEATURES::index_t i) const
+    test_feature(const typename _vqsr_featureset::index_t i) const
     {
         return _isFeatureSet[i];
     }
@@ -128,12 +135,44 @@ struct strelka_shared_modifiers
         return _featureVal;
     }
 
+    inline
     void
-    write_filters(std::ostream& os) const;
+    write_filters(
+            std::ostream& os) const
+    {
+        if (filters.none())
+        {
+            os << "PASS";
+            return;
+        }
+
+        bool is_sep(false);
+        for (unsigned i(0); i<STRELKA_VCF_FILTERS::SIZE; ++i)
+        {
+            if (! filters.test(i)) continue;
+
+            if (is_sep)
+            {
+                os << ";";
+            }
+            else
+            {
+                is_sep=true;
+            }
+            os << STRELKA_VCF_FILTERS::get_label(i);
+        }
+    }
 
     //For debug only
     void
-    write_feature(std::ostream& os) const;
+    write_feature(
+            std::ostream& os) const
+    {
+        os << "\n #FEAT ";
+        for (auto it = _featureVal.cbegin(); it != _featureVal.cend(); ++it)
+            os << _vqsr_featureset::get_feature_label(it->first) << "=" << it->second << "; ";
+        os << "\n";
+    }
 
     void
     clear()
@@ -145,14 +184,28 @@ struct strelka_shared_modifiers
         Qscore = 0;
     }
 
-    std::bitset<STRELKA_VCF_FILTERS::SIZE> filters;
+    std::bitset<_vqsr_featureset::SIZE> filters;
     bool isQscore;
     double Qscore;
 
 private:
-    std::bitset<STRELKA_VQSR_FEATURES::SIZE> _isFeatureSet;
+    std::bitset<_vqsr_featureset::SIZE> _isFeatureSet;
     feature_type _featureVal; // holds VQSR features
 };
 
 
-std::ostream& operator<<(std::ostream& os,const strelka_shared_modifiers& shmod);
+template<class _vqsr_featureset>
+std::ostream&
+operator<<(
+        std::ostream& os,
+        const strelka_shared_modifiers<_vqsr_featureset>& shmod)
+{
+    os << " filters: ";
+    shmod.write_filters(os);
+
+    return os;
+}
+
+typedef strelka_shared_modifiers<STRELKA_SNV_VQSR_FEATURES> strelka_shared_modifiers_snv;
+typedef strelka_shared_modifiers<STRELKA_INDEL_VQSR_FEATURES> strelka_shared_modifiers_indel;
+

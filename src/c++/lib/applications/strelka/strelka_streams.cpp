@@ -222,6 +222,7 @@ strelka_streams(
             //scoring_models::Instance().writeVcfHeader(fos);
 
             // INFO:
+            fos << "##INFO=<ID=VQSR,Number=1,Type=Float,Description=\"Empirically calibrated quality score for somatic variants\">\n";
             fos << "##INFO=<ID=QSI,Number=1,Type=Integer,Description=\"Quality score for any somatic variant, ie. for the ALT haplotype to be present at a significantly different frequency in the tumor and normal\">\n";
             fos << "##INFO=<ID=TQSI,Number=1,Type=Integer,Description=\"Data tier used to compute QSI\">\n";
             fos << "##INFO=<ID=NT,Number=1,Type=String,Description=\"Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.\">\n";
@@ -251,18 +252,42 @@ strelka_streams(
             fos << "##FORMAT=<ID=FS,Number=1,Type=Float,Description=\"Log p-value using Fisher's exact test to detect strand bias, based on tier1\">\n";
             fos << "##FORMAT=<ID=BSA,Number=1,Type=Float,Description=\"Binomial test log-pvalue for ALT allele in tier1\">\n";
             fos << "##FORMAT=<ID=RR,Number=1,Type=Float,Description=\"Read position ranksum for ALT allele in tier1 reads (U-statistic)\">\n";
+            fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
+
             // FILTERS:
+            const bool isUseVQSR(opt.isUseSomaticVQSR());
             {
                 using namespace STRELKA_VCF_FILTERS;
+                if (isUseVQSR)
                 {
-                    std::ostringstream oss;
-                    oss << "Average fraction of filtered basecalls within " << opt.sfilter.indelRegionFlankSize << " bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
-                    write_vcf_filter(fos, get_label(IndelBCNoise), oss.str().c_str());
+                    {
+                        std::ostringstream oss;
+                        oss << "The empirically fitted VQSR score is less than " << opt.sfilter.minimumQscore;
+                        write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
+                    }
+                    {
+                        std::ostringstream oss;
+                        oss << "OF > AF in Tumor sample (i.e. more noise evidence than somatic evidence)";
+                        write_vcf_filter(fos, get_label(TOR), oss.str().c_str());
+                    }
+                    {
+                        std::ostringstream oss;
+                        oss << "Normal type is not homozygous reference.";
+                        write_vcf_filter(fos, get_label(Nonref), oss.str().c_str());
+                    }
                 }
+                else
                 {
-                    std::ostringstream oss;
-                    oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << ", ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
-                    write_vcf_filter(fos, get_label(QSI_ref), oss.str().c_str());
+                    {
+                        std::ostringstream oss;
+                        oss << "Average fraction of filtered basecalls within " << opt.sfilter.indelRegionFlankSize << " bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
+                        write_vcf_filter(fos, get_label(IndelBCNoise), oss.str().c_str());
+                    }
+                    {
+                        std::ostringstream oss;
+                        oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << ", ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
+                        write_vcf_filter(fos, get_label(QSI_ref), oss.str().c_str());
+                    }
                 }
             }
 

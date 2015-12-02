@@ -25,71 +25,133 @@
 
 #include <cassert>
 
-namespace STRELKA_VQSR_FEATURES
+struct STRELKA_SNV_VQSR_FEATURES
 {
 
 /** any change here must be done together with changing
     src/python/somaticVQSRTraining/lib/features//StrelkaSNV.py
  */
-enum index_t
-{
-    QSS_NT,
-    N_FDP_RATE,
-    T_FDP_RATE,
-    N_SDP_RATE,
-    T_SDP_RATE,
-    N_DP_RATE,
-    TIER1_ALLELE_RATE,
-    MQ,
-    n_mapq0,
-    strandBias,
-    ReadPosRankSum,
-    altmap,
-    altpos,
-    pnoise,
-    pnoise2,
-    SIZE
+    enum index_t
+    {
+        QSS_NT,
+        N_FDP_RATE,
+        T_FDP_RATE,
+        N_SDP_RATE,
+        T_SDP_RATE,
+        N_DP_RATE,
+        TIER1_ALLELE_RATE,
+        MQ,
+        n_mapq0,
+        strandBias,
+        ReadPosRankSum,
+        altmap,
+        altpos,
+        pnoise,
+        pnoise2,
+        SIZE
+    };
+
+    inline
+    const char*
+    get_feature_label(const unsigned idx)
+    {
+        switch (idx)
+        {
+            case QSS_NT:
+                return "QSS_NT";
+            case N_FDP_RATE:
+                return "N_FDP_RATE";
+            case T_FDP_RATE:
+                return "T_FDP_RATE";
+            case N_SDP_RATE:
+                return "N_SDP_RATE";
+            case T_SDP_RATE:
+                return "T_SDP_RATE";
+            case N_DP_RATE:
+                return "N_DP_RATE";
+            case TIER1_ALLELE_RATE:
+                return "TIER1_ALLELE_RATE";
+            case MQ:
+                return "MQ";
+            case n_mapq0:
+                return "n_mapq0";
+            case strandBias:
+                return "strandBias";
+            case ReadPosRankSum:
+                return "ReadPosRankSum";
+            case altmap:
+                return "altmap";
+            case altpos:
+                return "altpos";
+            case pnoise:
+                return "pnoise";
+            case pnoise2:
+                return "pnoise2";
+            default:
+                assert(false && "Unknown feature");
+                return nullptr;
+        }
+    }
 };
 
-inline
-const char*
-get_feature_label(const unsigned idx)
+struct STRELKA_INDEL_VQSR_FEATURES
 {
-    switch (idx)
+
+/** Make sure the features are the same as used in the model
+ */
+    enum index_t
     {
-    case QSS_NT:
-        return "QSS_NT";
-    case N_FDP_RATE:
-        return "N_FDP_RATE";
-    case T_FDP_RATE:
-        return "T_FDP_RATE";
-    case N_SDP_RATE:
-        return "N_SDP_RATE";
-    case T_SDP_RATE:
-        return "T_SDP_RATE";
-    case N_DP_RATE:
-        return "N_DP_RATE";
-    case TIER1_ALLELE_RATE:
-        return "TIER1_ALLELE_RATE";
-    case MQ:
-        return "MQ";
-    case n_mapq0:
-        return "n_mapq0";
-    case strandBias:
-        return "strandBias";
-    case ReadPosRankSum:
-        return "ReadPosRankSum";
-    case altmap:
-        return "altmap";
-    case altpos:
-        return "altpos";
-    case pnoise:
-        return "pnoise";
-    case pnoise2:
-        return "pnoise2";
-    default:
-        assert(false && "Unknown feature");
-        return nullptr;
+        QSI_NT,
+        N_AF,
+        T_AF,
+        N_DP_RATE,
+        MQ,
+        T_RR,
+        T_BSA,
+        T_FS,
+        T_SOR,
+        T_OF,
+        IHP,
+        RC,
+        RU_LEN,
+        SIZE
+    };
+
+    inline
+    const char*
+    get_feature_label(const unsigned idx)
+    {
+        switch (idx)
+        {
+            case QSI_NT:
+                return "QSI_NT";
+            case N_AF:
+                return "N_AF";
+            case T_AF:
+                return "T_AF";
+            case N_DP_RATE:
+                return "N_DP_RATE";
+            case MQ:
+                return "MQ";
+            case T_RR:
+                return "T_RR";
+            case T_BSA:
+                return "T_BSA";
+            case T_FS:
+                return "T_FS";
+            case T_SOR:
+                return "T_SOR";
+            case T_OF:
+                return "T_OF";
+            case IHP:
+                return "IHP";
+            case RC:
+                return "RC";
+            case RU_LEN:
+                return "RU_LEN";
+            default:
+                assert(false && "Unknown feature");
+                return nullptr;
+        }
     }
-}
-}
+};
