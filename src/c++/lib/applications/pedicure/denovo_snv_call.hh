@@ -21,7 +21,7 @@
 #include <cstdint>
 #include <array>
 #include <vector>
-
+#include "blt_util/log.hh"
 
 struct denovo_snv_call
 {
@@ -35,7 +35,7 @@ struct denovo_snv_call
     bool
     is_snv() const
     {
-        return (0 != rs.snv_qphred);
+        return (gt_sum >0);
     }
 
     bool
@@ -44,11 +44,26 @@ struct denovo_snv_call
         return (is_snv() || is_forced_output);
     }
 
+    void
+    consolidate_genotype(){
+    	for(unsigned i=0; i<Sampleplhoods.size();i++){
+    		unsigned current_min = 0;
+    		for (unsigned t=1; t<3; t++)
+    			if (Sampleplhoods[i][t] < Sampleplhoods[i][current_min])
+    				current_min = t;
+    		gts.push_back(current_min);
+    		gt_sum += current_min;
+    	}
+    }
+
+
     unsigned ref_gt = 0;
+    unsigned gt_sum = 0;
     uint8_t dsnv_tier = 0;
     bool is_forced_output = false;
     result_set rs;
     
     std::vector< std::array<float,3> > Sampleplhoods;
+    std::vector< unsigned > gts;
 
 };

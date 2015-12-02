@@ -148,7 +148,10 @@ process_pos_snp_denovo(const pos_t pos)
     }
 
     // report events:
+
     //
+    dsc.consolidate_genotype();
+
     if (dsc.is_output())
     {
 

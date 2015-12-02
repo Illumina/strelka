@@ -23,7 +23,7 @@
 #include <iomanip>
 #include <iostream>
 
-
+#include "blt_util/log.hh"
 
 static
 void
@@ -31,22 +31,30 @@ write_vcf_sample_info(
     const blt_options& opt,
     const CleanedPileup& tier1_cpi,
     const CleanedPileup& tier2_cpi,
-    const denovo_snv_call& /*dsc*/,
-    int /*sampleIndex*/,
+    const denovo_snv_call& dsc,
+    int sampleIndex,
     std::ostream& os)
 {
     //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
-    os << "0/0"
+//	log_os << dsc.Sampleplhoods[sampleIndex][0]
+//			<< " " << dsc.Sampleplhoods[sampleIndex][1]
+//			<< " " << dsc.Sampleplhoods[sampleIndex][2] <<	std::endl;
+	if (dsc.gts[sampleIndex]==0)
+    	os << "0/0";
+	if (dsc.gts[sampleIndex]==1)
+		os << "0/1";
+	if (dsc.gts[sampleIndex]==2)
+		os << "1/1";
+	os <<':'
+	   << "." //GQ
 	   <<':'
-	   << 10
-	   <<':'
-	   << 50
+	   << 50  //GQX
        <<':'
 	   << tier1_cpi.n_calls()
        << ':'
-       << tier1_cpi.n_unused_calls()
-       << ':'
-       << "0,30,23";
+       << tier1_cpi.n_unused_calls();
+//       << ':'
+//       << "0,30,23";
 //       << ':'
 //       << tier1_cpi.rawPileup().n_spandel
 //       << ':'
@@ -57,8 +65,6 @@ write_vcf_sample_info(
     tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
     tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
 }
-
-
 
 void
 denovo_snv_call_vcf(
@@ -86,7 +92,7 @@ denovo_snv_call_vcf(
         {
             if (probandDP > dopt.dfilter.max_depth)
             {
-//                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
+                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
             }
         }
 
@@ -129,14 +135,15 @@ denovo_snv_call_vcf(
         }
         os << "DP=" << n_mapq;
         os << ";MQ0=" << n_mapq0;
-//        os << ";QDS=" << rs.dsnv_qphred
+        os << ";QDS=" << rs.dsnv_qphred;
 //           << ";TQSI=" << (dsc.dsnv_tier+1);
 
     }
 
     //FORMAT:
     os << '\t'
-       << "GT:GQ:GQX:DP:FDP:PL"; //:SDP:SUBDP:AU:CU:GU:TU";
+       << "GT:GQ:GQX:DP:FDP"; //:PL
+
     for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
     {
         const CleanedPileup& cpi1(*pileups[PEDICURE_TIERS::TIER1][sampleIndex]);

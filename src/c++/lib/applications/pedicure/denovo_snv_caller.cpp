@@ -225,9 +225,10 @@ struct DenovoResultMaker
                     {
                         using namespace TRANSMISSION_STATE;
                         log_os << "p0gt/p1/c: "
-                               << DIGT::label(parent0GT) << " "
+                               << DIGT::label(parent0GT) << "(" << parent0GT << ")"
                                << DIGT::label(parent1GT) << " "
-                               << DIGT::label(probandGT) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
+                               << DIGT::label(probandGT) << "\n";
+//							   " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
                     }
 #endif
                     stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
@@ -414,13 +415,13 @@ get_denovo_snv_call(
         dmaker.calculate_result_set_grid2(sinfo, sampleLhood, trs);
     }
 
-    if (! dsc.is_forced_output)
-    {
-        for (const auto& val : tier_rs)
-        {
-            if (val.dsnv_qphred==0) return;
-        }
-    }
+//    if (! dsc.is_forced_output)
+//    {
+//        for (const auto& val : tier_rs)
+//        {
+//            if (val.dsnv_qphred==0) return;
+//        }
+//    }
 
     dsc.dsnv_tier=0;
     if (opt.tier2.is_tier2())
@@ -456,5 +457,4 @@ get_denovo_snv_call(
 		for(int p(0); p<3; ++p){ pProb[p] = error_prob_to_qphred(pProb[p]); }
 		dsc.Sampleplhoods.push_back(pProb);
 	}
-
 }
