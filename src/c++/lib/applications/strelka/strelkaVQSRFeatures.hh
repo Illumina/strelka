@@ -102,18 +102,12 @@ struct STRELKA_INDEL_VQSR_FEATURES
     enum index_t
     {
         QSI_NT,
-        N_AF,
-        T_AF,
-        N_DP_RATE,
-        MQ,
+        AOR,
+        N_DP,
+        T_DP,
         T_RR,
-        T_BSA,
         T_FS,
         T_SOR,
-        T_OF,
-        IHP,
-        RC,
-        RU_LEN,
         SIZE
     };
 
@@ -125,30 +119,18 @@ struct STRELKA_INDEL_VQSR_FEATURES
         {
             case QSI_NT:
                 return "QSI_NT";
-            case N_AF:
-                return "N_AF";
-            case T_AF:
-                return "T_AF";
-            case N_DP_RATE:
-                return "N_DP_RATE";
-            case MQ:
-                return "MQ";
+            case AOR:
+                return "AOR";
+            case N_DP:
+                return "N_DP";
+            case T_DP:
+                return "T_DP";
             case T_RR:
                 return "T_RR";
-            case T_BSA:
-                return "T_BSA";
             case T_FS:
                 return "T_FS";
             case T_SOR:
                 return "T_SOR";
-            case T_OF:
-                return "T_OF";
-            case IHP:
-                return "IHP";
-            case RC:
-                return "RC";
-            case RU_LEN:
-                return "RU_LEN";
             default:
                 assert(false && "Unknown feature");
                 return nullptr;

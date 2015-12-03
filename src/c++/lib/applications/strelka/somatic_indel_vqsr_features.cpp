@@ -124,6 +124,20 @@ calculateBCNoise(const win_avg_set & was)
 }
 
 /**
+ * Calculate AOR feature (log ratio between T_AF and N_AF)
+ */
+double
+calculateAOR(const starling_indel_sample_report_info & nisri,
+             const starling_indel_sample_report_info & tisri
+        )
+{
+    const double T_AF = calculateIndelAF(tisri);
+    const double N_AF = calculateIndelAF(nisri);
+
+    return log10(std::max(T_AF, (double)0.00001) / std::max(N_AF, (double)0.0001));
+}
+
+/**
  * Calculate VQSR features and add to smod
  */
 void
@@ -131,42 +145,28 @@ calculateVQSRFeatures(
     const SomaticIndelVcfInfo& siInfo,
     const win_avg_set & /* n_was */,
     const win_avg_set & /* t_was */,
-    const strelka_options & opt,
-    const strelka_deriv_options & dopt,
+    const strelka_options & /* opt */,
+    const strelka_deriv_options & /* dopt */,
     strelka_shared_modifiers_indel & smod
 )
 {
     const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::QSI_NT, rs.sindel_from_ntype_qphred);
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::N_AF, calculateIndelAF(siInfo.nisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::T_AF, calculateIndelAF(siInfo.tisri[0]));
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::AOR, calculateAOR(siInfo.nisri[0], siInfo.tisri[0]));
 
-    double meanChrDepth = 1;
-    auto cd = dopt.sfilter.chrom_depth.find(opt.bam_seq_name);
-    if(cd != dopt.sfilter.chrom_depth.end())
-    {
-        meanChrDepth = cd->second;
-    }
+//    double meanChrDepth = 1;
+//    auto cd = dopt.sfilter.chrom_depth.find(opt.bam_seq_name);
+//    if(cd != dopt.sfilter.chrom_depth.end())
+//    {
+//        meanChrDepth = cd->second;
+//    }
 
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::N_DP_RATE, safeFrac((int)siInfo.nisri[0].depth, (int)meanChrDepth));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::MQ, (siInfo.nisri[1].mean_mapq + siInfo.tisri[1].mean_mapq) / 2);
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::N_DP, siInfo.nisri[0].depth);
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::T_DP, siInfo.tisri[0].depth);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::T_RR, siInfo.tisri[0].readpos_ranksum.get_u_stat());
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::T_BSA, calculateBSA(siInfo.tisri[0]));
 
     // TODO remove the phred conversion in the next model -- the current model has been trained on phred-scaled values
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::T_FS, error_prob_to_phred(calculateFS(siInfo.tisri[0])));
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::T_SOR, calculateSOR(siInfo.tisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::T_OF, calculateIndelOF(siInfo.tisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IHP, siInfo.iri.ihpol);
-    if (siInfo.iri.is_repeat_unit())
-    {
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RC, siInfo.iri.ref_repeat_count);
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RU_LEN, siInfo.iri.repeat_unit_length);
-    }
-    else
-    {
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RC, 0);
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RU_LEN, 0);
-    }
 }
 

@@ -79,6 +79,13 @@ calculateBSA(const starling_indel_sample_report_info & isri);
 double
 calculateBCNoise(const win_avg_set & was);
 
+/**
+ * Calculate AOR feature (log ratio between T_AF and N_AF)
+ */
+double
+calculateAOR(const starling_indel_sample_report_info & nisri,
+             const starling_indel_sample_report_info & tisri
+);
 
 /**
  * Calculate VQSR features and add to smod

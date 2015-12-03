@@ -124,10 +124,6 @@ writeSomaticIndelVcfGrid(
         }
 
         calculateVQSRFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
-        if(smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::T_OF) > smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::T_AF))
-        {
-            smod.set_filter(STRELKA_VCF_FILTERS::TOR);
-        }
 
         const scoring_models& models(scoring_models::Instance());
         if(!models.isVariantScoringInit())
@@ -197,18 +193,19 @@ writeSomaticIndelVcfGrid(
 
     {
         const StreamScoper ss(os);
+        double mean_mapq  = (siInfo.nisri[1].mean_mapq + siInfo.tisri[1].mean_mapq) / 2.0;
         double mean_mapq0 = (siInfo.nisri[1].mapq0_frac*siInfo.nisri[1].n_mapq +
                              siInfo.tisri[1].mapq0_frac*siInfo.tisri[1].n_mapq) / (
                                     siInfo.nisri[1].n_mapq + siInfo.tisri[1].n_mapq);
         os << std::fixed << std::setprecision(2);
-        os << ";MQ=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::MQ)
+        os << ";MQ=" << mean_mapq
            << ";MQ0=" << mean_mapq0
                 ;
     }
     {
         const StreamScoper ss(os);
         os << std::fixed << std::setprecision(4);
-        os << ";N_DP_RATE=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::N_DP_RATE)
+        os << ";AOR=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::AOR)
                 ;
     }
     if (siInfo.iri.is_repeat_unit())
