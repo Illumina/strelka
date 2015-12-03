@@ -138,7 +138,8 @@ writeSomaticIndelVcfGrid(
         smod.isQscore = true;
         if(doVQSRScore)
         {
-            smod.Qscore = models.score_variant(smod.get_features(), VARIATION_NODE_TYPE::INDEL);
+            // for some reason these come out the wrong way around
+            smod.Qscore = 1.0 - models.score_variant(smod.get_features(), VARIATION_NODE_TYPE::INDEL);
             // Emperically re-maps the RF Qscore to get a better calibration
         }
         else
