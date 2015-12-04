@@ -59,9 +59,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                           help="Noise vcf file (submit argument multiple times for more than one file)")
         group.add_option("--isWriteCallableRegion", action="store_true",
                          help="Write out a bed file describing somatic callable regions of thedupliates genome")
-        group.add_option("--allowDuplicateReadIDs", action="store_true",
-                         help="Allow duplicate read IDs in the same segment. This works around a bug in BWA-mem 0.7.12"
-                              " which doesn't correctly mark secondary alignments.")
+        group.add_option("--enable-indel-empirical-scoring", action="store_true", dest="isStrelkaIndelEmpiricalScoring",
+                         help="Enable empirical filters for indels")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
