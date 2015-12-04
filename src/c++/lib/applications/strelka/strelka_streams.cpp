@@ -222,7 +222,7 @@ strelka_streams(
             //scoring_models::Instance().writeVcfHeader(fos);
 
             // INFO:
-            fos << "##INFO=<ID=VQSR,Number=1,Type=Float,Description=\"Empirically calibrated quality score for somatic variants\">\n";
+            fos << "##INFO=<ID=EQSI,Number=1,Type=Float,Description=\"Empirically calibrated quality score for somatic variants\">\n";
             fos << "##INFO=<ID=QSI,Number=1,Type=Integer,Description=\"Quality score for any somatic variant, ie. for the ALT haplotype to be present at a significantly different frequency in the tumor and normal\">\n";
             fos << "##INFO=<ID=TQSI,Number=1,Type=Integer,Description=\"Data tier used to compute QSI\">\n";
             fos << "##INFO=<ID=NT,Number=1,Type=String,Description=\"Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.\">\n";
@@ -235,8 +235,8 @@ strelka_streams(
             fos << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Largest reference interrupted homopolymer length intersecting with the indel\">\n";
             fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
             fos << "##INFO=<ID=MQ0,Number=1,Type=Float,Description=\"Fraction of MAPQ == 0 reads covering this record\">\n";
-            fos << "##INFO=<ID=AOR,Number=1,Type=Float,Description=\"AOR VQSR feature\">\n";
-            fos << "##INFO=<ID=OD,Number=1,Type=Float,Description=\"OD VQSR feature\">\n";
+            fos << "##INFO=<ID=AOR,Number=1,Type=Float,Description=\"Log-ratio of tumor alt AF and normal alt AF\">\n";
+            fos << "##INFO=<ID=OD,Number=1,Type=Float,Description=\"Log ratio of alt AF and alt OF in tumor sample\">\n";
             fos << "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">\n";
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
@@ -257,14 +257,20 @@ strelka_streams(
             fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
 
             // FILTERS:
-            const bool isUseVQSR(opt.isUseSomaticVQSR());
+            const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
             {
                 using namespace STRELKA_VCF_FILTERS;
-                if (isUseVQSR)
+                if (is_use_empirical_scoring)
                 {
                     {
                         std::ostringstream oss;
-                        oss << "The empirically fitted VQSR score is less than " << opt.sfilter.minimumQscore;
+                        const scoring_models & sm = scoring_models::Instance();
+                        double threshold = 0;
+                        if(sm.isVariantScoringInit())
+                        {
+                            threshold = sm.score_threshold(VARIATION_NODE_TYPE::INDEL);
+                        }
+                        oss << "The empirically fitted quality score is less than " << threshold;
                         write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
                     }
                     {

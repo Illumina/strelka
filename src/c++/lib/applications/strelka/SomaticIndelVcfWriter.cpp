@@ -89,7 +89,7 @@ writeSomaticIndelVcfGrid(
 {
     const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
 
-    const bool isUseVQSR(opt.isUseSomaticVQSR());
+    // always use high depth filter when enabled
     strelka_shared_modifiers_indel smod;
     if (dopt.sfilter.is_max_depth())
     {
@@ -99,7 +99,25 @@ writeSomaticIndelVcfGrid(
             smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
         }
     }
-    if (!isUseVQSR) {
+
+    // calculate VQSR score and features
+    calculateVQSRFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
+
+    // always write VQSR feature
+    const scoring_models& models(scoring_models::Instance());
+    if(models.isVariantScoringInit())
+    {
+        // for some reason these come out the wrong way around
+        smod.Qscore = 1.0 - models.score_variant(smod.get_features(), VARIATION_NODE_TYPE::INDEL);
+        smod.isQscore = true;
+    }
+    else
+    {
+        smod.Qscore = 0;
+    }
+
+    const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
+    if (!is_use_empirical_scoring) {
         // compute all site filters:
         const double normalWinFrac = calculateBCNoise(wasNormal);
         const double tumorWinFrac = calculateBCNoise(wasTumor);
@@ -117,30 +135,9 @@ writeSomaticIndelVcfGrid(
     }
     else
     {
-        bool doVQSRScore = true;
         if (rs.ntype != NTYPE::REF)
         {
             smod.set_filter(STRELKA_VCF_FILTERS::Nonref);
-        }
-
-        calculateVQSRFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
-
-        const scoring_models& models(scoring_models::Instance());
-        if(!models.isVariantScoringInit())
-        {
-            doVQSRScore = false;
-        }
-
-        smod.isQscore = true;
-        if(doVQSRScore)
-        {
-            // for some reason these come out the wrong way around
-            smod.Qscore = 1.0 - models.score_variant(smod.get_features(), VARIATION_NODE_TYPE::INDEL);
-            // Emperically re-maps the RF Qscore to get a better calibration
-        }
-        else
-        {
-            smod.Qscore = 0;
         }
 
         if(smod.Qscore < models.score_threshold(VARIATION_NODE_TYPE::INDEL))
@@ -172,7 +169,6 @@ writeSomaticIndelVcfGrid(
     os << sep;
     smod.write_filters(os);
 
-
     //INFO
     os << sep
        << "SOMATIC";
@@ -181,7 +177,7 @@ writeSomaticIndelVcfGrid(
     {
         const StreamScoper ss(os);
         os << std::fixed << std::setprecision(4);
-        os << ";VQSR=" << smod.Qscore;
+        os << ";EQSI=" << smod.Qscore;
     }
 
     os << ";QSI=" << rs.sindel_qphred

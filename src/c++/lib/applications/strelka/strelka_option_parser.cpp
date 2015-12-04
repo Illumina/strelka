@@ -121,6 +121,8 @@ get_strelka_option_parser(
      "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
     ("strelka-indel-min-qsi-ref", po::value(&opt.sfilter.sindelQuality_LowerBound)->default_value(opt.sfilter.sindelQuality_LowerBound),
      "min QSI_ref value")
+    ("strelka-indel-empirical-scoring", po::value(&opt.sfilter.is_use_indel_empirical_scoring)->default_value(opt.sfilter.is_use_indel_empirical_scoring),
+     "Enable filtering based on empirical scoring for indels")
     ;
 
     po::options_description tier2_opt(getTier2OptionsDescription(opt.tier2));
