@@ -1,5 +1,5 @@
 
-Dockerized strelka build scripts with different docker image options:
+Dockerized build scripts with different docker image options:
 
 * centos5PlusGcc48
 

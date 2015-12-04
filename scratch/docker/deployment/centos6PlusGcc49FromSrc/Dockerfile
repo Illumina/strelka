@@ -15,7 +15,7 @@ FROM centos:6
 
 # add standard centos6 packages
 # adding cmake here for extra speed even though starka will bootstrap this
-RUN yum install -y bzip2 gcc gcc-c++ tar wget zlib-devel cmake
+RUN yum install -y bzip2 gcc gcc-c++ tar wget zlib-devel cmake git
 
 # build gcc 4.9 from source
 RUN mkdir -p /download/gcc-4.9.3 && cd /download/gcc-4.9.3 && wget ftp://ftp.gnu.org/gnu/gcc/gcc-4.9.3/gcc-4.9.3.tar.bz2 && \

@@ -3,17 +3,22 @@
 set -o nounset
 set -o xtrace
 
-buildLabel="strelka-unknown-version"
-if ! [ $# == 1 ]; then
+buildLabel=
+if ! [ $# != 3 ]; then
     cat <<END
-usage: $0 [binary_distro_prefix]
-
 Create binary distro tarball using docker.
+
+usage: $0 distro_root_directory binary_distro_prefix
+
+  distro_root_directory - root directory of the package git repository
+  binary_distro_prefix - filename prefix of tarball and directory name
+                         used when tarball is unpacked
 END
     exit 2
 fi
 
-buildLabel="$1"
+rootDir="$1"
+buildLabel="$2"
 
 
 rel2abs() {
@@ -22,9 +27,10 @@ rel2abs() {
 
 builderImage=centos6PlusGcc49FromSrc
 scriptDir=$(rel2abs $(dirname $0))
-rootDir=$(rel2abs $scriptDir/../../..)
+#rootDir=$(rel2abs $scriptDir/../../..)
+rootDir=$(rel2abs $rootDir)
 
-# check that script/root relationship is as expected:
+# check that rootDir conatins expected files:
 if ! [ -f $rootDir/src/configure ]; then
     echo "Can't find package configure script. Expected location is '$rootDir/src/configure'" 2>&1
     exit 1
@@ -40,9 +46,12 @@ sudo docker build -t $tag $scriptDir/$builderImage
 
 dmount=/builder
 
-installScript=buildBinaryTarball.bash
+installScriptFilename=buildBinaryTarball.bash
+installScriptPath=$rootDir/$installScriptFilename
 
-cat << ENDE >| $installScript
+trap "{ rm -f $installScriptPath; }" EXIT
+
+cat << ENDE >| $installScriptPath
 set -o errexit
 set -o nounset
 
@@ -60,5 +69,6 @@ rm -rf $buildLabel
 chmod 777 $buildLabel.tar.bz2
 ENDE
 
-sudo docker run -v $rootDir:$dmount -t $tag bash $dmount/$installScript
+sudo docker run -v $rootDir:$dmount -t $tag bash $dmount/$installScriptFilename
+mv $rootDir/$buildLabel.tar.bz2 .
 
