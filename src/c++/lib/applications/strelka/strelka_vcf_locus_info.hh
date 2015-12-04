@@ -51,7 +51,6 @@ enum index_t
     IndelBCNoise,
     QSI_ref,
     Nonref,
-    TOR,
     SIZE
 };
 
@@ -80,8 +79,6 @@ get_label(const unsigned idx)
         return "QSI_ref";
     case LowQscore:
         return "LowQscore";
-    case TOR:
-        return "TOR";
     case Nonref:
         return "Nonref";
     default:

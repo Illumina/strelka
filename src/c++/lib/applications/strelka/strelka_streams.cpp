@@ -269,11 +269,6 @@ strelka_streams(
                     }
                     {
                         std::ostringstream oss;
-                        oss << "OF > AF in Tumor sample (i.e. more noise evidence than somatic evidence)";
-                        write_vcf_filter(fos, get_label(TOR), oss.str().c_str());
-                    }
-                    {
-                        std::ostringstream oss;
                         oss << "Normal type is not homozygous reference.";
                         write_vcf_filter(fos, get_label(Nonref), oss.str().c_str());
                     }
