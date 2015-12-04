@@ -165,7 +165,7 @@ calculateVQSRFeatures(
     const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::QSI_NT, rs.sindel_from_ntype_qphred);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::AOR, calculateAOR(siInfo.nisri[0], siInfo.tisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::AOR, calculateOD(siInfo.tisri[0]));
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::OD, calculateOD(siInfo.tisri[0]));
 
 //    double meanChrDepth = 1;
 //    auto cd = dopt.sfilter.chrom_depth.find(opt.bam_seq_name);
