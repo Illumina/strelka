@@ -103,11 +103,10 @@ struct STRELKA_INDEL_VQSR_FEATURES
     {
         QSI_NT,
         AOR,
-        N_DP,
-        T_DP,
-        T_RR,
+        OD,
+        ABS_T_RR,
         T_FS,
-        T_SOR,
+        ABS_T_SOR,
         SIZE
     };
 
@@ -121,16 +120,14 @@ struct STRELKA_INDEL_VQSR_FEATURES
                 return "QSI_NT";
             case AOR:
                 return "AOR";
-            case N_DP:
-                return "N_DP";
-            case T_DP:
-                return "T_DP";
-            case T_RR:
-                return "T_RR";
+            case OD:
+                return "OD";
+            case ABS_T_RR:
+                return "ABS_T_RR";
             case T_FS:
                 return "T_FS";
-            case T_SOR:
-                return "T_SOR";
+            case ABS_T_SOR:
+                return "ABS_T_SOR";
             default:
                 assert(false && "Unknown feature");
                 return nullptr;

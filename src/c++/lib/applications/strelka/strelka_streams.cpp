@@ -236,7 +236,7 @@ strelka_streams(
             fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
             fos << "##INFO=<ID=MQ0,Number=1,Type=Float,Description=\"Fraction of MAPQ == 0 reads covering this record\">\n";
             fos << "##INFO=<ID=AOR,Number=1,Type=Float,Description=\"AOR VQSR feature\">\n";
-            fos << "##INFO=<ID=N_DP_RATE,Number=1,Type=Float,Description=\"Normalized depth in normal sample\">\n";
+            fos << "##INFO=<ID=OD,Number=1,Type=Float,Description=\"OD VQSR feature\">\n";
             fos << "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">\n";
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";

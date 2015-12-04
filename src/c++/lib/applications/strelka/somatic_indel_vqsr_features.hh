@@ -88,6 +88,12 @@ calculateAOR(const starling_indel_sample_report_info & nisri,
 );
 
 /**
+ * Calculate OD feature (log ratio between T_AF and T_OF)
+ */
+double
+calculateOD(const starling_indel_sample_report_info & tisri);
+
+/**
  * Calculate VQSR features and add to smod
  */
 void

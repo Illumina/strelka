@@ -206,6 +206,7 @@ writeSomaticIndelVcfGrid(
         const StreamScoper ss(os);
         os << std::fixed << std::setprecision(4);
         os << ";AOR=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::AOR)
+           << ";OD=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::OD)
                 ;
     }
     if (siInfo.iri.is_repeat_unit())
