@@ -21,9 +21,16 @@ find_cxx_source() {
     find $base_dir -type f \
         -name "*.cpp" -or \
         -name "*.hpp" -or \
-        -name "*.hh" -or \
+        -name "*.hh"
+}
+
+
+find_cconfig_source() {
+    base_dir=$1
+    find $base_dir -type f \
         -name "*.h" -or \
-        -name "*.h.in"
+        -name "*.h.in" |\
+    grep -v "compat_unistd.h"
 }
 
 
@@ -81,7 +88,7 @@ python_scratch_dir=$project_base_dir/scratch/error_fitting
 cmake_base_dir=$project_base_dir/src
 shell_base_dir=$project_base_dir/src
 
-for file in $(find_cxx_source $cxx_base_dir); do
+for file in $(find_cxx_source $cxx_base_dir) $(find_cconfig_source $cxx_base_dir); do
     reheader_file "python $thisdir/reheader_cxx_file.py" $file
 done
 
@@ -91,7 +98,8 @@ get_script_files() {
     echo $(find_python_source $python_base_dir) \
         $(find_python_source $python_scratch_dir) \
         $(find_cmake_source $cmake_base_dir) \
-        $(find_shell_source $shell_base_dir)
+        $(find_shell_source $shell_base_dir) \
+
 }
 
 for file in $(get_script_files); do
