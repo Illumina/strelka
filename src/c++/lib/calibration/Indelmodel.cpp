@@ -64,8 +64,8 @@ generate_new_indel_error_model()
         const double delete_g(delete_A/ (1 + std::exp((delete_B-hpol_len)/delete_C))+delete_D);
         delete_error_prob=(1.-std::exp(-delete_g/hpol_len));
 
-        std::pair<double,double> pair(insert_error_prob,delete_error_prob);
-        res.add_prop(0,hpol_len-1,pair);
+        indel_error_rates error_rates(insert_error_prob,delete_error_prob);
+        res.add_prop(0,hpol_len-1,error_rates);
     }
     return res;
 }
@@ -98,13 +98,11 @@ generate_old_indel_error_model()
         }
         delete_error_prob=(1.-std::exp(-delete_g));
 
-        std::pair<double,double> pair(insert_error_prob,delete_error_prob);
-        res.add_prop(0,hpol_len-1,pair);
+        indel_error_rates error_rates(insert_error_prob,delete_error_prob);
+        res.add_prop(0,hpol_len-1,error_rates);
     }
     return res;
 }
-
-
 
 IndelErrorModel::IndelErrorModel()
 {
@@ -132,14 +130,14 @@ void IndelErrorModel::Deserialize(const Json::Value& root)
     for ( unit = 0; unit < jmodels.size(); ++unit)
         for ( tract = 0; tract < jmodels[unit].size(); ++tract)
         {
-            std::pair<double,double> pair(jmodels[unit][tract][1].asDouble(),jmodels[unit][tract][0].asDouble());
+            indel_error_rates error_rates(jmodels[unit][tract][1].asDouble(),jmodels[unit][tract][0].asDouble());
             // assert((unit == 0 || ((tract + 1) < (2 * (unit + 1)) && pair.first == 0 && pair.second == 0) ||
             // 	((tract + 1) >= (2 * (unit + 1)))) &&
             // 	"Nonzero error probability for tract length below twice repeat unit size");
-            this->add_prop(unit,tract,pair);
+            this->add_prop(unit,tract,error_rates);
         }
 
-    //Make sure the model is self-consistent -- contains the data
+    // Make sure the model is self-consistent -- contains the data
     // specified in Max{Motif,Tract}
     assert(unit==this->MaxMotifLength && "Unexpected motif length in indel model");
     assert(tract>=this->MaxTractLength && "Unexpected tract length in indel model");
@@ -180,8 +178,8 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
     {
         // breakpoints and swaps -- // use zero repeat error for now.
         // TODO - provide estimates for complex indels NOTE: likely never utilized
-        double baseline_ins_prob(this->model[0][0].first);
-        double baseline_del_prob(this->model[0][0].second);
+        double baseline_ins_prob(this->model[0][0].insert_rate);
+        double baseline_del_prob(this->model[0][0].delete_rate);
 
         indel_error_prob=std::max(baseline_ins_prob,baseline_del_prob);
         ref_error_prob=indel_error_prob;
@@ -197,23 +195,23 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
     {
         if (iri.it == INDEL::INSERT)
         {
-            indel_error_prob=std::max(model[0][0].first,
-                                      std::pow(model[repeat_unit - 1][ref_query_len - 1].first,indel_size));
+            indel_error_prob=std::max(model[0][0].insert_rate,
+                                      std::pow(model[repeat_unit - 1][ref_query_len - 1].insert_rate,indel_size));
 
             // Reverse prob that true allele has been masked as reference by chance,
             // may want to leave this term for now.
             ref_error_prob=client_opt.indel_ref_error_factor
-                           * std::max(model[0][0].second,
-                                      std::pow(model[repeat_unit - 1][indel_query_len - 1].second,indel_size));
+                           * std::max(model[0][0].delete_rate,
+                                      std::pow(model[repeat_unit - 1][indel_query_len - 1].delete_rate,indel_size));
         }
         else if (iri.it == INDEL::DELETE)
         {
-            indel_error_prob=std::max(model[0][0].second,
-                                      std::pow(model[repeat_unit - 1][ref_query_len - 1].second,indel_size));
+            indel_error_prob=std::max(model[0][0].delete_rate,
+                                      std::pow(model[repeat_unit - 1][ref_query_len - 1].delete_rate,indel_size));
 
             ref_error_prob=client_opt.indel_ref_error_factor
-                           * std::max(model[0][0].first,
-                                      std::pow(model[repeat_unit - 1][indel_query_len - 1].first,indel_size));
+                           * std::max(model[0][0].insert_rate,
+                                      std::pow(model[repeat_unit - 1][indel_query_len - 1].insert_rate,indel_size));
         }
         else
         {
@@ -231,13 +229,13 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
             // current model is too aggressive for hpol length 1, which will be fixed in
             // the model calculation in the very near future.  For now, use error prob
             // from the previous model
-            indel_error_prob = model[0][0].first;
-            ref_error_prob   = model[0][0].second;
+            indel_error_prob = model[0][0].insert_rate;
+            ref_error_prob   = model[0][0].delete_rate;
         }
         else if (iri.it == INDEL::DELETE)
         {
-            indel_error_prob = model[0][0].second;
-            ref_error_prob   = model[0][0].first;
+            indel_error_prob = model[0][0].delete_rate;
+            ref_error_prob   = model[0][0].insert_rate;
         }
     }
     // else
@@ -245,6 +243,41 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
     //     log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
     //     throw blt_exception("Unknown indel type.");
     // }
+}
+
+void IndelErrorModel::calc_abstract_prop(unsigned repeat_unit_length,
+                                unsigned tract_length,
+                                unsigned indel_size,
+                                indel_error_rates& error_rates,
+                                bool use_length_dependence) const
+{
+    // determine the tract length to use
+    static const unsigned one(1);
+    const unsigned repeat_unit = std::min(std::max(repeat_unit_length,one), this->MaxMotifLength);
+    
+    unsigned min_tract_length = get_min_tract_length(repeat_unit);
+    if (repeat_unit == 1)
+    {
+        min_tract_length = 1;
+    }
+
+    // if tract length is too short for repeat unit, set to shortest indel error rate for
+    // that repeat unit length
+    const unsigned adj_tract_length = std::min(repeat_unit*std::max(tract_length,min_tract_length),
+                                               this->MaxTractLength);
+
+    double adj_indel_size = one;
+    if (use_length_dependence)
+    {
+        adj_indel_size = indel_size;
+    }
+
+
+    error_rates = model[repeat_unit - 1][adj_tract_length - 1];
+    error_rates.insert_rate = std::max(model[0][0].insert_rate,
+                                  std::pow(error_rates.insert_rate, adj_indel_size));
+    error_rates.delete_rate = std::max(model[0][0].delete_rate,
+                                       std::pow(error_rates.delete_rate, adj_indel_size));
 }
 
 bool IndelErrorModel::is_simple_tandem_repeat(const starling_indel_report_info& iri) const
@@ -262,7 +295,7 @@ bool IndelErrorModel::is_simple_tandem_repeat(const starling_indel_report_info& 
     return false;
 }
 
-void IndelErrorModel::add_prop(const unsigned& unit, const unsigned& tract, const std::pair<double,double>& myProps)
+void IndelErrorModel::add_prop(const unsigned& unit, const unsigned& tract, const indel_error_rates& myProps)
 {
     this->model[unit][tract] = myProps;
 }

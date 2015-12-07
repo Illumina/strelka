@@ -294,6 +294,31 @@ is_candidate_indel_impl(
 }
 
 
+// set up a vector of vectors where the minimum number of alt reads needed for an indel in
+// the hpol length 1 category to exceed the p-value threshold specified in _opt can be found
+// at _min_hpol_one_cov[cov - 1][indel_size - 1]
+void
+indel_synchronizer::
+precalc_max_hpol_one_cov(
+        unsigned max_cov,
+        unsigned max_indel_size)
+{
+    unsigned current_max_cov   = _min_hpol_one_cov.size();
+    unsigned current_max_indel = (_min_hpol_one_cov.empty() ? 0 : _min_hpol_one_cov[0].size());
+    _min_hpol_one_cov.resize(max_cov);
+
+    for(unsigned i = current_max_cov; i <= max_cov; ++i)
+    {
+        _min_hpol_one_cov[i].resize(max_indel_size);
+        for(unsigned j = current_max_indel; j < max_indel_size; ++j)
+        {
+            // error_rate = calc_prop();
+            // _min_hpol_one_cov[i] = min_count_binomial_gte_n_success_exact(_opt.tumor_min_hpol_pval, ref_error_prob,
+            //                                                                       n_indel_reads, n_total_reads);            
+        }
+    }
+}
+
 void
 indel_synchronizer::
 find_data_exception(const indel_key& ik) const

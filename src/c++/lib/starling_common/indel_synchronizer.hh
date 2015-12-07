@@ -24,6 +24,8 @@
 
 #pragma once
 
+# include <vector>
+
 #include "blt_util/id_map.hh"
 #include "starling_common/depth_buffer.hh"
 #include "starling_common/indel_buffer.hh"
@@ -104,6 +106,7 @@ struct indel_synchronizer
         , _sample_order(0)
     {
         _isd.register_sample(ib,db,db2,init_sample_opt, max_candidate_depth,_sample_no);
+        precalc_max_hpol_one_cov(500,10);
     }
 
     /// instantiate for multi-sample synced cases:
@@ -119,7 +122,10 @@ struct indel_synchronizer
         , _ref(ref)
         , _isd(isd)
         , _sample_no(sample_no)
-        , _sample_order(_isd._idata.get_id(sample_no)) {}
+        , _sample_order(_isd._idata.get_id(sample_no)) 
+    {
+        precalc_max_hpol_one_cov(500, 10);
+    }
 
     indel_buffer&
     ibuff()
@@ -188,6 +194,13 @@ private:
         const indel_key& ik,
         const indel_data& id) const;
 
+    // Pre-calculate minimum indel coverage thresholds for a large range of total coverage
+    // to avoid repeated calls to Boost in indel candidacy
+    void 
+    precalc_max_hpol_one_cov(
+        unsigned max_cov,
+        unsigned max_indel_size);
+
     indel_buffer&
     ibuff(const unsigned s)
     {
@@ -242,6 +255,8 @@ private:
     const reference_contig_segment& _ref;
 
     indel_sync_data _isd;
+
+    std::vector<std::vector<unsigned>> _min_hpol_one_cov;
 
     // this is the "external" id of the primary sample, it can be
     // considered as a map key
