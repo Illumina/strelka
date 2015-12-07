@@ -109,10 +109,7 @@ denovo_snv_call_vcf(
     os << '\t' << probandCpi.rawPileup().get_ref_base()
        //ALT:
        << "\t"
-	   << "N";
-
-//    DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
-//                                  dsc.ref_gt,os);
+	   << dsc.alt_str;
     //QUAL:
     os << "\t.";
 
@@ -145,7 +142,7 @@ denovo_snv_call_vcf(
 
     //FORMAT:
     os << '\t'
-       << "GT:GQ:GQX:DP:FDP:AD:PL"; //:AD:PL
+       << "GT:GQ:GQX:DP:FDP:AD:PL";
 
     for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
     {

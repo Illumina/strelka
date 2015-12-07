@@ -155,10 +155,10 @@ process_pos_snp_denovo(const pos_t pos)
     if (dsc.is_output())
     {
 
-    	std::ostream& bos(*_streams.denovo_osptr());
+//    	std::ostream& bos(*_streams.denovo_osptr());
 
     	//For debugging write to std::out
-//    	std::ostream& bos(std::cout);
+    	std::ostream& bos(std::cout);
 
         bos << _chrom_name << '\t'
             << output_pos << '\t'
@@ -173,8 +173,6 @@ process_pos_snp_denovo(const pos_t pos)
         bos << "\n";
     }
 }
-
-
 
 void
 pedicure_pos_processor::

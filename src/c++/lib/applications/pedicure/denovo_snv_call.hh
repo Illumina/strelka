@@ -21,7 +21,7 @@
 #include <cstdint>
 #include <array>
 #include <vector>
-#include "blt_util/log.hh"
+#include <map>
 
 struct denovo_snv_call
 {
@@ -60,6 +60,7 @@ struct denovo_snv_call
     	}
     }
 
+    void get_alt();
 
     unsigned ref_gt = 0;
     unsigned gt_sum = 0;
@@ -68,7 +69,10 @@ struct denovo_snv_call
     result_set rs;
     
     std::vector< std::array<float,3> > Sampleplhoods;
+    std::vector< std::array<uint8_t,2> > SampleGts;
     std::vector< unsigned > gts;
     std::vector< unsigned > gqx;
+    std::vector<uint8_t> alts;
+    std::string alt_str = ".";
 
 };

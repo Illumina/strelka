@@ -434,13 +434,17 @@ get_denovo_snv_call(
 
     dsc.rs=tier_rs[dsc.dsnv_tier];
 	
-	//goes through all samples, computes probability for hom-ref 0/0, het 0/1 or hom-alt 1/1
-	//writes to dsc object.
+	// Goes through all samples, computes probability for hom-ref 0/0, het 0/1 or hom-alt 1/1
+    // In addition consolidates all sample genotypes into a single allele framework
+	// Store final result in dsc object
 	for(unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex){
 		std::array<float,3> pProb;
 		static const double lnzero(-std::numeric_limits<double>::infinity());	//log(0)
         std::fill(pProb.begin(),pProb.end(),lnzero);
         
+
+        std::array<uint8_t,2> max_gt_alleles = {0,0};
+        unsigned max_gt(0);
 		const auto& lhood(sampleLhood[sampleIndex]);
 		for (unsigned gt(0); gt<DIGT::SIZE; ++gt)	
         {
@@ -450,11 +454,30 @@ get_denovo_snv_call(
 			}
 			uint8_t gt_val = ( dsc.ref_gt != alleles[0] ) + ( dsc.ref_gt != alleles[1] );	//number of bases equal to ref
 			pProb[gt_val] = log_sum(pProb[gt_val],lhood[gt]);	//add log likelihoods
+
+			if (lhood[gt]>=lhood[max_gt]){
+				max_gt_alleles = alleles;
+				max_gt = gt;
+			}
 		}
-		unsigned max_gt;
+
 		normalize_ln_distro(pProb.begin(),pProb.end(),max_gt);
-        
-		for(int p(0); p<3; ++p){ pProb[p] = error_prob_to_qphred(pProb[p]); }
+
+		unsigned current_min = 0;
+		unsigned sum = 0;
+		for(int p(0); p<3; ++p){
+			pProb[p] = error_prob_to_qphred(pProb[p]);
+			if (pProb[p]<pProb[current_min])
+				current_min = p;
+			sum += pProb[p];
+
+		}
+		dsc.gts.push_back(current_min);
+		dsc.gqx.push_back(sum);
+		dsc.gt_sum += current_min;
+
+		dsc.SampleGts.push_back(max_gt_alleles);
 		dsc.Sampleplhoods.push_back(pProb);
 	}
+	dsc.get_alt();
 }
