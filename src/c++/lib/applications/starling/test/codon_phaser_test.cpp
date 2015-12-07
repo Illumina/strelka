@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 #include "boost/test/unit_test.hpp"
 #include "boost/algorithm/string.hpp"
@@ -52,15 +59,16 @@ class dummy_variant_sink : public variant_pipe_stage_base
 {
 public:
     dummy_variant_sink() : variant_pipe_stage_base() {}
-    std::vector<site_info> the_sites;
-    std::vector<indel_info> the_indels;
-    void process(site_info& si) override
+    std::vector<std::unique_ptr<digt_site_info>> the_sites;
+    std::vector<std::unique_ptr<indel_info>> the_indels;
+    void process(std::unique_ptr<site_info> site) override
     {
-        if (si.is_het() || si.is_hetalt() ) the_sites.push_back(si);
+        auto si(downcast<digt_site_info>(std::move(site)));
+        if (si->is_het() || si->is_hetalt() ) the_sites.push_back(std::move(si));
     }
-    void process(indel_info& ii) override
+    void process(std::unique_ptr<indel_info> ii) override
     {
-        the_indels.push_back(ii);
+        the_indels.push_back(std::move(ii));
     }
 };
 
@@ -86,24 +94,25 @@ BOOST_AUTO_TEST_CASE( simple_3mer )
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
-    dummy_variant_sink sink;
-    Codon_phaser phaser(opt, bc_buff, rcs, sink);
+    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
+    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    dummy_variant_sink& sink(*next);
+
 
     for (int i = 0; r1[i]; i++)
     {
-        site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
-        si.smod.is_covered = si.smod.is_used_covered = true;
-        si.dgt.ref_gt = base_to_id(si.ref);
+        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->dgt.ref_gt = base_to_id(si->ref);
 
-        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
-        phaser.process(si);
+        phaser.process(std::move(si));
     }
     phaser.flush();
-    BOOST_CHECK_EQUAL("GCT", sink.the_sites.front().phased_alt);
+    BOOST_CHECK_EQUAL("GCT", sink.the_sites.front()->phased_alt);
 
 }
 
@@ -127,25 +136,26 @@ BOOST_AUTO_TEST_CASE( two_adjacent_3mers )
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
-    dummy_variant_sink sink;
-    Codon_phaser phaser(opt, bc_buff, rcs, sink);
+    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
+    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    dummy_variant_sink& sink(*next);
+
 
 
     for (int i = 0; r1[i]; i++)
     {
-        site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
-        si.smod.is_covered = si.smod.is_used_covered = true;
-        si.dgt.ref_gt = base_to_id(si.ref);
+        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->dgt.ref_gt = base_to_id(si->ref);
 
-        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
-        phaser.process(si);
+        phaser.process(std::move(si));
     }
     phaser.flush();
-    BOOST_CHECK_EQUAL("GCTTGCT", sink.the_sites.front().phased_alt);
+    BOOST_CHECK_EQUAL("GCTTGCT", sink.the_sites.front()->phased_alt);
 }
 
 BOOST_AUTO_TEST_CASE( handles_snps_at_start )
@@ -168,24 +178,24 @@ BOOST_AUTO_TEST_CASE( handles_snps_at_start )
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
-    dummy_variant_sink sink;
-    Codon_phaser phaser(opt, bc_buff, rcs, sink);
+    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
+    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    dummy_variant_sink& sink(*next);
 
     for (int i = 0; r1[i]; i++)
     {
-        site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
-        si.smod.is_covered = si.smod.is_used_covered = true;
-        si.dgt.ref_gt = base_to_id(si.ref);
+        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->dgt.ref_gt = base_to_id(si->ref);
 
-        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
-        phaser.process(si);
+        phaser.process(std::move(si));
     }
     phaser.flush();
-    BOOST_CHECK_EQUAL("GG", sink.the_sites.front().phased_alt);
+    BOOST_CHECK_EQUAL("GG", sink.the_sites.front()->phased_alt);
 }
 
 
@@ -209,24 +219,25 @@ BOOST_AUTO_TEST_CASE( respects_phasing_window )
     opt.phasing_window = 5;
     opt.do_codon_phasing = true;
 
-    dummy_variant_sink sink;
-    Codon_phaser phaser(opt, bc_buff, rcs, sink);
+    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
+    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    dummy_variant_sink& sink(*next);
+
 
     for (int i = 0; r1[i]; i++)
     {
-        site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
-        si.smod.is_covered = si.smod.is_used_covered = true;
-        si.dgt.ref_gt = base_to_id(si.ref);
+        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->dgt.ref_gt = base_to_id(si->ref);
 
-        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
-        phaser.process(si);
+        phaser.process(std::move(si));
     }
     phaser.flush();
-    BOOST_CHECK_EQUAL ("AGAACGGAG", sink.the_sites.front().phased_alt);
+    BOOST_CHECK_EQUAL ("AGAACGGAG", sink.the_sites.front()->phased_alt);
 }
 
 BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps)
@@ -249,25 +260,25 @@ BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps)
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
-    dummy_variant_sink sink;
-    Codon_phaser phaser(opt, bc_buff, rcs, sink);
+    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
+    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    dummy_variant_sink& sink(*next);
 
 
     for (int i = 0; r1[i]; i++)
     {
-        site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
-        si.smod.is_covered = si.smod.is_used_covered = true;
-        si.dgt.ref_gt = base_to_id(si.ref);
+        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->dgt.ref_gt = base_to_id(si->ref);
 
-        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
-        phaser.process(si);
+        phaser.process(std::move(si));
     }
     phaser.flush();
-    BOOST_CHECK_EQUAL("ATG,CTC", sink.the_sites.front().phased_alt);
+    BOOST_CHECK_EQUAL("ATG,CTC", sink.the_sites.front()->phased_alt);
 }
 
 BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps_different_size)
@@ -290,24 +301,24 @@ BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps_different_size)
     opt.phasing_window = 5;
     opt.do_codon_phasing = true;
 
-    dummy_variant_sink sink;
-    Codon_phaser phaser(opt, bc_buff, rcs, sink);
+    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
+    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    dummy_variant_sink& sink(*next);
 
     for (int i = 0; r1[i]; i++)
     {
-        site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
-        si.smod.is_covered = si.smod.is_used_covered = true;
-        si.dgt.ref_gt = base_to_id(si.ref);
+        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->dgt.ref_gt = base_to_id(si->ref);
 
-        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
-        phaser.process(si);
+        phaser.process(std::move(si));
     }
     phaser.flush();
-    BOOST_CHECK_EQUAL("ATCC,GAAA", sink.the_sites.front().phased_alt);
+    BOOST_CHECK_EQUAL("ATCC,GAAA", sink.the_sites.front()->phased_alt);
 }
 
 
@@ -332,28 +343,29 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
-    dummy_variant_sink sink;
-    Codon_phaser phaser(opt, bc_buff, rcs, sink);
+    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
+    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    dummy_variant_sink& sink(*next);
+
 
     for (int i = 0; r1[i]; i++)
     {
-        site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
-        si.smod.is_covered = si.smod.is_used_covered = true;
-        si.smod.gq = si.dgt.genome.snp_qphred = si.smod.Qscore = 40;
-        si.dgt.ref_gt = base_to_id(si.ref);
+        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.Qscore = 40;
+        si->dgt.ref_gt = base_to_id(si->ref);
 
-        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
-        phaser.process(si);
+        phaser.process(std::move(si));
     }
     phaser.flush();
-    for (auto phased_variant : sink.the_sites)
+    for (auto& phased_variant : sink.the_sites)
     {
-        BOOST_CHECK(!phased_variant.smod.filters.any());
-        BOOST_CHECK(!phased_variant.smod.is_phased_region);
+        BOOST_CHECK(!phased_variant->smod.filters.any());
+        BOOST_CHECK(!phased_variant->smod.is_phased_region);
     }
     BOOST_CHECK_EQUAL(sink.the_sites.size(), 1);
 }
@@ -389,29 +401,29 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
-    dummy_variant_sink sink;
-    Codon_phaser phaser(opt, bc_buff, rcs, sink);
+    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
+    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    dummy_variant_sink& sink(*next);
 
 
     for (int i = 0; r1[i]; i++)
     {
-        site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
-        si.smod.is_covered = si.smod.is_used_covered = true;
-        si.smod.gq = si.dgt.genome.snp_qphred = si.smod.Qscore = 40;
-        si.dgt.ref_gt = base_to_id(si.ref);
+        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.Qscore = 40;
+        si->dgt.ref_gt = base_to_id(si->ref);
 
-        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
-        phaser.process(si);
+        phaser.process(std::move(si));
     }
     phaser.flush();
-    for (site_info& site : sink.the_sites)
+    for (auto& site : sink.the_sites)
     {
-        BOOST_CHECK(! site.is_het() || site.smod.filters.test(VCF_FILTERS::PhasingConflict));
-        BOOST_CHECK(!site.smod.is_phased_region);
+        BOOST_CHECK(! site->is_het() || site->smod.filters.test(VCF_FILTERS::PhasingConflict));
+        BOOST_CHECK(!site->smod.is_phased_region);
     }
 }
 
@@ -435,26 +447,27 @@ BOOST_AUTO_TEST_CASE( low_depth_doesnt_phase )
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
-    dummy_variant_sink sink;
-    Codon_phaser phaser(opt, bc_buff, rcs, sink);
+    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
+    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    dummy_variant_sink& sink(*next);
+
 
     for (int i = 0; r1[i]; i++)
     {
-        site_info si;
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        si.init(read_pos + i, rcs.get_base(read_pos + i), spi, 30);
-        si.smod.is_covered = si.smod.is_used_covered = true;
-        si.dgt.ref_gt = base_to_id(si.ref);
+        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->dgt.ref_gt = base_to_id(si->ref);
 
-        si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si.dgt.is_snp = si.ref != r1[i] || si.ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
-        phaser.process(si);
+        phaser.process(std::move(si));
     }
     phaser.flush();
     BOOST_CHECK_EQUAL(2, sink.the_sites.size());
-    BOOST_CHECK(sink.the_sites.front().smod.is_phasing_insufficient_depth);
-    BOOST_CHECK(sink.the_sites.back().smod.is_phasing_insufficient_depth);
+    BOOST_CHECK(sink.the_sites.front()->smod.is_phasing_insufficient_depth);
+    BOOST_CHECK(sink.the_sites.back()->smod.is_phasing_insufficient_depth);
 
 }
 
@@ -491,16 +504,15 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     opt.user_genome_size = rcs.seq().size();
     opt.bam_seq_name = "dummy";
 
-    site_info si;
     const snp_pos_info& spi(bc_buff.get_pos(snp_pos));
-    si.init(snp_pos, rcs.get_base(snp_pos), spi, 30);
-    si.smod.is_covered = si.smod.is_used_covered = true;
-    si.dgt.ref_gt = base_to_id(si.ref);
+    std::unique_ptr<digt_site_info> si(new digt_site_info(snp_pos, rcs.get_base(snp_pos), spi, 30));
+    si->smod.is_covered = si->smod.is_used_covered = true;
+    si->dgt.ref_gt = base_to_id(si->ref);
 
-    si.smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));
-    si.dgt.is_snp = true;
+    si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));
+    si->dgt.is_snp = true;
 
-    si.smod.is_phasing_insufficient_depth = true;
+    si->smod.is_phasing_insufficient_depth = true;
 
     // now make sure it is rendered with the Unphased info field
 
@@ -517,7 +529,7 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
 
 
     gvcf_writer writer(opt, dopt, rcs, regions, &os, cm);
-    writer.process(si);
+    writer.process(std::move(si));
 
     std::string x = os.str();
     BOOST_CHECK(x.length() > 0);

@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 ################################################################################
@@ -45,19 +52,8 @@ TARBALL_COMPRESSION=j
 SOURCE_DIR=${BUILD_DIR}/cmake-$TARBALL_VERSION
 CMAKE_DIR=cmake-$CMAKE_MAJOR.$CMAKE_MINOR
 
-common_options $@
-
-if [[ $CLEAN ]] ; then
-    ilog "removing $SOURCE_DIR"
-    rm -rf $SOURCE_DIR
-    rm -rf ${INSTALL_DIR}/{doc,share}/$CMAKE_DIR
-    rm -f ${BIN_DIR}/{ccmake,cmake,cpack,ctest}
-    rm -f ${INSTALL_DIR}/man/man1/{ccmake,cmake,cmakecommands,cmakecompat,cmakemodules,cmakeprops,cmakevars,cpack,ctest}.1
-    exit 0
-fi
-
 AVAILABLE_CMAKE_VERSION=`cmake --version 2> /dev/null`
-if [[ "${AVAILABLE_CMAKE_VERSION}" =~ ^cmake\ version\ ([0-9]+)\.([0-9]+)\.([0-9]+) && ! $FORCE ]] ; then
+if [[ "${AVAILABLE_CMAKE_VERSION}" =~ ^cmake\ version\ ([0-9]+)\.([0-9]+)\.([0-9]+) ]] ; then
     MAJOR=${BASH_REMATCH[1]}
     MINOR=${BASH_REMATCH[2]}
     PATCH=${BASH_REMATCH[3]}
@@ -69,7 +65,7 @@ if [[ "${AVAILABLE_CMAKE_VERSION}" =~ ^cmake\ version\ ([0-9]+)\.([0-9]+)\.([0-9
 fi
 
 OLD_CMAKE_VERSION=`${BIN_DIR}/cmake --version 2> /dev/null`;
-if [[ $OLD_CMAKE_VERSION == "cmake version $TARBALL_VERSION" && ! $FORCE ]] ; then
+if [[ $OLD_CMAKE_VERSION == "cmake version $TARBALL_VERSION" ]] ; then
     ilog "cmake version \"$TARBALL_VERSION\" is already installed at ${BIN_DIR}/cmake"
     echo "${BIN_DIR}/cmake"
     exit 0

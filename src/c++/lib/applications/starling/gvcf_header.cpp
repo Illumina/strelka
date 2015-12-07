@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -95,7 +102,8 @@ add_gvcf_filters(
     }
 
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
-    if (sopt.do_codon_phasing)
+    if (sopt.do_codon_phasing ||
+        (opt.include_headers.end() != std::find(opt.include_headers.begin(), opt.include_headers.end(), "Phasing")))
     {
         std::ostringstream oss;
         oss << "Locus read evidence displays unbalanced phasing patterns";
@@ -178,8 +186,11 @@ finish_gvcf_header(const starling_options& opt,
 //        os << "##INFO=<ID=Qscore,Number=1,Type=Integer,Description=\"Calibrated quality score indicating expected empirical FP-rate for variant site.\">\n";
 
     // Unphased, flag if a site that is within a phasing window hasn't been phased
-    if (opt.do_codon_phasing)
+    if (opt.do_codon_phasing ||
+        opt.gvcf.include_headers.end() != std::find(opt.gvcf.include_headers.begin(), opt.gvcf.include_headers.end(), "Phasing"))
+    {
         os << "##INFO=<ID=Unphased,Number=0,Type=Flag,Description=\"Indicates a record that is within the specified phasing window of another variant but could not be phased due to lack of minimum read support.\">\n";
+    }
 
     //FORMAT:
     os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
@@ -190,8 +201,16 @@ finish_gvcf_header(const starling_options& opt,
     os << "##FORMAT=<ID=DPF,Number=1,Type=Integer,Description=\"Basecalls filtered from input prior to site genotyping\">\n";
 
     os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob 0.999 or higher that read contains indicated allele vs all other intersecting indel alleles)\">\n";
+    if (!opt.is_ploidy_prior ||
+        opt.gvcf.include_headers.end() != std::find(opt.gvcf.include_headers.begin(), opt.gvcf.include_headers.end(), "VF"))
+    {
+        os << "##FORMAT=<ID=VF,Number=1,Type=Float,Description=\"Variant frequency\">\n";
+    }
+
 
     os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Read depth associated with indel, taken from the site preceding the indel.\">\n";
+    os << "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification.\">\n";
+
 
     // FILTER:
 

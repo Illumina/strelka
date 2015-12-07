@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -29,6 +36,9 @@
 #include <iostream>
 #include <iomanip>
 
+
+
+const int diploid_genotype::maxQ = 999;
 
 
 const blt_float_t one_third(1./3.);
@@ -463,6 +473,7 @@ position_snp_call_pprob_digt(
     const blt_options& opt,
     const extended_pos_info& epi,
     diploid_genotype& dgt,
+    double& strand_bias,
     const bool is_always_test) const
 {
     const snp_pos_info& pi(epi.pi);
@@ -483,6 +494,22 @@ position_snp_call_pprob_digt(
     // get likelihood of each genotype
     blt_float_t lhood[DIGT::SIZE];
     get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood);
+
+    // set phredLoghood:
+    {
+        unsigned gtcount(DIGT::SIZE);
+        if (dgt.is_haploid()) gtcount=N_BASE;
+        unsigned maxIndex(0);
+        for (unsigned gt(1); gt<gtcount; ++gt)
+        {
+            if (lhood[gt] > lhood[maxIndex]) maxIndex = gt;
+        }
+        for (unsigned gt(0); gt<gtcount; ++gt)
+        {
+            dgt.phredLoghood[gt] = std::min(dgt.maxQ,ln_error_prob_to_qphred(lhood[gt]-lhood[maxIndex]));
+        }
+    }
+
 
     // get genomic site results:
     calculate_result_set(lhood,lnprior_genomic(dgt.ref_gt,dgt.is_haploid()),dgt.ref_gt,dgt.genome);
@@ -505,7 +532,11 @@ position_snp_call_pprob_digt(
         // for consistency, even though this makes the SB value
         // useless:
         const unsigned tgt(dgt.genome.max_gt);
-        dgt.sb=std::max(lhood_fwd[tgt],lhood_rev[tgt])-lhood[tgt];
+        strand_bias=std::max(lhood_fwd[tgt],lhood_rev[tgt])-lhood[tgt];
+    }
+    else
+    {
+        strand_bias = 0;
     }
 }
 

@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *
@@ -31,21 +38,22 @@
 #endif
 
 
-void Codon_phaser::process(site_info& si)
+void Codon_phaser::process(std::unique_ptr<site_info> site)
 {
+    std::unique_ptr<digt_site_info> si(downcast<digt_site_info>(std::move(site)));
     if (opt.do_codon_phasing && (is_phasable_site(si) || is_in_block()))
     {
-        auto emptyBuffer = add_site(si);
+        auto emptyBuffer = add_site(std::move(si));
         if ((!is_in_block()) || emptyBuffer)
         {
             output_buffer();
         }
         return;
     }
-    _sink->process(si);
+    _sink->process(std::move(si));
 }
 
-void Codon_phaser::flush()
+void Codon_phaser::flush_impl()
 {
     if (opt.do_codon_phasing)
     {
@@ -55,11 +63,10 @@ void Codon_phaser::flush()
         }
         output_buffer();
     }
-    _sink->flush();
 }
 
 // the Codon phaser can't work across indels, so flush any in-progress phasing
-void Codon_phaser::process(indel_info& ii)
+void Codon_phaser::process(std::unique_ptr<indel_info> ii)
 {
     if (opt.do_codon_phasing && is_in_block())
     {
@@ -69,14 +76,14 @@ void Codon_phaser::process(indel_info& ii)
         }
         output_buffer();
     }
-    _sink->process(ii);
+    _sink->process(std::move(ii));
 }
 
 void Codon_phaser::output_buffer()
 {
-    for (site_info& si : _buffer)
+    for (auto& si : _buffer)
     {
-        _sink->process(si);
+        _sink->process(std::move(si));
     }
     clear();
 }
@@ -84,11 +91,10 @@ void Codon_phaser::output_buffer()
 
 // Add a SNP site to the phasing buffer
 bool
-Codon_phaser::add_site(const site_info& si)
+Codon_phaser::add_site(std::unique_ptr<digt_site_info> si)
 {
-    _buffer.push_back(si);
 #ifdef DEBUG_CODON
-    log_os << __FUNCTION__ << ": input si " << si << "\n";
+    log_os << __FUNCTION__ << ": input si " << *si << "\n";
 #endif
 
     // case: extending block with het call, update block_end position
@@ -96,7 +102,7 @@ Codon_phaser::add_site(const site_info& si)
     {
         if (! is_in_block())
         {
-            block_start = si.pos;
+            block_start = si->pos;
 #ifdef DEBUG_CODON
             log_os << __FUNCTION__ << ": phasable & starting block @ " << block_start << "\n";
 #endif
@@ -104,31 +110,38 @@ Codon_phaser::add_site(const site_info& si)
 #ifdef DEBUG_CODON
         else
         {
-            log_os << __FUNCTION__ << ": phasable & continuing block to " << si.pos << "\n";
+            log_os << __FUNCTION__ << ": phasable & continuing block to " << si->pos << "\n";
         }
 #endif
-        block_end = si.pos;
+        block_end = si->pos;
         het_count++;
+        _buffer.push_back(std::move(si));
         return false;
     }
 
     //case: we get a record that is explicitly set a unphaseable
-    if (si.Unphasable)
+    if (si->Unphasable)
     {
 #ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << ": I shouldn't phase this record " << si << "\n";
+        log_os << __FUNCTION__ << ": I shouldn't phase this record " << *si << "\n";
 #endif
+        _buffer.push_back(std::move(si));
+
         return true;
     }
 
     // case: extending block with none-het call based on the phasing range
-    if (is_in_block() && (si.pos-block_end+1)<this->opt.phasing_window)
+    if (is_in_block() && (si->pos-block_end+1)<this->opt.phasing_window)
     {
 #ifdef DEBUG_CODON
-        log_os << __FUNCTION__ << ": notphasable & continuing block to " << si.pos << "\n";
+        log_os << __FUNCTION__ << ": notphasable & continuing block to " << si->pos << "\n";
 #endif
+        _buffer.push_back(std::move(si));
+
         return false;
     }
+    _buffer.push_back(std::move(si));
+
 
     // case: setup the phased record and write out
     if (het_count>1)
@@ -146,8 +159,8 @@ void
 Codon_phaser::construct_reference()
 {
     reference = "";
-    auto start = _buffer.begin()->pos;
-    auto end = _buffer.rbegin()->pos;
+    auto start = _buffer.front()->pos;
+    auto end = _buffer.back()->pos;
     auto len = std::min(get_block_length(), (unsigned)(end-start+1));
 
     ref.get_substring(start, len, reference);
@@ -155,6 +168,21 @@ Codon_phaser::construct_reference()
 #ifdef DEBUG_CODON
     log_os << __FUNCTION__ << ": reference " << reference << "\n";
 #endif
+}
+
+static bool is_genotype_represented(int genotype, unsigned offset, const std::string& allele1, const std::string& allele2)
+{
+    const char* gt = DIGT::label(genotype);
+    for (int i = 0; i < 2; i++)
+    {
+        char base = gt[i];
+        if ( (allele1.length() <= offset || allele1[offset] != base) &&
+             (allele2.length() <= offset || allele2[offset] != base))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 void
@@ -169,10 +197,10 @@ create_phased_record()
     {
         // some initial minimum conditions, look for at least 10 spanning reads support
         // set flag on records saying too little evidence to phase
-        for (site_info& si : _buffer)
+        for (auto& si : _buffer)
         {
-            if (si.is_het())
-                si.smod.is_phasing_insufficient_depth = true;
+            if (si->is_het())
+                si->smod.is_phasing_insufficient_depth = true;
         }
         return;
     }
@@ -197,7 +225,7 @@ create_phased_record()
     typedef std::pair<std::string, int> allele_count_t;
     //static constexpr unsigned alleleCount(2);
     std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
-    for (auto& obs : observations)
+    for (const auto& obs : observations)
     {
 #ifdef DEBUG_CODON
         log_os << "obs:" << obs.first << "(" << obs.second << ")" << std::endl;;
@@ -257,7 +285,6 @@ create_phased_record()
 
         if (! phasing_inconsistent)
         {
-            //TODO: If we ever phase HOMALT, this logic needs to change
             assert(! max_alleles[0].first.empty());
             assert(max_alleles[0].first.size() == max_alleles[1].first.size());
             if (max_alleles[0].first.front() == max_alleles[1].first.front()) phasing_inconsistent=true;
@@ -269,36 +296,17 @@ create_phased_record()
 #endif
     }
 
-    if (phasing_inconsistent)
-    {
-        for (auto& val : _buffer)
-        {
-            if (! is_phasable_site(val)) continue;
-            val.smod.set_filter(VCF_FILTERS::PhasingConflict);
-        }
-        return;
-    }
-
-    // we have a phased record, modify site buffer to reflect the changes
-    site_info& base = (this->_buffer.at(0));
-
-    base.phased_ref = this->reference;
-    const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
-
-    base.smod.is_block = false;
-    base.smod.is_unknown = false;
-    base.smod.max_gt = 4;
-    base.dgt.ref_gt  = 0; // hacking  the gt method to 0/1
-    if (!is_ref) base.dgt.ref_gt = 2; // hacking the gt method to 1/2
-
     std::stringstream AD,alt;
-    AD << this->observations[this->reference];
-    for (const auto& val : max_alleles)
+    if (!phasing_inconsistent)
     {
-        if (val.first==reference) continue;
-        if (! alt.str().empty()) alt << ',';
-        alt << val.first;
-        AD << ',' << val.second;
+        AD << this->observations[this->reference];
+        for (const auto& val : max_alleles)
+        {
+            if (val.first==reference) continue;
+            if (! alt.str().empty()) alt << ',';
+            alt << val.first;
+            AD << ',' << val.second;
+        }
     }
 
 #ifdef DEBUG_CODON
@@ -308,29 +316,157 @@ create_phased_record()
 
     // set GQ and GQX
     static const int maxInt(std::numeric_limits<int>::max());
-    int min_gq(maxInt), min_qual(maxInt), min_qscore(maxInt);
-    for (unsigned i(0); i<this->get_block_length(); i++)
+    int min_qual(maxInt), min_qscore(maxInt);
+    std::vector<unsigned> pls;
+    unsigned ref_gt(0);
+    unsigned max_gt(0);
+    bool is_min_gq_idx0(false);
+    bool is_min_gq_idx1(false);
+    unsigned min_gq_idx0(0);
+    unsigned min_gq_idx1(0);
+    if (!phasing_inconsistent)
     {
-        const site_info& si(_buffer.at(i));
-        if (! is_phasable_site(si)) continue;
-        min_gq = std::min(si.smod.gq,min_gq);
-        min_qual = std::min(si.dgt.genome.snp_qphred,min_qual);
-        min_qscore = std::min(si.smod.Qscore,min_qscore);
+        for (unsigned i(0); i<this->get_block_length(); i++)
+        {
+            const auto& si(_buffer.at(i));
+            if (! is_phasable_site(si)) continue;
+            // It is possible for a weak hetalt call and a strong het call to be phased into a het
+            // call, particularly at a site that is triallelic with one ref allele. In that case, it is
+            // important to skip those calls' contribution to the resultant statistics. This logic causes
+            // us to skip over these variants.
+            if (!is_genotype_represented(si->smod.max_gt, unsigned(si->pos - _buffer[0]->pos),
+                                         max_alleles[0].first, max_alleles[1].first))
+            {
+#ifdef DEBUG_CODON
+                log_os << "Variant at offset i lacks support in phased alleles - failing phasing\n"
+#endif
+                       // TODO: This is a blunt instrument. Refine this solution to select the minimum set of
+                       // ALTs that support the buffered variants
+                       phasing_inconsistent = true;
+                continue;
+            }
+
+            if ((! is_min_gq_idx0) || (si->smod.gq < _buffer.at(min_gq_idx0)->smod.gq))
+            {
+                min_gq_idx1 = min_gq_idx0;
+                if (is_min_gq_idx0) is_min_gq_idx1 = true;
+                min_gq_idx0 = i;
+                is_min_gq_idx0 = true;
+            }
+            if ((i != min_gq_idx0) && ( (! is_min_gq_idx1) || (si->smod.gq < _buffer.at(min_gq_idx1)->smod.gq)))
+            {
+                min_gq_idx1 = i;
+                is_min_gq_idx1 = true;
+            }
+            min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
+            min_qscore = std::min(si->smod.Qscore,min_qscore);
+        }
+    }
+    if (!is_min_gq_idx0)
+    {
+#ifdef DEBUG_CODON
+        log_os << __FUNCTION__ << "; no variants left\n";
+#endif
+        phasing_inconsistent = true;
     }
 
+
+    if (phasing_inconsistent)
+    {
+        for (auto& val : _buffer)
+        {
+            if (! is_phasable_site(val)) continue;
+            val->smod.set_filter(VCF_FILTERS::PhasingConflict);
+        }
+        return;
+    }
+
+    const bool is_ref(max_alleles[0].first==this->reference || max_alleles[1].first==this->reference);
+
+    int min_gq(maxInt);
+    {
+        const auto& minsi0(*(_buffer.at(min_gq_idx0)));
+        min_gq = minsi0.smod.gq;
+        max_gt = minsi0.smod.max_gt;
+        pls = minsi0.dgt.phredLoghood;
+        ref_gt = minsi0.dgt.ref_gt;
+
+        if (! is_ref && is_min_gq_idx1)
+        {
+            //
+            // hetalt case
+            //
+#ifdef DEBUG_CODON
+            log_os << "min0 " << min_gq_idx0 << "\n";
+            log_os << "min1 " << min_gq_idx1 << "\n";
+#endif
+
+            // create fake ref_gt value for hetalt case:
+            const uint8_t ax(DIGT::get_allele(max_gt,0));
+            const uint8_t ay(DIGT::get_allele(max_gt,1));
+
+            // phase a0/a1 to match max_allele order;
+            const bool is_swap(max_alleles[1].first[min_gq_idx0] == id_to_base(ax));
+            const uint8_t a0(is_swap ? ay : ax);
+            const uint8_t a1(is_swap ? ax : ay);
+
+            ref_gt = 0;
+            for (; true; ref_gt++)
+            {
+                assert(ref_gt < N_BASE);
+                if ((ref_gt != a0) && (ref_gt != a1)) break;
+            }
+
+            // hetalt site:
+            const auto& minsi1(*(_buffer.at(min_gq_idx1)));
+            const uint8_t bx(DIGT::get_allele(minsi1.smod.max_gt,0));
+            const uint8_t by(DIGT::get_allele(minsi1.smod.max_gt,1));
+
+            // phase b0/b1 to match max_allele order;
+            const bool is_swap2(max_alleles[1].first[min_gq_idx1] == id_to_base(bx));
+            const uint8_t b0(is_swap2 ? by : bx);
+            const uint8_t b1(is_swap2 ? bx : by);
+
+#ifdef DEBUG_CODON
+            log_os << "ref/a0/a1/b0/b1 " << ref_gt << " " << (int)a0 << " " << (int)a1 << " " << (int)b0 << " " << (int)b1 << "\n";
+            log_os << "ref0/ref1 " << minsi0.dgt.ref_gt << " " << minsi1.dgt.ref_gt << "\n";
+#endif
+
+            // construct new fake approximated PL distribution:
+            const auto& pls0(minsi0.dgt.phredLoghood);
+            const auto& pls1(minsi1.dgt.phredLoghood);
+
+            pls[ref_gt] = pls0[minsi0.dgt.ref_gt] + pls1[minsi1.dgt.ref_gt];  // 0/0
+            pls[DIGT::get_gt_with_alleles(ref_gt,a0)] = pls0[DIGT::get_gt_with_alleles(minsi0.dgt.ref_gt,a0)] + pls1[DIGT::get_gt_with_alleles(minsi1.dgt.ref_gt,b0)];  // 0/1
+            pls[DIGT::get_gt_with_alleles(a0,a0)] = pls0[DIGT::get_gt_with_alleles(a0,a0)] + pls1[DIGT::get_gt_with_alleles(b0,b0)];  // 1/1
+            pls[DIGT::get_gt_with_alleles(ref_gt,a1)] = pls0[DIGT::get_gt_with_alleles(minsi0.dgt.ref_gt,a1)] + pls1[DIGT::get_gt_with_alleles(minsi1.dgt.ref_gt,b1)];  // 0/2
+            pls[max_gt] = 0;  // 1/2
+            pls[DIGT::get_gt_with_alleles(a1,a1)] = pls0[DIGT::get_gt_with_alleles(a1,a1)] + pls1[DIGT::get_gt_with_alleles(b1,b1)];  // 2/2
+        }
+    }
+
+    // we have a phased record, modify site buffer to reflect the changes
+    auto& base = this->_buffer.at(0);
+
+    base->phased_ref = this->reference;
+    base->smod.is_unknown = false;
+    base->smod.max_gt = max_gt;
+    base->dgt.ref_gt = ref_gt;
+
     // set various quality fields conservatively
-    base.smod.gq                = min_gq;
-    base.dgt.genome.snp_qphred  = min_qual;
-    base.smod.gqx               = std::min(min_gq,min_qual);
-    base.smod.Qscore            = min_qscore;
+    base->smod.gq                = min_gq;
+    base->dgt.genome.snp_qphred  = min_qual;
+    base->dgt.phredLoghood       = pls;
+    base->smod.gqx               = std::min(min_gq,min_qual);
+    base->smod.Qscore            = min_qscore;
 
-    base.phased_alt = alt.str();
-    base.phased_AD  = AD.str();
+    base->phased_alt = alt.str();
+    base->phased_AD  = AD.str();
 
-    base.smod.is_phased_region = true;
+    base->smod.is_phased_region = true;
     const int reads_ignored = (this->total_reads-allele_sum);
-    base.n_used_calls = this->total_reads - reads_ignored;
-    base.n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
+    base->n_used_calls = this->total_reads - reads_ignored;
+    base->n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads
 
     // case we want to report the phased record clean out buffer and push on the phased record only
 #ifdef DEBUG_CODON
@@ -462,7 +598,7 @@ Codon_phaser::write_out_buffer() const
 {
     for (const auto& val : _buffer)
     {
-        log_os << val << " ref " << val.ref << "\n";
+        log_os << *val << " ref " << val->ref << "\n";
     }
 }
 

@@ -1,3 +1,34 @@
+- STARKA-275 prevent phaser from causing memory exaustion for amplicon input
+- STARKA-279 prevent rare vcf syntax error in gVCF when ALT is repeated
+- STARKA-284 update license to GPLv3
+- WGSW-765 Failed SNV phasing if any of the original SNVs are not represented
+  in the most common alleles
+- STARKA-241 turned on binom indel error model in starling and strelka
+v2.4.3
+- STAR-66 Correct GT reported for ALT alleles at forced-output sites in
+  continuous vf mode from "1/1" to "0/1" as appropriate.
+- WGSW-724 Do not print PLs for homref sites
+v2.4.2
+- STAR-65 Take the minimum GQ/GQX when overlapping indels
+- STAR-64 Output forced indels & SNPs in continuous calling mode. Modify
+  output of GQX to be per-call, not per-site. Fix flushing of compressed blocks
+  at end of processed region
+- WGSW-714 fix PLs not printed at nonref site
+- STAR-60 Update codon phaser to correctly handle interaction between GT and
+  alleles that are dropped due to low phasing support.
+- WGSW-711 Make inclusion of phasing-related headers conditional
+v2.4.1
+- STAR-62 fix setting vqsrModelName on --exome
+v2.4.0
+- STARKA-257 remap somatic SVN VQSR scores
+- STARKA-254 Add PL values for germline SNV and indel calls
+- STAR-54 Do not output homref call in continuous mode if the site has
+  alt alleles
+- STAR-55 Make GT of block compressed areas with overlapping deletions "0"
+v2.3.14
+- STAR-16 Continuous variant frequency calling (a.k.a. somatic)
+- TNW-371 Set MQ to 0 at forced calls with no coverage
+- STARKA-250 Remove hpol and ihpol indel filters
 - STAR-46 Don't block-compress forced GT SNVs in regions of no coverage
 - STARKA-249 Fix minor issue with somatic indel prior
 - STARKA-248 tolerate reference allele insert/delete alignments in read input

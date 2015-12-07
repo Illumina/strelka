@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -154,8 +161,6 @@ get_starling_base_option_parser(starling_base_options& opt)
     input_opt.add_options()
     ("max-input-depth", po::value(&opt.max_input_depth),
      "Maximum allowed read depth per sample (prior to realignment). Input reads which would exceed this depth are filtered out.  (default: no limit)")
-    ("ignore-conflicting-read-names", po::value(&opt.is_ignore_read_names)->zero_tokens(),
-     "Do not report an error if two input reads share the same QNAME and read number")
     ("max-sample-read-buffer", po::value(&opt.maxBufferedReads)->default_value(opt.maxBufferedReads),
      "Maximum reads buffered for each sample")
     ;

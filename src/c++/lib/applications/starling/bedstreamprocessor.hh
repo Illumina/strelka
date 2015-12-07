@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  * bedstreamprocessor.hh
@@ -24,10 +31,10 @@
 class bed_stream_processor : public variant_pipe_stage_base
 {
 public:
-    bed_stream_processor(const std::string& bed_file_name, const std::string& region, variant_pipe_stage_base& next_stage);
+    bed_stream_processor(const std::string& bed_file_name, const std::string& region, std::shared_ptr<variant_pipe_stage_base> next_stage);
 
-    void process(site_info& si) override;
-    void process(indel_info& ii) override;
+    void process(std::unique_ptr<site_info> si) override;
+    void process(std::unique_ptr<indel_info> ii) override;
 private:
     std::unique_ptr<bed_streamer> _bed_streamer;
     const bed_record* _current_record;

@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \author Chris Saunders
@@ -176,7 +183,7 @@ calc_VQSR_features(
     //MQ
     const unsigned n_mapq(n1_cpi.rawPileup().n_mapq+t1_cpi.rawPileup().n_mapq);
     const double cumm_mapq2(n1_cpi.rawPileup().cumm_mapq + t1_cpi.rawPileup().cumm_mapq);
-    smod.set_feature(STRELKA_VQSR_FEATURES::MQ,std::sqrt(cumm_mapq2/n_mapq));
+    smod.set_feature(STRELKA_VQSR_FEATURES::MQ,std::sqrt(safeFrac(cumm_mapq2,n_mapq)));
 
     //n_mapq0
     const unsigned n_mapq0(n1_cpi.rawPileup().n_mapq0+t1_cpi.rawPileup().n_mapq0);
@@ -325,6 +332,8 @@ write_vcf_somatic_snv_genotype_strand_grid(
         {
             smod.isQscore = true;
             smod.Qscore = models.score_variant(smod.get_features(),VARIATION_NODE_TYPE::SNP);
+            // Emperically re-maps the RF Qscore to get a better calibration
+            smod.Qscore = models.recal_somatic_snv_score(smod.Qscore);
             smod.filters.reset();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
@@ -332,6 +341,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
             if (smod.Qscore < opt.sfilter.minimumQscore)
                 smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
+
         }
     }
 

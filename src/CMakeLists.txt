@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 ################################################################################
@@ -79,7 +86,7 @@ if (NOT CMAKE_PARALLEL)
     set (IS_WIN_BOOST_BUILD FALSE)
 
 
-    if (IS_WIN_BOOST_BUILD)
+    if (WIN32 AND IS_WIN_BOOST_BUILD)
         set(CMAKE_PARALLEL "0" CACHE STRING
             "Choose the number of cores used by cmake during configuration (no default)")
 
@@ -133,7 +140,7 @@ if (CPACK_GENERATOR)
 
     if (CPACK_GENERATOR STREQUAL "RPM")
         set(CPACK_RPM_PACKAGE_RELOCATABLE TRUE)
-        set(CPACK_RPM_PACKAGE_LICENSE "Illumina Open Source Software License 1")
+        set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
         set(CPACK_RPM_PACKAGE_REQUIRES "python >= 2.4.0")
     else ()
         set(CPACK_SET_DESTDIR ON)

@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -325,7 +332,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _ref(ref)
     , _streams(streams)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
-      //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
+    //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
     , _largest_indel_ref_span(opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)
@@ -366,8 +373,11 @@ starling_pos_processor_base(const starling_base_options& opt,
         {
             good_pi.set_ref_base(id_to_base(b));
             _empty_dgt[b].reset(new diploid_genotype);
+            double strand_bias = 0;
             _dopt.pdcaller().position_snp_call_pprob_digt(_opt,good_epi,
-                                                          *_empty_dgt[b],_opt.is_all_sites());
+                                                          *_empty_dgt[b],
+                                                          strand_bias,
+                                                          _opt.is_all_sites());
         }
     }
 
@@ -639,8 +649,7 @@ insert_read(
         }
     }
 
-    const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(_opt,
-                                                                  br,al,maplev));
+    const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(br,al,maplev));
     if (! res.first) return res;
 
     // must initialize initial read_segments "by-hand":

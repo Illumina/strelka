@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 #include "starling_pos_processor.hh"
@@ -16,6 +23,8 @@
 #include "blt_common/position_nonref_2allele_test.hh"
 //#include "blt_common/position_snp_call_lrt.hh"
 #include "blt_common/ref_context.hh"
+#include "starling_common/starling_indel_error_prob.hh"
+#include "starling_continuous_variant_caller.hh"
 #include "calibration/scoringmodels.hh"
 
 #include <iomanip>
@@ -155,7 +164,15 @@ process_pos_snp_single_sample(
 {
     try
     {
-        process_pos_snp_single_sample_impl(pos,sample_no);
+        if (_opt.is_bsnp_diploid())
+        {
+            process_pos_snp_single_sample_impl(pos,sample_no);
+        }
+        else
+        {
+            process_pos_snp_single_sample_continuous(pos,sample_no);
+        }
+
     }
     catch (...)
     {
@@ -165,6 +182,62 @@ process_pos_snp_single_sample(
         throw;
     }
 }
+
+void
+starling_pos_processor::process_pos_snp_single_sample_continuous(
+    const pos_t pos,
+    const unsigned sample_no)
+{
+    if (sample_no!=0) return;
+
+    sample_info& sif(sample(sample_no));
+
+    const CleanedPileup& cpi(sif.cpi);
+    const snp_pos_info& pi(cpi.rawPileup());
+
+    _pileupCleaner.CleanPileupErrorProb(sif.cpi);
+
+    const snp_pos_info& good_pi(cpi.cleanedPileup());
+    const bool is_forced(is_forced_output_pos(pos));
+
+    if (pi.calls.empty() && !is_forced) return;
+
+
+
+
+    std::unique_ptr<site_info> si(new continuous_site_info(pos,pi.get_ref_base(),good_pi,
+                                                           _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
+
+    si->n_used_calls=cpi.n_used_calls();
+    si->n_unused_calls=cpi.n_unused_calls();
+    // hpol filter
+    si->hpol=get_snp_hpol_size(pos,_ref);
+
+
+    starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, (continuous_site_info&)*si);
+
+    if (_opt.is_counts)
+    {
+        report_counts(good_pi,si->n_unused_calls,si->pos+1,*_streams.counts_osptr());
+    }
+    if (si->is_snp())
+    {
+        // this needs to be updated no matter where the snp-call is written to:
+        if (_is_variant_windows)
+        {
+            _variant_print_pos.insert(pos);
+            _is_skip_process_pos=false;
+        }
+    }
+
+    if (_opt.gvcf.is_gvcf_output())
+    {
+        _gvcfer->add_site(std::move(si));
+    }
+
+}
+
+
 
 
 
@@ -196,41 +269,50 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
     const CleanedPileup& cpi(sif.cpi);
     const snp_pos_info& pi(cpi.rawPileup());
 
-    _site_info.n_used_calls=cpi.n_used_calls();
-    _site_info.n_unused_calls=cpi.n_unused_calls();
-
-    const bool is_forced(is_forced_output_pos(pos));
-
-
-
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
     if (sample_no!=0) return;
 
-    if (pi.calls.empty() && !is_forced) return;
+    const bool is_forced(is_forced_output_pos(pos));
+
+    // the second term in is_skippable below forces sites to go through the pipeline
+    // if phaser has put a hold on buffer cleanup. This ensures that the phaser will be turned back off
+    //
+    // TODO: there must be a way to force correct usage into the phaser's API instead of requiring this brittle hack
+    const bool is_skippable(! (is_forced || is_save_pileup_buffer()));
+
+    if (pi.calls.empty() && is_skippable) return;
 
     _pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
     const snp_pos_info& good_pi(cpi.cleanedPileup());
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
+
+    std::unique_ptr<digt_site_info> si(new digt_site_info(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced));
+    si->n_used_calls=cpi.n_used_calls();
+    si->n_unused_calls=cpi.n_unused_calls();
+
+
+
+
+
     // delay writing any snpcalls so that anomaly tests can (optionally) be applied as filters:
     //
     nonref_test_call nrc;
     //lrt_snp_call lsc;
-    _site_info.dgt.reset();
     //monoploid_genotype mgt;
     //std::unique_ptr<nploid_genotype> ngt_ptr;
 
     // check whether we're in a haploid region:
-    _site_info.dgt.ploidy=(get_ploidy(pos));
+    si->dgt.ploidy=(get_ploidy(pos));
 
     const pos_t output_pos(pos+1);
 
     if (_opt.is_counts)
     {
-        report_counts(good_pi,_site_info.n_unused_calls,output_pos,*_streams.counts_osptr());
+        report_counts(good_pi,si->n_unused_calls,output_pos,*_streams.counts_osptr());
     }
 
     if (_opt.is_nonref_test() || _opt.is_nonref_sites())
@@ -260,7 +342,7 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
     if (_opt.is_bsnp_diploid())
     {
         _dopt.pdcaller().position_snp_call_pprob_digt(
-            _opt,good_epi,_site_info.dgt,_opt.is_all_sites());
+            _opt,good_epi,si->dgt, si->smod.strand_bias, _opt.is_all_sites());
     }
 #if 0
     if (_opt.is_bsnp_monoploid)
@@ -275,7 +357,7 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
 #endif
 
     //    const bool is_snp(nrc.is_snp || lsc.is_snp || _site_info.dgt.is_snp || mgt.is_snp || (ngt_ptr.get() && ngt_ptr->is_snp));
-    const bool is_snp(nrc.is_snp || _site_info.dgt.is_snp);
+    const bool is_snp(nrc.is_snp || si->dgt.is_snp);
 
     // find anomalies:
     //
@@ -308,35 +390,28 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
     {
         if (_opt.is_compute_hapscore)
         {
-            _site_info.hapscore=get_hapscore(pi.hap_set);
+            si->hapscore=get_hapscore(pi.hap_set);
         }
 
         // do calculate VQSR metrics
         if (_opt.is_compute_germline_VQSRmetrics())
         {
-            _site_info.MQ               = pi.get_rms_mq();
-            _site_info.ReadPosRankSum   = pi.get_read_pos_ranksum();
-            _site_info.MQRankSum        = pi.get_mq_ranksum();
-            _site_info.BaseQRankSum     = pi.get_baseq_ranksum();
-            _site_info.rawPos           = pi.get_raw_pos();
-            _site_info.avgBaseQ         = pi.get_raw_baseQ();
+            si->MQ               = pi.get_rms_mq();
+            si->ReadPosRankSum   = pi.get_read_pos_ranksum();
+            si->MQRankSum        = pi.get_mq_ranksum();
+            si->BaseQRankSum     = pi.get_baseq_ranksum();
+            si->rawPos           = pi.get_raw_pos();
+            si->avgBaseQ         = pi.get_raw_baseQ();
         }
 
         // hpol filter
-        _site_info.hpol=get_snp_hpol_size(pos,_ref);
-    }
-
-    //Add site to gvcf
-    if (_opt.gvcf.is_gvcf_output())
-    {
-        _site_info.init(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced);
-        _gvcfer->add_site(_site_info);
+        si->hpol=get_snp_hpol_size(pos,_ref);
     }
 
     if (_opt.is_nonref_sites())
     {
         std::ostream& bos(*_streams.nonref_sites_osptr());
-        write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
+        write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),si->n_used_calls,si->n_unused_calls,bos);
         bos << "\t";
         write_nonref_2allele_test(_opt,good_pi,nrc,bos);
         bos << "\n";
@@ -353,7 +428,7 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
         if (nrc.is_snp)
         {
             std::ostream& bos(*_streams.nonref_test_osptr());
-            write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),_site_info.n_used_calls,_site_info.n_unused_calls,bos);
+            write_snp_prefix_info_file(_chrom_name,output_pos,pi.get_ref_base(),si->n_used_calls,si->n_unused_calls,bos);
             bos << "\t";
             write_nonref_2allele_test(_opt,good_pi,nrc,bos);
 #if 0
@@ -368,7 +443,7 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
             report_os << " " << lsc << "\n";
         }
 #endif
-        if (_site_info.dgt.is_snp)
+        if (si->dgt.is_snp)
         {
             // this needs to be updated no matter where the snp-call is written to:
             if (_is_variant_windows)
@@ -411,13 +486,34 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
                   << "is_snp: " << is_snp << "\n"
                   << pi << "\n";
     }
+
+    //Add site to gvcf
+    if (_opt.gvcf.is_gvcf_output())
+    {
+        _gvcfer->add_site(std::move(si));
+    }
+}
+
+void
+starling_pos_processor::process_pos_indel_single_sample(
+    const pos_t pos,
+    const unsigned sample_no)
+{
+    if (_opt.is_bsnp_diploid())
+    {
+        process_pos_indel_single_sample_digt(pos,sample_no);
+    }
+    else
+    {
+        process_pos_indel_single_sample_continuous(pos,sample_no);
+    }
 }
 
 
 
 void
 starling_pos_processor::
-process_pos_indel_single_sample(
+process_pos_indel_single_sample_digt(
     const pos_t pos,
     const unsigned sample_no)
 {
@@ -516,7 +612,7 @@ process_pos_indel_single_sample(
 
                 if (_opt.gvcf.is_gvcf_output())
                 {
-                    _gvcfer->add_indel(pos,ik,dindel,iri,isri);
+                    _gvcfer->add_indel(std::unique_ptr<indel_info>(new digt_indel_info(pos,ik,id, dindel,iri,isri)));
                 }
 
                 if (_is_variant_windows)
@@ -553,6 +649,66 @@ process_pos_indel_single_sample(
         }
     }
 }
+
+void
+starling_pos_processor::
+process_pos_indel_single_sample_continuous(
+    const pos_t pos,
+    const unsigned sample_no)
+{
+    // note multi-sample status -- can still be called only for one sample
+    // and only for sample 0. working on generalization:
+    //
+    if (sample_no!=0) return;
+
+    typedef indel_buffer::const_iterator ciiter;
+
+    sample_info& sif(sample(sample_no));
+    ciiter it(sif.indel_buff.pos_iter(pos));
+    const ciiter it_end(sif.indel_buff.pos_iter(pos+1));
+
+    std::unique_ptr<continuous_indel_info> info;
+
+    for (; it!=it_end; ++it)
+    {
+        const indel_key& ik(it->first);
+        const indel_data& id(get_indel_data(it));
+        const bool forcedOutput(id.is_forced_output);
+        const bool zeroCoverage(id.read_path_lnp.empty());
+
+        if (!sif.indel_sync().is_candidate_indel(ik,id) && !forcedOutput) continue;
+        if (zeroCoverage && !forcedOutput) continue;
+
+        // sample-independent info:
+        starling_indel_report_info iri;
+        get_starling_indel_report_info(ik,id,_ref,iri);
+
+        static const bool is_tier2_pass(false);
+        static const bool is_use_alt_indel(true);
+
+        if (!info)
+            info.reset(new continuous_indel_info(pos));
+
+        starling_indel_sample_report_info isri;
+        get_starling_indel_sample_report_info(_dopt,ik,id,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
+        starling_continuous_variant_caller::add_indel_call(_opt, ik, id, iri, isri, *info);
+
+    }
+    if (info && (info->is_indel() || info->is_forced_output()))
+    {
+        if (_opt.gvcf.is_gvcf_output())
+        {
+            _gvcfer->add_indel(std::move(info));
+        }
+
+        if (_is_variant_windows)
+        {
+            _variant_print_pos.insert(pos);
+            _is_skip_process_pos=false;
+        }
+    }
+}
+
 
 
 

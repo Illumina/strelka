@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -43,27 +50,51 @@ struct gvcf_writer : public variant_pipe_stage_base
         const calibration_models& cm);
 
 
-    void process(site_info&) override;
-    void process(indel_info&) override;
-    void flush() override;
+    void process(std::unique_ptr<site_info>) override;
+    void process(std::unique_ptr<indel_info>) override;
 
-    pos_t
-    headPos() const
-    {
-        return _head_pos;
-    }
 
 private:
-    void add_site_internal(site_info& si);
+    void flush_impl() override;
+
+    void add_site_internal(digt_site_info& si);
+    void add_site_internal(continuous_site_info& si);
     void write_block_site_record();
-    void write_site_record(const site_info& si) const;
-    void queue_site_record(const site_info& si);
-    void write_indel_record(const indel_info& ii);
+
+    // queue site record for writing, after
+    // possibly joining it into a compressed non-variant block
+    //
+    template<class TSiteInfo>
+    void queue_site_record(const TSiteInfo& si)
+    {
+        //test for basic blocking criteria
+        if (! _gvcf_comp.is_site_compressable(si))
+        {
+            write_block_site_record();
+            write_site_record(si);
+            return;
+        }
+
+        if (! _block.test(si))
+        {
+            write_block_site_record();
+        }
+        _block.join(si);
+    }
+
+
+    void write_indel_record(const digt_indel_info& ii);
+    void write_indel_record(const continuous_indel_info& ii);
+
+    void write_site_record(const continuous_site_info& si) const;
+    void write_site_record(const gvcf_block_site_record& si) const;
+    void write_site_record(const digt_site_info& si) const;
+
 
     /// fill in missing sites
     void skip_to_pos(const pos_t target_pos);
 
-    const site_info& get_empty_site(const pos_t pos)
+    const digt_site_info& get_empty_site(const pos_t pos)
     {
         _empty_site.pos = pos;
         _empty_site.ref = _ref.get_base(pos);
@@ -79,11 +110,11 @@ private:
     const gvcf_deriv_options _dopt;
     gvcf_block_site_record _block;
     pos_t _head_pos;
-    site_info _empty_site;
+    digt_site_info _empty_site;
 
-    std::unique_ptr<indel_info> _last_indel;
+    std::unique_ptr<digt_indel_info> _last_indel;
 
-    void filter_site_by_last_indel_overlap(site_info& si);
+    void filter_site_by_last_indel_overlap(digt_site_info& si);
 
     gvcf_compressor _gvcf_comp;
     const calibration_models& _CM;

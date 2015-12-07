@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *  Created on: Jan 15, 2014
@@ -150,13 +157,13 @@ struct c_model
 
     void
     score_site_instance(
-        const site_info& si,
-        site_modifiers& smod) const;
+        const digt_site_info& si,
+        digt_call_info& smod) const;
 
     void
     score_indel_instance(
-        const indel_info& ii,
-        indel_modifiers& imod) const;
+        const digt_indel_info& ii,
+        digt_indel_call& call) const;
 
     bool is_logistic_model() const;
 
@@ -176,14 +183,14 @@ private:
     void
     do_site_rule_model(
         const featuremap& cutoffs,
-        const site_info& si,
-        site_modifiers& smod) const;
+        const digt_site_info& si,
+        digt_call_info& smod) const;
 
     void
     do_indel_rule_model(
         const featuremap& cutoffs,
-        const indel_info& ii,
-        indel_modifiers& imod) const;
+        const digt_indel_info& ii,
+        digt_indel_call& call) const;
 
     /// Transform the features with the specified scaling parameters that were used to standardize
     /// the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
@@ -201,14 +208,14 @@ private:
     void
     apply_site_qscore_filters(
         const CALIBRATION_MODEL::var_case my_case,
-        const site_info& si,
-        site_modifiers& smod) const;
+        const digt_site_info& si,
+        digt_call_info& smod) const;
 
     void
     apply_indel_qscore_filters(
         const CALIBRATION_MODEL::var_case my_case,
-        const indel_info& ii,
-        indel_modifiers& imod) const;
+        const digt_indel_info& ii,
+        digt_indel_call& call) const;
 
     const gvcf_deriv_options& dopt;
     std::string model_name;

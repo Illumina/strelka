@@ -1,8 +1,10 @@
 
-This directory contains a very small dateset which can be used to
+This directory contains very small datesets which can be used to
 demonstrate/verify strelka's configuration and run steps using a
 demonstration script. To run the demonstration, run the demo
 script in the strelka workflow installation: 
+
+Strelka:
 
 "bash $INSTALL_DIR/bin/runStrelkaWorkflowDemo.bash"
 
@@ -24,4 +26,14 @@ telomeres when the whole genome is sequenced. This filter should be
 turned off in any where regions of the genome have been selected or
 enriched for, such as exome sequencing or artificial subsets of data
 such as this demo.
+
+Starling:
+
+"bash $INSTALL_DIR/bin/runStarlingWorkflowDemo.bash"
+
+Verifies germline variant calling.
+
+"bash $INSTALL_DIR/bin/runStarlingMitoWorkflowDemo.bash"
+
+Verifies the continuous VF variant calling in mitochondria.
 

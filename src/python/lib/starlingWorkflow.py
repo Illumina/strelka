@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -140,6 +147,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--do-short-range-phasing'])
+    # currently short-range phasing is not enabled with continuous variant calling. This ensures
+    # the header value for the relevant phasing filters is still emitted
+    if len(self.params.callContinuousVf) > 0 :
+        segCmd.extend(["--gvcf-include-header", "Phasing"])
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
 
     # VQSR:
@@ -147,9 +158,12 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModelName])
 
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
-    if self.params.isSkipIndelErrorModel:
+    if self.params.isSkipDynamicIndelErrorModel:
+        # specify indelErrorModelName from inputIndelErrorModelsFile
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
+        segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
     else :
+        # use dynamic indel error modeling to choose the appropritate model
         segCmd.extend(['--indel-error-models-file', self.params.dynamicIndelErrorModelsFile])
 
     if self.params.isReportVQSRMetrics :
@@ -160,6 +174,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     if not isFirstSegment :
         segCmd.append("--gvcf-skip-header")
+    elif len(self.params.callContinuousVf) > 0 :
+        segCmd.extend(["--gvcf-include-header", "VF"])
 
     if self.params.isHighDepthFilter :
         segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
@@ -183,6 +199,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     if self.params.ploidyBed is not None :
         segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
+
+    if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
+        segCmd.append('--call-continuous-vf')
 
     if self.params.extraStarlingArguments is not None :
         for arg in self.params.extraStarlingArguments.strip().split() :
@@ -346,7 +365,7 @@ class StarlingWorkflow(StarkaWorkflow) :
 
         # format other:
         safeSetBool(self.params,"isWriteRealignedBam")
-        safeSetBool(self.params,"isSkipIndelErrorModel")
+        safeSetBool(self.params,"isSkipDynamicIndelErrorModel")
 
         if self.params.isWriteRealignedBam :
             self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
@@ -355,9 +374,9 @@ class StarlingWorkflow(StarkaWorkflow) :
         self.paths = PathInfo(self.params)
 
         if self.params.isExome:
-            self.params.vqsrModel = "Qrule"
+            self.params.vqsrModelName = "Qrule"
             self.params.indelRefErrorFactor = "1"
-            self.params.indelErrorModel = "old"
+            self.params.indelErrorModelName = "old"
 
 
     def getSuccessMessage(self) :
@@ -377,7 +396,7 @@ class StarlingWorkflow(StarkaWorkflow) :
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
             callPreReqs |= runDepth(self)
-        if not self.params.isSkipIndelErrorModel :
+        if not self.params.isSkipDynamicIndelErrorModel :
             callPreReqs |= runIndelModel(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
 

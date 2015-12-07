@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *  Test for codon-phasing.
@@ -42,7 +49,7 @@ struct Codon_phaser : public variant_pipe_stage_base
         const starling_base_options& init_opt,
         const pos_basecall_buffer& init_bc_buff,
         const reference_contig_segment& init_ref,
-        variant_pipe_stage_base& destination)
+        std::shared_ptr<variant_pipe_stage_base> destination)
         : variant_pipe_stage_base(destination),
           opt(init_opt),
           bc_buff(init_bc_buff),
@@ -55,9 +62,9 @@ struct Codon_phaser : public variant_pipe_stage_base
     static
     bool
     is_phasable_site(
-        const site_info& si)
+        const std::unique_ptr<digt_site_info>& si)
     {
-        return (si.dgt.is_snp && si.is_het());
+        return (si->dgt.is_snp && si->is_het());
     }
 
     // clear all object data
@@ -72,19 +79,18 @@ struct Codon_phaser : public variant_pipe_stage_base
         return block_start != -1;
     }
 
-    void process(site_info& si) override;
-    void process(indel_info& ii) override;
-    void flush() override;
-
-
+    void process(std::unique_ptr<site_info> si) override;
+    void process(std::unique_ptr<indel_info> ii) override;
 
     void collect_records();
 
 private:
+    void flush_impl() override;
+
     /// add site to buffer
     ///
     /// \returns true when the buffer should be printed as a phased block
-    bool add_site(const site_info& si);
+    bool add_site(std::unique_ptr<digt_site_info> si);
 
     void make_record();                 // make phased record
 
@@ -99,7 +105,7 @@ private:
     void output_buffer();
 
 
-    std::vector<site_info> _buffer;
+    std::vector<std::unique_ptr<digt_site_info>> _buffer;
     const starling_base_options& opt;
     const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
     const reference_contig_segment& ref;

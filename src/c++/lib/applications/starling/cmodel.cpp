@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *      Created on: Dec 1, 2013
@@ -51,8 +58,8 @@ void
 c_model::
 do_site_rule_model(
     const featuremap& cutoffs,
-    const site_info& si,
-    site_modifiers& smod) const
+    const digt_site_info& si,
+    digt_call_info& smod) const
 {
     if (si.smod.gqx<cutoffs.at("GQX")) smod.set_filter(VCF_FILTERS::LowGQX);
     if (cutoffs.at("DP")>0 && dopt.is_max_depth())
@@ -68,7 +75,7 @@ do_site_rule_model(
     }
     if (si.dgt.is_snp)
     {
-        if (si.dgt.sb>cutoffs.at("HighSNVSB")) smod.set_filter(VCF_FILTERS::HighSNVSB);
+        if (smod.strand_bias>cutoffs.at("HighSNVSB")) smod.set_filter(VCF_FILTERS::HighSNVSB);
     }
 }
 
@@ -78,17 +85,17 @@ void
 c_model::
 do_indel_rule_model(
     const featuremap& cutoffs,
-    const indel_info& ii,
-    indel_modifiers& imod) const
+    const digt_indel_info& ii,
+    digt_indel_call& call) const
 {
     if (cutoffs.at("GQX")>0)
     {
-        if (ii.imod().gqx<cutoffs.at("GQX")) imod.set_filter(VCF_FILTERS::LowGQX);
+        if (ii.first().gqx<cutoffs.at("GQX")) call.set_filter(VCF_FILTERS::LowGQX);
     }
 
     if (cutoffs.at("DP")>0 && dopt.is_max_depth())
     {
-        if (ii.isri().depth > dopt.max_depth) imod.set_filter(VCF_FILTERS::HighDepth);
+        if (ii.first()._isri.depth > dopt.max_depth) call.set_filter(VCF_FILTERS::HighDepth);
     }
 }
 
@@ -181,8 +188,8 @@ void
 c_model::
 apply_site_qscore_filters(
     const CALIBRATION_MODEL::var_case var_case,
-    const site_info& si,
-    site_modifiers& smod) const
+    const digt_site_info& si,
+    digt_call_info& smod) const
 {
     // do extreme case handling better
     smod.Qscore = std::min(smod.Qscore,60);
@@ -222,29 +229,29 @@ void
 c_model::
 apply_indel_qscore_filters(
     const CALIBRATION_MODEL::var_case var_case,
-    const indel_info& ii,
-    indel_modifiers& imod) const
+    const digt_indel_info& ii,
+    digt_indel_call& call) const
 {
-    imod.Qscore = std::min(imod.Qscore,60);
+    call.Qscore = std::min(call.Qscore,60);
 
-    if (imod.Qscore<0)
+    if (call.Qscore<0)
     {
-        const auto orig_filters(imod.filters);
-        do_indel_rule_model(pars.at("indel").at("cutoff"), ii, imod);
-        if (imod.filters.count()>0)
+        const auto orig_filters(call.filters);
+        do_indel_rule_model(pars.at("indel").at("cutoff"), ii, call);
+        if (call.filters.count()>0)
         {
-            imod.Qscore = 1;
-            imod.filters = orig_filters;
+            call.Qscore = 1;
+            call.filters = orig_filters;
         }
         else
         {
-            imod.Qscore = 12;
+            call.Qscore = 12;
         }
     }
 
-    if (imod.Qscore < get_var_threshold(var_case))
+    if (call.Qscore < get_var_threshold(var_case))
     {
-        imod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(var_case));
+        call.set_filter(CALIBRATION_MODEL::get_Qscore_filter(var_case));
     }
 }
 
@@ -290,8 +297,8 @@ is_logistic_model() const
 void
 c_model::
 score_site_instance(
-    const site_info& si,
-    site_modifiers& smod) const
+    const digt_site_info& si,
+    digt_call_info& smod) const
 {
     if (is_logistic_model())   //case we are using a logistic regression mode
     {
@@ -332,21 +339,23 @@ score_site_instance(
 void
 c_model::
 score_indel_instance(
-    const indel_info& ii,
-    indel_modifiers& imod) const
+    const digt_indel_info& ii,
+    digt_indel_call& call) const
 {
     if (is_logistic_model())   //case we are using a logistic regression mode
     {
-        //TODO put into enum context
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
-        if (ii.iri().it==INDEL::DELETE)
+        switch (ii.first()._iri.it)
+        {
+        case INDEL::DELETE:
         {
             if (ii.is_hetalt())
                 var_case = CALIBRATION_MODEL::HetAltDel;
             else if (! ii.is_het())
                 var_case = CALIBRATION_MODEL::HomDel;
         }
-        else if (ii.iri().it==INDEL::INSERT)
+        break;
+        case INDEL::INSERT:
         {
             if (ii.is_hetalt())
                 var_case = CALIBRATION_MODEL::HetAltIns;
@@ -355,20 +364,20 @@ score_indel_instance(
             else
                 var_case = CALIBRATION_MODEL::HomIns;
         }
-        else
-        {
+        break;
+        default:
             // block substitutions???
-            do_indel_rule_model(pars.at("indel").at("cutoff"), ii, imod);
+            do_indel_rule_model(pars.at("indel").at("cutoff"), ii, call);
             return;
         }
 
         const featuremap features = ii.get_indel_qscore_features(normal_depth());
-        imod.Qscore = logistic_score(var_case, features);
-        apply_indel_qscore_filters(var_case, ii, imod);
+        call.Qscore = logistic_score(var_case, features);
+        apply_indel_qscore_filters(var_case, ii, call);
     }
     else if (this->model_type=="RULE")   //case we are using a rule based model
     {
-        do_indel_rule_model(this->pars.at("indel").at("cutoff"), ii, imod);
+        do_indel_rule_model(this->pars.at("indel").at("cutoff"), ii, call);
     }
     else
     {
