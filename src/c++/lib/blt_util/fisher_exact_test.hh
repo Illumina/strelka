@@ -18,9 +18,11 @@
 
 #pragma once
 
-#define FISHER_EXACT_LESS       1
-#define FISHER_EXACT_GREATER    2
-#define FISHER_EXACT_TWOTAILED  3
+enum class FISHER_EXACT : unsigned int {
+    LESS      = 1,
+    GREATER   = 2,
+    TWOTAILED = 3,
+};
 
 /**
  * Compute the fisher exact test p-value for a 2x2 contingency matrix:
@@ -34,8 +36,8 @@
 extern
 double
 fisher_exact_test_pval_2x2(
-    unsigned a,
-    unsigned b,
-    unsigned c,
-    unsigned d,
-    int type=FISHER_EXACT_TWOTAILED);
+    const unsigned a,
+    const unsigned b,
+    const unsigned c,
+    const unsigned d,
+    const FISHER_EXACT type=FISHER_EXACT::TWOTAILED);

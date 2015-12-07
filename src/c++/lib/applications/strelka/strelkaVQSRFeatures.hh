@@ -51,6 +51,7 @@ struct STRELKA_SNV_VQSR_FEATURES
         SIZE
     };
 
+    static
     inline
     const char*
     get_feature_label(const unsigned idx)
@@ -110,6 +111,7 @@ struct STRELKA_INDEL_VQSR_FEATURES
         SIZE
     };
 
+    static
     inline
     const char*
     get_feature_label(const unsigned idx)

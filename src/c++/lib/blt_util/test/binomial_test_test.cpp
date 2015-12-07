@@ -22,7 +22,8 @@
 
 #include "blt_util/binomial_test.hh"
 
-
+template <class T, size_t N>
+static size_t carray_size(T (&)[N]) { return N; }
 
 BOOST_AUTO_TEST_SUITE( test_binomial_test )
 
@@ -215,7 +216,9 @@ BOOST_AUTO_TEST_CASE( test_binomial_pvalue_0_5_manyvals )
          {   176,       127, 0.5, 3.617000e-09 }
     };
 
-    for (int i = 0; i < 100; ++i) {
+    const size_t nexamples = carray_size(exampledata);
+    assert(nexamples == 100 && "we want exactly 50 examples");
+    for (size_t i = 0; i < nexamples; ++i) {
         unsigned trials = (unsigned )exampledata[i][0];
         unsigned successes = (unsigned )exampledata[i][1];
         double p = exampledata[i][2];
@@ -293,7 +296,9 @@ BOOST_AUTO_TEST_CASE( test_binomial_pvalue_many_p_manyvals )
             {    7,        6, 7.700307e-01,  1.000000e+00 },
     };
 
-    for (int i = 0; i < 50; ++i) {
+    const size_t nexamples = carray_size(exampledata);
+    assert(nexamples == 50 && "we want exactly 50 examples");
+    for (size_t i = 0; i < nexamples; ++i) {
         unsigned trials = (unsigned )exampledata[i][0];
         unsigned successes = (unsigned )exampledata[i][1];
         double p = exampledata[i][2];

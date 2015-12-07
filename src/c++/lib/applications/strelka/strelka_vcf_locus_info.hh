@@ -166,8 +166,10 @@ struct strelka_shared_modifiers
             std::ostream& os) const
     {
         os << "\n #FEAT ";
-        for (auto it = _featureVal.cbegin(); it != _featureVal.cend(); ++it)
-            os << _vqsr_featureset::get_feature_label(it->first) << "=" << it->second << "; ";
+        for (auto const & val : _featureVal)
+        {
+            os << _vqsr_featureset::get_feature_label(val.first) << "=" << val.second << "; ";
+        }
         os << "\n";
     }
 

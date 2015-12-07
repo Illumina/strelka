@@ -16,6 +16,8 @@
 #include "blt_util/fisher_exact_test.hh"
 
 
+template <class T, size_t N>
+static size_t carray_size(T (&)[N]) { return N; }
 
 BOOST_AUTO_TEST_SUITE( test_fisher_exact_test )
 
@@ -178,7 +180,9 @@ BOOST_AUTO_TEST_CASE( test_fisher_exact_examples )
                 {61,  31,  16,  45,  1.332855e-06, 0.999999832, 9.930583e-07},
                 {0,   5,   1,   17,  1.000000e+00, 0.782608696, 1.000000e+00}
         };
-        for(int j = 0; j < 126; ++j)
+        const size_t nexamples = carray_size(example_data);
+        assert(nexamples == 126 && "Number of examples must be right.");
+        for(size_t j = 0; j < nexamples; ++j)
         {
 //            std::cout << j;
 //            for(int i = 0; i < 7; ++i) std::cout << "\t" << example_data[j][i];
@@ -192,13 +196,13 @@ BOOST_AUTO_TEST_CASE( test_fisher_exact_examples )
                               fisher_exact_test_pval_2x2(
                                       int(example_data[j][0]), int(example_data[j][1]),
                                       int(example_data[j][2]), int(example_data[j][3]),
-                                      FISHER_EXACT_LESS
+                                      FISHER_EXACT::LESS
                               ), 1e-4);
             BOOST_CHECK_CLOSE(example_data[j][6],
                               fisher_exact_test_pval_2x2(
                                       int(example_data[j][0]), int(example_data[j][1]),
                                       int(example_data[j][2]), int(example_data[j][3]),
-                                      FISHER_EXACT_GREATER
+                                      FISHER_EXACT::GREATER
                               ), 1e-4);
         }
     }
