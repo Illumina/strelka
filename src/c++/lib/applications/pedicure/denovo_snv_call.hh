@@ -80,7 +80,8 @@ struct denovo_snv_call
     std::vector< std::array<uint8_t,2> > SampleGts;
     std::vector< unsigned > gts;
     std::vector< unsigned > gqx;
+    std::vector< std::array<unsigned,2> > gts_chrom;
     std::vector<uint8_t> alts;
-    std::string alt_str = ".";
+    std::string alt_str = "";
 
 };

@@ -45,12 +45,11 @@ write_vcf_sample_info(
 	std::array<unsigned,N_BASE> tier1_base_counts;
 	tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
-	if (dsc.gts[sampleIndex]==0)
-    	os << "0/0";
-	if (dsc.gts[sampleIndex]==1)
-		os << "0/1";
-	if (dsc.gts[sampleIndex]==2)
-		os << "1/1";
+
+	os << dsc.gts_chrom[sampleIndex][0]
+	   << "/"
+	   << dsc.gts_chrom[sampleIndex][1];
+
 	os <<':'
 	   << "1" //GQ
 	   <<':'
@@ -66,7 +65,7 @@ write_vcf_sample_info(
 
 	   // PL field
 	   os << ':'
-       << "1,2";
+       << "1,2,3";
 }
 
 void
