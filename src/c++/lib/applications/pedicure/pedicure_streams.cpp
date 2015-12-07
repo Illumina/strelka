@@ -100,19 +100,26 @@ pedicure_streams(
 
     if (! opt.dfilter.is_skip_header)
     {
-        std::ostream& os(*_denovo_osptr);
+//        std::ostream& os(*_denovo_osptr);
+    	std::ostream& os(std::cout);
 
         write_vcf_audit(opt,pinfo,cmdline,header,os);
-        os << "##content=pedicure somatic snv calls\n"
+        os << "##content=pedicure snv calls\n"
            << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n";
 
         // INFO:
+        os << "##INFO=<ID=QDS,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
         os << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
         os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
 
         // FORMAT:
+        os << "##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\"\">\n";
+        os << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"\">\n";
+        os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"\">\n";
         os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">\n";
+        os << "##FORMAT=<ID=FDP,Number=1,Type=Integer,Description=\"Filtered read depth\">\n";
+        os << "##FORMAT=<ID=AD,Number=G,Type=Integer,Description=\"\">\n";
 		os << "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
 
         // FILTERS:
