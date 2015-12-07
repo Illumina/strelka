@@ -13,9 +13,9 @@ denovo_snv_call::get_alt(){
 					//make sure all recorded alt alles are recorded
 					if(std::find(alts.begin(), alts.end(), SampleGts[i][chrom]) == alts.end()){
 						alts.push_back(SampleGts[i][chrom]);
-						alt_str += id_to_base(alts[0]);
 						if (alts.size()>1)
 							alt_str += ",";
+						alt_str += id_to_base(alts[0]);
 					}
 
 					//genotype sample according to ALT map
