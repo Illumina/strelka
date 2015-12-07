@@ -69,7 +69,9 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Run script and run output will be written to this directory [required] (default: %default)")
 
     def addExtendedGroupOptions(self,group) :
-        group.add_option("--scanSizeMb", type="int", metavar="INT",
+        # note undocumented library behavior: "dest" is optional, but not including it here will
+        # cause the hidden option to always print
+        group.add_option("--scanSizeMb", type="int", dest="scanSizeMb", metavar="INT",
                          help="Maximum sequence region size (in megabases) scanned by each task during "
                          "genome variant calling. (default: %default)")
         group.add_option("--region", type="string",dest="regionStrList",metavar="REGION", action="append",
@@ -127,7 +129,11 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
 
         runDir = "variantCallWorkflow"
+
+        # extended options
         scanSizeMb = 12
+        regionStrList = None
+        callMemMbOverride = None
 
         isExome = False
 
