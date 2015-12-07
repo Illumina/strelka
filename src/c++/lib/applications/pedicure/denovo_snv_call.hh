@@ -22,6 +22,7 @@
 #include <array>
 #include <vector>
 #include <map>
+#include "pedicure_vcf_locus_info.hh"
 
 struct denovo_snv_call
 {

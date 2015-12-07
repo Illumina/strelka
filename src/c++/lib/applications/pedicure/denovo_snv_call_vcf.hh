@@ -31,5 +31,5 @@ denovo_snv_call_vcf(
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const cpiPtrTiers_t& pileups,
-    const denovo_snv_call& dsc,
+    denovo_snv_call& dsc,
     std::ostream& os);

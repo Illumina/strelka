@@ -479,5 +479,4 @@ get_denovo_snv_call(
 		dsc.SampleGts.push_back(max_gt_alleles);
 		dsc.Sampleplhoods.push_back(pProb);
 	}
-	dsc.get_alt();
 }

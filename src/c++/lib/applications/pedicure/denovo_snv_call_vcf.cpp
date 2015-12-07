@@ -16,7 +16,6 @@
 ///
 
 #include "denovo_snv_call_vcf.hh"
-#include "pedicure_vcf_locus_info.hh"
 #include "blt_util/io_util.hh"
 
 #include <array>
@@ -30,15 +29,15 @@ void
 write_vcf_sample_info(
     const blt_options& opt,
     const CleanedPileup& tier1_cpi,
-    const CleanedPileup& tier2_cpi,
+    const CleanedPileup& /*tier2_cpi*/,
     const denovo_snv_call& dsc,
     int sampleIndex,
     std::ostream& os)
 {
-    //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
-//	log_os << dsc.Sampleplhoods[sampleIndex][0]
-//			<< " " << dsc.Sampleplhoods[sampleIndex][1]
-//			<< " " << dsc.Sampleplhoods[sampleIndex][2] <<	std::endl;
+
+	std::array<unsigned,N_BASE> tier1_base_counts;
+	tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+
 	if (dsc.gts[sampleIndex]==0)
     	os << "0/0";
 	if (dsc.gts[sampleIndex]==1)
@@ -50,21 +49,17 @@ write_vcf_sample_info(
 	   <<':'
 	   << dsc.gqx[sampleIndex]  //GQX
        <<':'
-	   << tier1_cpi.n_calls()
+	   << (tier1_cpi.n_calls()-tier1_cpi.n_unused_calls())
        << ':'
        << tier1_cpi.n_unused_calls()
        << ':'
-       << "0,23"
-       << ':'
-       << "1,2";
-//       << tier1_cpi.rawPileup().n_spandel
-//       << ':'
-//       << tier1_cpi.rawPileup().n_submapped;
+       << tier1_base_counts[dsc.ref_gt];
+	   for (unsigned i=0; i<dsc.alts.size(); i++)
+		   os << "," << tier1_base_counts[dsc.alts[i]];
 
-    std::array<unsigned,N_BASE> tier1_base_counts;
-    std::array<unsigned,N_BASE> tier2_base_counts;
-    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-    tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
+	   // PL field
+	   os << ':'
+       << "1,2";
 }
 
 void
@@ -73,7 +68,7 @@ denovo_snv_call_vcf(
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const cpiPtrTiers_t& pileups,
-    const denovo_snv_call& dsc,
+    denovo_snv_call& dsc,
     std::ostream& os)
 {
     using namespace PEDICURE_SAMPLETYPE;
@@ -103,6 +98,7 @@ denovo_snv_call_vcf(
         }
 
     }
+    dsc.get_alt();
 
 
     //REF:

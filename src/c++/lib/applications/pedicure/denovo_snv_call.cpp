@@ -19,4 +19,5 @@ denovo_snv_call::get_alt(){
 			alt_str += ",";
 			alt_str += id_to_base(alts[i]);
 		}
+
 }
