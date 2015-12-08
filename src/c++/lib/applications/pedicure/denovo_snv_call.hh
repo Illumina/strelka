@@ -30,6 +30,7 @@
 #include <vector>
 #include <map>
 #include "pedicure_vcf_locus_info.hh"
+#include "blt_util/log.hh"
 
 struct denovo_snv_call
 {

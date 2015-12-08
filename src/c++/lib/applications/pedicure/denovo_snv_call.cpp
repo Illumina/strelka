@@ -1,6 +1,5 @@
 #include "denovo_snv_call_vcf.hh"
 #include <algorithm>
-#include "blt_util/log.hh"
 
 
 void
@@ -15,7 +14,7 @@ denovo_snv_call::get_alt(){
 						alts.push_back(SampleGts[i][chrom]);
 						if (alts.size()>1)
 							alt_str += ",";
-						alt_str += id_to_base(alts[0]);
+						alt_str += id_to_base(alts[alts.size()-1]);
 					}
 
 					//genotype sample according to ALT map
@@ -31,6 +30,7 @@ denovo_snv_call::get_alt(){
 			}
 			gts_chrom.push_back(gt);
  		}
+
 		if (alts.size()==0)
 			alt_str = ".";
 }
