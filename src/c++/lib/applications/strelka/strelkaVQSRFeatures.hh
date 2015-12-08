@@ -103,11 +103,12 @@ struct STRELKA_INDEL_VQSR_FEATURES
     enum index_t
     {
         QSI_NT,
-        AOR,
-        OD,
         ABS_T_RR,
-        T_FS,
         ABS_T_SOR,
+        TNR,
+        AFR,
+        LAR,
+        LOR,
         SIZE
     };
 
@@ -120,16 +121,18 @@ struct STRELKA_INDEL_VQSR_FEATURES
         {
             case QSI_NT:
                 return "QSI_NT";
-            case AOR:
-                return "AOR";
-            case OD:
-                return "OD";
             case ABS_T_RR:
                 return "ABS_T_RR";
-            case T_FS:
-                return "T_FS";
             case ABS_T_SOR:
                 return "ABS_T_SOR";
+            case TNR:
+                return "TNR";
+            case AFR:
+                return "AFR";
+            case LAR:
+                return "LAR";
+            case LOR:
+                return "LOR";
             default:
                 assert(false && "Unknown feature");
                 return nullptr;

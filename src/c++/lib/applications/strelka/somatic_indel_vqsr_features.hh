@@ -80,18 +80,33 @@ double
 calculateBCNoise(const win_avg_set & was);
 
 /**
- * Calculate AOR feature (log ratio between T_AF and N_AF)
+ * Calculate AFR feature (log ratio between T_AF and N_AF)
  */
 double
-calculateAOR(const starling_indel_sample_report_info & nisri,
-             const starling_indel_sample_report_info & tisri
+calculateAlleleFrequencyRate(const starling_indel_sample_report_info &nisri,
+                             const starling_indel_sample_report_info &tisri
 );
 
 /**
- * Calculate OD feature (log ratio between T_AF and T_OF)
+ * Calculate TNR feature (log ratio between T_AF and T_OF)
  */
 double
-calculateOD(const starling_indel_sample_report_info & tisri);
+calculateTumorNoiseRate(const starling_indel_sample_report_info &tisri);
+
+/**
+ * Calculate LAR feature (log ratio between #alt reads in tumor and #ref reads in normal)
+ */
+double
+calculateLogAltRatio(const starling_indel_sample_report_info &nisri,
+                     const starling_indel_sample_report_info &tisri);
+
+/**
+ * Calculate LOR feature (log odds ratio for  T_REF T_ALT
+ *                                            N_REF N_ALT)
+ */
+double
+calculateLogOddsRatio(const starling_indel_sample_report_info &nisri,
+                      const starling_indel_sample_report_info &tisri);
 
 /**
  * Calculate VQSR features and add to smod

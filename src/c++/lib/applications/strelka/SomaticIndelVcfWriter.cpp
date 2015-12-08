@@ -198,13 +198,6 @@ writeSomaticIndelVcfGrid(
            << ";MQ0=" << mean_mapq0
                 ;
     }
-    {
-        const StreamScoper ss(os);
-        os << std::fixed << std::setprecision(4);
-        os << ";AOR=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::AOR)
-           << ";OD=" << smod.get_feature(STRELKA_INDEL_VQSR_FEATURES::OD)
-                ;
-    }
     if (siInfo.iri.is_repeat_unit())
     {
         os << ";RU=" << siInfo.iri.repeat_unit
@@ -212,11 +205,19 @@ writeSomaticIndelVcfGrid(
            << ";IC=" << siInfo.iri.indel_repeat_count;
     }
     os << ";IHP=" << siInfo.iri.ihpol;
+
+    if(is_use_empirical_scoring)
+    {
+        os << ";ESF=";
+        smod.write_features(os);
+    }
+
     if ((siInfo.iri.it == INDEL::BP_LEFT) ||
         (siInfo.iri.it == INDEL::BP_RIGHT))
     {
         os << ";SVTYPE=BND";
     }
+
     if (rs.is_overlap)
     {
         os << ";OVERLAP";

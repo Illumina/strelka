@@ -235,11 +235,15 @@ strelka_streams(
             fos << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Largest reference interrupted homopolymer length intersecting with the indel\">\n";
             fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
             fos << "##INFO=<ID=MQ0,Number=1,Type=Float,Description=\"Fraction of MAPQ == 0 reads covering this record\">\n";
-            fos << "##INFO=<ID=AOR,Number=1,Type=Float,Description=\"Log-ratio of tumor alt AF and normal alt AF\">\n";
-            fos << "##INFO=<ID=OD,Number=1,Type=Float,Description=\"Log ratio of alt AF and alt OF in tumor sample\">\n";
             fos << "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">\n";
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
+
+            const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
+            if(is_use_empirical_scoring)
+            {
+                fos << "##INFO=<ID=ESF,Number=*,Type=String,Description=\"Empirical scoring features.\">\n";
+            }
 
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1\">\n";
@@ -257,7 +261,6 @@ strelka_streams(
             fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
 
             // FILTERS:
-            const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
             {
                 using namespace STRELKA_VCF_FILTERS;
                 if (is_use_empirical_scoring)

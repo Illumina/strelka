@@ -127,9 +127,9 @@ calculateBCNoise(const win_avg_set & was)
  * Calculate AOR feature (log ratio between T_AF and N_AF)
  */
 double
-calculateAOR(const starling_indel_sample_report_info & nisri,
-             const starling_indel_sample_report_info & tisri
-        )
+calculateAlleleFrequencyRate(const starling_indel_sample_report_info &nisri,
+                             const starling_indel_sample_report_info &tisri
+)
 {
     const double T_AF = calculateIndelAF(tisri);
     const double N_AF = calculateIndelAF(nisri);
@@ -141,12 +141,40 @@ calculateAOR(const starling_indel_sample_report_info & nisri,
  * Calculate OD feature (log ratio between T_AF and T_OF)
  */
 double
-calculateOD(const starling_indel_sample_report_info & tisri)
+calculateTumorNoiseRate(const starling_indel_sample_report_info &tisri)
 {
     const double T_AF = calculateIndelAF(tisri);
     const double T_OF = calculateIndelOF(tisri);
 
     return log10(std::max(T_AF, (double)0.00001) / std::max(T_OF, (double)0.0001));
+}
+
+/**
+ * Calculate LAR feature (log ratio between #alt reads in tumor and #ref reads in normal)
+ */
+double
+calculateLogAltRatio(const starling_indel_sample_report_info &nisri,
+                     const starling_indel_sample_report_info &tisri)
+{
+    const unsigned n_ref_reads = nisri.n_q30_ref_reads;
+    const unsigned t_alt_reads = tisri.n_q30_indel_reads;
+    return log10(safeFrac(t_alt_reads, n_ref_reads));
+}
+
+/**
+ * Calculate LOR feature (log odds ratio for  T_REF T_ALT
+ *                                            N_REF N_ALT)
+ */
+double
+calculateLogOddsRatio(const starling_indel_sample_report_info &nisri,
+                      const starling_indel_sample_report_info &tisri)
+{
+    const double n_ref_reads = nisri.n_q30_ref_reads + .5;
+    const double n_alt_reads = nisri.n_q30_indel_reads + .5;
+    const double t_ref_reads = tisri.n_q30_ref_reads + .5;
+    const double t_alt_reads = tisri.n_q30_indel_reads + .5;
+
+    return log10(t_ref_reads*n_alt_reads / t_alt_reads / n_ref_reads);
 }
 
 /**
@@ -164,8 +192,12 @@ calculateVQSRFeatures(
 {
     const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::QSI_NT, rs.sindel_from_ntype_qphred);
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::AOR, calculateAOR(siInfo.nisri[0], siInfo.tisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::OD, calculateOD(siInfo.tisri[0]));
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::TNR, calculateTumorNoiseRate(siInfo.tisri[0]));
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::AFR, calculateAlleleFrequencyRate(siInfo.nisri[0], siInfo.tisri[0]));
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::LAR, calculateLogAltRatio(siInfo.nisri[0], siInfo.tisri[0]));
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::LOR, calculateLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));
 
 //    double meanChrDepth = 1;
 //    auto cd = dopt.sfilter.chrom_depth.find(opt.bam_seq_name);
@@ -174,8 +206,5 @@ calculateVQSRFeatures(
 //        meanChrDepth = cd->second;
 //    }
 
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::T_FS, calculateFS(siInfo.tisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
 }
 
