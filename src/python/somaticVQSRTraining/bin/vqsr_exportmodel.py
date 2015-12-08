@@ -66,7 +66,8 @@ def main():
 
     model = vqsr.VQSRModel.create(args.model)
     model.load(args.clf)
-    model.save(args.output)
+    
+    model.save_json_strelka_format(args.output)
 
 
 if __name__ == '__main__':
