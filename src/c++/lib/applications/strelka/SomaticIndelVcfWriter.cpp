@@ -209,7 +209,21 @@ writeSomaticIndelVcfGrid(
     if(is_use_empirical_scoring)
     {
         os << ";ESF=";
-        smod.write_features(os);
+        for(unsigned q = 0; q < STRELKA_INDEL_VQSR_FEATURES::SIZE; ++q)
+        {
+            if(q > 0)
+            {
+                os << ",";
+            }
+            if(smod.test_feature(static_cast<STRELKA_INDEL_VQSR_FEATURES::index_t>(q)))
+            {
+                os << smod.get_feature(static_cast<STRELKA_INDEL_VQSR_FEATURES::index_t>(q));
+            }
+            else
+            {
+                os << ".";
+            }
+        }
     }
 
     if ((siInfo.iri.it == INDEL::BP_LEFT) ||

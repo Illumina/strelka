@@ -242,7 +242,7 @@ strelka_streams(
             const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
             if(is_use_empirical_scoring)
             {
-                fos << "##INFO=<ID=ESF,Number=*,Type=String,Description=\"Empirical scoring features.\">\n";
+                fos << "##INFO=<ID=ESF,Number=" << STRELKA_INDEL_VQSR_FEATURES::SIZE << ",Type=Float,Description=\"Empirical scoring features.\">\n";
             }
 
             // FORMAT:
@@ -259,6 +259,20 @@ strelka_streams(
             fos << "##FORMAT=<ID=BSA,Number=1,Type=Float,Description=\"Binomial test log-pvalue for ALT allele in tier1\">\n";
             fos << "##FORMAT=<ID=RR,Number=1,Type=Float,Description=\"Read position ranksum for ALT allele in tier1 reads (U-statistic)\">\n";
             fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
+
+            if(is_use_empirical_scoring)
+            {
+                fos << "##vqsr_features=";
+                for(unsigned q = 0; q < STRELKA_INDEL_VQSR_FEATURES::SIZE; ++q)
+                {
+                    if(q > 0)
+                    {
+                        fos << ",";
+                    }
+                    fos << q << ":" << STRELKA_INDEL_VQSR_FEATURES::get_feature_label(q);
+                }
+                fos << "\n";
+            }
 
             // FILTERS:
             {
