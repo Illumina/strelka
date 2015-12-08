@@ -57,7 +57,6 @@ scoring_models& scoring_models::Instance()
     if (!m_pInstance)    // Only allow one instance of class to be generated.
     {
         m_pInstance = new scoring_models;
-        m_pInstance->variantScoringModelFilename = "NA";
     }
     return *m_pInstance;
 }
@@ -71,44 +70,9 @@ void scoring_models::init_default_models()
     // load previously hard-coded polynomial model
     IndelErrorModel oldModel = generate_old_indel_error_model();
     this->indel_models[oldModel.get_model_string()] = oldModel;
-
-    model_threshold = 0;
-    model_threshold_indel = 0;
 }
 
-double scoring_models::score_variant(const feature_type& features, const VARIATION_NODE_TYPE::index_t vtype) const
-{
-    double score;
-    switch (vtype)
-    {
-    case VARIATION_NODE_TYPE::SNP:
-        score = this->randomforest_model.getProb(features);
-        return error_prob_to_phred(score);
-    case VARIATION_NODE_TYPE::INDEL:
-        score = this->randomforest_model_indel.getProb(features);
-        // return plain score for indels because we use the threshold from the model file
-        // TODO make this consistent for indel and SNV
-        return score;
-    default:
-        assert(false && "Unknown variation node type in serializedModel.");
-        return 0;
-    }
-}
 
-double scoring_models::score_threshold(
-        const VARIATION_NODE_TYPE::index_t vtype) const
-{
-    switch(vtype)
-    {
-        case VARIATION_NODE_TYPE::SNP:
-            return model_threshold;
-        case VARIATION_NODE_TYPE::INDEL:
-            return model_threshold_indel;
-        default:
-            assert(false && "Unknown variation node type in serializedModel.");
-            return 0;
-    }
-}
 
 const IndelErrorModel& scoring_models::get_indel_model() const
 {
@@ -116,17 +80,13 @@ const IndelErrorModel& scoring_models::get_indel_model() const
     return this->indel_models.at(this->current_indel_model);
 }
 
+
 // Generated the header VCF header string specifying which json file and what models were used
 void
 scoring_models::
 writeVcfHeader(
     std::ostream& os) const
 {
-    if (! variantScoringModelFilename.empty())
-    {
-        os << "##VariantScoringModelFilename=" << this->variantScoringModelFilename << "\n";
-    }
-
     if (! indelErrorModelFilename.empty())
     {
         os << "##IndelErrorModelFilename=" << this->indelErrorModelFilename << "\n";
@@ -178,32 +138,6 @@ void scoring_models::load_indel_model(const Json::Value& data)
     this->indel_models[tempModel.get_model_string()] = tempModel;
 }
 
-void scoring_models::load_calibration_model(const Json::Value& data)
-{
-    using namespace VARIATION_NODE_TYPE;
-    for (int i(0); i<SIZE; ++i)
-    {
-        const index_t modelIndex(static_cast<index_t>(i));
-        Json::Value model = data[get_label(modelIndex)];
-        if (!model.isNull())
-        {
-            //TODO add more logic here for reading other model types than RF
-            RandomForestModel temp_model;
-            temp_model.Deserialize(model);
-            if (modelIndex==SNP)
-            {
-                randomforest_model = temp_model;
-                model_threshold = model["FilterCutoff"].asDouble();
-            }
-            else
-            {
-                randomforest_model_indel = temp_model;
-                model_threshold_indel = model["FilterCutoff"].asDouble();
-            }
-        }
-    }
-}
-
 
 
 void
@@ -217,9 +151,6 @@ load_single_model(
     {
     case INDELMODEL:
         this->load_indel_model(data);
-        break;
-    case CALMODEL:
-        this->load_calibration_model(data);
         break;
     default:
         assert(false && "Unknown model-type in model json.");
@@ -256,16 +187,6 @@ load_models(
     {
         load_single_model(modelValue, model_type);
     }
-}
-
-
-void
-scoring_models::
-load_variant_scoring_models(
-    const std::string& model_file)
-{
-    variantScoringModelFilename = model_file;
-    load_models(model_file,MODEL_TYPE::CALMODEL);
 }
 
 

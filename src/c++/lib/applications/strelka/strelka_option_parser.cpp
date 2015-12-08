@@ -29,6 +29,8 @@
 #include "starling_common/starling_base_option_parser.hh"
 #include "starling_common/Tier2OptionsParser.hh"
 
+#include "boost/filesystem.hpp"
+
 
 
 po::options_description
@@ -205,7 +207,11 @@ finalize_strelka_options(
 
     if (! opt.somatic_variant_scoring_models_filename.empty())
     {
-        scoring_models::Instance().load_variant_scoring_models(opt.somatic_variant_scoring_models_filename);
+        if (! boost::filesystem::exists(opt.somatic_variant_scoring_models_filename))
+        {
+            pinfo.usage("Somatic SNV scoring model file does not exist");
+        }
+
     }
 
     finalize_starling_base_options(pinfo,vm,opt);

@@ -27,7 +27,6 @@
 #include "somatic_call_shared.hh"
 #include "blt_util/io_util.hh"
 #include "blt_util/math_util.hh"
-#include "calibration/scoringmodels.hh"
 
 
 #include <iomanip>
@@ -324,14 +323,24 @@ write_vcf_somatic_snv_genotype_strand_grid(
         // calculations are still needed for VCF reporting
         calc_VQSR_features(opt,dopt,sgt,smod,n1_epd,t1_epd,n2_epd,t2_epd,rs);
 
-        // case we are doing VQSR, clear filters and apply single LowQscore filter
-        const scoring_models& models(scoring_models::Instance());
-        if (opt.isUseSomaticVQSR() && models.isVariantScoringInit())  // write out somatic VQSR metrics
+        // if we are using empirical scoring, clear filters and apply single LowQscore filter
+        if (dopt.somaticSnvScoringModel)
         {
+            const VariantScoringModel& varModel(*dopt.somaticSnvScoringModel);
             smod.isQscore = true;
-            smod.Qscore = models.score_variant(smod.get_features(),VARIATION_NODE_TYPE::SNP);
-            // Emperically re-maps the RF Qscore to get a better calibration
-            smod.Qscore = models.recal_somatic_snv_score(smod.Qscore);
+            smod.Qscore = varModel.scoreVariant(smod.get_features());
+
+            // TMP!! make this scheme compatible with STARKA-296;
+            smod.Qscore = error_prob_to_phred(smod.Qscore);
+
+            // TMP!!!! Emperically re-maps the RF Qscore to get a better calibration
+            // See STARKA-257 github comment for more detail on this fit
+            auto recal_somatic_snv_score = [](double& score)
+                {
+                    return 2.57*score+0.94;
+                };
+
+            smod.Qscore = recal_somatic_snv_score(smod.Qscore);
             smod.filters.reset();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default

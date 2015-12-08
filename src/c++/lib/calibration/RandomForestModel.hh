@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <calibration/SerializedModel.hh>
+#include "calibration/SerializedModel.hh"
 
 #include <vector>
 #include <cassert>

@@ -280,13 +280,11 @@ strelka_streams(
                 if (is_use_empirical_scoring)
                 {
                     {
+                        assert(dopt.somaticIndelScoringModel);
+                        const VariantScoringModel& varModel(*dopt.somaticIndelScoringModel);
+                        const double threshold(varModel.scoreFilterThreshold());
+
                         std::ostringstream oss;
-                        const scoring_models & sm = scoring_models::Instance();
-                        double threshold = 0;
-                        if(sm.isVariantScoringInit())
-                        {
-                            threshold = sm.score_threshold(VARIATION_NODE_TYPE::INDEL);
-                        }
                         oss << "The empirically fitted quality score is less than " << threshold;
                         write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
                     }

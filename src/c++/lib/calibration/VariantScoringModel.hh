@@ -18,53 +18,39 @@
 //
 //
 /*
- * SerializedModel.hh
- *
- *  Created on: Jun 23, 2015
+ *  Created on: Aug 20, 2014
  *      Author: Morten Kallberg
  */
 
 #pragma once
 
-#include "json/json.h"
+#include "RandomForestModel.hh"
+#include "VariantScoringModelTypes.hh"
+
+#include <iosfwd>
 
 
-class serialized_model
+
+struct VariantScoringModel
 {
-public:
-    serialized_model() {}
+    VariantScoringModel(
+        const std::string& model_file,
+        const SCORING_CALL_TYPE::index_t ctype,
+        const SCORING_VARIANT_TYPE::index_t vtype);
 
-    /** methods for serializing */
-    void Deserialize(const Json::Value& root);
-
-    const std::string&
-    get_model_string() const
+    double
+    scoreVariant(
+        const feature_type& features) const
     {
-        return name;
+        return _model.getProb(features);
     }
 
-protected:
-    std::string name;
-    std::string version;
-    std::string date;
+    double scoreFilterThreshold() const
+    {
+        return _scoreFilterThreshold;
+    }
+
+private:
+    RandomForestModel _model;
+    double _scoreFilterThreshold;
 };
-
-
-typedef std::map<int, double> feature_type;
-class serialized_calibration_model : public serialized_model
-{
-public:
-    serialized_calibration_model() {}
-
-    /** methods for serializing */
-    void Deserialize( const Json::Value& root);
-    double getProb(const feature_type& features) const;
-    bool doFilter() const;
-
-protected:
-    std::string ModelType;
-    std::string Type;
-    double FilterCutoff;
-    // add feature sequence
-};
-

@@ -35,7 +35,6 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <calibration/scoringmodels.hh>
 
 
 static
@@ -103,21 +102,11 @@ writeSomaticIndelVcfGrid(
     // calculate VQSR score and features
     calculateVQSRFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
 
-    // always write VQSR feature
-    const scoring_models& models(scoring_models::Instance());
-    if(models.isVariantScoringInit())
-    {
-        // for some reason these come out the wrong way around
-        smod.Qscore = 1.0 - models.score_variant(smod.get_features(), VARIATION_NODE_TYPE::INDEL);
-        smod.isQscore = true;
-    }
-    else
-    {
-        smod.Qscore = 0;
-    }
-
     const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
     if (!is_use_empirical_scoring) {
+        smod.Qscore = 0;
+        smod.isQscore = false;
+
         // compute all site filters:
         const double normalWinFrac = calculateBCNoise(wasNormal);
         const double tumorWinFrac = calculateBCNoise(wasTumor);
@@ -135,12 +124,17 @@ writeSomaticIndelVcfGrid(
     }
     else
     {
+        assert(dopt.somaticIndelScoringModel);
+        const VariantScoringModel& varModel(*dopt.somaticIndelScoringModel);
+        smod.Qscore = 1.0 - varModel.scoreVariant(smod.get_features());
+        smod.isQscore = true;
+
         if (rs.ntype != NTYPE::REF)
         {
             smod.set_filter(STRELKA_VCF_FILTERS::Nonref);
         }
 
-        if(smod.Qscore < models.score_threshold(VARIATION_NODE_TYPE::INDEL))
+        if(smod.Qscore < varModel.scoreFilterThreshold())
         {
             smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
         }
