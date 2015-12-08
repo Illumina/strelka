@@ -66,6 +66,7 @@ std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj
 ///
 struct starling_indel_sample_report_info
 {
+    unsigned n_total_reads = 0;
     unsigned n_q30_ref_reads = 0;
     unsigned n_q30_indel_reads = 0;
     unsigned n_q30_alt_reads = 0;
@@ -75,6 +76,22 @@ struct starling_indel_sample_report_info
 
     // the depth of the pileup preceding the indel
     unsigned depth = 0;
+
+    // same as above, but by strand
+    unsigned n_q30_ref_reads_fwd = 0;
+    unsigned n_q30_indel_reads_fwd = 0;
+    unsigned n_q30_alt_reads_fwd = 0;
+    unsigned n_other_reads_fwd = 0;
+    unsigned n_q30_ref_reads_rev = 0;
+    unsigned n_q30_indel_reads_rev = 0;
+    unsigned n_q30_alt_reads_rev = 0;
+    unsigned n_other_reads_rev = 0;
+
+    double mean_mapq = 0.0;
+    double mapq0_frac = 0.0;
+    unsigned n_mapq = 0;
+
+    ranksum readpos_ranksum;
 
     unsigned total_q30_reads() const
     {

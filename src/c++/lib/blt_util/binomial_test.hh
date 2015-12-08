@@ -32,8 +32,6 @@
 /// prob of n_success or more extreme number of successes and then
 /// double it.
 ///
-/// Caveat emptor: the 'double the pvalue' method for creating
-/// a two-sided test disagrees with R when p is not equal to 0.5
 ///
 double
 get_binomial_twosided_exact_pval(
@@ -43,7 +41,6 @@ get_binomial_twosided_exact_pval(
 
 /// \brief two-sided binomial exact test
 ///
-/// see caveat above for p not equal to 0.5
 bool
 is_reject_binomial_twosided_exact(
     const double alpha,

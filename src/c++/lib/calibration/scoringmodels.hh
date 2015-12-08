@@ -75,6 +75,9 @@ struct scoring_models
         const feature_type& features,
         const VARIATION_NODE_TYPE::index_t vtype) const;
 
+    double score_threshold(
+            const VARIATION_NODE_TYPE::index_t vtype) const;
+
     void get_indel_error(
         const starling_base_options& client_opt,
         const starling_indel_report_info& iri,
@@ -139,5 +142,8 @@ private:
     indel_modelmap indel_models;
     std::string current_indel_model;
 
-    RandomForestModel randomforest_model,randomforest_model_indel;
+    // RF models
+    RandomForestModel randomforest_model, randomforest_model_indel;
+    // corresponding thresholds for the scores returned by score_threshold
+    double model_threshold, model_threshold_indel;
 };
