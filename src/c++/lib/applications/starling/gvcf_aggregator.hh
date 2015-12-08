@@ -65,7 +65,5 @@ private:
     std::shared_ptr<gvcf_writer> _writer;
     std::shared_ptr<Codon_phaser> _codon_phaser;
     std::shared_ptr<variant_pipe_stage_base> _head;
-
-
 };
 

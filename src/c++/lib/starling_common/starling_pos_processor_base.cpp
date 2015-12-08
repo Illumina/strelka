@@ -649,8 +649,7 @@ insert_read(
         }
     }
 
-    const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(_opt,
-                                                                  br,al,maplev));
+    const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(br,al,maplev));
     if (! res.first) return res;
 
     // must initialize initial read_segments "by-hand":

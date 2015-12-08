@@ -53,7 +53,7 @@ void Codon_phaser::process(std::unique_ptr<site_info> site)
     _sink->process(std::move(si));
 }
 
-void Codon_phaser::flush()
+void Codon_phaser::flush_impl()
 {
     if (opt.do_codon_phasing)
     {
@@ -63,7 +63,6 @@ void Codon_phaser::flush()
         }
         output_buffer();
     }
-    _sink->flush();
 }
 
 // the Codon phaser can't work across indels, so flush any in-progress phasing

@@ -161,8 +161,6 @@ get_starling_base_option_parser(starling_base_options& opt)
     input_opt.add_options()
     ("max-input-depth", po::value(&opt.max_input_depth),
      "Maximum allowed read depth per sample (prior to realignment). Input reads which would exceed this depth are filtered out.  (default: no limit)")
-    ("ignore-conflicting-read-names", po::value(&opt.is_ignore_read_names)->zero_tokens(),
-     "Do not report an error if two input reads share the same QNAME and read number")
     ("max-sample-read-buffer", po::value(&opt.maxBufferedReads)->default_value(opt.maxBufferedReads),
      "Maximum reads buffered for each sample")
     ;

@@ -37,14 +37,14 @@ public:
     void process(std::unique_ptr<site_info> si) override;
     void process(std::unique_ptr<indel_info> ii) override;
 
-    void flush() override;
-
     static void modify_overlapping_site(const digt_indel_info& ii, digt_site_info& si, const calibration_models& model);
 
 private:
-    const calibration_models& _CM;
-    const reference_contig_segment& _ref;
-    pos_t _indel_end_pos;
+    void flush_impl() override
+    {
+        // flush out accumulated sites & indels
+        process_overlaps();
+    }
 
     static void modify_indel_conflict_site(digt_site_info& si);
     static void modify_indel_overlap_site(const digt_indel_info& ii,
@@ -52,15 +52,16 @@ private:
                                           digt_site_info& si,
                                           const calibration_models& model);
 
-
-
-    std::vector<std::unique_ptr<digt_indel_info>> _indel_buffer;
-    std::vector<std::unique_ptr<digt_site_info>> _site_buffer;
-
-
     void process_overlaps();
     void modify_single_indel_record();
     void modify_conflict_indel_record();
     void modify_overlap_indel_record();
+
+    const calibration_models& _CM;
+    const reference_contig_segment& _ref;
+    pos_t _indel_end_pos;
+
+    std::vector<std::unique_ptr<digt_indel_info>> _indel_buffer;
+    std::vector<std::unique_ptr<digt_site_info>> _site_buffer;
 };
 

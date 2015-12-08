@@ -76,19 +76,7 @@ private:
 //
 struct starling_read : private boost::noncopyable
 {
-    starling_read(const bam_record& br,
-                  const bool is_bam_record_genomic);
-
-    void
-    set_genomic_bam_record(const bam_record& br)
-    {
-        if (_is_bam_record_genomic)
-        {
-            repeatError(br);
-        }
-        _read_rec = br;
-        _is_bam_record_genomic=true;
-    }
+    starling_read(const bam_record& br);
 
     // enters full alignment, and handles segment setup for splice
     // sites:
@@ -196,15 +184,11 @@ private:
     void
     update_full_segment();
 
-    void
-    repeatError(const bam_record& br) const;
-
 public:
     // mapping qualities of ELAND reads, does not apply to GROUPER:
     MAPLEVEL::index_t genome_align_maplev;
 
 private:
-    bool _is_bam_record_genomic; // indicates that this was the original (and thus, complete) alignment before grouper.
     align_id_t _id;
     bam_record _read_rec;
     read_segment _full_read;

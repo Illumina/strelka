@@ -17,10 +17,18 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
+/// \author John Duddy
+
 #pragma once
 #include "gvcf_locus_info.hh"
 
 
+/// base class used for snv/indel processing pipeline from "raw" calls to gVCF
+/// output.
+///
+/// Design is based on passign site/indel_info ownership down the pipe via unique_ptr/move
+///
 class variant_pipe_stage_base
 {
 public:
@@ -32,8 +40,10 @@ public:
     {
         if (_sink) _sink->process(std::move(ii));
     }
-    virtual void flush()
+
+    void flush()
     {
+        flush_impl();
         if (_sink)
             _sink->flush();
     }
@@ -45,6 +55,8 @@ public:
 protected:
     variant_pipe_stage_base() : _sink(nullptr) {}
 
+    virtual void flush_impl() {}
+
     template <class TDerived, class TBase>
     static std::unique_ptr<TDerived> downcast(std::unique_ptr<TBase> basePtr)
     {
@@ -54,9 +66,6 @@ protected:
         }
         throw std::bad_cast();
     }
-
-
-
 
     std::shared_ptr<variant_pipe_stage_base> _sink;
 };

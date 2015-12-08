@@ -77,7 +77,7 @@ void variant_prefilter_stage::add_site_modifiers(
         smod.gq=si.dgt.poly.max_gt_qphred;
     }
 
-    model.clasify_site(si, smod);
+    model.classify_site(si, smod);
 }
 
 void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
@@ -113,7 +113,7 @@ void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
         auto si(downcast<continuous_site_info>(std::move(info)));
         for (auto& call : si->calls)
         {
-            _model.default_clasify_site(*si, call);
+            _model.default_classify_site(*si, call);
         }
 
         _sink->process(std::move(si));
@@ -138,7 +138,7 @@ void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
         auto ii(downcast<continuous_indel_info>(std::move(info)));
         for (auto& call : ii->calls)
         {
-            _model.default_clasify_indel(call);
+            _model.default_classify_indel(call);
         }
         _sink->process(std::move(ii));
     }

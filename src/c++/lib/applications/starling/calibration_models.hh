@@ -45,24 +45,24 @@ public:
     }
 
     void
-    clasify_site(
+    classify_site(
         const digt_site_info& si,
         digt_call_info& smod) const;
 
     void
-    clasify_indel(
+    classify_indel(
         const digt_indel_info& ii,
         digt_indel_call& call) const;
 
     void
-    clasify_indels(
+    classify_indels(
         std::vector<std::unique_ptr<digt_indel_info>>& indels) const;
 
     // mimics behavior of previous hard filters
-    void  default_clasify_site(const site_info& si,
+    void  default_classify_site(const site_info& si,
                                shared_call_info& call) const;
 
-    void default_clasify_indel(shared_indel_call_info& call) const;
+    void default_classify_indel(shared_indel_call_info& call) const;
 
 
     bool is_current_logistic() const;
@@ -79,8 +79,14 @@ private:
     c_model& get_model(const std::string& name);
     const c_model& get_model(const std::string& name) const;
 
-    bool can_use_model(const digt_indel_info& ii) const;
+    bool check_is_model_usable(const digt_indel_info& ii) const;
     void set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const;
+
+    void
+    classify_indel_impl(
+        const bool is_model_usable,
+        const digt_indel_info& ii,
+        digt_indel_call& call) const;
 
     // set options
     void set_model(const std::string& name);  // set the calibration model to use

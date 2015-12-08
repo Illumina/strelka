@@ -166,8 +166,6 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
     auto& call(first());
     auto& overlap_call(overlap.first());
 
-
-
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
     std::string leading_seq,trailing_seq;
@@ -191,7 +189,6 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
         ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
         const unsigned trail_len(indel_end_pos-this_call._ik.right_pos());
         ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
-
 
         this_call._iri.vcf_indel_seq = leading_seq + this_call._iri.vcf_indel_seq + trailing_seq;
 
