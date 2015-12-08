@@ -64,9 +64,6 @@ def main():
 
     args = parser.parse_args()
 
-    if not args.output.endswith(".json"):
-        args.output += ".json"
-
     model = vqsr.VQSRModel.create(args.model)
     model.load(args.clf)
     model.save(args.output)

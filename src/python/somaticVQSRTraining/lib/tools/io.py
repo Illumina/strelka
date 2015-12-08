@@ -79,7 +79,5 @@ def classifier_to_dict(clf):
 def write_classifier_json(clf, fn):
     """ Write classifier as JSON file """
     all_trees = classifier_to_dict(clf)
-    if not fn.endswith(".json"):
-        fn += ".json"
     with open(fn, 'w') as fid:
         json.dump(all_trees, fid)

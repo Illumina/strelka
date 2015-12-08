@@ -91,10 +91,11 @@ class StrelkaRF(VQSRModel):
 
     def save(self, filename):
         """ Save to file """
-        if filename.endswith(".json"):
-            io.write_classifier_json(self.clf, filename)
-        else:
-            io.write_classifier_pickle(self.clf, filename)
+        io.write_classifier_pickle(self.clf, filename)
+
+    def save_json(self, filename):
+        """ Save to json """
+        io.write_classifier_json(self.clf, filename)
 
     def load(self, filename):
         """ Load from file """
