@@ -33,7 +33,8 @@ sys.path.append(workflowDir)
 
 from configBuildTimeInfo import workflowVersion
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, checkTabixListOption
+from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, \
+                            checkTabixListOption, validateFixExistingFileArg
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
 from workflowUtil import ensureDir
@@ -54,14 +55,22 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         group.add_option("--normalBam", type="string",dest="normalBamList",metavar="FILE", action="append",
                          help="Normal sample BAM or CRAM file. [required] (no default)")
         group.add_option("--tumorBam","--tumourBam", type="string",dest="tumorBamList",metavar="FILE", action="append",
-                          help="Tumor sample BAM or CRAM file. [required] (no default)")
-        group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
-                          help="Noise vcf file (submit argument multiple times for more than one file)")
+                         help="Tumor sample BAM or CRAM file. [required] (no default)")
         group.add_option("--isWriteCallableRegion", action="store_true",
-                         help="Write out a bed file describing somatic callable regions of the genome")
+                         help="Write out a bed file describing somatic callable regions of thedupliates genome")
+        group.add_option("--enable-indel-empirical-scoring", action="store_true", dest="isStrelkaIndelEmpiricalScoring",
+                         help="Enable empirical filters for indels")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
+    def addExtendedGroupOptions(self,group) :
+        group.add_option("--variantScoringModelFile", type="string", dest="variantScoringModelFile", metavar="FILE",
+                         help="Provide a custom empirical scoring model (default: %default)")
+        group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
+                         help="Noise vcf file (submit argument multiple times for more than one file)")
+
+
+        StarkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
 
     def getOptionDefaults(self) :
 
@@ -77,7 +86,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
             'variantScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'indelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
             'indelErrorModelName': 'Binom',
-            'isWriteCallableRegion' : False
+            'isWriteCallableRegion' : False,
+            'noiseVcfList' : None
             })
         return defaults
 
@@ -91,6 +101,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         checkTabixListOption(options.noiseVcfList,"noise vcf")
 
+        options.variantScoringModelFile=validateFixExistingFileArg(options.variantScoringModelFile,"Somatic empirical scoring file")
 
 
     def validateOptionExistence(self,options) :

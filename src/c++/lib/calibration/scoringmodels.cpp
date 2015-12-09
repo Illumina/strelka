@@ -71,6 +71,9 @@ void scoring_models::init_default_models()
     // load previously hard-coded polynomial model
     IndelErrorModel oldModel = generate_old_indel_error_model();
     this->indel_models[oldModel.get_model_string()] = oldModel;
+
+    model_threshold = 0;
+    model_threshold_indel = 0;
 }
 
 double scoring_models::score_variant(const feature_type& features, const VARIATION_NODE_TYPE::index_t vtype) const
@@ -83,10 +86,27 @@ double scoring_models::score_variant(const feature_type& features, const VARIATI
         return error_prob_to_phred(score);
     case VARIATION_NODE_TYPE::INDEL:
         score = this->randomforest_model_indel.getProb(features);
-        return error_prob_to_phred(score);
+        // return plain score for indels because we use the threshold from the model file
+        // TODO make this consistent for indel and SNV
+        return score;
     default:
         assert(false && "Unknown variation node type in serializedModel.");
         return 0;
+    }
+}
+
+double scoring_models::score_threshold(
+        const VARIATION_NODE_TYPE::index_t vtype) const
+{
+    switch(vtype)
+    {
+        case VARIATION_NODE_TYPE::SNP:
+            return model_threshold;
+        case VARIATION_NODE_TYPE::INDEL:
+            return model_threshold_indel;
+        default:
+            assert(false && "Unknown variation node type in serializedModel.");
+            return 0;
     }
 }
 
@@ -171,9 +191,15 @@ void scoring_models::load_calibration_model(const Json::Value& data)
             RandomForestModel temp_model;
             temp_model.Deserialize(model);
             if (modelIndex==SNP)
-                this->randomforest_model = temp_model;
+            {
+                randomforest_model = temp_model;
+                model_threshold = model["FilterCutoff"].asDouble();
+            }
             else
-                this->randomforest_model_indel = temp_model;
+            {
+                randomforest_model_indel = temp_model;
+                model_threshold_indel = model["FilterCutoff"].asDouble();
+            }
         }
     }
 }

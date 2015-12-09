@@ -53,6 +53,9 @@ struct somatic_filter_options
 
     unsigned indelRegionFlankSize = 50;
     double minimumQscore = 2.35;
+
+    // TODO: STARKA-296 enable when ready
+    bool is_use_indel_empirical_scoring = false;
 };
 
 

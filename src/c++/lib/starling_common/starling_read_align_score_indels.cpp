@@ -757,7 +757,7 @@ score_indels(const starling_base_options& opt,
             const bool is_indel_present_on_max_path(max_cal_indels.count(eval_ik)!=0);
 
 #ifdef DEBUG_ALIGN
-            log_os << "VARMIT: final indel scan: " << ik;
+            log_os << "VARMIT: final indel scan: " << eval_ik;
             log_os << "VARMIT: is_present_on_max_path?: " << is_indel_present_on_max_path << "\n";
 #endif
 
@@ -868,8 +868,15 @@ score_indels(const starling_base_options& opt,
 
             // assemble basic score data:
             //
-            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read);
+            int readpos = max_cal.al.is_fwd_strand ? ((signed) (eval_ik.pos - max_cal.al.pos)) :
+                          ((signed) (read_length - eval_ik.pos + max_cal.al.pos - 1));
 
+#ifdef DEBUG_ALIGN
+            //            correct for strandedness
+            log_os << "indelpos: " << eval_ik.pos << " readpos: + " << rseg.genome_align().pos << " rp: " << readpos << "\n";
+#endif
+            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read,max_cal.al.is_fwd_strand,
+                                 (int16_t) readpos);
 
             // start adding alternate indel alleles, if present:
 
@@ -878,7 +885,7 @@ score_indels(const starling_base_options& opt,
                 const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,overlap_ik))));
 
 #ifdef DEBUG_ALIGN
-                log_os << "VARMIT: alternate_indel " << *k;
+                log_os << "VARMIT: alternate_indel " << overlap_ik;
 #endif
 
                 // TODO consider a way that the basic stores
@@ -918,8 +925,13 @@ score_indels(const starling_base_options& opt,
 #endif
             }
 
-
             id_ptr->read_path_lnp[rseg.id()] = rps;
+            id_ptr->n_mapq++;
+            id_ptr->cumm_mapq += rseg.map_qual();
+            if(rseg.map_qual() == 0)
+            {
+                id_ptr->n_mapq0++;
+            }
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: modified indel data: " << *(id_ptr);
