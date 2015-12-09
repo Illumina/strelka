@@ -194,17 +194,31 @@ calculateVQSRFeatures(
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::QSI_NT, rs.sindel_from_ntype_qphred);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
+
+    if (siInfo.iri.is_repeat_unit())
+    {
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IC, siInfo.iri.indel_repeat_count);
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RC, siInfo.iri.ref_repeat_count);
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RU_LEN, siInfo.iri.repeat_unit_length);
+    }
+    else
+    {
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IC, 0);
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RC, 0);
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RU_LEN, 0);
+    }
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IHP, siInfo.iri.ihpol);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::TNR, calculateTumorNoiseRate(siInfo.tisri[0]));
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::AFR, calculateAlleleFrequencyRate(siInfo.nisri[0], siInfo.tisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::LAR, calculateLogAltRatio(siInfo.nisri[0], siInfo.tisri[0]));
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::LOR, calculateLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));
 
-//    double meanChrDepth = 1;
-//    auto cd = dopt.sfilter.chrom_depth.find(opt.bam_seq_name);
-//    if(cd != dopt.sfilter.chrom_depth.end())
-//    {
-//        meanChrDepth = cd->second;
-//    }
+    // this is how we could get the mean chromosome depth here if we needed to.
+    //    double meanChrDepth = 1siInfo.iri.repeat_unit_length;
+    //    auto cd = dopt.sfilter.chrom_depth.find(opt.bam_seq_name);
+    //    if(cd != dopt.sfilter.chrom_depth.end())
+    //    {
+    //        meanChrDepth = cd->second;
+    //    }
 
 }
 

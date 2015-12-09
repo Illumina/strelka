@@ -105,9 +105,12 @@ struct STRELKA_INDEL_VQSR_FEATURES
         QSI_NT,
         ABS_T_RR,
         ABS_T_SOR,
+        IC,
+        IHP,
+        RC,
+        RU_LEN,
         TNR,
         AFR,
-        LAR,
         LOR,
         SIZE
     };
@@ -125,12 +128,18 @@ struct STRELKA_INDEL_VQSR_FEATURES
                 return "ABS_T_RR";
             case ABS_T_SOR:
                 return "ABS_T_SOR";
+            case IC:
+                return "IC";
+            case IHP:
+                return "IHP";
+            case RC:
+                return "RC";
+            case RU_LEN:
+                return "RU_LEN";
             case TNR:
                 return "TNR";
             case AFR:
                 return "AFR";
-            case LAR:
-                return "LAR";
             case LOR:
                 return "LOR";
             default:
