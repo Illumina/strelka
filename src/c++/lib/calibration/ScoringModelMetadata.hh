@@ -18,26 +18,29 @@
 //
 //
 /*
- * LogisticRegressionModel.cpp
  *
  *  Created on: Jun 23, 2015
- *      Author: mkallberg
+ *      Author: Morten Kallberg
  */
 
-#include <LogisticRegressionModel.hh>
+#pragma once
 
-LogisticRegressionModel::LogisticRegressionModel()
+#include "json/json.h"
+
+
+/// parse common meta-data format shared for all scoring models
+class ScoringModelMetadata
 {
-    // TODO Auto-generated constructor stub
+public:
+    ScoringModelMetadata() {}
 
-}
+    void Deserialize(const Json::Value& root);
 
-LogisticRegressionModel::~LogisticRegressionModel()
-{
-    // TODO Auto-generated destructor stub
-}
+    //std::string name;
+    //std::string version;
+    std::string date;
+    std::string ModelType;
+    double FilterCutoff;
+    // add feature sequence
+};
 
-void LogisticRegressionModel::Deserialize( const Json::Value& root)
-{
-    serialized_model::Deserialize(root);
-}

@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "calibration/SerializedModel.hh"
+#include "IndelModelMetadata.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "blt_util/blt_exception.hh"
@@ -36,16 +36,22 @@ static const unsigned max_tract_len(40);
 typedef std::pair<double,double> error_model[max_unit_len][max_tract_len];
 
 
-struct IndelErrorModel : public serialized_model
+struct IndelErrorModel
 {
     IndelErrorModel();
-    IndelErrorModel(std::string n, std::string v, std::string d,int motif, int tract):
+    IndelErrorModel(const std::string& n, const std::string& v, const std::string& d,int motif, int tract):
         MaxMotifLength (motif),
         MaxTractLength (tract)
     {
-        this->name 		= n;
-        this->version 	= v;
-        this->date 		= d;
+        _meta.name 		= n;
+        _meta.version 	= v;
+        _meta.date 		= d;
+    }
+
+    const std::string&
+    getName() const
+    {
+        return _meta.name;
     }
 
     void Deserialize(const Json::Value& root);
@@ -72,6 +78,8 @@ private:
     {
         return iri.repeat_unit_length * 2;
     }
+
+    IndelModelMetadata _meta;
 
 public:
     error_model model;

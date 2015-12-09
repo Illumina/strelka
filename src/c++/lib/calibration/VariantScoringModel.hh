@@ -25,6 +25,7 @@
 #pragma once
 
 #include "RandomForestModel.hh"
+#include "ScoringModelMetadata.hh"
 #include "VariantScoringModelTypes.hh"
 
 #include <iosfwd>
@@ -47,10 +48,10 @@ struct VariantScoringModel
 
     double scoreFilterThreshold() const
     {
-        return _scoreFilterThreshold;
+        return _meta.FilterCutoff;
     }
 
 private:
+    ScoringModelMetadata _meta;
     RandomForestModel _model;
-    double _scoreFilterThreshold;
 };

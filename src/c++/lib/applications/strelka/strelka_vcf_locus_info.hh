@@ -24,9 +24,8 @@
 
 #pragma once
 
+#include "calibration/VariantScoringModel.hh"
 #include "strelkaVQSRFeatures.hh"
-#include "calibration/SerializedModel.hh"
-
 #include <cassert>
 
 #include <bitset>

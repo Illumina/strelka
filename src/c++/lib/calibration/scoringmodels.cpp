@@ -65,11 +65,11 @@ void scoring_models::init_default_models()
 {
     // load previously hard-coded logistic regression model
     IndelErrorModel newModel = generate_new_indel_error_model();
-    this->indel_models[newModel.get_model_string()] = newModel;
+    this->indel_models[newModel.getName()] = newModel;
 
     // load previously hard-coded polynomial model
     IndelErrorModel oldModel = generate_old_indel_error_model();
-    this->indel_models[oldModel.get_model_string()] = oldModel;
+    this->indel_models[oldModel.getName()] = oldModel;
 }
 
 
@@ -135,7 +135,7 @@ void scoring_models::load_indel_model(const Json::Value& data)
 {
     IndelErrorModel tempModel;
     tempModel.Deserialize(data);
-    this->indel_models[tempModel.get_model_string()] = tempModel;
+    this->indel_models[tempModel.getName()] = tempModel;
 }
 
 

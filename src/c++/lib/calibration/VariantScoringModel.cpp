@@ -70,6 +70,6 @@ VariantScoringModel(
     Json::Value varmodel = callmodels[var_type];
     if (varmodel.isNull()) modelParseError(model_file,var_type);
 
+    _meta.Deserialize(varmodel);
     _model.Deserialize(varmodel);
-    _scoreFilterThreshold = varmodel["FilterCutoff"].asDouble();
 }

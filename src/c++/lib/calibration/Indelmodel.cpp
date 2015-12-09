@@ -115,8 +115,7 @@ IndelErrorModel::IndelErrorModel()
 // read in the json
 void IndelErrorModel::Deserialize(const Json::Value& root)
 {
-    serialized_model::Deserialize(root);
-
+    _meta.Deserialize(root);
     this->MaxMotifLength = root["MaxMotifLength"].asInt();
     this->MaxTractLength = root["MaxTractLength"].asInt();
     Json::Value jmodels = root["Model"];
