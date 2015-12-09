@@ -68,7 +68,7 @@ class StrelkaRF(VQSRModel):
         self.clf.fit(allrows[columns].values, allrows["tag"].values)
         
         # add audit trail into the model output:
-        self.columns = columns
+        self.clf.columns = columns
 
 
     def classify(self, instances, columns, *args, **kwargs):
@@ -105,15 +105,18 @@ class StrelkaRF(VQSRModel):
         import datetime
         import json
 
-        date = datetime.datetime.utcfromtimestamp(ts).isoformat()
+        date = datetime.datetime.utcnow().isoformat()
         meta = {
-                "CreationDate" : "%s" % (date),
-                "Features" : self.columns,
-                "ModelType" : "RandomForest"
+                "Date" : "%s" % (date),
+                "Features" : self.clf.columns,
+                "ModelType" : "RandomForest",
+                "FilterCutoff" : 0.5
                 }
         all_trees = io.classifier_to_dict(self.clf)
-        full_model = {"Meta" : meta, "Model" : all_trees }
-        modelFile = {"CalibrationModels" : {"Somatic" : { "SNV" : full_model }}
+        #full_model = {"Meta" : meta, "Model" : all_trees }
+        full_model = meta
+        full_model["Model"] = all_trees
+        modelFile = {"CalibrationModels" : {"somatic_rf" : { "SNP" : full_model }}}
         json.dump(modelFile, open(filename,"wb"))
 
     def load(self, filename):
