@@ -29,50 +29,50 @@
 
 namespace SCORING_CALL_TYPE
 {
-    enum index_t
-    {
-        SOMATIC,
-        SIZE
-    };
+enum index_t
+{
+    SOMATIC,
+    SIZE
+};
 
-    inline
-    const char*
-    get_label(const index_t i)
+inline
+const char*
+get_label(const index_t i)
+{
+    switch (i)
     {
-        switch (i)
-        {
-        case SOMATIC:
-            return "somatic_rf"; // Temporary, change this to SOMATIC
-        default:
-            assert(false && "Unknown scoring model call type.");
-            return nullptr;
-        }
+    case SOMATIC:
+        return "somatic_rf"; // Temporary, change this to SOMATIC
+    default:
+        assert(false && "Unknown scoring model call type.");
+        return nullptr;
     }
+}
 }
 
 
 namespace SCORING_VARIANT_TYPE
 {
-    enum index_t
-    {
-        SNV,
-        INDEL,
-        SIZE
-    };
+enum index_t
+{
+    SNV,
+    INDEL,
+    SIZE
+};
 
-    inline
-    const char*
-    get_label(const index_t i)
+inline
+const char*
+get_label(const index_t i)
+{
+    switch (i)
     {
-        switch (i)
-        {
-        case SNV:
-            return "SNP";
-        case INDEL:
-            return "INDEL";
-        default:
-            assert(false && "Unknown scoring model variant type.");
-            return nullptr;
-        }
+    case SNV:
+        return "SNP";
+    case INDEL:
+        return "INDEL";
+    default:
+        assert(false && "Unknown scoring model variant type.");
+        return nullptr;
     }
+}
 }

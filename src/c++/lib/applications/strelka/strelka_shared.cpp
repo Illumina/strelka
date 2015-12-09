@@ -62,20 +62,20 @@ strelka_deriv_options(
     if (opt.isUseSomaticVQSR())
     {
         somaticSnvScoringModel.reset(
-                new VariantScoringModel(
-                        opt.somatic_variant_scoring_models_filename,
-                        SCORING_CALL_TYPE::SOMATIC,
-                        SCORING_VARIANT_TYPE::SNV)
-                    );
+            new VariantScoringModel(
+                opt.somatic_variant_scoring_models_filename,
+                SCORING_CALL_TYPE::SOMATIC,
+                SCORING_VARIANT_TYPE::SNV)
+        );
 
         if (opt.sfilter.is_use_indel_empirical_scoring)
         {
             somaticIndelScoringModel.reset(
-                    new VariantScoringModel(
-                            opt.somatic_variant_scoring_models_filename,
-                            SCORING_CALL_TYPE::SOMATIC,
-                            SCORING_VARIANT_TYPE::INDEL)
-                        );
+                new VariantScoringModel(
+                    opt.somatic_variant_scoring_models_filename,
+                    SCORING_CALL_TYPE::SOMATIC,
+                    SCORING_VARIANT_TYPE::INDEL)
+            );
         }
     }
 

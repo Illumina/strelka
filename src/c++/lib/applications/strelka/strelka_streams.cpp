@@ -240,7 +240,7 @@ strelka_streams(
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
 
             const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
-            if(is_use_empirical_scoring)
+            if (is_use_empirical_scoring)
             {
                 fos << "##INFO=<ID=ESF,Number=" << STRELKA_INDEL_VQSR_FEATURES::SIZE << ",Type=Float,Description=\"Empirical scoring features.\">\n";
             }
@@ -260,12 +260,12 @@ strelka_streams(
             fos << "##FORMAT=<ID=RR,Number=1,Type=Float,Description=\"Read position ranksum for ALT allele in tier1 reads (U-statistic)\">\n";
             fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
 
-            if(is_use_empirical_scoring)
+            if (is_use_empirical_scoring)
             {
                 fos << "##vqsr_features=";
-                for(unsigned q = 0; q < STRELKA_INDEL_VQSR_FEATURES::SIZE; ++q)
+                for (unsigned q = 0; q < STRELKA_INDEL_VQSR_FEATURES::SIZE; ++q)
                 {
-                    if(q > 0)
+                    if (q > 0)
                     {
                         fos << ",";
                     }

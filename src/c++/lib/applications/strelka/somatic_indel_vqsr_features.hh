@@ -36,7 +36,7 @@
  */
 double
 calculateIndelAF(
-        const starling_indel_sample_report_info &isri
+    const starling_indel_sample_report_info& isri
 );
 
 /**
@@ -44,7 +44,7 @@ calculateIndelAF(
  */
 double
 calculateIndelOF(
-        const starling_indel_sample_report_info &isri
+    const starling_indel_sample_report_info& isri
 );
 
 /**
@@ -56,7 +56,7 @@ calculateIndelOF(
  */
 double
 calculateSOR(
-        const starling_indel_sample_report_info &isri
+    const starling_indel_sample_report_info& isri
 );
 
 /*
@@ -64,60 +64,60 @@ calculateSOR(
  * either REF or ALT counts are biased towards one particular strand)
  */
 double
-calculateFS(const starling_indel_sample_report_info & isri);
+calculateFS(const starling_indel_sample_report_info& isri);
 
 /**
  * Calculate the p-value using a binomial test for the null hypothesis that
  * the ALT allele occurs on a particular strand only.
  */
 double
-calculateBSA(const starling_indel_sample_report_info & isri);
+calculateBSA(const starling_indel_sample_report_info& isri);
 
 /**
  * Calculate base-calling noise from window average set
  */
 double
-calculateBCNoise(const win_avg_set & was);
+calculateBCNoise(const win_avg_set& was);
 
 /**
  * Calculate AFR feature (log ratio between T_AF and N_AF)
  */
 double
-calculateAlleleFrequencyRate(const starling_indel_sample_report_info &nisri,
-                             const starling_indel_sample_report_info &tisri
-);
+calculateAlleleFrequencyRate(const starling_indel_sample_report_info& nisri,
+                             const starling_indel_sample_report_info& tisri
+                            );
 
 /**
  * Calculate TNR feature (log ratio between T_AF and T_OF)
  */
 double
-calculateTumorNoiseRate(const starling_indel_sample_report_info &tisri);
+calculateTumorNoiseRate(const starling_indel_sample_report_info& tisri);
 
 /**
  * Calculate LAR feature (log ratio between #alt reads in tumor and #ref reads in normal)
  */
 double
-calculateLogAltRatio(const starling_indel_sample_report_info &nisri,
-                     const starling_indel_sample_report_info &tisri);
+calculateLogAltRatio(const starling_indel_sample_report_info& nisri,
+                     const starling_indel_sample_report_info& tisri);
 
 /**
  * Calculate LOR feature (log odds ratio for  T_REF T_ALT
  *                                            N_REF N_ALT)
  */
 double
-calculateLogOddsRatio(const starling_indel_sample_report_info &nisri,
-                      const starling_indel_sample_report_info &tisri);
+calculateLogOddsRatio(const starling_indel_sample_report_info& nisri,
+                      const starling_indel_sample_report_info& tisri);
 
 /**
  * Calculate VQSR features and add to smod
  */
 void
 calculateVQSRFeatures(
-        const SomaticIndelVcfInfo& siInfo,
-        const win_avg_set & n_was,
-        const win_avg_set & t_was,
-        const strelka_options & opt,
-        const strelka_deriv_options & dopt,
-        strelka_shared_modifiers_indel & smod
+    const SomaticIndelVcfInfo& siInfo,
+    const win_avg_set& n_was,
+    const win_avg_set& t_was,
+    const strelka_options& opt,
+    const strelka_deriv_options& dopt,
+    strelka_shared_modifiers_indel& smod
 );
 

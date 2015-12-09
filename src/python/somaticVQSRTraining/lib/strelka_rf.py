@@ -66,7 +66,7 @@ class StrelkaRF(VQSRModel):
 
         self.clf = RandomForestClassifier(**kwargs)
         self.clf.fit(allrows[columns].values, allrows["tag"].values)
-        
+
         # add audit trail into the model output:
         self.clf.columns = columns
 

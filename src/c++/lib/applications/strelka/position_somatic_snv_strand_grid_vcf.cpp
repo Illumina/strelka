@@ -336,9 +336,9 @@ write_vcf_somatic_snv_genotype_strand_grid(
             // TMP!!!! Emperically re-maps the RF Qscore to get a better calibration
             // See STARKA-257 github comment for more detail on this fit
             auto recal_somatic_snv_score = [](double& score)
-                {
-                    return 2.57*score+0.94;
-                };
+            {
+                return 2.57*score+0.94;
+            };
 
             smod.Qscore = recal_somatic_snv_score(smod.Qscore);
             smod.filters.reset();
