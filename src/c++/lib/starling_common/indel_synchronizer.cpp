@@ -35,7 +35,7 @@
 
 #include <iostream>
 #include <sstream>
-
+#include <vector>
 
 void
 indel_sync_data::
@@ -296,26 +296,89 @@ is_candidate_indel_impl(
 
 // set up a vector of vectors where the minimum number of alt reads needed for an indel in
 // the hpol length 1 category to exceed the p-value threshold specified in _opt can be found
-// at _min_hpol_one_cov[cov - 1][indel_size - 1]
+// at _min_hpol_one_{ins/del}_cov[cov - 1][indel_size - 1]
 void
 indel_synchronizer::
-precalc_max_hpol_one_cov(
+calc_max_hpol_one_cov(
         unsigned max_cov,
         unsigned max_indel_size)
 {
-    unsigned current_max_cov   = _min_hpol_one_cov.size();
-    unsigned current_max_indel = (_min_hpol_one_cov.empty() ? 0 : _min_hpol_one_cov[0].size());
-    _min_hpol_one_cov.resize(max_cov);
+    const IndelErrorModel indel_model = scoring_models::Instance().get_indel_model();
 
-    for(unsigned i = current_max_cov; i <= max_cov; ++i)
+    // _min_hpol_one_ins_cov and _min_hpol_one_del_cov have the same dimensions
+    unsigned current_max_cov   = _min_hpol_one_ins_cov.size();
+    _min_hpol_one_ins_cov.resize(max_cov);
+    _min_hpol_one_del_cov.resize(max_cov);
+
+    // error rates will remain the same, so just calculate them once
+    std::vector<indel_error_rates> error_rates;
+    for(unsigned i = 0; i < max_indel_size; ++i)
     {
-        _min_hpol_one_cov[i].resize(max_indel_size);
-        for(unsigned j = current_max_indel; j < max_indel_size; ++j)
+        error_rates.push_back(indel_model.calc_abstract_prop(1, 1, i + 1, true));
+    }
+
+    // if we're adding new indel sizes to the current lookup table, then we want to add 
+    // new values for all coverage levels, otherwise, we can start from the current max
+    // coverage.  Similarly, if we're adding higher coverage levels, but function requests
+    // an indel size smaller than the one supported for the previous coverage levels,
+    // set max_indel_size to the current max indel size instead of the specified max_indel_size
+    unsigned i_start = 0;
+    unsigned j_end = max_indel_size;
+    if(current_max_cov > 0)
+    {
+        i_start = _min_hpol_one_ins_cov[0].size() == max_indel_size ? current_max_cov : 0;
+        j_end   = _min_hpol_one_ins_cov[0].size() > max_indel_size ? _min_hpol_one_ins_cov[0].size() : max_indel_size;
+    }
+
+    // even in cases where statistically one read is sufficient to generate candidacy, require
+    // 2 reads or more (do we want to expose this in _opt or leave it hard-coded here?)
+    for(unsigned i = i_start; i < max_cov; ++i)
+    {
+        unsigned current_max_indel = (_min_hpol_one_ins_cov.empty() ? 0 : _min_hpol_one_ins_cov[i].size());
+        _min_hpol_one_ins_cov[i].resize(max_indel_size);
+        _min_hpol_one_del_cov[i].resize(max_indel_size);
+        for(unsigned j = current_max_indel; j < j_end; ++j)
         {
-            // error_rate = calc_prop();
-            // _min_hpol_one_cov[i] = min_count_binomial_gte_n_success_exact(_opt.tumor_min_hpol_pval, ref_error_prob,
-            //                                                                       n_indel_reads, n_total_reads);            
+            _min_hpol_one_ins_cov[i][j] = std::max((unsigned)
+                                                   min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
+                                                                                error_rates[j].insert_rate, i + 1),
+                                                   2U);
+            _min_hpol_one_del_cov[i][j] = std::max((unsigned)
+                                                   min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
+                                                                                error_rates[j].delete_rate, i + 1),
+                                                   2U);
         }
+    }
+}
+
+void
+indel_synchronizer::
+print_hpol_one_lookup() const
+{
+    unsigned max_cov        = _min_hpol_one_ins_cov.size();
+    if(max_cov == 0)
+    {
+        std::cerr << "Hpol one lookup table is empty" << std::endl;
+        return;
+    }
+    unsigned max_indel_size = _min_hpol_one_ins_cov[0].size();
+
+    std::cout << " \t";
+    for(unsigned i = 0; i < max_indel_size; ++i)
+    {
+        std::cout << i + 1 << "\t";
+    }
+    std::cout << std::endl;
+
+    for(unsigned i = 0; i < max_cov; ++i)
+    {
+        std::cout << i + 1 << "\t";
+        for(unsigned j = 0; j < max_indel_size; ++j)
+        {
+            std::cout << _min_hpol_one_ins_cov[i][j] << "," << _min_hpol_one_del_cov[i][j];
+            std::cout << "\t";
+        }
+        std::cout << std::endl;
     }
 }
 

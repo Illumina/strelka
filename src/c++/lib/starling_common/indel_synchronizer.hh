@@ -106,7 +106,7 @@ struct indel_synchronizer
         , _sample_order(0)
     {
         _isd.register_sample(ib,db,db2,init_sample_opt, max_candidate_depth,_sample_no);
-        precalc_max_hpol_one_cov(500,10);
+        calc_max_hpol_one_cov(500,10);
     }
 
     /// instantiate for multi-sample synced cases:
@@ -124,7 +124,7 @@ struct indel_synchronizer
         , _sample_no(sample_no)
         , _sample_order(_isd._idata.get_id(sample_no)) 
     {
-        precalc_max_hpol_one_cov(500, 10);
+        calc_max_hpol_one_cov(500,10);
     }
 
     indel_buffer&
@@ -180,6 +180,10 @@ struct indel_synchronizer
         return _sample_no;
     }
 
+    // debug min_hpol_one lookup tables
+    void
+    print_hpol_one_lookup() const;
+
 private:
 
     bool
@@ -197,7 +201,7 @@ private:
     // Pre-calculate minimum indel coverage thresholds for a large range of total coverage
     // to avoid repeated calls to Boost in indel candidacy
     void 
-    precalc_max_hpol_one_cov(
+    calc_max_hpol_one_cov(
         unsigned max_cov,
         unsigned max_indel_size);
 
@@ -256,7 +260,8 @@ private:
 
     indel_sync_data _isd;
 
-    std::vector<std::vector<unsigned>> _min_hpol_one_cov;
+    std::vector<std::vector<unsigned>> _min_hpol_one_ins_cov;
+    std::vector<std::vector<unsigned>> _min_hpol_one_del_cov;
 
     // this is the "external" id of the primary sample, it can be
     // considered as a map key

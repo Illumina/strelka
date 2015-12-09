@@ -78,6 +78,11 @@ struct IndelErrorModel : public serialized_model
                             indel_error_rates& error_rates,
                             bool use_length_dependence) const;
 
+    indel_error_rates calc_abstract_prop(unsigned repeat_unit_length,
+                            unsigned tract_length,
+                            unsigned indel_size,
+                            bool use_length_dependence) const;
+
     bool is_simple_tandem_repeat(const starling_indel_report_info& iri) const;
 
     unsigned get_max_motif_length() const

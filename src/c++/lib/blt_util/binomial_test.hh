@@ -95,6 +95,8 @@ is_reject_binomial_gte_n_success_exact(
     const unsigned n_success,
     const unsigned n_trials);
 
-
-
-
+double
+min_count_binomial_gte_exact(
+    const double alpha,
+    const double p,
+    const unsigned n_trials);

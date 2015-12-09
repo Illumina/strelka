@@ -245,11 +245,13 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
     // }
 }
 
-void IndelErrorModel::calc_abstract_prop(unsigned repeat_unit_length,
-                                unsigned tract_length,
-                                unsigned indel_size,
-                                indel_error_rates& error_rates,
-                                bool use_length_dependence) const
+void
+IndelErrorModel::
+calc_abstract_prop(unsigned repeat_unit_length,
+                   unsigned tract_length,
+                   unsigned indel_size,
+                   indel_error_rates& error_rates,
+                   bool use_length_dependence) const
 {
     // determine the tract length to use
     static const unsigned one(1);
@@ -278,6 +280,43 @@ void IndelErrorModel::calc_abstract_prop(unsigned repeat_unit_length,
                                   std::pow(error_rates.insert_rate, adj_indel_size));
     error_rates.delete_rate = std::max(model[0][0].delete_rate,
                                        std::pow(error_rates.delete_rate, adj_indel_size));
+}
+
+indel_error_rates
+IndelErrorModel::
+calc_abstract_prop(unsigned repeat_unit_length,
+                   unsigned tract_length,
+                   unsigned indel_size,
+                   bool use_length_dependence) const
+{
+    // determine the tract length to use
+    static const unsigned one(1);
+    const unsigned repeat_unit = std::min(std::max(repeat_unit_length,one), this->MaxMotifLength);
+
+    unsigned min_tract_length = get_min_tract_length(repeat_unit);
+    if (repeat_unit == 1)
+    {
+        min_tract_length = 1;
+    }
+
+    // if tract length is too short for repeat unit, set to shortest indel error rate for
+    // that repeat unit length
+    const unsigned adj_tract_length = std::min(repeat_unit*std::max(tract_length,min_tract_length),
+                                               this->MaxTractLength);
+
+    double adj_indel_size = one;
+    if (use_length_dependence)
+    {
+        adj_indel_size = indel_size;
+    }
+
+    indel_error_rates error_rates = model[repeat_unit - 1][adj_tract_length - 1];
+    error_rates.insert_rate = std::max(model[0][0].insert_rate,
+                                  std::pow(error_rates.insert_rate, adj_indel_size));
+    error_rates.delete_rate = std::max(model[0][0].delete_rate,
+                                       std::pow(error_rates.delete_rate, adj_indel_size));
+
+    return error_rates;
 }
 
 bool IndelErrorModel::is_simple_tandem_repeat(const starling_indel_report_info& iri) const
