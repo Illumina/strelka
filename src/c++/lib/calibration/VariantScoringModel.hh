@@ -18,23 +18,25 @@
 //
 //
 /*
- *  Created on: Aug 20, 2014
  *      Author: Morten Kallberg
  */
 
 #pragma once
 
 #include "RandomForestModel.hh"
-#include "ScoringModelMetadata.hh"
+#include "VariantScoringModelMetadata.hh"
 #include "VariantScoringModelTypes.hh"
 
-#include <iosfwd>
 
 
-
+/// client interface to variant scoring models specified by file at runtime
+///
 struct VariantScoringModel
 {
+    /// \param featureMap Names of features supported in the client code, each feature
+    ///                   name should be mapped to a feature index number.
     VariantScoringModel(
+        const featureMap_t& featureMap,
         const std::string& model_file,
         const SCORING_CALL_TYPE::index_t ctype,
         const SCORING_VARIANT_TYPE::index_t vtype);
@@ -52,6 +54,6 @@ struct VariantScoringModel
     }
 
 private:
-    ScoringModelMetadata _meta;
+    VariantScoringModelMetadata _meta;
     RandomForestModel _model;
 };

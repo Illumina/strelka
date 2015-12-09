@@ -18,12 +18,11 @@
 //
 //
 /*
- *
- *  Created on: Jun 23, 2015
  *      Author: mkallberg
  */
 
-#include "ScoringModelMetadata.hh"
+#include "VariantScoringModelMetadata.hh"
+#include "common/Exceptions.hh"
 
 #include <cassert>
 
@@ -37,6 +36,7 @@ enum index_t
     DATE,
     MODELTYPE,
     FILTERCUTOFF,
+    FEATURES,
     SIZE
 };
 
@@ -56,6 +56,8 @@ get_label(const index_t i)
         return "ModelType";
     case FILTERCUTOFF:
         return "FilterCutoff";
+    case FEATURES:
+        return "Features";
     default:
         assert(false && "Unknown serialized calibration model entry type");
         return nullptr;
@@ -90,15 +92,57 @@ Clean_string(const std::string& str)
 
 
 
-void ScoringModelMetadata::Deserialize(const Json::Value& root)
+static
+void
+featureMapError(
+    const featureMap_t& featureMap,
+    const std::string& fname)
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: Can't find requested scoring model feature '" << fname << "' in candidate feature map containing:\n";
+    for (const auto& val : featureMap)
+    {
+        oss << val.first << "\n";
+    }
+    oss << "\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+
+
+
+void
+VariantScoringModelMetadata::
+Deserialize(
+    const featureMap_t& featureMap,
+    const Json::Value& root)
 {
     using namespace SMODEL_ENTRY_TYPE;
 //    this->name      = Clean_string(root[get_label(NAME)].asString());
 //    this->version   = Clean_string(root[get_label(VERSION)].asString());
-    this->date      = Clean_string(root[get_label(DATE)].asString());
-    this->ModelType 		= root[get_label(MODELTYPE)].asString();
-    this->FilterCutoff		= root[get_label(FILTERCUTOFF)].asDouble();
+    date      = Clean_string(root[get_label(DATE)].asString());
+    ModelType 		= root[get_label(MODELTYPE)].asString();
+    FilterCutoff		= root[get_label(FILTERCUTOFF)].asDouble();
 
-    //TODO load feature list here
+    // read and validate features:
+    const Json::Value featureRoot = root[get_label(FEATURES)];
+    assert(!featureRoot.isNull());
+
+    const auto fend(featureMap.end());
+
+    unsigned expectedIndex=0;
+    for (const auto& val : featureRoot)
+    {
+        const std::string fname(val.asString());
+        const auto fiter(featureMap.find(fname));
+        if (fiter == fend)
+        {
+            featureMapError(featureMap,fname);
+        }
+        assert(expectedIndex == fiter->second);
+        expectedIndex++;
+    }
+    assert(expectedIndex == featureMap.size());
 }
 

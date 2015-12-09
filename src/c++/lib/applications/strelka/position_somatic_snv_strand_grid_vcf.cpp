@@ -90,7 +90,7 @@ set_VQSR_sample_info(
         }
 
         const double allele_freq(safeFrac(alt,ref+alt));
-        smod.set_feature(STRELKA_SNV_VQSR_FEATURES::TIER1_ALLELE_RATE,allele_freq);
+        smod.set_feature(STRELKA_SNV_VQSR_FEATURES::TIER1_ALT_RATE,allele_freq);
     }
 }
 
@@ -126,7 +126,7 @@ void
 calc_VQSR_features(
     const blt_options& opt,
     const strelka_deriv_options& dopt,
-    const somatic_snv_genotype_grid& sgt,
+    const somatic_snv_genotype_grid& /*sgt*/,
     strelka_shared_modifiers_snv& smod,
     const CleanedPileup& n1_cpi,
     const CleanedPileup& t1_cpi,
@@ -199,6 +199,7 @@ calc_VQSR_features(
     smod.set_feature(STRELKA_SNV_VQSR_FEATURES::altpos,altpos);
     smod.set_feature(STRELKA_SNV_VQSR_FEATURES::altmap,altmap);
 
+#if 0
     //Pnoise
     double pnoise(0);
     if (sgt.sn.total > 1 && sgt.sn.noise > 1)
@@ -214,6 +215,7 @@ calc_VQSR_features(
         pnoise2 = sgt.sn.n2frac();
     }
     smod.set_feature(STRELKA_SNV_VQSR_FEATURES::pnoise2,pnoise2);
+#endif
 }
 
 
@@ -348,7 +350,6 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
             if (smod.Qscore < opt.sfilter.minimumQscore)
                 smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
-
         }
     }
 
@@ -412,8 +413,10 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
         os << ";ReadPosRankSum=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::ReadPosRankSum);
         os << ";SNVSB=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::strandBias);
+#if 0
         os << ";PNOISE=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::pnoise);
         os << ";PNOISE2=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::pnoise2);
+#endif
 
         if (smod.isQscore)
         {

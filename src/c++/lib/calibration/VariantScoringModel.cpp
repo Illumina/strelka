@@ -18,14 +18,12 @@
 //
 //
 /*
- * scoringmodels.cpp
- *
- *  Created on: Aug 20, 2014
  *      Author: Morten Kallberg
  */
 
 #include "VariantScoringModel.hh"
-#include "blt_util/blt_exception.hh"
+#include "blt_util/log.hh"
+#include "common/Exceptions.hh"
 
 #include <fstream>
 #include <iostream>
@@ -39,15 +37,18 @@ modelParseError(
     const std::string& model_file,
     const std::string& key)
 {
+    using namespace illumina::common;
+
     std::ostringstream oss;
-    oss << "Can't find node '" << key << "' in scoring model file: '" << model_file << "'";
-    throw blt_exception(oss.str().c_str());
+    oss << "ERROR: Can't find node '" << key << "' in scoring model file: '" << model_file << "'";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
 }
 
 
 
 VariantScoringModel::
 VariantScoringModel(
+    const featureMap_t& featureMap,
     const std::string& model_file,
     const SCORING_CALL_TYPE::index_t ctype,
     const SCORING_VARIANT_TYPE::index_t vtype)
@@ -59,17 +60,37 @@ VariantScoringModel(
     }
 
     static const std::string model_type("CalibrationModels");
-    Json::Value models = root[model_type];
+    const Json::Value models = root[model_type];
     if (models.isNull()) modelParseError(model_file,model_type);
 
     const std::string call_type(SCORING_CALL_TYPE::get_label(ctype));
-    Json::Value callmodels = models[call_type];
+    const Json::Value callmodels = models[call_type];
     if (callmodels.isNull()) modelParseError(model_file,call_type);
 
     const std::string var_type(SCORING_VARIANT_TYPE::get_label(vtype));
-    Json::Value varmodel = callmodels[var_type];
+    const Json::Value varmodel = callmodels[var_type];
     if (varmodel.isNull()) modelParseError(model_file,var_type);
 
-    _meta.Deserialize(varmodel);
-    _model.Deserialize(varmodel);
+    try {
+        _meta.Deserialize(featureMap,varmodel);
+
+        // only one model type for now:
+        assert(_meta.ModelType == "RandomForest");
+        _model.Deserialize(varmodel);
+
+        if (_model.expectedFeatureCount() != featureMap.size())
+        {
+            using namespace illumina::common;
+
+            std::ostringstream oss;
+            oss << "ERROR: scoring model feature count: " << _model.expectedFeatureCount()
+                    << " does not match expected count " << featureMap.size();
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+    }
+    catch (...)
+    {
+        log_os << "Exception caught while attempting to parse scoring model file '" << model_file << "'\n";
+        throw;
+    }
 }

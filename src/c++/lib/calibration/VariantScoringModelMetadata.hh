@@ -18,8 +18,6 @@
 //
 //
 /*
- *
- *  Created on: Jun 23, 2015
  *      Author: Morten Kallberg
  */
 
@@ -27,20 +25,28 @@
 
 #include "json/json.h"
 
+#include <map>
+#include <string>
 
-/// parse common meta-data format shared for all scoring models
-class ScoringModelMetadata
+
+typedef std::map<std::string,unsigned> featureMap_t;
+
+
+/// parse common meta-data format shared for all variant scoring models
+///
+class VariantScoringModelMetadata
 {
 public:
-    ScoringModelMetadata() {}
+    VariantScoringModelMetadata() {}
 
-    void Deserialize(const Json::Value& root);
+    void Deserialize(
+        const featureMap_t& featureMap,
+        const Json::Value& root);
 
     //std::string name;
     //std::string version;
     std::string date;
     std::string ModelType;
     double FilterCutoff;
-    // add feature sequence
 };
 

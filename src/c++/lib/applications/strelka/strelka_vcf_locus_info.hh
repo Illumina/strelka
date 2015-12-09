@@ -25,11 +25,12 @@
 #pragma once
 
 #include "calibration/VariantScoringModel.hh"
-#include "strelkaVQSRFeatures.hh"
 #include <cassert>
 
 #include <bitset>
 #include <iosfwd>
+
+#include "strelkaVQSRFeatures.hh"
 
 
 namespace STRELKA_VCF_FILTERS
@@ -160,7 +161,6 @@ struct strelka_shared_modifiers
     }
 
     /** write features to INFO field */
-    inline
     void
     write_features(
         std::ostream& os) const

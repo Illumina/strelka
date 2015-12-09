@@ -307,6 +307,4 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
             "strandBias",
             "ReadPosRankSum",
             "altmap",
-            "altpos",
-            "pnoise",
-            "pnoise2"]
+            "altpos"]

@@ -23,7 +23,10 @@
 
 #pragma once
 
+#include "calibration/VariantScoringModel.hh"
+
 #include <cassert>
+
 
 struct STRELKA_SNV_VQSR_FEATURES
 {
@@ -39,20 +42,21 @@ struct STRELKA_SNV_VQSR_FEATURES
         N_SDP_RATE,
         T_SDP_RATE,
         N_DP_RATE,
-        TIER1_ALLELE_RATE,
+        TIER1_ALT_RATE,
         MQ,
         n_mapq0,
         strandBias,
         ReadPosRankSum,
         altmap,
         altpos,
+        SIZE
+#if 0
         pnoise,
         pnoise2,
-        SIZE
+#endif
     };
 
     static
-    inline
     const char*
     get_feature_label(const unsigned idx)
     {
@@ -70,8 +74,8 @@ struct STRELKA_SNV_VQSR_FEATURES
             return "T_SDP_RATE";
         case N_DP_RATE:
             return "N_DP_RATE";
-        case TIER1_ALLELE_RATE:
-            return "TIER1_ALLELE_RATE";
+        case TIER1_ALT_RATE:
+            return "TIER1_ALT_RATE";
         case MQ:
             return "MQ";
         case n_mapq0:
@@ -84,14 +88,37 @@ struct STRELKA_SNV_VQSR_FEATURES
             return "altmap";
         case altpos:
             return "altpos";
-        case pnoise:
-            return "pnoise";
-        case pnoise2:
-            return "pnoise2";
         default:
             assert(false && "Unknown feature");
             return nullptr;
         }
+#if 0
+        case pnoise:
+            return "pnoise";
+        case pnoise2:
+            return "pnoise2";
+#endif
+}
+
+    struct FeatureMapMaker
+    {
+        FeatureMapMaker()
+        {
+            for (unsigned i(0);i<SIZE;++i)
+            {
+                fmap.insert(std::make_pair(std::string(get_feature_label(i)),i));
+            }
+        }
+
+        featureMap_t fmap;
+    };
+
+    static
+    const featureMap_t&
+    getFeatureMap()
+    {
+        static const FeatureMapMaker fmm;
+        return fmm.fmap;
     }
 };
 
@@ -116,7 +143,6 @@ struct STRELKA_INDEL_VQSR_FEATURES
     };
 
     static
-    inline
     const char*
     get_feature_label(const unsigned idx)
     {
@@ -146,5 +172,27 @@ struct STRELKA_INDEL_VQSR_FEATURES
             assert(false && "Unknown feature");
             return nullptr;
         }
+    }
+
+    // duplicate this code with SNVs just to get things moving...
+    struct FeatureMapMaker
+    {
+        FeatureMapMaker()
+        {
+            for (unsigned i(0);i<SIZE;++i)
+            {
+                fmap.insert(std::make_pair(std::string(get_feature_label(i)),i));
+            }
+        }
+
+        featureMap_t fmap;
+    };
+
+    static
+    const featureMap_t&
+    getFeatureMap()
+    {
+        static const FeatureMapMaker fmm;
+        return fmm.fmap;
     }
 };
