@@ -422,14 +422,6 @@ get_denovo_snv_call(
         dmaker.calculate_result_set_grid2(sinfo, sampleLhood, trs);
     }
 
-//    if (! dsc.is_forced_output)
-//    {
-//        for (const auto& val : tier_rs)
-//        {
-//            if (val.dsnv_qphred==0) return;
-//        }
-//    }
-
     dsc.dsnv_tier=0;
     if (opt.tier2.is_tier2())
     {

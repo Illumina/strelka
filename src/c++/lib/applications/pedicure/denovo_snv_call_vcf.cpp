@@ -65,7 +65,7 @@ write_vcf_sample_info(
 
 	   // PL field
 	   os << ':'
-       << "1,2,3";
+       << dsc.get_pl(sampleIndex);
 }
 
 void

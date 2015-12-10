@@ -29,12 +29,11 @@
 #include "denovo_snv_caller.hh"
 #include "denovo_snv_call_vcf.hh"
 
-#include "blt_util/log.hh"
 #include "calibration/scoringmodels.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
-
+#include "blt_util/log.hh"
 
 
 pedicure_pos_processor::
@@ -162,10 +161,10 @@ process_pos_snp_denovo(const pos_t pos)
     if (dsc.is_output())
     {
 
-    	std::ostream& bos(*_streams.denovo_osptr());
+//    	std::ostream& bos(*_streams.denovo_osptr());
 
     	//For debugging write to std::out
-//    	std::ostream& bos(std::cout);
+    	std::ostream& bos(std::cout);
 
         bos << _chrom_name << '\t'
             << output_pos << '\t'
