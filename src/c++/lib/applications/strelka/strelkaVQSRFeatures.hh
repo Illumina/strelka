@@ -93,18 +93,18 @@ struct STRELKA_SNV_VQSR_FEATURES
             return nullptr;
         }
 #if 0
-        case pnoise:
-            return "pnoise";
-        case pnoise2:
-            return "pnoise2";
+    case pnoise:
+        return "pnoise";
+    case pnoise2:
+        return "pnoise2";
 #endif
-}
+    }
 
     struct FeatureMapMaker
     {
         FeatureMapMaker()
         {
-            for (unsigned i(0);i<SIZE;++i)
+            for (unsigned i(0); i<SIZE; ++i)
             {
                 fmap.insert(std::make_pair(std::string(get_feature_label(i)),i));
             }
@@ -179,7 +179,7 @@ struct STRELKA_INDEL_VQSR_FEATURES
     {
         FeatureMapMaker()
         {
-            for (unsigned i(0);i<SIZE;++i)
+            for (unsigned i(0); i<SIZE; ++i)
             {
                 fmap.insert(std::make_pair(std::string(get_feature_label(i)),i));
             }

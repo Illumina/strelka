@@ -71,7 +71,8 @@ VariantScoringModel(
     const Json::Value varmodel = callmodels[var_type];
     if (varmodel.isNull()) modelParseError(model_file,var_type);
 
-    try {
+    try
+    {
         _meta.Deserialize(featureMap,varmodel);
 
         // only one model type for now:
@@ -84,7 +85,7 @@ VariantScoringModel(
 
             std::ostringstream oss;
             oss << "ERROR: scoring model feature count: " << _model.expectedFeatureCount()
-                    << " does not match expected count " << featureMap.size();
+                << " does not match expected count " << featureMap.size();
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
     }
