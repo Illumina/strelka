@@ -55,7 +55,9 @@ register_sample(
     _idata.insert(sample_no,indel_sample_data(ib,db,db2,sample_opt,max_depth));
 }
 
-
+constexpr const double
+indel_synchronizer::
+_min_hpol_one_indel_cov_by_np[17][3];
 
 bool
 indel_synchronizer::
@@ -79,7 +81,6 @@ insert_indel(const indel_observation& obs)
 }
 
 
-
 bool
 indel_synchronizer::
 is_candidate_indel_impl_test(
@@ -95,23 +96,89 @@ is_candidate_indel_impl_test(
     }
 
     // have we already tested if the indel is much more likely to be noise than sample variation?
-    // bool is_indel_noise_checked(false);
+    bool is_indel_noise_checked(false);
+    bool is_pass_indel_noise_check(false);
 
-    //////////////////////////////////////
-    // if candidate is in an STR that we have
-    // indel error estimates for,
-    // test against the appropriate error model
-    //
+    const IndelErrorModel indel_model = scoring_models::Instance().get_indel_model();
+
+    // since we don't use indel size to calculate error rates at the moment in candidcacy
+    // we can retrieve this value once
+    static const indel_error_rates hpol_one_error_rates = indel_model.calc_abstract_prop(1, 1, 1, false);
+
+
+    starling_indel_report_info iri;
+    get_starling_indel_report_info(ik,id,_ref,iri);
+
     {
-        starling_indel_report_info iri;
-        get_starling_indel_report_info(ik,id,_ref,iri);
-
-        const IndelErrorModel indel_model = scoring_models::Instance().get_indel_model();
-
-        // check to see if indel meets STR criteria
-        // if (indel_model.is_simple_tandem_repeat(iri))
+        // HPOL ONE CASE
+        // we're only testing against the reference error rate here
+        // in hpol one cases, we need to establish a few things:
+        // 1. reference tract length is 0 or 1
+        // 2. indel error rate
+        // 3. total coverage
+        if(iri.ref_repeat_count <= 1 && (ik.type == INDEL::INSERT || ik.type == INDEL::DELETE))
         {
-            // is_indel_noise_checked=true;
+            is_indel_noise_checked = true;
+
+            for (unsigned i(0); i<isds; ++i)
+            {
+                const unsigned n_indel_reads = idsp[i]->all_read_ids.size();
+                unsigned n_total_reads = ebuff(i).val(ik.pos-1);
+                n_total_reads = std::max(n_total_reads,n_indel_reads);
+
+                if(n_total_reads == 0)
+                {
+                    continue;
+                }
+
+                unsigned min_candidate_cov = 0;
+                // test to see if the observed indel coverage exceeds the minimum value
+                // for the rejection threshold.
+                if     (ik.type == INDEL::INSERT)
+                {
+                    min_candidate_cov = get_min_candidate_cov(n_total_reads * hpol_one_error_rates.insert_rate);
+                    if(min_candidate_cov == 0)
+                    {
+                        std::cout << "min_candidate_cov returned 0" << std::endl;
+                        min_candidate_cov = std::max((unsigned)
+                                                     min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
+                                                                                  hpol_one_error_rates.insert_rate,
+                                                                                  n_total_reads),
+                                                   2U);
+                    }
+                }
+                else if(ik.type == INDEL::DELETE)
+                {
+                    min_candidate_cov = get_min_candidate_cov(n_total_reads * hpol_one_error_rates.delete_rate);
+                    if(min_candidate_cov == 0)
+                    {
+                        std::cout << "min_candidate_cov returned 0" << std::endl;
+                        min_candidate_cov = std::max((unsigned)
+                                                     min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
+                                                                                  hpol_one_error_rates.delete_rate,
+                                                                                  n_total_reads),
+                                                   2U);
+                    }
+                }
+
+                is_pass_indel_noise_check=(n_indel_reads >= min_candidate_cov);
+                // if any sample passes the noise check, the indel is a candidate
+                if (is_pass_indel_noise_check)
+                {
+                    break;
+                }
+            }
+
+            if (! is_pass_indel_noise_check) return false;
+        }
+    }
+
+    // NON-HPOL ONE CASE
+    {
+        // check broader STR criteria for non-hpol one
+        if (!is_indel_noise_checked)
+        {
+            is_indel_noise_checked=true;
             bool use_length_dependence=false;
 
             double ref_error_prob(0.);
@@ -124,8 +191,6 @@ is_candidate_indel_impl_test(
 
             // need to undo the reference-error bias term that is used to reduce overcalls
             ref_error_prob /= _opt.indel_ref_error_factor;
-
-            bool is_pass_indel_noise_check(false);
 
             for (unsigned i(0); i<isds; ++i)
             {
@@ -156,79 +221,6 @@ is_candidate_indel_impl_test(
             if (! is_pass_indel_noise_check) return false;
         }
     }
-
-
-    // if (! is_indel_noise_checked)
-    // {
-    //     //////////////////////////////////////
-    //     // test against min read count:
-    //     //
-    //     {
-    //         bool is_min_count(false);
-
-    //         int n_total_reads(0);
-    //         for (unsigned i(0); i<isds; ++i)
-    //         {
-    //             const int n_reads(idsp[i]->all_read_ids.size());
-
-    //             // do the candidate reads exceed the (possibly lower than
-    //             // default) sample specific threshold?:
-    //             if (n_reads >= sample_opt(i).min_candidate_indel_reads)
-    //             {
-    //                 is_min_count=true;
-    //                 break;
-    //             }
-    //             n_total_reads += n_reads;
-    //         }
-
-    //         // do reads from all samples exceed the default threshold?:
-    //         if (n_total_reads >= _opt.default_min_candidate_indel_reads) is_min_count=true;
-
-    //         if (! is_min_count) return false;
-    //     }
-
-    //     //////////////////////////////////////
-    //     // test against min read frac:
-    //     //
-    //     {
-    //         bool is_min_frac(false);
-
-    //         double min_large_indel_frac(_opt.min_candidate_indel_read_frac);
-    //         const bool is_small_indel(static_cast<int>(std::max(ik.length,ik.swap_dlength)) <= _opt.max_small_candidate_indel_size);
-
-
-    //         for (unsigned i(0); i<isds; ++i)
-    //         {
-    //             // this value is used to get around type-mismatch error in
-    //             // std::max() when used below
-    //             static const unsigned one(1);
-
-    //             // note estdepth is based on genomic reads only, so
-    //             // readfrac can be > 1:
-    //             //
-    //             const unsigned n_reads(idsp[i]->all_read_ids.size());
-    //             const unsigned estdepth(std::max(one,ebuff(i).val(ik.pos-1)));
-    //             const double readfrac(static_cast<double>(n_reads)/static_cast<double>(estdepth));
-
-    //             double min_indel_frac(min_large_indel_frac);
-    //             if (is_small_indel)
-    //             {
-    //                 min_indel_frac=std::max(min_indel_frac,sample_opt(i).min_small_candidate_indel_read_frac);
-    //             }
-    
-    //             // min_frac threshold only needs to pass in one sample to
-    //             // be a candidate in all synchronized samples:
-    //             if (readfrac >= min_indel_frac)
-    //             {
-    //                 is_min_frac=true;
-    //                 break;
-    //             }
-    //         }
-
-
-    //         if (! is_min_frac) return false;
-    //     }
-    // }
 
     /////////////////////////////////////////
     // test against short open-ended segments:
@@ -290,95 +282,6 @@ is_candidate_indel_impl(
     {
         idsp[i]->status.is_candidate_indel=is_candidate;
         idsp[i]->status.is_candidate_indel_cached=true;
-    }
-}
-
-
-// set up a vector of vectors where the minimum number of alt reads needed for an indel in
-// the hpol length 1 category to exceed the p-value threshold specified in _opt can be found
-// at _min_hpol_one_{ins/del}_cov[cov - 1][indel_size - 1]
-void
-indel_synchronizer::
-calc_max_hpol_one_cov(
-        unsigned max_cov,
-        unsigned max_indel_size)
-{
-    const IndelErrorModel indel_model = scoring_models::Instance().get_indel_model();
-
-    // _min_hpol_one_ins_cov and _min_hpol_one_del_cov have the same dimensions
-    unsigned current_max_cov   = _min_hpol_one_ins_cov.size();
-    _min_hpol_one_ins_cov.resize(max_cov);
-    _min_hpol_one_del_cov.resize(max_cov);
-
-    // error rates will remain the same, so just calculate them once
-    std::vector<indel_error_rates> error_rates;
-    for(unsigned i = 0; i < max_indel_size; ++i)
-    {
-        error_rates.push_back(indel_model.calc_abstract_prop(1, 1, i + 1, true));
-    }
-
-    // if we're adding new indel sizes to the current lookup table, then we want to add 
-    // new values for all coverage levels, otherwise, we can start from the current max
-    // coverage.  Similarly, if we're adding higher coverage levels, but function requests
-    // an indel size smaller than the one supported for the previous coverage levels,
-    // set max_indel_size to the current max indel size instead of the specified max_indel_size
-    unsigned i_start = 0;
-    unsigned j_end = max_indel_size;
-    if(current_max_cov > 0)
-    {
-        i_start = _min_hpol_one_ins_cov[0].size() == max_indel_size ? current_max_cov : 0;
-        j_end   = _min_hpol_one_ins_cov[0].size() > max_indel_size ? _min_hpol_one_ins_cov[0].size() : max_indel_size;
-    }
-
-    // even in cases where statistically one read is sufficient to generate candidacy, require
-    // 2 reads or more (do we want to expose this in _opt or leave it hard-coded here?)
-    for(unsigned i = i_start; i < max_cov; ++i)
-    {
-        unsigned current_max_indel = (_min_hpol_one_ins_cov.empty() ? 0 : _min_hpol_one_ins_cov[i].size());
-        _min_hpol_one_ins_cov[i].resize(max_indel_size);
-        _min_hpol_one_del_cov[i].resize(max_indel_size);
-        for(unsigned j = current_max_indel; j < j_end; ++j)
-        {
-            _min_hpol_one_ins_cov[i][j] = std::max((unsigned)
-                                                   min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
-                                                                                error_rates[j].insert_rate, i + 1),
-                                                   2U);
-            _min_hpol_one_del_cov[i][j] = std::max((unsigned)
-                                                   min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
-                                                                                error_rates[j].delete_rate, i + 1),
-                                                   2U);
-        }
-    }
-}
-
-void
-indel_synchronizer::
-print_hpol_one_lookup() const
-{
-    unsigned max_cov        = _min_hpol_one_ins_cov.size();
-    if(max_cov == 0)
-    {
-        std::cerr << "Hpol one lookup table is empty" << std::endl;
-        return;
-    }
-    unsigned max_indel_size = _min_hpol_one_ins_cov[0].size();
-
-    std::cout << " \t";
-    for(unsigned i = 0; i < max_indel_size; ++i)
-    {
-        std::cout << i + 1 << "\t";
-    }
-    std::cout << std::endl;
-
-    for(unsigned i = 0; i < max_cov; ++i)
-    {
-        std::cout << i + 1 << "\t";
-        for(unsigned j = 0; j < max_indel_size; ++j)
-        {
-            std::cout << _min_hpol_one_ins_cov[i][j] << "," << _min_hpol_one_del_cov[i][j];
-            std::cout << "\t";
-        }
-        std::cout << std::endl;
     }
 }
 

@@ -106,7 +106,6 @@ struct indel_synchronizer
         , _sample_order(0)
     {
         _isd.register_sample(ib,db,db2,init_sample_opt, max_candidate_depth,_sample_no);
-        calc_max_hpol_one_cov(500,10);
     }
 
     /// instantiate for multi-sample synced cases:
@@ -122,10 +121,7 @@ struct indel_synchronizer
         , _ref(ref)
         , _isd(isd)
         , _sample_no(sample_no)
-        , _sample_order(_isd._idata.get_id(sample_no)) 
-    {
-        calc_max_hpol_one_cov(500,10);
-    }
+        , _sample_order(_isd._idata.get_id(sample_no)) {}
 
     indel_buffer&
     ibuff()
@@ -180,10 +176,6 @@ struct indel_synchronizer
         return _sample_no;
     }
 
-    // debug min_hpol_one lookup tables
-    void
-    print_hpol_one_lookup() const;
-
 private:
 
     bool
@@ -197,13 +189,6 @@ private:
     is_candidate_indel_impl(
         const indel_key& ik,
         const indel_data& id) const;
-
-    // Pre-calculate minimum indel coverage thresholds for a large range of total coverage
-    // to avoid repeated calls to Boost in indel candidacy
-    void 
-    calc_max_hpol_one_cov(
-        unsigned max_cov,
-        unsigned max_indel_size);
 
     indel_buffer&
     ibuff(const unsigned s)
@@ -260,8 +245,76 @@ private:
 
     indel_sync_data _isd;
 
-    std::vector<std::vector<unsigned>> _min_hpol_one_ins_cov;
-    std::vector<std::vector<unsigned>> _min_hpol_one_del_cov;
+    // Rather than calculate p-values explicitly in the hpol one case
+    // from a binomial distribution, or use a lookup table for total cov
+    // x indel size, we can leverage the fact the n * p ~ n * p * (1 - p)
+    // for our current indel error rates and use a Poisson approximation
+    // to the binomial distribution.   This will not work when p is large
+    // relative to n (i.e. high error rates--in a typical 30x dataset, error
+    // rates would have to be around 10%, we're currently observing error rates
+    // around 5e-6 - 2e-5.  This lookup table provides the minimum coverage
+    // given an error rate p and coverage n when for a p-value of 1e-9.
+    // We could calculate this dynamically in a small piece of code while we
+    // do refCoverage, etc. for an arbitrary p-value, but this should do for now.
+
+    /* Generated from the following code in R
+    *   require(plyr)
+
+    *   min_success_enum <- data.frame(min_success = qpois(1e-9, lambda = seq(1e-6, 3, 1e-6), 
+    *                                                      lower.tail = FALSE),
+    *                                  np = seq(1e-6, 3, 1e-6))
+    *   min_success_enum$min_success[min_success_enum$min_success < 2] <- 2
+
+    *   min_success_ranges <- ddply(min_success_enum, .(min_success), summarize, 
+    *                               min_success = unique(min_success),
+    *                               min_np = min(np),
+    *                               max_np = max(np))
+    *   min_success_ranges$min_np <- min_success_ranges$min_np - 1e-6
+
+    *   cat(apply(min_success_ranges, 1, function(x) sprintf("{%6d, %.6f, %.6f},",
+    *                                             x["min_success"],
+    *                                             x["min_np"], x["max_np"])),
+    *       sep = "\n")
+
+    */
+    // min success min_np    max_np
+    static constexpr const double _min_hpol_one_indel_cov_by_np[17][3] = {
+        {     2, 0.000000, 0.001817},
+        {     3, 0.001817, 0.012477},
+        {     4, 0.012477, 0.041576},
+        {     5, 0.041576, 0.095978},
+        {     6, 0.095978, 0.179024},
+        {     7, 0.179024, 0.291566},
+        {     8, 0.291566, 0.433032},
+        {     9, 0.433032, 0.602135},
+        {    10, 0.602135, 0.797280},
+        {    11, 0.797280, 1.016790},
+        {    12, 1.016790, 1.259019},
+        {    13, 1.259019, 1.522411},
+        {    14, 1.522411, 1.805519},
+        {    15, 1.805519, 2.107018},
+        {    16, 2.107018, 2.425694},
+        {    17, 2.425694, 2.760443},
+        {    18, 2.760443, 3.000000}
+    };
+
+    static constexpr const unsigned _min_hpol_one_indel_cov_rows = 17;
+
+
+    unsigned get_min_candidate_cov(double np) const
+    {
+        // this should be faster than a binary interval search since
+        // we almost always expect n * p to be on the low side
+        // (i.e. np < 0.01)
+        for(unsigned i = 0; i < _min_hpol_one_indel_cov_rows; ++i)
+        {
+            if(np <= _min_hpol_one_indel_cov_by_np[i][2])
+            {
+                return (unsigned )_min_hpol_one_indel_cov_by_np[i][0];
+            }
+        }
+        return 0U;
+    }
 
     // this is the "external" id of the primary sample, it can be
     // considered as a map key
