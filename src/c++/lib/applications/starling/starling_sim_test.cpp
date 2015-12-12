@@ -27,10 +27,7 @@
 ///
 
 
-#include "position_somatic_snv_strand_grid.hh"
-#include "strelka_pile_test_run.hh"
-#include "strelka_sim_test.hh"
-
+#include "starling_pile_test_run.hh"
 #include "blt_util/istream_line_splitter.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/seq_util.hh"
@@ -50,7 +47,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "StrelkaSampleSetSummary.hh"
+#include "starling_sim_test.hh"
 
 
 typedef boost::mt19937 gen_t;
@@ -211,23 +208,40 @@ private:
 
 static
 void
-sim_sample_pi(vgen_t& cov_gen,
-              const qval_distro& qdist,
-              const uint8_t ref_id,
-              const uint8_t alt_id,
-              const float alt_freq,
-              snp_pos_info& pi)
+sim_sample_pi(
+    const starling_site_sim_options& sim_opt,
+    vgen_t& cov_gen,
+    const qval_distro& qdist,
+    const uint8_t ref_id,
+    const uint8_t alt_id,
+    const float alt_freq,
+    snp_pos_info& pi)
 {
-    const unsigned all_cov(cov_gen());
+    unsigned all_cov(sim_opt.coverage);
+    if(! sim_opt.is_exact_cov)
+    {
+        all_cov = cov_gen();
+    }
+
+#if 0
     const unsigned fwd_cov(get_binom(all_cov,0.5));
     const unsigned rev_cov(all_cov-fwd_cov);
+#endif
 
+#if 0
     unsigned fwd_alt(0);
     unsigned rev_alt(0);
     if (alt_freq > 0)
     {
         fwd_alt=get_binom(fwd_cov,alt_freq);
         rev_alt=get_binom(rev_cov,alt_freq);
+    }
+#endif
+
+    unsigned n_alt(0);
+    if (alt_freq > 0)
+    {
+        n_alt=get_binom(all_cov,alt_freq);
     }
 
     pi.clear();
@@ -238,13 +252,17 @@ sim_sample_pi(vgen_t& cov_gen,
         const uint8_t qval(qdist.get());
 
         uint8_t true_id(ref_id);
+#if 0
         if ( (i < fwd_alt) || ((i >= fwd_cov) && (i < (fwd_cov+rev_alt))))
+#endif
+
+        if (i < n_alt)
         {
             true_id=alt_id;
         }
 
         const uint8_t obs_id(get_obs_base_id(true_id,qval));
-        const bool is_fwd(i < fwd_cov);
+        const bool is_fwd(true);
         pi.calls.push_back(base_call(obs_id,qval,is_fwd,
                                      1,1,false,false,false,false,false));
     }
@@ -252,16 +270,14 @@ sim_sample_pi(vgen_t& cov_gen,
 
 
 
-// completely self-contained version of pile simulator:
-//
 void
-strelka_site_sim(strelka_options& opt,
-                 strelka_site_sim_options& sim_opt)
+starling_site_sim(
+    starling_options& opt,
+    starling_site_sim_options& sim_opt)
 {
     gen.seed(sim_opt.seed);
 
-    snp_pos_info norm_pi;
-    snp_pos_info tumor_pi;
+    snp_pos_info pi;
 
     std::unique_ptr<qval_distro> qdistptr;
     if (sim_opt.qval_file.empty())
@@ -273,10 +289,8 @@ strelka_site_sim(strelka_options& opt,
         qdistptr.reset(new qval_distro(sim_opt.qval_file.c_str()));
     }
 
-    dist_t ndist(sim_opt.ncov);
-    dist_t tdist(sim_opt.tcov);
-    vgen_t ngen(gen,ndist);
-    vgen_t tgen(gen,tdist);
+    dist_t cov_dist(sim_opt.coverage);
+    vgen_t cov_gen(gen,cov_dist);
 
     static const uint8_t ref_id(0);
 
@@ -288,29 +302,19 @@ strelka_site_sim(strelka_options& opt,
         ofs.open(sim_opt.oracle_file.c_str());
     }
 
-    strelka_pile_caller scall(opt,std::cout);
+    starling_pile_caller scall(opt,std::cout);
 
     for (unsigned i(0); i<sim_opt.total_sites; ++i)
     {
         const unsigned pos(i+1);
 
         uint8_t nalt_id(ref_id);
-        uint8_t talt_id(ref_id);
         float nalt_freq(0.);
-        float talt_freq(0.);
 
         // test for alternate states
         if (sim_opt.mode == SIM_RANDOM)
         {
-            if (uran() < opt.shared_site_error_rate)
-            {
-                sim_opt.mode=SIM_NOISE;
-            }
-            else if (uran() < sim_opt.ssnv_prior)
-            {
-                sim_opt.mode=SIM_SOMATIC;
-            }
-            else if (uran() < opt.bsnp_diploid_theta)
+            if (uran() < opt.bsnp_diploid_theta)
             {
                 sim_opt.mode=SIM_GERMLINE;
             }
@@ -320,53 +324,26 @@ strelka_site_sim(strelka_options& opt,
             }
         }
 
-        //bool is_nonref(false);
-        if (sim_opt.mode == SIM_NOISE)
+        if (sim_opt.mode == SIM_GERMLINE)
         {
-            nalt_id=get_mut_base_id(nalt_id);
-            talt_id=nalt_id;
-            nalt_freq=uran();
-            talt_freq=nalt_freq;
-
-            if (is_ofs) ofs << pos << "\tNOISE\t" << nalt_freq << "\n";
-            //is_nonref=true;
-
-        }
-        else if (sim_opt.mode == SIM_SOMATIC)
-        {
-            nalt_id=get_mut_base_id(nalt_id);
-            nalt_freq=0.5*(1-sim_opt.normal_purity);
-
-            talt_id=nalt_id;
-            talt_freq=0.5*sim_opt.tumor_purity;
-
-            if (is_ofs) ofs << pos << "\tSOMATIC\t" << talt_freq << "\n";
-            //is_nonref=true;
-
-        }
-        else if (sim_opt.mode == SIM_GERMLINE)
-        {
-            nalt_id=get_mut_base_id(nalt_id);
-            talt_id=nalt_id;
-
-            static const double one_third(1./3.);
-            if (uran() <= one_third)
+            nalt_id=1;
+//            nalt_id=get_mut_base_id(nalt_id);
+            nalt_freq=0.5;
+            if (! sim_opt.is_het_only)
             {
-                nalt_freq=1.;
+                static const double one_third(1./3.);
+                if (uran() <= one_third)
+                {
+                    nalt_freq=1.;
+                }
             }
-            else
-            {
-                nalt_freq=0.5;
-            }
-            talt_freq=nalt_freq;
 
             if (is_ofs) ofs << pos << "\tGERMLINE\t" << nalt_freq << "\n";
-            //is_nonref=true;
         }
 
-        sim_sample_pi(ngen,*qdistptr,ref_id,nalt_id,nalt_freq,norm_pi);
-        sim_sample_pi(tgen,*qdistptr,ref_id,talt_id,talt_freq,tumor_pi);
+        sim_sample_pi(sim_opt,cov_gen,*qdistptr,ref_id,nalt_id,nalt_freq,pi);
 
-        scall.call(sim_opt.is_somatic_gvcf,i+1,norm_pi,tumor_pi);
+        scall.call(i+1,pi);
+        std::cout << " alt: " << id_to_base(nalt_id) << " alt_freq: " << nalt_freq << "\n";
     }
 }
