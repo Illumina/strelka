@@ -109,6 +109,9 @@ is_candidate_indel_impl_test(
     starling_indel_report_info iri;
     get_starling_indel_report_info(ik,id,_ref,iri);
 
+    bool is_indel(ik.type == INDEL::INSERT || ik.type == INDEL::DELETE);
+
+    if(is_indel)
     {
         // HPOL ONE CASE
         // we're only testing against the reference error rate here
@@ -116,7 +119,7 @@ is_candidate_indel_impl_test(
         // 1. reference tract length is 0 or 1
         // 2. indel error rate
         // 3. total coverage
-        if(iri.ref_repeat_count <= 1 && (ik.type == INDEL::INSERT || ik.type == INDEL::DELETE))
+        if(iri.ref_repeat_count <= 1)
         {
             is_indel_noise_checked = true;
 
@@ -139,7 +142,6 @@ is_candidate_indel_impl_test(
                     min_candidate_cov = get_min_candidate_cov(n_total_reads * hpol_one_error_rates.insert_rate);
                     if(min_candidate_cov == 0)
                     {
-                        std::cout << "min_candidate_cov returned 0" << std::endl;
                         min_candidate_cov = std::max((unsigned)
                                                      min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
                                                                                   hpol_one_error_rates.insert_rate,
@@ -152,7 +154,6 @@ is_candidate_indel_impl_test(
                     min_candidate_cov = get_min_candidate_cov(n_total_reads * hpol_one_error_rates.delete_rate);
                     if(min_candidate_cov == 0)
                     {
-                        std::cout << "min_candidate_cov returned 0" << std::endl;
                         min_candidate_cov = std::max((unsigned)
                                                      min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
                                                                                   hpol_one_error_rates.delete_rate,
@@ -171,10 +172,8 @@ is_candidate_indel_impl_test(
 
             if (! is_pass_indel_noise_check) return false;
         }
-    }
 
-    // NON-HPOL ONE CASE
-    {
+        // NON-HPOL ONE CASE
         // check broader STR criteria for non-hpol one
         if (!is_indel_noise_checked)
         {
@@ -221,6 +220,8 @@ is_candidate_indel_impl_test(
             if (! is_pass_indel_noise_check) return false;
         }
     }
+
+    assert(!is_indel || is_indel_noise_checked);
 
     /////////////////////////////////////////
     // test against short open-ended segments:
