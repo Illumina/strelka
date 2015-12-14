@@ -97,7 +97,6 @@ is_candidate_indel_impl_test(
 
     // have we already tested if the indel is much more likely to be noise than sample variation?
     bool is_indel_noise_checked(false);
-    bool is_pass_indel_noise_check(false);
 
     const IndelErrorModel indel_model = scoring_models::Instance().get_indel_model();
 
@@ -113,6 +112,7 @@ is_candidate_indel_impl_test(
 
     if(is_indel)
     {
+        bool is_pass_indel_noise_check(false);
         // HPOL ONE CASE
         // we're only testing against the reference error rate here
         // in hpol one cases, we need to establish a few things:
