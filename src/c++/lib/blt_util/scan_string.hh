@@ -18,14 +18,10 @@
 //
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
 
 #pragma once
-
-#include "boost/static_assert.hpp"
 
 
 template <typename T>
@@ -33,8 +29,8 @@ const char*
 scan_string()
 {
     // no scan_string available for type:
-    BOOST_STATIC_ASSERT(sizeof(T)==0);
-    return NULL;
+    static_assert(sizeof(T)==0,"no scan_string specialization available for type T");
+    return nullptr;
 }
 
 
