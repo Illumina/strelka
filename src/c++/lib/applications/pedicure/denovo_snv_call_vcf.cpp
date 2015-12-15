@@ -118,8 +118,11 @@ denovo_snv_call_vcf(
        //ALT:
 //       << "\t"
 //	   << dsc.alt_str;
-	os << "\t" << id_to_base(dsc.alts[0]);
-    for(unsigned i=1;i<dsc.alts.size(); ++i){ os << "," << id_to_base(dsc.alts[i]); }
+	if(dsc.alts.size() == 0){ os << "\t."; }
+	else{
+		os << "\t" << id_to_base(dsc.alts[0]);
+		for(unsigned i=1;i<dsc.alts.size(); ++i){ os << "," << id_to_base(dsc.alts[i]); }
+    }
     
     //QUAL:
     os << "\t.";

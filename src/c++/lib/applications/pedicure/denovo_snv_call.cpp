@@ -4,7 +4,7 @@
 
 void
 denovo_snv_call::get_alt(){
-		for (unsigned i(0);i<SampleGts.size();++i){
+		/*for (unsigned i(0);i<SampleGts.size();++i){
 			std::array<unsigned,2> gt = {0,0};
 			for (unsigned chrom=0;chrom<2;chrom++){
 				if (SampleGts[i][chrom] != this->ref_gt){
@@ -32,5 +32,5 @@ denovo_snv_call::get_alt(){
  		}
 
 		if (alts.size()==0)
-			alt_str = ".";
+			alt_str = ".";*/
 }

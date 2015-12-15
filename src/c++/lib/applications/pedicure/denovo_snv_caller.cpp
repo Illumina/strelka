@@ -481,10 +481,8 @@ get_denovo_snv_call(
 			normalize_ln_distro(pProb.begin(),pProb.end(),mgt);
 			dsc.gtstring.push_back( gts[ mgt ] );
 				
-			unsigned sum = 0;
-			for(unsigned p(0); p<pProb.size(); ++p){ pProb[p] = error_prob_to_qphred(pProb[p]); sum += pProb[p]; }
+			for(unsigned p(0); p<pProb.size(); ++p){ pProb[p] = error_prob_to_qphred(pProb[p]); }
 			dsc.Sampleplhoods.push_back(pProb);
-			dsc.gqx.push_back(sum);
 		
 		}
 	
