@@ -223,25 +223,15 @@ sim_sample_pi(
         all_cov = cov_gen();
     }
 
-#if 0
     const unsigned fwd_cov(get_binom(all_cov,0.5));
     const unsigned rev_cov(all_cov-fwd_cov);
-#endif
 
-#if 0
     unsigned fwd_alt(0);
     unsigned rev_alt(0);
     if (alt_freq > 0)
     {
         fwd_alt=get_binom(fwd_cov,alt_freq);
         rev_alt=get_binom(rev_cov,alt_freq);
-    }
-#endif
-
-    unsigned n_alt(0);
-    if (alt_freq > 0)
-    {
-        n_alt=get_binom(all_cov,alt_freq);
     }
 
     pi.clear();
@@ -252,17 +242,13 @@ sim_sample_pi(
         const uint8_t qval(qdist.get());
 
         uint8_t true_id(ref_id);
-#if 0
         if ( (i < fwd_alt) || ((i >= fwd_cov) && (i < (fwd_cov+rev_alt))))
-#endif
-
-        if (i < n_alt)
         {
             true_id=alt_id;
         }
 
         const uint8_t obs_id(get_obs_base_id(true_id,qval));
-        const bool is_fwd(true);
+        const bool is_fwd(i<fwd_cov);
         pi.calls.push_back(base_call(obs_id,qval,is_fwd,
                                      1,1,false,false,false,false,false));
     }
@@ -289,7 +275,12 @@ starling_site_sim(
         qdistptr.reset(new qval_distro(sim_opt.qval_file.c_str()));
     }
 
+    // warning observed on x86_64 gcc 4.9.0 for this line but similar usage in strelka
+    // site sim is ignored.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     dist_t cov_dist(sim_opt.coverage);
+#pragma GCC diagnostic pop
     vgen_t cov_gen(gen,cov_dist);
 
     static const uint8_t ref_id(0);
@@ -326,8 +317,7 @@ starling_site_sim(
 
         if (sim_opt.mode == SIM_GERMLINE)
         {
-            nalt_id=1;
-//            nalt_id=get_mut_base_id(nalt_id);
+            nalt_id=get_mut_base_id(nalt_id);
             nalt_freq=0.5;
             if (! sim_opt.is_het_only)
             {
