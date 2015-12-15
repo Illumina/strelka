@@ -299,8 +299,9 @@ private:
     };
 
     static constexpr const unsigned _min_hpol_one_indel_cov_rows = 17;
-
-
+    static_assert(starling_base_options::tumor_min_hpol_pval == 1e-9,
+        "Lookup table is invalid for minimum candidate p-values != 1e-9.  Please refer to src/c++/lib/starling_common/indel_synchronizer.hh:264, recalculate and replace lookup table, then recompile");
+        
     unsigned get_min_candidate_cov(double np) const
     {
         // this should be faster than a binary interval search since
