@@ -545,49 +545,6 @@ calculate_result_set_grid(
     const bool is_forced_output,
     result_set& rs)
 {
-    // a piece transplanted from 1150 to make a formal correction to
-    // the priors which should have a low-impact on the results.
-    // the prior below is incomplete
-#ifdef DEBUG_ALTERNATE_PRIOR
-    static const double neginf(-std::numeric_limits<double>::infinity());
-
-    std::vector<double> prior(DDIGT_SGRID::SIZE);
-    std::fill(prior.begin(),prior.end(),neginf);
-
-    // this zero'd code is incomplete and abandoned for now...:
-#if 0
-    for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt)
-    {
-        double base_prior(neginf);
-        const bool is_noise(ngt>=STAR_DIINDEL::SIZE);
-        if (is_noise)
-        {
-            base_prior=pset.normal[ngt];
-        }
-        else
-        {
-            base_prior=pset.nonoise[ngt];
-        }
-        for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt)
-        {
-            const blt_float_t tgt_prior_mod( (tgt==ngt) ? lnmatch : lnmismatch );
-            const unsigned dgt(DDIGT_SGRID::get_state(ngt,tgt));
-            prior[dgt] = normal_genomic_lnprior[ngt]+tgt_prior_mod;
-        }
-    }
-
-    for (unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt)
-    {
-        const unsigned dgt(DDIGT_SGRID::get_state(gt,gt));
-        prior[dgt] = normal_genomic_lnprior[gt]+lnmatch;
-    }
-#endif
-
-    check_ln_distro(prior.begin(),
-                    prior.end(),
-                    "somatic snv full prior");
-#endif
-
     // intentionally use higher float res (and heap alloc) for this structure:
     std::vector<double> pprob(DDIGT_SGRID::SIZE);
 
@@ -638,6 +595,22 @@ calculate_result_set_grid(
 
     opt_normalize_ln_distro(pprob.begin(),pprob.end(),DDIGT_SGRID::is_nonsom.val.begin(),rs.max_gt);
     //normalize_ln_distro(pprob.begin(),pprob.end(),rs.max_gt);
+
+    //// Debug
+//    printf("========================\n");
+//    for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt)
+//    {
+//        for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt)
+//        {
+//            printf("%d\t%d\t%f\n", ngt, tgt, pprob[DDIGT_SGRID::get_state(ngt,tgt)]);
+//        }
+//    }
+//    printf("=========\n");
+//    for (unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt)
+//    {
+//        printf("%d\t%d\t%f\n", gt, gt, pprob[DDIGT_SGRID::get_state(gt,gt)]);
+//    }
+    //////////////////
 
     double nonsomatic_sum(0);
     for (unsigned gt(0); gt<DIGT_SGRID::SIZE; ++gt)
@@ -858,16 +831,17 @@ position_somatic_snv_call(
             }
         }
 
-        // get likelihood of each genotype
-        //
+        // get likelihood of each genotype (REF, HOM, HET)
         const extended_pos_info& nepi(is_include_tier2 ? *normal_epi_t2_ptr : normal_epi );
         const extended_pos_info& tepi(is_include_tier2 ? *tumor_epi_t2_ptr : tumor_epi );
-        get_diploid_gt_lhood_cached(_opt, nepi.pi, normal_lhood);
-        get_diploid_gt_lhood_cached(_opt, tepi.pi, tumor_lhood);
+        get_diploid_gt_lhood_cached_simple(nepi.pi, sgt.ref_gt, normal_lhood);
+        get_diploid_gt_lhood_cached_simple(tepi.pi, sgt.ref_gt, tumor_lhood);
 
-        get_diploid_het_grid_lhood_cached(nepi.pi, DIGT_SGRID::HET_RES, normal_lhood+DIGT::SIZE);
-        get_diploid_het_grid_lhood_cached(tepi.pi, DIGT_SGRID::HET_RES, tumor_lhood+DIGT::SIZE);
+        // get likelihood of non-canonical frequencies (0.05, 0.1, ..., 0.45, 0.55, ..., 0.95)
+        get_diploid_het_grid_lhood_cached(nepi.pi, sgt.ref_gt, DIGT_SGRID::HET_RES, normal_lhood+DIGT_SIMPLE::SIZE);
+        get_diploid_het_grid_lhood_cached(tepi.pi, sgt.ref_gt, DIGT_SGRID::HET_RES, tumor_lhood+DIGT_SIMPLE::SIZE);
 
+        // get likelihood of strand states (0.05, ..., 0.45)
         get_diploid_strand_grid_lhood_spi(nepi.pi,sgt.ref_gt,normal_lhood+DIGT_SGRID::PRESTRAND_SIZE);
         get_diploid_strand_grid_lhood_spi(tepi.pi,sgt.ref_gt,tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE);
 

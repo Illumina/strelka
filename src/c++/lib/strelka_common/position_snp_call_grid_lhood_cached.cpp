@@ -37,6 +37,7 @@ static
 void
 get_high_low_het_ratio_lhood_cached(
     const snp_pos_info& pi,
+    const unsigned ref_gt,
     const blt_float_t het_ratio,
     const unsigned het_ratio_index,
     het_ratio_cache<3>& hrcache,
@@ -46,9 +47,6 @@ get_high_low_het_ratio_lhood_cached(
     const blt_float_t chet_ratio(1.-het_ratio);
 
     const unsigned n_calls(pi.calls.size());
-
-    //    cache_val cv;
-    static const uint8_t remap[3] = {0,2,1};
 
     for (unsigned i(0); i<n_calls; ++i)
     {
@@ -71,11 +69,15 @@ get_high_low_het_ratio_lhood_cached(
 
         const uint8_t obs_id(bc.base_id);
 
-        for (unsigned gt(N_BASE); gt<DIGT::SIZE; ++gt)
+        if(obs_id == ref_gt)
         {
-            const unsigned key(DIGT::expect2_bias(obs_id,gt));
-            lhood_high[gt] += cv.val[key];
-            lhood_low[gt] += cv.val[remap[key]];
+            *lhood_high += cv.val[0];
+            *lhood_low += cv.val[0];
+        }
+        else
+        {
+            *lhood_high += cv.val[1];
+            *lhood_low += cv.val[2];
         }
     }
 }
@@ -108,7 +110,10 @@ increment_het_ratio_lhood_cached(
         lhood_high[gt] = 0.;
         lhood_low[gt] = 0.;
     }
-    get_high_low_het_ratio_lhood_cached(pi,het_ratio,het_ratio_index,hrcache,lhood_high,lhood_low);
+
+    uint8_t ref_gt=base_to_id(pi.get_ref_base());
+
+    get_high_low_het_ratio_lhood_cached(pi,ref_gt, het_ratio,het_ratio_index,hrcache,lhood_high,lhood_low);
 
     for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
     {
@@ -188,6 +193,51 @@ get_diploid_gt_lhood_cached(
     }
 }
 
+void
+get_diploid_gt_lhood_cached_simple(
+    const snp_pos_info& pi,
+    const unsigned ref_gt,
+    blt_float_t* const lhood)
+{
+    // ! not thread-safe !
+    static het_ratio_cache<3> hrcache;
+
+    // get likelihood of each genotype
+    for (unsigned gt(0); gt<DIGT_SIMPLE::SIZE; ++gt) lhood[gt] = 0.;
+
+    for (const base_call& bc : pi.calls)
+    {
+        std::pair<bool,cache_val<3>*> ret(hrcache.get_val(bc.get_qscore(),0));
+        cache_val<3>& cv(*ret.second);
+        if (! ret.first)
+        {
+            const blt_float_t eprob(bc.error_prob());
+            const blt_float_t ceprob(1-eprob);
+            const blt_float_t lne(bc.ln_error_prob());
+            const blt_float_t lnce(bc.ln_comp_error_prob());
+
+            // precalculate the result for expect values of 0.0, 0.5 & 1.0
+            cv.val[0] = lne+ln_one_third;
+            cv.val[1] = std::log((ceprob)+((eprob)*one_third))+ln_one_half;
+            cv.val[2] = lnce;
+        }
+
+        const uint8_t obs_id(bc.base_id);
+
+        if(ref_gt == obs_id)
+        {
+            lhood[DIGT_SIMPLE::REF] += cv.val[2];
+            lhood[DIGT_SIMPLE::HET] += cv.val[1];
+            lhood[DIGT_SIMPLE::HOM] += cv.val[0];
+        }
+        else
+        {
+            lhood[DIGT_SIMPLE::REF] += cv.val[0];
+            lhood[DIGT_SIMPLE::HET] += cv.val[1];
+            lhood[DIGT_SIMPLE::HOM] += cv.val[2];
+        }
+    }
+}
 
 
 // fill in noise portions of the likelihood distro for non-strand
@@ -196,6 +246,7 @@ get_diploid_gt_lhood_cached(
 void
 get_diploid_het_grid_lhood_cached(
     const snp_pos_info& pi,
+    const unsigned ref_gt,
     const unsigned hetResolution,
     blt_float_t* const lhood)
 {
@@ -204,16 +255,16 @@ get_diploid_het_grid_lhood_cached(
 
     // get likelihood of each genotype
     const unsigned totalHetRatios(hetResolution*2);
-    for (unsigned gt(0); gt<(totalHetRatios*DIGT::HET_SIZE); ++gt) lhood[gt] = 0.;
+    for (unsigned gt(0); gt<totalHetRatios; ++gt) lhood[gt] = 0.;
 
-    blt_float_t* lhood_off=lhood-N_BASE;
+//    blt_float_t* lhood_off=lhood-N_BASE;
 
     const blt_float_t ratio_increment(0.5/static_cast<blt_float_t>(hetResolution+1));
     for (unsigned hetIndex(0); hetIndex<hetResolution; ++hetIndex)
     {
         const blt_float_t het_ratio((hetIndex+1)*ratio_increment);
-        get_high_low_het_ratio_lhood_cached(pi,het_ratio,hetIndex,hrcache,
-                                            lhood_off+(hetIndex*DIGT::HET_SIZE),
-                                            lhood_off+((totalHetRatios-(hetIndex+1))*DIGT::HET_SIZE));
+        get_high_low_het_ratio_lhood_cached(pi,ref_gt, het_ratio,hetIndex,hrcache,
+                                            lhood+hetIndex,
+                                            lhood+(totalHetRatios-(hetIndex+1)));
     }
 }

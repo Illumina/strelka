@@ -55,13 +55,14 @@ namespace DIGT_SGRID
 //
 
 
-enum constants { HET_RES = 4,
+enum constants { HET_RES = 9,
                  HET_COUNT = HET_RES*2+1,
                  STRAND_COUNT = HET_RES,
                  STRAND_SIZE = DIGT::HET_SIZE/2,
-                 HET_STATE_SIZE = DIGT::HET_SIZE*HET_COUNT,
-                 PRESTRAND_SIZE = N_BASE+HET_STATE_SIZE,
-                 STRAND_STATE_SIZE = STRAND_COUNT*STRAND_SIZE
+                 HET_STATE_SIZE = HET_COUNT,
+                 HOM_SIZE = 2,
+                 PRESTRAND_SIZE = HOM_SIZE+HET_STATE_SIZE,
+                 STRAND_STATE_SIZE = STRAND_COUNT
                };
 
 enum index_t { SIZE = PRESTRAND_SIZE+STRAND_STATE_SIZE };

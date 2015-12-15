@@ -245,3 +245,20 @@ get_gt_with_alleles(
 }
 
 }
+
+namespace DIGT_SIMPLE
+{
+enum index_t
+{
+    REF,
+    HOM,
+    HET,
+    SIZE
+};
+
+enum constants
+{
+    HET_SIZE = 1
+};
+
+}
