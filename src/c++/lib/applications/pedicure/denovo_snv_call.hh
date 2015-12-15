@@ -58,26 +58,10 @@ struct denovo_snv_call
     consolidate_genotype(){
     	for(unsigned i=0; i<Sampleplhoods.size();i++){
 
-			//std::vector<float> tt = Sampleplhoods[i];
-    		//std::sort(tt.begin(), tt.end());
-    		//gts.push_back(current_min);
-    		//gqx.push_back( std::min(100, (int)( tt[1] - tt[0] ) ) ); 
-    		//gt_sum += (unsigned)( tt[0] != Sampleplhoods[i][0]);
-    		
-    		
-    		unsigned current_min = 0;
-    		unsigned sum = Sampleplhoods[i][0];
-    		for (unsigned t=1; t<Sampleplhoods[i].size(); t++){
-    			if (Sampleplhoods[i][t] < Sampleplhoods[i][current_min]){
-    				current_min = t;
-    			}
-    			sum += Sampleplhoods[i][t];
-    		}
-    		//gts.push_back(current_min);
-    		gqx.push_back( 1 ); 
-    		gt_sum += current_min;
-    		
-    		
+			std::vector<float> tt = Sampleplhoods[i];
+    		std::sort(tt.begin(), tt.end());
+    		gqx.push_back( std::min(100, (int)( tt[1] - tt[0] ) ) ); 
+    		gt_sum += (unsigned)( tt[0] != Sampleplhoods[i][0]);
     		
     	}
     }
@@ -91,12 +75,8 @@ struct denovo_snv_call
     result_set rs;
 
     std::vector< std::vector<float> > Sampleplhoods;    
-    //std::vector< std::array<float,3> > Sampleplhoods;
     std::vector< std::array<uint8_t,2> > SampleGts;
-    //std::vector< unsigned > gts;
-    std::vector< unsigned > gqx; //TODO need to record real GQX here
-    //std::vector< std::array<float,6> > pls;
-    //std::vector< std::array<unsigned,2> > gts_chrom;
+    std::vector< unsigned > gqx; 
     std::vector<uint8_t> alts;
     std::string alt_str = "";
 	std::vector< std::string > gtstring;
