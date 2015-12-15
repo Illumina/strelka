@@ -137,9 +137,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--indel-error-models-file', self.params.indelErrorModelsFile])
     segCmd.extend(['--indel-error-model-name', self.params.indelErrorModelName])
 
-    # do not apply VQSR in exome case
-    if not self.params.isExome :
-        segCmd.extend(['--variant-scoring-models-file', self.params.variantScoringModelFile])
+    segCmd.extend(['--variant-scoring-models-file', self.params.variantScoringModelFile])
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["-bam-file", bamPath])
