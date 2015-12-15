@@ -45,12 +45,12 @@ get_binomial_twosided_exact_pval(
     assert(n_success <= n_trials);
 
     // otherwise we get p == 2
-    if(n_trials == 0)
+    if (n_trials == 0)
     {
         return 1;
     }
 
-    if(fabs(p - 0.5) < DBL_EPSILON)
+    if (fabs(p - 0.5) < DBL_EPSILON)
     {
         const unsigned n_failure(n_trials-n_success);
         const double obs_p((double)n_success/(double)n_trials);
@@ -62,7 +62,7 @@ get_binomial_twosided_exact_pval(
         }
         else
         {
-             exact_prob=cdf(binomial(n_trials,1.-p),n_failure);
+            exact_prob=cdf(binomial(n_trials,1.-p),n_failure);
         }
 
         return std::min(1.0, 2.*exact_prob);
@@ -78,9 +78,11 @@ get_binomial_twosided_exact_pval(
         binomial dist = binomial(n_trials, p);
         double exact_prob = pdf(dist, n_success);
         double result = 0;
-        for (unsigned j = 0; j <= n_trials; ++j) {
+        for (unsigned j = 0; j <= n_trials; ++j)
+        {
             double pp = pdf(dist, j);
-            if (pp <= exact_prob) {
+            if (pp <= exact_prob)
+            {
                 result += pp;
             }
         }

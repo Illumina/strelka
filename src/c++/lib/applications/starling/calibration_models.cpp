@@ -166,7 +166,7 @@ classify_indels(
 void
 calibration_models::
 default_classify_site(const site_info& si,
-                     shared_call_info& call) const
+                      shared_call_info& call) const
 {
     if (opt.is_min_gqx)
     {

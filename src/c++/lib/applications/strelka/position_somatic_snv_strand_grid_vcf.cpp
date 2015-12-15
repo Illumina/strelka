@@ -27,7 +27,6 @@
 #include "somatic_call_shared.hh"
 #include "blt_util/io_util.hh"
 #include "blt_util/math_util.hh"
-#include "calibration/scoringmodels.hh"
 
 
 #include <iomanip>
@@ -91,7 +90,7 @@ set_VQSR_sample_info(
         }
 
         const double allele_freq(safeFrac(alt,ref+alt));
-        smod.set_feature(STRELKA_SNV_VQSR_FEATURES::TIER1_ALLELE_RATE,allele_freq);
+        smod.set_feature(STRELKA_SNV_VQSR_FEATURES::TIER1_ALT_RATE,allele_freq);
     }
 }
 
@@ -127,7 +126,7 @@ void
 calc_VQSR_features(
     const blt_options& opt,
     const strelka_deriv_options& dopt,
-    const somatic_snv_genotype_grid& sgt,
+    const somatic_snv_genotype_grid& /*sgt*/,
     strelka_shared_modifiers_snv& smod,
     const CleanedPileup& n1_cpi,
     const CleanedPileup& t1_cpi,
@@ -200,6 +199,7 @@ calc_VQSR_features(
     smod.set_feature(STRELKA_SNV_VQSR_FEATURES::altpos,altpos);
     smod.set_feature(STRELKA_SNV_VQSR_FEATURES::altmap,altmap);
 
+#if 0
     //Pnoise
     double pnoise(0);
     if (sgt.sn.total > 1 && sgt.sn.noise > 1)
@@ -215,6 +215,7 @@ calc_VQSR_features(
         pnoise2 = sgt.sn.n2frac();
     }
     smod.set_feature(STRELKA_SNV_VQSR_FEATURES::pnoise2,pnoise2);
+#endif
 }
 
 
@@ -324,14 +325,24 @@ write_vcf_somatic_snv_genotype_strand_grid(
         // calculations are still needed for VCF reporting
         calc_VQSR_features(opt,dopt,sgt,smod,n1_epd,t1_epd,n2_epd,t2_epd,rs);
 
-        // case we are doing VQSR, clear filters and apply single LowQscore filter
-        const scoring_models& models(scoring_models::Instance());
-        if (opt.isUseSomaticVQSR() && models.isVariantScoringInit())  // write out somatic VQSR metrics
+        // if we are using empirical scoring, clear filters and apply single LowQscore filter
+        if (dopt.somaticSnvScoringModel)
         {
+            const VariantScoringModel& varModel(*dopt.somaticSnvScoringModel);
             smod.isQscore = true;
-            smod.Qscore = models.score_variant(smod.get_features(),VARIATION_NODE_TYPE::SNP);
-            // Emperically re-maps the RF Qscore to get a better calibration
-            smod.Qscore = models.recal_somatic_snv_score(smod.Qscore);
+            smod.Qscore = varModel.scoreVariant(smod.get_features());
+
+            // TMP!! make this scheme compatible with STARKA-296;
+            smod.Qscore = error_prob_to_phred(smod.Qscore);
+
+            // TMP!!!! Emperically re-maps the RF Qscore to get a better calibration
+            // See STARKA-257 github comment for more detail on this fit
+            auto recal_somatic_snv_score = [](double& score)
+            {
+                return 2.57*score+0.94;
+            };
+
+            smod.Qscore = recal_somatic_snv_score(smod.Qscore);
             smod.filters.reset();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
@@ -339,7 +350,6 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
             if (smod.Qscore < opt.sfilter.minimumQscore)
                 smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
-
         }
     }
 
@@ -403,8 +413,10 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
         os << ";ReadPosRankSum=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::ReadPosRankSum);
         os << ";SNVSB=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::strandBias);
+#if 0
         os << ";PNOISE=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::pnoise);
         os << ";PNOISE2=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::pnoise2);
+#endif
 
         if (smod.isQscore)
         {

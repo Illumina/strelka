@@ -23,16 +23,19 @@
 
 #pragma once
 
-#include <calibration/SerializedModel.hh>
+#include "json/json.h"
 
-#include <vector>
 #include <cassert>
 
+#include <map>
+#include <vector>
 
-struct RandomForestModel : public serialized_calibration_model
+/// TODO: better central location for this definiton:
+typedef std::map<int, double> feature_type;
+
+struct RandomForestModel
 {
     RandomForestModel() {}
-
 
     bool isInit() const
     {
@@ -46,7 +49,7 @@ struct RandomForestModel : public serialized_calibration_model
 
     double getProb(const feature_type& features) const;
 
-    void Deserialize( const Json::Value& root);
+    void Deserialize(const Json::Value& root);
 
 private:
     template <typename L, typename R>

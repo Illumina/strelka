@@ -47,7 +47,7 @@ safeFrac(const int num, const int denom)
  */
 double
 calculateIndelAF(
-        const starling_indel_sample_report_info &isri
+    const starling_indel_sample_report_info& isri
 )
 {
     return safeFrac(isri.n_q30_indel_reads, isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
@@ -58,7 +58,7 @@ calculateIndelAF(
  */
 double
 calculateIndelOF(
-        const starling_indel_sample_report_info &isri
+    const starling_indel_sample_report_info& isri
 )
 {
     return safeFrac(isri.n_other_reads, isri.n_other_reads + isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
@@ -73,7 +73,7 @@ calculateIndelOF(
  */
 double
 calculateSOR(
-        const starling_indel_sample_report_info &isri
+    const starling_indel_sample_report_info& isri
 )
 {
 
@@ -94,7 +94,7 @@ calculateSOR(
  * either REF or ALT counts are biased towards one particular strand)
  */
 double
-calculateFS(const starling_indel_sample_report_info & isri)
+calculateFS(const starling_indel_sample_report_info& isri)
 {
     return fisher_exact_test_pval_2x2(isri.n_q30_ref_reads_fwd, isri.n_q30_indel_reads_fwd,
                                       isri.n_q30_ref_reads_rev, isri.n_q30_indel_reads_rev);
@@ -105,7 +105,7 @@ calculateFS(const starling_indel_sample_report_info & isri)
  * the ALT allele occurs on a particular strand only.
  */
 double
-calculateBSA(const starling_indel_sample_report_info & isri)
+calculateBSA(const starling_indel_sample_report_info& isri)
 {
     return get_binomial_twosided_exact_pval(0.5, isri.n_q30_indel_reads_fwd, isri.n_q30_indel_reads) ;
 }
@@ -115,7 +115,7 @@ calculateBSA(const starling_indel_sample_report_info & isri)
  * Calculate base-calling noise from window average set
  */
 double
-calculateBCNoise(const win_avg_set & was)
+calculateBCNoise(const win_avg_set& was)
 {
     const double filt(was.ss_filt_win.avg());
     const double used(was.ss_used_win.avg());
@@ -127,9 +127,9 @@ calculateBCNoise(const win_avg_set & was)
  * Calculate AOR feature (log ratio between T_AF and N_AF)
  */
 double
-calculateAlleleFrequencyRate(const starling_indel_sample_report_info &nisri,
-                             const starling_indel_sample_report_info &tisri
-)
+calculateAlleleFrequencyRate(const starling_indel_sample_report_info& nisri,
+                             const starling_indel_sample_report_info& tisri
+                            )
 {
     const double T_AF = calculateIndelAF(tisri);
     const double N_AF = calculateIndelAF(nisri);
@@ -141,7 +141,7 @@ calculateAlleleFrequencyRate(const starling_indel_sample_report_info &nisri,
  * Calculate OD feature (log ratio between T_AF and T_OF)
  */
 double
-calculateTumorNoiseRate(const starling_indel_sample_report_info &tisri)
+calculateTumorNoiseRate(const starling_indel_sample_report_info& tisri)
 {
     const double T_AF = calculateIndelAF(tisri);
     const double T_OF = calculateIndelOF(tisri);
@@ -153,8 +153,8 @@ calculateTumorNoiseRate(const starling_indel_sample_report_info &tisri)
  * Calculate LAR feature (log ratio between #alt reads in tumor and #ref reads in normal)
  */
 double
-calculateLogAltRatio(const starling_indel_sample_report_info &nisri,
-                     const starling_indel_sample_report_info &tisri)
+calculateLogAltRatio(const starling_indel_sample_report_info& nisri,
+                     const starling_indel_sample_report_info& tisri)
 {
     const unsigned n_ref_reads = nisri.n_q30_ref_reads;
     const unsigned t_alt_reads = tisri.n_q30_indel_reads;
@@ -166,8 +166,8 @@ calculateLogAltRatio(const starling_indel_sample_report_info &nisri,
  *                                            N_REF N_ALT)
  */
 double
-calculateLogOddsRatio(const starling_indel_sample_report_info &nisri,
-                      const starling_indel_sample_report_info &tisri)
+calculateLogOddsRatio(const starling_indel_sample_report_info& nisri,
+                      const starling_indel_sample_report_info& tisri)
 {
     const double n_ref_reads = nisri.n_q30_ref_reads + .5;
     const double n_alt_reads = nisri.n_q30_indel_reads + .5;
@@ -183,28 +183,42 @@ calculateLogOddsRatio(const starling_indel_sample_report_info &nisri,
 void
 calculateVQSRFeatures(
     const SomaticIndelVcfInfo& siInfo,
-    const win_avg_set & /* n_was */,
-    const win_avg_set & /* t_was */,
-    const strelka_options & /* opt */,
-    const strelka_deriv_options & /* dopt */,
-    strelka_shared_modifiers_indel & smod
+    const win_avg_set& /* n_was */,
+    const win_avg_set& /* t_was */,
+    const strelka_options& /* opt */,
+    const strelka_deriv_options& /* dopt */,
+    strelka_shared_modifiers_indel& smod
 )
 {
     const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::QSI_NT, rs.sindel_from_ntype_qphred);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
+
+    if (siInfo.iri.is_repeat_unit())
+    {
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IC, siInfo.iri.indel_repeat_count);
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RC, siInfo.iri.ref_repeat_count);
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RU_LEN, siInfo.iri.repeat_unit_length);
+    }
+    else
+    {
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IC, 0);
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RC, 0);
+        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RU_LEN, 0);
+    }
+    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IHP, siInfo.iri.ihpol);
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::TNR, calculateTumorNoiseRate(siInfo.tisri[0]));
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::AFR, calculateAlleleFrequencyRate(siInfo.nisri[0], siInfo.tisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::LAR, calculateLogAltRatio(siInfo.nisri[0], siInfo.tisri[0]));
     smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::LOR, calculateLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));
 
-//    double meanChrDepth = 1;
-//    auto cd = dopt.sfilter.chrom_depth.find(opt.bam_seq_name);
-//    if(cd != dopt.sfilter.chrom_depth.end())
-//    {
-//        meanChrDepth = cd->second;
-//    }
+    // this is how we could get the mean chromosome depth here if we needed to.
+    //    double meanChrDepth = 1siInfo.iri.repeat_unit_length;
+    //    auto cd = dopt.sfilter.chrom_depth.find(opt.bam_seq_name);
+    //    if(cd != dopt.sfilter.chrom_depth.end())
+    //    {
+    //        meanChrDepth = cd->second;
+    //    }
 
 }
 

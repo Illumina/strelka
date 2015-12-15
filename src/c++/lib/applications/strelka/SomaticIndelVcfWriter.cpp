@@ -35,7 +35,6 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <calibration/scoringmodels.hh>
 
 
 static
@@ -65,13 +64,13 @@ write_vcf_isri_tiers(
     const StreamScoper ss(os);
     os << std::fixed << std::setprecision(3);
     os << sep << calculateIndelAF(isri1)
-              << sep << calculateIndelOF(isri1)
-              << sep << calculateSOR(isri1)
-              << sep << calculateFS(isri1)
-              << sep << calculateBSA(isri1)
-              << sep << isri1.readpos_ranksum.get_u_stat()
-              << sep << calculateBCNoise(was)
-            ;
+       << sep << calculateIndelOF(isri1)
+       << sep << calculateSOR(isri1)
+       << sep << calculateFS(isri1)
+       << sep << calculateBSA(isri1)
+       << sep << isri1.readpos_ranksum.get_u_stat()
+       << sep << calculateBCNoise(was)
+       ;
 }
 
 
@@ -103,21 +102,12 @@ writeSomaticIndelVcfGrid(
     // calculate VQSR score and features
     calculateVQSRFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
 
-    // always write VQSR feature
-    const scoring_models& models(scoring_models::Instance());
-    if(models.isVariantScoringInit())
-    {
-        // for some reason these come out the wrong way around
-        smod.Qscore = 1.0 - models.score_variant(smod.get_features(), VARIATION_NODE_TYPE::INDEL);
-        smod.isQscore = true;
-    }
-    else
+    const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
+    if (!is_use_empirical_scoring)
     {
         smod.Qscore = 0;
-    }
+        smod.isQscore = false;
 
-    const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
-    if (!is_use_empirical_scoring) {
         // compute all site filters:
         const double normalWinFrac = calculateBCNoise(wasNormal);
         const double tumorWinFrac = calculateBCNoise(wasTumor);
@@ -135,12 +125,17 @@ writeSomaticIndelVcfGrid(
     }
     else
     {
+        assert(dopt.somaticIndelScoringModel);
+        const VariantScoringModel& varModel(*dopt.somaticIndelScoringModel);
+        smod.Qscore = 1.0 - varModel.scoreVariant(smod.get_features());
+        smod.isQscore = true;
+
         if (rs.ntype != NTYPE::REF)
         {
             smod.set_filter(STRELKA_VCF_FILTERS::Nonref);
         }
 
-        if(smod.Qscore < models.score_threshold(VARIATION_NODE_TYPE::INDEL))
+        if (smod.Qscore < varModel.scoreFilterThreshold())
         {
             smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
         }
@@ -173,7 +168,7 @@ writeSomaticIndelVcfGrid(
     os << sep
        << "SOMATIC";
 
-    if(smod.isQscore)
+    if (smod.isQscore)
     {
         const StreamScoper ss(os);
         os << std::fixed << std::setprecision(4);
@@ -192,11 +187,11 @@ writeSomaticIndelVcfGrid(
         double mean_mapq  = (siInfo.nisri[1].mean_mapq + siInfo.tisri[1].mean_mapq) / 2.0;
         double mean_mapq0 = (siInfo.nisri[1].mapq0_frac*siInfo.nisri[1].n_mapq +
                              siInfo.tisri[1].mapq0_frac*siInfo.tisri[1].n_mapq) / (
-                                    siInfo.nisri[1].n_mapq + siInfo.tisri[1].n_mapq);
+                                siInfo.nisri[1].n_mapq + siInfo.tisri[1].n_mapq);
         os << std::fixed << std::setprecision(2);
         os << ";MQ=" << mean_mapq
            << ";MQ0=" << mean_mapq0
-                ;
+           ;
     }
     if (siInfo.iri.is_repeat_unit())
     {
@@ -206,16 +201,16 @@ writeSomaticIndelVcfGrid(
     }
     os << ";IHP=" << siInfo.iri.ihpol;
 
-    if(is_use_empirical_scoring)
+    if (is_use_empirical_scoring)
     {
         os << ";ESF=";
-        for(unsigned q = 0; q < STRELKA_INDEL_VQSR_FEATURES::SIZE; ++q)
+        for (unsigned q = 0; q < STRELKA_INDEL_VQSR_FEATURES::SIZE; ++q)
         {
-            if(q > 0)
+            if (q > 0)
             {
                 os << ",";
             }
-            if(smod.test_feature(static_cast<STRELKA_INDEL_VQSR_FEATURES::index_t>(q)))
+            if (smod.test_feature(static_cast<STRELKA_INDEL_VQSR_FEATURES::index_t>(q)))
             {
                 os << smod.get_feature(static_cast<STRELKA_INDEL_VQSR_FEATURES::index_t>(q));
             }

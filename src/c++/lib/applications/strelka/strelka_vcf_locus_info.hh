@@ -24,13 +24,13 @@
 
 #pragma once
 
-#include "strelkaVQSRFeatures.hh"
-#include "calibration/SerializedModel.hh"
-
+#include "calibration/VariantScoringModel.hh"
 #include <cassert>
 
 #include <bitset>
 #include <iosfwd>
+
+#include "strelkaVQSRFeatures.hh"
 
 
 namespace STRELKA_VCF_FILTERS
@@ -135,7 +135,7 @@ struct strelka_shared_modifiers
     inline
     void
     write_filters(
-            std::ostream& os) const
+        std::ostream& os) const
     {
         if (filters.none())
         {
@@ -161,15 +161,15 @@ struct strelka_shared_modifiers
     }
 
     /** write features to INFO field */
-    inline
     void
     write_features(
-            std::ostream& os) const
+        std::ostream& os) const
     {
         int ix = 0;
         for (auto const & val : _featureVal)
         {
-            if(ix > 0) {
+            if (ix > 0)
+            {
                 os << ",";
             }
             os << _vqsr_featureset::get_feature_label(val.first) << ":" << val.second;
@@ -200,8 +200,8 @@ private:
 template<class _vqsr_featureset>
 std::ostream&
 operator<<(
-        std::ostream& os,
-        const strelka_shared_modifiers<_vqsr_featureset>& shmod)
+    std::ostream& os,
+    const strelka_shared_modifiers<_vqsr_featureset>& shmod)
 {
     os << " filters: ";
     shmod.write_filters(os);

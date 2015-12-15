@@ -1,3 +1,6 @@
+- STARKA-302 add feature verification for file-based scoring models
+- STARKA-298 enable fully automated empirical scoring model training and test
+cycle for SNVs
 - STARKA-296 add somatic indel empirical scoring model
 - STARKA-260 add additional somatic indel features
 - STARKA-275 prevent phaser from causing memory exaustion for amplicon input

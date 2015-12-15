@@ -461,7 +461,7 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
         unsigned n_subscore_reads(0);
 
         isri.n_mapq = id.n_mapq;
-        if(id.n_mapq > 0)
+        if (id.n_mapq > 0)
         {
             isri.mean_mapq = (double)(id.cumm_mapq) / id.n_mapq;
             isri.mapq0_frac = (double)(id.n_mapq0) / id.n_mapq;
@@ -483,7 +483,7 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
             if       (pprob.ref >= path_pprob_thresh)
             {
                 isri.n_q30_ref_reads++;
-                if(path_lnp.is_fwd_strand)
+                if (path_lnp.is_fwd_strand)
                 {
                     ++isri.n_q30_ref_reads_fwd;
                 }
@@ -497,7 +497,7 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
             else if (pprob.indel >= path_pprob_thresh)
             {
                 isri.n_q30_indel_reads++;
-                if(path_lnp.is_fwd_strand)
+                if (path_lnp.is_fwd_strand)
                 {
                     ++isri.n_q30_indel_reads_fwd;
                 }
@@ -523,7 +523,7 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
                     if (palt.second >= path_pprob_thresh)
                     {
                         isri.n_q30_alt_reads++;
-                        if(path_lnp.is_fwd_strand)
+                        if (path_lnp.is_fwd_strand)
                         {
                             ++isri.n_q30_alt_reads_fwd;
                         }
@@ -539,7 +539,7 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
                 if (! is_alt_found)
                 {
                     n_subscore_reads++;
-                    if(path_lnp.is_fwd_strand)
+                    if (path_lnp.is_fwd_strand)
                     {
                         ++isri.n_other_reads_fwd;
                     }

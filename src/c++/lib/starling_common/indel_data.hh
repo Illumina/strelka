@@ -76,7 +76,7 @@ struct read_path_scores
                      const bool is_t1=true,
                      const bool is_fwd=true,
                      const int16_t rp=0
-    )
+                    )
         : ref(r)
         , indel(i)
         , nsite(ns)

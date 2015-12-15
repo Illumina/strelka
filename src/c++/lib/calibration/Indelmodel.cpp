@@ -113,8 +113,7 @@ IndelErrorModel::IndelErrorModel()
 // read in the json
 void IndelErrorModel::Deserialize(const Json::Value& root)
 {
-    serialized_model::Deserialize(root);
-
+    _meta.Deserialize(root);
     this->MaxMotifLength = root["MaxMotifLength"].asInt();
     this->MaxTractLength = root["MaxTractLength"].asInt();
     Json::Value jmodels = root["Model"];
@@ -257,7 +256,7 @@ calc_abstract_prop(unsigned repeat_unit_length,
     static const unsigned one(1);
     const unsigned repeat_unit = std::min(std::max(repeat_unit_length,one), this->MaxMotifLength);
     
-    unsigned min_tract_length = get_min_tract_length(repeat_unit);
+    unsigned min_tract_length = repeat_unit * 2;
     if (repeat_unit == 1)
     {
         min_tract_length = 1;
@@ -293,7 +292,7 @@ calc_abstract_prop(unsigned repeat_unit_length,
     static const unsigned one(1);
     const unsigned repeat_unit = std::min(std::max(repeat_unit_length,one), this->MaxMotifLength);
 
-    unsigned min_tract_length = get_min_tract_length(repeat_unit);
+    unsigned min_tract_length = repeat_unit * 2;
     if (repeat_unit == 1)
     {
         min_tract_length = 1;

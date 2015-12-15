@@ -67,6 +67,9 @@ class StrelkaRF(VQSRModel):
         self.clf = RandomForestClassifier(**kwargs)
         self.clf.fit(allrows[columns].values, allrows["tag"].values)
 
+        # add audit trail into the model output:
+        self.clf.columns = columns
+
 
     def classify(self, instances, columns, *args, **kwargs):
         """ Classify a set of instances after training
@@ -91,10 +94,30 @@ class StrelkaRF(VQSRModel):
 
     def save(self, filename):
         """ Save to file """
-        if filename.endswith(".json"):
-            io.write_classifier_json(self.clf, filename)
-        else:
-            io.write_classifier_pickle(self.clf, filename)
+        io.write_classifier_pickle(self.clf, filename)
+
+    def save_json(self, filename):
+        """ Save to json """
+        io.write_classifier_json(self.clf, filename)
+
+    def save_json_strelka_format(self, filename):
+        """ Save to json including all strelka scoring model meta-data """
+        import datetime
+        import json
+
+        date = datetime.datetime.utcnow().isoformat()
+        meta = {
+                "Date" : "%s" % (date),
+                "Features" : self.clf.columns,
+                "ModelType" : "RandomForest",
+                "FilterCutoff" : 0.5
+                }
+        all_trees = io.classifier_to_dict(self.clf)
+        #full_model = {"Meta" : meta, "Model" : all_trees }
+        full_model = meta
+        full_model["Model"] = all_trees
+        modelFile = {"CalibrationModels" : {"somatic_rf" : { "SNP" : full_model }}}
+        json.dump(modelFile, open(filename,"wb"))
 
     def load(self, filename):
         """ Load from file """
