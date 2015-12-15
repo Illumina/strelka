@@ -46,10 +46,11 @@ write_vcf_sample_info(
 	tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
 
-	os << dsc.gts_chrom[sampleIndex][0]
-	   << "/"
-	   << dsc.gts_chrom[sampleIndex][1];
-
+	//os << dsc.gts_chrom[sampleIndex][0]
+	//   << "/"
+	//   << dsc.gts_chrom[sampleIndex][1];
+    os << dsc.gtstring[sampleIndex]; 
+    
 	os <<':'
 	   << "1" //GQ
 	   <<':'
@@ -64,8 +65,13 @@ write_vcf_sample_info(
 		   os << "," << tier1_base_counts[dsc.alts[i]];
 
 	   // PL field
-	   os << ':'
-       << dsc.get_pl(sampleIndex);
+	   //os << ':'
+       //<< dsc.get_pl(sampleIndex);
+       os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
+	   for(unsigned i=3;i<dsc.Sampleplhoods[sampleIndex].size();++i){
+		os << "," << dsc.Sampleplhoods[sampleIndex][i];
+	   }
+	
 }
 
 void
@@ -104,14 +110,17 @@ denovo_snv_call_vcf(
         }
 
     }
-    dsc.get_alt();
+    //dsc.get_alt();
 
 
     //REF:
-    os << '\t' << probandCpi.rawPileup().get_ref_base()
+    os << '\t' << probandCpi.rawPileup().get_ref_base();
        //ALT:
-       << "\t"
-	   << dsc.alt_str;
+//       << "\t"
+//	   << dsc.alt_str;
+	os << "\t" << id_to_base(dsc.alts[0]);
+    for(unsigned i=1;i<dsc.alts.size(); ++i){ os << "," << id_to_base(dsc.alts[i]); }
+    
     //QUAL:
     os << "\t.";
 

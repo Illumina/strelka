@@ -433,49 +433,65 @@ get_denovo_snv_call(
 
     dsc.rs=tier_rs[dsc.dsnv_tier];
 	
-	// Goes through all samples, computes probability for hom-ref 0/0, het 0/1 or hom-alt 1/1
-    // In addition consolidates all sample genotypes into a single allele framework
-	// Store final result in dsc object
+	
+	//goes through all samples, 
+	// find most likely DIGT AA, CC, ...
+	//compiles list of alts
+	// for all samples and alts, records probability for 0/0, 0/1, 1/1, 0/2, 1/2, 2/2, ... 
+	//  position of PL field for P(j/k) is j + k(k+1)/2
+	// writes to dsc object.
+	
+	std::vector<unsigned> digts( sampleLhood.size() );
 	for(unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex){
-		std::array<float,3> pProb;
-		static const double lnzero(-std::numeric_limits<double>::infinity());	//log(0)
-        std::fill(pProb.begin(),pProb.end(),lnzero);
-        
-
-        std::array<uint8_t,2> max_gt_alleles = {0,0};
-        unsigned max_gt(0);
-		const auto& lhood(sampleLhood[sampleIndex]);
+		std::vector<float> lhood(DIGT::SIZE);
 		for (unsigned gt(0); gt<DIGT::SIZE; ++gt)	
         {
-			std::array<uint8_t,2> alleles;
-			for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex){
-				alleles[chromCopyIndex] = DIGT::get_allele(gt,chromCopyIndex);
-			}
-			uint8_t gt_val = ( dsc.ref_gt != alleles[0] ) + ( dsc.ref_gt != alleles[1] );	//number of bases equal to ref
-			pProb[gt_val] = log_sum(pProb[gt_val],lhood[gt]);	//add log likelihoods
-
-			if (lhood[gt]>=lhood[max_gt]){
-				max_gt_alleles = alleles;
-				max_gt = gt;
-			}
+			lhood[gt] = sampleLhood[sampleIndex][gt];
 		}
-
-		normalize_ln_distro(pProb.begin(),pProb.end(),max_gt);
-
-		unsigned current_min = 0;
-		unsigned sum = 0;
-		for(int p(0); p<3; ++p){
-			pProb[p] = error_prob_to_qphred(pProb[p]);
-			if (pProb[p]<pProb[current_min])
-				current_min = p;
-			sum += pProb[p];
-
-		}
-		dsc.gts.push_back(current_min);
-		dsc.gqx.push_back(sum);
-		dsc.gt_sum += current_min;
-
-		dsc.SampleGts.push_back(max_gt_alleles);
-		dsc.Sampleplhoods.push_back(pProb);
+		normalize_ln_distro(lhood.begin(),lhood.end(), digts[sampleIndex] );
 	}
+	dsc.alts.resize(0);
+	for( unsigned i=0;i<digts.size(); ++i){
+		for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex){
+			if( dsc.ref_gt != DIGT::get_allele(digts[i],chromCopyIndex)  ){
+				dsc.alts.push_back( DIGT::get_allele(digts[i],chromCopyIndex) );
+			}
+		}
+	}
+	std::sort( dsc.alts.begin(), dsc.alts.end() );
+	dsc.alts.erase( std::unique( dsc.alts.begin(), dsc.alts.end() ), dsc.alts.end() );
+	
+	if( dsc.alts.size() > 0 ){ 
+				
+		std::vector<float> pProb( (dsc.alts.size()+2)*(dsc.alts.size()+1)/2 ); //max val of k(k+1) + j + 1	
+		std::vector< std::string > gts( (dsc.alts.size()+2)*(dsc.alts.size()+1)/2 );	
+		std::vector<unsigned> bases(1, dsc.ref_gt ); for(unsigned i=0; i<dsc.alts.size(); ++i){ bases.push_back(dsc.alts[i]); }
+		for(unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex){
+		
+			const auto& lhood(sampleLhood[sampleIndex]);
+			
+			for(unsigned j=0; j<bases.size(); ++j){
+				for(unsigned k=j; k<bases.size(); ++k){
+					pProb[ j + (k*(k+1)/2) ] = lhood[ DIGT::get_gt_with_alleles(bases[j], bases[k]) ];
+					gts[  j + (k*(k+1)/2) ] = std::to_string(j) + "/" + std::to_string(k);
+				}
+			}
+		
+			unsigned mgt;
+			normalize_ln_distro(pProb.begin(),pProb.end(),mgt);
+			dsc.gtstring.push_back( gts[ mgt ] );
+				
+			unsigned sum = 0;
+			for(unsigned p(0); p<pProb.size(); ++p){ pProb[p] = error_prob_to_qphred(pProb[p]); sum += pProb[p]; }
+			dsc.Sampleplhoods.push_back(pProb);
+			dsc.gqx.push_back(sum);
+		
+		}
+	
+
+	}
+	
+
+	
+	
 }

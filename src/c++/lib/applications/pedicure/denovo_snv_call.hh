@@ -71,20 +71,14 @@ struct denovo_snv_call
 
     void get_alt();
 
-    // Dummy place holder for something that returns the ac
-    std::string
-	get_pl(const int& sampleIndex) const {
-    	Sampleplhoods.at(sampleIndex);
-    	return "1,2,3";
-    }
-
     unsigned ref_gt = 0;
     unsigned gt_sum = 0;
     uint8_t dsnv_tier = 0;
     bool is_forced_output = false;
     result_set rs;
-    
-    std::vector< std::array<float,3> > Sampleplhoods;
+
+    std::vector< std::vector<float> > Sampleplhoods;    
+    //std::vector< std::array<float,3> > Sampleplhoods;
     std::vector< std::array<uint8_t,2> > SampleGts;
     std::vector< unsigned > gts;
     std::vector< unsigned > gqx; //TODO need to record real GQX here
@@ -92,5 +86,6 @@ struct denovo_snv_call
     std::vector< std::array<unsigned,2> > gts_chrom;
     std::vector<uint8_t> alts;
     std::string alt_str = "";
-
+	std::vector< std::string > gtstring;
+	
 };
