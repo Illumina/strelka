@@ -75,8 +75,8 @@ write_shared_vcf_header_info(
         for (const auto& val : dopt.chrom_depth)
         {
             const std::string& chrom(val.first);
-            const double meanDepth(val.second);
-            os << "##MeanDepth_" << chrom << '=' << meanDepth << "\n";
+            const double expectedDepth(val.second);
+            os << "##Depth_" << chrom << '=' << expectedDepth << "\n";
         }
     }
 }

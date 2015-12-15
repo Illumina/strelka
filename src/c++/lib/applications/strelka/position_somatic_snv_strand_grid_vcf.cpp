@@ -42,20 +42,22 @@ safeFrac(const unsigned num, const D denom)
 }
 
 
-
+/// set sample specific empirical scoring features
+///
 // similar to 'write_vcf_sample_info' below, redundancy needed to get order of output right
 // TODO consolidate this dual calculation step
 static
 void
-set_VQSR_sample_info(
+get_single_sample_scoring_features(
     const blt_options& opt,
     const strelka_deriv_options& dopt,
     const CleanedPileup& tier1_cpi,
     const CleanedPileup& /*tier2_cpi*/,
-    strelka_shared_modifiers_snv& smod,
-    bool isNormalSample)
+    const bool isNormalSample,
+    strelka_shared_modifiers_snv& smod)
 {
-    // add in VQSR features
+    const bool isUniformDepthExpected(dopt.sfilter.is_max_depth());
+
     // {2,N_FDP_RATE},{3,T_FDP_RATE},{4,N_SDP_RATE},
     // {5,T_SDP_RATE},{6,N_DP_RATE},{7,TIER1_ALLELE_RATE}
     const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
@@ -66,7 +68,12 @@ set_VQSR_sample_info(
 
     if (isNormalSample)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
     {
-        smod.set_feature(STRELKA_SNV_VQSR_FEATURES::N_DP_RATE, safeFrac(tier1_cpi.n_calls(),dopt.sfilter.max_depth));
+        double normalDepthRate(1.);
+        if (isUniformDepthExpected)
+        {
+            normalDepthRate = safeFrac(tier1_cpi.n_calls(),dopt.sfilter.expected_chrom_depth);
+        }
+        smod.set_feature(STRELKA_SNV_VQSR_FEATURES::N_DP_RATE,normalDepthRate);
     }
 
     if (!isNormalSample)      //report tier1_allele count for tumor case
@@ -123,20 +130,17 @@ set_VQSR_sample_info(
 //          {9,n_mapq0},{10,rs.strandBias},{11,ReadPosRankSum},{12,altmap},{13,altpos},{14,pnoise},{15,pnoise2}};
 static
 void
-calc_VQSR_features(
+get_scoring_features(
     const blt_options& opt,
     const strelka_deriv_options& dopt,
     const somatic_snv_genotype_grid& /*sgt*/,
-    strelka_shared_modifiers_snv& smod,
     const CleanedPileup& n1_cpi,
     const CleanedPileup& t1_cpi,
     const CleanedPileup& n2_cpi,
     const CleanedPileup& t2_cpi,
-    const result_set& rs)
+    const result_set& rs,
+    strelka_shared_modifiers_snv& smod)
 {
-    // don't worry about efficiency for median calc right now:
-    //bool isAltpos(false);
-    //bool isAltmap(false);
     uint16_t altpos=0;
     uint16_t altmap=0;
     if (! t1_cpi.rawPileup().altReadPos.empty())
@@ -156,7 +160,6 @@ calc_VQSR_features(
         const auto pmedian(median(readpos.begin(),readpos.end()));
         const auto lmedian(median(readposcomp.begin(),readposcomp.end()));
 
-        // isAltpos=true;
         altpos=std::min(pmedian,lmedian);
 
         if (readpos.size() >= 3)
@@ -166,7 +169,6 @@ calc_VQSR_features(
                 p = std::abs(p-pmedian);
             }
 
-            //isAltmap=true;
             altmap=median(readpos.begin(),readpos.end());
         }
     }
@@ -174,8 +176,9 @@ calc_VQSR_features(
     //QSS_NT
     smod.set_feature(STRELKA_SNV_VQSR_FEATURES::QSS_NT,rs.snv_from_ntype_qphred);
 
-    set_VQSR_sample_info(opt,dopt,n1_cpi,n2_cpi,smod,true);
-    set_VQSR_sample_info(opt,dopt,t1_cpi,t2_cpi,smod,false);
+    static const bool isNormalSample(true);
+    get_single_sample_scoring_features(opt,dopt,n1_cpi,n2_cpi,isNormalSample,smod);
+    get_single_sample_scoring_features(opt,dopt,t1_cpi,t2_cpi,(!isNormalSample),smod);
 
     //MQ
     const unsigned n_mapq(n1_cpi.rawPileup().n_mapq+t1_cpi.rawPileup().n_mapq);
@@ -198,24 +201,6 @@ calc_VQSR_features(
     //Altpos
     smod.set_feature(STRELKA_SNV_VQSR_FEATURES::altpos,altpos);
     smod.set_feature(STRELKA_SNV_VQSR_FEATURES::altmap,altmap);
-
-#if 0
-    //Pnoise
-    double pnoise(0);
-    if (sgt.sn.total > 1 && sgt.sn.noise > 1)
-    {
-        pnoise = sgt.sn.nfrac();
-    }
-    smod.set_feature(STRELKA_SNV_VQSR_FEATURES::pnoise,pnoise);
-
-    //Pnoise2
-    double pnoise2(0);
-    if (sgt.sn.total > 1 && sgt.sn.noise2 > 1)
-    {
-        pnoise2 = sgt.sn.n2frac();
-    }
-    smod.set_feature(STRELKA_SNV_VQSR_FEATURES::pnoise2,pnoise2);
-#endif
 }
 
 
@@ -277,7 +262,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
         if (dopt.sfilter.is_max_depth())
         {
-            if (normalDP > dopt.sfilter.max_depth)
+            if (normalDP > dopt.sfilter.max_chrom_depth)
             {
                 smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
             }
@@ -320,10 +305,10 @@ write_vcf_somatic_snv_genotype_strand_grid(
     }
 
     {
-        // Make sure the VQSR feature vector is populated
-        // this is done even if not running with VQSR as some intermediate
+        // Make sure the empirical scoring feature vector is populated
+        // this is done even if not running with ES as some intermediate
         // calculations are still needed for VCF reporting
-        calc_VQSR_features(opt,dopt,sgt,smod,n1_epd,t1_epd,n2_epd,t2_epd,rs);
+        get_scoring_features(opt,dopt,sgt,n1_epd,t1_epd,n2_epd,t2_epd,rs,smod);
 
         // if we are using empirical scoring, clear filters and apply single LowQscore filter
         if (dopt.somaticSnvScoringModel)

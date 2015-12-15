@@ -93,7 +93,7 @@ writeSomaticIndelVcfGrid(
     if (dopt.sfilter.is_max_depth())
     {
         const unsigned& depth(siInfo.nisri[0].depth);
-        if (depth > dopt.sfilter.max_depth)
+        if (depth > dopt.sfilter.max_chrom_depth)
         {
             smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
         }

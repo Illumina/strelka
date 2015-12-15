@@ -146,7 +146,8 @@ struct somatic_filter_deriv_options
         return (! chrom_depth.empty());
     }
 
-    double max_depth = 0;
+    double max_chrom_depth = 0;
+    double expected_chrom_depth = 0;
     cdmap_t chrom_depth;
     unsigned indelRegionStage = 0;
 };

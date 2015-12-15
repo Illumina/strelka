@@ -87,8 +87,8 @@ def main():
         bres = pandas.concat(bams).groupby("CHROM").mean()
         md = {}
         for x in bres.index:
-            print >>sys.stderr, "Mean coverage on %s is %f" % (x, bres.loc[x]["COVERAGE"])
-            md[x] = float(bres.loc[x]["COVERAGE"])*3.0
+            print >>sys.stderr, "Expected coverage on %s is %f" % (x, bres.loc[x]["COVERAGE"])
+            md[x] = float(bres.loc[x]["COVERAGE"])
 
     fset = vqsr.features.FeatureSet.make(args.features)
     fset.setChrDepths(md)

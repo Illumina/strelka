@@ -296,9 +296,6 @@ process_pos_snp_single_sample_impl(
     si->n_unused_calls=cpi.n_unused_calls();
 
 
-
-
-
     // delay writing any snpcalls so that anomaly tests can (optionally) be applied as filters:
     //
     nonref_test_call nrc;

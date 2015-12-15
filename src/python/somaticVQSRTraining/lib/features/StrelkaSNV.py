@@ -53,7 +53,7 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
 
             for l in list(extractHeaders(vcfname)):
                 x = str(l).lower()
-                if '##maxdepth_' in x:
+                if '##Depth_' in x:
                     xl = str(l).split('=')
                     xchr = xl[0][11:]
                     avg_depth[xchr] = float(xl[1])

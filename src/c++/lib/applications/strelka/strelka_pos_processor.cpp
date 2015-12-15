@@ -76,7 +76,7 @@ strelka_pos_processor(
         {
             if (opt.max_candidate_indel_depth_factor > 0.)
             {
-                max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_depth);
+                max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_chrom_depth);
             }
         }
 
