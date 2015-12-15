@@ -378,7 +378,7 @@ get_diploid_strand_grid_lhood_spi(
     {
         const blt_float_t het_ratio((i+1)*ratio_increment);
         get_strand_ratio_lhood_spi(pi,ref_gt,het_ratio,i,hrcache,
-                                   lhood+(i*DIGT_SGRID::STRAND_SIZE));
+                                   lhood+i);
     }
 }
 
@@ -578,6 +578,7 @@ calculate_result_set_grid(
                 prior=pset.somatic_marginal[ngt]+lnmismatch;
             }
             pprob[dgt] = normal_lhood[ngt]+tumor_lhood[tgt]+prior;
+            printf("%d\t%d\t%lf\t%lf\t%lf\t%lf\n", ngt, tgt, normal_lhood[ngt], tumor_lhood[tgt], prior, pprob[dgt]);
 #endif
         }
     }
@@ -596,21 +597,23 @@ calculate_result_set_grid(
     opt_normalize_ln_distro(pprob.begin(),pprob.end(),DDIGT_SGRID::is_nonsom.val.begin(),rs.max_gt);
     //normalize_ln_distro(pprob.begin(),pprob.end(),rs.max_gt);
 
-    //// Debug
+//    //// Debug
 //    printf("========================\n");
 //    for (unsigned ngt(0); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt)
 //    {
 //        for (unsigned tgt(0); tgt<DIGT_SGRID::PRESTRAND_SIZE; ++tgt)
 //        {
-//            printf("%d\t%d\t%f\n", ngt, tgt, pprob[DDIGT_SGRID::get_state(ngt,tgt)]);
+//            if(pprob[DDIGT_SGRID::get_state(ngt,tgt)] > 0.0)
+//                printf("%d\t%d\t%f\n", ngt, tgt, pprob[DDIGT_SGRID::get_state(ngt,tgt)]);
 //        }
 //    }
 //    printf("=========\n");
 //    for (unsigned gt(DIGT_SGRID::PRESTRAND_SIZE); gt<DIGT_SGRID::SIZE; ++gt)
 //    {
-//        printf("%d\t%d\t%f\n", gt, gt, pprob[DDIGT_SGRID::get_state(gt,gt)]);
+//        if(pprob[DDIGT_SGRID::get_state(gt,gt)] > 0.0)
+//            printf("%d\t%d\t%f\n", gt, gt, pprob[DDIGT_SGRID::get_state(gt,gt)]);
 //    }
-    //////////////////
+//    //////////////////
 
     double nonsomatic_sum(0);
     for (unsigned gt(0); gt<DIGT_SGRID::SIZE; ++gt)
@@ -844,6 +847,13 @@ position_somatic_snv_call(
         // get likelihood of strand states (0.05, ..., 0.45)
         get_diploid_strand_grid_lhood_spi(nepi.pi,sgt.ref_gt,normal_lhood+DIGT_SGRID::PRESTRAND_SIZE);
         get_diploid_strand_grid_lhood_spi(tepi.pi,sgt.ref_gt,tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE);
+
+        // Debug
+//        for (unsigned gt(0); gt<DIGT_SGRID::SIZE; ++gt)
+//        {
+//            printf("%d\t%lf\t%lf\n", gt, normal_lhood[gt], tumor_lhood[gt]);
+//        }
+        ////////
 
         // genomic site results:
         calculate_result_set_grid(isComputeNonSomatic,

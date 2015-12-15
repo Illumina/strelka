@@ -58,7 +58,7 @@ namespace DIGT_SGRID
 enum constants { HET_RES = 9,
                  HET_COUNT = HET_RES*2+1,
                  STRAND_COUNT = HET_RES,
-                 STRAND_SIZE = DIGT::HET_SIZE/2,
+                 STRAND_SIZE = 1,
                  HET_STATE_SIZE = HET_COUNT,
                  HOM_SIZE = 2,
                  PRESTRAND_SIZE = HOM_SIZE+HET_STATE_SIZE,
