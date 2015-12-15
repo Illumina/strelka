@@ -96,6 +96,11 @@ struct IndelErrorModel
         return MaxMotifLength;
     }
 
+    double adjusted_rate(unsigned repeat_unit_length,
+                         unsigned tract_length,
+                         unsigned indel_size,
+                         INDEL::index_t it) const;
+
     void add_prop(const unsigned& unit, const unsigned& tract, const indel_error_rates& myProps);
 
 private:

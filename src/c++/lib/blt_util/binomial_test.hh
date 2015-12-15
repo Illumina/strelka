@@ -95,6 +95,13 @@ is_reject_binomial_gte_n_success_exact(
     const unsigned n_success,
     const unsigned n_trials);
 
+/// one-sided binomial exact test
+///
+/// returns the minimum number of successes to reject the null hypothesis
+/// with a p-value of at most alpha for a given error rate and number of trials
+/// one-sided test to establish that rate is higher than expected
+///
+/// matches R code qbinom(alpha, n_trials, p, lower.tail = FALSE    )
 double
 min_count_binomial_gte_exact(
     const double alpha,

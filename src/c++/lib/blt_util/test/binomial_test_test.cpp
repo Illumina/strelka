@@ -221,7 +221,6 @@ BOOST_AUTO_TEST_CASE( test_binomial_pvalue_0_5_manyvals )
     };
 
     const size_t nexamples = carray_size(exampledata);
-    assert(nexamples == 100 && "we want exactly 50 examples");
     for (size_t i = 0; i < nexamples; ++i)
     {
         unsigned trials = (unsigned )exampledata[i][0];
@@ -303,7 +302,6 @@ BOOST_AUTO_TEST_CASE( test_binomial_pvalue_many_p_manyvals )
     };
 
     const size_t nexamples = carray_size(exampledata);
-    assert(nexamples == 50 && "we want exactly 50 examples");
     for (size_t i = 0; i < nexamples; ++i)
     {
         unsigned trials = (unsigned )exampledata[i][0];
@@ -439,7 +437,6 @@ BOOST_AUTO_TEST_CASE( test_binomial_gte_min_count )
     };
 
     const size_t nexamples = carray_size(exampledata);
-    assert(nexamples == 100 && "we want exactly 100 examples");
     for (size_t i = 0; i < nexamples; ++i) {
         unsigned trials       = (unsigned )exampledata[i][0];
         double   success_rate = exampledata[i][1];

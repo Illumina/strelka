@@ -194,23 +194,19 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
     {
         if (iri.it == INDEL::INSERT)
         {
-            indel_error_prob=std::max(model[0][0].insert_rate,
-                                      std::pow(model[repeat_unit - 1][ref_query_len - 1].insert_rate,indel_size));
+            indel_error_prob=std::max(model[0][0].insert_rate, adjusted_rate(repeat_unit, ref_query_len, indel_size, INDEL::INSERT));
 
             // Reverse prob that true allele has been masked as reference by chance,
             // may want to leave this term for now.
             ref_error_prob=client_opt.indel_ref_error_factor
-                           * std::max(model[0][0].delete_rate,
-                                      std::pow(model[repeat_unit - 1][indel_query_len - 1].delete_rate,indel_size));
+                           * std::max(model[0][0].delete_rate, adjusted_rate(repeat_unit, indel_query_len, indel_size, INDEL::DELETE));
         }
         else if (iri.it == INDEL::DELETE)
         {
-            indel_error_prob=std::max(model[0][0].delete_rate,
-                                      std::pow(model[repeat_unit - 1][ref_query_len - 1].delete_rate,indel_size));
+            indel_error_prob=std::max(model[0][0].delete_rate, adjusted_rate(repeat_unit, ref_query_len, indel_size, INDEL::DELETE));
 
             ref_error_prob=client_opt.indel_ref_error_factor
-                           * std::max(model[0][0].insert_rate,
-                                      std::pow(model[repeat_unit - 1][indel_query_len - 1].insert_rate,indel_size));
+                           * std::max(model[0][0].insert_rate, adjusted_rate(repeat_unit, indel_query_len, indel_size, INDEL::INSERT));
         }
         else
         {
@@ -273,12 +269,9 @@ calc_abstract_prop(unsigned repeat_unit_length,
         adj_indel_size = indel_size;
     }
 
-
-    error_rates = model[repeat_unit - 1][adj_tract_length - 1];
-    error_rates.insert_rate = std::max(model[0][0].insert_rate,
-                                  std::pow(error_rates.insert_rate, adj_indel_size));
-    error_rates.delete_rate = std::max(model[0][0].delete_rate,
-                                       std::pow(error_rates.delete_rate, adj_indel_size));
+    // error_rates = model[repeat_unit - 1][adj_tract_length - 1];
+    error_rates.insert_rate = std::max(model[0][0].insert_rate, adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::INSERT));
+    error_rates.delete_rate = std::max(model[0][0].delete_rate, adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::DELETE));
 }
 
 indel_error_rates
@@ -309,11 +302,10 @@ calc_abstract_prop(unsigned repeat_unit_length,
         adj_indel_size = indel_size;
     }
 
-    indel_error_rates error_rates = model[repeat_unit - 1][adj_tract_length - 1];
-    error_rates.insert_rate = std::max(model[0][0].insert_rate,
-                                  std::pow(error_rates.insert_rate, adj_indel_size));
-    error_rates.delete_rate = std::max(model[0][0].delete_rate,
-                                       std::pow(error_rates.delete_rate, adj_indel_size));
+    // indel_error_rates error_rates = model[repeat_unit - 1][adj_tract_length - 1];
+    indel_error_rates error_rates;
+    error_rates.insert_rate = std::max(model[0][0].insert_rate, adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::INSERT));
+    error_rates.delete_rate = std::max(model[0][0].delete_rate, adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::DELETE));
 
     return error_rates;
 }
@@ -332,6 +324,20 @@ bool IndelErrorModel::is_simple_tandem_repeat(const starling_indel_report_info& 
     }
     return false;
 }
+
+double IndelErrorModel::adjusted_rate(unsigned repeat_unit_length,
+                                      unsigned tract_length,
+                                      unsigned indel_size,
+                                      INDEL::index_t it) const
+{
+    assert(it == INDEL::INSERT || it == INDEL::DELETE);
+    if(it == INDEL::INSERT)
+    {
+        return std::pow(model[repeat_unit_length - 1][tract_length - 1].insert_rate, indel_size);
+    }
+    return std::pow(model[repeat_unit_length - 1][tract_length - 1].delete_rate, indel_size);
+}
+
 
 void IndelErrorModel::add_prop(const unsigned& unit, const unsigned& tract, const indel_error_rates& myProps)
 {
