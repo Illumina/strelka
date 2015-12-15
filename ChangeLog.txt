@@ -1,3 +1,4 @@
+- STARKA-297 adjust somatic ES model for exome data
 - STARKA-293 remove count and frequency cutoffs for non-STR indels, replace with statistical test
 - STARKA-305 add simple germline SNV calling site simulator
 - STARKA-302 add feature verification for file-based scoring models

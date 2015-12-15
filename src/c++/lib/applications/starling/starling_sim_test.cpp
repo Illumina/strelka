@@ -218,7 +218,7 @@ sim_sample_pi(
     snp_pos_info& pi)
 {
     unsigned all_cov(sim_opt.coverage);
-    if(! sim_opt.is_exact_cov)
+    if (! sim_opt.is_exact_cov)
     {
         all_cov = cov_gen();
     }
