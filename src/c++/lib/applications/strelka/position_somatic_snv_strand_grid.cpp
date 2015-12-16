@@ -50,7 +50,6 @@ static const blt_float_t ln_one_half(std::log(one_half));
 static
 void
 get_nostrand_marginal_prior(const blt_float_t* normal_lnprior,
-                            const unsigned ref_gt,
                             const blt_float_t sse_rate,
                             const blt_float_t sseb_fraction,
                             std::vector<blt_float_t>& grid_normal_lnprior)
@@ -63,44 +62,16 @@ get_nostrand_marginal_prior(const blt_float_t* normal_lnprior,
     const blt_float_t ln_nostrand_sse_rate( std::log(nostrand_sse_rate) );
 
     // fill in normal sample prior for canonical diploid allele frequencies:
-    for (unsigned ngt(0); ngt<DIGT::SIZE; ++ngt)
+    for (unsigned ngt(0); ngt<DIGT_SIMPLE::SIZE; ++ngt)
     {
         grid_normal_lnprior[ngt] = (normal_lnprior[ngt]+ln_csse_rate);
     }
 
-    // nostrand noise prior distributions for each allele combination axis:
-    //
-    // weight the prior by the potential originating genotypes:
-    // if on AB axis, we want P(AA+noiseB)+P(AB+noise)+P(BB+noiseA)
-    // so we have P(AA)*error_prob /3 + P(AB)*error_prob + P(BB)*error_prob/3
-    //
-    static const unsigned n_het_axes(6);
-    blt_float_t nostrand_axis_prior[n_het_axes];
-    for (unsigned ngt(N_BASE); ngt<DIGT::SIZE; ++ngt)
-    {
-        const unsigned axis_id(ngt-N_BASE);
-        nostrand_axis_prior[axis_id] = normal_lnprior[ngt];
-        // get the two associated homs:
-        for (unsigned b(0); b<N_BASE; ++b)
-        {
-            if (DIGT::expect2(b,ngt)<=0) continue;
-            nostrand_axis_prior[axis_id] = log_sum(nostrand_axis_prior[axis_id],
-                                                   normal_lnprior[b]+ln_one_third);
-        }
-    }
-
     static const blt_float_t error_mod( -std::log(static_cast<blt_float_t>(DIGT_SGRID::HET_RES*2)) );
-
     // fill in normal sample prior for 'noise' frequencies:
-    for (unsigned ngt(DIGT::SIZE); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt)
+    for (unsigned ngt(DIGT_SIMPLE::SIZE); ngt<DIGT_SGRID::PRESTRAND_SIZE; ++ngt)
     {
-        // 'ngt2' is the root diploid state corresponding to noise
-        // state 'ngt'
-        const unsigned ngt2(DIGT_SGRID::get_digt_state(ngt,ref_gt));
-        assert(ngt2>=N_BASE);
-        const unsigned axis_id(ngt2-N_BASE);
-        grid_normal_lnprior[ngt] = (nostrand_axis_prior[axis_id]+ln_nostrand_sse_rate+error_mod);
-        //        grid_normal_lnprior[ngt] = (normal_lnprior[ngt2]+ln_sse_rate+error_mod);
+        grid_normal_lnprior[ngt] = (normal_lnprior[DIGT_SIMPLE::HET]+ln_nostrand_sse_rate+error_mod);
     }
 }
 
@@ -126,7 +97,6 @@ get_nostrand_marginal_prior(const blt_float_t* normal_lnprior,
 static
 void
 get_prior(const blt_float_t* normal_lnprior,
-          const unsigned ref_gt,
           const blt_float_t sse_rate,
           const blt_float_t sseb_fraction,
           const blt_float_t somatic_normal_noise_rate,
@@ -134,14 +104,14 @@ get_prior(const blt_float_t* normal_lnprior,
           std::vector<blt_float_t>& grid_normal_lnprior,
           std::vector<blt_float_t>& somatic_marginal_lnprior)
 {
-    get_nostrand_marginal_prior(normal_lnprior,ref_gt,sse_rate,sseb_fraction,grid_normal_lnprior);
+    get_nostrand_marginal_prior(normal_lnprior,sse_rate,sseb_fraction,grid_normal_lnprior);
     if (is_somatic_normal_noise_rate)
     {
-        get_nostrand_marginal_prior(normal_lnprior,ref_gt,somatic_normal_noise_rate,0,somatic_marginal_lnprior);
+        get_nostrand_marginal_prior(normal_lnprior,somatic_normal_noise_rate,0,somatic_marginal_lnprior);
     }
     else
     {
-        get_nostrand_marginal_prior(normal_lnprior,ref_gt,sse_rate,sseb_fraction,somatic_marginal_lnprior);
+        get_nostrand_marginal_prior(normal_lnprior,sse_rate,sseb_fraction,somatic_marginal_lnprior);
     }
 
     const blt_float_t strand_sse_rate(sse_rate*sseb_fraction);
@@ -153,24 +123,6 @@ get_prior(const blt_float_t* normal_lnprior,
 
     static const blt_float_t error_mod( -std::log(static_cast<blt_float_t>(DIGT_SGRID::HET_RES*2)) );
 
-    // strand noise prior distributions for each allele combination axis:
-    //
-    // weight the prior by the potential originating genotypes: if on
-    // AB axis, with A==ref, we want P(AA+noiseB) as the prior in the
-    // model for the strand error states: the remaining term:
-    // P(AB+noise)+P(BB+noiseA) is enumerated in to caluclate the
-    // prior "throwaway state" -- regions of the stranded error
-    // distribution for which we will approximate the lhood as 0
-    //
-
-    static const unsigned n_strand_het_axes(3);
-    blt_float_t strand_axis_prior[n_strand_het_axes];
-
-    for (unsigned sgt(0); sgt<n_strand_het_axes; ++sgt)
-    {
-        strand_axis_prior[sgt] = normal_lnprior[ref_gt]+ln_one_third;
-    }
-
     // flaw in using error mod -- because strand state could exist and
     // be detectable at the canonical gt frequencies, we leave it the
     // same with the goal of stable performance as the user changes
@@ -181,8 +133,7 @@ get_prior(const blt_float_t* normal_lnprior,
 
     for (unsigned ngt(DIGT_SGRID::PRESTRAND_SIZE); ngt<(DIGT_SGRID::SIZE); ++ngt)
     {
-        const unsigned sgt(DIGT_SGRID::get_strand_state(ngt));
-        grid_normal_lnprior[ngt] = (strand_axis_prior[sgt]+ln_strand_sse_rate+error_mod);
+        grid_normal_lnprior[ngt] = (grid_normal_lnprior[DIGT_SIMPLE::HET]+ln_strand_sse_rate+error_mod);
     }
 
 #ifdef SOMATIC_DEBUG
@@ -215,35 +166,28 @@ somatic_snv_caller_strand_grid(const strelka_options& opt,
     _ln_som_match=(log1p_switch(-opt.somatic_snv_rate));
     _ln_som_mismatch=(std::log(opt.somatic_snv_rate/(static_cast<blt_float_t>((DIGT_SGRID::PRESTRAND_SIZE)-1))));
 
-    for (unsigned i(0); i<(N_BASE+1); ++i)
-    {
-        prior_set& ps(_lnprior[i]);
-        std::fill(ps.normal.begin(),ps.normal.end(),0);
-        std::fill(ps.normal_poly.begin(),ps.normal_poly.end(),0);
-    }
+    prior_set& ps(_lnprior);
+    std::fill(ps.normal.begin(),ps.normal.end(),0);
+    std::fill(ps.normal_poly.begin(),ps.normal_poly.end(),0);
 
-    for (unsigned i(0); i<(N_BASE+1); ++i)
-    {
-        prior_set& ps(_lnprior[i]);
-        get_prior(pd_caller.lnprior_genomic(i),i,
-                  opt.shared_site_error_rate,
-                  opt.shared_site_error_strand_bias_fraction,
-                  opt.site_somatic_normal_noise_rate,
-                  opt.is_site_somatic_normal_noise_rate,
-                  ps.normal,
-                  ps.somatic_marginal);
-        get_prior(pd_caller.lnprior_polymorphic(i),i,
-                  opt.shared_site_error_rate,
-                  opt.shared_site_error_strand_bias_fraction,
-                  opt.site_somatic_normal_noise_rate,
-                  opt.is_site_somatic_normal_noise_rate,
-                  ps.normal_poly,
-                  ps.somatic_marginal_poly);
+    get_prior(pd_caller.lnprior_genomic(),
+              opt.shared_site_error_rate,
+              opt.shared_site_error_strand_bias_fraction,
+              opt.site_somatic_normal_noise_rate,
+              opt.is_site_somatic_normal_noise_rate,
+              ps.normal,
+              ps.somatic_marginal);
+    get_prior(pd_caller.lnprior_polymorphic(),
+              opt.shared_site_error_rate,
+              opt.shared_site_error_strand_bias_fraction,
+              opt.site_somatic_normal_noise_rate,
+              opt.is_site_somatic_normal_noise_rate,
+              ps.normal_poly,
+              ps.somatic_marginal_poly);
 
-        // special nostrand distro is used for somatic_gvcf:
-        get_nostrand_marginal_prior(pd_caller.lnprior_genomic(i),i,opt.shared_site_error_rate,0,ps.normal_nostrand);
-        get_nostrand_marginal_prior(pd_caller.lnprior_polymorphic(i),i,opt.shared_site_error_rate,0,ps.normal_poly_nostrand);
-    }
+    // special nostrand distro is used for somatic_gvcf:
+    get_nostrand_marginal_prior(pd_caller.lnprior_genomic(),opt.shared_site_error_rate,0,ps.normal_nostrand);
+    get_nostrand_marginal_prior(pd_caller.lnprior_polymorphic(),opt.shared_site_error_rate,0,ps.normal_poly_nostrand);
 }
 
 
@@ -569,16 +513,19 @@ calculate_result_set_grid(
             if (tgt==ngt)
             {
                 prior=pset.normal[ngt]+lnmatch;
+//                if(ngt < 10 && tgt < 10)
+//                    printf("%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf", ngt, tgt, normal_lhood[ngt], tumor_lhood[tgt], pset.normal[ngt], lnmatch, prior);
             }
             else
             {
-                // Modified by Sangtae to consider normal contamination
-//                prior=pset.somatic_marginal[ngt]+lnmismatch
-                //prior=pset.somatic_marginal[ngt]+lnmismatch+7.95511;
                 prior=pset.somatic_marginal[ngt]+lnmismatch;
+//                if(ngt < 10 && tgt < 10)
+//                    printf("%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf", ngt, tgt, normal_lhood[ngt], tumor_lhood[tgt], pset.somatic_marginal[ngt], lnmismatch, prior);
             }
             pprob[dgt] = normal_lhood[ngt]+tumor_lhood[tgt]+prior;
-            printf("%d\t%d\t%lf\t%lf\t%lf\t%lf\n", ngt, tgt, normal_lhood[ngt], tumor_lhood[tgt], prior, pprob[dgt]);
+//            if(ngt < 10 && tgt < 10)
+//                printf("\t%lf\n", pprob[dgt]);
+
 #endif
         }
     }
@@ -859,7 +806,7 @@ position_somatic_snv_call(
         calculate_result_set_grid(isComputeNonSomatic,
                                   normal_lhood,
                                   tumor_lhood,
-                                  get_prior_set(sgt.ref_gt),
+                                  get_prior_set(),
                                   _ln_som_match,_ln_som_mismatch,
                                   sgt.ref_gt,
                                   sgt.is_forced_output,

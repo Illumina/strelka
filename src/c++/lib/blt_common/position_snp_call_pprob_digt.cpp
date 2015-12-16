@@ -37,95 +37,40 @@ const blt_float_t one_half(1./2.);
 const blt_float_t log_one_half(std::log(one_half));
 
 
-
 static
 void
 get_genomic_prior(
-    const unsigned ref_gt,
     const blt_float_t theta,
     blt_float_t* const prior)
 {
-    blt_float_t prior_sum(0.);
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        if (gt==ref_gt) continue;
-        prior[gt]=(theta*one_third);
-        if (DIGT::is_het(gt))
-        {
-            if (DIGT::expect(ref_gt,gt)<=0.) prior[gt]*=theta;
-        }
-        else
-        {
-            prior[gt]*=.5;
-        }
-        prior_sum += prior[gt];
-    }
-    assert(prior_sum <= 1.);
-    prior[ref_gt] = (1.-prior_sum);
+    prior[DIGT_SIMPLE::HET] = std::log(theta);
+    prior[DIGT_SIMPLE::HOM] = std::log(theta*one_half);
+    prior[DIGT_SIMPLE::REF] = std::log(1.-3./2.*theta);
 }
-
 
 
 static
 void
 get_haploid_genomic_prior(
-    const unsigned ref_gt,
     const blt_float_t theta,
     blt_float_t* const prior)
 {
-    blt_float_t prior_sum(0.);
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        if (gt==ref_gt) continue;
-        if (DIGT::is_het(gt))
-        {
-            prior[gt]=0;
-        }
-        else
-        {
-            prior[gt]=(theta*one_third);
-        }
-        prior_sum += prior[gt];
-    }
-    assert(prior_sum <= 1.);
-    prior[ref_gt] = (1.-prior_sum);
+    prior[DIGT_SIMPLE::HET] = std::log(0.);
+    prior[DIGT_SIMPLE::HOM] = std::log(theta*one_third);
+    prior[DIGT_SIMPLE::REF] = std::log(1.-theta*one_third);
 }
-
 
 
 static
 void
 get_poly_prior(
-    const unsigned ref_gt,
-    const blt_float_t theta,
+    const blt_float_t /*theta*/,
     blt_float_t* const prior)
 {
-    blt_float_t prior_sum(0.);
-    const blt_float_t ctheta(1.-theta);
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        if (gt==ref_gt)
-        {
-            prior[gt]=0.25*(ctheta);
-        }
-        else if (DIGT::is_het(gt))
-        {
-            if (DIGT::expect(ref_gt,gt)<=0.)
-            {
-                prior[gt] = theta*one_third;
-            }
-            else
-            {
-                prior[gt] = 0.5*one_third*ctheta;
-            }
-        }
-        else
-        {
-            prior[gt] = 0.25*one_third*ctheta;
-        }
-        prior_sum += prior[gt];
-    }
-    assert(std::abs(1.-prior_sum) < 0.0001);
+    // Uniform distribution
+    prior[DIGT_SIMPLE::HET] = std::log(one_third);
+    prior[DIGT_SIMPLE::HOM] = std::log(one_third);
+    prior[DIGT_SIMPLE::REF] = std::log(one_third);
 }
 
 
@@ -133,99 +78,82 @@ get_poly_prior(
 static
 void
 get_haploid_poly_prior(
-    const unsigned ref_gt,
     const blt_float_t /*theta*/,
     blt_float_t* const prior)
 {
-    blt_float_t prior_sum(0.);
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        if (gt==ref_gt)
-        {
-            prior[gt]=0.5;
-        }
-        else if (DIGT::is_het(gt))
-        {
-            prior[gt]=0;
-        }
-        else
-        {
-            prior[gt] = 0.5*one_third;
-        }
-        prior_sum += prior[gt];
-    }
-    assert(std::abs(1.-prior_sum) < 0.0001);
+    prior[DIGT_SIMPLE::HET] = std::log(0.);
+    prior[DIGT_SIMPLE::HOM] = std::log(0.5);
+    prior[DIGT_SIMPLE::REF] = std::log(0.5);
 }
 
 
-
-static
-void
-sum_gt(blt_float_t* const x1,
-       const blt_float_t* const x2)
-{
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        x1[gt] += x2[gt];
-    }
-}
-
-
-
-static
-void
-norm_gt(blt_float_t* const x)
-{
-    blt_float_t sum(0);
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        sum += x[gt];
-    }
-    sum = 1./sum;
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        x[gt] *= sum;
-    }
-}
+//static
+//void
+//sum_gt(blt_float_t* const x1,
+//       const blt_float_t* const x2)
+//{
+//    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+//    {
+//        x1[gt] += x2[gt];
+//    }
+//}
 
 
 
-static
-void
-log_gt(blt_float_t* const x)
-{
-    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
-    {
-        x[gt] = std::log(x[gt]);
-    }
-}
+//static
+//void
+//norm_gt(blt_float_t* const x)
+//{
+//    blt_float_t sum(0);
+//    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+//    {
+//        sum += x[gt];
+//    }
+//    sum = 1./sum;
+//    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+//    {
+//        x[gt] *= sum;
+//    }
+//}
 
 
 
-static
-void
-finish_prior(
-    pprob_digt_caller::prior_group& prior)
-{
-    // 'N' prior is the average:
-    auto& nps(prior[N_BASE]);
-    for (unsigned i(0); i<N_BASE; ++i)
-    {
-        auto& ps(prior[i]);
-        sum_gt(nps.genome,ps.genome);
-        sum_gt(nps.poly,ps.poly);
-    }
-    norm_gt(nps.genome);
-    norm_gt(nps.poly);
-
-    // take logs:
-    for (unsigned i(0); i<(N_BASE+1); ++i)
-    {
-        auto& ps(prior[i]);
-        log_gt(ps.genome);
-        log_gt(ps.poly);
-    }
-}
+//static
+//void
+//log_gt(blt_float_t* const x)
+//{
+//    for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+//    {
+//        x[gt] = std::log(x[gt]);
+//    }
+//}
+//
+//
+//
+//static
+//void
+//finish_prior(
+//    pprob_digt_caller::prior_group& prior)
+//{
+//    // 'N' prior is the average:
+//    auto& nps(prior[N_BASE]);
+//    for (unsigned i(0); i<N_BASE; ++i)
+//    {
+//        auto& ps(prior[i]);
+//        sum_gt(nps.genome,ps.genome);
+//        sum_gt(nps.poly,ps.poly);
+//    }
+//    norm_gt(nps.genome);
+//    norm_gt(nps.poly);
+//
+//    // take logs:
+//    for (unsigned i(0); i<(N_BASE+1); ++i)
+//    {
+//        auto& ps(prior[i]);
+//        log_gt(ps.genome);
+//        log_gt(ps.poly);
+//    }
+//}
 
 
 
@@ -233,19 +161,16 @@ pprob_digt_caller::
 pprob_digt_caller(
     const blt_float_t theta)
 {
-    for (unsigned i(0); i<N_BASE; ++i)
-    {
-        prior_set& ps(_lnprior[i]);
-        get_genomic_prior(i,theta,ps.genome);
-        get_poly_prior(i,theta,ps.poly);
+    prior_set& ps(_lnprior);
+    get_genomic_prior(theta,ps.genome);
+    get_poly_prior(theta,ps.poly);
 
-        prior_set& psh(_lnprior_haploid[i]);
-        get_haploid_genomic_prior(i,theta,psh.genome);
-        get_haploid_poly_prior(i,theta,psh.poly);
-    }
+    prior_set& psh(_lnprior_haploid);
+    get_haploid_genomic_prior(theta,psh.genome);
+    get_haploid_poly_prior(theta,psh.poly);
 
-    finish_prior(_lnprior);
-    finish_prior(_lnprior_haploid);
+//    finish_prior(_lnprior);
+//    finish_prior(_lnprior_haploid);
 }
 
 
@@ -486,10 +411,10 @@ position_snp_call_pprob_digt(
     get_diploid_gt_lhood(opt,epi,is_het_bias,opt.bsnp_diploid_het_bias,lhood);
 
     // get genomic site results:
-    calculate_result_set(lhood,lnprior_genomic(dgt.ref_gt,dgt.is_haploid()),dgt.ref_gt,dgt.genome);
+    calculate_result_set(lhood,lnprior_genomic(dgt.is_haploid()),dgt.ref_gt,dgt.genome);
 
     // get polymorphic site results:
-    calculate_result_set(lhood,lnprior_polymorphic(dgt.ref_gt,dgt.is_haploid()),dgt.ref_gt,dgt.poly);
+    calculate_result_set(lhood,lnprior_polymorphic(dgt.is_haploid()),dgt.ref_gt,dgt.poly);
 
     dgt.is_snp=(dgt.genome.snp_qphred != 0);
 

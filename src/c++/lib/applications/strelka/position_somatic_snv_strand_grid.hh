@@ -74,25 +74,25 @@ struct somatic_snv_caller_strand_grid
 private:
 
     const prior_set&
-    get_prior_set(const unsigned ref_id) const
+    get_prior_set() const
     {
-        return _lnprior[ref_id];
+        return _lnprior;
     }
 
     const std::vector<blt_float_t>&
-    lnprior_genomic(const unsigned ref_id) const
+    lnprior_genomic() const
     {
-        return _lnprior[ref_id].normal;
+        return _lnprior.normal;
     }
 
     const std::vector<blt_float_t>&
-    lnprior_polymorphic(const unsigned ref_id) const
+    lnprior_polymorphic() const
     {
-        return _lnprior[ref_id].normal_poly;
+        return _lnprior.normal_poly;
     }
 
     const strelka_options& _opt;
-    std::array<prior_set,N_BASE+1> _lnprior;
+    prior_set _lnprior;
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;
 };
