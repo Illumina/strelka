@@ -75,16 +75,16 @@ namespace DDIGT_SGRID
 
 void
 write_state(const DDIGT_SGRID::index_t dgt,
-            const unsigned ref_gt,
+            const unsigned /* ref_gt */,
             std::ostream& os)
 {
     unsigned normal_gt;
     unsigned tumor_gt;
     DDIGT_SGRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
 
-    DIGT_SGRID::write_state(static_cast<DIGT_SGRID::index_t>(normal_gt),ref_gt,os);
+    os << DIGT_SIMPLE::label(normal_gt);
     os << "->";
-    DIGT_SGRID::write_state(static_cast<DIGT_SGRID::index_t>(tumor_gt),ref_gt,os);
+    os << DIGT_SIMPLE::label(tumor_gt);
 }
 
 void

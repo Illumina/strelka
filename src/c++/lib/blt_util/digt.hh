@@ -261,4 +261,18 @@ enum constants
     HET_SIZE = 1
 };
 
+inline
+const char*
+label(const unsigned idx)
+{
+    switch (idx)
+    {
+    case REF:
+        return "ref";
+    case HOM:
+        return "hom";
+    default:
+        return "het";
+    }
+}
 }

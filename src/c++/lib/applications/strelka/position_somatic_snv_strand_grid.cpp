@@ -65,6 +65,7 @@ get_nostrand_marginal_prior(const blt_float_t* normal_lnprior,
     for (unsigned ngt(0); ngt<DIGT_SIMPLE::SIZE; ++ngt)
     {
         grid_normal_lnprior[ngt] = (normal_lnprior[ngt]+ln_csse_rate);
+//        printf("%d\t%lf\t%lf\n", ngt, normal_lnprior[ngt], ln_csse_rate);
     }
 
     static const blt_float_t error_mod( -std::log(static_cast<blt_float_t>(DIGT_SGRID::HET_RES*2)) );
@@ -727,7 +728,6 @@ calculate_result_set_grid(
 }
 
 
-
 ///
 ///
 void
@@ -934,17 +934,17 @@ position_somatic_snv_call(
 
         // convert diploid genotype into more limited ntype set:
         //
-        if       (sgt.rs.ntype==sgt.ref_gt)
+        if       (sgt.rs.ntype==DIGT_SIMPLE::REF)
         {
             sgt.rs.ntype=NTYPE::REF;
         }
-        else if (DIGT::is_het(sgt.rs.ntype))
+        else if (sgt.rs.ntype==DIGT_SIMPLE::HOM)
         {
-            sgt.rs.ntype=NTYPE::HET;
+            sgt.rs.ntype=NTYPE::HOM;
         }
         else
         {
-            sgt.rs.ntype=NTYPE::HOM;
+            sgt.rs.ntype=NTYPE::HET;
         }
     }
 
