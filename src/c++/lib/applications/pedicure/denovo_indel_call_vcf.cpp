@@ -38,19 +38,28 @@ write_vcf_sample_info(
     const starling_indel_sample_report_info& isri2,
     std::ostream& os)
 {
+
+//	GT:GQ:GQX:DP:DP2:AD:PL
     static const char sep(':');
+    os << "0/1"
+       << sep
+	   << "1"
+	   << sep
+	   << "10"
+	   << sep;
+
     os << isri1.depth
        << sep
        << isri2.depth
        << sep
        << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
-       << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
-       << sep
-       << isri1.n_q30_indel_reads << ','
-       << isri2.n_q30_indel_reads
-       << sep
-       << isri1.n_other_reads << ','
-       << isri2.n_other_reads;
+       << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads;
+//       << sep
+//       << isri1.n_q30_indel_reads << ','
+//       << isri2.n_q30_indel_reads
+//       << sep
+//       << isri1.n_other_reads << ','
+//       << isri2.n_other_reads;
 }
 
 
@@ -178,7 +187,7 @@ denovo_indel_call_vcf(
     }
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR";
+    os << sep << "GT:GQ:GQX:DP:DP2:AD";
 
     // write sample info:
     for (const auto& sampleIsri : isri)
