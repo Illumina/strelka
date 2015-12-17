@@ -179,3 +179,17 @@ is_reject_binomial_gte_n_success_exact(
 
     return (observed_pval <= alpha);
 }
+
+double
+min_count_binomial_gte_exact(
+    const double alpha,
+    const double p,
+    const unsigned n_trials)
+{
+    assert(alpha >= 0);
+    assert((p >= 0.) && (p <= 1.));
+
+    const double min_count_above_threshold = quantile(complement(binomial(n_trials, p), alpha));
+
+    return min_count_above_threshold;
+}

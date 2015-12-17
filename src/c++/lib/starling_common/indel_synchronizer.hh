@@ -24,6 +24,8 @@
 
 #pragma once
 
+# include <vector>
+
 #include "blt_util/id_map.hh"
 #include "starling_common/depth_buffer.hh"
 #include "starling_common/indel_buffer.hh"
@@ -242,6 +244,78 @@ private:
     const reference_contig_segment& _ref;
 
     indel_sync_data _isd;
+
+    // Rather than calculate p-values explicitly in the hpol one case
+    // from a binomial distribution, or use a lookup table for total cov
+    // x indel size, we can leverage the fact the n * p ~ n * p * (1 - p)
+    // for our current indel error rates and use a Poisson approximation
+    // to the binomial distribution.   This will not work when p is large
+    // relative to n (i.e. high error rates--in a typical 30x dataset, error
+    // rates would have to be around 10%, we're currently observing error rates
+    // around 5e-6 - 2e-5.  This lookup table provides the minimum coverage
+    // given an error rate p and coverage n when for a p-value of 1e-9.
+    // We could calculate this dynamically in a small piece of code while we
+    // do refCoverage, etc. for an arbitrary p-value, but this should do for now.
+
+    /* Generated from the following code in R
+    *   require(plyr)
+
+    *   min_success_enum <- data.frame(min_success = qpois(1e-9, lambda = seq(1e-6, 3, 1e-6), 
+    *                                                      lower.tail = FALSE),
+    *                                  np = seq(1e-6, 3, 1e-6))
+    *   min_success_enum$min_success[min_success_enum$min_success < 2] <- 2
+
+    *   min_success_ranges <- ddply(min_success_enum, .(min_success), summarize, 
+    *                               min_success = unique(min_success),
+    *                               min_np = min(np),
+    *                               max_np = max(np))
+    *   min_success_ranges$min_np <- min_success_ranges$min_np - 1e-6
+
+    *   cat(apply(min_success_ranges, 1, function(x) sprintf("{%6d, %.6f, %.6f},",
+    *                                             x["min_success"],
+    *                                             x["min_np"], x["max_np"])),
+    *       sep = "\n")
+
+    */
+    // min success min_np    max_np
+    static constexpr const double _min_hpol_one_indel_cov_by_np[17][3] = {
+        {     2, 0.000000, 0.001817},
+        {     3, 0.001817, 0.012477},
+        {     4, 0.012477, 0.041576},
+        {     5, 0.041576, 0.095978},
+        {     6, 0.095978, 0.179024},
+        {     7, 0.179024, 0.291566},
+        {     8, 0.291566, 0.433032},
+        {     9, 0.433032, 0.602135},
+        {    10, 0.602135, 0.797280},
+        {    11, 0.797280, 1.016790},
+        {    12, 1.016790, 1.259019},
+        {    13, 1.259019, 1.522411},
+        {    14, 1.522411, 1.805519},
+        {    15, 1.805519, 2.107018},
+        {    16, 2.107018, 2.425694},
+        {    17, 2.425694, 2.760443},
+        {    18, 2.760443, 3.000000}
+    };
+
+    static constexpr const unsigned _min_hpol_one_indel_cov_rows = 17;
+    static_assert(starling_base_options::tumor_min_hpol_pval == 1e-9,
+        "Lookup table is invalid for minimum candidate p-values != 1e-9.  Please refer to src/c++/lib/starling_common/indel_synchronizer.hh:264, recalculate and replace lookup table, then recompile");
+        
+    unsigned get_min_candidate_cov(double np) const
+    {
+        // this should be faster than a binary interval search since
+        // we almost always expect n * p to be on the low side
+        // (i.e. np < 0.01)
+        for(unsigned i = 0; i < _min_hpol_one_indel_cov_rows; ++i)
+        {
+            if(np <= _min_hpol_one_indel_cov_by_np[i][2])
+            {
+                return (unsigned )_min_hpol_one_indel_cov_by_np[i][0];
+            }
+        }
+        return 0U;
+    }
 
     // this is the "external" id of the primary sample, it can be
     // considered as a map key

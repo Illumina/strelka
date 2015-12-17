@@ -33,8 +33,24 @@
 
 static const unsigned max_unit_len(10);
 static const unsigned max_tract_len(40);
-typedef std::pair<double,double> error_model[max_unit_len][max_tract_len];
 
+struct indel_error_rates{
+    double insert_rate;
+    double delete_rate;
+
+    indel_error_rates()
+    {
+        insert_rate = 0;
+        delete_rate = 0;
+    }
+    indel_error_rates(double insert_error_rate, double delete_error_rate)
+    {
+        insert_rate = insert_error_rate;
+        delete_rate = delete_error_rate;
+    }
+};
+
+typedef indel_error_rates error_model[max_unit_len][max_tract_len];
 
 struct IndelErrorModel
 {
@@ -62,6 +78,17 @@ struct IndelErrorModel
                    double& ref_error_prob,
                    bool use_length_dependence = false) const;
 
+    void calc_abstract_prop(unsigned repeat_unit_length,
+                            unsigned tract_length,
+                            unsigned indel_size,
+                            indel_error_rates& error_rates,
+                            bool use_length_dependence) const;
+
+    indel_error_rates calc_abstract_prop(unsigned repeat_unit_length,
+                            unsigned tract_length,
+                            unsigned indel_size,
+                            bool use_length_dependence) const;
+
     bool is_simple_tandem_repeat(const starling_indel_report_info& iri) const;
 
     unsigned get_max_motif_length() const
@@ -69,7 +96,12 @@ struct IndelErrorModel
         return MaxMotifLength;
     }
 
-    void add_prop(const unsigned& unit, const unsigned& tract, const std::pair<double,double>& myProps);
+    double adjusted_rate(unsigned repeat_unit_length,
+                         unsigned tract_length,
+                         unsigned indel_size,
+                         INDEL::index_t it) const;
+
+    void add_prop(const unsigned& unit, const unsigned& tract, const indel_error_rates& myProps);
 
 private:
     static
