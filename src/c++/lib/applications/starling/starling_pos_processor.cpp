@@ -243,7 +243,8 @@ starling_pos_processor::process_pos_snp_single_sample_continuous(
 
 
 void
-starling_pos_processor::process_pos_snp_single_sample_impl(
+starling_pos_processor::
+process_pos_snp_single_sample_impl(
     const pos_t pos,
     const unsigned sample_no)
 {
