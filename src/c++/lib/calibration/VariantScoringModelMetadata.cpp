@@ -87,7 +87,7 @@ Clean_string(const std::string& str)
         temp = temp.substr(doubleQuote);
     }
 
-    return std::move(temp);
+    return temp;
 }
 
 

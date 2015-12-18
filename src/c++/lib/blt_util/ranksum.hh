@@ -92,7 +92,7 @@ private:
         }
 
         std::sort(res.begin(), res.end());
-        return std::move(res);
+        return res;
     }
 
     // returns the count for a given base and observation
