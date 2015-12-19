@@ -60,9 +60,10 @@ protected:
     template <class TDerived, class TBase>
     static std::unique_ptr<TDerived> downcast(std::unique_ptr<TBase> basePtr)
     {
-        if (typeid(*basePtr) == typeid(TDerived))
+        TDerived* ptr(dynamic_cast<TDerived*>(basePtr.release()));
+        if (ptr != nullptr)
         {
-            return std::unique_ptr<TDerived>(dynamic_cast<TDerived*>(basePtr.release()));
+            return std::unique_ptr<TDerived>(ptr);
         }
         throw std::bad_cast();
     }

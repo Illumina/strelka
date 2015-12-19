@@ -36,7 +36,6 @@
 
 
 static const unsigned max_hpol_len(40);
-static const unsigned max_indel_len(15);
 typedef std::pair<double,double> error_model[max_hpol_len];
 
 static

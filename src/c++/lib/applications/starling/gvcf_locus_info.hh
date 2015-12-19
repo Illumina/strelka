@@ -123,6 +123,8 @@ struct shared_call_info
     {
         clear();
     }
+    shared_call_info(const shared_call_info&) = default;
+
     virtual ~shared_call_info() {}
 
     void
