@@ -24,12 +24,12 @@
 
 #pragma once
 
-# include <vector>
-
 #include "blt_util/id_map.hh"
 #include "starling_common/depth_buffer.hh"
 #include "starling_common/indel_buffer.hh"
 #include "starling_common/starling_base_shared.hh"
+
+#include <vector>
 
 
 struct indel_synchronizer;
@@ -89,8 +89,6 @@ struct indel_synchronizer
     /// instantiate for simple single-sample operation:
     ///
     /// \param[in] max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the filter.
-    ///
-    /// \max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the fi
     ///
     indel_synchronizer(
         const starling_base_options& opt,
@@ -299,8 +297,6 @@ private:
     };
 
     static constexpr const unsigned _min_hpol_one_indel_cov_rows = 17;
-    static_assert(starling_base_options::tumor_min_hpol_pval == 1e-9,
-        "Lookup table is invalid for minimum candidate p-values != 1e-9.  Please refer to src/c++/lib/starling_common/indel_synchronizer.hh:264, recalculate and replace lookup table, then recompile");
         
     unsigned get_min_candidate_cov(double np) const
     {

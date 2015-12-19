@@ -135,7 +135,7 @@ struct starling_base_options : public blt_options
     // determine whether they are eligible for candidacy, based on the
     // expected per-read error rate, total coverage, and indel coverage
     // this sets the p-value threshold for determining homopolymer candidacy
-    static constexpr const double tumor_min_hpol_pval = 1e-9;
+    const double tumor_min_hpol_pval = 1e-9;
 
     int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
     double max_candidate_indel_density = 0.15; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
