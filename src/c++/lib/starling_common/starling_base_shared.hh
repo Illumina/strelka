@@ -28,6 +28,7 @@
 
 #include "blt_common/blt_shared.hh"
 #include "blt_util/reference_contig_segment.hh"
+#include "starling_common/min_count_binom_gte_cache.hh"
 #include "starling_common/starling_align_limit.hh"
 #include "starling_common/Tier2Options.hh"
 
@@ -325,6 +326,8 @@ public:
 
     unsigned variant_window_first_stage;
     unsigned variant_window_last_stage;
+
+    const min_count_binom_gte_cache countCache;
 
 private:
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..

@@ -97,8 +97,8 @@ strelka_pos_processor(
                                normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
         isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
                                tumor_sif.sample_opt, -1., TUMOR);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,NORMAL));
-        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,TUMOR));
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,dopt.countCache,isdata,NORMAL));
+        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,dopt.countCache,isdata,TUMOR));
     }
 
     // setup indel avg window:

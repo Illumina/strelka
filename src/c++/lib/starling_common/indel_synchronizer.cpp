@@ -37,6 +37,8 @@
 #include <sstream>
 #include <vector>
 
+
+
 void
 indel_sync_data::
 register_sample(
@@ -55,9 +57,7 @@ register_sample(
     _idata.insert(sample_no,indel_sample_data(ib,db,db2,sample_opt,max_depth));
 }
 
-constexpr const double
-indel_synchronizer::
-_min_hpol_one_indel_cov_by_np[17][3];
+
 
 bool
 indel_synchronizer::
@@ -134,33 +134,18 @@ is_candidate_indel_impl_test(
                     continue;
                 }
 
-                unsigned min_candidate_cov = 0;
                 // test to see if the observed indel coverage exceeds the minimum value
                 // for the rejection threshold.
+                double error_rate(0.);
                 if     (ik.type == INDEL::INSERT)
                 {
-                    min_candidate_cov = get_min_candidate_cov(n_total_reads * hpol_one_error_rates.insert_rate);
-                    if(min_candidate_cov == 0)
-                    {
-                        min_candidate_cov = std::max((unsigned)
-                                                     min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
-                                                                                  hpol_one_error_rates.insert_rate,
-                                                                                  n_total_reads),
-                                                   2U);
-                    }
+                    error_rate = hpol_one_error_rates.insert_rate;
                 }
-                else if(ik.type == INDEL::DELETE)
+                else
                 {
-                    min_candidate_cov = get_min_candidate_cov(n_total_reads * hpol_one_error_rates.delete_rate);
-                    if(min_candidate_cov == 0)
-                    {
-                        min_candidate_cov = std::max((unsigned)
-                                                     min_count_binomial_gte_exact(_opt.tumor_min_hpol_pval,
-                                                                                  hpol_one_error_rates.delete_rate,
-                                                                                  n_total_reads),
-                                                   2U);
-                    }
+                    error_rate = hpol_one_error_rates.delete_rate;
                 }
+                const unsigned min_candidate_cov = std::max(2u,_countCache.getCount(n_total_reads, error_rate));
 
                 is_pass_indel_noise_check=(n_indel_reads >= min_candidate_cov);
                 // if any sample passes the noise check, the indel is a candidate
