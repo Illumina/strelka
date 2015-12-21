@@ -93,7 +93,8 @@ getCount(
 
     /// TODO: this is minimal disaster-proofing, insert a real test for validity of poisson approx to binomial.
     ///    also low n is common for the application we have in mind, how to improve this case?
-    if ((n>=5) && (p<=0.1))
+    double mv_ratio = (n * p) / (n * (1 - p));
+    if (abs(1 - mv_ratio) <= 0.01)
     {
         unsigned val = get_min_count_approx(n*p);
         if (val != 0) return val;
