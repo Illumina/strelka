@@ -34,7 +34,8 @@
 static const unsigned max_unit_len(10);
 static const unsigned max_tract_len(40);
 
-struct indel_error_rates{
+struct indel_error_rates
+{
     double insert_rate;
     double delete_rate;
 
@@ -85,9 +86,9 @@ struct IndelErrorModel
                             bool use_length_dependence) const;
 
     indel_error_rates calc_abstract_prop(unsigned repeat_unit_length,
-                            unsigned tract_length,
-                            unsigned indel_size,
-                            bool use_length_dependence) const;
+                                         unsigned tract_length,
+                                         unsigned indel_size,
+                                         bool use_length_dependence) const;
 
     bool is_simple_tandem_repeat(const starling_indel_report_info& iri) const;
 

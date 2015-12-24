@@ -251,7 +251,7 @@ calc_abstract_prop(unsigned repeat_unit_length,
     // determine the tract length to use
     static const unsigned one(1);
     const unsigned repeat_unit = std::min(std::max(repeat_unit_length,one), this->MaxMotifLength);
-    
+
     unsigned min_tract_length = repeat_unit * 2;
     if (repeat_unit == 1)
     {
@@ -331,7 +331,7 @@ double IndelErrorModel::adjusted_rate(unsigned repeat_unit_length,
                                       INDEL::index_t it) const
 {
     assert(it == INDEL::INSERT || it == INDEL::DELETE);
-    if(it == INDEL::INSERT)
+    if (it == INDEL::INSERT)
     {
         return std::pow(model[repeat_unit_length - 1][tract_length - 1].insert_rate, indel_size);
     }

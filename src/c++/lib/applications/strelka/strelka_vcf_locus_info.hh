@@ -62,7 +62,7 @@ get_label(const unsigned idx)
     {
     case HighDepth:
         return "HighDepth";
-        //return "DP"; // old strelka workflow name
+    //return "DP"; // old strelka workflow name
     case BCNoise:
         return "BCNoise";
     case SpanDel:
@@ -166,7 +166,7 @@ struct strelka_shared_modifiers
         std::ostream& os) const
     {
         int ix = 0;
-        for (auto const & val : _featureVal)
+        for (auto const& val : _featureVal)
         {
             if (ix > 0)
             {

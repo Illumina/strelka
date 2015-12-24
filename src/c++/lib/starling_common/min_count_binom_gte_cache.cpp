@@ -41,7 +41,7 @@ constexpr unsigned min_count_binom_gte_cache::_maxCacheK;
 min_count_binom_gte_cache::
 min_count_binom_gte_cache(
     const double alpha)
-  : _alpha(alpha)
+    : _alpha(alpha)
 {
     assert((alpha >= 0.) && (alpha <= 1.));
 
@@ -68,7 +68,7 @@ min_count_binom_gte_cache(
     /// \TODO explain the unexpected complement of the expected value when using
     ///    gamma_q_inv and fix the documentation above to be consistent
     //
-    for (unsigned kminus1(0);kminus1<_maxCacheK;++kminus1)
+    for (unsigned kminus1(0); kminus1<_maxCacheK; ++kminus1)
     {
         _papprox[kminus1] = boost::math::gamma_p_inv(kminus1+2,alpha);
     }

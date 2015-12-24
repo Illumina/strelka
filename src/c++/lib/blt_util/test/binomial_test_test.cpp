@@ -333,7 +333,8 @@ BOOST_AUTO_TEST_CASE( test_binomial_gte_min_count )
     *     sep = "\n")
      */
     //  trials success_rate    p-value  min_count
-    double exampledata[100][4] =  {
+    double exampledata[100][4] =
+    {
         {153, 2.57316e-03, 1.90497e-01,   1},
         { 79, 7.12531e-01, 2.08688e-04,  69},
         {  2, 2.54527e-01, 8.56125e-02,   1},
@@ -437,7 +438,8 @@ BOOST_AUTO_TEST_CASE( test_binomial_gte_min_count )
     };
 
     const size_t nexamples = carray_size(exampledata);
-    for (size_t i = 0; i < nexamples; ++i) {
+    for (size_t i = 0; i < nexamples; ++i)
+    {
         unsigned trials       = (unsigned )exampledata[i][0];
         double   success_rate = exampledata[i][1];
         double   p_val        = exampledata[i][2];

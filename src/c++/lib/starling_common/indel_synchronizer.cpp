@@ -110,7 +110,7 @@ is_candidate_indel_impl_test(
 
     bool is_indel(ik.type == INDEL::INSERT || ik.type == INDEL::DELETE);
 
-    if(is_indel)
+    if (is_indel)
     {
         bool is_pass_indel_noise_check(false);
         // HPOL ONE CASE
@@ -119,7 +119,7 @@ is_candidate_indel_impl_test(
         // 1. reference tract length is 0 or 1
         // 2. indel error rate
         // 3. total coverage
-        if(iri.ref_repeat_count <= 1)
+        if (iri.ref_repeat_count <= 1)
         {
             is_indel_noise_checked = true;
 
@@ -129,7 +129,7 @@ is_candidate_indel_impl_test(
                 unsigned n_total_reads = ebuff(i).val(ik.pos-1);
                 n_total_reads = std::max(n_total_reads,n_indel_reads);
 
-                if(n_total_reads == 0)
+                if (n_total_reads == 0)
                 {
                     continue;
                 }
