@@ -27,9 +27,14 @@
 
 #include "blt_util/binomial_test.hh"
 
-#include <boost/math/special_functions/gamma.hpp>
+#include "boost/math/special_functions/gamma.hpp"
 
 #include <cassert>
+
+
+
+/// TODO this is bulky -- isn't there an easier way to have an array size constant in C++11?
+constexpr unsigned min_count_binom_gte_cache::_maxCacheK;
 
 
 
@@ -38,44 +43,50 @@ min_count_binom_gte_cache(
     const double alpha)
   : _alpha(alpha)
 {
+    assert((alpha >= 0.) && (alpha <= 1.));
+
     // caching scheme relies on conditions where binom is approximated by Poisson, so
-    // X ~ B(n,p) -> X ~ Poisson(\lambda), where \lambda is n*p
+    // X ~ B(n,p) is approximated by X ~ Poisson(\lambda), where \lambda is n*p. This
+    // approximation allows us (with fixed \alpha), to cache in a compact 1D space.
     //
-    // For a given alpha we want to know for what value of k we exceed alpha on the
-    // Poisson cdf: F(k,\lambda). Because we are caching responses here in response to
-    // unknown values of \lambda, we want the inverse of F(k, \lambda). By first tranforming to
+    // For a given \alpha we want to know for what value of X = k we exceed \alpha on the
+    // Poisson CDF: F(k,\lambda). Because we are caching responses here for unknown
+    // values of \lambda, we want the inverse of the CDF. By first expressing
+    // the CDF, F(k, \lambda), as the equivalent Q(k+1,\lambda), where Q is the (upper)
+    // incomplete gamma function, we can then use the inverse gamma function to
+    // provide \lambda = Q^{-1}(k+1,\alpha)
     //
-    // F(k, \lambda) -> P(k+1,\lambda), where P is the (lower) incomplete gamma function, we then
-    // rely on inversions of the the gamma function to provide \lambda = P(k+1,alpha)^{-1}
+    // In practice boost supplies Q^{-1}() via boost::math::gamma_q_inv
     //
-    // In practice boost supplies P()^{-1} via boost::math::gamma_p_inv
-    //
-    // Besides wikipedia, a critical reference to work this out comes from stackexchange here:
-    //
+    // A helpful reference to work this out comes from stackexchange:
     // http://math.stackexchange.com/questions/68258/poisson-cdf-and-solving-for-lambda
     //
-    static const unsigned maxCacheK(18);
-    for (unsigned kminus1(0);kminus1<maxCacheK;++kminus1)
+    // Note that in practice the inverse upper incomplete gamma gives 1-x, where x is the
+    // expected answer based on the writeup and external links above, so the implementation
+    // below uses the inverse lower incomplete gamma, provided by boost as boost::math::gamma_p_inv
+    //
+    /// \TODO explain the unexpected complement of the expected value when using
+    ///    gamma_q_inv and fix the documentation above to be consistent
+    //
+    for (unsigned kminus1(0);kminus1<_maxCacheK;++kminus1)
     {
-        _papprox.push_back(boost::math::gamma_p_inv(kminus1+2,alpha));
+        _papprox[kminus1] = boost::math::gamma_p_inv(kminus1+2,alpha);
     }
 }
 
 
-unsigned
-min_count_binom_gte_cache::
-get_min_count_approx(const double np) const
+static
+bool
+isPoissonApprox(
+    const double p)
 {
-    // this should be faster than a binary interval search since
-    // we almost always expect n * p to be on the low side
-    // (i.e. np < 0.01)
-    const unsigned pSize(_papprox.size());
-    for(unsigned kminus1 = 0; kminus1 < pSize; ++kminus1)
-    {
-        if(np > _papprox[kminus1]) continue;
-        return (kminus1+1);
-    }
-    return 0;
+    // Test whether Poisson approx to binomial is reasonable for this (n,p) by checking
+    // that the Poisson/bionomial variance ratio is close to 1
+    //
+    // ratio of Pois to Binom variance is var_ratio = n*p / (n*p*(1-p)) -> 1/(1-p)
+    // comp_var_ratio = 1 - var_ratio -> 1 - 1/(1-p) -> -p/(1-p)
+    const double abs_comp_var_ratio(p/(1-p));
+    return (abs_comp_var_ratio <= 0.01);
 }
 
 
@@ -87,20 +98,61 @@ getCount(
     const double p) const
 {
     assert(n>0);
-    assert(p>=0.);
+    assert(p>=0. && p<=1.);
 
     if (p<=0.) return 1.;
 
-    /// TODO: this is minimal disaster-proofing, insert a real test for validity of poisson approx to binomial.
-    ///    also low n is common for the application we have in mind, how to improve this case?
-    double mv_ratio = (n * p) / (n * (1 - p));
-    if (abs(1 - mv_ratio) <= 0.01)
+    if (isPoissonApprox(p))
     {
-        unsigned val = get_min_count_approx(n*p);
-        if (val != 0) return val;
+        const auto iter = std::lower_bound(_papprox.begin(),_papprox.end(),n*p);
+        if (iter != _papprox.end())
+        {
+            return (1+(iter-_papprox.begin()));
+        }
     }
     return min_count_binomial_gte_exact(_alpha,p,n);
 }
+
+
+
+// Worksheet to capture the transformation here:
+//
+// n_success >= getCount(n,p)
+// n_success >= index+1, where pa[index] > np
+// n_success > index, where pa[index] > np
+// pa[n_success-1] > np
+//
+// usually faster than calling getCount b/c we don't need
+// to search on the papprox array
+//
+bool
+min_count_binom_gte_cache::
+isRejectNull(
+    const unsigned n,
+    const double p,
+    const unsigned n_success) const
+{
+    assert(n>0);
+    assert(p>=0. && p<=1.);
+    assert(n_success<=n);
+
+    if (p<=0.) return (n_success>0);
+    if (n_success==0) return false;
+
+    if (isPoissonApprox(p))
+    {
+        const double np(n*p);
+        if (np < _papprox.back())
+        {
+            const unsigned tn(std::min(n_success,_maxCacheK)-1);
+            return (np < _papprox[tn]);
+        }
+    }
+
+    /// TODO I'm sure there's a faster test encapsulating the line below into a single isRejectNull predicate
+    return (n_success>=min_count_binomial_gte_exact(_alpha,p,n));
+}
+
 
 
 // original docs form Mitch:

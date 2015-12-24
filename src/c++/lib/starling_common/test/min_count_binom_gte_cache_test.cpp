@@ -25,6 +25,7 @@
 #include "blt_util/binomial_test.hh"
 
 
+
 BOOST_AUTO_TEST_SUITE( mcbgc_test )
 
 
@@ -36,15 +37,29 @@ testCount(
     const double p)
 {
     min_count_binom_gte_cache mc(alpha);
-    BOOST_CHECK_EQUAL(mc.getCount(ntrials,p), min_count_binomial_gte_exact(alpha,p,ntrials));
+    BOOST_REQUIRE_EQUAL(mc.getCount(ntrials,p), min_count_binomial_gte_exact(alpha,p,ntrials));
 }
 
 
-BOOST_AUTO_TEST_CASE( test_mcbgc1 )
+BOOST_AUTO_TEST_CASE( test_count )
 {
     testCount(1e-9,10000,1e-4);
     testCount(1e-8,100000,1e-4);
     testCount(1e-3,100000,1e-4);
+
+    // test outside of Poisson range:
+    testCount(1e-3,1000,0.95);
+}
+
+
+BOOST_AUTO_TEST_CASE( test_reject )
+{
+    min_count_binom_gte_cache mc(1e-9);
+    BOOST_REQUIRE(! mc.isRejectNull(10000,1e-4,10));
+    BOOST_REQUIRE(mc.isRejectNull(10000,1e-4,11));
+
+    min_count_binom_gte_cache mc2(1e-3);
+    BOOST_REQUIRE(! mc2.isRejectNull(100000,1e-4,10));
 }
 
 

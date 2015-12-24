@@ -136,6 +136,15 @@ is_candidate_indel_impl_test(
 
                 // test to see if the observed indel coverage exceeds the minimum value
                 // for the rejection threshold.
+
+                // this min indel support coverage is applied regardless of error model:
+                static const unsigned min_candidate_cov_floor(2);
+                if (n_indel_reads < min_candidate_cov_floor)
+                {
+                    continue;
+                }
+
+                // this min indel support coverage is based on error model:
                 double error_rate(0.);
                 if     (ik.type == INDEL::INSERT)
                 {
@@ -145,9 +154,8 @@ is_candidate_indel_impl_test(
                 {
                     error_rate = hpol_one_error_rates.delete_rate;
                 }
-                const unsigned min_candidate_cov = std::max(2u,_countCache.getCount(n_total_reads, error_rate));
+                is_pass_indel_noise_check=_countCache.isRejectNull(n_total_reads, error_rate, n_indel_reads);
 
-                is_pass_indel_noise_check=(n_indel_reads >= min_candidate_cov);
                 // if any sample passes the noise check, the indel is a candidate
                 if (is_pass_indel_noise_check)
                 {
