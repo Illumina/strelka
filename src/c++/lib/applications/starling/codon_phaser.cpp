@@ -478,6 +478,8 @@ create_phased_record()
     _buffer.erase(_buffer.begin()+1,_buffer.begin()+this->get_block_length());
 }
 
+
+
 // makes the phased VCF record from the buffered sites list
 void
 Codon_phaser::
@@ -488,12 +490,6 @@ make_record()
     this->create_phased_record();
 }
 
-void
-Codon_phaser::collect_records()
-{
-    if (is_in_block() && het_count > 1)
-        make_record();
-}
 
 
 void
@@ -511,15 +507,30 @@ collect_pileup_evidence()
     const unsigned blockWidth(spi.size());
     std::vector<int> callOffset(blockWidth,0);
 
-    /// this function traces individual read fragments out of the pileup structure within the range of the phasing block
+    /// traces individual read fragments from the pileup structure within the phasing block range
     ///
-    /// given a start offset within the phasing block (startBlockIndex), return a bool indicating whether the read is good (ie.
-    /// complete to the end of the phasing block and all basecalls pass filter. This return val is really only useful for
-    /// startBlockIndex=0, in which case it provides a single allele count for the phaser
+    /// Low detail summary:
+    /// If translating aligned reads into pileup columns is thought of as a sort of matrix
+    /// transpose, this function is trying to invert the transposition back to a (partial)
+    /// read. A naive pileup structure would not support this, but starling pileup information
+    /// has been supplemented with a few extra bits that allows this reconstruction.
     ///
-    /// this function mutates callOffset over successive calls to progressively jump to the offset of the next read
+    /// Given a start offset within the phasing block (startBlockIndex), return a tuple composed of:
+    ///     1. A bool indicating whether the read is good (ie. complete to the end of the
+    ///        phasing block and all basecalls pass filter) This return val is really only
+    ///        useful for startBlockIndex=0
+    ///     2. The reconstructed read fragment
     ///
-    // can't use auto here b/c of recursion:
+    /// External calls should always provide startBlockIndex=0, other values of this argument
+    /// are used by internal recursive calls to the function. If the return bool indicates a
+    /// good read, this function effectively returns a single allele count for the phaser
+    ///
+    /// Important implementation detail: this function mutates the external vector 'callOffset'
+    /// over successive calls to progressively jump to the offset of the next read
+    ///
+    /// isFirstBaseCallFromMatchSeg is set for any basecall starting a continuous matching sequence in one read
+    /// isLastBaseCallFromMatchSeg is set for any basecall ending a continuous matching sequence in one read
+    // can't use auto for the return value here b/c of recursion:
     std::function<std::pair<bool,std::string>(const unsigned)> tracePartialRead =
         [&](const unsigned startBlockIndex)
     {
