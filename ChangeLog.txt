@@ -1,3 +1,4 @@
+- STARKA-306 fix rare chunk size boundary defect in RangeMap
 - STARKA-323 refactor STARKA-293 to allow reuse of general accelerated binom
 test
 - STARKA-297 adjust somatic ES model for exome data
