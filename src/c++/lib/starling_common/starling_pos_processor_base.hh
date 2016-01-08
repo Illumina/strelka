@@ -32,12 +32,12 @@
 #pragma once
 
 #include "blt_common/map_level.hh"
+#include "blt_util/depth_buffer.hh"
 #include "blt_util/depth_stream_stat_range.hh"
 #include "blt_util/pos_processor_base.hh"
 #include "blt_util/RegionTracker.hh"
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
-#include "starling_common/depth_buffer.hh"
 #include "starling_common/indel_buffer.hh"
 #include "starling_common/indel_set.hh"
 #include "starling_common/indel_synchronizer.hh"

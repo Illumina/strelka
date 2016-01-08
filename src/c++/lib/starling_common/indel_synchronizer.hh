@@ -26,8 +26,8 @@
 
 #include "min_count_binom_gte_cache.hh"
 
+#include "blt_util/depth_buffer.hh"
 #include "blt_util/id_map.hh"
-#include "starling_common/depth_buffer.hh"
 #include "starling_common/indel_buffer.hh"
 #include "starling_common/starling_base_shared.hh"
 

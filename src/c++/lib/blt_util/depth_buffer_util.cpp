@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Strelka - Small Variant Caller
-// Copyright (c) 2009-2016 Illumina, Inc.
+// Manta - Structural Variant and Indel Caller
+// Copyright (c) 2013-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,24 +28,23 @@
 
 
 void
-add_alignment_to_depth_buffer(const alignment& al,
-                              depth_buffer& db)
+add_alignment_to_depth_buffer(
+    const pos_t& pos,
+    const ALIGNPATH::path_t& apath,
+    depth_buffer& db)
 {
     using namespace ALIGNPATH;
 
-    pos_t ref_head_pos(al.pos);
+    pos_t ref_head_pos(pos);
 
-    const unsigned as(al.path.size());
-    for (unsigned i(0); i<as; ++i)
+    for (const path_segment& ps : apath)
     {
-        const path_segment& ps(al.path[i]);
-        if (is_segment_align_match(ps.type))
+        if ( is_segment_align_match(ps.type) )
         {
             for (unsigned j(0); j<ps.length; ++j) db.inc(ref_head_pos+static_cast<pos_t>(j));
         }
 
-        if (is_segment_type_ref_length(ps.type)) ref_head_pos += ps.length;
+        if ( is_segment_type_ref_length(ps.type) ) ref_head_pos += ps.length;
     }
-
 }
 

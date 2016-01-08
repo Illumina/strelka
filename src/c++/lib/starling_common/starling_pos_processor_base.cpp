@@ -26,7 +26,6 @@
 #pragma warning(disable:4355)
 #endif
 
-#include "depth_buffer_util.hh"
 #include "starling_pos_processor_indel_util.hh"
 #include "starling_read_align.hh"
 #include "starling_read_util.hh"
@@ -40,6 +39,7 @@
 #include "blt_common/position_strand_distro_anomaly_lrt.hh"
 #include "blt_util/align_path.hh"
 #include "blt_util/blt_exception.hh"
+#include "blt_util/depth_buffer_util.hh"
 #include "blt_util/io_util.hh"
 #include "blt_util/log.hh"
 #include "blt_util/read_util.hh"
@@ -733,11 +733,11 @@ load_read_in_depth_buffer(const read_segment& rseg,
     const bool is_usable_mapping(MAPLEVEL::TIER1_MAPPED == maplev);
     if (is_usable_mapping)
     {
-        add_alignment_to_depth_buffer(al,sample(sample_no).estdepth_buff);
+        add_alignment_to_depth_buffer(al.pos,al.path,sample(sample_no).estdepth_buff);
     }
     else if (maplev == MAPLEVEL::TIER2_MAPPED)
     {
-        add_alignment_to_depth_buffer(al,sample(sample_no).estdepth_buff_tier2);
+        add_alignment_to_depth_buffer(al.pos,al.path,sample(sample_no).estdepth_buff_tier2);
     }
 }
 

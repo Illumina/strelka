@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Strelka - Small Variant Caller
-// Copyright (c) 2009-2016 Illumina, Inc.
+// Manta - Structural Variant and Indel Caller
+// Copyright (c) 2013-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,10 +24,14 @@
 
 #pragma once
 
-#include "starling_common/alignment.hh"
-#include "starling_common/depth_buffer.hh"
+#include "blt_util/align_path.hh"
+#include "blt_util/depth_buffer.hh"
 
 
+/// parse alignment into depth buffer object:
+///
 void
-add_alignment_to_depth_buffer(const alignment& al,
-                              depth_buffer& db);
+add_alignment_to_depth_buffer(
+    const pos_t& pos,
+    const ALIGNPATH::path_t& apath,
+    depth_buffer& db);
