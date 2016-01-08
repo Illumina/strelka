@@ -49,7 +49,7 @@ __version__ = workflowVersion
 
 
 def runCount(self, taskPrefix="", dependencies=None) :
-    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
@@ -66,9 +66,9 @@ def runDepth(self,taskPrefix="",dependencies=None) :
     assert len(self.params.probandBamList) == 1
     bamFile = self.params.probandBamList[0]
 
-    cmd  = "%s -E %s" % (sys.executable, self.params.getChromDepth)
-    cmd += " --bam '%s'" % (bamFile)
-    cmd += " > %s" % (self.paths.getChromDepth())
+    cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.getChromDepth)
+    cmd += " --bam \"%s\"" % (bamFile)
+    cmd += " > \"%s\"" % (self.paths.getChromDepth())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth"),cmd,dependencies=dependencies))
@@ -180,9 +180,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         compressWaitFor=headerFixTask
 
     compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
-    compressCmd="%s %s" % (self.params.bgzipBin, tmpDenovoPath)
+    compressCmd="\"%s\" \"%s\"" % (self.params.bgzipBin, tmpDenovoPath)
     if self.params.isWriteCallableRegion :
-        compressCmd += " && %s %s" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
+        compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
 
     self.addTask(compressTask, compressCmd, dependencies=compressWaitFor, isForceLocal=True)
     nextStepWait.add(compressTask)
@@ -197,7 +197,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
     """
 
     tmpGraphDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), "mkdir -p "+tmpGraphDir, dependencies=dependencies, isForceLocal=True)
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), ["mkdir", "-p", tmpGraphDir], dependencies=dependencies, isForceLocal=True)
 
     graphTasks = set()
 

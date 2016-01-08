@@ -49,7 +49,7 @@ __version__ = workflowVersion
 
 
 def runCount(self, taskPrefix="", dependencies=None) :
-    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
@@ -72,9 +72,9 @@ def runDepth(self,taskPrefix="",dependencies=None) :
         return set()
 
 
-    cmd  = "%s -E %s" % (sys.executable, self.params.getChromDepth)
-    cmd += " --bam '%s'" % (bamFile)
-    cmd += " > %s" % (self.paths.getChromDepth())
+    cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.getChromDepth)
+    cmd += " --bam \"%s\"" % (bamFile)
+    cmd += " > \"%s\"" % (self.paths.getChromDepth())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth"),cmd,dependencies=dependencies))
@@ -212,9 +212,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         compressWaitFor=headerFixTask
 
     compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
-    compressCmd="%s %s && %s %s" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
+    compressCmd="\"%s\" \"%s\" && \"%s\" \"%s\"" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
     if self.params.isWriteCallableRegion :
-        compressCmd += " && %s %s" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
+        compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
 
     self.addTask(compressTask, compressCmd, dependencies=compressWaitFor, isForceLocal=True)
     nextStepWait.add(compressTask)
@@ -227,7 +227,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
             # adjust sorted to remove the ".bam" suffix
             sorted = sorted[:-4]
-            sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
+            sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
             sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.pyflowId)
             self.addTask(sortTaskLabel,sortCmd,dependencies=callTask,memMb=self.params.callMemMb)
@@ -246,7 +246,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
     """
 
     tmpGraphDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), "mkdir -p "+tmpGraphDir, dependencies=dependencies, isForceLocal=True)
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), ["mkdir", "-p", tmpGraphDir], dependencies=dependencies, isForceLocal=True)
 
     graphTasks = set()
 
