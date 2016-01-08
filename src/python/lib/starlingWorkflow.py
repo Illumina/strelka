@@ -210,8 +210,17 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
      # gvcf is written to stdout so we need shell features:
     segCmd = " ".join(segCmd)
 
+    # swap parent pyflow command-line into vcf header
+    if isFirstSegment :
+        def getHeaderFixCmd() :
+            cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
+            cmd += ' "' + " ".join(self.params.configCommandLine) + '"'
+            return cmd
+
+        segCmd += " | " + getHeaderFixCmd()
+
     segFiles.gvcf.append(self.paths.getTmpSegmentGvcfPath(segStr))
-    segCmd += " | %s -c >| %s" % (self.params.bgzip9Bin, segFiles.gvcf[-1])
+    segCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, segFiles.gvcf[-1])
 
     nextStepWait = set()
 

@@ -95,6 +95,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         Every local variable in this method becomes part of the default hash
         """
 
+        configCommandLine=sys.argv
+
         alignerMode = "isaac"
 
         libexecDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_LIBEXECDIR@"))
@@ -108,6 +110,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         countFastaBin=joinFile(libexecDir,"countFastaBases")
 
         getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
+        vcfCmdlineSwapper=joinFile(libexecDir,"vcfCmdlineSwapper.py")
 
         # TODO: these aren't shared and should go into child classes:
         starlingBin=joinFile(libexecDir,"starling2")

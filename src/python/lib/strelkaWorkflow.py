@@ -192,13 +192,32 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     callTask=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
     self.addTask(callTask,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
-    compressLabel=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
+    # fix vcf header to use parent pyflow cmdline instead of random segment command:
+    compressWaitFor=callTask
+    if isFirstSegment :
+        headerFixTask=preJoin(taskPrefix,"fixVcfHeader_"+gseg.pyflowId)
+        def getHeaderFixCmd(fileName) :
+            tmpName=fileName+".reheader.tmp"
+            cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
+            cmd += ' "' + " ".join(self.params.configCommandLine) + '"'
+            cmd += " < \"%s\" > \"%s\" && mv \"%s\" \"%s\"" % (fileName,tmpName,
+                                                               tmpName, fileName)
+            return cmd
+
+        headerFixCmd  = getHeaderFixCmd(tmpSnvPath)
+        headerFixCmd += " && "
+        headerFixCmd += getHeaderFixCmd(tmpIndelPath)
+        
+        self.addTask(headerFixTask, headerFixCmd, dependencies=callTask, isForceLocal=True)
+        compressWaitFor=headerFixTask
+
+    compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
     compressCmd="%s %s && %s %s" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
     if self.params.isWriteCallableRegion :
         compressCmd += " && %s %s" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
 
-    self.addTask(compressLabel, compressCmd, dependencies=callTask, isForceLocal=True)
-    nextStepWait.add(compressLabel)
+    self.addTask(compressTask, compressCmd, dependencies=compressWaitFor, isForceLocal=True)
+    nextStepWait.add(compressTask)
 
     if self.params.isWriteRealignedBam :
         def sortRealignBam(label, sortList) :
