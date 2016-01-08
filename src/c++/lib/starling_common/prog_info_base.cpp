@@ -22,8 +22,9 @@
 /// \author Chris Saunders
 ///
 
-#include "starling_common/prog_info_base.hh"
-#include "starling_common/version.hh"
+#include "prog_info_base.hh"
+
+#include "common/ProgramConfig.hh"
 
 #include <string>
 
@@ -32,5 +33,5 @@ const char*
 prog_info_base::
 version() const
 {
-    return getVersion();
+    return illumina::getVersion();
 }

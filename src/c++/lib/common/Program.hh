@@ -18,23 +18,51 @@
 //
 //
 
-///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "common/Program.hh"
+#include <iosfwd>
 
-
-struct strelkaSiteSimulator : public illumina::Program
+namespace illumina
 {
-    const char*
-    name() const
-    {
-        return "strelkaSiteSimulator";
-    }
 
+/// base-class for all command-line programs
+///
+/// this is used to standardize bottom-level exception handling
+struct Program
+{
+    virtual
+    ~Program() {}
+
+    int
+    run(int argc, char* argv[]) const;
+
+    virtual
+    const char*
+    name() const = 0;
+
+    const char*
+    version() const;
+
+    const char*
+    compiler() const;
+
+    const char*
+    buildTime() const;
+
+protected:
+    virtual
     void
-    runInternal(int argc, char* argv[]) const;
+    runInternal(int argc, char* argv[]) const = 0;
+
+private:
+    void
+    post_catch(
+        int argc,
+        char* argv[],
+        std::ostream& os) const;
 };
+
+}

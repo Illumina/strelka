@@ -21,17 +21,18 @@
 /// \author Chris Saunders
 ///
 
+#include "Program.hh"
+#include "ProgramConfig.hh"
+#include "Exceptions.hh"
+
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/sig_handler.hh"
-#include "common/Exceptions.hh"
-#include "starling_common/Program.hh"
-#include "starling_common/version.hh"
 
 #include <cstdlib>
 
 #include <iostream>
-#include <string>
+
 
 
 static
@@ -45,24 +46,11 @@ dump_cl(int argc,
     {
         os << ' ' << argv[i];
     }
-    os << std::endl;
+    os << "\n";
 }
 
 
-
-static
-void
-post_catch(int argc,
-           char* argv[],
-           std::ostream& os)
-{
-    os << "...caught in program.run()\n";
-    dump_cl(argc,argv,log_os);
-    exit(EXIT_FAILURE);
-}
-
-
-namespace starka
+namespace illumina
 {
 
 
@@ -72,6 +60,43 @@ version() const
 {
     return getVersion();
 }
+
+const char*
+Program::
+compiler() const
+{
+    static const std::string _str(
+        cxxCompilerName() +
+        std::string("-") +
+        compilerVersion());
+    return _str.c_str();
+
+}
+
+const char*
+Program::
+buildTime() const
+{
+    return getBuildTime();
+}
+
+
+void
+Program::
+post_catch(
+    int argc,
+    char* argv[],
+    std::ostream& os) const
+{
+    os << "...caught in program.run()\n";
+    dump_cl(argc,argv,log_os);
+    os << "version:\t" << version() << "\n";
+    os << "buildTime:\t" << buildTime() << "\n";
+    os << "compiler:\t" << compiler() << "\n";
+    os << std::flush;
+    exit(EXIT_FAILURE);
+}
+
 
 int
 Program::

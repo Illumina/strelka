@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "starling_common/Program.hh"
+#include "common/Program.hh"
 
 
-struct StrelkaNoiseExtractor : public starka::Program
+struct StrelkaNoiseExtractor : public illumina::Program
 {
     const char*
     name() const

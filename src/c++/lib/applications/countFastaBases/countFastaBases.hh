@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "starling_common/Program.hh"
+#include "common/Program.hh"
 
 
-struct countFastaBases : public starka::Program
+struct countFastaBases : public illumina::Program
 {
     const char*
     name() const

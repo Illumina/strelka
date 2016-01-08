@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Strelka - Small Variant Caller
-// Copyright (c) 2009-2016 Illumina, Inc.
+// Manta - Structural Variant and Indel Caller
+// Copyright (c) 2013-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,36 +18,41 @@
 //
 //
 
-/// \author Chris Saunders
-///
+/// \brief provide access to cmake project version numbers
 
 #pragma once
 
-namespace starka
+#include "common/config.h"
+
+namespace illumina
 {
 
-/// base-class for all command-line programs
-///
-/// this is used to standardize bottom-level exception handling
-struct Program
+inline
+const char*
+getVersion()
 {
-    virtual
-    ~Program() {}
+    return WORKFLOW_VERSION;
+}
 
-    int
-    run(int argc, char* argv[]) const;
+inline
+const char*
+getBuildTime()
+{
+    return BUILD_TIME;
+}
 
-    virtual
-    const char*
-    name() const = 0;
+inline
+const char*
+cxxCompilerName()
+{
+    return CXX_COMPILER_NAME;
+}
 
-    const char*
-    version() const;
-
-protected:
-    virtual
-    void
-    runInternal(int argc, char* argv[]) const = 0;
-};
+inline
+const char*
+compilerVersion()
+{
+    return COMPILER_VERSION;
+}
 
 }

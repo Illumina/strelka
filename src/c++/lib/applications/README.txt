@@ -1,7 +1,10 @@
 countFastaBases:
 common tool to several workflows
 
-inovo:
+getChromDepth:
+sample chroms from BAM to create a median depth estimate for each
+
+pedicure:
 de-novo variant caller
 
 starling:
