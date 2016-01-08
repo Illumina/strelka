@@ -322,8 +322,6 @@ public:
 
     starling_align_limit sal;
 
-    std::string bam_header_data; // the full bam header, read in from bam file. Used for setting the sample name in
-
     unsigned variant_window_first_stage;
     unsigned variant_window_last_stage;
 

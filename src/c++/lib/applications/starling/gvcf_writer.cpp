@@ -61,6 +61,7 @@ gvcf_writer(
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
+    const std::string& sampleName,
     std::ostream* osptr,
     const calibration_models& cm)
     : _opt(opt)
@@ -85,7 +86,7 @@ gvcf_writer(
 
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data, *_osptr, cm);
+        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth, sampleName, *_osptr, cm);
     }
 
     variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.smod, cm);

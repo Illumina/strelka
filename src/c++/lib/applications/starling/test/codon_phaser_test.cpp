@@ -519,6 +519,7 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     starling_deriv_options dopt(opt,rcs);
 
     RegionTracker regions;
+    const std::string sampleName = "SAMPLE";
     std::stringstream os;
     opt.germline_variant_scoring_models_filename = TEST_CONFIG_PATH;
     opt.germline_variant_scoring_model_name = "QScoreHPDRE100_v4";
@@ -528,7 +529,7 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     calibration_models cm(opt, gvcf_options);
 
 
-    gvcf_writer writer(opt, dopt, rcs, regions, &os, cm);
+    gvcf_writer writer(opt, dopt, rcs, regions, sampleName, &os, cm);
     writer.process(std::move(si));
 
     std::string x = os.str();

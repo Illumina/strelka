@@ -26,8 +26,8 @@
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
+
 #include <iosfwd>
-#include "gvcf_writer.hh"
 
 
 ///
@@ -42,6 +42,7 @@ public:
         const starling_deriv_options& dopt,
         const reference_contig_segment& ref,
         const RegionTracker& nocompress_regions,
+        const std::string& sampleName,
         std::ostream* os,
         const pos_basecall_buffer& bc_buff);
 
@@ -62,7 +63,6 @@ public:
 private:
     calibration_models _CM;
 
-    std::shared_ptr<gvcf_writer> _writer;
     std::shared_ptr<Codon_phaser> _codon_phaser;
     std::shared_ptr<variant_pipe_stage_base> _head;
 };

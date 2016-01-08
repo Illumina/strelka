@@ -145,7 +145,7 @@ void
 finish_gvcf_header(const starling_options& opt,
                    const gvcf_deriv_options& dopt,
                    const cdmap_t& chrom_depth,
-                   const std::string& bam_header_data,
+                   const std::string& sample_name,
                    std::ostream& os,
                    const calibration_models& CM)
 {
@@ -209,8 +209,6 @@ finish_gvcf_header(const starling_options& opt,
     // FILTER:
 
     add_gvcf_filters(opt,chrom_depth,os,CM);
-
-    const std::string sample_name = get_bam_header_sample_name(bam_header_data);
 
     os << vcf_col_label() << "\tFORMAT\t" << sample_name << "\n";
 }

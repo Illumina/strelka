@@ -34,7 +34,7 @@ snoise_streams::
 snoise_streams(
     const snoise_options& opt,
     const prog_info& pinfo,
-    const bam_header_t* const header,
+    const bam_hdr_t* const header,
     const SampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi),
       _snoise_osptr(&std::cout)
@@ -56,7 +56,7 @@ snoise_streams(
 
         // FILTERS:
 
-        const std::string sample_name = get_bam_header_sample_name(header->text);
+        const std::string sample_name = get_bam_header_sample_name(header);
         fos << vcf_col_label() << "\tFORMAT\t" << sample_name << "\n";
     }
 }

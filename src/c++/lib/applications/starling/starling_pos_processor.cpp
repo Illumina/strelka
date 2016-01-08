@@ -92,7 +92,8 @@ starling_pos_processor(
     if (_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
-                          _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(),
+                          _opt,_dopt,ref,_nocompress_regions,
+                          _streams.getSampleName(), _streams.gvcf_osptr(),
                           sample(0).bc_buff));
     }
 

@@ -46,6 +46,7 @@ struct gvcf_writer : public variant_pipe_stage_base
         const starling_deriv_options& dopt,
         const reference_contig_segment& ref,
         const RegionTracker& nocompress_regions,
+        const std::string& sampleName,
         std::ostream* os,
         const calibration_models& cm);
 
