@@ -28,8 +28,10 @@
 #pragma once
 
 #include "bam_util.hh"
+#include "bam_header_info.hh"
 
 #include <string>
+
 
 /// parse a bam region into chrom/begin/end values
 ///
@@ -53,6 +55,15 @@ parse_bam_region_from_hdr(
     int32_t& end_pos);
 
 
+void
+parse_bam_region(
+    const bam_header_info& header,
+    const char* region,
+    int32_t& tid,
+    int32_t& begin_pos,
+    int32_t& end_pos);
+
+
 /// return true only if the headers refer to the same
 /// reference sequences in the same order.
 ///
@@ -68,3 +79,4 @@ std::string
 get_bam_header_sample_name(
     const bam_hdr_t* const header,
     const char* default_sample_name = "SAMPLE");
+

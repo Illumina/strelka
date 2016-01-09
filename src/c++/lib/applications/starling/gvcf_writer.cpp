@@ -22,19 +22,18 @@
 /// \author Chris Saunders
 ///
 
+#include "gvcf_writer.hh"
+
+#include "calibration_models.hh"
 #include "gvcf_header.hh"
-#include "blt_util/blt_exception.hh"
-#include "blt_util/chrom_depth_map.hh"
+#include "indel_overlapper.hh"
+#include "variant_prefilter_stage.hh"
+
 #include "blt_util/io_util.hh"
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdexcept>
-#include "gvcf_writer.hh"
-#include "calibration_models.hh"
-#include "indel_overlapper.hh"
-
 
 
 
@@ -46,14 +45,6 @@
 #endif
 
 
-
-
-void gvcf_writer::write_block_site_record()
-{
-    if (_block.count<=0) return;
-    write_site_record(_block);
-    _block.reset();
-}
 
 gvcf_writer::
 gvcf_writer(
@@ -92,6 +83,16 @@ gvcf_writer(
     variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.smod, cm);
 
 }
+
+
+
+void gvcf_writer::write_block_site_record()
+{
+    if (_block.count<=0) return;
+    write_site_record(_block);
+    _block.reset();
+}
+
 
 
 void gvcf_writer::filter_site_by_last_indel_overlap(digt_site_info& si)

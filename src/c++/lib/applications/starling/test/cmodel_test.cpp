@@ -23,10 +23,9 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "calibration_models.cpp"
-#include "starling_common/indel_key.cpp"
-#include "starling_common/starling_indel_report_info.cpp"
-#include "starling_shared.hh"
+#include "calibration_models.hh"
+
+
 
 BOOST_AUTO_TEST_SUITE( cmodel )
 

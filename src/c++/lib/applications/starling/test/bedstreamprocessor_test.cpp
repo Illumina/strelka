@@ -22,7 +22,7 @@
 
 
 #include "boost/test/unit_test.hpp"
-#include "bedstreamprocessor.cpp"
+#include "bedstreamprocessor.hh"
 
 BOOST_AUTO_TEST_SUITE( bed_stream_processor_test )
 

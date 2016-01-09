@@ -137,6 +137,34 @@ parse_bam_region_from_hdr(
 
 
 
+void
+parse_bam_region(
+    const bam_header_info& header,
+    const char* region,
+    int32_t& tid,
+    int32_t& begin_pos,
+    int32_t& end_pos)
+{
+    assert(nullptr != region);
+
+    std::string chrom;
+    parse_bam_region(region,chrom,begin_pos,end_pos);
+
+    const auto citer(header.chrom_to_index.find(chrom));
+
+    if (citer == header.chrom_to_index.end())
+    {
+        std::ostringstream oss;
+        oss << "ERROR: contig '" << chrom << "' from bam_region '" << region << "' not found in BAM/CRAM header\n";
+        throw blt_exception(oss.str().c_str());
+    }
+
+    tid = citer->second;
+    end_pos = std::min(end_pos,static_cast<int32_t>(header.chrom_data[tid].length));
+}
+
+
+
 bool
 check_header_compatibility(
     const bam_hdr_t* h1,
@@ -186,3 +214,4 @@ get_bam_header_sample_name(
     }
     return default_sample_name;
 }
+

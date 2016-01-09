@@ -18,7 +18,7 @@
 //
 //
 #include "boost/test/unit_test.hpp"
-#include "starling_continuous_variant_caller.cpp"
+#include "starling_continuous_variant_caller.hh"
 #include <vector>
 
 BOOST_AUTO_TEST_SUITE( continuous_variant_caller )

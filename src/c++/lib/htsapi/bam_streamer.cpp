@@ -59,8 +59,18 @@ bam_streamer(
 
     if (nullptr == _hfp)
     {
-        log_os << "ERROR: Failed to open SAM/BAM/CRAM file: " << filename << "\n";
-        exit(EXIT_FAILURE);
+        std::ostringstream oss;
+        oss << "Failed to open SAM/BAM/CRAM file for reading: '" << name() << "'";
+        throw blt_exception(oss.str().c_str());
+    }
+
+    _hdr = sam_hdr_read(_hfp);
+
+    if (nullptr == _hdr)
+    {
+        std::ostringstream oss;
+        oss << "Failed to parse header from SAM/BAM/CRAM file: " << name();
+        throw blt_exception(oss.str().c_str());
     }
 
     if (nullptr == region)

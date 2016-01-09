@@ -24,13 +24,14 @@
 
 #pragma once
 
-
-#include "codon_phaser.hh"
 #include "gvcf_block_site_record.hh"
-#include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
+#include "starling_shared.hh"
+#include "variant_pipe_stage_base.hh"
+
+#include "blt_util/RegionTracker.hh"
+
 #include <iosfwd>
-#include "variant_prefilter_stage.hh"
 
 class calibration_models;
 
@@ -119,9 +120,4 @@ private:
 
     gvcf_compressor _gvcf_comp;
     const calibration_models& _CM;
-
-
-
-
 };
-

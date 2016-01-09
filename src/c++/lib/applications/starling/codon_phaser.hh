@@ -27,8 +27,9 @@
 #pragma once
 
 #include "gvcf_locus_info.hh"
-#include "starling_common/pos_basecall_buffer.hh"
 #include "variant_pipe_stage_base.hh"
+
+#include "starling_common/pos_basecall_buffer.hh"
 
 
 /// short-range phasing utility for het-snps

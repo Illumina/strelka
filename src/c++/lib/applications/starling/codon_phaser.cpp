@@ -27,7 +27,6 @@
 
 #include <array>
 #include <functional>
-#include <sstream>
 #include <vector>
 
 //#define DEBUG_CODON
