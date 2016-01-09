@@ -23,7 +23,6 @@ Strelka somatic small variant calling workflow
 
 
 import os.path
-import shutil
 import sys
 
 # add this path to pull in utils in same directory:
@@ -35,51 +34,29 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
 from configBuildTimeInfo import workflowVersion
+from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from starkaWorkflow import StarkaCallWorkflow, StarkaWorkflow
+from sharedWorkflow import runDepthFromAlignments
+from starkaWorkflow import runCount, StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
-
-from configureUtil import safeSetBool, getIniSections, dumpIniSections
-
 
 
 __version__ = workflowVersion
 
 
 
-def runCount(self, taskPrefix="", dependencies=None) :
-    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
-
-    return nextStepWait
-
-
-
-def runDepth(self,taskPrefix="",dependencies=None) :
-    """
-    estimate chrom depth
-    """
-
-    bamFile=""
+def strelkaRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
+    bamList=[]
     if len(self.params.normalBamList) :
-        bamFile = self.params.normalBamList[0]
+        bamList.append(self.params.normalBamList[0])
     elif len(self.params.tumorBamList) :
-        bamFile = self.params.tumorBamList[0]
+        bamList.append(self.params.tumorBamList[0])
     else :
         return set()
 
-
-    cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.getChromDepth)
-    cmd += " --bam \"%s\"" % (bamFile)
-    cmd += " > \"%s\"" % (self.paths.getChromDepth())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth"),cmd,dependencies=dependencies))
-
-    return nextStepWait
+    outputPath=self.paths.getChromDepth()
+    return runDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
 
 
 
@@ -409,6 +386,6 @@ class StrelkaWorkflow(StarkaWorkflow) :
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= runDepth(self)
+            callPreReqs |= strelkaRunDepthFromAlignments(self)
 
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
