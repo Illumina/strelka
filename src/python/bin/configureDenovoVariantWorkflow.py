@@ -102,7 +102,7 @@ You must specify BAM file(s) for the proband and additional related samples.
         bcheck.appendBams(options.probandBamList,"proband")
         bcheck.appendBams(options.parentBamList,"parent")
         bcheck.appendBams(options.siblingBamList,"sibling",isAllowEmpty=True)
-        bcheck.check(options.samtoolsBin,
+        bcheck.check(options.htslibBin,
                      options.referenceFasta)
 
 def main() :

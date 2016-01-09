@@ -31,8 +31,8 @@ scriptDir=os.path.abspath(os.path.dirname(__file__))
 sys.path.append(scriptDir)
 
 # add pyflow path:
-sys.path.append(os.path.join(scriptDir,"pyflow"))
-
+pyflowDir=os.path.join(scriptDir,"pyflow")
+sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
 from pyflow import WorkflowRunner

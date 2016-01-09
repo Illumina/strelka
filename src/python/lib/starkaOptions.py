@@ -103,6 +103,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         assert os.path.isdir(libexecDir)
 
         bgzipBin=joinFile(libexecDir,"bgzip")
+        htsfileBin=joinFile(libexecDir,"htsfile")
         samtoolsBin=joinFile(libexecDir,"samtools")
         tabixBin=joinFile(libexecDir,"tabix")
         bgcatBin=joinFile(libexecDir,"bgzf_cat")

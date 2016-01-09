@@ -44,14 +44,14 @@ class StarlingWorkflowOptions(StarkaWorkflowOptionsBase) :
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the starling small variant calling pipeline.
-You must specify a BAM file.
+This script configures the Strelka small variant calling pipeline for single germline samples.
+You must specify a BAM or CRAM file for the sample.
 """ % (workflowVersion)
 
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
-                         help="Sample BAM file. [required] (no default)")
+                         help="Sample BAM or CRAM file. [required] (no default)")
         group.add_option("--ploidy", type="string", dest="ploidyBed", metavar="FILE",
                          help="Provide ploidy bed file. The bed records should provide either 1 or 0 in the 5th 'score' column to "
                          "indicate haploid or deleted status respectively. File must be tabix indexed. (no default)")
@@ -123,7 +123,7 @@ You must specify a BAM file.
             bcheck.appendBams(bamList,label)
 
         singleAppender(options.bamList,"Input")
-        bcheck.check(options.samtoolsBin,
+        bcheck.check(options.htsfileBin,
                      options.referenceFasta)
 
 

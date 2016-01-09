@@ -36,6 +36,17 @@ macro(superset symbol value)
     set(${symbol} "${value}" PARENT_SCOPE)
 endmacro()
 
+
+set (THIS_CMAKE_PLATFORM "")
+if (WIN32)
+    # Sometimes the platform (x64,win32...) is specified as part of the target name
+    # this captures the cases where it is specified separately:
+    if (CMAKE_GENERATOR_PLATFORM)
+        set (THIS_CMAKE_PLATFORM -A "${CMAKE_GENERATOR_PLATFORM}")
+    endif ()
+endif ()
+
+
 #
 # htslib
 #
@@ -54,26 +65,29 @@ set (HTSLIB_FINAL_TASK ${HTSLIB_DIR})
 if (NOT WIN32)
     add_custom_command(
         OUTPUT ${HTSLIB_LIBRARY}
-        COMMAND $(MAKE) -C "${HTSLIB_DIR}" lib-static tabix bgzip 2>| htslib.build.log
+        COMMAND $(MAKE) lib-static bgzip htsfile tabix >htslib.build.log 2>htslib.build.error.log
+        WORKING_DIRECTORY ${HTSLIB_DIR}
         DEPENDS ${HTSLIB_DIR}
         COMMENT "Building htslib library")
 
     set (HTSLIB_FINAL_TASK ${HTSLIB_LIBRARY})
 endif ()
 
-#add_custom_target(${THIS_PROJECT_NAME}_htslib DEPENDS "${HTSLIB_FINAL_TASK}")
+set(THIS_HTSLIB "${THIS_PROJECT_NAME}_htslib")
+add_custom_target(${THIS_HTSLIB} DEPENDS "${HTSLIB_FINAL_TASK}")
 
 if (NOT WIN32)
-    install(PROGRAMS "${HTSLIB_DIR}/tabix" DESTINATION "${THIS_LIBEXECDIR}")
     install(PROGRAMS "${HTSLIB_DIR}/bgzip" DESTINATION "${THIS_LIBEXECDIR}")
+    install(PROGRAMS "${HTSLIB_DIR}/htsfile" DESTINATION "${THIS_LIBEXECDIR}")
+    install(PROGRAMS "${HTSLIB_DIR}/tabix" DESTINATION "${THIS_LIBEXECDIR}")
 endif ()
 
 #
 # samtools
 #
 set(SAMTOOLS_PREFIX "samtools-1.2")
-superset(SAMTOOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${SAMTOOLS_PREFIX}")
-superset(SAMTOOLS_LIBRARY "${SAMTOOLS_DIR}/libbam.a")
+set(SAMTOOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${SAMTOOLS_PREFIX}")
+set(SAMTOOLS_LIBRARY "${SAMTOOLS_DIR}/libbam.a")
 superset(SAMTOOLS_PROG "${SAMTOOLS_DIR}/samtools")
 
 # final directory copy below would ideally be a soft-link, copy is for windows build

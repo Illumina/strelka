@@ -117,7 +117,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         singleAppender(options.normalBamList,"Normal")
         singleAppender(options.tumorBamList,"Tumor")
-        bcheck.check(options.samtoolsBin,
+        bcheck.check(options.htsfileBin,
                      options.referenceFasta)
 
 def main() :
