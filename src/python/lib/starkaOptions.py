@@ -109,7 +109,9 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         countFastaBin=joinFile(libexecDir,"countFastaBases")
 
+        mergeChromDepth=joinFile(libexecDir,"mergeChromDepth.py")
         getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
+        catScript=joinFile(libexecDir,"cat.py")
         vcfCmdlineSwapper=joinFile(libexecDir,"vcfCmdlineSwapper.py")
 
         # TODO: these aren't shared and should go into child classes:
