@@ -69,10 +69,10 @@ pedicure_run(
     if (bamCount > 1)
     {
         /// TODO: provide a better error exception for failed bam header check:
-        const bam_header_t* compareHeader(bamStreams[0]->get_header());
+        const bam_hdr_t* compareHeader(bamStreams[0]->get_header());
         for (unsigned bamIndex(1); bamIndex<bamCount; ++bamIndex)
         {
-            const bam_header_t* indexHeader(bamStreams[bamIndex]->get_header());
+            const bam_hdr_t* indexHeader(bamStreams[bamIndex]->get_header());
             if (! check_header_compatibility(compareHeader,indexHeader))
             {
                 log_os << "ERROR: incompatible bam headers between files:\n"
@@ -105,7 +105,7 @@ pedicure_run(
     }
 
     const PedicureSampleSetSummary ssi(opt);
-    const bam_header_t* const header(bamStreams[0]->get_header());
+    const bam_hdr_t* const header(bamStreams[0]->get_header());
     pedicure_streams streams(opt, dopt, pinfo, header, ssi);
     pedicure_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;

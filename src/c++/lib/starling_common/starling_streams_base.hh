@@ -66,7 +66,7 @@ protected:
                            const prog_info& pinfo,
                            const std::string& filename,
                            const char* label,
-                           const bam_header_t* const header);
+                           const bam_hdr_t* const header);
 
     static
     std::ostream*

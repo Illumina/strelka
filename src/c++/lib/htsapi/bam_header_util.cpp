@@ -28,6 +28,7 @@
 #include "blt_util/string_util.hh"
 
 #include <cassert>
+#include <cstring>
 
 #include <algorithm>
 #include <limits>
