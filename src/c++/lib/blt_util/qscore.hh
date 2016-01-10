@@ -57,6 +57,7 @@ ln_error_prob_to_phred(const FloatType lnProb)
     return -10.*std::max(minlog10,lnProb/ln10);
 }
 
+
 template <typename FloatType>
 int
 error_prob_to_qphred(const FloatType prob)
@@ -70,6 +71,7 @@ ln_error_prob_to_qphred(const FloatType lnProb)
 {
     return static_cast<int>(std::floor(ln_error_prob_to_phred(lnProb)+0.5));
 }
+
 
 inline
 double
