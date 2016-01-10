@@ -2,7 +2,7 @@ countFastaBases:
 common tool to several workflows
 
 getChromDepth:
-sample chroms from BAM to create a median depth estimate for each
+sample sequences in BAM/CRAM file(s) to create a median depth estimate for each chrom
 
 pedicure:
 de-novo variant caller

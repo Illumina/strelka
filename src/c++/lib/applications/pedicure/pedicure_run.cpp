@@ -87,7 +87,7 @@ pedicure_run(
     if (tid < 0)
     {
         std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" <<  opt.alignFileOpt.alignmentFilename[0] << "'\n";
+        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" <<  opt.alignFileOpt.alignmentFilename[0] << "'\n";
         throw blt_exception(oss.str().c_str());
     }
 
@@ -100,7 +100,7 @@ pedicure_run(
         const int32_t other_tid(bamStreams[bamIndex]->target_name_to_id(opt.bam_seq_name.c_str()));
         if (tid != other_tid)
         {
-            throw blt_exception("ERROR: sample BAM files have mis-matched reference sequence dictionaries.\n");
+            throw blt_exception("ERROR: sample BAM/CRAM files have mis-matched reference sequence dictionaries.\n");
         }
     }
 

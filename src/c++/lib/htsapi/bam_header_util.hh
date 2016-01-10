@@ -73,7 +73,7 @@ check_header_compatibility(
     const bam_hdr_t* h2);
 
 
-/// try to determine the sample_name from the BAM header
+/// try to determine the sample_name from the BAM/CRAM header
 /// if none found return default string value
 std::string
 get_bam_header_sample_name(

@@ -112,7 +112,6 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         getChromDepthBin=joinFile(libexecDir,exeFile("GetChromDepth"))
 
         mergeChromDepth=joinFile(libexecDir,"mergeChromDepth.py")
-        getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
         catScript=joinFile(libexecDir,"cat.py")
         vcfCmdlineSwapper=joinFile(libexecDir,"vcfCmdlineSwapper.py")
 

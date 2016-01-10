@@ -83,6 +83,6 @@ starling_streams(
 
     if (opt.is_realigned_read_file)
     {
-        _realign_bam_ptr[0].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"realigned-read BAM",header));
+        _realign_bam_ptr[0].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"realigned-read BAM/CRAM",header));
     }
 }
