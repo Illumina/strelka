@@ -62,8 +62,9 @@ END
 fi
 
 cmd="$configScript \
---bam='$dataDir/NA12878_chrM_150_350.bam' \
+--bam='$dataDir/NA12878_chrM_200-200.bam' \
 --referenceFasta='$dataDir/chrM_hg19.fa' \
+--exome \
 --callContinuousVf chrM \
 --runDir=$analysisDir"
 
