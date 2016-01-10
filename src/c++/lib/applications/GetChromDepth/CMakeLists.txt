@@ -1,6 +1,6 @@
 #
-# Manta - Structural Variant and Indel Caller
-# Copyright (c) 2013-2015 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

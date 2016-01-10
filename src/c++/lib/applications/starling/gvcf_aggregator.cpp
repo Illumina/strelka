@@ -49,7 +49,7 @@ gvcf_aggregator(
         nextPipeStage = _codon_phaser;
     }
     std::shared_ptr<variant_pipe_stage_base> targeted_region_processor(
-            new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, opt.bam_seq_name.c_str(), nextPipeStage));
+        new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, opt.bam_seq_name.c_str(), nextPipeStage));
     _head.reset(new variant_prefilter_stage(_CM, targeted_region_processor));
 }
 
