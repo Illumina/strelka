@@ -97,26 +97,28 @@ denovo_indel_call_vcf(
             const unsigned& depth(isri[probandIndex][PEDICURE_TIERS::TIER1].depth);
             if (depth > dopt.dfilter.max_depth)
             {
-                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
+//                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
             }
+        }
+
+        if (rs.is_overlap){
+        	smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
 
         if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
         {
-            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
+//            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
 
-#if 0
-        if (siInfo.iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
-        {
-            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
-        }
-
-        if (siInfo.iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
-        {
-            smod.set_filter(INOOV_VCF_FILTERS::iHpol);
-        }
-#endif
+//        if (siInfo.iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
+//        {
+//            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
+//        }
+//
+//        if (siInfo.iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
+//        {
+//            smod.set_filter(INOOV_VCF_FILTERS::iHpol);
+//        }
 
 #if 0
         {
@@ -176,11 +178,11 @@ denovo_indel_call_vcf(
            << ";IC=" << iri.indel_repeat_count;
     }
     os << ";IHP=" << iri.ihpol;
-    if ((iri.it == INDEL::BP_LEFT) ||
-        (iri.it == INDEL::BP_RIGHT))
-    {
-        os << ";SVTYPE=BND";
-    }
+//    if ((iri.it == INDEL::BP_LEFT) ||
+//        (iri.it == INDEL::BP_RIGHT))
+//    {
+//        os << ";SVTYPE=BND";
+//    }
     if (rs.is_overlap)
     {
         os << ";OVERLAP";
