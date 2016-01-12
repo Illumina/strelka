@@ -276,3 +276,14 @@ label(const unsigned idx)
     }
 }
 }
+
+namespace TWO_STATE_SOMATIC
+{
+enum index_t
+{
+    NON_SOMATIC,
+    SOMATIC,
+    SIZE
+};
+}
+

@@ -19,6 +19,7 @@
 
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
+#include "blt_util/digt.hh"
 #include "starling_common/indel_util.hh"
 
 #include <cassert>
@@ -299,10 +300,7 @@ somatic_indel_caller_grid::calculate_result_set(
     //    log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
     //#endif
 
-    // sum up the diagonal
-    // Everything off-diagonal is somatic, so this is 'non-somatic'
-    //
-    double post_prob[STAR_DIINDEL::SIZE][STAR_DIINDEL::SIZE];
+    double post_prob[STAR_DIINDEL::SIZE][TWO_STATE_SOMATIC::SIZE];
     double sum_prob = 0.0;
     for (unsigned ngt(0); ngt<STAR_DIINDEL::SIZE; ++ngt)
     {

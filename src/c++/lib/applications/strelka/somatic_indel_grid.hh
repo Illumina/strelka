@@ -99,15 +99,15 @@ struct is_nonsom_maker_t
 };
 }
 
-namespace TWO_STATE_SOMATIC
-{
-enum index_t
-{
-    NON_SOMATIC,
-    SOMATIC,
-    SIZE
-};
-}
+//namespace TWO_STATE_SOMATIC
+//{
+//enum index_t
+//{
+//    NON_SOMATIC,
+//    SOMATIC,
+//    SIZE
+//};
+//}
 
 std::ostream& operator<<(std::ostream& os,const DDIINDEL_GRID::index_t dgt);
 

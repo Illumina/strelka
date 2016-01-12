@@ -95,4 +95,9 @@ private:
     prior_set _lnprior;
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;
+
+    blt_float_t _ln_csse_rate;
+    blt_float_t _ln_nostrand_sse_rate;
+    const blt_float_t* _bare_lnprior;
+
 };
