@@ -52,7 +52,7 @@ write_vcf_sample_info(
     os << dsc.gtstring[sampleIndex]; 
     
 	os <<':'
-	   << "1" //GQ
+	   << dsc.gq[sampleIndex] //GQ -- placeholder
 	   <<':'
 	   << dsc.gqx[sampleIndex]  //GQX
        <<':'
@@ -65,8 +65,6 @@ write_vcf_sample_info(
 		   os << "," << tier1_base_counts[dsc.alts[i]];
 
 	   // PL field
-	   //os << ':'
-       //<< dsc.get_pl(sampleIndex);
        os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
 	   for(unsigned i=3;i<dsc.Sampleplhoods[sampleIndex].size();++i){
 		os << "," << dsc.Sampleplhoods[sampleIndex][i];
@@ -104,10 +102,12 @@ denovo_snv_call_vcf(
             }
         }
 
-        if (rs.dsnv_qphred < opt.dfilter.dsnv_qual_lowerbound)
-        {
-//            smod.set_filter(PEDICURE_VCF_FILTERS::QDS);
-        }
+        //GQX 30 filter
+        for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
+			if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
+			{
+				smod.set_filter(PEDICURE_VCF_FILTERS::lowGQX);
+			}
 
     }
     //dsc.get_alt();

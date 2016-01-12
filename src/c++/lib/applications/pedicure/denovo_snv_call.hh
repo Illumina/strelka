@@ -60,7 +60,9 @@ struct denovo_snv_call
 
 			std::vector<float> tt = Sampleplhoods[i];
     		std::sort(tt.begin(), tt.end());
-    		gqx.push_back( std::min(100, (int)( tt[1] - tt[0] ) ) ); 
+    		gqx.push_back( std::min(100, (int)( tt[1] - tt[0] ) ) );
+    		//place-holder gq value
+    		gq.push_back( std::min(100, (int)( tt[1] - tt[0] ) ) );
     		gt_sum += (unsigned)( tt[0] != Sampleplhoods[i][0]);
     		
     	}
@@ -77,6 +79,7 @@ struct denovo_snv_call
     std::vector< std::vector<float> > Sampleplhoods;    
     std::vector< std::array<uint8_t,2> > SampleGts;
     std::vector< unsigned > gqx; 
+    std::vector< unsigned > gq;
     std::vector<uint8_t> alts;
     std::string alt_str = "";
 	std::vector< std::string > gtstring;

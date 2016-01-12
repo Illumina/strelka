@@ -45,6 +45,7 @@ enum index_t
     Repeat,
     iHpol,
 	overlapConflict,
+	lowGQX,
     SIZE
 };
 
@@ -66,6 +67,8 @@ get_label(const unsigned idx)
         return "Repeat";
     case iHpol:
         return "iHpol";
+    case lowGQX:
+        return "lowGQX";
     case overlapConflict:
         return "overlapConflict";
     default:
