@@ -483,7 +483,7 @@ calculate_result_set_grid(
         const bool isComputeNonSomatic,
         const blt_float_t* normal_lhood,
         const blt_float_t* tumor_lhood,
-        const blt_float_t* bare_lnprior,
+        const blt_float_t* bare_lnprior_normal,
         const blt_float_t ln_se_rate,   // ln (somatic error rate)
         const blt_float_t ln_cse_rate,  // ln (1 - somatic_error_rate)
         const blt_float_t lnmatch,
@@ -513,12 +513,13 @@ calculate_result_set_grid(
     for (unsigned ngt(0); ngt<DIGT_SIMPLE::SIZE; ++ngt)
     {
         // logP(Gn=ngt, Gt=tgt)
-        double log_diploid_prior_prob = bare_lnprior[ngt];  // logP(Gn)
+        double log_diploid_prior_prob = bare_lnprior_normal[ngt];  // logP(Gn)
         for (unsigned tgt(0); tgt<TWO_STATE_SOMATIC::SIZE; ++tgt) // 0: non-somatic, 1: somatic
         {
             double log_prior_prob = log_diploid_prior_prob + ((tgt == 0) ? lnmatch : lnmismatch);
             double max_log_sum = -INFINITY;
-            double log_sum[DDIGT_SGRID::SIZE];
+//            double log_sum[DDIGT_SGRID::SIZE];
+            double log_sum[DDIGT_SGRID::PRESTRAND_SIZE];
 
             for (unsigned ft(0); ft<DIGT_SGRID::PRESTRAND_SIZE; ++ft)
             {
@@ -528,7 +529,7 @@ calculate_result_set_grid(
                     // calculate prior
                     double lprob_f_given_g = 0.0;
 
-                    if(tgt == 0)
+                    if(tgt == 0)    // non-somatic
                     {
                        if(fn == ft)
                        {
@@ -539,7 +540,7 @@ calculate_result_set_grid(
                            lprob_f_given_g = -INFINITY;
                        }
                     }
-                    else
+                    else    // somatic
                     {
                        if(fn == ft)
                        {
@@ -549,8 +550,7 @@ calculate_result_set_grid(
                        {
                            if(!is_normal_contaminated || ngt != DIGT_SIMPLE::REF)
                            {
-                               lprob_f_given_g = log_error_mod;
-                               lprob_f_given_g += (fn == ngt) ? ln_cse_rate : ln_se_rate+log_error_mod;
+                               lprob_f_given_g = log_error_mod + (fn == ngt) ? ln_cse_rate : ln_se_rate+log_error_mod;
                            }
                            else
                            {
@@ -579,18 +579,27 @@ calculate_result_set_grid(
             // variation with these noise states, b/c single-strand
             // observations can almost exclusively be ruled out as noise:
             //
-            for (unsigned f(DIGT_SGRID::PRESTRAND_SIZE); f<DIGT_SGRID::SIZE; ++f)
-            {
-                const unsigned dgt(DDIGT_SGRID::get_state(f,f));
-                double lprob_f_given_g = ln_cse_rate;
-                double sum = normal_lhood[f]+tumor_lhood[f]+lprob_f_given_g;
-                log_sum[dgt] = sum;
-                if(sum > max_log_sum) max_log_sum = sum;
-            }
+//            for (unsigned f(DIGT_SGRID::PRESTRAND_SIZE); f<DIGT_SGRID::SIZE; ++f)
+//            {
+//                const unsigned dgt(DDIGT_SGRID::get_state(f,f));
+////                if(tgt == DIGT_SIMPLE::HET)
+////                {
+////                    double lprob_f_given_g = bare_lnprior_normal[ngt] + lnmatch + ln_se_rate+log_error_mod;
+////                    double sum = normal_lhood[f]+tumor_lhood[f]+lprob_f_given_g;
+////                    log_sum[dgt] = sum;
+////                    if(sum > max_log_sum) max_log_sum = sum;
+////                }
+////                else
+////                {
+////                    log_sum[dgt] = -INFINITY;
+////                }
+//                log_sum[dgt] = -INFINITY;
+//            }
 
             // calculate log(exp(log_sum[0])+exp(log_sum[1])+...)
             double sum = 0.0;
-            for (int i(0); i<DDIGT_SGRID::SIZE; ++i)
+//            for (int i(0); i<DDIGT_SGRID::SIZE; ++i)
+            for (int i(0); i<DDIGT_SGRID::PRESTRAND_SIZE; ++i)
             {
                 sum += std::exp(log_sum[i] - max_log_sum);
             }
@@ -635,6 +644,7 @@ calculate_result_set_grid(
             {
                 som_prob_given_ngt += post_prob[ngt][tgt];
             }
+            printf("%d\t%d\t%f\n", ngt, tgt, post_prob[ngt][tgt]);
         }
 
         double err_som_and_ngt = 1.0 - som_prob_given_ngt;
