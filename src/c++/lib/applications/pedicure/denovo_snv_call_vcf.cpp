@@ -102,7 +102,7 @@ denovo_snv_call_vcf(
             }
         }
 
-        //GQX 30 filter
+        //GQX <30 filter
         for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
 			if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
 			{
@@ -110,8 +110,6 @@ denovo_snv_call_vcf(
 			}
 
     }
-    //dsc.get_alt();
-
 
     //REF:
     os << '\t' << probandCpi.rawPileup().get_ref_base();

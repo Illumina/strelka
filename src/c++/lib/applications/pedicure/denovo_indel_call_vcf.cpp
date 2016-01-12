@@ -97,7 +97,7 @@ denovo_indel_call_vcf(
             const unsigned& depth(isri[probandIndex][PEDICURE_TIERS::TIER1].depth);
             if (depth > dopt.dfilter.max_depth)
             {
-//                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
+                smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
             }
         }
 
