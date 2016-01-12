@@ -25,6 +25,8 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
+#include <array>
 
 
 struct denovo_indel_call
@@ -55,4 +57,7 @@ struct denovo_indel_call
     result_set rs;
     uint8_t dindel_tier = 0;
     bool is_forced_output = false;
+    std::vector< std::vector<float> > Sampleplhoods;
+    std::vector< std::array<uint8_t,2> > SampleGts;
+    std::vector< std::string > gtstring;
 };
