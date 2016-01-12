@@ -33,7 +33,7 @@
 
 //#define DENOVO_INDEL_DEBUG
 
-#ifdef DENOVO_INDEL_DEBUG
+#if 1
 #include "blt_util/log.hh"
 #endif
 
@@ -284,6 +284,9 @@ calculate_result_set(
                            << STAR_DIINDEL::get_gt_label(pro) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
                 }
 #endif
+//                log_os << "test " << STAR_DIINDEL::get_gt_label(pro) << std::endl;
+//                log_os << "lhood " << sampleLhood[probandIndex][pro] << std::endl;
+
                 stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
             }
         }
@@ -519,6 +522,7 @@ get_denovo_indel_call(
         {
             const starling_sample_options& sampleOpt(*(sampleOptions[sampleIndex]));
             const indel_data& sid(*(allIndelData[sampleIndex]));
+
             indel_digt_caller::get_indel_digt_lhood(
                 opt,dopt,sampleOpt,
                 indel_error_prob,ref_error_prob,ik,
