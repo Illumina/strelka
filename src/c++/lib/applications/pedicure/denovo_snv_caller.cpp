@@ -488,6 +488,9 @@ get_denovo_snv_call(
 	
 
 	}
+	else{
+		//hom-ref case
+	}
 	
 
 	

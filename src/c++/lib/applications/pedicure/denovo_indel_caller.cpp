@@ -534,6 +534,11 @@ get_denovo_indel_call(
                 ik,sid,
                 is_include_tier2,is_use_alt_indel,
                 sampleLhood[sampleIndex].data()+STAR_DIINDEL::SIZE);
+
+            dinc.gq.push_back(30);
+            dinc.gqx.push_back(40);
+            dinc.gtstring.push_back("0/1");
+
         }
 
         calculate_result_set(sinfo, sampleLhood, tier_rs[tierIndex]);

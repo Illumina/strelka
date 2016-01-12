@@ -36,16 +36,17 @@ void
 write_vcf_sample_info(
     const starling_indel_sample_report_info& isri1,
     const starling_indel_sample_report_info& isri2,
+	const denovo_indel_call& dinc,
     std::ostream& os)
 {
 
 //	GT:GQ:GQX:DP:DP2:AD:PL
     static const char sep(':');
-    os << "0/1"
+    os << dinc.gtstring.at(0)
        << sep
-	   << "1"
+	   << dinc.gq.at(0)
 	   << sep
-	   << "10"
+	   << dinc.gqx.at(0)
 	   << sep;
 
     os << isri1.depth
@@ -195,6 +196,6 @@ denovo_indel_call_vcf(
     for (const auto& sampleIsri : isri)
     {
         os << sep;
-        write_vcf_sample_info(sampleIsri[PEDICURE_TIERS::TIER1],sampleIsri[PEDICURE_TIERS::TIER2], os);
+        write_vcf_sample_info(sampleIsri[PEDICURE_TIERS::TIER1],sampleIsri[PEDICURE_TIERS::TIER2],dinc, os);
     }
 }

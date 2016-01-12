@@ -60,4 +60,6 @@ struct denovo_indel_call
     std::vector< std::vector<float> > Sampleplhoods;
     std::vector< std::array<uint8_t,2> > SampleGts;
     std::vector< std::string > gtstring;
+    std::vector< unsigned > gqx;
+    std::vector< unsigned > gq;
 };
