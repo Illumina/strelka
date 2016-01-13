@@ -52,6 +52,7 @@ struct PosRangeEndSort
 
 
 /// facilitate 'rolling' region tracking and position intersect queries
+///
 struct RegionTracker
 {
     bool
@@ -106,6 +107,12 @@ struct RegionTracker
     void
     dump(
         std::ostream& os) const;
+
+    unsigned
+    size() const
+    {
+        return _regions.size();
+    }
 
     typedef std::set<known_pos_range2,PosRangeEndSort>  region_t;
 
@@ -188,6 +195,12 @@ struct RegionPayloadTracker
         std::ostream& os) const;
 
     typedef typename std::map<known_pos_range2,T,PosRangeEndSort> region_t;
+
+    unsigned
+    size() const
+    {
+        return _regions.size();
+    }
 
 private:
 
