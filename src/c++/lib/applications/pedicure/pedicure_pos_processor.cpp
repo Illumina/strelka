@@ -166,11 +166,6 @@ process_pos_snp_denovo(const pos_t pos)
     	//For debugging write to std::out
     	std::stringstream bos;
 
-
-        bos << _chrom_name << '\t'
-            << output_pos << '\t'
-            << ".";
-
         denovo_snv_call_vcf(
             _opt,_dopt,
             sinfo,
@@ -178,7 +173,7 @@ process_pos_snp_denovo(const pos_t pos)
             dsc,
             bos);
 
-        aggregate_vcf(output_pos,bos.str());
+        aggregate_vcf(_chrom_name,output_pos,bos.str());
     }
 }
 
@@ -307,28 +302,25 @@ process_pos_indel_denovo(const pos_t pos)
                 indel_pos -= 1;
             }
 
-
             const pos_t output_pos(indel_pos+1);
 
             std::stringstream bos;
-
-            bos << _chrom_name << '\t'
-                << output_pos << '\t'
-                << ".";
-
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, iri, isri, bos);
-//            bos << "\n";
 
-            aggregate_vcf(indel_pos,bos.str());
+            aggregate_vcf(_chrom_name,output_pos,bos.str());
         }
     }
 }
 
 void
 pedicure_pos_processor::
-aggregate_vcf(const pos_t /*pos*/, const std::string vcf_line){
+aggregate_vcf(const std::string& chrom, const pos_t& pos, const std::string& vcf_line){
 //	std::ostream& bos(*_streams.denovo_osptr());
+
 	std::ostream& bos(std::cout);
+	bos << chrom << '\t'
+        << pos << '\t'
+        << ".";
 	bos << vcf_line  << "\n";
 }
 
