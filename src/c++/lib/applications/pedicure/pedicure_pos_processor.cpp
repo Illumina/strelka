@@ -162,12 +162,16 @@ process_pos_snp_denovo(const pos_t pos)
     {
     	std::stringstream bos;
 
+        bos << _chrom_name<< '\t'
+                << output_pos << '\t'
+                << ".";
         denovo_snv_call_vcf(
             _opt,_dopt,
             sinfo,
             pileups,
             dsc,
             bos);
+        bos << "\n";
 
         aggregate_vcf(_chrom_name,output_pos,bos.str());
     }
@@ -301,23 +305,38 @@ process_pos_indel_denovo(const pos_t pos)
             const pos_t output_pos(indel_pos+1);
 
             std::stringstream bos;
+
+            bos << _chrom_name<< '\t'
+                    << output_pos << '\t'
+                    << ".";
+
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, iri, isri, bos);
+            bos << "\n";
 
             aggregate_vcf(_chrom_name,output_pos,bos.str());
         }
     }
 }
 
+
+// needs replaced by a more comprehensive record integration
 void
 pedicure_pos_processor::
-aggregate_vcf(const std::string& chrom, const pos_t& pos, const std::string& vcf_line){
-	std::ostream& bos(*_streams.denovo_osptr());
+aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string& vcf_line){
+//	std::ostream& bos(*_streams.denovo_osptr());
+	std::ostream& bos(std::cout);
 
-//	std::ostream& bos(std::cout);
-	bos << chrom << '\t'
-        << pos << '\t'
-        << ".";
-	bos << vcf_line  << "\n";
+	// case in order
+	if(prev_vcf_pos<pos){
+		prev_vcf_pos = pos;
+		if(prev_vcf_pos>0)
+			bos << prev_vcf_line;
+		prev_vcf_line = vcf_line;
+	}
+	//case not in order
+	else{
+		bos << vcf_line;
+	}
 }
 
 

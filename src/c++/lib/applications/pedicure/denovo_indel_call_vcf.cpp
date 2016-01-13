@@ -36,18 +36,23 @@ void
 write_vcf_sample_info(
     const starling_indel_sample_report_info& isri1,
     const starling_indel_sample_report_info& isri2,
-	const denovo_indel_call& /*dinc*/,
+	const denovo_indel_call& dinc,
     std::ostream& os)
 {
 
 //	GT:GQ:GQX:DP:DP2:AD:PL
     static const char sep(':');
-    os << "1/2" //dinc.gtstring.at(0)
-       << sep
-	   << 1 //dinc.gq.at(0)
-	   << sep
-	   << 1 //dinc.gqx.at(0)
-	   << sep;
+    if (dinc.gtstring.size()>0){
+		os << dinc.gtstring.at(0)
+		   << sep
+		   << dinc.gq.at(0)
+		   << sep
+		   << dinc.gqx.at(0)
+		   << sep;
+    }
+    else {
+    	os << "./." << sep << "." << sep << "." << sep;
+    }
 
     os << isri1.depth
        << sep
