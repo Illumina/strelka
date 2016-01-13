@@ -62,6 +62,10 @@ private:
     process_pos_indel_denovo(const pos_t pos);
 
     void
+	aggregate_vcf(const pos_t pos, const std::string vcf_line);
+
+
+    void
     write_counts(const pos_range& output_report_range) const override;
 
     /////////////////////////////

@@ -33,6 +33,7 @@
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
+#include <sstream>
 #include "blt_util/log.hh"
 
 
@@ -163,7 +164,8 @@ process_pos_snp_denovo(const pos_t pos)
 //    	std::ostream& bos(*_streams.denovo_osptr());
 
     	//For debugging write to std::out
-    	std::ostream& bos(std::cout);
+    	std::stringstream bos;
+
 
         bos << _chrom_name << '\t'
             << output_pos << '\t'
@@ -175,7 +177,8 @@ process_pos_snp_denovo(const pos_t pos)
             pileups,
             dsc,
             bos);
-        bos << "\n";
+
+        aggregate_vcf(output_pos,bos.str());
     }
 }
 
@@ -307,19 +310,27 @@ process_pos_indel_denovo(const pos_t pos)
 
             const pos_t output_pos(indel_pos+1);
 
-//            std::ostream& bos(*_streams.denovo_osptr());
-            std::ostream& bos(std::cout);
+            std::stringstream bos;
 
             bos << _chrom_name << '\t'
                 << output_pos << '\t'
                 << ".";
 
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, iri, isri, bos);
-            bos << "\n";
+//            bos << "\n";
+
+            aggregate_vcf(indel_pos,bos.str());
         }
     }
 }
 
+void
+pedicure_pos_processor::
+aggregate_vcf(const pos_t /*pos*/, const std::string vcf_line){
+//	std::ostream& bos(*_streams.denovo_osptr());
+	std::ostream& bos(std::cout);
+	bos << vcf_line  << "\n";
+}
 
 
 void
