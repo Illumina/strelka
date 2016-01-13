@@ -50,6 +50,10 @@ struct pedicure_pos_processor : public starling_pos_processor_base
         const reference_contig_segment& ref,
         const pedicure_streams& streams);
 
+    void
+    finalize();
+
+
 private:
 
     void
@@ -63,7 +67,6 @@ private:
 
     void
 	aggregate_vcf(const std::string& chrom, const pos_t& pos, const std::string& vcf_line);
-
 
     void
     write_counts(const pos_range& output_report_range) const override;

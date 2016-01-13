@@ -198,6 +198,6 @@ pedicure_run(
             exit(EXIT_FAILURE);
         }
     }
-
+    sppr.finalize();
     sppr.reset();
 }

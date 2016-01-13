@@ -323,8 +323,8 @@ process_pos_indel_denovo(const pos_t pos)
 void
 pedicure_pos_processor::
 aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string& vcf_line){
-//	std::ostream& bos(*_streams.denovo_osptr());
-	std::ostream& bos(std::cout);
+	std::ostream& bos(*_streams.denovo_osptr());
+//	std::ostream& bos(std::cout);
 
 	// case in order
 	if(prev_vcf_pos<pos){
@@ -337,6 +337,14 @@ aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string&
 	else{
 		bos << vcf_line;
 	}
+}
+
+void
+pedicure_pos_processor::
+finalize(){
+		std::ostream& bos(*_streams.denovo_osptr());
+//		std::ostream& bos(std::cout);
+		bos << prev_vcf_line;
 }
 
 
