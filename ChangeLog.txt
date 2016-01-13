@@ -1,3 +1,4 @@
+v2.4.5
 - STARKA-306 fix rare chunk size boundary defect in RangeMap
 v2.4.4
 - STARKA-275 prevent phaser from causing memory exaustion for amplicon input
