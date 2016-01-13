@@ -160,10 +160,6 @@ process_pos_snp_denovo(const pos_t pos)
 
     if (dsc.is_output())
     {
-
-//    	std::ostream& bos(*_streams.denovo_osptr());
-
-    	//For debugging write to std::out
     	std::stringstream bos;
 
         denovo_snv_call_vcf(
@@ -315,9 +311,9 @@ process_pos_indel_denovo(const pos_t pos)
 void
 pedicure_pos_processor::
 aggregate_vcf(const std::string& chrom, const pos_t& pos, const std::string& vcf_line){
-//	std::ostream& bos(*_streams.denovo_osptr());
+	std::ostream& bos(*_streams.denovo_osptr());
 
-	std::ostream& bos(std::cout);
+//	std::ostream& bos(std::cout);
 	bos << chrom << '\t'
         << pos << '\t'
         << ".";
