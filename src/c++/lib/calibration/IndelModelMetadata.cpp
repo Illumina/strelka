@@ -18,26 +18,22 @@
 //
 //
 /*
- * SerializedModel.cpp
  *
- *  Created on: Jun 23, 2015
  *      Author: mkallberg
  */
 
-#include "calibration/SerializedModel.hh"
+#include "IndelModelMetadata.hh"
 
 #include <cassert>
 
-namespace SMODEL_ENTRY_TYPE
+
+namespace IMODEL_ENTRY_TYPE
 {
 enum index_t
 {
     NAME,
     VERSION,
     DATE,
-    MODELTYPE,
-    TYPE,		//SNV,INDEL ect.
-    FILTERCUTOFF,
     SIZE
 };
 
@@ -53,14 +49,8 @@ get_label(const index_t i)
         return "Version";
     case DATE:
         return "Date";
-    case MODELTYPE:
-        return "ModelType";
-    case TYPE:
-        return "Type";
-    case FILTERCUTOFF:
-        return "FilterCutoff";
     default:
-        assert(false && "Unknown serialized calibration model entry type");
+        assert(false && "Unknown indel model entry type");
         return nullptr;
     }
 }
@@ -88,31 +78,17 @@ Clean_string(const std::string& str)
         temp = temp.substr(doubleQuote);
     }
 
-    return std::move(temp);
+    return temp;
 }
 
 
 
-void serialized_model::Deserialize(const Json::Value& root)
+void
+IndelModelMetadata::
+Deserialize(const Json::Value& root)
 {
-    using namespace SMODEL_ENTRY_TYPE;
-    this->name 		= Clean_string(root[get_label(NAME)].asString());
-    this->version 	= Clean_string(root[get_label(VERSION)].asString());
-    this->date 		= Clean_string(root[get_label(DATE)].asString());
+    using namespace IMODEL_ENTRY_TYPE;
+    this->name      = Clean_string(root[get_label(NAME)].asString());
+    this->version   = Clean_string(root[get_label(VERSION)].asString());
+    this->date      = Clean_string(root[get_label(DATE)].asString());
 }
-
-void serialized_calibration_model::Deserialize( const Json::Value& root)
-{
-    serialized_model::Deserialize(root);
-
-    //switch these to enums
-    using namespace SMODEL_ENTRY_TYPE;
-    this->ModelType 		= root[get_label(MODELTYPE)].asString();
-    this->Type 				= root[get_label(TYPE)].asString();
-    this->FilterCutoff		= root[get_label(FILTERCUTOFF)].asDouble();
-
-    //TODO load feature list here
-
-
-}
-

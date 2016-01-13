@@ -75,13 +75,13 @@ parseTreeNode(
     val.right = static_cast<R>(v[1].asDouble());
 }
 
-void RandomForestModel
-::Deserialize( const Json::Value& root)
+void
+RandomForestModel
+::Deserialize(const Json::Value& root)
 {
     clear();
 
     using namespace DTREE_NODE_TYPE;
-    serialized_calibration_model::Deserialize(root);
 
     //TODO read in other RF specific values
 

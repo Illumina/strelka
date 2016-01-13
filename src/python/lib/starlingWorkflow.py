@@ -52,7 +52,7 @@ def runCount(self, taskPrefix="", dependencies=None) :
     """
     count size of fasta chromosomes
     """
-    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
@@ -72,9 +72,9 @@ def runDepth(self,taskPrefix="",dependencies=None) :
         return set()
 
 
-    cmd  = "%s -E %s" % (sys.executable, self.params.getChromDepth)
-    cmd += " --bam '%s'" % (bamFile)
-    cmd += " > %s" % (self.paths.getChromDepth())
+    cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.getChromDepth)
+    cmd += " --bam \"%s\"" % (bamFile)
+    cmd += " > \"%s\"" % (self.paths.getChromDepth())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth"),cmd,dependencies=dependencies))
@@ -114,6 +114,11 @@ class TempSegmentFiles :
         self.bamRealign = []
 
 
+# we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
+def quote(instr):
+    return "\"%s\"" % (instr)
+
+
 
 def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
@@ -121,11 +126,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segStr = str(gseg.id)
 
-    # we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
-    def quote(instr):
-        return "'%s'" % (instr)
-
-    segCmd = [ self.params.starlingBin ]
+    segCmd = [ quote(self.params.starlingBin) ]
 
     segCmd.append("-clobber")
     segCmd.extend(["-min-paired-align-score",self.params.minMapq])
@@ -151,20 +152,20 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     # the header value for the relevant phasing filters is still emitted
     if len(self.params.callContinuousVf) > 0 :
         segCmd.extend(["--gvcf-include-header", "Phasing"])
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+    segCmd.extend(["--report-file", quote(self.paths.getTmpSegmentReportPath(gseg.pyflowId))])
 
     # VQSR:
-    segCmd.extend(['--variant-scoring-models-file',self.params.vqsrModelFile])
+    segCmd.extend(['--variant-scoring-models-file',quote(self.params.vqsrModelFile)])
     segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModelName])
 
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipDynamicIndelErrorModel:
         # specify indelErrorModelName from inputIndelErrorModelsFile
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
-        segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
+        segCmd.extend(['--indel-error-models-file', quote(self.params.inputIndelErrorModelsFile)])
     else :
         # use dynamic indel error modeling to choose the appropritate model
-        segCmd.extend(['--indel-error-models-file', self.params.dynamicIndelErrorModelsFile])
+        segCmd.extend(['--indel-error-models-file', quote(self.params.dynamicIndelErrorModelsFile)])
 
     if self.params.isReportVQSRMetrics :
         segCmd.append("--gvcf-report-VQSRmetrics")
@@ -178,10 +179,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--gvcf-include-header", "VF"])
 
     if self.params.isHighDepthFilter :
-        segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
+        segCmd.extend(["--chrom-depth-file", quote(self.paths.getChromDepth())])
 
     if self.params.isWriteRealignedBam :
-        segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr)])
+        segCmd.extend(["-realigned-read-file", quote(self.paths.getTmpUnsortRealignBamPath(segStr))])
 
     def addListCmdOption(optList,arg) :
         if optList is None : return
@@ -192,13 +193,13 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
     if self.params.noCompressBed is not None :
-        segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
+        segCmd.extend(['--nocompress-bed', quote(self.params.noCompressBed)])
 
     if self.params.targetRegionsBed is not None :
-        segCmd.extend(['--targeted-regions-bed', self.params.targetRegionsBed])
+        segCmd.extend(['--targeted-regions-bed', quote(self.params.targetRegionsBed)])
 
     if self.params.ploidyBed is not None :
-        segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
+        segCmd.extend(['--ploidy-region-bed', quote(self.params.ploidyBed)])
 
     if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
         segCmd.append('--call-continuous-vf')
@@ -210,8 +211,17 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
      # gvcf is written to stdout so we need shell features:
     segCmd = " ".join(segCmd)
 
+    # swap parent pyflow command-line into vcf header
+    if isFirstSegment :
+        def getHeaderFixCmd() :
+            cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
+            cmd += ' "' + " ".join(self.params.configCommandLine) + '"'
+            return cmd
+
+        segCmd += " | " + getHeaderFixCmd()
+
     segFiles.gvcf.append(self.paths.getTmpSegmentGvcfPath(segStr))
-    segCmd += " | %s -c >| %s" % (self.params.bgzip9Bin, segFiles.gvcf[-1])
+    segCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, segFiles.gvcf[-1])
 
     nextStepWait = set()
 
@@ -227,7 +237,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
             # adjust sorted to remove the ".bam" suffix
             sorted = sorted[:-4]
-            sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
+            sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
             sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+gseg.pyflowId)
             self.addTask(sortTaskLabel,sortCmd,dependencies=setTaskLabel,memMb=self.params.callMemMb)
@@ -245,7 +255,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
     """
 
     tmpGraphDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), "mkdir -p "+tmpGraphDir, dependencies=dependencies, isForceLocal=True)
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), ["mkdir","-p",tmpGraphDir], dependencies=dependencies, isForceLocal=True)
 
     graphTasks = set()
 
@@ -271,7 +281,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
         finishBam(segFiles.bamRealign, self.paths.getRealignedBamPath(), "realigned")
 
-    cleanTask=self.addTask(preJoin(taskPrefix,"cleanTmpDir"), "rm -rf "+tmpGraphDir, dependencies=finishTasks, isForceLocal=True)
+    cleanTask=self.addTask(preJoin(taskPrefix,"cleanTmpDir"), ["rm","-rf",tmpGraphDir], dependencies=finishTasks, isForceLocal=True)
 
     nextStepWait = finishTasks
 

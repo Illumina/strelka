@@ -93,26 +93,26 @@ package] [gnuwin32] among others.
 
 [gnuwin32]:http://gnuwin32.sourceforge.net/packages/zlib.htm
 
-### Production Build Environment
+### Automating Portable Binary Builds 
 
-We are required to maintain compatibility with Centos 5.x, which
-requires building on that platform. To make this easier, the process
-has been moved to Docker.
+A script is provided to enable a dockerized build process which
+issues Centos5+ or Centos6+ binary tarballs. To do so, ensure you
+have permission to `docker run` on the current system and execute the
+following script:
 
-The docker image has been saved to the public registry. If you need to
-recreate it, perform the following steps:
+```
+${STRELKA_REPO_ROOT}/scratch/docker/deployment/dockerBuildBinaryTarball.bash ${STRELKA_REPO_ROOT2} ${BINARY_BUILD_PREFIX}
+```
 
-`
-cd env
-sudo docker build -t YOURNEWTAGNAME .
-`
+The term `${STRELKA_REPO_ROOT2}` can point to the current git repo (ie. `${STRELKA_REPO_ROOT}`),
+or to an extracted Strelka source tarball previously created using the script:
 
-To do a build:
-`
-sudo docker.io run  -v $WORKSPACE:/src -v $install_path:/install -t jduddy/starka:gcc-4.9.2 /src/env/build_release.sh
-`
-                                                                                                                                             220,1         Bot
+```
+${STRELKA_REPO_ROOT}/scratch/make_release_tarball.bash
+```
 
+The choice of build environment is hard-coded in the deploy script for the time being,
+see the `builderImage` variable.
 
 ## Coding Guidelines
 

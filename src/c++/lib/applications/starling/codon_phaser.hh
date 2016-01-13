@@ -82,8 +82,6 @@ struct Codon_phaser : public variant_pipe_stage_base
     void process(std::unique_ptr<site_info> si) override;
     void process(std::unique_ptr<indel_info> ii) override;
 
-    void collect_records();
-
 private:
     void flush_impl() override;
 

@@ -29,6 +29,8 @@
 #include "starling_common/starling_base_option_parser.hh"
 #include "starling_common/Tier2OptionsParser.hh"
 
+#include "boost/filesystem.hpp"
+
 
 
 po::options_description
@@ -121,6 +123,8 @@ get_strelka_option_parser(
      "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
     ("strelka-indel-min-qsi-ref", po::value(&opt.sfilter.sindelQuality_LowerBound)->default_value(opt.sfilter.sindelQuality_LowerBound),
      "min QSI_ref value")
+    ("strelka-indel-empirical-scoring", po::value(&opt.sfilter.is_use_indel_empirical_scoring)->default_value(opt.sfilter.is_use_indel_empirical_scoring),
+     "Enable filtering based on empirical scoring for indels")
     ;
 
     po::options_description tier2_opt(getTier2OptionsDescription(opt.tier2));
@@ -203,7 +207,11 @@ finalize_strelka_options(
 
     if (! opt.somatic_variant_scoring_models_filename.empty())
     {
-        scoring_models::Instance().load_variant_scoring_models(opt.somatic_variant_scoring_models_filename);
+        if (! boost::filesystem::exists(opt.somatic_variant_scoring_models_filename))
+        {
+            pinfo.usage("Somatic SNV scoring model file does not exist");
+        }
+
     }
 
     finalize_starling_base_options(pinfo,vm,opt);

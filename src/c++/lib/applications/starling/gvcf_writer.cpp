@@ -137,7 +137,7 @@ void gvcf_writer::process(std::unique_ptr<site_info> si)
 {
     skip_to_pos(si->pos);
 
-    if (typeid(*si) == typeid(digt_site_info))
+    if (dynamic_cast<digt_site_info*>(si.get()) != nullptr)
     {
         add_site_internal(*downcast<digt_site_info>(std::move(si)));
     }
@@ -152,7 +152,7 @@ void gvcf_writer::process(std::unique_ptr<indel_info> ii)
 {
     skip_to_pos(ii->pos);
 
-    if (typeid(*ii) == typeid(digt_indel_info))
+    if (dynamic_cast<digt_indel_info*>(ii.get()) != nullptr)
     {
         auto ii_digt(downcast<digt_indel_info>(std::move(ii)));
 

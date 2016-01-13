@@ -18,26 +18,61 @@
 //
 //
 /*
- * LogisticRegressionModel.cpp
- *
- *  Created on: Jun 23, 2015
- *      Author: mkallberg
+ *  Created on: Aug 20, 2014
+ *      Author: Morten Kallberg
  */
 
-#include <LogisticRegressionModel.hh>
+#pragma once
 
-LogisticRegressionModel::LogisticRegressionModel()
+#include <cassert>
+
+
+namespace SCORING_CALL_TYPE
 {
-    // TODO Auto-generated constructor stub
+enum index_t
+{
+    SOMATIC,
+    SIZE
+};
 
+inline
+const char*
+get_label(const index_t i)
+{
+    switch (i)
+    {
+    case SOMATIC:
+        return "somatic_rf"; // Temporary, change this to SOMATIC
+    default:
+        assert(false && "Unknown scoring model call type.");
+        return nullptr;
+    }
+}
 }
 
-LogisticRegressionModel::~LogisticRegressionModel()
-{
-    // TODO Auto-generated destructor stub
-}
 
-void LogisticRegressionModel::Deserialize( const Json::Value& root)
+namespace SCORING_VARIANT_TYPE
 {
-    serialized_model::Deserialize(root);
+enum index_t
+{
+    SNV,
+    INDEL,
+    SIZE
+};
+
+inline
+const char*
+get_label(const index_t i)
+{
+    switch (i)
+    {
+    case SNV:
+        return "SNP";
+    case INDEL:
+        return "INDEL";
+    default:
+        assert(false && "Unknown scoring model variant type.");
+        return nullptr;
+    }
+}
 }

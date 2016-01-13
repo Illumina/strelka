@@ -82,7 +82,7 @@ void variant_prefilter_stage::add_site_modifiers(
 
 void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
 {
-    if (typeid(*info) == typeid(digt_site_info))
+    if (dynamic_cast<digt_site_info*>(info.get()) != nullptr)
     {
         auto si(downcast<digt_site_info>(std::move(info)));
 
@@ -122,7 +122,7 @@ void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
 
 void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
 {
-    if (typeid(*info) == typeid(digt_indel_info))
+    if (dynamic_cast<digt_indel_info*>(info.get()) != nullptr)
     {
         auto ii(downcast<digt_indel_info>(std::move(info)));
         // add filter for all indels in no-ploid regions:

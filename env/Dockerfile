@@ -1,3 +1,0 @@
-FROM centos:centos5
-RUN yum -y groupinstall 'Development Tools' && yum -y install openssh-clients wget perl zlib-devel python-devel bzip2-devel curl
-RUN mkdir /download && cd /download && wget ftp://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.bz2 && bzip2 -dc gcc-4.9.2.tar.bz2 | tar xf - && rm gcc-4.9.2.tar.bz2 && cd gcc-4.9.2 && contrib/download_prerequisites && mkdir /build && cd /build && /download/gcc-4.9.2/configure --prefix=/usr --libdir=/usr/lib --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --disable-multilib  --with-system-zlib --enable-languages=c,c++ && make -j 5 && make install && cd / && rm -rf /build

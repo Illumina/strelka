@@ -75,8 +75,8 @@ write_shared_vcf_header_info(
         for (const auto& val : dopt.chrom_depth)
         {
             const std::string& chrom(val.first);
-            const double meanDepth(val.second);
-            os << "##MeanDepth_" << chrom << '=' << meanDepth << "\n";
+            const double expectedDepth(val.second);
+            os << "##Depth_" << chrom << '=' << expectedDepth << "\n";
         }
     }
 }
@@ -222,6 +222,7 @@ strelka_streams(
             //scoring_models::Instance().writeVcfHeader(fos);
 
             // INFO:
+            fos << "##INFO=<ID=EQSI,Number=1,Type=Float,Description=\"Empirically calibrated quality score for somatic variants\">\n";
             fos << "##INFO=<ID=QSI,Number=1,Type=Integer,Description=\"Quality score for any somatic variant, ie. for the ALT haplotype to be present at a significantly different frequency in the tumor and normal\">\n";
             fos << "##INFO=<ID=TQSI,Number=1,Type=Integer,Description=\"Data tier used to compute QSI\">\n";
             fos << "##INFO=<ID=NT,Number=1,Type=String,Description=\"Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.\">\n";
@@ -232,9 +233,17 @@ strelka_streams(
             fos << "##INFO=<ID=RC,Number=1,Type=Integer,Description=\"Number of times RU repeats in the reference allele\">\n";
             fos << "##INFO=<ID=IC,Number=1,Type=Integer,Description=\"Number of times RU repeats in the indel allele\">\n";
             fos << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Largest reference interrupted homopolymer length intersecting with the indel\">\n";
+            fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
+            fos << "##INFO=<ID=MQ0,Number=1,Type=Float,Description=\"Fraction of MAPQ == 0 reads covering this record\">\n";
             fos << "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">\n";
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
+
+            const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
+            if (is_use_empirical_scoring)
+            {
+                fos << "##INFO=<ID=ESF,Number=" << STRELKA_INDEL_VQSR_FEATURES::SIZE << ",Type=Float,Description=\"Empirical scoring features.\">\n";
+            }
 
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1\">\n";
@@ -243,22 +252,60 @@ strelka_streams(
             fos << "##FORMAT=<ID=TIR,Number=2,Type=Integer,Description=\"Reads strongly supporting indel allele for tiers 1,2\">\n";
             fos << "##FORMAT=<ID=TOR,Number=2,Type=Integer,Description=\"Other reads (weak support or insufficient indel breakpoint overlap) for tiers 1,2\">\n";
 
-            fos << "##FORMAT=<ID=DP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average tier1 read depth within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
-            fos << "##FORMAT=<ID=FDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average tier1 number of basecalls filtered from original read depth within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
-            fos << "##FORMAT=<ID=SUBDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average number of reads below tier1 mapping quality threshold aligned across sites within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
+            fos << "##FORMAT=<ID=AF,Number=1,Type=Float,Description=\"Estimated Indel AF in tier1\">\n";
+            fos << "##FORMAT=<ID=OF,Number=1,Type=Float,Description=\"Estimated frequency of supported alleles different from ALT in tier1\">\n";
+            fos << "##FORMAT=<ID=SOR,Number=1,Type=Float,Description=\"Strand odds ratio, capped at [+/-]2 for tier1\">\n";
+            fos << "##FORMAT=<ID=FS,Number=1,Type=Float,Description=\"Log p-value using Fisher's exact test to detect strand bias, based on tier1\">\n";
+            fos << "##FORMAT=<ID=BSA,Number=1,Type=Float,Description=\"Binomial test log-pvalue for ALT allele in tier1\">\n";
+            fos << "##FORMAT=<ID=RR,Number=1,Type=Float,Description=\"Read position ranksum for ALT allele in tier1 reads (U-statistic)\">\n";
+            fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
+
+            if (is_use_empirical_scoring)
+            {
+                fos << "##vqsr_features=";
+                for (unsigned q = 0; q < STRELKA_INDEL_VQSR_FEATURES::SIZE; ++q)
+                {
+                    if (q > 0)
+                    {
+                        fos << ",";
+                    }
+                    fos << q << ":" << STRELKA_INDEL_VQSR_FEATURES::get_feature_label(q);
+                }
+                fos << "\n";
+            }
 
             // FILTERS:
             {
                 using namespace STRELKA_VCF_FILTERS;
+                if (is_use_empirical_scoring)
                 {
-                    std::ostringstream oss;
-                    oss << "Average fraction of filtered basecalls within " << opt.sfilter.indelRegionFlankSize << " bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
-                    write_vcf_filter(fos, get_label(IndelBCNoise), oss.str().c_str());
+                    {
+                        assert(dopt.somaticIndelScoringModel);
+                        const VariantScoringModel& varModel(*dopt.somaticIndelScoringModel);
+                        const double threshold(varModel.scoreFilterThreshold());
+
+                        std::ostringstream oss;
+                        oss << "The empirically fitted quality score is less than " << threshold;
+                        write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
+                    }
+                    {
+                        std::ostringstream oss;
+                        oss << "Normal type is not homozygous reference.";
+                        write_vcf_filter(fos, get_label(Nonref), oss.str().c_str());
+                    }
                 }
+                else
                 {
-                    std::ostringstream oss;
-                    oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << ", ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
-                    write_vcf_filter(fos, get_label(QSI_ref), oss.str().c_str());
+                    {
+                        std::ostringstream oss;
+                        oss << "Average fraction of filtered basecalls within " << opt.sfilter.indelRegionFlankSize << " bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
+                        write_vcf_filter(fos, get_label(IndelBCNoise), oss.str().c_str());
+                    }
+                    {
+                        std::ostringstream oss;
+                        oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << ", ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
+                        write_vcf_filter(fos, get_label(QSI_ref), oss.str().c_str());
+                    }
                 }
             }
 

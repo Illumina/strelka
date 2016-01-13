@@ -25,6 +25,7 @@
 #include "position_somatic_snv.hh"
 #include "position_somatic_snv_strand_grid.hh"
 #include "somatic_indel_grid.hh"
+#include "strelkaVQSRFeatures.hh"
 #include "strelka_shared.hh"
 #include "blt_util/blt_exception.hh"
 
@@ -53,11 +54,36 @@ strelka_deriv_options(
             oss << "ERROR: Can't find chromosome: '" << chrom_name << "' in chrom depth file: " << opt.sfilter.chrom_depth_file << "\n";
             throw blt_exception(oss.str().c_str());
         }
-        sfilter.max_depth=(cdi->second*opt.sfilter.max_depth_factor);
-        assert(sfilter.max_depth>=0.);
+        sfilter.expected_chrom_depth=(cdi->second);
+        sfilter.max_chrom_depth=(cdi->second*opt.sfilter.max_depth_factor);
+        assert(sfilter.max_chrom_depth>=0.);
     }
 
     sfilter.indelRegionStage=(addPostCallStage(opt.sfilter.indelRegionFlankSize));
+
+    if (opt.isUseSomaticVQSR())
+    {
+        somaticSnvScoringModel.reset(
+            new VariantScoringModel(
+                STRELKA_SNV_VQSR_FEATURES::getFeatureMap(),
+                opt.somatic_variant_scoring_models_filename,
+                SCORING_CALL_TYPE::SOMATIC,
+                SCORING_VARIANT_TYPE::SNV)
+        );
+
+        if (opt.sfilter.is_use_indel_empirical_scoring)
+        {
+            somaticIndelScoringModel.reset(
+                new VariantScoringModel(
+                    STRELKA_INDEL_VQSR_FEATURES::getFeatureMap(),
+                    opt.somatic_variant_scoring_models_filename,
+                    SCORING_CALL_TYPE::SOMATIC,
+                    SCORING_VARIANT_TYPE::INDEL)
+            );
+        }
+    }
+
+
 }
 
 /// dtor required to be in the cpp so that unique ptr can access complete data type

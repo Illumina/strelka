@@ -90,7 +90,7 @@ pedicure_pos_processor(
         for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
         {
             sample_info& sif(sample(sampleIndex));
-            sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,sampleIndex));
+            sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,dopt.countCache,isdata,sampleIndex));
         }
     }
 }

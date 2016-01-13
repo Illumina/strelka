@@ -56,9 +56,9 @@ class StarkaCallWorkflow(WorkflowRunner) :
             catCmd = [self.params.bgcatBin,"-o",output]
             catCmd.extend(inputList)
         else :
-            catCmd = "mv -f %s %s" % (inputList[0],output)
+            catCmd = ["mv","-f", inputList[0], output]
 
-        indexCmd = "%s -p %s %s" % (self.params.tabixBin, fileType, output)
+        indexCmd = [self.params.tabixBin,"-p", fileType, output]
         catTask = self.addTask(preJoin(taskPrefix,label+"_concat_"+fileType), catCmd,
                                dependencies=dependencies, isForceLocal=True)
         return self.addTask(preJoin(taskPrefix,label+"_index_"+fileType), indexCmd,

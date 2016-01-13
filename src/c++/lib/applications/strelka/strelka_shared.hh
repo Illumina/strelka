@@ -25,6 +25,7 @@
 #pragma once
 
 #include "blt_util/chrom_depth_map.hh"
+#include "calibration/VariantScoringModel.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
@@ -53,6 +54,9 @@ struct somatic_filter_options
 
     unsigned indelRegionFlankSize = 50;
     double minimumQscore = 2.35;
+
+    // TODO: STARKA-296 enable when ready
+    bool is_use_indel_empirical_scoring = false;
 };
 
 
@@ -142,7 +146,8 @@ struct somatic_filter_deriv_options
         return (! chrom_depth.empty());
     }
 
-    double max_depth = 0;
+    double max_chrom_depth = 0;
+    double expected_chrom_depth = 0;
     cdmap_t chrom_depth;
     unsigned indelRegionStage = 0;
 };
@@ -153,7 +158,7 @@ struct somatic_snv_caller_strand_grid;
 struct somatic_indel_caller_grid;
 
 
-// data deterministically derived from the input options:
+// data deterministically derived from the input options, or read in from model files, etc.
 //
 struct strelka_deriv_options : public starling_base_deriv_options
 {
@@ -179,6 +184,9 @@ struct strelka_deriv_options : public starling_base_deriv_options
 
 /// data:
     somatic_filter_deriv_options sfilter;
+
+    std::unique_ptr<VariantScoringModel> somaticSnvScoringModel;
+    std::unique_ptr<VariantScoringModel> somaticIndelScoringModel;
 
 private:
     std::unique_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;

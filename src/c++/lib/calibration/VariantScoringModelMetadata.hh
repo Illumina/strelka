@@ -18,25 +18,35 @@
 //
 //
 /*
- * LogisticRegressionModel.hh
- *
- *  Created on: Jun 23, 2015
- *      Author: mkallberg
+ *      Author: Morten Kallberg
  */
 
-#include <calibration/SerializedModel.hh>
+#pragma once
 
-#ifndef C___LIB_CALIBRATION_LOGISTICREGRESSIONMODEL_HH_
-#define C___LIB_CALIBRATION_LOGISTICREGRESSIONMODEL_HH_
+#include "json/json.h"
 
-struct LogisticRegressionModel : public serialized_model
+#include <map>
+#include <string>
+
+
+typedef std::map<std::string,unsigned> featureMap_t;
+
+
+/// parse common meta-data format shared for all variant scoring models
+///
+class VariantScoringModelMetadata
 {
+public:
+    VariantScoringModelMetadata() {}
 
-    LogisticRegressionModel();
-    virtual ~LogisticRegressionModel();
+    void Deserialize(
+        const featureMap_t& featureMap,
+        const Json::Value& root);
 
-    void Deserialize( const Json::Value& root);
-
+    //std::string name;
+    //std::string version;
+    std::string date;
+    std::string ModelType;
+    double FilterCutoff;
 };
 
-#endif /* C___LIB_CALIBRATION_LOGISTICREGRESSIONMODEL_HH_ */

@@ -83,7 +83,7 @@ def main() :
     chromList = []
 
     if True :
-        cmd = samtoolsBin + " idxstats '%s'" % (options.bamFile)
+        cmd = "\"%s\" idxstats \"%s\"" % (samtoolsBin,options.bamFile)
         proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE)
         for line in proc.stdout :
             word = line.strip().split('\t')
@@ -112,13 +112,13 @@ def main() :
         matchRex = re.compile("([0-9]+)[M=X]")
 
         # use "-F 4" to filter out unmapped reads
-        cmd = samtoolsBin + " view -F 4"
+        cmd = "\"%s\" view -F 4" % (samtoolsBin)
 
         # use "-s 0.1" to subsample the bam records to increaase sampled read diversity
         if type == 'subsample' :
             cmd += " -s 0.1"
 
-        cmd += " '%s'" % (options.bamFile)
+        cmd += " \"%s\"" % (options.bamFile)
 
         proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE)
         for line in proc.stdout :

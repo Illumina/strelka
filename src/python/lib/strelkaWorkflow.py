@@ -49,7 +49,7 @@ __version__ = workflowVersion
 
 
 def runCount(self, taskPrefix="", dependencies=None) :
-    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
@@ -72,9 +72,9 @@ def runDepth(self,taskPrefix="",dependencies=None) :
         return set()
 
 
-    cmd  = "%s -E %s" % (sys.executable, self.params.getChromDepth)
-    cmd += " --bam '%s'" % (bamFile)
-    cmd += " > %s" % (self.paths.getChromDepth())
+    cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.getChromDepth)
+    cmd += " --bam \"%s\"" % (bamFile)
+    cmd += " > \"%s\"" % (self.paths.getChromDepth())
 
     nextStepWait = set()
     nextStepWait.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth"),cmd,dependencies=dependencies))
@@ -137,9 +137,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--indel-error-models-file', self.params.indelErrorModelsFile])
     segCmd.extend(['--indel-error-model-name', self.params.indelErrorModelName])
 
-    # do not apply VQSR in exome case
-    if not self.params.isExome :
-        segCmd.extend(['--variant-scoring-models-file', self.params.variantScoringModelFile])
+    segCmd.extend(['--variant-scoring-models-file', self.params.variantScoringModelFile])
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["-bam-file", bamPath])
@@ -181,6 +179,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
         segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
 
+    if self.params.isStrelkaIndelEmpiricalScoring:
+        segCmd.extend(["--strelka-indel-empirical-scoring", 1])
+
     if self.params.extraStrelkaArguments is not None :
         for arg in self.params.extraStrelkaArguments.strip().split() :
             segCmd.append(arg)
@@ -191,13 +192,32 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     callTask=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
     self.addTask(callTask,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
-    compressLabel=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
-    compressCmd="%s %s && %s %s" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
-    if self.params.isWriteCallableRegion :
-        compressCmd += " && %s %s" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
+    # fix vcf header to use parent pyflow cmdline instead of random segment command:
+    compressWaitFor=callTask
+    if isFirstSegment :
+        headerFixTask=preJoin(taskPrefix,"fixVcfHeader_"+gseg.pyflowId)
+        def getHeaderFixCmd(fileName) :
+            tmpName=fileName+".reheader.tmp"
+            cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
+            cmd += ' "' + " ".join(self.params.configCommandLine) + '"'
+            cmd += " < \"%s\" > \"%s\" && mv \"%s\" \"%s\"" % (fileName,tmpName,
+                                                               tmpName, fileName)
+            return cmd
 
-    self.addTask(compressLabel, compressCmd, dependencies=callTask, isForceLocal=True)
-    nextStepWait.add(compressLabel)
+        headerFixCmd  = getHeaderFixCmd(tmpSnvPath)
+        headerFixCmd += " && "
+        headerFixCmd += getHeaderFixCmd(tmpIndelPath)
+        
+        self.addTask(headerFixTask, headerFixCmd, dependencies=callTask, isForceLocal=True)
+        compressWaitFor=headerFixTask
+
+    compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
+    compressCmd="\"%s\" \"%s\" && \"%s\" \"%s\"" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
+    if self.params.isWriteCallableRegion :
+        compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
+
+    self.addTask(compressTask, compressCmd, dependencies=compressWaitFor, isForceLocal=True)
+    nextStepWait.add(compressTask)
 
     if self.params.isWriteRealignedBam :
         def sortRealignBam(label, sortList) :
@@ -207,7 +227,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
             # adjust sorted to remove the ".bam" suffix
             sorted = sorted[:-4]
-            sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
+            sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
             sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.pyflowId)
             self.addTask(sortTaskLabel,sortCmd,dependencies=callTask,memMb=self.params.callMemMb)
@@ -226,7 +246,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
     """
 
     tmpGraphDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), "mkdir -p "+tmpGraphDir, dependencies=dependencies, isForceLocal=True)
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), ["mkdir", "-p", tmpGraphDir], dependencies=dependencies, isForceLocal=True)
 
     graphTasks = set()
 

@@ -69,7 +69,9 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Run script and run output will be written to this directory [required] (default: %default)")
 
     def addExtendedGroupOptions(self,group) :
-        group.add_option("--scanSizeMb", type="int", metavar="INT",
+        # note undocumented library behavior: "dest" is optional, but not including it here will
+        # cause the hidden option to always print
+        group.add_option("--scanSizeMb", type="int", dest="scanSizeMb", metavar="INT",
                          help="Maximum sequence region size (in megabases) scanned by each task during "
                          "genome variant calling. (default: %default)")
         group.add_option("--region", type="string",dest="regionStrList",metavar="REGION", action="append",
@@ -93,6 +95,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         Every local variable in this method becomes part of the default hash
         """
 
+        configCommandLine=sys.argv
+
         alignerMode = "isaac"
 
         libexecDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_LIBEXECDIR@"))
@@ -106,6 +110,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         countFastaBin=joinFile(libexecDir,"countFastaBases")
 
         getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
+        vcfCmdlineSwapper=joinFile(libexecDir,"vcfCmdlineSwapper.py")
 
         # TODO: these aren't shared and should go into child classes:
         starlingBin=joinFile(libexecDir,"starling2")
@@ -127,7 +132,11 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
 
         runDir = "variantCallWorkflow"
+
+        # extended options
         scanSizeMb = 12
+        regionStrList = None
+        callMemMbOverride = None
 
         isExome = False
 

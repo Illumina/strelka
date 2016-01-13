@@ -124,7 +124,7 @@ starling_pos_processor(
         indel_sync_data isdata;
         isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
                                normal_sif.sample_opt, max_candidate_normal_sample_depth, 0);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, ref, isdata, 0));
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, ref, dopt.countCache, isdata, 0));
     }
 }
 
@@ -243,7 +243,8 @@ starling_pos_processor::process_pos_snp_single_sample_continuous(
 
 
 void
-starling_pos_processor::process_pos_snp_single_sample_impl(
+starling_pos_processor::
+process_pos_snp_single_sample_impl(
     const pos_t pos,
     const unsigned sample_no)
 {
@@ -293,9 +294,6 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
     std::unique_ptr<digt_site_info> si(new digt_site_info(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced));
     si->n_used_calls=cpi.n_used_calls();
     si->n_unused_calls=cpi.n_unused_calls();
-
-
-
 
 
     // delay writing any snpcalls so that anomaly tests can (optionally) be applied as filters:

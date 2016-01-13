@@ -26,26 +26,49 @@
 
 #pragma once
 
-#include "calibration/SerializedModel.hh"
+#include "IndelModelMetadata.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "blt_util/blt_exception.hh"
 
 static const unsigned max_unit_len(10);
 static const unsigned max_tract_len(40);
-typedef std::pair<double,double> error_model[max_unit_len][max_tract_len];
 
+struct indel_error_rates
+{
+    double insert_rate;
+    double delete_rate;
 
-struct IndelErrorModel : public serialized_model
+    indel_error_rates()
+    {
+        insert_rate = 0;
+        delete_rate = 0;
+    }
+    indel_error_rates(double insert_error_rate, double delete_error_rate)
+    {
+        insert_rate = insert_error_rate;
+        delete_rate = delete_error_rate;
+    }
+};
+
+typedef indel_error_rates error_model[max_unit_len][max_tract_len];
+
+struct IndelErrorModel
 {
     IndelErrorModel();
-    IndelErrorModel(std::string n, std::string v, std::string d,int motif, int tract):
+    IndelErrorModel(const std::string& n, const std::string& v, const std::string& d,int motif, int tract):
         MaxMotifLength (motif),
         MaxTractLength (tract)
     {
-        this->name 		= n;
-        this->version 	= v;
-        this->date 		= d;
+        _meta.name 		= n;
+        _meta.version 	= v;
+        _meta.date 		= d;
+    }
+
+    const std::string&
+    getName() const
+    {
+        return _meta.name;
     }
 
     void Deserialize(const Json::Value& root);
@@ -56,6 +79,17 @@ struct IndelErrorModel : public serialized_model
                    double& ref_error_prob,
                    bool use_length_dependence = false) const;
 
+    void calc_abstract_prop(unsigned repeat_unit_length,
+                            unsigned tract_length,
+                            unsigned indel_size,
+                            indel_error_rates& error_rates,
+                            bool use_length_dependence) const;
+
+    indel_error_rates calc_abstract_prop(unsigned repeat_unit_length,
+                                         unsigned tract_length,
+                                         unsigned indel_size,
+                                         bool use_length_dependence) const;
+
     bool is_simple_tandem_repeat(const starling_indel_report_info& iri) const;
 
     unsigned get_max_motif_length() const
@@ -63,7 +97,12 @@ struct IndelErrorModel : public serialized_model
         return MaxMotifLength;
     }
 
-    void add_prop(const unsigned& unit, const unsigned& tract, const std::pair<double,double>& myProps);
+    double adjusted_rate(unsigned repeat_unit_length,
+                         unsigned tract_length,
+                         unsigned indel_size,
+                         INDEL::index_t it) const;
+
+    void add_prop(const unsigned& unit, const unsigned& tract, const indel_error_rates& myProps);
 
 private:
     static
@@ -72,6 +111,8 @@ private:
     {
         return iri.repeat_unit_length * 2;
     }
+
+    IndelModelMetadata _meta;
 
 public:
     error_model model;

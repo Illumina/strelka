@@ -26,7 +26,6 @@
 
 #pragma once
 
-#include "calibration/RandomForestModel.hh"
 #include "calibration/Indelmodel.hh"
 
 #include "json/json.h"
@@ -41,7 +40,6 @@ namespace MODEL_TYPE
 enum index_t
 {
     INDELMODEL,
-    CALMODEL,
     SIZE
 };
 
@@ -53,8 +51,6 @@ get_label(const index_t i)
     {
     case INDELMODEL:
         return "IndelModels";
-    case CALMODEL:
-        return "CalibrationModels";
     default:
         assert(false && "Unknown node type in scoringmodels");
         return nullptr;
@@ -66,14 +62,9 @@ struct scoring_models
 {
     static scoring_models& Instance();
 
-    void load_variant_scoring_models(const std::string& model_file);
     void load_indel_error_models(const std::string& model_file);
 
     void set_indel_model(const std::string& model_name);
-
-    double score_variant(
-        const feature_type& features,
-        const VARIATION_NODE_TYPE::index_t vtype) const;
 
     void get_indel_error(
         const starling_base_options& client_opt,
@@ -86,23 +77,14 @@ struct scoring_models
 
     const IndelErrorModel& get_indel_model() const;
 
-    void writeVcfHeader(std::ostream& os) const;
-
-    bool isVariantScoringInit() const
-    {
-        return randomforest_model.isInit();
-    }
     bool isIndelInit() const
     {
         return (! indel_models.empty());
     }
 
-    // See STARKA-257 github comment for more detail on this fit
-    double recal_somatic_snv_score(double& score) const
-    {
-        return 2.57*score+0.94;
-    }
-
+    void
+    writeVcfHeader(
+        std::ostream& os) const;
 private:
     scoring_models()
     {
@@ -124,7 +106,6 @@ private:
         const MODEL_TYPE::index_t model_type);
 
     void load_indel_model(const Json::Value& data);
-    void load_calibration_model(const Json::Value& data);
 
     const IndelErrorModel& get_indel_model(const std::string& pattern) const;
 
@@ -132,12 +113,9 @@ private:
 
     static scoring_models* m_pInstance;
 
-    std::string variantScoringModelFilename;
     std::string indelErrorModelFilename;
 
     typedef std::map<std::string,IndelErrorModel> indel_modelmap;
     indel_modelmap indel_models;
     std::string current_indel_model;
-
-    RandomForestModel randomforest_model,randomforest_model_indel;
 };
