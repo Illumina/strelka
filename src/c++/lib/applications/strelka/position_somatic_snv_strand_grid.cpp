@@ -492,7 +492,7 @@ calculate_result_set_grid(
         result_set& rs
         )
 {
-    bool is_normal_contaminated = false;
+    bool is_normal_contaminated = true;
     // Calculate posterior probabilities
     rs.max_gt=0;
 
@@ -550,7 +550,7 @@ calculate_result_set_grid(
                        {
                            if(!is_normal_contaminated || ngt != DIGT_SIMPLE::REF)
                            {
-                               lprob_f_given_g = log_error_mod + (fn == ngt) ? ln_cse_rate : ln_se_rate+log_error_mod;
+                               lprob_f_given_g = log_error_mod + ((fn == ngt) ? ln_cse_rate : ln_se_rate+log_error_mod);
                            }
                            else
                            {
@@ -574,6 +574,7 @@ calculate_result_set_grid(
                 }
             }
 
+            // Currently, the single-strand noise states are ignored.
             // Now consider the single-strand noise states. note that these states
             // are unique in that we don't look for mixtures of somatic
             // variation with these noise states, b/c single-strand
@@ -644,7 +645,7 @@ calculate_result_set_grid(
             {
                 som_prob_given_ngt += post_prob[ngt][tgt];
             }
-            printf("%d\t%d\t%f\n", ngt, tgt, post_prob[ngt][tgt]);
+//            printf("%d\t%d\t%lf\n", ngt, tgt, post_prob[ngt][tgt]);
         }
 
         double err_som_and_ngt = 1.0 - som_prob_given_ngt;
