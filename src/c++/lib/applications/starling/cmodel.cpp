@@ -317,7 +317,7 @@ score_site_instance(
             //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
 #endif
 
-            const featuremap features = si.get_site_qscore_features(normal_depth());
+        const featuremap features = si.get_site_qscore_features(normal_depth());
         smod.EVS = logistic_score(var_case, features);
         apply_site_qscore_filters(var_case, si, smod);
     }
