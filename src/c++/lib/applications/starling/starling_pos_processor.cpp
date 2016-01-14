@@ -380,9 +380,6 @@ process_pos_snp_single_sample_impl(
     }
 #endif
 
-    //const bool is_anomaly(is_pos_adis || is_pos_acov);
-    //const bool is_filter_snp(is_overfilter || (_opt.is_filter_anom_calls && is_anomaly));
-
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
     if (is_snp || is_forced)
     {
@@ -467,16 +464,6 @@ process_pos_snp_single_sample_impl(
 
         is_reported_event = true;
     }
-
-#if 0
-    if (is_anomaly && (! _opt.is_filter_anom_calls))
-    {
-        if (is_pos_adis) report_os << "ANOM_DIS pos: " << output_pos << "\n";
-        if (is_pos_acov) report_os << "ANOM_COV pos: " << output_pos << "\n";
-
-        is_reported_event = true;
-    }
-#endif
 
     if (_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event))
     {

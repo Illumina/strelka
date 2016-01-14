@@ -135,7 +135,6 @@ struct blt_options
     bool is_samtools_ref_set = false;
     std::string samtools_ref_seq_file;
 
-    bool is_filter_anom_calls = false;
     bool is_include_singleton = false;
     bool is_include_anomalous = false;
 

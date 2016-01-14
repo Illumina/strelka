@@ -120,10 +120,6 @@ legacy_starling_arg_parse(
         {
             set_xrange_arg(i,ad,opt.is_acov,opt.acov_alpha);
         }
-        else if (ad.argstr[i]=="-filter-anom-calls")
-        {
-            opt.is_filter_anom_calls=true;
-        }
         else if (ad.argstr[i]=="-print-evidence")
         {
             opt.is_print_evidence=true;
