@@ -297,12 +297,8 @@ write_bam(bam_dumper& bamd)
 
     // deal with optional fields:
     //
-    // (1) if XD record occurs (from ELAND MD field) it must be taken out before we change
-    // the alignment:
-    static const char xdtag[] = {'X','D'};
-    nuke_bam_aux_field(br,xdtag);
 
-    // (2) if MD or NM records occur (from BWA/novoalign/samtools calmd, etc) it must be
+    // if MD or NM records occur (from BWA/novoalign/samtools calmd, etc) it must be
     // taken out before we change the alignment:
     static const char mdtag[] = {'M','D'};
     nuke_bam_aux_field(br,mdtag);

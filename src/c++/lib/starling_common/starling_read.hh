@@ -67,10 +67,7 @@ private:
 
 
 //
-// captures the concept of read as required by starling: namely
-// potentially aligned by both ELAND and/or GROUPER
-//
-// all alignments must be on the same strand and 'reasonably' proximate.
+// captures the concept of read as required by starling
 //
 // all alignment info is fwd-strand
 //
@@ -185,7 +182,7 @@ private:
     update_full_segment();
 
 public:
-    // mapping qualities of ELAND reads, does not apply to GROUPER:
+    // read mapper quality categories
     MAPLEVEL::index_t genome_align_maplev;
 
 private:

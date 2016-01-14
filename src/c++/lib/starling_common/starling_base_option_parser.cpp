@@ -151,12 +151,6 @@ get_starling_base_option_parser(starling_base_options& opt)
      "Print out regional average basecall statistics at variant sites within a window of the variant call. Must provide arguments for window flank size and output file. Option can be specified multiple times. (example: '--variant-window-flank-file 10 window10.txt')")
     ;
 
-    po::options_description compat_opt("compatibility-options");
-    compat_opt.add_options()
-    ("eland-compatibility", po::value(&opt.is_eland_compat)->zero_tokens(),
-     "When argument is provided the input reads are checked for an optional AS field corresponding to the ELAND PE map score.")
-    ;
-
     po::options_description input_opt("input-options");
     input_opt.add_options()
     ("max-input-depth", po::value(&opt.max_input_depth),
@@ -184,7 +178,7 @@ get_starling_base_option_parser(starling_base_options& opt)
 
     new_opt.add(geno_opt).add(hap_opt).add(blt_nonref_opt);
     new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt).add(window_opt);
-    new_opt.add(compat_opt).add(input_opt).add(other_opt);
+    new_opt.add(input_opt).add(other_opt);
 
     return new_opt;
 }
@@ -231,10 +225,6 @@ write_starling_legacy_options(
        "                    - Reads with single align score<n are marked as SE-failed. By default such reads are excluded\n"
        "                      from consideration unless a paired score is present. This behavior can be modified by\n"
        "                      setting the exclude or rescue modes below. (default: " << default_opt.min_single_align_score << ")\n"
-       " -single-align-score-exclude-mode\n"
-       "                    - Exclude SE-failed reads even when a paired score is present and the read is not PE-failed.\n"
-       " -single-align-score-rescue-mode\n"
-       "                    - Include non SE-failed reads even when a paired score is present and the read is PE-failed.\n"
        " -min-paired-align-score n\n"
        "                    - Reads with paired align score<n are marked as PE-failed if a paired score is present. By\n"
        "                      default such reads are excluded from consideration, but may still be used if the single score\n"

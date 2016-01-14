@@ -110,7 +110,7 @@ snoise_run(
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(sinput.get_head_pos()-1);
 
-        if       (current.itype == INPUT_TYPE::READ)   // handle regular ELAND reads
+        if       (current.itype == INPUT_TYPE::READ)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report

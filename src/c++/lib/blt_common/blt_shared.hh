@@ -116,8 +116,6 @@ struct blt_options
     int min_qscore = 17;
     int min_single_align_score = 10;
     int min_paired_align_score = 6;
-    bool single_align_score_exclude_mode = false;
-    bool single_align_score_rescue_mode = false;
 
     bool is_min_win_qscore = false;
     int min_win_qscore = 0;
@@ -172,8 +170,6 @@ struct blt_options
     double nonref_site_error_decay_freq = 0.01;
     std::string nonref_test_filename;
     std::string nonref_sites_filename;
-
-    bool is_eland_compat = false;
 
     bool is_max_input_depth = false;
     unsigned max_input_depth = 0;

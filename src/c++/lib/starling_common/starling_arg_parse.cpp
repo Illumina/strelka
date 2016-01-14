@@ -150,14 +150,6 @@ legacy_starling_arg_parse(
         {
             set_arg(i,ad,is_min_pascore_set,opt.min_paired_align_score);
         }
-        else if (ad.argstr[i]=="-single-align-score-exclude-mode")
-        {
-            opt.single_align_score_exclude_mode=true;
-        }
-        else if (ad.argstr[i]=="-single-align-score-rescue-mode")
-        {
-            opt.single_align_score_rescue_mode=true;
-        }
         else if (ad.argstr[i]=="-counts")
         {
             set_filename_arg(i,ad,opt.is_counts,opt.counts_filename);

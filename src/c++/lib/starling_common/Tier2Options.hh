@@ -33,7 +33,6 @@ struct Tier2Options
         return
             (is_tier2_min_single_align_score ||
              is_tier2_min_paired_align_score ||
-             is_tier2_single_align_score_rescue_mode ||
              is_tier2_mismatch_density_filter_count ||
              is_tier2_no_mismatch_density_filter ||
              is_tier2_no_filter_unanchored ||
@@ -46,7 +45,6 @@ struct Tier2Options
     bool is_tier2_min_single_align_score = false;
     int tier2_min_paired_align_score = 0;
     bool is_tier2_min_paired_align_score = false;
-    bool is_tier2_single_align_score_rescue_mode = false;
 
     int tier2_mismatch_density_filter_count = 0;
     bool is_tier2_mismatch_density_filter_count = false;
