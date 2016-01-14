@@ -164,7 +164,8 @@ somatic_snv_caller_strand_grid(const strelka_options& opt,
     : _opt(opt)
 {
     _ln_som_match=(log1p_switch(-opt.somatic_snv_rate));
-    _ln_som_mismatch=(std::log(opt.somatic_snv_rate/(static_cast<blt_float_t>((DIGT_SGRID::PRESTRAND_SIZE)-1))));
+//    _ln_som_mismatch=(std::log(opt.somatic_snv_rate/(static_cast<blt_float_t>((DIGT_SGRID::PRESTRAND_SIZE)-1))));
+    _ln_som_mismatch=(std::log(opt.somatic_snv_rate));
 
     const blt_float_t strand_sse_rate(opt.shared_site_error_rate*opt.shared_site_error_strand_bias_fraction);
     const blt_float_t nostrand_sse_rate(opt.shared_site_error_rate-strand_sse_rate);
@@ -477,6 +478,16 @@ is_gvcf_nonsomatic_state(
 //    }
 //}
 
+float get_fraction_from_index_snv(int index)
+{
+    const float ratio_increment(0.5/static_cast<float>(DIGT_SGRID::HET_RES+1));
+    if(index == DIGT_SIMPLE::REF) return 0.f;
+    if(index == DIGT_SIMPLE::HOM) return 1.f;
+    if(index == DIGT_SIMPLE::HET) return 0.5f;
+    if(index < DIGT_SIMPLE::SIZE+DIGT_SGRID::HET_RES) return 1.0f - ratio_increment*(index-DIGT_SIMPLE::SIZE+1);
+    return 1.0f - ratio_increment*(index-DIGT_SIMPLE::SIZE+2);
+}
+
 static
 void
 calculate_result_set_grid(
@@ -492,7 +503,13 @@ calculate_result_set_grid(
         result_set& rs
         )
 {
-    bool is_normal_contaminated = true;
+    // Debugging
+//    for(int i=0; i<DIGT_SGRID::PRESTRAND_SIZE; ++i)
+//    {
+//        printf("%f\t%lf\t%lf\n", get_fraction_from_index_snv(i), normal_lhood[i], tumor_lhood[i]);
+//    }
+
+    bool is_normal_contaminated = false;
     // Calculate posterior probabilities
     rs.max_gt=0;
 
@@ -505,6 +522,7 @@ calculate_result_set_grid(
     double somatic_prior_normal[DIGT_SGRID::PRESTRAND_SIZE] = {};
     somatic_prior_normal[DIGT_SIMPLE::REF] = 0.5; // fn = 0.0
     somatic_prior_normal[DIGT_SGRID::PRESTRAND_SIZE - 1] = 0.5;  // fn = 0.05
+//    somatic_prior_normal[DIGT_SGRID::PRESTRAND_SIZE - 2] = 0.05;  // fn = 0.1
 
     double somatic_prior_tumor[DIGT_SGRID::PRESTRAND_SIZE];
     for(unsigned ft(0); ft<DIGT_SGRID::PRESTRAND_SIZE; ++ft)
@@ -525,7 +543,6 @@ calculate_result_set_grid(
             {
                 for (unsigned fn(0); fn<DIGT_SGRID::PRESTRAND_SIZE; ++fn)
                 {
-
                     // calculate prior
                     double lprob_f_given_g = 0.0;
 
@@ -555,12 +572,12 @@ calculate_result_set_grid(
                            else
                            {
                                // fn should be smaller than ft
-//                               if(get_fraction_from_index(fn) >= get_fraction_from_index(ft))
-//                                   lprob_f_given_g = -INFINITY;
-//                               else
-//                               {
-                               lprob_f_given_g = std::log(somatic_prior_normal[fn]) + std::log(somatic_prior_tumor[ft]);
-//                               }
+                               if(get_fraction_from_index_snv(fn) >= get_fraction_from_index_snv(ft))
+                                   lprob_f_given_g = -INFINITY;
+                               else
+                               {
+                                   lprob_f_given_g = std::log(somatic_prior_normal[fn]) + std::log(somatic_prior_tumor[ft]);
+                               }
                            }
                        }
                     }
@@ -570,6 +587,7 @@ calculate_result_set_grid(
                     double sum = lprob_f_given_g + normal_lhood[fn] + tumor_lhood[ft];
                     log_sum[dgt] = sum;
 
+//                    printf("%d\t%d\t%lf\n", fn, ft, log_prior_prob + lprob_f_given_g);
                     if(sum > max_log_sum) max_log_sum = sum;
                 }
             }

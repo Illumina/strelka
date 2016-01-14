@@ -62,22 +62,22 @@ get_high_low_het_ratio_lhood_cached(
             //const blt_float_t lnce(bc.ln_comp_error_prob());
 
             // precalculate the result for expect values of 0.0, het_ratio, chet_ratio, 1.0
-            cv.val[0] = bc.ln_error_prob()+ln_one_third;
-            cv.val[1] = std::log((ceprob)*het_ratio+((eprob)*one_third)*chet_ratio);
-            cv.val[2] = std::log((ceprob)*chet_ratio+((eprob)*one_third)*het_ratio);
+            cv.val[0] = bc.ln_error_prob()+ln_one_third;    // TODO: this is not used
+            cv.val[1] = std::log((ceprob)*het_ratio+((eprob)*one_third)*chet_ratio);    // mismatch for lhood_low, match for lhood_high
+            cv.val[2] = std::log((ceprob)*chet_ratio+((eprob)*one_third)*het_ratio);    // match for lhood_low, mismatch for lhood_high
         }
 
         const uint8_t obs_id(bc.base_id);
 
-        if(obs_id == ref_gt)
-        {
-            *lhood_high += cv.val[0];
-            *lhood_low += cv.val[0];
-        }
-        else
+        if(obs_id == ref_gt)    // match
         {
             *lhood_high += cv.val[1];
             *lhood_low += cv.val[2];
+        }
+        else                    // mismatch
+        {
+            *lhood_high += cv.val[2];
+            *lhood_low += cv.val[1];
         }
     }
 }
