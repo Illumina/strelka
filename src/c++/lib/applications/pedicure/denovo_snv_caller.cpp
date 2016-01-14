@@ -295,8 +295,6 @@ struct DenovoResultMaker
 
     }
 
-
-
     /// translate current state lhood into result_set
     void
     processStateLhood(

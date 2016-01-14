@@ -229,7 +229,7 @@ get_state(
 
 
 
-#ifdef DENOVO_INDEL_DEBUG
+#if 0
 static
 void
 dumpIndelLhood(
@@ -239,6 +239,7 @@ dumpIndelLhood(
 {
     using namespace STAR_DIINDEL;
     os << label << " indel lhood: ref/het/hom: " << lhood[NOINDEL] << " " << lhood[HET] << " " << lhood[HOM] << "\n";
+    os << std::endl;
 }
 #endif
 
@@ -249,7 +250,8 @@ void
 calculate_result_set(
     const SampleInfoManager& sinfo,
     const std::vector<indel_state_t>& sampleLhood,
-    denovo_indel_call::result_set& rs)
+    denovo_indel_call::result_set& rs,
+	denovo_indel_call& /*dinc*/)
 {
     using namespace PEDICURE_SAMPLETYPE;
 
@@ -260,15 +262,17 @@ calculate_result_set(
     std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
     std::fill(stateLhood.begin(),stateLhood.end(),lnzero);
 
-#ifdef DENOVO_INDEL_DEBUG
+#if 0
     dumpIndelLhood("parent0", sampleLhood[parentIndex[0]].data(), log_os);
     dumpIndelLhood("parent1", sampleLhood[parentIndex[1]].data(), log_os);
     dumpIndelLhood("proband", sampleLhood[probandIndex].data(), log_os);
 #endif
 
+
     // just go for total brute force as a first pass at this:
     for (unsigned p0(0); p0<STAR_DIINDEL::SIZE; ++p0)
     {
+//    	log_os << STAR_DIINDEL::get_gt_label(p0) << " " << sampleLhood[parentIndex[0]][p0] << std::endl;
         for (unsigned p1(0); p1<STAR_DIINDEL::SIZE; ++p1)
         {
             for (unsigned pro(0); pro<STAR_DIINDEL::SIZE; ++pro)
@@ -289,6 +293,7 @@ calculate_result_set(
 
                 stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
             }
+//            log_os << std::endl;
         }
     }
 
@@ -539,13 +544,32 @@ get_denovo_indel_call(
                 is_include_tier2,is_use_alt_indel,
                 sampleLhood[sampleIndex].data()+STAR_DIINDEL::SIZE);
 
-            dinc.gq.push_back(30);
-            dinc.gqx.push_back(40);
-            dinc.gtstring.push_back("0/1");
-
         }
 
-        calculate_result_set(sinfo, sampleLhood, tier_rs[tierIndex]);
+        calculate_result_set(sinfo, sampleLhood, tier_rs[tierIndex],dinc);
+
+        using namespace PEDICURE_SAMPLETYPE;
+
+//        const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
+//        const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
+
+//        const unsigned sampleIndex[3] = {probandIndex,probandIndex,probandIndex};
+
+        for (unsigned i=0; i<3;i++){
+//        	double min=0,max=9;
+//        	unsigned index =  sampleIndex[0];
+//        	   for (unsigned pro(0); pro<STAR_DIINDEL::SIZE; ++pro)
+        	   {
+//					const double pedigreeLhood = sampleLhood[index][pro];
+//					log_os << "slh " << pedigreeLhood << std::endl;
+        	   }
+//        	   log_os << "---------" << std::endl;
+
+        	dinc.gq.push_back(30);
+        	dinc.gqx.push_back(40);
+        	dinc.gtstring.push_back("0/1");
+        }
+
     }
 
     if (! dinc.is_forced_output)

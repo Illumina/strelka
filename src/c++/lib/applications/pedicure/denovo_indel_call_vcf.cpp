@@ -37,17 +37,18 @@ write_vcf_sample_info(
     const starling_indel_sample_report_info& isri1,
     const starling_indel_sample_report_info& isri2,
 	const denovo_indel_call& dinc,
+	const int& id,
     std::ostream& os)
 {
 
 //	GT:GQ:GQX:DP:DP2:AD:PL
     static const char sep(':');
     if (dinc.gtstring.size()>0){
-		os << dinc.gtstring.at(0)
+		os << dinc.gtstring.at(id)
 		   << sep
-		   << dinc.gq.at(0)
+		   << dinc.gq.at(id)
 		   << sep
-		   << dinc.gqx.at(0)
+		   << dinc.gqx.at(id)
 		   << sep;
     }
     else {
@@ -198,9 +199,11 @@ denovo_indel_call_vcf(
     os << sep << "GT:GQ:GQX:DP:DP2:AD";
 
     // write sample info:
+    int id = 0;
     for (const auto& sampleIsri : isri)
     {
         os << sep;
-        write_vcf_sample_info(sampleIsri[PEDICURE_TIERS::TIER1],sampleIsri[PEDICURE_TIERS::TIER2],dinc, os);
+        write_vcf_sample_info(sampleIsri[PEDICURE_TIERS::TIER1],sampleIsri[PEDICURE_TIERS::TIER2],dinc, id, os);
+        id++;
     }
 }
