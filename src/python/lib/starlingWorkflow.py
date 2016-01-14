@@ -154,9 +154,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--gvcf-include-header", "Phasing"])
     segCmd.extend(["--report-file", quote(self.paths.getTmpSegmentReportPath(gseg.pyflowId))])
 
-    # VQSR:
-    segCmd.extend(['--variant-scoring-models-file',quote(self.params.vqsrModelFile)])
-    segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModelName])
+    # Empirical Variant Scoring(EVS):
+    segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
+    segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
 
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipDynamicIndelErrorModel:
@@ -167,8 +167,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         # use dynamic indel error modeling to choose the appropritate model
         segCmd.extend(['--indel-error-models-file', quote(self.params.dynamicIndelErrorModelsFile)])
 
-    if self.params.isReportVQSRMetrics :
-        segCmd.append("--gvcf-report-VQSRmetrics")
+    if self.params.isReportEVSMetrics :
+        segCmd.append("--gvcf-report-EVSmetrics")
 
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",quote(bamPath)])
@@ -384,7 +384,7 @@ class StarlingWorkflow(StarkaWorkflow) :
         self.paths = PathInfo(self.params)
 
         if self.params.isExome:
-            self.params.vqsrModelName = "Qrule"
+            self.params.evsModelName = "Qrule"
             self.params.indelRefErrorFactor = "1"
             self.params.indelErrorModelName = "old"
 

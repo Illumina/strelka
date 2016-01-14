@@ -22,7 +22,7 @@
 #
 # 20/11/2014
 #
-# Learn VQSR Classifiers from (set of) feature files
+# Learn EVS model from (set of) feature files
 #
 # Usage:
 #
@@ -50,21 +50,22 @@ sys.path.append(workflowDir)
 import pandas
 import random
 
-import vqsr
-import vqsr.tools
-import vqsr.features
+import evs
+import evs.tools
+import evs.features
 
 
 def main():
-    parser = argparse.ArgumentParser("vqsr learning script")
+    parser = argparse.ArgumentParser("evs learning script")
 
     parser.add_argument("inputs", help="Feature CSV files", nargs="+")
 
-    parser.add_argument("-m", "--model", dest="model", choices=vqsr.VQSRModel.names(), required=True,
-                        help="Which model to use (options are: %s)" % str(vqsr.VQSRModel.names()))
+    modelNames=evs.EVSModel.names()
+    parser.add_argument("-m", "--model", dest="model", choices=modelNames, required=True,
+                        help="Which model to use (options are: %s)" % str(modelNames))
 
     parser.add_argument("-f", "--featuresets", dest="features",
-                        choices=vqsr.features.FeatureSet.sets.keys(),
+                        choices=evs.features.FeatureSet.sets.keys(),
                         required=True,
                         help="Which feature set to use (or a comma-separated list of feature names,"
                              " e.g. -f QSS_NT,T_DP_RATE")
@@ -107,7 +108,7 @@ def main():
     dataset = pandas.DataFrame(dataset[dataset["tag"] != "FN"])
 
     try:
-        fset = vqsr.features.FeatureSet.make(args.features)
+        fset = evs.features.FeatureSet.make(args.features)
         features = fset.trainingfeatures()
     except:
         features = args.features.split(",")
@@ -119,7 +120,7 @@ def main():
         print "Using default parameters."
         pars = {}
 
-    model = vqsr.VQSRModel.create(args.model)
+    model = evs.EVSModel.create(args.model)
 
     if not args.balance:
         tpdata = dataset[dataset["tag"] == "TP"]

@@ -206,7 +206,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         headerFixCmd  = getHeaderFixCmd(tmpSnvPath)
         headerFixCmd += " && "
         headerFixCmd += getHeaderFixCmd(tmpIndelPath)
-        
+
         self.addTask(headerFixTask, headerFixCmd, dependencies=callTask, isForceLocal=True)
         compressWaitFor=headerFixTask
 

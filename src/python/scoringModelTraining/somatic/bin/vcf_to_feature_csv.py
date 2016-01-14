@@ -45,16 +45,16 @@ templateConfigDir = os.path.abspath(os.path.join(scriptDir, '@THIS_RELATIVE_CONF
 
 sys.path.append(workflowDir)
 
-import vqsr
-import vqsr.features
-from vqsr.tools.bamstats import bamStats
-from vqsr.tools.bedintervaltree import BedIntervalTree
+import evs
+import evs.features
+from evs.tools.bamstats import bamStats
+from evs.tools.bedintervaltree import BedIntervalTree
 
 import pandas
 
 
 def main():
-    parser = argparse.ArgumentParser("vqsr precision/recall script")
+    parser = argparse.ArgumentParser("evs precision/recall script")
     parser.add_argument("input", help="Strelka VCF file", nargs=1)
 
     parser.add_argument("-o", "--output", dest="output", required=True,
@@ -70,7 +70,7 @@ def main():
                         help="Ambiguous region bed file(s) (places we don't want to label as FP).")
 
     parser.add_argument("--feature-table", dest="features", default="posandalleles",
-                        choices=vqsr.features.FeatureSet.sets.keys(),
+                        choices=evs.features.FeatureSet.sets.keys(),
                         help="Select a feature table to output.")
 
     parser.add_argument("--bam", dest="bams", default=[], action="append",
@@ -90,14 +90,14 @@ def main():
             print >>sys.stderr, "Expected coverage on %s is %f" % (x, bres.loc[x]["COVERAGE"])
             md[x] = float(bres.loc[x]["COVERAGE"])
 
-    fset = vqsr.features.FeatureSet.make(args.features)
+    fset = evs.features.FeatureSet.make(args.features)
     fset.setChrDepths(md)
 
     featuretable = fset.collect(args.input[0])
     featuretable["tag"] = ""
 
     if args.truth:
-        fset2 = vqsr.features.FeatureSet.make("posandalleles")
+        fset2 = evs.features.FeatureSet.make("posandalleles")
         truth_alleles = fset2.collect(args.truth)
         truth_alleles["tag"] = "TP"
         featuretable["tag"] = "FP"

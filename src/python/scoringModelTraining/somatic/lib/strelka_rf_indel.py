@@ -21,14 +21,14 @@
 
 import numpy as np
 import pandas
-from vqsr import VQSRModel
+from evs import EVSModel
 
-import vqsr.tools.io as io
+import evs.tools.io as io
 
 from sklearn.ensemble import RandomForestClassifier
 
 
-class StrelkaRFIndel(VQSRModel):
+class StrelkaRFIndel(EVSModel):
 
     def __init__(self):
         self.clf = {}
@@ -134,4 +134,4 @@ class StrelkaRFIndel(VQSRModel):
                                                         importances[indices[f]],
                                                         std[indices[f]])
 
-VQSRModel.register("strelka.rf.indel", StrelkaRFIndel)
+EVSModel.register("strelka.rf.indel", StrelkaRFIndel)

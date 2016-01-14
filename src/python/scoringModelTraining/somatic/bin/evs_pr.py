@@ -22,7 +22,7 @@
 #
 # 20/11/2014
 #
-# Given a VQSR classifier, evaluate a set of variant calls
+# Given an EVS model, evaluate a set of variant calls
 #
 # Usage:
 #
@@ -51,7 +51,7 @@ import random
 
 
 def main():
-    parser = argparse.ArgumentParser("vqsr precision/recall script")
+    parser = argparse.ArgumentParser("evs precision/recall script")
     parser.add_argument("inputs", help="Quality/tag CSV files", nargs="+")
 
     parser.add_argument("-q", "--quality-fields", dest="q", default="QSS_NT,qual",

@@ -192,32 +192,32 @@ apply_site_qscore_filters(
     digt_call_info& smod) const
 {
     // do extreme case handling better
-    smod.Qscore = std::min(smod.Qscore,60);
+    smod.EVS = std::min(smod.EVS,60);
 
     const double dpfExtreme(0.85);
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
     if (total_calls>0)
     {
         const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-        if (filt>dpfExtreme) smod.Qscore=3;
+        if (filt>dpfExtreme) smod.EVS=3;
     }
 
-    if (smod.Qscore<0)
+    if (smod.EVS<0)
     {
         const auto orig_filters(smod.filters);
         do_site_rule_model(pars.at("snp").at("cutoff"), si, smod);
         if (smod.filters.count()>0)
         {
-            smod.Qscore = 1;
+            smod.EVS = 1;
             smod.filters = orig_filters;
         }
         else
         {
-            smod.Qscore = 35;
+            smod.EVS = 35;
         }
     }
 
-    if (smod.Qscore < get_var_threshold(var_case))
+    if (smod.EVS < get_var_threshold(var_case))
     {
         smod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(var_case)); // more sophisticated filter setting here
     }
@@ -232,24 +232,24 @@ apply_indel_qscore_filters(
     const digt_indel_info& ii,
     digt_indel_call& call) const
 {
-    call.Qscore = std::min(call.Qscore,60);
+    call.EVS = std::min(call.EVS,60);
 
-    if (call.Qscore<0)
+    if (call.EVS<0)
     {
         const auto orig_filters(call.filters);
         do_indel_rule_model(pars.at("indel").at("cutoff"), ii, call);
         if (call.filters.count()>0)
         {
-            call.Qscore = 1;
+            call.EVS = 1;
             call.filters = orig_filters;
         }
         else
         {
-            call.Qscore = 12;
+            call.EVS = 12;
         }
     }
 
-    if (call.Qscore < get_var_threshold(var_case))
+    if (call.EVS < get_var_threshold(var_case))
     {
         call.set_filter(CALIBRATION_MODEL::get_Qscore_filter(var_case));
     }
@@ -307,7 +307,7 @@ score_site_instance(
             var_case = CALIBRATION_MODEL::HetSNP;
 
 #undef HETALTSNPMODEL
-#ifdef HETALTSNPMODEL // future-proofing: do not remove unless you are sure we will not be adding hetalt SNP model to VQSR
+#ifdef HETALTSNPMODEL // future-proofing: do not remove unless you are sure we will not be adding hetalt SNP model to scoring
         if (si.is_hetalt())
             var_case = CALIBRATION_MODEL::HetAltSNP;
         else
@@ -318,7 +318,7 @@ score_site_instance(
 #endif
 
             const featuremap features = si.get_site_qscore_features(normal_depth());
-        smod.Qscore = logistic_score(var_case, features);
+        smod.EVS = logistic_score(var_case, features);
         apply_site_qscore_filters(var_case, si, smod);
     }
 //    else if(this->model_type=="RFtree"){ // place-holder, put random forest here
@@ -372,7 +372,7 @@ score_indel_instance(
         }
 
         const featuremap features = ii.get_indel_qscore_features(normal_depth());
-        call.Qscore = logistic_score(var_case, features);
+        call.EVS = logistic_score(var_case, features);
         apply_indel_qscore_filters(var_case, ii, call);
     }
     else if (this->model_type=="RULE")   //case we are using a rule based model

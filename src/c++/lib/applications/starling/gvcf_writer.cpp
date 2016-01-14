@@ -349,7 +349,7 @@ write_site_record(
             os << "HaplotypeScore=" << si.hapscore;
         }
 
-        if (_opt.is_report_germline_VQSRmetrics)
+        if (_opt.is_report_germline_scoring_metrics)
         {
             os << ';';
             os << "MQ=" << si.MQ;
@@ -376,13 +376,6 @@ write_site_record(
         {
             os << ";Unphased";
         }
-
-        //            //reported q-score
-        //            if (si.Qscore>0) {
-        //                os << ';';
-        //                os << "Qscore=" << si.Qscore;
-        //            }
-
     }
     else
     {
@@ -418,9 +411,9 @@ write_site_record(
     }
     if (si.smod.is_gqx())
     {
-        if (si.smod.Qscore>=0)
+        if (si.smod.EVS>=0)
         {
-            os << si.smod.Qscore;
+            os << si.smod.EVS;
         }
         else
         {
@@ -436,7 +429,10 @@ write_site_record(
     os << si.n_used_calls << ':'
        << si.n_unused_calls;
 
-    if (isNoAlt) {}
+    if (isNoAlt)
+    {
+        // pass
+    }
     else if (si.smod.is_phased_region)
     {
         os << ':' << si.phased_AD;
@@ -712,23 +708,6 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
         }
     }
 
-//    if (ii.Qscore>0) {
-//        os << ';';
-//        os << "Qscore=" << ii.Qscore;
-//    }
-
-//    only report metrics if flag explicitly set
-//    if (_opt.is_compute_VQSRmetrics)
-//    {
-//        os << ';';
-//        os << "MQ=" << ii.MQ;
-//        os << ';';
-//        os << "MQRankSum=" << ii.MQRankSum;
-//        os << ';';
-//        os << "BaseQRankSum=" << ii.BaseQRankSum;
-//        os << ';';
-//        os << "ReadPosRankSum=" << ii.ReadPosRankSum;
-//    }
     os << '\t';
 
     //FORMAT
@@ -738,8 +717,8 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
     os << ii.get_gt() << ':'
        << call.gq << ':';
 
-    if (call.Qscore>=0)
-        os << call.Qscore  << ':';
+    if (call.EVS>=0)
+        os << call.EVS  << ':';
     else
         os << call.gqx  << ':';
 

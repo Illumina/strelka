@@ -22,7 +22,7 @@
 #
 # 20/11/2014
 #
-# Given a VQSR classifier, evaluate a set of variant calls
+# Given a EVS model, evaluate a set of variant calls
 #
 # Usage:
 #
@@ -48,24 +48,25 @@ sys.path.append(workflowDir)
 
 import pandas
 
-import vqsr
-import vqsr.tools
-import vqsr.features
+import evs
+import evs.tools
+import evs.features
 
 
 def main():
-    parser = argparse.ArgumentParser("vqsr evaluation/prediction script")
+    parser = argparse.ArgumentParser("evs evaluation/prediction script")
 
     parser.add_argument("inputs", help="Feature CSV files", nargs="+")
 
     parser.add_argument("-c", "--classifier", dest="clf", required=True,
                         help="Classifier pickle file name")
 
-    parser.add_argument("-m", "--model", dest="model", choices=vqsr.VQSRModel.names(), required=True,
-                        help="Which model to use (options are: %s)" % str(vqsr.VQSRModel.names()))
+    modelNames=evs.EVSModel.names()
+    parser.add_argument("-m", "--model", dest="model", choices=modelNames, required=True,
+                        help="Which model to use (options are: %s)" % str(modelNames))
 
     parser.add_argument("-f", "--featuresets", dest="features",
-                        choices=vqsr.features.FeatureSet.sets.keys(),
+                        choices=evs.features.FeatureSet.sets.keys(),
                         required=True,
                         help="Which feature set to use (or a comma-separated list of feature names,"
                              " e.g. -f QSS_NT,T_DP_RATE")
@@ -94,12 +95,12 @@ def main():
     dataset = pandas.DataFrame(dataset[dataset["tag"] != "FN"])
 
     try:
-        fset = vqsr.features.FeatureSet.make(args.features)
+        fset = evs.features.FeatureSet.make(args.features)
         features = fset.trainingfeatures()
     except:
         features = args.features.split(",")
 
-    model = vqsr.VQSRModel.create(args.model)
+    model = evs.EVSModel.create(args.model)
     model.load(args.clf)
     preds = model.classify(
         dataset[dataset["tag"].isin(["TP", "FP", "UNK"])], features)

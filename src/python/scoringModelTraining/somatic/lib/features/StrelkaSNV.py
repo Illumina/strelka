@@ -21,7 +21,7 @@
 import pandas
 import logging
 
-from vqsr.tools.vcfextract import vcfExtract, extractHeaders
+from evs.tools.vcfextract import vcfExtract, extractHeaders
 from . import FeatureSet
 
 
@@ -217,7 +217,7 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
                 "NT": NT,
                 "NT_REF": NT_is_ref,
 
-                # These features are used by VQSR
+                # These features are potentially used by models
                 "QSS_NT": QSS_NT,
                 "N_FDP_RATE": n_FDP_ratio,
                 "T_FDP_RATE": t_FDP_ratio,
@@ -254,7 +254,7 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
             # used in training / hard filtering
             "NT",
             "NT_REF",
-            # These features are used by VQSR
+            # These features are potentially used by models
             "QSS_NT",
             "N_FDP_RATE",
             "T_FDP_RATE",
@@ -289,10 +289,10 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
 
     def trainingfeatures(self):
         """ Return a list of columns that are features to
-            use for VQSR training
+            use for EVS training
 
             Any change here must be done together with changing
-            src/c++/lib/applications/strelka/strelkaVQSRFeatures.hh
+            src/c++/lib/applications/strelka/strelkaScoringFeatures.hh
         """
         return [
             "QSS_NT",

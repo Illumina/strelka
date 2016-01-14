@@ -21,5 +21,5 @@ add_subdirectory (bin)
 add_subdirectory (lib)
 add_subdirectory (libexec)
 
-add_subdirectory (somaticVQSRTraining)
+add_subdirectory (scoringModelTraining)
 

@@ -28,11 +28,11 @@
 #include <cassert>
 
 
-struct STRELKA_SNV_VQSR_FEATURES
+struct STRELKA_SNV_SCORING_FEATURES
 {
 
     /** any change here must be done together with changing
-        src/python/somaticVQSRTraining/lib/features//StrelkaSNV.py
+        src/python/scoringModelTraining/somatic/lib/features//StrelkaSNV.py
      */
     enum index_t
     {
@@ -122,7 +122,7 @@ struct STRELKA_SNV_VQSR_FEATURES
     }
 };
 
-struct STRELKA_INDEL_VQSR_FEATURES
+struct STRELKA_INDEL_SCORING_FEATURES
 {
 
     /** Make sure the features are the same as used in the model

@@ -108,11 +108,11 @@ double
 calculateLogOddsRatio(const starling_indel_sample_report_info& nisri,
                       const starling_indel_sample_report_info& tisri);
 
-/**
- * Calculate VQSR features and add to smod
- */
+
+/// Calculate empirical scoring features and add to smod
+///
 void
-calculateVQSRFeatures(
+calculateScoringFeatures(
     const SomaticIndelVcfInfo& siInfo,
     const win_avg_set& n_was,
     const win_avg_set& t_was,

@@ -67,8 +67,8 @@ You must specify a BAM file.
 
 
     def addExtendedGroupOptions(self,group) :
-        group.add_option("--reportVQSRMetrics", dest="isReportVQSRMetrics", action="store_true",
-                         help="Report all VQSR features in VCF output.")
+        group.add_option("--reportEVSMetrics", dest="isReportEVSMetrics", action="store_true",
+                         help="Report all Empirical Variant Scoring (EVS) features in VCF output.")
 
         StarkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
 
@@ -87,12 +87,12 @@ You must specify a BAM file.
             'runDir' : 'StarlingWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'indelRefErrorFactor' : "100",
-            'vqsrModelFile' : joinFile(configDir,'germlineVariantScoringModels.txt'),
-            'vqsrModelName' : "QScoreHPDRE100_v4",
+            'evsModelFile' : joinFile(configDir,'germlineVariantScoringModels.txt'),
+            'evsModelName' : "QScoreHPDRE100_v4",
             'inputIndelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
             'indelErrorModelName' : "new",
             'isSkipDynamicIndelErrorModel' : True,
-            'isReportVQSRMetrics' : False,
+            'isReportEVSMetrics' : False,
             'callContinuousVf' : []
             })
         return defaults

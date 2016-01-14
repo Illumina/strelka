@@ -21,7 +21,7 @@
 import pandas
 import logging
 
-from vqsr.tools.vcfextract import vcfExtract, extractHeaders
+from evs.tools.vcfextract import vcfExtract, extractHeaders
 from . import FeatureSet
 
 
@@ -318,7 +318,7 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
         return df
 
     def trainingfeatures(self):
-        """ Return a list of columns that are features to use for VQSR training """
+        """ Return a list of columns that are features to use for EVS model training """
         return ["QSI_NT",
                 "TIER1_ALLELE_RATE",
                 "RC",

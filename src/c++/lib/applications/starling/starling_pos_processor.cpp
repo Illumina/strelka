@@ -388,8 +388,8 @@ process_pos_snp_single_sample_impl(
             si->hapscore=get_hapscore(pi.hap_set);
         }
 
-        // do calculate VQSR metrics
-        if (_opt.is_compute_germline_VQSRmetrics())
+        // calculate empirical scoring metrics
+        if (_opt.is_compute_germline_scoring_metrics())
         {
             si->MQ               = pi.get_rms_mq();
             si->ReadPosRankSum   = pi.get_read_pos_ranksum();

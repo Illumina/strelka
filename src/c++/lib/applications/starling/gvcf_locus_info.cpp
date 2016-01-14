@@ -210,10 +210,10 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
     // combine filter flags
     call.filters |= overlap.first().filters;
     // combine QScores. Since the "unset" value is -1, this complex logic is necessary
-    if (call.Qscore <0)
-        call.Qscore = overlap.first().Qscore;
-    else if (overlap.first().Qscore >= 0)
-        call.Qscore = std::min(call.Qscore, overlap.first().Qscore);
+    if (call.EVS <0)
+        call.EVS = overlap.first().EVS;
+    else if (overlap.first().EVS >= 0)
+        call.EVS = std::min(call.EVS, overlap.first().EVS);
     call.gqx = std::min(call.gqx, overlap.first().gqx);
     call.gq = std::min(call.gq, overlap.first().gq);
 

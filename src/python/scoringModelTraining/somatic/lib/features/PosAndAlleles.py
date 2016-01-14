@@ -20,7 +20,7 @@
 
 import pandas
 
-from vqsr.tools.vcfextract import vcfExtract
+from evs.tools.vcfextract import vcfExtract
 from . import FeatureSet
 
 
@@ -57,5 +57,5 @@ class PosAndAlleles(FeatureSet):
         return df
 
     def trainingfeatures(self):
-        """ Return a list of columns that are features to use for VQSR training """
+        """ Return a list of columns that are features to use for EVS model training """
         return []

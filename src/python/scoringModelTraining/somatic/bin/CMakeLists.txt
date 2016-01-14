@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2016 Illumina, Inc.
@@ -18,25 +17,16 @@
 #
 #
 
-"""
-replace vcf header cmdline field
+set(INSTALL_TO_DIR "${STRELKA_SOMATIC_EVS_DIR}/bin")
 
-usage $0 "new cmdline" < in > out
-"""
+file(RELATIVE_PATH THIS_RELATIVE_PYTHON_LIBDIR "${INSTALL_TO_DIR}" "${STRELKA_SOMATIC_EVS_LIBDIR}")
+file(RELATIVE_PATH THIS_RELATIVE_CONFIGDIR "${INSTALL_TO_DIR}" "${THIS_CONFIGDIR}")
 
-import os, sys
+include ("${THIS_MACROS_CMAKE}")
 
-prefix="##cmdline="
+configure_files("${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "*.py")
 
+include("${THIS_GLOBALS_CMAKE}") # required for *_PERMISSIONS values
 
-def main() :
-    infp = sys.stdin
-    outfp = sys.stdout
-
-    for line in infp :
-        if line.startswith(prefix):
-            line = prefix + " ".join(sys.argv[1:]) + "\n"
-        outfp.write(line)
-
-
-main()
+install_fileglob("${CMAKE_CURRENT_BINARY_DIR}" "${INSTALL_TO_DIR}" "*.py"
+                 "${THIS_EXECUTABLE_PERMISSIONS}")

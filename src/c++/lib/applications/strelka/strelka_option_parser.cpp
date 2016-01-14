@@ -116,8 +116,6 @@ get_strelka_option_parser(
      "max fraction of overlapping deletion reads")
     ("strelka-snv-min-qss-ref", po::value(&opt.sfilter.snv_min_qss_ref)->default_value(opt.sfilter.snv_min_qss_ref),
      "min QSS_ref value")
-//     ("compute-VQSR-metrics", po::value(&opt.sfilter.compute_VQSR_options)->default_value(opt.sfilter.compute_VQSR_options),
-//      "report VQSR metrics in variant records")
     // indel only:
     ("strelka-indel-max-window-filtered-basecall-frac",  po::value(&opt.sfilter.indelMaxWindowFilteredBasecallFrac)->default_value(opt.sfilter.indelMaxWindowFilteredBasecallFrac),
      "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
@@ -132,7 +130,7 @@ get_strelka_option_parser(
     po::options_description score_opt("scoring-options");
     score_opt.add_options()
     ("variant-scoring-models-file", po::value(&opt.somatic_variant_scoring_models_filename),
-     "Model file for somatic small variant VQSR")
+     "Model file for somatic variant scoring")
     ;
 
     po::options_description strelka_parse_opt("Two-sample options");

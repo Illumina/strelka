@@ -21,7 +21,8 @@
 /// \author Peter Krusche
 ///
 
-#include "somatic_indel_vqsr_features.hh"
+#include "somatic_indel_scoring_features.hh"
+
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
 #include "strelka_vcf_locus_info.hh"
@@ -76,7 +77,6 @@ calculateSOR(
     const starling_indel_sample_report_info& isri
 )
 {
-
     // from
     // http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
     // we add .5 to each count to deal with the case of 0 / inf outcomes
@@ -177,11 +177,10 @@ calculateLogOddsRatio(const starling_indel_sample_report_info& nisri,
     return log10(t_ref_reads*n_alt_reads / t_alt_reads / n_ref_reads);
 }
 
-/**
- * Calculate VQSR features and add to smod
- */
+
+
 void
-calculateVQSRFeatures(
+calculateScoringFeatures(
     const SomaticIndelVcfInfo& siInfo,
     const win_avg_set& /* n_was */,
     const win_avg_set& /* t_was */,
@@ -191,26 +190,26 @@ calculateVQSRFeatures(
 )
 {
     const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::QSI_NT, rs.sindel_from_ntype_qphred);
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
+    smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::QSI_NT, rs.sindel_from_ntype_qphred);
+    smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
+    smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
 
     if (siInfo.iri.is_repeat_unit())
     {
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IC, siInfo.iri.indel_repeat_count);
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RC, siInfo.iri.ref_repeat_count);
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RU_LEN, siInfo.iri.repeat_unit_length);
+        smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::IC, siInfo.iri.indel_repeat_count);
+        smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::RC, siInfo.iri.ref_repeat_count);
+        smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::RU_LEN, siInfo.iri.repeat_unit_length);
     }
     else
     {
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IC, 0);
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RC, 0);
-        smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::RU_LEN, 0);
+        smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::IC, 0);
+        smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::RC, 0);
+        smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::RU_LEN, 0);
     }
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::IHP, siInfo.iri.ihpol);
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::TNR, calculateTumorNoiseRate(siInfo.tisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::AFR, calculateAlleleFrequencyRate(siInfo.nisri[0], siInfo.tisri[0]));
-    smod.set_feature(STRELKA_INDEL_VQSR_FEATURES::LOR, calculateLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));
+    smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::IHP, siInfo.iri.ihpol);
+    smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::TNR, calculateTumorNoiseRate(siInfo.tisri[0]));
+    smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::AFR, calculateAlleleFrequencyRate(siInfo.nisri[0], siInfo.tisri[0]));
+    smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::LOR, calculateLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));
 
     // this is how we could get the mean chromosome depth here if we needed to.
     //    double meanChrDepth = 1siInfo.iri.repeat_unit_length;

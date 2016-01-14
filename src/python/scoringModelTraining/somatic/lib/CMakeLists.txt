@@ -17,11 +17,9 @@
 #
 #
 
-set(STRELKA_VQSR_DIR "${THIS_DATADIR}/somaticVQSRTraining")
-set(STRELKA_VQSR_LIBDIR "${STRELKA_VQSR_DIR}/lib")
+set(INSTALL_TO_DIR "${STRELKA_SOMATIC_EVS_LIBDIR}/evs")
 
-install(FILES "README.md" DESTINATION ${STRELKA_VQSR_DIR})
+include("${THIS_GLOBALS_CMAKE}") # required for *_PERMISSIONS values
 
-add_subdirectory (bin)
-add_subdirectory (lib)
+install(DIRECTORY "./" DESTINATION "${INSTALL_TO_DIR}" FILE_PERMISSIONS ${THIS_LIBRARY_PERMISSIONS} FILES_MATCHING PATTERN "*.py")
 

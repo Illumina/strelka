@@ -53,7 +53,7 @@ struct somatic_filter_options
     int sindelQuality_LowerBound = 30;
 
     unsigned indelRegionFlankSize = 50;
-    double minimumQscore = 2.35;
+    double minimumEVS = 2.35;
 
     // TODO: STARKA-296 enable when ready
     bool is_use_indel_empirical_scoring = false;
@@ -67,8 +67,8 @@ struct strelka_options : public starling_base_options
 
     strelka_options()
     {
-        // turn on VQSR for strelka only:
-        is_compute_somatic_VQSRmetrics = true;
+        // turn on empirical scoring for strelka only:
+        is_compute_somatic_scoring_metrics = true;
     }
 
     bool is_tumor_realigned_read() const

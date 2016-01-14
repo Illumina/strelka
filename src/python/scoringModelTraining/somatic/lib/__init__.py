@@ -22,8 +22,8 @@
 import abc
 
 
-class VQSRModel(object):
-    """ Base class for VQSR models """
+class EVSModel(object):
+    """ Base class for EVS models """
 
     __metaclass__ = abc.ABCMeta
 

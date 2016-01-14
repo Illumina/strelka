@@ -353,7 +353,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
-        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.Qscore = 40;
+        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.EVS = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
         si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
@@ -411,7 +411,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
-        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.Qscore = 40;
+        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.EVS = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
         si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));

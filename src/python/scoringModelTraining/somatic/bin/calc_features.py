@@ -22,7 +22,7 @@
 #
 # 20/11/2014
 #
-# Export VQSR model to JSON format
+# Calculate additional features and write updated CSV
 #
 # Usage:
 #
@@ -33,41 +33,56 @@
 # Peter Krusche <pkrusche@illumina.com>
 #
 
+
 import os
 import sys
 import argparse
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
-scriptName = os.path.basename(__file__)
-workflowDir = os.path.abspath(
+libDir = os.path.abspath(
     os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
-templateConfigDir = os.path.abspath(
-    os.path.join(scriptDir, '@THIS_RELATIVE_CONFIGDIR@'))
+sys.path.append(libDir)
 
-sys.path.append(workflowDir)
 
-import vqsr
-import vqsr.tools
+import pandas
 
+from evs.features.ref import getReference
+from evs.features.entropy import getEntropy
+from evs.features.repeat import getRepeats
 
 def main():
-    parser = argparse.ArgumentParser("vqsr learning script")
+    parser = argparse.ArgumentParser("Split a set of CSV files")
 
-    parser.add_argument("-c", "--classifier", dest="clf", required=True,
-                        help="Classifier pickle file name")
+    parser.add_argument("inputs", help="Feature CSV files", nargs="+")
 
-    parser.add_argument("-m", "--model", dest="model", choices=vqsr.VQSRModel.names(), required=True,
-                        help="Which model to use (options are: %s)" % str(vqsr.VQSRModel.names()))
+    parser.add_argument("--ref-fasta", help="Fasta reference sequence file name", dest="ref",
+                        default="/illumina/development/iSAAC/iGenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa")
+
+    parser.add_argument("--window", dest="window", help="Window length for entropy calculation",
+                        type=int, default=200)
 
     parser.add_argument("-o", "--output", dest="output", required=True,
                         help="Output file name")
 
     args = parser.parse_args()
 
-    model = vqsr.VQSRModel.create(args.model)
-    model.load(args.clf)
+    datasets = []
+    for i in args.inputs:
+        i = os.path.abspath(i)
+        print "Reading %s" % i
+        df = pandas.read_csv(i)
+        datasets.append(df)
 
-    model.save_json_strelka_format(args.output)
+    if len(datasets) > 1:
+        dataset = pandas.concat(datasets)
+    else:
+        dataset = datasets[0]
+
+    dataset = getReference(dataset, args.ref, args.window)
+    dataset = getEntropy(dataset)
+    dataset = getRepeats(dataset)
+
+    dataset.to_csv(args.output, index=False)
 
 
 if __name__ == '__main__':

@@ -276,7 +276,7 @@ void indel_overlapper::modify_indel_overlap_site(
 
     // if overlapping indel has any filters, mark as site conflict
     // (note that we formerly had the site inherit indel filters, but
-    // this interacts poorly with VQSR)
+    // this interacts poorly with empirical scoring)
     if (! ii.first().filters.none())
     {
         si.smod.set_filter(VCF_FILTERS::SiteConflict);

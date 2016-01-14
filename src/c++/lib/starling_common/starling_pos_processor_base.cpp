@@ -1560,7 +1560,7 @@ pileup_read_segment(const read_segment& rseg,
                 }
 
                 // update extended feature metrics (including submapped reads):
-                if (_opt.is_compute_germline_VQSRmetrics())
+                if (_opt.is_compute_germline_scoring_metrics())
                 {
                     /// \TODO Morten -- consider improving MQ, MQ0 and RankSumMQ by:
                     ///  1) removing the if (! submapped) here
@@ -1571,7 +1571,7 @@ pileup_read_segment(const read_segment& rseg,
                         update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,adjustedMapq,align_strand_read_pos,is_submapped);
                     }
                 }
-                else if (_opt.is_compute_somatic_VQSRmetrics)
+                else if (_opt.is_compute_somatic_scoring_metrics)
                 {
                     update_somatic_features(ref_pos,sample_no,is_tier1,call_id,current_call_filter,mapq,read_pos,read_size);
                 }

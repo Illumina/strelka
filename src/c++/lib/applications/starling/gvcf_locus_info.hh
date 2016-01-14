@@ -202,7 +202,7 @@ struct digt_indel_call : public shared_indel_call_info
     starling_diploid_indel_core _dindel;
 
     // The empirically calibrated quality-score of an indel, if -1 no q-score has been reported
-    int Qscore = -1;
+    int EVS = -1;
 
     unsigned max_gt=0;
 };
@@ -257,7 +257,7 @@ struct digt_call_info : public shared_call_info
         is_phased_region=false;
         is_phasing_insufficient_depth=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
-        Qscore = -1;
+        EVS = -1;
     }
 
     bool
@@ -278,7 +278,7 @@ struct digt_call_info : public shared_call_info
 
 
     // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
-    int Qscore = -1;
+    int EVS = -1;
 };
 
 struct continuous_site_call : public shared_call_info

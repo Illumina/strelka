@@ -17,9 +17,7 @@
 #
 #
 
-set(INSTALL_TO_DIR "${STRELKA_VQSR_LIBDIR}/vqsr")
+set(STRELKA_EVS_DIR "${THIS_DATADIR}/scoringModelTraining")
 
-include("${THIS_GLOBALS_CMAKE}") # required for *_PERMISSIONS values
-
-install(DIRECTORY "./" DESTINATION "${INSTALL_TO_DIR}" FILE_PERMISSIONS ${THIS_LIBRARY_PERMISSIONS} FILES_MATCHING PATTERN "*.py")
+add_subdirectory (somatic)
 

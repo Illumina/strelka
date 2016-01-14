@@ -62,8 +62,8 @@ runInternal(int argc,char* argv[]) const
         opt.cmdline += argv[i];
     }
 
-    // hack in VQSR for pedicure only:
-    opt.is_compute_somatic_VQSRmetrics = true;
+    // hack in scoring for pedicure only:
+    opt.is_compute_somatic_scoring_metrics = true;
 
     std::vector<std::string> legacy_starling_args;
     po::variables_map vm;
