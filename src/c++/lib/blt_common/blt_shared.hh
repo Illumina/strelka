@@ -180,8 +180,6 @@ struct blt_options
 
     bool is_compute_hapscore = false;
     bool is_report_germline_VQSRmetrics = false;
-    bool is_compute_calibration_features = false;// For development only, out all features needed im
-
     bool is_compute_somatic_VQSRmetrics = false;
 
     bool

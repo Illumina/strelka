@@ -66,8 +66,6 @@ get_starling_option_parser(
      "Turn off block compression in gVCF output")
     ("gvcf-report-VQSRmetrics", po::value(&opt.is_report_germline_VQSRmetrics)->zero_tokens(),
      "Report metrics used for germline VQSR")
-    ("gvcf-compute-calibration-features", po::value(&opt.is_compute_calibration_features)->zero_tokens(),
-     "Output all features used for calibration model training, development only.")
     ("nocompress-bed",  po::value(&opt.gvcf.nocompress_region_bedfile),
      "Bed file with sites that should not be block-compressed in gVCF (must be bgzip compressed and tabix indexed).")
     ("targeted-regions-bed",  po::value(&opt.gvcf.targeted_regions_bedfile),
