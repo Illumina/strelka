@@ -29,6 +29,7 @@
 
 #include "candidate_alignment.hh"
 #include "starling_pos_processor_indel_util.hh"
+#include "starling_read_filter_shared.hh"
 #include "starling_read_util.hh"
 
 #include "blt_util/align_path.hh"
@@ -301,40 +302,20 @@ process_genomic_read(
     starling_pos_processor_base& sppr,
     const unsigned sample_no)
 {
-    // read filters which are *always* on, because starling/strelka
+    // read filters which are *always* on, because Strelka
     // can't do anything sensible with this information:
     //
-    if (read.is_filter())
+    const READ_FILTER_TYPE::index_t filterId(starling_read_filter_shared(read));
+    if (filterId != READ_FILTER_TYPE::NONE)
     {
-        brc.primary_filter++;
+        using namespace READ_FILTER_TYPE;
+        if (filterId == PRIMARY) brc.primary_filter++;
+        if (filterId == DUPLICATE) brc.duplicate++;
+        if (filterId == UNMAPPED) brc.unmapped++;
+        if (filterId == SECONDARY) brc.secondary++;
+        if (filterId == SUPPLEMENT) brc.supplement++;
         return;
     }
-
-    if (read.is_dup())
-    {
-        brc.duplicate++;
-        return;
-    }
-
-    if (read.is_unmapped())
-    {
-        brc.unmapped++;
-        return;
-    }
-
-    // for now, we can't do anything with secondary alignments either:
-    if (read.is_secondary())
-    {
-        brc.secondary++;
-        return;
-    }
-
-    if (read.is_supplement())
-    {
-        brc.supplement++;
-        return;
-    }
-
 
     MAPLEVEL::index_t maplev(get_map_level(opt,read));
 

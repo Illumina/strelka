@@ -31,6 +31,7 @@
 #include "common/Exceptions.hh"
 #include "htsapi/bam_header_info.hh"
 #include "htsapi/bam_streamer.hh"
+#include "starling_common/starling_read_filter_shared.hh"
 
 
 #include <iostream>
@@ -474,7 +475,8 @@ readChromDepthFromAlignment(
                 }
 
                 // apply all filters:
-                if (bamRead.is_unmapped()) continue;
+                const READ_FILTER_TYPE::index_t filterId(starling_read_filter_shared(bamRead));
+                if(filterId != READ_FILTER_TYPE::NONE) continue;
 
                 cdTracker.addRead(bamRead);
 
