@@ -4,10 +4,10 @@ Strelka Developer Guide
 =======================
 
 This guide provides:
-* Protocols for contributing new or modified methods
-* Methods to debug stability or runtime issues
-* Methods to debug suspected false or missing variant calls
-* Some high-level architectural documentation
+* protocols for contributing new or modified methods
+* methods to debug stability or runtime issues
+* methods to debug suspected false or missing variant calls
+* high-level architectural documentation
 
 Information is added as pertinent questions/discussions come up in the contributor community,
 so this guide is not intended to provide complete coverage of the above topics.
