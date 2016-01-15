@@ -120,7 +120,7 @@ pedicure_streams(
         os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">\n";
         os << "##FORMAT=<ID=FDP,Number=1,Type=Integer,Description=\"Filtered read depth\">\n";
         os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob 0.999 or higher that read contains indicated allele vs all other intersecting indel alleles)\">\n";
-		os << "##FORMAT=<ID=PL,Number=.,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
+        os << "##FORMAT=<ID=PL,Number=.,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
 
         // FILTERS:
         {
