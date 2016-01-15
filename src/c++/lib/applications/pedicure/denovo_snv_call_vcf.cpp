@@ -147,7 +147,7 @@ denovo_snv_call_vcf(
         }
         os << "DP=" << n_mapq;
         os << ";MQ0=" << n_mapq0;
-        os << ";QDS=" << rs.dsnv_qphred;
+        os << ";DQ=" << rs.dsnv_qphred;
 //           << ";TQSI=" << (dsc.dsnv_tier+1);
 
     }

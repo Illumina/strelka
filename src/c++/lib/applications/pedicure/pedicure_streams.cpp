@@ -108,7 +108,7 @@ pedicure_streams(
            << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n";
 
         // INFO:
-        os << "##INFO=<ID=QDS,Number=1,Type=Integer,Description=\"De novo quality score\">\n";
+        os << "##INFO=<ID=DQ,Number=1,Type=Integer,Description=\"De novo quality score\">\n";
         os << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
         os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
