@@ -206,8 +206,8 @@ struct DenovoResultMaker
             {
                 addAlleles(parentIndex);
             }
-            
-           
+
+
         }
 
         auto isFilterGT = [&](const unsigned gt)
@@ -224,8 +224,8 @@ struct DenovoResultMaker
                 for (unsigned probandGT(0); probandGT<DIGT::SIZE; ++probandGT)
                 {
                     if (isFilterGT(probandGT)) continue;
-                    
-                    
+
+
                     const double pedigreeLhood = sampleLhood[parentIndices[0]][parent0GT] + sampleLhood[parentIndices[1]][parent1GT] + sampleLhood[probandIndex][probandGT];
                     const TRANSMISSION_STATE::index_t tran(TRANSMISSION_STATE::get_state(parent0GT,parent1GT,probandGT));
 #ifdef DENOVO_SNV_DEBUG
@@ -243,8 +243,8 @@ struct DenovoResultMaker
             }
         }
         processStateLhood(rs);
-	
-				
+
+
     }
 
 
@@ -430,67 +430,83 @@ get_denovo_snv_call(
     }
 
     dsc.rs=tier_rs[dsc.dsnv_tier];
-	
-	
-	//goes through all samples, 
-	// find most likely DIGT AA, CC, ...
-	//compiles list of alts
-	// for all samples and alts, records probability for 0/0, 0/1, 1/1, 0/2, 1/2, 2/2, ... 
-	//  position of PL field for P(j/k) is j + k(k+1)/2
-	// writes to dsc object.
-	
-	std::vector<unsigned> digts( sampleLhood.size() );
-	for(unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex){
-		std::vector<float> lhood(DIGT::SIZE);
-		for (unsigned gt(0); gt<DIGT::SIZE; ++gt)	
+
+
+    //goes through all samples,
+    // find most likely DIGT AA, CC, ...
+    //compiles list of alts
+    // for all samples and alts, records probability for 0/0, 0/1, 1/1, 0/2, 1/2, 2/2, ...
+    //  position of PL field for P(j/k) is j + k(k+1)/2
+    // writes to dsc object.
+
+    std::vector<unsigned> digts( sampleLhood.size() );
+    for (unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex)
+    {
+        std::vector<float> lhood(DIGT::SIZE);
+        for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
         {
-			lhood[gt] = sampleLhood[sampleIndex][gt];
-		}
-		normalize_ln_distro(lhood.begin(),lhood.end(), digts[sampleIndex] );
-	}
-	dsc.alts.resize(0);
-	for( unsigned i=0;i<digts.size(); ++i){
-		for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex){
-			if( dsc.ref_gt != DIGT::get_allele(digts[i],chromCopyIndex)  ){
-				dsc.alts.push_back( DIGT::get_allele(digts[i],chromCopyIndex) );
-			}
-		}
-	}
-	std::sort( dsc.alts.begin(), dsc.alts.end() );
-	dsc.alts.erase( std::unique( dsc.alts.begin(), dsc.alts.end() ), dsc.alts.end() );
-	
-	if( dsc.alts.size() > 0 ){ 
-				
-		std::vector<float> pProb( (dsc.alts.size()+2)*(dsc.alts.size()+1)/2 ); //max val of k(k+1) + j + 1	
-		std::vector< std::string > gts( (dsc.alts.size()+2)*(dsc.alts.size()+1)/2 );	
-		std::vector<unsigned> bases(1, dsc.ref_gt ); for(unsigned i=0; i<dsc.alts.size(); ++i){ bases.push_back(dsc.alts[i]); }
-		for(unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex){
-		
-			const auto& lhood(sampleLhood[sampleIndex]);
-			
-			for(unsigned j=0; j<bases.size(); ++j){
-				for(unsigned k=j; k<bases.size(); ++k){
-					pProb[ j + (k*(k+1)/2) ] = lhood[ DIGT::get_gt_with_alleles(bases[j], bases[k]) ];
-					gts[  j + (k*(k+1)/2) ] = std::to_string(j) + "/" + std::to_string(k);
-				}
-			}
-		
-			unsigned mgt;
-			normalize_ln_distro(pProb.begin(),pProb.end(),mgt);
-			dsc.gtstring.push_back( gts[ mgt ] );
-				
-			for(unsigned p(0); p<pProb.size(); ++p){ pProb[p] = error_prob_to_qphred(pProb[p]); }
-			dsc.Sampleplhoods.push_back(pProb);
-		
-		}
-	
+            lhood[gt] = sampleLhood[sampleIndex][gt];
+        }
+        normalize_ln_distro(lhood.begin(),lhood.end(), digts[sampleIndex] );
+    }
+    dsc.alts.resize(0);
+    for ( unsigned i=0; i<digts.size(); ++i)
+    {
+        for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex)
+        {
+            if ( dsc.ref_gt != DIGT::get_allele(digts[i],chromCopyIndex)  )
+            {
+                dsc.alts.push_back( DIGT::get_allele(digts[i],chromCopyIndex) );
+            }
+        }
+    }
+    std::sort( dsc.alts.begin(), dsc.alts.end() );
+    dsc.alts.erase( std::unique( dsc.alts.begin(), dsc.alts.end() ), dsc.alts.end() );
 
-	}
-	else{
-		//hom-ref case
-	}
-	
+    if ( dsc.alts.size() > 0 )
+    {
 
-	
-	
+        std::vector<float> pProb( (dsc.alts.size()+2)*(dsc.alts.size()+1)/2 ); //max val of k(k+1) + j + 1
+        std::vector< std::string > gts( (dsc.alts.size()+2)*(dsc.alts.size()+1)/2 );
+        std::vector<unsigned> bases(1, dsc.ref_gt );
+        for (unsigned i=0; i<dsc.alts.size(); ++i)
+        {
+            bases.push_back(dsc.alts[i]);
+        }
+        for (unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex)
+        {
+
+            const auto& lhood(sampleLhood[sampleIndex]);
+
+            for (unsigned j=0; j<bases.size(); ++j)
+            {
+                for (unsigned k=j; k<bases.size(); ++k)
+                {
+                    pProb[ j + (k*(k+1)/2) ] = lhood[ DIGT::get_gt_with_alleles(bases[j], bases[k]) ];
+                    gts[  j + (k*(k+1)/2) ] = std::to_string(j) + "/" + std::to_string(k);
+                }
+            }
+
+            unsigned mgt;
+            normalize_ln_distro(pProb.begin(),pProb.end(),mgt);
+            dsc.gtstring.push_back( gts[ mgt ] );
+
+            for (unsigned p(0); p<pProb.size(); ++p)
+            {
+                pProb[p] = error_prob_to_qphred(pProb[p]);
+            }
+            dsc.Sampleplhoods.push_back(pProb);
+
+        }
+
+
+    }
+    else
+    {
+        //hom-ref case
+    }
+
+
+
+
 }

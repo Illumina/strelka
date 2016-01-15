@@ -251,7 +251,7 @@ calculate_result_set(
     const SampleInfoManager& sinfo,
     const std::vector<indel_state_t>& sampleLhood,
     denovo_indel_call::result_set& rs,
-	denovo_indel_call& /*dinc*/)
+    denovo_indel_call& /*dinc*/)
 {
     using namespace PEDICURE_SAMPLETYPE;
 
@@ -555,19 +555,20 @@ get_denovo_indel_call(
 
 //        const unsigned sampleIndex[3] = {probandIndex,probandIndex,probandIndex};
 
-        for (unsigned i=0; i<3;i++){
+        for (unsigned i=0; i<3; i++)
+        {
 //        	double min=0,max=9;
 //        	unsigned index =  sampleIndex[0];
 //        	   for (unsigned pro(0); pro<STAR_DIINDEL::SIZE; ++pro)
-        	   {
+            {
 //					const double pedigreeLhood = sampleLhood[index][pro];
 //					log_os << "slh " << pedigreeLhood << std::endl;
-        	   }
+            }
 //        	   log_os << "---------" << std::endl;
 
-        	dinc.gq.push_back(30);
-        	dinc.gqx.push_back(40);
-        	dinc.gtstring.push_back("0/1");
+            dinc.gq.push_back(30);
+            dinc.gqx.push_back(40);
+            dinc.gtstring.push_back("0/1");
         }
 
     }

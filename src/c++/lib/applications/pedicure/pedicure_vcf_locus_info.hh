@@ -44,8 +44,8 @@ enum index_t
     QDI,
     Repeat,
     iHpol,
-	overlapConflict,
-	lowGQX,
+    overlapConflict,
+    lowGQX,
     SIZE
 };
 

@@ -42,34 +42,35 @@ write_vcf_sample_info(
     std::ostream& os)
 {
 
-	std::array<unsigned,N_BASE> tier1_base_counts;
-	tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+    std::array<unsigned,N_BASE> tier1_base_counts;
+    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
 
-	//os << dsc.gts_chrom[sampleIndex][0]
-	//   << "/"
-	//   << dsc.gts_chrom[sampleIndex][1];
-    os << dsc.gtstring[sampleIndex]; 
-    
-	os <<':'
-	   << dsc.gq[sampleIndex] //GQ -- placeholder
-	   <<':'
-	   << dsc.gqx[sampleIndex]  //GQX
+    //os << dsc.gts_chrom[sampleIndex][0]
+    //   << "/"
+    //   << dsc.gts_chrom[sampleIndex][1];
+    os << dsc.gtstring[sampleIndex];
+
+    os <<':'
+       << dsc.gq[sampleIndex] //GQ -- placeholder
        <<':'
-	   << (tier1_cpi.n_calls()-tier1_cpi.n_unused_calls())
+       << dsc.gqx[sampleIndex]  //GQX
+       <<':'
+       << (tier1_cpi.n_calls()-tier1_cpi.n_unused_calls())
        << ':'
        << tier1_cpi.n_unused_calls()
        << ':'
        << tier1_base_counts[dsc.ref_gt];
-	   for (unsigned i=0; i<dsc.alts.size(); i++)
-		   os << "," << tier1_base_counts[dsc.alts[i]];
+    for (unsigned i=0; i<dsc.alts.size(); i++)
+        os << "," << tier1_base_counts[dsc.alts[i]];
 
-	   // PL field
-       os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
-	   for(unsigned i=3;i<dsc.Sampleplhoods[sampleIndex].size();++i){
-		os << "," << dsc.Sampleplhoods[sampleIndex][i];
-	   }
-	
+    // PL field
+    os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
+    for (unsigned i=3; i<dsc.Sampleplhoods[sampleIndex].size(); ++i)
+    {
+        os << "," << dsc.Sampleplhoods[sampleIndex][i];
+    }
+
 }
 
 void
@@ -104,24 +105,31 @@ denovo_snv_call_vcf(
 
         //GQX <30 filter
         for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
-			if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
-			{
-				smod.set_filter(PEDICURE_VCF_FILTERS::lowGQX);
-			}
+            if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
+            {
+                smod.set_filter(PEDICURE_VCF_FILTERS::lowGQX);
+            }
 
     }
 
     //REF:
     os << '\t' << probandCpi.rawPileup().get_ref_base();
-       //ALT:
+    //ALT:
 //       << "\t"
 //	   << dsc.alt_str;
-	if(dsc.alts.size() == 0){ os << "\t."; }
-	else{
-		os << "\t" << id_to_base(dsc.alts[0]);
-		for(unsigned i=1;i<dsc.alts.size(); ++i){ os << "," << id_to_base(dsc.alts[i]); }
+    if (dsc.alts.size() == 0)
+    {
+        os << "\t.";
     }
-    
+    else
+    {
+        os << "\t" << id_to_base(dsc.alts[0]);
+        for (unsigned i=1; i<dsc.alts.size(); ++i)
+        {
+            os << "," << id_to_base(dsc.alts[i]);
+        }
+    }
+
     //QUAL:
     os << "\t.";
 

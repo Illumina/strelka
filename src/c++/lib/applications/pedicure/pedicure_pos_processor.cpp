@@ -160,11 +160,11 @@ process_pos_snp_denovo(const pos_t pos)
 
     if (dsc.is_output())
     {
-    	std::stringstream bos;
+        std::stringstream bos;
 
         bos << _chrom_name<< '\t'
-                << output_pos << '\t'
-                << ".";
+            << output_pos << '\t'
+            << ".";
         denovo_snv_call_vcf(
             _opt,_dopt,
             sinfo,
@@ -307,8 +307,8 @@ process_pos_indel_denovo(const pos_t pos)
             std::stringstream bos;
 
             bos << _chrom_name<< '\t'
-                    << output_pos << '\t'
-                    << ".";
+                << output_pos << '\t'
+                << ".";
 
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, iri, isri, bos);
             bos << "\n";
@@ -322,21 +322,24 @@ process_pos_indel_denovo(const pos_t pos)
 // needs replaced by a more comprehensive record integration
 void
 pedicure_pos_processor::
-aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string& vcf_line){
+aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string& vcf_line)
+{
 //	std::ostream& bos(*_streams.denovo_osptr());
-	std::ostream& bos(std::cout);
+    std::ostream& bos(std::cout);
 
-	// case in order
-	if(prev_vcf_pos<pos){
-		prev_vcf_pos = pos;
-		if(prev_vcf_pos>0)
-			bos << prev_vcf_line;
-		prev_vcf_line = vcf_line;
-	}
-	//case not in order
-	else{
-		bos << vcf_line;
-	}
+    // case in order
+    if (prev_vcf_pos<pos)
+    {
+        prev_vcf_pos = pos;
+        if (prev_vcf_pos>0)
+            bos << prev_vcf_line;
+        prev_vcf_line = vcf_line;
+    }
+    //case not in order
+    else
+    {
+        bos << vcf_line;
+    }
 }
 
 
@@ -345,10 +348,10 @@ pedicure_pos_processor::
 write_counts(
     const pos_range& output_report_range) const
 {
-	std::ostream& bos(*_streams.denovo_osptr());
-	bos << prev_vcf_line;
+    std::ostream& bos(*_streams.denovo_osptr());
+    bos << prev_vcf_line;
 
-	std::ostream* report_os_ptr(get_report_osptr());
+    std::ostream* report_os_ptr(get_report_osptr());
     if (nullptr==report_os_ptr) return;
     std::ostream& report_os(*report_os_ptr);
 

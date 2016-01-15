@@ -36,23 +36,25 @@ void
 write_vcf_sample_info(
     const starling_indel_sample_report_info& isri1,
     const starling_indel_sample_report_info& isri2,
-	const denovo_indel_call& dinc,
-	const int& id,
+    const denovo_indel_call& dinc,
+    const int& id,
     std::ostream& os)
 {
 
 //	GT:GQ:GQX:DP:DP2:AD:PL
     static const char sep(':');
-    if (dinc.gtstring.size()>0){
-		os << dinc.gtstring.at(id)
-		   << sep
-		   << dinc.gq.at(id)
-		   << sep
-		   << dinc.gqx.at(id)
-		   << sep;
+    if (dinc.gtstring.size()>0)
+    {
+        os << dinc.gtstring.at(id)
+           << sep
+           << dinc.gq.at(id)
+           << sep
+           << dinc.gqx.at(id)
+           << sep;
     }
-    else {
-    	os << "./." << sep << "." << sep << "." << sep;
+    else
+    {
+        os << "./." << sep << "." << sep << "." << sep;
     }
 
     os << isri1.depth
@@ -108,8 +110,9 @@ denovo_indel_call_vcf(
             }
         }
 
-        if (rs.is_overlap){
-        	smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
+        if (rs.is_overlap)
+        {
+            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
 
         if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
