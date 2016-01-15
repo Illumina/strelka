@@ -339,21 +339,16 @@ aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string&
 	}
 }
 
-void
-pedicure_pos_processor::
-finalize(){
-//		std::ostream& bos(*_streams.denovo_osptr());
-		std::ostream& bos(std::cout);
-		bos << prev_vcf_line;
-}
-
 
 void
 pedicure_pos_processor::
 write_counts(
     const pos_range& output_report_range) const
 {
-    std::ostream* report_os_ptr(get_report_osptr());
+	std::ostream& bos(*_streams.denovo_osptr());
+	bos << prev_vcf_line;
+
+	std::ostream* report_os_ptr(get_report_osptr());
     if (nullptr==report_os_ptr) return;
     std::ostream& report_os(*report_os_ptr);
 

@@ -50,10 +50,6 @@ struct pedicure_pos_processor : public starling_pos_processor_base
         const reference_contig_segment& ref,
         const pedicure_streams& streams);
 
-    void
-    finalize();
-
-
 private:
 
     void
