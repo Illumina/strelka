@@ -4,7 +4,7 @@ Strelka Developer Guide
 =======================
 
 This guide provides information for Strelka development, including protocols for
-contirbuting new methods, debugging stability problems, suspected false or missing
+contributing new methods, debugging stability problems, suspected false or missing
 variant calls and some high-level internal methods documentation.
 
 For end user documentation describing how to run Strelka and interpret its output,
@@ -124,6 +124,63 @@ see the `builderImage` variable.
   * "ANSI" bracket style
 * Note the above restrictions are enforced by an astyle script which is occasionally run on the master branch (see [run_cxx_formatter.bash](../../scratch/source_check_and_format/run_cxx_formatter.bash))
 * Otherwise, just follow local code conventions
+
+### Error handling
+
+#### General Policies
+* Exceptions with informative contextual details are encouraged whenever possible.
+* To quickly express invariants it is acceptable to add `assert()`'s first, and transition to exceptions as code stabilizes.
+* Note that the Strelka build process will never define `NDEBUG` to compile out assert statements, even in release code.
+* Exceptions are never thrown with the intent to recover -- this is not a web browser. The goal is to:
+  * Fail at the first sign of trouble.
+  * Provide as much helpful contextual information as possible, including context from multiple layers of the stack.
+* Warnings are discouraged. If considering a warning you should probably just fail per the above policy.
+
+#### Exception Details
+* Preferred exception pattern is to use an internal class derived from boost::exception:
+ 
+```c++
+
+#include "common/Exceptions.hh"
+
+#include <sstream>
+
+void
+foo(const char* name)
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: unrecognized variant scoring model name: '" << name << "'\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+```
+ 
+* Context at the original throw site is often supplemented by a 'catch and release' block to add
+information at a few critical points on the stack. Typically this is information which
+is unavailable at the throw site. Example code is:
+
+```c++
+try
+{
+    realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,rseg,sif.indel_sync());
+}
+catch (...)
+{
+    log_os << "ERROR: Exception caught in align_pos() while realigning segment: "
+	   << static_cast<int>(r.second) << " of read: " << (*r.first) << "\n";
+    throw;
+}
+```
+
+#### Logging
+
+* At the workflow (python) layer, please write all logging messages through pyflow's logging interface as follows:
+```python
+self.flowLog("Initiating Starling workflow version: %s" % (__version__)
+```
+
+* At the binary (c++) layer, there is no logger at present. Direct all error messaging to `std::cerr`.
 
 ### Unit tests
 * Unit tests are enabled for a subset of the c++ code in manta
