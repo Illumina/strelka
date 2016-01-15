@@ -1,3 +1,4 @@
+- Pedicure multi-sample calling introduced for SNVs and Indel + PL field added (tickets PED10-19)
 - STARKA-306 fix rare chunk size boundary defect in RangeMap
 - STARKA-323 refactor STARKA-293 to allow reuse of general accelerated binom
 test
