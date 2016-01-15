@@ -160,11 +160,11 @@ process_pos_snp_denovo(const pos_t pos)
 
     if (dsc.is_output())
     {
-    	std::stringstream bos;
+        std::stringstream bos;
 
         bos << _chrom_name<< '\t'
-                << output_pos << '\t'
-                << ".";
+            << output_pos << '\t'
+            << ".";
         denovo_snv_call_vcf(
             _opt,_dopt,
             sinfo,
@@ -307,8 +307,8 @@ process_pos_indel_denovo(const pos_t pos)
             std::stringstream bos;
 
             bos << _chrom_name<< '\t'
-                    << output_pos << '\t'
-                    << ".";
+                << output_pos << '\t'
+                << ".";
 
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, iri, isri, bos);
             bos << "\n";
@@ -337,18 +337,18 @@ aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string&
 	else{
 		bos << vcf_line;
 	}
-}
 
+}
 
 void
 pedicure_pos_processor::
 write_counts(
     const pos_range& output_report_range) const
 {
-	std::ostream& bos(*_streams.denovo_osptr());
-	bos << prev_vcf_line;
+    std::ostream& bos(*_streams.denovo_osptr());
+    bos << prev_vcf_line;
 
-	std::ostream* report_os_ptr(get_report_osptr());
+    std::ostream* report_os_ptr(get_report_osptr());
     if (nullptr==report_os_ptr) return;
     std::ostream& report_os(*report_os_ptr);
 
