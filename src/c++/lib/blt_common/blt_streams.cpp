@@ -70,8 +70,6 @@ write_audit(const blt_options& opt,
             std::ostream& os,
             const char* const prefix = 0)
 {
-
-
     if (opt.is_write_variable_metadata)
     {
         if (prefix) os << prefix;
@@ -94,7 +92,7 @@ void
 write_vcf_audit(const blt_options& opt,
                 const prog_info& pinfo,
                 const char* const cmdline,
-                const bam_header_t* const header,
+                const bam_hdr_t* const header,
                 std::ostream& os)
 {
     const time_t t(time(NULL));
@@ -132,7 +130,6 @@ write_file_audit(const blt_options& opt,
                  const char* const cmdline,
                  std::ostream& os)
 {
-
     write_audit(opt,pinfo,cmdline,os,"#$ ");
     os << "#\n";
 }
@@ -193,7 +190,7 @@ blt_streams::
 write_vcf_audit(const blt_options& opt,
                 const prog_info& pinfo,
                 const char* const cmdline,
-                const bam_header_t* const header,
+                const bam_hdr_t* const header,
                 std::ostream& os)
 {
     ::write_vcf_audit(opt,pinfo,cmdline,header,os);

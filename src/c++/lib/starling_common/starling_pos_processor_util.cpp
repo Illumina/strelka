@@ -29,6 +29,7 @@
 
 #include "candidate_alignment.hh"
 #include "starling_pos_processor_indel_util.hh"
+#include "starling_read_filter_shared.hh"
 #include "starling_read_util.hh"
 
 #include "blt_util/align_path.hh"
@@ -163,14 +164,8 @@ is_usable_read_mapping(const starling_base_options& opt,
                        const bam_record& read,
                        const bool is_tier2 =false)
 {
-    // Legacy map scores are the separate SE and PE mapping scores
-    // from ELAND. Non-legacy mode uses the MAPQ score from the BAM
-    // file alone.
-    const bool is_use_legacy_map_scores(opt.is_eland_compat);
-
     int current_min_single_align_score(opt.min_single_align_score);
     int current_min_paired_align_score(opt.min_paired_align_score);
-    bool is_rescue_mode(opt.single_align_score_rescue_mode);
     bool is_filter_unanchored(opt.is_filter_unanchored);
     bool is_include_singleton(opt.is_include_singleton);
     bool is_include_anomalous(opt.is_include_anomalous);
@@ -183,10 +178,6 @@ is_usable_read_mapping(const starling_base_options& opt,
         if (opt.tier2.is_tier2_min_paired_align_score)
         {
             current_min_paired_align_score=opt.tier2.tier2_min_paired_align_score;
-        }
-        if (opt.tier2.is_tier2_single_align_score_rescue_mode)
-        {
-            is_rescue_mode=true;
         }
         if (opt.tier2.is_tier2_no_filter_unanchored)
         {
@@ -222,33 +213,6 @@ is_usable_read_mapping(const starling_base_options& opt,
         }
     }
 
-    if (is_use_legacy_map_scores)
-    {
-        const int se_mapq(static_cast<int>(read.se_map_qual()));
-
-        if (read.is_paired())
-        {
-            const int pe_mapq(static_cast<int>(read.pe_map_qual()));
-            if (pe_mapq<current_min_paired_align_score)
-            {
-                if ((! is_rescue_mode) ||
-                    (se_mapq<current_min_single_align_score))
-                {
-                    return false;
-                }
-            }
-        }
-
-        if ((! read.is_paired()) || opt.single_align_score_exclude_mode)
-        {
-            if (se_mapq<current_min_single_align_score)
-            {
-                return false;
-            }
-        }
-
-    }
-    else
     {
         const int mapq(static_cast<int>(read.map_qual()));
         if (read.is_paired())
@@ -338,40 +302,20 @@ process_genomic_read(
     starling_pos_processor_base& sppr,
     const unsigned sample_no)
 {
-    // read filters which are *always* on, because starling/strelka
+    // read filters which are *always* on, because Strelka
     // can't do anything sensible with this information:
     //
-    if (read.is_filter())
+    const READ_FILTER_TYPE::index_t filterId(starling_read_filter_shared(read));
+    if (filterId != READ_FILTER_TYPE::NONE)
     {
-        brc.primary_filter++;
+        using namespace READ_FILTER_TYPE;
+        if (filterId == PRIMARY) brc.primary_filter++;
+        if (filterId == DUPLICATE) brc.duplicate++;
+        if (filterId == UNMAPPED) brc.unmapped++;
+        if (filterId == SECONDARY) brc.secondary++;
+        if (filterId == SUPPLEMENT) brc.supplement++;
         return;
     }
-
-    if (read.is_dup())
-    {
-        brc.duplicate++;
-        return;
-    }
-
-    if (read.is_unmapped())
-    {
-        brc.unmapped++;
-        return;
-    }
-
-    // for now, we can't do anything with secondary alignments either:
-    if (read.is_secondary())
-    {
-        brc.secondary++;
-        return;
-    }
-
-    if (read.is_supplement())
-    {
-        brc.supplement++;
-        return;
-    }
-
 
     MAPLEVEL::index_t maplev(get_map_level(opt,read));
 

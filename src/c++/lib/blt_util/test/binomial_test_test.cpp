@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE( test_binomial_pvalue_0_5_manyvals )
      *  print(d)
      */
     //     trials successes   p         pval
-    double exampledata[100][4] =
+    double exampledata[][4] =
     {
         {    83,        42, 0.5, 1.000000e+00 },
         {   104,        55, 0.5, 6.241435e-01 },
@@ -333,7 +333,7 @@ BOOST_AUTO_TEST_CASE( test_binomial_gte_min_count )
     *     sep = "\n")
      */
     //  trials success_rate    p-value  min_count
-    double exampledata[100][4] =
+    double exampledata[][4] =
     {
         {153, 2.57316e-03, 1.90497e-01,   1},
         { 79, 7.12531e-01, 2.08688e-04,  69},

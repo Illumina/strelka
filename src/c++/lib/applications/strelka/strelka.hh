@@ -24,12 +24,11 @@
 
 #pragma once
 
-#include "starling_common/Program.hh"
+#include "common/Program.hh"
 
 
-struct strelka : public starka::Program
+struct strelka : public illumina::Program
 {
-
     const char*
     name() const
     {

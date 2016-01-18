@@ -62,7 +62,7 @@ snoise_run(
     if (tid < 0)
     {
         std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" << opt.bam_filename << "'\n";
+        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << opt.bam_filename << "'\n";
         throw blt_exception(oss.str().c_str());
     }
 
@@ -110,7 +110,7 @@ snoise_run(
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(sinput.get_head_pos()-1);
 
-        if       (current.itype == INPUT_TYPE::READ)   // handle regular ELAND reads
+        if       (current.itype == INPUT_TYPE::READ)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report

@@ -90,7 +90,7 @@ calibration_models::check_is_model_usable(const digt_indel_info& ii) const
     const auto& call(ii.first());
     return ((call._iri.it == INDEL::INSERT || call._iri.it == INDEL::DELETE) &&
             (!is_default_model) &&
-            (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // VQSR does not handle homref sites properly
+            (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // empirical scoring does not handle homref sites properly
 }
 
 void
@@ -292,7 +292,7 @@ void calibration_models::set_model(const std::string& name)
 
 //        if (this->has_depth && (this->chr_median>70 || this->chr_median<10))
 //        {
-//            this->model_name = "QRULE";     //TODO hacky fix for defaulting to qrule if we have a high median chromosome depth (VQSR not trained to handle these cases yet)
+//            this->model_name = "QRULE";     //TODO hacky fix for defaulting to qrule if we have a high median chromosome depth (empirical scoring not trained to handle these cases yet)
 //        }
 //        else
     this->model_name = boost::to_upper_copy(name);

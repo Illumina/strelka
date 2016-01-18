@@ -40,9 +40,6 @@ getTier2OptionsDescription(
     ("tier2-min-paired-align-score",
      po::value(&opt.tier2_min_paired_align_score),
      "Activate tier2 call validation and use the following paired alignment score threshold in the tier2 set")
-    ("tier2-single-align-score-rescue-mode",
-     po::value(&opt.is_tier2_single_align_score_rescue_mode)->zero_tokens(),
-     "Include non SE-failed reads in tier2 even when a paired score is present and the read is PE-failed")
     ("tier2-mismatch-density-filter-count",
      po::value(&opt.tier2_mismatch_density_filter_count),
      "Use the specified less stringent mismatch density count in tier2 evaluation.")

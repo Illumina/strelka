@@ -26,7 +26,6 @@
 #pragma warning(disable:4355)
 #endif
 
-#include "depth_buffer_util.hh"
 #include "starling_pos_processor_indel_util.hh"
 #include "starling_read_align.hh"
 #include "starling_read_util.hh"
@@ -40,6 +39,7 @@
 #include "blt_common/position_strand_distro_anomaly_lrt.hh"
 #include "blt_util/align_path.hh"
 #include "blt_util/blt_exception.hh"
+#include "blt_util/depth_buffer_util.hh"
 #include "blt_util/io_util.hh"
 #include "blt_util/log.hh"
 #include "blt_util/read_util.hh"
@@ -733,11 +733,11 @@ load_read_in_depth_buffer(const read_segment& rseg,
     const bool is_usable_mapping(MAPLEVEL::TIER1_MAPPED == maplev);
     if (is_usable_mapping)
     {
-        add_alignment_to_depth_buffer(al,sample(sample_no).estdepth_buff);
+        add_alignment_to_depth_buffer(al.pos,al.path,sample(sample_no).estdepth_buff);
     }
     else if (maplev == MAPLEVEL::TIER2_MAPPED)
     {
-        add_alignment_to_depth_buffer(al,sample(sample_no).estdepth_buff_tier2);
+        add_alignment_to_depth_buffer(al.pos,al.path,sample(sample_no).estdepth_buff_tier2);
     }
 }
 
@@ -1560,7 +1560,7 @@ pileup_read_segment(const read_segment& rseg,
                 }
 
                 // update extended feature metrics (including submapped reads):
-                if (_opt.is_compute_germline_VQSRmetrics())
+                if (_opt.is_compute_germline_scoring_metrics())
                 {
                     /// \TODO Morten -- consider improving MQ, MQ0 and RankSumMQ by:
                     ///  1) removing the if (! submapped) here
@@ -1571,7 +1571,7 @@ pileup_read_segment(const read_segment& rseg,
                         update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,adjustedMapq,align_strand_read_pos,is_submapped);
                     }
                 }
-                else if (_opt.is_compute_somatic_VQSRmetrics)
+                else if (_opt.is_compute_somatic_scoring_metrics)
                 {
                     update_somatic_features(ref_pos,sample_no,is_tier1,call_id,current_call_filter,mapq,read_pos,read_size);
                 }

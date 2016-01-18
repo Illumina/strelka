@@ -46,17 +46,17 @@ class PedicureWorkflowOptions(StarkaWorkflowOptionsBase) :
         return """Version: %s
 
 This script configures the Pedicure de-novo small variant calling pipeline.
-You must specify BAM file(s) for the proband and additional related samples.
+You must specify BAM or CRAM file(s) for the proband and additional related samples.
 """ % (workflowVersion)
 
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--probandAlignment", type="string",dest="probandBamList",metavar="FILE", action="append",
-                         help="Proband BAM file. [required] (no default)")
+                         help="Proband BAM or CRAM file. [required] (no default)")
         group.add_option("--parentAlignment", type="string",dest="parentBamList",metavar="FILE", action="append",
-                          help="BAM file for a parent sample. (no default, submit argument one time for each parent)")
+                          help="BAM or CRAM file for a parent sample. (no default, submit argument one time for each parent)")
         group.add_option("--siblingAlignment", type="string",dest="siblingBamList",metavar="FILE", action="append",
-                          help="BAM file for a sibling sample. (no default, submit argument one time for each sibling)")
+                          help="BAM or CRAM file for a sibling sample. (no default, submit argument one time for each sibling)")
         group.add_option("--isWriteCallableRegion", action="store_true",
                          help="Write out a bed file describing de-novo callable regions of the genome")
 
@@ -102,7 +102,7 @@ You must specify BAM file(s) for the proband and additional related samples.
         bcheck.appendBams(options.probandBamList,"proband")
         bcheck.appendBams(options.parentBamList,"parent")
         bcheck.appendBams(options.siblingBamList,"sibling",isAllowEmpty=True)
-        bcheck.check(options.samtoolsBin,
+        bcheck.check(options.htsfileBin,
                      options.referenceFasta)
 
 def main() :

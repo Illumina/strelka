@@ -37,6 +37,6 @@ finish_gvcf_header(
     const starling_options& opt,
     const gvcf_deriv_options& dopt,
     const cdmap_t& chrom_depth,
-    const std::string& bam_header_data,
+    const std::string& sample_name,
     std::ostream& os,
     const calibration_models& CM);

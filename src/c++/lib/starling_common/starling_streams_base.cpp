@@ -39,7 +39,7 @@ initialize_realign_bam(const bool is_clobber,
                        const prog_info& pinfo,
                        const std::string& filename,
                        const char* label,
-                       const bam_header_t* const header)
+                       const bam_hdr_t* const header)
 {
     assert(nullptr != header);
 

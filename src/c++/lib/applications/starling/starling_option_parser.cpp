@@ -64,10 +64,8 @@ get_starling_option_parser(
      "Non-variant blocks are chosen to constrain sample values to range [x,y], y <= max(x+3,x*(100+block-percent-tol)/100)")
     ("gvcf-no-block-compression", po::value(&opt.gvcf.is_block_compression)->zero_tokens()->implicit_value(false),
      "Turn off block compression in gVCF output")
-    ("gvcf-report-VQSRmetrics", po::value(&opt.is_report_germline_VQSRmetrics)->zero_tokens(),
-     "Report metrics used for germline VQSR")
-    ("gvcf-compute-calibration-features", po::value(&opt.is_compute_calibration_features)->zero_tokens(),
-     "Output all features used for calibration model training, development only.")
+    ("gvcf-report-scoring-metrics", po::value(&opt.is_report_germline_scoring_metrics)->zero_tokens(),
+     "Report metrics used for germline empirical variant scoring")
     ("nocompress-bed",  po::value(&opt.gvcf.nocompress_region_bedfile),
      "Bed file with sites that should not be block-compressed in gVCF (must be bgzip compressed and tabix indexed).")
     ("targeted-regions-bed",  po::value(&opt.gvcf.targeted_regions_bedfile),
@@ -99,9 +97,9 @@ get_starling_option_parser(
     po::options_description score_opt("scoring-options");
     score_opt.add_options()
     ("variant-scoring-models-file", po::value(&opt.germline_variant_scoring_models_filename),
-     "Model file for germline small variant scoring (VQSR)")
+     "File providing germline empirical variant scoring models")
     ("variant-scoring-model-name", po::value(&opt.germline_variant_scoring_model_name),
-     "The scoring model for germline small variants")
+     "The scoring model for germline variants")
     ;
 
     po::options_description starling_parse_opt("Germline calling options");

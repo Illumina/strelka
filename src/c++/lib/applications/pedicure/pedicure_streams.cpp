@@ -82,7 +82,7 @@ pedicure_streams(
     const pedicure_options& opt,
     const pedicure_deriv_options& dopt,
     const prog_info& pinfo,
-    const bam_header_t* const header,
+    const bam_hdr_t* const header,
     const PedicureSampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {

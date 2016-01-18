@@ -1,15 +1,15 @@
-# Trainng Somatic Empirical Score Model
+# Somatic Empirical Variant Score (EVS) Model Training
 
 This is a special topic of the [Strelka User Guide](strelkaUserGuide.md).
 
 
 ## Introduction
 
-This document outlines the process of training a somatic empirical score (ES) model for Strelka.
+This document outlines the process of training a somatic Empirical Variant Score (EVS) model for Strelka.
 
 ## Requirements
 
-Strelka somatic ES training has additional dependencies which are not included
+Strelka somatic EVS training has additional dependencies which are not included
 in the primary build system.
 
 You must have the following Python packages installed:
@@ -25,20 +25,20 @@ Given a VCF and a truth list, we can produce a CSV file with features and
 TP/FP/FN annotation like this:
 
 ```
-python ${STRELKA_INSTALL}/share/somaticVQSRTraining/bin/vqsr_vcf_to_csv.py \
+python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/vcf_to_feature_csv.py \
     src/demo/data/strelka_admix_snvs.vcf.gz \
     -o admix_training_data.csv \
     --feature-table=strelka.snv \
     --truth src/demo/data/PG_admix_truth_snvs.vcf.gz
 ```
 
-## Step 2: Training a ES model
+## Step 2: Training an EVS model
 
 The next command line learns a model given a training dataset. The parameter
 value of `-f` should be the same as the one used above in `--feature-table`.
 
 ```
-python ${STRELKA_INSTALL}/share/somaticVQSRTraining/bin/vqsr_learn.py \
+python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_learn.py \
     -m strelka.rf \
     -f strelka.snv \
     -o model.pickle \
@@ -49,7 +49,7 @@ python ${STRELKA_INSTALL}/share/somaticVQSRTraining/bin/vqsr_learn.py \
 =>
 
 ```
-Reading /home/peter/workspace_lx/starka_build/admix_training_data.csv
+Reading admix_training_data.csv
 Using default parameters.
 Feature ranking:
 1. feature 0:NT_REF (0.321115 +- 0.299492)
@@ -70,15 +70,15 @@ Feature ranking:
 16. feature 12:PNOISE (0.000000 +- 0.000000)
 ```
 
-## Step 3: Calculate Quality Scores
+## Step 3: Calculate Scores
 
 Here, we take a given set of TPs / FPs (we use the training set in this example,
 but in a real-world scenario an independent strelka run / different subsample
-should be used), and write ES scores given the model we trained in the
+should be used), and write EVS scores given the model we trained in the
 previous step.
 
 ```
-python ${STRELKA_INSTALL}/share/somaticVQSRTraining/bin/vqsr_evaluate.py -m strelka.rf -f strelka.snv \
+python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_evaluate.py -m strelka.rf -f strelka.snv \
     -c model.pickle \
     -o admix_classified.csv \
     admix_training_data.csv
@@ -87,7 +87,7 @@ python ${STRELKA_INSTALL}/share/somaticVQSRTraining/bin/vqsr_evaluate.py -m stre
 =>
 
 ```
-Reading /home/peter/workspace_lx/starka_build/admix_training_data.csv
+Reading admix_training_data.csv
 ptag   FN     FP     TP
 tag
 FN    662      0      0
@@ -100,7 +100,7 @@ TP      0      1  15572
 ## Step 4: Evaluate Precision / Recall for the model
 
 ```
-python ${STRELKA_INSTALL}/share/somaticVQSRTraining/bin/vqsr_pr.py \
+python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_pr.py \
      -q QSS_NT,qual \
      -o admix_precisionrecall.csv \
      admix_classified.csv
@@ -109,7 +109,7 @@ python ${STRELKA_INSTALL}/share/somaticVQSRTraining/bin/vqsr_pr.py \
 =>
 
 ```
-Reading /home/peter/workspace_lx/starka_build/admix_classified.csv
+Reading admix_classified.csv
 Processed 10 / 319 qual values for QSS_NT
 Processed 20 / 319 qual values for QSS_NT
 Processed 30 / 319 qual values for QSS_NT
@@ -126,7 +126,7 @@ Processed 100 / 319 qual values for QSS_NT
 We can look at the result e.g. using R:
 
 ```R
-data = read.csv('~/workspace_lx/starka_build/admix_precisionrecall.csv')
+data = read.csv('admix_precisionrecall.csv')
 head(data)
 ```
 
@@ -148,18 +148,14 @@ head(data)
 library(ggplot2)
 ggplot(data, aes(x=recall, y=precision, color=field)) +
     geom_point() + theme_bw()
-ggsave("vqsr_test.png", width=4, height=3, dpi=120)
+ggsave("evs_test.png", width=4, height=3, dpi=120)
 ```
-
-![vqsr_test.png](vqsr_test.png)
-
-(clearly, we have overtrained a bit here).
 
 ## Step 5: Export the Model for use in Strelka
 
 Strelka uses models in JSON format:
 
 ```
-python ${STRELKA_INSTALL}/share/somaticVQSRTraining/bin/vqsr_exportmodel.py \
+python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_exportmodel.py \
     -m strelka.rf -c model.pickle -o model.json
 ```

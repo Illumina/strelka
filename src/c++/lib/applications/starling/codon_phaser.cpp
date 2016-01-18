@@ -27,7 +27,6 @@
 
 #include <array>
 #include <functional>
-#include <sstream>
 #include <vector>
 
 //#define DEBUG_CODON
@@ -316,7 +315,7 @@ create_phased_record()
 
     // set GQ and GQX
     static const int maxInt(std::numeric_limits<int>::max());
-    int min_qual(maxInt), min_qscore(maxInt);
+    int min_qual(maxInt), min_EVS(maxInt);
     std::vector<unsigned> pls;
     unsigned ref_gt(0);
     unsigned max_gt(0);
@@ -359,7 +358,7 @@ create_phased_record()
                 is_min_gq_idx1 = true;
             }
             min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
-            min_qscore = std::min(si->smod.Qscore,min_qscore);
+            min_EVS = std::min(si->smod.EVS,min_EVS);
         }
     }
     if (!is_min_gq_idx0)
@@ -458,7 +457,7 @@ create_phased_record()
     base->dgt.genome.snp_qphred  = min_qual;
     base->dgt.phredLoghood       = pls;
     base->smod.gqx               = std::min(min_gq,min_qual);
-    base->smod.Qscore            = min_qscore;
+    base->smod.EVS            = min_EVS;
 
     base->phased_alt = alt.str();
     base->phased_AD  = AD.str();

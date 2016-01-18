@@ -40,15 +40,14 @@ Starling can tolerate non-paired reads in the input, but these will be ignored f
 during variant calling by default.
 
 Starling requires input sequencing reads to be mapped by an external tool and
-provided as input in BAM format.
+provided as input in BAM or CRAM format.
 
 At configuration time, a bam file must be provided for the query sample.
 
-The following limitations exist on the input BAMs provided to Starling:
+The following limitations exist on the input BAMCRAM files provided to Starling:
 
 * Alignments cannot contain the "=" character in the SEQ field.
-* Alignments cannot use the sequence match/mismatch ("="/"X") CIGAR notation
-* RG (read group) tags in the BAMs are ignored -- each BAM must represent one
+* RG (read group) tags are ignored -- each alignment file must represent one
   sample.
 * Alignments with basecall quality values greater than 70 are rejected (these
   are not supported on the assumption that this indicates an offset error)
@@ -82,8 +81,8 @@ the root installation referenced below is `${INSTALL_DIR}`.
 
 The workflow is configured with the script: `${INSTALL_DIR}/bin/configureStarlingWorkflow.py`
 . Running this script with no arguments will display all standard configuration
-options to specify input BAM files, the reference sequence and the output run folder.
-Note that all input BAMs and reference sequence must contain the same chromosome names
+options to specify input alignment files, the reference sequence and the output run folder.
+Note that all input alignment and reference sequence files must contain the same chromosome names
 in the same order. Starka's default settings assume a whole genome DNA-Seq analysis.
 
 Simple WGS Analysis -- Example Configuration:

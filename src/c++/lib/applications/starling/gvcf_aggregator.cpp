@@ -19,9 +19,13 @@
 //
 
 #include "gvcf_aggregator.hh"
+
 #include "bedstreamprocessor.hh"
-#include "variant_prefilter_stage.hh"
+#include "gvcf_writer.hh"
 #include "indel_overlapper.hh"
+#include "variant_prefilter_stage.hh"
+
+
 
 gvcf_aggregator::
 gvcf_aggregator(
@@ -29,27 +33,24 @@ gvcf_aggregator(
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
+    const std::string& sampleName,
     std::ostream* osptr,
     const pos_basecall_buffer& bc_buff)
     : _CM(opt, dopt.gvcf)
 {
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
+
+    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(new gvcf_writer(opt, dopt, ref, nocompress_regions, sampleName, osptr, _CM));
     if (opt.is_ploidy_prior)
     {
-        _writer.reset(new gvcf_writer(opt, dopt, ref, nocompress_regions, osptr, _CM));
-        std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_CM, ref, _writer));
+        std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_CM, ref, nextPipeStage));
         _codon_phaser.reset(new Codon_phaser(opt, bc_buff, ref, overlapper));
-        std::shared_ptr<variant_pipe_stage_base> targeted_region_processor(new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, opt.bam_seq_name.c_str(), _codon_phaser));
-        _head.reset(new variant_prefilter_stage(_CM, targeted_region_processor));
+        nextPipeStage = _codon_phaser;
     }
-    else
-    {
-        // simpler pipeline when running in this mode
-        _writer.reset(new gvcf_writer(opt, dopt, ref, nocompress_regions, osptr, _CM));
-        std::shared_ptr<variant_pipe_stage_base> targeted_region_processor(new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, opt.bam_seq_name.c_str(), _writer));
-        _head.reset(new variant_prefilter_stage(_CM, targeted_region_processor));
-    }
+    std::shared_ptr<variant_pipe_stage_base> targeted_region_processor(
+        new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, opt.bam_seq_name.c_str(), nextPipeStage));
+    _head.reset(new variant_prefilter_stage(_CM, targeted_region_processor));
 }
 
 gvcf_aggregator::~gvcf_aggregator()

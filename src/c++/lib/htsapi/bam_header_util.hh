@@ -28,8 +28,40 @@
 #pragma once
 
 #include "bam_util.hh"
+#include "bam_header_info.hh"
 
 #include <string>
+
+
+/// parse a bam region into chrom/begin/end values
+///
+void
+parse_bam_region(
+    const char* region,
+    std::string& chrom,
+    int32_t& begin_pos,
+    int32_t& end_pos);
+
+
+/// parse a bam region into chrom-index/begin/end values based
+/// on chromosome index lookup and end positions in bam header
+///
+void
+parse_bam_region_from_hdr(
+    const bam_hdr_t* header,
+    const char* region,
+    int32_t& tid,
+    int32_t& begin_pos,
+    int32_t& end_pos);
+
+
+void
+parse_bam_region(
+    const bam_header_info& header,
+    const char* region,
+    int32_t& tid,
+    int32_t& begin_pos,
+    int32_t& end_pos);
 
 
 /// return true only if the headers refer to the same
@@ -37,13 +69,14 @@
 ///
 bool
 check_header_compatibility(
-    const bam_header_t* h1,
-    const bam_header_t* h2);
+    const bam_hdr_t* h1,
+    const bam_hdr_t* h2);
 
 
-/// try to determine the sample_name from the BAM header
+/// try to determine the sample_name from the BAM/CRAM header
 /// if none found return default string value
 std::string
 get_bam_header_sample_name(
-    const std::string& bam_header_text,
+    const bam_hdr_t* const header,
     const char* default_sample_name = "SAMPLE");
+

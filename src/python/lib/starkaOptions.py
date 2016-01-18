@@ -33,7 +33,7 @@ from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, \
                           validateFixExistingDirArg, validateFixExistingFileArg, \
                           checkTabixListOption
-from workflowUtil import parseGenomeRegion
+from workflowUtil import exeFile, parseGenomeRegion
 
 
 def cleanLocals(locals_dict) :
@@ -102,20 +102,23 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         libexecDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_LIBEXECDIR@"))
         assert os.path.isdir(libexecDir)
 
-        bgzipBin=joinFile(libexecDir,"bgzip")
-        samtoolsBin=joinFile(libexecDir,"samtools")
-        tabixBin=joinFile(libexecDir,"tabix")
-        bgcatBin=joinFile(libexecDir,"bgzf_cat")
+        bgzipBin=joinFile(libexecDir,exeFile("bgzip"))
+        htsfileBin=joinFile(libexecDir,exeFile("htsfile"))
+        samtoolsBin=joinFile(libexecDir,exeFile("samtools"))
+        tabixBin=joinFile(libexecDir,exeFile("tabix"))
+        bgcatBin=joinFile(libexecDir,exeFile("bgzf_cat"))
 
-        countFastaBin=joinFile(libexecDir,"countFastaBases")
+        countFastaBin=joinFile(libexecDir,exeFile("countFastaBases"))
+        getChromDepthBin=joinFile(libexecDir,exeFile("GetChromDepth"))
 
-        getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
+        mergeChromDepth=joinFile(libexecDir,"mergeChromDepth.py")
+        catScript=joinFile(libexecDir,"cat.py")
         vcfCmdlineSwapper=joinFile(libexecDir,"vcfCmdlineSwapper.py")
 
         # TODO: these aren't shared and should go into child classes:
-        starlingBin=joinFile(libexecDir,"starling2")
-        strelkaBin=joinFile(libexecDir,"strelka2")
-        pedicureBin=joinFile(libexecDir,"pedicure")
+        starlingBin=joinFile(libexecDir,exeFile("starling2"))
+        strelkaBin=joinFile(libexecDir,exeFile("strelka2"))
+        pedicureBin=joinFile(libexecDir,exeFile("pedicure"))
 
         # default memory request per process-type
         #

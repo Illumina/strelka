@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "starling_common/Program.hh"
+#include "common/Program.hh"
 
 
-struct pedicure : public starka::Program
+struct pedicure : public illumina::Program
 {
     const char*
     name() const

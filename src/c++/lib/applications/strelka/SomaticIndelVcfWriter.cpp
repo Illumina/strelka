@@ -24,7 +24,6 @@
 #include "SomaticIndelVcfWriter.hh"
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
-#include "somatic_indel_vqsr_features.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/io_util.hh"
@@ -35,6 +34,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include "somatic_indel_scoring_features.hh"
 
 
 static
@@ -99,14 +99,14 @@ writeSomaticIndelVcfGrid(
         }
     }
 
-    // calculate VQSR score and features
-    calculateVQSRFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
+    // calculate empirical scoring score and features
+    calculateScoringFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
 
     const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
     if (!is_use_empirical_scoring)
     {
-        smod.Qscore = 0;
-        smod.isQscore = false;
+        smod.EVS = 0;
+        smod.isEVS = false;
 
         // compute all site filters:
         const double normalWinFrac = calculateBCNoise(wasNormal);
@@ -127,17 +127,17 @@ writeSomaticIndelVcfGrid(
     {
         assert(dopt.somaticIndelScoringModel);
         const VariantScoringModel& varModel(*dopt.somaticIndelScoringModel);
-        smod.Qscore = 1.0 - varModel.scoreVariant(smod.get_features());
-        smod.isQscore = true;
+        smod.EVS = 1.0 - varModel.scoreVariant(smod.get_features());
+        smod.isEVS = true;
 
         if (rs.ntype != NTYPE::REF)
         {
             smod.set_filter(STRELKA_VCF_FILTERS::Nonref);
         }
 
-        if (smod.Qscore < varModel.scoreFilterThreshold())
+        if (smod.EVS < varModel.scoreFilterThreshold())
         {
-            smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
+            smod.set_filter(STRELKA_VCF_FILTERS::LowEVS);
         }
     }
 
@@ -168,11 +168,11 @@ writeSomaticIndelVcfGrid(
     os << sep
        << "SOMATIC";
 
-    if (smod.isQscore)
+    if (smod.isEVS)
     {
         const StreamScoper ss(os);
         os << std::fixed << std::setprecision(4);
-        os << ";EQSI=" << smod.Qscore;
+        os << ";EVS=" << smod.EVS;
     }
 
     os << ";QSI=" << rs.sindel_qphred
@@ -204,15 +204,15 @@ writeSomaticIndelVcfGrid(
     if (is_use_empirical_scoring)
     {
         os << ";ESF=";
-        for (unsigned q = 0; q < STRELKA_INDEL_VQSR_FEATURES::SIZE; ++q)
+        for (unsigned q = 0; q < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++q)
         {
             if (q > 0)
             {
                 os << ",";
             }
-            if (smod.test_feature(static_cast<STRELKA_INDEL_VQSR_FEATURES::index_t>(q)))
+            if (smod.test_feature(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(q)))
             {
-                os << smod.get_feature(static_cast<STRELKA_INDEL_VQSR_FEATURES::index_t>(q));
+                os << smod.get_feature(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(q));
             }
             else
             {

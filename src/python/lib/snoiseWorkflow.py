@@ -23,7 +23,6 @@ Strelka noise estimate workflow
 
 
 import os.path
-import shutil
 import sys
 
 # add script path to pull in utils in same directory:
@@ -36,27 +35,15 @@ pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
+from configureUtil import argToBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
+from starkaWorkflow import runCount, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
 
-from configureUtil import argToBool, getIniSections, dumpIniSections
 
 
 __version__ = workflowVersion
-
-
-
-def runCount(self, taskPrefix="", dependencies=None) :
-    """
-    count size of fasta chromosomes
-    """
-    cmd  = "%s %s > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
-
-    return nextStepWait
 
 
 
@@ -215,49 +202,15 @@ class PathInfo:
 
 
 
-class snoiseWorkflow(WorkflowRunner) :
+class snoiseWorkflow(StarkaWorkflow) :
     """
     germline small variant calling workflow
     """
 
     def __init__(self,params,iniSections) :
 
-        # clear out some potentially destabilizing env variables:
-        clearList = [ "PYTHONPATH", "PYTHONHOME"]
-        for key in clearList :
-            if key in os.environ :
-                del os.environ[key]
-
-        self.params=params
-        self.iniSections=iniSections
-
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []
-
-        # make sure run directory is setup:
-        self.params.runDir=os.path.abspath(self.params.runDir)
-        ensureDir(self.params.runDir)
-
-        # everything that's not intended to be a final result should dump directories/files in workDir
-        self.params.workDir=os.path.join(self.params.runDir,"workspace")
-        ensureDir(self.params.workDir)
-
-        # all finalized pretty results get transfered to resultsDir
-        self.params.resultsDir=os.path.join(self.params.runDir,"results")
-        ensureDir(self.params.resultsDir)
-        self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
-        ensureDir(self.params.variantsDir)
-
-        indexRefFasta=self.params.referenceFasta+".fai"
-
-        if self.params.referenceFasta is None:
-            raise Exception("No reference fasta defined.")
-        else:
-            checkFile(self.params.referenceFasta,"reference fasta")
-            checkFile(indexRefFasta,"reference fasta index")
-
-        # read fasta index
-        (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
 
         # sanity check some parameter typing:
         MEGABASE = 1000000

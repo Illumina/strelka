@@ -61,7 +61,7 @@ bam_seq
 read_segment::
 get_bam_read() const
 {
-    return bam_seq(bam1_seq(sread().get_brp()),_size,_offset);
+    return bam_seq(bam_get_seq(sread().get_brp()),_size,_offset);
 }
 
 
@@ -70,7 +70,7 @@ const uint8_t*
 read_segment::
 qual() const
 {
-    return bam1_qual(sread().get_brp())+_offset;
+    return bam_get_qual(sread().get_brp())+_offset;
 }
 
 

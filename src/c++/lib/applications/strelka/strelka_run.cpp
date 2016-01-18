@@ -61,7 +61,7 @@ strelka_run(
     if (! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header()))
     {
         std::ostringstream oss;
-        oss << "ERROR: Normal and tumor BAM files have incompatible headers.\n";
+        oss << "ERROR: Normal and tumor BAM/CRAM files have incompatible headers.\n";
         oss << "\tnormal_bam_file:\t'" << opt.bam_filename << "'\n";
         oss << "\ttumor_bam_file:\t'" << opt.tumor_bam_filename << "'\n";
         throw blt_exception(oss.str().c_str());
@@ -71,7 +71,7 @@ strelka_run(
     if (tid < 0)
     {
         std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" << opt.bam_filename << "'\n";
+        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << opt.bam_filename << "'\n";
         throw blt_exception(oss.str().c_str());
     }
 
@@ -83,7 +83,7 @@ strelka_run(
         const int32_t tumor_tid(tumor_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
         if (tid != tumor_tid)
         {
-            throw blt_exception("ERROR: tumor and normal BAM files have mis-matched reference sequence dictionaries.\n");
+            throw blt_exception("ERROR: tumor and normal BAM/CRAM files have mis-matched reference sequence dictionaries.\n");
         }
     }
 

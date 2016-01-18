@@ -23,7 +23,6 @@ Pedicure de-novo small variant calling workflow
 
 
 import os.path
-import shutil
 import sys
 
 # add this path to pull in utils in same directory:
@@ -35,45 +34,25 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
 from configBuildTimeInfo import workflowVersion
+from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from starkaWorkflow import StarkaCallWorkflow, StarkaWorkflow
+from sharedWorkflow import runDepthFromAlignments
+from starkaWorkflow import runCount, StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
-
-from configureUtil import safeSetBool, getIniSections, dumpIniSections
-
 
 
 __version__ = workflowVersion
 
 
 
-def runCount(self, taskPrefix="", dependencies=None) :
-    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
-
-    return nextStepWait
-
-
-
-def runDepth(self,taskPrefix="",dependencies=None) :
-    """
-    estimate chrom depth
-    """
-
+def pedicureRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
     assert len(self.params.probandBamList) == 1
-    bamFile = self.params.probandBamList[0]
+    bamList = [ self.params.probandBamList[0] ]
 
-    cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.getChromDepth)
-    cmd += " --bam \"%s\"" % (bamFile)
-    cmd += " > \"%s\"" % (self.paths.getChromDepth())
 
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth"),cmd,dependencies=dependencies))
-
-    return nextStepWait
+    outputPath=self.paths.getChromDepth()
+    return runDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
 
 
 
@@ -114,7 +93,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd.extend(["--tier2-min-single-align-score", str(self.params.minTier2Mapq) ] )
     segCmd.extend(["--tier2-min-paired-align-score", str(self.params.minTier2Mapq) ] )
-    segCmd.append("--tier2-single-align-score-rescue-mode")
     segCmd.extend(["--tier2-mismatch-density-filter-count", "10"] )
     segCmd.append("--tier2-no-filter-unanchored")
     segCmd.extend(["--tier2-indel-nonsite-match-prob", "0.25"] )
@@ -175,7 +153,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
             return cmd
 
         headerFixCmd  = getHeaderFixCmd(tmpDenovoPath)
-        
+
         self.addTask(headerFixTask, headerFixCmd, dependencies=callTask, isForceLocal=True)
         compressWaitFor=headerFixTask
 
@@ -344,6 +322,6 @@ class PedicureWorkflow(StarkaWorkflow) :
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= runDepth(self)
+            callPreReqs |= pedicureRunDepthFromAlignments(self)
 
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

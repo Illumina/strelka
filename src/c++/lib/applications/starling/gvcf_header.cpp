@@ -145,12 +145,10 @@ void
 finish_gvcf_header(const starling_options& opt,
                    const gvcf_deriv_options& dopt,
                    const cdmap_t& chrom_depth,
-                   const std::string& bam_header_data,
+                   const std::string& sample_name,
                    std::ostream& os,
                    const calibration_models& CM)
 {
-//    bool do_rule_filters  = (opt.calibration_model=="default" || opt.calibration_model=="Qrule");
-
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
 
@@ -169,7 +167,7 @@ finish_gvcf_header(const starling_options& opt,
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
 
     // ranksums
-    if (opt.is_report_germline_VQSRmetrics)
+    if (opt.is_report_germline_scoring_metrics)
     {
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
         os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities.\">\n";
@@ -180,10 +178,6 @@ finish_gvcf_header(const starling_options& opt,
         os << "##INFO=<ID=AvgBaseQ,Number=1,Type=Float,Description=\"PLACEHOLDER=Mean base Qscore\">\n";
         os << "##INFO=<ID=AvgPos,Number=1,Type=Float,Description=\"PLACEHOLDER=Mean position in aligned reads\">\n";
     }
-
-    // Qscore
-//    if (!do_rule_filters)
-//        os << "##INFO=<ID=Qscore,Number=1,Type=Integer,Description=\"Calibrated quality score indicating expected empirical FP-rate for variant site.\">\n";
 
     // Unphased, flag if a site that is within a phasing window hasn't been phased
     if (opt.do_codon_phasing ||
@@ -215,8 +209,6 @@ finish_gvcf_header(const starling_options& opt,
     // FILTER:
 
     add_gvcf_filters(opt,chrom_depth,os,CM);
-
-    const std::string sample_name = get_bam_header_sample_name(bam_header_data);
 
     os << vcf_col_label() << "\tFORMAT\t" << sample_name << "\n";
 }

@@ -32,7 +32,7 @@ prefix="##cmdline="
 def main() :
     infp = sys.stdin
     outfp = sys.stdout
-    
+
     for line in infp :
         if line.startswith(prefix):
             line = prefix + " ".join(sys.argv[1:]) + "\n"

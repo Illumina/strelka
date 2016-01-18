@@ -22,6 +22,7 @@
 ///
 
 #include "starling_streams.hh"
+#include "htsapi/bam_header_util.hh"
 
 #include <cassert>
 
@@ -35,7 +36,7 @@ initialize_gvcf_file(
     const starling_options& opt,
     const prog_info& pinfo,
     const std::string& filename,
-    const bam_header_t* const header,
+    const bam_hdr_t* const header,
     std::unique_ptr<std::ostream>& os_ptr_auto)
 {
     std::ostream* osptr(&std::cout);
@@ -67,12 +68,13 @@ starling_streams::
 starling_streams(
     const starling_options& opt,
     const prog_info& pinfo,
-    const bam_header_t* const header,
+    const bam_hdr_t* const header,
     const SampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
     assert(_n_samples == 1);
     _gvcf_osptr = nullptr;
+    _sampleName = get_bam_header_sample_name(header);
 
     if (opt.gvcf.is_gvcf_output())
     {
@@ -81,6 +83,6 @@ starling_streams(
 
     if (opt.is_realigned_read_file)
     {
-        _realign_bam_ptr[0].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"realigned-read BAM",header));
+        _realign_bam_ptr[0].reset(initialize_realign_bam(opt.is_clobber,pinfo,opt.realigned_read_filename,"realigned-read BAM/CRAM",header));
     }
 }

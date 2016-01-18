@@ -49,8 +49,7 @@ The following limitations exist on the input BAM/CRAM alignment records provided
 to Starka:
 
 * Alignments cannot contain the "=" character in the SEQ field.
-* Alignments cannot use the sequence match/mismatch ("="/"X") CIGAR notation
-* RG (read group) tags in the BAMs are ignored -- each BAM must represent one
+* RG (read group) tags are ignored -- each alignment file must represent one
   sample.
 * Alignments with basecall quality values greater than 70 are rejected (these
   are not supported on the assumption that this indicates an offset error)
@@ -86,8 +85,8 @@ without changing the final result of the workflow.
 
 The workflow is configured with the script: `${INSTALL_DIR}/bin/configureStrelkaWorkflow.py`
 . Running this script with no arguments will display all standard configuration
-options to specify input BAM files, the reference sequence and the output run folder.
-Note that all input BAMs and reference sequence must contain the same chromosome names
+options to specify input alignment files, the reference sequence and the output run folder.
+Note that all input alignment and reference sequence files must contain the same chromosome names
 in the same order. Strelka's default settings assume a whole genome DNA-Seq analysis.
 
 Example Configuration:

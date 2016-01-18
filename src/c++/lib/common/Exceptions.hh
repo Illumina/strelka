@@ -107,6 +107,7 @@ public:
 class UnsupportedVersionException: public std::logic_error, public ExceptionData
 {
 public:
+    explicit
     UnsupportedVersionException(const std::string& message);
 };
 
@@ -117,6 +118,7 @@ public:
 class InvalidParameterException: public std::logic_error, public ExceptionData
 {
 public:
+    explicit
     InvalidParameterException(const std::string& message);
 };
 
@@ -127,6 +129,7 @@ public:
 class InvalidOptionException: public std::logic_error, public ExceptionData
 {
 public:
+    explicit
     InvalidOptionException(const std::string& message);
 };
 
@@ -137,6 +140,7 @@ public:
 class PreConditionException: public std::logic_error, public ExceptionData
 {
 public:
+    explicit
     PreConditionException(const std::string& message);
 };
 
@@ -147,6 +151,7 @@ public:
 class PostConditionException: public std::logic_error, public ExceptionData
 {
 public:
+    explicit
     PostConditionException(const std::string& message);
 };
 
@@ -154,6 +159,7 @@ public:
 ///
 struct LogicException: public std::logic_error, public ExceptionData
 {
+    explicit
     LogicException(const std::string& message) :
         std::logic_error(message),
         ExceptionData(EPERM, message)

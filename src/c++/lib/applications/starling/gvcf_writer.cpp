@@ -22,19 +22,18 @@
 /// \author Chris Saunders
 ///
 
+#include "gvcf_writer.hh"
+
+#include "calibration_models.hh"
 #include "gvcf_header.hh"
-#include "blt_util/blt_exception.hh"
-#include "blt_util/chrom_depth_map.hh"
+#include "indel_overlapper.hh"
+#include "variant_prefilter_stage.hh"
+
 #include "blt_util/io_util.hh"
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdexcept>
-#include "gvcf_writer.hh"
-#include "calibration_models.hh"
-#include "indel_overlapper.hh"
-
 
 
 
@@ -47,20 +46,13 @@
 
 
 
-
-void gvcf_writer::write_block_site_record()
-{
-    if (_block.count<=0) return;
-    write_site_record(_block);
-    _block.reset();
-}
-
 gvcf_writer::
 gvcf_writer(
     const starling_options& opt,
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
+    const std::string& sampleName,
     std::ostream* osptr,
     const calibration_models& cm)
     : _opt(opt)
@@ -85,12 +77,22 @@ gvcf_writer(
 
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data, *_osptr, cm);
+        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth, sampleName, *_osptr, cm);
     }
 
     variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.smod, cm);
 
 }
+
+
+
+void gvcf_writer::write_block_site_record()
+{
+    if (_block.count<=0) return;
+    write_site_record(_block);
+    _block.reset();
+}
+
 
 
 void gvcf_writer::filter_site_by_last_indel_overlap(digt_site_info& si)
@@ -349,7 +351,7 @@ write_site_record(
             os << "HaplotypeScore=" << si.hapscore;
         }
 
-        if (_opt.is_report_germline_VQSRmetrics)
+        if (_opt.is_report_germline_scoring_metrics)
         {
             os << ';';
             os << "MQ=" << si.MQ;
@@ -376,13 +378,6 @@ write_site_record(
         {
             os << ";Unphased";
         }
-
-        //            //reported q-score
-        //            if (si.Qscore>0) {
-        //                os << ';';
-        //                os << "Qscore=" << si.Qscore;
-        //            }
-
     }
     else
     {
@@ -418,9 +413,9 @@ write_site_record(
     }
     if (si.smod.is_gqx())
     {
-        if (si.smod.Qscore>=0)
+        if (si.smod.EVS>=0)
         {
-            os << si.smod.Qscore;
+            os << si.smod.EVS;
         }
         else
         {
@@ -436,7 +431,10 @@ write_site_record(
     os << si.n_used_calls << ':'
        << si.n_unused_calls;
 
-    if (isNoAlt) {}
+    if (isNoAlt)
+    {
+        // pass
+    }
     else if (si.smod.is_phased_region)
     {
         os << ':' << si.phased_AD;
@@ -712,23 +710,6 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
         }
     }
 
-//    if (ii.Qscore>0) {
-//        os << ';';
-//        os << "Qscore=" << ii.Qscore;
-//    }
-
-//    only report metrics if flag explicitly set
-//    if (_opt.is_compute_VQSRmetrics)
-//    {
-//        os << ';';
-//        os << "MQ=" << ii.MQ;
-//        os << ';';
-//        os << "MQRankSum=" << ii.MQRankSum;
-//        os << ';';
-//        os << "BaseQRankSum=" << ii.BaseQRankSum;
-//        os << ';';
-//        os << "ReadPosRankSum=" << ii.ReadPosRankSum;
-//    }
     os << '\t';
 
     //FORMAT
@@ -738,8 +719,8 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
     os << ii.get_gt() << ':'
        << call.gq << ':';
 
-    if (call.Qscore>=0)
-        os << call.Qscore  << ':';
+    if (call.EVS>=0)
+        os << call.EVS  << ':';
     else
         os << call.gqx  << ':';
 

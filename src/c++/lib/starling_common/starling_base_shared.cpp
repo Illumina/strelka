@@ -81,13 +81,6 @@ starling_base_deriv_options(
         nonsite_lnprior=log1p_switch(-site_prior);
     }
 
-    if (! opt.bam_filename.empty())
-    {
-        // get bam header text:
-        bam_streamer read_stream(opt.bam_filename.c_str());
-        bam_header_data = read_stream.get_header()->text;
-    }
-
     //
     // register post-call stages:
     //

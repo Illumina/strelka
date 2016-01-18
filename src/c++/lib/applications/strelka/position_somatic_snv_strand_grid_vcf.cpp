@@ -63,8 +63,8 @@ get_single_sample_scoring_features(
     const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
     const double SDP_ratio(safeFrac(tier1_cpi.rawPileup().n_spandel, tier1_cpi.n_calls()+tier1_cpi.rawPileup().n_spandel));
 
-    smod.set_feature((isNormalSample ? STRELKA_SNV_VQSR_FEATURES::N_FDP_RATE : STRELKA_SNV_VQSR_FEATURES::T_FDP_RATE), FDP_ratio);
-    smod.set_feature((isNormalSample ? STRELKA_SNV_VQSR_FEATURES::N_SDP_RATE : STRELKA_SNV_VQSR_FEATURES::T_SDP_RATE), SDP_ratio);
+    smod.set_feature((isNormalSample ? STRELKA_SNV_SCORING_FEATURES::N_FDP_RATE : STRELKA_SNV_SCORING_FEATURES::T_FDP_RATE), FDP_ratio);
+    smod.set_feature((isNormalSample ? STRELKA_SNV_SCORING_FEATURES::N_SDP_RATE : STRELKA_SNV_SCORING_FEATURES::T_SDP_RATE), SDP_ratio);
 
     if (isNormalSample)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
     {
@@ -73,7 +73,7 @@ get_single_sample_scoring_features(
         {
             normalDepthRate = safeFrac(tier1_cpi.n_calls(),dopt.sfilter.expected_chrom_depth);
         }
-        smod.set_feature(STRELKA_SNV_VQSR_FEATURES::N_DP_RATE,normalDepthRate);
+        smod.set_feature(STRELKA_SNV_SCORING_FEATURES::N_DP_RATE,normalDepthRate);
     }
 
     if (!isNormalSample)      //report tier1_allele count for tumor case
@@ -97,13 +97,13 @@ get_single_sample_scoring_features(
         }
 
         const double allele_freq(safeFrac(alt,ref+alt));
-        smod.set_feature(STRELKA_SNV_VQSR_FEATURES::TIER1_ALT_RATE,allele_freq);
+        smod.set_feature(STRELKA_SNV_SCORING_FEATURES::TIER1_ALT_RATE,allele_freq);
     }
 }
 
 
 
-// Prepare feature vector in case we are using VQSR, the individual values will be set
+// Prepare feature vector in case we are using empirical scoring, the individual values will be set
 // feature_type ft;
 
 // Feature dictionary constructed position-> feature similar to the columns in the training set (correct ordering is key)
@@ -174,7 +174,7 @@ get_scoring_features(
     }
 
     //QSS_NT
-    smod.set_feature(STRELKA_SNV_VQSR_FEATURES::QSS_NT,rs.snv_from_ntype_qphred);
+    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::QSS_NT,rs.snv_from_ntype_qphred);
 
     static const bool isNormalSample(true);
     get_single_sample_scoring_features(opt,dopt,n1_cpi,n2_cpi,isNormalSample,smod);
@@ -183,24 +183,24 @@ get_scoring_features(
     //MQ
     const unsigned n_mapq(n1_cpi.rawPileup().n_mapq+t1_cpi.rawPileup().n_mapq);
     const double cumm_mapq2(n1_cpi.rawPileup().cumm_mapq + t1_cpi.rawPileup().cumm_mapq);
-    smod.set_feature(STRELKA_SNV_VQSR_FEATURES::MQ,std::sqrt(safeFrac(cumm_mapq2,n_mapq)));
+    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::MQ,std::sqrt(safeFrac(cumm_mapq2,n_mapq)));
 
     //n_mapq0
     const unsigned n_mapq0(n1_cpi.rawPileup().n_mapq0+t1_cpi.rawPileup().n_mapq0);
-    smod.set_feature(STRELKA_SNV_VQSR_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq0+n_mapq));
+    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq0+n_mapq));
 
     //ReadPosRankSum
     const double ReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_u_stat();
-    smod.set_feature(STRELKA_SNV_VQSR_FEATURES::ReadPosRankSum,ReadPosRankSum);
+    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::ReadPosRankSum,ReadPosRankSum);
 
     //StrandBias
-    smod.set_feature(STRELKA_SNV_VQSR_FEATURES::strandBias,rs.strandBias);
+    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::strandBias,rs.strandBias);
 
     /// TODO better handling of default values for in cases where alpos or altmap are not defined (0 is not a good default)
     ///
     //Altpos
-    smod.set_feature(STRELKA_SNV_VQSR_FEATURES::altpos,altpos);
-    smod.set_feature(STRELKA_SNV_VQSR_FEATURES::altmap,altmap);
+    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::altpos,altpos);
+    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::altmap,altmap);
 }
 
 
@@ -310,31 +310,31 @@ write_vcf_somatic_snv_genotype_strand_grid(
         // calculations are still needed for VCF reporting
         get_scoring_features(opt,dopt,sgt,n1_epd,t1_epd,n2_epd,t2_epd,rs,smod);
 
-        // if we are using empirical scoring, clear filters and apply single LowQscore filter
+        // if we are using empirical scoring, clear filters and apply single LowEVS filter
         if (dopt.somaticSnvScoringModel)
         {
             const VariantScoringModel& varModel(*dopt.somaticSnvScoringModel);
-            smod.isQscore = true;
-            smod.Qscore = varModel.scoreVariant(smod.get_features());
+            smod.isEVS = true;
+            smod.EVS = varModel.scoreVariant(smod.get_features());
 
             // TMP!! make this scheme compatible with STARKA-296;
-            smod.Qscore = error_prob_to_phred(smod.Qscore);
+            smod.EVS = error_prob_to_phred(smod.EVS);
 
-            // TMP!!!! Emperically re-maps the RF Qscore to get a better calibration
+            // TMP!!!! Emperically re-maps EVS value to get a better calibration
             // See STARKA-257 github comment for more detail on this fit
             auto recal_somatic_snv_score = [](double& score)
             {
                 return 2.57*score+0.94;
             };
 
-            smod.Qscore = recal_somatic_snv_score(smod.Qscore);
+            smod.EVS = recal_somatic_snv_score(smod.EVS);
             smod.filters.reset();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
-            if (rs.ntype != NTYPE::REF) smod.Qscore=0;
+            if (rs.ntype != NTYPE::REF) smod.EVS=0;
 
-            if (smod.Qscore < opt.sfilter.minimumQscore)
-                smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
+            if (smod.EVS < opt.sfilter.minimumEVS)
+                smod.set_filter(STRELKA_VCF_FILTERS::LowEVS);
         }
     }
 
@@ -377,7 +377,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
         // m_mapq includes all calls, even from reads below the mapq threshold:
         const unsigned n_mapq(n1_epd.rawPileup().n_mapq+t1_epd.rawPileup().n_mapq);
         os << ";DP=" << n_mapq;
-        os << ";MQ=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::MQ);
+        os << ";MQ=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::MQ);
 
         {
             const unsigned n_mapq0(n1_epd.rawPileup().n_mapq0+t1_epd.rawPileup().n_mapq0);
@@ -385,27 +385,27 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         os << ";ALTPOS=";
-        if (smod.test_feature(STRELKA_SNV_VQSR_FEATURES::altpos))
-            os << (int)smod.get_feature(STRELKA_SNV_VQSR_FEATURES::altpos);
+        if (smod.test_feature(STRELKA_SNV_SCORING_FEATURES::altpos))
+            os << (int)smod.get_feature(STRELKA_SNV_SCORING_FEATURES::altpos);
         else
             os << '.';
 
         os << ";ALTMAP=";
-        if (smod.test_feature(STRELKA_SNV_VQSR_FEATURES::altmap))
-            os << (int)smod.get_feature(STRELKA_SNV_VQSR_FEATURES::altmap);
+        if (smod.test_feature(STRELKA_SNV_SCORING_FEATURES::altmap))
+            os << (int)smod.get_feature(STRELKA_SNV_SCORING_FEATURES::altmap);
         else
             os << '.';
 
-        os << ";ReadPosRankSum=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::ReadPosRankSum);
-        os << ";SNVSB=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::strandBias);
+        os << ";ReadPosRankSum=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::ReadPosRankSum);
+        os << ";SNVSB=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::strandBias);
 #if 0
-        os << ";PNOISE=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::pnoise);
-        os << ";PNOISE2=" << smod.get_feature(STRELKA_SNV_VQSR_FEATURES::pnoise2);
+        os << ";PNOISE=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::pnoise);
+        os << ";PNOISE2=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::pnoise2);
 #endif
 
-        if (smod.isQscore)
+        if (smod.isEVS)
         {
-            os << ";VQSR=" << smod.Qscore;
+            os << ";EVS=" << smod.EVS;
         }
     }
 

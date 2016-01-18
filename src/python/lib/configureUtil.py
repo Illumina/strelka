@@ -224,9 +224,17 @@ def checkForBamIndex(bamFile):
     """
     make sure bam file has an index
     """
+    # check for multi-extension index format PREFIX.bam -> PREFIX.bam.bai:
     for ext in (".bai", ".csi", ".crai") :
         indexFile=bamFile + ext
         if os.path.isfile(indexFile) : return
+
+    # check for older short index format PREFIX.bam -> PREFIX.bai:
+    for (oldSuffix,newSuffix) in [ (".bam",".bai") ] :
+        if not bamFile.endswith(oldSuffix) : continue
+        indexFile=bamFile[:-len(oldSuffix)] + newSuffix
+        if os.path.isfile(indexFile) : return
+
     raise OptParseException("Can't find any expected BAM/CRAM index files for: '%s'" % (bamFile))
 
 
@@ -268,9 +276,9 @@ class BamSetChecker(object):
             self.bamList.append(inputBamFile)
             self.bamLabels.append(inputLabel)
 
-    def check(self, samtoolsBin, referenceFasta) :
+    def check(self, htsfileBin, referenceFasta) :
 
-        checkChromSet(samtoolsBin,
+        checkChromSet(htsfileBin,
                       referenceFasta,
                       self.bamList,
                       self.bamLabels,

@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 This distribution includes the following code libraries/external tools.
 These are distributed according to the licensing terms governing each
-library.
+library:
 
 
 ******************************************************************
@@ -65,7 +65,7 @@ to a notice that reads "Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010,
 
 ******************************************************************
 
-htslib 1.2.1
+htslib 1.2.1-204-g8197cfd
 
 [Files in this distribution outwith the cram/ subdirectory are distributed
 according to the terms of the following MIT/Expat license.]

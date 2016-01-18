@@ -36,10 +36,21 @@ macro(superset symbol value)
     set(${symbol} "${value}" PARENT_SCOPE)
 endmacro()
 
+
+set (THIS_CMAKE_PLATFORM "")
+if (WIN32)
+    # Sometimes the platform (x64,win32...) is specified as part of the target name
+    # this captures the cases where it is specified separately:
+    if (CMAKE_GENERATOR_PLATFORM)
+        set (THIS_CMAKE_PLATFORM -A "${CMAKE_GENERATOR_PLATFORM}")
+    endif ()
+endif ()
+
+
 #
 # htslib
 #
-set(HTSLIB_PREFIX "htslib-1.2.1")
+set(HTSLIB_PREFIX "htslib-1.2.1-204-g8197cfd")
 superset(HTSLIB_DIR "${CMAKE_CURRENT_BINARY_DIR}/${HTSLIB_PREFIX}")
 superset(HTSLIB_LIBRARY "${HTSLIB_DIR}/libhts.a")
 
@@ -54,26 +65,29 @@ set (HTSLIB_FINAL_TASK ${HTSLIB_DIR})
 if (NOT WIN32)
     add_custom_command(
         OUTPUT ${HTSLIB_LIBRARY}
-        COMMAND $(MAKE) -C "${HTSLIB_DIR}" lib-static tabix bgzip 2>| htslib.build.log
+        COMMAND $(MAKE) lib-static bgzip htsfile tabix >htslib.build.log 2>htslib.build.error.log
+        WORKING_DIRECTORY ${HTSLIB_DIR}
         DEPENDS ${HTSLIB_DIR}
         COMMENT "Building htslib library")
 
     set (HTSLIB_FINAL_TASK ${HTSLIB_LIBRARY})
 endif ()
 
-#add_custom_target(${THIS_PROJECT_NAME}_htslib DEPENDS "${HTSLIB_FINAL_TASK}")
+set(THIS_HTSLIB "${THIS_PROJECT_NAME}_htslib")
+add_custom_target(${THIS_HTSLIB} DEPENDS "${HTSLIB_FINAL_TASK}")
 
 if (NOT WIN32)
-    install(PROGRAMS "${HTSLIB_DIR}/tabix" DESTINATION "${THIS_LIBEXECDIR}")
     install(PROGRAMS "${HTSLIB_DIR}/bgzip" DESTINATION "${THIS_LIBEXECDIR}")
+    install(PROGRAMS "${HTSLIB_DIR}/htsfile" DESTINATION "${THIS_LIBEXECDIR}")
+    install(PROGRAMS "${HTSLIB_DIR}/tabix" DESTINATION "${THIS_LIBEXECDIR}")
 endif ()
 
 #
 # samtools
 #
 set(SAMTOOLS_PREFIX "samtools-1.2")
-superset(SAMTOOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${SAMTOOLS_PREFIX}")
-superset(SAMTOOLS_LIBRARY "${SAMTOOLS_DIR}/libbam.a")
+set(SAMTOOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${SAMTOOLS_PREFIX}")
+set(SAMTOOLS_LIBRARY "${SAMTOOLS_DIR}/libbam.a")
 superset(SAMTOOLS_PROG "${SAMTOOLS_DIR}/samtools")
 
 # final directory copy below would ideally be a soft-link, copy is for windows build
@@ -90,7 +104,7 @@ set (SAMTOOLS_FINAL_TASK ${SAMTOOLS_DIR})
 if (NOT WIN32)
     add_custom_command(
         OUTPUT ${SAMTOOLS_PROG}
-        COMMAND $(MAKE) all 2>| samtools.build.log
+        COMMAND $(MAKE) HTSDIR=${HTSLIB_PREFIX} all 2>| samtools.build.log
         DEPENDS ${HTSLIB_LIBRARY}
         DEPENDS ${SAMTOOLS_DIR}
         WORKING_DIRECTORY ${SAMTOOLS_DIR}
@@ -210,7 +224,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${PYFLOW_DIR}"
     COMMAND ${CMAKE_COMMAND} -E tar xjf "${THIS_REDIST_DIR}/${PYFLOW_PREFIX}.tar.bz2"
     COMMAND ${CMAKE_COMMAND} -E remove -f "${PYFLOW_DIR}/src/__init__.py"
-    COMMENT "Extracting pyflow")
+    COMMENT "Unpacking pyflow")
 
 if (PYTHONINTERP_FOUND)
     set (PYFLOW_DEPENDS "${PYFLOW_SCRIPT}c")
@@ -218,7 +232,7 @@ if (PYTHONINTERP_FOUND)
         OUTPUT ${PYFLOW_SCRIPT}c
         COMMAND ${PYTHON_EXECUTABLE} -m compileall -q "${PYFLOW_DIR}/src"
         DEPENDS ${PYFLOW_SCRIPT}
-        COMMENT "Compiling pyflow")
+        COMMENT "Building pyflow")
 endif()
 
 install_python_lib_dir("${PYFLOW_DIR}/src" "${THIS_PYTHON_LIBDIR}/pyflow")

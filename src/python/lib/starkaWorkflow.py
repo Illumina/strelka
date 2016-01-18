@@ -33,7 +33,22 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
 from pyflow import WorkflowRunner
+from sharedWorkflow import getMvCmd
 from workflowUtil import checkFile, ensureDir, getFastaChromOrderSize, cleanPyEnv, preJoin
+
+
+
+def runCount(self, taskPrefix="", dependencies=None) :
+    """
+    count size of fasta chromosomes
+    """
+    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+
+    nextStepWait = set()
+    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
+
+    return nextStepWait
+
 
 
 class StarkaCallWorkflow(WorkflowRunner) :
@@ -56,7 +71,7 @@ class StarkaCallWorkflow(WorkflowRunner) :
             catCmd = [self.params.bgcatBin,"-o",output]
             catCmd.extend(inputList)
         else :
-            catCmd = ["mv","-f", inputList[0], output]
+            catCmd = getMvCmd() + [inputList[0], output]
 
         indexCmd = [self.params.tabixBin,"-p", fileType, output]
         catTask = self.addTask(preJoin(taskPrefix,label+"_concat_"+fileType), catCmd,

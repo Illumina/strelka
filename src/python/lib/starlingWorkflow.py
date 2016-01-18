@@ -23,7 +23,6 @@ Starling germline small variant calling workflow
 
 
 import os.path
-import shutil
 import sys
 
 # add this path to pull in utils in same directory:
@@ -31,55 +30,32 @@ scriptDir=os.path.abspath(os.path.dirname(__file__))
 sys.path.append(scriptDir)
 
 # add pyflow path:
-sys.path.append(os.path.join(scriptDir,"pyflow"))
-
+pyflowDir=os.path.join(scriptDir,"pyflow")
+sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
+from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from starkaWorkflow import StarkaCallWorkflow, StarkaWorkflow
+from sharedWorkflow import runDepthFromAlignments
+from starkaWorkflow import runCount, StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
-
-from configureUtil import safeSetBool, getIniSections, dumpIniSections
-
 
 
 __version__ = workflowVersion
 
 
 
-def runCount(self, taskPrefix="", dependencies=None) :
-    """
-    count size of fasta chromosomes
-    """
-    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
-
-    return nextStepWait
-
-
-def runDepth(self,taskPrefix="",dependencies=None) :
-    """
-    estimate chrom depth
-    """
-
-    bamFile=""
+def starlingRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
+    bamList=[]
     if len(self.params.bamList) :
-        bamFile = self.params.bamList[0]
+        bamList.append(self.params.bamList[0])
     else :
         return set()
 
+    outputPath=self.paths.getChromDepth()
+    return runDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
 
-    cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.getChromDepth)
-    cmd += " --bam \"%s\"" % (bamFile)
-    cmd += " > \"%s\"" % (self.paths.getChromDepth())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth"),cmd,dependencies=dependencies))
-
-    return nextStepWait
 
 
 def runIndelModel(self,taskPrefix="",dependencies=None) :
@@ -154,9 +130,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--gvcf-include-header", "Phasing"])
     segCmd.extend(["--report-file", quote(self.paths.getTmpSegmentReportPath(gseg.pyflowId))])
 
-    # VQSR:
-    segCmd.extend(['--variant-scoring-models-file',quote(self.params.vqsrModelFile)])
-    segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModelName])
+    # Empirical Variant Scoring(EVS):
+    segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
+    segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
 
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipDynamicIndelErrorModel:
@@ -167,8 +143,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         # use dynamic indel error modeling to choose the appropritate model
         segCmd.extend(['--indel-error-models-file', quote(self.params.dynamicIndelErrorModelsFile)])
 
-    if self.params.isReportVQSRMetrics :
-        segCmd.append("--gvcf-report-VQSRmetrics")
+    if self.params.isReportEVSMetrics :
+        segCmd.append("--gvcf-report-EVSmetrics")
 
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",quote(bamPath)])
@@ -384,7 +360,7 @@ class StarlingWorkflow(StarkaWorkflow) :
         self.paths = PathInfo(self.params)
 
         if self.params.isExome:
-            self.params.vqsrModelName = "Qrule"
+            self.params.evsModelName = "Qrule"
             self.params.indelRefErrorFactor = "1"
             self.params.indelErrorModelName = "old"
 
@@ -405,7 +381,7 @@ class StarlingWorkflow(StarkaWorkflow) :
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= runDepth(self)
+            callPreReqs |= starlingRunDepthFromAlignments(self)
         if not self.params.isSkipDynamicIndelErrorModel :
             callPreReqs |= runIndelModel(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

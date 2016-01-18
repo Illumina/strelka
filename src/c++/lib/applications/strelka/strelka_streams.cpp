@@ -88,7 +88,7 @@ strelka_streams(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const prog_info& pinfo,
-    const bam_header_t* const header,
+    const bam_hdr_t* const header,
     const StrelkaSampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
@@ -146,7 +146,7 @@ strelka_streams(
             fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
             fos << "##INFO=<ID=PNOISE,Number=1,Type=Float,Description=\"Fraction of panel containing non-reference noise at this site\">\n";
             fos << "##INFO=<ID=PNOISE2,Number=1,Type=Float,Description=\"Fraction of panel containing more than one non-reference noise obs at this site\">\n";
-            fos << "##INFO=<ID=VQSR,Number=1,Type=Float,Description=\"Recalibrated quality score expressing the phred scaled probability of the somatic call being a FP observation.\">\n";
+            fos << "##INFO=<ID=EVS,Number=1,Type=Float,Description=\"Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a FP observation.\">\n";
 
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1 (used+filtered)\">\n";
@@ -159,15 +159,15 @@ strelka_streams(
             fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
 
             // FILTERS:
-            const bool isUseVQSR(opt.isUseSomaticVQSR());
+            const bool isUseEVS(opt.isUseSomaticScoring());
             {
                 using namespace STRELKA_VCF_FILTERS;
-                if (isUseVQSR)
+                if (isUseEVS)
                 {
                     {
                         std::ostringstream oss;
-                        oss << "The empirically fitted VQSR score is less than " << opt.sfilter.minimumQscore;
-                        write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
+                        oss << "The Empirical Variant Score (EVS) is less than " << opt.sfilter.minimumEVS;
+                        write_vcf_filter(fos, get_label(LowEVS), oss.str().c_str());
                     }
                 }
                 else
@@ -190,7 +190,7 @@ strelka_streams(
                 }
             }
 
-            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseVQSR), fos);
+            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseEVS), fos);
 
             fos << vcf_col_label() << "\tFORMAT";
             for (unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s)
@@ -239,10 +239,10 @@ strelka_streams(
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
 
-            const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
-            if (is_use_empirical_scoring)
+            const bool isUseEVS(opt.sfilter.is_use_indel_empirical_scoring);
+            if (isUseEVS)
             {
-                fos << "##INFO=<ID=ESF,Number=" << STRELKA_INDEL_VQSR_FEATURES::SIZE << ",Type=Float,Description=\"Empirical scoring features.\">\n";
+                fos << "##INFO=<ID=ESF,Number=" << STRELKA_INDEL_SCORING_FEATURES::SIZE << ",Type=Float,Description=\"Empirical scoring features.\">\n";
             }
 
             // FORMAT:
@@ -260,16 +260,16 @@ strelka_streams(
             fos << "##FORMAT=<ID=RR,Number=1,Type=Float,Description=\"Read position ranksum for ALT allele in tier1 reads (U-statistic)\">\n";
             fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
 
-            if (is_use_empirical_scoring)
+            if (isUseEVS)
             {
-                fos << "##vqsr_features=";
-                for (unsigned q = 0; q < STRELKA_INDEL_VQSR_FEATURES::SIZE; ++q)
+                fos << "##indel_scoring_features=";
+                for (unsigned q = 0; q < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++q)
                 {
                     if (q > 0)
                     {
                         fos << ",";
                     }
-                    fos << q << ":" << STRELKA_INDEL_VQSR_FEATURES::get_feature_label(q);
+                    fos << q << ":" << STRELKA_INDEL_SCORING_FEATURES::get_feature_label(q);
                 }
                 fos << "\n";
             }
@@ -277,7 +277,7 @@ strelka_streams(
             // FILTERS:
             {
                 using namespace STRELKA_VCF_FILTERS;
-                if (is_use_empirical_scoring)
+                if (isUseEVS)
                 {
                     {
                         assert(dopt.somaticIndelScoringModel);
@@ -285,8 +285,8 @@ strelka_streams(
                         const double threshold(varModel.scoreFilterThreshold());
 
                         std::ostringstream oss;
-                        oss << "The empirically fitted quality score is less than " << threshold;
-                        write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
+                        oss << "The Empirical variant Score (EVS) is less than " << threshold;
+                        write_vcf_filter(fos, get_label(LowEVS), oss.str().c_str());
                     }
                     {
                         std::ostringstream oss;
