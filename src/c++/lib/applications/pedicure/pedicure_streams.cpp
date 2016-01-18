@@ -101,18 +101,26 @@ pedicure_streams(
     if (! opt.dfilter.is_skip_header)
     {
         std::ostream& os(*_denovo_osptr);
+//    	std::ostream& os(std::cout);
 
         write_vcf_audit(opt,pinfo,cmdline,header,os);
-        os << "##content=pedicure somatic snv calls\n"
+        os << "##content=pedicure snv calls\n"
            << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n";
 
         // INFO:
+        os << "##INFO=<ID=DQ,Number=1,Type=Integer,Description=\"De novo quality score\">\n";
         os << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
         os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
 
         // FORMAT:
+        os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
+        os << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality\">\n";
+        os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
         os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">\n";
+        os << "##FORMAT=<ID=FDP,Number=1,Type=Integer,Description=\"Filtered read depth\">\n";
+        os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob 0.999 or higher that read contains indicated allele vs all other intersecting indel alleles)\">\n";
+        os << "##FORMAT=<ID=PL,Number=.,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
 
         // FILTERS:
         {

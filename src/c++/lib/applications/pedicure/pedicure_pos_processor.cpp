@@ -29,12 +29,12 @@
 #include "denovo_snv_caller.hh"
 #include "denovo_snv_call_vcf.hh"
 
-#include "blt_util/log.hh"
 #include "calibration/scoringmodels.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
-
+#include <sstream>
+#include "blt_util/log.hh"
 
 
 pedicure_pos_processor::
@@ -155,14 +155,16 @@ process_pos_snp_denovo(const pos_t pos)
     }
 
     // report events:
-    //
+
+    dsc.consolidate_genotype();
+
     if (dsc.is_output())
     {
-        std::ostream& bos(*_streams.denovo_osptr());
-        bos << _chrom_name << '\t'
+        std::stringstream bos;
+
+        bos << _chrom_name<< '\t'
             << output_pos << '\t'
             << ".";
-
         denovo_snv_call_vcf(
             _opt,_dopt,
             sinfo,
@@ -170,10 +172,10 @@ process_pos_snp_denovo(const pos_t pos)
             dsc,
             bos);
         bos << "\n";
+
+        aggregate_vcf(_chrom_name,output_pos,bos.str());
     }
 }
-
-
 
 void
 pedicure_pos_processor::
@@ -278,7 +280,7 @@ process_pos_indel_denovo(const pos_t pos)
             is_use_alt_indel,
             dindel);
 
-        if (dindel.is_output())
+        if (true || dindel.is_output())
         {
             // get sample specific info:
             std::vector<isriTiers_t> isri(_n_samples);
@@ -300,27 +302,56 @@ process_pos_indel_denovo(const pos_t pos)
                 indel_pos -= 1;
             }
 
-
             const pos_t output_pos(indel_pos+1);
 
-            std::ostream& bos(*_streams.denovo_osptr());
-            bos << _chrom_name << '\t'
+            std::stringstream bos;
+
+            bos << _chrom_name<< '\t'
                 << output_pos << '\t'
                 << ".";
 
             denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, iri, isri, bos);
             bos << "\n";
+
+            aggregate_vcf(_chrom_name,output_pos,bos.str());
         }
     }
 }
 
 
+// needs replaced by a more comprehensive record integration
+void
+pedicure_pos_processor::
+aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string& vcf_line)
+{
+	std::ostream& bos(*_streams.denovo_osptr());
+//    std::ostream& bos(std::cout);
+
+    // case in order
+    if (prev_vcf_pos<pos)
+    {
+        prev_vcf_pos = pos;
+        if (prev_vcf_pos>0)
+            bos << prev_vcf_line;
+        prev_vcf_line = vcf_line;
+    }
+    //case not in order
+    else
+    {
+        bos << vcf_line;
+    }
+}
 
 void
 pedicure_pos_processor::
 write_counts(
     const pos_range& output_report_range) const
 {
+
+    //TODO better handling in pedicure_vcf_Agg
+    std::ostream& bos(*_streams.denovo_osptr());
+    bos << prev_vcf_line;
+
     std::ostream* report_os_ptr(get_report_osptr());
     if (nullptr==report_os_ptr) return;
     std::ostream& report_os(*report_os_ptr);
