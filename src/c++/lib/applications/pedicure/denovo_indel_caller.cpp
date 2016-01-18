@@ -550,25 +550,29 @@ get_denovo_indel_call(
 
         using namespace PEDICURE_SAMPLETYPE;
 
-//        const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
-//        const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
+        const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
+        const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
 
-//        const unsigned sampleIndex[3] = {probandIndex,probandIndex,probandIndex};
+        const unsigned sampleOrder[3] = {probandIndex,parentIndex[0],parentIndex[1]};
 
-        for (unsigned i=0; i<3; i++)
+        for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
         {
-//        	double min=0,max=9;
-//        	unsigned index =  sampleIndex[0];
-//        	   for (unsigned pro(0); pro<STAR_DIINDEL::SIZE; ++pro)
+            unsigned max_index=0;
+            unsigned index =  sampleOrder[sampleIndex];
+            double max = sampleLhood[index][0];
+            for (unsigned pro(1); pro<STAR_DIINDEL::SIZE; ++pro)
             {
-//					const double pedigreeLhood = sampleLhood[index][pro];
-//					log_os << "slh " << pedigreeLhood << std::endl;
+                if (max<sampleLhood[index][pro])
+                {
+                    max = sampleLhood[index][pro];
+                    max_index=pro;
+                }
             }
-//        	   log_os << "---------" << std::endl;
 
+            //TODO update the gqx values
             dinc.gq.push_back(30);
             dinc.gqx.push_back(40);
-            dinc.gtstring.push_back("0/1");
+            dinc.gtstring.push_back(STAR_DIINDEL::get_gt_label(max_index));
         }
 
     }

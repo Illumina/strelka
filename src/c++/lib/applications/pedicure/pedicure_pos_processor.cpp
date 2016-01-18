@@ -322,22 +322,24 @@ process_pos_indel_denovo(const pos_t pos)
 // needs replaced by a more comprehensive record integration
 void
 pedicure_pos_processor::
-aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string& vcf_line){
-	std::ostream& bos(*_streams.denovo_osptr());
-//	std::ostream& bos(std::cout);
+aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string& vcf_line)
+{
+//	std::ostream& bos(*_streams.denovo_osptr());
+    std::ostream& bos(std::cout);
 
-	// case in order
-	if(prev_vcf_pos<pos){
-		prev_vcf_pos = pos;
-		if(prev_vcf_pos>0)
-			bos << prev_vcf_line;
-		prev_vcf_line = vcf_line;
-	}
-	//case not in order
-	else{
-		bos << vcf_line;
-	}
-
+    // case in order
+    if (prev_vcf_pos<pos)
+    {
+        prev_vcf_pos = pos;
+        if (prev_vcf_pos>0)
+            bos << prev_vcf_line;
+        prev_vcf_line = vcf_line;
+    }
+    //case not in order
+    else
+    {
+        bos << vcf_line;
+    }
 }
 
 void
@@ -345,6 +347,8 @@ pedicure_pos_processor::
 write_counts(
     const pos_range& output_report_range) const
 {
+
+    //TODO better handling in pedicure_vcf_Agg
     std::ostream& bos(*_streams.denovo_osptr());
     bos << prev_vcf_line;
 
