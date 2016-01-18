@@ -125,6 +125,10 @@ void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
     if (dynamic_cast<digt_indel_info*>(info.get()) != nullptr)
     {
         auto ii(downcast<digt_indel_info>(std::move(info)));
+
+        // we can't handle breakends at all right now:
+        if (ii->first()._ik.is_breakpoint()) return;
+
         // add filter for all indels in no-ploid regions:
         if (ii->first()._dindel.is_noploid())
         {
@@ -136,6 +140,13 @@ void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
     else
     {
         auto ii(downcast<continuous_indel_info>(std::move(info)));
+
+        // we can't handle breakends at all right now:
+        for (const auto& call : ii->calls)
+        {
+            if (call._ik.is_breakpoint()) return;
+        }
+
         for (auto& call : ii->calls)
         {
             _model.default_classify_indel(call);
