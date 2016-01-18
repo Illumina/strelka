@@ -23,46 +23,55 @@
 ///
 
 #include "denovo_snv_call_vcf.hh"
-#include "pedicure_vcf_locus_info.hh"
 #include "blt_util/io_util.hh"
 
 #include <array>
 #include <iomanip>
 #include <iostream>
 
-
+#include "blt_util/log.hh"
 
 static
 void
 write_vcf_sample_info(
     const blt_options& opt,
     const CleanedPileup& tier1_cpi,
-    const CleanedPileup& tier2_cpi,
+    const CleanedPileup& /*tier2_cpi*/,
+    const denovo_snv_call& dsc,
+    int sampleIndex,
     std::ostream& os)
 {
-    //DP:FDP:SDP:SUBDP:AU:CU:GU:TU
-    os << tier1_cpi.n_calls()
+
+    std::array<unsigned,N_BASE> tier1_base_counts;
+    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
+
+
+    //os << dsc.gts_chrom[sampleIndex][0]
+    //   << "/"
+    //   << dsc.gts_chrom[sampleIndex][1];
+    os << dsc.gtstring[sampleIndex];
+
+    os <<':'
+       << dsc.gq[sampleIndex] //GQ -- placeholder
+       <<':'
+       << dsc.gqx[sampleIndex]  //GQX
+       <<':'
+       << (tier1_cpi.n_calls()-tier1_cpi.n_unused_calls())
        << ':'
        << tier1_cpi.n_unused_calls()
        << ':'
-       << tier1_cpi.rawPileup().n_spandel
-       << ':'
-       << tier1_cpi.rawPileup().n_submapped;
+       << tier1_base_counts[dsc.ref_gt];
+    for (unsigned i=0; i<dsc.alts.size(); i++)
+        os << "," << tier1_base_counts[dsc.alts[i]];
 
-    std::array<unsigned,N_BASE> tier1_base_counts;
-    std::array<unsigned,N_BASE> tier2_base_counts;
-    tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
-    tier2_cpi.cleanedPileup().get_known_counts(tier2_base_counts,opt.used_allele_count_min_qscore);
-
-    for (unsigned b(0); b<N_BASE; ++b)
+    // PL field
+    os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
+    for (unsigned i=3; i<dsc.Sampleplhoods[sampleIndex].size(); ++i)
     {
-        os << ':'
-           << tier1_base_counts[b] << ','
-           << tier2_base_counts[b];
+        os << "," << dsc.Sampleplhoods[sampleIndex][i];
     }
+
 }
-
-
 
 void
 denovo_snv_call_vcf(
@@ -70,7 +79,7 @@ denovo_snv_call_vcf(
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const cpiPtrTiers_t& pileups,
-    const denovo_snv_call& dsc,
+    denovo_snv_call& dsc,
     std::ostream& os)
 {
     using namespace PEDICURE_SAMPLETYPE;
@@ -94,20 +103,33 @@ denovo_snv_call_vcf(
             }
         }
 
-        if (rs.dsnv_qphred < opt.dfilter.dsnv_qual_lowerbound)
-        {
-            smod.set_filter(PEDICURE_VCF_FILTERS::QDS);
-        }
+        //GQX <30 filter
+        for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
+            if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
+            {
+                smod.set_filter(PEDICURE_VCF_FILTERS::lowGQX);
+            }
 
     }
 
-
     //REF:
-    os << '\t' << probandCpi.rawPileup().get_ref_base()
-       //ALT:
-       << "\t.";
-//    DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
-//                                  dsc.ref_gt,os);
+    os << '\t' << probandCpi.rawPileup().get_ref_base();
+    //ALT:
+//       << "\t"
+//	   << dsc.alt_str;
+    if (dsc.alts.size() == 0)
+    {
+        os << "\t.";
+    }
+    else
+    {
+        os << "\t" << id_to_base(dsc.alts[0]);
+        for (unsigned i=1; i<dsc.alts.size(); ++i)
+        {
+            os << "," << id_to_base(dsc.alts[i]);
+        }
+    }
+
     //QUAL:
     os << "\t.";
 
@@ -133,20 +155,20 @@ denovo_snv_call_vcf(
         }
         os << "DP=" << n_mapq;
         os << ";MQ0=" << n_mapq0;
-        os << ";QDS=" << rs.dsnv_qphred
-           << ";TQSI=" << (dsc.dsnv_tier+1);
+        os << ";DQ=" << rs.dsnv_qphred;
+//           << ";TQSI=" << (dsc.dsnv_tier+1);
 
     }
 
     //FORMAT:
     os << '\t'
-       << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";
+       << "GT:GQ:GQX:DP:FDP:AD:PL";
 
     for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
     {
         const CleanedPileup& cpi1(*pileups[PEDICURE_TIERS::TIER1][sampleIndex]);
         const CleanedPileup& cpi2(*pileups[PEDICURE_TIERS::TIER2][sampleIndex]);
         os << "\t";
-        write_vcf_sample_info(opt,cpi1,cpi2,os);
+        write_vcf_sample_info(opt,cpi1,cpi2,dsc,sampleIndex,os);
     }
 }

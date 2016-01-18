@@ -62,6 +62,9 @@ private:
     process_pos_indel_denovo(const pos_t pos);
 
     void
+    aggregate_vcf(const std::string& chrom, const pos_t& pos, const std::string& vcf_line);
+
+    void
     write_counts(const pos_range& output_report_range) const override;
 
     /////////////////////////////
@@ -71,6 +74,9 @@ private:
     const pedicure_options& _opt;
     const pedicure_deriv_options& _dopt;
     const pedicure_streams& _streams;
+    std::string prev_vcf_line="";
+    pos_t prev_vcf_pos=-1;
+    std::vector<std::pair<pos_t,std::string>> buffer;
 
     DenovoCallableProcessor _icallProcessor;
 
