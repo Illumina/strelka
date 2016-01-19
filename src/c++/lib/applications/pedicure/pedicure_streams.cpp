@@ -113,25 +113,31 @@ pedicure_streams(
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
         os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
 
+        // Indel specific infos
+        os << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Test\">\n";
+        os << "##INFO=<ID=RU,Number=1,Type=String,Description=\"Test\">\n";
+        os << "##INFO=<ID=RC,Number=1,Type=Integer,Description=\"Test\">\n";
+        os << "##INFO=<ID=IC,Number=1,Type=Integer,Description=\"Test\">\n";
+
         // FORMAT:
         os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
         os << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality\">\n";
         os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
         os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">\n";
+        os << "##FORMAT=<ID=DP2,Number=1,Type=Integer,Description=\"Read depth\">\n";
         os << "##FORMAT=<ID=FDP,Number=1,Type=Integer,Description=\"Filtered read depth\">\n";
         os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob 0.999 or higher that read contains indicated allele vs all other intersecting indel alleles)\">\n";
         os << "##FORMAT=<ID=PL,Number=.,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
 
         // FILTERS:
         {
-#if 0
             using namespace PEDICURE_VCF_FILTERS;
             {
                 std::ostringstream oss;
-                oss << "Fraction of basecalls filtered at this site in either sample is at or above " << opt.sfilter.snv_max_filtered_basecall_frac;
-                write_vcf_filter(os, get_label(BCNoise), oss.str().c_str());
+
+                oss << "Calls that have GQX below " << 30;
+                write_vcf_filter(os, get_label(lowGQX), oss.str().c_str());
             }
-#endif
         }
 
         write_shared_vcf_header_info(opt.dfilter,dopt.dfilter,os);
