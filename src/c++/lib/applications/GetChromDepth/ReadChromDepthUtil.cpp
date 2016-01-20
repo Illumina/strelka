@@ -476,7 +476,7 @@ readChromDepthFromAlignment(
 
                 // apply all filters:
                 const READ_FILTER_TYPE::index_t filterId(starling_read_filter_shared(bamRead));
-                if(filterId != READ_FILTER_TYPE::NONE) continue;
+                if (filterId != READ_FILTER_TYPE::NONE) continue;
 
                 cdTracker.addRead(bamRead);
 

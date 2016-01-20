@@ -332,7 +332,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _ref(ref)
     , _streams(streams)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
-    //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
+      //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
     , _largest_indel_ref_span(opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)

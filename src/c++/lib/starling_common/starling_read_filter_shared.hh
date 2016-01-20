@@ -27,30 +27,36 @@
 
 namespace READ_FILTER_TYPE
 {
-    enum index_t
-    {
-        PRIMARY,
-        DUPLICATE,
-        UNMAPPED,
-        SECONDARY,
-        SUPPLEMENT,
-        NONE
-    };
+enum index_t
+{
+    PRIMARY,
+    DUPLICATE,
+    UNMAPPED,
+    SECONDARY,
+    SUPPLEMENT,
+    NONE
+};
 
-    inline
-    const char*
-    label(const index_t id)
+inline
+const char*
+label(const index_t id)
+{
+    switch (id)
     {
-        switch(id)
-        {
-        case PRIMARY: return "Primary";
-        case DUPLICATE: return "Duplicate";
-        case UNMAPPED: return "Unmapped";
-        case SECONDARY: return "Secondary";
-        case SUPPLEMENT: return "Supplement";
-        default: return "None";
-        }
+    case PRIMARY:
+        return "Primary";
+    case DUPLICATE:
+        return "Duplicate";
+    case UNMAPPED:
+        return "Unmapped";
+    case SECONDARY:
+        return "Secondary";
+    case SUPPLEMENT:
+        return "Supplement";
+    default:
+        return "None";
     }
+}
 }
 
 
