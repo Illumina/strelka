@@ -24,7 +24,7 @@
 
 #include "DenovoAlignmentFileOptionsParser.hh"
 #include "options/optionsUtil.hh"
-
+#include "blt_util/log.hh"
 #include <set>
 
 
@@ -49,8 +49,6 @@ getOptionsDescription(
     return desc;
 }
 
-
-
 static
 void
 addSampleGroup(
@@ -62,6 +60,7 @@ addSampleGroup(
     if (! vm.count(vmkey)) return;
 
     files_t tmpfiles=(boost::any_cast<files_t>(vm[vmkey].value()));
+
     for (const auto& tfile : tmpfiles)
     {
         opt.alignmentFilename.push_back(tfile);
@@ -70,7 +69,6 @@ addSampleGroup(
         opt.alignmentSampleInfo.push_back(si);
     }
 }
-
 
 
 bool

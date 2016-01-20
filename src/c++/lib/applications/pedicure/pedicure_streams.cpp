@@ -115,7 +115,7 @@ pedicure_streams(
 
         // Indel specific infos
         os << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Test\">\n";
-        os << "##INFO=<ID=RU,Number=1,Type=String,Description=\"Test\">\n";
+        os << "##INFO=<ID=RU,Number=.,Type=String,Description=\"Test\">\n";
         os << "##INFO=<ID=RC,Number=1,Type=Integer,Description=\"Test\">\n";
         os << "##INFO=<ID=IC,Number=1,Type=Integer,Description=\"Test\">\n";
 
@@ -145,9 +145,15 @@ pedicure_streams(
         os << vcf_col_label() << "\tFORMAT";
         {
             const SampleInfoManager& si(opt.alignFileOpt.alignmentSampleInfo);
+            unsigned parentCount = 1;
             for (unsigned sampleIndex(0); sampleIndex<si.size(); ++sampleIndex)
             {
                 os << "\t" << PEDICURE_SAMPLETYPE::get_label(si.getSampleInfo(sampleIndex).stype);
+                if (si.getSampleInfo(sampleIndex).stype==PEDICURE_SAMPLETYPE::PARENT){
+                	os << parentCount;
+                	parentCount++;
+                }
+
             }
         }
         os << "\n";
