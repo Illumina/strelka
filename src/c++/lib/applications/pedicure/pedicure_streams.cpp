@@ -114,10 +114,10 @@ pedicure_streams(
         os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
 
         // Indel specific infos
-        os << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Test\">\n";
-        os << "##INFO=<ID=RU,Number=.,Type=String,Description=\"Test\">\n";
-        os << "##INFO=<ID=RC,Number=1,Type=Integer,Description=\"Test\">\n";
-        os << "##INFO=<ID=IC,Number=1,Type=Integer,Description=\"Test\">\n";
+        os << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Interupted homopolymer length\">\n";
+        os << "##INFO=<ID=RU,Number=.,Type=String,Description=\"Repeat unit\">\n";
+        os << "##INFO=<ID=RC,Number=1,Type=Integer,Description=\"Reference repeat count\">\n";
+        os << "##INFO=<ID=IC,Number=1,Type=Integer,Description=\"Indel repeat count\">\n";
 
         // FORMAT:
         os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
