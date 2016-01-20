@@ -25,7 +25,7 @@
 #pragma once
 
 #include <cassert>
-
+#include <string>
 #include <vector>
 
 
@@ -35,6 +35,8 @@ enum index_t
 {
     PROBAND,
     PARENT,
+    FATHER,
+    MOTHER,
     SIBLING,
     SIZE
 };
@@ -49,6 +51,10 @@ get_label(const unsigned i)
         return "PROBAND";
     case PARENT:
         return "PARENT";
+    case FATHER:
+        return "FATHER";
+    case MOTHER:
+        return "FATHER";
     case SIBLING:
         return "SIBLING";
     default:
@@ -73,8 +79,9 @@ enum index_t
 /// tracks all sample information provided by the user
 struct SampleInfo
 {
-    /// relationship of sample to proband there's no use for an unknown value here:
+    // relationship of sample to proband there's no use for an unknown value here:
     PEDICURE_SAMPLETYPE::index_t stype = PEDICURE_SAMPLETYPE::PROBAND;
+    std::string sname				   = "SAMPLE";
 };
 
 

@@ -1,3 +1,4 @@
+- PED-48 bcftools compatibility in VCF, better sample naming
 - STARKA-335 restore breakend filters for germline gVCF output
 - Multi-sample calling introduced for SNVs and Indel + PL field added (tickets PED10-19)
 - STARKA-317 Enable CRAM input, improve per-chrom depth estimation 
