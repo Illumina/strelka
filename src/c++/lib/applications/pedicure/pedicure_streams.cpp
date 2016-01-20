@@ -149,9 +149,10 @@ pedicure_streams(
             for (unsigned sampleIndex(0); sampleIndex<si.size(); ++sampleIndex)
             {
                 os << "\t" << PEDICURE_SAMPLETYPE::get_label(si.getSampleInfo(sampleIndex).stype);
-                if (si.getSampleInfo(sampleIndex).stype==PEDICURE_SAMPLETYPE::PARENT){
-                	os << parentCount;
-                	parentCount++;
+                if (si.getSampleInfo(sampleIndex).stype==PEDICURE_SAMPLETYPE::PARENT)
+                {
+                    os << parentCount;
+                    parentCount++;
                 }
 
             }

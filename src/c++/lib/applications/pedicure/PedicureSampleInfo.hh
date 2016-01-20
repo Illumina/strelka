@@ -35,8 +35,8 @@ enum index_t
 {
     PROBAND,
     PARENT,
-	FATHER,
-	MOTHER,
+    FATHER,
+    MOTHER,
     SIBLING,
     SIZE
 };
@@ -52,9 +52,9 @@ get_label(const unsigned i)
     case PARENT:
         return "PARENT";
     case FATHER:
-    	return "FATHER";
+        return "FATHER";
     case MOTHER:
-    	return "FATHER";
+        return "FATHER";
     case SIBLING:
         return "SIBLING";
     default:
