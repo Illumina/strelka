@@ -281,7 +281,7 @@ process_pos_indel_denovo(const pos_t pos)
             is_use_alt_indel,
             dindel);
 
-        if (true || dindel.is_output())
+        if (dindel.is_output())
         {
             // get sample specific info:
             std::vector<isriTiers_t> isri(_n_samples);

@@ -35,15 +35,17 @@ static
 void
 write_vcf_sample_info(
     const starling_indel_sample_report_info& isri1,
-    const starling_indel_sample_report_info& isri2,
+    const starling_indel_sample_report_info& /*isri2*/,
     const denovo_indel_call& dinc,
     const int& id,
     std::ostream& os)
 {
 
 //	GT:GQ:GQX:DP:DP2:AD:PL
+	int total = isri1.n_q30_ref_reads + isri1.n_q30_indel_reads;
+
     static const char sep(':');
-    if (dinc.gtstring.size()>0)
+    if (dinc.gtstring.size()>0 && total>0)
     {
         os << dinc.gtstring.at(id)
            << sep
@@ -59,10 +61,11 @@ write_vcf_sample_info(
 
     os << isri1.depth
        << sep
-       << isri2.depth
-       << sep
-       << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
-       << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads;
+//	   n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;
+	   << isri1.n_q30_ref_reads << ','
+	   << isri1.n_q30_indel_reads;// + isri1.n_q30_alt_reads;
+//       << isri1.n_q30_ref_reads+isri2.n_q30_ref_reads << ','
+//        << isri1.n_q30_alt_reads+isri2.n_q30_alt_reads
 //       << sep
 //       << isri1.n_q30_indel_reads << ','
 //       << isri2.n_q30_indel_reads
@@ -110,48 +113,57 @@ denovo_indel_call_vcf(
             }
         }
 
-        if (rs.is_overlap)
-        {
-            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
+//        if (rs.is_overlap)
+//        {
+//            smod.set_filter(PEDICURE_VCF_FILTERS::OverlapConflict);
+//        }
+
+        for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++){
+            if (dinc.gqx[sampleIndex] < opt.dfilter.sindelQuality_LowerBound)
+            {
+            	smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
+            	break;
+            }
         }
+
 
         if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
         {
 //            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
 
-//        if (siInfo.iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
+//        if (iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
 //        {
 //            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
 //        }
 //
-//        if (siInfo.iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
+        if (iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
+        {
+            smod.set_filter(PEDICURE_VCF_FILTERS::iHpol);
+        }
+
+
 //        {
-//            smod.set_filter(INOOV_VCF_FILTERS::iHpol);
+//            const int normalFilt(wasNormal.ss_filt_win.avg());
+//            const int normalUsed(wasNormal.ss_used_win.avg());
+//            const float normalWinFrac(safeFrac(normalFilt,(normalFilt+normalUsed)));
+//
+//            const int tumorFilt(wasTumor.ss_filt_win.avg());
+//            const int tumorUsed(wasTumor.ss_used_win.avg());
+//            const float tumorWinFrac(safeFrac(tumorFilt,(tumorFilt+tumorUsed)));
+//
+//            if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
+//                (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
+//            {
+//                smod.set_filter(STRELKA_VCF_FILTERS::IndelBCNoise);
+//            }
 //        }
 
-#if 0
-        {
-            const int normalFilt(wasNormal.ss_filt_win.avg());
-            const int normalUsed(wasNormal.ss_used_win.avg());
-            const float normalWinFrac(safeFrac(normalFilt,(normalFilt+normalUsed)));
+//        if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
+//        {
+//            smod.set_filter(STRELKA_VCF_FILTERS::QSI_ref);
+//        }
 
-            const int tumorFilt(wasTumor.ss_filt_win.avg());
-            const int tumorUsed(wasTumor.ss_used_win.avg());
-            const float tumorWinFrac(safeFrac(tumorFilt,(tumorFilt+tumorUsed)));
-
-            if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
-                (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
-            {
-                smod.set_filter(STRELKA_VCF_FILTERS::IndelBCNoise);
-            }
-        }
-
-        if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
-        {
-            smod.set_filter(STRELKA_VCF_FILTERS::QSI_ref);
-        }
-#endif
     }
 
 
@@ -195,11 +207,11 @@ denovo_indel_call_vcf(
 //    }
     if (rs.is_overlap)
     {
-        os << ";OVERLAP";
+//        os << ";OVERLAP";
     }
 
     //FORMAT
-    os << sep << "GT:GQ:GQX:DP:DP2:AD";
+    os << sep << "GT:GQ:GQX:DPI:AD";
 
     // write sample info:
     int id = 0;

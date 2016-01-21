@@ -1,3 +1,6 @@
+- PED-42 Filtering model for SNV and Indels
+- PED-40 De novo filter tunning
+- PED-44 Better indel overlap
 - STARKA-388 add ADF/ADR tags to gVCF output
 - STARKA-393 stabilize forced long del genotyping in gVCF aggregator 
 - STARKA-351 reorg all strelka documentation

@@ -123,20 +123,40 @@ pedicure_streams(
         os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
         os << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality\">\n";
         os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
+        os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Indel anchor base read depth\">\n";
         os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">\n";
-        os << "##FORMAT=<ID=DP2,Number=1,Type=Integer,Description=\"Read depth\">\n";
         os << "##FORMAT=<ID=FDP,Number=1,Type=Integer,Description=\"Filtered read depth\">\n";
         os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob 0.999 or higher that read contains indicated allele vs all other intersecting indel alleles)\">\n";
-        os << "##FORMAT=<ID=PL,Number=.,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
+        os << "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
 
         // FILTERS:
         {
             using namespace PEDICURE_VCF_FILTERS;
             {
                 std::ostringstream oss;
+                oss << "Loci GQX less than " << opt.dfilter.dsnv_qual_lowerbound;
+                write_vcf_filter(os, get_label(LowGQX), oss.str().c_str());
 
-                oss << "Calls that have GQX below " << 30;
-                write_vcf_filter(os, get_label(lowGQX), oss.str().c_str());
+                oss.str("");
+                oss << "Overlapping loci" ;
+                write_vcf_filter(os, get_label(OverlapConflict), oss.str().c_str());
+
+                oss.str("");
+                oss << "Depth is more than " << opt.dfilter.max_depth_factor << " times the chromosome mean" ;
+                write_vcf_filter(os, get_label(HighDepth), oss.str().c_str());
+
+                oss.str("");
+                oss << "The fraction of filtered reads to total reads exceeds " << opt.dfilter.snv_max_filtered_basecall_frac;
+                write_vcf_filter(os, get_label(DPF), oss.str().c_str());
+
+                oss.str("");
+                oss << "Reference repeat exceeds " << opt.dfilter.indelMaxRefRepeat;
+                write_vcf_filter(os, get_label(Repeat), oss.str().c_str());
+
+                oss.str("");
+                oss << "Homopolymer length exceeds " << opt.dfilter.indelMaxIntHpolLength;
+                write_vcf_filter(os, get_label(iHpol), oss.str().c_str());
+
             }
         }
 
