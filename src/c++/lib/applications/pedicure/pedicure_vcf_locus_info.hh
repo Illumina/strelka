@@ -59,10 +59,6 @@ get_label(const unsigned idx)
         return "HighDepth";
     case WrongCount:
         return "WrongCount";
-    case QDS:
-        return "LowQDS";
-    case QDI:
-        return "LowQDI";
     case Repeat:
         return "Repeat";
     case iHpol:
