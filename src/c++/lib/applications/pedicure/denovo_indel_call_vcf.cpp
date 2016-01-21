@@ -195,7 +195,7 @@ denovo_indel_call_vcf(
 //    }
     if (rs.is_overlap)
     {
-        os << ";OVERLAP";
+//        os << ";OVERLAP";
     }
 
     //FORMAT
