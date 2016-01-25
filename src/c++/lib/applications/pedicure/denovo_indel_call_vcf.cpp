@@ -110,10 +110,10 @@ denovo_indel_call_vcf(
             }
         }
 
-        if (rs.is_overlap)
-        {
-            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
-        }
+//        if (rs.is_overlap)
+//        {
+//            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
+//        }
 
         if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
         {
