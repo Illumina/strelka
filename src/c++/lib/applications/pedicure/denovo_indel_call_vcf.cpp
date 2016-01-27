@@ -59,10 +59,11 @@ write_vcf_sample_info(
 
     os << isri1.depth
        << sep
-//       << isri2.depth
-//       << sep
-       << isri1.n_q30_ref_reads+isri2.n_q30_ref_reads << ','
-       << isri2.n_q30_alt_reads+isri1.n_q30_alt_reads;
+//	   n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;
+	   << isri1.n_q30_ref_reads << ','
+	   << isri1.n_q30_indel_reads;// + isri1.n_q30_alt_reads;
+//       << isri1.n_q30_ref_reads+isri2.n_q30_ref_reads << ','
+//        << isri1.n_q30_alt_reads+isri2.n_q30_alt_reads
 //       << sep
 //       << isri1.n_q30_indel_reads << ','
 //       << isri2.n_q30_indel_reads
@@ -209,7 +210,7 @@ denovo_indel_call_vcf(
     }
 
     //FORMAT
-    os << sep << "GT:GQ:GQX:DP:AD";
+    os << sep << "GT:GQ:GQX:DPI:AD";
 
     // write sample info:
     int id = 0;
