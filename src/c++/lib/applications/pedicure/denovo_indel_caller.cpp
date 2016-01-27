@@ -443,7 +443,7 @@ is_multi_indel_allele(
     //
     is_overlap=((scores[0].second!=REF) && (scores[1].second!=REF));
 
-    return is_overlap;
+    return false;
 }
 
 
@@ -577,6 +577,8 @@ get_denovo_indel_call(
             dinc.gq.push_back( std::min(100, (int)( tt[1] - tt[0] ) ) );
 
             dinc.gtstring.push_back(STAR_DIINDEL::get_gt_label(max_index));
+            dinc.gt_sum += max_index;
+
         }
     }
 

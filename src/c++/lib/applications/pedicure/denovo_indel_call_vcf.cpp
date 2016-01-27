@@ -116,12 +116,12 @@ denovo_indel_call_vcf(
             smod.set_filter(PEDICURE_VCF_FILTERS::overlapConflict);
         }
 
-//        for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++){
-//            if (dinc.gqx[sampleIndex] < opt.dfilter.sindelQuality_LowerBound)
-//            {
-//            	smod.set_filter(PEDICURE_VCF_FILTERS::lowGQX);
-//            }
-//        }
+        for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++){
+            if (dinc.gqx[sampleIndex] < opt.dfilter.sindelQuality_LowerBound)
+            {
+            	smod.set_filter(PEDICURE_VCF_FILTERS::lowGQX);
+            }
+        }
 
 
 

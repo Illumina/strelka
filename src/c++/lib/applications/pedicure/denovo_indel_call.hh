@@ -44,7 +44,7 @@ struct denovo_indel_call
     bool
     is_indel() const
     {
-        return (rs.dindel_qphred != 0);
+        return (gt_sum > 0);
     }
 
     // should this indel be written out?
@@ -61,4 +61,5 @@ struct denovo_indel_call
     std::vector< std::string > gtstring;
     std::vector< unsigned > gqx;
     std::vector< unsigned > gq;
+    unsigned gt_sum=0;
 };
