@@ -500,7 +500,7 @@ get_denovo_indel_call(
                 if (! dinc.is_forced_output)   // if forced output then there's still a point to computing tier2
                 {
                     tier_rs[1].dindel_qphred=0;
-                    continue;
+//                    continue;
                 }
             }
         }
@@ -518,8 +518,8 @@ get_denovo_indel_call(
 #if 0
                 std::cerr << "BUG: rejected\n";
 #endif
-//                log_os << "debug multi case" << std::endl;
-                continue;
+                dinc.rs.is_overlap = true;
+//                continue;
             }
 
         for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)

@@ -51,7 +51,7 @@ struct denovo_indel_call
     bool
     is_output() const
     {
-        return (is_indel() || is_forced_output);
+        return (true || is_indel() || is_forced_output);
     }
 
     result_set rs;
