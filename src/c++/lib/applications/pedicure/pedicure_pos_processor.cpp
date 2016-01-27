@@ -280,7 +280,7 @@ process_pos_indel_denovo(const pos_t pos)
             is_use_alt_indel,
             dindel);
 
-        if (true || dindel.is_output())
+        if (dindel.is_output())
         {
             // get sample specific info:
             std::vector<isriTiers_t> isri(_n_samples);
@@ -324,8 +324,8 @@ void
 pedicure_pos_processor::
 aggregate_vcf(const std::string& /*chrom*/, const pos_t& pos, const std::string& vcf_line)
 {
-//    std::ostream& bos(*_streams.denovo_osptr());
-    std::ostream& bos(std::cout);
+    std::ostream& bos(*_streams.denovo_osptr());
+//    std::ostream& bos(std::cout);
 
     // case in order
     if (prev_vcf_pos<pos)
