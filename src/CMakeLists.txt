@@ -25,7 +25,11 @@
 ##
 ################################################################################
 
-cmake_minimum_required(VERSION 2.8.5)
+if (WIN32)
+    cmake_minimum_required(VERSION 3.1.0)
+else ()
+    cmake_minimum_required(VERSION 2.8.5)
+endif ()
 
 message (STATUS "==== Initializing project cmake configuration ====")
 
@@ -51,31 +55,43 @@ include ("${THIS_MACROS_CMAKE}")
 set(DEVELOPER_MODE true)
 
 #
-# setup build type
+# set WIN specific cache values
+#   - WIN user potentially interacts with cache via cmake-gui
+#   - Linux user interacts via the configure shell script
 #
-if (NOT WIN32)
-    set(CMAKE_BUILD_TYPES Debug Release RelWithDebInfo ASan)
-    join(CMAKE_BUILD_TYPES ", " CMAKE_BUILD_TYPES_STRING)
-
-    if (NOT CMAKE_BUILD_TYPE)
-        set(DEFAULT_CMAKE_BUILD_TYPE Release)
-        set(CMAKE_BUILD_TYPE ${DEFAULT_CMAKE_BUILD_TYPE} CACHE STRING
-            "Choose the type of build, options are: {${CMAKE_BUILD_TYPES_STRING}} (default: ${DEFAULT_CMAKE_BUILD_TYPE})")
-    endif()
-
-    # check that a valid build type has been selected:
-    list(FIND CMAKE_BUILD_TYPES ${CMAKE_BUILD_TYPE} TINDEX)
-    if(TINDEX EQUAL -1)
-        message (FATAL_ERROR "Selected build type, '${CMAKE_BUILD_TYPE}', is not in the set of available types: {${CMAKE_BUILD_TYPES_STRING}}")
-    endif()
-
-    message (STATUS "BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-else ()
+if (WIN32)
     set(IS_MSVC_ANALYZE FALSE CACHE BOOL
         "Turn on Visual Studio /analyze option")
+
+    # TODO better specify/document how this interacts with CMAKE_BUILD_TYPES
     set(CMAKE_CONFIGURATION_TYPES "Release" CACHE INTERNAL
         "Visual Studio build types" FORCE)
 endif ()
+
+
+#
+# setup build type
+#
+set(CMAKE_BUILD_TYPES Debug Release RelWithDebInfo)
+if (NOT WIN32)
+    set(CMAKE_BUILD_TYPES ${CMAKE_BUILD_TYPES} ASan)
+endif ()
+
+join(CMAKE_BUILD_TYPES ", " CMAKE_BUILD_TYPES_STRING)
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(DEFAULT_CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE ${DEFAULT_CMAKE_BUILD_TYPE} CACHE STRING
+        "Choose the type of build, options are: {${CMAKE_BUILD_TYPES_STRING}} (default: ${DEFAULT_CMAKE_BUILD_TYPE})")
+endif()
+
+# check that a valid build type has been selected:
+list(FIND CMAKE_BUILD_TYPES ${CMAKE_BUILD_TYPE} TINDEX)
+if(TINDEX EQUAL -1)
+    message (FATAL_ERROR "Selected build type, '${CMAKE_BUILD_TYPE}', is not in the set of available types: {${CMAKE_BUILD_TYPES_STRING}}")
+endif()
+
+message (STATUS "BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 #
 # other cache variables
@@ -114,6 +130,17 @@ find_package(PythonInterp)
 if (NOT PYTHONINTERP_FOUND)
     message (WARNING "No python interpreter found, disabling optional python build and installation components. Installed workflow requires python interpreter to run")
 endif()
+
+set (THIS_ARCH ${CMAKE_SYSTEM_PROCESSOR})
+if (NOT WIN32)
+    if (CMAKE_SIZEOF_VOID_P MATCHES 8)
+        set (THIS_ARCH "x86_64")
+    else ()
+        set (THIS_ARCH "x86")
+    endif ()
+endif ()
+message (STATUS "TARGET_ARCHITECTURE: " ${THIS_ARCH} )
+
 
 # Create package versioning target - version derived from git describe except for
 # release tarballs. Version file is treated as always out of date.
@@ -203,21 +230,23 @@ if (NOT WIN32)
     add_dependencies(${THIS_OPT} ${THIS_SOURCE_CHECK})
 endif ()
 
+add_subdirectory (cmake/preInstall)
+add_subdirectory (opt)
+
 # force unit tests at compile time, and set them to be more verbose than
 # cmake's default "test" target:
 set(THIS_UNITTESTS "${THIS_PROJECT_NAME}_unittests")
+set(utest_cmd ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --output-on-failure)
 add_custom_target(${THIS_UNITTESTS}
     ALL
-    COMMAND ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --output-on-failure
+    COMMAND ${utest_cmd}
     )
 
-add_subdirectory (cmake/preInstall)
-add_subdirectory (opt)
 add_subdirectory (c++)
 add_subdirectory (python)
 add_subdirectory (config)
+add_subdirectory (demo)
 if (NOT WIN32)
-    add_subdirectory (demo)
     add_subdirectory (markdown)
 endif ()
 add_subdirectory (cmake/postInstall)
