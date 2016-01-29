@@ -210,8 +210,7 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
         }
         else
         {
-            // this should never happen, but just for completeness
-            log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
+            log_os << "ERROR: Unknown indel type: " << iri << "\n";
             throw blt_exception("Unknown indel type.");
         }
     }
@@ -233,12 +232,9 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
             ref_error_prob   = model[0][0].insert_rate;
         }
     }
-    // else
-    // {
-    //     log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
-    //     throw blt_exception("Unknown indel type.");
-    // }
 }
+
+
 
 void
 IndelErrorModel::

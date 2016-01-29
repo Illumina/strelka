@@ -240,8 +240,7 @@ get_seq_repeat_unit(const std::string& seq,
                     std::string& repeat_unit,
                     unsigned& repeat_count)
 {
-    const std::string::size_type sg(seq.find('-'));
-    const unsigned seq_size((sg!=std::string::npos) ? sg : seq.size());
+    const unsigned seq_size(seq.size());
 
     // check all divisors of seq_size until a repeat is found:
     for (unsigned i(1); i<seq_size; ++i)
@@ -274,4 +273,16 @@ get_seq_repeat_unit(const std::string& seq,
 
     repeat_unit = seq;
     repeat_count = 1;
+}
+
+
+
+void
+get_vcf_seq_repeat_unit(
+    const std::string& seq,
+    std::string& repeat_unit,
+    unsigned& repeat_count)
+{
+    assert(! seq.empty());
+    get_seq_repeat_unit(seq.substr(1),repeat_unit,repeat_count);
 }
