@@ -107,7 +107,7 @@ denovo_snv_call_vcf(
         for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
             if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
             {
-                smod.set_filter(PEDICURE_VCF_FILTERS::lowGQX);
+                smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
             }
 
     }

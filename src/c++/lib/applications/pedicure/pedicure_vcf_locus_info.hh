@@ -44,8 +44,8 @@ enum index_t
     QDI,
     Repeat,
     iHpol,
-    overlapConflict,
-    lowGQX,
+    OverlapConflict,
+    LowGQX,
     SIZE
 };
 
@@ -67,10 +67,10 @@ get_label(const unsigned idx)
         return "Repeat";
     case iHpol:
         return "iHpol";
-    case lowGQX:
-        return "lowGQX";
-    case overlapConflict:
-        return "overlapConflict";
+    case LowGQX:
+        return "LowGQX";
+    case OverlapConflict:
+        return "OverlapConflict";
     default:
         assert(false && "Unknown vcf filter id");
         return nullptr;
