@@ -36,19 +36,29 @@ static const unsigned max_tract_len(40);
 
 struct indel_error_rates
 {
-    double insert_rate;
-    double delete_rate;
-
-    indel_error_rates()
-    {
-        insert_rate = 0;
-        delete_rate = 0;
-    }
-    indel_error_rates(double insert_error_rate, double delete_error_rate)
+    indel_error_rates(
+        const double insert_error_rate = 0,
+        const double delete_error_rate = 0)
     {
         insert_rate = insert_error_rate;
         delete_rate = delete_error_rate;
     }
+
+    double
+    get_rate(const INDEL::index_t it) const
+    {
+        switch(it)
+        {
+        case INDEL::DELETE : return delete_rate;
+        case INDEL::INSERT : return insert_rate;
+        default :
+            assert(false && "Unexpected indel type");
+            return 0.;
+        }
+    }
+
+    double insert_rate;
+    double delete_rate;
 };
 
 typedef indel_error_rates error_model[max_unit_len][max_tract_len];
@@ -97,14 +107,17 @@ struct IndelErrorModel
         return MaxMotifLength;
     }
 
-    double adjusted_rate(unsigned repeat_unit_length,
-                         unsigned tract_length,
-                         unsigned indel_size,
-                         INDEL::index_t it) const;
 
     void add_prop(const unsigned& unit, const unsigned& tract, const indel_error_rates& myProps);
 
 private:
+    double
+    adjusted_rate(
+        const unsigned repeat_unit_length,
+        const unsigned tract_length,
+        const unsigned indel_size,
+        const INDEL::index_t it) const;
+
     static
     unsigned
     get_min_tract_length(const starling_indel_report_info& iri)
