@@ -89,12 +89,6 @@ struct IndelErrorModel
                    double& ref_error_prob,
                    bool use_length_dependence = false) const;
 
-    void calc_abstract_prop(unsigned repeat_unit_length,
-                            unsigned tract_length,
-                            unsigned indel_size,
-                            indel_error_rates& error_rates,
-                            bool use_length_dependence) const;
-
     indel_error_rates calc_abstract_prop(unsigned repeat_unit_length,
                                          unsigned tract_length,
                                          unsigned indel_size,

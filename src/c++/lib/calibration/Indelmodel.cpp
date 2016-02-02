@@ -217,42 +217,6 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
 
 
 
-void
-IndelErrorModel::
-calc_abstract_prop(unsigned repeat_unit_length,
-                   unsigned tract_length,
-                   unsigned indel_size,
-                   indel_error_rates& error_rates,
-                   bool use_length_dependence) const
-{
-    // determine the tract length to use
-    static const unsigned one(1);
-    const unsigned repeat_unit = std::min(std::max(repeat_unit_length,one), this->MaxMotifLength);
-
-    unsigned min_tract_length = repeat_unit * 2;
-    if (repeat_unit == 1)
-    {
-        min_tract_length = 1;
-    }
-
-    // if tract length is too short for repeat unit, set to shortest indel error rate for
-    // that repeat unit length
-    const unsigned adj_tract_length = std::min(repeat_unit*std::max(tract_length,min_tract_length),
-                                               this->MaxTractLength);
-
-    double adj_indel_size = one;
-    if (use_length_dependence)
-    {
-        adj_indel_size = indel_size;
-    }
-
-    // error_rates = model[repeat_unit - 1][adj_tract_length - 1];
-    error_rates.insert_rate = adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::INSERT);
-    error_rates.delete_rate = adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::DELETE);
-}
-
-
-
 indel_error_rates
 IndelErrorModel::
 calc_abstract_prop(unsigned repeat_unit_length,
