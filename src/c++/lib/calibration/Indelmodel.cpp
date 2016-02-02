@@ -289,21 +289,6 @@ calc_abstract_prop(unsigned repeat_unit_length,
     return error_rates;
 }
 
-bool IndelErrorModel::is_simple_tandem_repeat(const starling_indel_report_info& iri) const
-{
-    // an STR only has insertions or deletions, has a repeat unit length present in the model,
-    // and has a tract length present in the model
-    unsigned min_tract_length = get_min_tract_length(iri);
-    if (iri.repeat_unit_length <= MaxMotifLength &&
-        (iri.it == INDEL::DELETE || iri.it == INDEL::INSERT) &&
-        (iri.ref_repeat_count >= min_tract_length ||
-         iri.indel_repeat_count >= min_tract_length))
-    {
-        return true;
-    }
-    return false;
-}
-
 
 
 double

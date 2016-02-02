@@ -100,8 +100,6 @@ struct IndelErrorModel
                                          unsigned indel_size,
                                          bool use_length_dependence) const;
 
-    bool is_simple_tandem_repeat(const starling_indel_report_info& iri) const;
-
     unsigned get_max_motif_length() const
     {
         return MaxMotifLength;
