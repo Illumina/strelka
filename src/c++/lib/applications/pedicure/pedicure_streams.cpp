@@ -137,9 +137,9 @@ pedicure_streams(
 
                 oss << "Loci GQX less than " << 30;
                 write_vcf_filter(os, get_label(LowGQX), oss.str().c_str());
-                oss << "Overlapping loci " ;
+                oss << "Overlapping loci" ;
                 write_vcf_filter(os, get_label(OverlapConflict), oss.str().c_str());
-                oss << "Depth is more than 3 times the chromosome mean " ;
+                oss << "Depth is more than 3 times the chromosome mean" ;
                 write_vcf_filter(os, get_label(HighDepth), oss.str().c_str());
             }
         }
