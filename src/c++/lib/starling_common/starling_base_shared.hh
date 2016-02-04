@@ -232,6 +232,9 @@ struct starling_base_options : public blt_options
     /// file specifying haploid and deleted regions as 1/0 in bed col 4
     std::string ploidy_region_bedfile;
 
+    /// Stores runtime stats
+    std::string segmentStatsFilename;
+
     bool
     isMaxBufferedReads() const
     {

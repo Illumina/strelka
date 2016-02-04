@@ -77,6 +77,11 @@ else  ()
     message(FATAL_ERROR "${TMP_MSG}")
 endif ()
 
+# required support for librt to allow boost chrono
+if (UNIX AND NOT APPLE)
+    set  (THIS_ADDITIONAL_LIB ${THIS_ADDITIONAL_LIB} rt)
+endif ()
+
 # htslib 1.x forces pthreads in link:
 find_package( Threads )
 set  (THIS_ADDITIONAL_LIB ${THIS_ADDITIONAL_LIB} ${CMAKE_THREAD_LIBS_INIT})
