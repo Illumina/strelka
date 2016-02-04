@@ -179,6 +179,16 @@ get_state(
 {
     if (normal_gt<DIGT_SGRID::PRESTRAND_SIZE) return normal_gt+DIGT_SGRID::PRESTRAND_SIZE*tumor_gt;
     return PRESTRAND_SIZE+normal_gt-DIGT_SGRID::PRESTRAND_SIZE;
+//    return normal_gt+DIGT_SIMPLE::SIZE*tumor_gt;
+}
+
+inline
+unsigned
+get_digt_state(
+    const unsigned normal_gt,
+    const unsigned tumor_gt)
+{
+    return normal_gt+DIGT_SIMPLE::SIZE*tumor_gt;
 }
 
 inline
@@ -214,9 +224,13 @@ write_full_state(const DDIGT_SGRID::index_t dgt,
                  const unsigned ref_gt,
                  std::ostream& os);
 
+//void
+//write_alt_alleles(const DDIGT_SGRID::index_t dgt,
+//                  const unsigned ref_gt,
+//                  std::ostream& os);
+
 void
-write_alt_alleles(const DDIGT_SGRID::index_t dgt,
-                  const unsigned ref_gt,
+write_alt_alleles(unsigned alt_gt,
                   std::ostream& os);
 
 struct is_nonsom_maker_t

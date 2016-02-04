@@ -339,8 +339,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
     os << '\t' << n1_epd.rawPileup().get_ref_base()
        //ALT:
        << "\t";
-    DDIGT_SGRID::write_alt_alleles(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
-                                   sgt.ref_gt,os);
+    DDIGT_SGRID::write_alt_alleles(rs.max_gt, os);
     //QUAL:
     os << "\t.";
 

@@ -48,7 +48,9 @@ strelka_pile_caller(strelka_options& opt,
     opt.bsnp_diploid_theta = 0.001;
     opt.somatic_snv_rate       = 0.000001;
     opt.shared_site_error_rate = 0.0000005;
-    opt.shared_site_error_strand_bias_fraction = 0.5;
+//    opt.shared_site_error_rate = 0.0000000005;
+//    opt.shared_site_error_strand_bias_fraction = 0.5;
+    opt.shared_site_error_strand_bias_fraction = 0.0;
 
     static const std::string ref_seq("ACGT");
     reference_contig_segment ref;

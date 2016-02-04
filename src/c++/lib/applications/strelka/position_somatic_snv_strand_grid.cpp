@@ -509,10 +509,8 @@ calculate_result_set_grid(
 //        printf("%f\t%lf\t%lf\n", get_fraction_from_index_snv(i), normal_lhood[i], tumor_lhood[i]);
 //    }
 
-    bool is_normal_contaminated = false;
+    bool is_normal_contaminated = true;
     // Calculate posterior probabilities
-    rs.max_gt=0;
-
     double log_post_prob[DIGT_SIMPLE::SIZE][TWO_STATE_SOMATIC::SIZE];
     double max_log_prob = -INFINITY;
 
@@ -524,6 +522,15 @@ calculate_result_set_grid(
     somatic_prior_normal[DIGT_SGRID::PRESTRAND_SIZE - 1] = 0.5;  // fn = 0.05
 //    somatic_prior_normal[DIGT_SGRID::PRESTRAND_SIZE - 2] = 0.05;  // fn = 0.1
 
+//    double somatic_prior[DIGT_SGRID::PRESTRAND_SIZE][DIGT_SGRID::PRESTRAND_SIZE] = {};
+//    for (unsigned ft(0); ft<DIGT_SGRID::PRESTRAND_SIZE; ++ft)
+//    {
+//        for (unsigned fn(0); fn<DIGT_SGRID::PRESTRAND_SIZE; ++fn)
+//        {
+//            somatic_prior[std::log(somatic_prior_normal[fn]) + std::log(somatic_prior_tumor[ft]);
+//        }
+//    }
+//
     double somatic_prior_tumor[DIGT_SGRID::PRESTRAND_SIZE];
     for(unsigned ft(0); ft<DIGT_SGRID::PRESTRAND_SIZE; ++ft)
         somatic_prior_tumor[ft] = 1.0/static_cast<double>(DIGT_SGRID::PRESTRAND_SIZE-1);
@@ -572,7 +579,7 @@ calculate_result_set_grid(
                            else
                            {
                                // fn should be smaller than ft
-                               if(get_fraction_from_index_snv(fn) >= get_fraction_from_index_snv(ft))
+                               if(get_fraction_from_index_snv(fn) >= 0.15*get_fraction_from_index_snv(ft))
                                    lprob_f_given_g = -INFINITY;
                                else
                                {
@@ -628,7 +635,6 @@ calculate_result_set_grid(
             if(log_post_prob[ngt][tgt] > max_log_prob)
             {
                 max_log_prob = log_post_prob[ngt][tgt];
-                rs.max_gt = DDIGT_SGRID::get_state(ngt,tgt);
             }
         }
     }
@@ -667,7 +673,7 @@ calculate_result_set_grid(
         }
 
         double err_som_and_ngt = 1.0 - som_prob_given_ngt;
-        if (err_som_and_ngt<min_not_somfrom_sum)
+        if (err_som_and_ngt < min_not_somfrom_sum)
         {
             min_not_somfrom_sum=err_som_and_ngt;
             rs.snv_from_ntype_qphred=error_prob_to_qphred(err_som_and_ngt);
@@ -753,6 +759,27 @@ position_somatic_snv_call(
         // get likelihood of each genotype (REF, HOM, HET)
         const extended_pos_info& nepi(is_include_tier2 ? *normal_epi_t2_ptr : normal_epi );
         const extended_pos_info& tepi(is_include_tier2 ? *tumor_epi_t2_ptr : tumor_epi );
+
+        // determine alt base (experimental)
+        // later, this must be included in pi
+        int alt_count[4] = {};
+        for (const base_call& tbc : tepi.pi.calls)
+        {
+            const uint8_t obs_id(tbc.base_id);
+            if(obs_id == sgt.ref_gt || obs_id >= 4) continue;
+            ++alt_count[obs_id];
+        }
+        unsigned alt_id = sgt.ref_gt;
+        int max_count = 0;
+        for (unsigned idx(0); idx<4; ++idx)
+        {
+            if (alt_count[idx] > max_count)
+            {
+                max_count = alt_count[idx];
+                alt_id = idx;
+            }
+        }
+
         get_diploid_gt_lhood_cached_simple(nepi.pi, sgt.ref_gt, normal_lhood);
         get_diploid_gt_lhood_cached_simple(tepi.pi, sgt.ref_gt, tumor_lhood);
 
@@ -774,6 +801,8 @@ position_somatic_snv_call(
                                   _ln_som_match,_ln_som_mismatch,
                                   sgt.is_forced_output,
                                   tier_rs[i]);
+        tier_rs[i].max_gt = alt_id;
+
 
 #if 0
 #ifdef ENABLE_POLY

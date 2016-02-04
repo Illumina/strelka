@@ -224,7 +224,7 @@ get_diploid_gt_lhood_cached_simple(
 
         const uint8_t obs_id(bc.base_id);
 
-        if(ref_gt == obs_id)
+        if (obs_id == ref_gt)
         {
             lhood[DIGT_SIMPLE::REF] += cv.val[2];
             lhood[DIGT_SIMPLE::HET] += cv.val[1];

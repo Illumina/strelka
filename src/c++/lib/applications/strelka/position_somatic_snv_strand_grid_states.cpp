@@ -103,30 +103,10 @@ write_full_state(const DDIGT_SGRID::index_t dgt,
 
 
 void
-write_alt_alleles(const DDIGT_SGRID::index_t dgt,
-                  const unsigned ref_gt,
+write_alt_alleles(unsigned alt_gt,
                   std::ostream& os)
 {
-    unsigned normal_gt;
-    unsigned tumor_gt;
-    DDIGT_SGRID::get_digt_grid_states(dgt,normal_gt,tumor_gt);
-
-    unsigned normal_digt(DIGT_SGRID::get_digt_state(normal_gt,ref_gt));
-    unsigned tumor_digt(DIGT_SGRID::get_digt_state(tumor_gt,ref_gt));
-
-    bool is_print(false);
-    for (unsigned b(0); b<N_BASE; ++b)
-    {
-        if (b==ref_gt) continue;
-        if (DIGT::expect2(b,normal_digt) ||
-            DIGT::expect2(b,tumor_digt))
-        {
-            if (is_print) os << ",";
-            os << id_to_base(b);
-            is_print=true;
-        }
-    }
-    if (! is_print) os << ".";
+    os << id_to_base(alt_gt);
 }
 
 is_nonsom_maker_t::
