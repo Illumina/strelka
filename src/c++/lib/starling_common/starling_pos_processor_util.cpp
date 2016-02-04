@@ -439,6 +439,8 @@ process_candidate_indel(
     const unsigned sample_no,
     const bool is_forced_output)
 {
+    assert (vcf_indel.is_indel());
+
     const unsigned rs(vcf_indel.ref.size());
     for (const auto& alt : vcf_indel.alt)
     {
