@@ -263,6 +263,8 @@ adjusted_rate(
     const unsigned indel_size,
     const INDEL::index_t it) const
 {
+    assert(repeat_unit_length > 0);
+    assert(tract_length > 0);
     assert(it == INDEL::INSERT || it == INDEL::DELETE);
     return std::max(model[0][0].get_rate(it), std::pow(model[repeat_unit_length - 1][tract_length - 1].get_rate(it), indel_size));
 }
