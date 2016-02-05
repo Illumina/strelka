@@ -45,59 +45,17 @@ struct somatic_snv_caller_strand_grid
         const bool isComputeNonSomatic,
         somatic_snv_genotype_grid& sgt) const;
 
-    // compute a lot of prior information for various alternate
-    // versions of the method -- we don't actually need all of this for any one computation:
-    //
-    struct prior_set
-    {
-        prior_set()
-            : normal(DIGT_SGRID::SIZE)
-            , somatic_marginal(DIGT_SGRID::SIZE)
-            , normal_poly(DIGT_SGRID::SIZE)
-            , somatic_marginal_poly(DIGT_SGRID::SIZE)
-            , normal_nostrand(DIGT_SGRID::SIZE)
-            , normal_poly_nostrand(DIGT_SGRID::SIZE)
-        {}
-
-        typedef std::vector<blt_float_t> prior_t;
-
-        prior_t normal;
-        prior_t somatic_marginal;
-        prior_t normal_poly;
-        prior_t somatic_marginal_poly;
-
-        // added to support somatic gVCF:
-        prior_t normal_nostrand;
-        prior_t normal_poly_nostrand;
-    };
-
 private:
+    std::vector<blt_float_t> _ln_freq_given_somatic;
 
-    const prior_set&
-    get_prior_set() const
-    {
-        return _lnprior;
-    }
-
-    const std::vector<blt_float_t>&
-    lnprior_genomic() const
-    {
-        return _lnprior.normal;
-    }
-
-    const std::vector<blt_float_t>&
-    lnprior_polymorphic() const
-    {
-        return _lnprior.normal_poly;
-    }
-
-    const strelka_options& _opt;
-    prior_set _lnprior;
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;
-
-    blt_float_t _ln_csse_rate;
-    blt_float_t _ln_nostrand_sse_rate;
     const blt_float_t* _bare_lnprior;
+
+    const std::vector<blt_float_t>&
+    ln_freq_given_somatic() const
+    {
+        return _ln_freq_given_somatic;
+    }
 
 };
