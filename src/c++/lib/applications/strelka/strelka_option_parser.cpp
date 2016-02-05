@@ -121,16 +121,16 @@ get_strelka_option_parser(
      "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
     ("strelka-indel-min-qsi-ref", po::value(&opt.sfilter.sindelQuality_LowerBound)->default_value(opt.sfilter.sindelQuality_LowerBound),
      "min QSI_ref value")
-    ("strelka-indel-empirical-scoring", po::value(&opt.sfilter.is_use_indel_empirical_scoring)->default_value(opt.sfilter.is_use_indel_empirical_scoring),
-     "Enable filtering based on empirical scoring for indels")
     ;
 
     po::options_description tier2_opt(getTier2OptionsDescription(opt.tier2));
 
     po::options_description score_opt("scoring-options");
     score_opt.add_options()
-    ("variant-scoring-models-file", po::value(&opt.somatic_variant_scoring_models_filename),
-     "Model file for somatic variant scoring")
+    ("somatic-snv-scoring-model-file", po::value(&opt.somatic_snv_scoring_model_filename),
+     "Model file for somatic SNV scoring")
+    ("somatic-indel-scoring-model-file", po::value(&opt.somatic_indel_scoring_model_filename),
+     "Model file for somatic indel scoring")
     ;
 
     po::options_description strelka_parse_opt("Two-sample options");
@@ -154,6 +154,24 @@ get_strelka_option_parser(
     visible.add(help_parse_opt);
 
     return visible;
+}
+
+
+
+static
+void
+checkOptionalFile(
+    const prog_info& pinfo,
+    const std::string& filename,
+    const char* label)
+{
+    if (filename.empty()) return;
+    if (! boost::filesystem::exists(filename))
+    {
+        std::ostringstream oss;
+        oss << "Can't find " << label << " file '" << filename << "'";
+        pinfo.usage(oss.str().c_str());
+    }
 }
 
 
@@ -203,14 +221,8 @@ finalize_strelka_options(
         pinfo.usage("Strelka depth factor must not be less than 0");
     }
 
-    if (! opt.somatic_variant_scoring_models_filename.empty())
-    {
-        if (! boost::filesystem::exists(opt.somatic_variant_scoring_models_filename))
-        {
-            pinfo.usage("Somatic SNV scoring model file does not exist");
-        }
-
-    }
+    checkOptionalFile(pinfo,opt.somatic_snv_scoring_model_filename, "somatic snv scoring model");
+    checkOptionalFile(pinfo,opt.somatic_indel_scoring_model_filename, "somatic indel scoring model");
 
     finalize_starling_base_options(pinfo,vm,opt);
 }

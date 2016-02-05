@@ -64,7 +64,7 @@ struct SomaticIndelVcfWriter
         return (_data.count(pos) != 0);
     }
 
-    /// return true if no indel information is cache
+    /// return true if no indel information is cached
     bool
     empty() const
     {

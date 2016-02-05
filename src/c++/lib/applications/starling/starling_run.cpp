@@ -50,6 +50,8 @@ starling_run(
     const prog_info& pinfo,
     const starling_options& opt)
 {
+    opt.validate();
+
     SegmentStatsManager segmentStatMan(opt.segmentStatsFilename);
 
     reference_contig_segment ref;

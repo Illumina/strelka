@@ -167,16 +167,16 @@ finish_gvcf_header(const starling_options& opt,
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
 
     // ranksums
-    if (opt.is_report_germline_scoring_metrics)
+    if (opt.isReportEVSFeatures)
     {
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
         os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities.\">\n";
         os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities.\">\n";
         os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position.\">\n";
         /* not currently used */
-        //os << "##INFO=<ID=MapQ0Count,Number=1,Type=Integer,Description=\"PLACEHOLDER=Number of overlapping reads with MAPQ=0\">\n";
-        os << "##INFO=<ID=AvgBaseQ,Number=1,Type=Float,Description=\"PLACEHOLDER=Mean base Qscore\">\n";
-        os << "##INFO=<ID=AvgPos,Number=1,Type=Float,Description=\"PLACEHOLDER=Mean position in aligned reads\">\n";
+        //os << "##INFO=<ID=MapQ0Count,Number=1,Type=Integer,Description=\"Number of overlapping reads with MAPQ=0\">\n";
+        os << "##INFO=<ID=AvgBaseQ,Number=1,Type=Float,Description=\"Mean base Qscore\">\n";
+        os << "##INFO=<ID=AvgPos,Number=1,Type=Float,Description=\"Mean position in aligned reads\">\n";
     }
 
     // Unphased, flag if a site that is within a phasing window hasn't been phased

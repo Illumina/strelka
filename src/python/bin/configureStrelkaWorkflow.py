@@ -58,14 +58,16 @@ You must specify BAM/CRAM file(s) for a pair of samples.
                          help="Tumor sample BAM or CRAM file. [required] (no default)")
         group.add_option("--isWriteCallableRegion", action="store_true",
                          help="Write out a bed file describing somatic callable regions of thedupliates genome")
-        group.add_option("--enable-indel-empirical-scoring", action="store_true", dest="isStrelkaIndelEmpiricalScoring",
-                         help="Enable empirical filters for indels")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
     def addExtendedGroupOptions(self,group) :
-        group.add_option("--variantScoringModelFile", type="string", dest="variantScoringModelFile", metavar="FILE",
-                         help="Provide a custom empirical scoring model (default: %default)")
+        group.add_option("--somaticSnvScoringModelFile", type="string", dest="somaticSnvScoringModelFile", metavar="FILE",
+                         help="Provide a custom EVS model file for somatic SNVs (default: %default)")
+        group.add_option("--enableSomaticIndelScoring", action="store_true", dest="isSomaticIndelEmpiricalScoring",
+                         help="Enable empirical variant scoring for somatic indels")
+        group.add_option("--somaticIndelScoringModelFile", type="string", dest="somaticIndelScoringModelFile", metavar="FILE",
+                         help="Provide a custom EVS model file for somatic Indels (default: %default)")
         group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
                          help="Noise vcf file (submit argument multiple times for more than one file)")
 
@@ -83,7 +85,9 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         defaults.update({
             'runDir' : 'StrelkaWorkflow',
             "minTier2Mapq" : 0,
-            'variantScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
+            "isSomaticIndelEmpiricalScoring" : False,
+            'somaticSnvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
+            'somaticIndelScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'indelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
             'indelErrorModelName': 'Binom',
             'isWriteCallableRegion' : False,
@@ -101,7 +105,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         checkTabixListOption(options.noiseVcfList,"noise vcf")
 
-        options.variantScoringModelFile=validateFixExistingFileArg(options.variantScoringModelFile,"Somatic empirical scoring file")
+        options.somaticSnvScoringModelFile=validateFixExistingFileArg(options.somaticSnvScoringModelFile,"Somatic SNV empirical scoring file")
+        options.somaticIndelScoringModelFile=validateFixExistingFileArg(options.somaticIndelScoringModelFile,"Somatic indel empirical scoring file")
 
 
     def validateOptionExistence(self,options) :

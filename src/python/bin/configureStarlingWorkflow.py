@@ -66,13 +66,6 @@ You must specify a BAM or CRAM file for the sample.
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
 
-    def addExtendedGroupOptions(self,group) :
-        group.add_option("--reportEVSMetrics", dest="isReportEVSMetrics", action="store_true",
-                         help="Report all Empirical Variant Scoring (EVS) features in VCF output.")
-
-        StarkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
-
-
     def getOptionDefaults(self) :
 
         self.configScriptDir=scriptDir
@@ -92,7 +85,6 @@ You must specify a BAM or CRAM file for the sample.
             'inputIndelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
             'indelErrorModelName' : "new",
             'isSkipDynamicIndelErrorModel' : True,
-            'isReportEVSMetrics' : False,
             'callContinuousVf' : []
             })
         return defaults

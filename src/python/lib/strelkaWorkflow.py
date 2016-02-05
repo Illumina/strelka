@@ -113,7 +113,13 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--indel-error-models-file', self.params.indelErrorModelsFile])
     segCmd.extend(['--indel-error-model-name', self.params.indelErrorModelName])
 
-    segCmd.extend(['--variant-scoring-models-file', self.params.variantScoringModelFile])
+    if self.params.isEVS :
+        segCmd.extend(['--somatic-snv-scoring-model-file', self.params.somaticSnvScoringModelFile])
+        if self.params.isSomaticIndelEmpiricalScoring:
+            segCmd.extend(['--somatic-indel-scoring-model-file', self.params.somaticIndelScoringModelFile])
+
+    if self.params.isReportEVSFeatures :
+        segCmd.append("--report-evs-features")
 
     for bamPath in self.params.normalBamList :
         segCmd.extend(["-bam-file", bamPath])
@@ -154,9 +160,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.isHighDepthFilter :
         segCmd.extend(["--strelka-chrom-depth-file", self.paths.getChromDepth()])
         segCmd.extend(["--strelka-max-depth-factor", self.params.depthFilterMultiple])
-
-    if self.params.isStrelkaIndelEmpiricalScoring:
-        segCmd.extend(["--strelka-indel-empirical-scoring", 1])
 
     if self.params.extraStrelkaArguments is not None :
         for arg in self.params.extraStrelkaArguments.strip().split() :

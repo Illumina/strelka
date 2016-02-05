@@ -167,6 +167,9 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("stats-file", po::value(&opt.segmentStatsFilename),
      "Write runtime stats to file")
 
+    ("report-evs-features", po::value(&opt.isReportEVSFeatures)->zero_tokens(),
+     "Report empirical variant scoring (EVS) training features in VCF output")
+
     ("indel-error-models-file", po::value(&opt.indel_error_models_filename),
      "File containing indel error models")
 

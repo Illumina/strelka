@@ -306,7 +306,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
     {
         // Make sure the empirical scoring feature vector is populated
-        // this is done even if not running with ES as some intermediate
+        // this is done even if not running with EVS as some intermediate
         // calculations are still needed for VCF reporting
         get_scoring_features(opt,dopt,sgt,n1_epd,t1_epd,n2_epd,t2_epd,rs,smod);
 
@@ -333,7 +333,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
             if (rs.ntype != NTYPE::REF) smod.EVS=0;
 
-            if (smod.EVS < opt.sfilter.minimumEVS)
+            if (smod.EVS < opt.sfilter.snvMinEVS)
                 smod.set_filter(STRELKA_VCF_FILTERS::LowEVS);
         }
     }
@@ -398,16 +398,28 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
         os << ";ReadPosRankSum=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::ReadPosRankSum);
         os << ";SNVSB=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::strandBias);
-#if 0
-        os << ";PNOISE=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::pnoise);
-        os << ";PNOISE2=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::pnoise2);
-#endif
 
         if (smod.isEVS)
         {
             os << ";EVS=" << smod.EVS;
         }
     }
+
+    if (opt.isReportEVSFeatures)
+    {
+        const StreamScoper ss(os);
+        os << std::setprecision(5);
+        os << ";EVSF=";
+        for (unsigned q = 0; q < STRELKA_SNV_SCORING_FEATURES::SIZE; ++q)
+        {
+            if (q > 0)
+            {
+                os << ",";
+            }
+            os << smod.get_feature(static_cast<STRELKA_SNV_SCORING_FEATURES::index_t>(q));
+        }
+    }
+
 
     //FORMAT:
     os << '\t'

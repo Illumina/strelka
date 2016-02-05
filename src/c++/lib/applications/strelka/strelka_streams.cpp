@@ -148,6 +148,11 @@ strelka_streams(
             fos << "##INFO=<ID=PNOISE2,Number=1,Type=Float,Description=\"Fraction of panel containing more than one non-reference noise obs at this site\">\n";
             fos << "##INFO=<ID=EVS,Number=1,Type=Float,Description=\"Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a FP observation.\">\n";
 
+            if (opt.isReportEVSFeatures)
+            {
+                fos << "##INFO=<ID=EVSF,Number=.,Type=Float,Description=\"Empirical variant scoring features.\">\n";
+            }
+
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1 (used+filtered)\">\n";
             fos << "##FORMAT=<ID=FDP,Number=1,Type=Integer,Description=\"Number of basecalls filtered from original read depth for tier1\">\n";
@@ -159,14 +164,14 @@ strelka_streams(
             fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
 
             // FILTERS:
-            const bool isUseEVS(opt.isUseSomaticScoring());
+            const bool isUseEVS(dopt.somaticSnvScoringModel);
             {
                 using namespace STRELKA_VCF_FILTERS;
                 if (isUseEVS)
                 {
                     {
                         std::ostringstream oss;
-                        oss << "The Empirical Variant Score (EVS) is less than " << opt.sfilter.minimumEVS;
+                        oss << "Empirical Variant Score (EVS) is less than " << opt.sfilter.snvMinEVS;
                         write_vcf_filter(fos, get_label(LowEVS), oss.str().c_str());
                     }
                 }
@@ -191,6 +196,20 @@ strelka_streams(
             }
 
             write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseEVS), fos);
+
+            if (opt.isReportEVSFeatures)
+            {
+                fos << "##snv_scoring_features=";
+                for (unsigned q = 0; q < STRELKA_SNV_SCORING_FEATURES::SIZE; ++q)
+                {
+                    if (q > 0)
+                    {
+                        fos << ",";
+                    }
+                    fos << STRELKA_SNV_SCORING_FEATURES::get_feature_label(q);
+                }
+                fos << "\n";
+            }
 
             fos << vcf_col_label() << "\tFORMAT";
             for (unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s)
@@ -239,10 +258,9 @@ strelka_streams(
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
 
-            const bool isUseEVS(opt.sfilter.is_use_indel_empirical_scoring);
-            if (isUseEVS)
+            if (opt.isReportEVSFeatures)
             {
-                fos << "##INFO=<ID=ESF,Number=" << STRELKA_INDEL_SCORING_FEATURES::SIZE << ",Type=Float,Description=\"Empirical scoring features.\">\n";
+                fos << "##INFO=<ID=EVSF,Number=.,Type=Float,Description=\"Empirical variant scoring features.\">\n";
             }
 
             // FORMAT:
@@ -260,21 +278,8 @@ strelka_streams(
             fos << "##FORMAT=<ID=RR,Number=1,Type=Float,Description=\"Read position ranksum for ALT allele in tier1 reads (U-statistic)\">\n";
             fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
 
-            if (isUseEVS)
-            {
-                fos << "##indel_scoring_features=";
-                for (unsigned q = 0; q < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++q)
-                {
-                    if (q > 0)
-                    {
-                        fos << ",";
-                    }
-                    fos << q << ":" << STRELKA_INDEL_SCORING_FEATURES::get_feature_label(q);
-                }
-                fos << "\n";
-            }
-
             // FILTERS:
+            const bool isUseEVS(opt.isUseSomaticIndelScoring());
             {
                 using namespace STRELKA_VCF_FILTERS;
                 if (isUseEVS)
@@ -285,7 +290,7 @@ strelka_streams(
                         const double threshold(varModel.scoreFilterThreshold());
 
                         std::ostringstream oss;
-                        oss << "The Empirical variant Score (EVS) is less than " << threshold;
+                        oss << "Empirical Variant Score (EVS) is less than " << threshold;
                         write_vcf_filter(fos, get_label(LowEVS), oss.str().c_str());
                     }
                     {
@@ -309,8 +314,21 @@ strelka_streams(
                 }
             }
 
-            static const bool isPrintRuleFilters(true);
-            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, isPrintRuleFilters,fos);
+            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseEVS), fos);
+
+            if (opt.isReportEVSFeatures)
+            {
+                fos << "##indel_scoring_features=";
+                for (unsigned q = 0; q < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++q)
+                {
+                    if (q > 0)
+                    {
+                        fos << ",";
+                    }
+                    fos << STRELKA_INDEL_SCORING_FEATURES::get_feature_label(q);
+                }
+                fos << "\n";
+            }
 
             fos << vcf_col_label() << "\tFORMAT";
             for (unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s)

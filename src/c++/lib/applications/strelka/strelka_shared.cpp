@@ -61,30 +61,29 @@ strelka_deriv_options(
 
     sfilter.indelRegionStage=(addPostCallStage(opt.sfilter.indelRegionFlankSize));
 
-    if (opt.isUseSomaticScoring())
+    if (opt.isUseSomaticSNVScoring())
     {
         somaticSnvScoringModel.reset(
             new VariantScoringModel(
                 STRELKA_SNV_SCORING_FEATURES::getFeatureMap(),
-                opt.somatic_variant_scoring_models_filename,
+                opt.somatic_snv_scoring_model_filename,
                 SCORING_CALL_TYPE::SOMATIC,
                 SCORING_VARIANT_TYPE::SNV)
         );
-
-        if (opt.sfilter.is_use_indel_empirical_scoring)
-        {
-            somaticIndelScoringModel.reset(
-                new VariantScoringModel(
-                    STRELKA_INDEL_SCORING_FEATURES::getFeatureMap(),
-                    opt.somatic_variant_scoring_models_filename,
-                    SCORING_CALL_TYPE::SOMATIC,
-                    SCORING_VARIANT_TYPE::INDEL)
-            );
-        }
     }
-
-
+    if (opt.isUseSomaticIndelScoring())
+    {
+        somaticIndelScoringModel.reset(
+            new VariantScoringModel(
+                STRELKA_INDEL_SCORING_FEATURES::getFeatureMap(),
+                opt.somatic_indel_scoring_model_filename,
+                SCORING_CALL_TYPE::SOMATIC,
+                SCORING_VARIANT_TYPE::INDEL)
+        );
+    }
 }
+
+
 
 /// dtor required to be in the cpp so that unique ptr can access complete data type
 strelka_deriv_options::

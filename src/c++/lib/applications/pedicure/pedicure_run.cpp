@@ -44,6 +44,8 @@ pedicure_run(
     const prog_info& pinfo,
     const pedicure_options& opt)
 {
+    opt.validate();
+
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
     const pedicure_deriv_options dopt(opt,ref);

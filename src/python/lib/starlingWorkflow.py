@@ -135,8 +135,9 @@ def callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, taskPrefix="", dep
     segCmd.extend(["--stats-file", quote(segStatsLogPaths[-1])])
 
     # Empirical Variant Scoring(EVS):
-    segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
-    segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
+    if self.isEVS :
+        segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
+        segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
 
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipDynamicIndelErrorModel:
@@ -147,8 +148,8 @@ def callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, taskPrefix="", dep
         # use dynamic indel error modeling to choose the appropritate model
         segCmd.extend(['--indel-error-models-file', quote(self.params.dynamicIndelErrorModelsFile)])
 
-    if self.params.isReportEVSMetrics :
-        segCmd.append("--gvcf-report-EVSmetrics")
+    if self.params.isReportEVSFeatures :
+        segCmd.append("--report-evs-features")
 
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",quote(bamPath)])

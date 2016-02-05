@@ -24,6 +24,7 @@
 #include "SomaticIndelVcfWriter.hh"
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
+#include "somatic_indel_scoring_features.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/io_util.hh"
@@ -34,7 +35,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include "somatic_indel_scoring_features.hh"
+
 
 
 static
@@ -60,16 +61,16 @@ write_vcf_isri_tiers(
        << isri1.n_other_reads << ','
        << isri2.n_other_reads;
 
-    // AF:OF:SOR:FS:BSA:RR:BCN
+    const float used(was.ss_used_win.avg());
+    const float filt(was.ss_filt_win.avg());
+    const float submap(was.ss_submap_win.avg());
+
     const StreamScoper ss(os);
-    os << std::fixed << std::setprecision(3);
-    os << sep << calculateIndelAF(isri1)
-       << sep << calculateIndelOF(isri1)
-       << sep << calculateSOR(isri1)
-       << sep << calculateFS(isri1)
-       << sep << calculateBSA(isri1)
-       << sep << isri1.readpos_ranksum.get_u_stat()
-       << sep << calculateBCNoise(was)
+    os << std::fixed << std::setprecision(2);
+
+    os << sep << (used+filt)
+       << sep << filt
+       << sep << submap
        ;
 }
 
@@ -102,7 +103,7 @@ writeSomaticIndelVcfGrid(
     // calculate empirical scoring score and features
     calculateScoringFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
 
-    const bool is_use_empirical_scoring(opt.sfilter.is_use_indel_empirical_scoring);
+    const bool is_use_empirical_scoring(opt.isUseSomaticIndelScoring());
     if (!is_use_empirical_scoring)
     {
         smod.EVS = 0;
@@ -201,23 +202,18 @@ writeSomaticIndelVcfGrid(
     }
     os << ";IHP=" << siInfo.iri.ihpol;
 
-    if (is_use_empirical_scoring)
+    if (opt.isReportEVSFeatures)
     {
-        os << ";ESF=";
+        const StreamScoper ss(os);
+        os << std::setprecision(5);
+        os << ";EVSF=";
         for (unsigned q = 0; q < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++q)
         {
             if (q > 0)
             {
                 os << ",";
             }
-            if (smod.test_feature(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(q)))
-            {
-                os << smod.get_feature(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(q));
-            }
-            else
-            {
-                os << ".";
-            }
+            os << smod.get_feature(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(q));
         }
     }
 
@@ -234,8 +230,7 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR:AF:OF:SOR:FS:BSA:RR";
-    os << ":BCN" << opt.sfilter.indelRegionFlankSize;
+    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50";
 
     // write normal sample info:
     os << sep;

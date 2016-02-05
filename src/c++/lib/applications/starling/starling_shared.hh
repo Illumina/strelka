@@ -35,6 +35,9 @@ struct starling_options : public starling_base_options
 
     starling_options()
     {
+        /// TODO: needing this bool indicates a design flaw
+        isStarling = true;
+
         // set command-line defaults for starling only:
         gvcf.out_file = "-";
         bsnp_ssd_no_mismatch = 0.35;

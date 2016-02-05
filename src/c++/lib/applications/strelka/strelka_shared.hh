@@ -53,10 +53,7 @@ struct somatic_filter_options
     int sindelQuality_LowerBound = 30;
 
     unsigned indelRegionFlankSize = 50;
-    double minimumEVS = 2.35;
-
-    // TODO: STARKA-296 enable when ready
-    bool is_use_indel_empirical_scoring = false;
+    double snvMinEVS = 2.35;
 };
 
 

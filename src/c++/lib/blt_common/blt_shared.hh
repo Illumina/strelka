@@ -28,6 +28,8 @@
 #include "blt_util/pos_range.hh"
 #include "blt_util/seq_util.hh"
 
+#include <cassert>
+
 #include <memory>
 #include <vector>
 
@@ -52,6 +54,13 @@ struct blt_options
     blt_options() {}
     virtual ~blt_options() {}
 
+    void
+    validate() const
+    {
+        // this should never be true, TODO: can we move this into a state enum so it *can't* be true:
+        assert(! (is_compute_germline_scoring_metrics() && is_compute_somatic_scoring_metrics));
+    }
+
     bool
     is_ref_set() const
     {
@@ -73,7 +82,7 @@ struct blt_options
     bool
     is_compute_germline_scoring_metrics() const
     {
-        return (is_report_germline_scoring_metrics || (! germline_variant_scoring_model_name.empty()));
+        return (isStarling && (isReportEVSFeatures || (! germline_variant_scoring_model_name.empty())));
     }
 
     virtual
@@ -175,14 +184,21 @@ struct blt_options
     unsigned max_input_depth = 0;
 
     bool is_compute_hapscore = false;
-    bool is_report_germline_scoring_metrics = false;
+    bool isReportEVSFeatures = false;
     bool is_compute_somatic_scoring_metrics = false;
 
     bool
-    isUseSomaticScoring() const
+    isUseSomaticSNVScoring() const
     {
-        return (! somatic_variant_scoring_models_filename.empty());
+        return (! somatic_snv_scoring_model_filename.empty());
     }
+
+    bool
+    isUseSomaticIndelScoring() const
+    {
+        return (! somatic_indel_scoring_model_filename.empty());
+    }
+
 
     // Apply codon phasing:
     bool do_codon_phasing = false;
@@ -205,8 +221,11 @@ struct blt_options
     /// Which calibration model should we use? (default: rule-based metric)
     std::string germline_variant_scoring_model_name;
 
-    /// somatic scoring models: (TODO: move this down to strelka options)
-    std::string somatic_variant_scoring_models_filename;
+    /// somatic scoring models: (TODO: move these down to strelka options)
+    std::string somatic_snv_scoring_model_filename;
+    std::string somatic_indel_scoring_model_filename;
+
+    bool isStarling = false;
 };
 
 
@@ -267,5 +286,3 @@ struct blt_read_counts
     unsigned max_depth = 0;
     unsigned used = 0;
 };
-
-

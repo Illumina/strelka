@@ -351,7 +351,7 @@ write_site_record(
             os << "HaplotypeScore=" << si.hapscore;
         }
 
-        if (_opt.is_report_germline_scoring_metrics)
+        if (_opt.isReportEVSFeatures)
         {
             os << ';';
             os << "MQ=" << si.MQ;

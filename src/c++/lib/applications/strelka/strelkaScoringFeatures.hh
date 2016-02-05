@@ -50,10 +50,6 @@ struct STRELKA_SNV_SCORING_FEATURES
         altmap,
         altpos,
         SIZE
-#if 0
-        pnoise,
-        pnoise2,
-#endif
     };
 
     static
