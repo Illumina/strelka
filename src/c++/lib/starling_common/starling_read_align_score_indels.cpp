@@ -927,7 +927,7 @@ score_indels(const starling_base_options& opt,
 
             id_ptr->read_path_lnp[rseg.id()] = rps;
             id_ptr->n_mapq++;
-            id_ptr->cumm_mapq += rseg.map_qual();
+            id_ptr->sum_sq_mapq += (rseg.map_qual()*rseg.map_qual());
             if (rseg.map_qual() == 0)
             {
                 id_ptr->n_mapq0++;

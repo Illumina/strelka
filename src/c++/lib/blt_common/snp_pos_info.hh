@@ -151,7 +151,7 @@ struct snp_pos_info
         n_submapped=0;
         n_mapq=0;
         n_mapq0=0;
-        cumm_mapq=0;
+        sum_sq_mapq=0;
         hap_set.clear();
         mq_ranksum.clear();
         baseq_ranksum.clear();
@@ -247,7 +247,7 @@ public:
     unsigned n_mapq0;
 
     // sum of mapq squared for all reads at this position
-    double cumm_mapq;
+    double sum_sq_mapq;
 
     mutable hap_set_t hap_set;
 

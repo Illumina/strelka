@@ -38,6 +38,16 @@
 
 
 
+template <typename D>
+static
+double
+safeFrac(const unsigned num, const D denom)
+{
+    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
+}
+
+
+
 static
 void
 write_vcf_isri_tiers(
@@ -185,14 +195,22 @@ writeSomaticIndelVcfGrid(
        << ";SGT=" << static_cast<DDIINDEL_GRID::index_t>(rs.max_gt);
 
     {
+        // these must be computed from tier2 otherwise mapq filtering is in effect:
+        /// TODO: features become invalid with a simple user configuration parameter
+        /// change
+
+        //MQ
+        const unsigned n_mapq(siInfo.nisri[1].n_mapq+siInfo.tisri[1].n_mapq);
+        const double sum_sq_mapq(siInfo.nisri[1].sum_sq_mapq+siInfo.tisri[1].sum_sq_mapq);
+        const double mq_rms_tn(std::sqrt(safeFrac(sum_sq_mapq,n_mapq)));
+
+        //MQ0
+        const unsigned n_mapq0(siInfo.nisri[1].n_mapq0+siInfo.tisri[1].n_mapq0);
+
         const StreamScoper ss(os);
-        double mean_mapq  = (siInfo.nisri[1].mean_mapq + siInfo.tisri[1].mean_mapq) / 2.0;
-        double mean_mapq0 = (siInfo.nisri[1].mapq0_frac*siInfo.nisri[1].n_mapq +
-                             siInfo.tisri[1].mapq0_frac*siInfo.tisri[1].n_mapq) / (
-                                siInfo.nisri[1].n_mapq + siInfo.tisri[1].n_mapq);
         os << std::fixed << std::setprecision(2);
-        os << ";MQ=" << mean_mapq
-           << ";MQ0=" << mean_mapq0
+        os << ";MQ=" << mq_rms_tn
+           << ";MQ0=" << n_mapq0
            ;
     }
     if (siInfo.iri.is_repeat_unit())

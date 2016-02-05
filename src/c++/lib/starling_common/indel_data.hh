@@ -209,7 +209,7 @@ struct indel_data
           is_forced_output(false),
           n_mapq(0),
           n_mapq0(0),
-          cumm_mapq(0)
+          sum_sq_mapq(0)
     {}
 
     /// add an observation for this indel
@@ -325,8 +325,8 @@ public:
 
     unsigned n_mapq;
     unsigned n_mapq0;
-    // sum of mapq for all reads at this position
-    int cumm_mapq;
+    // sum of mapq squares for all reads at this position
+    double sum_sq_mapq;
 
     struct status_t
     {

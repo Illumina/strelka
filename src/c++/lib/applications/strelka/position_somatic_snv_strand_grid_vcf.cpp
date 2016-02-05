@@ -182,8 +182,8 @@ get_scoring_features(
 
     //MQ
     const unsigned n_mapq(n1_cpi.rawPileup().n_mapq+t1_cpi.rawPileup().n_mapq);
-    const double cumm_mapq2(n1_cpi.rawPileup().cumm_mapq + t1_cpi.rawPileup().cumm_mapq);
-    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::MQ,std::sqrt(safeFrac(cumm_mapq2,n_mapq)));
+    const double sum_sq_mapq(n1_cpi.rawPileup().sum_sq_mapq + t1_cpi.rawPileup().sum_sq_mapq);
+    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::MQ,std::sqrt(safeFrac(sum_sq_mapq,n_mapq)));
 
     //n_mapq0
     const unsigned n_mapq0(n1_cpi.rawPileup().n_mapq0+t1_cpi.rawPileup().n_mapq0);

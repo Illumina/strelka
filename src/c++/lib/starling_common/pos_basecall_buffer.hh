@@ -75,7 +75,7 @@ struct pos_basecall_buffer
     {
         snp_pos_info& posdata(_pdata.getRef(pos));
         posdata.n_mapq++;
-        posdata.cumm_mapq += (adjustedMapq*adjustedMapq);
+        posdata.sum_sq_mapq += (adjustedMapq*adjustedMapq);
         if (mapq==0) posdata.n_mapq0++;
     }
 
