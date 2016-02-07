@@ -30,9 +30,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 class StrelkaRFIndel(EVSModel):
 
-    def __init__(self):
-        self.clf = {}
-        self.itypes = [1, 2]
+    itypes = [1, 2]
 
     def train(self, tp, fp, columns, *args, **kwargs):
         """ Train model from sets of TPs and FPs
@@ -102,18 +100,6 @@ class StrelkaRFIndel(EVSModel):
             insts.append(itinsts)
 
         return pandas.concat(insts)
-
-
-    def save(self, filename):
-        """ Save to file """
-        if filename.endswith(".json"):
-            io.write_classifier_json(self.clf, filename)
-        else:
-            io.write_classifier_pickle(self.clf, filename)
-
-    def load(self, filename):
-        """ Load from file """
-        self.clf = io.read_pickled_classifier(filename)
 
 
     def plots(self, prefix, featurenames):

@@ -21,11 +21,18 @@
 
 import abc
 
+import evs.tools.io as io
+
+
 
 class EVSModel(object):
     """ Base class for EVS models """
 
     __metaclass__ = abc.ABCMeta
+    
+    def __init__(self):
+        self.clf = None
+        self.mname = None
 
     @abc.abstractmethod
     def train(self, tp, fp, columns, *args, **kwargs):
@@ -55,15 +62,16 @@ class EVSModel(object):
         instances["tag"] = "FP"
         return instances
 
-    @abc.abstractmethod
-    def save(self, filename):
-        """ Save to file """
-        pass
+    def _save_object(self):
+        return [self.mname, self.clf]
 
-    @abc.abstractmethod
-    def load(self, filename):
-        """ Load from file """
-        pass
+    def save(self,filename):
+        """ Save to file """
+        io.write_classifier_pickle(self._save_object(), filename)
+
+    def save_json(self, filename):
+        """ Save to json """
+        io.write_classifier_json(self._save_object(), filename)
 
     # model factory
     _models = {}
@@ -73,8 +81,17 @@ class EVSModel(object):
         cls._models[mname] = mclass
 
     @classmethod
-    def create(cls, mname):
-        return cls._models[mname]()
+    def createNew(cls, mname):
+        model = cls._models[mname]()
+        model.mname = mname
+        return model
+
+    @classmethod
+    def createFromFile(cls, filename):
+        saveobj = io.read_pickled_classifier(filename)
+        model = cls.createNew(saveobj[0])
+        model.clf = saveobj[1]
+        return model
 
     @classmethod
     def names(cls):

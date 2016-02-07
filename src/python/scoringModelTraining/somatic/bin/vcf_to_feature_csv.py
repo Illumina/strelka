@@ -18,30 +18,21 @@
 #
 #
 
-# coding=utf-8
-#
-# 20/11/2014
-#
-# Convert a Strelka VCF to CSV format, annotate TP and FP given a
-# truth VCF and FP / AMBI bed files.
-#
-# Usage:
-#
-# For usage instructions run with option --help
-#
-# Author:
-#
-# Peter Krusche <pkrusche@illumina.com>
-#
+"""
+Convert a Strelka somatic VCF to CSV format, annotate TP and FP given a
+truth VCF and FP / ambiguous region bed files.
+"""
+
+__author__ = "Peter Krusche <pkrusche@illumina.com>"
 
 import os
 import sys
-import argparse
+
+import pandas
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 scriptName = os.path.basename(__file__)
 workflowDir = os.path.abspath(os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
-templateConfigDir = os.path.abspath(os.path.join(scriptDir, '@THIS_RELATIVE_CONFIGDIR@'))
 
 sys.path.append(workflowDir)
 
@@ -49,30 +40,47 @@ import evs
 import evs.features
 from evs.tools.bedintervaltree import BedIntervalTree
 
-import pandas
 
+def parseArgs():
 
-def main():
-    parser = argparse.ArgumentParser("evs precision/recall script")
+    import argparse
+    parser = argparse.ArgumentParser(description="Converts somatic VCF to annotated CSV",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("input", help="Strelka VCF file", nargs=1)
-
-    parser.add_argument("-o", "--output", dest="output", required=True,
+    parser.add_argument("-o", "--output", required=True,
                         help="Output file CSV name")
-
-    parser.add_argument("-t", "--truth", dest="truth", required=False, default="",
-                        help="Truth VCF file to use.")
-
-    parser.add_argument("-f", "--fp-regions", dest="fp_regions", required=False, default="",
-                        help="Use specific regions for FPs only.")
-
+    parser.add_argument("-t", "--truth", help="Truth VCF file")
+    parser.add_argument("-f", "--fp-regions", dest="fp_regions",
+                        help="Bed file indicating regions for FPs only.")
     parser.add_argument("-a", "--ambiguous", dest="ambi", action='append',
-                        help="Ambiguous region bed file(s) (places we don't want to label as FP).")
-
-    parser.add_argument("--feature-table", dest="features", default="posandalleles",
+                        help="Bed file indicating ambiguous regions ie. places we don't want to label as FP"
+                             " (may be specified more than once)")
+    parser.add_argument("--features", required=True, 
                         choices=evs.features.FeatureSet.sets.keys(),
                         help="Select a feature table to output.")
 
     args = parser.parse_args()
+
+    def checkFile(filename, label) :
+        if not os.path.isfile(filename) :
+            raise Exception("Can't find input %s file: '%s'" % (label,filename))
+
+    def checkOptionalFile(filename, label) :
+        if filename is None : return
+        checkFile(filename, label)
+ 
+    checkOptionalFile(args.truth,"truth")
+    checkOptionalFile(args.fp_regions,"false positive regions")
+    if args.ambi is not None :
+        for ambiFile in args.ambi :
+            checkFile(ambiFile,"ambiguous regions")
+
+    return args
+
+
+
+def main():
+    args = parseArgs()
 
     fset = evs.features.FeatureSet.make(args.features)
 

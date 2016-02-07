@@ -2,7 +2,6 @@
 
 This is a special topic of the [Strelka User Guide](strelkaUserGuide.md).
 
-
 ## Introduction
 
 This document outlines the process of training a somatic Empirical Variant Score (EVS) model for Strelka.
@@ -10,40 +9,53 @@ This document outlines the process of training a somatic Empirical Variant Score
 ## Requirements
 
 Strelka somatic EVS training has additional dependencies which are not included
-in the primary build system.
+in the primary build system. All packages required to retrain the EVS model and
+run the steps in this guide are provided in the [training environment
+Dockerfile](trainingSomaticEmpriicalScore/Dockerfile), which can be used to
+either setup an EVS training docker image or as documentation to install
+all dependencies on another system.
 
-You must have the following Python packages installed:
+## Step 1: Build a training data set
 
-* numpy
-* pandas
-* scikit-learn
-* matplotlib
+For EVS training, the strelka workflow must be configured with the optional
+`--reportEVSFeatures` argument. This will add a new VCF INFO field called `EVSF`
+to both SNV and indel VCF outputs. EVS features will be reported with this flag even
+when scoring itself is turned off with the `--disableEVS` option.
 
-## Step 1: Evaluating against a truth list
+### Step 1a: Evaluate a single strelka somatic analysis against a truth list
 
-Given a VCF and a truth list, we can produce a CSV file with features and
-TP/FP/FN annotation like this:
+Given a VCF and a truth list, a CSV file with features and
+TP/FP/FN annotation can be produced as follows:
 
 ```
-python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/vcf_to_feature_csv.py \
-    src/demo/data/strelka_admix_snvs_chr21:1-25000000.vcf.gz \
-    -o admix_training_data.csv \
-    --feature-table=strelka.snv \
-    --truth src/demo/data/PG_admix_truth_snvs_chr21:1-25000000.vcf.gz
+python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/vcf_to_feature_csv.py \
+    --truth ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/PG_admix_truth_snvs_chr21:1-25000000.vcf.gz \
+    --features strelka.snv \
+    --output admix_training_data.csv \
+    ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/strelka_admix_snvs_chr21:1-25000000.vcf.gz
 ```
+
+### Step 1b: Handle multiple analyses
+
+When multiple analyses are available for a training procedure, process each analysis
+using the training procedure described in Step 1a, keeping a separate csv output file
+for each. These training data files can be combined as required for the training
+procedure described below.
+
 
 ## Step 2: Training an EVS model
 
-The next command line learns a model given a training dataset. The parameter
-value of `-f` should be the same as the one used above in `--feature-table`.
+The next step is to train a model given one or more training datasets.
+The `--features` argument below must match that used to generate
+the input training dataset(s).
 
 ```
-python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_learn.py \
-    -m strelka.rf \
-    -f strelka.snv \
-    -o model.pickle \
-    admix_training_data.csv \
-    --plots
+python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_learn.py \
+    --features strelka.snv \
+    --model strelka.rf \
+    --plots \
+    --output admix_training_model.pickle \
+    admix_training_data.csv
 ```
 
 =>
@@ -52,32 +64,33 @@ python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_learn.py \
 Reading admix_training_data.csv
 Using default parameters.
 Feature ranking:
-1. feature 0:QSS_NT (0.360130 +- 0.040911)
-2. feature 6:TIER1_ALT_RATE (0.228258 +- 0.118031)
-3. feature 5:N_DP_RATE (0.155632 +- 0.048948)
-4. feature 9:strandBias (0.069111 +- 0.073574)
-5. feature 8:n_mapq0 (0.054176 +- 0.043498)
-6. feature 7:MQ (0.049967 +- 0.032699)
-7. feature 10:ReadPosRankSum (0.045467 +- 0.026747)
-8. feature 1:N_FDP_RATE (0.019045 +- 0.012597)
-9. feature 2:T_FDP_RATE (0.016458 +- 0.005400)
-10. feature 3:N_SDP_RATE (0.000937 +- 0.000709)
-11. feature 4:T_SDP_RATE (0.000820 +- 0.000598)
-12. feature 12:altpos (0.000000 +- 0.000000)
-13. feature 11:altmap (0.000000 +- 0.000000)
+1. feature 0:QSS_NT (0.341969 +- 0.040246)
+2. feature 6:TIER1_ALT_RATE (0.190468 +- 0.123727)
+3. feature 5:N_DP_RATE (0.154801 +- 0.068986)
+4. feature 11:altmap (0.058069 +- 0.062328)
+5. feature 8:n_mapq0 (0.056272 +- 0.051838)
+6. feature 7:MQ (0.051763 +- 0.043005)
+7. feature 12:altpos (0.047467 +- 0.053393)
+8. feature 10:ReadPosRankSum (0.032803 +- 0.020241)
+9. feature 9:strandBias (0.032238 +- 0.056309)
+10. feature 1:N_FDP_RATE (0.018251 +- 0.013008)
+11. feature 2:T_FDP_RATE (0.014174 +- 0.007238)
+12. feature 4:T_SDP_RATE (0.000968 +- 0.000762)
+13. feature 3:N_SDP_RATE (0.000757 +- 0.000641)
 ```
 
 ## Step 3: Calculate Scores
 
-Here, we take a given set of TPs / FPs (we use the training set in this example,
-but in a real-world scenario an independent strelka run / different subsample
-should be used), and write EVS scores given the model we trained in the
-previous step.
+Given a trained model any set of TP/FP variants can be scored to evaluated the trained
+model. In this example the training data itself is used is used for simplicity, although
+independent test data should be used for more accurate evaluation in a real training
+scenario.
 
 ```
-python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_evaluate.py -m strelka.rf -f strelka.snv \
-    -c model.pickle \
-    -o admix_classified.csv \
+python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_evaluate.py \
+    --features strelka.snv \
+    --classifier admix_training_model.pickle \
+    --output admix_classified.csv \
     admix_training_data.csv
 ```
 
@@ -88,16 +101,17 @@ Reading admix_training_data.csv
 ptag   FN     FP    TP
 tag                   
 FN    178      0     0
-FP      0  17632     9
-TP      0      2  5437
+FP      0  17640     1
+TP      0      0  5439
+
 [3 rows x 3 columns]
 ```
 
 ## Step 4: Evaluate Precision / Recall for the model
 
 ```
-python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_pr.py \
-     -o admix_precisionrecall.csv \
+python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_pr.py \
+     --output admix_precisionrecall.csv \
      admix_classified.csv
 ```
 
@@ -105,22 +119,15 @@ python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_pr.py \
 
 ```
 Reading admix_classified.csv
-Processed 10 / 163 qual values for qual
-Processed 20 / 163 qual values for qual
-Processed 30 / 163 qual values for qual
-Processed 40 / 163 qual values for qual
-Processed 50 / 163 qual values for qual
-Processed 60 / 163 qual values for qual
-Processed 70 / 163 qual values for qual
-Processed 80 / 163 qual values for qual
-Processed 90 / 163 qual values for qual
-Processed 100 / 163 qual values for qual
-Processed 110 / 163 qual values for qual
-Processed 120 / 163 qual values for qual
-Processed 130 / 163 qual values for qual
-Processed 140 / 163 qual values for qual
-Processed 150 / 163 qual values for qual
-Processed 160 / 163 qual values for qual
+Processed 10 / 99 qual values for qual
+Processed 20 / 99 qual values for qual
+Processed 30 / 99 qual values for qual
+Processed 40 / 99 qual values for qual
+Processed 50 / 99 qual values for qual
+Processed 60 / 99 qual values for qual
+Processed 70 / 99 qual values for qual
+Processed 80 / 99 qual values for qual
+Processed 90 / 99 qual values for qual
 ```
 
 We can look at the result e.g. using R:
@@ -133,13 +140,13 @@ head(data)
 =>
 
 ```
-  X  field qual    tp   fp  fn tp_filtered fp_filtered precision    recall
-1 0 QSS_NT    0 15487 1920 748           1       30286 0.8896995 0.9539267
-2 1 QSS_NT    1 15460 1765 775          28       30441 0.8975327 0.9522636
-3 2 QSS_NT    2 15440 1687 795          48       30519 0.9015006 0.9510317
-4 3 QSS_NT    3 15422 1639 813          66       30567 0.9039329 0.9499230
-5 4 QSS_NT    4 15410 1612 825          78       30594 0.9052990 0.9491839
-6 5 QSS_NT    5 15403 1585 832          85       30621 0.9066988 0.9487527
+  X field qual   tp   fp  fn tp_filtered fp_filtered precision    recall
+1 0  qual 0.00 5439 5531 178           0       12110 0.4958067 0.9683105
+2 1  qual 0.01 5439 3508 178           0       14133 0.6079133 0.9683105
+3 2  qual 0.02 5439 2564 178           0       15077 0.6796201 0.9683105
+4 3  qual 0.03 5439 1961 178           0       15680 0.7350000 0.9683105
+5 4  qual 0.04 5439 1521 178           0       16120 0.7814655 0.9683105
+6 5  qual 0.05 5439 1200 178           0       16441 0.8192499 0.9683105
 ```
 
 ... or make a plot like this:
@@ -148,14 +155,21 @@ head(data)
 library(ggplot2)
 ggplot(data, aes(x=recall, y=precision, color=field)) +
     geom_point() + theme_bw()
-ggsave("evs_test.png", width=4, height=3, dpi=120)
+ggsave("admix.png", width=4, height=3, dpi=120)
 ```
 
-## Step 5: Export the Model for use in Strelka
+An example plot from this procedure is:
 
-Strelka uses models in JSON format:
+![Training data ROC curve](trainingSomaticEmpriicalScore/admix.png)
+
+...showing the expected result of testing on a very small training data set.
+
+## Step 5: Export the model for use in Strelka
+
+Strelka uses models in JSON format, which can be produced from the model pickle file as follows:
 
 ```
-python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_exportmodel.py \
-    -m strelka.rf -c model.pickle -o model.json
+python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_exportmodel.py \
+    --classifier admix_training_model.pickle \
+    --output admix_training_model.json
 ```

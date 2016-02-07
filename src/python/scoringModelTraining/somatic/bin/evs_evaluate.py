@@ -18,63 +18,70 @@
 #
 #
 
-# coding=utf-8
-#
-# 20/11/2014
-#
-# Given a EVS model, evaluate a set of variant calls
-#
-# Usage:
-#
-# For usage instructions run with option --help
-#
-# Author:
-#
-# Peter Krusche <pkrusche@illumina.com>
-#
+"""
+Given a EVS model, evaluate a set of variant calls
+"""
+
+__author__ = "Peter Krusche <pkrusche@illumina.com>"
+
 
 import os
 import sys
-import argparse
+
+import pandas
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
-scriptName = os.path.basename(__file__)
 workflowDir = os.path.abspath(
     os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
-templateConfigDir = os.path.abspath(
-    os.path.join(scriptDir, '@THIS_RELATIVE_CONFIGDIR@'))
 
 sys.path.append(workflowDir)
 
-import pandas
 
 import evs
 import evs.tools
 import evs.features
 
 
-def main():
-    parser = argparse.ArgumentParser("evs evaluation/prediction script")
+def parseArgs():
+    import argparse
+
+    parser = argparse.ArgumentParser("evs evaluation script")
 
     parser.add_argument("inputs", help="Feature CSV files", nargs="+")
-
-    parser.add_argument("-c", "--classifier", dest="clf", required=True,
+    parser.add_argument("-c", "--classifier", required=True,
                         help="Classifier pickle file name")
-
-    modelNames=evs.EVSModel.names()
-    parser.add_argument("-m", "--model", dest="model", choices=modelNames, required=True,
-                        help="Which model to use (options are: %s)" % str(modelNames))
-
-    parser.add_argument("-f", "--featuresets", dest="features",
+    parser.add_argument("-f", "--features",
                         choices=evs.features.FeatureSet.sets.keys(),
                         required=True,
                         help="Which feature set to use (or a comma-separated list of feature names,"
                              " e.g. -f QSS_NT,T_DP_RATE")
-
-    parser.add_argument("-o", "--output", dest="output", required=True,
+    parser.add_argument("-o", "--output", required=True,
                         help="Output file name")
 
     args = parser.parse_args()
+
+    def checkFile(filename, label) :
+        if not os.path.isfile(filename) :
+            raise Exception("Can't find input %s file: '%s'" % (label,filename))
+
+    def checkOptionalFile(filename, label) :
+        if filename is None : return
+        checkFile(filename,label)
+
+    if len(args.inputs) == 0 :
+        raise Exception("No input file(s) given")
+
+    for inputFile in args.inputs :
+        checkFile(inputFile,"features CSV")
+
+    checkFile(args.classifier, "classifier")
+
+    return args
+
+
+
+def main():
+    args = parseArgs()
 
     datasets = []
     for i in args.inputs:
@@ -100,8 +107,7 @@ def main():
     except:
         features = args.features.split(",")
 
-    model = evs.EVSModel.create(args.model)
-    model.load(args.clf)
+    model = evs.EVSModel.createFromFile(args.classifier)
     preds = model.classify(
         dataset[dataset["tag"].isin(["TP", "FP", "UNK"])], features)
 
@@ -112,6 +118,7 @@ def main():
     print pandas.crosstab(result['tag'], result['ptag'])
 
     result.to_csv(args.output)
+
 
 if __name__ == '__main__':
     main()

@@ -18,55 +18,50 @@
 #
 #
 
-# coding=utf-8
-#
-# 20/11/2014
-#
-# Export EVS model to JSON format
-#
-# Usage:
-#
-# For usage instructions run with option --help
-#
-# Author:
-#
-# Peter Krusche <pkrusche@illumina.com>
-#
+"""
+Export EVS model to JSON format
+"""
+
+__author__ = "Peter Krusche <pkrusche@illumina.com>"
+
 
 import os
 import sys
-import argparse
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
-scriptName = os.path.basename(__file__)
 workflowDir = os.path.abspath(
     os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
-templateConfigDir = os.path.abspath(
-    os.path.join(scriptDir, '@THIS_RELATIVE_CONFIGDIR@'))
 
 sys.path.append(workflowDir)
 
 import evs
-import evs.tools
 
-def main():
+
+def parseArgs():
+    import argparse
+
     parser = argparse.ArgumentParser("evs learning script")
 
-    parser.add_argument("-c", "--classifier", dest="clf", required=True,
+    parser.add_argument("-c", "--classifier", required=True,
                         help="Classifier pickle file name")
-
-    modelNames=evs.EVSModel.names()
-    parser.add_argument("-m", "--model", dest="model", choices=modelNames, required=True,
-                        help="Which model to use (options are: %s)" % str(modelNames))
-
-    parser.add_argument("-o", "--output", dest="output", required=True,
+    parser.add_argument("-o", "--output", required=True,
                         help="Output file name")
 
     args = parser.parse_args()
+    
+    def checkFile(filename, label) :
+        if not os.path.isfile(filename) :
+            raise Exception("Can't find input %s file: '%s'" % (label,filename))
 
-    model = evs.EVSModel.create(args.model)
-    model.load(args.clf)
+    checkFile(args.classifier, "classifier")
 
+    return args
+
+
+def main() :
+    args = parseArgs()
+
+    model = evs.EVSModel.createFromFile(args.classifier)
     model.save_json_strelka_format(args.output)
 
 

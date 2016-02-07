@@ -18,83 +18,98 @@
 #
 #
 
-# coding=utf-8
-#
-# 20/11/2014
-#
-# Learn EVS model from (set of) feature files
-#
-# Usage:
-#
-# For usage instructions run with option --help
-#
-# Author:
-#
-# Peter Krusche <pkrusche@illumina.com>
-#
+"""
+Learn empirical variant scoring model from (set of) labeled feature files
+"""
+
+__author__ = "Peter Krusche <pkrusche@illumina.com>"
+
 
 import os
 import sys
-import argparse
 import json
 
+import pandas
+
 scriptDir = os.path.abspath(os.path.dirname(__file__))
-scriptName = os.path.basename(__file__)
 workflowDir = os.path.abspath(
     os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
-templateConfigDir = os.path.abspath(
-    os.path.join(scriptDir, '@THIS_RELATIVE_CONFIGDIR@'))
 
 sys.path.append(workflowDir)
 
-import pandas
-import random
 
 import evs
 import evs.tools
 import evs.features
 
 
-def main():
-    parser = argparse.ArgumentParser("evs learning script")
+def parseArgs():
+    import argparse
 
-    parser.add_argument("inputs", help="Feature CSV files", nargs="+")
+    parser = argparse.ArgumentParser(description="evs learning script",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("inputs", nargs="+",
+                        help="Feature CSV file (argument may be specified more than once")
 
     modelNames=evs.EVSModel.names()
-    parser.add_argument("-m", "--model", dest="model", choices=modelNames, required=True,
+    parser.add_argument("-m", "--model", choices=modelNames, required=True,
                         help="Which model to use (options are: %s)" % str(modelNames))
 
-    parser.add_argument("-f", "--featuresets", dest="features",
+    parser.add_argument("--features",
                         choices=evs.features.FeatureSet.sets.keys(),
                         required=True,
-                        help="Which feature set to use (or a comma-separated list of feature names,"
-                             " e.g. -f QSS_NT,T_DP_RATE")
+                        help="Training features. Either a feature-table name or a comma-separated list of feature names."
+                             " e.g. QSS_NT,T_DP_RATE")
 
-    parser.add_argument("-p", "--parameter-file", dest="parameters", default=None,
-                        help="Specify additional parameters for the learning algorithm (in a JSON file)")
+    parser.add_argument("-p", "--parameter-file", dest="parameters",
+                        help="Specify additional parameters for the learning algorithm as a JSON file")
 
-    parser.add_argument("-o", "--output", dest="output", required=True,
+    parser.add_argument("-o", "--output", required=True,
                         help="Output file name")
 
-    parser.add_argument("--balance", dest="balance", default=False, action="store_true",
+    parser.add_argument("--balance", default=False, action="store_true",
                         help="Balance the number of samples from each label.")
 
     parser.add_argument("--sample-input", dest="sample_input", default=0, type=int,
                         help="Number of rows to subsample from each input data file")
-
     parser.add_argument("--plots", default=False, action="store_true",
                         help="Make plots.")
 
     args = parser.parse_args()
 
-    datasets = []
-    for i in args.inputs:
-        i = os.path.abspath(i)
-        print "Reading %s" % i
-        df = pandas.read_csv(i)
+    def checkFile(filename, label) :
+        if not os.path.isfile(filename) :
+            raise Exception("Can't find input %s file: '%s'" % (label,filename))
 
-        if args.sample_input:
-            p_rows = min(df.shape[0], args.sample_input)
+    def checkOptionalFile(filename, label) :
+        if filename is None : return
+        checkFile(filename,label)
+
+    if len(args.inputs) == 0 :
+        raise Exception("No input file(s) given")
+
+    for inputFile in args.inputs :
+        checkFile(inputFile,"features CSV")
+
+    checkOptionalFile(args.parameters, "training model parameter")
+
+    return args
+
+
+
+def getDataSet(inputs, sample_input) :
+
+    import random
+
+    datasets = []
+    for inputFile in inputs:
+        inputFile = os.path.abspath(inputFile)
+        print "Reading '%s'" % (inputFile)
+        df = pandas.read_csv(inputFile)
+
+        if sample_input:
+            p_rows = min(df.shape[0], sample_input)
             p_rows_selected = random.sample(df.index, p_rows)
             df = pandas.DataFrame(df.ix[p_rows_selected])
 
@@ -105,7 +120,12 @@ def main():
     else:
         dataset = datasets[0]
 
-    dataset = pandas.DataFrame(dataset[dataset["tag"] != "FN"])
+    return pandas.DataFrame(dataset[dataset["tag"] != "FN"])
+
+
+
+def main():
+    args = parseArgs()
 
     try:
         fset = evs.features.FeatureSet.make(args.features)
@@ -113,14 +133,16 @@ def main():
     except:
         features = args.features.split(",")
 
-    try:
+    pars = {}
+    if args.parameters :
         pars = json.load(open(args.parameters))
-        print "Using learning parameters: %s" % str(pars)
-    except:
-        print "Using default parameters."
-        pars = {}
+        print "Using custom learning parameters: %s" % str(pars)
+    else :
+        print "Using default learning parameters."
 
-    model = evs.EVSModel.create(args.model)
+    model = evs.EVSModel.createNew(args.model)
+
+    dataset = getDataSet(args.inputs,args.sample_input)
 
     if not args.balance:
         tpdata = dataset[dataset["tag"] == "TP"]

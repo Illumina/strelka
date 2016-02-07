@@ -30,10 +30,6 @@ from sklearn.ensemble import RandomForestClassifier
 
 class StrelkaRF(EVSModel):
 
-    def __init__(self):
-        self.clf = None
-
-
     def train(self, tp, fp, columns, *args, **kwargs):
         """ Train model from sets of TPs and FPs
 
@@ -91,15 +87,6 @@ class StrelkaRF(EVSModel):
 
         return instances
 
-
-    def save(self, filename):
-        """ Save to file """
-        io.write_classifier_pickle(self.clf, filename)
-
-    def save_json(self, filename):
-        """ Save to json """
-        io.write_classifier_json(self.clf, filename)
-
     def save_json_strelka_format(self, filename):
         """ Save to json including all strelka scoring model meta-data """
         import datetime
@@ -118,11 +105,6 @@ class StrelkaRF(EVSModel):
         full_model["Model"] = all_trees
         modelFile = {"CalibrationModels" : {"somatic_rf" : { "SNP" : full_model }}}
         json.dump(modelFile, open(filename,"wb"))
-
-    def load(self, filename):
-        """ Load from file """
-        self.clf = io.read_pickled_classifier(filename)
-
 
     def plots(self, prefix, featurenames):
         """ Make diagnostic plots """

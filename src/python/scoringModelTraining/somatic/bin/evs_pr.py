@@ -18,53 +18,52 @@
 #
 #
 
-# coding=utf-8
-#
-# 20/11/2014
-#
-# Given an EVS model, evaluate a set of variant calls
-#
-# Usage:
-#
-# For usage instructions run with option --help
-#
-# Author:
-#
-# Peter Krusche <pkrusche@illumina.com>
-#
+"""
+Given an EVS model evaluation, provide precision/recall
+"""
+
+__author__ = "Peter Krusche <pkrusche@illumina.com>"
+
 
 import os
 import sys
-import argparse
-
-scriptDir = os.path.abspath(os.path.dirname(__file__))
-scriptName = os.path.basename(__file__)
-workflowDir = os.path.abspath(
-    os.path.join(scriptDir, "@THIS_RELATIVE_PYTHON_LIBDIR@"))
-templateConfigDir = os.path.abspath(
-    os.path.join(scriptDir, '@THIS_RELATIVE_CONFIGDIR@'))
-
-sys.path.append(workflowDir)
-
-import pandas
 import random
 
+import pandas
 
-def main():
+
+def parseArgs():
+    import argparse
+
     parser = argparse.ArgumentParser("evs precision/recall script")
     parser.add_argument("inputs", help="Quality/tag CSV files", nargs="+")
 
-    parser.add_argument("-q", "--quality-fields", dest="q", default="QSS_NT,qual",
-                        help="Select fields which give quality values, separated by comma. "
-                             "If QSS_NT is selected, standard Strelka filtering will be output.")
+    parser.add_argument("-q", "--quality-fields", dest="q", default="qual",
+                        help="Select fields which give quality values, separated by comma.")
 
-    parser.add_argument("-o", "--output", dest="output", required=True,
+    parser.add_argument("-o", "--output", required=True,
                         help="Output file name")
 
     parser.add_argument("-N", "--max-qual-values", dest="max_qual", type=int, default=1000,
                         help="Maximum number of distinct quality values to calculate P/R for.")
 
     args = parser.parse_args()
+
+    def checkFile(filename, label) :
+        if not os.path.isfile(filename) :
+            raise Exception("Can't find input %s file: '%s'" % (label,filename))
+
+    if len(args.inputs) == 0 :
+        raise Exception("No input file(s) given")
+
+    for inputFile in args.inputs :
+        checkFile(inputFile,"features CSV")
+
+    return args
+
+
+def main():
+    args = parseArgs()
 
     datasets = []
     for i in args.inputs:
