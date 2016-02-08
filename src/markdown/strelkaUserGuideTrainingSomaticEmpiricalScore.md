@@ -26,10 +26,10 @@ TP/FP/FN annotation like this:
 
 ```
 python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/vcf_to_feature_csv.py \
-    src/demo/data/strelka_admix_snvs.vcf.gz \
+    src/demo/data/strelka_admix_snvs_chr21:1-25000000.vcf.gz \
     -o admix_training_data.csv \
     --feature-table=strelka.snv \
-    --truth src/demo/data/PG_admix_truth_snvs.vcf.gz
+    --truth src/demo/data/PG_admix_truth_snvs_chr21:1-25000000.vcf.gz
 ```
 
 ## Step 2: Training an EVS model
