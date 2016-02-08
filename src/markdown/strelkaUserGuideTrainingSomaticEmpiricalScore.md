@@ -52,22 +52,19 @@ python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_learn.py \
 Reading admix_training_data.csv
 Using default parameters.
 Feature ranking:
-1. feature 0:NT_REF (0.321115 +- 0.299492)
-2. feature 9:N_TIER1_ALT_RATE (0.288852 +- 0.307693)
-3. feature 8:T_TIER1_ALT_RATE (0.114278 +- 0.107255)
-4. feature 1:QSS_NT (0.085156 +- 0.110212)
-5. feature 11:MQ_ZERO_RATE (0.035398 +- 0.043017)
-6. feature 7:T_DP_RATE (0.034063 +- 0.039814)
-7. feature 14:SNVSB (0.033583 +- 0.074959)
-8. feature 6:N_DP_RATE (0.027155 +- 0.036797)
-9. feature 15:ReadPosRankSum (0.025266 +- 0.041639)
-10. feature 10:MQ_SCORE (0.019818 +- 0.027179)
-11. feature 3:T_FDP_RATE (0.007780 +- 0.003133)
-12. feature 2:N_FDP_RATE (0.005160 +- 0.003502)
-13. feature 5:T_SDP_RATE (0.001232 +- 0.000659)
-14. feature 4:N_SDP_RATE (0.001144 +- 0.000810)
-15. feature 13:PNOISE2 (0.000000 +- 0.000000)
-16. feature 12:PNOISE (0.000000 +- 0.000000)
+1. feature 0:QSS_NT (0.360130 +- 0.040911)
+2. feature 6:TIER1_ALT_RATE (0.228258 +- 0.118031)
+3. feature 5:N_DP_RATE (0.155632 +- 0.048948)
+4. feature 9:strandBias (0.069111 +- 0.073574)
+5. feature 8:n_mapq0 (0.054176 +- 0.043498)
+6. feature 7:MQ (0.049967 +- 0.032699)
+7. feature 10:ReadPosRankSum (0.045467 +- 0.026747)
+8. feature 1:N_FDP_RATE (0.019045 +- 0.012597)
+9. feature 2:T_FDP_RATE (0.016458 +- 0.005400)
+10. feature 3:N_SDP_RATE (0.000937 +- 0.000709)
+11. feature 4:T_SDP_RATE (0.000820 +- 0.000598)
+12. feature 12:altpos (0.000000 +- 0.000000)
+13. feature 11:altmap (0.000000 +- 0.000000)
 ```
 
 ## Step 3: Calculate Scores
@@ -88,12 +85,11 @@ python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_evaluate.py
 
 ```
 Reading admix_training_data.csv
-ptag   FN     FP     TP
-tag
-FN    662      0      0
-FP      0  32189     17
-TP      0      1  15572
-
+ptag   FN     FP    TP
+tag                   
+FN    178      0     0
+FP      0  17632     9
+TP      0      2  5437
 [3 rows x 3 columns]
 ```
 
@@ -101,7 +97,6 @@ TP      0      1  15572
 
 ```
 python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_pr.py \
-     -q QSS_NT,qual \
      -o admix_precisionrecall.csv \
      admix_classified.csv
 ```
@@ -110,17 +105,22 @@ python ${STRELKA_INSTALL}/share/scoringModelTraining/somatic/bin/evs_pr.py \
 
 ```
 Reading admix_classified.csv
-Processed 10 / 319 qual values for QSS_NT
-Processed 20 / 319 qual values for QSS_NT
-Processed 30 / 319 qual values for QSS_NT
-Processed 40 / 319 qual values for QSS_NT
-Processed 50 / 319 qual values for QSS_NT
-Processed 60 / 319 qual values for QSS_NT
-Processed 70 / 319 qual values for QSS_NT
-Processed 80 / 319 qual values for QSS_NT
-Processed 90 / 319 qual values for QSS_NT
-Processed 100 / 319 qual values for QSS_NT
-...
+Processed 10 / 163 qual values for qual
+Processed 20 / 163 qual values for qual
+Processed 30 / 163 qual values for qual
+Processed 40 / 163 qual values for qual
+Processed 50 / 163 qual values for qual
+Processed 60 / 163 qual values for qual
+Processed 70 / 163 qual values for qual
+Processed 80 / 163 qual values for qual
+Processed 90 / 163 qual values for qual
+Processed 100 / 163 qual values for qual
+Processed 110 / 163 qual values for qual
+Processed 120 / 163 qual values for qual
+Processed 130 / 163 qual values for qual
+Processed 140 / 163 qual values for qual
+Processed 150 / 163 qual values for qual
+Processed 160 / 163 qual values for qual
 ```
 
 We can look at the result e.g. using R:

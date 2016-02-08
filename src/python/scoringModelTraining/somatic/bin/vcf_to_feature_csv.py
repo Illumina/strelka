@@ -47,7 +47,6 @@ sys.path.append(workflowDir)
 
 import evs
 import evs.features
-from evs.tools.bamstats import bamStats
 from evs.tools.bedintervaltree import BedIntervalTree
 
 import pandas
@@ -73,25 +72,9 @@ def main():
                         choices=evs.features.FeatureSet.sets.keys(),
                         help="Select a feature table to output.")
 
-    parser.add_argument("--bam", dest="bams", default=[], action="append",
-                        help="pass one or more BAM files for feature table extraction")
-
     args = parser.parse_args()
 
-    bams = []
-    md = None
-    for x in args.bams:
-        bams.append(bamStats(x))
-
-    if bams:
-        bres = pandas.concat(bams).groupby("CHROM").mean()
-        md = {}
-        for x in bres.index:
-            print >>sys.stderr, "Expected coverage on %s is %f" % (x, bres.loc[x]["COVERAGE"])
-            md[x] = float(bres.loc[x]["COVERAGE"])
-
     fset = evs.features.FeatureSet.make(args.features)
-    fset.setChrDepths(md)
 
     featuretable = fset.collect(args.input[0])
     featuretable["tag"] = ""

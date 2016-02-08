@@ -1,4 +1,3 @@
-#!/illumina/development/haplocompare/hc-virtualenv/bin/python
 #
 # Strelka - Small Variant Caller
 # Copyright (c) 2009-2016 Illumina, Inc.
@@ -27,7 +26,7 @@ class FeatureSet(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        self.chr_depth = {}
+        pass
 
     @abc.abstractmethod
     def collect(self, vcfname):
@@ -56,9 +55,6 @@ class FeatureSet(object):
         # noinspection PyCallingNonCallable
         return FeatureSet.sets[name]()
 
-    def setChrDepths(self, cd):
-        """ set depth normalisation factors (can come from VCF or BAM) """
-        self.chr_depth = cd
 
 import StrelkaSNV   # noqa
 import StrelkaIndel  # noqa

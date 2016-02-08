@@ -17,25 +17,24 @@
 #
 #
 
-from VcfFeatureSet import VcfFeatureSet
+"""
+misc vcf utilities
+"""
 
 
-@VcfFeatureSet.register("strelka.indel")
-class StrelkaIndelFeatures(VcfFeatureSet):
-    """Collect indel features from VCF"""
+def openMaybeGzip(fileName):
+    import gzip
+    if fileName.endswith(".gz"):
+        return gzip.GzipFile(fileName)
+    else:
+        return open(fileName)
 
-    def collect(self, vcfname):
-        """ Return a data frame with features collected from the
-            given VCF """
 
-        return self.collectCore(vcfname,"indel_scoring_features")
-
-    def trainingfeatures(self):
-        """ Return a list of columns that are features to use for EVS model training """
-        return ["QSI_NT",
-                "TIER1_ALLELE_RATE",
-                "RC",
-                "IHP",
-                "MQ",
-                "bcn",
-                "T_TOR_RATE_TIER1"]
+class VCFID :
+    CHROM = 0
+    POS = 1
+    REF = 3
+    ALT = 4
+    QUAL = 5
+    FILTER = 6
+    INFO = 7
