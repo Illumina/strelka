@@ -37,7 +37,8 @@ from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
-from starkaWorkflow import runCount, StarkaCallWorkflow, StarkaWorkflow
+from starkaWorkflow import runCount, SharedPathInfo, \
+                           StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
 
@@ -88,6 +89,7 @@ class TempSegmentFiles :
     def __init__(self) :
         self.gvcf = []
         self.bamRealign = []
+        self.stats = []
 
 
 # we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
@@ -96,7 +98,7 @@ def quote(instr):
 
 
 
-def callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, taskPrefix="", dependencies=None) :
+def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     isFirstSegment = (len(segFiles.gvcf) == 0)
 
@@ -128,11 +130,10 @@ def callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, taskPrefix="", dep
     # the header value for the relevant phasing filters is still emitted
     if len(self.params.callContinuousVf) > 0 :
         segCmd.extend(["--gvcf-include-header", "Phasing"])
-    segCmd.extend(["--report-file", quote(self.paths.getTmpSegmentReportPath(gseg.pyflowId))])
+    segCmd.extend(["--report-file", quote(self.paths.getTmpSegmentReportPath(gseg.id))])
 
-    # So far timings are the only stats collected
-    segStatsLogPaths.append(self.paths.getSegmentStatsPath(gseg.pyflowId))
-    segCmd.extend(["--stats-file", quote(segStatsLogPaths[-1])])
+    segFiles.stats.append(self.paths.getTmpSegmentStatsPath(segStr))
+    segCmd.extend(["--stats-file", quote(segFiles.stats[-1])])
 
     # Empirical Variant Scoring(EVS):
     if self.params.isEVS :
@@ -206,7 +207,7 @@ def callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, taskPrefix="", dep
 
     nextStepWait = set()
 
-    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
+    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
     self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
     nextStepWait.add(setTaskLabel)
 
@@ -220,7 +221,7 @@ def callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, taskPrefix="", dep
             sorted = sorted[:-4]
             sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+gseg.pyflowId)
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+gseg.id)
             self.addTask(sortTaskLabel,sortCmd,dependencies=setTaskLabel,memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
@@ -240,13 +241,10 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     segmentTasks = set()
 
-    # this collects the stats files per segment
-    segStatsLogPaths = []
-
     segFiles = TempSegmentFiles()
     for gseg in getNextGenomeSegment(self.params) :
 
-        segmentTasks |= callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, dependencies=dirTask)
+        segmentTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
 
     if len(segmentTasks) == 0 :
         raise Exception("No genome regions to analyze. Possible target region parse error.")
@@ -256,7 +254,11 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     finishTasks = set()
 
+    # merge gVCF
     finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.gvcf, self.paths.getGvcfOutputPath(),"gVCF"))
+
+    # merge segment stats:
+    finishTasks.add(self.mergeSegmentStats(taskPrefix,completeSegmentsTask, segFiles.stats))
 
     if self.params.isWriteRealignedBam :
         def finishBam(tmpList, output, label) :
@@ -264,16 +266,6 @@ def callGenome(self,taskPrefix="",dependencies=None):
             finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
 
         finishBam(segFiles.bamRealign, self.paths.getRealignedBamPath(), "realigned")
-
-    # merge segment stats:
-    segStatsMergeLabel=preJoin(taskPrefix,"mergeSegmentStats")
-    segStatsMergeCmd=[self.params.statsMergeBin]
-    for statsFile in segStatsLogPaths :
-        segStatsMergeCmd.extend(["--stats-file",statsFile])
-    segStatsMergeCmd.extend(["--output-file",self.paths.getFinalSegmentStatsPath()])
-    segStatsMergeCmd.extend(["--report-file",self.paths.getFinalSegmentStatsReportPath()])
-    mergeTask=self.addTask(segStatsMergeLabel, segStatsMergeCmd, dependencies=completeSegmentsTask, isForceLocal=True)
-    finishTasks.add(mergeTask)
 
     if not self.params.isRetainTempFiles :
         rmStatsTmpCmd = getRmdirCmd() + [tmpSegmentDir]
@@ -311,22 +303,16 @@ class CallWorkflow(StarkaCallWorkflow) :
 
 
 
-class PathInfo:
+class PathInfo(SharedPathInfo):
     """
     object to centralize shared workflow path names
     """
 
     def __init__(self, params) :
-        self.params = params
-
-    def getChromDepth(self) :
-        return os.path.join(self.params.workDir,"chromDepth.txt")
+        super(PathInfo,self).__init__(params)
 
     def getRunSpecificModel(self) :
         return os.path.join(self.params.workDir,"Indel_model_run.json")
-
-    def getTmpSegmentDir(self) :
-        return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
 
     def getIndelSegmentDir(self) :
         return os.path.join(self.params.workDir, "indelSegment.tmpdir")
@@ -340,29 +326,11 @@ class PathInfo:
     def getTmpRealignBamPath(self, segStr,) :
         return os.path.join( self.getTmpSegmentDir(), "%s.realigned.bam" % (segStr))
 
-    def getTmpSegmentReportPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
-
-    def getSegmentStatsPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "genomeCallStats.%s.xml" % (segStr))
-
-    def getVariantsDir(self) :
-        return self.params.variantsDir
-
-    def getFinalSegmentStatsPath(self) :
-        return os.path.join(self.params.statsDir,"genomeCallStats.xml")
-
-    def getFinalSegmentStatsReportPath(self) :
-        return os.path.join(self.params.statsDir,"genomeCallStats.tsv")
-
     def getGvcfOutputPath(self) :
-        return os.path.join( self.getVariantsDir(), "genome.vcf.gz")
+        return os.path.join( self.params.variantsDir, "genome.vcf.gz")
 
     def getRealignedBamPath(self) :
         return os.path.join( self.params.realignedDir, 'realigned.bam');
-
-    def getRefCountFile(self) :
-        return os.path.join( self.params.workDir, "refCount.txt")
 
 
 
@@ -372,8 +340,8 @@ class StarlingWorkflow(StarkaWorkflow) :
     """
 
     def __init__(self,params,iniSections) :
-
-        super(StarlingWorkflow,self).__init__(params,iniSections)
+        global PathInfo
+        super(StarlingWorkflow,self).__init__(params,iniSections,PathInfo)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []
@@ -385,8 +353,6 @@ class StarlingWorkflow(StarkaWorkflow) :
         if self.params.isWriteRealignedBam :
             self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
             ensureDir(self.params.realignedDir)
-
-        self.paths = PathInfo(self.params)
 
         if self.params.isExome:
             self.params.evsModelName = "Qrule"

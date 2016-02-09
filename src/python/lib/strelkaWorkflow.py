@@ -37,7 +37,8 @@ from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
-from starkaWorkflow import runCount, StarkaCallWorkflow, StarkaWorkflow
+from starkaWorkflow import runCount, SharedPathInfo, \
+                           StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
 
@@ -67,6 +68,7 @@ class TempSegmentFiles :
         self.callable = []
         self.normalRealign = []
         self.tumorRealign = []
+        self.stats = []
 
 
 
@@ -152,7 +154,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
     addListCmdOption(self.params.noiseVcfList, '--noise-vcf')
 
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
+
+    segFiles.stats.append(self.paths.getTmpSegmentStatsPath(segStr))
+    segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
     if not isFirstSegment :
         segCmd.append("--strelka-skip-header")
@@ -168,13 +173,13 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     nextStepWait = set()
 
-    callTask=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
+    callTask=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
     self.addTask(callTask,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
     # fix vcf header to use parent pyflow cmdline instead of random segment command:
     compressWaitFor=callTask
     if isFirstSegment :
-        headerFixTask=preJoin(taskPrefix,"fixVcfHeader_"+gseg.pyflowId)
+        headerFixTask=preJoin(taskPrefix,"fixVcfHeader_"+gseg.id)
         def getHeaderFixCmd(fileName) :
             tmpName=fileName+".reheader.tmp"
             cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
@@ -190,7 +195,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         self.addTask(headerFixTask, headerFixCmd, dependencies=callTask, isForceLocal=True)
         compressWaitFor=headerFixTask
 
-    compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
+    compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.id)
     compressCmd="\"%s\" \"%s\" && \"%s\" \"%s\"" % (self.params.bgzipBin, tmpSnvPath, self.params.bgzipBin, tmpIndelPath)
     if self.params.isWriteCallableRegion :
         compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
@@ -208,7 +213,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
             sorted = sorted[:-4]
             sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.pyflowId)
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+label+"_"+gseg.id)
             self.addTask(sortTaskLabel,sortCmd,dependencies=callTask,memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
@@ -246,6 +251,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
                                         self.paths.getSnvOutputPath(),"SNV"))
     finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.indel,
                                         self.paths.getIndelOutputPath(),"Indel"))
+
+    # merge segment stats:
+    finishTasks.add(self.mergeSegmentStats(taskPrefix,completeSegmentsTask, segFiles.stats))
 
     if self.params.isWriteCallableRegion :
         finishTasks.add(self.concatIndexBed(taskPrefix, completeSegmentsTask, segFiles.callable,
@@ -295,19 +303,13 @@ class CallWorkflow(StarkaCallWorkflow) :
 
 
 
-class PathInfo:
+class PathInfo(SharedPathInfo):
     """
     object to centralize shared workflow path names
     """
 
     def __init__(self, params) :
-        self.params = params
-
-    def getChromDepth(self) :
-        return os.path.join(self.params.workDir,"chromDepth.txt")
-
-    def getTmpSegmentDir(self) :
-        return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
+        super(PathInfo,self).__init__(params)
 
     def getTmpSegmentSnvPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "somatic.snvs.unfiltered.%s.vcf" % (segStr))
@@ -324,26 +326,17 @@ class PathInfo:
     def getTmpRealignBamPath(self, segStr, label) :
         return os.path.join( self.getTmpSegmentDir(), "%s.%s.realigned.bam" % (label, segStr))
 
-    def getTmpSegmentReportPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
-
-    def getVariantsDir(self) :
-        return self.params.variantsDir
-
     def getSnvOutputPath(self) :
-        return os.path.join( self.getVariantsDir(), "somatic.snvs.vcf.gz")
+        return os.path.join( self.params.variantsDir, "somatic.snvs.vcf.gz")
 
     def getIndelOutputPath(self) :
-        return os.path.join( self.getVariantsDir(), "somatic.indels.vcf.gz")
+        return os.path.join( self.params.variantsDir, "somatic.indels.vcf.gz")
 
     def getRegionOutputPath(self) :
         return os.path.join( self.params.regionsDir, 'somatic.callable.region.bed.gz');
 
     def getRealignedBamPath(self, label) :
         return os.path.join( self.params.realignedDir, '%s.realigned.bam' % (label));
-
-    def getRefCountFile(self) :
-        return os.path.join( self.params.workDir, "refCount.txt")
 
 
 
@@ -353,8 +346,8 @@ class StrelkaWorkflow(StarkaWorkflow) :
     """
 
     def __init__(self,params,iniSections) :
-
-        super(StrelkaWorkflow,self).__init__(params,iniSections)
+        global PathInfo
+        super(StrelkaWorkflow,self).__init__(params,iniSections, PathInfo)
 
         # format bam lists:
         if self.params.normalBamList is None : self.params.normalBamList = []
@@ -370,9 +363,6 @@ class StrelkaWorkflow(StarkaWorkflow) :
         if self.params.isWriteRealignedBam :
             self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
             ensureDir(self.params.realignedDir)
-
-        self.paths = PathInfo(self.params)
-
 
 
     def getSuccessMessage(self) :

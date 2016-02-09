@@ -37,7 +37,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 from configBuildTimeInfo import workflowVersion
 from configureUtil import argToBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from starkaWorkflow import runCount, StarkaWorkflow
+from starkaWorkflow import runCount, SharedPathInfo, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
 
@@ -81,7 +81,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",bamPath])
 
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
 
     if not isFirstSegment :
         segCmd.append("--skip-vcf-header")
@@ -97,7 +97,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     nextStepWait = set()
 
-    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
+    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
     self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
     nextStepWait.add(setTaskLabel)
 
@@ -174,13 +174,13 @@ class CallWorkflow(WorkflowRunner) :
 
 
 
-class PathInfo:
+class PathInfo(SharedPathInfo):
     """
     object to centralize shared workflow path names
     """
 
     def __init__(self, params) :
-        self.params = params
+        super(PathInfo,self).__init__(params)
 
     def getTmpSegmentDir(self) :
         return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
@@ -191,11 +191,8 @@ class PathInfo:
     def getTmpSegmentReportPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
-    def getVariantsDir(self) :
-        return self.params.variantsDir
-
     def getGvcfOutputPath(self) :
-        return os.path.join( self.getVariantsDir(), "noise.vcf.gz")
+        return os.path.join( self.params.variantsDir, "noise.vcf.gz")
 
     def getRefCountFile(self) :
         return os.path.join( self.params.workDir, "refCount.txt")
@@ -208,6 +205,8 @@ class snoiseWorkflow(StarkaWorkflow) :
     """
 
     def __init__(self,params,iniSections) :
+        global PathInfo
+        super(snoiseWorkflow,self).__init__(params,iniSections,PathInfo)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []
@@ -215,8 +214,6 @@ class snoiseWorkflow(StarkaWorkflow) :
         # sanity check some parameter typing:
         MEGABASE = 1000000
         self.params.scanSize = int(self.params.scanSizeMb) * MEGABASE
-
-        self.paths = PathInfo(self.params)
 
 
     def getSuccessMessage(self) :

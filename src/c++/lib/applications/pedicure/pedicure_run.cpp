@@ -26,6 +26,7 @@
 #include "pedicure_streams.hh"
 #include "pedicure_run.hh"
 
+#include "appstats/SegmentStatsManager.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "htsapi/bam_header_util.hh"
@@ -45,6 +46,8 @@ pedicure_run(
     const pedicure_options& opt)
 {
     opt.validate();
+
+    SegmentStatsManager segmentStatMan(opt.segmentStatsFilename);
 
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);

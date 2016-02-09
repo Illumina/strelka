@@ -105,12 +105,57 @@ class StarkaCallWorkflow(WorkflowRunner) :
 
 
 
+    def mergeSegmentStats(self, taskPrefix, dependencies, segStatsLogPaths) :
+        """
+        merge segment stats:
+        """
+        segStatsMergeLabel=preJoin(taskPrefix,"mergeSegmentStats")
+        segStatsMergeCmd=[self.params.statsMergeBin]
+        for statsFile in segStatsLogPaths :
+            segStatsMergeCmd.extend(["--stats-file",statsFile])
+        segStatsMergeCmd.extend(["--output-file",self.paths.getSegmentStatsPath()])
+        segStatsMergeCmd.extend(["--report-file",self.paths.getSegmentStatsReportPath()])
+        return self.addTask(segStatsMergeLabel, segStatsMergeCmd, dependencies=dependencies, isForceLocal=True)
+
+
+
+class SharedPathInfo(object):
+    """
+    object to centralize shared workflow path names
+    """
+
+    def __init__(self, params) :
+        self.params = params
+
+    def getChromDepth(self) :
+        return os.path.join(self.params.workDir,"chromDepth.txt")
+
+    def getTmpSegmentDir(self) :
+        return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
+
+    def getTmpSegmentReportPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
+
+    def getTmpSegmentStatsPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "genomeCallStats.%s.xml" % (segStr))
+
+    def getSegmentStatsPath(self) :
+        return os.path.join(self.params.statsDir,"genomeCallStats.xml")
+
+    def getSegmentStatsReportPath(self) :
+        return os.path.join(self.params.statsDir,"genomeCallStats.tsv")
+
+    def getRefCountFile(self) :
+        return os.path.join( self.params.workDir, "refCount.txt")
+
+
+
 class StarkaWorkflow(WorkflowRunner) :
     """
     small variant calling workflow base
     """
 
-    def __init__(self,params,iniSections) :
+    def __init__(self,params,iniSections,PathInfoType) :
 
         cleanPyEnv()
 
@@ -134,6 +179,8 @@ class StarkaWorkflow(WorkflowRunner) :
         # timings and other stats go into statsDir
         self.params.statsDir=os.path.join(self.params.resultsDir,"stats")
         ensureDir(self.params.statsDir)
+
+        self.paths = PathInfoType(self.params)
 
         indexRefFasta=self.params.referenceFasta+".fai"
 
