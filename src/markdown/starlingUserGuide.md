@@ -63,6 +63,17 @@ The primary starling output is a [VCF 4.1][1] file found in
     * This file represents the genotype for all positions in the genome, in addition to all discovered indel variants
 
 
+### Statistics
+
+Additional secondary output is provided in ${RUNFOLDER}/results/stats
+
+* __genomeCallStats.tsv__
+    * runtime information accumulated for each genome segment. Excludes auxiliary steps such as BAM indexing and vcf merging.
+
+* __genomeCallStats.xml__
+    * xml data backing the genomeCallStats.tsv report
+
+
 ## Run configuration and Execution
 
 Starling is run in a two step procedure: (1) configuration and (2) workflow

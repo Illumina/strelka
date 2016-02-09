@@ -121,6 +121,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         starlingBin=joinFile(libexecDir,exeFile("starling2"))
         strelkaBin=joinFile(libexecDir,exeFile("strelka2"))
         pedicureBin=joinFile(libexecDir,exeFile("pedicure"))
+        statsMergeBin=joinFile(libexecDir,exeFile("mergeSegmentStats"))
 
         # default memory request per process-type
         #

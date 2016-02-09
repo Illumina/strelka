@@ -15,3 +15,7 @@ somatic caller
 
 strelkaNoiseExtractor:
 strelka utiltity to develop 'panel of normal' noise profiles
+
+mergeSegmentStats:
+merges the runtime stats from individual genome segments
+
