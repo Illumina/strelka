@@ -272,6 +272,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
     segStatsMergeCmd.extend(["--output-file",self.paths.getFinalSegmentStatsPath()])
     segStatsMergeCmd.extend(["--report-file",self.paths.getFinalSegmentStatsReportPath()])
     mergeTask=self.addTask(segStatsMergeLabel, segStatsMergeCmd, dependencies=completeSegmentsTask, isForceLocal=True)
+    finishTasks.add(mergeTask)
 
     cleanTask=self.addTask(preJoin(taskPrefix,"cleanTmpDir"), ["rm","-rf",tmpGraphDir], dependencies=finishTasks, isForceLocal=True)
 
