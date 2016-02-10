@@ -1,11 +1,11 @@
 #
-# minimum environment required to run EVS training procedures for Strelka somatic variant training
+# minimum environment required to run Strelka somatic EVS training procedures
 #
 
 FROM ubuntu 14.04
 
 #
-# Training procedure requirements:
+# major required packages:
 #
 # - python
 # - numpy 

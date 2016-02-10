@@ -1,5 +1,3 @@
-<link rel='stylesheet' href='guideStyle.css' />
-
 Strelka Developer Guide
 =======================
 
@@ -13,11 +11,7 @@ Information is added as pertinent questions/discussions come up in the contribut
 so this guide is not intended to provide complete coverage of the above topics.
 
 For end user documentation describing how to run an analysis and interpret its output,
-please see the [User Guide](strelkaUserGuide.md).
-
-For a high level description of algorithms and statistical models, please see
-the latest Strelka publication.
-
+please see the [User Guide](../userGuide/README.md).
 
 ## Table of Contents
 * [Developer Build Notes](#developer-build-notes)
@@ -65,21 +59,21 @@ found in the path
 Note that during the configuration step, the following dependencies will be
 built from source if they are not found:
 
-* cmake 2.8.0+
-* boost 1.56.0+
+* cmake 2.8.5+
+* boost 1.53.0+
 
 To avoid the extra time associated with this step, ensure that (1)
-cmake 2.8.0+ is in your PATH and (2) BOOST\_ROOT is defined to point
-to boost 1.56.0 or newer.
+cmake 2.8.5+ is in your PATH and (2) BOOST\_ROOT is defined to point
+to boost 1.53.0 or newer.
 
 ### General Debugging: Address Sanitizer
 
 The build system offers first-class support for google address sanitizer
 when a supporting compiler is detected. To use this mode, start a fresh
 installation process with the additional configure option `--build-type=ASan`,
-extending from the configuration example in the above build instructions, use:
+for example:
 
-    ../strelka-A.B.C.release_src/src/configure --jobs=4 --prefix=/path/to/install --build-type=ASan
+    ../configure --jobs=4 --prefix=/path/to/install --build-type=ASan
 
 ### General Debugging: Inspecting temporary files
 
@@ -93,44 +87,39 @@ files may be helpful in various debugging scenarios. To turn on this option, add
 ### Windows development support
 
 Strelka does not link or run on windows. However, the build system does
-facilitate Visual Studio (VS) users. When cmake configuration is run
+facilitate Visual Studio (VS) developers. When cmake configuration is run
 on windows, all linking is disabled and most third party libraries are
 unpacked for header include access, but are not compiled. Cmake VS
 solutions allow the c++ code to be browsed, analyzed and compiled to
 the library level.  Note that unit test codes are compiled to
-libraries but cannot be run.
+libraries but not linked or run.
 
-C++11 features in use require at least VS2013. A Windows
-installation of cmake is also required to configure and compile.
-Note that the minimum cmake version for Windows is 3.1.0
-
-C++11 features used by starka require at least VS2013. Windows
-installations of cmake and zlib are also required to configure and
-compile. Windows zlib is provided by the [gnuwin32
-package] [gnuwin32] among others.
+C++11 features in use require at least VS2013. Windows
+installations of cmake and zlib are also required to configure and compile.
+Note that the minimum cmake version is 3.1.0 for Windows. Windows zlib is provided by the [gnuwin32 package] [gnuwin32] among others.
 
 [gnuwin32]:http://gnuwin32.sourceforge.net/packages/zlib.htm
 
-### Automating Portable Binary Builds 
+### Automating Portable Binary Builds for Linux
 
 A script is provided to enable a dockerized build process which
-issues Centos5+ or Centos6+ binary tarballs. To do so, ensure you
+issues Centos5+ or Centos6+ binary tarballs. To use this script, ensure you
 have permission to `docker run` on the current system and execute the
 following script:
 
 ```
-${STRELKA_REPO_ROOT}/scratch/docker/deployment/dockerBuildBinaryTarball.bash ${STRELKA_REPO_ROOT2} ${BINARY_BUILD_PREFIX}
+${STRELKA_ROOT_PATH}/scratch/docker/deployment/dockerBuildBinaryTarball.bash ${STRELKA_ROOT_PATH2} ${BINARY_BUILD_PREFIX}
 ```
 
-The term `${STRELKA_REPO_ROOT2}` can point to the current git repo (ie. `${STRELKA_REPO_ROOT}`),
+The term `${STRELKA_ROOT_PATH2}` can point to the current git repo (ie. `${STRELKA_ROOT_PATH}`),
 or to an extracted Strelka source tarball previously created using the script:
 
 ```
-${STRELKA_REPO_ROOT}/scratch/make_release_tarball.bash
+${STRELKA_ROOT_PATH}/scratch/make_release_tarball.bash
 ```
 
 The choice of virtualized build environment is hard-coded in the deploy script for the time being,
-see the `builderImage` variable.
+specified by `builderImage`.
 
 ## Coding Guidelines
 
@@ -205,5 +194,5 @@ self.flowLog("Initiating Starling workflow version: %s" % (__version__)
 * All tests use the boost unit test framework
 * All unit tests are required to run and pass as part of every build (including end-user builds)
 * Unit tests are already enabled for every library "test" subdirectory, additional tests in these directories will be automatically detected 
-  * Example [blt_util unit tests directory](../c++/lib/blt_util/test)
+  * Example [blt_util unit tests directory](../../src/c++/lib/blt_util/test)
 

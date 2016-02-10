@@ -1,0 +1,84 @@
+\documentclass{article}
+
+\usepackage{natbib}
+
+% for equation*
+\usepackage{amsmath}
+
+% for scalebox,...
+\usepackage{graphics}
+
+% for pseudocode
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+
+
+\title{'Methods for Strelka Small Variant Caller'}
+
+
+% simple scientific notation:
+\newcommand{\e}[1]{\ensuremath{\times 10^{#1}}}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Overview}
+
+On any release branch, the methods described here should reflect the default implementation in the source repository containing this document. 
+
+\section{Methods}
+
+\subsection{Strelka Workflow Overview}
+
+All strelka workflows run several quick parameter estimation steps on the input data, then chop up the genome to call variants on the segments in parallel, then glue the results back together!
+
+
+\subsection{Preliminary Parameter Estimation}
+
+Before entering the small  phase of the workflow, Strelka completes a rapid estimation of the sequencing depth for each chromosome. For somatic analysis this depth is only computed for the normal sample. This information is used downstream to filter out high-depth regions (details below) when Manta is run in its default whole genome sequencing mode, these values can be ignored for exome or other targeted analyses.
+
+\subsubsection{Chromosome depth estimation}
+
+For each chromosome, depth is estimated using a modified median calculation. As a first step, each chromosome is partitioned into segments of similar size to ensure the estimation process samples several chromosome regions. The chromosome is divided into the smallest number of segments no larger than $S_{max}$, where all segments have nearly equal size (all sizes must be $S$ or $S+1$, given smallest segment size of $S$). If this procedure results in more than 20 segments than $S_max$ is doubled until 20 or fewer segments are found. $S_max$ is initialized to 2 Mbase.
+
+The depth estimation procedure repeatedly cycles through all segments. Within each segment, at least 40,000 reads are scanned before moving to the next segment (additional reads are scanned until the mapping position changes.) After the target number of reads have been scanned from every segment in the chromosome, the procedure returns to the first position and repeats this procedure starting from the last unscanned position. The process repeats until the all reads in all segments are scanned or the depth estimate converges.
+
+Each scanned read is filtered if it is unmapped. Otherwise the read alignment is ignored and the read is applied to a simple depth pileup assuming a complete and ungapped alignment starting from the mapping position. Every 1M reads triggers a convergence check, but only after every chromosome segment has been sampled at least once.
+
+Depth is estimated from the resulting pileup, using a simple median over all depth observations from the pileup structure excluding zero counts. Convergence is checked between the depth estimate of the last convergence check and the current one. An absolute change of less than 0.05 is treated as converged (or given the median case, the integer median estimates must be an exact match).
+
+The depth estimation procedure is run separately for each non-tumor sample, and all high-depth thresholds are set based on the sum of depth estimates over these samples.
+
+\subsection{Small Variant Discovery}
+
+\subsubsection{Read Filtration}
+
+\subsubsection{Indel Candidacy}
+
+\subsubsection{Read Realignment}
+
+\subsection{Small Variant Scoring}
+
+\subsubsection{Core Likelihood Function}
+
+\paragraph{Indel Error Model}
+
+\subsubsection{Somatic Calling Model and Variant likelihoods}
+
+\subsubsection{Somatic Filtration and Scoring}
+
+\subsubsection{Germline Calling Model and Genotype likelihoods}
+
+\subsubsection{Germline Filtration and Scoring}
+
+\subsubsection{Denovo Calling Model and Genotype likelihoods}
+
+\subsubsection{Denovo Filtration and Scoring}
+
+
+\bibliography{methods}
+
+\end{document}

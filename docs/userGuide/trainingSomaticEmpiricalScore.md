@@ -1,6 +1,6 @@
 # Somatic Empirical Variant Score (EVS) Model Training
 
-This is a special topic of the [Strelka User Guide](strelkaUserGuide.md).
+[User Guide Home](README.md)
 
 ## Introduction
 
@@ -11,21 +11,22 @@ This document outlines the process of training a somatic Empirical Variant Score
 Strelka somatic EVS training has additional dependencies which are not included
 in the primary build system. All packages required to retrain the EVS model and
 run the steps in this guide are provided in the [training environment
-Dockerfile](trainingSomaticEmpriicalScore/Dockerfile), which can be used to
-either setup an EVS training docker image or as documentation to install
+Dockerfile](trainingSomaticEmpiricalScore/Dockerfile), which can be used to
+either setup an EVS training docker image or as a guideline to install
 all dependencies on another system.
 
 ## Step 1: Build a training data set
 
 For EVS training, the strelka workflow must be configured with the optional
 `--reportEVSFeatures` argument. This will add a new VCF INFO field called `EVSF`
-to both SNV and indel VCF outputs. EVS features will be reported with this flag even
-when scoring itself is turned off with the `--disableEVS` option.
+to both SNV and indel VCF outputs. All current EVS features used in Strelka's scoring
+model in addition to various experimental features will be reported. Note that EVS
+features can be reported even when scoring itself is turned off with the `--disableEVS` option.
 
-### Step 1a: Evaluate a single strelka somatic analysis against a truth list
+### Step 1a: Process a single VCF into a labeled feature CSV file 
 
-Given a VCF and a truth list, a CSV file with features and
-TP/FP/FN annotation can be produced as follows:
+Given a strelka somatic VCF with optional EVSF output and a truth list, a CSV file with features and
+TP/FP/FN labeling can be produced as follows:
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/vcf_to_feature_csv.py \
@@ -35,19 +36,21 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/vcf_to_fea
     ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/strelka_admix_snvs_chr21:1-25000000.vcf.gz
 ```
 
-### Step 1b: Handle multiple analyses
+This script supports additional bed file inputs to define FP and ambiguous regions, see script usage
+for details.
 
-When multiple analyses are available for a training procedure, process each analysis
-using the training procedure described in Step 1a, keeping a separate csv output file
-for each. These training data files can be combined as required for the training
-procedure described below.
+### Step 1b: Handle multiple training data sets 
+
+Typically multiple strelka analyses should available for training/testing, in this case process each
+VCF to a labeled CSV feature file using the procedure described in Step 1a. These training data may
+be combined as required for the model learning and/or evaluation procedures described below.
 
 
 ## Step 2: Training an EVS model
 
-The next step is to train a model given one or more training datasets.
-The `--features` argument below must match that used to generate
-the input training dataset(s).
+The next step is to train a model given one or more labeled feature datasets produced in Step 1.
+An example is shown below, note the `--features` argument below must match that used to generate
+the input training dataset(s), or else list a set of features present in all input dataset(s). 
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_learn.py \
@@ -81,10 +84,9 @@ Feature ranking:
 
 ## Step 3: Calculate Scores
 
-Given a trained model any set of TP/FP variants can be scored to evaluated the trained
-model. In this example the training data itself is used is used for simplicity, although
-independent test data should be used for more accurate evaluation in a real training
-scenario.
+Given a trained model any labeled testing data can be scored. In this example
+the training data itself is used as the test data for simplicity. Independent test
+data should be used for more accurate evaluation in a real training scenario.
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_evaluate.py \
@@ -108,6 +110,9 @@ TP      0      0  5439
 ```
 
 ## Step 4: Evaluate Precision / Recall for the model
+
+Any scored test data output can be further processed to evaluate precision / recall as
+follows:
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_pr.py \
@@ -158,11 +163,10 @@ ggplot(data, aes(x=recall, y=precision, color=field)) +
 ggsave("admix.png", width=4, height=3, dpi=120)
 ```
 
-An example plot from this procedure is:
+![Training data ROC curve](trainingSomaticEmpiricalScore/admix.png)
 
-![Training data ROC curve](trainingSomaticEmpriicalScore/admix.png)
-
-...showing the expected result of testing on a very small training data set.
+The ROC curve plotted in this example shows the expected result of both a small training set 
+and testing with the training data.
 
 ## Step 5: Export the model for use in Strelka
 
@@ -173,3 +177,6 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_export
     --classifier admix_training_model.pickle \
     --output admix_training_model.json
 ```
+
+Note that if the model's feature set has been changed, additional steps are required to use this file in Strelka.
+This operation is outside of user guide scope at present.

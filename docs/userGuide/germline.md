@@ -1,11 +1,7 @@
-<link rel='stylesheet' href='userGuide.css' />
+Strelka User Guide - Germline gVCF workflow
+===========================================
 
-Starling User Guide
-===================
-
-Version: @WORKFLOW_VERSION@
-
-<script src="tableOfContents.js"></script>
+[User Guide Home](README.md)
 
 ## Introduction
 
@@ -57,7 +53,7 @@ The following limitations exist on the input BAMCRAM files provided to Starling:
 ### Genome VCF (gVCF)
 
 The primary starling output is a [VCF 4.1][1] file found in
-`${RUNFOLDER}/results/variants`:
+`${STRELKA_ANALYSIS_PATH}/results/variants`:
 
 * __genome.vcf.gz__
     * This file represents the genotype for all positions in the genome, in addition to all discovered indel variants
@@ -86,11 +82,11 @@ without changing the final result of the workflow.
 
 Note in the guidelines below that starling is made available as part of the STARKA
 package, which also includes the strelka somatic small variant caller. For this reason
-the root installation referenced below is `${INSTALL_DIR}`.
+the root installation referenced below is `${STRELKA_INSTALL_PATH}`.
 
 ### Configuration
 
-The workflow is configured with the script: `${INSTALL_DIR}/bin/configureStarlingWorkflow.py`
+The workflow is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configureStarlingWorkflow.py`
 . Running this script with no arguments will display all standard configuration
 options to specify input alignment files, the reference sequence and the output run folder.
 Note that all input alignment and reference sequence files must contain the same chromosome names
@@ -98,12 +94,12 @@ in the same order. Starka's default settings assume a whole genome DNA-Seq analy
 
 Simple WGS Analysis -- Example Configuration:
 
-    ${STARKA_INSTALL_DIR}/bin/configureStarlingWorkflow.py \
+    ${STRELKA_INSTALL_PATH}/bin/configureStarlingWorkflow.py \
     --bam NA12878_S1.bam \
     --referenceFasta hg19.fa \
-    --runDir ${ANALYSIS_RUN_DIR}
+    --runDir ${STRELKA_ANALYSIS_PATH}
 
-On completion, the configuration script will create the workflow run script `${ANALYSIS_RUN_DIR}/runWorkflow.py`
+On completion, the configuration script will create the workflow run script `${STRELKA_ANALYSIS_PATH}/runWorkflow.py`
 . This can be used to run the workflow in various parallel compute modes per the
 instructions in the [Execution] section below.
 
@@ -111,13 +107,13 @@ instructions in the [Execution] section below.
 
 There are two sources of advanced configuration options:
 
-* Options listed in the file: `${INSTALL_DIR}/bin/configureStarlingWorkflow.py.ini`
+* Options listed in the file: `${STRELKA_INSTALL_PATH}/bin/configureStarlingWorkflow.py.ini`
     * These parameters are not expected to change frequently. Changing the file
   listed above will re-configure all starling runs for the installation. To change
   parameters for a single run, copy the configureStarlingWorkflow.py.ini file to another location,
   change the desired parameter values and supply the new file using the configuration
   script's `--config FILE` option.
-* Advanced options listed in: `${INSTALL_DIR}/bin/configureStarlingWorkflow.py --allHelp`
+* Advanced options listed in: `${STRELKA_INSTALL_PATH}/bin/configureStarlingWorkflow.py --allHelp`
     * These options are indented primarily for workflow development and
   debugging, but could be useful for runtime optimization in some specialized
   cases.
@@ -126,7 +122,7 @@ There are two sources of advanced configuration options:
 
 The configuration step creates a new workflow run script in the requested run directory:
 
-`{ANALYSIS_RUN_DIR}/runWorkflow.py`
+`{STRELKA_ANALYSIS_PATH}/runWorkflow.py`
 
 This script is used to control parallel execution of the workflow via the [pyFlow][2]
 task engine. It can be used to parallelize structural variant analysis via one
@@ -141,15 +137,15 @@ core count.
 
 For a full list of execution options, see:
 
-`{ANALYSIS_RUN_DIR}/runWorkflow.py -h`
+`{STRELKA_ANALYSIS_PATH}/runWorkflow.py -h`
 
 Example execution on a single node:
 
-`${ANALYSIS_RUN_DIR}/runWorkflow.py -m local -j 8`
+`${STRELKA_ANALYSIS_PATH}/runWorkflow.py -m local -j 8`
 
 Example execution on an SGE cluster:
 
-`${ANALYSIS_RUN_DIR}/runWorkflow.py -m sge -j 36`
+`${STRELKA_ANALYSIS_PATH}/runWorkflow.py -m sge -j 36`
 
 ### Extended use cases
 
@@ -177,7 +173,7 @@ call in this manner.
 These options are useful for workflow development and debugging:
 
 * Stderr logging can be disabled with `--quiet` argument. Note this log is
-  replicated to `${ANALYSIS_RUN_DIR}/workspace/pyflow.data/logs/pyflow_log.txt`
+  replicated to `${STRELKA_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt`
   so there is no loss of log information.
 
 [1]: http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41

@@ -1,5 +1,3 @@
-<link rel='stylesheet' href='guideStyle.css' />
-
 Strelka User Guide
 ==================
 
@@ -16,6 +14,10 @@ Strelka User Guide
 
 Strelka calls somatic SNVs and small indels from short sequencing reads corresponding to
 a tumor and matched normal sample. It is designed to handle impurity in the tumor sample.
+
+## Installation
+
+Please see the [Strelka installation instructions](installation.md)
 
 ## Method Overview
 
@@ -83,7 +85,7 @@ without changing the final result of the workflow.
 
 ### Configuration
 
-The workflow is configured with the script: `${INSTALL_DIR}/bin/configureStrelkaWorkflow.py`
+The workflow is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaWorkflow.py`
 . Running this script with no arguments will display all standard configuration
 options to specify input alignment files, the reference sequence and the output run folder.
 Note that all input alignment and reference sequence files must contain the same chromosome names
@@ -91,20 +93,20 @@ in the same order. Strelka's default settings assume a whole genome DNA-Seq anal
 
 Example Configuration:
 
-    ${INSTALL_DIR}/bin/configureStrelkaWorkflow.py \
-    --config ${INSTALL_DIR}/share/config/strelka_config_isaac_default.ini \
+    ${STRELKA_INSTALL_PATH}/bin/configureStrelkaWorkflow.py \
+    --config ${STRELKA_INSTALL_PATH}/share/config/strelka_config_isaac_default.ini \
     --normalBam HCC1187BL.bam \
     --tumorBam HCC1187C.bam \
     --referenceFasta hg19.fa \
-    --runDir ${ANALYSIS_RUN_DIR}
+    --runDir ${STRELKA_ANALYSIS_PATH}
 
-On completion, the configuration script will create the workflow run script `${ANALYSIS_RUN_DIR}/runWorkflow.py`
+On completion, the configuration script will create the workflow run script `${STRELKA_ANALYSIS_PATH}/runWorkflow.py`
 . This can be used to run the workflow in various parallel compute modes per the
 instructions in the [Execution] section below.
 
 #### Advanced configuration options
 
-* Advanced options listed in: `${INSTALL_DIR}/bin/configureStrelkaWorkflow.py -- allHelp`
+* Advanced options listed in: `${STRELKA_INSTALL_PATH}/bin/configureStrelkaWorkflow.py -- allHelp`
     * These options are indented primarily for workflow development and
       debugging, but could be useful for runtime optimization in some specialized
       cases.
@@ -113,7 +115,7 @@ instructions in the [Execution] section below.
 
 The configuration step creates a new workflow run script in the requested run directory:
 
-`{ANALYSIS_RUN_DIR}/runWorkflow.py`
+`${STRELKA_ANALYSIS_PATH}/runWorkflow.py`
 
 This script is used to control parallel execution of the workflow via the [pyFlow][2]
 task engine. It can be used to parallelize structural variant analysis via one
@@ -128,29 +130,29 @@ core count.
 
 For a full list of execution options, see:
 
-`{ANALYSIS_RUN_DIR}/runWorkflow.py -h`
+`${STRELKA_ANALYSIS_PATH}/runWorkflow.py -h`
 
 Example execution on a single node:
 
-`${ANALYSIS_RUN_DIR}/runWorkflow.py -m local -j 8`
+`${STRELKA_ANALYSIS_PATH}/runWorkflow.py -m local -j 8`
 
 Example execution on an SGE cluster:
 
-`${ANALYSIS_RUN_DIR}/runWorkflow.py -m sge -j 36`
+`${STRELKA_ANALYSIS_PATH}/runWorkflow.py -m sge -j 36`
 
 #### Advanced execution options
 
 These options are useful for workflow development and debugging:
 
 * Stderr logging can be disabled with `--quiet` argument. Note this log is
-  replicated to `${ANALYSIS_RUN_DIR}/workspace/pyflow.data/logs/pyflow_log.txt`
+  replicated to `${STRELKA_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt`
   so there is no loss of log information.
 
 ## Special Topics
 
 The following items provide an in-depth focus on a special topic or procedure 
 
-* [Training Procedure for Somatic Empirical Score](strelkaUserGuideTrainingSomaticEmpiricalScore.md)
+* [Training Procedure for Somatic Empirical Score](trainingSomaticEmpiricalScore.md)
 
 
 
