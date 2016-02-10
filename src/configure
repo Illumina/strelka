@@ -1,0 +1,11 @@
+
+#
+# temp file to assist with configure script transition
+#
+
+rel2abs() {
+  cd $1 && pwd -P
+}
+
+this_dir=$(rel2abs $(dirname $0))
+$this_dir/../configure "$@"
