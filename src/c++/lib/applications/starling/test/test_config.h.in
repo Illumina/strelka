@@ -21,4 +21,4 @@
 #pragma once
 
 #define TEST_DATA_PATH "@CMAKE_CURRENT_SOURCE_DIR@"
-#define TEST_CONFIG_PATH "@CMAKE_SOURCE_DIR@/config/germlineVariantScoringModels.txt"
+#define TEST_CONFIG_PATH "@THIS_SOURCE_DIR@/config/germlineVariantScoringModels.txt"

@@ -441,7 +441,6 @@ if (${GNU_COMPAT_COMPILER})
 
 endif()
 
-
 # cmake configure-time c++ configuration:
 #
 # don't include common subdirectory in config include path so that
@@ -479,4 +478,4 @@ endif ()
 # include dirs:
 #
 set (THIS_CXX_BEFORE_SYSTEM_INCLUDES "${Boost_INCLUDE_DIRS}" "${HTSLIB_DIR}" "${CODEMIN_DIR}" "${JSONCPP_INCLUDE_DIR}")
-set (THIS_CXX_ALL_INCLUDES "${CMAKE_SOURCE_DIR}/c++/lib")
+set (THIS_CXX_ALL_INCLUDES "${THIS_SOURCE_DIR}/c++/lib")

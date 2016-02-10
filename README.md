@@ -26,8 +26,6 @@ undesirably stringent build requirements, or an unstable development
 intermediate between releases.  Additional build notes for developers
 can be found below.
 
-Note that this README is _NOT_ part of a tagged source-code release.
-
 ### Build prerequisites:
 
 Strelka requires a compiler supporting most of the C++11 standard. These
@@ -108,7 +106,7 @@ Example (building on 4 cores):
     # Ensure that CC and CXX are updated to target compiler if needed, e.g.:
     #     export CC=/path/to/cc
     #     export CXX=/path/to/c++
-    ../strelka-A.B.C.release_src/src/configure --jobs=4 --prefix=/path/to/install
+    ../strelka-A.B.C.release_src/configure --jobs=4 --prefix=/path/to/install
     make -j4 install
 
 Note that during the configuration step, the following dependencies

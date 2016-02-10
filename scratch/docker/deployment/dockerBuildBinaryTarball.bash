@@ -37,8 +37,8 @@ scriptDir=$(rel2abs $(dirname $0))
 rootDir=$(rel2abs $rootDir)
 
 # check that rootDir conatins expected files:
-if ! [ -f $rootDir/src/configure ]; then
-    error "Can't find package configure script. Expected location is '$rootDir/src/configure'"
+if ! [ -f $rootDir/configure ]; then
+    error "Can't find package configure script. Expected location is '$rootDir/configure'"
 fi
 
 
@@ -67,7 +67,7 @@ set -o nounset
 # build
 mkdir -p build
 cd build
-$dmount/src/configure --prefix=$dmount/install --jobs=2
+$dmount/configure --prefix=$dmount/install --jobs=2
 make -j2 install
 
 # make tarball

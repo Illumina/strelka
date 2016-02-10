@@ -19,13 +19,13 @@
 
 ################################################################################
 ##
-## Configuration file for the opt subfolder (external tools)
+## Configuration file for external tools
 ##
 ## author Come Raczy
 ##
 ################################################################################
 
-message(STATUS "Creating external tools in subdirectory opt")
+message(STATUS "Building external tools")
 
 include ("${THIS_GLOBALS_CMAKE}")
 include ("${THIS_MACROS_CMAKE}")
@@ -75,6 +75,7 @@ endif ()
 
 set(THIS_HTSLIB "${THIS_PROJECT_NAME}_htslib")
 add_custom_target(${THIS_HTSLIB} DEPENDS "${HTSLIB_FINAL_TASK}")
+
 
 if (NOT WIN32)
     install(PROGRAMS "${HTSLIB_DIR}/bgzip" DESTINATION "${THIS_LIBEXECDIR}")
@@ -213,7 +214,6 @@ add_custom_target(${THIS_CODEMIN} DEPENDS "${CODEMIN_MARK}")
 # pyflow
 #
 
-#make sure unpacking happens regardless of whether ${VCF_TOOLS_DIR} exists
 set(PYFLOW_PREFIX "pyflow-1.1.12")
 set(PYFLOW_DIR "${CMAKE_CURRENT_BINARY_DIR}/${PYFLOW_PREFIX}")
 set(PYFLOW_SCRIPT "${PYFLOW_DIR}/src/pyflow.py")
