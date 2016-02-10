@@ -22,14 +22,14 @@ for ddir in doc more status; do
 done
 
 # remove unused headers for larger sub-libraries:
-for f in asio chrono geometry gil graph interprocess phoenix polygon python signals signals2 wave; do
+for f in asio geometry gil graph interprocess phoenix polygon python signals signals2 wave; do
     rm -rf $subset_name/boost/$f*
 done
 
 # remove unused libs:
 (
 cd  $subset_name/libs
-ls | grep -v -e "^\(detail\|filesystem\|program_options\|system\|test\)$"  | xargs rm -rf
+ls | grep -v -e "^\(detail\|serialization\|timer\|chrono\|filesystem\|program_options\|system\|test\)$"  | xargs rm -rf
 )
 
 # remove unused tools:

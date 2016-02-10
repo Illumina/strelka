@@ -57,11 +57,13 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               " if a variant genotype is likely."
                               " File must be tabix indexed."
                               " Option may be specified more than once, multiple inputs will be merged."
+                              " SNVs in the indel candidates file will be ignored."
                               " (default: None)")
         group.add_option("--forcedGT", type="string", dest="forcedGTList", metavar="FILE", action="append",
-                         help="Specify a vcf describing indels which must be genotyped and output even if a variant genotype is unlikely."
+                         help="Specify a vcf describing variants which must be genotyped and output even if a variant genotype is unlikely."
                               " File must be tabix indexed."
                               " Option may be specified more than once, multiple inputs will be merged."
+                              " Note that for SNVs, a site will be forced (or for gVCF, excluded from block compression), but the ALT value is ignored."
                               " (default: None)")
         group.add_option("--exome", dest="isExome", action="store_true",
                          help="Set options for WES input: turn off depth filters")
@@ -119,6 +121,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         starlingBin=joinFile(libexecDir,exeFile("starling2"))
         strelkaBin=joinFile(libexecDir,exeFile("strelka2"))
         pedicureBin=joinFile(libexecDir,exeFile("pedicure"))
+        statsMergeBin=joinFile(libexecDir,exeFile("mergeSegmentStats"))
 
         # default memory request per process-type
         #

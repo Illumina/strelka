@@ -77,6 +77,11 @@ else  ()
     message(FATAL_ERROR "${TMP_MSG}")
 endif ()
 
+# required support for librt to allow boost chrono
+if (UNIX AND NOT APPLE)
+    set  (THIS_ADDITIONAL_LIB ${THIS_ADDITIONAL_LIB} rt)
+endif ()
+
 # htslib 1.x forces pthreads in link:
 find_package( Threads )
 set  (THIS_ADDITIONAL_LIB ${THIS_ADDITIONAL_LIB} ${CMAKE_THREAD_LIBS_INIT})
@@ -436,17 +441,25 @@ if (${GNU_COMPAT_COMPILER})
 
 endif()
 
+
 # cmake configure-time c++ configuration:
-set(THIS_CXX_CONFIG_H_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib)
-set (CONFIG_DEST_FILE ${THIS_CXX_CONFIG_H_DIR}/common/config.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lib/common/config.h.in ${CONFIG_DEST_FILE} @ONLY)
+#
+# don't include common subdirectory in config include path so that
+# we effectively namespace this config.h to reduce include
+# filename shadowing
+#
+set (CXX_CONFIG_BASENAME "common/config.h")
+set (THIS_CXX_CONFIG_IN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+set (THIS_CXX_CONFIG_H_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib)
+set (CONFIG_DEST_FILE ${THIS_CXX_CONFIG_H_DIR}/${CXX_CONFIG_BASENAME})
+configure_file(${THIS_CXX_CONFIG_IN_DIR}/${CXX_CONFIG_BASENAME}.in ${CONFIG_DEST_FILE} @ONLY)
 
 # build-time c++ configuration:
 # note: (csaunders) tried to do this as add_custom_command every which way, can't get cmake to figure out
 #       dependency chain in this case
-set (CXX_BUILDTIME_CONFIG_BASENAME "configBuildTimeInfo.h")
-set (CXX_BUILDTIME_CONFIG_SOURCE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/lib/common/${CXX_BUILDTIME_CONFIG_BASENAME}.in)
-set (CXX_BUILDTIME_CONFIG_DEST_FILE ${THIS_CXX_CONFIG_H_DIR}/common/${CXX_BUILDTIME_CONFIG_BASENAME})
+set (CXX_BUILDTIME_CONFIG_BASENAME "common/configBuildTimeInfo.h")
+set (CXX_BUILDTIME_CONFIG_SOURCE_FILE ${THIS_CXX_CONFIG_IN_DIR}/${CXX_BUILDTIME_CONFIG_BASENAME}.in)
+set (CXX_BUILDTIME_CONFIG_DEST_FILE ${THIS_CXX_CONFIG_H_DIR}/${CXX_BUILDTIME_CONFIG_BASENAME})
 set (CXX_BUILDTIME_CONFIG_TARGET "${THIS_PROJECT_NAME}_cxx_buildtime_config")
 add_custom_target(${CXX_BUILDTIME_CONFIG_TARGET}
     DEPENDS ${THIS_BUILDTIME_CONFIG_TARGET}

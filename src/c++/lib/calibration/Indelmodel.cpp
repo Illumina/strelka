@@ -185,94 +185,37 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
         return;
     }
 
-    // if tract length is too short for repeat unit, set to shortest indel error rate for
-    // that repeat unit length
-    const unsigned ref_query_len = std::min(std::max(min_tract_length, ref_hpol_len), MaxTractLength);
-    const unsigned indel_query_len = std::min(std::max(min_tract_length, indel_hpol_len), MaxTractLength);
+    assert(iri.it == INDEL::INSERT || iri.it == INDEL::DELETE);
+    const INDEL::index_t reverse_it(iri.it==INDEL::DELETE ? INDEL::INSERT : INDEL::DELETE);
 
     if (iri.repeat_unit_length <= MaxMotifLength)
     {
-        if (iri.it == INDEL::INSERT)
-        {
-            indel_error_prob=std::max(model[0][0].insert_rate, adjusted_rate(repeat_unit, ref_query_len, indel_size, INDEL::INSERT));
+        // if tract length is too short for repeat unit, set to shortest indel error rate for
+        // that repeat unit length
+        const unsigned ref_query_len = std::min(std::max(min_tract_length, ref_hpol_len), MaxTractLength);
+        const unsigned indel_query_len = std::min(std::max(min_tract_length, indel_hpol_len), MaxTractLength);
 
-            // Reverse prob that true allele has been masked as reference by chance,
-            // may want to leave this term for now.
-            ref_error_prob=client_opt.indel_ref_error_factor
-                           * std::max(model[0][0].delete_rate, adjusted_rate(repeat_unit, indel_query_len, indel_size, INDEL::DELETE));
-        }
-        else if (iri.it == INDEL::DELETE)
-        {
-            indel_error_prob=std::max(model[0][0].delete_rate, adjusted_rate(repeat_unit, ref_query_len, indel_size, INDEL::DELETE));
+        indel_error_prob=adjusted_rate(repeat_unit, ref_query_len, indel_size, iri.it);
 
-            ref_error_prob=client_opt.indel_ref_error_factor
-                           * std::max(model[0][0].insert_rate, adjusted_rate(repeat_unit, indel_query_len, indel_size, INDEL::INSERT));
-        }
-        else
-        {
-            // this should never happen, but just for completeness
-            log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
-            throw blt_exception("Unknown indel type.");
-        }
+        // Reverse prob that true allele has been masked as reference by chance,
+        // may want to leave this term for now.
+        ref_error_prob=client_opt.indel_ref_error_factor *
+                adjusted_rate(repeat_unit, indel_query_len, indel_size, reverse_it);
     }
     else
     {
         // if there is no model for the repeat unit length observed, and the indel is in
         // non-repeat sequence (i.e. RC=0/IC=1 or RC=1/IC=0)
-        if (iri.it == INDEL::INSERT)
-        {
-            // current model is too aggressive for hpol length 1, which will be fixed in
-            // the model calculation in the very near future.  For now, use error prob
-            // from the previous model
-            indel_error_prob = model[0][0].insert_rate;
-            ref_error_prob   = model[0][0].delete_rate;
-        }
-        else if (iri.it == INDEL::DELETE)
-        {
-            indel_error_prob = model[0][0].delete_rate;
-            ref_error_prob   = model[0][0].insert_rate;
-        }
+
+        // current model is too aggressive for hpol length 1, which will be fixed in
+        // the model calculation in the very near future.  For now, use error prob
+        // from the previous model
+        indel_error_prob = model[0][0].get_rate(iri.it);
+        ref_error_prob   = model[0][0].get_rate(reverse_it);
     }
-    // else
-    // {
-    //     log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
-    //     throw blt_exception("Unknown indel type.");
-    // }
 }
 
-void
-IndelErrorModel::
-calc_abstract_prop(unsigned repeat_unit_length,
-                   unsigned tract_length,
-                   unsigned indel_size,
-                   indel_error_rates& error_rates,
-                   bool use_length_dependence) const
-{
-    // determine the tract length to use
-    static const unsigned one(1);
-    const unsigned repeat_unit = std::min(std::max(repeat_unit_length,one), this->MaxMotifLength);
 
-    unsigned min_tract_length = repeat_unit * 2;
-    if (repeat_unit == 1)
-    {
-        min_tract_length = 1;
-    }
-
-    // if tract length is too short for repeat unit, set to shortest indel error rate for
-    // that repeat unit length
-    const unsigned adj_tract_length = std::min(repeat_unit*std::max(tract_length,min_tract_length),
-                                               this->MaxTractLength);
-
-    double adj_indel_size = one;
-    if (use_length_dependence)
-    {
-        adj_indel_size = indel_size;
-    }
-
-    // error_rates = model[repeat_unit - 1][adj_tract_length - 1];
-    error_rates.insert_rate = std::max(model[0][0].insert_rate, adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::INSERT));
-    error_rates.delete_rate = std::max(model[0][0].delete_rate, adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::DELETE));
-}
 
 indel_error_rates
 IndelErrorModel::
@@ -304,38 +247,26 @@ calc_abstract_prop(unsigned repeat_unit_length,
 
     // indel_error_rates error_rates = model[repeat_unit - 1][adj_tract_length - 1];
     indel_error_rates error_rates;
-    error_rates.insert_rate = std::max(model[0][0].insert_rate, adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::INSERT));
-    error_rates.delete_rate = std::max(model[0][0].delete_rate, adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::DELETE));
+    error_rates.insert_rate = adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::INSERT);
+    error_rates.delete_rate = adjusted_rate(repeat_unit, adj_tract_length, adj_indel_size, INDEL::DELETE);
 
     return error_rates;
 }
 
-bool IndelErrorModel::is_simple_tandem_repeat(const starling_indel_report_info& iri) const
-{
-    // an STR only has insertions or deletions, has a repeat unit length present in the model,
-    // and has a tract length present in the model
-    unsigned min_tract_length = get_min_tract_length(iri);
-    if (iri.repeat_unit_length <= MaxMotifLength &&
-        (iri.it == INDEL::DELETE || iri.it == INDEL::INSERT) &&
-        (iri.ref_repeat_count >= min_tract_length ||
-         iri.indel_repeat_count >= min_tract_length))
-    {
-        return true;
-    }
-    return false;
-}
 
-double IndelErrorModel::adjusted_rate(unsigned repeat_unit_length,
-                                      unsigned tract_length,
-                                      unsigned indel_size,
-                                      INDEL::index_t it) const
+
+double
+IndelErrorModel::
+adjusted_rate(
+    const unsigned repeat_unit_length,
+    const unsigned tract_length,
+    const unsigned indel_size,
+    const INDEL::index_t it) const
 {
+    assert(repeat_unit_length > 0);
+    assert(tract_length > 0);
     assert(it == INDEL::INSERT || it == INDEL::DELETE);
-    if (it == INDEL::INSERT)
-    {
-        return std::pow(model[repeat_unit_length - 1][tract_length - 1].insert_rate, indel_size);
-    }
-    return std::pow(model[repeat_unit_length - 1][tract_length - 1].delete_rate, indel_size);
+    return std::max(model[0][0].get_rate(it), std::pow(model[repeat_unit_length - 1][tract_length - 1].get_rate(it), indel_size));
 }
 
 

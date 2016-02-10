@@ -261,7 +261,6 @@ get_indel_error_prob(const starling_base_options& client_opt,
         // treat everything besides simple homopolymer
         // contractions/expansions as homopolymer length 1:
         //
-//        log_os << "Im doing in indels \n";
         if (iri.repeat_unit.size() == 1)
         {
             static const unsigned one(1);
@@ -296,7 +295,7 @@ get_indel_error_prob(const starling_base_options& client_opt,
             }
             else
             {
-                log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
+                log_os << "ERROR: Unknown indel type: " << iri << "\n";
                 throw blt_exception("Unknown indel type.");
             }
         }
@@ -314,7 +313,7 @@ get_indel_error_prob(const starling_base_options& client_opt,
             }
             else
             {
-                log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
+                log_os << "ERROR: Unknown indel type: " << iri << "\n";
                 throw blt_exception("Unknown indel type.");
             }
         }

@@ -96,7 +96,7 @@ def quote(instr):
 
 
 
-def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
+def callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, taskPrefix="", dependencies=None) :
 
     isFirstSegment = (len(segFiles.gvcf) == 0)
 
@@ -129,6 +129,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if len(self.params.callContinuousVf) > 0 :
         segCmd.extend(["--gvcf-include-header", "Phasing"])
     segCmd.extend(["--report-file", quote(self.paths.getTmpSegmentReportPath(gseg.pyflowId))])
+
+    # So far timings are the only stats collected
+    segStatsLogPaths.append(self.paths.getSegmentStatsPath(gseg.pyflowId))
+    segCmd.extend(["--stats-file", quote(segStatsLogPaths[-1])])
 
     # Empirical Variant Scoring(EVS):
     segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
@@ -235,10 +239,13 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     graphTasks = set()
 
+    # this collects the stats files per segment
+    segStatsLogPaths = []
+
     segFiles = TempSegmentFiles()
     for gseg in getNextGenomeSegment(self.params) :
 
-        graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+        graphTasks |= callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, dependencies=dirTask)
 
     if len(graphTasks) == 0 :
         raise Exception("No genome regions to analyze. Possible target region parse error.")
@@ -256,6 +263,16 @@ def callGenome(self,taskPrefix="",dependencies=None):
             finishTasks.add(self.addTask(preJoin(taskPrefix,label+"_finalizeBAM"), cmd, dependencies=completeSegmentsTask))
 
         finishBam(segFiles.bamRealign, self.paths.getRealignedBamPath(), "realigned")
+
+    # merge segment stats:
+    segStatsMergeLabel=preJoin(taskPrefix,"mergeSegmentStats")
+    segStatsMergeCmd=[self.params.statsMergeBin]
+    for statsFile in segStatsLogPaths :
+        segStatsMergeCmd.extend(["--stats-file",statsFile])
+    segStatsMergeCmd.extend(["--output-file",self.paths.getFinalSegmentStatsPath()])
+    segStatsMergeCmd.extend(["--report-file",self.paths.getFinalSegmentStatsReportPath()])
+    mergeTask=self.addTask(segStatsMergeLabel, segStatsMergeCmd, dependencies=completeSegmentsTask, isForceLocal=True)
+    finishTasks.add(mergeTask)
 
     cleanTask=self.addTask(preJoin(taskPrefix,"cleanTmpDir"), ["rm","-rf",tmpGraphDir], dependencies=finishTasks, isForceLocal=True)
 
@@ -323,8 +340,17 @@ class PathInfo:
     def getTmpSegmentReportPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
+    def getSegmentStatsPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "timings.%s.xml" % (segStr))
+
     def getVariantsDir(self) :
         return self.params.variantsDir
+
+    def getFinalSegmentStatsPath(self) :
+        return os.path.join(self.params.statsDir,"genomeCallStats.xml")
+
+    def getFinalSegmentStatsReportPath(self) :
+        return os.path.join(self.params.statsDir,"genomeCallStats.tsv")
 
     def getGvcfOutputPath(self) :
         return os.path.join( self.getVariantsDir(), "genome.vcf.gz")

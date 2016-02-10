@@ -131,6 +131,10 @@ class StarkaWorkflow(WorkflowRunner) :
         self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
         ensureDir(self.params.variantsDir)
 
+        # timings and other stats go into statsDir
+        self.params.statsDir=os.path.join(self.params.resultsDir,"stats")
+        ensureDir(self.params.statsDir)
+
         indexRefFasta=self.params.referenceFasta+".fai"
 
         if self.params.referenceFasta is None:

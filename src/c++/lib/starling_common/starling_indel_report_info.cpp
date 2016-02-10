@@ -40,70 +40,6 @@
 
 
 
-///
-static
-void
-get_indel_desc(const indel_key& ik,
-               std::string& indel_desc)
-{
-    indel_desc.clear();
-
-    if ((ik.type == INDEL::INSERT) ||
-        (ik.type == INDEL::DELETE) ||
-        (ik.type == INDEL::SWAP))
-    {
-        indel_desc += boost::lexical_cast<std::string>(ik.length);
-        if ((ik.type == INDEL::INSERT) ||
-            (ik.type == INDEL::SWAP))
-        {
-            indel_desc += 'I';
-            if (ik.swap_dlength>0)
-            {
-                indel_desc += boost::lexical_cast<std::string>(ik.swap_dlength);
-                indel_desc += 'D';
-            }
-        }
-        else
-        {
-            indel_desc += 'D';
-        }
-    }
-    else if (ik.type == INDEL::BP_LEFT)
-    {
-        indel_desc = "BP_LEFT";
-    }
-    else if (ik.type == INDEL::BP_RIGHT)
-    {
-        indel_desc = "BP_RIGHT";
-    }
-    else
-    {
-        assert(0);
-    }
-}
-
-
-#if 0
-static
-void
-copy_subseq(const std::string& in_seq,
-            const pos_t start_pos,
-            const pos_t end_pos,
-            std::string& out_seq)
-{
-
-    const char* ip(in_seq.c_str());
-    const pos_t is(in_seq.size());
-    out_seq.clear();
-    for (pos_t p(start_pos); p<end_pos; ++p)
-    {
-        out_seq += get_seq_base(ip,is,p);
-    }
-}
-#endif
-
-
-
 static
 void
 copy_ref_subseq(const reference_contig_segment& ref,
@@ -111,74 +47,11 @@ copy_ref_subseq(const reference_contig_segment& ref,
                 const pos_t end_pos,
                 std::string& out_seq)
 {
-
     out_seq.clear();
     for (pos_t p(start_pos); p<end_pos; ++p)
     {
         out_seq += ref.get_base(p);
     }
-}
-
-
-
-static
-void
-set_delete_seq(const indel_key& ik,
-               const reference_contig_segment& ref,
-               std::string& seq)
-{
-    copy_ref_subseq(ref,ik.pos,ik.right_pos(),seq);
-}
-
-
-
-/// get the indel cigar and ref and indel strings used in the indel
-/// summary line output
-///
-static
-void
-get_indel_summary_strings(const indel_key& ik,
-                          const indel_data& id,
-                          const reference_contig_segment& ref,
-                          std::string& indel_desc,
-                          std::string& indel_seq,
-                          std::string& indel_ref_seq)
-{
-
-    get_indel_desc(ik,indel_desc);
-
-    if ((ik.type == INDEL::INSERT) ||
-        (ik.type == INDEL::BP_LEFT) ||
-        (ik.type == INDEL::BP_RIGHT))
-    {
-        indel_seq = id.get_insert_seq();
-        indel_ref_seq = std::string(indel_seq.size(),'-');
-    }
-    else if (ik.type == INDEL::DELETE)
-    {
-        set_delete_seq(ik,ref,indel_ref_seq);
-        indel_seq = std::string(indel_ref_seq.size(),'-');
-    }
-    else if (ik.type == INDEL::SWAP)
-    {
-        indel_seq = id.get_insert_seq();
-        set_delete_seq(ik,ref,indel_ref_seq);
-        int idelt(static_cast<int>(ik.length)-static_cast<int>(ik.swap_dlength));
-        if (idelt>0)
-        {
-            indel_ref_seq += std::string(idelt,'-');
-        }
-        else
-        {
-            indel_seq += std::string(-idelt,'-');
-        }
-    }
-    else
-    {
-        assert(0);
-    }
-
-    assert(indel_seq.size() == indel_ref_seq.size());
 }
 
 
@@ -217,11 +90,6 @@ get_vcf_summary_strings(const indel_key& ik,
         copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_indel_seq);
         vcf_indel_seq += id.get_insert_seq();
     }
-
-    // this can occur due to invalid bam input. Don't activate this assert until
-    // we've filtered input bam reads for equal size swaps which match the reference
-    //
-    //assert(vcf_indel_seq != vcf_ref_seq);
 }
 
 
@@ -241,18 +109,18 @@ set_repeat_info(const indel_key& ik,
 
     if       (iri.it == INDEL::INSERT)
     {
-        get_seq_repeat_unit(iri.indel_seq,iri.repeat_unit,insert_repeat_count);
+        get_vcf_seq_repeat_unit(iri.vcf_indel_seq,iri.repeat_unit,insert_repeat_count);
     }
     else if (iri.it == INDEL::DELETE)
     {
-        get_seq_repeat_unit(iri.ref_seq,iri.repeat_unit,delete_repeat_count);
+        get_vcf_seq_repeat_unit(iri.vcf_ref_seq,iri.repeat_unit,delete_repeat_count);
     }
     else if (iri.it == INDEL::SWAP)
     {
         std::string insert_ru;
         std::string delete_ru;
-        get_seq_repeat_unit(iri.indel_seq,insert_ru,insert_repeat_count);
-        get_seq_repeat_unit(iri.ref_seq,delete_ru,delete_repeat_count);
+        get_vcf_seq_repeat_unit(iri.vcf_indel_seq,insert_ru,insert_repeat_count);
+        get_vcf_seq_repeat_unit(iri.vcf_ref_seq,delete_ru,delete_repeat_count);
         if ((insert_ru != delete_ru) || insert_ru.empty()) return;
 
         iri.repeat_unit=insert_ru;
@@ -317,43 +185,12 @@ get_starling_indel_report_info(const indel_key& ik,
                                starling_indel_report_info& iri)
 {
     // indel summary info
-    get_indel_summary_strings(ik,id,ref,iri.desc,iri.indel_seq,iri.ref_seq);
     get_vcf_summary_strings(ik,id,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
 
     iri.it=ik.type;
 
     const pos_t indel_begin_pos(ik.pos);
     const pos_t indel_end_pos(ik.right_pos());
-
-    // reference context:
-    {
-        static const unsigned INDEL_CONTEXT_SIZE(10);
-
-        if (ik.type != INDEL::BP_RIGHT)
-        {
-            iri.ref_upstream.clear();
-            for (pos_t i(indel_begin_pos-static_cast<pos_t>(INDEL_CONTEXT_SIZE)); i<indel_begin_pos; ++i)
-            {
-                iri.ref_upstream += ref.get_base(i);
-            }
-        }
-        else
-        {
-            iri.ref_upstream = "N/A";
-        }
-        if (ik.type != INDEL::BP_LEFT)
-        {
-            iri.ref_downstream.clear();
-            for (pos_t i(indel_end_pos); i<(indel_end_pos+static_cast<pos_t>(INDEL_CONTEXT_SIZE)); ++i)
-            {
-                iri.ref_downstream += ref.get_base(i);
-            }
-        }
-        else
-        {
-            iri.ref_downstream = "N/A";
-        }
-    }
 
     // repeat analysis:
     set_repeat_info(ik,ref,iri);
@@ -592,13 +429,8 @@ std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_in
 
 void starling_indel_report_info::dump(std::ostream& os) const
 {
-    os << "desc=" << desc
-       << ",ref_seq=" << ref_seq
-       << ",indel_seq=" << indel_seq
-       << ",vcf_ref_seq=" << vcf_ref_seq
+    os << "vcf_ref_seq=" << vcf_ref_seq
        << ",vcf_indel_seq=" << vcf_indel_seq
-       << ",ref_upstream=" << ref_upstream
-       << ",ref_downstream=" << ref_downstream
        << ",repeat_unit=" << repeat_unit
        << ",ref_repeat_count=" << ref_repeat_count
        << ",indel_repeat_count=" << indel_repeat_count
