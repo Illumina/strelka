@@ -132,10 +132,10 @@ denovo_indel_call_vcf(
 //            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
 
-        if (iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
-        {
-            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
-        }
+//        if (iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
+//        {
+//            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
+//        }
 //
         if (iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
         {
