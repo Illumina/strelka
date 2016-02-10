@@ -113,7 +113,7 @@ denovo_indel_call_vcf(
             }
         }
 
-//        if (rs.)
+//        if (rs.is_overlap)
 //        {
 //            smod.set_filter(PEDICURE_VCF_FILTERS::OverlapConflict);
 //        }

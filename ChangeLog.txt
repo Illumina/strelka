@@ -1,3 +1,6 @@
+- PED-42 Filtering model for SNV and Indels
+- PED-40 De novo filter tunning
+- PED-44 Better indel overlap
 - STARKA-350 more accurate runtime instrumentation for starling workflow
 - PED-48 bcftools compatibility in VCF, better sample naming
 - STARKA-335 restore breakend filters for germline gVCF output
