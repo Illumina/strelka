@@ -94,7 +94,7 @@ class StrelkaRF(EVSModel):
 
         date = datetime.datetime.utcnow().isoformat()
         meta = {
-                "Date" : "%s" % (date),
+                "Date" : "%sZ" % (date),
                 "Features" : self.clf.columns,
                 "ModelType" : "RandomForest",
                 "FilterCutoff" : 0.5
