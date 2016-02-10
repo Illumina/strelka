@@ -46,7 +46,7 @@ struct denovo_filter_options
     bool is_skip_header = false;
     double max_depth_factor = 3.;
 
-    double dindel_qual_lowerbound = 30;
+    double dindel_qual_lowerbound = 10;
     double dsnv_qual_lowerbound = 30;
     double snv_max_filtered_basecall_frac = 0.35;
     double snv_max_spanning_deletion_frac = 0.75;
