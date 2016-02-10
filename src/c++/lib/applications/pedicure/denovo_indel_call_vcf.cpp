@@ -42,8 +42,10 @@ write_vcf_sample_info(
 {
 
 //	GT:GQ:GQX:DP:DP2:AD:PL
+	int total = isri1.n_q30_ref_reads + isri1.n_q30_indel_reads;
+
     static const char sep(':');
-    if (dinc.gtstring.size()>0)
+    if (dinc.gtstring.size()>0 && total>0)
     {
         os << dinc.gtstring.at(id)
            << sep
@@ -111,10 +113,10 @@ denovo_indel_call_vcf(
             }
         }
 
-        if (rs.is_overlap)
-        {
+//        if (rs.)
+//        {
 //            smod.set_filter(PEDICURE_VCF_FILTERS::OverlapConflict);
-        }
+//        }
 
         for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++){
             if (dinc.gqx[sampleIndex] < opt.dfilter.sindelQuality_LowerBound)
@@ -125,22 +127,20 @@ denovo_indel_call_vcf(
         }
 
 
-
-
         if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
         {
 //            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
-//        if (siInfo.iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
-//        {
-//            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
-//        }
+
+        if (iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
+        {
+            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
+        }
 //
-//        dinc.
-//        if (du.iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
-//        {
-//            smod.set_filter(PEDICURE_VCF_FILTERS::iHpol);
-//        }
+        if (iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
+        {
+            smod.set_filter(PEDICURE_VCF_FILTERS::iHpol);
+        }
 
 
 //        {

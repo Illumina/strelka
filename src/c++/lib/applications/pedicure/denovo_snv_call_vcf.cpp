@@ -30,25 +30,37 @@
 #include <iostream>
 
 #include "blt_util/log.hh"
+static
+double
+safeFrac(const int num, const int denom)
+{
+    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
+}
 
 static
 void
 write_vcf_sample_info(
-    const blt_options& opt,
+	const pedicure_options& opt,
     const CleanedPileup& tier1_cpi,
     const CleanedPileup& /*tier2_cpi*/,
     const denovo_snv_call& dsc,
     int sampleIndex,
+	pedicure_shared_modifiers& smod,
     std::ostream& os)
 {
 
     std::array<unsigned,N_BASE> tier1_base_counts;
     tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
+    //Adding filter on a per sample level
+    if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
+	   smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
 
-    //os << dsc.gts_chrom[sampleIndex][0]
-    //   << "/"
-    //   << dsc.gts_chrom[sampleIndex][1];
+    double frac = safeFrac(tier1_cpi.n_unused_calls(),tier1_cpi.n_calls());
+    if (frac > opt.dfilter.snv_max_filtered_basecall_frac)
+	   smod.set_filter(PEDICURE_VCF_FILTERS::DPF);
+
+
     os << dsc.gtstring[sampleIndex];
 
     os <<':'
@@ -108,6 +120,7 @@ denovo_snv_call_vcf(
             if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
             {
                 smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
+                break;
             }
 
     }
@@ -156,7 +169,6 @@ denovo_snv_call_vcf(
         os << "DP=" << n_mapq;
         os << ";MQ0=" << n_mapq0;
         os << ";DQ=" << rs.dsnv_qphred;
-//           << ";TQSI=" << (dsc.dsnv_tier+1);
 
     }
 
@@ -169,6 +181,6 @@ denovo_snv_call_vcf(
         const CleanedPileup& cpi1(*pileups[PEDICURE_TIERS::TIER1][sampleIndex]);
         const CleanedPileup& cpi2(*pileups[PEDICURE_TIERS::TIER2][sampleIndex]);
         os << "\t";
-        write_vcf_sample_info(opt,cpi1,cpi2,dsc,sampleIndex,os);
+        write_vcf_sample_info(opt,cpi1,cpi2,dsc,sampleIndex,smod,os);
     }
 }

@@ -46,6 +46,7 @@ enum index_t
     iHpol,
     OverlapConflict,
     LowGQX,
+	DPF,
     SIZE
 };
 
@@ -65,6 +66,8 @@ get_label(const unsigned idx)
         return "iHpol";
     case LowGQX:
         return "LowGQX";
+    case DPF:
+            return "HighDPF";
     case OverlapConflict:
         return "OverlapConflict";
     default:
