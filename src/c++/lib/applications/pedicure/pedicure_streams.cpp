@@ -134,22 +134,26 @@ pedicure_streams(
             using namespace PEDICURE_VCF_FILTERS;
             {
                 std::ostringstream oss;
-
                 oss << "Loci GQX less than " << opt.dfilter.dsnv_qual_lowerbound;
                 write_vcf_filter(os, get_label(LowGQX), oss.str().c_str());
 
+                oss.str("");
                 oss << "Overlapping loci" ;
                 write_vcf_filter(os, get_label(OverlapConflict), oss.str().c_str());
 
+                oss.str("");
                 oss << "Depth is more than " << opt.dfilter.max_depth_factor << " times the chromosome mean" ;
                 write_vcf_filter(os, get_label(HighDepth), oss.str().c_str());
 
+                oss.str("");
                 oss << "The fraction of filtered reads to total reads exceeds " << opt.dfilter.snv_max_filtered_basecall_frac;
                 write_vcf_filter(os, get_label(DPF), oss.str().c_str());
 
+                oss.str("");
                 oss << "Reference repeat exceeds " << opt.dfilter.indelMaxRefRepeat;
                 write_vcf_filter(os, get_label(Repeat), oss.str().c_str());
 
+                oss.str("");
                 oss << "Homopolymer length exceeds " << opt.dfilter.indelMaxIntHpolLength;
                 write_vcf_filter(os, get_label(iHpol), oss.str().c_str());
 
