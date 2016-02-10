@@ -1,7 +1,9 @@
-3rd party package modification notes:
+# external packages
+
+## modification notes
 
 boost has been modified to remove some files according to
-$ROOT/scratch/make_boost_subset.bash
+${ROOT_PATH}/scratch/make_boost_subset.bash
 
 samtools and htslib have been modified to remove the test/
 directories, in addition to all test and curses requirements
