@@ -42,14 +42,9 @@ struct RandomForestModel
         return (! _forest.empty());
     }
 
-    unsigned expectedFeatureCount() const
-    {
-        return _nFeatures;
-    }
-
     double getProb(const feature_type& features) const;
 
-    void Deserialize(const Json::Value& root);
+    void Deserialize(const unsigned expectedFeatureCount, const Json::Value& root);
 
 private:
     template <typename L, typename R>
@@ -96,11 +91,9 @@ private:
     void
     clear()
     {
-        _nFeatures=0;
         _forest.clear();
     }
 
 ////////data:
-    unsigned _nFeatures = 0;
     std::vector<DecisionTree> _forest;
 };

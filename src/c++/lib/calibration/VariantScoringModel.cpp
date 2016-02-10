@@ -77,17 +77,7 @@ VariantScoringModel(
 
         // only one model type for now:
         assert(_meta.ModelType == "RandomForest");
-        _model.Deserialize(varmodel);
-
-        if (_model.expectedFeatureCount() != featureMap.size())
-        {
-            using namespace illumina::common;
-
-            std::ostringstream oss;
-            oss << "ERROR: scoring model feature count: " << _model.expectedFeatureCount()
-                << " does not match expected count " << featureMap.size();
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-        }
+        _model.Deserialize(featureMap.size(),varmodel);
     }
     catch (...)
     {

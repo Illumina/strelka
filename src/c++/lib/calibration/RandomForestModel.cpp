@@ -25,10 +25,11 @@
 
 #include "blt_util/log.hh"
 #include "blt_util/parse_util.hh"
+#include "common/Exceptions.hh"
 
-#include <cstdlib>
+#include <sstream>
 
-using namespace illumina::blt_util;
+
 
 namespace DTREE_NODE_TYPE
 {
@@ -59,6 +60,8 @@ get_label(const index_t i)
 }
 }
 
+
+
 template <typename L, typename R>
 void
 RandomForestModel::
@@ -75,9 +78,13 @@ parseTreeNode(
     val.right = static_cast<R>(v[1].asDouble());
 }
 
+
+
 void
-RandomForestModel
-::Deserialize(const Json::Value& root)
+RandomForestModel::
+Deserialize(
+    const unsigned expectedFeatureCount,
+    const Json::Value& root)
 {
     clear();
 
@@ -86,8 +93,9 @@ RandomForestModel
     //TODO read in other RF specific values
 
     // Loop through all the trees
-    Json::Value jmodels = root["Model"];
-    for ( unsigned tree_count = 0; tree_count < jmodels.size(); ++tree_count)
+    const Json::Value jmodels = root["Model"];
+    const unsigned treeCount(jmodels.size());
+    for (unsigned treeIndex = 0; treeIndex < treeCount; ++treeIndex)
     {
         _forest.emplace_back();
         DecisionTree& dtree(_forest.back());
@@ -96,16 +104,16 @@ RandomForestModel
         for (int i(0); i<SIZE; ++i)
         {
             const index_t nodeTypeIndex(static_cast<index_t>(i));
-            Json::Value tree_cat = jmodels[tree_count][get_label(nodeTypeIndex)];
+            const Json::Value tree_cat = jmodels[treeIndex][get_label(nodeTypeIndex)];
 
             // loop over all the nodes in the tree
-            for (Json::Value::iterator it = tree_cat.begin(); it != tree_cat.end(); ++it)
+            for (Json::Value::const_iterator it = tree_cat.begin(); it != tree_cat.end(); ++it)
             {
-                unsigned nodeIndex(std::atoi(it.key().asCString()));
-                if (dtree.data.size() <= nodeIndex)
-                    dtree.data.resize(nodeIndex+1);
+                using namespace illumina::blt_util;
+                const unsigned nodeIndex(parse_unsigned_rvalue(it.key().asCString()));
+                if (dtree.data.size() <= nodeIndex) dtree.data.resize(nodeIndex+1);
 
-                Json::Value value = (*it);
+                const Json::Value value = (*it);
                 DecisionTreeNode& node(dtree.data[nodeIndex]);
                 switch (nodeTypeIndex)
                 {
@@ -117,9 +125,14 @@ RandomForestModel
                     break;
                 case DECISION:
                     parseTreeNode(value,node.decision);
-                    if (node.decision.left >= static_cast<int>(_nFeatures))
+                    if (node.decision.left >= static_cast<int>(expectedFeatureCount))
                     {
-                        _nFeatures=node.decision.left+1;
+                        using namespace illumina::common;
+
+                        std::ostringstream oss;
+                        oss << "ERROR: scoring model max feature index: " << node.decision.left
+                            << " is inconsistent with expected feature count " << expectedFeatureCount;
+                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
                     }
                     break;
                 default:
@@ -127,9 +140,9 @@ RandomForestModel
                 }
             }
         }
-
     }
 }
+
 
 
 double

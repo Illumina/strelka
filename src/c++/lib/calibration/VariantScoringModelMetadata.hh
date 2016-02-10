@@ -34,9 +34,8 @@ typedef std::map<std::string,unsigned> featureMap_t;
 
 /// parse common meta-data format shared for all variant scoring models
 ///
-class VariantScoringModelMetadata
+struct VariantScoringModelMetadata
 {
-public:
     VariantScoringModelMetadata() {}
 
     void Deserialize(
