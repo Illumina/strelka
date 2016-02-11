@@ -55,7 +55,7 @@ struct denovo_filter_options
     unsigned indelMaxRefRepeat = 14;
     unsigned indelMaxIntHpolLength = 14;
     double indelMaxWindowFilteredBasecallFrac = 0.3;
-    unsigned sindelQuality_LowerBound = 10;
+    unsigned sindelQuality_LowerBound = 5;
 
     unsigned indelRegionFlankSize = 50;
     double minimumQscore = 3.0;
