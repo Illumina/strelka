@@ -36,7 +36,7 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from sharedWorkflow import runDepthFromAlignments
+from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
 from starkaWorkflow import runCount, StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
@@ -221,21 +221,21 @@ def callGenome(self,taskPrefix="",dependencies=None):
     run strelka on all genome segments
     """
 
-    tmpGraphDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), ["mkdir", "-p", tmpGraphDir], dependencies=dependencies, isForceLocal=True)
+    tmpSegmentDir=self.paths.getTmpSegmentDir()
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), getMkdirCmd() + [tmpSegmentDir], dependencies=dependencies, isForceLocal=True)
 
-    graphTasks = set()
+    segmentTasks = set()
 
     segFiles = TempSegmentFiles()
     for gseg in getNextGenomeSegment(self.params) :
 
-        graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+        segmentTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
 
-    if len(graphTasks) == 0 :
+    if len(segmentTasks) == 0 :
         raise Exception("No genome regions to analyze. Possible target region parse error.")
 
     # create a checkpoint for all segments:
-    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=graphTasks)
+    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)
 
     finishTasks = set()
 
@@ -256,7 +256,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
         finishBam(segFiles.normalRealign, self.paths.getRealignedBamPath("normal"), "realignedNormal")
         finishBam(segFiles.tumorRealign, self.paths.getRealignedBamPath("tumor"), "realignedTumor")
 
-    # add a tmp folder rm step here....
+    if not self.params.isRetainTempFiles :
+        rmStatsTmpCmd = getRmdirCmd() + [tmpSegmentDir]
+        rmTask=self.addTask(preJoin(taskPrefix,"rmTmpDir"),rmStatsTmpCmd,dependencies=finishTasks, isForceLocal=True)
 
     nextStepWait = finishTasks
 

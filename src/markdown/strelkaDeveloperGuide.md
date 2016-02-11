@@ -81,6 +81,15 @@ extending from the configuration example in the above build instructions, use:
 
     ../strelka-A.B.C.release_src/src/configure --jobs=4 --prefix=/path/to/install --build-type=ASan
 
+### General Debugging: Inspecting temporary files
+
+All Strelka workflow configuration steps include an extended option to keep all temporary
+files which would normally be deleted by the workflow as it runs. Keeping these
+files may be helpful in various debugging scenarios. To turn on this option, add
+`--retainTempFiles` as a configuration argument:
+
+    configureStrelkaWorkflow.py [other_options...] --retainTempFiles
+ 
 ### Windows development support
 
 Strelka does not link or run on windows. However, the build system does

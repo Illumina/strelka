@@ -36,7 +36,7 @@ sys.path.append(os.path.abspath(pyflowDir))
 from configBuildTimeInfo import workflowVersion
 from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from sharedWorkflow import runDepthFromAlignments
+from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
 from starkaWorkflow import runCount, StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
@@ -234,10 +234,10 @@ def callGenome(self,taskPrefix="",dependencies=None):
     run variant caller on all genome segments
     """
 
-    tmpGraphDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), ["mkdir","-p",tmpGraphDir], dependencies=dependencies, isForceLocal=True)
+    tmpSegmentDir=self.paths.getTmpSegmentDir()
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), getMkdirCmd() + [tmpSegmentDir], dependencies=dependencies, isForceLocal=True)
 
-    graphTasks = set()
+    segmentTasks = set()
 
     # this collects the stats files per segment
     segStatsLogPaths = []
@@ -245,13 +245,13 @@ def callGenome(self,taskPrefix="",dependencies=None):
     segFiles = TempSegmentFiles()
     for gseg in getNextGenomeSegment(self.params) :
 
-        graphTasks |= callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, dependencies=dirTask)
+        segmentTasks |= callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, dependencies=dirTask)
 
-    if len(graphTasks) == 0 :
+    if len(segmentTasks) == 0 :
         raise Exception("No genome regions to analyze. Possible target region parse error.")
 
     # create a checkpoint for all segments:
-    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=graphTasks)
+    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)
 
     finishTasks = set()
 
@@ -274,7 +274,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
     mergeTask=self.addTask(segStatsMergeLabel, segStatsMergeCmd, dependencies=completeSegmentsTask, isForceLocal=True)
     finishTasks.add(mergeTask)
 
-    cleanTask=self.addTask(preJoin(taskPrefix,"cleanTmpDir"), ["rm","-rf",tmpGraphDir], dependencies=finishTasks, isForceLocal=True)
+    if not self.params.isRetainTempFiles :
+        rmStatsTmpCmd = getRmdirCmd() + [tmpSegmentDir]
+        rmTask=self.addTask(preJoin(taskPrefix,"rmTmpDir"),rmStatsTmpCmd,dependencies=finishTasks, isForceLocal=True)
 
     nextStepWait = finishTasks
 
@@ -341,7 +343,7 @@ class PathInfo:
         return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
     def getSegmentStatsPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "timings.%s.xml" % (segStr))
+        return os.path.join( self.getTmpSegmentDir(), "genomeCallStats.%s.xml" % (segStr))
 
     def getVariantsDir(self) :
         return self.params.variantsDir

@@ -86,6 +86,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Set variant calling task memory limit (in megabytes). It is not "
                               "recommended to change the default in most cases, but this might be required "
                               "for a sample of unusual depth.")
+        group.add_option("--retainTempFiles", dest="isRetainTempFiles", action="store_true",
+                         help="Keep all temporary files (for workflow debugging)")
 
         ConfigureWorkflowOptions.addExtendedGroupOptions(self,group)
 
@@ -145,6 +147,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         callMemMbOverride = None
 
         isExome = False
+
+        isRetainTempFiles = False
 
         return cleanLocals(locals())
 
