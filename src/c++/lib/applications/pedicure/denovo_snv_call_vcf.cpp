@@ -53,8 +53,8 @@ write_vcf_sample_info(
     tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
     //Adding filter on a per sample level
-    if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
-	   smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
+//    if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
+//	   smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
 
     double frac = safeFrac(tier1_cpi.n_unused_calls(),tier1_cpi.n_calls());
     if (frac > opt.dfilter.snv_max_filtered_basecall_frac)
@@ -114,6 +114,14 @@ denovo_snv_call_vcf(
                 smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
             }
         }
+
+        //GQX <30 filter
+        for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
+            if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
+            {
+                smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
+                break;
+            }
 
     }
 
