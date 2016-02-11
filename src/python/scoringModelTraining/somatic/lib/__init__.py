@@ -29,7 +29,7 @@ class EVSModel(object):
     """ Base class for EVS models """
 
     __metaclass__ = abc.ABCMeta
-    
+
     def __init__(self):
         self.clf = None
         self.mname = None

@@ -48,7 +48,7 @@ def parseArgs():
                         help="Output file name")
 
     args = parser.parse_args()
-    
+
     def checkFile(filename, label) :
         if not os.path.isfile(filename) :
             raise Exception("Can't find input %s file: '%s'" % (label,filename))

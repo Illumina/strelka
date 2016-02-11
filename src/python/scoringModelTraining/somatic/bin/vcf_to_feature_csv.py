@@ -55,7 +55,7 @@ def parseArgs():
     parser.add_argument("-a", "--ambiguous", dest="ambi", action='append',
                         help="Bed file indicating ambiguous regions ie. places we don't want to label as FP"
                              " (may be specified more than once)")
-    parser.add_argument("--features", required=True, 
+    parser.add_argument("--features", required=True,
                         choices=evs.features.FeatureSet.sets.keys(),
                         help="Select a feature table to output.")
 
@@ -68,7 +68,7 @@ def parseArgs():
     def checkOptionalFile(filename, label) :
         if filename is None : return
         checkFile(filename, label)
- 
+
     checkOptionalFile(args.truth,"truth")
     checkOptionalFile(args.fp_regions,"false positive regions")
     if args.ambi is not None :

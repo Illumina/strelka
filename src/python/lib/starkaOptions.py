@@ -151,10 +151,10 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         callMemMbOverride = None
 
         isExome = False
-        
+
         isRetainTempFiles = False
 
-        # Empirical Variant Scoring:        
+        # Empirical Variant Scoring:
         isEVS = True
         isReportEVSFeatures = False
 

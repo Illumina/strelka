@@ -175,7 +175,7 @@ struct strelka_feature_keeper
     double
     get(const typename FEATURESET::index_t i) const
     {
-        if(! test(i))
+        if (! test(i))
         {
             assert(false && "Requesting undefined feature");
         }

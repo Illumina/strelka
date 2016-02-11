@@ -28,7 +28,7 @@ class VcfFeatureSet(FeatureSet):
     def collectCore(self, vcfname, headerKey = None):
         """
         Return a data frame with features collected from the given VCF
-       
+
         If headerKey is provided, then use this header value to extract labels
         for the INFO EVSF feature tag
         """
@@ -39,7 +39,7 @@ class VcfFeatureSet(FeatureSet):
 
         isHeader = True
         isHeaderKey = (headerKey is not None)
-        
+
         for line in openMaybeGzip(vcfname):
             if isHeader :
                 if line[0] == "#" :
@@ -54,16 +54,16 @@ class VcfFeatureSet(FeatureSet):
                     if isHeaderKey :
                         assert(header_feature_labels is not None)
                     isHeader = False
-            
+
             word = line.strip().split('\t')
-            
+
             qrec = {
                 "CHROM": word[VCFID.CHROM],
                 "POS": int(word[VCFID.POS]),
                 "REF": word[VCFID.REF],
                 "ALT": word[VCFID.ALT]
             }
-            
+
             if isHeaderKey :
                 for ikv in word[VCFID.INFO].split(';') :
                     iword = ikv.split("=",1)
@@ -73,7 +73,7 @@ class VcfFeatureSet(FeatureSet):
                     assert(len(features) == len(header_feature_labels))
                     for i in range(len(features)) :
                         qrec[header_feature_labels[i]] = features[i]
-                    
+
             records.append(qrec)
 
         cols = feature_labels

@@ -1,5 +1,6 @@
+- STARKA-310 train somatic EVS model from features in VCF output
 - STARKA-369 add option to keep all temp files to support workflow debug
-- STARKA-350 more accurate runtime instrumentation for starling workflow
+- STARKA-350 more accurate runtime instrumentation for diploid gVCF workflow
 - PED-48 bcftools compatibility in VCF, better sample naming
 - STARKA-335 restore breakend filters for germline gVCF output
 - Multi-sample calling introduced for SNVs and Indel + PL field added (tickets PED10-19)
@@ -7,7 +8,7 @@
 - STARKA-306 fix rare chunk size boundary defect in RangeMap
 - STARKA-323 refactor STARKA-293 to allow reuse of general accelerated binom
 test
-- STARKA-297 adjust somatic ES model for exome data
+- STARKA-297 adjust somatic EVS model for exome data
 - STARKA-293 remove count and frequency cutoffs for non-STR indels, replace with statistical test
 - STARKA-305 add simple germline SNV calling site simulator
 - STARKA-302 add feature verification for file-based scoring models
