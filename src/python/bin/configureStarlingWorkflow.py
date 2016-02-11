@@ -96,16 +96,20 @@ You must specify a BAM or CRAM file for the sample.
         StarkaWorkflowOptionsBase.validateAndSanitizeExistingOptions(self,options)
         groomBamList(options.bamList,"input")
 
+        def checkFixTabixIndexedFileOption(tabixFile,label):
+            checkOptionalTabixIndexedFile(tabixFile,label)
+            if tabixFile is None : return None
+            return os.path.abspath(tabixFile)
+
+        options.ploidyBed = checkFixTabixIndexedFileOption(options.ploidyBed,"ploidy bed")
+        options.noCompressBed = checkFixTabixIndexedFileOption(options.noCompressBed,"no-compress bed")
+        options.targetRegionsBed = checkFixTabixIndexedFileOption(options.targetRegionsBed,"targeted-regions bed")
+
 
 
     def validateOptionExistence(self,options) :
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
-
-        checkOptionalTabixIndexedFile(options.ploidyBed,"ploidy bed")
-        checkOptionalTabixIndexedFile(options.noCompressBed,"no-compress bed")
-        checkOptionalTabixIndexedFile(options.targetRegionsBed,"targeted-regions bed")
-
 
         bcheck = BamSetChecker()
 

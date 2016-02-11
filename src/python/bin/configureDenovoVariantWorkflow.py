@@ -33,7 +33,7 @@ sys.path.append(workflowDir)
 
 from configBuildTimeInfo import workflowVersion
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, checkTabixListOption
+from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile
 from makeRunScript import makeRunScript
 from pedicureWorkflow import PedicureWorkflow
 from workflowUtil import ensureDir

@@ -34,7 +34,7 @@ sys.path.append(workflowDir)
 from configBuildTimeInfo import workflowVersion
 from starkaOptions import StarkaWorkflowOptionsBase
 from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, \
-                            checkTabixListOption, validateFixExistingFileArg
+                            checkFixTabixListOption, validateFixExistingFileArg
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
 from workflowUtil import ensureDir
@@ -103,7 +103,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         groomBamList(options.normalBamList,"normal sample")
         groomBamList(options.tumorBamList, "tumor sample")
 
-        checkTabixListOption(options.noiseVcfList,"noise vcf")
+        checkFixTabixListOption(options.noiseVcfList,"noise vcf")
 
         options.somaticSnvScoringModelFile=validateFixExistingFileArg(options.somaticSnvScoringModelFile,"Somatic SNV empirical scoring file")
         options.somaticIndelScoringModelFile=validateFixExistingFileArg(options.somaticIndelScoringModelFile,"Somatic indel empirical scoring file")
