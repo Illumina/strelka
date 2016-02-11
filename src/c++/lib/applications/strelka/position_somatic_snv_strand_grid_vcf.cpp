@@ -201,6 +201,12 @@ get_scoring_features(
     //Altpos
     smod.set_feature(STRELKA_SNV_SCORING_FEATURES::altpos,altpos);
     smod.set_feature(STRELKA_SNV_SCORING_FEATURES::altmap,altmap);
+
+    if (opt.isReportEVSFeatures)
+    {
+        // features not used in the current EVS model but feature candidates/exploratory for new EVS models:
+        smod.dfeatures.set(STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::MQ0_FRAC, safeFrac(n_mapq0,n_mapq));
+    }
 }
 
 
@@ -255,6 +261,9 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
     strelka_shared_modifiers_snv smod;
 
+    const bool isEVS(dopt.somaticSnvScoringModel);
+
+    if (! isEVS)
     {
         // compute all site filters:
         const unsigned normalDP(n1_epd.n_calls());
@@ -264,7 +273,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
         {
             if (normalDP > dopt.sfilter.max_chrom_depth)
             {
-                smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
+                smod.filters.set(STRELKA_VCF_FILTERS::HighDepth);
             }
         }
 
@@ -278,7 +287,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             if ((normalFilt >=opt.sfilter.snv_max_filtered_basecall_frac) ||
                 (tumorFilt >=opt.sfilter.snv_max_filtered_basecall_frac))
             {
-                smod.set_filter(STRELKA_VCF_FILTERS::BCNoise);
+                smod.filters.set(STRELKA_VCF_FILTERS::BCNoise);
             }
         }
 
@@ -294,13 +303,13 @@ write_vcf_somatic_snv_genotype_strand_grid(
             if ((normalSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac) ||
                 (tumorSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac))
             {
-                smod.set_filter(STRELKA_VCF_FILTERS::SpanDel);
+                smod.filters.set(STRELKA_VCF_FILTERS::SpanDel);
             }
         }
 
         if ((rs.ntype != NTYPE::REF) || (rs.snv_from_ntype_qphred < opt.sfilter.snv_min_qss_ref))
         {
-            smod.set_filter(STRELKA_VCF_FILTERS::QSS_ref);
+            smod.filters.set(STRELKA_VCF_FILTERS::QSS_ref);
         }
     }
 
@@ -311,7 +320,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
         get_scoring_features(opt,dopt,sgt,n1_epd,t1_epd,n2_epd,t2_epd,rs,smod);
 
         // if we are using empirical scoring, clear filters and apply single LowEVS filter
-        if (dopt.somaticSnvScoringModel)
+        if (isEVS)
         {
             const VariantScoringModel& varModel(*dopt.somaticSnvScoringModel);
             smod.isEVS = true;
@@ -320,7 +329,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             // TMP!! make this scheme compatible with STARKA-296;
             smod.EVS = error_prob_to_phred(smod.EVS);
 
-            // TMP!!!! Emperically re-maps EVS value to get a better calibration
+            // TMP!!!! Empirically re-maps EVS value to get a better calibration
             // See STARKA-257 github comment for more detail on this fit
             auto recal_somatic_snv_score = [](double& score)
             {
@@ -328,13 +337,13 @@ write_vcf_somatic_snv_genotype_strand_grid(
             };
 
             smod.EVS = recal_somatic_snv_score(smod.EVS);
-            smod.filters.reset();
+            smod.filters.clear();
 
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
             if (rs.ntype != NTYPE::REF) smod.EVS=0;
 
             if (smod.EVS < opt.sfilter.snvMinEVS)
-                smod.set_filter(STRELKA_VCF_FILTERS::LowEVS);
+                smod.filters.set(STRELKA_VCF_FILTERS::LowEVS);
         }
     }
 
@@ -349,7 +358,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
     //FILTER:
     os << "\t";
-    smod.write_filters(os);
+    smod.filters.write(os);
 
     //INFO:
     os << '\t'
@@ -410,13 +419,18 @@ write_vcf_somatic_snv_genotype_strand_grid(
         const StreamScoper ss(os);
         os << std::setprecision(5);
         os << ";EVSF=";
-        for (unsigned q = 0; q < STRELKA_SNV_SCORING_FEATURES::SIZE; ++q)
+        for (unsigned featureIndex = 0; featureIndex < STRELKA_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
         {
-            if (q > 0)
+            if (featureIndex > 0)
             {
                 os << ",";
             }
-            os << smod.get_feature(static_cast<STRELKA_SNV_SCORING_FEATURES::index_t>(q));
+            os << smod.get_feature(static_cast<STRELKA_SNV_SCORING_FEATURES::index_t>(featureIndex));
+        }
+        for (unsigned featureIndex = 0; featureIndex < STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+        {
+            os << ",";
+            os << smod.dfeatures.get(static_cast<STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
         }
     }
 

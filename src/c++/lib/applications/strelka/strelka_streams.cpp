@@ -112,12 +112,8 @@ strelka_streams(
 
         std::ofstream* fosptr(new std::ofstream);
         _somatic_snv_osptr.reset(fosptr);
-#ifdef DEBUG_HEADER
-        std::ostream& fos = std::cout;
-#else
         std::ofstream& fos(*fosptr);
         open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",opt.is_clobber,fos);
-#endif
 
         if (! opt.sfilter.is_skip_header)
         {
@@ -200,13 +196,17 @@ strelka_streams(
             if (opt.isReportEVSFeatures)
             {
                 fos << "##snv_scoring_features=";
-                for (unsigned q = 0; q < STRELKA_SNV_SCORING_FEATURES::SIZE; ++q)
+                for (unsigned featureIndex = 0; featureIndex < STRELKA_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
                 {
-                    if (q > 0)
+                    if (featureIndex > 0)
                     {
                         fos << ",";
                     }
-                    fos << STRELKA_SNV_SCORING_FEATURES::get_feature_label(q);
+                    fos << STRELKA_SNV_SCORING_FEATURES::get_feature_label(featureIndex);
+                }
+                for (unsigned featureIndex = 0; featureIndex < STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+                {
+                    fos << ',' << STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
                 }
                 fos << "\n";
             }
@@ -281,8 +281,8 @@ strelka_streams(
             fos << "##FORMAT=<ID=FS,Number=1,Type=Float,Description=\"Log p-value using Fisher's exact test to detect strand bias, based on tier1\">\n";
             fos << "##FORMAT=<ID=BSA,Number=1,Type=Float,Description=\"Binomial test log-pvalue for ALT allele in tier1\">\n";
             fos << "##FORMAT=<ID=RR,Number=1,Type=Float,Description=\"Read position ranksum for ALT allele in tier1 reads (U-statistic)\">\n";
-            fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
 #endif
+            fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
 
             // FILTERS:
             const bool isUseEVS(opt.isUseSomaticIndelScoring());
@@ -325,13 +325,17 @@ strelka_streams(
             if (opt.isReportEVSFeatures)
             {
                 fos << "##indel_scoring_features=";
-                for (unsigned q = 0; q < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++q)
+                for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
                 {
-                    if (q > 0)
+                    if (featureIndex > 0)
                     {
                         fos << ",";
                     }
-                    fos << STRELKA_INDEL_SCORING_FEATURES::get_feature_label(q);
+                    fos << STRELKA_INDEL_SCORING_FEATURES::get_feature_label(featureIndex);
+                }
+                for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+                {
+                    fos << ',' << STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
                 }
                 fos << "\n";
             }

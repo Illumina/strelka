@@ -88,12 +88,6 @@ struct STRELKA_SNV_SCORING_FEATURES
             assert(false && "Unknown feature");
             return nullptr;
         }
-#if 0
-    case pnoise:
-        return "pnoise";
-    case pnoise2:
-        return "pnoise2";
-#endif
     }
 
     struct FeatureMapMaker
@@ -118,9 +112,38 @@ struct STRELKA_SNV_SCORING_FEATURES
     }
 };
 
+///
+/// additional experimental features not used in the current scoring model
+///
+/// these should only be output as part of a non-default training mode
+///
+struct STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES
+{
+    enum index_t
+    {
+        MQ0_FRAC,
+        SIZE
+    };
+
+    static
+    const char*
+    get_feature_label(const unsigned idx)
+    {
+        switch (idx)
+        {
+        case MQ0_FRAC:
+            return "MQ0_FRAC";
+        default:
+            assert(false && "Unknown feature");
+            return nullptr;
+        }
+    }
+};
+
+
+
 struct STRELKA_INDEL_SCORING_FEATURES
 {
-
     /** Make sure the features are the same as used in the model
      */
     enum index_t
@@ -192,3 +215,48 @@ struct STRELKA_INDEL_SCORING_FEATURES
         return fmm.fmap;
     }
 };
+
+
+///
+/// additional experimental features not used in the current scoring model
+///
+/// these should only be output as part of a non-default training mode
+///
+struct STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES
+{
+    enum index_t
+    {
+        N_AF,
+        T_AF,
+        N_OF,
+        T_OF,
+        N_BCN,
+        T_BCN,
+        SIZE
+    };
+
+    static
+    const char*
+    get_feature_label(const unsigned idx)
+    {
+        switch (idx)
+        {
+        case N_AF:
+            return "N_AF";
+        case T_AF:
+            return "T_AF";
+        case N_OF:
+            return "N_OF";
+        case T_OF:
+            return "T_OF";
+        case N_BCN:
+            return "N_BCN";
+        case T_BCN:
+            return "T_BCN";
+        default:
+            assert(false && "Unknown feature");
+            return nullptr;
+        }
+    }
+};
+

@@ -182,9 +182,9 @@ calculateLogOddsRatio(const starling_indel_sample_report_info& nisri,
 void
 calculateScoringFeatures(
     const SomaticIndelVcfInfo& siInfo,
-    const win_avg_set& /* n_was */,
-    const win_avg_set& /* t_was */,
-    const strelka_options& /* opt */,
+    const win_avg_set& n_was,
+    const win_avg_set& t_was,
+    const strelka_options& opt,
     const strelka_deriv_options& /* dopt */,
     strelka_shared_modifiers_indel& smod
 )
@@ -219,5 +219,17 @@ calculateScoringFeatures(
     //        meanChrDepth = cd->second;
     //    }
 
+    if (opt.isReportEVSFeatures)
+    {
+        // features not used in the current EVS model but feature candidates/exploratory for new EVS models:
+        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::N_AF, calculateIndelAF(siInfo.nisri[0]));
+        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::T_AF, calculateIndelAF(siInfo.tisri[0]));
+
+        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::N_OF, calculateIndelOF(siInfo.nisri[0]));
+        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::T_OF, calculateIndelOF(siInfo.tisri[0]));
+
+        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::N_BCN, calculateBCNoise(n_was));
+        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::T_BCN, calculateBCNoise(t_was));
+    }
 }
 

@@ -135,7 +135,7 @@ def callGenomeSegment(self, gseg, segFiles, segStatsLogPaths, taskPrefix="", dep
     segCmd.extend(["--stats-file", quote(segStatsLogPaths[-1])])
 
     # Empirical Variant Scoring(EVS):
-    if self.isEVS :
+    if self.params.isEVS :
         segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
         segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
 

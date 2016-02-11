@@ -71,6 +71,7 @@ write_vcf_isri_tiers(
     os << sep << (used+filt)
        << sep << filt
        << sep << submap
+       << sep << calculateBCNoise(was)
        ;
 }
 
@@ -96,7 +97,7 @@ writeSomaticIndelVcfGrid(
         const unsigned& depth(siInfo.nisri[0].depth);
         if (depth > dopt.sfilter.max_chrom_depth)
         {
-            smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
+            smod.filters.set(STRELKA_VCF_FILTERS::HighDepth);
         }
     }
 
@@ -116,12 +117,12 @@ writeSomaticIndelVcfGrid(
         if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
             (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
         {
-            smod.set_filter(STRELKA_VCF_FILTERS::IndelBCNoise);
+            smod.filters.set(STRELKA_VCF_FILTERS::IndelBCNoise);
         }
 
         if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
         {
-            smod.set_filter(STRELKA_VCF_FILTERS::QSI_ref);
+            smod.filters.set(STRELKA_VCF_FILTERS::QSI_ref);
         }
     }
     else
@@ -133,12 +134,12 @@ writeSomaticIndelVcfGrid(
 
         if (rs.ntype != NTYPE::REF)
         {
-            smod.set_filter(STRELKA_VCF_FILTERS::Nonref);
+            smod.filters.set(STRELKA_VCF_FILTERS::Nonref);
         }
 
         if (smod.EVS < varModel.scoreFilterThreshold())
         {
-            smod.set_filter(STRELKA_VCF_FILTERS::LowEVS);
+            smod.filters.set(STRELKA_VCF_FILTERS::LowEVS);
         }
     }
 
@@ -163,7 +164,7 @@ writeSomaticIndelVcfGrid(
 
     //FILTER:
     os << sep;
-    smod.write_filters(os);
+    smod.filters.write(os);
 
     //INFO
     os << sep
@@ -207,13 +208,19 @@ writeSomaticIndelVcfGrid(
         const StreamScoper ss(os);
         os << std::setprecision(5);
         os << ";EVSF=";
-        for (unsigned q = 0; q < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++q)
+        for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
         {
-            if (q > 0)
+            if (featureIndex > 0)
             {
                 os << ",";
             }
-            os << smod.get_feature(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(q));
+            os << smod.get_feature(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(featureIndex));
+        }
+
+        for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+        {
+            os << ",";
+            os << smod.dfeatures.get(static_cast<STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
         }
     }
 
@@ -230,7 +237,7 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50";
+    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:BCN50";
 
     // write normal sample info:
     os << sep;
