@@ -47,8 +47,6 @@ def cleanLocals(locals_dict) :
 
 class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
-    validAlignerModes = ["bwa","isaac"]
-
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--referenceFasta",type="string",metavar="FILE",
                          help="samtools-indexed reference fasta file [required]")
@@ -104,8 +102,6 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         """
 
         configCommandLine=sys.argv
-
-        alignerMode = "isaac"
 
         libexecDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_LIBEXECDIR@"))
         assert os.path.isdir(libexecDir)
@@ -166,12 +162,6 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         options.runDir=os.path.abspath(options.runDir)
 
-        # check alignerMode:
-        if options.alignerMode is not None :
-            options.alignerMode = options.alignerMode.lower()
-            if options.alignerMode not in self.validAlignerModes :
-                raise OptParseException("Invalid aligner mode: '%s'" % options.alignerMode)
-
         options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference")
 
         # check for reference fasta index file:
@@ -193,7 +183,6 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         assertOptionExists(options.runDir,"run directory")
 
-        assertOptionExists(options.alignerMode,"aligner mode")
         assertOptionExists(options.referenceFasta,"reference fasta file")
 
 
