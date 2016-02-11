@@ -200,7 +200,7 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
         // Reverse prob that true allele has been masked as reference by chance,
         // may want to leave this term for now.
         ref_error_prob=client_opt.indel_ref_error_factor *
-                adjusted_rate(repeat_unit, indel_query_len, indel_size, reverse_it);
+                       adjusted_rate(repeat_unit, indel_query_len, indel_size, reverse_it);
     }
     else
     {

@@ -1,3 +1,4 @@
+- STARKA-369 add option to keep all temp files to support workflow debug
 - STARKA-350 more accurate runtime instrumentation for starling workflow
 - PED-48 bcftools compatibility in VCF, better sample naming
 - STARKA-335 restore breakend filters for germline gVCF output

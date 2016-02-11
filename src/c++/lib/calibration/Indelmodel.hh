@@ -47,10 +47,12 @@ struct indel_error_rates
     double
     get_rate(const INDEL::index_t it) const
     {
-        switch(it)
+        switch (it)
         {
-        case INDEL::DELETE : return delete_rate;
-        case INDEL::INSERT : return insert_rate;
+        case INDEL::DELETE :
+            return delete_rate;
+        case INDEL::INSERT :
+            return insert_rate;
         default :
             assert(false && "Unexpected indel type");
             return 0.;

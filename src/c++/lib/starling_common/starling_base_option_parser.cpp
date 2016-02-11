@@ -164,8 +164,8 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
 
-     ("stats-file", po::value(&opt.segmentStatsFilename),
-      "Write runtime stats to file")
+    ("stats-file", po::value(&opt.segmentStatsFilename),
+     "Write runtime stats to file")
 
     ("indel-error-models-file", po::value(&opt.indel_error_models_filename),
      "File containing indel error models")
