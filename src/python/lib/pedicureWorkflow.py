@@ -121,6 +121,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
             segCmd.extend([arg, val])
 
     addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
     if self.params.extraCallerArguments is not None :
         for arg in self.params.extraCallerArguments.strip().split() :

@@ -141,6 +141,7 @@ process_pos_snp_denovo(const pos_t pos)
 
     const SampleInfoManager& sinfo(_opt.alignFileOpt.alignmentSampleInfo);
     denovo_snv_call dsc;
+    dsc.is_forced_output = is_forced_output_pos(pos);
 
     get_denovo_snv_call(
         _opt,

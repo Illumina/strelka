@@ -346,6 +346,7 @@ get_denovo_snv_call(
 
     // escape in case of low sample depth:
     // depth must be at least minDepth in all samples (proband and parents)
+    if (!dsc.is_forced_output)
     {
         static const unsigned minDepth(8);
         for (const auto sampleIndex : allIndex)
@@ -454,7 +455,7 @@ get_denovo_snv_call(
     {
         for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex)
         {
-            if ( dsc.ref_gt != DIGT::get_allele(digts[i],chromCopyIndex)  )
+            if ( dsc.ref_gt != DIGT::get_allele(digts[i],chromCopyIndex) || dsc.is_forced_output )
             {
                 dsc.alts.push_back( DIGT::get_allele(digts[i],chromCopyIndex) );
             }
