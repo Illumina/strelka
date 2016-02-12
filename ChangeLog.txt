@@ -1,3 +1,4 @@
+- PED-33 Forced outputs of SNVs for pedicure workflow
 - STARKA-350 more accurate runtime instrumentation for starling workflow
 - PED-48 bcftools compatibility in VCF, better sample naming
 - STARKA-335 restore breakend filters for germline gVCF output
