@@ -9,7 +9,7 @@
 - STARKA-306 fix rare chunk size boundary defect in RangeMap
 - STARKA-323 refactor STARKA-293 to allow reuse of general accelerated binom
 test
-- STARKA-297 adjust somatic ES model for exome data
+- STARKA-297 adjust somatic EVS model for exome data
 - STARKA-293 remove count and frequency cutoffs for non-STR indels, replace with statistical test
 - STARKA-305 add simple germline SNV calling site simulator
 - STARKA-302 add feature verification for file-based scoring models
