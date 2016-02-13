@@ -31,3 +31,6 @@
 
 boost::optional<int>
 parsePloidyFromBed(const char* line);
+
+int
+parsePloidyFromBedStrict(const char* line);
