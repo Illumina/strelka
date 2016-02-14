@@ -131,7 +131,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
 
-    segFiles.stats.append(self.paths.getTmpSegmentStatsPath(segStr))
+    segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
     segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
     if not isFirstSegment :
@@ -202,7 +202,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
                                         self.paths.getDenovoOutputPath(),"denovo"))
 
     # merge segment stats:
-    finishTasks.add(self.mergeSegmentStats(taskPrefix,completeSegmentsTask, segFiles.stats))
+    finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
 
     if self.params.isWriteCallableRegion :
         finishTasks.add(self.concatIndexBed(taskPrefix, completeSegmentsTask, segFiles.callable,

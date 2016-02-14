@@ -22,7 +22,7 @@
 /// \author Chris Saunders
 ///
 
-#include "MESOptions.hh"
+#include "MRSOptions.hh"
 #include "blt_util/log.hh"
 #include "common/ProgramUtil.hh"
 
@@ -43,23 +43,23 @@ usage(
     const boost::program_options::options_description& visible,
     const char* msg = nullptr)
 {
-    usage(os, prog, visible, "merge genome segment stats", "", msg);
+    usage(os, prog, visible, "Merge Strelka RunStats", "", msg);
 }
 
 
 
 void
-parseMESOptions(
+parseMRSOptions(
     const illumina::Program& prog,
     int argc, char* argv[],
-    MESOptions& opt)
+    MRSOptions& opt)
 {
     namespace po = boost::program_options;
     po::options_description req("configuration");
 
     req.add_options()
     ("stats-file", po::value(&opt.statsFilename),
-     "input segment stats file (may be specified multiple times)")
+     "input run stats file (may be specified multiple times)")
     ("stats-file-list", po::value(&opt.statsFilenameList),
      "file listing all input stats files, one filename per line (specified only once)")
     ("output-file", po::value(&opt.outputFilename),

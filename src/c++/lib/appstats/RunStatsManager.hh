@@ -24,24 +24,28 @@
 
 #pragma once
 
-#include "common/Program.hh"
+#include "RunStats.hh"
+#include "blt_util/time_util.hh"
 
+#include "boost/utility.hpp"
+
+#include <iosfwd>
 #include <string>
-#include <vector>
 
 
-
-struct MESOptions
+/// handles all messy real world interaction for the stats module,
+/// stats module itself just accumulates data
+///
+struct RunStatsManager : private boost::noncopyable
 {
-    std::vector<std::string> statsFilename;
-    std::string statsFilenameList;
-    std::string outputFilename;
-    std::string reportFilename;
+    explicit
+    RunStatsManager(
+        const std::string& outputFile);
+
+    ~RunStatsManager();
+
+private:
+    std::ostream* _osPtr;
+    TimeTracker lifeTime;
+    RunStats runStats;
 };
-
-
-void
-parseMESOptions(
-    const illumina::Program& prog,
-    int argc, char* argv[],
-    MESOptions& opt);

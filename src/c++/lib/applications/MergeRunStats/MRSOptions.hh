@@ -24,28 +24,24 @@
 
 #pragma once
 
-#include "SegmentStats.hh"
-#include "blt_util/time_util.hh"
+#include "common/Program.hh"
 
-#include "boost/utility.hpp"
-
-#include <iosfwd>
 #include <string>
+#include <vector>
 
 
-/// handles all messy real world interaction for the stats module,
-/// stats module itself just accumulates data
-///
-struct SegmentStatsManager : private boost::noncopyable
+
+struct MRSOptions
 {
-    explicit
-    SegmentStatsManager(
-        const std::string& outputFile);
-
-    ~SegmentStatsManager();
-
-private:
-    std::ostream* _osPtr;
-    TimeTracker lifeTime;
-    SegmentStats segmentStats;
+    std::vector<std::string> statsFilename;
+    std::string statsFilenameList;
+    std::string outputFilename;
+    std::string reportFilename;
 };
+
+
+void
+parseMRSOptions(
+    const illumina::Program& prog,
+    int argc, char* argv[],
+    MRSOptions& opt);

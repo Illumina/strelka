@@ -132,7 +132,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--gvcf-include-header", "Phasing"])
     segCmd.extend(["--report-file", quote(self.paths.getTmpSegmentReportPath(gseg.id))])
 
-    segFiles.stats.append(self.paths.getTmpSegmentStatsPath(segStr))
+    segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
     segCmd.extend(["--stats-file", quote(segFiles.stats[-1])])
 
     # Empirical Variant Scoring(EVS):
@@ -258,7 +258,7 @@ def callGenome(self,taskPrefix="",dependencies=None):
     finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.gvcf, self.paths.getGvcfOutputPath(),"gVCF"))
 
     # merge segment stats:
-    finishTasks.add(self.mergeSegmentStats(taskPrefix,completeSegmentsTask, segFiles.stats))
+    finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
 
     if self.params.isWriteRealignedBam :
         def finishBam(tmpList, output, label) :

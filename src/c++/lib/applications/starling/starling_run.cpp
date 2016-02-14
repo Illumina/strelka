@@ -31,7 +31,7 @@
 #include "starling_pos_processor.hh"
 #include "starling_streams.hh"
 
-#include "appstats/SegmentStatsManager.hh"
+#include "appstats/RunStatsManager.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "htsapi/bam_streamer.hh"
@@ -52,7 +52,7 @@ starling_run(
 {
     opt.validate();
 
-    SegmentStatsManager segmentStatMan(opt.segmentStatsFilename);
+    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);

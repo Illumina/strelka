@@ -36,12 +36,12 @@
 #include <vector>
 
 
-struct SegmentStatsData
+struct RunStatsData
 {
-    SegmentStatsData() {}
+    RunStatsData() {}
 
     void
-    merge(const SegmentStatsData& rhs)
+    merge(const RunStatsData& rhs)
     {
         lifeTime.merge(rhs.lifeTime);
     }
@@ -58,9 +58,9 @@ struct SegmentStatsData
     CpuTimes lifeTime;
 };
 
-BOOST_CLASS_IMPLEMENTATION(SegmentStatsData, boost::serialization::object_serializable)
+BOOST_CLASS_IMPLEMENTATION(RunStatsData, boost::serialization::object_serializable)
 
-struct SegmentStats
+struct RunStats
 {
     void
     load(const char* filename);
@@ -75,12 +75,12 @@ struct SegmentStats
     report(const char* filename) const;
 
     void
-    merge(const SegmentStats& rhs)
+    merge(const RunStats& rhs)
     {
-        segmentData.merge(rhs.segmentData);
+        runStatsData.merge(rhs.runStatsData);
     }
 
-    SegmentStatsData segmentData;
+    RunStatsData runStatsData;
 };
 
-BOOST_CLASS_IMPLEMENTATION(SegmentStats, boost::serialization::object_serializable)
+BOOST_CLASS_IMPLEMENTATION(RunStats, boost::serialization::object_serializable)

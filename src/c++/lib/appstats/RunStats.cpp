@@ -22,7 +22,7 @@
 /// \author Chris Saunders
 ///
 
-#include "SegmentStats.hh"
+#include "RunStats.hh"
 
 #include "boost/archive/xml_iarchive.hpp"
 #include "boost/archive/xml_oarchive.hpp"
@@ -43,11 +43,10 @@ safeFrac(
 }
 
 void
-SegmentStatsData::
+RunStatsData::
 report(std::ostream& os) const
 {
-    using namespace BOOST_TIMER_HELPER;
-    os << "SegmentTotalHours\t";
+    os << "TotalHours\t";
     lifeTime.reportHr(os);
     os << "\n";
 }
@@ -55,29 +54,29 @@ report(std::ostream& os) const
 
 
 void
-SegmentStats::
+RunStats::
 load(const char* filename)
 {
     assert(nullptr != filename);
     std::ifstream ifs(filename);
     boost::archive::xml_iarchive ia(ifs);
-    ia >> BOOST_SERIALIZATION_NVP(segmentData);
+    ia >> BOOST_SERIALIZATION_NVP(runStatsData);
 }
 
 
 
 void
-SegmentStats::
+RunStats::
 save(std::ostream& os) const
 {
     boost::archive::xml_oarchive oa(os);
-    oa << BOOST_SERIALIZATION_NVP(segmentData);
+    oa << BOOST_SERIALIZATION_NVP(runStatsData);
 }
 
 
 
 void
-SegmentStats::
+RunStats::
 save(const char* filename) const
 {
     assert(nullptr != filename);
@@ -88,11 +87,11 @@ save(const char* filename) const
 
 
 void
-SegmentStats::
+RunStats::
 report(const char* filename) const
 {
     assert(nullptr != filename);
     std::ofstream ofs(filename);
-    ofs << "SegmentStatsReport\n";
-    segmentData.report(ofs);
+    ofs << "StrelkaRunStatsReport\n";
+    runStatsData.report(ofs);
 }

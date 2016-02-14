@@ -26,7 +26,7 @@
 #include "strelka_streams.hh"
 #include "strelka_run.hh"
 
-#include "appstats/SegmentStatsManager.hh"
+#include "appstats/RunStatsManager.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "htsapi/bam_header_util.hh"
@@ -47,7 +47,7 @@ strelka_run(
 {
     opt.validate();
 
-    SegmentStatsManager segmentStatMan(opt.segmentStatsFilename);
+    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
 
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);

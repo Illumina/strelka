@@ -22,20 +22,17 @@
 /// \author Chris Saunders
 ///
 
-#include "mergeSegmentStats.hh"
-
-#include "MESOptions.hh"
-
-#include "appstats/SegmentStats.hh"
-#include "common/OutStream.hh"
-
+#include "MergeRunStats.hh"
+#include "MRSOptions.hh"
+#include "appstats/RunStats.hh"
 #include "blt_util/log.hh"
+#include "common/OutStream.hh"
 
 
 
 static
 void
-runMES(const MESOptions& opt)
+runMRS(const MRSOptions& opt)
 {
     {
         // early test that we have permission to write to output file(s)
@@ -46,7 +43,7 @@ runMES(const MESOptions& opt)
         }
     }
 
-    SegmentStats mergedStats;
+    RunStats mergedStats;
     bool isFirst(true);
     for (const std::string& statsFilename : opt.statsFilename)
     {
@@ -57,7 +54,7 @@ runMES(const MESOptions& opt)
         }
         else
         {
-            SegmentStats inputStats;
+            RunStats inputStats;
             inputStats.load(statsFilename.c_str());
             mergedStats.merge(inputStats);
         }
@@ -74,11 +71,11 @@ runMES(const MESOptions& opt)
 
 
 void
-mergeSegmentStats::
+MergeRunStats::
 runInternal(int argc, char* argv[]) const
 {
-    MESOptions opt;
+    MRSOptions opt;
 
-    parseMESOptions(*this,argc,argv,opt);
-    runMES(opt);
+    parseMRSOptions(*this,argc,argv,opt);
+    runMRS(opt);
 }

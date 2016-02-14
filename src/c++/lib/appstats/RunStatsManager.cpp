@@ -22,8 +22,7 @@
 /// \author Chris Saunders
 ///
 
-#include "SegmentStatsManager.hh"
-
+#include "RunStatsManager.hh"
 #include "common/Exceptions.hh"
 
 #include <fstream>
@@ -32,8 +31,8 @@
 
 
 
-SegmentStatsManager::
-SegmentStatsManager(
+RunStatsManager::
+RunStatsManager(
     const std::string& outputFile)
     : _osPtr(nullptr)
 {
@@ -51,13 +50,13 @@ SegmentStatsManager(
 
 
 
-SegmentStatsManager::
-~SegmentStatsManager()
+RunStatsManager::
+~RunStatsManager()
 {
     if (_osPtr != nullptr)
     {
         lifeTime.stop();
-        segmentStats.segmentData.lifeTime=lifeTime.getTimes();
-        segmentStats.save(*_osPtr);
+        runStats.runStatsData.lifeTime=lifeTime.getTimes();
+        runStats.save(*_osPtr);
     }
 }

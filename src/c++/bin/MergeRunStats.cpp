@@ -18,24 +18,10 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
+#include "applications/MergeRunStats/MergeRunStats.hh"
 
-#pragma once
-
-#include "common/Program.hh"
-
-
-struct mergeSegmentStats : public illumina::Program
+int
+main(int argc, char* argv[])
 {
-    const char*
-    name() const
-    {
-        return "mergeSegmentStats";
-    }
-
-    void
-    runInternal(int argc, char* argv[]) const;
-};
-
+    return MergeRunStats().run(argc,argv);
+}

@@ -105,17 +105,17 @@ class StarkaCallWorkflow(WorkflowRunner) :
 
 
 
-    def mergeSegmentStats(self, taskPrefix, dependencies, segStatsLogPaths) :
+    def mergeRunStats(self, taskPrefix, dependencies, runStatsLogPaths) :
         """
-        merge segment stats:
+        merge run stats:
         """
-        segStatsMergeLabel=preJoin(taskPrefix,"mergeSegmentStats")
-        segStatsMergeCmd=[self.params.statsMergeBin]
-        for statsFile in segStatsLogPaths :
-            segStatsMergeCmd.extend(["--stats-file",statsFile])
-        segStatsMergeCmd.extend(["--output-file",self.paths.getSegmentStatsPath()])
-        segStatsMergeCmd.extend(["--report-file",self.paths.getSegmentStatsReportPath()])
-        return self.addTask(segStatsMergeLabel, segStatsMergeCmd, dependencies=dependencies, isForceLocal=True)
+        runStatsMergeLabel=preJoin(taskPrefix,"mergeRunStats")
+        runStatsMergeCmd=[self.params.statsMergeBin]
+        for statsFile in runStatsLogPaths :
+            runStatsMergeCmd.extend(["--stats-file",statsFile])
+        runStatsMergeCmd.extend(["--output-file",self.paths.getRunStatsPath()])
+        runStatsMergeCmd.extend(["--report-file",self.paths.getRunStatsReportPath()])
+        return self.addTask(runStatsMergeLabel, runStatsMergeCmd, dependencies=dependencies, isForceLocal=True)
 
 
 
@@ -136,14 +136,14 @@ class SharedPathInfo(object):
     def getTmpSegmentReportPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
-    def getTmpSegmentStatsPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "genomeCallStats.%s.xml" % (segStr))
+    def getTmpRunStatsPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "runStats.%s.xml" % (segStr))
 
-    def getSegmentStatsPath(self) :
-        return os.path.join(self.params.statsDir,"genomeCallStats.xml")
+    def getRunStatsPath(self) :
+        return os.path.join(self.params.statsDir,"runStats.xml")
 
-    def getSegmentStatsReportPath(self) :
-        return os.path.join(self.params.statsDir,"genomeCallStats.tsv")
+    def getRunStatsReportPath(self) :
+        return os.path.join(self.params.statsDir,"runStats.tsv")
 
     def getRefCountFile(self) :
         return os.path.join( self.params.workDir, "refCount.txt")
