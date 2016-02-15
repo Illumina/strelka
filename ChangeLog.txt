@@ -1,3 +1,4 @@
+- STARKA-351 reorg all strelka documentation
 - PED-33 Forced outputs of SNVs for pedicure workflow
 - STARKA-310 train somatic EVS model from features in VCF output
 - STARKA-369 add option to keep all temp files to support workflow debug
