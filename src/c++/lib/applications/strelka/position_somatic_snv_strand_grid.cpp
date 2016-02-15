@@ -491,29 +491,6 @@ calculate_result_set_grid(
                 }
             }
 
-            // Currently, the single-strand noise states are ignored.
-            // Now consider the single-strand noise states. note that these states
-            // are unique in that we don't look for mixtures of somatic
-            // variation with these noise states, b/c single-strand
-            // observations can almost exclusively be ruled out as noise:
-            //
-//            for (unsigned f(DIGT_SGRID::PRESTRAND_SIZE); f<DIGT_SGRID::SIZE; ++f)
-//            {
-//                const unsigned dgt(DDIGT_SGRID::get_state(f,f));
-////                if(tgt == DIGT_SIMPLE::HET)
-////                {
-////                    double lprob_f_given_g = bare_lnprior_normal[ngt] + lnmatch + ln_se_rate+log_error_mod;
-////                    double sum = normal_lhood[f]+tumor_lhood[f]+lprob_f_given_g;
-////                    log_sum[dgt] = sum;
-////                    if(sum > max_log_sum) max_log_sum = sum;
-////                }
-////                else
-////                {
-////                    log_sum[dgt] = -INFINITY;
-////                }
-//                log_sum[dgt] = -INFINITY;
-//            }
-
             // calculate log(exp(log_sum[0])+exp(log_sum[1])+...)
             double sum = 0.0;
 //            for (int i(0); i<DDIGT_SGRID::SIZE; ++i)
@@ -561,7 +538,6 @@ calculate_result_set_grid(
             {
                 som_prob_given_ngt += post_prob[ngt][tgt];
             }
-//            printf("%d\t%d\t%lf\n", ngt, tgt, post_prob[ngt][tgt]);
         }
 
         double err_som_and_ngt = 1.0 - som_prob_given_ngt;
@@ -591,7 +567,7 @@ calculate_result_set_grid(
     {
         // get ratio of strand bias vs. non-strand-bias version of max_gt, if max_gt does not correspond to a het state, then
         // set sb to 0
-        const blt_float_t symm_lhood(*std::max_element(tumor_lhood+N_BASE, tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE));
+        const blt_float_t symm_lhood(*std::max_element(tumor_lhood+DIGT_SIMPLE::SIZE, tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE));
         const blt_float_t strand_lhood(*std::max_element(tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE, tumor_lhood+DIGT_SGRID::SIZE));
         rs.strandBias = std::max(0.f,(strand_lhood - symm_lhood));
     }
@@ -680,7 +656,7 @@ position_somatic_snv_call(
         get_diploid_het_grid_lhood_cached(tepi.pi, sgt.ref_gt, DIGT_SGRID::HET_RES, tumor_lhood+DIGT_SIMPLE::SIZE);
 
         // get likelihood of strand states (0.05, ..., 0.45)
-        get_diploid_strand_grid_lhood_spi(nepi.pi,sgt.ref_gt,normal_lhood+DIGT_SGRID::PRESTRAND_SIZE);
+//        get_diploid_strand_grid_lhood_spi(nepi.pi,sgt.ref_gt,normal_lhood+DIGT_SGRID::PRESTRAND_SIZE);
         get_diploid_strand_grid_lhood_spi(tepi.pi,sgt.ref_gt,tumor_lhood+DIGT_SGRID::PRESTRAND_SIZE);
 
         // genomic site results:
