@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -21,6 +28,8 @@
 #include "calibration/scoringmodels.hh"
 #include "starling_common/starling_base_option_parser.hh"
 #include "starling_common/Tier2OptionsParser.hh"
+
+#include "boost/filesystem.hpp"
 
 
 
@@ -107,8 +116,6 @@ get_strelka_option_parser(
      "max fraction of overlapping deletion reads")
     ("strelka-snv-min-qss-ref", po::value(&opt.sfilter.snv_min_qss_ref)->default_value(opt.sfilter.snv_min_qss_ref),
      "min QSS_ref value")
-//     ("compute-VQSR-metrics", po::value(&opt.sfilter.compute_VQSR_options)->default_value(opt.sfilter.compute_VQSR_options),
-//      "report VQSR metrics in variant records")
     // indel only:
     ("strelka-indel-max-window-filtered-basecall-frac",  po::value(&opt.sfilter.indelMaxWindowFilteredBasecallFrac)->default_value(opt.sfilter.indelMaxWindowFilteredBasecallFrac),
      "indel are filtered if more than this fraction of basecalls are filtered in a 50 base window")
@@ -120,8 +127,10 @@ get_strelka_option_parser(
 
     po::options_description score_opt("scoring-options");
     score_opt.add_options()
-    ("variant-scoring-models-file", po::value(&opt.somatic_variant_scoring_models_filename),
-     "Model file for somatic small variant VQSR")
+    ("somatic-snv-scoring-model-file", po::value(&opt.somatic_snv_scoring_model_filename),
+     "Model file for somatic SNV scoring")
+    ("somatic-indel-scoring-model-file", po::value(&opt.somatic_indel_scoring_model_filename),
+     "Model file for somatic indel scoring")
     ;
 
     po::options_description strelka_parse_opt("Two-sample options");
@@ -145,6 +154,24 @@ get_strelka_option_parser(
     visible.add(help_parse_opt);
 
     return visible;
+}
+
+
+
+static
+void
+checkOptionalFile(
+    const prog_info& pinfo,
+    const std::string& filename,
+    const char* label)
+{
+    if (filename.empty()) return;
+    if (! boost::filesystem::exists(filename))
+    {
+        std::ostringstream oss;
+        oss << "Can't find " << label << " file '" << filename << "'";
+        pinfo.usage(oss.str().c_str());
+    }
 }
 
 
@@ -194,10 +221,8 @@ finalize_strelka_options(
         pinfo.usage("Strelka depth factor must not be less than 0");
     }
 
-    if (! opt.somatic_variant_scoring_models_filename.empty())
-    {
-        scoring_models::Instance().load_variant_scoring_models(opt.somatic_variant_scoring_models_filename);
-    }
+    checkOptionalFile(pinfo,opt.somatic_snv_scoring_model_filename, "somatic snv scoring model");
+    checkOptionalFile(pinfo,opt.somatic_indel_scoring_model_filename, "somatic indel scoring model");
 
     finalize_starling_base_options(pinfo,vm,opt);
 }

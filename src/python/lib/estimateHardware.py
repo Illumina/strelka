@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -104,6 +111,9 @@ def getNodeHyperthreadCoreCount():
         for line in proc.stdout :
             cpuCount=int(line.strip())
             break
+    elif platform.system().find("Windows") > -1:
+        import multiprocessing
+        cpuCount = multiprocessing.cpu_count()
     else:
         raise EstException("Can't determine total logical cores available on OS: '%s'" (platform.system()))
 
@@ -138,7 +148,7 @@ def getNodeMemMb():
             raise EstException("Unexpected format in %s" % (mname))
 
         try:
-            memMb = 1+(int(splat[1])-1)/1024
+            memMb = 1+((int(splat[1])-1)/1024)
         except:
             raise EstException("Unexpected format in %s" % (mname))
     elif platform.system().find("Darwin") > -1:
@@ -148,6 +158,14 @@ def getNodeMemMb():
         for line in proc.stdout :
             memMb=int(line.strip())/(1024*1024)
             break
+    elif platform.system().find("Windows") > -1:
+        process = os.popen('wmic memorychip get capacity')
+        result = process.read()
+        process.close()
+        totalMem = 0
+        for m in result.split("  \r\n")[1:-1]:
+            totalMem += int(m)
+        memMb = totalMem / (1024**2)
     else:
         raise EstException("Can't determine total memory available on OS: '%s'" (platform.system()))
 

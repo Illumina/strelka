@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -18,6 +25,7 @@
 #pragma once
 
 #include "blt_util/chrom_depth_map.hh"
+#include "calibration/VariantScoringModel.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
@@ -45,7 +53,7 @@ struct somatic_filter_options
     int sindelQuality_LowerBound = 30;
 
     unsigned indelRegionFlankSize = 50;
-    double minimumQscore = 0.54;
+    double snvMinEVS = 2.35;
 };
 
 
@@ -56,8 +64,8 @@ struct strelka_options : public starling_base_options
 
     strelka_options()
     {
-        // turn on VQSR for strelka only:
-        is_compute_somatic_VQSRmetrics = true;
+        // turn on empirical scoring for strelka only:
+        is_compute_somatic_scoring_metrics = true;
     }
 
     bool is_tumor_realigned_read() const
@@ -135,7 +143,8 @@ struct somatic_filter_deriv_options
         return (! chrom_depth.empty());
     }
 
-    double max_depth = 0;
+    double max_chrom_depth = 0;
+    double expected_chrom_depth = 0;
     cdmap_t chrom_depth;
     unsigned indelRegionStage = 0;
 };
@@ -146,7 +155,7 @@ struct somatic_snv_caller_strand_grid;
 struct somatic_indel_caller_grid;
 
 
-// data deterministically derived from the input options:
+// data deterministically derived from the input options, or read in from model files, etc.
 //
 struct strelka_deriv_options : public starling_base_deriv_options
 {
@@ -172,6 +181,9 @@ struct strelka_deriv_options : public starling_base_deriv_options
 
 /// data:
     somatic_filter_deriv_options sfilter;
+
+    std::unique_ptr<VariantScoringModel> somaticSnvScoringModel;
+    std::unique_ptr<VariantScoringModel> somaticIndelScoringModel;
 
 private:
     std::unique_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;

@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -37,14 +44,14 @@ class StarlingWorkflowOptions(StarkaWorkflowOptionsBase) :
     def workflowDescription(self) :
         return """Version: %s
 
-This script configures the starling small variant calling pipeline.
-You must specify a BAM file.
+This script configures the Strelka small variant calling pipeline for single germline samples.
+You must specify a BAM or CRAM file for the sample.
 """ % (workflowVersion)
 
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
-                         help="Sample BAM file. [required] (no default)")
+                         help="Sample BAM or CRAM file. [required] (no default)")
         group.add_option("--ploidy", type="string", dest="ploidyBed", metavar="FILE",
                          help="Provide ploidy bed file. The bed records should provide either 1 or 0 in the 5th 'score' column to "
                          "indicate haploid or deleted status respectively. File must be tabix indexed. (no default)")
@@ -57,13 +64,6 @@ You must specify a BAM file.
                          help="Call variants on CHROM without a ploidy prior assumption, issuing calls with continuous variant frequencies (no default)")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
-
-
-    def addExtendedGroupOptions(self,group) :
-        group.add_option("--reportVQSRMetrics", dest="isReportVQSRMetrics", action="store_true",
-                         help="Report all VQSR features in VCF output.")
-
-        StarkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
 
 
     def getOptionDefaults(self) :
@@ -80,12 +80,11 @@ You must specify a BAM file.
             'runDir' : 'StarlingWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'indelRefErrorFactor' : "100",
-            'vqsrModelFile' : joinFile(configDir,'germlineVariantScoringModels.txt'),
-            'vqsrModelName' : "QScoreHPDRE100_v4",
+            'evsModelFile' : joinFile(configDir,'germlineVariantScoringModels.txt'),
+            'evsModelName' : "QScoreHPDRE100_v4",
             'inputIndelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
             'indelErrorModelName' : "new",
-            'isSkipIndelErrorModel' : True,
-            'isReportVQSRMetrics' : False,
+            'isSkipDynamicIndelErrorModel' : True,
             'callContinuousVf' : []
             })
         return defaults
@@ -116,7 +115,7 @@ You must specify a BAM file.
             bcheck.appendBams(bamList,label)
 
         singleAppender(options.bamList,"Input")
-        bcheck.check(options.samtoolsBin,
+        bcheck.check(options.htsfileBin,
                      options.referenceFasta)
 
 

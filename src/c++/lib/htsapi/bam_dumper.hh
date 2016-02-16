@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \author Chris Saunders
@@ -18,23 +25,30 @@
 
 #include "sam_util.hh"
 
+#include <string>
+
 
 struct bam_dumper
 {
     bam_dumper(const char* filename,
-               const bam_header_t* header);
+               const bam_hdr_t* header);
 
-    ~bam_dumper()
-    {
-        if (NULL != _bfp) samclose(_bfp);
-    }
+    ~bam_dumper();
 
     void
     put_record(const bam1_t* brec)
     {
-        samwrite(_bfp,brec);
+        sam_write1(_hfp,_hdr,brec);
+    }
+
+    const char* name() const
+    {
+        return _stream_name.c_str();
     }
 
 private:
-    samfile_t* _bfp;
+    htsFile* _hfp;
+    const bam_hdr_t* _hdr;
+
+    std::string _stream_name;
 };

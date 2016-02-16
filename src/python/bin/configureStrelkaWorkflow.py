@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -26,7 +33,8 @@ sys.path.append(workflowDir)
 
 from configBuildTimeInfo import workflowVersion
 from starkaOptions import StarkaWorkflowOptionsBase
-from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, checkTabixListOption
+from configureUtil import BamSetChecker, groomBamList, OptParseException, joinFile, \
+                            checkTabixListOption, validateFixExistingFileArg
 from makeRunScript import makeRunScript
 from strelkaWorkflow import StrelkaWorkflow
 from workflowUtil import ensureDir
@@ -47,14 +55,24 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         group.add_option("--normalBam", type="string",dest="normalBamList",metavar="FILE", action="append",
                          help="Normal sample BAM or CRAM file. [required] (no default)")
         group.add_option("--tumorBam","--tumourBam", type="string",dest="tumorBamList",metavar="FILE", action="append",
-                          help="Tumor sample BAM or CRAM file. [required] (no default)")
-        group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
-                          help="Noise vcf file (submit argument multiple times for more than one file)")
+                         help="Tumor sample BAM or CRAM file. [required] (no default)")
         group.add_option("--isWriteCallableRegion", action="store_true",
-                         help="Write out a bed file describing somatic callable regions of the genome")
+                         help="Write out a bed file describing somatic callable regions of thedupliates genome")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
+    def addExtendedGroupOptions(self,group) :
+        group.add_option("--somaticSnvScoringModelFile", type="string", dest="somaticSnvScoringModelFile", metavar="FILE",
+                         help="Provide a custom EVS model file for somatic SNVs (default: %default)")
+        group.add_option("--enableSomaticIndelScoring", action="store_true", dest="isSomaticIndelEmpiricalScoring",
+                         help="Enable empirical variant scoring for somatic indels")
+        group.add_option("--somaticIndelScoringModelFile", type="string", dest="somaticIndelScoringModelFile", metavar="FILE",
+                         help="Provide a custom EVS model file for somatic Indels (default: %default)")
+        group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
+                         help="Noise vcf file (submit argument multiple times for more than one file)")
+
+
+        StarkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
 
     def getOptionDefaults(self) :
 
@@ -67,10 +85,13 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         defaults.update({
             'runDir' : 'StrelkaWorkflow',
             "minTier2Mapq" : 0,
-            'variantScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
+            "isSomaticIndelEmpiricalScoring" : False,
+            'somaticSnvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
+            'somaticIndelScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'indelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
-            'indelErrorModelName': 'new',
-            'isWriteCallableRegion' : False
+            'indelErrorModelName': 'Binom',
+            'isWriteCallableRegion' : False,
+            'noiseVcfList' : None
             })
         return defaults
 
@@ -84,6 +105,8 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         checkTabixListOption(options.noiseVcfList,"noise vcf")
 
+        options.somaticSnvScoringModelFile=validateFixExistingFileArg(options.somaticSnvScoringModelFile,"Somatic SNV empirical scoring file")
+        options.somaticIndelScoringModelFile=validateFixExistingFileArg(options.somaticIndelScoringModelFile,"Somatic indel empirical scoring file")
 
 
     def validateOptionExistence(self,options) :
@@ -99,7 +122,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         singleAppender(options.normalBamList,"Normal")
         singleAppender(options.tumorBamList,"Tumor")
-        bcheck.check(options.samtoolsBin,
+        bcheck.check(options.htsfileBin,
                      options.referenceFasta)
 
 def main() :

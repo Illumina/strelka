@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -29,7 +36,6 @@
 
 
 static const unsigned max_hpol_len(40);
-static const unsigned max_indel_len(15);
 typedef std::pair<double,double> error_model[max_hpol_len];
 
 static
@@ -255,7 +261,6 @@ get_indel_error_prob(const starling_base_options& client_opt,
         // treat everything besides simple homopolymer
         // contractions/expansions as homopolymer length 1:
         //
-//        log_os << "Im doing in indels \n";
         if (iri.repeat_unit.size() == 1)
         {
             static const unsigned one(1);
@@ -290,7 +295,7 @@ get_indel_error_prob(const starling_base_options& client_opt,
             }
             else
             {
-                log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
+                log_os << "ERROR: Unknown indel type: " << iri << "\n";
                 throw blt_exception("Unknown indel type.");
             }
         }
@@ -308,7 +313,7 @@ get_indel_error_prob(const starling_base_options& client_opt,
             }
             else
             {
-                log_os << "ERROR: Unknown indel type: " << iri.desc << "\n";
+                log_os << "ERROR: Unknown indel type: " << iri << "\n";
                 throw blt_exception("Unknown indel type.");
             }
         }

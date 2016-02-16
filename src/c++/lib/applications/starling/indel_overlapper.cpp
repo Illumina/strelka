@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *
@@ -36,14 +43,6 @@ indel_overlapper::indel_overlapper(const calibration_models& model, const refere
     , _ref(ref)
     , _indel_end_pos(0)
 {
-
-}
-
-void indel_overlapper::flush()
-{
-    // flush out accumulated sites & indels
-    process_overlaps();
-    variant_pipe_stage_base::flush();
 }
 
 void indel_overlapper::process(std::unique_ptr<site_info> site)
@@ -64,7 +63,6 @@ void indel_overlapper::process(std::unique_ptr<site_info> site)
         }
     }
     _sink->process(std::move(si));
-
 }
 
 static
@@ -76,7 +74,7 @@ is_het_indel(const starling_diploid_indel_core& dindel)
 
 static
 bool
-is_no_indel(const starling_diploid_indel_core& dindel)
+check_is_no_indel(const starling_diploid_indel_core& dindel)
 {
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
@@ -90,20 +88,19 @@ void indel_overlapper::process(std::unique_ptr<indel_info> indel)
     // we can't handle breakends at all right now:
     if (call._ik.is_breakpoint()) return;
 
+    const bool is_no_indel = check_is_no_indel(call._dindel);
+
     // don't handle homozygous reference calls unless genotyping is forced
-    if (is_no_indel(call._dindel) && !call._dindel.is_forced_output) return;
+    if (is_no_indel && !call._dindel.is_forced_output) return;
 
-
-    bool no_indel = is_no_indel(call._dindel);
-
-    if ((! _indel_buffer.empty()) && ((ii->pos>_indel_end_pos) || no_indel))
+    if ((! _indel_buffer.empty()) && ((ii->pos>_indel_end_pos) || is_no_indel))
     {
         process_overlaps();
     }
     _indel_end_pos=std::max(_indel_end_pos,call._ik.right_pos());
     _indel_buffer.push_back(std::move(ii));
     // clear the current homRef indel
-    if (no_indel)
+    if (is_no_indel)
     {
         process_overlaps();
     }
@@ -111,11 +108,52 @@ void indel_overlapper::process(std::unique_ptr<indel_info> indel)
 
 static
 bool
-is_simple_indel_overlap(const std::vector<std::unique_ptr<digt_indel_info>>& indel_buffer)
+is_simple_indel_overlap(
+    const reference_contig_segment& ref,
+    const std::vector<std::unique_ptr<digt_indel_info>>& indel_buffer)
 {
-    return (indel_buffer.size()==2 &&
-            is_het_indel(indel_buffer[0]->first()._dindel) &&
-            is_het_indel(indel_buffer[1]->first()._dindel));
+    // check for very very simple overlap condition -- these are the cases that are easy to
+    // glue together, although many more non-simple cases could be resolved if we wanted to
+    // put in the work
+    //
+    // check for 2 overlapping hets:
+
+    if (indel_buffer.size() != 2) return false;
+
+    const digt_indel_info& ii0(*indel_buffer[0]);
+    const digt_indel_info& ii1(*indel_buffer[1]);
+
+    const digt_indel_call& ic0(ii0.first());
+    const digt_indel_call& ic1(ii1.first());
+
+    const bool isTwoHets = (is_het_indel(ic0._dindel) && is_het_indel(ic1._dindel));
+
+    if (! isTwoHets) return false;
+
+    // also make sure we don't create two matching alt sequences
+    // (two matching ALTs will fail vcf output
+
+    // there's going to be 1 (possibly empty) fill range in front of one haplotype
+    // and one possibly empty fill range on the back of one haplotype
+    const pos_t indel_end_pos=std::max(ic1._ik.right_pos(),ic0._ik.right_pos());
+    const pos_t indel_begin_pos(ii0.pos-1);
+
+    // get the VCF ALT string associated with overlapping indel:
+    auto get_overlap_alt = [&] (const digt_indel_info& ii)
+    {
+        std::string leading_seq,trailing_seq;
+        const auto& ic(ii.first());
+        // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
+        ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
+        const unsigned trail_len(indel_end_pos-ic._ik.right_pos());
+        ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
+
+        return leading_seq + ic._iri.vcf_indel_seq + trailing_seq;
+    };
+    const std::string alt0 = get_overlap_alt(*indel_buffer[0]);
+    const std::string alt1 = get_overlap_alt(*indel_buffer[1]);
+
+    return (alt0 != alt1);
 }
 
 
@@ -135,7 +173,7 @@ void indel_overlapper::process_overlaps()
     }
     else
     {
-        if (is_simple_indel_overlap(_indel_buffer))
+        if (is_simple_indel_overlap(_ref,_indel_buffer))
         {
             // handle the simplest possible overlap case (two hets):
             modify_overlap_indel_record();
@@ -151,7 +189,7 @@ void indel_overlapper::process_overlaps()
     //    *_osptr << "INDEL_SIZE: " << _indel_buffer.size() << "\n";
 
     // process sites to be consistent with overlapping indels:
-    for (auto&& si : _site_buffer)
+    for (auto& si : _site_buffer)
     {
 #ifdef DEBUG_GVCF
         log_os << "CHIRP: indel overlapping site: " << si->pos << "\n";
@@ -220,7 +258,7 @@ indel_overlapper::modify_single_indel_record()
     digt_indel_info& ii(*_indel_buffer[0]);
     ii.first().set_hap_cigar();
 
-    _CM.clasify_indel(ii, ii.first());
+    _CM.classify_indel(ii, ii.first());
 }
 
 
@@ -238,7 +276,7 @@ void indel_overlapper::modify_indel_overlap_site(
 
     // if overlapping indel has any filters, mark as site conflict
     // (note that we formerly had the site inherit indel filters, but
-    // this interacts poorly with VQSR)
+    // this interacts poorly with empirical scoring)
     if (! ii.first().filters.none())
     {
         si.smod.set_filter(VCF_FILTERS::SiteConflict);
@@ -294,7 +332,7 @@ void indel_overlapper::modify_indel_overlap_site(
     }
 
     // after all those changes we need to rerun the site filters:
-    model.clasify_site(si, si.smod);
+    model.classify_site(si, si.smod);
 }
 
 
@@ -317,13 +355,12 @@ indel_overlapper::modify_overlap_indel_record()
     assert(_indel_buffer.size()==2);
 
     // TODO: hackey
-    for (auto&& ii : _indel_buffer)
+    for (auto& ii : _indel_buffer)
         ii->_is_overlap = true;
 
-    _CM.clasify_indels(_indel_buffer);
+    _CM.classify_indels(_indel_buffer);
 
     _indel_buffer[0]->add_overlap(_ref, *_indel_buffer[1]);
-
 }
 
 
@@ -334,13 +371,13 @@ indel_overlapper::modify_conflict_indel_record()
 {
     assert(_indel_buffer.size()>1);
 
-    for (auto&& ii : _indel_buffer)
+    for (auto& ii : _indel_buffer)
     {
         ii->first().set_hap_cigar();
 
         ii->first().set_filter(VCF_FILTERS::IndelConflict);
 
-        _CM.clasify_indel(*ii, ii->first());
+        _CM.classify_indel(*ii, ii->first());
     }
 }
 

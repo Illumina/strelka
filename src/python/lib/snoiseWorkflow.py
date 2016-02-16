@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -16,7 +23,6 @@ Strelka noise estimate workflow
 
 
 import os.path
-import shutil
 import sys
 
 # add script path to pull in utils in same directory:
@@ -29,27 +35,15 @@ pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
+from configureUtil import argToBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
+from starkaWorkflow import runCount, SharedPathInfo, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, getFastaChromOrderSize, bamListCatCmd
 
-from configureUtil import argToBool, getIniSections, dumpIniSections
 
 
 __version__ = workflowVersion
-
-
-
-def runCount(self, taskPrefix="", dependencies=None) :
-    """
-    count size of fasta chromosomes
-    """
-    cmd  = "%s %s > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
-
-    return nextStepWait
 
 
 
@@ -87,7 +81,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",bamPath])
 
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
 
     if not isFirstSegment :
         segCmd.append("--skip-vcf-header")
@@ -103,7 +97,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     nextStepWait = set()
 
-    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
+    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
     self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
     nextStepWait.add(setTaskLabel)
 
@@ -180,13 +174,13 @@ class CallWorkflow(WorkflowRunner) :
 
 
 
-class PathInfo:
+class PathInfo(SharedPathInfo):
     """
     object to centralize shared workflow path names
     """
 
     def __init__(self, params) :
-        self.params = params
+        super(PathInfo,self).__init__(params)
 
     def getTmpSegmentDir(self) :
         return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
@@ -197,66 +191,29 @@ class PathInfo:
     def getTmpSegmentReportPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
-    def getVariantsDir(self) :
-        return self.params.variantsDir
-
     def getGvcfOutputPath(self) :
-        return os.path.join( self.getVariantsDir(), "noise.vcf.gz")
+        return os.path.join( self.params.variantsDir, "noise.vcf.gz")
 
     def getRefCountFile(self) :
         return os.path.join( self.params.workDir, "refCount.txt")
 
 
 
-class snoiseWorkflow(WorkflowRunner) :
+class snoiseWorkflow(StarkaWorkflow) :
     """
     germline small variant calling workflow
     """
 
     def __init__(self,params,iniSections) :
-
-        # clear out some potentially destabilizing env variables:
-        clearList = [ "PYTHONPATH", "PYTHONHOME"]
-        for key in clearList :
-            if key in os.environ :
-                del os.environ[key]
-
-        self.params=params
-        self.iniSections=iniSections
+        global PathInfo
+        super(snoiseWorkflow,self).__init__(params,iniSections,PathInfo)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []
 
-        # make sure run directory is setup:
-        self.params.runDir=os.path.abspath(self.params.runDir)
-        ensureDir(self.params.runDir)
-
-        # everything that's not intended to be a final result should dump directories/files in workDir
-        self.params.workDir=os.path.join(self.params.runDir,"workspace")
-        ensureDir(self.params.workDir)
-
-        # all finalized pretty results get transfered to resultsDir
-        self.params.resultsDir=os.path.join(self.params.runDir,"results")
-        ensureDir(self.params.resultsDir)
-        self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
-        ensureDir(self.params.variantsDir)
-
-        indexRefFasta=self.params.referenceFasta+".fai"
-
-        if self.params.referenceFasta is None:
-            raise Exception("No reference fasta defined.")
-        else:
-            checkFile(self.params.referenceFasta,"reference fasta")
-            checkFile(indexRefFasta,"reference fasta index")
-
-        # read fasta index
-        (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
-
         # sanity check some parameter typing:
         MEGABASE = 1000000
         self.params.scanSize = int(self.params.scanSizeMb) * MEGABASE
-
-        self.paths = PathInfo(self.params)
 
 
     def getSuccessMessage(self) :

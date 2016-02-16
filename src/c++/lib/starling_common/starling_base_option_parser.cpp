@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -144,18 +151,10 @@ get_starling_base_option_parser(starling_base_options& opt)
      "Print out regional average basecall statistics at variant sites within a window of the variant call. Must provide arguments for window flank size and output file. Option can be specified multiple times. (example: '--variant-window-flank-file 10 window10.txt')")
     ;
 
-    po::options_description compat_opt("compatibility-options");
-    compat_opt.add_options()
-    ("eland-compatibility", po::value(&opt.is_eland_compat)->zero_tokens(),
-     "When argument is provided the input reads are checked for an optional AS field corresponding to the ELAND PE map score.")
-    ;
-
     po::options_description input_opt("input-options");
     input_opt.add_options()
     ("max-input-depth", po::value(&opt.max_input_depth),
      "Maximum allowed read depth per sample (prior to realignment). Input reads which would exceed this depth are filtered out.  (default: no limit)")
-    ("ignore-conflicting-read-names", po::value(&opt.is_ignore_read_names)->zero_tokens(),
-     "Do not report an error if two input reads share the same QNAME and read number")
     ("max-sample-read-buffer", po::value(&opt.maxBufferedReads)->default_value(opt.maxBufferedReads),
      "Maximum reads buffered for each sample")
     ;
@@ -164,6 +163,12 @@ get_starling_base_option_parser(starling_base_options& opt)
     other_opt.add_options()
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
+
+    ("stats-file", po::value(&opt.segmentStatsFilename),
+     "Write runtime stats to file")
+
+    ("report-evs-features", po::value(&opt.isReportEVSFeatures)->zero_tokens(),
+     "Report empirical variant scoring (EVS) training features in VCF output")
 
     ("indel-error-models-file", po::value(&opt.indel_error_models_filename),
      "File containing indel error models")
@@ -179,7 +184,7 @@ get_starling_base_option_parser(starling_base_options& opt)
 
     new_opt.add(geno_opt).add(hap_opt).add(blt_nonref_opt);
     new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt).add(window_opt);
-    new_opt.add(compat_opt).add(input_opt).add(other_opt);
+    new_opt.add(input_opt).add(other_opt);
 
     return new_opt;
 }
@@ -226,10 +231,6 @@ write_starling_legacy_options(
        "                    - Reads with single align score<n are marked as SE-failed. By default such reads are excluded\n"
        "                      from consideration unless a paired score is present. This behavior can be modified by\n"
        "                      setting the exclude or rescue modes below. (default: " << default_opt.min_single_align_score << ")\n"
-       " -single-align-score-exclude-mode\n"
-       "                    - Exclude SE-failed reads even when a paired score is present and the read is not PE-failed.\n"
-       " -single-align-score-rescue-mode\n"
-       "                    - Include non SE-failed reads even when a paired score is present and the read is PE-failed.\n"
        " -min-paired-align-score n\n"
        "                    - Reads with paired align score<n are marked as PE-failed if a paired score is present. By\n"
        "                      default such reads are excluded from consideration, but may still be used if the single score\n"

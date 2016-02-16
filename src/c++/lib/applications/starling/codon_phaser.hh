@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *  Test for codon-phasing.
@@ -20,8 +27,9 @@
 #pragma once
 
 #include "gvcf_locus_info.hh"
-#include "starling_common/pos_basecall_buffer.hh"
 #include "variant_pipe_stage_base.hh"
+
+#include "starling_common/pos_basecall_buffer.hh"
 
 
 /// short-range phasing utility for het-snps
@@ -55,7 +63,7 @@ struct Codon_phaser : public variant_pipe_stage_base
     static
     bool
     is_phasable_site(
-            const std::unique_ptr<digt_site_info>& si)
+        const std::unique_ptr<digt_site_info>& si)
     {
         return (si->dgt.is_snp && si->is_het());
     }
@@ -74,13 +82,10 @@ struct Codon_phaser : public variant_pipe_stage_base
 
     void process(std::unique_ptr<site_info> si) override;
     void process(std::unique_ptr<indel_info> ii) override;
-    void flush() override;
-
-
-
-    void collect_records();
 
 private:
+    void flush_impl() override;
+
     /// add site to buffer
     ///
     /// \returns true when the buffer should be printed as a phased block

@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -39,17 +46,17 @@ class PedicureWorkflowOptions(StarkaWorkflowOptionsBase) :
         return """Version: %s
 
 This script configures the Pedicure de-novo small variant calling pipeline.
-You must specify BAM file(s) for the proband and additional related samples.
+You must specify BAM or CRAM file(s) for the proband and additional related samples.
 """ % (workflowVersion)
 
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--probandAlignment", type="string",dest="probandBamList",metavar="FILE", action="append",
-                         help="Proband BAM file. [required] (no default)")
+                         help="Proband BAM or CRAM file. [required] (no default)")
         group.add_option("--parentAlignment", type="string",dest="parentBamList",metavar="FILE", action="append",
-                          help="BAM file for a parent sample. (no default, submit argument one time for each parent)")
+                          help="BAM or CRAM file for a parent sample. (no default, submit argument one time for each parent)")
         group.add_option("--siblingAlignment", type="string",dest="siblingBamList",metavar="FILE", action="append",
-                          help="BAM file for a sibling sample. (no default, submit argument one time for each sibling)")
+                          help="BAM or CRAM file for a sibling sample. (no default, submit argument one time for each sibling)")
         group.add_option("--isWriteCallableRegion", action="store_true",
                          help="Write out a bed file describing de-novo callable regions of the genome")
 
@@ -95,7 +102,7 @@ You must specify BAM file(s) for the proband and additional related samples.
         bcheck.appendBams(options.probandBamList,"proband")
         bcheck.appendBams(options.parentBamList,"parent")
         bcheck.appendBams(options.siblingBamList,"sibling",isAllowEmpty=True)
-        bcheck.check(options.samtoolsBin,
+        bcheck.check(options.htsfileBin,
                      options.referenceFasta)
 
 def main() :

@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -23,11 +30,39 @@
 #include "blt_util/thirdparty_push.h"
 
 extern "C" {
+#include <unistd.h> // this simplifies zlib on windows
 #define __STDC_LIMIT_MACROS
-#include "bam.h"
+#include "htslib/bgzf.h"
+#include "htslib/sam.h"
 }
 
 #include "blt_util/thirdparty_pop.h"
+
+/// pull two remaining functions in from samtools API:
+
+/*!
+  @abstract    Calculate the minimum bin that contains a region [beg,end).
+  @param  beg  start of the region, 0-based
+  @param  end  end of the region, 0-based
+  @return      bin
+ */
+static inline int bam_reg2bin(uint32_t beg, uint32_t end)
+{
+    return hts_reg2bin(beg, end, 14, 5);
+}
+
+/*!
+  @abstract Calculate the rightmost coordinate of an alignment on the
+  reference genome.
+
+  @param  c      pointer to the bam1_core_t structure
+  @param  cigar  the corresponding CIGAR array (from bam1_t::cigar)
+  @return        the rightmost coordinate, 0-based
+*/
+static inline uint32_t bam_calend(const bam1_core_t* c, const uint32_t* cigar)
+{
+    return c->pos + (c->n_cigar? bam_cigar2rlen(c->n_cigar, cigar) : 1);
+}
 
 
 namespace BAM_FLAG
@@ -86,6 +121,7 @@ change_bam_data_segment_len(const int end,
                             const int delta,
                             bam1_t& br);
 
+
 /// Update bam record bin value -- call after updating pos and/or
 /// cigar fields.
 ///
@@ -104,7 +140,7 @@ bam_update_bin(bam1_t& br)
         if (brc.n_cigar!=0)
         {
             // normal case:
-            brc.bin = bam_reg2bin(brc.pos, bam_calend(&brc, bam1_cigar(&br)));
+            brc.bin = bam_reg2bin(brc.pos, bam_calend(&brc, bam_get_cigar(&br)));
         }
         else
         {

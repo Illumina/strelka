@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \author Chris Saunders
@@ -29,21 +36,39 @@ void
 write_vcf_sample_info(
     const starling_indel_sample_report_info& isri1,
     const starling_indel_sample_report_info& isri2,
+    const denovo_indel_call& dinc,
+    const int& id,
     std::ostream& os)
 {
+
+//	GT:GQ:GQX:DP:DP2:AD:PL
     static const char sep(':');
+    if (dinc.gtstring.size()>0)
+    {
+        os << dinc.gtstring.at(id)
+           << sep
+           << dinc.gq.at(id)
+           << sep
+           << dinc.gqx.at(id)
+           << sep;
+    }
+    else
+    {
+        os << "./." << sep << "." << sep << "." << sep;
+    }
+
     os << isri1.depth
        << sep
        << isri2.depth
        << sep
        << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
-       << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
-       << sep
-       << isri1.n_q30_indel_reads << ','
-       << isri2.n_q30_indel_reads
-       << sep
-       << isri1.n_other_reads << ','
-       << isri2.n_other_reads;
+       << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads;
+//       << sep
+//       << isri1.n_q30_indel_reads << ','
+//       << isri2.n_q30_indel_reads
+//       << sep
+//       << isri1.n_other_reads << ','
+//       << isri2.n_other_reads;
 }
 
 
@@ -85,22 +110,25 @@ denovo_indel_call_vcf(
             }
         }
 
-        if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
+        if (rs.is_overlap)
         {
             smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
 
-#if 0
-        if (siInfo.iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
+        if (rs.dindel_qphred < opt.dfilter.dindel_qual_lowerbound)
         {
-            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
+//            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
 
-        if (siInfo.iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
-        {
-            smod.set_filter(INOOV_VCF_FILTERS::iHpol);
-        }
-#endif
+//        if (siInfo.iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
+//        {
+//            smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
+//        }
+//
+//        if (siInfo.iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
+//        {
+//            smod.set_filter(INOOV_VCF_FILTERS::iHpol);
+//        }
 
 #if 0
         {
@@ -149,8 +177,8 @@ denovo_indel_call_vcf(
 
     os << sep
        << "DP="<< totalDepth
-       << ";QDI=" << rs.dindel_qphred
-       << ";TQDI=" << (dinc.dindel_tier+1)
+       << ";DQ=" << rs.dindel_qphred
+//       << ";TQDI=" << (dinc.dindel_tier+1)
        ;
 
     if (iri.is_repeat_unit())
@@ -160,23 +188,25 @@ denovo_indel_call_vcf(
            << ";IC=" << iri.indel_repeat_count;
     }
     os << ";IHP=" << iri.ihpol;
-    if ((iri.it == INDEL::BP_LEFT) ||
-        (iri.it == INDEL::BP_RIGHT))
-    {
-        os << ";SVTYPE=BND";
-    }
+//    if ((iri.it == INDEL::BP_LEFT) ||
+//        (iri.it == INDEL::BP_RIGHT))
+//    {
+//        os << ";SVTYPE=BND";
+//    }
     if (rs.is_overlap)
     {
         os << ";OVERLAP";
     }
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR";
+    os << sep << "GT:GQ:GQX:DP:DP2:AD";
 
     // write sample info:
+    int id = 0;
     for (const auto& sampleIsri : isri)
     {
         os << sep;
-        write_vcf_sample_info(sampleIsri[PEDICURE_TIERS::TIER1],sampleIsri[PEDICURE_TIERS::TIER2], os);
+        write_vcf_sample_info(sampleIsri[PEDICURE_TIERS::TIER1],sampleIsri[PEDICURE_TIERS::TIER2],dinc, id, os);
+        id++;
     }
 }

@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -21,6 +28,7 @@
 
 #include "blt_common/blt_shared.hh"
 #include "blt_util/reference_contig_segment.hh"
+#include "starling_common/min_count_binom_gte_cache.hh"
 #include "starling_common/starling_align_limit.hh"
 #include "starling_common/Tier2Options.hh"
 
@@ -128,7 +136,7 @@ struct starling_base_options : public blt_options
     // determine whether they are eligible for candidacy, based on the
     // expected per-read error rate, total coverage, and indel coverage
     // this sets the p-value threshold for determining homopolymer candidacy
-    double tumor_min_hpol_pval = std::pow(10,-9);
+    const double tumor_min_hpol_pval = 1e-9;
 
     int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
     double max_candidate_indel_density = 0.15; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
@@ -206,9 +214,6 @@ struct starling_base_options : public blt_options
     // Internal development option - not for production use:
     bool is_baby_elephant = false;
 
-    // if not using grouper, you can optionally turn off the restriction that each qname occurs once in the bam:
-    bool is_ignore_read_names = false;
-
     // Indicates that an upstream oligo is present on reads, which can be used to increase confidence for indels near the edge of the read
     unsigned upstream_oligo_size = 0;
 
@@ -226,6 +231,9 @@ struct starling_base_options : public blt_options
 
     /// file specifying haploid and deleted regions as 1/0 in bed col 4
     std::string ploidy_region_bedfile;
+
+    /// Stores runtime stats
+    std::string segmentStatsFilename;
 
     bool
     isMaxBufferedReads() const
@@ -317,10 +325,10 @@ public:
 
     starling_align_limit sal;
 
-    std::string bam_header_data; // the full bam header, read in from bam file. Used for setting the sample name in
-
     unsigned variant_window_first_stage;
     unsigned variant_window_last_stage;
+
+    const min_count_binom_gte_cache countCache;
 
 private:
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..

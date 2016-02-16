@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -26,7 +33,22 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
 from pyflow import WorkflowRunner
+from sharedWorkflow import getMvCmd
 from workflowUtil import checkFile, ensureDir, getFastaChromOrderSize, cleanPyEnv, preJoin
+
+
+
+def runCount(self, taskPrefix="", dependencies=None) :
+    """
+    count size of fasta chromosomes
+    """
+    cmd  = "\"%s\" \"%s\" > \"%s\""  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
+
+    nextStepWait = set()
+    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
+
+    return nextStepWait
+
 
 
 class StarkaCallWorkflow(WorkflowRunner) :
@@ -49,9 +71,9 @@ class StarkaCallWorkflow(WorkflowRunner) :
             catCmd = [self.params.bgcatBin,"-o",output]
             catCmd.extend(inputList)
         else :
-            catCmd = "mv -f %s %s" % (inputList[0],output)
+            catCmd = getMvCmd() + [inputList[0], output]
 
-        indexCmd = "%s -p %s %s" % (self.params.tabixBin, fileType, output)
+        indexCmd = [self.params.tabixBin,"-p", fileType, output]
         catTask = self.addTask(preJoin(taskPrefix,label+"_concat_"+fileType), catCmd,
                                dependencies=dependencies, isForceLocal=True)
         return self.addTask(preJoin(taskPrefix,label+"_index_"+fileType), indexCmd,
@@ -83,12 +105,57 @@ class StarkaCallWorkflow(WorkflowRunner) :
 
 
 
+    def mergeRunStats(self, taskPrefix, dependencies, runStatsLogPaths) :
+        """
+        merge run stats:
+        """
+        runStatsMergeLabel=preJoin(taskPrefix,"mergeRunStats")
+        runStatsMergeCmd=[self.params.statsMergeBin]
+        for statsFile in runStatsLogPaths :
+            runStatsMergeCmd.extend(["--stats-file",statsFile])
+        runStatsMergeCmd.extend(["--output-file",self.paths.getRunStatsPath()])
+        runStatsMergeCmd.extend(["--report-file",self.paths.getRunStatsReportPath()])
+        return self.addTask(runStatsMergeLabel, runStatsMergeCmd, dependencies=dependencies, isForceLocal=True)
+
+
+
+class SharedPathInfo(object):
+    """
+    object to centralize shared workflow path names
+    """
+
+    def __init__(self, params) :
+        self.params = params
+
+    def getChromDepth(self) :
+        return os.path.join(self.params.workDir,"chromDepth.txt")
+
+    def getTmpSegmentDir(self) :
+        return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
+
+    def getTmpSegmentReportPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
+
+    def getTmpRunStatsPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "runStats.%s.xml" % (segStr))
+
+    def getRunStatsPath(self) :
+        return os.path.join(self.params.statsDir,"runStats.xml")
+
+    def getRunStatsReportPath(self) :
+        return os.path.join(self.params.statsDir,"runStats.tsv")
+
+    def getRefCountFile(self) :
+        return os.path.join( self.params.workDir, "refCount.txt")
+
+
+
 class StarkaWorkflow(WorkflowRunner) :
     """
     small variant calling workflow base
     """
 
-    def __init__(self,params,iniSections) :
+    def __init__(self,params,iniSections,PathInfoType) :
 
         cleanPyEnv()
 
@@ -108,6 +175,12 @@ class StarkaWorkflow(WorkflowRunner) :
         ensureDir(self.params.resultsDir)
         self.params.variantsDir=os.path.join(self.params.resultsDir,"variants")
         ensureDir(self.params.variantsDir)
+
+        # timings and other stats go into statsDir
+        self.params.statsDir=os.path.join(self.params.resultsDir,"stats")
+        ensureDir(self.params.statsDir)
+
+        self.paths = PathInfoType(self.params)
 
         indexRefFasta=self.params.referenceFasta+".fai"
 

@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \author Chris Saunders
@@ -38,20 +45,50 @@ get_binomial_twosided_exact_pval(
     assert((p>0.) && (p<1.));
     assert(n_success <= n_trials);
 
-    const unsigned n_failure(n_trials-n_success);
-    const double obs_p((double)n_success/(double)n_trials);
-
-    double exact_prob;
-    if (obs_p <= p)
+    // otherwise we get p == 2
+    if (n_trials == 0)
     {
-        exact_prob=cdf(binomial(n_trials,p),n_success);
+        return 1;
+    }
+
+    if (fabs(p - 0.5) < DBL_EPSILON)
+    {
+        const unsigned n_failure(n_trials-n_success);
+        const double obs_p((double)n_success/(double)n_trials);
+
+        double exact_prob;
+        if (obs_p <= p)
+        {
+            exact_prob=cdf(binomial(n_trials,p),n_success);
+        }
+        else
+        {
+            exact_prob=cdf(binomial(n_trials,1.-p),n_failure);
+        }
+
+        return std::min(1.0, 2.*exact_prob);
     }
     else
     {
-        exact_prob=cdf(binomial(n_trials,1.-p),n_failure);
+        // naive implementation -- this can be improved
+        // in two ways:
+        // * find upper / lower bound so we don't have to
+        //   evaluate the pdf for every single value
+        //   between 0 and n_trials
+        // * be smarter about additive error
+        binomial dist = binomial(n_trials, p);
+        double exact_prob = pdf(dist, n_success);
+        double result = 0;
+        for (unsigned j = 0; j <= n_trials; ++j)
+        {
+            double pp = pdf(dist, j);
+            if (pp <= exact_prob)
+            {
+                result += pp;
+            }
+        }
+        return result;
     }
-
-    return (2.*exact_prob);
 }
 
 
@@ -142,4 +179,18 @@ is_reject_binomial_gte_n_success_exact(
     const double observed_pval = get_binomial_gte_n_success_exact_pval(p, n_success, n_trials);
 
     return (observed_pval <= alpha);
+}
+
+double
+min_count_binomial_gte_exact(
+    const double alpha,
+    const double p,
+    const unsigned n_trials)
+{
+    assert(alpha >= 0);
+    assert((p >= 0.) && (p <= 1.));
+
+    const double min_count_above_threshold = quantile(complement(binomial(n_trials, p), alpha));
+
+    return min_count_above_threshold;
 }

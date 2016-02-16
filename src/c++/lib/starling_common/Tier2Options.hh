@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -26,7 +33,6 @@ struct Tier2Options
         return
             (is_tier2_min_single_align_score ||
              is_tier2_min_paired_align_score ||
-             is_tier2_single_align_score_rescue_mode ||
              is_tier2_mismatch_density_filter_count ||
              is_tier2_no_mismatch_density_filter ||
              is_tier2_no_filter_unanchored ||
@@ -39,7 +45,6 @@ struct Tier2Options
     bool is_tier2_min_single_align_score = false;
     int tier2_min_paired_align_score = 0;
     bool is_tier2_min_paired_align_score = false;
-    bool is_tier2_single_align_score_rescue_mode = false;
 
     int tier2_mismatch_density_filter_count = 0;
     bool is_tier2_mismatch_density_filter_count = false;

@@ -1,24 +1,24 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 #include "boost/test/unit_test.hpp"
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wkeyword-macro"
-
-#define private public
-
-#pragma clang diagnostic pop
 
 #include "RegionTracker.hh"
 
@@ -45,14 +45,14 @@ BOOST_AUTO_TEST_CASE( test_RegionTrackerPosIntersect )
 
         rt.addRegion(known_pos_range2(5,10));
         rt.addRegion(known_pos_range2(2,3));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE_EQUAL(rt.size(),2);
         BOOST_REQUIRE(  rt.isIntersectRegion(2));
         BOOST_REQUIRE(! rt.isIntersectRegion(3));
         BOOST_REQUIRE(! rt.isIntersectRegion(4));
         BOOST_REQUIRE(  rt.isIntersectRegion(5));
 
         rt.addRegion(known_pos_range2(3,7));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE_EQUAL(rt.size(),1);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
     {
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTrackerPosIntersect )
         rt.addRegion(known_pos_range2(5,10));
         rt.addRegion(known_pos_range2(2,3));
         rt.addRegion(known_pos_range2(2,5));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE_EQUAL(rt.size(),1);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTrackerPosIntersect )
         rt.addRegion(known_pos_range2(5,10));
         rt.addRegion(known_pos_range2(2,3));
         rt.addRegion(known_pos_range2(2,4));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE_EQUAL(rt.size(),2);
         BOOST_REQUIRE(  rt.isIntersectRegion(3));
     }
 
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTrackerPosIntersect )
         rt.addRegion(known_pos_range2(5,10));
         rt.addRegion(known_pos_range2(2,3));
         rt.addRegion(known_pos_range2(4,5));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE_EQUAL(rt.size(),2);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTrackerPosIntersect )
         RegionTracker rt;
         rt.addRegion(known_pos_range2(1,10));
         rt.addRegion(known_pos_range2(4,5));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE_EQUAL(rt.size(),1);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTrackerPosIntersect )
         RegionTracker rt;
         rt.addRegion(known_pos_range2(4,5));
         rt.addRegion(known_pos_range2(1,10));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE_EQUAL(rt.size(),1);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 }
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTrackerRegionIntersect )
 
         rt.addRegion(known_pos_range2(5,10));
         rt.addRegion(known_pos_range2(2,3));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE_EQUAL(rt.size(),2);
         BOOST_REQUIRE(  rt.isIntersectRegion( known_pos_range2(2,10)));
         BOOST_REQUIRE(! rt.isIntersectRegion( known_pos_range2(3,4)));
         BOOST_REQUIRE(! rt.isIntersectRegion( known_pos_range2(4,4)));
@@ -126,16 +126,16 @@ BOOST_AUTO_TEST_CASE( test_RegionTracker3 )
     rt.addRegion(known_pos_range2(2,3));
     rt.addRegion(known_pos_range2(14,15));
     rt.addRegion(known_pos_range2(24,25));
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),4);
+    BOOST_REQUIRE_EQUAL(rt.size(),4);
 
     rt.removeToPos(2);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
+    BOOST_REQUIRE_EQUAL(rt.size(),3);
     rt.removeToPos(2);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
+    BOOST_REQUIRE_EQUAL(rt.size(),3);
     rt.removeToPos(6);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
+    BOOST_REQUIRE_EQUAL(rt.size(),3);
     rt.removeToPos(16);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+    BOOST_REQUIRE_EQUAL(rt.size(),1);
 }
 
 
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE( test_RegionTrackerSubset )
     rt.addRegion(known_pos_range2(2,3));
     rt.addRegion(known_pos_range2(14,15));
     rt.addRegion(known_pos_range2(24,25));
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),4);
+    BOOST_REQUIRE_EQUAL(rt.size(),4);
 
     BOOST_REQUIRE(rt.isSubsetOfRegion(known_pos_range2(5,10)));
     BOOST_REQUIRE(rt.isSubsetOfRegion(known_pos_range2(6,7)));
@@ -181,14 +181,14 @@ BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker2 )
 
         BOOST_REQUIRE(rt.addRegion(known_pos_range2(5,10),5));
         BOOST_REQUIRE(rt.addRegion(known_pos_range2(2,3),5));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE_EQUAL(rt.size(),2);
         BOOST_REQUIRE(  rt.isIntersectRegion(2));
         BOOST_REQUIRE(! rt.isIntersectRegion(3));
         BOOST_REQUIRE(! rt.isIntersectRegion(4));
         BOOST_REQUIRE(  rt.isIntersectRegion(5));
 
         BOOST_REQUIRE(rt.addRegion(known_pos_range2(3,7),5));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE_EQUAL(rt.size(),1);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
     {
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker2 )
         BOOST_REQUIRE(rt.addRegion(known_pos_range2(5,10),5));
         BOOST_REQUIRE(rt.addRegion(known_pos_range2(2,3),5));
         BOOST_REQUIRE(rt.addRegion(known_pos_range2(2,5),5));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE_EQUAL(rt.size(),1);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker2 )
         rt.addRegion(known_pos_range2(5,10),5);
         rt.addRegion(known_pos_range2(2,3),5);
         rt.addRegion(known_pos_range2(2,4),5);
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE_EQUAL(rt.size(),2);
         BOOST_REQUIRE(  rt.isIntersectRegion(3));
     }
 
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker2 )
         rt.addRegion(known_pos_range2(5,10),5);
         rt.addRegion(known_pos_range2(2,3),5);
         rt.addRegion(known_pos_range2(4,5),5);
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),2);
+        BOOST_REQUIRE_EQUAL(rt.size(),2);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker2 )
         RegionPayloadTracker<int> rt;
         rt.addRegion(known_pos_range2(1,10),5);
         rt.addRegion(known_pos_range2(4,5),5);
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE_EQUAL(rt.size(),1);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker2 )
         RegionPayloadTracker<int> rt;
         rt.addRegion(known_pos_range2(4,5),5);
         rt.addRegion(known_pos_range2(1,10),5);
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE_EQUAL(rt.size(),1);
         BOOST_REQUIRE(  rt.isIntersectRegion(4));
     }
 }
@@ -245,16 +245,16 @@ BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker3 )
     rt.addRegion(known_pos_range2(2,3),5);
     rt.addRegion(known_pos_range2(14,15),5);
     rt.addRegion(known_pos_range2(24,25),5);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),4);
+    BOOST_REQUIRE_EQUAL(rt.size(),4);
 
     rt.removeToPos(2);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
+    BOOST_REQUIRE_EQUAL(rt.size(),3);
     rt.removeToPos(2);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
+    BOOST_REQUIRE_EQUAL(rt.size(),3);
     rt.removeToPos(6);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),3);
+    BOOST_REQUIRE_EQUAL(rt.size(),3);
     rt.removeToPos(16);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+    BOOST_REQUIRE_EQUAL(rt.size(),1);
 }
 
 
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE( test_RegionPayloadTracker4 )
 
         BOOST_REQUIRE( rt.addRegion(known_pos_range2(5,10),5));
         BOOST_REQUIRE(! rt.addRegion(known_pos_range2(8,14),4));
-        BOOST_REQUIRE_EQUAL(rt._regions.size(),1);
+        BOOST_REQUIRE_EQUAL(rt.size(),1);
         BOOST_REQUIRE(rt.addRegion(known_pos_range2(10,14),4));
         BOOST_REQUIRE(rt.addRegion(known_pos_range2(3,5),3));
 
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE( test_PayloadRegionTrackerSubset )
     rt.addRegion(known_pos_range2(2,3),4);
     rt.addRegion(known_pos_range2(14,15),-1);
     rt.addRegion(known_pos_range2(24,25),0);
-    BOOST_REQUIRE_EQUAL(rt._regions.size(),4);
+    BOOST_REQUIRE_EQUAL(rt.size(),4);
 
     const auto test1(rt.isSubsetOfRegion(known_pos_range2(5,10)));
     BOOST_REQUIRE(test1);

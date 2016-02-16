@@ -1,17 +1,25 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \author Chris Saunders
+/// \author Morten Kallberg
 ///
 
 #include "denovo_snv_caller.hh"
@@ -25,9 +33,10 @@
 #include <iterator>
 
 
-//#define DENOVO_SNV_DEBUG
+//#define DENOVO_SNV_DEBUG2
+#include "blt_util/log.hh"
 
-#ifdef DENOVO_SNV_DEBUG
+#ifdef DENOVO_SNV_DEBUG2
 #include "blt_util/log.hh"
 #endif
 
@@ -51,7 +60,7 @@ enum index_t
     SIZE
 };
 
-#ifdef DENOVO_SNV_DEBUG
+#ifdef DENOVO_SNV_DEBUG2
 static
 const char*
 getLabel(
@@ -197,6 +206,8 @@ struct DenovoResultMaker
             {
                 addAlleles(parentIndex);
             }
+
+
         }
 
         auto isFilterGT = [&](const unsigned gt)
@@ -213,23 +224,27 @@ struct DenovoResultMaker
                 for (unsigned probandGT(0); probandGT<DIGT::SIZE; ++probandGT)
                 {
                     if (isFilterGT(probandGT)) continue;
+
+
                     const double pedigreeLhood = sampleLhood[parentIndices[0]][parent0GT] + sampleLhood[parentIndices[1]][parent1GT] + sampleLhood[probandIndex][probandGT];
                     const TRANSMISSION_STATE::index_t tran(TRANSMISSION_STATE::get_state(parent0GT,parent1GT,probandGT));
 #ifdef DENOVO_SNV_DEBUG
                     {
                         using namespace TRANSMISSION_STATE;
                         log_os << "p0gt/p1/c: "
-                               << DIGT::get_gt_label(parent0GT) << " "
-                               << DIGT::get_gt_label(parent1GT) << " "
-                               << DIGT::get_gt_label(probandGT) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
+                               << DIGT::label(parent0GT) << "(" << parent0GT << ")"
+                               << DIGT::label(parent1GT) << " "
+                               << DIGT::label(probandGT) << "\n";
+//							   " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
                     }
 #endif
                     stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
                 }
             }
         }
-
         processStateLhood(rs);
+
+
     }
 
 
@@ -277,9 +292,8 @@ struct DenovoResultMaker
         }
 
         processStateLhood(rs);
+
     }
-
-
 
     /// translate current state lhood into result_set
     void
@@ -290,7 +304,7 @@ struct DenovoResultMaker
         for (unsigned tstate(0); tstate<TRANSMISSION_STATE::SIZE; ++tstate)
         {
             statePprob[tstate] = stateLhood[tstate] + TRANSMISSION_STATE::getPrior(static_cast<TRANSMISSION_STATE::index_t>(tstate));
-#ifdef DENOVO_SNV_DEBUG
+#ifdef DENOVO_SNV_DEBUG2
             const TRANSMISSION_STATE::index_t tidx(static_cast<TRANSMISSION_STATE::index_t>(tstate));
             log_os << "denovo state pprob/lhood/prior: " << TRANSMISSION_STATE::getLabel(tidx)
                    << " " << statePprob[tstate] << " " << stateLhood[tstate]
@@ -305,14 +319,14 @@ struct DenovoResultMaker
         log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
 #endif
         rs.dsnv_qphred=error_prob_to_qphred(statePprob[TRANSMISSION_STATE::INHERITED] + statePprob[TRANSMISSION_STATE::ERROR]);
-    }
+        rs.snv_qphred= 1.0;//error_prob_to_qphred(statePprob[TRANSMISSION_STATE::INHERITED] + statePprob[TRANSMISSION_STATE::ERROR]);
 
+    }
 
 private:
     std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
     std::array<bool,N_BASE> max_alleles;
 };
-
 
 
 void
@@ -332,6 +346,7 @@ get_denovo_snv_call(
 
     // escape in case of low sample depth:
     // depth must be at least minDepth in all samples (proband and parents)
+    if (!dsc.is_forced_output)
     {
         static const unsigned minDepth(8);
         for (const auto sampleIndex : allIndex)
@@ -406,16 +421,6 @@ get_denovo_snv_call(
         dmaker.calculate_result_set_grid2(sinfo, sampleLhood, trs);
     }
 
-
-
-    if (! dsc.is_forced_output)
-    {
-        for (const auto& val : tier_rs)
-        {
-            if (val.dsnv_qphred==0) return;
-        }
-    }
-
     dsc.dsnv_tier=0;
     if (opt.tier2.is_tier2())
     {
@@ -426,4 +431,83 @@ get_denovo_snv_call(
     }
 
     dsc.rs=tier_rs[dsc.dsnv_tier];
+
+
+    //goes through all samples,
+    // find most likely DIGT AA, CC, ...
+    //compiles list of alts
+    // for all samples and alts, records probability for 0/0, 0/1, 1/1, 0/2, 1/2, 2/2, ...
+    //  position of PL field for P(j/k) is j + k(k+1)/2
+    // writes to dsc object.
+
+    std::vector<unsigned> digts( sampleLhood.size() );
+    for (unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex)
+    {
+        std::vector<float> lhood(DIGT::SIZE);
+        for (unsigned gt(0); gt<DIGT::SIZE; ++gt)
+        {
+            lhood[gt] = sampleLhood[sampleIndex][gt];
+        }
+        normalize_ln_distro(lhood.begin(),lhood.end(), digts[sampleIndex] );
+    }
+    dsc.alts.resize(0);
+    for ( unsigned i=0; i<digts.size(); ++i)
+    {
+        for (unsigned chromCopyIndex(0); chromCopyIndex<2; ++chromCopyIndex)
+        {
+            if ( dsc.ref_gt != DIGT::get_allele(digts[i],chromCopyIndex) || dsc.is_forced_output )
+            {
+                dsc.alts.push_back( DIGT::get_allele(digts[i],chromCopyIndex) );
+            }
+        }
+    }
+    std::sort( dsc.alts.begin(), dsc.alts.end() );
+    dsc.alts.erase( std::unique( dsc.alts.begin(), dsc.alts.end() ), dsc.alts.end() );
+
+    if ( dsc.alts.size() > 0 )
+    {
+
+        std::vector<float> pProb( (dsc.alts.size()+2)*(dsc.alts.size()+1)/2 ); //max val of k(k+1) + j + 1
+        std::vector< std::string > gts( (dsc.alts.size()+2)*(dsc.alts.size()+1)/2 );
+        std::vector<unsigned> bases(1, dsc.ref_gt );
+        for (unsigned i=0; i<dsc.alts.size(); ++i)
+        {
+            bases.push_back(dsc.alts[i]);
+        }
+        for (unsigned sampleIndex(0); sampleIndex<sampleLhood.size(); ++sampleIndex)
+        {
+
+            const auto& lhood(sampleLhood[sampleIndex]);
+
+            for (unsigned j=0; j<bases.size(); ++j)
+            {
+                for (unsigned k=j; k<bases.size(); ++k)
+                {
+                    pProb[ j + (k*(k+1)/2) ] = lhood[ DIGT::get_gt_with_alleles(bases[j], bases[k]) ];
+                    gts[  j + (k*(k+1)/2) ] = std::to_string(j) + "/" + std::to_string(k);
+                }
+            }
+
+            unsigned mgt;
+            normalize_ln_distro(pProb.begin(),pProb.end(),mgt);
+            dsc.gtstring.push_back( gts[ mgt ] );
+
+            for (unsigned p(0); p<pProb.size(); ++p)
+            {
+                pProb[p] = error_prob_to_qphred(pProb[p]);
+            }
+            dsc.Sampleplhoods.push_back(pProb);
+
+        }
+
+
+    }
+    else
+    {
+        //hom-ref case
+    }
+
+
+
+
 }

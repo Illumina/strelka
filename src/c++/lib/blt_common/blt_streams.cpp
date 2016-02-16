@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \file
@@ -63,8 +70,6 @@ write_audit(const blt_options& opt,
             std::ostream& os,
             const char* const prefix = 0)
 {
-
-
     if (opt.is_write_variable_metadata)
     {
         if (prefix) os << prefix;
@@ -87,7 +92,7 @@ void
 write_vcf_audit(const blt_options& opt,
                 const prog_info& pinfo,
                 const char* const cmdline,
-                const bam_header_t* const header,
+                const bam_hdr_t* const header,
                 std::ostream& os)
 {
     const time_t t(time(NULL));
@@ -125,7 +130,6 @@ write_file_audit(const blt_options& opt,
                  const char* const cmdline,
                  std::ostream& os)
 {
-
     write_audit(opt,pinfo,cmdline,os,"#$ ");
     os << "#\n";
 }
@@ -186,7 +190,7 @@ blt_streams::
 write_vcf_audit(const blt_options& opt,
                 const prog_info& pinfo,
                 const char* const cmdline,
-                const bam_header_t* const header,
+                const bam_hdr_t* const header,
                 std::ostream& os)
 {
     ::write_vcf_audit(opt,pinfo,cmdline,header,os);

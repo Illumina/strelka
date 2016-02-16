@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -20,6 +27,8 @@
 #include "blt_util/blt_types.hh"
 #include "blt_util/pos_range.hh"
 #include "blt_util/seq_util.hh"
+
+#include <cassert>
 
 #include <memory>
 #include <vector>
@@ -45,6 +54,13 @@ struct blt_options
     blt_options() {}
     virtual ~blt_options() {}
 
+    void
+    validate() const
+    {
+        // this should never be true, TODO: can we move this into a state enum so it *can't* be true:
+        assert(! (is_compute_germline_scoring_metrics() && is_compute_somatic_scoring_metrics));
+    }
+
     bool
     is_ref_set() const
     {
@@ -64,9 +80,9 @@ struct blt_options
     }
 
     bool
-    is_compute_germline_VQSRmetrics() const
+    is_compute_germline_scoring_metrics() const
     {
-        return (is_report_germline_VQSRmetrics || (! germline_variant_scoring_model_name.empty()));
+        return (isStarling && (isReportEVSFeatures || (! germline_variant_scoring_model_name.empty())));
     }
 
     virtual
@@ -109,8 +125,6 @@ struct blt_options
     int min_qscore = 17;
     int min_single_align_score = 10;
     int min_paired_align_score = 6;
-    bool single_align_score_exclude_mode = false;
-    bool single_align_score_rescue_mode = false;
 
     bool is_min_win_qscore = false;
     int min_win_qscore = 0;
@@ -128,7 +142,6 @@ struct blt_options
     bool is_samtools_ref_set = false;
     std::string samtools_ref_seq_file;
 
-    bool is_filter_anom_calls = false;
     bool is_include_singleton = false;
     bool is_include_anomalous = false;
 
@@ -167,22 +180,25 @@ struct blt_options
     std::string nonref_test_filename;
     std::string nonref_sites_filename;
 
-    bool is_eland_compat = false;
-
     bool is_max_input_depth = false;
     unsigned max_input_depth = 0;
 
     bool is_compute_hapscore = false;
-    bool is_report_germline_VQSRmetrics = false;
-    bool is_compute_calibration_features = false;// For development only, out all features needed im
-
-    bool is_compute_somatic_VQSRmetrics = false;
+    bool isReportEVSFeatures = false;
+    bool is_compute_somatic_scoring_metrics = false;
 
     bool
-    isUseSomaticVQSR() const
+    isUseSomaticSNVScoring() const
     {
-        return (! somatic_variant_scoring_models_filename.empty());
+        return (! somatic_snv_scoring_model_filename.empty());
     }
+
+    bool
+    isUseSomaticIndelScoring() const
+    {
+        return (! somatic_indel_scoring_model_filename.empty());
+    }
+
 
     // Apply codon phasing:
     bool do_codon_phasing = false;
@@ -199,15 +215,17 @@ struct blt_options
     std::string indel_error_models_filename;
     std::string indel_error_model_name = "new";      // which baseline prior should be used for candidate indel genotyping (required)
 
-    /// starling VQSR options: (TODO: move this down to starling options)
+    /// germline scoring models: (TODO: move this down to starling options)
     std::string germline_variant_scoring_models_filename;
 
     /// Which calibration model should we use? (default: rule-based metric)
     std::string germline_variant_scoring_model_name;
 
-    /// strelka VQSR options: (TODO: move this down to strelka options)
-    // all somatic VQSR models
-    std::string somatic_variant_scoring_models_filename;
+    /// somatic scoring models: (TODO: move these down to strelka options)
+    std::string somatic_snv_scoring_model_filename;
+    std::string somatic_indel_scoring_model_filename;
+
+    bool isStarling = false;
 };
 
 
@@ -268,5 +286,3 @@ struct blt_read_counts
     unsigned max_depth = 0;
     unsigned used = 0;
 };
-
-

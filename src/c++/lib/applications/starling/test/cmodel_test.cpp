@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 #include "test_config.h"
@@ -16,10 +23,9 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "calibration_models.cpp"
-#include "starling_common/indel_key.cpp"
-#include "starling_common/starling_indel_report_info.cpp"
-#include "starling_shared.hh"
+#include "calibration_models.hh"
+
+
 
 BOOST_AUTO_TEST_SUITE( cmodel )
 
@@ -89,7 +95,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     ii.imod.is_overlap = true;
 
 
-    cm.clasify_indel(ii, ii.imod);
+    cm.classify_indel(ii, ii.imod);
     //BOOST_CHECK_EQUAL(ii.imod.gqx, 219);
     BOOST_CHECK_EQUAL(ii.imod.filters.none(), true);
 
@@ -137,7 +143,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     cigar_to_apath("1M8I", ii2.imod.cigar);
     ii2.imod.is_overlap = true;
 
-    cm.clasify_indel(ii2, ii2.imod);
+    cm.classify_indel(ii2, ii2.imod);
     // BOOST_CHECK_EQUAL(ii2.imod.gqx, 120);
     BOOST_CHECK_EQUAL(ii2.imod.filters.none(), true);
 

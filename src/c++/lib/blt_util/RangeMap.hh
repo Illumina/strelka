@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -24,6 +31,12 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+
+//#define DEBUG_RMAP
+
+#ifdef DEBUG_RMAP
+#include <iostream>
+#endif
 
 
 /// two predefined options for the ValClear type parameter to RangeMap:
@@ -48,11 +61,11 @@ struct ClearT
 };
 
 
-/// this object provides map-like storage for a set of positions which are
-/// assumed to cluster in a small range
+/// provides map-like storage for a set of positions which are assumed to
+/// cluster in a small range
 ///
-/// in practice this is very similar to an unbounded circular buffer, but heavily customized
-/// for our specific application
+/// in practice this is very similar to an unbounded circular buffer,
+/// but heavily customized for our specific application
 ///
 template <typename KeyType, typename ValType, typename ValClear = ZeroT<ValType>>
 struct RangeMap
@@ -60,7 +73,14 @@ struct RangeMap
     ///\TODO automate this w/ static assert/concepts:
     //Keytype must implement operator < +/-
 
-    RangeMap() :
+    static const unsigned defaultMinChunk = 1024;
+
+    /// \param minChunk the storage buffer operates in units of minChunk, this
+    ///                 setting could impact performance in some specialized
+    ///                 cases but in general shouldn't need to be set
+    explicit
+    RangeMap(const unsigned minChunk = defaultMinChunk) :
+        _minChunk(minChunk),
         _isEmpty(true),
         _minKeyIndex(0),
         _data(_minChunk),
@@ -101,7 +121,7 @@ struct RangeMap
         }
         else if (k < _minKey)
         {
-            expand(_maxKey-k);
+            expand(_maxKey-k+1);
             const unsigned dataSize(_data.size());
             _minKeyIndex = ((_minKeyIndex + dataSize)-(_minKey-k) ) % dataSize;
             _minKey = k;
@@ -109,7 +129,7 @@ struct RangeMap
 
         if ((_isEmpty) || (k > _maxKey))
         {
-            expand(k-_minKey);
+            expand(k-_minKey+1);
             _maxKey = k;
             _isEmpty=false;
         }
@@ -304,7 +324,7 @@ private:
         rotateLeft(a, (s-n));
     }
 
-    static const unsigned _minChunk = 1024;
+    const unsigned _minChunk;
 
     bool _isEmpty;
     unsigned _minKeyIndex;

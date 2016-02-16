@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -16,7 +23,6 @@ Pedicure de-novo small variant calling workflow
 
 
 import os.path
-import shutil
 import sys
 
 # add this path to pull in utils in same directory:
@@ -28,45 +34,26 @@ sys.path.append(os.path.join(scriptDir,"pyflow"))
 
 
 from configBuildTimeInfo import workflowVersion
+from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from starkaWorkflow import StarkaCallWorkflow, StarkaWorkflow
+from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
+from starkaWorkflow import runCount, SharedPathInfo, \
+                           StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
-
-from configureUtil import safeSetBool, getIniSections, dumpIniSections
-
 
 
 __version__ = workflowVersion
 
 
 
-def runCount(self, taskPrefix="", dependencies=None) :
-    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
-
-    return nextStepWait
-
-
-
-def runDepth(self,taskPrefix="",dependencies=None) :
-    """
-    estimate chrom depth
-    """
-
+def pedicureRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
     assert len(self.params.probandBamList) == 1
-    bamFile = self.params.probandBamList[0]
+    bamList = [ self.params.probandBamList[0] ]
 
-    cmd  = "%s -E %s" % (sys.executable, self.params.getChromDepth)
-    cmd += " --bam '%s'" % (bamFile)
-    cmd += " > %s" % (self.paths.getChromDepth())
 
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth"),cmd,dependencies=dependencies))
-
-    return nextStepWait
+    outputPath=self.paths.getChromDepth()
+    return runDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
 
 
 
@@ -74,6 +61,7 @@ class TempSegmentFiles :
     def __init__(self) :
         self.denovo = []
         self.callable = []
+        self.stats = []
 
 
 
@@ -107,7 +95,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd.extend(["--tier2-min-single-align-score", str(self.params.minTier2Mapq) ] )
     segCmd.extend(["--tier2-min-paired-align-score", str(self.params.minTier2Mapq) ] )
-    segCmd.append("--tier2-single-align-score-rescue-mode")
     segCmd.extend(["--tier2-mismatch-density-filter-count", "10"] )
     segCmd.append("--tier2-no-filter-unanchored")
     segCmd.extend(["--tier2-indel-nonsite-match-prob", "0.25"] )
@@ -136,12 +123,16 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
             segCmd.extend([arg, val])
 
     addListCmdOption(self.params.indelCandidatesList, '--candidate-indel-input-vcf')
+    addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
     if self.params.extraCallerArguments is not None :
         for arg in self.params.extraCallerArguments.strip().split() :
             segCmd.append(arg)
 
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.id)])
+
+    segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
+    segCmd.extend(["--stats-file", segFiles.stats[-1]])
 
     if not isFirstSegment :
         segCmd.append("--pedicure-skip-header")
@@ -152,16 +143,33 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     nextStepWait = set()
 
-    callTask=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
+    callTask=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
     self.addTask(callTask,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
 
-    compressLabel=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.pyflowId)
-    compressCmd="%s %s" % (self.params.bgzipBin, tmpDenovoPath)
-    if self.params.isWriteCallableRegion :
-        compressCmd += " && %s %s" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
+    # fix vcf header to use parent pyflow cmdline instead of random segment command:
+    compressWaitFor=callTask
+    if isFirstSegment :
+        headerFixTask=preJoin(taskPrefix,"fixVcfHeader_"+gseg.id)
+        def getHeaderFixCmd(fileName) :
+            tmpName=fileName+".reheader.tmp"
+            cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
+            cmd += ' "' + " ".join(self.params.configCommandLine) + '"'
+            cmd += " < \"%s\" > \"%s\" && mv \"%s\" \"%s\"" % (fileName,tmpName,
+                                                               tmpName, fileName)
+            return cmd
 
-    self.addTask(compressLabel, compressCmd, dependencies=callTask, isForceLocal=True)
-    nextStepWait.add(compressLabel)
+        headerFixCmd  = getHeaderFixCmd(tmpDenovoPath)
+
+        self.addTask(headerFixTask, headerFixCmd, dependencies=callTask, isForceLocal=True)
+        compressWaitFor=headerFixTask
+
+    compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.id)
+    compressCmd="\"%s\" \"%s\"" % (self.params.bgzipBin, tmpDenovoPath)
+    if self.params.isWriteCallableRegion :
+        compressCmd += " && \"%s\" \"%s\"" % (self.params.bgzipBin, self.paths.getTmpSegmentRegionPath(segStr))
+
+    self.addTask(compressTask, compressCmd, dependencies=compressWaitFor, isForceLocal=True)
+    nextStepWait.add(compressTask)
 
     return nextStepWait
 
@@ -172,30 +180,37 @@ def callGenome(self,taskPrefix="",dependencies=None):
     run variant caller on all genome segments
     """
 
-    tmpGraphDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), "mkdir -p "+tmpGraphDir, dependencies=dependencies, isForceLocal=True)
+    tmpSegmentDir=self.paths.getTmpSegmentDir()
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), getMkdirCmd() + [tmpSegmentDir], dependencies=dependencies, isForceLocal=True)
 
-    graphTasks = set()
+    segmentTasks = set()
 
     segFiles = TempSegmentFiles()
     for gseg in getNextGenomeSegment(self.params) :
 
-        graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+        segmentTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
 
-    if len(graphTasks) == 0 :
+    if len(segmentTasks) == 0 :
         raise Exception("No genome regions to analyze. Possible target region parse error.")
 
     # create a checkpoint for all segments:
-    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=graphTasks)
+    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)
 
     finishTasks = set()
 
     finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.denovo,
                                         self.paths.getDenovoOutputPath(),"denovo"))
 
+    # merge segment stats:
+    finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
+
     if self.params.isWriteCallableRegion :
         finishTasks.add(self.concatIndexBed(taskPrefix, completeSegmentsTask, segFiles.callable,
                                             self.paths.getRegionOutputPath(), "callableRegions"))
+
+    if not self.params.isRetainTempFiles :
+        rmStatsTmpCmd = getRmdirCmd() + [tmpSegmentDir]
+        rmTask=self.addTask(preJoin(taskPrefix,"rmTmpDir"),rmStatsTmpCmd,dependencies=finishTasks, isForceLocal=True)
 
     nextStepWait = finishTasks
 
@@ -229,19 +244,13 @@ class CallWorkflow(StarkaCallWorkflow) :
 
 
 
-class PathInfo:
+class PathInfo(SharedPathInfo):
     """
     object to centralize shared workflow path names
     """
 
     def __init__(self, params) :
-        self.params = params
-
-    def getChromDepth(self) :
-        return os.path.join(self.params.workDir,"chromDepth.txt")
-
-    def getTmpSegmentDir(self) :
-        return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
+        super(PathInfo,self).__init__(params)
 
     def getTmpSegmentDenovoPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "denovo.unfiltered.%s.vcf" % (segStr))
@@ -258,20 +267,14 @@ class PathInfo:
     def getTmpSegmentReportPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
 
-    def getVariantsDir(self) :
-        return self.params.variantsDir
-
     def getDenovoOutputPath(self) :
-        return os.path.join( self.getVariantsDir(), "denovo.vcf.gz")
+        return os.path.join( self.params.variantsDir, "denovo.vcf.gz")
 
     def getRegionOutputPath(self) :
         return os.path.join( self.params.regionsDir, 'denovo.callable.region.bed.gz');
 
     def getRealignedBamPath(self, label) :
         return os.path.join( self.params.realignedDir, '%s.realigned.bam' % (label));
-
-    def getRefCountFile(self) :
-        return os.path.join( self.params.workDir, "refCount.txt")
 
 
 
@@ -281,8 +284,8 @@ class PedicureWorkflow(StarkaWorkflow) :
     """
 
     def __init__(self,params,iniSections) :
-
-        super(PedicureWorkflow,self).__init__(params,iniSections)
+        global PathInfo
+        super(PedicureWorkflow,self).__init__(params,iniSections,PathInfo)
 
         # format bam lists:
         if self.params.probandBamList is None : self.params.probandBamList = []
@@ -299,8 +302,6 @@ class PedicureWorkflow(StarkaWorkflow) :
 #        if self.params.isWriteRealignedBam :
 #            self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
 #            ensureDir(self.params.realignedDir)
-
-        self.paths = PathInfo(self.params)
 
 
 
@@ -320,6 +321,6 @@ class PedicureWorkflow(StarkaWorkflow) :
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= runDepth(self)
+            callPreReqs |= pedicureRunDepthFromAlignments(self)
 
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)

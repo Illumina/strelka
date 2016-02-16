@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -62,10 +69,8 @@ get_segment(const seg_id_t seg_no) const
 
 
 starling_read::
-starling_read(const bam_record& br,
-              const bool is_bam_record_genomic)
+starling_read(const bam_record& br)
     : genome_align_maplev(MAPLEVEL::UNKNOWN),
-      _is_bam_record_genomic(is_bam_record_genomic),
       _id(0),
       _read_rec(br),
       _full_read(_read_rec.read_size(),0,this)
@@ -103,8 +108,7 @@ uint8_t
 starling_read::
 map_qual() const
 {
-    if ((! get_full_segment().genome_align().empty()) &&
-        _is_bam_record_genomic)
+    if (! get_full_segment().genome_align().empty())
     {
         return _read_rec.map_qual();
     }
@@ -281,7 +285,7 @@ write_bam(bam_dumper& bamd)
     bam1_t& br(*_read_rec.get_data());
     bam1_core_t& ca(br.core);
 
-    const bool is_orig_unmapped((! _is_bam_record_genomic) || _read_rec.is_unmapped());
+    const bool is_orig_unmapped(_read_rec.is_unmapped());
 
     // mark mapped bit if necessary:
     if (is_orig_unmapped)
@@ -293,12 +297,8 @@ write_bam(bam_dumper& bamd)
 
     // deal with optional fields:
     //
-    // (1) if XD record occurs (from ELAND MD field) it must be taken out before we change
-    // the alignment:
-    static const char xdtag[] = {'X','D'};
-    nuke_bam_aux_field(br,xdtag);
 
-    // (2) if MD or NM records occur (from BWA/novoalign/samtools calmd, etc) it must be
+    // if MD or NM records occur (from BWA/novoalign/samtools calmd, etc) it must be
     // taken out before we change the alignment:
     static const char mdtag[] = {'M','D'};
     nuke_bam_aux_field(br,mdtag);
@@ -399,7 +399,7 @@ operator<<(std::ostream& os,
            const starling_read& sr)
 {
     os << "STARLING_READ id: " << sr.id()
-       << " genomic_mapping?: " << MAPLEVEL::get_label(sr.genome_align_maplev)
+       << " mapping_type: " << MAPLEVEL::get_label(sr.genome_align_maplev)
        << "\n";
 
     os << "full_segment_info:\n";
@@ -415,17 +415,3 @@ operator<<(std::ostream& os,
 
     return os;
 }
-
-void
-starling_read::
-repeatError(const bam_record& br) const
-{
-    using namespace illumina::common;
-
-    std::ostringstream oss;
-    oss << "ERROR: adding conflicting record to existing starling_read.\n";
-    oss << "\tNew record: " << br << "\n";
-    oss << "\tExisting read: " << *this << "\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-}
-

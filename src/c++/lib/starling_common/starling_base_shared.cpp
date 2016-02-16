@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -42,6 +49,7 @@ starling_base_deriv_options(
     , sal(opt.max_realignment_candidates)
     , variant_window_first_stage(0)
     , variant_window_last_stage(0)
+    , countCache(opt.tumor_min_hpol_pval)
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);
@@ -71,13 +79,6 @@ starling_base_deriv_options(
         const double site_prior(1./(2.*static_cast<double>(genome_size)));
         site_lnprior=std::log(site_prior);
         nonsite_lnprior=log1p_switch(-site_prior);
-    }
-
-    if (! opt.bam_filename.empty())
-    {
-        // get bam header text:
-        bam_streamer read_stream(opt.bam_filename.c_str());
-        bam_header_data = read_stream.get_header()->text;
     }
 
     //

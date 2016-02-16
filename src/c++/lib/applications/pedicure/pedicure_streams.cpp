@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -75,7 +82,7 @@ pedicure_streams(
     const pedicure_options& opt,
     const pedicure_deriv_options& dopt,
     const prog_info& pinfo,
-    const bam_header_t* const header,
+    const bam_hdr_t* const header,
     const PedicureSampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
@@ -94,29 +101,43 @@ pedicure_streams(
     if (! opt.dfilter.is_skip_header)
     {
         std::ostream& os(*_denovo_osptr);
+//    	std::ostream& os(std::cout);
 
         write_vcf_audit(opt,pinfo,cmdline,header,os);
-        os << "##content=pedicure somatic snv calls\n"
+        os << "##content=pedicure snv calls\n"
            << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n";
 
         // INFO:
+        os << "##INFO=<ID=DQ,Number=1,Type=Integer,Description=\"De novo quality score\">\n";
         os << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
         os << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
 
+        // Indel specific infos
+        os << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Interupted homopolymer length\">\n";
+        os << "##INFO=<ID=RU,Number=.,Type=String,Description=\"Repeat unit\">\n";
+        os << "##INFO=<ID=RC,Number=1,Type=Integer,Description=\"Reference repeat count\">\n";
+        os << "##INFO=<ID=IC,Number=1,Type=Integer,Description=\"Indel repeat count\">\n";
+
         // FORMAT:
+        os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
+        os << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality\">\n";
+        os << "##FORMAT=<ID=GQX,Number=1,Type=Integer,Description=\"Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}\">\n";
         os << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">\n";
+        os << "##FORMAT=<ID=DP2,Number=1,Type=Integer,Description=\"Read depth\">\n";
+        os << "##FORMAT=<ID=FDP,Number=1,Type=Integer,Description=\"Filtered read depth\">\n";
+        os << "##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob 0.999 or higher that read contains indicated allele vs all other intersecting indel alleles)\">\n";
+        os << "##FORMAT=<ID=PL,Number=.,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n";
 
         // FILTERS:
         {
-#if 0
             using namespace PEDICURE_VCF_FILTERS;
             {
                 std::ostringstream oss;
-                oss << "Fraction of basecalls filtered at this site in either sample is at or above " << opt.sfilter.snv_max_filtered_basecall_frac;
-                write_vcf_filter(os, get_label(BCNoise), oss.str().c_str());
+
+                oss << "Calls that have GQX below " << 30;
+                write_vcf_filter(os, get_label(lowGQX), oss.str().c_str());
             }
-#endif
         }
 
         write_shared_vcf_header_info(opt.dfilter,dopt.dfilter,os);
@@ -124,9 +145,16 @@ pedicure_streams(
         os << vcf_col_label() << "\tFORMAT";
         {
             const SampleInfoManager& si(opt.alignFileOpt.alignmentSampleInfo);
+            unsigned parentCount = 1;
             for (unsigned sampleIndex(0); sampleIndex<si.size(); ++sampleIndex)
             {
                 os << "\t" << PEDICURE_SAMPLETYPE::get_label(si.getSampleInfo(sampleIndex).stype);
+                if (si.getSampleInfo(sampleIndex).stype==PEDICURE_SAMPLETYPE::PARENT)
+                {
+                    os << parentCount;
+                    parentCount++;
+                }
+
             }
         }
         os << "\n";

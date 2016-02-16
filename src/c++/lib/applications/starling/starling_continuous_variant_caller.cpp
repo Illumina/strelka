@@ -1,3 +1,22 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+//
 #include "starling_continuous_variant_caller.hh"
 
 #include <array>
@@ -15,7 +34,7 @@ static double Likelihood(unsigned coverage, unsigned observedCallCount, double e
 
 // calculate the ratio of the log likelihood of the variants on either strand / both strands
 double starling_continuous_variant_caller::strand_bias(
-        unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double /*noise*/)
+    unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double /*noise*/)
 {
     double expectedVf = (fwdAlt + revAlt) / ((double)fwdOther+revOther+fwdAlt+revAlt);
 
@@ -27,9 +46,9 @@ double starling_continuous_variant_caller::strand_bias(
 }
 
 void starling_continuous_variant_caller::position_snp_call_continuous(
-        const starling_base_options& opt,
-        const snp_pos_info& good_pi,
-        continuous_site_info& info)
+    const starling_base_options& opt,
+    const snp_pos_info& good_pi,
+    continuous_site_info& info)
 {
     unsigned totalDepth = info.spanning_deletions;
     for (auto known : info.known_counts)
@@ -88,19 +107,19 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
 }
 
 void starling_continuous_variant_caller::add_indel_call(
-            const starling_base_options& opt,
-            const indel_key& ik,
-            const indel_data& id,
-            const starling_indel_report_info& iri,
-            const starling_indel_sample_report_info& isri,
-            continuous_indel_info& info)
+    const starling_base_options& opt,
+    const indel_key& ik,
+    const indel_data& id,
+    const starling_indel_report_info& iri,
+    const starling_indel_sample_report_info& isri,
+    continuous_indel_info& info)
 {
     // determine VF
     double vf = isri.n_q30_indel_reads / ((double)isri.total_q30_reads());
-    if (vf > opt.min_het_vf)
+    if (vf > opt.min_het_vf || id.is_forced_output)
     {
         info.calls.emplace_back(isri.total_q30_reads(), isri.n_q30_indel_reads,
-                ik, id, iri, isri);
+                                ik, id, iri, isri);
         continuous_indel_call& call = info.calls.back();
         call.gqx = call.gq = poisson_qscore(isri.n_q30_indel_reads, isri.total_q30_reads(), (unsigned)opt.min_qscore, 40);
 

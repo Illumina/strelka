@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \author Chris Saunders
@@ -26,7 +33,7 @@
 
 //#define DENOVO_INDEL_DEBUG
 
-#ifdef DENOVO_INDEL_DEBUG
+#if 1
 #include "blt_util/log.hh"
 #endif
 
@@ -222,7 +229,7 @@ get_state(
 
 
 
-#ifdef DENOVO_INDEL_DEBUG
+#if 0
 static
 void
 dumpIndelLhood(
@@ -232,6 +239,7 @@ dumpIndelLhood(
 {
     using namespace STAR_DIINDEL;
     os << label << " indel lhood: ref/het/hom: " << lhood[NOINDEL] << " " << lhood[HET] << " " << lhood[HOM] << "\n";
+    os << std::endl;
 }
 #endif
 
@@ -242,7 +250,8 @@ void
 calculate_result_set(
     const SampleInfoManager& sinfo,
     const std::vector<indel_state_t>& sampleLhood,
-    denovo_indel_call::result_set& rs)
+    denovo_indel_call::result_set& rs,
+    denovo_indel_call& /*dinc*/)
 {
     using namespace PEDICURE_SAMPLETYPE;
 
@@ -253,15 +262,17 @@ calculate_result_set(
     std::array<double,TRANSMISSION_STATE::SIZE> stateLhood;
     std::fill(stateLhood.begin(),stateLhood.end(),lnzero);
 
-#ifdef DENOVO_INDEL_DEBUG
+#if 0
     dumpIndelLhood("parent0", sampleLhood[parentIndex[0]].data(), log_os);
     dumpIndelLhood("parent1", sampleLhood[parentIndex[1]].data(), log_os);
     dumpIndelLhood("proband", sampleLhood[probandIndex].data(), log_os);
 #endif
 
+
     // just go for total brute force as a first pass at this:
     for (unsigned p0(0); p0<STAR_DIINDEL::SIZE; ++p0)
     {
+//    	log_os << STAR_DIINDEL::get_gt_label(p0) << " " << sampleLhood[parentIndex[0]][p0] << std::endl;
         for (unsigned p1(0); p1<STAR_DIINDEL::SIZE; ++p1)
         {
             for (unsigned pro(0); pro<STAR_DIINDEL::SIZE; ++pro)
@@ -277,8 +288,12 @@ calculate_result_set(
                            << STAR_DIINDEL::get_gt_label(pro) << " trans_state: " << getLabel(tran) << " lhood: " << pedigreeLhood << "\n";
                 }
 #endif
+//                log_os << "test " << STAR_DIINDEL::get_gt_label(pro) << std::endl;
+//                log_os << "lhood " << sampleLhood[probandIndex][pro] << std::endl;
+
                 stateLhood[tran] = log_sum(stateLhood[tran],pedigreeLhood);
             }
+//            log_os << std::endl;
         }
     }
 
@@ -512,6 +527,7 @@ get_denovo_indel_call(
         {
             const starling_sample_options& sampleOpt(*(sampleOptions[sampleIndex]));
             const indel_data& sid(*(allIndelData[sampleIndex]));
+
             indel_digt_caller::get_indel_digt_lhood(
                 opt,dopt,sampleOpt,
                 indel_error_prob,ref_error_prob,ik,
@@ -527,9 +543,38 @@ get_denovo_indel_call(
                 ik,sid,
                 is_include_tier2,is_use_alt_indel,
                 sampleLhood[sampleIndex].data()+STAR_DIINDEL::SIZE);
+
         }
 
-        calculate_result_set(sinfo, sampleLhood, tier_rs[tierIndex]);
+        calculate_result_set(sinfo, sampleLhood, tier_rs[tierIndex],dinc);
+
+        using namespace PEDICURE_SAMPLETYPE;
+
+        const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
+        const std::vector<unsigned>& parentIndex(sinfo.getTypeIndexList(PARENT));
+
+        const unsigned sampleOrder[3] = {probandIndex,parentIndex[0],parentIndex[1]};
+
+        for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
+        {
+            unsigned max_index=0;
+            unsigned index =  sampleOrder[sampleIndex];
+            double max = sampleLhood[index][0];
+            for (unsigned pro(1); pro<STAR_DIINDEL::SIZE; ++pro)
+            {
+                if (max<sampleLhood[index][pro])
+                {
+                    max = sampleLhood[index][pro];
+                    max_index=pro;
+                }
+            }
+
+            //TODO update the gqx values
+            dinc.gq.push_back(30);
+            dinc.gqx.push_back(40);
+            dinc.gtstring.push_back(STAR_DIINDEL::get_gt_label(max_index));
+        }
+
     }
 
     if (! dinc.is_forced_output)

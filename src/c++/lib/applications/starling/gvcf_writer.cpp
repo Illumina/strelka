@@ -1,33 +1,39 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
 /// \author Chris Saunders
 ///
 
+#include "gvcf_writer.hh"
+
+#include "calibration_models.hh"
 #include "gvcf_header.hh"
-#include "blt_util/blt_exception.hh"
-#include "blt_util/chrom_depth_map.hh"
+#include "indel_overlapper.hh"
+#include "variant_prefilter_stage.hh"
+
 #include "blt_util/io_util.hh"
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdexcept>
-#include "gvcf_writer.hh"
-#include "calibration_models.hh"
-#include "indel_overlapper.hh"
-
 
 
 
@@ -40,20 +46,13 @@
 
 
 
-
-void gvcf_writer::write_block_site_record()
-{
-    if (_block.count<=0) return;
-    write_site_record(_block);
-    _block.reset();
-}
-
 gvcf_writer::
 gvcf_writer(
     const starling_options& opt,
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const RegionTracker& nocompress_regions,
+    const std::string& sampleName,
     std::ostream* osptr,
     const calibration_models& cm)
     : _opt(opt)
@@ -78,12 +77,22 @@ gvcf_writer(
 
     if (! _opt.gvcf.is_skip_header)
     {
-        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth,dopt.bam_header_data, *_osptr, cm);
+        finish_gvcf_header(_opt,_dopt, _dopt.chrom_depth, sampleName, *_osptr, cm);
     }
 
     variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.smod, cm);
 
 }
+
+
+
+void gvcf_writer::write_block_site_record()
+{
+    if (_block.count<=0) return;
+    write_site_record(_block);
+    _block.reset();
+}
+
 
 
 void gvcf_writer::filter_site_by_last_indel_overlap(digt_site_info& si)
@@ -130,7 +139,7 @@ void gvcf_writer::process(std::unique_ptr<site_info> si)
 {
     skip_to_pos(si->pos);
 
-    if (typeid(*si) == typeid(digt_site_info))
+    if (dynamic_cast<digt_site_info*>(si.get()) != nullptr)
     {
         add_site_internal(*downcast<digt_site_info>(std::move(si)));
     }
@@ -143,10 +152,10 @@ void gvcf_writer::process(std::unique_ptr<site_info> si)
 
 void gvcf_writer::process(std::unique_ptr<indel_info> ii)
 {
-    if (typeid(*ii) == typeid(digt_indel_info))
-    {
-        skip_to_pos(ii->pos);
+    skip_to_pos(ii->pos);
 
+    if (dynamic_cast<digt_indel_info*>(ii.get()) != nullptr)
+    {
         auto ii_digt(downcast<digt_indel_info>(std::move(ii)));
 
         write_indel_record(*ii_digt);
@@ -158,14 +167,10 @@ void gvcf_writer::process(std::unique_ptr<indel_info> ii)
     }
 }
 
-void gvcf_writer::flush()
+void gvcf_writer::flush_impl()
 {
-    if (_opt.is_ploidy_prior)
-    {
-        // not doing any block stuff for continuous variants
-        skip_to_pos(_report_range.end_pos);
-        write_block_site_record();
-    }
+    skip_to_pos(_report_range.end_pos);
+    write_block_site_record();
 }
 
 
@@ -346,7 +351,7 @@ write_site_record(
             os << "HaplotypeScore=" << si.hapscore;
         }
 
-        if (_opt.is_report_germline_VQSRmetrics)
+        if (_opt.isReportEVSFeatures)
         {
             os << ';';
             os << "MQ=" << si.MQ;
@@ -373,19 +378,15 @@ write_site_record(
         {
             os << ";Unphased";
         }
-
-        //            //reported q-score
-        //            if (si.Qscore>0) {
-        //                os << ';';
-        //                os << "Qscore=" << si.Qscore;
-        //            }
-
     }
     else
     {
         os << '.';
     }
     os << '\t';
+
+    const bool is_nonref_gt(si.smod.max_gt != si.dgt.ref_gt);
+    const bool is_print_pl(is_nonref_gt || si.dgt.is_snp);
 
     //FORMAT
     os << "GT";
@@ -398,6 +399,10 @@ write_site_record(
     {
         os << ":AD";
     }
+    if (is_print_pl)
+    {
+        os << ":PL";
+    }
     os << '\t';
 
     //SAMPLE
@@ -408,9 +413,9 @@ write_site_record(
     }
     if (si.smod.is_gqx())
     {
-        if (si.smod.Qscore>=0)
+        if (si.smod.EVS>=0)
         {
-            os << si.smod.Qscore;
+            os << si.smod.EVS;
         }
         else
         {
@@ -424,9 +429,12 @@ write_site_record(
     os << ':';
     //print DP:DPF
     os << si.n_used_calls << ':'
-            << si.n_unused_calls;
+       << si.n_unused_calls;
 
-    if (isNoAlt) {}
+    if (isNoAlt)
+    {
+        // pass
+    }
     else if (si.smod.is_phased_region)
     {
         os << ':' << si.phased_AD;
@@ -436,6 +444,44 @@ write_site_record(
         os << ':';
         print_site_ad(si, altOrder, os);
     }
+
+    if (is_print_pl)
+    {
+        // print PL values
+        os << ':';
+        if (si.is_hetalt())
+        {
+            const unsigned print_gt(si.smod.max_gt);
+            const uint8_t a0(DIGT::get_allele(print_gt,0));
+            const uint8_t a1(DIGT::get_allele(print_gt,1));
+            os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt,a0)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0,a0)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt,a1)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0,a1)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1,a1)];
+        }
+        else if (si.dgt.is_haploid() || (si.smod.modified_gt == MODIFIED_SITE_GT::ONE))
+        {
+            os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
+               << si.dgt.phredLoghood[si.smod.max_gt];
+        }
+        else
+        {
+            const unsigned print_gt(si.smod.max_gt);
+            const uint8_t a0(DIGT::get_allele(print_gt,0));
+            const uint8_t a1(DIGT::get_allele(print_gt,1));
+            uint8_t alt(a0);
+            if (si.dgt.ref_gt == a0)
+            {
+                alt = a1;
+            }
+            os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(si.dgt.ref_gt,alt)] << ','
+               << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(alt,alt)];
+        }
+    }
+
     os << '\n';
 }
 
@@ -493,7 +539,7 @@ gvcf_writer::write_site_record(
     os << ':';
     //print DP:DPF
     os << _block.block_dpu.min() << ':'
-            << _block.block_dpf.min();
+       << _block.block_dpf.min();
     os << '\n';
 }
 
@@ -507,14 +553,12 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
 
     std::ostream& os(*_osptr);
 
-
     for (auto& call : ii.calls)
     {
-
         os << _chrom << '\t'   // CHROM
-                << ii.pos << '\t'   // POS
-                << ".\t"            // ID
-                << call._iri.vcf_ref_seq << '\t'; // REF
+           << ii.pos << '\t'   // POS
+           << ".\t"            // ID
+           << call._iri.vcf_ref_seq << '\t'; // REF
 
         // ALT
         os << call._iri.vcf_indel_seq;
@@ -561,7 +605,7 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
 
         //SAMPLE
         os << ii.get_gt() << ':'
-                << call.gq << ':';
+           << call.gq << ':';
 
         os << call.gqx  << ':';
 
@@ -569,8 +613,8 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
 
         // SAMPLE AD:
         os << call._totalDepth - call._alleleDepth
-                << ","
-                << call._alleleDepth;
+           << ","
+           << call._alleleDepth;
         // VF
         {
             const StreamScoper ss(os);
@@ -578,7 +622,6 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
         }
         os << '\n';
     }
-
 }
 
 
@@ -667,34 +710,17 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
         }
     }
 
-//    if (ii.Qscore>0) {
-//        os << ';';
-//        os << "Qscore=" << ii.Qscore;
-//    }
-
-//    only report metrics if flag explicitly set
-//    if (_opt.is_compute_VQSRmetrics)
-//    {
-//        os << ';';
-//        os << "MQ=" << ii.MQ;
-//        os << ';';
-//        os << "MQRankSum=" << ii.MQRankSum;
-//        os << ';';
-//        os << "BaseQRankSum=" << ii.BaseQRankSum;
-//        os << ';';
-//        os << "ReadPosRankSum=" << ii.ReadPosRankSum;
-//    }
     os << '\t';
 
     //FORMAT
-    os << "GT:GQ:GQX:DPI:AD" << '\t';
+    os << "GT:GQ:GQX:DPI:AD:PL" << '\t';
 
     //SAMPLE
     os << ii.get_gt() << ':'
        << call.gq << ':';
 
-    if (call.Qscore>=0)
-        os << call.Qscore  << ':';
+    if (call.EVS>=0)
+        os << call.EVS  << ':';
     else
         os << call.gqx  << ':';
 
@@ -711,6 +737,54 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
     {
         os << ',' << ii._calls[i]._isri.n_q30_indel_reads;
     }
+
+    // PL field
+    os << ":";
+    const unsigned icount(ii._calls.size());
+    if (icount == 1)
+    {
+        using namespace STAR_DIINDEL;
+        const auto& dindel(ii._calls[0]._dindel);
+        const auto& pls(dindel.phredLoghood);
+        if (dindel.is_haploid())
+        {
+            os << pls[NOINDEL] << ','
+               << pls[HOM];
+        }
+        else
+        {
+            os << pls[NOINDEL] << ','
+               << pls[HET] << ','
+               << pls[HOM];
+        }
+    }
+    else if (icount == 2)
+    {
+        // very roughly approximate the overlapping indel PL values
+        //
+        // 1. 0/0 - this is always maxQ
+        // 2. 0/1 - set ot 0/0 from indel1
+        // 3. 1/1 - set to 1/1 from indel0
+        // 4. 0/2 - set to 0/0 from indel0
+        // 5. 1/2 - this is always 0
+        // 6. 2/2 - set to 1/1 from indel1
+        //
+        using namespace STAR_DIINDEL;
+        const auto& pls0(ii._calls[0]._dindel.phredLoghood);
+        const auto& pls1(ii._calls[1]._dindel.phredLoghood);
+
+        os << starling_diploid_indel_core::maxQ << ','
+           << pls1[NOINDEL] << ','
+           << pls0[HOM] << ','
+           << pls0[NOINDEL] << ','
+           << 0 << ','
+           << pls1[HOM];
+    }
+    else
+    {
+        assert(false && "Unexpected indel count");
+    }
+
     os << '\n';
 }
 
@@ -718,14 +792,17 @@ void
 gvcf_writer::write_site_record(
     const continuous_site_info& si) const
 {
-    int gqx = std::numeric_limits<int>::max();
-    for (auto&& call : si.calls)
-    {
-        gqx = std::min(gqx, call.gq);
-    }
+    bool site_is_nonref = si.is_nonref();
+    auto ref_base_id = base_to_id(si.ref);
 
-    for (auto&& call : si.calls)
+    for (auto& call : si.calls)
     {
+        bool is_no_alt(call._base == ref_base_id);
+
+        // do not output the call for reference if the site has variants unless it is forced output
+        if (!si.forcedOutput && site_is_nonref && is_no_alt)
+            continue;
+
         std::ostream& os(*_osptr);
 
         os << _chrom << '\t'  // CHROM
@@ -735,8 +812,6 @@ gvcf_writer::write_site_record(
         os  << si.ref << '\t'; // REF
 
         std::string gt(si.get_gt(call));
-
-        bool is_no_alt(call._base == base_to_id(si.ref));
 
         // ALT
         if (is_no_alt)
@@ -768,9 +843,12 @@ gvcf_writer::write_site_record(
 
         if (!is_no_alt)
         {
-            if (!info.str().empty())
-                info << ";";
-            info << "Unphased"; // TODO: placeholder
+            if (_opt.do_codon_phasing)
+            {
+                if (!info.str().empty())
+                    info << ";";
+                info << "Unphased"; // TODO: placeholder until we do phasing on continuous variants
+            }
         }
 
         os << (info.str().empty() ? "." : info.str()) << "\t";
@@ -789,7 +867,7 @@ gvcf_writer::write_site_record(
         //SAMPLE
         os << gt << ':';
         os << call.gq << ':';
-        os << gqx << ':';
+        os << call.gqx << ':';
         // DP:DPF
         os << si.n_used_calls << ':' << si.n_unused_calls;
 

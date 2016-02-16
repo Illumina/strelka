@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 ################################################################################
@@ -17,11 +24,8 @@
 ## author Come Raczy
 ##
 ################################################################################
-include_directories (BEFORE SYSTEM ${THIS_CXX_BEFORE_SYSTEM_INCLUDES})
-include_directories (${THIS_CXX_ALL_INCLUDES})
-include_directories (${CMAKE_CURRENT_BINARY_DIR})
-include_directories (${CMAKE_CURRENT_SOURCE_DIR})
-include_directories (${THIS_CXX_CONFIG_H_DIR})
+
+include (${THIS_CXX_COMMMON_CMAKE})
 
 get_filename_component(CURRENT_DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 message (STATUS "Adding c++ library subdirectory: ${CURRENT_DIR_NAME}")
@@ -32,7 +36,7 @@ message (STATUS "Adding c++ library subdirectory: ${CURRENT_DIR_NAME}")
 ## shared across libraries
 ##
 
-string(REGEX REPLACE ${CMAKE_SOURCE_DIR}/c[+][+]/ "" TMP1 ${CMAKE_CURRENT_SOURCE_DIR}/)
+string(REGEX REPLACE ${THIS_SOURCE_DIR}/c[+][+]/ "" TMP1 ${CMAKE_CURRENT_SOURCE_DIR}/)
 string(REGEX REPLACE "/" "_" THIS_UNIQUE_PREFIX ${TMP1})
 
 ##
@@ -60,7 +64,7 @@ if (THIS_LIBRARY_SOURCES)
     add_dependencies(${LIB_TARGET_NAME} ${THIS_OPT})
 
     # make the target project use folders when applying cmake IDE generators like Visual Studio
-    file(RELATIVE_PATH THIS_RELATIVE_LIBDIR "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    file(RELATIVE_PATH THIS_RELATIVE_LIBDIR "${THIS_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
     set_property(TARGET ${LIB_TARGET_NAME} PROPERTY FOLDER "${THIS_RELATIVE_LIBDIR}")
 endif()
 

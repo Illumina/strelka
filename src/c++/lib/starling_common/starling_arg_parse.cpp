@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \file
@@ -113,10 +120,6 @@ legacy_starling_arg_parse(
         {
             set_xrange_arg(i,ad,opt.is_acov,opt.acov_alpha);
         }
-        else if (ad.argstr[i]=="-filter-anom-calls")
-        {
-            opt.is_filter_anom_calls=true;
-        }
         else if (ad.argstr[i]=="-print-evidence")
         {
             opt.is_print_evidence=true;
@@ -146,14 +149,6 @@ legacy_starling_arg_parse(
         else if (ad.argstr[i]=="-min-paired-align-score")
         {
             set_arg(i,ad,is_min_pascore_set,opt.min_paired_align_score);
-        }
-        else if (ad.argstr[i]=="-single-align-score-exclude-mode")
-        {
-            opt.single_align_score_exclude_mode=true;
-        }
-        else if (ad.argstr[i]=="-single-align-score-rescue-mode")
-        {
-            opt.single_align_score_rescue_mode=true;
         }
         else if (ad.argstr[i]=="-counts")
         {

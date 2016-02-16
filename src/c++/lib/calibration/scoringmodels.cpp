@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  * scoringmodels.cpp
@@ -50,7 +57,6 @@ scoring_models& scoring_models::Instance()
     if (!m_pInstance)    // Only allow one instance of class to be generated.
     {
         m_pInstance = new scoring_models;
-        m_pInstance->variantScoringModelFilename = "NA";
     }
     return *m_pInstance;
 }
@@ -59,29 +65,14 @@ void scoring_models::init_default_models()
 {
     // load previously hard-coded logistic regression model
     IndelErrorModel newModel = generate_new_indel_error_model();
-    this->indel_models[newModel.get_model_string()] = newModel;
+    this->indel_models[newModel.getName()] = newModel;
 
     // load previously hard-coded polynomial model
     IndelErrorModel oldModel = generate_old_indel_error_model();
-    this->indel_models[oldModel.get_model_string()] = oldModel;
+    this->indel_models[oldModel.getName()] = oldModel;
 }
 
-double scoring_models::score_variant(const feature_type& features, const VARIATION_NODE_TYPE::index_t vtype) const
-{
-    double score;
-    switch (vtype)
-    {
-    case VARIATION_NODE_TYPE::SNP:
-        score = this->randomforest_model.getProb(features);
-        return error_prob_to_phred(score);
-    case VARIATION_NODE_TYPE::INDEL:
-        score = this->randomforest_model_indel.getProb(features);
-        return error_prob_to_phred(score);
-    default:
-        assert(false && "Unknown variation node type in serializedModel.");
-        return 0;
-    }
-}
+
 
 const IndelErrorModel& scoring_models::get_indel_model() const
 {
@@ -89,17 +80,13 @@ const IndelErrorModel& scoring_models::get_indel_model() const
     return this->indel_models.at(this->current_indel_model);
 }
 
+
 // Generated the header VCF header string specifying which json file and what models were used
 void
 scoring_models::
 writeVcfHeader(
     std::ostream& os) const
 {
-    if (! variantScoringModelFilename.empty())
-    {
-        os << "##VariantScoringModelFilename=" << this->variantScoringModelFilename << "\n";
-    }
-
     if (! indelErrorModelFilename.empty())
     {
         os << "##IndelErrorModelFilename=" << this->indelErrorModelFilename << "\n";
@@ -148,27 +135,7 @@ void scoring_models::load_indel_model(const Json::Value& data)
 {
     IndelErrorModel tempModel;
     tempModel.Deserialize(data);
-    this->indel_models[tempModel.get_model_string()] = tempModel;
-}
-
-void scoring_models::load_calibration_model(const Json::Value& data)
-{
-    using namespace VARIATION_NODE_TYPE;
-    for (int i(0); i<SIZE; ++i)
-    {
-        const index_t modelIndex(static_cast<index_t>(i));
-        Json::Value model = data[get_label(modelIndex)];
-        if (!model.isNull())
-        {
-            //TODO add more logic here for reading other model types than RF
-            RandomForestModel temp_model;
-            temp_model.Deserialize(model);
-            if (modelIndex==SNP)
-                this->randomforest_model = temp_model;
-            else
-                this->randomforest_model_indel = temp_model;
-        }
-    }
+    this->indel_models[tempModel.getName()] = tempModel;
 }
 
 
@@ -184,9 +151,6 @@ load_single_model(
     {
     case INDELMODEL:
         this->load_indel_model(data);
-        break;
-    case CALMODEL:
-        this->load_calibration_model(data);
         break;
     default:
         assert(false && "Unknown model-type in model json.");
@@ -223,16 +187,6 @@ load_models(
     {
         load_single_model(modelValue, model_type);
     }
-}
-
-
-void
-scoring_models::
-load_variant_scoring_models(
-    const std::string& model_file)
-{
-    variantScoringModelFilename = model_file;
-    load_models(model_file,MODEL_TYPE::CALMODEL);
 }
 
 

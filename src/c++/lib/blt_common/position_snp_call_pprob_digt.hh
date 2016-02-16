@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -33,6 +40,7 @@
 struct diploid_genotype
 {
     diploid_genotype()
+        : phredLoghood(DIGT::SIZE,0)
     {
         reset();
     }
@@ -56,6 +64,7 @@ struct diploid_genotype
         ref_gt=0;
         genome.reset();
         poly.reset();
+        std::fill(phredLoghood.begin(), phredLoghood.end(), 0);
     }
 
     struct result_set
@@ -82,6 +91,9 @@ struct diploid_genotype
         std::array<double,DIGT::SIZE> pprob; // note this is intentionally stored at higher float resolution than the rest of the computation
     };
 
+    // only used for PLs
+    static const int maxQ;
+
     bool is_snp;
 
     /// a cheap way to add haploid calling capability, better solution: either haploid calls have their own object
@@ -92,6 +104,8 @@ struct diploid_genotype
     unsigned ref_gt;
     result_set genome;
     result_set poly;
+
+    std::vector<unsigned> phredLoghood;
 };
 
 

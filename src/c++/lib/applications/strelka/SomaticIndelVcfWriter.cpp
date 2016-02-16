@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \author Chris Saunders
@@ -17,12 +24,27 @@
 #include "SomaticIndelVcfWriter.hh"
 #include "somatic_call_shared.hh"
 #include "somatic_indel_grid.hh"
+#include "somatic_indel_scoring_features.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/io_util.hh"
+#include "blt_util/qscore.hh"
+#include "blt_util/fisher_exact_test.hh"
+#include "blt_util/binomial_test.hh"
 
 #include <iomanip>
 #include <iostream>
+#include <limits>
+
+
+
+template <typename D>
+static
+double
+safeFrac(const unsigned num, const D denom)
+{
+    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
+}
 
 
 
@@ -35,6 +57,7 @@ write_vcf_isri_tiers(
     std::ostream& os)
 {
     static const char sep(':');
+//  DP:DP2:TAR:TIR:TOR...
     os << isri1.depth
        << sep
        << isri2.depth
@@ -57,17 +80,11 @@ write_vcf_isri_tiers(
 
     os << sep << (used+filt)
        << sep << filt
-       << sep << submap;
+       << sep << submap
+       << sep << calculateBCNoise(was)
+       ;
 }
 
-
-
-static
-double
-safeFrac(const int num, const int denom)
-{
-    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
-}
 
 
 static
@@ -83,37 +100,56 @@ writeSomaticIndelVcfGrid(
 {
     const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
 
-    strelka_shared_modifiers smod;
+    // always use high depth filter when enabled
+    strelka_shared_modifiers_indel smod;
+    if (dopt.sfilter.is_max_depth())
     {
-        // compute all site filters:
-        if (dopt.sfilter.is_max_depth())
+        const unsigned& depth(siInfo.nisri[0].depth);
+        if (depth > dopt.sfilter.max_chrom_depth)
         {
-            const unsigned& depth(siInfo.nisri[0].depth);
-            if (depth > dopt.sfilter.max_depth)
-            {
-                smod.set_filter(STRELKA_VCF_FILTERS::HighDepth);
-            }
+            smod.filters.set(STRELKA_VCF_FILTERS::HighDepth);
         }
+    }
 
+    // calculate empirical scoring score and features
+    calculateScoringFeatures(siInfo, wasNormal, wasTumor, opt, dopt, smod);
+
+    const bool is_use_empirical_scoring(opt.isUseSomaticIndelScoring());
+    if (!is_use_empirical_scoring)
+    {
+        smod.EVS = 0;
+        smod.isEVS = false;
+
+        // compute all site filters:
+        const double normalWinFrac = calculateBCNoise(wasNormal);
+        const double tumorWinFrac = calculateBCNoise(wasTumor);
+
+        if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
+            (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
         {
-            const int normalFilt(wasNormal.ss_filt_win.avg());
-            const int normalUsed(wasNormal.ss_used_win.avg());
-            const float normalWinFrac(safeFrac(normalFilt,(normalFilt+normalUsed)));
-
-            const int tumorFilt(wasTumor.ss_filt_win.avg());
-            const int tumorUsed(wasTumor.ss_used_win.avg());
-            const float tumorWinFrac(safeFrac(tumorFilt,(tumorFilt+tumorUsed)));
-
-            if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
-                (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
-            {
-                smod.set_filter(STRELKA_VCF_FILTERS::IndelBCNoise);
-            }
+            smod.filters.set(STRELKA_VCF_FILTERS::IndelBCNoise);
         }
 
         if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
         {
-            smod.set_filter(STRELKA_VCF_FILTERS::QSI_ref);
+            smod.filters.set(STRELKA_VCF_FILTERS::QSI_ref);
+        }
+    }
+    else
+    {
+        assert(dopt.somaticIndelScoringModel);
+        const VariantScoringModel& varModel(*dopt.somaticIndelScoringModel);
+        smod.EVS = 1.0 - varModel.scoreVariant(smod.get_features());
+        smod.isEVS = true;
+
+        if (rs.ntype != NTYPE::REF)
+        {
+            smod.filters.set(STRELKA_VCF_FILTERS::Nonref);
+        }
+
+        if (smod.EVS < varModel.scoreFilterThreshold())
+        {
+            smod.filters.set(STRELKA_VCF_FILTERS::LowEVS);
         }
     }
 
@@ -138,17 +174,45 @@ writeSomaticIndelVcfGrid(
 
     //FILTER:
     os << sep;
-    smod.write_filters(os);
+    smod.filters.write(os);
 
     //INFO
     os << sep
-       << "SOMATIC"
-       << ";QSI=" << rs.sindel_qphred
+       << "SOMATIC";
+
+    if (smod.isEVS)
+    {
+        const StreamScoper ss(os);
+        os << std::fixed << std::setprecision(4);
+        os << ";EVS=" << smod.EVS;
+    }
+
+    os << ";QSI=" << rs.sindel_qphred
        << ";TQSI=" << (siInfo.sindel.sindel_tier+1)
        << ";NT=" << NTYPE::label(rs.ntype)
        << ";QSI_NT=" << rs.sindel_from_ntype_qphred
        << ";TQSI_NT=" << (siInfo.sindel.sindel_from_ntype_tier+1)
        << ";SGT=" << static_cast<DDIINDEL_GRID::index_t>(rs.max_gt);
+
+    {
+        // these must be computed from tier2 otherwise mapq filtering is in effect:
+        /// TODO: features become invalid with a simple user configuration parameter
+        /// change
+
+        //MQ
+        const unsigned n_mapq(siInfo.nisri[1].n_mapq+siInfo.tisri[1].n_mapq);
+        const double sum_sq_mapq(siInfo.nisri[1].sum_sq_mapq+siInfo.tisri[1].sum_sq_mapq);
+        const double mq_rms_tn(std::sqrt(safeFrac(sum_sq_mapq,n_mapq)));
+
+        //MQ0
+        const unsigned n_mapq0(siInfo.nisri[1].n_mapq0+siInfo.tisri[1].n_mapq0);
+
+        const StreamScoper ss(os);
+        os << std::fixed << std::setprecision(2);
+        os << ";MQ=" << mq_rms_tn
+           << ";MQ0=" << n_mapq0
+           ;
+    }
     if (siInfo.iri.is_repeat_unit())
     {
         os << ";RU=" << siInfo.iri.repeat_unit
@@ -156,11 +220,34 @@ writeSomaticIndelVcfGrid(
            << ";IC=" << siInfo.iri.indel_repeat_count;
     }
     os << ";IHP=" << siInfo.iri.ihpol;
+
+    if (opt.isReportEVSFeatures)
+    {
+        const StreamScoper ss(os);
+        os << std::setprecision(5);
+        os << ";EVSF=";
+        for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
+        {
+            if (featureIndex > 0)
+            {
+                os << ",";
+            }
+            os << smod.get_feature(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(featureIndex));
+        }
+
+        for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+        {
+            os << ",";
+            os << smod.dfeatures.get(static_cast<STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
+        }
+    }
+
     if ((siInfo.iri.it == INDEL::BP_LEFT) ||
         (siInfo.iri.it == INDEL::BP_RIGHT))
     {
         os << ";SVTYPE=BND";
     }
+
     if (rs.is_overlap)
     {
         os << ";OVERLAP";
@@ -168,7 +255,7 @@ writeSomaticIndelVcfGrid(
 
 
     //FORMAT
-    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50";
+    os << sep << "DP:DP2:TAR:TIR:TOR:DP50:FDP50:SUBDP50:BCN50";
 
     // write normal sample info:
     os << sep;

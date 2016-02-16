@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -60,28 +67,13 @@ private:
 
 
 //
-// captures the concept of read as required by starling: namely
-// potentially aligned by both ELAND and/or GROUPER
-//
-// all alignments must be on the same strand and 'reasonably' proximate.
+// captures the concept of read as required by starling
 //
 // all alignment info is fwd-strand
 //
 struct starling_read : private boost::noncopyable
 {
-    starling_read(const bam_record& br,
-                  const bool is_bam_record_genomic);
-
-    void
-    set_genomic_bam_record(const bam_record& br)
-    {
-        if (_is_bam_record_genomic)
-        {
-            repeatError(br);
-        }
-        _read_rec = br;
-        _is_bam_record_genomic=true;
-    }
+    starling_read(const bam_record& br);
 
     // enters full alignment, and handles segment setup for splice
     // sites:
@@ -189,15 +181,11 @@ private:
     void
     update_full_segment();
 
-    void
-    repeatError(const bam_record& br) const;
-
 public:
-    // mapping qualities of ELAND reads, does not apply to GROUPER:
+    // read mapper quality categories
     MAPLEVEL::index_t genome_align_maplev;
 
 private:
-    bool _is_bam_record_genomic; // indicates that this was the original (and thus, complete) alignment before grouper.
     align_id_t _id;
     bam_record _read_rec;
     read_segment _full_read;

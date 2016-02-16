@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -750,7 +757,7 @@ score_indels(const starling_base_options& opt,
             const bool is_indel_present_on_max_path(max_cal_indels.count(eval_ik)!=0);
 
 #ifdef DEBUG_ALIGN
-            log_os << "VARMIT: final indel scan: " << ik;
+            log_os << "VARMIT: final indel scan: " << eval_ik;
             log_os << "VARMIT: is_present_on_max_path?: " << is_indel_present_on_max_path << "\n";
 #endif
 
@@ -861,8 +868,15 @@ score_indels(const starling_base_options& opt,
 
             // assemble basic score data:
             //
-            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read);
+            int readpos = max_cal.al.is_fwd_strand ? ((signed) (eval_ik.pos - max_cal.al.pos)) :
+                          ((signed) (read_length - eval_ik.pos + max_cal.al.pos - 1));
 
+#ifdef DEBUG_ALIGN
+            //            correct for strandedness
+            log_os << "indelpos: " << eval_ik.pos << " readpos: + " << rseg.genome_align().pos << " rp: " << readpos << "\n";
+#endif
+            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read,max_cal.al.is_fwd_strand,
+                                 (int16_t) readpos);
 
             // start adding alternate indel alleles, if present:
 
@@ -871,7 +885,7 @@ score_indels(const starling_base_options& opt,
                 const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,overlap_ik))));
 
 #ifdef DEBUG_ALIGN
-                log_os << "VARMIT: alternate_indel " << *k;
+                log_os << "VARMIT: alternate_indel " << overlap_ik;
 #endif
 
                 // TODO consider a way that the basic stores
@@ -911,8 +925,13 @@ score_indels(const starling_base_options& opt,
 #endif
             }
 
-
             id_ptr->read_path_lnp[rseg.id()] = rps;
+            id_ptr->n_mapq++;
+            id_ptr->sum_sq_mapq += (rseg.map_qual()*rseg.map_qual());
+            if (rseg.map_qual() == 0)
+            {
+                id_ptr->n_mapq0++;
+            }
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: modified indel data: " << *(id_ptr);

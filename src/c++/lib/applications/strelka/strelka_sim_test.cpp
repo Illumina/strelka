@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -363,130 +370,3 @@ strelka_site_sim(strelka_options& opt,
         scall.call(sim_opt.is_somatic_gvcf,i+1,norm_pi,tumor_pi);
     }
 }
-
-
-#if 0
-static
-void
-load_pi(const char ref_base,
-        const char* read,
-        const uint8_t* qual,
-        snp_pos_info& pi)
-{
-
-    pi.clear();
-    pi.ref_base=ref_base;
-
-    const unsigned len(strlen(read));
-    for (unsigned i(0); i<len; ++i)
-    {
-        const bool is_fwd(isupper(read[i]));
-        const uint8_t base_id(base_to_id(toupper(read[i])));
-        assert(qual[i]>=33);
-        pi.calls.push_back(base_call(base_id,qual[i]-33,is_fwd,
-                                     1,1,false,false));
-    }
-}
-
-
-
-void
-strelka_pile_test_run(strelka_options& opt)
-{
-
-    static const char chrom_name[] = "sim";
-
-    // set default parameters:
-    opt.is_bsnp_diploid = true;
-    opt.bsnp_diploid_theta = 0.001;
-    opt.somatic_snv_rate       = 0.000001;
-    opt.shared_site_error_rate = 0.0000005;
-
-    const std::string ref_seq("ACGT");
-
-    const strelka_deriv_options dopt(opt,ref_seq);
-
-    istream_line_splitter dparse(std::cin);
-
-    snp_pos_info norm_pi;
-    snp_pos_info tumor_pi;
-
-    // recreate data caches:
-    extra_position_data norm_epd;
-    extra_position_data tumor_epd;
-    extra_position_data tier2_epd[STRELKA_SAMPLE_TYPE::SIZE];
-
-    static dependent_prob_cache dpcache;
-
-    while (dparse.parse_line())
-    {
-
-        assert(6 == dparse.n_word());
-
-        const char* pcopy(dparse.word[0]);
-        const unsigned pos(illumina::blt_util::parse_unsigned(pcopy));
-        const char ref_base(*dparse.word[1]);
-
-        {
-            const char* normbase(dparse.word[2]);
-            const uint8_t* normqual((uint8_t*) dparse.word[3]);
-            load_pi(ref_base,normbase,normqual,norm_pi);
-        }
-
-        {
-            const char* tumorbase(dparse.word[4]);
-            const uint8_t* tumorqual((uint8_t*) dparse.word[5]);
-            load_pi(ref_base,tumorbase,tumorqual,tumor_pi);
-        }
-
-        static const unsigned n_tier(2);
-
-        std::unique_ptr<extended_pos_data> normald_ptr[n_tier];
-        std::unique_ptr<extended_pos_data> tumord_ptr[n_tier];
-
-        extra_position_data* normal_epd_ptr[n_tier] = { &(norm_epd) , &(tier2_epd[STRELKA_SAMPLE_TYPE::NORMAL]) };
-        extra_position_data* tumor_epd_ptr[n_tier] = { &(tumor_epd) , &(tier2_epd[STRELKA_SAMPLE_TYPE::TUMOR]) };
-
-        for (unsigned t(0); t<n_tier; ++t)
-        {
-            static const bool is_dep(false);
-            const bool is_include_tier2(t!=0);
-            if (is_include_tier2) continue;
-            normald_ptr[t].reset(new extended_pos_data(&norm_pi,*(normal_epd_ptr[t]),
-                                                       ref_base,opt,dpcache,is_dep,is_include_tier2));
-            tumord_ptr[t].reset(new extended_pos_data(&tumor_pi,*(tumor_epd_ptr[t]),
-                                                      ref_base,opt,dpcache,is_dep,is_include_tier2));
-        }
-
-        //    somatic_snv_genotype sgt;
-        somatic_snv_genotype_grid sgtg;
-
-        static const extended_pos_info* normal_epi_t2_ptr(NULL);
-        static const extended_pos_info* tumor_epi_t2_ptr(NULL);
-
-        dopt.sscaller_strand_grid().position_somatic_snv_call(normald_ptr[0]->good_epi,
-                                                              tumord_ptr[0]->good_epi,
-                                                              normal_epi_t2_ptr,
-                                                              tumor_epi_t2_ptr,
-                                                              sgtg);
-
-        if (! sgtg.is_snv) continue;
-
-        std::ostream& bos(std::cout);
-
-        // OUTPUT_VCF:
-        bos << chrom_name << '\t'
-            << pos << '\t'
-            << ".";
-
-        write_vcf_somatic_snv_genotype_strand_grid(opt,sgtg,
-                                                   *(normald_ptr[0]),
-                                                   *(tumord_ptr[0]),
-                                                   *(normald_ptr[0]),
-                                                   *(tumord_ptr[0]),
-                                                   bos);
-
-        bos << "\n";
-    }
-}
-#endif

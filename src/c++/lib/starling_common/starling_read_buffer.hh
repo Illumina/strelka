@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \file
@@ -78,7 +85,6 @@ struct starling_read_buffer : private boost::noncopyable
     //
     std::pair<bool,align_id_t>
     add_read_alignment(
-        const starling_base_options& opt,
         const bam_record& br,
         const alignment& al,
         const MAPLEVEL::index_t maplev);
@@ -142,10 +148,7 @@ struct starling_read_buffer : private boost::noncopyable
     }
 
 private:
-    //
-    typedef read_key read_key_t;
     typedef std::map<align_id_t,starling_read*> read_data_t;
-    typedef std::map<read_key_t, align_id_t> read_key_lup_t;
     typedef std::pair<align_id_t,seg_id_t> segment_t;
     typedef std::set<segment_t> segment_group_t;
     typedef std::map<pos_t,segment_group_t> pos_group_t;
@@ -175,9 +178,6 @@ private:
 
     // read id to read data structure pointer map:
     read_data_t _read_data;
-
-    // read name (eg. QNAME) to read id map:
-    read_key_lup_t _read_key;
 
     // storage position to read segment id map
     //

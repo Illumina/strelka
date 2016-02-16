@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -69,7 +76,7 @@ strelka_pos_processor(
         {
             if (opt.max_candidate_indel_depth_factor > 0.)
             {
-                max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_depth);
+                max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_chrom_depth);
             }
         }
 
@@ -90,8 +97,8 @@ strelka_pos_processor(
                                normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
         isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
                                tumor_sif.sample_opt, -1., TUMOR);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,NORMAL));
-        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,isdata,TUMOR));
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,dopt.countCache,isdata,NORMAL));
+        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,dopt.countCache,isdata,TUMOR));
     }
 
     // setup indel avg window:
@@ -195,6 +202,7 @@ process_pos_snp_somatic(const pos_t pos)
             }
         }
         std::ostream& bos(*_streams.somatic_snv_osptr());
+//        std::ostream& bos(std::cout);
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG

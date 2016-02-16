@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -26,7 +33,7 @@ from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, \
                           validateFixExistingDirArg, validateFixExistingFileArg, \
                           checkTabixListOption
-from workflowUtil import parseGenomeRegion
+from workflowUtil import exeFile, parseGenomeRegion
 
 
 def cleanLocals(locals_dict) :
@@ -50,11 +57,13 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               " if a variant genotype is likely."
                               " File must be tabix indexed."
                               " Option may be specified more than once, multiple inputs will be merged."
+                              " SNVs in the indel candidates file will be ignored."
                               " (default: None)")
         group.add_option("--forcedGT", type="string", dest="forcedGTList", metavar="FILE", action="append",
-                         help="Specify a vcf describing indels which must be genotyped and output even if a variant genotype is unlikely."
+                         help="Specify a vcf describing variants which must be genotyped and output even if a variant genotype is unlikely."
                               " File must be tabix indexed."
                               " Option may be specified more than once, multiple inputs will be merged."
+                              " Note that for SNVs, a site will be forced (or for gVCF, excluded from block compression), but the ALT value is ignored."
                               " (default: None)")
         group.add_option("--exome", dest="isExome", action="store_true",
                          help="Set options for WES input: turn off depth filters")
@@ -62,7 +71,9 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Run script and run output will be written to this directory [required] (default: %default)")
 
     def addExtendedGroupOptions(self,group) :
-        group.add_option("--scanSizeMb", type="int", metavar="INT",
+        # note undocumented library behavior: "dest" is optional, but not including it here will
+        # cause the hidden option to always print
+        group.add_option("--scanSizeMb", type="int", dest="scanSizeMb", metavar="INT",
                          help="Maximum sequence region size (in megabases) scanned by each task during "
                          "genome variant calling. (default: %default)")
         group.add_option("--region", type="string",dest="regionStrList",metavar="REGION", action="append",
@@ -75,6 +86,12 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                          help="Set variant calling task memory limit (in megabytes). It is not "
                               "recommended to change the default in most cases, but this might be required "
                               "for a sample of unusual depth.")
+        group.add_option("--retainTempFiles", dest="isRetainTempFiles", action="store_true",
+                         help="Keep all temporary files (for workflow debugging)")
+        group.add_option("--disableEVS", dest="isEVS", action="store_false",
+                         help="Disable empirical variant scoring.")
+        group.add_option("--reportEVSFeatures", dest="isReportEVSFeatures", action="store_true",
+                         help="Report all Empirical Variant Scoring (EVS) features in VCF output.")
 
         ConfigureWorkflowOptions.addExtendedGroupOptions(self,group)
 
@@ -86,24 +103,31 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         Every local variable in this method becomes part of the default hash
         """
 
+        configCommandLine=sys.argv
+
         alignerMode = "isaac"
 
         libexecDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_LIBEXECDIR@"))
         assert os.path.isdir(libexecDir)
 
-        bgzipBin=joinFile(libexecDir,"bgzip")
-        samtoolsBin=joinFile(libexecDir,"samtools")
-        tabixBin=joinFile(libexecDir,"tabix")
-        bgcatBin=joinFile(libexecDir,"bgzf_cat")
+        bgzipBin=joinFile(libexecDir,exeFile("bgzip"))
+        htsfileBin=joinFile(libexecDir,exeFile("htsfile"))
+        samtoolsBin=joinFile(libexecDir,exeFile("samtools"))
+        tabixBin=joinFile(libexecDir,exeFile("tabix"))
+        bgcatBin=joinFile(libexecDir,exeFile("bgzf_cat"))
 
-        countFastaBin=joinFile(libexecDir,"countFastaBases")
+        countFastaBin=joinFile(libexecDir,exeFile("countFastaBases"))
+        getChromDepthBin=joinFile(libexecDir,exeFile("GetChromDepth"))
 
-        getChromDepth=joinFile(libexecDir,"getBamAvgChromDepth.py")
+        mergeChromDepth=joinFile(libexecDir,"mergeChromDepth.py")
+        catScript=joinFile(libexecDir,"cat.py")
+        vcfCmdlineSwapper=joinFile(libexecDir,"vcfCmdlineSwapper.py")
 
         # TODO: these aren't shared and should go into child classes:
-        starlingBin=joinFile(libexecDir,"starling2")
-        strelkaBin=joinFile(libexecDir,"strelka2")
-        pedicureBin=joinFile(libexecDir,"pedicure")
+        starlingBin=joinFile(libexecDir,exeFile("starling2"))
+        strelkaBin=joinFile(libexecDir,exeFile("strelka2"))
+        pedicureBin=joinFile(libexecDir,exeFile("pedicure"))
+        statsMergeBin=joinFile(libexecDir,exeFile("MergeRunStats"))
 
         # default memory request per process-type
         #
@@ -120,9 +144,19 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
 
         runDir = "variantCallWorkflow"
+
+        # extended options
         scanSizeMb = 12
+        regionStrList = None
+        callMemMbOverride = None
 
         isExome = False
+
+        isRetainTempFiles = False
+
+        # Empirical Variant Scoring:
+        isEVS = True
+        isReportEVSFeatures = False
 
         return cleanLocals(locals())
 

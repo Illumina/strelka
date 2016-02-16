@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -17,8 +24,10 @@
 
 #pragma once
 
+#include "min_count_binom_gte_cache.hh"
+
+#include "blt_util/depth_buffer.hh"
 #include "blt_util/id_map.hh"
-#include "starling_common/depth_buffer.hh"
 #include "starling_common/indel_buffer.hh"
 #include "starling_common/starling_base_shared.hh"
 
@@ -81,11 +90,10 @@ struct indel_synchronizer
     ///
     /// \param[in] max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the filter.
     ///
-    /// \max_candidate_depth - max depth (in this sample) for indel candidates, any filtration will be applied to all samples. A negative value disables the fi
-    ///
     indel_synchronizer(
         const starling_base_options& opt,
         const reference_contig_segment& ref,
+        const min_count_binom_gte_cache& countCache,
         const double max_candidate_depth,
         indel_buffer& ib,
         const depth_buffer& db,
@@ -93,6 +101,7 @@ struct indel_synchronizer
         const starling_sample_options& init_sample_opt)
         : _opt(opt)
         , _ref(ref)
+        , _countCache(countCache)
         , _sample_no(0)
         , _sample_order(0)
     {
@@ -106,10 +115,12 @@ struct indel_synchronizer
     indel_synchronizer(
         const starling_base_options& opt,
         const reference_contig_segment& ref,
+        const min_count_binom_gte_cache& countCache,
         const indel_sync_data& isd,
         const sample_id_t sample_no)
         : _opt(opt)
         , _ref(ref)
+        , _countCache(countCache)
         , _isd(isd)
         , _sample_no(sample_no)
         , _sample_order(_isd._idata.get_id(sample_no)) {}
@@ -233,6 +244,7 @@ private:
 
     const starling_base_options& _opt;
     const reference_contig_segment& _ref;
+    const min_count_binom_gte_cache& _countCache;
 
     indel_sync_data _isd;
 

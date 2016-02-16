@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -86,9 +93,9 @@ def parseGenomeRegion(regionStr) :
 
     assert(regionStr is not None)
 
-    word=regionStr.strip().split(':')
+    word=regionStr.strip().rsplit(':',1)
 
-    if (len(word) < 1) or (len(word) > 2) :
+    if len(word) < 1 :
         raise Exception("Unexpected format in genome region string: %s" % (regionStr))
 
     chrom=word[0]
@@ -99,14 +106,19 @@ def parseGenomeRegion(regionStr) :
     end=None
 
     if (len(word) > 1) :
+        if len(word[1]) == 0 :
+            raise Exception("Unexpected format in genome region string: %s" % (regionStr))
+
         rangeWord=word[1].split('-')
         if len(rangeWord) != 2 :
-            raise Exception("Unexpected format in genome region string: %s" % (regionStr))
-        start = int(rangeWord[0])
-        end = int(rangeWord[1])
+            # assume this might be an HLA chrom at this point:
+            chrom=regionStr.strip()
+        else :
+            start = int(rangeWord[0])
+            end = int(rangeWord[1])
 
-        if (end < start) or (start < 1) or (end < 1) :
-            raise Exception("Unexpected format in genome region string: %s" % (regionStr))
+            if (end < start) or (start < 1) or (end < 1) :
+                raise Exception("Unexpected format in genome region string: %s" % (regionStr))
 
     return {"chrom":chrom, "start":start, "end":end}
 
@@ -261,6 +273,11 @@ def cleanId(input_id) :
 
 
 
+def getRobustChromId(chromIndex,chromLabel):
+    return "%s_%s" % (str(chromIndex).zfill(3),cleanId(chromLabel))
+
+
+
 class GenomeSegment(object) :
     """
     organizes all variables which can change
@@ -284,16 +301,17 @@ class GenomeSegment(object) :
         self.bamRegion = chromLabel + ':' + str(beginPos) + '-' + str(endPos)
         self.binId = binId
         self.binStr = str(binId).zfill(4)
-        self.id = chromLabel + "_" + self.binStr
 
-        regionId=cleanId(chromLabel)
+        regionId=getRobustChromId(chromIndex,chromLabel)
         if genomeRegion is not None :
             if genomeRegion['start'] is not None :
                 regionId += "-"+str(genomeRegion['start'])
                 if genomeRegion['end'] is not None :
                     regionId += "-"+str(genomeRegion['end'])
-        self.pyflowId = "chromId_%s_%s_%s" % (str(chromIndex).zfill(3), regionId, self.binStr)
+        self.id = "chromId_%s_%s" % (regionId, self.binStr)
 
+    def size(self) :
+        return (self.endPos-self.beginPos)+1
 
 
 def getNextGenomeSegment(params) :
@@ -337,15 +355,35 @@ def isLocalSmtp() :
     return True
 
 
+def _isWindows() :
+    import platform
+    return (platform.system().find("Windows") > -1)
+
+
+class Constants :
+    isWindows=_isWindows()
+
+
+def isWindows() :
+    return Constants.isWindows
+
+
+def exeFile(filename):
+    """
+    adjust filename suffix by platform
+    """
+    if isWindows() : return filename + ".exe"
+    return filename
+
 
 def bamListCatCmd(samtoolsBin, bamList, output) :
     assert(len(bamList) > 0)
 
     if len(bamList) > 1:
         headerTmp = bamList[0] + "header"
-        cmd  = "%s view -H %s >| %s" % (samtoolsBin, bamList[0], headerTmp)
-        cmd += " && %s merge  -h %s %s " % (samtoolsBin, headerTmp, output)
+        cmd  = "\"%s\" view -H \"%s\" >| \"%s\"" % (samtoolsBin, bamList[0], headerTmp)
+        cmd += " && \"%s\" merge -h \"%s\" \"%s\" " % (samtoolsBin, headerTmp, output)
         cmd += " ".join(bamList)
     else:
-        cmd = "mv -f %s %s" % (bamList[0], output)
-    return cmd + " && %s index %s" % (samtoolsBin, output)
+        cmd = "mv -f \"%s\" \"%s\"" % (bamList[0], output)
+    return cmd + " && \"%s\" index \"%s\"" % (samtoolsBin, output)

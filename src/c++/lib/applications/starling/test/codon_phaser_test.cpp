@@ -1,33 +1,29 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+//
+
 #include "boost/test/unit_test.hpp"
 #include "boost/algorithm/string.hpp"
 
-#include "test_config.h"
+#include "codon_phaser.hh"
 
 
-#include "starling_shared.hh"
-#include "calibration_models.hh"
-#include "gvcf_writer.hh"
-
-#include "blt_util/reference_contig_segment.cpp"
-#include "blt_util/seq_util.hh"
-#include "blt_util/RegionTracker.cpp"
-#include "blt_common/snp_pos_info.cpp"
-#include "starling_common/pos_basecall_buffer.cpp"
-#include "starling_common/starling_base_shared.hh"
-#include "codon_phaser.cpp"
-#include "gvcf_locus_info.cpp"
 
 static void insert_read(const char* read, pos_t position,
                         pos_basecall_buffer& bc_buff)
@@ -59,7 +55,10 @@ public:
         auto si(downcast<digt_site_info>(std::move(site)));
         if (si->is_het() || si->is_hetalt() ) the_sites.push_back(std::move(si));
     }
-    void process(std::unique_ptr<indel_info> ii) override { the_indels.push_back(std::move(ii)); }
+    void process(std::unique_ptr<indel_info> ii) override
+    {
+        the_indels.push_back(std::move(ii));
+    }
 };
 
 // positive tests
@@ -343,7 +342,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
-        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.Qscore = 40;
+        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.EVS = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
         si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
@@ -352,7 +351,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
         phaser.process(std::move(si));
     }
     phaser.flush();
-    for (auto&& phased_variant : sink.the_sites)
+    for (auto& phased_variant : sink.the_sites)
     {
         BOOST_CHECK(!phased_variant->smod.filters.any());
         BOOST_CHECK(!phased_variant->smod.is_phased_region);
@@ -401,7 +400,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
-        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.Qscore = 40;
+        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.EVS = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
         si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
@@ -410,7 +409,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         phaser.process(std::move(si));
     }
     phaser.flush();
-    for (auto&& site : sink.the_sites)
+    for (auto& site : sink.the_sites)
     {
         BOOST_CHECK(! site->is_het() || site->smod.filters.test(VCF_FILTERS::PhasingConflict));
         BOOST_CHECK(!site->smod.is_phased_region);
@@ -468,75 +467,3 @@ BOOST_AUTO_TEST_CASE( low_depth_doesnt_phase )
 // nonsense phasing (i.e. the called SNPs are not in the top most common alleles)
 
 BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE( gvcf_writer_test )
-
-BOOST_AUTO_TEST_CASE( unphased_flag_written )
-{
-    reference_contig_segment rcs;
-    rcs.seq() = "ACGTACGTACGT";
-    pos_basecall_buffer bc_buff(rcs);
-
-    auto r1 = "ACGTACGTAC";
-    auto r2 = "AGGTACGTAC";
-    pos_t read_pos = 0;
-    pos_t snp_pos = 1;
-
-    // add 2 haplotypes of reads
-    for (int i = 0; i < 10; i++)
-        insert_read(r1, read_pos, bc_buff);
-    for (int i = 0; i < 10; i++)
-        insert_read(r2, read_pos, bc_buff);
-
-    starling_options opt;
-    opt.gvcf.is_skip_header = true;
-    opt.is_user_genome_size = true;
-    opt.user_genome_size = rcs.seq().size();
-    opt.bam_seq_name = "dummy";
-
-    const snp_pos_info& spi(bc_buff.get_pos(snp_pos));
-    std::unique_ptr<digt_site_info> si(new digt_site_info(snp_pos, rcs.get_base(snp_pos), spi, 30));
-    si->smod.is_covered = si->smod.is_used_covered = true;
-    si->dgt.ref_gt = base_to_id(si->ref);
-
-    si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[snp_pos]),base_to_id(r2[snp_pos]));
-    si->dgt.is_snp = true;
-
-    si->smod.is_phasing_insufficient_depth = true;
-
-    // now make sure it is rendered with the Unphased info field
-
-    starling_deriv_options dopt(opt,rcs);
-
-    RegionTracker regions;
-    std::stringstream os;
-    opt.germline_variant_scoring_models_filename = TEST_CONFIG_PATH;
-    opt.germline_variant_scoring_model_name = "QScoreHPDRE100_v4";
-
-    gvcf_deriv_options gvcf_options(opt.gvcf, "dummy");
-    gvcf_options.chrom_depth["dummy"] = 30.734;
-    calibration_models cm(opt, gvcf_options);
-
-
-    gvcf_writer writer(opt, dopt, rcs, regions, &os, cm);
-    writer.process(std::move(si));
-
-    std::string x = os.str();
-    BOOST_CHECK(x.length() > 0);
-    std::vector<std::string> lines;
-    boost::split(lines, x, boost::is_any_of("\n"));
-    BOOST_CHECK(lines.size() >= 2);
-
-    std::vector<std::string> strs;
-    boost::split(strs, lines[1], boost::is_any_of("\t"));
-    BOOST_CHECK(strs.size() > 7);
-
-    std::vector<std::string> infos;
-    boost::split(infos, strs[7], boost::is_any_of(";"));
-    BOOST_CHECK(infos.end() != std::find(infos.begin(), infos.end(), "Unphased"));
-
-}
-
-BOOST_AUTO_TEST_SUITE_END()
-
-

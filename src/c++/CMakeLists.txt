@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 ################################################################################
@@ -22,10 +29,11 @@ set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-set (THIS_CXX_EXECUTABLE_CMAKE "${CMAKE_SOURCE_DIR}/cmake/cxxExecutable.cmake")
-set (THIS_CXX_LIBRARY_CMAKE "${CMAKE_SOURCE_DIR}/cmake/cxxLibrary.cmake")
-set (THIS_CXX_CONFIGURE_CMAKE "${CMAKE_SOURCE_DIR}/cmake/cxxConfigure.cmake")
-set (THIS_CXX_TEST_LIBRARY_CMAKE "${CMAKE_SOURCE_DIR}/cmake/cxxTestLibrary.cmake")
+set (THIS_CXX_COMMMON_CMAKE "${THIS_MODULE_DIR}/cxxCommon.cmake")
+set (THIS_CXX_EXECUTABLE_CMAKE "${THIS_MODULE_DIR}/cxxExecutable.cmake")
+set (THIS_CXX_LIBRARY_CMAKE "${THIS_MODULE_DIR}/cxxLibrary.cmake")
+set (THIS_CXX_CONFIGURE_CMAKE "${THIS_MODULE_DIR}/cxxConfigure.cmake")
+set (THIS_CXX_TEST_LIBRARY_CMAKE "${THIS_MODULE_DIR}/cxxTestLibrary.cmake")
 
 include ("${THIS_CXX_CONFIGURE_CMAKE}")
 

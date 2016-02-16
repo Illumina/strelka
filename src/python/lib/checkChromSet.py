@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 import os,sys
@@ -51,7 +58,7 @@ def getFastaInfo(fasta) :
 
 
 
-def getBamChromInfo(samtoolsBin,bam) :
+def getBamChromInfo(htsfileBin,bam) :
     """
     Get chromosome information from bam/cram header
 
@@ -60,7 +67,7 @@ def getBamChromInfo(samtoolsBin,bam) :
 
     import subprocess
 
-    cmd="%s view -H '%s'" % (samtoolsBin,bam)
+    cmd="\"%s\" -h \"%s\"" % (htsfileBin,bam)
 
     info = {}
     chromIndex=0
@@ -70,17 +77,17 @@ def getBamChromInfo(samtoolsBin,bam) :
         if not line.startswith("@SQ") : continue
         w = line.strip().split('\t')
         if len(w) < 3 :
-            chromError("Unexpected bam/cram header for file '%s'" % (bam))
+            chromError("Unexpected BAM/CRAM header for file '%s'" % (bam))
 
         h = {}
         for word in w[1:] :
-            vals=word.split(':')
+            vals=word.split(':', 1)
             h[vals[0]] = vals[1]
 
         key = h["SN"]
         size = int(h["LN"])
         if size <= 0 :
-            chromError("Unexpected chromosome size '%i' in bam/cram header for file '%s'" % (size,bam))
+            chromError("Unexpected chromosome size '%i' in BAM/CRAM header for file '%s'" % (size,bam))
 
         info[key] = (size,chromIndex)
         chromIndex += 1
@@ -93,15 +100,15 @@ def getBamChromInfo(samtoolsBin,bam) :
 
 
 
-def checkChromSet(samtoolsBin,referenceFasta,bamList,bamLabel=None,isReferenceLocked=False) :
+def checkChromSet(htsfileBin,referenceFasta,bamList,bamLabel=None,isReferenceLocked=False) :
     """
     Check that chromosomes in reference and input bam/cram(s) are consistent
 
-    @param samtoolsBin - samtools binary
+    @param htsfileBin - htsfile binary
     @param referenceFasta - samtools indexed fasta file
     @param bamList - a container of indexed bam/cram(s) to check for consistency
     @param bamLabel - a container of labels for each bam/cram file (default is to label files by index number)
-    @param isReferenceLocked - if true, then the input BAMs must contain all of the chromosomes in the reference fasta
+    @param isReferenceLocked - if true, then the input BAM/CRAMs must contain all of the chromosomes in the reference fasta
 
     This function closely follows the strelka input configuration step validator
     """
@@ -116,7 +123,7 @@ def checkChromSet(samtoolsBin,referenceFasta,bamList,bamLabel=None,isReferenceLo
     refChromInfo = getFastaInfo(referenceFasta)
 
     # first bam is used as a reference:
-    chromInfo = getBamChromInfo(samtoolsBin,bamList[0])
+    chromInfo = getBamChromInfo(htsfileBin,bamList[0])
     chroms = sorted(chromInfo.keys(),key=lambda x:chromInfo[x][1])
 
     # check that first bam is compatible with reference:
@@ -139,7 +146,7 @@ def checkChromSet(samtoolsBin,referenceFasta,bamList,bamLabel=None,isReferenceLo
 
     # check that other bams are compatible with first bam:
     for index in range(1,len(bamList)) :
-        compareChromInfo=getBamChromInfo(samtoolsBin,bamList[index])
+        compareChromInfo=getBamChromInfo(htsfileBin,bamList[index])
         for chrom in chroms:
             isError=False
             if not chrom in compareChromInfo :

@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *  Created on: Oct 10, 2013
@@ -38,24 +45,24 @@ public:
     }
 
     void
-    clasify_site(
+    classify_site(
         const digt_site_info& si,
         digt_call_info& smod) const;
 
     void
-    clasify_indel(
+    classify_indel(
         const digt_indel_info& ii,
         digt_indel_call& call) const;
 
     void
-    clasify_indels(
+    classify_indels(
         std::vector<std::unique_ptr<digt_indel_info>>& indels) const;
 
     // mimics behavior of previous hard filters
-    void  default_clasify_site(const site_info& si,
-            shared_call_info& call) const;
+    void  default_classify_site(const site_info& si,
+                                shared_call_info& call) const;
 
-    void default_clasify_indel(shared_indel_call_info& call) const;
+    void default_classify_indel(shared_indel_call_info& call) const;
 
 
     bool is_current_logistic() const;
@@ -72,8 +79,14 @@ private:
     c_model& get_model(const std::string& name);
     const c_model& get_model(const std::string& name) const;
 
-    bool can_use_model(const digt_indel_info& ii) const;
+    bool check_is_model_usable(const digt_indel_info& ii) const;
     void set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const;
+
+    void
+    classify_indel_impl(
+        const bool is_model_usable,
+        const digt_indel_info& ii,
+        digt_indel_call& call) const;
 
     // set options
     void set_model(const std::string& name);  // set the calibration model to use

@@ -1,5 +1,53 @@
+- STARKA-351 reorg all strelka documentation
+- PED-33 Forced outputs of SNVs for pedicure workflow
+- STARKA-310 train somatic EVS model from features in VCF output
+- STARKA-369 add option to keep all temp files to support workflow debug
+- STARKA-350 more accurate runtime instrumentation for diploid gVCF workflow
+- PED-48 bcftools compatibility in VCF, better sample naming
+- STARKA-335 restore breakend filters for germline gVCF output
+- Multi-sample calling introduced for SNVs and Indel + PL field added (tickets PED10-19)
+- STARKA-317 Enable CRAM input, improve per-chrom depth estimation 
+- STARKA-306 fix rare chunk size boundary defect in RangeMap
+- STARKA-323 refactor STARKA-293 to allow reuse of general accelerated binom
+test
+- STARKA-297 adjust somatic EVS model for exome data
+- STARKA-293 remove count and frequency cutoffs for non-STR indels, replace with statistical test
+- STARKA-305 add simple germline SNV calling site simulator
+- STARKA-302 add feature verification for file-based scoring models
+- STARKA-298 enable fully automated empirical scoring model training and test
+cycle for SNVs
+- STARKA-296 add somatic indel empirical scoring model
+- STARKA-260 add additional somatic indel features
+- STARKA-275 prevent phaser from causing memory exaustion for amplicon input
+- STARKA-279 prevent rare vcf syntax error in gVCF when ALT is repeated
+- STARKA-284 update license to GPLv3
+- WGSW-765 Failed SNV phasing if any of the original SNVs are not represented
+  in the most common alleles
+- STARKA-241 turned on binom indel error model in starling and strelka
+v2.4.3
+- STAR-66 Correct GT reported for ALT alleles at forced-output sites in
+  continuous vf mode from "1/1" to "0/1" as appropriate.
+- WGSW-724 Do not print PLs for homref sites
+v2.4.2
+- STAR-65 Take the minimum GQ/GQX when overlapping indels
+- STAR-64 Output forced indels & SNPs in continuous calling mode. Modify
+  output of GQX to be per-call, not per-site. Fix flushing of compressed blocks
+  at end of processed region
+- WGSW-714 fix PLs not printed at nonref site
+- STAR-60 Update codon phaser to correctly handle interaction between GT and
+  alleles that are dropped due to low phasing support.
+- WGSW-711 Make inclusion of phasing-related headers conditional
+v2.4.1
+- STAR-62 fix setting vqsrModelName on --exome
+v2.4.0
+- STARKA-257 remap somatic SVN VQSR scores
+- STARKA-254 Add PL values for germline SNV and indel calls
+- STAR-54 Do not output homref call in continuous mode if the site has
+  alt alleles
+- STAR-55 Make GT of block compressed areas with overlapping deletions "0"
 v2.3.14
 - STAR-16 Continuous variant frequency calling (a.k.a. somatic)
+- TNW-371 Set MQ to 0 at forced calls with no coverage
 - STARKA-250 Remove hpol and ihpol indel filters
 - STAR-46 Don't block-compress forced GT SNVs in regions of no coverage
 - STARKA-249 Fix minor issue with somatic indel prior
@@ -14,7 +62,7 @@ v2.3.12
 - STAR-32: Trigger phasing of SNVs if an indel is encountered within the phasing interval.
 - STAR-14: Add --targeted-regions-bed parameter to Starling for flagging OffTarget positions. Also
   added --targetRegions to the python workflow wrapper.
-- Apply SiteConflict filter to block-compressed areas that overlap a filtered indel. This was a 
+- Apply SiteConflict filter to block-compressed areas that overlap a filtered indel. This was a
   side-effect of a restructuring of the code, but was deemed to be more correct than the previous behavior.
 v2.3.11
 - Modify workflow generation to remove use of reflection
@@ -64,15 +112,15 @@ v2.3.0
 - STARKA-181 Use indel error estimates to improve indel quality computation
 - Update germline indel error settings to reflect MIB defaults
 - STARKA-163 Use indel error estimates to improve indel candidate selection
-- STARKA-179 Provide config option for somatic callability track 
+- STARKA-179 Provide config option for somatic callability track
 - STARKA-178 Consolidate single strelka config for all aligners
 - Expand random forest tree count in somatic SNV VQSR
 v2.2.2
 - STARKA-175 Update somatic SNV VQSR model to include MAPQ0 with improved
 normalization
-- STARKA-176 Prevent large deletions from locking indels outside of the 
+- STARKA-176 Prevent large deletions from locking indels outside of the
 realignment buffer.
-- STARKA-174 Prevent segfault due to libstdc++ bug in certain gcc versions 
+- STARKA-174 Prevent segfault due to libstdc++ bug in certain gcc versions
 v2.2.1
 - STARKA-170 Add "--exome" config option for starling/strelka
 v2.2.0
@@ -113,7 +161,7 @@ v2.1.3
 v2.1.2
 - STARKA-124 fix strelka overlapping indel issue
 - STARKA-118 fix GSNAP alignment example: leading deletion in exon
-- Rolled back elimination of min-vexp and min-mismatch-window default settings, these are again required as command-line 
+- Rolled back elimination of min-vexp and min-mismatch-window default settings, these are again required as command-line
 - Set refitted hpol indel model as default
 - STARKA-113 Set parameter values according to Isis defaults
 - STARKA-130 Read buffer not being cleared in certain phasing context
@@ -130,23 +178,23 @@ v2.1
 - STARKA-57 HighRefRep should not be default rule-based filter for indels
 v2.0.21
 - Minor VQSR fixes
-- STARKA-52 gVCF block compression filters not cleared on single record 
+- STARKA-52 gVCF block compression filters not cleared on single record
 v2.0.20
 - Added VQSR for indels
 - Updated VQSR model parameters
 - Updated homopolymer error-model
-- Modified block-compression parameters for better NextSeq compression 
-- Added option for providing bed-file with sites that should not be block-compressed 
+- Modified block-compression parameters for better NextSeq compression
+- Added option for providing bed-file with sites that should not be block-compressed
 - STARKA-50 option to output somatic-callable bed file
 v2.0.17
-- STARKA-48 Fixed formatting bug for high GQX 
+- STARKA-48 Fixed formatting bug for high GQX
 - Header fix for adjusted Nova filters
 v2.0.16
 - Adjusted filters for Nova release
 v2.0.15
 - STARKA-47 Accept GATK-style bam indices
 - STARKA-43 Accept edge indel pattern produced by freeBayes/BamLeftAlign
-- STARKA-45 Filter indels greater than max indel size from candidate indel vcf 
+- STARKA-45 Filter indels greater than max indel size from candidate indel vcf
 v2.0.14
 - STARKA-41 Fix consensus open-break-end error
 v2.0.13
@@ -185,7 +233,7 @@ not in the ALT tag
 - Add win32 compat fixes from Eric Roller
 - STARKA-13 Groom CIGAR alignments on input to remove zero-length and PAD
 segments
-- STARKA-11 Samtools upgraded to 0.1.18 to resolve issues reported for 
+- STARKA-11 Samtools upgraded to 0.1.18 to resolve issues reported for
 strelka run with long-line version of hg19 reference.
 v2.0.2
 - Add haplotype score option to command-line

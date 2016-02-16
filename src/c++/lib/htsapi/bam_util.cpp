@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -37,13 +44,13 @@ change_bam_data_len(const int new_len,
         br.m_data = new_len;
         kroundup32(br.m_data);
         br.data = (uint8_t*) realloc(br.data,br.m_data);
-        if (NULL == br.data)
+        if (nullptr == br.data)
         {
             log_os << "ERROR: failed to realloc BAM data size to: " << new_len << "\n";
             exit(EXIT_FAILURE);
         }
     }
-    br.data_len = new_len;
+    br.l_data = new_len;
 }
 
 
@@ -55,7 +62,7 @@ change_bam_data_segment_len(const int end,
 {
     assert(end>=0);
     if (0==delta) return;
-    const int old_len(br.data_len);
+    const int old_len(br.l_data);
     const int new_len(old_len+delta);
     const int tail_size(old_len-end);
     assert(tail_size>=0);
@@ -92,7 +99,7 @@ edit_bam_qname(const char* name,
         bc.l_qname=new_qname_size;
     }
 
-    strcpy(bam1_qname(&br),name);
+    strcpy(bam_get_qname(&br),name);
 }
 
 
@@ -116,19 +123,19 @@ edit_bam_read_and_quality(const char* read,
 
     if (0 != delta)
     {
-        const int end(bam1_aux(&br)-br.data);
+        const int end(bam_get_aux(&br)-br.data);
         change_bam_data_segment_len(end,delta,br);
     }
     br.core.l_qseq = new_len;
     // update seq:
-    uint8_t* p(bam1_seq(&br));
+    uint8_t* p(bam_get_seq(&br));
     memset(p,0,(new_len+1)/2);
     for (int i(0); i<new_len; ++i)
     {
         p[i/2] |= get_bam_seq_code(read[i]) << 4*(1-i%2);
     }
     // update qual
-    memcpy(bam1_qual(&br),qual,new_len);
+    memcpy(bam_get_qual(&br),qual,new_len);
 }
 
 
@@ -140,7 +147,7 @@ nuke_bam_aux_field(bam1_t& br,
     while (true)
     {
         uint8_t* p(bam_aux_get(&br,tag));
-        if (NULL==p) return;
+        if (nullptr==p) return;
         bam_aux_del(&br,p);
     }
 }

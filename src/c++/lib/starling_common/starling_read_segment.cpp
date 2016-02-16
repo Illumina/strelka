@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \file
@@ -54,7 +61,7 @@ bam_seq
 read_segment::
 get_bam_read() const
 {
-    return bam_seq(bam1_seq(sread().get_brp()),_size,_offset);
+    return bam_seq(bam_get_seq(sread().get_brp()),_size,_offset);
 }
 
 
@@ -63,7 +70,7 @@ const uint8_t*
 read_segment::
 qual() const
 {
-    return bam1_qual(sread().get_brp())+_offset;
+    return bam_get_qual(sread().get_brp())+_offset;
 }
 
 

@@ -1,21 +1,28 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 #include "test_config.h"
 
 
 #include "boost/test/unit_test.hpp"
-#include "bedstreamprocessor.cpp"
+#include "bedstreamprocessor.hh"
 
 BOOST_AUTO_TEST_SUITE( bed_stream_processor_test )
 
@@ -25,8 +32,14 @@ public:
     dummy_variant_sink() : variant_pipe_stage_base() {}
     std::vector<std::unique_ptr<digt_site_info>> the_sites;
     std::vector<std::unique_ptr<digt_indel_info>> the_indels;
-    void process(std::unique_ptr<site_info> si) override { the_sites.push_back(downcast<digt_site_info>(std::move(si))); }
-    void process(std::unique_ptr<indel_info> ii) override { the_indels.push_back(downcast<digt_indel_info>(std::move(ii))); }
+    void process(std::unique_ptr<site_info> si) override
+    {
+        the_sites.push_back(downcast<digt_site_info>(std::move(si)));
+    }
+    void process(std::unique_ptr<indel_info> ii) override
+    {
+        the_indels.push_back(downcast<digt_indel_info>(std::move(ii)));
+    }
 };
 
 
@@ -71,39 +84,39 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
     std::unique_ptr<digt_indel_info> site;
     site.reset(new digt_indel_info(50, indel_key(),
-         indel_data(indel_key()),
-         starling_diploid_indel_core(),
-         starling_indel_report_info(),
-         starling_indel_sample_report_info()));
+                                   indel_data(indel_key()),
+                                   starling_diploid_indel_core(),
+                                   starling_indel_report_info(),
+                                   starling_indel_sample_report_info()));
 
     bsp.process(std::move(site));
 
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
 
     site.reset(new digt_indel_info(105, indel_key(),
-             indel_data(indel_key()),
-             starling_diploid_indel_core(),
-             starling_indel_report_info(),
-             starling_indel_sample_report_info()));
+                                   indel_data(indel_key()),
+                                   starling_diploid_indel_core(),
+                                   starling_indel_report_info(),
+                                   starling_indel_sample_report_info()));
 
 
     bsp.process(std::move(site));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
 
     site.reset(new digt_indel_info(150, indel_key(),
-            indel_data(indel_key()),
-             starling_diploid_indel_core(),
-             starling_indel_report_info(),
-             starling_indel_sample_report_info()));
+                                   indel_data(indel_key()),
+                                   starling_diploid_indel_core(),
+                                   starling_indel_report_info(),
+                                   starling_indel_sample_report_info()));
 
 
     bsp.process(std::move(site));
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
     site.reset(new digt_indel_info(250, indel_key(),
-            indel_data(indel_key()),
-             starling_diploid_indel_core(),
-             starling_indel_report_info(),
-             starling_indel_sample_report_info()));
+                                   indel_data(indel_key()),
+                                   starling_diploid_indel_core(),
+                                   starling_indel_report_info(),
+                                   starling_indel_sample_report_info()));
 
     bsp.process(std::move(site));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));

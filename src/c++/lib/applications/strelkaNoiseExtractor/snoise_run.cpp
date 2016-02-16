@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -55,7 +62,7 @@ snoise_run(
     if (tid < 0)
     {
         std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" << opt.bam_filename << "'\n";
+        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << opt.bam_filename << "'\n";
         throw blt_exception(oss.str().c_str());
     }
 
@@ -103,7 +110,7 @@ snoise_run(
         // wind sppr forward to position behind buffer head:
         sppr.set_head_pos(sinput.get_head_pos()-1);
 
-        if       (current.itype == INPUT_TYPE::READ)   // handle regular ELAND reads
+        if       (current.itype == INPUT_TYPE::READ)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report

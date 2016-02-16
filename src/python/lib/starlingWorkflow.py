@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -16,7 +23,6 @@ Starling germline small variant calling workflow
 
 
 import os.path
-import shutil
 import sys
 
 # add this path to pull in utils in same directory:
@@ -24,55 +30,33 @@ scriptDir=os.path.abspath(os.path.dirname(__file__))
 sys.path.append(scriptDir)
 
 # add pyflow path:
-sys.path.append(os.path.join(scriptDir,"pyflow"))
-
+pyflowDir=os.path.join(scriptDir,"pyflow")
+sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
+from configureUtil import safeSetBool, getIniSections, dumpIniSections
 from pyflow import WorkflowRunner
-from starkaWorkflow import StarkaCallWorkflow, StarkaWorkflow
+from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
+from starkaWorkflow import runCount, SharedPathInfo, \
+                           StarkaCallWorkflow, StarkaWorkflow
 from workflowUtil import checkFile, ensureDir, preJoin, which, \
                          getNextGenomeSegment, bamListCatCmd
-
-from configureUtil import safeSetBool, getIniSections, dumpIniSections
-
 
 
 __version__ = workflowVersion
 
 
 
-def runCount(self, taskPrefix="", dependencies=None) :
-    """
-    count size of fasta chromosomes
-    """
-    cmd  = "%s '%s' > %s"  % (self.params.countFastaBin, self.params.referenceFasta, self.paths.getRefCountFile())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"RefCount"), cmd, dependencies=dependencies))
-
-    return nextStepWait
-
-
-def runDepth(self,taskPrefix="",dependencies=None) :
-    """
-    estimate chrom depth
-    """
-
-    bamFile=""
+def starlingRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
+    bamList=[]
     if len(self.params.bamList) :
-        bamFile = self.params.bamList[0]
+        bamList.append(self.params.bamList[0])
     else :
         return set()
 
+    outputPath=self.paths.getChromDepth()
+    return runDepthFromAlignments(self, bamList, outputPath, taskPrefix, dependencies)
 
-    cmd  = "%s -E %s" % (sys.executable, self.params.getChromDepth)
-    cmd += " --bam '%s'" % (bamFile)
-    cmd += " > %s" % (self.paths.getChromDepth())
-
-    nextStepWait = set()
-    nextStepWait.add(self.addTask(preJoin(taskPrefix,"estimateChromDepth"),cmd,dependencies=dependencies))
-
-    return nextStepWait
 
 
 def runIndelModel(self,taskPrefix="",dependencies=None) :
@@ -105,6 +89,12 @@ class TempSegmentFiles :
     def __init__(self) :
         self.gvcf = []
         self.bamRealign = []
+        self.stats = []
+
+
+# we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
+def quote(instr):
+    return "\"%s\"" % (instr)
 
 
 
@@ -114,11 +104,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segStr = str(gseg.id)
 
-    # we need extra quoting for files with spaces in this workflow because command is stringified below to enable gVCF pipe:
-    def quote(instr):
-        return "'%s'" % (instr)
-
-    segCmd = [ self.params.starlingBin ]
+    segCmd = [ quote(self.params.starlingBin) ]
 
     segCmd.append("-clobber")
     segCmd.extend(["-min-paired-align-score",self.params.minMapq])
@@ -140,20 +126,31 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])
     segCmd.extend(['-min-vexp', '0.25'])
     segCmd.extend(['--do-short-range-phasing'])
-    segCmd.extend(["--report-file", self.paths.getTmpSegmentReportPath(gseg.pyflowId)])
+    # currently short-range phasing is not enabled with continuous variant calling. This ensures
+    # the header value for the relevant phasing filters is still emitted
+    if len(self.params.callContinuousVf) > 0 :
+        segCmd.extend(["--gvcf-include-header", "Phasing"])
+    segCmd.extend(["--report-file", quote(self.paths.getTmpSegmentReportPath(gseg.id))])
 
-    # VQSR:
-    segCmd.extend(['--variant-scoring-models-file',self.params.vqsrModelFile])
-    segCmd.extend(['--variant-scoring-model-name',self.params.vqsrModelName])
+    segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
+    segCmd.extend(["--stats-file", quote(segFiles.stats[-1])])
+
+    # Empirical Variant Scoring(EVS):
+    if self.params.isEVS :
+        segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
+        segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
 
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
-    if self.params.isSkipIndelErrorModel:
+    if self.params.isSkipDynamicIndelErrorModel:
+        # specify indelErrorModelName from inputIndelErrorModelsFile
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
+        segCmd.extend(['--indel-error-models-file', quote(self.params.inputIndelErrorModelsFile)])
     else :
-        segCmd.extend(['--indel-error-models-file', self.params.dynamicIndelErrorModelsFile])
+        # use dynamic indel error modeling to choose the appropritate model
+        segCmd.extend(['--indel-error-models-file', quote(self.params.dynamicIndelErrorModelsFile)])
 
-    if self.params.isReportVQSRMetrics :
-        segCmd.append("--gvcf-report-VQSRmetrics")
+    if self.params.isReportEVSFeatures :
+        segCmd.append("--report-evs-features")
 
     for bamPath in self.params.bamList :
         segCmd.extend(["-bam-file",quote(bamPath)])
@@ -164,10 +161,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(["--gvcf-include-header", "VF"])
 
     if self.params.isHighDepthFilter :
-        segCmd.extend(["--chrom-depth-file", self.paths.getChromDepth()])
+        segCmd.extend(["--chrom-depth-file", quote(self.paths.getChromDepth())])
 
     if self.params.isWriteRealignedBam :
-        segCmd.extend(["-realigned-read-file", self.paths.getTmpUnsortRealignBamPath(segStr)])
+        segCmd.extend(["-realigned-read-file", quote(self.paths.getTmpUnsortRealignBamPath(segStr))])
 
     def addListCmdOption(optList,arg) :
         if optList is None : return
@@ -178,13 +175,13 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
 
     if self.params.noCompressBed is not None :
-        segCmd.extend(['--nocompress-bed', self.params.noCompressBed])
+        segCmd.extend(['--nocompress-bed', quote(self.params.noCompressBed)])
 
     if self.params.targetRegionsBed is not None :
-        segCmd.extend(['--targeted-regions-bed', self.params.targetRegionsBed])
+        segCmd.extend(['--targeted-regions-bed', quote(self.params.targetRegionsBed)])
 
     if self.params.ploidyBed is not None :
-        segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
+        segCmd.extend(['--ploidy-region-bed', quote(self.params.ploidyBed)])
 
     if self.params.callContinuousVf is not None and gseg.chromLabel in self.params.callContinuousVf :
         segCmd.append('--call-continuous-vf')
@@ -196,12 +193,21 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
      # gvcf is written to stdout so we need shell features:
     segCmd = " ".join(segCmd)
 
+    # swap parent pyflow command-line into vcf header
+    if isFirstSegment :
+        def getHeaderFixCmd() :
+            cmd  = "\"%s\" -E \"%s\"" % (sys.executable, self.params.vcfCmdlineSwapper)
+            cmd += ' "' + " ".join(self.params.configCommandLine) + '"'
+            return cmd
+
+        segCmd += " | " + getHeaderFixCmd()
+
     segFiles.gvcf.append(self.paths.getTmpSegmentGvcfPath(segStr))
-    segCmd += " | %s -c >| %s" % (self.params.bgzip9Bin, segFiles.gvcf[-1])
+    segCmd += " | \"%s\" -c >| \"%s\"" % (self.params.bgzip9Bin, segFiles.gvcf[-1])
 
     nextStepWait = set()
 
-    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.pyflowId)
+    setTaskLabel=preJoin(taskPrefix,"callGenomeSegment_"+gseg.id)
     self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
     nextStepWait.add(setTaskLabel)
 
@@ -213,9 +219,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
             # adjust sorted to remove the ".bam" suffix
             sorted = sorted[:-4]
-            sortCmd="%s sort %s %s && rm -f %s" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
+            sortCmd="\"%s\" sort \"%s\" \"%s\" && rm -f \"%s\"" % (self.params.samtoolsBin,unsorted,sorted,unsorted)
 
-            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+gseg.pyflowId)
+            sortTaskLabel=preJoin(taskPrefix,"sortRealignedSegment_"+gseg.id)
             self.addTask(sortTaskLabel,sortCmd,dependencies=setTaskLabel,memMb=self.params.callMemMb)
             nextStepWait.add(sortTaskLabel)
 
@@ -230,25 +236,29 @@ def callGenome(self,taskPrefix="",dependencies=None):
     run variant caller on all genome segments
     """
 
-    tmpGraphDir=self.paths.getTmpSegmentDir()
-    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), "mkdir -p "+tmpGraphDir, dependencies=dependencies, isForceLocal=True)
+    tmpSegmentDir=self.paths.getTmpSegmentDir()
+    dirTask=self.addTask(preJoin(taskPrefix,"makeTmpDir"), getMkdirCmd() + [tmpSegmentDir], dependencies=dependencies, isForceLocal=True)
 
-    graphTasks = set()
+    segmentTasks = set()
 
     segFiles = TempSegmentFiles()
     for gseg in getNextGenomeSegment(self.params) :
 
-        graphTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
+        segmentTasks |= callGenomeSegment(self, gseg, segFiles, dependencies=dirTask)
 
-    if len(graphTasks) == 0 :
+    if len(segmentTasks) == 0 :
         raise Exception("No genome regions to analyze. Possible target region parse error.")
 
     # create a checkpoint for all segments:
-    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=graphTasks)
+    completeSegmentsTask = self.addTask(preJoin(taskPrefix,"completedAllGenomeSegments"),dependencies=segmentTasks)
 
     finishTasks = set()
 
+    # merge gVCF
     finishTasks.add(self.concatIndexVcf(taskPrefix, completeSegmentsTask, segFiles.gvcf, self.paths.getGvcfOutputPath(),"gVCF"))
+
+    # merge segment stats:
+    finishTasks.add(self.mergeRunStats(taskPrefix,completeSegmentsTask, segFiles.stats))
 
     if self.params.isWriteRealignedBam :
         def finishBam(tmpList, output, label) :
@@ -257,7 +267,9 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
         finishBam(segFiles.bamRealign, self.paths.getRealignedBamPath(), "realigned")
 
-    cleanTask=self.addTask(preJoin(taskPrefix,"cleanTmpDir"), "rm -rf "+tmpGraphDir, dependencies=finishTasks, isForceLocal=True)
+    if not self.params.isRetainTempFiles :
+        rmStatsTmpCmd = getRmdirCmd() + [tmpSegmentDir]
+        rmTask=self.addTask(preJoin(taskPrefix,"rmTmpDir"),rmStatsTmpCmd,dependencies=finishTasks, isForceLocal=True)
 
     nextStepWait = finishTasks
 
@@ -291,22 +303,16 @@ class CallWorkflow(StarkaCallWorkflow) :
 
 
 
-class PathInfo:
+class PathInfo(SharedPathInfo):
     """
     object to centralize shared workflow path names
     """
 
     def __init__(self, params) :
-        self.params = params
-
-    def getChromDepth(self) :
-        return os.path.join(self.params.workDir,"chromDepth.txt")
+        super(PathInfo,self).__init__(params)
 
     def getRunSpecificModel(self) :
         return os.path.join(self.params.workDir,"Indel_model_run.json")
-
-    def getTmpSegmentDir(self) :
-        return os.path.join(self.params.workDir, "genomeSegment.tmpdir")
 
     def getIndelSegmentDir(self) :
         return os.path.join(self.params.workDir, "indelSegment.tmpdir")
@@ -320,20 +326,11 @@ class PathInfo:
     def getTmpRealignBamPath(self, segStr,) :
         return os.path.join( self.getTmpSegmentDir(), "%s.realigned.bam" % (segStr))
 
-    def getTmpSegmentReportPath(self, segStr) :
-        return os.path.join( self.getTmpSegmentDir(), "stats.%s.txt" % (segStr))
-
-    def getVariantsDir(self) :
-        return self.params.variantsDir
-
     def getGvcfOutputPath(self) :
-        return os.path.join( self.getVariantsDir(), "genome.vcf.gz")
+        return os.path.join( self.params.variantsDir, "genome.vcf.gz")
 
     def getRealignedBamPath(self) :
         return os.path.join( self.params.realignedDir, 'realigned.bam');
-
-    def getRefCountFile(self) :
-        return os.path.join( self.params.workDir, "refCount.txt")
 
 
 
@@ -343,26 +340,24 @@ class StarlingWorkflow(StarkaWorkflow) :
     """
 
     def __init__(self,params,iniSections) :
-
-        super(StarlingWorkflow,self).__init__(params,iniSections)
+        global PathInfo
+        super(StarlingWorkflow,self).__init__(params,iniSections,PathInfo)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []
 
         # format other:
         safeSetBool(self.params,"isWriteRealignedBam")
-        safeSetBool(self.params,"isSkipIndelErrorModel")
+        safeSetBool(self.params,"isSkipDynamicIndelErrorModel")
 
         if self.params.isWriteRealignedBam :
             self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
             ensureDir(self.params.realignedDir)
 
-        self.paths = PathInfo(self.params)
-
         if self.params.isExome:
-            self.params.vqsrModel = "Qrule"
+            self.params.evsModelName = "Qrule"
             self.params.indelRefErrorFactor = "1"
-            self.params.indelErrorModel = "old"
+            self.params.indelErrorModelName = "old"
 
 
     def getSuccessMessage(self) :
@@ -381,8 +376,8 @@ class StarlingWorkflow(StarkaWorkflow) :
         callPreReqs = set()
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
-            callPreReqs |= runDepth(self)
-        if not self.params.isSkipIndelErrorModel :
+            callPreReqs |= starlingRunDepthFromAlignments(self)
+        if not self.params.isSkipDynamicIndelErrorModel :
             callPreReqs |= runIndelModel(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
 

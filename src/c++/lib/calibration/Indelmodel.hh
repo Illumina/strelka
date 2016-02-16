@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  * Indelmodel.hh
@@ -19,26 +26,61 @@
 
 #pragma once
 
-#include "calibration/SerializedModel.hh"
+#include "IndelModelMetadata.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "blt_util/blt_exception.hh"
 
 static const unsigned max_unit_len(10);
 static const unsigned max_tract_len(40);
-typedef std::pair<double,double> error_model[max_unit_len][max_tract_len];
 
+struct indel_error_rates
+{
+    indel_error_rates(
+        const double insert_error_rate = 0,
+        const double delete_error_rate = 0)
+    {
+        insert_rate = insert_error_rate;
+        delete_rate = delete_error_rate;
+    }
 
-struct IndelErrorModel : public serialized_model
+    double
+    get_rate(const INDEL::index_t it) const
+    {
+        switch (it)
+        {
+        case INDEL::DELETE :
+            return delete_rate;
+        case INDEL::INSERT :
+            return insert_rate;
+        default :
+            assert(false && "Unexpected indel type");
+            return 0.;
+        }
+    }
+
+    double insert_rate;
+    double delete_rate;
+};
+
+typedef indel_error_rates error_model[max_unit_len][max_tract_len];
+
+struct IndelErrorModel
 {
     IndelErrorModel();
-    IndelErrorModel(std::string n, std::string v, std::string d,int motif, int tract):
+    IndelErrorModel(const std::string& n, const std::string& v, const std::string& d,int motif, int tract):
         MaxMotifLength (motif),
         MaxTractLength (tract)
     {
-        this->name 		= n;
-        this->version 	= v;
-        this->date 		= d;
+        _meta.name 		= n;
+        _meta.version 	= v;
+        _meta.date 		= d;
+    }
+
+    const std::string&
+    getName() const
+    {
+        return _meta.name;
     }
 
     void Deserialize(const Json::Value& root);
@@ -49,22 +91,35 @@ struct IndelErrorModel : public serialized_model
                    double& ref_error_prob,
                    bool use_length_dependence = false) const;
 
-    bool is_simple_tandem_repeat(const starling_indel_report_info& iri) const;
+    indel_error_rates calc_abstract_prop(unsigned repeat_unit_length,
+                                         unsigned tract_length,
+                                         unsigned indel_size,
+                                         bool use_length_dependence) const;
 
     unsigned get_max_motif_length() const
     {
         return MaxMotifLength;
     }
 
-    void add_prop(const unsigned& unit, const unsigned& tract, const std::pair<double,double>& myProps);
+
+    void add_prop(const unsigned& unit, const unsigned& tract, const indel_error_rates& myProps);
 
 private:
+    double
+    adjusted_rate(
+        const unsigned repeat_unit_length,
+        const unsigned tract_length,
+        const unsigned indel_size,
+        const INDEL::index_t it) const;
+
     static
     unsigned
     get_min_tract_length(const starling_indel_report_info& iri)
     {
         return iri.repeat_unit_length * 2;
     }
+
+    IndelModelMetadata _meta;
 
 public:
     error_model model;

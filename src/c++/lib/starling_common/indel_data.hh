@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \file
@@ -66,12 +73,17 @@ struct read_path_scores
                      const score_t i=0,
                      const uint16_t ns=0,
                      const uint16_t rlen=0,
-                     const bool is_t1=true)
+                     const bool is_t1=true,
+                     const bool is_fwd=true,
+                     const int16_t rp=0
+                    )
         : ref(r)
         , indel(i)
         , nsite(ns)
         , read_length(rlen)
         , is_tier1_read(is_t1)
+        , is_fwd_strand(is_fwd)
+        , read_pos(rp)
     {}
 
     void
@@ -93,6 +105,12 @@ struct read_path_scores
 
     // used to filter for/against tier2 data:
     bool is_tier1_read;
+
+    // so we're able to collect scores by strand
+    bool is_fwd_strand;
+
+    // this is used in strelka to calculate read pos ranksums for indels
+    int16_t read_pos;
 };
 
 
@@ -190,7 +208,8 @@ struct indel_data
           is_external_candidate(false),
           is_forced_output(false),
           n_mapq(0),
-          cumm_mapq(0)
+          n_mapq0(0),
+          sum_sq_mapq(0)
     {}
 
     /// add an observation for this indel
@@ -304,12 +323,10 @@ public:
     // to be entered into the scores list
     evidence_t suboverlap_tier2_read_ids;
 
-    ranksum mq_ranksum;
-    ranksum baseq_ranksum;
-    ranksum read_pos_ranksum;
     unsigned n_mapq;
-    // sum of mapq for all reads at this position
-    int cumm_mapq;
+    unsigned n_mapq0;
+    // sum of mapq squares for all reads at this position
+    double sum_sq_mapq;
 
     struct status_t
     {

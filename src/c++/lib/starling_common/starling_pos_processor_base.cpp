@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -19,7 +26,6 @@
 #pragma warning(disable:4355)
 #endif
 
-#include "depth_buffer_util.hh"
 #include "starling_pos_processor_indel_util.hh"
 #include "starling_read_align.hh"
 #include "starling_read_util.hh"
@@ -33,6 +39,7 @@
 #include "blt_common/position_strand_distro_anomaly_lrt.hh"
 #include "blt_util/align_path.hh"
 #include "blt_util/blt_exception.hh"
+#include "blt_util/depth_buffer_util.hh"
 #include "blt_util/io_util.hh"
 #include "blt_util/log.hh"
 #include "blt_util/read_util.hh"
@@ -642,8 +649,7 @@ insert_read(
         }
     }
 
-    const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(_opt,
-                                                                  br,al,maplev));
+    const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(br,al,maplev));
     if (! res.first) return res;
 
     // must initialize initial read_segments "by-hand":
@@ -727,11 +733,11 @@ load_read_in_depth_buffer(const read_segment& rseg,
     const bool is_usable_mapping(MAPLEVEL::TIER1_MAPPED == maplev);
     if (is_usable_mapping)
     {
-        add_alignment_to_depth_buffer(al,sample(sample_no).estdepth_buff);
+        add_alignment_to_depth_buffer(al.pos,al.path,sample(sample_no).estdepth_buff);
     }
     else if (maplev == MAPLEVEL::TIER2_MAPPED)
     {
-        add_alignment_to_depth_buffer(al,sample(sample_no).estdepth_buff_tier2);
+        add_alignment_to_depth_buffer(al.pos,al.path,sample(sample_no).estdepth_buff_tier2);
     }
 }
 
@@ -1554,7 +1560,7 @@ pileup_read_segment(const read_segment& rseg,
                 }
 
                 // update extended feature metrics (including submapped reads):
-                if (_opt.is_compute_germline_VQSRmetrics())
+                if (_opt.is_compute_germline_scoring_metrics())
                 {
                     /// \TODO Morten -- consider improving MQ, MQ0 and RankSumMQ by:
                     ///  1) removing the if (! submapped) here
@@ -1565,7 +1571,7 @@ pileup_read_segment(const read_segment& rseg,
                         update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,adjustedMapq,align_strand_read_pos,is_submapped);
                     }
                 }
-                else if (_opt.is_compute_somatic_VQSRmetrics)
+                else if (_opt.is_compute_somatic_scoring_metrics)
                 {
                     update_somatic_features(ref_pos,sample_no,is_tier1,call_id,current_call_filter,mapq,read_pos,read_size);
                 }

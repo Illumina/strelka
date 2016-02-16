@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -19,6 +26,7 @@
 #include "strelka_streams.hh"
 #include "strelka_run.hh"
 
+#include "appstats/RunStatsManager.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "htsapi/bam_header_util.hh"
@@ -37,6 +45,10 @@ strelka_run(
     const prog_info& pinfo,
     const strelka_options& opt)
 {
+    opt.validate();
+
+    RunStatsManager segmentStatMan(opt.segmentStatsFilename);
+
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
     const strelka_deriv_options dopt(opt,ref);
@@ -54,7 +66,7 @@ strelka_run(
     if (! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header()))
     {
         std::ostringstream oss;
-        oss << "ERROR: Normal and tumor BAM files have incompatible headers.\n";
+        oss << "ERROR: Normal and tumor BAM/CRAM files have incompatible headers.\n";
         oss << "\tnormal_bam_file:\t'" << opt.bam_filename << "'\n";
         oss << "\ttumor_bam_file:\t'" << opt.tumor_bam_filename << "'\n";
         throw blt_exception(oss.str().c_str());
@@ -64,7 +76,7 @@ strelka_run(
     if (tid < 0)
     {
         std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM file: '" << opt.bam_filename << "'\n";
+        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << opt.bam_filename << "'\n";
         throw blt_exception(oss.str().c_str());
     }
 
@@ -76,7 +88,7 @@ strelka_run(
         const int32_t tumor_tid(tumor_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
         if (tid != tumor_tid)
         {
-            throw blt_exception("ERROR: tumor and normal BAM files have mis-matched reference sequence dictionaries.\n");
+            throw blt_exception("ERROR: tumor and normal BAM/CRAM files have mis-matched reference sequence dictionaries.\n");
         }
     }
 

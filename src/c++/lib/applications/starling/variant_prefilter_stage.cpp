@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *  Created on: Jun 4, 2015
@@ -19,8 +26,8 @@
 #include "calibration_models.hh"
 
 variant_prefilter_stage::variant_prefilter_stage(const calibration_models& model, std::shared_ptr<variant_pipe_stage_base> destination)
-: variant_pipe_stage_base(destination)
-, _model(model)
+    : variant_pipe_stage_base(destination)
+    , _model(model)
 {
 }
 
@@ -70,15 +77,12 @@ void variant_prefilter_stage::add_site_modifiers(
         smod.gq=si.dgt.poly.max_gt_qphred;
     }
 
-    model.clasify_site(si, smod);
+    model.classify_site(si, smod);
 }
-
-
-
 
 void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
 {
-    if (typeid(*info) == typeid(digt_site_info))
+    if (dynamic_cast<digt_site_info*>(info.get()) != nullptr)
     {
         auto si(downcast<digt_site_info>(std::move(info)));
 
@@ -109,7 +113,7 @@ void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
         auto si(downcast<continuous_site_info>(std::move(info)));
         for (auto& call : si->calls)
         {
-            _model.default_clasify_site(*si, call);
+            _model.default_classify_site(*si, call);
         }
 
         _sink->process(std::move(si));
@@ -118,9 +122,13 @@ void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
 
 void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
 {
-    if (typeid(*info) == typeid(digt_indel_info))
+    if (dynamic_cast<digt_indel_info*>(info.get()) != nullptr)
     {
         auto ii(downcast<digt_indel_info>(std::move(info)));
+
+        // we can't handle breakends at all right now:
+        if (ii->first()._ik.is_breakpoint()) return;
+
         // add filter for all indels in no-ploid regions:
         if (ii->first()._dindel.is_noploid())
         {
@@ -132,13 +140,18 @@ void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
     else
     {
         auto ii(downcast<continuous_indel_info>(std::move(info)));
+
+        // we can't handle breakends at all right now:
+        for (const auto& call : ii->calls)
+        {
+            if (call._ik.is_breakpoint()) return;
+        }
+
         for (auto& call : ii->calls)
         {
-            _model.default_clasify_indel(call);
+            _model.default_classify_indel(call);
         }
         _sink->process(std::move(ii));
     }
 }
-
-
 

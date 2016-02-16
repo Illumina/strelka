@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -28,6 +35,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
+
 
 
 void
@@ -72,7 +81,6 @@ insert_indel(const indel_observation& obs)
 }
 
 
-
 bool
 indel_synchronizer::
 is_candidate_indel_impl_test(
@@ -90,19 +98,77 @@ is_candidate_indel_impl_test(
     // have we already tested if the indel is much more likely to be noise than sample variation?
     bool is_indel_noise_checked(false);
 
-    //////////////////////////////////////
-    // if candidate is in an STR that we have
-    // indel error estimates for,
-    // test against the appropriate error model
-    //
+    const IndelErrorModel indel_model = scoring_models::Instance().get_indel_model();
+
+    // since we don't use indel size to calculate error rates at the moment in candidcacy
+    // we can retrieve this value once
+    static const indel_error_rates hpol_one_error_rates = indel_model.calc_abstract_prop(1, 1, 1, false);
+
+
+    starling_indel_report_info iri;
+    get_starling_indel_report_info(ik,id,_ref,iri);
+
+    bool is_indel(ik.type == INDEL::INSERT || ik.type == INDEL::DELETE);
+
+    if (is_indel)
     {
-        starling_indel_report_info iri;
-        get_starling_indel_report_info(ik,id,_ref,iri);
+        bool is_pass_indel_noise_check(false);
+        // HPOL ONE CASE
+        // we're only testing against the reference error rate here
+        // in hpol one cases, we need to establish a few things:
+        // 1. reference tract length is 0 or 1
+        // 2. indel error rate
+        // 3. total coverage
+        if (iri.ref_repeat_count <= 1)
+        {
+            is_indel_noise_checked = true;
 
-        const IndelErrorModel indel_model = scoring_models::Instance().get_indel_model();
+            for (unsigned i(0); i<isds; ++i)
+            {
+                const unsigned n_indel_reads = idsp[i]->all_read_ids.size();
+                unsigned n_total_reads = ebuff(i).val(ik.pos-1);
+                n_total_reads = std::max(n_total_reads,n_indel_reads);
 
-        // check to see if indel meets STR criteria
-        if (indel_model.is_simple_tandem_repeat(iri))
+                if (n_total_reads == 0)
+                {
+                    continue;
+                }
+
+                // test to see if the observed indel coverage exceeds the minimum value
+                // for the rejection threshold.
+
+                // this min indel support coverage is applied regardless of error model:
+                static const unsigned min_candidate_cov_floor(2);
+                if (n_indel_reads < min_candidate_cov_floor)
+                {
+                    continue;
+                }
+
+                // this min indel support coverage is based on error model:
+                double error_rate(0.);
+                if     (ik.type == INDEL::INSERT)
+                {
+                    error_rate = hpol_one_error_rates.insert_rate;
+                }
+                else
+                {
+                    error_rate = hpol_one_error_rates.delete_rate;
+                }
+                is_pass_indel_noise_check=_countCache.isRejectNull(n_total_reads, error_rate, n_indel_reads);
+
+                // if any sample passes the noise check, the indel is a candidate
+                if (is_pass_indel_noise_check)
+                {
+                    break;
+                }
+            }
+
+            if (! is_pass_indel_noise_check) return false;
+        }
+
+        // NON-HPOL ONE CASE
+        // check broader STR criteria for non-hpol one
+        if (!is_indel_noise_checked)
         {
             is_indel_noise_checked=true;
             bool use_length_dependence=false;
@@ -115,7 +181,8 @@ is_candidate_indel_impl_test(
             // get expected per-read error rate for this STR
             indel_model.calc_prop(_opt,iri,indel_error_prob,ref_error_prob,use_length_dependence);
 
-            bool is_pass_indel_noise_check(false);
+            // need to undo the reference-error bias term that is used to reduce overcalls
+            ref_error_prob /= _opt.indel_ref_error_factor;
 
             for (unsigned i(0); i<isds; ++i)
             {
@@ -147,77 +214,7 @@ is_candidate_indel_impl_test(
         }
     }
 
-
-    if (! is_indel_noise_checked)
-    {
-        //////////////////////////////////////
-        // test against min read count:
-        //
-        {
-            bool is_min_count(false);
-
-            int n_total_reads(0);
-            for (unsigned i(0); i<isds; ++i)
-            {
-                const int n_reads(idsp[i]->all_read_ids.size());
-
-                // do the candidate reads exceed the (possibly lower than
-                // default) sample specific threshold?:
-                if (n_reads >= sample_opt(i).min_candidate_indel_reads)
-                {
-                    is_min_count=true;
-                    break;
-                }
-                n_total_reads += n_reads;
-            }
-
-            // do reads from all samples exceed the default threshold?:
-            if (n_total_reads >= _opt.default_min_candidate_indel_reads) is_min_count=true;
-
-            if (! is_min_count) return false;
-        }
-
-        //////////////////////////////////////
-        // test against min read frac:
-        //
-        {
-            bool is_min_frac(false);
-
-            double min_large_indel_frac(_opt.min_candidate_indel_read_frac);
-            const bool is_small_indel(static_cast<int>(std::max(ik.length,ik.swap_dlength)) <= _opt.max_small_candidate_indel_size);
-
-
-            for (unsigned i(0); i<isds; ++i)
-            {
-                // this value is used to get around type-mismatch error in
-                // std::max() when used below
-                static const unsigned one(1);
-
-                // note estdepth is based on genomic reads only, so
-                // readfrac can be > 1:
-                //
-                const unsigned n_reads(idsp[i]->all_read_ids.size());
-                const unsigned estdepth(std::max(one,ebuff(i).val(ik.pos-1)));
-                const double readfrac(static_cast<double>(n_reads)/static_cast<double>(estdepth));
-
-                double min_indel_frac(min_large_indel_frac);
-                if (is_small_indel)
-                {
-                    min_indel_frac=std::max(min_indel_frac,sample_opt(i).min_small_candidate_indel_read_frac);
-                }
-
-                // min_frac threshold only needs to pass in one sample to
-                // be a candidate in all synchronized samples:
-                if (readfrac >= min_indel_frac)
-                {
-                    is_min_frac=true;
-                    break;
-                }
-            }
-
-            if (! is_min_frac) return false;
-        }
-    }
+    assert(!is_indel || is_indel_noise_checked);
 
     /////////////////////////////////////////
     // test against short open-ended segments:
@@ -281,7 +278,6 @@ is_candidate_indel_impl(
         idsp[i]->status.is_candidate_indel_cached=true;
     }
 }
-
 
 void
 indel_synchronizer::

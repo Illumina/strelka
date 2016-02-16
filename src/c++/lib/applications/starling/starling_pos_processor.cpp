@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 #include "starling_pos_processor.hh"
@@ -85,7 +92,8 @@ starling_pos_processor(
     if (_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
-                          _opt,_dopt,ref,_nocompress_regions,_streams.gvcf_osptr(),
+                          _opt,_dopt,ref,_nocompress_regions,
+                          _streams.getSampleName(), _streams.gvcf_osptr(),
                           sample(0).bc_buff));
     }
 
@@ -117,7 +125,7 @@ starling_pos_processor(
         indel_sync_data isdata;
         isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
                                normal_sif.sample_opt, max_candidate_normal_sample_depth, 0);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, ref, isdata, 0));
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, ref, dopt.countCache, isdata, 0));
     }
 }
 
@@ -199,7 +207,7 @@ starling_pos_processor::process_pos_snp_single_sample_continuous(
 
 
     std::unique_ptr<site_info> si(new continuous_site_info(pos,pi.get_ref_base(),good_pi,
-            _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
+                                                           _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
 
     si->n_used_calls=cpi.n_used_calls();
     si->n_unused_calls=cpi.n_unused_calls();
@@ -236,7 +244,8 @@ starling_pos_processor::process_pos_snp_single_sample_continuous(
 
 
 void
-starling_pos_processor::process_pos_snp_single_sample_impl(
+starling_pos_processor::
+process_pos_snp_single_sample_impl(
     const pos_t pos,
     const unsigned sample_no)
 {
@@ -269,8 +278,13 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
 
     const bool is_forced(is_forced_output_pos(pos));
 
+    // the second term in is_skippable below forces sites to go through the pipeline
+    // if phaser has put a hold on buffer cleanup. This ensures that the phaser will be turned back off
+    //
+    // TODO: there must be a way to force correct usage into the phaser's API instead of requiring this brittle hack
+    const bool is_skippable(! (is_forced || is_save_pileup_buffer()));
 
-    if (pi.calls.empty()&& !is_forced) return;
+    if (pi.calls.empty() && is_skippable) return;
 
     _pileupCleaner.CleanPileupErrorProb(sif.cpi);
 
@@ -281,9 +295,6 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
     std::unique_ptr<digt_site_info> si(new digt_site_info(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced));
     si->n_used_calls=cpi.n_used_calls();
     si->n_unused_calls=cpi.n_unused_calls();
-
-
-
 
 
     // delay writing any snpcalls so that anomaly tests can (optionally) be applied as filters:
@@ -370,9 +381,6 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
     }
 #endif
 
-    //const bool is_anomaly(is_pos_adis || is_pos_acov);
-    //const bool is_filter_snp(is_overfilter || (_opt.is_filter_anom_calls && is_anomaly));
-
     //    const bool is_nf_snp(is_snp && (! is_filter_snp));
     if (is_snp || is_forced)
     {
@@ -381,8 +389,8 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
             si->hapscore=get_hapscore(pi.hap_set);
         }
 
-        // do calculate VQSR metrics
-        if (_opt.is_compute_germline_VQSRmetrics())
+        // calculate empirical scoring metrics
+        if (_opt.is_compute_germline_scoring_metrics())
         {
             si->MQ               = pi.get_rms_mq();
             si->ReadPosRankSum   = pi.get_read_pos_ranksum();
@@ -458,16 +466,6 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
         is_reported_event = true;
     }
 
-#if 0
-    if (is_anomaly && (! _opt.is_filter_anom_calls))
-    {
-        if (is_pos_adis) report_os << "ANOM_DIS pos: " << output_pos << "\n";
-        if (is_pos_acov) report_os << "ANOM_COV pos: " << output_pos << "\n";
-
-        is_reported_event = true;
-    }
-#endif
-
     if (_opt.is_print_all_site_evidence || (_opt.is_print_evidence && is_reported_event))
     {
         report_os << "EVIDENCE pos: " << output_pos << "\n"
@@ -484,8 +482,8 @@ starling_pos_processor::process_pos_snp_single_sample_impl(
 
 void
 starling_pos_processor::process_pos_indel_single_sample(
-        const pos_t pos,
-        const unsigned sample_no)
+    const pos_t pos,
+    const unsigned sample_no)
 {
     if (_opt.is_bsnp_diploid())
     {
@@ -641,8 +639,8 @@ process_pos_indel_single_sample_digt(
 void
 starling_pos_processor::
 process_pos_indel_single_sample_continuous(
-        const pos_t pos,
-        const unsigned sample_no)
+    const pos_t pos,
+    const unsigned sample_no)
 {
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:

@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -64,6 +71,14 @@ is_new_value_blockable(const int new_val,
     return check_block_tolerance(ss2,frac_tol,abs_tol);
 }
 
+// sites that are 0/1 can be compressed if their non-ref allele ratios are low enough. So, fix those here
+static const char* map_gt_to_homref(const char* gt)
+{
+    if (0 == std::strcmp("0/1", gt))
+        return "0/0";
+    return gt;
+}
+
 
 
 bool
@@ -80,7 +95,7 @@ test(const digt_site_info& si) const
 
     if (is_nonref || si.is_nonref()) return false;
 
-    if (gt != si.get_gt()) return false;
+    if (gt != map_gt_to_homref(si.get_gt())) return false;
 
     // coverage states must match:
     if (is_covered != si.smod.is_covered) return false;
@@ -123,7 +138,7 @@ join(const digt_site_info& si)
         pos = si.pos;
         filters = si.smod.filters;
         is_nonref = si.is_nonref();
-        gt = si.get_gt();
+        gt = map_gt_to_homref(si.get_gt());
         is_used_covered = si.smod.is_used_covered;
         is_covered = si.smod.is_covered;
         ploidy = si.dgt.ploidy;
@@ -166,7 +181,7 @@ test(const continuous_site_info& si) const
 
     if (is_nonref || si.is_nonref()) return false;
 
-    if (gt != si.get_gt(si.calls.front())) return false;
+    if (gt != map_gt_to_homref(si.get_gt(si.calls.front()))) return false;
 
     // coverage states must match:
     if (is_covered != (si.n_used_calls != 0 || si.n_unused_calls != 0)) return false;
@@ -176,9 +191,9 @@ test(const continuous_site_info& si) const
     {
         // test blocking values:
         if (! is_new_value_blockable(si.calls.front().gqx,
-                block_gqx,frac_tol,abs_tol,
-                true,
-                true))
+                                     block_gqx,frac_tol,abs_tol,
+                                     true,
+                                     true))
         {
             return false;
         }
@@ -209,7 +224,7 @@ gvcf_block_site_record::join(const continuous_site_info& si)
         if (!si.calls.empty())
         {
             filters = si.calls.front().filters;
-            gt = si.get_gt(si.calls.front());
+            gt = map_gt_to_homref(si.get_gt(si.calls.front()));
             is_nonref = si.is_nonref();
             // TODO: handle no coverage regions in continuous
             has_call = true;

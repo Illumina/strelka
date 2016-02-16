@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 ################################################################################
@@ -28,13 +35,15 @@ endif ()
 macro (initBoostParams)
     # required boost libraries
     set (THIS_BOOST_VERSION 1.53.0)
-    set (THIS_BOOST_COMPONENTS filesystem program_options
-                               system unit_test_framework)
+    # note we default to alphabetical order here, except where boost libraries depend on
+    # each other (timer->chrono)
+    set (THIS_BOOST_COMPONENTS filesystem program_options serialization
+                               system timer chrono unit_test_framework)
 
     # the name given to boost.build and the library name are the same for all libraries, except
     # for test, so we need two lists now:
-    set (THIS_BOOST_BUILD_COMPONENTS filesystem program_options
-                                     system test)
+    set (THIS_BOOST_BUILD_COMPONENTS filesystem program_options serialization
+                                     system timer chrono test)
     set (Boost_USE_STATIC_LIBS ON)
     if (NOT WIN32)
         # bjam on windows ignores this setting so skip for win32:
@@ -145,18 +154,21 @@ if (NOT Boost_FOUND)
             COMMAND ${CMAKE_COMMAND} -E touch "${BOOST_BUILD_DIR}/boost_unpack_complete")
     endif ()
 
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        file(APPEND "${BOOST_SRC_DIR}/tools/build/v2/user-config.jam" "using gcc : : \"${CMAKE_CXX_COMPILER}\" ;\n")
-    endif ()
-
     set (BOOST_BOOTSTRAP sh "bootstrap.sh")
     if (WIN32)
         set (BOOST_BOOTSTRAP "bootstrap.bat")
     endif ()
 
+    # boost compile works in windows, but we aren't going to link anyway so we're
+    # skipping to save time:
+    #
     if (NOT WIN32)
-        # boost compile works in windows, but we aren't going to link anyway so we're
-        # skipping to save time:
+
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            set (UCONFIG "${BOOST_SRC_DIR}/tools/build/src/user-config.jam")
+            file (WRITE "${UCONFIG}" "using gcc : : \"${CMAKE_CXX_COMPILER}\" ;\n")
+        endif ()
+
         message(STATUS "Configuring boost library")
         execute_process(
             COMMAND ${BOOST_BOOTSTRAP}

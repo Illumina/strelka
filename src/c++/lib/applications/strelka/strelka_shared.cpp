@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -19,6 +26,7 @@
 #include "position_somatic_snv_strand_grid.hh"
 #include "somatic_indel_grid.hh"
 #include "strelka_shared.hh"
+#include "strelkaScoringFeatures.hh"
 #include "blt_util/blt_exception.hh"
 
 #include <sstream>
@@ -46,12 +54,36 @@ strelka_deriv_options(
             oss << "ERROR: Can't find chromosome: '" << chrom_name << "' in chrom depth file: " << opt.sfilter.chrom_depth_file << "\n";
             throw blt_exception(oss.str().c_str());
         }
-        sfilter.max_depth=(cdi->second*opt.sfilter.max_depth_factor);
-        assert(sfilter.max_depth>=0.);
+        sfilter.expected_chrom_depth=(cdi->second);
+        sfilter.max_chrom_depth=(cdi->second*opt.sfilter.max_depth_factor);
+        assert(sfilter.max_chrom_depth>=0.);
     }
 
     sfilter.indelRegionStage=(addPostCallStage(opt.sfilter.indelRegionFlankSize));
+
+    if (opt.isUseSomaticSNVScoring())
+    {
+        somaticSnvScoringModel.reset(
+            new VariantScoringModel(
+                STRELKA_SNV_SCORING_FEATURES::getFeatureMap(),
+                opt.somatic_snv_scoring_model_filename,
+                SCORING_CALL_TYPE::SOMATIC,
+                SCORING_VARIANT_TYPE::SNV)
+        );
+    }
+    if (opt.isUseSomaticIndelScoring())
+    {
+        somaticIndelScoringModel.reset(
+            new VariantScoringModel(
+                STRELKA_INDEL_SCORING_FEATURES::getFeatureMap(),
+                opt.somatic_indel_scoring_model_filename,
+                SCORING_CALL_TYPE::SOMATIC,
+                SCORING_VARIANT_TYPE::INDEL)
+        );
+    }
 }
+
+
 
 /// dtor required to be in the cpp so that unique ptr can access complete data type
 strelka_deriv_options::

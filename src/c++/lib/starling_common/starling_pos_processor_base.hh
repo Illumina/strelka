@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 /// \file
@@ -25,12 +32,12 @@
 #pragma once
 
 #include "blt_common/map_level.hh"
+#include "blt_util/depth_buffer.hh"
 #include "blt_util/depth_stream_stat_range.hh"
 #include "blt_util/pos_processor_base.hh"
 #include "blt_util/RegionTracker.hh"
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
-#include "starling_common/depth_buffer.hh"
 #include "starling_common/indel_buffer.hh"
 #include "starling_common/indel_set.hh"
 #include "starling_common/indel_synchronizer.hh"

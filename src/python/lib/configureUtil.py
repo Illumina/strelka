@@ -1,13 +1,20 @@
 #
-# Starka
-# Copyright (c) 2009-2014 Illumina, Inc.
+# Strelka - Small Variant Caller
+# Copyright (c) 2009-2016 Illumina, Inc.
 #
-# This software is provided under the terms and conditions of the
-# Illumina Open Source Software License 1.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# at your option) any later version.
 #
-# You should have received a copy of the Illumina Open Source
-# Software License 1 along with this program. If not, see
-# <https://github.com/sequencing/licenses/>
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 
 """
@@ -191,9 +198,11 @@ def validateFixExistingFileArg(argFile,label) :
 
 def checkTabixIndexedFile(iname,label) :
     assert(iname is not None)
-    tabixFile = iname + ".tbi"
-    if os.path.isfile(tabixFile) : return
-    raise OptParseException("Can't find expected %s index file: '%s'" % (label,tabixFile))
+    if os.path.isfile(iname) : return
+    raise OptParseException("Can't find expected %s file: '%s'" % (label,iname))
+    tabixIndexFile = iname + ".tbi"
+    if os.path.isfile(tabixIndexFile) : return
+    raise OptParseException("Can't find expected %s index file: '%s'" % (label,tabixIndexFile))
 
 
 def checkOptionalTabixIndexedFile(iname,label) :
@@ -217,9 +226,17 @@ def checkForBamIndex(bamFile):
     """
     make sure bam file has an index
     """
+    # check for multi-extension index format PREFIX.bam -> PREFIX.bam.bai:
     for ext in (".bai", ".csi", ".crai") :
         indexFile=bamFile + ext
         if os.path.isfile(indexFile) : return
+
+    # check for older short index format PREFIX.bam -> PREFIX.bai:
+    for (oldSuffix,newSuffix) in [ (".bam",".bai") ] :
+        if not bamFile.endswith(oldSuffix) : continue
+        indexFile=bamFile[:-len(oldSuffix)] + newSuffix
+        if os.path.isfile(indexFile) : return
+
     raise OptParseException("Can't find any expected BAM/CRAM index files for: '%s'" % (bamFile))
 
 
@@ -261,9 +278,9 @@ class BamSetChecker(object):
             self.bamList.append(inputBamFile)
             self.bamLabels.append(inputLabel)
 
-    def check(self, samtoolsBin, referenceFasta) :
+    def check(self, htsfileBin, referenceFasta) :
 
-        checkChromSet(samtoolsBin,
+        checkChromSet(htsfileBin,
                       referenceFasta,
                       self.bamList,
                       self.bamLabels,

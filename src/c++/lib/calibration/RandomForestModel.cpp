@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 /*
  *      Author: Morten Kallberg
@@ -18,10 +25,11 @@
 
 #include "blt_util/log.hh"
 #include "blt_util/parse_util.hh"
+#include "common/Exceptions.hh"
 
-#include <cstdlib>
+#include <sstream>
 
-using namespace illumina::blt_util;
+
 
 namespace DTREE_NODE_TYPE
 {
@@ -52,6 +60,8 @@ get_label(const index_t i)
 }
 }
 
+
+
 template <typename L, typename R>
 void
 RandomForestModel::
@@ -68,19 +78,24 @@ parseTreeNode(
     val.right = static_cast<R>(v[1].asDouble());
 }
 
-void RandomForestModel
-::Deserialize( const Json::Value& root)
+
+
+void
+RandomForestModel::
+Deserialize(
+    const unsigned expectedFeatureCount,
+    const Json::Value& root)
 {
     clear();
 
     using namespace DTREE_NODE_TYPE;
-    serialized_calibration_model::Deserialize(root);
 
     //TODO read in other RF specific values
 
     // Loop through all the trees
-    Json::Value jmodels = root["Model"];
-    for ( unsigned tree_count = 0; tree_count < jmodels.size(); ++tree_count)
+    const Json::Value jmodels = root["Model"];
+    const unsigned treeCount(jmodels.size());
+    for (unsigned treeIndex = 0; treeIndex < treeCount; ++treeIndex)
     {
         _forest.emplace_back();
         DecisionTree& dtree(_forest.back());
@@ -89,16 +104,16 @@ void RandomForestModel
         for (int i(0); i<SIZE; ++i)
         {
             const index_t nodeTypeIndex(static_cast<index_t>(i));
-            Json::Value tree_cat = jmodels[tree_count][get_label(nodeTypeIndex)];
+            const Json::Value tree_cat = jmodels[treeIndex][get_label(nodeTypeIndex)];
 
             // loop over all the nodes in the tree
-            for (Json::Value::iterator it = tree_cat.begin(); it != tree_cat.end(); ++it)
+            for (Json::Value::const_iterator it = tree_cat.begin(); it != tree_cat.end(); ++it)
             {
-                unsigned nodeIndex(std::atoi(it.key().asCString()));
-                if (dtree.data.size() <= nodeIndex)
-                    dtree.data.resize(nodeIndex+1);
+                using namespace illumina::blt_util;
+                const unsigned nodeIndex(parse_unsigned_rvalue(it.key().asCString()));
+                if (dtree.data.size() <= nodeIndex) dtree.data.resize(nodeIndex+1);
 
-                Json::Value value = (*it);
+                const Json::Value value = (*it);
                 DecisionTreeNode& node(dtree.data[nodeIndex]);
                 switch (nodeTypeIndex)
                 {
@@ -110,9 +125,14 @@ void RandomForestModel
                     break;
                 case DECISION:
                     parseTreeNode(value,node.decision);
-                    if (node.decision.left >= static_cast<int>(_nFeatures))
+                    if (node.decision.left >= static_cast<int>(expectedFeatureCount))
                     {
-                        _nFeatures=node.decision.left+1;
+                        using namespace illumina::common;
+
+                        std::ostringstream oss;
+                        oss << "ERROR: scoring model max feature index: " << node.decision.left
+                            << " is inconsistent with expected feature count " << expectedFeatureCount;
+                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
                     }
                     break;
                 default:
@@ -120,9 +140,9 @@ void RandomForestModel
                 }
             }
         }
-
     }
 }
+
 
 
 double

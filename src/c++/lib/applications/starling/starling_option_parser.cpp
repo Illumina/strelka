@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -57,10 +64,6 @@ get_starling_option_parser(
      "Non-variant blocks are chosen to constrain sample values to range [x,y], y <= max(x+3,x*(100+block-percent-tol)/100)")
     ("gvcf-no-block-compression", po::value(&opt.gvcf.is_block_compression)->zero_tokens()->implicit_value(false),
      "Turn off block compression in gVCF output")
-    ("gvcf-report-VQSRmetrics", po::value(&opt.is_report_germline_VQSRmetrics)->zero_tokens(),
-     "Report metrics used for germline VQSR")
-    ("gvcf-compute-calibration-features", po::value(&opt.is_compute_calibration_features)->zero_tokens(),
-     "Output all features used for calibration model training, development only.")
     ("nocompress-bed",  po::value(&opt.gvcf.nocompress_region_bedfile),
      "Bed file with sites that should not be block-compressed in gVCF (must be bgzip compressed and tabix indexed).")
     ("targeted-regions-bed",  po::value(&opt.gvcf.targeted_regions_bedfile),
@@ -70,15 +73,15 @@ get_starling_option_parser(
     ("indel-ref-error-factor",  po::value(&opt.indel_ref_error_factor)->default_value(opt.indel_ref_error_factor),
      "Choose multiplier for ref error rate to use; 1 would be expected to be correct, but higher values counteract a bias away from homozygous indels (undercalling)")
     ("call-continuous-vf",  po::value(&opt.is_ploidy_prior)->zero_tokens()->implicit_value(false),
-          "Instead of a haploid/diploid prior assumption, output a continuous VF")
+     "Instead of a haploid/diploid prior assumption, output a continuous VF")
     ("noise-floor",  po::value(&opt.noise_floor)->default_value(opt.noise_floor),
-          "The noise rate for basecalls assumed when calling continuous variant frequencies")
+     "The noise rate for basecalls assumed when calling continuous variant frequencies")
     ("min-het-vf",  po::value(&opt.min_het_vf)->default_value(opt.min_het_vf),
-                    "The minimum allele frequency to call a heterozygous genotype when calling continuous variant frequencies")
+     "The minimum allele frequency to call a heterozygous genotype when calling continuous variant frequencies")
     ("gvcf-skip-header", po::value(&opt.gvcf.is_skip_header)->zero_tokens(),
      "Skip writing header info for the gvcf file (usually used to simplify segment concatenation)")
     ("gvcf-include-header", po::value(&opt.gvcf.include_headers)->multitoken(),
-          "Include the specified field description in the header (usually used to simplify segment concatenation when different segments have different fields)")
+     "Include the specified field description in the header (usually used to simplify segment concatenation when different segments have different fields)")
     ;
 
     po::options_description phase_opt("Read-backed phasing options");
@@ -92,9 +95,9 @@ get_starling_option_parser(
     po::options_description score_opt("scoring-options");
     score_opt.add_options()
     ("variant-scoring-models-file", po::value(&opt.germline_variant_scoring_models_filename),
-     "Model file for germline small variant scoring (VQSR)")
+     "File providing germline empirical variant scoring models")
     ("variant-scoring-model-name", po::value(&opt.germline_variant_scoring_model_name),
-     "The scoring model for germline small variants")
+     "The scoring model for germline variants")
     ;
 
     po::options_description starling_parse_opt("Germline calling options");

@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -17,13 +24,14 @@
 
 #pragma once
 
-
-#include "codon_phaser.hh"
 #include "gvcf_block_site_record.hh"
-#include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
+#include "starling_shared.hh"
+#include "variant_pipe_stage_base.hh"
+
+#include "blt_util/RegionTracker.hh"
+
 #include <iosfwd>
-#include "variant_prefilter_stage.hh"
 
 class calibration_models;
 
@@ -39,16 +47,18 @@ struct gvcf_writer : public variant_pipe_stage_base
         const starling_deriv_options& dopt,
         const reference_contig_segment& ref,
         const RegionTracker& nocompress_regions,
+        const std::string& sampleName,
         std::ostream* os,
         const calibration_models& cm);
 
 
     void process(std::unique_ptr<site_info>) override;
     void process(std::unique_ptr<indel_info>) override;
-    void flush() override;
 
 
 private:
+    void flush_impl() override;
+
     void add_site_internal(digt_site_info& si);
     void add_site_internal(continuous_site_info& si);
     void write_block_site_record();
@@ -110,9 +120,4 @@ private:
 
     gvcf_compressor _gvcf_comp;
     const calibration_models& _CM;
-
-
-
-
 };
-

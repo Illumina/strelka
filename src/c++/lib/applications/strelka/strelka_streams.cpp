@@ -1,14 +1,21 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Starka
-// Copyright (c) 2009-2014 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 //
 
 ///
@@ -68,8 +75,8 @@ write_shared_vcf_header_info(
         for (const auto& val : dopt.chrom_depth)
         {
             const std::string& chrom(val.first);
-            const double meanDepth(val.second);
-            os << "##MeanDepth_" << chrom << '=' << meanDepth << "\n";
+            const double expectedDepth(val.second);
+            os << "##Depth_" << chrom << '=' << expectedDepth << "\n";
         }
     }
 }
@@ -81,7 +88,7 @@ strelka_streams(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const prog_info& pinfo,
-    const bam_header_t* const header,
+    const bam_hdr_t* const header,
     const StrelkaSampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
@@ -105,12 +112,8 @@ strelka_streams(
 
         std::ofstream* fosptr(new std::ofstream);
         _somatic_snv_osptr.reset(fosptr);
-#ifdef DEBUG_HEADER
-        std::ostream& fos = std::cout;
-#else
         std::ofstream& fos(*fosptr);
         open_ofstream(pinfo,opt.somatic_snv_filename,"somatic-snv",opt.is_clobber,fos);
-#endif
 
         if (! opt.sfilter.is_skip_header)
         {
@@ -139,7 +142,12 @@ strelka_streams(
             fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
             fos << "##INFO=<ID=PNOISE,Number=1,Type=Float,Description=\"Fraction of panel containing non-reference noise at this site\">\n";
             fos << "##INFO=<ID=PNOISE2,Number=1,Type=Float,Description=\"Fraction of panel containing more than one non-reference noise obs at this site\">\n";
-            fos << "##INFO=<ID=VQSR,Number=1,Type=Float,Description=\"Recalibrated quality score expressing the phred scaled probability of the somatic call being a FP observation.\">\n";
+            fos << "##INFO=<ID=EVS,Number=1,Type=Float,Description=\"Empirical Variant Score (EVS) expressing the phred-scaled probability of the call being a FP observation.\">\n";
+
+            if (opt.isReportEVSFeatures)
+            {
+                fos << "##INFO=<ID=EVSF,Number=.,Type=Float,Description=\"Empirical variant scoring features.\">\n";
+            }
 
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1 (used+filtered)\">\n";
@@ -152,15 +160,15 @@ strelka_streams(
             fos << "##FORMAT=<ID=TU,Number=2,Type=Integer,Description=\"Number of 'T' alleles used in tiers 1,2\">\n";
 
             // FILTERS:
-            const bool isUseVQSR(opt.isUseSomaticVQSR());
+            const bool isUseEVS(dopt.somaticSnvScoringModel);
             {
                 using namespace STRELKA_VCF_FILTERS;
-                if (isUseVQSR)
+                if (isUseEVS)
                 {
                     {
                         std::ostringstream oss;
-                        oss << "The empirically fitted VQSR score is less than " << opt.sfilter.minimumQscore;
-                        write_vcf_filter(fos, get_label(LowQscore), oss.str().c_str());
+                        oss << "Empirical Variant Score (EVS) is less than " << opt.sfilter.snvMinEVS;
+                        write_vcf_filter(fos, get_label(LowEVS), oss.str().c_str());
                     }
                 }
                 else
@@ -183,7 +191,25 @@ strelka_streams(
                 }
             }
 
-            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseVQSR), fos);
+            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseEVS), fos);
+
+            if (opt.isReportEVSFeatures)
+            {
+                fos << "##snv_scoring_features=";
+                for (unsigned featureIndex = 0; featureIndex < STRELKA_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
+                {
+                    if (featureIndex > 0)
+                    {
+                        fos << ",";
+                    }
+                    fos << STRELKA_SNV_SCORING_FEATURES::get_feature_label(featureIndex);
+                }
+                for (unsigned featureIndex = 0; featureIndex < STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+                {
+                    fos << ',' << STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+                }
+                fos << "\n";
+            }
 
             fos << vcf_col_label() << "\tFORMAT";
             for (unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s)
@@ -215,6 +241,7 @@ strelka_streams(
             //scoring_models::Instance().writeVcfHeader(fos);
 
             // INFO:
+            fos << "##INFO=<ID=EQSI,Number=1,Type=Float,Description=\"Empirically calibrated quality score for somatic variants\">\n";
             fos << "##INFO=<ID=QSI,Number=1,Type=Integer,Description=\"Quality score for any somatic variant, ie. for the ALT haplotype to be present at a significantly different frequency in the tumor and normal\">\n";
             fos << "##INFO=<ID=TQSI,Number=1,Type=Integer,Description=\"Data tier used to compute QSI\">\n";
             fos << "##INFO=<ID=NT,Number=1,Type=String,Description=\"Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.\">\n";
@@ -225,9 +252,16 @@ strelka_streams(
             fos << "##INFO=<ID=RC,Number=1,Type=Integer,Description=\"Number of times RU repeats in the reference allele\">\n";
             fos << "##INFO=<ID=IC,Number=1,Type=Integer,Description=\"Number of times RU repeats in the indel allele\">\n";
             fos << "##INFO=<ID=IHP,Number=1,Type=Integer,Description=\"Largest reference interrupted homopolymer length intersecting with the indel\">\n";
+            fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
+            fos << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
             fos << "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">\n";
             fos << "##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description=\"Somatic mutation\">\n";
             fos << "##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description=\"Somatic indel possibly overlaps a second indel.\">\n";
+
+            if (opt.isReportEVSFeatures)
+            {
+                fos << "##INFO=<ID=EVSF,Number=.,Type=Float,Description=\"Empirical variant scoring features.\">\n";
+            }
 
             // FORMAT:
             fos << "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth for tier1\">\n";
@@ -240,23 +274,71 @@ strelka_streams(
             fos << "##FORMAT=<ID=FDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average tier1 number of basecalls filtered from original read depth within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
             fos << "##FORMAT=<ID=SUBDP" << opt.sfilter.indelRegionFlankSize << ",Number=1,Type=Float,Description=\"Average number of reads below tier1 mapping quality threshold aligned across sites within " << opt.sfilter.indelRegionFlankSize << " bases\">\n";
 
+#if 0
+            fos << "##FORMAT=<ID=AF,Number=1,Type=Float,Description=\"Estimated Indel AF in tier1\">\n";
+            fos << "##FORMAT=<ID=OF,Number=1,Type=Float,Description=\"Estimated frequency of supported alleles different from ALT in tier1\">\n";
+            fos << "##FORMAT=<ID=SOR,Number=1,Type=Float,Description=\"Strand odds ratio, capped at [+/-]2 for tier1\">\n";
+            fos << "##FORMAT=<ID=FS,Number=1,Type=Float,Description=\"Log p-value using Fisher's exact test to detect strand bias, based on tier1\">\n";
+            fos << "##FORMAT=<ID=BSA,Number=1,Type=Float,Description=\"Binomial test log-pvalue for ALT allele in tier1\">\n";
+            fos << "##FORMAT=<ID=RR,Number=1,Type=Float,Description=\"Read position ranksum for ALT allele in tier1 reads (U-statistic)\">\n";
+#endif
+            fos << "##FORMAT=<ID=BCN" << opt.sfilter.indelRegionFlankSize <<  ",Number=1,Type=Float,Description=\"Fraction of filtered reads within " << opt.sfilter.indelRegionFlankSize << " bases of the indel.\">\n";
+
             // FILTERS:
+            const bool isUseEVS(opt.isUseSomaticIndelScoring());
             {
                 using namespace STRELKA_VCF_FILTERS;
+                if (isUseEVS)
                 {
-                    std::ostringstream oss;
-                    oss << "Average fraction of filtered basecalls within " << opt.sfilter.indelRegionFlankSize << " bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
-                    write_vcf_filter(fos, get_label(IndelBCNoise), oss.str().c_str());
+                    {
+                        assert(dopt.somaticIndelScoringModel);
+                        const VariantScoringModel& varModel(*dopt.somaticIndelScoringModel);
+                        const double threshold(varModel.scoreFilterThreshold());
+
+                        std::ostringstream oss;
+                        oss << "Empirical Variant Score (EVS) is less than " << threshold;
+                        write_vcf_filter(fos, get_label(LowEVS), oss.str().c_str());
+                    }
+                    {
+                        std::ostringstream oss;
+                        oss << "Normal type is not homozygous reference.";
+                        write_vcf_filter(fos, get_label(Nonref), oss.str().c_str());
+                    }
                 }
+                else
                 {
-                    std::ostringstream oss;
-                    oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << ", ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
-                    write_vcf_filter(fos, get_label(QSI_ref), oss.str().c_str());
+                    {
+                        std::ostringstream oss;
+                        oss << "Average fraction of filtered basecalls within " << opt.sfilter.indelRegionFlankSize << " bases of the indel exceeds " << opt.sfilter.indelMaxWindowFilteredBasecallFrac;
+                        write_vcf_filter(fos, get_label(IndelBCNoise), oss.str().c_str());
+                    }
+                    {
+                        std::ostringstream oss;
+                        oss << "Normal sample is not homozygous ref or sindel Q-score < " << opt.sfilter.sindelQuality_LowerBound << ", ie calls with NT!=ref or QSI_NT < " << opt.sfilter.sindelQuality_LowerBound;
+                        write_vcf_filter(fos, get_label(QSI_ref), oss.str().c_str());
+                    }
                 }
             }
 
-            static const bool isPrintRuleFilters(true);
-            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, isPrintRuleFilters,fos);
+            write_shared_vcf_header_info(opt.sfilter, dopt.sfilter, (! isUseEVS), fos);
+
+            if (opt.isReportEVSFeatures)
+            {
+                fos << "##indel_scoring_features=";
+                for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
+                {
+                    if (featureIndex > 0)
+                    {
+                        fos << ",";
+                    }
+                    fos << STRELKA_INDEL_SCORING_FEATURES::get_feature_label(featureIndex);
+                }
+                for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+                {
+                    fos << ',' << STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+                }
+                fos << "\n";
+            }
 
             fos << vcf_col_label() << "\tFORMAT";
             for (unsigned s(0); s<STRELKA_SAMPLE_TYPE::SIZE; ++s)
