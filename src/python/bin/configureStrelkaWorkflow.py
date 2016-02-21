@@ -53,7 +53,7 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--normalBam", type="string",dest="normalBamList",metavar="FILE", action="append",
-                         help="Normal sample BAM or CRAM file. [required] (no default)")
+                         help="Normal sample BAM or CRAM file. (no default)")
         group.add_option("--tumorBam","--tumourBam", type="string",dest="tumorBamList",metavar="FILE", action="append",
                          help="Tumor sample BAM or CRAM file. [required] (no default)")
         group.add_option("--isWriteCallableRegion", action="store_true",
@@ -113,15 +113,22 @@ You must specify BAM/CRAM file(s) for a pair of samples.
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
+        def checkRequired(bamList,label):
+            if (bamList is None) or (len(bamList) == 0) :
+                raise OptParseException("No %s sample BAM/CRAM files specified" % (label))
+
+        checkRequired(options.tumorBamList,"tumor")
+
         bcheck = BamSetChecker()
 
         def singleAppender(bamList,label):
+            if bamList is None : return
             if len(bamList) > 1 :
                 raise OptParseException("More than one %s sample BAM/CRAM files specified" % (label))
             bcheck.appendBams(bamList,label)
 
-        singleAppender(options.normalBamList,"Normal")
-        singleAppender(options.tumorBamList,"Tumor")
+        singleAppender(options.normalBamList,"normal")
+        singleAppender(options.tumorBamList,"tumor")
         bcheck.check(options.htsfileBin,
                      options.referenceFasta)
 

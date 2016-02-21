@@ -330,14 +330,6 @@ finalize_legacy_starling_options(
 {
     // sanity check argument settings:
     //
-    if (opt.is_bam_filename_used)
-    {
-        if (opt.bam_filename.empty())
-        {
-            pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned sample reads");
-        }
-    }
-
     if (opt.bam_seq_name.empty())
     {
         pinfo.usage("must specify -bam-seq-name");

@@ -130,6 +130,20 @@ finalize_starling_options(
     const po::variables_map& vm,
     starling_options& opt)
 {
+    if (opt.bam_filename.empty())
+    {
+        pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned sample reads");
+    }
+    else
+    {
+        if (! boost::filesystem::exists(opt.bam_filename))
+        {
+            std::ostringstream oss;
+            oss << "Submitted BAM/CRAM file does not exist: '" << opt.bam_filename << "'";
+            pinfo.usage(oss.str().c_str());
+        }
+    }
+
     // gvcf option handlers:
     opt.gvcf.is_min_gqx = (opt.gvcf.min_gqx >= 0);
     opt.gvcf.is_max_snv_hpol = (opt.gvcf.max_snv_hpol >= 0);
