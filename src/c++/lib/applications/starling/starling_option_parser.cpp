@@ -25,6 +25,9 @@
 
 #include "starling_option_parser.hh"
 
+#include "boost/filesystem.hpp"
+
+
 //#define DEBUG_OPTIONS
 #ifdef DEBUG_OPTIONS
 #include "blt_util/log.hh"
@@ -168,6 +171,23 @@ finalize_starling_options(
             pinfo.usage("min-het-vf must be in range (0, 0.5)");
         }
 
+    }
+
+    if (! opt.germline_variant_scoring_models_filename.empty())
+    {
+        if (! boost::filesystem::exists(opt.germline_variant_scoring_models_filename))
+        {
+            std::ostringstream oss;
+            oss << "Germline scoring model file does not exist: '" << opt.germline_variant_scoring_models_filename << "'";
+            pinfo.usage(oss.str().c_str());
+        }
+    }
+    else
+    {
+        if (! opt.germline_variant_scoring_model_name.empty())
+        {
+            pinfo.usage("Specified germline variant scoring model name without a corresponding scoring file.");
+        }
     }
 
     finalize_starling_base_options(pinfo,vm,opt);

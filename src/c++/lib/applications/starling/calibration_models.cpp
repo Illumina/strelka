@@ -332,9 +332,14 @@ void calibration_models::add_model_pars(std::string& name,parmap& my_pars)
 }
 
 
-void calibration_models::load_models(std::string model_file)
+void
+calibration_models::
+load_models(
+    const std::string& model_file)
 {
     using namespace boost::algorithm;
+
+    if (model_file.empty()) return;
 
 #ifdef DEBUG_CAL
     log_os << "Loading models from file: " << model_file << "\n";
