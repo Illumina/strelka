@@ -83,8 +83,10 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
 
     std::unique_ptr<digt_indel_info> site;
-    site.reset(new digt_indel_info(50, indel_key(),
-                                   indel_data(indel_key()),
+    indel_key ik;
+    ik.pos=50;
+    site.reset(new digt_indel_info(ik,
+                                   indel_data(ik),
                                    starling_diploid_indel_core(),
                                    starling_indel_report_info(),
                                    starling_indel_sample_report_info()));
@@ -93,8 +95,9 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
 
-    site.reset(new digt_indel_info(105, indel_key(),
-                                   indel_data(indel_key()),
+    ik.pos=105;
+    site.reset(new digt_indel_info(ik,
+                                   indel_data(ik),
                                    starling_diploid_indel_core(),
                                    starling_indel_report_info(),
                                    starling_indel_sample_report_info()));
@@ -103,8 +106,9 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
     bsp.process(std::move(site));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
 
-    site.reset(new digt_indel_info(150, indel_key(),
-                                   indel_data(indel_key()),
+    ik.pos=150;
+    site.reset(new digt_indel_info(ik,
+                                   indel_data(ik),
                                    starling_diploid_indel_core(),
                                    starling_indel_report_info(),
                                    starling_indel_sample_report_info()));
@@ -112,8 +116,10 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
     bsp.process(std::move(site));
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
-    site.reset(new digt_indel_info(250, indel_key(),
-                                   indel_data(indel_key()),
+
+    ik.pos=250;
+    site.reset(new digt_indel_info(ik,
+                                   indel_data(ik),
                                    starling_diploid_indel_core(),
                                    starling_indel_report_info(),
                                    starling_indel_sample_report_info()));

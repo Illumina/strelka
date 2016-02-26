@@ -341,12 +341,11 @@ struct indel_info
 
 struct digt_indel_info : public indel_info
 {
-    digt_indel_info(const pos_t init_pos,
-                    const indel_key& init_ik,
+    digt_indel_info(const indel_key& init_ik,
                     const indel_data& init_id,
                     const starling_diploid_indel_core& init_dindel,
                     const starling_indel_report_info& init_iri,
-                    const starling_indel_sample_report_info& init_isri) : indel_info(init_pos)
+                    const starling_indel_sample_report_info& init_isri) : indel_info(init_ik.pos)
     {
         _calls.emplace_back(init_ik, init_id, init_iri, init_isri, init_dindel);
     }
