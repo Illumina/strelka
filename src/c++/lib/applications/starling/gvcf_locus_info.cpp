@@ -24,12 +24,17 @@
 
 
 #include "gvcf_locus_info.hh"
+#include "common/Exceptions.hh"
+
+#include "boost/math/distributions/binomial.hpp"
+#include "boost/math/distributions.hpp"
 
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <typeinfo>
-#include <boost/math/distributions/binomial.hpp>
-#include <boost/math/distributions.hpp>
+
+
 
 void
 shared_call_info::
@@ -229,6 +234,20 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
 
 
 
+void
+digt_indel_info::
+getPloidyError(
+    const unsigned offset) const
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: get_ploidy offset '" << offset << "' exceeds ploidy region size '" << ploidy.size() << "'\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+
+
+
 
 std::map<std::string, double>
 digt_site_info::
@@ -318,6 +337,8 @@ operator<<(std::ostream& os,
     return os;
 }
 
+
+
 std::ostream&
 operator<<(std::ostream& os,
            const digt_site_info& si)
@@ -325,3 +346,58 @@ operator<<(std::ostream& os,
     os << "pos: " << (si.pos+1) << " " << si.get_gt();
     return os;
 }
+
+
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const shared_indel_call_info& shi)
+{
+    os << static_cast<shared_call_info>(shi) << '\n';
+
+    os << "indel_key: " << shi._ik << "\n";
+    //os << "indel_data: " << shi._id << "\n";
+    os << "indel_report_info: " << shi._iri << "\n";
+    os << "indel_sample_info: " << shi._isri << "\n";
+    os << "cigar: " << shi.cigar << "\n";
+
+    return os;
+}
+
+
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const digt_indel_call& dic)
+{
+    os << static_cast<shared_indel_call_info>(dic) << '\n';
+
+    dic._dindel.dump(os);
+
+    os << "EVS: " << dic.EVS << " max_gt: " << dic.max_gt << "\n";
+
+    return os;
+}
+
+
+void
+digt_indel_info::
+dump(std::ostream& os) const
+{
+    os << "digt_indel_info\n";
+    os << "nCalls: " << _calls.size() << " isOverlap: " << _is_overlap << "\n";
+    os << "ploidy: ";
+    for (const unsigned pl : ploidy)
+    {
+        os << " " << pl;
+    }
+    os << "\n";
+    os << "Calls:\n";
+    for (const auto& cl : _calls)
+    {
+        os << cl << "\n";
+    }
+}
+

@@ -43,6 +43,8 @@ indel_overlapper::indel_overlapper(const calibration_models& model, const refere
     , _ref(ref)
     , _indel_end_pos(0)
 {
+    // this component doesn't make any sense without a destination:
+    assert(destination);
 }
 
 void indel_overlapper::process(std::unique_ptr<site_info> site)
@@ -112,6 +114,10 @@ is_simple_indel_overlap(
     const reference_contig_segment& ref,
     const std::vector<std::unique_ptr<digt_indel_info>>& indel_buffer)
 {
+#ifdef DEBUG_GVCF
+    log_os << "CHIRP: " << __FUNCTION__ << " START\n";
+#endif
+
     // check for very very simple overlap condition -- these are the cases that are easy to
     // glue together, although many more non-simple cases could be resolved if we wanted to
     // put in the work
@@ -127,6 +133,10 @@ is_simple_indel_overlap(
     const digt_indel_call& ic1(ii1.first());
 
     const bool isTwoHets = (is_het_indel(ic0._dindel) && is_het_indel(ic1._dindel));
+
+#ifdef DEBUG_GVCF
+    log_os << "CHIRP: " << __FUNCTION__ << " isTwoHets: " << isTwoHets << "\n";
+#endif
 
     if (! isTwoHets) return false;
 
@@ -153,14 +163,63 @@ is_simple_indel_overlap(
     const std::string alt0 = get_overlap_alt(*indel_buffer[0]);
     const std::string alt1 = get_overlap_alt(*indel_buffer[1]);
 
+#ifdef DEBUG_GVCF
+    log_os << "CHIRP: " << __FUNCTION__ << " alt0: " << alt0 << " alt1: " << alt1 << "\n";
+#endif
+
     return (alt0 != alt1);
 }
 
 
 
-
-void indel_overlapper::process_overlaps()
+void
+indel_overlapper::
+dump(std::ostream& os) const
 {
+    os << "indel_overlapper:"
+       << " nSites: " << _site_buffer.size()
+       << " nIndels: " << _indel_buffer.size()
+       << " indel_end_pos: " << _indel_end_pos << "\n";
+    os << "buffered sites:\n";
+    for (const auto& site : _site_buffer)
+    {
+        os << *site << "\n";
+    }
+
+    os << "buffered indels:\n";
+    for (const auto& indel : _indel_buffer)
+    {
+        indel->dump(os);
+        os << "\n";
+    }
+}
+
+
+
+void
+indel_overlapper::
+process_overlaps()
+{
+    try
+    {
+        process_overlaps_impl();
+    }
+    catch(...)
+    {
+        log_os << "ERROR: exception caught in process_overlaps()\n";
+        dump(log_os);
+        throw;
+    }
+}
+
+
+
+void indel_overlapper::process_overlaps_impl()
+{
+#ifdef DEBUG_GVCF
+    log_os << "CHIRP: " << __FUNCTION__ << " START\n";
+#endif
+
     if (0==_indel_buffer.size()) return;
 
     bool is_conflict(false);
@@ -232,6 +291,8 @@ void indel_overlapper::process_overlaps()
     _site_buffer.clear();
 }
 
+
+
 void indel_overlapper::modify_overlapping_site(const digt_indel_info& ii, digt_site_info& si, const calibration_models& model)
 {
     const pos_t offset(si.pos-ii.pos);
@@ -271,7 +332,6 @@ void indel_overlapper::modify_indel_overlap_site(
 {
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";
-    log_os << "CHIRP: indel_overlap_site imod before: " << ii.imod << "\n";
 #endif
 
     // if overlapping indel has any filters, mark as site conflict
@@ -351,6 +411,10 @@ void indel_overlapper::modify_indel_conflict_site(digt_site_info& si)
 void
 indel_overlapper::modify_overlap_indel_record()
 {
+#ifdef DEBUG_GVCF
+    log_os << "CHIRP: " << __FUNCTION__ << " START\n";
+#endif
+
     // can only handle simple 2-indel overlaps right now:
     assert(_indel_buffer.size()==2);
 
@@ -369,6 +433,10 @@ indel_overlapper::modify_overlap_indel_record()
 void
 indel_overlapper::modify_conflict_indel_record()
 {
+#ifdef DEBUG_GVCF
+    log_os << "CHIRP: " << __FUNCTION__ << " START\n";
+#endif
+
     assert(_indel_buffer.size()>1);
 
     for (auto& ii : _indel_buffer)

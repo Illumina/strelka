@@ -23,8 +23,11 @@
  */
 
 #pragma once
+
 #include "gvcf_locus_info.hh"
 #include "variant_pipe_stage_base.hh"
+
+#include <iosfwd>
 
 class calibration_models;
 
@@ -32,7 +35,10 @@ class calibration_models;
 class indel_overlapper : public variant_pipe_stage_base
 {
 public:
-    indel_overlapper(const calibration_models& model, const reference_contig_segment& ref, std::shared_ptr<variant_pipe_stage_base> destination);
+    indel_overlapper(
+        const calibration_models& model,
+        const reference_contig_segment& ref,
+        std::shared_ptr<variant_pipe_stage_base> destination);
 
     void process(std::unique_ptr<site_info> si) override;
     void process(std::unique_ptr<indel_info> ii) override;
@@ -53,9 +59,12 @@ private:
                                           const calibration_models& model);
 
     void process_overlaps();
+    void process_overlaps_impl();
     void modify_single_indel_record();
     void modify_conflict_indel_record();
     void modify_overlap_indel_record();
+
+    void dump(std::ostream& os) const;
 
     const calibration_models& _CM;
     const reference_contig_segment& _ref;

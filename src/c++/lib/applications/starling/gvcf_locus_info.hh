@@ -184,6 +184,7 @@ struct shared_indel_call_info : public shared_call_info
     ALIGNPATH::path_t cigar;
 };
 
+std::ostream& operator<<(std::ostream& os,const shared_indel_call_info& shi);
 
 
 struct digt_indel_call : public shared_indel_call_info
@@ -206,6 +207,8 @@ struct digt_indel_call : public shared_indel_call_info
 
     unsigned max_gt=0;
 };
+
+std::ostream& operator<<(std::ostream& os,const digt_indel_call& dic);
 
 
 
@@ -433,7 +436,10 @@ struct digt_indel_info : public indel_info
         }
         else
         {
-            assert(offset<ploidy.size());
+            if (offset>=ploidy.size())
+            {
+                getPloidyError(offset);
+            }
             return ploidy[offset];
         }
         return 2;
@@ -451,6 +457,16 @@ struct digt_indel_info : public indel_info
         return _calls.front();
     }
 
+    void
+    dump(std::ostream& os) const;
+
+private:
+
+    void
+    getPloidyError(const unsigned offset) const;
+
+public:
+
     /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
     std::vector<unsigned> ploidy;
 
@@ -458,7 +474,6 @@ struct digt_indel_info : public indel_info
     bool _is_overlap=false;
 
     std::vector<digt_indel_call> _calls;
-
 };
 
 
@@ -485,7 +500,6 @@ struct site_info
     virtual void set_filter(VCF_FILTERS::index_t filter) = 0;
     virtual bool is_nonref() const = 0;
 
-
     pos_t pos = 0;
     char ref = 'N';
     std::array<unsigned,N_BASE> known_counts = {{}};
@@ -493,11 +507,12 @@ struct site_info
     unsigned n_unused_calls = 0;
     unsigned hpol = 0;
 
-
     unsigned spanning_deletions;
     bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
     bool forcedOutput = false;
 };
+
+
 
 struct digt_site_info : public site_info
 {
@@ -519,7 +534,6 @@ struct digt_site_info : public site_info
     {
         smod.set_filter(filter);
     }
-
 
     const char*
     get_gt() const
