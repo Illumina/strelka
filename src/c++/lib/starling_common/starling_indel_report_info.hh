@@ -33,14 +33,18 @@
 ///
 struct starling_indel_report_info
 {
+    starling_indel_report_info() {}
+
     bool
     is_repeat_unit() const
     {
         return (! repeat_unit.empty());
     }
 
-    std::string vcf_ref_seq;
-    std::string vcf_indel_seq;
+    void dump(std::ostream& os) const;
+
+    std::string vcf_ref_seq; ///< vcf REF string
+    std::string vcf_indel_seq; ///< vcf ALT string
     std::string repeat_unit;
     unsigned repeat_unit_length = 0;
     unsigned ref_repeat_count = 0;
@@ -49,8 +53,6 @@ struct starling_indel_report_info
 
     // not directly reported, but handy to have pre-calculated:
     INDEL::index_t it = INDEL::NONE;
-
-    void dump(std::ostream& os) const;
 };
 
 std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj);
@@ -60,6 +62,8 @@ std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj
 ///
 struct starling_indel_sample_report_info
 {
+    starling_indel_sample_report_info() {}
+
     unsigned n_total_reads = 0;
     unsigned n_q30_ref_reads = 0;
     unsigned n_q30_indel_reads = 0;

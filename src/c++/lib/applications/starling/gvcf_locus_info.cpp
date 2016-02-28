@@ -198,11 +198,16 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
                                 trailing_seq.size());
 
         // add to the ploidy object:
-        add_cigar_to_ploidy(this_call.cigar,this->ploidy);
+        add_cigar_to_ploidy(this_call.cigar,ploidy);
     };
     munge_indel(*this);
     munge_indel(overlap);
 
+    // we only combine pairs of simple het indels on different haplotpyes, so this assertion must hold:
+    for (const unsigned pl : ploidy)
+    {
+        assert(pl<2);
+    }
 
     //reduce qual and gt to the lowest of the set:
     call._dindel.indel_qphred = std::min(call._dindel.indel_qphred, overlap.first()._dindel.indel_qphred);
