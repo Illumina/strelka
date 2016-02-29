@@ -47,25 +47,30 @@ indel_overlapper::indel_overlapper(const calibration_models& model, const refere
     assert(destination);
 }
 
+
+
 void indel_overlapper::process(std::unique_ptr<site_info> site)
 {
     std::unique_ptr<digt_site_info> si(downcast<digt_site_info>(std::move(site)));
 
     // resolve any current or previous indels before queuing site:
-    if (! _indel_buffer.empty())
+    if (si->pos>=_indel_end_pos)
     {
-        if (si->pos>=_indel_end_pos)
-        {
-            process_overlaps();
-        }
-        else
-        {
-            _site_buffer.push_back(std::move(si));
-            return;
-        }
+        process_overlaps();
     }
+    else
+    {
+        _site_buffer.push_back(std::move(si));
+        return;
+    }
+
+    assert(si->pos>=_indel_end_pos);
+    assert(_nonvariant_indel_buffer.empty());
+
     _sink->process(std::move(si));
 }
+
+
 
 static
 bool
@@ -76,7 +81,7 @@ is_het_indel(const starling_diploid_indel_core& dindel)
 
 static
 bool
-check_is_no_indel(const starling_diploid_indel_core& dindel)
+check_is_nonvariant_indel(const starling_diploid_indel_core& dindel)
 {
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
@@ -90,21 +95,24 @@ void indel_overlapper::process(std::unique_ptr<indel_info> indel)
     // we can't handle breakends at all right now:
     if (call._ik.is_breakpoint()) return;
 
-    const bool is_no_indel = check_is_no_indel(call._dindel);
+    const bool is_nonvariant_indel = check_is_nonvariant_indel(call._dindel);
 
     // don't handle homozygous reference calls unless genotyping is forced
-    if (is_no_indel && !call._dindel.is_forced_output) return;
+    if (is_nonvariant_indel && !call._dindel.is_forced_output) return;
 
-    if ((! _indel_buffer.empty()) && ((ii->pos>_indel_end_pos) || is_no_indel))
+    if (ii->pos>_indel_end_pos)
     {
         process_overlaps();
     }
-    _indel_end_pos=std::max(_indel_end_pos,call._ik.right_pos());
-    _indel_buffer.push_back(std::move(ii));
-    // clear the current homRef indel
-    if (is_no_indel)
+
+    if (is_nonvariant_indel)
     {
-        process_overlaps();
+        _nonvariant_indel_buffer.push_back(std::move(ii));
+    }
+    else
+    {
+        _indel_end_pos=std::max(_indel_end_pos,call._ik.right_pos());
+        _indel_buffer.push_back(std::move(ii));
     }
 }
 
@@ -213,6 +221,68 @@ process_overlaps()
 }
 
 
+namespace VARQUEUE
+{
+enum index_t
+{
+    NONE,
+    INDEL,
+    NONVARIANT_INDEL,
+    SITE
+};
+}
+
+
+// this doesn't really generalize or tidy up the (implicit) indel/site priority queue, but
+// just dumps the ugliness into one place:
+static
+VARQUEUE::index_t
+nextVariantType(
+    const std::vector<std::unique_ptr<digt_indel_info>>& indel_buffer,
+    const std::vector<std::unique_ptr<digt_indel_info>>& nonvariant_indel_buffer,
+    const std::vector<std::unique_ptr<digt_site_info>>& site_buffer,
+    const unsigned indel_index,
+    const unsigned nonvariant_indel_index,
+    const unsigned site_index)
+{
+    const bool is_indel(indel_index<indel_buffer.size());
+    const bool is_nonvariant_indel(nonvariant_indel_index<nonvariant_indel_buffer.size());
+    const bool is_site(site_index<site_buffer.size());
+
+    if ((!is_indel) && (!is_nonvariant_indel) && (!is_site))
+    {
+        return VARQUEUE::NONE;
+    }
+
+    const bool AlessB(is_indel && ((! is_nonvariant_indel) || (indel_buffer[indel_index]->pos <= nonvariant_indel_buffer[nonvariant_indel_index]->pos)));
+    const bool AlessC(is_indel && ((! is_site) || (indel_buffer[indel_index]->pos <= site_buffer[site_index]->pos)));
+    const bool BlessC(is_nonvariant_indel && ((! is_site) || (nonvariant_indel_buffer[nonvariant_indel_index]->pos <= site_buffer[site_index]->pos)));
+
+    if (AlessB)
+    {
+        if (AlessC)
+        {
+            return VARQUEUE::INDEL;
+        }
+        else
+        {
+            return VARQUEUE::SITE;
+        }
+    }
+    else
+    {
+        if(BlessC)
+        {
+            return VARQUEUE::NONVARIANT_INDEL;
+        }
+        else
+        {
+            return VARQUEUE::SITE;
+        }
+    }
+}
+
+
 
 void indel_overlapper::process_overlaps_impl()
 {
@@ -220,17 +290,17 @@ void indel_overlapper::process_overlaps_impl()
     log_os << "CHIRP: " << __FUNCTION__ << " START\n";
 #endif
 
-    if (0==_indel_buffer.size()) return;
+    if(_indel_buffer.empty() && _nonvariant_indel_buffer.empty()) return;
 
     bool is_conflict(false);
 
-    // do the overlap processing:
+    // do standard or overlap indel processing:
     if (_indel_buffer.size()==1)
     {
         // simple case of no overlap:
-        modify_single_indel_record();
+        modify_single_indel_record(*_indel_buffer[0]);
     }
-    else
+    else if (_indel_buffer.size() > 1)
     {
         if (is_simple_indel_overlap(_ref,_indel_buffer))
         {
@@ -245,7 +315,11 @@ void indel_overlapper::process_overlaps_impl()
         }
     }
 
-    //    *_osptr << "INDEL_SIZE: " << _indel_buffer.size() << "\n";
+    // simple processing for all nonvariant_indels:
+    for (auto& nonvariant_indel : _nonvariant_indel_buffer)
+    {
+        modify_single_indel_record(*nonvariant_indel);
+    }
 
     // process sites to be consistent with overlapping indels:
     for (auto& si : _site_buffer)
@@ -257,15 +331,19 @@ void indel_overlapper::process_overlaps_impl()
     }
 
     unsigned indel_index(0);
+    unsigned nonvariant_indel_index(0);
     unsigned site_index(0);
 
+    // order all buffered indel and site record output according to VCF formatting rules:
     while (true)
     {
-        const bool is_indel(indel_index<_indel_buffer.size());
-        const bool is_site(site_index<_site_buffer.size());
-        if (! (is_indel || is_site)) break;
+        const VARQUEUE::index_t nextvar = nextVariantType(_indel_buffer,_nonvariant_indel_buffer,_site_buffer,indel_index,nonvariant_indel_index,site_index);
 
-        if (is_indel && ((! is_site) || _indel_buffer[indel_index]->pos <= _site_buffer[site_index]->pos))
+        if      (nextvar == VARQUEUE::NONE)
+        {
+            break;
+        }
+        else if (nextvar == VARQUEUE::INDEL)
         {
             _sink->process(std::move(_indel_buffer[indel_index]));
             if (is_conflict)
@@ -279,15 +357,24 @@ void indel_overlapper::process_overlaps_impl()
                 indel_index=_indel_buffer.size();
             }
         }
-        else
+        else if (nextvar == VARQUEUE::NONVARIANT_INDEL)
         {
-            // emit site:
-            //log_os << "site record" << "\n";
+            _sink->process(std::move(_nonvariant_indel_buffer[nonvariant_indel_index]));
+            nonvariant_indel_index++;
+        }
+        else if (nextvar == VARQUEUE::SITE)
+        {
             _sink->process(std::move(_site_buffer[site_index]));
             site_index++;
         }
+        else
+        {
+            assert(false && "unexpected varqueue type");
+        }
     }
+
     _indel_buffer.clear();
+    _nonvariant_indel_buffer.clear();
     _site_buffer.clear();
 }
 
@@ -312,13 +399,10 @@ void indel_overlapper::modify_overlapping_site(const digt_indel_info& ii, digt_s
 
 // set the CIGAR string:
 void
-indel_overlapper::modify_single_indel_record()
+indel_overlapper::
+modify_single_indel_record(digt_indel_info& ii)
 {
-    assert(_indel_buffer.size()==1);
-
-    digt_indel_info& ii(*_indel_buffer[0]);
     ii.first().set_hap_cigar();
-
     _CM.classify_indel(ii, ii.first());
 }
 

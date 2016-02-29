@@ -60,7 +60,7 @@ private:
 
     void process_overlaps();
     void process_overlaps_impl();
-    void modify_single_indel_record();
+    void modify_single_indel_record(digt_indel_info& ii);
     void modify_conflict_indel_record();
     void modify_overlap_indel_record();
 
@@ -71,6 +71,7 @@ private:
     pos_t _indel_end_pos;
 
     std::vector<std::unique_ptr<digt_indel_info>> _indel_buffer;
+    std::vector<std::unique_ptr<digt_indel_info>> _nonvariant_indel_buffer;
     std::vector<std::unique_ptr<digt_site_info>> _site_buffer;
 };
 

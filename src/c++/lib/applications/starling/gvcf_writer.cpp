@@ -81,7 +81,6 @@ gvcf_writer(
     }
 
     variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.smod, cm);
-
 }
 
 
