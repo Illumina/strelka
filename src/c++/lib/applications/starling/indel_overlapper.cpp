@@ -212,7 +212,7 @@ process_overlaps()
     {
         process_overlaps_impl();
     }
-    catch(...)
+    catch (...)
     {
         log_os << "ERROR: exception caught in process_overlaps()\n";
         dump(log_os);
@@ -271,7 +271,7 @@ nextVariantType(
     }
     else
     {
-        if(BlessC)
+        if (BlessC)
         {
             return VARQUEUE::NONVARIANT_INDEL;
         }
@@ -290,7 +290,7 @@ void indel_overlapper::process_overlaps_impl()
     log_os << "CHIRP: " << __FUNCTION__ << " START\n";
 #endif
 
-    if(_indel_buffer.empty() && _nonvariant_indel_buffer.empty()) return;
+    if (_indel_buffer.empty() && _nonvariant_indel_buffer.empty()) return;
 
     bool is_conflict(false);
 

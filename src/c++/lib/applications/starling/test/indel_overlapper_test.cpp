@@ -45,7 +45,7 @@ struct dummy_variant_sink : public variant_pipe_stage_base
 
 BOOST_AUTO_TEST_SUITE( indel_overlapper_test )
 
-/// add a single indel to the indel_overlapper, this is 
+/// add a single indel to the indel_overlapper, this is
 /// a simple demo to unit test the overlapper
 ///
 BOOST_AUTO_TEST_CASE( simple_indel_test )
@@ -97,11 +97,12 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
     std::shared_ptr<variant_pipe_stage_base> next(new dummy_variant_sink);
     indel_overlapper overlap(cm, rcs, next);
 
-    indel_key iks[] = {
-            indel_key(10,INDEL::DELETE,10),
-            indel_key(15,INDEL::DELETE,30),
-            indel_key(20,INDEL::DELETE,1),
-            indel_key(25,INDEL::DELETE,1),
+    indel_key iks[] =
+    {
+        indel_key(10,INDEL::DELETE,10),
+        indel_key(15,INDEL::DELETE,30),
+        indel_key(20,INDEL::DELETE,1),
+        indel_key(25,INDEL::DELETE,1),
     };
 
     int max_gts[] = { 2,0,2,2 };
@@ -144,11 +145,12 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     indel_overlapper overlap(cm, rcs, next);
 
-    indel_key iks[] = {
-            indel_key(10,INDEL::DELETE,10),
-            indel_key(12,INDEL::DELETE,1),
-            indel_key(15,INDEL::DELETE,1),
-            indel_key(18,INDEL::DELETE,1),
+    indel_key iks[] =
+    {
+        indel_key(10,INDEL::DELETE,10),
+        indel_key(12,INDEL::DELETE,1),
+        indel_key(15,INDEL::DELETE,1),
+        indel_key(18,INDEL::DELETE,1),
     };
 
     int max_gts[] = { 2,2,0,2 };

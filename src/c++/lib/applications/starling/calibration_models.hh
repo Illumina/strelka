@@ -60,7 +60,7 @@ public:
 
     // mimics behavior of previous hard filters
     void default_classify_site(const site_info& si,
-                                shared_call_info& call) const;
+                               shared_call_info& call) const;
 
     void default_classify_indel(shared_indel_call_info& call) const;
 
