@@ -153,6 +153,9 @@ void gvcf_writer::process(std::unique_ptr<indel_info> ii)
 {
     skip_to_pos(ii->pos);
 
+    // flush any non-variant block before starting:
+    write_block_site_record();
+
     if (dynamic_cast<digt_indel_info*>(ii.get()) != nullptr)
     {
         auto ii_digt(downcast<digt_indel_info>(std::move(ii)));
@@ -559,11 +562,8 @@ gvcf_writer::write_site_record(
 
 
 void
-gvcf_writer::write_indel_record(const continuous_indel_info& ii)
+gvcf_writer::write_indel_record(const continuous_indel_info& ii) const
 {
-    // flush any non-variant block before starting:
-    write_block_site_record();
-
     std::ostream& os(*_osptr);
 
     for (auto& call : ii.calls)
@@ -647,11 +647,8 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
 
 
 void
-gvcf_writer::write_indel_record(const digt_indel_info& ii)
+gvcf_writer::write_indel_record(const digt_indel_info& ii) const
 {
-    // flush any non-variant block before starting:
-    write_block_site_record();
-
     std::ostream& os(*_osptr);
     auto& call(ii.first());
 

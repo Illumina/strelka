@@ -85,8 +85,8 @@ private:
     }
 
 
-    void write_indel_record(const digt_indel_info& ii);
-    void write_indel_record(const continuous_indel_info& ii);
+    void write_indel_record(const digt_indel_info& ii) const;
+    void write_indel_record(const continuous_indel_info& ii) const;
 
     void write_site_record(const continuous_site_info& si) const;
     void write_site_record(const gvcf_block_site_record& si) const;
