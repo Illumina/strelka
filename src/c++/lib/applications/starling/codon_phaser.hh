@@ -113,6 +113,19 @@ private:
     int het_count;                      // total hets observed in buffer
     int total_reads,total_reads_unused; // total used and unused reads spanning phasing region
     std::string reference;              // the phased allele reference
-    typedef std::map<std::string,int> allele_map;
-    allele_map observations;
+
+    struct allele_observations
+    {
+        int
+        count() const
+        {
+            return (fwd+rev);
+        }
+
+        int fwd=0;
+        int rev=0;
+    };
+
+    typedef std::map<std::string,allele_observations> allele_map_t;
+    allele_map_t observations;
 };

@@ -256,26 +256,34 @@ print_vcf_alt(
 static
 void
 print_site_ad(
-    const digt_site_info& si,
+    const site_info& si,
     const std::vector<uint8_t>& altOrder,
     std::ostream& os)
 {
-    os << si.known_counts[si.dgt.ref_gt];
+    os << si.alleleObservationCounts(base_to_id(si.ref));
 
     for (const auto& b : altOrder)
     {
-        os << ',' << si.known_counts[b];
+        os << ',' << si.alleleObservationCounts(b);
     }
 }
 
+
+
 static
 void
-print_site_ad(
-    const continuous_site_info& si,
-    const continuous_site_call& call,
+print_site_ad_strand(
+    const site_info& si,
+    const std::vector<uint8_t>& altOrder,
+    const bool is_fwd_strand,
     std::ostream& os)
 {
-    os << si.known_counts[base_to_id(si.ref)] << "," << call._alleleDepth;
+    os << si.alleleObservationCountsByStrand(is_fwd_strand, base_to_id(si.ref));
+
+    for (const auto& b : altOrder)
+    {
+        os << ',' << si.alleleObservationCountsByStrand(is_fwd_strand,b);
+    }
 }
 
 
@@ -396,7 +404,7 @@ write_site_record(
     os << ":GQX:DP:DPF";
     if (! isNoAlt)
     {
-        os << ":AD";
+        os << ":AD:ADF:ADR";
     }
     if (is_print_pl)
     {
@@ -436,12 +444,18 @@ write_site_record(
     }
     else if (si.smod.is_phased_region)
     {
-        os << ':' << si.phased_AD;
+        os << ':' << si.phased_AD
+           << ':' << si.phased_ADF
+           << ':' << si.phased_ADR;
     }
     else
     {
         os << ':';
         print_site_ad(si, altOrder, os);
+        os << ':';
+        print_site_ad_strand(si, altOrder, true, os);
+        os << ':';
+        print_site_ad_strand(si, altOrder, false, os);
     }
 
     if (is_print_pl)
@@ -600,20 +614,28 @@ gvcf_writer::write_indel_record(const continuous_indel_info& ii)
         os << '\t';
 
         //FORMAT
-        os << "GT:GQ:GQX:DPI:AD:VF" << '\t';
+        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:VF" << '\t';
 
         //SAMPLE
         os << ii.get_gt() << ':'
-           << call.gq << ':';
+           << call.gq;
 
-        os << call.gqx  << ':';
+        os << ':' << call.gqx;
 
-        os << call._isri.depth << ':';
+        os << ':' << call._isri.depth;
 
-        // SAMPLE AD:
-        os << call._totalDepth - call._alleleDepth
-           << ","
-           << call._alleleDepth;
+        // AD:
+        os << ':' << call._isri.n_q30_ref_reads
+           << ',' << call._isri.n_q30_indel_reads;
+
+        // ADF
+        os << ':' << call._isri.n_q30_ref_reads_fwd
+           << ',' << call._isri.n_q30_indel_reads_fwd;
+
+        // ADR
+        os << ':' << call._isri.n_q30_ref_reads_rev
+           << ',' << call._isri.n_q30_indel_reads_rev;
+
         // VF
         {
             const StreamScoper ss(os);
@@ -712,29 +734,48 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
     os << '\t';
 
     //FORMAT
-    os << "GT:GQ:GQX:DPI:AD:PL" << '\t';
+    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:PL" << '\t';
 
     //SAMPLE
     os << ii.get_gt() << ':'
-       << call.gq << ':';
+       << call.gq;
 
-    if (call.EVS>=0)
-        os << call.EVS  << ':';
-    else
-        os << call.gqx  << ':';
+    os << ':' << ((call.EVS>=0) ? call.EVS : call.gqx);
 
-    os << call._isri.depth << ':';
+    os << ':' << call._isri.depth;
 
-    // SAMPLE AD:
-    unsigned ref_count(0);
-    for (unsigned i = 0; i <ii._calls.size(); ++i)
+    // SAMPLE AD/ADF/ADR:
     {
-        ref_count = std::max(ref_count, ii._calls[i]._isri.n_q30_ref_reads);
-    }
-    os << ref_count;
-    for (unsigned i = 0; i <ii._calls.size(); ++i)
-    {
-        os << ',' << ii._calls[i]._isri.n_q30_indel_reads;
+        auto orderRefReads = [](const digt_indel_call& a, const digt_indel_call& b)
+            {
+                return (a._isri.n_q30_ref_reads < b._isri.n_q30_ref_reads);
+            };
+
+        const auto maxRefCountIter(
+            std::max_element(ii._calls.begin(),ii._calls.end(),orderRefReads));
+
+        const auto& maxRefIsri(maxRefCountIter->_isri);
+
+        // AD
+        os << ':' << maxRefIsri.n_q30_ref_reads;
+        for (const auto& icall : ii._calls)
+        {
+            os << ',' << icall._isri.n_q30_indel_reads;
+        }
+
+        // ADF
+        os << ':' << maxRefIsri.n_q30_ref_reads_fwd;
+        for (const auto& icall : ii._calls)
+        {
+            os << ',' << icall._isri.n_q30_indel_reads_fwd;
+        }
+
+        // ADR
+        os << ':' << maxRefIsri.n_q30_ref_reads_rev;
+        for (const auto& icall : ii._calls)
+        {
+            os << ',' << icall._isri.n_q30_indel_reads_rev;
+        }
     }
 
     // PL field
@@ -787,6 +828,8 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
     os << '\n';
 }
 
+
+
 void
 gvcf_writer::write_site_record(
     const continuous_site_info& si) const
@@ -796,7 +839,12 @@ gvcf_writer::write_site_record(
 
     for (auto& call : si.calls)
     {
-        bool is_no_alt(call._base == ref_base_id);
+        std::vector<uint8_t> altOrder;
+        const bool is_no_alt(call._base == ref_base_id);
+        if (! is_no_alt)
+        {
+            altOrder.push_back(call._base);
+        }
 
         // do not output the call for reference if the site has variants unless it is forced output
         if (!si.forcedOutput && site_is_nonref && is_no_alt)
@@ -858,22 +906,29 @@ gvcf_writer::write_site_record(
         os << ":GQX";
         os << ":DP:DPF";
         if (!is_no_alt)
-            os << ":AD";
+        {
+            os << ":AD:ADF:ADR";
+        }
         os << ":VF";
 
         os << '\t';
 
         //SAMPLE
-        os << gt << ':';
-        os << call.gq << ':';
-        os << call.gqx << ':';
+        os << gt
+           << ':' << call.gq
+           << ':' << call.gqx;
+
         // DP:DPF
-        os << si.n_used_calls << ':' << si.n_unused_calls;
+        os << ':' << si.n_used_calls << ':' << si.n_unused_calls;
 
         if (!is_no_alt)
         {
             os << ':';
-            print_site_ad(si, call, os);
+            print_site_ad(si, altOrder, os);
+            os << ':';
+            print_site_ad_strand(si, altOrder, true, os);
+            os << ':';
+            print_site_ad_strand(si, altOrder, false, os);
         }
 
         {

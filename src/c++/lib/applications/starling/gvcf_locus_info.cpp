@@ -267,7 +267,7 @@ get_site_qscore_features(
     //we need to handle the scaling of DP better for high depth cases
     res["F_DP"]               = n_used_calls * depth_norm;
     res["F_DPF"]              = n_unused_calls * depth_norm;
-    res["AD0"]                = known_counts[dgt.ref_gt] * depth_norm;
+    res["AD0"]                = alleleObservationCounts(dgt.ref_gt) * depth_norm;
     res["AD1"]                = 0.0;          // set below
 
     res["I_MQ"]               = MQ;
@@ -281,10 +281,10 @@ get_site_qscore_features(
         if (b==dgt.ref_gt) continue;
         if (DIGT::expect2(b,smod.max_gt))
         {
-            res["AD1"] =  known_counts[b] * depth_norm;
+            res["AD1"] =  alleleObservationCounts(b) * depth_norm;
             // allele bias metrics
-            double r0 = known_counts[dgt.ref_gt];
-            double r1 = known_counts[b];
+            double r0 = alleleObservationCounts(dgt.ref_gt);
+            double r1 = alleleObservationCounts(b);
             double allelebiaslower  = cdf(boost::math::binomial(r0+r1,0.5),r0);
             double allelebiasupper  = cdf(boost::math::binomial(r0+r1,0.5),r1);
             res["ABlower"]          = -log(allelebiaslower+1.e-30); // +1e-30 to avoid log(0) in extreme cases
