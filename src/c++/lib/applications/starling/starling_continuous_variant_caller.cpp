@@ -51,7 +51,7 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
     continuous_site_info& info)
 {
     unsigned totalDepth = info.spanning_deletions;
-    for (unsigned base_id(0);base_id<N_BASE;++base_id)
+    for (unsigned base_id(0); base_id<N_BASE; ++base_id)
     {
         totalDepth += info.alleleObservationCounts(base_id);
     }
@@ -95,7 +95,7 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
     };
 
 
-    for (unsigned base_id(0);base_id<N_BASE;++base_id)
+    for (unsigned base_id(0); base_id<N_BASE; ++base_id)
     {
         generateCallInfo(base_id, info.forcedOutput);
     }
@@ -119,8 +119,8 @@ void starling_continuous_variant_caller::add_indel_call(
     if (vf > opt.min_het_vf || id.is_forced_output)
     {
         info.calls.emplace_back(
-                isri.total_q30_reads(), isri.n_q30_indel_reads,
-                ik, id, iri, isri);
+            isri.total_q30_reads(), isri.n_q30_indel_reads,
+            ik, id, iri, isri);
         continuous_indel_call& call = info.calls.back();
         call.gqx = call.gq = poisson_qscore(isri.n_q30_indel_reads, isri.total_q30_reads(), (unsigned)opt.min_qscore, 40);
     }

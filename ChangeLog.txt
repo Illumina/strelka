@@ -1,3 +1,4 @@
+- STARKA-388 add ADF/ADR tags to gVCF output
 - STARKA-393 stabilize forced long del genotyping in gVCF aggregator 
 - STARKA-351 reorg all strelka documentation
 - PED-33 Forced outputs of SNVs for pedicure workflow
