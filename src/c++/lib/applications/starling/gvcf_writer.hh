@@ -84,19 +84,18 @@ private:
         _block.join(si);
     }
 
+    void write_site_record(const digt_site_info& si) const;
+    void write_site_record(const continuous_site_info& si) const;
+    void write_site_record(const gvcf_block_site_record& si) const;
 
     void write_indel_record(const digt_indel_info& ii) const;
     void write_indel_record(const continuous_indel_info& ii) const;
 
-    void write_site_record(const continuous_site_info& si) const;
-    void write_site_record(const gvcf_block_site_record& si) const;
-    void write_site_record(const digt_site_info& si) const;
-
-
     /// fill in missing sites
     void skip_to_pos(const pos_t target_pos);
 
-    const digt_site_info& get_empty_site(const pos_t pos)
+    const digt_site_info&
+    get_empty_site(const pos_t pos)
     {
         _empty_site.pos = pos;
         _empty_site.ref = _ref.get_base(pos);
