@@ -230,7 +230,7 @@ void somatic_indel_caller_grid::set_somatic_prior(
                             else
                             {
                                 // fn should be smaller than ft
-                                if(get_fraction_from_index(fn) >= get_fraction_from_index(ft))
+                                if(get_fraction_from_index(fn) >= 0.15*get_fraction_from_index(ft))
                                     lprob_f_given_g = -INFINITY;
                                 else
                                 {
