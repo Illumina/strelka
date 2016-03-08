@@ -32,7 +32,7 @@ sys.path.append(scriptDir)
 from configureOptions import ConfigureWorkflowOptions
 from configureUtil import assertOptionExists, joinFile, OptParseException, \
                           validateFixExistingDirArg, validateFixExistingFileArg, \
-                          checkTabixListOption
+                          checkFixTabixListOption
 from workflowUtil import exeFile, parseGenomeRegion
 
 
@@ -46,8 +46,6 @@ def cleanLocals(locals_dict) :
 
 
 class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
-
-    validAlignerModes = ["bwa","isaac"]
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--referenceFasta",type="string",metavar="FILE",
@@ -104,8 +102,6 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         """
 
         configCommandLine=sys.argv
-
-        alignerMode = "isaac"
 
         libexecDir=os.path.abspath(os.path.join(scriptDir,"@THIS_RELATIVE_LIBEXECDIR@"))
         assert os.path.isdir(libexecDir)
@@ -166,12 +162,6 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         options.runDir=os.path.abspath(options.runDir)
 
-        # check alignerMode:
-        if options.alignerMode is not None :
-            options.alignerMode = options.alignerMode.lower()
-            if options.alignerMode not in self.validAlignerModes :
-                raise OptParseException("Invalid aligner mode: '%s'" % options.alignerMode)
-
         options.referenceFasta=validateFixExistingFileArg(options.referenceFasta,"reference")
 
         # check for reference fasta index file:
@@ -180,8 +170,8 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
             if not os.path.isfile(faiFile) :
                 raise OptParseException("Can't find expected fasta index file: '%s'" % (faiFile))
 
-        checkTabixListOption(options.indelCandidatesList,"candidate indel vcf")
-        checkTabixListOption(options.forcedGTList,"forced genotype vcf")
+        checkFixTabixListOption(options.indelCandidatesList,"candidate indel vcf")
+        checkFixTabixListOption(options.forcedGTList,"forced genotype vcf")
 
         if (options.regionStrList is None) or (len(options.regionStrList) == 0) :
             options.genomeRegionList = None
@@ -193,7 +183,6 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         assertOptionExists(options.runDir,"run directory")
 
-        assertOptionExists(options.alignerMode,"aligner mode")
         assertOptionExists(options.referenceFasta,"reference fasta file")
 
 

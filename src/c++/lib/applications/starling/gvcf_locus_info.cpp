@@ -24,12 +24,17 @@
 
 
 #include "gvcf_locus_info.hh"
+#include "common/Exceptions.hh"
+
+#include "boost/math/distributions/binomial.hpp"
+#include "boost/math/distributions.hpp"
 
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <typeinfo>
-#include <boost/math/distributions/binomial.hpp>
-#include <boost/math/distributions.hpp>
+
+
 
 void
 shared_call_info::
@@ -198,11 +203,16 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
                                 trailing_seq.size());
 
         // add to the ploidy object:
-        add_cigar_to_ploidy(this_call.cigar,this->ploidy);
+        add_cigar_to_ploidy(this_call.cigar,ploidy);
     };
     munge_indel(*this);
     munge_indel(overlap);
 
+    // we only combine pairs of simple het indels on different haplotpyes, so this assertion must hold:
+    for (const unsigned pl : ploidy)
+    {
+        assert(pl<2);
+    }
 
     //reduce qual and gt to the lowest of the set:
     call._dindel.indel_qphred = std::min(call._dindel.indel_qphred, overlap.first()._dindel.indel_qphred);
@@ -220,6 +230,20 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
     call.gq = std::min(call.gq, overlap.first().gq);
 
     _calls.push_back(overlap.first());
+}
+
+
+
+void
+digt_indel_info::
+getPloidyError(
+    const unsigned offset) const
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: get_ploidy offset '" << offset << "' exceeds ploidy region size '" << ploidy.size() << "'\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
 }
 
 
@@ -243,7 +267,7 @@ get_site_qscore_features(
     //we need to handle the scaling of DP better for high depth cases
     res["F_DP"]               = n_used_calls * depth_norm;
     res["F_DPF"]              = n_unused_calls * depth_norm;
-    res["AD0"]                = known_counts[dgt.ref_gt] * depth_norm;
+    res["AD0"]                = alleleObservationCounts(dgt.ref_gt) * depth_norm;
     res["AD1"]                = 0.0;          // set below
 
     res["I_MQ"]               = MQ;
@@ -257,10 +281,10 @@ get_site_qscore_features(
         if (b==dgt.ref_gt) continue;
         if (DIGT::expect2(b,smod.max_gt))
         {
-            res["AD1"] =  known_counts[b] * depth_norm;
+            res["AD1"] =  alleleObservationCounts(b) * depth_norm;
             // allele bias metrics
-            double r0 = known_counts[dgt.ref_gt];
-            double r1 = known_counts[b];
+            double r0 = alleleObservationCounts(dgt.ref_gt);
+            double r1 = alleleObservationCounts(b);
             double allelebiaslower  = cdf(boost::math::binomial(r0+r1,0.5),r0);
             double allelebiasupper  = cdf(boost::math::binomial(r0+r1,0.5),r1);
             res["ABlower"]          = -log(allelebiaslower+1.e-30); // +1e-30 to avoid log(0) in extreme cases
@@ -313,6 +337,8 @@ operator<<(std::ostream& os,
     return os;
 }
 
+
+
 std::ostream&
 operator<<(std::ostream& os,
            const digt_site_info& si)
@@ -320,3 +346,58 @@ operator<<(std::ostream& os,
     os << "pos: " << (si.pos+1) << " " << si.get_gt();
     return os;
 }
+
+
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const shared_indel_call_info& shi)
+{
+    os << static_cast<shared_call_info>(shi) << '\n';
+
+    os << "indel_key: " << shi._ik << "\n";
+    //os << "indel_data: " << shi._id << "\n";
+    os << "indel_report_info: " << shi._iri << "\n";
+    os << "indel_sample_info: " << shi._isri << "\n";
+    os << "cigar: " << shi.cigar << "\n";
+
+    return os;
+}
+
+
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const digt_indel_call& dic)
+{
+    os << static_cast<shared_indel_call_info>(dic) << '\n';
+
+    dic._dindel.dump(os);
+
+    os << "EVS: " << dic.EVS << " max_gt: " << dic.max_gt << "\n";
+
+    return os;
+}
+
+
+void
+digt_indel_info::
+dump(std::ostream& os) const
+{
+    os << "digt_indel_info\n";
+    os << "nCalls: " << _calls.size() << " isOverlap: " << _is_overlap << "\n";
+    os << "ploidy: ";
+    for (const unsigned pl : ploidy)
+    {
+        os << " " << pl;
+    }
+    os << "\n";
+    os << "Calls:\n";
+    for (const auto& cl : _calls)
+    {
+        os << cl << "\n";
+    }
+}
+

@@ -598,7 +598,8 @@ process_pos_indel_single_sample_digt(
 
                 if (_opt.gvcf.is_gvcf_output())
                 {
-                    _gvcfer->add_indel(std::unique_ptr<indel_info>(new digt_indel_info(pos,ik,id, dindel,iri,isri)));
+                    assert(ik.pos==pos);
+                    _gvcfer->add_indel(std::unique_ptr<indel_info>(new digt_indel_info(ik,id, dindel,iri,isri)));
                 }
 
                 if (_is_variant_windows)

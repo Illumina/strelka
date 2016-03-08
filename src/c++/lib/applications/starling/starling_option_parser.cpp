@@ -25,6 +25,9 @@
 
 #include "starling_option_parser.hh"
 
+#include "boost/filesystem.hpp"
+
+
 //#define DEBUG_OPTIONS
 #ifdef DEBUG_OPTIONS
 #include "blt_util/log.hh"
@@ -127,6 +130,20 @@ finalize_starling_options(
     const po::variables_map& vm,
     starling_options& opt)
 {
+    if (opt.bam_filename.empty())
+    {
+        pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned sample reads");
+    }
+    else
+    {
+        if (! boost::filesystem::exists(opt.bam_filename))
+        {
+            std::ostringstream oss;
+            oss << "Submitted BAM/CRAM file does not exist: '" << opt.bam_filename << "'";
+            pinfo.usage(oss.str().c_str());
+        }
+    }
+
     // gvcf option handlers:
     opt.gvcf.is_min_gqx = (opt.gvcf.min_gqx >= 0);
     opt.gvcf.is_max_snv_hpol = (opt.gvcf.max_snv_hpol >= 0);
@@ -168,6 +185,23 @@ finalize_starling_options(
             pinfo.usage("min-het-vf must be in range (0, 0.5)");
         }
 
+    }
+
+    if (! opt.germline_variant_scoring_models_filename.empty())
+    {
+        if (! boost::filesystem::exists(opt.germline_variant_scoring_models_filename))
+        {
+            std::ostringstream oss;
+            oss << "Germline scoring model file does not exist: '" << opt.germline_variant_scoring_models_filename << "'";
+            pinfo.usage(oss.str().c_str());
+        }
+    }
+    else
+    {
+        if (! opt.germline_variant_scoring_model_name.empty())
+        {
+            pinfo.usage("Specified germline variant scoring model name without a corresponding scoring file.");
+        }
     }
 
     finalize_starling_base_options(pinfo,vm,opt);

@@ -59,8 +59,8 @@ public:
         std::vector<std::unique_ptr<digt_indel_info>>& indels) const;
 
     // mimics behavior of previous hard filters
-    void  default_classify_site(const site_info& si,
-                                shared_call_info& call) const;
+    void default_classify_site(const site_info& si,
+                               shared_call_info& call) const;
 
     void default_classify_indel(shared_indel_call_info& call) const;
 
@@ -90,7 +90,7 @@ private:
 
     // set options
     void set_model(const std::string& name);  // set the calibration model to use
-    void load_models(std::string model_file); // read in model parameters
+    void load_models(const std::string& model_file); // read in model parameters
 
     void load_chr_depth_stats();
     void add_model_pars(std::string& name,parmap& my_pars);
@@ -99,7 +99,7 @@ private:
     // for setting the vcf header filters
     const gvcf_options& opt;
     const gvcf_deriv_options& dopt;
-    std::string model_name="DEFAULT";
+    std::string model_name;
     bool is_default_model=true;
 
     cdmap_t chrom_depth;

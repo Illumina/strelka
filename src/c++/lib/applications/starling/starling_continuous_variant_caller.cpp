@@ -51,19 +51,19 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
     continuous_site_info& info)
 {
     unsigned totalDepth = info.spanning_deletions;
-    for (auto known : info.known_counts)
+    for (unsigned base_id(0); base_id<N_BASE; ++base_id)
     {
-        totalDepth += known;
+        totalDepth += info.alleleObservationCounts(base_id);
     }
     uint8_t ref_base_id = base_to_id(info.ref);
 
     auto generateCallInfo = [&](uint8_t base_id, bool force)
     {
-        auto vf = info.known_counts[base_id] / (double)totalDepth;
+        auto vf = info.alleleObservationCounts(base_id) / (double)totalDepth;
         if (vf > opt.min_het_vf || force)
         {
-            continuous_site_call call(totalDepth, info.known_counts[base_id], (BASE_ID::index_t)base_id);
-            call.gqx = call.gq = poisson_qscore(info.known_counts[base_id], totalDepth, (unsigned)opt.min_qscore, 40);
+            continuous_site_call call(totalDepth, info.alleleObservationCounts(base_id), (BASE_ID::index_t)base_id);
+            call.gqx = call.gq = poisson_qscore(info.alleleObservationCounts(base_id), totalDepth, (unsigned)opt.min_qscore, 40);
 
             if (ref_base_id != base_id)
             {
@@ -95,9 +95,9 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
     };
 
 
-    for (uint8_t i=0; i< info.known_counts.size(); i++)
+    for (unsigned base_id(0); base_id<N_BASE; ++base_id)
     {
-        generateCallInfo(i, info.forcedOutput);
+        generateCallInfo(base_id, info.forcedOutput);
     }
     if (info.calls.empty())
     {
@@ -118,11 +118,11 @@ void starling_continuous_variant_caller::add_indel_call(
     double vf = isri.n_q30_indel_reads / ((double)isri.total_q30_reads());
     if (vf > opt.min_het_vf || id.is_forced_output)
     {
-        info.calls.emplace_back(isri.total_q30_reads(), isri.n_q30_indel_reads,
-                                ik, id, iri, isri);
+        info.calls.emplace_back(
+            isri.total_q30_reads(), isri.n_q30_indel_reads,
+            ik, id, iri, isri);
         continuous_indel_call& call = info.calls.back();
         call.gqx = call.gq = poisson_qscore(isri.n_q30_indel_reads, isri.total_q30_reads(), (unsigned)opt.min_qscore, 40);
-
     }
     if (!info.calls.empty())
     {

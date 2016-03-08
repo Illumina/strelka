@@ -174,6 +174,24 @@ struct snp_pos_info
         }
     }
 
+    template <typename T>
+    void
+    get_known_counts(std::array<T,N_BASE>& base_count,
+                     const int min_qscore,
+                     const bool is_fwd_strand) const
+    {
+        std::fill(base_count.begin(),base_count.end(),0);
+
+        for (const auto& call : calls)
+        {
+            if (call.base_id==BASE_ID::ANY) continue;
+            if (call.get_qscore()<min_qscore) continue;
+            if (call.is_fwd_strand != is_fwd_strand) continue;
+            base_count[call.base_id]++;
+        }
+    }
+
+
     bool
     is_ref_set() const
     {

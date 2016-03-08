@@ -221,35 +221,34 @@ create_phased_record()
     //---
     //> chr8  70364286    .   G   A   32  PhasingConflict SNVSB=-2.5;SNVHPOL=4    GT:GQ:GQX:DP:DPF:AD 0/1:65:21:15:5:12,3
     //> chr8  70364287    .   A   G   11  PhasingConflict SNVSB=-2.5;SNVHPOL=2    GT:GQ:GQX:DP:DPF:AD 0/1:44:18:16:3:14,2
-    typedef std::pair<std::string, int> allele_count_t;
     //static constexpr unsigned alleleCount(2);
-    std::array<allele_count_t, 2> max_alleles = {allele_count_t("N",0),allele_count_t("N",0)};
+    std::array<std::pair<std::string,allele_observations>, 2> max_alleles;
     for (const auto& obs : observations)
     {
 #ifdef DEBUG_CODON
-        log_os << "obs:" << obs.first << "(" << obs.second << ")" << std::endl;;
+        log_os << "obs:" << obs.first << "(" << obs.second.count() << ")\n";
 #endif
 
-        if (obs.second>max_alleles[0].second)
+        if (obs.second.count()>max_alleles[0].second.count())
         {
-            max_alleles[1]  = max_alleles[0];
-            max_alleles[0]  = obs;
+            max_alleles[1] = max_alleles[0];
+            max_alleles[0] = obs;
         }
-        if (obs.second>max_alleles[1].second && max_alleles[0].first!=obs.first)
+        if (obs.second.count()>max_alleles[1].second.count() && max_alleles[0].first!=obs.first)
         {
             max_alleles[1] = obs;
         }
     }
 
 #ifdef DEBUG_CODON
-    log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second << "\n";
-    log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second << "\n";
+    log_os << "max_1 " << max_alleles[0].first << "=" << max_alleles[0].second.count() << "\n";
+    log_os << "max_2 " << max_alleles[1].first << "=" << max_alleles[1].second.count() << "\n";
 #endif
 
     // some ad hoc metrics to measure consistency with diploid model
-    const int allele_sum = max_alleles[0].second + max_alleles[1].second;
+    const int allele_sum = max_alleles[0].second.count() + max_alleles[1].second.count();
     const float max_allele_frac = (static_cast<float>(allele_sum))/this->total_reads;
-    const float relative_allele_frac  = static_cast<float>(max_alleles[1].second)/max_alleles[0].second;
+    const float relative_allele_frac = static_cast<float>(max_alleles[1].second.count())/max_alleles[0].second.count();
 
 #ifdef DEBUG_CODON
     log_os << "max alleles sum " << allele_sum << "\n";
@@ -279,8 +278,8 @@ create_phased_record()
     // sanity check that we have one het on each end of the block:
     if (! phasing_inconsistent)
     {
-        if (max_alleles[0].second == 0) phasing_inconsistent=true;
-        if (max_alleles[1].second == 0) phasing_inconsistent=true;
+        if (max_alleles[0].second.count() == 0) phasing_inconsistent=true;
+        if (max_alleles[1].second.count() == 0) phasing_inconsistent=true;
 
         if (! phasing_inconsistent)
         {
@@ -295,16 +294,20 @@ create_phased_record()
 #endif
     }
 
-    std::stringstream AD,alt;
+    std::stringstream AD, ADF, ADR, alt;
     if (!phasing_inconsistent)
     {
-        AD << this->observations[this->reference];
+        AD << observations[reference].count();
+        ADF << observations[reference].fwd;
+        ADR << observations[reference].rev;
         for (const auto& val : max_alleles)
         {
             if (val.first==reference) continue;
             if (! alt.str().empty()) alt << ',';
             alt << val.first;
-            AD << ',' << val.second;
+            AD << ',' << val.second.count();
+            ADF << ',' << val.second.fwd;
+            ADR << ',' << val.second.rev;
         }
     }
 
@@ -461,6 +464,8 @@ create_phased_record()
 
     base->phased_alt = alt.str();
     base->phased_AD  = AD.str();
+    base->phased_ADF  = ADF.str();
+    base->phased_ADR  = ADR.str();
 
     base->smod.is_phased_region = true;
     const int reads_ignored = (this->total_reads-allele_sum);
@@ -566,6 +571,7 @@ collect_pileup_evidence()
     const unsigned n_calls(beginPi.calls.size());
     for (unsigned callIndex(0); callIndex<n_calls; ++callIndex)
     {
+        const bool is_fwd_strand(beginPi.calls[callIndex].is_fwd_strand);
         std::pair<bool,std::string> result = tracePartialRead(0);
 #ifdef DEBUG_CODON
         log_os << __FUNCTION__ << ": callOffset:";
@@ -579,7 +585,14 @@ collect_pileup_evidence()
 
         if (! result.first) continue;
 
-        observations[result.second]++;
+        if (is_fwd_strand)
+        {
+            observations[result.second].fwd++;
+        }
+        else
+        {
+            observations[result.second].rev++;
+        }
         total_reads++;
     }
 
@@ -618,7 +631,7 @@ Codon_phaser::write_out_alleles() const
     for (const auto& val : observations)
     {
         if (val.first == this->reference) continue;
-        log_os << val.first << "=" << val.second << " ";
+        log_os << val.first << "=" << val.second.count() << " ";
     }
     log_os << "\n";
 }

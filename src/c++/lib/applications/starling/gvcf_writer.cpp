@@ -81,7 +81,6 @@ gvcf_writer(
     }
 
     variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.smod, cm);
-
 }
 
 
@@ -153,6 +152,9 @@ void gvcf_writer::process(std::unique_ptr<site_info> si)
 void gvcf_writer::process(std::unique_ptr<indel_info> ii)
 {
     skip_to_pos(ii->pos);
+
+    // flush any non-variant block before starting:
+    write_block_site_record();
 
     if (dynamic_cast<digt_indel_info*>(ii.get()) != nullptr)
     {
@@ -257,26 +259,34 @@ print_vcf_alt(
 static
 void
 print_site_ad(
-    const digt_site_info& si,
+    const site_info& si,
     const std::vector<uint8_t>& altOrder,
     std::ostream& os)
 {
-    os << si.known_counts[si.dgt.ref_gt];
+    os << si.alleleObservationCounts(base_to_id(si.ref));
 
     for (const auto& b : altOrder)
     {
-        os << ',' << si.known_counts[b];
+        os << ',' << si.alleleObservationCounts(b);
     }
 }
 
+
+
 static
 void
-print_site_ad(
-    const continuous_site_info& si,
-    const continuous_site_call& call,
+print_site_ad_strand(
+    const site_info& si,
+    const std::vector<uint8_t>& altOrder,
+    const bool is_fwd_strand,
     std::ostream& os)
 {
-    os << si.known_counts[base_to_id(si.ref)] << "," << call._alleleDepth;
+    os << si.alleleObservationCountsByStrand(is_fwd_strand, base_to_id(si.ref));
+
+    for (const auto& b : altOrder)
+    {
+        os << ',' << si.alleleObservationCountsByStrand(is_fwd_strand,b);
+    }
 }
 
 
@@ -397,7 +407,7 @@ write_site_record(
     os << ":GQX:DP:DPF";
     if (! isNoAlt)
     {
-        os << ":AD";
+        os << ":AD:ADF:ADR";
     }
     if (is_print_pl)
     {
@@ -437,12 +447,18 @@ write_site_record(
     }
     else if (si.smod.is_phased_region)
     {
-        os << ':' << si.phased_AD;
+        os << ':' << si.phased_AD
+           << ':' << si.phased_ADF
+           << ':' << si.phased_ADR;
     }
     else
     {
         os << ':';
         print_site_ad(si, altOrder, os);
+        os << ':';
+        print_site_ad_strand(si, altOrder, true, os);
+        os << ':';
+        print_site_ad_strand(si, altOrder, false, os);
     }
 
     if (is_print_pl)
@@ -485,8 +501,123 @@ write_site_record(
     os << '\n';
 }
 
+
+
 void
-gvcf_writer::write_site_record(
+gvcf_writer::
+write_site_record(
+    const continuous_site_info& si) const
+{
+    bool site_is_nonref = si.is_nonref();
+    auto ref_base_id = base_to_id(si.ref);
+
+    for (auto& call : si.calls)
+    {
+        std::vector<uint8_t> altOrder;
+        const bool is_no_alt(call._base == ref_base_id);
+        if (! is_no_alt)
+        {
+            altOrder.push_back(call._base);
+        }
+
+        // do not output the call for reference if the site has variants unless it is forced output
+        if (!si.forcedOutput && site_is_nonref && is_no_alt)
+            continue;
+
+        std::ostream& os(*_osptr);
+
+        os << _chrom << '\t'  // CHROM
+           << (si.pos+1) << '\t'  // POS
+           << ".\t";           // ID
+
+        os  << si.ref << '\t'; // REF
+
+        std::string gt(si.get_gt(call));
+
+        // ALT
+        if (is_no_alt)
+            os << ".";
+        else
+            os << id_to_base(call._base);
+        os << '\t';
+
+        // QUAL: TODO - need separate calc?
+        os << call.gq << '\t';
+
+        // FILTER:
+        call.write_filters(os);
+        os << '\t';
+
+        // INFO
+        std::ostringstream info;
+
+        if (si._is_snp)
+        {
+            info << "SNVSB=";
+            {
+                const StreamScoper ss(info);
+                info << std::fixed << std::setprecision(1) << call.strand_bias;
+            }
+            info << ';';
+            info << "SNVHPOL=" << si.hpol;
+        }
+
+        if (!is_no_alt)
+        {
+            if (_opt.do_codon_phasing)
+            {
+                if (!info.str().empty())
+                    info << ";";
+                info << "Unphased"; // TODO: placeholder until we do phasing on continuous variants
+            }
+        }
+
+        os << (info.str().empty() ? "." : info.str()) << "\t";
+
+        //FORMAT
+        os << "GT";
+        os << ":GQ";
+        os << ":GQX";
+        os << ":DP:DPF";
+        if (!is_no_alt)
+        {
+            os << ":AD:ADF:ADR";
+        }
+        os << ":VF";
+
+        os << '\t';
+
+        //SAMPLE
+        os << gt
+           << ':' << call.gq
+           << ':' << call.gqx;
+
+        // DP:DPF
+        os << ':' << si.n_used_calls << ':' << si.n_unused_calls;
+
+        if (!is_no_alt)
+        {
+            os << ':';
+            print_site_ad(si, altOrder, os);
+            os << ':';
+            print_site_ad_strand(si, altOrder, true, os);
+            os << ':';
+            print_site_ad_strand(si, altOrder, false, os);
+        }
+
+        {
+            const StreamScoper ss(os);
+            os << ':' << std::fixed << std::setprecision(3) << call.variant_frequency();
+        }
+        os << '\n';
+    }
+}
+
+
+
+void
+gvcf_writer::
+write_site_record(
     const gvcf_block_site_record& si) const
 {
     std::ostream& os(*_osptr);
@@ -546,91 +677,10 @@ gvcf_writer::write_site_record(
 
 
 void
-gvcf_writer::write_indel_record(const continuous_indel_info& ii)
+gvcf_writer::
+write_indel_record(
+    const digt_indel_info& ii) const
 {
-    // flush any non-variant block before starting:
-    write_block_site_record();
-
-    std::ostream& os(*_osptr);
-
-    for (auto& call : ii.calls)
-    {
-        os << _chrom << '\t'   // CHROM
-           << ii.pos << '\t'   // POS
-           << ".\t"            // ID
-           << call._iri.vcf_ref_seq << '\t'; // REF
-
-        // ALT
-        os << call._iri.vcf_indel_seq;
-        os << '\t';
-
-        os << call.gq << '\t'; //QUAL
-
-        // FILTER:
-        call.write_filters(os);
-        os << '\t';
-
-        // INFO
-        os << "CIGAR=";
-        os << call.cigar;
-        os << ';';
-        os << "RU=";
-        if (call._iri.is_repeat_unit() && call._iri.repeat_unit.size() <= 20)
-        {
-            os << call._iri.repeat_unit;
-        }
-        else
-        {
-            os << '.';
-        }
-        os << ';';
-        os << "REFREP=";
-        if (call._iri.is_repeat_unit())
-        {
-            os << call._iri.ref_repeat_count;
-        }
-
-        os << ';';
-        os << "IDREP=";
-        if (call._iri.is_repeat_unit())
-        {
-            os << call._iri.indel_repeat_count;
-        }
-
-
-        os << '\t';
-
-        //FORMAT
-        os << "GT:GQ:GQX:DPI:AD:VF" << '\t';
-
-        //SAMPLE
-        os << ii.get_gt() << ':'
-           << call.gq << ':';
-
-        os << call.gqx  << ':';
-
-        os << call._isri.depth << ':';
-
-        // SAMPLE AD:
-        os << call._totalDepth - call._alleleDepth
-           << ","
-           << call._alleleDepth;
-        // VF
-        {
-            const StreamScoper ss(os);
-            os << ':' << std::setprecision(3) << call.variant_frequency();
-        }
-        os << '\n';
-    }
-}
-
-
-void
-gvcf_writer::write_indel_record(const digt_indel_info& ii)
-{
-    // flush any non-variant block before starting:
-    write_block_site_record();
-
     std::ostream& os(*_osptr);
     auto& call(ii.first());
 
@@ -713,29 +763,48 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
     os << '\t';
 
     //FORMAT
-    os << "GT:GQ:GQX:DPI:AD:PL" << '\t';
+    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:PL" << '\t';
 
     //SAMPLE
     os << ii.get_gt() << ':'
-       << call.gq << ':';
+       << call.gq;
 
-    if (call.EVS>=0)
-        os << call.EVS  << ':';
-    else
-        os << call.gqx  << ':';
+    os << ':' << ((call.EVS>=0) ? call.EVS : call.gqx);
 
-    os << call._isri.depth << ':';
+    os << ':' << call._isri.depth;
 
-    // SAMPLE AD:
-    unsigned ref_count(0);
-    for (unsigned i = 0; i <ii._calls.size(); ++i)
+    // SAMPLE AD/ADF/ADR:
     {
-        ref_count = std::max(ref_count, ii._calls[i]._isri.n_q30_ref_reads);
-    }
-    os << ref_count;
-    for (unsigned i = 0; i <ii._calls.size(); ++i)
-    {
-        os << ',' << ii._calls[i]._isri.n_q30_indel_reads;
+        auto orderRefReads = [](const digt_indel_call& a, const digt_indel_call& b)
+            {
+                return (a._isri.n_q30_ref_reads < b._isri.n_q30_ref_reads);
+            };
+
+        const auto maxRefCountIter(
+            std::max_element(ii._calls.begin(),ii._calls.end(),orderRefReads));
+
+        const auto& maxRefIsri(maxRefCountIter->_isri);
+
+        // AD
+        os << ':' << maxRefIsri.n_q30_ref_reads;
+        for (const auto& icall : ii._calls)
+        {
+            os << ',' << icall._isri.n_q30_indel_reads;
+        }
+
+        // ADF
+        os << ':' << maxRefIsri.n_q30_ref_reads_fwd;
+        for (const auto& icall : ii._calls)
+        {
+            os << ',' << icall._isri.n_q30_indel_reads_fwd;
+        }
+
+        // ADR
+        os << ':' << maxRefIsri.n_q30_ref_reads_rev;
+        for (const auto& icall : ii._calls)
+        {
+            os << ',' << icall._isri.n_q30_indel_reads_rev;
+        }
     }
 
     // PL field
@@ -788,98 +857,89 @@ gvcf_writer::write_indel_record(const digt_indel_info& ii)
     os << '\n';
 }
 
+
+
 void
-gvcf_writer::write_site_record(
-    const continuous_site_info& si) const
+gvcf_writer::
+write_indel_record(
+    const continuous_indel_info& ii) const
 {
-    bool site_is_nonref = si.is_nonref();
-    auto ref_base_id = base_to_id(si.ref);
+    std::ostream& os(*_osptr);
 
-    for (auto& call : si.calls)
+    for (auto& call : ii.calls)
     {
-        bool is_no_alt(call._base == ref_base_id);
-
-        // do not output the call for reference if the site has variants unless it is forced output
-        if (!si.forcedOutput && site_is_nonref && is_no_alt)
-            continue;
-
-        std::ostream& os(*_osptr);
-
-        os << _chrom << '\t'  // CHROM
-           << (si.pos+1) << '\t'  // POS
-           << ".\t";           // ID
-
-        os  << si.ref << '\t'; // REF
-
-        std::string gt(si.get_gt(call));
+        os << _chrom << '\t'   // CHROM
+           << ii.pos << '\t'   // POS
+           << ".\t"            // ID
+           << call._iri.vcf_ref_seq << '\t'; // REF
 
         // ALT
-        if (is_no_alt)
-            os << ".";
-        else
-            os << id_to_base(call._base);
+        os << call._iri.vcf_indel_seq;
         os << '\t';
 
-        // QUAL: TODO - need separate calc?
-        os << call.gq << '\t';
+        os << call.gq << '\t'; //QUAL
 
         // FILTER:
         call.write_filters(os);
         os << '\t';
 
         // INFO
-        std::ostringstream info;
-
-        if (si._is_snp)
+        os << "CIGAR=";
+        os << call.cigar;
+        os << ';';
+        os << "RU=";
+        if (call._iri.is_repeat_unit() && call._iri.repeat_unit.size() <= 20)
         {
-            info << "SNVSB=";
-            {
-                const StreamScoper ss(info);
-                info << std::fixed << std::setprecision(1) << call.strand_bias;
-            }
-            info << ';';
-            info << "SNVHPOL=" << si.hpol;
+            os << call._iri.repeat_unit;
+        }
+        else
+        {
+            os << '.';
+        }
+        os << ';';
+        os << "REFREP=";
+        if (call._iri.is_repeat_unit())
+        {
+            os << call._iri.ref_repeat_count;
         }
 
-        if (!is_no_alt)
+        os << ';';
+        os << "IDREP=";
+        if (call._iri.is_repeat_unit())
         {
-            if (_opt.do_codon_phasing)
-            {
-                if (!info.str().empty())
-                    info << ";";
-                info << "Unphased"; // TODO: placeholder until we do phasing on continuous variants
-            }
+            os << call._iri.indel_repeat_count;
         }
 
-        os << (info.str().empty() ? "." : info.str()) << "\t";
-
-        //FORMAT
-        os << "GT";
-        os << ":GQ";
-        os << ":GQX";
-        os << ":DP:DPF";
-        if (!is_no_alt)
-            os << ":AD";
-        os << ":VF";
 
         os << '\t';
 
+        //FORMAT
+        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:VF" << '\t';
+
         //SAMPLE
-        os << gt << ':';
-        os << call.gq << ':';
-        os << call.gqx << ':';
-        // DP:DPF
-        os << si.n_used_calls << ':' << si.n_unused_calls;
+        os << ii.get_gt() << ':'
+           << call.gq;
 
-        if (!is_no_alt)
-        {
-            os << ':';
-            print_site_ad(si, call, os);
-        }
+        os << ':' << call.gqx;
 
+        os << ':' << call._isri.depth;
+
+        // AD:
+        os << ':' << call._isri.n_q30_ref_reads
+           << ',' << call._isri.n_q30_indel_reads;
+
+        // ADF
+        os << ':' << call._isri.n_q30_ref_reads_fwd
+           << ',' << call._isri.n_q30_indel_reads_fwd;
+
+        // ADR
+        os << ':' << call._isri.n_q30_ref_reads_rev
+           << ',' << call._isri.n_q30_indel_reads_rev;
+
+        // VF
         {
             const StreamScoper ss(os);
-            os << ':' << std::fixed << std::setprecision(3) << call.variant_frequency();
+            os << ':' << std::setprecision(3) << call.variant_frequency();
         }
         os << '\n';
     }

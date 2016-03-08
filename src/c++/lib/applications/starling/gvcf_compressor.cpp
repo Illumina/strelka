@@ -59,7 +59,7 @@ is_site_compressable(
 
     if (si.ref!='N' && si.n_used_calls > 0)
     {
-        const double reffrac(static_cast<double>(si.known_counts[base_to_id(si.ref)]) /
+        const double reffrac(static_cast<double>(si.alleleObservationCounts(base_to_id(si.ref))) /
                              static_cast<double>(si.n_used_calls));
         if (reffrac+_opt.block_max_nonref <= 1) return false;
     }

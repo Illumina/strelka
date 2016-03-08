@@ -36,6 +36,7 @@
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
+#include <memory>
 #include <sstream>
 
 
@@ -55,50 +56,51 @@ strelka_run(
 
     const pos_range& rlimit(dopt.report_range_limit);
 
-    assert(! opt.bam_filename.empty());
     assert(! opt.tumor_bam_filename.empty());
 
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-    bam_streamer normal_read_stream(opt.bam_filename.c_str(),bam_region.c_str());
     bam_streamer tumor_read_stream(opt.tumor_bam_filename.c_str(),bam_region.c_str());
 
+    const bam_hdr_t* bam_header(tumor_read_stream.get_header());
+
+    std::unique_ptr<bam_streamer> normal_read_stream_ptr;
+
+    if (! opt.bam_filename.empty())
+    {
+        normal_read_stream_ptr.reset(new bam_streamer(opt.bam_filename.c_str(),bam_region.c_str()));
+    }
+
     // check for header consistency:
-    if (! check_header_compatibility(normal_read_stream.get_header(),tumor_read_stream.get_header()))
+    if (normal_read_stream_ptr)
     {
-        std::ostringstream oss;
-        oss << "ERROR: Normal and tumor BAM/CRAM files have incompatible headers.\n";
-        oss << "\tnormal_bam_file:\t'" << opt.bam_filename << "'\n";
-        oss << "\ttumor_bam_file:\t'" << opt.tumor_bam_filename << "'\n";
-        throw blt_exception(oss.str().c_str());
-    }
-
-    const int32_t tid(normal_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
-    if (tid < 0)
-    {
-        std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << opt.bam_filename << "'\n";
-        throw blt_exception(oss.str().c_str());
-    }
-
-    // We make the assumption that the normal and tumor files have the
-    // same set of reference chromosomes (and thus tid matches for the
-    // same chrom label in the binary records). Check this constraint
-    // here:
-    {
-        const int32_t tumor_tid(tumor_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
-        if (tid != tumor_tid)
+        if (! check_header_compatibility(normal_read_stream_ptr->get_header(),tumor_read_stream.get_header()))
         {
-            throw blt_exception("ERROR: tumor and normal BAM/CRAM files have mis-matched reference sequence dictionaries.\n");
+            std::ostringstream oss;
+            oss << "ERROR: Normal and tumor BAM/CRAM files have incompatible headers.\n";
+            oss << "\tnormal_bam_file:\t'" << opt.bam_filename << "'\n";
+            oss << "\ttumor_bam_file:\t'" << opt.tumor_bam_filename << "'\n";
+            throw blt_exception(oss.str().c_str());
         }
     }
 
+    const int32_t tid(tumor_read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
+    if (tid < 0)
+    {
+        std::ostringstream oss;
+        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << opt.tumor_bam_filename << "'\n";
+        throw blt_exception(oss.str().c_str());
+    }
+
     const StrelkaSampleSetSummary ssi;
-    strelka_streams client_io(opt, dopt, pinfo,normal_read_stream.get_header(),ssi);
+    strelka_streams client_io(opt, dopt, pinfo,bam_header,ssi);
     strelka_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
     starling_input_stream_data sdata;
-    sdata.register_reads(normal_read_stream,STRELKA_SAMPLE_TYPE::NORMAL);
+    if (normal_read_stream_ptr)
+    {
+        sdata.register_reads(*normal_read_stream_ptr,STRELKA_SAMPLE_TYPE::NORMAL);
+    }
     sdata.register_reads(tumor_read_stream,STRELKA_SAMPLE_TYPE::TUMOR);
 
     // hold zero-to-many vcf streams open:
@@ -108,7 +110,7 @@ strelka_run(
     for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
     {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),normal_read_stream.get_header())));
+                                                        bam_region.c_str(),bam_header)));
         sdata.register_indels(*(indel_stream.back()));
     }
 
@@ -117,7 +119,7 @@ strelka_run(
     for (const auto& vcf_filename : opt.force_output_vcf)
     {
         foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                          bam_region.c_str(),normal_read_stream.get_header())));
+                                                          bam_region.c_str(),bam_header)));
         sdata.register_forced_output(*(foutput_stream.back()));
     }
 
@@ -126,7 +128,7 @@ strelka_run(
     for (const auto& vcf_filename : opt.noise_vcf)
     {
         noise_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),normal_read_stream.get_header())));
+                                                        bam_region.c_str(), bam_header)));
         sdata.register_noise(*(noise_stream.back()));
     }
 
@@ -161,7 +163,7 @@ strelka_run(
             const bam_streamer* streamptr(nullptr);
             if        (current.sample_no == STRELKA_SAMPLE_TYPE::NORMAL)
             {
-                streamptr = &normal_read_stream;
+                streamptr = &(*normal_read_stream_ptr);
             }
             else if (current.sample_no == STRELKA_SAMPLE_TYPE::TUMOR)
             {
@@ -208,7 +210,6 @@ strelka_run(
                 set_noise_from_vcf(vcf_variant.line,sn);
                 sppr.insert_noise_pos(vcf_variant.pos-1,sn);
             }
-
         }
         else
         {

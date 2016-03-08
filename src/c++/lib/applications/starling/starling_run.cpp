@@ -34,6 +34,7 @@
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
+#include "common/Exceptions.hh"
 #include "htsapi/bam_streamer.hh"
 #include "htsapi/bed_streamer.hh"
 #include "htsapi/vcf_streamer.hh"
@@ -68,9 +69,11 @@ starling_run(
     const int32_t tid(read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
     if (tid < 0)
     {
+        using namespace illumina::common;
+
         std::ostringstream oss;
         oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << opt.bam_filename << "'\n";
-        throw blt_exception(oss.str().c_str());
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
     SampleSetSummary ssi;
@@ -173,15 +176,17 @@ starling_run(
         {
             const bed_record& bedr(*(ploidy_regions->get_record_ptr()));
             known_pos_range2 ploidyRange(bedr.begin,bedr.end);
-            const auto ploidy = parsePloidyFromBed(bedr.line);
-            if (ploidy && ((*ploidy == 0) || (*ploidy == 1)))
+            const int ploidy(parsePloidyFromBedStrict(bedr.line));
+            if ((ploidy == 0) || (ploidy == 1))
             {
-                const bool retval(sppr.insert_ploidy_region(ploidyRange,*ploidy));
+                const bool retval(sppr.insert_ploidy_region(ploidyRange,ploidy));
                 if (! retval)
                 {
+                    using namespace illumina::common;
+
                     std::ostringstream oss;
                     oss << "ERROR: ploidy bedfile record conflicts with prior record. Bedfile line: '" << bedr.line << "'\n";
-                    throw blt_exception(oss.str().c_str());
+                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
                 }
             }
         }

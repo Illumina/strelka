@@ -184,6 +184,7 @@ struct shared_indel_call_info : public shared_call_info
     ALIGNPATH::path_t cigar;
 };
 
+std::ostream& operator<<(std::ostream& os,const shared_indel_call_info& shi);
 
 
 struct digt_indel_call : public shared_indel_call_info
@@ -206,6 +207,8 @@ struct digt_indel_call : public shared_indel_call_info
 
     unsigned max_gt=0;
 };
+
+std::ostream& operator<<(std::ostream& os,const digt_indel_call& dic);
 
 
 
@@ -341,12 +344,11 @@ struct indel_info
 
 struct digt_indel_info : public indel_info
 {
-    digt_indel_info(const pos_t init_pos,
-                    const indel_key& init_ik,
+    digt_indel_info(const indel_key& init_ik,
                     const indel_data& init_id,
                     const starling_diploid_indel_core& init_dindel,
                     const starling_indel_report_info& init_iri,
-                    const starling_indel_sample_report_info& init_isri) : indel_info(init_pos)
+                    const starling_indel_sample_report_info& init_isri) : indel_info(init_ik.pos)
     {
         _calls.emplace_back(init_ik, init_id, init_iri, init_isri, init_dindel);
     }
@@ -434,7 +436,10 @@ struct digt_indel_info : public indel_info
         }
         else
         {
-            assert(offset<ploidy.size());
+            if (offset>=ploidy.size())
+            {
+                getPloidyError(offset);
+            }
             return ploidy[offset];
         }
         return 2;
@@ -452,6 +457,16 @@ struct digt_indel_info : public indel_info
         return _calls.front();
     }
 
+    void
+    dump(std::ostream& os) const;
+
+private:
+
+    void
+    getPloidyError(const unsigned offset) const;
+
+public:
+
     /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
     std::vector<unsigned> ploidy;
 
@@ -459,7 +474,6 @@ struct digt_indel_info : public indel_info
     bool _is_overlap=false;
 
     std::vector<digt_indel_call> _calls;
-
 };
 
 
@@ -476,7 +490,8 @@ struct site_info
         pos=(init_pos);
         ref=(init_ref);
         forcedOutput = is_forced_output;
-        good_pi.get_known_counts(known_counts,used_allele_count_min_qscore);
+        good_pi.get_known_counts(fwd_counts,used_allele_count_min_qscore,true);
+        good_pi.get_known_counts(rev_counts,used_allele_count_min_qscore,false);
         spanning_deletions = good_pi.n_spandel;
     }
 
@@ -486,19 +501,36 @@ struct site_info
     virtual void set_filter(VCF_FILTERS::index_t filter) = 0;
     virtual bool is_nonref() const = 0;
 
+    unsigned
+    alleleObservationCounts(const int base_id) const
+    {
+        return (fwd_counts[base_id]+rev_counts[base_id]);
+    }
+
+    unsigned
+    alleleObservationCountsByStrand(
+        const bool is_fwd_strand,
+        const int base_id) const
+    {
+        return (is_fwd_strand ? fwd_counts[base_id] : rev_counts[base_id]);
+    }
 
     pos_t pos = 0;
     char ref = 'N';
-    std::array<unsigned,N_BASE> known_counts = {{}};
     unsigned n_used_calls = 0;
     unsigned n_unused_calls = 0;
     unsigned hpol = 0;
 
-
     unsigned spanning_deletions;
     bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
     bool forcedOutput = false;
+
+private:
+    std::array<unsigned,N_BASE> fwd_counts;
+    std::array<unsigned,N_BASE> rev_counts;
 };
+
+
 
 struct digt_site_info : public site_info
 {
@@ -520,7 +552,6 @@ struct digt_site_info : public site_info
     {
         smod.set_filter(filter);
     }
-
 
     const char*
     get_gt() const
@@ -583,7 +614,7 @@ struct digt_site_info : public site_info
         return ((!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
     }
 
-    std::string phased_ref, phased_alt, phased_AD;
+    std::string phased_ref, phased_alt, phased_AD, phased_ADF, phased_ADR;
     diploid_genotype dgt;
     double hapscore = 0;
     double MQ = 0;				 // RMS of mapping qualities

@@ -23,6 +23,9 @@
 ///
 
 #include "ploidy_util.hh"
+#include "common/Exceptions.hh"
+
+#include <sstream>
 
 
 
@@ -47,4 +50,26 @@ parsePloidyFromBed(const char* line)
     if (s != line) result.reset(val);
 
     return result;
+}
+
+
+
+int
+parsePloidyFromBedStrict(const char* line)
+{
+    using namespace illumina::common;
+    const auto ploidy = parsePloidyFromBed(line);
+    if (! ploidy)
+    {
+        std::ostringstream oss;
+        oss << "ERROR: can't parse ploidy (column 5) from bed record: '" << line << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+    if ((*ploidy < 0) || (*ploidy > 2))
+    {
+        std::ostringstream oss;
+        oss << "ERROR: parsed unsupported ploidy value (" << *ploidy << ") from bed record: '" << line << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+    return *ploidy;
 }
