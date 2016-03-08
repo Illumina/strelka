@@ -199,8 +199,27 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
 
         // Reverse prob that true allele has been masked as reference by chance,
         // may want to leave this term for now.
+#define NONLINEAR_REF_ERROR_FACTOR
+#ifndef NONLINEAR_REF_ERROR_FACTOR
         ref_error_prob=client_opt.indel_ref_error_factor *
                        adjusted_rate(repeat_unit, indel_query_len, indel_size, reverse_it);
+#else
+
+        //in applying the ref error factor, we want to make sure that we don't end up with
+        //"probabilities" > 1 ... and in fact we might want to keep it <= .5 ... we don't
+        //want to say that we are less likely to be right than wrong, as that would favor any
+        //specific alternative over no error.
+        // If we take the preliminary error estimate as f and compute the final estimate p 
+        // as follows, then we get graceful behavior: nearly the linear scaling of error
+        // estimates originally intended when the error rates are very low, but with reduced
+        // scaling as the result would push us towards .5:
+        //
+        //   p = .5*(1-exp(100*log(2*(.5-$1))))
+        //
+        #define MAX_ERR_PROB 0.5
+        double prelimRate = adjusted_rate(repeat_unit, indel_query_len, indel_size, reverse_it);
+        ref_error_prob=MAX_ERR_PROB*(1.-exp(client_opt.indel_ref_error_factor*log((MAX_ERR_PROB-std::min(prelimRate,MAX_ERR_PROB))/MAX_ERR_PROB)));
+#endif
     }
     else
     {
