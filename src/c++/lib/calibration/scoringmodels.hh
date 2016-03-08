@@ -72,6 +72,8 @@ struct scoring_models
         double& indel_error_prob,
         double& ref_error_prob) const
     {
+        assert(0 && "this is never used");
+        // if it is in fact used, need to think through whether you want to use the indel_ref_error_factor
         get_indel_model().calc_prop(client_opt,iri,indel_error_prob,ref_error_prob);
     }
 
