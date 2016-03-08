@@ -27,13 +27,29 @@
 
 \section{Overview}
 
-On any release branch, the methods described here should reflect the default implementation in the source repository containing this document. 
+On any release branch, the methods described here should reflect the default implementation in the source 
+repository containing this document.
 
 \section{Methods}
 
-\subsection{Strelka Workflow Overview}
+\subsection{Workflow Overview}
 
-All strelka workflows run several quick parameter estimation steps on the input data, then chop up the genome to call variants on the segments in parallel, then glue the results back together!
+Strelka comprises several workflows for small variant calling from mapped sequencing data. It includes workflows for analysis of germline variants from single-samples and multi-sample groups, somatic variants from matched tumor-normal sample pairs and denovo variants from parent-offspring trios.
+
+The methods below describe several core components shared by all workflows in addition to workflow specific logic specialized for each type of variant calling problem. All workflows share a common sequence of analysis steps:
+
+\begin{enumerate}
+\item Preliminary estimation of parameters from sample data.
+\item Division of the genome into segments to be analyzed in parallel
+\item For each analyzed genome segment:
+\begin{enumerate}
+\item Filtration of input read alignments
+\item Processing the input read alignments into a set of variant haplotype candidates.
+\item Finding probability of variant haplotypes/haplotype combinations under various (germline, somatic, de-novo) models.
+\item Empirical re-scoring of variants based on models trained from static truth sets.
+\end{enumerate}
+\item Joining parallel analysis results into final VCF(s)/reported output.
+\end{enumerate}
 
 
 \subsection{Preliminary Parameter Estimation}
