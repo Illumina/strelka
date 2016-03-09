@@ -171,7 +171,8 @@ is_candidate_indel_impl_test(
         if (!is_indel_noise_checked)
         {
             is_indel_noise_checked=true;
-            bool use_length_dependence=false;
+            const bool use_ref_error_factor=false;
+            const bool use_length_dependence=false;
 
             double ref_error_prob(0.);
             double indel_error_prob(0.);
@@ -179,10 +180,7 @@ is_candidate_indel_impl_test(
             // required by get_indel_error_prob
 
             // get expected per-read error rate for this STR
-            indel_model.calc_prop(_opt,iri,indel_error_prob,ref_error_prob,use_length_dependence);
-
-            // need to undo the reference-error bias term that is used to reduce overcalls
-            ref_error_prob /= _opt.indel_ref_error_factor;
+            indel_model.calc_prop(_opt,iri,indel_error_prob,ref_error_prob,use_length_dependence,use_ref_error_factor);
 
             for (unsigned i(0); i<isds; ++i)
             {

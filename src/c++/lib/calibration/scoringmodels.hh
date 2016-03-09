@@ -66,15 +66,6 @@ struct scoring_models
 
     void set_indel_model(const std::string& model_name);
 
-    void get_indel_error(
-        const starling_base_options& client_opt,
-        const starling_indel_report_info& iri,
-        double& indel_error_prob,
-        double& ref_error_prob) const
-    {
-        get_indel_model().calc_prop(client_opt,iri,indel_error_prob,ref_error_prob);
-    }
-
     const IndelErrorModel& get_indel_model() const;
 
     bool isIndelInit() const

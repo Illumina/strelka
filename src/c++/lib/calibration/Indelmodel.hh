@@ -89,7 +89,8 @@ struct IndelErrorModel
                    const starling_indel_report_info& iri,
                    double& indel_error_prob,
                    double& ref_error_prob,
-                   bool use_length_dependence = false) const;
+                   bool use_length_dependence = false,
+                   bool use_ref_error_factor = false) const;
 
     indel_error_rates calc_abstract_prop(unsigned repeat_unit_length,
                                          unsigned tract_length,
