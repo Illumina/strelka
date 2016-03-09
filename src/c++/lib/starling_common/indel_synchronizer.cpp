@@ -171,7 +171,7 @@ is_candidate_indel_impl_test(
         if (!is_indel_noise_checked)
         {
             is_indel_noise_checked=true;
-            bool use_ref_error_factor=false;
+            const bool use_ref_error_factor=false;
             bool use_length_dependence=false;
 
             double ref_error_prob(0.);

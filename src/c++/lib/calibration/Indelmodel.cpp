@@ -225,7 +225,8 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
             //
             // ... assuming p < .5, so the log() is valid
 
-            #define MAX_ERR_PROB 0.5
+            // adjust this if you want a different maximum error probability on the return
+            static const double MAX_ERR_PROB=0.5;
 
             double prelimRate = adjusted_rate(repeat_unit, indel_query_len, indel_size, reverse_it);
             prelimRate = std::min(prelimRate,MAX_ERR_PROB*.999999);
