@@ -37,6 +37,47 @@ std::ostream& log_os(std::cerr);
 BOOST_AUTO_TEST_SUITE( test_alignment_util )
 
 
+BOOST_AUTO_TEST_CASE( test_alignment_range_types )
+{
+    alignment al;
+    al.pos = 100;
+    ALIGNPATH::cigar_to_apath("2S2I2M2I2S",al.path);
+
+    known_pos_range pr1 = get_strict_alignment_range(al);
+    BOOST_REQUIRE_EQUAL(pr1,known_pos_range(100,102));
+
+    known_pos_range pr2 = get_soft_clip_alignment_range(al);
+    BOOST_REQUIRE_EQUAL(pr2,known_pos_range(98,104));
+
+    known_pos_range pr3 = get_alignment_range(al);
+    BOOST_REQUIRE_EQUAL(pr3,known_pos_range(96,106));
+}
+
+BOOST_AUTO_TEST_CASE( test_alignment_zone )
+{
+    alignment al;
+    al.pos = 100;
+    ALIGNPATH::cigar_to_apath("2S2I2M2I2S",al.path);
+
+    known_pos_range pr2 = get_alignment_zone(al,20);
+    BOOST_REQUIRE_EQUAL(pr2,known_pos_range(86,116));
+}
+
+
+BOOST_AUTO_TEST_CASE( test_indel_in_alignment )
+{
+    alignment al;
+    al.pos = 100;
+    ALIGNPATH::cigar_to_apath("2S2I2M2I2M2S",al.path);
+
+    indel_key ik(102,INDEL::INSERT,2);
+
+    pos_range pr;
+    BOOST_REQUIRE(is_indel_in_alignment(al,ik,pr));
+    BOOST_REQUIRE_EQUAL(pr,pos_range(6,8));
+}
+
+
 static
 alignment
 get_test_alignment()
