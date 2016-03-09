@@ -95,19 +95,53 @@ BOOST_AUTO_TEST_CASE( test_remove_edge_deletion )
 
     alignment al(get_test_alignment());
 
-    alignment al2(remove_edge_deletions(al));
+    alignment al2(remove_edge_deletions(al,true,true));
 
     BOOST_CHECK_EQUAL(al, al2);
 
     ALIGNPATH::cigar_to_apath("3D100M",al2.path);
 
-    alignment al3(remove_edge_deletions(al2));
+    alignment al3(remove_edge_deletions(al2,true,true));
 
     BOOST_CHECK_EQUAL(al.path, al3.path);
 
     BOOST_CHECK_EQUAL(static_cast<int>(al3.pos), 1003);
 }
 
+
+
+BOOST_AUTO_TEST_CASE( test_matchify_insertions )
+{
+    alignment al;
+    al.pos = 100;
+    ALIGNPATH::cigar_to_apath("2S2I2M2I2M2I2S",al.path);
+
+    const alignment ali1 = matchify_edge_insertions(al,true,false);
+    const alignment ali2 = matchify_edge_insertions(al,false,true);
+    const alignment ali12 = matchify_edge_insertions(al,true,true);
+
+    BOOST_REQUIRE_EQUAL(ali1.pos,98);
+    BOOST_REQUIRE_EQUAL(apath_to_cigar(ali1.path),"2S4M2I2M2I2S");
+
+    BOOST_REQUIRE_EQUAL(ali2.pos,100);
+    BOOST_REQUIRE_EQUAL(apath_to_cigar(ali2.path),"2S2I2M2I4M2S");
+
+    BOOST_REQUIRE_EQUAL(ali12.pos,98);
+    BOOST_REQUIRE_EQUAL(apath_to_cigar(ali12.path),"2S4M2I4M2S");
+}
+
+
+BOOST_AUTO_TEST_CASE( test_matchify_soft_clip )
+{
+    alignment al;
+    al.pos = 100;
+    ALIGNPATH::cigar_to_apath("2S2I2M2I2M2S",al.path);
+
+    const alignment als = matchify_edge_soft_clip(al);
+
+    BOOST_REQUIRE_EQUAL(als.pos,98);
+    BOOST_REQUIRE_EQUAL(apath_to_cigar(als.path),"2M2I2M2I4M");
+}
 
 
 BOOST_AUTO_TEST_SUITE_END()

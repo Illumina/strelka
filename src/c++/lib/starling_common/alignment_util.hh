@@ -18,9 +18,8 @@
 //
 //
 
-/// \file
 ///
-/// \author Chris Saunders
+/// \brief misc utilities to summarize and/or transform alignment objects
 ///
 
 #pragma once
@@ -76,13 +75,42 @@ is_indel_in_alignment(const alignment& al,
                       const indel_key& ik,
                       pos_range& read_indel_pr);
 
-
-
 /// remove any edge deletions and properly adjust pos for leading deletions:
 alignment
-remove_edge_deletions(const alignment& al,
-                      const bool is_remove_leading_edge=true,
-                      const bool is_remove_trailing_edge=true);
+remove_edge_deletions(
+    const alignment& al,
+    const bool is_remove_leading_edge,
+    const bool is_remove_trailing_edge);
+
+/// transform an alignment such that any insert edge segments become
+/// match. insertions can be enclosed with soft-clip/hard-clip and will still be
+/// counted as edge insertions.
+///
+/// segments are joined and start pos is adjusted appropriately
+///
+alignment
+matchify_edge_insertions(
+    const alignment& al,
+    const bool is_match_leading_edge,
+    const bool is_match_trailing_edge);
+
+/// replicates behavior of matchify_edge_insertions() with an additional
+/// step to remove edge deletions
+///
+alignment
+matchify_edge_indels(
+    const alignment& al,
+    const bool is_match_leading_edge,
+    const bool is_match_trailing_edge);
+
+/// transform an alignment such that any soft-clipped edge segments
+/// become match.
+///
+/// segments are joined and start pos is adjusted appropriately
+///
+alignment
+matchify_edge_soft_clip(
+    const alignment& al);
 
 
 #if 0
