@@ -30,8 +30,13 @@
 #include "starling_common/starling_base_shared.hh"
 
 
-/// search for optimal realignments of the read and score alternate
+/// search for most likely realignments of the read and score alternate
 /// indel states in preparation for indel genotype calling
+///
+/// Note search is for most likely realignment to a pool of potential
+/// haplotypes formed by all possible candidate indel combinations. This
+/// means there are not penalties for candidate indels if we think about the
+/// realignment wrt the reference haplotype.
 ///
 /// \param realign_buffer_range range in reference coordinates in which read is allowed to realign to (due to buffering constraints)
 ///

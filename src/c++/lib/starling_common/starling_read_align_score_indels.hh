@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -42,18 +41,18 @@ typedef indel_buffer::const_iterator ciiter;
 typedef std::map<indel_key,bool> indel_status_map_t;
 
 
-// use the most likely alignment for each indel state for every indel
-// in indel_status_map to generate data needed in indel calling:
-//
+/// use the most likely alignment for each indel state for every indel
+/// in indel_status_map to generate data needed in indel calling:
+///
 void
-score_indels(const starling_base_options& opt,
-             const starling_base_deriv_options& dopt,
-             const starling_sample_options& sample_opt,
-             const read_segment& rseg,
-             indel_synchronizer& isync,
-             const std::set<candidate_alignment>& cal_set,
-             const bool is_incomplete_search,
-             const std::vector<double>& cal_set_path_lnp,
-             double max_path_lnp,
-             const candidate_alignment* max_cal_ptr);
-
+score_indels(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const read_segment& rseg,
+    indel_synchronizer& isync,
+    const std::set<candidate_alignment>& cal_set,
+    const bool is_incomplete_search,
+    const std::vector<double>& cal_set_path_lnp,
+    double max_path_lnp,
+    const candidate_alignment* max_cal_ptr);

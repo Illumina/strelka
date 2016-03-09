@@ -25,7 +25,6 @@
 #include "alignment_util.hh"
 #include "starling_read_align.hh"
 #include "starling_read_align_clipper.hh"
-#include "starling_read_align_get_exemplars.hh"
 #include "starling_read_align_score.hh"
 #include "starling_read_align_score_indels.hh"
 
@@ -66,10 +65,27 @@ typedef std::map<indel_key,starling_align_indel_info> starling_align_indel_statu
 
 
 
-/// Check to see if an alignment overlaps any candidate indels (but not
-/// private indels) over the maximum range suggested by its discovery
-/// alignment. If at least one overlap is discovered, then the read
-/// goes into full re-alignment.
+static
+known_pos_range
+getReadAlignmentZone(
+    const read_segment& rseg)
+{
+    const alignment& al(rseg.genome_align());
+    assert (! al.empty());
+    return get_alignment_zone(al,rseg.read_size());
+}
+
+
+
+/// Check to see if a read segment overlaps any candidate indels (but not
+/// private indels) over the maximum range suggested by its input alignment
+/// as proposed by the read mapper.
+///
+/// If at least one overlap is discovered, then the read goes into full re-alignment.
+///
+/// Also run a preliminary check to make sure alignment doesn't spill outside
+/// of the realignment buffer (realign_pr), if so return false. This should be
+/// extremely rare.
 ///
 static
 bool
@@ -82,24 +98,15 @@ check_for_candidate_indel_overlap(
     std::cerr << "BUGBUG testing read_segment for indel overlap, sample_no: " << isync.get_sample_id() << " rseg: " << rseg;
 #endif
 
+    // get liberally interpreted min, max ref coordinate bounds for the input alignment;
+    const known_pos_range read_range(getReadAlignmentZone(rseg));
 
-    //get min,max bounds for each discovery alignment;
-    known_pos_range read_range(0,0);
-    {
-        const alignment& al(rseg.genome_align());
-        assert (! al.empty());
-
-        const pos_t seq_length(rseg.read_size());
-        read_range=get_alignment_zone(al,seq_length);
-    }
-
-    // read range of interest (pr), must be overlapped by the realignment buffer (realign_pr)
-    // to allow us to continue with the candidate check:
+    // read range must be completely overlapped by the realignment buffer range
+    // to continue:
     if (! realign_buffer_range.is_superset_of(read_range))
     {
         return false;
     }
-
 
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT read extends: " << read_range << "\n";
@@ -110,12 +117,13 @@ check_for_candidate_indel_overlap(
     for (ciiter i(ipair.first); i!=ipair.second; ++i)
     {
         const indel_key& ik(i->first);
-        const indel_data& id(get_indel_data(i));
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT key: " << ik;
 #endif
         // check if read intersects with indel breakpoint:
         if (! is_range_intersect_indel_breakpoints(read_range,ik)) continue;
+
+        const indel_data& id(get_indel_data(i));
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT intersects indel: " << ik << id;
 #endif
@@ -124,7 +132,7 @@ check_for_candidate_indel_overlap(
         if (isync.is_candidate_indel(ik,id))
         {
 #ifdef DEBUG_ALIGN
-            std::cerr << "VARMIT read segment intersects at least one qualifying indel.\n";
+            std::cerr << "VARMIT read segment intersects at least one qualifying candidate indel.\n";
 #endif
             return true;
         }
@@ -622,7 +630,7 @@ add_pin_exception_info(
 ///
 static
 void
-make_candidate_alignments(
+candidate_alignment_search(
     const starling_base_options& client_opt,
     const starling_base_deriv_options& client_dopt,
     const align_id_t read_id,
@@ -695,8 +703,8 @@ make_candidate_alignments(
 
     // each recursive step invokes (up to) 3 paths:
     //  1) is the current state of the active indel
-    //  2) is the alternate state of the active indel with the start position pinned
-    //  3) is the alternate state of the active indel with the end position pinned
+    //  2) is the alternate state of the active indel with the alignment's start position pinned
+    //  3) is the alternate state of the active indel with the alignment's end position pinned
     //
     // toggle will not be invoked for unusable indels (but those are
     // already filtered out of the list)
@@ -715,7 +723,7 @@ make_candidate_alignments(
     // alignment 1) --> unchanged case:
     try
     {
-        make_candidate_alignments(
+        candidate_alignment_search(
             client_opt,client_dopt,read_id,read_length,isync,
             realign_buffer_range,cal_set,warn,
             indel_status_map,indel_order,depth+1,toggle_depth,read_range,
@@ -748,7 +756,7 @@ make_candidate_alignments(
     {
         // Check for very high candidate indel density. If found, indel
         // search toggling is turned down to the minimum level which still
-        // allows simple calls (distance 1 from exemplar). The intention
+        // allows simple calls (distance 1 from input alignemnt). The intention
         // is to allow basic indel calling to proceed in practical time
         // through regions with very high numbers of candidate indels.
         //
@@ -838,7 +846,7 @@ make_candidate_alignments(
                                                      read_length,
                                                      current_indels);
 
-                make_candidate_alignments(
+                candidate_alignment_search(
                     client_opt,client_dopt,read_id,read_length,isync,
                     realign_buffer_range,cal_set,warn,
                     indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
@@ -904,7 +912,7 @@ make_candidate_alignments(
                                                          read_length,
                                                          current_indels);
 
-                    make_candidate_alignments(
+                    candidate_alignment_search(
                         client_opt,client_dopt,read_id,read_length,isync,
                         realign_buffer_range, cal_set,warn,
                         indel_status_map,indel_order,depth+1,toggle_depth+1,read_range,
@@ -962,37 +970,6 @@ get_extra_path_info(const ALIGNPATH::path_t& p)
 
     return epi;
 }
-
-
-
-#if 0
-// some rather involved tie breaking for alignments with the same score:
-//
-// 1. choose the alignment with the fewest indels
-// 2. choose the alignment with the smallest deletion length
-// 3. choose the alignment with the smallest insertion length
-//
-static
-bool
-is_first_path_preferred(const ALIGNPATH::path_t& p1,
-                        const ALIGNPATH::path_t& p2)
-{
-
-    const extra_path_info epi1(get_extra_path_info(p1));
-    const extra_path_info epi2(get_extra_path_info(p2));
-
-    if (epi2.indel_count < epi1.indel_count) return false;
-    if (epi2.indel_count == epi1.indel_count)
-    {
-        if (epi2.del_size < epi1.del_size) return false;
-        if (epi2.del_size == epi1.del_size)
-        {
-            if (epi2.ins_size < epi1.ins_size) return false;
-        }
-    }
-    return true;
-}
-#endif
 
 
 
@@ -1079,13 +1056,14 @@ is_cal_pool_contains_candidate(const starling_base_options& client_opt,
 
 static
 void
-finish_realignment(const starling_base_options& client_opt,
-                   read_segment& rseg,
-                   const cal_pool_t& cal_pool,
-                   const double /*path_lnp*/,
-                   const candidate_alignment* cal_ptr)
+finish_realignment(
+    const starling_base_options& opt,
+    read_segment& rseg,
+    const cal_pool_t& cal_pool,
+    const double /*path_lnp*/,
+    const candidate_alignment* cal_ptr)
 {
-    if (client_opt.is_clip_ambiguous_path &&
+    if (opt.is_clip_ambiguous_path &&
         (cal_pool.size() > 1))
     {
         // soft-clip off any ambiguous regions from the alignment:
@@ -1134,8 +1112,8 @@ is_alignment_spanned_by_range(const known_pos_range pr,
 
 
 
-// score the candidate alignments, find the most likely and the best for realignment:
-//
+/// score the candidate alignments, find the most likely and the best for realignment:
+///
 static
 void
 score_candidate_alignments(
@@ -1318,9 +1296,9 @@ score_candidate_alignments(
 
 
 
-// find the most likely alignment and most likely alignment for
-// each indel state for every indel in indel_status_map
-//
+/// find the most likely alignment and most likely alignment for
+/// each indel state for every indel in indel_status_map
+///
 static
 void
 score_candidate_alignments_and_indels(
@@ -1336,7 +1314,11 @@ score_candidate_alignments_and_indels(
     assert(! cal_set.empty());
 
     // (1) score all alignments in cal_set and find the max scoring
-    // alignment path:
+    // alignment path.
+    //
+    // NOTE: In (1) we're essentially picking a "best" haplotype by
+    // searching for the best alignment with no-penalty candidate indels applied. If we also had candidate snps,
+    // it would be a true candidate haplotype search.
     //
     // (1b) possibly also find a "best" scoring path for re-alignment
     // which is not (quite) the max
@@ -1355,18 +1337,16 @@ score_candidate_alignments_and_indels(
         throw;
     }
 
-
-    //
     // Realignment for snp-calling and visualization is complete here,
     // remaining task is to evaluate alternate alignments as required
     // by the indel calling model.
     //
 
-    // if calling indels, we only need reads with tier1 and tier2
-    // mappings. if tier2 mappings aren't being used, they won't be in
-    // the data, so there's no reason to check for usage here:
+    // For snps and visualization we realign all reads that aren't filtered out entirely,
+    // but for the score_indels step, we only consider reads meeting the minimum filtration
+    // criteria setup for indels.
     //
-    if (! rseg.is_treated_as_anytier_mapping()) return;
+    if (! rseg.is_tier1or2_mapping()) return;
 
     try
     {
@@ -1432,12 +1412,12 @@ load_cal_with_edge_indels(const alignment& al,
 
 static
 void
-get_exemplar_candidate_alignments(
+get_candidate_alignments(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const read_segment& rseg,
     const indel_synchronizer& isync,
-    const alignment& exemplar,
+    const alignment& inputAlignment,
     const known_pos_range realign_buffer_range,
     mca_warnings& warn,
     std::set<candidate_alignment>& cal_set)
@@ -1448,13 +1428,13 @@ get_exemplar_candidate_alignments(
     std::vector<indel_key> indel_order;
 
     candidate_alignment cal;
-    load_cal_with_edge_indels(exemplar,cal);
+    load_cal_with_edge_indels(inputAlignment,cal);
 
 #ifdef DEBUG_ALIGN
-    std::cerr << "VARMIT starting search from exemplar: " << cal;
+    std::cerr << "VARMIT starting search from input alignment: " << cal;
 #endif
 
-    // Get indel set and indel order for the exemplar alignment:
+    // Get indel set and indel order for the input alignment:
     const known_pos_range exemplar_pr(get_soft_clip_alignment_range(cal.al));
     add_indels_in_range(rseg.id(),isync,exemplar_pr,indel_status_map,indel_order);
 
@@ -1462,9 +1442,8 @@ get_exemplar_candidate_alignments(
     std::cerr << "VARMIT exemplar alignment range: " << exemplar_pr << "\n";
 #endif
 
-    // Mark the indels which are already included in the discovery
-    // alignment. Note this won't work for grouper edge indels but we've
-    // removed those from the exemplars already.
+    // Mark the indels which are already included in the input
+    // alignment.
     //
     {
         indel_set_t cal_indels;
@@ -1518,7 +1497,7 @@ get_exemplar_candidate_alignments(
 
     // to handle soft-clip and hard-clip in the genomic alignment, we take the
     // soft and hard clip portion off of the alignment before entering
-    // make_candidate_alignments, and add it back in afterwards.
+    // the candidate alignment search routine, and add it back in afterwards.
     //
     // TODO -- something less hacky to handle clipping
     //
@@ -1527,8 +1506,8 @@ get_exemplar_candidate_alignments(
     unsigned hc_trail(0);
     unsigned sc_lead(0);
     unsigned sc_trail(0);
-    const bool is_exemplar_clip(is_clipped(cal.al.path));
-    if (is_exemplar_clip)
+    const bool is_input_alignment_clipped(is_clipped(cal.al.path));
+    if (is_input_alignment_clipped)
     {
         // exemplar clip condition should only be true for the
         // genomic alignment, which comes first in the exemplar list:
@@ -1548,13 +1527,13 @@ get_exemplar_candidate_alignments(
     // launch recursive re-alignment routine starting from the current exemplar alignment:
     static const unsigned start_depth(0);
     static const unsigned start_toggle_depth(0);
-    make_candidate_alignments(
+    candidate_alignment_search(
         opt,dopt,rseg.id(),cal_read_length,isync,
         realign_buffer_range, cal_set,warn,
         indel_status_map,indel_order,start_depth,start_toggle_depth,
         exemplar_pr,opt.max_read_indel_toggle,cal);
 
-    if (is_exemplar_clip)
+    if (is_input_alignment_clipped)
     {
         // un soft-clip candidate alignments:
         std::set<candidate_alignment> cal_set2(cal_set);
@@ -1587,6 +1566,43 @@ get_exemplar_candidate_alignments(
 
 
 
+/// standardize input alignment to "matchify" edge insertion and soft-clip,
+/// and remove edge indels (with exceptions for RNA segment edges adjacent to
+/// gap segments)
+///
+static
+alignment
+normalizeInputAlignmnet(
+    const read_segment& rseg)
+{
+    const std::pair<bool,bool> end_pin(rseg.get_segment_edge_pin());
+    const bool is_remove_leading_edge_indels(! end_pin.first);
+    const bool is_remove_trailing_edge_indels(! end_pin.second);
+
+    const alignment& inputAlignment(rseg.genome_align());
+
+    const alignment* alignmentPtr(&inputAlignment);
+    alignment noEdgeIndelAlignment;
+    if ((is_remove_leading_edge_indels || is_remove_trailing_edge_indels) && is_edge_readref_len_segment(inputAlignment.path))
+    {
+        noEdgeIndelAlignment=matchify_edge_indels(*alignmentPtr,is_remove_leading_edge_indels,is_remove_trailing_edge_indels);
+        alignmentPtr=&noEdgeIndelAlignment;
+    }
+
+     alignment noEdgeSoftclipAlignment;
+     if (is_soft_clipped(inputAlignment.path))
+     {
+         noEdgeSoftclipAlignment=matchify_edge_soft_clip(*alignmentPtr);
+         alignmentPtr=&noEdgeSoftclipAlignment;
+     }
+
+     return *alignmentPtr;
+}
+
+
+
+
+
 void
 realign_and_score_read(
     const starling_base_options& opt,
@@ -1603,48 +1619,33 @@ realign_and_score_read(
         exit(EXIT_FAILURE);
     }
 
+    const alignment& inputAlignment(rseg.genome_align());
+    assert (! inputAlignment.empty());
+
+    if (! inputAlignment.is_realignable(opt.max_indel_size)) return;
+
     if (! check_for_candidate_indel_overlap(realign_buffer_range, rseg, isync)) return;
 
-    // Reduce discovery alignments to a set of non-redundant exemplars.
-    //
-    // For the exemplar set, all contig alignments have soft-clipped
-    // ends forced to match. For genomic alignments soft-clip is
-    // preserved on the edge of a read, but not edge insertions.
-    //
-    // TODO: further adapt this to allow for actual soft-clip cases
-    // (examples: read origin crossover, end of an exon... etc), by
-    // finding some way for contig alignments to preserve soft-clip.
-    //
-    std::vector<alignment> exemplars;
-    get_exemplar_alignments(opt,rseg,exemplars);
+    const alignment normedAlignment(normalizeInputAlignmnet(rseg));
 
-    if (exemplars.empty()) return;
+    // skip if normedAlignment has negative start position
+    // note this won't come from the read mapper in most cases, but rarely
+    // the normalization process could do this
+    if (normedAlignment.pos<0) return;
 
-    // If any exemplars map to a negative start position, then skip realignment
-    //
-    // Note that even though such alignments will not occur in BAM, they
-    // can still be produced by grouper.
-    //
-    for (const alignment& al : exemplars)
-    {
-        if (al.pos<0) return;
-    }
-
-    // run recursive alignment search starting from each discovery
-    // alignment, produce a list of candidate alignments from this
-    // search
+    // run recursive alignment search starting from normedAlignment,
+    // produce a list of candidate alignments from this search
     //
     // scheme:
     //
-    // 1) starting indel set are just those overlapped by the
-    // discovery alignment
+    // 1) starting indel set are those overlapped by the input alignment
     //
-    // 2) order is defined over the indel set -- indels present in the
-    // exemplar must come first to prevent interference under this
+    // 2) order is defined over the indel set -- indels already present in the
+    // input alignment must come first to prevent interference under this
     // scheme
     //
     // 3) when a new candidate alignment overlaps a new indel (ie. not
-    // in the indel set), that indel is added to the indel set and is
+    // in the starting indel set), that indel is added to the indel set and is
     // pushed onto the end of the indel order.
     //
     // 4) indel status is recorded in the indel_status_map -- toggled
@@ -1658,16 +1659,13 @@ realign_and_score_read(
     std::set<candidate_alignment> cal_set;
     mca_warnings warn;
 
-    for (const alignment& al : exemplars)
-    {
-        get_exemplar_candidate_alignments(opt,dopt,rseg,isync,al,realign_buffer_range,warn,cal_set);
+    get_candidate_alignments(opt,dopt,rseg,isync,normedAlignment,realign_buffer_range,warn,cal_set);
 
-        if ( cal_set.empty() )
-        {
-            std::ostringstream oss;
-            oss << "Empty candidate alignment set while realigning read segment from exemplar alignment: " << al << "\n";
-            throw blt_exception(oss.str().c_str());
-        }
+    if ( cal_set.empty() )
+    {
+        std::ostringstream oss;
+        oss << "Empty candidate alignment set while realigning normed input alignment: " << normedAlignment << "\n";
+        throw blt_exception(oss.str().c_str());
     }
 
     const bool is_incomplete_search(warn.origin_skip || warn.max_toggle_depth);

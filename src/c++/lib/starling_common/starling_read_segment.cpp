@@ -32,17 +32,17 @@
 
 bool
 read_segment::
-is_treated_as_tier1_mapping() const
+is_tier1_mapping() const
 {
-    return sread().is_treated_as_tier1_mapping();
+    return sread().is_tier1_mapping();
 }
 
 
 bool
 read_segment::
-is_treated_as_anytier_mapping() const
+is_tier1or2_mapping() const
 {
-    return sread().is_treated_as_anytier_mapping();
+    return sread().is_tier1or2_mapping();
 }
 
 
@@ -159,18 +159,13 @@ bool
 read_segment::
 is_valid() const
 {
-
     const read_segment& rseg(*this);
-    const unsigned rs(rseg.read_size());
+    const alignment& al(rseg.genome_align());
 
-    if (! rseg.genome_align().empty())
-    {
-        const ALIGNPATH::path_t path(rseg.genome_align().path);
-        if (is_apath_invalid(path,rs) ||
-            is_apath_starling_invalid(path)) return false;
-    }
+    if (al.empty()) return false;
 
-    return true;
+    return (! (is_apath_invalid(al.path,rseg.read_size()) ||
+              is_apath_starling_invalid(al.path)));
 }
 
 

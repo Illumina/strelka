@@ -158,10 +158,6 @@ struct starling_read : private boost::noncopyable
         return get_segment(0);
     }
 
-
-//    const bool
-//    is_mate_unmapped(){return this->_read_rec.is_mate_unmapped();}
-
 private:
     friend struct read_segment;
 
@@ -172,10 +168,10 @@ private:
     }
 
     bool
-    is_treated_as_anytier_mapping() const;
+    is_tier1_mapping() const;
 
     bool
-    is_treated_as_tier1_mapping() const;
+    is_tier1or2_mapping() const;
 
     // update full segment with sub-segment realignments
     void

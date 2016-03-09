@@ -80,25 +80,18 @@ starling_read(const bam_record& br)
 
 bool
 starling_read::
-is_treated_as_tier1_mapping() const
+is_tier1_mapping() const
 {
-    if (get_full_segment().genome_align().empty())
-    {
-        return true;
-    }
-    else
-    {
-        return (MAPLEVEL::TIER1_MAPPED == genome_align_maplev);
-    }
+    return (MAPLEVEL::TIER1_MAPPED == genome_align_maplev);
 }
 
 
 
 bool
 starling_read::
-is_treated_as_anytier_mapping() const
+is_tier1or2_mapping() const
 {
-    return (is_treated_as_tier1_mapping() ||
+    return (is_tier1_mapping() ||
             (MAPLEVEL::TIER2_MAPPED == genome_align_maplev));
 }
 
