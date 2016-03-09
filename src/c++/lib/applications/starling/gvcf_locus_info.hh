@@ -27,6 +27,7 @@
 
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
+#include "blt_util/polymorphicObject.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
 #include <bitset>
@@ -117,15 +118,12 @@ get_label(const unsigned idx)
 
 
 
-struct shared_call_info
+struct shared_call_info : polymorphicObject
 {
     shared_call_info()
     {
         clear();
     }
-    shared_call_info(const shared_call_info&) = default;
-
-    virtual ~shared_call_info() {}
 
     void
     set_filter(const VCF_FILTERS::index_t i)
@@ -332,6 +330,8 @@ struct indel_info
     {
     }
 
+    virtual ~indel_info() {}
+
     virtual bool is_forced_output() const = 0;
     virtual bool is_indel() const = 0;
     virtual void set_filter(VCF_FILTERS::index_t filter) = 0;
@@ -479,7 +479,7 @@ public:
 
 
 //Data structure defining parameters for a single site to be used for writing in gvcf_aggregator
-struct site_info
+struct site_info : public polymorphicObject
 {
     site_info(const pos_t init_pos,
               const char init_ref,
@@ -495,7 +495,7 @@ struct site_info
         spanning_deletions = good_pi.n_spandel;
     }
 
-    site_info() {}
+    site_info() = default;
 
     virtual bool is_snp() const = 0;
     virtual void set_filter(VCF_FILTERS::index_t filter) = 0;
@@ -542,7 +542,7 @@ struct digt_site_info : public site_info
         : site_info(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output)
     {}
 
-    digt_site_info() {}
+    digt_site_info() = default;
 
     bool is_snp() const override
     {

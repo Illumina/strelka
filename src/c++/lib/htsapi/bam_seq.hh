@@ -25,14 +25,17 @@
 #pragma once
 
 #include "blt_util/blt_types.hh"
+#include "blt_util/polymorphicObject.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "blt_util/seq_util.hh"
 
 #include <cassert>
 #include <ciso646>
+
 #include <iosfwd>
 #include <string>
 #include <algorithm>
+
 
 namespace BAM_BASE
 {
@@ -152,21 +155,8 @@ bam_seq_code_to_id(const uint8_t a,
 // sequences from bam files and regular strings using the same
 // object:
 //
-struct bam_seq_base
+struct bam_seq_base : public polymorphicObject
 {
-    bam_seq_base() = default;
-    virtual ~bam_seq_base() = default;
-
-    explicit
-    bam_seq_base(const bam_seq_base&) = default; // support copying
-    bam_seq_base& operator=(const bam_seq_base&) = default;
-
-#if ((!defined(_MSC_VER)) || (_MSC_VER > 1800))
-    explicit
-    bam_seq_base(bam_seq_base&&) = default; // support moving
-    bam_seq_base& operator=(bam_seq_base&&) = default;
-#endif
-
     virtual uint8_t get_code(pos_t i) const = 0;
 
     virtual char get_char(const pos_t i) const = 0;
