@@ -77,7 +77,6 @@ add_exemplar_alignment(const alignment& al,
                        const unsigned max_indel_size,
                        const bool is_remove_leading_edge_indels,
                        const bool is_remove_trailing_edge_indels,
-                       const bool is_remove_soft_clip,
                        std::vector<alignment>& exal)
 {
     if (! al.is_realignable(max_indel_size)) return;
@@ -86,7 +85,6 @@ add_exemplar_alignment(const alignment& al,
     log_os << "Adding Exemplar Alignment."
            << " remove leading: " << is_remove_leading_edge_indels
            << " remove trailing: " << is_remove_trailing_edge_indels
-           << " remove soft-clip: " << is_remove_soft_clip
            << "\n";
 #endif
 
@@ -104,7 +102,7 @@ add_exemplar_alignment(const alignment& al,
     }
 
     alignment nscal;
-    if ((is_remove_soft_clip) & is_soft_clipped(al.path))
+    if (is_soft_clipped(al.path))
     {
         nscal=matchify_edge_soft_clip(*al_ptr);
         al_ptr=&nscal;
@@ -134,8 +132,6 @@ get_exemplar_alignments(const starling_base_options& opt,
                         const read_segment& rseg,
                         std::vector<alignment>& exal)
 {
-    const bool is_remove_mapper_soft_clip(opt.is_remap_input_softclip);
-
     exal.clear();
 
     // get exemplar from read mapper:
@@ -148,7 +144,6 @@ get_exemplar_alignments(const starling_base_options& opt,
         add_exemplar_alignment(al,opt.max_indel_size,
                                is_remove_leading_edge_indels,
                                is_remove_trailing_edge_indels,
-                               is_remove_mapper_soft_clip,
                                exal);
     }
 

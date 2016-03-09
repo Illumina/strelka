@@ -74,7 +74,6 @@ typedef std::map<indel_key,starling_align_indel_info> starling_align_indel_statu
 static
 bool
 check_for_candidate_indel_overlap(
-    const starling_base_options& opt,
     const known_pos_range realign_buffer_range,
     const read_segment& rseg,
     const indel_synchronizer& isync)
@@ -92,13 +91,6 @@ check_for_candidate_indel_overlap(
 
         const pos_t seq_length(rseg.read_size());
         read_range=get_alignment_zone(al,seq_length);
-
-        if (! opt.is_remap_input_softclip)
-        {
-            // for the genomic alignment only we subtract off any edge soft-clip:
-            read_range.begin_pos+=apath_soft_clip_lead_size(al.path);
-            read_range.end_pos-=static_cast<pos_t>(apath_soft_clip_trail_size(al.path));
-        }
     }
 
     // read range of interest (pr), must be overlapped by the realignment buffer (realign_pr)
@@ -1611,15 +1603,7 @@ realign_and_score_read(
         exit(EXIT_FAILURE);
     }
 
-    // check that there are any candidate indels within bounds of the
-    // discovery alignments for this read
-    //
-    // also run a preliminary check to make sure alignment doesn't spill outside
-    // of the realignment buffer (realign_pr), if so it returns false before
-    // checking for any candidate overlap:
-    //
-    if (! check_for_candidate_indel_overlap(opt, realign_buffer_range, rseg,isync)) return;
-
+    if (! check_for_candidate_indel_overlap(realign_buffer_range, rseg, isync)) return;
 
     // Reduce discovery alignments to a set of non-redundant exemplars.
     //
