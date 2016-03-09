@@ -148,8 +148,8 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
                                 const starling_indel_report_info& iri,
                                 double& indel_error_prob,
                                 double& ref_error_prob,
-                                bool use_ref_error_factor,
-                                bool use_length_dependence) const
+                                bool use_length_dependence,
+                                bool use_ref_error_factor) const
 {
     // determine simple case
     const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
