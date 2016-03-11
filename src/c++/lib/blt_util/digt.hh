@@ -253,6 +253,7 @@ get_gt_with_alleles(
 
 }
 
+/// For simplified diploid model used in Strelka
 namespace DIGT_SIMPLE
 {
 enum index_t

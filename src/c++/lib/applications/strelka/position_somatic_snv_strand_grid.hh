@@ -53,16 +53,10 @@ struct somatic_snv_caller_strand_grid
         somatic_snv_genotype_grid& sgt) const;
 
 private:
-    std::vector<blt_float_t> _ln_freq_given_somatic;
+    std::vector<blt_float_t> _ln_somatic_prior;
 
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;
+
     const blt_float_t* _bare_lnprior;
-
-    const std::vector<blt_float_t>&
-    ln_freq_given_somatic() const
-    {
-        return _ln_freq_given_somatic;
-    }
-
 };

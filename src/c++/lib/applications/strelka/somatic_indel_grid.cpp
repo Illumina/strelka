@@ -174,21 +174,9 @@ void somatic_indel_caller_grid::set_somatic_prior(
     const double ln_csie_rate(log1p_switch(-sie_rate));
 
     double somatic_prior_normal[STAR_DIINDEL_GRID::SIZE] = {};
-//    somatic_prior_normal[STAR_DIINDEL::NOINDEL] = 0.865894; // fn = 0.0
-//    somatic_prior_normal[STAR_DIINDEL::HET] = 0.0;  // fn=0.5
-//    somatic_prior_normal[STAR_DIINDEL::HOM] = 0.0;  // fn=1.0
-//    somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 1] = 0.122517;  // fn = 0.05
-//    somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 2] = 0.009934;  // fn = 0.1
-//    somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 3] = 0.001656;  // fn = 0.15
     somatic_prior_normal[STAR_DIINDEL::NOINDEL] = 0.5; // fn = 0.0
     somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 1] = 0.5;  // fn = 0.05
-//    somatic_prior_normal[STAR_DIINDEL_GRID::SIZE - 2] = 0.01;  // fn = 0.1
 
-//    double somatic_prior_tumor[STAR_DIINDEL_GRID::SIZE] = {
-//            0.001656, 0.0, 0.163907,    // 0.0, 1.0, 0.5
-//            0.0, 0.0, 0.0, 0.0, 0.001656, 0.011589, 0.018212, 0.036424, 0.084437,    // 0.95, 0.90, ...
-//            0.193709, 0.193709, 0.147351, 0.074503, 0.038079, 0.016556, 0.013245, 0.001656, 0.003311     // 0.45, 0.40, ...
-//    };
     double somatic_prior_tumor[STAR_DIINDEL_GRID::SIZE];
     for(unsigned ft(0); ft<STAR_DIINDEL_GRID::SIZE; ++ft)
         somatic_prior_tumor[ft] = 1.0/static_cast<double>(STAR_DIINDEL_GRID::SIZE-1);
@@ -252,7 +240,7 @@ void somatic_indel_caller_grid::set_somatic_prior(
 
 void
 somatic_indel_caller_grid::calculate_result_set(
-    const std::vector<double>& somatic_prior,
+    const std::vector<double>& ln_somatic_prior,
     const double* normal_lhood,
     const double* tumor_lhood,
     result_set& rs) const
@@ -278,7 +266,7 @@ somatic_indel_caller_grid::calculate_result_set(
                     const unsigned genotype_index(tgt*STAR_DIINDEL::SIZE + ngt);
                     const unsigned index(genotype_index*DDIINDEL_GRID::SIZE + dgt);
 
-                    double sum = somatic_prior[index] + normal_lhood[fn] + tumor_lhood[ft];
+                    double sum = ln_somatic_prior[index] + normal_lhood[fn] + tumor_lhood[ft];
                     log_sum[dgt] = sum;
 
                     if(sum > max_log_sum) max_log_sum = sum;
@@ -302,10 +290,6 @@ somatic_indel_caller_grid::calculate_result_set(
             }
         }
     }
-
-    //#ifdef DEBUG_INDEL_CALL
-    //    log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << pprob[STAR_DIINDEL::NOINDEL] << " " << pprob[STAR_DIINDEL::HOM] << " " << pprob[STAR_DIINDEL::HET] << "\n";
-    //#endif
 
     double post_prob[STAR_DIINDEL::SIZE][TWO_STATE_SOMATIC::SIZE];
     double sum_prob = 0.0;

@@ -65,7 +65,7 @@ get_haploid_genomic_prior(
     const blt_float_t theta,
     blt_float_t* const prior)
 {
-    prior[DIGT_SIMPLE::HET] = std::log(0.);
+    prior[DIGT_SIMPLE::HET] = -INFINITY;
     prior[DIGT_SIMPLE::HOM] = std::log(theta*one_third);
     prior[DIGT_SIMPLE::REF] = std::log(1.-theta*one_third);
 }
@@ -91,7 +91,7 @@ get_haploid_poly_prior(
     const blt_float_t /*theta*/,
     blt_float_t* const prior)
 {
-    prior[DIGT_SIMPLE::HET] = std::log(0.);
+    prior[DIGT_SIMPLE::HET] = -INFINITY;
     prior[DIGT_SIMPLE::HOM] = std::log(0.5);
     prior[DIGT_SIMPLE::REF] = std::log(0.5);
 }

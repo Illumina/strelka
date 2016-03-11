@@ -144,7 +144,6 @@ process_pos_snp_somatic(const pos_t pos)
         _pileupCleaner.CleanPileup(tumor_sif.bc_buff.get_pos(pos),is_include_tier2,*(tumor_cpi_ptr[t]));
     }
 
-
     // note single-sample anomaly filtration won't apply here (more of
     // a vestigial blt feature anyway)
     //

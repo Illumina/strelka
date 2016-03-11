@@ -94,6 +94,12 @@ get_strelka_option_parser(
     ("indel-somatic-normal-noise-rate",
      po::value(&opt.indel_somatic_normal_noise_rate),
      "Expected rate of 'noise' in the normal sample at somatic indels -- this allows for some degree of tumor contamination in the normal sample for raw somatic Q-scores (default: use shared site error instead)")
+    ("ssnv-freq-ratio",
+      po::value(&opt.ssnv_freq_ratio)->default_value(opt.ssnv_freq_ratio),
+      "Ratio of normal SNV allele frequency against tumor SNV allele frequency -- this allows for some degree of tumor contamination in the normal sample.")
+     ("indel-freq-ratio",
+      po::value(&opt.indel_freq_ratio)->default_value(opt.indel_freq_ratio),
+      "Ratio of normal indel allele frequency against tumor indel allele frequency -- this allows for some degree of tumor contamination in the normal sample.")
     ("somatic-callable-region-file",
      po::value(&opt.somatic_callable_filename),
      "Output a bed file of regions which are confidently somatic or non-somatic for SNVs at allele frequencies of 10% or greater.")
