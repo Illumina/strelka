@@ -51,8 +51,8 @@ score_indels(
     const starling_sample_options& sample_opt,
     const read_segment& rseg,
     indel_synchronizer& isync,
-    const std::set<candidate_alignment>& cal_set,
+    const std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search,
-    const std::vector<double>& cal_set_path_lnp,
-    double max_path_lnp,
-    const candidate_alignment* max_cal_ptr);
+    const std::vector<double>& candAlignmentScores,
+    double maxCandAlignmentScore,
+    const candidate_alignment* maxCandAlignmentPtr);

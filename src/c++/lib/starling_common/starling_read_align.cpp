@@ -1117,14 +1117,14 @@ is_alignment_spanned_by_range(const known_pos_range pr,
 static
 void
 score_candidate_alignments(
-    const starling_base_options& client_opt,
+    const starling_base_options& opt,
     const reference_contig_segment& ref,
     read_segment& rseg,
     indel_synchronizer& isync,
-    const std::set<candidate_alignment>& cal_set,
-    std::vector<double>& cal_set_path_lnp,
-    double& max_path_lnp,
-    const candidate_alignment*& max_cal_ptr)
+    const std::set<candidate_alignment>& candAlignments,
+    std::vector<double>& candAlignmentScores,
+    double& maxCandAlignmentScore,
+    const candidate_alignment*& maxCandAlignmentPtr)
 {
     // the smooth optimum alignment and alignment pool are actually
     // used for realignment, whereas the strict max_path path
@@ -1145,13 +1145,13 @@ score_candidate_alignments(
     const bool is_pinned(edge_pin.first || edge_pin.second);
 
     typedef std::set<candidate_alignment>::const_iterator citer;
-    const citer cal_set_begin(cal_set.begin()), cal_set_end(cal_set.end());
+    const citer cal_set_begin(candAlignments.begin()), cal_set_end(candAlignments.end());
     for (citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter)
     {
         const candidate_alignment& ical(*cal_iter);
-        const double path_lnp(score_candidate_alignment(client_opt,ibuff,rseg,ical,ref));
+        const double path_lnp(score_candidate_alignment(opt,ibuff,rseg,ical,ref));
 
-        cal_set_path_lnp.push_back(path_lnp);
+        candAlignmentScores.push_back(path_lnp);
 
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT CANDIDATE ALIGNMENT " << ical;
@@ -1161,32 +1161,32 @@ score_candidate_alignments(
         // check that this is not the first iteration, then determine if this
         // cal will be the new max value:
         //
-        if (NULL!=max_cal_ptr)
+        if (NULL!=maxCandAlignmentPtr)
         {
-            if (path_lnp<max_path_lnp) continue;
+            if (path_lnp<maxCandAlignmentScore) continue;
 
             // TODO -- cleaner test of float equivalence (the
             // present test should be legit given the way the
             // score is calculated, but it's still not preferred)
             //
-            if ((path_lnp<=max_path_lnp) &&
-                is_first_cal_preferred(client_opt,isync,
-                                       *max_cal_ptr,ical)) continue;
+            if ((path_lnp<=maxCandAlignmentScore) &&
+                is_first_cal_preferred(opt,isync,
+                                       *maxCandAlignmentPtr,ical)) continue;
         }
-        max_path_lnp=path_lnp;
-        max_cal_ptr=&ical;
+        maxCandAlignmentScore=path_lnp;
+        maxCandAlignmentPtr=&ical;
     }
 
     // if there's a pin on this segment, then find out which
     // alignments are allowed and what the max path_lnp of this
     // subset is:
     //
-    double max_allowed_path_lnp(max_path_lnp);
+    double max_allowed_path_lnp(maxCandAlignmentScore);
     std::vector<bool> is_cal_allowed;
     if (is_pinned)
     {
         const candidate_alignment* max_allowed_cal_ptr(NULL);
-        is_cal_allowed.resize(cal_set.size(),true);
+        is_cal_allowed.resize(candAlignments.size(),true);
         const known_pos_range gen_pr(get_strict_alignment_range(rseg.genome_align()));
 
         unsigned cal_index(0);
@@ -1205,9 +1205,9 @@ score_candidate_alignments(
 
             if (NULL!=max_allowed_cal_ptr)
             {
-                if (cal_set_path_lnp[cal_index]<max_allowed_path_lnp) continue;
+                if (candAlignmentScores[cal_index]<max_allowed_path_lnp) continue;
             }
-            max_allowed_path_lnp=cal_set_path_lnp[cal_index];
+            max_allowed_path_lnp=candAlignmentScores[cal_index];
             max_allowed_cal_ptr=&(*cal_iter);
         }
 
@@ -1235,9 +1235,9 @@ score_candidate_alignments(
     // instance)
     //
     double allowed_lnp_range(0);
-    if (client_opt.is_smoothed_alignments)
+    if (opt.is_smoothed_alignments)
     {
-        allowed_lnp_range=client_opt.smoothed_lnp_range;
+        allowed_lnp_range=opt.smoothed_lnp_range;
     }
 
     double smooth_path_lnp(0);
@@ -1247,15 +1247,15 @@ score_candidate_alignments(
     unsigned cal_index(0);
     for (citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter,++cal_index)
     {
-        if ((cal_set_path_lnp[cal_index]+allowed_lnp_range) < max_allowed_path_lnp) continue;
+        if ((candAlignmentScores[cal_index]+allowed_lnp_range) < max_allowed_path_lnp) continue;
         if (is_pinned && (! is_cal_allowed[cal_index])) continue;
         const candidate_alignment& ical(*cal_iter);
         smooth_cal_pool.push_back(&ical);
         if ((NULL==smooth_cal_ptr) ||
-            (! is_first_cal_preferred(client_opt,isync,
+            (! is_first_cal_preferred(opt,isync,
                                       *smooth_cal_ptr,ical)))
         {
-            smooth_path_lnp=cal_set_path_lnp[cal_index];
+            smooth_path_lnp=candAlignmentScores[cal_index];
             smooth_cal_ptr=&ical;
         }
     }
@@ -1263,7 +1263,7 @@ score_candidate_alignments(
     assert(NULL != smooth_cal_ptr);
 
 #ifdef DEBUG_ALIGN
-    std::cerr << "BUBBY: key,max_path_lnp,max_path: " << rseg.key() << " " << max_path_lnp << " max_cal: " << *max_cal_ptr;
+    std::cerr << "BUBBY: key,max_path_lnp,max_path: " << rseg.key() << " " << maxCandAlignmentScore << " max_cal: " << *maxCandAlignmentPtr;
 
     if (smooth_cal_pool.size() > 1)
     {
@@ -1281,7 +1281,7 @@ score_candidate_alignments(
         }
     }
 
-    if (client_opt.is_smoothed_alignments)
+    if (opt.is_smoothed_alignments)
     {
         std::cerr << "BUBBY: smooth_path_lnp,smooth_path: " << smooth_path_lnp << " smooth_cal: " << *smooth_cal_ptr;
     }
@@ -1291,7 +1291,7 @@ score_candidate_alignments(
     // optionally clip best alignment here based on multiple best
     // candidates:
     rseg.is_realigned=true;
-    finish_realignment(client_opt,rseg,smooth_cal_pool,smooth_path_lnp,smooth_cal_ptr);
+    finish_realignment(opt,rseg,smooth_cal_pool,smooth_path_lnp,smooth_cal_ptr);
 }
 
 
@@ -1308,10 +1308,10 @@ score_candidate_alignments_and_indels(
     const reference_contig_segment& ref,
     read_segment& rseg,
     indel_synchronizer& isync,
-    std::set<candidate_alignment>& cal_set,
+    std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search)
 {
-    assert(! cal_set.empty());
+    assert(! candAlignments.empty());
 
     // (1) score all alignments in cal_set and find the max scoring
     // alignment path.
@@ -1323,13 +1323,14 @@ score_candidate_alignments_and_indels(
     // (1b) possibly also find a "best" scoring path for re-alignment
     // which is not (quite) the max
     //
-    std::vector<double> cal_set_path_lnp;
-    double max_path_lnp(0);
-    const candidate_alignment* max_cal_ptr(NULL);
+    std::vector<double> candAlignmentScores;
+    double maxCandAlignmentScore(0);
+    const candidate_alignment* maxCandAlignmentPtr(nullptr);
 
     try
     {
-        score_candidate_alignments(opt,ref,rseg,isync,cal_set,cal_set_path_lnp,max_path_lnp,max_cal_ptr);
+        score_candidate_alignments(opt,ref,rseg,isync,candAlignments,
+                candAlignmentScores,maxCandAlignmentScore,maxCandAlignmentPtr);
     }
     catch (...)
     {
@@ -1350,7 +1351,8 @@ score_candidate_alignments_and_indels(
 
     try
     {
-        score_indels(opt,dopt,sample_opt,rseg,isync,cal_set,is_incomplete_search,cal_set_path_lnp,max_path_lnp,max_cal_ptr);
+        score_indels(opt,dopt,sample_opt,rseg,isync,candAlignments,is_incomplete_search,
+                candAlignmentScores,maxCandAlignmentScore,maxCandAlignmentPtr);
     }
     catch (...)
     {
