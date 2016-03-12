@@ -720,6 +720,7 @@ translate_maplev_to_indel_type(const MAPLEVEL::index_t i)
 }
 
 
+
 // only acts on genomic mapped reads:
 void
 starling_pos_processor_base::
@@ -740,6 +741,8 @@ load_read_in_depth_buffer(const read_segment& rseg,
         add_alignment_to_depth_buffer(al.pos,al.path,sample(sample_no).estdepth_buff_tier2);
     }
 }
+
+
 
 // only acts on genomic mapped reads:
 void
