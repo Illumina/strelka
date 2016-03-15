@@ -128,9 +128,9 @@ is_interfering_indel(
 static
 std::pair<int,int>
 get_alignment_indel_bp_overlap(
-        const unsigned upstream_oligo_size,
-        const alignment& al,
-        const indel_key& ik)
+    const unsigned upstream_oligo_size,
+    const alignment& al,
+    const indel_key& ik)
 {
     using namespace ALIGNPATH;
 
@@ -509,7 +509,7 @@ score_indels(
     if (is_slip_norm)
     {
         late_indel_normalization_filter(opt, isync, candAlignments, candAlignmentScores,
-                nonnorm_indels, isFilterCandAlignment, maxCandAlignmentScore, maxCandAlignmentPtr);
+                                        nonnorm_indels, isFilterCandAlignment, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
 
     // (2a) get an initial set of candidate indels which can be scored

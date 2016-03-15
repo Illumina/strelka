@@ -171,7 +171,7 @@ get_starling_base_option_parser(starling_base_options& opt)
      "File containing indel error models")
     ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
      "Indel error model name (corresponds to {name}_{version} in model file)")
-     ;
+    ;
 
     po::options_description new_opt("Shared small-variant options");
 

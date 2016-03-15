@@ -1330,7 +1330,7 @@ score_candidate_alignments_and_indels(
     try
     {
         score_candidate_alignments(opt,ref,rseg,isync,candAlignments,
-                candAlignmentScores,maxCandAlignmentScore,maxCandAlignmentPtr);
+                                   candAlignmentScores,maxCandAlignmentScore,maxCandAlignmentPtr);
     }
     catch (...)
     {
@@ -1352,7 +1352,7 @@ score_candidate_alignments_and_indels(
     try
     {
         score_indels(opt,dopt,sample_opt,rseg,isync,candAlignments,is_incomplete_search,
-                candAlignmentScores,maxCandAlignmentScore,maxCandAlignmentPtr);
+                     candAlignmentScores,maxCandAlignmentScore,maxCandAlignmentPtr);
     }
     catch (...)
     {
@@ -1591,14 +1591,14 @@ normalizeInputAlignmnet(
         alignmentPtr=&noEdgeIndelAlignment;
     }
 
-     alignment noEdgeSoftclipAlignment;
-     if (is_soft_clipped(inputAlignment.path))
-     {
-         noEdgeSoftclipAlignment=matchify_edge_soft_clip(*alignmentPtr);
-         alignmentPtr=&noEdgeSoftclipAlignment;
-     }
+    alignment noEdgeSoftclipAlignment;
+    if (is_soft_clipped(inputAlignment.path))
+    {
+        noEdgeSoftclipAlignment=matchify_edge_soft_clip(*alignmentPtr);
+        alignmentPtr=&noEdgeSoftclipAlignment;
+    }
 
-     return *alignmentPtr;
+    return *alignmentPtr;
 }
 
 

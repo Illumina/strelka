@@ -165,7 +165,7 @@ is_valid() const
     if (al.empty()) return false;
 
     return (! (is_apath_invalid(al.path,rseg.read_size()) ||
-              is_apath_starling_invalid(al.path)));
+               is_apath_starling_invalid(al.path)));
 }
 
 
