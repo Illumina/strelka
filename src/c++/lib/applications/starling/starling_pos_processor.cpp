@@ -553,8 +553,9 @@ process_pos_indel_single_sample_digt(
 
             double indel_error_prob(0);
             double ref_error_prob(0);
+            const bool use_length_dependence=false;
             const bool use_ref_error_factor=true;
-            scoring_models::Instance().get_indel_model().calc_prop(_opt,iri,indel_error_prob,ref_error_prob,use_ref_error_factor);
+            scoring_models::Instance().get_indel_model().calc_prop(_opt,iri,indel_error_prob,ref_error_prob,use_length_dependence,use_ref_error_factor);
 
             static const bool is_tier2_pass(false);
             static const bool is_use_alt_indel(true);
