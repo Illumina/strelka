@@ -144,6 +144,23 @@ struct pos_range
         return false;
     }
 
+    bool
+    operator==(const pos_range& rhs) const
+    {
+        if ((is_begin_pos != rhs.is_begin_pos) || (is_end_pos != rhs.is_end_pos)) return false;
+
+        if (is_begin_pos)
+        {
+            if (begin_pos!=rhs.begin_pos) return false;
+        }
+        if (is_end_pos)
+        {
+            if (end_pos!=rhs.end_pos) return false;
+        }
+
+        return true;
+    }
+
     bool is_begin_pos;
     bool is_end_pos;
     pos_t begin_pos;

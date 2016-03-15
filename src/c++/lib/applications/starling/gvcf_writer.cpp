@@ -776,9 +776,9 @@ write_indel_record(
     // SAMPLE AD/ADF/ADR:
     {
         auto orderRefReads = [](const digt_indel_call& a, const digt_indel_call& b)
-            {
-                return (a._isri.n_q30_ref_reads < b._isri.n_q30_ref_reads);
-            };
+        {
+            return (a._isri.n_q30_ref_reads < b._isri.n_q30_ref_reads);
+        };
 
         const auto maxRefCountIter(
             std::max_element(ii._calls.begin(),ii._calls.end(),orderRefReads));

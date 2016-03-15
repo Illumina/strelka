@@ -61,11 +61,11 @@ struct read_segment
 #endif
 
     bool
-    is_treated_as_tier1_mapping() const;
+    is_tier1_mapping() const;
 
     // is this a tier1/tier2 mapping?:
     bool
-    is_treated_as_anytier_mapping() const;
+    is_tier1or2_mapping() const;
 
     unsigned read_size() const
     {
@@ -101,6 +101,12 @@ struct read_segment
     uint8_t
     map_qual() const;
 
+    /// return a bool pair, indicating the bin status at the begin and end of the
+    /// read segment, respectively
+    ///
+    /// A "pinned" end of the segment means that end cannot be realigned, typically
+    /// because it is an exon bounded by gap segments to other exon sequences
+    ///
     std::pair<bool,bool>
     get_segment_edge_pin() const;
 

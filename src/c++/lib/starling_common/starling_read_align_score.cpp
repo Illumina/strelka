@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -118,7 +117,6 @@ score_segment(const starling_base_options& /*opt*/,
               const pos_t ref_head_pos,
               double& lnp)
 {
-
     static const double lnthird(-std::log(3.));
 
     for (unsigned i(0); i<seg_length; ++i)

@@ -185,7 +185,8 @@ process_pos_snp_single_sample(
 }
 
 void
-starling_pos_processor::process_pos_snp_single_sample_continuous(
+starling_pos_processor::
+process_pos_snp_single_sample_continuous(
     const pos_t pos,
     const unsigned sample_no)
 {
@@ -202,9 +203,6 @@ starling_pos_processor::process_pos_snp_single_sample_continuous(
     const bool is_forced(is_forced_output_pos(pos));
 
     if (pi.calls.empty() && !is_forced) return;
-
-
-
 
     std::unique_ptr<site_info> si(new continuous_site_info(pos,pi.get_ref_base(),good_pi,
                                                            _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
@@ -235,11 +233,7 @@ starling_pos_processor::process_pos_snp_single_sample_continuous(
     {
         _gvcfer->add_site(std::move(si));
     }
-
 }
-
-
-
 
 
 
@@ -480,8 +474,11 @@ process_pos_snp_single_sample_impl(
     }
 }
 
+
+
 void
-starling_pos_processor::process_pos_indel_single_sample(
+starling_pos_processor::
+process_pos_indel_single_sample(
     const pos_t pos,
     const unsigned sample_no)
 {
@@ -529,11 +526,14 @@ process_pos_indel_single_sample_digt(
     {
         const indel_key& ik(it->first);
         const indel_data& id(get_indel_data(it));
-        const bool forcedOutput(id.is_forced_output);
-        const bool zeroCoverage(id.read_path_lnp.empty());
+        const bool isForcedOutput(id.is_forced_output);
+        const bool isZeroCoverage(id.read_path_lnp.empty());
 
-        if (!sif.indel_sync().is_candidate_indel(ik,id) && !forcedOutput) continue;
-        if (zeroCoverage && !forcedOutput) continue;
+        if (! isForcedOutput)
+        {
+            if (isZeroCoverage) continue;
+            if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+        }
 
         // TODO implement indel overlap resolution
         //
@@ -547,7 +547,8 @@ process_pos_indel_single_sample_digt(
             starling_indel_report_info iri;
             get_starling_indel_report_info(ik,id,_ref,iri);
 
-            // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
+            // STARKA-248 filter invalid indel
+            /// TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
             if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
 
             double indel_error_prob(0);
@@ -560,8 +561,8 @@ process_pos_indel_single_sample_digt(
             static const bool is_use_alt_indel(true);
 
             starling_diploid_indel dindel;
-            dindel.is_forced_output = forcedOutput;
-            dindel.is_zero_coverage = zeroCoverage;
+            dindel.is_forced_output = isForcedOutput;
+            dindel.is_zero_coverage = isZeroCoverage;
 
             {
                 // check whether we're in a haploid/noploid region, for indels just check
@@ -662,11 +663,14 @@ process_pos_indel_single_sample_continuous(
     {
         const indel_key& ik(it->first);
         const indel_data& id(get_indel_data(it));
-        const bool forcedOutput(id.is_forced_output);
-        const bool zeroCoverage(id.read_path_lnp.empty());
+        const bool isForcedOutput(id.is_forced_output);
+        const bool isZeroCoverage(id.read_path_lnp.empty());
 
-        if (!sif.indel_sync().is_candidate_indel(ik,id) && !forcedOutput) continue;
-        if (zeroCoverage && !forcedOutput) continue;
+        if (! isForcedOutput)
+        {
+            if (isZeroCoverage) continue;
+            if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+        }
 
         // sample-independent info:
         starling_indel_report_info iri;

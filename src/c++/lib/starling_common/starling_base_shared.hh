@@ -226,9 +226,6 @@ struct starling_base_options : public blt_options
     // multiple of max-indel-size used for haplotyping:
     unsigned htype_call_segment = 1000;
 
-    // if true, treat all soft-clipped segments on the egdes of reads as realignable
-    bool is_remap_input_softclip = true;
-
     /// file specifying haploid and deleted regions as 1/0 in bed col 4
     std::string ploidy_region_bedfile;
 

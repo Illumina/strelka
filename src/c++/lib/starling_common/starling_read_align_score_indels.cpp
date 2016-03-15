@@ -34,24 +34,40 @@
 
 //#define DEBUG_ALIGN
 
+// iks_map_t stores information linking candidate indels to alignment scores
+//
+// The components of the map type are enumerated below. The "active" indel
+// is the one being evaluated/scored.
+//
 
-typedef std::pair<indel_key,std::pair<bool,indel_key> > indel_status_t;
+/// first: is X indel present in the read alignment?
+/// second: X indel, this may or may not be the same as the active indel,
+///         but it should only be the active indel or an indel which interferes
+///         with the active indel
+typedef std::pair<bool,indel_key> indel_present_t;
+
+/// first: active indel
+typedef std::pair<indel_key, indel_present_t > indel_status_t;
+
+/// first: alignment likelihood
+/// second: alignment
 typedef std::pair<double,const candidate_alignment*> align_info_t;
 typedef std::map<indel_status_t,align_info_t> iks_map_t;
 
 
 
-// check whether the current path has a better score than that stored
-// and if so add entry to iks map
-//
+/// check whether the current alignment has a better score than that already
+/// stored in iks_map and if so add entry to iks_map
+///
 static
 void
-check_and_update_iks(iks_map_t& iks_map,
-                     const indel_key& ik_call,
-                     const bool is_indel_present,
-                     const indel_key& ik_present,
-                     const double path_lnp,
-                     const candidate_alignment* cal_ptr)
+updateIndelScoringInfo(
+    iks_map_t& iks_map,
+    const indel_key& ik_call,
+    const bool is_indel_present,
+    const indel_key& ik_present,
+    const double path_lnp,
+    const candidate_alignment* cal_ptr)
 {
     const indel_status_t mkey(std::make_pair(ik_call,std::make_pair(is_indel_present,ik_present)));
 
@@ -69,9 +85,10 @@ typedef std::map<indel_key,indel_set_t> overlap_map_t;
 
 static
 void
-overlap_map_tick(overlap_map_t& omap,
-                 const indel_key& ik1,
-                 const indel_key& ik2)
+overlap_map_tick(
+    overlap_map_t& omap,
+    const indel_key& ik1,
+    const indel_key& ik2)
 {
     indel_set_t& os(omap[ik1]);
     if (os.find(ik2) == os.end()) os.insert(ik2);
@@ -79,10 +96,12 @@ overlap_map_tick(overlap_map_t& omap,
 
 
 
+/// does "new_indel" interfere with any of the indel set "current_indels"?
 static
 bool
-is_interfering_indel(const indel_set_t& current_indels,
-                     const indel_key& new_indel)
+is_interfering_indel(
+    const indel_set_t& current_indels,
+    const indel_key& new_indel)
 {
     if (current_indels.count(new_indel) != 0) return false;
 
@@ -95,22 +114,23 @@ is_interfering_indel(const indel_set_t& current_indels,
 
 
 
-// by how many bases does the alignment cross each indel breakpoint?
-//
-// Note that this function only works correctly for indels that are
-// present in the alignment -- otherwise there are multiple possible
-// realignments of the read
-//
-// Allow for the possibility of an upstream oligo to be implicitely
-// present for the read, acting to 'anchor' the beginning of the read
-// with the equivalent length match state even though this does not
-// appear in the read's CIGAR string.
-//
+/// by how many bases does the alignment cross each indel breakpoint?
+///
+/// Note that this function only works correctly for indels that are
+/// present in the alignment -- otherwise there are multiple possible
+/// realignments of the read
+///
+/// Allow for the possibility of an upstream oligo to be implicitly
+/// present for the read, acting to 'anchor' the beginning of the read
+/// with the equivalent length match state even though this does not
+/// appear in the read's CIGAR string.
+///
 static
 std::pair<int,int>
-get_alignment_indel_bp_overlap(const unsigned upstream_oligo_size,
-                               const alignment& al,
-                               const indel_key& ik)
+get_alignment_indel_bp_overlap(
+    const unsigned upstream_oligo_size,
+    const alignment& al,
+    const indel_key& ik)
 {
     using namespace ALIGNPATH;
 
@@ -207,16 +227,17 @@ typedef std::set<std::pair<indel_key,indel_key> > indel_pair_set;
 
 
 
-// given two alignemnts that have (nearly) the same alignment score,
-// quickly approximate whether they could be expressing the same set
-// of indels:
-//
+/// given two alignments that have (nearly) the same alignment score,
+/// quickly approximate whether they could be expressing the same set
+/// of indels:
+///
 static
 bool
-is_equiv_candidate(const candidate_alignment& cal1,
-                   const candidate_alignment& cal2,
-                   const unsigned max_indel_size,
-                   indel_pair_set& equiv_keys)
+is_equiv_candidate(
+    const candidate_alignment& cal1,
+    const candidate_alignment& cal2,
+    const unsigned max_indel_size,
+    indel_pair_set& equiv_keys)
 {
     equiv_keys.clear();
 
@@ -244,9 +265,9 @@ is_equiv_candidate(const candidate_alignment& cal1,
 
 
 
-// written for equiv indel resolution (i.e. assuming ik1 and ik2 are
-// of the same type and length)
-//
+/// written for equiv indel resolution (i.e. assuming ik1 and ik2 are
+/// of the same type and length)
+///
 static
 bool
 is_first_indel_dominant(
@@ -267,26 +288,179 @@ is_first_indel_dominant(
 
 
 
-// use the most likely alignment for each indel state for every indel
-// in indel_status_map to generate data needed in indel calling:
-//
+/// A heuristic late-stage indel normalization procedure,
+/// which identifies indels likely to represent the same
+/// haplotype and disables all but the first.
+///
+static
 void
-score_indels(const starling_base_options& opt,
-             const starling_base_deriv_options& /*dopt*/,
-             const starling_sample_options& sample_opt,
-             const read_segment& rseg,
-             indel_synchronizer& isync,
-             const std::set<candidate_alignment>& cal_set,
-             const bool is_incomplete_search,
-             const std::vector<double>& cal_set_path_lnp,
-             double max_path_lnp,
-             const candidate_alignment* max_cal_ptr)
+late_indel_normalization_filter(
+    const starling_base_options& opt,
+    const indel_synchronizer& isync,
+    const std::set<candidate_alignment>& candAlignments,
+    const std::vector<double>& candAlignmentScores,
+    indel_set_t nonnorm_indels,
+    std::vector<bool>& isFilterCandAlignment,
+    double& maxCandAlignmentScore,
+    const candidate_alignment*& maxCandAlignmentPtr)
+{
+    const unsigned candAlignmentCount(candAlignments.size());
+
+    const double equiv_lnp_range( opt.is_smoothed_alignments ?
+                                  opt.smoothed_lnp_range : 0. );
+
+    // go through alignment x alignments in best->worst score
+    // order -- to do so start out with the sort order:
+    std::vector<std::pair<double,unsigned> > sortedScores;
+    std::vector<const candidate_alignment*> candAlignmentPtrs;
+    {
+        std::set<candidate_alignment>::const_iterator si(candAlignments.begin());
+        for (unsigned candAlignmentIndex(0); candAlignmentIndex<candAlignmentCount; ++candAlignmentIndex,++si)
+        {
+            sortedScores.push_back(std::make_pair(candAlignmentScores[candAlignmentIndex],candAlignmentIndex));
+            candAlignmentPtrs.push_back(&(*si));
+        }
+        std::sort(sortedScores.rbegin(),sortedScores.rend());
+    }
+
+    // this starts out as a copy of cal_set_path_lnp, but path_lnp
+    // gets reset to the highest lnp an alignment has eliminated
+    // to prevent transitive shenanigans:
+    std::vector<double> smoothScores(candAlignmentScores);
+
+    bool is_any_excluded(false);
+    indel_pair_set indelPairs;
+
+    for (unsigned index1(0); index1<candAlignmentCount; ++index1)
+    {
+        const unsigned sortedIndex1(sortedScores[index1].second);
+        if (isFilterCandAlignment[sortedIndex1]) continue;
+
+        for (unsigned index2(index1+1); index2<candAlignmentCount; ++index2)
+        {
+            const unsigned sortedIndex2(sortedScores[index2].second);
+            if (isFilterCandAlignment[sortedIndex2]) continue;
+
+            // determine if this is an equiv_indel:
+            if (smoothScores[sortedIndex2]+equiv_lnp_range < smoothScores[sortedIndex1]) break;
+            const bool is_equiv(is_equiv_candidate(*(candAlignmentPtrs[sortedIndex1]),
+                                                   *(candAlignmentPtrs[sortedIndex2]),
+                                                   opt.max_indel_size,
+                                                   indelPairs));
+
+            if (! is_equiv) continue;
+
+#ifdef DEBUG_ALIGN
+            log_os << "COWSLIP: sorti,lnpi,sortj,lnpj: "
+                   << sortedIndex1 << " " << smoothScores[sortedIndex1] << " "
+                   << sortedIndex2 << " " << smoothScores[sortedIndex2] << "\n";
+            log_os << "COWSLIP cali: " << *(candAlignmentPtrs[sortedIndex1]) << "\n";
+            log_os << "COWSLIP calj: " << *(candAlignmentPtrs[sortedIndex2]) << "\n";
+#endif
+
+            // In theory, this should be an assertion of
+            // !ips.empty(), but it seems that two alignments with
+            // the same score and the same set of indels, but
+            // (i.e. different start positions) could somehow
+            // occur.
+            if (indelPairs.empty()) continue;
+
+            // for each pair, determine which indel is dominant,
+            // if there are multiple equiv indels, we remove the
+            // alignment containing the first non-dominant equiv
+            // indel only
+            bool is_sortedIndex1_removed(false);
+            bool is_removed(false);
+            for (const auto indelPair : indelPairs)
+            {
+                const bool is1(is_first_indel_dominant(isync,indelPair.first,indelPair.second));
+
+#ifdef DEBUG_ALIGN
+                log_os << "COWSLIP: indel1: " << indelPair.first << "\n";
+                log_os << "COWSLIP: indel2: " << indelPair.second << "\n";
+                log_os << "COWSLIP: is_indel1_dominant?: " << is1 << "\n";
+#endif
+                if (is1)
+                {
+                    nonnorm_indels.insert(indelPair.second);
+#ifdef DEBUG_ALIGN
+                    log_os << "COWSLIP: marking 2 nonnorm: " << indelPair.second << "\n";
+#endif
+                    if (! is_removed)
+                    {
+                        isFilterCandAlignment[sortedIndex2] = true;
+                        is_any_excluded = true;
+                        smoothScores[sortedIndex1] = std::max(smoothScores[sortedIndex1],smoothScores[sortedIndex2]);
+#ifdef DEBUG_ALIGN
+                        log_os << "COWSLIP: excluding sortj: " << sortedIndex2 << "\n";
+#endif
+                    }
+                }
+                else
+                {
+                    nonnorm_indels.insert(indelPair.first);
+#ifdef DEBUG_ALIGN
+                    log_os << "COWSLIP: marking 1 nonnorm: " << indelPair.first << "\n";
+#endif
+                    if (! is_removed)
+                    {
+                        isFilterCandAlignment[sortedIndex1] = true;
+                        is_any_excluded = true;
+                        smoothScores[sortedIndex2] = std::max(smoothScores[sortedIndex1],smoothScores[sortedIndex2]);
+#ifdef DEBUG_ALIGN
+                        log_os << "COWSLIP: excluding sorti: " << sortedIndex1 << "\n";
+#endif
+                        is_sortedIndex1_removed=true;
+                    }
+                }
+                is_removed=true;
+            }
+            if (is_sortedIndex1_removed) break;
+        }
+    }
+
+    // recalc new max path in case it was excluded:
+    //
+    // note this loop is designed to take advantage of the high->low path_lnp sort
+    //
+    if (is_any_excluded)
+    {
+        for (unsigned candAlignmentIndex(0); candAlignmentIndex<candAlignmentCount; ++candAlignmentIndex)
+        {
+            const unsigned sortedIndex(sortedScores[candAlignmentIndex].second);
+            if (isFilterCandAlignment[sortedIndex]) continue;
+#ifdef DEBUG_ALIGN
+            log_os << "COWSLIP: reseting max_path_lnp/max_cal from: " << maxCandAlignmentScore << " " << *(maxCandAlignmentPtr) << "\n";
+#endif
+            maxCandAlignmentScore=candAlignmentScores[sortedIndex];
+            maxCandAlignmentPtr=candAlignmentPtrs[sortedIndex];
+#ifdef DEBUG_ALIGN
+            log_os << "COWSLIP: reseting max_path_lnp/max_cal to: " << maxCandAlignmentScore << " " << *(maxCandAlignmentPtr) << "\n";
+#endif
+            break;
+        }
+    }
+}
+
+
+
+void
+score_indels(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& /*dopt*/,
+    const starling_sample_options& sample_opt,
+    const read_segment& rseg,
+    indel_synchronizer& isync,
+    const std::set<candidate_alignment>& candAlignments,
+    const bool is_incomplete_search,
+    const std::vector<double>& candAlignmentScores,
+    double maxCandAlignmentScore,
+    const candidate_alignment* maxCandAlignmentPtr)
 {
     static const bool is_safe_mode(true);
 
     // (1) score candidate alignments -- already done before calling this function
-
-
+    //
     // (2) store the highest scoring alignment with each indel present
     // and absent.
     //
@@ -296,8 +470,8 @@ score_indels(const starling_base_options& opt,
     // less common.
     //
     // We must control for the case where the indel is absent but
-    // replaced by an equivilent indel. In this case we must not only
-    // determine that an equivilent exists, but establish which case
+    // replaced by an equivalent indel. In this case we must not only
+    // determine that an equivalent exists, but establish which case
     // is dominant so that the indel is only reported once. Dominance
     // rules should follow the same pattern established for
     // realignment above.
@@ -310,24 +484,23 @@ score_indels(const starling_base_options& opt,
 
     // (2alpha)
     //
-    // go through all scored alignments and search for cases with an
+    // Go through all scored alignments and search for cases with an
     // equal score (or within the smooth threshold if this is turned
-    // on). Determine if smooth score matches are actually equivilent
+    // on). Determine if smooth score matches are actually equivalent
     // -- in which case remove the non-dominant alignment and mark the
-    // equivilent indel as not participating in this read's indel call
+    // equivalent indel as not participating in this read's indel call
     // search:
     //
-    const unsigned cal_set_size(cal_set.size());
+    const unsigned candAlignmentCount(candAlignments.size());
 
-    // Nonnorm indels contains any indels found to be equivilent to
+    // Nonnorm indels contains any indels found to be equivalent to
     // another indel (ie. not normalized). These indels are not used
     // in subsequent calculation so as not to penalize the normalized
     // indel form (otherwise all reads which support the indel would
     // appear to ambiguously support two different indels).
     //
     indel_set_t nonnorm_indels;
-
-    std::vector<bool> cal_set_exclude(cal_set_size,false);
+    std::vector<bool> isFilterCandAlignment(candAlignmentCount,false);
 
     // This procedure implements a heuristic late-stage indel
     // normalization, set is_slip_norm=false to disable:
@@ -335,144 +508,9 @@ score_indels(const starling_base_options& opt,
     static const bool is_slip_norm(true);
     if (is_slip_norm)
     {
-
-        const double equiv_lnp_range( opt.is_smoothed_alignments ?
-                                      opt.smoothed_lnp_range : 0. );
-
-        // go through alignment x alignments in best->worst score
-        // order -- to do so start out with the sort order:
-        std::vector<std::pair<double,unsigned> > sorted_path_lnp;
-        std::vector<const candidate_alignment*> cal_ptr_vec;
-        {
-            std::set<candidate_alignment>::const_iterator si(cal_set.begin());
-            for (unsigned i(0); i<cal_set_size; ++i,++si)
-            {
-                sorted_path_lnp.push_back(std::make_pair(cal_set_path_lnp[i],i));
-                cal_ptr_vec.push_back(&(*si));
-            }
-            std::sort(sorted_path_lnp.rbegin(),sorted_path_lnp.rend());
-        }
-
-        // this starts out as a copy of cal_set_path_lnp, but path_lnp
-        // gets reset to the highest lnp an alignment has eliminated
-        // to prevent transitive shenanigans:
-        std::vector<double> smooth_path_lnp(cal_set_path_lnp);
-
-        bool is_any_excluded(false);
-        indel_pair_set ips;
-
-        for (unsigned i(0); i<cal_set_size; ++i)
-        {
-            const unsigned sorti(sorted_path_lnp[i].second);
-            if (cal_set_exclude[sorti]) continue;
-
-            for (unsigned j(i+1); j<cal_set_size; ++j)
-            {
-                const unsigned sortj(sorted_path_lnp[j].second);
-                if (cal_set_exclude[sortj]) continue;
-
-                // determine if this is an equiv_indel:
-                if (smooth_path_lnp[sortj]+equiv_lnp_range < smooth_path_lnp[sorti]) break;
-                const bool is_equiv(is_equiv_candidate(*(cal_ptr_vec[sorti]),
-                                                       *(cal_ptr_vec[sortj]),
-                                                       opt.max_indel_size,
-                                                       ips));
-
-                if (! is_equiv) continue;
-
-#ifdef DEBUG_ALIGN
-                log_os << "COWSLIP: sorti,lnpi,sortj,lnpj: "
-                       << sorti << " " << smooth_path_lnp[sorti] << " "
-                       << sortj << " " << smooth_path_lnp[sortj] << "\n";
-                log_os << "COWSLIP cali: " << *(cal_ptr_vec[sorti]) << "\n";
-                log_os << "COWSLIP calj: " << *(cal_ptr_vec[sortj]) << "\n";
-#endif
-
-                // In theory, this should be an assertion of
-                // !ips.empty(), but it seems that two alignments with
-                // the same score and the same set of indels, but
-                // (i.e. different start positions) could somehow
-                // occur.
-                if (ips.empty()) continue;
-
-                indel_pair_set::const_iterator ip(ips.begin()),ip_end(ips.end());
-                // for each pair, determine which indel is dominant,
-                // if there are multiple equiv indels, we remove the
-                // alignment containing the first non-dominant equiv
-                // indel only
-                bool is_sorti_removed(false);
-                bool is_removed(false);
-                for (; ip!=ip_end; ++ip)
-                {
-                    const bool is1(is_first_indel_dominant(isync,ip->first,ip->second));
-
-#ifdef DEBUG_ALIGN
-                    log_os << "COWSLIP: indel1: " << ip->first << "\n";
-                    log_os << "COWSLIP: indel2: " << ip->second << "\n";
-                    log_os << "COWSLIP: is_indel1_dominant?: " << is1 << "\n";
-#endif
-                    if (is1)
-                    {
-                        nonnorm_indels.insert(ip->second);
-#ifdef DEBUG_ALIGN
-                        log_os << "COWSLIP: marking 2 nonnorm: " << ip->second << "\n";
-#endif
-                        if (! is_removed)
-                        {
-                            cal_set_exclude[sortj] = true;
-                            is_any_excluded = true;
-                            smooth_path_lnp[sorti] = std::max(smooth_path_lnp[sorti],smooth_path_lnp[sortj]);
-#ifdef DEBUG_ALIGN
-                            log_os << "COWSLIP: excluding sortj: " << sortj << "\n";
-#endif
-                        }
-                    }
-                    else
-                    {
-                        nonnorm_indels.insert(ip->first);
-#ifdef DEBUG_ALIGN
-                        log_os << "COWSLIP: marking 1 nonnorm: " << ip->first << "\n";
-#endif
-                        if (! is_removed)
-                        {
-                            cal_set_exclude[sorti] = true;
-                            is_any_excluded = true;
-                            smooth_path_lnp[sortj] = std::max(smooth_path_lnp[sorti],smooth_path_lnp[sortj]);
-#ifdef DEBUG_ALIGN
-                            log_os << "COWSLIP: excluding sorti: " << sorti << "\n";
-#endif
-                            is_sorti_removed=true;
-                        }
-                    }
-                    is_removed=true;
-                }
-                if (is_sorti_removed) break;
-            }
-        }
-
-        // recalc new max path in case it was excluded:
-        //
-        // note this loop is designed to take advantage of the high->low path_lnp sort
-        //
-        if (is_any_excluded)
-        {
-            for (unsigned i(0); i<cal_set_size; ++i)
-            {
-                const unsigned sorti(sorted_path_lnp[i].second);
-                if (cal_set_exclude[sorti]) continue;
-#ifdef DEBUG_ALIGN
-                log_os << "COWSLIP: reseting max_path_lnp/max_cal from: " << max_path_lnp << " " << *(max_cal_ptr) << "\n";
-#endif
-                max_path_lnp=cal_set_path_lnp[sorti];
-                max_cal_ptr=cal_ptr_vec[sorti];
-#ifdef DEBUG_ALIGN
-                log_os << "COWSLIP: reseting max_path_lnp/max_cal to: " << max_path_lnp << " " << *(max_cal_ptr) << "\n";
-#endif
-                break;
-            }
-        }
+        late_indel_normalization_filter(opt, isync, candAlignments, candAlignmentScores,
+                                        nonnorm_indels, isFilterCandAlignment, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
-
 
     // (2a) get an initial set of candidate indels which can be scored
     //      from max path. note that we can't do full
@@ -491,34 +529,34 @@ score_indels(const starling_base_options& opt,
     //
     // TODO deal with mapping issues somehow??
     //
-    const bool is_tier1_read(rseg.is_treated_as_tier1_mapping());
+    const bool is_tier1_read(rseg.is_tier1_mapping());
 
-    const candidate_alignment& max_cal(*max_cal_ptr);
+    const candidate_alignment& maxCandAlignment(*maxCandAlignmentPtr);
 
-    indel_set_t max_cal_eval_indels;
-    indel_set_t max_cal_indels;
-    indel_status_map_t is_max_cal_eval_indels_interfere;
+    indel_set_t indelsToEvaluate;
+    indel_set_t indelsInMaxCandAlignment;
+    indel_status_map_t isIndelOrthogonalToMaxCandAlignment;
     {
-        const known_pos_range max_pr(get_soft_clip_alignment_range(max_cal.al));
-        const known_pos_range strict_max_pr(get_strict_alignment_range(max_cal.al));
+        const known_pos_range maxCandAlignmentRange(get_soft_clip_alignment_range(maxCandAlignment.al));
+        const known_pos_range maxCandAlignmentStrictRange(get_strict_alignment_range(maxCandAlignment.al));
 
 #ifdef DEBUG_ALIGN
         log_os << "VARMIT: starting max_cal_eval_indel search\n"
-               << "VARMIT: max_cal.al: " << max_cal.al << "\n"
-               << "VARMIT: max_pr: " << max_pr << "\n"
-               << "VARMIT: strict_max_pr: " << strict_max_pr << "\n";
+               << "VARMIT: max_cal.al: " << maxCandAlignment.al << "\n"
+               << "VARMIT: max_pr: " << maxCandAlignmentRange << "\n"
+               << "VARMIT: strict_max_pr: " << maxCandAlignmentStrictRange << "\n";
 #endif
-        get_alignment_indels(max_cal,opt.max_indel_size,max_cal_indels);
+        get_alignment_indels(maxCandAlignment,opt.max_indel_size,indelsInMaxCandAlignment);
 #ifdef DEBUG_ALIGN
         log_os << "VARMIT max_path extracted indels:\n";
-        dump_indel_set(max_cal_indels,log_os);
+        dump_indel_set(indelsInMaxCandAlignment,log_os);
 #endif
         indel_buffer& ibuff(isync.ibuff());
-        const std::pair<iiter,iiter> ipair(ibuff.pos_range_iter(max_pr.begin_pos,max_pr.end_pos));
-        for (iiter i(ipair.first); i!=ipair.second; ++i)
+        const std::pair<iiter,iiter> ipair(ibuff.pos_range_iter(maxCandAlignmentRange.begin_pos,maxCandAlignmentRange.end_pos));
+        for (iiter indelIter(ipair.first); indelIter!=ipair.second; ++indelIter)
         {
-            const indel_key& ik(i->first);
-            indel_data& id(get_indel_data(i));
+            const indel_key& ik(indelIter->first);
+            indel_data& id(get_indel_data(indelIter));
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path eval indel candidate: " << ik;
@@ -530,20 +568,14 @@ score_indels(const starling_base_options& opt,
             log_os << "VARMIT: max path indel is candidate\n";
 #endif
 
-            const bool is_indel_interfering(is_interfering_indel(max_cal_indels,ik));
-
-#ifdef DEBUG_ALIGN
-            log_os << "VARMIT: max path indel is non-interfering\n";
-#endif
-
-            const bool is_indel_present(max_cal_indels.count(ik)!=0);
+            const bool isIndelInMaxCandAlignment(indelsInMaxCandAlignment.count(ik)!=0);
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: indel present? " << is_indel_present << "\n";
 #endif
 
-            if (is_indel_present)
+            if (isIndelInMaxCandAlignment)
             {
-                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,max_cal.al,ik));
+                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,maxCandAlignment.al,ik));
                 const int bpo(std::max(both_bpo.first,both_bpo.second));
 #ifdef DEBUG_ALIGN
                 log_os << "VARMIT: indel bp_overlap " << bpo << "\n";
@@ -553,7 +585,7 @@ score_indels(const starling_base_options& opt,
                     if (bpo>0)
                     {
                         if (is_tier1_read) id.suboverlap_tier1_read_ids.insert(rseg.id());
-                        else              id.suboverlap_tier2_read_ids.insert(rseg.id());
+                        else               id.suboverlap_tier2_read_ids.insert(rseg.id());
                     }
                     continue;
                 }
@@ -562,29 +594,28 @@ score_indels(const starling_base_options& opt,
             {
 #ifdef DEBUG_ALIGN
                 log_os << "VARMIT: indel intersects max_path? "
-                       <<  is_range_intersect_indel_breakpoints(strict_max_pr,ik) << "\n";
+                       <<  is_range_intersect_indel_breakpoints(maxCandAlignmentStrictRange,ik) << "\n";
 #endif
-                if (! is_range_intersect_indel_breakpoints(strict_max_pr,ik)) continue;
+                if (! is_range_intersect_indel_breakpoints(maxCandAlignmentStrictRange,ik)) continue;
             }
 
             // all checks passed... indel will be evaluated for indel calling:
             //
-            max_cal_eval_indels.insert(ik);
-
-            is_max_cal_eval_indels_interfere[ik] = is_indel_interfering;
+            indelsToEvaluate.insert(ik);
+            isIndelOrthogonalToMaxCandAlignment[ik] = is_interfering_indel(indelsInMaxCandAlignment,ik);
         }
     }
 
-    // go through eval indel set and map which indels conflict with
+    // go through indelsToEvaluate and map which indels conflict with
     // each other
     //
     // for now we calc and store this info in a comically inefficient
     // manner
     //
-    overlap_map_t indel_overlap_map;
+    overlap_map_t orthogonalIndelMap;
     {
-        indel_set_t::const_iterator i(max_cal_eval_indels.begin());
-        const indel_set_t::const_iterator i_end(max_cal_eval_indels.end());
+        indel_set_t::const_iterator i(indelsToEvaluate.begin());
+        const indel_set_t::const_iterator i_end(indelsToEvaluate.end());
         for (; i!=i_end; ++i)
         {
             indel_set_t::const_iterator j(i);
@@ -593,8 +624,8 @@ score_indels(const starling_base_options& opt,
             {
                 if (is_indel_conflict(*i,*j))
                 {
-                    overlap_map_tick(indel_overlap_map,*i,*j);
-                    overlap_map_tick(indel_overlap_map,*j,*i);
+                    overlap_map_tick(orthogonalIndelMap,*i,*j);
+                    overlap_map_tick(orthogonalIndelMap,*j,*i);
                 }
             }
         }
@@ -605,28 +636,25 @@ score_indels(const starling_base_options& opt,
     // (2b) Create index of highest scoring alignment set for each
     //      evaluation indel (found in step 2a). The set of alignments
     //      include all mutually consistent sets of indels which
-    //      interfere with the evalutation indel (including the eval
+    //      interfere with the evaluation indel (including the eval
     //      indel itself) 99% of the time this should just be the
     //      indel and ref paths.  99% of the rest of the time this
     //      will just be the paths of the indel, ref, and one
     //      alternate indel allele.
     //
 
-    //
     // First part of iks_map_t key is the called indel -- second part
     // of the key is the indel which is toggled on which interferes
-    // with the called indel. When called indel is toggled on the
-    // first and second keys are the same. Ptr is NULL for no-indel
+    // with the called indel, and a bool indicating the toggle state.
+    // When called indel is toggled on the first and second indel keys
+    // are the same. When bool is toggled off it is the no-indel
     // (reference) allele case.
     //
-    // Effect of this change is now we store maximum scoring alignment
-    // for each interfering indel allele (not just the called indel
-    // and reference). I don't realistically envision that more than
-    // one indel will be required very often -- that's the case where we
-    // would want a full-blown candidate haplotype model anyway.
+    // Note that we store maximum scoring alignment info for called indel,
+    // reference, and each interfering indel allele. Most of the time there
+    // should not be an interfering indel.
     //
-    //
-    iks_map_t iks_max_path_lnp;
+    iks_map_t indelScoringInfo;
     {
         {
             // as a simple acceleration to the full max scoring
@@ -635,84 +663,95 @@ score_indels(const starling_base_options& opt,
             // taking advantage of our knowledge that this will be the
             // highest scoring path already:
             //
-            const align_info_t max_info(std::make_pair(max_path_lnp,&max_cal));
-            for (const indel_key& eval_ik : max_cal_eval_indels)
+            const align_info_t maxCandAlignmentInfo(std::make_pair(maxCandAlignmentScore,&maxCandAlignment));
+            for (const indel_key& evaluationIndel : indelsToEvaluate)
             {
-                const bool is_indel_present(max_cal_indels.count(eval_ik)!=0);
+                const bool isIndelInMaxCandAlignment(indelsInMaxCandAlignment.count(evaluationIndel)!=0);
+                const auto indelPresentInfo(std::make_pair(isIndelInMaxCandAlignment,evaluationIndel));
 
-                if (is_indel_present)
+                if (isIndelInMaxCandAlignment)
                 {
-                    iks_max_path_lnp[std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
+                    indelScoringInfo[std::make_pair(evaluationIndel,indelPresentInfo)] = maxCandAlignmentInfo;
 
                     // mark this as an alternate indel score for interfering indels:
-                    for (const indel_key& overlap_ik : indel_overlap_map[eval_ik])
+                    for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
-                        iks_max_path_lnp[std::make_pair(overlap_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
+                        indelScoringInfo[std::make_pair(orthogonalIndel,indelPresentInfo)] = maxCandAlignmentInfo;
                     }
                 }
                 else
                 {
                     // check that this indel does not interfere with the max-set:
-                    if (! is_max_cal_eval_indels_interfere[eval_ik])
+                    if (! isIndelOrthogonalToMaxCandAlignment[evaluationIndel])
                     {
-                        iks_max_path_lnp[std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik))] = max_info;
+                        indelScoringInfo[std::make_pair(evaluationIndel,indelPresentInfo)] = maxCandAlignmentInfo;
                     }
                 }
             }
         }
 
-        std::set<candidate_alignment>::const_iterator si(cal_set.begin()),si_end(cal_set.end());
-        for (unsigned c(0); si!=si_end; ++si,++c)
+        std::set<candidate_alignment>::const_iterator candAlignmentIter(candAlignments.begin()),candAlignmentIter_end(candAlignments.end());
+        for (unsigned candAlignmentIndex(0); candAlignmentIter!=candAlignmentIter_end; ++candAlignmentIter,++candAlignmentIndex)
         {
-            const candidate_alignment& ical(*si);
-            const bool is_max_cal(&ical == &max_cal);
+            const candidate_alignment& candAlignment(*candAlignmentIter);
+            const bool isMaxCandAlignment(&candAlignment == &maxCandAlignment);
 
-            if (cal_set_exclude[c])
+            if (isFilterCandAlignment[candAlignmentIndex])
             {
-                assert(! is_max_cal);
+                assert(! isMaxCandAlignment);
                 continue;
             }
-            if (is_max_cal) continue;
+            if (isMaxCandAlignment) continue;
 
-            const double path_lnp(cal_set_path_lnp[c]);
+            const double score(candAlignmentScores[candAlignmentIndex]);
 
-            indel_set_t ical_indels;
-            get_alignment_indels(ical,opt.max_indel_size,ical_indels);
+            indel_set_t indelsInCandAlignment;
+            get_alignment_indels(candAlignment,opt.max_indel_size,indelsInCandAlignment);
 
-            for (const indel_key& eval_ik : max_cal_eval_indels)
+            for (const indel_key& evaluationIndel : indelsToEvaluate)
             {
-                const bool is_indel_present(ical_indels.count(eval_ik)!=0);
-                if (is_indel_present)
+                const bool isIndelInCandAlignment(indelsInCandAlignment.count(evaluationIndel)!=0);
+                if (isIndelInCandAlignment)
                 {
-                    //const indel_status_t mkey(std::make_pair(eval_ik,std::make_pair(is_indel_present,eval_ik)));
-                    check_and_update_iks(iks_max_path_lnp,eval_ik,is_indel_present,eval_ik,path_lnp,&ical);
+                    // this represents the score of the read arising from the evaluationIndel haplotype, as explained by a gapless alignment:
+                    //
+                    updateIndelScoringInfo(indelScoringInfo,evaluationIndel,isIndelInCandAlignment,evaluationIndel,score,&candAlignment);
 
-                    // mark this as an alternate indel score for interfering indels:
-                    for (const indel_key& overlap_ik : indel_overlap_map[eval_ik])
+                    // mark this as an alternate indel score for orthogonal indels:
+                    for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
-                        check_and_update_iks(iks_max_path_lnp,overlap_ik,is_indel_present,eval_ik,path_lnp,&ical);
+                        // this represents the score of the read arising from the evaluationIndel haplotype,
+                        // (as above) but this is the copy we use when we are evaluating the orthogonalIndel haplotype
+                        //
+                        updateIndelScoringInfo(indelScoringInfo,orthogonalIndel,isIndelInCandAlignment,evaluationIndel,score,&candAlignment);
                     }
                 }
                 else
                 {
                     // if indel is not present, we must determine
-                    // whether an interfering indel is present in the
+                    // whether an orthogonal indel is present in the
                     // alignment to score this alignment in the right
                     // category:
                     //
-                    bool is_interference(false);
-                    for (const indel_key& overlap_ik : indel_overlap_map[eval_ik])
+                    bool isIndelOrthogonalToCandAlignment(false);
+                    for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
-                        if (ical_indels.count(overlap_ik)!=0)
+                        if (indelsInCandAlignment.count(orthogonalIndel)!=0)
                         {
-                            is_interference=true;
+                            isIndelOrthogonalToCandAlignment=true;
                             break;
                         }
                     }
 
-                    if (! is_interference)
+                    if (! isIndelOrthogonalToCandAlignment)
                     {
-                        check_and_update_iks(iks_max_path_lnp,eval_ik,is_indel_present,eval_ik,path_lnp,&ical);
+                        // this represents the score of the read arising from the reference haplotype
+                        //
+                        // note that "reference haplotype" means the reference allele over the reference span
+                        // of the evaluation indel only
+                        //
+                        updateIndelScoringInfo(indelScoringInfo,evaluationIndel,isIndelInCandAlignment,evaluationIndel,score,&candAlignment);
+
                     }
                 }
             }
@@ -745,20 +784,20 @@ score_indels(const starling_base_options& opt,
     //
     {
         indel_buffer& ibuff(isync.ibuff());
-        for (const indel_key& eval_ik : max_cal_eval_indels)
+        for (const indel_key& evaluationIndel : indelsToEvaluate)
         {
-            indel_data* id_ptr(ibuff.get_indel_data_ptr(eval_ik));
-            assert(NULL != id_ptr);
+            indel_data* id_ptr(ibuff.get_indel_data_ptr(evaluationIndel));
+            assert(nullptr != id_ptr);
 
             // we test for presence of the indel on the highest
             // scoring alignment because breakpoint overlap has
             // already been tested there, allowing us to skip this
             // step:
-            const bool is_indel_present_on_max_path(max_cal_indels.count(eval_ik)!=0);
+            const bool isIndelInMaxCandAlignment(indelsInMaxCandAlignment.count(evaluationIndel)!=0);
 
 #ifdef DEBUG_ALIGN
-            log_os << "VARMIT: final indel scan: " << eval_ik;
-            log_os << "VARMIT: is_present_on_max_path?: " << is_indel_present_on_max_path << "\n";
+            log_os << "VARMIT: final indel scan: " << evaluationIndel;
+            log_os << "VARMIT: is_present_on_max_path?: " << isIndelInMaxCandAlignment << "\n";
 #endif
 
             // sanity check that these exist in iks (unless search is incomplete):
@@ -768,21 +807,21 @@ score_indels(const starling_base_options& opt,
             //
 
             // 1) indel present:
-            double indel_path_lnp(max_path_lnp);
-            if (! is_indel_present_on_max_path)
+            double indel_path_lnp(maxCandAlignmentScore);
+            if (! isIndelInMaxCandAlignment)
             {
-                const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,eval_ik))));
-                const bool is_found(j!=iks_max_path_lnp.end());
+                const iks_map_t::iterator indelScoringIter(indelScoringInfo.find(std::make_pair(evaluationIndel,std::make_pair(true,evaluationIndel))));
+                const bool is_found(indelScoringIter!=indelScoringInfo.end());
                 if (! is_found)
                 {
                     if (is_incomplete_search) continue;
                     // TODO -- get more precise information on exactly when we expect an indel which overlaps a max_cal indel to not be found, for
                     // now we have to give a pass on all cases:
-                    if (is_max_cal_eval_indels_interfere[eval_ik]) continue;
+                    if (isIndelOrthogonalToMaxCandAlignment[evaluationIndel]) continue;
 
                     // for the nonnorm cases, we've already eliminated at least some of the alignments which contain them
                     // and in certain circumstances there won't be alternates available
-                    if (nonnorm_indels.count(eval_ik)!=0) continue;
+                    if (nonnorm_indels.count(evaluationIndel)!=0) continue;
 
                     if (is_safe_mode)
                     {
@@ -793,7 +832,7 @@ score_indels(const starling_base_options& opt,
                         log_os << "ERROR: ";
                     }
 
-                    log_os << "failed to find expected alignment for indel: " << eval_ik
+                    log_os << "failed to find expected alignment for indel: " << evaluationIndel
                            << "\twhile evaluating read_segment:\n" << rseg << "\n";
 
                     if (is_safe_mode)
@@ -806,8 +845,9 @@ score_indels(const starling_base_options& opt,
                     }
                 }
 
-                const candidate_alignment& alt_cal(*(j->second.second));
-                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,alt_cal.al,eval_ik));
+                const iks_map_t::mapped_type& indelAlignmentInfo(indelScoringIter->second);
+                const candidate_alignment& candAlignment(*(indelAlignmentInfo.second));
+                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,candAlignment.al,evaluationIndel));
                 const int bpo(std::max(both_bpo.first,both_bpo.second));
 
 #ifdef DEBUG_ALIGN
@@ -818,12 +858,12 @@ score_indels(const starling_base_options& opt,
                     if (bpo>0)
                     {
                         if (is_tier1_read) id_ptr->suboverlap_tier1_read_ids.insert(rseg.id());
-                        else              id_ptr->suboverlap_tier2_read_ids.insert(rseg.id());
+                        else               id_ptr->suboverlap_tier2_read_ids.insert(rseg.id());
                     }
                     continue;
                 }
 
-                indel_path_lnp=j->second.first;
+                indel_path_lnp=indelAlignmentInfo.first;
             }
 
 #ifdef DEBUG_ALIGN
@@ -833,8 +873,8 @@ score_indels(const starling_base_options& opt,
             // 2) indel absent w/o interference:
             double ref_path_lnp(0);
             {
-                const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(false,eval_ik))));
-                const bool is_found(j!=iks_max_path_lnp.end());
+                const iks_map_t::iterator indelScoringIter(indelScoringInfo.find(std::make_pair(evaluationIndel,std::make_pair(false,evaluationIndel))));
+                const bool is_found(indelScoringIter!=indelScoringInfo.end());
                 if (is_incomplete_search && (! is_found)) continue;
                 if (! is_found)
                 {
@@ -859,7 +899,7 @@ score_indels(const starling_base_options& opt,
                     }
                 }
 
-                ref_path_lnp=j->second.first;
+                ref_path_lnp=indelScoringIter->second.first;
 
 #ifdef DEBUG_ALIGN
                 log_os << "VARMIT: ref_path_lnp " << ref_path_lnp << "\n";
@@ -868,31 +908,31 @@ score_indels(const starling_base_options& opt,
 
             // assemble basic score data:
             //
-            int readpos = max_cal.al.is_fwd_strand ? ((signed) (eval_ik.pos - max_cal.al.pos)) :
-                          ((signed) (read_length - eval_ik.pos + max_cal.al.pos - 1));
+            int readpos = maxCandAlignment.al.is_fwd_strand ? ((signed) (evaluationIndel.pos - maxCandAlignment.al.pos)) :
+                          ((signed) (read_length - evaluationIndel.pos + maxCandAlignment.al.pos - 1));
 
 #ifdef DEBUG_ALIGN
             //            correct for strandedness
-            log_os << "indelpos: " << eval_ik.pos << " readpos: + " << rseg.genome_align().pos << " rp: " << readpos << "\n";
+            log_os << "indelpos: " << evaluationIndel.pos << " readpos: + " << rseg.genome_align().pos << " rp: " << readpos << "\n";
 #endif
-            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read,max_cal.al.is_fwd_strand,
+            read_path_scores rps(ref_path_lnp,indel_path_lnp,nsite,read_length,is_tier1_read,maxCandAlignment.al.is_fwd_strand,
                                  (int16_t) readpos);
 
             // start adding alternate indel alleles, if present:
 
-            for (const indel_key& overlap_ik : indel_overlap_map[eval_ik])
+            for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
             {
-                const iks_map_t::iterator j(iks_max_path_lnp.find(std::make_pair(eval_ik,std::make_pair(true,overlap_ik))));
+                const iks_map_t::iterator indelScoringIter(indelScoringInfo.find(std::make_pair(evaluationIndel,std::make_pair(true,orthogonalIndel))));
 
 #ifdef DEBUG_ALIGN
-                log_os << "VARMIT: alternate_indel " << overlap_ik;
+                log_os << "VARMIT: alternate_indel " << orthogonalIndel;
 #endif
 
                 // TODO consider a way that the basic stores
                 // could still be used even if we can't get all
                 // alternate paths?
                 //
-                const bool is_found(j!=iks_max_path_lnp.end());
+                const bool is_found(indelScoringIter!=indelScoringInfo.end());
 
                 //if(is_incomplete_search and (not is_found)) continue;
                 //assert(is_found);
@@ -909,7 +949,7 @@ score_indels(const starling_base_options& opt,
                 //
                 if (is_found)
                 {
-                    rps.insert_alt(overlap_ik,j->second.first);
+                    rps.insert_alt(orthogonalIndel,indelScoringIter->second.first);
                     //                        rps.alt_indel[*k] = j->second.first;
                 }
                 else

@@ -163,21 +163,14 @@ get_starling_base_option_parser(starling_base_options& opt)
     other_opt.add_options()
     ("report-file", po::value(&opt.report_filename),
      "Report non-error run info and statistics to file")
-
     ("stats-file", po::value(&opt.segmentStatsFilename),
      "Write runtime stats to file")
-
     ("report-evs-features", po::value(&opt.isReportEVSFeatures)->zero_tokens(),
      "Report empirical variant scoring (EVS) training features in VCF output")
-
     ("indel-error-models-file", po::value(&opt.indel_error_models_filename),
      "File containing indel error models")
-
     ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
      "Indel error model name (corresponds to {name}_{version} in model file)")
-
-    ("remap-input-softclip", po::value(&opt.is_remap_input_softclip)->zero_tokens(),
-     "Attempt to realign all soft-clipped segments in input reads (DEPRECATED)")
     ;
 
     po::options_description new_opt("Shared small-variant options");

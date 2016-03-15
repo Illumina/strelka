@@ -30,7 +30,8 @@
 ///
 /// Per suggestion from: http://stackoverflow.com/questions/19997646/no-implicit-copy-constructor-in-polymorphic-class
 ///
-struct polymorphicObject {
+struct polymorphicObject
+{
 
     polymorphicObject() = default;
     virtual ~polymorphicObject() = default;

@@ -29,7 +29,7 @@
 #include "starling_common/indel.hh"
 
 
-// do these two indels overlap?:
+/// do these two indels overlap?:
 bool
 is_indel_conflict(const indel_key& ik1,
                   const indel_key& ik2);

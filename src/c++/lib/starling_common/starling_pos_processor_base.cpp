@@ -720,6 +720,7 @@ translate_maplev_to_indel_type(const MAPLEVEL::index_t i)
 }
 
 
+
 // only acts on genomic mapped reads:
 void
 starling_pos_processor_base::
@@ -740,6 +741,8 @@ load_read_in_depth_buffer(const read_segment& rseg,
         add_alignment_to_depth_buffer(al.pos,al.path,sample(sample_no).estdepth_buff_tier2);
     }
 }
+
+
 
 // only acts on genomic mapped reads:
 void
@@ -876,7 +879,7 @@ align_pos(const pos_t pos)
             if (nullptr == r.first) break;
             read_segment& rseg(r.first->get_segment(r.second));
             if (_opt.is_realign_submapped_reads ||
-                rseg.is_treated_as_anytier_mapping())
+                rseg.is_tier1or2_mapping())
             {
                 try
                 {
@@ -1318,7 +1321,7 @@ pileup_pos_reads(const pos_t pos)
             r=ri.get_ptr();
             if (nullptr==r.first) break;
             const read_segment& rseg(r.first->get_segment(r.second));
-            if (is_include_submapped || rseg.is_treated_as_anytier_mapping())
+            if (is_include_submapped || rseg.is_tier1or2_mapping())
             {
                 pileup_read_segment(rseg,s);
             }
@@ -1422,8 +1425,8 @@ pileup_read_segment(const read_segment& rseg,
     // value used for is_neighbor_mismatch in case it is not measured:
     bool is_neighbor_mismatch(false);
 
-    const bool is_submapped(! rseg.is_treated_as_anytier_mapping());
-    const bool is_tier1(rseg.is_treated_as_tier1_mapping());
+    const bool is_submapped(! rseg.is_tier1or2_mapping());
+    const bool is_tier1(rseg.is_tier1_mapping());
 
     // precompute mismatch density info for this read:
     if ((! is_submapped) && _opt.is_max_win_mismatch)

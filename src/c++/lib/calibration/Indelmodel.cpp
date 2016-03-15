@@ -203,13 +203,16 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
 
         // Meta-comment: What the heck does the comment above mean?
 
-        if (! use_ref_error_factor) {
+        if (! use_ref_error_factor)
+        {
             // currently, only germline calling, and only the actual variant calling (as opposed to
             // candidacy evaluation) use the indel ref error factor
 
             ref_error_prob=adjusted_rate(repeat_unit, indel_query_len, indel_size, reverse_it);
 
-        } else {
+        }
+        else
+        {
 
             // In applying the ref error factor, we want to make sure that we don't end up with
             // "probabilities" > 1 ... and in fact we might want to keep it <= .5 ... we don't
@@ -217,8 +220,8 @@ void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
             // specific alternative over no error.
             //
             // If we take the preliminary error estimate as p and compute the final estimate (with
-            // ref error factor modification) as p' as follows, then we get graceful behavior: 
-            // nearly the linear scaling of error estimates originally intended when the error 
+            // ref error factor modification) as p' as follows, then we get graceful behavior:
+            // nearly the linear scaling of error estimates originally intended when the error
             // rates are very low, but with reduced scaling as the result would push us towards or over .5:
             //
             //   p' = .5*(1-exp(100*log((.5-p)/.5)))
