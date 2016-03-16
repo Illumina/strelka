@@ -200,52 +200,6 @@ get_diploid_gt_lhood_cached(
     }
 }
 
-void
-get_diploid_gt_lhood_cached_simple(
-    const snp_pos_info& pi,
-    const unsigned ref_gt,
-    blt_float_t* const lhood)
-{
-    // ! not thread-safe !
-    static het_ratio_cache<3> hrcache;
-
-    // get likelihood of each genotype
-    for (unsigned gt(0); gt<DIGT_SIMPLE::SIZE; ++gt) lhood[gt] = 0.;
-
-    for (const base_call& bc : pi.calls)
-    {
-        std::pair<bool,cache_val<3>*> ret(hrcache.get_val(bc.get_qscore(),0));
-        cache_val<3>& cv(*ret.second);
-        if (! ret.first)
-        {
-            const blt_float_t eprob(bc.error_prob());
-            const blt_float_t ceprob(1-eprob);
-            const blt_float_t lne(bc.ln_error_prob());
-            const blt_float_t lnce(bc.ln_comp_error_prob());
-
-            // precalculate the result for expect values of 0.0, 0.5 & 1.0
-            cv.val[0] = lne+ln_one_third;
-            cv.val[1] = std::log((ceprob)+((eprob)*one_third))+ln_one_half;
-            cv.val[2] = lnce;
-        }
-
-        const uint8_t obs_id(bc.base_id);
-
-        if (obs_id == ref_gt)
-        {
-            lhood[DIGT_SIMPLE::REF] += cv.val[2];
-            lhood[DIGT_SIMPLE::HET] += cv.val[1];
-            lhood[DIGT_SIMPLE::HOM] += cv.val[0];
-        }
-        else
-        {
-            lhood[DIGT_SIMPLE::REF] += cv.val[0];
-            lhood[DIGT_SIMPLE::HET] += cv.val[1];
-            lhood[DIGT_SIMPLE::HOM] += cv.val[2];
-        }
-    }
-}
-
 
 // fill in noise portions of the likelihood distro for non-strand
 // noise

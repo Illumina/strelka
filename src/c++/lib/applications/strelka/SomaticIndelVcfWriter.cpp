@@ -98,7 +98,7 @@ writeSomaticIndelVcfGrid(
     const win_avg_set& wasTumor,
     std::ostream& os)
 {
-    const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
+    const indel_result_set& rs(siInfo.sindel.rs);
 
     // always use high depth filter when enabled
     strelka_shared_modifiers_indel smod;
@@ -130,7 +130,7 @@ writeSomaticIndelVcfGrid(
             smod.filters.set(STRELKA_VCF_FILTERS::IndelBCNoise);
         }
 
-        if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
+        if ((rs.ntype != NTYPE::REF) || (rs.from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
         {
             smod.filters.set(STRELKA_VCF_FILTERS::QSI_ref);
         }
@@ -187,12 +187,13 @@ writeSomaticIndelVcfGrid(
         os << ";EVS=" << smod.EVS;
     }
 
-    os << ";QSI=" << rs.sindel_qphred
+    os << ";QSI=" << rs.qphred
        << ";TQSI=" << (siInfo.sindel.sindel_tier+1)
        << ";NT=" << NTYPE::label(rs.ntype)
-       << ";QSI_NT=" << rs.sindel_from_ntype_qphred
+       << ";QSI_NT=" << rs.from_ntype_qphred
        << ";TQSI_NT=" << (siInfo.sindel.sindel_from_ntype_tier+1)
-       << ";SGT=" << static_cast<DDIINDEL_GRID::index_t>(rs.max_gt);
+       << ";SGT="; // << static_cast<SOMATIC_DIGT::index_t>(rs.max_gt);
+    DDIGT::write_state(static_cast<DDIGT::index_t>(rs.max_gt),os);
 
     {
         // these must be computed from tier2 otherwise mapq filtering is in effect:

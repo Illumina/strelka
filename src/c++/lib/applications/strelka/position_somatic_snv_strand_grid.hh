@@ -28,9 +28,9 @@
 
 #pragma once
 
-#include "position_somatic_snv_grid_shared.hh"
-#include "position_somatic_snv_strand_grid_states.hh"
+#include "somatic_result_set.hh"
 #include "strelka_shared.hh"
+#include "qscore_calculator.hh"
 
 #include "blt_common/position_snp_call_pprob_digt.hh"
 
@@ -38,9 +38,8 @@
 // object used to pre-compute priors:
 struct somatic_snv_caller_strand_grid
 {
-    somatic_snv_caller_strand_grid(
-        const strelka_options& opt,
-        const pprob_digt_caller& pd_caller);
+    explicit somatic_snv_caller_strand_grid(
+        const strelka_options& opt);
 
     //
     void
@@ -58,5 +57,5 @@ private:
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;
 
-    const blt_float_t* _bare_lnprior;
+    blt_float_t _bare_lnprior[SOMATIC_DIGT::SIZE];
 };

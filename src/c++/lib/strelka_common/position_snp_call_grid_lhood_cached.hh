@@ -58,13 +58,6 @@ get_diploid_gt_lhood_cached(
     get_diploid_gt_lhood_cached(opt, pi, false, 0, lhood);
 }
 
-/// added by Sangtae to support 3 state model
-void
-get_diploid_gt_lhood_cached_simple(
-    const snp_pos_info& pi,
-    const unsigned ref_gt,
-    blt_float_t* const lhood);
-
 /// get lhood for nonstandard diploid het allele ratios
 ///
 /// lhood ordering follows (undocumented) strelka conventions

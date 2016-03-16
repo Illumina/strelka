@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "position_somatic_snv_grid_shared.hh"
+#include "somatic_result_set.hh"
 
 #include "blt_util/RegionProcessor.hh"
 
@@ -46,7 +46,7 @@ struct SomaticCallableProcessor : public RegionProcessor
         const pos_t outputPos,
         const somatic_snv_genotype_grid& sgtg)
     {
-        if ((sgtg.rs.snv_qphred < _minQSS) && (sgtg.rs.nonsomatic_qphred < _minNQSS)) return;
+        if ((sgtg.rs.qphred < _minQSS) && (sgtg.rs.nonsomatic_qphred < _minNQSS)) return;
         base_t::addToRegion(chrom,outputPos);
     }
 

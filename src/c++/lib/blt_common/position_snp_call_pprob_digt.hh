@@ -147,16 +147,18 @@ struct pprob_digt_caller : private boost::noncopyable
 
     const blt_float_t*
     lnprior_genomic(
+        const unsigned ref_id,
         const bool is_haploid = false) const
     {
-        return get_prior(is_haploid).genome;
+        return get_prior(is_haploid)[ref_id].genome;
     }
 
     const blt_float_t*
     lnprior_polymorphic(
+        const unsigned ref_id,
         const bool is_haploid = false) const
     {
-        return get_prior(is_haploid).poly;
+        return get_prior(is_haploid)[ref_id].poly;
     }
 
     static
@@ -182,23 +184,25 @@ struct pprob_digt_caller : private boost::noncopyable
     {
         prior_set()
         {
-            std::fill(genome,genome+DIGT_SIMPLE::SIZE,0);
-            std::fill(poly,poly+DIGT_SIMPLE::SIZE,0);
+            std::fill(genome,genome+DIGT::SIZE,0);
+            std::fill(poly,poly+DIGT::SIZE,0);
         }
 
-        blt_float_t genome[DIGT_SIMPLE::SIZE];
-        blt_float_t poly[DIGT_SIMPLE::SIZE];
+        blt_float_t genome[DIGT::SIZE];
+        blt_float_t poly[DIGT::SIZE];
     };
+
+    typedef std::array<prior_set,N_BASE+1> prior_group;
 
 private:
 
-    const prior_set&
+    const prior_group&
     get_prior(
         const bool is_haploid) const
     {
         return (is_haploid ? _lnprior_haploid : _lnprior);
     }
 
-    prior_set _lnprior;
-    prior_set _lnprior_haploid;
+    prior_group _lnprior;
+    prior_group _lnprior_haploid;
 };

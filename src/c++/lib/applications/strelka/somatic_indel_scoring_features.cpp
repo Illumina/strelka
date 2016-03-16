@@ -23,7 +23,7 @@
 
 #include "somatic_indel_scoring_features.hh"
 
-#include "somatic_call_shared.hh"
+#include "somatic_result_set.hh"
 #include "somatic_indel_grid.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "blt_util/blt_exception.hh"
@@ -189,8 +189,8 @@ calculateScoringFeatures(
     strelka_shared_modifiers_indel& smod
 )
 {
-    const somatic_indel_call::result_set& rs(siInfo.sindel.rs);
-    smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::QSI_NT, rs.sindel_from_ntype_qphred);
+    const indel_result_set& rs(siInfo.sindel.rs);
+    smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::QSI_NT, rs.from_ntype_qphred);
     smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
     smod.set_feature(STRELKA_INDEL_SCORING_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
 

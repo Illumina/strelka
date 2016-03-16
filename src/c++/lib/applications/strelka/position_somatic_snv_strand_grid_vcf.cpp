@@ -23,6 +23,7 @@
 ///
 
 #include "position_somatic_snv_strand_grid_vcf.hh"
+#include "qscore_calculator.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "somatic_call_shared.hh"
 #include "blt_util/io_util.hh"
@@ -138,7 +139,7 @@ get_scoring_features(
     const CleanedPileup& t1_cpi,
     const CleanedPileup& n2_cpi,
     const CleanedPileup& t2_cpi,
-    const result_set& rs,
+    const snv_result_set& rs,
     strelka_shared_modifiers_snv& smod)
 {
     uint16_t altpos=0;
@@ -174,7 +175,7 @@ get_scoring_features(
     }
 
     //QSS_NT
-    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::QSS_NT,rs.snv_from_ntype_qphred);
+    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::QSS_NT,rs.from_ntype_qphred);
 
     static const bool isNormalSample(true);
     get_single_sample_scoring_features(opt,dopt,n1_cpi,n2_cpi,isNormalSample,smod);
@@ -257,7 +258,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
     const CleanedPileup& t2_epd,
     std::ostream& os)
 {
-    const result_set& rs(sgt.rs);
+    const snv_result_set& rs(sgt.rs);
 
     strelka_shared_modifiers_snv smod;
 
@@ -307,7 +308,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             }
         }
 
-        if ((rs.ntype != NTYPE::REF) || (rs.snv_from_ntype_qphred < opt.sfilter.snv_min_qss_ref))
+        if ((rs.ntype != NTYPE::REF) || (rs.from_ntype_qphred < opt.sfilter.snv_min_qss_ref))
         {
             smod.filters.set(STRELKA_VCF_FILTERS::QSS_ref);
         }
@@ -351,7 +352,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
     os << '\t' << n1_epd.rawPileup().get_ref_base()
        //ALT:
        << "\t";
-    DDIGT_SGRID::write_alt_alleles(rs.max_gt, os);
+    DDIGT::write_alt_alleles(rs.alt_id, os);
     //QUAL:
     os << "\t.";
 
@@ -362,7 +363,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
     //INFO:
     os << '\t'
        << "SOMATIC"
-       << ";QSS=" << rs.snv_qphred;
+       << ";QSS=" << rs.qphred;
 
     if (is_write_nqss)
     {
@@ -371,12 +372,12 @@ write_vcf_somatic_snv_genotype_strand_grid(
 
     os << ";TQSS=" << (sgt.snv_tier+1)
        << ";NT=" << NTYPE::label(rs.ntype)
-       << ";QSS_NT=" << rs.snv_from_ntype_qphred
+       << ";QSS_NT=" << rs.from_ntype_qphred
        << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1);
     os << ";SGT=";
 
-    DDIGT_SGRID::write_state(static_cast<DDIGT_SGRID::index_t>(rs.max_gt),
-                             sgt.ref_gt,os);
+    DDIGT::write_state(static_cast<DDIGT::index_t>(rs.max_gt),
+                             os);
 
     {
         const StreamScoper ss(os);
