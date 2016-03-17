@@ -1,7 +1,6 @@
 #pragma once
 
 #include "somatic_result_set.hh"
-#include "position_somatic_snv_strand_grid_states.hh"
 #include "strelka_shared.hh"
 
 #include "blt_util/math_util.hh"
