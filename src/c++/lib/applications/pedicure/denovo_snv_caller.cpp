@@ -416,7 +416,7 @@ get_denovo_snv_call(
             const CleanedPileup& cpi(*sampleCpi[sampleIndex]);
             const snp_pos_info& pi(cpi.cleanedPileup());
             blt_float_t* lhood(sampleLhood[sampleIndex].data());
-            get_diploid_het_grid_lhood_cached(pi, base_to_id(pi.get_ref_base()), DIGT_DGRID::HET_RES, lhood+DIGT::SIZE);
+            get_diploid_het_grid_lhood_cached(pi, DIGT_DGRID::HET_RES, lhood+DIGT::SIZE);
         }
         dmaker.calculate_result_set_grid2(sinfo, sampleLhood, trs);
     }

@@ -22,6 +22,7 @@
 ///
 
 #include "position_somatic_snv_strand_grid.hh"
+#include "position_somatic_snv_strand_grid_lhood_cached.hh"
 #include "qscore_calculator.hh"
 #include "somatic_result_set.hh"
 #include "somatic_call_shared.hh"
@@ -30,7 +31,8 @@
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/seq_util.hh"
-#include "strelka_common/position_snp_call_grid_lhood_cached.hh"
+
+#include "strelka_common/het_ratio_cache.hh"
 
 #include <cassert>
 #include <cmath>
@@ -72,53 +74,6 @@ somatic_snv_caller_strand_grid(const strelka_options& opt)
             ln_nostrand_sse_rate,   // ln (somatic error rate)
             ln_csse_rate,  // ln (1 - somatic_error_rate)
             _ln_somatic_prior);
-}
-
-static
-void
-get_diploid_gt_lhood_cached_simple(
-    const snp_pos_info& pi,
-    const unsigned ref_gt,
-    blt_float_t* const lhood)
-{
-    // ! not thread-safe !
-    static het_ratio_cache<3> hrcache;
-
-    // get likelihood of each genotype
-    for (unsigned gt(0); gt<SOMATIC_DIGT::SIZE; ++gt) lhood[gt] = 0.;
-
-    for (const base_call& bc : pi.calls)
-    {
-        std::pair<bool,cache_val<3>*> ret(hrcache.get_val(bc.get_qscore(),0));
-        cache_val<3>& cv(*ret.second);
-        if (! ret.first)
-        {
-            const blt_float_t eprob(bc.error_prob());
-            const blt_float_t ceprob(1-eprob);
-            const blt_float_t lne(bc.ln_error_prob());
-            const blt_float_t lnce(bc.ln_comp_error_prob());
-
-            // precalculate the result for expect values of 0.0, 0.5 & 1.0
-            cv.val[0] = lne+ln_one_third;
-            cv.val[1] = std::log((ceprob)+((eprob)*one_third))+ln_one_half;
-            cv.val[2] = lnce;
-        }
-
-        const uint8_t obs_id(bc.base_id);
-
-        if (obs_id == ref_gt)
-        {
-            lhood[SOMATIC_DIGT::REF] += cv.val[2];
-            lhood[SOMATIC_DIGT::HET] += cv.val[1];
-            lhood[SOMATIC_DIGT::HOM] += cv.val[0];
-        }
-        else
-        {
-            lhood[SOMATIC_DIGT::REF] += cv.val[0];
-            lhood[SOMATIC_DIGT::HET] += cv.val[1];
-            lhood[SOMATIC_DIGT::HOM] += cv.val[2];
-        }
-    }
 }
 
 // calculate probability of strand-specific noise
@@ -229,69 +184,6 @@ get_diploid_strand_grid_lhood_spi(
     }
 }
 
-
-
-
-#if 0
-static
-float
-nonsomatic_gvcf_prior(
-    const somatic_snv_caller_strand_grid::prior_set& /*pset*/,
-    const unsigned ngt,
-    const unsigned tgt)
-{
-    static const float ln_ref_som_match=std::log(0.5);
-    static const float ln_ref_som_mismatch=(std::log(0.5/static_cast<blt_float_t>(DIGT_GRID::PRESTRAND_SIZE-1)));
-
-    if (tgt==ngt)
-    {
-        return /*pset.normal_poly_nostrand[ngt]+*/ln_ref_som_match;
-    }
-    else
-    {
-        return /*pset.normal_poly_nostrand[ngt]+*/ln_ref_som_mismatch;
-    }
-}
-#endif
-
-
-
-/// expanded nonsomatic definition for the purpose of somatic gvcf output:
-#if 0
-static
-bool
-is_gvcf_nonsomatic_state(
-    const unsigned ngt,
-    const unsigned tgt)
-{
-    return (ngt==tgt);
-}
-#endif
-
-
-/// expanded definition of 'nonsomatic' for the purpose of providing somatic gVCF output:
-//static
-//float
-//gvcf_nonsomatic_gvcf_prior(
-//    const unsigned ngt,
-//    const unsigned tgt)
-//{
-//    if (ngt == tgt)
-//    {
-//        static const float lone(std::log(1.f));
-//        return lone;
-//    }
-//    else if (ngt<N_BASE)
-//    {
-//        static const float lhalf(std::log(0.5f));
-//        return lhalf;
-//    }
-//    else
-//    {
-//        static const float lzero(-std::numeric_limits<float>::infinity());
-//        return lzero;
-//    }
-//}
 
 static
 void
