@@ -18,35 +18,16 @@
 //
 //
 
-///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "blt_util/blt_types.hh"
-#include "blt_util/reference_contig_segment.hh"
+#include "blt_util/prog_info.hh"
+#include "SequenceErrorCountsOptions.hh"
 
 
-/// get size of hpol from the current position, given that this
-/// is the left-most position in the hpol, otherwise, return 1
-unsigned
-get_left_shifted_hpol_size(
-    const pos_t pos,
-    const reference_contig_segment& ref);
-
-
-/// Get the length of the longest homopolymer containing the current
-/// position if this position can be treated as any base.
-///
-unsigned
-get_snp_hpol_size(const pos_t pos,
-                  const reference_contig_segment& ref);
-
-/// find the largest homopolymer extending from pos where one
-/// occurrence of an alternate base is allowed
-///
-unsigned
-get_interrupted_hpol_size(
-    const pos_t pos,
-    const reference_contig_segment& ref);
+void
+getSequenceErrorCountsRun(
+    const prog_info& pinfo,
+    const SequenceErrorCountsOptions& opt);

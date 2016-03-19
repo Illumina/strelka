@@ -24,29 +24,20 @@
 
 #pragma once
 
-#include "blt_util/blt_types.hh"
-#include "blt_util/reference_contig_segment.hh"
+#include "SequenceErrorCountsOptions.hh"
+#include "starling_common/starling_base_option_parser.hh"
 
 
-/// get size of hpol from the current position, given that this
-/// is the left-most position in the hpol, otherwise, return 1
-unsigned
-get_left_shifted_hpol_size(
-    const pos_t pos,
-    const reference_contig_segment& ref);
+po::options_description
+getSequenceErrorCountsOptionsParser(SequenceErrorCountsOptions& opt);
 
 
-/// Get the length of the longest homopolymer containing the current
-/// position if this position can be treated as any base.
-///
-unsigned
-get_snp_hpol_size(const pos_t pos,
-                  const reference_contig_segment& ref);
+// validate options and process any required quick consistency
+// adjustments
+//
+void
+finalizeSequenceErrorCountsOptions(
+    const prog_info& pinfo,
+    const po::variables_map& vm,
+    SequenceErrorCountsOptions& opt);
 
-/// find the largest homopolymer extending from pos where one
-/// occurrence of an alternate base is allowed
-///
-unsigned
-get_interrupted_hpol_size(
-    const pos_t pos,
-    const reference_contig_segment& ref);

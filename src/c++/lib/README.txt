@@ -10,6 +10,10 @@ general utility functions from manta/starling/strelka/gvcftools
 common:
 general utility functions from CASAVA/Grouper/Isaac
 
+errorAnalysis:
+shared libraries for utilities that estimate sequence artifact
+rates form data, used for various forms of model parameter estimation
+
 htsapi:
 various c++ wrapper objects built on top of samtools/htslib
 and other utilities for standard genomic indexed file formats

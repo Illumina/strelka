@@ -26,20 +26,19 @@
 /// XXX_end_pos is zero-index position 1 step after the end of the range
 ///
 
-#include "starling_run.hh"
-#include "starling_pos_processor.hh"
-#include "starling_streams.hh"
+#include "GetSequenceErrorCountsRun.hh"
+#include "SequenceErrorCountsPosProcessor.hh"
 
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
+#include "htsapi/align_path_bam_util.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/ploidy_util.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
 #include <sstream>
-
 
 
 namespace INPUT_TYPE
@@ -55,9 +54,9 @@ enum index_t
 
 
 void
-starling_run(
+getSequenceErrorCountsRun(
     const prog_info& pinfo,
-    const starling_options& opt)
+    const SequenceErrorCountsOptions& opt)
 {
     opt.validate();
 
@@ -66,13 +65,12 @@ starling_run(
     reference_contig_segment ref;
     get_starling_ref_seq(opt,ref);
 
-    const starling_deriv_options dopt(opt,ref);
+    const SequenceErrorCountsDerivOptions dopt(opt,ref);
     const pos_range& rlimit(dopt.report_range_limit);
 
     assert(! opt.bam_filename.empty());
 
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-
     HtsMergeStreamer streamData(bam_region.c_str());
     const bam_streamer& readStream(streamData.registerBam(opt.bam_filename.c_str()));
     const bam_hdr_t& readHeader(readStream.get_header());
@@ -88,9 +86,9 @@ starling_run(
     }
 
     SampleSetSummary ssi;
-    starling_streams client_io(opt,pinfo,readHeader,ssi);
+    SequenceErrorCountsStreams client_io(opt,pinfo,readHeader,ssi);
 
-    starling_pos_processor sppr(opt,dopt,ref,client_io);
+    SequenceErrorCountsPosProcessor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
     registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, readHeader, streamData);
@@ -99,11 +97,6 @@ starling_run(
     if (! opt.ploidy_region_bedfile.empty())
     {
         streamData.registerBed(opt.ploidy_region_bedfile.c_str(), INPUT_TYPE::PLOIDY_REGION);
-    }
-
-    if (! opt.gvcf.nocompress_region_bedfile.empty())
-    {
-        streamData.registerBed(opt.gvcf.nocompress_region_bedfile.c_str(), INPUT_TYPE::NOCOMPRESS_REGION);
     }
 
     while (streamData.next())
@@ -134,7 +127,18 @@ starling_run(
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
 
-            process_genomic_read(opt, ref, readStream, streamData.getCurrentBam(),
+            const bam_record& read(streamData.getCurrentBam());
+
+            // special test used in error counting only -- this isn't the ideal place for this:
+            {
+                using namespace ALIGNPATH;
+                path_t apath;
+                bam_cigar_to_apath(read.raw_cigar(),read.n_cigar(),apath);
+
+                if (apath_indel_count(apath) > 2) continue;
+            }
+
+            process_genomic_read(opt, ref, readStream, read,
                                  currentPos, rlimit.begin_pos, brc, sppr);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
@@ -184,11 +188,6 @@ starling_run(
                         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
                     }
                 }
-            }
-            else if (INPUT_TYPE::NOCOMPRESS_REGION == currentIndex)
-            {
-                known_pos_range2 range(bedRecord.begin,bedRecord.end);
-                sppr.insert_nocompress_region(range);
             }
             else
             {

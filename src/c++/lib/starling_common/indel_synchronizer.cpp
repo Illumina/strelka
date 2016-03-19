@@ -157,7 +157,10 @@ is_candidate_indel_impl_test(
         if (idsp[i]->is_external_candidate) return true;
     }
 
-    if (! is_candidate_indel_impl_test_signal_noise(ik,id,idsp,isds)) return false;
+    if (_opt.is_candidate_indel_signal_test)
+    {
+        if (! is_candidate_indel_impl_test_signal_noise(ik,id,idsp,isds)) return false;
+    }
 
     /////////////////////////////////////////
     // test against short open-ended segments:

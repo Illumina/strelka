@@ -91,11 +91,11 @@ struct starling_base_options : public blt_options
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
 
-    /// to contribute to a breakpoint likelihood, a read must have at least
-    /// this many bases on each side of the breakpoint:
-    ///
-    /// This is the default used in all samples unless an override is provided for the sample.
-    ///
+    // to contribute to a breakpoint likelihood, a read must have at least
+    // this many bases on each side of the breakpoint:
+    //
+    // This is the default used in all samples unless an override is provided for the sample.
+    //
     int default_min_read_bp_flank = 6;
 
     // starling parameters:
@@ -109,6 +109,11 @@ struct starling_base_options : public blt_options
     // maximum indel size which can be represented by starling
     // (formerly a static value)
     unsigned max_indel_size = 150;
+
+    // Do we test indel observation counts to determine if these are significant enough
+    // to create an indel candidate? This should be true for any normal variant caller,
+    // it is turned off for specialized indel noise estimation routines
+    bool is_candidate_indel_signal_test = true;
 
     // Observed indels are promoted to candidate indels based on a one-sided
     // binomial exact test, which incorporates expected per-read indel error rate,
