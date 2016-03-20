@@ -27,6 +27,7 @@
 #pragma once
 
 #include "gvcf_locus_info.hh"
+#include "starling_shared.hh"
 #include "variant_pipe_stage_base.hh"
 
 #include "starling_common/pos_basecall_buffer.hh"
@@ -47,7 +48,7 @@
 struct Codon_phaser : public variant_pipe_stage_base
 {
     Codon_phaser(
-        const starling_base_options& init_opt,
+        const starling_options& init_opt,
         const pos_basecall_buffer& init_bc_buff,
         const reference_contig_segment& init_ref,
         std::shared_ptr<variant_pipe_stage_base> destination)
@@ -105,7 +106,7 @@ private:
 
 
     std::vector<std::unique_ptr<digt_site_info>> _buffer;
-    const starling_base_options& opt;
+    const starling_options& opt;
     const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
     const reference_contig_segment& ref;
 

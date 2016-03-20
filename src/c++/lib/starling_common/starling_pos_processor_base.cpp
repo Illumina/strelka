@@ -250,12 +250,7 @@ get_stage_data(
 
     sdata.add_stage(CLEAR_SITE_ANNOTATION,POST_ALIGN,largest_total_indel_ref_span_per_read);
 
-    unsigned clear_readbuf_dist(0);
-    if (opt.do_codon_phasing)
-    {
-        clear_readbuf_dist += largest_read_size;
-    }
-    sdata.add_stage(CLEAR_READ_BUFFER,POST_ALIGN,clear_readbuf_dist);
+    sdata.add_stage(CLEAR_READ_BUFFER,POST_ALIGN,0);
 
 
     if (! opt.is_htype_calling)
