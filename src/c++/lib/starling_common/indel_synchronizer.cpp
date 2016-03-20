@@ -197,7 +197,7 @@ is_candidate_indel_impl_test(
                 // test to see if the observed indel coverage has a binomial exact test
                 // p-value below the rejection threshold.  If it does not, it cannot be
                 // a candidate indel
-                is_pass_indel_noise_check=(is_reject_binomial_gte_n_success_exact(_opt.tumor_min_hpol_pval, ref_error_prob,
+                is_pass_indel_noise_check=(is_reject_binomial_gte_n_success_exact(_opt.indel_candidate_signal_test_alpha, ref_error_prob,
                                                                                   n_indel_reads, n_total_reads));
 
                 // if any sample passes the homopolymer noise check (i.e. indel has high enough
