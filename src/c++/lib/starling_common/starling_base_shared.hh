@@ -88,7 +88,6 @@ struct starling_base_options : public blt_options
     double bindel_diploid_theta = 0.0001;
     double bindel_diploid_het_bias = 0;
     bool is_bindel_diploid_het_bias = false;
-    bool is_test_indels = false;
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
 
@@ -191,9 +190,6 @@ struct starling_base_options : public blt_options
 
     // positions/indels in vcf must be written in output:
     std::vector<std::string> force_output_vcf;
-
-    // Internal development option - not for production use:
-    bool is_baby_elephant = false;
 
     // Indicates that an upstream oligo is present on reads, which can be used to increase confidence for indels near the edge of the read
     unsigned upstream_oligo_size = 0;

@@ -267,10 +267,6 @@ legacy_starling_arg_parse(
         {
             opt.is_write_variable_metadata=false;
         }
-        else if (ad.argstr[i]=="-baby-elephant")
-        {
-            opt.is_baby_elephant=true;
-        }
         else if (ad.argstr[i]=="-h")
         {
             pinfo.usage();
