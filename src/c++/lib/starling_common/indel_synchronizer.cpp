@@ -81,6 +81,92 @@ insert_indel(const indel_observation& obs)
 }
 
 
+
+bool
+indel_synchronizer::
+is_candidate_indel_impl_test_signal_noise(
+    const indel_key& ik,
+    const indel_data& id,
+    const indel_data* idsp[],
+    const unsigned isds) const
+{
+    // determine expected error rate for this indel, then test whether the
+    // observed indel count is significant wrt this expected error
+    //
+
+    bool is_indel(ik.type == INDEL::INSERT || ik.type == INDEL::DELETE);
+
+    /// TODO: this is a pretty big hole in the candidacy screen, let's remove it:
+    if (! is_indel) return true;
+
+
+    // first step is to find the error rate:
+    double error_rate(0.);
+    {
+        const IndelErrorModel& indel_model = scoring_models::Instance().get_indel_model();
+
+        starling_indel_report_info iri;
+        get_starling_indel_report_info(ik,id,_ref,iri);
+
+        if (iri.ref_repeat_count <= 1)
+        {
+            // HPOL 1 case
+
+            // since we don't use indel size to calculate error rates at the moment in candidcacy
+            // we can retrieve this value once
+            static const indel_error_rates hpol_one_error_rates = indel_model.calc_abstract_prop(1, 1, 1, false);
+
+            error_rate = hpol_one_error_rates.get_rate(ik.type);
+        }
+        else
+        {
+            // HPOL >1 case
+
+            // get expected per-read error rate for this STR
+            {
+                static const bool use_ref_error_factor=false;
+                static const bool use_length_dependence=false;
+
+                // indel_error_prob does not factor in to this calculation, but is
+                // required by get_indel_error_prob
+                double indel_error_prob(0.);
+                indel_model.calc_prop(_opt,iri,indel_error_prob,error_rate,use_length_dependence,use_ref_error_factor);
+            }
+        }
+    }
+
+
+    for (unsigned i(0); i<isds; ++i)
+    {
+        // for each sample, get the number of tier 1 reads supporting the indel
+        // and the total number of tier 1 reads at this locus
+        const unsigned n_indel_reads = idsp[i]->all_read_ids.size();
+        unsigned n_total_reads = ebuff(i).val(ik.pos-1);
+
+        // total reads and indel reads are measured in different ways here, so the nonsensical
+        // result of indel_reads>total_reads is possible. The total is fudged below to appear sane
+        // before going into the count test:
+        n_total_reads = std::max(n_total_reads,n_indel_reads);
+
+        if (n_total_reads == 0) continue;
+
+        // this min indel support coverage is applied regardless of error model:
+        static const unsigned min_candidate_cov_floor(2);
+        if (n_indel_reads < min_candidate_cov_floor) continue;
+
+        // test to see if the observed indel coverage has a binomial exact test
+        // p-value above the rejection threshold. If this does not occur for the
+        // counts observed in any sample, the indel cannot become a candidate
+        if (_countCache.isRejectNull(n_total_reads, error_rate, n_indel_reads))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
 bool
 indel_synchronizer::
 is_candidate_indel_impl_test(
@@ -95,124 +181,7 @@ is_candidate_indel_impl_test(
         if (idsp[i]->is_external_candidate) return true;
     }
 
-    // have we already tested if the indel is much more likely to be noise than sample variation?
-    bool is_indel_noise_checked(false);
-
-    const IndelErrorModel indel_model = scoring_models::Instance().get_indel_model();
-
-    // since we don't use indel size to calculate error rates at the moment in candidcacy
-    // we can retrieve this value once
-    static const indel_error_rates hpol_one_error_rates = indel_model.calc_abstract_prop(1, 1, 1, false);
-
-
-    starling_indel_report_info iri;
-    get_starling_indel_report_info(ik,id,_ref,iri);
-
-    bool is_indel(ik.type == INDEL::INSERT || ik.type == INDEL::DELETE);
-
-    if (is_indel)
-    {
-        bool is_pass_indel_noise_check(false);
-        // HPOL ONE CASE
-        // we're only testing against the reference error rate here
-        // in hpol one cases, we need to establish a few things:
-        // 1. reference tract length is 0 or 1
-        // 2. indel error rate
-        // 3. total coverage
-        if (iri.ref_repeat_count <= 1)
-        {
-            is_indel_noise_checked = true;
-
-            for (unsigned i(0); i<isds; ++i)
-            {
-                const unsigned n_indel_reads = idsp[i]->all_read_ids.size();
-                unsigned n_total_reads = ebuff(i).val(ik.pos-1);
-                n_total_reads = std::max(n_total_reads,n_indel_reads);
-
-                if (n_total_reads == 0)
-                {
-                    continue;
-                }
-
-                // test to see if the observed indel coverage exceeds the minimum value
-                // for the rejection threshold.
-
-                // this min indel support coverage is applied regardless of error model:
-                static const unsigned min_candidate_cov_floor(2);
-                if (n_indel_reads < min_candidate_cov_floor)
-                {
-                    continue;
-                }
-
-                // this min indel support coverage is based on error model:
-                double error_rate(0.);
-                if     (ik.type == INDEL::INSERT)
-                {
-                    error_rate = hpol_one_error_rates.insert_rate;
-                }
-                else
-                {
-                    error_rate = hpol_one_error_rates.delete_rate;
-                }
-                is_pass_indel_noise_check=_countCache.isRejectNull(n_total_reads, error_rate, n_indel_reads);
-
-                // if any sample passes the noise check, the indel is a candidate
-                if (is_pass_indel_noise_check)
-                {
-                    break;
-                }
-            }
-
-            if (! is_pass_indel_noise_check) return false;
-        }
-
-        // NON-HPOL ONE CASE
-        // check broader STR criteria for non-hpol one
-        if (!is_indel_noise_checked)
-        {
-            is_indel_noise_checked=true;
-            const bool use_ref_error_factor=false;
-            const bool use_length_dependence=false;
-
-            double ref_error_prob(0.);
-            double indel_error_prob(0.);
-            // indel_error_prob does not factor in to this calculation, but is
-            // required by get_indel_error_prob
-
-            // get expected per-read error rate for this STR
-            indel_model.calc_prop(_opt,iri,indel_error_prob,ref_error_prob,use_length_dependence,use_ref_error_factor);
-
-            for (unsigned i(0); i<isds; ++i)
-            {
-                // for each sample, get the number of tier 1 reads supporting the indel
-                // and the total number of tier 1 reads at this locus
-                const unsigned n_indel_reads = idsp[i]->all_read_ids.size();
-                unsigned n_total_reads = ebuff(i).val(ik.pos-1);
-
-                // total reads and indel reads are measured in different ways here, so the nonsensical
-                // result of indel_reads>total_reads is possible. The total is fudged below to appear sane
-                // before going into the count test:
-                n_total_reads = std::max(n_total_reads,n_indel_reads);
-
-                // test to see if the observed indel coverage has a binomial exact test
-                // p-value below the rejection threshold.  If it does not, it cannot be
-                // a candidate indel
-                is_pass_indel_noise_check=(is_reject_binomial_gte_n_success_exact(_opt.indel_candidate_signal_test_alpha, ref_error_prob,
-                                                                                  n_indel_reads, n_total_reads));
-
-                // if any sample passes the homopolymer noise check (i.e. indel has high enough
-                // coverage that it may not be noise), the indel is a candidate
-                if (is_pass_indel_noise_check)
-                {
-                    break;
-                }
-            }
-
-            if (! is_pass_indel_noise_check) return false;
-        }
-    }
-
-    assert(!is_indel || is_indel_noise_checked);
+    if (! is_candidate_indel_impl_test_signal_noise(ik,id,idsp,isds)) return false;
 
     /////////////////////////////////////////
     // test against short open-ended segments:
