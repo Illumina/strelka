@@ -60,15 +60,6 @@ strelka_pos_processor(
     // set sample-specific parameter overrides:
     normal_sif.sample_opt.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
 
-    if (opt.is_tumor_sample_min_candidate_indel_reads)
-    {
-        tumor_sif.sample_opt.min_candidate_indel_reads = opt.tumor_sample_min_candidate_indel_reads;
-    }
-    if (opt.is_tumor_sample_min_small_candidate_indel_read_frac)
-    {
-        tumor_sif.sample_opt.min_small_candidate_indel_read_frac = opt.tumor_sample_min_small_candidate_indel_read_frac;
-    }
-
     // setup indel syncronizers:
     {
         double max_candidate_normal_sample_depth(-1.);

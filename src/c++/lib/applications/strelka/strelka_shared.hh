@@ -115,14 +115,6 @@ struct strelka_options : public starling_base_options
     // available:
     int normal_sample_min_read_bp_flank = 1;
 
-    // Lower the candidate indel threshold on the tumor side to
-    // increase sensitivity in case of low purity:
-    //
-    bool is_tumor_sample_min_candidate_indel_reads = false;
-    bool is_tumor_sample_min_small_candidate_indel_read_frac = false;
-    int tumor_sample_min_candidate_indel_reads = 2;
-    double tumor_sample_min_small_candidate_indel_read_frac = 0.02;
-
     std::string somatic_callable_filename;
 
     // positions/indels in vcf are used to estimate low-frequency sequencing noise:

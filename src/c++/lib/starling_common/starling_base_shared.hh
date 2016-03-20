@@ -111,27 +111,6 @@ struct starling_base_options : public blt_options
     // (formerly a static value)
     unsigned max_indel_size = 150;
 
-    // indel cannot become candidate unless at least min reads which
-    // meet mapping threshold support it
-    //
-    // this is the default used for all samples until overridden
-    int default_min_candidate_indel_reads = 3;
-
-    // indel cannot become candidate unless at least frac of reads
-    // which meet mapping thresholds support it (num is reads
-    // supporting indel/den in aligner reads aligning to adjacent
-    // position).
-    double min_candidate_indel_read_frac = 0.02;
-
-    // indels this size or lower have additional 'small indel'
-    // candidacy criteria
-    int max_small_candidate_indel_size = 4;
-
-    // same as for min_candidate_indel_read_frac, but for small indels
-    //
-    // this is the default used for all samples until overridden
-    double default_min_small_candidate_indel_read_frac = 0.1;
-
     // indels in homopolymers use a one-sided binomial exact test to
     // determine whether they are eligible for candidacy, based on the
     // expected per-read error rate, total coverage, and indel coverage
@@ -255,13 +234,9 @@ struct starling_sample_options
     starling_sample_options(
         const starling_base_options& opt)
         : min_read_bp_flank(opt.default_min_read_bp_flank)
-        , min_candidate_indel_reads(opt.default_min_candidate_indel_reads)
-        , min_small_candidate_indel_read_frac(opt.default_min_small_candidate_indel_read_frac)
     {}
 
     int min_read_bp_flank;
-    int min_candidate_indel_reads;
-    double min_small_candidate_indel_read_frac;
 };
 
 

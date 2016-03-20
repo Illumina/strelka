@@ -85,12 +85,6 @@ get_strelka_option_parser(
     ("site-somatic-normal-noise-rate",
      po::value(&opt.site_somatic_normal_noise_rate),
      "Expected rate of 'noise' in the normal sample at somatic call sites -- this allows for some degree of tumor contamination in the normal for raw somatic Q-scores (default: use shared site error instead)")
-    ("tumor-min-candidate-indel-reads",
-     po::value(&opt.tumor_sample_min_candidate_indel_reads),
-     "Unless an indel is supported by at least this many reads in the tumor sample, it cannot become a candidate unless the global read count test passes for all samples. (default: not used)")
-    ("tumor-min-small-candidate-indel-read-frac",
-     po::value(&opt.tumor_sample_min_small_candidate_indel_read_frac),
-     "For small indels an additional indel candidacy filter is applied: Unless at least this fraction of intersecting reads contain the small indel in the tumor sample, it cannot become a candidate unless this same test passes for other samples. (default: not used)")
     ("indel-somatic-normal-noise-rate",
      po::value(&opt.indel_somatic_normal_noise_rate),
      "Expected rate of 'noise' in the normal sample at somatic indels -- this allows for some degree of tumor contamination in the normal sample for raw somatic Q-scores (default: use shared site error instead)")
@@ -203,16 +197,6 @@ finalize_strelka_options(
     if (vm.count("indel-somatic-normal-noise-rate"))
     {
         opt.is_indel_somatic_normal_noise_rate=true;
-    }
-
-    if (vm.count("tumor-min-candidate-indel-reads"))
-    {
-        opt.is_tumor_sample_min_candidate_indel_reads=true;
-    }
-
-    if (vm.count("tumor-min-small-candidate-indel-read-frac"))
-    {
-        opt.is_tumor_sample_min_small_candidate_indel_read_frac=true;
     }
 
     // deal with sfilter options:
