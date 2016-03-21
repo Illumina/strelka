@@ -70,7 +70,7 @@ min_count_binom_gte_cache(
     //
     for (unsigned kminus1(0); kminus1<_maxCacheK; ++kminus1)
     {
-        _papprox[kminus1] = boost::math::gamma_p_inv(kminus1+2,alpha);
+        _papprox[kminus1] = boost::math::gamma_p_inv(kminus1+1,alpha);
     }
 }
 

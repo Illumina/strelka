@@ -1,3 +1,4 @@
+- STREL-24 fix off-by-one error in test leading to extra candidate indel noise
 - STARKA-388 add ADF/ADR tags to gVCF output
 - STARKA-393 stabilize forced long del genotyping in gVCF aggregator 
 - STARKA-351 reorg all strelka documentation
