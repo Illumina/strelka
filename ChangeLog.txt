@@ -1,6 +1,4 @@
-- PED-42 Filtering model for SNV and Indels
-- PED-40 De novo filter tunning
-- PED-44 Better indel overlap
+- PED-42 Filtering model for SNV and Indels, De novo filter tunning, Better indel overlap
 - STARKA-388 add ADF/ADR tags to gVCF output
 - STARKA-393 stabilize forced long del genotyping in gVCF aggregator 
 - STARKA-351 reorg all strelka documentation
@@ -10,7 +8,7 @@
 - STARKA-350 more accurate runtime instrumentation for diploid gVCF workflow
 - PED-48 bcftools compatibility in VCF, better sample naming
 - STARKA-335 restore breakend filters for germline gVCF output
-- Multi-sample calling introduced for SNVs and Indel + PL field added (tickets PED10-19)
+- PED Multi-sample calling introduced for SNVs and Indel + PL field added (tickets PED10-19)
 - STARKA-317 Enable CRAM input, improve per-chrom depth estimation 
 - STARKA-306 fix rare chunk size boundary defect in RangeMap
 - STARKA-323 refactor STARKA-293 to allow reuse of general accelerated binom
