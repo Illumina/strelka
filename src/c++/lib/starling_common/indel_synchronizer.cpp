@@ -90,52 +90,28 @@ is_candidate_indel_impl_test_signal_noise(
     const indel_data* idsp[],
     const unsigned isds) const
 {
-    // determine expected error rate for this indel, then test whether the
-    // observed indel count is significant wrt this expected error
     //
-
-    bool is_indel(ik.type == INDEL::INSERT || ik.type == INDEL::DELETE);
-
-    /// TODO: this is a pretty big hole in the candidacy screen, let's remove it:
-    if (! is_indel) return true;
-
-
-    // first step is to find the error rate:
+    // Step 1: find the error rate for this indel and context:
+    //
     double error_rate(0.);
     {
+        static const bool use_ref_error_factor=false;
+        static const bool use_length_dependence=false;
+
         const IndelErrorModel& indel_model = scoring_models::Instance().get_indel_model();
 
         starling_indel_report_info iri;
         get_starling_indel_report_info(ik,id,_ref,iri);
 
-        if (iri.ref_repeat_count <= 1)
-        {
-            // HPOL 1 case
-
-            // since we don't use indel size to calculate error rates at the moment in candidcacy
-            // we can retrieve this value once
-            static const indel_error_rates hpol_one_error_rates = indel_model.calc_abstract_prop(1, 1, 1, false);
-
-            error_rate = hpol_one_error_rates.get_rate(ik.type);
-        }
-        else
-        {
-            // HPOL >1 case
-
-            // get expected per-read error rate for this STR
-            {
-                static const bool use_ref_error_factor=false;
-                static const bool use_length_dependence=false;
-
-                // indel_error_prob does not factor in to this calculation, but is
-                // required by get_indel_error_prob
-                double indel_error_prob(0.);
-                indel_model.calc_prop(_opt,iri,indel_error_prob,error_rate,use_length_dependence,use_ref_error_factor);
-            }
-        }
+        // indel_error_prob does not factor in to this calculation, but is
+        // required by get_indel_error_prob
+        double indel_error_prob(0.);
+        indel_model.calc_prop(_opt,iri,indel_error_prob,error_rate,use_length_dependence,use_ref_error_factor);
     }
 
-
+    //
+    // Step 2: determine if the observed counts are sig wrt the error rate for at least one sample:
+    //
     for (unsigned i(0); i<isds; ++i)
     {
         // for each sample, get the number of tier 1 reads supporting the indel
