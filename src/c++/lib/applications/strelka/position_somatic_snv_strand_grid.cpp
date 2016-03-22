@@ -65,14 +65,14 @@ somatic_snv_caller_strand_grid(const strelka_options& opt)
     const blt_float_t nostrand_sse_rate(opt.shared_site_error_rate-strand_sse_rate);
 
     blt_float_t ln_csse_rate = log1p_switch(-opt.shared_site_error_rate);
-    blt_float_t ln_nostrand_sse_rate = std::log(nostrand_sse_rate);
+    blt_float_t ln_sse_rate = std::log(nostrand_sse_rate);
 
     std::fill(_ln_somatic_prior.begin(),_ln_somatic_prior.end(),0);
 
     set_prior(
             opt.ssnv_freq_ratio,
-            ln_nostrand_sse_rate,   // ln (somatic error rate)
-            ln_csse_rate,  // ln (1 - somatic_error_rate)
+            ln_sse_rate,   // ln (shared_error_rate)
+            ln_csse_rate,  // ln (1 - shared_error_rate)
             _ln_somatic_prior);
 }
 
@@ -184,6 +184,29 @@ get_diploid_strand_grid_lhood_spi(
     }
 }
 
+/// expanded definition of 'nonsomatic' for the purpose of providing somatic gVCF output:
+static
+float
+gvcf_nonsomatic_gvcf_prior(
+    const unsigned fn,
+    const unsigned ft)
+{
+    if (fn == ft)
+    {
+        static const float lone(std::log(1.f));
+        return lone;
+    }
+    else if (fn == SOMATIC_DIGT::REF || fn == SOMATIC_DIGT::HET)
+    {
+        static const float lhalf(std::log(0.5f));
+        return lhalf;
+    }
+    else
+    {
+        static const float lzero(-std::numeric_limits<float>::infinity());
+        return lzero;
+    }
+}
 
 static
 void
@@ -211,13 +234,36 @@ calculate_result_set_grid(
 
     if ((! (is_forced_output || isComputeNonSomatic)) && (0==rs.qphred)) return;
 
-    //
     // add new somatic gVCF value -- note this is an expanded definition of 'non-somatic' beyond just f_N == f_T
-    // process regular tumor/normal lhood, but:
-    // (1) use uniform probability for {somatic,non-somatic} states
-    // (2) simply computation to remove strand-specific logic
-    // (3) ignore normal genotype
-    rs.nonsomatic_qphred=rs.qphred; // TODO: not implemented
+    if (isComputeNonSomatic)
+    {
+        // process regular tumor/normal lhood, but:
+        // (1) use uniform probability for {somatic,non-somatic} states
+        // (2) simply computation to remove strand-specific logic
+        // (3) ignore normal genotype
+        //
+        std::vector<double> pprob(DDIGT_GRID::SIZE);
+        double sum_prob = 0.0;
+        for (unsigned fn(0); fn<DIGT_GRID::PRESTRAND_SIZE; ++fn)
+        {
+            for (unsigned ft(0); ft<DIGT_GRID::PRESTRAND_SIZE; ++ft)
+            {
+                const unsigned dgt(DDIGT_GRID::get_state(fn,ft));
+                double prob = normal_lhood[fn]+tumor_lhood[ft]+gvcf_nonsomatic_gvcf_prior(fn,ft);
+                pprob[dgt] = prob;
+                sum_prob += prob;
+            }
+        }
+
+        double sgvcf_nonsomatic_sum(0);
+        for (unsigned f(0); f<DIGT_GRID::PRESTRAND_SIZE; ++f)
+        {
+            const unsigned dgt(DDIGT_GRID::get_state(f,f));
+            sgvcf_nonsomatic_sum += pprob[dgt] / sum_prob;
+        }
+
+        rs.nonsomatic_qphred=error_prob_to_qphred(1.-sgvcf_nonsomatic_sum);
+    }
 
     static const bool is_compute_sb(true);
     if (is_compute_sb)

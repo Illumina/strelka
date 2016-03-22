@@ -38,6 +38,8 @@ write_alt_alleles(unsigned alt_gt,
 
 }
 
+static const blt_float_t neg_inf = -std::numeric_limits<float>::infinity();
+
 void
 calculate_bare_lnprior(const double theta,
         blt_float_t *bare_lnprior)
@@ -76,8 +78,8 @@ get_prior_index(
 void
 set_prior(
         const blt_float_t ssnv_freq_ratio,
-        const blt_float_t ln_se_rate,   // ln (somatic error rate)
-        const blt_float_t ln_cse_rate,  // ln (1 - somatic_error_rate)
+        const blt_float_t ln_se_rate,   // ln (shared_error_rate)
+        const blt_float_t ln_cse_rate,  // ln (1 - shared_error_rate)
         std::vector<blt_float_t>& ln_freq_given_somatic
         )
 {
@@ -86,10 +88,6 @@ set_prior(
     double somatic_prior_normal[DIGT_GRID::PRESTRAND_SIZE] = {};
     somatic_prior_normal[SOMATIC_DIGT::REF] = 0.5;
     somatic_prior_normal[DIGT_GRID::PRESTRAND_SIZE - 1] = 0.5;
-
-    double somatic_prior_tumor[DIGT_GRID::PRESTRAND_SIZE];
-    for(unsigned ft(0); ft<DIGT_GRID::PRESTRAND_SIZE; ++ft)
-        somatic_prior_tumor[ft] = 1.0/static_cast<double>(DIGT_GRID::PRESTRAND_SIZE-1);
 
     for (unsigned ngt(0); ngt<SOMATIC_DIGT::SIZE; ++ngt)
     {
@@ -111,14 +109,14 @@ set_prior(
                        }
                        else
                        {
-                           lprob_f_given_g = -INFINITY;
+                           lprob_f_given_g = neg_inf;
                        }
                     }
                     else    // somatic
                     {
                        if(fn == ft)
                        {
-                           lprob_f_given_g = -INFINITY;
+                           lprob_f_given_g = neg_inf;
                        }
                        else
                        {
@@ -129,10 +127,10 @@ set_prior(
                            else
                            {
                                if (get_fraction_from_index(fn) >= ssnv_freq_ratio*get_fraction_from_index(ft))
-                                   lprob_f_given_g = -INFINITY;
+                                   lprob_f_given_g = neg_inf;
                                else
                                {
-                                   lprob_f_given_g = std::log(somatic_prior_normal[fn]) + std::log(somatic_prior_tumor[ft]);
+                                   lprob_f_given_g = std::log(somatic_prior_normal[fn]) + log_error_mod;
                                }
                            }
                        }
@@ -158,7 +156,7 @@ calculate_result_set_grid(
         )
 {
     double log_post_prob[SOMATIC_DIGT::SIZE][TWO_STATE_SOMATIC::SIZE];
-    double max_log_prob = -INFINITY;
+    double max_log_prob = neg_inf;
 
     rs.max_gt = 0;
     for (unsigned ngt(0); ngt<SOMATIC_DIGT::SIZE; ++ngt)
@@ -168,7 +166,7 @@ calculate_result_set_grid(
         for (unsigned tgt(0); tgt<TWO_STATE_SOMATIC::SIZE; ++tgt) // 0: non-somatic, 1: somatic
         {
             double log_prior_prob = log_diploid_prior_prob + ((tgt == 0) ? lnmatch : lnmismatch);
-            double max_log_sum = -INFINITY;
+            double max_log_sum = neg_inf;
             double log_sum[DDIGT_GRID::PRESTRAND_SIZE];
 
             for (unsigned ft(0); ft<DIGT_GRID::PRESTRAND_SIZE; ++ft)

@@ -268,7 +268,7 @@ get_somatic_indel(const strelka_options& opt,
                                  tumor_lhood+SOMATIC_DIGT::SIZE);
 
         const double sie_rate(std::pow(ref_error_prob, opt.shared_indel_error_factor));
-        const double ln_sie_rate(std::log(sie_rate));
+        const double ln_sie_rate(std::log(sie_rate)); // shared indel error rate
         const double ln_csie_rate(log1p_switch(-sie_rate));
         std::vector<blt_float_t> somatic_prior(TWO_STATE_SOMATIC::SIZE*SOMATIC_DIGT::SIZE*DDIGT_GRID::PRESTRAND_SIZE);
 
