@@ -348,11 +348,12 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
     }
 
+    char ref_base = n1_epd.rawPileup().get_ref_base();
     //REF:
-    os << '\t' << n1_epd.rawPileup().get_ref_base()
+    os << '\t' << ref_base
        //ALT:
        << "\t";
-    DDIGT::write_alt_alleles(rs.alt_id, os);
+    DDIGT::write_alt_alleles(rs.tumor_alt_id, os);
     //QUAL:
     os << "\t.";
 
@@ -376,8 +377,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
        << ";TQSS_NT=" << (sgt.snv_from_ntype_tier+1);
     os << ";SGT=";
 
-    DDIGT::write_state(static_cast<DDIGT::index_t>(rs.max_gt),
-                             os);
+    DDIGT::write_snv_state(static_cast<DDIGT::index_t>(rs.max_gt),
+                            ref_base,
+                            id_to_base(rs.normal_alt_id),
+                            id_to_base(rs.tumor_alt_id),
+                            os);
 
     {
         const StreamScoper ss(os);

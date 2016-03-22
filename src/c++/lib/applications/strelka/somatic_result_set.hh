@@ -36,7 +36,8 @@ struct result_set
 
 struct snv_result_set : result_set
 {
-    unsigned alt_id;
+    unsigned normal_alt_id;
+    unsigned tumor_alt_id;
     int nonsomatic_qphred = 0;
     double strandBias = 0;
 };

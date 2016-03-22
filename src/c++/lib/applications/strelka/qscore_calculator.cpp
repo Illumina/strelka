@@ -17,7 +17,7 @@ namespace DDIGT
 {
 
 void
-write_state(const DDIGT::index_t dgt,
+write_indel_state(const DDIGT::index_t dgt,
             std::ostream& os)
 {
     unsigned normal_gt;
@@ -26,7 +26,78 @@ write_state(const DDIGT::index_t dgt,
 
     os << SOMATIC_DIGT::label(normal_gt);
     os << "->";
-    os << TWO_STATE_SOMATIC::label(tumor_gt);
+    if (tumor_gt == TWO_STATE_SOMATIC::NON_SOMATIC)
+    {
+        os << SOMATIC_DIGT::label(normal_gt);
+    }
+    else
+    {
+        if (normal_gt == SOMATIC_DIGT::REF)
+            os << SOMATIC_DIGT::label(SOMATIC_DIGT::HET);   // ref->som is written as ref->het for backward compatability
+        else
+            os << SOMATIC_DIGT::label(SOMATIC_DIGT::REF);   // het/hom->som is written as het/hom->ref for backward compatability
+    }
+}
+
+static
+void
+write_diploid_genotype(
+        const char base1,
+        const char base2,
+        std::ostream& os)
+{
+    char diploid_genotype[3];
+    if (base1 < base2)
+    {
+        diploid_genotype[0] = base1;
+        diploid_genotype[1] = base2;
+    }
+    else
+    {
+        diploid_genotype[1] = base1;
+        diploid_genotype[0] = base2;
+    }
+    diploid_genotype[2] = 0;    // null
+    os << diploid_genotype;
+}
+
+void
+write_snv_state(const DDIGT::index_t dgt,
+            const char ref_base,
+            const char normal_alt_base,
+            const char tumor_alt_base,
+            std::ostream& os)
+{
+    unsigned normal_gt;
+    unsigned tumor_gt;
+    get_digt_states(dgt,normal_gt,tumor_gt);
+
+    switch (normal_gt) {
+    case SOMATIC_DIGT::REF:
+        write_diploid_genotype(ref_base, ref_base, os);
+        os << "->";
+        if (tumor_gt == TWO_STATE_SOMATIC::NON_SOMATIC)
+            write_diploid_genotype(ref_base, ref_base, os);
+        else
+            write_diploid_genotype(ref_base, tumor_alt_base, os);
+        break;
+    case SOMATIC_DIGT::HET:
+        write_diploid_genotype(ref_base, normal_alt_base, os);
+        os << "->";
+        if (tumor_gt == TWO_STATE_SOMATIC::NON_SOMATIC)
+            write_diploid_genotype(ref_base, normal_alt_base, os);
+        else
+            write_diploid_genotype(ref_base, ref_base, os);
+        break;
+    case SOMATIC_DIGT::HOM:
+        write_diploid_genotype(normal_alt_base, normal_alt_base, os);
+        os << "->";
+        if (tumor_gt == TWO_STATE_SOMATIC::NON_SOMATIC)
+            write_diploid_genotype(normal_alt_base, normal_alt_base, os);
+        else
+            write_diploid_genotype(ref_base, ref_base, os);
+        break;
+    }
 }
 
 void

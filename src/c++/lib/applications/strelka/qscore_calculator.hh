@@ -46,21 +46,6 @@ enum index_t
     SIZE
 };
 
-inline
-const char*
-label(const unsigned idx)
-{
-    switch (idx)
-    {
-    case NON_SOMATIC:
-        return "nonsom";
-    case SOMATIC:
-        return "som";
-    default:
-        return "xxx";
-    }
-}
-
 }
 
 namespace DIGT_GRID
@@ -104,7 +89,14 @@ get_state(
 }
 
 void
-write_state(const DDIGT::index_t dgt,
+write_indel_state(const DDIGT::index_t dgt,
+            std::ostream& os);
+
+void
+write_snv_state(const DDIGT::index_t dgt,
+            const char ref_base,
+            const char normal_alt_base,
+            const char tumor_alt_base,
             std::ostream& os);
 
 inline

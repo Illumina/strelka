@@ -331,26 +331,6 @@ position_somatic_snv_call(
         const extended_pos_info& nepi(is_include_tier2 ? *normal_epi_t2_ptr : normal_epi );
         const extended_pos_info& tepi(is_include_tier2 ? *tumor_epi_t2_ptr : tumor_epi );
 
-        // determine alt id
-        // TODO: consider to include it in pi
-        int alt_count[4] = {};
-        for (const base_call& tbc : tepi.pi.calls)
-        {
-            const uint8_t obs_id(tbc.base_id);
-            if(obs_id == sgt.ref_gt || obs_id >= 4) continue;
-            ++alt_count[obs_id];
-        }
-        unsigned alt_id = sgt.ref_gt;
-        int max_count = 0;
-        for (unsigned idx(0); idx<4; ++idx)
-        {
-            if (alt_count[idx] > max_count)
-            {
-                max_count = alt_count[idx];
-                alt_id = idx;
-            }
-        }
-
         get_diploid_gt_lhood_cached_simple(nepi.pi, sgt.ref_gt, normal_lhood);
         get_diploid_gt_lhood_cached_simple(tepi.pi, sgt.ref_gt, tumor_lhood);
 
@@ -371,7 +351,6 @@ position_somatic_snv_call(
                                   _ln_som_match,_ln_som_mismatch,
                                   sgt.is_forced_output,
                                   tier_rs[i]);
-        tier_rs[i].alt_id = alt_id;
     }
 
     if (! (sgt.is_forced_output || isComputeNonSomatic))
@@ -428,4 +407,7 @@ position_somatic_snv_call(
 
     /// somatic gVCF, always use tier1 to keep things simple:
     sgt.rs.nonsomatic_qphred = tier_rs[0].nonsomatic_qphred;
+
+    sgt.rs.normal_alt_id = normal_epi.pi.get_most_frequent_alt_id(sgt.ref_gt);
+    sgt.rs.tumor_alt_id = tumor_epi.pi.get_most_frequent_alt_id(sgt.ref_gt);
 }

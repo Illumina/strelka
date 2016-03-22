@@ -193,7 +193,7 @@ writeSomaticIndelVcfGrid(
        << ";QSI_NT=" << rs.from_ntype_qphred
        << ";TQSI_NT=" << (siInfo.sindel.sindel_from_ntype_tier+1)
        << ";SGT="; // << static_cast<SOMATIC_DIGT::index_t>(rs.max_gt);
-    DDIGT::write_state(static_cast<DDIGT::index_t>(rs.max_gt),os);
+    DDIGT::write_indel_state(static_cast<DDIGT::index_t>(rs.max_gt),os);
 
     {
         // these must be computed from tier2 otherwise mapq filtering is in effect:
