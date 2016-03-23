@@ -18,6 +18,7 @@
 //
 //
 
+/// \author Chris Saunders
 /// \author Sangtae Kim
 ///
 
@@ -25,6 +26,7 @@
 
 #include "blt_common/blt_shared.hh"
 #include "blt_common/snp_pos_info.hh"
+#include "strelka_common/het_ratio_cache.hh"
 
 void
 get_diploid_gt_lhood_cached_simple(
@@ -38,3 +40,12 @@ get_diploid_het_grid_lhood_cached(
     const unsigned ref_gt,
     const unsigned hetResolution,
     blt_float_t* const lhood);
+
+void
+get_strand_ratio_lhood_spi(
+    const snp_pos_info& pi,
+    const unsigned ref_gt,
+    const blt_float_t het_ratio,
+    const unsigned het_ratio_index,
+    het_ratio_cache<2>& hrcache,
+    blt_float_t* lhood);

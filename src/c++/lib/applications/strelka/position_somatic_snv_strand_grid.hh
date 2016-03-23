@@ -30,7 +30,7 @@
 
 #include "somatic_result_set.hh"
 #include "strelka_shared.hh"
-#include "qscore_calculator.hh"
+#include "strelka_digt_states.hh"
 
 #include "blt_common/position_snp_call_pprob_digt.hh"
 
@@ -52,7 +52,9 @@ struct somatic_snv_caller_strand_grid
         somatic_snv_genotype_grid& sgt) const;
 
 private:
-    std::vector<blt_float_t> _ln_somatic_prior;
+    blt_float_t _contam_tolerance;
+    blt_float_t _ln_csse_rate;
+    blt_float_t _ln_sse_rate;
 
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;

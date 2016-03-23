@@ -18,8 +18,10 @@
 //
 //
 
-/// \author Chris Saunders
 ///
+/// \author Chris Saunders, Sangtae Kim
+///
+
 
 #pragma once
 

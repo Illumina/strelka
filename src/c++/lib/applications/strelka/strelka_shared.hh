@@ -109,8 +109,8 @@ struct strelka_options : public starling_base_options
     double indel_somatic_normal_noise_rate = 0;
     bool is_indel_somatic_normal_noise_rate = false;
 
-    double ssnv_freq_ratio = 0.15;
-    double indel_freq_ratio = 0.15;
+    double ssnv_contam_tolerance = 0.15;
+    double indel_contam_tolerance = 0.15;
 
     // We provide a lower flank requirement for normal sample reads
     // during somatic variant calling, to ensure that all evidence

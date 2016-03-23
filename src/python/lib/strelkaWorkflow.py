@@ -115,8 +115,8 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(['--indel-error-models-file', self.params.indelErrorModelsFile])
     segCmd.extend(['--indel-error-model-name', self.params.indelErrorModelName])
 
-    segCmd.extend(["--ssnv-freq-ratio", str(self.params.ssnvFreqRatio) ] )
-    segCmd.extend(["--indel-freq-ratio", str(self.params.indelFreqRatio) ] )
+    segCmd.extend(["--ssnv-contam-tolerance", str(self.params.ssnvContamTolerance) ] )
+    segCmd.extend(["--indel-contam-tolerance", str(self.params.indelContamTolerance) ] )
 
     if self.params.isEVS :
         segCmd.extend(['--somatic-snv-scoring-model-file', self.params.somaticSnvScoringModelFile])

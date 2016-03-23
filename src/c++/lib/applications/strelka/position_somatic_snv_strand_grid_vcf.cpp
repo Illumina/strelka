@@ -23,7 +23,7 @@
 ///
 
 #include "position_somatic_snv_strand_grid_vcf.hh"
-#include "qscore_calculator.hh"
+#include "strelka_digt_states.hh"
 #include "strelka_vcf_locus_info.hh"
 #include "somatic_call_shared.hh"
 #include "blt_util/io_util.hh"

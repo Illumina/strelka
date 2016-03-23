@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "qscore_calculator.hh"
 #include "somatic_result_set.hh"
 #include "strelka_shared.hh"
+#include "strelka_digt_states.hh"
 
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 

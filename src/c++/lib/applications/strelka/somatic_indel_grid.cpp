@@ -82,18 +82,17 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
     static const unsigned lsize(DIGT_GRID::HET_RES*2);
     for (unsigned gt(0); gt<(lsize); ++gt) lhood[gt] = 0.;
 
-    static const double ratio_increment(0.5/static_cast<double>(DIGT_GRID::HET_RES+1));
     for (unsigned i(0); i<DIGT_GRID::HET_RES; ++i)
     {
-        const double het_ratio((i+1)*ratio_increment);
+        const double het_ratio((i+1)*DIGT_GRID::RATIO_INCREMENT);
         indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,
                                                         sample_opt,
                                                         indel_error_lnp,indel_real_lnp,
                                                         ref_error_lnp,ref_real_lnp,
                                                         ik,id,het_ratio,
                                                         is_include_tier2,is_use_alt_indel,
-                                                        lhood[i],
-                                                        lhood[lsize-(i+1)]);
+                                                        lhood[lsize-(i+1)],
+                                                        lhood[i]);
     }
 }
 
@@ -267,14 +266,7 @@ get_somatic_indel(const strelka_options& opt,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+SOMATIC_DIGT::SIZE);
 
-        const double sie_rate(std::pow(ref_error_prob, opt.shared_indel_error_factor));
-        const double ln_sie_rate(std::log(sie_rate)); // shared indel error rate
-        const double ln_csie_rate(log1p_switch(-sie_rate));
-        std::vector<blt_float_t> somatic_prior(TWO_STATE_SOMATIC::SIZE*SOMATIC_DIGT::SIZE*DDIGT_GRID::PRESTRAND_SIZE);
-
-        set_prior(opt.indel_freq_ratio, ln_sie_rate, ln_csie_rate, somatic_prior);
-
-        // TODO: this is an ad hoc solution
+        // TODO: this is a temporary solution
         blt_float_t normal_lhood_float[DIGT_GRID::PRESTRAND_SIZE];
         blt_float_t tumor_lhood_float[DIGT_GRID::PRESTRAND_SIZE];
 
@@ -284,9 +276,16 @@ get_somatic_indel(const strelka_options& opt,
             tumor_lhood_float[j] = (blt_float_t) tumor_lhood[j];
         }
 
-        calculate_result_set_grid(normal_lhood_float,
+        const double sie_rate(std::pow(ref_error_prob, opt.shared_indel_error_factor));
+        const double ln_sie_rate(std::log(sie_rate)); // shared indel error rate
+        const double ln_csie_rate(log1p_switch(-sie_rate));
+
+        calculate_result_set_grid(
+                (float)opt.indel_contam_tolerance,
+                (float)ln_sie_rate,
+                (float)ln_csie_rate,
+                normal_lhood_float,
                 tumor_lhood_float,
-                somatic_prior,
                 _bare_lnprior,
                 _ln_som_match,
                 _ln_som_mismatch,

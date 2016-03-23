@@ -32,30 +32,17 @@
 #include "blt_util/prob_util.hh"
 #include "blt_util/seq_util.hh"
 
-#include "strelka_common/het_ratio_cache.hh"
-
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
 
 #include <map>
 
-//#define SOMATIC_DEBUG
-
-#ifdef SOMATIC_DEBUG
-#include <iostream>
-#include <iomanip>
-#endif
-
-
-static const blt_float_t one_third(1./3.);
-static const blt_float_t ln_one_third(std::log(one_third));
-static const blt_float_t one_half(1./2.);
-static const blt_float_t ln_one_half(std::log(one_half));
 
 somatic_snv_caller_strand_grid::
 somatic_snv_caller_strand_grid(const strelka_options& opt)
-: _ln_somatic_prior(SOMATIC_DIGT::SIZE*TWO_STATE_SOMATIC::SIZE*DIGT_GRID::PRESTRAND_SIZE*DIGT_GRID::PRESTRAND_SIZE),
+: _contam_tolerance(opt.ssnv_contam_tolerance),
+  _ln_csse_rate (log1p_switch(-opt.shared_site_error_rate)),
   _ln_som_match(log1p_switch(-opt.somatic_snv_rate)),
   _ln_som_mismatch(std::log(opt.somatic_snv_rate))
 {
@@ -64,98 +51,8 @@ somatic_snv_caller_strand_grid(const strelka_options& opt)
     const blt_float_t strand_sse_rate(opt.shared_site_error_rate*opt.shared_site_error_strand_bias_fraction);
     const blt_float_t nostrand_sse_rate(opt.shared_site_error_rate-strand_sse_rate);
 
-    blt_float_t ln_csse_rate = log1p_switch(-opt.shared_site_error_rate);
-    blt_float_t ln_sse_rate = std::log(nostrand_sse_rate);
-
-    std::fill(_ln_somatic_prior.begin(),_ln_somatic_prior.end(),0);
-
-    set_prior(
-            opt.ssnv_freq_ratio,
-            ln_sse_rate,   // ln (shared_error_rate)
-            ln_csse_rate,  // ln (1 - shared_error_rate)
-            _ln_somatic_prior);
+    _ln_sse_rate = std::log(nostrand_sse_rate);
 }
-
-// calculate probability of strand-specific noise
-//
-// accelerated version with no hyrax q-val mods:
-//
-// the ratio key can be used as a proxy for the het ratio to look up cached results:
-//
-static
-void
-get_strand_ratio_lhood_spi(
-    const snp_pos_info& pi,
-    const unsigned ref_gt,
-    const blt_float_t het_ratio,
-    const unsigned het_ratio_index,
-    het_ratio_cache<2>& hrcache,
-    blt_float_t* lhood)
-{
-    // het_ratio is the expected allele frequency of noise on the
-    // noise-strand, or "on-strand" below. All possible ratio values
-    // (there should be very few), have an associated index value for
-    // caching.
-    //
-    const blt_float_t chet_ratio(1.-het_ratio);
-
-    // In this situation every basecall falls into 1 of 4 states:
-    //
-    // 0: off-strand non-reference allele (0)
-    // 1: on-strand non-reference allele (het_ratio)  (cached)
-    // 2: on-strand agrees with the reference (chet_ratio) (cached)
-    // 3: off-strand agree with the reference (1)
-    //
-    // The off-strand states are not cached below because they're
-    // simpler to compute
-    //
-    blt_float_t lhood_fwd = 0; // "on-strand" is fwd
-    blt_float_t lhood_rev = 0; // "on-strand" is rev
-
-    for (const base_call& bc : pi.calls)
-    {
-        std::pair<bool,cache_val<2>*> ret(hrcache.get_val(bc.get_qscore(),het_ratio_index));
-        cache_val<2>& cv(*ret.second);
-
-        // compute results only if they aren't already cached:
-        //
-        if (! ret.first)
-        {
-            const blt_float_t eprob(bc.error_prob());
-            const blt_float_t ceprob(1.-eprob);
-            // cached value [0] refers to state 2 above: on-strand
-            // reference allele
-            cv.val[0]=(std::log((ceprob)*chet_ratio+((eprob)*one_third)*het_ratio));
-            // cached value [1] refers to state 1 above: on-strand
-            // non-reference allele
-            cv.val[1]=(std::log((ceprob)*het_ratio+((eprob)*one_third)*chet_ratio));
-        }
-
-        const uint8_t obs_id(bc.base_id);
-
-        if (obs_id==ref_gt)
-        {
-            const blt_float_t val_off_strand(bc.ln_comp_error_prob());
-            const blt_float_t val_fwd(bc.is_fwd_strand ? cv.val[0] : val_off_strand);
-            const blt_float_t val_rev(bc.is_fwd_strand ? val_off_strand : cv.val[0]);
-            lhood_fwd += val_fwd;
-            lhood_rev += val_rev;
-        }
-        else
-        {
-            const blt_float_t val_off_strand(bc.ln_error_prob()+ln_one_third);
-            const blt_float_t val_fwd(bc.is_fwd_strand ? cv.val[1] : val_off_strand);
-            const blt_float_t val_rev(bc.is_fwd_strand ? val_off_strand : cv.val[1]);
-
-            lhood_fwd += val_fwd;
-            lhood_rev += val_rev;
-        }
-    }
-
-    *lhood = log_sum(lhood_fwd,lhood_rev)+ln_one_half;
-}
-
-
 
 // Fill in the noise portions of the likelihood function for the
 // regions where we expect strand bias noise (a minor allele frequency
@@ -175,10 +72,9 @@ get_diploid_strand_grid_lhood_spi(
     // get likelihood of each genotype
     for (unsigned gt(0); gt<(DIGT_GRID::STRAND_STATE_SIZE); ++gt) lhood[gt] = 0.;
 
-    static const blt_float_t ratio_increment(0.5/static_cast<blt_float_t>(DIGT_GRID::HET_RES+1));
     for (unsigned i(0); i<DIGT_GRID::HET_RES; ++i)
     {
-        const blt_float_t het_ratio((i+1)*ratio_increment);
+        const blt_float_t het_ratio((i+1)*DIGT_GRID::RATIO_INCREMENT);
         get_strand_ratio_lhood_spi(pi,ref_gt,het_ratio,i,hrcache,
                                    lhood+i);
     }
@@ -212,7 +108,9 @@ static
 void
 calculate_result_set_grid(
         const bool isComputeNonSomatic,
-        const std::vector<blt_float_t>& ln_somatic_prior,
+        const blt_float_t ssnv_contam_tolerance,
+        const blt_float_t ln_sse_rate,
+        const blt_float_t ln_csse_rate,
         const blt_float_t* normal_lhood,
         const blt_float_t* tumor_lhood,
         const blt_float_t* bare_lnprior_normal,
@@ -224,9 +122,11 @@ calculate_result_set_grid(
 {
 
     calculate_result_set_grid(
+            ssnv_contam_tolerance,
+            ln_sse_rate,   // ln (shared_error_rate)
+            ln_csse_rate,  // ln (1 - shared_error_rate)
             normal_lhood,
             tumor_lhood,
-            ln_somatic_prior,
             bare_lnprior_normal,
             lnmatch,
             lnmismatch,
@@ -344,7 +244,9 @@ position_somatic_snv_call(
 
         // genomic site results:
         calculate_result_set_grid(isComputeNonSomatic,
-                                  _ln_somatic_prior,
+                                  _contam_tolerance,
+                                  _ln_sse_rate,   // ln (shared_error_rate)
+                                  _ln_csse_rate,  // ln (1 - shared_error_rate)
                                   normal_lhood,
                                   tumor_lhood,
                                   _bare_lnprior,

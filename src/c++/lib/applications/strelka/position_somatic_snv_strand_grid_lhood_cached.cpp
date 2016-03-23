@@ -18,11 +18,12 @@
 //
 //
 
+/// \author Chris Saunders
 /// \author Sangtae Kim
 ///
 
 #include "position_somatic_snv_strand_grid_lhood_cached.hh"
-#include "qscore_calculator.hh"
+#include "strelka_digt_states.hh"
 #include "strelka_common/het_ratio_cache.hh"
 
 #include "blt_util/digt.hh"
@@ -143,12 +144,90 @@ get_diploid_het_grid_lhood_cached(
 
 //    blt_float_t* lhood_off=lhood-N_BASE;
 
-    const blt_float_t ratio_increment(0.5/static_cast<blt_float_t>(hetResolution+1));
     for (unsigned hetIndex(0); hetIndex<hetResolution; ++hetIndex)
     {
-        const blt_float_t het_ratio((hetIndex+1)*ratio_increment);
+        const blt_float_t het_ratio((hetIndex+1)*DIGT_GRID::RATIO_INCREMENT);
         get_high_low_het_ratio_lhood_cached(pi,ref_gt, het_ratio,hetIndex,hrcache,
-                                            lhood+hetIndex,
-                                            lhood+(totalHetRatios-(hetIndex+1)));
+                                            lhood+(totalHetRatios-(hetIndex+1)),
+                                            lhood+hetIndex);
     }
 }
+
+// calculate probability of strand-specific noise
+//
+// accelerated version with no hyrax q-val mods:
+//
+// the ratio key can be used as a proxy for the het ratio to look up cached results:
+//
+void
+get_strand_ratio_lhood_spi(
+    const snp_pos_info& pi,
+    const unsigned ref_gt,
+    const blt_float_t het_ratio,
+    const unsigned het_ratio_index,
+    het_ratio_cache<2>& hrcache,
+    blt_float_t* lhood)
+{
+    // het_ratio is the expected allele frequency of noise on the
+    // noise-strand, or "on-strand" below. All possible ratio values
+    // (there should be very few), have an associated index value for
+    // caching.
+    //
+    const blt_float_t chet_ratio(1.-het_ratio);
+
+    // In this situation every basecall falls into 1 of 4 states:
+    //
+    // 0: off-strand non-reference allele (0)
+    // 1: on-strand non-reference allele (het_ratio)  (cached)
+    // 2: on-strand agrees with the reference (chet_ratio) (cached)
+    // 3: off-strand agree with the reference (1)
+    //
+    // The off-strand states are not cached below because they're
+    // simpler to compute
+    //
+    blt_float_t lhood_fwd = 0; // "on-strand" is fwd
+    blt_float_t lhood_rev = 0; // "on-strand" is rev
+
+    for (const base_call& bc : pi.calls)
+    {
+        std::pair<bool,cache_val<2>*> ret(hrcache.get_val(bc.get_qscore(),het_ratio_index));
+        cache_val<2>& cv(*ret.second);
+
+        // compute results only if they aren't already cached:
+        //
+        if (! ret.first)
+        {
+            const blt_float_t eprob(bc.error_prob());
+            const blt_float_t ceprob(1.-eprob);
+            // cached value [0] refers to state 2 above: on-strand
+            // reference allele
+            cv.val[0]=(std::log((ceprob)*chet_ratio+((eprob)*one_third)*het_ratio));
+            // cached value [1] refers to state 1 above: on-strand
+            // non-reference allele
+            cv.val[1]=(std::log((ceprob)*het_ratio+((eprob)*one_third)*chet_ratio));
+        }
+
+        const uint8_t obs_id(bc.base_id);
+
+        if (obs_id==ref_gt)
+        {
+            const blt_float_t val_off_strand(bc.ln_comp_error_prob());
+            const blt_float_t val_fwd(bc.is_fwd_strand ? cv.val[0] : val_off_strand);
+            const blt_float_t val_rev(bc.is_fwd_strand ? val_off_strand : cv.val[0]);
+            lhood_fwd += val_fwd;
+            lhood_rev += val_rev;
+        }
+        else
+        {
+            const blt_float_t val_off_strand(bc.ln_error_prob()+ln_one_third);
+            const blt_float_t val_fwd(bc.is_fwd_strand ? cv.val[1] : val_off_strand);
+            const blt_float_t val_rev(bc.is_fwd_strand ? val_off_strand : cv.val[1]);
+
+            lhood_fwd += val_fwd;
+            lhood_rev += val_rev;
+        }
+    }
+
+    *lhood = log_sum(lhood_fwd,lhood_rev)+ln_one_half;
+}
+
