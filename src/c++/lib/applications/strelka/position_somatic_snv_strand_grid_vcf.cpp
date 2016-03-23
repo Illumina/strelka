@@ -85,7 +85,11 @@ set_VQSR_sample_info(
             }
         }
 
-        const double allele_freq(safeFrac(alt,ref+alt));
+        /// with limited training data presenting examples in the range (0.5,1.0], we fix a max value for
+        /// TIER1_ALLELE_RATE to normalize performance in case of high frequencies due to LOH regions
+        /// in high purity samples:
+        static const double max_freq(0.5);
+        const double allele_freq(std::min(max_freq,safeFrac(alt,ref+alt)));
         smod.set_feature(TIER1_ALLELE_RATE,allele_freq);
     }
 }
