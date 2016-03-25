@@ -34,10 +34,12 @@
 #include <cmath>
 
 
+// calculates diploid prior probabilities
 void
 calculate_bare_lnprior(const double theta,
         blt_float_t *bare_lnprior);
 
+// calculates qscores
 void
 calculate_result_set_grid(
         const blt_float_t ssnv_freq_ratio,

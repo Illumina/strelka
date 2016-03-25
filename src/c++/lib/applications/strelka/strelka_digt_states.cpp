@@ -24,6 +24,22 @@
 
 #include "strelka_digt_states.hh"
 
+
+namespace DIGT_GRID
+{
+
+blt_float_t
+get_fraction_from_index(int index)
+{
+    if (index == SOMATIC_DIGT::REF) return 0.f;
+    if (index == SOMATIC_DIGT::HOM) return 1.f;
+    if (index == SOMATIC_DIGT::HET) return 0.5f;
+    if (index < SOMATIC_DIGT::SIZE+DIGT_GRID::HET_RES) return DIGT_GRID::RATIO_INCREMENT*(index-SOMATIC_DIGT::SIZE+1);
+    return DIGT_GRID::RATIO_INCREMENT*(index-SOMATIC_DIGT::SIZE+2);
+}
+
+}
+
 namespace DDIGT
 {
 

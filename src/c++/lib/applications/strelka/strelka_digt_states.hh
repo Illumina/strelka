@@ -99,6 +99,9 @@ enum index_t { SIZE = PRESTRAND_SIZE+STRAND_STATE_SIZE };
 
 const blt_float_t RATIO_INCREMENT = 0.5f/static_cast<blt_float_t>(DIGT_GRID::HET_RES+1);
 
+blt_float_t
+get_fraction_from_index(int index);
+
 }
 
 namespace DDIGT

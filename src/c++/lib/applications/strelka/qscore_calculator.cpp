@@ -19,7 +19,8 @@
 //
 
 ///
-/// \author Chris Saunders, Sangtae Kim
+/// \author Chris Saunders
+/// \author Sangtae Kim
 ///
 
 
@@ -42,24 +43,14 @@ void
 calculate_bare_lnprior(const double theta,
         blt_float_t *bare_lnprior)
 {
-    bare_lnprior[SOMATIC_DIGT::REF]= (blt_float_t) log1p_switch(-(3.*theta)/2.);
-    bare_lnprior[SOMATIC_DIGT::HOM]= (blt_float_t) std::log(theta/2.);
-    bare_lnprior[SOMATIC_DIGT::HET]= (blt_float_t) std::log(theta);
-}
-
-static
-blt_float_t
-get_fraction_from_index(int index)
-{
-    if (index == SOMATIC_DIGT::REF) return 0.f;
-    if (index == SOMATIC_DIGT::HOM) return 1.f;
-    if (index == SOMATIC_DIGT::HET) return 0.5f;
-    if (index < SOMATIC_DIGT::SIZE+DIGT_GRID::HET_RES) return DIGT_GRID::RATIO_INCREMENT*(index-SOMATIC_DIGT::SIZE+1);
-    return DIGT_GRID::RATIO_INCREMENT*(index-SOMATIC_DIGT::SIZE+2);
+    bare_lnprior[SOMATIC_DIGT::REF] = (blt_float_t) log1p_switch(-(3.*theta)/2.);
+    bare_lnprior[SOMATIC_DIGT::HOM] = (blt_float_t) std::log(theta/2.);
+    bare_lnprior[SOMATIC_DIGT::HET] = (blt_float_t) std::log(theta);
 }
 
 static const blt_float_t neg_inf = -std::numeric_limits<float>::infinity();
-static const double ln_one_half(std::log(1./2.));
+static const blt_float_t ln_one_half(std::log(1./2.));
+static const blt_float_t log_error_mod = -std::log(static_cast<double>(DIGT_GRID::PRESTRAND_SIZE-1));
 
 void
 calculate_result_set_grid(
@@ -78,14 +69,9 @@ calculate_result_set_grid(
     double max_log_prob = neg_inf;
 
     rs.max_gt = 0;
-    blt_float_t log_error_mod = -std::log(static_cast<double>(DIGT_GRID::PRESTRAND_SIZE-1));
 
     for (unsigned ngt(0); ngt<SOMATIC_DIGT::SIZE; ++ngt)
     {
-        // logP(Gn=ngt, Gt=tgt)
-        double log_ngt_prior = bare_lnprior[ngt];  // logP(Gn)
-
-        // logP(Gn=ngt, Gt=tgt)
         for (unsigned tgt(0); tgt<SOMATIC_STATE::SIZE; ++tgt) // 0: non-somatic, 1: somatic
         {
             double max_log_sum = neg_inf;
@@ -94,10 +80,10 @@ calculate_result_set_grid(
 
             for (unsigned tumor_freq_index(0); tumor_freq_index<DIGT_GRID::PRESTRAND_SIZE; ++tumor_freq_index)
             {
-                blt_float_t tumor_freq = get_fraction_from_index(tumor_freq_index);
+                blt_float_t tumor_freq = DIGT_GRID::get_fraction_from_index(tumor_freq_index);
 
-                // consider_norm_contam is set if tumor_freq is large enough
-                // so that normal_freq==DIGT_GRID::RATIO_INCREMENT is considered as contamination from tumor instead of error
+                // this flag is set if tumor_freq is large.
+                // if it is set, normal_freq==DIGT_GRID::RATIO_INCREMENT is considered as "canonical" frequency rather than noise
                 bool consider_norm_contam = contam_tolerance*tumor_freq >= DIGT_GRID::RATIO_INCREMENT;
 
                 for (unsigned normal_freq_index(0); normal_freq_index<DIGT_GRID::PRESTRAND_SIZE; ++normal_freq_index)
@@ -106,22 +92,25 @@ calculate_result_set_grid(
 
                     if (tgt == 0)    // non-somatic
                     {
-                       if (normal_freq_index != tumor_freq_index) continue;
+                       if (normal_freq_index != tumor_freq_index) continue; // P(fn != ft | Gn = Gt) = 0
+
                        lprior_freq = (normal_freq_index == ngt) ? ln_cse_rate : ln_se_rate+log_error_mod;
                     }
                     else    // somatic
                     {
-                       if (normal_freq_index == tumor_freq_index) continue;
-                       if (ngt != SOMATIC_DIGT::REF || !consider_norm_contam)
+                       if (normal_freq_index == tumor_freq_index) continue; // P(fn = ft | Gn != Gt) = 0
+                       if (ngt != SOMATIC_DIGT::REF)
                        {
-                           lprior_freq = log_error_mod + ((normal_freq_index == ngt) ? ln_cse_rate : ln_se_rate+log_error_mod);
+                           if (normal_freq_index != ngt)
+                               continue;
+                           lprior_freq = log_error_mod + ln_cse_rate;
                        }
                        else
                        {
-                           if (normal_freq_index == ngt || normal_freq_index == SOMATIC_DIGT::SIZE)   // normal_fraction == 0 or DIGT_GRID::RATIO_INCREMENT
-                               lprior_freq = log_error_mod + ln_cse_rate+ln_one_half;
+                           if (normal_freq_index == ngt || (consider_norm_contam && normal_freq_index == SOMATIC_DIGT::SIZE))
+                               lprior_freq = log_error_mod + ln_one_half;
                            else
-                               lprior_freq = log_error_mod + ln_se_rate+log_error_mod;
+                               continue;
                        }
                     }
                     double lsum = lprior_freq + normal_lhood[normal_freq_index] + tumor_lhood[tumor_freq_index];
@@ -130,15 +119,20 @@ calculate_result_set_grid(
                 }
             }
 
-            // calculate log(exp(log_sum[0])+exp(log_sum[1])+...)
+            // Calculate log(exp(log_sum[0]-max_log_sum) + ...
             double sum = 0.0;
             for (int i(0); i<index; ++i)
             {
                 sum += std::exp(log_sum[i] - max_log_sum);
             }
 
-            double log_genotype_prior = log_ngt_prior + ((tgt == 0) ? lnmatch : lnmismatch);
-            // log(exp
+            // logP(Gn=ngt, Gt=tgt)
+            double log_genotype_prior = bare_lnprior[ngt] + ((tgt == 0) ? lnmatch : lnmismatch);
+
+            // log(P(G)) + log(D|G)
+            // log(D|G)
+            // = log(exp(log_sum[0])+exp(log_sum[1])+...)
+            // = max_log_sum + log(exp(log_sum[0]-max_log_sum) + ...
             log_post_prob[ngt][tgt] = log_genotype_prior + max_log_sum + std::log(sum);
 
             if(log_post_prob[ngt][tgt] > max_log_prob)
@@ -149,7 +143,7 @@ calculate_result_set_grid(
         }
     }
 
-    // Calculate posterior probabilities
+    // Calculate posterior probabilities ( P(G)*P(D|G) )
     double sum_prob = 0.0;
     for (unsigned ngt(0); ngt<SOMATIC_DIGT::SIZE; ++ngt)
     {
