@@ -33,9 +33,9 @@
 #include "starling_read_util.hh"
 
 #include "blt_util/align_path.hh"
-#include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
+#include "common/Exceptions.hh"
 #include "htsapi/align_path_bam_util.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
@@ -401,30 +401,87 @@ process_genomic_read(
 
 
 // return common prefix and suffix length of two strings, where
-// prefix takes priority
+// suffix takes priority (this is important for left-shifting)
 //
 static
 std::pair<unsigned,unsigned>
-common_xfix_length(const std::string& s1,
-                   const std::string& s2)
+common_xfix_length(
+        const std::string& s1,
+        const std::string& s2)
 {
     const unsigned s1s(s1.size());
     const unsigned s2s(s2.size());
 
-    unsigned prefix(0);
+    unsigned suffix(0);
     unsigned nsearch(std::min(s1s,s2s));
+    for (; suffix<nsearch; ++suffix)
+    {
+        if (s1[s1s-1-suffix] != s2[s2s-1-suffix]) break;
+    }
+
+    unsigned prefix(0);
+    nsearch -= suffix;
     for (; prefix<nsearch; ++prefix)
     {
         if (s1[prefix] != s2[prefix]) break;
     }
 
-    unsigned suffix(0);
-    nsearch -= prefix;
-    for (; suffix<nsearch; ++suffix)
-    {
-        if (s1[s1s-1-suffix] != s2[s2s-1-suffix]) break;
-    }
     return std::make_pair(prefix,suffix);
+}
+
+
+
+bool
+convert_vcfrecord_to_indel_allele(
+    const unsigned max_indel_size,
+    const vcf_record& vcf_indel,
+    const unsigned altIndex,
+    indel_observation& obs)
+{
+    assert(vcf_indel.is_indel());
+    assert(altIndex<vcf_indel.alt.size());
+
+    const unsigned rs(vcf_indel.ref.size());
+    const auto& alt(vcf_indel.alt[altIndex]);
+    const unsigned as(alt.size());
+    const std::pair<unsigned,unsigned> xfix(common_xfix_length(vcf_indel.ref,alt));
+    const unsigned nfix(xfix.first+xfix.second);
+    assert(nfix<=std::min(rs,as));
+    const int insert_length(as-nfix);
+    const int delete_length(rs-nfix);
+
+    if ((insert_length > static_cast<int>(max_indel_size)) ||
+        (delete_length > static_cast<int>(max_indel_size))) return false;
+
+    // starling indel pos is at the first changed base but zero-indexed:
+    obs.key.pos = (vcf_indel.pos+xfix.first-1);
+    if (insert_length>0)
+    {
+        if (delete_length>0)
+        {
+            obs.key.type = INDEL::SWAP;
+            obs.key.swap_dlength = delete_length;
+        }
+        else
+        {
+            obs.key.type = INDEL::INSERT;
+        }
+        obs.key.length = insert_length;
+        obs.data.insert_seq = std::string(alt.begin()+xfix.first,alt.end()-xfix.second);
+    }
+    else if (delete_length>0)
+    {
+        obs.key.type = INDEL::DELETE;
+        obs.key.length = delete_length;
+    }
+    else
+    {
+        using namespace illumina::common;
+        std::ostringstream oss;
+        oss << "ERROR: Can't parse vcf indel: '" << vcf_indel << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+    return true;
 }
 
 
@@ -441,46 +498,13 @@ process_candidate_indel(
 {
     assert (vcf_indel.is_indel());
 
-    const unsigned rs(vcf_indel.ref.size());
-    for (const auto& alt : vcf_indel.alt)
+    const unsigned altCount(vcf_indel.alt.size());
+    for (unsigned altIndex(0); altIndex<altCount; ++altIndex)
     {
-        const unsigned as(alt.size());
-        const std::pair<unsigned,unsigned> xfix(common_xfix_length(vcf_indel.ref,alt));
-        const unsigned nfix(xfix.first+xfix.second);
-        assert(nfix<=std::min(rs,as));
-        const int insert_length(as-nfix);
-        const int delete_length(rs-nfix);
-
-        if ((insert_length > static_cast<int>(max_indel_size)) ||
-            (delete_length > static_cast<int>(max_indel_size))) continue;
-
         indel_observation obs;
-        // starling indel pos is at the first changed base but zero-indexed:
-        obs.key.pos = (vcf_indel.pos+xfix.first-1);
-        if (insert_length>0)
-        {
-            if (delete_length>0)
-            {
-                obs.key.type = INDEL::SWAP;
-                obs.key.swap_dlength = delete_length;
-            }
-            else
-            {
-                obs.key.type = INDEL::INSERT;
-            }
-            obs.key.length = insert_length;
-            obs.data.insert_seq = std::string(alt.begin()+xfix.first,alt.end()-xfix.second);
-        }
-        else if (delete_length>0)
-        {
-            obs.key.type = INDEL::DELETE;
-            obs.key.length = delete_length;
-        }
-        else
-        {
-            log_os << "ERROR: Can't parse vcf indel: '" << vcf_indel << "'\n";
-            exit(EXIT_FAILURE);
-        }
+        const bool isAlleleConverted =
+                convert_vcfrecord_to_indel_allele(max_indel_size,vcf_indel,altIndex,obs);
+        if (! isAlleleConverted) continue;
 
         obs.data.is_external_candidate = true;
         obs.data.is_forced_output = is_forced_output;
