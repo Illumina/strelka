@@ -6,7 +6,7 @@ set -o pipefail
 set -o xtrace
 
 
-package_name=starka
+package_name=strelka
 
 pname_root=""
 if [ $# -gt 1 ]; then
