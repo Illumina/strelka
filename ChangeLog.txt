@@ -1,3 +1,6 @@
+v2.4.6
+- STARKA-416 Adjust somatic EVS threshold for improved precision
+- STARKA-352 Improve somatic recall for variants in LOH region
 v2.4.5
 - STARKA-306 fix rare chunk size boundary defect in RangeMap
 v2.4.4
