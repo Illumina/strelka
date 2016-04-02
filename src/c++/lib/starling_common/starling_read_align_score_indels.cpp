@@ -464,7 +464,7 @@ score_indels(
 
     // (1) score candidate alignments -- already done before calling this function
     //
-    // (2) store the highest scoring alignment with each indel present
+    // (2) find the highest scoring alignment with each indel present
     // and absent.
     //
     // Note there are up to two 'indel absent' states. The first is
@@ -515,14 +515,11 @@ score_indels(
                                         nonnorm_indels, isFilterCandAlignment, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
 
-    // (2a) get an initial set of candidate indels which can be scored
-    //      from max path. note that we can't do full
-    //      breakpoint-testing yet, so a few more indels may be
-    //      eliminated from this set:
+    // (2a) find set of candidate indels which will be scored by this read
     //
-    // The criteria for indel calling are that:
+    // The criteria for indels in this set are:
     // 1) the indel is not private to the read
-    // 2) the read overlaps at least one indel breakpoint by at least option:min_read_bp_flank bases
+    // 2) the read overlaps at least one indel breakpoint by at least option:min_read_bp_flank bases in at least one candidate alignment
     // 3) the indel is not in the nonnorm set
     // 4) the read meets whatever mapping quality criteria have been setup for snp-calling
     //
@@ -541,13 +538,11 @@ score_indels(
     indel_status_map_t isIndelOrthogonalToMaxCandAlignment;
     {
         const known_pos_range maxCandAlignmentRange(get_soft_clip_alignment_range(maxCandAlignment.al));
-        const known_pos_range maxCandAlignmentStrictRange(get_strict_alignment_range(maxCandAlignment.al));
 
 #ifdef DEBUG_ALIGN
         log_os << "VARMIT: starting max_cal_eval_indel search\n"
                << "VARMIT: max_cal.al: " << maxCandAlignment.al << "\n"
-               << "VARMIT: max_pr: " << maxCandAlignmentRange << "\n"
-               << "VARMIT: strict_max_pr: " << maxCandAlignmentStrictRange << "\n";
+               << "VARMIT: max_pr: " << maxCandAlignmentRange << "\n";
 #endif
         get_alignment_indels(maxCandAlignment,opt.max_indel_size,indelsInMaxCandAlignment);
 #ifdef DEBUG_ALIGN
@@ -576,9 +571,45 @@ score_indels(
             log_os << "VARMIT: indel present? " << isIndelInMaxCandAlignment << "\n";
 #endif
 
-            if (isIndelInMaxCandAlignment)
+            // (1) find the most likely alignment which contains this indel
+            // (2) on that alignment, test for breakpoint overlap
+            // (3) filter the candidate indel if overlap < min
             {
-                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,maxCandAlignment.al,evaluationIndel));
+                const candidate_alignment* maxCandAlignmentForIndelPtr(nullptr);
+                if (isIndelInMaxCandAlignment)
+                {
+                    maxCandAlignmentForIndelPtr = &maxCandAlignment;
+                }
+                else
+                {
+                    double maxScore(0);
+                    std::set<candidate_alignment>::const_iterator candAlignmentIter(candAlignments.begin()),candAlignmentIter_end(candAlignments.end());
+                    for (unsigned candAlignmentIndex(0); candAlignmentIter!=candAlignmentIter_end; ++candAlignmentIter,++candAlignmentIndex)
+                    {
+                        const candidate_alignment& candAlignment(*candAlignmentIter);
+                        const bool isMaxCandAlignment(&candAlignment == &maxCandAlignment);
+                        if (isMaxCandAlignment) continue;
+
+                        if (isFilterCandAlignment[candAlignmentIndex]) continue;
+
+                        indel_set_t indelsInCandAlignment;
+                        get_alignment_indels(candAlignment,opt.max_indel_size,indelsInCandAlignment);
+                        const bool isIndelInCandAlignment(indelsInCandAlignment.count(evaluationIndel)!=0);
+                        if (! isIndelInCandAlignment) continue;
+
+                        const double score(candAlignmentScores[candAlignmentIndex]);
+                        if ((nullptr == maxCandAlignmentForIndelPtr) || (score > maxScore))
+                        {
+                            maxScore = score;
+                            maxCandAlignmentForIndelPtr = &(candAlignment);
+                        }
+                    }
+                }
+
+                // test and reject if breakpoint overlap is insufficient:
+                if (nullptr == maxCandAlignmentForIndelPtr) continue;
+                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,maxCandAlignmentForIndelPtr->al,evaluationIndel));
+
                 const int bpo(std::max(both_bpo.first,both_bpo.second));
 #ifdef DEBUG_ALIGN
                 log_os << "VARMIT: indel bp_overlap " << bpo << "\n";
@@ -593,17 +624,12 @@ score_indels(
                     continue;
                 }
             }
-            else     // check that the most likely alignment intersects this indel:
-            {
-#ifdef DEBUG_ALIGN
-                log_os << "VARMIT: indel intersects max_path? "
-                       <<  is_range_intersect_indel_breakpoints(maxCandAlignmentStrictRange,evaluationIndel) << "\n";
-#endif
-                if (! is_range_intersect_indel_breakpoints(maxCandAlignmentStrictRange,evaluationIndel)) continue;
-            }
 
             // all checks passed... indel will be evaluated for indel calling:
             //
+#ifdef DEBUG_ALIGN
+            log_os << "VARMIT: inserting indel to evaluate " << evaluationIndel << "\n";
+#endif
             indelsToEvaluate.insert(evaluationIndel);
             isIndelOrthogonalToMaxCandAlignment[evaluationIndel] = is_interfering_indel(indelsInMaxCandAlignment,evaluationIndel);
         }
@@ -779,12 +805,6 @@ score_indels(
         }
     }
 
-
-    // Note that for sanity/consistency, the breakpoint overlap
-    // filtration criteria is applied to the called indel
-    // only. Alignments of the same read to alternate indel alleles
-    // are not tested for overlap size
-    //
     {
         indel_buffer& indelBuffer(isync.ibuff());
         for (const indel_key& evaluationIndel : indelsToEvaluate)
@@ -849,23 +869,6 @@ score_indels(
                 }
 
                 const iks_map_t::mapped_type& indelAlignmentInfo(indelScoringIter->second);
-                const candidate_alignment& candAlignment(*(indelAlignmentInfo.second));
-                const std::pair<int,int> both_bpo(get_alignment_indel_bp_overlap(opt.upstream_oligo_size,candAlignment.al,evaluationIndel));
-                const int bpo(std::max(both_bpo.first,both_bpo.second));
-
-#ifdef DEBUG_ALIGN
-                log_os << "VARMIT: called_indel_bp_overlap " << bpo << "\n";
-#endif
-                if (bpo < sample_opt.min_read_bp_flank)
-                {
-                    if (bpo>0)
-                    {
-                        if (is_tier1_read) evaluationIndelDataPtr->suboverlap_tier1_read_ids.insert(rseg.id());
-                        else               evaluationIndelDataPtr->suboverlap_tier2_read_ids.insert(rseg.id());
-                    }
-                    continue;
-                }
-
                 evaluationIndelScore=indelAlignmentInfo.first;
             }
 

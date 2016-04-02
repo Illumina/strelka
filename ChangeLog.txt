@@ -1,3 +1,4 @@
+- STREL-36 fix indel breakend support test
 - STREL-29 fix edge-case handling of overlapping indel candidate/forcedGT input
 - STREL-27 refactor indel candidacy to uniformly test all indel types
 - STREL-24 fix off-by-one error in test leading to extra candidate indel noise
