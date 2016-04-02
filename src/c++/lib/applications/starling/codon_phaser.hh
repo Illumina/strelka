@@ -32,6 +32,8 @@
 
 #include "starling_common/pos_basecall_buffer.hh"
 
+#include <iosfwd>
+
 
 /// short-range phasing utility for het-snps
 ///
@@ -72,8 +74,8 @@ struct Codon_phaser : public variant_pipe_stage_base
     // clear all object data
     void clear();
 
-    void write_out_buffer() const;      // debugging feature, print current buffer to std
-    void write_out_alleles() const;     // print allele evidence
+    void write_out_buffer(std::ostream& os) const;      // debugging feature, print current buffer to std
+    void write_out_alleles(std::ostream& os) const;     // print allele evidence
 
     /// Are we currently in a phasing block?
     bool is_in_block() const

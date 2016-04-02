@@ -26,7 +26,7 @@
 
 #include <vector>
 #include <iosfwd>
-#include <iostream>
+
 
 // Calculates the Mann-Whitney rank-sum statistic from two populations with
 // sparse (and similar) observation spaces
