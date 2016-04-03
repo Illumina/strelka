@@ -63,7 +63,7 @@ compressInt(
     const unsigned bitCount)
 {
     using Tinfo = std::numeric_limits<T>;
-    static_assert((not Tinfo::is_signed) && Tinfo::is_integer, "T must have unsigned integral type");
+    static_assert((! Tinfo::is_signed) && Tinfo::is_integer, "T must have unsigned integral type");
 
     assert(bitCount>0);
 
