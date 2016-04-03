@@ -194,7 +194,7 @@ struct bam_seq : public bam_seq_base
 #endif
 
     uint8_t
-    get_code(pos_t i) const
+    get_code(pos_t i) const override
     {
         if (! is_in_range(i)) return BAM_BASE::ANY;
         i += static_cast<pos_t>(_offset);
@@ -202,7 +202,7 @@ struct bam_seq : public bam_seq_base
     }
 
     char
-    get_char(const pos_t i) const
+    get_char(const pos_t i) const override
     {
         return get_bam_seq_char(get_code(i));
     }
@@ -237,7 +237,7 @@ struct bam_seq : public bam_seq_base
         return s;
     }
 
-    unsigned size() const
+    unsigned size() const override
     {
         return _size;
     }
@@ -262,19 +262,19 @@ struct string_bam_seq : public bam_seq_base
         : _s(s), _size(init_size) {}
 
     uint8_t
-    get_code(pos_t i) const
+    get_code(pos_t i) const override
     {
         return get_bam_seq_code(get_char(i));
     }
 
     char
-    get_char(const pos_t i) const
+    get_char(const pos_t i) const override
     {
         if (! is_in_range(i)) return 'N';
         return _s[i];
     }
 
-    unsigned size() const
+    unsigned size() const override
     {
         return _size;
     }
@@ -295,18 +295,18 @@ struct rc_segment_bam_seq : public bam_seq_base
     {}
 
     uint8_t
-    get_code(pos_t i) const
+    get_code(pos_t i) const override
     {
         return get_bam_seq_code(get_char(i));
     }
 
     char
-    get_char(const pos_t i) const
+    get_char(const pos_t i) const override
     {
         return _r.get_base(i);
     }
 
-    unsigned size() const
+    unsigned size() const override
     {
         return _r.end();
     }
