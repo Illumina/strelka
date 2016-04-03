@@ -26,6 +26,7 @@
 
 
 #include "blt_util/pos_range.hh"
+#include "htsapi/bam_record.hh"
 #include "starling_common/alignment.hh"
 #include "starling_common/indel.hh"
 
@@ -112,6 +113,12 @@ alignment
 matchify_edge_soft_clip(
     const alignment& al);
 
+/// translate bam_record into the cooresponding alignment structure
+///
+void
+getAlignmentFromBamRecord(
+    const bam_record& br,
+    alignment& al);
 
 #if 0
 /// Shift all indels as far "to the left" as possible -- note that

@@ -28,6 +28,7 @@
 
 
 #include "candidate_alignment.hh"
+#include "normalizeAlignment.hh"
 #include "starling_pos_processor_indel_util.hh"
 #include "starling_read_filter_shared.hh"
 #include "starling_read_util.hh"
@@ -37,6 +38,7 @@
 #include "blt_util/qscore.hh"
 #include "common/Exceptions.hh"
 #include "htsapi/align_path_bam_util.hh"
+#include "htsapi/bam_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
 #include <cassert>
@@ -293,7 +295,7 @@ is_al_overdepth(const starling_base_options& opt,
 void
 process_genomic_read(
     const starling_base_options& opt,
-    const reference_contig_segment& /*ref*/,
+    const reference_contig_segment& ref,
     const bam_streamer& read_stream,
     const bam_record& read,
     const pos_t base_pos,
@@ -381,6 +383,11 @@ process_genomic_read(
                 brc.max_depth++;
                 return;
             }
+
+            // normalize/left-shift the input alingment before inserting into the read buffer below:
+            const rc_segment_bam_seq refBamSeq(ref);
+            const bam_seq readBamSeq(read.get_bam_read());
+            normalizeAlignment(refBamSeq,readBamSeq,al);
         }
 
 

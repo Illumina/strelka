@@ -1,3 +1,4 @@
+- STREL 32 left-shift/standardize input alignment records
 - STARKA-403 charged somatic SNV/indel scoring model for liquid tumor support
 - STREL-36 fix indel breakend support test
 - STREL-29 fix edge-case handling of overlapping indel candidate/forcedGT input

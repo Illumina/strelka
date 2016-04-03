@@ -25,6 +25,7 @@
 #include "alignment_util.hh"
 #include "blt_util/align_path.hh"
 #include "blt_util/align_path_util.hh"
+#include "htsapi/align_path_bam_util.hh"
 
 #include <cassert>
 
@@ -314,6 +315,19 @@ matchify_edge_soft_clip(
     const alignment& al)
 {
     return matchify_edge_segment_type(al, ALIGNPATH::SOFT_CLIP);
+}
+
+
+
+void
+getAlignmentFromBamRecord(
+    const bam_record& br,
+    alignment& al)
+{
+    al.clear();
+    al.pos=br.pos()-1;
+    al.is_fwd_strand=br.is_fwd_strand();
+    bam_cigar_to_apath(br.raw_cigar(),br.n_cigar(),al.path);
 }
 
 
