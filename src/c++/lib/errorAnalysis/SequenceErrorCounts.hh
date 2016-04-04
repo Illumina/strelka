@@ -25,9 +25,11 @@
 #pragma once
 
 #include "boost/serialization/level.hpp"
+#include "boost/array.hpp"
 
 #include <iosfwd>
 #include <map>
+#include <numeric>
 #include <vector>
 
 
@@ -54,28 +56,54 @@ namespace INDEL_TYPE
 }
 
 
+namespace SIGNAL_TYPE
+{
+    // second number represents REPEAT_UNITS added or removed
+    enum index_t {
+        INSERT_1,
+        INSERT_2,
+        INSERT_GE3,
+        DELETE_1,
+        DELETE_2,
+        DELETE_GE3,
+        SIZE
+    };
+
+    inline
+    const char*
+    label(
+        const index_t id)
+    {
+        switch(id)
+        {
+        case INSERT_1:   return "I_1.";
+        case INSERT_2:   return "I_2.";
+        case INSERT_GE3: return "I_3+";
+        case DELETE_1:   return "D_1.";
+        case DELETE_2:   return "D_2.";
+        case DELETE_GE3: return "D_3+";
+        default:     return "X_X.";
+        }
+    }
+}
+
+
 struct SequenceErrorContext
 {
     bool
     operator<(
         const SequenceErrorContext& rhs) const
     {
-        if (hpolLength < rhs.hpolLength) return true;
-        if (hpolLength == rhs.hpolLength)
-        {
-            return (itype < rhs.itype);
-        }
-        return false;
+        return (repeatCount < rhs.repeatCount);
     }
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& hpolLength& itype;
+        ar& repeatCount;
     }
 
-    unsigned hpolLength;
-    INDEL_TYPE::index_t itype;
+    unsigned repeatCount;
 };
 
 BOOST_CLASS_IMPLEMENTATION(SequenceErrorContext, boost::serialization::object_serializable)
@@ -181,32 +209,48 @@ BOOST_CLASS_IMPLEMENTATION(SequenceDepthSupportTotal, boost::serialization::obje
 
 struct SequenceErrorContextObservation
 {
+    SequenceErrorContextObservation()
+      : refCount(0)
+    {
+        std::fill(signalCounts.begin(), signalCounts.end(), 0);
+    }
+
+    unsigned
+    totalSignalCount() const
+    {
+        return std::accumulate(signalCounts.begin(), signalCounts.end(), 0);
+    }
+
     unsigned
     totalCount() const
     {
-        return (refCount+signalCount);
+        return (refCount+totalSignalCount());
     }
 
     bool
     operator<(
         const SequenceErrorContextObservation& rhs) const
     {
-        if (refCount < rhs.refCount) return true;
         if (refCount == rhs.refCount)
         {
-            return (signalCount < rhs.signalCount);
+            for (unsigned signalIndex(0); signalIndex<SIGNAL_TYPE::SIZE; ++signalIndex)
+            {
+                if (signalCounts[signalIndex] == rhs.signalCounts[signalIndex]) continue;
+                return (signalCounts[signalIndex] < rhs.signalCounts[signalIndex]);
+            }
         }
-        return false;
+        return (refCount < rhs.refCount);
     }
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& refCount& signalCount;
+        ar& refCount& signalCounts;
     }
 
     unsigned refCount;
-    unsigned signalCount;
+    /// note: can't get std::array to serialize correctly on clang
+    boost::array<unsigned,SIGNAL_TYPE::SIZE> signalCounts;
 };
 
 BOOST_CLASS_IMPLEMENTATION(SequenceErrorContextObservation, boost::serialization::object_serializable)
@@ -267,7 +311,7 @@ struct ExportedObservations
     unsigned refObservations;
 
     /// number of supporting observations of the alt allele
-    unsigned altObservations;
+    boost::array<unsigned,SIGNAL_TYPE::SIZE> altObservations;
 };
 
 
@@ -289,12 +333,13 @@ struct SequenceErrorData
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& background& error& depthSupport;
+        ar& background& error& depthSupport& skipped;
     }
 
     SequenceBackgroundObservationData background;
     SequenceErrorContextObservationData error;
     SequenceDepthSupportTotal depthSupport;
+    unsigned skipped = 0;
 };
 
 BOOST_CLASS_IMPLEMENTATION(SequenceErrorData, boost::serialization::object_serializable)
@@ -325,6 +370,10 @@ public:
     addBackground(
         const SequenceErrorContext& context,
         const SequenceBackgroundObservation& backgroundObservation);
+
+    void
+    addDepthSkip(
+        const SequenceErrorContext& context);
 
     void
     merge(const SequenceErrorCounts& in);

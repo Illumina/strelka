@@ -25,6 +25,9 @@
 #include "starling_common/starling_diploid_indel.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 
+#include <algorithm>
+#include <vector>
+
 
 
 SequenceErrorCountsPosProcessor::
@@ -34,9 +37,7 @@ SequenceErrorCountsPosProcessor(
     const reference_contig_segment& ref,
     const SequenceErrorCountsStreams& streams)
     : base_t(opt,dopt,ref,streams,1),
-      _opt(opt),
-      _dopt(dopt),
-      _streams(streams)
+      _opt(opt)
 {
     // check that we have write permission on the output file early:
     {
@@ -91,6 +92,205 @@ reset()
 
 
 
+/// generalization of overlapping indels:
+///
+struct OrthogonalHaplotypeCandidateGroup
+{
+    const indel_key&
+    key(
+        const unsigned index) const
+    {
+        return iter(index)->first;
+    }
+
+    const indel_data&
+    data(
+        const unsigned index) const
+    {
+        assert(index < size());
+        return get_indel_data(iter(index));
+    }
+
+    const indel_buffer::const_iterator&
+    iter(
+        const unsigned index) const
+    {
+        assert(index < size());
+        return haps[index];
+    }
+
+    unsigned
+    size() const
+    {
+        return haps.size();
+    }
+
+    bool
+    empty() const
+    {
+        return haps.empty();
+    }
+
+    void
+    clear()
+    {
+        haps.clear();
+    }
+
+    void
+    addHaplotype(
+        const indel_buffer::const_iterator hapIter)
+    {
+        haps.push_back(hapIter);
+    }
+
+    std::vector<indel_buffer::const_iterator> haps;
+};
+
+
+
+
+#include "blt_util/math_util.hh"
+#include "blt_util/prob_util.hh"
+
+/// order overlapping indels by total read support
+///
+/// \param[out] referenceRank rank of the reference among all haplotypes, with 0 being the best (highest scoring)
+///
+static
+void
+getOrthogonalHaplotypeSupportCounts(
+    const OrthogonalHaplotypeCandidateGroup& hg,
+    std::vector<unsigned>& support)
+{
+    const unsigned nonrefHapCount(hg.size());
+    assert(nonrefHapCount!=0);
+
+    std::set<unsigned> readIds;
+
+    // intersection of read ids
+    {
+        std::map<unsigned,unsigned> countReadIds;
+        for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; nonrefHapIndex++)
+        {
+            const indel_data& id(hg.data(nonrefHapIndex));
+            for (const auto& score : id.read_path_lnp)
+            {
+                const auto iter(countReadIds.find(score.first));
+                if (iter==countReadIds.end())
+                {
+                    countReadIds.insert(std::make_pair(score.first,1));
+                }
+                else
+                {
+                    iter->second += 1;
+                }
+            }
+        }
+
+        for (const auto& value : countReadIds)
+        {
+            if (value.second >= nonrefHapCount)
+            {
+                readIds.insert(value.first);
+            }
+        }
+    }
+
+
+    // count of all haplotypes including reference
+    const unsigned allHapCount(nonrefHapCount+1);
+    const unsigned refHapIndex(nonrefHapCount);
+
+    support.clear();
+    support.resize(allHapCount,0);
+
+    std::vector<double> lhood(allHapCount);
+    for (const auto readId : readIds)
+    {
+        static const double log0(-std::numeric_limits<double>::infinity());
+        std::fill(lhood.begin(),lhood.end(),log0);
+        for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; nonrefHapIndex++)
+        {
+            const indel_data& id(hg.data(nonrefHapIndex));
+
+            const auto iditer(id.read_path_lnp.find(readId));
+            if (iditer==id.read_path_lnp.end())
+            {
+                continue;
+            }
+            const read_path_scores& path_lnp(iditer->second);
+
+            lhood[refHapIndex] = std::max(lhood[refHapIndex],static_cast<double>(path_lnp.ref));
+            lhood[nonrefHapIndex] = path_lnp.indel;
+        }
+        unsigned maxIndex(0);
+        normalize_ln_distro(lhood.begin(),lhood.end(),maxIndex);
+
+        for (unsigned allHapIndex(0); allHapIndex<allHapCount; allHapIndex++)
+        {
+            if (lhood[allHapIndex]>0.999)
+            {
+                support[allHapIndex]++;
+            }
+        }
+    }
+}
+
+
+static
+SIGNAL_TYPE::index_t
+getIndelType(
+    const starling_indel_report_info& iri)
+{
+    int rudiff(static_cast<int>(iri.ref_repeat_count)-static_cast<int>(iri.indel_repeat_count));
+    rudiff = std::min(3,std::max(-3,rudiff));
+
+    using namespace SIGNAL_TYPE;
+    switch(rudiff)
+    {
+    case  1: return DELETE_1;
+    case  2: return DELETE_2;
+    case  3: return DELETE_GE3;
+    case -1: return INSERT_1;
+    case -2: return INSERT_2;
+    case -3: return INSERT_GE3;
+    default:
+        assert(false);
+        return SIZE;
+    }
+}
+
+
+
+static
+void
+mergeIndelObservations(
+    const SequenceErrorContext& context,
+    const SequenceErrorContextObservation& obs,
+    std::map<SequenceErrorContext,SequenceErrorContextObservation>& indelObservations)
+{
+    auto iter(indelObservations.find(context));
+
+    if (iter == indelObservations.end())
+    {
+        indelObservations.insert(std::make_pair(context,obs));
+    }
+    else
+    {
+        // all signal counts should be summed:
+        for(unsigned signalIndex(0); signalIndex<SIGNAL_TYPE::SIZE; ++signalIndex)
+        {
+            iter->second.signalCounts[signalIndex] += obs.signalCounts[signalIndex];
+        }
+
+        // refCount used for the group is the lowest submitted:
+        iter->second.refCount = std::min(iter->second.refCount, obs.refCount);
+    }
+}
+
+
+
 void
 SequenceErrorCountsPosProcessor::
 process_pos_indel_single_sample_digt(
@@ -104,6 +304,9 @@ process_pos_indel_single_sample_digt(
     //
     if (sample_no!=0) return;
 
+    const char refBase(_ref.get_base(pos));
+
+    if (refBase=='N') return;
 
 
     // Current multiploid indel model can handle a het or hom indel
@@ -127,147 +330,131 @@ process_pos_indel_single_sample_digt(
         {
             const unsigned estdepth(sif.estdepth_buff.val(pos-1));
             const unsigned estdepth2(sif.estdepth_buff_tier2.val(pos-1));
-            if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth) return;
+            if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
+            {
+                // record the number of contexts which have been skipped due to high depth:
+                SequenceErrorContext context;
+                context.repeatCount = 1;
+                _counts.addDepthSkip(context);
+
+                const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
+                if (leftHpolSize>1)
+                {
+                    context.repeatCount = std::min(maxHpolLength,leftHpolSize);
+                    _counts.addDepthSkip(context);
+                }
+                return;
+            }
         }
     }
 
+    // define groups of overlapping indels:
+    //
+    // indels which form "conflict cliques" go into a single indel
+    // group for scoring together
+    //
+    // this design should look overblown within this function, it
+    // is intended to generalize across multiple positions, in which
+    // case we will have to deal with non-clique conflict patterns.
+    //
     ciiter it(sif.indel_buff.pos_iter(pos));
     const ciiter it_end(sif.indel_buff.pos_iter(pos+1));
 
-    std::set<SequenceErrorContext> representedContexts;
+    std::vector<OrthogonalHaplotypeCandidateGroup> _groups;
 
     for (; it!=it_end; ++it)
     {
         const indel_key& ik(it->first);
         const indel_data& id(get_indel_data(it));
-        const bool isForcedOutput(id.is_forced_output);
 
-        if (! (ik.type == INDEL::DELETE || ik.type == INDEL::INSERT)) continue;
+        if (ik.is_breakpoint()) continue;
+
+        const bool isForcedOutput(id.is_forced_output);
 
         if (! isForcedOutput)
         {
             if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
         }
 
-        // TODO implement indel overlap resolution
-        //
-        // punt conflict resolution for now....
-        {
-            // indel_report_info needs to be run first now so that
-            // local small repeat info is available to the indel
-            // caller
+        if (! (ik.type == INDEL::DELETE || ik.type == INDEL::INSERT)) continue;
 
-            // sample-independent info:
+        // all indels at the same position are conflicting:
+        if (_groups.empty()) _groups.resize(1);
+        OrthogonalHaplotypeCandidateGroup& hg(_groups[0]);
+        hg.addHaplotype(it);
+    }
+
+    // buffer observations until we get through all overlaping indels at this site:
+    std::map<SequenceErrorContext,SequenceErrorContextObservation> indelObservations;
+
+
+    if (! _groups.empty())
+    {
+        const OrthogonalHaplotypeCandidateGroup& hg(_groups[0]);
+        const unsigned nonrefHapCount(hg.size());
+        std::vector<unsigned> support;
+        getOrthogonalHaplotypeSupportCounts(hg,support);
+
+        for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; ++nonrefHapIndex)
+        {
+            const indel_key& ik(hg.key(nonrefHapIndex));
+            const indel_data& id(hg.data(nonrefHapIndex));
+
             starling_indel_report_info iri;
             get_starling_indel_report_info(ik,id,_ref,iri);
 
-            // STARKA-248 filter invalid indel
-            /// TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
-            if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
-
-            double indel_error_prob(0);
-            double ref_error_prob(0);
-
-            static const bool is_tier2_pass(false);
-            static const bool is_use_alt_indel(true);
-
-            starling_diploid_indel dindel;
-            dindel.is_forced_output = isForcedOutput;
-            dindel.is_zero_coverage = false;
-
-            {
-                // check whether we're in a haploid/noploid region, for indels just check
-                // start position and end position, approximating that the whole
-                // region in between has the same ploidy, for any anomalous state
-                // revert to 'noploid':
-                const int indelLeftPloidy(get_ploidy(ik.pos));
-                const int indelRightPloidy(get_ploidy(ik.right_pos()));
-
-                if (indelLeftPloidy == indelRightPloidy)
-                {
-                    dindel.ploidy = indelLeftPloidy;
-                }
-                else
-                {
-                    dindel.ploidy = 0;
-                }
-            }
-
-            _dopt.incaller().starling_indel_call_pprob_digt(
-                _opt,_dopt,
-                sif.sample_opt,
-                indel_error_prob,ref_error_prob,
-                ik,id,is_use_alt_indel,dindel);
-
-            // sample-specific info: (division doesn't really matter
-            // in single-sample case)
-            starling_indel_sample_report_info isri;
-            get_starling_indel_sample_report_info(_dopt,ik,id,sif.bc_buff,
-                                                  is_tier2_pass,is_use_alt_indel,isri);
-
             SequenceErrorContext context;
-            if (ik.type == INDEL::DELETE)
-            {
-                context.itype = INDEL_TYPE::DELETE;
-            }
-            else if(ik.type == INDEL::INSERT)
-            {
-                context.itype = INDEL_TYPE::INSERT;
-            }
-            else
-            {
-                assert(false);
-            }
-
-            context.hpolLength = 1;
+            context.repeatCount = 1;
             if ((iri.repeat_unit_length==1) && (iri.ref_repeat_count>1))
             {
-                context.hpolLength = std::min(maxHpolLength, iri.ref_repeat_count);
+                // guard against the occasional non-normalized indel:
+                const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
+                if (leftHpolSize == iri.ref_repeat_count)
+                {
+                    context.repeatCount = std::min(maxHpolLength, iri.ref_repeat_count);
+                }
             }
 
-            // this would occur for, say, two different types of deletion noise at a homopolymer
-            // that we don't currently pull apart -- really we should be summing all of these
-            // types together - this is an approximation to get by....
-            if (representedContexts.count(context)) continue;
-
-            representedContexts.insert(context);
-
             SequenceErrorContextObservation obs;
-            obs.signalCount = isri.n_q30_indel_reads;
-            obs.refCount = (isri.n_q30_ref_reads + isri.n_q30_alt_reads);
 
-            _counts.addError(context,obs,isri.depth);
+            const SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
+            obs.signalCounts[sigIndex] = support[nonrefHapIndex];
+            obs.refCount = support[nonrefHapCount];
+
+            mergeIndelObservations(context,obs,indelObservations);
         }
+    }
+
+    // background depth is always one minus position to be consistent with indel report:
+    const pos_t depth_pos(pos-1);
+    const snp_pos_info& spi(sif.bc_buff.get_pos(depth_pos));
+    const unsigned depth(spi.calls.size());
+
+    for (const auto& value : indelObservations)
+    {
+        _counts.addError(value.first,value.second,depth);
     }
 
     // add all the backgrounds that haven't been covered already
     {
-        // background depth is always one minus position to be consistent with indel report:
-        const pos_t depth_pos(pos-1);
-        const snp_pos_info& spi(sif.bc_buff.get_pos(depth_pos));
-        const unsigned depth(spi.calls.size());
-
         unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
 
         SequenceErrorContext context;
         SequenceBackgroundObservation obs;
         obs.depth = depth;
 
-        for (unsigned indelType(0);indelType<INDEL_TYPE::SIZE;++indelType)
+        // always add hpol=1:
+        context.repeatCount = 1;
+        if (! indelObservations.count(context))
         {
-            context.itype = static_cast<INDEL_TYPE::index_t>(indelType);
+            _counts.addBackground(context,obs);
+        }
 
-            // always add hpol=1:
-            context.hpolLength = 1;
-            if (! representedContexts.count(context))
-            {
-                _counts.addBackground(context,obs);
-            }
-
-            // also check for a more specific reference context
-            if (leftHpolSize<=1) continue;
-            context.hpolLength = std::min(maxHpolLength,leftHpolSize);
-            if (! representedContexts.count(context))
+        // also check for a more specific reference context
+        if (leftHpolSize>1)
+        {
+            context.repeatCount = std::min(maxHpolLength,leftHpolSize);
+            if (! indelObservations.count(context))
             {
                 _counts.addBackground(context,obs);
             }

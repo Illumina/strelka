@@ -24,23 +24,151 @@
 
 #include "modelVariantAndTriggerMixError.hh"
 
+#include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 
+//#define CODEMIN_DEBUG
 #define CODEMIN_USE_BOOST
 #include "minimize_conj_direction.h"
 
 #include <iomanip>
 #include <iostream>
 
-namespace MIN_PARAMS
+namespace
+{
+
+namespace MIN_PARAMS3
 {
     enum index_t {
-        LN_ALT_ERROR_RATE,
+        LN_INSERT_ERROR_RATE,
+        LN_DELETE_ERROR_RATE,
         LN_NOISY_LOCUS_RATE,
         LN_THETA,
         SIZE
     };
+}
+
+
+//#define DEBUG_MODEL3
+
+
+
+static
+double
+getObsLogLhood(
+    const double logHomPrior,
+    const double logHetPrior,
+    const double logAltHetPrior,
+    const double logNoIndelPrior,
+    const double logInsertErrorRate,
+    const double logDeleteErrorRate,
+    const double logNoIndelRefRate,
+    const ExportedObservations& obs)
+{
+    static const double log0(-std::numeric_limits<double>::infinity());
+
+    static const double homAltRate(0.99);
+    static const double hetAltRate(0.5);
+
+    static const double logHomAltRate(std::log(homAltRate));
+    static const double logHomRefRate(std::log(1.-homAltRate));
+    static const double logHetRate(std::log(hetAltRate));
+
+    // get lhood of homref GT:
+    double noindel(log0);
+    {
+        unsigned totalInsertObservations(0);
+        for (unsigned altIndex(SIGNAL_TYPE::INSERT_1); altIndex<SIGNAL_TYPE::DELETE_1; ++altIndex)
+        {
+            totalInsertObservations += obs.altObservations[altIndex];
+        }
+
+        unsigned totalDeleteObservations(0);
+        for (unsigned altIndex(SIGNAL_TYPE::DELETE_1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+        {
+            totalDeleteObservations += obs.altObservations[altIndex];
+        }
+
+        noindel = (
+            logInsertErrorRate*totalInsertObservations +
+            logDeleteErrorRate*totalDeleteObservations +
+            logNoIndelRefRate*obs.refObservations);
+    }
+
+    unsigned maxIndex(0);
+    for (unsigned altIndex(1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+    {
+        if (obs.altObservations[altIndex] > obs.altObservations[maxIndex]) maxIndex = altIndex;
+    }
+
+    // get lhood of het and hom GT:
+    double het(log0);
+    double hom(log0);
+    {
+        // approximate that the most frequent observations is the only potential variant allele:
+
+        unsigned remainingInsertObservations(0);
+        for (unsigned altIndex(SIGNAL_TYPE::INSERT_1); altIndex<SIGNAL_TYPE::DELETE_1; ++altIndex)
+        {
+            if (altIndex==maxIndex) continue;
+            remainingInsertObservations += obs.altObservations[altIndex];
+        }
+
+        unsigned remainingDeleteObservations(0);
+        for (unsigned altIndex(SIGNAL_TYPE::DELETE_1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+        {
+            if (altIndex==maxIndex) continue;
+            remainingDeleteObservations += obs.altObservations[altIndex];
+        }
+
+        // compute lhood of het/hom states given that maxIndex is the variant allele:
+        het =(logHetRate*(obs.refObservations+obs.altObservations[maxIndex]) +
+            logInsertErrorRate*remainingInsertObservations +
+            logDeleteErrorRate*remainingDeleteObservations);
+
+        hom = (logHomAltRate*obs.altObservations[maxIndex] +
+            logHomRefRate*obs.refObservations +
+            logInsertErrorRate*remainingInsertObservations +
+            logDeleteErrorRate*remainingDeleteObservations);
+    }
+
+    // get lhood of althet GT:
+    double althet(log0);
+    {
+        // approximate that the two most frequent observations are the only potential variant alleles:
+        assert(SIGNAL_TYPE::SIZE>1);
+        unsigned maxIndex2(maxIndex==0 ? 1 : 0);
+        for (unsigned altIndex(maxIndex2+1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+        {
+            if (altIndex==maxIndex) continue;
+            if (obs.altObservations[altIndex] > obs.altObservations[maxIndex2]) maxIndex2 = altIndex;
+        }
+
+        unsigned remainingInsertObservations(0);
+        for (unsigned altIndex(SIGNAL_TYPE::INSERT_1); altIndex<SIGNAL_TYPE::DELETE_1; ++altIndex)
+        {
+            if (altIndex==maxIndex) continue;
+            if (altIndex==maxIndex2) continue;
+            remainingInsertObservations += obs.altObservations[altIndex];
+        }
+
+        unsigned remainingDeleteObservations(0);
+        for (unsigned altIndex(SIGNAL_TYPE::DELETE_1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+        {
+            if (altIndex==maxIndex) continue;
+            if (altIndex==maxIndex2) continue;
+            remainingDeleteObservations += obs.altObservations[altIndex];
+        }
+
+        // compute lhood of het/hom states given that maxIndex is the variant allele:
+        althet =(logHetRate*(obs.altObservations[maxIndex]+obs.altObservations[maxIndex2]) +
+            logHomRefRate*obs.refObservations +
+            logInsertErrorRate*remainingInsertObservations +
+            logDeleteErrorRate*remainingDeleteObservations);
+    }
+
+    return log_sum( log_sum(logHomPrior+hom,logHetPrior+het), log_sum(logNoIndelPrior+noindel,logAltHetPrior+althet) );
 }
 
 
@@ -49,71 +177,82 @@ static
 double
 contextLogLhood(
     const std::vector<ExportedObservations>& observations,
-    const double logNoisyNoIndelAltRate,
+    const double logInsertErrorRate,
+    const double logDeleteErrorRate,
     const double logNoisyLocusRate,
     const double logTheta)
 {
-    static const double homAltRate(0.99);
-    static const double hetAltRate(0.5);
+#ifdef DEBUG_MODEL3
+    log_os << "MODEL3: loghood input:"
+           << " insert: " << std::exp(logInsertErrorRate)
+           << " delete: " << std::exp(logDeleteErrorRate)
+           << " noise: " << std::exp(logNoisyLocusRate)
+           << " theta: " << std::exp(logTheta)
+           << "\n";
+#endif
 
-    static const double logHomAltRate(std::log(homAltRate));
-    static const double logHomRefRate(std::log(1.-homAltRate));
-    static const double logHetRate(std::log(hetAltRate));
-
-    static const double ln2(std::log(2));
-    const double logHomPrior(logTheta-ln2);
+    static const double log2(std::log(2));
+    const double logHomPrior(logTheta-log2);
     const double logHetPrior(logTheta);
-    const double logNoIndelPrior(std::log(1-std::exp(logTheta)*3./2.));
+    const double logAltHetPrior(logTheta*2);
+    const double theta(std::exp(logTheta));
+    const double logNoIndelPrior(std::log(1-(theta*3./2.+(theta*theta))));
 
-    const double logNoisyNoIndelRefRate(std::log(1-std::exp(logNoisyNoIndelAltRate)));
+    const double logNoIndelRefRate(std::log(1-std::exp(logInsertErrorRate))+std::log(1-std::exp(logDeleteErrorRate)));
 
     const double logCleanLocusRate(std::log(1-std::exp(logNoisyLocusRate)));
 
-    static const double cleanNoIndelAltRate(1e-8);
-    static const double logCleanNoIndelAltRate(std::log(cleanNoIndelAltRate));
-    static const double logCleanNoIndelRefRate(std::log(1-cleanNoIndelAltRate));
+    static const double cleanLocusIndelRate(1e-8);
+    static const double logCleanLocusIndelRate(std::log(cleanLocusIndelRate));
+    static const double logCleanLocusRefRate(std::log(1-cleanLocusIndelRate));
 
     double logLhood(0.);
     for (const auto& obs : observations)
     {
-        const unsigned totalObservations(obs.altObservations+obs.refObservations);
-        const double het(logHetRate*totalObservations);
-        const double hom(logHomAltRate*obs.altObservations + logHomRefRate*obs.refObservations);
-        const double noisyNoindel(logNoisyNoIndelAltRate*obs.altObservations + logNoisyNoIndelRefRate*obs.refObservations);
+        const double noisyMix(getObsLogLhood(logHomPrior, logHetPrior, logAltHetPrior, logNoIndelPrior,
+                logInsertErrorRate, logDeleteErrorRate, logNoIndelRefRate, obs));
+        const double cleanMix(getObsLogLhood(logHomPrior, logHetPrior, logAltHetPrior, logNoIndelPrior,
+                logCleanLocusIndelRate, logCleanLocusIndelRate, logCleanLocusRefRate, obs));
 
-        const double cleanNoindel(logCleanNoIndelAltRate*obs.altObservations + logCleanNoIndelRefRate*obs.refObservations);
+        const double mix(log_sum(logCleanLocusRate+cleanMix,logNoisyLocusRate+noisyMix));
 
-        /// TODO: generalize log_sum to N values...
-        const double mix(log_sum(log_sum(logHomPrior+hom,logHetPrior+het),logNoIndelPrior+log_sum(logNoisyLocusRate+noisyNoindel,logCleanLocusRate+cleanNoindel)));
+#ifdef DEBUG_MODEL3
+        log_os << "MODEL3: loghood obs: noisy/clean/mix/delta: " << noisyMix << " " << cleanMix << " " << mix << " " << (mix*obs.repeatCount) << "\n";
+#endif
 
         logLhood += (mix*obs.repeatCount);
     }
+
+#ifdef DEBUG_MODEL3
+    log_os << "MODEL3: loghood output:" << logLhood << "\n";
+#endif
 
     return logLhood;
 }
 
 
-struct error_minfunc : public codemin::minfunc_interface<double>
+struct error_minfunc_model3 : public codemin::minfunc_interface<double>
 {
     explicit
-    error_minfunc(
+    error_minfunc_model3(
         const std::vector<ExportedObservations>& observations,
         const bool isLockTheta = false)
     : _obs(observations), _isLockTheta(isLockTheta)
     {}
 
-    virtual unsigned dim() const
+    unsigned dim() const override
     {
-        return (_isLockTheta ? MIN_PARAMS::SIZE-1 : MIN_PARAMS::SIZE);
+        return (_isLockTheta ? (MIN_PARAMS3::SIZE-1) : MIN_PARAMS3::SIZE);
     }
 
-    virtual double val(const double* in)
+    double val(const double* in) override
     {
         argToParameters(in,_params);
         return -contextLogLhood(_obs,
-                _params[MIN_PARAMS::LN_ALT_ERROR_RATE],
-                _params[MIN_PARAMS::LN_NOISY_LOCUS_RATE],
-                (_isLockTheta ? defaultLogTheta : _params[MIN_PARAMS::LN_THETA]));
+                _params[MIN_PARAMS3::LN_INSERT_ERROR_RATE],
+                _params[MIN_PARAMS3::LN_DELETE_ERROR_RATE],
+                _params[MIN_PARAMS3::LN_NOISY_LOCUS_RATE],
+                (_isLockTheta ? defaultLogTheta : _params[MIN_PARAMS3::LN_THETA]));
     }
 
     /// normalize the minimization values back to usable parameters
@@ -127,39 +266,219 @@ struct error_minfunc : public codemin::minfunc_interface<double>
         const double* in,
         double* out)
     {
-        // keep any log(prob) value negative in case the minimizer bends it
-        // around the corner
-        auto convert = [](const double a) -> double { return -std::abs(a); };
+        auto rateSmoother = [](double a) -> double {
+            static const double triggerVal(1e-3);
+            static const double logTriggerVal(std::log(triggerVal));
+            if (a>logTriggerVal)
+            {
+                a = std::log(1+(a-logTriggerVal)) + logTriggerVal;
+            }
+            return (a>maxLogRate ? maxLogRate-std::abs(a-maxLogRate) : a);
+        };
+
+        auto locusRateSmoother = [](double a) -> double {
+            static const double triggerVal(0.8);
+            static const double logTriggerVal(std::log(triggerVal));
+            if (a>logTriggerVal)
+            {
+                a = std::log(1+(a-logTriggerVal)) + logTriggerVal;
+            }
+            return (a>maxLogLocusRate ? maxLogLocusRate-std::abs(a-maxLogLocusRate) : a);
+        };
 
         // A lot of conditioning is required to keep the model from winding
         // theta around zero and getting confused, here we start applying a
-        // second log to the delta above 1e-2, and finally put a hard stop
-        // at 0.4 -- hard stops are obviously bad b/c the model can get lost
+        // second log to the delta above triggerTheta, and finally put a hard stop
+        // at logMaxTheta -- hard stops are obviously bad b/c the model can get lost
         // on the flat plane even if the ML value is well below this limit, but
         // in practice this is such a ridiculously high value for theta, that
         // I don't see the model getting trapped.
         auto thetaSmoother = [](double a) -> double {
-            static const double limitVal(std::log(0.4));
-            static const double triggerVal(std::log(1e-2));
-            if (a>triggerVal)
+            static const double triggerVal(1e-3);
+            static const double logTriggerVal(std::log(triggerVal));
+
+            if (a>logTriggerVal)
             {
-                a = std::log(1+(a-triggerVal)) + triggerVal;
+                a = std::log(1+(a-logTriggerVal)) + logTriggerVal;
             }
-            return (a>limitVal ? limitVal : a);
+            return (a>maxLogTheta ? maxLogTheta-std::abs(a-maxLogTheta) : a);
         };
 
-        out[MIN_PARAMS::LN_ALT_ERROR_RATE] =  convert(in[MIN_PARAMS::LN_ALT_ERROR_RATE]);
-        out[MIN_PARAMS::LN_NOISY_LOCUS_RATE] =  convert(in[MIN_PARAMS::LN_NOISY_LOCUS_RATE]);
-        out[MIN_PARAMS::LN_THETA] = thetaSmoother(in[MIN_PARAMS::LN_THETA]);
+        for (unsigned paramIndex(MIN_PARAMS3::LN_INSERT_ERROR_RATE); paramIndex<MIN_PARAMS3::LN_NOISY_LOCUS_RATE; ++paramIndex)
+        {
+            out[paramIndex] = rateSmoother(in[paramIndex]);
+        }
+        out[MIN_PARAMS3::LN_NOISY_LOCUS_RATE] = locusRateSmoother(in[MIN_PARAMS3::LN_NOISY_LOCUS_RATE]);
+        out[MIN_PARAMS3::LN_THETA] = thetaSmoother(in[MIN_PARAMS3::LN_THETA]);
     }
 
-    static constexpr double defaultLogTheta = std::log(1e-4);
+#if 0
+    // this should help in theory, but in practice the minimizer is more likely to get stuck
+    bool
+    is_val_computable(
+        const double* in) override
+    {
+        if (in[MIN_PARAMS3::LN_INSERT_ERROR_RATE]>maxLogRate) return false;
+        if (in[MIN_PARAMS3::LN_DELETE_ERROR_RATE]>maxLogRate) return false;
+        if (in[MIN_PARAMS3::LN_NOISY_LOCUS_RATE]>maxLogLocusRate) return false;
+        if (in[MIN_PARAMS3::LN_THETA]>maxLogTheta) return false;
+        return true;
+    }
+#endif
+
+    static const double defaultLogTheta;
+    static const double maxLogTheta;
+    static const double maxLogRate;
+    static const double maxLogLocusRate;
 
 private:
     const std::vector<ExportedObservations>& _obs;
     bool _isLockTheta;
-    double _params[MIN_PARAMS::SIZE];
+    double _params[MIN_PARAMS3::SIZE];
 };
+
+const double error_minfunc_model3::defaultLogTheta = std::log(1e-4);
+const double error_minfunc_model3::maxLogTheta = std::log(0.4);
+const double error_minfunc_model3::maxLogRate = std::log(0.5);
+const double error_minfunc_model3::maxLogLocusRate = std::log(1.0);
+
+
+
+struct SignalGroupTotal
+{
+    double ref = 0;
+    double alt = 0;
+    double locus = 0;
+};
+
+
+
+static
+void
+getAltSigTotal(
+    const std::vector<ExportedObservations>& observations,
+    const unsigned altBeginIndex,
+    const unsigned altEndIndex,
+    SignalGroupTotal& sigTotal)
+{
+    for (const ExportedObservations& obs : observations)
+    {
+        unsigned totalAltObservations(0);
+        for (unsigned altIndex(altBeginIndex); altIndex<altEndIndex; ++altIndex)
+        {
+            totalAltObservations += obs.altObservations[altIndex];
+        }
+
+        sigTotal.ref += (obs.refObservations*obs.repeatCount);
+        sigTotal.alt += (totalAltObservations*obs.repeatCount);
+        sigTotal.locus += obs.repeatCount;
+    }
+}
+
+
+
+static
+void
+reportIndelErrorRateSet(
+    const SequenceErrorContext& context,
+    const char* extendedContextTag,
+    const SignalGroupTotal& sigTotal,
+    const unsigned skipped,
+    unsigned iter,
+    const double loghood,
+    const double indelErrorRate,
+    const double theta,
+    const double noisyLocusRate,
+    std::ostream& os)
+{
+    static const std::string sep(", ");
+
+    os << std::setprecision(10);
+    os << context << "_" << extendedContextTag
+       << sep << (skipped+sigTotal.locus)
+       << sep << sigTotal.locus
+       << sep << sigTotal.ref
+       << sep << sigTotal.alt
+       << sep << iter
+       << sep << loghood
+       << sep << indelErrorRate
+       << sep << theta
+       << sep << noisyLocusRate
+       << "\n";
+}
+
+
+
+static
+void
+reportExtendedContext(
+    const bool isLockTheta,
+    const SequenceErrorContext& context,
+    const std::vector<ExportedObservations>& observations,
+    const unsigned skipped,
+    std::ostream& os)
+{
+    // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
+    SignalGroupTotal sigInsertTotal;
+    getAltSigTotal(observations, SIGNAL_TYPE::INSERT_1, SIGNAL_TYPE::DELETE_1, sigInsertTotal);
+
+    SignalGroupTotal sigDeleteTotal;
+    getAltSigTotal(observations, SIGNAL_TYPE::DELETE_1, SIGNAL_TYPE::SIZE, sigDeleteTotal);
+
+
+    // initialize conjugate direction minimizer settings and minimize lhood...
+    //
+    double minParams[MIN_PARAMS3::SIZE];
+
+    unsigned iter;
+    double x_all_loghood;
+    {
+        static const double line_tol(1e-10);
+        static const double end_tol(1e-10);
+        static const unsigned max_iter(40);
+
+        // initialize parameter search
+        minParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE] = std::log(1e-3);
+        minParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE] = std::log(1e-3);
+        minParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE] = std::log(0.4);
+        minParams[MIN_PARAMS3::LN_THETA] = error_minfunc_model3::defaultLogTheta;
+
+        static const unsigned SIZE2(MIN_PARAMS3::SIZE*MIN_PARAMS3::SIZE);
+        double conjDir[SIZE2];
+
+        std::fill(conjDir,conjDir+SIZE2,0.);
+        const unsigned dim(isLockTheta ? MIN_PARAMS3::SIZE-1 : MIN_PARAMS3::SIZE);
+        for (unsigned i(0); i<dim; ++i)
+        {
+            conjDir[i*(dim+1)] = 0.0005;
+        }
+
+        double start_tol(end_tol);
+        double final_dlh;
+        error_minfunc_model3 errFunc(observations,isLockTheta);
+
+        codemin::minimize_conj_direction(minParams,conjDir,errFunc,start_tol,end_tol,line_tol,
+                                         x_all_loghood,iter,final_dlh,max_iter);
+    }
+
+    // report:
+    {
+        double normalizedParams[MIN_PARAMS3::SIZE];
+        error_minfunc_model3::argToParameters(minParams,normalizedParams);
+
+        const double theta(std::exp(normalizedParams[MIN_PARAMS3::LN_THETA]));
+
+        const double insertErrorRate(std::exp(normalizedParams[MIN_PARAMS3::LN_INSERT_ERROR_RATE]));
+        const double noisyLocusRate(std::exp(normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE]));
+        reportIndelErrorRateSet(context, "I", sigInsertTotal, skipped, iter, -x_all_loghood, insertErrorRate, theta, noisyLocusRate, os);
+
+        const double deleteErrorRate(std::exp(normalizedParams[MIN_PARAMS3::LN_DELETE_ERROR_RATE]));
+        reportIndelErrorRateSet(context, "D", sigDeleteTotal, skipped, iter, -x_all_loghood, deleteErrorRate, theta, noisyLocusRate, os);
+    }
+}
+
+}
+
 
 
 void
@@ -170,11 +489,7 @@ modelVariantAndTriggerMixError(
 
     std::ostream& ros(std::cout);
 
-    ros << "context, loci, reads, iter, lhood, rate, theta\n";
-
-    double minParams[MIN_PARAMS::SIZE];
-    static const unsigned SIZE2(MIN_PARAMS::SIZE*MIN_PARAMS::SIZE);
-    double conjDir[SIZE2];
+    ros << "context, allLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, theta, noisyLocusRate\n";
 
     std::vector<ExportedObservations> observations;
     for (const auto& contextInfo : counts)
@@ -184,66 +499,9 @@ modelVariantAndTriggerMixError(
 
         data.exportObservations(observations);
 
-        // get some useful counts unrelated to minimization or model:
-        double refTotal(0.);
-        double altTotal(0.);
-        double locusTotal(0.);
+        if (observations.empty()) continue;
 
-        for (const auto& obs : observations)
-        {
-            refTotal += (obs.refObservations*obs.repeatCount);
-            altTotal += (obs.altObservations*obs.repeatCount);
-            locusTotal += obs.repeatCount;
-        }
-
-        /// initialize conj dir minimizer settings and min...
-        ///
-        unsigned iter;
-        double x_all_loghood;
-        {
-            static const double line_tol(1e-10);
-            static const double end_tol(1e-10);
-            static const unsigned max_iter(200);
-
-            // initialize parameter search
-            minParams[MIN_PARAMS::LN_ALT_ERROR_RATE] = std::log(1e-4);
-            minParams[MIN_PARAMS::LN_NOISY_LOCUS_RATE] = std::log(1e-2);
-            minParams[MIN_PARAMS::LN_THETA] = error_minfunc::defaultLogTheta;
-
-            std::fill(conjDir,conjDir+SIZE2,0.);
-            for (unsigned i(0); i<MIN_PARAMS::SIZE; ++i)
-            {
-                conjDir[i*(MIN_PARAMS::SIZE+1)] = 0.01;
-            }
-
-            double start_tol(end_tol);
-            double final_dlh;
-            error_minfunc errFunc(observations,isLockTheta);
-
-            codemin::minimize_conj_direction(minParams,conjDir,errFunc,start_tol,end_tol,line_tol,
-                                             x_all_loghood,iter,final_dlh,max_iter);
-        }
-
-        double normalizedParams[MIN_PARAMS::SIZE];
-        error_minfunc::argToParameters(minParams,normalizedParams);
-
-        const double NoIndelAltRate(std::exp(normalizedParams[MIN_PARAMS::LN_ALT_ERROR_RATE]));
-        const double NoisyRate(std::exp(normalizedParams[MIN_PARAMS::LN_NOISY_LOCUS_RATE]));
-        const double theta(std::exp(normalizedParams[MIN_PARAMS::LN_THETA]));
-
-        {
-            static const std::string sep(", ");
-
-            ros << std::setprecision(10);
-            ros << context << sep
-                << locusTotal << sep
-                << (altTotal+refTotal) << sep
-                << iter << sep
-                << -x_all_loghood << sep
-                << NoIndelAltRate << sep
-                << theta << sep
-                << NoisyRate << "\n";
-                ;
-        }
+        log_os << "INFO: computing rates for context: " << context << "\n";
+        reportExtendedContext(isLockTheta, context, observations, data.skipped, ros);
     }
 }

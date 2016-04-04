@@ -22,6 +22,8 @@
 /// \author Chris Saunders
 ///
 
+#pragma once
+
 #include "errorAnalysis/SequenceErrorCounts.hh"
 
 

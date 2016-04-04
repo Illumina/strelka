@@ -28,6 +28,7 @@
 
 #include "boost/archive/binary_iarchive.hpp"
 #include "boost/archive/binary_oarchive.hpp"
+#include "boost/serialization/array.hpp"
 #include "boost/serialization/map.hpp"
 
 #include <cassert>
@@ -64,7 +65,7 @@ mergeMapKeys(
     const std::map<K,V>& m1,
     std::map<K,V>& m2)
 {
-    for (const auto mv1 : m1)
+    for (const auto& mv1 : m1)
     {
         const auto iter(m2.find(mv1.first));
         if (iter == m2.end())
@@ -85,7 +86,7 @@ operator<<(
     std::ostream& os,
     const SequenceErrorContext& context)
 {
-    os << context.hpolLength << "_" << INDEL_TYPE::symbol(context.itype);
+    os << context.repeatCount;
     return os;
 }
 
@@ -149,8 +150,10 @@ addObservation(
 
     SequenceErrorContextObservation compObs = obs;
     compObs.refCount    = compressInt(compObs.refCount,bitCount);
-    compObs.signalCount = compressInt(compObs.signalCount,bitCount);
-
+    for (auto& signalCount : compObs.signalCounts)
+    {
+        signalCount = compressInt(signalCount,bitCount);
+    }
     iterMap(data,compObs);
 }
 
@@ -185,16 +188,16 @@ dump(
         const auto& obsCount(value.second);
         totalObservations += obsCount;
         totalRef += (obsCount*key.refCount);
-        totalSignal += (obsCount*key.signalCount);
+        totalSignal += (obsCount*key.totalSignalCount());
 
         const unsigned total(key.totalCount());
-        const double frac(static_cast<double>(key.signalCount)/total);
+        const double frac(static_cast<double>(key.totalSignalCount())/total);
         if ((total >= 25) && (frac <= 0.05))
         {
             noiseKeyCount++;
             noiseObservations += obsCount;
             noiseRef += (obsCount*key.refCount);
-            noiseSignal += (obsCount*key.signalCount);
+            noiseSignal += (obsCount*key.totalSignalCount());
         }
     }
 
@@ -221,7 +224,9 @@ exportObservations(
     std::vector<ExportedObservations>& counts) const
 {
     counts.clear();
-    assert(depthSupport.depth > 0.);
+
+    // if this is true, we observed no errors:
+    if (depthSupport.depth <= 0.) return;
 
     const double supportFraction(safeFrac(depthSupport.supportCount, depthSupport.depth));
 
@@ -233,7 +238,7 @@ exportObservations(
         const unsigned refCounts(std::round(value.first.depth*supportFraction));
         obs.repeatCount = value.second;
         obs.refObservations = refCounts;
-        obs.altObservations = 0;
+        std::fill(obs.altObservations.begin(), obs.altObservations.end(), 0);
 
         counts.push_back(obs);
     }
@@ -243,7 +248,7 @@ exportObservations(
     {
         obs.repeatCount = value.second;
         obs.refObservations = value.first.refCount;
-        obs.altObservations = value.first.signalCount;
+        obs.altObservations = value.first.signalCounts;
 
         counts.push_back(obs);
     }
@@ -259,6 +264,7 @@ merge(
     background.merge(in.background);
     error.merge(in.error);
     depthSupport.merge(in.depthSupport);
+    skipped += in.skipped;
 }
 
 
@@ -269,6 +275,7 @@ dump(
     std::ostream& os) const
 {
     os << "depthSupportRatio: " << safeFrac(depthSupport.supportCount, depthSupport.depth) << "\n";
+    os << "skippedCount: " << skipped << "\n";
 
     background.dump(os);
     error.dump(os);
@@ -304,10 +311,21 @@ addBackground(
 
 void
 SequenceErrorCounts::
+addDepthSkip(
+    const SequenceErrorContext& context)
+{
+    const auto iter(getContextIterator(context));
+    iter->second.skipped++;
+}
+
+
+
+void
+SequenceErrorCounts::
 merge(
     const SequenceErrorCounts& in)
 {
-    for (const auto idata : in._data)
+    for (const auto& idata : in._data)
     {
         const auto iter(_data.find(idata.first));
 

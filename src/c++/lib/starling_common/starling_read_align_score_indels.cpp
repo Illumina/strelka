@@ -374,7 +374,7 @@ late_indel_normalization_filter(
             // indel only
             bool is_sortedIndex1_removed(false);
             bool is_removed(false);
-            for (const auto indelPair : indelPairs)
+            for (const auto& indelPair : indelPairs)
             {
                 const bool is1(is_first_indel_dominant(isync,indelPair.first,indelPair.second));
 

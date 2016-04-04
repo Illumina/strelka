@@ -31,6 +31,8 @@
 struct EPECOptions
 {
     std::string countsFilename;
+
+    int modelIndex = 1;
 };
 
 

@@ -63,8 +63,6 @@ private:
     write_counts(const pos_range&) const override {}
 
     const SequenceErrorCountsOptions& _opt;
-    const SequenceErrorCountsDerivOptions& _dopt;
-    const SequenceErrorCountsStreams& _streams;
 
     SequenceErrorCounts _counts;
 

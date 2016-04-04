@@ -30,6 +30,8 @@
 #include "modelVariantAndIndyError.hh"
 #include "modelVariantAndTriggerMixError.hh"
 
+#include <iostream>
+
 
 
 static
@@ -40,9 +42,22 @@ runEPEC(
     SequenceErrorCounts counts;
     counts.load(opt.countsFilename.c_str());
 
-//    model1(counts);
-//    modelVariantAndIndyError(counts);
-    modelVariantAndTriggerMixError(counts);
+    if      (opt.modelIndex == 1)
+    {
+        model1(counts);
+    }
+    else if (opt.modelIndex == 2)
+    {
+        modelVariantAndIndyError(counts);
+    }
+    else if (opt.modelIndex == 3)
+    {
+        modelVariantAndTriggerMixError(counts);
+    }
+    else
+    {
+        std::cerr << "Unknown Model\n";
+    }
 }
 
 

@@ -55,6 +55,8 @@ parseEPECOptions(
     req.add_options()
     ("counts-file", po::value(&opt.countsFilename),
      "read binary error counts from filename (required, no default)")
+    ("model", po::value(&opt.modelIndex)->default_value(opt.modelIndex),
+     "select which model to run")
     ;
 
     po::options_description help("help");

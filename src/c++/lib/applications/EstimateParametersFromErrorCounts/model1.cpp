@@ -30,19 +30,87 @@
 
 #include <iomanip>
 #include <iostream>
+#include <numeric>
 
+namespace {
+
+
+struct SignalGroupTotal
+{
+    double ref = 0;
+    double alt = 0;
+    double noiseLocus = 0;
+    double locus = 0;
+};
+
+
+
+static
+void
+reportExtendedContext(
+    const double maxAltFrac,
+    const unsigned minDepth,
+    const SequenceErrorContext& context,
+    const std::vector<ExportedObservations>& observations,
+    const unsigned skipped,
+    const unsigned altBeginIndex,
+    const unsigned altEndIndex,
+    const char* extendedContextTag,
+    std::ostream& os)
+{
+    SignalGroupTotal sigTotal;
+
+    for (const ExportedObservations& obs : observations)
+    {
+        sigTotal.locus += obs.repeatCount;
+        unsigned totalAltObservations(0);
+        for (unsigned altIndex(altBeginIndex); altIndex<altEndIndex; ++altIndex)
+        {
+            totalAltObservations += obs.altObservations[altIndex];
+        }
+        const unsigned total(obs.refObservations+totalAltObservations);
+        const double altFrac(static_cast<double>(totalAltObservations)/total);
+        if ( (total<minDepth) || (altFrac > maxAltFrac)) continue;
+
+        sigTotal.ref += (obs.refObservations*obs.repeatCount);
+        sigTotal.alt += (totalAltObservations*obs.repeatCount);
+        sigTotal.noiseLocus += obs.repeatCount;
+    }
+
+    {
+        static const std::string sep(", ");
+        const double total(sigTotal.ref+sigTotal.alt);
+
+        static const double alpha(0.05);
+
+        const double upper(boost::math::binomial_distribution<double>::find_upper_bound_on_p(total, sigTotal.alt, alpha));
+
+        os << std::setprecision(10);
+        os << context << "_" << extendedContextTag << sep
+           << (skipped+sigTotal.locus) << sep
+           << sigTotal.locus << sep
+           << sigTotal.noiseLocus << sep
+           << sigTotal.ref << sep
+           << sigTotal.alt << sep
+           << safeFrac(sigTotal.alt,total) << sep
+           << upper << "\n";
+           ;
+    }
+}
+
+}
 
 
 void
 model1(
     const SequenceErrorCounts& counts)
 {
-    static const unsigned minDepth(25);
     static const double maxAltFrac(0.05);
+    static const unsigned minDepth(25);
 
     std::ostream& ros(std::cout);
 
-    ros << "context, loci, reads, rate, rate_95%_upper_bound\n";
+    ros << "context, allLoci, usedLoci, noiseLoci, refReads, altReads, rate, rate_95%_upper_bound\n";
 
     std::vector<ExportedObservations> observations;
     for (const auto& contextInfo : counts)
@@ -52,36 +120,11 @@ model1(
 
         data.exportObservations(observations);
 
-        double refTotal(0.);
-        double altTotal(0.);
-        double locusTotal(0.);
+        if (observations.empty()) continue;
 
-        for (const auto& obs : observations)
-        {
-            const unsigned total(obs.refObservations+obs.altObservations);
-            const double altFrac(static_cast<double>(obs.altObservations)/total);
-            if ( (total<minDepth) || (altFrac > maxAltFrac)) continue;
-
-            refTotal += (obs.refObservations*obs.repeatCount);
-            altTotal += (obs.altObservations*obs.repeatCount);
-            locusTotal += obs.repeatCount;
-        }
-
-        {
-            static const std::string sep(", ");
-            const double total(refTotal+altTotal);
-
-            static const double alpha(0.05);
-
-            const double upper(boost::math::binomial_distribution<double>::find_upper_bound_on_p(total, altTotal, alpha));
-
-            ros << std::setprecision(10);
-            ros << context << sep
-                << locusTotal << sep
-                << total << sep
-                << safeFrac(altTotal,total) << sep
-                << upper << "\n";
-                ;
-        }
+        reportExtendedContext(maxAltFrac, minDepth, context, observations, data.skipped,
+            SIGNAL_TYPE::INSERT_1, SIGNAL_TYPE::DELETE_1, "I", ros);
+        reportExtendedContext(maxAltFrac, minDepth, context, observations, data.skipped,
+            SIGNAL_TYPE::DELETE_1, SIGNAL_TYPE::SIZE, "D", ros);
     }
 }
