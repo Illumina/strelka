@@ -191,6 +191,30 @@ struct snp_pos_info
         }
     }
 
+    unsigned
+    get_most_frequent_alt_id(const unsigned ref_gt) const
+    {
+        unsigned alt_count[BASE_ID::SIZE] = {};
+        for (const base_call& tbc : calls)
+        {
+            const uint8_t obs_id(tbc.base_id);
+            if(obs_id == ref_gt || obs_id == BASE_ID::ANY) continue;
+            ++alt_count[obs_id];
+        }
+        unsigned alt_id = ref_gt;
+        unsigned max_count = 0;
+        for (unsigned base_id(0); base_id<BASE_ID::SIZE; ++base_id)
+        {
+            if (alt_count[base_id] > max_count)
+            {
+                if(base_id == ref_gt) continue;
+                max_count = alt_count[base_id];
+                alt_id = base_id;
+            }
+        }
+
+        return alt_id;
+    }
 
     bool
     is_ref_set() const

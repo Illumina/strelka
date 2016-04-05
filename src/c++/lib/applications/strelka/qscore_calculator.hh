@@ -18,12 +18,8 @@
 //
 //
 
-/// variation on the original strawman snv caller -- implements a
-/// compile-time specified grid in allele frequency space and requires
-/// similar frequency as definition of non-somatic.
 ///
-
-/// \author Chris Saunders
+/// \author Chris Saunders, Sangtae Kim
 ///
 
 #pragma once
@@ -32,32 +28,27 @@
 #include "strelka_shared.hh"
 #include "strelka_digt_states.hh"
 
+#include "blt_util/math_util.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
 
+#include <cmath>
 
-// object used to pre-compute priors:
-struct somatic_snv_caller_strand_grid
-{
-    explicit somatic_snv_caller_strand_grid(
-        const strelka_options& opt);
 
-    //
-    void
-    position_somatic_snv_call(
-        const extended_pos_info& normal_epi,
-        const extended_pos_info& tumor_epi,
-        const extended_pos_info* normal_epi_t2_ptr,
-        const extended_pos_info* tumor_epi_t2_ptr,
-        const bool isComputeNonSomatic,
-        somatic_snv_genotype_grid& sgt) const;
+// calculates diploid prior probabilities
+void
+calculate_bare_lnprior(const double theta,
+        blt_float_t *bare_lnprior);
 
-private:
-    blt_float_t _contam_tolerance;
-    blt_float_t _ln_csse_rate;
-    blt_float_t _ln_sse_rate;
-
-    blt_float_t _ln_som_match;
-    blt_float_t _ln_som_mismatch;
-
-    blt_float_t _bare_lnprior[SOMATIC_DIGT::SIZE];
-};
+// calculates qscores
+void
+calculate_result_set_grid(
+        const blt_float_t ssnv_freq_ratio,
+        const blt_float_t ln_se_rate,   // ln (shared_error_rate)
+        const blt_float_t ln_cse_rate,  // ln (1 - shared_error_rate)
+        const blt_float_t* normal_lhood,
+        const blt_float_t* tumor_lhood,
+        const blt_float_t* bare_lnprior,
+        const blt_float_t lnmatch,
+        const blt_float_t lnmismatch,
+        result_set& rs
+        );

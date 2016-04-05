@@ -19,50 +19,33 @@
 //
 
 /// \author Chris Saunders
+/// \author Sangtae Kim
 ///
 
 #pragma once
 
-#include "boost/utility.hpp"
+#include "blt_common/blt_shared.hh"
+#include "blt_common/snp_pos_info.hh"
+#include "strelka_common/het_ratio_cache.hh"
 
+void
+get_diploid_gt_lhood_cached_simple(
+    const snp_pos_info& pi,
+    const unsigned ref_gt,
+    blt_float_t* const lhood);
 
-struct somatic_indel_call
-{
-    somatic_indel_call()
-        : is_forced_output(false)
-    {}
+void
+get_diploid_het_grid_lhood_cached(
+    const snp_pos_info& pi,
+    const unsigned ref_gt,
+    const unsigned hetResolution,
+    blt_float_t* const lhood);
 
-    typedef bool tier_t;
-
-    struct result_set
-    {
-        result_set()
-            : sindel_qphred(0),
-              is_overlap(false)
-        {}
-
-        unsigned ntype;
-        unsigned max_gt;
-        int sindel_qphred;
-        int sindel_from_ntype_qphred;
-        bool is_overlap;
-    };
-
-    bool
-    is_indel() const
-    {
-        return (rs.sindel_qphred != 0);
-    }
-
-    // should this indel be written out?
-    bool
-    is_output() const
-    {
-        return (is_indel() || is_forced_output);
-    }
-
-    tier_t sindel_tier;
-    tier_t sindel_from_ntype_tier;
-    result_set rs;
-    bool is_forced_output;
-};
+void
+get_strand_ratio_lhood_spi(
+    const snp_pos_info& pi,
+    const unsigned ref_gt,
+    const blt_float_t het_ratio,
+    const unsigned het_ratio_index,
+    het_ratio_cache<2>& hrcache,
+    blt_float_t* lhood);

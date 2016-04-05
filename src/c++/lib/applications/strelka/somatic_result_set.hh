@@ -18,38 +18,56 @@
 //
 //
 
-/// variation on the original strawman snv caller -- implements a
-/// compile-time specified grid in allele frequency space and requires
-/// similar frequency as definition of non-somatic.
+///
+/// \author Chris Saunders, Sangtae Kim
 ///
 
-/// \author Chris Saunders
-///
 
 #pragma once
 
+#include "boost/utility.hpp"
 #include "SiteNoise.hh"
 
+struct result_set
+{
+    unsigned ntype;
+    unsigned max_gt;
+    int qphred = 0;
+    int from_ntype_qphred = 0;
+};
+
+struct snv_result_set : result_set
+{
+    unsigned normal_alt_id;
+    unsigned tumor_alt_id;
+    int nonsomatic_qphred = 0;
+    double strandBias = 0;
+};
+
+struct indel_result_set : result_set
+{
+    bool is_overlap;
+};
+
+struct somatic_result_set
+{
+    typedef bool tier_t;
+
+    tier_t tier = 0;
+    tier_t from_ntype_tier = 0;
+    result_set rs = result_set();
+    bool is_forced_output = false;
+};
 
 struct somatic_snv_genotype_grid
 {
     typedef bool tier_t;
 
-    struct result_set
-    {
-        unsigned ntype;
-        unsigned max_gt;
-        int snv_qphred = 0;
-        int snv_from_ntype_qphred = 0;
-        int nonsomatic_qphred = 0;
-
-        double strandBias = 0;
-    };
 
     bool
     is_snv() const
     {
-        return (0 != rs.snv_qphred);
+        return (0 != rs.qphred);
     }
 
     bool
@@ -61,7 +79,31 @@ struct somatic_snv_genotype_grid
     tier_t snv_tier = 0;
     tier_t snv_from_ntype_tier = 0;
     unsigned ref_gt = 0;
-    result_set rs = result_set();
+    snv_result_set rs = snv_result_set();
     bool is_forced_output = false;
     SiteNoise sn;
 };
+
+struct somatic_indel_call
+{
+    typedef bool tier_t;
+
+    bool
+    is_indel() const
+    {
+        return (rs.qphred != 0);
+    }
+
+    // should this indel be written out?
+    bool
+    is_output() const
+    {
+        return (is_indel() || is_forced_output);
+    }
+
+    tier_t sindel_tier;
+    tier_t sindel_from_ntype_tier;
+    indel_result_set rs;
+    bool is_forced_output = false;
+};
+

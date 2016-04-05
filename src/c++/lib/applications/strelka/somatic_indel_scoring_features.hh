@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "somatic_indel_call.hh"
 #include "strelka_shared.hh"
 
 #include "starling_common/starling_indel_report_info.hh"

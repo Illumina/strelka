@@ -71,7 +71,7 @@ runInternal(int argc,char* argv[]) const
     ("gvcf",po::value(&sim_opt.is_somatic_gvcf)->zero_tokens(),"use somatic gvcf mode to compute scores for non-somatic sites")
     ;
 
-    po::options_description visible("options");
+    po::options_description visible("optionsstr");
     visible.add(req);
 
     bool po_parse_fail(false);

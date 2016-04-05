@@ -22,7 +22,6 @@
 /// \author Chris Saunders
 ///
 
-#include "position_somatic_snv.hh"
 #include "position_somatic_snv_strand_grid.hh"
 #include "position_somatic_snv_strand_grid_vcf.hh"
 #include "somatic_indel_grid.hh"
@@ -134,7 +133,6 @@ process_pos_snp_somatic(const pos_t pos)
         _pileupCleaner.CleanPileup(normal_sif.bc_buff.get_pos(pos),is_include_tier2,*(normal_cpi_ptr[t]));
         _pileupCleaner.CleanPileup(tumor_sif.bc_buff.get_pos(pos),is_include_tier2,*(tumor_cpi_ptr[t]));
     }
-
 
     // note single-sample anomaly filtration won't apply here (more of
     // a vestigial blt feature anyway)
