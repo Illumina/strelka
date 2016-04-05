@@ -1,3 +1,4 @@
+- STARKA-403 charged somatic SNV/indel scoring model for liquid tumor support
 - STARKA-388 add ADF/ADR tags to gVCF output
 - STARKA-393 stabilize forced long del genotyping in gVCF aggregator 
 - STARKA-351 reorg all strelka documentation
