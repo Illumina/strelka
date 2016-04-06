@@ -1,0 +1,309 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+//
+
+///
+/// \author Chris Saunders
+///
+
+#pragma once
+
+#include "blt_util/blt_types.hh"
+#include "htsapi/bam_streamer.hh"
+#include "htsapi/bed_streamer.hh"
+#include "htsapi/vcf_streamer.hh"
+
+#include <memory>
+#include <queue>
+#include <string>
+#include <vector>
+
+
+namespace HTS_TYPE
+{
+    enum index_t
+    {
+        NONE,
+        BAM,
+        VCF,
+        BED
+    };
+
+    inline
+    const char*
+    label(const index_t i)
+    {
+        switch (i)
+        {
+        case NONE :
+            return "NONE";
+        case BAM :
+            return "BAM/CRAM";
+        case VCF :
+            return "VCF";
+        case BED :
+            return "BED";
+        default :
+            assert(false && "Unrecognized hts file type");
+            return nullptr;
+        }
+    }
+
+    template <typename T> index_t getStreamType();
+    template <> inline index_t getStreamType<bam_streamer>() { return BAM; }
+    template <> inline index_t getStreamType<vcf_streamer>() { return VCF; }
+    template <> inline index_t getStreamType<bed_streamer>() { return BED; }
+}
+
+
+///
+struct HtsMergeStreamer
+{
+    explicit
+    HtsMergeStreamer(
+        const char* region = nullptr);
+
+    /// register* methods:
+    ///
+    /// used to register an hts data source to the streamer
+    ///
+    /// can be called before the first call to next(), after next() is called, these methods will
+    /// generate a runtime error
+    ///
+    /// input index will be reflected back out by the MergeStreamer, it does not need to be unique
+    ///
+    /// registration order will be used to order all inputs with the same position
+    ///
+    const bam_streamer&
+    registerBam(
+        const char* bamFilename,
+        const unsigned index = 0)
+    {
+        return registerHtsType(bamFilename,index,_data._bam);
+    }
+
+    const vcf_streamer&
+    registerVcf(
+        const char* vcfFilename,
+        const unsigned index = 0)
+    {
+        return registerHtsType(vcfFilename,index,_data._vcf);
+    }
+
+    const bed_streamer&
+    registerBed(
+        const char* bedFilename,
+        const unsigned index = 0)
+    {
+        return registerHtsType(bedFilename,index,_data._bed);
+    }
+
+
+    /// Advances to the next HTS record in the merged stream
+    ///
+    /// returns false if no more records exist
+    ///
+    /// This needs to be called once before any data is accessible. The first call to next will not discard any records.
+    ///
+    bool
+    next();
+
+    HTS_TYPE::index_t
+    getCurrentType() const
+    {
+        return getHtsType(getCurrent().order);
+    }
+
+    unsigned
+    getCurrentIndex() const
+    {
+        return getUserIndex(getCurrent().order);
+    }
+
+    pos_t
+    getCurrentPos() const
+    {
+        return getCurrent().pos;
+    }
+
+    const bam_record&
+    getCurrentBam() const
+    {
+        return *(getHtsStreamer(getCurrent().order, _data._bam).get_record_ptr());
+    }
+
+    const vcf_record&
+    getCurrentVcf() const
+    {
+        return *(getHtsStreamer(getCurrent().order, _data._vcf).get_record_ptr());
+    }
+
+    const bed_record&
+    getCurrentBed() const
+    {
+        return *(getHtsStreamer(getCurrent().order, _data._bed).get_record_ptr());
+    }
+
+private:
+
+    struct HtsData
+    {
+        std::vector<std::unique_ptr<bam_streamer>> _bam;
+        std::vector<std::unique_ptr<vcf_streamer>> _vcf;
+        std::vector<std::unique_ptr<bed_streamer>> _bed;
+    };
+
+    /// this sets the sort order for different HTS stream types
+    /// and instances
+    ///
+    struct HtsRecordSortData
+    {
+        HtsRecordSortData(
+            const pos_t initPos = 0,
+            const unsigned initOrder = 0)
+            :  pos(initPos), order(initOrder)
+        {}
+
+        // reverse logic implied by operator< such that the 'lower' values
+        // we'd like to see first will come up on top of the
+        // priority_queue
+        //
+        bool
+        operator<(const HtsRecordSortData& rhs) const
+        {
+            if (pos != rhs.pos)
+            {
+                return (pos > rhs.pos);
+            }
+            return (order > rhs.order);
+        }
+
+        pos_t pos;
+        // record the submission order:
+        unsigned order;
+    };
+
+    struct OrderData
+    {
+        OrderData(
+            const HTS_TYPE::index_t initHtsType,
+            const unsigned initUserIndex,
+            const unsigned initHtsTypeIndex)
+        : htsType(initHtsType)
+        , userIndex(initUserIndex)
+        , htsTypeIndex(initHtsTypeIndex)
+        {}
+
+        HTS_TYPE::index_t htsType = HTS_TYPE::NONE;
+        unsigned userIndex = 0;
+        unsigned htsTypeIndex = 0;
+    };
+
+    const char*
+    getRegionPtr()
+    {
+        if (_region.empty()) return nullptr;
+        return _region.c_str();
+    }
+
+    const HtsRecordSortData&
+    getCurrent() const
+    {
+        assert(_isStreamBegin && (! _isStreamEnd));
+        return _streamQueue.top();
+    }
+
+    HTS_TYPE::index_t
+    getHtsType(const unsigned orderIndex) const
+    {
+        return _order[orderIndex].htsType;
+    }
+
+    unsigned
+    getUserIndex(const unsigned orderIndex) const
+    {
+        return _order[orderIndex].userIndex;
+    }
+
+    template <typename T>
+    const T&
+    registerHtsType(
+        const char* htsFilename,
+        const unsigned index,
+        std::vector<std::unique_ptr<T>>& htsStreamerVec)
+    {
+        static const HTS_TYPE::index_t htsType(HTS_TYPE::getStreamType<T>());
+        assert(! _isStreamBegin);
+        const unsigned htsTypeIndex(htsStreamerVec.size());
+        const unsigned orderIndex(_order.size());
+        htsStreamerVec.emplace_back(new T(htsFilename, getRegionPtr()));
+        _order.emplace_back(htsType, index, htsTypeIndex);
+        queueItem(orderIndex);
+        return *(htsStreamerVec.back());
+    }
+
+    const OrderData&
+    getOrderForType(
+        const unsigned orderIndex,
+        const HTS_TYPE::index_t expectedHtsType) const;
+
+    template <typename T>
+    T&
+    getHtsStreamer(
+        const unsigned orderIndex,
+        std::vector<std::unique_ptr<T>>& htsStreamerVec)
+    {
+        static const HTS_TYPE::index_t htsType(HTS_TYPE::getStreamType<T>());
+        const OrderData& orderData(getOrderForType(orderIndex, htsType));
+        return *(htsStreamerVec[orderData.htsTypeIndex]);
+    }
+
+    template <typename T>
+    const T&
+    getHtsStreamer(
+        const unsigned orderIndex,
+        const std::vector<std::unique_ptr<T>>& htsStreamerVec) const
+    {
+        static const HTS_TYPE::index_t htsType(HTS_TYPE::getStreamType<T>());
+        const OrderData& orderData(getOrderForType(orderIndex, htsType));
+        return *(htsStreamerVec[orderData.htsTypeIndex]);
+    }
+
+    void
+    queueItem(const unsigned orderIndex);
+
+    /// attempt to queue an item from the same order
+    /// as the head of the queue:
+    void
+    queueNextItem()
+    {
+        queueItem(getCurrent().order);
+    }
+
+
+    /////// data:
+    std::string _region;
+    HtsData _data;
+    std::vector<OrderData> _order;
+
+    bool _isStreamBegin = false;
+    bool _isStreamEnd = false;
+    std::priority_queue<HtsRecordSortData> _streamQueue;
+};
+
