@@ -32,18 +32,26 @@
 #include "starling_streams.hh"
 
 #include "appstats/RunStatsManager.hh"
-#include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
-#include "htsapi/bam_streamer.hh"
-#include "htsapi/bed_streamer.hh"
-#include "htsapi/vcf_streamer.hh"
-#include "starling_common/starling_input_stream_handler.hh"
+#include "starling_common/HtsMergeStreamer.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
 #include <sstream>
 
+
+
+namespace INPUT_TYPE
+{
+    enum index_t
+    {
+        CANDIDATE_INDELS,
+        FORCED_GT,
+        PLOIDY_REGION,
+        NOCOMPRESS_REGION
+    };
+}
 
 
 void
@@ -64,10 +72,12 @@ starling_run(
     assert(! opt.bam_filename.empty());
 
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-    bam_streamer read_stream(opt.bam_filename.c_str(),bam_region.c_str());
-    const bam_hdr_t& header(read_stream.get_header());
 
-    const int32_t tid(read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
+    HtsMergeStreamer streamData(bam_region.c_str());
+    const bam_streamer& readStream(streamData.registerBam(opt.bam_filename.c_str()));
+    const bam_hdr_t& readHeader(readStream.get_header());
+
+    const int32_t tid(readStream.target_name_to_id(opt.bam_seq_name.c_str()));
     if (tid < 0)
     {
         using namespace illumina::common;
@@ -78,66 +88,50 @@ starling_run(
     }
 
     SampleSetSummary ssi;
-    starling_streams client_io(opt,pinfo,read_stream.get_header(),ssi);
+    starling_streams client_io(opt,pinfo,readHeader,ssi);
 
     starling_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
-    starling_input_stream_data sdata;
-    sdata.register_reads(read_stream);
-
-    // hold zero-to-many vcf streams open:
-    typedef std::shared_ptr<vcf_streamer> vcf_ptr;
-    std::vector<vcf_ptr> indel_stream;
-
     for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
     {
-        indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),&header)));
-        sdata.register_indels(*(indel_stream.back()));
+        const vcf_streamer& vcfStream(streamData.registerVcf(vcf_filename.c_str(), INPUT_TYPE::CANDIDATE_INDELS));
+        vcfStream.validateBamHeaderChromSync(readHeader);
     }
-
-    std::vector<vcf_ptr> foutput_stream;
 
     for (const auto& vcf_filename : opt.force_output_vcf)
     {
-        foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                          bam_region.c_str(),&header)));
-        sdata.register_forced_output(*(foutput_stream.back()));
+        const vcf_streamer& vcfStream(streamData.registerVcf(vcf_filename.c_str(), INPUT_TYPE::FORCED_GT));
+        vcfStream.validateBamHeaderChromSync(readHeader);
     }
 
-    std::unique_ptr<bed_streamer> ploidy_regions;
     if (! opt.ploidy_region_bedfile.empty())
     {
-        ploidy_regions.reset(new bed_streamer(opt.ploidy_region_bedfile.c_str(),
-                                              bam_region.c_str()));
-        sdata.register_ploidy_regions(*ploidy_regions);
+        streamData.registerBed(opt.ploidy_region_bedfile.c_str(), INPUT_TYPE::PLOIDY_REGION);
     }
 
-    std::unique_ptr<bed_streamer> nocompress_regions;
     if (! opt.gvcf.nocompress_region_bedfile.empty())
     {
-        nocompress_regions.reset(new bed_streamer(opt.gvcf.nocompress_region_bedfile.c_str(),
-                                                  bam_region.c_str()));
-        sdata.register_nocompress_regions(*nocompress_regions);
+        streamData.registerBed(opt.gvcf.nocompress_region_bedfile.c_str(), INPUT_TYPE::NOCOMPRESS_REGION);
     }
 
-    starling_input_stream_handler sinput(sdata);
 
-    while (sinput.next())
+    while (streamData.next())
     {
-        const input_record_info current(sinput.get_current());
+        const pos_t currentPos(streamData.getCurrentPos());
+        const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
+        const unsigned currentIndex(streamData.getCurrentIndex());
 
         // Process finishes at the the end of rlimit range. Note that
         // some additional padding is allowed for off-range indels
         // which might influence results within rlimit:
         //
-        if (rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(sinput.get_head_pos()-1);
+        sppr.set_head_pos(currentPos-1);
 
-        if       (current.itype == INPUT_TYPE::READ)
+        if       (HTS_TYPE::BAM == currentHtsType)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
@@ -150,52 +144,67 @@ starling_run(
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
 
-            const bam_record& read(*(read_stream.get_record_ptr()));
+            const bam_record& read(streamData.getCurrentBam());
 
-            process_genomic_read(opt,ref,read_stream,read,current.pos,rlimit.begin_pos,brc,sppr);
+            process_genomic_read(opt, ref, readStream, read, currentPos, rlimit.begin_pos, brc, sppr);
         }
-        else if (current.itype == INPUT_TYPE::INDEL)     // process candidate indels input from vcf file(s)
+        else if (HTS_TYPE::VCF == currentHtsType)
         {
-            const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
-            process_candidate_indel(opt.max_indel_size, vcf_indel,sppr);
-        }
-        else if (current.itype == INPUT_TYPE::FORCED_OUTPUT)     // process forced genotype tests from vcf file(s)
-        {
-            const vcf_record& vcf_variant(*(foutput_stream[current.get_order()]->get_record_ptr()));
-            if (vcf_variant.is_indel())
+            const vcf_record& vcfRecord(streamData.getCurrentVcf());
+            if     (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
             {
-                static const unsigned sample_no(0);
-                static const bool is_forced_output(true);
-                process_candidate_indel(opt.max_indel_size, vcf_variant,sppr,sample_no,is_forced_output);
-            }
-            else if (vcf_variant.is_snv())
-            {
-                sppr.insert_forced_output_pos(vcf_variant.pos-1);
-            }
-        }
-        else if (current.itype == INPUT_TYPE::PLOIDY_REGION)
-        {
-            const bed_record& bedr(*(ploidy_regions->get_record_ptr()));
-            known_pos_range2 ploidyRange(bedr.begin,bedr.end);
-            const int ploidy(parsePloidyFromBedStrict(bedr.line));
-            if ((ploidy == 0) || (ploidy == 1))
-            {
-                const bool retval(sppr.insert_ploidy_region(ploidyRange,ploidy));
-                if (! retval)
+                if (vcfRecord.is_indel())
                 {
-                    using namespace illumina::common;
-
-                    std::ostringstream oss;
-                    oss << "ERROR: ploidy bedfile record conflicts with prior record. Bedfile line: '" << bedr.line << "'\n";
-                    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
                 }
             }
+            else if (INPUT_TYPE::FORCED_GT == currentIndex)     // process forced genotype tests from vcf file(s)
+            {
+                if (vcfRecord.is_indel())
+                {
+                    static const unsigned sample_no(0);
+                    static const bool is_forced_output(true);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord,sppr,sample_no,is_forced_output);
+                }
+                else if (vcfRecord.is_snv())
+                {
+                    sppr.insert_forced_output_pos(vcfRecord.pos-1);
+                }
+            }
+            else
+            {
+                assert(false && "Unexpected hts index");
+            }
         }
-        else if (current.itype == INPUT_TYPE::NOCOMPRESS_REGION)
+        else if (HTS_TYPE::BED == currentHtsType)
         {
-            const bed_record& bedr(*(nocompress_regions->get_record_ptr()));
-            known_pos_range2 range(bedr.begin,bedr.end);
-            sppr.insert_nocompress_region(range);
+            const bed_record& bedRecord(streamData.getCurrentBed());
+            if     (INPUT_TYPE::PLOIDY_REGION == currentIndex)
+            {
+                known_pos_range2 ploidyRange(bedRecord.begin,bedRecord.end);
+                const int ploidy(parsePloidyFromBedStrict(bedRecord.line));
+                if ((ploidy == 0) || (ploidy == 1))
+                {
+                    const bool retval(sppr.insert_ploidy_region(ploidyRange,ploidy));
+                    if (! retval)
+                    {
+                        using namespace illumina::common;
+
+                        std::ostringstream oss;
+                        oss << "ERROR: ploidy bedfile record conflicts with prior record. Bedfile line: '" << bedRecord.line << "'\n";
+                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+                    }
+                }
+            }
+            else if (INPUT_TYPE::NOCOMPRESS_REGION == currentIndex)
+            {
+                known_pos_range2 range(bedRecord.begin,bedRecord.end);
+                sppr.insert_nocompress_region(range);
+            }
+            else
+            {
+                assert(false && "Unexpected hts index");
+            }
         }
         else
         {
@@ -205,7 +214,5 @@ starling_run(
     }
 
     sppr.reset();
-
-    //    brc.report(client_io.report_os());
 }
 
