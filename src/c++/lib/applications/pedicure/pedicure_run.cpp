@@ -30,13 +30,22 @@
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
 #include "htsapi/bam_header_util.hh"
-#include "htsapi/bam_streamer.hh"
-#include "htsapi/vcf_streamer.hh"
-#include "starling_common/starling_input_stream_handler.hh"
+#include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
 #include <sstream>
+
+
+
+namespace INPUT_TYPE
+{
+    enum index_t
+    {
+        CANDIDATE_INDELS,
+        FORCED_GT_VARIANTS,
+    };
+}
 
 
 
@@ -59,14 +68,15 @@ pedicure_run(
 
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
 
-    typedef std::shared_ptr<bam_streamer> stream_ptr;
-    std::vector<stream_ptr> bamStreams;
+    HtsMergeStreamer streamData(bam_region.c_str());
 
     // setup all alignment data for main scan loop:
+    std::vector<const bam_streamer*> bamStreams;
+    unsigned sampleIndex(0);
     for (const std::string& afile : opt.alignFileOpt.alignmentFilename)
     {
-        stream_ptr tmp(new bam_streamer(afile.c_str(), bam_region.c_str()));
-        bamStreams.push_back(tmp);
+        bamStreams.emplace_back(&(streamData.registerBam(afile.c_str(),sampleIndex)));
+        ++sampleIndex;
     }
 
     // check bam header compatibility:
@@ -115,49 +125,26 @@ pedicure_run(
     pedicure_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;
 
-    starling_input_stream_data sdata;
-    for (unsigned bamIndex(0); bamIndex<bamCount; ++bamIndex)
+    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, header, streamData);
+    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, header, streamData);
+
+    while (streamData.next())
     {
-        sdata.register_reads(*bamStreams[bamIndex],bamIndex);
-    }
-
-    // hold zero-to-many vcf streams open:
-    typedef std::shared_ptr<vcf_streamer> vcf_ptr;
-    std::vector<vcf_ptr> indel_stream;
-
-    for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
-    {
-        indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),&header)));
-        sdata.register_indels(*(indel_stream.back()));
-    }
-
-    std::vector<vcf_ptr> foutput_stream;
-
-    for (const auto& vcf_filename : opt.force_output_vcf)
-    {
-        foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                          bam_region.c_str(),&header)));
-        sdata.register_forced_output(*(foutput_stream.back()));
-    }
-
-    starling_input_stream_handler sinput(sdata);
-
-    while (sinput.next())
-    {
-        const input_record_info current(sinput.get_current());
+        const pos_t currentPos(streamData.getCurrentPos());
+        const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
+        const unsigned currentIndex(streamData.getCurrentIndex());
 
         // If we're past the end of rlimit range then we're done.
         //   Note that some additional padding is allowed for off
         //   range indels which might influence results within the
         //   report range:
         //
-        if (rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(sinput.get_head_pos()-1);
+        sppr.set_head_pos(currentPos-1);
 
-        if       (current.itype == INPUT_TYPE::READ)   // handle reads from the primary mapper (as opposed to the local assembler)
+        if       (HTS_TYPE::BAM == currentHtsType)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
@@ -170,32 +157,38 @@ pedicure_run(
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
 
-            const bam_streamer& readStream(*bamStreams[current.sample_no]);
-            const bam_record& read(*(readStream.get_record_ptr()));
-
-            process_genomic_read(opt,ref,readStream,read,current.pos,
-                                 rlimit.begin_pos,brc,sppr,current.sample_no);
+            process_genomic_read(opt,ref,streamData.getCurrentBamStreamer(),
+                                 streamData.getCurrentBam(),currentPos,
+                                 rlimit.begin_pos,brc,sppr,currentIndex);
         }
-        else if (current.itype == INPUT_TYPE::INDEL)     // process candidate indels input from vcf file(s)
+        else if (HTS_TYPE::VCF == currentHtsType)
         {
-            const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
-            process_candidate_indel(opt.max_indel_size, vcf_indel, sppr);
-
-        }
-        else if (current.itype == INPUT_TYPE::FORCED_OUTPUT)     // process forced genotype tests from vcf file(s)
-        {
-            const vcf_record& vcf_variant(*(foutput_stream[current.get_order()]->get_record_ptr()));
-            if (vcf_variant.is_indel())
+            const vcf_record& vcfRecord(streamData.getCurrentVcf());
+            if     (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
             {
-                static const unsigned sample_no(0);
-                static const bool is_forced_output(true);
-                process_candidate_indel(opt.max_indel_size, vcf_variant,sppr,sample_no,is_forced_output);
+                if (vcfRecord.is_indel())
+                {
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
+                }
             }
-            else if (vcf_variant.is_snv())
+            else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
             {
-                sppr.insert_forced_output_pos(vcf_variant.pos-1);
-            }
+                if (vcfRecord.is_indel())
+                {
+                    static const unsigned sample_no(0);
+                    static const bool is_forced_output(true);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord,sppr,sample_no,is_forced_output);
+                }
+                else if (vcfRecord.is_snv())
+                {
+                    sppr.insert_forced_output_pos(vcfRecord.pos-1);
+                }
 
+            }
+            else
+            {
+                assert(false && "Unexpected hts index");
+            }
         }
         else
         {
