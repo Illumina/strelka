@@ -88,11 +88,10 @@ strelka_streams(
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
     const prog_info& pinfo,
-    const bam_hdr_t* const header,
+    const bam_hdr_t& header,
     const StrelkaSampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
-
     {
         using namespace STRELKA_SAMPLE_TYPE;
         if (opt.is_realigned_read_file)

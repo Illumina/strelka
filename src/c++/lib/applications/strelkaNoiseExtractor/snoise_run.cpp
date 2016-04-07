@@ -57,6 +57,7 @@ snoise_run(
 
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
     bam_streamer read_stream(opt.bam_filename.c_str(),bam_region.c_str());
+    const bam_hdr_t& header(read_stream.get_header());
 
     const int32_t tid(read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
     if (tid < 0)
@@ -82,7 +83,7 @@ snoise_run(
     for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
     {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),read_stream.get_header())));
+                                                        bam_region.c_str(),&header)));
         sdata.register_indels(*(indel_stream.back()));
     }
 
@@ -91,7 +92,7 @@ snoise_run(
     for (const auto& vcf_filename : opt.force_output_vcf)
     {
         foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                          bam_region.c_str(),read_stream.get_header())));
+                                                          bam_region.c_str(),&header)));
         sdata.register_forced_output(*(foutput_stream.back()));
     }
 

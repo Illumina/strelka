@@ -30,8 +30,9 @@
 
 struct bam_dumper
 {
-    bam_dumper(const char* filename,
-               const bam_hdr_t* header);
+    bam_dumper(
+        const char* filename,
+        const bam_hdr_t& header);
 
     ~bam_dumper();
 

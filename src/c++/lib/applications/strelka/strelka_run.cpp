@@ -61,7 +61,7 @@ strelka_run(
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
     bam_streamer tumor_read_stream(opt.tumor_bam_filename.c_str(),bam_region.c_str());
 
-    const bam_hdr_t* bam_header(tumor_read_stream.get_header());
+    const bam_hdr_t& bam_header(tumor_read_stream.get_header());
 
     std::unique_ptr<bam_streamer> normal_read_stream_ptr;
 
@@ -73,7 +73,7 @@ strelka_run(
     // check for header consistency:
     if (normal_read_stream_ptr)
     {
-        if (! check_header_compatibility(normal_read_stream_ptr->get_header(),tumor_read_stream.get_header()))
+        if (! check_header_compatibility(normal_read_stream_ptr->get_header(),bam_header))
         {
             std::ostringstream oss;
             oss << "ERROR: Normal and tumor BAM/CRAM files have incompatible headers.\n";
@@ -110,7 +110,7 @@ strelka_run(
     for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
     {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),bam_header)));
+                                                        bam_region.c_str(),&bam_header)));
         sdata.register_indels(*(indel_stream.back()));
     }
 
@@ -119,7 +119,7 @@ strelka_run(
     for (const auto& vcf_filename : opt.force_output_vcf)
     {
         foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                          bam_region.c_str(),bam_header)));
+                                                          bam_region.c_str(),&bam_header)));
         sdata.register_forced_output(*(foutput_stream.back()));
     }
 
@@ -128,7 +128,7 @@ strelka_run(
     for (const auto& vcf_filename : opt.noise_vcf)
     {
         noise_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(), bam_header)));
+                                                        bam_region.c_str(), &bam_header)));
         sdata.register_noise(*(noise_stream.back()));
     }
 

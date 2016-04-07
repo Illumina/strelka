@@ -34,7 +34,7 @@ snoise_streams::
 snoise_streams(
     const snoise_options& opt,
     const prog_info& pinfo,
-    const bam_hdr_t* const header,
+    const bam_hdr_t& header,
     const SampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi),
       _snoise_osptr(&std::cout)

@@ -35,14 +35,13 @@
 
 bam_dumper*
 starling_streams_base::
-initialize_realign_bam(const bool is_clobber,
-                       const prog_info& pinfo,
-                       const std::string& filename,
-                       const char* label,
-                       const bam_hdr_t* const header)
+initialize_realign_bam(
+    const bool is_clobber,
+    const prog_info& pinfo,
+    const std::string& filename,
+    const char* label,
+    const bam_hdr_t& header)
 {
-    assert(nullptr != header);
-
     // \TODO consider putting extra info into BAM header:
     //
     //fp->header = bam_header_dup((const bam_header_t*)aux);

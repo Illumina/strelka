@@ -82,7 +82,7 @@ protected:
     write_vcf_audit(const blt_options& opt,
                     const prog_info& pinfo,
                     const char* const cmdline,
-                    const bam_hdr_t* const header,
+                    const bam_hdr_t& header,
                     std::ostream& os);
 
 private:

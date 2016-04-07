@@ -34,12 +34,11 @@
 
 bam_dumper::
 bam_dumper(const char* filename,
-           const bam_hdr_t* header)
-    : _hdr(header),
+           const bam_hdr_t& header)
+    : _hdr(&header),
       _stream_name(filename)
 {
     assert(nullptr != filename);
-    assert(nullptr != header);
 
     _hfp = hts_open(filename, "wb");
 

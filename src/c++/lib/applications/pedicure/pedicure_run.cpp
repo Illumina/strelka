@@ -74,10 +74,10 @@ pedicure_run(
     if (bamCount > 1)
     {
         /// TODO: provide a better error exception for failed bam header check:
-        const bam_hdr_t* compareHeader(bamStreams[0]->get_header());
+        const bam_hdr_t& compareHeader(bamStreams[0]->get_header());
         for (unsigned bamIndex(1); bamIndex<bamCount; ++bamIndex)
         {
-            const bam_hdr_t* indexHeader(bamStreams[bamIndex]->get_header());
+            const bam_hdr_t& indexHeader(bamStreams[bamIndex]->get_header());
             if (! check_header_compatibility(compareHeader,indexHeader))
             {
                 log_os << "ERROR: incompatible bam headers between files:\n"
@@ -110,7 +110,7 @@ pedicure_run(
     }
 
     const PedicureSampleSetSummary ssi(opt);
-    const bam_hdr_t* const header(bamStreams[0]->get_header());
+    const bam_hdr_t& header(bamStreams[0]->get_header());
     pedicure_streams streams(opt, dopt, pinfo, header, ssi);
     pedicure_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;
@@ -128,7 +128,7 @@ pedicure_run(
     for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
     {
         indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),header)));
+                                                        bam_region.c_str(),&header)));
         sdata.register_indels(*(indel_stream.back()));
     }
 
@@ -137,7 +137,7 @@ pedicure_run(
     for (const auto& vcf_filename : opt.force_output_vcf)
     {
         foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                          bam_region.c_str(),header)));
+                                                          bam_region.c_str(),&header)));
         sdata.register_forced_output(*(foutput_stream.back()));
     }
 
