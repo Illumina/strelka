@@ -45,16 +45,15 @@ void
 check_bam_bcf_header_compatability(
     const char* bcf_filename,
     const bcf_hdr_t* bcfh,
-    const bam_hdr_t* bamh)
+    const bam_hdr_t& bamh)
 {
-    assert(nullptr != bamh);
     assert(nullptr != bcfh);
 
     // build set of chrom labels from BAM:
     std::set<std::string> bamlabels;
-    for (int32_t i(0); i<bamh->n_targets; ++i)
+    for (int32_t i(0); i<bamh.n_targets; ++i)
     {
-        bamlabels.insert(std::string(bamh->target_name[i]));
+        bamlabels.insert(std::string(bamh.target_name[i]));
     }
     int n_labels(0);
 
@@ -95,7 +94,7 @@ vcf_streamer(
 
     if (nullptr != bh)
     {
-        check_bam_bcf_header_compatability(filename, _hdr, bh);
+        validateBamHeaderChromSync(*bh);
     }
 }
 
@@ -166,4 +165,14 @@ report_state(std::ostream& os) const
     {
         os << "\tno vcf record currently set\n";
     }
+}
+
+
+
+void
+vcf_streamer::
+validateBamHeaderChromSync(
+    const bam_hdr_t& header) const
+{
+    check_bam_bcf_header_compatability(name(), _hdr, header);
 }

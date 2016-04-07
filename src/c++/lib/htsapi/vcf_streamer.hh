@@ -54,6 +54,10 @@ struct vcf_streamer : public hts_streamer
 
     void report_state(std::ostream& os) const;
 
+    void
+    validateBamHeaderChromSync(
+        const bam_hdr_t& header) const;
+
 private:
     bcf_hdr_t* _hdr;
     vcf_record _vcfrec;
