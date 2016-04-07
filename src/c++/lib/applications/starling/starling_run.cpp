@@ -134,9 +134,8 @@ starling_run(
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
 
-            const bam_record& read(streamData.getCurrentBam());
-
-            process_genomic_read(opt, ref, readStream, read, currentPos, rlimit.begin_pos, brc, sppr);
+            process_genomic_read(opt, ref, readStream, streamData.getCurrentBam(),
+                                 currentPos, rlimit.begin_pos, brc, sppr);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {

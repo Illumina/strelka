@@ -74,8 +74,7 @@ check_bam_bcf_header_compatability(
 vcf_streamer::
 vcf_streamer(
     const char* filename,
-    const char* region,
-    const bam_hdr_t* bh) :
+    const char* region) :
     hts_streamer(filename,region),
     _hdr(nullptr)
 {
@@ -90,11 +89,6 @@ vcf_streamer(
     {
         log_os << "ERROR: Failed to load header for VCF file: '" << filename << "'\n";
         exit(EXIT_FAILURE);
-    }
-
-    if (nullptr != bh)
-    {
-        validateBamHeaderChromSync(*bh);
     }
 }
 
