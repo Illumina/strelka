@@ -145,7 +145,7 @@ struct HtsMergeStreamer
     const bam_record&
     getCurrentBam() const
     {
-        return *(getHtsStreamer(getCurrent().order, _data._bam).get_record_ptr());
+        return *(getCurrentBamStreamer().get_record_ptr());
     }
 
     const vcf_record&
@@ -158,6 +158,12 @@ struct HtsMergeStreamer
     getCurrentBed() const
     {
         return *(getHtsStreamer(getCurrent().order, _data._bed).get_record_ptr());
+    }
+
+    const bam_streamer&
+    getCurrentBamStreamer() const
+    {
+        return getHtsStreamer(getCurrent().order, _data._bam);
     }
 
 private:

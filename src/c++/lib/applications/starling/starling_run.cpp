@@ -34,7 +34,7 @@
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
-#include "starling_common/HtsMergeStreamer.hh"
+#include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
@@ -47,7 +47,7 @@ namespace INPUT_TYPE
     enum index_t
     {
         CANDIDATE_INDELS,
-        FORCED_GT,
+        FORCED_GT_VARIANTS,
         PLOIDY_REGION,
         NOCOMPRESS_REGION
     };
@@ -93,17 +93,8 @@ starling_run(
     starling_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
-    for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
-    {
-        const vcf_streamer& vcfStream(streamData.registerVcf(vcf_filename.c_str(), INPUT_TYPE::CANDIDATE_INDELS));
-        vcfStream.validateBamHeaderChromSync(readHeader);
-    }
-
-    for (const auto& vcf_filename : opt.force_output_vcf)
-    {
-        const vcf_streamer& vcfStream(streamData.registerVcf(vcf_filename.c_str(), INPUT_TYPE::FORCED_GT));
-        vcfStream.validateBamHeaderChromSync(readHeader);
-    }
+    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, readHeader, streamData);
+    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, readHeader, streamData);
 
     if (! opt.ploidy_region_bedfile.empty())
     {
@@ -114,7 +105,6 @@ starling_run(
     {
         streamData.registerBed(opt.gvcf.nocompress_region_bedfile.c_str(), INPUT_TYPE::NOCOMPRESS_REGION);
     }
-
 
     while (streamData.next())
     {
@@ -158,7 +148,7 @@ starling_run(
                     process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
                 }
             }
-            else if (INPUT_TYPE::FORCED_GT == currentIndex)     // process forced genotype tests from vcf file(s)
+            else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
             {
                 if (vcfRecord.is_indel())
                 {
