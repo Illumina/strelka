@@ -57,6 +57,9 @@ This script configures the Strelka sequence error counts workflow.
         group.add_option("--targetRegions", type="string", dest="targetRegionsBed", metavar="FILE",
                          help="Provide bed file of regions to allow variant calls. Calls outside these ares are filtered "
                          "as OffTarget. File must be tabix indexed. (no default)")
+        group.add_option("--reportObservedIndels", dest="isReportObservedIndels", action="store_true", default = False,
+                         help="Report all observed indels by location in a separate BED file in addition to the"
+                         "summary counts")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 

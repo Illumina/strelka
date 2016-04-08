@@ -52,10 +52,17 @@ struct SequenceErrorCountsOptions : public starling_base_options
         return (! chrom_depth_file.empty());
     }
 
+    bool is_write_observations() const
+    {
+        return (! observationsBedFilename.empty());
+    }
+
     std::string chrom_depth_file;
     double max_depth_factor = 3.;
 
     std::string countsFilename;
+
+    std::string observationsBedFilename;
 };
 
 

@@ -62,6 +62,7 @@ def starlingRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=
 class TempSegmentFiles :
     def __init__(self) :
         self.counts = []
+        self.observedIndelBed = []
 
 
 
@@ -102,6 +103,11 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     if self.params.ploidyBed is not None :
         segCmd.extend(['--ploidy-region-bed', self.params.ploidyBed])
 
+    if self.params.isReportObservedIndels :
+        tmpObservedIndelBedPath = self.paths.getTmpObservedIndelBedPath(segStr)
+        segFiles.observedIndelBed.append(tmpObservedIndelBedPath + ".gz")
+        segCmd.extend(['--observation-bed-file', tmpObservedIndelBedPath])
+
     if self.params.extraCountsArguments is not None :
         for arg in self.params.extraCountsArguments.strip().split() :
             segCmd.append(arg)
@@ -112,8 +118,13 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     self.addTask(setTaskLabel,segCmd,dependencies=dependencies,memMb=self.params.callMemMb)
     nextStepWait.add(setTaskLabel)
 
-    return nextStepWait
+    if self.params.isReportObservedIndels :
+        compressTask=preJoin(taskPrefix,"compressSegmentOutput_"+gseg.id)
+        compressCmd = "\"%s\" \"%s\"" % (self.params.bgzipBin, tmpObservedIndelBedPath)
+        self.addTask(compressTask, compressCmd, dependencies=setTaskLabel, isForceLocal=True)
+        nextStepWait.add(compressTask)
 
+    return nextStepWait
 
 
 def mergeSequenceErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
@@ -152,6 +163,10 @@ def callGenome(self,taskPrefix="",dependencies=None):
 
     # merge segment stats:
     finishTasks.add(mergeSequenceErrorCounts(self,taskPrefix,completeSegmentsTask, segFiles.counts))
+
+    if self.params.isReportObservedIndels :
+        finishTasks.add(self.concatIndexBed(taskPrefix, completeSegmentsTask, segFiles.observedIndelBed,
+                                            self.paths.getObservedIndelBedPath(), "observedIndels"))
 
     if not self.params.isRetainTempFiles :
         rmTmpCmd = getRmdirCmd() + [tmpSegmentDir]
@@ -200,9 +215,14 @@ class PathInfo(SharedPathInfo):
     def getTmpSegmentCountsPath(self, segStr) :
         return os.path.join( self.getTmpSegmentDir(), "strelkaErrorCounts.%s.bin" % (segStr))
 
+    def getTmpObservedIndelBedPath(self, segStr) :
+        return os.path.join( self.getTmpSegmentDir(), "strelkaObservedIndel.%s.bed" % segStr)
+
     def getCountsOutputPath(self) :
         return os.path.join( self.params.variantsDir, "strelkaErrorCounts.bin")
 
+    def getObservedIndelBedPath(self) :
+        return os.path.join( self.params.debugDir, "strelkaObservedIndel.bed.gz")
 
 
 class SequenceErrorCountsWorkflow(StarkaWorkflow) :
@@ -213,6 +233,11 @@ class SequenceErrorCountsWorkflow(StarkaWorkflow) :
     def __init__(self,params,iniSections) :
         global PathInfo
         super(SequenceErrorCountsWorkflow,self).__init__(params,iniSections,PathInfo)
+
+        # if debugging output is going to be produced, add a results/debug dir
+        if self.params.isReportObservedIndels:
+            self.params.debugDir=os.path.join(self.params.resultsDir,"debug")
+            ensureDir(self.params.debugDir)
 
         # format bam lists:
         if self.params.bamList is None : self.params.bamList = []

@@ -43,6 +43,13 @@ struct SequenceErrorCountsStreams : public starling_streams_base
         return _sampleName;
     }
 
+    std::ostream*
+    observation_bed_osptr() const
+    {
+        return _observation_bed_osptr.get();
+    }
+
 private:
     std::string _sampleName;
+    std::unique_ptr<std::ostream> _observation_bed_osptr;
 };

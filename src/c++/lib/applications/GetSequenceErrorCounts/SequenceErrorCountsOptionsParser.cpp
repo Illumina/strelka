@@ -48,6 +48,8 @@ getSequenceErrorCountsOptionsParser(
      "If a chrom depth file is supplied then loci with depth exceeding the mean chromosome depth times this value are filtered")
     ("counts-file", po::value(&opt.countsFilename),
      "write binary error counts output to filename (required, no default)")
+    ("observation-bed-file", po::value(&opt.observationsBedFilename),
+     "write all observed indels to BED file (if not specified, individual indels will not be reported)")
     ;
 
     // final assembly

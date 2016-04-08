@@ -41,4 +41,12 @@ SequenceErrorCountsStreams(
 {
     assert(_n_samples == 1);
     _sampleName = get_bam_header_sample_name(header);
+
+    if (opt.is_write_observations())
+    {
+		std::ofstream* fosptr(new std::ofstream);
+		_observation_bed_osptr.reset(fosptr);
+		std::ofstream& fos(*fosptr);
+		open_ofstream(pinfo,opt.observationsBedFilename,"obs_bed",opt.is_clobber,fos);
+    }
 }

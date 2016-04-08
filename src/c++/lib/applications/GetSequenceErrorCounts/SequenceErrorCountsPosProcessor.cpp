@@ -37,11 +37,16 @@ SequenceErrorCountsPosProcessor(
     const reference_contig_segment& ref,
     const SequenceErrorCountsStreams& streams)
     : base_t(opt,dopt,ref,streams,1),
-      _opt(opt)
+      _opt(opt),
+      _streams(streams)
 {
     // check that we have write permission on the output file early:
     {
         OutStream outs(opt.countsFilename);
+        if(opt.is_write_observations())
+        {
+            OutStream outs2(opt.observationsBedFilename);
+        }
     }
 
     // setup indel syncronizers:
@@ -329,7 +334,7 @@ process_pos_indel_single_sample_digt(
     sample_info& sif(sample(sample_no));
 
 
-    // candidate indles are turned off above a certain depth relative to chromosome
+    // candidate indels are turned off above a certain depth relative to chromosome
     // mean, so we make sure to turn off counts as well to prevent a reference bias:
     {
         if (_max_candidate_normal_sample_depth > 0.)
@@ -426,6 +431,22 @@ process_pos_indel_single_sample_digt(
             const SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
             obs.signalCounts[sigIndex] = support[nonrefHapIndex];
             obs.refCount = support[nonrefHapCount];
+
+            // an indel candidate can have 0 q30 indel reads when it is only supported by
+            // noise reads (i.e. indel occurs outside of a read's valid alignment range,
+            // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
+            // in this case, we're not going to report the incidence as noise, since it's
+            // not a read we would consider in variant calling
+            if(support[nonrefHapIndex] > 0 && _opt.is_write_observations())
+            {
+                std::ostream& obs_os(*_streams.observation_bed_osptr());
+                obs_os << _opt.bam_seq_name << "\t";
+                obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
+                obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
+                obs_os << ik.length << "\t" << nonrefHapIndex << "/" << nonrefHapCount << "\t";
+                obs_os << support[nonrefHapIndex] << "\t" << support[nonrefHapCount] << "\t";
+                obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
+            }
 
             mergeIndelObservations(context,obs,indelObservations);
         }
