@@ -1,0 +1,175 @@
+\documentclass{article}
+
+\usepackage{natbib}
+
+% for equation*
+\usepackage{amsmath}
+
+% for scalebox,...
+\usepackage{graphics}
+
+% for pseudocode
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+
+
+\title{'Sequencing error estimation methods for Strelka Small Variant Caller'}
+
+
+% simple scientific notation:
+\newcommand{\e}[1]{\ensuremath{\times 10^{#1}}}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Overview}
+
+This document describes the sequencing error estimation routines built into the Strelka Small Variant Caller, collectively referred to as the pattern analyzer. These methods are not necessary part of the regular calling workflow, and include numerous experimental techniques. Any techniques run during or used to generate parameters for the standard small variant calling routines will be described in the primary Strelka methods.
+
+\section{Methods}
+
+\subsection{Pattern Analyzer overview}
+
+Sequence pattern analysis is principally focused on the characterization of sequencing errors, including SNVs and indels. We refer to "pattern" rather than error analysis, because the variant sequence patterns analyzed represent a mixture of sequencing errors with true sample variants. The pattern analyzer comprises two phases. In the first phase mapped sequencing data is analyzed to produce sequence pattern counts for various types of variant sequences and variant contexts. In the second phase these counts are analyzed under various possible variant and error models to evaluate model fit and parameterization.
+
+\subsection{Producing sequence pattern counts}
+
+Each pattern count consists of a \emph{context}, \emph{set of alleles}, and \emph{allele counts}. A context typically refers to a single locus in the genome, or a single base, but it can be further divided to indicate one strand at one site, etc. There is not a strict division between context and allele. These pattern counts are collected for many instances of the context and possibly many other contexts by analyzing any amount of mapped sequencing data. Counts are stored to a compact binary file format and can be merged across chromosomes, individual genomes, technical replicates, etc.
+
+The current implementation counts indel patterns only. In doing so the context set is factored on homopolymer length, $h$. Each base is counted as a single observation at $h=1$ and each homopolymer tract of length $X$ is counted as a single observation of $h=X$. Reference N's are not included. As an example, in the reference sequence "NACCTTGGGT", the total contexts enumerated are (9,2,1) for $h=1,2,3$. The total number of contexts are greater than the number of bases because the eligible \emph{set of alleles} is dependent on the context, a recognized model approximation. To continue the example above, in the two base "CC" homopolymer at positions 3 and 4, the $h=2$ context will be associated with all insertion alleles composed entirely of "C"'s and any 1 or 2 base deletion alleles. All other indels that are normalized to a start position at base 3 or 4 will be associated with one of the two instances of the $h=1$ context.
+
+During indel pattern matching, counts are recorded for 7 allele types, these are: (1) the reference allele (2) insertions and deletions of length 1 or 2 (3) all insertions and deletions of length greater than 3 condensed to a single "3+" length category, one each for insertions and deletions. Any complex indels represented by a combination insertion/deletion event are skipped.
+
+The counting process itself uses the same mapped read scanning and realignment strategy used by the small variant caller, with the following major differences: (1) all reads with greater than 2 indels are filtered out on input (2) there is no threshold for indel candidacy (3) no indel errors are allowed when read likelihood for each indel allele is computed. Note that item (2) above means that an alignment gap  observed once in an input read is treated as a "candidate" for the purposes of error evaluation, thus an attempt is made to realign all other reads to that indel, and in the process the likelihood of each read supporting the given indel is found. Item (3) above means that all read likelihoods for each indel allele have to be explained by basecalling errors only.
+
+Additional but less critical modifications to error counting process compared to the variant caller include suspending indel candidacy and the candidate process for any region where the pileup depth is observed to be more than 3 times the chromosome mean. When the high depth threshold is triggered the error counting process suspends the collection of any evidence. The number of contexts affected by such filtration is recorded so that it is still possible to verify the total number of contexts observed during the counting process.
+
+Note that except for the filtration of reads with many alignment gaps, input read filtration matches the germline small variant caller, including a default mapping quality filtration to remove any reads with MAPQ $<$ 20.
+
+\subsubsection{Criteria used for counting supporting evidence}
+
+Supporting evidence counts for each alleles are found by two different processes, depending on whether there is any evidence for a candidate indel at a context:
+
+At contexts where one or more non-reference candidate indels are evaluated, supporting counts are computed for each read by determining whether that read strongly supports one allele relative to the others under consideration at that context. At all other contexts a fast approximation of read support for the reference is used. Both processes are detailed below.
+
+The process of generating a "count" in support of a specific allele in contexts where non-reference candidate indels exists is as follows: For each context, all eligible alleles expressed as candidate indels (and the reference) for the context $A$ are enumerated. For each allele, the likelihood of each read, $r$, supporting the allele, $P( r \vert a ), a \in A$, has already been computed. These reads are filtered to find the subset of reads, $R_{A}$ with likelihoods computed for all members of $A$ (a read might not have sufficient breakpoint overlap to support every allele, excluding reads which support only a subset of the alleles is a known approximation of the method). Then for each read $r \in R_{A}$, the posterior support over $A$ under a uniform prior is used as the criteria to count the read as supporting the indel. Each read $r$, where $P( a \vert r ) \geq 0.999$ provides one count of support for allele $a$.  
+
+Where there are no candidate indel alleles, the simple pileup depth of the base preceding the context is recorded. For each context where a candidate allele is observed, the pileup depth of the base preceding the context has also been recorded. The counts data are stored and/or merged with these pileup depths recorded for both candidate indel and reference observations. Immediately before any inference is to be made from the counts data, the reference depth is converted into an approximate supporting read count by using the ratio of depth to supporting read counts from the same context where variants have already been observed. This scheme assumes that the counts data is being collected/merged from data with similar power to support large variant context, principally assuming a similar read length.
+
+
+\subsection{Analyzing sequence pattern counts}
+
+The counts data are analyzed to estimate indel error rates using several schemes:
+
+\subsubsection{Model 1: Simple approximated error counts}
+
+This is a very simple control model. For each context all counts data are examined. For each observation of the context, hard thresholds are used to determine if the observation is too likely to represent real sample variation to be counted towards the error estimates. Specifically, the total number of supporting counts must be $\geq 25$ and each non-reference allele count must represent 5\% or less of the total. Counts are summed for all insertion error alleles, deletion error alleles and reference alleles for each context observation meeting this criteria for the context, which is used to generate a simple insertion and deletion error rate for the context.
+
+\subsubsection{Model 2: Mixture of sample variation and independent error processes}
+
+In this case the counts data are analyzed under a model assuming a mixture of sample variants and independent insertion and deletion error processes. In the current implementation the estimation process is still isolated per context.
+
+For each context, we estimate the maximum likelihood values of up to three parameters, the insertion error rate $e_i$, the deletion error rate $e_d$, and a parameter which is meant to approximately represent the population indel mutation rate conditioned on the context $\theta_{X}$, that is, the probability of an indel difference between two chromosomes drawn from the population, conditioned on (1) the context and (2) the set of eligible indel alleles associated with the context. Thus, for instance, the value of $\theta_{X}$ estimated at a 15-mer homopolymer represents the probability that one chromosome includes an indel variant which expands or contracts the homopolymer, given a site where a 15-base homopolymer is the most common allele in the population.
+
+All count observations for the context are $D$, comprised of independent context observations $d$, where each context observation is a set of supporting counts for the set of eligible allele groups, $T$. An example eligible allele grouping is:
+
+\begin{enumerate}
+\item reference
+\item insertions of size 1
+\item insertions of size 2
+\item insertions of size 3 or more
+\item deletions of size 1
+\item deletions of size 2
+\item deletions of size 3 or more
+\end{enumerate}
+
+This example demonstrates properties of any eligible allele grouping, in that (1) the reference is always included (2) members of the set may represent a single indel allele or large set of alleles (3) all possible alternative alleles for the reference may not be represented (in this case complex insertion/deletion combinations are not considered).
+
+The likelihood function used for parameter estimation $P( D \vert \theta )$ given $\theta = {e_i,e_d,\theta_X}$ is enumerated below. Each context observation is considered independent, such that:
+
+\begin{equation}
+\label{eq:m2}
+P(D \vert \theta) = \prod_{d \in D} P(d \vert \theta)
+\end{equation}
+
+..where
+
+\begin{equation*}
+P(d \vert \theta) = \sum_{g \in G} P(d \vert g) P(g)
+\end{equation*}
+
+...given possible genotypes $G$ = {ref,het,hom,althet}.
+
+\paragraph{Genotype likelihoods}
+
+The reference genotype likelihood is:
+
+\begin{equation*}
+P ( d \vert g_{ref} ) = \prod_{y \in Y} r(y)^{c(y)}
+\end{equation*}
+
+...where $c(y)$ is the supporting observation count of allele $y$ and $r(y)$ is the error rate or $y$, set to $e_i$ if $y$ is an insertion allele type, $e_d$ if $y$ is a deletion allele type, and $(1-e_i) (1-e_d)$ for the reference allele type.
+
+The heterozygous and homozygous genotype likelihoods are approximated by finding the most likely (by number of supporting counts) non-reference indel allele and using that as the only candidate variant allele, $y_{var}$.
+
+The heterozygous likelihood is:
+
+\begin{equation*}
+P (d \vert g_{het}) = 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+\end{equation*}
+
+The homozygous likelihood is:
+
+\begin{equation*}
+P (d \vert g_{hom}) = (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+\end{equation*}
+
+...where $e_{ref}$ is set to a constant value of 0.01.
+
+Finally, because observed $\theta_X$ values can become very high for long homopolymers, hetalt variants start to become important enough to include in the model. Just as with heterozygous variants, the hetalt state is approximated by finding the top two most likely non-reference indel alleles, $y_{var}$, $y_{var2}$ and computing the likelihood with these values fixed. The likelihood of this genotype is:
+
+\begin{equation*}
+P (d \vert g_{hetalt}) = 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},y_{var2},ref\}} r(y)^{c(y)}
+\end{equation*}
+
+
+\paragraph{Genotype priors}
+
+The genotype priors $P(G)$ describe above are a function of $\theta_X$, with
+
+\begin{eqnarray*}
+P(het) = \theta_X \\
+P(hom) = 2\theta_X \\
+P(hetalt) = {\theta_{X}}^2
+\end{eqnarray*}
+
+
+
+\subsubsection{Model 3: Mixture of sample variation and mixture error processes}
+
+Model 3 is motivated as follows: the indel error rates are understood to be overdispersed, ie. the error process is poorly modeled by an error process which is applied independently to each read, at least given current context/allele set segmentation.
+
+This leads to two related questions: (1) what is the best representation of the indel error process that can be found (per parameter... etc) (2) what is the best representation that can also be implemented in the variant caller.
+
+Model 3 focuses a bit more on the later question - it represents the indel error with each indel locus (or context instance), having two states, noisy and not-noisy. Every locus as $P(noisy)$ chance of being a high noise locus. A noisy locus has a free parameter set exactly as represented in Model 2 above. A \emph{not-noisy} locus has all indel errors fixed to \e{-8}.
+
+Model 3 is thus very similar to Model 2 above, with the simple modification of equation \ref{eq:m2} above to:
+
+\begin{equation}
+P(d \vert \theta) = P(noisy) P (d \vert \theta_{noise}) + (1-P(noisy)) P (d \vert \theta_{not-noisy})
+\end{equation}
+
+...where $P(noisy)$ is the only new free model parameter compared to Model 2.
+
+
+
+
+
+
+
+\bibliography{methods}
+
+\end{document}
