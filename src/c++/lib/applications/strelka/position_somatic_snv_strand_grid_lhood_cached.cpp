@@ -115,7 +115,7 @@ get_high_low_het_ratio_lhood_cached(
 
         const uint8_t obs_id(bc.base_id);
 
-        if(obs_id == ref_gt)    // match
+        if (obs_id == ref_gt)   // match
         {
             *lhood_high += cv.val[0];
             *lhood_low += cv.val[1];

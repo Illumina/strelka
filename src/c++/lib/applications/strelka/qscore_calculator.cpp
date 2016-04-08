@@ -41,7 +41,7 @@
 
 void
 calculate_bare_lnprior(const double theta,
-        blt_float_t *bare_lnprior)
+                       blt_float_t* bare_lnprior)
 {
     bare_lnprior[SOMATIC_DIGT::REF] = (blt_float_t) log1p_switch(-(3.*theta)/2.);
     bare_lnprior[SOMATIC_DIGT::HOM] = (blt_float_t) std::log(theta/2.);
@@ -54,16 +54,16 @@ static const blt_float_t log_error_mod = -std::log(static_cast<double>(DIGT_GRID
 
 void
 calculate_result_set_grid(
-        const blt_float_t contam_tolerance,
-        const blt_float_t ln_se_rate,   // ln (shared_error_rate)
-        const blt_float_t ln_cse_rate,  // ln (1 - shared_error_rate)
-        const blt_float_t* normal_lhood,
-        const blt_float_t* tumor_lhood,
-        const blt_float_t* bare_lnprior,
-        const blt_float_t lnmatch,
-        const blt_float_t lnmismatch,
-        result_set& rs
-        )
+    const blt_float_t contam_tolerance,
+    const blt_float_t ln_se_rate,   // ln (shared_error_rate)
+    const blt_float_t ln_cse_rate,  // ln (1 - shared_error_rate)
+    const blt_float_t* normal_lhood,
+    const blt_float_t* tumor_lhood,
+    const blt_float_t* bare_lnprior,
+    const blt_float_t lnmatch,
+    const blt_float_t lnmismatch,
+    result_set& rs
+)
 {
     double log_post_prob[SOMATIC_DIGT::SIZE][SOMATIC_STATE::SIZE];
     double max_log_prob = neg_inf;
@@ -92,30 +92,30 @@ calculate_result_set_grid(
 
                     if (tgt == 0)    // non-somatic
                     {
-                       if (normal_freq_index != tumor_freq_index) continue; // P(fn != ft | Gn = Gt) = 0
+                        if (normal_freq_index != tumor_freq_index) continue; // P(fn != ft | Gn = Gt) = 0
 
-                       lprior_freq = (normal_freq_index == ngt) ? ln_cse_rate : ln_se_rate+log_error_mod;
+                        lprior_freq = (normal_freq_index == ngt) ? ln_cse_rate : ln_se_rate+log_error_mod;
                     }
                     else    // somatic
                     {
-                       if (normal_freq_index == tumor_freq_index) continue; // P(fn = ft | Gn != Gt) = 0
-                       if (ngt != SOMATIC_DIGT::REF)
-                       {
-                           if (normal_freq_index != ngt)
-                               continue;
-                           lprior_freq = log_error_mod + ln_cse_rate;
-                       }
-                       else
-                       {
-                           if (normal_freq_index == ngt || (consider_norm_contam && normal_freq_index == SOMATIC_DIGT::SIZE))
-                               lprior_freq = log_error_mod + ln_one_half;
-                           else
-                               continue;
-                       }
+                        if (normal_freq_index == tumor_freq_index) continue; // P(fn = ft | Gn != Gt) = 0
+                        if (ngt != SOMATIC_DIGT::REF)
+                        {
+                            if (normal_freq_index != ngt)
+                                continue;
+                            lprior_freq = log_error_mod + ln_cse_rate;
+                        }
+                        else
+                        {
+                            if (normal_freq_index == ngt || (consider_norm_contam && normal_freq_index == SOMATIC_DIGT::SIZE))
+                                lprior_freq = log_error_mod + ln_one_half;
+                            else
+                                continue;
+                        }
                     }
                     double lsum = lprior_freq + normal_lhood[normal_freq_index] + tumor_lhood[tumor_freq_index];
                     log_sum[index++] = lsum;
-                    if(lsum > max_log_sum) max_log_sum = lsum;
+                    if (lsum > max_log_sum) max_log_sum = lsum;
                 }
             }
 
@@ -135,7 +135,7 @@ calculate_result_set_grid(
             // = max_log_sum + log(exp(log_sum[0]-max_log_sum) + ...
             log_post_prob[ngt][tgt] = log_genotype_prior + max_log_sum + std::log(sum);
 
-            if(log_post_prob[ngt][tgt] > max_log_prob)
+            if (log_post_prob[ngt][tgt] > max_log_prob)
             {
                 max_log_prob = log_post_prob[ngt][tgt];
                 rs.max_gt = DDIGT::get_state(ngt, tgt);
@@ -165,7 +165,7 @@ calculate_result_set_grid(
         for (unsigned tgt(0); tgt<SOMATIC_STATE::SIZE; ++tgt)
         {
             post_prob[ngt][tgt] = std::exp(log_post_prob[ngt][tgt] - max_log_prob - log_sum_prob);
-            if(tgt == 0)    // Non-somatic
+            if (tgt == 0)   // Non-somatic
             {
                 nonsom_prob += post_prob[ngt][tgt];
             }

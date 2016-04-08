@@ -120,14 +120,14 @@ get_state(
 
 void
 write_indel_state(const DDIGT::index_t dgt,
-            std::ostream& os);
+                  std::ostream& os);
 
 void
 write_snv_state(const DDIGT::index_t dgt,
-            const char ref_base,
-            const char normal_alt_base,
-            const char tumor_alt_base,
-            std::ostream& os);
+                const char ref_base,
+                const char normal_alt_base,
+                const char tumor_alt_base,
+                std::ostream& os);
 
 inline
 void

@@ -43,11 +43,11 @@
 
 namespace INPUT_TYPE
 {
-    enum index_t
-    {
-        CANDIDATE_INDELS,
-        FORCED_GT_VARIANTS,
-    };
+enum index_t
+{
+    CANDIDATE_INDELS,
+    FORCED_GT_VARIANTS,
+};
 }
 
 

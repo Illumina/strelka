@@ -89,11 +89,11 @@ get_strelka_option_parser(
      po::value(&opt.indel_somatic_normal_noise_rate),
      "Expected rate of 'noise' in the normal sample at somatic indels -- this allows for some degree of tumor contamination in the normal sample for raw somatic Q-scores (default: use shared site error instead)")
     ("ssnv-contam-tolerance",
-      po::value(&opt.ssnv_contam_tolerance)->default_value(opt.ssnv_contam_tolerance),
-      "Tolerance of tumor contamination in the normal sample for SNVs (allowed range: [0-1], default: 0.15).")
-     ("indel-contam-tolerance",
-      po::value(&opt.indel_contam_tolerance)->default_value(opt.indel_contam_tolerance),
-      "Tolerance of tumor contamination in the normal sample for indels (allowed range: [0-1], default: 0.15).")
+     po::value(&opt.ssnv_contam_tolerance)->default_value(opt.ssnv_contam_tolerance),
+     "Tolerance of tumor contamination in the normal sample for SNVs (allowed range: [0-1], default: 0.15).")
+    ("indel-contam-tolerance",
+     po::value(&opt.indel_contam_tolerance)->default_value(opt.indel_contam_tolerance),
+     "Tolerance of tumor contamination in the normal sample for indels (allowed range: [0-1], default: 0.15).")
     ("somatic-callable-region-file",
      po::value(&opt.somatic_callable_filename),
      "Output a bed file of regions which are confidently somatic or non-somatic for SNVs at allele frequencies of 10% or greater.")

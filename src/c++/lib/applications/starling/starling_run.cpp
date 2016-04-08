@@ -44,13 +44,13 @@
 
 namespace INPUT_TYPE
 {
-    enum index_t
-    {
-        CANDIDATE_INDELS,
-        FORCED_GT_VARIANTS,
-        PLOIDY_REGION,
-        NOCOMPRESS_REGION
-    };
+enum index_t
+{
+    CANDIDATE_INDELS,
+    FORCED_GT_VARIANTS,
+    PLOIDY_REGION,
+    NOCOMPRESS_REGION
+};
 }
 
 

@@ -58,8 +58,8 @@
 //
 somatic_indel_caller_grid::
 somatic_indel_caller_grid(const strelka_options& opt)
-: _ln_som_match(log1p_switch(-opt.somatic_indel_rate)),
-  _ln_som_mismatch(std::log(opt.somatic_indel_rate))
+    : _ln_som_match(log1p_switch(-opt.somatic_indel_rate)),
+      _ln_som_mismatch(std::log(opt.somatic_indel_rate))
 {
     calculate_bare_lnprior(opt.bindel_diploid_theta, _bare_lnprior);
 }
@@ -246,7 +246,7 @@ get_somatic_indel(const strelka_options& opt,
                                                 is_normal_het_bias,normal_het_bias,
                                                 is_include_tier2,is_use_alt_indel,
                                                 normal_lhood
-                                                );
+                                               );
         indel_digt_caller::get_indel_digt_lhood(opt,dopt,tumor_opt,
                                                 indel_error_prob,ref_error_prob,ik,tumor_id,
                                                 is_tumor_het_bias,tumor_het_bias,
@@ -281,16 +281,16 @@ get_somatic_indel(const strelka_options& opt,
         const double ln_csie_rate(log1p_switch(-sie_rate));
 
         calculate_result_set_grid(
-                (float)opt.indel_contam_tolerance,
-                (float)ln_sie_rate,
-                (float)ln_csie_rate,
-                normal_lhood_float,
-                tumor_lhood_float,
-                _bare_lnprior,
-                _ln_som_match,
-                _ln_som_mismatch,
-                tier_rs[i]
-                );
+            (float)opt.indel_contam_tolerance,
+            (float)ln_sie_rate,
+            (float)ln_csie_rate,
+            normal_lhood_float,
+            tumor_lhood_float,
+            _bare_lnprior,
+            _ln_som_match,
+            _ln_som_mismatch,
+            tier_rs[i]
+        );
     }
 
     if (! sindel.is_forced_output)

@@ -37,18 +37,18 @@
 // calculates diploid prior probabilities
 void
 calculate_bare_lnprior(const double theta,
-        blt_float_t *bare_lnprior);
+                       blt_float_t* bare_lnprior);
 
 // calculates qscores
 void
 calculate_result_set_grid(
-        const blt_float_t ssnv_freq_ratio,
-        const blt_float_t ln_se_rate,   // ln (shared_error_rate)
-        const blt_float_t ln_cse_rate,  // ln (1 - shared_error_rate)
-        const blt_float_t* normal_lhood,
-        const blt_float_t* tumor_lhood,
-        const blt_float_t* bare_lnprior,
-        const blt_float_t lnmatch,
-        const blt_float_t lnmismatch,
-        result_set& rs
-        );
+    const blt_float_t ssnv_freq_ratio,
+    const blt_float_t ln_se_rate,   // ln (shared_error_rate)
+    const blt_float_t ln_cse_rate,  // ln (1 - shared_error_rate)
+    const blt_float_t* normal_lhood,
+    const blt_float_t* tumor_lhood,
+    const blt_float_t* bare_lnprior,
+    const blt_float_t lnmatch,
+    const blt_float_t lnmismatch,
+    result_set& rs
+);

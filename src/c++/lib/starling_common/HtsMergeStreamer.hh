@@ -37,38 +37,47 @@
 
 namespace HTS_TYPE
 {
-    enum index_t
-    {
-        NONE,
-        BAM,
-        VCF,
-        BED
-    };
+enum index_t
+{
+    NONE,
+    BAM,
+    VCF,
+    BED
+};
 
-    inline
-    const char*
-    label(const index_t i)
+inline
+const char*
+label(const index_t i)
+{
+    switch (i)
     {
-        switch (i)
-        {
-        case NONE :
-            return "NONE";
-        case BAM :
-            return "BAM/CRAM";
-        case VCF :
-            return "VCF";
-        case BED :
-            return "BED";
-        default :
-            assert(false && "Unrecognized hts file type");
-            return nullptr;
-        }
+    case NONE :
+        return "NONE";
+    case BAM :
+        return "BAM/CRAM";
+    case VCF :
+        return "VCF";
+    case BED :
+        return "BED";
+    default :
+        assert(false && "Unrecognized hts file type");
+        return nullptr;
     }
+}
 
-    template <typename T> index_t getStreamType();
-    template <> inline index_t getStreamType<bam_streamer>() { return BAM; }
-    template <> inline index_t getStreamType<vcf_streamer>() { return VCF; }
-    template <> inline index_t getStreamType<bed_streamer>() { return BED; }
+template <typename T> index_t getStreamType();
+template <> inline index_t getStreamType<bam_streamer>()
+{
+    return BAM;
+}
+template <> inline index_t getStreamType<vcf_streamer>()
+{
+    return VCF;
+}
+template <> inline index_t getStreamType<bed_streamer>()
+{
+    return BED;
+}
 }
 
 
@@ -211,9 +220,9 @@ private:
             const HTS_TYPE::index_t initHtsType,
             const unsigned initUserIndex,
             const unsigned initHtsTypeIndex)
-        : htsType(initHtsType)
-        , userIndex(initUserIndex)
-        , htsTypeIndex(initHtsTypeIndex)
+            : htsType(initHtsType)
+            , userIndex(initUserIndex)
+            , htsTypeIndex(initHtsTypeIndex)
         {}
 
         HTS_TYPE::index_t htsType = HTS_TYPE::NONE;

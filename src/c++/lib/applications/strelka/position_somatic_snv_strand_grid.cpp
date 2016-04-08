@@ -41,10 +41,10 @@
 
 somatic_snv_caller_strand_grid::
 somatic_snv_caller_strand_grid(const strelka_options& opt)
-: _contam_tolerance(opt.ssnv_contam_tolerance),
-  _ln_csse_rate (log1p_switch(-opt.shared_site_error_rate)),
-  _ln_som_match(log1p_switch(-opt.somatic_snv_rate)),
-  _ln_som_mismatch(std::log(opt.somatic_snv_rate))
+    : _contam_tolerance(opt.ssnv_contam_tolerance),
+      _ln_csse_rate (log1p_switch(-opt.shared_site_error_rate)),
+      _ln_som_match(log1p_switch(-opt.somatic_snv_rate)),
+      _ln_som_mismatch(std::log(opt.somatic_snv_rate))
 {
     calculate_bare_lnprior(opt.bsnp_diploid_theta, _bare_lnprior);
 
@@ -107,30 +107,30 @@ gvcf_nonsomatic_gvcf_prior(
 static
 void
 calculate_result_set_grid(
-        const bool isComputeNonSomatic,
-        const blt_float_t ssnv_contam_tolerance,
-        const blt_float_t ln_sse_rate,
-        const blt_float_t ln_csse_rate,
-        const blt_float_t* normal_lhood,
-        const blt_float_t* tumor_lhood,
-        const blt_float_t* bare_lnprior_normal,
-        const blt_float_t lnmatch,
-        const blt_float_t lnmismatch,
-        const bool is_forced_output,
-        snv_result_set& rs
-        )
+    const bool isComputeNonSomatic,
+    const blt_float_t ssnv_contam_tolerance,
+    const blt_float_t ln_sse_rate,
+    const blt_float_t ln_csse_rate,
+    const blt_float_t* normal_lhood,
+    const blt_float_t* tumor_lhood,
+    const blt_float_t* bare_lnprior_normal,
+    const blt_float_t lnmatch,
+    const blt_float_t lnmismatch,
+    const bool is_forced_output,
+    snv_result_set& rs
+)
 {
 
     calculate_result_set_grid(
-            ssnv_contam_tolerance,
-            ln_sse_rate,   // ln (shared_error_rate)
-            ln_csse_rate,  // ln (1 - shared_error_rate)
-            normal_lhood,
-            tumor_lhood,
-            bare_lnprior_normal,
-            lnmatch,
-            lnmismatch,
-            rs);
+        ssnv_contam_tolerance,
+        ln_sse_rate,   // ln (shared_error_rate)
+        ln_csse_rate,  // ln (1 - shared_error_rate)
+        normal_lhood,
+        tumor_lhood,
+        bare_lnprior_normal,
+        lnmatch,
+        lnmismatch,
+        rs);
 
     if ((! (is_forced_output || isComputeNonSomatic)) && (0==rs.qphred)) return;
 

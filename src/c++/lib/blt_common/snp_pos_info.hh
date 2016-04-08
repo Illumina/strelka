@@ -198,7 +198,7 @@ struct snp_pos_info
         for (const base_call& tbc : calls)
         {
             const uint8_t obs_id(tbc.base_id);
-            if(obs_id == ref_gt || obs_id == BASE_ID::ANY) continue;
+            if (obs_id == ref_gt || obs_id == BASE_ID::ANY) continue;
             ++alt_count[obs_id];
         }
         unsigned alt_id = ref_gt;
@@ -207,7 +207,7 @@ struct snp_pos_info
         {
             if (alt_count[base_id] > max_count)
             {
-                if(base_id == ref_gt) continue;
+                if (base_id == ref_gt) continue;
                 max_count = alt_count[base_id];
                 alt_id = base_id;
             }

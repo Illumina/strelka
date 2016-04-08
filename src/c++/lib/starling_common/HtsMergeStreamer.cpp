@@ -69,7 +69,7 @@ queueItem(
             nextItemPos = (bs.get_record_ptr()->pos() - 1);
         }
     }
-    else if(HTS_TYPE::VCF == htsType)
+    else if (HTS_TYPE::VCF == htsType)
     {
         vcf_streamer& vs(getHtsStreamer(orderIndex, _data._vcf));
         if (vs.next())
@@ -77,7 +77,7 @@ queueItem(
             nextItemPos = (vs.get_record_ptr()->pos - 1);
         }
     }
-    else if(HTS_TYPE::BED == htsType)
+    else if (HTS_TYPE::BED == htsType)
     {
         bed_streamer& bes(getHtsStreamer(orderIndex, _data._bed));
         if (bes.next())
@@ -117,7 +117,8 @@ next()
                 << (getCurrentPos()+1) << "/" << HTS_TYPE::label(htsType) << "/" << getCurrentIndex()
                 << " follows pos/type/index: "
                 << (last.pos+1) << "/" << HTS_TYPE::label(getHtsType(last.order)) << "/" << getUserIndex(last.order) << "\n";
-            BOOST_THROW_EXCEPTION(LogicException(oss.str()));        }
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
     }
     else
     {

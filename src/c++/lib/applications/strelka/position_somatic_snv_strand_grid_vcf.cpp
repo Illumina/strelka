@@ -378,10 +378,10 @@ write_vcf_somatic_snv_genotype_strand_grid(
     os << ";SGT=";
 
     DDIGT::write_snv_state(static_cast<DDIGT::index_t>(rs.max_gt),
-                            ref_base,
-                            id_to_base(rs.normal_alt_id),
-                            id_to_base(rs.tumor_alt_id),
-                            os);
+                           ref_base,
+                           id_to_base(rs.normal_alt_id),
+                           id_to_base(rs.tumor_alt_id),
+                           os);
 
     {
         const StreamScoper ss(os);

@@ -413,8 +413,8 @@ process_genomic_read(
 static
 std::pair<unsigned,unsigned>
 common_xfix_length(
-        const std::string& s1,
-        const std::string& s2)
+    const std::string& s1,
+    const std::string& s2)
 {
     const unsigned s1s(s1.size());
     const unsigned s2s(s2.size());
@@ -510,7 +510,7 @@ process_candidate_indel(
     {
         indel_observation obs;
         const bool isAlleleConverted =
-                convert_vcfrecord_to_indel_allele(max_indel_size,vcf_indel,altIndex,obs);
+            convert_vcfrecord_to_indel_allele(max_indel_size,vcf_indel,altIndex,obs);
         if (! isAlleleConverted) continue;
 
         obs.data.is_external_candidate = true;

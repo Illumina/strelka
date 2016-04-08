@@ -45,7 +45,7 @@ namespace DDIGT
 
 void
 write_indel_state(const DDIGT::index_t dgt,
-            std::ostream& os)
+                  std::ostream& os)
 {
     unsigned normal_gt;
     unsigned tumor_gt;
@@ -69,9 +69,9 @@ write_indel_state(const DDIGT::index_t dgt,
 static
 void
 write_diploid_genotype(
-        const char base1,
-        const char base2,
-        std::ostream& os)
+    const char base1,
+    const char base2,
+    std::ostream& os)
 {
     char diploid_genotype[3];
     if (base1 < base2)
@@ -90,16 +90,17 @@ write_diploid_genotype(
 
 void
 write_snv_state(const DDIGT::index_t dgt,
-            const char ref_base,
-            const char normal_alt_base,
-            const char tumor_alt_base,
-            std::ostream& os)
+                const char ref_base,
+                const char normal_alt_base,
+                const char tumor_alt_base,
+                std::ostream& os)
 {
     unsigned normal_gt;
     unsigned tumor_gt;
     get_digt_states(dgt,normal_gt,tumor_gt);
 
-    switch (normal_gt) {
+    switch (normal_gt)
+    {
     case SOMATIC_DIGT::REF:
         write_diploid_genotype(ref_base, ref_base, os);
         os << "->";

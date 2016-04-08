@@ -86,7 +86,7 @@ struct strelka_options : public starling_base_options
     bool
     is_somatic_callable() const
     {
-       return (! somatic_callable_filename.empty());
+        return (! somatic_callable_filename.empty());
     }
 
     std::string tumor_bam_filename;
