@@ -26,6 +26,16 @@
 #include "htsapi/bam_util.hh"
 
 
+//#define DEBUG_NORM_TEST
+
+
+#ifdef DEBUG_NORM_TEST
+#include "blt_util/log.hh"
+#include <iostream>
+#endif
+
+
+
 BOOST_AUTO_TEST_SUITE( normalizeAlignment_test )
 
 
@@ -39,6 +49,9 @@ testNormalizeAlignment(
     const pos_t expectPos,
     const char* expectCigar)
 {
+#ifdef DEBUG_NORM_TEST
+    log_os << "input ref: " << refSeq << " read: " << readSeq << " pos: " << readPos << " cigar: " << cigar << "\n";
+#endif
     alignment al;
     al.pos=readPos;
     cigar_to_apath(cigar,al.path);
@@ -47,6 +60,10 @@ testNormalizeAlignment(
 
     const bool isChanged(normalizeAlignment(refBamSeq,readBamSeq,al));
 
+#ifdef DEBUG_NORM_TEST
+    log_os << "output pos: " << al.pos << " cigar: " << al.path << "\n";
+#endif
+
     BOOST_REQUIRE(isChanged);
     BOOST_REQUIRE_EQUAL(al.pos, expectPos);
     BOOST_REQUIRE_EQUAL(apath_to_cigar(al.path),std::string(expectCigar));
@@ -54,22 +71,25 @@ testNormalizeAlignment(
 
 BOOST_AUTO_TEST_CASE( test_normalizeAlignment )
 {
-    // basic left-shifting:
+    // basic left-shifting for hpols:
     testNormalizeAlignment("ACGTAAAATGTA","CGTAAATGT",1,"4M1D5M",1,"3M1D6M");
     testNormalizeAlignment("ACGTAAAATGTA","CGTAAAAATGT",1,"4M1I6M",1,"3M1I7M");
     testNormalizeAlignment("ACGTAAAATGTA","CGTAAAAAATGT",1,"3M1I2M1I5M",1,"3M2I7M");
     testNormalizeAlignment("ACGTAAAATGTA","CGTAATGT",1,"3M1D2M1D3M",1,"3M2D5M");
 
+    // basic left-shifting for dinucs:
     testNormalizeAlignment("ACGTACACACACTGTA","CGTACACACTGT",1,"5M2D7M",1,"3M2D9M");
     testNormalizeAlignment("ACGTACACACACTGTA","CGTACACACACACTGT",1,"5M2I9M",1,"3M2I11M");
 
     // insert/delete collapsing
     testNormalizeAlignment("ACGTAAAATGTA","CGTAAAATGT",1,"4M1I1D5M",1,"10M");
-    testNormalizeAlignment("ACGTAAAATGTA","CGTAAAATGT",1,"4M1I2D4M",1,"3M1D6M");
+    testNormalizeAlignment("ACGTAAAATGTA","CGTAAATGT",1,"4M1I2D4M",1,"3M1D6M");
     testNormalizeAlignment("ACGTAAAATGTA","CGTAAAAATGTA",1,"4M2I1D6M",1,"3M1I8M");
 
     // left-shift, then collapse:
     testNormalizeAlignment("ACGTAAAATGTA","CGTAAAAATG",1,"4M2I1M1D3M",1,"3M1I6M");
+    // collapse, then left-shift
+    testNormalizeAlignment("ATTGC","ATGC",0,"2M1I2D1M",0,"1M1D3M");
 
     // left-edge behavior
     testNormalizeAlignment("AAAAAAATGTA","AAAAAATGT",2,"3M1I5M",1,"9M");
@@ -90,6 +110,17 @@ BOOST_AUTO_TEST_CASE( test_normalizeAlignment )
     // rna:
     testNormalizeAlignment("ACGTAAAATGTA","CGATGT",1,"2M3N1M1D4M",1,"2M3N1D5M");
     testNormalizeAlignment("ACGTAAAATGTA","CGAAATGT",1,"2M3N1M1I5M",1,"2M3N1I6M");
+
+    // left-shifting policy that reduces mismatches:
+    //
+    // This example case suggested in review by A Halpern in review.
+    // The original left design would left shift only if the mismatch
+    // count did not change, but it seems reasonable that left-shifting
+    // if the mistmatch count does not get worse is reasonable, and
+    // consistent with the "collapsing of reference matching 1I1D patterns
+    // as well (which is also a match-increasing transformation).
+    //
+    testNormalizeAlignment("TACAAAT","TAAAAT",0,"4M1D2M",0,"2M1D4M");
 }
 
 

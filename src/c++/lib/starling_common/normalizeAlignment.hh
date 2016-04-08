@@ -29,22 +29,30 @@
 #include "htsapi/bam_record.hh"
 
 
-/// Normalize alignment so that indels are left-shifted and reduced
+/// Normalize alignment so that indels are left-shifted and simplified.
 ///
-/// Indels are left-shifted in such a way that the matching mismatch count is preserved. Multiple indels can
-/// potentially be left-shifted into each other and joined
+/// Indels are left-shifted in such a way that the match count of the alignment
+/// does not get worse with each 1-base left-shift operation.
 ///
-/// Indels are 'reduced' by identifying any combined insert/delete indels which can be matched to reference
+/// Multiple indels can potentially be left-shifted to become adjacent. If this
+/// happens the indels will be merged into one larger indel.
 ///
-/// Indels at or moved to the edge of an alignment are collapsed if possible, for indels on the left edge
-/// of the alignment this could change the alignment position
+/// Indels are 'simplified' by identifying any portion of a set of adjacent
+/// insert/delete edits which can be matched to reference. For example:
+/// REF: ACTGC, READ: ACGC, CIGAR: 2M1I2D1M
+/// Should collapse to CIGAR: 2M1D2M
+///
+/// Indels at or left-shifted to the edge of an alignment are simplified if possible.
+/// For indels on the left edge of the alignment this could change the alignment
+/// position.
 ///
 /// All hard and soft clipping at the alignment edge is preserved.
 ///
-/// Note that any BAM CIGAR seq-match/mismatch states ("=","X") will be collapsed to regular match ("M") states
-/// in regions surrounding normalized indels
+/// Note that any BAM CIGAR seq-match/mismatch states ("=","X") will be collapsed to
+/// regular match ("M") states in regions surrounding normalized indels.
 ///
 /// \returns true if the alignment is changed
+///
 bool
 normalizeAlignment(
     const bam_seq_base& refSeq,
@@ -54,6 +62,7 @@ normalizeAlignment(
 /// execute the above normalizeAlignment transformation directly on a bam_record
 ///
 /// \returns true if the alignment is changed
+///
 bool
 normalizeBamRecordAlignment(
     const reference_contig_segment& refSeq,

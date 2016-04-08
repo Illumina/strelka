@@ -31,6 +31,14 @@
 
 #include <cassert>
 
+//#define DEBUG_NORM_ALIGN
+
+
+#ifdef DEBUG_NORM_ALIGN
+#include "blt_util/log.hh"
+#include <iostream>
+#endif
+
 
 
 struct AlignmentInfo
@@ -49,10 +57,25 @@ struct AlignmentInfo
     bool isChanged = false;
 };
 
+#ifdef DEBUG_NORM_ALIGN
+static
+std::ostream&
+operator<<(std::ostream& os, const AlignmentInfo& ai)
+{
+    os << "AI"
+       << " refpos: " << ai.refPos << "readPos: " << ai.readPos
+       << " MSegs: " << ai.startPriorMatchSegment << "," << ai.endPriorMatchSegment
+       << " ISegs: " << ai.startPriorIndelSegment << "," << ai.endPriorIndelSegment
+       << " prM " << ai.priorMatchLength
+       << " prD " << ai.priorDeleteLength
+       << " prI " << ai.priorInsertLength;
+    return os;
+}
+#endif
 
 
-/// left-shift the current indel as detailed by the
-/// contextual position values above
+
+/// return the number of positions the current indel (as describe in ai), can be left-shifted.
 static
 pos_t
 findLeftShift(
@@ -75,7 +98,7 @@ findLeftShift(
         assert((refRightPos-shift) >= 0);
         const bool isLeftMatch(readSeq.get_char(readLeftPos-shift)==refSeq.get_char(refLeftPos-shift));
         const bool isRightMatch(readSeq.get_char(readRightPos-shift)==refSeq.get_char(refRightPos-shift));
-        if (isLeftMatch!=isRightMatch) break;
+        if ((!isRightMatch) && isLeftMatch) break;
         shift++;
     }
 
@@ -83,7 +106,12 @@ findLeftShift(
 }
 
 
-
+/// left shift a single indel (as defined in ai)
+///
+/// this calls out to findLeftShift to tell us how much left-shift is possible, if
+/// this value is non-zero the rest of the function updates the alignment in al to
+/// reflect the left-shifted value.
+///
 static
 void
 leftShiftIndel(
@@ -96,6 +124,14 @@ leftShiftIndel(
     using namespace ALIGNPATH;
 
     const pos_t shiftSize(findLeftShift(refSeq,readSeq,ai));
+#ifdef DEBUG_NORM_ALIGN
+    log_os << "FLS: ref: " << refSeq << "\n"
+           << "FLS: read: " << readSeq << "\n"
+           << "FLS: al: " << al << "\n"
+           << "FLS: ai: " << ai << "\n"
+           << "FLS: shift: " << shiftSize << "\n";
+#endif
+
     if (shiftSize <= 0) return;
 
     ai.isChanged=true;
@@ -111,10 +147,12 @@ leftShiftIndel(
 
 
 
-/// Indicate how much of the inserted sequence from a combined insert/delete can be matched back to the reference
-/// on the left or right side.
+/// Find how much of the inserted sequence from a combined insert/delete
+/// can be matched back to the reference on the left or right side.
 ///
-/// give priority to the right side in cases that could be assigned to either, to be consistent with left-shifting
+/// If the whole insert can be matched back to the reference, return this
+/// value as a right-side collapse only -- this way the indel will be collapsed
+/// into a left-shifted format.
 ///
 static
 void
@@ -154,7 +192,16 @@ findInsertCollapse(
 }
 
 
-
+/// Detect if the current indel (described in ai) can be collapsed.
+/// If so, update the alignment in al to reflect this
+///
+/// A collapse example is:
+/// REF:   ACTGC
+/// READ:  ACGC
+/// CIGAR: 2M1I2D1M
+///
+/// Should collapse to CIGAR: 2M1D2M
+///
 static
 void
 collapseInsert(
@@ -205,6 +252,9 @@ collapseInsert(
 }
 
 
+
+/// special handler to detect and simplify the alignment of any indels
+/// on the left-edge of the alignment
 static
 void
 leftEdgeIndelCollapse(
@@ -263,6 +313,8 @@ leftEdgeIndelCollapse(
 
 
 
+/// special handler to detect and simplify the alignment of any indels
+/// on the right-edge of the alignment
 static
 void
 rightEdgeIndelCollapse(
@@ -317,267 +369,300 @@ rightEdgeIndelCollapse(
 
 
 
+/// collapse all non-edge indels in alignment al
+static
+bool
+collapseAlignmentIndels(
+    const bam_seq_base& refSeq,
+    const bam_seq_base& readSeq,
+    alignment& al)
+{
+    using namespace ALIGNPATH;
+    const unsigned as(al.path.size());
+
+    AlignmentInfo ai;
+    bool isInsideIndel(false);
+
+    ai.refPos = al.pos;
+
+    for (unsigned segmentIndex(0); segmentIndex<as; segmentIndex++)
+    {
+        auto& ps(al.path[segmentIndex]);
+        if (ps.length == 0) continue;
+
+        if (is_segment_align_match(ps.type))
+        {
+            if (ai.priorMatchLength>0)
+            {
+                if (isInsideIndel)
+                {
+                    if ((ai.priorDeleteLength>0) && (ai.priorInsertLength>0))
+                    {
+                        // collapse matching insertion sequence
+                        collapseInsert(refSeq,readSeq,segmentIndex,al,ai);
+                    }
+
+                    ai.priorMatchLength=0;
+                }
+            }
+
+            if (ai.priorMatchLength==0)
+            {
+                ai.startPriorMatchSegment=segmentIndex;
+            }
+            isInsideIndel=false;
+            ai.priorMatchLength += ps.length;
+            ai.endPriorMatchSegment = segmentIndex+1;
+        }
+        else if ((ps.type == DELETE) || (ps.type == INSERT))
+        {
+            if (! isInsideIndel)
+            {
+                isInsideIndel=true;
+                ai.priorDeleteLength=0;
+                ai.priorInsertLength=0;
+                ai.startPriorIndelSegment=segmentIndex;
+            }
+            ai.endPriorIndelSegment = segmentIndex+1;
+
+            if     (ps.type == DELETE)
+            {
+                ai.priorDeleteLength += ps.length;
+            }
+            else if (ps.type == INSERT)
+            {
+                ai.priorInsertLength += ps.length;
+            }
+        }
+        else
+        {
+            isInsideIndel=false;
+            ai.priorMatchLength=0;
+        }
+
+        if (is_segment_type_read_length(ps.type))
+        {
+            ai.readPos += ps.length;
+        }
+        if (is_segment_type_ref_length(ps.type))
+        {
+            ai.refPos += ps.length;
+        }
+    }
+    return ai.isChanged;
+}
+
+
+/// left-shift all indels in alignment al
+static
+bool
+leftShiftAlignmentIndels(
+    const bam_seq_base& refSeq,
+    const bam_seq_base& readSeq,
+    alignment& al)
+{
+    using namespace ALIGNPATH;
+    const unsigned as(al.path.size());
+
+    AlignmentInfo ai;
+    bool isInsideIndel(false);
+    ai.refPos = al.pos;
+
+    for (unsigned segmentIndex(0); segmentIndex<as; segmentIndex++)
+    {
+        auto& ps(al.path[segmentIndex]);
+
+        if (is_segment_align_match(ps.type))
+        {
+            if (ai.priorMatchLength>0)
+            {
+                if (isInsideIndel)
+                {
+                    leftShiftIndel(refSeq,readSeq,segmentIndex,al,ai);
+
+                    ai.priorMatchLength=0;
+                }
+            }
+
+            if (ai.priorMatchLength==0)
+            {
+                ai.startPriorMatchSegment=segmentIndex;
+            }
+            isInsideIndel=false;
+            ai.priorMatchLength += ps.length;
+            ai.endPriorMatchSegment = segmentIndex+1;
+        }
+        else if ((ps.type == DELETE) || (ps.type == INSERT))
+        {
+            if (! isInsideIndel)
+            {
+                isInsideIndel=true;
+                ai.priorDeleteLength=0;
+                ai.priorInsertLength=0;
+            }
+
+            if     (ps.type == DELETE)
+            {
+                ai.priorDeleteLength += ps.length;
+            }
+            else if (ps.type == INSERT)
+            {
+                ai.priorInsertLength += ps.length;
+            }
+        }
+        else
+        {
+            isInsideIndel=false;
+            ai.priorMatchLength=0;
+        }
+
+        if (is_segment_type_read_length(ps.type))
+        {
+            ai.readPos += ps.length;
+        }
+        if (is_segment_type_ref_length(ps.type))
+        {
+            ai.refPos += ps.length;
+        }
+    }
+    return ai.isChanged;
+}
+
+
+
+/// normalize edge indels in alignment al
+static
+bool
+normalizeEdgeIndels(
+    const bam_seq_base& refSeq,
+    const bam_seq_base& readSeq,
+    alignment& al)
+{
+    using namespace ALIGNPATH;
+    const unsigned as(al.path.size());
+
+    AlignmentInfo ai;
+    bool isInsideIndel(false);
+    ai.refPos = al.pos;
+
+    bool isFirstMatch(true);
+    for (unsigned segmentIndex(0); segmentIndex<as; segmentIndex++)
+    {
+        auto& ps(al.path[segmentIndex]);
+        if (ps.length == 0) continue;
+
+        if (is_segment_align_match(ps.type))
+        {
+            if (isInsideIndel && isFirstMatch)
+            {
+                leftEdgeIndelCollapse(refSeq,readSeq,segmentIndex,al,ai);
+            }
+
+            if (isFirstMatch)
+            {
+                isFirstMatch=false;
+            }
+
+            if (ai.priorMatchLength>0)
+            {
+                if (isInsideIndel)
+                {
+                    ai.priorMatchLength=0;
+                }
+            }
+
+            if (ai.priorMatchLength==0)
+            {
+                ai.startPriorMatchSegment=segmentIndex;
+            }
+            isInsideIndel=false;
+            ai.priorMatchLength += ps.length;
+            ai.endPriorMatchSegment = segmentIndex+1;
+        }
+        else if ((ps.type == DELETE) || (ps.type == INSERT))
+        {
+            if (! isInsideIndel)
+            {
+                isInsideIndel=true;
+                ai.priorDeleteLength=0;
+                ai.priorInsertLength=0;
+                ai.startPriorIndelSegment=segmentIndex;
+            }
+            ai.endPriorIndelSegment = segmentIndex+1;
+
+            if     (ps.type == DELETE)
+            {
+                ai.priorDeleteLength += ps.length;
+            }
+            else if (ps.type == INSERT)
+            {
+                ai.priorInsertLength += ps.length;
+            }
+        }
+        else
+        {
+            if ((ps.type==SOFT_CLIP) || (ps.type==HARD_CLIP))
+            {
+                if (ai.priorMatchLength && isInsideIndel)
+                {
+                    if ((ai.priorDeleteLength>0) || (ai.priorInsertLength>0))
+                    {
+                        rightEdgeIndelCollapse(refSeq,readSeq,al,ai);
+                    }
+                }
+
+            }
+            isInsideIndel=false;
+            ai.priorMatchLength=0;
+        }
+
+        if (is_segment_type_read_length(ps.type))
+        {
+            ai.readPos += ps.length;
+        }
+        if (is_segment_type_ref_length(ps.type))
+        {
+            ai.refPos += ps.length;
+        }
+    }
+
+    if (ai.priorMatchLength && isInsideIndel)
+    {
+        if ((ai.priorDeleteLength>0) || (ai.priorInsertLength>0))
+        {
+            rightEdgeIndelCollapse(refSeq,readSeq,al,ai);
+        }
+    }
+    return ai.isChanged;
+}
+
+
+
 bool
 normalizeAlignment(
     const bam_seq_base& refSeq,
     const bam_seq_base& readSeq,
     alignment& al)
 {
-    using namespace ALIGNPATH;
+    // first pass is to collapse internal indels:
+    const bool isc1 = collapseAlignmentIndels(refSeq,readSeq,al);
 
-    const unsigned as(al.path.size());
+    // second pass through left-shifts:
+    const bool isls = leftShiftAlignmentIndels(refSeq,readSeq,al);
 
-    //
-    // first pass through is to left shift:
-    //
-    AlignmentInfo ai;
-    {
-        bool isInsideIndel(false);
+    // third pass is to collapse internal indels again
+    // (indels may have been left-shifted to become adjacent):
+    const bool isc2 = collapseAlignmentIndels(refSeq,readSeq,al);
 
-        ai.refPos = al.pos;
+    // final pass is to handle edge indels
+    const bool isne = normalizeEdgeIndels(refSeq,readSeq,al);
 
-        for (unsigned segmentIndex(0); segmentIndex<as; segmentIndex++)
-        {
-            auto& ps(al.path[segmentIndex]);
-
-            if (is_segment_align_match(ps.type))
-            {
-                if (ai.priorMatchLength>0)
-                {
-                    if (isInsideIndel)
-                    {
-                        leftShiftIndel(refSeq,readSeq,segmentIndex,al,ai);
-
-                        ai.priorMatchLength=0;
-                    }
-                }
-
-                if (ai.priorMatchLength==0)
-                {
-                    ai.startPriorMatchSegment=segmentIndex;
-                }
-                isInsideIndel=false;
-                ai.priorMatchLength += ps.length;
-                ai.endPriorMatchSegment = segmentIndex+1;
-            }
-            else if ((ps.type == DELETE) || (ps.type == INSERT))
-            {
-                if (! isInsideIndel)
-                {
-                    isInsideIndel=true;
-                    ai.priorDeleteLength=0;
-                    ai.priorInsertLength=0;
-                }
-
-                if     (ps.type == DELETE)
-                {
-                    ai.priorDeleteLength += ps.length;
-                }
-                else if (ps.type == INSERT)
-                {
-                    ai.priorInsertLength += ps.length;
-                }
-            }
-            else
-            {
-                isInsideIndel=false;
-                ai.priorMatchLength=0;
-            }
-
-            if (is_segment_type_read_length(ps.type))
-            {
-                ai.readPos += ps.length;
-            }
-            if (is_segment_type_ref_length(ps.type))
-            {
-                ai.refPos += ps.length;
-            }
-        }
-    }
-
-    //
-    // second pass through is to collapse internal indels:
-    //
-    {
-        bool isInsideIndel(false);
-
-        ai.refPos = al.pos;
-        ai.readPos = 0;
-        ai.priorMatchLength = 0;
-
-        for (unsigned segmentIndex(0); segmentIndex<as; segmentIndex++)
-        {
-            auto& ps(al.path[segmentIndex]);
-            if (ps.length == 0) continue;
-
-            if (is_segment_align_match(ps.type))
-            {
-                if (ai.priorMatchLength>0)
-                {
-                    if (isInsideIndel)
-                    {
-                        if ((ai.priorDeleteLength>0) && (ai.priorInsertLength>0))
-                        {
-                            // collapse matching insertion sequence
-                            collapseInsert(refSeq,readSeq,segmentIndex,al,ai);
-                        }
-
-                        ai.priorMatchLength=0;
-                    }
-                }
-
-                if (ai.priorMatchLength==0)
-                {
-                    ai.startPriorMatchSegment=segmentIndex;
-                }
-                isInsideIndel=false;
-                ai.priorMatchLength += ps.length;
-                ai.endPriorMatchSegment = segmentIndex+1;
-            }
-            else if ((ps.type == DELETE) || (ps.type == INSERT))
-            {
-                if (! isInsideIndel)
-                {
-                    isInsideIndel=true;
-                    ai.priorDeleteLength=0;
-                    ai.priorInsertLength=0;
-                    ai.startPriorIndelSegment=segmentIndex;
-                }
-                ai.endPriorIndelSegment = segmentIndex+1;
-
-                if     (ps.type == DELETE)
-                {
-                    ai.priorDeleteLength += ps.length;
-                }
-                else if (ps.type == INSERT)
-                {
-                    ai.priorInsertLength += ps.length;
-                }
-            }
-            else
-            {
-                isInsideIndel=false;
-                ai.priorMatchLength=0;
-            }
-
-            if (is_segment_type_read_length(ps.type))
-            {
-                ai.readPos += ps.length;
-            }
-            if (is_segment_type_ref_length(ps.type))
-            {
-                ai.refPos += ps.length;
-            }
-        }
-    }
-
-    //
-    // third pass is to handle edge indels
-    //
-    {
-        bool isInsideIndel(false);
-
-        ai.refPos = al.pos;
-        ai.readPos = 0;
-        ai.priorMatchLength = 0;
-        ai.priorDeleteLength = 0;
-        ai.priorInsertLength = 0;
-
-        bool isFirstMatch(true);
-        for (unsigned segmentIndex(0); segmentIndex<as; segmentIndex++)
-        {
-            auto& ps(al.path[segmentIndex]);
-            if (ps.length == 0) continue;
-
-            if (is_segment_align_match(ps.type))
-            {
-                if (isInsideIndel && isFirstMatch)
-                {
-                    leftEdgeIndelCollapse(refSeq,readSeq,segmentIndex,al,ai);
-                }
-
-                if (isFirstMatch)
-                {
-                    isFirstMatch=false;
-                }
-
-                if (ai.priorMatchLength>0)
-                {
-                    if (isInsideIndel)
-                    {
-                        ai.priorMatchLength=0;
-                    }
-                }
-
-                if (ai.priorMatchLength==0)
-                {
-                    ai.startPriorMatchSegment=segmentIndex;
-                }
-                isInsideIndel=false;
-                ai.priorMatchLength += ps.length;
-                ai.endPriorMatchSegment = segmentIndex+1;
-            }
-            else if ((ps.type == DELETE) || (ps.type == INSERT))
-            {
-                if (! isInsideIndel)
-                {
-                    isInsideIndel=true;
-                    ai.priorDeleteLength=0;
-                    ai.priorInsertLength=0;
-                    ai.startPriorIndelSegment=segmentIndex;
-                }
-                ai.endPriorIndelSegment = segmentIndex+1;
-
-                if     (ps.type == DELETE)
-                {
-                    ai.priorDeleteLength += ps.length;
-                }
-                else if (ps.type == INSERT)
-                {
-                    ai.priorInsertLength += ps.length;
-                }
-            }
-            else
-            {
-                if ((ps.type==SOFT_CLIP) || (ps.type==HARD_CLIP))
-                {
-                    if (ai.priorMatchLength && isInsideIndel)
-                    {
-                        if ((ai.priorDeleteLength>0) || (ai.priorInsertLength>0))
-                        {
-                            rightEdgeIndelCollapse(refSeq,readSeq,al,ai);
-                        }
-                    }
-
-                }
-                isInsideIndel=false;
-                ai.priorMatchLength=0;
-            }
-
-            if (is_segment_type_read_length(ps.type))
-            {
-                ai.readPos += ps.length;
-            }
-            if (is_segment_type_ref_length(ps.type))
-            {
-                ai.refPos += ps.length;
-            }
-        }
-
-        if (ai.priorMatchLength && isInsideIndel)
-        {
-            if ((ai.priorDeleteLength>0) || (ai.priorInsertLength>0))
-            {
-                rightEdgeIndelCollapse(refSeq,readSeq,al,ai);
-            }
-        }
-    }
-
-    if (ai.isChanged)
+    if (isc1 || isls || isc2 || isne)
     {
         apath_cleaner(al.path);
+        return true;
     }
-    return ai.isChanged;
+    return false;
 }
 
 
