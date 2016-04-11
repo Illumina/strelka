@@ -141,9 +141,10 @@ get_digt_states(
 }
 
 void
-write_alt_alleles(unsigned alt_gt,
+write_alt_alleles(char normal_alt_base,
+                  char tumor_alt_base,
+                  char ref_base,
                   std::ostream& os);
-
 }
 
 namespace DDIGT_GRID

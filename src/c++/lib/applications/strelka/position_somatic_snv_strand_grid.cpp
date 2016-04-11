@@ -253,6 +253,8 @@ position_somatic_snv_call(
                                   _ln_som_match,_ln_som_mismatch,
                                   sgt.is_forced_output,
                                   tier_rs[i]);
+        tier_rs[i].normal_alt_id = nepi.pi.get_most_frequent_alt_id(sgt.ref_gt);
+        tier_rs[i].tumor_alt_id = tepi.pi.get_most_frequent_alt_id(sgt.ref_gt);
     }
 
     if (! (sgt.is_forced_output || isComputeNonSomatic))
@@ -309,7 +311,4 @@ position_somatic_snv_call(
 
     /// somatic gVCF, always use tier1 to keep things simple:
     sgt.rs.nonsomatic_qphred = tier_rs[0].nonsomatic_qphred;
-
-    sgt.rs.normal_alt_id = normal_epi.pi.get_most_frequent_alt_id(sgt.ref_gt);
-    sgt.rs.tumor_alt_id = tumor_epi.pi.get_most_frequent_alt_id(sgt.ref_gt);
 }
