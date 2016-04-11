@@ -129,10 +129,20 @@ write_snv_state(const DDIGT::index_t dgt,
 }
 
 void
-write_alt_alleles(unsigned alt_gt,
+write_alt_alleles(char normal_alt_base,
+                  char tumor_alt_base,
+                  char ref_base,
                   std::ostream& os)
 {
-    os << id_to_base(alt_gt);
+    if (tumor_alt_base != ref_base)
+        // tumor: at least one non-ref call
+        os << tumor_alt_base;
+    else if (normal_alt_base != ref_base)
+        // tumor: all reference calls, normal: at least one non-ref call
+        os << normal_alt_base;
+    else
+        // tumor: all ref calls, normal: all ref calls
+        os << ".";
 }
 
 }

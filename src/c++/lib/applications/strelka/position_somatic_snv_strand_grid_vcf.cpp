@@ -353,7 +353,12 @@ write_vcf_somatic_snv_genotype_strand_grid(
     os << '\t' << ref_base
        //ALT:
        << "\t";
-    DDIGT::write_alt_alleles(rs.tumor_alt_id, os);
+
+    DDIGT::write_alt_alleles(id_to_base(rs.normal_alt_id),
+            id_to_base(rs.tumor_alt_id),
+            ref_base,
+            os);
+
     //QUAL:
     os << "\t.";
 
