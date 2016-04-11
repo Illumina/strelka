@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Manta - Structural Variant and Indel Caller
-// Copyright (c) 2013-2016 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -38,12 +38,13 @@ namespace
 
 namespace MIN_PARAMS
 {
-    enum index_t {
-        LN_INSERT_ERROR_RATE,
-        LN_DELETE_ERROR_RATE,
-        LN_THETA,
-        SIZE
-    };
+enum index_t
+{
+    LN_INSERT_ERROR_RATE,
+    LN_DELETE_ERROR_RATE,
+    LN_THETA,
+    SIZE
+};
 }
 
 
@@ -92,9 +93,9 @@ contextLogLhood(
             }
 
             noindel = (
-                logInsertErrorRate*totalInsertObservations +
-                logDeleteErrorRate*totalDeleteObservations +
-                logNoIndelRefRate*obs.refObservations);
+                          logInsertErrorRate*totalInsertObservations +
+                          logDeleteErrorRate*totalDeleteObservations +
+                          logNoIndelRefRate*obs.refObservations);
         }
 
         unsigned maxIndex(0);
@@ -125,13 +126,13 @@ contextLogLhood(
 
             // compute lhood of het/hom states given that maxIndex is the variant allele:
             het =(logHetRate*(obs.refObservations+obs.altObservations[maxIndex]) +
-                logInsertErrorRate*remainingInsertObservations +
-                logDeleteErrorRate*remainingDeleteObservations);
+                  logInsertErrorRate*remainingInsertObservations +
+                  logDeleteErrorRate*remainingDeleteObservations);
 
             hom = (logHomAltRate*obs.altObservations[maxIndex] +
-                logHomRefRate*obs.refObservations +
-                logInsertErrorRate*remainingInsertObservations +
-                logDeleteErrorRate*remainingDeleteObservations);
+                   logHomRefRate*obs.refObservations +
+                   logInsertErrorRate*remainingInsertObservations +
+                   logDeleteErrorRate*remainingDeleteObservations);
         }
 
         // get lhood of althet GT:
@@ -164,9 +165,9 @@ contextLogLhood(
 
             // compute lhood of het/hom states given that maxIndex is the variant allele:
             althet =(logHetRate*(obs.altObservations[maxIndex]+obs.altObservations[maxIndex2]) +
-                logHomRefRate*obs.refObservations +
-                logInsertErrorRate*remainingInsertObservations +
-                logDeleteErrorRate*remainingDeleteObservations);
+                     logHomRefRate*obs.refObservations +
+                     logInsertErrorRate*remainingInsertObservations +
+                     logDeleteErrorRate*remainingDeleteObservations);
         }
 
 
@@ -187,7 +188,7 @@ struct error_minfunc : public codemin::minfunc_interface<double>
     error_minfunc(
         const std::vector<ExportedObservations>& observations,
         const bool isLockTheta = false)
-    : _obs(observations), _isLockTheta(isLockTheta)
+        : _obs(observations), _isLockTheta(isLockTheta)
     {}
 
     virtual unsigned dim() const
@@ -197,13 +198,13 @@ struct error_minfunc : public codemin::minfunc_interface<double>
 
     virtual double val(const double* in)
     {
-       // std::cerr << "Submitting: " << in[0] << " " << in[1] << " " << in[2] << "\n";
+        // std::cerr << "Submitting: " << in[0] << " " << in[1] << " " << in[2] << "\n";
         argToParameters(in,_params);
-      //  std::cerr << "Trying: ins/del/theta: " << std::exp(_params[0]) << " " << std::exp(_params[1]) << " " << std::exp(_params[2]) << "\n";
+        //  std::cerr << "Trying: ins/del/theta: " << std::exp(_params[0]) << " " << std::exp(_params[1]) << " " << std::exp(_params[2]) << "\n";
         return -contextLogLhood(_obs,
-                _params[MIN_PARAMS::LN_INSERT_ERROR_RATE],
-                _params[MIN_PARAMS::LN_DELETE_ERROR_RATE],
-                (_isLockTheta ? defaultLogTheta : _params[MIN_PARAMS::LN_THETA]));
+                                _params[MIN_PARAMS::LN_INSERT_ERROR_RATE],
+                                _params[MIN_PARAMS::LN_DELETE_ERROR_RATE],
+                                (_isLockTheta ? defaultLogTheta : _params[MIN_PARAMS::LN_THETA]));
     }
 
     /// normalize the minimization values back to usable parameters
@@ -220,12 +221,14 @@ struct error_minfunc : public codemin::minfunc_interface<double>
 #if 0
         // keep any log(prob) value negative in case the minimizer bends it
         // around the corner
-        auto convert = [](const double a) -> double {
+        auto convert = [](const double a) -> double
+        {
             return -std::abs(a);
         };
 #endif
 
-        auto rateSmoother = [](double a) -> double {
+        auto rateSmoother = [](double a) -> double
+        {
             static const double triggerVal(1e-3);
             static const double limitVal(0.5);
             static const double logTriggerVal(std::log(triggerVal));
@@ -244,7 +247,8 @@ struct error_minfunc : public codemin::minfunc_interface<double>
         // on the flat plane even if the ML value is well below this limit, but
         // in practice this is such a ridiculously high value for theta, that
         // I don't see the model getting trapped.
-        auto thetaSmoother = [](double a) -> double {
+        auto thetaSmoother = [](double a) -> double
+        {
             static const double triggerVal(1e-3);
             static const double limitVal(0.3);
             static const double logTriggerVal(std::log(triggerVal));

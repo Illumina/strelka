@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Manta - Structural Variant and Indel Caller
-// Copyright (c) 2013-2016 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,13 +40,14 @@ namespace
 
 namespace MIN_PARAMS3
 {
-    enum index_t {
-        LN_INSERT_ERROR_RATE,
-        LN_DELETE_ERROR_RATE,
-        LN_NOISY_LOCUS_RATE,
-        LN_THETA,
-        SIZE
-    };
+enum index_t
+{
+    LN_INSERT_ERROR_RATE,
+    LN_DELETE_ERROR_RATE,
+    LN_NOISY_LOCUS_RATE,
+    LN_THETA,
+    SIZE
+};
 }
 
 
@@ -91,9 +92,9 @@ getObsLogLhood(
         }
 
         noindel = (
-            logInsertErrorRate*totalInsertObservations +
-            logDeleteErrorRate*totalDeleteObservations +
-            logNoIndelRefRate*obs.refObservations);
+                      logInsertErrorRate*totalInsertObservations +
+                      logDeleteErrorRate*totalDeleteObservations +
+                      logNoIndelRefRate*obs.refObservations);
     }
 
     unsigned maxIndex(0);
@@ -124,13 +125,13 @@ getObsLogLhood(
 
         // compute lhood of het/hom states given that maxIndex is the variant allele:
         het =(logHetRate*(obs.refObservations+obs.altObservations[maxIndex]) +
-            logInsertErrorRate*remainingInsertObservations +
-            logDeleteErrorRate*remainingDeleteObservations);
+              logInsertErrorRate*remainingInsertObservations +
+              logDeleteErrorRate*remainingDeleteObservations);
 
         hom = (logHomAltRate*obs.altObservations[maxIndex] +
-            logHomRefRate*obs.refObservations +
-            logInsertErrorRate*remainingInsertObservations +
-            logDeleteErrorRate*remainingDeleteObservations);
+               logHomRefRate*obs.refObservations +
+               logInsertErrorRate*remainingInsertObservations +
+               logDeleteErrorRate*remainingDeleteObservations);
     }
 
     // get lhood of althet GT:
@@ -163,9 +164,9 @@ getObsLogLhood(
 
         // compute lhood of het/hom states given that maxIndex is the variant allele:
         althet =(logHetRate*(obs.altObservations[maxIndex]+obs.altObservations[maxIndex2]) +
-            logHomRefRate*obs.refObservations +
-            logInsertErrorRate*remainingInsertObservations +
-            logDeleteErrorRate*remainingDeleteObservations);
+                 logHomRefRate*obs.refObservations +
+                 logInsertErrorRate*remainingInsertObservations +
+                 logDeleteErrorRate*remainingDeleteObservations);
     }
 
     return log_sum( log_sum(logHomPrior+hom,logHetPrior+het), log_sum(logNoIndelPrior+noindel,logAltHetPrior+althet) );
@@ -210,9 +211,9 @@ contextLogLhood(
     for (const auto& obs : observations)
     {
         const double noisyMix(getObsLogLhood(logHomPrior, logHetPrior, logAltHetPrior, logNoIndelPrior,
-                logInsertErrorRate, logDeleteErrorRate, logNoIndelRefRate, obs));
+                                             logInsertErrorRate, logDeleteErrorRate, logNoIndelRefRate, obs));
         const double cleanMix(getObsLogLhood(logHomPrior, logHetPrior, logAltHetPrior, logNoIndelPrior,
-                logCleanLocusIndelRate, logCleanLocusIndelRate, logCleanLocusRefRate, obs));
+                                             logCleanLocusIndelRate, logCleanLocusIndelRate, logCleanLocusRefRate, obs));
 
         const double mix(log_sum(logCleanLocusRate+cleanMix,logNoisyLocusRate+noisyMix));
 
@@ -237,7 +238,7 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
     error_minfunc_model3(
         const std::vector<ExportedObservations>& observations,
         const bool isLockTheta = false)
-    : _obs(observations), _isLockTheta(isLockTheta)
+        : _obs(observations), _isLockTheta(isLockTheta)
     {}
 
     unsigned dim() const override
@@ -249,10 +250,10 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
     {
         argToParameters(in,_params);
         return -contextLogLhood(_obs,
-                _params[MIN_PARAMS3::LN_INSERT_ERROR_RATE],
-                _params[MIN_PARAMS3::LN_DELETE_ERROR_RATE],
-                _params[MIN_PARAMS3::LN_NOISY_LOCUS_RATE],
-                (_isLockTheta ? defaultLogTheta : _params[MIN_PARAMS3::LN_THETA]));
+                                _params[MIN_PARAMS3::LN_INSERT_ERROR_RATE],
+                                _params[MIN_PARAMS3::LN_DELETE_ERROR_RATE],
+                                _params[MIN_PARAMS3::LN_NOISY_LOCUS_RATE],
+                                (_isLockTheta ? defaultLogTheta : _params[MIN_PARAMS3::LN_THETA]));
     }
 
     /// normalize the minimization values back to usable parameters
@@ -266,7 +267,8 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
         const double* in,
         double* out)
     {
-        auto rateSmoother = [](double a) -> double {
+        auto rateSmoother = [](double a) -> double
+        {
             static const double triggerVal(1e-3);
             static const double logTriggerVal(std::log(triggerVal));
             if (a>logTriggerVal)
@@ -276,7 +278,8 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
             return (a>maxLogRate ? maxLogRate-std::abs(a-maxLogRate) : a);
         };
 
-        auto locusRateSmoother = [](double a) -> double {
+        auto locusRateSmoother = [](double a) -> double
+        {
             static const double triggerVal(0.8);
             static const double logTriggerVal(std::log(triggerVal));
             if (a>logTriggerVal)
@@ -293,7 +296,8 @@ struct error_minfunc_model3 : public codemin::minfunc_interface<double>
         // on the flat plane even if the ML value is well below this limit, but
         // in practice this is such a ridiculously high value for theta, that
         // I don't see the model getting trapped.
-        auto thetaSmoother = [](double a) -> double {
+        auto thetaSmoother = [](double a) -> double
+        {
             static const double triggerVal(1e-3);
             static const double logTriggerVal(std::log(triggerVal));
 

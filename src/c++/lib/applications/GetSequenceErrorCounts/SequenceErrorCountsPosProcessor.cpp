@@ -247,14 +247,20 @@ getIndelType(
     rudiff = std::min(3,std::max(-3,rudiff));
 
     using namespace SIGNAL_TYPE;
-    switch(rudiff)
+    switch (rudiff)
     {
-    case  1: return DELETE_1;
-    case  2: return DELETE_2;
-    case  3: return DELETE_GE3;
-    case -1: return INSERT_1;
-    case -2: return INSERT_2;
-    case -3: return INSERT_GE3;
+    case  1:
+        return DELETE_1;
+    case  2:
+        return DELETE_2;
+    case  3:
+        return DELETE_GE3;
+    case -1:
+        return INSERT_1;
+    case -2:
+        return INSERT_2;
+    case -3:
+        return INSERT_GE3;
     default:
         assert(false);
         return SIZE;
@@ -279,7 +285,7 @@ mergeIndelObservations(
     else
     {
         // all signal counts should be summed:
-        for(unsigned signalIndex(0); signalIndex<SIGNAL_TYPE::SIZE; ++signalIndex)
+        for (unsigned signalIndex(0); signalIndex<SIGNAL_TYPE::SIZE; ++signalIndex)
         {
             iter->second.signalCounts[signalIndex] += obs.signalCounts[signalIndex];
         }

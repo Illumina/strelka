@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Manta - Structural Variant and Indel Caller
-// Copyright (c) 2013-2016 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ reportExtendedContext(
            << sigTotal.alt << sep
            << safeFrac(sigTotal.alt,total) << sep
            << upper << "\n";
-           ;
+        ;
     }
 }
 
@@ -123,8 +123,8 @@ model1(
         if (observations.empty()) continue;
 
         reportExtendedContext(maxAltFrac, minDepth, context, observations, data.skipped,
-            SIGNAL_TYPE::INSERT_1, SIGNAL_TYPE::DELETE_1, "I", ros);
+                              SIGNAL_TYPE::INSERT_1, SIGNAL_TYPE::DELETE_1, "I", ros);
         reportExtendedContext(maxAltFrac, minDepth, context, observations, data.skipped,
-            SIGNAL_TYPE::DELETE_1, SIGNAL_TYPE::SIZE, "D", ros);
+                              SIGNAL_TYPE::DELETE_1, SIGNAL_TYPE::SIZE, "D", ros);
     }
 }

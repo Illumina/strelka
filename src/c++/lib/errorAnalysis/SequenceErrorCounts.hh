@@ -35,56 +35,68 @@
 
 namespace INDEL_TYPE
 {
-    enum index_t {
-        INSERT,
-        DELETE,
-        SIZE
-    };
+enum index_t
+{
+    INSERT,
+    DELETE,
+    SIZE
+};
 
-    inline
-    char
-    symbol(
-        const index_t id)
+inline
+char
+symbol(
+    const index_t id)
+{
+    switch (id)
     {
-        switch(id)
-        {
-        case INSERT: return 'I';
-        case DELETE: return 'D';
-        default:     return 'X';
-        }
+    case INSERT:
+        return 'I';
+    case DELETE:
+        return 'D';
+    default:
+        return 'X';
     }
+}
 }
 
 
 namespace SIGNAL_TYPE
 {
-    // second number represents REPEAT_UNITS added or removed
-    enum index_t {
-        INSERT_1,
-        INSERT_2,
-        INSERT_GE3,
-        DELETE_1,
-        DELETE_2,
-        DELETE_GE3,
-        SIZE
-    };
+// second number represents REPEAT_UNITS added or removed
+enum index_t
+{
+    INSERT_1,
+    INSERT_2,
+    INSERT_GE3,
+    DELETE_1,
+    DELETE_2,
+    DELETE_GE3,
+    SIZE
+};
 
-    inline
-    const char*
-    label(
-        const index_t id)
+inline
+const char*
+label(
+    const index_t id)
+{
+    switch (id)
     {
-        switch(id)
-        {
-        case INSERT_1:   return "I_1.";
-        case INSERT_2:   return "I_2.";
-        case INSERT_GE3: return "I_3+";
-        case DELETE_1:   return "D_1.";
-        case DELETE_2:   return "D_2.";
-        case DELETE_GE3: return "D_3+";
-        default:     return "X_X.";
-        }
+    case INSERT_1:
+        return "I_1.";
+    case INSERT_2:
+        return "I_2.";
+    case INSERT_GE3:
+        return "I_3+";
+    case DELETE_1:
+        return "D_1.";
+    case DELETE_2:
+        return "D_2.";
+    case DELETE_GE3:
+        return "D_3+";
+    default:
+        return "X_X.";
     }
+}
 }
 
 
@@ -210,7 +222,7 @@ BOOST_CLASS_IMPLEMENTATION(SequenceDepthSupportTotal, boost::serialization::obje
 struct SequenceErrorContextObservation
 {
     SequenceErrorContextObservation()
-      : refCount(0)
+        : refCount(0)
     {
         std::fill(signalCounts.begin(), signalCounts.end(), 0);
     }

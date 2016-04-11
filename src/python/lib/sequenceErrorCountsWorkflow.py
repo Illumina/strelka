@@ -117,7 +117,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
 
 def mergeSequenceErrorCounts(self, taskPrefix, dependencies, runStatsLogPaths) :
-    
+
     runMergeLabel=preJoin(taskPrefix,"mergeCounts")
     runMergeCmd=[self.params.mergeCountsBin]
     for statsFile in runStatsLogPaths :
