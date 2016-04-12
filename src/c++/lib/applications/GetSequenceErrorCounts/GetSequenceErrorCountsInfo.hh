@@ -39,7 +39,7 @@ struct GetSequenceErrorCountsInfo : public prog_info_base
 private:
     const char* name() const override
     {
-        static const char NAME[] = "starling";
+        static const char NAME[] = "GetSequenceErrorCounts";
         return NAME;
     }
 
