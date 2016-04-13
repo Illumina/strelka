@@ -54,7 +54,7 @@ class StrelkaRF(EVSModel):
 
         if not kwargs:
             kwargs = {"n_jobs": 8,
-                      # "max_depth": 6,
+                      "max_depth": 6,
                       # "min_samples_leaf": 100,
                       "n_estimators": 100,
                       # "max_features": None

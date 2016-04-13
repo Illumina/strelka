@@ -65,6 +65,11 @@ struct starling_options : public starling_base_options
         return true;
     }
 
+    // Apply codon phasing:
+    bool do_codon_phasing = false;
+
+    // Size of the window we are phasing in, default is codon range (=3)
+    int phasing_window = 3;
 
     gvcf_options gvcf;
 };

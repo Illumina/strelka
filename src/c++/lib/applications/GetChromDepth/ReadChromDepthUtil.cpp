@@ -366,9 +366,7 @@ readChromDepthFromAlignment(
     const std::string& chromName)
 {
     bam_streamer read_stream(statsAlignmentFile.c_str());
-
-    const bam_hdr_t& header(* read_stream.get_header());
-    const bam_header_info bamHeader(header);
+    const bam_header_info bamHeader(read_stream.get_header());
 
     const auto& chromToIndex(bamHeader.chrom_to_index);
     const auto chromIter(chromToIndex.find(chromName));

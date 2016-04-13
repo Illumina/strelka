@@ -181,6 +181,13 @@ struct indel_synchronizer
 private:
 
     bool
+    is_candidate_indel_impl_test_signal_noise(
+        const indel_key& ik,
+        const indel_data& id,
+        const indel_data* idsp[],
+        const unsigned isds) const;
+
+    bool
     is_candidate_indel_impl_test(
         const indel_key& ik,
         const indel_data& id,

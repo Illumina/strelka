@@ -34,7 +34,6 @@
 
 // vcf output:
 //
-typedef somatic_snv_genotype_grid::result_set result_set;
 
 void
 write_vcf_somatic_snv_genotype_strand_grid(

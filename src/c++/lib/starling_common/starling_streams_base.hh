@@ -62,11 +62,12 @@ struct starling_streams_base : public blt_streams
 
 protected:
     bam_dumper*
-    initialize_realign_bam(const bool is_clobber,
-                           const prog_info& pinfo,
-                           const std::string& filename,
-                           const char* label,
-                           const bam_hdr_t* const header);
+    initialize_realign_bam(
+        const bool is_clobber,
+        const prog_info& pinfo,
+        const std::string& filename,
+        const char* label,
+        const bam_hdr_t& header);
 
     static
     std::ostream*

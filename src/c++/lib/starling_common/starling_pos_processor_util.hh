@@ -58,6 +58,17 @@ process_genomic_read(const starling_base_options& client_opt,
                      starling_pos_processor_base& sppr,
                      const unsigned sample_no = 0);
 
+/// convert specified alt from vcf_record into an indel_observation
+///
+/// returns true if successful, false for exceeding max indel size or otherwise can't parse this VCF record
+///
+bool
+convert_vcfrecord_to_indel_allele(
+    const unsigned max_indel_size,
+    const vcf_record& vcf_indel,
+    const unsigned altIndex,
+    indel_observation& obs);
+
 /// insert a candidate indel into sppr
 ///
 /// \param is_forced_output - the results of the genotype type must be output for this indel, no matter how unlikely the variant is:

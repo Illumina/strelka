@@ -26,6 +26,19 @@
 BOOST_AUTO_TEST_SUITE( ref_context )
 
 
+BOOST_AUTO_TEST_CASE( test_left_shifted_hpol_size )
+{
+    reference_contig_segment ref;
+    ref.seq() = "TTGTTTGAGATTT";
+
+    BOOST_REQUIRE_EQUAL(get_left_shifted_hpol_size(0,ref),2u);
+    BOOST_REQUIRE_EQUAL(get_left_shifted_hpol_size(1,ref),1u);
+    BOOST_REQUIRE_EQUAL(get_left_shifted_hpol_size(2,ref),1u);
+    BOOST_REQUIRE_EQUAL(get_left_shifted_hpol_size(3,ref),3u);
+    BOOST_REQUIRE_EQUAL(get_left_shifted_hpol_size(4,ref),1u);
+}
+
+
 static
 void
 single_snp_hpol_test(const pos_t pos,

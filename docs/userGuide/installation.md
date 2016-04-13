@@ -100,7 +100,7 @@ Note that during the configuration step, the following dependencies
 will be built from source if they are not found:
 
 * cmake 2.8.5+
-* boost 1.53.0+
+* boost 1.56.0+
 
 To accelerate this process the configuration step can be parallelized
 over multiple cores, as demonstrated in the example above with the

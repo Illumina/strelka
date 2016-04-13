@@ -37,14 +37,6 @@
 #include <set>
 #include <vector>
 
-#define ID_DEBUG
-
-#ifdef ID_DEBUG
-#include "blt_util/log.hh"
-
-#include <iostream>
-#endif
-
 
 /// represents the data associated with a single indel observation:
 ///
@@ -243,9 +235,6 @@ struct indel_data
     const std::string&
     get_insert_seq() const
     {
-#ifdef ID_DEBUG
-        //log_os << "KATTER: reporting insert seq for indel: " << _ik << "\n";
-#endif
         return _insert_seq.get();
     }
 

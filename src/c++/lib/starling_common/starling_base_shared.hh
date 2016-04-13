@@ -88,15 +88,14 @@ struct starling_base_options : public blt_options
     double bindel_diploid_theta = 0.0001;
     double bindel_diploid_het_bias = 0;
     bool is_bindel_diploid_het_bias = false;
-    bool is_test_indels = false;
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
 
-    /// to contribute to a breakpoint likelihood, a read must have at least
-    /// this many bases on each side of the breakpoint:
-    ///
-    /// This is the default used in all samples unless an override is provided for the sample.
-    ///
+    // to contribute to a breakpoint likelihood, a read must have at least
+    // this many bases on each side of the breakpoint:
+    //
+    // This is the default used in all samples unless an override is provided for the sample.
+    //
     int default_min_read_bp_flank = 6;
 
     // starling parameters:
@@ -111,32 +110,18 @@ struct starling_base_options : public blt_options
     // (formerly a static value)
     unsigned max_indel_size = 150;
 
-    // indel cannot become candidate unless at least min reads which
-    // meet mapping threshold support it
+    // Do we test indel observation counts to determine if these are significant enough
+    // to create an indel candidate? This should be true for any normal variant caller,
+    // it is turned off for specialized indel noise estimation routines
+    bool is_candidate_indel_signal_test = true;
+
+    // Observed indels are promoted to candidate indels based on a one-sided
+    // binomial exact test, which incorporates expected per-read indel error rate,
+    // total coverage, and observed indel coverage.
     //
-    // this is the default used for all samples until overridden
-    int default_min_candidate_indel_reads = 3;
-
-    // indel cannot become candidate unless at least frac of reads
-    // which meet mapping thresholds support it (num is reads
-    // supporting indel/den in aligner reads aligning to adjacent
-    // position).
-    double min_candidate_indel_read_frac = 0.02;
-
-    // indels this size or lower have additional 'small indel'
-    // candidacy criteria
-    int max_small_candidate_indel_size = 4;
-
-    // same as for min_candidate_indel_read_frac, but for small indels
-    //
-    // this is the default used for all samples until overridden
-    double default_min_small_candidate_indel_read_frac = 0.1;
-
-    // indels in homopolymers use a one-sided binomial exact test to
-    // determine whether they are eligible for candidacy, based on the
-    // expected per-read error rate, total coverage, and indel coverage
-    // this sets the p-value threshold for determining homopolymer candidacy
-    const double tumor_min_hpol_pval = 1e-9;
+    // this sets the p-value threshold for determining indel candidacy, a lower value
+    // means that relatively more observations are required to create any indel candidate
+    const double indel_candidate_signal_test_alpha = 1e-9;
 
     int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
     double max_candidate_indel_density = 0.15; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
@@ -211,9 +196,6 @@ struct starling_base_options : public blt_options
     // positions/indels in vcf must be written in output:
     std::vector<std::string> force_output_vcf;
 
-    // Internal development option - not for production use:
-    bool is_baby_elephant = false;
-
     // Indicates that an upstream oligo is present on reads, which can be used to increase confidence for indels near the edge of the read
     unsigned upstream_oligo_size = 0;
 
@@ -255,13 +237,9 @@ struct starling_sample_options
     starling_sample_options(
         const starling_base_options& opt)
         : min_read_bp_flank(opt.default_min_read_bp_flank)
-        , min_candidate_indel_reads(opt.default_min_candidate_indel_reads)
-        , min_small_candidate_indel_read_frac(opt.default_min_small_candidate_indel_read_frac)
     {}
 
     int min_read_bp_flank;
-    int min_candidate_indel_reads;
-    double min_small_candidate_indel_read_frac;
 };
 
 

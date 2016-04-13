@@ -92,11 +92,6 @@ struct IndelErrorModel
                    bool use_length_dependence = false,
                    bool use_ref_error_factor = false) const;
 
-    indel_error_rates calc_abstract_prop(unsigned repeat_unit_length,
-                                         unsigned tract_length,
-                                         unsigned indel_size,
-                                         bool use_length_dependence) const;
-
     unsigned get_max_motif_length() const
     {
         return MaxMotifLength;

@@ -28,9 +28,9 @@
 
 #pragma once
 
-#include "position_somatic_snv_grid_shared.hh"
-#include "position_somatic_snv_strand_grid_states.hh"
+#include "somatic_result_set.hh"
 #include "strelka_shared.hh"
+#include "strelka_digt_states.hh"
 
 #include "blt_common/position_snp_call_pprob_digt.hh"
 
@@ -38,9 +38,8 @@
 // object used to pre-compute priors:
 struct somatic_snv_caller_strand_grid
 {
-    somatic_snv_caller_strand_grid(
-        const strelka_options& opt,
-        const pprob_digt_caller& pd_caller);
+    explicit somatic_snv_caller_strand_grid(
+        const strelka_options& opt);
 
     //
     void
@@ -52,54 +51,13 @@ struct somatic_snv_caller_strand_grid
         const bool isComputeNonSomatic,
         somatic_snv_genotype_grid& sgt) const;
 
-    // compute a lot of prior information for various alternate
-    // versions of the method -- we don't actually need all of this for any one computation:
-    //
-    struct prior_set
-    {
-        prior_set()
-            : normal(DIGT_SGRID::SIZE)
-            , somatic_marginal(DIGT_SGRID::SIZE)
-            , normal_poly(DIGT_SGRID::SIZE)
-            , somatic_marginal_poly(DIGT_SGRID::SIZE)
-            , normal_nostrand(DIGT_SGRID::SIZE)
-            , normal_poly_nostrand(DIGT_SGRID::SIZE)
-        {}
-
-        typedef std::vector<blt_float_t> prior_t;
-
-        prior_t normal;
-        prior_t somatic_marginal;
-        prior_t normal_poly;
-        prior_t somatic_marginal_poly;
-
-        // added to support somatic gVCF:
-        prior_t normal_nostrand;
-        prior_t normal_poly_nostrand;
-    };
-
 private:
+    blt_float_t _contam_tolerance;
+    blt_float_t _ln_csse_rate;
+    blt_float_t _ln_sse_rate;
 
-    const prior_set&
-    get_prior_set(const unsigned ref_id) const
-    {
-        return _lnprior[ref_id];
-    }
-
-    const std::vector<blt_float_t>&
-    lnprior_genomic(const unsigned ref_id) const
-    {
-        return _lnprior[ref_id].normal;
-    }
-
-    const std::vector<blt_float_t>&
-    lnprior_polymorphic(const unsigned ref_id) const
-    {
-        return _lnprior[ref_id].normal_poly;
-    }
-
-    const strelka_options& _opt;
-    std::array<prior_set,N_BASE+1> _lnprior;
     blt_float_t _ln_som_match;
     blt_float_t _ln_som_mismatch;
+
+    blt_float_t _bare_lnprior[SOMATIC_DIGT::SIZE];
 };

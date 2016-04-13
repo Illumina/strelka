@@ -33,7 +33,7 @@ struct starling_streams : public starling_streams_base
 
     starling_streams(const starling_options& client_opt,
                      const prog_info& pinfo,
-                     const bam_hdr_t* const bam_header,
+                     const bam_hdr_t& bam_header,
                      const SampleSetSummary& ssi);
 
     std::ostream*
@@ -55,7 +55,7 @@ private:
         const starling_options& opt,
         const prog_info& pinfo,
         const std::string& filename,
-        const bam_hdr_t* const header,
+        const bam_hdr_t& header,
         std::unique_ptr<std::ostream>& os_ptr_auto);
 
     std::ostream* _gvcf_osptr;

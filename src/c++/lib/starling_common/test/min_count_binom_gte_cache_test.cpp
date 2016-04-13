@@ -51,15 +51,25 @@ BOOST_AUTO_TEST_CASE( test_count )
     testCount(1e-3,1000,0.95);
 }
 
-
 BOOST_AUTO_TEST_CASE( test_reject )
 {
     min_count_binom_gte_cache mc(1e-9);
-    BOOST_REQUIRE(! mc.isRejectNull(10000,1e-4,10));
-    BOOST_REQUIRE(mc.isRejectNull(10000,1e-4,11));
+    BOOST_REQUIRE(! mc.isRejectNull(10000,1e-4,11));
+    BOOST_REQUIRE(mc.isRejectNull(10000,1e-4,12));
 
     min_count_binom_gte_cache mc2(1e-3);
-    BOOST_REQUIRE(! mc2.isRejectNull(100000,1e-4,10));
+    BOOST_REQUIRE(! mc2.isRejectNull(100000,1e-4,11));
+}
+
+BOOST_AUTO_TEST_CASE( test_compare_reject_to_is_reject_binomial_gte_n_success_exact )
+{
+    static const double alpha(1e-9);
+    min_count_binom_gte_cache mc(alpha);
+    BOOST_REQUIRE(! mc.isRejectNull(10000,1e-4,11));
+    BOOST_REQUIRE(mc.isRejectNull(10000,1e-4,12));
+
+    BOOST_REQUIRE(! is_reject_binomial_gte_n_success_exact(alpha,1e-4,11,10000));
+    BOOST_REQUIRE(is_reject_binomial_gte_n_success_exact(alpha,1e-4,12,10000));
 }
 
 

@@ -36,7 +36,7 @@ initialize_gvcf_file(
     const starling_options& opt,
     const prog_info& pinfo,
     const std::string& filename,
-    const bam_hdr_t* const header,
+    const bam_hdr_t& header,
     std::unique_ptr<std::ostream>& os_ptr_auto)
 {
     std::ostream* osptr(&std::cout);
@@ -68,7 +68,7 @@ starling_streams::
 starling_streams(
     const starling_options& opt,
     const prog_info& pinfo,
-    const bam_hdr_t* const header,
+    const bam_hdr_t& header,
     const SampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {

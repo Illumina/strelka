@@ -28,6 +28,14 @@
 #include "blt_util/reference_contig_segment.hh"
 
 
+/// get size of hpol from the current position, given that this
+/// is the left-most position in the hpol, otherwise, return 1
+unsigned
+get_left_shifted_hpol_size(
+    const pos_t pos,
+    const reference_contig_segment& ref);
+
+
 /// Get the length of the longest homopolymer containing the current
 /// position if this position can be treated as any base.
 ///

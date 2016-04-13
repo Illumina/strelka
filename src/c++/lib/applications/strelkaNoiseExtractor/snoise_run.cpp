@@ -32,13 +32,23 @@
 
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
-#include "htsapi/bam_streamer.hh"
-#include "htsapi/vcf_streamer.hh"
 #include "starling_common/starling_base_shared.hh"
-#include "starling_common/starling_input_stream_handler.hh"
+#include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
+
 #include <sstream>
+
+
+
+namespace INPUT_TYPE
+{
+enum index_t
+{
+    CANDIDATE_INDELS,
+    FORCED_GT_VARIANTS,
+};
+}
 
 
 
@@ -56,9 +66,11 @@ snoise_run(
     assert(! opt.bam_filename.empty());
 
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
-    bam_streamer read_stream(opt.bam_filename.c_str(),bam_region.c_str());
+    HtsMergeStreamer streamData(bam_region.c_str());
+    const bam_streamer& readStream(streamData.registerBam(opt.bam_filename.c_str()));
+    const bam_hdr_t& readHeader(readStream.get_header());
 
-    const int32_t tid(read_stream.target_name_to_id(opt.bam_seq_name.c_str()));
+    const int32_t tid(readStream.target_name_to_id(opt.bam_seq_name.c_str()));
     if (tid < 0)
     {
         std::ostringstream oss;
@@ -67,50 +79,30 @@ snoise_run(
     }
 
     SampleSetSummary ssi;
-    snoise_streams streams(opt,pinfo,read_stream.get_header(),ssi);
+    snoise_streams streams(opt,pinfo,readHeader,ssi);
 
     snoise_pos_processor sppr(opt,dopt,ref,streams);
     starling_read_counts brc;
 
-    starling_input_stream_data sdata;
-    sdata.register_reads(read_stream);
+    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, readHeader, streamData);
+    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, readHeader, streamData);
 
-    // hold zero-to-many vcf streams open:
-    typedef std::shared_ptr<vcf_streamer> vcf_ptr;
-    std::vector<vcf_ptr> indel_stream;
-
-    for (const auto& vcf_filename : opt.input_candidate_indel_vcf)
+    while (streamData.next())
     {
-        indel_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                        bam_region.c_str(),read_stream.get_header())));
-        sdata.register_indels(*(indel_stream.back()));
-    }
-
-    std::vector<vcf_ptr> foutput_stream;
-
-    for (const auto& vcf_filename : opt.force_output_vcf)
-    {
-        foutput_stream.push_back(vcf_ptr(new vcf_streamer(vcf_filename.c_str(),
-                                                          bam_region.c_str(),read_stream.get_header())));
-        sdata.register_forced_output(*(foutput_stream.back()));
-    }
-
-    starling_input_stream_handler sinput(sdata);
-
-    while (sinput.next())
-    {
-        const input_record_info current(sinput.get_current());
+        const pos_t currentPos(streamData.getCurrentPos());
+        const HTS_TYPE::index_t currentHtsType(streamData.getCurrentType());
+        const unsigned currentIndex(streamData.getCurrentIndex());
 
         // Process finishes at the the end of rlimit range. Note that
         // some additional padding is allowed for off-range indels
         // which might influence results within rlimit:
         //
-        if (rlimit.is_end_pos && (current.pos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
+        if (rlimit.is_end_pos && (currentPos >= (rlimit.end_pos+static_cast<pos_t>(opt.max_indel_size)))) break;
 
         // wind sppr forward to position behind buffer head:
-        sppr.set_head_pos(sinput.get_head_pos()-1);
+        sppr.set_head_pos(currentPos-1);
 
-        if       (current.itype == INPUT_TYPE::READ)
+        if       (HTS_TYPE::BAM == currentHtsType)
         {
             // Remove the filter below because it's not valid for
             // RNA-Seq case, reads should be selected for the report
@@ -123,29 +115,35 @@ snoise_run(
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+max_indel_size) <= rlimit.begin_pos) continue;
 
-            const bam_record& read(*(read_stream.get_record_ptr()));
-
-            process_genomic_read(opt,ref,read_stream,read,current.pos,rlimit.begin_pos,brc,sppr);
-
+            process_genomic_read(opt, ref, readStream, streamData.getCurrentBam(),
+                                 currentPos, rlimit.begin_pos, brc, sppr);
         }
-        else if (current.itype == INPUT_TYPE::INDEL)     // process candidate indels input from vcf file(s)
+        else if (HTS_TYPE::VCF == currentHtsType)
         {
-            const vcf_record& vcf_indel(*(indel_stream[current.get_order()]->get_record_ptr()));
-            process_candidate_indel(opt.max_indel_size, vcf_indel,sppr);
-
-        }
-        else if (current.itype == INPUT_TYPE::FORCED_OUTPUT)     // process forced genotype tests from vcf file(s)
-        {
-            const vcf_record& vcf_variant(*(foutput_stream[current.get_order()]->get_record_ptr()));
-            if       (vcf_variant.is_indel())
+            const vcf_record& vcfRecord(streamData.getCurrentVcf());
+            if     (INPUT_TYPE::CANDIDATE_INDELS == currentIndex)     // process candidate indels input from vcf file(s)
             {
-                static const unsigned sample_no(0);
-                static const bool is_forced_output(true);
-                process_candidate_indel(opt.max_indel_size, vcf_variant,sppr,sample_no,is_forced_output);
+                if (vcfRecord.is_indel())
+                {
+                    process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
+                }
             }
-            else if (vcf_variant.is_snv())
+            else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
             {
-                sppr.insert_forced_output_pos(vcf_variant.pos-1);
+                if       (vcfRecord.is_indel())
+                {
+                    static const unsigned sample_no(0);
+                    static const bool is_forced_output(true);
+                    process_candidate_indel(opt.max_indel_size, vcfRecord,sppr,sample_no,is_forced_output);
+                }
+                else if (vcfRecord.is_snv())
+                {
+                    sppr.insert_forced_output_pos(vcfRecord.pos-1);
+                }
+            }
+            else
+            {
+                assert(false && "Unexpected hts index");
             }
         }
         else
@@ -156,7 +154,5 @@ snoise_run(
     }
 
     sppr.reset();
-
-    //    brc.report(client_io.report_os());
 }
 

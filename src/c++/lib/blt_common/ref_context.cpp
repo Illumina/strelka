@@ -29,6 +29,30 @@
 
 
 unsigned
+get_left_shifted_hpol_size(
+    const pos_t pos,
+    const reference_contig_segment& ref)
+{
+    unsigned size(1);
+
+    const char rpos(ref.get_base(pos));
+    if (pos>0)
+    {
+        if (rpos == ref.get_base(pos-1)) return size;
+    }
+
+    const pos_t rs(ref.end());
+    for (pos_t i(pos+1); i<rs; i++)
+    {
+        if (rpos != ref.get_base(i)) break;
+        size++;
+    }
+    return size;
+}
+
+
+
+unsigned
 get_snp_hpol_size(const pos_t pos,
                   const reference_contig_segment& ref)
 {

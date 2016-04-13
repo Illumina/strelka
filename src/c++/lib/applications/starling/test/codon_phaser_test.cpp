@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE( simple_3mer )
     for (int i = 0; i < 10; i++)
         insert_read(r2, read_pos, bc_buff);
 
-    starling_base_options opt;
+    starling_options opt;
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( two_adjacent_3mers )
     for (int i = 0; i < 10; i++)
         insert_read(r2, read_pos, bc_buff);
 
-    starling_base_options opt;
+    starling_options opt;
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE( handles_snps_at_start )
     for (int i = 0; i < 10; i++)
         insert_read(r2, read_pos, bc_buff);
 
-    starling_base_options opt;
+    starling_options opt;
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE( respects_phasing_window )
     for (int i = 0; i < 10; i++)
         insert_read(r2, read_pos, bc_buff);
 
-    starling_base_options opt;
+    starling_options opt;
     opt.phasing_window = 5;
     opt.do_codon_phasing = true;
 
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps)
     for (int i = 0; i < 10; i++)
         insert_read(r2, read_pos, bc_buff);
 
-    starling_base_options opt;
+    starling_options opt;
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps_different_size)
     for (int i = 0; i < 10; i++)
         insert_read(r2, read_pos, bc_buff);
 
-    starling_base_options opt;
+    starling_options opt;
     opt.phasing_window = 5;
     opt.do_codon_phasing = true;
 
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
     for (int i = 0; i < 10; i++)
         insert_read(r2, read_pos, bc_buff);
 
-    starling_base_options opt;
+    starling_options opt;
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
@@ -386,7 +386,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
         insert_read(r2, read_pos_snp, bc_buff);
     }
 
-    starling_base_options opt;
+    starling_options opt;
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 
@@ -432,7 +432,7 @@ BOOST_AUTO_TEST_CASE( low_depth_doesnt_phase )
     for (int i = 0; i < 4; i++)
         insert_read(r2, read_pos, bc_buff);
 
-    starling_base_options opt;
+    starling_options opt;
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
 

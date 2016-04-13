@@ -23,6 +23,7 @@
 #include "blt_common/position_nonref_2allele_test.hh"
 //#include "blt_common/position_snp_call_lrt.hh"
 #include "blt_common/ref_context.hh"
+#include "blt_util/log.hh"
 #include "starling_common/starling_indel_error_prob.hh"
 #include "starling_continuous_variant_caller.hh"
 #include "calibration/scoringmodels.hh"

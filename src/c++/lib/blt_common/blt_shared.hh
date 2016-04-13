@@ -199,13 +199,6 @@ struct blt_options
         return (! somatic_indel_scoring_model_filename.empty());
     }
 
-
-    // Apply codon phasing:
-    bool do_codon_phasing = false;
-
-    // Size of the window we are phasing in, default is codon range (=3)
-    int phasing_window = 3;
-
     //multiplier for ref error rate to use; 1 would be expected to be correct, but higher values counteract a bias away from homozygous indels (undercalling)
     double indel_ref_error_factor = 1.;
 

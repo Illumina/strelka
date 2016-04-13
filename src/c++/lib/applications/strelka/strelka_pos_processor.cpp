@@ -22,7 +22,6 @@
 /// \author Chris Saunders
 ///
 
-#include "position_somatic_snv.hh"
 #include "position_somatic_snv_strand_grid.hh"
 #include "position_somatic_snv_strand_grid_vcf.hh"
 #include "somatic_indel_grid.hh"
@@ -59,15 +58,6 @@ strelka_pos_processor(
 
     // set sample-specific parameter overrides:
     normal_sif.sample_opt.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
-
-    if (opt.is_tumor_sample_min_candidate_indel_reads)
-    {
-        tumor_sif.sample_opt.min_candidate_indel_reads = opt.tumor_sample_min_candidate_indel_reads;
-    }
-    if (opt.is_tumor_sample_min_small_candidate_indel_read_frac)
-    {
-        tumor_sif.sample_opt.min_small_candidate_indel_read_frac = opt.tumor_sample_min_small_candidate_indel_read_frac;
-    }
 
     // setup indel syncronizers:
     {
@@ -143,7 +133,6 @@ process_pos_snp_somatic(const pos_t pos)
         _pileupCleaner.CleanPileup(normal_sif.bc_buff.get_pos(pos),is_include_tier2,*(normal_cpi_ptr[t]));
         _pileupCleaner.CleanPileup(tumor_sif.bc_buff.get_pos(pos),is_include_tier2,*(tumor_cpi_ptr[t]));
     }
-
 
     // note single-sample anomaly filtration won't apply here (more of
     // a vestigial blt feature anyway)

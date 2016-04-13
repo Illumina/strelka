@@ -143,10 +143,7 @@ struct pedicure_options : public starling_base_options
     // increase sensitivity in case of low purity:
     //
     bool is_tumor_sample_min_candidate_indel_reads = false;
-    bool is_tumor_sample_min_small_candidate_indel_read_frac = false;
     int tumor_sample_min_candidate_indel_reads = 2;
-    double tumor_sample_min_small_candidate_indel_read_frac = 0.02;
-
     // positions/indels in vcf are used to estimate low-frequency sequencing noise:
     std::vector<std::string> noise_vcf;
 #endif

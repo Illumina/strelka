@@ -10,7 +10,7 @@
 set -o nounset
 
 
-boost_name=boost_1_53_0
+boost_name=boost_1_56_0
 subset_name=${boost_name}_subset
 
 
@@ -22,20 +22,20 @@ for ddir in doc more status; do
 done
 
 # remove unused headers for larger sub-libraries:
-for f in asio geometry gil graph interprocess phoenix polygon python signals signals2 wave; do
+for f in asio geometry gil graph interprocess polygon python signals signals2; do
     rm -rf $subset_name/boost/$f*
 done
 
 # remove unused libs:
 (
 cd  $subset_name/libs
-ls | grep -v -e "^\(detail\|serialization\|timer\|chrono\|filesystem\|program_options\|system\|test\)$"  | xargs rm -rf
+ls | grep -v -e "^\(detail\|serialization\|timer\|chrono\|filesystem\|program_options\|system\|test\|wave\)$"  | xargs rm -rf
 )
 
 # remove unused tools:
 (
 cd  $subset_name/tools
-ls | grep -v -e "^\(build\)$"  | xargs rm -rf
+ls | grep -v -e "^\(build\|inspect\)$"  | xargs rm -rf
 )
 
 # remove docs:

@@ -617,21 +617,23 @@ Codon_phaser::clear()
 
 
 void
-Codon_phaser::write_out_buffer() const
+Codon_phaser::
+write_out_buffer(std::ostream& os) const
 {
     for (const auto& val : _buffer)
     {
-        log_os << *val << " ref " << val->ref << "\n";
+        os << *val << " ref " << val->ref << "\n";
     }
 }
 
 void
-Codon_phaser::write_out_alleles() const
+Codon_phaser::
+write_out_alleles(std::ostream& os) const
 {
     for (const auto& val : observations)
     {
         if (val.first == this->reference) continue;
-        log_os << val.first << "=" << val.second.count() << " ";
+        os << val.first << "=" << val.second.count() << " ";
     }
-    log_os << "\n";
+    os << "\n";
 }

@@ -49,7 +49,7 @@ starling_base_deriv_options(
     , sal(opt.max_realignment_candidates)
     , variant_window_first_stage(0)
     , variant_window_last_stage(0)
-    , countCache(opt.tumor_min_hpol_pval)
+    , countCache(opt.indel_candidate_signal_test_alpha)
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);

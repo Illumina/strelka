@@ -511,16 +511,16 @@ get_denovo_indel_call(
 #if 0
         std::cerr << "BUG: testing tier/ik: " << i << " " << ik;
 #endif
-            ismulti = (is_multi_indel_allele(dopt,allIndelData,is_include_tier2,dinc.rs.is_overlap));
-            if (ismulti)
-            {
-                tier_rs[tierIndex].dindel_qphred=0;
+        ismulti = (is_multi_indel_allele(dopt,allIndelData,is_include_tier2,dinc.rs.is_overlap));
+        if (ismulti)
+        {
+            tier_rs[tierIndex].dindel_qphred=0;
 #if 0
-                std::cerr << "BUG: rejected\n";
+            std::cerr << "BUG: rejected\n";
 #endif
-                dinc.rs.is_overlap = true;
+            dinc.rs.is_overlap = true;
 //                continue;
-            }
+        }
 
         for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
         {

@@ -42,7 +42,7 @@ write_vcf_sample_info(
 {
 
 //	GT:GQ:GQX:DP:DP2:AD:PL
-	int total = isri1.n_q30_ref_reads + isri1.n_q30_indel_reads;
+    int total = isri1.n_q30_ref_reads + isri1.n_q30_indel_reads;
 
     static const char sep(':');
     if (dinc.gtstring.size()>0 && total>0)
@@ -62,8 +62,8 @@ write_vcf_sample_info(
     os << isri1.depth
        << sep
 //	   n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;
-	   << isri1.n_q30_ref_reads << ','
-	   << isri1.n_q30_indel_reads;// + isri1.n_q30_alt_reads;
+       << isri1.n_q30_ref_reads << ','
+       << isri1.n_q30_indel_reads;// + isri1.n_q30_alt_reads;
 //       << isri1.n_q30_ref_reads+isri2.n_q30_ref_reads << ','
 //        << isri1.n_q30_alt_reads+isri2.n_q30_alt_reads
 //       << sep
@@ -118,11 +118,12 @@ denovo_indel_call_vcf(
 //            smod.set_filter(PEDICURE_VCF_FILTERS::OverlapConflict);
 //        }
 
-        for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++){
+        for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
+        {
             if (dinc.gqx[sampleIndex] < opt.dfilter.sindelQuality_LowerBound)
             {
-            	smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
-            	break;
+                smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
+                break;
             }
         }
 

@@ -40,12 +40,12 @@ safeFrac(const int num, const int denom)
 static
 void
 write_vcf_sample_info(
-	const pedicure_options& opt,
+    const pedicure_options& opt,
     const CleanedPileup& tier1_cpi,
     const CleanedPileup& /*tier2_cpi*/,
     const denovo_snv_call& dsc,
     int sampleIndex,
-	pedicure_shared_modifiers& smod,
+    pedicure_shared_modifiers& smod,
     std::ostream& os)
 {
 
@@ -58,7 +58,7 @@ write_vcf_sample_info(
 
     double frac = safeFrac(tier1_cpi.n_unused_calls(),tier1_cpi.n_calls());
     if (frac > opt.dfilter.snv_max_filtered_basecall_frac)
-	   smod.set_filter(PEDICURE_VCF_FILTERS::DPF);
+        smod.set_filter(PEDICURE_VCF_FILTERS::DPF);
 
 
     os << dsc.gtstring[sampleIndex];

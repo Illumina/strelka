@@ -25,15 +25,9 @@
 
 #include "indel_overlapper.hh"
 #include "calibration_models.hh"
+#include "blt_util/log.hh"
 
 //#define DEBUG_GVCF
-
-
-#ifdef DEBUG_GVCF
-#include "blt_util/log.hh"
-#endif
-
-
 
 
 

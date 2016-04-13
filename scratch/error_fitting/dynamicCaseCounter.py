@@ -233,7 +233,7 @@ def readRecords(job,seqContext='All'):
                 for ii in xrange(0, numpairs):
                     (x, y) = alignedPairs[ii]
                     if x != None:
-                        readbase = r.query[x]
+                        readbase = r.query_sequence[x]
                     else:
                         readbase = '-'
                     if y != None:
@@ -280,7 +280,7 @@ def readRecords(job,seqContext='All'):
                                     if (not rpos) or (not qpos) or rpos == y + strCase:
                                         break
                                 # require that we be at the right position and it be an alignment of bases and they match
-                                if rpos == y + strCase and qpos and job.refInterval[rpos - refOffset].upper() == r.query[qpos]:
+                                if rpos == y + strCase and qpos and job.refInterval[rpos - refOffset].upper() == r.query_sequence[qpos]:
                                     ### we can use it!
                                     ok = True
 

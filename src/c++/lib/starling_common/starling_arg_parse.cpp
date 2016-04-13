@@ -54,9 +54,6 @@ legacy_starling_arg_parse(
     bool is_bsnp_ssd_no_mismatch(false);
     bool is_bsnp_ssd_one_mismatch(false);
 
-    bool is_min_can_indel_set(false);
-    bool is_min_can_indel_frac_set(false);
-    bool is_min_small_can_indel_frac_set(false);
     bool is_max_can_indel_density_set(false);
 
     bool is_max_basecall_filter_fraction(false);
@@ -209,18 +206,6 @@ legacy_starling_arg_parse(
         {
             set_arg(i,ad,is_uacmq_set,opt.used_allele_count_min_qscore);
         }
-        else if (ad.argstr[i]=="-min-candidate-indel-reads")
-        {
-            set_arg(i,ad,is_min_can_indel_set,opt.default_min_candidate_indel_reads);
-        }
-        else if (ad.argstr[i]=="-min-candidate-indel-read-frac")
-        {
-            set_xrange_arg(i,ad,is_min_can_indel_frac_set,opt.min_candidate_indel_read_frac,true);
-        }
-        else if (ad.argstr[i]=="-min-small-candidate-indel-read-frac")
-        {
-            set_xrange_arg(i,ad,is_min_small_can_indel_frac_set,opt.default_min_small_candidate_indel_read_frac,true);
-        }
         else if (ad.argstr[i]=="-max-candidate-indel-density")
         {
             set_xrange_arg(i,ad,is_max_can_indel_density_set,opt.max_candidate_indel_density,false,true);
@@ -281,10 +266,6 @@ legacy_starling_arg_parse(
         else if (ad.argstr[i]=="-skip-variable-metadata")
         {
             opt.is_write_variable_metadata=false;
-        }
-        else if (ad.argstr[i]=="-baby-elephant")
-        {
-            opt.is_baby_elephant=true;
         }
         else if (ad.argstr[i]=="-h")
         {

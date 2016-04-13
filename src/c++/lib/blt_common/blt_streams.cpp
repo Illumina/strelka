@@ -89,11 +89,12 @@ write_audit(const blt_options& opt,
 
 static
 void
-write_vcf_audit(const blt_options& opt,
-                const prog_info& pinfo,
-                const char* const cmdline,
-                const bam_hdr_t* const header,
-                std::ostream& os)
+write_vcf_audit(
+    const blt_options& opt,
+    const prog_info& pinfo,
+    const char* const cmdline,
+    const bam_hdr_t& header,
+    std::ostream& os)
 {
     const time_t t(time(NULL));
 
@@ -112,12 +113,10 @@ write_vcf_audit(const blt_options& opt,
         assert(0);
     }
 
-    assert(NULL != header);
-
-    for (int32_t i(0); i<header->n_targets; ++i)
+    for (int32_t i(0); i<header.n_targets; ++i)
     {
-        os << "##contig=<ID=" << header->target_name[i]
-           << ",length=" << header->target_len[i] << ">\n";
+        os << "##contig=<ID=" << header.target_name[i]
+           << ",length=" << header.target_len[i] << ">\n";
     }
 }
 
@@ -190,7 +189,7 @@ blt_streams::
 write_vcf_audit(const blt_options& opt,
                 const prog_info& pinfo,
                 const char* const cmdline,
-                const bam_hdr_t* const header,
+                const bam_hdr_t& header,
                 std::ostream& os)
 {
     ::write_vcf_audit(opt,pinfo,cmdline,header,os);
