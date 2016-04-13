@@ -500,27 +500,26 @@ get_denovo_indel_call(
                 if (! dinc.is_forced_output)   // if forced output then there's still a point to computing tier2
                 {
                     tier_rs[1].dindel_qphred=0;
-                    continue;
+//                    continue;
                 }
             }
         }
 
         // early escape filter borrowed directly from somatic case
-        static const bool is_denovo_multi_indel_filter(true);
+//        static const bool is_denovo_multi_indel_filter(true);
+        bool ismulti(false);
 #if 0
         std::cerr << "BUG: testing tier/ik: " << i << " " << ik;
 #endif
-        if (is_denovo_multi_indel_filter)
+        ismulti = (is_multi_indel_allele(dopt,allIndelData,is_include_tier2,dinc.rs.is_overlap));
+        if (ismulti)
         {
-            const bool ismulti(is_multi_indel_allele(dopt,allIndelData,is_include_tier2,dinc.rs.is_overlap));
-            if (ismulti)
-            {
-                tier_rs[tierIndex].dindel_qphred=0;
+            tier_rs[tierIndex].dindel_qphred=0;
 #if 0
-                std::cerr << "BUG: rejected\n";
+            std::cerr << "BUG: rejected\n";
 #endif
-                continue;
-            }
+            dinc.rs.is_overlap = true;
+//                continue;
         }
 
         for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
@@ -560,22 +559,30 @@ get_denovo_indel_call(
             unsigned max_index=0;
             unsigned index =  sampleOrder[sampleIndex];
             double max = sampleLhood[index][0];
+            std::vector<float> tt;
+            tt.push_back(max);
             for (unsigned pro(1); pro<STAR_DIINDEL::SIZE; ++pro)
             {
                 if (max<sampleLhood[index][pro])
                 {
                     max = sampleLhood[index][pro];
                     max_index=pro;
+
                 }
+                tt.push_back(sampleLhood[index][pro]);
             }
 
-            //TODO update the gqx values
-            dinc.gq.push_back(30);
-            dinc.gqx.push_back(40);
-            dinc.gtstring.push_back(STAR_DIINDEL::get_gt_label(max_index));
-        }
+            std::sort(tt.begin(), tt.end());
+            dinc.gqx.push_back( std::min(100, (int)( tt[1] - tt[0] ) ) );
+            dinc.gq.push_back( std::min(100, (int)( tt[1] - tt[0] ) ) );
 
+            dinc.gtstring.push_back(STAR_DIINDEL::get_gt_label(max_index));
+            dinc.gt_sum += max_index;
+
+        }
     }
+
+
 
     if (! dinc.is_forced_output)
     {
