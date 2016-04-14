@@ -1,3 +1,4 @@
+- STREL-49 Liquid tumor EVS cut-off retuning
 - PED-42 Filtering model for SNV and Indels, De novo filter tunning, Better indel overlap handeling
 - STREL-18 add new indel error estimator
 - STREL-46 fix ALT matches REF error in somatic SNV output
