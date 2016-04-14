@@ -48,19 +48,17 @@ struct denovo_filter_options
 
     double dindel_qual_lowerbound = 30;
     double dsnv_qual_lowerbound = 30;
-#if 0
-    double snv_max_filtered_basecall_frac = 0.4;
+    double snv_max_filtered_basecall_frac = 0.35;
     double snv_max_spanning_deletion_frac = 0.75;
     int snv_min_qss_ref = 15;
 
-    unsigned indelMaxRefRepeat = 8;
+    unsigned indelMaxRefRepeat = 14;
     unsigned indelMaxIntHpolLength = 14;
     double indelMaxWindowFilteredBasecallFrac = 0.3;
-    int sindelQuality_LowerBound = 30;
+    unsigned sindelQuality_LowerBound = 5;
 
     unsigned indelRegionFlankSize = 50;
     double minimumQscore = 3.0;
-#endif
 };
 
 

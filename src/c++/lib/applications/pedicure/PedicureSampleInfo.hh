@@ -54,7 +54,7 @@ get_label(const unsigned i)
     case FATHER:
         return "FATHER";
     case MOTHER:
-        return "FATHER";
+        return "MOTHER";
     case SIBLING:
         return "SIBLING";
     default:

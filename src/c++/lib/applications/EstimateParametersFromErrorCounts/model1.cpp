@@ -32,7 +32,8 @@
 #include <iostream>
 #include <numeric>
 
-namespace {
+namespace
+{
 
 
 struct SignalGroupTotal

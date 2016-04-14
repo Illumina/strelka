@@ -87,7 +87,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])
     segCmd.extend(["-samtools-reference", self.params.referenceFasta ])
-    segCmd.extend(["-max-window-mismatch", "3", "20" ])
+    segCmd.extend(["-max-window-mismatch", "4", "20" ])
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-genome-size", str(self.params.knownSize)] )
     segCmd.extend(["-max-indel-size", "50"] )
