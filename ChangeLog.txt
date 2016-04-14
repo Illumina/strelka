@@ -1,3 +1,4 @@
+- STREL-33 add method docs for the new somatic scoring model
 - STREL-18 add new indel error estimator
 - STREL-46 fix ALT matches REF error in somatic SNV output
 - STREL-43 add new hts file stream merger

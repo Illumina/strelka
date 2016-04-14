@@ -54,11 +54,11 @@ The methods below describe several core components shared by all workflows in ad
 
 \subsection{Preliminary Parameter Estimation}
 
-Before entering the small  phase of the workflow, Strelka completes a rapid estimation of the sequencing depth for each chromosome. For somatic analysis this depth is only computed for the normal sample. This information is used downstream to filter out high-depth regions (details below) when Manta is run in its default whole genome sequencing mode, these values can be ignored for exome or other targeted analyses.
+Before entering the small  phase of the workflow, Strelka completes a rapid estimation of the sequencing depth for each chromosome. For somatic analysis this depth is only computed for the normal sample. This information is used downstream to filter out high-depth regions (details below) when Strelka is run in its default whole genome sequencing mode, these values can be ignored for exome or other targeted analyses.
 
 \subsubsection{Chromosome depth estimation}
 
-For each chromosome, depth is estimated using a modified median calculation. As a first step, each chromosome is partitioned into segments of similar size to ensure the estimation process samples several chromosome regions. The chromosome is divided into the smallest number of segments no larger than $S_{max}$, where all segments have nearly equal size (all sizes must be $S$ or $S+1$, given smallest segment size of $S$). If this procedure results in more than 20 segments than $S_max$ is doubled until 20 or fewer segments are found. $S_max$ is initialized to 2 Mbase.
+For each chromosome, depth is estimated using a modified median calculation. As a first step, each chromosome is partitioned into segments of similar size to ensure the estimation process samples several chromosome regions. The chromosome is divided into the smallest number of segments no larger than $S_{max}$, where all segments have nearly equal size (all sizes must be $S$ or $S+1$, given smallest segment size of $S$). If this procedure results in more than 20 segments than $S_max$ is doubled until 20 or fewer segments are found. $S_{max}$ is initialized to 2 Mbase.
 
 The depth estimation procedure repeatedly cycles through all segments. Within each segment, at least 40,000 reads are scanned before moving to the next segment (additional reads are scanned until the mapping position changes.) After the target number of reads have been scanned from every segment in the chromosome, the procedure returns to the first position and repeats this procedure starting from the last unscanned position. The process repeats until the all reads in all segments are scanned or the depth estimate converges.
 
@@ -83,6 +83,94 @@ The depth estimation procedure is run separately for each non-tumor sample, and 
 \paragraph{Indel Error Model}
 
 \subsubsection{Somatic Calling Model and Variant likelihoods}
+The somatic calling model assumes that the samples are from diploid individuals. For both SNVs and indels, the normal genotype state space is the set of unphased diploid genotypes, $G_n = \{ \tt{ref}, \tt{het}, \tt{hom}\}$, where $\tt{ref}$, $\tt{het}$, and $\tt{hom}$ refer to the normal genotype being reference, heterozygous, and homozygous, respectively. The tumor genotype has two states $G_t = \{ \tt{nonsom}, \tt{som} \}$, where $\tt{nonsom}$ and $\tt{som}$ indicate the absence and presence of somatic mutation in the tumor sample, respectively. The method approximates a posterior probability on the joint tumor and normal genotypes.
+
+\begin{align*}
+	& P(G_t,G_n|D) \propto P(G_t,G_n) P(D|G_t,G_n) \\
+\end{align*}
+
+
+Here $D$ refers to the sequencing data from both samples. The likelihood term above is computed from independent sample-specific allele frequency likelihoods 
+
+\begin{align*}
+	& P(D|G_t,G_n) = \int_{F_t,F_n}{P(D|F_t,F_n)P(F_t,F_n|G_t,G_n)} \\
+	& = \int_{F_t,F_n}{P(D_t|F_t)P(D_n|F_n)P(F_t,F_n|G_t,G_n)},
+\end{align*}
+
+\noindent where $F_t$, $F_n$ refer to tumor and normal allele frequencies and $D_t$ and $D_n$ indicate tumor and normal sample data. In the above equation, the sample-specific allele frequency likelihoods $P(D_t|F_t)$ and $P(D_n|F_n)$ could in principle be supplied by any probabilistic variant caller. Strelka currently provides its own sample-specific frequency likelihoods (described in Section xxx). The genotype prior probability $P(G_t, G_n)$ and the joint allele-frequency distribution $P(F_t,F_n|G)$ are detailed below. 
+
+The posterior probability over tumor and normal genotypes $P(G_t,G_n|D)$ is used to compute the {\em somatic variant probability} (QSS for SNVs and QSI for indels).
+
+\begin{equation*}
+	P(G_t = {\tt som} | D) = \sum_{G_n \in \{ {\tt ref}, {\tt het}, \tt{hom} \}}{P(G_t={\tt som},G_n|D)}.
+\end{equation*}
+
+As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the probability of somatic variation {\em and} the normal sample genotype being $\tt ref$ (QSS\_NT for SNVs and QSI\_NT for indels), i.e., $P(G_t = {\tt som}, G_n = {\tt ref} | D)$. All Strelka quality scores discussed below express these values.
+
+The Strelka workflow uses two calling tiers. All somatic calls are classified according to their most-likely normal genotype if that value is the same in tiers 1 and 2, and classified as conflicts otherwise. 
+
+\paragraph{Genomic prior}
+Given the expected rate of single nucleotide differences between two unrelated haplotypes (Watterson theta) $\theta$, the normal genomic prior $P(G_n)$ over the set of diploid genotypes is
+
+\begin{equation*}
+P(G_n)=
+\begin{cases}
+	\theta & \text{if } G_n = {\tt het} \\
+	\theta/2 & \text{if } G_n = {\tt hom} \\
+	1 - 3\theta/2 & \text{if } G_n = {\tt ref} \\
+\end{cases}
+\end{equation*}
+
+\noindent where $\theta_{\text{SNV}}=1 \times 10^{-3}$ for SNVs and $\theta_{\text{indel}}=1 \times 10^{-4}$ for indels. Given the somatic state prior $P(G_t={\tt som}) = \gamma$, the genomic prior is
+
+\begin{equation*}
+P(G_t, G_n)=
+\begin{cases}
+	(1 - \gamma) P(G_n) & \text{if } G_t = {\tt nonsom} \\
+	\gamma P(G_n) & \text{if } G_t = {\tt som}. \\
+\end{cases}
+\end{equation*}
+
+\noindent where $\gamma$ is set to $\gamma_{\text{SNV}} = 1 \times 10^{-3}$ and $\gamma_{\text{indel}} = 1 \times 10^{-6}$ for SNVs and indels. Note that $\gamma$ is expected to scale the somatic variant probabilities but not substantially influence their rank, thus its value was chosen empirically to provide reasonable variant probabilities and are not adjusted for different samples in practice.
+
+
+\paragraph{Joint allele-frequency prior}
+The prior probability on the tumor and normal allele-frequencies $P(F_t, F_n|G_t, G_n)$ encodes the concept that the normal sample is a mixture of diploid germline variation and noise while the tumor sample is a mixture of the normal sample and somatic variation. Let ${\cal C} (F_n, G_n) = 1$ if $F_n$ is a {\em canonical} diploid allele frequency of $G_n$ and ${\cal C} (F_n, G_n) = 0$ otherwise. For example, ${\cal C} (F_n=0, G_n = {\tt ref}) = 1$ and ${\cal C} (F_n=0.4, G_n = {\tt ref}) = 0$. The joint frequency prior is defined as follows.
+
+% Non-somatic
+\begin{equation*}
+P(F_t, F_n | G_t = {\tt nonsom}, G_n)=
+\begin{cases}
+	0 & \text{ if } F_t \neq F_n \\
+	1-\mu & \text{ if } F_t = F_n \text{ and }{\cal C}(F_n, G_n) = 1 \\
+	\mu U(F_t) & \text{ if } F_t = F_n \text{ and }{\cal C}(F_n, G_n) = 0 \\
+\end{cases}
+\end{equation*}
+
+% Somatic, normal genotype ref
+\begin{equation*}
+P(F_t, F_n | G_t = {\tt som}, G_n = {\tt ref})=
+\begin{cases}
+	(1-\mu)U(F_t) & \text{ if } F_t \neq F_n \text{ and } F_n \leq \tau F_t \\
+	0 & \text{ otherwise } \\
+\end{cases}
+\end{equation*}
+
+% Somatic, normal genotype het or hom
+\begin{equation*}
+P(F_t, F_n | G_t = {\tt som}, G_n \neq {\tt ref})=
+\begin{cases}
+	(1-\mu)U(F_t) & \text{ if } F_t \neq F_n \text{ and } {\cal C}(F_n, G_n) = 1\\
+	0 & \text{ otherwise } \\
+\end{cases}
+\end{equation*}
+
+\noindent Here, $\tau$ represents the {\em contamination tolerance}, $U(F_t)$ refers to a uniform distribution over the allowed tumor allele frequencies and $\mu$ indicates the noise term. The contamination tolerance term is introduced to allow for contamination in the normal sample by some fraction of tumor cells. This is particularly useful for analyses of liquid tumors, where normal sample is almost always contaminated by tumor cells. The contamination tolerance is set to $0.15$. The noise term abstracts various sequencing, read mapping and assembly issues which could produce an unexpected allele frequency shared in the tumor and normal samples. For SNVs, the noise contribution is set to $\mu_{\text{SNV}} = 5 \times 10^{-10}$. For indels, it is dynamically estimated as described in Section xxx. 
+
+% The description of the strand-bias model is not included here because it is not used in the quality score calculation.
+
+\paragraph{Practical computation}
+The continuous allele frequencies modeled above are efficiently computed by dividing each allele-pair axis into a set of equidistant points and performing the somatic probability computation over the resulting discrete point set. Several point resolutions were attempted to confirm the expected stability and convergence of results as resolution increased. A resolution of 21 points per axis is used for all computations by default. We expect that this resolution should be increased for improved detection of somatic allele frequencies lower than 5\%.
 
 \subsubsection{Somatic Filtration and Scoring}
 
