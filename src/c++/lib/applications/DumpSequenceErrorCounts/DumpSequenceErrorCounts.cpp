@@ -46,21 +46,20 @@ reportExtendedContext(
 		bool isFirst = true;
         for (unsigned altIndex(0); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
         {
-			if (obs.altObservations[altIndex] > 0)
-			{
-				if(isFirst)
-				{
-					alts << SIGNAL_TYPE::label(static_cast<SIGNAL_TYPE::index_t>(altIndex));
-					alt_counts << obs.altObservations[altIndex];
-					isFirst = false;
+			if (obs.altObservations[altIndex] == 0) continue;
 
-				}
-				else
-				{
-					alts << alt_sep << SIGNAL_TYPE::label(static_cast<SIGNAL_TYPE::index_t>(altIndex));
-					alt_counts << alt_sep << obs.altObservations[altIndex];
-				}
+			if(isFirst)
+			{
+				alts << SIGNAL_TYPE::label(altIndex);
+				alt_counts << obs.altObservations[altIndex];
+				isFirst = false;
 			}
+			else
+			{
+				alts << alt_sep << SIGNAL_TYPE::label(altIndex);
+				alt_counts << alt_sep << obs.altObservations[altIndex];
+			}
+
 			totalAltObservations += obs.altObservations[altIndex];
 		}
 

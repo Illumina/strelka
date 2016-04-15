@@ -97,6 +97,15 @@ label(
         return "X_X.";
     }
 }
+
+inline
+const char*
+label(
+    const unsigned id)
+{
+    return label(static_cast<index_t>(id));
+}
+
 }
 
 
