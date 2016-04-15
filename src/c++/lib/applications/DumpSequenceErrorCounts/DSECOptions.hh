@@ -31,6 +31,7 @@
 struct DSECOptions
 {
     std::string countsFilename;
+    bool isExtendedOutput;
 };
 
 

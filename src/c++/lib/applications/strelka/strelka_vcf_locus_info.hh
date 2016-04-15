@@ -64,7 +64,7 @@ get_label(const unsigned idx)
     {
     case HighDepth:
         return "HighDepth";
-        //return "DP"; // old strelka workflow name
+    //return "DP"; // old strelka workflow name
     case BCNoise:
         return "BCNoise";
     case SpanDel:

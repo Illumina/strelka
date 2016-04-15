@@ -43,7 +43,7 @@ SequenceErrorCountsPosProcessor(
     // check that we have write permission on the output file early:
     {
         OutStream outs(opt.countsFilename);
-        if(opt.is_write_observations())
+        if (opt.is_write_observations())
         {
             OutStream outs2(opt.observationsBedFilename);
         }
@@ -437,7 +437,7 @@ process_pos_indel_single_sample_digt(
             // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
             // in this case, we're not going to report the incidence as noise, since it's
             // not a read we would consider in variant calling
-            if(support[nonrefHapIndex] > 0 && _opt.is_write_observations())
+            if (support[nonrefHapIndex] > 0 && _opt.is_write_observations())
             {
                 std::ostream& obs_os(*_streams.observation_bed_osptr());
                 obs_os << _opt.bam_seq_name << "\t";

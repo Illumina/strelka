@@ -55,6 +55,8 @@ parseDSECOptions(
     req.add_options()
     ("counts-file", po::value(&opt.countsFilename),
      "read binary error counts from filename (required, no default)")
+    ("extended", po::value(&opt.isExtendedOutput)->zero_tokens(),
+     "print extended output in tab-delimited format, which should be more suitable for analysis with external tools")
     ;
 
     po::options_description help("help");

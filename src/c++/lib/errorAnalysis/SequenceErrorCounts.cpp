@@ -216,6 +216,24 @@ dump(
     os << tag << "MeanNoiseSignal: " << safeFrac(noiseSignal,noiseObservations) << "\n";
 }
 
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const ExportedObservations& obs)
+{
+    os << "repeatCount: " << obs.repeatCount;
+    os << "\trefCounts: " << obs.refObservations;
+    os << "\taltObservations: ";
+    unsigned alt_index(0);
+    for (const auto& alt: obs.altObservations)
+    {
+        os << SIGNAL_TYPE::label(static_cast<SIGNAL_TYPE::index_t>(alt_index)) << ":";
+        os << alt << ",";
+        ++alt_index;
+    }
+
+    return os;
+}
 
 
 void
