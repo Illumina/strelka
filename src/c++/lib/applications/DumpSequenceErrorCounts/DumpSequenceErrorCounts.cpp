@@ -40,49 +40,48 @@ reportExtendedContext(
     static const std::string alt_sep(",");
     for (const ExportedObservations& obs : observations)
     {
-		unsigned totalAltObservations = 0;
-		std::ostringstream alts;
-		std::ostringstream alt_counts;
-		bool isFirst = true;
+        unsigned totalAltObservations = 0;
+        std::ostringstream alts;
+        std::ostringstream alt_counts;
+        bool isFirst = true;
         for (unsigned altIndex(0); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
         {
-			if (obs.altObservations[altIndex] == 0) continue;
+            if (obs.altObservations[altIndex] == 0) continue;
 
-			if(isFirst)
-			{
-				alts << SIGNAL_TYPE::label(altIndex);
-				alt_counts << obs.altObservations[altIndex];
-				isFirst = false;
-			}
-			else
-			{
-				alts << alt_sep << SIGNAL_TYPE::label(altIndex);
-				alt_counts << alt_sep << obs.altObservations[altIndex];
-			}
+            if (! isFirst)
+            {
+                alts << alt_sep;
+                alt_counts << alt_sep;
+            }
 
-			totalAltObservations += obs.altObservations[altIndex];
-		}
+            alts << SIGNAL_TYPE::label(altIndex);
+            alt_counts << obs.altObservations[altIndex];
+
+            isFirst = false;
+
+            totalAltObservations += obs.altObservations[altIndex];
+        }
 
         // isFirst will remain true if we have seen no alts in this context
-        if(isFirst)
+        if (isFirst)
         {
-			alts << 0;
-			alt_counts << 0;
+            alts << 0;
+            alt_counts << 0;
         }
 
         // print the report
-	    {
-	        static const std::string sep("\t");
+        {
+            static const std::string sep("\t");
 
-	        os << std::setprecision(10);
-	        os << context <<  sep
-	           << alts.str() << sep
-	           << alt_counts.str() << sep
-	           << obs.refObservations << sep
-	           << totalAltObservations << sep
-	           << obs.repeatCount << "\n"
-	        ;
-	    }
+            os << std::setprecision(10);
+            os << context <<  sep
+               << alts.str() << sep
+               << alt_counts.str() << sep
+               << obs.refObservations << sep
+               << totalAltObservations << sep
+               << obs.repeatCount << "\n"
+               ;
+        }
     }
 }
 
@@ -116,13 +115,13 @@ runDSEC(
     SequenceErrorCounts counts;
     counts.load(opt.countsFilename.c_str());
 
-    if(!opt.isExtendedOutput)
+    if (!opt.isExtendedOutput)
     {
-		counts.dump(std::cout);
+        counts.dump(std::cout);
     }
     else
     {
-		extendedReport(counts, std::cout);
+        extendedReport(counts, std::cout);
     }
 }
 
