@@ -27,7 +27,86 @@
 #include "errorAnalysis/SequenceErrorCounts.hh"
 
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
+static
+void
+reportExtendedContext(
+    const SequenceErrorContext& context,
+    const std::vector<ExportedObservations>& observations,
+    std::ostream& os)
+{
+    static const std::string alt_sep(",");
+    for (const ExportedObservations& obs : observations)
+    {
+		unsigned totalAltObservations = 0;
+		std::ostringstream alts;
+		std::ostringstream alt_counts;
+		bool isFirst = true;
+        for (unsigned altIndex(0); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+        {
+			if (obs.altObservations[altIndex] > 0)
+			{
+				if(isFirst)
+				{
+					alts << SIGNAL_TYPE::label(static_cast<SIGNAL_TYPE::index_t>(altIndex));
+					alt_counts << obs.altObservations[altIndex];
+					isFirst = false;
+
+				}
+				else
+				{
+					alts << alt_sep << SIGNAL_TYPE::label(static_cast<SIGNAL_TYPE::index_t>(altIndex));
+					alt_counts << alt_sep << obs.altObservations[altIndex];
+				}
+			}
+			totalAltObservations += obs.altObservations[altIndex];
+		}
+
+        // isFirst will remain true if we have seen no alts in this context
+        if(isFirst)
+        {
+			alts << 0;
+			alt_counts << 0;
+        }
+
+        // print the report
+	    {
+	        static const std::string sep("\t");
+
+	        os << std::setprecision(10);
+	        os << context <<  sep
+	           << alts.str() << sep
+	           << alt_counts.str() << sep
+	           << obs.refObservations << sep
+	           << totalAltObservations << sep
+	           << obs.repeatCount << "\n"
+	        ;
+	    }
+    }
+}
+
+void
+extendedReport(
+    const SequenceErrorCounts& counts,
+    std::ostream& ros)
+{
+    ros << "context\talts\talt_counts\tref_count\ttotal_alt\ttimes_observed\n";
+
+    std::vector<ExportedObservations> observations;
+    for (const auto& contextInfo : counts)
+    {
+        const auto& context(contextInfo.first);
+        const auto& data(contextInfo.second);
+
+        data.exportObservations(observations);
+
+        if (observations.empty()) continue;
+
+        reportExtendedContext(context, observations, ros);
+    }
+}
 
 
 static
@@ -38,10 +117,15 @@ runDSEC(
     SequenceErrorCounts counts;
     counts.load(opt.countsFilename.c_str());
 
-    counts.dump(std::cout);
+    if(!opt.isExtendedOutput)
+    {
+		counts.dump(std::cout);
+    }
+    else
+    {
+		extendedReport(counts, std::cout);
+    }
 }
-
-
 
 void
 DumpSequenceErrorCounts::

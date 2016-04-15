@@ -326,6 +326,10 @@ struct ExportedObservations
     boost::array<unsigned,SIGNAL_TYPE::SIZE> altObservations;
 };
 
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const ExportedObservations& obs);
 
 struct SequenceErrorData
 {
