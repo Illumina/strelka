@@ -701,6 +701,52 @@ candidate_alignment_search(
         return;
     }
 
+    if (is_new_indels)
+    {
+        // Check for very high candidate indel density. If found, indel
+        // search toggling is turned down to the minimum level which still
+        // allows simple calls (distance 1 from input alignemnt). The intention
+        // is to allow basic indel calling to proceed in practical time
+        // through regions with very high numbers of candidate indels.
+        //
+        // This filter was introduced to handle a large set of predictions
+        // made by grouper in a low complexity CT-rich region of human
+        // NCBI37:chr16:33954000-33956000
+        //
+        // TODO: Note the expression for indel density doesn't account for
+        // a possibly large number of indels intersected by a large
+        // deletion in a read. This works well enough for now, but if the
+        // max indel size is ever run around the order of 10k or more this
+        // might start to spuriously engage the filter.
+        //
+        const double max_indels(read_length*client_opt.max_candidate_indel_density);
+        if (indel_status_map.size()>max_indels)
+        {
+            max_read_indel_toggle=1;
+        }
+        else
+        {
+            max_read_indel_toggle=client_opt.max_read_indel_toggle;
+        }
+
+        // a new stronger complexity limit on search based on total candidate indels crossing the read:
+        //
+        {
+            const int max_toggle(client_dopt.sal.get_max_toggle(indel_status_map.size()));
+            max_read_indel_toggle=std::min(max_read_indel_toggle,max_toggle);
+        }
+    }
+
+    // check whether toggling the input alignment already exceeds the maximum
+    // number of toggles made to the exemplar alignment (this is
+    // here to prevent a combinatorial blowup)
+    //
+    if (static_cast<int>(toggle_depth)>max_read_indel_toggle)
+    {
+        warn.max_toggle_depth=true;
+        return;
+    }
+
     // each recursive step invokes (up to) 3 paths:
     //  1) is the current state of the active indel
     //  2) is the alternate state of the active indel with the alignment's start position pinned
@@ -752,44 +798,8 @@ candidate_alignment_search(
         }
     }
 
-    if (is_new_indels)
-    {
-        // Check for very high candidate indel density. If found, indel
-        // search toggling is turned down to the minimum level which still
-        // allows simple calls (distance 1 from input alignemnt). The intention
-        // is to allow basic indel calling to proceed in practical time
-        // through regions with very high numbers of candidate indels.
-        //
-        // This filter was introduced to handle a large set of predictions
-        // made by grouper in a low complexity CT-rich region of human
-        // NCBI37:chr16:33954000-33956000
-        //
-        // TODO: Note the expression for indel density doesn't account for
-        // a possibly large number of indels intersected by a large
-        // deletion in a read. This works well enough for now, but if the
-        // max indel size is ever run around the order of 10k or more this
-        // might start to spuriously engage the filter.
-        //
-        const double max_indels(read_length*client_opt.max_candidate_indel_density);
-        if (indel_status_map.size()>max_indels)
-        {
-            max_read_indel_toggle=1;
-        }
-        else
-        {
-            max_read_indel_toggle=client_opt.max_read_indel_toggle;
-        }
-
-        // a new stronger complexity limit on search based on total candidate indels crossing the read:
-        //
-        {
-            const int max_toggle(client_dopt.sal.get_max_toggle(indel_status_map.size()));
-            max_read_indel_toggle=std::min(max_read_indel_toggle,max_toggle);
-        }
-    }
-
     // check whether toggling this indel would exceed the maximum
-    // number of toggles made to the exemplar alignment (this is only
+    // number of toggles made to the exemplar alignment (this is
     // here to prevent a combinatorial blowup)
     //
     if (static_cast<int>(toggle_depth+1)>max_read_indel_toggle)
