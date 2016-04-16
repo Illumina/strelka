@@ -85,6 +85,9 @@ reportExtendedContext(
     }
 }
 
+
+
+static
 void
 extendedReport(
     const SequenceErrorCounts& counts,
@@ -105,6 +108,7 @@ extendedReport(
         reportExtendedContext(context, observations, ros);
     }
 }
+
 
 
 static
