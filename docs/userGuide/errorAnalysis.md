@@ -11,7 +11,9 @@ Error Pattern Analyzer User Guide
 * [Error counting workflow configuration and execution](#error-counting-workflow-configuration-and-execution)
     * [Configuration](#configuration)
     * [Execution](#execution)
-        * [Advanced execution options](#advanced-execution-options)
+    * [Advanced execution options](#advanced-execution-options)
+        * [--quiet](#quiet)
+        * [--reportObservedIndels](#reportobservedindels)
 * [Error model evaluation/parameter estimation](#error-model-evaluationparameter-estimation)
 
 ## Introduction
@@ -43,7 +45,21 @@ The error counting process input requirements are identical to the Strelka small
 The primary output of the error counting workflow is a binary error counts file, currently written
 to `${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin`. This is a binary format, without running a model the easiest way to observe file details is to dump a summary of the file contents as follows:
 
-    ${STRELKA_INSTALL_PATH}/libexec//DumpSequenceErrorCounts --counts-file ${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin
+    ${STRELKA_INSTALL_PATH}/libexec/DumpSequenceErrorCounts --counts-file ${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin
+
+#### Dumping all counts data for model development
+If you would like to get the complete contents of the file, which could be useful for model development in external software (e.g. numpy or R), you can get a tab-delimited file by running DumpSequenceErrorCounts with the `--extended` argument.  This will write a headered file to stdout (N.B. output should __definitely__ be redirected to a file) with the following information:
+
+| Field # | Field name     | Description                                      |
+|--------:|---------------:|:-------------------------------------------------|
+|       1 | context        | currently, this is the homopolymer tract length  |
+|       2 | alts           | alt alleles observed ("0" if no alts observed)   |
+|       3 | alt_counts     | counts for each alt allele (0 if not alts)       |
+|       4 | ref_count      | total reference allele coverage                  |
+|       5 | total_alt      | total alternate allele coverage                  |
+|       6 | times_observed | number of times this configuration is observed   |
+
+Both alts and alt_counts are comma-delimited lists.  The first 5 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles and 30x coverage), while the final field provides the number of times it was observed.
 
 ### Error model output
 
@@ -129,14 +145,14 @@ Example execution on an SGE cluster:
 
 `${COUNTS_ANALYSIS_PATH}/runWorkflow.py -m sge -j 36`
 
-#### Advanced execution options
+### Advanced execution options
 
 These options are useful for workflow development and debugging:
 
-* Stderr logging can be disabled with `--quiet` argument. Note this log is
-  replicated to `${COUNTS_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt`
-  so there is no loss of log information.
-* Extended context details for each observed indel can be reported with the `--reportObservedIndels` argument.  This command will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/results` with a BED file titled `strelkaObservedIndel.bed.gz` which will report each observed indel as a single record.  In addition to the standard BED fields, it will also output the following additional fields:
+#### `--quiet`
+Stderr logging can be disabled with `--quiet` argument. Note this log is replicated to `${COUNTS_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt` so there is no loss of log information.
+#### `--reportObservedIndels`
+Extended context details for each observed indel can be reported with the `--reportObservedIndels` argument.  This command will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/results` with a BED file titled `strelkaObservedIndel.bed.gz` which will report each observed indel as a single record.  In addition to the standard BED fields, it will also output the following additional fields:
 
 | Field # |         Description                                               |
 |--------:|:------------------------------------------------------------------|
