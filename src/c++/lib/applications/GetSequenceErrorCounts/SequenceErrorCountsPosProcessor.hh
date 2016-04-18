@@ -52,10 +52,10 @@ private:
     void
     process_pos_variants_impl(const pos_t pos) override
     {
-        process_pos_indel_single_sample_digt(pos,0);
+        process_pos_error_counts(pos,0);
     }
 
-    void process_pos_indel_single_sample_digt(
+    void process_pos_error_counts(
         const pos_t pos,
         const unsigned sample_no);
 

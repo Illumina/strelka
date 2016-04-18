@@ -52,7 +52,7 @@ enum index_t
 static
 double
 contextLogLhood(
-    const std::vector<ExportedObservations>& observations,
+    const std::vector<ExportedIndelObservations>& observations,
     const double logInsertErrorRate,
     const double logDeleteErrorRate,
     const double logTheta)
@@ -81,13 +81,13 @@ contextLogLhood(
         double noindel(log0);
         {
             unsigned totalInsertObservations(0);
-            for (unsigned altIndex(SIGNAL_TYPE::INSERT_1); altIndex<SIGNAL_TYPE::DELETE_1; ++altIndex)
+            for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex<INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
             {
                 totalInsertObservations += obs.altObservations[altIndex];
             }
 
             unsigned totalDeleteObservations(0);
-            for (unsigned altIndex(SIGNAL_TYPE::DELETE_1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+            for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
             {
                 totalDeleteObservations += obs.altObservations[altIndex];
             }
@@ -99,7 +99,7 @@ contextLogLhood(
         }
 
         unsigned maxIndex(0);
-        for (unsigned altIndex(1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+        for (unsigned altIndex(1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
         {
             if (obs.altObservations[altIndex] > obs.altObservations[maxIndex]) maxIndex = altIndex;
         }
@@ -111,14 +111,14 @@ contextLogLhood(
             // approximate that the most frequent observations is the only potential variant allele:
 
             unsigned remainingInsertObservations(0);
-            for (unsigned altIndex(SIGNAL_TYPE::INSERT_1); altIndex<SIGNAL_TYPE::DELETE_1; ++altIndex)
+            for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex<INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
             {
                 if (altIndex==maxIndex) continue;
                 remainingInsertObservations += obs.altObservations[altIndex];
             }
 
             unsigned remainingDeleteObservations(0);
-            for (unsigned altIndex(SIGNAL_TYPE::DELETE_1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+            for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
             {
                 if (altIndex==maxIndex) continue;
                 remainingDeleteObservations += obs.altObservations[altIndex];
@@ -139,16 +139,16 @@ contextLogLhood(
         double althet(log0);
         {
             // approximate that the two most frequent observations are the only potential variant alleles:
-            assert(SIGNAL_TYPE::SIZE>1);
+            assert(INDEL_SIGNAL_TYPE::SIZE>1);
             unsigned maxIndex2(maxIndex==0 ? 1 : 0);
-            for (unsigned altIndex(maxIndex2+1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+            for (unsigned altIndex(maxIndex2+1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
             {
                 if (altIndex==maxIndex) continue;
                 if (obs.altObservations[altIndex] > obs.altObservations[maxIndex2]) maxIndex2 = altIndex;
             }
 
             unsigned remainingInsertObservations(0);
-            for (unsigned altIndex(SIGNAL_TYPE::INSERT_1); altIndex<SIGNAL_TYPE::DELETE_1; ++altIndex)
+            for (unsigned altIndex(INDEL_SIGNAL_TYPE::INSERT_1); altIndex<INDEL_SIGNAL_TYPE::DELETE_1; ++altIndex)
             {
                 if (altIndex==maxIndex) continue;
                 if (altIndex==maxIndex2) continue;
@@ -156,7 +156,7 @@ contextLogLhood(
             }
 
             unsigned remainingDeleteObservations(0);
-            for (unsigned altIndex(SIGNAL_TYPE::DELETE_1); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+            for (unsigned altIndex(INDEL_SIGNAL_TYPE::DELETE_1); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
             {
                 if (altIndex==maxIndex) continue;
                 if (altIndex==maxIndex2) continue;
@@ -186,7 +186,7 @@ struct error_minfunc : public codemin::minfunc_interface<double>
 {
     explicit
     error_minfunc(
-        const std::vector<ExportedObservations>& observations,
+        const std::vector<ExportedIndelObservations>& observations,
         const bool isLockTheta = false)
         : _obs(observations), _isLockTheta(isLockTheta)
     {}
@@ -268,7 +268,7 @@ struct error_minfunc : public codemin::minfunc_interface<double>
     static const double defaultLogTheta;
 
 private:
-    const std::vector<ExportedObservations>& _obs;
+    const std::vector<ExportedIndelObservations>& _obs;
     bool _isLockTheta;
     double _params[MIN_PARAMS::SIZE];
 };
@@ -288,12 +288,12 @@ struct SignalGroupTotal
 static
 void
 getAltSigTotal(
-    const std::vector<ExportedObservations>& observations,
+    const std::vector<ExportedIndelObservations>& observations,
     const unsigned altBeginIndex,
     const unsigned altEndIndex,
     SignalGroupTotal& sigTotal)
 {
-    for (const ExportedObservations& obs : observations)
+    for (const ExportedIndelObservations& obs : observations)
     {
         unsigned totalAltObservations(0);
         for (unsigned altIndex(altBeginIndex); altIndex<altEndIndex; ++altIndex)
@@ -312,7 +312,7 @@ getAltSigTotal(
 static
 void
 reportIndelErrorRateSet(
-    const SequenceErrorContext& context,
+    const IndelErrorContext& context,
     const char* extendedContextTag,
     const SignalGroupTotal& sigTotal,
     const unsigned skipped,
@@ -342,17 +342,17 @@ static
 void
 reportExtendedContext(
     const bool isLockTheta,
-    const SequenceErrorContext& context,
-    const std::vector<ExportedObservations>& observations,
+    const IndelErrorContext& context,
+    const std::vector<ExportedIndelObservations>& observations,
     const unsigned skipped,
     std::ostream& os)
 {
     // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
     SignalGroupTotal sigInsertTotal;
-    getAltSigTotal(observations, SIGNAL_TYPE::INSERT_1, SIGNAL_TYPE::DELETE_1, sigInsertTotal);
+    getAltSigTotal(observations, INDEL_SIGNAL_TYPE::INSERT_1, INDEL_SIGNAL_TYPE::DELETE_1, sigInsertTotal);
 
     SignalGroupTotal sigDeleteTotal;
-    getAltSigTotal(observations, SIGNAL_TYPE::DELETE_1, SIGNAL_TYPE::SIZE, sigDeleteTotal);
+    getAltSigTotal(observations, INDEL_SIGNAL_TYPE::DELETE_1, INDEL_SIGNAL_TYPE::SIZE, sigDeleteTotal);
 
 
     // initialize conjugate direction minimizer settings and minimize lhood...
@@ -418,8 +418,8 @@ modelVariantAndIndyError(
 
     ros << "context, allLoci, usedLoci, refReads, altReads, iter, lhood, rate, theta\n";
 
-    std::vector<ExportedObservations> observations;
-    for (const auto& contextInfo : counts)
+    std::vector<ExportedIndelObservations> observations;
+    for (const auto& contextInfo : counts.getIndelCounts())
     {
         const auto& context(contextInfo.first);
         const auto& data(contextInfo.second);

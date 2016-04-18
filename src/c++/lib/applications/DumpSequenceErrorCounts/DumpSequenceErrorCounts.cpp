@@ -33,18 +33,18 @@
 static
 void
 reportExtendedContext(
-    const SequenceErrorContext& context,
-    const std::vector<ExportedObservations>& observations,
+    const IndelErrorContext& context,
+    const std::vector<ExportedIndelObservations>& observations,
     std::ostream& os)
 {
     static const std::string alt_sep(",");
-    for (const ExportedObservations& obs : observations)
+    for (const ExportedIndelObservations& obs : observations)
     {
         unsigned totalAltObservations = 0;
         std::ostringstream alts;
         std::ostringstream alt_counts;
         bool isFirst = true;
-        for (unsigned altIndex(0); altIndex<SIGNAL_TYPE::SIZE; ++altIndex)
+        for (unsigned altIndex(0); altIndex<INDEL_SIGNAL_TYPE::SIZE; ++altIndex)
         {
             if (obs.altObservations[altIndex] == 0) continue;
 
@@ -54,7 +54,7 @@ reportExtendedContext(
                 alt_counts << alt_sep;
             }
 
-            alts << SIGNAL_TYPE::label(altIndex);
+            alts << INDEL_SIGNAL_TYPE::label(altIndex);
             alt_counts << obs.altObservations[altIndex];
 
             isFirst = false;
@@ -89,16 +89,16 @@ reportExtendedContext(
 
 static
 void
-extendedReport(
-    const SequenceErrorCounts& counts,
+extendedIndelReport(
+    const IndelErrorCounts& counts,
     std::ostream& ros)
 {
     ros << "context\talts\talt_counts\tref_count\ttotal_alt\ttimes_observed\n";
 
-    std::vector<ExportedObservations> observations;
+    std::vector<ExportedIndelObservations> observations;
     for (const auto& contextInfo : counts)
     {
-        const auto& context(contextInfo.first);
+        const IndelErrorContext& context(contextInfo.first);
         const auto& data(contextInfo.second);
 
         data.exportObservations(observations);
@@ -119,13 +119,14 @@ runDSEC(
     SequenceErrorCounts counts;
     counts.load(opt.countsFilename.c_str());
 
+    IndelErrorCounts& indelCounts(counts.getIndelCounts());
     if (!opt.isExtendedOutput)
     {
-        counts.dump(std::cout);
+        indelCounts.dump(std::cout);
     }
     else
     {
-        extendedReport(counts, std::cout);
+        extendedIndelReport(indelCounts, std::cout);
     }
 }
 

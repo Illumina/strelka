@@ -244,14 +244,14 @@ getOrthogonalHaplotypeSupportCounts(
 
 
 static
-SIGNAL_TYPE::index_t
+INDEL_SIGNAL_TYPE::index_t
 getIndelType(
     const starling_indel_report_info& iri)
 {
     int rudiff(static_cast<int>(iri.ref_repeat_count)-static_cast<int>(iri.indel_repeat_count));
     rudiff = std::min(3,std::max(-3,rudiff));
 
-    using namespace SIGNAL_TYPE;
+    using namespace INDEL_SIGNAL_TYPE;
     switch (rudiff)
     {
     case  1:
@@ -277,9 +277,9 @@ getIndelType(
 static
 void
 mergeIndelObservations(
-    const SequenceErrorContext& context,
-    const SequenceErrorContextObservation& obs,
-    std::map<SequenceErrorContext,SequenceErrorContextObservation>& indelObservations)
+    const IndelErrorContext& context,
+    const IndelErrorContextObservation& obs,
+    std::map<IndelErrorContext,IndelErrorContextObservation>& indelObservations)
 {
     auto iter(indelObservations.find(context));
 
@@ -290,7 +290,7 @@ mergeIndelObservations(
     else
     {
         // all signal counts should be summed:
-        for (unsigned signalIndex(0); signalIndex<SIGNAL_TYPE::SIZE; ++signalIndex)
+        for (unsigned signalIndex(0); signalIndex<INDEL_SIGNAL_TYPE::SIZE; ++signalIndex)
         {
             iter->second.signalCounts[signalIndex] += obs.signalCounts[signalIndex];
         }
@@ -304,7 +304,7 @@ mergeIndelObservations(
 
 void
 SequenceErrorCountsPosProcessor::
-process_pos_indel_single_sample_digt(
+process_pos_error_counts(
     const pos_t pos,
     const unsigned sample_no)
 {
@@ -319,6 +319,7 @@ process_pos_indel_single_sample_digt(
 
     if (refBase=='N') return;
 
+    IndelErrorCounts& indelCounts(_counts.getIndelCounts());
 
     // Current multiploid indel model can handle a het or hom indel
     // allele vs. reference, or two intersecting non-reference indel
@@ -344,15 +345,15 @@ process_pos_indel_single_sample_digt(
             if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
             {
                 // record the number of contexts which have been skipped due to high depth:
-                SequenceErrorContext context;
+                IndelErrorContext context;
                 context.repeatCount = 1;
-                _counts.addDepthSkip(context);
+                indelCounts.addDepthSkip(context);
 
                 const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
                 if (leftHpolSize>1)
                 {
                     context.repeatCount = std::min(maxHpolLength,leftHpolSize);
-                    _counts.addDepthSkip(context);
+                    indelCounts.addDepthSkip(context);
                 }
                 return;
             }
@@ -396,7 +397,7 @@ process_pos_indel_single_sample_digt(
     }
 
     // buffer observations until we get through all overlaping indels at this site:
-    std::map<SequenceErrorContext,SequenceErrorContextObservation> indelObservations;
+    std::map<IndelErrorContext,IndelErrorContextObservation> indelObservations;
 
 
     if (! _groups.empty())
@@ -414,8 +415,7 @@ process_pos_indel_single_sample_digt(
             starling_indel_report_info iri;
             get_starling_indel_report_info(ik,id,_ref,iri);
 
-            SequenceErrorContext context;
-            context.repeatCount = 1;
+            IndelErrorContext context;
             if ((iri.repeat_unit_length==1) && (iri.ref_repeat_count>1))
             {
                 // guard against the occasional non-normalized indel:
@@ -426,9 +426,9 @@ process_pos_indel_single_sample_digt(
                 }
             }
 
-            SequenceErrorContextObservation obs;
+            IndelErrorContextObservation obs;
 
-            const SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
+            const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
             obs.signalCounts[sigIndex] = support[nonrefHapIndex];
             obs.refCount = support[nonrefHapCount];
 
@@ -459,22 +459,21 @@ process_pos_indel_single_sample_digt(
 
     for (const auto& value : indelObservations)
     {
-        _counts.addError(value.first,value.second,depth);
+        indelCounts.addError(value.first,value.second,depth);
     }
 
     // add all the backgrounds that haven't been covered already
     {
         unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
 
-        SequenceErrorContext context;
-        SequenceBackgroundObservation obs;
+        IndelErrorContext context;
+        IndelBackgroundObservation obs;
         obs.depth = depth;
 
         // always add hpol=1:
-        context.repeatCount = 1;
         if (! indelObservations.count(context))
         {
-            _counts.addBackground(context,obs);
+            indelCounts.addBackground(context,obs);
         }
 
         // also check for a more specific reference context
@@ -483,7 +482,7 @@ process_pos_indel_single_sample_digt(
             context.repeatCount = std::min(maxHpolLength,leftHpolSize);
             if (! indelObservations.count(context))
             {
-                _counts.addBackground(context,obs);
+                indelCounts.addBackground(context,obs);
             }
         }
     }

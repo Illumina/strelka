@@ -51,8 +51,8 @@ void
 reportExtendedContext(
     const double maxAltFrac,
     const unsigned minDepth,
-    const SequenceErrorContext& context,
-    const std::vector<ExportedObservations>& observations,
+    const IndelErrorContext& context,
+    const std::vector<ExportedIndelObservations>& observations,
     const unsigned skipped,
     const unsigned altBeginIndex,
     const unsigned altEndIndex,
@@ -61,7 +61,7 @@ reportExtendedContext(
 {
     SignalGroupTotal sigTotal;
 
-    for (const ExportedObservations& obs : observations)
+    for (const ExportedIndelObservations& obs : observations)
     {
         sigTotal.locus += obs.repeatCount;
         unsigned totalAltObservations(0);
@@ -113,8 +113,8 @@ model1(
 
     ros << "context, allLoci, usedLoci, noiseLoci, refReads, altReads, rate, rate_95%_upper_bound\n";
 
-    std::vector<ExportedObservations> observations;
-    for (const auto& contextInfo : counts)
+    std::vector<ExportedIndelObservations> observations;
+    for (const auto& contextInfo : counts.getIndelCounts())
     {
         const auto& context(contextInfo.first);
         const auto& data(contextInfo.second);
@@ -124,8 +124,8 @@ model1(
         if (observations.empty()) continue;
 
         reportExtendedContext(maxAltFrac, minDepth, context, observations, data.skipped,
-                              SIGNAL_TYPE::INSERT_1, SIGNAL_TYPE::DELETE_1, "I", ros);
+                              INDEL_SIGNAL_TYPE::INSERT_1, INDEL_SIGNAL_TYPE::DELETE_1, "I", ros);
         reportExtendedContext(maxAltFrac, minDepth, context, observations, data.skipped,
-                              SIGNAL_TYPE::DELETE_1, SIGNAL_TYPE::SIZE, "D", ros);
+                              INDEL_SIGNAL_TYPE::DELETE_1, INDEL_SIGNAL_TYPE::SIZE, "D", ros);
     }
 }
