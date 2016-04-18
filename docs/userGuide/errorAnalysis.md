@@ -1,5 +1,18 @@
 Error Pattern Analyzer User Guide
 =================================
+# Table of Contents
+* [Introduction](#introduction)
+* [Installation](#installation)
+* [Method overview](#method-overview)
+* [Input Requirements](#input-requirements)
+* [Outputs](#outputs)
+    * [Counts files](#counts-files)
+    * [Error model output](#error-model-output)
+* [Error counting workflow configuration and execution](#error-counting-workflow-configuration-and-execution)
+    * [Configuration](#configuration)
+    * [Execution](#execution)
+        * [Advanced execution options](#advanced-execution-options)
+* [Error model evaluation/parameter estimation](#error-model-evaluationparameter-estimation)
 
 ## Introduction
 
@@ -9,7 +22,7 @@ The error pattern analyzer is used to evaluate various models of spurious baseca
 
 This module builds and installs with the Strelka variant caller by default. No special build steps are required.
 
-## Method Overview
+## Method overview
 
 The error pattern analyzer is comprised of two primary steps.
 
@@ -32,7 +45,7 @@ to `${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin`. This is a 
 
     ${STRELKA_INSTALL_PATH}/libexec//DumpSequenceErrorCounts --counts-file ${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin
 
-### Error model output:
+### Error model output
 
 All error models applied to the counts file currently write to stdout, typically in csv format.
 
@@ -123,8 +136,20 @@ These options are useful for workflow development and debugging:
 * Stderr logging can be disabled with `--quiet` argument. Note this log is
   replicated to `${COUNTS_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt`
   so there is no loss of log information.
+* Extended context details for each observed indel can be reported with the `--reportObservedIndels` argument.  This command will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/results` with a BED file titled `strelkaObservedIndel.bed.gz` which will report each observed indel as a single record.  In addition to the standard BED fields, it will also output the following additional fields:
+
+| Field # |         Description                                               |
+|--------:|:------------------------------------------------------------------|
+|       4 | Indel type (INSERT/DELETE)                                        |
+|       5 | Repeat unit                                                       |
+|       6 | Reference repeat count (in # of repeat units)                     |
+|       7 | Indel magnitude/length (in bp)                                    |
+|       8 | Indel index at site (numerator is 0-indexed, denominator is 1-indexed) |
+|       9 | Indel allele coverage                                             |
+|      10 | Reference allele coverage                                         |
+|      11 | Total locus coverage                                              |
   
-## Error Model evaluation/Parameter estimation 
+## Error model evaluation/parameter estimation 
 
 Given a counts file, error estimation under a particular model can be fun via:
 
