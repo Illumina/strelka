@@ -12,8 +12,8 @@ Error Pattern Analyzer User Guide
     * [Configuration](#configuration)
     * [Execution](#execution)
     * [Advanced execution options](#advanced-execution-options)
-        * [--quiet](#quiet)
-        * [--reportObservedIndels](#reportobservedindels)
+        * [--quiet](#--quiet)
+        * [--reportObservedIndels](#--reportobservedindels)
 * [Error model evaluation/parameter estimation](#error-model-evaluationparameter-estimation)
 
 ## Introduction
@@ -48,7 +48,7 @@ to `${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin`. This is a 
     ${STRELKA_INSTALL_PATH}/libexec/DumpSequenceErrorCounts --counts-file ${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin
 
 #### Dumping all counts data for model development
-If you would like to get the complete contents of the file, which could be useful for model development in external software (e.g. numpy or R), you can get a tab-delimited file by running DumpSequenceErrorCounts with the `--extended` argument.  This will write a headered file to stdout (N.B. output should __definitely__ be redirected to a file) with the following information:
+If you would like to get the complete contents of the file, which could be useful for model development in external software (e.g. numpy or R), you can get a tab-delimited file by running DumpSequenceErrorCounts with the `--extended` argument.  This will write a headered tab-delimited file to stdout (N.B. output should __definitely__ be redirected to a file) with the following information:
 
 | Field # | Field name     | Description                                      |
 |--------:|---------------:|:-------------------------------------------------|
