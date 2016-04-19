@@ -6,15 +6,10 @@ Error Pattern Analyzer User Guide
 * [Method overview](#method-overview)
 * [Input Requirements](#input-requirements)
 * [Outputs](#outputs)
-    * [Counts files](#counts-files)
-    * [Error model output](#error-model-output)
 * [Error counting workflow configuration and execution](#error-counting-workflow-configuration-and-execution)
-    * [Configuration](#configuration)
-    * [Execution](#execution)
-    * [Advanced execution options](#advanced-execution-options)
-        * [--quiet](#--quiet)
-        * [--reportObservedIndels](#--reportobservedindels)
-* [Error model evaluation/parameter estimation](#error-model-evaluationparameter-estimation)
+* [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput)
+* [Error model parameter estimation](#error-model-parameter-estimation)
+* [Error model evaluation](#error-model-evaluation)
 
 ## Introduction
 
@@ -43,23 +38,7 @@ The error counting process input requirements are identical to the Strelka small
 ### Counts files
 
 The primary output of the error counting workflow is a binary error counts file, currently written
-to `${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin`. This is a binary format, without running a model the easiest way to observe file details is to dump a summary of the file contents as follows:
-
-    ${STRELKA_INSTALL_PATH}/libexec/DumpSequenceErrorCounts --counts-file ${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin
-
-#### Dumping all counts data for model development
-If you would like to get the complete contents of the file, which could be useful for model development in external software (e.g. numpy or R), you can get a tab-delimited file by running DumpSequenceErrorCounts with the `--extended` argument.  This will write a headered tab-delimited file to stdout (N.B. output should __definitely__ be redirected to a file) with the following information:
-
-| Field # | Field name     | Description                                      |
-|--------:|---------------:|:-------------------------------------------------|
-|       1 | context        | currently, this is the homopolymer tract length  |
-|       2 | alts           | alt alleles observed ("0" if no alts observed)   |
-|       3 | alt_counts     | counts for each alt allele (0 if not alts)       |
-|       4 | ref_count      | total reference allele coverage                  |
-|       5 | total_alt      | total alternate allele coverage                  |
-|       6 | times_observed | number of times this configuration is observed   |
-
-Both alts and alt_counts are comma-delimited lists.  The first 5 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles and 30x coverage), while the final field provides the number of times it was observed.
+to `${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin`. This is a binary format--to view the counts data without running a model, please see [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput).
 
 ### Error model output
 
@@ -165,6 +144,30 @@ Extended context details for each observed indel can be reported with the `--rep
 |      10 | Reference allele coverage                                         |
 |      11 | Total locus coverage                                              |
   
+## Viewing error counting workflow ouput
+
+### Summary output
+
+The following command allows you to view a summary of the output from the error counting workflow:
+
+    ${STRELKA_INSTALL_PATH}/libexec/DumpSequenceErrorCounts --counts-file ${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin
+
+### Extended output (for model development)
+
+If you would like to get the complete contents of the file, which could be useful for model development in external software (e.g. numpy or R), you can get a tab-delimited file by running DumpSequenceErrorCounts with the `--extended` argument.  This will write a headered tab-delimited file to stdout (N.B. output should __definitely__ be redirected to a file) with the following information:
+
+| Field # | Field name     | Description                                      |
+|--------:|---------------:|:-------------------------------------------------|
+|       1 | context        | currently, this is the homopolymer tract length  |
+|       2 | alts           | alt alleles observed ("0" if no alts observed)   |
+|       3 | alt_counts     | counts for each alt allele (0 if not alts)       |
+|       4 | ref_count      | total reference allele coverage                  |
+|       5 | total_alt      | total alternate allele coverage                  |
+|       6 | times_observed | number of times this configuration is observed   |
+
+Both alts and alt_counts are comma-delimited lists.  The first 5 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles and 30x coverage), while the final field provides the number of times it was observed.
+
+
 ## Error model evaluation/parameter estimation 
 
 Given a counts file, error estimation under a particular model can be fun via:
@@ -173,5 +176,8 @@ Given a counts file, error estimation under a particular model can be fun via:
         
 Note that the estimation process currenlty offers very little runtime flexibility or documentation, any user of this tool is assumed to be adding or modifying models by changes the estimator source code itself. As a minimal convenience to developers, the exact model choosen for analysis can be choosen at runtime by number, per the above aexample.
 
+## Error model evaluation
+
+This section is empty for now
 
 [2]: http://Illumina.github.io/pyflow/
