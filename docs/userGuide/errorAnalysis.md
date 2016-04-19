@@ -168,7 +168,7 @@ If you would like to get the complete contents of the file, which could be usefu
 Both alts and alt_counts are comma-delimited lists.  The first 5 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles and 30x coverage), while the final field provides the number of times it was observed.
 
 
-## Error model evaluation/parameter estimation 
+## Error model parameter estimation 
 
 Given a counts file, error estimation under a particular model can be fun via:
 
