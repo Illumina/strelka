@@ -25,9 +25,9 @@ The error pattern analyzer is comprised of two primary steps.
 
 (1) An error counting workflow analyzes BAMs to produce per-locus allele distributions over the genome for various allele types and context segmentations. Error counts are found for segments of the genome in parallel and merged to produce a single counts file for the sample.
 
-(2) Given a counts file from the first step, various error models can be run on the data to evaluate model fit or to paramaterize a model to specific sequencing conditions.
+(2) Given a counts file from the first step, various error models can be run on the data to evaluate model fit or to parameterize a model to specific sequencing conditions.
 
-More detailed methods documentation for both steps can be found [here](../methods/errorAnalysis/)
+More detailed methods documentation for both steps can be found [here](../methods/errorAnalysis/).
 
 ## Input requirements
 
@@ -51,13 +51,13 @@ execution. The configuration step is used to specify the input data and any
 options pertaining to the error counting methods. The execution
 step is used to specify any parameters pertaining to _how_ the workflow is executed
 (such as the total number of cores or SGE nodes over which the jobs should be
-parallelized). The second execution step can also be interrupted and restarted
+parallelized). The second execution step can also be interrupted and resumed
 without changing the final result of the workflow.
 
 ### Configuration
 
-The workflow is configured with the script: `${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py`
-. Running this script with no arguments will display all standard configuration
+The workflow is configured with the script: `${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py`. 
+Running this script with no arguments will display all standard configuration
 options to specify input alignment files, the reference sequence and the output run folder.
 Note that all input alignment and reference sequence files must contain the same chromosome names
 in the same order. Note that many downstream error modeling routines assume the counts are gathered from diploid regions, for now non-autosomes need to be filtered out crudely by explicitily listing all autosomes as region targets.
@@ -93,7 +93,7 @@ Example configuration for human autosomes:
         
 
 On completion, the configuration script will create the workflow run script `${COUNTS_ANALYSIS_PATH}/runWorkflow.py`. This can be used to run the workflow in various parallel compute modes per the
-instructions in the [Execution] section below.
+instructions in the [Execution](#execution) section below.
 
 ### Execution
 
@@ -154,16 +154,16 @@ The following command allows you to view a summary of the output from the error 
 
 ### Extended output (for model development)
 
-If you would like to get the complete contents of the file, which could be useful for model development in external software (e.g. numpy or R), you can get a tab-delimited file by running DumpSequenceErrorCounts with the `--extended` argument.  This will write a headered tab-delimited file to stdout (N.B. output should __definitely__ be redirected to a file) with the following information:
+If you would like to get the complete contents of the file, which could be useful for model development in external software (e.g. numpy or R), you can get a tab-delimited file by running `DumpSequenceErrorCounts` with the `--extended` argument.  This will write a headered tab-delimited file to stdout (N.B. output should __definitely__ be redirected to a file) with the following information:
 
 | Field # | Field name     | Description                                      |
 |--------:|---------------:|:-------------------------------------------------|
-|       1 | context        | currently, this is the homopolymer tract length  |
-|       2 | alts           | alt alleles observed ("0" if no alts observed)   |
-|       3 | alt_counts     | counts for each alt allele (0 if no alts)       |
-|       4 | ref_count      | total reference allele coverage                  |
-|       5 | total_alt      | total alternate allele coverage                  |
-|       6 | times_observed | number of times this configuration is observed   |
+|       1 | context        | Currently, this is the homopolymer tract length  |
+|       2 | alts           | Alt alleles observed (0 if no alts observed)     |
+|       3 | alt_counts     | Counts for each alt allele (0 if no alts)        |
+|       4 | ref_count      | Total reference allele coverage                  |
+|       5 | total_alt      | Total alternate allele coverage                  |
+|       6 | times_observed | Number of times this configuration is observed   |
 
 Both alts and alt_counts are comma-delimited lists.  The first 5 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles and 30x coverage), while the final field provides the number of times it was observed.
 
@@ -174,7 +174,7 @@ Given a counts file, error estimation under a particular model can be fun via:
 
         ${STRELKA_INSTALL_PATH}/libexec/EstimateParametersFromErrorCounts --counts-file myCounts.bin --model 2
         
-Note that the estimation process currenlty offers very little runtime flexibility or documentation, any user of this tool is assumed to be adding or modifying models by changes the estimator source code itself. As a minimal convenience to developers, the exact model choosen for analysis can be choosen at runtime by number, per the above example.
+Note that the estimation process currently offers very little runtime flexibility or documentation, any user of this tool is assumed to be adding or modifying models by changes the estimator source code itself. As a minimal convenience to developers, the exact model choosen for analysis can be choosen at runtime by number, per the above example.
 
 ## Error model evaluation
 
