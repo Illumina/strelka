@@ -38,7 +38,7 @@ The error counting process input requirements are identical to the Strelka small
 ### Counts files
 
 The primary output of the error counting workflow is a binary error counts file, currently written
-to `${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin`. This is a binary format--to view the counts data without running a model, please see [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput).
+to `${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin`. This is a binary format&mdash;to view the counts data without running a model, please see [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput).
 
 ### Error model output
 
