@@ -1,6 +1,7 @@
 Error Pattern Analyzer User Guide
 =================================
-# Table of Contents
+
+## Table of Contents
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Method overview](#method-overview)
