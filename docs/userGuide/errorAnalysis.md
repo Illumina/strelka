@@ -160,7 +160,7 @@ If you would like to get the complete contents of the file, which could be usefu
 |--------:|---------------:|:-------------------------------------------------|
 |       1 | context        | currently, this is the homopolymer tract length  |
 |       2 | alts           | alt alleles observed ("0" if no alts observed)   |
-|       3 | alt_counts     | counts for each alt allele (0 if not alts)       |
+|       3 | alt_counts     | counts for each alt allele (0 if no alts)       |
 |       4 | ref_count      | total reference allele coverage                  |
 |       5 | total_alt      | total alternate allele coverage                  |
 |       6 | times_observed | number of times this configuration is observed   |
@@ -174,7 +174,7 @@ Given a counts file, error estimation under a particular model can be fun via:
 
         ${STRELKA_INSTALL_PATH}/libexec/EstimateParametersFromErrorCounts --counts-file myCounts.bin --model 2
         
-Note that the estimation process currenlty offers very little runtime flexibility or documentation, any user of this tool is assumed to be adding or modifying models by changes the estimator source code itself. As a minimal convenience to developers, the exact model choosen for analysis can be choosen at runtime by number, per the above aexample.
+Note that the estimation process currenlty offers very little runtime flexibility or documentation, any user of this tool is assumed to be adding or modifying models by changes the estimator source code itself. As a minimal convenience to developers, the exact model choosen for analysis can be choosen at runtime by number, per the above example.
 
 ## Error model evaluation
 
