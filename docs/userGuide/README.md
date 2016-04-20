@@ -2,13 +2,22 @@ Strelka User Guide
 ==================
 
 ## Table of Contents
+[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
 * [Introduction](#introduction)
+* [Installation](#installation)
 * [Method Overview](#method-overview)
 * [Capabilities](#capabilities)
+  * [Known Limitations](#known-limitations)
 * [Input requirements](#input-requirements)
 * [Outputs](#outputs)
-* [Run configuration and execution](#run-configuration-and-execution)
+  * [Somatic variant predictions](#somatic-variant-predictions)
+* [Run configuration and Execution](#run-configuration-and-execution)
+  * [Configuration](#configuration)
+    * [Advanced configuration options](#advanced-configuration-options)
+  * [Execution](#execution)
+    * [Advanced execution options](#advanced-execution-options)
 * [Special Topics](#special-topics)
+[] (END automated TOC section, any edits will be overwritten on next source refresh)
 
 ## Introduction
 
@@ -68,7 +77,7 @@ created for any run. These files are:
     * snvs
 * __somatic.indels.vcf.gz__
     * indels
-    
+
 Strelka can also optionally produce a somatic callability track in:
 
 '${RUNFOLDER}/results/regions/somatic.callable.region.bed.gz'
@@ -150,7 +159,7 @@ These options are useful for workflow development and debugging:
 
 ## Special Topics
 
-The following items provide an in-depth focus on a special topic or procedure 
+The following items provide an in-depth focus on a special topic or procedure
 
 * [Training Procedure for Somatic Empirical Score](trainingSomaticEmpiricalScore.md)
 

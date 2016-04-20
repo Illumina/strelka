@@ -222,7 +222,7 @@ operator<<(
     os << "\taltObservations: ";
     unsigned alt_index(0);
     for (const auto& alt: obs.altObservations)
-    {   
+    {
         os << INDEL_SIGNAL_TYPE::label(alt_index) << ":";
         os << alt << ",";
         ++alt_index;

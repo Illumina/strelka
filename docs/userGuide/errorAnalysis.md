@@ -2,15 +2,26 @@ Error Pattern Analyzer User Guide
 =================================
 
 ## Table of Contents
+[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Method overview](#method-overview)
-* [Input Requirements](#input-requirements)
+* [Input requirements](#input-requirements)
 * [Outputs](#outputs)
+  * [Counts files](#counts-files)
+  * [Error model output](#error-model-output)
 * [Error counting workflow configuration and execution](#error-counting-workflow-configuration-and-execution)
+  * [Configuration](#configuration)
+  * [Execution](#execution)
+  * [Advanced execution options](#advanced-execution-options)
+    * [`--quiet`](#--quiet)
+    * [`--reportObservedIndels`](#--reportobservedindels)
 * [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput)
+  * [Summary output](#summary-output)
+  * [Extended output (for model development)](#extended-output-for-model-development)
 * [Error model parameter estimation](#error-model-parameter-estimation)
 * [Error model evaluation](#error-model-evaluation)
+[] (END automated TOC section, any edits will be overwritten on next source refresh)
 
 ## Introduction
 
@@ -57,7 +68,7 @@ without changing the final result of the workflow.
 
 ### Configuration
 
-The workflow is configured with the script: `${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py`. 
+The workflow is configured with the script: `${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py`.
 Running this script with no arguments will display all standard configuration
 options to specify input alignment files, the reference sequence and the output run folder.
 Note that all input alignment and reference sequence files must contain the same chromosome names
@@ -91,7 +102,7 @@ Example configuration for human autosomes:
     --region chr20 \
     --region chr21 \
     --region chr22
-        
+
 
 On completion, the configuration script will create the workflow run script `${COUNTS_ANALYSIS_PATH}/runWorkflow.py`. This can be used to run the workflow in various parallel compute modes per the
 instructions in the [Execution](#execution) section below.
@@ -144,7 +155,7 @@ Extended context details for each observed indel can be reported with the `--rep
 |       9 | Indel allele coverage                                             |
 |      10 | Reference allele coverage                                         |
 |      11 | Total locus coverage                                              |
-  
+
 ## Viewing error counting workflow ouput
 
 ### Summary output
@@ -169,12 +180,12 @@ If you would like to get the complete contents of the file, which could be usefu
 Both alts and alt_counts are comma-delimited lists.  The first 5 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles and 30x coverage), while the final field provides the number of times it was observed.
 
 
-## Error model parameter estimation 
+## Error model parameter estimation
 
 Given a counts file, error estimation under a particular model can be fun via:
 
         ${STRELKA_INSTALL_PATH}/libexec/EstimateParametersFromErrorCounts --counts-file myCounts.bin --model 2
-        
+
 Note that the estimation process currently offers very little runtime flexibility or documentation, any user of this tool is assumed to be adding or modifying models by changes the estimator source code itself. As a minimal convenience to developers, the exact model choosen for analysis can be choosen at runtime by number, per the above example.
 
 ## Error model evaluation

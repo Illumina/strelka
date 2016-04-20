@@ -103,9 +103,9 @@ label(
 inline
 const char*
 label(
-            const unsigned id)
+    const unsigned id)
 {
-        return label(static_cast<index_t>(id));
+    return label(static_cast<index_t>(id));
 }
 }
 

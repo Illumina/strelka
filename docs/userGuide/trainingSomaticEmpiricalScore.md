@@ -23,7 +23,7 @@ to both SNV and indel VCF outputs. All current EVS features used in Strelka's sc
 model in addition to various experimental features will be reported. Note that EVS
 features can be reported even when scoring itself is turned off with the `--disableEVS` option.
 
-### Step 1a: Process a single VCF into a labeled feature CSV file 
+### Step 1a: Process a single VCF into a labeled feature CSV file
 
 Given a strelka somatic VCF with optional EVSF output and a truth list, a CSV file with features and
 TP/FP/FN labeling can be produced as follows:
@@ -39,7 +39,7 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/vcf_to_fea
 This script supports additional bed file inputs to define FP and ambiguous regions, see script usage
 for details.
 
-### Step 1b: Handle multiple training data sets 
+### Step 1b: Handle multiple training data sets
 
 Typically multiple strelka analyses should available for training/testing, in this case process each
 VCF to a labeled CSV feature file using the procedure described in Step 1a. These training data may
@@ -50,7 +50,7 @@ be combined as required for the model learning and/or evaluation procedures desc
 
 The next step is to train a model given one or more labeled feature datasets produced in Step 1.
 An example is shown below, note the `--features` argument below must match that used to generate
-the input training dataset(s), or else list a set of features present in all input dataset(s). 
+the input training dataset(s), or else list a set of features present in all input dataset(s).
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_learn.py \
@@ -101,7 +101,7 @@ python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/evs_evalua
 ```
 Reading admix_training_data.csv
 ptag   FN     FP    TP
-tag                   
+tag
 FN    178      0     0
 FP      0  17640     1
 TP      0      0  5439
@@ -165,7 +165,7 @@ ggsave("admix.png", width=4, height=3, dpi=120)
 
 ![Training data ROC curve](trainingSomaticEmpiricalScore/admix.png)
 
-The ROC curve plotted in this example shows the expected result of both a small training set 
+The ROC curve plotted in this example shows the expected result of both a small training set
 and testing with the training data.
 
 ## Step 5: Export the model for use in Strelka

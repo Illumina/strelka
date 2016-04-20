@@ -27,7 +27,7 @@
 
 \section{Overview}
 
-On any release branch, the methods described here should reflect the default implementation in the source 
+On any release branch, the methods described here should reflect the default implementation in the source
 repository containing this document.
 
 \section{Methods}
@@ -90,14 +90,14 @@ The somatic calling model assumes that the samples are from diploid individuals.
 \end{align*}
 
 
-Here $D$ refers to the sequencing data from both samples. The likelihood term above is computed from independent sample-specific allele frequency likelihoods 
+Here $D$ refers to the sequencing data from both samples. The likelihood term above is computed from independent sample-specific allele frequency likelihoods
 
 \begin{align*}
 	& P(D|G_t,G_n) = \int_{F_t,F_n}{P(D|F_t,F_n)P(F_t,F_n|G_t,G_n)} \\
 	& = \int_{F_t,F_n}{P(D_t|F_t)P(D_n|F_n)P(F_t,F_n|G_t,G_n)},
 \end{align*}
 
-\noindent where $F_t$, $F_n$ refer to tumor and normal allele frequencies and $D_t$ and $D_n$ indicate tumor and normal sample data. In the above equation, the sample-specific allele frequency likelihoods $P(D_t|F_t)$ and $P(D_n|F_n)$ could in principle be supplied by any probabilistic variant caller. Strelka currently provides its own sample-specific frequency likelihoods (described in Section xxx). The genotype prior probability $P(G_t, G_n)$ and the joint allele-frequency distribution $P(F_t,F_n|G)$ are detailed below. 
+\noindent where $F_t$, $F_n$ refer to tumor and normal allele frequencies and $D_t$ and $D_n$ indicate tumor and normal sample data. In the above equation, the sample-specific allele frequency likelihoods $P(D_t|F_t)$ and $P(D_n|F_n)$ could in principle be supplied by any probabilistic variant caller. Strelka currently provides its own sample-specific frequency likelihoods (described in Section xxx). The genotype prior probability $P(G_t, G_n)$ and the joint allele-frequency distribution $P(F_t,F_n|G)$ are detailed below.
 
 The posterior probability over tumor and normal genotypes $P(G_t,G_n|D)$ is used to compute the {\em somatic variant probability} (QSS for SNVs and QSI for indels).
 
@@ -107,7 +107,7 @@ The posterior probability over tumor and normal genotypes $P(G_t,G_n|D)$ is used
 
 As previously discussed, this somatic variant probability is not ideal for detecting variants of interest because it does not distinguish somatic variant types. We therefore associate somatic calls with the probability of somatic variation {\em and} the normal sample genotype being $\tt ref$ (QSS\_NT for SNVs and QSI\_NT for indels), i.e., $P(G_t = {\tt som}, G_n = {\tt ref} | D)$. All Strelka quality scores discussed below express these values.
 
-The Strelka workflow uses two calling tiers. All somatic calls are classified according to their most-likely normal genotype if that value is the same in tiers 1 and 2, and classified as conflicts otherwise. 
+The Strelka workflow uses two calling tiers. All somatic calls are classified according to their most-likely normal genotype if that value is the same in tiers 1 and 2, and classified as conflicts otherwise.
 
 \paragraph{Genomic prior}
 Given the expected rate of single nucleotide differences between two unrelated haplotypes (Watterson theta) $\theta$, the normal genomic prior $P(G_n)$ over the set of diploid genotypes is
@@ -165,7 +165,7 @@ P(F_t, F_n | G_t = {\tt som}, G_n \neq {\tt ref})=
 \end{cases}
 \end{equation*}
 
-\noindent Here, $\tau$ represents the {\em contamination tolerance}, $U(F_t)$ refers to a uniform distribution over the allowed tumor allele frequencies and $\mu$ indicates the noise term. The contamination tolerance term is introduced to allow for contamination in the normal sample by some fraction of tumor cells. This is particularly useful for analyses of liquid tumors, where normal sample is almost always contaminated by tumor cells. The contamination tolerance is set to $0.15$. The noise term abstracts various sequencing, read mapping and assembly issues which could produce an unexpected allele frequency shared in the tumor and normal samples. For SNVs, the noise contribution is set to $\mu_{\text{SNV}} = 5 \times 10^{-10}$. For indels, it is dynamically estimated as described in Section xxx. 
+\noindent Here, $\tau$ represents the {\em contamination tolerance}, $U(F_t)$ refers to a uniform distribution over the allowed tumor allele frequencies and $\mu$ indicates the noise term. The contamination tolerance term is introduced to allow for contamination in the normal sample by some fraction of tumor cells. This is particularly useful for analyses of liquid tumors, where normal sample is almost always contaminated by tumor cells. The contamination tolerance is set to $0.15$. The noise term abstracts various sequencing, read mapping and assembly issues which could produce an unexpected allele frequency shared in the tumor and normal samples. For SNVs, the noise contribution is set to $\mu_{\text{SNV}} = 5 \times 10^{-10}$. For indels, it is dynamically estimated as described in Section xxx.
 
 % The description of the strand-bias model is not included here because it is not used in the quality score calculation.
 

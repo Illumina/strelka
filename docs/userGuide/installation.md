@@ -28,7 +28,7 @@ are the current minimum versions enforced by the build system:
 
 ### Operating System Guidelines
 
-##### Linux 
+##### Linux
 
 Strelka is known to build and run on the following linux distributions
 (with additional packages as described below):

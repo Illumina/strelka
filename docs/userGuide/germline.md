@@ -15,7 +15,7 @@ filtration and scoring. These steps are described in more detail below:
 
 1. **Candidate indel discovery**
 
-2. **Read Realignment** 
+2. **Read Realignment**
 
 3. **SNP and indel genotyping**
 

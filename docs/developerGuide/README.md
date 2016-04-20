@@ -1,6 +1,25 @@
 Strelka Developer Guide
 =======================
 
+## Table of Contents
+[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+* [Scope](#scope)
+  * [Developer Build Notes](#developer-build-notes)
+    * [Building from source repository vs. versioned code distribution:](#building-from-source-repository-vs-versioned-code-distribution)
+    * [Source auto-documentation](#source-auto-documentation)
+    * [Improving build time](#improving-build-time)
+    * [General Debugging: Address Sanitizer](#general-debugging-address-sanitizer)
+    * [General Debugging: Inspecting temporary files](#general-debugging-inspecting-temporary-files)
+    * [Windows development support](#windows-development-support)
+    * [Automating Portable Binary Builds for Linux](#automating-portable-binary-builds-for-linux)
+  * [Coding Guidelines](#coding-guidelines)
+    * [Source formatting](#source-formatting)
+    * [Error handling](#error-handling)
+    * [Unit tests](#unit-tests)
+[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
+# Scope
+
 This guide provides:
 * protocols for contributing new or modified methods
 * methods to debug stability or runtime issues
@@ -12,10 +31,6 @@ so this guide is not intended to provide complete coverage of the above topics.
 
 For end user documentation describing how to run an analysis and interpret its output,
 please see the [User Guide](../userGuide/README.md).
-
-## Table of Contents
-* [Developer Build Notes](#developer-build-notes)
-* [Coding Guidelines](#coding-guidelines)
 
 ## Developer Build Notes
 
@@ -83,7 +98,7 @@ files may be helpful in various debugging scenarios. To turn on this option, add
 `--retainTempFiles` as a configuration argument:
 
     configureStrelkaWorkflow.py [other_options...] --retainTempFiles
- 
+
 ### Windows development support
 
 Strelka does not link or run on windows. However, the build system does
@@ -145,7 +160,7 @@ specified by `builderImage`.
 
 #### Exception Details
 * Preferred exception pattern is to use an internal class derived from `boost::exception`:
- 
+
 ```c++
 
 #include "common/Exceptions.hh"
@@ -162,7 +177,7 @@ foo(const char* name)
     BOOST_THROW_EXCEPTION(LogicException(oss.str()));
 }
 ```
- 
+
 * Context at the original throw site is often supplemented by a 'catch and release' block to add
 information at a few critical points on the stack. Typically this is information which
 is unavailable at the throw site. Example code is:
@@ -193,6 +208,6 @@ self.flowLog("Initiating Starling workflow version: %s" % (__version__)
 * Unit tests are enabled for a subset of the c++ code
 * All tests use the boost unit test framework
 * All unit tests are required to run and pass as part of every build (including end-user builds)
-* Unit tests are already enabled for every library "test" subdirectory, additional tests in these directories will be automatically detected 
+* Unit tests are already enabled for every library "test" subdirectory, additional tests in these directories will be automatically detected
   * Example [blt_util unit tests directory](../../src/c++/lib/blt_util/test)
 
