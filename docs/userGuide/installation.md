@@ -3,6 +3,23 @@ Strelka User Guide - Installation
 
 [User Guide Home](README.md)
 
+## Table of Contents
+[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+* [Prerequisites to build from source](#prerequisites-to-build-from-source)
+* [Runtime prerequisites](#runtime-prerequisites)
+* [Operating System Guidelines](#operating-system-guidelines)
+    * [Linux](#linux)
+    * [Windows](#windows)
+* [Linux Package Additions](#linux-package-additions)
+    * [Ubuntu 14.04](#ubuntu-1404)
+    * [Ubuntu 12.04](#ubuntu-1204)
+    * [CentOS 7](#centos-7)
+    * [CentOS 5 and 6](#centos-5-and-6)
+* [Build procedure](#build-procedure)
+    * [Workflow relocation](#workflow-relocation)
+* [Demo](#demo)
+[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
 For Strelka users it is strongly recommended to start from one of the
 release distributions of the source code. Acquiring the source via a
 git clone or archive could result in missing version number entries,

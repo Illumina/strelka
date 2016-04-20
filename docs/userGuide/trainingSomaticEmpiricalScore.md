@@ -2,6 +2,19 @@
 
 [User Guide Home](README.md)
 
+## Table of Contents
+[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+* [Introduction](#introduction)
+* [Requirements](#requirements)
+* [Step 1: Build a training data set](#step-1-build-a-training-data-set)
+  * [Step 1a: Process a single VCF into a labeled feature CSV file](#step-1a-process-a-single-vcf-into-a-labeled-feature-csv-file)
+  * [Step 1b: Handle multiple training data sets](#step-1b-handle-multiple-training-data-sets)
+* [Step 2: Training an EVS model](#step-2-training-an-evs-model)
+* [Step 3: Calculate Scores](#step-3-calculate-scores)
+* [Step 4: Evaluate Precision / Recall for the model](#step-4-evaluate-precision--recall-for-the-model)
+* [Step 5: Export the model for use in Strelka](#step-5-export-the-model-for-use-in-strelka)
+[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
 ## Introduction
 
 This document outlines the process of training a somatic Empirical Variant Score (EVS) model for Strelka.
