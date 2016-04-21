@@ -336,6 +336,10 @@ write_vcf_somatic_snv_genotype_strand_grid(
             // Temp hack to handle sample with large LOH, if REF is already het, set low score and filter by default
             if (rs.ntype != NTYPE::REF) smod.Qscore=0;
 
+            // Modify Qscore to be no more than QSS_NT, such that empirical scoring serves strictly as filter
+            // on top of the QSS_NT prediction to improve precision:
+            smod.Qscore = std::min(static_cast<double>(rs.snv_from_ntype_qphred), smod.Qscore);
+
             if (smod.Qscore < opt.sfilter.minimumQscore)
                 smod.set_filter(STRELKA_VCF_FILTERS::LowQscore);
 
