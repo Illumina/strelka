@@ -29,6 +29,7 @@
 #include "model1.hh"
 #include "modelVariantAndIndyError.hh"
 #include "modelVariantAndTriggerMixError.hh"
+#include "modelVariantAndBetaBinomialError.hh"
 
 #include <iostream>
 
@@ -53,6 +54,10 @@ runEPEC(
     else if (opt.modelIndex == 3)
     {
         modelVariantAndTriggerMixError(counts);
+    }
+    else if (opt.modelIndex == 4)
+    {
+        modelVariantAndBetaBinomialError(counts);
     }
     else
     {
