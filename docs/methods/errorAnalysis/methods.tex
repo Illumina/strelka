@@ -37,9 +37,33 @@ Sequence pattern analysis is principally focused on the characterization of sequ
 
 \subsection{Producing sequence pattern counts}
 
-Each pattern count consists of a \emph{context}, \emph{set of alleles}, and \emph{allele counts}. A context typically refers to a single locus in the genome, or a single base, but it can be further divided to indicate one strand at one site, etc. There is not a strict division between context and allele. These pattern counts are collected for many instances of the context and possibly many other contexts by analyzing any amount of mapped sequencing data. Counts are stored to a compact binary file format and can be merged across chromosomes, individual genomes, technical replicates, etc.
+Each pattern count consists of a \emph{context}, \emph{set of alleles}, \emph{set of predicted error rates} and \emph{counts} for each (allele,error rate) type.
 
-The current implementation counts indel patterns only. In doing so the context set is factored on homopolymer length, $h$. Each base is counted as a single observation at $h=1$ and each homopolymer tract of length $X$ is counted as a single observation of $h=X$. Reference N's are not included. As an example, in the reference sequence "NACCTTGGGT", the total contexts enumerated are (9,2,1) for $h=1,2,3$. The total number of contexts are greater than the number of bases because the eligible \emph{set of alleles} is dependent on the context, a recognized model approximation. To continue the example above, in the two base "CC" homopolymer at positions 3 and 4, the $h=2$ context will be associated with all insertion alleles composed entirely of "C"'s and any 1 or 2 base deletion alleles. All other indels that are normalized to a start position at base 3 or 4 will be associated with one of the two instances of the $h=1$ context.
+A context typically refers to a single locus in the genome, or a single base, but it can be further divided to indicate one strand at one site, etc. There is not a strict division between context and allele.
+
+The allele set can represent different types of indel and SNV observations, it is not restricted to allele in the biological sense -- for instance when analyzing SNVs, strand is effectively treated as an allele.
+
+The set of predicted error rates captures the predicted basecall qualities when analyzing SNVs. This information -- unique to SNV analysis, typically makes SNV data compression and modeling much more difficult than the equivalent indel model.
+
+The pattern counts are collected for many instances of the context and possibly many other contexts by analyzing any amount of mapped sequencing data. Counts are stored to a compact binary file format and can be merged across chromosomes, individual genomes, technical replicates, etc.
+
+\subsubsection{Shared read filtration criteria}
+
+For both SNV and indels, reads are filtered from the error analysis if they
+
+\begin{enumerate}
+	\item fail platform quality test
+	\item are PCR/optical duplicates
+	\item are not mapped
+	\item are not "proper pair"
+	\item input alignment contains more than 2 indels
+\end{enumerate}
+
+Additionally, reads are read in but not used to generate error counts, if their MAPQ score is less than 60. Note that lower MAPQ reads are still read in so that it is still possible to determine depth relative to chromosome mean for the purpose of filtering high-depth regions (details below).
+
+\subsubsection{Producing sequence pattern counts for indels}
+
+For indels, the context set is factored on homopolymer length, $h$. Each base is counted as a single observation at $h=1$ and each homopolymer tract of length $X$ is counted as a single observation of $h=X$. Reference N's are not included. As an example, in the reference sequence "NACCTTGGGT", the total contexts enumerated are (9,2,1) for $h=1,2,3$. The total number of contexts are greater than the number of bases because the eligible \emph{set of alleles} is dependent on the context, a recognized model approximation. To continue the example above, in the two base "CC" homopolymer at positions 3 and 4, the $h=2$ context will be associated with all insertion alleles composed entirely of "C"'s and any 1 or 2 base deletion alleles. All other indels that are normalized to a start position at base 3 or 4 will be associated with one of the two instances of the $h=1$ context.
 
 During indel pattern matching, counts are recorded for 7 allele types, these are: (1) the reference allele (2) insertions and deletions of length 1 or 2 (3) all insertions and deletions of length greater than 3 condensed to a single "3+" length category, one each for insertions and deletions. Any complex indels represented by a combination insertion/deletion event are skipped.
 
@@ -47,9 +71,7 @@ The counting process itself uses the same mapped read scanning and realignment s
 
 Additional but less critical modifications to error counting process compared to the variant caller include suspending indel candidacy and the candidate process for any region where the pileup depth is observed to be more than 3 times the chromosome mean. When the high depth threshold is triggered the error counting process suspends the collection of any evidence. The number of contexts affected by such filtration is recorded so that it is still possible to verify the total number of contexts observed during the counting process.
 
-Note that except for the filtration of reads with many alignment gaps, input read filtration matches the germline small variant caller, including a default mapping quality filtration to remove any reads with MAPQ $<$ 20.
-
-\subsubsection{Criteria used for counting supporting evidence}
+\paragraph{Criteria used for counting supporting evidence}
 
 Supporting evidence counts for each alleles are found by two different processes, depending on whether there is any evidence for a candidate indel at a context:
 
@@ -59,20 +81,60 @@ In contexts where non-reference candidate indels exist, the process of generatin
 
 Where there are no candidate indel alleles, the simple pileup depth of the base preceding the context is recorded. For each context where a candidate allele is observed, the pileup depth of the base preceding the context has also been recorded. The counts data are stored and/or merged with these pileup depths recorded for both candidate indel and reference observations. Immediately before any inference is to be made from the counts data, the reference depth is converted into an approximate supporting read count by using the ratio of depth to supporting read counts from the same context where variants have already been observed. This scheme assumes that the counts data is being collected/merged from data with similar power to support large variant context, principally assuming a similar read length.
 
+\subsubsection{Producing sequence pattern counts for SNVs}
 
-\subsection{Analyzing sequence pattern counts}
+In the same manner that indel counts are found, SNV counts are gathered using a process that contains many similar elements from the SNV caller -- note that SNV and indel counts are jointly enumerated as part of a single process, so many of the indel analysis details above also apply to SNVs: Reads are input from BAM, candidate indels are found in these reads and all reads are realigned to find optimal alignments with respect to this pool of candidate indel variants. Following realignment, SNV count information is enumerated for each site at the same point where indel counts are found.
+
+Note that for the purpose of error analysis, no modifications are made to the basecall qualities, basecall error counts are factored based on the quality values encoded in the input BAM files.
+
+Just as with indels, there is a maximum depth filter applied to SNVs so that any site with a total depth (including all MAPQ0 reads) greater than 3 times the chromosome mean is excluded from the error counts.
+
+Additional filtration which is specific to SNVs: (1) No basecall error counts are enumerated for qualities lower than 25, but note (below) that basecalls have to be less than 17 to be considered 'noise' (2) all of the basecalls at a site are excluded from the counting procedure if more than 5\% of the basecalls are marked as 'noise' (3) if condition (2) does not apply, then any individual basecall marked as 'noise' at a site is excluded.
+
+Basecalls are marked as 'noise' for any of the following reasons:
+
+\begin{enumerate}
+	\item comes from a read with MAPQ < 60
+	\item is "N"
+	\item has quality lower than 17
+	\item fails the mismatch density filter, which for the pattern analyzer has been made very stringent: only 1 mismatch is allowed in the flanking 100 bases on each side of a site (effectively the allele of interest can be the only mismatch in most typical reads)
+\end{enumerate}
+
+The basecall filtration is designed to be extremely conservative, with the goal of removing mapping and assembly errors so that the downstream basecall error estimation models can focus on the basecall error process itself. Given this goal, the most important consideration is whether any of the above steps introduce a filtration bias that would impact the error estimates, which is probably true for the mismatch density filter above, and a potential focus for future improvements.
+
+
+\paragraph{Criteria used to store basecall qualities for SNV counts}
+
+Gathering supporting count evidence for basecall errors is generally similar to the process for indels, with the notable exception that the sequencer provides basecall qualities for this case. An additional incidental difference is that we also record strand information for basecalls, but there is no reason this cannot or should not be done for indels as well in the future.
+
+Regarding the handling of basecalls - naively storing  the counts of all basecall quality groupings at all sites quickly becomes unmanageable from the perspective of both storage (too many quality count patterns in RAM/on disk) and computing likelihood models downstream (too many quality count patterns to iterate over to evaluate model likelihood). For this reason, we need to plan ahead of time exactly what types of likelihoods we want to generate for this case and what minimum information required to do this -- based on this analysis the quality compression scheme for SNVs is:
+
+\begin{enumerate}
+	\item no basecall quality information is stored (per-site+strand) for any base matching the reference, instead we record a simple reference count for each site+strand
+	\item basecall qualities are stored for all non-reference basecalls
+\end{enumerate}
+
+An additional counting structure is added to record the aggregate reference basecall quality distribution over all sites, which is used in the current downstream likelihood models described below. This scheme should provide a reasonable solution for single sample analysis, if multiple samples with different basecall quality distributions are combined this approximation would need to be revisited.
+
+To further improve compression of per-strand counts, the data for each site are initially gathered into "forward" and "reverse" strand categories, but these are collapsed into "strand0" and "strand1" with consistent sorting rules to map forward/reverse to strand0/strand1. This means that an observation of 10 ref counts on the forward strand only at one site and 10 ref counts on the reverse strand only at a different site in the genome can be compressed into one count pattern.
+
+Note that the allele space recorded for basecalls only records whether the basecall matches the reference or not (ie. ref and alt states), the specific basecalls are not recorded.
+
+For current basecall models there is only one context used to represent all sites in the genome.
+
+\subsection{Analyzing sequence pattern counts for indels}
 
 The counts data are analyzed to estimate indel error rates using several schemes:
 
-\subsubsection{Model 1: Simple approximated error counts}
+\subsubsection{Indel Model 1: Simple approximated error counts}
 
 This is a very simple control model. For each context all counts data are examined. For each observation of the context, hard thresholds are used to determine if the observation is too likely to represent real sample variation to be counted towards the error estimates. Specifically, the total number of supporting counts must be $\geq 25$ and each non-reference allele count must represent 5\% or less of the total. Counts are summed for all insertion error alleles, deletion error alleles and reference alleles for each context observation meeting this criteria for the context, which is used to generate a simple insertion and deletion error rate for the context.
 
-\subsubsection{Model 2: Mixture of sample variation and independent error process}
+\subsubsection{Indel Model 2: Mixture of sample variation and independent error process}
 
 In this case the counts data are analyzed under a model assuming a mixture of sample variants and independent insertion and deletion error processes. In the current implementation the estimation process is still isolated per context.
 
-For each context, we estimate the maximum likelihood values of up to three parameters, the insertion error rate $e_i$, the deletion error rate $e_d$, and a parameter which is meant to approximately represent the population indel mutation rate conditioned on the context $\theta_{X}$, that is, the probability of an indel difference between two chromosomes drawn from the population, conditioned on (1) the context and (2) the set of eligible indel alleles associated with the context. Thus, for instance, the value of $\theta_{X}$ estimated at a 15-mer homopolymer represents the probability that one chromosome includes an indel variant which expands or contracts the homopolymer, given a site where a 15-base homopolymer is the most common allele in the population.
+For each context, we estimate the maximum likelihood values of up to three parameters, the insertion error rate $e_i$, the deletion error rate $e_d$, and a parameter which is meant to approximately represent the population indel mutation rate conditioned on the context $\theta_{indel}$, that is, the probability of an indel difference between two chromosomes drawn from the population, conditioned on (1) the context and (2) the set of eligible indel alleles associated with the context. Thus, for instance, the value of $\theta_{indel}$ estimated at a 15-mer homopolymer represents the probability that one chromosome includes an indel variant which expands or contracts the homopolymer, given a site where a 15-base homopolymer is the most common allele in the population.
 
 All count observations for the context are $D$, comprised of independent context observations $d$, where each context observation is a set of supporting counts for the set of eligible allele groups, $T$. An example eligible allele grouping is:
 
@@ -88,37 +150,45 @@ All count observations for the context are $D$, comprised of independent context
 
 This example demonstrates properties of any eligible allele grouping, in that (1) the reference is always included (2) members of the set may represent a single indel allele or large set of alleles (3) all possible alternative alleles for the reference may not be represented (in this case complex insertion/deletion combinations are not considered).
 
-The likelihood function used for parameter estimation $P( D \vert \theta )$ given $\theta = {e_i,e_d,\theta_X}$ is enumerated below. Each context observation is considered independent, such that:
+The likelihood function used for parameter estimation $P( D \vert \theta )$ given $\theta = {e_i,e_d,\theta_{indel}}$ is enumerated below. Each context observation is considered independent, such that:
 
 \begin{equation}
-\label{eq:m2}
+\label{eq:indel_m2}
 P(D \vert \theta) = \prod_{d \in D} P(d \vert \theta)
 \end{equation}
 
 ..where
 
 \begin{equation*}
-P(d \vert \theta) = \sum_{g \in G} P(d \vert\theta, g) P(g)
+P(d \vert \theta) = \sum_{g \in G} P(d \vert \theta, g) P(g)
 \end{equation*}
 
-...given possible genotypes $G$ = {ref,het,hom,althet}.
+...given possible genotypes $G$ = \{ref,het,hom,althet\}.
 
 \paragraph{Genotype likelihoods}
 
 The reference genotype likelihood is:
 
 \begin{equation*}
-P ( d \vert \theta, g_{ref}) = \prod_{y \in Y} r(y)^{c(y)}
+P ( d \vert \theta, g_{ref}) = m_c \prod_{y \in Y} r(y)^{c(y)}
 \end{equation*}
 
 ...where $c(y)$ is the supporting observation count of allele $y$ and $r(y)$ is the error rate or $y$, set to $e_i$ if $y$ is an insertion allele type, $e_d$ if $y$ is a deletion allele type, and $(1-e_i) (1-e_d)$ for the reference allele type.
+
+Note that $m_c$ is the corresponding multinomial coefficient:
+
+\begin{equation*}
+m_c = \frac{\Gamma(\sum_{i}{x_i + 1})}{\prod_{i}{\Gamma(x_i+1)}}
+\end{equation*}
+
+..this term applies to all of the likelihood components below and contains no model parameters so it is not actually computed in practice.
 
 The heterozygous and homozygous genotype likelihoods are approximated by finding the most likely (by number of supporting counts) non-reference indel allele and using that as the only candidate variant allele, $y_{var}$.
 
 The heterozygous likelihood is:
 
 \begin{equation*}
-P (d \vert \theta, g_{het}) = 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+P (d \vert \theta, g_{het}) = m_c 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
 \end{equation*}
 
 ...note that in this form, we remove the impact of all indel errors except for those that would mutate the reference allele into something other than $y_{var}$. This approximation should lead to a greater distortion of results as indel error rates become large and as greater asymmetry develops between the rate of error from $ref$ to $y_{var}$ vs $y_{var}$ to $ref$.
@@ -126,15 +196,15 @@ P (d \vert \theta, g_{het}) = 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \not\i
 The homozygous likelihood is:
 
 \begin{equation*}
-P (d \vert \theta, g_{hom}) = (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+P (d \vert \theta, g_{hom}) = m_c (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
 \end{equation*}
 
-...where $e_{ref}$ is set to a constant value of 0.01. As discussed for the heterozygous likelihood, the simplified representation of error terms such as $e_ref$ here are likely to introduce distortions in indel contexts with higher error rates.
+...where $e_{ref}$ is set to a constant value of 0.01. As discussed for the heterozygous likelihood, the simplified representation of error terms such as $e_{ref}$ here are likely to introduce distortions in indel contexts with higher error rates.
 
-Finally, because observed $\theta_X$ values can become very high for long homopolymers, hetalt variants start to become important enough to include in the model. Just as with heterozygous variants, the hetalt state is approximated by finding the top two most likely non-reference indel alleles, $y_{var}$, $y_{var2}$ and computing the likelihood with these values fixed. The likelihood of this genotype is:
+Finally, because observed $\theta_{indel}$ values can become very high for long homopolymers, hetalt variants start to become important enough to include in the model. Just as with heterozygous variants, the hetalt state is approximated by finding the top two most likely non-reference indel alleles, $y_{var}$, $y_{var2}$ and computing the likelihood with these values fixed. The likelihood of this genotype is:
 
 \begin{equation*}
-P (d \vert \theta, g_{hetalt}) = 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},y_{var2},ref\}} r(y)^{c(y)}
+P (d \vert \theta, g_{hetalt}) = m_c 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},y_{var2},ref\}} r(y)^{c(y)}
 \end{equation*}
 
 
@@ -143,13 +213,13 @@ P (d \vert \theta, g_{hetalt}) = 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)}
 The genotype priors $P(G)$ described above are a function of $\theta_X$, with
 
 \begin{eqnarray*}
-P(het) = \theta_X \\
-P(hom) = \theta_X / 2 \\
-P(hetalt) = {\theta_{X}}^2
+P(het) &=& \theta_{indel} \\
+P(hom) &=& \theta_{indel} / 2 \\
+P(hetalt) &=& {\theta_{indel}}^2
 \end{eqnarray*}
 
 
-\subsubsection{Model 3: Mixture of sample variation with a mixture of two error processes}
+\subsubsection{Indel Model 3: Mixture of sample variation with a mixture of two error processes}
 
 Model 3 is motivated as follows: the indel error rates are understood to be over-dispersed, ie. the error process is poorly modeled by an error process which is applied independently to each read, at least given current context/allele set segmentation.
 
@@ -157,7 +227,7 @@ This leads to two related questions: (1) what is the best representation of the 
 
 Model 3 focuses a bit more on the later question - it represents the indel error with each indel locus (or context instance), having two states, \emph{noisy} and \emph{clean}. Every locus has $P(noisy)$ chance of being in the \emph{noisy} state. A \emph{noisy} locus has a single free error parameter set exactly as represented in Model 2 above. A \emph{clean} locus has all indel errors fixed to 1\e{-8}.
 
-Model 3 is thus very similar to Model 2 above, with the simple modification of equation \ref{eq:m2} above to:
+Model 3 is thus very similar to Model 2 above, with the simple modification of equation \ref{eq:indel_m2} above to:
 
 \begin{equation}
 P(d \vert \theta) = P(noisy) P (d \vert \theta_{noise}) + (1-P(noisy)) P (d \vert \theta_{not-noisy})
@@ -166,7 +236,7 @@ P(d \vert \theta) = P(noisy) P (d \vert \theta_{noise}) + (1-P(noisy)) P (d \ver
 ...where $P(noisy)$ is the only new free model parameter compared to Model 2.
 
 
-\subsubsection{Model 4: Mixture of sample variation and independent error process, simplified to a two-state model}
+\subsubsection{Indel Model 4: Mixture of sample variation and independent error process, simplified to a two-state model}
 
 Model 4 is a simplified version of Model 2. It is motivated by the need to have a much simpler two allele representation of the variant and error process.
 
@@ -198,13 +268,13 @@ P (d \vert \theta, g_{hom}) = (1-e_{ref})^{c(alt)} {e_{ref}}^{c(ref)}
 
 ...where $e_{ref}$ is set to a constant value of 0.01.
 
-\subsubsection{Model 5: Mixture of sample variation with a mixture of two error processes, simplified to a two-state model}
+\subsubsection{Indel Model 5: Mixture of sample variation with a mixture of two error processes, simplified to a two-state model}
 
 Model 5 is a simplified version of Model 3. It is motivated by the need to have a likelihood that is directly comparable to the simple 2 state beta-binomial below.
 
 The simplification to a 2-state model is exactly the same as that described for Model 4 above.
 
-\subsubsection{Model 6: Mixture of sample variation with a beta-binomial error process}
+\subsubsection{Indel Model 6: Mixture of sample variation with a beta-binomial error process}
 
 In this model we introduce a beta-binomial error process. Per Models 4 and 5 above, the input data is arranged to restrict all loci to two states -- observations of the reference or the alternate allele type of interest only.
 
@@ -215,6 +285,112 @@ P ( d \vert \theta, g_{ref}) = \frac{B(c(alt)+\alpha,c(ref)+\beta)}{B(\alpha,\be
 \end{equation}
 
 ..and minimizing the resulting for likelihood function with respect to $\alpha$, $\beta$ and $\theta$.
+
+
+\subsection{Analyzing sequence pattern counts for SNVs}
+
+The counts data are analyzed to estimate indel error rates using several schemes:
+
+\subsubsection{SNV Model 1: Simple approximated error counts}
+
+This is a very simple control model. For each context and basecall quality all counts data are examined. Note there is current only one SNV context. For each observation of the context, hard thresholds are used to determine if the observation is too likely to represent real sample variation to be counted towards the error estimates. Specifically, the total number of supporting counts must be $\geq 30$ and the alt allele count must represent 3\% or less of the total. For all remaining observations, the data are stratified by basecall quality, and for each quality the alt counts are divided by the total to report the empirical error rate (in addition to reporting a 95\% Clopper-Pearson upper bound on this rate in case of low counts).
+
+\subsubsection{SNV Model 2: Mixture of sample variation and independent error process}
+
+In this case the counts data are analyzed under a model assuming a mixture of sample variants and independent basecall error processes.
+
+The model is parameterized to include $\theta_{SNV}$ which, as in the indel models above, represents the probability of nucleotide difference between two chromosomes drawn from the population. We additionally include parameters for a set of basecall error rates $e_b \in E$, where each error parameter $e_b$ is associated with the predicted basecall quality value $b$.
+
+All count observations for a context are $D$, comprised of independent context observations $d$, where each context observation is a set of supporting counts for alleles \{ref,alt\}, strands \{strand0,strand1\} and for the alt alleles, basecall qualities $B$.
+
+The likelihood function used for parameter estimation $P( D \vert \theta )$ given $\theta = {E,\theta_{SNV}}$ is enumerated below. Each context observation is considered independent, such that:
+
+\begin{equation}
+\label{eq:snv_m2}
+P(D \vert \theta) = \prod_{d \in D} P(d \vert \theta)
+\end{equation}
+
+..where
+
+\begin{equation*}
+P(d \vert \theta) = \sum_{g \in G} P(d \vert\theta, g) P(g)
+\end{equation*}
+
+...given possible genotypes $G$ = \{ref,het,hom\}.
+
+\paragraph{Genotype likelihoods}
+
+The reference genotype likelihood is:
+
+\begin{equation*}
+P ( d \vert \theta, g_{ref}) = m_c (e_{rmean})^{c(ref)} \prod_{b \in B} e_b^{c(alt,b)}
+\end{equation*}
+
+...where $c(y,b)$ is the supporting observation count of allele $y$ and predicted basecall quality $b$ when we sum observations over both strands, and $c(y) = \sum{b \in B} c(y,b)$. We also introduce $e_{rmean}$ to represent the average basecall quality for any reference count in the sample. Recall that to improve compression, basecall qualities are not stored for individual reference basecalls. To approximate the reference basecall quality we compute:
+
+\begin{equation*}
+e_{rmean} = \frac{\sum_{b \in B} e_b C(ref,b)}{\sum_{b \in B} C(ref,b)}
+\end{equation*}
+
+...where $C(ref,b)$ are the observation counts of the reference allele for predicted basecall quality $b$ over \emph{the entire sample of counts}. Note that this introduces a significant approximation, which limits the ability to jointly analyze data sets with different quality score distributions.
+
+Finally note that $m_c$ above is the corresponding multinomial coefficient:
+
+\begin{equation*}
+m_c = \frac{\Gamma(\sum_{i}{x_i + 1})}{\prod_{i}{\Gamma(x_i+1)}}
+\end{equation*}
+
+..this term applies to all of the likelihood components below and contains no model parameters so it is not actually computed in practice.
+
+The heterozygous likelihood is:
+
+\begin{equation*}
+P (d \vert \theta, g_{het}) = m_c 0.5^{c(alt) + c(ref)}
+\end{equation*}
+
+...note that in this form, we remove the impact of all basecall errors. This approximation should lead to a greater distortion of results as basecall error rates become large.
+
+The homozygous likelihood is:
+
+\begin{equation*}
+P (d \vert \theta, g_{hom}) = m_c (1-e_{ref})^{c(alt)} {e_{ref}}^{c(ref)}
+\end{equation*}
+
+...where $e_{ref}$ is set to a constant value of 0.01. As discussed for the heterozygous likelihood, the simplified representation of error terms such as $e_{ref}$ here are likely to introduce distortions if basecall error rates become large.
+
+
+\paragraph{Genotype priors}
+
+The genotype priors $P(G)$ described above are a function of $\theta_{SNV}$, with
+
+\begin{eqnarray*}
+	P(het) &=& \theta_{SNV} \\
+	P(hom) &=& \theta_{SNV} / 2
+\end{eqnarray*}
+
+
+\subsubsection{SNV Model 3: Mixture of sample variation with a mixture of two error processes}
+
+SNV Model 3 is motivated as follows: the SNV error rates are known to be over-dispersed, ie. the error process is poorly modeled by an independent error for each read, at least given current context/allele set segmentation.
+
+Model 3 represents the basecall error with each locus (or context instance), having two states, \emph{noisy} and \emph{clean}. Every locus has $P(noisy)$ chance of being in the \emph{noisy} state. A \emph{noisy} locus has a single free error parameter per basecall quality, $e_{b|noisy}$ set exactly as represented in Model 2 above. A \emph{clean} locus has a lower error rate, parameterized in two possible ways as described below.
+
+Model 3 is thus very similar to Model 2 above, with the simple modification of equation \ref{eq:snv_m2} above to:
+
+\begin{equation*}
+P(d \vert \theta) = P(noisy) P (d \vert \theta_{noise}) + (1-P(noisy)) P (d \vert \theta_{not-noisy})
+\end{equation*}
+
+...where $P(noisy)$ is a new free model parameter compared to Model 2.
+
+The error rates set for each basecall quality value at clean loci $e_{b|clean}$, can be trained as an additional set of free parameters, or constrained as a function of the $e_{b|noisy}$ values as follows
+
+\begin{equation*}
+e_{b|clean} = (e_{b|noisy})^{f_{clean}}
+\end{equation*}
+
+Where the clean error factor $f_{clean}$ is a free parameter. For the purpose of initialization, this factor has been estimated close to 2 in various two-state mixture models.
+
 
 
 
