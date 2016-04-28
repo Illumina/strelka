@@ -28,6 +28,7 @@
 
 #include "model1.hh"
 #include "modelVariantAndIndyError.hh"
+#include "modelVariantAndIndyErrorNoOverlap.hh"
 #include "modelVariantAndTriggerMixError.hh"
 #include "modelVariantAndBetaBinomialError.hh"
 
@@ -56,6 +57,10 @@ runEPEC(
         modelVariantAndTriggerMixError(counts);
     }
     else if (opt.modelIndex == 4)
+    {
+        modelVariantAndIndyErrorNoOverlap(counts);
+    }
+    else if (opt.modelIndex == 5)
     {
         modelVariantAndBetaBinomialError(counts);
     }
