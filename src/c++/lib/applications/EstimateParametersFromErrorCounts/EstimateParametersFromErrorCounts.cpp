@@ -30,6 +30,7 @@
 #include "modelVariantAndIndyError.hh"
 #include "modelVariantAndIndyErrorNoOverlap.hh"
 #include "modelVariantAndTriggerMixError.hh"
+#include "modelVariantAndTriggerMixErrorNoOverlap.hh"
 #include "modelVariantAndBetaBinomialError.hh"
 
 #include <iostream>
@@ -63,6 +64,10 @@ runEPEC(
             modelVariantAndIndyErrorNoOverlap(counts);
         }
         else if (opt.modelIndex == 5)
+        {
+            modelVariantAndTriggerMixErrorNoOverlap(counts);
+        }
+        else if (opt.modelIndex == 6)
         {
             modelVariantAndBetaBinomialError(counts);
         }
