@@ -68,7 +68,7 @@ The counts data are analyzed to estimate indel error rates using several schemes
 
 This is a very simple control model. For each context all counts data are examined. For each observation of the context, hard thresholds are used to determine if the observation is too likely to represent real sample variation to be counted towards the error estimates. Specifically, the total number of supporting counts must be $\geq 25$ and each non-reference allele count must represent 5\% or less of the total. Counts are summed for all insertion error alleles, deletion error alleles and reference alleles for each context observation meeting this criteria for the context, which is used to generate a simple insertion and deletion error rate for the context.
 
-\subsubsection{Model 2: Mixture of sample variation and independent error processes}
+\subsubsection{Model 2: Mixture of sample variation and independent error process}
 
 In this case the counts data are analyzed under a model assuming a mixture of sample variants and independent insertion and deletion error processes. In the current implementation the estimation process is still isolated per context.
 
@@ -148,7 +148,7 @@ P(hetalt) = {\theta_{X}}^2
 
 
 
-\subsubsection{Model 3: Mixture of sample variation and mixture error processes}
+\subsubsection{Model 3: Mixture of sample variation with a mixture of two error processes}
 
 Model 3 is motivated as follows: the indel error rates are understood to be overdispersed, ie. the error process is poorly modeled by an error process which is applied independently to each read, at least given current context/allele set segmentation.
 
@@ -165,6 +165,31 @@ P(d \vert \theta) = P(noisy) P (d \vert \theta_{noise}) + (1-P(noisy)) P (d \ver
 ...where $P(noisy)$ is the only new free model parameter compared to Model 2.
 
 
+\subsubsection{Model 4: Mixture of sample variation and independent error process, simplified to a two-state model}
+
+Model 4 is a simplified version of Model 2. It is motivated by the need to have a likelihood that is directly comparable to the simple 2 state beta-binomial below.
+
+Compared to Model 2, insertion and deletion rates are not jointly analyzed within a single context. Instead one likelihood function is created and minimized separately for each of the two indel types for each contexts.
+
+As an example, when evaluating insertion error rates, all types of insertions (length 1, 2 and 3+), are summed to together to create the alternate allele observation count at each locus, and these are compared to the reference counts. Any observations of deletion alleles are ignored. Because there is only one alt type, we no longer consider an alt-het variant type, and we no longer account for possible error observations mixed into the het or hom variant states. The corresponding pattern is followed when estimating deletions.
+
+\subsubsection{Model 5: Mixture of sample variation with a mixture of two error processes, simplified to a two-state model}
+
+Model 5 is a simplified version of Model 3. It is motivated by the need to have a likelihood that is directly comparable to the simple 2 state beta-binomial below.
+
+The simplification to a 2-state model is exactly the same as that described for Model 4 above.
+
+\subsubsection{Model 6: Mixture of sample variation with a beta-binomial error process}
+
+In this model we introduce a beta-binomial error process. Per Models 4 and 5 above, the input data is arranged to restrict all loci to two states -- observations of the reference or the alternate allele type of interest only.
+
+The goal of this analysis is to estimate the beta/beta-binomial shape parameters $\alpha$ and $\beta$. We do so by substituting the likelihood of the homozygous reference state from Model 2 with:
+
+\begin{equation}
+P ( d \vert g_{ref} ) = \frac{B(c(alt)+\alpha,c(ref)+\beta)}{B(\alpha,\beta)}
+\end{equation}
+
+..and minimizing the resulting for likelihood function with respect to $\alpha$, $\beta$ and $\theta$.
 
 
 
