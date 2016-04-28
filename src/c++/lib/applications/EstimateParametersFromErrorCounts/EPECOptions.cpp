@@ -50,13 +50,26 @@ parseEPECOptions(
     int argc, char* argv[],
     EPECOptions& opt)
 {
+    std::string modelTypeString = MODEL_TYPE::label(opt.modelType);
+
+    std::ostringstream modelTypeHelp;
+    modelTypeHelp << "select model type, options are (";
+    for (unsigned modelTypeIndex(0);modelTypeIndex<MODEL_TYPE::SIZE;++modelTypeIndex)
+    {
+        if (modelTypeIndex) modelTypeHelp << ",";
+        modelTypeHelp << MODEL_TYPE::label(static_cast<MODEL_TYPE::index_t>(modelTypeIndex));
+    }
+    modelTypeHelp << ")";
+
     namespace po = boost::program_options;
     po::options_description req("configuration");
     req.add_options()
     ("counts-file", po::value(&opt.countsFilename),
      "read binary error counts from filename (required, no default)")
+    ("model-type", po::value(&modelTypeString)->default_value(modelTypeString),
+     modelTypeHelp.str().c_str())
     ("model", po::value(&opt.modelIndex)->default_value(opt.modelIndex),
-     "select which model to run")
+     "select which model of a given type to run")
     ;
 
     po::options_description help("help");

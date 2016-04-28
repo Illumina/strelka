@@ -44,29 +44,38 @@ runEPEC(
     SequenceErrorCounts counts;
     counts.load(opt.countsFilename.c_str());
 
-    if      (opt.modelIndex == 1)
+    if (opt.modelType == MODEL_TYPE::INDEL)
     {
-        model1(counts);
-    }
-    else if (opt.modelIndex == 2)
-    {
-        modelVariantAndIndyError(counts);
-    }
-    else if (opt.modelIndex == 3)
-    {
-        modelVariantAndTriggerMixError(counts);
-    }
-    else if (opt.modelIndex == 4)
-    {
-        modelVariantAndIndyErrorNoOverlap(counts);
-    }
-    else if (opt.modelIndex == 5)
-    {
-        modelVariantAndBetaBinomialError(counts);
+        if      (opt.modelIndex == 1)
+        {
+            model1(counts);
+        }
+        else if (opt.modelIndex == 2)
+        {
+            modelVariantAndIndyError(counts);
+        }
+        else if (opt.modelIndex == 3)
+        {
+            modelVariantAndTriggerMixError(counts);
+        }
+        else if (opt.modelIndex == 4)
+        {
+            modelVariantAndIndyErrorNoOverlap(counts);
+        }
+        else if (opt.modelIndex == 5)
+        {
+            modelVariantAndBetaBinomialError(counts);
+        }
+        else
+        {
+            std::cerr << "Unknown Indel Model\n";
+        }
     }
     else
     {
-        std::cerr << "Unknown Model\n";
+        {
+            std::cerr << "Unknown Model Type\n";
+        }
     }
 }
 
