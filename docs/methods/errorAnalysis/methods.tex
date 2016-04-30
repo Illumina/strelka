@@ -98,7 +98,7 @@ P(D \vert \theta) = \prod_{d \in D} P(d \vert \theta)
 ..where
 
 \begin{equation*}
-P(d \vert \theta) = \sum_{g \in G} P(d \vert g) P(g)
+P(d \vert \theta) = \sum_{g \in G} P(d \vert\theta, g) P(g)
 \end{equation*}
 
 ...given possible genotypes $G$ = {ref,het,hom,althet}.
@@ -108,7 +108,7 @@ P(d \vert \theta) = \sum_{g \in G} P(d \vert g) P(g)
 The reference genotype likelihood is:
 
 \begin{equation*}
-P ( d \vert g_{ref} ) = \prod_{y \in Y} r(y)^{c(y)}
+P ( d \vert \theta, g_{ref}) = \prod_{y \in Y} r(y)^{c(y)}
 \end{equation*}
 
 ...where $c(y)$ is the supporting observation count of allele $y$ and $r(y)$ is the error rate or $y$, set to $e_i$ if $y$ is an insertion allele type, $e_d$ if $y$ is a deletion allele type, and $(1-e_i) (1-e_d)$ for the reference allele type.
@@ -118,43 +118,44 @@ The heterozygous and homozygous genotype likelihoods are approximated by finding
 The heterozygous likelihood is:
 
 \begin{equation*}
-P (d \vert g_{het}) = 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+P (d \vert \theta, g_{het}) = 0.5^{c(y_{var}) + c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
 \end{equation*}
+
+...note that in this form, we remove the impact of all indel errors except for those that would mutate the reference allele into something other than $y_{var}$. This approximation should lead to a greater distortion of results as indel error rates become large and as greater asymmetry develops between the rate of error from $ref$ to $y_{var}$ vs $y_{var}$ to $ref$.
 
 The homozygous likelihood is:
 
 \begin{equation*}
-P (d \vert g_{hom}) = (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
+P (d \vert \theta, g_{hom}) = (1-e_{ref})^{c(y_{var})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},ref\}} r(y)^{c(y)}
 \end{equation*}
 
-...where $e_{ref}$ is set to a constant value of 0.01.
+...where $e_{ref}$ is set to a constant value of 0.01. As discussed for the heterozygous likelihood, the simplified representation of error terms such as $e_ref$ here are likely to introduce distortions in indel contexts with higher error rates.
 
 Finally, because observed $\theta_X$ values can become very high for long homopolymers, hetalt variants start to become important enough to include in the model. Just as with heterozygous variants, the hetalt state is approximated by finding the top two most likely non-reference indel alleles, $y_{var}$, $y_{var2}$ and computing the likelihood with these values fixed. The likelihood of this genotype is:
 
 \begin{equation*}
-P (d \vert g_{hetalt}) = 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},y_{var2},ref\}} r(y)^{c(y)}
+P (d \vert \theta, g_{hetalt}) = 0.5^{c(y_{var})+c(y_{var2})} {e_{ref}}^{c(ref)} \prod_{y \in Y, y \not\in \{y_{var},y_{var2},ref\}} r(y)^{c(y)}
 \end{equation*}
 
 
 \paragraph{Genotype priors}
 
-The genotype priors $P(G)$ describe above are a function of $\theta_X$, with
+The genotype priors $P(G)$ described above are a function of $\theta_X$, with
 
 \begin{eqnarray*}
 P(het) = \theta_X \\
-P(hom) = 2\theta_X \\
+P(hom) = \theta_X / 2 \\
 P(hetalt) = {\theta_{X}}^2
 \end{eqnarray*}
 
 
-
 \subsubsection{Model 3: Mixture of sample variation with a mixture of two error processes}
 
-Model 3 is motivated as follows: the indel error rates are understood to be overdispersed, ie. the error process is poorly modeled by an error process which is applied independently to each read, at least given current context/allele set segmentation.
+Model 3 is motivated as follows: the indel error rates are understood to be over-dispersed, ie. the error process is poorly modeled by an error process which is applied independently to each read, at least given current context/allele set segmentation.
 
 This leads to two related questions: (1) what is the best representation of the indel error process that can be found (per parameter... etc) (2) what is the best representation that can also be implemented in the variant caller.
 
-Model 3 focuses a bit more on the later question - it represents the indel error with each indel locus (or context instance), having two states, noisy and not-noisy. Every locus as $P(noisy)$ chance of being a high noise locus. A noisy locus has a free parameter set exactly as represented in Model 2 above. A \emph{not-noisy} locus has all indel errors fixed to 1\e{-8}.
+Model 3 focuses a bit more on the later question - it represents the indel error with each indel locus (or context instance), having two states, \emph{noisy} and \emph{clean}. Every locus has $P(noisy)$ chance of being in the \emph{noisy} state. A \emph{noisy} locus has a single free error parameter set exactly as represented in Model 2 above. A \emph{clean} locus has all indel errors fixed to 1\e{-8}.
 
 Model 3 is thus very similar to Model 2 above, with the simple modification of equation \ref{eq:m2} above to:
 
@@ -167,11 +168,35 @@ P(d \vert \theta) = P(noisy) P (d \vert \theta_{noise}) + (1-P(noisy)) P (d \ver
 
 \subsubsection{Model 4: Mixture of sample variation and independent error process, simplified to a two-state model}
 
-Model 4 is a simplified version of Model 2. It is motivated by the need to have a likelihood that is directly comparable to the simple 2 state beta-binomial below.
+Model 4 is a simplified version of Model 2. It is motivated by the need to have a much simpler two allele representation of the variant and error process.
 
-Compared to Model 2, insertion and deletion rates are not jointly analyzed within a single context. Instead one likelihood function is created and minimized separately for each of the two indel types for each contexts.
+Although less accurate, one application for such a 2-allele model is to provide likelihoods which are directly comparable to the the model below which represents indel error as a beta-binomial process under the assumption of only 2 alleles.
 
-As an example, when evaluating insertion error rates, all types of insertions (length 1, 2 and 3+), are summed to together to create the alternate allele observation count at each locus, and these are compared to the reference counts. Any observations of deletion alleles are ignored. Because there is only one alt type, we no longer consider an alt-het variant type, and we no longer account for possible error observations mixed into the het or hom variant states. The corresponding pattern is followed when estimating deletions.
+Compared to Model 2, insertion and deletion rates are not jointly analyzed within a single context. Instead one likelihood function is created and minimized separately for each of the two indel types for each contexts. Additionally, all instances of the chosen indel type are collapsed to a single represented allele type.
+
+As an example, when evaluating insertion error rates, all types of insertions (length 1, 2 and 3+), are summed to together to create the alternate allele observation count at each locus, and these are compared to the reference counts. Any observations of deletion alleles are ignored. Because there is only one alt type, we no longer consider an alt-het genotype. The corresponding pattern is followed when estimating deletions.
+
+The specific genotype likelihoods used in the 2-allele model are described by introducing the two-allele space $Z = {ref,alt}$ to replace the larger allele set $Y$ discussed above:
+
+\begin{equation*}
+P ( d \vert \theta, g_{ref}) = \prod_{z \in Y} r(z)^{c(z)}
+\end{equation*}
+
+...where $c()$ and $r()$ describe allele counts and error rates as above.
+
+The heterozygous likelihood is:
+
+\begin{equation*}
+P (d \vert \theta, g_{het}) = 0.5^{c(alt) + c(ref)}
+\end{equation*}
+
+The homozygous likelihood is:
+
+\begin{equation*}
+P (d \vert \theta, g_{hom}) = (1-e_{ref})^{c(alt)} {e_{ref}}^{c(ref)}
+\end{equation*}
+
+...where $e_{ref}$ is set to a constant value of 0.01.
 
 \subsubsection{Model 5: Mixture of sample variation with a mixture of two error processes, simplified to a two-state model}
 
@@ -186,7 +211,7 @@ In this model we introduce a beta-binomial error process. Per Models 4 and 5 abo
 The goal of this analysis is to estimate the beta/beta-binomial shape parameters $\alpha$ and $\beta$. We do so by substituting the likelihood of the homozygous reference state from Model 2 with:
 
 \begin{equation}
-P ( d \vert g_{ref} ) = \frac{B(c(alt)+\alpha,c(ref)+\beta)}{B(\alpha,\beta)}
+P ( d \vert \theta, g_{ref}) = \frac{B(c(alt)+\alpha,c(ref)+\beta)}{B(\alpha,\beta)}
 \end{equation}
 
 ..and minimizing the resulting for likelihood function with respect to $\alpha$, $\beta$ and $\theta$.
