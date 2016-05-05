@@ -29,5 +29,5 @@
 
 /// recreate something close to v2.4- parameter estimation process:
 void
-model1(
+indelModel1(
     const SequenceErrorCounts& counts);

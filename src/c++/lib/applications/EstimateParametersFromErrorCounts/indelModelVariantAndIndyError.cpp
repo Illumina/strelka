@@ -22,7 +22,7 @@
 /// \author Chris Saunders
 ///
 
-#include "modelVariantAndIndyError.hh"
+#include "indelModelVariantAndIndyError.hh"
 
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
@@ -409,7 +409,7 @@ reportExtendedContext(
 
 
 void
-modelVariantAndIndyError(
+indelModelVariantAndIndyError(
     const SequenceErrorCounts& counts)
 {
     const bool isLockTheta(false);

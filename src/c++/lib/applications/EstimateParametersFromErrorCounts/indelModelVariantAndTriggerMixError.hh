@@ -27,7 +27,8 @@
 #include "errorAnalysis/SequenceErrorCounts.hh"
 
 
-/// model data as a mixture of variants and an independent error process
+/// model data as a mixture of variants and a two stage error process
+///
 void
-modelVariantAndIndyError(
+indelModelVariantAndTriggerMixError(
     const SequenceErrorCounts& counts);

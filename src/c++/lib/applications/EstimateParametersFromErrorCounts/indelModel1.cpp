@@ -22,8 +22,6 @@
 /// \author Chris Saunders
 ///
 
-#include "model1.hh"
-
 #include "blt_util/math_util.hh"
 
 #include "boost/math/distributions/binomial.hpp"
@@ -31,6 +29,7 @@
 #include <iomanip>
 #include <iostream>
 #include <numeric>
+#include "indelModel1.hh"
 
 namespace
 {
@@ -102,7 +101,7 @@ reportExtendedContext(
 
 
 void
-model1(
+indelModel1(
     const SequenceErrorCounts& counts)
 {
     static const double maxAltFrac(0.05);

@@ -27,8 +27,10 @@
 #include "errorAnalysis/SequenceErrorCounts.hh"
 
 
-/// model data as a mixture of variants and a two stage error process
+/// model data as a mixture of variants and an independent error process
 ///
+/// this variant of the model does not allow for multiple overlapping indel
+/// alleles at one locus
 void
-modelVariantAndBetaBinomialError(
+indelModelVariantAndIndyErrorNoOverlap(
     const SequenceErrorCounts& counts);

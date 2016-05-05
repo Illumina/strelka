@@ -22,10 +22,9 @@
 /// \author Chris Saunders
 ///
 
-#include "modelVariantAndIndyErrorNoOverlap.hh"
-
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
+#include "indelModelVariantAndIndyErrorNoOverlap.hh"
 
 #define CODEMIN_USE_BOOST
 #include "minimize_conj_direction.h"
@@ -333,7 +332,7 @@ reportExtendedContext(
 
 
 void
-modelVariantAndIndyErrorNoOverlap(
+indelModelVariantAndIndyErrorNoOverlap(
     const SequenceErrorCounts& counts)
 {
     const bool isLockTheta(false);

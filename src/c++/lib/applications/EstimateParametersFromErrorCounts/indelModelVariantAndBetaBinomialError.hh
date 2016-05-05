@@ -29,8 +29,6 @@
 
 /// model data as a mixture of variants and a two stage error process
 ///
-/// this variant of the model does not allow for multiple overlapping indel
-/// alleles at one locus
 void
-modelVariantAndTriggerMixErrorNoOverlap(
+indelModelVariantAndBetaBinomialError(
     const SequenceErrorCounts& counts);

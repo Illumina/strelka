@@ -26,16 +26,16 @@
 #include "EPECOptions.hh"
 #include "errorAnalysis/SequenceErrorCounts.hh"
 
+#include "indelModel1.hh"
+#include "indelModelVariantAndBetaBinomialError.hh"
+#include "indelModelVariantAndIndyError.hh"
+#include "indelModelVariantAndIndyErrorNoOverlap.hh"
+#include "indelModelVariantAndTriggerMixError.hh"
+#include "indelModelVariantAndTriggerMixErrorNoOverlap.hh"
+
 #include "snvModel1.hh"
 #include "snvModelVariantAndIndyError.hh"
 #include "snvModelVariantAndTriggerMixError.hh"
-
-#include "model1.hh"
-#include "modelVariantAndIndyError.hh"
-#include "modelVariantAndIndyErrorNoOverlap.hh"
-#include "modelVariantAndTriggerMixError.hh"
-#include "modelVariantAndTriggerMixErrorNoOverlap.hh"
-#include "modelVariantAndBetaBinomialError.hh"
 
 #include <iostream>
 
@@ -54,27 +54,27 @@ runEPEC(
     {
         if      (opt.modelIndex == 1)
         {
-            model1(counts);
+            indelModel1(counts);
         }
         else if (opt.modelIndex == 2)
         {
-            modelVariantAndIndyError(counts);
+            indelModelVariantAndIndyError(counts);
         }
         else if (opt.modelIndex == 3)
         {
-            modelVariantAndTriggerMixError(counts);
+            indelModelVariantAndTriggerMixError(counts);
         }
         else if (opt.modelIndex == 4)
         {
-            modelVariantAndIndyErrorNoOverlap(counts);
+            indelModelVariantAndIndyErrorNoOverlap(counts);
         }
         else if (opt.modelIndex == 5)
         {
-            modelVariantAndTriggerMixErrorNoOverlap(counts);
+            indelModelVariantAndTriggerMixErrorNoOverlap(counts);
         }
         else if (opt.modelIndex == 6)
         {
-            modelVariantAndBetaBinomialError(counts);
+            indelModelVariantAndBetaBinomialError(counts);
         }
         else
         {

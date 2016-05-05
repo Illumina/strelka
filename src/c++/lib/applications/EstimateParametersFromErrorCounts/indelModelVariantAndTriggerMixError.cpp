@@ -22,7 +22,7 @@
 /// \author Chris Saunders
 ///
 
-#include "modelVariantAndTriggerMixError.hh"
+#include "indelModelVariantAndTriggerMixError.hh"
 
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
@@ -486,7 +486,7 @@ reportExtendedContext(
 
 
 void
-modelVariantAndTriggerMixError(
+indelModelVariantAndTriggerMixError(
     const SequenceErrorCounts& counts)
 {
     const bool isLockTheta(false);

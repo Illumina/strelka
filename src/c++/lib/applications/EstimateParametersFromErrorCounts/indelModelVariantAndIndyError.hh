@@ -28,9 +28,6 @@
 
 
 /// model data as a mixture of variants and an independent error process
-///
-/// this variant of the model does not allow for multiple overlapping indel
-/// alleles at one locus
 void
-modelVariantAndIndyErrorNoOverlap(
+indelModelVariantAndIndyError(
     const SequenceErrorCounts& counts);
