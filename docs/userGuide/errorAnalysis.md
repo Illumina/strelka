@@ -20,7 +20,6 @@ Error Pattern Analyzer User Guide
   * [Summary output](#summary-output)
   * [Extended output (for model development)](#extended-output-for-model-development)
 * [Error model parameter estimation](#error-model-parameter-estimation)
-* [Error model evaluation](#error-model-evaluation)
 [] (END automated TOC section, any edits will be overwritten on next source refresh)
 
 ## Introduction
@@ -50,7 +49,7 @@ The error counting process input requirements are identical to the Strelka small
 ### Counts files
 
 The primary output of the error counting workflow is a binary error counts file, currently written
-to `${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin`. This is a binary format&mdash;to view the counts data without running a model, please see [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput).
+to `${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin`. This is a binary format. To view the counts data without running a model, see [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput).
 
 ### Error model output
 
@@ -182,14 +181,10 @@ Both alts and alt_counts are comma-delimited lists.  The first 5 fields define t
 
 ## Error model parameter estimation
 
-Given a counts file, error estimation under a particular model can be fun via:
+Given a counts file, error estimation under a particular model can be run via:
 
-        ${STRELKA_INSTALL_PATH}/libexec/EstimateParametersFromErrorCounts --counts-file myCounts.bin --model 2
+        ${STRELKA_INSTALL_PATH}/libexec/EstimateParametersFromErrorCounts --counts-file myCounts.bin --model-type indel --model 2
 
-Note that the estimation process currently offers very little runtime flexibility or documentation, any user of this tool is assumed to be adding or modifying models by changes the estimator source code itself. As a minimal convenience to developers, the exact model choosen for analysis can be choosen at runtime by number, per the above example.
-
-## Error model evaluation
-
-This section is empty for now
+Note that the estimation process currently offers very little runtime flexibility or documentation, any user of this tool is assumed to be adding or modifying models by changes the estimator source code itself. As a minimal convenience to developers, the model type (indel or snv) and the model index can be choosen at runtime, per the above example.
 
 [2]: http://Illumina.github.io/pyflow/
