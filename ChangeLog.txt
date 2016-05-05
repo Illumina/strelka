@@ -1,3 +1,4 @@
+- STREL-47 add new basecall error estimator
 - STREL-54 fix realignment tree pruning
 - STREL-33 add method docs for the new somatic scoring model
 - STREL-49 Liquid tumor EVS cut-off retuning

@@ -91,13 +91,13 @@ contextLogLhood(
 
         // get lhood of homref GT:
         const double noindel(logIndelErrorRate*totalIndelObservations +
-                          logNoIndelRefRate*obs.refObservations);
+                             logNoIndelRefRate*obs.refObservations);
 
         // get lhood of het and hom GT:
         const double het(logHetRate*(obs.refObservations+totalIndelObservations));
 
         const double hom(logHomAltRate* +totalIndelObservations +
-                   logHomRefRate*obs.refObservations);
+                         logHomRefRate*obs.refObservations);
 
         /// TODO: generalize log_sum to N values...
         const double mix(log_sum( log_sum(logHomPrior+hom,logHetPrior+het), logNoIndelPrior+noindel ));

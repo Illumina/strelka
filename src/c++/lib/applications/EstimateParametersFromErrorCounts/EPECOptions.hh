@@ -44,10 +44,12 @@ inline
 const char*
 label(const index_t i)
 {
-    switch(i)
+    switch (i)
     {
-    case INDEL: return "indel";
-    case SNV: return "snv";
+    case INDEL:
+        return "indel";
+    case SNV:
+        return "snv";
     default:
         assert(false && "unknown model type");
         return "xxx";

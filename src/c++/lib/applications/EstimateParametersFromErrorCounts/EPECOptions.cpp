@@ -100,7 +100,7 @@ parseEPECOptions(
 
     {
         bool isModelTypeFound(false);
-        for (unsigned modelTypeIndex(0);modelTypeIndex<MODEL_TYPE::SIZE;++modelTypeIndex)
+        for (unsigned modelTypeIndex(0); modelTypeIndex<MODEL_TYPE::SIZE; ++modelTypeIndex)
         {
             const MODEL_TYPE::index_t modelType(static_cast<MODEL_TYPE::index_t>(modelTypeIndex));
             if (modelTypeString ==  MODEL_TYPE::label(modelType))

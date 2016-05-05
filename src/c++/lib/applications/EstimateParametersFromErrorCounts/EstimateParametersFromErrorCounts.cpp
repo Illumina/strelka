@@ -97,7 +97,7 @@ runEPEC(
         }
         else
         {
-             std::cerr << "Unknown SNV Model\n";
+            std::cerr << "Unknown SNV Model\n";
         }
     }
     else

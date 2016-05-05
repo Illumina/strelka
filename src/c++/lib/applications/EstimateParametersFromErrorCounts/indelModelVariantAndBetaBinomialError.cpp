@@ -67,7 +67,7 @@ getObsLogLhood(
     const double indelErrorBeta,
     const double indelBetaDenom,
     const bool isInsert,
-/*    const double logNoIndelRefRate, */
+    /*    const double logNoIndelRefRate, */
     const ExportedIndelObservations& obs)
 {
     static const double log0(-std::numeric_limits<double>::infinity());
@@ -101,7 +101,7 @@ getObsLogLhood(
     {
         noindel = std::log(boost::math::beta((totalIndelObservations+indelErrorAlpha),
                                              (obs.refObservations+indelErrorBeta))
-                                                             /indelBetaDenom);
+                           /indelBetaDenom);
     }
 
     // get lhood of het and hom GT:
@@ -145,8 +145,8 @@ contextLogLhood(
 
     const double indelErrorAlpha(std::exp(logIndelErrorAlpha));
     const double indelErrorBeta(std::exp(logIndelErrorBeta));
-  //  const double insertErrorConcentration(insertErrorAlpha+insertErrorBeta);
-   // const double insertErrorMean(insertErrorAlpha/insertErrorConcentration);
+    //  const double insertErrorConcentration(insertErrorAlpha+insertErrorBeta);
+    // const double insertErrorMean(insertErrorAlpha/insertErrorConcentration);
 
     const double indelBetaDenom(boost::math::beta(indelErrorAlpha, indelErrorBeta));
 
@@ -154,8 +154,8 @@ contextLogLhood(
     for (const auto& obs : observations)
     {
         const double mix(getObsLogLhood(logHomPrior, logHetPrior, logNoIndelPrior,
-                indelErrorAlpha, indelErrorBeta, indelBetaDenom,
-                isInsert, obs));
+                                        indelErrorAlpha, indelErrorBeta, indelBetaDenom,
+                                        isInsert, obs));
 
 #ifdef DEBUG_MODEL4
         log_os << "MODEL4: loghood obs: mix/delta: " << mix << " " << (mix*obs.repeatCount) << "\n";
