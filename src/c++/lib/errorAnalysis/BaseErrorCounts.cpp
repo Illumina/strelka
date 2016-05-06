@@ -409,6 +409,7 @@ merge(
     const BaseErrorData& in)
 {
     error.merge(in.error);
+    excludedRegionSkipped += in.excludedRegionSkipped;
     depthSkipped += in.depthSkipped;
     emptySkipped += in.emptySkipped;
     noiseSkipped += in.noiseSkipped;
@@ -421,6 +422,7 @@ BaseErrorData::
 dump(
     std::ostream& os) const
 {
+    os << "excludedRegionSkippedCount: " << excludedRegionSkipped << "\n";
     os << "depthSkippedCount: " << depthSkipped << "\n";
     os << "emptySkippedCount: " << emptySkipped << "\n";
     os << "noiseSkippedCount: " << noiseSkipped << "\n";
@@ -438,6 +440,17 @@ addSiteObservation(
 {
     const auto iter(getContextIterator(context));
     iter->second.error.addObservation(siteObservation);
+}
+
+
+
+void
+BaseErrorCounts::
+addExcludedRegionSkip(
+    const BaseErrorContext& context)
+{
+    const auto iter(getContextIterator(context));
+    iter->second.excludedRegionSkipped++;
 }
 
 

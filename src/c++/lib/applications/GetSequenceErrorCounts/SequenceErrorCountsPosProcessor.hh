@@ -47,6 +47,10 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
 
     void reset();
 
+    void
+    insertExcludedRegion(
+        const known_pos_range2& excludedRange);
+
 private:
 
     void
@@ -62,6 +66,12 @@ private:
     void
     write_counts(const pos_range&) const override {}
 
+    bool
+    derived_empty() const override
+    {
+        return _excludedRegions.empty();
+    }
+
     const SequenceErrorCountsOptions& _opt;
     const SequenceErrorCountsStreams& _streams;
 
@@ -69,4 +79,5 @@ private:
 
     double _max_candidate_normal_sample_depth = -1;
 
+    RegionTracker _excludedRegions;
 };

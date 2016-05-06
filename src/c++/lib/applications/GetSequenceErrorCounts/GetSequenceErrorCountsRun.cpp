@@ -47,8 +47,7 @@ enum index_t
 {
     CANDIDATE_INDELS,
     FORCED_GT_VARIANTS,
-    PLOIDY_REGION,
-    NOCOMPRESS_REGION
+    EXCLUDE_REGION
 };
 }
 
@@ -94,9 +93,9 @@ getSequenceErrorCountsRun(
     registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, readHeader, streamData);
     registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, readHeader, streamData);
 
-    if (! opt.ploidy_region_bedfile.empty())
+    for (const std::string& excludeRegionFilename : opt.excludedRegionsFileList)
     {
-        streamData.registerBed(opt.ploidy_region_bedfile.c_str(), INPUT_TYPE::PLOIDY_REGION);
+        streamData.registerBed(excludeRegionFilename.c_str(), INPUT_TYPE::EXCLUDE_REGION);
     }
 
     while (streamData.next())
@@ -172,22 +171,10 @@ getSequenceErrorCountsRun(
         else if (HTS_TYPE::BED == currentHtsType)
         {
             const bed_record& bedRecord(streamData.getCurrentBed());
-            if     (INPUT_TYPE::PLOIDY_REGION == currentIndex)
+            if     (INPUT_TYPE::EXCLUDE_REGION == currentIndex)
             {
-                known_pos_range2 ploidyRange(bedRecord.begin,bedRecord.end);
-                const int ploidy(parsePloidyFromBedStrict(bedRecord.line));
-                if ((ploidy == 0) || (ploidy == 1))
-                {
-                    const bool retval(sppr.insert_ploidy_region(ploidyRange,ploidy));
-                    if (! retval)
-                    {
-                        using namespace illumina::common;
-
-                        std::ostringstream oss;
-                        oss << "ERROR: ploidy bedfile record conflicts with prior record. Bedfile line: '" << bedRecord.line << "'\n";
-                        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-                    }
-                }
+                const known_pos_range2 excludedRange(bedRecord.begin,bedRecord.end);
+                sppr.insertExcludedRegion(excludedRange);
             }
             else
             {

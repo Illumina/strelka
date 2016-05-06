@@ -50,6 +50,9 @@ getSequenceErrorCountsOptionsParser(
      "write binary error counts output to filename (required, no default)")
     ("observation-bed-file", po::value(&opt.observationsBedFilename),
      "write all observed indels to BED file (if not specified, individual indels will not be reported)")
+    ("excluded-regions-bed-file",
+     po::value(&opt.excludedRegionsFileList)->multitoken(),
+     "Bed file specifying regions to exclude from counting. Bed file must be tabix indexed. Argument can be provided multiple times to specify multiple exclusions.")
     ;
 
     // final assembly

@@ -360,13 +360,18 @@ struct IndelErrorData
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& background& error& depthSupport& skipped;
+        ar& background;
+        ar& error;
+        ar& depthSupport;
+        ar& excludedRegionSkipped;
+        ar& depthSkipped;
     }
 
     IndelBackgroundObservationData background;
     IndelErrorContextObservationData error;
     IndelDepthSupportTotal depthSupport;
-    unsigned skipped = 0;
+    uint64_t excludedRegionSkipped = 0;
+    uint64_t depthSkipped = 0;
 };
 
 BOOST_CLASS_IMPLEMENTATION(IndelErrorData, boost::serialization::object_serializable)
@@ -390,6 +395,10 @@ public:
     addBackground(
         const IndelErrorContext& context,
         const IndelBackgroundObservation& backgroundObservation);
+
+    void
+    addExcludedRegionSkip(
+        const IndelErrorContext& context);
 
     void
     addDepthSkip(

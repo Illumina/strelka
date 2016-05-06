@@ -97,6 +97,18 @@ reset()
 
 
 
+void
+SequenceErrorCountsPosProcessor::
+insertExcludedRegion(
+    const known_pos_range2& excludedRange)
+{
+    _stageman.validate_new_pos_value(excludedRange.begin_pos(),STAGE::READ_BUFFER);
+    _excludedRegions.addRegion(excludedRange);
+    _is_skip_process_pos=false;
+}
+
+
+
 /// generalization of overlapping indels:
 ///
 struct OrthogonalHaplotypeCandidateGroup
@@ -333,42 +345,67 @@ process_pos_error_counts(
 
     const sample_info& sif(sample(sample_no));
 
-    // right now there's only one baseContext, so just set it const here and leave it;
+    // right now there's only one baseContext, so just set it const here and leave it
     const BaseErrorContext baseContext;
 
-    // candidate indels are turned off above a certain depth relative to chromosome
-    // mean, so turn off all other error counts when this occurs:
+    bool isSkipSNV(false);
+    bool isSkipIndel(false);
+
+    if (_excludedRegions.isIntersectRegion(pos))
     {
-        if (_max_candidate_normal_sample_depth > 0.)
+        baseCounts.addExcludedRegionSkip(baseContext);
+        isSkipSNV=true;
+
+        IndelErrorContext indelContext;
+        indelCounts.addExcludedRegionSkip(indelContext);
+        const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
+        if (leftHpolSize>1)
+        {
+            indelContext.repeatCount = std::min(maxHpolLength,leftHpolSize);
+            indelCounts.addExcludedRegionSkip(indelContext);
+        }
+        isSkipIndel=true;
+    }
+    else if (_max_candidate_normal_sample_depth > 0.)
+    {
+        //
+        // candidate variants are turned off above a certain depth relative to chromosome mean
+        // for basecalls we check the current position, for indels we check the previous position.
+        //
+        {
+            // handle SNVs
+            const unsigned estdepth(sif.estdepth_buff.val(pos));
+            const unsigned estdepth2(sif.estdepth_buff_tier2.val(pos));
+            if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
+            {
+                baseCounts.addDepthSkip(baseContext);
+                isSkipSNV=true;
+            }
+        }
+
         {
             const unsigned estdepth(sif.estdepth_buff.val(pos-1));
             const unsigned estdepth2(sif.estdepth_buff_tier2.val(pos-1));
             if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
             {
-                // record the number of contexts which have been skipped due to high depth:
-                {
-                    // handle SNVs:
-                    baseCounts.addDepthSkip(baseContext);
-                }
-                {
-                    // handle indels:
-                    IndelErrorContext indelContext;
-                    indelCounts.addDepthSkip(indelContext);
+                // handle indels:
+                IndelErrorContext indelContext;
+                indelCounts.addDepthSkip(indelContext);
 
-                    const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
-                    if (leftHpolSize>1)
-                    {
-                        indelContext.repeatCount = std::min(maxHpolLength,leftHpolSize);
-                        indelCounts.addDepthSkip(indelContext);
-                    }
+                const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
+                if (leftHpolSize>1)
+                {
+                    indelContext.repeatCount = std::min(maxHpolLength,leftHpolSize);
+                    indelCounts.addDepthSkip(indelContext);
                 }
-                return;
+                isSkipIndel=true;
             }
         }
     }
 
 
     // handle base error signal
+    if (! isSkipSNV)
     {
         // be relatively intolerant of anything interesting happening in the local sequence neighborhood:
         static const double snvMMDRMaxFrac(0.05);
@@ -423,6 +460,9 @@ process_pos_error_counts(
             }
         }
     }
+
+
+    if (isSkipIndel) return;
 
 
     // define groups of overlapping indels:

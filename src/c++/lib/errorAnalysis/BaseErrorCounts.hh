@@ -307,12 +307,14 @@ struct BaseErrorData
         // serialize template depth:
         ar& error.data;
         ar& error.refQuals;
+        ar& excludedRegionSkipped;
         ar& depthSkipped;
         ar& emptySkipped;
         ar& noiseSkipped;
     }
 
     BaseErrorContextObservationData error;
+    uint64_t excludedRegionSkipped = 0;
     uint64_t depthSkipped = 0;
     uint64_t emptySkipped = 0;
     uint64_t noiseSkipped = 0;
@@ -333,6 +335,10 @@ public:
     addSiteObservation(
         const BaseErrorContext& context,
         const BaseErrorContextInputObservation& siteObservation);
+
+    void
+    addExcludedRegionSkip(
+        const BaseErrorContext& context);
 
     void
     addDepthSkip(

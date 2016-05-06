@@ -451,6 +451,6 @@ indelModelVariantAndBetaBinomialError(
         if (observations.empty()) continue;
 
         log_os << "INFO: computing rates for context: " << context << "\n";
-        reportExtendedContext(isLockTheta, context, observations, data.skipped, ros);
+        reportExtendedContext(isLockTheta, context, observations, data.depthSkipped, ros);
     }
 }

@@ -69,8 +69,14 @@ struct SequenceErrorCountsOptions : public starling_base_options
     std::string chrom_depth_file;
     double max_depth_factor = 3.;
 
-    std::string countsFilename;
+    ////////// input files:
+    // exclude genome regios from analysis
+    std::vector<std::string> excludedRegionsFileList;
 
+    ////////// output files:
+    // binary output pattern counts (required)
+    std::string countsFilename;
+    // optional debug output specifying indel location
     std::string observationsBedFilename;
 };
 

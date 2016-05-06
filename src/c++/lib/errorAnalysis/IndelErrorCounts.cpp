@@ -281,7 +281,8 @@ merge(
     background.merge(in.background);
     error.merge(in.error);
     depthSupport.merge(in.depthSupport);
-    skipped += in.skipped;
+    excludedRegionSkipped += in.excludedRegionSkipped;
+    depthSkipped += in.depthSkipped;
 }
 
 
@@ -292,7 +293,8 @@ dump(
     std::ostream& os) const
 {
     os << "depthSupportRatio: " << safeFrac(depthSupport.supportCount, depthSupport.depth) << "\n";
-    os << "skippedCount: " << skipped << "\n";
+    os << "excludedRegionSkippedCount: " << excludedRegionSkipped << "\n";
+    os << "depthSkippedCount: " << depthSkipped << "\n";
 
     background.dump(os);
     error.dump(os);
@@ -328,11 +330,22 @@ addBackground(
 
 void
 IndelErrorCounts::
+addExcludedRegionSkip(
+    const IndelErrorContext& context)
+{
+    const auto iter(getContextIterator(context));
+    iter->second.excludedRegionSkipped++;
+}
+
+
+
+void
+IndelErrorCounts::
 addDepthSkip(
     const IndelErrorContext& context)
 {
     const auto iter(getContextIterator(context));
-    iter->second.skipped++;
+    iter->second.depthSkipped++;
 }
 
 

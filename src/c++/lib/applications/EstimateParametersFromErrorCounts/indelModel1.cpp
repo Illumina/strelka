@@ -121,9 +121,9 @@ indelModel1(
 
         if (observations.empty()) continue;
 
-        reportExtendedContext(maxAltFrac, minDepth, context, observations, data.skipped,
+        reportExtendedContext(maxAltFrac, minDepth, context, observations, data.depthSkipped,
                               INDEL_SIGNAL_TYPE::INSERT_1, INDEL_SIGNAL_TYPE::DELETE_1, "I", ros);
-        reportExtendedContext(maxAltFrac, minDepth, context, observations, data.skipped,
+        reportExtendedContext(maxAltFrac, minDepth, context, observations, data.depthSkipped,
                               INDEL_SIGNAL_TYPE::DELETE_1, INDEL_SIGNAL_TYPE::SIZE, "D", ros);
     }
 }

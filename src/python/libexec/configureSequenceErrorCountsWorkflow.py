@@ -51,12 +51,9 @@ This script configures the Strelka sequence error counts workflow.
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
                          help="Sample BAM or CRAM file. [required] (no default)")
-        group.add_option("--ploidy", type="string", dest="ploidyBed", metavar="FILE",
-                         help="Provide ploidy bed file. The bed records should provide either 1 or 0 in the 5th 'score' column to "
-                         "indicate haploid or deleted status respectively. File must be tabix indexed. (no default)")
-        group.add_option("--targetRegions", type="string", dest="targetRegionsBed", metavar="FILE",
-                         help="Provide bed file of regions to allow variant calls. Calls outside these ares are filtered "
-                         "as OffTarget. File must be tabix indexed. (no default)")
+        group.add_option("--excludedRegions", type="string", metavar="FILE", action="append",
+                         help="Provide bed file of regions to be excluded from error count analysis. Bed file must be tabix indexed."
+                         "argument may be specified multiple times to provide multiple exclusion regions (no default)")
         group.add_option("--reportObservedIndels", dest="isReportObservedIndels", action="store_true", default = False,
                          help="Report all observed indels by location in a separate BED file in addition to the"
                          "summary counts")
@@ -94,8 +91,10 @@ This script configures the Strelka sequence error counts workflow.
             if tabixFile is None : return None
             return os.path.abspath(tabixFile)
 
-        options.ploidyBed = checkFixTabixIndexedFileOption(options.ploidyBed,"ploidy bed")
-        options.targetRegionsBed = checkFixTabixIndexedFileOption(options.targetRegionsBed,"targeted-regions bed")
+        if options.excludedRegions is not None :
+            for excludeIndex in range(len(options.excludedRegions)) :
+                options.excludedRegions[excludeIndex] = \
+                    checkFixTabixIndexedFileOption(options.excludedRegions[excludeIndex],"excluded-regions bed")
 
 
 

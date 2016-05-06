@@ -51,14 +51,13 @@ struct starling_pos_processor : public starling_pos_processor_base
 
     void reset();
 
+private:
+
     bool
     derived_empty() const override
     {
         return _nocompress_regions.empty();
     }
-
-
-private:
 
     bool
     is_save_pileup_buffer() override
