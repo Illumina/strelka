@@ -12,6 +12,7 @@ Error Pattern Analyzer User Guide
   * [Error model output](#error-model-output)
 * [Error counting workflow configuration and execution](#error-counting-workflow-configuration-and-execution)
   * [Configuration](#configuration)
+    * [Configuration: Excluding regions](#configuration-excluding-regions)
   * [Execution](#execution)
   * [Advanced execution options](#advanced-execution-options)
     * [`--quiet`](#--quiet)
@@ -42,7 +43,7 @@ More detailed methods documentation for both steps can be found [here](../method
 
 ## Input requirements
 
-The error counting process input requirements are identical to the Strelka small variant caller.
+The error counting process requires aligned sequencing reads in BAM or CRAM forma. The BAM/CRAM file restrictions are identical to those for the Strelka small variant caller. The workflow also optionally excepts region and variant input formated as indexed BED and VCF files respectively.
 
 ## Outputs
 
@@ -105,6 +106,17 @@ Example configuration for human autosomes:
 
 On completion, the configuration script will create the workflow run script `${COUNTS_ANALYSIS_PATH}/runWorkflow.py`. This can be used to run the workflow in various parallel compute modes per the
 instructions in the [Execution](#execution) section below.
+
+#### Configuration: Excluding regions
+
+Regions of the genome specified in a BED file may be marked for exclusion from the counting process. Multiple BED files may be given, in which case the union of all excluded regions are skipped in the counting process
+
+    ${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py \
+    --bam=sample.bam \
+    --referenceFasta=hg19.fa \
+    --runDir ${COUNTS_ANALYSIS_PATH} \
+    --excludedRegions=nonconfidentRegions.bed.gz \
+    --excludedRegions=nonAutosomes.bed.gz
 
 ### Execution
 
