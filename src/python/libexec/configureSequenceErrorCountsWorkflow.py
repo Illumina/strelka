@@ -52,8 +52,14 @@ This script configures the Strelka sequence error counts workflow.
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
                          help="Sample BAM or CRAM file. [required] (no default)")
         group.add_option("--excludedRegions", type="string", metavar="FILE", action="append",
-                         help="Provide bed file of regions to be excluded from error count analysis. Bed file must be tabix indexed."
+                         help="Provide BED file of regions to be excluded from error count analysis. BED file must be tabix indexed."
                          "argument may be specified multiple times to provide multiple exclusion regions (no default)")
+        group.add_option("--knownVariants", type="string", metavar="FILE",
+                         help="Provide VCF file of indels and SNVs with known genotype assignments. VCF file must be tabix indexed."
+                         "Matching alt alleles in the error counts file will be marked with a known copy number. There is no"
+                         "handling of hom ref assertions, whether remaining unlabeled loci are treated as known hom ref is left to the"
+                         "downstream estimation model. Note this option does not promote the known variants to candidate or forced GT"
+                         "status, to do so the same VCF file can be resubmitted to the appropriate additional argument.")
         group.add_option("--reportObservedIndels", dest="isReportObservedIndels", action="store_true", default = False,
                          help="Report all observed indels by location in a separate BED file in addition to the"
                          "summary counts")
@@ -95,6 +101,10 @@ This script configures the Strelka sequence error counts workflow.
             for excludeIndex in range(len(options.excludedRegions)) :
                 options.excludedRegions[excludeIndex] = \
                     checkFixTabixIndexedFileOption(options.excludedRegions[excludeIndex],"excluded-regions bed")
+
+        if options.knownVariants is not None :
+            options.knownVariants = \
+                checkFixTabixIndexedFileOption(options.knownVariants,"known-variants vcf")
 
 
 

@@ -70,7 +70,10 @@ struct SequenceErrorCountsOptions : public starling_base_options
     double max_depth_factor = 3.;
 
     ////////// input files:
-    // exclude genome regios from analysis
+
+    // mark certain variants as having a known genotype:
+    std::string knownVariantsFile;
+    // exclude genome regions from analysis
     std::vector<std::string> excludedRegionsFileList;
 
     ////////// output files:

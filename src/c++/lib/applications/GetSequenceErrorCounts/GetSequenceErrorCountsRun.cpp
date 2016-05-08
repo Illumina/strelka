@@ -47,9 +47,52 @@ enum index_t
 {
     CANDIDATE_INDELS,
     FORCED_GT_VARIANTS,
-    EXCLUDE_REGION
+    KNOWN_VARIANTS,
+    EXCLUDE_REGION,
 };
 }
+
+
+
+//// handles truth variant input from a vcf record
+////
+void
+processTrueVariantRecord(
+    const unsigned /*max_indel_size*/,
+    const vcf_record& /*vcfr*/,
+    SequenceErrorCountsPosProcessor& /*sppr*/)
+{
+    /// TODO: the actual truth logic
+    ///
+    /// to make the problem incremental/easier consider:
+    /// 1) only handle indels at first
+    /// 2) don't bother parsing the genotype at first (just mark everything as copy number 1)
+    /// 3) ignore any record with multiple alts.
+    ///
+
+    // getGenotype(vcfr.line);
+
+
+
+#if 0
+    assert (vcfr.is_indel());
+
+    const unsigned altCount(vcfr.alt.size());
+    for (unsigned altIndex(0); altIndex<altCount; ++altIndex)
+    {
+        indel_observation obs;
+        const bool isAlleleConverted =
+            convert_vcfrecord_to_indel_allele(max_indel_size,vcfr,altIndex,obs);
+        if (! isAlleleConverted) continue;
+
+        obs.data.is_external_candidate = true;
+        obs.data.is_forced_output = is_forced_output;
+
+        sppr.insert_indel(obs,sample_no);
+    }
+#endif
+}
+
 
 
 void
@@ -92,6 +135,12 @@ getSequenceErrorCountsRun(
 
     registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, readHeader, streamData);
     registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, readHeader, streamData);
+
+    if (! opt.knownVariantsFile.empty())
+    {
+        const vcf_streamer& vcfStream(streamData.registerVcf(opt.knownVariantsFile.c_str(), INPUT_TYPE::KNOWN_VARIANTS));
+        vcfStream.validateBamHeaderChromSync(readHeader);
+    }
 
     for (const std::string& excludeRegionFilename : opt.excludedRegionsFileList)
     {
@@ -163,6 +212,11 @@ getSequenceErrorCountsRun(
                     sppr.insert_forced_output_pos(vcfRecord.pos-1);
                 }
             }
+            else if (INPUT_TYPE::KNOWN_VARIANTS == currentIndex)
+            {
+                processTrueVariantRecord(opt.max_indel_size, vcfRecord, sppr);
+            }
+
             else
             {
                 assert(false && "Unexpected hts index");
