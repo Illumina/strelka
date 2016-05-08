@@ -166,7 +166,8 @@ static
 void
 getOrthogonalHaplotypeSupportCounts(
     const OrthogonalHaplotypeCandidateGroup& hg,
-    std::vector<unsigned>& support)
+    std::vector<unsigned>& support,
+    const bool is_tier1_only = true)
 {
     const unsigned nonrefHapCount(hg.size());
     assert(nonrefHapCount!=0);
@@ -181,6 +182,8 @@ getOrthogonalHaplotypeSupportCounts(
             const indel_data& id(hg.data(nonrefHapIndex));
             for (const auto& score : id.read_path_lnp)
             {
+                if (is_tier1_only && (! score.second.is_tier1_read)) continue;
+
                 const auto iter(countReadIds.find(score.first));
                 if (iter==countReadIds.end())
                 {

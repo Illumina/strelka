@@ -145,6 +145,27 @@ is_candidate_indel_impl_test_signal_noise(
 
 bool
 indel_synchronizer::
+is_candidate_indel_impl_test_weak_signal(
+    const indel_data* idsp[],
+    const unsigned isds) const
+{
+    for (unsigned i(0); i<isds; ++i)
+    {
+        // for each sample, get the number of tier 1 reads supporting the indel
+        const unsigned n_indel_reads = idsp[i]->all_read_ids.size();
+
+        static const unsigned min_candidate_cov_floor(1);
+        if (n_indel_reads < min_candidate_cov_floor) continue;
+
+        return true;
+    }
+    return false;
+}
+
+
+
+bool
+indel_synchronizer::
 is_candidate_indel_impl_test(
     const indel_key& ik,
     const indel_data& id,
@@ -160,6 +181,10 @@ is_candidate_indel_impl_test(
     if (_opt.is_candidate_indel_signal_test)
     {
         if (! is_candidate_indel_impl_test_signal_noise(ik,id,idsp,isds)) return false;
+    }
+    else
+    {
+        if (! is_candidate_indel_impl_test_weak_signal(idsp,isds)) return false;
     }
 
     /////////////////////////////////////////

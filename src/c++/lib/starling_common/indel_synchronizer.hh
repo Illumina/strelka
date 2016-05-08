@@ -180,10 +180,19 @@ struct indel_synchronizer
 
 private:
 
+    /// test whether the indel should be promoted to
+    /// a candidate
     bool
     is_candidate_indel_impl_test_signal_noise(
         const indel_key& ik,
         const indel_data& id,
+        const indel_data* idsp[],
+        const unsigned isds) const;
+
+    /// much weaker version of the above -- used for indel
+    /// discovery protocols outside of the variant caller
+    bool
+    is_candidate_indel_impl_test_weak_signal(
         const indel_data* idsp[],
         const unsigned isds) const;
 
