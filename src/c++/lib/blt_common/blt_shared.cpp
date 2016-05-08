@@ -38,7 +38,7 @@ const char STDIN_FILENAME[] = "-";
 
 
 // arbitrary... but things will be a total mess if not capped somewhere:
-const unsigned MAX_FLANK_SIZE(50);
+const unsigned MAX_FLANK_SIZE(100);
 
 
 

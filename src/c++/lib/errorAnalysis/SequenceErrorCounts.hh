@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "BaseErrorCounts.hh"
 #include "IndelErrorCounts.hh"
 
 
@@ -36,6 +37,18 @@
 ///
 struct SequenceErrorCounts
 {
+    BaseErrorCounts&
+    getBaseCounts()
+    {
+        return _bases;
+    }
+
+    const BaseErrorCounts&
+    getBaseCounts() const
+    {
+        return _bases;
+    }
+
     IndelErrorCounts&
     getIndelCounts()
     {
@@ -54,6 +67,7 @@ struct SequenceErrorCounts
     void
     clear()
     {
+        _bases.clear();
         _indels.clear();
     }
 
@@ -68,5 +82,6 @@ struct SequenceErrorCounts
     dump(std::ostream& os) const;
 
 private:
+    BaseErrorCounts _bases;
     IndelErrorCounts _indels;
 };

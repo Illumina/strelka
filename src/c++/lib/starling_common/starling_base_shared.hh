@@ -225,6 +225,8 @@ struct starling_base_options : public blt_options
     /// set to zero to disable limit
     unsigned maxBufferedReads = 100000;
 
+    bool isBasecallQualAdjustedForMapq = true;
+
     Tier2Options tier2;
 };
 

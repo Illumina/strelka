@@ -53,6 +53,10 @@ parseDSECOptions(
     namespace po = boost::program_options;
     po::options_description req("configuration");
     req.add_options()
+    ("exclude-basecalls", po::value(&opt.isExcludeBasecalls)->zero_tokens(),
+     "Exclude basecall info from the dump")
+    ("exclude-indels", po::value(&opt.isExcludeIndels)->zero_tokens(),
+     "Exclude indel info from the dump")
     ("counts-file", po::value(&opt.countsFilename),
      "read binary error counts from filename (required, no default)")
     ("extended", po::value(&opt.isExtendedOutput)->zero_tokens(),

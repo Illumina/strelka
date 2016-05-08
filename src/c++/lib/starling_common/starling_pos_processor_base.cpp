@@ -1377,7 +1377,7 @@ pileup_read_segment(const read_segment& rseg,
     static const uint8_t min_adjust_mapq(5);
     const uint8_t mapq(rseg.map_qual());
     const uint8_t adjustedMapq(std::max(min_adjust_mapq,mapq));
-    const bool is_mapq_adjust(adjustedMapq<=80);
+    const bool is_mapq_adjust(_opt.isBasecallQualAdjustedForMapq && (adjustedMapq<=80));
     // test read against max indel size (this is a backup, should have been taken care of upstream):
     const unsigned read_ref_mapped_size(apath_ref_length(best_al.path));
     if (read_ref_mapped_size > (read_size+get_largest_total_indel_ref_span_per_read()))

@@ -32,9 +32,11 @@
 #include <iostream>
 
 
+
 /// assuming V is an integer count type, iterate or initialize
 /// new key
 template <typename K, typename V>
+static
 void
 iterMap(
     std::map<K,V>& m,
@@ -52,8 +54,8 @@ iterMap(
 }
 
 
-
 template <typename K, typename V>
+static
 void
 mergeMapKeys(
     const std::map<K,V>& m1,

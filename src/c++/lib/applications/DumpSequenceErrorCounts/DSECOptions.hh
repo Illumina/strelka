@@ -30,6 +30,8 @@
 
 struct DSECOptions
 {
+    bool isExcludeBasecalls = false;
+    bool isExcludeIndels = false;
     std::string countsFilename;
     bool isExtendedOutput;
 };

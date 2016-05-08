@@ -83,7 +83,6 @@ reportExtendedContext(
         const double total(sigTotal.ref+sigTotal.alt);
 
         static const double alpha(0.05);
-
         const double upper(boost::math::binomial_distribution<double>::find_upper_bound_on_p(total, sigTotal.alt, alpha));
 
         os << std::setprecision(10);

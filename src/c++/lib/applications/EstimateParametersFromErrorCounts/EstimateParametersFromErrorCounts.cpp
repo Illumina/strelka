@@ -26,6 +26,10 @@
 #include "EPECOptions.hh"
 #include "errorAnalysis/SequenceErrorCounts.hh"
 
+#include "snvModel1.hh"
+#include "snvModelVariantAndIndyError.hh"
+#include "snvModelVariantAndTriggerMixError.hh"
+
 #include "model1.hh"
 #include "modelVariantAndIndyError.hh"
 #include "modelVariantAndIndyErrorNoOverlap.hh"
@@ -34,6 +38,7 @@
 #include "modelVariantAndBetaBinomialError.hh"
 
 #include <iostream>
+
 
 
 
@@ -76,11 +81,28 @@ runEPEC(
             std::cerr << "Unknown Indel Model\n";
         }
     }
+    else if (opt.modelType == MODEL_TYPE::SNV)
+    {
+        if     (opt.modelIndex == 1)
+        {
+            snvModel1(counts);
+        }
+        else if (opt.modelIndex == 2)
+        {
+            snvModelVariantAndIndyError(counts);
+        }
+        else if (opt.modelIndex == 3)
+        {
+            snvModelVariantAndTriggerMixError(counts);
+        }
+        else
+        {
+             std::cerr << "Unknown SNV Model\n";
+        }
+    }
     else
     {
-        {
-            std::cerr << "Unknown Model Type\n";
-        }
+        std::cerr << "Unknown Model Type\n";
     }
 }
 

@@ -37,6 +37,7 @@ SequenceErrorCounts::
 merge(
     const SequenceErrorCounts& in)
 {
+    _bases.merge(in._bases);
     _indels.merge(in._indels);
 }
 
@@ -52,6 +53,7 @@ save(
     std::ofstream ofs(filename, std::ios::binary);
     binary_oarchive oa(ofs);
 
+    oa << _bases;
     oa << _indels;
 }
 
@@ -70,6 +72,7 @@ load(
     std::ifstream ifs(filename, std::ios::binary);
     binary_iarchive ia(ifs);
 
+    ia >> _bases;
     ia >> _indels;
 }
 
@@ -80,5 +83,6 @@ SequenceErrorCounts::
 dump(
     std::ostream& os) const
 {
+    getBaseCounts().dump(os);
     getIndelCounts().dump(os);
 }

@@ -42,8 +42,17 @@ struct SequenceErrorCountsOptions : public starling_base_options
         // turning the signal test off (above)
         max_candidate_indel_depth_factor = 1;
 
-        // set command-line defaults for starling only:
-        min_paired_align_score = 20;
+        // set command-line defaults for error counting only:
+        min_paired_align_score = 60;
+        min_qscore = 17;
+        isBasecallQualAdjustedForMapq = false;
+
+        is_max_win_mismatch = true;
+        max_win_mismatch = 1;
+        max_win_mismatch_flank_size = 100;
+
+        tier2.is_tier2_min_paired_align_score = true;
+        tier2.tier2_min_paired_align_score = 0;
     }
 
     bool

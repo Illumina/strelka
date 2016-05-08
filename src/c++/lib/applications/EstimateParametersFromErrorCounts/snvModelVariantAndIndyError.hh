@@ -18,55 +18,16 @@
 //
 //
 
+///
 /// \author Chris Saunders
 ///
 
 #pragma once
 
-#include "common/Program.hh"
-
-#include <cassert>
-
-#include <string>
+#include "errorAnalysis/SequenceErrorCounts.hh"
 
 
-namespace MODEL_TYPE
-{
-enum index_t
-{
-    INDEL,
-    SNV,
-    SIZE,
-    NONE = SIZE
-};
-
-inline
-const char*
-label(const index_t i)
-{
-    switch(i)
-    {
-    case INDEL: return "indel";
-    case SNV: return "snv";
-    default:
-        assert(false && "unknown model type");
-        return "xxx";
-    }
-}
-}
-
-
-struct EPECOptions
-{
-    std::string countsFilename;
-
-    MODEL_TYPE::index_t modelType = MODEL_TYPE::NONE;
-    int modelIndex = 1;
-};
-
-
+/// model data as a mixture of variants and an independent error process
 void
-parseEPECOptions(
-    const illumina::Program& prog,
-    int argc, char* argv[],
-    EPECOptions& opt);
+snvModelVariantAndIndyError(
+    const SequenceErrorCounts& counts);

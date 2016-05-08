@@ -119,16 +119,26 @@ runDSEC(
     SequenceErrorCounts counts;
     counts.load(opt.countsFilename.c_str());
 
-    IndelErrorCounts& indelCounts(counts.getIndelCounts());
-    if (!opt.isExtendedOutput)
+    std::ostream& ros(std::cout);
+    if (! opt.isExcludeBasecalls)
     {
-        indelCounts.dump(std::cout);
+        counts.getBaseCounts().dump(ros);
     }
-    else
+    if (! opt.isExcludeIndels)
     {
-        extendedIndelReport(indelCounts, std::cout);
+        IndelErrorCounts& indelCounts(counts.getIndelCounts());
+        if (!opt.isExtendedOutput)
+        {
+            indelCounts.dump(ros);
+        }
+        else
+        {
+            extendedIndelReport(indelCounts, ros);
+        }
     }
 }
+
+
 
 void
 DumpSequenceErrorCounts::

@@ -174,7 +174,7 @@ getOrthogonalHaplotypeSupportCounts(
 
     std::set<unsigned> readIds;
 
-    // intersection of read ids
+    // intersection of read ids which have a likelihood evaluated over all candidate haplotypes:
     {
         std::map<unsigned,unsigned> countReadIds;
         for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; nonrefHapIndex++)
@@ -223,10 +223,13 @@ getOrthogonalHaplotypeSupportCounts(
             const indel_data& id(hg.data(nonrefHapIndex));
 
             const auto iditer(id.read_path_lnp.find(readId));
+
             if (iditer==id.read_path_lnp.end())
             {
+                // note we've set readIds to intersection now so this should never happen:
                 continue;
             }
+
             const read_path_scores& path_lnp(iditer->second);
 
             lhood[refHapIndex] = std::max(lhood[refHapIndex],static_cast<double>(path_lnp.ref));
@@ -322,24 +325,19 @@ process_pos_error_counts(
 
     if (refBase=='N') return;
 
+    BaseErrorCounts& baseCounts(_counts.getBaseCounts());
     IndelErrorCounts& indelCounts(_counts.getIndelCounts());
 
-    // Current multiploid indel model can handle a het or hom indel
-    // allele vs. reference, or two intersecting non-reference indel
-    // alleles. (note that indel intersection is evaluated only in
-    // terms of breakpoints -- so, for instance, a small het deletion
-    // could occur within a large het deletion and the two would be
-    // treated as non-interacting -- this is just an artifact of how
-    // the methods are coded,)
-    //
 
     typedef indel_buffer::const_iterator ciiter;
 
-    sample_info& sif(sample(sample_no));
+    const sample_info& sif(sample(sample_no));
 
+    // right now there's only one baseContext, so just set it const here and leave it;
+    const BaseErrorContext baseContext;
 
     // candidate indels are turned off above a certain depth relative to chromosome
-    // mean, so we make sure to turn off counts as well to prevent a reference bias:
+    // mean, so turn off all other error counts when this occurs:
     {
         if (_max_candidate_normal_sample_depth > 0.)
         {
@@ -348,20 +346,84 @@ process_pos_error_counts(
             if ((estdepth+estdepth2) > _max_candidate_normal_sample_depth)
             {
                 // record the number of contexts which have been skipped due to high depth:
-                IndelErrorContext context;
-                context.repeatCount = 1;
-                indelCounts.addDepthSkip(context);
-
-                const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
-                if (leftHpolSize>1)
                 {
-                    context.repeatCount = std::min(maxHpolLength,leftHpolSize);
-                    indelCounts.addDepthSkip(context);
+                    // handle SNVs:
+                    baseCounts.addDepthSkip(baseContext);
+                }
+                {
+                    // handle indels:
+                    IndelErrorContext indelContext;
+                    indelCounts.addDepthSkip(indelContext);
+
+                    const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
+                    if (leftHpolSize>1)
+                    {
+                        indelContext.repeatCount = std::min(maxHpolLength,leftHpolSize);
+                        indelCounts.addDepthSkip(indelContext);
+                    }
                 }
                 return;
             }
         }
     }
+
+
+    // handle base error signal
+    {
+        // be relatively intolerant of anything interesting happening in the local sequence neighborhood:
+        static const double snvMMDRMaxFrac(0.05);
+
+        const snp_pos_info& sinfo(sif.bc_buff.get_pos(pos));
+        unsigned fcount(0);
+        for (const base_call& bc : sinfo.calls)
+        {
+            if (bc.is_call_filter) fcount++;
+        }
+        fcount += sinfo.tier2_calls.size();
+
+        const double filtFrac(fcount/static_cast<double>(sinfo.calls.size()+sinfo.tier2_calls.size()));
+
+        if (filtFrac >= snvMMDRMaxFrac)
+        {
+            baseCounts.addNoiseSkip(baseContext);
+        }
+        else
+        {
+            bool isEmpty(true);
+            const uint8_t ref_id(base_to_id(refBase));
+            BaseErrorContextInputObservation obs;
+            for (const base_call& bc : sinfo.calls)
+            {
+                if (bc.is_call_filter) continue;
+
+                const uint16_t qual(bc.get_qscore());
+                if (qual<_opt.min_qscore) continue;
+
+                static const uint16_t min_count_qscore(25);
+                if (qual<min_count_qscore) continue;
+                isEmpty=false;
+                const bool isRef(bc.base_id == ref_id);
+                if (isRef)
+                {
+                    obs.addRefCount(bc.is_fwd_strand, bc.get_qscore());
+                }
+                else
+                {
+                    obs.addAltCount(bc.is_fwd_strand, bc.get_qscore());
+                }
+            }
+
+            if (isEmpty)
+            {
+                baseCounts.addEmptySkip(baseContext);
+            }
+            else
+            {
+                baseCounts.addSiteObservation(baseContext,obs);
+            }
+        }
+    }
+
 
     // define groups of overlapping indels:
     //
