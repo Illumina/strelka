@@ -245,6 +245,15 @@ if     (STDCXX_VERSION)
     endif ()
 endif ()
 
+#
+# not exactly a bug, but give clang a fighting chance on gcc5+ systems
+#
+if (${IS_CLANGXX})
+    # TODO only checked on linux clang, test this for AppleClang
+    # TODO assuming this will not be needed in clang 3.9+, check when 3.9 comes out.
+    add_definitions( -D_GLIBCXX_USE_CXX11_ABI=0 )
+endif ()
+
 
 ##
 ## set warning flags:
