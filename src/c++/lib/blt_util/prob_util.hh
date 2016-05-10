@@ -28,6 +28,63 @@
 #include <cmath>
 
 #include <iterator>
+#include <type_traits>
+
+
+/// given a value on [-inf,inf], transform it
+/// to a value on [0,1]
+///
+/// This uses the simple binomial version of the 'soft-max'
+/// multinomial transformation:
+///
+/// out = exp(in) / (1 + exp(in))
+///
+/// TODO: probably some roundoff/precision changes that would improve handling of certain input ranges
+///
+template <typename FloatType>
+FloatType
+softMaxTransform(
+    const FloatType real)
+{
+    static_assert(std::is_floating_point<FloatType>::value, "Transform requires floating point type.");
+    const FloatType ei(std::exp(real));
+    return (ei/(1.+ei));
+}
+
+template <typename FloatType>
+FloatType
+softMaxInverseTransform(
+    const FloatType ranged)
+{
+    static_assert(std::is_floating_point<FloatType>::value, "Transform requires floating point type.");
+    assert((ranged>=0) && (ranged<=1));
+    return std::log(-ranged/(ranged-1));
+}
+
+/// helper function for softMaxTransform to map [0,1] output to [rangedMin,rangedMax] range instead:
+template <typename FloatType>
+FloatType
+softMaxTransform(
+    const FloatType real,
+    const FloatType rangedMin,
+    const FloatType rangedMax)
+{
+    const FloatType range(rangedMax-rangedMin);
+    const FloatType offset(rangedMin);
+    return softMaxTransform(real)*range + offset;
+}
+
+template <typename FloatType>
+FloatType
+softMaxInverseTransform(
+    const FloatType ranged,
+    const FloatType rangedMin,
+    const FloatType rangedMax)
+{
+    const FloatType range(rangedMax-rangedMin);
+    const FloatType offset(rangedMin);
+    return softMaxInverseTransform((ranged-offset)/range);
+}
 
 
 /// Find more accurate complement of probability distro:
@@ -209,3 +266,5 @@ check_ln_distro(It i,
     }
     return sum;
 }
+
+
