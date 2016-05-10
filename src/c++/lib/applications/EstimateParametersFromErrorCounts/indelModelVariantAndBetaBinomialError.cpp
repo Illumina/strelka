@@ -327,7 +327,7 @@ reportIndelErrorRateSet(
     const IndelErrorContext& context,
     const char* extendedContextTag,
     const SignalGroupTotal& sigTotal,
-    const unsigned skipped,
+    const IndelErrorData& data,
     unsigned iter,
     const double loghood,
     const double indelErrorAlpha,
@@ -342,7 +342,8 @@ reportIndelErrorRateSet(
 
     os << std::setprecision(10);
     os << context << "_" << extendedContextTag
-       << sep << (skipped+sigTotal.locus)
+       << sep << data.excludedRegionSkipped
+       << sep << (sigTotal.locus + data.depthSkipped)
        << sep << sigTotal.locus
        << sep << sigTotal.ref
        << sep << sigTotal.alt
@@ -364,7 +365,7 @@ reportExtendedContext(
     const bool isLockTheta,
     const IndelErrorContext& context,
     const std::vector<ExportedIndelObservations>& observations,
-    const unsigned skipped,
+    const IndelErrorData& data,
     std::ostream& os)
 {
     // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
@@ -421,7 +422,7 @@ reportExtendedContext(
             const double indelErrorAlpha(std::exp(normalizedParams[MIN_PARAMS4::LN_INDEL_ERROR_ALPHA]));
             const double indelErrorBeta(std::exp(normalizedParams[MIN_PARAMS4::LN_INDEL_ERROR_BETA]));
             const std::string tag(isInsert ? "I" : "D");
-            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, skipped, iter, -x_all_loghood, indelErrorAlpha, indelErrorBeta, theta, os);
+            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, data, iter, -x_all_loghood, indelErrorAlpha, indelErrorBeta, theta, os);
         }
     }
 }
@@ -438,7 +439,7 @@ indelModelVariantAndBetaBinomialError(
 
     std::ostream& ros(std::cout);
 
-    ros << "context, allLoci, usedLoci, refReads, altReads, iter, lhood, alpha, beta, mean, concentration, theta\n";
+    ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, alpha, beta, mean, concentration, theta\n";
 
     std::vector<ExportedIndelObservations> observations;
     for (const auto& contextInfo : counts.getIndelCounts())
@@ -451,6 +452,6 @@ indelModelVariantAndBetaBinomialError(
         if (observations.empty()) continue;
 
         log_os << "INFO: computing rates for context: " << context << "\n";
-        reportExtendedContext(isLockTheta, context, observations, data.depthSkipped, ros);
+        reportExtendedContext(isLockTheta, context, observations, data, ros);
     }
 }

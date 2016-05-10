@@ -236,7 +236,7 @@ reportIndelErrorRateSet(
     const IndelErrorContext& context,
     const char* extendedContextTag,
     const SignalGroupTotal& sigTotal,
-    const unsigned skipped,
+    const IndelErrorData& data,
     unsigned iter,
     const double loghood,
     const double indelErrorRate,
@@ -247,7 +247,8 @@ reportIndelErrorRateSet(
 
     os << std::setprecision(10);
     os << context << "_" << extendedContextTag << sep
-       << (skipped+sigTotal.locus) << sep
+       << data.excludedRegionSkipped << sep
+       << (sigTotal.locus + data.depthSkipped) << sep
        << sigTotal.locus << sep
        << sigTotal.ref << sep
        << sigTotal.alt << sep
@@ -265,7 +266,7 @@ reportExtendedContext(
     const bool isLockTheta,
     const IndelErrorContext& context,
     const std::vector<ExportedIndelObservations>& observations,
-    const unsigned skipped,
+    const IndelErrorData& data,
     std::ostream& os)
 {
     // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
@@ -322,7 +323,7 @@ reportExtendedContext(
 
             const double indelErrorRate(std::exp(normalizedParams[MIN_PARAMS::LN_INDEL_ERROR_RATE]));
             const std::string tag(isInsert ? "I" : "D");
-            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, skipped, iter, -x_all_loghood, indelErrorRate, theta, os);
+            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, data, iter, -x_all_loghood, indelErrorRate, theta, os);
         }
     }
 }
@@ -339,7 +340,7 @@ indelModelVariantAndIndyErrorNoOverlap(
 
     std::ostream& ros(std::cout);
 
-    ros << "context, allLoci, usedLoci, refReads, altReads, iter, lhood, rate, theta\n";
+    ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, rate, theta\n";
 
     std::vector<ExportedIndelObservations> observations;
     for (const auto& contextInfo : counts.getIndelCounts())
@@ -352,6 +353,6 @@ indelModelVariantAndIndyErrorNoOverlap(
         if (observations.empty()) continue;
 
         std::cerr << "INFO: computing rates for context: " << context << "\n";
-        reportExtendedContext(isLockTheta, context, observations, data.depthSkipped, ros);
+        reportExtendedContext(isLockTheta, context, observations, data, ros);
     }
 }

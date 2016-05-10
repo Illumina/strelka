@@ -216,6 +216,7 @@ static
 void
 reportQualErrorRateSet(
     const BaseErrorContext& context,
+    const BaseErrorData& data,
     const uint16_t qual,
     const SignalGroupTotal& sigTotal,
     unsigned iter,
@@ -231,6 +232,7 @@ reportQualErrorRateSet(
     os << std::setprecision(10);
     os << context
        << sep << "Q" << qual
+       << sep << data.excludedRegionSkipped
        << sep << (sigTotal.skipped+sigTotal.locus)
        << sep << sigTotal.locus
        << sep << sigTotal.ref
@@ -330,7 +332,7 @@ reportExtendedContext(
             }
 
             const double qualErrorRate(std::exp(normParams[qualIndex]));
-            reportQualErrorRateSet(context, exportData.qualLevels[qualIndex], sigTotal, iter, -x_all_loghood, qualErrorRate, theta, os);
+            reportQualErrorRateSet(context, data, exportData.qualLevels[qualIndex], sigTotal, iter, -x_all_loghood, qualErrorRate, theta, os);
         }
     }
 }
@@ -345,7 +347,7 @@ snvModelVariantAndIndyError(
 
     std::ostream& ros(std::cout);
 
-    ros << "context, qual, allLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, expectErrorRate, theta\n";
+    ros << "context, qual, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, errorRate, expectErrorRate, theta\n";
 
     for (const auto& contextInfo : counts.getBaseCounts())
     {

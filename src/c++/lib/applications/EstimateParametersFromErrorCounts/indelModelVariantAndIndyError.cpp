@@ -315,7 +315,7 @@ reportIndelErrorRateSet(
     const IndelErrorContext& context,
     const char* extendedContextTag,
     const SignalGroupTotal& sigTotal,
-    const unsigned skipped,
+    const IndelErrorData& data,
     unsigned iter,
     const double loghood,
     const double indelErrorRate,
@@ -326,7 +326,8 @@ reportIndelErrorRateSet(
 
     os << std::setprecision(10);
     os << context << "_" << extendedContextTag << sep
-       << (skipped+sigTotal.locus) << sep
+       << data.excludedRegionSkipped << sep
+       << (sigTotal.locus + data.depthSkipped) << sep
        << sigTotal.locus << sep
        << sigTotal.ref << sep
        << sigTotal.alt << sep
@@ -344,7 +345,7 @@ reportExtendedContext(
     const bool isLockTheta,
     const IndelErrorContext& context,
     const std::vector<ExportedIndelObservations>& observations,
-    const unsigned skipped,
+    const IndelErrorData& data,
     std::ostream& os)
 {
     // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
@@ -397,10 +398,10 @@ reportExtendedContext(
         const double theta(std::exp(normalizedParams[MIN_PARAMS::LN_THETA]));
 
         const double insertErrorRate(std::exp(normalizedParams[MIN_PARAMS::LN_INSERT_ERROR_RATE]));
-        reportIndelErrorRateSet(context, "I", sigInsertTotal, skipped, iter, -x_all_loghood, insertErrorRate, theta, os);
+        reportIndelErrorRateSet(context, "I", sigInsertTotal, data, iter, -x_all_loghood, insertErrorRate, theta, os);
 
         const double deleteErrorRate(std::exp(normalizedParams[MIN_PARAMS::LN_DELETE_ERROR_RATE]));
-        reportIndelErrorRateSet(context, "D", sigDeleteTotal, skipped, iter, -x_all_loghood, deleteErrorRate, theta, os);
+        reportIndelErrorRateSet(context, "D", sigDeleteTotal, data, iter, -x_all_loghood, deleteErrorRate, theta, os);
     }
 }
 
@@ -416,7 +417,7 @@ indelModelVariantAndIndyError(
 
     std::ostream& ros(std::cout);
 
-    ros << "context, allLoci, usedLoci, refReads, altReads, iter, lhood, rate, theta\n";
+    ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, rate, theta\n";
 
     std::vector<ExportedIndelObservations> observations;
     for (const auto& contextInfo : counts.getIndelCounts())
@@ -429,6 +430,6 @@ indelModelVariantAndIndyError(
         if (observations.empty()) continue;
 
         std::cerr << "INFO: computing rates for context: " << context << "\n";
-        reportExtendedContext(isLockTheta, context, observations, data.depthSkipped, ros);
+        reportExtendedContext(isLockTheta, context, observations, data, ros);
     }
 }

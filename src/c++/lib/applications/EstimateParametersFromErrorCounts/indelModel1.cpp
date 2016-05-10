@@ -52,7 +52,7 @@ reportExtendedContext(
     const unsigned minDepth,
     const IndelErrorContext& context,
     const std::vector<ExportedIndelObservations>& observations,
-    const unsigned skipped,
+    const IndelErrorData& data,
     const unsigned altBeginIndex,
     const unsigned altEndIndex,
     const char* extendedContextTag,
@@ -86,7 +86,8 @@ reportExtendedContext(
 
         os << std::setprecision(10);
         os << context << "_" << extendedContextTag << sep
-           << (skipped+sigTotal.locus) << sep
+           << data.excludedRegionSkipped << sep
+           << (sigTotal.locus + data.depthSkipped) << sep
            << sigTotal.locus << sep
            << sigTotal.noiseLocus << sep
            << sigTotal.ref << sep
@@ -109,7 +110,7 @@ indelModel1(
 
     std::ostream& ros(std::cout);
 
-    ros << "context, allLoci, usedLoci, noiseLoci, refReads, altReads, rate, rate_95%_upper_bound\n";
+    ros << "context, excludedLoci, nonExcludedLoci, usedLoci, noiseLoci, refReads, altReads, rate, rate_95%_upper_bound\n";
 
     std::vector<ExportedIndelObservations> observations;
     for (const auto& contextInfo : counts.getIndelCounts())
@@ -121,9 +122,9 @@ indelModel1(
 
         if (observations.empty()) continue;
 
-        reportExtendedContext(maxAltFrac, minDepth, context, observations, data.depthSkipped,
+        reportExtendedContext(maxAltFrac, minDepth, context, observations, data,
                               INDEL_SIGNAL_TYPE::INSERT_1, INDEL_SIGNAL_TYPE::DELETE_1, "I", ros);
-        reportExtendedContext(maxAltFrac, minDepth, context, observations, data.depthSkipped,
+        reportExtendedContext(maxAltFrac, minDepth, context, observations, data,
                               INDEL_SIGNAL_TYPE::DELETE_1, INDEL_SIGNAL_TYPE::SIZE, "D", ros);
     }
 }

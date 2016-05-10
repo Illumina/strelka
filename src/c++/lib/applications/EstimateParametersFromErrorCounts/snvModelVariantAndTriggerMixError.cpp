@@ -424,6 +424,7 @@ static
 void
 reportQualErrorRateSet(
     const BaseErrorContext& context,
+    const BaseErrorData& data,
     const uint16_t qual,
     const SignalGroupTotal& sigTotal,
     unsigned iter,
@@ -443,6 +444,7 @@ reportQualErrorRateSet(
     os << std::setprecision(10);
     os << context
        << sep << "Q" << qual
+       << sep << data.excludedRegionSkipped
        << sep << (sigTotal.skipped+sigTotal.locus)
        << sep << sigTotal.locus
        << sep << sigTotal.ref
@@ -587,7 +589,7 @@ reportExtendedContext(
                 cleanErrorFactor = minParams[qualCount];
                 cleanErrorRate = std::exp(getLogCleanLocusBaseErrorRate(minArgs[qualIndex],cleanErrorFactor));
             }
-            reportQualErrorRateSet(context, exportData.qualLevels[qualIndex], sigTotal, iter, -x_all_loghood,
+            reportQualErrorRateSet(context, data, exportData.qualLevels[qualIndex], sigTotal, iter, -x_all_loghood,
                                    noisyErrorRate, cleanErrorRate, noisyLocusRate, theta, isFreeCleanLocusError, cleanErrorFactor, os);
         }
     }
@@ -604,7 +606,7 @@ snvModelVariantAndTriggerMixError(
 
     std::ostream& ros(std::cout);
 
-    ros << "context, qual, allLoci, usedLoci, refReads, altReads, iter, lhood, noisyErrorRate, cleanErrorRate, cleanErrorFactor, noisyLocusRate, simpleErrorRate, expectErrorRate, theta\n";
+    ros << "context, qual, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, noisyErrorRate, cleanErrorRate, cleanErrorFactor, noisyLocusRate, simpleErrorRate, expectErrorRate, theta\n";
 
     for (const auto& contextInfo : counts.getBaseCounts())
     {

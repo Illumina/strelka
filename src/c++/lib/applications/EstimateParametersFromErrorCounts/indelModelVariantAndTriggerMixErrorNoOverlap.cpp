@@ -318,7 +318,7 @@ reportIndelErrorRateSet(
     const IndelErrorContext& context,
     const char* extendedContextTag,
     const SignalGroupTotal& sigTotal,
-    const unsigned skipped,
+    const IndelErrorData& data,
     unsigned iter,
     const double loghood,
     const double noisyLocusIndelErrorRate,
@@ -332,7 +332,8 @@ reportIndelErrorRateSet(
 
     os << std::setprecision(10);
     os << context << "_" << extendedContextTag
-       << sep << (skipped+sigTotal.locus)
+       << sep << data.excludedRegionSkipped
+       << sep << (sigTotal.locus + data.depthSkipped)
        << sep << sigTotal.locus
        << sep << sigTotal.ref
        << sep << sigTotal.alt
@@ -354,7 +355,7 @@ reportExtendedContext(
     const bool isLockTheta,
     const IndelErrorContext& context,
     const std::vector<ExportedIndelObservations>& observations,
-    const unsigned skipped,
+    const IndelErrorData& data,
     std::ostream& os)
 {
     // Get summary counts for QC purposes. Note these are unrelated to minimization or model:
@@ -412,7 +413,7 @@ reportExtendedContext(
             const double noisyLocusIndelErrorRate(std::exp(normalizedParams[MIN_PARAMS3::LN_INDEL_ERROR_RATE]));
             const double noisyLocusRate(std::exp(normalizedParams[MIN_PARAMS3::LN_NOISY_LOCUS_RATE]));
             const std::string tag(isInsert ? "I" : "D");
-            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, skipped, iter, -x_all_loghood, noisyLocusIndelErrorRate, noisyLocusRate, theta, os);
+            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, data, iter, -x_all_loghood, noisyLocusIndelErrorRate, noisyLocusRate, theta, os);
         }
     }
 }
@@ -429,7 +430,7 @@ indelModelVariantAndTriggerMixErrorNoOverlap(
 
     std::ostream& ros(std::cout);
 
-    ros << "context, allLoci, usedLoci, refReads, altReads, iter, lhood, noisyErrorRate, cleanErrorRate, noisyLocusRate, simpleErrorRate, theta, \n";
+    ros << "context, excludedLoci, nonExcludedLoci, usedLoci, refReads, altReads, iter, lhood, noisyErrorRate, cleanErrorRate, noisyLocusRate, simpleErrorRate, theta, \n";
 
     std::vector<ExportedIndelObservations> observations;
     for (const auto& contextInfo : counts.getIndelCounts())
@@ -442,6 +443,6 @@ indelModelVariantAndTriggerMixErrorNoOverlap(
         if (observations.empty()) continue;
 
         log_os << "INFO: computing rates for context: " << context << "\n";
-        reportExtendedContext(isLockTheta, context, observations, data.depthSkipped, ros);
+        reportExtendedContext(isLockTheta, context, observations, data, ros);
     }
 }

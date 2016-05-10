@@ -91,7 +91,7 @@ printExtendedContext(
     const uint64_t depthSkippedLociCount(data.depthSkipped);
     const uint64_t noisyContextSkippedLociCount(data.noiseSkipped);
 
-    const uint64_t totalLoci(cTotal.locus+emptySkippedLociCount+depthSkippedLociCount+noisyContextSkippedLociCount);
+    const uint64_t totalNonExcludedLoci(cTotal.locus+emptySkippedLociCount+depthSkippedLociCount+noisyContextSkippedLociCount);
 
     const double refReadNoiseScaleFactor(noiseLocusRefReadTotal/refReadTotal);
 
@@ -120,7 +120,8 @@ printExtendedContext(
 
         os << context
            << sep << "Q" << qual
-           << sep << totalLoci
+           << sep << data.excludedRegionSkipped
+           << sep << totalNonExcludedLoci
            << sep << cTotal.locus
            << sep << cTotal.noiseLocus
            << sep << noiseLocusRefQualCount
@@ -205,7 +206,7 @@ snvModel1(
     static const unsigned minDepth(30);
     std::ostream& ros(std::cout);
 
-    ros << "context, qual, allLoci, usedLoci, noiseLoci, refReads, altReads, rate, rate_95%_upper_bound, expect\n";
+    ros << "context, qual, excludedLoci, nonExcludedLoci, usedLoci, noiseLoci, refReads, altReads, rate, rate_95%_upper_bound, expect\n";
 
     for (const auto& contextInfo : counts.getBaseCounts())
     {
