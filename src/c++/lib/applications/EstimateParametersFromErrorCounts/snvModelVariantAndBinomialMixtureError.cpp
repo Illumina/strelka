@@ -22,7 +22,7 @@
 /// \author Chris Saunders
 ///
 
-#include "snvModelVariantAndTriggerMixError.hh"
+#include "snvModelVariantAndBinomialMixtureError.hh"
 
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
@@ -598,7 +598,7 @@ reportExtendedContext(
 
 
 void
-snvModelVariantAndTriggerMixError(
+snvModelVariantAndBinomialMixtureError(
     const SequenceErrorCounts& counts)
 {
     const bool isFreeCleanLocusError(false);

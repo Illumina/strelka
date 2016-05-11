@@ -22,7 +22,7 @@
 /// \author Chris Saunders
 ///
 
-#include "indelModelVariantAndTriggerMixErrorNoOverlap.hh"
+#include "indelModelVariantAndBinomialMixtureErrorNoOverlap.hh"
 
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
@@ -423,7 +423,7 @@ reportExtendedContext(
 
 
 void
-indelModelVariantAndTriggerMixErrorNoOverlap(
+indelModelVariantAndBinomialMixtureErrorNoOverlap(
     const SequenceErrorCounts& counts)
 {
     const bool isLockTheta(false);

@@ -32,5 +32,5 @@
 /// this variant of the model does not allow for multiple overlapping indel
 /// alleles at one locus
 void
-indelModelVariantAndTriggerMixErrorNoOverlap(
+indelModelVariantAndBinomialMixtureErrorNoOverlap(
     const SequenceErrorCounts& counts);
