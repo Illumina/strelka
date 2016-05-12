@@ -292,7 +292,8 @@ IndelErrorData::
 dump(
     std::ostream& os) const
 {
-    os << "depthSupportRatio: " << safeFrac(depthSupport.supportCount, depthSupport.depth) << "\n";
+    os << "depthSupportRatio: " << safeFrac(depthSupport.supportCount, depthSupport.depth)
+       << " (" << depthSupport.supportCount << "/" << depthSupport.depth << ")\n";
     os << "excludedRegionSkippedCount: " << excludedRegionSkipped << "\n";
     os << "depthSkippedCount: " << depthSkipped << "\n";
 
