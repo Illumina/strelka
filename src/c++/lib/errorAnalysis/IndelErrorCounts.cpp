@@ -248,14 +248,13 @@ exportObservations(
     const double supportFraction(safeFrac(depthSupport.supportCount, depthSupport.depth));
 
     ExportedIndelObservations obs;
+    std::fill(obs.altObservations.begin(), obs.altObservations.end(), 0);
 
     // convert background observations:
     for (const auto& value : background)
     {
-        const unsigned refCounts(std::round(value.first.depth*supportFraction));
         obs.repeatCount = value.second;
-        obs.refObservations = refCounts;
-        std::fill(obs.altObservations.begin(), obs.altObservations.end(), 0);
+        obs.refObservations = (value.first.depth*supportFraction);
 
         counts.push_back(obs);
     }
