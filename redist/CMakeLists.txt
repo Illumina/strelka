@@ -200,7 +200,7 @@ add_custom_target(${THIS_JSONCPP} DEPENDS "${JSONCPP_FINAL_TASK}")
 #
 # codemin
 #
-set(CODEMIN_PREFIX "CodeMin-1.0.4")
+set(CODEMIN_PREFIX "CodeMin-1.0.5")
 superset(CODEMIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CODEMIN_PREFIX}/include")
 set(CODEMIN_MARK "${CODEMIN_DIR}/minimize_1d.h")
 
