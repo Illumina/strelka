@@ -24,6 +24,45 @@
 
 BOOST_AUTO_TEST_SUITE( prob_util )
 
+BOOST_AUTO_TEST_CASE( test_softmax )
+{
+    {
+        static const double val(0.75);
+        const auto tval = softMaxInverseTransform(val);
+        const auto val2 = softMaxTransform(tval);
+
+        static const double eps = 0.00000001;
+        BOOST_REQUIRE_CLOSE(val2, val, eps);
+    }
+
+    {
+        static const double val(500);
+        static const double min(-10);
+        static const double max(1000);
+        const auto tval = softMaxInverseTransform(val,min,max);
+        const auto val2 = softMaxTransform(tval,min,max);
+
+        static const double eps = 0.00000001;
+        BOOST_REQUIRE_CLOSE(val2, val, eps);
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE( test_softmax_range )
+{
+    static const std::vector<double> startVal = { 0.2 , 0.3 , 0.0001 };
+    auto val = startVal;
+    softMaxInverseRangeTransform(val.begin(), val.end());
+    softMaxRangeTransform(val.begin(), val.end());
+
+    static const double eps = 0.00000001;
+    for (unsigned index(0); index < startVal.size(); ++index)
+    {
+        BOOST_REQUIRE_CLOSE(val[index], startVal[index], eps);
+    }
+}
+
+
 BOOST_AUTO_TEST_CASE( test_prob_comp )
 {
     static const float eps = 0.00000001f;
