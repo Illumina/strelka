@@ -107,7 +107,15 @@ insertExcludedRegion(
     _is_skip_process_pos=false;
 }
 
-
+void
+SequenceErrorCountsPosProcessor::
+addKnownVariant(
+    const vcf_record& knownVariant)
+{
+    _stageman.validate_new_pos_value(knownVariant.pos, STAGE::READ_BUFFER);
+    _knownVariants.addVcfRecord(knownVariant);
+    _is_skip_process_pos=false;
+}
 
 /// generalization of overlapping indels:
 ///
@@ -533,9 +541,13 @@ process_pos_error_counts(
 
             IndelErrorContextObservation obs;
 
+            std::string knownVariantRecord;
+            bool isKnownVariant(_knownVariants.intersectingRecord(pos, knownVariantRecord));
+
             const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
             obs.signalCounts[sigIndex] = support[nonrefHapIndex];
             obs.refCount = support[nonrefHapCount];
+            // obs.assignKnownState(knownVariantRecord);
 
             // an indel candidate can have 0 q30 indel reads when it is only supported by
             // noise reads (i.e. indel occurs outside of a read's valid alignment range,

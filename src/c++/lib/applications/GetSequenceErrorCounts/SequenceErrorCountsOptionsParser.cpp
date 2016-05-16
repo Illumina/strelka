@@ -100,6 +100,8 @@ finalizeSequenceErrorCountsOptions(
         pinfo.usage("Must specify an filename for error counts output");
     }
 
+    // knownVariantsFile and excludedRegionsFileList are both checked in the Python config code,
+    // so we're not duplicating the effort here
 
     /// not using any of these below options, not worth cleaning this up right now...
 

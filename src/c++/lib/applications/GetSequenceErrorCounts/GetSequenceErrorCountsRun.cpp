@@ -39,6 +39,7 @@
 #include "starling_common/starling_pos_processor_util.hh"
 
 #include <sstream>
+#include <algorithm>
 
 
 namespace INPUT_TYPE
@@ -52,17 +53,69 @@ enum index_t
 };
 }
 
+void
+extractFormatEntry(
+    const std::string& vcf_line,
+    const std::string& field,
+    std::string& value)
+{
+    static const char field_sep('\t');
+    static const char format_sep(':');
+    static const unsigned format_index(8);
+
+    size_t field_start(0);
+    size_t next_start(0);
+
+    // fast-forward to format field
+    for(unsigned i(0); i < format_index; ++i)
+    {
+        field_start = vcf_line.find_first_of(field_sep, field_start) + 1;
+    }
+    next_start = vcf_line.find_first_of(field_sep, field_start) + 1;
+    std::string format_string = vcf_line.substr(field_start, next_start - field_start - 1);
+
+    // go to first sample field
+    field_start = next_start;
+    next_start  = vcf_line.find_first_of(field_sep, field_start);
+    std::string sample_string = vcf_line.substr(field_start, next_start - field_start - 1);
+    // N.B. if next_start is std::string::npos (i.e. only one sample in VCF), this will grab til
+    // the end of the line
+
+    // strict assumption that format field is present in current line
+    size_t entry_start (format_string.find(field));
+    assert(entry_start != std::string::npos);
+    size_t entry_index (std::count(format_string.begin(), format_string.begin() + entry_start, format_sep));
+
+    size_t sample_entry_pos(0);
+    for(unsigned i(0); i < entry_index; ++i)
+    {
+        sample_entry_pos = sample_string.find_first_of(format_sep, sample_entry_pos) + 1;
+    }
+    size_t next_pos = sample_string.find_first_of(format_sep, sample_entry_pos) + 1;
+
+    value = sample_string.substr(sample_entry_pos, next_pos - sample_entry_pos - 1);
+}
+
+// extract genotype from VCF entry
+std::string
+getGenotype(
+    const std::string& vcf_line)
+{
+    std::string genotype;
+    extractFormatEntry(vcf_line, "GT", genotype);
+    return genotype;
+}
 
 
-//// handles truth variant input from a vcf record
+//// adds truth variant input from a vcf to indel synchronizer
 ////
 void
-processTrueVariantRecord(
-    const unsigned /*max_indel_size*/,
-    const vcf_record& /*vcfr*/,
-    SequenceErrorCountsPosProcessor& /*sppr*/)
+processTrueIndelVariantRecord(
+    const unsigned max_indel_size,
+    const vcf_record& vcfr,
+    SequenceErrorCountsPosProcessor& sppr)
 {
-    /// TODO: the actual truth logic
+   /// TODO: the actual truth logic
     ///
     /// to make the problem incremental/easier consider:
     /// 1) only handle indels at first
@@ -70,27 +123,36 @@ processTrueVariantRecord(
     /// 3) ignore any record with multiple alts.
     ///
 
-    // getGenotype(vcfr.line);
+    // std::string genotype(getGenotype(vcfr.line));
+
+    // since this will include SNPs and indels at some point, switching from assert
+    // to conditional
+    // assert (vcfr.is_indel());
 
 
-
-#if 0
-    assert (vcfr.is_indel());
-
-    const unsigned altCount(vcfr.alt.size());
-    for (unsigned altIndex(0); altIndex<altCount; ++altIndex)
+    // ignore indels with multiple alts for now
+    if (vcfr.is_indel() && vcfr.alt.size() == 1)
     {
-        indel_observation obs;
-        const bool isAlleleConverted =
-            convert_vcfrecord_to_indel_allele(max_indel_size,vcfr,altIndex,obs);
-        if (! isAlleleConverted) continue;
+        const unsigned altCount(vcfr.alt.size());
 
-        obs.data.is_external_candidate = true;
-        obs.data.is_forced_output = is_forced_output;
+        for (unsigned altIndex(0); altIndex<altCount; ++altIndex)
+        {
+            indel_observation obs;
+            const bool isAlleleConverted =
+                convert_vcfrecord_to_indel_allele(max_indel_size,vcfr,altIndex,obs);
+            if (! isAlleleConverted) continue;
 
-        sppr.insert_indel(obs,sample_no);
+            obs.data.is_external_candidate = true;
+            // obs.data.is_forced_output = is_forced_output;
+            // not setting is_forced_output since it's not clear what that would mean in
+            // the pattern analyzer
+
+            const unsigned sample_no(0); //currently, the pattern analyzer only operates on a single sample
+
+            sppr.insert_indel(obs,sample_no);
+            sppr.addKnownVariant(vcfr);
+        }
     }
-#endif
 }
 
 
@@ -214,7 +276,11 @@ getSequenceErrorCountsRun(
             }
             else if (INPUT_TYPE::KNOWN_VARIANTS == currentIndex)
             {
-                processTrueVariantRecord(opt.max_indel_size, vcfRecord, sppr);
+                if(vcfRecord.is_indel())
+                {
+                    // processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord);
+                    processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord, sppr);
+                }
             }
 
             else
