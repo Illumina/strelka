@@ -8,6 +8,9 @@
 % for scalebox,...
 \usepackage{graphics}
 
+% hide hyperref links  with pdfborder (more portable than hidelinks option)
+\usepackage[pdfborder={0 0 0}]{hyperref}
+
 % for pseudocode
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
@@ -392,10 +395,7 @@ e_{b|clean} = (e_{b|noisy})^{f_{clean}}
 Where the clean error factor $f_{clean}$ is a free parameter. For the purpose of initialization, this factor has been estimated close to 2 in various two-state mixture models.
 
 
-
-
-
-
+\bibliographystyle{alpha}
 \bibliography{methods}
 
 \end{document}

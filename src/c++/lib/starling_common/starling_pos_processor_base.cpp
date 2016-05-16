@@ -1029,7 +1029,8 @@ process_pos(const int stage_no,
 
         if (! _opt.is_write_candidate_indels_only)
         {
-            process_htype_pos(pos);
+            // mothballing this...
+            //process_htype_pos(pos);
             _forced_output_pos.erase(pos);
         }
     }

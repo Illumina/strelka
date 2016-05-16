@@ -18,8 +18,6 @@
 //
 //
 
-/// \file
-///
 /// part of starling_pos_processor_base that handles new haplotype routines
 ///
 /// \author Chris Saunders
@@ -35,6 +33,8 @@
 #include <iostream>
 
 
+// mothballing this code so that we don't have to keep up with new compiler warnings
+#if 0
 
 // used to describe an open breakpoint haplotype:
 //
@@ -316,7 +316,6 @@ leftmost_rightkey_pos(const pos_t& begin_range_pos,
 }
 
 
-
 std::pair<htype_buffer::iterator,htype_buffer::iterator>
 htype_buffer::
 pos_range_iter(const pos_t begin_pos,
@@ -335,7 +334,6 @@ pos_range_iter(const pos_t begin_pos,
     if (begin_key < left_begin_key) begin=_hdata.find(begin_key);
     return std::make_pair(begin,end);
 }
-
 
 
 void
@@ -687,3 +685,4 @@ process_htype_pos(const pos_t begin_pos)
     }
 }
 
+#endif
