@@ -109,6 +109,42 @@ label(
 }
 }
 
+namespace KNOWN_VARIANT_STATUS
+{
+enum variant_t
+{
+    UNKNOWN,
+    VARIANT,
+    SIZE
+};
+
+inline
+const char*
+label(
+    const variant_t var)
+{
+    switch(var)
+    {
+    case UNKNOWN:
+        return "Unknown";
+    case VARIANT:
+        return "Variant";
+    default:
+        return "xxx";
+    }
+}
+
+inline
+variant_t
+assignStatus(const std::string& vcf_entry)
+{
+    if (!vcf_entry.empty())
+    {
+        return VARIANT;
+    }
+    return UNKNOWN;
+}
+}
 
 struct IndelErrorContext
 {
@@ -138,20 +174,31 @@ operator<<(
 
 struct IndelBackgroundObservation
 {
+    void
+    assignKnownStatus(const std::string vcf_entry)
+    {
+        backgroundStatus = KNOWN_VARIANT_STATUS::assignStatus(vcf_entry);
+    }
+
     bool
     operator<(
         const IndelBackgroundObservation& rhs) const
     {
+        // if (variantType != rhs.variantType)
+        // {
+        //     return variantType < rhs.variantType;
+        // }
         return (depth < rhs.depth);
     }
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& depth;
+        ar& depth& backgroundStatus;
     }
 
     unsigned depth;
+    KNOWN_VARIANT_STATUS::variant_t backgroundStatus;
 };
 
 BOOST_CLASS_IMPLEMENTATION(IndelBackgroundObservation, boost::serialization::object_serializable)
@@ -237,6 +284,12 @@ struct IndelErrorContextObservation
         std::fill(signalCounts.begin(), signalCounts.end(), 0);
     }
 
+    void
+    assignKnownStatus(const std::string vcf_entry)
+    {
+        variantStatus = KNOWN_VARIANT_STATUS::assignStatus(vcf_entry);
+    }
+
     unsigned
     totalSignalCount() const
     {
@@ -267,10 +320,11 @@ struct IndelErrorContextObservation
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& refCount& signalCounts;
+        ar& variantStatus& refCount& signalCounts;
     }
 
     unsigned refCount;
+    KNOWN_VARIANT_STATUS::variant_t variantStatus;
     /// note: can't get std::array to serialize correctly on clang
     boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> signalCounts;
 };

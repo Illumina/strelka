@@ -323,6 +323,11 @@ mergeIndelObservations(
 
         // refCount used for the group is the lowest submitted:
         iter->second.refCount = std::min(iter->second.refCount, obs.refCount);
+
+        // known variant status is the maximum status within the set (e.g. if UNKNOWN
+        // and VARIANT, site is variant)
+
+        iter->second.variantStatus = std::max(iter->second.variantStatus, obs.variantStatus);
     }
 }
 
@@ -513,6 +518,11 @@ process_pos_error_counts(
     std::map<IndelErrorContext,IndelErrorContextObservation> indelObservations;
 
 
+    // check for any known variants overlapping this position
+    std::string knownVariantRecord;
+    _knownVariants.intersectingRecord(pos, knownVariantRecord);
+
+
     if (! _groups.empty())
     {
         const OrthogonalHaplotypeCandidateGroup& hg(_groups[0]);
@@ -541,13 +551,10 @@ process_pos_error_counts(
 
             IndelErrorContextObservation obs;
 
-            std::string knownVariantRecord;
-            bool isKnownVariant(_knownVariants.intersectingRecord(pos, knownVariantRecord));
-
             const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
             obs.signalCounts[sigIndex] = support[nonrefHapIndex];
             obs.refCount = support[nonrefHapCount];
-            // obs.assignKnownState(knownVariantRecord);
+            obs.assignKnownStatus(knownVariantRecord);
 
             // an indel candidate can have 0 q30 indel reads when it is only supported by
             // noise reads (i.e. indel occurs outside of a read's valid alignment range,
@@ -586,6 +593,7 @@ process_pos_error_counts(
         IndelErrorContext context;
         IndelBackgroundObservation obs;
         obs.depth = depth;
+        obs.assignKnownStatus(knownVariantRecord);
 
         // always add hpol=1:
         if (! indelObservations.count(context))

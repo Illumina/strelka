@@ -22,6 +22,8 @@
 /// \author Mitch Bekritsky
 ///
 
+#pragma once
+
 #include "blt_util/known_pos_range2.hh"
 #include "blt_util/RegionTracker.hh"
 #include "blt_util/blt_types.hh"
