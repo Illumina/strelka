@@ -569,6 +569,7 @@ process_pos_error_counts(
                 obs_os << _opt.bam_seq_name << "\t";
                 obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
                 obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
+                obs_os << KNOWN_VARIANT_STATUS::label(obs.variantStatus) << "\t";
                 obs_os << ik.length << "\t" << nonrefHapIndex << "/" << nonrefHapCount << "\t";
                 obs_os << support[nonrefHapIndex] << "\t" << support[nonrefHapCount] << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
@@ -597,8 +598,8 @@ process_pos_error_counts(
         obs.depth = depth;
         obs.assignKnownStatus(knownVariantRecords);
 
-        std::cout << "POS: " << pos << std::endl;
-        std::cout << obs << std::endl;
+        // std::cout << "POS: " << pos << std::endl;
+        // std::cout << obs << std::endl;
 
         // always add hpol=1:
         if (! indelObservations.count(context))

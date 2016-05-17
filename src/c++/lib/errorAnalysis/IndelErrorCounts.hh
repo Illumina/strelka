@@ -146,6 +146,7 @@ assignStatus(const std::set<std::string>& vcf_entry)
         // UNKNOWN
         return VARIANT;
     }
+
     return UNKNOWN;
 }
 }

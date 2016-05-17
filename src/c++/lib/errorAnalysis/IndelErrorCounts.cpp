@@ -281,7 +281,6 @@ exportObservations(
     // convert background observations:
     for (const auto& value : background)
     {
-        std::cout << value.first << std::endl;
         obs.repeatCount = value.second;
         obs.refObservations = (value.first.depth*supportFraction);
         obs.variantStatus = value.first.backgroundStatus;
@@ -292,7 +291,6 @@ exportObservations(
     // convert error observations:
     for (const auto& value : error)
     {
-        std::cout << value.first << std::endl;
         obs.repeatCount = value.second;
         obs.refObservations = value.first.refCount;
         obs.altObservations = value.first.signalCounts;

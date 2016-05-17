@@ -125,12 +125,12 @@ processTrueIndelVariantRecord(
 
     // std::string genotype(getGenotype(vcfr.line));
 
-    // since this will include SNPs and indels at some point, switching from assert
+    // since this could include SNPs and indels at some point, switching from assert
     // to conditional
     // assert (vcfr.is_indel());
 
 
-    // ignore indels with multiple alts for now
+    // N.B. ignoring indels with multiple alts for now
     if (vcfr.is_indel() && vcfr.alt.size() == 1)
     {
         const unsigned altCount(vcfr.alt.size());
