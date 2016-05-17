@@ -79,8 +79,6 @@ addVcfRecord(
 	interval_t interval = boost::icl::discrete_interval<pos_t>::right_open(start_pos, end_pos);
 	value_t record_set;
 	record_set.insert(vcfRecord.line);
-
-	std::cout << interval << std::endl;
 	
 	// std::cout << "Adding record {" << interval << ", [" << vcfRecord.line << "]}\n";
 

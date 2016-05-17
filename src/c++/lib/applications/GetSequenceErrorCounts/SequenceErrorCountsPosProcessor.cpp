@@ -519,9 +519,8 @@ process_pos_error_counts(
 
 
     // check for any known variants overlapping this position
-    std::string knownVariantRecord;
-    _knownVariants.intersectingRecord(pos, knownVariantRecord);
-
+    std::set<std::string> knownVariantRecords;
+    _knownVariants.intersectingRecord(pos, knownVariantRecords);
 
     if (! _groups.empty())
     {
@@ -554,7 +553,10 @@ process_pos_error_counts(
             const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
             obs.signalCounts[sigIndex] = support[nonrefHapIndex];
             obs.refCount = support[nonrefHapCount];
-            obs.assignKnownStatus(knownVariantRecord);
+            obs.assignKnownStatus(knownVariantRecords);
+
+            // std::cout << "POS: " << pos << ", #KVR: " << knownVariantRecords.size() << std::endl;
+            // std::cout << obs << std::endl << std::endl;
 
             // an indel candidate can have 0 q30 indel reads when it is only supported by
             // noise reads (i.e. indel occurs outside of a read's valid alignment range,
@@ -593,7 +595,10 @@ process_pos_error_counts(
         IndelErrorContext context;
         IndelBackgroundObservation obs;
         obs.depth = depth;
-        obs.assignKnownStatus(knownVariantRecord);
+        obs.assignKnownStatus(knownVariantRecords);
+
+        std::cout << "POS: " << pos << std::endl;
+        std::cout << obs << std::endl;
 
         // always add hpol=1:
         if (! indelObservations.count(context))

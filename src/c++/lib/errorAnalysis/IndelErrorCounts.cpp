@@ -92,7 +92,7 @@ operator<<(
     const IndelBackgroundObservation& obs)
 {
     os << "Background observation\n";
-    os << "refCount:" << obs.refCount << std::endl;
+    os << "refCount:" << obs.depth << std::endl;
     os << "variantStatus: " << KNOWN_VARIANT_STATUS::label(obs.backgroundStatus) << std::endl;
     return os;
 }
@@ -281,6 +281,7 @@ exportObservations(
     // convert background observations:
     for (const auto& value : background)
     {
+        std::cout << value.first << std::endl;
         obs.repeatCount = value.second;
         obs.refObservations = (value.first.depth*supportFraction);
         obs.variantStatus = value.first.backgroundStatus;

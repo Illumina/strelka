@@ -33,6 +33,7 @@
 #include <map>
 #include <numeric>
 #include <vector>
+#include <set>
 
 
 namespace INDEL_TYPE
@@ -136,10 +137,13 @@ label(
 
 inline
 variant_t
-assignStatus(const std::string& vcf_entry)
+assignStatus(const std::set<std::string>& vcf_entry)
 {
-    if (!vcf_entry.empty())
+    if (vcf_entry.size() == 1)
     {
+        // right now, if a known variant has multiple annotations
+        // (e.g. OverlapConflict), we will label the variant as
+        // UNKNOWN
         return VARIANT;
     }
     return UNKNOWN;
@@ -175,7 +179,7 @@ operator<<(
 struct IndelBackgroundObservation
 {
     void
-    assignKnownStatus(const std::string vcf_entry)
+    assignKnownStatus(const std::set<std::string>& vcf_entry)
     {
         backgroundStatus = KNOWN_VARIANT_STATUS::assignStatus(vcf_entry);
     }
@@ -290,7 +294,7 @@ struct IndelErrorContextObservation
     }
 
     void
-    assignKnownStatus(const std::string vcf_entry)
+    assignKnownStatus(const std::set<std::string>& vcf_entry)
     {
         variantStatus = KNOWN_VARIANT_STATUS::assignStatus(vcf_entry);
     }
