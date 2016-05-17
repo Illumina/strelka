@@ -189,17 +189,13 @@ struct IndelBackgroundObservation
     operator<(
         const IndelBackgroundObservation& rhs) const
     {
-        // if (variantType != rhs.variantType)
-        // {
-        //     return variantType < rhs.variantType;
-        // }
         return (depth < rhs.depth);
     }
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& depth& backgroundStatus;
+        ar& backgroundStatus& depth;
     }
 
     unsigned depth;
