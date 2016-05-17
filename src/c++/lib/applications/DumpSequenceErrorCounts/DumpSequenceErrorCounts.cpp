@@ -75,6 +75,7 @@ reportExtendedContext(
 
             os << std::setprecision(10);
             os << context <<  sep
+               << KNOWN_VARIANT_STATUS::label(obs.variantStatus) << sep
                << alts.str() << sep
                << alt_counts.str() << sep
                << obs.refObservations << sep

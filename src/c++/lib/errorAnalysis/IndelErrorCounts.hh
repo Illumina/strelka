@@ -201,6 +201,11 @@ struct IndelBackgroundObservation
     KNOWN_VARIANT_STATUS::variant_t backgroundStatus;
 };
 
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelBackgroundObservation& obs);
+
 BOOST_CLASS_IMPLEMENTATION(IndelBackgroundObservation, boost::serialization::object_serializable)
 
 
@@ -329,6 +334,11 @@ struct IndelErrorContextObservation
     boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> signalCounts;
 };
 
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelErrorContextObservation& obs);
+
 BOOST_CLASS_IMPLEMENTATION(IndelErrorContextObservation, boost::serialization::object_serializable)
 
 
@@ -388,6 +398,9 @@ struct ExportedIndelObservations
 
     /// number of supporting observations of the alt allele
     boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> altObservations;
+
+    /// status of indel -- has it been supplied previously as a known variant
+    KNOWN_VARIANT_STATUS::variant_t variantStatus = KNOWN_VARIANT_STATUS::UNKNOWN;
 };
 
 std::ostream&
