@@ -161,11 +161,12 @@ Extended context details for each observed indel can be reported with the `--rep
 |       4 | Indel type (INSERT/DELETE)                                        |
 |       5 | Repeat unit                                                       |
 |       6 | Reference repeat count (in # of repeat units)                     |
-|       7 | Indel magnitude/length (in bp)                                    |
-|       8 | Indel index at site (numerator is 0-indexed, denominator is 1-indexed) |
-|       9 | Indel allele coverage                                             |
-|      10 | Reference allele coverage                                         |
-|      11 | Total locus coverage                                              |
+|       7 | Variant status (UNKNOWN/VARIANT)                                  |
+|       8 | Indel magnitude/length (in bp)                                    |
+|       9 | Indel index at site (numerator is 0-indexed, denominator is 1-indexed) |
+|      10 | Indel allele coverage                                             |
+|      11 | Reference allele coverage                                         |
+|      12 | Total locus coverage                                              |
 
 ## Viewing error counting workflow ouput
 
@@ -182,11 +183,12 @@ If you would like to get the complete contents of the file, which could be usefu
 | Field # | Field name     | Description                                      |
 |--------:|---------------:|:-------------------------------------------------|
 |       1 | context        | Currently, this is the homopolymer tract length  |
-|       2 | alts           | Alt alleles observed (0 if no alts observed)     |
-|       3 | alt_counts     | Counts for each alt allele (0 if no alts)        |
-|       4 | ref_count      | Total reference allele coverage                  |
-|       5 | total_alt      | Total alternate allele coverage                  |
-|       6 | times_observed | Number of times this configuration is observed   |
+|       2 | variant_status | Is this a known variant? (UNKNOWN/VARIANT)       |
+|       3 | alts           | Alt alleles observed (0 if no alts observed)     |
+|       4 | alt_counts     | Counts for each alt allele (0 if no alts)        |
+|       5 | ref_count      | Total reference allele coverage                  |
+|       6 | total_alt      | Total alternate allele coverage                  |
+|       7 | times_observed | Number of times this configuration is observed   |
 
 Both alts and alt_counts are comma-delimited lists.  The first 5 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles and 30x coverage), while the final field provides the number of times it was observed.
 
