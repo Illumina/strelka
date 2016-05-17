@@ -98,7 +98,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     addListCmdOption(self.params.forcedGTList, '--force-output-vcf')
     addListCmdOption(self.params.excludedRegions,"--excluded-regions-bed-file")
     if self.params.knownVariants is not None :
-        segCmd.extend("--known-variants-vcf-file",self.params.knownVariants)
+        segCmd.extend(["--known-variants-vcf-file",self.params.knownVariants])
 
     if self.params.isReportObservedIndels :
         tmpObservedIndelBedPath = self.paths.getTmpObservedIndelBedPath(segStr)

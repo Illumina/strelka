@@ -94,7 +94,7 @@ extendedIndelReport(
     const IndelErrorCounts& counts,
     std::ostream& ros)
 {
-    ros << "context\talts\talt_counts\tref_count\ttotal_alt\ttimes_observed\n";
+    ros << "context\tvariant_status\talts\talt_counts\tref_count\ttotal_alt\ttimes_observed\n";
 
     std::vector<ExportedIndelObservations> observations;
     for (const auto& contextInfo : counts)
