@@ -29,19 +29,27 @@ RecordTracker::
 intersectingRecordImpl(
     const pos_t beginPos,
     const pos_t endPos,
-    std::string& record) const
+    std::set<std::string>& records) const
 {
 	if (_records.empty()) return false;
 
-	const auto posIter(_records.upper_bound(known_pos_range2(beginPos, beginPos)));
-	if (posIter == _records.end()) return false;
+	interval_t search_interval = boost::icl::construct<interval_t>(beginPos, endPos, boost::icl::interval_bounds::right_open());
 
-	if ((*posIter).first.begin_pos() < endPos)
-	{
-		record = (*posIter).second;
-		return true;
-	}
-	return false;
+	auto resultIter  = _records.find(search_interval);
+	if (resultIter == _records.end()) return false;
+
+	// std::cout << "Search interval overlaps known variant\n";
+	// std::cout << "Search interval: " << search_interval << std::endl;
+	// std::cout << "Known variant interval: " << resultIter->first << std::endl;
+	// std::cout << "Variants:\n";
+	// for(value_t::const_iterator it = resultIter->second.begin(); it != resultIter->second.end(); ++it)
+	// {
+	// 	std::cout << "\t" << *it << std::endl;
+	// }
+
+	records = resultIter->second;
+
+	return true;
 }
 
 void
@@ -68,11 +76,15 @@ addVcfRecord(
 	}
 	// insertions and SNPs do not have length >1
 
-	const known_pos_range2 record_key(start_pos, end_pos);
+	interval_t interval = boost::icl::discrete_interval<pos_t>::right_open(start_pos, end_pos);
+	value_t record_set;
+	record_set.insert(vcfRecord.line);
+
+	std::cout << interval << std::endl;
 	
-	std::pair<std::map<known_pos_range2, std::string>::iterator, bool> ret;
-	ret = _records.insert(std::pair<const known_pos_range2, std::string>(record_key, vcfRecord.line));
-	assert(ret.second); // assuming no duplicate records are possible
+	// std::cout << "Adding record {" << interval << ", [" << vcfRecord.line << "]}\n";
+
+	_records += std::make_pair(interval, record_set);
 }
 
 void 
@@ -81,8 +93,13 @@ dump(
     std::ostream& os) const
 {
 	os << "RecordTracker\n";
-	for (const auto& val : _records)
+	for (record_t::const_iterator it = _records.begin(); it != _records.end(); ++it)
 	{
-		os << val.first << " => " << val.second << std::endl;
+		os << it->first << " => {";
+		for (value_t::const_iterator vit = it->second.begin(); vit != it->second.end(); ++vit)
+		{
+			os << *vit << ",";
+		}
+		os << "}\n";
 	}
 }

@@ -30,8 +30,11 @@
 
 #include "htsapi/vcf_record.hh"
 
-#include <set>
+#include "boost/icl/discrete_interval.hpp"
+#include "boost/icl/interval_map.hpp"
+
 #include <iosfwd>
+#include <set>
 
 struct RecordTracker
 {
@@ -50,17 +53,17 @@ struct RecordTracker
     bool
     intersectingRecord(
         const pos_t pos,
-        std::string& record) const
+        std::set<std::string>& records) const
     {
-        return intersectingRecordImpl(pos, pos + 1, record);
+        return intersectingRecordImpl(pos, pos + 1, records);
     }
 
     bool
     intersectingRecord(
         const known_pos_range2 range,
-        std::string& record) const
+        std::set<std::string>& records) const
     {
-        return intersectingRecordImpl(range.begin_pos(), range.end_pos(), record);
+        return intersectingRecordImpl(range.begin_pos(), range.end_pos(), records);
     }
 
     void
@@ -77,7 +80,9 @@ struct RecordTracker
         return _records.size();
     }
 
-    typedef std::map<known_pos_range2, std::string, PosRangeEndSort> record_t;
+    typedef boost::icl::interval_map<pos_t, std::set<std::string> > record_t;
+    typedef boost::icl::discrete_interval<pos_t> interval_t;
+    typedef std::set<std::string> value_t;
 
 private:
 
@@ -85,7 +90,7 @@ private:
     intersectingRecordImpl(
         const pos_t beginPos,
         const pos_t endPos,
-        std::string& record) const;
+        std::set<std::string>& records) const;
 
     record_t _records;
 };
