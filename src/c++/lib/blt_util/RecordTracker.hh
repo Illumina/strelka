@@ -80,11 +80,11 @@ struct RecordTracker
         return _records.size();
     }
 
-    typedef boost::icl::interval_map<pos_t, std::set<std::string> > record_t;
-    typedef boost::icl::discrete_interval<pos_t> interval_t;
     typedef std::set<std::string> value_t;
 
 private:
+    typedef boost::icl::interval_map<pos_t, std::set<std::string> > record_t;
+    typedef boost::icl::discrete_interval<pos_t> interval_t;
 
     bool
     intersectingRecordImpl(

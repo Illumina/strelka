@@ -91,12 +91,12 @@ dump(
     std::ostream& os) const
 {
 	os << "RecordTracker\n";
-	for (record_t::const_iterator it = _records.begin(); it != _records.end(); ++it)
+	for (const auto& record : _records)
 	{
-		os << it->first << " => {";
-		for (value_t::const_iterator vit = it->second.begin(); vit != it->second.end(); ++vit)
+		os << record.first << " => {";
+		for (const auto& vcfLine : record.second)
 		{
-			os << *vit << ",";
+			os << vcfLine << ",";
 		}
 		os << "}\n";
 	}
