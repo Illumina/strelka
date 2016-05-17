@@ -22,11 +22,10 @@
 /// \author Chris Saunders
 ///
 
-#include "indelModelVariantAndTriggerMixError.hh"
-
 #include "blt_util/log.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
+#include "indelModelVariantAndBinomialMixtureError.hh"
 
 //#define CODEMIN_DEBUG
 #define CODEMIN_USE_BOOST
@@ -487,7 +486,7 @@ reportExtendedContext(
 
 
 void
-indelModelVariantAndTriggerMixError(
+indelModelVariantAndBinomialMixtureError(
     const SequenceErrorCounts& counts)
 {
     const bool isLockTheta(false);

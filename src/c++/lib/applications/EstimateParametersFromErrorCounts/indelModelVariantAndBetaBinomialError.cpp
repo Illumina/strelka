@@ -34,6 +34,8 @@
 
 #include "boost/math/special_functions/beta.hpp"
 
+#include <cmath>
+
 #include <iomanip>
 #include <iostream>
 
@@ -45,8 +47,8 @@ namespace MIN_PARAMS4
 {
 enum index_t
 {
-    LN_INDEL_ERROR_ALPHA,
-    LN_INDEL_ERROR_BETA,
+    LN_INDEL_ERROR_MEAN,
+    LN_INDEL_ERROR_CONCENTRATION,
     LN_THETA,
     SIZE
 };
@@ -54,6 +56,24 @@ enum index_t
 
 
 //#define DEBUG_MODEL4
+
+
+
+static
+bool
+isSaneVal(const double val)
+{
+    return (! (std::isnan(val) || std::isinf(val)));
+}
+
+
+
+static
+void
+checkSaneVal(const double val)
+{
+    assert(isSaneVal(val));
+}
 
 
 
@@ -115,6 +135,7 @@ getObsLogLhood(
     }
 
     const double mix = log_sum( log_sum(logHomPrior+hom,logHetPrior+het), logNoIndelPrior+noindel);
+
     return mix;
 }
 
@@ -124,14 +145,24 @@ static
 double
 contextLogLhood(
     const std::vector<ExportedIndelObservations>& observations,
-    const double logIndelErrorAlpha,
-    const double logIndelErrorBeta,
+    const double logIndelErrorMean,
+    const double logIndelErrorConcentration,
     const bool isInsert,
     const double logTheta)
 {
+    const double indelErrorMean(std::exp(logIndelErrorMean));
+    const double indelErrorConcentration(std::exp(logIndelErrorConcentration));
+
+    checkSaneVal(indelErrorMean);
+    checkSaneVal(indelErrorConcentration);
+
+    const double indelErrorAlpha(indelErrorMean*indelErrorConcentration);
+    const double indelErrorBeta(indelErrorConcentration*(1.-indelErrorMean));
+
 #ifdef DEBUG_MODEL4
     log_os << "MODEL4: loghood input:"
-           << " insert_ab: " << std::exp(logIndelErrorAlpha) << " " << std::exp(logIndelErrorBeta)
+           << " insert_ab: " << indelErrorAlpha << " " << indelErrorBeta
+           << " insert_mc: " << indelErrorMean << " " << indelErrorConcentration
            << " isInsert: " << isInsert
            << " theta: " << std::exp(logTheta)
            << "\n";
@@ -143,12 +174,13 @@ contextLogLhood(
     const double theta(std::exp(logTheta));
     const double logNoIndelPrior(std::log(1-(theta*3./2.)));
 
-    const double indelErrorAlpha(std::exp(logIndelErrorAlpha));
-    const double indelErrorBeta(std::exp(logIndelErrorBeta));
-    //  const double insertErrorConcentration(insertErrorAlpha+insertErrorBeta);
-    // const double insertErrorMean(insertErrorAlpha/insertErrorConcentration);
+    //const double insertErrorConcentration(insertErrorAlpha+insertErrorBeta);
+    //const double insertErrorMean(insertErrorAlpha/insertErrorConcentration);
 
     const double indelBetaDenom(boost::math::beta(indelErrorAlpha, indelErrorBeta));
+
+    // we haven't set this up for very good numerical stability, so the bounds on alpha/beta are fairly tight:
+    assert((indelBetaDenom > 0.) && "Can't process proposed beta distribution parameters");
 
     double logLhood(0.);
     for (const auto& obs : observations)
@@ -164,12 +196,17 @@ contextLogLhood(
         logLhood += (mix*obs.repeatCount);
     }
 
+    checkSaneVal(logLhood);
+
 #ifdef DEBUG_MODEL4
     log_os << "MODEL4: loghood output:" << logLhood << "\n";
 #endif
 
     return logLhood;
 }
+
+
+static const double maxConcentration(2000);
 
 
 struct error_minfunc_model4 : public codemin::minfunc_interface<double>
@@ -189,10 +226,10 @@ struct error_minfunc_model4 : public codemin::minfunc_interface<double>
 
     double val(const double* in) override
     {
-        argToParameters(in,_params);
+        minimizerParamsToModelParams(in,_params);
         return -contextLogLhood(_obs,
-                                _params[MIN_PARAMS4::LN_INDEL_ERROR_ALPHA],
-                                _params[MIN_PARAMS4::LN_INDEL_ERROR_BETA],
+                                _params[MIN_PARAMS4::LN_INDEL_ERROR_MEAN],
+                                _params[MIN_PARAMS4::LN_INDEL_ERROR_CONCENTRATION],
                                 _isInsert,
                                 (_isLockTheta ? defaultLogTheta : _params[MIN_PARAMS4::LN_THETA]));
     }
@@ -204,11 +241,10 @@ struct error_minfunc_model4 : public codemin::minfunc_interface<double>
     ///
     static
     void
-    argToParameters(
+    minimizerParamsToModelParams(
         const double* in,
         double* out)
     {
-#if 0
         auto rateSmoother = [](double a) -> double
         {
             static const double triggerVal(1e-3);
@@ -220,6 +256,7 @@ struct error_minfunc_model4 : public codemin::minfunc_interface<double>
             return (a>maxLogRate ? maxLogRate-std::abs(a-maxLogRate) : a);
         };
 
+#if 0
         auto locusRateSmoother = [](double a) -> double
         {
             static const double triggerVal(0.8);
@@ -251,11 +288,8 @@ struct error_minfunc_model4 : public codemin::minfunc_interface<double>
             return (a>maxLogTheta ? maxLogTheta-std::abs(a-maxLogTheta) : a);
         };
 
-
-        for (unsigned paramIndex(0); paramIndex<(MIN_PARAMS4::SIZE-1); ++paramIndex)
-        {
-            out[paramIndex] = in[paramIndex];
-        }
+        out[MIN_PARAMS4::LN_INDEL_ERROR_MEAN] = rateSmoother(in[MIN_PARAMS4::LN_INDEL_ERROR_MEAN]);
+        out[MIN_PARAMS4::LN_INDEL_ERROR_CONCENTRATION] = std::log(softMaxTransform(in[MIN_PARAMS4::LN_INDEL_ERROR_CONCENTRATION],0.0,maxConcentration));
         out[MIN_PARAMS4::LN_THETA] = thetaSmoother(in[MIN_PARAMS4::LN_THETA]);
     }
 
@@ -275,6 +309,7 @@ struct error_minfunc_model4 : public codemin::minfunc_interface<double>
 
     static const double defaultLogTheta;
     static const double maxLogTheta;
+    static const double maxLogRate;
 
 private:
     const std::vector<ExportedIndelObservations>& _obs;
@@ -285,6 +320,7 @@ private:
 
 const double error_minfunc_model4::defaultLogTheta = std::log(1e-4);
 const double error_minfunc_model4::maxLogTheta = std::log(0.4);
+const double error_minfunc_model4::maxLogRate = std::log(0.35);
 
 
 
@@ -330,15 +366,18 @@ reportIndelErrorRateSet(
     const IndelErrorData& data,
     unsigned iter,
     const double loghood,
-    const double indelErrorAlpha,
-    const double indelErrorBeta,
+    const double indelErrorMean,
+    const double indelErrorConcentration,
     const double theta,
     std::ostream& os)
 {
     static const std::string sep(", ");
 
-    const double indelErrorConcentration(indelErrorAlpha+indelErrorBeta);
-    const double indelErrorMean(indelErrorAlpha/indelErrorConcentration);
+//    const double indelErrorConcentration(indelErrorAlpha+indelErrorBeta);
+//    const double indelErrorMean(indelErrorAlpha/indelErrorConcentration);
+
+    const double indelErrorAlpha(indelErrorMean*indelErrorConcentration);
+    const double indelErrorBeta(indelErrorConcentration*(1.-indelErrorMean));
 
     os << std::setprecision(10);
     os << context << "_" << extendedContextTag
@@ -391,8 +430,8 @@ reportExtendedContext(
             static const unsigned max_iter(40);
 
             // initialize parameter search
-            minParams[MIN_PARAMS4::LN_INDEL_ERROR_ALPHA] = std::log(1.);
-            minParams[MIN_PARAMS4::LN_INDEL_ERROR_BETA] = std::log(999.);
+            minParams[MIN_PARAMS4::LN_INDEL_ERROR_MEAN] = std::log(1e-3);
+            minParams[MIN_PARAMS4::LN_INDEL_ERROR_CONCENTRATION] = softMaxInverseTransform(100.0,0.0,maxConcentration);
             minParams[MIN_PARAMS4::LN_THETA] = error_minfunc_model4::defaultLogTheta;
 
             static const unsigned SIZE2(MIN_PARAMS4::SIZE*MIN_PARAMS4::SIZE);
@@ -416,13 +455,13 @@ reportExtendedContext(
         // report:
         {
             double normalizedParams[MIN_PARAMS4::SIZE];
-            error_minfunc_model4::argToParameters(minParams,normalizedParams);
+            error_minfunc_model4::minimizerParamsToModelParams(minParams,normalizedParams);
 
             const double theta(std::exp(normalizedParams[MIN_PARAMS4::LN_THETA]));
-            const double indelErrorAlpha(std::exp(normalizedParams[MIN_PARAMS4::LN_INDEL_ERROR_ALPHA]));
-            const double indelErrorBeta(std::exp(normalizedParams[MIN_PARAMS4::LN_INDEL_ERROR_BETA]));
+            const double indelErrorMean(std::exp(normalizedParams[MIN_PARAMS4::LN_INDEL_ERROR_MEAN]));
+            const double indelErrorConcentration(std::exp(normalizedParams[MIN_PARAMS4::LN_INDEL_ERROR_CONCENTRATION]));
             const std::string tag(isInsert ? "I" : "D");
-            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, data, iter, -x_all_loghood, indelErrorAlpha, indelErrorBeta, theta, os);
+            reportIndelErrorRateSet(context, tag.c_str(), sigInsertTotal, data, iter, -x_all_loghood, indelErrorMean, indelErrorConcentration, theta, os);
         }
     }
 }
@@ -446,6 +485,8 @@ indelModelVariantAndBetaBinomialError(
     {
         const auto& context(contextInfo.first);
         const auto& data(contextInfo.second);
+
+        //if (context.repeatCount != 15) continue;
 
         data.exportObservations(observations);
 

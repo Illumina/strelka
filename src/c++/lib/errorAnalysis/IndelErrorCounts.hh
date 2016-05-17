@@ -394,7 +394,7 @@ struct ExportedIndelObservations
     unsigned repeatCount;
 
     /// number of supporting observations of the non-alt* allele (*exact definition in flux...)
-    unsigned refObservations;
+    double refObservations;
 
     /// number of supporting observations of the alt allele
     boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> altObservations;

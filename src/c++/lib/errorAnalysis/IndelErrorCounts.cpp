@@ -276,15 +276,14 @@ exportObservations(
     const double supportFraction(safeFrac(depthSupport.supportCount, depthSupport.depth));
 
     ExportedIndelObservations obs;
+    std::fill(obs.altObservations.begin(), obs.altObservations.end(), 0);
 
     // convert background observations:
     for (const auto& value : background)
     {
-        const unsigned refCounts(std::round(value.first.depth*supportFraction));
         obs.repeatCount = value.second;
-        obs.refObservations = refCounts;
+        obs.refObservations = (value.first.depth*supportFraction);
         obs.variantStatus = value.first.backgroundStatus;
-        std::fill(obs.altObservations.begin(), obs.altObservations.end(), 0);
 
         counts.push_back(obs);
     }
@@ -323,7 +322,8 @@ IndelErrorData::
 dump(
     std::ostream& os) const
 {
-    os << "depthSupportRatio: " << safeFrac(depthSupport.supportCount, depthSupport.depth) << "\n";
+    os << "depthSupportRatio: " << safeFrac(depthSupport.supportCount, depthSupport.depth)
+       << " (" << depthSupport.supportCount << "/" << depthSupport.depth << ")\n";
     os << "excludedRegionSkippedCount: " << excludedRegionSkipped << "\n";
     os << "depthSkippedCount: " << depthSkipped << "\n";
 

@@ -30,14 +30,12 @@
 #include "indelModelVariantAndBetaBinomialError.hh"
 #include "indelModelVariantAndIndyError.hh"
 #include "indelModelVariantAndIndyErrorNoOverlap.hh"
-#include "indelModelVariantAndTriggerMixError.hh"
-#include "indelModelVariantAndTriggerMixErrorNoOverlap.hh"
-
 #include "snvModel1.hh"
 #include "snvModelVariantAndIndyError.hh"
-#include "snvModelVariantAndTriggerMixError.hh"
-
 #include <iostream>
+#include "indelModelVariantAndBinomialMixtureError.hh"
+#include "indelModelVariantAndBinomialMixtureErrorNoOverlap.hh"
+#include "snvModelVariantAndBinomialMixtureError.hh"
 
 
 
@@ -62,7 +60,7 @@ runEPEC(
         }
         else if (opt.modelIndex == 3)
         {
-            indelModelVariantAndTriggerMixError(counts);
+            indelModelVariantAndBinomialMixtureError(counts);
         }
         else if (opt.modelIndex == 4)
         {
@@ -70,7 +68,7 @@ runEPEC(
         }
         else if (opt.modelIndex == 5)
         {
-            indelModelVariantAndTriggerMixErrorNoOverlap(counts);
+            indelModelVariantAndBinomialMixtureErrorNoOverlap(counts);
         }
         else if (opt.modelIndex == 6)
         {
@@ -93,7 +91,7 @@ runEPEC(
         }
         else if (opt.modelIndex == 3)
         {
-            snvModelVariantAndTriggerMixError(counts);
+            snvModelVariantAndBinomialMixtureError(counts);
         }
         else
         {
