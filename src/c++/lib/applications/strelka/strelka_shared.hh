@@ -24,8 +24,8 @@
 
 #pragma once
 
+#include "../../calibration/VariantScoringModelServer.hh"
 #include "blt_util/chrom_depth_map.hh"
-#include "calibration/VariantScoringModel.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
@@ -177,8 +177,8 @@ struct strelka_deriv_options : public starling_base_deriv_options
 /// data:
     somatic_filter_deriv_options sfilter;
 
-    std::unique_ptr<VariantScoringModel> somaticSnvScoringModel;
-    std::unique_ptr<VariantScoringModel> somaticIndelScoringModel;
+    std::unique_ptr<VariantScoringModelServer> somaticSnvScoringModel;
+    std::unique_ptr<VariantScoringModelServer> somaticIndelScoringModel;
 
 private:
     std::unique_ptr<somatic_snv_caller_strand_grid> _sscaller_strand_grid;

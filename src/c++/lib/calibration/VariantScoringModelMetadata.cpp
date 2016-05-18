@@ -95,7 +95,7 @@ Clean_string(const std::string& str)
 static
 void
 featureMapError(
-    const featureMap_t& featureMap,
+    const VariantScoringModelMetadata::featureMap_t& featureMap,
     const std::string& fname)
 {
     using namespace illumina::common;

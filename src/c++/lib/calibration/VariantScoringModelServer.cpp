@@ -21,7 +21,10 @@
  *      Author: Morten Kallberg
  */
 
-#include "VariantScoringModel.hh"
+#include "VariantScoringModelServer.hh"
+
+#include "RandomForestModel.hh"
+
 #include "blt_util/log.hh"
 #include "common/Exceptions.hh"
 
@@ -46,9 +49,9 @@ modelParseError(
 
 
 
-VariantScoringModel::
-VariantScoringModel(
-    const featureMap_t& featureMap,
+VariantScoringModelServer::
+VariantScoringModelServer(
+    const VariantScoringModelMetadata::featureMap_t& featureMap,
     const std::string& model_file,
     const SCORING_CALL_TYPE::index_t ctype,
     const SCORING_VARIANT_TYPE::index_t vtype)
@@ -75,9 +78,16 @@ VariantScoringModel(
     {
         _meta.Deserialize(featureMap,varmodel);
 
-        // only one model type for now:
-        assert(_meta.ModelType == "RandomForest");
-        _model.Deserialize(featureMap.size(),varmodel);
+        if (_meta.ModelType == "RandomForest")
+        {
+            std::unique_ptr<RandomForestModel> rfModel(new RandomForestModel());
+            rfModel->Deserialize(featureMap.size(),varmodel);
+            _model = std::move(rfModel);
+        }
+        else
+        {
+            assert(false && "Unrecognized model type");
+        }
     }
     catch (...)
     {

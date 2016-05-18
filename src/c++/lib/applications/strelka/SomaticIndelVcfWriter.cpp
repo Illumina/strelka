@@ -138,8 +138,8 @@ writeSomaticIndelVcfGrid(
     else
     {
         assert(dopt.somaticIndelScoringModel);
-        const VariantScoringModel& varModel(*dopt.somaticIndelScoringModel);
-        smod.EVS = 1.0 - varModel.scoreVariant(smod.get_features());
+        const VariantScoringModelServer& varModel(*dopt.somaticIndelScoringModel);
+        smod.EVS = 1.0 - varModel.scoreVariant(smod.features.getAll());
         smod.isEVS = true;
 
         if (rs.ntype != NTYPE::REF)
@@ -233,7 +233,7 @@ writeSomaticIndelVcfGrid(
             {
                 os << ",";
             }
-            os << smod.get_feature(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(featureIndex));
+            os << smod.features.get(static_cast<STRELKA_INDEL_SCORING_FEATURES::index_t>(featureIndex));
         }
 
         for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)

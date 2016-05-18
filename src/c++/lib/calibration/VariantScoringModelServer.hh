@@ -23,29 +23,30 @@
 
 #pragma once
 
-#include "RandomForestModel.hh"
+#include "VariantScoringModelBase.hh"
 #include "VariantScoringModelMetadata.hh"
 #include "VariantScoringModelTypes.hh"
 
+#include <memory>
 
 
 /// client interface to variant scoring models specified by file at runtime
 ///
-struct VariantScoringModel
+struct VariantScoringModelServer
 {
     /// \param featureMap Names of features supported in the client code, each feature
     ///                   name should be mapped to a feature index number.
-    VariantScoringModel(
-        const featureMap_t& featureMap,
+    VariantScoringModelServer(
+        const VariantScoringModelMetadata::featureMap_t& featureMap,
         const std::string& model_file,
         const SCORING_CALL_TYPE::index_t ctype,
         const SCORING_VARIANT_TYPE::index_t vtype);
 
     double
     scoreVariant(
-        const feature_type& features) const
+        const VariantScoringModelBase::featureInput_t& features) const
     {
-        return _model.getProb(features);
+        return _model->getProb(features);
     }
 
     double scoreFilterThreshold() const
@@ -55,5 +56,5 @@ struct VariantScoringModel
 
 private:
     VariantScoringModelMetadata _meta;
-    RandomForestModel _model;
+    std::unique_ptr<VariantScoringModelBase> _model;
 };

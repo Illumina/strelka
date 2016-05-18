@@ -25,7 +25,7 @@
 #pragma once
 
 #include "strelkaScoringFeatures.hh"
-#include "calibration/VariantScoringModel.hh"
+#include "calibration/VariantScoringModelServer.hh"
 
 #include <cassert>
 
@@ -159,6 +159,7 @@ struct strelka_feature_keeper
     strelka_feature_keeper()
     {
         clear();
+        _featureVal.resize(FEATURESET::SIZE);
     }
 
     void
@@ -180,6 +181,12 @@ struct strelka_feature_keeper
             assert(false && "Requesting undefined feature");
         }
         return _featureVal[i];
+    }
+
+    const VariantScoringModelBase::featureInput_t&
+    getAll() const
+    {
+        return _featureVal;
     }
 
     bool
@@ -208,85 +215,22 @@ struct strelka_feature_keeper
 
 private:
     std::bitset<FEATURESET::SIZE> _isFeatureSet;
-    std::array<double,FEATURESET::SIZE> _featureVal;
+    VariantScoringModelBase::featureInput_t _featureVal;
 };
 
 
 
-template<typename _evs_featureset = STRELKA_SNV_SCORING_FEATURES,
-         typename _evs_dev_featureset = STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES>
+template<typename _evs_featureset,
+         typename _evs_dev_featureset>
 struct strelka_shared_modifiers
 {
-    void
-    set_feature(const typename _evs_featureset::index_t i,double val)
-    {
-        if (_isFeatureSet.test(i))
-        {
-            assert(false && "Set scoring feature twice");
-        }
-        _featureVal[i] = val;
-        _isFeatureSet.set(i);
-    }
-
-    double
-    get_feature(const typename _evs_featureset::index_t i) const
-    {
-        assert(_isFeatureSet.test(i));
-        return this->_featureVal.at(i);
-    }
-
-    bool
-    test_feature(const typename _evs_featureset::index_t i) const
-    {
-        return _isFeatureSet[i];
-    }
-
-    const feature_type&
-    get_features() const
-    {
-        return _featureVal;
-    }
-
-    /// write features to INFO field
-    void
-    write_features(
-        std::ostream& os) const
-    {
-        int ix = 0;
-        for (auto const& val : _featureVal)
-        {
-            if (ix > 0)
-            {
-                os << ",";
-            }
-            os << _evs_featureset::get_feature_label(val.first) << ":" << val.second;
-            ++ix;
-        }
-    }
-
     bool isEVS = false;
     double EVS = 0;
     strelka_filter_keeper filters;
-
+    strelka_feature_keeper<_evs_featureset> features;
     strelka_feature_keeper<_evs_dev_featureset> dfeatures;
-
-private:
-    std::bitset<_evs_featureset::SIZE> _isFeatureSet;
-    feature_type _featureVal; // holds scoring features
 };
 
-
-template<class _evs_featureset>
-std::ostream&
-operator<<(
-    std::ostream& os,
-    const strelka_shared_modifiers<_evs_featureset>& shmod)
-{
-    os << " filters: ";
-    shmod.write_filters(os);
-
-    return os;
-}
 
 typedef strelka_shared_modifiers<STRELKA_SNV_SCORING_FEATURES, STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES> strelka_shared_modifiers_snv;
 typedef strelka_shared_modifiers<STRELKA_INDEL_SCORING_FEATURES, STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES> strelka_shared_modifiers_indel;

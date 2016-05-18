@@ -23,28 +23,14 @@
 
 #pragma once
 
-#include "json/json.h"
-
-#include <map>
-#include <string>
+#include <vector>
 
 
-/// parse common meta-data format shared for all variant scoring models
-///
-struct VariantScoringModelMetadata
+struct VariantScoringModelBase
 {
-    typedef std::map<std::string,unsigned> featureMap_t;
+    typedef std::vector<double> featureInput_t;
 
-    VariantScoringModelMetadata() {}
-
-    void Deserialize(
-        const featureMap_t& featureMap,
-        const Json::Value& root);
-
-    //std::string name;
-    //std::string version;
-    std::string date;
-    std::string ModelType;
-    double FilterCutoff;
+    virtual
+    double
+    getProb(const featureInput_t& features) const = 0;
 };
-

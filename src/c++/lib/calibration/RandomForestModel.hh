@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "VariantScoringModelBase.hh"
+
 #include "json/json.h"
 
 #include <cassert>
@@ -30,10 +32,7 @@
 #include <map>
 #include <vector>
 
-/// TODO: better central location for this definiton:
-typedef std::map<int, double> feature_type;
-
-struct RandomForestModel
+struct RandomForestModel : public VariantScoringModelBase
 {
     RandomForestModel() {}
 
@@ -42,7 +41,7 @@ struct RandomForestModel
         return (! _forest.empty());
     }
 
-    double getProb(const feature_type& features) const;
+    double getProb(const featureInput_t& features) const override;
 
     void Deserialize(const unsigned expectedFeatureCount, const Json::Value& root);
 
@@ -85,7 +84,7 @@ private:
 
     double
     getDecisionTreeProb(
-        const feature_type& features,
+        const featureInput_t& features,
         const DecisionTree& dtree) const;
 
     void

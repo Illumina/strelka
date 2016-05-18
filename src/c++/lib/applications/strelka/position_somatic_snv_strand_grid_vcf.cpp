@@ -64,8 +64,8 @@ get_single_sample_scoring_features(
     const double FDP_ratio(safeFrac(tier1_cpi.n_unused_calls(), tier1_cpi.n_calls()));
     const double SDP_ratio(safeFrac(tier1_cpi.rawPileup().n_spandel, tier1_cpi.n_calls()+tier1_cpi.rawPileup().n_spandel));
 
-    smod.set_feature((isNormalSample ? STRELKA_SNV_SCORING_FEATURES::N_FDP_RATE : STRELKA_SNV_SCORING_FEATURES::T_FDP_RATE), FDP_ratio);
-    smod.set_feature((isNormalSample ? STRELKA_SNV_SCORING_FEATURES::N_SDP_RATE : STRELKA_SNV_SCORING_FEATURES::T_SDP_RATE), SDP_ratio);
+    smod.features.set((isNormalSample ? STRELKA_SNV_SCORING_FEATURES::N_FDP_RATE : STRELKA_SNV_SCORING_FEATURES::T_FDP_RATE), FDP_ratio);
+    smod.features.set((isNormalSample ? STRELKA_SNV_SCORING_FEATURES::N_SDP_RATE : STRELKA_SNV_SCORING_FEATURES::T_SDP_RATE), SDP_ratio);
 
     if (isNormalSample)      // offset of 1 is tumor case, we only calculate the depth rate for the normal
     {
@@ -74,7 +74,7 @@ get_single_sample_scoring_features(
         {
             normalDepthRate = safeFrac(tier1_cpi.n_calls(),dopt.sfilter.expected_chrom_depth);
         }
-        smod.set_feature(STRELKA_SNV_SCORING_FEATURES::N_DP_RATE,normalDepthRate);
+        smod.features.set(STRELKA_SNV_SCORING_FEATURES::N_DP_RATE,normalDepthRate);
     }
 
     if (!isNormalSample)      //report tier1_allele count for tumor case
@@ -98,7 +98,7 @@ get_single_sample_scoring_features(
         }
 
         const double allele_freq(safeFrac(alt,ref+alt));
-        smod.set_feature(STRELKA_SNV_SCORING_FEATURES::TIER1_ALT_RATE,allele_freq);
+        smod.features.set(STRELKA_SNV_SCORING_FEATURES::TIER1_ALT_RATE,allele_freq);
     }
 }
 
@@ -175,7 +175,7 @@ get_scoring_features(
     }
 
     //QSS_NT
-    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::QSS_NT,rs.from_ntype_qphred);
+    smod.features.set(STRELKA_SNV_SCORING_FEATURES::QSS_NT,rs.from_ntype_qphred);
 
     static const bool isNormalSample(true);
     get_single_sample_scoring_features(opt,dopt,n1_cpi,n2_cpi,isNormalSample,smod);
@@ -184,24 +184,24 @@ get_scoring_features(
     //MQ
     const unsigned n_mapq(n1_cpi.rawPileup().n_mapq+t1_cpi.rawPileup().n_mapq);
     const double sum_sq_mapq(n1_cpi.rawPileup().sum_sq_mapq + t1_cpi.rawPileup().sum_sq_mapq);
-    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::MQ,std::sqrt(safeFrac(sum_sq_mapq,n_mapq)));
+    smod.features.set(STRELKA_SNV_SCORING_FEATURES::MQ,std::sqrt(safeFrac(sum_sq_mapq,n_mapq)));
 
     //n_mapq0
     const unsigned n_mapq0(n1_cpi.rawPileup().n_mapq0+t1_cpi.rawPileup().n_mapq0);
-    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq0+n_mapq));
+    smod.features.set(STRELKA_SNV_SCORING_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq0+n_mapq));
 
     //ReadPosRankSum
     const double ReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_u_stat();
-    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::ReadPosRankSum,ReadPosRankSum);
+    smod.features.set(STRELKA_SNV_SCORING_FEATURES::ReadPosRankSum,ReadPosRankSum);
 
     //StrandBias
-    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::strandBias,rs.strandBias);
+    smod.features.set(STRELKA_SNV_SCORING_FEATURES::strandBias,rs.strandBias);
 
     /// TODO better handling of default values for in cases where alpos or altmap are not defined (0 is not a good default)
     ///
     //Altpos
-    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::altpos,altpos);
-    smod.set_feature(STRELKA_SNV_SCORING_FEATURES::altmap,altmap);
+    smod.features.set(STRELKA_SNV_SCORING_FEATURES::altpos,altpos);
+    smod.features.set(STRELKA_SNV_SCORING_FEATURES::altmap,altmap);
 
     if (opt.isReportEVSFeatures)
     {
@@ -323,9 +323,9 @@ write_vcf_somatic_snv_genotype_strand_grid(
         // if we are using empirical scoring, clear filters and apply single LowEVS filter
         if (isEVS)
         {
-            const VariantScoringModel& varModel(*dopt.somaticSnvScoringModel);
+            const VariantScoringModelServer& varModel(*dopt.somaticSnvScoringModel);
             smod.isEVS = true;
-            smod.EVS = varModel.scoreVariant(smod.get_features());
+            smod.EVS = varModel.scoreVariant(smod.features.getAll());
 
             // TMP!! make this scheme compatible with STARKA-296;
             smod.EVS = error_prob_to_phred(smod.EVS);
@@ -395,7 +395,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
         // m_mapq includes all calls, even from reads below the mapq threshold:
         const unsigned n_mapq(n1_epd.rawPileup().n_mapq+t1_epd.rawPileup().n_mapq);
         os << ";DP=" << n_mapq;
-        os << ";MQ=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::MQ);
+        os << ";MQ=" << smod.features.get(STRELKA_SNV_SCORING_FEATURES::MQ);
 
         {
             const unsigned n_mapq0(n1_epd.rawPileup().n_mapq0+t1_epd.rawPileup().n_mapq0);
@@ -403,19 +403,19 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
 
         os << ";ALTPOS=";
-        if (smod.test_feature(STRELKA_SNV_SCORING_FEATURES::altpos))
-            os << (int)smod.get_feature(STRELKA_SNV_SCORING_FEATURES::altpos);
+        if (smod.features.test(STRELKA_SNV_SCORING_FEATURES::altpos))
+            os << (int)smod.features.get(STRELKA_SNV_SCORING_FEATURES::altpos);
         else
             os << '.';
 
         os << ";ALTMAP=";
-        if (smod.test_feature(STRELKA_SNV_SCORING_FEATURES::altmap))
-            os << (int)smod.get_feature(STRELKA_SNV_SCORING_FEATURES::altmap);
+        if (smod.features.test(STRELKA_SNV_SCORING_FEATURES::altmap))
+            os << (int)smod.features.get(STRELKA_SNV_SCORING_FEATURES::altmap);
         else
             os << '.';
 
-        os << ";ReadPosRankSum=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::ReadPosRankSum);
-        os << ";SNVSB=" << smod.get_feature(STRELKA_SNV_SCORING_FEATURES::strandBias);
+        os << ";ReadPosRankSum=" << smod.features.get(STRELKA_SNV_SCORING_FEATURES::ReadPosRankSum);
+        os << ";SNVSB=" << smod.features.get(STRELKA_SNV_SCORING_FEATURES::strandBias);
 
         if (smod.isEVS)
         {
@@ -434,7 +434,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             {
                 os << ",";
             }
-            os << smod.get_feature(static_cast<STRELKA_SNV_SCORING_FEATURES::index_t>(featureIndex));
+            os << smod.features.get(static_cast<STRELKA_SNV_SCORING_FEATURES::index_t>(featureIndex));
         }
         for (unsigned featureIndex = 0; featureIndex < STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
         {

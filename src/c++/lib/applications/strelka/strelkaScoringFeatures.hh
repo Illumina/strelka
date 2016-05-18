@@ -23,14 +23,14 @@
 
 #pragma once
 
-#include "calibration/VariantScoringModel.hh"
+#include "calibration/VariantScoringModelBase.hh"
+#include "calibration/VariantScoringModelMetadata.hh"
 
 #include <cassert>
 
 
 struct STRELKA_SNV_SCORING_FEATURES
 {
-
     /** any change here must be done together with changing
         src/python/scoringModelTraining/somatic/lib/features//StrelkaSNV.py
      */
@@ -100,11 +100,11 @@ struct STRELKA_SNV_SCORING_FEATURES
             }
         }
 
-        featureMap_t fmap;
+        VariantScoringModelMetadata::featureMap_t fmap;
     };
 
     static
-    const featureMap_t&
+    const VariantScoringModelMetadata::featureMap_t&
     getFeatureMap()
     {
         static const FeatureMapMaker fmm;
@@ -204,11 +204,11 @@ struct STRELKA_INDEL_SCORING_FEATURES
             }
         }
 
-        featureMap_t fmap;
+        VariantScoringModelMetadata::featureMap_t fmap;
     };
 
     static
-    const featureMap_t&
+    const VariantScoringModelMetadata::featureMap_t&
     getFeatureMap()
     {
         static const FeatureMapMaker fmm;

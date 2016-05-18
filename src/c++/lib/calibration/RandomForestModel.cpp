@@ -148,7 +148,7 @@ Deserialize(
 double
 RandomForestModel::
 getDecisionTreeProb(
-    const feature_type& features,
+    const featureInput_t& features,
     const DecisionTree& dtree) const
 {
     unsigned nodeIndex(0);
@@ -167,7 +167,7 @@ getDecisionTreeProb(
         }
 
         assert(node.decision.isInit);
-        if (features.at(node.decision.left) <= node.decision.right)
+        if (features[node.decision.left] <= node.decision.right)
         {
             nodeIndex=node.tree.left;
         }
@@ -182,7 +182,7 @@ getDecisionTreeProb(
 double
 RandomForestModel::
 getProb(
-    const feature_type& features) const
+    const featureInput_t& features) const
 {
     double retval(0);
     try

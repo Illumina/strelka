@@ -291,7 +291,7 @@ strelka_streams(
                 {
                     {
                         assert(dopt.somaticIndelScoringModel);
-                        const VariantScoringModel& varModel(*dopt.somaticIndelScoringModel);
+                        const VariantScoringModelServer& varModel(*dopt.somaticIndelScoringModel);
                         const double threshold(varModel.scoreFilterThreshold());
 
                         std::ostringstream oss;
