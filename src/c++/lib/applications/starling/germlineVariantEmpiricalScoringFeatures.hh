@@ -32,23 +32,25 @@
 struct GERMLINE_SNV_SCORING_FEATURES
 {
     /** any change here must be done together with changing
-        src/python/scoringModelTraining/somatic/lib/features//StrelkaSNV.py
+        src/python/scoringModelTraining/germline/lib/features/StrelkaSNV.py
      */
     enum index_t
     {
-        QSS_NT,
-        N_FDP_RATE,
-        T_FDP_RATE,
-        N_SDP_RATE,
-        T_SDP_RATE,
-        N_DP_RATE,
-        TIER1_ALT_RATE,
-        MQ,
-        n_mapq0,
-        strandBias,
-        ReadPosRankSum,
-        altmap,
-        altpos,
+        QUAL,
+        F_GQX,
+        F_GQ,
+        I_SNVSB,
+        I_SNVHPOL,
+        F_DP,
+        F_DPF,
+        AD0,
+        AD1,
+        I_MQ,
+        I_ReadPosRankSum,
+        I_BaseQRankSum,
+        I_MQRankSum,
+        ABlower,
+        AB,
         SIZE
     };
 
@@ -58,32 +60,36 @@ struct GERMLINE_SNV_SCORING_FEATURES
     {
         switch (idx)
         {
-        case QSS_NT:
-            return "QSS_NT";
-        case N_FDP_RATE:
-            return "N_FDP_RATE";
-        case T_FDP_RATE:
-            return "T_FDP_RATE";
-        case N_SDP_RATE:
-            return "N_SDP_RATE";
-        case T_SDP_RATE:
-            return "T_SDP_RATE";
-        case N_DP_RATE:
-            return "N_DP_RATE";
-        case TIER1_ALT_RATE:
-            return "TIER1_ALT_RATE";
-        case MQ:
-            return "MQ";
-        case n_mapq0:
-            return "n_mapq0";
-        case strandBias:
-            return "strandBias";
-        case ReadPosRankSum:
-            return "ReadPosRankSum";
-        case altmap:
-            return "altmap";
-        case altpos:
-            return "altpos";
+        case QUAL:
+            return "QUAL";
+        case F_GQX:
+            return "F_GQX";
+        case F_GQ:
+            return "F_GQ";
+        case I_SNVSB:
+            return "I_SNVSB";
+        case I_SNVHPOL:
+            return "I_SNVHPOL";
+        case F_DP:
+            return "F_DP";
+        case F_DPF:
+            return "F_DPF";
+        case AD0:
+            return "AD0";
+        case AD1:
+            return "AD1";
+        case I_MQ:
+            return "I_MQ";
+        case I_ReadPosRankSum:
+            return "I_ReadPosRankSum";
+        case I_BaseQRankSum:
+            return "I_BaseQRankSum";
+        case I_MQRankSum:
+            return "I_MQRankSum";
+        case ABlower:
+            return "ABlower";
+        case AB:
+            return "AB";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -122,7 +128,8 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
 {
     enum index_t
     {
-        MQ0_FRAC,
+        I_RawPos,
+        I_RawBaseQ,
         SIZE
     };
 
@@ -132,8 +139,10 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
     {
         switch (idx)
         {
-        case MQ0_FRAC:
-            return "MQ0_FRAC";
+        case I_RawPos:
+            return "I_RawPos";
+        case I_RawBaseQ:
+            return "I_RawBaseQ";
         default:
             assert(false && "Unknown feature");
             return nullptr;

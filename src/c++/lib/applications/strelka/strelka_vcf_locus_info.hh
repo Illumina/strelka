@@ -153,7 +153,7 @@ private:
 /// (1) doesn't mix up features with other tracking info
 /// (2) generates no system calls after initialization
 ///
-template<typename FEATURESET>
+template <typename FEATURESET>
 struct strelka_feature_keeper
 {
     strelka_feature_keeper()

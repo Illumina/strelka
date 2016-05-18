@@ -361,6 +361,7 @@ write_site_record(
             os << "HaplotypeScore=" << si.hapscore;
         }
 
+#ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
         if (_opt.isReportEVSFeatures)
         {
             os << ';';
@@ -384,6 +385,7 @@ write_site_record(
             //                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
 
         }
+#endif
         if (si.smod.is_phasing_insufficient_depth)
         {
             os << ";Unphased";
