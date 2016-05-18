@@ -17,21 +17,26 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 /*
- *      Author: Morten Kallberg
+ *      Author: mkallberg
  */
 
 #pragma once
 
-#include <vector>
+#include "calibration/VariantScoringModelMetadata.hh"
 
 
-struct VariantScoringModelBase
+template <typename FEATURESET>
+struct FeatureMapMaker
 {
-    typedef std::vector<double> featureInput_t;
+    FeatureMapMaker()
+    {
+        for (unsigned i(0); i<FEATURESET::SIZE; ++i)
+        {
+            result.insert(std::make_pair(std::string(FEATURESET::get_feature_label(i)),i));
+        }
+    }
 
-    virtual
-    double
-    getProb(const featureInput_t& features) const = 0;
+    VariantScoringModelMetadata::featureMap_t result;
 };
-

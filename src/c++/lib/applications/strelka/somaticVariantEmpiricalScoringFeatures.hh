@@ -24,8 +24,8 @@
 
 #pragma once
 
+#include "calibration/featuresetUtil.hh"
 #include "calibration/VariantScoringModelBase.hh"
-#include "calibration/VariantScoringModelMetadata.hh"
 
 #include <cassert>
 
@@ -91,25 +91,12 @@ struct SOMATIC_SNV_SCORING_FEATURES
         }
     }
 
-    struct FeatureMapMaker
-    {
-        FeatureMapMaker()
-        {
-            for (unsigned i(0); i<SIZE; ++i)
-            {
-                fmap.insert(std::make_pair(std::string(get_feature_label(i)),i));
-            }
-        }
-
-        VariantScoringModelMetadata::featureMap_t fmap;
-    };
-
     static
     const VariantScoringModelMetadata::featureMap_t&
     getFeatureMap()
     {
-        static const FeatureMapMaker fmm;
-        return fmm.fmap;
+        static const FeatureMapMaker<SOMATIC_SNV_SCORING_FEATURES> fmm;
+        return fmm.result;
     }
 };
 
@@ -195,26 +182,12 @@ struct SOMATIC_INDEL_SCORING_FEATURES
         }
     }
 
-    // duplicate this code with SNVs just to get things moving...
-    struct FeatureMapMaker
-    {
-        FeatureMapMaker()
-        {
-            for (unsigned i(0); i<SIZE; ++i)
-            {
-                fmap.insert(std::make_pair(std::string(get_feature_label(i)),i));
-            }
-        }
-
-        VariantScoringModelMetadata::featureMap_t fmap;
-    };
-
     static
     const VariantScoringModelMetadata::featureMap_t&
     getFeatureMap()
     {
-        static const FeatureMapMaker fmm;
-        return fmm.fmap;
+        static const FeatureMapMaker<SOMATIC_INDEL_SCORING_FEATURES> fmm;
+        return fmm.result;
     }
 };
 
