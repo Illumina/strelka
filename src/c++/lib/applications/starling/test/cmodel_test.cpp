@@ -23,7 +23,7 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "calibration_models.hh"
+#include "../ScoringModelManager.hh"
 
 
 

@@ -24,8 +24,7 @@
 
 #include "gvcf_writer.hh"
 
-#include "calibration_models.hh"
-
+#include "../ScoringModelManager.hh"
 #include "starling_common/pos_basecall_buffer.hh"
 
 
@@ -96,7 +95,7 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
 
     gvcf_deriv_options gvcf_options(opt.gvcf, "dummy");
     gvcf_options.chrom_depth["dummy"] = 30.734;
-    calibration_models cm(opt, gvcf_options);
+    ScoringModelManager cm(opt, gvcf_options);
 
 
     gvcf_writer writer(opt, dopt, rcs, regions, sampleName, &os, cm);

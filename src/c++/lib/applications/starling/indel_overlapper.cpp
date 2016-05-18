@@ -24,14 +24,14 @@
  */
 
 #include "indel_overlapper.hh"
-#include "calibration_models.hh"
 #include "blt_util/log.hh"
+#include "ScoringModelManager.hh"
 
 //#define DEBUG_GVCF
 
 
 
-indel_overlapper::indel_overlapper(const calibration_models& model, const reference_contig_segment& ref, std::shared_ptr<variant_pipe_stage_base> destination)
+indel_overlapper::indel_overlapper(const ScoringModelManager& model, const reference_contig_segment& ref, std::shared_ptr<variant_pipe_stage_base> destination)
     : variant_pipe_stage_base(destination)
     , _CM(model)
     , _ref(ref)
@@ -374,7 +374,7 @@ void indel_overlapper::process_overlaps_impl()
 
 
 
-void indel_overlapper::modify_overlapping_site(const digt_indel_info& ii, digt_site_info& si, const calibration_models& model)
+void indel_overlapper::modify_overlapping_site(const digt_indel_info& ii, digt_site_info& si, const ScoringModelManager& model)
 {
     const pos_t offset(si.pos-ii.pos);
     assert(offset>=0);
@@ -406,7 +406,7 @@ void indel_overlapper::modify_indel_overlap_site(
     const digt_indel_info& ii,
     const unsigned ploidy,
     digt_site_info& si,
-    const calibration_models& model)
+    const ScoringModelManager& model)
 {
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: indel_overlap_site smod before: " << si.smod << "\n";

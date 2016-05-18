@@ -44,7 +44,7 @@ add_gvcf_filters(
     const starling_options& sopt,
     const cdmap_t& chrom_depth,
     std::ostream& os,
-    const calibration_models& CM)
+    const ScoringModelManager& CM)
 {
     const gvcf_options& opt(sopt.gvcf);
 
@@ -147,7 +147,7 @@ finish_gvcf_header(const starling_options& opt,
                    const cdmap_t& chrom_depth,
                    const std::string& sample_name,
                    std::ostream& os,
-                   const calibration_models& CM)
+                   const ScoringModelManager& CM)
 {
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";

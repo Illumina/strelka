@@ -138,18 +138,21 @@ get_Qscore_filter(const unsigned var_case)
 }
 }
 
+
 typedef std::map<std::string, double> featuremap;
 typedef std::map<std::string, std::map<std::string, featuremap > > parmap;
 
-struct c_model
+/// this captures a number of concepts, including a logistic regression model
+/// a rule based filtration service and a variant object to model features
+/// translation
+///
+struct LogisticAndRuleScoringModels
 {
-    c_model(
-        const std::string& name,
+    LogisticAndRuleScoringModels(
         const std::string& type,
         const gvcf_deriv_options& init_dopt,
         const parmap& myPars) :
         dopt(init_dopt),
-        model_name(name),
         model_type(type),
         pars(myPars)
     {}
@@ -217,7 +220,6 @@ private:
         digt_indel_call& call) const;
 
     const gvcf_deriv_options& dopt;
-    std::string model_name;
     std::string model_type;
     parmap pars;
 };

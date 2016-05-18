@@ -24,7 +24,6 @@
 
 #include "gvcf_writer.hh"
 
-#include "calibration_models.hh"
 #include "gvcf_header.hh"
 #include "indel_overlapper.hh"
 #include "variant_prefilter_stage.hh"
@@ -34,6 +33,8 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+
+#include "ScoringModelManager.hh"
 
 
 
@@ -54,7 +55,7 @@ gvcf_writer(
     const RegionTracker& nocompress_regions,
     const std::string& sampleName,
     std::ostream* osptr,
-    const calibration_models& cm)
+    const ScoringModelManager& cm)
     : _opt(opt)
     , _report_range(dopt.report_range.begin_pos,dopt.report_range.end_pos)
     , _ref(ref)

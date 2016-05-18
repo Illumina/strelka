@@ -21,7 +21,8 @@
 #include "boost/test/unit_test.hpp"
 
 #include "indel_overlapper.hh"
-#include "calibration_models.hh"
+
+#include "../ScoringModelManager.hh"
 
 
 struct dummy_variant_sink : public variant_pipe_stage_base
@@ -58,7 +59,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
 
     gvcf_deriv_options gvcf_dopt(opt.gvcf, "chr1");
 
-    calibration_models cm(opt,gvcf_dopt);
+    ScoringModelManager cm(opt,gvcf_dopt);
 
     std::shared_ptr<variant_pipe_stage_base> next(new dummy_variant_sink);
     indel_overlapper overlap(cm, rcs, next);
@@ -92,7 +93,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
 
     gvcf_deriv_options gvcf_dopt(opt.gvcf, "chr1");
 
-    calibration_models cm(opt,gvcf_dopt);
+    ScoringModelManager cm(opt,gvcf_dopt);
 
     std::shared_ptr<variant_pipe_stage_base> next(new dummy_variant_sink);
     indel_overlapper overlap(cm, rcs, next);
@@ -140,7 +141,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
 
     gvcf_deriv_options gvcf_dopt(opt.gvcf, "chr1");
 
-    calibration_models cm(opt,gvcf_dopt);
+    ScoringModelManager cm(opt,gvcf_dopt);
 
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     indel_overlapper overlap(cm, rcs, next);

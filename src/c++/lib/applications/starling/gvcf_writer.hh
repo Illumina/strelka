@@ -33,7 +33,7 @@
 
 #include <iosfwd>
 
-class calibration_models;
+class ScoringModelManager;
 
 
 ///
@@ -49,7 +49,7 @@ struct gvcf_writer : public variant_pipe_stage_base
         const RegionTracker& nocompress_regions,
         const std::string& sampleName,
         std::ostream* os,
-        const calibration_models& cm);
+        const ScoringModelManager& cm);
 
 
     void process(std::unique_ptr<site_info>) override;
@@ -118,5 +118,5 @@ private:
     void filter_site_by_last_indel_overlap(digt_site_info& si);
 
     gvcf_compressor _gvcf_comp;
-    const calibration_models& _CM;
+    const ScoringModelManager& _CM;
 };

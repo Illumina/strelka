@@ -25,20 +25,20 @@
 #pragma once
 #include "variant_pipe_stage_base.hh"
 
-class calibration_models;
+class ScoringModelManager;
 
 class variant_prefilter_stage : public variant_pipe_stage_base
 {
 public:
-    variant_prefilter_stage(const calibration_models& model, std::shared_ptr<variant_pipe_stage_base> destination);
+    variant_prefilter_stage(const ScoringModelManager& model, std::shared_ptr<variant_pipe_stage_base> destination);
     void process(std::unique_ptr<site_info> si) override;
     void process(std::unique_ptr<indel_info> ii) override;
 
     static void  add_site_modifiers(
         const digt_site_info& si,
         digt_call_info& smod,
-        const calibration_models& model);
+        const ScoringModelManager& model);
 
 private:
-    const calibration_models& _model;
+    const ScoringModelManager& _model;
 };

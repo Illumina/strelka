@@ -29,21 +29,21 @@
 
 #include <iosfwd>
 
-class calibration_models;
+class ScoringModelManager;
 
 
 class indel_overlapper : public variant_pipe_stage_base
 {
 public:
     indel_overlapper(
-        const calibration_models& model,
+        const ScoringModelManager& model,
         const reference_contig_segment& ref,
         std::shared_ptr<variant_pipe_stage_base> destination);
 
     void process(std::unique_ptr<site_info> si) override;
     void process(std::unique_ptr<indel_info> ii) override;
 
-    static void modify_overlapping_site(const digt_indel_info& ii, digt_site_info& si, const calibration_models& model);
+    static void modify_overlapping_site(const digt_indel_info& ii, digt_site_info& si, const ScoringModelManager& model);
 
 private:
     void flush_impl() override
@@ -56,7 +56,7 @@ private:
     static void modify_indel_overlap_site(const digt_indel_info& ii,
                                           const unsigned ploidy,
                                           digt_site_info& si,
-                                          const calibration_models& model);
+                                          const ScoringModelManager& model);
 
     void process_overlaps();
     void process_overlaps_impl();
@@ -66,7 +66,7 @@ private:
 
     void dump(std::ostream& os) const;
 
-    const calibration_models& _CM;
+    const ScoringModelManager& _CM;
     const reference_contig_segment& _ref;
     pos_t _indel_end_pos;
 

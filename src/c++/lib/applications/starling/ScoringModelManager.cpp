@@ -22,7 +22,8 @@
  * Author: Morten Kallberg
  */
 
-#include "calibration_models.hh"
+#include "ScoringModelManager.hh"
+
 #include "common/Exceptions.hh"
 
 #include "boost/algorithm/string/split.hpp"
@@ -50,16 +51,17 @@
 
 
 int
-calibration_models::
+ScoringModelManager::
 get_case_cutoff(
     const CALIBRATION_MODEL::var_case my_case) const
 {
+    if (is_default_model()) return 0;
     return get_model().get_var_threshold(my_case);
 }
 
 
 
-bool calibration_models::is_current_logistic() const
+bool ScoringModelManager::is_current_logistic() const
 {
     if (is_default_model()) return false;
     return get_model().is_logistic_model();
@@ -67,7 +69,7 @@ bool calibration_models::is_current_logistic() const
 
 
 void
-calibration_models::
+ScoringModelManager::
 classify_site(
     const digt_site_info& si,
     digt_call_info& smod) const
@@ -85,7 +87,7 @@ classify_site(
 }
 
 bool
-calibration_models::check_is_model_usable(const digt_indel_info& ii) const
+ScoringModelManager::check_is_model_usable(const digt_indel_info& ii) const
 {
     const auto& call(ii.first());
     return ((call._iri.it == INDEL::INSERT || call._iri.it == INDEL::DELETE) &&
@@ -94,7 +96,7 @@ calibration_models::check_is_model_usable(const digt_indel_info& ii) const
 }
 
 void
-calibration_models::
+ScoringModelManager::
 set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const
 {
     const auto& dindel(ii.first()._dindel);
@@ -113,7 +115,7 @@ set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const
 
 
 void
-calibration_models::
+ScoringModelManager::
 classify_indel_impl(
     const bool is_model_usable,
     const digt_indel_info& ii,
@@ -133,7 +135,7 @@ classify_indel_impl(
 
 
 void
-calibration_models::
+ScoringModelManager::
 classify_indel(
     const digt_indel_info& ii,
     digt_indel_call& call) const
@@ -142,7 +144,7 @@ classify_indel(
 }
 
 void
-calibration_models::
+ScoringModelManager::
 classify_indels(
     std::vector<std::unique_ptr<digt_indel_info>>& indels) const
 {
@@ -164,7 +166,7 @@ classify_indels(
 
 
 void
-calibration_models::
+ScoringModelManager::
 default_classify_site(const site_info& si,
                       shared_call_info& call) const
 {
@@ -203,7 +205,7 @@ default_classify_site(const site_info& si,
 
 // default rules based indel model
 void
-calibration_models::
+ScoringModelManager::
 default_classify_indel(shared_indel_call_info& call) const
 {
     if (this->opt.is_min_gqx)
@@ -233,7 +235,7 @@ default_classify_indel(shared_indel_call_info& call) const
 
 
 void
-calibration_models::
+ScoringModelManager::
 load_models(
     const std::string& model_file,
     const std::string& name)
@@ -310,5 +312,5 @@ load_models(
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
     assert(! pars.empty());
-    modelPtr.reset(new c_model(name,modelType,dopt,pars));
+    modelPtr.reset(new LogisticAndRuleScoringModels(modelType,dopt,pars));
 }

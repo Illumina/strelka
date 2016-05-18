@@ -21,13 +21,14 @@
 #pragma once
 
 
-#include "calibration_models.hh"
 #include "codon_phaser.hh"
 #include "gvcf_block_site_record.hh"
 #include "gvcf_locus_info.hh"
 #include "gvcf_compressor.hh"
 
 #include <iosfwd>
+
+#include "ScoringModelManager.hh"
 
 
 ///
@@ -61,7 +62,7 @@ public:
     void reset();
 
 private:
-    calibration_models _CM;
+    ScoringModelManager _CM;
 
     std::shared_ptr<Codon_phaser> _codon_phaser;
     std::shared_ptr<variant_pipe_stage_base> _head;

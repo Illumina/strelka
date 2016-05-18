@@ -22,9 +22,9 @@
  *      Author: Morten Kallberg
  */
 
-#include "blt_util/qscore.hh"
-#include "cmodel.hh"
+#include "LogisticAndRuleScoringModels.hh"
 
+#include "blt_util/qscore.hh"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 
@@ -45,7 +45,7 @@
 
 
 void
-c_model::
+LogisticAndRuleScoringModels::
 do_site_rule_model(
     const featuremap& cutoffs,
     const digt_site_info& si,
@@ -72,7 +72,7 @@ do_site_rule_model(
 
 
 void
-c_model::
+LogisticAndRuleScoringModels::
 do_indel_rule_model(
     const featuremap& cutoffs,
     const digt_indel_info& ii,
@@ -92,7 +92,7 @@ do_indel_rule_model(
 
 
 featuremap
-c_model::
+LogisticAndRuleScoringModels::
 normalize(
     const featuremap& features,
     const featuremap& adjust_factor,
@@ -110,7 +110,7 @@ normalize(
 
 
 double
-c_model::
+LogisticAndRuleScoringModels::
 log_odds(
     const featuremap& features,
     const featuremap& coeffs) const
@@ -175,7 +175,7 @@ prior_adjustment(
 
 
 void
-c_model::
+LogisticAndRuleScoringModels::
 apply_site_qscore_filters(
     const CALIBRATION_MODEL::var_case var_case,
     const digt_site_info& si,
@@ -216,7 +216,7 @@ apply_site_qscore_filters(
 
 
 void
-c_model::
+LogisticAndRuleScoringModels::
 apply_indel_qscore_filters(
     const CALIBRATION_MODEL::var_case var_case,
     const digt_indel_info& ii,
@@ -247,7 +247,7 @@ apply_indel_qscore_filters(
 
 // joint logistic regression for both SNPs and INDELs
 int
-c_model::
+LogisticAndRuleScoringModels::
 logistic_score(
     const CALIBRATION_MODEL::var_case var_case,
     const featuremap& features) const
@@ -268,7 +268,7 @@ logistic_score(
 }
 
 int
-c_model::
+LogisticAndRuleScoringModels::
 get_var_threshold(
     const CALIBRATION_MODEL::var_case& my_case) const
 {
@@ -276,7 +276,7 @@ get_var_threshold(
 }
 
 bool
-c_model::
+LogisticAndRuleScoringModels::
 is_logistic_model() const
 {
     return (model_type=="LOGISTIC");
@@ -285,7 +285,7 @@ is_logistic_model() const
 
 
 void
-c_model::
+LogisticAndRuleScoringModels::
 score_site_instance(
     const digt_site_info& si,
     digt_call_info& smod) const
@@ -327,7 +327,7 @@ score_site_instance(
 
 
 void
-c_model::
+LogisticAndRuleScoringModels::
 score_indel_instance(
     const digt_indel_info& ii,
     digt_indel_call& call) const
@@ -376,7 +376,7 @@ score_indel_instance(
 }
 
 // give the normal depth for this model; used to depth-normalize various features in logistic model
-double c_model::normal_depth() const
+double LogisticAndRuleScoringModels::normal_depth() const
 {
     return this->dopt.norm_depth;
 }

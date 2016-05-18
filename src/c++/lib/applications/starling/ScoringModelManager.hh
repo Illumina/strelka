@@ -24,17 +24,20 @@
 
 #pragma once
 
-#include "cmodel.hh"
 #include "starling_shared.hh"
 
 #include "boost/utility.hpp"
+#include "LogisticAndRuleScoringModels.hh"
 
 
-
-class calibration_models : private boost::noncopyable
+/// handles site and indel filter labeling and also possibly EVS scoring
+/// for (1) a logisitic model read from a file (2) a default hard-threshold
+/// model and (3) and file-based hard-threshold model.
+///
+class ScoringModelManager : private boost::noncopyable
 {
 public:
-    calibration_models(
+    ScoringModelManager(
         const starling_options& init_opt,
         const gvcf_deriv_options& init_dopt)
         : opt(init_opt.gvcf),
@@ -72,8 +75,8 @@ public:
     get_case_cutoff(const CALIBRATION_MODEL::var_case my_case) const;
 
 private:
-    c_model& get_model() { return *modelPtr; }
-    const c_model& get_model() const { return *modelPtr; }
+    LogisticAndRuleScoringModels& get_model() { return *modelPtr; }
+    const LogisticAndRuleScoringModels& get_model() const { return *modelPtr; }
 
     bool check_is_model_usable(const digt_indel_info& ii) const;
     void set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const;
@@ -87,7 +90,7 @@ private:
     // set options
     void load_models(
         const std::string& model_file,
-        const std::string& name); // read in model parameters
+        const std::string& name);
 
     bool
     is_default_model() const
@@ -99,7 +102,6 @@ private:
     const gvcf_options& opt;
     const gvcf_deriv_options& dopt;
 
-    typedef std::map<std::string, double> featuremap;
-    std::unique_ptr<c_model> modelPtr;
+    std::unique_ptr<LogisticAndRuleScoringModels> modelPtr;
 };
 

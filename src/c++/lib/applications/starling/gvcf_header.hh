@@ -24,12 +24,13 @@
 
 #pragma once
 
-#include "calibration_models.hh"
 #include "starling_shared.hh"
 #include "blt_common/blt_shared.hh"
 #include "blt_util/chrom_depth_map.hh"
 
 #include <iosfwd>
+
+#include "ScoringModelManager.hh"
 
 
 void
@@ -39,4 +40,4 @@ finish_gvcf_header(
     const cdmap_t& chrom_depth,
     const std::string& sample_name,
     std::ostream& os,
-    const calibration_models& CM);
+    const ScoringModelManager& CM);

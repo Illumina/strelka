@@ -23,9 +23,10 @@
  */
 
 #include "variant_prefilter_stage.hh"
-#include "calibration_models.hh"
 
-variant_prefilter_stage::variant_prefilter_stage(const calibration_models& model, std::shared_ptr<variant_pipe_stage_base> destination)
+#include "ScoringModelManager.hh"
+
+variant_prefilter_stage::variant_prefilter_stage(const ScoringModelManager& model, std::shared_ptr<variant_pipe_stage_base> destination)
     : variant_pipe_stage_base(destination)
     , _model(model)
 {
@@ -45,7 +46,7 @@ set_site_gt(const diploid_genotype::result_set& rs,
 void variant_prefilter_stage::add_site_modifiers(
     const digt_site_info& si,
     digt_call_info& smod,
-    const calibration_models& model)
+    const ScoringModelManager& model)
 {
     smod.clear();
     smod.is_unknown=(si.ref=='N');
