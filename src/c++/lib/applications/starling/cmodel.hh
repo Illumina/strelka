@@ -146,14 +146,13 @@ struct c_model
     c_model(
         const std::string& name,
         const std::string& type,
-        const gvcf_deriv_options& init_dopt) :
+        const gvcf_deriv_options& init_dopt,
+        const parmap& myPars) :
         dopt(init_dopt),
         model_name(name),
-        model_type(type)
+        model_type(type),
+        pars(myPars)
     {}
-
-    void
-    add_parameters(const parmap& myPars);
 
     void
     score_site_instance(

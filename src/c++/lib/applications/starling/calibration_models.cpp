@@ -54,15 +54,15 @@ calibration_models::
 get_case_cutoff(
     const CALIBRATION_MODEL::var_case my_case) const
 {
-    return get_model(model_name).get_var_threshold(my_case);
+    return get_model().get_var_threshold(my_case);
 }
 
 
 
 bool calibration_models::is_current_logistic() const
 {
-    if (is_default_model) return false;
-    return get_model(model_name).is_logistic_model();
+    if (is_default_model()) return false;
+    return get_model().is_logistic_model();
 }
 
 
@@ -73,9 +73,9 @@ classify_site(
     digt_call_info& smod) const
 {
     //si.smod.filters.reset(); // make sure no filters have been applied prior
-    if ((si.dgt.is_snp) && (!is_default_model))
+    if ((si.dgt.is_snp) && (!is_default_model()))
     {
-        get_model(model_name).score_site_instance(si, smod);
+        get_model().score_site_instance(si, smod);
     }
     else
     {
@@ -89,7 +89,7 @@ calibration_models::check_is_model_usable(const digt_indel_info& ii) const
 {
     const auto& call(ii.first());
     return ((call._iri.it == INDEL::INSERT || call._iri.it == INDEL::DELETE) &&
-            (!is_default_model) &&
+            (!is_default_model()) &&
             (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // empirical scoring does not handle homref sites properly
 }
 
@@ -123,7 +123,7 @@ classify_indel_impl(
 
     if ( is_model_usable )
     {
-        get_model(model_name).score_indel_instance(ii, call);
+        get_model().score_indel_instance(ii, call);
     }
     else
     {
@@ -231,115 +231,17 @@ default_classify_indel(shared_indel_call_info& call) const
 }
 
 
-void
-calibration_models::load_chr_depth_stats()
-{
-    if (! this->opt.chrom_depth_file.empty())
-    {
-        parse_chrom_depth(this->opt.chrom_depth_file,chrom_depth);
-        std::vector<double> depths;
-        for (cdmap_t::const_iterator iter = this->chrom_depth.begin(); iter != this->chrom_depth.end() ; ++iter)
-        {
-#if 0
-            /// NO HARD CODED CHROMOSOME NAMES!!!!!!!!!!!!
-            if (!(iter->first=="chrM" ||iter->first=="chrY"||iter->first=="chrX"))
-#endif
-            {
-//                log_os << iter->first << " is " << iter->second << "\n";
-                depths.push_back(iter->second);
-            }
-        }
-        std::sort(depths.begin(), depths.end());
-        int sum = 0;
-        for (unsigned i=0; i<depths.size(); i++)
-        {
-//            log_os << depths.at(i) << "\n";
-            sum += depths.at(i);
-        }
-        this->chr_median    = depths.at(depths.size()/2);
-        this->chr_avg       = sum/depths.size();
-//        log_os << "median " << this->chr_median << "\n";
-//        log_os << "mean " << this->chr_avg << "\n";
-        this->has_depth = true;
-    }
-}
-
-
-
-static
-void
-nameError(const std::string& name)
-{
-    using namespace illumina::common;
-
-    std::ostringstream oss;
-    oss << "ERROR: unrecognized variant scoring model name: '" << name << "'\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-}
-
-
-
-void calibration_models::set_model(const std::string& name)
-{
-    if (name.empty()) return;
-
-    modelmap::iterator it = this->models.find(boost::to_upper_copy(name));
-    if (it == models.end())
-    {
-        nameError(name);
-    }
-    this->load_chr_depth_stats();
-
-//        if (this->has_depth && (this->chr_median>70 || this->chr_median<10))
-//        {
-//            this->model_name = "QRULE";     //TODO hacky fix for defaulting to qrule if we have a high median chromosome depth (empirical scoring not trained to handle these cases yet)
-//        }
-//        else
-    this->model_name = boost::to_upper_copy(name);
-    this->is_default_model = false;
-
-    //    log_os << "Calibration model set to '" << this->model_name << "'\n";
-//    log_os << "Calibration model is default '" << this->is_default_model << "'\n";
-#ifdef DEBUG_CAL
-    log_os << "Calibration model set to '" << this->model_name << "'\n";
-#endif
-}
-
-c_model&
-calibration_models::get_model(const std::string& name)
-{
-    auto it = this->models.find(boost::to_upper_copy(name));
-    assert("Unrecognized calibration model given using --scoring-model option" && it != this->models.end());
-    return it->second;
-}
-
-const c_model&
-calibration_models::get_model(const std::string& name) const
-{
-    auto it = this->models.find(boost::to_upper_copy(name));
-    assert("Unrecognized calibration model given using --scoring-model option" && it != this->models.end());
-    return it->second;
-}
-
-void calibration_models::add_model_pars(std::string& name,parmap& my_pars)
-{
-#ifdef DEBUG_CAL
-    log_os << "Adding pars for model " << name << "\n";
-    log_os << "Adding pars " << my_pars.size() << "\n";
-#endif
-    this->get_model(name).add_parameters(my_pars);
-    my_pars.clear();
-}
-
 
 void
 calibration_models::
 load_models(
-    const std::string& model_file)
+    const std::string& model_file,
+    const std::string& name)
 {
     using namespace boost::algorithm;
 
     if (model_file.empty()) return;
+    if (name.empty()) return;
 
 #ifdef DEBUG_CAL
     log_os << "Loading models from file: " << model_file << "\n";
@@ -356,37 +258,36 @@ load_models(
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
 
-    std::string output;
     std::string parspace;
     std::string submodel;
-    std::string current_name;
+    std::string modelType;
     parmap pars;
+
+    bool isInCurrentModel(false);
+
     while (!myReadFile.eof())
     {
-        std::getline (myReadFile,output);
         std::vector<std::string> tokens;
-        split(tokens, output, is_any_of(" \t")); // tokenize string
+        {
+            std::string output;
+            std::getline(myReadFile,output);
+            split(tokens, output, is_any_of(" \t")); // tokenize string
+        }
+
         //case new model
         if (tokens.at(0).substr(0,3)=="###")
         {
-            if (! pars.empty())
-            {
-                this->add_model_pars(current_name,pars);
-            }
-            current_name = boost::to_upper_copy(tokens.at(1));
-            c_model current_model(current_name,tokens.at(2),dopt);
+            if (isInCurrentModel) break;
+            isInCurrentModel=(tokens.at(1)==name);
 
-            this->models.insert(modelmap::value_type(current_name, current_model));
-#ifdef DEBUG_CAL
-            log_os << "Loading model: " << tokens.at(1) << " Type: " << tokens.at(2) << "\n";
-#endif
+            if (! isInCurrentModel) continue;
+            modelType=tokens.at(2);
         }
+
+        if (! isInCurrentModel) continue;
         //load submodel
-        else if (tokens.at(0)=="#")
+        if (tokens.at(0)=="#")
         {
-#ifdef DEBUG_CAL
-            log_os << "submodel: " << tokens.at(1) << " parspace: " << tokens.at(2) << "\n";
-#endif
             submodel = tokens.at(1);
             parspace = tokens.at(2);
         }
@@ -395,15 +296,19 @@ load_models(
         {
             if (tokens.size()>1)
             {
-#ifdef DEBUG_CAL
-                log_os << " setting " << tokens.at(0) << " = " << tokens.at(1) << "\n";
-#endif
                 pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
             }
         }
     }
-    this->add_model_pars(current_name,pars);
-#ifdef DEBUG_CAL
-    log_os << "Done loading models" << "\n";
-#endif
+
+    if (! isInCurrentModel)
+    {
+        using namespace illumina::common;
+
+        std::ostringstream oss;
+        oss << "ERROR: unrecognized variant scoring model name: '" << name << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+    assert(! pars.empty());
+    modelPtr.reset(new c_model(name,modelType,dopt,pars));
 }

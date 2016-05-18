@@ -40,8 +40,9 @@ public:
         : opt(init_opt.gvcf),
           dopt(init_dopt)
     {
-        load_models(init_opt.germline_variant_scoring_models_filename);
-        set_model(init_opt.germline_variant_scoring_model_name);
+        load_models(
+                init_opt.germline_variant_scoring_models_filename,
+                init_opt.germline_variant_scoring_model_name);
     }
 
     void
@@ -70,14 +71,9 @@ public:
     int
     get_case_cutoff(const CALIBRATION_MODEL::var_case my_case) const;
 
-    const char* get_model_name() const
-    {
-        return model_name.c_str();
-    }
-
 private:
-    c_model& get_model(const std::string& name);
-    const c_model& get_model(const std::string& name) const;
+    c_model& get_model() { return *modelPtr; }
+    const c_model& get_model() const { return *modelPtr; }
 
     bool check_is_model_usable(const digt_indel_info& ii) const;
     void set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const;
@@ -89,24 +85,21 @@ private:
         digt_indel_call& call) const;
 
     // set options
-    void set_model(const std::string& name);  // set the calibration model to use
-    void load_models(const std::string& model_file); // read in model parameters
+    void load_models(
+        const std::string& model_file,
+        const std::string& name); // read in model parameters
 
-    void load_chr_depth_stats();
-    void add_model_pars(std::string& name,parmap& my_pars);
-
+    bool
+    is_default_model() const
+    {
+        return (!modelPtr);
+    }
 
     // for setting the vcf header filters
     const gvcf_options& opt;
     const gvcf_deriv_options& dopt;
-    std::string model_name;
-    bool is_default_model=true;
 
-    cdmap_t chrom_depth;
-    bool has_depth=false;
-    int chr_avg=30, chr_median=30;
-    typedef std::map<std::string,c_model> modelmap;
     typedef std::map<std::string, double> featuremap;
-    modelmap models;
+    std::unique_ptr<c_model> modelPtr;
 };
 

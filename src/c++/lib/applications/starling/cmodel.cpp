@@ -46,16 +46,6 @@
 
 void
 c_model::
-add_parameters(
-    const parmap& myPars)
-{
-    this->pars = myPars;
-}
-
-
-
-void
-c_model::
 do_site_rule_model(
     const featuremap& cutoffs,
     const digt_site_info& si,
