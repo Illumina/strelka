@@ -195,17 +195,17 @@ strelka_streams(
             if (opt.isReportEVSFeatures)
             {
                 fos << "##snv_scoring_features=";
-                for (unsigned featureIndex = 0; featureIndex < STRELKA_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
+                for (unsigned featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
                 {
                     if (featureIndex > 0)
                     {
                         fos << ",";
                     }
-                    fos << STRELKA_SNV_SCORING_FEATURES::get_feature_label(featureIndex);
+                    fos << SOMATIC_SNV_SCORING_FEATURES::get_feature_label(featureIndex);
                 }
-                for (unsigned featureIndex = 0; featureIndex < STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+                for (unsigned featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
                 {
-                    fos << ',' << STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+                    fos << ',' << SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
                 }
                 fos << "\n";
             }
@@ -324,17 +324,17 @@ strelka_streams(
             if (opt.isReportEVSFeatures)
             {
                 fos << "##indel_scoring_features=";
-                for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
+                for (unsigned featureIndex = 0; featureIndex < SOMATIC_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
                 {
                     if (featureIndex > 0)
                     {
                         fos << ",";
                     }
-                    fos << STRELKA_INDEL_SCORING_FEATURES::get_feature_label(featureIndex);
+                    fos << SOMATIC_INDEL_SCORING_FEATURES::get_feature_label(featureIndex);
                 }
-                for (unsigned featureIndex = 0; featureIndex < STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+                for (unsigned featureIndex = 0; featureIndex < SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
                 {
-                    fos << ',' << STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+                    fos << ',' << SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
                 }
                 fos << "\n";
             }

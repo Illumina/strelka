@@ -17,19 +17,19 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 /*
  *      Author: mkallberg
  */
 
 #pragma once
 
-#include "calibration/VariantScoringModelBase.hh"
 #include "calibration/VariantScoringModelMetadata.hh"
 
 #include <cassert>
 
 
-struct STRELKA_SNV_SCORING_FEATURES
+struct GERMLINE_SNV_SCORING_FEATURES
 {
     /** any change here must be done together with changing
         src/python/scoringModelTraining/somatic/lib/features//StrelkaSNV.py
@@ -100,11 +100,11 @@ struct STRELKA_SNV_SCORING_FEATURES
             }
         }
 
-        VariantScoringModelMetadata::featureMap_t fmap;
+        featureMap_t fmap;
     };
 
     static
-    const VariantScoringModelMetadata::featureMap_t&
+    const featureMap_t&
     getFeatureMap()
     {
         static const FeatureMapMaker fmm;
@@ -112,12 +112,13 @@ struct STRELKA_SNV_SCORING_FEATURES
     }
 };
 
+
 ///
 /// additional experimental features not used in the current scoring model
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES
+struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
 {
     enum index_t
     {
@@ -142,7 +143,7 @@ struct STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES
 
 
 
-struct STRELKA_INDEL_SCORING_FEATURES
+struct GERMLINE_INDEL_SCORING_FEATURES
 {
     /** Make sure the features are the same as used in the model
      */
@@ -204,11 +205,11 @@ struct STRELKA_INDEL_SCORING_FEATURES
             }
         }
 
-        VariantScoringModelMetadata::featureMap_t fmap;
+        featureMap_t fmap;
     };
 
     static
-    const VariantScoringModelMetadata::featureMap_t&
+    const featureMap_t&
     getFeatureMap()
     {
         static const FeatureMapMaker fmm;
@@ -222,7 +223,7 @@ struct STRELKA_INDEL_SCORING_FEATURES
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES
+struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
 {
     enum index_t
     {

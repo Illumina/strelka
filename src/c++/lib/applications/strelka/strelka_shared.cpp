@@ -25,10 +25,10 @@
 #include "position_somatic_snv_strand_grid.hh"
 #include "somatic_indel_grid.hh"
 #include "strelka_shared.hh"
-#include "strelkaScoringFeatures.hh"
 #include "blt_util/blt_exception.hh"
 
 #include <sstream>
+#include "somaticVariantEmpiricalScoringFeatures.hh"
 
 
 
@@ -64,7 +64,7 @@ strelka_deriv_options(
     {
         somaticSnvScoringModel.reset(
             new VariantScoringModelServer(
-                STRELKA_SNV_SCORING_FEATURES::getFeatureMap(),
+                SOMATIC_SNV_SCORING_FEATURES::getFeatureMap(),
                 opt.somatic_snv_scoring_model_filename,
                 SCORING_CALL_TYPE::SOMATIC,
                 SCORING_VARIANT_TYPE::SNV)
@@ -74,7 +74,7 @@ strelka_deriv_options(
     {
         somaticIndelScoringModel.reset(
             new VariantScoringModelServer(
-                STRELKA_INDEL_SCORING_FEATURES::getFeatureMap(),
+                SOMATIC_INDEL_SCORING_FEATURES::getFeatureMap(),
                 opt.somatic_indel_scoring_model_filename,
                 SCORING_CALL_TYPE::SOMATIC,
                 SCORING_VARIANT_TYPE::INDEL)

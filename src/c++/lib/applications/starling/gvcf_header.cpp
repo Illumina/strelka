@@ -23,6 +23,7 @@
 ///
 
 #include "gvcf_header.hh"
+#include "germlineVariantEmpiricalScoringFeatures.hh"
 #include "gvcf_locus_info.hh"
 #include "blt_util/io_util.hh"
 #include "htsapi/bam_header_util.hh"
@@ -166,7 +167,7 @@ finish_gvcf_header(const starling_options& opt,
     os << "##INFO=<ID=REFREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in reference.\">\n";
     os << "##INFO=<ID=IDREP,Number=A,Type=Integer,Description=\"Number of times RU is repeated in indel allele.\">\n";
 
-    // ranksums
+#ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
     if (opt.isReportEVSFeatures)
     {
         os << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS of mapping quality.\">\n";
@@ -178,12 +179,18 @@ finish_gvcf_header(const starling_options& opt,
         os << "##INFO=<ID=AvgBaseQ,Number=1,Type=Float,Description=\"Mean base Qscore\">\n";
         os << "##INFO=<ID=AvgPos,Number=1,Type=Float,Description=\"Mean position in aligned reads\">\n";
     }
+#endif
 
     // Unphased, flag if a site that is within a phasing window hasn't been phased
     if (opt.do_codon_phasing ||
         opt.gvcf.include_headers.end() != std::find(opt.gvcf.include_headers.begin(), opt.gvcf.include_headers.end(), "Phasing"))
     {
         os << "##INFO=<ID=Unphased,Number=0,Type=Flag,Description=\"Indicates a record that is within the specified phasing window of another variant but could not be phased due to lack of minimum read support.\">\n";
+    }
+
+    if (opt.isReportEVSFeatures)
+    {
+        os << "##INFO=<ID=EVSF,Number=.,Type=Float,Description=\"Empirical variant scoring features.\">\n";
     }
 
     //FORMAT:
@@ -207,10 +214,43 @@ finish_gvcf_header(const starling_options& opt,
     os << "##FORMAT=<ID=DPI,Number=1,Type=Integer,Description=\"Read depth associated with indel, taken from the site preceding the indel.\">\n";
     os << "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification.\">\n";
 
-
     // FILTER:
 
     add_gvcf_filters(opt,chrom_depth,os,CM);
+
+
+    if (opt.isReportEVSFeatures)
+    {
+        os << "##snv_scoring_features=";
+        for (unsigned featureIndex = 0; featureIndex < GERMLINE_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
+        {
+            if (featureIndex > 0)
+            {
+                os << ",";
+            }
+            os << GERMLINE_SNV_SCORING_FEATURES::get_feature_label(featureIndex);
+        }
+        for (unsigned featureIndex = 0; featureIndex < GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+        {
+            os << ',' << GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+        }
+        os << "\n";
+
+        os << "##indel_scoring_features=";
+        for (unsigned featureIndex = 0; featureIndex < GERMLINE_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
+        {
+            if (featureIndex > 0)
+            {
+                os << ",";
+            }
+            os << GERMLINE_INDEL_SCORING_FEATURES::get_feature_label(featureIndex);
+        }
+        for (unsigned featureIndex = 0; featureIndex < GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+        {
+            os << ',' << GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+        }
+        os << "\n";
+    }
 
     os << vcf_col_label() << "\tFORMAT\t" << sample_name << "\n";
 }

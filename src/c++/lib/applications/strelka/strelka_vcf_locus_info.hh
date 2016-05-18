@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "strelkaScoringFeatures.hh"
+#include "somaticVariantEmpiricalScoringFeatures.hh"
 #include "calibration/VariantScoringModelServer.hh"
 
 #include <cassert>
@@ -232,6 +232,6 @@ struct strelka_shared_modifiers
 };
 
 
-typedef strelka_shared_modifiers<STRELKA_SNV_SCORING_FEATURES, STRELKA_SNV_SCORING_DEVELOPMENT_FEATURES> strelka_shared_modifiers_snv;
-typedef strelka_shared_modifiers<STRELKA_INDEL_SCORING_FEATURES, STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES> strelka_shared_modifiers_indel;
+typedef strelka_shared_modifiers<SOMATIC_SNV_SCORING_FEATURES, SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES> strelka_shared_modifiers_snv;
+typedef strelka_shared_modifiers<SOMATIC_INDEL_SCORING_FEATURES, SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES> strelka_shared_modifiers_indel;
 

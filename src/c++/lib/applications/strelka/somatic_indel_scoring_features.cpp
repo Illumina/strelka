@@ -190,27 +190,26 @@ calculateScoringFeatures(
 )
 {
     const indel_result_set& rs(siInfo.sindel.rs);
-    auto& sfeatures(smod.features);
-    sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::QSI_NT, rs.from_ntype_qphred);
-    sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
-    sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::QSI_NT, rs.from_ntype_qphred);
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
 
     if (siInfo.iri.is_repeat_unit())
     {
-        sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::IC, siInfo.iri.indel_repeat_count);
-        sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::RC, siInfo.iri.ref_repeat_count);
-        sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::RU_LEN, siInfo.iri.repeat_unit_length);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IC, siInfo.iri.indel_repeat_count);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RC, siInfo.iri.ref_repeat_count);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RU_LEN, siInfo.iri.repeat_unit_length);
     }
     else
     {
-        sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::IC, 0);
-        sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::RC, 0);
-        sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::RU_LEN, 0);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IC, 0);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RC, 0);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RU_LEN, 0);
     }
-    sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::IHP, siInfo.iri.ihpol);
-    sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::TNR, calculateTumorNoiseRate(siInfo.tisri[0]));
-    sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::AFR, calculateAlleleFrequencyRate(siInfo.nisri[0], siInfo.tisri[0]));
-    sfeatures.set(STRELKA_INDEL_SCORING_FEATURES::LOR, calculateLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IHP, siInfo.iri.ihpol);
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TNR, calculateTumorNoiseRate(siInfo.tisri[0]));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::AFR, calculateAlleleFrequencyRate(siInfo.nisri[0], siInfo.tisri[0]));
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::LOR, calculateLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));
 
     // this is how we could get the mean chromosome depth here if we needed to.
     //    double meanChrDepth = 1siInfo.iri.repeat_unit_length;
@@ -223,14 +222,14 @@ calculateScoringFeatures(
     if (opt.isReportEVSFeatures)
     {
         // features not used in the current EVS model but feature candidates/exploratory for new EVS models:
-        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::N_AF, calculateIndelAF(siInfo.nisri[0]));
-        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::T_AF, calculateIndelAF(siInfo.tisri[0]));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_AF, calculateIndelAF(siInfo.nisri[0]));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_AF, calculateIndelAF(siInfo.tisri[0]));
 
-        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::N_OF, calculateIndelOF(siInfo.nisri[0]));
-        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::T_OF, calculateIndelOF(siInfo.tisri[0]));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_OF, calculateIndelOF(siInfo.nisri[0]));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_OF, calculateIndelOF(siInfo.tisri[0]));
 
-        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::N_BCN, calculateBCNoise(n_was));
-        smod.dfeatures.set(STRELKA_INDEL_SCORING_DEVELOPMENT_FEATURES::T_BCN, calculateBCNoise(t_was));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::N_BCN, calculateBCNoise(n_was));
+        smod.dfeatures.set(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::T_BCN, calculateBCNoise(t_was));
     }
 }
 
