@@ -107,7 +107,7 @@ writeSomaticIndelVcfGrid(
         const unsigned& depth(siInfo.nisri[0].depth);
         if (depth > dopt.sfilter.max_chrom_depth)
         {
-            smod.filters.set(STRELKA_VCF_FILTERS::HighDepth);
+            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::HighDepth);
         }
     }
 
@@ -127,12 +127,12 @@ writeSomaticIndelVcfGrid(
         if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
             (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
         {
-            smod.filters.set(STRELKA_VCF_FILTERS::IndelBCNoise);
+            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::IndelBCNoise);
         }
 
         if ((rs.ntype != NTYPE::REF) || (rs.from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
         {
-            smod.filters.set(STRELKA_VCF_FILTERS::QSI_ref);
+            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::QSI_ref);
         }
     }
     else
@@ -144,12 +144,12 @@ writeSomaticIndelVcfGrid(
 
         if (rs.ntype != NTYPE::REF)
         {
-            smod.filters.set(STRELKA_VCF_FILTERS::Nonref);
+            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::Nonref);
         }
 
         if (smod.EVS < varModel.scoreFilterThreshold())
         {
-            smod.filters.set(STRELKA_VCF_FILTERS::LowEVS);
+            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowEVS);
         }
     }
 

@@ -35,7 +35,7 @@
 
 
 
-namespace STRELKA_VCF_FILTERS
+namespace SOMATIC_VARIANT_VCF_FILTERS
 {
 
 enum index_t
@@ -99,7 +99,7 @@ struct strelka_filter_keeper
     }
 
     void
-    set(const STRELKA_VCF_FILTERS::index_t i)
+    set(const SOMATIC_VARIANT_VCF_FILTERS::index_t i)
     {
         if (_filters.test(i))
         {
@@ -119,7 +119,7 @@ struct strelka_filter_keeper
         }
 
         bool is_sep(false);
-        for (unsigned i(0); i<STRELKA_VCF_FILTERS::SIZE; ++i)
+        for (unsigned i(0); i<SOMATIC_VARIANT_VCF_FILTERS::SIZE; ++i)
         {
             if (! _filters.test(i)) continue;
 
@@ -131,7 +131,7 @@ struct strelka_filter_keeper
             {
                 is_sep=true;
             }
-            os << STRELKA_VCF_FILTERS::get_label(i);
+            os << SOMATIC_VARIANT_VCF_FILTERS::get_label(i);
         }
     }
 
@@ -142,7 +142,7 @@ struct strelka_filter_keeper
     }
 
 private:
-    std::bitset<STRELKA_VCF_FILTERS::SIZE> _filters;
+    std::bitset<SOMATIC_VARIANT_VCF_FILTERS::SIZE> _filters;
 };
 
 

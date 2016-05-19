@@ -58,7 +58,7 @@ write_shared_vcf_header_info(
 {
     if (dopt.is_max_depth())
     {
-        using namespace STRELKA_VCF_FILTERS;
+        using namespace SOMATIC_VARIANT_VCF_FILTERS;
 
         if (isPrintRuleFilters)
         {
@@ -161,7 +161,7 @@ strelka_streams(
             // FILTERS:
             const bool isUseEVS(dopt.somaticSnvScoringModel);
             {
-                using namespace STRELKA_VCF_FILTERS;
+                using namespace SOMATIC_VARIANT_VCF_FILTERS;
                 if (isUseEVS)
                 {
                     {
@@ -286,7 +286,7 @@ strelka_streams(
             // FILTERS:
             const bool isUseEVS(opt.isUseSomaticIndelScoring());
             {
-                using namespace STRELKA_VCF_FILTERS;
+                using namespace SOMATIC_VARIANT_VCF_FILTERS;
                 if (isUseEVS)
                 {
                     {

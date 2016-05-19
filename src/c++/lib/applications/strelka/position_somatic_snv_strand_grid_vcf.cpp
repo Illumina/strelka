@@ -274,7 +274,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
         {
             if (normalDP > dopt.sfilter.max_chrom_depth)
             {
-                smod.filters.set(STRELKA_VCF_FILTERS::HighDepth);
+                smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::HighDepth);
             }
         }
 
@@ -288,7 +288,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             if ((normalFilt >=opt.sfilter.snv_max_filtered_basecall_frac) ||
                 (tumorFilt >=opt.sfilter.snv_max_filtered_basecall_frac))
             {
-                smod.filters.set(STRELKA_VCF_FILTERS::BCNoise);
+                smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::BCNoise);
             }
         }
 
@@ -304,13 +304,13 @@ write_vcf_somatic_snv_genotype_strand_grid(
             if ((normalSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac) ||
                 (tumorSpanDelFrac > opt.sfilter.snv_max_spanning_deletion_frac))
             {
-                smod.filters.set(STRELKA_VCF_FILTERS::SpanDel);
+                smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::SpanDel);
             }
         }
 
         if ((rs.ntype != NTYPE::REF) || (rs.from_ntype_qphred < opt.sfilter.snv_min_qss_ref))
         {
-            smod.filters.set(STRELKA_VCF_FILTERS::QSS_ref);
+            smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::QSS_ref);
         }
     }
 
@@ -344,7 +344,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             if (rs.ntype != NTYPE::REF) smod.EVS=0;
 
             if (smod.EVS < opt.sfilter.snvMinEVS)
-                smod.filters.set(STRELKA_VCF_FILTERS::LowEVS);
+                smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::LowEVS);
         }
     }
 
