@@ -37,7 +37,7 @@
 
 
 void
-shared_call_info::
+GermlineVariantSimpleGenotypeInfo::
 write_filters(std::ostream& os) const
 {
     if (filters.none())
@@ -64,7 +64,9 @@ write_filters(std::ostream& os) const
 }
 
 
-pos_t digt_indel_info::end() const
+pos_t
+GermlineDiploidIndelCallInfo::
+end() const
 {
     pos_t result = 0;
     for (auto& x : _calls)
@@ -72,7 +74,7 @@ pos_t digt_indel_info::end() const
     return result;
 }
 
-void shared_indel_call_info::set_hap_cigar(
+void GermlineIndelSimpleGenotypeInfo::set_hap_cigar(
     const unsigned lead,
     const unsigned trail)
 {
@@ -99,7 +101,8 @@ void shared_indel_call_info::set_hap_cigar(
 
 
 std::map<std::string, double>
-digt_indel_info::get_indel_qscore_features(
+GermlineDiploidIndelCallInfo::
+get_indel_qscore_features(
     const double chrom_depth) const
 {
     const double depth_norm(1./chrom_depth);
@@ -165,7 +168,11 @@ static void add_cigar_to_ploidy(
 }
 
 
-void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_indel_info& overlap)
+void
+GermlineDiploidIndelCallInfo::
+add_overlap(
+    const reference_contig_segment& ref,
+    GermlineDiploidIndelCallInfo& overlap)
 {
     assert(_calls.size() == 1);
     assert(overlap._calls.size() == 1);
@@ -189,7 +196,7 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
 
     ploidy.resize(indel_end_pos-pos,0);
 
-    auto munge_indel = [&] (digt_indel_info& ii)
+    auto munge_indel = [&] (GermlineDiploidIndelCallInfo& ii)
     {
         auto& this_call(ii.first());
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
@@ -222,10 +229,10 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
     // combine filter flags
     call.filters |= overlap.first().filters;
     // combine QScores. Since the "unset" value is -1, this complex logic is necessary
-    if (call.EVS <0)
-        call.EVS = overlap.first().EVS;
-    else if (overlap.first().EVS >= 0)
-        call.EVS = std::min(call.EVS, overlap.first().EVS);
+    if (call.empiricalVariantScore <0)
+        call.empiricalVariantScore = overlap.first().empiricalVariantScore;
+    else if (overlap.first().empiricalVariantScore >= 0)
+        call.empiricalVariantScore = std::min(call.empiricalVariantScore, overlap.first().empiricalVariantScore);
     call.gqx = std::min(call.gqx, overlap.first().gqx);
     call.gq = std::min(call.gq, overlap.first().gq);
 
@@ -235,7 +242,7 @@ void digt_indel_info::add_overlap(const reference_contig_segment& ref, digt_inde
 
 
 void
-digt_indel_info::
+GermlineDiploidIndelCallInfo::
 getPloidyError(
     const unsigned offset) const
 {
@@ -250,7 +257,7 @@ getPloidyError(
 
 
 std::map<std::string, double>
-digt_site_info::
+GermlineDiploidSiteCallInfo::
 get_site_qscore_features(
     const double chrom_depth) const
 {
@@ -301,13 +308,13 @@ get_site_qscore_features(
 
 std::ostream&
 operator<<(std::ostream& os,
-           const shared_call_info& shmod)
+           const GermlineVariantSimpleGenotypeInfo& shmod)
 {
     os << "gqx: " << shmod.gqx
        << " gq: " << shmod.gq;
-    if (typeid(shmod) == typeid(digt_indel_call))
+    if (typeid(shmod) == typeid(GermlineDiploidIndelSimpleGenotypeInfo))
     {
-        auto imod = dynamic_cast<const digt_indel_call&>(shmod);
+        auto imod = dynamic_cast<const GermlineDiploidIndelSimpleGenotypeInfo&>(shmod);
 
         os << " max_gt: " << DIGT::label(imod.max_gt);
     }
@@ -320,9 +327,9 @@ operator<<(std::ostream& os,
 
 std::ostream&
 operator<<(std::ostream& os,
-           const digt_call_info& smod)
+           const GermlineDiploidSiteSimpleGenotypeInfo& smod)
 {
-    os << static_cast<shared_call_info>(smod) << '\n';
+    os << static_cast<GermlineVariantSimpleGenotypeInfo>(smod) << '\n';
 
     os << "is_unknown: " << smod.is_unknown;
     os << " is_covered: " << smod.is_covered;
@@ -341,7 +348,7 @@ operator<<(std::ostream& os,
 
 std::ostream&
 operator<<(std::ostream& os,
-           const digt_site_info& si)
+           const GermlineDiploidSiteCallInfo& si)
 {
     os << "pos: " << (si.pos+1) << " " << si.get_gt();
     return os;
@@ -352,9 +359,9 @@ operator<<(std::ostream& os,
 std::ostream&
 operator<<(
     std::ostream& os,
-    const shared_indel_call_info& shi)
+    const GermlineIndelSimpleGenotypeInfo& shi)
 {
-    os << static_cast<shared_call_info>(shi) << '\n';
+    os << static_cast<GermlineVariantSimpleGenotypeInfo>(shi) << '\n';
 
     os << "indel_key: " << shi._ik << "\n";
     //os << "indel_data: " << shi._id << "\n";
@@ -370,20 +377,20 @@ operator<<(
 std::ostream&
 operator<<(
     std::ostream& os,
-    const digt_indel_call& dic)
+    const GermlineDiploidIndelSimpleGenotypeInfo& dic)
 {
-    os << static_cast<shared_indel_call_info>(dic) << '\n';
+    os << static_cast<GermlineIndelSimpleGenotypeInfo>(dic) << '\n';
 
     dic._dindel.dump(os);
 
-    os << "EVS: " << dic.EVS << " max_gt: " << dic.max_gt << "\n";
+    os << "EVS: " << dic.empiricalVariantScore << " max_gt: " << dic.max_gt << "\n";
 
     return os;
 }
 
 
 void
-digt_indel_info::
+GermlineDiploidIndelCallInfo::
 dump(std::ostream& os) const
 {
     os << "digt_indel_info\n";

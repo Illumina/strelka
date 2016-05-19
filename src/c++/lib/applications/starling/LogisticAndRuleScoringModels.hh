@@ -159,13 +159,13 @@ struct LogisticAndRuleScoringModels
 
     void
     score_site_instance(
-        const digt_site_info& si,
-        digt_call_info& smod) const;
+        const GermlineDiploidSiteCallInfo& si,
+        GermlineDiploidSiteSimpleGenotypeInfo& smod) const;
 
     void
     score_indel_instance(
-        const digt_indel_info& ii,
-        digt_indel_call& call) const;
+        const GermlineDiploidIndelCallInfo& ii,
+        GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     bool is_logistic_model() const;
 
@@ -185,14 +185,14 @@ private:
     void
     do_site_rule_model(
         const featuremap& cutoffs,
-        const digt_site_info& si,
-        digt_call_info& smod) const;
+        const GermlineDiploidSiteCallInfo& si,
+        GermlineDiploidSiteSimpleGenotypeInfo& smod) const;
 
     void
     do_indel_rule_model(
         const featuremap& cutoffs,
-        const digt_indel_info& ii,
-        digt_indel_call& call) const;
+        const GermlineDiploidIndelCallInfo& ii,
+        GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     /// Transform the features with the specified scaling parameters that were used to standardize
     /// the dataset to zero mean and unit variance: newVal = (oldVal-centerVal)/scaleVal.
@@ -210,14 +210,14 @@ private:
     void
     apply_site_qscore_filters(
         const CALIBRATION_MODEL::var_case my_case,
-        const digt_site_info& si,
-        digt_call_info& smod) const;
+        const GermlineDiploidSiteCallInfo& si,
+        GermlineDiploidSiteSimpleGenotypeInfo& smod) const;
 
     void
     apply_indel_qscore_filters(
         const CALIBRATION_MODEL::var_case my_case,
-        const digt_indel_info& ii,
-        digt_indel_call& call) const;
+        const GermlineDiploidIndelCallInfo& ii,
+        GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     const gvcf_deriv_options& dopt;
     std::string model_type;

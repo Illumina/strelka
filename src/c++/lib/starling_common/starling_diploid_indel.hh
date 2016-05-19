@@ -133,9 +133,9 @@ label(const unsigned idx)
 
 // separate out core with automatic copy ctor:
 //
-struct starling_diploid_indel_core
+struct GermlineDiploidIndelSimpleGenotypeInfoCore
 {
-    starling_diploid_indel_core()
+    GermlineDiploidIndelSimpleGenotypeInfoCore()
         : is_indel(false), ploidy(2), max_gt(0), max_gt_poly(0), phredLoghood(STAR_DIINDEL::SIZE,0)
     {
         static const int qp(error_prob_to_qphred((1.-init_p())));
@@ -195,10 +195,10 @@ public:
 
 
 
-struct starling_diploid_indel : public starling_diploid_indel_core, private boost::noncopyable
+struct starling_diploid_indel : public GermlineDiploidIndelSimpleGenotypeInfoCore, private boost::noncopyable
 {
     starling_diploid_indel()
-        : starling_diploid_indel_core()
+        : GermlineDiploidIndelSimpleGenotypeInfoCore()
     {
         static const double p(init_p());
         for (unsigned i(0); i<STAR_DIINDEL::SIZE; ++i) pprob[i] = p;

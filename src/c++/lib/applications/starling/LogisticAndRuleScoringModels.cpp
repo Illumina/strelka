@@ -48,8 +48,8 @@ void
 LogisticAndRuleScoringModels::
 do_site_rule_model(
     const featuremap& cutoffs,
-    const digt_site_info& si,
-    digt_call_info& smod) const
+    const GermlineDiploidSiteCallInfo& si,
+    GermlineDiploidSiteSimpleGenotypeInfo& smod) const
 {
     if (si.smod.gqx<cutoffs.at("GQX")) smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     if (cutoffs.at("DP")>0 && dopt.is_max_depth())
@@ -75,8 +75,8 @@ void
 LogisticAndRuleScoringModels::
 do_indel_rule_model(
     const featuremap& cutoffs,
-    const digt_indel_info& ii,
-    digt_indel_call& call) const
+    const GermlineDiploidIndelCallInfo& ii,
+    GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
     if (cutoffs.at("GQX")>0)
     {
@@ -178,36 +178,36 @@ void
 LogisticAndRuleScoringModels::
 apply_site_qscore_filters(
     const CALIBRATION_MODEL::var_case var_case,
-    const digt_site_info& si,
-    digt_call_info& smod) const
+    const GermlineDiploidSiteCallInfo& si,
+    GermlineDiploidSiteSimpleGenotypeInfo& smod) const
 {
     // do extreme case handling better
-    smod.EVS = std::min(smod.EVS,60);
+    smod.empiricalVariantScore = std::min(smod.empiricalVariantScore,60);
 
     const double dpfExtreme(0.85);
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
     if (total_calls>0)
     {
         const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-        if (filt>dpfExtreme) smod.EVS=3;
+        if (filt>dpfExtreme) smod.empiricalVariantScore=3;
     }
 
-    if (smod.EVS<0)
+    if (smod.empiricalVariantScore<0)
     {
         const auto orig_filters(smod.filters);
         do_site_rule_model(pars.at("snp").at("cutoff"), si, smod);
         if (smod.filters.count()>0)
         {
-            smod.EVS = 1;
+            smod.empiricalVariantScore = 1;
             smod.filters = orig_filters;
         }
         else
         {
-            smod.EVS = 35;
+            smod.empiricalVariantScore = 35;
         }
     }
 
-    if (smod.EVS < get_var_threshold(var_case))
+    if (smod.empiricalVariantScore < get_var_threshold(var_case))
     {
         smod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(var_case)); // more sophisticated filter setting here
     }
@@ -219,27 +219,27 @@ void
 LogisticAndRuleScoringModels::
 apply_indel_qscore_filters(
     const CALIBRATION_MODEL::var_case var_case,
-    const digt_indel_info& ii,
-    digt_indel_call& call) const
+    const GermlineDiploidIndelCallInfo& ii,
+    GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
-    call.EVS = std::min(call.EVS,60);
+    call.empiricalVariantScore = std::min(call.empiricalVariantScore,60);
 
-    if (call.EVS<0)
+    if (call.empiricalVariantScore<0)
     {
         const auto orig_filters(call.filters);
         do_indel_rule_model(pars.at("indel").at("cutoff"), ii, call);
         if (call.filters.count()>0)
         {
-            call.EVS = 1;
+            call.empiricalVariantScore = 1;
             call.filters = orig_filters;
         }
         else
         {
-            call.EVS = 12;
+            call.empiricalVariantScore = 12;
         }
     }
 
-    if (call.EVS < get_var_threshold(var_case))
+    if (call.empiricalVariantScore < get_var_threshold(var_case))
     {
         call.set_filter(CALIBRATION_MODEL::get_Qscore_filter(var_case));
     }
@@ -287,8 +287,8 @@ is_logistic_model() const
 void
 LogisticAndRuleScoringModels::
 score_site_instance(
-    const digt_site_info& si,
-    digt_call_info& smod) const
+    const GermlineDiploidSiteCallInfo& si,
+    GermlineDiploidSiteSimpleGenotypeInfo& smod) const
 {
     if (is_logistic_model())   //case we are using a logistic regression mode
     {
@@ -308,7 +308,7 @@ score_site_instance(
 #endif
 
         const featuremap features = si.get_site_qscore_features(normal_depth());
-        smod.EVS = logistic_score(var_case, features);
+        smod.empiricalVariantScore = logistic_score(var_case, features);
         apply_site_qscore_filters(var_case, si, smod);
     }
 //    else if(this->model_type=="RFtree"){ // place-holder, put random forest here
@@ -329,8 +329,8 @@ score_site_instance(
 void
 LogisticAndRuleScoringModels::
 score_indel_instance(
-    const digt_indel_info& ii,
-    digt_indel_call& call) const
+    const GermlineDiploidIndelCallInfo& ii,
+    GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
     if (is_logistic_model())   //case we are using a logistic regression mode
     {
@@ -362,7 +362,7 @@ score_indel_instance(
         }
 
         const featuremap features = ii.get_indel_qscore_features(normal_depth());
-        call.EVS = logistic_score(var_case, features);
+        call.empiricalVariantScore = logistic_score(var_case, features);
         apply_indel_qscore_filters(var_case, ii, call);
     }
     else if (this->model_type=="RULE")   //case we are using a rule based model

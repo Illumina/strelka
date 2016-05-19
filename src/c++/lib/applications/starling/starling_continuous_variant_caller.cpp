@@ -48,7 +48,7 @@ double starling_continuous_variant_caller::strand_bias(
 void starling_continuous_variant_caller::position_snp_call_continuous(
     const starling_base_options& opt,
     const snp_pos_info& good_pi,
-    continuous_site_info& info)
+    GermlineContinuousSiteCallInfo& info)
 {
     unsigned totalDepth = info.spanning_deletions;
     for (unsigned base_id(0); base_id<N_BASE; ++base_id)
@@ -62,7 +62,7 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
         auto vf = info.alleleObservationCounts(base_id) / (double)totalDepth;
         if (vf > opt.min_het_vf || force)
         {
-            continuous_site_call call(totalDepth, info.alleleObservationCounts(base_id), (BASE_ID::index_t)base_id);
+            GermlineContinuousSiteSimpleGenotypeInfo call(totalDepth, info.alleleObservationCounts(base_id), (BASE_ID::index_t)base_id);
             call.gqx = call.gq = poisson_qscore(info.alleleObservationCounts(base_id), totalDepth, (unsigned)opt.min_qscore, 40);
 
             if (ref_base_id != base_id)
@@ -112,7 +112,7 @@ void starling_continuous_variant_caller::add_indel_call(
     const indel_data& id,
     const starling_indel_report_info& iri,
     const starling_indel_sample_report_info& isri,
-    continuous_indel_info& info)
+    GermlineContinuousIndelCallInfo& info)
 {
     // determine VF
     double vf = isri.n_q30_indel_reads / ((double)isri.total_q30_reads());
@@ -121,7 +121,7 @@ void starling_continuous_variant_caller::add_indel_call(
         info.calls.emplace_back(
             isri.total_q30_reads(), isri.n_q30_indel_reads,
             ik, id, iri, isri);
-        continuous_indel_call& call = info.calls.back();
+        GermlineContinuousIndelSimpleGenotypeInfo& call = info.calls.back();
         call.gqx = call.gq = poisson_qscore(isri.n_q30_indel_reads, isri.total_q30_reads(), (unsigned)opt.min_qscore, 40);
     }
     if (!info.calls.empty())

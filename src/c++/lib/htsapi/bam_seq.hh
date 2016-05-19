@@ -25,7 +25,7 @@
 #pragma once
 
 #include "blt_util/blt_types.hh"
-#include "blt_util/polymorphicObject.hh"
+#include "blt_util/PolymorphicObject.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "blt_util/seq_util.hh"
 
@@ -155,7 +155,7 @@ bam_seq_code_to_id(const uint8_t a,
 // sequences from bam files and regular strings using the same
 // object:
 //
-struct bam_seq_base : public polymorphicObject
+struct bam_seq_base : public PolymorphicObject
 {
     virtual uint8_t get_code(pos_t i) const = 0;
 

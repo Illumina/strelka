@@ -72,3 +72,19 @@ bam_dumper::
         }
     }
 }
+
+
+
+void
+bam_dumper::
+put_record(const bam1_t* brec)
+{
+    const int retval = sam_write1(_hfp,_hdr,brec);
+    if (retval < 0)
+    {
+        std::ostringstream oss;
+        oss << "Failed to write new record to BAM file: '" << name() << "'";
+        throw blt_exception(oss.str().c_str());
+    }
+}
+

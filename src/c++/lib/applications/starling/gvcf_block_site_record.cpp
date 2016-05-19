@@ -83,7 +83,7 @@ static const char* map_gt_to_homref(const char* gt)
 
 bool
 gvcf_block_site_record::
-test(const digt_site_info& si) const
+test(const GermlineDiploidSiteCallInfo& si) const
 {
     if (count==0) return true;
 
@@ -131,7 +131,7 @@ test(const digt_site_info& si) const
 
 void
 gvcf_block_site_record::
-join(const digt_site_info& si)
+join(const GermlineDiploidSiteCallInfo& si)
 {
     if (count == 0)
     {
@@ -159,7 +159,7 @@ join(const digt_site_info& si)
 
 bool
 gvcf_block_site_record::
-test(const continuous_site_info& si) const
+test(const GermlineContinuousSiteCallInfo& si) const
 {
     if (si.calls.size() != 1)
         return false;
@@ -216,7 +216,7 @@ test(const continuous_site_info& si) const
 
 
 void
-gvcf_block_site_record::join(const continuous_site_info& si)
+gvcf_block_site_record::join(const GermlineContinuousSiteCallInfo& si)
 {
     if (count == 0)
     {

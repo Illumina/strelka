@@ -50,23 +50,24 @@ public:
 
     void
     classify_site(
-        const digt_site_info& si,
-        digt_call_info& smod) const;
+        const GermlineDiploidSiteCallInfo& si,
+        GermlineDiploidSiteSimpleGenotypeInfo& smod) const;
 
     void
     classify_indel(
-        const digt_indel_info& ii,
-        digt_indel_call& call) const;
+        const GermlineDiploidIndelCallInfo& ii,
+        GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     void
     classify_indels(
-        std::vector<std::unique_ptr<digt_indel_info>>& indels) const;
+        std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indels) const;
 
     // mimics behavior of previous hard filters
-    void default_classify_site(const site_info& si,
-                               shared_call_info& call) const;
+    void default_classify_site(
+        const GermlineSiteCallInfo& si,
+        GermlineVariantSimpleGenotypeInfo& call) const;
 
-    void default_classify_indel(shared_indel_call_info& call) const;
+    void default_classify_indel(GermlineIndelSimpleGenotypeInfo& call) const;
 
 
     bool is_current_logistic() const;
@@ -78,14 +79,16 @@ private:
     LogisticAndRuleScoringModels& get_model() { return *modelPtr; }
     const LogisticAndRuleScoringModels& get_model() const { return *modelPtr; }
 
-    bool check_is_model_usable(const digt_indel_info& ii) const;
-    void set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const;
+    bool check_is_model_usable(const GermlineDiploidIndelCallInfo& ii) const;
+    void set_indel_modifiers(
+        const GermlineDiploidIndelCallInfo& ii,
+        GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     void
     classify_indel_impl(
         const bool is_model_usable,
-        const digt_indel_info& ii,
-        digt_indel_call& call) const;
+        const GermlineDiploidIndelCallInfo& ii,
+        GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     // set options
     void load_models(

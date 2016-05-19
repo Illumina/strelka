@@ -17,14 +17,15 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 #include "boost/test/unit_test.hpp"
 #include "boost/algorithm/string.hpp"
 
 #include "test_config.h"
 
 #include "gvcf_writer.hh"
+#include "ScoringModelManager.hh"
 
-#include "../ScoringModelManager.hh"
 #include "starling_common/pos_basecall_buffer.hh"
 
 
@@ -74,7 +75,7 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     opt.bam_seq_name = "dummy";
 
     const snp_pos_info& spi(bc_buff.get_pos(snp_pos));
-    std::unique_ptr<digt_site_info> si(new digt_site_info(snp_pos, rcs.get_base(snp_pos), spi, 30));
+    std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(snp_pos, rcs.get_base(snp_pos), spi, 30));
     si->smod.is_covered = si->smod.is_used_covered = true;
     si->dgt.ref_gt = base_to_id(si->ref);
 

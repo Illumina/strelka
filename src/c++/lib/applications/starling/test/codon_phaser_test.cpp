@@ -48,14 +48,14 @@ class dummy_variant_sink : public variant_pipe_stage_base
 {
 public:
     dummy_variant_sink() : variant_pipe_stage_base() {}
-    std::vector<std::unique_ptr<digt_site_info>> the_sites;
-    std::vector<std::unique_ptr<indel_info>> the_indels;
-    void process(std::unique_ptr<site_info> site) override
+    std::vector<std::unique_ptr<GermlineDiploidSiteCallInfo>> the_sites;
+    std::vector<std::unique_ptr<GermlineIndelCallInfo>> the_indels;
+    void process(std::unique_ptr<GermlineSiteCallInfo> site) override
     {
-        auto si(downcast<digt_site_info>(std::move(site)));
+        auto si(downcast<GermlineDiploidSiteCallInfo>(std::move(site)));
         if (si->is_het() || si->is_hetalt() ) the_sites.push_back(std::move(si));
     }
-    void process(std::unique_ptr<indel_info> ii) override
+    void process(std::unique_ptr<GermlineIndelCallInfo> ii) override
     {
         the_indels.push_back(std::move(ii));
     }
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE( simple_3mer )
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE( two_adjacent_3mers )
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE( handles_snps_at_start )
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE( respects_phasing_window )
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps)
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
@@ -297,7 +297,7 @@ BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps_different_size)
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
@@ -340,9 +340,9 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
-        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.EVS = 40;
+        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.empiricalVariantScore = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
         si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
@@ -398,9 +398,9 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
-        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.EVS = 40;
+        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.empiricalVariantScore = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
         si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
@@ -444,7 +444,7 @@ BOOST_AUTO_TEST_CASE( low_depth_doesnt_phase )
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<digt_site_info> si(new digt_site_info(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 

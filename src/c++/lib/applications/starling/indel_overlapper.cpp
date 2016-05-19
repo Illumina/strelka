@@ -43,9 +43,9 @@ indel_overlapper::indel_overlapper(const ScoringModelManager& model, const refer
 
 
 
-void indel_overlapper::process(std::unique_ptr<site_info> site)
+void indel_overlapper::process(std::unique_ptr<GermlineSiteCallInfo> site)
 {
-    std::unique_ptr<digt_site_info> si(downcast<digt_site_info>(std::move(site)));
+    std::unique_ptr<GermlineDiploidSiteCallInfo> si(downcast<GermlineDiploidSiteCallInfo>(std::move(site)));
 
     // resolve any current or previous indels before queuing site:
     if (si->pos>=_indel_end_pos)
@@ -68,21 +68,21 @@ void indel_overlapper::process(std::unique_ptr<site_info> site)
 
 static
 bool
-is_het_indel(const starling_diploid_indel_core& dindel)
+is_het_indel(const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
 {
     return (dindel.max_gt==STAR_DIINDEL::HET);
 }
 
 static
 bool
-check_is_nonvariant_indel(const starling_diploid_indel_core& dindel)
+check_is_nonvariant_indel(const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
 {
     return (dindel.max_gt==STAR_DIINDEL::NOINDEL);
 }
 
-void indel_overlapper::process(std::unique_ptr<indel_info> indel)
+void indel_overlapper::process(std::unique_ptr<GermlineIndelCallInfo> indel)
 {
-    auto ii(downcast<digt_indel_info>(std::move(indel)));
+    auto ii(downcast<GermlineDiploidIndelCallInfo>(std::move(indel)));
 
     auto& call(ii->first());
 
@@ -114,7 +114,7 @@ static
 bool
 is_simple_indel_overlap(
     const reference_contig_segment& ref,
-    const std::vector<std::unique_ptr<digt_indel_info>>& indel_buffer)
+    const std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indel_buffer)
 {
 #ifdef DEBUG_GVCF
     log_os << "CHIRP: " << __FUNCTION__ << " START\n";
@@ -128,11 +128,11 @@ is_simple_indel_overlap(
 
     if (indel_buffer.size() != 2) return false;
 
-    const digt_indel_info& ii0(*indel_buffer[0]);
-    const digt_indel_info& ii1(*indel_buffer[1]);
+    const GermlineDiploidIndelCallInfo& ii0(*indel_buffer[0]);
+    const GermlineDiploidIndelCallInfo& ii1(*indel_buffer[1]);
 
-    const digt_indel_call& ic0(ii0.first());
-    const digt_indel_call& ic1(ii1.first());
+    const GermlineDiploidIndelSimpleGenotypeInfo& ic0(ii0.first());
+    const GermlineDiploidIndelSimpleGenotypeInfo& ic1(ii1.first());
 
     const bool isTwoHets = (is_het_indel(ic0._dindel) && is_het_indel(ic1._dindel));
 
@@ -151,7 +151,7 @@ is_simple_indel_overlap(
     const pos_t indel_begin_pos(ii0.pos-1);
 
     // get the VCF ALT string associated with overlapping indel:
-    auto get_overlap_alt = [&] (const digt_indel_info& ii)
+    auto get_overlap_alt = [&] (const GermlineDiploidIndelCallInfo& ii)
     {
         std::string leading_seq,trailing_seq;
         const auto& ic(ii.first());
@@ -232,9 +232,9 @@ enum index_t
 static
 VARQUEUE::index_t
 nextVariantType(
-    const std::vector<std::unique_ptr<digt_indel_info>>& indel_buffer,
-    const std::vector<std::unique_ptr<digt_indel_info>>& nonvariant_indel_buffer,
-    const std::vector<std::unique_ptr<digt_site_info>>& site_buffer,
+    const std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indel_buffer,
+    const std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& nonvariant_indel_buffer,
+    const std::vector<std::unique_ptr<GermlineDiploidSiteCallInfo>>& site_buffer,
     const unsigned indel_index,
     const unsigned nonvariant_indel_index,
     const unsigned site_index)
@@ -374,7 +374,7 @@ void indel_overlapper::process_overlaps_impl()
 
 
 
-void indel_overlapper::modify_overlapping_site(const digt_indel_info& ii, digt_site_info& si, const ScoringModelManager& model)
+void indel_overlapper::modify_overlapping_site(const GermlineDiploidIndelCallInfo& ii, GermlineDiploidSiteCallInfo& si, const ScoringModelManager& model)
 {
     const pos_t offset(si.pos-ii.pos);
     assert(offset>=0);
@@ -394,7 +394,7 @@ void indel_overlapper::modify_overlapping_site(const digt_indel_info& ii, digt_s
 // set the CIGAR string:
 void
 indel_overlapper::
-modify_single_indel_record(digt_indel_info& ii)
+modify_single_indel_record(GermlineDiploidIndelCallInfo& ii)
 {
     ii.first().set_hap_cigar();
     _CM.classify_indel(ii, ii.first());
@@ -403,9 +403,9 @@ modify_single_indel_record(digt_indel_info& ii)
 
 
 void indel_overlapper::modify_indel_overlap_site(
-    const digt_indel_info& ii,
+    const GermlineDiploidIndelCallInfo& ii,
     const unsigned ploidy,
-    digt_site_info& si,
+    GermlineDiploidSiteCallInfo& si,
     const ScoringModelManager& model)
 {
 #ifdef DEBUG_GVCF
@@ -475,7 +475,7 @@ void indel_overlapper::modify_indel_overlap_site(
 
 
 
-void indel_overlapper::modify_indel_conflict_site(digt_site_info& si)
+void indel_overlapper::modify_indel_conflict_site(GermlineDiploidSiteCallInfo& si)
 {
     si.smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 }

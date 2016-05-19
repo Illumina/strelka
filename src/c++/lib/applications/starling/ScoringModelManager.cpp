@@ -71,8 +71,8 @@ bool ScoringModelManager::is_current_logistic() const
 void
 ScoringModelManager::
 classify_site(
-    const digt_site_info& si,
-    digt_call_info& smod) const
+    const GermlineDiploidSiteCallInfo& si,
+    GermlineDiploidSiteSimpleGenotypeInfo& smod) const
 {
     //si.smod.filters.reset(); // make sure no filters have been applied prior
     if ((si.dgt.is_snp) && (!is_default_model()))
@@ -87,7 +87,8 @@ classify_site(
 }
 
 bool
-ScoringModelManager::check_is_model_usable(const digt_indel_info& ii) const
+ScoringModelManager::
+check_is_model_usable(const GermlineDiploidIndelCallInfo& ii) const
 {
     const auto& call(ii.first());
     return ((call._iri.it == INDEL::INSERT || call._iri.it == INDEL::DELETE) &&
@@ -97,7 +98,9 @@ ScoringModelManager::check_is_model_usable(const digt_indel_info& ii) const
 
 void
 ScoringModelManager::
-set_indel_modifiers(const digt_indel_info& ii, digt_indel_call& call) const
+set_indel_modifiers(
+    const GermlineDiploidIndelCallInfo& ii,
+    GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
     const auto& dindel(ii.first()._dindel);
     if ((dindel.max_gt != dindel.max_gt_poly) || dindel.is_zero_coverage)
@@ -118,8 +121,8 @@ void
 ScoringModelManager::
 classify_indel_impl(
     const bool is_model_usable,
-    const digt_indel_info& ii,
-    digt_indel_call& call) const
+    const GermlineDiploidIndelCallInfo& ii,
+    GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
     set_indel_modifiers(ii, call);
 
@@ -137,8 +140,8 @@ classify_indel_impl(
 void
 ScoringModelManager::
 classify_indel(
-    const digt_indel_info& ii,
-    digt_indel_call& call) const
+    const GermlineDiploidIndelCallInfo& ii,
+    GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
     classify_indel_impl(check_is_model_usable(ii),ii,call);
 }
@@ -146,7 +149,7 @@ classify_indel(
 void
 ScoringModelManager::
 classify_indels(
-    std::vector<std::unique_ptr<digt_indel_info>>& indels) const
+    std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indels) const
 {
     bool is_model_usable = true;
     for (const auto& indel : indels)
@@ -157,7 +160,7 @@ classify_indels(
 
     for (auto& indel : indels)
     {
-        digt_indel_info& ii(*indel);
+        GermlineDiploidIndelCallInfo& ii(*indel);
         classify_indel_impl(is_model_usable,ii,ii.first());
     }
 }
@@ -167,8 +170,9 @@ classify_indels(
 
 void
 ScoringModelManager::
-default_classify_site(const site_info& si,
-                      shared_call_info& call) const
+default_classify_site(
+    const GermlineSiteCallInfo& si,
+    GermlineVariantSimpleGenotypeInfo& call) const
 {
     if (opt.is_min_gqx)
     {
@@ -206,7 +210,8 @@ default_classify_site(const site_info& si,
 // default rules based indel model
 void
 ScoringModelManager::
-default_classify_indel(shared_indel_call_info& call) const
+default_classify_indel(
+    GermlineIndelSimpleGenotypeInfo& call) const
 {
     if (this->opt.is_min_gqx)
     {

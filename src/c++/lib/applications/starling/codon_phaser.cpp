@@ -37,9 +37,9 @@
 #endif
 
 
-void Codon_phaser::process(std::unique_ptr<site_info> site)
+void Codon_phaser::process(std::unique_ptr<GermlineSiteCallInfo> site)
 {
-    std::unique_ptr<digt_site_info> si(downcast<digt_site_info>(std::move(site)));
+    std::unique_ptr<GermlineDiploidSiteCallInfo> si(downcast<GermlineDiploidSiteCallInfo>(std::move(site)));
     if (opt.do_codon_phasing && (is_phasable_site(si) || is_in_block()))
     {
         auto emptyBuffer = add_site(std::move(si));
@@ -65,7 +65,7 @@ void Codon_phaser::flush_impl()
 }
 
 // the Codon phaser can't work across indels, so flush any in-progress phasing
-void Codon_phaser::process(std::unique_ptr<indel_info> ii)
+void Codon_phaser::process(std::unique_ptr<GermlineIndelCallInfo> ii)
 {
     if (opt.do_codon_phasing && is_in_block())
     {
@@ -90,7 +90,7 @@ void Codon_phaser::output_buffer()
 
 // Add a SNP site to the phasing buffer
 bool
-Codon_phaser::add_site(std::unique_ptr<digt_site_info> si)
+Codon_phaser::add_site(std::unique_ptr<GermlineDiploidSiteCallInfo> si)
 {
 #ifdef DEBUG_CODON
     log_os << __FUNCTION__ << ": input si " << *si << "\n";
@@ -361,7 +361,7 @@ create_phased_record()
                 is_min_gq_idx1 = true;
             }
             min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
-            min_EVS = std::min(si->smod.EVS,min_EVS);
+            min_EVS = std::min(si->smod.empiricalVariantScore,min_EVS);
         }
     }
     if (!is_min_gq_idx0)
@@ -460,7 +460,7 @@ create_phased_record()
     base->dgt.genome.snp_qphred  = min_qual;
     base->dgt.phredLoghood       = pls;
     base->smod.gqx               = std::min(min_gq,min_qual);
-    base->smod.EVS            = min_EVS;
+    base->smod.empiricalVariantScore            = min_EVS;
 
     base->phased_alt = alt.str();
     base->phased_AD  = AD.str();

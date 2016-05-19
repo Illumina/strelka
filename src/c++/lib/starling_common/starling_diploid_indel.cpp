@@ -24,12 +24,12 @@
 
 
 
-const int starling_diploid_indel_core::maxQ = 999;
+const int GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ = 999;
 
 
 
 void
-starling_diploid_indel_core::
+GermlineDiploidIndelSimpleGenotypeInfoCore::
 dump(std::ostream& os) const
 {
     os << "ploidy=" << ploidy
@@ -48,7 +48,7 @@ void
 starling_diploid_indel::
 dump(std::ostream& os) const
 {
-    starling_diploid_indel_core::dump(os);
+    GermlineDiploidIndelSimpleGenotypeInfoCore::dump(os);
     os << ",pprob=[";
 
     bool isFirst(true);

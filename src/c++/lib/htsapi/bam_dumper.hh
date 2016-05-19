@@ -37,10 +37,7 @@ struct bam_dumper
     ~bam_dumper();
 
     void
-    put_record(const bam1_t* brec)
-    {
-        sam_write1(_hfp,_hdr,brec);
-    }
+    put_record(const bam1_t* brec);
 
     const char* name() const
     {

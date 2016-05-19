@@ -68,7 +68,7 @@ call(
     static PileupCleaner pileupCleaner(_opt);
     const bool is_forced(true);
 
-    std::unique_ptr<digt_site_info> si(new digt_site_info(pos,pi.get_ref_base(),pi,_opt.used_allele_count_min_qscore, is_forced));
+    std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(pos,pi.get_ref_base(),pi,_opt.used_allele_count_min_qscore, is_forced));
 
     // recreate data cache:
     CleanedPileup cpi;

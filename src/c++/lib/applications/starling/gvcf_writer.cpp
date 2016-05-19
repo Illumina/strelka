@@ -95,7 +95,7 @@ void gvcf_writer::write_block_site_record()
 
 
 
-void gvcf_writer::filter_site_by_last_indel_overlap(digt_site_info& si)
+void gvcf_writer::filter_site_by_last_indel_overlap(GermlineDiploidSiteCallInfo& si)
 {
     if (_last_indel)
     {
@@ -118,7 +118,7 @@ skip_to_pos(const pos_t target_pos)
     // advance through any indel region by adding individual sites
     while (_head_pos<target_pos)
     {
-        digt_site_info si = get_empty_site(_head_pos);
+        GermlineDiploidSiteCallInfo si = get_empty_site(_head_pos);
 
         add_site_internal(si);
         // Don't do compressed ranges if there is an overlapping indel
@@ -135,38 +135,38 @@ skip_to_pos(const pos_t target_pos)
 }
 
 
-void gvcf_writer::process(std::unique_ptr<site_info> si)
+void gvcf_writer::process(std::unique_ptr<GermlineSiteCallInfo> si)
 {
     skip_to_pos(si->pos);
 
-    if (dynamic_cast<digt_site_info*>(si.get()) != nullptr)
+    if (dynamic_cast<GermlineDiploidSiteCallInfo*>(si.get()) != nullptr)
     {
-        add_site_internal(*downcast<digt_site_info>(std::move(si)));
+        add_site_internal(*downcast<GermlineDiploidSiteCallInfo>(std::move(si)));
     }
     else
     {
-        add_site_internal(*downcast<continuous_site_info>(std::move(si)));
+        add_site_internal(*downcast<GermlineContinuousSiteCallInfo>(std::move(si)));
     }
 
 }
 
-void gvcf_writer::process(std::unique_ptr<indel_info> ii)
+void gvcf_writer::process(std::unique_ptr<GermlineIndelCallInfo> ii)
 {
     skip_to_pos(ii->pos);
 
     // flush any non-variant block before starting:
     write_block_site_record();
 
-    if (dynamic_cast<digt_indel_info*>(ii.get()) != nullptr)
+    if (dynamic_cast<GermlineDiploidIndelCallInfo*>(ii.get()) != nullptr)
     {
-        auto ii_digt(downcast<digt_indel_info>(std::move(ii)));
+        auto ii_digt(downcast<GermlineDiploidIndelCallInfo>(std::move(ii)));
 
         write_indel_record(*ii_digt);
         _last_indel = std::move(ii_digt);
     }
     else
     {
-        write_indel_record(*downcast<continuous_indel_info>(std::move(ii)));
+        write_indel_record(*downcast<GermlineContinuousIndelCallInfo>(std::move(ii)));
     }
 }
 
@@ -181,7 +181,7 @@ void gvcf_writer::flush_impl()
 void
 gvcf_writer::
 add_site_internal(
-    digt_site_info& si)
+    GermlineDiploidSiteCallInfo& si)
 {
     filter_site_by_last_indel_overlap(si);
     if (si.smod.is_phased_region)
@@ -199,7 +199,7 @@ add_site_internal(
 void
 gvcf_writer::
 add_site_internal(
-    continuous_site_info& si)
+    GermlineContinuousSiteCallInfo& si)
 {
     // TODO: phasing
     _head_pos=si.pos+1;
@@ -213,7 +213,7 @@ add_site_internal(
 static
 void
 get_visible_alt_order(
-    const digt_site_info& si,
+    const GermlineDiploidSiteCallInfo& si,
     std::vector<uint8_t>& altOrder)
 {
     altOrder.clear();
@@ -260,7 +260,7 @@ print_vcf_alt(
 static
 void
 print_site_ad(
-    const site_info& si,
+    const GermlineSiteCallInfo& si,
     const std::vector<uint8_t>& altOrder,
     std::ostream& os)
 {
@@ -277,7 +277,7 @@ print_site_ad(
 static
 void
 print_site_ad_strand(
-    const site_info& si,
+    const GermlineSiteCallInfo& si,
     const std::vector<uint8_t>& altOrder,
     const bool is_fwd_strand,
     std::ostream& os)
@@ -296,7 +296,7 @@ print_site_ad_strand(
 void
 gvcf_writer::
 write_site_record(
-    const digt_site_info& si) const
+    const GermlineDiploidSiteCallInfo& si) const
 {
     std::ostream& os(*_osptr);
 
@@ -426,9 +426,9 @@ write_site_record(
     }
     if (si.smod.is_gqx())
     {
-        if (si.smod.EVS>=0)
+        if (si.smod.empiricalVariantScore>=0)
         {
-            os << si.smod.EVS;
+            os << si.smod.empiricalVariantScore;
         }
         else
         {
@@ -509,7 +509,7 @@ write_site_record(
 void
 gvcf_writer::
 write_site_record(
-    const continuous_site_info& si) const
+    const GermlineContinuousSiteCallInfo& si) const
 {
     bool site_is_nonref = si.is_nonref();
     auto ref_base_id = base_to_id(si.ref);
@@ -682,7 +682,7 @@ write_site_record(
 void
 gvcf_writer::
 write_indel_record(
-    const digt_indel_info& ii) const
+    const GermlineDiploidIndelCallInfo& ii) const
 {
     std::ostream& os(*_osptr);
     auto& call(ii.first());
@@ -772,13 +772,13 @@ write_indel_record(
     os << ii.get_gt() << ':'
        << call.gq;
 
-    os << ':' << ((call.EVS>=0) ? call.EVS : call.gqx);
+    os << ':' << ((call.empiricalVariantScore>=0) ? call.empiricalVariantScore : call.gqx);
 
     os << ':' << call._isri.depth;
 
     // SAMPLE AD/ADF/ADR:
     {
-        auto orderRefReads = [](const digt_indel_call& a, const digt_indel_call& b)
+        auto orderRefReads = [](const GermlineDiploidIndelSimpleGenotypeInfo& a, const GermlineDiploidIndelSimpleGenotypeInfo& b)
         {
             return (a._isri.n_q30_ref_reads < b._isri.n_q30_ref_reads);
         };
@@ -845,7 +845,7 @@ write_indel_record(
         const auto& pls0(ii._calls[0]._dindel.phredLoghood);
         const auto& pls1(ii._calls[1]._dindel.phredLoghood);
 
-        os << starling_diploid_indel_core::maxQ << ','
+        os << GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ << ','
            << pls1[NOINDEL] << ','
            << pls0[HOM] << ','
            << pls0[NOINDEL] << ','
@@ -865,7 +865,7 @@ write_indel_record(
 void
 gvcf_writer::
 write_indel_record(
-    const continuous_indel_info& ii) const
+    const GermlineContinuousIndelCallInfo& ii) const
 {
     std::ostream& os(*_osptr);
 

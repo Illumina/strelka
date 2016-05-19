@@ -58,10 +58,10 @@ BOOST_AUTO_TEST_CASE( call_from_counts )
         pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
 
 
-    continuous_site_info info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
+    GermlineContinuousSiteCallInfo info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
 
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
-    auto C = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto C = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::C;
     });
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE( call_from_counts )
     BOOST_CHECK_EQUAL(40, C->gq);
     BOOST_CHECK_EQUAL(70, C->_totalDepth);
 
-    auto G = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto G = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::G;
     });
@@ -79,13 +79,13 @@ BOOST_AUTO_TEST_CASE( call_from_counts )
     BOOST_CHECK_EQUAL(40, G->gq);
     BOOST_CHECK_EQUAL(70, G->_totalDepth);
 
-    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::T;
     });
     BOOST_CHECK(T == info.calls.end());
 
-    auto A = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto A = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::A;
     });
@@ -113,16 +113,16 @@ BOOST_AUTO_TEST_CASE( do_not_call_low_vf )
         pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
 
 
-    continuous_site_info info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
+    GermlineContinuousSiteCallInfo info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
 
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
-    auto C = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto C = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::C;
     });
     BOOST_CHECK(C == info.calls.end());
 
-    auto A = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto A = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::A;
     });
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE( do_not_call_low_vf )
     BOOST_CHECK_EQUAL(40, A->gq);
     BOOST_CHECK_EQUAL(100, A->_totalDepth);
 
-    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::T;
     });
@@ -161,10 +161,10 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
         pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
 
 
-    continuous_site_info info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf, true);
+    GermlineContinuousSiteCallInfo info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf, true);
 
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
-    auto C = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto C = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::C;
     });
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     // below min het vf GT should be 0/0 (STAR-66)
     BOOST_CHECK(0 == strcmp(info.get_gt(*C), "0/0"));
 
-    auto A = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto A = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::A;
     });
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     BOOST_CHECK_EQUAL(100, A->_totalDepth);
     BOOST_CHECK(0 == strcmp(info.get_gt(*A), "0/0"));
 
-    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::T;
     });
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
 
     // G will be called since it is forced output
     // below min het vf GT should be 0/0 (STAR-66)
-    auto G = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto G = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::G;
     });
@@ -221,11 +221,11 @@ BOOST_AUTO_TEST_CASE( homalt_called_correctly )
         pileup.calls.emplace_back(base_to_id('T'), 30, false, 0, 0, false, false, false, false, false);
 
 
-    continuous_site_info info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
+    GermlineContinuousSiteCallInfo info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
 
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
 
-    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const continuous_site_call& call)
+    auto T = std::find_if(info.calls.begin(), info.calls.end(), [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
     {
         return call._base == BASE_ID::T;
     });
@@ -245,11 +245,7 @@ BOOST_AUTO_TEST_CASE( compute_sb )
     // chr1 16892310, SB: -65.243244, fwdAlt: 0, revAlt:62, fwdOther:190, revOther:8
     // diplod one returns 131.7
     BOOST_CHECK_CLOSE_FRACTION(-65.243244, starling_continuous_variant_caller::strand_bias(0,62, 190, 8, .01), 0.0001);
-
-
-
 }
-
 
 
 BOOST_AUTO_TEST_SUITE_END()

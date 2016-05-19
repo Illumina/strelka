@@ -35,7 +35,7 @@ variant_prefilter_stage::variant_prefilter_stage(const ScoringModelManager& mode
 static
 void
 set_site_gt(const diploid_genotype::result_set& rs,
-            digt_call_info& smod)
+            GermlineDiploidSiteSimpleGenotypeInfo& smod)
 {
     smod.max_gt=rs.max_gt;
     smod.gqx=rs.max_gt_qphred;
@@ -44,8 +44,8 @@ set_site_gt(const diploid_genotype::result_set& rs,
 
 
 void variant_prefilter_stage::add_site_modifiers(
-    const digt_site_info& si,
-    digt_call_info& smod,
+    const GermlineDiploidSiteCallInfo& si,
+    GermlineDiploidSiteSimpleGenotypeInfo& smod,
     const ScoringModelManager& model)
 {
     smod.clear();
@@ -81,11 +81,11 @@ void variant_prefilter_stage::add_site_modifiers(
     model.classify_site(si, smod);
 }
 
-void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
+void variant_prefilter_stage::process(std::unique_ptr<GermlineSiteCallInfo> info)
 {
-    if (dynamic_cast<digt_site_info*>(info.get()) != nullptr)
+    if (dynamic_cast<GermlineDiploidSiteCallInfo*>(info.get()) != nullptr)
     {
-        auto si(downcast<digt_site_info>(std::move(info)));
+        auto si(downcast<GermlineDiploidSiteCallInfo>(std::move(info)));
 
         add_site_modifiers(*si, si->smod, _model);
         if (si->dgt.is_haploid())
@@ -111,7 +111,7 @@ void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
     }
     else
     {
-        auto si(downcast<continuous_site_info>(std::move(info)));
+        auto si(downcast<GermlineContinuousSiteCallInfo>(std::move(info)));
         for (auto& call : si->calls)
         {
             _model.default_classify_site(*si, call);
@@ -121,11 +121,11 @@ void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
     }
 }
 
-void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
+void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelCallInfo> info)
 {
-    if (dynamic_cast<digt_indel_info*>(info.get()) != nullptr)
+    if (dynamic_cast<GermlineDiploidIndelCallInfo*>(info.get()) != nullptr)
     {
-        auto ii(downcast<digt_indel_info>(std::move(info)));
+        auto ii(downcast<GermlineDiploidIndelCallInfo>(std::move(info)));
 
         // we can't handle breakends at all right now:
         if (ii->first()._ik.is_breakpoint()) return;
@@ -140,7 +140,7 @@ void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
     }
     else
     {
-        auto ii(downcast<continuous_indel_info>(std::move(info)));
+        auto ii(downcast<GermlineContinuousIndelCallInfo>(std::move(info)));
 
         // we can't handle breakends at all right now:
         for (const auto& call : ii->calls)

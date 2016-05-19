@@ -30,20 +30,19 @@
 ///
 /// Per suggestion from: http://stackoverflow.com/questions/19997646/no-implicit-copy-constructor-in-polymorphic-class
 ///
-struct polymorphicObject
+struct PolymorphicObject
 {
-
-    polymorphicObject() = default;
-    virtual ~polymorphicObject() = default;
+	PolymorphicObject() = default;
+    virtual ~PolymorphicObject() = default;
 
     explicit
-    polymorphicObject(const polymorphicObject&) = default;
-    polymorphicObject& operator =(const polymorphicObject&) = default;
+    PolymorphicObject(const PolymorphicObject&) = default;
+    PolymorphicObject& operator =(const PolymorphicObject&) = default;
 
 #if ((!defined(_MSC_VER)) || (_MSC_VER > 1800))
     // support moving
     explicit
-    polymorphicObject(polymorphicObject&&) = default;
-    polymorphicObject& operator=(polymorphicObject&&) = default;
+    PolymorphicObject(PolymorphicObject&&) = default;
+    PolymorphicObject& operator=(PolymorphicObject&&) = default;
 #endif
 };

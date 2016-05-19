@@ -27,7 +27,7 @@
 
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
-#include "blt_util/polymorphicObject.hh"
+#include "blt_util/PolymorphicObject.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
 #include <bitset>
@@ -117,19 +117,19 @@ get_label(const unsigned idx)
 }
 
 
-
 /// this object contains information shared by any germline variant allele
 ///
 /// variant here means SNV or indel
 ///
-/// allele here means we enumerate information primarily pertaining to a single allele and it's interaction with the reference
-///  (this division doesn't strictly hold for SNVS)
+/// SimpleGenotype here means information pertaining to the core genotyping algorithm for SNVs or Indels (where for indels this genotype is
+///    restricted to a single alt allele). This information is suplemnted with additional details requred for full VCF records in the "Call"
+///    objects further below
 ///
 /// model types where this is used include diploid/haploid and continuous single sample calling, but not contrastive (ie. tumor-normal) models
 ///
-struct shared_call_info : polymorphicObject
+struct GermlineVariantSimpleGenotypeInfo : public PolymorphicObject
 {
-    shared_call_info()
+    GermlineVariantSimpleGenotypeInfo()
     {
         clear();
     }
@@ -155,7 +155,7 @@ struct shared_call_info : polymorphicObject
         gqx = 0;
         gq = 0;
         strand_bias = 0;
-        EVS = -1;
+        empiricalVariantScore = -1;
         filters.reset();
     }
 
@@ -164,20 +164,22 @@ struct shared_call_info : polymorphicObject
     double strand_bias = 0;
 
     // The empirically calibrated quality-score of the site, if -1 no EVS is available
-    int EVS = -1;
+    int empiricalVariantScore = -1;
 
     std::bitset<GERMLINE_VARIANT_VCF_FILTERS::SIZE> filters;
 };
 
+std::ostream& operator<<(std::ostream& os,const GermlineVariantSimpleGenotypeInfo& shmod);
 
-std::ostream& operator<<(std::ostream& os,const shared_call_info& shmod);
 
-struct shared_indel_call_info : public shared_call_info
+/// restrict to the case where variant is indel
+struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
-    shared_indel_call_info(const indel_key& ik,
-                           const indel_data& id,
-                           const starling_indel_report_info iri,
-                           const starling_indel_sample_report_info& isri)
+    GermlineIndelSimpleGenotypeInfo(
+		const indel_key& ik,
+		const indel_data& id,
+		const starling_indel_report_info iri,
+		const starling_indel_sample_report_info& isri)
         : _ik(ik)
         , _id(id)
         , _iri(iri)
@@ -197,27 +199,31 @@ struct shared_indel_call_info : public shared_call_info
     ALIGNPATH::path_t cigar;
 };
 
-std::ostream& operator<<(std::ostream& os,const shared_indel_call_info& shi);
+std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo& shi);
 
 
-struct digt_indel_call : public shared_indel_call_info
+/// restrict to diploid calling models
+struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
-    digt_indel_call(const indel_key& ik,
+    GermlineDiploidIndelSimpleGenotypeInfo(const indel_key& ik,
                     const indel_data& id,
                     const starling_indel_report_info& iri,
                     const starling_indel_sample_report_info& isri,
-                    const starling_diploid_indel_core& dindel)
-        : shared_indel_call_info(ik, id, iri, isri)
+                    const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
+        : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
         , _dindel(dindel)
     {
     }
 
-    // TODO: Make indel_overlapper create new call objects, then revert this to const
-    starling_diploid_indel_core _dindel;
+	/// TODO: this object is only here to trigger an auto copy ctor, seems like we can simplify now?
+    /// TODO: Make indel_overlapper create new call objects, then revert this to const
+    GermlineDiploidIndelSimpleGenotypeInfoCore _dindel;
+
+	/// TODO: max_gt is here and in _dindel. Ugggghhh. Document the difference or get this down to one copy
     unsigned max_gt=0;
 };
 
-std::ostream& operator<<(std::ostream& os,const digt_indel_call& dic);
+std::ostream& operator<<(std::ostream& os,const GermlineDiploidIndelSimpleGenotypeInfo& dic);
 
 
 
@@ -251,9 +257,11 @@ get_label(const unsigned idx)
 }
 }
 
-struct digt_call_info : public shared_call_info
+
+/// restrict to the case where variant is site/SNV and calling model is diploid
+struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
-    digt_call_info()
+    GermlineDiploidSiteSimpleGenotypeInfo()
     {
         clear();
     }
@@ -261,7 +269,7 @@ struct digt_call_info : public shared_call_info
     void
     clear()
     {
-        shared_call_info::clear();
+        GermlineVariantSimpleGenotypeInfo::clear();
         is_unknown=true;
         is_covered=false;
         is_used_covered=false;
@@ -288,9 +296,11 @@ struct digt_call_info : public shared_call_info
     unsigned max_gt;
 };
 
-struct continuous_site_call : public shared_call_info
+
+/// restrict to the case where variant is site/SNV and calling model is continuous
+struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
-    continuous_site_call(int totalDepth, int alleleDepth, BASE_ID::index_t base)
+    GermlineContinuousSiteSimpleGenotypeInfo(int totalDepth, int alleleDepth, BASE_ID::index_t base)
         : _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
         , _base(base)
@@ -306,11 +316,13 @@ struct continuous_site_call : public shared_call_info
     BASE_ID::index_t _base;
 };
 
-struct continuous_indel_call : public shared_indel_call_info
+
+/// restrict to the case where variant is indel and calling model is continuous
+struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
-    continuous_indel_call(unsigned totalDepth, unsigned alleleDepth,
+    GermlineContinuousIndelSimpleGenotypeInfo(unsigned totalDepth, unsigned alleleDepth,
                           const indel_key& ik, const indel_data& id, const starling_indel_report_info& iri, const starling_indel_sample_report_info& isri)
-        : shared_indel_call_info(ik, id, iri, isri)
+        : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
         , _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
     {
@@ -325,18 +337,17 @@ struct continuous_indel_call : public shared_indel_call_info
     unsigned _alleleDepth;
 };
 
+std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteSimpleGenotypeInfo& smod);
 
 
-std::ostream& operator<<(std::ostream& os,const digt_call_info& smod);
-
-struct indel_info
+/// represents an indel call at the level of a full VCF record, containing possibly multiple alleles/SimpleGenotypes
+struct GermlineIndelCallInfo
 {
-    explicit indel_info(const pos_t init_pos)
+    explicit GermlineIndelCallInfo(const pos_t init_pos)
         : pos(init_pos)
-    {
-    }
+    {}
 
-    virtual ~indel_info() {}
+    virtual ~GermlineIndelCallInfo() {}
 
     virtual bool is_forced_output() const = 0;
     virtual bool is_indel() const = 0;
@@ -348,13 +359,14 @@ struct indel_info
 };
 
 
-struct digt_indel_info : public indel_info
+/// specify that calling model is diploid
+struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
 {
-    digt_indel_info(const indel_key& init_ik,
+    GermlineDiploidIndelCallInfo(const indel_key& init_ik,
                     const indel_data& init_id,
-                    const starling_diploid_indel_core& init_dindel,
+                    const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
                     const starling_indel_report_info& init_iri,
-                    const starling_indel_sample_report_info& init_isri) : indel_info(init_ik.pos)
+                    const starling_indel_sample_report_info& init_isri) : GermlineIndelCallInfo(init_ik.pos)
     {
         _calls.emplace_back(init_ik, init_id, init_iri, init_isri, init_dindel);
     }
@@ -362,14 +374,14 @@ struct digt_indel_info : public indel_info
     bool is_forced_output() const override
     {
         return std::any_of(_calls.begin(), _calls.end(),
-                           [](const digt_indel_call& x)
+                           [](const GermlineDiploidIndelSimpleGenotypeInfo& x)
         {
             return x._dindel.is_forced_output;
         });
     }
     bool is_indel() const override
     {
-        return std::any_of(_calls.begin(), _calls.end(), [](const digt_indel_call& x)
+        return std::any_of(_calls.begin(), _calls.end(), [](const GermlineDiploidIndelSimpleGenotypeInfo& x)
         {
             return x._dindel.is_indel;
         });
@@ -380,7 +392,7 @@ struct digt_indel_info : public indel_info
     }
     pos_t end() const override;
 
-    void add_overlap(const reference_contig_segment& ref, digt_indel_info& overlap);
+    void add_overlap(const reference_contig_segment& ref, GermlineDiploidIndelCallInfo& overlap);
 
     const char*
     get_gt() const
@@ -454,11 +466,11 @@ struct digt_indel_info : public indel_info
     std::map<std::string, double>
     get_indel_qscore_features(const double chrom_depth) const;
 
-    const digt_indel_call& first() const
+    const GermlineDiploidIndelSimpleGenotypeInfo& first() const
     {
         return _calls.front();
     }
-    digt_indel_call& first()
+    GermlineDiploidIndelSimpleGenotypeInfo& first()
     {
         return _calls.front();
     }
@@ -479,15 +491,15 @@ public:
     // used to flag hetalt
     bool _is_overlap=false;
 
-    std::vector<digt_indel_call> _calls;
+    std::vector<GermlineDiploidIndelSimpleGenotypeInfo> _calls;
 };
 
 
 
-//Data structure defining parameters for a single site to be used for writing in gvcf_aggregator
-struct site_info : public polymorphicObject
+/// represents an site call at the level of a full VCF record, containing possibly multiple alleles
+struct GermlineSiteCallInfo : public PolymorphicObject
 {
-    site_info(const pos_t init_pos,
+    GermlineSiteCallInfo(const pos_t init_pos,
               const char init_ref,
               const snp_pos_info& good_pi,
               const int used_allele_count_min_qscore,
@@ -501,7 +513,7 @@ struct site_info : public polymorphicObject
         spanning_deletions = good_pi.n_spandel;
     }
 
-    site_info() = default;
+    GermlineSiteCallInfo() = default;
 
     virtual bool is_snp() const = 0;
     virtual void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) = 0;
@@ -537,18 +549,18 @@ private:
 };
 
 
-
-struct digt_site_info : public site_info
+/// specify that calling model is diploid
+struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
 {
-    digt_site_info(const pos_t init_pos,
+    GermlineDiploidSiteCallInfo(const pos_t init_pos,
                    const char init_ref,
                    const snp_pos_info& good_pi,
                    const int used_allele_count_min_qscore,
                    const bool is_forced_output = false)
-        : site_info(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output)
+        : GermlineSiteCallInfo(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output)
     {}
 
-    digt_site_info() = default;
+    GermlineDiploidSiteCallInfo() = default;
 
     bool is_snp() const override
     {
@@ -633,23 +645,26 @@ struct digt_site_info : public site_info
     double rawPos = 0;
     unsigned mapq_zero = 0;     // The number of spanning reads that do not pass the command-line mapq test
 
-    digt_call_info smod;
+    GermlineDiploidSiteSimpleGenotypeInfo smod;
 };
 
-std::ostream& operator<<(std::ostream& os,const digt_site_info& si);
+std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteCallInfo& si);
 
-struct continuous_site_info : public site_info
+
+/// specify that variant is site/SNV and a continuous frequency calling model
+struct GermlineContinuousSiteCallInfo : public GermlineSiteCallInfo
 {
-    continuous_site_info(const pos_t init_pos,
-                         const char init_ref,
-                         const snp_pos_info& good_pi,
-                         const int used_allele_count_min_qscore,
-                         const double min_het_vf,
-                         const bool is_forced_output = false) : site_info(init_pos,
-                                                                              init_ref,
-                                                                              good_pi,
-                                                                              used_allele_count_min_qscore,
-                                                                              is_forced_output)
+    GermlineContinuousSiteCallInfo(
+		const pos_t init_pos,
+		const char init_ref,
+		const snp_pos_info& good_pi,
+		const int used_allele_count_min_qscore,
+		const double min_het_vf,
+		const bool is_forced_output = false) : GermlineSiteCallInfo(init_pos,
+			init_ref,
+			good_pi,
+			used_allele_count_min_qscore,
+			is_forced_output)
         , _min_het_vf(min_het_vf)
     {
     }
@@ -667,7 +682,7 @@ struct continuous_site_info : public site_info
         auto ref_id = base_to_id(ref);
         return calls.end() !=
                std::find_if(calls.begin(), calls.end(),
-                            [&](const continuous_site_call& call)
+                            [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
         {
             return call._base != ref_id;
         });
@@ -676,7 +691,7 @@ struct continuous_site_info : public site_info
     bool _is_snp = false;
 
 
-    const char* get_gt(const continuous_site_call& call) const
+    const char* get_gt(const GermlineContinuousSiteSimpleGenotypeInfo& call) const
     {
         if (call._base == base_to_id(ref))
             return "0/0";
@@ -688,19 +703,21 @@ struct continuous_site_info : public site_info
             return "0/1";
     }
 
-    std::vector<continuous_site_call> calls;
+    std::vector<GermlineContinuousSiteSimpleGenotypeInfo> calls;
 private:
     double _min_het_vf;
 };
 
-struct continuous_indel_info : public indel_info
+
+/// specify that variant is indel and a continuous frequency calling model
+struct GermlineContinuousIndelCallInfo : public GermlineIndelCallInfo
 {
-    explicit continuous_indel_info(const pos_t init_pos)
-        : indel_info(init_pos)
+    explicit GermlineContinuousIndelCallInfo(const pos_t init_pos)
+        : GermlineIndelCallInfo(init_pos)
     {
     }
 
-    void set_filter (GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
+    void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
         for (auto& call : calls) call.set_filter(filter);
     }
@@ -740,10 +757,9 @@ struct continuous_indel_info : public indel_info
             return "1/1";
     }
 
-    std::vector<continuous_indel_call> calls;
+    std::vector<GermlineContinuousIndelSimpleGenotypeInfo> calls;
     bool is_het=false;
-
-
 };
+
 
 

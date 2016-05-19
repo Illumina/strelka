@@ -32,7 +32,7 @@
 
 /// manages compressed site record blocks output in the gVCF
 ///
-struct gvcf_block_site_record : public shared_call_info
+struct gvcf_block_site_record : public GermlineVariantSimpleGenotypeInfo
 {
     explicit
     gvcf_block_site_record(const gvcf_options& opt)
@@ -55,20 +55,20 @@ struct gvcf_block_site_record : public shared_call_info
         has_call = is_covered = is_used_covered = is_nonref=false;
         ploidy = 0;
 
-        shared_call_info::clear();
+        GermlineVariantSimpleGenotypeInfo::clear();
     }
 
     /// determine if the given site could be joined to this block:
-    bool test(const digt_site_info& si) const;
+    bool test(const GermlineDiploidSiteCallInfo& si) const;
 
     /// add site to the current block
-    void join(const digt_site_info& si);
+    void join(const GermlineDiploidSiteCallInfo& si);
 
     /// determine if the given site could be joined to this block:
-    bool test(const continuous_site_info& si) const;
+    bool test(const GermlineContinuousSiteCallInfo& si) const;
 
     /// add site to the current block
-    void join(const continuous_site_info& si);
+    void join(const GermlineContinuousSiteCallInfo& si);
 
     const char* get_gt() const
     {
