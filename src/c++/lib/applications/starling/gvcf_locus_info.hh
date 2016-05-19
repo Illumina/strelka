@@ -118,12 +118,14 @@ get_label(const unsigned idx)
 
 
 
-/// this object contains information shared by any germline
-/// variant call.
+/// this object contains information shared by any germline variant allele
 ///
 /// variant here means SNV or indel
-/// 'call' here means level of a vcf record, so values pertain to possibly more than one allele composing a genotype
-/// model types where this is used include diploid/haploid and continuous single sample, but not cancer
+///
+/// allele here means we enumerate information primarily pertaining to a single allele and it's interaction with the reference
+///  (this division doesn't strictly hold for SNVS)
+///
+/// model types where this is used include diploid/haploid and continuous single sample calling, but not contrastive (ie. tumor-normal) models
 ///
 struct shared_call_info : polymorphicObject
 {
