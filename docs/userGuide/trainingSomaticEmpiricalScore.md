@@ -43,10 +43,10 @@ TP/FP/FN labeling can be produced as follows:
 
 ```
 python ${STRELKA_INSTALL_PATH}/share/scoringModelTraining/somatic/bin/vcf_to_feature_csv.py \
-    --truth ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/PG_admix_truth_snvs_chr21:1-25000000.vcf.gz \
+    --truth ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/PG_admix_truth_snvs_chr21_1-25000000.vcf.gz \
     --features strelka.snv \
     --output admix_training_data.csv \
-    ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/strelka_admix_snvs_chr21:1-25000000.vcf.gz
+    ${STRELKA_INSTALL_PATH}/share/demo/strelka/data/strelka_admix_snvs_chr21_1-25000000.vcf.gz
 ```
 
 This script supports additional bed file inputs to define FP and ambiguous regions, see script usage
