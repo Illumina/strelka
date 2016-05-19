@@ -153,6 +153,15 @@ These options are useful for workflow development and debugging:
 
 #### `--quiet`
 Stderr logging can be disabled with `--quiet` argument. Note this log is replicated to `${COUNTS_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt` so there is no loss of log information.
+
+#### `--excludedRegion`
+The pattern analyzer can be instructed to avoid particular regions of the genome by passing a tabixed BED file with the `--excludedRegion` argument.  This can be used to exclude, for instance, mitochondrial and sex chromosomes, or regions of the genome that look unreliable (e.g. non-platinum regions when using a Platinum Genomes individual).
+
+#### `--knownVariants`
+The pattern analyzer can be supplied with a list of known variants in VCF format with the `--knownVariants` argument.  Pattern analyzer output will then be labeled according to the number of times a particular pattern overlaps a known variant present in the VCF.  The labels are currently "Unknown" for patterns that do not overlap a known variant call, and "Variant" for those that do.  This is currently limited to indels.
+
+One strategy would be to combine the `--excludedRegion` argument to exclude non-platinum regions and the `--knownVariant` argument to label platinum variants in a Platinum Genomes sample.  This would provide "Unknown" patterns that either are in confident homref regions or do not match a platinum variant at a variant site, and "Variant" patterns that overlap high-confidence indel calls.
+
 #### `--reportObservedIndels`
 Extended context details for each observed indel can be reported with the `--reportObservedIndels` argument.  This command will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/results` with a BED file titled `strelkaObservedIndel.bed.gz` which will report each observed indel as a single record.  In addition to the standard BED fields, it will also output the following additional fields:
 
@@ -190,7 +199,7 @@ If you would like to get the complete contents of the file, which could be usefu
 |       6 | total_alt      | Total alternate allele coverage                  |
 |       7 | times_observed | Number of times this configuration is observed   |
 
-Both alts and alt_counts are comma-delimited lists.  The first 5 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles and 30x coverage), while the final field provides the number of times it was observed.
+Both alts and alt_counts are comma-delimited lists.  The first 6 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles, no known variants, and 30x coverage), while the final field provides the number of times it was observed.
 
 
 ## Error model parameter estimation
