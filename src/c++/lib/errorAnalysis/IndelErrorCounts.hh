@@ -126,7 +126,7 @@ const char*
 label(
     const variant_t var)
 {
-    switch(var)
+    switch (var)
     {
     case UNKNOWN:
         return "Unknown";

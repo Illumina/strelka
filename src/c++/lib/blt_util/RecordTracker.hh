@@ -63,12 +63,12 @@ struct IndelVariantSort
         const IndelVariant& rhs)
     {
         // respect the enum ordering in indel_core
-        if(lhs.type < rhs.type) return true;
-        if(lhs.type == rhs.type)
+        if (lhs.type < rhs.type) return true;
+        if (lhs.type == rhs.type)
         {
             // if both indels have the same type, the shorter one
             // is less than the larger one
-            if(lhs.length < rhs.length) return true;
+            if (lhs.length < rhs.length) return true;
         }
 
         return false;
@@ -82,7 +82,7 @@ struct IndelGenotype
     bool
     operator==(const IndelGenotype& rhs) const
     {
-        if(vcfr.pos == rhs.vcfr.pos && genotype == rhs.genotype) return true;
+        if (vcfr.pos == rhs.vcfr.pos && genotype == rhs.genotype) return true;
         return false;
     }
 
@@ -109,11 +109,11 @@ struct IndelGenotypeSort
         const IndelGenotype& rhs)
     {
 
-        if(lhs.vcfr.pos < rhs.vcfr.pos) return true;
-        if(lhs.vcfr.pos == rhs.vcfr.pos)
+        if (lhs.vcfr.pos < rhs.vcfr.pos) return true;
+        if (lhs.vcfr.pos == rhs.vcfr.pos)
         {
             // respect STAR_DIINDEL genotype ordering
-            if(lhs.genotype < rhs.genotype) return true;
+            if (lhs.genotype < rhs.genotype) return true;
         }
 
         // I'm assuming that VCF records beginning at the same position
@@ -160,7 +160,7 @@ struct RecordTracker
     addVcfRecord(
         const vcf_record& vcfRecord);
 
-    void 
+    void
     dump(
         std::ostream& os) const;
 

@@ -194,7 +194,7 @@ reportExtendedContext(
     }
 
     printExtendedContext(context, data, cTotal, refReadTotal,
-        noiseLocusRefReadTotal, noiseLocusAltQualCounts, os);
+                         noiseLocusRefReadTotal, noiseLocusAltQualCounts, os);
 }
 
 

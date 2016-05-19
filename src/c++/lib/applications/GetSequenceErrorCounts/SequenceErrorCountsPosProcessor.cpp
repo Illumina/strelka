@@ -124,16 +124,16 @@ isKnownVariantMatch(
     const indel_data& id,
     RecordTracker::indel_value_t& overlap)
 {
-    if(knownVariants.empty()) return false;
+    if (knownVariants.empty()) return false;
 
     // the variant matches a known variant
     // if it overlaps a known record and has
     // the same type and length.  If the
     // known variant is an insertion, then
     // the inserted sequence must match
-    for(const auto& kv : knownVariants)
+    for (const auto& kv : knownVariants)
     {
-        if(kv.altMatch(ik, id)) overlap.insert(kv);
+        if (kv.altMatch(ik, id)) overlap.insert(kv);
         // if(kv.altMatch(ik, id))
         // {
         //     std::cout << "Indels match!\n";

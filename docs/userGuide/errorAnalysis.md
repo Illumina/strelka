@@ -16,6 +16,8 @@ Error Pattern Analyzer User Guide
   * [Execution](#execution)
   * [Advanced execution options](#advanced-execution-options)
     * [`--quiet`](#--quiet)
+    * [`--excludedRegion`](#--excludedregion)
+    * [`--knownVariants`](#--knownvariants)
     * [`--reportObservedIndels`](#--reportobservedindels)
 * [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput)
   * [Summary output](#summary-output)

@@ -67,7 +67,7 @@ extractFormatEntry(
     size_t next_start(0);
 
     // fast-forward to format field
-    for(unsigned i(0); i < format_index; ++i)
+    for (unsigned i(0); i < format_index; ++i)
     {
         field_start = vcf_line.find_first_of(field_sep, field_start) + 1;
     }
@@ -87,7 +87,7 @@ extractFormatEntry(
     size_t entry_index (std::count(format_string.begin(), format_string.begin() + entry_start, format_sep));
 
     size_t sample_entry_pos(0);
-    for(unsigned i(0); i < entry_index; ++i)
+    for (unsigned i(0); i < entry_index; ++i)
     {
         sample_entry_pos = sample_string.find_first_of(format_sep, sample_entry_pos) + 1;
     }
@@ -115,7 +115,7 @@ processTrueIndelVariantRecord(
     const vcf_record& vcfr,
     SequenceErrorCountsPosProcessor& sppr)
 {
-   /// TODO: the actual truth logic
+    /// TODO: the actual truth logic
     ///
     /// to make the problem incremental/easier consider:
     /// 1) only handle indels at first
@@ -276,7 +276,7 @@ getSequenceErrorCountsRun(
             }
             else if (INPUT_TYPE::KNOWN_VARIANTS == currentIndex)
             {
-                if(vcfRecord.is_indel())
+                if (vcfRecord.is_indel())
                 {
                     // processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord);
                     processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord, sppr);
