@@ -14,10 +14,10 @@ Error Pattern Analyzer User Guide
   * [Configuration](#configuration)
     * [Configuration: Excluding regions](#configuration-excluding-regions)
     * [Configuration: Annotating known variants](#configuration-annotating-known-variants)
+    * [Configuration: Report observed indels](#configuration-report-observed-indels)
   * [Execution](#execution)
   * [Advanced execution options](#advanced-execution-options)
     * [`--quiet`](#--quiet)
-    * [`--reportObservedIndels`](#--reportobservedindels)
 * [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput)
   * [Summary output](#summary-output)
   * [Extended output (for model development)](#extended-output-for-model-development)
@@ -120,6 +120,7 @@ Regions of the genome specified in a BED file may be marked for exclusion from t
     --excludedRegions=nonAutosomes.bed.gz
 
 #### Configuration: Annotating known variants
+
 A _single_ known variants VCF file can be supplied to distinguish pattern counts of known and unknown variants.  Pattern analyzer output will then be labeled according to the number of times it overlaps a known variant present in the VCF.  The labels are currently "Unknown" for patterns that do not overlap a known variant call, and "Variant" for those that do.  If a known variant VCF is not provided, all patterns are marked as "Unknown".  This is currently limited to indels.
 
     ${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py \
@@ -129,6 +130,32 @@ A _single_ known variants VCF file can be supplied to distinguish pattern counts
     --knownVariants=sample.knownVariant.vcf.gz
 
 One strategy would be to combine the `--excludedRegion` argument to exclude non-platinum regions and the `--knownVariant` argument to label platinum variants in a Platinum Genomes sample.  This would provide "Unknown" patterns that either are in confident homref regions or do not match a platinum variant at a variant site, and "Variant" patterns that overlap high-confidence indel calls.
+
+#### Configuration: Report observed indels
+
+Extended context details for each observed indel can optionally be reported in a BED file.
+
+
+    ${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py \
+    --bam=sample.bam \
+    --referenceFasta=hg19.fa \
+    --runDir ${COUNTS_ANALYSIS_PATH} \
+    --reportObservedIndels
+
+This argument will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/results` with a BED file titled `strelkaObservedIndel.bed.gz` where each observed indel as a single record.  In addition to the standard BED fields, it will also output the following additional fields:
+
+| Field # |         Description                                               |
+|--------:|:------------------------------------------------------------------|
+|       4 | Indel type (INSERT/DELETE)                                        |
+|       5 | Repeat unit                                                       |
+|       6 | Reference repeat count (in # of repeat units)                     |
+|       7 | Variant status (UNKNOWN/VARIANT)                                  |
+|       8 | Indel magnitude/length (in bp)                                    |
+|       9 | Indel index at site (both 1-indexed)                              |
+|      10 | Indel allele coverage                                             |
+|      11 | Reference allele coverage                                         |
+|      12 | Total locus coverage                                              |
+
 
 ### Execution
 
@@ -165,21 +192,6 @@ These options are useful for workflow development and debugging:
 
 #### `--quiet`
 Stderr logging can be disabled with `--quiet` argument. Note this log is replicated to `${COUNTS_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt` so there is no loss of log information.
-
-#### `--reportObservedIndels`
-Extended context details for each observed indel can be reported with the `--reportObservedIndels` argument.  This command will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/results` with a BED file titled `strelkaObservedIndel.bed.gz` which will report each observed indel as a single record.  In addition to the standard BED fields, it will also output the following additional fields:
-
-| Field # |         Description                                               |
-|--------:|:------------------------------------------------------------------|
-|       4 | Indel type (INSERT/DELETE)                                        |
-|       5 | Repeat unit                                                       |
-|       6 | Reference repeat count (in # of repeat units)                     |
-|       7 | Variant status (UNKNOWN/VARIANT)                                  |
-|       8 | Indel magnitude/length (in bp)                                    |
-|       9 | Indel index at site (both 1-indexed)                              |
-|      10 | Indel allele coverage                                             |
-|      11 | Reference allele coverage                                         |
-|      12 | Total locus coverage                                              |
 
 ## Viewing error counting workflow ouput
 
