@@ -13,11 +13,10 @@ Error Pattern Analyzer User Guide
 * [Error counting workflow configuration and execution](#error-counting-workflow-configuration-and-execution)
   * [Configuration](#configuration)
     * [Configuration: Excluding regions](#configuration-excluding-regions)
+    * [Configuration: Annotating known variants](#configuration-annotating-known-variants)
   * [Execution](#execution)
   * [Advanced execution options](#advanced-execution-options)
     * [`--quiet`](#--quiet)
-    * [`--excludedRegion`](#--excludedregion)
-    * [`--knownVariants`](#--knownvariants)
     * [`--reportObservedIndels`](#--reportobservedindels)
 * [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput)
   * [Summary output](#summary-output)
@@ -120,6 +119,17 @@ Regions of the genome specified in a BED file may be marked for exclusion from t
     --excludedRegions=nonconfidentRegions.bed.gz \
     --excludedRegions=nonAutosomes.bed.gz
 
+#### Configuration: Annotating known variants
+A _single_ known variants VCF file can be supplied to distinguish pattern counts of known and unknown variants.  Pattern analyzer output will then be labeled according to the number of times it overlaps a known variant present in the VCF.  The labels are currently "Unknown" for patterns that do not overlap a known variant call, and "Variant" for those that do.  If a known variant VCF is not provided, all patterns are marked as "Unknown".  This is currently limited to indels.
+
+    ${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py \
+    --bam=sample.bam \
+    --referenceFasta=hg19.fa \
+    --runDir ${COUNTS_ANALYSIS_PATH} \
+    --knownVariants=sample.knownVariant.vcf.gz
+
+One strategy would be to combine the `--excludedRegion` argument to exclude non-platinum regions and the `--knownVariant` argument to label platinum variants in a Platinum Genomes sample.  This would provide "Unknown" patterns that either are in confident homref regions or do not match a platinum variant at a variant site, and "Variant" patterns that overlap high-confidence indel calls.
+
 ### Execution
 
 The configuration step creates a new workflow run script in the requested run directory:
@@ -155,14 +165,6 @@ These options are useful for workflow development and debugging:
 
 #### `--quiet`
 Stderr logging can be disabled with `--quiet` argument. Note this log is replicated to `${COUNTS_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt` so there is no loss of log information.
-
-#### `--excludedRegion`
-The pattern analyzer can be instructed to avoid particular regions of the genome by passing a tabixed BED file with the `--excludedRegion` argument.  This can be used to exclude, for instance, mitochondrial and sex chromosomes, or regions of the genome that look unreliable (e.g. non-platinum regions when using a Platinum Genomes individual).
-
-#### `--knownVariants`
-The pattern analyzer can be supplied with a list of known variants in VCF format with the `--knownVariants` argument.  Pattern analyzer output will then be labeled according to the number of times a particular pattern overlaps a known variant present in the VCF.  The labels are currently "Unknown" for patterns that do not overlap a known variant call, and "Variant" for those that do.  This is currently limited to indels.
-
-One strategy would be to combine the `--excludedRegion` argument to exclude non-platinum regions and the `--knownVariant` argument to label platinum variants in a Platinum Genomes sample.  This would provide "Unknown" patterns that either are in confident homref regions or do not match a platinum variant at a variant site, and "Variant" patterns that overlap high-confidence indel calls.
 
 #### `--reportObservedIndels`
 Extended context details for each observed indel can be reported with the `--reportObservedIndels` argument.  This command will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/results` with a BED file titled `strelkaObservedIndel.bed.gz` which will report each observed indel as a single record.  In addition to the standard BED fields, it will also output the following additional fields:
