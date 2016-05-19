@@ -163,7 +163,7 @@ Extended context details for each observed indel can be reported with the `--rep
 |       6 | Reference repeat count (in # of repeat units)                     |
 |       7 | Variant status (UNKNOWN/VARIANT)                                  |
 |       8 | Indel magnitude/length (in bp)                                    |
-|       9 | Indel index at site (numerator is 0-indexed, denominator is 1-indexed) |
+|       9 | Indel index at site (both 1-indexed)                              |
 |      10 | Indel allele coverage                                             |
 |      11 | Reference allele coverage                                         |
 |      12 | Total locus coverage                                              |

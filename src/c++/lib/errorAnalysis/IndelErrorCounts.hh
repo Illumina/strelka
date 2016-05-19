@@ -29,6 +29,8 @@
 #include "boost/serialization/level.hpp"
 #include "boost/serialization/map.hpp"
 
+#include "blt_util/RecordTracker.hh"
+
 #include <iosfwd>
 #include <map>
 #include <numeric>
@@ -137,9 +139,9 @@ label(
 
 inline
 variant_t
-assignStatus(const std::set<std::string>& vcf_entry)
+assignStatus(const RecordTracker::indel_value_t& knownVariantOlap)
 {
-    if (vcf_entry.size() == 1)
+    if (knownVariantOlap.size() == 1)
     {
         // right now, if a known variant has multiple annotations
         // (e.g. OverlapConflict), we will label the variant as
@@ -180,9 +182,9 @@ operator<<(
 struct IndelBackgroundObservation
 {
     void
-    assignKnownStatus(const std::set<std::string>& vcf_entry)
+    assignKnownStatus(const RecordTracker::indel_value_t& knownVariantOlap)
     {
-        backgroundStatus = KNOWN_VARIANT_STATUS::assignStatus(vcf_entry);
+        backgroundStatus = KNOWN_VARIANT_STATUS::assignStatus(knownVariantOlap);
     }
 
     bool
@@ -291,9 +293,9 @@ struct IndelErrorContextObservation
     }
 
     void
-    assignKnownStatus(const std::set<std::string>& vcf_entry)
+    assignKnownStatus(const RecordTracker::indel_value_t& knownVariantOlap)
     {
-        variantStatus = KNOWN_VARIANT_STATUS::assignStatus(vcf_entry);
+        variantStatus = KNOWN_VARIANT_STATUS::assignStatus(knownVariantOlap);
     }
 
     unsigned

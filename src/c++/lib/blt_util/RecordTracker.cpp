@@ -23,13 +23,69 @@
 ///
 
 #include "blt_util/RecordTracker.hh"
+#include <iostream>
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelVariant& var)
+{
+	// os << "Original ref string: " << var.ref_string << "\n";
+	// os << "Original alt string: " << var.alt_string << "\n";
+	os << "Indel variant type: " << INDEL::get_index_label(var.type) << "\n";
+	os << "Indel length: " << var.length << "\n";
+	if (var.type == INDEL::INSERT)
+	{
+		os << "Inserted sequence: " << var.insert_sequence << "\n";
+	}
+
+	return os;
+}
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelGenotype& gt)
+{
+	os << "VCF record: " << gt.vcfr;
+	os << "Genotype: " << STAR_DIINDEL::label(gt.genotype) << "\n";
+	os << "Observed alts:\n";
+
+	unsigned alt_index(1);
+	for (const auto& alt : gt.alts)
+	{
+		os << "Alt " << alt_index << ":\n";
+		os << alt;
+		alt_index++;
+	}
+
+	return os;
+}
+
+bool
+IndelGenotype::
+altMatch(
+		const indel_key& ik,
+	    const indel_data& id) const
+{
+	for(const auto alt : alts)
+	{
+		if(ik.type == alt.type && ik.length == alt.length)
+		{
+			if(ik.type == INDEL::DELETE) return true;
+			if(id.get_insert_seq() == alt.insert_sequence) return true;
+		}
+	}
+	return false;
+}
+
 
 bool
 RecordTracker::
 intersectingRecordImpl(
     const pos_t beginPos,
     const pos_t endPos,
-    std::set<std::string>& records) const
+    RecordTracker::indel_value_t& records) const
 {
 	if (_records.empty()) return false;
 
@@ -42,9 +98,9 @@ intersectingRecordImpl(
 	// std::cout << "Search interval: " << search_interval << std::endl;
 	// std::cout << "Known variant interval: " << resultIter->first << std::endl;
 	// std::cout << "Variants:\n";
-	// for(value_t::const_iterator it = resultIter->second.begin(); it != resultIter->second.end(); ++it)
+	// for(const auto& var : resultIter->second)
 	// {
-	// 	std::cout << "\t" << *it << std::endl;
+	// 	std::cout << "\t" << var << std::endl;
 	// }
 
 	records = resultIter->second;
@@ -66,8 +122,35 @@ addVcfRecord(
 	unsigned ref_length = vcfRecord.ref.size();
 
 	// currently only used to add VCFs with single alts
-	assert(vcfRecord.alt.size() == 1);
+	assert(vcfRecord.alt.size() == 1 && vcfRecord.is_indel());
+
+	// if it's an indel, populate the IndelVariant struct
 	unsigned alt_length = vcfRecord.alt.begin()->size();
+
+	assert(alt_length != ref_length);
+	// AFAIK, the only way for alt_length and ref_length to be
+	// equal would be for the record to be a SNP
+
+	IndelVariant variant_instance;
+	IndelGenotype genotype_instance;
+	genotype_instance.vcfr = vcfRecord;
+
+	variant_instance.ref_string = vcfRecord.ref;
+	variant_instance.alt_string = *(vcfRecord.alt.begin());
+
+	if (ref_length < alt_length)
+	{
+		variant_instance.type = INDEL::INSERT;
+		variant_instance.length = alt_length - ref_length;
+		variant_instance.insert_sequence = vcfRecord.alt.begin()->substr(1);
+	}
+	else
+	{
+		variant_instance.type = INDEL::DELETE;
+		variant_instance.length = ref_length - alt_length;
+	}
+
+	genotype_instance.alts.insert(variant_instance);
 
 	// deletion has length >1 in record tracker
 	if (ref_length > 0 && alt_length == 1)
@@ -77,12 +160,10 @@ addVcfRecord(
 	// insertions and SNPs do not have length >1
 
 	interval_t interval = boost::icl::discrete_interval<pos_t>::right_open(start_pos, end_pos);
-	value_t record_set;
-	record_set.insert(vcfRecord.line);
+	indel_value_t record_set;
+	record_set.insert(genotype_instance);
 	
-	// std::cout << "Adding record {" << interval << ", [" << vcfRecord.line << "]}\n";
-
-	_records += std::make_pair(interval, record_set);
+	_records.insert(std::make_pair(interval, record_set));
 }
 
 void 
@@ -94,9 +175,9 @@ dump(
 	for (const auto& record : _records)
 	{
 		os << record.first << " => {";
-		for (const auto& vcfLine : record.second)
+		for (const auto& gt : record.second)
 		{
-			os << vcfLine << ",";
+			os << "{" << gt << "};";
 		}
 		os << "}\n";
 	}
