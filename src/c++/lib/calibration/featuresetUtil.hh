@@ -18,13 +18,15 @@
 //
 //
 
-/*
- *      Author: mkallberg
- */
 
 #pragma once
 
+#include "calibration/VariantScoringModelBase.hh"
 #include "calibration/VariantScoringModelMetadata.hh"
+
+#include <cassert>
+
+#include <bitset>
 
 
 template <typename FEATURESET>
@@ -40,3 +42,75 @@ struct FeatureMapMaker
 
     VariantScoringModelMetadata::featureMap_t result;
 };
+
+
+/// simple feature organizer
+///
+/// (1) doesn't mix up features with other tracking info
+/// (2) generates no system calls after initialization
+///
+template <typename FEATURESET>
+struct VariantScoringFeatureKeeper
+{
+    VariantScoringFeatureKeeper()
+    {
+        clear();
+        _featureVal.resize(FEATURESET::SIZE);
+    }
+
+    void
+    set(const typename FEATURESET::index_t i,double val)
+    {
+        if (test(i))
+        {
+            assert(false && "Set scoring feature twice");
+        }
+        _featureVal[i] = val;
+        _isFeatureSet.set(i);
+    }
+
+    double
+    get(const typename FEATURESET::index_t i) const
+    {
+        if (! test(i))
+        {
+            assert(false && "Requesting undefined feature");
+        }
+        return _featureVal[i];
+    }
+
+    const VariantScoringModelBase::featureInput_t&
+    getAll() const
+    {
+        return _featureVal;
+    }
+
+    bool
+    test(const typename FEATURESET::index_t i) const
+    {
+        return _isFeatureSet.test(i);
+    }
+
+    void
+    write(
+        std::ostream& os) const
+    {
+        const unsigned featureSize(FEATURESET::SIZE);
+        for (unsigned featureIndex(0); featureIndex<featureSize; ++featureIndex)
+        {
+            if (featureIndex > 0) os << ',';
+            os << FEATURESET::get_feature_label(featureIndex) << ":" << get(featureIndex);
+        }
+    }
+
+    void
+    clear()
+    {
+        _isFeatureSet.reset();
+    }
+
+private:
+    std::bitset<FEATURESET::SIZE> _isFeatureSet;
+    VariantScoringModelBase::featureInput_t _featureVal;
+};
+
