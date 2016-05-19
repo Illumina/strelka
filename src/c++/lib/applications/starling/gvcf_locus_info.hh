@@ -118,6 +118,13 @@ get_label(const unsigned idx)
 
 
 
+/// this object contains information shared by any germline
+/// variant call.
+///
+/// variant here means SNV or indel
+/// 'call' here means level of a vcf record, so values pertain to possibly more than one allele composing a genotype
+/// model types where this is used include diploid/haploid and continuous single sample, but not cancer
+///
 struct shared_call_info : polymorphicObject
 {
     shared_call_info()
@@ -143,13 +150,19 @@ struct shared_call_info : polymorphicObject
     void
     clear()
     {
+        gqx = 0;
+        gq = 0;
+        strand_bias = 0;
+        EVS = -1;
         filters.reset();
-        gq = gqx = 0;
     }
 
     int gqx=0;
     int gq=0;
     double strand_bias = 0;
+
+    // The empirically calibrated quality-score of the site, if -1 no EVS is available
+    int EVS = -1;
 
     std::bitset<GERMLINE_VARIANT_VCF_FILTERS::SIZE> filters;
 };
@@ -199,10 +212,6 @@ struct digt_indel_call : public shared_indel_call_info
 
     // TODO: Make indel_overlapper create new call objects, then revert this to const
     starling_diploid_indel_core _dindel;
-
-    // The empirically calibrated quality-score of an indel, if -1 no q-score has been reported
-    int EVS = -1;
-
     unsigned max_gt=0;
 };
 
@@ -258,7 +267,6 @@ struct digt_call_info : public shared_call_info
         is_phased_region=false;
         is_phasing_insufficient_depth=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
-        EVS = -1;
     }
 
     bool
@@ -276,10 +284,6 @@ struct digt_call_info : public shared_call_info
 
     MODIFIED_SITE_GT::index_t modified_gt;
     unsigned max_gt;
-
-
-    // The empirically calibrated quality-score of the site, if -1 not q-score has been reported
-    int EVS = -1;
 };
 
 struct continuous_site_call : public shared_call_info
