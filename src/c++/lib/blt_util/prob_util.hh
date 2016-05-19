@@ -109,7 +109,7 @@ softMaxRangeTransform(
     typedef typename std::iterator_traits<IterType>::value_type value_type;
     static_assert(std::is_floating_point<value_type>::value, "Transform requires iterators over floating point type.");
     value_type sum(1);
-    for (IterType i(begin);i!=end;++i)
+    for (IterType i(begin); i!=end; ++i)
     {
         *i = std::exp(*i);
         sum += *i;
@@ -117,7 +117,7 @@ softMaxRangeTransform(
 
     const value_type norm(1/sum);
     value_type sum2(0);
-    for (IterType i(begin);i!=end;++i)
+    for (IterType i(begin); i!=end; ++i)
     {
         *i *= norm;
         sum2 += *i;
@@ -135,7 +135,7 @@ softMaxInverseRangeTransform(
     static_assert(std::is_floating_point<value_type>::value, "Transform requires iterators over floating point type.");
 
     value_type sum(0);
-    for (IterType i(begin);i!=end;++i)
+    for (IterType i(begin); i!=end; ++i)
     {
         assert((*i>=0) && (*i<=1));
         sum += *i;
@@ -143,7 +143,7 @@ softMaxInverseRangeTransform(
     assert((sum>=0) && (sum<=1));
 
     const value_type norm(1./(1-sum));
-    for (IterType i(begin);i!=end;++i)
+    for (IterType i(begin); i!=end; ++i)
     {
         *i = std::log(*i * norm);
     }

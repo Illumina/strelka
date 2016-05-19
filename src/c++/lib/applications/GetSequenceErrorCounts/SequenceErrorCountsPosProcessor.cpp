@@ -107,7 +107,48 @@ insertExcludedRegion(
     _is_skip_process_pos=false;
 }
 
+void
+SequenceErrorCountsPosProcessor::
+addKnownVariant(
+    const vcf_record& knownVariant)
+{
+    _stageman.validate_new_pos_value(knownVariant.pos, STAGE::READ_BUFFER);
+    _knownVariants.addVcfRecord(knownVariant);
+    _is_skip_process_pos=false;
+}
 
+bool
+isKnownVariantMatch(
+    const RecordTracker::indel_value_t& knownVariants,
+    const indel_key& ik,
+    const indel_data& id,
+    RecordTracker::indel_value_t& overlap)
+{
+    if (knownVariants.empty()) return false;
+
+    // the variant matches a known variant
+    // if it overlaps a known record and has
+    // the same type and length.  If the
+    // known variant is an insertion, then
+    // the inserted sequence must match
+    for (const auto& kv : knownVariants)
+    {
+        if (kv.altMatch(ik, id)) overlap.insert(kv);
+        // if(kv.altMatch(ik, id))
+        // {
+        //     std::cout << "Indels match!\n";
+        //     std::cout << kv;
+        //     std::cout << ik;
+        //     std::cout << id.get_insert_seq() << "\n\n";
+        //     return true;
+        // }
+    }
+
+    // std::cout << "No match for indel\n";
+    // std::cout << ik << "\n";
+    // std::cout << id.get_insert_seq() << "\n\n";
+    return !overlap.empty();
+}
 
 /// generalization of overlapping indels:
 ///
@@ -315,6 +356,11 @@ mergeIndelObservations(
 
         // refCount used for the group is the lowest submitted:
         iter->second.refCount = std::min(iter->second.refCount, obs.refCount);
+
+        // known variant status is the maximum status within the set (e.g. if UNKNOWN
+        // and VARIANT, site is variant)
+
+        iter->second.variantStatus = std::max(iter->second.variantStatus, obs.variantStatus);
     }
 }
 
@@ -505,6 +551,10 @@ process_pos_error_counts(
     std::map<IndelErrorContext,IndelErrorContextObservation> indelObservations;
 
 
+    // check for any known variants overlapping this position
+    RecordTracker::indel_value_t knownVariantRecords;
+    _knownVariants.intersectingRecord(pos, knownVariantRecords);
+
     if (! _groups.empty())
     {
         const OrthogonalHaplotypeCandidateGroup& hg(_groups[0]);
@@ -531,11 +581,18 @@ process_pos_error_counts(
                 }
             }
 
+            RecordTracker::indel_value_t overlappingRecords;
+            isKnownVariantMatch(knownVariantRecords, ik, id, overlappingRecords);
+
             IndelErrorContextObservation obs;
 
             const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
             obs.signalCounts[sigIndex] = support[nonrefHapIndex];
             obs.refCount = support[nonrefHapCount];
+            obs.assignKnownStatus(overlappingRecords);
+
+            // std::cout << "POS: " << pos << ", #KVR: " << knownVariantRecords.size() << std::endl;
+            // std::cout << obs << std::endl << std::endl;
 
             // an indel candidate can have 0 q30 indel reads when it is only supported by
             // noise reads (i.e. indel occurs outside of a read's valid alignment range,
@@ -548,7 +605,8 @@ process_pos_error_counts(
                 obs_os << _opt.bam_seq_name << "\t";
                 obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
                 obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
-                obs_os << ik.length << "\t" << nonrefHapIndex << "/" << nonrefHapCount << "\t";
+                obs_os << KNOWN_VARIANT_STATUS::label(obs.variantStatus) << "\t";
+                obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
                 obs_os << support[nonrefHapIndex] << "\t" << support[nonrefHapCount] << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }
@@ -574,6 +632,13 @@ process_pos_error_counts(
         IndelErrorContext context;
         IndelBackgroundObservation obs;
         obs.depth = depth;
+        obs.assignKnownStatus(knownVariantRecords);
+        // the assumption is that a background position should have
+        // the variant status of any overlapping known variants,
+        // regardless of whether the genotypes match
+
+        // std::cout << "POS: " << pos << std::endl;
+        // std::cout << obs << std::endl;
 
         // always add hpol=1:
         if (! indelObservations.count(context))

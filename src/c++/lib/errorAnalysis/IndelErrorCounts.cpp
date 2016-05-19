@@ -86,7 +86,34 @@ operator<<(
     return os;
 }
 
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelBackgroundObservation& obs)
+{
+    os << "Background observation\n";
+    os << "refCount:" << obs.depth << std::endl;
+    os << "variantStatus: " << KNOWN_VARIANT_STATUS::label(obs.backgroundStatus) << std::endl;
+    return os;
+}
 
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelErrorContextObservation& obs)
+{
+    os << "Indel observation\n";
+    os << "refCount:" << obs.refCount << std::endl;
+    os << "altCounts:\n";
+    for (unsigned i(0); i < INDEL_SIGNAL_TYPE::SIZE; ++i)
+    {
+        os << "\t" << INDEL_SIGNAL_TYPE::label(i) << ":";
+        os << obs.signalCounts[i] << std::endl;
+    }
+    os << "variantStatus: " << KNOWN_VARIANT_STATUS::label(obs.variantStatus) << std::endl;
+
+    return os;
+}
 
 void
 IndelBackgroundObservationData::
@@ -219,6 +246,7 @@ operator<<(
     std::ostream& os,
     const ExportedIndelObservations& obs)
 {
+    os << "variantStatus" << KNOWN_VARIANT_STATUS::label(obs.variantStatus);
     os << "repeatCount: " << obs.repeatCount;
     os << "\trefCounts: " << obs.refObservations;
     os << "\taltObservations: ";
@@ -255,6 +283,7 @@ exportObservations(
     {
         obs.repeatCount = value.second;
         obs.refObservations = (value.first.depth*supportFraction);
+        obs.variantStatus = value.first.backgroundStatus;
 
         counts.push_back(obs);
     }
@@ -265,6 +294,7 @@ exportObservations(
         obs.repeatCount = value.second;
         obs.refObservations = value.first.refCount;
         obs.altObservations = value.first.signalCounts;
+        obs.variantStatus   = value.first.variantStatus;
 
         counts.push_back(obs);
     }

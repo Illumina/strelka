@@ -29,7 +29,7 @@
 #include "errorAnalysis/SequenceErrorCounts.hh"
 #include "starling_common/starling_pos_processor_base.hh"
 
-
+#include "blt_util/RecordTracker.hh"
 ///
 ///
 struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
@@ -50,6 +50,10 @@ struct SequenceErrorCountsPosProcessor : public starling_pos_processor_base
     void
     insertExcludedRegion(
         const known_pos_range2& excludedRange);
+
+    void
+    addKnownVariant(
+        const vcf_record& knownVariant);
 
 private:
 
@@ -80,4 +84,5 @@ private:
     double _max_candidate_normal_sample_depth = -1;
 
     RegionTracker _excludedRegions;
+    RecordTracker _knownVariants;
 };

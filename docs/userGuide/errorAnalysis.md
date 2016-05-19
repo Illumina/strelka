@@ -13,6 +13,7 @@ Error Pattern Analyzer User Guide
 * [Error counting workflow configuration and execution](#error-counting-workflow-configuration-and-execution)
   * [Configuration](#configuration)
     * [Configuration: Excluding regions](#configuration-excluding-regions)
+    * [Configuration: Annotating known variants](#configuration-annotating-known-variants)
   * [Execution](#execution)
   * [Advanced execution options](#advanced-execution-options)
     * [`--quiet`](#--quiet)
@@ -118,6 +119,17 @@ Regions of the genome specified in a BED file may be marked for exclusion from t
     --excludedRegions=nonconfidentRegions.bed.gz \
     --excludedRegions=nonAutosomes.bed.gz
 
+#### Configuration: Annotating known variants
+A _single_ known variants VCF file can be supplied to distinguish pattern counts of known and unknown variants.  Pattern analyzer output will then be labeled according to the number of times it overlaps a known variant present in the VCF.  The labels are currently "Unknown" for patterns that do not overlap a known variant call, and "Variant" for those that do.  If a known variant VCF is not provided, all patterns are marked as "Unknown".  This is currently limited to indels.
+
+    ${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py \
+    --bam=sample.bam \
+    --referenceFasta=hg19.fa \
+    --runDir ${COUNTS_ANALYSIS_PATH} \
+    --knownVariants=sample.knownVariant.vcf.gz
+
+One strategy would be to combine the `--excludedRegion` argument to exclude non-platinum regions and the `--knownVariant` argument to label platinum variants in a Platinum Genomes sample.  This would provide "Unknown" patterns that either are in confident homref regions or do not match a platinum variant at a variant site, and "Variant" patterns that overlap high-confidence indel calls.
+
 ### Execution
 
 The configuration step creates a new workflow run script in the requested run directory:
@@ -153,6 +165,7 @@ These options are useful for workflow development and debugging:
 
 #### `--quiet`
 Stderr logging can be disabled with `--quiet` argument. Note this log is replicated to `${COUNTS_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt` so there is no loss of log information.
+
 #### `--reportObservedIndels`
 Extended context details for each observed indel can be reported with the `--reportObservedIndels` argument.  This command will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/results` with a BED file titled `strelkaObservedIndel.bed.gz` which will report each observed indel as a single record.  In addition to the standard BED fields, it will also output the following additional fields:
 
@@ -161,11 +174,12 @@ Extended context details for each observed indel can be reported with the `--rep
 |       4 | Indel type (INSERT/DELETE)                                        |
 |       5 | Repeat unit                                                       |
 |       6 | Reference repeat count (in # of repeat units)                     |
-|       7 | Indel magnitude/length (in bp)                                    |
-|       8 | Indel index at site (numerator is 0-indexed, denominator is 1-indexed) |
-|       9 | Indel allele coverage                                             |
-|      10 | Reference allele coverage                                         |
-|      11 | Total locus coverage                                              |
+|       7 | Variant status (UNKNOWN/VARIANT)                                  |
+|       8 | Indel magnitude/length (in bp)                                    |
+|       9 | Indel index at site (both 1-indexed)                              |
+|      10 | Indel allele coverage                                             |
+|      11 | Reference allele coverage                                         |
+|      12 | Total locus coverage                                              |
 
 ## Viewing error counting workflow ouput
 
@@ -182,13 +196,14 @@ If you would like to get the complete contents of the file, which could be usefu
 | Field # | Field name     | Description                                      |
 |--------:|---------------:|:-------------------------------------------------|
 |       1 | context        | Currently, this is the homopolymer tract length  |
-|       2 | alts           | Alt alleles observed (0 if no alts observed)     |
-|       3 | alt_counts     | Counts for each alt allele (0 if no alts)        |
-|       4 | ref_count      | Total reference allele coverage                  |
-|       5 | total_alt      | Total alternate allele coverage                  |
-|       6 | times_observed | Number of times this configuration is observed   |
+|       2 | variant_status | Is this a known variant? (UNKNOWN/VARIANT)       |
+|       3 | alts           | Alt alleles observed (0 if no alts observed)     |
+|       4 | alt_counts     | Counts for each alt allele (0 if no alts)        |
+|       5 | ref_count      | Total reference allele coverage                  |
+|       6 | total_alt      | Total alternate allele coverage                  |
+|       7 | times_observed | Number of times this configuration is observed   |
 
-Both alts and alt_counts are comma-delimited lists.  The first 5 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles and 30x coverage), while the final field provides the number of times it was observed.
+Both alts and alt_counts are comma-delimited lists.  The first 6 fields define the specific configuration that was observed (e.g. 1 bp homopolymer with no observed alternate alleles, no known variants, and 30x coverage), while the final field provides the number of times it was observed.
 
 
 ## Error model parameter estimation

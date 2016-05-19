@@ -29,10 +29,13 @@
 #include "boost/serialization/level.hpp"
 #include "boost/serialization/map.hpp"
 
+#include "blt_util/RecordTracker.hh"
+
 #include <iosfwd>
 #include <map>
 #include <numeric>
 #include <vector>
+#include <set>
 
 
 namespace INDEL_TYPE
@@ -109,6 +112,46 @@ label(
 }
 }
 
+namespace KNOWN_VARIANT_STATUS
+{
+enum variant_t
+{
+    UNKNOWN,
+    VARIANT,
+    SIZE
+};
+
+inline
+const char*
+label(
+    const variant_t var)
+{
+    switch (var)
+    {
+    case UNKNOWN:
+        return "Unknown";
+    case VARIANT:
+        return "Variant";
+    default:
+        return "xxx";
+    }
+}
+
+inline
+variant_t
+assignStatus(const RecordTracker::indel_value_t& knownVariantOlap)
+{
+    if (knownVariantOlap.size() == 1)
+    {
+        // right now, if a known variant has multiple annotations
+        // (e.g. OverlapConflict), we will label the variant as
+        // UNKNOWN
+        return VARIANT;
+    }
+
+    return UNKNOWN;
+}
+}
 
 struct IndelErrorContext
 {
@@ -138,6 +181,12 @@ operator<<(
 
 struct IndelBackgroundObservation
 {
+    void
+    assignKnownStatus(const RecordTracker::indel_value_t& knownVariantOlap)
+    {
+        backgroundStatus = KNOWN_VARIANT_STATUS::assignStatus(knownVariantOlap);
+    }
+
     bool
     operator<(
         const IndelBackgroundObservation& rhs) const
@@ -148,11 +197,17 @@ struct IndelBackgroundObservation
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& depth;
+        ar& backgroundStatus& depth;
     }
 
     unsigned depth;
+    KNOWN_VARIANT_STATUS::variant_t backgroundStatus;
 };
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelBackgroundObservation& obs);
 
 BOOST_CLASS_IMPLEMENTATION(IndelBackgroundObservation, boost::serialization::object_serializable)
 
@@ -237,6 +292,12 @@ struct IndelErrorContextObservation
         std::fill(signalCounts.begin(), signalCounts.end(), 0);
     }
 
+    void
+    assignKnownStatus(const RecordTracker::indel_value_t& knownVariantOlap)
+    {
+        variantStatus = KNOWN_VARIANT_STATUS::assignStatus(knownVariantOlap);
+    }
+
     unsigned
     totalSignalCount() const
     {
@@ -267,13 +328,19 @@ struct IndelErrorContextObservation
     template<class Archive>
     void serialize(Archive& ar, const unsigned /* version */)
     {
-        ar& refCount& signalCounts;
+        ar& variantStatus& refCount& signalCounts;
     }
 
     unsigned refCount;
+    KNOWN_VARIANT_STATUS::variant_t variantStatus;
     /// note: can't get std::array to serialize correctly on clang
     boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> signalCounts;
 };
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelErrorContextObservation& obs);
 
 BOOST_CLASS_IMPLEMENTATION(IndelErrorContextObservation, boost::serialization::object_serializable)
 
@@ -334,6 +401,9 @@ struct ExportedIndelObservations
 
     /// number of supporting observations of the alt allele
     boost::array<unsigned,INDEL_SIGNAL_TYPE::SIZE> altObservations;
+
+    /// status of indel -- has it been supplied previously as a known variant
+    KNOWN_VARIANT_STATUS::variant_t variantStatus = KNOWN_VARIANT_STATUS::UNKNOWN;
 };
 
 std::ostream&
