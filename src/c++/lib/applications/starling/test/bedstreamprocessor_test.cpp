@@ -55,24 +55,24 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
     site->pos = 50;
     bsp.process(std::move(site));
 
-    BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
     site.reset(new digt_site_info());
     site->pos = 105;
 
     bsp.process(std::move(site));
-    BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
     site.reset(new digt_site_info());
     site->pos = 150;
 
     bsp.process(std::move(site));
-    BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
     site.reset(new digt_site_info());
     site->pos = 250;
 
     bsp.process(std::move(site));
-    BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
 }
 
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
     bsp.process(std::move(site));
 
-    BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
     ik.pos=105;
     site.reset(new digt_indel_info(ik,
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
 
     bsp.process(std::move(site));
-    BOOST_REQUIRE(next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
     ik.pos=150;
     site.reset(new digt_indel_info(ik,
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
 
     bsp.process(std::move(site));
-    BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
     ik.pos=250;
     site.reset(new digt_indel_info(ik,
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
                                    starling_indel_sample_report_info()));
 
     bsp.process(std::move(site));
-    BOOST_REQUIRE(next->the_indels.back()->first().filters.test(VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
 }
 

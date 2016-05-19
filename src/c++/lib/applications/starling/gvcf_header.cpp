@@ -48,7 +48,7 @@ add_gvcf_filters(
 {
     const gvcf_options& opt(sopt.gvcf);
 
-    using namespace VCF_FILTERS;
+    using namespace GERMLINE_VARIANT_VCF_FILTERS;
     os << "##VariantQualityScoringModel=" << sopt.germline_variant_scoring_model_name << "\n";
     write_vcf_filter(os,get_label(IndelConflict),"Locus is in region with conflicting indel calls");
     write_vcf_filter(os,get_label(SiteConflict),"Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion");
@@ -97,7 +97,7 @@ add_gvcf_filters(
             const var_case vti(static_cast<var_case>(varType));
             std::ostringstream oss;
             oss << "Locus GQX is less than " << CM.get_case_cutoff(vti)  << " for " << get_label_header(vti);
-            write_vcf_filter(os,VCF_FILTERS::get_label(get_Qscore_filter(vti)),oss.str().c_str());
+            write_vcf_filter(os,GERMLINE_VARIANT_VCF_FILTERS::get_label(get_Qscore_filter(vti)),oss.str().c_str());
         }
     }
 

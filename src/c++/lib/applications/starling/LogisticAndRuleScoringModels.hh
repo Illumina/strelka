@@ -108,32 +108,32 @@ get_label_header(const unsigned idx)
 }
 
 inline
-VCF_FILTERS::index_t
+GERMLINE_VARIANT_VCF_FILTERS::index_t
 get_Qscore_filter(const unsigned var_case)
 {
     switch (var_case)
     {
     case HetSNP:
-        return VCF_FILTERS::LowQscoreHetSNP;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowQscoreHetSNP;
     case HomSNP:
-        return VCF_FILTERS::LowQscoreHomSNP;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowQscoreHomSNP;
     case HetAltSNP:
-        return VCF_FILTERS::LowQscoreHetAltSNP;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowQscoreHetAltSNP;
     case HetIns:
-        return VCF_FILTERS::LowQscoreHetIns;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowQscoreHetIns;
     case HomIns:
-        return VCF_FILTERS::LowQscoreHomIns;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowQscoreHomIns;
     case HetAltIns:
-        return VCF_FILTERS::LowQscoreHetAltIns;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowQscoreHetAltIns;
     case HetDel:
-        return VCF_FILTERS::LowQscoreHetDel;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowQscoreHetDel;
     case HomDel:
-        return VCF_FILTERS::LowQscoreHomDel;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowQscoreHomDel;
     case HetAltDel:
-        return VCF_FILTERS::LowQscoreHetAltDel;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowQscoreHetAltDel;
     default:
         assert(0);
-        return VCF_FILTERS::LowGQX;
+        return GERMLINE_VARIANT_VCF_FILTERS::LowGQX;
     }
 }
 }

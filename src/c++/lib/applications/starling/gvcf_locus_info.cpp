@@ -47,7 +47,7 @@ write_filters(std::ostream& os) const
     }
 
     bool is_sep(false);
-    for (unsigned i(0); i<VCF_FILTERS::SIZE; ++i)
+    for (unsigned i(0); i<GERMLINE_VARIANT_VCF_FILTERS::SIZE; ++i)
     {
         if (! filters.test(i)) continue;
 
@@ -59,7 +59,7 @@ write_filters(std::ostream& os) const
         {
             is_sep=true;
         }
-        os << VCF_FILTERS::get_label(i);
+        os << GERMLINE_VARIANT_VCF_FILTERS::get_label(i);
     }
 }
 

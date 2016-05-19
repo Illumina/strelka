@@ -172,11 +172,11 @@ default_classify_site(const site_info& si,
 {
     if (opt.is_min_gqx)
     {
-        if (call.gqx<opt.min_gqx) call.set_filter(VCF_FILTERS::LowGQX);
+        if (call.gqx<opt.min_gqx) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
     if (dopt.is_max_depth())
     {
-        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) call.set_filter(VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     if (opt.is_max_base_filt)
@@ -185,18 +185,18 @@ default_classify_site(const site_info& si,
         if (total_calls>0)
         {
             const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>opt.max_base_filt) call.set_filter(VCF_FILTERS::HighBaseFilt);
+            if (filt>opt.max_base_filt) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
         }
     }
     if (si.is_snp())
     {
         if (opt.is_max_snv_sb)
         {
-            if (call.strand_bias>opt.max_snv_sb) call.set_filter(VCF_FILTERS::HighSNVSB);
+            if (call.strand_bias>opt.max_snv_sb) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
         }
         if (opt.is_max_snv_hpol)
         {
-            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) call.set_filter(VCF_FILTERS::HighSNVHPOL);
+            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
         }
     }
 }
@@ -210,12 +210,12 @@ default_classify_indel(shared_indel_call_info& call) const
 {
     if (this->opt.is_min_gqx)
     {
-        if (call.gqx<opt.min_gqx) call.set_filter(VCF_FILTERS::LowGQX);
+        if (call.gqx<opt.min_gqx) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
 
     if (this->dopt.is_max_depth())
     {
-        if (call._isri.depth > this->dopt.max_depth) call.set_filter(VCF_FILTERS::HighDepth);
+        if (call._isri.depth > this->dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 
     if (this->opt.is_max_ref_rep)
@@ -226,7 +226,7 @@ default_classify_indel(shared_indel_call_info& call) const
             if ((iri.repeat_unit.size() <= 2) &&
                 (static_cast<int>(iri.ref_repeat_count) > this->opt.max_ref_rep))
             {
-                call.set_filter(VCF_FILTERS::HighRefRep);
+                call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
             }
         }
     }

@@ -35,7 +35,7 @@
 #include <map>
 
 
-namespace VCF_FILTERS
+namespace GERMLINE_VARIANT_VCF_FILTERS
 {
 
 enum index_t
@@ -126,13 +126,13 @@ struct shared_call_info : polymorphicObject
     }
 
     void
-    set_filter(const VCF_FILTERS::index_t i)
+    set_filter(const GERMLINE_VARIANT_VCF_FILTERS::index_t i)
     {
         filters.set(i);
     }
 
     void
-    unset_filter(const VCF_FILTERS::index_t i)
+    unset_filter(const GERMLINE_VARIANT_VCF_FILTERS::index_t i)
     {
         filters.reset(i);
     }
@@ -151,7 +151,7 @@ struct shared_call_info : polymorphicObject
     int gq=0;
     double strand_bias = 0;
 
-    std::bitset<VCF_FILTERS::SIZE> filters;
+    std::bitset<GERMLINE_VARIANT_VCF_FILTERS::SIZE> filters;
 };
 
 
@@ -334,7 +334,7 @@ struct indel_info
 
     virtual bool is_forced_output() const = 0;
     virtual bool is_indel() const = 0;
-    virtual void set_filter(VCF_FILTERS::index_t filter) = 0;
+    virtual void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) = 0;
     // the EXCLUSIVE end of the variant (i.e. open)
     virtual pos_t end() const = 0;
 
@@ -368,7 +368,7 @@ struct digt_indel_info : public indel_info
             return x._dindel.is_indel;
         });
     }
-    void set_filter(VCF_FILTERS::index_t filter) override
+    void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
         for (auto& x : _calls) x.set_filter(filter);
     }
@@ -498,7 +498,7 @@ struct site_info : public polymorphicObject
     site_info() = default;
 
     virtual bool is_snp() const = 0;
-    virtual void set_filter(VCF_FILTERS::index_t filter) = 0;
+    virtual void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) = 0;
     virtual bool is_nonref() const = 0;
 
     unsigned
@@ -548,7 +548,7 @@ struct digt_site_info : public site_info
     {
         return dgt.is_snp;
     }
-    void set_filter (VCF_FILTERS::index_t filter) override
+    void set_filter (GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
         smod.set_filter(filter);
     }
@@ -652,7 +652,7 @@ struct continuous_site_info : public site_info
     {
         return _is_snp;
     }
-    void set_filter (VCF_FILTERS::index_t filter) override
+    void set_filter (GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
         for (auto& call : calls) call.set_filter(filter);
     }
@@ -694,7 +694,7 @@ struct continuous_indel_info : public indel_info
     {
     }
 
-    void set_filter (VCF_FILTERS::index_t filter) override
+    void set_filter (GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
         for (auto& call : calls) call.set_filter(filter);
     }

@@ -103,7 +103,7 @@ void variant_prefilter_stage::process(std::unique_ptr<site_info> info)
         {
             if (! si->is_print_unknowngt())
             {
-                si->smod.set_filter(VCF_FILTERS::PloidyConflict);
+                si->smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
             }
         }
 
@@ -133,7 +133,7 @@ void variant_prefilter_stage::process(std::unique_ptr<indel_info> info)
         // add filter for all indels in no-ploid regions:
         if (ii->first()._dindel.is_noploid())
         {
-            ii->set_filter(VCF_FILTERS::PloidyConflict);
+            ii->set_filter(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
         }
 
         _sink->process(std::move(ii));

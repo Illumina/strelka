@@ -411,7 +411,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     phaser.flush();
     for (auto& site : sink.the_sites)
     {
-        BOOST_CHECK(! site->is_het() || site->smod.filters.test(VCF_FILTERS::PhasingConflict));
+        BOOST_CHECK(! site->is_het() || site->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict));
         BOOST_CHECK(!site->smod.is_phased_region);
     }
 }

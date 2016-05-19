@@ -51,21 +51,21 @@ do_site_rule_model(
     const digt_site_info& si,
     digt_call_info& smod) const
 {
-    if (si.smod.gqx<cutoffs.at("GQX")) smod.set_filter(VCF_FILTERS::LowGQX);
+    if (si.smod.gqx<cutoffs.at("GQX")) smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     if (cutoffs.at("DP")>0 && dopt.is_max_depth())
     {
-        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) smod.set_filter(VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
     if (total_calls>0)
     {
         const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-        if (filt>cutoffs.at("DPFratio")) smod.set_filter(VCF_FILTERS::HighBaseFilt);
+        if (filt>cutoffs.at("DPFratio")) smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
     }
     if (si.dgt.is_snp)
     {
-        if (smod.strand_bias>cutoffs.at("HighSNVSB")) smod.set_filter(VCF_FILTERS::HighSNVSB);
+        if (smod.strand_bias>cutoffs.at("HighSNVSB")) smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
     }
 }
 
@@ -80,12 +80,12 @@ do_indel_rule_model(
 {
     if (cutoffs.at("GQX")>0)
     {
-        if (ii.first().gqx<cutoffs.at("GQX")) call.set_filter(VCF_FILTERS::LowGQX);
+        if (ii.first().gqx<cutoffs.at("GQX")) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
 
     if (cutoffs.at("DP")>0 && dopt.is_max_depth())
     {
-        if (ii.first()._isri.depth > dopt.max_depth) call.set_filter(VCF_FILTERS::HighDepth);
+        if (ii.first()._isri.depth > dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 }
 
