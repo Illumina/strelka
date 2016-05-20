@@ -53,6 +53,9 @@ enum index_t
 };
 }
 
+
+#if 0
+static
 void
 extractFormatEntry(
     const std::string& vcf_line,
@@ -96,7 +99,10 @@ extractFormatEntry(
     value = sample_string.substr(sample_entry_pos, next_pos - sample_entry_pos - 1);
 }
 
-// extract genotype from VCF entry
+
+
+/// extract genotype from VCF entry
+static
 std::string
 getGenotype(
     const std::string& vcf_line)
@@ -105,10 +111,12 @@ getGenotype(
     extractFormatEntry(vcf_line, "GT", genotype);
     return genotype;
 }
+#endif
 
 
-//// adds truth variant input from a vcf to indel synchronizer
-////
+/// adds truth variant input from a vcf to indel synchronizer
+///
+static
 void
 processTrueIndelVariantRecord(
     const unsigned max_indel_size,
