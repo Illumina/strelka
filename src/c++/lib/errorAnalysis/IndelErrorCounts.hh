@@ -191,6 +191,11 @@ struct IndelBackgroundObservation
     operator<(
         const IndelBackgroundObservation& rhs) const
     {
+        if (depth == rhs.depth)
+        {
+            return (backgroundStatus < rhs.backgroundStatus);
+        }
+
         return (depth < rhs.depth);
     }
 
@@ -321,6 +326,7 @@ struct IndelErrorContextObservation
                 if (signalCounts[signalIndex] == rhs.signalCounts[signalIndex]) continue;
                 return (signalCounts[signalIndex] < rhs.signalCounts[signalIndex]);
             }
+            return (variantStatus < rhs.variantStatus);
         }
         return (refCount < rhs.refCount);
     }

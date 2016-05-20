@@ -606,8 +606,9 @@ process_pos_error_counts(
                 obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
                 obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
                 obs_os << KNOWN_VARIANT_STATUS::label(obs.variantStatus) << "\t";
+                obs_os << context.repeatCount << "\t" << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
                 obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
-                obs_os << support[nonrefHapIndex] << "\t" << support[nonrefHapCount] << "\t";
+                obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }
 

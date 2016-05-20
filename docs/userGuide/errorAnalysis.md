@@ -150,11 +150,13 @@ This argument will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/result
 |       5 | Repeat unit                                                       |
 |       6 | Reference repeat count (in # of repeat units)                     |
 |       7 | Variant status (UNKNOWN/VARIANT)                                  |
-|       8 | Indel magnitude/length (in bp)                                    |
-|       9 | Indel index at site (both 1-indexed)                              |
-|      10 | Indel allele coverage                                             |
-|      11 | Reference allele coverage                                         |
-|      12 | Total locus coverage                                              |
+|       8 | context repeat count (i.e. homopolymer length)                    |
+|       9 | indel category (i.e. one of I\_3+, I\_2, I\_1, D\_1, D\_2, D\_3+) |
+|      10 | Indel magnitude/length (in bp)                                    |
+|      11 | Indel index at site (both 1-indexed)                              |
+|      12 | Indel allele coverage                                             |
+|      13 | Reference allele coverage                                         |
+|      14 | Total locus coverage                                              |
 
 
 ### Execution
