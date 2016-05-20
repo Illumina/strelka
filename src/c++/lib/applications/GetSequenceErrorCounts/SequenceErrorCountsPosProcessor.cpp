@@ -117,6 +117,8 @@ addKnownVariant(
     _is_skip_process_pos=false;
 }
 
+
+
 static
 bool
 isKnownVariantMatch(
@@ -148,7 +150,7 @@ isKnownVariantMatch(
     // std::cout << "No match for indel\n";
     // std::cout << ik << "\n";
     // std::cout << id.get_insert_seq() << "\n\n";
-    return !overlap.empty();
+    return (! overlap.empty());
 }
 
 /// generalization of overlapping indels:
