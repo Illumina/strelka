@@ -146,11 +146,16 @@ dump(
     std::ostream& os) const
 {
     uint64_t totalObservations(0.);
+    uint64_t totalUnknownObservations(0);
     double totaDepth(0.);
     for (const auto& value : data)
     {
         totalObservations += value.second;
         totaDepth += (value.second*value.first.depth);
+        if (value.first.backgroundStatus == KNOWN_VARIANT_STATUS::UNKNOWN)
+        {
+            totalUnknownObservations += value.second;
+        }
     }
 
     const unsigned keyCount(data.size());
@@ -158,6 +163,7 @@ dump(
     static const std::string tag("background");
     os << tag << "KeyCount: " << keyCount << "\n";
     os << tag << "TotalObservations: " <<  totalObservations << "\n";
+    os << tag << "TotalUnknownObservations: " << totalUnknownObservations << "\n";
     os << tag << "MeanKeyOccupancy: " <<  safeFrac(totalObservations,keyCount) << "\n";
     os << tag << "MeanDepth: " << safeFrac(totaDepth,totalObservations) << "\n";
 }
@@ -197,10 +203,12 @@ dump(
     std::ostream& os) const
 {
     uint64_t totalObservations(0.);
+    uint64_t totalUnknownObservations(0.);
     double totalRef(0.);
     double totalSignal(0.);
 
     unsigned noiseKeyCount(0);
+    uint64_t noiseUnknownObservations(0.);
     uint64_t noiseObservations(0.);
     double noiseRef(0.);
     double noiseSignal(0.);
@@ -212,6 +220,10 @@ dump(
         totalObservations += obsCount;
         totalRef += (obsCount*key.refCount);
         totalSignal += (obsCount*key.totalSignalCount());
+        if (key.variantStatus == KNOWN_VARIANT_STATUS::UNKNOWN)
+        {
+            totalUnknownObservations += obsCount;
+        }
 
         const unsigned total(key.totalCount());
         const double frac(static_cast<double>(key.totalSignalCount())/total);
@@ -221,6 +233,10 @@ dump(
             noiseObservations += obsCount;
             noiseRef += (obsCount*key.refCount);
             noiseSignal += (obsCount*key.totalSignalCount());
+            if (key.variantStatus == KNOWN_VARIANT_STATUS::UNKNOWN)
+            {
+                noiseUnknownObservations += obsCount;
+            }
         }
     }
 
@@ -229,10 +245,12 @@ dump(
     static const std::string tag("error");
     os << tag << "KeyCount: " << keyCount << "\n";
     os << tag << "TotalObservations: " <<  totalObservations << "\n";
+    os << tag << "UnknownObservations: " << totalUnknownObservations << "\n";
     os << tag << "MeanKeyOccupancy: " <<  safeFrac(totalObservations,keyCount) << "\n";
     os << tag << "MeanRef: " << safeFrac(totalRef,totalObservations) << "\n";
     os << tag << "MeanSignal: " << safeFrac(totalSignal,totalObservations) << "\n";
     os << tag << "NoiseObservations: " <<  noiseObservations << "\n";
+    os << tag << "NoiseUnknownObservations: " << noiseUnknownObservations << "\n";
     os << tag << "NoiseKeyCount: " << noiseKeyCount << "\n";
     os << tag << "MeanNoiseKeyOccupancy: " <<  safeFrac(noiseObservations,noiseKeyCount) << "\n";
     os << tag << "MeanNoiseRef: " << safeFrac(noiseRef,noiseObservations) << "\n";
