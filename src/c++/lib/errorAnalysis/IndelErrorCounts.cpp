@@ -203,12 +203,12 @@ dump(
     std::ostream& os) const
 {
     uint64_t totalObservations(0.);
-    unsigned totalUnknownObservations(0);
+    uint64_t totalUnknownObservations(0.);
     double totalRef(0.);
     double totalSignal(0.);
 
     unsigned noiseKeyCount(0);
-    unsigned noiseUnknownObservations(0);
+    uint64_t noiseUnknownObservations(0.);
     uint64_t noiseObservations(0.);
     double noiseRef(0.);
     double noiseSignal(0.);

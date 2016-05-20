@@ -117,6 +117,7 @@ addKnownVariant(
     _is_skip_process_pos=false;
 }
 
+static
 bool
 isKnownVariantMatch(
     const RecordTracker::indel_value_t& knownVariants,
