@@ -23,10 +23,12 @@
 
 #pragma once
 
+#include "blt_util/PolymorphicObject.hh"
+
 #include <vector>
 
 
-struct VariantScoringModelBase
+struct VariantScoringModelBase : public PolymorphicObject
 {
     typedef std::vector<double> featureInput_t;
 

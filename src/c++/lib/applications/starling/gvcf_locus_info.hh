@@ -24,7 +24,7 @@
 
 #pragma once
 
-
+#include "germlineVariantEmpiricalScoringFeatures.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
 #include "blt_util/PolymorphicObject.hh"
@@ -163,11 +163,12 @@ struct GermlineVariantSimpleGenotypeInfo : public PolymorphicObject
     int gq=0;
     double strand_bias = 0;
 
-    // The empirically calibrated quality-score of the site, if -1 no EVS is available
+    /// The empirically calibrated quality-score of the site, if -1 no EVS is available
     int empiricalVariantScore = -1;
 
     std::bitset<GERMLINE_VARIANT_VCF_FILTERS::SIZE> filters;
 };
+
 
 std::ostream& operator<<(std::ostream& os,const GermlineVariantSimpleGenotypeInfo& shmod);
 
@@ -186,17 +187,31 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
         , _isri(isri)
     {
     }
+
+    void
+    clear()
+    {
+        GermlineVariantSimpleGenotypeInfo::clear();
+        cigar.clear();
+        features.clear();
+        developmentFeatures.clear();
+    }
+
+    void set_hap_cigar(
+        const unsigned lead=1,
+        const unsigned trail=0);
+
     const indel_key _ik;
     const indel_data _id;
     // TODO: make the indel overlapping code create a new call, then revert this to const
     starling_indel_report_info _iri;
     const starling_indel_sample_report_info _isri;
 
-    void set_hap_cigar(
-        const unsigned lead=1,
-        const unsigned trail=0);
-
     ALIGNPATH::path_t cigar;
+
+    /// production and development features used in the empirical scoring model:
+    VariantScoringFeatureKeeper<GERMLINE_INDEL_SCORING_FEATURES> features;
+    VariantScoringFeatureKeeper<GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES> developmentFeatures;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo& shi);
@@ -277,6 +292,9 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
         is_phased_region=false;
         is_phasing_insufficient_depth=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
+        max_gt=0;
+        features.clear();
+        developmentFeatures.clear();
     }
 
     bool
@@ -294,6 +312,10 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
 
     MODIFIED_SITE_GT::index_t modified_gt;
     unsigned max_gt;
+
+    /// production and development features used in the empirical scoring model:
+    VariantScoringFeatureKeeper<GERMLINE_SNV_SCORING_FEATURES> features;
+    VariantScoringFeatureKeeper<GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES> developmentFeatures;
 };
 
 

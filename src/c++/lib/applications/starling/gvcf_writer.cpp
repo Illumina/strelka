@@ -362,9 +362,9 @@ write_site_record(
             os << "HaplotypeScore=" << si.hapscore;
         }
 
-#ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
         if (_opt.isReportEVSFeatures)
         {
+#ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
             os << ';';
             os << "MQ=" << si.MQ;
             os << ';';
@@ -384,9 +384,26 @@ write_site_record(
             // N.B. DP is in FORMAT already, and that seems to be where Nondas's code expects to find it, so suppress it here:
             //                os << ';';
             //                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
-
-        }
 #endif
+
+            const StreamScoper ss(os);
+            os << std::setprecision(5);
+            os << ";EVSF=";
+            for (unsigned featureIndex(0); featureIndex < GERMLINE_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
+            {
+                if (featureIndex > 0)
+                {
+                    os << ",";
+                }
+                os << si.smod.features.get(static_cast<GERMLINE_SNV_SCORING_FEATURES::index_t>(featureIndex));
+            }
+            for (unsigned featureIndex(0); featureIndex < GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+            {
+                os << ",";
+                os << si.smod.developmentFeatures.get(static_cast<GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
+            }
+        }
+
         if (si.smod.is_phasing_insufficient_depth)
         {
             os << ";Unphased";
@@ -760,6 +777,26 @@ write_indel_record(
         else
         {
             os << '.';
+        }
+    }
+
+    if (_opt.isReportEVSFeatures)
+    {
+        const StreamScoper ss(os);
+        os << std::setprecision(5);
+        os << ";EVSF=";
+        for (unsigned featureIndex(0); featureIndex < GERMLINE_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
+        {
+            if (featureIndex > 0)
+            {
+                os << ",";
+            }
+            os << call.features.get(static_cast<GERMLINE_INDEL_SCORING_FEATURES::index_t>(featureIndex));
+        }
+        for (unsigned featureIndex(0); featureIndex < GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+        {
+            os << ",";
+            os << call.developmentFeatures.get(static_cast<GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
         }
     }
 
