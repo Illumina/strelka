@@ -109,6 +109,12 @@ struct VariantScoringFeatureKeeper
         _isFeatureSet.reset();
     }
 
+    bool
+    empty() const
+    {
+        return _isFeatureSet.none();
+    }
+
 private:
     std::bitset<FEATURESET::SIZE> _isFeatureSet;
     VariantScoringModelBase::featureInput_t _featureVal;

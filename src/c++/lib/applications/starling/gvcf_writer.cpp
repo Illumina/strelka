@@ -386,21 +386,25 @@ write_site_record(
             //                os << "DP=" << (si.n_used_calls+si.n_unused_calls);
 #endif
 
-            const StreamScoper ss(os);
-            os << std::setprecision(5);
-            os << ";EVSF=";
-            for (unsigned featureIndex(0); featureIndex < GERMLINE_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
+            // EVS features may not be computed for certain records, so check first:
+            if (! si.smod.features.empty())
             {
-                if (featureIndex > 0)
+                const StreamScoper ss(os);
+                os << std::setprecision(5);
+                os << ";EVSF=";
+                for (unsigned featureIndex(0); featureIndex < GERMLINE_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
+                {
+                    if (featureIndex > 0)
+                    {
+                        os << ",";
+                    }
+                    os << si.smod.features.get(static_cast<GERMLINE_SNV_SCORING_FEATURES::index_t>(featureIndex));
+                }
+                for (unsigned featureIndex(0); featureIndex < GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
                 {
                     os << ",";
+                    os << si.smod.developmentFeatures.get(static_cast<GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
                 }
-                os << si.smod.features.get(static_cast<GERMLINE_SNV_SCORING_FEATURES::index_t>(featureIndex));
-            }
-            for (unsigned featureIndex(0); featureIndex < GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-            {
-                os << ",";
-                os << si.smod.developmentFeatures.get(static_cast<GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
             }
         }
 
@@ -782,21 +786,25 @@ write_indel_record(
 
     if (_opt.isReportEVSFeatures)
     {
-        const StreamScoper ss(os);
-        os << std::setprecision(5);
-        os << ";EVSF=";
-        for (unsigned featureIndex(0); featureIndex < GERMLINE_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
+        // EVS features may not be computed for certain records, so check first:
+        if (! call.features.empty())
         {
-            if (featureIndex > 0)
+            const StreamScoper ss(os);
+            os << std::setprecision(5);
+            os << ";EVSF=";
+            for (unsigned featureIndex(0); featureIndex < GERMLINE_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
+            {
+                if (featureIndex > 0)
+                {
+                    os << ",";
+                }
+                os << call.features.get(static_cast<GERMLINE_INDEL_SCORING_FEATURES::index_t>(featureIndex));
+            }
+            for (unsigned featureIndex(0); featureIndex < GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
             {
                 os << ",";
+                os << call.developmentFeatures.get(static_cast<GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
             }
-            os << call.features.get(static_cast<GERMLINE_INDEL_SCORING_FEATURES::index_t>(featureIndex));
-        }
-        for (unsigned featureIndex(0); featureIndex < GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-        {
-            os << ",";
-            os << call.developmentFeatures.get(static_cast<GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
         }
     }
 

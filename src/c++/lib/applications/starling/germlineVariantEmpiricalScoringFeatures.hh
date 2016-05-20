@@ -146,16 +146,17 @@ struct GERMLINE_INDEL_SCORING_FEATURES
      */
     enum index_t
     {
-        QSI_NT,
-        ABS_T_RR,
-        ABS_T_SOR,
-        IC,
-        IHP,
-        RC,
-        RU_LEN,
-        TNR,
-        AFR,
-        LOR,
+        QUAL,
+        F_GQX,
+        REFREP1,
+        IDREP1,
+        RULEN1,
+        AD0,
+        AD1,
+        AD2,
+        ABlower,
+        AB,
+        F_DPI,
         SIZE
     };
 
@@ -165,26 +166,28 @@ struct GERMLINE_INDEL_SCORING_FEATURES
     {
         switch (idx)
         {
-        case QSI_NT:
-            return "QSI_NT";
-        case ABS_T_RR:
-            return "ABS_T_RR";
-        case ABS_T_SOR:
-            return "ABS_T_SOR";
-        case IC:
-            return "IC";
-        case IHP:
-            return "IHP";
-        case RC:
-            return "RC";
-        case RU_LEN:
-            return "RU_LEN";
-        case TNR:
-            return "TNR";
-        case AFR:
-            return "AFR";
-        case LOR:
-            return "LOR";
+        case QUAL:
+            return "QUAL";
+        case F_GQX:
+            return "F_GQX";
+        case REFREP1:
+            return "REFREP1";
+        case IDREP1:
+            return "IDREP1";
+        case RULEN1:
+            return "RULEN1";
+        case AD0:
+            return "AD0";
+        case AD1:
+            return "AD1";
+        case AD2:
+            return "AD2";
+        case ABlower:
+            return "ABlower";
+        case AB:
+            return "AB";
+        case F_DPI:
+            return "F_DPI";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -210,12 +213,7 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
 {
     enum index_t
     {
-        N_AF,
-        T_AF,
-        N_OF,
-        T_OF,
-        N_BCN,
-        T_BCN,
+        F_GQ,
         SIZE
     };
 
@@ -225,18 +223,8 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
     {
         switch (idx)
         {
-        case N_AF:
-            return "N_AF";
-        case T_AF:
-            return "T_AF";
-        case N_OF:
-            return "N_OF";
-        case T_OF:
-            return "T_OF";
-        case N_BCN:
-            return "N_BCN";
-        case T_BCN:
-            return "T_BCN";
+        case F_GQ:
+            return "F_GQ";
         default:
             assert(false && "Unknown feature");
             return nullptr;

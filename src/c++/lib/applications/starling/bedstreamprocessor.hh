@@ -29,6 +29,7 @@
 #include "htsapi/bed_streamer.hh"
 #include "variant_pipe_stage_base.hh"
 
+
 class bed_stream_processor : public variant_pipe_stage_base
 {
 public:
