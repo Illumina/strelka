@@ -74,6 +74,13 @@ classify_site(
     const GermlineDiploidSiteCallInfo& si,
     GermlineDiploidSiteSimpleGenotypeInfo& smod) const
 {
+    if (si.dgt.is_snp && _isReportEVSFeatures)
+    {
+        // when reporting is turned on, we need to compute EVS features
+        // for any usable variant regardless of EVS model type:
+        si.computeEmpiricalScoringFeatures(_isReportEVSFeatures, _dopt.norm_depth, smod);
+    }
+
     //si.smod.filters.reset(); // make sure no filters have been applied prior
     if ((si.dgt.is_snp) && (!is_default_model()))
     {

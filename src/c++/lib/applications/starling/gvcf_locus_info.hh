@@ -613,8 +613,11 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
         }
     }
 
-    std::map<std::string, double>
-    get_site_qscore_features(const double chrom_depth) const;
+    void
+    computeEmpiricalScoringFeatures(
+        const bool isComputeDevelopmentFeatures,
+        const double chromDepth,
+        GermlineDiploidSiteSimpleGenotypeInfo& smod2) const;
 
     bool
     is_het() const
@@ -712,9 +715,6 @@ struct GermlineContinuousSiteCallInfo : public GermlineSiteCallInfo
         });
     }
 
-    bool _is_snp = false;
-
-
     const char* get_gt(const GermlineContinuousSiteSimpleGenotypeInfo& call) const
     {
         if (call._base == base_to_id(ref))
@@ -727,6 +727,7 @@ struct GermlineContinuousSiteCallInfo : public GermlineSiteCallInfo
             return "0/1";
     }
 
+    bool _is_snp = false;
     std::vector<GermlineContinuousSiteSimpleGenotypeInfo> calls;
 private:
     double _min_het_vf;

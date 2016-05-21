@@ -264,54 +264,70 @@ getPloidyError(
 
 
 
-
-std::map<std::string, double>
+void
 GermlineDiploidSiteCallInfo::
-get_site_qscore_features(
-    const double chrom_depth) const
+computeEmpiricalScoringFeatures(
+    const bool isComputeDevelopmentFeatures,
+    const double chromDepth,
+    GermlineDiploidSiteSimpleGenotypeInfo& smod2) const
 {
-    const double depth_norm(1./chrom_depth);
+    const double chromDepthFactor(1./chromDepth);
 
-    std::map<std::string, double> res;
-
-    res["QUAL"]               = dgt.genome.snp_qphred * depth_norm;
-    res["F_GQX"]              = smod.gqx * depth_norm;
-    res["F_GQ"]               = smod.gq * depth_norm;
-    res["I_SNVSB"]            = smod.strand_bias;
-    res["I_SNVHPOL"]          = hpol;
-
-    //we need to handle the scaling of DP better for high depth cases
-    res["F_DP"]               = n_used_calls * depth_norm;
-    res["F_DPF"]              = n_unused_calls * depth_norm;
-    res["AD0"]                = alleleObservationCounts(dgt.ref_gt) * depth_norm;
-    res["AD1"]                = 0.0;          // set below
-
-    res["I_MQ"]               = MQ;
-    res["I_ReadPosRankSum"]   = ReadPosRankSum;
-    res["I_BaseQRankSum"]     = BaseQRankSum;
-    res["I_MQRankSum"]        = MQRankSum;
-    res["I_RawPos"]           = rawPos;         //the average position value within a read of alt allele
-    res["I_RawBaseQ"]         = avgBaseQ;       //The average baseQ of the position of alt allele
+    // get the alt base id (choose second in case of an alt het....)
+    unsigned altBase(N_BASE);
     for (unsigned b(0); b<N_BASE; ++b)
     {
         if (b==dgt.ref_gt) continue;
         if (DIGT::expect2(b,smod.max_gt))
         {
-            res["AD1"] =  alleleObservationCounts(b) * depth_norm;
-            // allele bias metrics
-            double r0 = alleleObservationCounts(dgt.ref_gt);
-            double r1 = alleleObservationCounts(b);
-            double allelebiaslower  = cdf(boost::math::binomial(r0+r1,0.5),r0);
-            double allelebiasupper  = cdf(boost::math::binomial(r0+r1,0.5),r1);
-            res["ABlower"]          = -log(allelebiaslower+1.e-30); // +1e-30 to avoid log(0) in extreme cases
-            res["AB"]               = -log(std::min(1.,2.*std::min(allelebiaslower,allelebiasupper))+1.e-30);
+            altBase=b;
         }
     }
-    return res;
+    assert(altBase!=N_BASE);
+
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::QUAL, (dgt.genome.snp_qphred * chromDepthFactor));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::F_GQX, (smod.gqx * chromDepthFactor));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::F_GQ, (smod.gq * chromDepthFactor));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (smod.strand_bias));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVHPOL, (hpol));
+
+    //we need to handle the scaling of DP better for high depth cases
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::F_DP, (n_used_calls * chromDepthFactor));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::F_DPF, (n_unused_calls * chromDepthFactor));
+
+    const double r0 = alleleObservationCounts(dgt.ref_gt);
+    const double r1 = alleleObservationCounts(altBase);
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::AD0, (r0 * chromDepthFactor));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::AD1, (r1 * chromDepthFactor));
+
+
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (MQ));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (ReadPosRankSum));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_BaseQRankSum, (BaseQRankSum));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (MQRankSum));
+
+    // allele bias metrics
+    {
+        const double allelebiaslower  = cdf(boost::math::binomial(r0+r1,0.5),r0);
+        const double allelebiasupper  = cdf(boost::math::binomial(r0+r1,0.5),r1);
+
+        // +1e-30 to avoid log(0) in extreme cases
+        smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::ABlower, (-log(allelebiaslower+1.e-30)));
+        smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::AB, (-log(std::min(1.,2.*std::min(allelebiaslower,allelebiasupper))+1.e-30)));
+    }
+
+    //
+    // compute any experimental features not currently used in production
+    //
+    if (isComputeDevelopmentFeatures)
+    {
+        //The average baseQ of the position of alt allele
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawBaseQ, (avgBaseQ));
+
+        //the average position value within a read of alt allele
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawPos, (rawPos));
+    }
 }
-
-
-
 
 
 

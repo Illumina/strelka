@@ -327,8 +327,13 @@ score_site_instance(
         //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
 #endif
 
-        const featuremap features = si.get_site_qscore_features(normal_depth());
-        smod.empiricalVariantScore = logistic_score(var_case, features);
+        // compute scoring features if this hasn't already been done:
+        if (smod.features.empty())
+        {
+            static const bool isComputeDevelopmentFeatures(false);
+            si.computeEmpiricalScoringFeatures(isComputeDevelopmentFeatures, normal_depth(), smod);
+        }
+        smod.empiricalVariantScore = logistic_score(var_case, getFeatureMap(smod.features));
         apply_site_qscore_filters(var_case, si, smod);
     }
 //    else if(this->model_type=="RFtree"){ // place-holder, put random forest here
