@@ -44,6 +44,26 @@
 
 
 
+/// the logistic regression model still requires an actual string map -- something we want
+/// to move away from, but this provides a bridge for now:
+///
+template <typename FEATURESET>
+featuremap
+getFeatureMap(
+        const VariantScoringFeatureKeeper<FEATURESET>& features)
+{
+    typedef typename FEATURESET::index_t findex_t;
+    featuremap ret;
+    for (unsigned index(0); index<FEATURESET::SIZE; ++index)
+    {
+        const findex_t findex(static_cast<findex_t>(index));
+        ret.insert(std::make_pair(FEATURESET::get_feature_label(findex),features.get(findex)));
+    }
+    return ret;
+}
+
+
+
 void
 LogisticAndRuleScoringModels::
 do_site_rule_model(
@@ -361,8 +381,13 @@ score_indel_instance(
             return;
         }
 
-        const featuremap features = ii.get_indel_qscore_features(normal_depth());
-        call.empiricalVariantScore = logistic_score(var_case, features);
+        // compute scoring features if this hasn't already been done:
+        if (call.features.empty())
+        {
+            static const bool isComputeDevelopmentFeatures(false);
+            call.computeEmpiricalScoringFeatures(isComputeDevelopmentFeatures, normal_depth(), ii.is_hetalt());
+        }
+        call.empiricalVariantScore = logistic_score(var_case, getFeatureMap(call.features));
         apply_indel_qscore_filters(var_case, ii, call);
     }
     else if (this->model_type=="RULE")   //case we are using a rule based model

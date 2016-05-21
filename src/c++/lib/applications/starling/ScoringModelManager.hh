@@ -34,14 +34,14 @@
 /// for (1) a logisitic model read from a file (2) a default hard-threshold
 /// model and (3) and file-based hard-threshold model.
 ///
-class ScoringModelManager : private boost::noncopyable
+struct ScoringModelManager : private boost::noncopyable
 {
-public:
     ScoringModelManager(
         const starling_options& init_opt,
         const gvcf_deriv_options& init_dopt)
-        : opt(init_opt.gvcf),
-          dopt(init_dopt)
+        : _opt(init_opt.gvcf),
+          _dopt(init_dopt),
+          _isReportEVSFeatures(init_opt.isReportEVSFeatures)
     {
         load_models(
                 init_opt.germline_variant_scoring_models_filename,
@@ -79,7 +79,7 @@ private:
     LogisticAndRuleScoringModels& get_model() { return *modelPtr; }
     const LogisticAndRuleScoringModels& get_model() const { return *modelPtr; }
 
-    bool check_is_model_usable(const GermlineDiploidIndelCallInfo& ii) const;
+    bool checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const;
     void set_indel_modifiers(
         const GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
@@ -102,8 +102,9 @@ private:
     }
 
     // for setting the vcf header filters
-    const gvcf_options& opt;
-    const gvcf_deriv_options& dopt;
+    const gvcf_options& _opt;
+    const gvcf_deriv_options& _dopt;
+    bool _isReportEVSFeatures;
 
     std::unique_ptr<LogisticAndRuleScoringModels> modelPtr;
 };

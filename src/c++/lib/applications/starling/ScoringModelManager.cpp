@@ -88,11 +88,10 @@ classify_site(
 
 bool
 ScoringModelManager::
-check_is_model_usable(const GermlineDiploidIndelCallInfo& ii) const
+checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const
 {
     const auto& call(ii.first());
     return ((call._iri.it == INDEL::INSERT || call._iri.it == INDEL::DELETE) &&
-            (!is_default_model()) &&
             (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // empirical scoring does not handle homref sites properly
 }
 
@@ -120,13 +119,20 @@ set_indel_modifiers(
 void
 ScoringModelManager::
 classify_indel_impl(
-    const bool is_model_usable,
+    const bool isVariantUsableInEVSModel,
     const GermlineDiploidIndelCallInfo& ii,
     GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
     set_indel_modifiers(ii, call);
 
-    if ( is_model_usable )
+    if (isVariantUsableInEVSModel && _isReportEVSFeatures)
+    {
+        // when reporting is turned on, we need to compute EVS features
+        // for any usable variant regardless of EVS model type:
+        call.computeEmpiricalScoringFeatures(_isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
+    }
+
+    if ( (! is_default_model()) && isVariantUsableInEVSModel )
     {
         get_model().score_indel_instance(ii, call);
     }
@@ -143,7 +149,7 @@ classify_indel(
     const GermlineDiploidIndelCallInfo& ii,
     GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
-    classify_indel_impl(check_is_model_usable(ii),ii,call);
+    classify_indel_impl(checkIsVariantUsableInEVSModel(ii),ii,call);
 }
 
 void
@@ -151,17 +157,17 @@ ScoringModelManager::
 classify_indels(
     std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indels) const
 {
-    bool is_model_usable = true;
+    bool isVariantUsableInEVSModel = true;
     for (const auto& indel : indels)
     {
-        if (! is_model_usable) break;
-        is_model_usable = check_is_model_usable(*indel);
+        if (! isVariantUsableInEVSModel) break;
+        isVariantUsableInEVSModel = checkIsVariantUsableInEVSModel(*indel);
     }
 
     for (auto& indel : indels)
     {
         GermlineDiploidIndelCallInfo& ii(*indel);
-        classify_indel_impl(is_model_usable,ii,ii.first());
+        classify_indel_impl(isVariantUsableInEVSModel,ii,ii.first());
     }
 }
 
@@ -174,33 +180,33 @@ default_classify_site(
     const GermlineSiteCallInfo& si,
     GermlineVariantSimpleGenotypeInfo& call) const
 {
-    if (opt.is_min_gqx)
+    if (_opt.is_min_gqx)
     {
-        if (call.gqx<opt.min_gqx) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        if (call.gqx<_opt.min_gqx) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
-    if (dopt.is_max_depth())
+    if (_dopt.is_max_depth())
     {
-        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > _dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
-    if (opt.is_max_base_filt)
+    if (_opt.is_max_base_filt)
     {
         const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
         if (total_calls>0)
         {
             const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>opt.max_base_filt) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
+            if (filt>_opt.max_base_filt) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
         }
     }
     if (si.is_snp())
     {
-        if (opt.is_max_snv_sb)
+        if (_opt.is_max_snv_sb)
         {
-            if (call.strand_bias>opt.max_snv_sb) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
+            if (call.strand_bias>_opt.max_snv_sb) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
         }
-        if (opt.is_max_snv_hpol)
+        if (_opt.is_max_snv_hpol)
         {
-            if (static_cast<int>(si.hpol)>opt.max_snv_hpol) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
+            if (static_cast<int>(si.hpol)>_opt.max_snv_hpol) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
         }
     }
 }
@@ -213,23 +219,23 @@ ScoringModelManager::
 default_classify_indel(
     GermlineIndelSimpleGenotypeInfo& call) const
 {
-    if (this->opt.is_min_gqx)
+    if (this->_opt.is_min_gqx)
     {
-        if (call.gqx<opt.min_gqx) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        if (call.gqx<_opt.min_gqx) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
 
-    if (this->dopt.is_max_depth())
+    if (this->_dopt.is_max_depth())
     {
-        if (call._isri.depth > this->dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if (call._isri.depth > this->_dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 
-    if (this->opt.is_max_ref_rep)
+    if (this->_opt.is_max_ref_rep)
     {
         const auto& iri(call._iri);
         if (iri.is_repeat_unit())
         {
             if ((iri.repeat_unit.size() <= 2) &&
-                (static_cast<int>(iri.ref_repeat_count) > this->opt.max_ref_rep))
+                (static_cast<int>(iri.ref_repeat_count) > this->_opt.max_ref_rep))
             {
                 call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
             }
@@ -317,5 +323,5 @@ load_models(
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
     assert(! pars.empty());
-    modelPtr.reset(new LogisticAndRuleScoringModels(modelType,dopt,pars));
+    modelPtr.reset(new LogisticAndRuleScoringModels(modelType,_dopt,pars));
 }

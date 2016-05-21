@@ -33,7 +33,7 @@
 
 #include <iosfwd>
 
-class ScoringModelManager;
+struct ScoringModelManager;
 
 
 ///

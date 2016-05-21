@@ -227,8 +227,13 @@ struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenoty
                     const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
         : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
         , _dindel(dindel)
-    {
-    }
+    {}
+
+    void
+    computeEmpiricalScoringFeatures(
+        const bool isComputeDevelopmentFeatures,
+        const double chromDepth,
+        const bool isHetalt);
 
 	/// TODO: this object is only here to trigger an auto copy ctor, seems like we can simplify now?
     /// TODO: Make indel_overlapper create new call objects, then revert this to const
@@ -484,9 +489,6 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
         }
         return 2;
     }
-
-    std::map<std::string, double>
-    get_indel_qscore_features(const double chrom_depth) const;
 
     const GermlineDiploidIndelSimpleGenotypeInfo& first() const
     {

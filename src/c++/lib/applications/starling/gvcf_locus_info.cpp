@@ -100,47 +100,56 @@ void GermlineIndelSimpleGenotypeInfo::set_hap_cigar(
 }
 
 
-std::map<std::string, double>
-GermlineDiploidIndelCallInfo::
-get_indel_qscore_features(
-    const double chrom_depth) const
+void
+GermlineDiploidIndelSimpleGenotypeInfo::
+computeEmpiricalScoringFeatures(
+    const bool isComputeDevelopmentFeatures,
+    const double chromDepth,
+    const bool isHetalt)
 {
-    const double depth_norm(1./chrom_depth);
+    const double chromDepthFactor(1./chromDepth);
 
-    const auto& call(first());
-    std::map<std::string, double> res;
-    res["QUAL"]             = call._dindel.indel_qphred * depth_norm;
-    res["F_GQX"]            = call.gqx * depth_norm;
-    res["F_GQ"]             = call.gq * depth_norm; // N.B. Not used at time of writing; normalization uncertain
-    res["REFREP1"]          = call._iri.ref_repeat_count;
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::QUAL, (_dindel.indel_qphred * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX, (gqx * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::REFREP1, (_iri.ref_repeat_count));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (_iri.indel_repeat_count));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (_iri.repeat_unit.length()));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_isri.n_q30_ref_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_isri.n_q30_indel_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_isri.n_q30_alt_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_isri.depth * chromDepthFactor));
 
-    res["IDREP1"]           = call._iri.indel_repeat_count;
-    res["RULEN1"]           = call._iri.repeat_unit.length(); //isri.depth;               //This feature actually means the length of the RU string
-
-    unsigned ref_count(0);
-    ref_count = std::max(ref_count,first()._isri.n_q30_ref_reads);
-
-    const double r0 = ref_count;
-    const double r1 = call._isri.n_q30_indel_reads;
-    const double r2 = call._isri.n_q30_alt_reads;
-    res["AD0"]              = r0 * depth_norm;
-    res["AD1"]              = r1 * depth_norm;
-    res["AD2"]              = r2 * depth_norm;
-    // allele bias metrics
-    // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
-    double allelebiaslower = cdf(boost::math::binomial(r0+r1,0.5),r0);
-    // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
-    double allelebiasupper = cdf(boost::math::binomial(r0+r1,0.5),r1);
-    if ( is_hetalt() )
     {
-        allelebiaslower = cdf(boost::math::binomial(r2+r1,0.5),r1);
-        allelebiasupper = cdf(boost::math::binomial(r2+r1,0.5),r2);
-    }
-    res["ABlower"]          = -std::log(allelebiaslower+1.e-30); // +1e-30 to avoid log(0) in extreme cases
-    res["AB"]               = -std::log(std::min(1.,2.*std::min(allelebiaslower,allelebiasupper))+1.e-30);
+        // allele bias metrics
+        const double r0(_isri.n_q30_ref_reads);
+        const double r1(_isri.n_q30_indel_reads);
+        const double r2(_isri.n_q30_alt_reads);
 
-    res["F_DPI"]            = call._isri.depth * depth_norm;
-    return res;
+        // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
+        // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
+        double allelebiaslower;
+        double allelebiasupper;
+        if (isHetalt)
+        {
+            allelebiaslower = cdf(boost::math::binomial(r2+r1,0.5),r1);
+            allelebiasupper = cdf(boost::math::binomial(r2+r1,0.5),r2);
+        }
+        else
+        {
+            allelebiaslower = cdf(boost::math::binomial(r0+r1,0.5),r0);
+            allelebiasupper = cdf(boost::math::binomial(r0+r1,0.5),r1);
+        }
+
+        // +1e-30 to avoid log(0) in extreme cases
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower+1.e-30)));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::AB, (-std::log(std::min(1.,2.*std::min(allelebiaslower,allelebiasupper))+1.e-30)));
+    }
+
+    /// compute any experimental features not currently used in production
+    if (isComputeDevelopmentFeatures)
+    {
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (gqx * chromDepthFactor));
+    }
 }
 
 

@@ -29,12 +29,11 @@
 
 #include <iosfwd>
 
-class ScoringModelManager;
+struct ScoringModelManager;
 
 
-class indel_overlapper : public variant_pipe_stage_base
+struct indel_overlapper : public variant_pipe_stage_base
 {
-public:
     indel_overlapper(
         const ScoringModelManager& model,
         const reference_contig_segment& ref,

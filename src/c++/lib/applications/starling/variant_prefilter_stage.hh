@@ -25,11 +25,10 @@
 #pragma once
 #include "variant_pipe_stage_base.hh"
 
-class ScoringModelManager;
+struct ScoringModelManager;
 
-class variant_prefilter_stage : public variant_pipe_stage_base
+struct variant_prefilter_stage : public variant_pipe_stage_base
 {
-public:
     variant_prefilter_stage(const ScoringModelManager& model, std::shared_ptr<variant_pipe_stage_base> destination);
     void process(std::unique_ptr<GermlineSiteCallInfo> si) override;
     void process(std::unique_ptr<GermlineIndelCallInfo> ii) override;
