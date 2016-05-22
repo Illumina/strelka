@@ -24,7 +24,7 @@
  *      Author: Morten Kallberg
  */
 
-#include "calibration/Indelmodel.hh"
+#include "IndelErrorModel.hh"
 #include "blt_util/log.hh"
 
 #include <cmath>

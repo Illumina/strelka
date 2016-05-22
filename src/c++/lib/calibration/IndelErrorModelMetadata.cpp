@@ -22,7 +22,7 @@
  *      Author: mkallberg
  */
 
-#include "IndelModelMetadata.hh"
+#include "IndelErrorModelMetadata.hh"
 
 #include <cassert>
 
@@ -50,7 +50,7 @@ get_label(const index_t i)
     case DATE:
         return "Date";
     default:
-        assert(false && "Unknown indel model entry type");
+        assert(false && "Unknown indel error model entry type");
         return nullptr;
     }
 }
@@ -84,7 +84,7 @@ Clean_string(const std::string& str)
 
 
 void
-IndelModelMetadata::
+IndelErrorModelMetadata::
 Deserialize(const Json::Value& root)
 {
     using namespace IMODEL_ENTRY_TYPE;

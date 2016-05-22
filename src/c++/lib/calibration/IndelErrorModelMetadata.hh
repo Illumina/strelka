@@ -27,10 +27,9 @@
 
 
 /// parse common meta-data format shared for all indel models
-class IndelModelMetadata
+struct IndelErrorModelMetadata
 {
-public:
-    IndelModelMetadata() {}
+    IndelErrorModelMetadata() {}
 
     void Deserialize(const Json::Value& root);
 

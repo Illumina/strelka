@@ -26,13 +26,12 @@
 
 #pragma once
 
-#include "calibration/Indelmodel.hh"
-
 #include "json/json.h"
 
 #include <iosfwd>
 #include <map>
 #include <string>
+#include "IndelErrorModel.hh"
 
 
 namespace MODEL_TYPE

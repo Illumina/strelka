@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "IndelModelMetadata.hh"
+#include "IndelErrorModelMetadata.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "blt_util/blt_exception.hh"
@@ -115,7 +115,7 @@ private:
         return iri.repeat_unit_length * 2;
     }
 
-    IndelModelMetadata _meta;
+    IndelErrorModelMetadata _meta;
 
 public:
     error_model model;
