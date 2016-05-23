@@ -134,22 +134,12 @@ isKnownVariantMatch(
     // the same type and length.  If the
     // known variant is an insertion, then
     // the inserted sequence must match
+
     for (const auto& kv : knownVariants)
     {
         if (kv.altMatch(ik, id)) overlap.insert(kv);
-        // if(kv.altMatch(ik, id))
-        // {
-        //     std::cout << "Indels match!\n";
-        //     std::cout << kv;
-        //     std::cout << ik;
-        //     std::cout << id.get_insert_seq() << "\n\n";
-        //     return true;
-        // }
     }
 
-    // std::cout << "No match for indel\n";
-    // std::cout << ik << "\n";
-    // std::cout << id.get_insert_seq() << "\n\n";
     return (! overlap.empty());
 }
 
@@ -553,6 +543,10 @@ process_pos_error_counts(
     // buffer observations until we get through all overlaping indels at this site:
     std::map<IndelErrorContext,IndelErrorContextObservation> indelObservations;
 
+    // background depth is always one minus position to be consistent with indel report:
+    const pos_t depth_pos(pos-1);
+    const snp_pos_info& spi(sif.bc_buff.get_pos(depth_pos));
+    const unsigned depth(spi.calls.size());
 
     // check for any known variants overlapping this position
     RecordTracker::indel_value_t knownVariantRecords;
@@ -594,9 +588,6 @@ process_pos_error_counts(
             obs.refCount = support[nonrefHapCount];
             obs.assignKnownStatus(overlappingRecords);
 
-            // std::cout << "POS: " << pos << ", #KVR: " << knownVariantRecords.size() << std::endl;
-            // std::cout << obs << std::endl << std::endl;
-
             // an indel candidate can have 0 q30 indel reads when it is only supported by
             // noise reads (i.e. indel occurs outside of a read's valid alignment range,
             // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
@@ -608,46 +599,42 @@ process_pos_error_counts(
                 obs_os << _opt.bam_seq_name << "\t";
                 obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
                 obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
-                obs_os << KNOWN_VARIANT_STATUS::label(obs.variantStatus) << "\t";
+                obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
                 obs_os << context.repeatCount << "\t" << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
                 obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
                 obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }
 
-            if(obs.variantStatus == KNOWN_VARIANT_STATUS::VARIANT &&
-                obs.signalCounts[sigIndex] == 0)
-            {
-                std::ostream& obs_os(std::cout);
-                obs_os << _opt.bam_seq_name << "\t";
-                obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
-                obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
-                obs_os << KNOWN_VARIANT_STATUS::label(obs.variantStatus) << "\t";
-                obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
-                obs_os << support[nonrefHapCount] << "\t";
-                obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
+            // if(obs.variantStatus == GENOTYPE_STATUS::VARIANT &&
+            //     obs.signalCounts[sigIndex] == 0)
+            // {
+            //     std::ostream& obs_os(std::cout);
+            //     obs_os << _opt.bam_seq_name << "\t";
+            //     obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
+            //     obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
+            //     obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
+            //     obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
+            //     obs_os << support[nonrefHapCount] << "\t";
+            //     obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
 
-                for(const auto& rec : overlappingRecords)
-                {
-                    std::cout << rec << std::endl;
-                }
-            }
+            //     for(const auto& rec : overlappingRecords)
+            //     {
+            //         std::cout << rec << std::endl;
+            //     }
+            // }
 
             mergeIndelObservations(context,obs,indelObservations);
         }
+
+        for (const auto& value : indelObservations)
+        {
+            indelCounts.addError(value.first,value.second,depth);
+        }
+
     }
-
-    // background depth is always one minus position to be consistent with indel report:
-    const pos_t depth_pos(pos-1);
-    const snp_pos_info& spi(sif.bc_buff.get_pos(depth_pos));
-    const unsigned depth(spi.calls.size());
-
-    for (const auto& value : indelObservations)
-    {
-        indelCounts.addError(value.first,value.second,depth);
-    }
-
     // add all the backgrounds that haven't been covered already
+    else
     {
         unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
 
@@ -655,12 +642,6 @@ process_pos_error_counts(
         IndelBackgroundObservation obs;
         obs.depth = depth;
         obs.assignKnownStatus(knownVariantRecords);
-        // the assumption is that a background position should have
-        // the variant status of any overlapping known variants,
-        // regardless of whether the genotypes match
-
-        // std::cout << "POS: " << pos << std::endl;
-        // std::cout << obs << std::endl;
 
         // always add hpol=1:
         if (! indelObservations.count(context))
