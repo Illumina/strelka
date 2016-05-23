@@ -25,6 +25,7 @@
  */
 
 #pragma once
+
 #include "htsapi/bed_streamer.hh"
 #include "variant_pipe_stage_base.hh"
 

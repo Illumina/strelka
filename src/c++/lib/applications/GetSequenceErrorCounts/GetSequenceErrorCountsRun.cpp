@@ -54,8 +54,9 @@ enum index_t
 }
 
 
-//// adds truth variant input from a vcf to indel synchronizer
-////
+/// adds truth variant input from a vcf to indel synchronizer
+///
+static
 void
 processTrueIndelVariantRecord(
     const unsigned max_indel_size,

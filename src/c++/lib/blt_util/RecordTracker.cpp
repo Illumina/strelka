@@ -122,9 +122,9 @@ altMatch(
     const indel_key& ik,
     const indel_data& id) const
 {
-    for (const auto alt : alts)
+    for (const auto& alt : alts)
     {
-        if (ik.type == alt.type && ik.length == alt.length)
+        if ((ik.type == alt.type) && (ik.length == alt.length))
         {
             if (ik.type == INDEL::DELETE) return true;
             if (id.get_insert_seq() == alt.insert_sequence) return true;
