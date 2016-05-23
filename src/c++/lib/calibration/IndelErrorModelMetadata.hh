@@ -31,7 +31,7 @@ struct IndelErrorModelMetadata
 {
     IndelErrorModelMetadata() {}
 
-    void Deserialize(const Json::Value& root);
+    void deserialize(const Json::Value& root);
 
     std::string name;
     std::string version;

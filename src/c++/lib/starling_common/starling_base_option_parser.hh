@@ -35,6 +35,21 @@
 namespace po = boost::program_options;
 
 
+/// test for the existence of an optional input file
+///
+/// filename has to either be empty or the file needs to exist and be accessible
+///
+/// if filename cannot be accessed this function will generate a usage error
+///
+/// label will be printed in any usage error message as "<label> file"
+///
+void
+checkOptionalFile(
+    const prog_info& pinfo,
+    const std::string& filename,
+    const char* label);
+
+
 // Called by program_options to parse avg_window_data:
 //
 void validate(

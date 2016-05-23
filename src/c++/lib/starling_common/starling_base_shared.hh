@@ -250,6 +250,7 @@ struct starling_sample_options
 
 
 
+struct IndelErrorModel;
 struct indel_digt_caller;
 
 
@@ -288,6 +289,12 @@ struct starling_base_deriv_options : public blt_deriv_options
         return _postCallStage;
     }
 
+    const IndelErrorModel&
+    getIndelErrorModel() const
+    {
+        return *_indelErrorModel;
+    }
+
 protected:
     unsigned
     addPostCallStage(
@@ -312,6 +319,7 @@ public:
     const min_count_binom_gte_cache countCache;
 
 private:
+    std::unique_ptr<IndelErrorModel> _indelErrorModel;
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
 
     std::vector<unsigned> _postCallStage;

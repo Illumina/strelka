@@ -18,17 +18,19 @@
 //
 //
 /*
- * Indelmodel.cpp
- *
- *  Created on: Jun 23, 2015
  *      Author: Morten Kallberg
  */
 
 #include "IndelErrorModel.hh"
 #include "blt_util/log.hh"
+#include "common/Exceptions.hh"
+
+#include "json/json.h"
 
 #include <cmath>
 #include <cassert>
+
+#include <fstream>
 
 
 // Calculate p(error) of
@@ -40,234 +42,214 @@
 //    FIT pars: [  1.09573511e-03   9.82226042e+00   1.03579658e+00   8.31843836e-06]
 //    Function prob(error)=0.00109573511176/ (1 + exp((9.82226041538-x)/1.03579658224))+8.31843836296e-06
 //    --------------------
-IndelErrorModel
-generate_new_indel_error_model()
+static
+IndelErrorRateSet
+getNewIndelErrorModel()
 {
-    IndelErrorModel res("new","v1","",1,40);
+    static const unsigned maxPatternRepeatCount = 40;
 
-    const double insert_A(1.49133831e-03);
-    const double insert_B(1.03348683e+01);
-    const double insert_C(1.13646811e+00);
-    const double insert_D(1.18488282e-05);
+    static const double insert_A(1.49133831e-03);
+    static const double insert_B(1.03348683e+01);
+    static const double insert_C(1.13646811e+00);
+    static const double insert_D(1.18488282e-05);
 
-    const double delete_A(1.09573511e-03);
-    const double delete_B(9.82226042e+00);
-    const double delete_C(1.03579658e+00);
-    const double delete_D(8.31843836e-06);
+    static const double delete_A(1.09573511e-03);
+    static const double delete_B(9.82226042e+00);
+    static const double delete_C(1.03579658e+00);
+    static const double delete_D(8.31843836e-06);
 
-    for (unsigned hpol_len=1; hpol_len <= res.MaxTractLength; ++hpol_len)
+    IndelErrorRateSet rates;
+
+    // model covers homopolymers only:
+    static const unsigned repeatingPatternSize(1);
+
+    for (unsigned patternRepeatCount=1; patternRepeatCount <= maxPatternRepeatCount; ++patternRepeatCount)
     {
-        double insert_error_prob, delete_error_prob;
+        const double insert_g(insert_A/ (1 + std::exp((insert_B-patternRepeatCount)/insert_C))+insert_D);
+        const double insert_error_prob(1.-std::exp(-insert_g/patternRepeatCount));
+        const double delete_g(delete_A/ (1 + std::exp((delete_B-patternRepeatCount)/delete_C))+delete_D);
+        const double delete_error_prob(1.-std::exp(-delete_g/patternRepeatCount));
 
-        const double insert_g(insert_A/ (1 + std::exp((insert_B-hpol_len)/insert_C))+insert_D);
-        insert_error_prob=(1.-std::exp(-insert_g/hpol_len));
-        const double delete_g(delete_A/ (1 + std::exp((delete_B-hpol_len)/delete_C))+delete_D);
-        delete_error_prob=(1.-std::exp(-delete_g/hpol_len));
-
-        indel_error_rates error_rates(insert_error_prob,delete_error_prob);
-        res.add_prop(0,hpol_len-1,error_rates);
+        rates.addRate(repeatingPatternSize, patternRepeatCount, insert_error_prob, delete_error_prob);
     }
-    return res;
+    return rates;
 }
 
 
-IndelErrorModel
-generate_old_indel_error_model()
+
+static
+IndelErrorRateSet
+getOldIndelErrorModel()
 {
-    IndelErrorModel res("old","v1","",1,40);
+    static const unsigned maxPatternRepeatCount = 40;
 
-    const double insert_A(5.03824e-7);
-    const double insert_B(3.30572e-10);
-    const double insert_C(6.99777);
+    static const double insert_A(5.03824e-7);
+    static const double insert_B(3.30572e-10);
+    static const double insert_C(6.99777);
 
-    const double delete_hpol1_err(5.00057e-5);
-    const double delete_A(1.09814e-5);
-    const double delete_B(5.19742e-10);
-    const double delete_C(6.99256);
-    for (unsigned hpol_len=1; hpol_len <= res.MaxTractLength; ++hpol_len)
+    static const double delete_hpol1_err(5.00057e-5);
+    static const double delete_A(1.09814e-5);
+    static const double delete_B(5.19742e-10);
+    static const double delete_C(6.99256);
+
+    IndelErrorRateSet rates;
+
+    // model covers homopolymers only:
+    static const unsigned repeatingPatternSize(1);
+
+    for (unsigned patternRepeatCount=1; patternRepeatCount <= maxPatternRepeatCount; ++patternRepeatCount)
     {
-        double insert_error_prob, delete_error_prob;
-
-        const double insert_g(insert_A*hpol_len+insert_B*std::pow(hpol_len,insert_C));
-        insert_error_prob=(1.-std::exp(-insert_g));
+        const double insert_g(insert_A*patternRepeatCount+insert_B*std::pow(patternRepeatCount,insert_C));
+        const double insert_error_prob(1.-std::exp(-insert_g));
 
         double delete_g(delete_hpol1_err);
-        if (hpol_len>1)
+        if (patternRepeatCount>1)
         {
-            delete_g = delete_A*hpol_len+delete_B*std::pow(hpol_len,delete_C);
+            delete_g = delete_A*patternRepeatCount+delete_B*std::pow(patternRepeatCount,delete_C);
         }
-        delete_error_prob=(1.-std::exp(-delete_g));
+        const double delete_error_prob(1.-std::exp(-delete_g));
 
-        indel_error_rates error_rates(insert_error_prob,delete_error_prob);
-        res.add_prop(0,hpol_len-1,error_rates);
+        rates.addRate(repeatingPatternSize, patternRepeatCount, insert_error_prob, delete_error_prob);
     }
-    return res;
+    return rates;
 }
 
-IndelErrorModel::IndelErrorModel()
-{
-    this->MaxMotifLength = 0;
-    this->MaxTractLength = 0;
-}
 
-// read in the json
-void IndelErrorModel::Deserialize(const Json::Value& root)
-{
-    _meta.Deserialize(root);
-    this->MaxMotifLength = root["MaxMotifLength"].asInt();
-    this->MaxTractLength = root["MaxTractLength"].asInt();
-    Json::Value jmodels = root["Model"];
 
-    // Reads in model parameter matrix with entries as error-pair [ins_error,del_error]
-    // in the following format:
-    // unit length 1: [[[ins_hpol1,del_hpol1],[ins_hpol2,del_hpol2],...,[ins_hpol_m,del_hpol_m]],
-    // unit length 2:  [ins_dinuc1,del_dinuc1],[ins_dinuc2,del_dinuc2],...,[ins_dinuc_m,del_dinuc_m]],
-    //  ....
-    // unit length N:  [[ins_repeatN,del_repeatN],[ins_repeatN2,del_repeatN2],...,]]
-    unsigned tract(0);
-    unsigned unit(0);
-    for ( unit = 0; unit < jmodels.size(); ++unit)
-        for ( tract = 0; tract < jmodels[unit].size(); ++tract)
+/// Reads in model parameter matrix with entries as error-pair [ins_error,del_error]
+/// in the following format:
+/// unit length 1: [[[del_hpol1,ins_hpol1],[del_hpol2,ins_hpol2],...,[del_hpol_m,ins_hpol_m]],
+/// unit length 2:  [[del_dinuc1,ins_dinuc1],[del_dinuc2,ins_dinuc2],...,[del_dinuc_m,ins_dinuc_m]],
+///  ....
+/// unit length N:  [[del_repeatN,ins_repeatN],[del_repeatN2,ins_repeatN2],...,]]]
+static
+IndelErrorRateSet
+deserializeRateSet(
+    const Json::Value& root)
+{
+    const unsigned maxRepeatingPatternSize = root["MaxMotifLength"].asInt();
+    const unsigned maxTractLength = root["MaxTractLength"].asInt();
+    const Json::Value& models = root["Model"];
+
+    assert((models.size()==maxRepeatingPatternSize) && "Unexpected repeating pattern size in indel model");
+
+    IndelErrorRateSet rates;
+
+    for (unsigned repeatingPatternSize(1); repeatingPatternSize<=maxRepeatingPatternSize; ++repeatingPatternSize)
+    {
+        const auto& pattern(models[repeatingPatternSize-1]);
+
+        assert((pattern.size()<=maxTractLength) && "Unexpected tract length in indel model");
+
+        for (unsigned tractLength=1; tractLength <= pattern.size(); ++tractLength)
         {
-            indel_error_rates error_rates(jmodels[unit][tract][1].asDouble(),jmodels[unit][tract][0].asDouble());
-            // assert((unit == 0 || ((tract + 1) < (2 * (unit + 1)) && pair.first == 0 && pair.second == 0) ||
-            // 	((tract + 1) >= (2 * (unit + 1)))) &&
-            // 	"Nonzero error probability for tract length below twice repeat unit size");
-            this->add_prop(unit,tract,error_rates);
+            if ((tractLength % repeatingPatternSize)!=0) continue;
+            const unsigned patternRepeatCount(tractLength/repeatingPatternSize);
+            const auto& cell(pattern[tractLength-1]);
+
+            const double delete_error_prob(cell[0].asDouble());
+            const double insert_error_prob(cell[1].asDouble());
+            rates.addRate(repeatingPatternSize, patternRepeatCount, insert_error_prob, delete_error_prob);
         }
+    }
 
-    // Make sure the model is self-consistent -- contains the data
-    // specified in Max{Motif,Tract}
-    assert(unit==this->MaxMotifLength && "Unexpected motif length in indel model");
-    assert(tract>=this->MaxTractLength && "Unexpected tract length in indel model");
+    return rates;
 }
 
 
 
-void IndelErrorModel::calc_prop(const starling_base_options& client_opt,
-                                const starling_indel_report_info& iri,
-                                double& indel_error_prob,
-                                double& ref_error_prob,
-                                bool use_length_dependence,
-                                bool use_ref_error_factor) const
+IndelErrorModel::
+IndelErrorModel(
+    const std::string& modelName,
+    const std::string& modelFilename)
 {
-    // determine simple case
-    const bool is_simple_indel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
-
-    // determine the tract length to use
-    static const unsigned one(1);
-    const unsigned repeat_unit    = std::min(std::max(iri.repeat_unit_length,one), this->MaxMotifLength);
-    const unsigned ref_hpol_len   = std::min(repeat_unit*std::max(iri.ref_repeat_count,one),this->MaxTractLength);
-    const unsigned indel_hpol_len = std::min(repeat_unit*std::max(iri.indel_repeat_count,one),this->MaxTractLength);
-
-    // determine indel size
-    int indel_size(1);
-    if (use_length_dependence)
+    if (modelFilename.empty())
     {
-        indel_size = std::abs(static_cast<long>(iri.ref_repeat_count)-static_cast<long>(iri.indel_repeat_count));
-    }
-
-    // Fall-back probs
-    unsigned min_tract_length = get_min_tract_length(iri);
-    if (repeat_unit == 1)
-    {
-        min_tract_length = 1;
-    }
-
-    if (! is_simple_indel)
-    {
-        // breakpoints and swaps -- // use zero repeat error for now.
-        // TODO - provide estimates for complex indels NOTE: likely never utilized
-        double baseline_ins_prob(this->model[0][0].insert_rate);
-        double baseline_del_prob(this->model[0][0].delete_rate);
-
-        indel_error_prob=std::max(baseline_ins_prob,baseline_del_prob);
-        ref_error_prob=indel_error_prob;
-        return;
-    }
-
-    assert(iri.it == INDEL::INSERT || iri.it == INDEL::DELETE);
-    const INDEL::index_t reverse_it(iri.it==INDEL::DELETE ? INDEL::INSERT : INDEL::DELETE);
-
-    if (iri.repeat_unit_length <= MaxMotifLength)
-    {
-        // if tract length is too short for repeat unit, set to shortest indel error rate for
-        // that repeat unit length
-        const unsigned ref_query_len = std::min(std::max(min_tract_length, ref_hpol_len), MaxTractLength);
-        const unsigned indel_query_len = std::min(std::max(min_tract_length, indel_hpol_len), MaxTractLength);
-
-        indel_error_prob=adjusted_rate(repeat_unit, ref_query_len, indel_size, iri.it);
-
-        // Reverse prob that true allele has been masked as reference by chance,
-        // may want to leave this term for now.
-
-        // Meta-comment: What the heck does the comment above mean?
-
-        if (! use_ref_error_factor)
+        if     (modelName == "old")
         {
-            // currently, only germline calling, and only the actual variant calling (as opposed to
-            // candidacy evaluation) use the indel ref error factor
-
-            ref_error_prob=adjusted_rate(repeat_unit, indel_query_len, indel_size, reverse_it);
-
+            _errorRates = getOldIndelErrorModel();
+        }
+        else if(modelName == "new")
+        {
+            _errorRates = getNewIndelErrorModel();
         }
         else
         {
+            using namespace illumina::common;
 
-            // In applying the ref error factor, we want to make sure that we don't end up with
-            // "probabilities" > 1 ... and in fact we might want to keep it <= .5 ... we don't
-            // want to say that we are less likely to be right than wrong, as that would favor any
-            // specific alternative over no error.
-            //
-            // If we take the preliminary error estimate as p and compute the final estimate (with
-            // ref error factor modification) as p' as follows, then we get graceful behavior:
-            // nearly the linear scaling of error estimates originally intended when the error
-            // rates are very low, but with reduced scaling as the result would push us towards or over .5:
-            //
-            //   p' = .5*(1-exp(100*log((.5-p)/.5)))
-            //
-            // ... assuming p < .5, so the log() is valid
-
-            // adjust this if you want a different maximum error probability on the return
-            static const double MAX_ERR_PROB=0.5;
-
-            double prelimRate = adjusted_rate(repeat_unit, indel_query_len, indel_size, reverse_it);
-            prelimRate = std::min(prelimRate,MAX_ERR_PROB*.999999);
-            ref_error_prob=MAX_ERR_PROB*(1.-exp(client_opt.indel_ref_error_factor*log((MAX_ERR_PROB-prelimRate)/MAX_ERR_PROB)));
-
+            std::ostringstream oss;
+            oss << "ERROR: unrecognized indel error model name: '" << modelName << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
     }
     else
     {
-        // if there is no model for the repeat unit length observed, and the indel is in
-        // non-repeat sequence (i.e. RC=0/IC=1 or RC=1/IC=0)
+        Json::Value root;
+        std::ifstream file(modelFilename , std::ifstream::binary);
+        file >> root;
 
-        // current model is too aggressive for hpol length 1, which will be fixed in
-        // the model calculation in the very near future.  For now, use error prob
-        // from the previous model
-        indel_error_prob = model[0][0].get_rate(iri.it);
-        ref_error_prob   = model[0][0].get_rate(reverse_it);
+        Json::Value models = root["IndelModels"];
+        if (! models.isNull())
+        {
+            for (const auto& modelValue : models)
+            {
+                _meta.deserialize(modelValue);
+                if (_meta.name != modelName) continue;
+                _errorRates = deserializeRateSet(modelValue);
+                break;
+            }
+        }
+
+        if(_meta.name != modelName)
+        {
+            using namespace illumina::common;
+
+            std::ostringstream oss;
+            oss << "ERROR: unrecognized indel error model name: '" << modelName << "' in model file '" << modelFilename << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
     }
+
+    _errorRates.finalizeRates();
 }
 
 
 
-double
+
+void
 IndelErrorModel::
-adjusted_rate(
-    const unsigned repeat_unit_length,
-    const unsigned tract_length,
-    const unsigned indel_size,
-    const INDEL::index_t it) const
+getIndelErrorRate(
+    const starling_indel_report_info& iri,
+    double& refToIndelErrorProb,
+    double& indelToRefErrorProb) const
 {
-    assert(repeat_unit_length > 0);
-    assert(tract_length > 0);
-    assert(it == INDEL::INSERT || it == INDEL::DELETE);
-    return std::max(model[0][0].get_rate(it), std::pow(model[repeat_unit_length - 1][tract_length - 1].get_rate(it), indel_size));
-}
+    // determine simple case
+    const bool isSimpleIndel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
 
+    if (! isSimpleIndel)
+    {
+        // complex indels use baseline indel error rates
+        /// TODO - provide estimates for complex indels
+        const double baselineInsertionErrorRate(_errorRates.getRate(1,1,INDEL::INSERT));
+        const double baselineDeletionErrorRate(_errorRates.getRate(1,1,INDEL::DELETE));
 
-void IndelErrorModel::add_prop(const unsigned& unit, const unsigned& tract, const indel_error_rates& myProps)
-{
-    this->model[unit][tract] = myProps;
+        refToIndelErrorProb=std::max(baselineInsertionErrorRate,baselineDeletionErrorRate);
+        indelToRefErrorProb=refToIndelErrorProb;
+        return;
+    }
+
+    assert(iri.it == INDEL::INSERT || iri.it == INDEL::DELETE);
+
+    // determine the repeat pattern size and count:
+    static const unsigned one(1);
+    const unsigned repeatingPatternSize    = std::max(iri.repeat_unit_length,one);
+    const unsigned refPatternRepeatCount   = std::max(iri.ref_repeat_count,one);
+    const unsigned indelPatternRepeatCount = std::max(iri.indel_repeat_count,one);
+
+    //const int indelPatternRepeatSize(std::abs(static_cast<int>(iri.ref_repeat_count)-static_cast<int>(iri.indel_repeat_count));
+
+    const INDEL::index_t reverse_it(iri.it==INDEL::DELETE ? INDEL::INSERT : INDEL::DELETE);
+
+    refToIndelErrorProb=_errorRates.getRate(repeatingPatternSize, refPatternRepeatCount, iri.it);
+    indelToRefErrorProb=_errorRates.getRate(repeatingPatternSize, indelPatternRepeatCount, reverse_it);
 }

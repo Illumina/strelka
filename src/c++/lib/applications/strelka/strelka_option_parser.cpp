@@ -25,11 +25,8 @@
 #include "strelka_option_parser.hh"
 
 #include "blt_common/blt_arg_validate.hh"
-#include "calibration/scoringmodels.hh"
 #include "starling_common/starling_base_option_parser.hh"
 #include "starling_common/Tier2OptionsParser.hh"
-
-#include "boost/filesystem.hpp"
 
 
 
@@ -154,24 +151,6 @@ get_strelka_option_parser(
     visible.add(help_parse_opt);
 
     return visible;
-}
-
-
-
-static
-void
-checkOptionalFile(
-    const prog_info& pinfo,
-    const std::string& filename,
-    const char* label)
-{
-    if (filename.empty()) return;
-    if (! boost::filesystem::exists(filename))
-    {
-        std::ostringstream oss;
-        oss << "Can't find " << label << " file '" << filename << "'";
-        pinfo.usage(oss.str().c_str());
-    }
 }
 
 

@@ -23,9 +23,11 @@
 ///
 
 #include "blt_util/math_util.hh"
+#include "calibration/IndelErrorModel.hh"
 #include "htsapi/bam_streamer.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
+
 #include <cmath>
 
 #include <iostream>
@@ -50,6 +52,7 @@ starling_base_deriv_options(
     , variant_window_first_stage(0)
     , variant_window_last_stage(0)
     , countCache(opt.indel_candidate_signal_test_alpha)
+    , _indelErrorModel(new IndelErrorModel(opt.indel_error_model_name,opt.indel_error_models_filename))
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);

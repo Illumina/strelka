@@ -92,16 +92,17 @@ struct indel_synchronizer
     ///
     indel_synchronizer(
         const starling_base_options& opt,
+        const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const min_count_binom_gte_cache& countCache,
         const double max_candidate_depth,
         indel_buffer& ib,
         const depth_buffer& db,
         const depth_buffer& db2,
         const starling_sample_options& init_sample_opt)
         : _opt(opt)
+        , _dopt(dopt)
         , _ref(ref)
-        , _countCache(countCache)
+        , _countCache(dopt.countCache)
         , _sample_no(0)
         , _sample_order(0)
     {
@@ -114,13 +115,14 @@ struct indel_synchronizer
     ///
     indel_synchronizer(
         const starling_base_options& opt,
+        const starling_base_deriv_options& dopt,
         const reference_contig_segment& ref,
-        const min_count_binom_gte_cache& countCache,
         const indel_sync_data& isd,
         const sample_id_t sample_no)
         : _opt(opt)
+        , _dopt(dopt)
         , _ref(ref)
-        , _countCache(countCache)
+        , _countCache(dopt.countCache)
         , _isd(isd)
         , _sample_no(sample_no)
         , _sample_order(_isd._idata.get_id(sample_no)) {}
@@ -259,6 +261,7 @@ private:
 
 
     const starling_base_options& _opt;
+    const starling_base_deriv_options& _dopt;
     const reference_contig_segment& _ref;
     const min_count_binom_gte_cache& _countCache;
 

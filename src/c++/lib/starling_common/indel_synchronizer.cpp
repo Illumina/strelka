@@ -28,8 +28,7 @@
 #include "blt_util/binomial_test.hh"
 #include "blt_util/blt_exception.hh"
 #include "blt_util/log.hh"
-#include "starling_common/starling_indel_error_prob.hh"
-#include "calibration/scoringmodels.hh"
+#include "calibration/IndelErrorModel.hh"
 
 #include <cstdlib>
 
@@ -93,20 +92,14 @@ is_candidate_indel_impl_test_signal_noise(
     //
     // Step 1: find the error rate for this indel and context:
     //
-    double error_rate(0.);
+    double indelToRefErrorProb(0.);
     {
-        static const bool use_ref_error_factor=false;
-        static const bool use_length_dependence=false;
-
-        const IndelErrorModel& indel_model = scoring_models::Instance().get_indel_model();
-
         starling_indel_report_info iri;
         get_starling_indel_report_info(ik,id,_ref,iri);
 
-        // indel_error_prob does not factor in to this calculation, but is
-        // required by get_indel_error_prob
-        double indel_error_prob(0.);
-        indel_model.calc_prop(_opt,iri,indel_error_prob,error_rate,use_length_dependence,use_ref_error_factor);
+        // refToIndelErrorProb does not factor in to this calculation, so put this in a temp value
+        double refToIndelErrorProb(0.);
+        _dopt.getIndelErrorModel().getIndelErrorRate(iri,refToIndelErrorProb,indelToRefErrorProb);
     }
 
     //
@@ -133,7 +126,7 @@ is_candidate_indel_impl_test_signal_noise(
         // test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
-        if (_countCache.isRejectNull(n_total_reads, error_rate, n_indel_reads))
+        if (_countCache.isRejectNull(n_total_reads, indelToRefErrorProb, n_indel_reads))
         {
             return true;
         }

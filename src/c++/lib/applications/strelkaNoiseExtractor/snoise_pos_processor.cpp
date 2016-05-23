@@ -35,9 +35,11 @@ snoise_pos_processor(
     : base_t(opt,dopt,ref,streams,1),
       _streams(streams)
 {
+    static const unsigned sampleId(0);
+
     // setup indel syncronizers:
     {
-        sample_info& normal_sif(sample(0));
+        sample_info& normal_sif(sample(sampleId));
 
         double max_candidate_normal_sample_depth(-1.);
 #if 0
@@ -64,8 +66,8 @@ snoise_pos_processor(
 
         indel_sync_data isdata;
         isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, max_candidate_normal_sample_depth, 0);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, ref, dopt.countCache, isdata, 0));
+                               normal_sif.sample_opt, max_candidate_normal_sample_depth, sampleId);
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleId));
     }
 }
 

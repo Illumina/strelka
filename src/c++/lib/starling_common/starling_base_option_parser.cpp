@@ -26,18 +26,36 @@
 
 #include "blt_common/blt_arg_validate.hh"
 #include "blt_util/compat_util.hh"
-#include "calibration/scoringmodels.hh"
 #include "starling_common/Tier2OptionsParser.hh"
 
+#include "boost/filesystem.hpp"
 #include "boost/format.hpp"
 
 #include <iostream>
+#include <sstream>
 
 //#define DEBUG_OPTIONPARSER
 
 #ifdef DEBUG_OPTIONPARSER
 #include "blt_util/log.hh"
 #endif
+
+
+
+void
+checkOptionalFile(
+    const prog_info& pinfo,
+    const std::string& filename,
+    const char* label)
+{
+    if (filename.empty()) return;
+    if (! boost::filesystem::exists(filename))
+    {
+        std::ostringstream oss;
+        oss << "Can't find " << label << " file '" << filename << "'";
+        pinfo.usage(oss.str().c_str());
+    }
+}
 
 
 
@@ -170,7 +188,7 @@ get_starling_base_option_parser(starling_base_options& opt)
     ("indel-error-models-file", po::value(&opt.indel_error_models_filename),
      "File containing indel error models")
     ("indel-error-model-name", po::value(&opt.indel_error_model_name)->default_value(opt.indel_error_model_name),
-     "Indel error model name (corresponds to {name}_{version} in model file)")
+     "Indel error model name, either 'new', 'old' or label to choose from the indel error model file")
     ;
 
     po::options_description new_opt("Shared small-variant options");
@@ -408,15 +426,7 @@ finalize_starling_base_options(
         last_fs=fs;
     }
 
-    if (! opt.indel_error_models_filename.empty())
-    {
-        scoring_models::Instance().load_indel_error_models(opt.indel_error_models_filename);
-    }
-
-    if (! opt.indel_error_model_name.empty())
-    {
-        scoring_models::Instance().set_indel_model(opt.indel_error_model_name);
-    }
+    checkOptionalFile(pinfo,opt.indel_error_models_filename,"indel error models");
 
     /// tier2 options are not parsed by starling_base, but need to live up here for now,
     /// so validate them together with the rest of starling_base

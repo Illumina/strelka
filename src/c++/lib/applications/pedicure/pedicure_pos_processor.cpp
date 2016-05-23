@@ -29,12 +29,12 @@
 #include "denovo_snv_caller.hh"
 #include "denovo_snv_call_vcf.hh"
 
-#include "calibration/scoringmodels.hh"
+#include "blt_util/log.hh"
+#include "calibration/IndelErrorModel.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
 #include <sstream>
-#include "blt_util/log.hh"
 
 
 pedicure_pos_processor::
@@ -91,7 +91,7 @@ pedicure_pos_processor(
         for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
         {
             sample_info& sif(sample(sampleIndex));
-            sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,dopt.countCache,isdata,sampleIndex));
+            sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleIndex));
         }
     }
 }
@@ -257,9 +257,9 @@ process_pos_indel_denovo(const pos_t pos)
         // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
         if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
 
-        double indel_error_prob(0);
-        double ref_error_prob(0);
-        scoring_models::Instance().get_indel_model().calc_prop(_opt,iri,indel_error_prob,ref_error_prob);
+        double refToIndelErrorProb(0);
+        double indelToRefErrorProb(0);
+        _dopt.getIndelErrorModel().getIndelErrorRate(iri,refToIndelErrorProb,indelToRefErrorProb);
 
         denovo_indel_call dindel;
 
@@ -276,7 +276,7 @@ process_pos_indel_denovo(const pos_t pos)
             _dopt,
             sinfo,
             sampleOptions,
-            indel_error_prob,ref_error_prob,
+            refToIndelErrorProb,indelToRefErrorProb,
             ik,allIndelData,
             is_use_alt_indel,
             dindel);

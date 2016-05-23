@@ -85,7 +85,7 @@ Clean_string(const std::string& str)
 
 void
 IndelErrorModelMetadata::
-Deserialize(const Json::Value& root)
+deserialize(const Json::Value& root)
 {
     using namespace IMODEL_ENTRY_TYPE;
     this->name      = Clean_string(root[get_label(NAME)].asString());

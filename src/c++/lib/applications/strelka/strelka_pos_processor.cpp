@@ -28,7 +28,7 @@
 #include "strelka_pos_processor.hh"
 
 #include "blt_util/log.hh"
-#include "calibration/scoringmodels.hh"
+#include "calibration/IndelErrorModel.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_base_stages.hh"
 
@@ -87,8 +87,8 @@ strelka_pos_processor(
                                normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
         isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
                                tumor_sif.sample_opt, -1., TUMOR);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,dopt.countCache,isdata,NORMAL));
-        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,ref,dopt.countCache,isdata,TUMOR));
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,dopt,ref,isdata,NORMAL));
+        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,dopt,ref,isdata,TUMOR));
     }
 
     // setup indel avg window:
@@ -303,16 +303,16 @@ process_pos_indel_somatic(const pos_t pos)
             // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
             if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
 
-            double indel_error_prob(0);
-            double ref_error_prob(0);
-            scoring_models::Instance().get_indel_model().calc_prop(_opt,iri,indel_error_prob,ref_error_prob);
+            double refToIndelErrorProb(0);
+            double indelToRefErrorProb(0);
+            _dopt.getIndelErrorModel().getIndelErrorRate(iri, refToIndelErrorProb, indelToRefErrorProb);
 
             somatic_indel_call sindel;
             static const bool is_use_alt_indel(true);
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
                                                     normal_sif.sample_opt,
                                                     tumor_sif.sample_opt,
-                                                    indel_error_prob,ref_error_prob,
+                                                    refToIndelErrorProb,indelToRefErrorProb,
                                                     ik,normal_id,tumor_id,
                                                     is_use_alt_indel,
                                                     sindel);

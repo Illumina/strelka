@@ -29,7 +29,6 @@
 #include "blt_util/io_util.hh"
 #include "htsapi/vcf_util.hh"
 #include "htsapi/bam_dumper.hh"
-#include "calibration/scoringmodels.hh"
 
 #include <cassert>
 

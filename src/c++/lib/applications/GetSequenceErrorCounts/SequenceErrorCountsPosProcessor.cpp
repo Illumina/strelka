@@ -23,7 +23,6 @@
 #include "common/OutStream.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "starling_common/starling_diploid_indel.hh"
-#include "starling_common/starling_indel_error_prob.hh"
 
 #include <algorithm>
 #include <vector>
@@ -49,9 +48,11 @@ SequenceErrorCountsPosProcessor(
         }
     }
 
+    static const unsigned sampleId(0);
+
     // setup indel syncronizers:
     {
-        sample_info& normal_sif(sample(0));
+        sample_info& normal_sif(sample(sampleId));
 
         if (dopt.is_max_depth())
         {
@@ -75,8 +76,8 @@ SequenceErrorCountsPosProcessor(
 
         indel_sync_data isdata;
         isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, _max_candidate_normal_sample_depth, 0);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, ref, dopt.countCache, isdata, 0));
+                               normal_sif.sample_opt, _max_candidate_normal_sample_depth, sampleId);
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleId));
     }
 }
 

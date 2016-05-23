@@ -21,12 +21,10 @@
 #include "starling_pos_processor.hh"
 #include "blt_common/position_nonref_test.hh"
 #include "blt_common/position_nonref_2allele_test.hh"
-//#include "blt_common/position_snp_call_lrt.hh"
 #include "blt_common/ref_context.hh"
 #include "blt_util/log.hh"
-#include "starling_common/starling_indel_error_prob.hh"
+#include "calibration/IndelErrorModel.hh"
 #include "starling_continuous_variant_caller.hh"
-#include "calibration/scoringmodels.hh"
 
 #include <iomanip>
 
@@ -89,13 +87,15 @@ starling_pos_processor(
       _dopt(dopt),
       _streams(streams)
 {
+    static const unsigned sampleId(0);
+
     // setup gvcf aggregator
     if (_opt.gvcf.is_gvcf_output())
     {
         _gvcfer.reset(new gvcf_aggregator(
                           _opt,_dopt,ref,_nocompress_regions,
                           _streams.getSampleName(), _streams.gvcf_osptr(),
-                          sample(0).bc_buff));
+                          sample(sampleId).bc_buff));
     }
 
     // setup indel syncronizers:
@@ -125,8 +125,8 @@ starling_pos_processor(
 
         indel_sync_data isdata;
         isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, max_candidate_normal_sample_depth, 0);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, ref, dopt.countCache, isdata, 0));
+                               normal_sif.sample_opt, max_candidate_normal_sample_depth, sampleId);
+        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleId));
     }
 }
 
@@ -552,11 +552,31 @@ process_pos_indel_single_sample_digt(
             /// TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
             if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
 
-            double indel_error_prob(0);
-            double ref_error_prob(0);
-            const bool use_length_dependence=false;
-            const bool use_ref_error_factor=true;
-            scoring_models::Instance().get_indel_model().calc_prop(_opt,iri,indel_error_prob,ref_error_prob,use_length_dependence,use_ref_error_factor);
+            double refToIndelErrorProb(0);
+            double indelToRefErrorProb(0);
+            _dopt.getIndelErrorModel().getIndelErrorRate(iri,refToIndelErrorProb,indelToRefErrorProb);
+
+            // make ref error factor adjustments:
+            {
+                // In applying the ref error factor, we want to make sure that we don't end up with
+                // "probabilities" > 1 ... and in fact we might want to keep it <= .5 ... we don't
+                // want to say that we are less likely to be right than wrong, as that would favor any
+                // specific alternative over no error.
+                //
+                // If we take the preliminary error estimate as p and compute the final estimate (with
+                // ref error factor modification) as p' as follows, then we get graceful behavior:
+                // nearly the linear scaling of error estimates originally intended when the error
+                // rates are very low, but with reduced scaling as the result would push us towards or over .5:
+                //
+                //   p' = .5*(1-exp(100*log((.5-p)/.5)))
+                //
+                // ... assuming p < .5, so the log() is valid
+
+                // adjust this if you want a different maximum error probability on the return
+                static const double MAX_ERR_PROB=0.5;
+                indelToRefErrorProb = std::min(indelToRefErrorProb,MAX_ERR_PROB*.999999);
+                indelToRefErrorProb=MAX_ERR_PROB*(1.-std::exp(_opt.indel_ref_error_factor*std::log((MAX_ERR_PROB-indelToRefErrorProb)/MAX_ERR_PROB)));
+            }
 
             static const bool is_tier2_pass(false);
             static const bool is_use_alt_indel(true);
@@ -586,7 +606,7 @@ process_pos_indel_single_sample_digt(
             _dopt.incaller().starling_indel_call_pprob_digt(
                 _opt,_dopt,
                 sif.sample_opt,
-                indel_error_prob,ref_error_prob,
+                refToIndelErrorProb,indelToRefErrorProb,
                 ik,id,is_use_alt_indel,dindel);
 
             bool is_indel(false);
