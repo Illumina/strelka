@@ -300,6 +300,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _is_variant_windows(! _opt.variant_windows.empty())
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
+    , _active_region_detector()
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
@@ -504,7 +505,32 @@ insert_indel(
     }
 }
 
+void
+starling_pos_processor_base::insert_mismatch_position(const pos_t pos)
+{
+//    printf("%d\n", pos);
+    _active_region_detector.insert_mismatch_position(pos);
+}
 
+void
+starling_pos_processor_base::insert_indel_position(const pos_t pos)
+{
+//    printf("%d\n", pos);
+    _active_region_detector.insert_indel_position(pos);
+}
+
+void
+starling_pos_processor_base::update_active_region_start(const pos_t pos)
+{
+    _active_region_detector.update_start_position(pos);
+}
+
+void
+starling_pos_processor_base::update_active_region_end(const pos_t pos)
+{
+//    printf("%d\n", pos);
+    _active_region_detector.update_end_position(pos);
+}
 
 void
 starling_pos_processor_base::
@@ -723,7 +749,7 @@ init_read_segment(const read_segment& rseg,
 //        const read_stats rs = read_stats(rseg.map_qual(),rseg.qual());
         const unsigned total_indel_ref_span_per_read =
             add_alignment_indels_to_sppr(_opt.max_indel_size,_ref,
-                                         al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin());
+                                         al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin(), rseg.map_qual() == 0);
 
         update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
 
@@ -898,6 +924,8 @@ process_pos(const int stage_no,
 
     if        (stage_no==STAGE::HEAD)
     {
+//        printf("HEAD\t%d\n", pos);
+        update_active_region_end(pos);
         init_read_segment_pos(pos);
 
         if (_opt.is_write_candidate_indels())
@@ -910,6 +938,8 @@ process_pos(const int stage_no,
     }
     else if (stage_no==STAGE::READ_BUFFER)
     {
+//        printf("READ_BUFFER\t%d\n", pos);
+
 #if 0
         for (unsigned s(0); s<_n_samples; ++s)
         {
@@ -919,6 +949,7 @@ process_pos(const int stage_no,
         }
 #endif
         //        consolidate_candidate_indel_pos(pos);
+        update_active_region_start(pos);
 
         if (! _opt.is_write_candidate_indels_only)
         {
@@ -1369,6 +1400,10 @@ pileup_read_segment(const read_segment& rseg,
             for (unsigned j(0); j<ps.length; ++j)
             {
                 const unsigned read_pos(read_head_pos+j);
+
+//                if (_ref.get_base(ref_head_pos+static_cast<pos_t>(j)) != id_to_base(bam_seq_code_to_id(bseq.get_code(read_pos))))
+//                    printf("2\t%d\t%d\t%d\n", ref_head_pos, ref_head_pos+static_cast<pos_t>(j), bam_seq_code_to_id(bseq.get_code(read_pos)));
+
                 if ((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
                 // skip position outside of report range:
@@ -1494,6 +1529,8 @@ pileup_read_segment(const read_segment& rseg,
                                                    current_call_filter,is_neighbor_mismatch,is_tier_specific_filter,
                                                    isFirstBaseCallFromMatchSeg,
                                                    isLastBaseCallFromMatchSeg);
+//                    if (_ref.get_base(ref_pos) != id_to_base(bc.base_id))
+//                        printf("3\t%d\t%d\t%d\n", ref_head_pos, ref_pos, bc.base_id);
 
                     insert_pos_basecall(ref_pos,
                                         sample_no,

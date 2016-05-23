@@ -65,5 +65,6 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                              const INDEL_ALIGN_TYPE::index_t iat,
                              align_id_t id,
                              const unsigned sample_no,
-                             const std::pair<bool,bool>& edge_pin);
+                             const std::pair<bool,bool>& edge_pin,
+                             const bool is_mapq_zero);
 
