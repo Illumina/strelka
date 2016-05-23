@@ -24,13 +24,15 @@
 
 #pragma once
 
+#include "ScoringModelManager.hh"
 #include "starling_shared.hh"
 #include "blt_common/blt_shared.hh"
 #include "blt_util/chrom_depth_map.hh"
 
 #include <iosfwd>
 
-#include "ScoringModelManager.hh"
+/// TODO: remove this after STREL-97 transition period:
+#define SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
 
 
 void
