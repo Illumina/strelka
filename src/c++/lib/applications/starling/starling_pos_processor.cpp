@@ -336,7 +336,7 @@ process_pos_snp_single_sample_impl(
     if (_opt.is_bsnp_diploid())
     {
         _dopt.pdcaller().position_snp_call_pprob_digt(
-            _opt,good_epi,si->dgt, si->smod.strand_bias, _opt.is_all_sites());
+            _opt,good_epi,si->dgt, _opt.is_all_sites());
     }
 #if 0
     if (_opt.is_bsnp_monoploid)

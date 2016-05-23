@@ -52,6 +52,7 @@ void variant_prefilter_stage::add_site_modifiers(
     smod.is_unknown=(si.ref=='N');
     smod.is_used_covered=(si.n_used_calls!=0);
     smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
+    smod.strand_bias=si.dgt.strand_bias;
 
     if     (smod.is_unknown)
     {

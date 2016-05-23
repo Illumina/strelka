@@ -473,7 +473,6 @@ position_snp_call_pprob_digt(
     const blt_options& opt,
     const extended_pos_info& epi,
     diploid_genotype& dgt,
-    double& strand_bias,
     const bool is_always_test) const
 {
     const snp_pos_info& pi(epi.pi);
@@ -532,11 +531,11 @@ position_snp_call_pprob_digt(
         // for consistency, even though this makes the SB value
         // useless:
         const unsigned tgt(dgt.genome.max_gt);
-        strand_bias=std::max(lhood_fwd[tgt],lhood_rev[tgt])-lhood[tgt];
+        dgt.strand_bias=std::max(lhood_fwd[tgt],lhood_rev[tgt])-lhood[tgt];
     }
     else
     {
-        strand_bias = 0;
+        dgt.strand_bias = 0;
     }
 }
 

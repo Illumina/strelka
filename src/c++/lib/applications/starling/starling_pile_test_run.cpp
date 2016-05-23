@@ -82,7 +82,7 @@ call(
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
     _dopt_ptr->pdcaller().position_snp_call_pprob_digt(
-        _opt,good_epi,si->dgt, si->smod.strand_bias, _opt.is_all_sites());
+        _opt,good_epi,si->dgt, _opt.is_all_sites());
 
     _os << si->dgt;
 }

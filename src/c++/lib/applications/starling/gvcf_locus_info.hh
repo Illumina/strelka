@@ -163,7 +163,7 @@ struct GermlineVariantSimpleGenotypeInfo : public PolymorphicObject
     int gq=0;
     double strand_bias = 0;
 
-    /// The empirically calibrated quality-score of the site, if -1 no EVS is available
+    // The empirically calibrated quality-score of the site, if -1 no EVS is available
     int empiricalVariantScore = -1;
 
     std::bitset<GERMLINE_VARIANT_VCF_FILTERS::SIZE> filters;

@@ -62,6 +62,7 @@ struct diploid_genotype
         is_snp=false;
         ploidy=2;
         ref_gt=0;
+        strand_bias=0;
         genome.reset();
         poly.reset();
         std::fill(phredLoghood.begin(), phredLoghood.end(), 0);
@@ -102,9 +103,9 @@ struct diploid_genotype
     int ploidy;
 
     unsigned ref_gt;
+    double strand_bias;
     result_set genome;
     result_set poly;
-
     std::vector<unsigned> phredLoghood;
 };
 
@@ -141,7 +142,6 @@ struct pprob_digt_caller : private boost::noncopyable
         const blt_options& opt,
         const extended_pos_info& epi,
         diploid_genotype& dgt,
-        double& strand_bias,
         const bool is_always_test = false) const;
 
 

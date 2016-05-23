@@ -368,10 +368,8 @@ starling_pos_processor_base(const starling_base_options& opt,
         {
             good_pi.set_ref_base(id_to_base(b));
             _empty_dgt[b].reset(new diploid_genotype);
-            double strand_bias = 0;
             _dopt.pdcaller().position_snp_call_pprob_digt(_opt,good_epi,
                                                           *_empty_dgt[b],
-                                                          strand_bias,
                                                           _opt.is_all_sites());
         }
     }
