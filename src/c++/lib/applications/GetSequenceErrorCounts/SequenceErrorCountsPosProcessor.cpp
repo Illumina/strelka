@@ -139,7 +139,6 @@ isKnownVariantMatch(
     {
         if (kv.altMatch(ik, id)) overlap.insert(kv);
     }
-
     return (! overlap.empty());
 }
 
@@ -543,10 +542,6 @@ process_pos_error_counts(
     // buffer observations until we get through all overlaping indels at this site:
     std::map<IndelErrorContext,IndelErrorContextObservation> indelObservations;
 
-    // background depth is always one minus position to be consistent with indel report:
-    const pos_t depth_pos(pos-1);
-    const snp_pos_info& spi(sif.bc_buff.get_pos(depth_pos));
-    const unsigned depth(spi.calls.size());
 
     // check for any known variants overlapping this position
     RecordTracker::indel_value_t knownVariantRecords;
@@ -626,15 +621,19 @@ process_pos_error_counts(
 
             mergeIndelObservations(context,obs,indelObservations);
         }
-
-        for (const auto& value : indelObservations)
-        {
-            indelCounts.addError(value.first,value.second,depth);
-        }
-
     }
+
+    // background depth is always one minus position to be consistent with indel report:
+    const pos_t depth_pos(pos-1);
+    const snp_pos_info& spi(sif.bc_buff.get_pos(depth_pos));
+    const unsigned depth(spi.calls.size());
+
+    for (const auto& value : indelObservations)
+    {
+        indelCounts.addError(value.first,value.second,depth);
+    }
+
     // add all the backgrounds that haven't been covered already
-    else
     {
         unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
 
@@ -642,6 +641,12 @@ process_pos_error_counts(
         IndelBackgroundObservation obs;
         obs.depth = depth;
         obs.assignKnownStatus(knownVariantRecords);
+        // the assumption is that a background position should have
+        // the variant status of any overlapping known variants,
+        // regardless of whether the genotypes match
+
+        // std::cout << "POS: " << pos << std::endl;
+        // std::cout << obs << std::endl;
 
         // always add hpol=1:
         if (! indelObservations.count(context))
