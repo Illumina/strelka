@@ -24,11 +24,45 @@
 
 #include "blt_util/RecordTracker.hh"
 #include <iostream>
+#include <array>
 
+static
+size_t
+extractVcfField(
+    const std::string& vcf_line,
+    unsigned field_index,
+    std::string& field,
+    size_t start_from = 0)
+{
+    static const char field_sep('\t');
+
+    size_t field_start = start_from;
+
+    // fast-forward to field_index
+    for (unsigned i(0); i < field_index; ++i)
+    {
+        field_start = vcf_line.find_first_of(field_sep, field_start + 1);
+    }
+
+    if (field_start != std::string::npos)
+    {
+        size_t next_start(vcf_line.find_first_of(field_sep, field_start + 1));
+        field = vcf_line.substr(field_start + 1, next_start - field_start - 1);
+
+        return next_start + 1;
+    }
+
+    // if the next occurence of the tab is std::string::npos, then this field is the
+    // last field in the record
+    field = vcf_line.substr(start_from);
+
+    return std::string::npos;
+}
 
 // extract an entry from the format field in a VCF record
 // and returns the value in the first VCF sample (that's
 // easy  to change if needed)
+static
 void
 extractFormatEntry(
     const std::string& vcf_line,
@@ -36,27 +70,12 @@ extractFormatEntry(
     std::string& value,
     bool strict = true)
 {
-    static const char field_sep('\t');
     static const char format_sep(':');
     static const unsigned format_index(8);
 
-    size_t field_start(0);
-    size_t next_start(0);
-
-    // fast-forward to format field
-    for (unsigned i(0); i < format_index; ++i)
-    {
-        field_start = vcf_line.find_first_of(field_sep, field_start) + 1;
-    }
-    next_start = vcf_line.find_first_of(field_sep, field_start) + 1;
-    std::string format_string = vcf_line.substr(field_start, next_start - field_start - 1);
-
-    // go to first sample field
-    field_start = next_start;
-    next_start  = vcf_line.find_first_of(field_sep, field_start);
-    std::string sample_string = vcf_line.substr(field_start, next_start - field_start - 1);
-    // N.B. if next_start is std::string::npos (i.e. only one sample in VCF), this will grab til
-    // the end of the line
+    std::string format_string, sample_string;
+    size_t formatEnd(extractVcfField(vcf_line, format_index, format_string));
+    extractVcfField(vcf_line, 1, sample_string, formatEnd);
 
     size_t entry_start (format_string.find(field));
 
@@ -77,6 +96,7 @@ extractFormatEntry(
 
 
 // extract genotype from VCF entry
+static
 std::string
 getGenotypeString(
     const std::string& vcf_line)
@@ -159,22 +179,36 @@ assignGenotype()
     gt_string = getGenotypeString(vcfr.line);
     assert(!gt_string.empty());
 
+    // we could move this into the array loop, but I want to keep
+    // the assert for now, which is easier to have out here
     size_t gt_string_delim_pos = gt_string.find_first_of("|/");
-
     assert(gt_string_delim_pos != std::string::npos);
 
-    int allele_1 = stoi(gt_string.substr(0, gt_string_delim_pos));
-    int allele_2 = stoi(gt_string.substr(gt_string_delim_pos + 1));
+    std::array <int, 2> alleles;
+    size_t start_pos = 0;
+    unsigned hom_count = 0;
 
-    // no negative genotype indices
-    assert (allele_1 >= 0 && allele_2 >= 0);
+    // parse alleles
+    for (unsigned i = 0; i < alleles.size(); ++i)
+    {
+        try
+        {
+            alleles[i] = stoi(gt_string.substr(start_pos, gt_string_delim_pos));
+        } catch (const std::invalid_argument& ex)
+        {
+            assert (gt_string.substr(start_pos, gt_string_delim_pos) == ".");
+            alleles[i] = 0;
+        }
+        start_pos += gt_string_delim_pos + 1;
 
-    // alt indices must be less than or equal to the the total number of alts
-    assert (allele_1 <= (int) alts.size() && allele_2 <= (int) alts.size());
+        // no negative genotype indices and alt indices must be less than or
+        // equal to the the total number of alts
+        assert(alleles[i] >= 0 && alleles[i] <= (int) alts.size());
+        hom_count += (alleles[i] == 0);
+    }
 
-    unsigned hom_count = (allele_1 > 0) + (allele_2 > 0);
-
-    if (hom_count == 0) // i.e. 0/0
+    // assign genotype status (homref, het, homalt, hetalt)
+    if (hom_count == 2) // i.e. 0/0
     {
         genotype = GENOTYPE_STATUS::HOMREF;
     }
@@ -184,7 +218,7 @@ assignGenotype()
     }
     else
     {
-        if (allele_1 == allele_2) // i.e. 1/1
+        if (alleles[0] == alleles[1]) // i.e. 1/1
         {
             genotype = GENOTYPE_STATUS::HOMALT;
         }
@@ -193,6 +227,14 @@ assignGenotype()
             genotype = GENOTYPE_STATUS::HETALT;
         }
     }
+}
+
+void
+IndelGenotype::
+assignFilter()
+{
+    static const unsigned filter_index = 6;
+    extractVcfField(vcfr.line, filter_index, filter);
 }
 
 bool
@@ -234,16 +276,21 @@ addVcfRecord(
 
     IndelGenotype genotype_instance(vcfRecord);
 
-    // since these intervals are right-open, the end position of the interval
-    // is one past the final reference base in the indel
-    pos_t start_pos = vcfRecord.pos;
-    pos_t end_pos   = start_pos + genotype_instance.max_delete_length + 1;
+    // exclude non-passing variants here for now (may want to add all
+    // records and leave treatment as downstream decision)
+    if (genotype_instance.filter == "PASS" || genotype_instance.filter == ".")
+    {
+        // since these intervals are right-open, the end position of the interval
+        // is one past the final reference base in the indel
+        pos_t start_pos = vcfRecord.pos;
+        pos_t end_pos   = start_pos + genotype_instance.max_delete_length + 1;
 
-    interval_t interval = boost::icl::discrete_interval<pos_t>::right_open(start_pos, end_pos);
-    indel_value_t record_set;
-    record_set.insert(genotype_instance);
+        interval_t interval = boost::icl::discrete_interval<pos_t>::right_open(start_pos, end_pos);
+        indel_value_t record_set;
+        record_set.insert(genotype_instance);
 
-    _records.insert(std::make_pair(interval, record_set));
+        _records.insert(std::make_pair(interval, record_set));
+    }
 }
 
 void
@@ -289,6 +336,7 @@ operator<<(
 {
     os << "Pos: " << gt.pos << "\n";
     os << "Genotype: " << GENOTYPE_STATUS::label(gt.genotype) << "\n";
+    os << "Filter: " << gt.filter << "\n";
     os << "Observed alts:\n";
 
     unsigned alt_index(1);

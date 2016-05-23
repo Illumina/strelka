@@ -41,10 +41,12 @@
 #include <iosfwd>
 #include <set>
 
+
 namespace GENOTYPE_STATUS
 {
 enum genotype_t
 {
+    UNKNOWN,
     HOMREF,
     HET,
     HETALT,
@@ -59,6 +61,8 @@ label(
 {
     switch (gt)
     {
+        case UNKNOWN:
+            return "Unknown";
         case HOMREF:
             return "Homref";
         case HET:
@@ -72,7 +76,6 @@ label(
     }
 }
 }
-
 
 struct IndelVariant
 {
@@ -121,6 +124,7 @@ struct IndelGenotype
         pos = in_vcfr.pos;
         extractAlts();
         assignGenotype();
+        assignFilter();
     }
 
     bool
@@ -139,11 +143,13 @@ struct IndelGenotype
     alt_vec_t alts;
     unsigned max_delete_length;
     std::string gt_string;
+    std::string filter;
     GENOTYPE_STATUS::genotype_t genotype = GENOTYPE_STATUS::HOMREF;
 
 private:
     void extractAlts();
     void assignGenotype();
+    void assignFilter();
 };
 
 
@@ -158,7 +164,7 @@ struct IndelGenotypeSort
         if (lhs.vcfr.pos < rhs.vcfr.pos) return true;
         if (lhs.vcfr.pos == rhs.vcfr.pos)
         {
-            // respect STAR_DIINDEL genotype ordering
+            // respect GENOTYPE_STATUS genotype ordering
             if (lhs.genotype < rhs.genotype) return true;
         }
 

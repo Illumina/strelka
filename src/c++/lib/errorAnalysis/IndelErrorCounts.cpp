@@ -93,7 +93,7 @@ operator<<(
 {
     os << "Background observation\n";
     os << "refCount:" << obs.depth << std::endl;
-    os << "variantStatus: " << KNOWN_VARIANT_STATUS::label(obs.backgroundStatus) << std::endl;
+    os << "variantStatus: " << GENOTYPE_STATUS::label(obs.backgroundStatus) << std::endl;
     return os;
 }
 
@@ -110,7 +110,7 @@ operator<<(
         os << "\t" << INDEL_SIGNAL_TYPE::label(i) << ":";
         os << obs.signalCounts[i] << std::endl;
     }
-    os << "variantStatus: " << KNOWN_VARIANT_STATUS::label(obs.variantStatus) << std::endl;
+    os << "variantStatus: " << GENOTYPE_STATUS::label(obs.variantStatus) << std::endl;
 
     return os;
 }
@@ -152,7 +152,7 @@ dump(
     {
         totalObservations += value.second;
         totaDepth += (value.second*value.first.depth);
-        if (value.first.backgroundStatus == KNOWN_VARIANT_STATUS::UNKNOWN)
+        if (value.first.backgroundStatus == GENOTYPE_STATUS::UNKNOWN)
         {
             totalUnknownObservations += value.second;
         }
@@ -220,7 +220,7 @@ dump(
         totalObservations += obsCount;
         totalRef += (obsCount*key.refCount);
         totalSignal += (obsCount*key.totalSignalCount());
-        if (key.variantStatus == KNOWN_VARIANT_STATUS::UNKNOWN)
+        if (key.variantStatus == GENOTYPE_STATUS::UNKNOWN)
         {
             totalUnknownObservations += obsCount;
         }
@@ -233,7 +233,7 @@ dump(
             noiseObservations += obsCount;
             noiseRef += (obsCount*key.refCount);
             noiseSignal += (obsCount*key.totalSignalCount());
-            if (key.variantStatus == KNOWN_VARIANT_STATUS::UNKNOWN)
+            if (key.variantStatus == GENOTYPE_STATUS::UNKNOWN)
             {
                 noiseUnknownObservations += obsCount;
             }
@@ -264,7 +264,7 @@ operator<<(
     std::ostream& os,
     const ExportedIndelObservations& obs)
 {
-    os << "variantStatus" << KNOWN_VARIANT_STATUS::label(obs.variantStatus);
+    os << "variantStatus" << GENOTYPE_STATUS::label(obs.variantStatus);
     os << "repeatCount: " << obs.repeatCount;
     os << "\trefCounts: " << obs.refObservations;
     os << "\taltObservations: ";

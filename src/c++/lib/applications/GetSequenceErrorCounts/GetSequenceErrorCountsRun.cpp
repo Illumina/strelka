@@ -67,18 +67,10 @@ processTrueIndelVariantRecord(
     ///
     /// to make the problem incremental/easier consider:
     /// 1) only handle indels at first
-    /// 2) don't bother parsing the genotype at first (just mark everything as copy number 1)
-    /// 3) ignore any record with multiple alts.
+    /// 2) ignore any record with multiple alts.
     ///
 
-    // std::string genotype(getGenotype(vcfr.line));
-
-    // since this could include SNPs and indels at some point, switching from assert
-    // to conditional
-    // assert (vcfr.is_indel());
-
-
-    // N.B. ignoring indels with multiple alts for now
+    // N.B. ignoring SNPs and indels with multiple alts for now
     if (vcfr.is_indel() && vcfr.alt.size() == 1)
     {
         const unsigned altCount(vcfr.alt.size());
