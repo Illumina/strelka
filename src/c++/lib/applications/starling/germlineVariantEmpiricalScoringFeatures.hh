@@ -32,6 +32,13 @@
 
 struct GERMLINE_SNV_SCORING_FEATURES
 {
+    static
+    const char*
+    get_name()
+    {
+        return "GERMLINE_SNV_SCORING_FEATURES";
+    }
+
     /** any change here must be done together with changing
         src/python/scoringModelTraining/germline/lib/features/StrelkaSNV.py
      */
@@ -114,6 +121,13 @@ struct GERMLINE_SNV_SCORING_FEATURES
 ///
 struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
 {
+    static
+    const char*
+    get_name()
+    {
+        return "GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES";
+    }
+
     enum index_t
     {
         I_RawPos,
@@ -142,6 +156,13 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
 
 struct GERMLINE_INDEL_SCORING_FEATURES
 {
+    static
+    const char*
+    get_name()
+    {
+        return "GERMLINE_SNV_INDEL_FEATURES";
+    }
+
     /** Make sure the features are the same as used in the model
      */
     enum index_t
@@ -211,6 +232,13 @@ struct GERMLINE_INDEL_SCORING_FEATURES
 ///
 struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
 {
+    static
+    const char*
+    get_name()
+    {
+        return "GERMLINE_SNV_INDEL_DEVELOPMENT_FEATURES";
+    }
+
     enum index_t
     {
         F_GQ,

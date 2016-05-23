@@ -298,6 +298,12 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
         is_phasing_insufficient_depth=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
         max_gt=0;
+        clearEVSFeatures();
+    }
+
+    void
+    clearEVSFeatures()
+    {
         features.clear();
         developmentFeatures.clear();
     }

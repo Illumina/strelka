@@ -23,10 +23,13 @@
 
 #include "calibration/VariantScoringModelBase.hh"
 #include "calibration/VariantScoringModelMetadata.hh"
+#include "common/Exceptions.hh"
 
 #include <cassert>
 
 #include <bitset>
+#include <sstream>
+#include <string>
 
 
 template <typename FEATURESET>
@@ -59,14 +62,20 @@ struct VariantScoringFeatureKeeper
     }
 
     void
-    set(const typename FEATURESET::index_t i,double val)
+    set(const typename FEATURESET::index_t featureIndex,double val)
     {
-        if (test(i))
+        if (test(featureIndex))
         {
-            assert(false && "Set scoring feature twice");
+            using namespace illumina::common;
+
+            std::ostringstream oss;
+            oss << "ERROR: attempted to set scoring feature twice."
+                << " Feature: '" << FEATURESET::get_feature_label(featureIndex) << "'"
+                << " from set: '" << FEATURESET::get_name() << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
-        _featureVal[i] = val;
-        _isFeatureSet.set(i);
+        _featureVal[featureIndex] = val;
+        _isFeatureSet.set(featureIndex);
     }
 
     double

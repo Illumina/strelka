@@ -32,6 +32,13 @@
 
 struct SOMATIC_SNV_SCORING_FEATURES
 {
+    static
+    const char*
+    get_name()
+    {
+        return "SOMATIC_SNV_SCORING_FEATURES";
+    }
+
     /** any change here must be done together with changing
         src/python/scoringModelTraining/somatic/lib/features//StrelkaSNV.py
      */
@@ -108,6 +115,13 @@ struct SOMATIC_SNV_SCORING_FEATURES
 ///
 struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
 {
+    static
+    const char*
+    get_name()
+    {
+        return "SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES";
+    }
+
     enum index_t
     {
         MQ0_FRAC,
@@ -133,6 +147,13 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
 
 struct SOMATIC_INDEL_SCORING_FEATURES
 {
+    static
+    const char*
+    get_name()
+    {
+        return "SOMATIC_INDEL_SCORING_FEATURES";
+    }
+
     /** Make sure the features are the same as used in the model
      */
     enum index_t
@@ -199,6 +220,13 @@ struct SOMATIC_INDEL_SCORING_FEATURES
 ///
 struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES
 {
+    static
+    const char*
+    get_name()
+    {
+        return "SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES";
+    }
+
     enum index_t
     {
         N_AF,
