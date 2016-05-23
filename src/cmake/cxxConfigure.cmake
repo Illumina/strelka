@@ -281,6 +281,9 @@ elseif (MSVC)
     append_args(CXX_WARN_FLAGS "/W3 /wd4305 /wd4244 /wd4068")
     # suppress warnings for size_t to {unsigned,int, etc...} narrowing (most occur in 64 bit build):
     append_args(CXX_WARN_FLAGS "/wd4267")
+
+    # suppress warning of symbol names greater than N (...where N=4096 for VSC++15)
+    append_args(CXX_WARN_FLAGS "/wd4503")
     add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 endif ()
 
