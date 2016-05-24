@@ -46,6 +46,13 @@ struct IndelErrorRateSet
         assert(repeatingPatternSize>0);
         assert(patternRepeatCount>0);
 
+        // revert back to baseline if our motif size isn't covered
+        if (repeatingPatternSize > _errorRates.size())
+        {
+            repeatingPatternSize=1;
+            patternRepeatCount=1;
+        }
+
         const unsigned maxPatternSizeIndex(_errorRates.size()-1);
         repeatingPatternSize = std::min((repeatingPatternSize-1), maxPatternSizeIndex);
 
