@@ -77,14 +77,14 @@ extractFormatEntry(
     size_t formatEnd(extractVcfField(vcf_line, format_index, format_string));
     extractVcfField(vcf_line, 1, sample_string, formatEnd);
 
-    size_t entry_start (format_string.find(field));
+    // VCF record must have a sample entry
+    assert(!sample_string.empty());
 
-    // if strict is true, require that both the FORMAT and SAMPLE field
-    // are present
+    size_t entry_start (format_string.find(field));
+    // if strict is true, require that field is a key in the FORMAT string
     if (strict)
     {
         assert(entry_start != std::string::npos);
-        assert(sample_string != std::string::npos);
     }
 
     // count how many separators you need to pass before getting to the right field
