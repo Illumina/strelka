@@ -134,7 +134,6 @@ isKnownVariantMatch(
     // the same type and length.  If the
     // known variant is an insertion, then
     // the inserted sequence must match
-
     for (const auto& kv : knownVariants)
     {
         if (kv.altMatch(ik, id)) overlap.insert(kv);

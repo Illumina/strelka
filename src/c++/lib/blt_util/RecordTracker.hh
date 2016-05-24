@@ -61,18 +61,18 @@ label(
 {
     switch (gt)
     {
-        case UNKNOWN:
-            return "Unknown";
-        case HOMREF:
-            return "Homref";
-        case HET:
-            return "Het";
-        case HETALT:
-            return "Hetalt";
-        case HOMALT:
-            return "Homalt";
-        default:
-            return "xxx";
+    case UNKNOWN:
+        return "Unknown";
+    case HOMREF:
+        return "Homref";
+    case HET:
+        return "Het";
+    case HETALT:
+        return "Hetalt";
+    case HOMALT:
+        return "Homalt";
+    default:
+        return "xxx";
     }
 }
 }
@@ -119,7 +119,7 @@ struct IndelGenotype
     typedef std::vector<IndelVariant> alt_vec_t;
     IndelGenotype(
         const vcf_record& in_vcfr)
-    : vcfr(in_vcfr)
+        : vcfr(in_vcfr)
     {
         pos = in_vcfr.pos;
         extractAlts();

@@ -79,7 +79,13 @@ extractFormatEntry(
 
     size_t entry_start (format_string.find(field));
 
-    if (strict) assert(entry_start != std::string::npos);
+    // if strict is true, require that both the FORMAT and SAMPLE field
+    // are present
+    if (strict)
+    {
+        assert(entry_start != std::string::npos);
+        assert(sample_string != std::string::npos);
+    }
 
     // count how many separators you need to pass before getting to the right field
     size_t entry_index (std::count(format_string.begin(), format_string.begin() + entry_start, format_sep));
@@ -159,12 +165,12 @@ IndelGenotype::
 extractAlts()
 {
     max_delete_length = 0;
-    for(const auto& alt_str : vcfr.alt)
+    for (const auto& alt_str : vcfr.alt)
     {
         IndelVariant variant_instance = IndelVariant(vcfr, alt_str);
         alts.push_back(variant_instance);
 
-        if(variant_instance.type == INDEL::DELETE)
+        if (variant_instance.type == INDEL::DELETE)
         {
             max_delete_length = std::max(max_delete_length, variant_instance.length);
         }
@@ -194,7 +200,8 @@ assignGenotype()
         try
         {
             alleles[i] = stoi(gt_string.substr(start_pos, gt_string_delim_pos));
-        } catch (const std::invalid_argument& ex)
+        }
+        catch (const std::invalid_argument& ex)
         {
             assert (gt_string.substr(start_pos, gt_string_delim_pos) == ".");
             alleles[i] = 0;
