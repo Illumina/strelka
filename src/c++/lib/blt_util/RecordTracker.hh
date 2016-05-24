@@ -41,8 +41,48 @@
 #include <iosfwd>
 #include <set>
 
+
+namespace GENOTYPE_STATUS
+{
+enum genotype_t
+{
+    UNKNOWN,
+    HOMREF,
+    HET,
+    HETALT,
+    HOMALT,
+    SIZE
+};
+
+inline
+const char*
+label(
+    const genotype_t gt)
+{
+    switch (gt)
+    {
+    case UNKNOWN:
+        return "Unknown";
+    case HOMREF:
+        return "Homref";
+    case HET:
+        return "Het";
+    case HETALT:
+        return "Hetalt";
+    case HOMALT:
+        return "Homalt";
+    default:
+        return "xxx";
+    }
+}
+}
+
 struct IndelVariant
 {
+    IndelVariant(
+        const vcf_record& vcfr,
+        const std::string& alt_instance);
+
     INDEL::index_t type;
     unsigned length;
     std::string insert_sequence;
@@ -50,10 +90,6 @@ struct IndelVariant
     std::string ref_string;
 };
 
-std::ostream&
-operator<<(
-    std::ostream& os,
-    const IndelVariant& var);
 
 struct IndelVariantSort
 {
@@ -78,7 +114,19 @@ struct IndelVariantSort
 
 struct IndelGenotype
 {
-    // std::set<IndelVariant, IndelVariantSort> variants;
+    // alts are stored in a vector to maintain the ordering
+    // of alts in the VCF file
+    typedef std::vector<IndelVariant> alt_vec_t;
+    IndelGenotype(
+        const vcf_record& in_vcfr)
+        : vcfr(in_vcfr)
+    {
+        pos = in_vcfr.pos;
+        extractAlts();
+        assignGenotype();
+        assignFilter();
+    }
+
     bool
     operator==(const IndelGenotype& rhs) const
     {
@@ -92,14 +140,18 @@ struct IndelGenotype
 
     vcf_record vcfr;
     pos_t pos;
-    std::set<IndelVariant, IndelVariantSort> alts;
-    STAR_DIINDEL::index_t genotype = STAR_DIINDEL::NOINDEL;
+    alt_vec_t alts;
+    unsigned max_delete_length;
+    std::string gt_string;
+    std::string filter;
+    GENOTYPE_STATUS::genotype_t genotype = GENOTYPE_STATUS::HOMREF;
+
+private:
+    void extractAlts();
+    void assignGenotype();
+    void assignFilter();
 };
 
-std::ostream&
-operator<<(
-    std::ostream& os,
-    const IndelGenotype& gt);
 
 struct IndelGenotypeSort
 {
@@ -112,7 +164,7 @@ struct IndelGenotypeSort
         if (lhs.vcfr.pos < rhs.vcfr.pos) return true;
         if (lhs.vcfr.pos == rhs.vcfr.pos)
         {
-            // respect STAR_DIINDEL genotype ordering
+            // respect GENOTYPE_STATUS genotype ordering
             if (lhs.genotype < rhs.genotype) return true;
         }
 
@@ -182,3 +234,13 @@ private:
 
     indel_record_t _records;
 };
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelVariant& var);
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelGenotype& gt);

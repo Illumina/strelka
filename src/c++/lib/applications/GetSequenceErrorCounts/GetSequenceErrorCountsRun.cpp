@@ -54,66 +54,6 @@ enum index_t
 }
 
 
-#if 0
-static
-void
-extractFormatEntry(
-    const std::string& vcf_line,
-    const std::string& field,
-    std::string& value)
-{
-    static const char field_sep('\t');
-    static const char format_sep(':');
-    static const unsigned format_index(8);
-
-    size_t field_start(0);
-    size_t next_start(0);
-
-    // fast-forward to format field
-    for (unsigned i(0); i < format_index; ++i)
-    {
-        field_start = vcf_line.find_first_of(field_sep, field_start) + 1;
-    }
-    next_start = vcf_line.find_first_of(field_sep, field_start) + 1;
-    std::string format_string = vcf_line.substr(field_start, next_start - field_start - 1);
-
-    // go to first sample field
-    field_start = next_start;
-    next_start  = vcf_line.find_first_of(field_sep, field_start);
-    std::string sample_string = vcf_line.substr(field_start, next_start - field_start - 1);
-    // N.B. if next_start is std::string::npos (i.e. only one sample in VCF), this will grab til
-    // the end of the line
-
-    // strict assumption that format field is present in current line
-    size_t entry_start (format_string.find(field));
-    assert(entry_start != std::string::npos);
-    size_t entry_index (std::count(format_string.begin(), format_string.begin() + entry_start, format_sep));
-
-    size_t sample_entry_pos(0);
-    for (unsigned i(0); i < entry_index; ++i)
-    {
-        sample_entry_pos = sample_string.find_first_of(format_sep, sample_entry_pos) + 1;
-    }
-    size_t next_pos = sample_string.find_first_of(format_sep, sample_entry_pos) + 1;
-
-    value = sample_string.substr(sample_entry_pos, next_pos - sample_entry_pos - 1);
-}
-
-
-
-/// extract genotype from VCF entry
-static
-std::string
-getGenotype(
-    const std::string& vcf_line)
-{
-    std::string genotype;
-    extractFormatEntry(vcf_line, "GT", genotype);
-    return genotype;
-}
-#endif
-
-
 /// adds truth variant input from a vcf to indel synchronizer
 ///
 static
@@ -127,18 +67,10 @@ processTrueIndelVariantRecord(
     ///
     /// to make the problem incremental/easier consider:
     /// 1) only handle indels at first
-    /// 2) don't bother parsing the genotype at first (just mark everything as copy number 1)
-    /// 3) ignore any record with multiple alts.
+    /// 2) ignore any record with multiple alts.
     ///
 
-    // std::string genotype(getGenotype(vcfr.line));
-
-    // since this could include SNPs and indels at some point, switching from assert
-    // to conditional
-    // assert (vcfr.is_indel());
-
-
-    // N.B. ignoring indels with multiple alts for now
+    // N.B. ignoring SNPs and indels with multiple alts for now
     if (vcfr.is_indel() && vcfr.alt.size() == 1)
     {
         const unsigned altCount(vcfr.alt.size());

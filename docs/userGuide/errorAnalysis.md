@@ -20,6 +20,7 @@ Error Pattern Analyzer User Guide
     * [`--quiet`](#--quiet)
 * [Viewing error counting workflow ouput](#viewing-error-counting-workflow-ouput)
   * [Summary output](#summary-output)
+  * [Excluding basecalls/indels](#excluding-basecallsindels)
   * [Extended output (for model development)](#extended-output-for-model-development)
 * [Error model parameter estimation](#error-model-parameter-estimation)
 [] (END automated TOC section, any edits will be overwritten on next source refresh)
@@ -121,7 +122,7 @@ Regions of the genome specified in a BED file may be marked for exclusion from t
 
 #### Configuration: Annotating known variants
 
-A _single_ known variants VCF file can be supplied to distinguish pattern counts of known and unknown variants.  Pattern analyzer output will then be labeled according to the number of times it overlaps a known variant present in the VCF.  The labels are currently "Unknown" for patterns that do not overlap a known variant call, and "Variant" for those that do.  If a known variant VCF is not provided, all patterns are marked as "Unknown".  This is currently limited to indels.
+A _single_ known variants VCF file can be supplied to distinguish pattern counts of known and unknown variants.  Pattern analyzer output will then be labeled according to the number of times it overlaps a known variant present in the VCF.  The labels are currently "Unknown" for patterns that do not overlap a known variant call, and the matching genotype from the known variant VCF for those that do (Homref, Het, Hetalt, or Homalt).  If a known variant VCF is not provided, all patterns are marked as "Unknown".  This is currently limited to indels.
 
     ${STRELKA_INSTALL_PATH}/libexec/configureSequenceErrorCountsWorkflow.py \
     --bam=sample.bam \
@@ -129,7 +130,7 @@ A _single_ known variants VCF file can be supplied to distinguish pattern counts
     --runDir ${COUNTS_ANALYSIS_PATH} \
     --knownVariants=sample.knownVariant.vcf.gz
 
-One strategy would be to combine the `--excludedRegion` argument to exclude non-platinum regions and the `--knownVariant` argument to label platinum variants in a Platinum Genomes sample.  This would provide "Unknown" patterns that either are in confident homref regions or do not match a platinum variant at a variant site, and "Variant" patterns that overlap high-confidence indel calls.
+One strategy would be to combine the `--excludedRegion` argument to exclude non-platinum regions and the `--knownVariant` argument to label platinum variants in a Platinum Genomes sample.  This would provide "Unknown" patterns that either are in confident homref regions or do not match a platinum variant at a variant site, and known variant patterns that overlap high-confidence indel calls.
 
 #### Configuration: Report observed indels
 
@@ -149,7 +150,7 @@ This argument will create a `debug` directory in `${COUNTS_ANALYSIS_PATH}/result
 |       4 | Indel type (INSERT/DELETE)                                        |
 |       5 | Repeat unit                                                       |
 |       6 | Reference repeat count (in # of repeat units)                     |
-|       7 | Variant status (UNKNOWN/VARIANT)                                  |
+|       7 | Variant status (Unknown/Homref/Het/Hetalt/Homalt)                 |
 |       8 | context repeat count (i.e. homopolymer length)                    |
 |       9 | indel category (i.e. one of I\_3+, I\_2, I\_1, D\_1, D\_2, D\_3+) |
 |      10 | Indel magnitude/length (in bp)                                    |
@@ -202,6 +203,10 @@ Stderr logging can be disabled with `--quiet` argument. Note this log is replica
 The following command allows you to view a summary of the output from the error counting workflow:
 
     ${STRELKA_INSTALL_PATH}/libexec/DumpSequenceErrorCounts --counts-file ${COUNTS_ANALYSIS_PATH}/results/variants/strelkaErrorCounts.bin
+
+### Excluding basecalls/indels
+
+DumpSequenceErrorCounts reports both basecalls (i.e. SNPs) and indels.  If you would like to limit the pattern analyzer output to one of the two pattern types, you can do so with the `--exclude-basecalls` and `--exclude-indels` to exclude SNP and indel patterns, respectively.
 
 ### Extended output (for model development)
 

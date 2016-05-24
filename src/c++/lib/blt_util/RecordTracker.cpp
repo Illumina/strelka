@@ -24,43 +24,123 @@
 
 #include "blt_util/RecordTracker.hh"
 #include <iostream>
+#include <array>
 
-std::ostream&
-operator<<(
-    std::ostream& os,
-    const IndelVariant& var)
+static
+size_t
+extractVcfField(
+    const std::string& vcf_line,
+    unsigned field_index,
+    std::string& field,
+    size_t start_from = 0)
 {
-    // os << "Original ref string: " << var.ref_string << "\n";
-    // os << "Original alt string: " << var.alt_string << "\n";
-    os << "Indel variant type: " << INDEL::get_index_label(var.type) << "\n";
-    os << "Indel length: " << var.length << "\n";
-    if (var.type == INDEL::INSERT)
+    static const char field_sep('\t');
+
+    size_t field_start = start_from;
+
+    // fast-forward to field_index
+    for (unsigned i(0); i < field_index; ++i)
     {
-        os << "Inserted sequence: " << var.insert_sequence << "\n";
+        field_start = vcf_line.find_first_of(field_sep, field_start + 1);
     }
 
-    return os;
-}
-
-std::ostream&
-operator<<(
-    std::ostream& os,
-    const IndelGenotype& gt)
-{
-    os << "VCF record: " << gt.vcfr;
-    os << "Genotype: " << STAR_DIINDEL::label(gt.genotype) << "\n";
-    os << "Observed alts:\n";
-
-    unsigned alt_index(1);
-    for (const auto& alt : gt.alts)
+    if (field_start != std::string::npos)
     {
-        os << "Alt " << alt_index << ":\n";
-        os << alt;
-        alt_index++;
+        size_t next_start(vcf_line.find_first_of(field_sep, field_start + 1));
+        field = vcf_line.substr(field_start + 1, next_start - field_start - 1);
+
+        return next_start + 1;
     }
 
-    return os;
+    // if the next occurence of the tab is std::string::npos, then this field is the
+    // last field in the record
+    field = vcf_line.substr(start_from);
+
+    return std::string::npos;
 }
+
+// extract an entry from the format field in a VCF record
+// and returns the value in the first VCF sample (that's
+// easy  to change if needed)
+static
+void
+extractFormatEntry(
+    const std::string& vcf_line,
+    const std::string& field,
+    std::string& value,
+    bool strict = true)
+{
+    static const char format_sep(':');
+    static const unsigned format_index(8);
+
+    std::string format_string, sample_string;
+    size_t formatEnd(extractVcfField(vcf_line, format_index, format_string));
+    extractVcfField(vcf_line, 1, sample_string, formatEnd);
+
+    size_t entry_start (format_string.find(field));
+
+    // if strict is true, require that both the FORMAT and SAMPLE field
+    // are present
+    if (strict)
+    {
+        assert(entry_start != std::string::npos);
+        assert(sample_string != std::string::npos);
+    }
+
+    // count how many separators you need to pass before getting to the right field
+    size_t entry_index (std::count(format_string.begin(), format_string.begin() + entry_start, format_sep));
+
+    size_t sample_entry_pos(0);
+    for (unsigned i(0); i < entry_index; ++i)
+    {
+        sample_entry_pos = sample_string.find_first_of(format_sep, sample_entry_pos) + 1;
+    }
+    size_t next_pos = sample_string.find_first_of(format_sep, sample_entry_pos) + 1;
+
+    value = sample_string.substr(sample_entry_pos, next_pos - sample_entry_pos - 1);
+}
+
+
+// extract genotype from VCF entry
+static
+std::string
+getGenotypeString(
+    const std::string& vcf_line)
+{
+    std::string genotype;
+    extractFormatEntry(vcf_line, "GT", genotype);
+    return genotype;
+}
+
+
+IndelVariant::
+IndelVariant(
+    const vcf_record& vcfr,
+    const std::string& alt_instance)
+{
+    unsigned ref_length = vcfr.ref.size();
+    unsigned alt_length = alt_instance.size();
+
+    assert(alt_length != ref_length);
+    // AFAIK, the only way for alt_length and ref_length to be
+    // equal would be for the record to be a SNP
+
+    alt_string = alt_instance;
+    ref_string = vcfr.ref;
+
+    if (ref_length < alt_length)
+    {
+        type = INDEL::INSERT;
+        length = alt_length - ref_length;
+        insert_sequence = alt_instance.substr(1);
+    }
+    else
+    {
+        type = INDEL::DELETE;
+        length = ref_length - alt_length;
+    }
+}
+
 
 bool
 IndelGenotype::
@@ -79,6 +159,90 @@ altMatch(
     return false;
 }
 
+
+void
+IndelGenotype::
+extractAlts()
+{
+    max_delete_length = 0;
+    for (const auto& alt_str : vcfr.alt)
+    {
+        IndelVariant variant_instance = IndelVariant(vcfr, alt_str);
+        alts.push_back(variant_instance);
+
+        if (variant_instance.type == INDEL::DELETE)
+        {
+            max_delete_length = std::max(max_delete_length, variant_instance.length);
+        }
+    }
+}
+
+
+void
+IndelGenotype::
+assignGenotype()
+{
+    gt_string = getGenotypeString(vcfr.line);
+    assert(!gt_string.empty());
+
+    // we could move this into the array loop, but I want to keep
+    // the assert for now, which is easier to have out here
+    size_t gt_string_delim_pos = gt_string.find_first_of("|/");
+    assert(gt_string_delim_pos != std::string::npos);
+
+    std::array <int, 2> alleles;
+    size_t start_pos = 0;
+    unsigned hom_count = 0;
+
+    // parse alleles
+    for (unsigned i = 0; i < alleles.size(); ++i)
+    {
+        try
+        {
+            alleles[i] = stoi(gt_string.substr(start_pos, gt_string_delim_pos));
+        }
+        catch (const std::invalid_argument& ex)
+        {
+            assert (gt_string.substr(start_pos, gt_string_delim_pos) == ".");
+            alleles[i] = 0;
+        }
+        start_pos += gt_string_delim_pos + 1;
+
+        // no negative genotype indices and alt indices must be less than or
+        // equal to the the total number of alts
+        assert(alleles[i] >= 0 && alleles[i] <= (int) alts.size());
+        hom_count += (alleles[i] == 0);
+    }
+
+    // assign genotype status (homref, het, homalt, hetalt)
+    if (hom_count == 2) // i.e. 0/0
+    {
+        genotype = GENOTYPE_STATUS::HOMREF;
+    }
+    else if (hom_count == 1) // i.e. 0/1, 0/2, 1/0, etc.
+    {
+        genotype = GENOTYPE_STATUS::HET;
+    }
+    else
+    {
+        if (alleles[0] == alleles[1]) // i.e. 1/1
+        {
+            genotype = GENOTYPE_STATUS::HOMALT;
+        }
+        else // i.e. 1/2
+        {
+            genotype = GENOTYPE_STATUS::HETALT;
+        }
+    }
+}
+
+void
+IndelGenotype::
+assignFilter()
+{
+    static const unsigned filter_index = 6;
+    extractVcfField(vcfr.line, filter_index, filter);
+}
 
 bool
 RecordTracker::
@@ -114,56 +278,26 @@ addVcfRecord(
     const vcf_record& vcfRecord)
 {
     // overlapping vcf records are allowed
-
-    pos_t start_pos = vcfRecord.pos;
-    pos_t end_pos   = start_pos + 1;
-    // check to see if REF or ALT field has length > 1 (i.e. record is indel)
-
-    unsigned ref_length = vcfRecord.ref.size();
-
-    // currently only used to add VCFs with single alts
+    // currently only used to add indels with single alts
     assert(vcfRecord.alt.size() == 1 && vcfRecord.is_indel());
 
-    // if it's an indel, populate the IndelVariant struct
-    unsigned alt_length = vcfRecord.alt.begin()->size();
+    IndelGenotype genotype_instance(vcfRecord);
 
-    assert(alt_length != ref_length);
-    // AFAIK, the only way for alt_length and ref_length to be
-    // equal would be for the record to be a SNP
-
-    IndelVariant variant_instance;
-    IndelGenotype genotype_instance;
-    genotype_instance.vcfr = vcfRecord;
-
-    variant_instance.ref_string = vcfRecord.ref;
-    variant_instance.alt_string = *(vcfRecord.alt.begin());
-
-    if (ref_length < alt_length)
+    // exclude non-passing variants here for now (may want to add all
+    // records and leave treatment as downstream decision)
+    if (genotype_instance.filter == "PASS" || genotype_instance.filter == ".")
     {
-        variant_instance.type = INDEL::INSERT;
-        variant_instance.length = alt_length - ref_length;
-        variant_instance.insert_sequence = vcfRecord.alt.begin()->substr(1);
+        // since these intervals are right-open, the end position of the interval
+        // is one past the final reference base in the indel
+        pos_t start_pos = vcfRecord.pos;
+        pos_t end_pos   = start_pos + genotype_instance.max_delete_length + 1;
+
+        interval_t interval = boost::icl::discrete_interval<pos_t>::right_open(start_pos, end_pos);
+        indel_value_t record_set;
+        record_set.insert(genotype_instance);
+
+        _records.insert(std::make_pair(interval, record_set));
     }
-    else
-    {
-        variant_instance.type = INDEL::DELETE;
-        variant_instance.length = ref_length - alt_length;
-    }
-
-    genotype_instance.alts.insert(variant_instance);
-
-    // deletion has length >1 in record tracker
-    if (ref_length > 0 && alt_length == 1)
-    {
-        end_pos = start_pos + ref_length - 1;
-    }
-    // insertions and SNPs do not have length >1
-
-    interval_t interval = boost::icl::discrete_interval<pos_t>::right_open(start_pos, end_pos);
-    indel_value_t record_set;
-    record_set.insert(genotype_instance);
-
-    _records.insert(std::make_pair(interval, record_set));
 }
 
 void
@@ -181,4 +315,44 @@ dump(
         }
         os << "}\n";
     }
+}
+
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelVariant& var)
+{
+    // os << "Original ref string: " << var.ref_string << "\n";
+    // os << "Original alt string: " << var.alt_string << "\n";
+    os << "Indel variant type: " << INDEL::get_index_label(var.type) << "\n";
+    os << "Indel length: " << var.length << "\n";
+    if (var.type == INDEL::INSERT)
+    {
+        os << "Inserted sequence: " << var.insert_sequence << "\n";
+    }
+
+    return os;
+}
+
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelGenotype& gt)
+{
+    os << "Pos: " << gt.pos << "\n";
+    os << "Genotype: " << GENOTYPE_STATUS::label(gt.genotype) << "\n";
+    os << "Filter: " << gt.filter << "\n";
+    os << "Observed alts:\n";
+
+    unsigned alt_index(1);
+    for (const auto& alt : gt.alts)
+    {
+        os << "Alt " << alt_index << ":\n";
+        os << alt;
+        alt_index++;
+    }
+
+    return os;
 }

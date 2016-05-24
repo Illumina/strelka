@@ -137,19 +137,7 @@ isKnownVariantMatch(
     for (const auto& kv : knownVariants)
     {
         if (kv.altMatch(ik, id)) overlap.insert(kv);
-        // if(kv.altMatch(ik, id))
-        // {
-        //     std::cout << "Indels match!\n";
-        //     std::cout << kv;
-        //     std::cout << ik;
-        //     std::cout << id.get_insert_seq() << "\n\n";
-        //     return true;
-        // }
     }
-
-    // std::cout << "No match for indel\n";
-    // std::cout << ik << "\n";
-    // std::cout << id.get_insert_seq() << "\n\n";
     return (! overlap.empty());
 }
 
@@ -594,9 +582,6 @@ process_pos_error_counts(
             obs.refCount = support[nonrefHapCount];
             obs.assignKnownStatus(overlappingRecords);
 
-            // std::cout << "POS: " << pos << ", #KVR: " << knownVariantRecords.size() << std::endl;
-            // std::cout << obs << std::endl << std::endl;
-
             // an indel candidate can have 0 q30 indel reads when it is only supported by
             // noise reads (i.e. indel occurs outside of a read's valid alignment range,
             // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
@@ -608,12 +593,32 @@ process_pos_error_counts(
                 obs_os << _opt.bam_seq_name << "\t";
                 obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
                 obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
-                obs_os << KNOWN_VARIANT_STATUS::label(obs.variantStatus) << "\t";
+                obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
                 obs_os << context.repeatCount << "\t" << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
                 obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
                 obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }
+
+            #if 0
+            if(obs.variantStatus == GENOTYPE_STATUS::VARIANT &&
+                obs.signalCounts[sigIndex] == 0)
+            {
+                std::ostream& obs_os(std::cout);
+                obs_os << _opt.bam_seq_name << "\t";
+                obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
+                obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
+                obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
+                obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
+                obs_os << support[nonrefHapCount] << "\t";
+                obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
+
+                for(const auto& rec : overlappingRecords)
+                {
+                    std::cout << rec << std::endl;
+                }
+            }
+            #endif
 
             mergeIndelObservations(context,obs,indelObservations);
         }
