@@ -228,6 +228,10 @@ struct starling_base_options : public blt_options
     bool isBasecallQualAdjustedForMapq = true;
 
     Tier2Options tier2;
+
+    /// indel error options
+    std::string indel_error_models_filename;
+    std::string indel_error_model_name = "new";
 };
 
 

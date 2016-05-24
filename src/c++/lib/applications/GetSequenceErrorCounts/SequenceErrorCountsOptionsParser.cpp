@@ -97,7 +97,7 @@ finalizeSequenceErrorCountsOptions(
 
     if (opt.countsFilename.empty())
     {
-        pinfo.usage("Must specify an filename for error counts output");
+        pinfo.usage("Must specify a filename for error counts output");
     }
 
     // knownVariantsFile and excludedRegionsFileList are both checked in the Python config code,
@@ -137,23 +137,6 @@ finalizeSequenceErrorCountsOptions(
             pinfo.usage("min-het-vf must be in range (0, 0.5)");
         }
 
-    }
-
-    if (! opt.germline_variant_scoring_models_filename.empty())
-    {
-        if (! boost::filesystem::exists(opt.germline_variant_scoring_models_filename))
-        {
-            std::ostringstream oss;
-            oss << "Germline scoring model file does not exist: '" << opt.germline_variant_scoring_models_filename << "'";
-            pinfo.usage(oss.str().c_str());
-        }
-    }
-    else
-    {
-        if (! opt.germline_variant_scoring_model_name.empty())
-        {
-            pinfo.usage("Specified germline variant scoring model name without a corresponding scoring file.");
-        }
     }
 
     finalize_starling_base_options(pinfo,vm,opt);

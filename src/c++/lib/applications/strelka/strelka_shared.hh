@@ -35,7 +35,6 @@
 ///
 struct somatic_filter_options
 {
-
     bool
     is_depth_filter() const
     {
@@ -89,6 +88,18 @@ struct strelka_options : public starling_base_options
         return (! somatic_callable_filename.empty());
     }
 
+    bool
+    isUseSomaticSNVScoring() const
+    {
+        return (! somatic_snv_scoring_model_filename.empty());
+    }
+
+    bool
+    isUseSomaticIndelScoring() const
+    {
+        return (! somatic_indel_scoring_model_filename.empty());
+    }
+
     std::string tumor_bam_filename;
 
     std::string tumor_realigned_read_filename;
@@ -124,6 +135,10 @@ struct strelka_options : public starling_base_options
     std::vector<std::string> noise_vcf;
 
     somatic_filter_options sfilter;
+
+    /// somatic scoring models:
+    std::string somatic_snv_scoring_model_filename;
+    std::string somatic_indel_scoring_model_filename;
 };
 
 

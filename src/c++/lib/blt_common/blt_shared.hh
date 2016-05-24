@@ -79,10 +79,11 @@ struct blt_options
         return (! nonref_sites_filename.empty());
     }
 
+    virtual
     bool
     is_compute_germline_scoring_metrics() const
     {
-        return (isStarling && (isReportEVSFeatures || (! germline_variant_scoring_model_name.empty())));
+        return false;
     }
 
     virtual
@@ -187,38 +188,10 @@ struct blt_options
     bool isReportEVSFeatures = false;
     bool is_compute_somatic_scoring_metrics = false;
 
-    bool
-    isUseSomaticSNVScoring() const
-    {
-        return (! somatic_snv_scoring_model_filename.empty());
-    }
-
-    bool
-    isUseSomaticIndelScoring() const
-    {
-        return (! somatic_indel_scoring_model_filename.empty());
-    }
-
     //multiplier for ref error rate to use; 1 would be expected to be correct, but higher values counteract a bias away from homozygous indels (undercalling)
     double indel_ref_error_factor = 1.;
 
     std::string report_filename;
-
-    /// indel error options (TODO: move this to starling_base options)
-    std::string indel_error_models_filename;
-    std::string indel_error_model_name = "new";      // which baseline prior should be used for candidate indel genotyping (required)
-
-    /// germline scoring models: (TODO: move this down to starling options)
-    std::string germline_variant_scoring_models_filename;
-
-    /// Which calibration model should we use? (default: rule-based metric)
-    std::string germline_variant_scoring_model_name;
-
-    /// somatic scoring models: (TODO: move these down to strelka options)
-    std::string somatic_snv_scoring_model_filename;
-    std::string somatic_indel_scoring_model_filename;
-
-    bool isStarling = false;
 };
 
 
