@@ -156,7 +156,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         indelErrorModelName = None
         inputIndelErrorModelsFile = None
-        
+
         return cleanLocals(locals())
 
 

@@ -200,11 +200,11 @@ IndelErrorModel(
         {
             _errorRates = getOldIndelErrorModel();
         }
-        else if(modelName == "new")
+        else if (modelName == "new")
         {
             _errorRates = getNewIndelErrorModel();
         }
-        else if(modelName == "logLinear")
+        else if (modelName == "logLinear")
         {
             _errorRates = getLogLinearIndelErrorModel();
         }
@@ -235,7 +235,7 @@ IndelErrorModel(
             }
         }
 
-        if(_meta.name != modelName)
+        if (_meta.name != modelName)
         {
             using namespace illumina::common;
 

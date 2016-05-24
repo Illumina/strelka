@@ -79,10 +79,8 @@ You must specify a BAM or CRAM file for the sample.
         defaults.update({
             'runDir' : 'StarlingWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
-            'indelRefErrorFactor' : "100",
             'evsModelFile' : joinFile(configDir,'germlineVariantScoringModels.txt'),
             'evsModelName' : "QScoreHPDRE100_v4",
-            'isSkipDynamicIndelErrorModel' : True,
             'callContinuousVf' : []
             })
         return defaults

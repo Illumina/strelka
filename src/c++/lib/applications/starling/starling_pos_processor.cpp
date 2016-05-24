@@ -23,6 +23,7 @@
 #include "blt_common/position_nonref_2allele_test.hh"
 #include "blt_common/ref_context.hh"
 #include "blt_util/log.hh"
+#include "blt_util/prob_util.hh"
 #include "calibration/IndelErrorModel.hh"
 #include "starling_continuous_variant_caller.hh"
 
@@ -495,6 +496,23 @@ process_pos_indel_single_sample(
 
 
 
+static
+void
+transformGermlineIndelErrorRate(
+    const double logScaleFactor,
+    double& indelErrorRate)
+{
+    static const double minIndelErrorProb(0.0);
+    static const double maxIndelErrorProb(0.5);
+
+    indelErrorRate = std::min(indelErrorRate, maxIndelErrorProb);
+    indelErrorRate = softMaxInverseTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
+    indelErrorRate += logScaleFactor;
+    indelErrorRate = softMaxTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
+}
+
+
+
 void
 starling_pos_processor::
 process_pos_indel_single_sample_digt(
@@ -556,26 +574,18 @@ process_pos_indel_single_sample_digt(
             double indelToRefErrorProb(0);
             _dopt.getIndelErrorModel().getIndelErrorRate(iri,refToIndelErrorProb,indelToRefErrorProb);
 
-            // make ref error factor adjustments:
+            // make germline-specific error rate adjustments:
             {
-                // In applying the ref error factor, we want to make sure that we don't end up with
+                // In applying the germlineIndelErrorRateFactor, we want to make sure that we don't end up with
                 // "probabilities" > 1 ... and in fact we might want to keep it <= .5 ... we don't
                 // want to say that we are less likely to be right than wrong, as that would favor any
                 // specific alternative over no error.
                 //
-                // If we take the preliminary error estimate as p and compute the final estimate (with
-                // ref error factor modification) as p' as follows, then we get graceful behavior:
-                // nearly the linear scaling of error estimates originally intended when the error
-                // rates are very low, but with reduced scaling as the result would push us towards or over .5:
-                //
-                //   p' = .5*(1-exp(100*log((.5-p)/.5)))
-                //
-                // ... assuming p < .5, so the log() is valid
-
-                // adjust this if you want a different maximum error probability on the return
-                static const double MAX_ERR_PROB=0.5;
-                indelToRefErrorProb = std::min(indelToRefErrorProb,MAX_ERR_PROB*.999999);
-                indelToRefErrorProb=MAX_ERR_PROB*(1.-std::exp(_opt.indel_ref_error_factor*std::log((MAX_ERR_PROB-indelToRefErrorProb)/MAX_ERR_PROB)));
+                // We transform the value on the restricted range [0,max] to a real parameter using a
+                // logistic function, transform by scaling factor in log space and return the restricted
+                // value range:
+                transformGermlineIndelErrorRate(_dopt.logGermlineIndelErrorRateFactor, refToIndelErrorProb);
+                transformGermlineIndelErrorRate(_dopt.logGermlineIndelErrorRateFactor, indelToRefErrorProb);
             }
 
             static const bool is_tier2_pass(false);

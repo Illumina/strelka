@@ -27,6 +27,15 @@ BOOST_AUTO_TEST_SUITE( prob_util )
 BOOST_AUTO_TEST_CASE( test_softmax )
 {
     {
+        static const double val(0.00001);
+        const auto tval = softMaxInverseTransform(val);
+        const auto val2 = softMaxTransform(tval);
+
+        static const double eps = 0.00000001;
+        BOOST_REQUIRE_CLOSE(val2, val, eps);
+    }
+
+    {
         static const double val(0.75);
         const auto tval = softMaxInverseTransform(val);
         const auto val2 = softMaxTransform(tval);
@@ -66,6 +75,40 @@ BOOST_AUTO_TEST_CASE( test_softmax_edgecase )
 
         static const double eps = 0.00000001;
         BOOST_REQUIRE_CLOSE(val2, val, eps);
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE( test_softmax_factor_scale )
+{
+    //
+    // test using softmax as a "safe" way to mult probs by interesting factors:
+    //
+
+    // test1: a case where we can mult by a factor easily
+    {
+        static const double val(0.000001);
+        static const double factor(100);
+        static const double logFactor(std::log(factor));
+        auto tval = softMaxInverseTransform(val);
+        tval += logFactor;
+        const auto val2 = softMaxTransform(tval);
+
+        static const double eps = 0.01;
+        BOOST_REQUIRE_CLOSE(val2, (val*factor), eps);
+    }
+
+    // test2: a case where we need a "soft" max limitation to hold
+    {
+        static const double val(0.0049);
+        static const double factor(100);
+        static const double logFactor(std::log(factor));
+        auto tval = softMaxInverseTransform(val);
+        tval += logFactor;
+        const auto val2 = softMaxTransform(tval);
+
+        static const double eps = 0.01;
+        BOOST_REQUIRE_CLOSE(val2, 0.329944, eps);
     }
 }
 

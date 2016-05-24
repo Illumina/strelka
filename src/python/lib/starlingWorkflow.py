@@ -139,15 +139,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
         segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
 
-    segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
-    if self.params.isSkipDynamicIndelErrorModel:
-        if self.params.indelErrorModelName is not None :
-            segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
-        if self.params.inputIndelErrorModelsFile is not None :
-            segCmd.extend(['--indel-error-models-file', quote(self.params.inputIndelErrorModelsFile)])
-    else :
-        # use dynamic indel error modeling to choose the appropritate model
-        segCmd.extend(['--indel-error-models-file', quote(self.params.dynamicIndelErrorModelsFile)])
+    if self.params.indelErrorModelName is not None :
+        segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
+    if self.params.inputIndelErrorModelsFile is not None :
+        segCmd.extend(['--indel-error-models-file', quote(self.params.inputIndelErrorModelsFile)])
 
     if self.params.isReportEVSFeatures :
         segCmd.append("--report-evs-features")
@@ -348,16 +343,13 @@ class StarlingWorkflow(StarkaWorkflow) :
 
         # format other:
         safeSetBool(self.params,"isWriteRealignedBam")
-        safeSetBool(self.params,"isSkipDynamicIndelErrorModel")
 
         if self.params.isWriteRealignedBam :
             self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
             ensureDir(self.params.realignedDir)
-
-        if self.params.isExome:
-            self.params.evsModelName = "Qrule"
-            self.params.indelRefErrorFactor = "1"
-            self.params.indelErrorModelName = "old"
+            
+        if self.params.isExome :
+            self.params.isEVS = False
 
 
     def getSuccessMessage(self) :
@@ -377,7 +369,5 @@ class StarlingWorkflow(StarkaWorkflow) :
         callPreReqs |= runCount(self)
         if self.params.isHighDepthFilter :
             callPreReqs |= starlingRunDepthFromAlignments(self)
-        if not self.params.isSkipDynamicIndelErrorModel :
-            callPreReqs |= runIndelModel(self)
         self.addWorkflowTask("CallGenome", CallWorkflow(self.params, self.paths), dependencies=callPreReqs)
 
