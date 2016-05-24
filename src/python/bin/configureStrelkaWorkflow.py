@@ -88,8 +88,6 @@ You must specify BAM/CRAM file(s) for a pair of samples.
             "isSomaticIndelEmpiricalScoring" : False,
             'somaticSnvScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
             'somaticIndelScoringModelFile' : joinFile(configDir,'somaticVariantScoringModels.json'),
-            'indelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
-            'indelErrorModelName': 'Binom',
             'isWriteCallableRegion' : False,
             'noiseVcfList' : None
             })

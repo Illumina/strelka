@@ -82,8 +82,6 @@ You must specify a BAM or CRAM file for the sample.
             'indelRefErrorFactor' : "100",
             'evsModelFile' : joinFile(configDir,'germlineVariantScoringModels.txt'),
             'evsModelName' : "QScoreHPDRE100_v4",
-            'inputIndelErrorModelsFile' : joinFile(configDir,'indelErrorModels.json'),
-            'indelErrorModelName' : "new",
             'isSkipDynamicIndelErrorModel' : True,
             'callContinuousVf' : []
             })

@@ -116,6 +116,37 @@ getOldIndelErrorModel()
 
 
 
+static
+IndelErrorRateSet
+getLogLinearIndelErrorModel()
+{
+    static const unsigned maxPatternRepeatCount = 20;
+
+    static const double logLowErrorRate(std::log(5e-5));
+    static const double logHighErrorRate(std::log(3e-4));
+
+    // this is the zero-indexed endpoint of the ramp, so we hit the
+    // constant high error rate at an hpol length of repeatCountSwitchPoint+1
+    static const unsigned repeatCountSwitchPoint(15);
+
+    IndelErrorRateSet rates;
+
+    // model covers homopolymers only:
+    static const unsigned repeatingPatternSize(1);
+
+    for (unsigned patternRepeatCount=1; patternRepeatCount <= maxPatternRepeatCount; ++patternRepeatCount)
+    {
+        const double highErrorFrac(std::min((patternRepeatCount-1),repeatCountSwitchPoint)/static_cast<double>(repeatCountSwitchPoint));
+        const double logErrorRate((1.-highErrorFrac)*logLowErrorRate + highErrorFrac*logHighErrorRate);
+        const double errorRate(std::exp(repeatingPatternSize==1 ? logErrorRate : logLowErrorRate));
+
+        rates.addRate(repeatingPatternSize, patternRepeatCount, errorRate, errorRate);
+    }
+    return rates;
+}
+
+
+
 /// Reads in model parameter matrix with entries as error-pair [ins_error,del_error]
 /// in the following format:
 /// unit length 1: [[[del_hpol1,ins_hpol1],[del_hpol2,ins_hpol2],...,[del_hpol_m,ins_hpol_m]],
@@ -172,6 +203,10 @@ IndelErrorModel(
         else if(modelName == "new")
         {
             _errorRates = getNewIndelErrorModel();
+        }
+        else if(modelName == "logLinear")
+        {
+            _errorRates = getLogLinearIndelErrorModel();
         }
         else
         {

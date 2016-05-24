@@ -141,9 +141,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd.extend(['--indel-ref-error-factor',self.params.indelRefErrorFactor])
     if self.params.isSkipDynamicIndelErrorModel:
-        # specify indelErrorModelName from inputIndelErrorModelsFile
-        segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
-        segCmd.extend(['--indel-error-models-file', quote(self.params.inputIndelErrorModelsFile)])
+        if self.params.indelErrorModelName is not None :
+            segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
+        if self.params.inputIndelErrorModelsFile is not None :
+            segCmd.extend(['--indel-error-models-file', quote(self.params.inputIndelErrorModelsFile)])
     else :
         # use dynamic indel error modeling to choose the appropritate model
         segCmd.extend(['--indel-error-models-file', quote(self.params.dynamicIndelErrorModelsFile)])

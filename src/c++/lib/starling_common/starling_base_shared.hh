@@ -231,7 +231,7 @@ struct starling_base_options : public blt_options
 
     /// indel error options
     std::string indel_error_models_filename;
-    std::string indel_error_model_name = "new";
+    std::string indel_error_model_name = "logLinear";
 };
 
 

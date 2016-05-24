@@ -110,8 +110,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--strelka-indel-max-window-filtered-basecall-frac", str(self.params.indelMaxWindowFilteredBasecallFrac)])
     segCmd.extend(["--strelka-indel-min-qsi-ref", str(self.params.sindelQuality_LowerBound)])
 
-    segCmd.extend(['--indel-error-models-file', self.params.indelErrorModelsFile])
-    segCmd.extend(['--indel-error-model-name', self.params.indelErrorModelName])
+    if self.params.indelErrorModelName is not None :
+        segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
+    if self.params.inputIndelErrorModelsFile is not None :
+        segCmd.extend(['--indel-error-models-file', self.params.inputIndelErrorModelsFile])
 
     segCmd.extend(["--ssnv-contam-tolerance", str(self.params.ssnvContamTolerance) ] )
     segCmd.extend(["--indel-contam-tolerance", str(self.params.indelContamTolerance) ] )

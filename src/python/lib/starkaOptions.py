@@ -154,6 +154,9 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         isEVS = True
         isReportEVSFeatures = False
 
+        indelErrorModelName = None
+        inputIndelErrorModelsFile = None
+        
         return cleanLocals(locals())
 
 
