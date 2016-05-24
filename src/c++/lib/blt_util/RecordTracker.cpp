@@ -77,14 +77,14 @@ extractFormatEntry(
     size_t formatEnd(extractVcfField(vcf_line, format_index, format_string));
     extractVcfField(vcf_line, 1, sample_string, formatEnd);
 
-    size_t entry_start (format_string.find(field));
+    // VCF record must have a sample entry
+    assert(!sample_string.empty());
 
-    // if strict is true, require that both the FORMAT and SAMPLE field
-    // are present
+    size_t entry_start (format_string.find(field));
+    // if strict is true, require that field is a key in the FORMAT string
     if (strict)
     {
         assert(entry_start != std::string::npos);
-        assert(sample_string != std::string::npos);
     }
 
     // count how many separators you need to pass before getting to the right field
@@ -197,13 +197,16 @@ assignGenotype()
     // parse alleles
     for (unsigned i = 0; i < alleles.size(); ++i)
     {
-        try
+        std::string allele_instance(gt_string.substr(start_pos, gt_string_delim_pos));
+
+        // currently assuming that alleles can either be an integer or a '.',
+        // nothing else
+        if(allele_instance != ".")
         {
-            alleles[i] = stoi(gt_string.substr(start_pos, gt_string_delim_pos));
+            alleles[i] = stoi(allele_instance);
         }
-        catch (const std::invalid_argument& ex)
+        else
         {
-            assert (gt_string.substr(start_pos, gt_string_delim_pos) == ".");
             alleles[i] = 0;
         }
         start_pos += gt_string_delim_pos + 1;
