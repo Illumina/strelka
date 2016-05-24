@@ -197,13 +197,16 @@ assignGenotype()
     // parse alleles
     for (unsigned i = 0; i < alleles.size(); ++i)
     {
-        try
+        std::string allele_instance(gt_string.substr(start_pos, gt_string_delim_pos));
+
+        // currently assuming that alleles can either be an integer or a '.',
+        // nothing else
+        if(allele_instance != ".")
         {
-            alleles[i] = stoi(gt_string.substr(start_pos, gt_string_delim_pos));
+            alleles[i] = stoi(allele_instance);
         }
-        catch (const std::invalid_argument& ex)
+        else
         {
-            assert (gt_string.substr(start_pos, gt_string_delim_pos) == ".");
             alleles[i] = 0;
         }
         start_pos += gt_string_delim_pos + 1;
