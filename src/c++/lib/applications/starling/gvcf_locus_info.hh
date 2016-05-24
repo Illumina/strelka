@@ -177,10 +177,10 @@ std::ostream& operator<<(std::ostream& os,const GermlineVariantSimpleGenotypeInf
 struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
     GermlineIndelSimpleGenotypeInfo(
-		const indel_key& ik,
-		const indel_data& id,
-		const starling_indel_report_info iri,
-		const starling_indel_sample_report_info& isri)
+        const indel_key& ik,
+        const indel_data& id,
+        const starling_indel_report_info iri,
+        const starling_indel_sample_report_info& isri)
         : _ik(ik)
         , _id(id)
         , _iri(iri)
@@ -221,10 +221,10 @@ std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo&
 struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
     GermlineDiploidIndelSimpleGenotypeInfo(const indel_key& ik,
-                    const indel_data& id,
-                    const starling_indel_report_info& iri,
-                    const starling_indel_sample_report_info& isri,
-                    const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
+                                           const indel_data& id,
+                                           const starling_indel_report_info& iri,
+                                           const starling_indel_sample_report_info& isri,
+                                           const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
         : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
         , _dindel(dindel)
     {}
@@ -235,11 +235,11 @@ struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenoty
         const double chromDepth,
         const bool isHetalt);
 
-	/// TODO: this object is only here to trigger an auto copy ctor, seems like we can simplify now?
+    /// TODO: this object is only here to trigger an auto copy ctor, seems like we can simplify now?
     /// TODO: Make indel_overlapper create new call objects, then revert this to const
     GermlineDiploidIndelSimpleGenotypeInfoCore _dindel;
 
-	/// TODO: max_gt is here and in _dindel. Ugggghhh. Document the difference or get this down to one copy
+    /// TODO: max_gt is here and in _dindel. Ugggghhh. Document the difference or get this down to one copy
     unsigned max_gt=0;
 };
 
@@ -354,7 +354,7 @@ struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGe
 struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
     GermlineContinuousIndelSimpleGenotypeInfo(unsigned totalDepth, unsigned alleleDepth,
-                          const indel_key& ik, const indel_data& id, const starling_indel_report_info& iri, const starling_indel_sample_report_info& isri)
+                                              const indel_key& ik, const indel_data& id, const starling_indel_report_info& iri, const starling_indel_sample_report_info& isri)
         : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
         , _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
@@ -396,10 +396,10 @@ struct GermlineIndelCallInfo
 struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
 {
     GermlineDiploidIndelCallInfo(const indel_key& init_ik,
-                    const indel_data& init_id,
-                    const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
-                    const starling_indel_report_info& init_iri,
-                    const starling_indel_sample_report_info& init_isri) : GermlineIndelCallInfo(init_ik.pos)
+                                 const indel_data& init_id,
+                                 const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
+                                 const starling_indel_report_info& init_iri,
+                                 const starling_indel_sample_report_info& init_isri) : GermlineIndelCallInfo(init_ik.pos)
     {
         _calls.emplace_back(init_ik, init_id, init_iri, init_isri, init_dindel);
     }
@@ -530,10 +530,10 @@ public:
 struct GermlineSiteCallInfo : public PolymorphicObject
 {
     GermlineSiteCallInfo(const pos_t init_pos,
-              const char init_ref,
-              const snp_pos_info& good_pi,
-              const int used_allele_count_min_qscore,
-              const bool is_forced_output = false)
+                         const char init_ref,
+                         const snp_pos_info& good_pi,
+                         const int used_allele_count_min_qscore,
+                         const bool is_forced_output = false)
     {
         pos=(init_pos);
         ref=(init_ref);
@@ -583,10 +583,10 @@ private:
 struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
 {
     GermlineDiploidSiteCallInfo(const pos_t init_pos,
-                   const char init_ref,
-                   const snp_pos_info& good_pi,
-                   const int used_allele_count_min_qscore,
-                   const bool is_forced_output = false)
+                                const char init_ref,
+                                const snp_pos_info& good_pi,
+                                const int used_allele_count_min_qscore,
+                                const bool is_forced_output = false)
         : GermlineSiteCallInfo(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output)
     {}
 
@@ -688,16 +688,16 @@ std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteCallInfo& si)
 struct GermlineContinuousSiteCallInfo : public GermlineSiteCallInfo
 {
     GermlineContinuousSiteCallInfo(
-		const pos_t init_pos,
-		const char init_ref,
-		const snp_pos_info& good_pi,
-		const int used_allele_count_min_qscore,
-		const double min_het_vf,
-		const bool is_forced_output = false) : GermlineSiteCallInfo(init_pos,
-			init_ref,
-			good_pi,
-			used_allele_count_min_qscore,
-			is_forced_output)
+        const pos_t init_pos,
+        const char init_ref,
+        const snp_pos_info& good_pi,
+        const int used_allele_count_min_qscore,
+        const double min_het_vf,
+        const bool is_forced_output = false) : GermlineSiteCallInfo(init_pos,
+                                                                        init_ref,
+                                                                        good_pi,
+                                                                        used_allele_count_min_qscore,
+                                                                        is_forced_output)
         , _min_het_vf(min_het_vf)
     {
     }

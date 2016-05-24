@@ -206,7 +206,7 @@ process_pos_snp_single_sample_continuous(
     if (pi.calls.empty() && !is_forced) return;
 
     std::unique_ptr<GermlineSiteCallInfo> si(new GermlineContinuousSiteCallInfo(pos,pi.get_ref_base(),good_pi,
-                                                           _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
+                                                                                _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
 
     si->n_used_calls=cpi.n_used_calls();
     si->n_unused_calls=cpi.n_unused_calls();

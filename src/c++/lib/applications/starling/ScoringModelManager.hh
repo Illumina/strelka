@@ -44,8 +44,8 @@ struct ScoringModelManager : private boost::noncopyable
           _isReportEVSFeatures(init_opt.isReportEVSFeatures)
     {
         load_models(
-                init_opt.germline_variant_scoring_models_filename,
-                init_opt.germline_variant_scoring_model_name);
+            init_opt.germline_variant_scoring_models_filename,
+            init_opt.germline_variant_scoring_model_name);
     }
 
     void
@@ -76,8 +76,14 @@ struct ScoringModelManager : private boost::noncopyable
     get_case_cutoff(const CALIBRATION_MODEL::var_case my_case) const;
 
 private:
-    LogisticAndRuleScoringModels& get_model() { return *modelPtr; }
-    const LogisticAndRuleScoringModels& get_model() const { return *modelPtr; }
+    LogisticAndRuleScoringModels& get_model()
+    {
+        return *modelPtr;
+    }
+    const LogisticAndRuleScoringModels& get_model() const
+    {
+        return *modelPtr;
+    }
 
     bool checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const;
     void set_indel_modifiers(

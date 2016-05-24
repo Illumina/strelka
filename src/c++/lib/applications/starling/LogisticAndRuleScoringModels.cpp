@@ -50,7 +50,7 @@
 template <typename FEATURESET>
 featuremap
 getFeatureMap(
-        const VariantScoringFeatureKeeper<FEATURESET>& features)
+    const VariantScoringFeatureKeeper<FEATURESET>& features)
 {
     typedef typename FEATURESET::index_t findex_t;
     featuremap ret;

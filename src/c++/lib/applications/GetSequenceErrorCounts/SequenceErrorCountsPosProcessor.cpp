@@ -600,8 +600,8 @@ process_pos_error_counts(
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }
 
-            #if 0
-            if(obs.variantStatus == GENOTYPE_STATUS::VARIANT &&
+#if 0
+            if (obs.variantStatus == GENOTYPE_STATUS::VARIANT &&
                 obs.signalCounts[sigIndex] == 0)
             {
                 std::ostream& obs_os(std::cout);
@@ -613,12 +613,12 @@ process_pos_error_counts(
                 obs_os << support[nonrefHapCount] << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
 
-                for(const auto& rec : overlappingRecords)
+                for (const auto& rec : overlappingRecords)
                 {
                     std::cout << rec << std::endl;
                 }
             }
-            #endif
+#endif
 
             mergeIndelObservations(context,obs,indelObservations);
         }

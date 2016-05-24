@@ -32,7 +32,7 @@
 ///
 struct PolymorphicObject
 {
-	PolymorphicObject() = default;
+    PolymorphicObject() = default;
     virtual ~PolymorphicObject() = default;
 
     explicit

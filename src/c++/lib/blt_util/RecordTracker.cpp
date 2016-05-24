@@ -201,7 +201,7 @@ assignGenotype()
 
         // currently assuming that alleles can either be an integer or a '.',
         // nothing else
-        if(allele_instance != ".")
+        if (allele_instance != ".")
         {
             alleles[i] = stoi(allele_instance);
         }
