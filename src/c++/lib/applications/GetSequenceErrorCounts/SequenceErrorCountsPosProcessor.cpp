@@ -600,23 +600,25 @@ process_pos_error_counts(
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }
 
-            // if(obs.variantStatus == GENOTYPE_STATUS::VARIANT &&
-            //     obs.signalCounts[sigIndex] == 0)
-            // {
-            //     std::ostream& obs_os(std::cout);
-            //     obs_os << _opt.bam_seq_name << "\t";
-            //     obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
-            //     obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
-            //     obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
-            //     obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
-            //     obs_os << support[nonrefHapCount] << "\t";
-            //     obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
+            #if 0
+            if(obs.variantStatus == GENOTYPE_STATUS::VARIANT &&
+                obs.signalCounts[sigIndex] == 0)
+            {
+                std::ostream& obs_os(std::cout);
+                obs_os << _opt.bam_seq_name << "\t";
+                obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
+                obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
+                obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
+                obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
+                obs_os << support[nonrefHapCount] << "\t";
+                obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
 
-            //     for(const auto& rec : overlappingRecords)
-            //     {
-            //         std::cout << rec << std::endl;
-            //     }
-            // }
+                for(const auto& rec : overlappingRecords)
+                {
+                    std::cout << rec << std::endl;
+                }
+            }
+            #endif
 
             mergeIndelObservations(context,obs,indelObservations);
         }
