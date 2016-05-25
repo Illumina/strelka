@@ -47,8 +47,16 @@ softMaxTransform(
     const FloatType real)
 {
     static_assert(std::is_floating_point<FloatType>::value, "Transform requires floating point type.");
-    const FloatType ei(std::exp(real));
-    return (ei/(1.+ei));
+    if (real<=0.)
+    {
+        const FloatType er(std::exp(real));
+        return (er/(1.+er));
+    }
+    else
+    {
+        const FloatType enr(std::exp(-real));
+        return (1./(enr+1.));
+    }
 }
 
 template <typename FloatType>
@@ -58,7 +66,14 @@ softMaxInverseTransform(
 {
     static_assert(std::is_floating_point<FloatType>::value, "Transform requires floating point type.");
     assert((ranged>=0) && (ranged<=1));
-    return std::log(ranged/(1-ranged));
+    if (ranged<=0.5)
+    {
+        return std::log(ranged/(1-ranged));
+    }
+    else
+    {
+        return -std::log((1-ranged)/ranged);
+    }
 }
 
 /// helper function for softMaxTransform to map [0,1] output to [rangedMin,rangedMax] range instead:

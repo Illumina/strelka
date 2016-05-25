@@ -48,6 +48,28 @@ BOOST_AUTO_TEST_CASE( test_softmax )
 }
 
 
+BOOST_AUTO_TEST_CASE( test_softmax_edgecase )
+{
+    {
+        static const double val(0.);
+        const auto tval = softMaxInverseTransform(val);
+        const auto val2 = softMaxTransform(tval);
+
+        static const double eps = 0.00000001;
+        BOOST_REQUIRE_CLOSE(val2, val, eps);
+    }
+
+    {
+        static const double val(1.);
+        const auto tval = softMaxInverseTransform(val);
+        const auto val2 = softMaxTransform(tval);
+
+        static const double eps = 0.00000001;
+        BOOST_REQUIRE_CLOSE(val2, val, eps);
+    }
+}
+
+
 BOOST_AUTO_TEST_CASE( test_softmax_range )
 {
     static const std::vector<double> startVal = { 0.2 , 0.3 , 0.0001 };
