@@ -85,7 +85,21 @@ The depth estimation procedure is run separately for each non-tumor sample, and 
 
 \paragraph{Indel Error Model}
 
+Indel errors are approximated as a process which occurs independently in each read, with some fixed probably of an indel error occurring as a function of the local sequence STR context. Strelka's indel error parameters are currently set based on empirical observation of indel calling performance for both germline and somatic indel detection.
+
+The default indel error rates used by strelka are a function of the local homopolymer context length only $l_{\text{STR}}$, so any expansion or contraction of a homopolymer sequence has an error rate indexed on the homopolymer length in the presumed source haplotype upon which the indel error process occurred. All other types of indels, including mutations of homopolymers which do not represent simple expansion/contraction events, and dinucleotide tract indels are have $l_{\text{STR}}$ set to one. By observation, the indel error rates are set to a log-linear ramp as a function of $l_{\text{STR}}$
+
+\begin{equation*}
+P(error | l_{\text{STR}}) = e_{l} \exp(f_{\text{STR}}(\log(e_{h})-\log(e_{l})))
+\end{equation*}
+
+\noindent ...where the constant indel errors set for low and high STR lengths are $e_{l} = 5\e{-5}$ and $e_{h} = 3\e{-4}$, and the fraction of high STR length is $f_{\text{STR}} = \max((l_{\text{STR}}-1),15)/15$.
+
+As a special case, the germline indel genotyping model uses higher error rates to heuristically account for assembly and mapping errors. This is currently a scaling factor of 100, $P(error_{\text{germline}} | l_{\text{STR}}) = 100 * P(error | l_{\text{STR}})$
+
+
 \subsubsection{Somatic Calling Model and Variant likelihoods}
+
 The somatic calling model assumes that the samples are from diploid individuals. For both SNVs and indels, the normal genotype state space is the set of unphased diploid genotypes, $G_n = \{ \tt{ref}, \tt{het}, \tt{hom}\}$, where $\tt{ref}$, $\tt{het}$, and $\tt{hom}$ refer to the normal genotype being reference, heterozygous, and homozygous, respectively. The tumor genotype has two states $G_t = \{ \tt{nonsom}, \tt{som} \}$, where $\tt{nonsom}$ and $\tt{som}$ indicate the absence and presence of somatic mutation in the tumor sample, respectively. The method approximates a posterior probability on the joint tumor and normal genotypes.
 
 \begin{align*}
@@ -124,7 +138,7 @@ P(G_n)=
 \end{cases}
 \end{equation*}
 
-\noindent where $\theta_{\text{SNV}}=1 \times 10^{-3}$ for SNVs and $\theta_{\text{indel}}=1 \times 10^{-4}$ for indels. Given the somatic state prior $P(G_t={\tt som}) = \gamma$, the genomic prior is
+\noindent where $\theta_{\text{SNV}}=1\e{-3}$ for SNVs and $\theta_{\text{indel}}=1\e{-4}$ for indels. Given the somatic state prior $P(G_t={\tt som}) = \gamma$, the genomic prior is
 
 \begin{equation*}
 P(G_t, G_n)=
@@ -134,7 +148,7 @@ P(G_t, G_n)=
 \end{cases}
 \end{equation*}
 
-\noindent where $\gamma$ is set to $\gamma_{\text{SNV}} = 1 \times 10^{-3}$ and $\gamma_{\text{indel}} = 1 \times 10^{-6}$ for SNVs and indels. Note that $\gamma$ is expected to scale the somatic variant probabilities but not substantially influence their rank, thus its value was chosen empirically to provide reasonable variant probabilities and are not adjusted for different samples in practice.
+\noindent where $\gamma$ is set to $\gamma_{\text{SNV}} = 1\e{-3}$ and $\gamma_{\text{indel}} = 1\e{-6}$ for SNVs and indels. Note that $\gamma$ is expected to scale the somatic variant probabilities but not substantially influence their rank, thus its value was chosen empirically to provide reasonable variant probabilities and are not adjusted for different samples in practice.
 
 
 \paragraph{Joint allele-frequency prior}
