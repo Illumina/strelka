@@ -48,7 +48,6 @@ legacy_starling_arg_parse(
     opt.cmdline = ad.cmdline;
 
     bool is_min_qscore_set(false);
-    bool is_min_sascore_set(false);
     bool is_min_pascore_set(false);
 
     bool is_bsnp_ssd_no_mismatch(false);
@@ -139,13 +138,9 @@ legacy_starling_arg_parse(
             }
             opt.max_win_mismatch=max_win_mismatch_tmp;
         }
-        else if (ad.argstr[i]=="-min-single-align-score")
+        else if (ad.argstr[i]=="-min-mapping-quality")
         {
-            set_arg(i,ad,is_min_sascore_set,opt.min_single_align_score);
-        }
-        else if (ad.argstr[i]=="-min-paired-align-score")
-        {
-            set_arg(i,ad,is_min_pascore_set,opt.min_paired_align_score);
+            set_arg(i,ad,is_min_pascore_set,opt.min_mapping_quality);
         }
         else if (ad.argstr[i]=="-counts")
         {

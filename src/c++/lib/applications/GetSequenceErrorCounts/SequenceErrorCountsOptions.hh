@@ -43,7 +43,7 @@ struct SequenceErrorCountsOptions : public starling_base_options
         max_candidate_indel_depth_factor = 1;
 
         // set command-line defaults for error counting only:
-        min_paired_align_score = 60;
+        min_mapping_quality = 60;
         min_qscore = 17;
         isBasecallQualAdjustedForMapq = false;
 
@@ -51,8 +51,8 @@ struct SequenceErrorCountsOptions : public starling_base_options
         max_win_mismatch = 1;
         max_win_mismatch_flank_size = 100;
 
-        tier2.is_tier2_min_paired_align_score = true;
-        tier2.tier2_min_paired_align_score = 0;
+        tier2.is_tier2_min_mapping_quality = true;
+        tier2.tier2_min_mapping_quality = 0;
     }
 
     bool

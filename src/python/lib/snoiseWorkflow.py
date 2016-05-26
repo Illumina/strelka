@@ -63,8 +63,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd = [ self.params.snoiseBin ]
 
     segCmd.append("-clobber")
-    segCmd.extend(["-min-paired-align-score",self.params.minMapq])
-    segCmd.extend(["-min-single-align-score",self.params.minMapq])
+    segCmd.extend(["-min-mapping-quality",self.params.minMapq])
     segCmd.extend(["-bam-seq-name", gseg.chromLabel] )
     segCmd.extend(["-report-range-begin", str(gseg.beginPos) ])
     segCmd.extend(["-report-range-end", str(gseg.endPos) ])

@@ -124,8 +124,7 @@ struct blt_options
     bool is_acov = false;
 
     int min_qscore = 17;
-    int min_single_align_score = 10;
-    int min_paired_align_score = 6;
+    int min_mapping_quality = 20;
 
     bool is_min_win_qscore = false;
     int min_win_qscore = 0;

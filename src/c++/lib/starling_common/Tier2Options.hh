@@ -31,8 +31,7 @@ struct Tier2Options
     is_tier2() const
     {
         return
-            (is_tier2_min_single_align_score ||
-             is_tier2_min_paired_align_score ||
+            (is_tier2_min_mapping_quality ||
              is_tier2_mismatch_density_filter_count ||
              is_tier2_no_mismatch_density_filter ||
              is_tier2_no_filter_unanchored ||
@@ -41,10 +40,8 @@ struct Tier2Options
              is_tier2_indel_nonsite_match_prob);
     }
 
-    int tier2_min_single_align_score = 0;
-    bool is_tier2_min_single_align_score = false;
-    int tier2_min_paired_align_score = 0;
-    bool is_tier2_min_paired_align_score = false;
+    int tier2_min_mapping_quality = 0;
+    bool is_tier2_min_mapping_quality = false;
 
     int tier2_mismatch_density_filter_count = 0;
     bool is_tier2_mismatch_density_filter_count = false;

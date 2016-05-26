@@ -73,8 +73,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segCmd = [ self.params.pedicureBin ]
     segCmd.append("-clobber")
-    segCmd.extend(["-min-paired-align-score",str(self.params.minTier1Mapq)])
-    segCmd.extend(["-min-single-align-score","10"])
+    segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
 
 #    segCmd.extend(["-min-qscore","0"])  # consider this once we go back to a quality based scoring model
     segCmd.extend(['-min-qscore','17'])
@@ -93,8 +92,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-max-indel-size", "50"] )
     segCmd.extend(["-indel-nonsite-match-prob", "0.5"] )
 
-    segCmd.extend(["--tier2-min-single-align-score", str(self.params.minTier2Mapq) ] )
-    segCmd.extend(["--tier2-min-paired-align-score", str(self.params.minTier2Mapq) ] )
+    segCmd.extend(["--tier2-min-mapping-quality", str(self.params.minTier2Mapq) ] )
     segCmd.extend(["--tier2-mismatch-density-filter-count", "10"] )
     segCmd.append("--tier2-no-filter-unanchored")
     segCmd.extend(["--tier2-indel-nonsite-match-prob", "0.25"] )

@@ -34,12 +34,9 @@ getTier2OptionsDescription(
     namespace po = boost::program_options;
     po::options_description desc("Tier2 data thresholds");
     desc.add_options()
-    ("tier2-min-single-align-score",
-     po::value(&opt.tier2_min_single_align_score),
-     "Activate tier2 call validation and use the following single alignment score threshold in the tier2 set")
-    ("tier2-min-paired-align-score",
-     po::value(&opt.tier2_min_paired_align_score),
-     "Activate tier2 call validation and use the following paired alignment score threshold in the tier2 set")
+    ("tier2-min-mapping-quality",
+     po::value(&opt.tier2_min_mapping_quality),
+     "Activate tier2 call validation and use the following mapping quality threshold in the tier2 set")
     ("tier2-mismatch-density-filter-count",
      po::value(&opt.tier2_mismatch_density_filter_count),
      "Use the specified less stringent mismatch density count in tier2 evaluation.")
@@ -77,14 +74,9 @@ parseTier2Options(
         opt.is_tier2_indel_nonsite_match_prob=true;
     }
 
-    if (vm.count("tier2-min-single-align-score"))
+    if (vm.count("tier2-min-mapping-quality"))
     {
-        opt.is_tier2_min_single_align_score=true;
-    }
-
-    if (vm.count("tier2-min-paired-align-score"))
-    {
-        opt.is_tier2_min_paired_align_score=true;
+        opt.is_tier2_min_mapping_quality=true;
     }
 
     if (vm.count("tier2-mismatch-density-filter-count"))

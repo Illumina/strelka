@@ -220,14 +220,10 @@ write_starling_legacy_options(
        " -min-qscore n      - Don't use base if qscore<n (default: " << default_opt.min_qscore << ")\n"
        " -max-window-mismatch n m\n"
        "                    - Don't use base if mismatch count>n within a window of m flanking bases\n"
-       " -min-single-align-score n\n"
-       "                    - Reads with single align score<n are marked as SE-failed. By default such reads are excluded\n"
-       "                      from consideration unless a paired score is present. This behavior can be modified by\n"
-       "                      setting the exclude or rescue modes below. (default: " << default_opt.min_single_align_score << ")\n"
-       " -min-paired-align-score n\n"
-       "                    - Reads with paired align score<n are marked as PE-failed if a paired score is present. By\n"
-       "                      default such reads are excluded from consideration, but may still be used if the single score\n"
-       "                      rescue mode is enabled. (default score: " << default_opt.min_paired_align_score << ")\n"
+       " -min-mapping-quality n\n"
+       "                    - Reads with mapping quality<n are marked as tier1 filtered. Such reads are not\n"
+       "                      directly used for variant calling unless a tier2 value is defined in certain applications.\n"
+       "                      Filtered reads may also still be used to compute locus quality metrics (default score: " << default_opt.min_mapping_quality << ")\n"
        " -filter-unanchored - Don't use unanchored read pairs during variant calling. Unanchored read pairs have a single-read\n"
        "                      mapping score of zero in both reads of the pair\n"
        " -include-singleton - Include paired reads with unmapped mates\n"
@@ -430,22 +426,12 @@ finalize_starling_base_options(
         pinfo.usage(errorMsg.c_str());
     }
 
-    if (opt.tier2.is_tier2_min_single_align_score)
+    if (opt.tier2.is_tier2_min_mapping_quality)
     {
-        if (opt.tier2.tier2_min_single_align_score >= opt.min_single_align_score)
+        if (opt.tier2.tier2_min_mapping_quality >= opt.min_mapping_quality)
         {
             std::ostringstream oss;
-            oss << "Invalid tier2 single align score. Value must be lower than primary single align score: '" << opt.min_single_align_score << "'";
-            pinfo.usage(oss.str().c_str());
-        }
-    }
-
-    if (opt.tier2.is_tier2_min_paired_align_score)
-    {
-        if (opt.tier2.tier2_min_paired_align_score >= opt.min_paired_align_score)
-        {
-            std::ostringstream oss;
-            oss << "Invalid tier2 paired align score. Value must be lower than primary paired align score: '" << opt.min_paired_align_score << "'";
+            oss << "Invalid tier2 min mapping quality. Value must be lower than tier1 min mapping quality: '" << opt.min_mapping_quality << "'";
             pinfo.usage(oss.str().c_str());
         }
     }

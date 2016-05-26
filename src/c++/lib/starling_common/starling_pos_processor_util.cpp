@@ -166,20 +166,15 @@ is_usable_read_mapping(const starling_base_options& opt,
                        const bam_record& read,
                        const bool is_tier2 =false)
 {
-    int current_min_single_align_score(opt.min_single_align_score);
-    int current_min_paired_align_score(opt.min_paired_align_score);
+    int current_min_mapping_quality(opt.min_mapping_quality);
     bool is_filter_unanchored(opt.is_filter_unanchored);
     bool is_include_singleton(opt.is_include_singleton);
     bool is_include_anomalous(opt.is_include_anomalous);
     if (is_tier2)
     {
-        if (opt.tier2.is_tier2_min_single_align_score)
+        if (opt.tier2.is_tier2_min_mapping_quality)
         {
-            current_min_single_align_score=opt.tier2.tier2_min_single_align_score;
-        }
-        if (opt.tier2.is_tier2_min_paired_align_score)
-        {
-            current_min_paired_align_score=opt.tier2.tier2_min_paired_align_score;
+            current_min_mapping_quality=opt.tier2.tier2_min_mapping_quality;
         }
         if (opt.tier2.is_tier2_no_filter_unanchored)
         {
@@ -217,20 +212,10 @@ is_usable_read_mapping(const starling_base_options& opt,
 
     {
         const int mapq(static_cast<int>(read.map_qual()));
-        if (read.is_paired())
-        {
-            if (mapq < current_min_paired_align_score)
-            {
-                return false; // paired submap
-            }
-        }
-        else
-        {
-            if (mapq < current_min_single_align_score)
-            {
-                return false; // single submap
-            }
-        }
+		if (mapq < current_min_mapping_quality)
+		{
+			return false;
+		}
     }
     return true;
 }
