@@ -70,12 +70,11 @@ struct pos_basecall_buffer
     void
     insert_mapq_count(
         const pos_t pos,
-        const uint8_t mapq,
-        const uint8_t adjustedMapq)
+        const uint8_t mapq)
     {
         snp_pos_info& posdata(_pdata.getRef(pos));
         posdata.n_mapq++;
-        posdata.sum_sq_mapq += (adjustedMapq*adjustedMapq);
+        posdata.sum_sq_mapq += (mapq*mapq);
         if (mapq==0) posdata.n_mapq0++;
     }
 
@@ -99,7 +98,7 @@ struct pos_basecall_buffer
         const pos_t pos,
         const uint8_t call_id,
         const uint8_t qscore,
-        const uint8_t adjustedMapq,
+        const uint8_t mapq,
         const unsigned cycle,
         const bool is_submapped);
 

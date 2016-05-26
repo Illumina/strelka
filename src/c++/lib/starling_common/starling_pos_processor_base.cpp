@@ -1108,15 +1108,14 @@ update_ranksum_and_mapq_count(
     const uint8_t call_id,
     const uint8_t qscore,
     const uint8_t mapq,
-    const uint8_t adjustedMapq,
     const unsigned cycle,
     const bool is_submapped)
 {
     // assume pos is already valid:
 
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.insert_mapq_count(pos,mapq,adjustedMapq);
-    bcbuff.update_ranksums(_ref.get_base(pos),pos,call_id,qscore,adjustedMapq,cycle,is_submapped);
+    bcbuff.insert_mapq_count(pos,mapq);
+    bcbuff.update_ranksums(_ref.get_base(pos),pos,call_id,qscore,mapq,cycle,is_submapped);
 }
 
 
@@ -1135,7 +1134,7 @@ update_somatic_features(
     // assume pos is already valid:
 
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.insert_mapq_count(pos,mapq,mapq);
+    bcbuff.insert_mapq_count(pos,mapq);
 
     if (is_tier1 && (sample_no != 0) && (! is_call_filter))
     {
@@ -1560,14 +1559,7 @@ pileup_read_segment(const read_segment& rseg,
                 // update extended feature metrics (including submapped reads):
                 if (_opt.is_compute_germline_scoring_metrics())
                 {
-                    /// \TODO Morten -- consider improving MQ, MQ0 and RankSumMQ by:
-                    ///  1) removing the if (! submapped) here
-                    ///  2) collapsing mapq and adjustedMapq to just mapq
-                    ///
-                    if (! is_submapped)
-                    {
-                        update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,adjustedMapq,align_strand_read_pos,is_submapped);
-                    }
+                    update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,align_strand_read_pos,is_submapped);
                 }
                 else if (_opt.is_compute_somatic_scoring_metrics)
                 {

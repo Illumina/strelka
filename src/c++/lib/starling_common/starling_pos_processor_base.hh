@@ -399,7 +399,6 @@ private:
         const uint8_t call_id,
         const uint8_t qscore,
         const uint8_t mapq,
-        const uint8_t adjustedMapq,
         const unsigned cycle,
         const bool is_submapped);
 
