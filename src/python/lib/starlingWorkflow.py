@@ -347,7 +347,7 @@ class StarlingWorkflow(StarkaWorkflow) :
         if self.params.isWriteRealignedBam :
             self.params.realignedDir=os.path.join(self.params.resultsDir,"realigned")
             ensureDir(self.params.realignedDir)
-            
+
         if self.params.isExome :
             self.params.isEVS = False
 
