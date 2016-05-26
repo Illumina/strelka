@@ -131,14 +131,15 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const unsigned depth,
         const unsigned sample_no) const;
 
-    // first return value is true if the alignment is accepted into
+    // return value is true if the alignment is accepted into
     // the buffer (alignments can fail a number of quality checks --
     // such as being located too far away from other alignments of the
     // same read or having an indel that is too large
     //
-    // second return value is read_id
+    // if true, the return value provides the read's ide in this structures
+    // read buffer
     //
-    std::pair<bool,align_id_t>
+    boost::optional<align_id_t>
     insert_read(
         const bam_record& br,
         const alignment& al,

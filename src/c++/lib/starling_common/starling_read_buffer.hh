@@ -75,15 +75,15 @@ struct starling_read_buffer : private boost::noncopyable
 
     ~starling_read_buffer();
 
-    /// \return <was the read added?, what is the id in the read buffer? >
+    /// insert new read into read buffer
+    ///
+    /// \return what is the read's internal id in Strelka's read buffer?
     ///
     // note pos_processor is responsible for checking that the
     // position of the read is not too low -- the read_buffer itself
     // is agnostic to the data management process:
     //
-    // TODO: return boost::optional
-    //
-    std::pair<bool,align_id_t>
+    align_id_t
     add_read_alignment(
         const bam_record& br,
         const alignment& al,

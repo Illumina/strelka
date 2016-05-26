@@ -47,7 +47,7 @@ starling_read_buffer::
 
 
 
-std::pair<bool,align_id_t>
+align_id_t
 starling_read_buffer::
 add_read_alignment(
     const bam_record& br,
@@ -87,7 +87,7 @@ add_read_alignment(
         (_pos_group[buffer_pos]).insert(std::make_pair(this_read_id,seg_id));
     }
 
-    return std::make_pair(true,this_read_id);
+    return this_read_id;
 }
 
 
