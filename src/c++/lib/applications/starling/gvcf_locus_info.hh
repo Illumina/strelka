@@ -27,6 +27,7 @@
 #include "germlineVariantEmpiricalScoringFeatures.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
+#include "blt_util/math_util.hh"
 #include "blt_util/PolymorphicObject.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
@@ -333,7 +334,7 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
 /// restrict to the case where variant is site/SNV and calling model is continuous
 struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
-    GermlineContinuousSiteSimpleGenotypeInfo(int totalDepth, int alleleDepth, BASE_ID::index_t base)
+    GermlineContinuousSiteSimpleGenotypeInfo(unsigned totalDepth, unsigned alleleDepth, BASE_ID::index_t base)
         : _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
         , _base(base)
@@ -342,10 +343,11 @@ struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGe
 
     double variant_frequency() const
     {
-        return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0;
+        return safeFrac(_alleleDepth, _totalDepth);
     }
-    int _totalDepth;
-    int _alleleDepth;
+
+    unsigned _totalDepth;
+    unsigned _alleleDepth;
     BASE_ID::index_t _base;
 };
 
@@ -364,8 +366,9 @@ struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGen
 
     double variant_frequency() const
     {
-        return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0;
+        return safeFrac(_alleleDepth,_totalDepth);
     }
+
     unsigned _totalDepth;
     unsigned _alleleDepth;
 };
@@ -568,6 +571,7 @@ struct GermlineSiteCallInfo : public PolymorphicObject
     char ref = 'N';
     unsigned n_used_calls = 0;
     unsigned n_unused_calls = 0;
+
     unsigned hpol = 0;
 
     unsigned spanning_deletions;
