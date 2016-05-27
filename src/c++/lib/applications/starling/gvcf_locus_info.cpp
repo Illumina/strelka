@@ -146,10 +146,12 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::AB, (-std::log(std::min(1.,2.*std::min(allelebiaslower,allelebiasupper))+1.e-30)));
     }
 
-    /// compute any experimental features not currently used in production
+    // compute any experimental features not currently used in production
     if (isComputeDevelopmentFeatures)
     {
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (gqx * chromDepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ, (_isri.mapqTracker.getRMS()));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (_isri.mapqTracker.getZeroFrac()));
     }
 }
 

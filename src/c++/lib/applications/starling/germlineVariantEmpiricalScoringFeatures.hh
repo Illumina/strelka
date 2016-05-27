@@ -163,7 +163,7 @@ struct GERMLINE_INDEL_SCORING_FEATURES
     const char*
     get_name()
     {
-        return "GERMLINE_SNV_INDEL_FEATURES";
+        return "GERMLINE_INDEL_SCORING_FEATURES";
     }
 
     /** Make sure the features are the same as used in the model
@@ -239,12 +239,14 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
     const char*
     get_name()
     {
-        return "GERMLINE_SNV_INDEL_DEVELOPMENT_FEATURES";
+        return "GERMLINE_INDEL_DEVELOPMENT_SCORING_FEATURES";
     }
 
     enum index_t
     {
         F_GQ,
+        F_MQ,
+        mapqZeroFraction,
         SIZE
     };
 
@@ -256,6 +258,10 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
         {
         case F_GQ:
             return "F_GQ";
+        case F_MQ:
+            return "F_MQ";
+        case mapqZeroFraction:
+            return "mapqZeroFraction";
         default:
             assert(false && "Unknown feature");
             return nullptr;
