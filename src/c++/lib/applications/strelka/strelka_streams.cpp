@@ -202,7 +202,7 @@ strelka_streams(
                     }
                     fos << SOMATIC_SNV_SCORING_FEATURES::get_feature_label(featureIndex);
                 }
-                for (unsigned featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+                for (int featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
                 {
                     fos << ',' << SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
                 }

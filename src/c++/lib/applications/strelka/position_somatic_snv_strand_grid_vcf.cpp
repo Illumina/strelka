@@ -189,7 +189,7 @@ get_scoring_features(
     //n_mapq0
     const unsigned n_mapq(mapqTracker.count);
     const unsigned n_mapq0(mapqTracker.zeroCount);
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq0+n_mapq));
+    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::MQ0_FRAC, safeFrac(n_mapq0,n_mapq));
 
     //ReadPosRankSum
     const double ReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_u_stat();
@@ -198,7 +198,7 @@ get_scoring_features(
     //StrandBias
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::strandBias,rs.strandBias);
 
-    /// TODO better handling of default values for in cases where alpos or altmap are not defined (0 is not a good default)
+    /// TODO better handling of default values for cases where alpos or altmap are not defined (0 is not a good default)
     ///
     //Altpos
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::altpos,altpos);
@@ -207,7 +207,6 @@ get_scoring_features(
     if (opt.isReportEVSFeatures)
     {
         // features not used in the current EVS model but feature candidates/exploratory for new EVS models:
-        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::MQ0_FRAC, safeFrac(n_mapq0,n_mapq));
     }
 }
 
@@ -434,7 +433,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             }
             os << smod.features.get(static_cast<SOMATIC_SNV_SCORING_FEATURES::index_t>(featureIndex));
         }
-        for (unsigned featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+        for (int featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
         {
             os << ",";
             os << smod.dfeatures.get(static_cast<SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
