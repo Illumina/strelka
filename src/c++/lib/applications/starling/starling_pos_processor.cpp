@@ -389,6 +389,8 @@ process_pos_snp_single_sample_impl(
         if (_opt.is_compute_germline_scoring_metrics())
         {
             si->mapqRMS = pi.mapqTracker.getRMS();
+            si->mapqZeroCount = pi.mapqTracker.zeroCount;
+            si->mapqCount = pi.mapqTracker.count;
             si->ReadPosRankSum = pi.get_read_pos_ranksum();
             si->MQRankSum = pi.get_mq_ranksum();
             si->BaseQRankSum = pi.get_baseq_ranksum();

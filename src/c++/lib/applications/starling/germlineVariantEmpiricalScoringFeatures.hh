@@ -132,6 +132,7 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
     {
         I_RawPos,
         I_RawBaseQ,
+        mapqZeroFraction,
         SIZE
     };
 
@@ -145,6 +146,8 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
             return "I_RawPos";
         case I_RawBaseQ:
             return "I_RawBaseQ";
+        case mapqZeroFraction:
+            return "mapqZeroFraction";
         default:
             assert(false && "Unknown feature");
             return nullptr;

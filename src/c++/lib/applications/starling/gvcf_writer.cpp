@@ -368,6 +368,8 @@ write_site_record(
             os << ';';
             os << "MQ=" << si.mapqRMS;
             os << ';';
+            os << "MQ0=" << si.mapqZeroCount;
+            os << ';';
             os << "MQRankSum=" << si.MQRankSum;
             os << ';';
             os << "BaseQRankSum=" << si.BaseQRankSum;

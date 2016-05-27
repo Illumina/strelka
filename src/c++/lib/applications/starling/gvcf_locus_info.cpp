@@ -24,6 +24,7 @@
 
 
 #include "gvcf_locus_info.hh"
+#include "blt_util/math_util.hh"
 #include "common/Exceptions.hh"
 
 #include "boost/math/distributions/binomial.hpp"
@@ -326,6 +327,8 @@ computeEmpiricalScoringFeatures(
 
         //the average position value within a read of alt allele
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawPos, (rawPos));
+
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (safeFrac(mapqZeroCount,mapqCount)));
     }
 }
 

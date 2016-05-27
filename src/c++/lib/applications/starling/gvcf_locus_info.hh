@@ -423,6 +423,7 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
     {
         for (auto& x : _calls) x.set_filter(filter);
     }
+
     pos_t end() const override;
 
     void add_overlap(const reference_contig_segment& ref, GermlineDiploidIndelCallInfo& overlap);
@@ -669,6 +670,8 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
     diploid_genotype dgt;
     double hapscore = 0;
     double mapqRMS = 0;
+    unsigned mapqZeroCount = 0;
+    unsigned mapqCount = 0;
 
     //only meaningful for het calls
     double ReadPosRankSum = 0;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
@@ -676,7 +679,6 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
     double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
     double avgBaseQ = 0;
     double rawPos = 0;
-    unsigned mapq_zero = 0;     // The number of spanning reads that do not pass the command-line mapq test
 
     GermlineDiploidSiteSimpleGenotypeInfo smod;
 };
