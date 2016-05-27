@@ -86,7 +86,6 @@ double
 snp_pos_info::
 get_mq_ranksum() const
 {
-//	cout << mq_ranksum << endl;
     return mq_ranksum.get_u_stat();
 }
 

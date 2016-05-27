@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -26,7 +25,6 @@
 #pragma once
 
 #include "blt_util/ranksum.hh"
-#include "blt_common/MapqTracker.hh"
 #include "starling_common/indel_align_type.hh"
 #include "starling_common/indel_key.hh"
 #include "starling_common/starling_types.hh"
@@ -311,8 +309,6 @@ public:
     evidence_t suboverlap_tier1_read_ids; // the reads which cross an indel breakpoint, but not by enough
     // to be entered into the scores list
     evidence_t suboverlap_tier2_read_ids;
-
-    MapqTracker mapqTracker;
 
     struct status_t
     {

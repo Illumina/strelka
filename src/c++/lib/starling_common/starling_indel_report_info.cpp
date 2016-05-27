@@ -298,8 +298,6 @@ get_starling_indel_sample_report_info(
 
         unsigned n_subscore_reads(0);
 
-        isri.mapqTracker = id.mapqTracker;
-
         for (const auto& val : id.read_path_lnp)
         {
             const read_path_scores& path_lnp(val.second);
@@ -392,11 +390,12 @@ get_starling_indel_sample_report_info(
     }
 
     {
-        // get depth of indel:
+        // get various indel stats from the pileup:
         pos_t depth_pos(ik.pos-1);
         if (ik.type==INDEL::BP_RIGHT) depth_pos=ik.pos;
         const snp_pos_info& spi(bc_buff.get_pos(depth_pos));
-        isri.depth=spi.calls.size();
+        isri.tier1Depth=spi.calls.size();
+        isri.mapqTracker=spi.mapqTracker;
     }
 }
 
@@ -409,7 +408,7 @@ void starling_indel_sample_report_info::dump(std::ostream& os) const
        << ",n_q30_indel_reads=" << n_q30_indel_reads
        << ",n_q30_alt_reads=" << n_q30_alt_reads
        << ",n_other_reads=" << n_other_reads
-       << ",depth=" << depth;
+       << ",tier1Depth=" << tier1Depth;
 }
 
 std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj)

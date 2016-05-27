@@ -48,9 +48,9 @@ write_vcf_isri_tiers(
 {
     static const char sep(':');
 //  DP:DP2:TAR:TIR:TOR...
-    os << isri1.depth
+    os << isri1.tier1Depth
        << sep
-       << isri2.depth
+       << isri2.tier1Depth
        << sep
        << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
        << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
@@ -94,7 +94,7 @@ writeSomaticIndelVcfGrid(
     strelka_shared_modifiers_indel smod;
     if (dopt.sfilter.is_max_depth())
     {
-        const unsigned& depth(siInfo.nisri[0].depth);
+        const unsigned& depth(siInfo.nisri[0].tier1Depth);
         if (depth > dopt.sfilter.max_chrom_depth)
         {
             smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::HighDepth);

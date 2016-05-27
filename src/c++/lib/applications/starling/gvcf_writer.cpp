@@ -819,7 +819,7 @@ write_indel_record(
 
     os << ':' << ((call.empiricalVariantScore>=0) ? call.empiricalVariantScore : call.gqx);
 
-    os << ':' << call._isri.depth;
+    os << ':' << call._isri.tier1Depth;
 
     // SAMPLE AD/ADF/ADR:
     {
@@ -970,7 +970,7 @@ write_indel_record(
 
         os << ':' << call.gqx;
 
-        os << ':' << call._isri.depth;
+        os << ':' << call._isri.tier1Depth;
 
         // AD:
         os << ':' << call._isri.n_q30_ref_reads

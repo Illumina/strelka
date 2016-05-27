@@ -59,7 +59,7 @@ write_vcf_sample_info(
         os << "./." << sep << "." << sep << "." << sep;
     }
 
-    os << isri1.depth
+    os << isri1.tier1Depth
        << sep
 //	   n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;
        << isri1.n_q30_ref_reads << ','
@@ -106,7 +106,7 @@ denovo_indel_call_vcf(
             using namespace PEDICURE_SAMPLETYPE;
             const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
 
-            const unsigned& depth(isri[probandIndex][PEDICURE_TIERS::TIER1].depth);
+            const unsigned& depth(isri[probandIndex][PEDICURE_TIERS::TIER1].tier1Depth);
             if (depth > dopt.dfilter.max_depth)
             {
                 smod.set_filter(PEDICURE_VCF_FILTERS::HighDepth);
@@ -185,7 +185,7 @@ denovo_indel_call_vcf(
     unsigned totalDepth(0);
     for (const auto& sampleIsri : isri)
     {
-        totalDepth += sampleIsri[PEDICURE_TIERS::TIER1].depth;
+        totalDepth += sampleIsri[PEDICURE_TIERS::TIER1].tier1Depth;
     }
 
     os << sep

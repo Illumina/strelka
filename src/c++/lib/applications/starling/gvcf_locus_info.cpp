@@ -117,7 +117,7 @@ computeEmpiricalScoringFeatures(
     features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_isri.n_q30_ref_reads * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_isri.n_q30_indel_reads * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_isri.n_q30_alt_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_isri.depth * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_isri.tier1Depth * chromDepthFactor));
 
     {
         // allele bias metrics

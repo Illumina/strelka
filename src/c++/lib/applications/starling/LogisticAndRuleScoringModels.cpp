@@ -105,7 +105,7 @@ do_indel_rule_model(
 
     if (cutoffs.at("DP")>0 && dopt.is_max_depth())
     {
-        if (ii.first()._isri.depth > dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if (ii.first()._isri.tier1Depth > dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 }
 

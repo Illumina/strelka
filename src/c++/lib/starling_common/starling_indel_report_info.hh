@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "blt_common/MapqTracker.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/indel.hh"
 
@@ -74,7 +75,7 @@ struct starling_indel_sample_report_info
     unsigned n_other_reads = 0;
 
     // the depth of the pileup preceding the indel
-    unsigned depth = 0;
+    unsigned tier1Depth = 0;
 
     // same as above, but by strand
     unsigned n_q30_ref_reads_fwd = 0;

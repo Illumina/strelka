@@ -233,7 +233,7 @@ default_classify_indel(
 
     if (this->_dopt.is_max_depth())
     {
-        if (call._isri.depth > this->_dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if (call._isri.tier1Depth > this->_dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 
     if (this->_opt.is_max_ref_rep)
