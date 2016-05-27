@@ -30,26 +30,15 @@
 #include "starling_read_align.hh"
 #include "starling_read_util.hh"
 
-#include "blt_common/adjust_joint_eprob.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
-#include "blt_common/position_snp_call_pprob_monogt.hh"
 #include "blt_common/position_snp_call_pprob_nploid.hh"
-#include "blt_common/position_strand_coverage_anomaly.hh"
-#include "blt_common/position_strand_distro_anomaly.hh"
-#include "blt_common/position_strand_distro_anomaly_lrt.hh"
-#include "blt_util/align_path.hh"
-#include "blt_util/blt_exception.hh"
 #include "blt_util/depth_buffer_util.hh"
 #include "blt_util/io_util.hh"
 #include "blt_util/log.hh"
-#include "blt_util/read_util.hh"
 #include "htsapi/bam_seq_read_util.hh"
 #include "starling_common/starling_indel_report_info.hh"
-#include "starling_common/starling_pos_processor_base.hh"
 
 #include <iomanip>
-#include <iostream>
-#include <sstream>
 
 
 //#define DEBUG_PPOS
@@ -506,33 +495,6 @@ insert_indel(
 }
 
 void
-starling_pos_processor_base::insert_mismatch_position(const pos_t pos)
-{
-//    printf("%d\n", pos);
-    _active_region_detector.insert_mismatch_position(pos);
-}
-
-void
-starling_pos_processor_base::insert_indel_position(const pos_t pos)
-{
-//    printf("%d\n", pos);
-    _active_region_detector.insert_indel_position(pos);
-}
-
-void
-starling_pos_processor_base::update_active_region_start(const pos_t pos)
-{
-    _active_region_detector.update_start_position(pos);
-}
-
-void
-starling_pos_processor_base::update_active_region_end(const pos_t pos)
-{
-//    printf("%d\n", pos);
-    _active_region_detector.update_end_position(pos);
-}
-
-void
 starling_pos_processor_base::
 insert_forced_output_pos(const pos_t pos)
 {
@@ -925,8 +887,8 @@ process_pos(const int stage_no,
     if        (stage_no==STAGE::HEAD)
     {
 //        printf("HEAD\t%d\n", pos);
-        update_active_region_end(pos);
         init_read_segment_pos(pos);
+        _active_region_detector.update_end_position(pos);
 
         if (_opt.is_write_candidate_indels())
         {
@@ -949,7 +911,7 @@ process_pos(const int stage_no,
         }
 #endif
         //        consolidate_candidate_indel_pos(pos);
-        update_active_region_start(pos);
+        _active_region_detector.update_start_position(pos);
 
         if (! _opt.is_write_candidate_indels_only)
         {

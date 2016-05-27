@@ -487,23 +487,27 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         }
         else if (!is_mapq_zero && is_segment_align_match(ps.type))
         {
-            for (unsigned j(0); j<ps.length; ++j)
-             {
-                const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
+            for (unsigned j(0); j < ps.length; ++j)
+            {
+                const pos_t ref_pos(ref_head_pos + static_cast<pos_t>(j));
+                pos_t read_pos = read_offset + j;
 
-                char base_char = read_seq.get_char(read_offset + j);
+                char base_char = read_seq.get_char(read_pos);
+
                 if (ref.get_base(ref_pos) != base_char)
                 {
-                    sppr.insert_mismatch_position(ref_pos);
-//                    printf("%d\t%d\n", ref_pos, base_to_id(base_char));
+                    sppr.get_active_region_detector().insert_mismatch(id, ref_pos, base_char);
                 }
-             }
+                else
+                {
+                    sppr.get_active_region_detector().insert_match(id, ref_pos, base_char);
+                }
+            }
         }
 
         if (!is_mapq_zero && obs.key.type != INDEL::NONE)
         {
-            sppr.insert_indel_position(obs.key.pos);
-//            printf("%s\t%d\t%d\n", INDEL::get_index_label(obs.key.type), obs.key.pos, obs.key.length);
+            sppr.get_active_region_detector().insert_indel(obs);
         }
 
         for (unsigned i(0); i<n_seg; ++i)
@@ -511,6 +515,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
             increment_path(al.path,path_index,read_offset,ref_head_pos);
         }
     }
+
     return total_indel_ref_span_per_read;
 }
 

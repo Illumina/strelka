@@ -111,17 +111,13 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
                  const unsigned sampleId);
 
     // for detecting active regions
-    void
-    insert_mismatch_position(const pos_t pos);
 
-    void
-    insert_indel_position(const pos_t pos);
 
-    void
-    update_active_region_start(const pos_t pos);
-
-    void
-    update_active_region_end(const pos_t pos);
+    active_region_detector&
+    get_active_region_detector()
+    {
+        return _active_region_detector;
+    }
 
     // in range [begin,end), is the estimated depth always below
     // depth?
