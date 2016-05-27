@@ -158,18 +158,15 @@ denovo_snv_call_vcf(
         os << std::fixed << std::setprecision(2);
 
         // m_mapq includes all calls, even from reads below the mapq threshold:
-        unsigned n_mapq(0);
-        unsigned n_mapq0(0);
+        MapqTracker mapqTracker;
         for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); ++sampleIndex)
         {
             const snp_pos_info& pi(pileups[PEDICURE_TIERS::TIER1][sampleIndex]->rawPileup());
-            n_mapq += pi.n_mapq;
-            n_mapq0 += pi.n_mapq0;
+            mapqTracker.merge(pi.mapqTracker);
         }
-        os << "DP=" << n_mapq;
-        os << ";MQ0=" << n_mapq0;
+        os << "DP=" << mapqTracker.count;
+        os << ";MQ0=" << mapqTracker.zeroCount;
         os << ";DQ=" << rs.dsnv_qphred;
-
     }
 
     //FORMAT:

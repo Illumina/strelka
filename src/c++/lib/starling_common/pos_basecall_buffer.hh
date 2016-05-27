@@ -72,10 +72,7 @@ struct pos_basecall_buffer
         const pos_t pos,
         const uint8_t mapq)
     {
-        snp_pos_info& posdata(_pdata.getRef(pos));
-        posdata.n_mapq++;
-        posdata.sum_sq_mapq += (mapq*mapq);
-        if (mapq==0) posdata.n_mapq0++;
+        _pdata.getRef(pos).mapqTracker.add(mapq);
     }
 
     void

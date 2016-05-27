@@ -283,13 +283,14 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
 
 
 void
-get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
-                                      const indel_key& ik,
-                                      const indel_data& id,
-                                      const pos_basecall_buffer& bc_buff,
-                                      const bool is_tier2_pass,
-                                      const bool is_use_alt_indel,
-                                      starling_indel_sample_report_info& isri)
+get_starling_indel_sample_report_info(
+        const starling_base_deriv_options& dopt,
+        const indel_key& ik,
+        const indel_data& id,
+        const pos_basecall_buffer& bc_buff,
+        const bool is_tier2_pass,
+        const bool is_use_alt_indel,
+        starling_indel_sample_report_info& isri)
 {
     // get read info:
     {
@@ -297,9 +298,7 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
 
         unsigned n_subscore_reads(0);
 
-        isri.n_mapq = id.n_mapq;
-        isri.n_mapq0 = id.n_mapq0;
-        isri.sum_sq_mapq = id.sum_sq_mapq;
+        isri.mapqTracker = id.mapqTracker;
 
         for (const auto& val : id.read_path_lnp)
         {

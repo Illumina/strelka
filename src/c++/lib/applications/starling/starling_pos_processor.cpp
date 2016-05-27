@@ -388,16 +388,16 @@ process_pos_snp_single_sample_impl(
         // calculate empirical scoring metrics
         if (_opt.is_compute_germline_scoring_metrics())
         {
-            si->MQ               = pi.get_rms_mq();
-            si->ReadPosRankSum   = pi.get_read_pos_ranksum();
-            si->MQRankSum        = pi.get_mq_ranksum();
-            si->BaseQRankSum     = pi.get_baseq_ranksum();
-            si->rawPos           = pi.get_raw_pos();
-            si->avgBaseQ         = pi.get_raw_baseQ();
+            si->mapqRMS = pi.mapqTracker.getRMS();
+            si->ReadPosRankSum = pi.get_read_pos_ranksum();
+            si->MQRankSum = pi.get_mq_ranksum();
+            si->BaseQRankSum = pi.get_baseq_ranksum();
+            si->rawPos = pi.get_raw_pos();
+            si->avgBaseQ = pi.get_raw_baseQ();
         }
 
         // hpol filter
-        si->hpol=get_snp_hpol_size(pos,_ref);
+        si->hpol = get_snp_hpol_size(pos,_ref);
     }
 
     if (_opt.is_nonref_sites())

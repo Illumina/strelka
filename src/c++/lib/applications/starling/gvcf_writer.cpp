@@ -366,7 +366,7 @@ write_site_record(
         {
 #ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
             os << ';';
-            os << "MQ=" << si.MQ;
+            os << "MQ=" << si.mapqRMS;
             os << ';';
             os << "MQRankSum=" << si.MQRankSum;
             os << ';';

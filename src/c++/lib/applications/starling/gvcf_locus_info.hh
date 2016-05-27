@@ -668,7 +668,7 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
     std::string phased_ref, phased_alt, phased_AD, phased_ADF, phased_ADR;
     diploid_genotype dgt;
     double hapscore = 0;
-    double MQ = 0;				 // RMS of mapping qualities
+    double mapqRMS = 0;
 
     //only meaningful for het calls
     double ReadPosRankSum = 0;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.

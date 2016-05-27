@@ -301,7 +301,7 @@ computeEmpiricalScoringFeatures(
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::AD1, (r1 * chromDepthFactor));
 
 
-    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (MQ));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (mapqRMS));
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (ReadPosRankSum));
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_BaseQRankSum, (BaseQRankSum));
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (MQRankSum));

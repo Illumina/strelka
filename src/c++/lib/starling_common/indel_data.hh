@@ -26,6 +26,7 @@
 #pragma once
 
 #include "blt_util/ranksum.hh"
+#include "blt_common/MapqTracker.hh"
 #include "starling_common/indel_align_type.hh"
 #include "starling_common/indel_key.hh"
 #include "starling_common/starling_types.hh"
@@ -52,11 +53,11 @@ struct indel_observation_data
 
 
 
-// Holds the alignment scores created by each read aligning across an
-// indel which express the relative probability of the read aligning
-// to the indel or the reference (or elsewhere in the genome). Used
-// for indel genotyping.
-//
+/// Holds the alignment scores created by each read aligning across an
+/// indel which express the relative probability of the read aligning
+/// to the indel or the reference (or elsewhere in the genome). Used
+/// for indel genotyping.
+///
 struct read_path_scores
 {
     typedef float score_t;
@@ -190,18 +191,15 @@ private:
 
 
 
-// represents the data from all observations associated with an indel
-//
+/// represents the data from all observations associated with an indel
+///
 struct indel_data
 {
     indel_data(
         const indel_key& ik)
-        : _ik(ik),
-          is_external_candidate(false),
+        : is_external_candidate(false),
           is_forced_output(false),
-          n_mapq(0),
-          n_mapq0(0),
-          sum_sq_mapq(0)
+          _ik(ik)
     {}
 
     /// add an observation for this indel
@@ -268,11 +266,13 @@ struct indel_data
 #endif
 
 private:
-    // indel key is maintained for debugging only:
-    const indel_key _ik;
+    // add observation for the non-shared case
+    void
+    add_observation_core(const indel_observation_data& obs_data,
+                         bool& is_repeat_obs);
 
-    mutable insert_seq_manager _insert_seq;
 
+///////////// data
 public:
 
     // all_read_ids refers to the read(s) that support the indel
@@ -312,10 +312,7 @@ public:
     // to be entered into the scores list
     evidence_t suboverlap_tier2_read_ids;
 
-    unsigned n_mapq;
-    unsigned n_mapq0;
-    // sum of mapq squares for all reads at this position
-    double sum_sq_mapq;
+    MapqTracker mapqTracker;
 
     struct status_t
     {
@@ -326,22 +323,10 @@ public:
     mutable status_t status;
 
 private:
-#if 0
-    // a = a U b
-    static
-    void
-    add_evidence(evidence_t& a,
-                 const evidence_t& b)
-    {
-        a.insert(b.begin(),b.end());
-    }
-#endif
+    // indel key is maintained for debugging only:
+    const indel_key _ik;
 
-    // add observation for the non-shared case
-    void
-    add_observation_core(const indel_observation_data& obs_data,
-                         bool& is_repeat_obs);
-
+    mutable insert_seq_manager _insert_seq;
 };
 
 

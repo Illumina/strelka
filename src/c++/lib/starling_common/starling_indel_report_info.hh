@@ -26,6 +26,7 @@
 
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/indel.hh"
+
 #include <string>
 
 
@@ -85,9 +86,7 @@ struct starling_indel_sample_report_info
     unsigned n_q30_alt_reads_rev = 0;
     unsigned n_other_reads_rev = 0;
 
-    unsigned n_mapq = 0;
-    unsigned n_mapq0 = 0;
-    double sum_sq_mapq = 0.;
+    MapqTracker mapqTracker;
 
     ranksum readpos_ranksum;
 
