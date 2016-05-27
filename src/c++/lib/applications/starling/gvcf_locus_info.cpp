@@ -108,7 +108,14 @@ computeEmpiricalScoringFeatures(
     const double chromDepth,
     const bool isHetalt)
 {
-    const double chromDepthFactor(1./chromDepth);
+    const double filteredLocusDepth(_isri.tier1Depth);
+    const double locusDepth(_isri.mapqTracker.count);
+    const double q30Depth(_isri.total_q30_reads());
+
+    const double chromDepthFactor(safeFrac(1,chromDepth));
+    const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
+    const double locusDepthFactor(safeFrac(1,locusDepth));
+    const double q30DepthFactor(safeFrac(1,q30Depth));
 
     features.set(GERMLINE_INDEL_SCORING_FEATURES::QUAL, (_dindel.indel_qphred * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX, (gqx * chromDepthFactor));
@@ -150,8 +157,32 @@ computeEmpiricalScoringFeatures(
     if (isComputeDevelopmentFeatures)
     {
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (gqx * chromDepthFactor));
+
+        // ************ notes for Konrad ***************:
+
+        // these two are anticipated to be used as two possibly new features for the indel scoring model:
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ, (_isri.mapqTracker.getRMS()));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (_isri.mapqTracker.getZeroFrac()));
+
+        // this should replace F_DPI
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM, (filteredLocusDepth * locusDepthFactor));
+
+        // this is a new feature that currently isn't captured in the model -- this expresses how surprising the depth
+        // is relative to chromosome mean.
+        //
+        // This is the only feature we want to use chrom depth after everything is fixed up. It will be set to 1
+        // for exome builds.
+        //
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, (locusDepth * chromDepthFactor));
+
+        // all of the features below are simply renormalized reqplacements of the current produciton feature set
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (_dindel.indel_qphred * filteredLocusDepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (gqx * filteredLocusDepthFactor));
+
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (_isri.n_q30_ref_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (_isri.n_q30_indel_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM, (_isri.n_q30_alt_reads * q30DepthFactor));
+
     }
 }
 

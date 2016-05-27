@@ -228,7 +228,6 @@ struct GERMLINE_INDEL_SCORING_FEATURES
 };
 
 
-///
 /// additional experimental features not used in the current scoring model
 ///
 /// these should only be output as part of a non-default training mode
@@ -247,6 +246,14 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
         F_GQ,
         F_MQ,
         mapqZeroFraction,
+        F_DPI_NORM,
+        T_DP_NORM,
+        QUAL_NORM,
+        F_GQX_NORM,
+        TDP_NORM,
+        AD0_NORM,
+        AD1_NORM,
+        AD2_NORM,
         SIZE
     };
 
@@ -262,6 +269,20 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
             return "F_MQ";
         case mapqZeroFraction:
             return "mapqZeroFraction";
+        case F_DPI_NORM:
+            return "F_DPI_NORM";
+        case TDP_NORM:
+            return "TDP_NORM";
+        case QUAL_NORM:
+            return "QUAL_NORM";
+        case F_GQX_NORM:
+            return "F_GQX_NORM";
+        case AD0_NORM:
+            return "AD0_NORM";
+        case AD1_NORM:
+            return "AD1_NORM";
+        case AD2_NORM:
+            return "AD2_NORM";
         default:
             assert(false && "Unknown feature");
             return nullptr;
