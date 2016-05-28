@@ -17,30 +17,19 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 /*
- *      Created on: Dec 1, 2013
  *      Author: Morten Kallberg
  */
 
 #include "LogisticAndRuleScoringModels.hh"
 
-#include "blt_util/qscore.hh"
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 
-#include <cassert>
 
 #include <iostream>
-#include <sstream>
-#include <string>
 #include <fstream>
-#include <iterator>
-
-//#define DEBUG_MODEL
-
-#ifdef DEBUG_MODEL
-#include "blt_util/log.hh"
-#endif
 
 
 
@@ -72,9 +61,9 @@ do_site_rule_model(
     GermlineDiploidSiteSimpleGenotypeInfo& smod) const
 {
     if (si.smod.gqx<cutoffs.at("GQX")) smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
-    if (cutoffs.at("DP")>0 && dopt.is_max_depth())
+    if (cutoffs.at("DP")>0 && _dopt.is_max_depth())
     {
-        if ((si.n_used_calls+si.n_unused_calls) > dopt.max_depth) smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > _dopt.max_depth) smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     const unsigned total_calls(si.n_used_calls+si.n_unused_calls);
@@ -103,9 +92,9 @@ do_indel_rule_model(
         if (ii.first().gqx<cutoffs.at("GQX")) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
 
-    if (cutoffs.at("DP")>0 && dopt.is_max_depth())
+    if (cutoffs.at("DP")>0 && _dopt.is_max_depth())
     {
-        if (ii.first()._isri.tier1Depth > dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if (ii.first()._isri.tier1Depth > _dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 }
 
@@ -182,12 +171,6 @@ prior_adjustment(
     const double pFP          = 1.0/(1+std::exp(raw_score)); // this calculation can likely be simplified
     const double pFPrescale   = pFP*minorityPrior/(1+2*minorityPrior*pFP-minorityPrior-pFP);
     const int qscore          = error_prob_to_qphred(pFPrescale);
-#ifdef DEBUG_MODEL
-//        log_os << "minorityPrior " << minorityPrior << "\n";
-//        log_os << "raw_score=" << raw_score << "\n";
-//        log_os << "rescale=" << pFPrescale << "\n";
-//        log_os << "experimental=" << qscore << "\n";
-#endif
 
     return qscore;
 }
@@ -215,7 +198,7 @@ apply_site_qscore_filters(
     if (smod.empiricalVariantScore<0)
     {
         const auto orig_filters(smod.filters);
-        do_site_rule_model(pars.at("snp").at("cutoff"), si, smod);
+        do_site_rule_model(_pars.at("snp").at("cutoff"), si, smod);
         if (smod.filters.count()>0)
         {
             smod.empiricalVariantScore = 1;
@@ -247,7 +230,7 @@ apply_indel_qscore_filters(
     if (call.empiricalVariantScore<0)
     {
         const auto orig_filters(call.filters);
-        do_indel_rule_model(pars.at("indel").at("cutoff"), ii, call);
+        do_indel_rule_model(_pars.at("indel").at("cutoff"), ii, call);
         if (call.filters.count()>0)
         {
             call.empiricalVariantScore = 1;
@@ -275,7 +258,7 @@ logistic_score(
     const std::string var_case_label(CALIBRATION_MODEL::get_label(var_case));
 
     // normalize
-    const auto case_pars(this->pars.at(var_case_label));
+    const auto case_pars(this->_pars.at(var_case_label));
     const featuremap norm_features = normalize(features,case_pars.at("CenterVal"),case_pars.at("ScaleVal"));
 
     //calculates log-odds ratio
@@ -292,14 +275,14 @@ LogisticAndRuleScoringModels::
 get_var_threshold(
     const CALIBRATION_MODEL::var_case& my_case) const
 {
-    return this->pars.at(CALIBRATION_MODEL::get_label(my_case)).at("PassThreshold").at("Q");
+    return this->_pars.at(CALIBRATION_MODEL::get_label(my_case)).at("PassThreshold").at("Q");
 }
 
 bool
 LogisticAndRuleScoringModels::
 is_logistic_model() const
 {
-    return (model_type=="LOGISTIC");
+    return (_modelType=="LOGISTIC");
 }
 
 
@@ -323,26 +306,23 @@ score_site_instance(
         //else
 #endif
 
-#ifdef DEBUG_MODEL
-        //log_os << "Im doing a logistic model varcase: " << var_case <<  "\n";
-#endif
 
         // compute scoring features if this hasn't already been done:
         if (smod.features.empty())
         {
             static const bool isComputeDevelopmentFeatures(false);
-            const bool isUniformDepthExpected(dopt.is_max_depth());
+            const bool isUniformDepthExpected(_dopt.is_max_depth());
             si.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, normal_depth(), smod);
         }
         smod.empiricalVariantScore = logistic_score(var_case, getFeatureMap(smod.features));
         apply_site_qscore_filters(var_case, si, smod);
     }
-//    else if(this->model_type=="RFtree"){ // place-holder, put random forest here
+//    else if(this->_modelType=="RFtree"){ // place-holder, put random forest here
 //        si.Qscore = rf_score(var_case, features);
 //    }
-    else if (this->model_type=="RULE")   //case we are using a rule based model
+    else if (this->_modelType=="RULE")   //case we are using a rule based model
     {
-        do_site_rule_model(pars.at("snp").at("cutoff"), si, smod);
+        do_site_rule_model(_pars.at("snp").at("cutoff"), si, smod);
     }
     else
     {
@@ -383,7 +363,7 @@ score_indel_instance(
         break;
         default:
             // block substitutions???
-            do_indel_rule_model(pars.at("indel").at("cutoff"), ii, call);
+            do_indel_rule_model(_pars.at("indel").at("cutoff"), ii, call);
             return;
         }
 
@@ -391,15 +371,15 @@ score_indel_instance(
         if (call.features.empty())
         {
             static const bool isComputeDevelopmentFeatures(false);
-            const bool isUniformDepthExpected(dopt.is_max_depth());
+            const bool isUniformDepthExpected(_dopt.is_max_depth());
             call.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, normal_depth(), ii.is_hetalt());
         }
         call.empiricalVariantScore = logistic_score(var_case, getFeatureMap(call.features));
         apply_indel_qscore_filters(var_case, ii, call);
     }
-    else if (this->model_type=="RULE")   //case we are using a rule based model
+    else if (this->_modelType=="RULE")   //case we are using a rule based model
     {
-        do_indel_rule_model(this->pars.at("indel").at("cutoff"), ii, call);
+        do_indel_rule_model(this->_pars.at("indel").at("cutoff"), ii, call);
     }
     else
     {
@@ -410,5 +390,5 @@ score_indel_instance(
 // give the normal depth for this model; used to depth-normalize various features in logistic model
 double LogisticAndRuleScoringModels::normal_depth() const
 {
-    return this->dopt.norm_depth;
+    return this->_dopt.norm_depth;
 }

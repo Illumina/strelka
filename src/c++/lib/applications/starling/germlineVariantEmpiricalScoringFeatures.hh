@@ -309,4 +309,3 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
         }
     }
 };
-

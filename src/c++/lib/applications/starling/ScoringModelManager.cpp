@@ -17,29 +17,18 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 /*
-*  Created on: Oct 10, 2013
  * Author: Morten Kallberg
  */
 
 #include "ScoringModelManager.hh"
 
-#include "common/Exceptions.hh"
-
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string.hpp"
-#include "boost/algorithm/string/classification.hpp"
 
-#include <cassert>
-#include <cstdlib>     /* atof */
-
-#include <exception>
-#include <sstream>
-#include <string>
 #include <iostream>
 #include <fstream>
-#include <iterator>
-#include <map>
 
 
 //#define DEBUG_CAL
