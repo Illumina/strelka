@@ -66,7 +66,6 @@ struct starling_indel_sample_report_info
 {
     starling_indel_sample_report_info() {}
 
-    unsigned n_total_reads = 0;
     unsigned n_q30_ref_reads = 0;
     unsigned n_q30_indel_reads = 0;
     unsigned n_q30_alt_reads = 0;
@@ -97,7 +96,6 @@ struct starling_indel_sample_report_info
     }
 
     void dump(std::ostream& os) const;
-
 };
 std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj);
 

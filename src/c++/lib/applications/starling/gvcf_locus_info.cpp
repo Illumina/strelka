@@ -158,24 +158,19 @@ computeEmpiricalScoringFeatures(
     {
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (gqx * chromDepthFactor));
 
-        // ************ notes for Konrad ***************:
-
-        // these two are anticipated to be used as two possibly new features for the indel scoring model:
+        // hom unrelable are the read mappings near this locus?
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ, (_isri.mapqTracker.getRMS()));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (_isri.mapqTracker.getZeroFrac()));
 
-        // this should replace F_DPI
+        // how noisy is the locus?
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM, (filteredLocusDepth * locusDepthFactor));
 
-        // this is a new feature that currently isn't captured in the model -- this expresses how surprising the depth
-        // is relative to chromosome mean.
+        // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
         //
-        // This is the only feature we want to use chrom depth after everything is fixed up. It will be set to 1
-        // for exome builds.
-        //
+        /// TODO: convert this to pvalue based on Poisson distro?
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, (locusDepth * chromDepthFactor));
 
-        // all of the features below are simply renormalized reqplacements of the current produciton feature set
+        // all of the features below are simply renormalized reqplacements of the current production feature set
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (_dindel.indel_qphred * filteredLocusDepthFactor));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (gqx * filteredLocusDepthFactor));
 
@@ -305,7 +300,13 @@ computeEmpiricalScoringFeatures(
     const double chromDepth,
     GermlineDiploidSiteSimpleGenotypeInfo& smod2) const
 {
-    const double chromDepthFactor(1./chromDepth);
+    const double filteredLocusDepth(n_used_calls);
+    const double locusDepth(mapqCount);
+
+    const double chromDepthFactor(safeFrac(1,chromDepth));
+    const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
+    const double locusDepthFactor(safeFrac(1,locusDepth));
+
 
     // get the alt base id (choose second in case of an alt het....)
     unsigned altBase(N_BASE);
@@ -361,7 +362,26 @@ computeEmpiricalScoringFeatures(
         //the average position value within a read of alt allele
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawPos, (rawPos));
 
+        // hom unrelable are the read mappings near this locus?
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (safeFrac(mapqZeroCount,mapqCount)));
+
+        // how noisy is the locus?
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_DP_NORM, (filteredLocusDepth * locusDepthFactor));
+
+        // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
+        //
+        /// TODO: convert this to pvalue based on Poisson distro?
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, (locusDepth * chromDepthFactor));
+
+
+        // renormalized features intended to replece the corresponding procuction feature
+        //
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (dgt.genome.snp_qphred * filteredLocusDepthFactor));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (smod.gqx * filteredLocusDepthFactor));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM, (smod.gq * filteredLocusDepthFactor));
+
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (r0 * filteredLocusDepthFactor));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (r1 * filteredLocusDepthFactor));
     }
 }
 
