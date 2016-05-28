@@ -440,7 +440,6 @@ write_vcf_somatic_snv_genotype_strand_grid(
         }
     }
 
-
     //FORMAT:
     os << '\t'
        << "DP:FDP:SDP:SUBDP:AU:CU:GU:TU";

@@ -331,7 +331,8 @@ score_site_instance(
         if (smod.features.empty())
         {
             static const bool isComputeDevelopmentFeatures(false);
-            si.computeEmpiricalScoringFeatures(isComputeDevelopmentFeatures, normal_depth(), smod);
+            const bool isUniformDepthExpected(dopt.is_max_depth());
+            si.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, normal_depth(), smod);
         }
         smod.empiricalVariantScore = logistic_score(var_case, getFeatureMap(smod.features));
         apply_site_qscore_filters(var_case, si, smod);
@@ -390,7 +391,8 @@ score_indel_instance(
         if (call.features.empty())
         {
             static const bool isComputeDevelopmentFeatures(false);
-            call.computeEmpiricalScoringFeatures(isComputeDevelopmentFeatures, normal_depth(), ii.is_hetalt());
+            const bool isUniformDepthExpected(dopt.is_max_depth());
+            call.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, normal_depth(), ii.is_hetalt());
         }
         call.empiricalVariantScore = logistic_score(var_case, getFeatureMap(call.features));
         apply_indel_qscore_filters(var_case, ii, call);

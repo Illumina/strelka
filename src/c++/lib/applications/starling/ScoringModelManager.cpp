@@ -78,7 +78,8 @@ classify_site(
     {
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
-        si.computeEmpiricalScoringFeatures(_isReportEVSFeatures, _dopt.norm_depth, smod);
+        const bool isUniformDepthExpected(_dopt.is_max_depth());
+        si.computeEmpiricalScoringFeatures(isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, smod);
     }
 
     //si.smod.filters.reset(); // make sure no filters have been applied prior
@@ -136,7 +137,8 @@ classify_indel_impl(
     {
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
-        call.computeEmpiricalScoringFeatures(_isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
+        const bool isUniformDepthExpected(_dopt.is_max_depth());
+        call.computeEmpiricalScoringFeatures(isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
     }
 
     if ( (! is_default_model()) && isVariantUsableInEVSModel )
@@ -158,6 +160,8 @@ classify_indel(
 {
     classify_indel_impl(checkIsVariantUsableInEVSModel(ii),ii,call);
 }
+
+
 
 void
 ScoringModelManager::

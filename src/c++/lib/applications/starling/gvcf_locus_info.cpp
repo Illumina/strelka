@@ -104,6 +104,7 @@ void GermlineIndelSimpleGenotypeInfo::set_hap_cigar(
 void
 GermlineDiploidIndelSimpleGenotypeInfo::
 computeEmpiricalScoringFeatures(
+    const bool isUniformDepthExpected,
     const bool isComputeDevelopmentFeatures,
     const double chromDepth,
     const bool isHetalt)
@@ -168,7 +169,12 @@ computeEmpiricalScoringFeatures(
         // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
         //
         /// TODO: convert this to pvalue based on Poisson distro?
-        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, (locusDepth * chromDepthFactor));
+        double relativeLocusDepth(1.);
+        if (isUniformDepthExpected)
+        {
+            relativeLocusDepth = (locusDepth * chromDepthFactor);
+        }
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
 
         // all of the features below are simply renormalized reqplacements of the current production feature set
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (_dindel.indel_qphred * filteredLocusDepthFactor));
@@ -296,6 +302,7 @@ getPloidyError(
 void
 GermlineDiploidSiteCallInfo::
 computeEmpiricalScoringFeatures(
+    const bool isUniformDepthExpected,
     const bool isComputeDevelopmentFeatures,
     const double chromDepth,
     GermlineDiploidSiteSimpleGenotypeInfo& smod2) const
@@ -371,7 +378,13 @@ computeEmpiricalScoringFeatures(
         // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
         //
         /// TODO: convert this to pvalue based on Poisson distro?
-        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, (locusDepth * chromDepthFactor));
+        double relativeLocusDepth(1.);
+        if (isUniformDepthExpected)
+        {
+            relativeLocusDepth = (locusDepth * chromDepthFactor);
+        }
+
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
 
 
         // renormalized features intended to replece the corresponding procuction feature

@@ -232,6 +232,7 @@ struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenoty
 
     void
     computeEmpiricalScoringFeatures(
+        const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
         const double chromDepth,
         const bool isHetalt);
@@ -626,6 +627,7 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
 
     void
     computeEmpiricalScoringFeatures(
+        const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
         const double chromDepth,
         GermlineDiploidSiteSimpleGenotypeInfo& smod2) const;
