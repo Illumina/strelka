@@ -284,13 +284,13 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
 
 void
 get_starling_indel_sample_report_info(
-        const starling_base_deriv_options& dopt,
-        const indel_key& ik,
-        const indel_data& id,
-        const pos_basecall_buffer& bc_buff,
-        const bool is_tier2_pass,
-        const bool is_use_alt_indel,
-        starling_indel_sample_report_info& isri)
+    const starling_base_deriv_options& dopt,
+    const indel_key& ik,
+    const indel_data& id,
+    const pos_basecall_buffer& bc_buff,
+    const bool is_tier2_pass,
+    const bool is_use_alt_indel,
+    starling_indel_sample_report_info& isri)
 {
     // get read info:
     {

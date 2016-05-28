@@ -212,10 +212,10 @@ is_usable_read_mapping(const starling_base_options& opt,
 
     {
         const int mapq(static_cast<int>(read.map_qual()));
-		if (mapq < current_min_mapping_quality)
-		{
-			return false;
-		}
+        if (mapq < current_min_mapping_quality)
+        {
+            return false;
+        }
     }
     return true;
 }
