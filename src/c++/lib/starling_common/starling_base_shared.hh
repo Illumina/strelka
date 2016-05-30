@@ -215,9 +215,13 @@ struct starling_base_options : public blt_options
 
     Tier2Options tier2;
 
-    /// indel error options
+    // indel error options
     std::string indel_error_models_filename;
     std::string indel_error_model_name = "logLinear";
+
+    // temporary indel erorr rate hack applied to germline only
+    bool isIndelErrorRateFactor = false;
+    double indelErrorRateFactor = 1.;
 };
 
 
@@ -303,6 +307,8 @@ public:
     unsigned variant_window_last_stage;
 
     const min_count_binom_gte_cache countCache;
+
+    const double logIndelErrorRateFactor;
 
 private:
     std::unique_ptr<IndelErrorModel> _indelErrorModel;

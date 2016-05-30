@@ -44,6 +44,11 @@ struct starling_options : public starling_base_options
         is_min_vexp = true;
         min_vexp = 0.25;
 
+        /// In practice we find that simple binomial error rates need to be heuristically scaled up in the germline model for good performance
+        /// This scaling is not used for (1) indel candidate selection (2) somatic calling, or any other models outside of diploid genotyping
+        isIndelErrorRateFactor = true;
+        indelErrorRateFactor = 100.;
+
         // TODO double-check with MK:
         ///upstream_oligo_size = 10;
     }
@@ -78,10 +83,6 @@ struct starling_options : public starling_base_options
     // Size of the window we are phasing in, default is codon range (=3)
     int phasing_window = 3;
 
-    /// In practice we find that simple binomial error rates need to be heuristically scaled up in the germline model for good performance
-    /// This scaling is not used for (1) indel candidate selection (2) somatic calling, or any other models outside of diploid genotyping
-    double germlineIndelErrorRateFactor = 100.;
-
     gvcf_options gvcf;
 };
 
@@ -96,11 +97,9 @@ struct starling_deriv_options : public starling_base_deriv_options
         const starling_options& opt,
         const reference_contig_segment& ref)
         : base_t(opt,ref),
-          logGermlineIndelErrorRateFactor(std::log(opt.germlineIndelErrorRateFactor)),
           gvcf(opt.gvcf,opt.bam_seq_name)
     {}
 
-    const double logGermlineIndelErrorRateFactor;
     gvcf_deriv_options gvcf;
 };
 

@@ -586,8 +586,8 @@ process_pos_indel_single_sample_digt(
                 // We transform the value on the restricted range [0,max] to a real parameter using a
                 // logistic function, transform by scaling factor in log space and return the restricted
                 // value range:
-                transformGermlineIndelErrorRate(_dopt.logGermlineIndelErrorRateFactor, refToIndelErrorProb);
-                transformGermlineIndelErrorRate(_dopt.logGermlineIndelErrorRateFactor, indelToRefErrorProb);
+                transformGermlineIndelErrorRate(_dopt.logIndelErrorRateFactor, refToIndelErrorProb);
+                transformGermlineIndelErrorRate(_dopt.logIndelErrorRateFactor, indelToRefErrorProb);
             }
 
             static const bool is_tier2_pass(false);
