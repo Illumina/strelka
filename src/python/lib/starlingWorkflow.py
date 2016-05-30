@@ -117,7 +117,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["-max-indel-size", "50"] )
 
     segCmd.extend(["--gvcf-file","-"])
-    segCmd.extend(['--gvcf-min-gqx','30'])
+    segCmd.extend(['--gvcf-min-gqx','15'])
     segCmd.extend(['--gvcf-max-snv-strand-bias','10'])
     segCmd.extend(['--gvcf-max-indel-ref-repeat', '-1'])
     segCmd.extend(['-min-qscore','17'])
