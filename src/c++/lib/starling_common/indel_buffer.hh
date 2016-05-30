@@ -104,15 +104,6 @@ struct indel_buffer
                  const bool is_shared,
                  bool& is_repeat_obs);
 
-#if 0
-    // like insert indel, but used for indels from other samples where
-    // the candidate indel pool is to be synchronized between
-    // samples. Thus, this function does add read or contig id's to
-    // indel_data.
-    bool
-    insert_shared_indel(const indel& in);
-#endif
-
     void
     clear_pos(const pos_t pos);
 

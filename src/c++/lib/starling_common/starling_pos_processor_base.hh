@@ -18,16 +18,10 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
-///
 
 #pragma once
 
@@ -56,11 +50,6 @@
 
 struct diploid_genotype;
 struct nploid_info;
-
-
-//int
-//get_influence_zone_size(const unsigned max_indel_size);
-
 
 
 /// \brief accumulate sequential position specific information and
@@ -93,8 +82,6 @@ struct nploid_info;
 /// Submission of snps < first_pos will be ignored. Submission of indels
 /// between first_pos and first_pos-MAX_READ_SIZE will be processed but
 /// not reported.
-///
-/// ...
 ///
 struct starling_pos_processor_base : public pos_processor_base, private boost::noncopyable
 {
@@ -456,13 +443,6 @@ private:
                         const unsigned sample_no);
 
     void
-    get_region_haplotypes(const known_pos_range full_pr,
-                          const known_pos_range active_pr);
-
-    void
-    process_htype_pos(const pos_t begin_pos);
-
-    void
     write_reads(const pos_t pos);
 
     void
@@ -510,11 +490,6 @@ protected:
     }
 
 private:
-    //////
-    void
-    print_delayed_results(const int stage_no,
-                          const pos_t pos);
-
     virtual
     void
     write_counts(const pos_range& output_report_range) const = 0;
