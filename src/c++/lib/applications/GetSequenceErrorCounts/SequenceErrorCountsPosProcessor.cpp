@@ -50,7 +50,7 @@ SequenceErrorCountsPosProcessor(
 
     static const unsigned sampleId(0);
 
-    // setup indel syncronizers:
+    // setup indel syncronizer:
     {
         sample_info& normal_sif(sample(sampleId));
 
@@ -74,10 +74,13 @@ SequenceErrorCountsPosProcessor(
             }
         }
 
-        indel_sync_data isdata;
-        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, _max_candidate_normal_sample_depth, sampleId);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleId));
+        sample_id_t syncSampleId;
+        syncSampleId = indel_sync().register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
+                                                    normal_sif.sample_opt, _max_candidate_normal_sample_depth);
+
+        assert(syncSampleId == sampleId);
+
+        indel_sync().finalizeSamples();
     }
 }
 
@@ -362,14 +365,14 @@ void
 SequenceErrorCountsPosProcessor::
 process_pos_error_counts(
     const pos_t pos,
-    const unsigned sample_no)
+    const unsigned sampleId)
 {
     static const unsigned maxHpolLength(20);
 
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if (sample_no!=0) return;
+    if (sampleId!=0) return;
 
     const char refBase(_ref.get_base(pos));
 
@@ -381,7 +384,7 @@ process_pos_error_counts(
 
     typedef indel_buffer::const_iterator ciiter;
 
-    const sample_info& sif(sample(sample_no));
+    const sample_info& sif(sample(sampleId));
 
     // right now there's only one baseContext, so just set it const here and leave it
     const BaseErrorContext baseContext;
@@ -528,7 +531,7 @@ process_pos_error_counts(
 
         if (! isForcedOutput)
         {
-            if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+            if (! indel_sync().is_candidate_indel(sampleId, ik, id)) continue;
         }
 
         if (! (ik.type == INDEL::DELETE || ik.type == INDEL::INSERT)) continue;

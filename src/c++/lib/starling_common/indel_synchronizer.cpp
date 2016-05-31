@@ -34,47 +34,45 @@
 
 #include <iostream>
 #include <sstream>
-#include <vector>
 
 
 
-void
-indel_sync_data::
+unsigned
+indel_synchronizer::
 register_sample(
     indel_buffer& ib,
     const depth_buffer& db,
     const depth_buffer& db2,
     const starling_sample_options& sample_opt,
-    const double max_depth,
-    const sample_id_t sample_no)
+    const double max_depth)
 {
-    if (_idata.test_key(sample_no))
-    {
-        log_os << "ERROR: sample_no " << sample_no << " repeated in indel sync registration\n";
-        exit(EXIT_FAILURE);
-    }
-    _idata.insert(sample_no,indel_sample_data(ib,db,db2,sample_opt,max_depth));
+    assert(! _isFinalized);
+    const unsigned sampleIndex(_idata.size());
+    _idata.emplace_back(ib,db,db2,sample_opt,max_depth);
+    return sampleIndex;
 }
 
 
 
 bool
 indel_synchronizer::
-insert_indel(const indel_observation& obs)
+insert_indel(
+    const unsigned sampleId,
+    const indel_observation& obs)
 {
     // first insert indel into this sample:
     bool is_synced_sample(false);
     bool is_repeat_obs(false);
 
-    const bool is_novel(ibuff(_sample_order).insert_indel(obs,is_synced_sample,is_repeat_obs));
+    const bool is_novel(ibuff(sampleId).insert_indel(obs,is_synced_sample,is_repeat_obs));
 
     // then insert indel into synchronized samples:
     is_synced_sample=true;
-    const unsigned isds(idata().size());
-    for (unsigned i(0); i<isds; ++i)
+    const unsigned sampleCount(getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        if (i == _sample_order) continue;
-        ibuff(i).insert_indel(obs,is_synced_sample,is_repeat_obs);
+        if (sampleId) continue;
+        ibuff(sampleIndex).insert_indel(obs,is_synced_sample,is_repeat_obs);
     }
     return is_novel;
 }
@@ -163,21 +161,21 @@ is_candidate_indel_impl_test(
     const indel_key& ik,
     const indel_data& id,
     const indel_data* idsp[],
-    const unsigned isds) const
+    const unsigned sampleCount) const
 {
     // check whether the candidate has been externally specified:
-    for (unsigned i(0); i<isds; ++i)
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        if (idsp[i]->is_external_candidate) return true;
+        if (idsp[sampleIndex]->is_external_candidate) return true;
     }
 
     if (_opt.is_candidate_indel_signal_test)
     {
-        if (! is_candidate_indel_impl_test_signal_noise(ik,id,idsp,isds)) return false;
+        if (! is_candidate_indel_impl_test_signal_noise(ik,id,idsp,sampleCount)) return false;
     }
     else
     {
-        if (! is_candidate_indel_impl_test_weak_signal(idsp,isds)) return false;
+        if (! is_candidate_indel_impl_test_weak_signal(idsp,sampleCount)) return false;
     }
 
     /////////////////////////////////////////
@@ -194,13 +192,13 @@ is_candidate_indel_impl_test(
     /////////////////////////////////////////
     // test against max_depth:
     //
-    for (unsigned i(0); i<isds; ++i)
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const double max_depth(idata().get_value(i).max_depth);
+        const double max_depth(idata(sampleIndex).max_depth);
         if (max_depth <= 0.) continue;
 
-        const unsigned estdepth(ebuff(i).val(ik.pos-1));
-        const unsigned estdepth2(ebuff2(i).val(ik.pos-1));
+        const unsigned estdepth(ebuff(sampleIndex).val(ik.pos-1));
+        const unsigned estdepth2(ebuff2(sampleIndex).val(ik.pos-1));
         if ((estdepth+estdepth2) > max_depth) return false;
     }
 
@@ -212,6 +210,7 @@ is_candidate_indel_impl_test(
 void
 indel_synchronizer::
 is_candidate_indel_impl(
+    const unsigned sampleId,
     const indel_key& ik,
     const indel_data& id) const
 {
@@ -220,28 +219,30 @@ is_candidate_indel_impl(
     //
     const indel_data* idsp[MAX_SAMPLE];
 
-    const unsigned isds(idata().size());
-    for (unsigned i(0); i<isds; ++i)
+    const unsigned sampleCount(getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        if (i==_sample_order)
+        if (sampleIndex==sampleId)
         {
-            idsp[i] = &id;
+            idsp[sampleIndex] = &id;
         }
         else
         {
-            idsp[i] = ibuff(i).get_indel_data_ptr(ik);
-            assert(nullptr != idsp[i]);
+            idsp[sampleIndex] = ibuff(sampleIndex).get_indel_data_ptr(ik);
+            assert(nullptr != idsp[sampleIndex]);
         }
     }
 
-    const bool is_candidate(is_candidate_indel_impl_test(ik,id,idsp,isds));
+    const bool is_candidate(is_candidate_indel_impl_test(ik,id,idsp,sampleCount));
 
-    for (unsigned i(0); i<isds; ++i)
+    for (unsigned i(0); i<sampleCount; ++i)
     {
         idsp[i]->status.is_candidate_indel=is_candidate;
         idsp[i]->status.is_candidate_indel_cached=true;
     }
 }
+
+
 
 void
 indel_synchronizer::

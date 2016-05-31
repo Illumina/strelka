@@ -64,10 +64,11 @@ snoise_pos_processor(
             }
         }
 
-        indel_sync_data isdata;
-        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, max_candidate_normal_sample_depth, sampleId);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleId));
+        sample_id_t syncSampleId;
+        syncSampleId = indel_sync().register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
+                                                    normal_sif.sample_opt, max_candidate_normal_sample_depth);
+        assert(syncSampleId == sampleId);
+        indel_sync().finalizeSamples();
     }
 }
 

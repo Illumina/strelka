@@ -59,7 +59,7 @@ strelka_pos_processor(
     // set sample-specific parameter overrides:
     normal_sif.sample_opt.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
 
-    // setup indel syncronizers:
+    // setup indel syncronizer:
     {
         double max_candidate_normal_sample_depth(-1.);
         if (dopt.sfilter.is_max_depth())
@@ -82,13 +82,19 @@ strelka_pos_processor(
             }
         }
 
-        indel_sync_data isdata;
-        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
-        isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
-                               tumor_sif.sample_opt, -1., TUMOR);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,dopt,ref,isdata,NORMAL));
-        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,dopt,ref,isdata,TUMOR));
+        /// TODO: setup a stronger sample id handler -- using the version from manta would be a good start here
+        sample_id_t sample_id;
+        sample_id = indel_sync().register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
+                               normal_sif.sample_opt, max_candidate_normal_sample_depth);
+
+        assert(sample_id == NORMAL);
+
+        sample_id = indel_sync().register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
+                               tumor_sif.sample_opt, -1.);
+
+        assert(sample_id == TUMOR);
+
+        indel_sync().finalizeSamples();
     }
 
     // setup indel avg window:
@@ -280,7 +286,7 @@ process_pos_indel_somatic(const pos_t pos)
 
         const indel_data& tumor_id(get_indel_data(i));
 
-        if (! tumor_sif.indel_sync().is_candidate_indel(ik,tumor_id)) continue;
+        if (! indel_sync().is_candidate_indel(TUMOR, ik, tumor_id)) continue;
 
         const indel_data* normal_id_ptr(normal_sif.indel_buff.get_indel_data_ptr(ik));
         assert(NULL != normal_id_ptr);

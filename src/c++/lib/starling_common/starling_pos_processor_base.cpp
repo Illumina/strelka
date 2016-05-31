@@ -292,6 +292,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _n_samples(n_samples)
     , _is_variant_windows(! _opt.variant_windows.empty())
     , _pileupCleaner(opt)
+    , _indel_sync(opt,dopt,ref)
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
@@ -435,10 +436,10 @@ reset()
 
 bool
 starling_pos_processor_base::
-insert_indel(const indel_observation& obs,
-             const unsigned sample_no)
+insert_indel(
+    const indel_observation& obs,
+    const unsigned sampleId)
 {
-    //
     // ppr advance is controlled by the start positions of reads and
     // relatively cheap to store (so long as we aren't including
     // gigantic insert sequences) and do not scale up linearly with
@@ -484,7 +485,7 @@ insert_indel(const indel_observation& obs,
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.max_indel_size));
         update_largest_indel_ref_span(len);
 
-        bool is_novel(sample(sample_no).indel_sync().insert_indel(obs));
+        bool is_novel(indel_sync().insert_indel(sampleId,obs));
         if (obs.data.is_forced_output) _is_skip_process_pos=false;
 
         return is_novel;
@@ -820,9 +821,9 @@ align_pos(const pos_t pos)
 {
     known_pos_range realign_buffer_range(get_realignment_range(pos, _stageman.get_stage_data()));
 
-    for (unsigned s(0); s<_n_samples; ++s)
+    for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
     {
-        sample_info& sif(sample(s));
+        sample_info& sif(sample(sampleIndex));
         read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
         for (read_segment_iter::ret_val r; true; ri.next())
         {
@@ -834,7 +835,7 @@ align_pos(const pos_t pos)
             {
                 try
                 {
-                    realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,rseg,sif.indel_sync());
+                    realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex,rseg,indel_sync());
                 }
                 catch (...)
                 {
@@ -1084,14 +1085,15 @@ insert_hap_cand(const pos_t pos,
 
 void
 starling_pos_processor_base::
-write_candidate_indels_pos(const pos_t pos)
+write_candidate_indels_pos(
+    const pos_t pos)
 {
-    static const unsigned sample_no(0);
+    static const unsigned sampleId(0);
 
     const pos_t output_pos(pos+1);
     typedef indel_buffer::const_iterator ciiter;
 
-    sample_info& sif(sample(sample_no));
+    sample_info& sif(sample(sampleId));
     ciiter i(sif.indel_buff.pos_iter(pos));
     const ciiter i_end(sif.indel_buff.pos_iter(pos+1));
 
@@ -1101,7 +1103,7 @@ write_candidate_indels_pos(const pos_t pos)
     {
         const indel_key& ik(i->first);
         const indel_data& id(get_indel_data(i));
-        if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+        if (! indel_sync().is_candidate_indel(sampleId,ik,id)) continue;
         bos << _chrom_name << "\t"
             << output_pos << "\t"
             << INDEL::get_index_label(ik.type) << "\t"

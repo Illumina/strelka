@@ -99,7 +99,7 @@ starling_pos_processor(
                           sample(sampleId).bc_buff));
     }
 
-    // setup indel syncronizers:
+    // setup indel syncronizer:
     {
         sample_info& normal_sif(sample(0));
 
@@ -124,10 +124,13 @@ starling_pos_processor(
             }
         }
 
-        indel_sync_data isdata;
-        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, max_candidate_normal_sample_depth, sampleId);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleId));
+        sample_id_t syncSampleId;
+        syncSampleId = indel_sync().register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
+                                                 normal_sif.sample_opt, max_candidate_normal_sample_depth);
+
+        assert(syncSampleId == sampleId);
+
+        indel_sync().finalizeSamples();
     }
 }
 
@@ -519,12 +522,12 @@ void
 starling_pos_processor::
 process_pos_indel_single_sample_digt(
     const pos_t pos,
-    const unsigned sample_no)
+    const unsigned sampleId)
 {
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if (sample_no!=0) return;
+    if (sampleId!=0) return;
 
     // Current multiploid indel model can handle a het or hom indel
     // allele vs. reference, or two intersecting non-reference indel
@@ -539,7 +542,7 @@ process_pos_indel_single_sample_digt(
 
     typedef indel_buffer::const_iterator ciiter;
 
-    sample_info& sif(sample(sample_no));
+    sample_info& sif(sample(sampleId));
     ciiter it(sif.indel_buff.pos_iter(pos));
     const ciiter it_end(sif.indel_buff.pos_iter(pos+1));
 
@@ -553,7 +556,7 @@ process_pos_indel_single_sample_digt(
         if (! isForcedOutput)
         {
             if (isZeroCoverage) continue;
-            if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+            if (! indel_sync().is_candidate_indel(sampleId, ik, id)) continue;
         }
 
         // TODO implement indel overlap resolution
@@ -677,16 +680,16 @@ void
 starling_pos_processor::
 process_pos_indel_single_sample_continuous(
     const pos_t pos,
-    const unsigned sample_no)
+    const unsigned sampleId)
 {
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if (sample_no!=0) return;
+    if (sampleId!=0) return;
 
     typedef indel_buffer::const_iterator ciiter;
 
-    sample_info& sif(sample(sample_no));
+    sample_info& sif(sample(sampleId));
     ciiter it(sif.indel_buff.pos_iter(pos));
     const ciiter it_end(sif.indel_buff.pos_iter(pos+1));
 
@@ -702,7 +705,7 @@ process_pos_indel_single_sample_continuous(
         if (! isForcedOutput)
         {
             if (isZeroCoverage) continue;
-            if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+            if (! indel_sync().is_candidate_indel(sampleId, ik, id)) continue;
         }
 
         // sample-independent info:
@@ -742,7 +745,6 @@ void
 starling_pos_processor::
 write_counts(const pos_range& output_report_range) const
 {
-
     std::ostream* report_osptr(get_report_osptr());
     if (NULL==report_osptr) return;
     std::ostream& report_os(*report_osptr);

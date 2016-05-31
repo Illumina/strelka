@@ -47,5 +47,6 @@ realign_and_score_read(
     const starling_sample_options& sample_opt,
     const reference_contig_segment& ref,
     const known_pos_range& realign_buffer_range,
+    const unsigned sampleId,
     read_segment& rseg,
     indel_synchronizer& isync);

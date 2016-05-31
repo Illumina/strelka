@@ -76,23 +76,18 @@ pedicure_pos_processor(
 
     using namespace PEDICURE_SAMPLETYPE;
 
-    // setup indel syncronizers:
+    // setup indel syncronizer:
     {
-        indel_sync_data isdata;
         for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
         {
             const bool isProband(_opt.alignFileOpt.alignmentSampleInfo.getSampleInfo(sampleIndex).stype == PROBAND);
             double max_candidate_sample_depth(isProband ? max_candidate_proband_sample_depth : -1);
             sample_info& sif(sample(sampleIndex));
-            isdata.register_sample(sif.indel_buff,sif.estdepth_buff,sif.estdepth_buff_tier2,
-                                   sif.sample_opt, max_candidate_sample_depth, sampleIndex);
+            indel_sync().register_sample(sif.indel_buff,sif.estdepth_buff,sif.estdepth_buff_tier2,
+                                         sif.sample_opt, max_candidate_sample_depth);
         }
 
-        for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
-        {
-            sample_info& sif(sample(sampleIndex));
-            sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleIndex));
-        }
+        indel_sync().finalizeSamples();
     }
 }
 
@@ -231,7 +226,7 @@ process_pos_indel_denovo(const pos_t pos)
 
         const indel_data& proband_id(get_indel_data(i));
 
-        if (! proband_sif.indel_sync().is_candidate_indel(ik,proband_id)) continue;
+        if (! indel_sync().is_candidate_indel(probandIndex, ik, proband_id)) continue;
 
         // assert that indel data exists for all samples, make sure alt alignments are scored in at least one sample:
         bool isAllEmpty(true);
@@ -318,6 +313,7 @@ process_pos_indel_denovo(const pos_t pos)
         }
     }
 }
+
 
 
 // needs replaced by a more comprehensive record integration

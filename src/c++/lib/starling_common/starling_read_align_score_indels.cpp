@@ -271,12 +271,13 @@ is_equiv_candidate(
 static
 bool
 is_first_indel_dominant(
-    const indel_synchronizer& isync,
-    const indel_key& ik1,
-    const indel_key& ik2)
+    const indel_synchronizer &isync,
+    const unsigned sampleId,
+    const indel_key &ik1,
+    const indel_key &ik2)
 {
-    const bool ic1(isync.is_candidate_indel(ik1));
-    const bool ic2(isync.is_candidate_indel(ik2));
+    const bool ic1(isync.is_candidate_indel(sampleId,ik1));
+    const bool ic2(isync.is_candidate_indel(sampleId,ik2));
 
     if (ic2 && (! ic1)) return false;
     if (ic2==ic1)
@@ -298,14 +299,15 @@ is_first_indel_dominant(
 static
 void
 late_indel_normalization_filter(
-    const starling_base_options& opt,
-    const indel_synchronizer& isync,
-    const std::set<candidate_alignment>& candAlignments,
-    const std::vector<double>& candAlignmentScores,
+    const starling_base_options &opt,
+    const indel_synchronizer &isync,
+    const unsigned sampleId,
+    const std::set<candidate_alignment> &candAlignments,
+    const std::vector<double> &candAlignmentScores,
     indel_set_t nonnorm_indels,
-    std::vector<bool>& isFilterCandAlignment,
-    double& maxCandAlignmentScore,
-    const candidate_alignment*& maxCandAlignmentPtr)
+    std::vector<bool> &isFilterCandAlignment,
+    double &maxCandAlignmentScore,
+    const candidate_alignment *&maxCandAlignmentPtr)
 {
     const unsigned candAlignmentCount(candAlignments.size());
 
@@ -376,7 +378,7 @@ late_indel_normalization_filter(
             bool is_removed(false);
             for (const auto& indelPair : indelPairs)
             {
-                const bool is1(is_first_indel_dominant(isync,indelPair.first,indelPair.second));
+                const bool is1(is_first_indel_dominant(isync, sampleId, indelPair.first, indelPair.second));
 
 #ifdef DEBUG_ALIGN
                 log_os << "COWSLIP: indel1: " << indelPair.first << "\n";
@@ -449,16 +451,17 @@ late_indel_normalization_filter(
 
 void
 score_indels(
-    const starling_base_options& opt,
-    const starling_base_deriv_options& /*dopt*/,
-    const starling_sample_options& sample_opt,
-    const read_segment& rseg,
-    indel_synchronizer& isync,
-    const std::set<candidate_alignment>& candAlignments,
+    const starling_base_options &opt,
+    const starling_base_deriv_options &,
+    const starling_sample_options &sample_opt,
+    const read_segment &rseg,
+    indel_synchronizer &isync,
+    const unsigned sampleId,
+    const std::set<candidate_alignment> &candAlignments,
     const bool is_incomplete_search,
-    const std::vector<double>& candAlignmentScores,
+    const std::vector<double> &candAlignmentScores,
     double maxCandAlignmentScore,
-    const candidate_alignment* maxCandAlignmentPtr)
+    const candidate_alignment *maxCandAlignmentPtr)
 {
     static const bool is_safe_mode(true);
 
@@ -511,8 +514,9 @@ score_indels(
     static const bool is_slip_norm(true);
     if (is_slip_norm)
     {
-        late_indel_normalization_filter(opt, isync, candAlignments, candAlignmentScores,
-                                        nonnorm_indels, isFilterCandAlignment, maxCandAlignmentScore, maxCandAlignmentPtr);
+        late_indel_normalization_filter(opt, isync, sampleId, candAlignments, candAlignmentScores,
+                                        nonnorm_indels, isFilterCandAlignment, maxCandAlignmentScore,
+                                        maxCandAlignmentPtr);
     }
 
     // (2a) find set of candidate indels which will be scored by this read
@@ -549,7 +553,7 @@ score_indels(
         log_os << "VARMIT max_path extracted indels:\n";
         dump_indel_set(indelsInMaxCandAlignment,log_os);
 #endif
-        indel_buffer& indelBuffer(isync.ibuff());
+        indel_buffer& indelBuffer(isync.ibuff(sampleId));
         const std::pair<iiter,iiter> ipair(indelBuffer.pos_range_iter(maxCandAlignmentRange.begin_pos,maxCandAlignmentRange.end_pos));
         for (iiter indelIter(ipair.first); indelIter!=ipair.second; ++indelIter)
         {
@@ -560,7 +564,7 @@ score_indels(
             log_os << "VARMIT: max path eval indel candidate: " << evaluationIndel;
 #endif
 
-            if (! isync.is_candidate_indel(evaluationIndel,id)) continue;
+            if (! isync.is_candidate_indel(sampleId, evaluationIndel, id)) continue;
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path indel is candidate\n";
@@ -806,7 +810,7 @@ score_indels(
     }
 
     {
-        indel_buffer& indelBuffer(isync.ibuff());
+        indel_buffer& indelBuffer(isync.ibuff(sampleId));
         for (const indel_key& evaluationIndel : indelsToEvaluate)
         {
             indel_data* evaluationIndelDataPtr(indelBuffer.get_indel_data_ptr(evaluationIndel));

@@ -65,7 +65,7 @@ private:
 
     void process_pos_error_counts(
         const pos_t pos,
-        const unsigned sample_no);
+        const unsigned sampleId);
 
     void
     write_counts(const pos_range&) const override {}

@@ -107,7 +107,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     //
     bool
     insert_indel(const indel_observation& obs,
-                 const unsigned sample_no);
+                 const unsigned sampleId);
 
     // in range [begin,end), is the estimated depth always below
     // depth?
@@ -295,19 +295,6 @@ public:
             }
         }
 
-        indel_synchronizer&
-        indel_sync()
-        {
-            return *indel_sync_ptr;
-        }
-
-        const indel_synchronizer&
-        indel_sync() const
-        {
-            return *indel_sync_ptr;
-        }
-
-
         indel_buffer indel_buff;
         pos_basecall_buffer bc_buff;
         starling_read_buffer read_buff;
@@ -315,8 +302,6 @@ public:
         depth_buffer estdepth_buff_tier2; // provide an early estimate of read depth before realignment.
 
         starling_sample_options sample_opt;
-
-        std::unique_ptr<indel_synchronizer> indel_sync_ptr;
 
         depth_stream_stat_range ss;
         depth_stream_stat_range used_ss;
@@ -342,6 +327,20 @@ public:
         return *_sample[sample_no];
     }
 
+protected:
+    indel_synchronizer&
+    indel_sync()
+    {
+        return _indel_sync;
+    }
+
+    const indel_synchronizer&
+    indel_sync() const
+    {
+        return _indel_sync;
+    }
+
+public:
     // data for haplotoype regions, shared between all samples:
     //
     struct htype_region_data
@@ -602,4 +601,7 @@ protected:
     PileupCleaner _pileupCleaner;
 
     RegionPayloadTracker<int> _ploidy_regions;
+
+private:
+    indel_synchronizer _indel_sync;
 };
