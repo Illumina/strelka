@@ -17,11 +17,13 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-#include "starling_continuous_variant_caller.hh"
 
-#include <array>
+#include "starling_continuous_variant_caller.hh"
+#include "blt_util/qscore.hh"
+
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/math/distributions/binomial.hpp>
+
 
 
 static double Likelihood(unsigned coverage, unsigned observedCallCount, double expectedFrequency)
@@ -31,6 +33,31 @@ static double Likelihood(unsigned coverage, unsigned observedCallCount, double e
 
     return boost::math::pdf(boost::math::binomial(coverage, expectedFrequency), observedCallCount);
 }
+
+
+
+static double AssignPValue(unsigned observedCallCount, unsigned coverage, unsigned estimatedBaseCallQuality)
+{
+    if (observedCallCount == 0)
+        return 1.0;
+
+    const double errorRate = qphred_to_error_prob(estimatedBaseCallQuality);
+    return (boost::math::gamma_p(observedCallCount, coverage * errorRate));
+}
+
+
+
+int
+starling_continuous_variant_caller::
+poisson_qscore(unsigned callCount, unsigned coverage, unsigned estimatedBaseCallQuality, int maxQScore)
+{
+    double pValue = AssignPValue(callCount, coverage, estimatedBaseCallQuality);
+    if (pValue <= 0) return maxQScore;
+    return std::min(maxQScore, error_prob_to_qphred(pValue));
+}
+
+
+
 
 // calculate the ratio of the log likelihood of the variants on either strand / both strands
 double starling_continuous_variant_caller::strand_bias(
@@ -106,10 +133,12 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
     }
 }
 
+
+
 void starling_continuous_variant_caller::add_indel_call(
     const starling_base_options& opt,
     const indel_key& ik,
-    const indel_data& id,
+    const IndelData& id,
     const starling_indel_report_info& iri,
     const starling_indel_sample_report_info& isri,
     GermlineContinuousIndelCallInfo& info)
@@ -129,36 +158,3 @@ void starling_continuous_variant_caller::add_indel_call(
         info.is_het = info.calls.size() > 1 || info.calls.front().variant_frequency() < (1-opt.min_het_vf);
     }
 }
-
-
-// The following code was adapted from the Illumina SomaticVariantCaller
-static double QtoP(double q)
-{
-    return std::pow(10, -1 * q / 10);
-}
-
-static double PtoQ(double p)
-{
-    return (-10 * std::log10(p));
-}
-static double AssignPValue(unsigned observedCallCount, unsigned coverage, unsigned estimatedBaseCallQuality)
-{
-    double errorRate = QtoP(estimatedBaseCallQuality);
-    if (observedCallCount == 0)
-        return 1.0;
-
-    return (boost::math::gamma_p(observedCallCount, coverage * errorRate));
-}
-
-
-
-
-unsigned starling_continuous_variant_caller::poisson_qscore(unsigned callCount, unsigned coverage, unsigned estimatedBaseCallQuality, unsigned maxQScore)
-{
-    double pValue = AssignPValue(callCount, coverage, estimatedBaseCallQuality);
-    if (pValue <= 0) return maxQScore;
-    double qScore = std::min((double)maxQScore, PtoQ(pValue));
-    unsigned intQScore = (unsigned)std::round(qScore);
-    return std::min(maxQScore, intQScore);
-}
-

@@ -24,52 +24,19 @@
 
 #pragma once
 
-#include "min_count_binom_gte_cache.hh"
 
 #include "blt_util/depth_buffer.hh"
-#include "blt_util/id_map.hh"
-#include "starling_common/indel_buffer.hh"
+#include "starling_common/indel.hh"
+#include "starling_common/min_count_binom_gte_cache.hh"
 #include "starling_common/starling_base_shared.hh"
 
 #include <vector>
 
 
-struct indel_sample_data
-{
-    indel_sample_data(
-        indel_buffer& ib,
-        const depth_buffer& db,
-        const depth_buffer& db2,
-        const starling_sample_options& sample_opt,
-        const double init_max_depth)
-        : ibp(&ib)
-        , dbp(&db)
-        , dbp2(&db2)
-        , sample_optp(&sample_opt)
-        , max_depth(init_max_depth)
-    {}
-
-    indel_buffer* ibp;
-    const depth_buffer* dbp;
-    const depth_buffer* dbp2;
-    const starling_sample_options* sample_optp;
-    double max_depth;
-};
-
-
-/// helps to sync the indel information from multiple
-/// samples, currently used for tumor/normal indel-calling.
-///
-/// There is one indel synchronizer associated with each sample
-/// (referred to as the primary sample below). The synchronizer defines
-/// the primary sample's synchronization policy with any other sample.
+/// coordinate indel information across multiple samples
 ///
 struct indel_synchronizer
 {
-    /// instantiate for multi-sample synced cases:
-    ///
-    /// \param[in] sample_no is the sample that is 'primary' for this synchronizer.
-    ///
     indel_synchronizer(
         const starling_base_options& opt,
         const starling_base_deriv_options& dopt,
@@ -80,162 +47,244 @@ struct indel_synchronizer
         , _countCache(dopt.countCache)
     {}
 
+    /// prior to executing any other functions, each sample must be registered:
     unsigned
     register_sample(
-        indel_buffer& ib,
-        const depth_buffer& db,
-        const depth_buffer& db2,
-        const starling_sample_options& sample_opt,
+        const depth_buffer &db,
+        const depth_buffer &db2,
+        const starling_sample_options &sample_opt,
         const double max_depth);
 
+    /// registration must be followed with a finalization step:
     void
     finalizeSamples()
     {
-        assert(! _idata.empty());
+        assert(! _indelSampleData.empty());
         _isFinalized = true;
     }
 
-    indel_buffer&
-    ibuff(
-        const unsigned sampleId)
-    {
-        return *idata(sampleId).ibp;
-    }
-
-    const indel_buffer&
-    ibuff(
-        const unsigned sampleId) const
-    {
-        return *idata(sampleId).ibp;
-    }
+    typedef IndelData indel_buffer_value_t;
+    typedef std::map<indel_key,indel_buffer_value_t> indel_buffer_t;
+    typedef indel_buffer_t::iterator iterator;
+    typedef indel_buffer_t::const_iterator const_iterator;
 
     /// \returns true if this indel is novel to the buffer
     ///
-    /// indel is fully inserted into the primary sample buffer, but
-    /// only the key is inserted into other sample buffers.
     bool
     insert_indel(
         const unsigned sampleId,
         const indel_observation& obs);
+
+    /// position iterators based on left-most indel position:
+    iterator
+    pos_iter(const pos_t pos)
+    {
+        return _indelBuffer.lower_bound(indel_key(pos));
+    }
+
+    const_iterator
+    pos_iter(const pos_t pos) const
+    {
+        return _indelBuffer.lower_bound(indel_key(pos));
+    }
+
+    /// position iterators which return (at least) all indels with a
+    /// left or right breakpoint in the range.
+    ///
+    /// Note:
+    /// 1) indels which encompass the range are not returned
+    /// 2) some non-intersecting indels may be returned in the
+    ///    iteration range
+    ///
+    std::pair<iterator,iterator>
+    pos_range_iter(const pos_t begin_pos, const pos_t end_pos);
+
+    std::pair<const_iterator,const_iterator>
+    pos_range_iter(const pos_t begin_pos, const pos_t end_pos) const;
+
+    /// return nullptr if no indel found:
+    indel_buffer_value_t*
+    get_indel_data_ptr(const indel_key& ik)
+    {
+        const iterator i(_indelBuffer.find(ik));
+        return ((i==_indelBuffer.end()) ? nullptr : &(i->second) );
+    }
+
+    const indel_buffer_value_t*
+    get_indel_data_ptr(const indel_key& ik) const
+    {
+        const const_iterator i(_indelBuffer.find(ik));
+        return ((i==_indelBuffer.end()) ? nullptr : &(i->second) );
+    }
 
     /// is an indel treated as a candidate for genotype calling and
     /// realignment or as a "private" (ie. noise) indel?
     ///
     bool
     is_candidate_indel(
-        const unsigned sampleId,
         const indel_key& ik,
-        const indel_data& id) const
+        const IndelData& id) const
     {
         if (! id.status.is_candidate_indel_cached)
         {
-            is_candidate_indel_impl(sampleId, ik, id);
+            is_candidate_indel_impl(ik, id);
         }
         return id.status.is_candidate_indel;
     }
 
-    // this version is less efficient than if you have indel_data
-    // beforehand, but provided for convenience:
-    //
+    /// this version is less efficient than if you have indel_data
+    /// beforehand, but provided for convenience:
+    ///
     bool
     is_candidate_indel(
-        const unsigned sampleId,
         const indel_key& ik) const
     {
-        const indel_data* id_ptr(ibuff(sampleId).get_indel_data_ptr(ik));
+        const IndelData* id_ptr(get_indel_data_ptr(ik));
         if (nullptr == id_ptr) find_data_exception(ik);
-        return is_candidate_indel(sampleId, ik, *id_ptr);
+        return is_candidate_indel(ik, *id_ptr);
     }
 
+    void
+    clear_pos(const pos_t pos);
+
+    bool
+    empty() const
+    {
+        return _indelBuffer.empty();
+    }
+
+    // debug dumpers:
+    void
+    dump_pos(const pos_t pos, std::ostream& os) const;
+
+    void
+    dump(std::ostream& os) const;
+
 private:
+
+    /// helper struct for indel_syncronizer
+    struct indel_sample_data
+    {
+        indel_sample_data(
+            const depth_buffer& db,
+            const depth_buffer& db2,
+            const starling_sample_options& sample_opt,
+            const double init_max_depth)
+            : dbp(&db)
+            , dbp2(&db2)
+            , sample_optp(&sample_opt)
+            , max_depth(init_max_depth)
+        {}
+
+        const depth_buffer* dbp;
+        const depth_buffer* dbp2;
+        const starling_sample_options* sample_optp;
+        double max_depth;
+    };
 
     /// test whether the indel should be promoted to
     /// a candidate
     bool
     is_candidate_indel_impl_test_signal_noise(
         const indel_key& ik,
-        const indel_data& id,
-        const indel_data* idsp[],
-        const unsigned isds) const;
+        const IndelData& id) const;
 
     /// much weaker version of the above -- used for indel
     /// discovery protocols outside of the variant caller
     bool
     is_candidate_indel_impl_test_weak_signal(
-        const indel_data* idsp[],
-        const unsigned isds) const;
+        const IndelData& id) const;
 
     bool
     is_candidate_indel_impl_test(
         const indel_key& ik,
-        const indel_data& id,
-        const indel_data* idsp[],
-        const unsigned sampleCount) const;
+        const IndelData& id) const;
 
     void
     is_candidate_indel_impl(
-        const unsigned sampleId,
         const indel_key& ik,
-        const indel_data& id) const;
+        const IndelData& id) const;
 
     /// return object which provides estimated depth of tier1 reads
     const depth_buffer&
     ebuff(const unsigned sampleId) const
     {
-        return *(idata(sampleId).dbp);
+        return *(getIndelSampleData(sampleId).dbp);
     }
 
     /// return object which provides estimated depth of tier2 reads
     const depth_buffer&
     ebuff2(const unsigned sampleId) const
     {
-        return *(idata(sampleId).dbp2);
+        return *(getIndelSampleData(sampleId).dbp2);
     }
 
     const starling_sample_options&
     sample_opt(
         const unsigned sampleId) const
     {
-        return *(idata(sampleId).sample_optp);
+        return *(getIndelSampleData(sampleId).sample_optp);
     }
 
     unsigned
     getSampleCount() const
     {
-        return _idata.size();
+        return _indelSampleData.size();
     }
 
-    typedef std::vector<indel_sample_data> idata_t;
+    typedef std::vector<indel_sample_data> indel_sample_data_t;
 
     indel_sample_data&
-    idata(
+    getIndelSampleData(
         const unsigned sampleId)
     {
         assert(_isFinalized);
-        assert(sampleId<_idata.size());
-
-        return _idata[sampleId];
+        assert(sampleId<_indelSampleData.size());
+        return _indelSampleData[sampleId];
     }
 
     const indel_sample_data&
-    idata(
+    getIndelSampleData(
         const unsigned sampleId) const
     {
         assert(_isFinalized);
-        assert(sampleId<_idata.size());
-
-        return _idata[sampleId];
+        assert(sampleId<_indelSampleData.size());
+        return _indelSampleData[sampleId];
     }
 
     void
     find_data_exception(const indel_key& ik) const;
 
-
+/////////////// data
     const starling_base_options& _opt;
     const starling_base_deriv_options& _dopt;
     const reference_contig_segment& _ref;
     const min_count_binom_gte_cache& _countCache;
 
     bool _isFinalized = false;
-    idata_t _idata;
+    indel_sample_data_t _indelSampleData;
+    indel_buffer_t _indelBuffer;
 };
+
+
+
+// These functions assume valid iterators:
+//
+// note these are just stopgaps so that client code can
+// voluntarily abstract out the storage mechanism of indel_data,
+// ideally we would not give raw iterators to client code, see
+// top-level TODO
+inline
+indel_synchronizer::indel_buffer_value_t&
+get_indel_data(const indel_synchronizer::iterator i)
+{
+    return (i->second);
+}
+
+inline
+const indel_synchronizer::indel_buffer_value_t&
+get_indel_data(const indel_synchronizer::const_iterator i)
+{
+    return (i->second);
+}
+

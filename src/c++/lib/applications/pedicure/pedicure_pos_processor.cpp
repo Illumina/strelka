@@ -83,8 +83,8 @@ pedicure_pos_processor(
             const bool isProband(_opt.alignFileOpt.alignmentSampleInfo.getSampleInfo(sampleIndex).stype == PROBAND);
             double max_candidate_sample_depth(isProband ? max_candidate_proband_sample_depth : -1);
             sample_info& sif(sample(sampleIndex));
-            indel_sync().register_sample(sif.indel_buff,sif.estdepth_buff,sif.estdepth_buff_tier2,
-                                         sif.sample_opt, max_candidate_sample_depth);
+            indel_sync().register_sample(sif.estdepth_buff, sif.estdepth_buff_tier2, sif.sample_opt,
+                                         max_candidate_sample_depth);
         }
 
         indel_sync().finalizeSamples();
@@ -206,37 +206,27 @@ process_pos_indel_denovo(const pos_t pos)
 {
     using namespace PEDICURE_SAMPLETYPE;
 
-    // because of indel syncronization we should get all the indels by iterating
-    // through any of our samples. The proband is the only sample that's guaranteed
-    // to exist, so we standardize on it here:
     const SampleInfoManager& sinfo(_opt.alignFileOpt.alignmentSampleInfo);
-    const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
-    const sample_info& proband_sif(sample(probandIndex));
 
-    typedef indel_buffer::const_iterator ciiter;
-    ciiter i(proband_sif.indel_buff.pos_iter(pos));
-    const ciiter i_end(proband_sif.indel_buff.pos_iter(pos+1));
+    auto it(indel_sync().pos_iter(pos));
+    const auto it_end(indel_sync().pos_iter(pos+1));
 
-    for (; i!=i_end; ++i)
+    for (; it!=it_end; ++it)
     {
-        const indel_key& ik(i->first);
+        const indel_key& ik(it->first);
 
         // don't write breakpoint output:
         if (ik.is_breakpoint()) continue;
 
-        const indel_data& proband_id(get_indel_data(i));
+        const IndelData& id(get_indel_data(it));
 
-        if (! indel_sync().is_candidate_indel(probandIndex, ik, proband_id)) continue;
+        if (! indel_sync().is_candidate_indel(ik, id)) continue;
 
         // assert that indel data exists for all samples, make sure alt alignments are scored in at least one sample:
         bool isAllEmpty(true);
-        std::vector<const indel_data*> allIndelData(_n_samples);
         for (unsigned sampleIndex(0); sampleIndex<_n_samples; sampleIndex++)
         {
-            const indel_data* idp = sample(sampleIndex).indel_buff.get_indel_data_ptr(ik);
-            allIndelData[sampleIndex] = idp;
-            assert(nullptr != idp);
-            if (! idp->read_path_lnp.empty()) isAllEmpty = false;
+            if (! id.getSampleData(sampleIndex).read_path_lnp.empty()) isAllEmpty = false;
         }
 
         if (isAllEmpty) continue;
@@ -247,7 +237,7 @@ process_pos_indel_denovo(const pos_t pos)
 
         // get iri from either sample:
         starling_indel_report_info iri;
-        get_starling_indel_report_info(ik,proband_id,_ref,iri);
+        get_starling_indel_report_info(ik, id, _ref, iri);
 
         // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
         if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
@@ -272,7 +262,7 @@ process_pos_indel_denovo(const pos_t pos)
             sinfo,
             sampleOptions,
             refToIndelErrorProb,indelToRefErrorProb,
-            ik,allIndelData,
+            ik,id,
             is_use_alt_indel,
             dindel);
 
@@ -286,7 +276,7 @@ process_pos_indel_denovo(const pos_t pos)
                 for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
                 {
                     get_starling_indel_sample_report_info(
-                        _dopt,ik,*(allIndelData[sampleIndex]),sample(sampleIndex).bc_buff,
+                        _dopt,ik,id.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,
                         is_include_tier2,is_use_alt_indel,
                         isri[sampleIndex][tierIndex]);
                 }

@@ -61,11 +61,12 @@ copy_ref_subseq(const reference_contig_segment& ref,
 ///
 static
 void
-get_vcf_summary_strings(const indel_key& ik,
-                        const indel_data& id,
-                        const reference_contig_segment& ref,
-                        std::string& vcf_indel_seq,
-                        std::string& vcf_ref_seq)
+get_vcf_summary_strings(
+    const indel_key& ik,
+    const IndelData& id,
+    const reference_contig_segment& ref,
+    std::string& vcf_indel_seq,
+    std::string& vcf_ref_seq)
 {
     if       (ik.is_breakpoint())
     {
@@ -96,9 +97,10 @@ get_vcf_summary_strings(const indel_key& ik,
 
 static
 void
-set_repeat_info(const indel_key& ik,
-                const reference_contig_segment& ref,
-                starling_indel_report_info& iri)
+set_repeat_info(
+    const indel_key& ik,
+    const reference_contig_segment& ref,
+    starling_indel_report_info& iri)
 {
     if (! ((iri.it == INDEL::INSERT) ||
            (iri.it == INDEL::DELETE) ||
@@ -179,10 +181,11 @@ set_repeat_info(const indel_key& ik,
 
 
 void
-get_starling_indel_report_info(const indel_key& ik,
-                               const indel_data& id,
-                               const reference_contig_segment& ref,
-                               starling_indel_report_info& iri)
+get_starling_indel_report_info(
+    const indel_key& ik,
+    const IndelData& id,
+    const reference_contig_segment& ref,
+    starling_indel_report_info& iri)
 {
     // indel summary info
     get_vcf_summary_strings(ik,id,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
@@ -286,7 +289,7 @@ void
 get_starling_indel_sample_report_info(
     const starling_base_deriv_options& dopt,
     const indel_key& ik,
-    const indel_data& id,
+    const IndelSampleData& isd,
     const pos_basecall_buffer& bc_buff,
     const bool is_tier2_pass,
     const bool is_use_alt_indel,
@@ -298,7 +301,7 @@ get_starling_indel_sample_report_info(
 
         unsigned n_subscore_reads(0);
 
-        for (const auto& val : id.read_path_lnp)
+        for (const auto& val : isd.read_path_lnp)
         {
             const read_path_scores& path_lnp(val.second);
 
@@ -379,12 +382,12 @@ get_starling_indel_sample_report_info(
 
         // total number of reads with non-zero, yet insufficient indel
         // breakpoint overlap
-        const unsigned n_suboverlap_tier1_reads(id.suboverlap_tier1_read_ids.size());
+        const unsigned n_suboverlap_tier1_reads(isd.suboverlap_tier1_read_ids.size());
         isri.n_other_reads = (n_subscore_reads+n_suboverlap_tier1_reads);
 
         if (is_tier2_pass)
         {
-            const unsigned n_suboverlap_tier2_reads(id.suboverlap_tier2_read_ids.size());
+            const unsigned n_suboverlap_tier2_reads(isd.suboverlap_tier2_read_ids.size());
             isri.n_other_reads += n_suboverlap_tier2_reads;
         }
     }

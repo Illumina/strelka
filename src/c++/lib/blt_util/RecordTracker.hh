@@ -136,7 +136,7 @@ struct IndelGenotype
 
     bool altMatch(
         const indel_key& ik,
-        const indel_data& id) const;
+        const IndelData& id) const;
 
     vcf_record vcfr;
     pos_t pos;

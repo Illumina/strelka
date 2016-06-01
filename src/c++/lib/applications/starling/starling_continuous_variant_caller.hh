@@ -17,31 +17,33 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 #pragma once
+
 #include "starling_common/starling_base_shared.hh"
 #include "blt_common/snp_pos_info.hh"
 
-#include "blt_util/qscore.hh"
 #include "gvcf_locus_info.hh"
-#include <boost/utility.hpp>
 
 
-class starling_continuous_variant_caller : private boost::noncopyable
+struct starling_continuous_variant_caller
 {
-public:
+    static
+    int
+    poisson_qscore(unsigned callCount, unsigned coverage, unsigned estimatedBaseCallQuality, int maxQScore);
 
     static void position_snp_call_continuous(
         const starling_base_options& opt,
         const snp_pos_info& good_pi,
         GermlineContinuousSiteCallInfo& info);
+
     static void add_indel_call(
         const starling_base_options& opt,
         const indel_key& ik,
-        const indel_data& id,
+        const IndelData& id,
         const starling_indel_report_info& iri,
         const starling_indel_sample_report_info& isri,
         GermlineContinuousIndelCallInfo& info);
-    static unsigned poisson_qscore(unsigned callCount, unsigned coverage, unsigned estimatedBaseCallQuality, unsigned maxQScore);
 
     static double strand_bias(unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double noise);
 };

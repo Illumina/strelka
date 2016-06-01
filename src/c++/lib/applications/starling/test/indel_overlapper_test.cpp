@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     indel_overlapper overlap(cm, rcs, next);
 
     indel_key ik;
-    const indel_data id(ik);
+    const IndelData id(1,ik);
     const GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
     const starling_indel_report_info iri;
     const starling_indel_sample_report_info isri;
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
     int max_gts[] = { 2,0,2,2 };
 
     indel_key ik;
-    const indel_data id(ik);
+    const IndelData id(1,ik);
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
     dindel.is_forced_output = true;
     const starling_indel_report_info iri;
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
     int max_gts[] = { 2,2,0,2 };
 
     indel_key ik;
-    const indel_data id(ik);
+    const IndelData id(1,ik);
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
     dindel.is_forced_output = true;
     const starling_indel_report_info iri;

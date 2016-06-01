@@ -32,7 +32,7 @@
 #include <iosfwd>
 
 
-// Represents a single indel observation
+/// Represents a single indel observation
 struct indel_observation
 {
     indel_key key;
@@ -41,11 +41,11 @@ struct indel_observation
 
 
 
-// Represents all information about an indel
+/// Represents all information about an indel
 struct indel
 {
     indel_key key;
-    indel_data data;
+    IndelData data;
 };
 
 

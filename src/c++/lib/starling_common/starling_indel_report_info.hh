@@ -116,19 +116,21 @@ indel_lnp_to_pprob(
 /// summarize indel output
 ///
 void
-get_starling_indel_report_info(const indel_key& ik,
-                               const indel_data& id,
-                               const reference_contig_segment& ref,
-                               starling_indel_report_info& iri);
+get_starling_indel_report_info(
+    const indel_key& ik,
+    const IndelData& id,
+    const reference_contig_segment& ref,
+    starling_indel_report_info& iri);
 
 
 struct pos_basecall_buffer;
 
 void
-get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
-                                      const indel_key& ik,
-                                      const indel_data& id,
-                                      const pos_basecall_buffer& bc_buff,
-                                      const bool is_include_tier2,
-                                      const bool is_use_alt_indel,
-                                      starling_indel_sample_report_info& isri);
+get_starling_indel_sample_report_info(
+    const starling_base_deriv_options& dopt,
+    const indel_key& ik,
+    const IndelSampleData& isd,
+    const pos_basecall_buffer& bc_buff,
+    const bool is_include_tier2,
+    const bool is_use_alt_indel,
+    starling_indel_sample_report_info& isri);

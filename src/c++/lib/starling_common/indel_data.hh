@@ -188,45 +188,78 @@ private:
 };
 
 
-
-/// represents the data from all observations associated with an indel
-///
-struct indel_data
+/// indel allele data specific to one sample
+struct IndelSampleData
 {
-    indel_data(
-        const indel_key& ik)
-        : is_external_candidate(false),
-          is_forced_output(false),
-          _ik(ik)
-    {}
-
-    /// add an observation for this indel
-    ///
-    /// \param is_repeat_obs has this read_id been observed before? this is both
-    ///                 read and set by this method. Read ids are allowed to be
-    ///                 repeated due to suggested alternate alignments from
-    ///                 GROUPER
     void
-    add_observation(
-        const indel_observation_data& obs_data,
-        const bool is_shared,
-        bool& is_repeat_obs);
+    addObservation(
+        const indel_observation_data& obs_data);
 
-#if 0
-    // add read evidence from another indel_data
-    // structure -- this is not a copy ctor
+// ------------- data ------------------
+
+    // tier[12]_map_read ids refers to reads meeting either tier1 or
+    // tier2 mapping criteria. All other (non-noise) observations are
+    // categorized as submapped
     //
-    void
-    add_indel_data_evidence(const indel_data& id)
-    {
-        add_evidence(all_read_ids,id.all_read_ids);
-        add_evidence(tier2_map_read_ids,id.tier2_map_read_ids);
-        add_evidence(submap_read_ids,id.submap_read_ids);
-        add_evidence(noise_read_ids,id.noise_read_ids);
-        if (id.is_external_candidate) is_external_candidate=true;
-    }
-#endif
+    typedef std::set<align_id_t> evidence_t;
+    evidence_t tier1_map_read_ids;
+    evidence_t tier2_map_read_ids;
+    evidence_t submap_read_ids;
 
+    // noise_read_ids indicates that an input alignment had a mismatch
+    // fraction which was too high for the alignment to qualify as
+    // support for the indels
+    evidence_t noise_read_ids;
+
+    // enumerates support for the indel among all reads
+    // which cross an indel breakpoint by a sufficient margin after
+    // re-alignment:
+    typedef std::map<align_id_t,read_path_scores> score_t;
+    score_t read_path_lnp;
+
+    // the reads which cross an indel breakpoint, but not by enough
+    // to be entered into the scores list
+    evidence_t suboverlap_tier1_read_ids;
+    evidence_t suboverlap_tier2_read_ids;
+};
+
+
+/// indel allele data which is shared across all samples
+struct IndelData
+{
+    IndelData(
+        const unsigned sampleCount,
+        const indel_key& ik)
+        : _sampleData(sampleCount),
+          _ik(ik)
+    {
+        assert(sampleCount>=1);
+    }
+
+    unsigned
+    getSampleCount() const
+    {
+        return _sampleData.size();
+    }
+
+    IndelSampleData&
+    getSampleData(const unsigned sampleId)
+    {
+        assert(sampleId<_sampleData.size());
+        return _sampleData[sampleId];
+    }
+
+    const IndelSampleData&
+    getSampleData(const unsigned sampleId) const
+    {
+        assert(sampleId<_sampleData.size());
+        return _sampleData[sampleId];
+    }
+
+    void
+    addObservation(
+        const unsigned sampleId,
+        const indel_observation_data& obs_data);
 
     const std::string&
     get_insert_seq() const
@@ -242,73 +275,16 @@ struct indel_data
         return _insert_seq.get_size();
     }
 
-#if 0
-    // insert sequence for all contig and tier1 observations:
-    void
-    add_insert_seq_obs(//const align_id_t id,
-        const std::string& seq)
-    {
-
-        //if(all_read_ids.find(id) != all_read_ids.end()) return;
-        _insert_seq.add_obs(seq);
-    }
-
-    // dump the full insert_seq_manager
-    //
-    // this is useful to construct partial indel_data clones
-    const insert_seq_manager&
-    get_insert_seq_manager() const
-    {
-        return _insert_seq;
-    }
-#endif
-
 private:
-    // add observation for the non-shared case
-    void
-    add_observation_core(const indel_observation_data& obs_data,
-                         bool& is_repeat_obs);
-
-
-///////////// data
+    friend std::ostream& operator<<(std::ostream& os, const IndelData& id);
 public:
-
-    // all_read_ids refers to the read(s) that support the indel
-    // through their genomic alignments, given that those alignments
-    // meet the snp-caller's mapping thresholds.
-    //
-    // submap_read_ids are genomic alignments that fall below the
-    // mapping thresholds.
-    //
-    // all_read_ids contains the list of reads which either have a
-    // genomic alignment passing the mapping criteria
-    //
-    typedef std::set<align_id_t> evidence_t;
-    evidence_t all_read_ids; // all tier1 read_ids
-    evidence_t tier2_map_read_ids;
-    evidence_t submap_read_ids;
-
-    // noise_read_ids indicates that an input alignment had a mismatch
-    // fraction which was too high for the alignment to qualify as
-    // support for the indel.
-    //
-    evidence_t noise_read_ids;
+// ------------- data ------------------
 
     // candidates can be provided from external sources as well:
-    bool is_external_candidate;
+    bool is_external_candidate = false;
 
     // if true candidates should be output even if very unlikely:
-    bool is_forced_output;
-
-    // this structure represents support for the indel among all reads
-    // which cross an indel breakpoint by a sufficient margin after
-    // re-alignment:
-    //
-    typedef std::map<align_id_t,read_path_scores> score_t;
-    score_t read_path_lnp;
-    evidence_t suboverlap_tier1_read_ids; // the reads which cross an indel breakpoint, but not by enough
-    // to be entered into the scores list
-    evidence_t suboverlap_tier2_read_ids;
+    bool is_forced_output = false;
 
     struct status_t
     {
@@ -319,10 +295,11 @@ public:
     mutable status_t status;
 
 private:
-    // indel key is maintained for debugging only:
-    const indel_key _ik;
-
+    std::vector<IndelSampleData> _sampleData;
     mutable insert_seq_manager _insert_seq;
+
+    // indel key stored for debugging only
+    indel_key _ik;
 };
 
 
@@ -330,5 +307,5 @@ private:
 // Debugging dumps:
 std::ostream& operator<<(std::ostream& os, const indel_observation_data& id);
 std::ostream& operator<<(std::ostream& os, const read_path_scores& rps);
-std::ostream& operator<<(std::ostream& os, const indel_data& id);
-
+std::ostream& operator<<(std::ostream& os, const IndelSampleData& id);
+std::ostream& operator<<(std::ostream& os, const IndelData& id);

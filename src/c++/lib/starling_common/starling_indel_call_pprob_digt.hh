@@ -32,23 +32,22 @@
 #include <iosfwd>
 
 
-// total the path likelihoods of ref,indel and alt_indel states
-//
-// utility used for indel filtration...
-//
+/// total the path likelihoods of ref,indel and alt_indel states
+///
+/// utility used for indel filtration...
+///
 void
 get_sum_path_pprob(
     const starling_base_deriv_options& dopt,
-    const indel_data& id,
+    const IndelSampleData& isd,
     const bool is_include_tier2,
     const bool is_use_alt_indel,
     read_path_scores& total_pprob,
     const bool is_init_total = true);
 
 
-// Use caller object to precalculate prior distributions based on
-// theta value:
-//
+/// precalculates prior distributions based on theta value:
+///
 struct indel_digt_caller : private boost::noncopyable
 {
     explicit
@@ -58,15 +57,16 @@ struct indel_digt_caller : private boost::noncopyable
     /// of all possible genotypes for a diploid individual.
     ///
     void
-    starling_indel_call_pprob_digt(const starling_base_options& client_opt,
-                                   const starling_base_deriv_options& client_dopt,
-                                   const starling_sample_options& sample_opt,
-                                   const double indel_error_prob,
-                                   const double ref_error_prob,
-                                   const indel_key& ik,
-                                   const indel_data& id,
-                                   const bool is_use_alt_indel,
-                                   starling_diploid_indel& dindel) const;
+    starling_indel_call_pprob_digt(
+        const starling_base_options& client_opt,
+        const starling_base_deriv_options& client_dopt,
+        const starling_sample_options& sample_opt,
+        const double indel_error_prob,
+        const double ref_error_prob,
+        const indel_key& ik,
+        const IndelSampleData& isd,
+        const bool is_use_alt_indel,
+        starling_diploid_indel& dindel) const;
 
     const double*
     lnprior_genomic(const bool is_haploid = false) const
@@ -85,35 +85,37 @@ struct indel_digt_caller : private boost::noncopyable
 
     static
     void
-    get_high_low_het_ratio_lhood(const starling_base_options& opt,
-                                 const starling_base_deriv_options& dopt,
-                                 const starling_sample_options& sample_opt,
-                                 const double indel_error_lnp,
-                                 const double indel_real_lnp,
-                                 const double ref_error_lnp,
-                                 const double ref_real_lnp,
-                                 const indel_key& ik,
-                                 const indel_data& id,
-                                 const double het_ratio,
-                                 const bool is_include_tier2,
-                                 const bool is_use_alt_indel,
-                                 double& het_lhood_high,
-                                 double& het_lhood_low);
+    get_high_low_het_ratio_lhood(
+        const starling_base_options& opt,
+        const starling_base_deriv_options& dopt,
+        const starling_sample_options& sample_opt,
+        const double indel_error_lnp,
+        const double indel_real_lnp,
+        const double ref_error_lnp,
+        const double ref_real_lnp,
+        const indel_key& ik,
+        const IndelSampleData& isd,
+        const double het_ratio,
+        const bool is_include_tier2,
+        const bool is_use_alt_indel,
+        double& het_lhood_high,
+        double& het_lhood_low);
 
     static
     void
-    get_indel_digt_lhood(const starling_base_options& opt,
-                         const starling_base_deriv_options& dopt,
-                         const starling_sample_options& sample_opt,
-                         const double indel_error_prob,
-                         const double ref_error_prob,
-                         const indel_key& ik,
-                         const indel_data& id,
-                         const bool is_het_bias,
-                         const double het_bias,
-                         const bool is_include_tier2,
-                         const bool is_use_alt_indel,
-                         double* const lhood);
+    get_indel_digt_lhood(
+        const starling_base_options& opt,
+        const starling_base_deriv_options& dopt,
+        const starling_sample_options& sample_opt,
+        const double indel_error_prob,
+        const double ref_error_prob,
+        const indel_key& ik,
+        const IndelSampleData& isd,
+        const bool is_het_bias,
+        const double het_bias,
+        const bool is_include_tier2,
+        const bool is_use_alt_indel,
+        double* const lhood);
 
     struct prior_group
     {

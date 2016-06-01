@@ -935,6 +935,8 @@ process_pos(const int stage_no,
             }
         }
 
+        indel_sync().clear_pos(pos);
+
         for (unsigned s(0); s<_n_samples; ++s)
         {
             sample(s).indel_buff.clear_pos(pos);
@@ -1088,22 +1090,17 @@ starling_pos_processor_base::
 write_candidate_indels_pos(
     const pos_t pos)
 {
-    static const unsigned sampleId(0);
-
     const pos_t output_pos(pos+1);
-    typedef indel_buffer::const_iterator ciiter;
-
-    sample_info& sif(sample(sampleId));
-    ciiter i(sif.indel_buff.pos_iter(pos));
-    const ciiter i_end(sif.indel_buff.pos_iter(pos+1));
-
     std::ostream& bos(*_streams.candidate_indel_osptr());
 
-    for (; i!=i_end; ++i)
+    auto indelIter(indel_sync().pos_iter(pos));
+    const auto indelIterEnd(indel_sync().pos_iter(pos+1));
+
+    for (; indelIter!=indelIterEnd; ++indelIter)
     {
-        const indel_key& ik(i->first);
-        const indel_data& id(get_indel_data(i));
-        if (! indel_sync().is_candidate_indel(sampleId,ik,id)) continue;
+        const indel_key& ik(indelIter->first);
+        const IndelData& id(get_indel_data(indelIter));
+        if (! indel_sync().is_candidate_indel(ik,id)) continue;
         bos << _chrom_name << "\t"
             << output_pos << "\t"
             << INDEL::get_index_label(ik.type) << "\t"

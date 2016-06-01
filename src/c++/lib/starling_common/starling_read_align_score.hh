@@ -26,16 +26,17 @@
 
 #include "candidate_alignment.hh"
 
-#include "starling_common/indel_buffer.hh"
+#include "starling_common/indel_synchronizer.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
 
 double
-score_candidate_alignment(const starling_base_options& client_opt,
-                          const indel_buffer& ibuff,
-                          const read_segment& rseg,
-                          const candidate_alignment& cal,
-                          const reference_contig_segment& ref);
+score_candidate_alignment(
+    const starling_base_options& opt,
+    const indel_synchronizer& isync,
+    const read_segment& rseg,
+    const candidate_alignment& cal,
+    const reference_contig_segment& ref);
 

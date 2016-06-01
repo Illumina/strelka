@@ -32,8 +32,10 @@
 
 
 void
-read_path_scores::insert_alt(const indel_key& ik,
-                             const score_t a)
+read_path_scores::
+insert_alt(
+    const indel_key& ik,
+    const score_t a)
 {
     const unsigned ais(static_cast<unsigned>(alt_indel.size()));
     if (ais < 2)
@@ -62,42 +64,55 @@ read_path_scores::insert_alt(const indel_key& ik,
 
 
 void
-indel_data::
-add_observation(
-    const indel_observation_data& obs_data,
-    const bool is_shared,
-    bool& is_repeat_obs)
+IndelSampleData::
+addObservation(
+    const indel_observation_data& obs_data)
 {
-#ifdef DEBUG_ID
-    log_os << "KATTER: adding obs for indel: " << _ik;
-    log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
-    log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
-#endif
+    const bool isAbstractObservation(obs_data.is_external_candidate || obs_data.is_forced_output);
 
-    if (! is_shared)
+    if (! isAbstractObservation)
     {
-        add_observation_core(obs_data,is_repeat_obs);
-    }
+        using namespace INDEL_ALIGN_TYPE;
 
-    if (! obs_data.insert_seq.empty())
-    {
-        if (! (is_shared && is_repeat_obs))
+        evidence_t* insertTarget(nullptr);
+
+        if (obs_data.is_noise)
         {
-            _insert_seq.add_obs(obs_data.insert_seq);
+            insertTarget=&noise_read_ids;
         }
+        else if (obs_data.iat == GENOME_TIER1_READ)
+        {
+            insertTarget=&tier1_map_read_ids;
+        }
+        else if (obs_data.iat == GENOME_TIER2_READ)
+        {
+            insertTarget=&tier2_map_read_ids;
+        }
+        else if (obs_data.iat == GENOME_SUBMAP_READ)
+        {
+            insertTarget=&submap_read_ids;
+        }
+        else
+        {
+            assert(false && "Unknown indel alignment type");
+        }
+
+        assert (insertTarget != nullptr);
+        const auto retval = insertTarget->insert(obs_data.id);
+        assert (retval.second);
     }
 }
 
-// add observation for the non-shared case
+
+
 void
-indel_data::
-add_observation_core(
-    const indel_observation_data& obs_data,
-    bool& is_repeat_obs)
+IndelData::
+addObservation(
+    const unsigned sampleId,
+    const indel_observation_data& obs_data)
 {
 #ifdef DEBUG_ID
     log_os << "KATTER: adding obs for indel: " << _ik;
-    log_os << "KATTER: is_shared: " << is_shared << " is_repeat: " << is_repeat_obs << "\n";
     log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
 #endif
 
@@ -105,46 +120,22 @@ add_observation_core(
     if (! is_external_candidate) is_external_candidate=obs_data.is_external_candidate;
     if (! is_forced_output) is_forced_output=obs_data.is_forced_output;
 
-    if (!is_external_candidate && !is_forced_output)
+    if (! obs_data.insert_seq.empty())
     {
-        using namespace INDEL_ALIGN_TYPE;
-
-        if (obs_data.is_noise)
-        {
-            // noise state overrides all except contig type:
-            //
-            noise_read_ids.insert(obs_data.id);
-        }
-        else if (obs_data.iat == GENOME_TIER1_READ)
-        {
-            if (all_read_ids.find(obs_data.id) != all_read_ids.end())
-            {
-                is_repeat_obs=true;
-            }
-            all_read_ids.insert(obs_data.id);
-        }
-        else if (obs_data.iat == GENOME_TIER2_READ)
-        {
-            tier2_map_read_ids.insert(obs_data.id);
-        }
-        else if (obs_data.iat == GENOME_SUBMAP_READ)
-        {
-            submap_read_ids.insert(obs_data.id);
-        }
-        else
-        {
-            assert(false && "Unknown indel alignment type");
-        }
+        assert(obs_data.insert_seq.size() == _ik.insert_length());
+        _insert_seq.add_obs(obs_data.insert_seq);
     }
+
+    getSampleData(sampleId).addObservation(obs_data);
 }
 
 
 
 std::ostream&
-operator<<(std::ostream& os,
-           const indel_observation_data& obs)
+operator<<(
+    std::ostream& os,
+    const indel_observation_data& obs)
 {
-
     os << "is_noise: " << obs.is_noise << "\n";
     os << "is_external: " << obs.is_external_candidate << "\n";
     os << "is_forced_output: " << obs.is_forced_output << "\n";
@@ -154,13 +145,16 @@ operator<<(std::ostream& os,
     return os;
 }
 
+
+
 static
 void
-report_indel_evidence_set(const indel_data::evidence_t& e,
-                          const char* label,
-                          std::ostream& os)
+report_indel_evidence_set(
+    const IndelSampleData::evidence_t& e,
+    const char* label,
+    std::ostream& os)
 {
-    typedef indel_data::evidence_t::const_iterator viter;
+    typedef IndelSampleData::evidence_t::const_iterator viter;
     viter i(e.begin()),i_end(e.end());
     for (unsigned n(0); i!=i_end; ++i)
     {
@@ -173,10 +167,10 @@ report_indel_evidence_set(const indel_data::evidence_t& e,
 
 
 std::ostream&
-operator<<(std::ostream& os,
-           const read_path_scores& rps)
+operator<<(
+    std::ostream& os,
+    const read_path_scores& rps)
 {
-
     os << "ref: " << rps.ref
        << " indel: " << rps.indel
        << " nsite: " << rps.nsite;
@@ -187,12 +181,10 @@ operator<<(std::ostream& os,
         os << " alt: " << rps.alt;
     }
 #else
-    typedef read_path_scores::alt_indel_t::const_iterator aiter;
-    aiter i(rps.alt_indel.begin()), i_end(rps.alt_indel.end());
-    for (; i!=i_end; ++i)
+    for (const auto& indel : rps.alt_indel)
     {
-        const indel_key& ik(i->first);
-        os << " alt-" << ik.pos << "-" << INDEL::get_index_label(ik.type) << ik.length << ": " << i->second;
+        const indel_key& ik(indel.first);
+        os << " alt-" << ik.pos << "-" << INDEL::get_index_label(ik.type) << ik.length << ": " << indel.second;
     }
 #endif
 
@@ -200,6 +192,7 @@ operator<<(std::ostream& os,
 
     return os;
 }
+
 
 
 void
@@ -210,6 +203,7 @@ _exception(const char* msg) const
     oss << "Exception in insert_seq_manager: " << msg;
     throw blt_exception(oss.str().c_str());
 }
+
 
 
 void
@@ -237,33 +231,51 @@ _finalize()
 
 
 std::ostream&
-operator<<(std::ostream& os,
-           const indel_data& id)
+operator<<(
+    std::ostream& os,
+    const IndelSampleData& isd)
 {
-    os << "seq: " << id.get_insert_seq() << "\n";
-
-    report_indel_evidence_set(id.all_read_ids,"all_read",os);
-    //    report_indel_evidence_set(id.tier1_map_read_ids,"tier1_map_read",os);
-    report_indel_evidence_set(id.tier2_map_read_ids,"tier2_map_read",os);
-    report_indel_evidence_set(id.submap_read_ids,"submap_read",os);
-    report_indel_evidence_set(id.noise_read_ids,"noise_read",os);
+    report_indel_evidence_set(isd.tier1_map_read_ids,"tier1_map_read",os);
+    report_indel_evidence_set(isd.tier2_map_read_ids,"tier2_map_read",os);
+    report_indel_evidence_set(isd.submap_read_ids,"submap_read",os);
+    report_indel_evidence_set(isd.noise_read_ids,"noise_read",os);
 
     {
-        typedef indel_data::score_t::const_iterator siter;
-        siter i(id.read_path_lnp.begin()), i_end(id.read_path_lnp.end());
-        for (unsigned n(0); i!=i_end; ++i)
+        unsigned n(0);
+        for(const auto& readLnp : isd.read_path_lnp)
         {
             os << "read_path_lnp no: " << ++n
-               << " id: " << i->first
-               << " " << i->second
-               << "\n";
+            << " id: " << readLnp.first
+            << " " << readLnp.second
+            << "\n";
         }
     }
 
-    report_indel_evidence_set(id.suboverlap_tier1_read_ids,"suboverlap_tier1_read",os);
-    report_indel_evidence_set(id.suboverlap_tier2_read_ids,"suboverlap_tier2_read",os);
+    report_indel_evidence_set(isd.suboverlap_tier1_read_ids,"suboverlap_tier1_read",os);
+    report_indel_evidence_set(isd.suboverlap_tier2_read_ids,"suboverlap_tier2_read",os);
 
+    return os;
+}
+
+
+
+std::ostream&
+operator<<(
+    std::ostream& os,
+    const IndelData& id)
+{
+    os << "indel_key: " << id._ik << "\n";
     os << "is_external_candidate: " << id.is_external_candidate << "\n";
+    os << "is_forced_output: " << id.is_forced_output << "\n";
 
+    os << "seq: " << id.get_insert_seq() << "\n";
+
+    const unsigned sampleCount(id.getSampleCount());
+    for(unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        os << "BEGIN sample: " << sampleIndex << "\n";
+        os << id.getSampleData(sampleIndex);
+        os << "BEGIN sample: " << sampleIndex << "\n";
+    }
     return os;
 }

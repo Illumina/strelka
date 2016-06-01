@@ -37,6 +37,6 @@ get_denovo_indel_call(
     const double indel_error_prob,
     const double ref_error_prob,
     const indel_key& ik,
-    const std::vector<const indel_data*>& allIndelData,
+    const IndelData& id,
     const bool is_use_alt_indel,
     denovo_indel_call& dinc);

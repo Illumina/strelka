@@ -140,11 +140,12 @@ score_segment(const starling_base_options& /*opt*/,
 
 
 double
-score_candidate_alignment(const starling_base_options& opt,
-                          const indel_buffer& ibuff,
-                          const read_segment& rseg,
-                          const candidate_alignment& cal,
-                          const reference_contig_segment& ref)
+score_candidate_alignment(
+    const starling_base_options& opt,
+    const indel_synchronizer& isync,
+    const read_segment& rseg,
+    const candidate_alignment& cal,
+    const reference_contig_segment& ref)
 {
     using namespace ALIGNPATH;
 
@@ -202,8 +203,8 @@ score_candidate_alignment(const starling_base_options& opt,
                 assert(ik.type!=INDEL::NONE);
             }
 
-            const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
-            if (NULL == id_ptr)
+            const IndelData* id_ptr(isync.get_indel_data_ptr(ik));
+            if (nullptr == id_ptr)
             {
                 std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected swap indel: " << ik << "\n"
@@ -286,8 +287,8 @@ score_candidate_alignment(const starling_base_options& opt,
                 assert(ik.type!=INDEL::NONE);
             }
 
-            const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
-            if (NULL == id_ptr)
+            const IndelData* id_ptr(isync.get_indel_data_ptr(ik));
+            if (nullptr == id_ptr)
             {
                 std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected insertion: " << ik << "\n"

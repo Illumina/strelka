@@ -179,15 +179,14 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
 {
     GermlineIndelSimpleGenotypeInfo(
         const indel_key& ik,
-        const indel_data& id,
+        const IndelData& id,
         const starling_indel_report_info iri,
         const starling_indel_sample_report_info& isri)
         : _ik(ik)
         , _id(id)
         , _iri(iri)
         , _isri(isri)
-    {
-    }
+    {}
 
     void
     clear()
@@ -203,7 +202,7 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
         const unsigned trail=0);
 
     const indel_key _ik;
-    const indel_data _id;
+    const IndelData _id;
     // TODO: make the indel overlapping code create a new call, then revert this to const
     starling_indel_report_info _iri;
     const starling_indel_sample_report_info _isri;
@@ -221,11 +220,12 @@ std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo&
 /// restrict to diploid calling models
 struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
-    GermlineDiploidIndelSimpleGenotypeInfo(const indel_key& ik,
-                                           const indel_data& id,
-                                           const starling_indel_report_info& iri,
-                                           const starling_indel_sample_report_info& isri,
-                                           const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
+    GermlineDiploidIndelSimpleGenotypeInfo(
+        const indel_key& ik,
+        const IndelData& id,
+        const starling_indel_report_info& iri,
+        const starling_indel_sample_report_info& isri,
+        const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
         : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
         , _dindel(dindel)
     {}
@@ -356,8 +356,13 @@ struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGe
 /// restrict to the case where variant is indel and calling model is continuous
 struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
-    GermlineContinuousIndelSimpleGenotypeInfo(unsigned totalDepth, unsigned alleleDepth,
-                                              const indel_key& ik, const indel_data& id, const starling_indel_report_info& iri, const starling_indel_sample_report_info& isri)
+    GermlineContinuousIndelSimpleGenotypeInfo(
+        unsigned totalDepth,
+        unsigned alleleDepth,
+        const indel_key &ik,
+        const IndelData &id,
+        const starling_indel_report_info &iri,
+        const starling_indel_sample_report_info &isri)
         : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
         , _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
@@ -399,11 +404,12 @@ struct GermlineIndelCallInfo
 /// specify that calling model is diploid
 struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
 {
-    GermlineDiploidIndelCallInfo(const indel_key& init_ik,
-                                 const indel_data& init_id,
-                                 const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
-                                 const starling_indel_report_info& init_iri,
-                                 const starling_indel_sample_report_info& init_isri) : GermlineIndelCallInfo(init_ik.pos)
+    GermlineDiploidIndelCallInfo(
+        const indel_key& init_ik,
+        const IndelData& init_id,
+        const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
+        const starling_indel_report_info& init_iri,
+        const starling_indel_sample_report_info& init_isri) : GermlineIndelCallInfo(init_ik.pos)
     {
         _calls.emplace_back(init_ik, init_id, init_iri, init_isri, init_dindel);
     }

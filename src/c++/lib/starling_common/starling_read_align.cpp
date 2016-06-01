@@ -91,7 +91,6 @@ static
 bool
 check_for_candidate_indel_overlap(
     const known_pos_range realign_buffer_range,
-    const unsigned sampleId,
     const read_segment &rseg,
     const indel_synchronizer &isync)
 {
@@ -113,24 +112,23 @@ check_for_candidate_indel_overlap(
     std::cerr << "VARMIT read extends: " << read_range << "\n";
 #endif
 
-    const indel_buffer& ibuff(isync.ibuff(sampleId));
-    const std::pair<ciiter,ciiter> ipair(ibuff.pos_range_iter(read_range.begin_pos,read_range.end_pos));
-    for (ciiter i(ipair.first); i!=ipair.second; ++i)
+    const auto indelIterPair(isync.pos_range_iter(read_range.begin_pos,read_range.end_pos));
+    for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
     {
-        const indel_key& ik(i->first);
+        const indel_key& ik(indelIter->first);
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT key: " << ik;
 #endif
         // check if read intersects with indel breakpoint:
         if (! is_range_intersect_indel_breakpoints(read_range,ik)) continue;
 
-        const indel_data& id(get_indel_data(i));
+        const IndelData& id(get_indel_data(indelIter));
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT intersects indel: " << ik << id;
 #endif
 
         // check if indel qualifies as candidate indel:
-        if (isync.is_candidate_indel(sampleId, ik, id))
+        if (isync.is_candidate_indel(ik, id))
         {
 #ifdef DEBUG_ALIGN
             std::cerr << "VARMIT read segment intersects at least one qualifying candidate indel.\n";
@@ -166,15 +164,17 @@ bool
 is_usable_indel(
     const indel_synchronizer &isync,
     const indel_key &ik,
-    const indel_data &id,
+    const IndelData &id,
     const align_id_t read_id,
     const unsigned sampleId)
 {
-    return (isync.is_candidate_indel(sampleId,ik,id) ||
-            (id.all_read_ids.count(read_id)>0) ||
-            (id.tier2_map_read_ids.count(read_id)>0) ||
-            (id.submap_read_ids.count(read_id)>0) ||
-            (id.noise_read_ids.count(read_id)>0));
+    if (isync.is_candidate_indel(ik, id)) return true;
+
+    const IndelSampleData& isd(id.getSampleData(sampleId));
+    return ((isd.tier1_map_read_ids.count(read_id)>0) ||
+            (isd.tier2_map_read_ids.count(read_id)>0) ||
+            (isd.submap_read_ids.count(read_id)>0) ||
+            (isd.noise_read_ids.count(read_id)>0));
 }
 
 
@@ -191,14 +191,13 @@ add_indels_in_range(
     starling_align_indel_status &indel_status_map,
     std::vector<indel_key> &indel_order)
 {
-    const indel_buffer& ibuff(isync.ibuff(sampleId));
-    const std::pair<ciiter,ciiter> ipair(ibuff.pos_range_iter(pr.begin_pos,pr.end_pos));
+    const auto indelIterPair(isync.pos_range_iter(pr.begin_pos,pr.end_pos));
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT CHECKING INDELS IN RANGE: " << pr << "\n";
 #endif
-    for (ciiter i(ipair.first); i!=ipair.second; ++i)
+    for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
     {
-        const indel_key& ik(i->first);
+        const indel_key& ik(indelIter->first);
         // check if read intersects with indel and indel is usable by this read:
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT INDEL CANDIDATE " << ik;
@@ -228,7 +227,7 @@ add_indels_in_range(
         }
         else
         {
-            const indel_data& id(get_indel_data(i));
+            const IndelData& id(get_indel_data(indelIter));
             if (is_usable_indel(isync, ik, id, read_id, sampleId))
             {
                 indel_status_map[ik].is_present = false;
@@ -243,10 +242,11 @@ add_indels_in_range(
 
 static
 void
-add_path_segment(ALIGNPATH::path_t& apath,
-                 ALIGNPATH::align_t inc_type,
-                 pos_t& inc_pos,
-                 const unsigned increment)
+add_path_segment(
+    ALIGNPATH::path_t& apath,
+    ALIGNPATH::align_t inc_type,
+    pos_t& inc_pos,
+    const unsigned increment)
 {
     using namespace ALIGNPATH;
 
@@ -989,7 +989,6 @@ unsigned int
 get_candidate_indel_count(
     const starling_base_options &client_opt,
     const indel_synchronizer &isync,
-    const unsigned sampleId,
     const candidate_alignment &cal)
 {
     indel_set_t is;
@@ -998,7 +997,7 @@ get_candidate_indel_count(
     unsigned val(0);
     for (const indel_key& ik : is)
     {
-        if (isync.is_candidate_indel(sampleId, ik)) val++;
+        if (isync.is_candidate_indel(ik)) val++;
     }
     return val;
 }
@@ -1017,7 +1016,6 @@ bool
 is_first_cal_preferred(
     const starling_base_options &client_opt,
     const indel_synchronizer &isync,
-    const unsigned sampleId,
     const candidate_alignment &c1,
     const candidate_alignment &c2)
 {
@@ -1027,8 +1025,8 @@ is_first_cal_preferred(
     if (epi2.indel_count < epi1.indel_count) return false;
     if (epi2.indel_count == epi1.indel_count)
     {
-        const unsigned cic1(get_candidate_indel_count(client_opt, isync, sampleId, c1));
-        const unsigned cic2(get_candidate_indel_count(client_opt, isync, sampleId, c2));
+        const unsigned cic1(get_candidate_indel_count(client_opt, isync, c1));
+        const unsigned cic2(get_candidate_indel_count(client_opt, isync, c2));
         if (cic2 > cic1) return false;
         if (cic2 == cic1)
         {
@@ -1136,7 +1134,6 @@ score_candidate_alignments(
     const reference_contig_segment &ref,
     read_segment &rseg,
     indel_synchronizer &isync,
-    const unsigned sampleId,
     const std::set<candidate_alignment> &candAlignments,
     std::vector<double> &candAlignmentScores,
     double &maxCandAlignmentScore,
@@ -1152,8 +1149,6 @@ score_candidate_alignments(
     // an alignment being 'pinned' for exon alignments.
     //
 
-    const indel_buffer& ibuff(isync.ibuff(sampleId));
-
     // pins are used to prevent exon/intron boundaries from being moved
     // during exon realignment:
     //
@@ -1165,7 +1160,7 @@ score_candidate_alignments(
     for (citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter)
     {
         const candidate_alignment& ical(*cal_iter);
-        const double path_lnp(score_candidate_alignment(opt,ibuff,rseg,ical,ref));
+        const double path_lnp(score_candidate_alignment(opt,isync,rseg,ical,ref));
 
         candAlignmentScores.push_back(path_lnp);
 
@@ -1186,7 +1181,7 @@ score_candidate_alignments(
             // score is calculated, but it's still not preferred)
             //
             if ((path_lnp<=maxCandAlignmentScore) &&
-                is_first_cal_preferred(opt, isync, sampleId, *maxCandAlignmentPtr, ical)) continue;
+                is_first_cal_preferred(opt, isync, *maxCandAlignmentPtr, ical)) continue;
         }
         maxCandAlignmentScore=path_lnp;
         maxCandAlignmentPtr=&ical;
@@ -1267,7 +1262,7 @@ score_candidate_alignments(
         const candidate_alignment& ical(*cal_iter);
         smooth_cal_pool.push_back(&ical);
         if ((NULL==smooth_cal_ptr) ||
-            (!is_first_cal_preferred(opt, isync, sampleId, *smooth_cal_ptr, ical)))
+            (!is_first_cal_preferred(opt, isync, *smooth_cal_ptr, ical)))
         {
             smooth_path_lnp=candAlignmentScores[cal_index];
             smooth_cal_ptr=&ical;
@@ -1344,7 +1339,7 @@ score_candidate_alignments_and_indels(
 
     try
     {
-        score_candidate_alignments(opt, ref, rseg, isync, sampleId, candAlignments,
+        score_candidate_alignments(opt, ref, rseg, isync, candAlignments,
                                    candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
     catch (...)
@@ -1640,7 +1635,7 @@ realign_and_score_read(
 
     if (! inputAlignment.is_realignable(opt.max_indel_size)) return;
 
-    if (!check_for_candidate_indel_overlap(realign_buffer_range, sampleId, rseg, isync)) return;
+    if (!check_for_candidate_indel_overlap(realign_buffer_range, rseg, isync)) return;
 
     const alignment normedAlignment(normalizeInputAlignmnet(rseg));
 

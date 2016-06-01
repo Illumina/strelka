@@ -40,16 +40,61 @@
 unsigned
 indel_synchronizer::
 register_sample(
-    indel_buffer& ib,
-    const depth_buffer& db,
-    const depth_buffer& db2,
-    const starling_sample_options& sample_opt,
+    const depth_buffer &db,
+    const depth_buffer &db2,
+    const starling_sample_options &sample_opt,
     const double max_depth)
 {
     assert(! _isFinalized);
-    const unsigned sampleIndex(_idata.size());
-    _idata.emplace_back(ib,db,db2,sample_opt,max_depth);
+    const unsigned sampleIndex(_indelSampleData.size());
+    _indelSampleData.emplace_back(db,db2,sample_opt,max_depth);
     return sampleIndex;
+}
+
+
+
+std::pair<indel_synchronizer::iterator,indel_synchronizer::iterator>
+indel_synchronizer::
+pos_range_iter(
+    const pos_t begin_pos,
+    const pos_t end_pos)
+{
+    const indel_key end_range_key(end_pos);
+    const iterator end(_indelBuffer.lower_bound(end_range_key));
+    const indel_key begin_range_key(begin_pos-static_cast<pos_t>(_opt.max_indel_size));
+    iterator begin(_indelBuffer.lower_bound(begin_range_key));
+    for (; begin!=end; ++begin)
+    {
+        if (begin->first.right_pos() >= begin_pos) break;
+    }
+    return std::make_pair(begin,end);
+}
+
+
+
+// The goal is to return all indels with a left or right breakpoint in the
+// range [begin_pos,end_pos]. Returning indels in addition to this set is
+// acceptable.
+//
+// The indels_keys: "end_range_key" and "begin_range_key" take
+// advantage of the indel NONE type, which sorts ahead of all other
+// types at the same position.
+//
+std::pair<indel_synchronizer::const_iterator,indel_synchronizer::const_iterator>
+indel_synchronizer::
+pos_range_iter(
+    const pos_t begin_pos,
+    const pos_t end_pos) const
+{
+    const indel_key end_range_key(end_pos);
+    const const_iterator end(_indelBuffer.lower_bound(end_range_key));
+    const indel_key begin_range_key(begin_pos-static_cast<pos_t>(_opt.max_indel_size));
+    const_iterator begin(_indelBuffer.lower_bound(begin_range_key));
+    for (; begin!=end; ++begin)
+    {
+        if (begin->first.right_pos() >= begin_pos) break;
+    }
+    return std::make_pair(begin,end);
 }
 
 
@@ -60,21 +105,20 @@ insert_indel(
     const unsigned sampleId,
     const indel_observation& obs)
 {
-    // first insert indel into this sample:
-    bool is_synced_sample(false);
-    bool is_repeat_obs(false);
+    assert(obs.key.type != INDEL::NONE);
 
-    const bool is_novel(ibuff(sampleId).insert_indel(obs,is_synced_sample,is_repeat_obs));
-
-    // then insert indel into synchronized samples:
-    is_synced_sample=true;
-    const unsigned sampleCount(getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    // if not previously observed
+    iterator indelIter(_indelBuffer.find(obs.key));
+    const bool isNovel(indelIter == _indelBuffer.end());
+    if (isNovel)
     {
-        if (sampleId) continue;
-        ibuff(sampleIndex).insert_indel(obs,is_synced_sample,is_repeat_obs);
+        const auto retval = _indelBuffer.insert(std::make_pair(obs.key,IndelData(getSampleCount(), obs.key)));
+        indelIter = retval.first;
     }
-    return is_novel;
+
+    IndelData &id(get_indel_data(indelIter));
+    id.addObservation(sampleId, obs.data);
+    return isNovel;
 }
 
 
@@ -83,9 +127,7 @@ bool
 indel_synchronizer::
 is_candidate_indel_impl_test_signal_noise(
     const indel_key& ik,
-    const indel_data& id,
-    const indel_data* idsp[],
-    const unsigned isds) const
+    const IndelData& id) const
 {
     //
     // Step 1: find the error rate for this indel and context:
@@ -103,28 +145,31 @@ is_candidate_indel_impl_test_signal_noise(
     //
     // Step 2: determine if the observed counts are sig wrt the error rate for at least one sample:
     //
-    for (unsigned i(0); i<isds; ++i)
+    const unsigned sampleCount(id.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
+        const IndelSampleData& isd(id.getSampleData(sampleIndex));
+
         // for each sample, get the number of tier 1 reads supporting the indel
         // and the total number of tier 1 reads at this locus
-        const unsigned n_indel_reads = idsp[i]->all_read_ids.size();
-        unsigned n_total_reads = ebuff(i).val(ik.pos-1);
+        const unsigned tier1ReadSupportCount(isd.tier1_map_read_ids.size());
+        unsigned totalReadCount(ebuff(sampleIndex).val(ik.pos-1));
 
         // total reads and indel reads are measured in different ways here, so the nonsensical
         // result of indel_reads>total_reads is possible. The total is fudged below to appear sane
         // before going into the count test:
-        n_total_reads = std::max(n_total_reads,n_indel_reads);
+        totalReadCount = std::max(totalReadCount,tier1ReadSupportCount);
 
-        if (n_total_reads == 0) continue;
+        if (totalReadCount == 0) continue;
 
         // this min indel support coverage is applied regardless of error model:
         static const unsigned min_candidate_cov_floor(2);
-        if (n_indel_reads < min_candidate_cov_floor) continue;
+        if (totalReadCount < min_candidate_cov_floor) continue;
 
         // test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
-        if (_countCache.isRejectNull(n_total_reads, indelToRefErrorProb, n_indel_reads))
+        if (_countCache.isRejectNull(totalReadCount, indelToRefErrorProb, tier1ReadSupportCount))
         {
             return true;
         }
@@ -137,17 +182,15 @@ is_candidate_indel_impl_test_signal_noise(
 bool
 indel_synchronizer::
 is_candidate_indel_impl_test_weak_signal(
-    const indel_data* idsp[],
-    const unsigned isds) const
+    const IndelData& id) const
 {
-    for (unsigned i(0); i<isds; ++i)
+    const unsigned sampleCount(id.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        // for each sample, get the number of tier 1 reads supporting the indel
-        const unsigned n_indel_reads = idsp[i]->all_read_ids.size();
-
+        const IndelSampleData& isd(id.getSampleData(sampleIndex));
+        const unsigned tier1ReadSupportCount(isd.tier1_map_read_ids.size());
         static const unsigned min_candidate_cov_floor(1);
-        if (n_indel_reads < min_candidate_cov_floor) continue;
-
+        if (tier1ReadSupportCount < min_candidate_cov_floor) continue;
         return true;
     }
     return false;
@@ -159,23 +202,18 @@ bool
 indel_synchronizer::
 is_candidate_indel_impl_test(
     const indel_key& ik,
-    const indel_data& id,
-    const indel_data* idsp[],
-    const unsigned sampleCount) const
+    const IndelData& id) const
 {
     // check whether the candidate has been externally specified:
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-    {
-        if (idsp[sampleIndex]->is_external_candidate) return true;
-    }
+    if (id.is_external_candidate) return true;
 
     if (_opt.is_candidate_indel_signal_test)
     {
-        if (! is_candidate_indel_impl_test_signal_noise(ik,id,idsp,sampleCount)) return false;
+        if (! is_candidate_indel_impl_test_signal_noise(ik,id)) return false;
     }
     else
     {
-        if (! is_candidate_indel_impl_test_weak_signal(idsp,sampleCount)) return false;
+        if (! is_candidate_indel_impl_test_weak_signal(id)) return false;
     }
 
     /////////////////////////////////////////
@@ -192,9 +230,10 @@ is_candidate_indel_impl_test(
     /////////////////////////////////////////
     // test against max_depth:
     //
+    const unsigned sampleCount(getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const double max_depth(idata(sampleIndex).max_depth);
+        const double max_depth(getIndelSampleData(sampleIndex).max_depth);
         if (max_depth <= 0.) continue;
 
         const unsigned estdepth(ebuff(sampleIndex).val(ik.pos-1));
@@ -210,36 +249,12 @@ is_candidate_indel_impl_test(
 void
 indel_synchronizer::
 is_candidate_indel_impl(
-    const unsigned sampleId,
     const indel_key& ik,
-    const indel_data& id) const
+    const IndelData& id) const
 {
-    //////////////////////////////////////
-    // lookup all indel_data objects:
-    //
-    const indel_data* idsp[MAX_SAMPLE];
-
-    const unsigned sampleCount(getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-    {
-        if (sampleIndex==sampleId)
-        {
-            idsp[sampleIndex] = &id;
-        }
-        else
-        {
-            idsp[sampleIndex] = ibuff(sampleIndex).get_indel_data_ptr(ik);
-            assert(nullptr != idsp[sampleIndex]);
-        }
-    }
-
-    const bool is_candidate(is_candidate_indel_impl_test(ik,id,idsp,sampleCount));
-
-    for (unsigned i(0); i<sampleCount; ++i)
-    {
-        idsp[i]->status.is_candidate_indel=is_candidate;
-        idsp[i]->status.is_candidate_indel_cached=true;
-    }
+    const bool is_candidate(is_candidate_indel_impl_test(ik,id));
+    id.status.is_candidate_indel = is_candidate;
+    id.status.is_candidate_indel_cached = true;
 }
 
 
@@ -253,3 +268,52 @@ find_data_exception(const indel_key& ik) const
     throw blt_exception(oss.str().c_str());
 }
 
+
+
+void
+indel_synchronizer::
+clear_pos(const pos_t pos)
+{
+    const iterator i_begin(pos_iter(pos));
+    const iterator i_end(pos_iter(pos+1));
+    _indelBuffer.erase(i_begin,i_end);
+}
+
+
+
+static
+void
+dump_range(
+    indel_synchronizer::const_iterator i,
+    const indel_synchronizer::const_iterator i_end,
+    std::ostream& os)
+{
+    for (; i!=i_end; ++i)
+    {
+        os << "INDEL_KEY: " << i->first;
+        os << "INDEL_DATA:\n";
+        os << get_indel_data(i);
+    }
+}
+
+
+
+void
+indel_synchronizer::
+dump_pos(
+    const pos_t pos,
+    std::ostream& os) const
+{
+    dump_range(pos_iter(pos),pos_iter(pos+1),os);
+}
+
+
+
+void
+indel_synchronizer::
+dump(std::ostream& os) const
+{
+    os << "INDEL_BUFFER DUMP ON\n";
+    dump_range(_indelBuffer.begin(),_indelBuffer.end(),os);
+    os << "INDEL_BUFFER DUMP OFF\n";
+}

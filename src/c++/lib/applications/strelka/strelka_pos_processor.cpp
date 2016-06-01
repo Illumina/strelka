@@ -84,13 +84,13 @@ strelka_pos_processor(
 
         /// TODO: setup a stronger sample id handler -- using the version from manta would be a good start here
         sample_id_t sample_id;
-        sample_id = indel_sync().register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, max_candidate_normal_sample_depth);
+        sample_id = indel_sync().register_sample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
+                                                 normal_sif.sample_opt, max_candidate_normal_sample_depth);
 
         assert(sample_id == NORMAL);
 
-        sample_id = indel_sync().register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
-                               tumor_sif.sample_opt, -1.);
+        sample_id = indel_sync().register_sample(tumor_sif.estdepth_buff, tumor_sif.estdepth_buff_tier2,
+                                                 tumor_sif.sample_opt, -1.);
 
         assert(sample_id == TUMOR);
 
@@ -268,33 +268,24 @@ process_pos_indel_somatic(const pos_t pos)
     sample_info& normal_sif(sample(NORMAL));
     sample_info& tumor_sif(sample(TUMOR));
 
-    // with indel synchronization turned on in this model, we should
-    // only need to iterate through one sample or the other -- for now
-    // we just pick one -- would be nicer in the future to have a way
-    // to
-    //
-    typedef indel_buffer::const_iterator ciiter;
-    ciiter i(tumor_sif.indel_buff.pos_iter(pos));
-    const ciiter i_end(tumor_sif.indel_buff.pos_iter(pos+1));
+    auto indelIter(indel_sync().pos_iter(pos));
+    const auto indelIterEnd(indel_sync().pos_iter(pos+1));
 
-    for (; i!=i_end; ++i)
+    for(;indelIter != indelIterEnd; ++indelIter)
     {
-        const indel_key& ik(i->first);
+        const indel_key& ik(indelIter->first);
 
         // don't write breakpoint output:
         if (ik.is_breakpoint()) continue;
 
-        const indel_data& tumor_id(get_indel_data(i));
+        const IndelData& id(get_indel_data(indelIter));
 
-        if (! indel_sync().is_candidate_indel(TUMOR, ik, tumor_id)) continue;
+        if (! indel_sync().is_candidate_indel(ik, id)) continue;
 
-        const indel_data* normal_id_ptr(normal_sif.indel_buff.get_indel_data_ptr(ik));
-        assert(NULL != normal_id_ptr);
-        const indel_data& normal_id(*normal_id_ptr);
+        const IndelSampleData& normal_isd(id.getSampleData(NORMAL));
+        const IndelSampleData& tumor_isd(id.getSampleData(TUMOR));
 
-        if (normal_id.read_path_lnp.empty() && tumor_id.read_path_lnp.empty()) continue;
-
-        //bool is_indel(false);
+        if (normal_isd.read_path_lnp.empty() && tumor_isd.read_path_lnp.empty()) continue;
 
         if (_opt.is_somatic_indel())
         {
@@ -304,7 +295,7 @@ process_pos_indel_somatic(const pos_t pos)
 
             // get iri from either sample:
             starling_indel_report_info iri;
-            get_starling_indel_report_info(ik,tumor_id,_ref,iri);
+            get_starling_indel_report_info(ik,id,_ref,iri);
 
             // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
             if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
@@ -319,7 +310,7 @@ process_pos_indel_somatic(const pos_t pos)
                                                     normal_sif.sample_opt,
                                                     tumor_sif.sample_opt,
                                                     refToIndelErrorProb,indelToRefErrorProb,
-                                                    ik,normal_id,tumor_id,
+                                                    ik, id, NORMAL,TUMOR,
                                                     is_use_alt_indel,
                                                     sindel);
 
@@ -333,10 +324,10 @@ process_pos_indel_somatic(const pos_t pos)
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);
-                    get_starling_indel_sample_report_info(_dopt,ik,normal_id,normal_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_dopt,ik,normal_isd,normal_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.nisri[t]);
-                    get_starling_indel_sample_report_info(_dopt,ik,tumor_id,tumor_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_dopt,ik,tumor_isd,tumor_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.tisri[t]);
                 }

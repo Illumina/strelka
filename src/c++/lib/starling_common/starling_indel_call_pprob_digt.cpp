@@ -161,7 +161,7 @@ get_high_low_het_ratio_lhood(
     const double ref_error_lnp,
     const double ref_real_lnp,
     const indel_key& ik,
-    const indel_data& id,
+    const IndelSampleData& isd,
     const double het_ratio,
     const bool is_tier2_pass,
     const bool is_use_alt_indel,
@@ -179,7 +179,7 @@ get_high_low_het_ratio_lhood(
     het_lhood_high=0;
     het_lhood_low=0;
 
-    for (const auto& score : id.read_path_lnp)
+    for (const auto& score : isd.read_path_lnp)
     {
         const read_path_scores& path_lnp(score.second);
 
@@ -251,7 +251,7 @@ increment_het_ratio_lhood(
     const double ref_error_lnp,
     const double ref_real_lnp,
     const indel_key& ik,
-    const indel_data& id,
+    const IndelSampleData& isd,
     const double het_ratio,
     const bool is_tier2_pass,
     const bool is_use_alt_indel,
@@ -264,7 +264,7 @@ increment_het_ratio_lhood(
     indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,sample_opt,
                                                     indel_error_lnp,indel_real_lnp,
                                                     ref_error_lnp,ref_real_lnp,
-                                                    ik,id,het_ratio,is_tier2_pass,
+                                                    ik,isd,het_ratio,is_tier2_pass,
                                                     is_use_alt_indel,
                                                     het_lhood_high,het_lhood_low);
 
@@ -279,7 +279,7 @@ increment_het_ratio_lhood(
 void
 get_sum_path_pprob(
     const starling_base_deriv_options& dopt,
-    const indel_data& id,
+    const IndelSampleData& isd,
     const bool is_tier2_pass,
     const bool is_use_alt_indel,
     read_path_scores& total_pprob,
@@ -297,7 +297,7 @@ get_sum_path_pprob(
     typedef std::map<indel_key,unsigned> aimap_t;
     aimap_t alt_indel_index;
 
-    for (const auto& score : id.read_path_lnp)
+    for (const auto& score : isd.read_path_lnp)
     {
         const read_path_scores& path_lnp(score.second);
 
@@ -342,7 +342,7 @@ static
 bool
 is_diploid_indel_noise(
     const starling_base_deriv_options& dopt,
-    const indel_data& id,
+    const IndelSampleData& isd,
     const bool is_tier2_pass)
 {
     static const bool is_use_alt_indel(true);
@@ -352,7 +352,7 @@ is_diploid_indel_noise(
 
     // first sum every read intersecting the indel:
     read_path_scores total_pprob;
-    get_sum_path_pprob(dopt,id,is_tier2_pass,is_use_alt_indel,total_pprob);
+    get_sum_path_pprob(dopt,isd,is_tier2_pass,is_use_alt_indel,total_pprob);
 
     enum iallele_t
     {
@@ -421,7 +421,7 @@ get_indel_digt_lhood(
     const double indel_error_prob,
     const double ref_error_prob,
     const indel_key& ik,
-    const indel_data& id,
+    const IndelSampleData& isd,
     const bool is_het_bias,
     const double het_bias,
     const bool is_tier2_pass,
@@ -439,7 +439,7 @@ get_indel_digt_lhood(
     const double ref_error_lnp(std::log(ref_error_prob));
     const double ref_real_lnp(std::log(1.-ref_error_prob));
 
-    for (const auto& score : id.read_path_lnp)
+    for (const auto& score : isd.read_path_lnp)
     {
         const read_path_scores& path_lnp(score.second);
 
@@ -503,7 +503,7 @@ get_indel_digt_lhood(
             increment_het_ratio_lhood(opt,dopt,sample_opt,
                                       indel_error_lnp,indel_real_lnp,
                                       ref_error_lnp,ref_real_lnp,
-                                      ik,id,het_ratio,is_tier2_pass,is_use_alt_indel,lhood);
+                                      ik,isd,het_ratio,is_tier2_pass,is_use_alt_indel,lhood);
         }
 
         const unsigned n_het_subgt(1+2*n_bias_steps);
@@ -518,22 +518,23 @@ get_indel_digt_lhood(
 ///
 void
 indel_digt_caller::
-starling_indel_call_pprob_digt(const starling_base_options& opt,
-                               const starling_base_deriv_options& dopt,
-                               const starling_sample_options& sample_opt,
-                               const double indel_error_prob,
-                               const double ref_error_prob,
-                               const indel_key& ik,
-                               const indel_data& id,
-                               const bool is_use_alt_indel,
-                               starling_diploid_indel& dindel) const
+starling_indel_call_pprob_digt(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const double indel_error_prob,
+    const double ref_error_prob,
+    const indel_key& ik,
+    const IndelSampleData& isd,
+    const bool is_use_alt_indel,
+    starling_diploid_indel& dindel) const
 {
     // no immediate plans to include this for regular indel-calling:
     static const bool is_tier2_pass(false);
 
     const bool is_haploid(dindel.is_haploid());
 
-    if (opt.is_noise_indel_filter && is_diploid_indel_noise(dopt,id,is_tier2_pass))
+    if (opt.is_noise_indel_filter && is_diploid_indel_noise(dopt,isd,is_tier2_pass))
     {
         dindel.is_indel=false;
         return;
@@ -544,7 +545,7 @@ starling_indel_call_pprob_digt(const starling_base_options& opt,
 
     // get likelihood of each genotype:
     double lhood[STAR_DIINDEL::SIZE];
-    get_indel_digt_lhood(opt,dopt,sample_opt,indel_error_prob,ref_error_prob,ik,id,
+    get_indel_digt_lhood(opt,dopt,sample_opt,indel_error_prob,ref_error_prob,ik,isd,
                          is_het_bias,opt.bindel_diploid_het_bias,
                          is_tier2_pass,is_use_alt_indel,lhood);
 

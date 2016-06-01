@@ -32,7 +32,6 @@
 #include "blt_util/RegionTracker.hh"
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
-#include "starling_common/indel_buffer.hh"
 #include "starling_common/indel_set.hh"
 #include "starling_common/indel_synchronizer.hh"
 #include "starling_common/PileupCleaner.hh"
@@ -279,8 +278,7 @@ public:
             const unsigned report_size,
             const unsigned knownref_report_size,
             read_id_counter* ricp)
-            : indel_buff(opt.max_indel_size)
-            , bc_buff(ref)
+            : bc_buff(ref)
             , read_buff(ricp)
             , sample_opt(opt)
             , ss(report_size)
@@ -295,7 +293,6 @@ public:
             }
         }
 
-        indel_buffer indel_buff;
         pos_basecall_buffer bc_buff;
         starling_read_buffer read_buff;
         depth_buffer estdepth_buff; // provide an early estimate of read depth before realignment.
@@ -521,13 +518,13 @@ private:
     {
         if (! _is_skip_process_pos)
         {
-            for (unsigned s(0); s<_n_samples; ++s)
+            for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
             {
-                const sample_info& sif(sample(s));
+                const sample_info& sif(sample(sampleIndex));
                 if (! sif.read_buff.empty()) return false;
                 if (! sif.bc_buff.empty()) return false;
-                if (! sif.indel_buff.empty()) return false;
             }
+            if (! _indel_sync.empty()) return false;
             if (! _variant_print_pos.empty()) return false;
             if (! _forced_output_pos.empty()) return false;
             if (! derived_empty()) return false;

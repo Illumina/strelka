@@ -35,9 +35,6 @@
 #include <vector>
 
 
-typedef indel_buffer::iterator iiter;
-typedef indel_buffer::const_iterator ciiter;
-
 typedef std::map<indel_key,bool> indel_status_map_t;
 
 
