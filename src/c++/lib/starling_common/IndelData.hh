@@ -39,7 +39,7 @@
 
 /// represents the data associated with a single indel observation:
 ///
-struct indel_observation_data
+struct IndelObservationData
 {
     bool is_noise = false;
     bool is_external_candidate = false;
@@ -56,18 +56,18 @@ struct indel_observation_data
 /// to the indel or the reference (or elsewhere in the genome). Used
 /// for indel genotyping.
 ///
-struct read_path_scores
+struct ReadPathScores
 {
     typedef float score_t;
 
-    read_path_scores(const score_t r=0,
-                     const score_t i=0,
-                     const uint16_t ns=0,
-                     const uint16_t rlen=0,
-                     const bool is_t1=true,
-                     const bool is_fwd=true,
-                     const int16_t rp=0
-                    )
+    ReadPathScores(
+        const score_t r=0,
+        const score_t i=0,
+        const uint16_t ns=0,
+        const uint16_t rlen=0,
+        const bool is_t1=true,
+        const bool is_fwd=true,
+        const int16_t rp=0)
         : ref(r)
         , indel(i)
         , nsite(ns)
@@ -78,8 +78,9 @@ struct read_path_scores
     {}
 
     void
-    insert_alt(const indel_key& ik,
-               const score_t a);
+    insertAlt(
+        const indel_key& ik,
+        const score_t a);
 
     score_t ref;
     score_t indel;
@@ -115,7 +116,7 @@ struct read_path_scores
 /// Note that for open-breakends we also report the longest insert
 /// candidate, and consider the most prevalent as a secondary term.
 ///
-struct insert_seq_manager
+struct InsertSequenceManager
 {
     // get final consensus sequence:
     const std::string&
@@ -133,7 +134,7 @@ struct insert_seq_manager
     // note that this test will not trigger consensus finalization,
     // so it is substantially different than get().size()
     unsigned
-    get_size() const
+    getSize() const
     {
         if (_is_consensus) return _consensus_seq.size();
 
@@ -149,7 +150,7 @@ struct insert_seq_manager
 
     // add insert sequence observation:
     void
-    add_obs(const std::string& seq)
+    addObservation(const std::string& seq)
     {
         if (_is_consensus)
         {
@@ -192,8 +193,8 @@ private:
 struct IndelSampleData
 {
     void
-    addObservation(
-        const indel_observation_data& obs_data);
+    addIndelObservation(
+        const IndelObservationData& obs_data);
 
 // ------------- data ------------------
 
@@ -214,7 +215,7 @@ struct IndelSampleData
     // enumerates support for the indel among all reads
     // which cross an indel breakpoint by a sufficient margin after
     // re-alignment:
-    typedef std::map<align_id_t,read_path_scores> score_t;
+    typedef std::map<align_id_t,ReadPathScores> score_t;
     score_t read_path_lnp;
 
     // the reads which cross an indel breakpoint, but not by enough
@@ -257,12 +258,12 @@ struct IndelData
     }
 
     void
-    addObservation(
+    addIndelObservation(
         const unsigned sampleId,
-        const indel_observation_data& obs_data);
+        const IndelObservationData& obs_data);
 
     const std::string&
-    get_insert_seq() const
+    getInsertSeq() const
     {
         return _insert_seq.get();
     }
@@ -270,9 +271,9 @@ struct IndelData
     /// this test is different than asking for insert-seq in that it does not
     /// trigger insert sequence consensus generation:
     unsigned
-    get_insert_size() const
+    getInsertSize() const
     {
-        return _insert_seq.get_size();
+        return _insert_seq.getSize();
     }
 
 private:
@@ -296,7 +297,7 @@ public:
 
 private:
     std::vector<IndelSampleData> _sampleData;
-    mutable insert_seq_manager _insert_seq;
+    mutable InsertSequenceManager _insert_seq;
 
     // indel key stored for debugging only
     indel_key _ik;
@@ -305,7 +306,7 @@ private:
 
 
 // Debugging dumps:
-std::ostream& operator<<(std::ostream& os, const indel_observation_data& id);
-std::ostream& operator<<(std::ostream& os, const read_path_scores& rps);
+std::ostream& operator<<(std::ostream& os, const IndelObservationData& id);
+std::ostream& operator<<(std::ostream& os, const ReadPathScores& rps);
 std::ostream& operator<<(std::ostream& os, const IndelSampleData& id);
 std::ostream& operator<<(std::ostream& os, const IndelData& id);

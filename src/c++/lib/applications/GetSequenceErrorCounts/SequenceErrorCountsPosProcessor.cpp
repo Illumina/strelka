@@ -74,13 +74,12 @@ SequenceErrorCountsPosProcessor(
             }
         }
 
-        sample_id_t syncSampleId;
-        syncSampleId = indel_sync().register_sample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                    normal_sif.sample_opt, _max_candidate_normal_sample_depth);
+        const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
+                                                       _max_candidate_normal_sample_depth);
 
         assert(syncSampleId == sampleId);
 
-        indel_sync().finalizeSamples();
+        getIndelBuffer().finalizeSamples();
     }
 }
 
@@ -161,10 +160,10 @@ struct OrthogonalHaplotypeCandidateGroup
         const unsigned index) const
     {
         assert(index < size());
-        return get_indel_data(iter(index));
+        return getIndelData(iter(index));
     }
 
-    const indel_synchronizer::const_iterator&
+    const IndelBuffer::const_iterator&
     iter(
         const unsigned index) const
     {
@@ -192,12 +191,12 @@ struct OrthogonalHaplotypeCandidateGroup
 
     void
     addHaplotype(
-        const indel_synchronizer::const_iterator hapIter)
+        const IndelBuffer::const_iterator hapIter)
     {
         haps.push_back(hapIter);
     }
 
-    std::vector<indel_synchronizer::const_iterator> haps;
+    std::vector<IndelBuffer::const_iterator> haps;
 };
 
 
@@ -279,7 +278,7 @@ getOrthogonalHaplotypeSupportCounts(
                 continue;
             }
 
-            const read_path_scores& path_lnp(iditer->second);
+            const ReadPathScores& path_lnp(iditer->second);
 
             lhood[refHapIndex] = std::max(lhood[refHapIndex],static_cast<double>(path_lnp.ref));
             lhood[nonrefHapIndex] = path_lnp.indel;
@@ -516,13 +515,13 @@ process_pos_error_counts(
     //
     std::vector<OrthogonalHaplotypeCandidateGroup> _groups;
 
-    auto it(indel_sync().pos_iter(pos));
-    const auto it_end(indel_sync().pos_iter(pos+1));
+    auto it(getIndelBuffer().positionIterator(pos));
+    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
     for (; it!=it_end; ++it)
     {
         const indel_key& ik(it->first);
-        const IndelData& id(get_indel_data(it));
+        const IndelData& id(getIndelData(it));
 
         if (ik.is_breakpoint()) continue;
 
@@ -530,7 +529,7 @@ process_pos_error_counts(
 
         if (! isForcedOutput)
         {
-            if (! indel_sync().is_candidate_indel(ik, id)) continue;
+            if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
         }
 
         if (! (ik.type == INDEL::DELETE || ik.type == INDEL::INSERT)) continue;

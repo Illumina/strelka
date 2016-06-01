@@ -115,7 +115,7 @@ is_multi_indel_allele(
     };
 
     // get total pprob:
-    read_path_scores total_pprob;
+    ReadPathScores total_pprob;
     get_sum_path_pprob(dopt,normal_isd,is_include_tier2,is_use_alt_indel,total_pprob,true);
     get_sum_path_pprob(dopt,tumor_isd,is_include_tier2,is_use_alt_indel,total_pprob,false);
 
@@ -123,7 +123,7 @@ is_multi_indel_allele(
     std::vector<std::pair<double,int> > scores;
     scores.push_back(std::make_pair(-total_pprob.indel,static_cast<int>(INDEL)));
     scores.push_back(std::make_pair(-total_pprob.ref,static_cast<int>(REF)));
-    const read_path_scores::alt_indel_t& ai(total_pprob.alt_indel);
+    const ReadPathScores::alt_indel_t& ai(total_pprob.alt_indel);
     const int ais(ai.size());
     for (int i(0); i<ais; ++i)
     {

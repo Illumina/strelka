@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_SUITE( sppr_util_test )
 BOOST_AUTO_TEST_CASE( test_vcf_to_allele )
 {
     static const unsigned max_indel_size(50);
-    indel_observation obs;
+    IndelObservation obs;
     bool isConverted;
 
     {

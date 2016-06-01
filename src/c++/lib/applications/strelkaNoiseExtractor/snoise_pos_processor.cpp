@@ -64,11 +64,10 @@ snoise_pos_processor(
             }
         }
 
-        sample_id_t syncSampleId;
-        syncSampleId = indel_sync().register_sample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                    normal_sif.sample_opt, max_candidate_normal_sample_depth);
+        const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
+                                                       max_candidate_normal_sample_depth);
         assert(syncSampleId == sampleId);
-        indel_sync().finalizeSamples();
+        getIndelBuffer().finalizeSamples();
     }
 }
 

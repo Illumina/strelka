@@ -142,7 +142,7 @@ score_segment(const starling_base_options& /*opt*/,
 double
 score_candidate_alignment(
     const starling_base_options& opt,
-    const indel_synchronizer& isync,
+    const IndelBuffer& indelBuffer,
     const read_segment& rseg,
     const candidate_alignment& cal,
     const reference_contig_segment& ref)
@@ -203,7 +203,7 @@ score_candidate_alignment(
                 assert(ik.type!=INDEL::NONE);
             }
 
-            const IndelData* id_ptr(isync.get_indel_data_ptr(ik));
+            const IndelData* id_ptr(indelBuffer.getIndelDataPtr(ik));
             if (nullptr == id_ptr)
             {
                 std::ostringstream oss;
@@ -212,7 +212,7 @@ score_candidate_alignment(
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->get_insert_seq());
+            const string_bam_seq insert_bseq(id_ptr->getInsertSeq());
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:
@@ -287,7 +287,7 @@ score_candidate_alignment(
                 assert(ik.type!=INDEL::NONE);
             }
 
-            const IndelData* id_ptr(isync.get_indel_data_ptr(ik));
+            const IndelData* id_ptr(indelBuffer.getIndelDataPtr(ik));
             if (nullptr == id_ptr)
             {
                 std::ostringstream oss;
@@ -296,7 +296,7 @@ score_candidate_alignment(
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->get_insert_seq());
+            const string_bam_seq insert_bseq(id_ptr->getInsertSeq());
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:

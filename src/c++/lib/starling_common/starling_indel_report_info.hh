@@ -103,10 +103,10 @@ std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_in
 
 /// translate read path likelihoods to posterior probs
 ///
-read_path_scores
+ReadPathScores
 indel_lnp_to_pprob(
     const starling_base_deriv_options& client_dopt,
-    const read_path_scores& read_path_lnp,
+    const ReadPathScores& read_path_lnp,
     const bool is_tier2_pass,
     const bool is_use_alt_indel);
 

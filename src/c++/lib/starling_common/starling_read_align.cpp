@@ -91,11 +91,11 @@ static
 bool
 check_for_candidate_indel_overlap(
     const known_pos_range realign_buffer_range,
-    const read_segment &rseg,
-    const indel_synchronizer &isync)
+    const read_segment& rseg,
+    const IndelBuffer& indelBuffer)
 {
 #ifdef DEBUG_ALIGN
-    std::cerr << "BUGBUG testing read_segment for indel overlap, sample_no: " << isync.get_sample_id() << " rseg: " << rseg;
+    std::cerr << "BUGBUG testing read_segment for indel overlap, sample_no: " << indelBuffer.get_sample_id() << " rseg: " << rseg;
 #endif
 
     // get liberally interpreted min, max ref coordinate bounds for the input alignment;
@@ -112,7 +112,7 @@ check_for_candidate_indel_overlap(
     std::cerr << "VARMIT read extends: " << read_range << "\n";
 #endif
 
-    const auto indelIterPair(isync.pos_range_iter(read_range.begin_pos,read_range.end_pos));
+    const auto indelIterPair(indelBuffer.rangeIterator(read_range.begin_pos, read_range.end_pos));
     for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
     {
         const indel_key& ik(indelIter->first);
@@ -122,13 +122,13 @@ check_for_candidate_indel_overlap(
         // check if read intersects with indel breakpoint:
         if (! is_range_intersect_indel_breakpoints(read_range,ik)) continue;
 
-        const IndelData& id(get_indel_data(indelIter));
+        const IndelData& id(getIndelData(indelIter));
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT intersects indel: " << ik << id;
 #endif
 
         // check if indel qualifies as candidate indel:
-        if (isync.is_candidate_indel(ik, id))
+        if (indelBuffer.isCandidateIndel(ik, id))
         {
 #ifdef DEBUG_ALIGN
             std::cerr << "VARMIT read segment intersects at least one qualifying candidate indel.\n";
@@ -162,13 +162,13 @@ dump_indel_status(const starling_align_indel_status& ismap,
 static
 bool
 is_usable_indel(
-    const indel_synchronizer &isync,
-    const indel_key &ik,
-    const IndelData &id,
+    const IndelBuffer& indelBuffer,
+    const indel_key& ik,
+    const IndelData& id,
     const align_id_t read_id,
     const unsigned sampleId)
 {
-    if (isync.is_candidate_indel(ik, id)) return true;
+    if (indelBuffer.isCandidateIndel(ik, id)) return true;
 
     const IndelSampleData& isd(id.getSampleData(sampleId));
     return ((isd.tier1_map_read_ids.count(read_id)>0) ||
@@ -185,13 +185,13 @@ static
 void
 add_indels_in_range(
     const align_id_t read_id,
-    const indel_synchronizer &isync,
-    const known_pos_range &pr,
+    const IndelBuffer& indelBuffer,
+    const known_pos_range& pr,
     const unsigned sampleId,
-    starling_align_indel_status &indel_status_map,
-    std::vector<indel_key> &indel_order)
+    starling_align_indel_status& indel_status_map,
+    std::vector<indel_key>& indel_order)
 {
-    const auto indelIterPair(isync.pos_range_iter(pr.begin_pos,pr.end_pos));
+    const auto indelIterPair(indelBuffer.rangeIterator(pr.begin_pos, pr.end_pos));
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT CHECKING INDELS IN RANGE: " << pr << "\n";
 #endif
@@ -202,7 +202,7 @@ add_indels_in_range(
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT INDEL CANDIDATE " << ik;
         std::cerr << "Intersect?: " << is_range_intersect_indel_breakpoints(pr,ik) << "\n";
-        std::cerr << "Usable?: " <<  is_usable_indel(isync,ik,get_indel_data(i),read_id) << "\n";
+        std::cerr << "Usable?: " <<  is_usable_indel(indelBuffer,ik,get_indel_data(i),read_id) << "\n";
         std::cerr << "Count: " << indel_status_map.count(ik) << "\n";
 #endif
         // check if the indel is not intersecting or adjacent -- if neither we don't need to
@@ -227,8 +227,8 @@ add_indels_in_range(
         }
         else
         {
-            const IndelData& id(get_indel_data(indelIter));
-            if (is_usable_indel(isync, ik, id, read_id, sampleId))
+            const IndelData& id(getIndelData(indelIter));
+            if (is_usable_indel(indelBuffer, ik, id, read_id, sampleId))
             {
                 indel_status_map[ik].is_present = false;
                 indel_status_map[ik].is_remove_only = is_remove_only;
@@ -634,22 +634,22 @@ add_pin_exception_info(
 static
 void
 candidate_alignment_search(
-    const starling_base_options &client_opt,
-    const starling_base_deriv_options &client_dopt,
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
     const align_id_t read_id,
     const unsigned read_length,
-    const indel_synchronizer &isync,
+    const IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    const known_pos_range &realign_buffer_range,
-    std::set<candidate_alignment> &cal_set,
-    mca_warnings &warn,
+    const known_pos_range& realign_buffer_range,
+    std::set<candidate_alignment>& cal_set,
+    mca_warnings& warn,
     starling_align_indel_status indel_status_map,
     std::vector<indel_key> indel_order,
     const unsigned depth,
     const unsigned toggle_depth,
     known_pos_range read_range,
     int max_read_indel_toggle,
-    const candidate_alignment &cal)
+    const candidate_alignment& cal)
 {
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT starting MCA depth: " << depth << "\n";
@@ -674,13 +674,13 @@ candidate_alignment_search(
 
         if (pr.begin_pos < read_range.begin_pos)
         {
-            add_indels_in_range(read_id, isync, known_pos_range(pr.begin_pos, read_range.begin_pos + 1), sampleId,
+            add_indels_in_range(read_id, indelBuffer, known_pos_range(pr.begin_pos, read_range.begin_pos + 1), sampleId,
                                 indel_status_map, indel_order);
             read_range.begin_pos = pr.begin_pos;
         }
         if (pr.end_pos > read_range.end_pos)
         {
-            add_indels_in_range(read_id, isync, known_pos_range(read_range.end_pos - 1, pr.end_pos), sampleId,
+            add_indels_in_range(read_id, indelBuffer, known_pos_range(read_range.end_pos - 1, pr.end_pos), sampleId,
                                 indel_status_map, indel_order);
             read_range.end_pos = pr.end_pos;
         }
@@ -721,20 +721,20 @@ candidate_alignment_search(
         // max indel size is ever run around the order of 10k or more this
         // might start to spuriously engage the filter.
         //
-        const double max_indels(read_length*client_opt.max_candidate_indel_density);
+        const double max_indels(read_length*opt.max_candidate_indel_density);
         if (indel_status_map.size()>max_indels)
         {
             max_read_indel_toggle=1;
         }
         else
         {
-            max_read_indel_toggle=client_opt.max_read_indel_toggle;
+            max_read_indel_toggle=opt.max_read_indel_toggle;
         }
 
         // a new stronger complexity limit on search based on total candidate indels crossing the read:
         //
         {
-            const int max_toggle(client_dopt.sal.get_max_toggle(indel_status_map.size()));
+            const int max_toggle(dopt.sal.get_max_toggle(indel_status_map.size()));
             max_read_indel_toggle=std::min(max_read_indel_toggle,max_toggle);
         }
     }
@@ -771,7 +771,7 @@ candidate_alignment_search(
     // alignment 1) --> unchanged case:
     try
     {
-        candidate_alignment_search(client_opt, client_dopt, read_id, read_length, isync, sampleId, realign_buffer_range,
+        candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, sampleId, realign_buffer_range,
                                    cal_set,
                                    warn, indel_status_map,
                                    indel_order, depth + 1, toggle_depth, read_range, max_read_indel_toggle, cal);
@@ -857,7 +857,7 @@ candidate_alignment_search(
                                                      read_length,
                                                      current_indels);
 
-                candidate_alignment_search(client_opt, client_dopt, read_id, read_length, isync, sampleId,
+                candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, sampleId,
                                            realign_buffer_range, cal_set,
                                            warn, indel_status_map,
                                            indel_order, depth + 1, toggle_depth + 1, read_range, max_read_indel_toggle,
@@ -923,7 +923,7 @@ candidate_alignment_search(
                                                          read_length,
                                                          current_indels);
 
-                    candidate_alignment_search(client_opt, client_dopt, read_id, read_length, isync, sampleId,
+                    candidate_alignment_search(opt, dopt, read_id, read_length, indelBuffer, sampleId,
                                                realign_buffer_range, cal_set,
                                                warn, indel_status_map,
                                                indel_order, depth + 1, toggle_depth + 1, read_range,
@@ -987,17 +987,17 @@ get_extra_path_info(const ALIGNPATH::path_t& p)
 static
 unsigned int
 get_candidate_indel_count(
-    const starling_base_options &client_opt,
-    const indel_synchronizer &isync,
-    const candidate_alignment &cal)
+    const starling_base_options& opt,
+    const IndelBuffer& indelBuffer,
+    const candidate_alignment& cal)
 {
     indel_set_t is;
-    get_alignment_indels(cal,client_opt.max_indel_size,is);
+    get_alignment_indels(cal,opt.max_indel_size,is);
 
     unsigned val(0);
     for (const indel_key& ik : is)
     {
-        if (isync.is_candidate_indel(ik)) val++;
+        if (indelBuffer.isCandidateIndel(ik)) val++;
     }
     return val;
 }
@@ -1014,10 +1014,10 @@ get_candidate_indel_count(
 static
 bool
 is_first_cal_preferred(
-    const starling_base_options &client_opt,
-    const indel_synchronizer &isync,
-    const candidate_alignment &c1,
-    const candidate_alignment &c2)
+    const starling_base_options& opt,
+    const IndelBuffer& indelBuffer,
+    const candidate_alignment& c1,
+    const candidate_alignment& c2)
 {
     const extra_path_info epi1(get_extra_path_info(c1.al.path));
     const extra_path_info epi2(get_extra_path_info(c2.al.path));
@@ -1025,8 +1025,8 @@ is_first_cal_preferred(
     if (epi2.indel_count < epi1.indel_count) return false;
     if (epi2.indel_count == epi1.indel_count)
     {
-        const unsigned cic1(get_candidate_indel_count(client_opt, isync, c1));
-        const unsigned cic2(get_candidate_indel_count(client_opt, isync, c2));
+        const unsigned cic1(get_candidate_indel_count(opt, indelBuffer, c1));
+        const unsigned cic2(get_candidate_indel_count(opt, indelBuffer, c2));
         if (cic2 > cic1) return false;
         if (cic2 == cic1)
         {
@@ -1130,14 +1130,14 @@ is_alignment_spanned_by_range(const known_pos_range pr,
 static
 void
 score_candidate_alignments(
-    const starling_base_options &opt,
-    const reference_contig_segment &ref,
-    read_segment &rseg,
-    indel_synchronizer &isync,
-    const std::set<candidate_alignment> &candAlignments,
-    std::vector<double> &candAlignmentScores,
-    double &maxCandAlignmentScore,
-    const candidate_alignment *&maxCandAlignmentPtr)
+    const starling_base_options& opt,
+    const reference_contig_segment& ref,
+    read_segment& rseg,
+    IndelBuffer& indelBuffer,
+    const std::set<candidate_alignment>& candAlignments,
+    std::vector<double>& candAlignmentScores,
+    double& maxCandAlignmentScore,
+    const candidate_alignment*& maxCandAlignmentPtr)
 {
     // the smooth optimum alignment and alignment pool are actually
     // used for realignment, whereas the strict max_path path
@@ -1160,7 +1160,7 @@ score_candidate_alignments(
     for (citer cal_iter(cal_set_begin); cal_iter!=cal_set_end; ++cal_iter)
     {
         const candidate_alignment& ical(*cal_iter);
-        const double path_lnp(score_candidate_alignment(opt,isync,rseg,ical,ref));
+        const double path_lnp(score_candidate_alignment(opt,indelBuffer,rseg,ical,ref));
 
         candAlignmentScores.push_back(path_lnp);
 
@@ -1181,7 +1181,7 @@ score_candidate_alignments(
             // score is calculated, but it's still not preferred)
             //
             if ((path_lnp<=maxCandAlignmentScore) &&
-                is_first_cal_preferred(opt, isync, *maxCandAlignmentPtr, ical)) continue;
+                is_first_cal_preferred(opt, indelBuffer, *maxCandAlignmentPtr, ical)) continue;
         }
         maxCandAlignmentScore=path_lnp;
         maxCandAlignmentPtr=&ical;
@@ -1262,7 +1262,7 @@ score_candidate_alignments(
         const candidate_alignment& ical(*cal_iter);
         smooth_cal_pool.push_back(&ical);
         if ((NULL==smooth_cal_ptr) ||
-            (!is_first_cal_preferred(opt, isync, *smooth_cal_ptr, ical)))
+            (!is_first_cal_preferred(opt, indelBuffer, *smooth_cal_ptr, ical)))
         {
             smooth_path_lnp=candAlignmentScores[cal_index];
             smooth_cal_ptr=&ical;
@@ -1311,14 +1311,14 @@ score_candidate_alignments(
 static
 void
 score_candidate_alignments_and_indels(
-    const starling_base_options &opt,
-    const starling_base_deriv_options &dopt,
-    const starling_sample_options &sample_opt,
-    const reference_contig_segment &ref,
-    read_segment &rseg,
-    indel_synchronizer &isync,
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const reference_contig_segment& ref,
+    read_segment& rseg,
+    IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    std::set<candidate_alignment> &candAlignments,
+    std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search)
 {
     assert(! candAlignments.empty());
@@ -1339,7 +1339,7 @@ score_candidate_alignments_and_indels(
 
     try
     {
-        score_candidate_alignments(opt, ref, rseg, isync, candAlignments,
+        score_candidate_alignments(opt, ref, rseg, indelBuffer, candAlignments,
                                    candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
     catch (...)
@@ -1361,7 +1361,7 @@ score_candidate_alignments_and_indels(
 
     try
     {
-        score_indels(opt, dopt, sample_opt, rseg, isync, sampleId, candAlignments, is_incomplete_search,
+        score_indels(opt, dopt, sample_opt, rseg, indelBuffer, sampleId, candAlignments, is_incomplete_search,
                      candAlignmentScores, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
     catch (...)
@@ -1425,15 +1425,15 @@ load_cal_with_edge_indels(const alignment& al,
 static
 void
 get_candidate_alignments(
-    const starling_base_options &opt,
-    const starling_base_deriv_options &dopt,
-    const read_segment &rseg,
-    const indel_synchronizer &isync,
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const read_segment& rseg,
+    const IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    const alignment &inputAlignment,
+    const alignment& inputAlignment,
     const known_pos_range realign_buffer_range,
-    mca_warnings &warn,
-    std::set<candidate_alignment> &cal_set)
+    mca_warnings& warn,
+    std::set<candidate_alignment>& cal_set)
 {
     const unsigned read_length(rseg.read_size());
 
@@ -1449,7 +1449,7 @@ get_candidate_alignments(
 
     // Get indel set and indel order for the input alignment:
     const known_pos_range exemplar_pr(get_soft_clip_alignment_range(cal.al));
-    add_indels_in_range(rseg.id(), isync, exemplar_pr, sampleId, indel_status_map, indel_order);
+    add_indels_in_range(rseg.id(), indelBuffer, exemplar_pr, sampleId, indel_status_map, indel_order);
 
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT exemplar alignment range: " << exemplar_pr << "\n";
@@ -1540,7 +1540,7 @@ get_candidate_alignments(
     // launch recursive re-alignment routine starting from the current exemplar alignment:
     static const unsigned start_depth(0);
     static const unsigned start_toggle_depth(0);
-    candidate_alignment_search(opt, dopt, rseg.id(), cal_read_length, isync, sampleId, realign_buffer_range, cal_set,
+    candidate_alignment_search(opt, dopt, rseg.id(), cal_read_length, indelBuffer, sampleId, realign_buffer_range, cal_set,
                                warn, indel_status_map,
                                indel_order, start_depth, start_toggle_depth, exemplar_pr, opt.max_read_indel_toggle,
                                cal);
@@ -1622,7 +1622,7 @@ realign_and_score_read(
     const known_pos_range& realign_buffer_range,
     const unsigned sampleId,
     read_segment& rseg,
-    indel_synchronizer& isync)
+    IndelBuffer& indelBuffer)
 {
     if (! rseg.is_valid())
     {
@@ -1635,7 +1635,7 @@ realign_and_score_read(
 
     if (! inputAlignment.is_realignable(opt.max_indel_size)) return;
 
-    if (!check_for_candidate_indel_overlap(realign_buffer_range, rseg, isync)) return;
+    if (!check_for_candidate_indel_overlap(realign_buffer_range, rseg, indelBuffer)) return;
 
     const alignment normedAlignment(normalizeInputAlignmnet(rseg));
 
@@ -1670,7 +1670,7 @@ realign_and_score_read(
     std::set<candidate_alignment> cal_set;
     mca_warnings warn;
 
-    get_candidate_alignments(opt, dopt, rseg, isync, sampleId, normedAlignment,
+    get_candidate_alignments(opt, dopt, rseg, indelBuffer, sampleId, normedAlignment,
                              realign_buffer_range, warn, cal_set);
 
     if ( cal_set.empty() )
@@ -1703,5 +1703,5 @@ realign_and_score_read(
     }
 
     score_candidate_alignments_and_indels(opt, dopt, sample_opt, ref,
-                                          rseg, isync, sampleId, cal_set, is_incomplete_search);
+                                          rseg, indelBuffer, sampleId, cal_set, is_incomplete_search);
 }

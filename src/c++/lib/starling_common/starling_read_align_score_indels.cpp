@@ -271,12 +271,12 @@ is_equiv_candidate(
 static
 bool
 is_first_indel_dominant(
-    const indel_synchronizer &isync,
-    const indel_key &ik1,
-    const indel_key &ik2)
+    const IndelBuffer& indelBuffer,
+    const indel_key& ik1,
+    const indel_key& ik2)
 {
-    const bool ic1(isync.is_candidate_indel(ik1));
-    const bool ic2(isync.is_candidate_indel(ik2));
+    const bool ic1(indelBuffer.isCandidateIndel(ik1));
+    const bool ic2(indelBuffer.isCandidateIndel(ik2));
 
     if (ic2 && (! ic1)) return false;
     if (ic2==ic1)
@@ -298,14 +298,14 @@ is_first_indel_dominant(
 static
 void
 late_indel_normalization_filter(
-    const starling_base_options &opt,
-    const indel_synchronizer &isync,
-    const std::set<candidate_alignment> &candAlignments,
-    const std::vector<double> &candAlignmentScores,
+    const starling_base_options& opt,
+    const IndelBuffer& indelBuffer,
+    const std::set<candidate_alignment>& candAlignments,
+    const std::vector<double>& candAlignmentScores,
     indel_set_t nonnorm_indels,
-    std::vector<bool> &isFilterCandAlignment,
-    double &maxCandAlignmentScore,
-    const candidate_alignment *&maxCandAlignmentPtr)
+    std::vector<bool>& isFilterCandAlignment,
+    double& maxCandAlignmentScore,
+    const candidate_alignment*& maxCandAlignmentPtr)
 {
     const unsigned candAlignmentCount(candAlignments.size());
 
@@ -376,7 +376,7 @@ late_indel_normalization_filter(
             bool is_removed(false);
             for (const auto& indelPair : indelPairs)
             {
-                const bool is1(is_first_indel_dominant(isync, indelPair.first, indelPair.second));
+                const bool is1(is_first_indel_dominant(indelBuffer, indelPair.first, indelPair.second));
 
 #ifdef DEBUG_ALIGN
                 log_os << "COWSLIP: indel1: " << indelPair.first << "\n";
@@ -449,17 +449,17 @@ late_indel_normalization_filter(
 
 void
 score_indels(
-    const starling_base_options &opt,
-    const starling_base_deriv_options &,
-    const starling_sample_options &sample_opt,
-    const read_segment &rseg,
-    indel_synchronizer &isync,
+    const starling_base_options& opt,
+    const starling_base_deriv_options&,
+    const starling_sample_options& sample_opt,
+    const read_segment& rseg,
+    IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    const std::set<candidate_alignment> &candAlignments,
+    const std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search,
-    const std::vector<double> &candAlignmentScores,
+    const std::vector<double>& candAlignmentScores,
     double maxCandAlignmentScore,
-    const candidate_alignment *maxCandAlignmentPtr)
+    const candidate_alignment* maxCandAlignmentPtr)
 {
     static const bool is_safe_mode(true);
 
@@ -512,7 +512,7 @@ score_indels(
     static const bool is_slip_norm(true);
     if (is_slip_norm)
     {
-        late_indel_normalization_filter(opt, isync, candAlignments, candAlignmentScores, nonnorm_indels,
+        late_indel_normalization_filter(opt, indelBuffer, candAlignments, candAlignmentScores, nonnorm_indels,
                                         isFilterCandAlignment, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
 
@@ -550,17 +550,17 @@ score_indels(
         log_os << "VARMIT max_path extracted indels:\n";
         dump_indel_set(indelsInMaxCandAlignment,log_os);
 #endif
-        const auto indelIterPair(isync.pos_range_iter(maxCandAlignmentRange.begin_pos,maxCandAlignmentRange.end_pos));
+        const auto indelIterPair(indelBuffer.rangeIterator(maxCandAlignmentRange.begin_pos, maxCandAlignmentRange.end_pos));
         for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
         {
             const indel_key& evaluationIndel(indelIter->first);
-            const IndelData& id(get_indel_data(indelIter));
+            const IndelData& id(getIndelData(indelIter));
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path eval indel candidate: " << evaluationIndel;
 #endif
 
-            if (! isync.is_candidate_indel(evaluationIndel, id)) continue;
+            if (!indelBuffer.isCandidateIndel(evaluationIndel, id)) continue;
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path indel is candidate\n";
@@ -618,7 +618,7 @@ score_indels(
                 {
                     if (bpo>0)
                     {
-                        IndelSampleData& isd(get_indel_data(indelIter).getSampleData(sampleId));
+                        IndelSampleData& isd(getIndelData(indelIter).getSampleData(sampleId));
 
                         if (is_tier1_read) isd.suboverlap_tier1_read_ids.insert(rseg.id());
                         else               isd.suboverlap_tier2_read_ids.insert(rseg.id());
@@ -919,8 +919,8 @@ score_indels(
             //            correct for strandedness
             log_os << "indelpos: " << evaluationIndel.pos << " readpos: + " << rseg.genome_align().pos << " rp: " << readpos << "\n";
 #endif
-            read_path_scores rps(referenceScore,evaluationIndelScore,nsite,read_length,is_tier1_read,maxCandAlignment.al.is_fwd_strand,
-                                 (int16_t) readpos);
+            ReadPathScores rps(referenceScore,evaluationIndelScore,nsite,read_length,is_tier1_read,maxCandAlignment.al.is_fwd_strand,
+                               (int16_t) readpos);
 
             // start adding alternate indel alleles, if present:
 
@@ -953,7 +953,7 @@ score_indels(
                 //
                 if (is_found)
                 {
-                    rps.insert_alt(orthogonalIndel,indelScoringIter->second.first);
+                    rps.insertAlt(orthogonalIndel, indelScoringIter->second.first);
                     //                        rps.alt_indel[*k] = j->second.first;
                 }
                 else
@@ -970,9 +970,9 @@ score_indels(
             }
 
             {
-                IndelData *evaluationIndelDataPtr(isync.get_indel_data_ptr(evaluationIndel));
+                IndelData* evaluationIndelDataPtr(indelBuffer.getIndelDataPtr(evaluationIndel));
                 assert(nullptr != evaluationIndelDataPtr);
-                IndelSampleData &evaluationIndelSampleData(evaluationIndelDataPtr->getSampleData(sampleId));
+                IndelSampleData& evaluationIndelSampleData(evaluationIndelDataPtr->getSampleData(sampleId));
                 evaluationIndelSampleData.read_path_lnp[rseg.id()] = rps;
             }
 

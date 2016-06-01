@@ -23,7 +23,7 @@
 ///
 
 #include "blt_util/blt_exception.hh"
-#include "starling_common/indel_data.hh"
+#include "starling_common/IndelData.hh"
 
 #include <iostream>
 #include <sstream>
@@ -32,8 +32,8 @@
 
 
 void
-read_path_scores::
-insert_alt(
+ReadPathScores::
+insertAlt(
     const indel_key& ik,
     const score_t a)
 {
@@ -65,8 +65,8 @@ insert_alt(
 
 void
 IndelSampleData::
-addObservation(
-    const indel_observation_data& obs_data)
+addIndelObservation(
+    const IndelObservationData& obs_data)
 {
     const bool isAbstractObservation(obs_data.is_external_candidate || obs_data.is_forced_output);
 
@@ -107,9 +107,9 @@ addObservation(
 
 void
 IndelData::
-addObservation(
+addIndelObservation(
     const unsigned sampleId,
-    const indel_observation_data& obs_data)
+    const IndelObservationData& obs_data)
 {
 #ifdef DEBUG_ID
     log_os << "KATTER: adding obs for indel: " << _ik;
@@ -123,10 +123,10 @@ addObservation(
     if (! obs_data.insert_seq.empty())
     {
         assert(obs_data.insert_seq.size() == _ik.insert_length());
-        _insert_seq.add_obs(obs_data.insert_seq);
+        _insert_seq.addObservation(obs_data.insert_seq);
     }
 
-    getSampleData(sampleId).addObservation(obs_data);
+    getSampleData(sampleId).addIndelObservation(obs_data);
 }
 
 
@@ -134,7 +134,7 @@ addObservation(
 std::ostream&
 operator<<(
     std::ostream& os,
-    const indel_observation_data& obs)
+    const IndelObservationData& obs)
 {
     os << "is_noise: " << obs.is_noise << "\n";
     os << "is_external: " << obs.is_external_candidate << "\n";
@@ -169,7 +169,7 @@ report_indel_evidence_set(
 std::ostream&
 operator<<(
     std::ostream& os,
-    const read_path_scores& rps)
+    const ReadPathScores& rps)
 {
     os << "ref: " << rps.ref
        << " indel: " << rps.indel
@@ -196,18 +196,18 @@ operator<<(
 
 
 void
-insert_seq_manager::
+InsertSequenceManager::
 _exception(const char* msg) const
 {
     std::ostringstream oss;
-    oss << "Exception in insert_seq_manager: " << msg;
+    oss << "Exception in InsertSequenceManager: " << msg;
     throw blt_exception(oss.str().c_str());
 }
 
 
 
 void
-insert_seq_manager::
+InsertSequenceManager::
 _finalize()
 {
     unsigned count(0);
@@ -242,12 +242,12 @@ operator<<(
 
     {
         unsigned n(0);
-        for(const auto& readLnp : isd.read_path_lnp)
+        for (const auto& readLnp : isd.read_path_lnp)
         {
             os << "read_path_lnp no: " << ++n
-            << " id: " << readLnp.first
-            << " " << readLnp.second
-            << "\n";
+               << " id: " << readLnp.first
+               << " " << readLnp.second
+               << "\n";
         }
     }
 
@@ -268,10 +268,10 @@ operator<<(
     os << "is_external_candidate: " << id.is_external_candidate << "\n";
     os << "is_forced_output: " << id.is_forced_output << "\n";
 
-    os << "seq: " << id.get_insert_seq() << "\n";
+    os << "seq: " << id.getInsertSeq() << "\n";
 
     const unsigned sampleCount(id.getSampleCount());
-    for(unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         os << "BEGIN sample: " << sampleIndex << "\n";
         os << id.getSampleData(sampleIndex);

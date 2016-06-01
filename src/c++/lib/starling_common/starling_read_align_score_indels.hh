@@ -27,7 +27,7 @@
 
 #include "candidate_alignment.hh"
 
-#include "starling_common/indel_synchronizer.hh"
+#include "starling_common/IndelBuffer.hh"
 #include "starling_common/starling_read_segment.hh"
 #include "starling_common/starling_base_shared.hh"
 
@@ -43,14 +43,14 @@ typedef std::map<indel_key,bool> indel_status_map_t;
 ///
 void
 score_indels(
-    const starling_base_options &opt,
-    const starling_base_deriv_options &dopt,
-    const starling_sample_options &sample_opt,
-    const read_segment &rseg,
-    indel_synchronizer &isync,
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sample_opt,
+    const read_segment& rseg,
+    IndelBuffer& indelBuffer,
     const unsigned sampleId,
-    const std::set<candidate_alignment> &candAlignments,
+    const std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search,
-    const std::vector<double> &candAlignmentScores,
+    const std::vector<double>& candAlignmentScores,
     double maxCandAlignmentScore,
-    const candidate_alignment *maxCandAlignmentPtr);
+    const candidate_alignment* maxCandAlignmentPtr);

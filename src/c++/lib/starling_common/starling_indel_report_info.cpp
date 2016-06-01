@@ -73,12 +73,12 @@ get_vcf_summary_strings(
         if       (ik.type == INDEL::BP_LEFT)
         {
             copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_ref_seq);
-            vcf_indel_seq = vcf_ref_seq + id.get_insert_seq() + '.';
+            vcf_indel_seq = vcf_ref_seq + id.getInsertSeq() + '.';
         }
         else if (ik.type == INDEL::BP_RIGHT)
         {
             copy_ref_subseq(ref,ik.pos,ik.pos+1,vcf_ref_seq);
-            vcf_indel_seq = '.' + id.get_insert_seq() + vcf_ref_seq;
+            vcf_indel_seq = '.' + id.getInsertSeq() + vcf_ref_seq;
         }
         else
         {
@@ -89,7 +89,7 @@ get_vcf_summary_strings(
     {
         copy_ref_subseq(ref,ik.pos-1,ik.pos+ik.delete_length(),vcf_ref_seq);
         copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_indel_seq);
-        vcf_indel_seq += id.get_insert_seq();
+        vcf_indel_seq += id.getInsertSeq();
     }
 }
 
@@ -210,9 +210,9 @@ get_starling_indel_report_info(
 
 
 
-read_path_scores
+ReadPathScores
 indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
-                   const read_path_scores& path_lnp,
+                   const ReadPathScores& path_lnp,
                    const bool is_tier2_pass,
                    const bool is_use_alt_indel)
 {
@@ -225,8 +225,8 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
     static const double allele_prior(1./static_cast<double>(n_alleles));
     static const double allele_lnprior(std::log(allele_prior));
 
-    read_path_scores pprob;
-    read_path_scores::score_t pprob_nonsite = dopt.get_nonsite_path_lnp(is_tier2_pass,path_lnp.nsite) + dopt.nonsite_lnprior;
+    ReadPathScores pprob;
+    ReadPathScores::score_t pprob_nonsite = dopt.get_nonsite_path_lnp(is_tier2_pass,path_lnp.nsite) + dopt.nonsite_lnprior;
     pprob.ref     = path_lnp.ref     + dopt.site_lnprior + allele_lnprior;
     pprob.indel   = path_lnp.indel   + dopt.site_lnprior + allele_lnprior;
 
@@ -303,12 +303,12 @@ get_starling_indel_sample_report_info(
 
         for (const auto& val : isd.read_path_lnp)
         {
-            const read_path_scores& path_lnp(val.second);
+            const ReadPathScores& path_lnp(val.second);
 
             // optionally skip tier2 data:
             if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
 
-            const read_path_scores pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
+            const ReadPathScores pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
             if       (pprob.ref >= path_pprob_thresh)
             {
                 isri.n_q30_ref_reads++;

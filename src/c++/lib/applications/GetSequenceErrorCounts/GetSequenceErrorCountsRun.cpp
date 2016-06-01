@@ -77,7 +77,7 @@ processTrueIndelVariantRecord(
 
         for (unsigned altIndex(0); altIndex<altCount; ++altIndex)
         {
-            indel_observation obs;
+            IndelObservation obs;
             const bool isAlleleConverted =
                 convert_vcfrecord_to_indel_allele(max_indel_size,vcfr,altIndex,obs);
             if (! isAlleleConverted) continue;

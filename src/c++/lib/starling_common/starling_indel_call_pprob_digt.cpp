@@ -181,7 +181,7 @@ get_high_low_het_ratio_lhood(
 
     for (const auto& score : isd.read_path_lnp)
     {
-        const read_path_scores& path_lnp(score.second);
+        const ReadPathScores& path_lnp(score.second);
 
         // optionally skip tier2 data:
         if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
@@ -282,7 +282,7 @@ get_sum_path_pprob(
     const IndelSampleData& isd,
     const bool is_tier2_pass,
     const bool is_use_alt_indel,
-    read_path_scores& total_pprob,
+    ReadPathScores& total_pprob,
     const bool is_init_total)
 {
     static const double initval(0);
@@ -299,12 +299,12 @@ get_sum_path_pprob(
 
     for (const auto& score : isd.read_path_lnp)
     {
-        const read_path_scores& path_lnp(score.second);
+        const ReadPathScores& path_lnp(score.second);
 
         // optionally skip tier2 data:
         if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
 
-        const read_path_scores path_pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
+        const ReadPathScores path_pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
 
         total_pprob.indel += path_pprob.indel;
         total_pprob.ref += path_pprob.ref;
@@ -351,7 +351,7 @@ is_diploid_indel_noise(
     //
 
     // first sum every read intersecting the indel:
-    read_path_scores total_pprob;
+    ReadPathScores total_pprob;
     get_sum_path_pprob(dopt,isd,is_tier2_pass,is_use_alt_indel,total_pprob);
 
     enum iallele_t
@@ -370,7 +370,7 @@ is_diploid_indel_noise(
         std::swap(max1,max2);
         std::swap(max1_id,max2_id);
     }
-    const read_path_scores::alt_indel_t& ai(total_pprob.alt_indel);
+    const ReadPathScores::alt_indel_t& ai(total_pprob.alt_indel);
     const int ais(ai.size());
     for (int i(0); i<ais; ++i)
     {
@@ -441,7 +441,7 @@ get_indel_digt_lhood(
 
     for (const auto& score : isd.read_path_lnp)
     {
-        const read_path_scores& path_lnp(score.second);
+        const ReadPathScores& path_lnp(score.second);
 
         // optionally skip tier2 data:
         if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;

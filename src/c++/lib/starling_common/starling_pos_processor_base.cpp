@@ -292,7 +292,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _n_samples(n_samples)
     , _is_variant_windows(! _opt.variant_windows.empty())
     , _pileupCleaner(opt)
-    , _indel_sync(opt,dopt,ref)
+    , _indelBuffer(opt,dopt,ref)
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
@@ -437,7 +437,7 @@ reset()
 bool
 starling_pos_processor_base::
 insert_indel(
-    const indel_observation& obs,
+    const IndelObservation& obs,
     const unsigned sampleId)
 {
     // ppr advance is controlled by the start positions of reads and
@@ -485,7 +485,7 @@ insert_indel(
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.max_indel_size));
         update_largest_indel_ref_span(len);
 
-        bool is_novel(indel_sync().insert_indel(sampleId,obs));
+        bool is_novel(getIndelBuffer().addIndelObservation(sampleId, obs));
         if (obs.data.is_forced_output) _is_skip_process_pos=false;
 
         return is_novel;
@@ -835,7 +835,8 @@ align_pos(const pos_t pos)
             {
                 try
                 {
-                    realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex,rseg,indel_sync());
+                    realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex,rseg,
+                                           getIndelBuffer());
                 }
                 catch (...)
                 {
@@ -935,12 +936,7 @@ process_pos(const int stage_no,
             }
         }
 
-        indel_sync().clear_pos(pos);
-
-        for (unsigned s(0); s<_n_samples; ++s)
-        {
-            sample(s).indel_buff.clear_pos(pos);
-        }
+        getIndelBuffer().clearPosition(pos);
 
         // everything else:
         post_align_clear_pos(pos);
@@ -1093,14 +1089,14 @@ write_candidate_indels_pos(
     const pos_t output_pos(pos+1);
     std::ostream& bos(*_streams.candidate_indel_osptr());
 
-    auto indelIter(indel_sync().pos_iter(pos));
-    const auto indelIterEnd(indel_sync().pos_iter(pos+1));
+    auto indelIter(getIndelBuffer().positionIterator(pos));
+    const auto indelIterEnd(getIndelBuffer().positionIterator(pos + 1));
 
     for (; indelIter!=indelIterEnd; ++indelIter)
     {
         const indel_key& ik(indelIter->first);
-        const IndelData& id(get_indel_data(indelIter));
-        if (! indel_sync().is_candidate_indel(ik,id)) continue;
+        const IndelData& id(getIndelData(indelIter));
+        if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
         bos << _chrom_name << "\t"
             << output_pos << "\t"
             << INDEL::get_index_label(ik.type) << "\t"
@@ -1109,7 +1105,7 @@ write_candidate_indels_pos(
         {
             bos << ik.swap_dlength << "\t";
         }
-        bos << id.get_insert_seq() << "\n";
+        bos << id.getInsertSeq() << "\n";
     }
 }
 

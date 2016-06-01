@@ -155,7 +155,7 @@ altMatch(
         if ((ik.type == alt.type) && (ik.length == alt.length))
         {
             if (ik.type == INDEL::DELETE) return true;
-            if (id.get_insert_seq() == alt.insert_sequence) return true;
+            if (id.getInsertSeq() == alt.insert_sequence) return true;
         }
     }
     return false;

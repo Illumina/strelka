@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -27,16 +26,16 @@
 
 
 #include "starling_common/indel_key.hh"
-#include "starling_common/indel_data.hh"
+#include "starling_common/IndelData.hh"
 
 #include <iosfwd>
 
 
 /// Represents a single indel observation
-struct indel_observation
+struct IndelObservation
 {
     indel_key key;
-    indel_observation_data data;
+    IndelObservationData data;
 };
 
 
@@ -51,6 +50,6 @@ struct indel
 
 
 // Debugging dump:
-std::ostream& operator<<(std::ostream& os, const indel_observation& obs);
+std::ostream& operator<<(std::ostream& os, const IndelObservation& obs);
 std::ostream& operator<<(std::ostream& os, const indel& in);
 

@@ -33,7 +33,7 @@
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
 #include "starling_common/indel_set.hh"
-#include "starling_common/indel_synchronizer.hh"
+#include "starling_common/IndelBuffer.hh"
 #include "starling_common/PileupCleaner.hh"
 #include "starling_common/pos_basecall_buffer.hh"
 #include "starling_common/read_mismatch_info.hh"
@@ -105,7 +105,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     // returns true if this indel is novel to the buffer
     //
     bool
-    insert_indel(const indel_observation& obs,
+    insert_indel(const IndelObservation& obs,
                  const unsigned sampleId);
 
     // in range [begin,end), is the estimated depth always below
@@ -325,16 +325,16 @@ public:
     }
 
 protected:
-    indel_synchronizer&
-    indel_sync()
+    IndelBuffer&
+    getIndelBuffer()
     {
-        return _indel_sync;
+        return _indelBuffer;
     }
 
-    const indel_synchronizer&
-    indel_sync() const
+    const IndelBuffer&
+    getIndelBuffer() const
     {
-        return _indel_sync;
+        return _indelBuffer;
     }
 
 public:
@@ -524,7 +524,7 @@ private:
                 if (! sif.read_buff.empty()) return false;
                 if (! sif.bc_buff.empty()) return false;
             }
-            if (! _indel_sync.empty()) return false;
+            if (! _indelBuffer.empty()) return false;
             if (! _variant_print_pos.empty()) return false;
             if (! _forced_output_pos.empty()) return false;
             if (! derived_empty()) return false;
@@ -600,5 +600,5 @@ protected:
     RegionPayloadTracker<int> _ploidy_regions;
 
 private:
-    indel_synchronizer _indel_sync;
+    IndelBuffer _indelBuffer;
 };

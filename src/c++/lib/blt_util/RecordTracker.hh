@@ -32,7 +32,7 @@
 #include "starling_common/indel_core.hh"
 #include "starling_common/starling_diploid_indel.hh"
 #include "starling_common/indel_key.hh"
-#include "starling_common/indel_data.hh"
+#include "starling_common/IndelData.hh"
 
 #include "boost/icl/discrete_interval.hpp"
 #include "boost/icl/interval_map.hpp"

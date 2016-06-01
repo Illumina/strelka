@@ -42,7 +42,7 @@ get_sum_path_pprob(
     const IndelSampleData& isd,
     const bool is_include_tier2,
     const bool is_use_alt_indel,
-    read_path_scores& total_pprob,
+    ReadPathScores& total_pprob,
     const bool is_init_total = true);
 
 

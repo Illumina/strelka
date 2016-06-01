@@ -23,39 +23,32 @@
 /// \author Mitch Bekritsky
 ///
 
-#include "starling_common/indel_synchronizer.hh"
+#include "starling_common/IndelBuffer.hh"
 
-#include "blt_util/binomial_test.hh"
-#include "blt_util/blt_exception.hh"
-#include "blt_util/log.hh"
 #include "calibration/IndelErrorModel.hh"
 
-#include <cstdlib>
-
 #include <iostream>
-#include <sstream>
 
 
 
 unsigned
-indel_synchronizer::
-register_sample(
-    const depth_buffer &db,
-    const depth_buffer &db2,
-    const starling_sample_options &sample_opt,
+IndelBuffer::
+registerSample(
+    const depth_buffer& db,
+    const depth_buffer& db2,
     const double max_depth)
 {
     assert(! _isFinalized);
     const unsigned sampleIndex(_indelSampleData.size());
-    _indelSampleData.emplace_back(db,db2,sample_opt,max_depth);
+    _indelSampleData.emplace_back(db,db2,max_depth);
     return sampleIndex;
 }
 
 
 
-std::pair<indel_synchronizer::iterator,indel_synchronizer::iterator>
-indel_synchronizer::
-pos_range_iter(
+std::pair<IndelBuffer::iterator,IndelBuffer::iterator>
+IndelBuffer::
+rangeIterator(
     const pos_t begin_pos,
     const pos_t end_pos)
 {
@@ -80,9 +73,9 @@ pos_range_iter(
 // advantage of the indel NONE type, which sorts ahead of all other
 // types at the same position.
 //
-std::pair<indel_synchronizer::const_iterator,indel_synchronizer::const_iterator>
-indel_synchronizer::
-pos_range_iter(
+std::pair<IndelBuffer::const_iterator,IndelBuffer::const_iterator>
+IndelBuffer::
+rangeIterator(
     const pos_t begin_pos,
     const pos_t end_pos) const
 {
@@ -100,10 +93,10 @@ pos_range_iter(
 
 
 bool
-indel_synchronizer::
-insert_indel(
+IndelBuffer::
+addIndelObservation(
     const unsigned sampleId,
-    const indel_observation& obs)
+    const IndelObservation& obs)
 {
     assert(obs.key.type != INDEL::NONE);
 
@@ -116,16 +109,16 @@ insert_indel(
         indelIter = retval.first;
     }
 
-    IndelData &id(get_indel_data(indelIter));
-    id.addObservation(sampleId, obs.data);
+    IndelData& id(getIndelData(indelIter));
+    id.addIndelObservation(sampleId, obs.data);
     return isNovel;
 }
 
 
 
 bool
-indel_synchronizer::
-is_candidate_indel_impl_test_signal_noise(
+IndelBuffer::
+isCandidateIndelImplTestSignalNoise(
     const indel_key& ik,
     const IndelData& id) const
 {
@@ -180,8 +173,8 @@ is_candidate_indel_impl_test_signal_noise(
 
 
 bool
-indel_synchronizer::
-is_candidate_indel_impl_test_weak_signal(
+IndelBuffer::
+isCandidateIndelImplTestWeakSignal(
     const IndelData& id) const
 {
     const unsigned sampleCount(id.getSampleCount());
@@ -199,8 +192,8 @@ is_candidate_indel_impl_test_weak_signal(
 
 
 bool
-indel_synchronizer::
-is_candidate_indel_impl_test(
+IndelBuffer::
+isCandidateIndelImplTest(
     const indel_key& ik,
     const IndelData& id) const
 {
@@ -209,25 +202,25 @@ is_candidate_indel_impl_test(
 
     if (_opt.is_candidate_indel_signal_test)
     {
-        if (! is_candidate_indel_impl_test_signal_noise(ik,id)) return false;
+        if (!isCandidateIndelImplTestSignalNoise(ik, id)) return false;
     }
     else
     {
-        if (! is_candidate_indel_impl_test_weak_signal(id)) return false;
+        if (!isCandidateIndelImplTestWeakSignal(id)) return false;
     }
 
-    /////////////////////////////////////////
+    //
     // test against short open-ended segments:
     //
-    // call get_insert_size() instead of asking for the insert seq
+    // call getInsertSize() instead of asking for the insert seq
     // so as to not finalize any incomplete insertions:
     if (ik.is_breakpoint() &&
-        (_opt.min_candidate_indel_open_length > id.get_insert_size()))
+        (_opt.min_candidate_indel_open_length > id.getInsertSize()))
     {
         return false;
     }
 
-    /////////////////////////////////////////
+    //
     // test against max_depth:
     //
     const unsigned sampleCount(getSampleCount());
@@ -247,12 +240,12 @@ is_candidate_indel_impl_test(
 
 
 void
-indel_synchronizer::
-is_candidate_indel_impl(
+IndelBuffer::
+isCandidateIndelImpl(
     const indel_key& ik,
     const IndelData& id) const
 {
-    const bool is_candidate(is_candidate_indel_impl_test(ik,id));
+    const bool is_candidate(isCandidateIndelImplTest(ik, id));
     id.status.is_candidate_indel = is_candidate;
     id.status.is_candidate_indel_cached = true;
 }
@@ -260,8 +253,8 @@ is_candidate_indel_impl(
 
 
 void
-indel_synchronizer::
-find_data_exception(const indel_key& ik) const
+IndelBuffer::
+findDataException(const indel_key& ik) const
 {
     std::ostringstream oss;
     oss << "ERROR: could not find indel_data for indel: " << ik;
@@ -271,11 +264,11 @@ find_data_exception(const indel_key& ik) const
 
 
 void
-indel_synchronizer::
-clear_pos(const pos_t pos)
+IndelBuffer::
+clearPosition(const pos_t pos)
 {
-    const iterator i_begin(pos_iter(pos));
-    const iterator i_end(pos_iter(pos+1));
+    const iterator i_begin(positionIterator(pos));
+    const iterator i_end(positionIterator(pos + 1));
     _indelBuffer.erase(i_begin,i_end);
 }
 
@@ -284,33 +277,33 @@ clear_pos(const pos_t pos)
 static
 void
 dump_range(
-    indel_synchronizer::const_iterator i,
-    const indel_synchronizer::const_iterator i_end,
+    IndelBuffer::const_iterator i,
+    const IndelBuffer::const_iterator i_end,
     std::ostream& os)
 {
     for (; i!=i_end; ++i)
     {
         os << "INDEL_KEY: " << i->first;
         os << "INDEL_DATA:\n";
-        os << get_indel_data(i);
+        os << getIndelData(i);
     }
 }
 
 
 
 void
-indel_synchronizer::
-dump_pos(
+IndelBuffer::
+dumpPosition(
     const pos_t pos,
     std::ostream& os) const
 {
-    dump_range(pos_iter(pos),pos_iter(pos+1),os);
+    dump_range(positionIterator(pos), positionIterator(pos + 1),os);
 }
 
 
 
 void
-indel_synchronizer::
+IndelBuffer::
 dump(std::ostream& os) const
 {
     os << "INDEL_BUFFER DUMP ON\n";

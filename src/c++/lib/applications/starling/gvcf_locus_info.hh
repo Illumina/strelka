@@ -359,10 +359,10 @@ struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGen
     GermlineContinuousIndelSimpleGenotypeInfo(
         unsigned totalDepth,
         unsigned alleleDepth,
-        const indel_key &ik,
-        const IndelData &id,
-        const starling_indel_report_info &iri,
-        const starling_indel_sample_report_info &isri)
+        const indel_key& ik,
+        const IndelData& id,
+        const starling_indel_report_info& iri,
+        const starling_indel_sample_report_info& isri)
         : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
         , _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)

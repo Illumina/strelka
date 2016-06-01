@@ -124,13 +124,12 @@ starling_pos_processor(
             }
         }
 
-        sample_id_t syncSampleId;
-        syncSampleId = indel_sync().register_sample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                    normal_sif.sample_opt, max_candidate_normal_sample_depth);
+        const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
+                                                       max_candidate_normal_sample_depth);
 
         assert(syncSampleId == sampleId);
 
-        indel_sync().finalizeSamples();
+        getIndelBuffer().finalizeSamples();
     }
 }
 
@@ -541,13 +540,13 @@ process_pos_indel_single_sample_digt(
     std::ostream& report_os(std::cerr);
 
     sample_info& sif(sample(sampleId));
-    auto it(indel_sync().pos_iter(pos));
-    const auto it_end(indel_sync().pos_iter(pos+1));
+    auto it(getIndelBuffer().positionIterator(pos));
+    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
     for (; it!=it_end; ++it)
     {
         const indel_key& ik(it->first);
-        const IndelData& id(get_indel_data(it));
+        const IndelData& id(getIndelData(it));
         const bool isForcedOutput(id.is_forced_output);
 
         const IndelSampleData& isd(id.getSampleData(sampleId));
@@ -556,7 +555,7 @@ process_pos_indel_single_sample_digt(
         if (! isForcedOutput)
         {
             if (isZeroCoverage) continue;
-            if (! indel_sync().is_candidate_indel(ik, id)) continue;
+            if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
         }
 
         // TODO implement indel overlap resolution
@@ -660,8 +659,8 @@ process_pos_indel_single_sample_digt(
                 for (const auto& val : isd.read_path_lnp)
                 {
                     const align_id_t read_id(val.first);
-                    const read_path_scores& lnp(val.second);
-                    const read_path_scores pprob(indel_lnp_to_pprob(_dopt,lnp,is_tier2_pass,is_use_alt_indel));
+                    const ReadPathScores& lnp(val.second);
+                    const ReadPathScores pprob(indel_lnp_to_pprob(_dopt,lnp,is_tier2_pass,is_use_alt_indel));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 
                     report_os << "read key: ";
@@ -688,15 +687,15 @@ process_pos_indel_single_sample_continuous(
     if (sampleId!=0) return;
 
     sample_info& sif(sample(sampleId));
-    auto it(indel_sync().pos_iter(pos));
-    const auto it_end(indel_sync().pos_iter(pos+1));
+    auto it(getIndelBuffer().positionIterator(pos));
+    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
     std::unique_ptr<GermlineContinuousIndelCallInfo> info;
 
     for (; it!=it_end; ++it)
     {
         const indel_key& ik(it->first);
-        const IndelData& id(get_indel_data(it));
+        const IndelData& id(getIndelData(it));
         const bool isForcedOutput(id.is_forced_output);
 
         const IndelSampleData& isd(id.getSampleData(sampleId));
@@ -705,7 +704,7 @@ process_pos_indel_single_sample_continuous(
         if (! isForcedOutput)
         {
             if (isZeroCoverage) continue;
-            if (! indel_sync().is_candidate_indel(ik, id)) continue;
+            if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
         }
 
         // sample-independent info:

@@ -429,7 +429,7 @@ convert_vcfrecord_to_indel_allele(
     const unsigned max_indel_size,
     const vcf_record& vcf_indel,
     const unsigned altIndex,
-    indel_observation& obs)
+    IndelObservation& obs)
 {
     assert(vcf_indel.is_indel());
     assert(altIndex<vcf_indel.alt.size());
@@ -494,7 +494,7 @@ process_candidate_indel(
     const unsigned altCount(vcf_indel.alt.size());
     for (unsigned altIndex(0); altIndex<altCount; ++altIndex)
     {
-        indel_observation obs;
+        IndelObservation obs;
         const bool isAlleleConverted =
             convert_vcfrecord_to_indel_allele(max_indel_size,vcf_indel,altIndex,obs);
         if (! isAlleleConverted) continue;

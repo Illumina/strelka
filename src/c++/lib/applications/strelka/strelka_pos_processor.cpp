@@ -84,17 +84,16 @@ strelka_pos_processor(
 
         /// TODO: setup a stronger sample id handler -- using the version from manta would be a good start here
         sample_id_t sample_id;
-        sample_id = indel_sync().register_sample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                 normal_sif.sample_opt, max_candidate_normal_sample_depth);
+        sample_id = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
+                                                    max_candidate_normal_sample_depth);
 
         assert(sample_id == NORMAL);
 
-        sample_id = indel_sync().register_sample(tumor_sif.estdepth_buff, tumor_sif.estdepth_buff_tier2,
-                                                 tumor_sif.sample_opt, -1.);
+        sample_id = getIndelBuffer().registerSample(tumor_sif.estdepth_buff, tumor_sif.estdepth_buff_tier2, -1.);
 
         assert(sample_id == TUMOR);
 
-        indel_sync().finalizeSamples();
+        getIndelBuffer().finalizeSamples();
     }
 
     // setup indel avg window:
@@ -268,19 +267,19 @@ process_pos_indel_somatic(const pos_t pos)
     sample_info& normal_sif(sample(NORMAL));
     sample_info& tumor_sif(sample(TUMOR));
 
-    auto indelIter(indel_sync().pos_iter(pos));
-    const auto indelIterEnd(indel_sync().pos_iter(pos+1));
+    auto indelIter(getIndelBuffer().positionIterator(pos));
+    const auto indelIterEnd(getIndelBuffer().positionIterator(pos + 1));
 
-    for(;indelIter != indelIterEnd; ++indelIter)
+    for (; indelIter != indelIterEnd; ++indelIter)
     {
         const indel_key& ik(indelIter->first);
 
         // don't write breakpoint output:
         if (ik.is_breakpoint()) continue;
 
-        const IndelData& id(get_indel_data(indelIter));
+        const IndelData& id(getIndelData(indelIter));
 
-        if (! indel_sync().is_candidate_indel(ik, id)) continue;
+        if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
 
         const IndelSampleData& normal_isd(id.getSampleData(NORMAL));
         const IndelSampleData& tumor_isd(id.getSampleData(TUMOR));
@@ -357,8 +356,8 @@ process_pos_indel_somatic(const pos_t pos)
                 for (; i!=i_end; ++i)
                 {
                     const align_id_t read_id(i->first);
-                    const read_path_scores& lnp(i->second);
-                    const read_path_scores pprob(indel_lnp_to_pprob(_dopt,lnp));
+                    const ReadPathScores& lnp(i->second);
+                    const ReadPathScores pprob(indel_lnp_to_pprob(_dopt,lnp));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 
                     report_os << "read key: ";

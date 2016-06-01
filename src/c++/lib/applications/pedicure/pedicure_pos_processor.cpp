@@ -83,11 +83,10 @@ pedicure_pos_processor(
             const bool isProband(_opt.alignFileOpt.alignmentSampleInfo.getSampleInfo(sampleIndex).stype == PROBAND);
             double max_candidate_sample_depth(isProband ? max_candidate_proband_sample_depth : -1);
             sample_info& sif(sample(sampleIndex));
-            indel_sync().register_sample(sif.estdepth_buff, sif.estdepth_buff_tier2, sif.sample_opt,
-                                         max_candidate_sample_depth);
+            getIndelBuffer().registerSample(sif.estdepth_buff, sif.estdepth_buff_tier2, max_candidate_sample_depth);
         }
 
-        indel_sync().finalizeSamples();
+        getIndelBuffer().finalizeSamples();
     }
 }
 
@@ -208,8 +207,8 @@ process_pos_indel_denovo(const pos_t pos)
 
     const SampleInfoManager& sinfo(_opt.alignFileOpt.alignmentSampleInfo);
 
-    auto it(indel_sync().pos_iter(pos));
-    const auto it_end(indel_sync().pos_iter(pos+1));
+    auto it(getIndelBuffer().positionIterator(pos));
+    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
     for (; it!=it_end; ++it)
     {
@@ -218,9 +217,9 @@ process_pos_indel_denovo(const pos_t pos)
         // don't write breakpoint output:
         if (ik.is_breakpoint()) continue;
 
-        const IndelData& id(get_indel_data(it));
+        const IndelData& id(getIndelData(it));
 
-        if (! indel_sync().is_candidate_indel(ik, id)) continue;
+        if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
 
         // assert that indel data exists for all samples, make sure alt alignments are scored in at least one sample:
         bool isAllEmpty(true);
