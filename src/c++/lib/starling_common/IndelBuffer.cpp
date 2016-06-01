@@ -166,7 +166,7 @@ isCandidateIndelImplTestSignalNoise(
         // test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
-        if (_countCache.isRejectNull(totalReadCount, indelData.errorRates.indelToRefErrorProb, tier1ReadSupportCount))
+        if (_countCache.isRejectNull(totalReadCount, indelData.errorRates.indelToRefErrorProb.getValue(), tier1ReadSupportCount))
         {
             return true;
         }
@@ -207,18 +207,25 @@ isCandidateIndelImplTest(
         // get standard rates:
         starling_indel_report_info indelReportInfo;
         get_starling_indel_report_info(indelKey, indelData, _ref, indelReportInfo);
+        double refToIndelErrorProb;
+        double indelToRefErrorProb;
         _dopt.getIndelErrorModel().getIndelErrorRate(indelReportInfo,
-                                                     indelData.errorRates.refToIndelErrorProb,
-                                                     indelData.errorRates.indelToRefErrorProb);
+                                                     refToIndelErrorProb,
+                                                     indelToRefErrorProb);
+        indelData.errorRates.refToIndelErrorProb.updateValue(refToIndelErrorProb);
+        indelData.errorRates.indelToRefErrorProb.updateValue(indelToRefErrorProb);
 
         // compute scaled rates:
-        indelData.errorRates.scaledIndelToRefErrorProb = indelData.errorRates.indelToRefErrorProb;
-        indelData.errorRates.scaledRefToIndelErrorProb = indelData.errorRates.refToIndelErrorProb;
+        double scaledRefToIndelErrorProb = indelData.errorRates.refToIndelErrorProb.getValue();
+        double scaledIndelToRefErrorProb = indelData.errorRates.indelToRefErrorProb.getValue();
         if (_opt.isIndelErrorRateFactor)
         {
-            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, indelData.errorRates.scaledRefToIndelErrorProb);
-            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, indelData.errorRates.scaledIndelToRefErrorProb);
+            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, scaledRefToIndelErrorProb);
+            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, scaledIndelToRefErrorProb);
         }
+
+        indelData.errorRates.scaledRefToIndelErrorProb.updateValue(scaledRefToIndelErrorProb);
+        indelData.errorRates.scaledIndelToRefErrorProb.updateValue(scaledIndelToRefErrorProb);
 
         indelData.errorRates.isInit = true;
     }

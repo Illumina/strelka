@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "blt_util/LogValuePair.hh"
 #include "blt_util/ranksum.hh"
 #include "starling_common/indel_align_type.hh"
 #include "starling_common/IndelKey.hh"
@@ -290,11 +291,11 @@ public:
     struct ErrorRates
     {
         bool isInit = false;
-        double indelToRefErrorProb = 0.;
-        double refToIndelErrorProb = 0.;
+        LogValuePair indelToRefErrorProb;
+        LogValuePair refToIndelErrorProb;
 
-        double scaledIndelToRefErrorProb = 0.;
-        double scaledRefToIndelErrorProb = 0.;
+        LogValuePair scaledIndelToRefErrorProb;
+        LogValuePair scaledRefToIndelErrorProb;
     };
 
     struct status_t
