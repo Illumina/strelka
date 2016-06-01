@@ -23,6 +23,8 @@
 ///
 
 #include "blt_util/blt_exception.hh"
+#include "blt_util/log.hh"
+#include "common/Exceptions.hh"
 #include "starling_common/IndelData.hh"
 
 #include <iostream>
@@ -113,7 +115,7 @@ addIndelObservation(
 {
 #ifdef DEBUG_ID
     log_os << "KATTER: adding obs for indel: " << _ik;
-    log_os << "KATTER: is_external: " << obs_data.is_external_candidate << " align_id: " << obs_data.id << "\n\n";
+    log_os << "KATTER: obs: " << obs_data;
 #endif
 
     // never reset the flags to false if they are true already
@@ -122,7 +124,14 @@ addIndelObservation(
 
     if (! obs_data.insert_seq.empty())
     {
-        assert(obs_data.insert_seq.size() == _ik.insert_length());
+        if((not _ik.is_breakpoint()) and (obs_data.insert_seq.size() != _ik.insert_length()))
+        {
+            using namespace illumina::common;
+
+            std::ostringstream oss;
+            oss << "ERROR: indel obs insert length '" << obs_data.insert_seq.size() << "' does not match expected length for indel: " << _ik;
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
         _insert_seq.addObservation(obs_data.insert_seq);
     }
 

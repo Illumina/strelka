@@ -30,7 +30,6 @@
 #include "denovo_snv_call_vcf.hh"
 
 #include "blt_util/log.hh"
-#include "calibration/IndelErrorModel.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
@@ -241,10 +240,6 @@ process_pos_indel_denovo(const pos_t pos)
         // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
         if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
 
-        double refToIndelErrorProb(0);
-        double indelToRefErrorProb(0);
-        _dopt.getIndelErrorModel().getIndelErrorRate(iri,refToIndelErrorProb,indelToRefErrorProb);
-
         denovo_indel_call dindel;
 
         // considate sample_options:
@@ -260,7 +255,7 @@ process_pos_indel_denovo(const pos_t pos)
             _dopt,
             sinfo,
             sampleOptions,
-            refToIndelErrorProb,indelToRefErrorProb,
+            id.errorRates.refToIndelErrorProb,id.errorRates.indelToRefErrorProb,
             ik,id,
             is_use_alt_indel,
             dindel);

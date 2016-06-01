@@ -23,8 +23,9 @@
 /// \author Mitch Bekritsky
 ///
 
-#include "starling_common/IndelBuffer.hh"
+#include "IndelBuffer.hh"
 
+#include "blt_util/prob_util.hh"
 #include "calibration/IndelErrorModel.hh"
 
 #include <iostream>
@@ -92,6 +93,23 @@ rangeIterator(
 
 
 
+static
+void
+scaleIndelErrorRate(
+    const double logScaleFactor,
+    double& indelErrorRate)
+{
+    static const double minIndelErrorProb(0.0);
+    static const double maxIndelErrorProb(0.5);
+
+    indelErrorRate = std::min(indelErrorRate, maxIndelErrorProb);
+    indelErrorRate = softMaxInverseTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
+    indelErrorRate += logScaleFactor;
+    indelErrorRate = softMaxTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
+}
+
+
+
 bool
 IndelBuffer::
 addIndelObservation(
@@ -122,21 +140,7 @@ isCandidateIndelImplTestSignalNoise(
     const indel_key& ik,
     const IndelData& id) const
 {
-    //
-    // Step 1: find the error rate for this indel and context:
-    //
-    double indelToRefErrorProb(0.);
-    {
-        starling_indel_report_info iri;
-        get_starling_indel_report_info(ik,id,_ref,iri);
-
-        // refToIndelErrorProb does not factor in to this calculation, so put this in a temp value
-        double refToIndelErrorProb(0.);
-        _dopt.getIndelErrorModel().getIndelErrorRate(iri,refToIndelErrorProb,indelToRefErrorProb);
-    }
-
-    //
-    // Step 2: determine if the observed counts are sig wrt the error rate for at least one sample:
+    // determine if the observed counts are sig wrt the error rate for at least one sample:
     //
     const unsigned sampleCount(id.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
@@ -162,7 +166,7 @@ isCandidateIndelImplTestSignalNoise(
         // test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
-        if (_countCache.isRejectNull(totalReadCount, indelToRefErrorProb, tier1ReadSupportCount))
+        if (_countCache.isRejectNull(totalReadCount, id.errorRates.indelToRefErrorProb, tier1ReadSupportCount))
         {
             return true;
         }
@@ -197,6 +201,28 @@ isCandidateIndelImplTest(
     const indel_key& ik,
     const IndelData& id) const
 {
+    // initialize indel error rates:
+    if (! id.errorRates.isInit)
+    {
+        // get standard rates:
+        starling_indel_report_info iri;
+        get_starling_indel_report_info(ik, id, _ref, iri);
+        _dopt.getIndelErrorModel().getIndelErrorRate(iri,
+                                                     id.errorRates.refToIndelErrorProb,
+                                                     id.errorRates.indelToRefErrorProb);
+
+        // compute scaled rates:
+        id.errorRates.scaledIndelToRefErrorProb = id.errorRates.indelToRefErrorProb;
+        id.errorRates.scaledRefToIndelErrorProb = id.errorRates.refToIndelErrorProb;
+        if (_opt.isIndelErrorRateFactor)
+        {
+            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, id.errorRates.scaledRefToIndelErrorProb);
+            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, id.errorRates.scaledIndelToRefErrorProb);
+        }
+
+        id.errorRates.isInit = true;
+    }
+
     // check whether the candidate has been externally specified:
     if (id.is_external_candidate) return true;
 

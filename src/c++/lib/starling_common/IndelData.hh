@@ -287,6 +287,16 @@ public:
     // if true candidates should be output even if very unlikely:
     bool is_forced_output = false;
 
+    struct ErrorRates
+    {
+        bool isInit = false;
+        double indelToRefErrorProb = 0.;
+        double refToIndelErrorProb = 0.;
+
+        double scaledIndelToRefErrorProb = 0.;
+        double scaledRefToIndelErrorProb = 0.;
+    };
+
     struct status_t
     {
         bool is_candidate_indel_cached = false;
@@ -294,6 +304,7 @@ public:
     };
 
     mutable status_t status;
+    mutable ErrorRates errorRates;
 
 private:
     std::vector<IndelSampleData> _sampleData;

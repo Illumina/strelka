@@ -28,7 +28,6 @@
 #include "strelka_pos_processor.hh"
 
 #include "blt_util/log.hh"
-#include "calibration/IndelErrorModel.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_base_stages.hh"
 
@@ -292,23 +291,19 @@ process_pos_indel_somatic(const pos_t pos)
             // local small repeat info is available to the indel
             // caller
 
-            // get iri from either sample:
             starling_indel_report_info iri;
             get_starling_indel_report_info(ik,id,_ref,iri);
 
             // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
             if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
 
-            double refToIndelErrorProb(0);
-            double indelToRefErrorProb(0);
-            _dopt.getIndelErrorModel().getIndelErrorRate(iri, refToIndelErrorProb, indelToRefErrorProb);
-
             somatic_indel_call sindel;
             static const bool is_use_alt_indel(true);
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
                                                     normal_sif.sample_opt,
                                                     tumor_sif.sample_opt,
-                                                    refToIndelErrorProb,indelToRefErrorProb,
+                                                    id.errorRates.refToIndelErrorProb,
+                                                    id.errorRates.indelToRefErrorProb,
                                                     ik, id, NORMAL,TUMOR,
                                                     is_use_alt_indel,
                                                     sindel);

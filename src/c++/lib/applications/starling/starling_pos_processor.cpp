@@ -23,8 +23,6 @@
 #include "blt_common/position_nonref_2allele_test.hh"
 #include "blt_common/ref_context.hh"
 #include "blt_util/log.hh"
-#include "blt_util/prob_util.hh"
-#include "calibration/IndelErrorModel.hh"
 #include "starling_continuous_variant_caller.hh"
 
 #include <iomanip>
@@ -500,23 +498,6 @@ process_pos_indel_single_sample(
 
 
 
-static
-void
-transformGermlineIndelErrorRate(
-    const double logScaleFactor,
-    double& indelErrorRate)
-{
-    static const double minIndelErrorProb(0.0);
-    static const double maxIndelErrorProb(0.5);
-
-    indelErrorRate = std::min(indelErrorRate, maxIndelErrorProb);
-    indelErrorRate = softMaxInverseTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
-    indelErrorRate += logScaleFactor;
-    indelErrorRate = softMaxTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
-}
-
-
-
 void
 starling_pos_processor::
 process_pos_indel_single_sample_digt(
@@ -574,24 +555,6 @@ process_pos_indel_single_sample_digt(
             /// TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
             if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
 
-            double refToIndelErrorProb(0);
-            double indelToRefErrorProb(0);
-            _dopt.getIndelErrorModel().getIndelErrorRate(iri,refToIndelErrorProb,indelToRefErrorProb);
-
-            // make germline-specific error rate adjustments:
-            {
-                // In applying the germlineIndelErrorRateFactor, we want to make sure that we don't end up with
-                // "probabilities" > 1 ... and in fact we might want to keep it <= .5 ... we don't
-                // want to say that we are less likely to be right than wrong, as that would favor any
-                // specific alternative over no error.
-                //
-                // We transform the value on the restricted range [0,max] to a real parameter using a
-                // logistic function, transform by scaling factor in log space and return the restricted
-                // value range:
-                transformGermlineIndelErrorRate(_dopt.logIndelErrorRateFactor, refToIndelErrorProb);
-                transformGermlineIndelErrorRate(_dopt.logIndelErrorRateFactor, indelToRefErrorProb);
-            }
-
             static const bool is_tier2_pass(false);
             static const bool is_use_alt_indel(true);
 
@@ -620,7 +583,7 @@ process_pos_indel_single_sample_digt(
             _dopt.incaller().starling_indel_call_pprob_digt(
                 _opt,_dopt,
                 sif.sample_opt,
-                refToIndelErrorProb,indelToRefErrorProb,
+                id.errorRates.scaledRefToIndelErrorProb,id.errorRates.scaledIndelToRefErrorProb,
                 ik,isd,is_use_alt_indel,dindel);
 
             bool is_indel(false);
