@@ -972,12 +972,6 @@ score_indels(
             }
 
             evaluationIndelDataPtr->read_path_lnp[rseg.id()] = rps;
-            evaluationIndelDataPtr->n_mapq++;
-            evaluationIndelDataPtr->sum_sq_mapq += (rseg.map_qual()*rseg.map_qual());
-            if (rseg.map_qual() == 0)
-            {
-                evaluationIndelDataPtr->n_mapq0++;
-            }
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: modified indel data: " << *(evaluationIndelDataPtr);

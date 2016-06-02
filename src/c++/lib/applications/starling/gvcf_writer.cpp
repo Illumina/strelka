@@ -366,7 +366,9 @@ write_site_record(
         {
 #ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
             os << ';';
-            os << "MQ=" << si.MQ;
+            os << "MQ=" << si.mapqRMS;
+            os << ';';
+            os << "MQ0=" << si.mapqZeroCount;
             os << ';';
             os << "MQRankSum=" << si.MQRankSum;
             os << ';';
@@ -819,7 +821,7 @@ write_indel_record(
 
     os << ':' << ((call.empiricalVariantScore>=0) ? call.empiricalVariantScore : call.gqx);
 
-    os << ':' << call._isri.depth;
+    os << ':' << call._isri.tier1Depth;
 
     // SAMPLE AD/ADF/ADR:
     {
@@ -970,7 +972,7 @@ write_indel_record(
 
         os << ':' << call.gqx;
 
-        os << ':' << call._isri.depth;
+        os << ':' << call._isri.tier1Depth;
 
         // AD:
         os << ':' << call._isri.n_q30_ref_reads

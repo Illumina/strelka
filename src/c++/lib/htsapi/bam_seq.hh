@@ -32,9 +32,9 @@
 #include <cassert>
 #include <ciso646>
 
+#include <algorithm>
 #include <iosfwd>
 #include <string>
-#include <algorithm>
 
 
 namespace BAM_BASE

@@ -63,12 +63,7 @@ set(DEVELOPER_MODE true)
 if (WIN32)
     set(IS_MSVC_ANALYZE FALSE CACHE BOOL
         "Turn on Visual Studio /analyze option")
-
-    # TODO better specify/document how this interacts with CMAKE_BUILD_TYPES
-    set(CMAKE_CONFIGURATION_TYPES "Release" CACHE INTERNAL
-        "Visual Studio build types" FORCE)
 endif ()
-
 
 #
 # setup configuration types, and pick set a build type from this set

@@ -38,16 +38,6 @@
 
 
 
-template <typename D>
-static
-double
-safeFrac(const unsigned num, const D denom)
-{
-    return ( (denom > 0) ? (num/static_cast<double>(denom)) : 0.);
-}
-
-
-
 static
 void
 write_vcf_isri_tiers(
@@ -58,9 +48,9 @@ write_vcf_isri_tiers(
 {
     static const char sep(':');
 //  DP:DP2:TAR:TIR:TOR...
-    os << isri1.depth
+    os << isri1.tier1Depth
        << sep
-       << isri2.depth
+       << isri2.tier1Depth
        << sep
        << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
        << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
@@ -104,7 +94,7 @@ writeSomaticIndelVcfGrid(
     strelka_shared_modifiers_indel smod;
     if (dopt.sfilter.is_max_depth())
     {
-        const unsigned& depth(siInfo.nisri[0].depth);
+        const unsigned& depth(siInfo.nisri[0].tier1Depth);
         if (depth > dopt.sfilter.max_chrom_depth)
         {
             smod.filters.set(SOMATIC_VARIANT_VCF_FILTERS::HighDepth);
@@ -196,22 +186,14 @@ writeSomaticIndelVcfGrid(
     DDIGT::write_indel_state(static_cast<DDIGT::index_t>(rs.max_gt),os);
 
     {
-        // these must be computed from tier2 otherwise mapq filtering is in effect:
-        /// TODO: features become invalid with a simple user configuration parameter
-        /// change
-
-        //MQ
-        const unsigned n_mapq(siInfo.nisri[1].n_mapq+siInfo.tisri[1].n_mapq);
-        const double sum_sq_mapq(siInfo.nisri[1].sum_sq_mapq+siInfo.tisri[1].sum_sq_mapq);
-        const double mq_rms_tn(std::sqrt(safeFrac(sum_sq_mapq,n_mapq)));
-
-        //MQ0
-        const unsigned n_mapq0(siInfo.nisri[1].n_mapq0+siInfo.tisri[1].n_mapq0);
+        //MQ and MQ0
+        MapqTracker mapqTracker(siInfo.nisri[1].mapqTracker);
+        mapqTracker.merge(siInfo.tisri[1].mapqTracker);
 
         const StreamScoper ss(os);
         os << std::fixed << std::setprecision(2);
-        os << ";MQ=" << mq_rms_tn
-           << ";MQ0=" << n_mapq0
+        os << ";MQ=" << mapqTracker.getRMS()
+           << ";MQ0=" << mapqTracker.zeroCount
            ;
     }
     if (siInfo.iri.is_repeat_unit())

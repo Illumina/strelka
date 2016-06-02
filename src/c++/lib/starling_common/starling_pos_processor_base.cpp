@@ -587,7 +587,7 @@ is_estimated_depth_range_ge_than(
 
 // TODO use boost::optional here:
 //
-std::pair<bool,align_id_t>
+boost::optional<align_id_t>
 starling_pos_processor_base::
 insert_read(
     const bam_record& br,
@@ -596,6 +596,8 @@ insert_read(
     const MAPLEVEL::index_t maplev,
     const unsigned sample_no)
 {
+    boost::optional<align_id_t> retval;
+
     if (0 != strcmp(_chrom_name.c_str(),chrom_name))
     {
         log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chrom_name << "'\n"
@@ -613,9 +615,8 @@ insert_read(
     {
         log_os << "WARNING: skipping alignment for read: " << read_key(br)
                << " which falls outside of the read buffer\n";
-        return std::make_pair(false,0);
+        return retval;
     }
-
 
     starling_read_buffer& rbuff(sample(sample_no).read_buff);
 
@@ -624,7 +625,7 @@ insert_read(
     {
         if (rbuff.size() >= _opt.maxBufferedReads)
         {
-            return std::make_pair(false,0);
+            return retval;
         }
     }
 
@@ -642,16 +643,16 @@ insert_read(
         }
     }
 
-    const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(br,al,maplev));
-    if (! res.first) return res;
+    retval.reset(rbuff.add_read_alignment(br,al,maplev));
 
     // must initialize initial read_segments "by-hand":
     //
     // TODO get this streamlined into the pos-processor
     //
+    if (retval)
     {
-        const starling_read* sread_ptr(rbuff.get_read(res.second));
-        assert(NULL!=sread_ptr);
+        const starling_read* sread_ptr(rbuff.get_read(*retval));
+        assert(nullptr!=sread_ptr);
 
         // update depth-buffer for the whole read:
         load_read_in_depth_buffer(sread_ptr->get_full_segment(),sample_no);
@@ -661,7 +662,7 @@ insert_read(
         init_read_segment(sread_ptr->get_segment(seg_id),sample_no);
     }
 
-    return res;
+    return retval;
 }
 
 
@@ -1107,15 +1108,14 @@ update_ranksum_and_mapq_count(
     const uint8_t call_id,
     const uint8_t qscore,
     const uint8_t mapq,
-    const uint8_t adjustedMapq,
     const unsigned cycle,
     const bool is_submapped)
 {
     // assume pos is already valid:
 
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.insert_mapq_count(pos,mapq,adjustedMapq);
-    bcbuff.update_ranksums(_ref.get_base(pos),pos,call_id,qscore,adjustedMapq,cycle,is_submapped);
+    bcbuff.insert_mapq_count(pos,mapq);
+    bcbuff.update_ranksums(_ref.get_base(pos),pos,call_id,qscore,mapq,cycle,is_submapped);
 }
 
 
@@ -1134,7 +1134,7 @@ update_somatic_features(
     // assume pos is already valid:
 
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.insert_mapq_count(pos,mapq,mapq);
+    bcbuff.insert_mapq_count(pos,mapq);
 
     if (is_tier1 && (sample_no != 0) && (! is_call_filter))
     {
@@ -1559,14 +1559,7 @@ pileup_read_segment(const read_segment& rseg,
                 // update extended feature metrics (including submapped reads):
                 if (_opt.is_compute_germline_scoring_metrics())
                 {
-                    /// \TODO Morten -- consider improving MQ, MQ0 and RankSumMQ by:
-                    ///  1) removing the if (! submapped) here
-                    ///  2) collapsing mapq and adjustedMapq to just mapq
-                    ///
-                    if (! is_submapped)
-                    {
-                        update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,adjustedMapq,align_strand_read_pos,is_submapped);
-                    }
+                    update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,align_strand_read_pos,is_submapped);
                 }
                 else if (_opt.is_compute_somatic_scoring_metrics)
                 {

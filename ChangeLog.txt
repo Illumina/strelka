@@ -1,3 +1,4 @@
+- STREL-104 provide corrected germline MQ/MQ0, EVS feature norm and exome support
 - STREL-101 update to simplified log-linear indel error rates
 - STREL-97 use EVSF field to report all variant scoring features for germline model
 - STREL-47 add new basecall error estimator

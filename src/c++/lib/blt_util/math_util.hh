@@ -111,9 +111,9 @@ median(
 
 /// standardize the div by zero guard on division
 ///
-/// note while this is a relatively simple utility, it was creaping
+/// note while this is a relatively simple utility, it was creeping
 /// up all over the place with minor type variations. This standard
-/// library copy should consistent do the sane thing for all integral
+/// library copy should consistently do the sane thing for all integral
 /// and floating point types, unless you want floating point wider than
 /// double..
 ///

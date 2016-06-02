@@ -283,23 +283,20 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
 
 
 void
-get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
-                                      const indel_key& ik,
-                                      const indel_data& id,
-                                      const pos_basecall_buffer& bc_buff,
-                                      const bool is_tier2_pass,
-                                      const bool is_use_alt_indel,
-                                      starling_indel_sample_report_info& isri)
+get_starling_indel_sample_report_info(
+    const starling_base_deriv_options& dopt,
+    const indel_key& ik,
+    const indel_data& id,
+    const pos_basecall_buffer& bc_buff,
+    const bool is_tier2_pass,
+    const bool is_use_alt_indel,
+    starling_indel_sample_report_info& isri)
 {
     // get read info:
     {
         static const double path_pprob_thresh(0.999);
 
         unsigned n_subscore_reads(0);
-
-        isri.n_mapq = id.n_mapq;
-        isri.n_mapq0 = id.n_mapq0;
-        isri.sum_sq_mapq = id.sum_sq_mapq;
 
         for (const auto& val : id.read_path_lnp)
         {
@@ -393,11 +390,12 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
     }
 
     {
-        // get depth of indel:
+        // get various indel stats from the pileup:
         pos_t depth_pos(ik.pos-1);
         if (ik.type==INDEL::BP_RIGHT) depth_pos=ik.pos;
         const snp_pos_info& spi(bc_buff.get_pos(depth_pos));
-        isri.depth=spi.calls.size();
+        isri.tier1Depth=spi.calls.size();
+        isri.mapqTracker=spi.mapqTracker;
     }
 }
 
@@ -410,7 +408,7 @@ void starling_indel_sample_report_info::dump(std::ostream& os) const
        << ",n_q30_indel_reads=" << n_q30_indel_reads
        << ",n_q30_alt_reads=" << n_q30_alt_reads
        << ",n_other_reads=" << n_other_reads
-       << ",depth=" << depth;
+       << ",tier1Depth=" << tier1Depth;
 }
 
 std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj)

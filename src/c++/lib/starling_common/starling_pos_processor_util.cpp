@@ -212,10 +212,10 @@ is_usable_read_mapping(const starling_base_options& opt,
 
     {
         const int mapq(static_cast<int>(read.map_qual()));
-		if (mapq < current_min_mapping_quality)
-		{
-			return false;
-		}
+        if (mapq < current_min_mapping_quality)
+        {
+            return false;
+        }
     }
     return true;
 }
@@ -289,8 +289,9 @@ process_genomic_read(
     starling_pos_processor_base& sppr,
     const unsigned sample_no)
 {
-    // read filters which are *always* on, because Strelka
-    // can't do anything sensible with this information:
+    // Read filters which are *always* on, because Strelka
+    // can't do anything sensible with these reads. This filtration
+    // is shared with the chrom depth estimation routine.
     //
     const READ_FILTER_TYPE::index_t filterId(starling_read_filter_shared(read));
     if (filterId != READ_FILTER_TYPE::NONE)
@@ -369,7 +370,7 @@ process_genomic_read(
                 return;
             }
 
-            // normalize/left-shift the input alingment before inserting into the read buffer below:
+            // normalize/left-shift the input alignment before inserting into the read buffer below:
             const rc_segment_bam_seq refBamSeq(ref);
             const bam_seq readBamSeq(read.get_bam_read());
             normalizeAlignment(refBamSeq,readBamSeq,al);

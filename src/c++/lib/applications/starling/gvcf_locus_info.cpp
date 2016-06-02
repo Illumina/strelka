@@ -24,6 +24,7 @@
 
 
 #include "gvcf_locus_info.hh"
+#include "blt_util/math_util.hh"
 #include "common/Exceptions.hh"
 
 #include "boost/math/distributions/binomial.hpp"
@@ -103,11 +104,19 @@ void GermlineIndelSimpleGenotypeInfo::set_hap_cigar(
 void
 GermlineDiploidIndelSimpleGenotypeInfo::
 computeEmpiricalScoringFeatures(
+    const bool isUniformDepthExpected,
     const bool isComputeDevelopmentFeatures,
     const double chromDepth,
     const bool isHetalt)
 {
-    const double chromDepthFactor(1./chromDepth);
+    const double filteredLocusDepth(_isri.tier1Depth);
+    const double locusDepth(_isri.mapqTracker.count);
+    const double q30Depth(_isri.total_q30_reads());
+
+    const double chromDepthFactor(safeFrac(1,chromDepth));
+    const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
+    const double locusDepthFactor(safeFrac(1,locusDepth));
+    const double q30DepthFactor(safeFrac(1,q30Depth));
 
     features.set(GERMLINE_INDEL_SCORING_FEATURES::QUAL, (_dindel.indel_qphred * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX, (gqx * chromDepthFactor));
@@ -117,7 +126,7 @@ computeEmpiricalScoringFeatures(
     features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_isri.n_q30_ref_reads * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_isri.n_q30_indel_reads * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_isri.n_q30_alt_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_isri.depth * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_isri.tier1Depth * chromDepthFactor));
 
     {
         // allele bias metrics
@@ -145,10 +154,36 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::AB, (-std::log(std::min(1.,2.*std::min(allelebiaslower,allelebiasupper))+1.e-30)));
     }
 
-    /// compute any experimental features not currently used in production
+    // compute any experimental features not currently used in production
     if (isComputeDevelopmentFeatures)
     {
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (gqx * chromDepthFactor));
+
+        // hom unrelable are the read mappings near this locus?
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ, (_isri.mapqTracker.getRMS()));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (_isri.mapqTracker.getZeroFrac()));
+
+        // how noisy is the locus?
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM, (filteredLocusDepth * locusDepthFactor));
+
+        // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
+        //
+        /// TODO: convert this to pvalue based on Poisson distro?
+        double relativeLocusDepth(1.);
+        if (isUniformDepthExpected)
+        {
+            relativeLocusDepth = (locusDepth * chromDepthFactor);
+        }
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
+
+        // all of the features below are simply renormalized reqplacements of the current production feature set
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (_dindel.indel_qphred * filteredLocusDepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (gqx * filteredLocusDepthFactor));
+
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (_isri.n_q30_ref_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (_isri.n_q30_indel_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM, (_isri.n_q30_alt_reads * q30DepthFactor));
+
     }
 }
 
@@ -267,11 +302,18 @@ getPloidyError(
 void
 GermlineDiploidSiteCallInfo::
 computeEmpiricalScoringFeatures(
+    const bool isUniformDepthExpected,
     const bool isComputeDevelopmentFeatures,
     const double chromDepth,
     GermlineDiploidSiteSimpleGenotypeInfo& smod2) const
 {
-    const double chromDepthFactor(1./chromDepth);
+    const double filteredLocusDepth(n_used_calls);
+    const double locusDepth(mapqCount);
+
+    const double chromDepthFactor(safeFrac(1,chromDepth));
+    const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
+    const double locusDepthFactor(safeFrac(1,locusDepth));
+
 
     // get the alt base id (choose second in case of an alt het....)
     unsigned altBase(N_BASE);
@@ -301,7 +343,7 @@ computeEmpiricalScoringFeatures(
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::AD1, (r1 * chromDepthFactor));
 
 
-    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (MQ));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (mapqRMS));
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (ReadPosRankSum));
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_BaseQRankSum, (BaseQRankSum));
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (MQRankSum));
@@ -326,6 +368,33 @@ computeEmpiricalScoringFeatures(
 
         //the average position value within a read of alt allele
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawPos, (rawPos));
+
+        // hom unrelable are the read mappings near this locus?
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (safeFrac(mapqZeroCount,mapqCount)));
+
+        // how noisy is the locus?
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_DP_NORM, (filteredLocusDepth * locusDepthFactor));
+
+        // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
+        //
+        /// TODO: convert this to pvalue based on Poisson distro?
+        double relativeLocusDepth(1.);
+        if (isUniformDepthExpected)
+        {
+            relativeLocusDepth = (locusDepth * chromDepthFactor);
+        }
+
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
+
+
+        // renormalized features intended to replece the corresponding procuction feature
+        //
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (dgt.genome.snp_qphred * filteredLocusDepthFactor));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (smod.gqx * filteredLocusDepthFactor));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM, (smod.gq * filteredLocusDepthFactor));
+
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (r0 * filteredLocusDepthFactor));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (r1 * filteredLocusDepthFactor));
     }
 }
 

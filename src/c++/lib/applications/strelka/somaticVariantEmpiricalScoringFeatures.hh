@@ -52,7 +52,7 @@ struct SOMATIC_SNV_SCORING_FEATURES
         N_DP_RATE,
         TIER1_ALT_RATE,
         MQ,
-        n_mapq0,
+        MQ0_FRAC,
         strandBias,
         ReadPosRankSum,
         altmap,
@@ -82,8 +82,8 @@ struct SOMATIC_SNV_SCORING_FEATURES
             return "TIER1_ALT_RATE";
         case MQ:
             return "MQ";
-        case n_mapq0:
-            return "n_mapq0";
+        case MQ0_FRAC:
+            return "MQ0_FRAC";
         case strandBias:
             return "strandBias";
         case ReadPosRankSum:

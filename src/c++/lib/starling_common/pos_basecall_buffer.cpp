@@ -48,14 +48,14 @@ update_ranksums(
     const pos_t pos,
     const uint8_t call_id,
     const uint8_t qscore,
-    const uint8_t adjustedMapq,
+    const uint8_t mapq,
     const unsigned cycle,
     const bool is_submapped)
 {
     const bool is_reference(refchar==id_to_base(call_id));
 
     auto& posdata(_pdata.getRef(pos));
-    posdata.mq_ranksum.add_observation(is_reference,static_cast<unsigned>(adjustedMapq));
+    posdata.mq_ranksum.add_observation(is_reference,static_cast<unsigned>(mapq));
     if (! is_submapped)
     {
         posdata.baseq_ranksum.add_observation(is_reference,static_cast<unsigned>(qscore));

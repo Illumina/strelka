@@ -24,8 +24,10 @@
 
 #pragma once
 
+#include "blt_common/MapqTracker.hh"
 #include "starling_common/starling_base_shared.hh"
 #include "starling_common/indel.hh"
+
 #include <string>
 
 
@@ -64,7 +66,6 @@ struct starling_indel_sample_report_info
 {
     starling_indel_sample_report_info() {}
 
-    unsigned n_total_reads = 0;
     unsigned n_q30_ref_reads = 0;
     unsigned n_q30_indel_reads = 0;
     unsigned n_q30_alt_reads = 0;
@@ -73,7 +74,7 @@ struct starling_indel_sample_report_info
     unsigned n_other_reads = 0;
 
     // the depth of the pileup preceding the indel
-    unsigned depth = 0;
+    unsigned tier1Depth = 0;
 
     // same as above, but by strand
     unsigned n_q30_ref_reads_fwd = 0;
@@ -85,9 +86,7 @@ struct starling_indel_sample_report_info
     unsigned n_q30_alt_reads_rev = 0;
     unsigned n_other_reads_rev = 0;
 
-    unsigned n_mapq = 0;
-    unsigned n_mapq0 = 0;
-    double sum_sq_mapq = 0.;
+    MapqTracker mapqTracker;
 
     ranksum readpos_ranksum;
 
@@ -97,7 +96,6 @@ struct starling_indel_sample_report_info
     }
 
     void dump(std::ostream& os) const;
-
 };
 std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj);
 

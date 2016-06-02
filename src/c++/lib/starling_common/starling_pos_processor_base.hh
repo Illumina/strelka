@@ -18,16 +18,10 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
-///
 
 #pragma once
 
@@ -56,11 +50,6 @@
 
 struct diploid_genotype;
 struct nploid_info;
-
-
-//int
-//get_influence_zone_size(const unsigned max_indel_size);
-
 
 
 /// \brief accumulate sequential position specific information and
@@ -93,8 +82,6 @@ struct nploid_info;
 /// Submission of snps < first_pos will be ignored. Submission of indels
 /// between first_pos and first_pos-MAX_READ_SIZE will be processed but
 /// not reported.
-///
-/// ...
 ///
 struct starling_pos_processor_base : public pos_processor_base, private boost::noncopyable
 {
@@ -131,14 +118,15 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const unsigned depth,
         const unsigned sample_no) const;
 
-    // first return value is true if the alignment is accepted into
+    // return value is true if the alignment is accepted into
     // the buffer (alignments can fail a number of quality checks --
     // such as being located too far away from other alignments of the
     // same read or having an indel that is too large
     //
-    // second return value is read_id
+    // if true, the return value provides the read's ide in this structures
+    // read buffer
     //
-    std::pair<bool,align_id_t>
+    boost::optional<align_id_t>
     insert_read(
         const bam_record& br,
         const alignment& al,
@@ -398,7 +386,6 @@ private:
         const uint8_t call_id,
         const uint8_t qscore,
         const uint8_t mapq,
-        const uint8_t adjustedMapq,
         const unsigned cycle,
         const bool is_submapped);
 
@@ -456,13 +443,6 @@ private:
                         const unsigned sample_no);
 
     void
-    get_region_haplotypes(const known_pos_range full_pr,
-                          const known_pos_range active_pr);
-
-    void
-    process_htype_pos(const pos_t begin_pos);
-
-    void
     write_reads(const pos_t pos);
 
     void
@@ -510,11 +490,6 @@ protected:
     }
 
 private:
-    //////
-    void
-    print_delayed_results(const int stage_no,
-                          const pos_t pos);
-
     virtual
     void
     write_counts(const pos_range& output_report_range) const = 0;
