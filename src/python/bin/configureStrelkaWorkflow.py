@@ -71,7 +71,6 @@ You must specify BAM/CRAM file(s) for a pair of samples.
         group.add_option("--noiseVcf", type="string",dest="noiseVcfList",metavar="FILE", action="append",
                          help="Noise vcf file (submit argument multiple times for more than one file)")
 
-
         StarkaWorkflowOptionsBase.addExtendedGroupOptions(self,group)
 
     def getOptionDefaults(self) :

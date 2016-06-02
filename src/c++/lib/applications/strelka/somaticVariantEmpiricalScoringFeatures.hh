@@ -40,7 +40,7 @@ struct SOMATIC_SNV_SCORING_FEATURES
     }
 
     /** any change here must be done together with changing
-        src/python/scoringModelTraining/somatic/lib/features//StrelkaSNV.py
+        src/python/scoringModelTraining/somatic/lib/features/StrelkaSNV.py
      */
     enum index_t
     {
@@ -124,6 +124,9 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
 
     enum index_t
     {
+        MQ0_FRAC,
+//		AFR,
+		LOR,
         SIZE
     };
 
@@ -133,6 +136,12 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
     {
         switch (idx)
         {
+        case MQ0_FRAC:
+            return "MQ0_FRAC";
+//        case AFR:
+//            return "AlleleFreqRatio";
+        case LOR:
+        	return "LogOddsRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;
