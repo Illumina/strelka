@@ -21,6 +21,7 @@
 #include "SequenceErrorCountsPosProcessor.hh"
 #include "blt_common/ref_context.hh"
 #include "common/OutStream.hh"
+#include "starling_common/OrthogonalVariantAlleleCandidateGroup.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "starling_common/starling_diploid_indel.hh"
 
@@ -144,62 +145,6 @@ isKnownVariantMatch(
     return (! overlap.empty());
 }
 
-/// generalization of overlapping indels:
-///
-struct OrthogonalHaplotypeCandidateGroup
-{
-    const IndelKey&
-    key(
-        const unsigned index) const
-    {
-        return iter(index)->first;
-    }
-
-    const IndelData&
-    data(
-        const unsigned index) const
-    {
-        assert(index < size());
-        return getIndelData(iter(index));
-    }
-
-    const IndelBuffer::const_iterator&
-    iter(
-        const unsigned index) const
-    {
-        assert(index < size());
-        return haps[index];
-    }
-
-    unsigned
-    size() const
-    {
-        return haps.size();
-    }
-
-    bool
-    empty() const
-    {
-        return haps.empty();
-    }
-
-    void
-    clear()
-    {
-        haps.clear();
-    }
-
-    void
-    addHaplotype(
-        const IndelBuffer::const_iterator hapIter)
-    {
-        haps.push_back(hapIter);
-    }
-
-    std::vector<IndelBuffer::const_iterator> haps;
-};
-
-
 
 
 #include "blt_util/math_util.hh"
@@ -212,7 +157,7 @@ struct OrthogonalHaplotypeCandidateGroup
 static
 void
 getOrthogonalHaplotypeSupportCounts(
-    const OrthogonalHaplotypeCandidateGroup& hg,
+    const OrthogonalVariantAlleleCandidateGroup& hg,
     const unsigned sampleId,
     std::vector<unsigned>& support,
     const bool is_tier1_only = true)
@@ -513,7 +458,7 @@ process_pos_error_counts(
     // is intended to generalize across multiple positions, in which
     // case we will have to deal with non-clique conflict patterns.
     //
-    std::vector<OrthogonalHaplotypeCandidateGroup> _groups;
+    std::vector<OrthogonalVariantAlleleCandidateGroup> _groups;
 
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
@@ -536,8 +481,8 @@ process_pos_error_counts(
 
         // all indels at the same position are conflicting:
         if (_groups.empty()) _groups.resize(1);
-        OrthogonalHaplotypeCandidateGroup& hg(_groups[0]);
-        hg.addHaplotype(it);
+        OrthogonalVariantAlleleCandidateGroup& hg(_groups[0]);
+        hg.addVariantAllele(it);
     }
 
     // buffer observations until we get through all overlaping indels at this site:
@@ -550,7 +495,7 @@ process_pos_error_counts(
 
     if (! _groups.empty())
     {
-        const OrthogonalHaplotypeCandidateGroup& hg(_groups[0]);
+        const OrthogonalVariantAlleleCandidateGroup& hg(_groups[0]);
         const unsigned nonrefHapCount(hg.size());
         std::vector<unsigned> support;
         getOrthogonalHaplotypeSupportCounts(hg, sampleId, support);

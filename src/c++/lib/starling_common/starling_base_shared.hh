@@ -238,6 +238,7 @@ struct starling_base_options : public blt_options
 //
 struct starling_sample_options
 {
+    explicit
     starling_sample_options(
         const starling_base_options& opt)
         : min_read_bp_flank(opt.default_min_read_bp_flank)
@@ -250,7 +251,7 @@ struct starling_sample_options
 
 struct IndelErrorModel;
 struct indel_digt_caller;
-
+struct GenotypePriors;
 
 
 // data deterministically derived from the input options:
@@ -293,6 +294,12 @@ struct starling_base_deriv_options : public blt_deriv_options
         return *_indelErrorModel;
     }
 
+    const GenotypePriors&
+    getIndelGenotypePriors() const
+    {
+        return *_indelGenotypePriors;
+    }
+
 protected:
     unsigned
     addPostCallStage(
@@ -316,11 +323,13 @@ public:
 
     const min_count_binom_gte_cache countCache;
 
+    // cache the log of options->indelErrroRateFactor
     const double logIndelErrorRateFactor;
 
 private:
     std::unique_ptr<IndelErrorModel> _indelErrorModel;
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
+    std::unique_ptr<GenotypePriors> _indelGenotypePriors;
 
     std::vector<unsigned> _postCallStage;
 };

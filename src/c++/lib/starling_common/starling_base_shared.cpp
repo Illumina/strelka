@@ -22,10 +22,12 @@
 /// \author Chris Saunders
 ///
 
+#include "starling_common/starling_base_shared.hh"
+
 #include "blt_util/math_util.hh"
 #include "calibration/IndelErrorModel.hh"
 #include "htsapi/bam_streamer.hh"
-#include "starling_common/starling_base_shared.hh"
+#include "starling_common/AlleleGroupGenotype.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
 #include <cmath>
@@ -55,6 +57,7 @@ starling_base_deriv_options(
     , logIndelErrorRateFactor(std::log(opt.indelErrorRateFactor))
     , _indelErrorModel(new IndelErrorModel(opt.indel_error_model_name,opt.indel_error_models_filename))
     , _incaller(new indel_digt_caller(opt.bindel_diploid_theta))
+    , _indelGenotypePriors(new GenotypePriors(opt.bindel_diploid_theta))
 {
     indel_nonsite_match_lnp=std::log(opt.indel_nonsite_match_prob);
     if (opt.tier2.is_tier2_indel_nonsite_match_prob)

@@ -19,6 +19,9 @@
 //
 
 #include "starling_pos_processor.hh"
+#include "starling_common/OrthogonalVariantAlleleCandidateGroup.hh"
+#include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
+#include "starling_common/AlleleGroupGenotype.hh"
 #include "blt_common/position_nonref_test.hh"
 #include "blt_common/position_nonref_2allele_test.hh"
 #include "blt_common/ref_context.hh"
@@ -498,6 +501,194 @@ process_pos_indel_single_sample(
 
 
 
+/// TEMPORARY
+static
+void
+insertIndelInGvcf(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const reference_contig_segment& ref,
+    const pos_basecall_buffer& basecallBuffer,
+    const IndelKey& indelKey,
+    const IndelData& indelData,
+    const unsigned sampleId,
+    const starling_diploid_indel& dindel,
+    gvcf_aggregator& gvcfer)
+{
+    static const bool is_tier2_pass(false);
+    static const bool is_use_alt_indel(false);
+
+    // sample-independent info:
+    starling_indel_report_info indelReportInfo;
+    get_starling_indel_report_info(indelKey, indelData, ref, indelReportInfo);
+
+    // sample-specific info: (division doesn't really matter
+    // in single-sample case)
+    const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
+    starling_indel_sample_report_info indelSampleReportInfo;
+    get_starling_indel_sample_report_info(opt, dopt, indelKey, indelSampleData, basecallBuffer,
+                                          is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
+
+    gvcfer.add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(indelKey, indelData, dindel, indelReportInfo, indelSampleReportInfo)));
+}
+
+
+
+/// TEMPORARY
+namespace AG_GENOTYPE
+{
+    static
+    STAR_DIINDEL::index_t
+    mapHap0(const unsigned id)
+    {
+        switch(static_cast<index_t>(id))
+        {
+            case HOM0: return STAR_DIINDEL::HOM;
+            case HET0:
+            case HET01: return STAR_DIINDEL::HET;
+            default:    return STAR_DIINDEL::NOINDEL;
+        }
+    }
+
+    static
+    STAR_DIINDEL::index_t
+    mapHap1(const unsigned id)
+    {
+        switch(static_cast<index_t>(id))
+        {
+            case HOM1: return STAR_DIINDEL::HOM;
+            case HET1:
+            case HET01: return STAR_DIINDEL::HET;
+            default:    return STAR_DIINDEL::NOINDEL;
+        }
+    }
+}
+
+
+
+/// TEMPORARY
+static
+void
+hackDiplotypeCallToCopyNumberCalls(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const reference_contig_segment& ref,
+    const pos_basecall_buffer& basecallBuffer,
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const AlleleGroupGenotype& locusGenotype,
+    gvcf_aggregator& gvcfer)
+{
+    if (not locusGenotype.isNonReferenceGenotype()) return;
+
+    // nonref allele 0:
+    if (AG_GENOTYPE::isAllele0Present(locusGenotype.maxGenotypeIndex))
+    {
+        const unsigned variantAllele0Index(0);
+        const IndelKey& indelKey0(alleleGroup.key(variantAllele0Index));
+        const IndelData& indelData0(alleleGroup.data(variantAllele0Index));
+
+        starling_diploid_indel dindel;
+        dindel.is_forced_output = false;
+        dindel.is_zero_coverage = false;
+        dindel.ploidy = 2;
+        dindel.is_indel = true;
+
+        dindel.pprob[STAR_DIINDEL::NOINDEL] = locusGenotype.posteriorProb[AG_GENOTYPE::HOMREF];
+        dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::HET0];
+        dindel.pprob[STAR_DIINDEL::HOM] = locusGenotype.posteriorProb[AG_GENOTYPE::HOM0];
+
+        if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
+        {
+            dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::HET01];
+        }
+
+        dindel.indel_qphred = (int) locusGenotype.variantAlleleQuality;
+        dindel.max_gt = AG_GENOTYPE::mapHap0(locusGenotype.maxGenotypeIndex);
+        dindel.max_gt_qphred = (int) locusGenotype.genotypeQuality;
+        dindel.max_gt_poly = AG_GENOTYPE::mapHap0(locusGenotype.maxGenotypeIndexPolymorphic);
+        dindel.max_gt_poly_qphred = (int) locusGenotype.genotypeQualityPolymorphic;
+
+        dindel.phredLoghood[STAR_DIINDEL::NOINDEL] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HOMREF];
+        dindel.phredLoghood[STAR_DIINDEL::HET] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HET0];
+        dindel.phredLoghood[STAR_DIINDEL::HOM] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HOM0];
+
+        if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
+        {
+            dindel.phredLoghood[STAR_DIINDEL::HET] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HET01];
+        }
+
+        {
+            unsigned minIndex(0);
+            for (unsigned gt(1); gt < STAR_DIINDEL::SIZE; ++gt)
+            {
+                if (dindel.phredLoghood[gt] < dindel.phredLoghood[minIndex]) minIndex = gt;
+            }
+            const int minPL(dindel.phredLoghood[minIndex]);
+            for (unsigned gt(0); gt < STAR_DIINDEL::SIZE; ++gt)
+            {
+                dindel.phredLoghood[gt] = (unsigned) std::min(GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ,
+                                                              (int) (dindel.phredLoghood[gt] - minPL));
+            }
+        }
+        insertIndelInGvcf(opt, dopt, ref, basecallBuffer, indelKey0, indelData0, sampleId, dindel, gvcfer);
+    }
+
+    if (AG_GENOTYPE::isAllele1Present(locusGenotype.maxGenotypeIndex))
+    {
+        const unsigned variantAllele1Index(1);
+        const IndelKey& indelKey1(alleleGroup.key(variantAllele1Index));
+        const IndelData& indelData1(alleleGroup.data(variantAllele1Index));
+
+        starling_diploid_indel dindel;
+        dindel.is_forced_output = false;
+        dindel.is_zero_coverage = false;
+        dindel.ploidy = 2;
+        dindel.is_indel = true;
+
+        dindel.pprob[STAR_DIINDEL::NOINDEL] = locusGenotype.posteriorProb[AG_GENOTYPE::HOMREF];
+        dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::HET1];
+        dindel.pprob[STAR_DIINDEL::HOM] = locusGenotype.posteriorProb[AG_GENOTYPE::HOM1];
+
+        if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
+        {
+            dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::HET01];
+        }
+
+        dindel.indel_qphred = (int) locusGenotype.variantAlleleQuality;
+        dindel.max_gt = AG_GENOTYPE::mapHap1(locusGenotype.maxGenotypeIndex);
+        dindel.max_gt_qphred = (int) locusGenotype.genotypeQuality;
+        dindel.max_gt_poly = AG_GENOTYPE::mapHap1(locusGenotype.maxGenotypeIndexPolymorphic);
+        dindel.max_gt_poly_qphred = (int) locusGenotype.genotypeQualityPolymorphic;
+
+        dindel.phredLoghood[STAR_DIINDEL::NOINDEL] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HOMREF];
+        dindel.phredLoghood[STAR_DIINDEL::HET] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HET1];
+        dindel.phredLoghood[STAR_DIINDEL::HOM] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HOM1];
+
+        if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
+        {
+            dindel.phredLoghood[STAR_DIINDEL::HET] = (unsigned) locusGenotype.phredLoghood[AG_GENOTYPE::HET01];
+        }
+
+        {
+            unsigned minIndex(0);
+            for (unsigned gt(1); gt < STAR_DIINDEL::SIZE; ++gt)
+            {
+                if (dindel.phredLoghood[gt] < dindel.phredLoghood[minIndex]) minIndex = gt;
+            }
+            const int minPL(dindel.phredLoghood[minIndex]);
+            for (unsigned gt(0); gt < STAR_DIINDEL::SIZE; ++gt)
+            {
+                dindel.phredLoghood[gt] = (unsigned) std::min(GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ,
+                                                              (int) (dindel.phredLoghood[gt] - minPL));
+            }
+        }
+        insertIndelInGvcf(opt, dopt, ref, basecallBuffer, indelKey1, indelData1, sampleId, dindel, gvcfer);
+    }
+}
+
+
+
 void
 starling_pos_processor::
 process_pos_indel_single_sample_digt(
@@ -522,21 +713,106 @@ process_pos_indel_single_sample_digt(
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
+    // define groups of overlapping indels:
+    //
+    // alleles should form "conflict graphs", where an edge exists
+    // between two alleles which cannot exist together on the same haplotype
+    //
+    // When only evaluating alleles at a single position in one sample, this graph is a clique,
+    // so the process of picking the mostly likely candidates is simple, we can pick the top
+    // two alleles (by some evidence metric), and add in the refernece if it is not one of the
+    // top two.
+    //
+    // This method will have to be redesigned for multi-sample and/or non-clique conflict graphs.
+    //
+    OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
     for (; it!=it_end; ++it)
     {
         const IndelKey& indelKey(it->first);
         const IndelData& indelData(getIndelData(it));
+
+        if (indelKey.is_breakpoint()) continue;
+
         const bool isForcedOutput(indelData.is_forced_output);
-
-        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
-        const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
-
-        if (! isForcedOutput)
+        if (not isForcedOutput)
         {
+            const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
+            const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
+
             if (isZeroCoverage) continue;
-            if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
+            if (not getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
+        // all alleles at the same position are automatically conflicting/orthogonal:
+        orthogonalVariantAlleles.addVariantAllele(it);
+    }
+
+    if (not orthogonalVariantAlleles.empty())
+    {
+        // determine region ploidy
+        //
+        // Assume entire allele group is covered by one ploidy type in nearly all cases,
+        // in case of a conflict use the highest ploidy overlapped by the group.
+        //
+        int groupLocusPloidy(0);
+        {
+            const known_pos_range alleleGroupRange(orthogonalVariantAlleles.getReferenceRange());
+            const int groupLeftPloidy(get_ploidy(alleleGroupRange.begin_pos));
+            const int groupRightPloidy(get_ploidy(alleleGroupRange.end_pos));
+
+            groupLocusPloidy=std::max(groupLeftPloidy,groupRightPloidy);
+        }
+
+        // if groupLocusPloidy > orthogonalVariantAlleleCount, order alleles according to read evidence,
+        // and take the top 'groupLocusPloidy' allele candidates (besides the reference)
+        //
+        // track all forcedOutput alleles in a separate group (even if they go into topVariant group)
+        // to ensure that these are output even if not included in the most likely genotype
+        //
+        OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
+        OrthogonalVariantAlleleCandidateGroup forcedOutputAlleleGroup;
+        {
+            const unsigned orthogonalVariantAlleleCount(orthogonalVariantAlleles.size());
+
+            for (unsigned alleleIndex(0); alleleIndex < orthogonalVariantAlleleCount; alleleIndex++)
+            {
+                const IndelData& indelData(orthogonalVariantAlleles.data(alleleIndex));
+                if (indelData.is_forced_output)
+                {
+                    forcedOutputAlleleGroup.addVariantAllele(orthogonalVariantAlleles.iter(alleleIndex));
+                }
+            }
+
+            unsigned referenceRank(0);
+            rankOrthogonalAllelesInSample(sampleId, orthogonalVariantAlleles, topVariantAlleleGroup, referenceRank);
+
+            assert(groupLocusPloidy>0);
+            unsigned nonrefPloidy(static_cast<unsigned>(groupLocusPloidy));
+            if (referenceRank < nonrefPloidy)
+            {
+                nonrefPloidy -= 1;
+            }
+
+            if (nonrefPloidy < orthogonalVariantAlleleCount)
+            {
+                // Copy the second chunk of the first vector in the second vector:
+                topVariantAlleleGroup.alleles.resize(nonrefPloidy);
+            }
+        }
+
+        // score topVariantAlleleGroup
+        {
+            AlleleGroupGenotype locusGenotype;
+            getVariantAlleleGroupGenotypeLhoods(_dopt, _dopt.getIndelGenotypePriors(), sampleId, topVariantAlleleGroup, locusGenotype);
+
+            // (1) TEMPORARY hack called variant alleles into old dindel structure(s)
+            // (2) determine how many forcedGT alleles are 'left', call each one to get AD counts and add those into dindel structures as well
+
+            hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, sampleId, topVariantAlleleGroup, locusGenotype, *_gvcfer);
+        }
+
+
+#if 0
         // TODO implement indel overlap resolution
         //
         // punt conflict resolution for now....
@@ -633,8 +909,12 @@ process_pos_indel_single_sample_digt(
                 }
             }
         }
+#endif
+
     }
 }
+
+
 
 void
 starling_pos_processor::
