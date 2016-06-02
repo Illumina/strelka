@@ -69,10 +69,6 @@ void
 get_indel_het_grid_lhood(const starling_base_options& opt,
                          const starling_base_deriv_options& dopt,
                          const starling_sample_options& sample_opt,
-                         const double indel_error_lnp,
-                         const double indel_real_lnp,
-                         const double ref_error_lnp,
-                         const double ref_real_lnp,
                          const IndelKey& indelKey,
                          const IndelSampleData& indelSampleData,
                          const bool is_include_tier2,
@@ -87,8 +83,6 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
         const double het_ratio((i+1)*DIGT_GRID::RATIO_INCREMENT);
         indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,
                                                         sample_opt,
-                                                        indel_error_lnp,indel_real_lnp,
-                                                        ref_error_lnp,ref_real_lnp,
                                                         indelKey,indelSampleData,het_ratio,
                                                         is_include_tier2,is_use_alt_indel,
                                                         lhood[lsize-(i+1)],
@@ -183,8 +177,6 @@ get_somatic_indel(
     const strelka_deriv_options& dopt,
     const starling_sample_options& normal_opt,
     const starling_sample_options& tumor_opt,
-    const double indel_error_prob,
-    const double ref_error_prob,
     const IndelKey& indelKey,
     const IndelData& indelData,
     const unsigned normalId,
@@ -206,11 +198,6 @@ get_somatic_indel(
 
     const IndelSampleData& normalIndelSampleData(indelData.getSampleData(normalId));
     const IndelSampleData& tumorIndelSampleData(indelData.getSampleData(tumorId));
-
-    const double indel_error_lnp(std::log(indel_error_prob));
-    const double indel_real_lnp(std::log(1.-indel_error_prob));
-    const double ref_error_lnp(std::log(ref_error_prob));
-    const double ref_real_lnp(std::log(1.-ref_error_prob));
 
     static const unsigned n_tier(2);
     std::array<indel_result_set,n_tier> tier_rs;
@@ -248,26 +235,21 @@ get_somatic_indel(
         }
 
         indel_digt_caller::get_indel_digt_lhood(opt,dopt,normal_opt,
-                                                indel_error_prob,ref_error_prob,indelKey,normalIndelSampleData,
+                                                indelKey,normalIndelSampleData,
                                                 is_normal_het_bias,normal_het_bias,
                                                 is_include_tier2,is_use_alt_indel,
-                                                normal_lhood
-                                               );
+                                                normal_lhood);
         indel_digt_caller::get_indel_digt_lhood(opt,dopt,tumor_opt,
-                                                indel_error_prob,ref_error_prob,indelKey,tumorIndelSampleData,
+                                                indelKey,tumorIndelSampleData,
                                                 is_tumor_het_bias,tumor_het_bias,
                                                 is_include_tier2,is_use_alt_indel,
                                                 tumor_lhood);
 
         get_indel_het_grid_lhood(opt,dopt,normal_opt,
-                                 indel_error_lnp,indel_real_lnp,
-                                 ref_error_lnp,ref_real_lnp,
                                  indelKey,normalIndelSampleData,
                                  is_include_tier2,is_use_alt_indel,
                                  normal_lhood+SOMATIC_DIGT::SIZE);
         get_indel_het_grid_lhood(opt,dopt,tumor_opt,
-                                 indel_error_lnp,indel_real_lnp,
-                                 ref_error_lnp,ref_real_lnp,
                                  indelKey,tumorIndelSampleData,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+SOMATIC_DIGT::SIZE);

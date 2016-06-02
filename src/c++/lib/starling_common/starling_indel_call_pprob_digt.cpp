@@ -157,10 +157,6 @@ get_high_low_het_ratio_lhood(
     const starling_base_options& /*opt*/,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
-    const double indel_error_lnp,
-    const double indel_real_lnp,
-    const double ref_error_lnp,
-    const double ref_real_lnp,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const double het_ratio,
@@ -205,8 +201,8 @@ get_high_low_het_ratio_lhood(
         }
 #endif
 
-        const double noindel_lnp(log_sum(alt_path_lnp+ref_real_lnp,path_lnp.indel+indel_error_lnp));
-        const double hom_lnp(log_sum(alt_path_lnp+ref_error_lnp,path_lnp.indel+indel_real_lnp));
+        const double noindel_lnp(alt_path_lnp);
+        const double hom_lnp(path_lnp.indel);
 
         // allele ratio convention is that the indel occurs at the
         // het_allele ratio and the alternate allele occurs at
@@ -247,10 +243,6 @@ increment_het_ratio_lhood(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
-    const double indel_error_lnp,
-    const double indel_real_lnp,
-    const double ref_error_lnp,
-    const double ref_real_lnp,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const double het_ratio,
@@ -263,8 +255,6 @@ increment_het_ratio_lhood(
     double het_lhood_low;
 
     indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,sample_opt,
-                                                    indel_error_lnp,indel_real_lnp,
-                                                    ref_error_lnp,ref_real_lnp,
                                                     indelKey,indelSampleData,het_ratio,is_tier2_pass,
                                                     is_use_alt_indel,
                                                     het_lhood_high,het_lhood_low);
@@ -419,8 +409,6 @@ get_indel_digt_lhood(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
-    const double indel_error_prob,
-    const double ref_error_prob,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const bool is_het_bias,
@@ -434,11 +422,6 @@ get_indel_digt_lhood(
     for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt) lhood[gt] = 0.;
 
     const bool is_breakpoint(indelKey.is_breakpoint());
-
-    const double indel_error_lnp(std::log(indel_error_prob));
-    const double indel_real_lnp(std::log(1.-indel_error_prob));
-    const double ref_error_lnp(std::log(ref_error_prob));
-    const double ref_real_lnp(std::log(1.-ref_error_prob));
 
     for (const auto& score : indelSampleData.read_path_lnp)
     {
@@ -465,8 +448,8 @@ get_indel_digt_lhood(
         }
 #endif
 
-        const double noindel_lnp(log_sum(alt_path_lnp+ref_real_lnp,path_lnp.indel+indel_error_lnp));
-        const double hom_lnp(log_sum(alt_path_lnp+ref_error_lnp,path_lnp.indel+indel_real_lnp));
+        const double noindel_lnp(alt_path_lnp);
+        const double hom_lnp(path_lnp.indel);
 
         // allele ratio convention is that the indel occurs at the
         // het_allele ratio and the alternate allele occurs at
@@ -502,8 +485,6 @@ get_indel_digt_lhood(
         {
             const double het_ratio(0.5+(step+1)*ratio_increment);
             increment_het_ratio_lhood(opt,dopt,sample_opt,
-                                      indel_error_lnp,indel_real_lnp,
-                                      ref_error_lnp,ref_real_lnp,
                                       indelKey,indelSampleData,het_ratio,is_tier2_pass,is_use_alt_indel,lhood);
         }
 
@@ -523,8 +504,6 @@ starling_indel_call_pprob_digt(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
-    const double indel_error_prob,
-    const double ref_error_prob,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const bool is_use_alt_indel,
@@ -546,7 +525,7 @@ starling_indel_call_pprob_digt(
 
     // get likelihood of each genotype:
     double lhood[STAR_DIINDEL::SIZE];
-    get_indel_digt_lhood(opt,dopt,sample_opt,indel_error_prob,ref_error_prob,indelKey,indelSampleData,
+    get_indel_digt_lhood(opt,dopt,sample_opt,indelKey,indelSampleData,
                          is_het_bias,opt.bindel_diploid_het_bias,
                          is_tier2_pass,is_use_alt_indel,lhood);
 

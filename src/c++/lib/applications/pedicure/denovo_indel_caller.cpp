@@ -85,10 +85,6 @@ get_indel_het_grid_lhood(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
-    const double indel_error_lnp,
-    const double indel_real_lnp,
-    const double ref_error_lnp,
-    const double ref_real_lnp,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const bool is_include_tier2,
@@ -109,8 +105,6 @@ get_indel_het_grid_lhood(
         indel_digt_caller::get_high_low_het_ratio_lhood(
             opt,dopt,
             sample_opt,
-            indel_error_lnp,indel_real_lnp,
-            ref_error_lnp,ref_real_lnp,
             indelKey,indelSampleData,het_ratio,
             is_include_tier2,is_use_alt_indel,
             lhood[ratioIndex],
@@ -454,8 +448,6 @@ get_denovo_indel_call(
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const std::vector<const starling_sample_options*>& sampleOptions,
-    const double indel_error_prob,
-    const double ref_error_prob,
     const IndelKey& indelKey,
     const IndelData& indelData,
     const bool is_use_alt_indel,
@@ -472,13 +464,6 @@ get_denovo_indel_call(
     {
         dinc.is_forced_output = true;
     }
-
-    /// TODO: stop computing this stuff three times for every indel
-    /// (other two are in get_indel_digt_lhood)
-    const double indel_error_lnp(std::log(indel_error_prob));
-    const double indel_real_lnp(std::log(1.-indel_error_prob));
-    const double ref_error_lnp(std::log(ref_error_prob));
-    const double ref_real_lnp(std::log(1.-ref_error_prob));
 
     const unsigned sampleSize(indelData.getSampleCount());
     std::vector<indel_state_t> sampleLhood(sampleSize);
@@ -525,16 +510,13 @@ get_denovo_indel_call(
 
             indel_digt_caller::get_indel_digt_lhood(
                 opt,dopt,sampleOpt,
-                indel_error_prob,ref_error_prob,indelKey,
-                indelSampleData,
+                indelKey, indelSampleData,
                 is_het_bias, het_bias,
                 is_include_tier2, is_use_alt_indel,
                 sampleLhood[sampleIndex].data());
 
             get_indel_het_grid_lhood(
                 opt,dopt,sampleOpt,
-                indel_error_lnp,indel_real_lnp,
-                ref_error_lnp,ref_real_lnp,
                 indelKey,indelSampleData,
                 is_include_tier2,is_use_alt_indel,
                 sampleLhood[sampleIndex].data()+STAR_DIINDEL::SIZE);

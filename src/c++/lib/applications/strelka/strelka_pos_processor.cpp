@@ -302,8 +302,6 @@ process_pos_indel_somatic(const pos_t pos)
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
                                                     normal_sif.sample_opt,
                                                     tumor_sif.sample_opt,
-                                                    indelData.errorRates.refToIndelErrorProb,
-                                                    indelData.errorRates.indelToRefErrorProb,
                                                     indelKey, indelData, NORMAL,TUMOR,
                                                     is_use_alt_indel,
                                                     sindel);

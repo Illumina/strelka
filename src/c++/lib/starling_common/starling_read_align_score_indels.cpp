@@ -120,26 +120,6 @@ which_interfering_indel(
 
 
 
-#if 0
-/// does "new_indel" interfere with any of the indel set "current_indels"?
-static
-bool
-is_interfering_indel(
-    const indel_set_t& current_indels,
-    const IndelKey& newIndel)
-{
-    if (current_indels.count(newIndel) != 0) return false;
-
-    for (const IndelKey& currentIndel : current_indels)
-    {
-        if (is_indel_conflict(currentIndel, newIndel)) return true;
-    }
-    return false;
-}
-#endif
-
-
-
 /// by how many bases does the alignment cross each indel breakpoint?
 ///
 /// Note that this function only works correctly for indels that are

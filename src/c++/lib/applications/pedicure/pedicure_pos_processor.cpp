@@ -255,7 +255,6 @@ process_pos_indel_denovo(const pos_t pos)
             _dopt,
             sinfo,
             sampleOptions,
-            indelData.errorRates.refToIndelErrorProb,indelData.errorRates.indelToRefErrorProb,
             indelKey,indelData,
             is_use_alt_indel,
             dindel);

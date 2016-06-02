@@ -518,8 +518,6 @@ process_pos_indel_single_sample_digt(
     // the methods are coded,)
     //
 
-    std::ostream& report_os(std::cerr);
-
     sample_info& sif(sample(sampleId));
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
@@ -583,7 +581,6 @@ process_pos_indel_single_sample_digt(
             _dopt.incaller().starling_indel_call_pprob_digt(
                 _opt,_dopt,
                 sif.sample_opt,
-                indelData.errorRates.scaledRefToIndelErrorProb,indelData.errorRates.scaledIndelToRefErrorProb,
                 indelKey,indelSampleData,is_use_alt_indel,dindel);
 
             bool is_indel(false);
@@ -617,6 +614,7 @@ process_pos_indel_single_sample_digt(
 
             if (is_print_indel_evidence && is_indel)
             {
+                std::ostream& report_os(std::cerr);
                 report_os << "INDEL_EVIDENCE " << indelKey;
 
                 for (const auto& val : indelSampleData.read_path_lnp)
