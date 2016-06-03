@@ -141,6 +141,21 @@ add_gvcf_filters(
 
 
 
+static
+void
+repeatedFeatureLabelError(
+    const char* label,
+    const std::string& featureLabel)
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: repeated " << label << " EVS training feature label '" << featureLabel << "'\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+}
+
+
+
 void
 finish_gvcf_header(
     const starling_options& opt,
@@ -175,8 +190,6 @@ finish_gvcf_header(
         os << "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref mapping qualities\">\n";
         os << "##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref base-call qualities\">\n";
         os << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position\">\n";
-        /* not currently used */
-        //os << "##INFO=<ID=MapQ0Count,Number=1,Type=Integer,Description=\"Number of overlapping reads with MAPQ=0\">\n";
         os << "##INFO=<ID=AvgBaseQ,Number=1,Type=Float,Description=\"Mean base Qscore\">\n";
         os << "##INFO=<ID=AvgPos,Number=1,Type=Float,Description=\"Mean position in aligned reads\">\n";
     }
@@ -222,6 +235,7 @@ finish_gvcf_header(
 
     if (opt.isReportEVSFeatures)
     {
+        std::set<std::string> featureLabels;
         os << "##snv_scoring_features=";
         for (unsigned featureIndex = 0; featureIndex < GERMLINE_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
         {
@@ -229,14 +243,28 @@ finish_gvcf_header(
             {
                 os << ",";
             }
-            os << GERMLINE_SNV_SCORING_FEATURES::get_feature_label(featureIndex);
+            const std::string featureLabel(GERMLINE_SNV_SCORING_FEATURES::get_feature_label(featureIndex));
+            const auto retVal = featureLabels.insert(featureLabel);
+            if (not retVal.second)
+            {
+                repeatedFeatureLabelError("SNV", featureLabel);
+            }
+            os << featureLabel;
         }
         for (unsigned featureIndex = 0; featureIndex < GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
         {
-            os << ',' << GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+            os << ',';
+            const std::string featureLabel(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
+            const auto retVal = featureLabels.insert(featureLabel);
+            if (not retVal.second)
+            {
+                repeatedFeatureLabelError("SNV", featureLabel);
+            }
+            os << featureLabel;
         }
         os << "\n";
 
+        featureLabels.clear();
         os << "##indel_scoring_features=";
         for (unsigned featureIndex = 0; featureIndex < GERMLINE_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
         {
@@ -244,11 +272,24 @@ finish_gvcf_header(
             {
                 os << ",";
             }
-            os << GERMLINE_INDEL_SCORING_FEATURES::get_feature_label(featureIndex);
+            const std::string featureLabel(GERMLINE_INDEL_SCORING_FEATURES::get_feature_label(featureIndex));
+            const auto retVal = featureLabels.insert(featureLabel);
+            if (not retVal.second)
+            {
+                repeatedFeatureLabelError("indel", featureLabel);
+            }
+            os << featureLabel;
         }
         for (unsigned featureIndex = 0; featureIndex < GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
         {
-            os << ',' << GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+            os << ',';
+            const std::string featureLabel(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
+            const auto retVal = featureLabels.insert(featureLabel);
+            if (not retVal.second)
+            {
+                repeatedFeatureLabelError("indel", featureLabel);
+            }
+            os << featureLabel;
         }
         os << "\n";
     }
