@@ -208,7 +208,6 @@ get_scoring_features(
     if (opt.isReportEVSFeatures)
     {
         // features not used in the current EVS model but feature candidates/exploratory for new EVS models:
-        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::MQ0_FRAC, safeFrac(n_mapq0,n_mapq));
 
         /**
          * Calculate LOR feature (log odds ratio for  T_REF T_ALT
@@ -226,16 +225,16 @@ get_scoring_features(
         for (unsigned b(0); b<N_BASE; ++b)
         {
             if (b==ref_index)
-            	n_ref += n_tier1_base_counts[b];
+                n_ref += n_tier1_base_counts[b];
             else
-            	n_alt += n_tier1_base_counts[b];
+                n_alt += n_tier1_base_counts[b];
         }
         for (unsigned b(0); b<N_BASE; ++b)
         {
             if (b==ref_index)
-            	t_ref += t_tier1_base_counts[b];
+                t_ref += t_tier1_base_counts[b];
             else
-            	t_alt += t_tier1_base_counts[b];
+                t_alt += t_tier1_base_counts[b];
         }
 
         double LOR = log10((t_ref+0.5)*(n_alt+0.5) / ((t_alt+0.5) / (n_ref+0.5)));

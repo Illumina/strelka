@@ -124,9 +124,7 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
 
     enum index_t
     {
-        MQ0_FRAC,
-//		AFR,
-		LOR,
+        LOR,
         SIZE
     };
 
@@ -136,12 +134,8 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
     {
         switch (idx)
         {
-        case MQ0_FRAC:
-            return "MQ0_FRAC";
-//        case AFR:
-//            return "AlleleFreqRatio";
         case LOR:
-        	return "LogOddsRatio";
+            return "LogOddsRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;
