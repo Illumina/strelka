@@ -177,21 +177,17 @@ namespace STAGE
 // stage into which pileup entries must fit:
 static
 int
-get_pileup_stage_no(const starling_base_options& opt)
+get_pileup_stage_no(const starling_base_options& /*opt*/)
 {
-    return (opt.is_htype_calling ?
-            static_cast<int>(POST_REGION) :
-            static_cast<int>(POST_ALIGN));
+    return (static_cast<int>(POST_ALIGN));
 }
 
 // stage into which pileup entries must fit:
 static
 int
-get_last_static_stage_no(const starling_base_options& opt)
+get_last_static_stage_no(const starling_base_options& /*opt*/)
 {
-    return (opt.is_htype_calling ?
-            static_cast<int>(POST_CALL) :
-            static_cast<int>(POST_CALL));
+    return (static_cast<int>(POST_CALL));
 }
 
 // given largest read, and indel ref span per read, get stage
@@ -207,12 +203,10 @@ get_stage_data(
 {
     stage_data sdata;
 
-    //
     // HEAD contains everything before the head position in the
     // stage processing pipeline, this should be:
     //
-    // 1) GROUPER contigs/reads that were far out-of-order
-    // 2) Exon entries that extend past the head position
+    // 1) Exon entries that extend past the head position
     //
     // HEAD has no defined size -- it is everything stored before
     // the head position
@@ -252,63 +246,26 @@ get_stage_data(
 
     sdata.add_stage(CLEAR_READ_BUFFER,POST_ALIGN,0);
 
-
-    if (! opt.is_htype_calling)
-    {
-        // POST_CALL is used to free up the pileup data. This data is
-        // preserved for one extra cycle after snp and indel calling so that
-        // the indel caller can look one base 'to the left' of its call
-        // location (excepting right breakpoints) to get the depth for the
-        // current indel call
-        //
-        // At the end of this stage we free the position's pileup buffer
-        //
-        static const unsigned pileup_free_delay(1);
-        sdata.add_stage(POST_CALL,POST_ALIGN,pileup_free_delay);
-
-    }
-    else
-    {
-        // POST_REGION defines the end of the "active region" used for
-        // haplotyping and calling. the "active region" is contained
-        // between two "buffer segments" where haplotyping occurs but
-        // no calling is done. The buffer segment is used to improve
-        // haplotype continuity on active region boundaries.
-        //
-        sdata.add_stage(POST_REGION,POST_ALIGN,(opt.htype_buffer_segment()+
-                                                opt.htype_call_segment));
-
-        // POST_CALL is used to free up the pileup data. This data is
-        // preserved for one extra cycle after snp and indel calling so that
-        // the indel caller can look one base 'to the left' of its call
-        // location (excepting right breakpoints) to get the depth for the
-        // current indel call
-        //
-        // At the end of this stage we free the position's pileup buffer
-        //
-        static const unsigned pileup_free_delay(1);
-        sdata.add_stage(POST_CALL,POST_REGION,pileup_free_delay);
-
-
-        // POST_READ is used to free reads during haplotype based calling:
-        //
-        const unsigned read_reserve_segment(get_read_buffer_size(largest_read_size,
-                                                                 largest_total_indel_ref_span_per_read));
-        const unsigned post_read_to_post_region(opt.htype_buffer_segment()+read_reserve_segment);
-        sdata.add_stage(POST_READ,POST_REGION,post_read_to_post_region);
-    }
+    // POST_CALL is used to free up the pileup data. This data is
+    // preserved for one extra cycle after snp and indel calling so that
+    // the indel caller can look one base 'to the left' of its call
+    // location (excepting right breakpoints) to get the depth for the
+    // current indel call
+    //
+    // At the end of this stage we free the position's pileup buffer
+    //
+    static const unsigned pileup_free_delay(1);
+    sdata.add_stage(POST_CALL,POST_ALIGN,pileup_free_delay);
 
     // dynamic stages after POST_CALL are used to region based information around a site
     //
-    // TODO this will not work correctly for the haplotype calling right now:
-    //
-    const int pileup_stage(get_pileup_stage_no(opt));
+    const int pileupStageIndex(get_pileup_stage_no(opt));
 
-    const auto& stages(dopt.getPostCalLStage());
-    const unsigned stageCount(stages.size());
-    for (unsigned i(0); i<stageCount; ++i)
+    const auto& postCallStages(dopt.getPostCallStage());
+    const unsigned postCallStageCount(postCallStages.size());
+    for (unsigned postCallStageIndex(0); postCallStageIndex<postCallStageCount; ++postCallStageIndex)
     {
-        sdata.add_stage(SIZE+i,pileup_stage,stages[i]);
+        sdata.add_stage(SIZE+postCallStageIndex,pileupStageIndex,postCallStages[postCallStageIndex]);
     }
 
     return sdata;
@@ -954,83 +911,48 @@ process_pos(const int stage_no,
 #endif
         //        consolidate_candidate_indel_pos(pos);
 
-        if (! _opt.is_htype_calling)
+        if (! _opt.is_write_candidate_indels_only)
         {
-            if (! _opt.is_write_candidate_indels_only)
-            {
-                //        clean_pos(pos);
-                align_pos(pos);
-                pileup_pos_reads(pos);
-                // if(_opt.is_realigned_read_file) {
-                //     rebuffer_pos_reads(pos);
-                // }
+            //        clean_pos(pos);
+            align_pos(pos);
+            pileup_pos_reads(pos);
+            // if(_opt.is_realigned_read_file) {
+            //     rebuffer_pos_reads(pos);
+            // }
 
-                write_reads(pos);
-            }
-
-            //previously cleared read-buffer here
-
-        }
-        else
-        {
-            if (! _opt.is_write_candidate_indels_only)
-            {
-                //        clean_pos(pos);
-                align_pos(pos);
-                rebuffer_pos_reads(pos);
-            }
+            write_reads(pos);
         }
 
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
-        if (! _opt.is_htype_calling)
+        if (! _opt.is_write_candidate_indels_only)
         {
-            if (! _opt.is_write_candidate_indels_only)
+            if (is_pos_reportable(pos))
             {
-                if (is_pos_reportable(pos))
-                {
-                    process_pos_variants(pos);
-                }
+                process_pos_variants(pos);
             }
-
-            for (unsigned s(0); s<_n_samples; ++s)
-            {
-                sample(s).indel_buff.clear_pos(pos);
-            }
-
-            // everything else:
-            post_align_clear_pos(pos);
         }
 
+        for (unsigned s(0); s<_n_samples; ++s)
+        {
+            sample(s).indel_buff.clear_pos(pos);
+        }
+
+        // everything else:
+        post_align_clear_pos(pos);
     }
     else if (stage_no==STAGE::CLEAR_SITE_ANNOTATION)
     {
-        assert (! _opt.is_htype_calling);
-
         _forced_output_pos.erase(pos);
         _ploidy_regions.removeToPos(pos);
         clear_pos_annotation(pos);
     }
     else if (stage_no==STAGE::CLEAR_READ_BUFFER)
     {
-        if (! _opt.is_htype_calling)
+        for (unsigned s(0); s<_n_samples; ++s)
         {
-            for (unsigned s(0); s<_n_samples; ++s)
-            {
-                sample(s).read_buff.clear_to_pos(pos);
-            }
-        }
-    }
-    else if (stage_no==STAGE::POST_REGION)
-    {
-        assert(_opt.is_htype_calling);
-
-        if (! _opt.is_write_candidate_indels_only)
-        {
-            // mothballing this...
-            //process_htype_pos(pos);
-            _forced_output_pos.erase(pos);
+            sample(s).read_buff.clear_to_pos(pos);
         }
     }
     else if (stage_no==STAGE::POST_CALL)
@@ -1048,20 +970,6 @@ process_pos(const int stage_no,
                 sif.bc_buff.clear_to_pos(pos);
             }
         }
-    }
-    else if (stage_no==STAGE::POST_READ)
-    {
-        assert(_opt.is_htype_calling);
-
-        for (unsigned s(0); s<_n_samples; ++s)
-        {
-            sample(s).read_buff.clear_to_pos(pos);
-        }
-        for (unsigned s(0); s<_n_samples; ++s)
-        {
-            sample(s).indel_buff.clear_pos(pos);
-        }
-
     }
     else if (stage_no>=STAGE::SIZE)
     {
