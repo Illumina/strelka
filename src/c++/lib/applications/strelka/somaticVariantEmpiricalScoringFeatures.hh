@@ -55,8 +55,8 @@ struct SOMATIC_SNV_SCORING_FEATURES
         n_mapq0,
         strandBias,
         ReadPosRankSum,
-        altmap,
-        altpos,
+		MQ0_FRAC,
+		LOR,
         SIZE
     };
 
@@ -88,10 +88,10 @@ struct SOMATIC_SNV_SCORING_FEATURES
             return "strandBias";
         case ReadPosRankSum:
             return "ReadPosRankSum";
-        case altmap:
-            return "altmap";
-        case altpos:
-            return "altpos";
+        case MQ0_FRAC:
+            return "MQ0_FRAC";
+        case LOR:
+        	return "LogOddsRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -124,9 +124,9 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
 
     enum index_t
     {
-        MQ0_FRAC,
-//		AFR,
-		LOR,
+		AFR,
+        altmap,
+        altpos,
         SIZE
     };
 
@@ -136,12 +136,12 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
     {
         switch (idx)
         {
-        case MQ0_FRAC:
-            return "MQ0_FRAC";
-//        case AFR:
-//            return "AlleleFreqRatio";
-        case LOR:
-        	return "LogOddsRatio";
+        case AFR:
+            return "AlleleFreqRatio";
+        case altmap:
+            return "altmap";
+        case altpos:
+            return "altpos";
         default:
             assert(false && "Unknown feature");
             return nullptr;

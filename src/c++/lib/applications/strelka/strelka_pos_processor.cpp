@@ -190,8 +190,8 @@ process_pos_snp_somatic(const pos_t pos)
                 sgtg.sn = *snp;
             }
         }
-        std::ostream& bos(*_streams.somatic_snv_osptr());
-//        std::ostream& bos(std::cout);
+//        std::ostream& bos(*_streams.somatic_snv_osptr());
+        std::ostream& bos(std::cout);
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG

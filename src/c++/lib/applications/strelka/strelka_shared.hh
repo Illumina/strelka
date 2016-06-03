@@ -52,7 +52,7 @@ struct somatic_filter_options
     int sindelQuality_LowerBound = 30;
 
     unsigned indelRegionFlankSize = 50;
-    double snvMinEVS = 4.00;
+    double snvMinEVS = 20.00;
 };
 
 
