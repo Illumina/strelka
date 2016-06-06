@@ -26,6 +26,7 @@
 #include "starling_indel_call_pprob_digt.hh"
 
 
+
 static
 double
 integrate_out_sites(
@@ -40,14 +41,130 @@ integrate_out_sites(
 
 
 
+static
+void
+accumulateLogLhoodFromReadObservation(
+    const starling_base_deriv_options& dopt,
+    const starling_sample_options& sampleOptions,
+    const uint16_t nsite,
+    const uint16_t read_length,
+    const bool is3AlleleModel,
+    const double refAllele_lnp,
+    const double variantAllele0_lnp,
+    const double variantAllele1_lnp,
+    const IndelKey& variantAllele0Key,
+    const IndelKey& variantAllele1Key,
+    double* logLhood)
+{
+    logLhood[AG_GENOTYPE::HOMREF] += integrate_out_sites(dopt,nsite,refAllele_lnp,false);
+    logLhood[AG_GENOTYPE::HOM0] += integrate_out_sites(dopt,nsite,variantAllele0_lnp,false);
+
+    static const double loghalf(std::log(0.5));
+    double logHet0RefPrior(loghalf);
+    double logHet0Allele0Prior(loghalf);
+    {
+        static const double hetAlleleRatio(0.5);
+        get_het_observed_allele_ratio(read_length, sampleOptions.min_read_bp_flank,
+                                      variantAllele0Key, hetAlleleRatio, logHet0RefPrior, logHet0Allele0Prior);
+    }
+
+    const double het0_lnp(log_sum(refAllele_lnp+logHet0RefPrior,variantAllele0_lnp+logHet0Allele0Prior));
+    logLhood[AG_GENOTYPE::HET0] += integrate_out_sites(dopt,nsite,het0_lnp,false);
+
+    if (is3AlleleModel)
+    {
+        logLhood[AG_GENOTYPE::HOM1] += integrate_out_sites(dopt,nsite,variantAllele1_lnp,false);
+
+        double logHet1RefPrior(loghalf);
+        double logHet1Allele1Prior(loghalf);
+        {
+            static const double hetAlleleRatio(0.5);
+            get_het_observed_allele_ratio(read_length, sampleOptions.min_read_bp_flank,
+                                          variantAllele1Key, hetAlleleRatio, logHet1RefPrior, logHet1Allele1Prior);
+        }
+
+        const double het1_lnp(log_sum(refAllele_lnp+logHet1RefPrior,variantAllele1_lnp+logHet1Allele1Prior));
+        logLhood[AG_GENOTYPE::HET1] += integrate_out_sites(dopt,nsite,het1_lnp,false);
+
+        /// approximate the expected allele ratio in this case
+        const double normalizeHetRatio(log_sum(logHet0Allele0Prior, logHet1Allele1Prior));
+        const double het01_lnp(log_sum(variantAllele0_lnp+(logHet0Allele0Prior-normalizeHetRatio),variantAllele1_lnp+(logHet1Allele1Prior-normalizeHetRatio)));
+        logLhood[AG_GENOTYPE::HET01] += integrate_out_sites(dopt,nsite,het01_lnp,false);
+    }
+
+}
+
+
+static
+void
+logLhoodToLocusGenotype(
+    const GenotypePriors& genotypePriors,
+    const unsigned gtCount,
+    const bool is3AlleleModel,
+    double* logLhood,
+    AlleleGroupGenotype& locusGenotype)
+{
+    // mult by prior distro to get unnormalized pprob:
+    const double* genotypeLogPrior(genotypePriors.prior2AlleleDiploid);
+    if (is3AlleleModel)
+    {
+        genotypeLogPrior = (genotypePriors.prior3AlleleDiploid);
+    }
+
+    for (unsigned gt(0); gt<gtCount; ++gt)
+    {
+        locusGenotype.posteriorProb[gt] = logLhood[gt] + genotypeLogPrior[gt];
+    }
+
+    normalize_ln_distro(std::begin(locusGenotype.posteriorProb),std::begin(locusGenotype.posteriorProb)+gtCount,locusGenotype.maxGenotypeIndex);
+
+    locusGenotype.variantAlleleQuality=error_prob_to_qphred(locusGenotype.posteriorProb[AG_GENOTYPE::HOMREF]);
+    locusGenotype.genotypeQuality=error_prob_to_qphred(prob_comp(locusGenotype.posteriorProb,locusGenotype.posteriorProb+gtCount,locusGenotype.maxGenotypeIndex));
+
+
+    // set phredLoghood:
+    {
+        unsigned maxIndex(0);
+        for (unsigned gt(1); gt<gtCount; ++gt)
+        {
+            if (logLhood[gt] > logLhood[maxIndex]) maxIndex = gt;
+        }
+        for (unsigned gt(0); gt<gtCount; ++gt)
+        {
+            // don't enforce maxQ at this point, b/c we're going to possibly select down from this list:
+            locusGenotype.phredLoghood[gt] = ln_error_prob_to_qphred(logLhood[gt]-logLhood[maxIndex]);
+        }
+    }
+
+
+    // add new poly calls (this trashes lhood):
+    {
+        // mult by prior distro to get unnormalized pprob:
+        const double* genotypeLogPriorPolymorphic(genotypePriors.prior2AlleleDiploidPolymorphic);
+        if (is3AlleleModel)
+        {
+            genotypeLogPriorPolymorphic = (genotypePriors.prior3AlleleDiploidPolymorphic);
+        }
+
+        for (unsigned gt(0); gt<gtCount; ++gt)
+        {
+            logLhood[gt] += genotypeLogPriorPolymorphic[gt];
+        }
+    }
+    normalize_ln_distro(logLhood,logLhood+gtCount,locusGenotype.maxGenotypeIndexPolymorphic);
+    locusGenotype.genotypeQualityPolymorphic=error_prob_to_qphred(prob_comp(logLhood,logLhood+gtCount,locusGenotype.maxGenotypeIndexPolymorphic));
+}
+
+
+
 void
 getVariantAlleleGroupGenotypeLhoods(
-    const starling_base_deriv_options &dopt,
+    const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
     const GenotypePriors& genotypePriors,
     const unsigned sampleId,
-    const OrthogonalVariantAlleleCandidateGroup &alleleGroup,
-    AlleleGroupGenotype &locusGenotype)
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    AlleleGroupGenotype& locusGenotype)
 {
     // fix this on first pass
     static const uint8_t ploidy(2);
@@ -103,90 +220,134 @@ getVariantAlleleGroupGenotypeLhoods(
             variantAllele1_lnp = allele1ReadScores.indel;
         }
 
-        logLhood[AG_GENOTYPE::HOMREF] += integrate_out_sites(dopt,allele0ReadScores.nsite,refAllele_lnp,false);
-        logLhood[AG_GENOTYPE::HOM0] += integrate_out_sites(dopt,allele0ReadScores.nsite,variantAllele0_lnp,false);
-
-        static const double loghalf(std::log(0.5));
-        double logHet0RefPrior(loghalf);
-        double logHet0Allele0Prior(loghalf);
-        {
-            static const double hetAlleleRatio(0.5);
-            get_het_observed_allele_ratio(allele0ReadScores.read_length, sampleOptions.min_read_bp_flank,
-                                          allele0Key, hetAlleleRatio, logHet0RefPrior, logHet0Allele0Prior);
-        }
-
-        const double het0_lnp(log_sum(refAllele_lnp+logHet0RefPrior,variantAllele0_lnp+logHet0Allele0Prior));
-        logLhood[AG_GENOTYPE::HET0] += integrate_out_sites(dopt,allele0ReadScores.nsite,het0_lnp,false);
-
-        if (is3AlleleModel)
-        {
-            logLhood[AG_GENOTYPE::HOM1] += integrate_out_sites(dopt,allele0ReadScores.nsite,variantAllele1_lnp,false);
-
-            double logHet1RefPrior(loghalf);
-            double logHet1Allele1Prior(loghalf);
-            {
-                static const double hetAlleleRatio(0.5);
-                get_het_observed_allele_ratio(allele0ReadScores.read_length, sampleOptions.min_read_bp_flank,
-                                              allele1Key, hetAlleleRatio, logHet1RefPrior, logHet1Allele1Prior);
-            }
-
-            const double het1_lnp(log_sum(refAllele_lnp+logHet1RefPrior,variantAllele1_lnp+logHet1Allele1Prior));
-            logLhood[AG_GENOTYPE::HET1] += integrate_out_sites(dopt,allele0ReadScores.nsite,het1_lnp,false);
-
-            /// approximate the expected allele ratio in this case
-            const double normalizeHetRatio(log_sum(logHet0Allele0Prior, logHet1Allele1Prior));
-            const double het01_lnp(log_sum(variantAllele0_lnp+(logHet0Allele0Prior-normalizeHetRatio),variantAllele1_lnp+(logHet1Allele1Prior-normalizeHetRatio)));
-            logLhood[AG_GENOTYPE::HET01] += integrate_out_sites(dopt,allele0ReadScores.nsite,het01_lnp,false);
-        }
+        accumulateLogLhoodFromReadObservation(dopt, sampleOptions,
+                                              allele0ReadScores.nsite, allele0ReadScores.read_length, is3AlleleModel,
+                                              refAllele_lnp, variantAllele0_lnp, variantAllele1_lnp,
+                                              allele0Key, allele1Key, logLhood);
     }
 
-    // mult by prior distro to get unnormalized pprob:
-    const double* genotypeLogPrior(genotypePriors.prior2AlleleDiploid);
-    if (is3AlleleModel)
+    logLhoodToLocusGenotype(genotypePriors, gtCount, is3AlleleModel, logLhood, locusGenotype);
+}
+
+
+
+/// for a specific read, get the likelihood of the read conditioned on a whole group of alleles
+///
+/// this type of likelihood can be useful for something like a VCF <*> abstract allele type
+///
+/// \return the variantAlleleIndex of the most likely allele for this read
+static
+unsigned
+updateFromAlleleGroup(
+    const unsigned sampleId,
+    const IndelKey& excludeAlleleKey,
+    const unsigned targetReadIndex,
+    const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
+    double& refAllele_lnp,
+    double& variantAlleleGroup_lnp)
+{
+    bool isAnyAlleleEligable(false);
+    bool isAnyAlleleScored(false);
+    unsigned maxVariantAlleleIndex(0);
+
+    const double variantAlleleCount(variantAlleleGroup.size());
+    for (unsigned variantAlleleIndex(0); variantAlleleIndex<variantAlleleCount; ++variantAlleleIndex)
     {
-        genotypeLogPrior = (genotypePriors.prior3AlleleDiploid);
+        const IndelKey& variantAlleleKey(variantAlleleGroup.key(variantAlleleIndex));
+        if (variantAlleleKey == excludeAlleleKey) continue;
+
+        isAnyAlleleEligable = true;
+
+        const IndelData& id(variantAlleleGroup.data(variantAlleleIndex));
+        const IndelSampleData& isd(id.getSampleData(sampleId));
+
+        const auto AlleleReadScoresIter(isd.read_path_lnp.find(targetReadIndex));
+        if (AlleleReadScoresIter == isd.read_path_lnp.end()) continue;
+
+        isAnyAlleleScored=true;
+
+        const ReadPathScores& AlleleReadScores(AlleleReadScoresIter->second);
+        refAllele_lnp = std::max(refAllele_lnp, (double) AlleleReadScores.ref);
+        if (AlleleReadScores.indel > variantAlleleGroup_lnp)
+        {
+            variantAlleleGroup_lnp = AlleleReadScores.indel;
+            maxVariantAlleleIndex = variantAlleleIndex;
+        }
+        variantAlleleGroup_lnp = std::max(variantAlleleGroup_lnp, (double) AlleleReadScores.indel);
     }
 
-    for (unsigned gt(0); gt<gtCount; ++gt)
+    if (isAnyAlleleEligable and (not isAnyAlleleScored))
     {
-        locusGenotype.posteriorProb[gt] = logLhood[gt] + genotypeLogPrior[gt];
+        variantAlleleGroup_lnp = std::max(variantAlleleGroup_lnp, refAllele_lnp);
     }
 
-    normalize_ln_distro(std::begin(locusGenotype.posteriorProb),std::begin(locusGenotype.posteriorProb)+gtCount,locusGenotype.maxGenotypeIndex);
-
-    locusGenotype.variantAlleleQuality=error_prob_to_qphred(locusGenotype.posteriorProb[AG_GENOTYPE::HOMREF]);
-    locusGenotype.genotypeQuality=error_prob_to_qphred(prob_comp(locusGenotype.posteriorProb,locusGenotype.posteriorProb+gtCount,locusGenotype.maxGenotypeIndex));
+    return maxVariantAlleleIndex;
+}
 
 
-    // set phredLoghood:
+
+void
+getGenotypeLhoodsForForcedOutputAllele(
+    const starling_base_deriv_options &dopt,
+    const starling_sample_options& sampleOptions,
+    const GenotypePriors& genotypePriors,
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
+    const OrthogonalVariantAlleleCandidateGroup& forcedOutputAlleleGroup,
+    const unsigned forcedOutputAlleleIndex,
+    AlleleGroupGenotype& locusGenotype)
+{
+    static const double log0(-std::numeric_limits<double>::infinity());
+
+    // fix this on first pass
+    static const uint8_t ploidy(2);
+
+    assert(ploidy>0);
+    assert(ploidy<3);
+
+    // this is a fixed allele set: {ref, forced output allele, everything else}
+    const uint8_t fullAlleleCount(3);
+    const bool is3AlleleModel(fullAlleleCount==3);
+
+    GenotypeInfo ginfo(ploidy,fullAlleleCount);
+    const unsigned gtCount(ginfo.genotypeCount());
+    assert(gtCount<=AlleleGroupGenotype::MAX_GENOTYPE_COUNT);
+    double logLhood[AlleleGroupGenotype::MAX_GENOTYPE_COUNT];
+    std::fill(logLhood,logLhood+gtCount,0.);
+
+    const IndelKey& forcedOutputIndelKey(forcedOutputAlleleGroup.key(forcedOutputAlleleIndex));
+    const IndelData& forcedOutputIndelData(forcedOutputAlleleGroup.data(forcedOutputAlleleIndex));
+    const IndelSampleData& forcedOutputIndelSampleData(forcedOutputIndelData.getSampleData(sampleId));
+
+    for (const auto& score : forcedOutputIndelSampleData.read_path_lnp)
     {
-        unsigned maxIndex(0);
-        for (unsigned gt(1); gt<gtCount; ++gt)
+        const unsigned readIndex(score.first);
+        const ReadPathScores& forcedOutputAlleleReadScores(score.second);
+
+        if (! forcedOutputAlleleReadScores.is_tier1_read) continue;
+
+        double refAllele_lnp(forcedOutputAlleleReadScores.ref);
+        const double forcedOutputAllele_lnp(forcedOutputAlleleReadScores.indel);
+
+        double maxVariantAllele_lnp(log0);
+        const unsigned maxVariantAlleleIndex(updateFromAlleleGroup(sampleId, forcedOutputIndelKey, readIndex,
+                                                                   variantAlleleGroup, refAllele_lnp,
+                                                                   maxVariantAllele_lnp));
+
+        /// TEMPORARY: for now we compress REF and <*> to one state until we have a way to report this:
+        if (maxVariantAllele_lnp > refAllele_lnp)
         {
-            if (logLhood[gt] > logLhood[maxIndex]) maxIndex = gt;
+            refAllele_lnp = maxVariantAllele_lnp;
         }
-        for (unsigned gt(0); gt<gtCount; ++gt)
-        {
-            // don't enforce maxQ at this point, b/c we're going to possibly select down from this list:
-            locusGenotype.phredLoghood[gt] = ln_error_prob_to_qphred(logLhood[gt]-logLhood[maxIndex]);
-        }
+        maxVariantAllele_lnp = log0;
+
+        accumulateLogLhoodFromReadObservation(dopt, sampleOptions,
+                                              forcedOutputAlleleReadScores.nsite,
+                                              forcedOutputAlleleReadScores.read_length, is3AlleleModel,
+                                              refAllele_lnp, forcedOutputAllele_lnp, maxVariantAllele_lnp,
+                                              forcedOutputIndelKey, variantAlleleGroup.key(maxVariantAlleleIndex),
+                                              logLhood);
     }
 
-
-    // add new poly calls (this trashes lhood):
-    {
-        // mult by prior distro to get unnormalized pprob:
-        const double* genotypeLogPriorPolymorphic(genotypePriors.prior2AlleleDiploidPolymorphic);
-        if (is3AlleleModel)
-        {
-            genotypeLogPriorPolymorphic = (genotypePriors.prior3AlleleDiploidPolymorphic);
-        }
-
-        for (unsigned gt(0); gt<gtCount; ++gt)
-        {
-            logLhood[gt] += genotypeLogPriorPolymorphic[gt];
-        }
-    }
-    normalize_ln_distro(logLhood,logLhood+gtCount,locusGenotype.maxGenotypeIndexPolymorphic);
-    locusGenotype.genotypeQualityPolymorphic=error_prob_to_qphred(prob_comp(logLhood,logLhood+gtCount,locusGenotype.maxGenotypeIndexPolymorphic));
+    logLhoodToLocusGenotype(genotypePriors, gtCount, is3AlleleModel, logLhood, locusGenotype);
 }

@@ -123,13 +123,17 @@ struct IndelBuffer
     iterator
     getIndelIter(const IndelKey& indelKey)
     {
-        return _indelBuffer.find(indelKey);
+        const iterator iter(_indelBuffer.find(indelKey));
+        assert(iter != _indelBuffer.end());
+        return iter;
     }
 
     const_iterator
     getIndelIter(const IndelKey& indelKey) const
     {
-        return _indelBuffer.find(indelKey);
+        const const_iterator iter(_indelBuffer.find(indelKey));
+        assert(iter != _indelBuffer.end());
+        return iter;
     }
 
     /// is an indel treated as a candidate for genotype calling and

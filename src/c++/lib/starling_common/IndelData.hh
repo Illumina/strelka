@@ -31,6 +31,7 @@
 #include "starling_common/starling_types.hh"
 
 #include <cassert>
+
 #include <iosfwd>
 #include <map>
 #include <string>

@@ -136,12 +136,12 @@ label(const unsigned idx)
 struct GermlineDiploidIndelSimpleGenotypeInfoCore
 {
     GermlineDiploidIndelSimpleGenotypeInfoCore()
-        : is_indel(false), ploidy(2), max_gt(0), max_gt_poly(0), phredLoghood(STAR_DIINDEL::SIZE,0)
+        : ploidy(2), max_gt(0), max_gt_poly(0), phredLoghood(STAR_DIINDEL::SIZE, 0)
     {
-        static const int qp(error_prob_to_qphred((1.-init_p())));
-        indel_qphred=qp;
-        max_gt_qphred=qp;
-        max_gt_poly_qphred=qp;
+        static const int qp(error_prob_to_qphred((1. - init_p())));
+        indel_qphred = qp;
+        max_gt_qphred = qp;
+        max_gt_poly_qphred = qp;
     }
 
     bool
@@ -159,6 +159,14 @@ struct GermlineDiploidIndelSimpleGenotypeInfoCore
     // debug
     void dump(std::ostream& os) const;
 
+    bool
+    isIndel() const
+    {
+        return (indel_qphred != 0);
+    }
+
+
+
     /// only applies to PLs so far:
     static const int maxQ;
 
@@ -173,8 +181,6 @@ protected:
     }
 
 public:
-
-    bool is_indel;
 
     // hack haploid/'noploid' model into diploid data structure:
     // only {2,1,0} are actually used at present

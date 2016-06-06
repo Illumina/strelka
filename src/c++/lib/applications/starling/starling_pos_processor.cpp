@@ -570,8 +570,6 @@ addAllelesAtOtherPositions(
     OrthogonalVariantAlleleCandidateGroup altAlleleGroup;
     for (const auto& altAlleleKey : filteredAltAlleles)
     {
-        const auto altDataPtr(indelBuffer.getIndelDataPtr(altAlleleKey));
-        assert(altDataPtr != nullptr);
         const auto altIter(indelBuffer.getIndelIter(altAlleleKey));
         altAlleleGroup.addVariantAllele(altIter);
     }
@@ -585,10 +583,10 @@ addAllelesAtOtherPositions(
 
         altAlleleGroup.clear();
 
-        for (const auto rankedAltAlleleIter : rankedAltAlleleGroup.alleles)
+        for (const auto& rankedAltAlleleIter : rankedAltAlleleGroup.alleles)
         {
             bool isGroupOrthogonal(true);
-            for (const auto altAlleleIter : altAlleleGroup.alleles)
+            for (const auto& altAlleleIter : altAlleleGroup.alleles)
             {
                 if (not is_indel_conflict(rankedAltAlleleIter->first, altAlleleIter->first))
                 {
@@ -605,7 +603,7 @@ addAllelesAtOtherPositions(
 
     // put all qualifying alts back together with variants to form an extended allele set:
     OrthogonalVariantAlleleCandidateGroup extendedVariantAlleleGroup(alleleGroup);
-    for (const auto altAlleleIter : altAlleleGroup.alleles)
+    for (const auto& altAlleleIter : altAlleleGroup.alleles)
     {
         extendedVariantAlleleGroup.alleles.push_back(altAlleleIter);
     }
@@ -682,7 +680,9 @@ namespace AG_GENOTYPE
         else
         {
             assert(false and "Unknown alleleId");
-        }}
+            return STAR_DIINDEL::SIZE;
+        }
+    }
 }
 
 
@@ -692,13 +692,15 @@ static
 starling_diploid_indel
 locusGenotypeToDindel(
     const AlleleGroupGenotype& locusGenotype,
-    const unsigned alleleId)
+    const unsigned alleleId,
+    const int groupLocusPloidy,
+    const bool isForcedOuput,
+    const bool isZeroCoverage)
 {
     starling_diploid_indel dindel;
-    dindel.is_forced_output = false;
-    dindel.is_zero_coverage = false;
-    dindel.ploidy = 2;
-    dindel.is_indel = true;
+    dindel.is_forced_output = isForcedOuput;
+    dindel.is_zero_coverage = isZeroCoverage;
+    dindel.ploidy = groupLocusPloidy;
 
     dindel.pprob[STAR_DIINDEL::NOINDEL] = locusGenotype.posteriorProb[AG_GENOTYPE::HOMREF];
     dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::getAlleleHetId(alleleId)];
@@ -755,26 +757,34 @@ hackDiplotypeCallToCopyNumberCalls(
     const pos_t targetPos,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const AlleleGroupGenotype& locusGenotype,
+    const int groupLocusPloidy,
+    const bool isForcedOutput,
     gvcf_aggregator& gvcfer)
 {
     bool isOutputAnyAlleles(false);
-    if (not locusGenotype.isNonReferenceGenotype()) return isOutputAnyAlleles;
 
     // cycle through variant alleles in genotype:
-    for (unsigned variantAlleleIndex(0); variantAlleleIndex<2; ++variantAlleleIndex)
+    const unsigned alleleGroupSize(alleleGroup.size());
+    for (unsigned genotypeAlleleIndex(0); genotypeAlleleIndex<alleleGroupSize; ++genotypeAlleleIndex)
     {
-        if (not AG_GENOTYPE::isAllelePresent(locusGenotype.maxGenotypeIndex, variantAlleleIndex))
+        if (not (isForcedOutput or
+                 AG_GENOTYPE::isAllelePresent(locusGenotype.maxGenotypeIndex, genotypeAlleleIndex)))
         {
             continue;
         }
 
-        const IndelKey& indelKey(alleleGroup.key(variantAlleleIndex));
-        const IndelData& indelData(alleleGroup.data(variantAlleleIndex));
+        const IndelKey& indelKey(alleleGroup.key(genotypeAlleleIndex));
+        const IndelData& indelData(alleleGroup.data(genotypeAlleleIndex));
 
         if (indelKey.pos != targetPos) continue;
 
         isOutputAnyAlleles=true;
-        starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, variantAlleleIndex));
+
+        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
+        const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
+
+        starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex,
+                                                            groupLocusPloidy, isForcedOutput, isZeroCoverage));
         insertIndelInGvcf(opt, dopt, ref, basecallBuffer, indelKey, indelData, sampleId, dindel, gvcfer);
     }
     return isOutputAnyAlleles;
@@ -843,170 +853,230 @@ process_pos_indel_single_sample_digt(
         orthogonalVariantAlleles.addVariantAllele(it);
     }
 
-    if (not orthogonalVariantAlleles.empty())
-    {
-        // determine region ploidy
-        //
-        // Assume entire allele group is covered by one ploidy type in nearly all cases,
-        // in case of a conflict use the highest ploidy overlapped by the group.
-        //
-        int groupLocusPloidy(0);
-        {
-            const known_pos_range alleleGroupRange(orthogonalVariantAlleles.getReferenceRange());
-            const int groupLeftPloidy(get_ploidy(alleleGroupRange.begin_pos));
-            const int groupRightPloidy(get_ploidy(alleleGroupRange.end_pos));
+    if (orthogonalVariantAlleles.empty()) return;
 
-            groupLocusPloidy=std::max(groupLeftPloidy,groupRightPloidy);
+    // determine region ploidy
+    //
+    // Assume entire allele group is covered by one ploidy type in nearly all cases,
+    // in case of a conflict use the highest ploidy overlapped by the group.
+    //
+    int groupLocusPloidy(0);
+    {
+        const known_pos_range alleleGroupRange(orthogonalVariantAlleles.getReferenceRange());
+        const int groupLeftPloidy(get_ploidy(alleleGroupRange.begin_pos));
+        const int groupRightPloidy(get_ploidy(alleleGroupRange.end_pos));
+
+        groupLocusPloidy=std::max(groupLeftPloidy,groupRightPloidy);
+    }
+
+    // if groupLocusPloidy > orthogonalVariantAlleleCount, order alleles according to read evidence,
+    // and take the top 'groupLocusPloidy' allele candidates (besides the reference)
+    //
+    // track all forcedOutput alleles in a separate group (even if they go into topVariant group)
+    // to ensure that these are output even if not included in the most likely genotype
+    //
+    OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
+    OrthogonalVariantAlleleCandidateGroup forcedOutputAlleleGroup;
+    {
+        const unsigned orthogonalVariantAlleleCount(orthogonalVariantAlleles.size());
+
+        for (unsigned alleleIndex(0); alleleIndex < orthogonalVariantAlleleCount; alleleIndex++)
+        {
+            const IndelData& indelData(orthogonalVariantAlleles.data(alleleIndex));
+            if (indelData.is_forced_output)
+            {
+                forcedOutputAlleleGroup.addVariantAllele(orthogonalVariantAlleles.iter(alleleIndex));
+            }
         }
 
-        // if groupLocusPloidy > orthogonalVariantAlleleCount, order alleles according to read evidence,
-        // and take the top 'groupLocusPloidy' allele candidates (besides the reference)
-        //
-        // track all forcedOutput alleles in a separate group (even if they go into topVariant group)
-        // to ensure that these are output even if not included in the most likely genotype
-        //
-        OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
-        OrthogonalVariantAlleleCandidateGroup forcedOutputAlleleGroup;
-        {
-            const unsigned orthogonalVariantAlleleCount(orthogonalVariantAlleles.size());
+        // rank and select top N alleles, N=groupLocusPloidy
+        assert(groupLocusPloidy>0);
+        selectTopOrthogonalAllelesInSample(sampleId, orthogonalVariantAlleles, groupLocusPloidy, topVariantAlleleGroup);
+    }
 
-            for (unsigned alleleIndex(0); alleleIndex < orthogonalVariantAlleleCount; alleleIndex++)
+    // refine topVariantAlleleGroup to consider alts shared by all top alleles, then rerank
+    addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
+                               groupLocusPloidy, getIndelBuffer(), topVariantAlleleGroup);
+
+    // score and report topVariantAlleleGroup
+    //
+    AlleleGroupGenotype locusGenotype;
+    bool isOutputAlleles(false);
+    {
+        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), sampleId,
+                                            topVariantAlleleGroup, locusGenotype);
+
+        // (1) TEMPORARY hack called variant alleles into old dindel structure(s)
+        static const bool isForcedOutput(false);
+        isOutputAlleles = (hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, sampleId, pos,
+                                                              topVariantAlleleGroup, locusGenotype,
+                                                              groupLocusPloidy, isForcedOutput, *_gvcfer));
+    }
+
+    // score and report any remaining forced output alleles
+    //
+    {
+        /// (2) trim the forcedGT allele set to take out any alleles already called as variants:
+        auto eraseForced = [&](const unsigned variantAlleleIndex)
+        {
+            const IndelKey& alleleKey(topVariantAlleleGroup.key(variantAlleleIndex));
+
+            /// TMP: brute-force the gt match search:
+            const unsigned forcedCount(forcedOutputAlleleGroup.size());
+            for (unsigned forcedIndex(0); forcedIndex < forcedCount; ++forcedIndex)
             {
-                const IndelData& indelData(orthogonalVariantAlleles.data(alleleIndex));
-                if (indelData.is_forced_output)
+                if (forcedOutputAlleleGroup.key(forcedIndex) == alleleKey)
                 {
-                    forcedOutputAlleleGroup.addVariantAllele(orthogonalVariantAlleles.iter(alleleIndex));
+                    forcedOutputAlleleGroup.alleles.erase(forcedOutputAlleleGroup.alleles.begin() + forcedIndex);
+                    break;
                 }
             }
+        };
 
-            // rank and select top N alleles, N=groupLocusPloidy
-            assert(groupLocusPloidy>0);
-            selectTopOrthogonalAllelesInSample(sampleId, orthogonalVariantAlleles, groupLocusPloidy, topVariantAlleleGroup);
+        if (not forcedOutputAlleleGroup.empty())
+        {
+            for (unsigned variantAlleleIndex(0); variantAlleleIndex < 2; ++variantAlleleIndex)
+            {
+                if (AG_GENOTYPE::isAllelePresent(locusGenotype.maxGenotypeIndex, variantAlleleIndex))
+                {
+                    eraseForced(variantAlleleIndex);
+                }
+            }
         }
 
-        // refine topVariantAlleleGroup to consider alts shared by all top alleles, then rerank
-        addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
-                                   groupLocusPloidy, getIndelBuffer(), topVariantAlleleGroup);
-
-        // score topVariantAlleleGroup
+        // enumerate support for remaining forcedOutput alleles compared to orthogonal genotyped variant alleles above
+        const unsigned forcedOutputAlleleCount(forcedOutputAlleleGroup.size());
+        for (unsigned forcedOutputAlleleIndex(0);
+             forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
         {
-            AlleleGroupGenotype locusGenotype;
-            getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), sampleId, topVariantAlleleGroup, locusGenotype);
+            AlleleGroupGenotype forcedAlleleLocusGenotype;
+            getGenotypeLhoodsForForcedOutputAllele(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), sampleId,
+                                                   topVariantAlleleGroup, forcedOutputAlleleGroup,
+                                                   forcedOutputAlleleIndex, forcedAlleleLocusGenotype);
 
-            // (1) TEMPORARY hack called variant alleles into old dindel structure(s)
-            // (2) determine how many forcedGT alleles are 'left', call each one to get AD counts and add those into dindel structures as well
+            // TEMPORARY, the above function should be set to compress <*> and REF alleles to just REF for now,
+            // so the most likely genotype should not contain the second allele
+            assert(not AG_GENOTYPE::isAllelePresent(forcedAlleleLocusGenotype.maxGenotypeIndex, 1));
 
-            const bool isOutputAlleles(hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, sampleId, pos, topVariantAlleleGroup, locusGenotype, *_gvcfer));
+            // TEMPORARY fake an allele group with only the forced output allele so that we can output using
+            // standard data structures
+            OrthogonalVariantAlleleCandidateGroup fakeForcedOutputAlleleGroup;
+            fakeForcedOutputAlleleGroup.addVariantAllele(forcedOutputAlleleGroup.alleles[forcedOutputAlleleIndex]);
+            static const bool isForcedOutput(true);
+            hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, sampleId,
+                                               pos, fakeForcedOutputAlleleGroup,
+                                               forcedAlleleLocusGenotype, groupLocusPloidy, isForcedOutput,
+                                               *_gvcfer);
 
-            if (isOutputAlleles and _is_variant_windows)
+            isOutputAlleles = true;
+        }
+    }
+
+    // finalize response to any reported indels for this pos:
+    if (isOutputAlleles and _is_variant_windows)
+    {
+        _variant_print_pos.insert(pos);
+        _is_skip_process_pos=false;
+    }
+
+#if 0
+    // TODO implement indel overlap resolution
+    //
+    // punt conflict resolution for now....
+    {
+        // indel_report_info needs to be run first now so that
+        // local small repeat info is available to the indel
+        // caller
+
+        // sample-independent info:
+        starling_indel_report_info indelReportInfo;
+        get_starling_indel_report_info(indelKey,indelData,_ref,indelReportInfo);
+
+        // STARKA-248 filter invalid indel
+        /// TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
+        if (indelReportInfo.vcf_indel_seq == indelReportInfo.vcf_ref_seq) continue;
+
+        static const bool is_tier2_pass(false);
+        static const bool is_use_alt_indel(true);
+
+        starling_diploid_indel dindel;
+        dindel.is_forced_output = isForcedOutput;
+        dindel.is_zero_coverage = isZeroCoverage;
+
+        {
+            // check whether we're in a haploid/noploid region, for indels just check
+            // start position and end position, approximating that the whole
+            // region in between has the same ploidy, for any anomalous state
+            // revert to 'noploid':
+            const int indelLeftPloidy(get_ploidy(indelKey.pos));
+            const int indelRightPloidy(get_ploidy(indelKey.right_pos()));
+
+            if (indelLeftPloidy == indelRightPloidy)
+            {
+                dindel.ploidy = indelLeftPloidy;
+            }
+            else
+            {
+                dindel.ploidy = 0;
+            }
+        }
+
+        _dopt.incaller().starling_indel_call_pprob_digt(
+            _opt,_dopt,
+            sif.sample_opt,
+            indelKey,indelSampleData,is_use_alt_indel,dindel);
+
+        bool is_indel(false);
+        if ((dindel.is_indel) || (dindel.is_forced_output))
+        {
+            is_indel=true;
+
+            // sample-specific info: (division doesn't really matter
+            // in single-sample case)
+            starling_indel_sample_report_info isri;
+            get_starling_indel_sample_report_info(_opt, _dopt,indelKey,indelSampleData,sif.bc_buff,
+                                                  is_tier2_pass,is_use_alt_indel,isri);
+
+            if (_opt.gvcf.is_gvcf_output())
+            {
+                assert(indelKey.pos==pos);
+                _gvcfer->add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(indelKey,indelData, dindel,indelReportInfo,isri)));
+            }
+
+            if (_is_variant_windows)
             {
                 _variant_print_pos.insert(pos);
                 _is_skip_process_pos=false;
             }
-
         }
 
+        /// \TODO put this option under runtime control...
+        /// \TODO setup option so that read keys persist longer when needed for this case...
+        ///
+        static const bool is_print_indel_evidence(false);
 
-#if 0
-        // TODO implement indel overlap resolution
-        //
-        // punt conflict resolution for now....
+        if (is_print_indel_evidence && is_indel)
         {
-            // indel_report_info needs to be run first now so that
-            // local small repeat info is available to the indel
-            // caller
+            std::ostream& report_os(std::cerr);
+            report_os << "INDEL_EVIDENCE " << indelKey;
 
-            // sample-independent info:
-            starling_indel_report_info indelReportInfo;
-            get_starling_indel_report_info(indelKey,indelData,_ref,indelReportInfo);
-
-            // STARKA-248 filter invalid indel
-            /// TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
-            if (indelReportInfo.vcf_indel_seq == indelReportInfo.vcf_ref_seq) continue;
-
-            static const bool is_tier2_pass(false);
-            static const bool is_use_alt_indel(true);
-
-            starling_diploid_indel dindel;
-            dindel.is_forced_output = isForcedOutput;
-            dindel.is_zero_coverage = isZeroCoverage;
-
+            for (const auto& val : indelSampleData.read_path_lnp)
             {
-                // check whether we're in a haploid/noploid region, for indels just check
-                // start position and end position, approximating that the whole
-                // region in between has the same ploidy, for any anomalous state
-                // revert to 'noploid':
-                const int indelLeftPloidy(get_ploidy(indelKey.pos));
-                const int indelRightPloidy(get_ploidy(indelKey.right_pos()));
+                const align_id_t read_id(val.first);
+                const ReadPathScores& lnp(val.second);
+                const ReadPathScores pprob(indel_lnp_to_pprob(_dopt,lnp,is_tier2_pass,is_use_alt_indel));
+                const starling_read* srptr(sif.read_buff.get_read(read_id));
 
-                if (indelLeftPloidy == indelRightPloidy)
-                {
-                    dindel.ploidy = indelLeftPloidy;
-                }
-                else
-                {
-                    dindel.ploidy = 0;
-                }
-            }
-
-            _dopt.incaller().starling_indel_call_pprob_digt(
-                _opt,_dopt,
-                sif.sample_opt,
-                indelKey,indelSampleData,is_use_alt_indel,dindel);
-
-            bool is_indel(false);
-            if ((dindel.is_indel) || (dindel.is_forced_output))
-            {
-                is_indel=true;
-
-                // sample-specific info: (division doesn't really matter
-                // in single-sample case)
-                starling_indel_sample_report_info isri;
-                get_starling_indel_sample_report_info(_opt, _dopt,indelKey,indelSampleData,sif.bc_buff,
-                                                      is_tier2_pass,is_use_alt_indel,isri);
-
-                if (_opt.gvcf.is_gvcf_output())
-                {
-                    assert(indelKey.pos==pos);
-                    _gvcfer->add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(indelKey,indelData, dindel,indelReportInfo,isri)));
-                }
-
-                if (_is_variant_windows)
-                {
-                    _variant_print_pos.insert(pos);
-                    _is_skip_process_pos=false;
-                }
-            }
-
-            /// \TODO put this option under runtime control...
-            /// \TODO setup option so that read keys persist longer when needed for this case...
-            ///
-            static const bool is_print_indel_evidence(false);
-
-            if (is_print_indel_evidence && is_indel)
-            {
-                std::ostream& report_os(std::cerr);
-                report_os << "INDEL_EVIDENCE " << indelKey;
-
-                for (const auto& val : indelSampleData.read_path_lnp)
-                {
-                    const align_id_t read_id(val.first);
-                    const ReadPathScores& lnp(val.second);
-                    const ReadPathScores pprob(indel_lnp_to_pprob(_dopt,lnp,is_tier2_pass,is_use_alt_indel));
-                    const starling_read* srptr(sif.read_buff.get_read(read_id));
-
-                    report_os << "read key: ";
-                    if (NULL==srptr) report_os << "UNKNOWN_KEY";
-                    else            report_os << srptr->key();
-                    report_os << "\n"
-                              << "read log_lhoods: " << lnp << "\n"
-                              << "read pprobs: " << pprob << "\n";
-                }
+                report_os << "read key: ";
+                if (NULL==srptr) report_os << "UNKNOWN_KEY";
+                else            report_os << srptr->key();
+                report_os << "\n"
+                          << "read log_lhoods: " << lnp << "\n"
+                          << "read pprobs: " << pprob << "\n";
             }
         }
-#endif
-
     }
+#endif
 }
 
 

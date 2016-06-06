@@ -482,8 +482,4 @@ starling_indel_call_pprob_digt(
     }
     normalize_ln_distro(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly);
     dindel.max_gt_poly_qphred=error_prob_to_qphred(prob_comp(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly));
-
-    // old report criteria:
-    //dindel.is_indel=(dindel.max_gt != STAR_DIINDEL::NOINDEL);
-    dindel.is_indel=(dindel.indel_qphred != 0);
 }

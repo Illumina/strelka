@@ -426,7 +426,7 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
     {
         return std::any_of(_calls.begin(), _calls.end(), [](const GermlineDiploidIndelSimpleGenotypeInfo& x)
         {
-            return x._dindel.is_indel;
+            return x._dindel.isIndel();
         });
     }
     void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override

@@ -27,7 +27,6 @@
 #include "blt_util/blt_types.hh"
 #include "blt_util/pos_range.hh"
 #include "starling_common/indel_core.hh"
-//#include "starling_common/starling_types.hh"
 
 #include <iosfwd>
 

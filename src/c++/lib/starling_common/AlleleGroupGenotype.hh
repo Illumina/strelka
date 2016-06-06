@@ -169,6 +169,7 @@ namespace AG_GENOTYPE
         else
         {
             assert(false and "Unsupported alleleId");
+            return false;
         }
     }
 
@@ -278,5 +279,16 @@ getVariantAlleleGroupGenotypeLhoods(
     const starling_sample_options& sampleOptions,
     const GenotypePriors& genotypePriors,
     const unsigned sampleId,
-    const OrthogonalVariantAlleleCandidateGroup &alleleGroup,
-    AlleleGroupGenotype &locusGenotype);
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    AlleleGroupGenotype&locusGenotype);
+
+void
+getGenotypeLhoodsForForcedOutputAllele(
+    const starling_base_deriv_options &dopt,
+    const starling_sample_options& sampleOptions,
+    const GenotypePriors& genotypePriors,
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
+    const OrthogonalVariantAlleleCandidateGroup& forcedOutputAlleleGroup,
+    const unsigned forcedOutputAlleleIndex,
+    AlleleGroupGenotype& locusGenotype);
