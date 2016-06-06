@@ -53,7 +53,9 @@ private:
     pos_t _start;
     pos_t _end;
     unsigned _num_variants;
+
     std::map<align_id_t, std::string> _align_id_to_haplotype;
+
     std::set<align_id_t> _align_id_reaching_end;
 //    std::string
 

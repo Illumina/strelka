@@ -48,7 +48,7 @@ public:
             _active_regions(),
             _variant_counter(max_buffer_size),
             _align_ids_current_active_region(),
-            _position_to_align_ids(max_buffer_size, std::set<align_id_t>()),
+            _position_to_align_ids(max_buffer_size, std::list<align_id_t>()),
             _haplotype_base(max_depth, std::vector<std::string>(max_buffer_size, std::string()))
 
     {
@@ -72,6 +72,11 @@ private:
     unsigned _min_num_mismatches_per_position;
     unsigned _min_num_variants_per_region;
 
+    const std::string str_A = "A";
+    const std::string str_C = "C";
+    const std::string str_G = "G";
+    const std::string str_T = "T";
+
     pos_t _buffer_start_pos;
 
     pos_t _prev_variant_pos;
@@ -83,7 +88,7 @@ private:
 
     // for haplotypes
     std::vector<align_id_t> _align_ids_current_active_region;
-    std::vector<std::set<align_id_t>> _position_to_align_ids;
+    std::vector<std::list<align_id_t>> _position_to_align_ids;
     std::vector<std::vector<std::string>> _haplotype_base;
 
     bool is_candidate_variant(const pos_t pos) const;
@@ -105,15 +110,48 @@ private:
 
     inline void add_align_id_to_pos(const align_id_t align_id, const pos_t pos)
     {
-        _position_to_align_ids[pos % max_buffer_size].insert(align_id);
+        int index = pos % max_buffer_size;
+        if (_position_to_align_ids[index].back() != align_id)
+            _position_to_align_ids[index].push_back(align_id);
     }
 
-    inline std::set<align_id_t>& position_to_align_ids(const pos_t pos)
+    inline std::list<align_id_t> get_position_to_align_ids(const pos_t pos) const
     {
         return _position_to_align_ids[pos % max_buffer_size];
     }
 
-    inline std::string& haplotype_base(const align_id_t id, const pos_t pos)
+    void set_haplotype_base_snv(const align_id_t id, const pos_t pos, char base_char)
+    {
+        std::string base_str;
+        switch (base_char)
+        {
+            case 'A':
+                base_str = str_A;
+                break;
+            case 'C':
+                base_str = str_C;
+                break;
+            case 'G':
+                base_str = str_G;
+                break;
+            case 'T':
+                base_str = str_T;
+                break;
+        }
+        _haplotype_base[id % max_depth][pos % max_buffer_size] = base_str;
+    }
+
+    inline void set_haplotype_base(const align_id_t id, const pos_t pos, std::string base)
+    {
+        _haplotype_base[id % max_depth][pos % max_buffer_size] = base;
+    }
+
+    inline void concatenate_haplotype_base(const align_id_t id, const pos_t pos, std::string base)
+    {
+        _haplotype_base[id % max_depth][pos % max_buffer_size] += base;
+    }
+
+    inline std::string get_haplotype_base(const align_id_t id, const pos_t pos) const
     {
         return _haplotype_base[id % max_depth][pos % max_buffer_size];
     }

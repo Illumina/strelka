@@ -28,7 +28,7 @@
 
 void active_region_detector::insert_match(const align_id_t align_id, const pos_t pos, const char base_char)
 {
-    haplotype_base(align_id, pos) = std::string(1, base_char);
+    set_haplotype_base_snv(align_id, pos, base_char);
     add_align_id_to_pos(align_id, pos);
 }
 
@@ -36,7 +36,7 @@ void
 active_region_detector::insert_mismatch(const align_id_t align_id, const pos_t pos, const char base_char)
 {
     add_count(pos, 1);
-    haplotype_base(align_id, pos) = std::string(1, base_char);
+    set_haplotype_base_snv(align_id, pos, base_char);
     add_align_id_to_pos(align_id, pos);
 }
 
@@ -53,7 +53,7 @@ active_region_detector::insert_indel(const indel_observation indel_obs)
     {
         add_count(pos-1, indel_count);
         add_count(pos, indel_count);
-        haplotype_base(align_id, pos-1) += indel_obs.data.insert_seq;
+        concatenate_haplotype_base(align_id, pos - 1, indel_obs.data.insert_seq);
 //        printf("%d: insert %s to %d\n", align_id, indel_obs.data.insert_seq.c_str(), pos-1);
         add_align_id_to_pos(align_id, pos-1);
     }
@@ -63,7 +63,7 @@ active_region_detector::insert_indel(const indel_observation indel_obs)
         for (unsigned i(0); i<length; ++i)
         {
             add_count(pos+i, indel_count);
-            haplotype_base(align_id, pos+i) = "";
+            set_haplotype_base(align_id, pos + i, "");
             add_align_id_to_pos(align_id, pos+i);
         }
         // length 1 deletion makes an active region
@@ -91,7 +91,7 @@ active_region_detector::update_start_position(const pos_t pos)
     if (front.get_start() == pos)
     {
 //        printf("%d\t%d\t%d\t%d\t%d\n", ++active_region_index, front.get_start()+1, front.get_end()+1, front.get_num_variants(), front.get_length());
-        front.print_haplotypes();
+//        front.print_haplotypes();
         _active_regions.pop_front();
     }
 }
@@ -112,9 +112,10 @@ active_region_detector::update_end_position(const pos_t pos)
             printf(">%d\t%d\t%d\n", (_active_region_start_pos+1), (_prev_variant_pos+1), _num_variants);
             for (pos_t active_region_pos(_active_region_start_pos); active_region_pos<=_prev_variant_pos; ++active_region_pos)
             {
-                for (align_id_t align_id : position_to_align_ids(active_region_pos))
+                for (align_id_t align_id : get_position_to_align_ids(active_region_pos))
                 {
-                    activeRegion.insert_haplotype_base(align_id, active_region_pos, haplotype_base(align_id, active_region_pos));
+                    activeRegion.insert_haplotype_base(align_id, active_region_pos,
+                                                       get_haplotype_base(align_id, active_region_pos));
                 }
             }
             activeRegion.print_haplotypes();
