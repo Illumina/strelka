@@ -66,9 +66,9 @@ struct starling_indel_sample_report_info
 {
     starling_indel_sample_report_info() {}
 
-    unsigned n_q30_ref_reads = 0;
-    unsigned n_q30_indel_reads = 0;
-    unsigned n_q30_alt_reads = 0;
+    unsigned n_confident_ref_reads = 0;
+    unsigned n_confident_indel_reads = 0;
+    unsigned n_confident_alt_reads = 0;
 
     // number of lower-quality reads
     unsigned n_other_reads = 0;
@@ -77,22 +77,22 @@ struct starling_indel_sample_report_info
     unsigned tier1Depth = 0;
 
     // same as above, but by strand
-    unsigned n_q30_ref_reads_fwd = 0;
-    unsigned n_q30_indel_reads_fwd = 0;
-    unsigned n_q30_alt_reads_fwd = 0;
+    unsigned n_confident_ref_reads_fwd = 0;
+    unsigned n_confident_indel_reads_fwd = 0;
+    unsigned n_confident_alt_reads_fwd = 0;
     unsigned n_other_reads_fwd = 0;
-    unsigned n_q30_ref_reads_rev = 0;
-    unsigned n_q30_indel_reads_rev = 0;
-    unsigned n_q30_alt_reads_rev = 0;
+    unsigned n_confident_ref_reads_rev = 0;
+    unsigned n_confident_indel_reads_rev = 0;
+    unsigned n_confident_alt_reads_rev = 0;
     unsigned n_other_reads_rev = 0;
 
     MapqTracker mapqTracker;
 
     ranksum readpos_ranksum;
 
-    unsigned total_q30_reads() const
+    unsigned total_confident_reads() const
     {
-        return n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;
+        return n_confident_alt_reads + n_confident_indel_reads + n_confident_ref_reads;
     }
 
     void dump(std::ostream& os) const;
@@ -127,6 +127,7 @@ struct pos_basecall_buffer;
 
 void
 get_starling_indel_sample_report_info(
+    const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,

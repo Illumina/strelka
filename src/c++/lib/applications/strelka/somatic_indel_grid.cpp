@@ -264,7 +264,7 @@ get_somatic_indel(
             tumor_lhood_float[j] = (blt_float_t) tumor_lhood[j];
         }
 
-        const double sie_rate(std::pow(id.errorRates.indelToRefErrorProb.getValue(), opt.shared_indel_error_factor));
+        const double sie_rate(std::pow(indelData.errorRates.indelToRefErrorProb.getValue(), opt.shared_indel_error_factor));
         const double ln_sie_rate(std::log(sie_rate)); // shared indel error rate
         const double ln_csie_rate(log1p_switch(-sie_rate));
 

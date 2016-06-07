@@ -111,28 +111,28 @@ computeEmpiricalScoringFeatures(
 {
     const double filteredLocusDepth(_indelSampleReportInfo.tier1Depth);
     const double locusDepth(_indelSampleReportInfo.mapqTracker.count);
-    const double q30Depth(_indelSampleReportInfo.total_q30_reads());
+    const double confidentDepth(_indelSampleReportInfo.total_confident_reads());
 
     const double chromDepthFactor(safeFrac(1,chromDepth));
     const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
     const double locusDepthFactor(safeFrac(1,locusDepth));
-    const double q30DepthFactor(safeFrac(1,q30Depth));
+    const double confidentDepthFactor(safeFrac(1,confidentDepth));
 
     features.set(GERMLINE_INDEL_SCORING_FEATURES::QUAL, (_dindel.indel_qphred * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX, (gqx * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::REFREP1, (_indelReportInfo.ref_repeat_count));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (_indelReportInfo.indel_repeat_count));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (_indelReportInfo.repeat_unit.length()));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_indelSampleReportInfo.n_q30_ref_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_indelSampleReportInfo.n_q30_indel_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_indelSampleReportInfo.n_q30_alt_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_indelSampleReportInfo.n_confident_ref_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_indelSampleReportInfo.n_confident_indel_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_indelSampleReportInfo.n_confident_alt_reads * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_indelSampleReportInfo.tier1Depth * chromDepthFactor));
 
     {
         // allele bias metrics
-        const double r0(_indelSampleReportInfo.n_q30_ref_reads);
-        const double r1(_indelSampleReportInfo.n_q30_indel_reads);
-        const double r2(_indelSampleReportInfo.n_q30_alt_reads);
+        const double r0(_indelSampleReportInfo.n_confident_ref_reads);
+        const double r1(_indelSampleReportInfo.n_confident_indel_reads);
+        const double r2(_indelSampleReportInfo.n_confident_alt_reads);
 
         // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
         // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
@@ -181,9 +181,9 @@ computeEmpiricalScoringFeatures(
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (gqx * filteredLocusDepthFactor));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM, (gq * filteredLocusDepthFactor));
 
-        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (_indelSampleReportInfo.n_q30_ref_reads * q30DepthFactor));
-        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (_indelSampleReportInfo.n_q30_indel_reads * q30DepthFactor));
-        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM, (_indelSampleReportInfo.n_q30_alt_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (_indelSampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (_indelSampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM, (_indelSampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
 
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (_dindel.indel_qphred));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (gqx));

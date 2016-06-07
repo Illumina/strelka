@@ -52,11 +52,11 @@ write_vcf_isri_tiers(
        << sep
        << isri2.tier1Depth
        << sep
-       << isri1.n_q30_ref_reads+isri1.n_q30_alt_reads << ','
-       << isri2.n_q30_ref_reads+isri2.n_q30_alt_reads
+       << isri1.n_confident_ref_reads+isri1.n_confident_alt_reads << ','
+       << isri2.n_confident_ref_reads+isri2.n_confident_alt_reads
        << sep
-       << isri1.n_q30_indel_reads << ','
-       << isri2.n_q30_indel_reads
+       << isri1.n_confident_indel_reads << ','
+       << isri2.n_confident_indel_reads
        << sep
        << isri1.n_other_reads << ','
        << isri2.n_other_reads;

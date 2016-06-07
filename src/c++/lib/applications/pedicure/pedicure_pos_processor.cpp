@@ -269,7 +269,7 @@ process_pos_indel_denovo(const pos_t pos)
                 for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
                 {
                     get_starling_indel_sample_report_info(
-                        _dopt,indelKey,indelData.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,
+                        _opt, _dopt,indelKey,indelData.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,
                         is_include_tier2,is_use_alt_indel,
                         isri[sampleIndex][tierIndex]);
                 }

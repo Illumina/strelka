@@ -144,17 +144,18 @@ void starling_continuous_variant_caller::add_indel_call(
     GermlineContinuousIndelCallInfo& info)
 {
     // determine VF
-    double vf = indelSampleReportInfo.n_q30_indel_reads / ((double)indelSampleReportInfo.total_q30_reads());
+    double vf = indelSampleReportInfo.n_confident_indel_reads / ((double)indelSampleReportInfo.total_confident_reads());
     if (vf > opt.min_het_vf || indelData.is_forced_output)
     {
         info.calls.emplace_back(
-            indelSampleReportInfo.total_q30_reads(), indelSampleReportInfo.n_q30_indel_reads,
+            indelSampleReportInfo.total_confident_reads(), indelSampleReportInfo.n_confident_indel_reads,
             indelKey, indelData, indelReportInfo, indelSampleReportInfo);
         GermlineContinuousIndelSimpleGenotypeInfo& call = info.calls.back();
-        call.gqx = call.gq = poisson_qscore(indelSampleReportInfo.n_q30_indel_reads, indelSampleReportInfo.total_q30_reads(), (unsigned)opt.min_qscore, 40);
+        call.gqx = call.gq = poisson_qscore(indelSampleReportInfo.n_confident_indel_reads, indelSampleReportInfo.total_confident_reads(), (unsigned)opt.min_qscore, 40);
     }
     if (!info.calls.empty())
     {
         info.is_het = info.calls.size() > 1 || info.calls.front().variant_frequency() < (1-opt.min_het_vf);
     }
 }
+

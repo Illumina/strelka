@@ -27,6 +27,7 @@
 #include "starling_pos_processor_base_stages.hh"
 
 #include "blt_common/blt_shared.hh"
+#include "blt_util/PrettyFloat.hh"
 #include "blt_util/reference_contig_segment.hh"
 #include "starling_common/min_count_binom_gte_cache.hh"
 #include "starling_common/starling_align_limit.hh"
@@ -63,7 +64,9 @@ struct starling_base_options : public blt_options
 {
     typedef blt_options base_t;
 
-    starling_base_options() {}
+    starling_base_options()
+//      : readConfidentSupportThreshold(readConfidentSupportThresholdDefault)
+    {}
 
     virtual
     bool
@@ -222,6 +225,11 @@ struct starling_base_options : public blt_options
     // temporary indel erorr rate hack applied to germline only
     bool isIndelErrorRateFactor = false;
     double indelErrorRateFactor = 1.;
+
+    // when P(read | allele) is >= this value the read counts as "supporting"
+    // the given allele
+    // WARNING: this value impacts several count-based EVS metrics
+    PrettyFloat<double> readConfidentSupportThreshold = PrettyFloat<double>("0.9");
 };
 
 

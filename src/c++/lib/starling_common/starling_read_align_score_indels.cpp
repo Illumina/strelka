@@ -102,7 +102,7 @@ static
 indel_set_t::const_iterator
 which_interfering_indel(
     const indel_set_t& current_indels,
-    const indel_key& new_indel)
+    const IndelKey& new_indel)
 {
     typedef indel_set_t::const_iterator ci;
     ci end(current_indels.end());
@@ -112,8 +112,8 @@ which_interfering_indel(
     const ci iter_end(current_indels.end());
     for(;iter != iter_end; ++iter)
     {
-        const indel_key& ik(*iter);
-        if (is_indel_conflict(ik, new_indel)) return iter;
+        const IndelKey& currentIndel(*iter);
+        if (is_indel_conflict(currentIndel, new_indel)) return iter;
     }
     return end;
 }

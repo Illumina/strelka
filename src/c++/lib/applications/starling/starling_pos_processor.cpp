@@ -591,7 +591,7 @@ process_pos_indel_single_sample_digt(
                 // sample-specific info: (division doesn't really matter
                 // in single-sample case)
                 starling_indel_sample_report_info isri;
-                get_starling_indel_sample_report_info(_dopt,indelKey,indelSampleData,sif.bc_buff,
+                get_starling_indel_sample_report_info(_opt, _dopt,indelKey,indelSampleData,sif.bc_buff,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
                 if (_opt.gvcf.is_gvcf_output())
@@ -679,9 +679,8 @@ process_pos_indel_single_sample_continuous(
             info.reset(new GermlineContinuousIndelCallInfo(pos));
 
         starling_indel_sample_report_info isri;
-        get_starling_indel_sample_report_info(_dopt,indelKey,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
+        get_starling_indel_sample_report_info(_opt, _dopt,indelKey,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
         starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, indelReportInfo, isri, *info);
-
     }
     if (info && (info->is_indel() || info->is_forced_output()))
     {
