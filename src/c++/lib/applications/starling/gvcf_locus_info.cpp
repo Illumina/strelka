@@ -159,7 +159,7 @@ computeEmpiricalScoringFeatures(
     {
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (gqx * chromDepthFactor));
 
-        // hom unrelable are the read mappings near this locus?
+        // how unreliable are the read mappings near this locus?
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ, (_isri.mapqTracker.getRMS()));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (_isri.mapqTracker.getZeroFrac()));
 
@@ -176,13 +176,18 @@ computeEmpiricalScoringFeatures(
         }
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
 
-        // all of the features below are simply renormalized reqplacements of the current production feature set
+        // all of the features below are simply renormalized replacements of the current production feature set
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (_dindel.indel_qphred * filteredLocusDepthFactor));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (gqx * filteredLocusDepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM, (gq * filteredLocusDepthFactor));
 
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (_isri.n_q30_ref_reads * q30DepthFactor));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (_isri.n_q30_indel_reads * q30DepthFactor));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM, (_isri.n_q30_alt_reads * q30DepthFactor));
+
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (_dindel.indel_qphred));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (gqx));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (gq));
 
     }
 }
@@ -387,7 +392,7 @@ computeEmpiricalScoringFeatures(
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
 
 
-        // renormalized features intended to replece the corresponding procuction feature
+        // renormalized features intended to replace the corresponding production feature
         //
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (dgt.genome.snp_qphred * filteredLocusDepthFactor));
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (smod.gqx * filteredLocusDepthFactor));
@@ -395,6 +400,10 @@ computeEmpiricalScoringFeatures(
 
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (r0 * filteredLocusDepthFactor));
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (r1 * filteredLocusDepthFactor));
+
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (dgt.genome.snp_qphred));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (smod.gqx));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (smod.gq));
     }
 }
 

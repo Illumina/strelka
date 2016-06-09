@@ -140,6 +140,9 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
         F_GQ_NORM,
         AD0_NORM,
         AD1_NORM,
+        QUAL_EXACT,
+        F_GQX_EXACT,
+        F_GQ_EXACT,
         SIZE
     };
 
@@ -169,6 +172,12 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
             return "AD0_NORM";
         case AD1_NORM:
             return "AD1_NORM";
+        case QUAL_EXACT:
+            return "QUAL_EXACT";
+        case F_GQX_EXACT:
+            return "F_GQX_EXACT";
+        case F_GQ_EXACT:
+            return "F_GQ_EXACT";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -271,9 +280,13 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
         TDP_NORM,
         QUAL_NORM,
         F_GQX_NORM,
+        F_GQ_NORM,
         AD0_NORM,
         AD1_NORM,
         AD2_NORM,
+        QUAL_EXACT,
+        F_GQX_EXACT,
+        F_GQ_EXACT,
         SIZE
     };
 
@@ -297,12 +310,20 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
             return "QUAL_NORM";
         case F_GQX_NORM:
             return "F_GQX_NORM";
+        case F_GQ_NORM:
+            return "F_GQ_NORM";
         case AD0_NORM:
             return "AD0_NORM";
         case AD1_NORM:
             return "AD1_NORM";
         case AD2_NORM:
             return "AD2_NORM";
+        case QUAL_EXACT:
+            return "QUAL_EXACT";
+        case F_GQX_EXACT:
+            return "F_GQX_EXACT";
+        case F_GQ_EXACT:
+            return "F_GQ_EXACT";
         default:
             assert(false && "Unknown feature");
             return nullptr;
