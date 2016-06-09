@@ -364,7 +364,7 @@ class StarlingWorkflow(StarkaWorkflow) :
         self.paths = PathInfo(self.params)
 
         if self.params.isExome:
-            self.params.vqsrModelName = "Qrule"
+            self.params.vqsrModelName = "Qrule-Exome"
             self.params.indelRefErrorFactor = "1"
             self.params.indelErrorModelName = "old"
 

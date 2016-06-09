@@ -1,3 +1,5 @@
+v2.4.8
+- ENA-825 Update default exome filtration parameters
 v2.4.7
 - STREL-65 cap somatic snv EVS value at QSS_NT
 v2.4.6
