@@ -1212,8 +1212,6 @@ void
 starling_pos_processor_base::
 pileup_pos_reads(const pos_t pos)
 {
-    static const bool is_include_submapped(false);
-
     for (unsigned s(0); s<_n_samples; ++s)
     {
         read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
@@ -1223,10 +1221,7 @@ pileup_pos_reads(const pos_t pos)
             r=ri.get_ptr();
             if (nullptr==r.first) break;
             const read_segment& rseg(r.first->get_segment(r.second));
-            if (is_include_submapped || rseg.is_tier1or2_mapping())
-            {
-                pileup_read_segment(rseg,s);
-            }
+            pileup_read_segment(rseg,s);
             ri.next();
         }
     }
