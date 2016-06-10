@@ -187,7 +187,7 @@ score_candidate_alignment(
             const swap_info sinfo(path,path_index);
             n_seg=sinfo.n_seg;
 
-            indel_key ik(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
+            IndelKey ik(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
 
             // check if this is an edge swap:
             if ((path_index<ends.first) || (path_index>ends.second))
@@ -271,7 +271,7 @@ score_candidate_alignment(
         else if (ps.type==INSERT)
         {
 
-            indel_key ik(ref_head_pos,INDEL::INSERT,ps.length);
+            IndelKey ik(ref_head_pos,INDEL::INSERT,ps.length);
 
             // check if this is an edge insertion:
             if ((path_index<ends.first) || (path_index>ends.second))

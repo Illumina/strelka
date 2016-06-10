@@ -28,8 +28,8 @@
 
 
 bool
-is_indel_conflict(const indel_key& ik1,
-                  const indel_key& ik2)
+is_indel_conflict(const IndelKey& ik1,
+                  const IndelKey& ik2)
 {
 
     // add one to the end_pos of all indels to prevent immediately
@@ -46,7 +46,7 @@ is_indel_conflict(const indel_key& ik1,
 
 bool
 is_range_intersect_indel_breakpoints(const known_pos_range read_pr,
-                                     const indel_key& ik)
+                                     const IndelKey& ik)
 {
 
     if (read_pr.is_range_intersect(pos_range(ik.pos,ik.pos))) return true;
@@ -59,7 +59,7 @@ is_range_intersect_indel_breakpoints(const known_pos_range read_pr,
 
 bool
 is_range_adjacent_indel_breakpoints(const known_pos_range read_pr,
-                                    const indel_key& ik)
+                                    const IndelKey& ik)
 {
 
     if (read_pr.is_range_intersect(pos_range(ik.pos-1,ik.pos+1))) return true;

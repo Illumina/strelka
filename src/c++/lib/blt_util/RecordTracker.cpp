@@ -147,7 +147,7 @@ IndelVariant(
 bool
 IndelGenotype::
 altMatch(
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelData& indelData) const
 {
     for (const auto& alt : alts)

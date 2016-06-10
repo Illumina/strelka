@@ -31,8 +31,8 @@
 
 /// do these two indels overlap?:
 bool
-is_indel_conflict(const indel_key& ik1,
-                  const indel_key& ik2);
+is_indel_conflict(const IndelKey& ik1,
+                  const IndelKey& ik2);
 
 
 /// check if a range (representing an alignment, etc) intersects the breakends of a
@@ -43,7 +43,7 @@ is_indel_conflict(const indel_key& ik1,
 ///
 bool
 is_range_intersect_indel_breakpoints(const known_pos_range read_pr,
-                                     const indel_key& ik);
+                                     const IndelKey& ik);
 
 
 /// check if a range (representing an alignment, etc) intersects or is
@@ -51,4 +51,4 @@ is_range_intersect_indel_breakpoints(const known_pos_range read_pr,
 ///
 bool
 is_range_adjacent_indel_breakpoints(const known_pos_range read_pr,
-                                    const indel_key& ik);
+                                    const IndelKey& ik);

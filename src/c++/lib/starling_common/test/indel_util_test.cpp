@@ -30,28 +30,28 @@ BOOST_AUTO_TEST_CASE( test_indel_intersect_deletion )
 {
 
     // 5-base deletion starting at zero-indexed position 9:
-    const indel_key ikdel1(9,INDEL::DELETE,5);
+    const IndelKey ikdel1(9,INDEL::DELETE,5);
 
     // left-side deletion:
-    BOOST_CHECK(! is_indel_conflict(ikdel1,indel_key(7,INDEL::DELETE,1)) );
-    BOOST_CHECK(  is_indel_conflict(ikdel1,indel_key(8,INDEL::DELETE,1)) );
+    BOOST_CHECK(! is_indel_conflict(ikdel1,IndelKey(7,INDEL::DELETE,1)) );
+    BOOST_CHECK(  is_indel_conflict(ikdel1,IndelKey(8,INDEL::DELETE,1)) );
 
     // right-side deletion:
-    BOOST_CHECK(  is_indel_conflict(ikdel1,indel_key(14,INDEL::DELETE,1)) );
-    BOOST_CHECK(! is_indel_conflict(ikdel1,indel_key(15,INDEL::DELETE,1)) );
+    BOOST_CHECK(  is_indel_conflict(ikdel1,IndelKey(14,INDEL::DELETE,1)) );
+    BOOST_CHECK(! is_indel_conflict(ikdel1,IndelKey(15,INDEL::DELETE,1)) );
 
     // super-set deletion
-    BOOST_CHECK(  is_indel_conflict(ikdel1,indel_key(4,INDEL::DELETE,15)) );
+    BOOST_CHECK(  is_indel_conflict(ikdel1,IndelKey(4,INDEL::DELETE,15)) );
 
     // sub-set deletion
-    BOOST_CHECK(  is_indel_conflict(ikdel1,indel_key(12,INDEL::DELETE,1)) );
+    BOOST_CHECK(  is_indel_conflict(ikdel1,IndelKey(12,INDEL::DELETE,1)) );
 }
 
 
 
 static
 bool
-test_single_intersect_case(const indel_key& ik,
+test_single_intersect_case(const IndelKey& ik,
                            const bool expect)
 {
 
@@ -68,15 +68,15 @@ BOOST_AUTO_TEST_CASE( test_range_intersect_delete )
     static const INDEL::index_t itype(INDEL::DELETE);
 
     // simple interior case:
-    BOOST_CHECK(test_single_intersect_case(indel_key(14,itype,1),true));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(14,itype,1),true));
 
     // left-side edge cases:
-    BOOST_CHECK(test_single_intersect_case(indel_key(8,itype,1),false));
-    BOOST_CHECK(test_single_intersect_case(indel_key(9,itype,1),true));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(8,itype,1),false));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(9,itype,1),true));
 
     // right-side edge cases:
-    BOOST_CHECK(test_single_intersect_case(indel_key(19,itype,1),true));
-    BOOST_CHECK(test_single_intersect_case(indel_key(20,itype,1),false));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(19,itype,1),true));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(20,itype,1),false));
 }
 
 
@@ -86,15 +86,15 @@ BOOST_AUTO_TEST_CASE( test_range_intersect_insert )
     static const INDEL::index_t itype(INDEL::INSERT);
 
     // simple interior case:
-    BOOST_CHECK(test_single_intersect_case(indel_key(14,itype,1),true));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(14,itype,1),true));
 
     // left-side edge cases:
-    BOOST_CHECK(test_single_intersect_case(indel_key(9,itype,1),false));
-    BOOST_CHECK(test_single_intersect_case(indel_key(10,itype,1),true));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(9,itype,1),false));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(10,itype,1),true));
 
     // right-side edge cases:
-    BOOST_CHECK(test_single_intersect_case(indel_key(19,itype,1),true));
-    BOOST_CHECK(test_single_intersect_case(indel_key(20,itype,1),false));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(19,itype,1),true));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(20,itype,1),false));
 }
 
 BOOST_AUTO_TEST_CASE( test_range_intersect_swap )
@@ -103,22 +103,22 @@ BOOST_AUTO_TEST_CASE( test_range_intersect_swap )
     static const INDEL::index_t itype(INDEL::SWAP);
 
     // simple interior case:
-    BOOST_CHECK(test_single_intersect_case(indel_key(14,itype,1,1),true));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(14,itype,1,1),true));
 
     // left-side edge cases:
-    BOOST_CHECK(test_single_intersect_case(indel_key(8,itype,1,1),false));
-    BOOST_CHECK(test_single_intersect_case(indel_key(9,itype,1,1),true));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(8,itype,1,1),false));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(9,itype,1,1),true));
 
     // right-side edge cases:
-    BOOST_CHECK(test_single_intersect_case(indel_key(19,itype,1,1),true));
-    BOOST_CHECK(test_single_intersect_case(indel_key(20,itype,1,1),false));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(19,itype,1,1),true));
+    BOOST_CHECK(test_single_intersect_case(IndelKey(20,itype,1,1),false));
 }
 
 
 
 static
 bool
-test_single_adjacent_case(const indel_key& ik,
+test_single_adjacent_case(const IndelKey& ik,
                           const bool expect)
 {
 
@@ -135,15 +135,15 @@ BOOST_AUTO_TEST_CASE( test_range_adjacent_delete )
     static const INDEL::index_t itype(INDEL::DELETE);
 
     // simple interior case:
-    BOOST_CHECK(test_single_adjacent_case(indel_key(14,itype,1),true));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(14,itype,1),true));
 
     // left-side edge cases:
-    BOOST_CHECK(test_single_adjacent_case(indel_key(7,itype,1),false));
-    BOOST_CHECK(test_single_adjacent_case(indel_key(8,itype,1),true));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(7,itype,1),false));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(8,itype,1),true));
 
     // right-side edge cases:
-    BOOST_CHECK(test_single_adjacent_case(indel_key(20,itype,1),true));
-    BOOST_CHECK(test_single_adjacent_case(indel_key(21,itype,1),false));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(20,itype,1),true));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(21,itype,1),false));
 }
 
 
@@ -153,15 +153,15 @@ BOOST_AUTO_TEST_CASE( test_range_adjacent_insert )
     static const INDEL::index_t itype(INDEL::INSERT);
 
     // simple interior case:
-    BOOST_CHECK(test_single_adjacent_case(indel_key(14,itype,1),true));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(14,itype,1),true));
 
     // left-side edge cases:
-    BOOST_CHECK(test_single_adjacent_case(indel_key(8,itype,1),false));
-    BOOST_CHECK(test_single_adjacent_case(indel_key(9,itype,1),true));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(8,itype,1),false));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(9,itype,1),true));
 
     // right-side edge cases:
-    BOOST_CHECK(test_single_adjacent_case(indel_key(20,itype,1),true));
-    BOOST_CHECK(test_single_adjacent_case(indel_key(21,itype,1),false));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(20,itype,1),true));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(21,itype,1),false));
 }
 
 BOOST_AUTO_TEST_CASE( test_range_adjacent_swap )
@@ -170,15 +170,15 @@ BOOST_AUTO_TEST_CASE( test_range_adjacent_swap )
     static const INDEL::index_t itype(INDEL::SWAP);
 
     // simple interior case:
-    BOOST_CHECK(test_single_adjacent_case(indel_key(14,itype,1,1),true));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(14,itype,1,1),true));
 
     // left-side edge cases:
-    BOOST_CHECK(test_single_adjacent_case(indel_key(7,itype,1,1),false));
-    BOOST_CHECK(test_single_adjacent_case(indel_key(8,itype,1,1),true));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(7,itype,1,1),false));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(8,itype,1,1),true));
 
     // right-side edge cases:
-    BOOST_CHECK(test_single_adjacent_case(indel_key(20,itype,1,1),true));
-    BOOST_CHECK(test_single_adjacent_case(indel_key(21,itype,1,1),false));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(20,itype,1,1),true));
+    BOOST_CHECK(test_single_adjacent_case(IndelKey(21,itype,1,1),false));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

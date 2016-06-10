@@ -26,7 +26,7 @@
 
 #include "blt_util/ranksum.hh"
 #include "starling_common/indel_align_type.hh"
-#include "starling_common/indel_key.hh"
+#include "starling_common/IndelKey.hh"
 #include "starling_common/starling_types.hh"
 
 #include <cassert>
@@ -79,7 +79,7 @@ struct ReadPathScores
 
     void
     insertAlt(
-        const indel_key& ik,
+        const IndelKey& ik,
         const score_t a);
 
     score_t ref;
@@ -89,7 +89,7 @@ struct ReadPathScores
 //    score_t alt;
 
     // store up to 2 highest scoring alternate indels
-    typedef std::vector<std::pair<indel_key,score_t> > alt_indel_t;
+    typedef std::vector<std::pair<IndelKey,score_t> > alt_indel_t;
     alt_indel_t alt_indel;
 
     // used to set expected het allele ratio:
@@ -230,7 +230,7 @@ struct IndelData
 {
     IndelData(
         const unsigned sampleCount,
-        const indel_key& ik)
+        const IndelKey& ik)
         : _sampleData(sampleCount),
           _ik(ik)
     {
@@ -311,7 +311,7 @@ private:
     mutable InsertSequenceManager _insert_seq;
 
     // indel key stored for debugging only
-    indel_key _ik;
+    IndelKey _ik;
 };
 
 

@@ -25,7 +25,7 @@
 #pragma once
 
 
-#include "starling_common/indel_key.hh"
+#include "starling_common/IndelKey.hh"
 #include "starling_common/IndelData.hh"
 
 #include <iosfwd>
@@ -34,7 +34,7 @@
 /// Represents a single indel observation
 struct IndelObservation
 {
-    indel_key key;
+    IndelKey key;
     IndelObservationData data;
 };
 
@@ -43,7 +43,7 @@ struct IndelObservation
 /// Represents all information about an indel
 struct indel
 {
-    indel_key key;
+    IndelKey key;
     IndelData data;
 };
 

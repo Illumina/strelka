@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
 
     std::unique_ptr<GermlineDiploidIndelCallInfo> site;
-    indel_key ik;
+    IndelKey ik;
     ik.pos=50;
     site.reset(new GermlineDiploidIndelCallInfo(ik,
                                                 IndelData(1,ik),

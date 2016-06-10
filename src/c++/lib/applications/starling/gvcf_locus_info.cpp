@@ -466,7 +466,7 @@ operator<<(
 {
     os << static_cast<GermlineVariantSimpleGenotypeInfo>(shi) << '\n';
 
-    os << "indel_key: " << shi._ik << "\n";
+    os << "IndelKey: " << shi._ik << "\n";
     //os << "indel_data: " << shi._id << "\n";
     os << "indel_report_info: " << shi._iri << "\n";
     os << "indel_sample_info: " << shi._isri << "\n";

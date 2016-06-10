@@ -30,7 +30,7 @@
 #include <set>
 
 
-typedef std::set<indel_key> indel_set_t;
+typedef std::set<IndelKey> indel_set_t;
 
 
 void

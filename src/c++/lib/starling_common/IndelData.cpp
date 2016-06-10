@@ -36,7 +36,7 @@
 void
 ReadPathScores::
 insertAlt(
-    const indel_key& ik,
+    const IndelKey& ik,
     const score_t a)
 {
     const unsigned ais(static_cast<unsigned>(alt_indel.size()));
@@ -192,7 +192,7 @@ operator<<(
 #else
     for (const auto& indel : rps.alt_indel)
     {
-        const indel_key& ik(indel.first);
+        const IndelKey& ik(indel.first);
         os << " alt-" << ik.pos << "-" << INDEL::get_index_label(ik.type) << ik.length << ": " << indel.second;
     }
 #endif
@@ -273,7 +273,7 @@ operator<<(
     std::ostream& os,
     const IndelData& indelData)
 {
-    os << "indel_key: " << indelData._ik << "\n";
+    os << "IndelKey: " << indelData._ik << "\n";
     os << "is_external_candidate: " << indelData.is_external_candidate << "\n";
     os << "is_forced_output: " << indelData.is_forced_output << "\n";
 

@@ -117,7 +117,7 @@ static
 void
 get_het_observed_allele_ratio(const unsigned read_length,
                               const unsigned min_overlap,
-                              const indel_key& ik,
+                              const IndelKey& ik,
                               const double het_allele_ratio,
                               double& log_ref_prob,
                               double& log_indel_prob)
@@ -160,7 +160,7 @@ get_high_low_het_ratio_lhood(
     const double indel_real_lnp,
     const double ref_error_lnp,
     const double ref_real_lnp,
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelSampleData& indelSampleData,
     const double het_ratio,
     const bool is_tier2_pass,
@@ -250,7 +250,7 @@ increment_het_ratio_lhood(
     const double indel_real_lnp,
     const double ref_error_lnp,
     const double ref_real_lnp,
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelSampleData& indelSampleData,
     const double het_ratio,
     const bool is_tier2_pass,
@@ -294,7 +294,7 @@ get_sum_path_pprob(
         total_pprob.nsite=0;
     }
 
-    typedef std::map<indel_key,unsigned> aimap_t;
+    typedef std::map<IndelKey,unsigned> aimap_t;
     aimap_t alt_indel_index;
 
     for (const auto& score : indelSampleData.read_path_lnp)
@@ -420,7 +420,7 @@ get_indel_digt_lhood(
     const starling_sample_options& sample_opt,
     const double indel_error_prob,
     const double ref_error_prob,
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelSampleData& indelSampleData,
     const bool is_het_bias,
     const double het_bias,
@@ -524,7 +524,7 @@ starling_indel_call_pprob_digt(
     const starling_sample_options& sample_opt,
     const double indel_error_prob,
     const double ref_error_prob,
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelSampleData& indelSampleData,
     const bool is_use_alt_indel,
     starling_diploid_indel& dindel) const

@@ -35,7 +35,7 @@
 #include <vector>
 
 
-typedef std::map<indel_key,bool> indel_status_map_t;
+typedef std::map<IndelKey,bool> indel_status_map_t;
 
 
 /// use the most likely alignment for each indel state for every indel

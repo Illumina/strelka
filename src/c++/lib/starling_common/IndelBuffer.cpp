@@ -53,9 +53,9 @@ rangeIterator(
     const pos_t begin_pos,
     const pos_t end_pos)
 {
-    const indel_key end_range_key(end_pos);
+    const IndelKey end_range_key(end_pos);
     const iterator end(_indelBuffer.lower_bound(end_range_key));
-    const indel_key begin_range_key(begin_pos-static_cast<pos_t>(_opt.max_indel_size));
+    const IndelKey begin_range_key(begin_pos-static_cast<pos_t>(_opt.max_indel_size));
     iterator begin(_indelBuffer.lower_bound(begin_range_key));
     for (; begin!=end; ++begin)
     {
@@ -80,9 +80,9 @@ rangeIterator(
     const pos_t begin_pos,
     const pos_t end_pos) const
 {
-    const indel_key end_range_key(end_pos);
+    const IndelKey end_range_key(end_pos);
     const const_iterator end(_indelBuffer.lower_bound(end_range_key));
-    const indel_key begin_range_key(begin_pos-static_cast<pos_t>(_opt.max_indel_size));
+    const IndelKey begin_range_key(begin_pos-static_cast<pos_t>(_opt.max_indel_size));
     const_iterator begin(_indelBuffer.lower_bound(begin_range_key));
     for (; begin!=end; ++begin)
     {
@@ -137,7 +137,7 @@ addIndelObservation(
 bool
 IndelBuffer::
 isCandidateIndelImplTestSignalNoise(
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelData& indelData) const
 {
     // determine if the observed counts are sig wrt the error rate for at least one sample:
@@ -198,7 +198,7 @@ isCandidateIndelImplTestWeakSignal(
 bool
 IndelBuffer::
 isCandidateIndelImplTest(
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelData& indelData) const
 {
     // initialize indel error rates:
@@ -268,7 +268,7 @@ isCandidateIndelImplTest(
 void
 IndelBuffer::
 isCandidateIndelImpl(
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelData& indelData) const
 {
     const bool is_candidate(isCandidateIndelImplTest(ik, indelData));
@@ -280,7 +280,7 @@ isCandidateIndelImpl(
 
 void
 IndelBuffer::
-findDataException(const indel_key& ik) const
+findDataException(const IndelKey& ik) const
 {
     std::ostringstream oss;
     oss << "ERROR: could not find indel_data for indel: " << ik;

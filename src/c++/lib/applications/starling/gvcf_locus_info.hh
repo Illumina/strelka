@@ -178,7 +178,7 @@ std::ostream& operator<<(std::ostream& os,const GermlineVariantSimpleGenotypeInf
 struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
     GermlineIndelSimpleGenotypeInfo(
-        const indel_key& ik,
+        const IndelKey& ik,
         const IndelData& indelData,
         const starling_indel_report_info iri,
         const starling_indel_sample_report_info& isri)
@@ -201,7 +201,7 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
         const unsigned lead=1,
         const unsigned trail=0);
 
-    const indel_key _ik;
+    const IndelKey _ik;
     const IndelData _indelData;
     // TODO: make the indel overlapping code create a new call, then revert this to const
     starling_indel_report_info _iri;
@@ -221,7 +221,7 @@ std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo&
 struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
     GermlineDiploidIndelSimpleGenotypeInfo(
-        const indel_key& ik,
+        const IndelKey& ik,
         const IndelData& indelData,
         const starling_indel_report_info& iri,
         const starling_indel_sample_report_info& isri,
@@ -359,7 +359,7 @@ struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGen
     GermlineContinuousIndelSimpleGenotypeInfo(
         unsigned totalDepth,
         unsigned alleleDepth,
-        const indel_key& ik,
+        const IndelKey& ik,
         const IndelData& indelData,
         const starling_indel_report_info& iri,
         const starling_indel_sample_report_info& isri)
@@ -405,7 +405,7 @@ struct GermlineIndelCallInfo
 struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
 {
     GermlineDiploidIndelCallInfo(
-        const indel_key& init_ik,
+        const IndelKey& init_ik,
         const IndelData& initIndelData,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
         const starling_indel_report_info& init_iri,

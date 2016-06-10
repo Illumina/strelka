@@ -44,10 +44,10 @@
 /// second: X indel, this may or may not be the same as the active indel,
 ///         but it should only be the active indel or an indel which interferes
 ///         with the active indel
-typedef std::pair<bool,indel_key> indel_present_t;
+typedef std::pair<bool,IndelKey> indel_present_t;
 
 /// first: active indel
-typedef std::pair<indel_key, indel_present_t > indel_status_t;
+typedef std::pair<IndelKey, indel_present_t > indel_status_t;
 
 /// first: alignment likelihood
 /// second: alignment
@@ -63,9 +63,9 @@ static
 void
 updateIndelScoringInfo(
     iks_map_t& iks_map,
-    const indel_key& ik_call,
+    const IndelKey& ik_call,
     const bool is_indel_present,
-    const indel_key& ik_present,
+    const IndelKey& ik_present,
     const double path_lnp,
     const candidate_alignment* cal_ptr)
 {
@@ -79,7 +79,7 @@ updateIndelScoringInfo(
 
 
 
-typedef std::map<indel_key,indel_set_t> overlap_map_t;
+typedef std::map<IndelKey,indel_set_t> overlap_map_t;
 
 
 
@@ -87,8 +87,8 @@ static
 void
 overlap_map_tick(
     overlap_map_t& omap,
-    const indel_key& ik1,
-    const indel_key& ik2)
+    const IndelKey& ik1,
+    const IndelKey& ik2)
 {
     indel_set_t& os(omap[ik1]);
     if (os.find(ik2) == os.end()) os.insert(ik2);
@@ -101,11 +101,11 @@ static
 bool
 is_interfering_indel(
     const indel_set_t& current_indels,
-    const indel_key& new_indel)
+    const IndelKey& new_indel)
 {
     if (current_indels.count(new_indel) != 0) return false;
 
-    for (const indel_key& ik : current_indels)
+    for (const IndelKey& ik : current_indels)
     {
         if (is_indel_conflict(ik,new_indel)) return true;
     }
@@ -130,7 +130,7 @@ std::pair<int,int>
 get_alignment_indel_bp_overlap(
     const unsigned upstream_oligo_size,
     const alignment& al,
-    const indel_key& ik)
+    const IndelKey& ik)
 {
     using namespace ALIGNPATH;
 
@@ -223,7 +223,7 @@ get_alignment_indel_bp_overlap(
 
 
 
-typedef std::set<std::pair<indel_key,indel_key> > indel_pair_set;
+typedef std::set<std::pair<IndelKey,IndelKey> > indel_pair_set;
 
 
 
@@ -272,8 +272,8 @@ static
 bool
 is_first_indel_dominant(
     const IndelBuffer& indelBuffer,
-    const indel_key& ik1,
-    const indel_key& ik2)
+    const IndelKey& ik1,
+    const IndelKey& ik2)
 {
     const bool ic1(indelBuffer.isCandidateIndel(ik1));
     const bool ic2(indelBuffer.isCandidateIndel(ik2));
@@ -553,7 +553,7 @@ score_indels(
         const auto indelIterPair(indelBuffer.rangeIterator(maxCandAlignmentRange.begin_pos, maxCandAlignmentRange.end_pos));
         for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
         {
-            const indel_key& evaluationIndel(indelIter->first);
+            const IndelKey& evaluationIndel(indelIter->first);
             const IndelData& indelData(getIndelData(indelIter));
 
 #ifdef DEBUG_ALIGN
@@ -695,7 +695,7 @@ score_indels(
             // highest scoring path already:
             //
             const align_info_t maxCandAlignmentInfo(std::make_pair(maxCandAlignmentScore,&maxCandAlignment));
-            for (const indel_key& evaluationIndel : indelsToEvaluate)
+            for (const IndelKey& evaluationIndel : indelsToEvaluate)
             {
                 const bool isIndelInMaxCandAlignment(indelsInMaxCandAlignment.count(evaluationIndel)!=0);
                 const auto indelPresentInfo(std::make_pair(isIndelInMaxCandAlignment,evaluationIndel));
@@ -705,7 +705,7 @@ score_indels(
                     indelScoringInfo[std::make_pair(evaluationIndel,indelPresentInfo)] = maxCandAlignmentInfo;
 
                     // mark this as an alternate indel score for interfering indels:
-                    for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
+                    for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
                         indelScoringInfo[std::make_pair(orthogonalIndel,indelPresentInfo)] = maxCandAlignmentInfo;
                     }
@@ -739,7 +739,7 @@ score_indels(
             indel_set_t indelsInCandAlignment;
             get_alignment_indels(candAlignment,opt.max_indel_size,indelsInCandAlignment);
 
-            for (const indel_key& evaluationIndel : indelsToEvaluate)
+            for (const IndelKey& evaluationIndel : indelsToEvaluate)
             {
                 const bool isIndelInCandAlignment(indelsInCandAlignment.count(evaluationIndel)!=0);
                 if (isIndelInCandAlignment)
@@ -749,7 +749,7 @@ score_indels(
                     updateIndelScoringInfo(indelScoringInfo,evaluationIndel,isIndelInCandAlignment,evaluationIndel,score,&candAlignment);
 
                     // mark this as an alternate indel score for orthogonal indels:
-                    for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
+                    for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
                         // this represents the score of the read arising from the evaluationIndel haplotype,
                         // (as above) but this is the copy we use when we are evaluating the orthogonalIndel haplotype
@@ -765,7 +765,7 @@ score_indels(
                     // category:
                     //
                     bool isIndelOrthogonalToCandAlignment(false);
-                    for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
+                    for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
                         if (indelsInCandAlignment.count(orthogonalIndel)!=0)
                         {
@@ -808,7 +808,7 @@ score_indels(
     }
 
     {
-        for (const indel_key& evaluationIndel : indelsToEvaluate)
+        for (const IndelKey& evaluationIndel : indelsToEvaluate)
         {
             // we test for presence of the indel on the highest
             // scoring alignment because breakpoint overlap has
@@ -924,7 +924,7 @@ score_indels(
 
             // start adding alternate indel alleles, if present:
 
-            for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
+            for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
             {
                 const iks_map_t::iterator indelScoringIter(indelScoringInfo.find(std::make_pair(evaluationIndel,std::make_pair(true,orthogonalIndel))));
 

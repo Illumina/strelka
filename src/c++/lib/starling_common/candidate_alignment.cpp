@@ -107,13 +107,13 @@ get_alignment_indels(
             const unsigned swap_size(std::max(sinfo.insert_length,sinfo.delete_length));
             if (swap_size <= max_indel_size)
             {
-                indels.insert(indel_key(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length));
+                indels.insert(IndelKey(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length));
             }
             else
             {
-                indels.insert(indel_key(ref_head_pos,INDEL::BP_LEFT,swap_size));
+                indels.insert(IndelKey(ref_head_pos,INDEL::BP_LEFT,swap_size));
                 const pos_t right_pos(ref_head_pos+sinfo.delete_length);
-                indels.insert(indel_key(right_pos,INDEL::BP_RIGHT,swap_size));
+                indels.insert(IndelKey(right_pos,INDEL::BP_RIGHT,swap_size));
             }
 
         }
@@ -122,13 +122,13 @@ get_alignment_indels(
             if (ps.length <= max_indel_size)
             {
                 const INDEL::index_t id( (ps.type==INSERT) ? INDEL::INSERT : INDEL::DELETE );
-                indels.insert(indel_key(ref_head_pos,id,ps.length));
+                indels.insert(IndelKey(ref_head_pos,id,ps.length));
             }
             else
             {
-                indels.insert(indel_key(ref_head_pos,INDEL::BP_LEFT,ps.length));
+                indels.insert(IndelKey(ref_head_pos,INDEL::BP_LEFT,ps.length));
                 const pos_t right_pos(ref_head_pos+((ps.type==INSERT) ? 0 : ps.length));
-                indels.insert(indel_key(right_pos,INDEL::BP_RIGHT,ps.length));
+                indels.insert(IndelKey(right_pos,INDEL::BP_RIGHT,ps.length));
             }
 
         }

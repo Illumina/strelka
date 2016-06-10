@@ -62,7 +62,7 @@ copy_ref_subseq(const reference_contig_segment& ref,
 static
 void
 get_vcf_summary_strings(
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelData& indelData,
     const reference_contig_segment& ref,
     std::string& vcf_indel_seq,
@@ -98,7 +98,7 @@ get_vcf_summary_strings(
 static
 void
 set_repeat_info(
-    const indel_key& ik,
+    const IndelKey& ik,
     const reference_contig_segment& ref,
     starling_indel_report_info& iri)
 {
@@ -182,7 +182,7 @@ set_repeat_info(
 
 void
 get_starling_indel_report_info(
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelData& indelData,
     const reference_contig_segment& ref,
     starling_indel_report_info& iri)
@@ -288,7 +288,7 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
 void
 get_starling_indel_sample_report_info(
     const starling_base_deriv_options& dopt,
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelSampleData& indelSampleData,
     const pos_basecall_buffer& bc_buff,
     const bool is_tier2_pass,

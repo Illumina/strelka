@@ -18,20 +18,20 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-#include "starling_common/indel_key.hh"
+#include "starling_common/IndelKey.hh"
 
 #include <iostream>
 
 
 
 std::ostream&
-operator<<(std::ostream& os,
-           const indel_key& ik)
+operator<<(
+    std::ostream& os,
+    const IndelKey& ik)
 {
     os << "INDEL pos: " << ik.pos
        << " type: " << INDEL::get_index_label(ik.type)

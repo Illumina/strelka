@@ -89,7 +89,7 @@ get_alignment_zone(const alignment& al,
 
 bool
 is_indel_in_alignment(const alignment& al,
-                      const indel_key& ik,
+                      const IndelKey& ik,
                       pos_range& read_indel_pr)
 {
     using namespace ALIGNPATH;

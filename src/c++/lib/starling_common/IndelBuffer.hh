@@ -63,7 +63,7 @@ struct IndelBuffer
     }
 
     typedef IndelData indel_buffer_value_t;
-    typedef std::map<indel_key,indel_buffer_value_t> indel_buffer_t;
+    typedef std::map<IndelKey,indel_buffer_value_t> indel_buffer_t;
     typedef indel_buffer_t::iterator iterator;
     typedef indel_buffer_t::const_iterator const_iterator;
 
@@ -78,13 +78,13 @@ struct IndelBuffer
     iterator
     positionIterator(const pos_t pos)
     {
-        return _indelBuffer.lower_bound(indel_key(pos));
+        return _indelBuffer.lower_bound(IndelKey(pos));
     }
 
     const_iterator
     positionIterator(const pos_t pos) const
     {
-        return _indelBuffer.lower_bound(indel_key(pos));
+        return _indelBuffer.lower_bound(IndelKey(pos));
     }
 
     /// position iterators which return (at least) all indels with a
@@ -107,14 +107,14 @@ struct IndelBuffer
 
     /// return nullptr if no indel found:
     indel_buffer_value_t*
-    getIndelDataPtr(const indel_key& ik)
+    getIndelDataPtr(const IndelKey& ik)
     {
         const iterator i(_indelBuffer.find(ik));
         return ((i==_indelBuffer.end()) ? nullptr : &(i->second) );
     }
 
     const indel_buffer_value_t*
-    getIndelDataPtr(const indel_key& ik) const
+    getIndelDataPtr(const IndelKey& ik) const
     {
         const const_iterator i(_indelBuffer.find(ik));
         return ((i==_indelBuffer.end()) ? nullptr : &(i->second) );
@@ -125,7 +125,7 @@ struct IndelBuffer
     ///
     bool
     isCandidateIndel(
-        const indel_key& ik,
+        const IndelKey& ik,
         const IndelData& indelData) const
     {
         if (! indelData.status.is_candidate_indel_cached)
@@ -140,7 +140,7 @@ struct IndelBuffer
     ///
     bool
     isCandidateIndel(
-        const indel_key& ik) const
+        const IndelKey& ik) const
     {
         const IndelData* indelDataPtr(getIndelDataPtr(ik));
         if (nullptr == indelDataPtr) findDataException(ik);
@@ -188,7 +188,7 @@ private:
     /// a candidate
     bool
     isCandidateIndelImplTestSignalNoise(
-        const indel_key& ik,
+        const IndelKey& ik,
         const IndelData& indelData) const;
 
     /// much weaker version of the above -- used for indel
@@ -199,12 +199,12 @@ private:
 
     bool
     isCandidateIndelImplTest(
-        const indel_key& ik,
+        const IndelKey& ik,
         const IndelData& indelData) const;
 
     void
     isCandidateIndelImpl(
-        const indel_key& ik,
+        const IndelKey& ik,
         const IndelData& indelData) const;
 
     /// return object which provides estimated depth of tier1 reads
@@ -239,7 +239,7 @@ private:
     }
 
     void
-    findDataException(const indel_key& ik) const;
+    findDataException(const IndelKey& ik) const;
 
 /////////////// data
     const starling_base_options& _opt;

@@ -271,7 +271,7 @@ process_pos_indel_somatic(const pos_t pos)
 
     for (; indelIter != indelIterEnd; ++indelIter)
     {
-        const indel_key& ik(indelIter->first);
+        const IndelKey& ik(indelIter->first);
 
         // don't write breakpoint output:
         if (ik.is_breakpoint()) continue;

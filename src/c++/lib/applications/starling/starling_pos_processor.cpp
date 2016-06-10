@@ -526,7 +526,7 @@ process_pos_indel_single_sample_digt(
 
     for (; it!=it_end; ++it)
     {
-        const indel_key& ik(it->first);
+        const IndelKey& ik(it->first);
         const IndelData& indelData(getIndelData(it));
         const bool isForcedOutput(indelData.is_forced_output);
 
@@ -657,7 +657,7 @@ process_pos_indel_single_sample_continuous(
 
     for (; it!=it_end; ++it)
     {
-        const indel_key& ik(it->first);
+        const IndelKey& ik(it->first);
         const IndelData& indelData(getIndelData(it));
         const bool isForcedOutput(indelData.is_forced_output);
 

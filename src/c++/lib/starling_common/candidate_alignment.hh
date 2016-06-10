@@ -47,8 +47,8 @@ struct candidate_alignment
     }
 
     alignment al;
-    indel_key leading_indel_key;
-    indel_key trailing_indel_key;
+    IndelKey leading_indel_key;
+    IndelKey trailing_indel_key;
 };
 
 

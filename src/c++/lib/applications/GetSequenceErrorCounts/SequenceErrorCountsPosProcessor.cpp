@@ -126,7 +126,7 @@ static
 bool
 isKnownVariantMatch(
     const RecordTracker::indel_value_t& knownVariants,
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelData& indelData,
     RecordTracker::indel_value_t& overlap)
 {
@@ -148,7 +148,7 @@ isKnownVariantMatch(
 ///
 struct OrthogonalHaplotypeCandidateGroup
 {
-    const indel_key&
+    const IndelKey&
     key(
         const unsigned index) const
     {
@@ -520,7 +520,7 @@ process_pos_error_counts(
 
     for (; it!=it_end; ++it)
     {
-        const indel_key& ik(it->first);
+        const IndelKey& ik(it->first);
         const IndelData& indelData(getIndelData(it));
 
         if (ik.is_breakpoint()) continue;
@@ -557,7 +557,7 @@ process_pos_error_counts(
 
         for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; ++nonrefHapIndex)
         {
-            const indel_key& ik(hg.key(nonrefHapIndex));
+            const IndelKey& ik(hg.key(nonrefHapIndex));
             const IndelData& indelData(hg.data(nonrefHapIndex));
 
             starling_indel_report_info iri;

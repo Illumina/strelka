@@ -211,7 +211,7 @@ process_pos_indel_denovo(const pos_t pos)
 
     for (; it!=it_end; ++it)
     {
-        const indel_key& ik(it->first);
+        const IndelKey& ik(it->first);
 
         // don't write breakpoint output:
         if (ik.is_breakpoint()) continue;

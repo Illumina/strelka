@@ -1094,7 +1094,7 @@ write_candidate_indels_pos(
 
     for (; indelIter!=indelIterEnd; ++indelIter)
     {
-        const indel_key& ik(indelIter->first);
+        const IndelKey& ik(indelIter->first);
         const IndelData& indelData(getIndelData(indelIter));
         if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
         bos << _chrom_name << "\t"

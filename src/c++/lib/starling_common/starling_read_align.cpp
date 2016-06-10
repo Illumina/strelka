@@ -61,7 +61,7 @@ operator<<(std::ostream& os, const starling_align_indel_info& ii)
 }
 
 
-typedef std::map<indel_key,starling_align_indel_info> starling_align_indel_status;
+typedef std::map<IndelKey,starling_align_indel_info> starling_align_indel_status;
 
 
 
@@ -115,7 +115,7 @@ check_for_candidate_indel_overlap(
     const auto indelIterPair(indelBuffer.rangeIterator(read_range.begin_pos, read_range.end_pos));
     for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
     {
-        const indel_key& ik(indelIter->first);
+        const IndelKey& ik(indelIter->first);
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT key: " << ik;
 #endif
@@ -163,7 +163,7 @@ static
 bool
 is_usable_indel(
     const IndelBuffer& indelBuffer,
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelData& indelData,
     const align_id_t read_id,
     const unsigned sampleId)
@@ -189,7 +189,7 @@ add_indels_in_range(
     const known_pos_range& pr,
     const unsigned sampleId,
     starling_align_indel_status& indel_status_map,
-    std::vector<indel_key>& indel_order)
+    std::vector<IndelKey>& indel_order)
 {
     const auto indelIterPair(indelBuffer.rangeIterator(pr.begin_pos, pr.end_pos));
 #ifdef DEBUG_ALIGN
@@ -197,7 +197,7 @@ add_indels_in_range(
 #endif
     for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
     {
-        const indel_key& ik(indelIter->first);
+        const IndelKey& ik(indelIter->first);
         // check if read intersects with indel and indel is usable by this read:
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT INDEL CANDIDATE " << ik;
@@ -289,7 +289,7 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 
     path_t& apath(cal.al.path);
 
-    for (const indel_key& ik : indels)
+    for (const IndelKey& ik : indels)
     {
         // don't consider indels which can't intersect the read:
         if (ik.right_pos() < ref_start_pos) continue;
@@ -314,7 +314,7 @@ make_start_pos_alignment(const pos_t ref_start_pos,
                     << "\tread_length: " << read_length << "\n";
 
                 oss << "\tfull indel set: ";
-                for (const indel_key& ik2 : indels)
+                for (const IndelKey& ik2 : indels)
                 {
                     oss << "\t\t" << ik2;
                 }
@@ -467,7 +467,7 @@ get_end_pin_start_pos(const indel_set_t& indels,
     while (i!=i_begin)
     {
         --i;
-        const indel_key& ik(*i);
+        const IndelKey& ik(*i);
 
         // check that indel actually intersects the read:
         if (ik.pos > ref_end_pos) continue;
@@ -566,15 +566,15 @@ get_end_pin_start_pos(const indel_set_t& indels,
 static
 void
 sort_remove_only_indels_last(const starling_align_indel_status& indel_status_map,
-                             std::vector<indel_key>& indel_order,
+                             std::vector<IndelKey>& indel_order,
                              const unsigned current_depth = 0)
 {
-    typedef std::vector<indel_key>::const_iterator siter;
+    typedef std::vector<IndelKey>::const_iterator siter;
     const siter i_begin(indel_order.begin());
     const siter i_new(i_begin+current_depth);
     const siter i_end(indel_order.end());
 
-    std::vector<indel_key> indel_order2;
+    std::vector<IndelKey> indel_order2;
     for (siter i(i_begin); i!=i_new; ++i)
     {
         indel_order2.push_back(*i);
@@ -611,7 +611,7 @@ add_pin_exception_info(
     const candidate_alignment& start_cal,
     const pos_t ref_start_pos,
     const pos_t read_start_pos,
-    const indel_key& cindel,
+    const IndelKey& cindel,
     const indel_set_t& current_indels)
 {
     log_os << "\nException caught while building " << label << "-pinned alignment candidate at depth: " << depth << "\n"
@@ -620,7 +620,7 @@ add_pin_exception_info(
            << "\tref_start_pos: " << ref_start_pos << "\n"
            << "\tread_start_pos: " << read_start_pos << "\n"
            << "this_indel: " << cindel;
-    for (const indel_key& ik : current_indels)
+    for (const IndelKey& ik : current_indels)
     {
         log_os << "current_indels: " << ik;
     }
@@ -644,7 +644,7 @@ candidate_alignment_search(
     std::set<candidate_alignment>& cal_set,
     mca_warnings& warn,
     starling_align_indel_status indel_status_map,
-    std::vector<indel_key> indel_order,
+    std::vector<IndelKey> indel_order,
     const unsigned depth,
     const unsigned toggle_depth,
     known_pos_range read_range,
@@ -765,7 +765,7 @@ candidate_alignment_search(
     //
     // edge-indels only be pinned on one side
     //
-    const indel_key& cindel(indel_order[depth]);
+    const IndelKey& cindel(indel_order[depth]);
     const bool is_cindel_on(indel_status_map[cindel].is_present);
 
     // alignment 1) --> unchanged case:
@@ -794,7 +794,7 @@ candidate_alignment_search(
         //
         for (unsigned i(0); i<depth; ++i)
         {
-            const indel_key& ik(indel_order[i]);
+            const IndelKey& ik(indel_order[i]);
             if (indel_status_map[ik].is_present && is_indel_conflict(ik,cindel)) return;
         }
     }
@@ -995,7 +995,7 @@ get_candidate_indel_count(
     get_alignment_indels(cal,opt.max_indel_size,is);
 
     unsigned val(0);
-    for (const indel_key& ik : is)
+    for (const IndelKey& ik : is)
     {
         if (indelBuffer.isCandidateIndel(ik)) val++;
     }
@@ -1406,7 +1406,7 @@ load_cal_with_edge_indels(const alignment& al,
             {
                 itype = INDEL::DELETE;
             }
-            const indel_key ik(ref_pos,itype,ps.length);
+            const IndelKey ik(ref_pos,itype,ps.length);
             if     (i<ends.first)
             {
                 cal.leading_indel_key = ik;
@@ -1438,7 +1438,7 @@ get_candidate_alignments(
     const unsigned read_length(rseg.read_size());
 
     starling_align_indel_status indel_status_map;
-    std::vector<indel_key> indel_order;
+    std::vector<IndelKey> indel_order;
 
     candidate_alignment cal;
     load_cal_with_edge_indels(inputAlignment,cal);
@@ -1462,7 +1462,7 @@ get_candidate_alignments(
         indel_set_t cal_indels;
         get_alignment_indels(cal,opt.max_indel_size,cal_indels);
 
-        for (const indel_key& ik : cal_indels)
+        for (const IndelKey& ik : cal_indels)
         {
             if (indel_status_map.find(ik)==indel_status_map.end())
             {

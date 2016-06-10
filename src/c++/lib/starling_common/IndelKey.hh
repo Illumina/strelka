@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -46,20 +45,22 @@
 // if type is breakpoint it is the length of unaligned sequence stored for the other side of the breakpoint
 // it type is swap it is the inserted sequence, in this case swapd_length is used to indicated the deletion length
 //
-struct indel_key
+struct IndelKey
 {
-    indel_key(const pos_t p=0,
-              const INDEL::index_t t=INDEL::NONE,
-              const unsigned l=0,
-              const unsigned sl=0)
-        : pos(p), type(t), length(l), swap_dlength(sl) {}
+    IndelKey(
+        const pos_t p=0,
+        const INDEL::index_t t=INDEL::NONE,
+        const unsigned l=0,
+        const unsigned sl=0)
+        : pos(p), type(t), length(l), swap_dlength(sl)
+    {}
 
     // default sort is based on left-most position of the indel (note
     // we consider breakpoints to have the same left and right
     // locations)
     //
     bool
-    operator<(const indel_key& rhs) const
+    operator<(const IndelKey& rhs) const
     {
         if (pos < rhs.pos) return true;
         if (pos == rhs.pos)
@@ -70,7 +71,7 @@ struct indel_key
     }
 
     bool
-    gtcore(const indel_key& rhs) const
+    gtcore(const IndelKey& rhs) const
     {
         if (type < rhs.type) return true;
         if (type == rhs.type)
@@ -87,12 +88,8 @@ struct indel_key
         return false;
     }
 
-    //updating data on the ranksums as the reads come in
-    void
-    addRanksumInfo(const int mapq, const int baseq, bool is_alt);
-
     bool
-    operator==(const indel_key& rhs) const
+    operator==(const IndelKey& rhs) const
     {
         return ((pos == rhs.pos) &&
                 (type == rhs.type) &&
@@ -190,8 +187,8 @@ struct indel_key
 struct right_pos_indel_key_sorter
 {
     bool
-    operator()(const indel_key& i1,
-               const indel_key& i2) const
+    operator()(const IndelKey& i1,
+               const IndelKey& i2) const
     {
         if (i1.right_pos() < i2.right_pos()) return true;
         if (i1.right_pos() == i2.right_pos())
@@ -204,5 +201,5 @@ struct right_pos_indel_key_sorter
 #endif
 
 
-std::ostream& operator<<(std::ostream& os, const indel_key& ik);
+std::ostream& operator<<(std::ostream& os, const IndelKey& ik);
 

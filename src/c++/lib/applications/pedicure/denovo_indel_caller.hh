@@ -36,7 +36,7 @@ get_denovo_indel_call(
     const std::vector<const starling_sample_options*>& sampleOptions,
     const double indel_error_prob,
     const double ref_error_prob,
-    const indel_key& ik,
+    const IndelKey& ik,
     const IndelData& indelData,
     const bool is_use_alt_indel,
     denovo_indel_call& dinc);
