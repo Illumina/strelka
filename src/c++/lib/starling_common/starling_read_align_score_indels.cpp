@@ -618,10 +618,10 @@ score_indels(
                 {
                     if (bpo>0)
                     {
-                        IndelSampleData& isd(getIndelData(indelIter).getSampleData(sampleId));
+                        IndelSampleData& indelSampleData(getIndelData(indelIter).getSampleData(sampleId));
 
-                        if (is_tier1_read) isd.suboverlap_tier1_read_ids.insert(rseg.id());
-                        else               isd.suboverlap_tier2_read_ids.insert(rseg.id());
+                        if (is_tier1_read) indelSampleData.suboverlap_tier1_read_ids.insert(rseg.id());
+                        else               indelSampleData.suboverlap_tier2_read_ids.insert(rseg.id());
                     }
                     continue;
                 }

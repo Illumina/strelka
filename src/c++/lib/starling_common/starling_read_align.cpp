@@ -170,11 +170,11 @@ is_usable_indel(
 {
     if (indelBuffer.isCandidateIndel(ik, indelData)) return true;
 
-    const IndelSampleData& isd(indelData.getSampleData(sampleId));
-    return ((isd.tier1_map_read_ids.count(read_id)>0) ||
-            (isd.tier2_map_read_ids.count(read_id)>0) ||
-            (isd.submap_read_ids.count(read_id)>0) ||
-            (isd.noise_read_ids.count(read_id)>0));
+    const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
+    return ((indelSampleData.tier1_map_read_ids.count(read_id)>0) ||
+            (indelSampleData.tier2_map_read_ids.count(read_id)>0) ||
+            (indelSampleData.submap_read_ids.count(read_id)>0) ||
+            (indelSampleData.noise_read_ids.count(read_id)>0));
 }
 
 

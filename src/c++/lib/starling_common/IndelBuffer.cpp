@@ -145,11 +145,11 @@ isCandidateIndelImplTestSignalNoise(
     const unsigned sampleCount(indelData.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const IndelSampleData& isd(indelData.getSampleData(sampleIndex));
+        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
 
         // for each sample, get the number of tier 1 reads supporting the indel
         // and the total number of tier 1 reads at this locus
-        const unsigned tier1ReadSupportCount(isd.tier1_map_read_ids.size());
+        const unsigned tier1ReadSupportCount(indelSampleData.tier1_map_read_ids.size());
         unsigned totalReadCount(ebuff(sampleIndex).val(ik.pos-1));
 
         // total reads and indel reads are measured in different ways here, so the nonsensical
@@ -184,8 +184,8 @@ isCandidateIndelImplTestWeakSignal(
     const unsigned sampleCount(indelData.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const IndelSampleData& isd(indelData.getSampleData(sampleIndex));
-        const unsigned tier1ReadSupportCount(isd.tier1_map_read_ids.size());
+        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
+        const unsigned tier1ReadSupportCount(indelSampleData.tier1_map_read_ids.size());
         static const unsigned min_candidate_cov_floor(1);
         if (tier1ReadSupportCount < min_candidate_cov_floor) continue;
         return true;

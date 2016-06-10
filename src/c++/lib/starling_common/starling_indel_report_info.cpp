@@ -289,7 +289,7 @@ void
 get_starling_indel_sample_report_info(
     const starling_base_deriv_options& dopt,
     const indel_key& ik,
-    const IndelSampleData& isd,
+    const IndelSampleData& indelSampleData,
     const pos_basecall_buffer& bc_buff,
     const bool is_tier2_pass,
     const bool is_use_alt_indel,
@@ -301,7 +301,7 @@ get_starling_indel_sample_report_info(
 
         unsigned n_subscore_reads(0);
 
-        for (const auto& val : isd.read_path_lnp)
+        for (const auto& val : indelSampleData.read_path_lnp)
         {
             const ReadPathScores& path_lnp(val.second);
 
@@ -382,12 +382,12 @@ get_starling_indel_sample_report_info(
 
         // total number of reads with non-zero, yet insufficient indel
         // breakpoint overlap
-        const unsigned n_suboverlap_tier1_reads(isd.suboverlap_tier1_read_ids.size());
+        const unsigned n_suboverlap_tier1_reads(indelSampleData.suboverlap_tier1_read_ids.size());
         isri.n_other_reads = (n_subscore_reads+n_suboverlap_tier1_reads);
 
         if (is_tier2_pass)
         {
-            const unsigned n_suboverlap_tier2_reads(isd.suboverlap_tier2_read_ids.size());
+            const unsigned n_suboverlap_tier2_reads(indelSampleData.suboverlap_tier2_read_ids.size());
             isri.n_other_reads += n_suboverlap_tier2_reads;
         }
     }

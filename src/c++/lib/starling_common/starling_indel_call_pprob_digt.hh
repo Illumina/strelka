@@ -39,7 +39,7 @@
 void
 get_sum_path_pprob(
     const starling_base_deriv_options& dopt,
-    const IndelSampleData& isd,
+    const IndelSampleData& indelSampleData,
     const bool is_include_tier2,
     const bool is_use_alt_indel,
     ReadPathScores& total_pprob,
@@ -64,7 +64,7 @@ struct indel_digt_caller : private boost::noncopyable
         const double indel_error_prob,
         const double ref_error_prob,
         const indel_key& ik,
-        const IndelSampleData& isd,
+        const IndelSampleData& indelSampleData,
         const bool is_use_alt_indel,
         starling_diploid_indel& dindel) const;
 
@@ -94,7 +94,7 @@ struct indel_digt_caller : private boost::noncopyable
         const double ref_error_lnp,
         const double ref_real_lnp,
         const indel_key& ik,
-        const IndelSampleData& isd,
+        const IndelSampleData& indelSampleData,
         const double het_ratio,
         const bool is_include_tier2,
         const bool is_use_alt_indel,
@@ -110,7 +110,7 @@ struct indel_digt_caller : private boost::noncopyable
         const double indel_error_prob,
         const double ref_error_prob,
         const indel_key& ik,
-        const IndelSampleData& isd,
+        const IndelSampleData& indelSampleData,
         const bool is_het_bias,
         const double het_bias,
         const bool is_include_tier2,

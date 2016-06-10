@@ -242,16 +242,16 @@ _finalize()
 std::ostream&
 operator<<(
     std::ostream& os,
-    const IndelSampleData& isd)
+    const IndelSampleData& indelSampleData)
 {
-    report_indel_evidence_set(isd.tier1_map_read_ids,"tier1_map_read",os);
-    report_indel_evidence_set(isd.tier2_map_read_ids,"tier2_map_read",os);
-    report_indel_evidence_set(isd.submap_read_ids,"submap_read",os);
-    report_indel_evidence_set(isd.noise_read_ids,"noise_read",os);
+    report_indel_evidence_set(indelSampleData.tier1_map_read_ids,"tier1_map_read",os);
+    report_indel_evidence_set(indelSampleData.tier2_map_read_ids,"tier2_map_read",os);
+    report_indel_evidence_set(indelSampleData.submap_read_ids,"submap_read",os);
+    report_indel_evidence_set(indelSampleData.noise_read_ids,"noise_read",os);
 
     {
         unsigned n(0);
-        for (const auto& readLnp : isd.read_path_lnp)
+        for (const auto& readLnp : indelSampleData.read_path_lnp)
         {
             os << "read_path_lnp no: " << ++n
                << " id: " << readLnp.first
@@ -260,8 +260,8 @@ operator<<(
         }
     }
 
-    report_indel_evidence_set(isd.suboverlap_tier1_read_ids,"suboverlap_tier1_read",os);
-    report_indel_evidence_set(isd.suboverlap_tier2_read_ids,"suboverlap_tier2_read",os);
+    report_indel_evidence_set(indelSampleData.suboverlap_tier1_read_ids,"suboverlap_tier1_read",os);
+    report_indel_evidence_set(indelSampleData.suboverlap_tier2_read_ids,"suboverlap_tier2_read",os);
 
     return os;
 }

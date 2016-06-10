@@ -319,5 +319,5 @@ private:
 // Debugging dumps:
 std::ostream& operator<<(std::ostream& os, const IndelObservationData& id);
 std::ostream& operator<<(std::ostream& os, const ReadPathScores& rps);
-std::ostream& operator<<(std::ostream& os, const IndelSampleData& id);
+std::ostream& operator<<(std::ostream& os, const IndelSampleData& indelSampleData);
 std::ostream& operator<<(std::ostream& os, const IndelData& indelData);

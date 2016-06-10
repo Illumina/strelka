@@ -280,10 +280,10 @@ process_pos_indel_somatic(const pos_t pos)
 
         if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
 
-        const IndelSampleData& normal_isd(indelData.getSampleData(NORMAL));
-        const IndelSampleData& tumor_isd(indelData.getSampleData(TUMOR));
+        const IndelSampleData& normalIndelSampleData(indelData.getSampleData(NORMAL));
+        const IndelSampleData& tumorIndelSampleData(indelData.getSampleData(TUMOR));
 
-        if (normal_isd.read_path_lnp.empty() && tumor_isd.read_path_lnp.empty()) continue;
+        if (normalIndelSampleData.read_path_lnp.empty() && tumorIndelSampleData.read_path_lnp.empty()) continue;
 
         if (_opt.is_somatic_indel())
         {
@@ -318,10 +318,10 @@ process_pos_indel_somatic(const pos_t pos)
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);
-                    get_starling_indel_sample_report_info(_dopt,ik,normal_isd,normal_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_dopt,ik,normalIndelSampleData,normal_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.nisri[t]);
-                    get_starling_indel_sample_report_info(_dopt,ik,tumor_isd,tumor_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_dopt,ik,tumorIndelSampleData,tumor_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.tisri[t]);
                 }

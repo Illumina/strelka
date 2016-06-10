@@ -74,7 +74,7 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
                          const double ref_error_lnp,
                          const double ref_real_lnp,
                          const indel_key& ik,
-                         const IndelSampleData& isd,
+                         const IndelSampleData& indelSampleData,
                          const bool is_include_tier2,
                          const bool is_use_alt_indel,
                          double* const lhood)
@@ -89,7 +89,7 @@ get_indel_het_grid_lhood(const starling_base_options& opt,
                                                         sample_opt,
                                                         indel_error_lnp,indel_real_lnp,
                                                         ref_error_lnp,ref_real_lnp,
-                                                        ik,isd,het_ratio,
+                                                        ik,indelSampleData,het_ratio,
                                                         is_include_tier2,is_use_alt_indel,
                                                         lhood[lsize-(i+1)],
                                                         lhood[i]);
@@ -100,8 +100,8 @@ static
 bool
 is_multi_indel_allele(
     const starling_base_deriv_options& dopt,
-    const IndelSampleData& normal_isd,
-    const IndelSampleData& tumor_isd,
+    const IndelSampleData& normalIndelSampleData,
+    const IndelSampleData& tumorIndelSampleData,
     const bool is_include_tier2,
     bool& is_overlap)
 {
@@ -116,8 +116,8 @@ is_multi_indel_allele(
 
     // get total pprob:
     ReadPathScores total_pprob;
-    get_sum_path_pprob(dopt,normal_isd,is_include_tier2,is_use_alt_indel,total_pprob,true);
-    get_sum_path_pprob(dopt,tumor_isd,is_include_tier2,is_use_alt_indel,total_pprob,false);
+    get_sum_path_pprob(dopt,normalIndelSampleData,is_include_tier2,is_use_alt_indel,total_pprob,true);
+    get_sum_path_pprob(dopt,tumorIndelSampleData,is_include_tier2,is_use_alt_indel,total_pprob,false);
 
     // next determine the top two indel alleles:
     std::vector<std::pair<double,int> > scores;
@@ -204,8 +204,8 @@ get_somatic_indel(
 
     sindel.is_forced_output=indelData.is_forced_output;
 
-    const IndelSampleData& normal_isd(indelData.getSampleData(normalId));
-    const IndelSampleData& tumor_isd(indelData.getSampleData(tumorId));
+    const IndelSampleData& normalIndelSampleData(indelData.getSampleData(normalId));
+    const IndelSampleData& tumorIndelSampleData(indelData.getSampleData(tumorId));
 
     const double indel_error_lnp(std::log(indel_error_prob));
     const double indel_real_lnp(std::log(1.-indel_error_prob));
@@ -236,7 +236,7 @@ get_somatic_indel(
 #endif
         if (is_somatic_multi_indel_filter)
         {
-            const bool ismulti(is_multi_indel_allele(dopt,normal_isd,tumor_isd,is_include_tier2,tier_rs[i].is_overlap));
+            const bool ismulti(is_multi_indel_allele(dopt,normalIndelSampleData,tumorIndelSampleData,is_include_tier2,tier_rs[i].is_overlap));
             if (ismulti)
             {
                 tier_rs[i].qphred=0;
@@ -248,13 +248,13 @@ get_somatic_indel(
         }
 
         indel_digt_caller::get_indel_digt_lhood(opt,dopt,normal_opt,
-                                                indel_error_prob,ref_error_prob,ik,normal_isd,
+                                                indel_error_prob,ref_error_prob,ik,normalIndelSampleData,
                                                 is_normal_het_bias,normal_het_bias,
                                                 is_include_tier2,is_use_alt_indel,
                                                 normal_lhood
                                                );
         indel_digt_caller::get_indel_digt_lhood(opt,dopt,tumor_opt,
-                                                indel_error_prob,ref_error_prob,ik,tumor_isd,
+                                                indel_error_prob,ref_error_prob,ik,tumorIndelSampleData,
                                                 is_tumor_het_bias,tumor_het_bias,
                                                 is_include_tier2,is_use_alt_indel,
                                                 tumor_lhood);
@@ -262,13 +262,13 @@ get_somatic_indel(
         get_indel_het_grid_lhood(opt,dopt,normal_opt,
                                  indel_error_lnp,indel_real_lnp,
                                  ref_error_lnp,ref_real_lnp,
-                                 ik,normal_isd,
+                                 ik,normalIndelSampleData,
                                  is_include_tier2,is_use_alt_indel,
                                  normal_lhood+SOMATIC_DIGT::SIZE);
         get_indel_het_grid_lhood(opt,dopt,tumor_opt,
                                  indel_error_lnp,indel_real_lnp,
                                  ref_error_lnp,ref_real_lnp,
-                                 ik,tumor_isd,
+                                 ik,tumorIndelSampleData,
                                  is_include_tier2,is_use_alt_indel,
                                  tumor_lhood+SOMATIC_DIGT::SIZE);
 

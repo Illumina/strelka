@@ -227,8 +227,8 @@ getOrthogonalHaplotypeSupportCounts(
         std::map<unsigned,unsigned> countReadIds;
         for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; nonrefHapIndex++)
         {
-            const IndelSampleData& isd(hg.data(nonrefHapIndex).getSampleData(sampleId));
-            for (const auto& score : isd.read_path_lnp)
+            const IndelSampleData& indelSampleData(hg.data(nonrefHapIndex).getSampleData(sampleId));
+            for (const auto& score : indelSampleData.read_path_lnp)
             {
                 if (is_tier1_only && (! score.second.is_tier1_read)) continue;
 
@@ -268,11 +268,11 @@ getOrthogonalHaplotypeSupportCounts(
         std::fill(lhood.begin(),lhood.end(),log0);
         for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; nonrefHapIndex++)
         {
-            const IndelSampleData& isd(hg.data(nonrefHapIndex).getSampleData(sampleId));
+            const IndelSampleData& indelSampleData(hg.data(nonrefHapIndex).getSampleData(sampleId));
 
-            const auto iditer(isd.read_path_lnp.find(readId));
+            const auto iditer(indelSampleData.read_path_lnp.find(readId));
 
-            if (iditer==isd.read_path_lnp.end())
+            if (iditer==indelSampleData.read_path_lnp.end())
             {
                 // note we've set readIds to intersection now so this should never happen:
                 continue;

@@ -530,8 +530,8 @@ process_pos_indel_single_sample_digt(
         const IndelData& indelData(getIndelData(it));
         const bool isForcedOutput(indelData.is_forced_output);
 
-        const IndelSampleData& isd(indelData.getSampleData(sampleId));
-        const bool isZeroCoverage(isd.read_path_lnp.empty());
+        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
+        const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
 
         if (! isForcedOutput)
         {
@@ -584,7 +584,7 @@ process_pos_indel_single_sample_digt(
                 _opt,_dopt,
                 sif.sample_opt,
                 indelData.errorRates.scaledRefToIndelErrorProb,indelData.errorRates.scaledIndelToRefErrorProb,
-                ik,isd,is_use_alt_indel,dindel);
+                ik,indelSampleData,is_use_alt_indel,dindel);
 
             bool is_indel(false);
             if ((dindel.is_indel) || (dindel.is_forced_output))
@@ -594,7 +594,7 @@ process_pos_indel_single_sample_digt(
                 // sample-specific info: (division doesn't really matter
                 // in single-sample case)
                 starling_indel_sample_report_info isri;
-                get_starling_indel_sample_report_info(_dopt,ik,isd,sif.bc_buff,
+                get_starling_indel_sample_report_info(_dopt,ik,indelSampleData,sif.bc_buff,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
                 if (_opt.gvcf.is_gvcf_output())
@@ -619,7 +619,7 @@ process_pos_indel_single_sample_digt(
             {
                 report_os << "INDEL_EVIDENCE " << ik;
 
-                for (const auto& val : isd.read_path_lnp)
+                for (const auto& val : indelSampleData.read_path_lnp)
                 {
                     const align_id_t read_id(val.first);
                     const ReadPathScores& lnp(val.second);
@@ -661,8 +661,8 @@ process_pos_indel_single_sample_continuous(
         const IndelData& indelData(getIndelData(it));
         const bool isForcedOutput(indelData.is_forced_output);
 
-        const IndelSampleData& isd(indelData.getSampleData(sampleId));
-        const bool isZeroCoverage(isd.read_path_lnp.empty());
+        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
+        const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
 
         if (! isForcedOutput)
         {
@@ -681,7 +681,7 @@ process_pos_indel_single_sample_continuous(
             info.reset(new GermlineContinuousIndelCallInfo(pos));
 
         starling_indel_sample_report_info isri;
-        get_starling_indel_sample_report_info(_dopt,ik,isd,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
+        get_starling_indel_sample_report_info(_dopt,ik,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
         starling_continuous_variant_caller::add_indel_call(_opt, ik, indelData, iri, isri, *info);
 
     }

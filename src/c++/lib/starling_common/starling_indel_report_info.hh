@@ -129,7 +129,7 @@ void
 get_starling_indel_sample_report_info(
     const starling_base_deriv_options& dopt,
     const indel_key& ik,
-    const IndelSampleData& isd,
+    const IndelSampleData& indelSampleData,
     const pos_basecall_buffer& bc_buff,
     const bool is_include_tier2,
     const bool is_use_alt_indel,
