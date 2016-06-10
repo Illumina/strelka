@@ -156,8 +156,8 @@ writeSomaticIndelVcfGrid(
     os << sep << ".";
 
     // REF/ALT
-    os << sep << siInfo.iri.vcf_ref_seq
-       << sep << siInfo.iri.vcf_indel_seq;
+    os << sep << siInfo.indelReportInfo.vcf_ref_seq
+       << sep << siInfo.indelReportInfo.vcf_indel_seq;
 
     //QUAL:
     os << sep << ".";
@@ -196,13 +196,13 @@ writeSomaticIndelVcfGrid(
            << ";MQ0=" << mapqTracker.zeroCount
            ;
     }
-    if (siInfo.iri.is_repeat_unit())
+    if (siInfo.indelReportInfo.is_repeat_unit())
     {
-        os << ";RU=" << siInfo.iri.repeat_unit
-           << ";RC=" << siInfo.iri.ref_repeat_count
-           << ";IC=" << siInfo.iri.indel_repeat_count;
+        os << ";RU=" << siInfo.indelReportInfo.repeat_unit
+           << ";RC=" << siInfo.indelReportInfo.ref_repeat_count
+           << ";IC=" << siInfo.indelReportInfo.indel_repeat_count;
     }
-    os << ";IHP=" << siInfo.iri.ihpol;
+    os << ";IHP=" << siInfo.indelReportInfo.ihpol;
 
     if (opt.isReportEVSFeatures)
     {
@@ -225,8 +225,8 @@ writeSomaticIndelVcfGrid(
         }
     }
 
-    if ((siInfo.iri.it == INDEL::BP_LEFT) ||
-        (siInfo.iri.it == INDEL::BP_RIGHT))
+    if ((siInfo.indelReportInfo.it == INDEL::BP_LEFT) ||
+        (siInfo.indelReportInfo.it == INDEL::BP_RIGHT))
     {
         os << ";SVTYPE=BND";
     }

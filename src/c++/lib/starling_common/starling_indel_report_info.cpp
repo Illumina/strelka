@@ -100,45 +100,45 @@ void
 set_repeat_info(
     const IndelKey& indelKey,
     const reference_contig_segment& ref,
-    starling_indel_report_info& iri)
+    starling_indel_report_info& indelReportInfo)
 {
-    if (! ((iri.it == INDEL::INSERT) ||
-           (iri.it == INDEL::DELETE) ||
-           (iri.it == INDEL::SWAP))) return;
+    if (! ((indelReportInfo.it == INDEL::INSERT) ||
+           (indelReportInfo.it == INDEL::DELETE) ||
+           (indelReportInfo.it == INDEL::SWAP))) return;
 
     unsigned insert_repeat_count(0);
     unsigned delete_repeat_count(0);
 
-    if       (iri.it == INDEL::INSERT)
+    if       (indelReportInfo.it == INDEL::INSERT)
     {
-        get_vcf_seq_repeat_unit(iri.vcf_indel_seq,iri.repeat_unit,insert_repeat_count);
+        get_vcf_seq_repeat_unit(indelReportInfo.vcf_indel_seq,indelReportInfo.repeat_unit,insert_repeat_count);
     }
-    else if (iri.it == INDEL::DELETE)
+    else if (indelReportInfo.it == INDEL::DELETE)
     {
-        get_vcf_seq_repeat_unit(iri.vcf_ref_seq,iri.repeat_unit,delete_repeat_count);
+        get_vcf_seq_repeat_unit(indelReportInfo.vcf_ref_seq,indelReportInfo.repeat_unit,delete_repeat_count);
     }
-    else if (iri.it == INDEL::SWAP)
+    else if (indelReportInfo.it == INDEL::SWAP)
     {
         std::string insert_ru;
         std::string delete_ru;
-        get_vcf_seq_repeat_unit(iri.vcf_indel_seq,insert_ru,insert_repeat_count);
-        get_vcf_seq_repeat_unit(iri.vcf_ref_seq,delete_ru,delete_repeat_count);
+        get_vcf_seq_repeat_unit(indelReportInfo.vcf_indel_seq,insert_ru,insert_repeat_count);
+        get_vcf_seq_repeat_unit(indelReportInfo.vcf_ref_seq,delete_ru,delete_repeat_count);
         if ((insert_ru != delete_ru) || insert_ru.empty()) return;
 
-        iri.repeat_unit=insert_ru;
+        indelReportInfo.repeat_unit=insert_ru;
     }
     else
     {
         assert(false && "Unexpected indel type");
     }
-    iri.repeat_unit_length=iri.repeat_unit.size();
+    indelReportInfo.repeat_unit_length=indelReportInfo.repeat_unit.size();
 
     // count repeats in contextual sequence:
     unsigned indel_context_repeat_count(0);
     {
         const pos_t indel_begin_pos(indelKey.pos);
         const pos_t indel_end_pos(indelKey.right_pos());
-        const int repeat_unit_size(static_cast<int>(iri.repeat_unit.size()));
+        const int repeat_unit_size(static_cast<int>(indelReportInfo.repeat_unit.size()));
 
         // count upstream repeats:
         for (pos_t i(indel_begin_pos-repeat_unit_size); i>=0; i-=repeat_unit_size)
@@ -146,7 +146,7 @@ set_repeat_info(
             bool is_repeat(true);
             for (int j(0); j<repeat_unit_size; ++j)
             {
-                if (ref.get_base(i+j) != iri.repeat_unit[j])
+                if (ref.get_base(i+j) != indelReportInfo.repeat_unit[j])
                 {
                     is_repeat = false;
                     break;
@@ -163,7 +163,7 @@ set_repeat_info(
             bool is_repeat(true);
             for (int j(0); j<repeat_unit_size; ++j)
             {
-                if (ref.get_base(i+j) != iri.repeat_unit[j])
+                if (ref.get_base(i+j) != indelReportInfo.repeat_unit[j])
                 {
                     is_repeat = false;
                     break;
@@ -174,8 +174,8 @@ set_repeat_info(
         }
     }
 
-    iri.ref_repeat_count = indel_context_repeat_count+delete_repeat_count;
-    iri.indel_repeat_count = indel_context_repeat_count+insert_repeat_count;
+    indelReportInfo.ref_repeat_count = indel_context_repeat_count+delete_repeat_count;
+    indelReportInfo.indel_repeat_count = indel_context_repeat_count+insert_repeat_count;
 }
 
 
@@ -185,26 +185,26 @@ get_starling_indel_report_info(
     const IndelKey& indelKey,
     const IndelData& indelData,
     const reference_contig_segment& ref,
-    starling_indel_report_info& iri)
+    starling_indel_report_info& indelReportInfo)
 {
     // indel summary info
-    get_vcf_summary_strings(indelKey,indelData,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
+    get_vcf_summary_strings(indelKey,indelData,ref,indelReportInfo.vcf_indel_seq,indelReportInfo.vcf_ref_seq);
 
-    iri.it=indelKey.type;
+    indelReportInfo.it=indelKey.type;
 
     const pos_t indel_begin_pos(indelKey.pos);
     const pos_t indel_end_pos(indelKey.right_pos());
 
     // repeat analysis:
-    set_repeat_info(indelKey,ref,iri);
+    set_repeat_info(indelKey,ref,indelReportInfo);
 
     // interrupted hpol compuation:
-    iri.ihpol=get_interrupted_hpol_size(indel_begin_pos-1,ref);
-    iri.ihpol=std::max(iri.ihpol,get_interrupted_hpol_size(indel_begin_pos,ref));
+    indelReportInfo.ihpol=get_interrupted_hpol_size(indel_begin_pos-1,ref);
+    indelReportInfo.ihpol=std::max(indelReportInfo.ihpol,get_interrupted_hpol_size(indel_begin_pos,ref));
     if (indel_begin_pos != indel_end_pos)
     {
-        iri.ihpol=std::max(iri.ihpol,get_interrupted_hpol_size(indel_end_pos-1,ref));
-        iri.ihpol=std::max(iri.ihpol,get_interrupted_hpol_size(indel_end_pos,ref));
+        indelReportInfo.ihpol=std::max(indelReportInfo.ihpol,get_interrupted_hpol_size(indel_end_pos-1,ref));
+        indelReportInfo.ihpol=std::max(indelReportInfo.ihpol,get_interrupted_hpol_size(indel_end_pos,ref));
     }
 }
 

@@ -120,7 +120,7 @@ get_starling_indel_report_info(
     const IndelKey& indelKey,
     const IndelData& indelData,
     const reference_contig_segment& ref,
-    starling_indel_report_info& iri);
+    starling_indel_report_info& indelReportInfo);
 
 
 struct pos_basecall_buffer;

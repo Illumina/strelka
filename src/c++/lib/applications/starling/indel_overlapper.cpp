@@ -160,7 +160,7 @@ is_simple_indel_overlap(
         const unsigned trail_len(indel_end_pos-ic._indelKey.right_pos());
         ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
 
-        return leading_seq + ic._iri.vcf_indel_seq + trailing_seq;
+        return leading_seq + ic._indelReportInfo.vcf_indel_seq + trailing_seq;
     };
     const std::string alt0 = get_overlap_alt(*indel_buffer[0]);
     const std::string alt1 = get_overlap_alt(*indel_buffer[1]);

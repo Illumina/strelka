@@ -120,9 +120,9 @@ computeEmpiricalScoringFeatures(
 
     features.set(GERMLINE_INDEL_SCORING_FEATURES::QUAL, (_dindel.indel_qphred * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX, (gqx * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::REFREP1, (_iri.ref_repeat_count));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (_iri.indel_repeat_count));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (_iri.repeat_unit.length()));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::REFREP1, (_indelReportInfo.ref_repeat_count));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (_indelReportInfo.indel_repeat_count));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (_indelReportInfo.repeat_unit.length()));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_isri.n_q30_ref_reads * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_isri.n_q30_indel_reads * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_isri.n_q30_alt_reads * chromDepthFactor));
@@ -241,7 +241,7 @@ add_overlap(
     // make extended vcf ref seq:
     std::string tmp;
     ref.get_substring(indel_begin_pos,(indel_end_pos-indel_begin_pos),tmp);
-    call._iri.vcf_ref_seq = tmp;
+    call._indelReportInfo.vcf_ref_seq = tmp;
 
     ploidy.resize(indel_end_pos-pos,0);
 
@@ -253,7 +253,7 @@ add_overlap(
         const unsigned trail_len(indel_end_pos-this_call._indelKey.right_pos());
         ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
 
-        this_call._iri.vcf_indel_seq = leading_seq + this_call._iri.vcf_indel_seq + trailing_seq;
+        this_call._indelReportInfo.vcf_indel_seq = leading_seq + this_call._indelReportInfo.vcf_indel_seq + trailing_seq;
 
         this_call.set_hap_cigar(leading_seq.size()+1,
                                 trailing_seq.size());
@@ -468,7 +468,7 @@ operator<<(
 
     os << "IndelKey: " << shi._indelKey << "\n";
     //os << "indel_data: " << shi._id << "\n";
-    os << "indel_report_info: " << shi._iri << "\n";
+    os << "indel_report_info: " << shi._indelReportInfo << "\n";
     os << "indel_sample_info: " << shi._isri << "\n";
     os << "cigar: " << shi.cigar << "\n";
 

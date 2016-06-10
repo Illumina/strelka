@@ -291,11 +291,11 @@ process_pos_indel_somatic(const pos_t pos)
             // local small repeat info is available to the indel
             // caller
 
-            starling_indel_report_info iri;
-            get_starling_indel_report_info(indelKey,indelData,_ref,iri);
+            starling_indel_report_info indelReportInfo;
+            get_starling_indel_report_info(indelKey,indelData,_ref,indelReportInfo);
 
             // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
-            if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
+            if (indelReportInfo.vcf_indel_seq == indelReportInfo.vcf_ref_seq) continue;
 
             somatic_indel_call sindel;
             static const bool is_use_alt_indel(true);
@@ -313,7 +313,7 @@ process_pos_indel_somatic(const pos_t pos)
                 // get sample specific info:
                 SomaticIndelVcfInfo siInfo;
                 siInfo.sindel = sindel;
-                siInfo.iri = iri;
+                siInfo.indelReportInfo = indelReportInfo;
 
                 for (unsigned t(0); t<2; ++t)
                 {

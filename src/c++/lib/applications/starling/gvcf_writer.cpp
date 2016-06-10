@@ -713,14 +713,14 @@ write_indel_record(
     os << _chrom << '\t'   // CHROM
        << ii.pos << '\t'   // POS
        << ".\t"            // ID
-       << call._iri.vcf_ref_seq << '\t'; // REF
+       << call._indelReportInfo.vcf_ref_seq << '\t'; // REF
 
     // ALT
 
     for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
         if (i > 0) os << ',';
-        os << ii._calls[i]._iri.vcf_indel_seq;
+        os << ii._calls[i]._indelReportInfo.vcf_indel_seq;
     }
     os << '\t';
 
@@ -741,7 +741,7 @@ write_indel_record(
     os << "RU=";
     for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
-        const auto& iri(ii._calls[i]._iri);
+        const auto& iri(ii._calls[i]._indelReportInfo);
         if (i > 0) os << ',';
         if (iri.is_repeat_unit() && iri.repeat_unit.size() <= 20)
         {
@@ -756,7 +756,7 @@ write_indel_record(
     os << "REFREP=";
     for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
-        const auto& iri(ii._calls[i]._iri);
+        const auto& iri(ii._calls[i]._indelReportInfo);
         if (i > 0) os << ',';
 
         if (iri.is_repeat_unit())
@@ -772,7 +772,7 @@ write_indel_record(
     os << "IDREP=";
     for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
-        const auto& iri(ii._calls[i]._iri);
+        const auto& iri(ii._calls[i]._indelReportInfo);
 
         if (i > 0) os << ',';
 
@@ -921,10 +921,10 @@ write_indel_record(
         os << _chrom << '\t'   // CHROM
            << ii.pos << '\t'   // POS
            << ".\t"            // ID
-           << call._iri.vcf_ref_seq << '\t'; // REF
+           << call._indelReportInfo.vcf_ref_seq << '\t'; // REF
 
         // ALT
-        os << call._iri.vcf_indel_seq;
+        os << call._indelReportInfo.vcf_indel_seq;
         os << '\t';
 
         os << call.gq << '\t'; //QUAL
@@ -938,9 +938,9 @@ write_indel_record(
         os << call.cigar;
         os << ';';
         os << "RU=";
-        if (call._iri.is_repeat_unit() && call._iri.repeat_unit.size() <= 20)
+        if (call._indelReportInfo.is_repeat_unit() && call._indelReportInfo.repeat_unit.size() <= 20)
         {
-            os << call._iri.repeat_unit;
+            os << call._indelReportInfo.repeat_unit;
         }
         else
         {
@@ -948,16 +948,16 @@ write_indel_record(
         }
         os << ';';
         os << "REFREP=";
-        if (call._iri.is_repeat_unit())
+        if (call._indelReportInfo.is_repeat_unit())
         {
-            os << call._iri.ref_repeat_count;
+            os << call._indelReportInfo.ref_repeat_count;
         }
 
         os << ';';
         os << "IDREP=";
-        if (call._iri.is_repeat_unit())
+        if (call._indelReportInfo.is_repeat_unit())
         {
-            os << call._iri.indel_repeat_count;
+            os << call._indelReportInfo.indel_repeat_count;
         }
 
 

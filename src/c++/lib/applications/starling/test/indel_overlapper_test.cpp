@@ -67,14 +67,14 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     IndelKey indelKey;
     const IndelData indelData(1,indelKey);
     const GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
-    const starling_indel_report_info iri;
+    const starling_indel_report_info indelReportInfo;
     const starling_indel_sample_report_info isri;
 
     indelKey.pos=6;
     indelKey.type=INDEL::DELETE;
     indelKey.length=2;
 
-    std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(indelKey,indelData,dindel,iri,isri));
+    std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(indelKey,indelData,dindel,indelReportInfo,isri));
     overlap.process(std::move(ii));
 
     overlap.flush();
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
     const IndelData indelData(1,ik);
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
     dindel.is_forced_output = true;
-    const starling_indel_report_info iri;
+    const starling_indel_report_info indelReportInfo;
     const starling_indel_sample_report_info isri;
 
     const unsigned keyCount(sizeof(iks)/sizeof(IndelKey));
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
         ik=iks[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(ik,indelData,dindel,iri,isri));
+        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(ik,indelData,dindel,indelReportInfo,isri));
         overlap.process(std::move(ii));
     }
 
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
     const IndelData indelData(1,indelKey);
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
     dindel.is_forced_output = true;
-    const starling_indel_report_info iri;
+    const starling_indel_report_info indelReportInfo;
     const starling_indel_sample_report_info isri;
 
     const unsigned keyCount(sizeof(indelKeys)/sizeof(IndelKey));
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
         indelKey=indelKeys[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(indelKey,indelData,dindel,iri,isri));
+        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(indelKey,indelData,dindel,indelReportInfo,isri));
         overlap.process(std::move(ii));
     }
 

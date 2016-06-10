@@ -205,9 +205,9 @@ isCandidateIndelImplTest(
     if (! indelData.errorRates.isInit)
     {
         // get standard rates:
-        starling_indel_report_info iri;
-        get_starling_indel_report_info(indelKey, indelData, _ref, iri);
-        _dopt.getIndelErrorModel().getIndelErrorRate(iri,
+        starling_indel_report_info indelReportInfo;
+        get_starling_indel_report_info(indelKey, indelData, _ref, indelReportInfo);
+        _dopt.getIndelErrorModel().getIndelErrorRate(indelReportInfo,
                                                      indelData.errorRates.refToIndelErrorProb,
                                                      indelData.errorRates.indelToRefErrorProb);
 

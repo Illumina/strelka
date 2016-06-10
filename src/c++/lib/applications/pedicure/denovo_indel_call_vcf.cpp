@@ -92,7 +92,7 @@ denovo_indel_call_vcf(
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const denovo_indel_call& dinc,
-    const starling_indel_report_info& iri,
+    const starling_indel_report_info& indelReportInfo,
     const std::vector<isriTiers_t>& isri,
     std::ostream& os)
 {
@@ -133,12 +133,12 @@ denovo_indel_call_vcf(
 //            smod.set_filter(PEDICURE_VCF_FILTERS::QDI);
         }
 
-        if (iri.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
+        if (indelReportInfo.ref_repeat_count > opt.dfilter.indelMaxRefRepeat)
         {
             smod.set_filter(PEDICURE_VCF_FILTERS::Repeat);
         }
 
-        if (iri.ihpol > opt.dfilter.indelMaxIntHpolLength)
+        if (indelReportInfo.ihpol > opt.dfilter.indelMaxIntHpolLength)
         {
             smod.set_filter(PEDICURE_VCF_FILTERS::iHpol);
         }
@@ -171,8 +171,8 @@ denovo_indel_call_vcf(
     static const char sep('\t');
 
     // REF/ALT
-    os << sep << iri.vcf_ref_seq
-       << sep << iri.vcf_indel_seq;
+    os << sep << indelReportInfo.vcf_ref_seq
+       << sep << indelReportInfo.vcf_indel_seq;
 
     //QUAL:
     os << sep << ".";
@@ -194,13 +194,13 @@ denovo_indel_call_vcf(
 //       << ";TQDI=" << (dinc.dindel_tier+1)
        ;
 
-    if (iri.is_repeat_unit())
+    if (indelReportInfo.is_repeat_unit())
     {
-        os << ";RU=" << iri.repeat_unit
-           << ";RC=" << iri.ref_repeat_count
-           << ";IC=" << iri.indel_repeat_count;
+        os << ";RU=" << indelReportInfo.repeat_unit
+           << ";RC=" << indelReportInfo.ref_repeat_count
+           << ";IC=" << indelReportInfo.indel_repeat_count;
     }
-    os << ";IHP=" << iri.ihpol;
+    os << ";IHP=" << indelReportInfo.ihpol;
 //    if ((iri.it == INDEL::BP_LEFT) ||
 //        (iri.it == INDEL::BP_RIGHT))
 //    {

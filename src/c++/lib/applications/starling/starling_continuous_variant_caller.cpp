@@ -139,7 +139,7 @@ void starling_continuous_variant_caller::add_indel_call(
     const starling_base_options& opt,
     const IndelKey& indelKey,
     const IndelData& indelData,
-    const starling_indel_report_info& iri,
+    const starling_indel_report_info& indelReportInfo,
     const starling_indel_sample_report_info& isri,
     GermlineContinuousIndelCallInfo& info)
 {
@@ -149,7 +149,7 @@ void starling_continuous_variant_caller::add_indel_call(
     {
         info.calls.emplace_back(
             isri.total_q30_reads(), isri.n_q30_indel_reads,
-            indelKey, indelData, iri, isri);
+            indelKey, indelData, indelReportInfo, isri);
         GermlineContinuousIndelSimpleGenotypeInfo& call = info.calls.back();
         call.gqx = call.gq = poisson_qscore(isri.n_q30_indel_reads, isri.total_q30_reads(), (unsigned)opt.min_qscore, 40);
     }

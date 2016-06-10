@@ -300,9 +300,9 @@ getOrthogonalHaplotypeSupportCounts(
 static
 INDEL_SIGNAL_TYPE::index_t
 getIndelType(
-    const starling_indel_report_info& iri)
+    const starling_indel_report_info& indelReportInfo)
 {
-    int rudiff(static_cast<int>(iri.ref_repeat_count)-static_cast<int>(iri.indel_repeat_count));
+    int rudiff(static_cast<int>(indelReportInfo.ref_repeat_count)-static_cast<int>(indelReportInfo.indel_repeat_count));
     rudiff = std::min(3,std::max(-3,rudiff));
 
     using namespace INDEL_SIGNAL_TYPE;
@@ -560,17 +560,17 @@ process_pos_error_counts(
             const IndelKey& indelKey(hg.key(nonrefHapIndex));
             const IndelData& indelData(hg.data(nonrefHapIndex));
 
-            starling_indel_report_info iri;
-            get_starling_indel_report_info(indelKey, indelData,_ref,iri);
+            starling_indel_report_info indelReportInfo;
+            get_starling_indel_report_info(indelKey, indelData,_ref,indelReportInfo);
 
             IndelErrorContext context;
-            if ((iri.repeat_unit_length==1) && (iri.ref_repeat_count>1))
+            if ((indelReportInfo.repeat_unit_length==1) && (indelReportInfo.ref_repeat_count>1))
             {
                 // guard against the occasional non-normalized indel:
                 const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
-                if (leftHpolSize == iri.ref_repeat_count)
+                if (leftHpolSize == indelReportInfo.ref_repeat_count)
                 {
-                    context.repeatCount = std::min(maxHpolLength, iri.ref_repeat_count);
+                    context.repeatCount = std::min(maxHpolLength, indelReportInfo.ref_repeat_count);
                 }
             }
 
@@ -579,7 +579,7 @@ process_pos_error_counts(
 
             IndelErrorContextObservation obs;
 
-            const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
+            const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(indelReportInfo));
             obs.signalCounts[sigIndex] = support[nonrefHapIndex];
             obs.refCount = support[nonrefHapCount];
             obs.assignKnownStatus(overlappingRecords);
@@ -594,7 +594,7 @@ process_pos_error_counts(
                 std::ostream& obs_os(*_streams.observation_bed_osptr());
                 obs_os << _opt.bam_seq_name << "\t";
                 obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.length << "\t" << INDEL::get_index_label(indelKey.type) << "\t";
-                obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
+                obs_os << indelReportInfo.repeat_unit << "\t" << indelReportInfo.ref_repeat_count << "\t";
                 obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
                 obs_os << context.repeatCount << "\t" << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
                 obs_os << indelKey.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";

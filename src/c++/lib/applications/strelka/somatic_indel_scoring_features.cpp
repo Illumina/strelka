@@ -194,11 +194,11 @@ calculateScoringFeatures(
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_RR, fabs(siInfo.tisri[0].readpos_ranksum.get_u_stat()));
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::ABS_T_SOR, fabs(calculateSOR(siInfo.tisri[0])));
 
-    if (siInfo.iri.is_repeat_unit())
+    if (siInfo.indelReportInfo.is_repeat_unit())
     {
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IC, siInfo.iri.indel_repeat_count);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RC, siInfo.iri.ref_repeat_count);
-        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RU_LEN, siInfo.iri.repeat_unit_length);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IC, siInfo.indelReportInfo.indel_repeat_count);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RC, siInfo.indelReportInfo.ref_repeat_count);
+        smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RU_LEN, siInfo.indelReportInfo.repeat_unit_length);
     }
     else
     {
@@ -206,7 +206,7 @@ calculateScoringFeatures(
         smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RC, 0);
         smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::RU_LEN, 0);
     }
-    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IHP, siInfo.iri.ihpol);
+    smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::IHP, siInfo.indelReportInfo.ihpol);
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::TNR, calculateTumorNoiseRate(siInfo.tisri[0]));
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::AFR, calculateAlleleFrequencyRate(siInfo.nisri[0], siInfo.tisri[0]));
     smod.features.set(SOMATIC_INDEL_SCORING_FEATURES::LOR, calculateLogOddsRatio(siInfo.nisri[0], siInfo.tisri[0]));

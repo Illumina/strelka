@@ -341,7 +341,7 @@ score_indel_instance(
     if (is_logistic_model())   //case we are using a logistic regression mode
     {
         CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
-        switch (ii.first()._iri.it)
+        switch (ii.first()._indelReportInfo.it)
         {
         case INDEL::DELETE:
         {
