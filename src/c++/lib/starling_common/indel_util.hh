@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -31,8 +30,9 @@
 
 /// do these two indels overlap?:
 bool
-is_indel_conflict(const IndelKey& ik1,
-                  const IndelKey& ik2);
+is_indel_conflict(
+    const IndelKey& indelKey1,
+    const IndelKey& indelKey2);
 
 
 /// check if a range (representing an alignment, etc) intersects the breakends of a
@@ -42,13 +42,15 @@ is_indel_conflict(const IndelKey& ik1,
 ///       (2) this is breakpoint intersection, so for example a spanning deletion will not be included
 ///
 bool
-is_range_intersect_indel_breakpoints(const known_pos_range read_pr,
-                                     const IndelKey& ik);
+is_range_intersect_indel_breakpoints(
+    const known_pos_range read_pr,
+    const IndelKey& indelKey);
 
 
 /// check if a range (representing an alignment, etc) intersects or is
 /// adjacent to the breakends of a candidate indel
 ///
 bool
-is_range_adjacent_indel_breakpoints(const known_pos_range read_pr,
-                                    const IndelKey& ik);
+is_range_adjacent_indel_breakpoints(
+    const known_pos_range read_pr,
+    const IndelKey& indelKey);

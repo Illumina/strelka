@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -28,15 +27,15 @@
 
 
 bool
-is_indel_conflict(const IndelKey& ik1,
-                  const IndelKey& ik2)
+is_indel_conflict(
+    const IndelKey& indelKey1,
+    const IndelKey& indelKey2)
 {
-
     // add one to the end_pos of all indels to prevent immediately
     // adjacent indels in the final alignments:
-    pos_range pr1(ik1.open_pos_range());
+    pos_range pr1(indelKey1.open_pos_range());
     pr1.end_pos++;
-    pos_range pr2(ik2.open_pos_range());
+    pos_range pr2(indelKey2.open_pos_range());
     pr2.end_pos++;
 
     return pr1.is_range_intersect(pr2);
@@ -45,25 +44,25 @@ is_indel_conflict(const IndelKey& ik1,
 
 
 bool
-is_range_intersect_indel_breakpoints(const known_pos_range read_pr,
-                                     const IndelKey& ik)
+is_range_intersect_indel_breakpoints(
+    const known_pos_range read_pr,
+    const IndelKey& indelKey)
 {
-
-    if (read_pr.is_range_intersect(pos_range(ik.pos,ik.pos))) return true;
-    const pos_t rpos(ik.right_pos());
-    if (ik.pos==rpos) return false;
+    if (read_pr.is_range_intersect(pos_range(indelKey.pos,indelKey.pos))) return true;
+    const pos_t rpos(indelKey.right_pos());
+    if (indelKey.pos==rpos) return false;
     return (read_pr.is_range_intersect(pos_range(rpos,rpos)));
 }
 
 
 
 bool
-is_range_adjacent_indel_breakpoints(const known_pos_range read_pr,
-                                    const IndelKey& ik)
+is_range_adjacent_indel_breakpoints(
+    const known_pos_range read_pr,
+    const IndelKey& indelKey)
 {
-
-    if (read_pr.is_range_intersect(pos_range(ik.pos-1,ik.pos+1))) return true;
-    const pos_t rpos(ik.right_pos());
-    if (ik.pos==rpos) return false;
+    if (read_pr.is_range_intersect(pos_range(indelKey.pos-1,indelKey.pos+1))) return true;
+    const pos_t rpos(indelKey.right_pos());
+    if (indelKey.pos==rpos) return false;
     return (read_pr.is_range_intersect(pos_range(rpos-1,rpos+1)));
 }

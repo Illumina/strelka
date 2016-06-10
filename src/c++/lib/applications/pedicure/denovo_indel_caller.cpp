@@ -89,7 +89,7 @@ get_indel_het_grid_lhood(
     const double indel_real_lnp,
     const double ref_error_lnp,
     const double ref_real_lnp,
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const bool is_include_tier2,
     const bool is_use_alt_indel,
@@ -111,7 +111,7 @@ get_indel_het_grid_lhood(
             sample_opt,
             indel_error_lnp,indel_real_lnp,
             ref_error_lnp,ref_real_lnp,
-            ik,indelSampleData,het_ratio,
+            indelKey,indelSampleData,het_ratio,
             is_include_tier2,is_use_alt_indel,
             lhood[ratioIndex],
             lhood[ratioCount-(ratioIndex+1)]);
@@ -456,7 +456,7 @@ get_denovo_indel_call(
     const std::vector<const starling_sample_options*>& sampleOptions,
     const double indel_error_prob,
     const double ref_error_prob,
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelData& indelData,
     const bool is_use_alt_indel,
     denovo_indel_call& dinc)
@@ -525,7 +525,7 @@ get_denovo_indel_call(
 
             indel_digt_caller::get_indel_digt_lhood(
                 opt,dopt,sampleOpt,
-                indel_error_prob,ref_error_prob,ik,
+                indel_error_prob,ref_error_prob,indelKey,
                 indelSampleData,
                 is_het_bias, het_bias,
                 is_include_tier2, is_use_alt_indel,
@@ -535,7 +535,7 @@ get_denovo_indel_call(
                 opt,dopt,sampleOpt,
                 indel_error_lnp,indel_real_lnp,
                 ref_error_lnp,ref_real_lnp,
-                ik,indelSampleData,
+                indelKey,indelSampleData,
                 is_include_tier2,is_use_alt_indel,
                 sampleLhood[sampleIndex].data()+STAR_DIINDEL::SIZE);
 

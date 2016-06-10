@@ -51,20 +51,19 @@ BOOST_AUTO_TEST_CASE( test_indel_intersect_deletion )
 
 static
 bool
-test_single_intersect_case(const IndelKey& ik,
-                           const bool expect)
+test_single_intersect_case(
+    const IndelKey& indelKey,
+    const bool expect)
 {
-
     // test case represents a 10-base alignment from 10-20 (1-indexed range)
     static const known_pos_range tpr(9,20);
 
-    return (expect==is_range_intersect_indel_breakpoints(tpr,ik));
+    return (expect==is_range_intersect_indel_breakpoints(tpr,indelKey));
 }
 
 
 BOOST_AUTO_TEST_CASE( test_range_intersect_delete )
 {
-
     static const INDEL::index_t itype(INDEL::DELETE);
 
     // simple interior case:
@@ -82,7 +81,6 @@ BOOST_AUTO_TEST_CASE( test_range_intersect_delete )
 
 BOOST_AUTO_TEST_CASE( test_range_intersect_insert )
 {
-
     static const INDEL::index_t itype(INDEL::INSERT);
 
     // simple interior case:
@@ -118,14 +116,15 @@ BOOST_AUTO_TEST_CASE( test_range_intersect_swap )
 
 static
 bool
-test_single_adjacent_case(const IndelKey& ik,
-                          const bool expect)
+test_single_adjacent_case(
+    const IndelKey& indelKey,
+    const bool expect)
 {
 
     // test case represents a 10-base alignment from 10-20 (1-indexed range)
     static const known_pos_range tpr(9,20);
 
-    return (expect==is_range_adjacent_indel_breakpoints(tpr,ik));
+    return (expect==is_range_adjacent_indel_breakpoints(tpr,indelKey));
 }
 
 

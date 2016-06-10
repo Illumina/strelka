@@ -79,7 +79,7 @@ struct ReadPathScores
 
     void
     insertAlt(
-        const IndelKey& ik,
+        const IndelKey& indelKey,
         const score_t a);
 
     score_t ref;
@@ -230,9 +230,9 @@ struct IndelData
 {
     IndelData(
         const unsigned sampleCount,
-        const IndelKey& ik)
+        const IndelKey& indelKey)
         : _sampleData(sampleCount),
-          _ik(ik)
+          _indelKey(indelKey)
     {
         assert(sampleCount>=1);
     }
@@ -311,7 +311,7 @@ private:
     mutable InsertSequenceManager _insert_seq;
 
     // indel key stored for debugging only
-    IndelKey _ik;
+    IndelKey _indelKey;
 };
 
 

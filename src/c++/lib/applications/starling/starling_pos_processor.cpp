@@ -526,7 +526,7 @@ process_pos_indel_single_sample_digt(
 
     for (; it!=it_end; ++it)
     {
-        const IndelKey& ik(it->first);
+        const IndelKey& indelKey(it->first);
         const IndelData& indelData(getIndelData(it));
         const bool isForcedOutput(indelData.is_forced_output);
 
@@ -536,7 +536,7 @@ process_pos_indel_single_sample_digt(
         if (! isForcedOutput)
         {
             if (isZeroCoverage) continue;
-            if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
+            if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
         // TODO implement indel overlap resolution
@@ -549,7 +549,7 @@ process_pos_indel_single_sample_digt(
 
             // sample-independent info:
             starling_indel_report_info iri;
-            get_starling_indel_report_info(ik,indelData,_ref,iri);
+            get_starling_indel_report_info(indelKey,indelData,_ref,iri);
 
             // STARKA-248 filter invalid indel
             /// TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
@@ -567,8 +567,8 @@ process_pos_indel_single_sample_digt(
                 // start position and end position, approximating that the whole
                 // region in between has the same ploidy, for any anomalous state
                 // revert to 'noploid':
-                const int indelLeftPloidy(get_ploidy(ik.pos));
-                const int indelRightPloidy(get_ploidy(ik.right_pos()));
+                const int indelLeftPloidy(get_ploidy(indelKey.pos));
+                const int indelRightPloidy(get_ploidy(indelKey.right_pos()));
 
                 if (indelLeftPloidy == indelRightPloidy)
                 {
@@ -584,7 +584,7 @@ process_pos_indel_single_sample_digt(
                 _opt,_dopt,
                 sif.sample_opt,
                 indelData.errorRates.scaledRefToIndelErrorProb,indelData.errorRates.scaledIndelToRefErrorProb,
-                ik,indelSampleData,is_use_alt_indel,dindel);
+                indelKey,indelSampleData,is_use_alt_indel,dindel);
 
             bool is_indel(false);
             if ((dindel.is_indel) || (dindel.is_forced_output))
@@ -594,13 +594,13 @@ process_pos_indel_single_sample_digt(
                 // sample-specific info: (division doesn't really matter
                 // in single-sample case)
                 starling_indel_sample_report_info isri;
-                get_starling_indel_sample_report_info(_dopt,ik,indelSampleData,sif.bc_buff,
+                get_starling_indel_sample_report_info(_dopt,indelKey,indelSampleData,sif.bc_buff,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
                 if (_opt.gvcf.is_gvcf_output())
                 {
-                    assert(ik.pos==pos);
-                    _gvcfer->add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(ik,indelData, dindel,iri,isri)));
+                    assert(indelKey.pos==pos);
+                    _gvcfer->add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(indelKey,indelData, dindel,iri,isri)));
                 }
 
                 if (_is_variant_windows)
@@ -617,7 +617,7 @@ process_pos_indel_single_sample_digt(
 
             if (is_print_indel_evidence && is_indel)
             {
-                report_os << "INDEL_EVIDENCE " << ik;
+                report_os << "INDEL_EVIDENCE " << indelKey;
 
                 for (const auto& val : indelSampleData.read_path_lnp)
                 {
@@ -657,7 +657,7 @@ process_pos_indel_single_sample_continuous(
 
     for (; it!=it_end; ++it)
     {
-        const IndelKey& ik(it->first);
+        const IndelKey& indelKey(it->first);
         const IndelData& indelData(getIndelData(it));
         const bool isForcedOutput(indelData.is_forced_output);
 
@@ -667,12 +667,12 @@ process_pos_indel_single_sample_continuous(
         if (! isForcedOutput)
         {
             if (isZeroCoverage) continue;
-            if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
+            if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
         // sample-independent info:
         starling_indel_report_info iri;
-        get_starling_indel_report_info(ik,indelData,_ref,iri);
+        get_starling_indel_report_info(indelKey,indelData,_ref,iri);
 
         static const bool is_tier2_pass(false);
         static const bool is_use_alt_indel(true);
@@ -681,8 +681,8 @@ process_pos_indel_single_sample_continuous(
             info.reset(new GermlineContinuousIndelCallInfo(pos));
 
         starling_indel_sample_report_info isri;
-        get_starling_indel_sample_report_info(_dopt,ik,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
-        starling_continuous_variant_caller::add_indel_call(_opt, ik, indelData, iri, isri, *info);
+        get_starling_indel_sample_report_info(_dopt,indelKey,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
+        starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, iri, isri, *info);
 
     }
     if (info && (info->is_indel() || info->is_forced_output()))

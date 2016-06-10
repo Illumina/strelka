@@ -137,7 +137,7 @@ addIndelObservation(
 bool
 IndelBuffer::
 isCandidateIndelImplTestSignalNoise(
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelData& indelData) const
 {
     // determine if the observed counts are sig wrt the error rate for at least one sample:
@@ -150,7 +150,7 @@ isCandidateIndelImplTestSignalNoise(
         // for each sample, get the number of tier 1 reads supporting the indel
         // and the total number of tier 1 reads at this locus
         const unsigned tier1ReadSupportCount(indelSampleData.tier1_map_read_ids.size());
-        unsigned totalReadCount(ebuff(sampleIndex).val(ik.pos-1));
+        unsigned totalReadCount(ebuff(sampleIndex).val(indelKey.pos-1));
 
         // total reads and indel reads are measured in different ways here, so the nonsensical
         // result of indel_reads>total_reads is possible. The total is fudged below to appear sane
@@ -198,7 +198,7 @@ isCandidateIndelImplTestWeakSignal(
 bool
 IndelBuffer::
 isCandidateIndelImplTest(
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelData& indelData) const
 {
     // initialize indel error rates:
@@ -206,7 +206,7 @@ isCandidateIndelImplTest(
     {
         // get standard rates:
         starling_indel_report_info iri;
-        get_starling_indel_report_info(ik, indelData, _ref, iri);
+        get_starling_indel_report_info(indelKey, indelData, _ref, iri);
         _dopt.getIndelErrorModel().getIndelErrorRate(iri,
                                                      indelData.errorRates.refToIndelErrorProb,
                                                      indelData.errorRates.indelToRefErrorProb);
@@ -228,7 +228,7 @@ isCandidateIndelImplTest(
 
     if (_opt.is_candidate_indel_signal_test)
     {
-        if (!isCandidateIndelImplTestSignalNoise(ik, indelData)) return false;
+        if (!isCandidateIndelImplTestSignalNoise(indelKey, indelData)) return false;
     }
     else
     {
@@ -240,7 +240,7 @@ isCandidateIndelImplTest(
     //
     // call getInsertSize() instead of asking for the insert seq
     // so as to not finalize any incomplete insertions:
-    if (ik.is_breakpoint() &&
+    if (indelKey.is_breakpoint() &&
         (_opt.min_candidate_indel_open_length > indelData.getInsertSize()))
     {
         return false;
@@ -255,8 +255,8 @@ isCandidateIndelImplTest(
         const double max_depth(getIndelSampleData(sampleIndex).max_depth);
         if (max_depth <= 0.) continue;
 
-        const unsigned estdepth(ebuff(sampleIndex).val(ik.pos-1));
-        const unsigned estdepth2(ebuff2(sampleIndex).val(ik.pos-1));
+        const unsigned estdepth(ebuff(sampleIndex).val(indelKey.pos-1));
+        const unsigned estdepth2(ebuff2(sampleIndex).val(indelKey.pos-1));
         if ((estdepth+estdepth2) > max_depth) return false;
     }
 
@@ -268,10 +268,10 @@ isCandidateIndelImplTest(
 void
 IndelBuffer::
 isCandidateIndelImpl(
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelData& indelData) const
 {
-    const bool is_candidate(isCandidateIndelImplTest(ik, indelData));
+    const bool is_candidate(isCandidateIndelImplTest(indelKey, indelData));
     indelData.status.is_candidate_indel = is_candidate;
     indelData.status.is_candidate_indel_cached = true;
 }
@@ -280,10 +280,10 @@ isCandidateIndelImpl(
 
 void
 IndelBuffer::
-findDataException(const IndelKey& ik) const
+findDataException(const IndelKey& indelKey) const
 {
     std::ostringstream oss;
-    oss << "ERROR: could not find indel_data for indel: " << ik;
+    oss << "ERROR: could not find indel_data for indel: " << indelKey;
     throw blt_exception(oss.str().c_str());
 }
 

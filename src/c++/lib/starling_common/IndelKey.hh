@@ -201,5 +201,5 @@ struct right_pos_indel_key_sorter
 #endif
 
 
-std::ostream& operator<<(std::ostream& os, const IndelKey& ik);
+std::ostream& operator<<(std::ostream& os, const IndelKey& indelKey);
 

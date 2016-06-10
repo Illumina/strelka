@@ -115,12 +115,12 @@ check_for_candidate_indel_overlap(
     const auto indelIterPair(indelBuffer.rangeIterator(read_range.begin_pos, read_range.end_pos));
     for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
     {
-        const IndelKey& ik(indelIter->first);
+        const IndelKey& indelKey(indelIter->first);
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT key: " << ik;
 #endif
         // check if read intersects with indel breakpoint:
-        if (! is_range_intersect_indel_breakpoints(read_range,ik)) continue;
+        if (! is_range_intersect_indel_breakpoints(read_range,indelKey)) continue;
 
         const IndelData& indelData(getIndelData(indelIter));
 #ifdef DEBUG_ALIGN
@@ -128,7 +128,7 @@ check_for_candidate_indel_overlap(
 #endif
 
         // check if indel qualifies as candidate indel:
-        if (indelBuffer.isCandidateIndel(ik, indelData))
+        if (indelBuffer.isCandidateIndel(indelKey, indelData))
         {
 #ifdef DEBUG_ALIGN
             std::cerr << "VARMIT read segment intersects at least one qualifying candidate indel.\n";
@@ -163,12 +163,12 @@ static
 bool
 is_usable_indel(
     const IndelBuffer& indelBuffer,
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelData& indelData,
     const align_id_t read_id,
     const unsigned sampleId)
 {
-    if (indelBuffer.isCandidateIndel(ik, indelData)) return true;
+    if (indelBuffer.isCandidateIndel(indelKey, indelData)) return true;
 
     const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
     return ((indelSampleData.tier1_map_read_ids.count(read_id)>0) ||
@@ -197,7 +197,7 @@ add_indels_in_range(
 #endif
     for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
     {
-        const IndelKey& ik(indelIter->first);
+        const IndelKey& indelKey(indelIter->first);
         // check if read intersects with indel and indel is usable by this read:
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT INDEL CANDIDATE " << ik;
@@ -207,10 +207,10 @@ add_indels_in_range(
 #endif
         // check if the indel is not intersecting or adjacent -- if neither we don't need to
         // worry about the indel at all:
-        if (! is_range_adjacent_indel_breakpoints(pr,ik)) continue;
+        if (! is_range_adjacent_indel_breakpoints(pr,indelKey)) continue;
 
         // if true, this means the indel is adjacent but not intersecting:
-        const bool is_remove_only(! is_range_intersect_indel_breakpoints(pr,ik));
+        const bool is_remove_only(! is_range_intersect_indel_breakpoints(pr,indelKey));
 
 #ifdef DEBUG_ALIGN
         std::cerr << "is_remove_only " << is_remove_only << "\n";
@@ -218,21 +218,21 @@ add_indels_in_range(
 
         // if indel is already present, it may be possible to promote this indel from
         // adjacent to an intersection:
-        if (indel_status_map.count(ik))
+        if (indel_status_map.count(indelKey))
         {
-            if ((! is_remove_only) && indel_status_map[ik].is_remove_only)
+            if ((! is_remove_only) && indel_status_map[indelKey].is_remove_only)
             {
-                indel_status_map[ik].is_remove_only = false;
+                indel_status_map[indelKey].is_remove_only = false;
             }
         }
         else
         {
             const IndelData& indelData(getIndelData(indelIter));
-            if (is_usable_indel(indelBuffer, ik, indelData, read_id, sampleId))
+            if (is_usable_indel(indelBuffer, indelKey, indelData, read_id, sampleId))
             {
-                indel_status_map[ik].is_present = false;
-                indel_status_map[ik].is_remove_only = is_remove_only;
-                indel_order.push_back(ik);
+                indel_status_map[indelKey].is_present = false;
+                indel_status_map[indelKey].is_remove_only = is_remove_only;
+                indel_order.push_back(indelKey);
             }
         }
     }
@@ -289,11 +289,11 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 
     path_t& apath(cal.al.path);
 
-    for (const IndelKey& ik : indels)
+    for (const IndelKey& indelKey : indels)
     {
         // don't consider indels which can't intersect the read:
-        if (ik.right_pos() < ref_start_pos) continue;
-        if ((ik.right_pos() == ref_start_pos) && (! is_leading_read)) continue;
+        if (indelKey.right_pos() < ref_start_pos) continue;
+        if ((indelKey.right_pos() == ref_start_pos) && (! is_leading_read)) continue;
 
         // deal with leading indel, swap or right breakpoint:
         const bool is_first_intersecting_indel(apath.empty());
@@ -302,10 +302,10 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 
         if (is_leading_read && is_first_intersecting_indel)
         {
-            if (ik.pos != ref_start_pos)
+            if (indelKey.pos != ref_start_pos)
             {
                 std::ostringstream oss;
-                oss << "ERROR: anomalous condition for indel candidate: " << ik << "\n"
+                oss << "ERROR: anomalous condition for indel candidate: " << indelKey << "\n"
                     << "\tref_start_pos: " << ref_start_pos << "\n"
                     << "\tread_start_pos: " << read_start_pos << "\n"
                     << "\tref_head_pos: " << ref_head_pos << "\n"
@@ -314,31 +314,31 @@ make_start_pos_alignment(const pos_t ref_start_pos,
                     << "\tread_length: " << read_length << "\n";
 
                 oss << "\tfull indel set: ";
-                for (const IndelKey& ik2 : indels)
+                for (const IndelKey& indelKey2 : indels)
                 {
-                    oss << "\t\t" << ik2;
+                    oss << "\t\t" << indelKey2;
                 }
 
                 throw blt_exception(oss.str().c_str());
             }
 
             assert((apath.empty()) && (ref_head_pos==ref_start_pos));
-            assert((ik.type == INDEL::INSERT) ||
-                   (ik.type == INDEL::SWAP) ||
-                   (ik.type == INDEL::BP_RIGHT));
+            assert((indelKey.type == INDEL::INSERT) ||
+                   (indelKey.type == INDEL::SWAP) ||
+                   (indelKey.type == INDEL::BP_RIGHT));
 
-            if ((ik.type == INDEL::INSERT) ||
-                (ik.type == INDEL::SWAP))
+            if ((indelKey.type == INDEL::INSERT) ||
+                (indelKey.type == INDEL::SWAP))
             {
-                assert(static_cast<pos_t>(ik.length)>=read_start_pos);
+                assert(static_cast<pos_t>(indelKey.length)>=read_start_pos);
             }
 
             apath.push_back(path_segment(INSERT,read_start_pos));
-            if (ik.type == INDEL::SWAP)
+            if (indelKey.type == INDEL::SWAP)
             {
-                add_path_segment(apath,DELETE,ref_head_pos,ik.swap_dlength);
+                add_path_segment(apath,DELETE,ref_head_pos,indelKey.swap_dlength);
             }
-            cal.leading_indel_key=ik;
+            cal.leading_indel_key=indelKey;
             continue;
         }
 
@@ -347,23 +347,23 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 
         // note this relies on the single extra base of separation
         // required between indels during indel conflict detection:
-        const bool is_edge_delete((INDEL::DELETE == ik.type) && (ik.pos == ref_start_pos));
-        if ((ik.pos <= ref_head_pos) && (!is_edge_delete))
+        const bool is_edge_delete((INDEL::DELETE == indelKey.type) && (indelKey.pos == ref_start_pos));
+        if ((indelKey.pos <= ref_head_pos) && (!is_edge_delete))
         {
             std::ostringstream oss;
-            oss << "ERROR: indel candidate: " << ik << " is not greater than ref_head_pos: " << ref_head_pos
+            oss << "ERROR: indel candidate: " << indelKey << " is not greater than ref_head_pos: " << ref_head_pos
                 << ". ref_start_pos: " << ref_start_pos << ". Cannot resolve indel with candidate read alignment: " << cal << "\n";
             throw blt_exception(oss.str().c_str());
         }
 
-        assert(ik.pos >= ref_head_pos);
-        const unsigned match_segment(ik.pos-ref_head_pos);
+        assert(indelKey.pos >= ref_head_pos);
+        const unsigned match_segment(indelKey.pos-ref_head_pos);
 
         assert(is_first_intersecting_indel || (match_segment>0));
 
         // remaining read segment match segment added after indel loop:
         if (read_head_pos+match_segment>read_length ||
-            ((read_head_pos+match_segment)==read_length && (ik.type!=INDEL::DELETE)))
+            ((read_head_pos+match_segment)==read_length && (indelKey.type!=INDEL::DELETE)))
         {
             break;
         }
@@ -375,52 +375,52 @@ make_start_pos_alignment(const pos_t ref_start_pos,
             read_head_pos += match_segment;
         }
 
-        if       (ik.type==INDEL::INSERT ||
-                  ik.type==INDEL::SWAP)
+        if       (indelKey.type==INDEL::INSERT ||
+                  indelKey.type==INDEL::SWAP)
         {
-            if (ik.type==INDEL::SWAP)
+            if (indelKey.type==INDEL::SWAP)
             {
-                add_path_segment(apath,DELETE,ref_head_pos,ik.swap_dlength);
+                add_path_segment(apath,DELETE,ref_head_pos,indelKey.swap_dlength);
             }
 
             const unsigned max_insert_length(read_length-read_head_pos);
-            const unsigned insert_length(std::min(ik.length,max_insert_length));
+            const unsigned insert_length(std::min(indelKey.length,max_insert_length));
             add_path_segment(apath,INSERT,read_head_pos,insert_length);
 
-            const bool is_final(ik.length>=max_insert_length);
+            const bool is_final(indelKey.length>=max_insert_length);
             if (is_final)
             {
-                cal.trailing_indel_key=ik;
+                cal.trailing_indel_key=indelKey;
                 break;
             }
         }
-        else if (ik.type==INDEL::DELETE)
+        else if (indelKey.type==INDEL::DELETE)
         {
-            add_path_segment(apath,DELETE,ref_head_pos,ik.length);
+            add_path_segment(apath,DELETE,ref_head_pos,indelKey.length);
             if (match_segment==0)
             {
-                cal.leading_indel_key=ik;
+                cal.leading_indel_key=indelKey;
             }
             else
             {
                 const bool is_final(read_head_pos==static_cast<pos_t>(read_length));
                 if (is_final)
                 {
-                    cal.trailing_indel_key=ik;
+                    cal.trailing_indel_key=indelKey;
                 }
             }
         }
-        else if (ik.type==INDEL::BP_LEFT)
+        else if (indelKey.type==INDEL::BP_LEFT)
         {
             const unsigned overhang_length(read_length-read_head_pos);
             add_path_segment(apath,INSERT,read_head_pos,overhang_length);
-            cal.trailing_indel_key=ik;
+            cal.trailing_indel_key=indelKey;
             break;
         }
         else
         {
             std::ostringstream oss;
-            oss << "Unexpected indel state: " << INDEL::get_index_label(ik.type) << " at: " << __FILE__  << ":" << __LINE__ ;
+            oss << "Unexpected indel state: " << INDEL::get_index_label(indelKey.type) << " at: " << __FILE__  << ":" << __LINE__ ;
             throw blt_exception(oss.str().c_str());
         }
     }
@@ -467,35 +467,35 @@ get_end_pin_start_pos(const indel_set_t& indels,
     while (i!=i_begin)
     {
         --i;
-        const IndelKey& ik(*i);
+        const IndelKey& indelKey(*i);
 
         // check that indel actually intersects the read:
-        if (ik.pos > ref_end_pos) continue;
-        if ((ik.pos == ref_end_pos) && (! is_trailing_read)) continue;
+        if (indelKey.pos > ref_end_pos) continue;
+        if ((indelKey.pos == ref_end_pos) && (! is_trailing_read)) continue;
 
-        const bool is_trailing_indel(ik.right_pos() == ref_end_pos);
+        const bool is_trailing_indel(indelKey.right_pos() == ref_end_pos);
 
         if (is_trailing_indel)   // deal with trailing-edge insert/breakpoint case first
         {
             assert((is_first) && (ref_start_pos==ref_end_pos));
-            assert((ik.type == INDEL::INSERT) ||
-                   (ik.type == INDEL::DELETE) ||
-                   (ik.type == INDEL::SWAP) ||
-                   (ik.type == INDEL::BP_LEFT));
+            assert((indelKey.type == INDEL::INSERT) ||
+                   (indelKey.type == INDEL::DELETE) ||
+                   (indelKey.type == INDEL::SWAP) ||
+                   (indelKey.type == INDEL::BP_LEFT));
 
-            if ((ik.type == INDEL::INSERT) ||
-                (ik.type == INDEL::SWAP))
+            if ((indelKey.type == INDEL::INSERT) ||
+                (indelKey.type == INDEL::SWAP))
             {
-                assert(ik.length>=(read_length-read_end_pos));
+                assert(indelKey.length>=(read_length-read_end_pos));
             }
 
-            if       (ik.type==INDEL::SWAP)
+            if       (indelKey.type==INDEL::SWAP)
             {
-                ref_start_pos -= ik.swap_dlength;
+                ref_start_pos -= indelKey.swap_dlength;
             }
-            else if (ik.type==INDEL::DELETE)
+            else if (indelKey.type==INDEL::DELETE)
             {
-                ref_start_pos -= ik.length;
+                ref_start_pos -= indelKey.length;
             }
         }
         else     // deal with normal case:
@@ -511,44 +511,44 @@ get_end_pin_start_pos(const indel_set_t& indels,
 
             // note the excluding 'equals' relationship relies on the single extra base of separation
             // required between indels during indel conflict detection:
-            //const bool is_edge_delete((INDEL::DELETE == ik.type) && (ik.right_pos() == ref_end_pos));
+            //const bool is_edge_delete((INDEL::DELETE == indelKey.type) && (indelKey.right_pos() == ref_end_pos));
 
             // new indel must end at least one base below the current ref head (otherwise it would be
             // an interfering indel):
             //
-            if ((ik.right_pos() >= ref_start_pos))   //&& (! is_edge_delete)) {
+            if ((indelKey.right_pos() >= ref_start_pos))   //&& (! is_edge_delete)) {
             {
                 std::ostringstream oss;
-                oss << "Unexpected indel position: indel: " << ik;
+                oss << "Unexpected indel position: indel: " << indelKey;
                 oss << "\tref_start_pos: " << ref_start_pos << " ref_end_pos: " << ref_end_pos << "\n";
                 throw blt_exception(oss.str().c_str());
             }
 
-            const unsigned match_segment(std::min((ref_start_pos - ik.right_pos()),read_start_pos));
+            const unsigned match_segment(std::min((ref_start_pos - indelKey.right_pos()),read_start_pos));
 
             ref_start_pos -= match_segment;
             read_start_pos -= match_segment;
 
             if (read_start_pos==0) return;
 
-            if       (ik.type==INDEL::INSERT || ik.type==INDEL::SWAP)
+            if       (indelKey.type==INDEL::INSERT || indelKey.type==INDEL::SWAP)
             {
-                ref_start_pos -= ik.swap_dlength;
-                if (static_cast<pos_t>(ik.length) >= read_start_pos) return;
-                read_start_pos -= ik.length;
+                ref_start_pos -= indelKey.swap_dlength;
+                if (static_cast<pos_t>(indelKey.length) >= read_start_pos) return;
+                read_start_pos -= indelKey.length;
             }
-            else if (ik.type==INDEL::DELETE)
+            else if (indelKey.type==INDEL::DELETE)
             {
-                ref_start_pos -= ik.length;
+                ref_start_pos -= indelKey.length;
             }
-            else if (ik.type==INDEL::BP_RIGHT)
+            else if (indelKey.type==INDEL::BP_RIGHT)
             {
                 return;
             }
             else
             {
                 std::ostringstream oss;
-                oss << "Unexpected indel state: " << INDEL::get_index_label(ik.type) << " at: " << __FILE__  << ":" << __LINE__ ;
+                oss << "Unexpected indel state: " << INDEL::get_index_label(indelKey.type) << " at: " << __FILE__  << ":" << __LINE__ ;
                 throw blt_exception(oss.str().c_str());
             }
         }
@@ -620,9 +620,9 @@ add_pin_exception_info(
            << "\tref_start_pos: " << ref_start_pos << "\n"
            << "\tread_start_pos: " << read_start_pos << "\n"
            << "this_indel: " << cindel;
-    for (const IndelKey& ik : current_indels)
+    for (const IndelKey& indelKey : current_indels)
     {
-        log_os << "current_indels: " << ik;
+        log_os << "current_indels: " << indelKey;
     }
 }
 
@@ -794,8 +794,8 @@ candidate_alignment_search(
         //
         for (unsigned i(0); i<depth; ++i)
         {
-            const IndelKey& ik(indel_order[i]);
-            if (indel_status_map[ik].is_present && is_indel_conflict(ik,cindel)) return;
+            const IndelKey& indelKey(indel_order[i]);
+            if (indel_status_map[indelKey].is_present && is_indel_conflict(indelKey,cindel)) return;
         }
     }
 
@@ -995,9 +995,9 @@ get_candidate_indel_count(
     get_alignment_indels(cal,opt.max_indel_size,is);
 
     unsigned val(0);
-    for (const IndelKey& ik : is)
+    for (const IndelKey& indelKey : is)
     {
-        if (indelBuffer.isCandidateIndel(ik)) val++;
+        if (indelBuffer.isCandidateIndel(indelKey)) val++;
     }
     return val;
 }
@@ -1406,14 +1406,14 @@ load_cal_with_edge_indels(const alignment& al,
             {
                 itype = INDEL::DELETE;
             }
-            const IndelKey ik(ref_pos,itype,ps.length);
+            const IndelKey indelKey(ref_pos,itype,ps.length);
             if     (i<ends.first)
             {
-                cal.leading_indel_key = ik;
+                cal.leading_indel_key = indelKey;
             }
             else if (i>ends.second)
             {
-                cal.trailing_indel_key = ik;
+                cal.trailing_indel_key = indelKey;
             }
         }
         if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
@@ -1459,21 +1459,21 @@ get_candidate_alignments(
     // alignment.
     //
     {
-        indel_set_t cal_indels;
-        get_alignment_indels(cal,opt.max_indel_size,cal_indels);
+        indel_set_t candidateAlignmentIndels;
+        get_alignment_indels(cal,opt.max_indel_size,candidateAlignmentIndels);
 
-        for (const IndelKey& ik : cal_indels)
+        for (const IndelKey& indelKey : candidateAlignmentIndels)
         {
-            if (indel_status_map.find(ik)==indel_status_map.end())
+            if (indel_status_map.find(indelKey)==indel_status_map.end())
             {
                 std::ostringstream oss;
                 oss << "ERROR: Exemplar alignment contains indel not found in the overlap indel set\n"
-                    << "\tIndel: " << ik
+                    << "\tIndel: " << indelKey
                     << "Exemplar overlap set:\n";
                 dump_indel_status(indel_status_map,oss);
                 throw blt_exception(oss.str().c_str());
             }
-            indel_status_map[ik].is_present = true;
+            indel_status_map[indelKey].is_present = true;
         }
     }
 

@@ -1094,16 +1094,16 @@ write_candidate_indels_pos(
 
     for (; indelIter!=indelIterEnd; ++indelIter)
     {
-        const IndelKey& ik(indelIter->first);
+        const IndelKey& indelKey(indelIter->first);
         const IndelData& indelData(getIndelData(indelIter));
-        if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
+        if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         bos << _chrom_name << "\t"
             << output_pos << "\t"
-            << INDEL::get_index_label(ik.type) << "\t"
-            << ik.length << "\t";
-        if (INDEL::SWAP==ik.type)
+            << INDEL::get_index_label(indelKey.type) << "\t"
+            << indelKey.length << "\t";
+        if (INDEL::SWAP==indelKey.type)
         {
-            bos << ik.swap_dlength << "\t";
+            bos << indelKey.swap_dlength << "\t";
         }
         bos << indelData.getInsertSeq() << "\n";
     }

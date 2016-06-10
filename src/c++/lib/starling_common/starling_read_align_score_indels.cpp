@@ -87,11 +87,11 @@ static
 void
 overlap_map_tick(
     overlap_map_t& omap,
-    const IndelKey& ik1,
-    const IndelKey& ik2)
+    const IndelKey& indelKey1,
+    const IndelKey& indelKey2)
 {
-    indel_set_t& os(omap[ik1]);
-    if (os.find(ik2) == os.end()) os.insert(ik2);
+    indel_set_t& os(omap[indelKey1]);
+    if (os.find(indelKey2) == os.end()) os.insert(indelKey2);
 }
 
 
@@ -101,13 +101,13 @@ static
 bool
 is_interfering_indel(
     const indel_set_t& current_indels,
-    const IndelKey& new_indel)
+    const IndelKey& newIndel)
 {
-    if (current_indels.count(new_indel) != 0) return false;
+    if (current_indels.count(newIndel) != 0) return false;
 
-    for (const IndelKey& ik : current_indels)
+    for (const IndelKey& currentIndel : current_indels)
     {
-        if (is_indel_conflict(ik,new_indel)) return true;
+        if (is_indel_conflict(currentIndel, newIndel)) return true;
     }
     return false;
 }
@@ -130,7 +130,7 @@ std::pair<int,int>
 get_alignment_indel_bp_overlap(
     const unsigned upstream_oligo_size,
     const alignment& al,
-    const IndelKey& ik)
+    const IndelKey& indelKey)
 {
     using namespace ALIGNPATH;
 
@@ -176,14 +176,14 @@ get_alignment_indel_bp_overlap(
             assert(0);
         }
 
-        if ((! is_left_read_pos) && (ik.pos<=(next_ref_head_pos)))
+        if ((! is_left_read_pos) && (indelKey.pos<=(next_ref_head_pos)))
         {
-            left_read_pos=read_head_pos+(ik.pos-ref_head_pos);
+            left_read_pos=read_head_pos+(indelKey.pos-ref_head_pos);
             is_left_read_pos=true;
         }
-        if ((! is_right_read_pos) && (ik.right_pos()<(next_ref_head_pos)))
+        if ((! is_right_read_pos) && (indelKey.right_pos()<(next_ref_head_pos)))
         {
-            right_read_pos=read_head_pos+(ik.right_pos()-ref_head_pos);
+            right_read_pos=read_head_pos+(indelKey.right_pos()-ref_head_pos);
             is_right_read_pos=true;
         }
 
@@ -272,16 +272,16 @@ static
 bool
 is_first_indel_dominant(
     const IndelBuffer& indelBuffer,
-    const IndelKey& ik1,
-    const IndelKey& ik2)
+    const IndelKey& indelKey1,
+    const IndelKey& indelKey2)
 {
-    const bool ic1(indelBuffer.isCandidateIndel(ik1));
-    const bool ic2(indelBuffer.isCandidateIndel(ik2));
+    const bool ic1(indelBuffer.isCandidateIndel(indelKey1));
+    const bool ic2(indelBuffer.isCandidateIndel(indelKey2));
 
     if (ic2 && (! ic1)) return false;
     if (ic2==ic1)
     {
-        return (ik1.pos<=ik2.pos);
+        return (indelKey1.pos<=indelKey2.pos);
     }
     return true;
 }

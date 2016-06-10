@@ -36,13 +36,13 @@
 void
 ReadPathScores::
 insertAlt(
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const score_t a)
 {
     const unsigned ais(static_cast<unsigned>(alt_indel.size()));
     if (ais < 2)
     {
-        alt_indel.push_back(std::make_pair(ik,a));
+        alt_indel.push_back(std::make_pair(indelKey,a));
     }
     else
     {
@@ -58,7 +58,7 @@ insertAlt(
         }
         if (min_index<ais)
         {
-            alt_indel[min_index] = std::make_pair(ik,a);
+            alt_indel[min_index] = std::make_pair(indelKey,a);
         }
     }
 //    log_os << ik << "\n";
@@ -124,12 +124,12 @@ addIndelObservation(
 
     if (! obs_data.insert_seq.empty())
     {
-        if((not _ik.is_breakpoint()) and (obs_data.insert_seq.size() != _ik.insert_length()))
+        if((not _indelKey.is_breakpoint()) and (obs_data.insert_seq.size() != _indelKey.insert_length()))
         {
             using namespace illumina::common;
 
             std::ostringstream oss;
-            oss << "ERROR: indel obs insert length '" << obs_data.insert_seq.size() << "' does not match expected length for indel: " << _ik;
+            oss << "ERROR: indel obs insert length '" << obs_data.insert_seq.size() << "' does not match expected length for indel: " << _indelKey;
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
         _insert_seq.addObservation(obs_data.insert_seq);
@@ -192,8 +192,8 @@ operator<<(
 #else
     for (const auto& indel : rps.alt_indel)
     {
-        const IndelKey& ik(indel.first);
-        os << " alt-" << ik.pos << "-" << INDEL::get_index_label(ik.type) << ik.length << ": " << indel.second;
+        const IndelKey& indelKey(indel.first);
+        os << " alt-" << indelKey.pos << "-" << INDEL::get_index_label(indelKey.type) << indelKey.length << ": " << indel.second;
     }
 #endif
 
@@ -273,7 +273,7 @@ operator<<(
     std::ostream& os,
     const IndelData& indelData)
 {
-    os << "IndelKey: " << indelData._ik << "\n";
+    os << "IndelKey: " << indelData._indelKey << "\n";
     os << "is_external_candidate: " << indelData.is_external_candidate << "\n";
     os << "is_forced_output: " << indelData.is_forced_output << "\n";
 

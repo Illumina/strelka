@@ -187,27 +187,27 @@ score_candidate_alignment(
             const swap_info sinfo(path,path_index);
             n_seg=sinfo.n_seg;
 
-            IndelKey ik(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
+            IndelKey indelKey(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
 
             // check if this is an edge swap:
             if ((path_index<ends.first) || (path_index>ends.second))
             {
                 if (path_index<ends.first)
                 {
-                    ik=cal.leading_indel_key;
+                    indelKey=cal.leading_indel_key;
                 }
                 else
                 {
-                    ik=cal.trailing_indel_key;
+                    indelKey=cal.trailing_indel_key;
                 }
-                assert(ik.type!=INDEL::NONE);
+                assert(indelKey.type!=INDEL::NONE);
             }
 
-            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(ik));
+            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
             if (nullptr == indelDataPtr)
             {
                 std::ostringstream oss;
-                oss << "ERROR: candidate alignment does not contain expected swap indel: " << ik << "\n"
+                oss << "ERROR: candidate alignment does not contain expected swap indel: " << indelKey << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
                 throw blt_exception(oss.str().c_str());
             }
@@ -270,28 +270,27 @@ score_candidate_alignment(
         }
         else if (ps.type==INSERT)
         {
-
-            IndelKey ik(ref_head_pos,INDEL::INSERT,ps.length);
+            IndelKey indelKey(ref_head_pos,INDEL::INSERT,ps.length);
 
             // check if this is an edge insertion:
             if ((path_index<ends.first) || (path_index>ends.second))
             {
                 if (path_index<ends.first)
                 {
-                    ik=cal.leading_indel_key;
+                    indelKey=cal.leading_indel_key;
                 }
                 else
                 {
-                    ik=cal.trailing_indel_key;
+                    indelKey=cal.trailing_indel_key;
                 }
-                assert(ik.type!=INDEL::NONE);
+                assert(indelKey.type!=INDEL::NONE);
             }
 
-            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(ik));
+            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
             if (nullptr == indelDataPtr)
             {
                 std::ostringstream oss;
-                oss << "ERROR: candidate alignment does not contain expected insertion: " << ik << "\n"
+                oss << "ERROR: candidate alignment does not contain expected insertion: " << indelKey << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
                 throw blt_exception(oss.str().c_str());
             }

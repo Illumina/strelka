@@ -31,12 +31,12 @@
 std::ostream&
 operator<<(
     std::ostream& os,
-    const IndelKey& ik)
+    const IndelKey& indelKey)
 {
-    os << "INDEL pos: " << ik.pos
-       << " type: " << INDEL::get_index_label(ik.type)
-       << " len: " << ik.length
-       << " swap_dlen: " << ik.swap_dlength << "\n";
+    os << "INDEL pos: " << indelKey.pos
+       << " type: " << INDEL::get_index_label(indelKey.type)
+       << " len: " << indelKey.length
+       << " swap_dlen: " << indelKey.swap_dlength << "\n";
     return os;
 }
 

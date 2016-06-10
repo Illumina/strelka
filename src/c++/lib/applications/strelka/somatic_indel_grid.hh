@@ -45,7 +45,7 @@ struct somatic_indel_caller_grid : private boost::noncopyable
         const starling_sample_options& tumor_opt,
         const double indel_error_prob,
         const double ref_error_prob,
-        const IndelKey& ik,
+        const IndelKey& indelKey,
         const IndelData& indelData,
         const unsigned normalId,
         const unsigned tumorId,

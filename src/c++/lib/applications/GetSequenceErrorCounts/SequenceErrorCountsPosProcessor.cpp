@@ -126,7 +126,7 @@ static
 bool
 isKnownVariantMatch(
     const RecordTracker::indel_value_t& knownVariants,
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelData& indelData,
     RecordTracker::indel_value_t& overlap)
 {
@@ -139,7 +139,7 @@ isKnownVariantMatch(
     // the inserted sequence must match
     for (const auto& kv : knownVariants)
     {
-        if (kv.altMatch(ik, indelData)) overlap.insert(kv);
+        if (kv.altMatch(indelKey, indelData)) overlap.insert(kv);
     }
     return (! overlap.empty());
 }
@@ -520,19 +520,19 @@ process_pos_error_counts(
 
     for (; it!=it_end; ++it)
     {
-        const IndelKey& ik(it->first);
+        const IndelKey& indelKey(it->first);
         const IndelData& indelData(getIndelData(it));
 
-        if (ik.is_breakpoint()) continue;
+        if (indelKey.is_breakpoint()) continue;
 
         const bool isForcedOutput(indelData.is_forced_output);
 
         if (! isForcedOutput)
         {
-            if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
+            if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
-        if (! (ik.type == INDEL::DELETE || ik.type == INDEL::INSERT)) continue;
+        if (! (indelKey.type == INDEL::DELETE || indelKey.type == INDEL::INSERT)) continue;
 
         // all indels at the same position are conflicting:
         if (_groups.empty()) _groups.resize(1);
@@ -557,11 +557,11 @@ process_pos_error_counts(
 
         for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; ++nonrefHapIndex)
         {
-            const IndelKey& ik(hg.key(nonrefHapIndex));
+            const IndelKey& indelKey(hg.key(nonrefHapIndex));
             const IndelData& indelData(hg.data(nonrefHapIndex));
 
             starling_indel_report_info iri;
-            get_starling_indel_report_info(ik, indelData,_ref,iri);
+            get_starling_indel_report_info(indelKey, indelData,_ref,iri);
 
             IndelErrorContext context;
             if ((iri.repeat_unit_length==1) && (iri.ref_repeat_count>1))
@@ -575,7 +575,7 @@ process_pos_error_counts(
             }
 
             RecordTracker::indel_value_t overlappingRecords;
-            isKnownVariantMatch(knownVariantRecords, ik, indelData, overlappingRecords);
+            isKnownVariantMatch(knownVariantRecords, indelKey, indelData, overlappingRecords);
 
             IndelErrorContextObservation obs;
 
@@ -593,11 +593,11 @@ process_pos_error_counts(
             {
                 std::ostream& obs_os(*_streams.observation_bed_osptr());
                 obs_os << _opt.bam_seq_name << "\t";
-                obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
+                obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.length << "\t" << INDEL::get_index_label(indelKey.type) << "\t";
                 obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
                 obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
                 obs_os << context.repeatCount << "\t" << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
-                obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
+                obs_os << indelKey.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
                 obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }

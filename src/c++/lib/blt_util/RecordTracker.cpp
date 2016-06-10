@@ -147,14 +147,14 @@ IndelVariant(
 bool
 IndelGenotype::
 altMatch(
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelData& indelData) const
 {
     for (const auto& alt : alts)
     {
-        if ((ik.type == alt.type) && (ik.length == alt.length))
+        if ((indelKey.type == alt.type) && (indelKey.length == alt.length))
         {
-            if (ik.type == INDEL::DELETE) return true;
+            if (indelKey.type == INDEL::DELETE) return true;
             if (indelData.getInsertSeq() == alt.insert_sequence) return true;
         }
     }

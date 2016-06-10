@@ -71,7 +71,7 @@ end() const
 {
     pos_t result = 0;
     for (auto& x : _calls)
-        result = std::max(result, x._ik.right_pos());
+        result = std::max(result, x._indelKey.right_pos());
     return result;
 }
 
@@ -86,13 +86,13 @@ void GermlineIndelSimpleGenotypeInfo::set_hap_cigar(
     {
         cigar.push_back(path_segment(MATCH,lead));
     }
-    if (_ik.delete_length())
+    if (_indelKey.delete_length())
     {
-        cigar.push_back(path_segment(DELETE,_ik.delete_length()));
+        cigar.push_back(path_segment(DELETE,_indelKey.delete_length()));
     }
-    if (_ik.insert_length())
+    if (_indelKey.insert_length())
     {
-        cigar.push_back(path_segment(INSERT,_ik.insert_length()));
+        cigar.push_back(path_segment(INSERT,_indelKey.insert_length()));
     }
     if (trail)
     {
@@ -232,7 +232,7 @@ add_overlap(
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
     std::string leading_seq,trailing_seq;
-    auto indel_end_pos=std::max(overlap_call._ik.right_pos(),call._ik.right_pos());
+    auto indel_end_pos=std::max(overlap_call._indelKey.right_pos(),call._indelKey.right_pos());
 
     const pos_t indel_begin_pos(pos-1);
 
@@ -250,7 +250,7 @@ add_overlap(
         auto& this_call(ii.first());
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
-        const unsigned trail_len(indel_end_pos-this_call._ik.right_pos());
+        const unsigned trail_len(indel_end_pos-this_call._indelKey.right_pos());
         ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
 
         this_call._iri.vcf_indel_seq = leading_seq + this_call._iri.vcf_indel_seq + trailing_seq;
@@ -466,7 +466,7 @@ operator<<(
 {
     os << static_cast<GermlineVariantSimpleGenotypeInfo>(shi) << '\n';
 
-    os << "IndelKey: " << shi._ik << "\n";
+    os << "IndelKey: " << shi._indelKey << "\n";
     //os << "indel_data: " << shi._id << "\n";
     os << "indel_report_info: " << shi._iri << "\n";
     os << "indel_sample_info: " << shi._isri << "\n";

@@ -211,14 +211,14 @@ process_pos_indel_denovo(const pos_t pos)
 
     for (; it!=it_end; ++it)
     {
-        const IndelKey& ik(it->first);
+        const IndelKey& indelKey(it->first);
 
         // don't write breakpoint output:
-        if (ik.is_breakpoint()) continue;
+        if (indelKey.is_breakpoint()) continue;
 
         const IndelData& indelData(getIndelData(it));
 
-        if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
+        if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
 
         // assert that indel data exists for all samples, make sure alt alignments are scored in at least one sample:
         bool isAllEmpty(true);
@@ -235,7 +235,7 @@ process_pos_indel_denovo(const pos_t pos)
 
         // get iri from either sample:
         starling_indel_report_info iri;
-        get_starling_indel_report_info(ik, indelData, _ref, iri);
+        get_starling_indel_report_info(indelKey, indelData, _ref, iri);
 
         // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
         if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
@@ -256,7 +256,7 @@ process_pos_indel_denovo(const pos_t pos)
             sinfo,
             sampleOptions,
             indelData.errorRates.refToIndelErrorProb,indelData.errorRates.indelToRefErrorProb,
-            ik,indelData,
+            indelKey,indelData,
             is_use_alt_indel,
             dindel);
 
@@ -270,14 +270,14 @@ process_pos_indel_denovo(const pos_t pos)
                 for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
                 {
                     get_starling_indel_sample_report_info(
-                        _dopt,ik,indelData.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,
+                        _dopt,indelKey,indelData.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,
                         is_include_tier2,is_use_alt_indel,
                         isri[sampleIndex][tierIndex]);
                 }
             }
 
-            pos_t indel_pos(ik.pos);
-            if (ik.type != INDEL::BP_RIGHT)
+            pos_t indel_pos(indelKey.pos);
+            if (indelKey.type != INDEL::BP_RIGHT)
             {
                 indel_pos -= 1;
             }

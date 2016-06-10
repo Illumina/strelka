@@ -73,7 +73,7 @@ get_alignment_zone(const alignment& al,
 ///
 bool
 is_indel_in_alignment(const alignment& al,
-                      const IndelKey& ik,
+                      const IndelKey& indelKey,
                       pos_range& read_indel_pr);
 
 /// remove any edge deletions and properly adjust pos for leading deletions:

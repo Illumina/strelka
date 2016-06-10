@@ -115,16 +115,17 @@ integrate_out_sites(const starling_base_deriv_options& dopt,
 //
 static
 void
-get_het_observed_allele_ratio(const unsigned read_length,
-                              const unsigned min_overlap,
-                              const IndelKey& ik,
-                              const double het_allele_ratio,
-                              double& log_ref_prob,
-                              double& log_indel_prob)
+get_het_observed_allele_ratio(
+    const unsigned read_length,
+    const unsigned min_overlap,
+    const IndelKey& indelKey,
+    const double het_allele_ratio,
+    double& log_ref_prob,
+    double& log_indel_prob)
 {
-    assert((ik.type==INDEL::INSERT) ||
-           (ik.type==INDEL::DELETE) ||
-           (ik.type == INDEL::SWAP));
+    assert((indelKey.type==INDEL::INSERT) ||
+           (indelKey.type==INDEL::DELETE) ||
+           (indelKey.type == INDEL::SWAP));
 
     // the expected relative read depth for two breakpoints separated by a distance of 0:
     const unsigned base_expect( (read_length+1)<(2*min_overlap) ? 0 : (read_length+1)-(2*min_overlap) );
@@ -134,8 +135,8 @@ get_het_observed_allele_ratio(const unsigned read_length,
     // basic insertions and deletions, in these cases
     // spath_break_distance is 0 and spath_expect equals base_expect:
     //
-    const double ref_path_expect(base_expect+std::min(ik.delete_length(),base_expect));
-    const double indel_path_expect(base_expect+std::min(ik.insert_length(),base_expect));
+    const double ref_path_expect(base_expect+std::min(indelKey.delete_length(),base_expect));
+    const double indel_path_expect(base_expect+std::min(indelKey.insert_length(),base_expect));
     const double ref_path_term((1-het_allele_ratio)*ref_path_expect);
     const double indel_path_term(het_allele_ratio*indel_path_expect);
     const double total_path_term(ref_path_term+indel_path_term);
@@ -160,7 +161,7 @@ get_high_low_het_ratio_lhood(
     const double indel_real_lnp,
     const double ref_error_lnp,
     const double ref_real_lnp,
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const double het_ratio,
     const bool is_tier2_pass,
@@ -174,7 +175,7 @@ get_high_low_het_ratio_lhood(
     const double log_het_ratio(std::log(het_ratio));
     const double log_chet_ratio(std::log(chet_ratio));
 
-    const bool is_breakpoint(ik.is_breakpoint());
+    const bool is_breakpoint(indelKey.is_breakpoint());
 
     het_lhood_high=0;
     het_lhood_low=0;
@@ -216,7 +217,7 @@ get_high_low_het_ratio_lhood(
             if (! is_breakpoint)
             {
                 get_het_observed_allele_ratio(path_lnp.read_length,sample_opt.min_read_bp_flank,
-                                              ik,het_ratio,log_ref_prob,log_indel_prob);
+                                              indelKey,het_ratio,log_ref_prob,log_indel_prob);
             }
             const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
@@ -229,7 +230,7 @@ get_high_low_het_ratio_lhood(
             if (! is_breakpoint)
             {
                 get_het_observed_allele_ratio(path_lnp.read_length,sample_opt.min_read_bp_flank,
-                                              ik,chet_ratio,log_ref_prob,log_indel_prob);
+                                              indelKey,chet_ratio,log_ref_prob,log_indel_prob);
             }
             const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
@@ -250,7 +251,7 @@ increment_het_ratio_lhood(
     const double indel_real_lnp,
     const double ref_error_lnp,
     const double ref_real_lnp,
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const double het_ratio,
     const bool is_tier2_pass,
@@ -264,7 +265,7 @@ increment_het_ratio_lhood(
     indel_digt_caller::get_high_low_het_ratio_lhood(opt,dopt,sample_opt,
                                                     indel_error_lnp,indel_real_lnp,
                                                     ref_error_lnp,ref_real_lnp,
-                                                    ik,indelSampleData,het_ratio,is_tier2_pass,
+                                                    indelKey,indelSampleData,het_ratio,is_tier2_pass,
                                                     is_use_alt_indel,
                                                     het_lhood_high,het_lhood_low);
 
@@ -420,7 +421,7 @@ get_indel_digt_lhood(
     const starling_sample_options& sample_opt,
     const double indel_error_prob,
     const double ref_error_prob,
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const bool is_het_bias,
     const double het_bias,
@@ -432,7 +433,7 @@ get_indel_digt_lhood(
 
     for (unsigned gt(0); gt<STAR_DIINDEL::SIZE; ++gt) lhood[gt] = 0.;
 
-    const bool is_breakpoint(ik.is_breakpoint());
+    const bool is_breakpoint(indelKey.is_breakpoint());
 
     const double indel_error_lnp(std::log(indel_error_prob));
     const double indel_real_lnp(std::log(1.-indel_error_prob));
@@ -477,7 +478,7 @@ get_indel_digt_lhood(
         {
             static const double het_allele_ratio(0.5);
             get_het_observed_allele_ratio(path_lnp.read_length,sample_opt.min_read_bp_flank,
-                                          ik,het_allele_ratio,log_ref_prob,log_indel_prob);
+                                          indelKey,het_allele_ratio,log_ref_prob,log_indel_prob);
         }
         const double het_lnp(log_sum(noindel_lnp+log_ref_prob,hom_lnp+log_indel_prob));
 
@@ -503,7 +504,7 @@ get_indel_digt_lhood(
             increment_het_ratio_lhood(opt,dopt,sample_opt,
                                       indel_error_lnp,indel_real_lnp,
                                       ref_error_lnp,ref_real_lnp,
-                                      ik,indelSampleData,het_ratio,is_tier2_pass,is_use_alt_indel,lhood);
+                                      indelKey,indelSampleData,het_ratio,is_tier2_pass,is_use_alt_indel,lhood);
         }
 
         const unsigned n_het_subgt(1+2*n_bias_steps);
@@ -524,7 +525,7 @@ starling_indel_call_pprob_digt(
     const starling_sample_options& sample_opt,
     const double indel_error_prob,
     const double ref_error_prob,
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const bool is_use_alt_indel,
     starling_diploid_indel& dindel) const
@@ -545,7 +546,7 @@ starling_indel_call_pprob_digt(
 
     // get likelihood of each genotype:
     double lhood[STAR_DIINDEL::SIZE];
-    get_indel_digt_lhood(opt,dopt,sample_opt,indel_error_prob,ref_error_prob,ik,indelSampleData,
+    get_indel_digt_lhood(opt,dopt,sample_opt,indel_error_prob,ref_error_prob,indelKey,indelSampleData,
                          is_het_bias,opt.bindel_diploid_het_bias,
                          is_tier2_pass,is_use_alt_indel,lhood);
 

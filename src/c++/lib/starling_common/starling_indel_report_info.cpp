@@ -62,22 +62,22 @@ copy_ref_subseq(const reference_contig_segment& ref,
 static
 void
 get_vcf_summary_strings(
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelData& indelData,
     const reference_contig_segment& ref,
     std::string& vcf_indel_seq,
     std::string& vcf_ref_seq)
 {
-    if       (ik.is_breakpoint())
+    if       (indelKey.is_breakpoint())
     {
-        if       (ik.type == INDEL::BP_LEFT)
+        if       (indelKey.type == INDEL::BP_LEFT)
         {
-            copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_ref_seq);
+            copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos,vcf_ref_seq);
             vcf_indel_seq = vcf_ref_seq + indelData.getInsertSeq() + '.';
         }
-        else if (ik.type == INDEL::BP_RIGHT)
+        else if (indelKey.type == INDEL::BP_RIGHT)
         {
-            copy_ref_subseq(ref,ik.pos,ik.pos+1,vcf_ref_seq);
+            copy_ref_subseq(ref,indelKey.pos,indelKey.pos+1,vcf_ref_seq);
             vcf_indel_seq = '.' + indelData.getInsertSeq() + vcf_ref_seq;
         }
         else
@@ -87,8 +87,8 @@ get_vcf_summary_strings(
     }
     else
     {
-        copy_ref_subseq(ref,ik.pos-1,ik.pos+ik.delete_length(),vcf_ref_seq);
-        copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_indel_seq);
+        copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos+indelKey.delete_length(),vcf_ref_seq);
+        copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos,vcf_indel_seq);
         vcf_indel_seq += indelData.getInsertSeq();
     }
 }
@@ -98,7 +98,7 @@ get_vcf_summary_strings(
 static
 void
 set_repeat_info(
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const reference_contig_segment& ref,
     starling_indel_report_info& iri)
 {
@@ -136,8 +136,8 @@ set_repeat_info(
     // count repeats in contextual sequence:
     unsigned indel_context_repeat_count(0);
     {
-        const pos_t indel_begin_pos(ik.pos);
-        const pos_t indel_end_pos(ik.right_pos());
+        const pos_t indel_begin_pos(indelKey.pos);
+        const pos_t indel_end_pos(indelKey.right_pos());
         const int repeat_unit_size(static_cast<int>(iri.repeat_unit.size()));
 
         // count upstream repeats:
@@ -182,21 +182,21 @@ set_repeat_info(
 
 void
 get_starling_indel_report_info(
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelData& indelData,
     const reference_contig_segment& ref,
     starling_indel_report_info& iri)
 {
     // indel summary info
-    get_vcf_summary_strings(ik,indelData,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
+    get_vcf_summary_strings(indelKey,indelData,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
 
-    iri.it=ik.type;
+    iri.it=indelKey.type;
 
-    const pos_t indel_begin_pos(ik.pos);
-    const pos_t indel_end_pos(ik.right_pos());
+    const pos_t indel_begin_pos(indelKey.pos);
+    const pos_t indel_end_pos(indelKey.right_pos());
 
     // repeat analysis:
-    set_repeat_info(ik,ref,iri);
+    set_repeat_info(indelKey,ref,iri);
 
     // interrupted hpol compuation:
     iri.ihpol=get_interrupted_hpol_size(indel_begin_pos-1,ref);
@@ -288,7 +288,7 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
 void
 get_starling_indel_sample_report_info(
     const starling_base_deriv_options& dopt,
-    const IndelKey& ik,
+    const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
     const pos_basecall_buffer& bc_buff,
     const bool is_tier2_pass,
@@ -394,8 +394,8 @@ get_starling_indel_sample_report_info(
 
     {
         // get various indel stats from the pileup:
-        pos_t depth_pos(ik.pos-1);
-        if (ik.type==INDEL::BP_RIGHT) depth_pos=ik.pos;
+        pos_t depth_pos(indelKey.pos-1);
+        if (indelKey.type==INDEL::BP_RIGHT) depth_pos=indelKey.pos;
         const snp_pos_info& spi(bc_buff.get_pos(depth_pos));
         isri.tier1Depth=spi.calls.size();
         isri.mapqTracker=spi.mapqTracker;

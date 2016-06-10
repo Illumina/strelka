@@ -107,16 +107,16 @@ struct IndelBuffer
 
     /// return nullptr if no indel found:
     indel_buffer_value_t*
-    getIndelDataPtr(const IndelKey& ik)
+    getIndelDataPtr(const IndelKey& indelKey)
     {
-        const iterator i(_indelBuffer.find(ik));
+        const iterator i(_indelBuffer.find(indelKey));
         return ((i==_indelBuffer.end()) ? nullptr : &(i->second) );
     }
 
     const indel_buffer_value_t*
-    getIndelDataPtr(const IndelKey& ik) const
+    getIndelDataPtr(const IndelKey& indelKey) const
     {
-        const const_iterator i(_indelBuffer.find(ik));
+        const const_iterator i(_indelBuffer.find(indelKey));
         return ((i==_indelBuffer.end()) ? nullptr : &(i->second) );
     }
 
@@ -125,12 +125,12 @@ struct IndelBuffer
     ///
     bool
     isCandidateIndel(
-        const IndelKey& ik,
+        const IndelKey& indelKey,
         const IndelData& indelData) const
     {
         if (! indelData.status.is_candidate_indel_cached)
         {
-            isCandidateIndelImpl(ik, indelData);
+            isCandidateIndelImpl(indelKey, indelData);
         }
         return indelData.status.is_candidate_indel;
     }
@@ -140,11 +140,11 @@ struct IndelBuffer
     ///
     bool
     isCandidateIndel(
-        const IndelKey& ik) const
+        const IndelKey& indelKey) const
     {
-        const IndelData* indelDataPtr(getIndelDataPtr(ik));
-        if (nullptr == indelDataPtr) findDataException(ik);
-        return isCandidateIndel(ik, *indelDataPtr);
+        const IndelData* indelDataPtr(getIndelDataPtr(indelKey));
+        if (nullptr == indelDataPtr) findDataException(indelKey);
+        return isCandidateIndel(indelKey, *indelDataPtr);
     }
 
     void
@@ -188,7 +188,7 @@ private:
     /// a candidate
     bool
     isCandidateIndelImplTestSignalNoise(
-        const IndelKey& ik,
+        const IndelKey& indelKey,
         const IndelData& indelData) const;
 
     /// much weaker version of the above -- used for indel
@@ -199,12 +199,12 @@ private:
 
     bool
     isCandidateIndelImplTest(
-        const IndelKey& ik,
+        const IndelKey& indelKey,
         const IndelData& indelData) const;
 
     void
     isCandidateIndelImpl(
-        const IndelKey& ik,
+        const IndelKey& indelKey,
         const IndelData& indelData) const;
 
     /// return object which provides estimated depth of tier1 reads
@@ -239,7 +239,7 @@ private:
     }
 
     void
-    findDataException(const IndelKey& ik) const;
+    findDataException(const IndelKey& indelKey) const;
 
 /////////////// data
     const starling_base_options& _opt;

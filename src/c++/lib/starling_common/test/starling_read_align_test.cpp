@@ -29,10 +29,10 @@ BOOST_AUTO_TEST_SUITE( starling_read_align )
 // test results of placing a single indel into a standard background:
 static
 candidate_alignment
-test_indel_placement(const IndelKey ik,
-                     const pos_t read_start_pos = 0)
+test_indel_placement(
+    const IndelKey& indelKey,
+    const pos_t read_start_pos = 0)
 {
-
     const pos_t ref_start_pos(1000);
     const bool is_fwd_strand(true);
     const unsigned read_length(100);
@@ -40,7 +40,7 @@ test_indel_placement(const IndelKey ik,
     indel_set_t iset;
     const IndelKey ikfixed(1075,INDEL::DELETE,1);
     iset.insert(ikfixed);
-    iset.insert(ik);
+    iset.insert(indelKey);
 
     return make_start_pos_alignment(ref_start_pos,read_start_pos,is_fwd_strand,read_length,iset);
 }
@@ -62,7 +62,6 @@ path_compare(const std::string& expect,
 
 BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 {
-
     {
         // basic delete
         IndelKey ik(1050,INDEL::DELETE,10);
@@ -172,17 +171,17 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 ///
 static
 std::pair<int,int>
-test_end_pin_indel_placement(const IndelKey ik,
-                             const pos_t read_end_pos = 100)
+test_end_pin_indel_placement(
+    const IndelKey& indelKey,
+    const pos_t read_end_pos = 100)
 {
-
     const pos_t ref_end_pos(1100);
     const unsigned read_length(100);
 
     indel_set_t iset;
     const IndelKey ikfixed(1075,INDEL::DELETE,1);
     iset.insert(ikfixed);
-    iset.insert(ik);
+    iset.insert(indelKey);
 
     pos_t ref_start_pos(0);
     pos_t read_start_pos(0);
@@ -196,7 +195,6 @@ test_end_pin_indel_placement(const IndelKey ik,
 
 BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 {
-
     {
         // basic delete:
         IndelKey ik(1050,INDEL::DELETE,10);

@@ -271,14 +271,14 @@ process_pos_indel_somatic(const pos_t pos)
 
     for (; indelIter != indelIterEnd; ++indelIter)
     {
-        const IndelKey& ik(indelIter->first);
+        const IndelKey& indelKey(indelIter->first);
 
         // don't write breakpoint output:
-        if (ik.is_breakpoint()) continue;
+        if (indelKey.is_breakpoint()) continue;
 
         const IndelData& indelData(getIndelData(indelIter));
 
-        if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
+        if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
 
         const IndelSampleData& normalIndelSampleData(indelData.getSampleData(NORMAL));
         const IndelSampleData& tumorIndelSampleData(indelData.getSampleData(TUMOR));
@@ -292,7 +292,7 @@ process_pos_indel_somatic(const pos_t pos)
             // caller
 
             starling_indel_report_info iri;
-            get_starling_indel_report_info(ik,indelData,_ref,iri);
+            get_starling_indel_report_info(indelKey,indelData,_ref,iri);
 
             // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
             if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
@@ -304,7 +304,7 @@ process_pos_indel_somatic(const pos_t pos)
                                                     tumor_sif.sample_opt,
                                                     indelData.errorRates.refToIndelErrorProb,
                                                     indelData.errorRates.indelToRefErrorProb,
-                                                    ik, indelData, NORMAL,TUMOR,
+                                                    indelKey, indelData, NORMAL,TUMOR,
                                                     is_use_alt_indel,
                                                     sindel);
 
@@ -318,16 +318,16 @@ process_pos_indel_somatic(const pos_t pos)
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);
-                    get_starling_indel_sample_report_info(_dopt,ik,normalIndelSampleData,normal_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_dopt,indelKey,normalIndelSampleData,normal_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.nisri[t]);
-                    get_starling_indel_sample_report_info(_dopt,ik,tumorIndelSampleData,tumor_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_dopt,indelKey,tumorIndelSampleData,tumor_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.tisri[t]);
                 }
 
-                pos_t indel_pos(ik.pos);
-                if (ik.type != INDEL::BP_RIGHT)
+                pos_t indel_pos(indelKey.pos);
+                if (indelKey.type != INDEL::BP_RIGHT)
                 {
                     indel_pos -= 1;
                 }
