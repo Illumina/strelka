@@ -303,42 +303,6 @@ process_simple_indel(const unsigned max_indel_size,
     }
 }
 
-//static
-//void
-//process_mismatches(const unsigned max_indel_size,
-//                     const ALIGNPATH::path_t& path,
-//                     const bam_seq_base& bseq,
-//                     starling_pos_processor_base& sppr,
-//                     indel_observation& obs,
-//                     const unsigned sample_no,
-//                     const unsigned path_index,
-//                     const unsigned read_offset,
-//                     const pos_t ref_head_pos)
-//{
-//    using namespace ALIGNPATH;
-//
-//    const path_segment& ps(path[path_index]);
-//
-//    if (ps.length <= max_indel_size)
-//    {
-//        obs.key.pos=ref_head_pos;
-//        obs.key.length = ps.length;
-//        if (ps.type == INSERT)
-//        {
-//            obs.key.type=INDEL::INSERT;
-////            log_os << "l: " << bseq << "\n";
-//            bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
-//
-//        }
-//        else
-//        {
-//            obs.key.type=INDEL::DELETE;
-//        }
-//        finish_indel_sppr(obs,sppr,sample_no);
-//    }
-//}
-
-
 // Extract indel information from an alignment and store this
 // in the starling_pos_processor indel buffer.
 //
@@ -387,6 +351,9 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 
     unsigned total_indel_ref_span_per_read(0);
     const unsigned aps(al.path.size());
+
+    auto& active_region_detector(sppr.get_active_region_detector());
+
     while (path_index<aps)
     {
         const path_segment& ps(al.path[path_index]);
@@ -485,8 +452,9 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
                                  sppr,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
         }
-        else if (!is_mapq_zero && is_segment_align_match(ps.type))
+        else if (!is_mapq_zero && sppr.is_active_region_detector_enabled() && is_segment_align_match(ps.type))
         {
+            // to detect active regions
             for (unsigned j(0); j < ps.length; ++j)
             {
                 const pos_t ref_pos(ref_head_pos + static_cast<pos_t>(j));
@@ -496,18 +464,18 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
 
                 if (ref.get_base(ref_pos) != base_char)
                 {
-                    sppr.get_active_region_detector().insert_mismatch(id, ref_pos, base_char);
+                    active_region_detector.insertMismatch(id, ref_pos, base_char);
                 }
                 else
                 {
-                    sppr.get_active_region_detector().insert_match(id, ref_pos, base_char);
+                    active_region_detector.insertMatch(id, ref_pos, base_char);
                 }
             }
         }
 
-        if (!is_mapq_zero && obs.key.type != INDEL::NONE)
+        if (sppr.is_active_region_detector_enabled() && !is_mapq_zero && obs.key.type != INDEL::NONE)
         {
-            sppr.get_active_region_detector().insert_indel(obs);
+            active_region_detector.insertIndel(obs);
         }
 
         for (unsigned i(0); i<n_seg; ++i)

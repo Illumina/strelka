@@ -18,57 +18,56 @@
 //
 //
 
-/// \file
 ///
 /// \author Sangtae Kim
 ///
 
-#include "active_region.hh"
+#include "ActiveRegion.hh"
 #include <string>
-#include <cstdio>
+#include <iostream>
 
-void active_region::insert_haplotype_base (align_id_t align_id, pos_t pos, std::string base)
+void ActiveRegion::insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string &base)
 {
-    if (!_align_id_to_haplotype.count(align_id))
+    if (!_alignIdToHaplotype.count(align_id))
     {
-        _align_id_to_haplotype[align_id] = std::string();
+        _alignIdToHaplotype[align_id] = std::string();
         for (int i=_start; i<pos; ++i)
-            _align_id_to_haplotype[align_id] += '.';
+            _alignIdToHaplotype[align_id] += '.';
     }
-    _align_id_to_haplotype[align_id] += base;
+    _alignIdToHaplotype[align_id] += base;
     if (pos == _end)
-        _align_id_reaching_end.insert(align_id);
+        _alignIdReachingEnd.insert(align_id);
 }
 
-void active_region::print_haplotypes() const
+void ActiveRegion::printHaplotypeSequences() const
 {
-    std::map<std::string, unsigned> haplotype_counter;
-    unsigned max_count = 0;
-    for (auto entry : _align_id_to_haplotype)
+    std::map<std::string, unsigned> haplotypeCounter;
+    unsigned maxCount = 0;
+    for (const auto& entry : _alignIdToHaplotype)
     {
-        align_id_t align_id = entry.first;
+        align_id_t alignId = entry.first;
         std::string haplotype = entry.second;
-        if (_align_id_reaching_end.find(align_id) == _align_id_reaching_end.end())
+        if (_alignIdReachingEnd.find(alignId) == _alignIdReachingEnd.end())
             haplotype += "*";
 
-        if(!haplotype_counter.count(haplotype))
-            haplotype_counter[haplotype] = 1;
+        if(!haplotypeCounter.count(haplotype))
+            haplotypeCounter[haplotype] = 1;
         else
         {
-            unsigned count = haplotype_counter[haplotype] + 1;
-            if (count > max_count)
-                max_count = count;
-            haplotype_counter[haplotype] = count;
+            unsigned count = haplotypeCounter[haplotype] + 1;
+            if (count > maxCount)
+                maxCount = count;
+            haplotypeCounter[haplotype] = count;
         }
     }
 
-    for (auto entry : haplotype_counter)
+    for (const auto& entry : haplotypeCounter)
     {
         std::string haplotype = entry.first;
         unsigned count = entry.second;
-        if (count >= 3 && count >= max_count/4)
+        if ((count >= 3) && (count >= maxCount/4))
         {
-            printf("%s\t%d\n", haplotype.c_str(), count);
+            std::cout << haplotype.c_str() << '\t' << count << std::endl;
         }
     }
 }

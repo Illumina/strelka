@@ -42,15 +42,6 @@ snoise_pos_processor(
         sample_info& normal_sif(sample(sampleId));
 
         double max_candidate_normal_sample_depth(-1.);
-#if 0
-        if (dopt.gvcf.is_max_depth())
-        {
-            if (opt.max_candidate_indel_depth_factor > 0.)
-            {
-                max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.gvcf.max_depth);
-            }
-        }
-#endif
 
         if (opt.max_candidate_indel_depth > 0.)
         {

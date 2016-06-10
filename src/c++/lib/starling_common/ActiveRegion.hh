@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Sangtae Kim
 ///
@@ -32,31 +31,30 @@
 #include <map>
 #include <set>
 
-class active_region
+/// Represent all haplotypes found in the current active region
+class ActiveRegion
 {
 public:
-    active_region(pos_t start, pos_t end, unsigned num_variants):
-        _start(start), _end(end), _num_variants(num_variants),
-        _align_id_to_haplotype(),
-        _align_id_reaching_end()
+    ActiveRegion(pos_t start, pos_t end, unsigned numVariants):
+        _start(start), _end(end), _numVariants(numVariants),
+        _alignIdToHaplotype(),
+        _alignIdReachingEnd()
     {}
 
-    pos_t get_start() { return _start; }
-    pos_t get_end() { return _end; }
-    unsigned get_length() { return _end - _start + 1; }
-    unsigned get_num_variants() { return _num_variants; }
-    bool contains(pos_t pos) { return pos >= _start && pos <= _end; }
-    void insert_haplotype_base (align_id_t align_id, pos_t pos, std::string base);
-    void print_haplotypes() const;
+    pos_t getStart() const { return _start; }
+    pos_t getEnd() const { return _end; }
+    unsigned getLength() const { return _end - _start + 1; }
+    unsigned getNumVariants() const { return _numVariants; }
+    bool contains(pos_t pos) const { return pos >= _start && pos <= _end; }
+    void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string &base);
+    void printHaplotypeSequences() const;
 
 private:
     pos_t _start;
     pos_t _end;
-    unsigned _num_variants;
+    unsigned _numVariants;
 
-    std::map<align_id_t, std::string> _align_id_to_haplotype;
+    std::map<align_id_t, std::string> _alignIdToHaplotype;
 
-    std::set<align_id_t> _align_id_reaching_end;
-//    std::string
-
+    std::set<align_id_t> _alignIdReachingEnd;
 };

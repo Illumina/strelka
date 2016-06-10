@@ -289,7 +289,6 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _is_variant_windows(! _opt.variant_windows.empty())
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
-    , _active_region_detector()
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
@@ -886,9 +885,9 @@ process_pos(const int stage_no,
 
     if        (stage_no==STAGE::HEAD)
     {
-//        printf("HEAD\t%d\n", pos);
         init_read_segment_pos(pos);
-        _active_region_detector.update_end_position(pos);
+        if (_opt.is_short_haplotype_calling_enabled)
+            _active_region_detector.updateEndPosition(pos);
 
         if (_opt.is_write_candidate_indels())
         {
@@ -900,8 +899,6 @@ process_pos(const int stage_no,
     }
     else if (stage_no==STAGE::READ_BUFFER)
     {
-//        printf("READ_BUFFER\t%d\n", pos);
-
 #if 0
         for (unsigned s(0); s<_n_samples; ++s)
         {
@@ -911,7 +908,8 @@ process_pos(const int stage_no,
         }
 #endif
         //        consolidate_candidate_indel_pos(pos);
-        _active_region_detector.update_start_position(pos);
+        if (_opt.is_short_haplotype_calling_enabled)
+            _active_region_detector.updateStartPosition(pos);
 
         if (! _opt.is_write_candidate_indels_only)
         {
@@ -1363,9 +1361,6 @@ pileup_read_segment(const read_segment& rseg,
             {
                 const unsigned read_pos(read_head_pos+j);
 
-//                if (_ref.get_base(ref_head_pos+static_cast<pos_t>(j)) != id_to_base(bam_seq_code_to_id(bseq.get_code(read_pos))))
-//                    printf("2\t%d\t%d\t%d\n", ref_head_pos, ref_head_pos+static_cast<pos_t>(j), bam_seq_code_to_id(bseq.get_code(read_pos)));
-
                 if ((read_pos < read_begin) || (read_pos >= read_end)) continue; // allow for read end trimming
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
                 // skip position outside of report range:
@@ -1491,8 +1486,6 @@ pileup_read_segment(const read_segment& rseg,
                                                    current_call_filter,is_neighbor_mismatch,is_tier_specific_filter,
                                                    isFirstBaseCallFromMatchSeg,
                                                    isLastBaseCallFromMatchSeg);
-//                    if (_ref.get_base(ref_pos) != id_to_base(bc.base_id))
-//                        printf("3\t%d\t%d\t%d\n", ref_head_pos, ref_pos, bc.base_id);
 
                     insert_pos_basecall(ref_pos,
                                         sample_no,

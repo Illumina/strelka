@@ -87,6 +87,10 @@ struct starling_base_options : public blt_options
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
 
+    // parameter to enable/disable short haplotype calling
+    // it's always false for now
+    bool is_short_haplotype_calling_enabled = false;
+
     // to contribute to a breakpoint likelihood, a read must have at least
     // this many bases on each side of the breakpoint:
     //

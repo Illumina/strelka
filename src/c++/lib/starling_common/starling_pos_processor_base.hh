@@ -41,7 +41,7 @@
 #include "starling_common/starling_pos_processor_win_avg_set.hh"
 #include "starling_common/starling_read_buffer.hh"
 #include "starling_common/starling_streams_base.hh"
-#include "starling_common/active_region_detector.hh"
+#include "starling_common/ActiveRegionDetector.hh"
 
 
 #include "boost/utility.hpp"
@@ -110,10 +110,8 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     insert_indel(const IndelObservation& obs,
                  const unsigned sampleId);
 
-    // for detecting active regions
-
-
-    active_region_detector&
+    bool is_active_region_detector_enabled() { return _opt.is_short_haplotype_calling_enabled; }
+    ActiveRegionDetector&
     get_active_region_detector()
     {
         return _active_region_detector;
@@ -614,6 +612,7 @@ protected:
 
 private:
     IndelBuffer _indelBuffer;
-    // used to keep active regions
-    active_region_detector _active_region_detector;
+
+    // to keep active regions
+    ActiveRegionDetector _active_region_detector;
 };
