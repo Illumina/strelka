@@ -43,39 +43,28 @@ safeFrac(const int num, const int denom)
 }
 
 
-/**
- * Approximate indel AF from reads
- */
+
 double
 calculateIndelAF(
-    const starling_indel_sample_report_info& isri
-)
+    const starling_indel_sample_report_info& isri)
 {
     return safeFrac(isri.n_q30_indel_reads, isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
 }
 
-/**
- * Approximate indel "other" frequency (OF) from reads
- */
+
+
 double
 calculateIndelOF(
-    const starling_indel_sample_report_info& isri
-)
+    const starling_indel_sample_report_info& isri)
 {
     return safeFrac(isri.n_other_reads, isri.n_other_reads + isri.n_q30_ref_reads + isri.n_q30_alt_reads + isri.n_q30_indel_reads);
 }
 
-/**
- * Similar to
- * https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
- *
- * We adjust the counts for low coverage/low AF by adding 0.5 -- this deals with the
- * case where we don't actually observe reads on one strand.
- */
+
+
 double
 calculateSOR(
-    const starling_indel_sample_report_info& isri
-)
+    const starling_indel_sample_report_info& isri)
 {
     // from
     // http://www.people.fas.harvard.edu/~mparzen/published/parzen17.pdf
@@ -89,10 +78,7 @@ calculateSOR(
 }
 
 
-/**
- * Calculate phred-scaled Fisher strand bias (p-value for the null hypothesis that
- * either REF or ALT counts are biased towards one particular strand)
- */
+
 double
 calculateFS(const starling_indel_sample_report_info& isri)
 {
@@ -100,10 +86,8 @@ calculateFS(const starling_indel_sample_report_info& isri)
                                       isri.n_q30_ref_reads_rev, isri.n_q30_indel_reads_rev);
 }
 
-/**
- * Calculate the p-value using a binomial test for the null hypothesis that
- * the ALT allele occurs on a particular strand only.
- */
+
+
 double
 calculateBSA(const starling_indel_sample_report_info& isri)
 {
@@ -111,9 +95,7 @@ calculateBSA(const starling_indel_sample_report_info& isri)
 }
 
 
-/**
- * Calculate base-calling noise from window average set
- */
+
 double
 calculateBCNoise(const win_avg_set& was)
 {
@@ -123,56 +105,53 @@ calculateBCNoise(const win_avg_set& was)
     return bcnoise;
 }
 
-/**
- * Calculate AOR feature (log ratio between T_AF and N_AF)
- */
+
+
 double
-calculateAlleleFrequencyRate(const starling_indel_sample_report_info& nisri,
-                             const starling_indel_sample_report_info& tisri
-                            )
+calculateAlleleFrequencyRate(
+    const starling_indel_sample_report_info& normalIndelSampleReportInfo,
+    const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
 {
-    const double T_AF = calculateIndelAF(tisri);
-    const double N_AF = calculateIndelAF(nisri);
+    const double T_AF = calculateIndelAF(tumorIndelSampleReportInfo);
+    const double N_AF = calculateIndelAF(normalIndelSampleReportInfo);
 
     return log10(std::max(T_AF, (double)0.00001) / std::max(N_AF, (double)0.0001));
 }
 
-/**
- * Calculate OD feature (log ratio between T_AF and T_OF)
- */
+
+
 double
-calculateTumorNoiseRate(const starling_indel_sample_report_info& tisri)
+calculateTumorNoiseRate(const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
 {
-    const double T_AF = calculateIndelAF(tisri);
-    const double T_OF = calculateIndelOF(tisri);
+    const double T_AF = calculateIndelAF(tumorIndelSampleReportInfo);
+    const double T_OF = calculateIndelOF(tumorIndelSampleReportInfo);
 
     return log10(std::max(T_AF, (double)0.00001) / std::max(T_OF, (double)0.0001));
 }
 
-/**
- * Calculate LAR feature (log ratio between #alt reads in tumor and #ref reads in normal)
- */
+
+
 double
-calculateLogAltRatio(const starling_indel_sample_report_info& nisri,
-                     const starling_indel_sample_report_info& tisri)
+calculateLogAltRatio(
+     const starling_indel_sample_report_info& normalIndelSampleReportInfo,
+     const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
 {
-    const unsigned n_ref_reads = nisri.n_q30_ref_reads;
-    const unsigned t_alt_reads = tisri.n_q30_indel_reads;
+    const unsigned n_ref_reads = normalIndelSampleReportInfo.n_q30_ref_reads;
+    const unsigned t_alt_reads = tumorIndelSampleReportInfo.n_q30_indel_reads;
     return log10(safeFrac(t_alt_reads, n_ref_reads));
 }
 
-/**
- * Calculate LOR feature (log odds ratio for  T_REF T_ALT
- *                                            N_REF N_ALT)
- */
+
+
 double
-calculateLogOddsRatio(const starling_indel_sample_report_info& nisri,
-                      const starling_indel_sample_report_info& tisri)
+calculateLogOddsRatio(
+    const starling_indel_sample_report_info& normalIndelSampleReportInfo,
+    const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
 {
-    const double n_ref_reads = nisri.n_q30_ref_reads + .5;
-    const double n_alt_reads = nisri.n_q30_indel_reads + .5;
-    const double t_ref_reads = tisri.n_q30_ref_reads + .5;
-    const double t_alt_reads = tisri.n_q30_indel_reads + .5;
+    const double n_ref_reads = normalIndelSampleReportInfo.n_q30_ref_reads + .5;
+    const double n_alt_reads = normalIndelSampleReportInfo.n_q30_indel_reads + .5;
+    const double t_ref_reads = tumorIndelSampleReportInfo.n_q30_ref_reads + .5;
+    const double t_alt_reads = tumorIndelSampleReportInfo.n_q30_indel_reads + .5;
 
     return log10(t_ref_reads*n_alt_reads / t_alt_reads / n_ref_reads);
 }

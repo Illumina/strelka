@@ -30,82 +30,69 @@
 #include "SomaticIndelVcfWriter.hh"
 
 
-/**
- * Approximate indel AF from reads
- */
+/// Approximate indel AF from reads
+///
 double
 calculateIndelAF(
-    const starling_indel_sample_report_info& isri
-);
+    const starling_indel_sample_report_info& isri);
 
-/**
- * Approximate indel "other" frequency (OF) from reads
- */
+/// Approximate indel "other" frequency (OF) from reads
+///
 double
 calculateIndelOF(
-    const starling_indel_sample_report_info& isri
-);
+    const starling_indel_sample_report_info& isri);
 
-/**
- * Similar to
- * https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
- *
- * We adjust the counts for low coverage/low AF by adding 0.5 -- this deals with the
- * case where we don't actually observe reads on one strand.
- */
+/// Similar to
+/// https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_StrandOddsRatio.php
+///
+/// We adjust the counts for low coverage/low AF by adding 0.5 -- this deals with the
+/// case where we don't actually observe reads on one strand.
+///
 double
 calculateSOR(
-    const starling_indel_sample_report_info& isri
-);
+    const starling_indel_sample_report_info& isri);
 
-/*
- * Calculate phred-scaled Fisher strand bias (p-value for the null hypothesis that
- * either REF or ALT counts are biased towards one particular strand)
- */
+/// Calculate phred-scaled Fisher strand bias (p-value for the null hypothesis that
+/// either REF or ALT counts are biased towards one particular strand)
+///
 double
 calculateFS(const starling_indel_sample_report_info& isri);
 
-/**
- * Calculate the p-value using a binomial test for the null hypothesis that
- * the ALT allele occurs on a particular strand only.
- */
+/// Calculate the p-value using a binomial test for the null hypothesis that
+/// the ALT allele occurs on a particular strand only.
+///
 double
 calculateBSA(const starling_indel_sample_report_info& isri);
 
-/**
- * Calculate base-calling noise from window average set
- */
+/// Calculate base-calling noise from window average set
+///
 double
 calculateBCNoise(const win_avg_set& was);
 
-/**
- * Calculate AFR feature (log ratio between T_AF and N_AF)
- */
+/// Calculate AFR feature (log ratio between T_AF and N_AF)
+///
 double
-calculateAlleleFrequencyRate(const starling_indel_sample_report_info& nisri,
-                             const starling_indel_sample_report_info& tisri
-                            );
+calculateAlleleFrequencyRate(
+    const starling_indel_sample_report_info& normalIndelSampleReportInfo,
+    const starling_indel_sample_report_info& tumorIndelSampleReportInfo);
 
-/**
- * Calculate TNR feature (log ratio between T_AF and T_OF)
- */
+/// Calculate TNR feature (log ratio between T_AF and T_OF)
+///
 double
-calculateTumorNoiseRate(const starling_indel_sample_report_info& tisri);
+calculateTumorNoiseRate(const starling_indel_sample_report_info& tumorIndelSampleReportInfo);
 
-/**
- * Calculate LAR feature (log ratio between #alt reads in tumor and #ref reads in normal)
- */
+/// Calculate LAR feature (log ratio between #alt reads in tumor and #ref reads in normal)
+///
 double
 calculateLogAltRatio(const starling_indel_sample_report_info& nisri,
                      const starling_indel_sample_report_info& tisri);
 
-/**
- * Calculate LOR feature (log odds ratio for  T_REF T_ALT
- *                                            N_REF N_ALT)
- */
+/// Calculate LOR feature (log odds ratio for  T_REF T_ALT
+///                                            N_REF N_ALT)
+///
 double
-calculateLogOddsRatio(const starling_indel_sample_report_info& nisri,
-                      const starling_indel_sample_report_info& tisri);
+calculateLogOddsRatio(const starling_indel_sample_report_info& normalIndelSampleReportInfo,
+                      const starling_indel_sample_report_info& tumorIndelSampleReportInfo);
 
 
 /// Calculate empirical scoring features and add to smod
@@ -117,6 +104,5 @@ calculateScoringFeatures(
     const win_avg_set& t_was,
     const strelka_options& opt,
     const strelka_deriv_options& dopt,
-    strelka_shared_modifiers_indel& smod
-);
+    strelka_shared_modifiers_indel& smod);
 

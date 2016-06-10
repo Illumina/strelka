@@ -181,11 +181,11 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info indelReportInfo,
-        const starling_indel_sample_report_info& isri)
+        const starling_indel_sample_report_info& indelSampleReportInfo)
         : _indelKey(indelKey)
         , _indelData(indelData)
         , _indelReportInfo(indelReportInfo)
-        , _isri(isri)
+        , _indelSampleReportInfo(indelSampleReportInfo)
     {}
 
     void
@@ -205,7 +205,7 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
     const IndelData _indelData;
     // TODO: make the indel overlapping code create a new call, then revert this to const
     starling_indel_report_info _indelReportInfo;
-    const starling_indel_sample_report_info _isri;
+    const starling_indel_sample_report_info _indelSampleReportInfo;
 
     ALIGNPATH::path_t cigar;
 
@@ -224,9 +224,9 @@ struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenoty
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
-        const starling_indel_sample_report_info& isri,
+        const starling_indel_sample_report_info& indelSampleReportInfo,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
-        : GermlineIndelSimpleGenotypeInfo(indelKey, indelData, indelReportInfo, isri)
+        : GermlineIndelSimpleGenotypeInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _dindel(dindel)
     {}
 
@@ -362,8 +362,8 @@ struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGen
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
-        const starling_indel_sample_report_info& isri)
-        : GermlineIndelSimpleGenotypeInfo(indelKey, indelData, indelReportInfo, isri)
+        const starling_indel_sample_report_info& indelSampleReportInfo)
+        : GermlineIndelSimpleGenotypeInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
     {
@@ -409,9 +409,9 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
         const IndelData& initIndelData,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
         const starling_indel_report_info& initIndelReportInfo,
-        const starling_indel_sample_report_info& init_isri) : GermlineIndelCallInfo(initIndelKey.pos)
+        const starling_indel_sample_report_info& initIndelSampleReportInfo) : GermlineIndelCallInfo(initIndelKey.pos)
     {
-        _calls.emplace_back(initIndelKey, initIndelData, initIndelReportInfo, init_isri, init_dindel);
+        _calls.emplace_back(initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
     }
 
     bool is_forced_output() const override

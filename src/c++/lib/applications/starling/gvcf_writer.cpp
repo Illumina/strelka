@@ -821,39 +821,39 @@ write_indel_record(
 
     os << ':' << ((call.empiricalVariantScore>=0) ? call.empiricalVariantScore : call.gqx);
 
-    os << ':' << call._isri.tier1Depth;
+    os << ':' << call._indelSampleReportInfo.tier1Depth;
 
     // SAMPLE AD/ADF/ADR:
     {
         auto orderRefReads = [](const GermlineDiploidIndelSimpleGenotypeInfo& a, const GermlineDiploidIndelSimpleGenotypeInfo& b)
         {
-            return (a._isri.n_q30_ref_reads < b._isri.n_q30_ref_reads);
+            return (a._indelSampleReportInfo.n_q30_ref_reads < b._indelSampleReportInfo.n_q30_ref_reads);
         };
 
         const auto maxRefCountIter(
             std::max_element(ii._calls.begin(),ii._calls.end(),orderRefReads));
 
-        const auto& maxRefIsri(maxRefCountIter->_isri);
+        const auto& maxRefIsri(maxRefCountIter->_indelSampleReportInfo);
 
         // AD
         os << ':' << maxRefIsri.n_q30_ref_reads;
         for (const auto& icall : ii._calls)
         {
-            os << ',' << icall._isri.n_q30_indel_reads;
+            os << ',' << icall._indelSampleReportInfo.n_q30_indel_reads;
         }
 
         // ADF
         os << ':' << maxRefIsri.n_q30_ref_reads_fwd;
         for (const auto& icall : ii._calls)
         {
-            os << ',' << icall._isri.n_q30_indel_reads_fwd;
+            os << ',' << icall._indelSampleReportInfo.n_q30_indel_reads_fwd;
         }
 
         // ADR
         os << ':' << maxRefIsri.n_q30_ref_reads_rev;
         for (const auto& icall : ii._calls)
         {
-            os << ',' << icall._isri.n_q30_indel_reads_rev;
+            os << ',' << icall._indelSampleReportInfo.n_q30_indel_reads_rev;
         }
     }
 
@@ -972,19 +972,19 @@ write_indel_record(
 
         os << ':' << call.gqx;
 
-        os << ':' << call._isri.tier1Depth;
+        os << ':' << call._indelSampleReportInfo.tier1Depth;
 
         // AD:
-        os << ':' << call._isri.n_q30_ref_reads
-           << ',' << call._isri.n_q30_indel_reads;
+        os << ':' << call._indelSampleReportInfo.n_q30_ref_reads
+           << ',' << call._indelSampleReportInfo.n_q30_indel_reads;
 
         // ADF
-        os << ':' << call._isri.n_q30_ref_reads_fwd
-           << ',' << call._isri.n_q30_indel_reads_fwd;
+        os << ':' << call._indelSampleReportInfo.n_q30_ref_reads_fwd
+           << ',' << call._indelSampleReportInfo.n_q30_indel_reads_fwd;
 
         // ADR
-        os << ':' << call._isri.n_q30_ref_reads_rev
-           << ',' << call._isri.n_q30_indel_reads_rev;
+        os << ':' << call._indelSampleReportInfo.n_q30_ref_reads_rev
+           << ',' << call._indelSampleReportInfo.n_q30_indel_reads_rev;
 
         // VF
         {

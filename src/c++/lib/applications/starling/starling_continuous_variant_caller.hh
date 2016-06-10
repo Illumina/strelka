@@ -42,7 +42,7 @@ struct starling_continuous_variant_caller
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
-        const starling_indel_sample_report_info& isri,
+        const starling_indel_sample_report_info& indelSampleReportInfo,
         GermlineContinuousIndelCallInfo& info);
 
     static double strand_bias(unsigned fwdAlt, unsigned revAlt, unsigned fwdOther, unsigned revOther, double noise);

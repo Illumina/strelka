@@ -34,15 +34,15 @@
 static
 void
 write_vcf_sample_info(
-    const starling_indel_sample_report_info& isri1,
-    const starling_indel_sample_report_info& /*isri2*/,
+    const starling_indel_sample_report_info& indelSampleReportInfo1,
+    const starling_indel_sample_report_info& /*indelSampleReportInfo2*/,
     const denovo_indel_call& dinc,
     const int& id,
     std::ostream& os)
 {
 
 //	GT:GQ:GQX:DP:DP2:AD:PL
-    int total = isri1.n_q30_ref_reads + isri1.n_q30_indel_reads;
+    int total = indelSampleReportInfo1.n_q30_ref_reads + indelSampleReportInfo1.n_q30_indel_reads;
 
     static const char sep(':');
     if (dinc.gtstring.size()>0 && total>0)
@@ -59,18 +59,18 @@ write_vcf_sample_info(
         os << "./." << sep << "." << sep << "." << sep;
     }
 
-    os << isri1.tier1Depth
+    os << indelSampleReportInfo1.tier1Depth
        << sep
 //	   n_q30_alt_reads + n_q30_indel_reads + n_q30_ref_reads;
-       << isri1.n_q30_ref_reads << ','
-       << isri1.n_q30_indel_reads;// + isri1.n_q30_alt_reads;
-//       << isri1.n_q30_ref_reads+isri2.n_q30_ref_reads << ','
-//        << isri1.n_q30_alt_reads+isri2.n_q30_alt_reads
+       << indelSampleReportInfo1.n_q30_ref_reads << ','
+       << indelSampleReportInfo1.n_q30_indel_reads;// + indelSampleReportInfo1.n_q30_alt_reads;
+//       << indelSampleReportInfo1.n_q30_ref_reads+isri2.n_q30_ref_reads << ','
+//        << indelSampleReportInfo1.n_q30_alt_reads+isri2.n_q30_alt_reads
 //       << sep
-//       << isri1.n_q30_indel_reads << ','
+//       << indelSampleReportInfo1.n_q30_indel_reads << ','
 //       << isri2.n_q30_indel_reads
 //       << sep
-//       << isri1.n_other_reads << ','
+//       << indelSampleReportInfo1.n_other_reads << ','
 //       << isri2.n_other_reads;
 }
 

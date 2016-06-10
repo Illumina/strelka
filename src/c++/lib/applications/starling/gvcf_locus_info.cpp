@@ -109,9 +109,9 @@ computeEmpiricalScoringFeatures(
     const double chromDepth,
     const bool isHetalt)
 {
-    const double filteredLocusDepth(_isri.tier1Depth);
-    const double locusDepth(_isri.mapqTracker.count);
-    const double q30Depth(_isri.total_q30_reads());
+    const double filteredLocusDepth(_indelSampleReportInfo.tier1Depth);
+    const double locusDepth(_indelSampleReportInfo.mapqTracker.count);
+    const double q30Depth(_indelSampleReportInfo.total_q30_reads());
 
     const double chromDepthFactor(safeFrac(1,chromDepth));
     const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
@@ -123,16 +123,16 @@ computeEmpiricalScoringFeatures(
     features.set(GERMLINE_INDEL_SCORING_FEATURES::REFREP1, (_indelReportInfo.ref_repeat_count));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (_indelReportInfo.indel_repeat_count));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (_indelReportInfo.repeat_unit.length()));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_isri.n_q30_ref_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_isri.n_q30_indel_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_isri.n_q30_alt_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_isri.tier1Depth * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_indelSampleReportInfo.n_q30_ref_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_indelSampleReportInfo.n_q30_indel_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_indelSampleReportInfo.n_q30_alt_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_indelSampleReportInfo.tier1Depth * chromDepthFactor));
 
     {
         // allele bias metrics
-        const double r0(_isri.n_q30_ref_reads);
-        const double r1(_isri.n_q30_indel_reads);
-        const double r2(_isri.n_q30_alt_reads);
+        const double r0(_indelSampleReportInfo.n_q30_ref_reads);
+        const double r1(_indelSampleReportInfo.n_q30_indel_reads);
+        const double r2(_indelSampleReportInfo.n_q30_alt_reads);
 
         // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
         // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
@@ -160,8 +160,8 @@ computeEmpiricalScoringFeatures(
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (gqx * chromDepthFactor));
 
         // how unreliable are the read mappings near this locus?
-        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ, (_isri.mapqTracker.getRMS()));
-        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (_isri.mapqTracker.getZeroFrac()));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ, (_indelSampleReportInfo.mapqTracker.getRMS()));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (_indelSampleReportInfo.mapqTracker.getZeroFrac()));
 
         // how noisy is the locus?
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM, (filteredLocusDepth * locusDepthFactor));
@@ -181,9 +181,9 @@ computeEmpiricalScoringFeatures(
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (gqx * filteredLocusDepthFactor));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM, (gq * filteredLocusDepthFactor));
 
-        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (_isri.n_q30_ref_reads * q30DepthFactor));
-        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (_isri.n_q30_indel_reads * q30DepthFactor));
-        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM, (_isri.n_q30_alt_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (_indelSampleReportInfo.n_q30_ref_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (_indelSampleReportInfo.n_q30_indel_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM, (_indelSampleReportInfo.n_q30_alt_reads * q30DepthFactor));
 
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (_dindel.indel_qphred));
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (gqx));
@@ -469,7 +469,7 @@ operator<<(
     os << "IndelKey: " << shi._indelKey << "\n";
     //os << "indel_data: " << shi._id << "\n";
     os << "indel_report_info: " << shi._indelReportInfo << "\n";
-    os << "indel_sample_info: " << shi._isri << "\n";
+    os << "indel_sample_info: " << shi._indelSampleReportInfo << "\n";
     os << "cigar: " << shi.cigar << "\n";
 
     return os;
