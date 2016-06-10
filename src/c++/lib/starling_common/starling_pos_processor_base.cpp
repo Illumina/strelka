@@ -1095,8 +1095,8 @@ write_candidate_indels_pos(
     for (; indelIter!=indelIterEnd; ++indelIter)
     {
         const indel_key& ik(indelIter->first);
-        const IndelData& id(getIndelData(indelIter));
-        if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
+        const IndelData& indelData(getIndelData(indelIter));
+        if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
         bos << _chrom_name << "\t"
             << output_pos << "\t"
             << INDEL::get_index_label(ik.type) << "\t"
@@ -1105,7 +1105,7 @@ write_candidate_indels_pos(
         {
             bos << ik.swap_dlength << "\t";
         }
-        bos << id.getInsertSeq() << "\n";
+        bos << indelData.getInsertSeq() << "\n";
     }
 }
 

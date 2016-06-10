@@ -138,18 +138,18 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
 void starling_continuous_variant_caller::add_indel_call(
     const starling_base_options& opt,
     const indel_key& ik,
-    const IndelData& id,
+    const IndelData& indelData,
     const starling_indel_report_info& iri,
     const starling_indel_sample_report_info& isri,
     GermlineContinuousIndelCallInfo& info)
 {
     // determine VF
     double vf = isri.n_q30_indel_reads / ((double)isri.total_q30_reads());
-    if (vf > opt.min_het_vf || id.is_forced_output)
+    if (vf > opt.min_het_vf || indelData.is_forced_output)
     {
         info.calls.emplace_back(
             isri.total_q30_reads(), isri.n_q30_indel_reads,
-            ik, id, iri, isri);
+            ik, indelData, iri, isri);
         GermlineContinuousIndelSimpleGenotypeInfo& call = info.calls.back();
         call.gqx = call.gq = poisson_qscore(isri.n_q30_indel_reads, isri.total_q30_reads(), (unsigned)opt.min_qscore, 40);
     }

@@ -271,19 +271,19 @@ operator<<(
 std::ostream&
 operator<<(
     std::ostream& os,
-    const IndelData& id)
+    const IndelData& indelData)
 {
-    os << "indel_key: " << id._ik << "\n";
-    os << "is_external_candidate: " << id.is_external_candidate << "\n";
-    os << "is_forced_output: " << id.is_forced_output << "\n";
+    os << "indel_key: " << indelData._ik << "\n";
+    os << "is_external_candidate: " << indelData.is_external_candidate << "\n";
+    os << "is_forced_output: " << indelData.is_forced_output << "\n";
 
-    os << "seq: " << id.getInsertSeq() << "\n";
+    os << "seq: " << indelData.getInsertSeq() << "\n";
 
-    const unsigned sampleCount(id.getSampleCount());
+    const unsigned sampleCount(indelData.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         os << "BEGIN sample: " << sampleIndex << "\n";
-        os << id.getSampleData(sampleIndex);
+        os << indelData.getSampleData(sampleIndex);
         os << "BEGIN sample: " << sampleIndex << "\n";
     }
     return os;

@@ -122,13 +122,13 @@ check_for_candidate_indel_overlap(
         // check if read intersects with indel breakpoint:
         if (! is_range_intersect_indel_breakpoints(read_range,ik)) continue;
 
-        const IndelData& id(getIndelData(indelIter));
+        const IndelData& indelData(getIndelData(indelIter));
 #ifdef DEBUG_ALIGN
         std::cerr << "VARMIT intersects indel: " << ik << id;
 #endif
 
         // check if indel qualifies as candidate indel:
-        if (indelBuffer.isCandidateIndel(ik, id))
+        if (indelBuffer.isCandidateIndel(ik, indelData))
         {
 #ifdef DEBUG_ALIGN
             std::cerr << "VARMIT read segment intersects at least one qualifying candidate indel.\n";
@@ -164,13 +164,13 @@ bool
 is_usable_indel(
     const IndelBuffer& indelBuffer,
     const indel_key& ik,
-    const IndelData& id,
+    const IndelData& indelData,
     const align_id_t read_id,
     const unsigned sampleId)
 {
-    if (indelBuffer.isCandidateIndel(ik, id)) return true;
+    if (indelBuffer.isCandidateIndel(ik, indelData)) return true;
 
-    const IndelSampleData& isd(id.getSampleData(sampleId));
+    const IndelSampleData& isd(indelData.getSampleData(sampleId));
     return ((isd.tier1_map_read_ids.count(read_id)>0) ||
             (isd.tier2_map_read_ids.count(read_id)>0) ||
             (isd.submap_read_ids.count(read_id)>0) ||
@@ -227,8 +227,8 @@ add_indels_in_range(
         }
         else
         {
-            const IndelData& id(getIndelData(indelIter));
-            if (is_usable_indel(indelBuffer, ik, id, read_id, sampleId))
+            const IndelData& indelData(getIndelData(indelIter));
+            if (is_usable_indel(indelBuffer, ik, indelData, read_id, sampleId))
             {
                 indel_status_map[ik].is_present = false;
                 indel_status_map[ik].is_remove_only = is_remove_only;

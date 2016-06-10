@@ -277,7 +277,7 @@ struct IndelData
     }
 
 private:
-    friend std::ostream& operator<<(std::ostream& os, const IndelData& id);
+    friend std::ostream& operator<<(std::ostream& os, const IndelData& indelData);
 public:
 // ------------- data ------------------
 
@@ -320,4 +320,4 @@ private:
 std::ostream& operator<<(std::ostream& os, const IndelObservationData& id);
 std::ostream& operator<<(std::ostream& os, const ReadPathScores& rps);
 std::ostream& operator<<(std::ostream& os, const IndelSampleData& id);
-std::ostream& operator<<(std::ostream& os, const IndelData& id);
+std::ostream& operator<<(std::ostream& os, const IndelData& indelData);

@@ -46,7 +46,7 @@ struct somatic_indel_caller_grid : private boost::noncopyable
         const double indel_error_prob,
         const double ref_error_prob,
         const indel_key& ik,
-        const IndelData& id,
+        const IndelData& indelData,
         const unsigned normalId,
         const unsigned tumorId,
         const bool is_use_alt_indel,

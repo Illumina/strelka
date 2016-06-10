@@ -127,8 +127,8 @@ addIndelObservation(
         indelIter = retval.first;
     }
 
-    IndelData& id(getIndelData(indelIter));
-    id.addIndelObservation(sampleId, obs.data);
+    IndelData& indelData(getIndelData(indelIter));
+    indelData.addIndelObservation(sampleId, obs.data);
     return isNovel;
 }
 
@@ -138,14 +138,14 @@ bool
 IndelBuffer::
 isCandidateIndelImplTestSignalNoise(
     const indel_key& ik,
-    const IndelData& id) const
+    const IndelData& indelData) const
 {
     // determine if the observed counts are sig wrt the error rate for at least one sample:
     //
-    const unsigned sampleCount(id.getSampleCount());
+    const unsigned sampleCount(indelData.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const IndelSampleData& isd(id.getSampleData(sampleIndex));
+        const IndelSampleData& isd(indelData.getSampleData(sampleIndex));
 
         // for each sample, get the number of tier 1 reads supporting the indel
         // and the total number of tier 1 reads at this locus
@@ -166,7 +166,7 @@ isCandidateIndelImplTestSignalNoise(
         // test to see if the observed indel coverage has a binomial exact test
         // p-value above the rejection threshold. If this does not occur for the
         // counts observed in any sample, the indel cannot become a candidate
-        if (_countCache.isRejectNull(totalReadCount, id.errorRates.indelToRefErrorProb, tier1ReadSupportCount))
+        if (_countCache.isRejectNull(totalReadCount, indelData.errorRates.indelToRefErrorProb, tier1ReadSupportCount))
         {
             return true;
         }
@@ -179,12 +179,12 @@ isCandidateIndelImplTestSignalNoise(
 bool
 IndelBuffer::
 isCandidateIndelImplTestWeakSignal(
-    const IndelData& id) const
+    const IndelData& indelData) const
 {
-    const unsigned sampleCount(id.getSampleCount());
+    const unsigned sampleCount(indelData.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        const IndelSampleData& isd(id.getSampleData(sampleIndex));
+        const IndelSampleData& isd(indelData.getSampleData(sampleIndex));
         const unsigned tier1ReadSupportCount(isd.tier1_map_read_ids.size());
         static const unsigned min_candidate_cov_floor(1);
         if (tier1ReadSupportCount < min_candidate_cov_floor) continue;
@@ -199,40 +199,40 @@ bool
 IndelBuffer::
 isCandidateIndelImplTest(
     const indel_key& ik,
-    const IndelData& id) const
+    const IndelData& indelData) const
 {
     // initialize indel error rates:
-    if (! id.errorRates.isInit)
+    if (! indelData.errorRates.isInit)
     {
         // get standard rates:
         starling_indel_report_info iri;
-        get_starling_indel_report_info(ik, id, _ref, iri);
+        get_starling_indel_report_info(ik, indelData, _ref, iri);
         _dopt.getIndelErrorModel().getIndelErrorRate(iri,
-                                                     id.errorRates.refToIndelErrorProb,
-                                                     id.errorRates.indelToRefErrorProb);
+                                                     indelData.errorRates.refToIndelErrorProb,
+                                                     indelData.errorRates.indelToRefErrorProb);
 
         // compute scaled rates:
-        id.errorRates.scaledIndelToRefErrorProb = id.errorRates.indelToRefErrorProb;
-        id.errorRates.scaledRefToIndelErrorProb = id.errorRates.refToIndelErrorProb;
+        indelData.errorRates.scaledIndelToRefErrorProb = indelData.errorRates.indelToRefErrorProb;
+        indelData.errorRates.scaledRefToIndelErrorProb = indelData.errorRates.refToIndelErrorProb;
         if (_opt.isIndelErrorRateFactor)
         {
-            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, id.errorRates.scaledRefToIndelErrorProb);
-            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, id.errorRates.scaledIndelToRefErrorProb);
+            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, indelData.errorRates.scaledRefToIndelErrorProb);
+            scaleIndelErrorRate(_dopt.logIndelErrorRateFactor, indelData.errorRates.scaledIndelToRefErrorProb);
         }
 
-        id.errorRates.isInit = true;
+        indelData.errorRates.isInit = true;
     }
 
     // check whether the candidate has been externally specified:
-    if (id.is_external_candidate) return true;
+    if (indelData.is_external_candidate) return true;
 
     if (_opt.is_candidate_indel_signal_test)
     {
-        if (!isCandidateIndelImplTestSignalNoise(ik, id)) return false;
+        if (!isCandidateIndelImplTestSignalNoise(ik, indelData)) return false;
     }
     else
     {
-        if (!isCandidateIndelImplTestWeakSignal(id)) return false;
+        if (!isCandidateIndelImplTestWeakSignal(indelData)) return false;
     }
 
     //
@@ -241,7 +241,7 @@ isCandidateIndelImplTest(
     // call getInsertSize() instead of asking for the insert seq
     // so as to not finalize any incomplete insertions:
     if (ik.is_breakpoint() &&
-        (_opt.min_candidate_indel_open_length > id.getInsertSize()))
+        (_opt.min_candidate_indel_open_length > indelData.getInsertSize()))
     {
         return false;
     }
@@ -269,11 +269,11 @@ void
 IndelBuffer::
 isCandidateIndelImpl(
     const indel_key& ik,
-    const IndelData& id) const
+    const IndelData& indelData) const
 {
-    const bool is_candidate(isCandidateIndelImplTest(ik, id));
-    id.status.is_candidate_indel = is_candidate;
-    id.status.is_candidate_indel_cached = true;
+    const bool is_candidate(isCandidateIndelImplTest(ik, indelData));
+    indelData.status.is_candidate_indel = is_candidate;
+    indelData.status.is_candidate_indel_cached = true;
 }
 
 

@@ -370,7 +370,7 @@ static
 bool
 is_multi_indel_allele(
     const starling_base_deriv_options& dopt,
-    const IndelData& id,
+    const IndelData& indelData,
     const bool is_include_tier2,
     bool& is_overlap)
 {
@@ -385,11 +385,11 @@ is_multi_indel_allele(
 
     // get total pprob:
     ReadPathScores total_pprob;
-    const unsigned sampleSize(id.getSampleCount());
+    const unsigned sampleSize(indelData.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
     {
         const bool isInit(sampleIndex==0);
-        get_sum_path_pprob(dopt, id.getSampleData(sampleIndex), is_include_tier2, is_use_alt_indel, total_pprob, isInit);
+        get_sum_path_pprob(dopt, indelData.getSampleData(sampleIndex), is_include_tier2, is_use_alt_indel, total_pprob, isInit);
     }
 
     // next determine the top two indel alleles:
@@ -457,7 +457,7 @@ get_denovo_indel_call(
     const double indel_error_prob,
     const double ref_error_prob,
     const indel_key& ik,
-    const IndelData& id,
+    const IndelData& indelData,
     const bool is_use_alt_indel,
     denovo_indel_call& dinc)
 {
@@ -468,7 +468,7 @@ get_denovo_indel_call(
     static const double het_bias(0.0);
 
     // set is_forced_output
-    if (id.is_forced_output)
+    if (indelData.is_forced_output)
     {
         dinc.is_forced_output = true;
     }
@@ -480,7 +480,7 @@ get_denovo_indel_call(
     const double ref_error_lnp(std::log(ref_error_prob));
     const double ref_real_lnp(std::log(1.-ref_error_prob));
 
-    const unsigned sampleSize(id.getSampleCount());
+    const unsigned sampleSize(indelData.getSampleCount());
     std::vector<indel_state_t> sampleLhood(sampleSize);
 
     std::array<denovo_indel_call::result_set,PEDICURE_TIERS::SIZE> tier_rs;
@@ -507,7 +507,7 @@ get_denovo_indel_call(
 #if 0
         std::cerr << "BUG: testing tier/ik: " << i << " " << ik;
 #endif
-        ismulti = (is_multi_indel_allele(dopt,id,is_include_tier2,dinc.rs.is_overlap));
+        ismulti = (is_multi_indel_allele(dopt,indelData,is_include_tier2,dinc.rs.is_overlap));
         if (ismulti)
         {
             tier_rs[tierIndex].dindel_qphred=0;
@@ -521,7 +521,7 @@ get_denovo_indel_call(
         for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
         {
             const starling_sample_options& sampleOpt(*(sampleOptions[sampleIndex]));
-            const IndelSampleData& isd(id.getSampleData(sampleIndex));
+            const IndelSampleData& isd(indelData.getSampleData(sampleIndex));
 
             indel_digt_caller::get_indel_digt_lhood(
                 opt,dopt,sampleOpt,

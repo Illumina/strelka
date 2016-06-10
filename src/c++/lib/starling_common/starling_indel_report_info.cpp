@@ -63,7 +63,7 @@ static
 void
 get_vcf_summary_strings(
     const indel_key& ik,
-    const IndelData& id,
+    const IndelData& indelData,
     const reference_contig_segment& ref,
     std::string& vcf_indel_seq,
     std::string& vcf_ref_seq)
@@ -73,12 +73,12 @@ get_vcf_summary_strings(
         if       (ik.type == INDEL::BP_LEFT)
         {
             copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_ref_seq);
-            vcf_indel_seq = vcf_ref_seq + id.getInsertSeq() + '.';
+            vcf_indel_seq = vcf_ref_seq + indelData.getInsertSeq() + '.';
         }
         else if (ik.type == INDEL::BP_RIGHT)
         {
             copy_ref_subseq(ref,ik.pos,ik.pos+1,vcf_ref_seq);
-            vcf_indel_seq = '.' + id.getInsertSeq() + vcf_ref_seq;
+            vcf_indel_seq = '.' + indelData.getInsertSeq() + vcf_ref_seq;
         }
         else
         {
@@ -89,7 +89,7 @@ get_vcf_summary_strings(
     {
         copy_ref_subseq(ref,ik.pos-1,ik.pos+ik.delete_length(),vcf_ref_seq);
         copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_indel_seq);
-        vcf_indel_seq += id.getInsertSeq();
+        vcf_indel_seq += indelData.getInsertSeq();
     }
 }
 
@@ -183,12 +183,12 @@ set_repeat_info(
 void
 get_starling_indel_report_info(
     const indel_key& ik,
-    const IndelData& id,
+    const IndelData& indelData,
     const reference_contig_segment& ref,
     starling_indel_report_info& iri)
 {
     // indel summary info
-    get_vcf_summary_strings(ik,id,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
+    get_vcf_summary_strings(ik,indelData,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
 
     iri.it=ik.type;
 

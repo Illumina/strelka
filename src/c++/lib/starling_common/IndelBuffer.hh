@@ -126,13 +126,13 @@ struct IndelBuffer
     bool
     isCandidateIndel(
         const indel_key& ik,
-        const IndelData& id) const
+        const IndelData& indelData) const
     {
-        if (! id.status.is_candidate_indel_cached)
+        if (! indelData.status.is_candidate_indel_cached)
         {
-            isCandidateIndelImpl(ik, id);
+            isCandidateIndelImpl(ik, indelData);
         }
-        return id.status.is_candidate_indel;
+        return indelData.status.is_candidate_indel;
     }
 
     /// this version is less efficient than if you have indel_data
@@ -142,9 +142,9 @@ struct IndelBuffer
     isCandidateIndel(
         const indel_key& ik) const
     {
-        const IndelData* id_ptr(getIndelDataPtr(ik));
-        if (nullptr == id_ptr) findDataException(ik);
-        return isCandidateIndel(ik, *id_ptr);
+        const IndelData* indelDataPtr(getIndelDataPtr(ik));
+        if (nullptr == indelDataPtr) findDataException(ik);
+        return isCandidateIndel(ik, *indelDataPtr);
     }
 
     void
@@ -189,23 +189,23 @@ private:
     bool
     isCandidateIndelImplTestSignalNoise(
         const indel_key& ik,
-        const IndelData& id) const;
+        const IndelData& indelData) const;
 
     /// much weaker version of the above -- used for indel
     /// discovery protocols outside of the variant caller
     bool
     isCandidateIndelImplTestWeakSignal(
-        const IndelData& id) const;
+        const IndelData& indelData) const;
 
     bool
     isCandidateIndelImplTest(
         const indel_key& ik,
-        const IndelData& id) const;
+        const IndelData& indelData) const;
 
     void
     isCandidateIndelImpl(
         const indel_key& ik,
-        const IndelData& id) const;
+        const IndelData& indelData) const;
 
     /// return object which provides estimated depth of tier1 reads
     const depth_buffer&

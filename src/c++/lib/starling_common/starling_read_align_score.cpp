@@ -203,8 +203,8 @@ score_candidate_alignment(
                 assert(ik.type!=INDEL::NONE);
             }
 
-            const IndelData* id_ptr(indelBuffer.getIndelDataPtr(ik));
-            if (nullptr == id_ptr)
+            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(ik));
+            if (nullptr == indelDataPtr)
             {
                 std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected swap indel: " << ik << "\n"
@@ -212,7 +212,7 @@ score_candidate_alignment(
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->getInsertSeq());
+            const string_bam_seq insert_bseq(indelDataPtr->getInsertSeq());
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:
@@ -287,8 +287,8 @@ score_candidate_alignment(
                 assert(ik.type!=INDEL::NONE);
             }
 
-            const IndelData* id_ptr(indelBuffer.getIndelDataPtr(ik));
-            if (nullptr == id_ptr)
+            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(ik));
+            if (nullptr == indelDataPtr)
             {
                 std::ostringstream oss;
                 oss << "ERROR: candidate alignment does not contain expected insertion: " << ik << "\n"
@@ -296,7 +296,7 @@ score_candidate_alignment(
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->getInsertSeq());
+            const string_bam_seq insert_bseq(indelDataPtr->getInsertSeq());
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:

@@ -216,15 +216,15 @@ process_pos_indel_denovo(const pos_t pos)
         // don't write breakpoint output:
         if (ik.is_breakpoint()) continue;
 
-        const IndelData& id(getIndelData(it));
+        const IndelData& indelData(getIndelData(it));
 
-        if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
+        if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
 
         // assert that indel data exists for all samples, make sure alt alignments are scored in at least one sample:
         bool isAllEmpty(true);
         for (unsigned sampleIndex(0); sampleIndex<_n_samples; sampleIndex++)
         {
-            if (! id.getSampleData(sampleIndex).read_path_lnp.empty()) isAllEmpty = false;
+            if (! indelData.getSampleData(sampleIndex).read_path_lnp.empty()) isAllEmpty = false;
         }
 
         if (isAllEmpty) continue;
@@ -235,7 +235,7 @@ process_pos_indel_denovo(const pos_t pos)
 
         // get iri from either sample:
         starling_indel_report_info iri;
-        get_starling_indel_report_info(ik, id, _ref, iri);
+        get_starling_indel_report_info(ik, indelData, _ref, iri);
 
         // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
         if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
@@ -255,8 +255,8 @@ process_pos_indel_denovo(const pos_t pos)
             _dopt,
             sinfo,
             sampleOptions,
-            id.errorRates.refToIndelErrorProb,id.errorRates.indelToRefErrorProb,
-            ik,id,
+            indelData.errorRates.refToIndelErrorProb,indelData.errorRates.indelToRefErrorProb,
+            ik,indelData,
             is_use_alt_indel,
             dindel);
 
@@ -270,7 +270,7 @@ process_pos_indel_denovo(const pos_t pos)
                 for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
                 {
                     get_starling_indel_sample_report_info(
-                        _dopt,ik,id.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,
+                        _dopt,ik,indelData.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,
                         is_include_tier2,is_use_alt_indel,
                         isri[sampleIndex][tierIndex]);
                 }

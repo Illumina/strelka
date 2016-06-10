@@ -118,7 +118,7 @@ indel_lnp_to_pprob(
 void
 get_starling_indel_report_info(
     const indel_key& ik,
-    const IndelData& id,
+    const IndelData& indelData,
     const reference_contig_segment& ref,
     starling_indel_report_info& iri);
 

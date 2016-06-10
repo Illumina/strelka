@@ -554,13 +554,13 @@ score_indels(
         for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
         {
             const indel_key& evaluationIndel(indelIter->first);
-            const IndelData& id(getIndelData(indelIter));
+            const IndelData& indelData(getIndelData(indelIter));
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path eval indel candidate: " << evaluationIndel;
 #endif
 
-            if (!indelBuffer.isCandidateIndel(evaluationIndel, id)) continue;
+            if (!indelBuffer.isCandidateIndel(evaluationIndel, indelData)) continue;
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path indel is candidate\n";

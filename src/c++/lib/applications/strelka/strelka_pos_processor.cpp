@@ -276,12 +276,12 @@ process_pos_indel_somatic(const pos_t pos)
         // don't write breakpoint output:
         if (ik.is_breakpoint()) continue;
 
-        const IndelData& id(getIndelData(indelIter));
+        const IndelData& indelData(getIndelData(indelIter));
 
-        if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
+        if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
 
-        const IndelSampleData& normal_isd(id.getSampleData(NORMAL));
-        const IndelSampleData& tumor_isd(id.getSampleData(TUMOR));
+        const IndelSampleData& normal_isd(indelData.getSampleData(NORMAL));
+        const IndelSampleData& tumor_isd(indelData.getSampleData(TUMOR));
 
         if (normal_isd.read_path_lnp.empty() && tumor_isd.read_path_lnp.empty()) continue;
 
@@ -292,7 +292,7 @@ process_pos_indel_somatic(const pos_t pos)
             // caller
 
             starling_indel_report_info iri;
-            get_starling_indel_report_info(ik,id,_ref,iri);
+            get_starling_indel_report_info(ik,indelData,_ref,iri);
 
             // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
             if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
@@ -302,9 +302,9 @@ process_pos_indel_somatic(const pos_t pos)
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
                                                     normal_sif.sample_opt,
                                                     tumor_sif.sample_opt,
-                                                    id.errorRates.refToIndelErrorProb,
-                                                    id.errorRates.indelToRefErrorProb,
-                                                    ik, id, NORMAL,TUMOR,
+                                                    indelData.errorRates.refToIndelErrorProb,
+                                                    indelData.errorRates.indelToRefErrorProb,
+                                                    ik, indelData, NORMAL,TUMOR,
                                                     is_use_alt_indel,
                                                     sindel);
 

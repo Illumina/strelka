@@ -127,7 +127,7 @@ bool
 isKnownVariantMatch(
     const RecordTracker::indel_value_t& knownVariants,
     const indel_key& ik,
-    const IndelData& id,
+    const IndelData& indelData,
     RecordTracker::indel_value_t& overlap)
 {
     if (knownVariants.empty()) return false;
@@ -139,7 +139,7 @@ isKnownVariantMatch(
     // the inserted sequence must match
     for (const auto& kv : knownVariants)
     {
-        if (kv.altMatch(ik, id)) overlap.insert(kv);
+        if (kv.altMatch(ik, indelData)) overlap.insert(kv);
     }
     return (! overlap.empty());
 }
@@ -521,15 +521,15 @@ process_pos_error_counts(
     for (; it!=it_end; ++it)
     {
         const indel_key& ik(it->first);
-        const IndelData& id(getIndelData(it));
+        const IndelData& indelData(getIndelData(it));
 
         if (ik.is_breakpoint()) continue;
 
-        const bool isForcedOutput(id.is_forced_output);
+        const bool isForcedOutput(indelData.is_forced_output);
 
         if (! isForcedOutput)
         {
-            if (!getIndelBuffer().isCandidateIndel(ik, id)) continue;
+            if (!getIndelBuffer().isCandidateIndel(ik, indelData)) continue;
         }
 
         if (! (ik.type == INDEL::DELETE || ik.type == INDEL::INSERT)) continue;
@@ -558,10 +558,10 @@ process_pos_error_counts(
         for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; ++nonrefHapIndex)
         {
             const indel_key& ik(hg.key(nonrefHapIndex));
-            const IndelData& id(hg.data(nonrefHapIndex));
+            const IndelData& indelData(hg.data(nonrefHapIndex));
 
             starling_indel_report_info iri;
-            get_starling_indel_report_info(ik, id,_ref,iri);
+            get_starling_indel_report_info(ik, indelData,_ref,iri);
 
             IndelErrorContext context;
             if ((iri.repeat_unit_length==1) && (iri.ref_repeat_count>1))
@@ -575,7 +575,7 @@ process_pos_error_counts(
             }
 
             RecordTracker::indel_value_t overlappingRecords;
-            isKnownVariantMatch(knownVariantRecords, ik, id, overlappingRecords);
+            isKnownVariantMatch(knownVariantRecords, ik, indelData, overlappingRecords);
 
             IndelErrorContextObservation obs;
 

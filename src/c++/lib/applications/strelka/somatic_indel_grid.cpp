@@ -186,7 +186,7 @@ get_somatic_indel(
     const double indel_error_prob,
     const double ref_error_prob,
     const indel_key& ik,
-    const IndelData& id,
+    const IndelData& indelData,
     const unsigned normalId,
     const unsigned tumorId,
     const bool is_use_alt_indel,
@@ -202,10 +202,10 @@ get_somatic_indel(
     double normal_lhood[DIGT_GRID::PRESTRAND_SIZE];
     double tumor_lhood[DIGT_GRID::PRESTRAND_SIZE];
 
-    sindel.is_forced_output=id.is_forced_output;
+    sindel.is_forced_output=indelData.is_forced_output;
 
-    const IndelSampleData& normal_isd(id.getSampleData(normalId));
-    const IndelSampleData& tumor_isd(id.getSampleData(tumorId));
+    const IndelSampleData& normal_isd(indelData.getSampleData(normalId));
+    const IndelSampleData& tumor_isd(indelData.getSampleData(tumorId));
 
     const double indel_error_lnp(std::log(indel_error_prob));
     const double indel_real_lnp(std::log(1.-indel_error_prob));
