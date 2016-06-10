@@ -67,7 +67,7 @@ struct MapqTracker
     getZeroFrac() const
     {
         if (count==0) return 0;
-        return (zeroCount/count);
+        return (zeroCount/static_cast<double>(count));
     }
 
     unsigned count = 0;
