@@ -36,3 +36,13 @@ rankOrthogonalAllelesInSample(
     OrthogonalVariantAlleleCandidateGroup& rankedAlleleGroup,
     unsigned& referenceRank);
 
+
+/// perform the ranking as above, then select the top
+/// N alleles (including the reference) and return
+/// the top N (or N-1) non-reference alleles
+void
+selectTopOrthogonalAllelesInSample(
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned selectionSize,
+    OrthogonalVariantAlleleCandidateGroup& topAlleleGroup);

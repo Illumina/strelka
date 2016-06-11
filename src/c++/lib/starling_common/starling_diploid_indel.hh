@@ -195,7 +195,7 @@ public:
 
 
 
-struct starling_diploid_indel : public GermlineDiploidIndelSimpleGenotypeInfoCore, private boost::noncopyable
+struct starling_diploid_indel : public GermlineDiploidIndelSimpleGenotypeInfoCore
 {
     starling_diploid_indel()
         : GermlineDiploidIndelSimpleGenotypeInfoCore()
@@ -207,6 +207,6 @@ struct starling_diploid_indel : public GermlineDiploidIndelSimpleGenotypeInfoCor
     void dump(std::ostream& os) const;
 
     // members:
-    double pprob[STAR_DIINDEL::SIZE];
+    std::array<double,STAR_DIINDEL::SIZE> pprob;
 };
 

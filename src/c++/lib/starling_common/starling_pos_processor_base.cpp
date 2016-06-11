@@ -246,6 +246,13 @@ get_stage_data(
 
     sdata.add_stage(CLEAR_READ_BUFFER,POST_ALIGN,0);
 
+    // CLEAR_INDEL_BUFFER is the point at which all indel scoring data is cleared
+    //
+    // it needs to persistent long enough after indel scoring so that overlapping indels in
+    // 5' of the indel/allele currently being called are still available.
+    //
+    sdata.add_stage(CLEAR_INDEL_BUFFER,POST_ALIGN,largest_total_indel_ref_span_per_read);
+
     // POST_CALL is used to free up the pileup data. This data is
     // preserved for one extra cycle after snp and indel calling so that
     // the indel caller can look one base 'to the left' of its call
@@ -936,8 +943,6 @@ process_pos(const int stage_no,
             }
         }
 
-        getIndelBuffer().clearPosition(pos);
-
         // everything else:
         post_align_clear_pos(pos);
     }
@@ -949,10 +954,14 @@ process_pos(const int stage_no,
     }
     else if (stage_no==STAGE::CLEAR_READ_BUFFER)
     {
-        for (unsigned s(0); s<_n_samples; ++s)
+        for (unsigned s(0); s < _n_samples; ++s)
         {
             sample(s).read_buff.clear_to_pos(pos);
         }
+    }
+    else if (stage_no==STAGE::CLEAR_INDEL_BUFFER)
+    {
+        getIndelBuffer().clearPosition(pos);
     }
     else if (stage_no==STAGE::POST_CALL)
     {

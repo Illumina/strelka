@@ -120,6 +120,18 @@ struct IndelBuffer
         return ((i==_indelBuffer.end()) ? nullptr : &(i->second) );
     }
 
+    iterator
+    getIndelIter(const IndelKey& indelKey)
+    {
+        return _indelBuffer.find(indelKey);
+    }
+
+    const_iterator
+    getIndelIter(const IndelKey& indelKey) const
+    {
+        return _indelBuffer.find(indelKey);
+    }
+
     /// is an indel treated as a candidate for genotype calling and
     /// realignment or as a "private" (ie. noise) indel?
     ///

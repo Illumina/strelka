@@ -52,19 +52,20 @@ rankOrthogonalAllelesInSample(
     const unsigned nonrefAlleleCount(alleleGroup.size());
     assert(nonrefAlleleCount!=0);
 
+    // compile option below to use reads which only support a subset of alleles vs all alleles, no measurable difference
+    // now, but could be important with longer alleles?
     std::set<unsigned> readIds;
 #if 0
     // union of read ids
     for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
     {
-        const IndelData& id(alleleGroup.data(nonrefAlleleIndex).);
-        for (const auto& score : id.read_path_lnp)
+        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
+        for (const auto& score : isd.read_path_lnp)
         {
             readIds.insert(score.first);
         }
     }
-#endif
-
+#else
     // intersection of read ids
     {
         std::map<unsigned,unsigned> countReadIds;
@@ -94,6 +95,7 @@ rankOrthogonalAllelesInSample(
             }
         }
     }
+#endif
 
     // count of all haplotypes including reference
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
@@ -103,8 +105,8 @@ rankOrthogonalAllelesInSample(
     std::vector<double> lhood(fullAlleleCount);
     for (const auto readId : readIds)
     {
-        static const double log0(-std::numeric_limits<double>::infinity());
-        std::fill(lhood.begin(),lhood.end(),log0);
+        bool isZeroAlleleCoverage(true);
+        bool isPartialAlleleCoverage(false);
         for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
         {
             const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
@@ -112,13 +114,40 @@ rankOrthogonalAllelesInSample(
             const auto iditer(isd.read_path_lnp.find(readId));
             if (iditer==isd.read_path_lnp.end())
             {
+                isPartialAlleleCoverage=true;
                 continue;
             }
             const ReadPathScores& path_lnp(iditer->second);
 
-            lhood[refAlleleIndex] = std::max(lhood[refAlleleIndex],static_cast<double>(path_lnp.ref));
+            if (isZeroAlleleCoverage)
+            {
+                lhood[refAlleleIndex] = static_cast<double>(path_lnp.ref);
+            }
+            else
+            {
+                lhood[refAlleleIndex] = std::max(lhood[refAlleleIndex],static_cast<double>(path_lnp.ref));
+            }
             lhood[nonrefAlleleIndex] = path_lnp.indel;
+
+            isZeroAlleleCoverage=false;
         }
+
+        assert(not isZeroAlleleCoverage);
+
+        // handle read which only supports a subset of alleles
+        if (isPartialAlleleCoverage)
+        {
+            for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; nonrefAlleleIndex++)
+            {
+                const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
+
+                const auto iditer(isd.read_path_lnp.find(readId));
+                if (iditer != isd.read_path_lnp.end()) continue;
+
+                lhood[nonrefAlleleIndex] = lhood[refAlleleIndex];
+            }
+        }
+
         unsigned maxIndex(0);
         normalize_ln_distro(lhood.begin(),lhood.end(),maxIndex);
 
@@ -144,3 +173,26 @@ rankOrthogonalAllelesInSample(
     }
 }
 
+
+
+void
+selectTopOrthogonalAllelesInSample(
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned selectionSize,
+    OrthogonalVariantAlleleCandidateGroup& topAlleleGroup)
+{
+    unsigned referenceRank(0);
+    rankOrthogonalAllelesInSample(sampleId, alleleGroup, topAlleleGroup, referenceRank);
+
+    unsigned topSize(selectionSize);
+    if (referenceRank<topSize)
+    {
+        topSize -= 1;
+    }
+
+    if (topSize<alleleGroup.size())
+    {
+        topAlleleGroup.alleles.resize(topSize);
+    }
+}

@@ -132,38 +132,88 @@ namespace AG_GENOTYPE
         HET0,
         HOM1,
         HET1,
-        HET01
+        HET01,
+        SIZE
     };
 
     inline
     bool
-    isAllele0Present(const unsigned id)
+    isAllelePresent(
+        const unsigned genotypeId,
+        const unsigned alleleId)
     {
-        switch (static_cast<index_t>(id))
+        if (alleleId==0)
         {
-            case HOM0:
-            case HET0:
-            case HET01:
-                return true;
-            default:
-                return false;
+            switch (static_cast<index_t>(genotypeId))
+            {
+                case HOM0:
+                case HET0:
+                case HET01:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        else if (alleleId == 1)
+        {
+            switch (static_cast<index_t>(genotypeId))
+            {
+                case HOM1:
+                case HET1:
+                case HET01:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        else
+        {
+            assert(false and "Unsupported alleleId");
         }
     }
 
+    /// return the heterozygous genotype including alleleId and reference
     inline
-    bool
-    isAllele1Present(const unsigned id)
+    index_t
+    getAlleleHetId(
+        const unsigned alleleId)
     {
-        switch (static_cast<index_t>(id))
+        if (alleleId == 0)
         {
-            case HOM1:
-            case HET1:
-            case HET01:
-                return true;
-            default:
-                return false;
+            return HET0;
+        }
+        else if(alleleId == 1)
+        {
+            return HET1;
+        }
+        else
+        {
+            assert(false and "Unsupported alleleId");
+            return SIZE;
         }
     }
+
+    /// return the homozygous genotype including alleleId and reference
+    inline
+    index_t
+    getAlleleHomId(
+        const unsigned alleleId)
+    {
+        if (alleleId == 0)
+        {
+            return HOM0;
+        }
+        else if(alleleId == 1)
+        {
+            return HOM1;
+        }
+        else
+        {
+            assert(false and "Unsupported alleleId");
+            return SIZE;
+        }
+    }
+
 }
 
 

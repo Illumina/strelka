@@ -537,14 +537,14 @@ starling_indel_call_pprob_digt(
         }
     }
 
-    normalize_ln_distro(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt);
+    normalize_ln_distro(dindel.pprob.begin(),dindel.pprob.end(),dindel.max_gt);
 
 #ifdef DEBUG_INDEL_CALL
     log_os << "INDEL_CALL pprob(noindel),pprob(hom),pprob(het): " << dindel.pprob[STAR_DIINDEL::NOINDEL] << " " << dindel.pprob[STAR_DIINDEL::HOM] << " " << dindel.pprob[STAR_DIINDEL::HET] << "\n";
 #endif
 
     dindel.indel_qphred=error_prob_to_qphred(dindel.pprob[STAR_DIINDEL::NOINDEL]);
-    dindel.max_gt_qphred=error_prob_to_qphred(prob_comp(dindel.pprob,dindel.pprob+STAR_DIINDEL::SIZE,dindel.max_gt));
+    dindel.max_gt_qphred=error_prob_to_qphred(prob_comp(dindel.pprob.begin(),dindel.pprob.end(),dindel.max_gt));
 
     // set phredLoghood:
     {

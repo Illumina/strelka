@@ -95,7 +95,7 @@ getVariantAlleleGroupGenotypeLhoods(
         double refAllele_lnp(allele0ReadScores.ref);
         const double variantAllele0_lnp(allele0ReadScores.indel);
         double variantAllele1_lnp(variantAllele0_lnp);
-
+        
         if (is3AlleleModel)
         {
             const ReadPathScores& allele1ReadScores(*allele1ReadScoresPtr);

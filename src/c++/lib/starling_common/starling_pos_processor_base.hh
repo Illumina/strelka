@@ -494,12 +494,14 @@ private:
     bool
     update_largest_read_size(const unsigned rs);
 
+protected:
     unsigned
     get_largest_total_indel_ref_span_per_read() const
     {
         return _largest_total_indel_ref_span_per_read;
     }
 
+private:
     void
     update_largest_indel_ref_span(const unsigned is);
 
