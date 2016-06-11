@@ -113,7 +113,6 @@ integrate_out_sites(const starling_base_deriv_options& dopt,
 //
 // Note this routine does not account for overlapping indels
 //
-static
 void
 get_het_observed_allele_ratio(
     const unsigned read_length,

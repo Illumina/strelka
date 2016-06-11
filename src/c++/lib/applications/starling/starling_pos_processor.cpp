@@ -803,7 +803,7 @@ process_pos_indel_single_sample_digt(
         // score topVariantAlleleGroup
         {
             AlleleGroupGenotype locusGenotype;
-            getVariantAlleleGroupGenotypeLhoods(_dopt, _dopt.getIndelGenotypePriors(), sampleId, topVariantAlleleGroup, locusGenotype);
+            getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), sampleId, topVariantAlleleGroup, locusGenotype);
 
             // (1) TEMPORARY hack called variant alleles into old dindel structure(s)
             // (2) determine how many forcedGT alleles are 'left', call each one to get AD counts and add those into dindel structures as well
