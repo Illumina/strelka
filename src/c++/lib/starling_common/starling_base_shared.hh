@@ -94,7 +94,7 @@ struct starling_base_options : public blt_options
     //
     // This is the default used in all samples unless an override is provided for the sample.
     //
-    int default_min_read_bp_flank = 6;
+    int default_min_read_bp_flank = 5;
 
     // starling parameters:
     //
