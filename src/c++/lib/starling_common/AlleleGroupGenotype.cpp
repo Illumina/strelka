@@ -79,64 +79,64 @@ getVariantAlleleGroupGenotypeLhoods(
     for (const auto& score : allele0SampleData.read_path_lnp)
     {
         const auto readIndex(score.first);
-        const ReadPathScores& Allele0ReadScores(score.second);
+        const ReadPathScores& allele0ReadScores(score.second);
 
-        if (! Allele0ReadScores.is_tier1_read) continue;
+        if (! allele0ReadScores.is_tier1_read) continue;
 
-        const ReadPathScores* Allele1ReadScoresPtr(nullptr);
+        const ReadPathScores* allele1ReadScoresPtr(nullptr);
         if (is3AlleleModel)
         {
             /// skip this read if it's not aligned to both alleles:
-            const auto Allele1ReadScoresIter(allele1SampleData.read_path_lnp.find(readIndex));
-            if (Allele1ReadScoresIter == allele1SampleData.read_path_lnp.end()) continue;
-            Allele1ReadScoresPtr = (&(Allele1ReadScoresIter->second));
+            const auto allele1ReadScoresIter(allele1SampleData.read_path_lnp.find(readIndex));
+            if (allele1ReadScoresIter == allele1SampleData.read_path_lnp.end()) continue;
+            allele1ReadScoresPtr = (&(allele1ReadScoresIter->second));
         }
 
-        double refAllele_lnp(Allele0ReadScores.ref);
-        const double variantAllele0_lnp(Allele0ReadScores.indel);
+        double refAllele_lnp(allele0ReadScores.ref);
+        const double variantAllele0_lnp(allele0ReadScores.indel);
         double variantAllele1_lnp(variantAllele0_lnp);
 
         if (is3AlleleModel)
         {
-            const ReadPathScores& Allele1ReadScores(*Allele1ReadScoresPtr);
-            refAllele_lnp = std::max(refAllele_lnp,(double)Allele1ReadScores.ref);
-            variantAllele1_lnp = Allele1ReadScores.indel;
+            const ReadPathScores& allele1ReadScores(*allele1ReadScoresPtr);
+            refAllele_lnp = std::max(refAllele_lnp,(double)allele1ReadScores.ref);
+            variantAllele1_lnp = allele1ReadScores.indel;
         }
 
-        logLhood[AG_GENOTYPE::HOMREF] += integrate_out_sites(dopt,Allele0ReadScores.nsite,refAllele_lnp,false);
-        logLhood[AG_GENOTYPE::HOM0] += integrate_out_sites(dopt,Allele0ReadScores.nsite,variantAllele0_lnp,false);
+        logLhood[AG_GENOTYPE::HOMREF] += integrate_out_sites(dopt,allele0ReadScores.nsite,refAllele_lnp,false);
+        logLhood[AG_GENOTYPE::HOM0] += integrate_out_sites(dopt,allele0ReadScores.nsite,variantAllele0_lnp,false);
 
         static const double loghalf(std::log(0.5));
         double logHet0RefPrior(loghalf);
         double logHet0Allele0Prior(loghalf);
         {
             static const double hetAlleleRatio(0.5);
-            get_het_observed_allele_ratio(Allele0ReadScores.read_length, sampleOptions.min_read_bp_flank,
+            get_het_observed_allele_ratio(allele0ReadScores.read_length, sampleOptions.min_read_bp_flank,
                                           allele0Key, hetAlleleRatio, logHet0RefPrior, logHet0Allele0Prior);
         }
 
         const double het0_lnp(log_sum(refAllele_lnp+logHet0RefPrior,variantAllele0_lnp+logHet0Allele0Prior));
-        logLhood[AG_GENOTYPE::HET0] += integrate_out_sites(dopt,Allele0ReadScores.nsite,het0_lnp,false);
+        logLhood[AG_GENOTYPE::HET0] += integrate_out_sites(dopt,allele0ReadScores.nsite,het0_lnp,false);
 
         if (is3AlleleModel)
         {
-            logLhood[AG_GENOTYPE::HOM1] += integrate_out_sites(dopt,Allele0ReadScores.nsite,variantAllele1_lnp,false);
+            logLhood[AG_GENOTYPE::HOM1] += integrate_out_sites(dopt,allele0ReadScores.nsite,variantAllele1_lnp,false);
 
             double logHet1RefPrior(loghalf);
             double logHet1Allele1Prior(loghalf);
             {
                 static const double hetAlleleRatio(0.5);
-                get_het_observed_allele_ratio(Allele0ReadScores.read_length, sampleOptions.min_read_bp_flank,
+                get_het_observed_allele_ratio(allele0ReadScores.read_length, sampleOptions.min_read_bp_flank,
                                               allele1Key, hetAlleleRatio, logHet1RefPrior, logHet1Allele1Prior);
             }
 
             const double het1_lnp(log_sum(refAllele_lnp+logHet1RefPrior,variantAllele1_lnp+logHet1Allele1Prior));
-            logLhood[AG_GENOTYPE::HET1] += integrate_out_sites(dopt,Allele0ReadScores.nsite,het1_lnp,false);
+            logLhood[AG_GENOTYPE::HET1] += integrate_out_sites(dopt,allele0ReadScores.nsite,het1_lnp,false);
 
             /// approximate the expected allele ratio in this case
             const double normalizeHetRatio(log_sum(logHet0Allele0Prior, logHet1Allele1Prior));
             const double het01_lnp(log_sum(variantAllele0_lnp+(logHet0Allele0Prior-normalizeHetRatio),variantAllele1_lnp+(logHet1Allele1Prior-normalizeHetRatio)));
-            logLhood[AG_GENOTYPE::HET01] += integrate_out_sites(dopt,Allele0ReadScores.nsite,het01_lnp,false);
+            logLhood[AG_GENOTYPE::HET01] += integrate_out_sites(dopt,allele0ReadScores.nsite,het01_lnp,false);
         }
     }
 
