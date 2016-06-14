@@ -117,7 +117,42 @@ set(const char* s)
     return (wordindex >= maxword);
 }
 
+bool
+vcf_record::
+is_left_shifted() const
+{
+    unsigned ref_length = ref.size();
 
+    for (const auto& alt_allele : alt)
+    {
+        // This should exclude SNPs.  If indels are
+        // reference-padded, the first base of the ref
+        // and alt alleles should always have the same
+        // base
+        unsigned alt_length = alt_allele.size();
+        if ( (*alt_allele.begin()) == (*ref.begin()))
+        {
+            for (unsigned i = ref_length - 1, j = alt_length - 1; ; ++i, ++j)
+            {
+                // if the ref and alt allele are not equal at some point from the right side,
+                // then it is left-shifted (but could still be right-padded)
+                if (ref[i] != alt_allele[j])
+                {
+                    break;
+                }
+                else if (i == 0 || j == 0)
+                {
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            assert (alt_length == ref_length && ref_length == 1);
+        }
+    }
+    return true;
+}
 
 std::ostream& operator<<(std::ostream& os, const vcf_record& vcfr)
 {
