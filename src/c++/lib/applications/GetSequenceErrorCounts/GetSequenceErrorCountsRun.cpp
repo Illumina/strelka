@@ -198,6 +198,7 @@ getSequenceErrorCountsRun(
             {
                 if (vcfRecord.is_indel())
                 {
+                    assert(vcfRecord.is_left_shifted() && "Indels are not left-shifted in candidate indel VCF");
                     process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
                 }
             }
@@ -205,6 +206,7 @@ getSequenceErrorCountsRun(
             {
                 if (vcfRecord.is_indel())
                 {
+                    assert(vcfRecord.is_left_shifted() && "Indels are not left-shifted in forced genotype VCF");
                     static const unsigned sample_no(0);
                     static const bool is_forced_output(true);
                     process_candidate_indel(opt.max_indel_size, vcfRecord,sppr,sample_no,is_forced_output);
@@ -218,6 +220,7 @@ getSequenceErrorCountsRun(
             {
                 if (vcfRecord.is_indel())
                 {
+                    assert(vcfRecord.is_left_shifted() && "Indels are not left-shifted in known variant VCF");
                     // processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord);
                     processTrueIndelVariantRecord(opt.max_indel_size, vcfRecord, sppr);
                 }
