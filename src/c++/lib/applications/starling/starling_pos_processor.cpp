@@ -504,6 +504,7 @@ process_pos_indel_single_sample(
 
 /// TEMPORARY
 /// refine topVariantAlleleGroup to consider alts shared by all top alleles, then rerank
+/// and re-select top groupLocusPloidy alleles
 static
 void
 addAllelesAtOtherPositions(
@@ -516,109 +517,100 @@ addAllelesAtOtherPositions(
 {
     const pos_t minIndelBufferPos(pos-largest_total_indel_ref_span_per_read);
 
-    // first just get the full possible set of alts from another pos...
     const unsigned inputAlleleCount(alleleGroup.size());
-    std::vector<std::set<IndelKey>> inputAltAlleles(inputAlleleCount);
 
-    for (unsigned inputAlleleIndex(0); inputAlleleIndex < inputAlleleCount; inputAlleleIndex++)
-    {
-        const IndelData& alleleData(alleleGroup.data(inputAlleleIndex));
-        const IndelSampleData& alleleSampleData(alleleData.getSampleData(sampleId));
-
-        for (const auto& score : alleleSampleData.read_path_lnp)
-        {
-            const ReadPathScores& alleleReadScores(score.second);
-
-            if (not alleleReadScores.is_tier1_read) continue;
-
-            for (const auto& alt : alleleReadScores.alt_indel)
-            {
-                const auto& altAlleleKey(alt.first);
-
-                // all alleles with this starting position have already been
-                // considered..
-                if (altAlleleKey.pos == pos) continue;
-
-                // filter out indels which have already been cleared out of the indel buffer:
-                if (altAlleleKey.pos < minIndelBufferPos) continue;
-
-                if (altAlleleKey.is_breakpoint()) continue;
-
-                inputAltAlleles[inputAlleleIndex].insert(altAlleleKey);
-            }
-        }
-    }
-
-    // now require that the orthogonal allele graph is a clique, so an alt which
-    // interferese with only one of the top two alleles is removed
+    // first get the set of candidate alt alleles from another position
     //
-    /// TODO: think of a more general solution for non-cliques, example:
-    // hap1 is 2D2M2D
-    // hap2 is 6D
-    //
-
-    // first we requIre that any new alts are fully interfering with the top set:
-    std::map<IndelKey,unsigned> altAlleleCount;
-    for (const auto& altAlleleKeySet : inputAltAlleles)
-    {
-        for (const auto& altAlleleKey : altAlleleKeySet)
-        {
-            auto altAlleleIter(altAlleleCount.find(altAlleleKey));
-            if (altAlleleIter == altAlleleCount.end())
-            {
-                altAlleleCount[altAlleleKey] = 1;
-            }
-            else
-            {
-                altAlleleIter->second++;
-            }
-        }
-    }
-
     std::vector<IndelKey> filteredAltAlleles;
-    for (const auto& altValue : altAlleleCount)
     {
-        if (altValue.second < inputAlleleCount) continue;
+        const known_pos_range inputAlleleGroupRange(alleleGroup.getReferenceRange());
 
-        assert(indelBuffer.isCandidateIndel(altValue.first));
-        filteredAltAlleles.push_back(altValue.first);
+        // extend end_pos by one to ensure that we find indels adjacent to the right end of the range
+        /// TODO add strict definition and unit tests to rangeIterator wrt adjacent indels
+        const auto indelIterPair(indelBuffer.rangeIterator(inputAlleleGroupRange.begin_pos, inputAlleleGroupRange.end_pos+1));
+        for (auto altAlleleIter(indelIterPair.first); altAlleleIter!=indelIterPair.second; ++altAlleleIter)
+        {
+            const IndelKey& altAlleleKey(altAlleleIter->first);
+
+            // all alleles with this starting position have already been
+            // considered..
+            if (altAlleleKey.pos == pos) continue;
+
+            // filter out indels which have already been cleared out of the indel buffer:
+            if (altAlleleKey.pos < minIndelBufferPos) continue;
+
+            // no breakpoints:
+            if (altAlleleKey.is_breakpoint()) continue;
+
+            // must be orthogonal to all input alleles:
+            {
+                bool isOrthogonalToAllInputAlleles(true);
+                for (unsigned inputAlleleIndex(0); inputAlleleIndex < inputAlleleCount; inputAlleleIndex++)
+                {
+                    const IndelKey& inputAlleleKey(alleleGroup.key(inputAlleleIndex));
+                    if (is_indel_conflict(altAlleleKey, inputAlleleKey)) continue;
+                    isOrthogonalToAllInputAlleles = false;
+                    break;
+                }
+                if (not isOrthogonalToAllInputAlleles) continue;
+            }
+
+            const IndelData& altAlleleData(getIndelData(altAlleleIter));
+
+            // must be a candidate allele:
+            if (not indelBuffer.isCandidateIndel(altAlleleKey, altAlleleData)) continue;
+
+            // made it! add allele to the set we move forward with:
+            filteredAltAlleles.push_back(altAlleleKey);
+        }
     }
 
     if (filteredAltAlleles.empty()) return;
 
-    // next we require that the alts are interfering with each other
-
-    // test if all alleles in set interfere with all others:
-    auto testIsOrthogonalAlleleClique = [](const std::vector<IndelKey>& alleles) -> bool
-        {
-            const unsigned alleleCount(alleles.size());
-            for(unsigned alleleIndex0(0);alleleIndex0<alleleCount;++alleleIndex0)
-            {
-                for(unsigned alleleIndex1(alleleIndex0);alleleIndex1<alleleCount;++alleleIndex1)
-                {
-                    if (not is_indel_conflict(alleles[alleleIndex0],alleles[alleleIndex1]))
-                    {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        };
-
-    if (not testIsOrthogonalAlleleClique(filteredAltAlleles)) return;
-
-    OrthogonalVariantAlleleCandidateGroup extendedVariantAlleleGroup(alleleGroup);
-
+    OrthogonalVariantAlleleCandidateGroup altAlleleGroup;
     for (const auto& altAlleleKey : filteredAltAlleles)
     {
         const auto altDataPtr(indelBuffer.getIndelDataPtr(altAlleleKey));
         assert(altDataPtr != nullptr);
         const auto altIter(indelBuffer.getIndelIter(altAlleleKey));
-        extendedVariantAlleleGroup.addVariantAllele(altIter);
+        altAlleleGroup.addVariantAllele(altIter);
     }
 
-    //
-    // rerank
+    if (altAlleleGroup.size()>1)
+    {
+        // rank alt alleles and include from highest to lowest unless interference clique is broken:
+        unsigned referenceRank(0);
+        OrthogonalVariantAlleleCandidateGroup rankedAltAlleleGroup;
+        rankOrthogonalAllelesInSample(sampleId, altAlleleGroup, rankedAltAlleleGroup, referenceRank);
+
+        altAlleleGroup.clear();
+
+        for (const auto rankedAltAlleleIter : rankedAltAlleleGroup.alleles)
+        {
+            bool isGroupOrthogonal(true);
+            for (const auto altAlleleIter : altAlleleGroup.alleles)
+            {
+                if (not is_indel_conflict(rankedAltAlleleIter->first, altAlleleIter->first))
+                {
+                    isGroupOrthogonal = false;
+                    break;
+                }
+            }
+            if (isGroupOrthogonal)
+            {
+                altAlleleGroup.alleles.push_back(rankedAltAlleleIter);
+            }
+        }
+    }
+
+    // put all qualifying alts back together with variants to form an extended allele set:
+    OrthogonalVariantAlleleCandidateGroup extendedVariantAlleleGroup(alleleGroup);
+    for (const auto altAlleleIter : altAlleleGroup.alleles)
+    {
+        extendedVariantAlleleGroup.alleles.push_back(altAlleleIter);
+    }
+
+    // rerank and reselect top N alleles, N=groupLocusPloidy
     //
     selectTopOrthogonalAllelesInSample(sampleId, extendedVariantAlleleGroup, groupLocusPloidy, alleleGroup);
 }
@@ -753,7 +745,7 @@ locusGenotypeToDindel(
 
 /// TEMPORARY
 static
-void
+bool
 hackDiplotypeCallToCopyNumberCalls(
     const starling_base_options& opt,
     const starling_base_deriv_options& dopt,
@@ -765,7 +757,8 @@ hackDiplotypeCallToCopyNumberCalls(
     const AlleleGroupGenotype& locusGenotype,
     gvcf_aggregator& gvcfer)
 {
-    if (not locusGenotype.isNonReferenceGenotype()) return;
+    bool isOutputAnyAlleles(false);
+    if (not locusGenotype.isNonReferenceGenotype()) return isOutputAnyAlleles;
 
     // cycle through variant alleles in genotype:
     for (unsigned variantAlleleIndex(0); variantAlleleIndex<2; ++variantAlleleIndex)
@@ -780,9 +773,11 @@ hackDiplotypeCallToCopyNumberCalls(
 
         if (indelKey.pos != targetPos) continue;
 
+        isOutputAnyAlleles=true;
         starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, variantAlleleIndex));
         insertIndelInGvcf(opt, dopt, ref, basecallBuffer, indelKey, indelData, sampleId, dindel, gvcfer);
     }
+    return isOutputAnyAlleles;
 }
 
 
@@ -798,6 +793,9 @@ process_pos_indel_single_sample_digt(
     //
     if (sampleId!=0) return;
 
+    /// TODO remove this legacy option, germline calling is *always and only* gvcf output now:
+    assert(_opt.gvcf.is_gvcf_output());
+
     // Current multiploid indel model can handle a het or hom indel
     // allele vs. reference, or two intersecting non-reference indel
     // alleles. (note that indel intersection is evaluated only in
@@ -811,7 +809,7 @@ process_pos_indel_single_sample_digt(
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
-    // define groups of overlapping indels:
+    // define groups of overlapping alleles:
     //
     // alleles should form "conflict graphs", where an edge exists
     // between two alleles which cannot exist together on the same haplotype
@@ -881,6 +879,7 @@ process_pos_indel_single_sample_digt(
                 }
             }
 
+            // rank and select top N alleles, N=groupLocusPloidy
             assert(groupLocusPloidy>0);
             selectTopOrthogonalAllelesInSample(sampleId, orthogonalVariantAlleles, groupLocusPloidy, topVariantAlleleGroup);
         }
@@ -897,7 +896,14 @@ process_pos_indel_single_sample_digt(
             // (1) TEMPORARY hack called variant alleles into old dindel structure(s)
             // (2) determine how many forcedGT alleles are 'left', call each one to get AD counts and add those into dindel structures as well
 
-            hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, sampleId, pos, topVariantAlleleGroup, locusGenotype, *_gvcfer);
+            const bool isOutputAlleles(hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, sampleId, pos, topVariantAlleleGroup, locusGenotype, *_gvcfer));
+
+            if (isOutputAlleles and _is_variant_windows)
+            {
+                _variant_print_pos.insert(pos);
+                _is_skip_process_pos=false;
+            }
+
         }
 
 

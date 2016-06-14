@@ -28,7 +28,7 @@
 #include "starling_common/indel.hh"
 
 
-/// do these two indels overlap?:
+/// are the two indels overlapping or adjacent?
 bool
 is_indel_conflict(
     const IndelKey& indelKey1,
