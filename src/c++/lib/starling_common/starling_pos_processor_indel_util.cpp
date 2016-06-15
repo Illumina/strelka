@@ -45,7 +45,7 @@
 
 static
 void
-finish_indel_sppr(indel_observation& obs,
+finish_indel_sppr(IndelObservation& obs,
                   starling_pos_processor_base& sppr,
                   const unsigned sample_no)
 {
@@ -82,7 +82,7 @@ process_edge_insert(const unsigned max_indel_size,
                     const ALIGNPATH::path_t& path,
                     const bam_seq_base& bseq,
                     starling_pos_processor_base& sppr,
-                    indel_observation& obs,
+                    IndelObservation& obs,
                     const unsigned sample_no,
                     const unsigned path_index,
                     const unsigned read_offset,
@@ -125,7 +125,7 @@ process_edge_delete(const unsigned max_indel_size,
                     const ALIGNPATH::path_t& path,
                     const bam_seq_base& bseq,
                     starling_pos_processor_base& sppr,
-                    indel_observation& obs,
+                    IndelObservation& obs,
                     const unsigned sample_no,
                     const unsigned path_index,
                     const unsigned read_offset,
@@ -168,7 +168,7 @@ process_swap(const unsigned max_indel_size,
              const ALIGNPATH::path_t& path,
              const bam_seq_base& bseq,
              starling_pos_processor_base& sppr,
-             indel_observation& obs,
+             IndelObservation& obs,
              const unsigned sample_no,
              const unsigned path_index,
              const unsigned read_offset,
@@ -238,7 +238,7 @@ process_simple_indel(const unsigned max_indel_size,
                      const ALIGNPATH::path_t& path,
                      const bam_seq_base& bseq,
                      starling_pos_processor_base& sppr,
-                     indel_observation& obs,
+                     IndelObservation& obs,
                      const unsigned sample_no,
                      const unsigned path_index,
                      const unsigned read_offset,
@@ -365,7 +365,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
         // fix STARKA-43:
         // assert(! (is_edge_segment && is_swap_start));
 
-        indel_observation obs;
+        IndelObservation obs;
         obs.data.iat = iat;
         obs.data.id = id;
 

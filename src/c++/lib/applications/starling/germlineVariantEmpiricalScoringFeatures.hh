@@ -132,6 +132,17 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
     {
         I_RawPos,
         I_RawBaseQ,
+        mapqZeroFraction,
+        F_DP_NORM,
+        TDP_NORM,
+        QUAL_NORM,
+        F_GQX_NORM,
+        F_GQ_NORM,
+        AD0_NORM,
+        AD1_NORM,
+        QUAL_EXACT,
+        F_GQX_EXACT,
+        F_GQ_EXACT,
         SIZE
     };
 
@@ -145,6 +156,28 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
             return "I_RawPos";
         case I_RawBaseQ:
             return "I_RawBaseQ";
+        case mapqZeroFraction:
+            return "mapqZeroFraction";
+        case F_DP_NORM:
+            return "F_DP_NORM";
+        case TDP_NORM:
+            return "TDP_NORM";
+        case QUAL_NORM:
+            return "QUAL_NORM";
+        case F_GQX_NORM:
+            return "F_GQX_NORM";
+        case F_GQ_NORM:
+            return "F_GQ_NORM";
+        case AD0_NORM:
+            return "AD0_NORM";
+        case AD1_NORM:
+            return "AD1_NORM";
+        case QUAL_EXACT:
+            return "QUAL_EXACT";
+        case F_GQX_EXACT:
+            return "F_GQX_EXACT";
+        case F_GQ_EXACT:
+            return "F_GQ_EXACT";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -160,7 +193,7 @@ struct GERMLINE_INDEL_SCORING_FEATURES
     const char*
     get_name()
     {
-        return "GERMLINE_SNV_INDEL_FEATURES";
+        return "GERMLINE_INDEL_SCORING_FEATURES";
     }
 
     /** Make sure the features are the same as used in the model
@@ -225,7 +258,6 @@ struct GERMLINE_INDEL_SCORING_FEATURES
 };
 
 
-///
 /// additional experimental features not used in the current scoring model
 ///
 /// these should only be output as part of a non-default training mode
@@ -236,12 +268,25 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
     const char*
     get_name()
     {
-        return "GERMLINE_SNV_INDEL_DEVELOPMENT_FEATURES";
+        return "GERMLINE_INDEL_DEVELOPMENT_SCORING_FEATURES";
     }
 
     enum index_t
     {
         F_GQ,
+        F_MQ,
+        mapqZeroFraction,
+        F_DPI_NORM,
+        TDP_NORM,
+        QUAL_NORM,
+        F_GQX_NORM,
+        F_GQ_NORM,
+        AD0_NORM,
+        AD1_NORM,
+        AD2_NORM,
+        QUAL_EXACT,
+        F_GQX_EXACT,
+        F_GQ_EXACT,
         SIZE
     };
 
@@ -253,10 +298,35 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
         {
         case F_GQ:
             return "F_GQ";
+        case F_MQ:
+            return "F_MQ";
+        case mapqZeroFraction:
+            return "mapqZeroFraction";
+        case F_DPI_NORM:
+            return "F_DPI_NORM";
+        case TDP_NORM:
+            return "TDP_NORM";
+        case QUAL_NORM:
+            return "QUAL_NORM";
+        case F_GQX_NORM:
+            return "F_GQX_NORM";
+        case F_GQ_NORM:
+            return "F_GQ_NORM";
+        case AD0_NORM:
+            return "AD0_NORM";
+        case AD1_NORM:
+            return "AD1_NORM";
+        case AD2_NORM:
+            return "AD2_NORM";
+        case QUAL_EXACT:
+            return "QUAL_EXACT";
+        case F_GQX_EXACT:
+            return "F_GQX_EXACT";
+        case F_GQ_EXACT:
+            return "F_GQ_EXACT";
         default:
             assert(false && "Unknown feature");
             return nullptr;
         }
     }
 };
-

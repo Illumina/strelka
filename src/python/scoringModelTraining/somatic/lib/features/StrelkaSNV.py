@@ -47,7 +47,7 @@ class StrelkaSNVFeatures(VcfFeatureSet):
             "N_DP_RATE",
             "TIER1_ALT_RATE",
             "MQ",
-            "n_mapq0",
+            "MQ0_FRAC",
             "strandBias",
             "ReadPosRankSum",
             "altmap",

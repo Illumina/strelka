@@ -140,11 +140,12 @@ score_segment(const starling_base_options& /*opt*/,
 
 
 double
-score_candidate_alignment(const starling_base_options& opt,
-                          const indel_buffer& ibuff,
-                          const read_segment& rseg,
-                          const candidate_alignment& cal,
-                          const reference_contig_segment& ref)
+score_candidate_alignment(
+    const starling_base_options& opt,
+    const IndelBuffer& indelBuffer,
+    const read_segment& rseg,
+    const candidate_alignment& cal,
+    const reference_contig_segment& ref)
 {
     using namespace ALIGNPATH;
 
@@ -186,32 +187,32 @@ score_candidate_alignment(const starling_base_options& opt,
             const swap_info sinfo(path,path_index);
             n_seg=sinfo.n_seg;
 
-            indel_key ik(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
+            IndelKey indelKey(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length);
 
             // check if this is an edge swap:
             if ((path_index<ends.first) || (path_index>ends.second))
             {
                 if (path_index<ends.first)
                 {
-                    ik=cal.leading_indel_key;
+                    indelKey=cal.leading_indel_key;
                 }
                 else
                 {
-                    ik=cal.trailing_indel_key;
+                    indelKey=cal.trailing_indel_key;
                 }
-                assert(ik.type!=INDEL::NONE);
+                assert(indelKey.type!=INDEL::NONE);
             }
 
-            const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
-            if (NULL == id_ptr)
+            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
+            if (nullptr == indelDataPtr)
             {
                 std::ostringstream oss;
-                oss << "ERROR: candidate alignment does not contain expected swap indel: " << ik << "\n"
+                oss << "ERROR: candidate alignment does not contain expected swap indel: " << indelKey << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->get_insert_seq());
+            const string_bam_seq insert_bseq(indelDataPtr->getInsertSeq());
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:
@@ -269,33 +270,32 @@ score_candidate_alignment(const starling_base_options& opt,
         }
         else if (ps.type==INSERT)
         {
-
-            indel_key ik(ref_head_pos,INDEL::INSERT,ps.length);
+            IndelKey indelKey(ref_head_pos,INDEL::INSERT,ps.length);
 
             // check if this is an edge insertion:
             if ((path_index<ends.first) || (path_index>ends.second))
             {
                 if (path_index<ends.first)
                 {
-                    ik=cal.leading_indel_key;
+                    indelKey=cal.leading_indel_key;
                 }
                 else
                 {
-                    ik=cal.trailing_indel_key;
+                    indelKey=cal.trailing_indel_key;
                 }
-                assert(ik.type!=INDEL::NONE);
+                assert(indelKey.type!=INDEL::NONE);
             }
 
-            const indel_data* id_ptr(ibuff.get_indel_data_ptr(ik));
-            if (NULL == id_ptr)
+            const IndelData* indelDataPtr(indelBuffer.getIndelDataPtr(indelKey));
+            if (nullptr == indelDataPtr)
             {
                 std::ostringstream oss;
-                oss << "ERROR: candidate alignment does not contain expected insertion: " << ik << "\n"
+                oss << "ERROR: candidate alignment does not contain expected insertion: " << indelKey << "\n"
                     << "\tcandidate alignment: " << cal << "\n";
                 throw blt_exception(oss.str().c_str());
             }
 
-            const string_bam_seq insert_bseq(id_ptr->get_insert_seq());
+            const string_bam_seq insert_bseq(indelDataPtr->getInsertSeq());
 
             // if this is a leading edge-insertion we need to set
             // insert_seq_head_pos accordingly:

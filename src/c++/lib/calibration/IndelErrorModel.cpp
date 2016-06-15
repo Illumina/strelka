@@ -254,12 +254,12 @@ IndelErrorModel(
 void
 IndelErrorModel::
 getIndelErrorRate(
-    const starling_indel_report_info& iri,
+    const starling_indel_report_info& indelReportInfo,
     double& refToIndelErrorProb,
     double& indelToRefErrorProb) const
 {
     // determine simple case
-    const bool isSimpleIndel(iri.it==INDEL::INSERT || iri.it==INDEL::DELETE);
+    const bool isSimpleIndel(indelReportInfo.it==INDEL::INSERT || indelReportInfo.it==INDEL::DELETE);
 
     if (! isSimpleIndel)
     {
@@ -273,18 +273,18 @@ getIndelErrorRate(
         return;
     }
 
-    assert(iri.it == INDEL::INSERT || iri.it == INDEL::DELETE);
+    assert(indelReportInfo.it == INDEL::INSERT || indelReportInfo.it == INDEL::DELETE);
 
     // determine the repeat pattern size and count:
     static const unsigned one(1);
-    const unsigned repeatingPatternSize    = std::max(iri.repeat_unit_length,one);
-    const unsigned refPatternRepeatCount   = std::max(iri.ref_repeat_count,one);
-    const unsigned indelPatternRepeatCount = std::max(iri.indel_repeat_count,one);
+    const unsigned repeatingPatternSize    = std::max(indelReportInfo.repeat_unit_length,one);
+    const unsigned refPatternRepeatCount   = std::max(indelReportInfo.ref_repeat_count,one);
+    const unsigned indelPatternRepeatCount = std::max(indelReportInfo.indel_repeat_count,one);
 
     //const int indelPatternRepeatSize(std::abs(static_cast<int>(iri.ref_repeat_count)-static_cast<int>(iri.indel_repeat_count));
 
-    const INDEL::index_t reverse_it(iri.it==INDEL::DELETE ? INDEL::INSERT : INDEL::DELETE);
+    const INDEL::index_t reverse_it(indelReportInfo.it==INDEL::DELETE ? INDEL::INSERT : INDEL::DELETE);
 
-    refToIndelErrorProb=_errorRates.getRate(repeatingPatternSize, refPatternRepeatCount, iri.it);
+    refToIndelErrorProb=_errorRates.getRate(repeatingPatternSize, refPatternRepeatCount, indelReportInfo.it);
     indelToRefErrorProb=_errorRates.getRate(repeatingPatternSize, indelPatternRepeatCount, reverse_it);
 }

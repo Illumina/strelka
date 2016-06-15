@@ -18,7 +18,6 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
@@ -26,31 +25,31 @@
 #pragma once
 
 
-#include "starling_common/indel_key.hh"
-#include "starling_common/indel_data.hh"
+#include "starling_common/IndelKey.hh"
+#include "starling_common/IndelData.hh"
 
 #include <iosfwd>
 
 
-// Represents a single indel observation
-struct indel_observation
+/// Represents a single indel observation
+struct IndelObservation
 {
-    indel_key key;
-    indel_observation_data data;
+    IndelKey key;
+    IndelObservationData data;
 };
 
 
 
-// Represents all information about an indel
+/// Represents all information about an indel
 struct indel
 {
-    indel_key key;
-    indel_data data;
+    IndelKey key;
+    IndelData data;
 };
 
 
 
 // Debugging dump:
-std::ostream& operator<<(std::ostream& os, const indel_observation& obs);
+std::ostream& operator<<(std::ostream& os, const IndelObservation& obs);
 std::ostream& operator<<(std::ostream& os, const indel& in);
 

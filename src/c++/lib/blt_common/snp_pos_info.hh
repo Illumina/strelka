@@ -25,6 +25,7 @@
 #pragma once
 
 #include "blt_common/hapscore.hh"
+#include "blt_common/MapqTracker.hh"
 #include "blt_util/qscore.hh"
 #include "blt_util/fastRanksum.hh"
 #include "blt_util/seq_util.hh"
@@ -149,9 +150,7 @@ struct snp_pos_info
         tier2_calls.clear();
         n_spandel=0;
         n_submapped=0;
-        n_mapq=0;
-        n_mapq0=0;
-        sum_sq_mapq=0;
+        mapqTracker.clear();
         hap_set.clear();
         mq_ranksum.clear();
         baseq_ranksum.clear();
@@ -236,10 +235,6 @@ struct snp_pos_info
         return _ref_base;
     }
 
-    /// \returns the RMS of the read mapQs
-    double
-    get_rms_mq() const;
-
     /// \returns the read-position rank sum
     double
     get_read_pos_ranksum() const;
@@ -282,14 +277,7 @@ public:
     // all submapped reads get counted here:
     unsigned n_submapped;
 
-    // number of mapq observations, meaning coverage at position
-    unsigned n_mapq;
-
-    // number of mapq==0 observations
-    unsigned n_mapq0;
-
-    // sum of mapq squared for all reads at this position
-    double sum_sq_mapq;
+    MapqTracker mapqTracker;
 
     mutable hap_set_t hap_set;
 

@@ -25,7 +25,7 @@
 #pragma once
 
 
-#include "starling_common/indel_synchronizer.hh"
+#include "starling_common/IndelBuffer.hh"
 #include "starling_common/starling_read.hh"
 #include "starling_common/starling_base_shared.hh"
 
@@ -47,5 +47,6 @@ realign_and_score_read(
     const starling_sample_options& sample_opt,
     const reference_contig_segment& ref,
     const known_pos_range& realign_buffer_range,
+    const unsigned sampleId,
     read_segment& rseg,
-    indel_synchronizer& isync);
+    IndelBuffer& indelBuffer);

@@ -38,17 +38,19 @@ struct somatic_indel_caller_grid : private boost::noncopyable
     explicit somatic_indel_caller_grid(const strelka_options& opt);
 
     void
-    get_somatic_indel(const strelka_options& opt,
-                      const strelka_deriv_options& dopt,
-                      const starling_sample_options& normal_opt,
-                      const starling_sample_options& tumor_opt,
-                      const double indel_error_prob,
-                      const double ref_error_prob,
-                      const indel_key& ik,
-                      const indel_data& normal_id,
-                      const indel_data& tumor_id,
-                      const bool is_use_alt_indel,
-                      somatic_indel_call& sindel) const;
+    get_somatic_indel(
+        const strelka_options& opt,
+        const strelka_deriv_options& dopt,
+        const starling_sample_options& normal_opt,
+        const starling_sample_options& tumor_opt,
+        const double indel_error_prob,
+        const double ref_error_prob,
+        const IndelKey& indelKey,
+        const IndelData& indelData,
+        const unsigned normalId,
+        const unsigned tumorId,
+        const bool is_use_alt_indel,
+        somatic_indel_call& sindel) const;
 
 private:
     blt_float_t _ln_som_match;

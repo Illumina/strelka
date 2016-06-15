@@ -17,8 +17,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 /*
- *  Created on: Jan 15, 2014
  *      Author: Morten Kallberg
  */
 
@@ -152,9 +152,9 @@ struct LogisticAndRuleScoringModels
         const std::string& type,
         const gvcf_deriv_options& init_dopt,
         const parmap& myPars) :
-        dopt(init_dopt),
-        model_type(type),
-        pars(myPars)
+        _dopt(init_dopt),
+        _modelType(type),
+        _pars(myPars)
     {}
 
     void
@@ -219,7 +219,7 @@ private:
         const GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
-    const gvcf_deriv_options& dopt;
-    std::string model_type;
-    parmap pars;
+    const gvcf_deriv_options& _dopt;
+    std::string _modelType;
+    parmap _pars;
 };

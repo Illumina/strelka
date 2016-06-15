@@ -23,8 +23,6 @@
 #include "blt_common/position_nonref_2allele_test.hh"
 #include "blt_common/ref_context.hh"
 #include "blt_util/log.hh"
-#include "blt_util/prob_util.hh"
-#include "calibration/IndelErrorModel.hh"
 #include "starling_continuous_variant_caller.hh"
 
 #include <iomanip>
@@ -99,7 +97,7 @@ starling_pos_processor(
                           sample(sampleId).bc_buff));
     }
 
-    // setup indel syncronizers:
+    // setup indel syncronizer:
     {
         sample_info& normal_sif(sample(0));
 
@@ -124,10 +122,12 @@ starling_pos_processor(
             }
         }
 
-        indel_sync_data isdata;
-        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, max_candidate_normal_sample_depth, sampleId);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleId));
+        const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
+                                                                      max_candidate_normal_sample_depth);
+
+        assert(syncSampleId == sampleId);
+
+        getIndelBuffer().finalizeSamples();
     }
 }
 
@@ -388,16 +388,18 @@ process_pos_snp_single_sample_impl(
         // calculate empirical scoring metrics
         if (_opt.is_compute_germline_scoring_metrics())
         {
-            si->MQ               = pi.get_rms_mq();
-            si->ReadPosRankSum   = pi.get_read_pos_ranksum();
-            si->MQRankSum        = pi.get_mq_ranksum();
-            si->BaseQRankSum     = pi.get_baseq_ranksum();
-            si->rawPos           = pi.get_raw_pos();
-            si->avgBaseQ         = pi.get_raw_baseQ();
+            si->mapqRMS = pi.mapqTracker.getRMS();
+            si->mapqZeroCount = pi.mapqTracker.zeroCount;
+            si->mapqCount = pi.mapqTracker.count;
+            si->ReadPosRankSum = pi.get_read_pos_ranksum();
+            si->MQRankSum = pi.get_mq_ranksum();
+            si->BaseQRankSum = pi.get_baseq_ranksum();
+            si->rawPos = pi.get_raw_pos();
+            si->avgBaseQ = pi.get_raw_baseQ();
         }
 
         // hpol filter
-        si->hpol=get_snp_hpol_size(pos,_ref);
+        si->hpol = get_snp_hpol_size(pos,_ref);
     }
 
     if (_opt.is_nonref_sites())
@@ -496,33 +498,16 @@ process_pos_indel_single_sample(
 
 
 
-static
-void
-transformGermlineIndelErrorRate(
-    const double logScaleFactor,
-    double& indelErrorRate)
-{
-    static const double minIndelErrorProb(0.0);
-    static const double maxIndelErrorProb(0.5);
-
-    indelErrorRate = std::min(indelErrorRate, maxIndelErrorProb);
-    indelErrorRate = softMaxInverseTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
-    indelErrorRate += logScaleFactor;
-    indelErrorRate = softMaxTransform(indelErrorRate, minIndelErrorProb, maxIndelErrorProb);
-}
-
-
-
 void
 starling_pos_processor::
 process_pos_indel_single_sample_digt(
     const pos_t pos,
-    const unsigned sample_no)
+    const unsigned sampleId)
 {
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if (sample_no!=0) return;
+    if (sampleId!=0) return;
 
     // Current multiploid indel model can handle a het or hom indel
     // allele vs. reference, or two intersecting non-reference indel
@@ -535,23 +520,23 @@ process_pos_indel_single_sample_digt(
 
     std::ostream& report_os(std::cerr);
 
-    typedef indel_buffer::const_iterator ciiter;
-
-    sample_info& sif(sample(sample_no));
-    ciiter it(sif.indel_buff.pos_iter(pos));
-    const ciiter it_end(sif.indel_buff.pos_iter(pos+1));
+    sample_info& sif(sample(sampleId));
+    auto it(getIndelBuffer().positionIterator(pos));
+    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
     for (; it!=it_end; ++it)
     {
-        const indel_key& ik(it->first);
-        const indel_data& id(get_indel_data(it));
-        const bool isForcedOutput(id.is_forced_output);
-        const bool isZeroCoverage(id.read_path_lnp.empty());
+        const IndelKey& indelKey(it->first);
+        const IndelData& indelData(getIndelData(it));
+        const bool isForcedOutput(indelData.is_forced_output);
+
+        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
+        const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
 
         if (! isForcedOutput)
         {
             if (isZeroCoverage) continue;
-            if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+            if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
         // TODO implement indel overlap resolution
@@ -563,30 +548,12 @@ process_pos_indel_single_sample_digt(
             // caller
 
             // sample-independent info:
-            starling_indel_report_info iri;
-            get_starling_indel_report_info(ik,id,_ref,iri);
+            starling_indel_report_info indelReportInfo;
+            get_starling_indel_report_info(indelKey,indelData,_ref,indelReportInfo);
 
             // STARKA-248 filter invalid indel
             /// TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
-            if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
-
-            double refToIndelErrorProb(0);
-            double indelToRefErrorProb(0);
-            _dopt.getIndelErrorModel().getIndelErrorRate(iri,refToIndelErrorProb,indelToRefErrorProb);
-
-            // make germline-specific error rate adjustments:
-            {
-                // In applying the germlineIndelErrorRateFactor, we want to make sure that we don't end up with
-                // "probabilities" > 1 ... and in fact we might want to keep it <= .5 ... we don't
-                // want to say that we are less likely to be right than wrong, as that would favor any
-                // specific alternative over no error.
-                //
-                // We transform the value on the restricted range [0,max] to a real parameter using a
-                // logistic function, transform by scaling factor in log space and return the restricted
-                // value range:
-                transformGermlineIndelErrorRate(_dopt.logGermlineIndelErrorRateFactor, refToIndelErrorProb);
-                transformGermlineIndelErrorRate(_dopt.logGermlineIndelErrorRateFactor, indelToRefErrorProb);
-            }
+            if (indelReportInfo.vcf_indel_seq == indelReportInfo.vcf_ref_seq) continue;
 
             static const bool is_tier2_pass(false);
             static const bool is_use_alt_indel(true);
@@ -600,8 +567,8 @@ process_pos_indel_single_sample_digt(
                 // start position and end position, approximating that the whole
                 // region in between has the same ploidy, for any anomalous state
                 // revert to 'noploid':
-                const int indelLeftPloidy(get_ploidy(ik.pos));
-                const int indelRightPloidy(get_ploidy(ik.right_pos()));
+                const int indelLeftPloidy(get_ploidy(indelKey.pos));
+                const int indelRightPloidy(get_ploidy(indelKey.right_pos()));
 
                 if (indelLeftPloidy == indelRightPloidy)
                 {
@@ -616,8 +583,8 @@ process_pos_indel_single_sample_digt(
             _dopt.incaller().starling_indel_call_pprob_digt(
                 _opt,_dopt,
                 sif.sample_opt,
-                refToIndelErrorProb,indelToRefErrorProb,
-                ik,id,is_use_alt_indel,dindel);
+                indelData.errorRates.scaledRefToIndelErrorProb,indelData.errorRates.scaledIndelToRefErrorProb,
+                indelKey,indelSampleData,is_use_alt_indel,dindel);
 
             bool is_indel(false);
             if ((dindel.is_indel) || (dindel.is_forced_output))
@@ -627,13 +594,13 @@ process_pos_indel_single_sample_digt(
                 // sample-specific info: (division doesn't really matter
                 // in single-sample case)
                 starling_indel_sample_report_info isri;
-                get_starling_indel_sample_report_info(_dopt,ik,id,sif.bc_buff,
+                get_starling_indel_sample_report_info(_dopt,indelKey,indelSampleData,sif.bc_buff,
                                                       is_tier2_pass,is_use_alt_indel,isri);
 
                 if (_opt.gvcf.is_gvcf_output())
                 {
-                    assert(ik.pos==pos);
-                    _gvcfer->add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(ik,id, dindel,iri,isri)));
+                    assert(indelKey.pos==pos);
+                    _gvcfer->add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(indelKey,indelData, dindel,indelReportInfo,isri)));
                 }
 
                 if (_is_variant_windows)
@@ -650,13 +617,13 @@ process_pos_indel_single_sample_digt(
 
             if (is_print_indel_evidence && is_indel)
             {
-                report_os << "INDEL_EVIDENCE " << ik;
+                report_os << "INDEL_EVIDENCE " << indelKey;
 
-                for (const auto& val : id.read_path_lnp)
+                for (const auto& val : indelSampleData.read_path_lnp)
                 {
                     const align_id_t read_id(val.first);
-                    const read_path_scores& lnp(val.second);
-                    const read_path_scores pprob(indel_lnp_to_pprob(_dopt,lnp,is_tier2_pass,is_use_alt_indel));
+                    const ReadPathScores& lnp(val.second);
+                    const ReadPathScores pprob(indel_lnp_to_pprob(_dopt,lnp,is_tier2_pass,is_use_alt_indel));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 
                     report_os << "read key: ";
@@ -675,37 +642,37 @@ void
 starling_pos_processor::
 process_pos_indel_single_sample_continuous(
     const pos_t pos,
-    const unsigned sample_no)
+    const unsigned sampleId)
 {
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if (sample_no!=0) return;
+    if (sampleId!=0) return;
 
-    typedef indel_buffer::const_iterator ciiter;
-
-    sample_info& sif(sample(sample_no));
-    ciiter it(sif.indel_buff.pos_iter(pos));
-    const ciiter it_end(sif.indel_buff.pos_iter(pos+1));
+    sample_info& sif(sample(sampleId));
+    auto it(getIndelBuffer().positionIterator(pos));
+    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
     std::unique_ptr<GermlineContinuousIndelCallInfo> info;
 
     for (; it!=it_end; ++it)
     {
-        const indel_key& ik(it->first);
-        const indel_data& id(get_indel_data(it));
-        const bool isForcedOutput(id.is_forced_output);
-        const bool isZeroCoverage(id.read_path_lnp.empty());
+        const IndelKey& indelKey(it->first);
+        const IndelData& indelData(getIndelData(it));
+        const bool isForcedOutput(indelData.is_forced_output);
+
+        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
+        const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
 
         if (! isForcedOutput)
         {
             if (isZeroCoverage) continue;
-            if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+            if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
         // sample-independent info:
-        starling_indel_report_info iri;
-        get_starling_indel_report_info(ik,id,_ref,iri);
+        starling_indel_report_info indelReportInfo;
+        get_starling_indel_report_info(indelKey,indelData,_ref,indelReportInfo);
 
         static const bool is_tier2_pass(false);
         static const bool is_use_alt_indel(true);
@@ -714,8 +681,8 @@ process_pos_indel_single_sample_continuous(
             info.reset(new GermlineContinuousIndelCallInfo(pos));
 
         starling_indel_sample_report_info isri;
-        get_starling_indel_sample_report_info(_dopt,ik,id,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
-        starling_continuous_variant_caller::add_indel_call(_opt, ik, id, iri, isri, *info);
+        get_starling_indel_sample_report_info(_dopt,indelKey,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
+        starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, indelReportInfo, isri, *info);
 
     }
     if (info && (info->is_indel() || info->is_forced_output()))
@@ -740,7 +707,6 @@ void
 starling_pos_processor::
 write_counts(const pos_range& output_report_range) const
 {
-
     std::ostream* report_osptr(get_report_osptr());
     if (NULL==report_osptr) return;
     std::ostream& report_os(*report_osptr);

@@ -108,12 +108,6 @@ get_starling_base_option_parser(starling_base_options& opt)
      "Set indel theta")
     ;
 
-    po::options_description hap_opt("haplotype-options");
-    hap_opt.add_options()
-    ("hap-model", po::value(&opt.is_htype_calling)->zero_tokens(),
-     "Turn on haplotype-based variant calling")
-    ;
-
     po::options_description blt_nonref_opt("nonref-model-options");
     blt_nonref_opt.add_options()
     ("nonref-test-file", po::value(&opt.nonref_test_filename),
@@ -193,7 +187,7 @@ get_starling_base_option_parser(starling_base_options& opt)
 
     po::options_description new_opt("Shared small-variant options");
 
-    new_opt.add(geno_opt).add(hap_opt).add(blt_nonref_opt);
+    new_opt.add(geno_opt).add(blt_nonref_opt);
     new_opt.add(realign_opt).add(indel_opt).add(ploidy_opt).add(window_opt);
     new_opt.add(input_opt).add(other_opt);
 

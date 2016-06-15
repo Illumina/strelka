@@ -41,6 +41,6 @@ denovo_indel_call_vcf(
     const pedicure_deriv_options& dopt,
     const SampleInfoManager& sinfo,
     const denovo_indel_call& dinc,
-    const starling_indel_report_info& iri,
+    const starling_indel_report_info& indelReportInfo,
     const std::vector<isriTiers_t>& isri,
     std::ostream& os);

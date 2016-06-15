@@ -27,6 +27,7 @@
 
 #include "blt_util/chrom_depth_map.hh"
 #include "blt_util/io_util.hh"
+#include "common/Exceptions.hh"
 #include "htsapi/vcf_util.hh"
 #include "htsapi/bam_dumper.hh"
 
@@ -35,6 +36,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <set>
 #include <sstream>
 
 
@@ -78,6 +80,21 @@ write_shared_vcf_header_info(
             os << "##Depth_" << chrom << '=' << expectedDepth << "\n";
         }
     }
+}
+
+
+
+static
+void
+repeatedFeatureLabelError(
+    const char* label,
+    const std::string& featureLabel)
+{
+    using namespace illumina::common;
+
+    std::ostringstream oss;
+    oss << "ERROR: repeated " << label << " EVS training feature label '" << featureLabel << "'\n";
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
 }
 
 
@@ -134,8 +151,8 @@ strelka_streams(
             fos << "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Combined depth across samples\">\n";
             fos << "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">\n";
             fos << "##INFO=<ID=MQ0,Number=1,Type=Integer,Description=\"Number of MAPQ == 0 reads covering this record\">\n";
-            fos << "##INFO=<ID=ALTPOS,Number=1,Type=Integer,Description=\"Tumor alternate allele read position median\">\n";
-            fos << "##INFO=<ID=ALTMAP,Number=1,Type=Integer,Description=\"Tumor alternate allele read position MAP\">\n";
+//            fos << "##INFO=<ID=ALTPOS,Number=1,Type=Integer,Description=\"Tumor alternate allele read position median\">\n";
+//            fos << "##INFO=<ID=ALTMAP,Number=1,Type=Integer,Description=\"Tumor alternate allele read position MAP\">\n";
             fos << "##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description=\"Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position in the tumor\">\n";
             fos << "##INFO=<ID=SNVSB,Number=1,Type=Float,Description=\"Somatic SNV site strand bias\">\n";
             fos << "##INFO=<ID=PNOISE,Number=1,Type=Float,Description=\"Fraction of panel containing non-reference noise at this site\">\n";
@@ -193,6 +210,7 @@ strelka_streams(
 
             if (opt.isReportEVSFeatures)
             {
+                std::set<std::string> featureLabels;
                 fos << "##snv_scoring_features=";
                 for (unsigned featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
                 {
@@ -200,12 +218,25 @@ strelka_streams(
                     {
                         fos << ",";
                     }
-                    fos << SOMATIC_SNV_SCORING_FEATURES::get_feature_label(featureIndex);
+                    const std::string featureLabel(SOMATIC_SNV_SCORING_FEATURES::get_feature_label(featureIndex));
+                    const auto retVal = featureLabels.insert(featureLabel);
+                    if (not retVal.second)
+                    {
+                        repeatedFeatureLabelError("SNV", featureLabel);
+                    }
+                    fos << featureLabel;
                 }
 
-                for (unsigned featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+                for (int featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
                 {
-                    fos << ',' << SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+                    fos << ',';
+                    const std::string featureLabel(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
+                    const auto retVal = featureLabels.insert(featureLabel);
+                    if (not retVal.second)
+                    {
+                        repeatedFeatureLabelError("SNV", featureLabel);
+                    }
+                    fos << featureLabel;
                 }
                 fos << "\n";
             }
@@ -323,6 +354,7 @@ strelka_streams(
 
             if (opt.isReportEVSFeatures)
             {
+                std::set<std::string> featureLabels;
                 fos << "##indel_scoring_features=";
                 for (unsigned featureIndex = 0; featureIndex < SOMATIC_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
                 {
@@ -330,11 +362,24 @@ strelka_streams(
                     {
                         fos << ",";
                     }
-                    fos << SOMATIC_INDEL_SCORING_FEATURES::get_feature_label(featureIndex);
+                    const std::string featureLabel(SOMATIC_INDEL_SCORING_FEATURES::get_feature_label(featureIndex));
+                    const auto retVal = featureLabels.insert(featureLabel);
+                    if (not retVal.second)
+                    {
+                        repeatedFeatureLabelError("indel", featureLabel);
+                    }
+                    fos << featureLabel;
                 }
                 for (unsigned featureIndex = 0; featureIndex < SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
                 {
-                    fos << ',' << SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex);
+                    fos << ',';
+                    const std::string featureLabel(SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
+                    const auto retVal = featureLabels.insert(featureLabel);
+                    if (not retVal.second)
+                    {
+                        repeatedFeatureLabelError("indel", featureLabel);
+                    }
+                    fos << featureLabel;
                 }
                 fos << "\n";
             }

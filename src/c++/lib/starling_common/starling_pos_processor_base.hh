@@ -18,16 +18,10 @@
 //
 //
 
-/// \file
 ///
 /// \author Chris Saunders
 ///
 
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the begining of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
-///
 
 #pragma once
 
@@ -38,9 +32,8 @@
 #include "blt_util/RegionTracker.hh"
 #include "blt_util/stage_manager.hh"
 #include "blt_util/window_util.hh"
-#include "starling_common/indel_buffer.hh"
 #include "starling_common/indel_set.hh"
-#include "starling_common/indel_synchronizer.hh"
+#include "starling_common/IndelBuffer.hh"
 #include "starling_common/PileupCleaner.hh"
 #include "starling_common/pos_basecall_buffer.hh"
 #include "starling_common/read_mismatch_info.hh"
@@ -56,11 +49,6 @@
 
 struct diploid_genotype;
 struct nploid_info;
-
-
-//int
-//get_influence_zone_size(const unsigned max_indel_size);
-
 
 
 /// \brief accumulate sequential position specific information and
@@ -94,8 +82,6 @@ struct nploid_info;
 /// between first_pos and first_pos-MAX_READ_SIZE will be processed but
 /// not reported.
 ///
-/// ...
-///
 struct starling_pos_processor_base : public pos_processor_base, private boost::noncopyable
 {
     typedef pos_processor_base base_t;
@@ -119,8 +105,8 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     // returns true if this indel is novel to the buffer
     //
     bool
-    insert_indel(const indel_observation& obs,
-                 const unsigned sample_no);
+    insert_indel(const IndelObservation& obs,
+                 const unsigned sampleId);
 
     // in range [begin,end), is the estimated depth always below
     // depth?
@@ -131,14 +117,15 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
         const unsigned depth,
         const unsigned sample_no) const;
 
-    // first return value is true if the alignment is accepted into
+    // return value is true if the alignment is accepted into
     // the buffer (alignments can fail a number of quality checks --
     // such as being located too far away from other alignments of the
     // same read or having an indel that is too large
     //
-    // second return value is read_id
+    // if true, the return value provides the read's ide in this structures
+    // read buffer
     //
-    std::pair<bool,align_id_t>
+    boost::optional<align_id_t>
     insert_read(
         const bam_record& br,
         const alignment& al,
@@ -291,8 +278,7 @@ public:
             const unsigned report_size,
             const unsigned knownref_report_size,
             read_id_counter* ricp)
-            : indel_buff(opt.max_indel_size)
-            , bc_buff(ref)
+            : bc_buff(ref)
             , read_buff(ricp)
             , sample_opt(opt)
             , ss(report_size)
@@ -307,28 +293,12 @@ public:
             }
         }
 
-        indel_synchronizer&
-        indel_sync()
-        {
-            return *indel_sync_ptr;
-        }
-
-        const indel_synchronizer&
-        indel_sync() const
-        {
-            return *indel_sync_ptr;
-        }
-
-
-        indel_buffer indel_buff;
         pos_basecall_buffer bc_buff;
         starling_read_buffer read_buff;
         depth_buffer estdepth_buff; // provide an early estimate of read depth before realignment.
         depth_buffer estdepth_buff_tier2; // provide an early estimate of read depth before realignment.
 
         starling_sample_options sample_opt;
-
-        std::unique_ptr<indel_synchronizer> indel_sync_ptr;
 
         depth_stream_stat_range ss;
         depth_stream_stat_range used_ss;
@@ -354,6 +324,20 @@ public:
         return *_sample[sample_no];
     }
 
+protected:
+    IndelBuffer&
+    getIndelBuffer()
+    {
+        return _indelBuffer;
+    }
+
+    const IndelBuffer&
+    getIndelBuffer() const
+    {
+        return _indelBuffer;
+    }
+
+public:
     // data for haplotoype regions, shared between all samples:
     //
     struct htype_region_data
@@ -398,7 +382,6 @@ private:
         const uint8_t call_id,
         const uint8_t qscore,
         const uint8_t mapq,
-        const uint8_t adjustedMapq,
         const unsigned cycle,
         const bool is_submapped);
 
@@ -456,13 +439,6 @@ private:
                         const unsigned sample_no);
 
     void
-    get_region_haplotypes(const known_pos_range full_pr,
-                          const known_pos_range active_pr);
-
-    void
-    process_htype_pos(const pos_t begin_pos);
-
-    void
     write_reads(const pos_t pos);
 
     void
@@ -510,11 +486,6 @@ protected:
     }
 
 private:
-    //////
-    void
-    print_delayed_results(const int stage_no,
-                          const pos_t pos);
-
     virtual
     void
     write_counts(const pos_range& output_report_range) const = 0;
@@ -547,13 +518,13 @@ private:
     {
         if (! _is_skip_process_pos)
         {
-            for (unsigned s(0); s<_n_samples; ++s)
+            for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
             {
-                const sample_info& sif(sample(s));
+                const sample_info& sif(sample(sampleIndex));
                 if (! sif.read_buff.empty()) return false;
                 if (! sif.bc_buff.empty()) return false;
-                if (! sif.indel_buff.empty()) return false;
             }
+            if (! _indelBuffer.empty()) return false;
             if (! _variant_print_pos.empty()) return false;
             if (! _forced_output_pos.empty()) return false;
             if (! derived_empty()) return false;
@@ -627,4 +598,7 @@ protected:
     PileupCleaner _pileupCleaner;
 
     RegionPayloadTracker<int> _ploidy_regions;
+
+private:
+    IndelBuffer _indelBuffer;
 };

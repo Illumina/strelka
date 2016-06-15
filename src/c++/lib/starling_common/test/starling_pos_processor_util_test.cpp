@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_SUITE( sppr_util_test )
 BOOST_AUTO_TEST_CASE( test_vcf_to_allele )
 {
     static const unsigned max_indel_size(50);
-    indel_observation obs;
+    IndelObservation obs;
     bool isConverted;
 
     {
@@ -41,12 +41,12 @@ BOOST_AUTO_TEST_CASE( test_vcf_to_allele )
         vr.alt.push_back("A");
 
         isConverted = convert_vcfrecord_to_indel_allele(max_indel_size,vr,0,obs);
-        indel_key k0expect(4329513,INDEL::DELETE,1);
+        IndelKey k0expect(4329513,INDEL::DELETE,1);
         BOOST_REQUIRE(isConverted);
         BOOST_REQUIRE_EQUAL(obs.key,k0expect);
 
         isConverted = convert_vcfrecord_to_indel_allele(max_indel_size,vr,1,obs);
-        indel_key k1expect(4329513,INDEL::DELETE,2);
+        IndelKey k1expect(4329513,INDEL::DELETE,2);
         BOOST_REQUIRE(isConverted);
         BOOST_REQUIRE_EQUAL(obs.key,k1expect);
     }
@@ -62,17 +62,17 @@ BOOST_AUTO_TEST_CASE( test_vcf_to_allele )
         vr.alt.push_back("AG");
 
         isConverted = convert_vcfrecord_to_indel_allele(max_indel_size,vr,0,obs);
-        indel_key k0expect(4329513,INDEL::DELETE,2);
+        IndelKey k0expect(4329513,INDEL::DELETE,2);
         BOOST_REQUIRE(isConverted);
         BOOST_REQUIRE_EQUAL(obs.key,k0expect);
 
         isConverted = convert_vcfrecord_to_indel_allele(max_indel_size,vr,1,obs);
-        indel_key k1expect(4329513,INDEL::INSERT,1);
+        IndelKey k1expect(4329513,INDEL::INSERT,1);
         BOOST_REQUIRE(isConverted);
         BOOST_REQUIRE_EQUAL(obs.key,k1expect);
 
         isConverted = convert_vcfrecord_to_indel_allele(max_indel_size,vr,2,obs);
-        indel_key k2expect(4329513,INDEL::SWAP,1,2);
+        IndelKey k2expect(4329513,INDEL::SWAP,1,2);
         BOOST_REQUIRE(isConverted);
         BOOST_REQUIRE_EQUAL(obs.key,k2expect);
     }

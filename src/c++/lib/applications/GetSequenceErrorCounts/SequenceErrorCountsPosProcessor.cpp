@@ -50,7 +50,7 @@ SequenceErrorCountsPosProcessor(
 
     static const unsigned sampleId(0);
 
-    // setup indel syncronizers:
+    // setup indel syncronizer:
     {
         sample_info& normal_sif(sample(sampleId));
 
@@ -74,10 +74,12 @@ SequenceErrorCountsPosProcessor(
             }
         }
 
-        indel_sync_data isdata;
-        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, _max_candidate_normal_sample_depth, sampleId);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleId));
+        const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
+                                                                      _max_candidate_normal_sample_depth);
+
+        assert(syncSampleId == sampleId);
+
+        getIndelBuffer().finalizeSamples();
     }
 }
 
@@ -124,8 +126,8 @@ static
 bool
 isKnownVariantMatch(
     const RecordTracker::indel_value_t& knownVariants,
-    const indel_key& ik,
-    const indel_data& id,
+    const IndelKey& indelKey,
+    const IndelData& indelData,
     RecordTracker::indel_value_t& overlap)
 {
     if (knownVariants.empty()) return false;
@@ -137,7 +139,7 @@ isKnownVariantMatch(
     // the inserted sequence must match
     for (const auto& kv : knownVariants)
     {
-        if (kv.altMatch(ik, id)) overlap.insert(kv);
+        if (kv.altMatch(indelKey, indelData)) overlap.insert(kv);
     }
     return (! overlap.empty());
 }
@@ -146,22 +148,22 @@ isKnownVariantMatch(
 ///
 struct OrthogonalHaplotypeCandidateGroup
 {
-    const indel_key&
+    const IndelKey&
     key(
         const unsigned index) const
     {
         return iter(index)->first;
     }
 
-    const indel_data&
+    const IndelData&
     data(
         const unsigned index) const
     {
         assert(index < size());
-        return get_indel_data(iter(index));
+        return getIndelData(iter(index));
     }
 
-    const indel_buffer::const_iterator&
+    const IndelBuffer::const_iterator&
     iter(
         const unsigned index) const
     {
@@ -189,12 +191,12 @@ struct OrthogonalHaplotypeCandidateGroup
 
     void
     addHaplotype(
-        const indel_buffer::const_iterator hapIter)
+        const IndelBuffer::const_iterator hapIter)
     {
         haps.push_back(hapIter);
     }
 
-    std::vector<indel_buffer::const_iterator> haps;
+    std::vector<IndelBuffer::const_iterator> haps;
 };
 
 
@@ -203,7 +205,7 @@ struct OrthogonalHaplotypeCandidateGroup
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 
-/// order overlapping indels by total read support
+/// order overlapping indels by total read support in one sample
 ///
 /// \param[out] referenceRank rank of the reference among all haplotypes, with 0 being the best (highest scoring)
 ///
@@ -211,6 +213,7 @@ static
 void
 getOrthogonalHaplotypeSupportCounts(
     const OrthogonalHaplotypeCandidateGroup& hg,
+    const unsigned sampleId,
     std::vector<unsigned>& support,
     const bool is_tier1_only = true)
 {
@@ -224,8 +227,8 @@ getOrthogonalHaplotypeSupportCounts(
         std::map<unsigned,unsigned> countReadIds;
         for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; nonrefHapIndex++)
         {
-            const indel_data& id(hg.data(nonrefHapIndex));
-            for (const auto& score : id.read_path_lnp)
+            const IndelSampleData& indelSampleData(hg.data(nonrefHapIndex).getSampleData(sampleId));
+            for (const auto& score : indelSampleData.read_path_lnp)
             {
                 if (is_tier1_only && (! score.second.is_tier1_read)) continue;
 
@@ -265,17 +268,17 @@ getOrthogonalHaplotypeSupportCounts(
         std::fill(lhood.begin(),lhood.end(),log0);
         for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; nonrefHapIndex++)
         {
-            const indel_data& id(hg.data(nonrefHapIndex));
+            const IndelSampleData& indelSampleData(hg.data(nonrefHapIndex).getSampleData(sampleId));
 
-            const auto iditer(id.read_path_lnp.find(readId));
+            const auto iditer(indelSampleData.read_path_lnp.find(readId));
 
-            if (iditer==id.read_path_lnp.end())
+            if (iditer==indelSampleData.read_path_lnp.end())
             {
                 // note we've set readIds to intersection now so this should never happen:
                 continue;
             }
 
-            const read_path_scores& path_lnp(iditer->second);
+            const ReadPathScores& path_lnp(iditer->second);
 
             lhood[refHapIndex] = std::max(lhood[refHapIndex],static_cast<double>(path_lnp.ref));
             lhood[nonrefHapIndex] = path_lnp.indel;
@@ -297,9 +300,9 @@ getOrthogonalHaplotypeSupportCounts(
 static
 INDEL_SIGNAL_TYPE::index_t
 getIndelType(
-    const starling_indel_report_info& iri)
+    const starling_indel_report_info& indelReportInfo)
 {
-    int rudiff(static_cast<int>(iri.ref_repeat_count)-static_cast<int>(iri.indel_repeat_count));
+    int rudiff(static_cast<int>(indelReportInfo.ref_repeat_count)-static_cast<int>(indelReportInfo.indel_repeat_count));
     rudiff = std::min(3,std::max(-3,rudiff));
 
     using namespace INDEL_SIGNAL_TYPE;
@@ -362,14 +365,14 @@ void
 SequenceErrorCountsPosProcessor::
 process_pos_error_counts(
     const pos_t pos,
-    const unsigned sample_no)
+    const unsigned sampleId)
 {
     static const unsigned maxHpolLength(20);
 
     // note multi-sample status -- can still be called only for one sample
     // and only for sample 0. working on generalization:
     //
-    if (sample_no!=0) return;
+    if (sampleId!=0) return;
 
     const char refBase(_ref.get_base(pos));
 
@@ -379,9 +382,7 @@ process_pos_error_counts(
     IndelErrorCounts& indelCounts(_counts.getIndelCounts());
 
 
-    typedef indel_buffer::const_iterator ciiter;
-
-    const sample_info& sif(sample(sample_no));
+    const sample_info& sif(sample(sampleId));
 
     // right now there's only one baseContext, so just set it const here and leave it
     const BaseErrorContext baseContext;
@@ -512,26 +513,26 @@ process_pos_error_counts(
     // is intended to generalize across multiple positions, in which
     // case we will have to deal with non-clique conflict patterns.
     //
-    ciiter it(sif.indel_buff.pos_iter(pos));
-    const ciiter it_end(sif.indel_buff.pos_iter(pos+1));
-
     std::vector<OrthogonalHaplotypeCandidateGroup> _groups;
+
+    auto it(getIndelBuffer().positionIterator(pos));
+    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
     for (; it!=it_end; ++it)
     {
-        const indel_key& ik(it->first);
-        const indel_data& id(get_indel_data(it));
+        const IndelKey& indelKey(it->first);
+        const IndelData& indelData(getIndelData(it));
 
-        if (ik.is_breakpoint()) continue;
+        if (indelKey.is_breakpoint()) continue;
 
-        const bool isForcedOutput(id.is_forced_output);
+        const bool isForcedOutput(indelData.is_forced_output);
 
         if (! isForcedOutput)
         {
-            if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+            if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
-        if (! (ik.type == INDEL::DELETE || ik.type == INDEL::INSERT)) continue;
+        if (! (indelKey.type == INDEL::DELETE || indelKey.type == INDEL::INSERT)) continue;
 
         // all indels at the same position are conflicting:
         if (_groups.empty()) _groups.resize(1);
@@ -552,33 +553,33 @@ process_pos_error_counts(
         const OrthogonalHaplotypeCandidateGroup& hg(_groups[0]);
         const unsigned nonrefHapCount(hg.size());
         std::vector<unsigned> support;
-        getOrthogonalHaplotypeSupportCounts(hg,support);
+        getOrthogonalHaplotypeSupportCounts(hg, sampleId, support);
 
         for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; ++nonrefHapIndex)
         {
-            const indel_key& ik(hg.key(nonrefHapIndex));
-            const indel_data& id(hg.data(nonrefHapIndex));
+            const IndelKey& indelKey(hg.key(nonrefHapIndex));
+            const IndelData& indelData(hg.data(nonrefHapIndex));
 
-            starling_indel_report_info iri;
-            get_starling_indel_report_info(ik,id,_ref,iri);
+            starling_indel_report_info indelReportInfo;
+            get_starling_indel_report_info(indelKey, indelData,_ref,indelReportInfo);
 
             IndelErrorContext context;
-            if ((iri.repeat_unit_length==1) && (iri.ref_repeat_count>1))
+            if ((indelReportInfo.repeat_unit_length==1) && (indelReportInfo.ref_repeat_count>1))
             {
                 // guard against the occasional non-normalized indel:
                 const unsigned leftHpolSize(get_left_shifted_hpol_size(pos,_ref));
-                if (leftHpolSize == iri.ref_repeat_count)
+                if (leftHpolSize == indelReportInfo.ref_repeat_count)
                 {
-                    context.repeatCount = std::min(maxHpolLength, iri.ref_repeat_count);
+                    context.repeatCount = std::min(maxHpolLength, indelReportInfo.ref_repeat_count);
                 }
             }
 
             RecordTracker::indel_value_t overlappingRecords;
-            isKnownVariantMatch(knownVariantRecords, ik, id, overlappingRecords);
+            isKnownVariantMatch(knownVariantRecords, indelKey, indelData, overlappingRecords);
 
             IndelErrorContextObservation obs;
 
-            const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(iri));
+            const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(indelReportInfo));
             obs.signalCounts[sigIndex] = support[nonrefHapIndex];
             obs.refCount = support[nonrefHapCount];
             obs.assignKnownStatus(overlappingRecords);
@@ -592,11 +593,11 @@ process_pos_error_counts(
             {
                 std::ostream& obs_os(*_streams.observation_bed_osptr());
                 obs_os << _opt.bam_seq_name << "\t";
-                obs_os << ik.pos << "\t" << ik.pos + ik.length << "\t" << INDEL::get_index_label(ik.type) << "\t";
-                obs_os << iri.repeat_unit << "\t" << iri.ref_repeat_count << "\t";
+                obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.length << "\t" << INDEL::get_index_label(indelKey.type) << "\t";
+                obs_os << indelReportInfo.repeat_unit << "\t" << indelReportInfo.ref_repeat_count << "\t";
                 obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
                 obs_os << context.repeatCount << "\t" << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
-                obs_os << ik.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
+                obs_os << indelKey.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
                 obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }

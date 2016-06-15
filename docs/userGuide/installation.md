@@ -36,7 +36,7 @@ Strelka requires a compiler supporting most of the C++11 standard. These
 are the current minimum versions enforced by the build system:
 
 * python 2.4+
-* gcc 4.7+ OR clang 3.1+ (OR Visual Studio 2013+, see windows note below)
+* gcc 4.8+ OR clang 3.2+ (OR Visual Studio 2013+, see windows note below)
 * libz (including headers)
 
 ### Runtime prerequisites

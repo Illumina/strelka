@@ -83,10 +83,10 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
 
     std::unique_ptr<GermlineDiploidIndelCallInfo> site;
-    indel_key ik;
-    ik.pos=50;
-    site.reset(new GermlineDiploidIndelCallInfo(ik,
-                                                indel_data(ik),
+    IndelKey indelKey;
+    indelKey.pos=50;
+    site.reset(new GermlineDiploidIndelCallInfo(indelKey,
+                                                IndelData(1,indelKey),
                                                 GermlineDiploidIndelSimpleGenotypeInfoCore(),
                                                 starling_indel_report_info(),
                                                 starling_indel_sample_report_info()));
@@ -95,9 +95,9 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    ik.pos=105;
-    site.reset(new GermlineDiploidIndelCallInfo(ik,
-                                                indel_data(ik),
+    indelKey.pos=105;
+    site.reset(new GermlineDiploidIndelCallInfo(indelKey,
+                                                IndelData(1,indelKey),
                                                 GermlineDiploidIndelSimpleGenotypeInfoCore(),
                                                 starling_indel_report_info(),
                                                 starling_indel_sample_report_info()));
@@ -106,9 +106,9 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
     bsp.process(std::move(site));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    ik.pos=150;
-    site.reset(new GermlineDiploidIndelCallInfo(ik,
-                                                indel_data(ik),
+    indelKey.pos=150;
+    site.reset(new GermlineDiploidIndelCallInfo(indelKey,
+                                                IndelData(1,indelKey),
                                                 GermlineDiploidIndelSimpleGenotypeInfoCore(),
                                                 starling_indel_report_info(),
                                                 starling_indel_sample_report_info()));
@@ -117,9 +117,9 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
     bsp.process(std::move(site));
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    ik.pos=250;
-    site.reset(new GermlineDiploidIndelCallInfo(ik,
-                                                indel_data(ik),
+    indelKey.pos=250;
+    site.reset(new GermlineDiploidIndelCallInfo(indelKey,
+                                                IndelData(1,indelKey),
                                                 GermlineDiploidIndelSimpleGenotypeInfoCore(),
                                                 starling_indel_report_info(),
                                                 starling_indel_sample_report_info()));

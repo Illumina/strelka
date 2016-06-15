@@ -44,10 +44,10 @@
 /// second: X indel, this may or may not be the same as the active indel,
 ///         but it should only be the active indel or an indel which interferes
 ///         with the active indel
-typedef std::pair<bool,indel_key> indel_present_t;
+typedef std::pair<bool,IndelKey> indel_present_t;
 
 /// first: active indel
-typedef std::pair<indel_key, indel_present_t > indel_status_t;
+typedef std::pair<IndelKey, indel_present_t > indel_status_t;
 
 /// first: alignment likelihood
 /// second: alignment
@@ -63,9 +63,9 @@ static
 void
 updateIndelScoringInfo(
     iks_map_t& iks_map,
-    const indel_key& ik_call,
+    const IndelKey& ik_call,
     const bool is_indel_present,
-    const indel_key& ik_present,
+    const IndelKey& ik_present,
     const double path_lnp,
     const candidate_alignment* cal_ptr)
 {
@@ -79,7 +79,7 @@ updateIndelScoringInfo(
 
 
 
-typedef std::map<indel_key,indel_set_t> overlap_map_t;
+typedef std::map<IndelKey,indel_set_t> overlap_map_t;
 
 
 
@@ -87,11 +87,11 @@ static
 void
 overlap_map_tick(
     overlap_map_t& omap,
-    const indel_key& ik1,
-    const indel_key& ik2)
+    const IndelKey& indelKey1,
+    const IndelKey& indelKey2)
 {
-    indel_set_t& os(omap[ik1]);
-    if (os.find(ik2) == os.end()) os.insert(ik2);
+    indel_set_t& os(omap[indelKey1]);
+    if (os.find(indelKey2) == os.end()) os.insert(indelKey2);
 }
 
 
@@ -101,13 +101,13 @@ static
 bool
 is_interfering_indel(
     const indel_set_t& current_indels,
-    const indel_key& new_indel)
+    const IndelKey& newIndel)
 {
-    if (current_indels.count(new_indel) != 0) return false;
+    if (current_indels.count(newIndel) != 0) return false;
 
-    for (const indel_key& ik : current_indels)
+    for (const IndelKey& currentIndel : current_indels)
     {
-        if (is_indel_conflict(ik,new_indel)) return true;
+        if (is_indel_conflict(currentIndel, newIndel)) return true;
     }
     return false;
 }
@@ -130,7 +130,7 @@ std::pair<int,int>
 get_alignment_indel_bp_overlap(
     const unsigned upstream_oligo_size,
     const alignment& al,
-    const indel_key& ik)
+    const IndelKey& indelKey)
 {
     using namespace ALIGNPATH;
 
@@ -176,14 +176,14 @@ get_alignment_indel_bp_overlap(
             assert(0);
         }
 
-        if ((! is_left_read_pos) && (ik.pos<=(next_ref_head_pos)))
+        if ((! is_left_read_pos) && (indelKey.pos<=(next_ref_head_pos)))
         {
-            left_read_pos=read_head_pos+(ik.pos-ref_head_pos);
+            left_read_pos=read_head_pos+(indelKey.pos-ref_head_pos);
             is_left_read_pos=true;
         }
-        if ((! is_right_read_pos) && (ik.right_pos()<(next_ref_head_pos)))
+        if ((! is_right_read_pos) && (indelKey.right_pos()<(next_ref_head_pos)))
         {
-            right_read_pos=read_head_pos+(ik.right_pos()-ref_head_pos);
+            right_read_pos=read_head_pos+(indelKey.right_pos()-ref_head_pos);
             is_right_read_pos=true;
         }
 
@@ -223,7 +223,7 @@ get_alignment_indel_bp_overlap(
 
 
 
-typedef std::set<std::pair<indel_key,indel_key> > indel_pair_set;
+typedef std::set<std::pair<IndelKey,IndelKey> > indel_pair_set;
 
 
 
@@ -271,17 +271,17 @@ is_equiv_candidate(
 static
 bool
 is_first_indel_dominant(
-    const indel_synchronizer& isync,
-    const indel_key& ik1,
-    const indel_key& ik2)
+    const IndelBuffer& indelBuffer,
+    const IndelKey& indelKey1,
+    const IndelKey& indelKey2)
 {
-    const bool ic1(isync.is_candidate_indel(ik1));
-    const bool ic2(isync.is_candidate_indel(ik2));
+    const bool ic1(indelBuffer.isCandidateIndel(indelKey1));
+    const bool ic2(indelBuffer.isCandidateIndel(indelKey2));
 
     if (ic2 && (! ic1)) return false;
     if (ic2==ic1)
     {
-        return (ik1.pos<=ik2.pos);
+        return (indelKey1.pos<=indelKey2.pos);
     }
     return true;
 }
@@ -299,7 +299,7 @@ static
 void
 late_indel_normalization_filter(
     const starling_base_options& opt,
-    const indel_synchronizer& isync,
+    const IndelBuffer& indelBuffer,
     const std::set<candidate_alignment>& candAlignments,
     const std::vector<double>& candAlignmentScores,
     indel_set_t nonnorm_indels,
@@ -376,7 +376,7 @@ late_indel_normalization_filter(
             bool is_removed(false);
             for (const auto& indelPair : indelPairs)
             {
-                const bool is1(is_first_indel_dominant(isync,indelPair.first,indelPair.second));
+                const bool is1(is_first_indel_dominant(indelBuffer, indelPair.first, indelPair.second));
 
 #ifdef DEBUG_ALIGN
                 log_os << "COWSLIP: indel1: " << indelPair.first << "\n";
@@ -450,10 +450,11 @@ late_indel_normalization_filter(
 void
 score_indels(
     const starling_base_options& opt,
-    const starling_base_deriv_options& /*dopt*/,
+    const starling_base_deriv_options&,
     const starling_sample_options& sample_opt,
     const read_segment& rseg,
-    indel_synchronizer& isync,
+    IndelBuffer& indelBuffer,
+    const unsigned sampleId,
     const std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search,
     const std::vector<double>& candAlignmentScores,
@@ -511,8 +512,8 @@ score_indels(
     static const bool is_slip_norm(true);
     if (is_slip_norm)
     {
-        late_indel_normalization_filter(opt, isync, candAlignments, candAlignmentScores,
-                                        nonnorm_indels, isFilterCandAlignment, maxCandAlignmentScore, maxCandAlignmentPtr);
+        late_indel_normalization_filter(opt, indelBuffer, candAlignments, candAlignmentScores, nonnorm_indels,
+                                        isFilterCandAlignment, maxCandAlignmentScore, maxCandAlignmentPtr);
     }
 
     // (2a) find set of candidate indels which will be scored by this read
@@ -549,18 +550,17 @@ score_indels(
         log_os << "VARMIT max_path extracted indels:\n";
         dump_indel_set(indelsInMaxCandAlignment,log_os);
 #endif
-        indel_buffer& indelBuffer(isync.ibuff());
-        const std::pair<iiter,iiter> ipair(indelBuffer.pos_range_iter(maxCandAlignmentRange.begin_pos,maxCandAlignmentRange.end_pos));
-        for (iiter indelIter(ipair.first); indelIter!=ipair.second; ++indelIter)
+        const auto indelIterPair(indelBuffer.rangeIterator(maxCandAlignmentRange.begin_pos, maxCandAlignmentRange.end_pos));
+        for (auto indelIter(indelIterPair.first); indelIter!=indelIterPair.second; ++indelIter)
         {
-            const indel_key& evaluationIndel(indelIter->first);
-            indel_data& id(get_indel_data(indelIter));
+            const IndelKey& evaluationIndel(indelIter->first);
+            const IndelData& indelData(getIndelData(indelIter));
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path eval indel candidate: " << evaluationIndel;
 #endif
 
-            if (! isync.is_candidate_indel(evaluationIndel,id)) continue;
+            if (!indelBuffer.isCandidateIndel(evaluationIndel, indelData)) continue;
 
 #ifdef DEBUG_ALIGN
             log_os << "VARMIT: max path indel is candidate\n";
@@ -618,8 +618,10 @@ score_indels(
                 {
                     if (bpo>0)
                     {
-                        if (is_tier1_read) id.suboverlap_tier1_read_ids.insert(rseg.id());
-                        else               id.suboverlap_tier2_read_ids.insert(rseg.id());
+                        IndelSampleData& indelSampleData(getIndelData(indelIter).getSampleData(sampleId));
+
+                        if (is_tier1_read) indelSampleData.suboverlap_tier1_read_ids.insert(rseg.id());
+                        else               indelSampleData.suboverlap_tier2_read_ids.insert(rseg.id());
                     }
                     continue;
                 }
@@ -693,7 +695,7 @@ score_indels(
             // highest scoring path already:
             //
             const align_info_t maxCandAlignmentInfo(std::make_pair(maxCandAlignmentScore,&maxCandAlignment));
-            for (const indel_key& evaluationIndel : indelsToEvaluate)
+            for (const IndelKey& evaluationIndel : indelsToEvaluate)
             {
                 const bool isIndelInMaxCandAlignment(indelsInMaxCandAlignment.count(evaluationIndel)!=0);
                 const auto indelPresentInfo(std::make_pair(isIndelInMaxCandAlignment,evaluationIndel));
@@ -703,7 +705,7 @@ score_indels(
                     indelScoringInfo[std::make_pair(evaluationIndel,indelPresentInfo)] = maxCandAlignmentInfo;
 
                     // mark this as an alternate indel score for interfering indels:
-                    for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
+                    for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
                         indelScoringInfo[std::make_pair(orthogonalIndel,indelPresentInfo)] = maxCandAlignmentInfo;
                     }
@@ -737,7 +739,7 @@ score_indels(
             indel_set_t indelsInCandAlignment;
             get_alignment_indels(candAlignment,opt.max_indel_size,indelsInCandAlignment);
 
-            for (const indel_key& evaluationIndel : indelsToEvaluate)
+            for (const IndelKey& evaluationIndel : indelsToEvaluate)
             {
                 const bool isIndelInCandAlignment(indelsInCandAlignment.count(evaluationIndel)!=0);
                 if (isIndelInCandAlignment)
@@ -747,7 +749,7 @@ score_indels(
                     updateIndelScoringInfo(indelScoringInfo,evaluationIndel,isIndelInCandAlignment,evaluationIndel,score,&candAlignment);
 
                     // mark this as an alternate indel score for orthogonal indels:
-                    for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
+                    for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
                         // this represents the score of the read arising from the evaluationIndel haplotype,
                         // (as above) but this is the copy we use when we are evaluating the orthogonalIndel haplotype
@@ -763,7 +765,7 @@ score_indels(
                     // category:
                     //
                     bool isIndelOrthogonalToCandAlignment(false);
-                    for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
+                    for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
                     {
                         if (indelsInCandAlignment.count(orthogonalIndel)!=0)
                         {
@@ -806,12 +808,8 @@ score_indels(
     }
 
     {
-        indel_buffer& indelBuffer(isync.ibuff());
-        for (const indel_key& evaluationIndel : indelsToEvaluate)
+        for (const IndelKey& evaluationIndel : indelsToEvaluate)
         {
-            indel_data* evaluationIndelDataPtr(indelBuffer.get_indel_data_ptr(evaluationIndel));
-            assert(nullptr != evaluationIndelDataPtr);
-
             // we test for presence of the indel on the highest
             // scoring alignment because breakpoint overlap has
             // already been tested there, allowing us to skip this
@@ -921,12 +919,12 @@ score_indels(
             //            correct for strandedness
             log_os << "indelpos: " << evaluationIndel.pos << " readpos: + " << rseg.genome_align().pos << " rp: " << readpos << "\n";
 #endif
-            read_path_scores rps(referenceScore,evaluationIndelScore,nsite,read_length,is_tier1_read,maxCandAlignment.al.is_fwd_strand,
-                                 (int16_t) readpos);
+            ReadPathScores rps(referenceScore,evaluationIndelScore,nsite,read_length,is_tier1_read,maxCandAlignment.al.is_fwd_strand,
+                               (int16_t) readpos);
 
             // start adding alternate indel alleles, if present:
 
-            for (const indel_key& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
+            for (const IndelKey& orthogonalIndel : orthogonalIndelMap[evaluationIndel])
             {
                 const iks_map_t::iterator indelScoringIter(indelScoringInfo.find(std::make_pair(evaluationIndel,std::make_pair(true,orthogonalIndel))));
 
@@ -955,7 +953,7 @@ score_indels(
                 //
                 if (is_found)
                 {
-                    rps.insert_alt(orthogonalIndel,indelScoringIter->second.first);
+                    rps.insertAlt(orthogonalIndel, indelScoringIter->second.first);
                     //                        rps.alt_indel[*k] = j->second.first;
                 }
                 else
@@ -971,12 +969,11 @@ score_indels(
 #endif
             }
 
-            evaluationIndelDataPtr->read_path_lnp[rseg.id()] = rps;
-            evaluationIndelDataPtr->n_mapq++;
-            evaluationIndelDataPtr->sum_sq_mapq += (rseg.map_qual()*rseg.map_qual());
-            if (rseg.map_qual() == 0)
             {
-                evaluationIndelDataPtr->n_mapq0++;
+                IndelData* evaluationIndelDataPtr(indelBuffer.getIndelDataPtr(evaluationIndel));
+                assert(nullptr != evaluationIndelDataPtr);
+                IndelSampleData& evaluationIndelSampleData(evaluationIndelDataPtr->getSampleData(sampleId));
+                evaluationIndelSampleData.read_path_lnp[rseg.id()] = rps;
             }
 
 #ifdef DEBUG_ALIGN

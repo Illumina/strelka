@@ -26,6 +26,8 @@
 #include <iostream>
 #include <array>
 
+
+
 static
 size_t
 extractVcfField(
@@ -145,15 +147,15 @@ IndelVariant(
 bool
 IndelGenotype::
 altMatch(
-    const indel_key& ik,
-    const indel_data& id) const
+    const IndelKey& indelKey,
+    const IndelData& indelData) const
 {
     for (const auto& alt : alts)
     {
-        if ((ik.type == alt.type) && (ik.length == alt.length))
+        if ((indelKey.type == alt.type) && (indelKey.length == alt.length))
         {
-            if (ik.type == INDEL::DELETE) return true;
-            if (id.get_insert_seq() == alt.insert_sequence) return true;
+            if (indelKey.type == INDEL::DELETE) return true;
+            if (indelData.getInsertSeq() == alt.insert_sequence) return true;
         }
     }
     return false;

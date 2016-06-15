@@ -78,11 +78,6 @@ struct starling_base_options : public blt_options
         return (! candidate_indel_filename.empty());
     }
 
-    unsigned htype_buffer_segment() const
-    {
-        return max_indel_size;
-    }
-
     // parameters inherited from varling caller:
     //
     double bindel_diploid_theta = 0.0001;
@@ -199,15 +194,6 @@ struct starling_base_options : public blt_options
     // Indicates that an upstream oligo is present on reads, which can be used to increase confidence for indels near the edge of the read
     unsigned upstream_oligo_size = 0;
 
-    // turn on haplotype based calling:
-    bool is_htype_calling = false;
-
-    // number of allowed haplotypes:
-    unsigned hytpe_count = 2;
-
-    // multiple of max-indel-size used for haplotyping:
-    unsigned htype_call_segment = 1000;
-
     /// file specifying haploid and deleted regions as 1/0 in bed col 4
     std::string ploidy_region_bedfile;
 
@@ -229,9 +215,13 @@ struct starling_base_options : public blt_options
 
     Tier2Options tier2;
 
-    /// indel error options
+    // indel error options
     std::string indel_error_models_filename;
     std::string indel_error_model_name = "logLinear";
+
+    // temporary indel erorr rate hack applied to germline only
+    bool isIndelErrorRateFactor = false;
+    double indelErrorRateFactor = 1.;
 };
 
 
@@ -284,7 +274,7 @@ struct starling_base_deriv_options : public blt_deriv_options
     }
 
     const std::vector<unsigned>&
-    getPostCalLStage() const
+    getPostCallStage() const
     {
         return _postCallStage;
     }
@@ -317,6 +307,8 @@ public:
     unsigned variant_window_last_stage;
 
     const min_count_binom_gte_cache countCache;
+
+    const double logIndelErrorRateFactor;
 
 private:
     std::unique_ptr<IndelErrorModel> _indelErrorModel;

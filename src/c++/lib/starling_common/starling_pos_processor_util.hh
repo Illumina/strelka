@@ -67,7 +67,7 @@ convert_vcfrecord_to_indel_allele(
     const unsigned max_indel_size,
     const vcf_record& vcf_indel,
     const unsigned altIndex,
-    indel_observation& obs);
+    IndelObservation& obs);
 
 /// insert a candidate indel into sppr
 ///

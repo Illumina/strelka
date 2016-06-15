@@ -24,6 +24,7 @@
 
 
 #include "gvcf_locus_info.hh"
+#include "blt_util/math_util.hh"
 #include "common/Exceptions.hh"
 
 #include "boost/math/distributions/binomial.hpp"
@@ -70,7 +71,7 @@ end() const
 {
     pos_t result = 0;
     for (auto& x : _calls)
-        result = std::max(result, x._ik.right_pos());
+        result = std::max(result, x._indelKey.right_pos());
     return result;
 }
 
@@ -85,13 +86,13 @@ void GermlineIndelSimpleGenotypeInfo::set_hap_cigar(
     {
         cigar.push_back(path_segment(MATCH,lead));
     }
-    if (_ik.delete_length())
+    if (_indelKey.delete_length())
     {
-        cigar.push_back(path_segment(DELETE,_ik.delete_length()));
+        cigar.push_back(path_segment(DELETE,_indelKey.delete_length()));
     }
-    if (_ik.insert_length())
+    if (_indelKey.insert_length())
     {
-        cigar.push_back(path_segment(INSERT,_ik.insert_length()));
+        cigar.push_back(path_segment(INSERT,_indelKey.insert_length()));
     }
     if (trail)
     {
@@ -103,27 +104,35 @@ void GermlineIndelSimpleGenotypeInfo::set_hap_cigar(
 void
 GermlineDiploidIndelSimpleGenotypeInfo::
 computeEmpiricalScoringFeatures(
+    const bool isUniformDepthExpected,
     const bool isComputeDevelopmentFeatures,
     const double chromDepth,
     const bool isHetalt)
 {
-    const double chromDepthFactor(1./chromDepth);
+    const double filteredLocusDepth(_indelSampleReportInfo.tier1Depth);
+    const double locusDepth(_indelSampleReportInfo.mapqTracker.count);
+    const double q30Depth(_indelSampleReportInfo.total_q30_reads());
+
+    const double chromDepthFactor(safeFrac(1,chromDepth));
+    const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
+    const double locusDepthFactor(safeFrac(1,locusDepth));
+    const double q30DepthFactor(safeFrac(1,q30Depth));
 
     features.set(GERMLINE_INDEL_SCORING_FEATURES::QUAL, (_dindel.indel_qphred * chromDepthFactor));
     features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX, (gqx * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::REFREP1, (_iri.ref_repeat_count));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (_iri.indel_repeat_count));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (_iri.repeat_unit.length()));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_isri.n_q30_ref_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_isri.n_q30_indel_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_isri.n_q30_alt_reads * chromDepthFactor));
-    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_isri.depth * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::REFREP1, (_indelReportInfo.ref_repeat_count));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (_indelReportInfo.indel_repeat_count));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (_indelReportInfo.repeat_unit.length()));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0, (_indelSampleReportInfo.n_q30_ref_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1, (_indelSampleReportInfo.n_q30_indel_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2, (_indelSampleReportInfo.n_q30_alt_reads * chromDepthFactor));
+    features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_indelSampleReportInfo.tier1Depth * chromDepthFactor));
 
     {
         // allele bias metrics
-        const double r0(_isri.n_q30_ref_reads);
-        const double r1(_isri.n_q30_indel_reads);
-        const double r2(_isri.n_q30_alt_reads);
+        const double r0(_indelSampleReportInfo.n_q30_ref_reads);
+        const double r1(_indelSampleReportInfo.n_q30_indel_reads);
+        const double r2(_indelSampleReportInfo.n_q30_alt_reads);
 
         // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
         // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
@@ -145,10 +154,41 @@ computeEmpiricalScoringFeatures(
         features.set(GERMLINE_INDEL_SCORING_FEATURES::AB, (-std::log(std::min(1.,2.*std::min(allelebiaslower,allelebiasupper))+1.e-30)));
     }
 
-    /// compute any experimental features not currently used in production
+    // compute any experimental features not currently used in production
     if (isComputeDevelopmentFeatures)
     {
         developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (gqx * chromDepthFactor));
+
+        // how unreliable are the read mappings near this locus?
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ, (_indelSampleReportInfo.mapqTracker.getRMS()));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (_indelSampleReportInfo.mapqTracker.getZeroFrac()));
+
+        // how noisy is the locus?
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM, (filteredLocusDepth * locusDepthFactor));
+
+        // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
+        //
+        /// TODO: convert this to pvalue based on Poisson distro?
+        double relativeLocusDepth(1.);
+        if (isUniformDepthExpected)
+        {
+            relativeLocusDepth = (locusDepth * chromDepthFactor);
+        }
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
+
+        // all of the features below are simply renormalized replacements of the current production feature set
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (_dindel.indel_qphred * filteredLocusDepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (gqx * filteredLocusDepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM, (gq * filteredLocusDepthFactor));
+
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (_indelSampleReportInfo.n_q30_ref_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (_indelSampleReportInfo.n_q30_indel_reads * q30DepthFactor));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM, (_indelSampleReportInfo.n_q30_alt_reads * q30DepthFactor));
+
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (_dindel.indel_qphred));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (gqx));
+        developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (gq));
+
     }
 }
 
@@ -192,7 +232,7 @@ add_overlap(
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
     std::string leading_seq,trailing_seq;
-    auto indel_end_pos=std::max(overlap_call._ik.right_pos(),call._ik.right_pos());
+    auto indel_end_pos=std::max(overlap_call._indelKey.right_pos(),call._indelKey.right_pos());
 
     const pos_t indel_begin_pos(pos-1);
 
@@ -201,7 +241,7 @@ add_overlap(
     // make extended vcf ref seq:
     std::string tmp;
     ref.get_substring(indel_begin_pos,(indel_end_pos-indel_begin_pos),tmp);
-    call._iri.vcf_ref_seq = tmp;
+    call._indelReportInfo.vcf_ref_seq = tmp;
 
     ploidy.resize(indel_end_pos-pos,0);
 
@@ -210,10 +250,10 @@ add_overlap(
         auto& this_call(ii.first());
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
-        const unsigned trail_len(indel_end_pos-this_call._ik.right_pos());
+        const unsigned trail_len(indel_end_pos-this_call._indelKey.right_pos());
         ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
 
-        this_call._iri.vcf_indel_seq = leading_seq + this_call._iri.vcf_indel_seq + trailing_seq;
+        this_call._indelReportInfo.vcf_indel_seq = leading_seq + this_call._indelReportInfo.vcf_indel_seq + trailing_seq;
 
         this_call.set_hap_cigar(leading_seq.size()+1,
                                 trailing_seq.size());
@@ -267,11 +307,18 @@ getPloidyError(
 void
 GermlineDiploidSiteCallInfo::
 computeEmpiricalScoringFeatures(
+    const bool isUniformDepthExpected,
     const bool isComputeDevelopmentFeatures,
     const double chromDepth,
     GermlineDiploidSiteSimpleGenotypeInfo& smod2) const
 {
-    const double chromDepthFactor(1./chromDepth);
+    const double filteredLocusDepth(n_used_calls);
+    const double locusDepth(mapqCount);
+
+    const double chromDepthFactor(safeFrac(1,chromDepth));
+    const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
+    const double locusDepthFactor(safeFrac(1,locusDepth));
+
 
     // get the alt base id (choose second in case of an alt het....)
     unsigned altBase(N_BASE);
@@ -301,7 +348,7 @@ computeEmpiricalScoringFeatures(
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::AD1, (r1 * chromDepthFactor));
 
 
-    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (MQ));
+    smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (mapqRMS));
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (ReadPosRankSum));
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_BaseQRankSum, (BaseQRankSum));
     smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (MQRankSum));
@@ -326,6 +373,37 @@ computeEmpiricalScoringFeatures(
 
         //the average position value within a read of alt allele
         smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::I_RawPos, (rawPos));
+
+        // hom unrelable are the read mappings near this locus?
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction, (safeFrac(mapqZeroCount,mapqCount)));
+
+        // how noisy is the locus?
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_DP_NORM, (filteredLocusDepth * locusDepthFactor));
+
+        // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
+        //
+        /// TODO: convert this to pvalue based on Poisson distro?
+        double relativeLocusDepth(1.);
+        if (isUniformDepthExpected)
+        {
+            relativeLocusDepth = (locusDepth * chromDepthFactor);
+        }
+
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
+
+
+        // renormalized features intended to replace the corresponding production feature
+        //
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM, (dgt.genome.snp_qphred * filteredLocusDepthFactor));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM, (smod.gqx * filteredLocusDepthFactor));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM, (smod.gq * filteredLocusDepthFactor));
+
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM, (r0 * filteredLocusDepthFactor));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM, (r1 * filteredLocusDepthFactor));
+
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (dgt.genome.snp_qphred));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (smod.gqx));
+        smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (smod.gq));
     }
 }
 
@@ -388,10 +466,10 @@ operator<<(
 {
     os << static_cast<GermlineVariantSimpleGenotypeInfo>(shi) << '\n';
 
-    os << "indel_key: " << shi._ik << "\n";
+    os << "IndelKey: " << shi._indelKey << "\n";
     //os << "indel_data: " << shi._id << "\n";
-    os << "indel_report_info: " << shi._iri << "\n";
-    os << "indel_sample_info: " << shi._isri << "\n";
+    os << "indel_report_info: " << shi._indelReportInfo << "\n";
+    os << "indel_sample_info: " << shi._indelSampleReportInfo << "\n";
     os << "cigar: " << shi.cigar << "\n";
 
     return os;

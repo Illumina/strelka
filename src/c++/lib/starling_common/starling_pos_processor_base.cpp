@@ -177,21 +177,17 @@ namespace STAGE
 // stage into which pileup entries must fit:
 static
 int
-get_pileup_stage_no(const starling_base_options& opt)
+get_pileup_stage_no(const starling_base_options& /*opt*/)
 {
-    return (opt.is_htype_calling ?
-            static_cast<int>(POST_REGION) :
-            static_cast<int>(POST_ALIGN));
+    return (static_cast<int>(POST_ALIGN));
 }
 
 // stage into which pileup entries must fit:
 static
 int
-get_last_static_stage_no(const starling_base_options& opt)
+get_last_static_stage_no(const starling_base_options& /*opt*/)
 {
-    return (opt.is_htype_calling ?
-            static_cast<int>(POST_CALL) :
-            static_cast<int>(POST_CALL));
+    return (static_cast<int>(POST_CALL));
 }
 
 // given largest read, and indel ref span per read, get stage
@@ -207,12 +203,10 @@ get_stage_data(
 {
     stage_data sdata;
 
-    //
     // HEAD contains everything before the head position in the
     // stage processing pipeline, this should be:
     //
-    // 1) GROUPER contigs/reads that were far out-of-order
-    // 2) Exon entries that extend past the head position
+    // 1) Exon entries that extend past the head position
     //
     // HEAD has no defined size -- it is everything stored before
     // the head position
@@ -252,63 +246,26 @@ get_stage_data(
 
     sdata.add_stage(CLEAR_READ_BUFFER,POST_ALIGN,0);
 
-
-    if (! opt.is_htype_calling)
-    {
-        // POST_CALL is used to free up the pileup data. This data is
-        // preserved for one extra cycle after snp and indel calling so that
-        // the indel caller can look one base 'to the left' of its call
-        // location (excepting right breakpoints) to get the depth for the
-        // current indel call
-        //
-        // At the end of this stage we free the position's pileup buffer
-        //
-        static const unsigned pileup_free_delay(1);
-        sdata.add_stage(POST_CALL,POST_ALIGN,pileup_free_delay);
-
-    }
-    else
-    {
-        // POST_REGION defines the end of the "active region" used for
-        // haplotyping and calling. the "active region" is contained
-        // between two "buffer segments" where haplotyping occurs but
-        // no calling is done. The buffer segment is used to improve
-        // haplotype continuity on active region boundaries.
-        //
-        sdata.add_stage(POST_REGION,POST_ALIGN,(opt.htype_buffer_segment()+
-                                                opt.htype_call_segment));
-
-        // POST_CALL is used to free up the pileup data. This data is
-        // preserved for one extra cycle after snp and indel calling so that
-        // the indel caller can look one base 'to the left' of its call
-        // location (excepting right breakpoints) to get the depth for the
-        // current indel call
-        //
-        // At the end of this stage we free the position's pileup buffer
-        //
-        static const unsigned pileup_free_delay(1);
-        sdata.add_stage(POST_CALL,POST_REGION,pileup_free_delay);
-
-
-        // POST_READ is used to free reads during haplotype based calling:
-        //
-        const unsigned read_reserve_segment(get_read_buffer_size(largest_read_size,
-                                                                 largest_total_indel_ref_span_per_read));
-        const unsigned post_read_to_post_region(opt.htype_buffer_segment()+read_reserve_segment);
-        sdata.add_stage(POST_READ,POST_REGION,post_read_to_post_region);
-    }
+    // POST_CALL is used to free up the pileup data. This data is
+    // preserved for one extra cycle after snp and indel calling so that
+    // the indel caller can look one base 'to the left' of its call
+    // location (excepting right breakpoints) to get the depth for the
+    // current indel call
+    //
+    // At the end of this stage we free the position's pileup buffer
+    //
+    static const unsigned pileup_free_delay(1);
+    sdata.add_stage(POST_CALL,POST_ALIGN,pileup_free_delay);
 
     // dynamic stages after POST_CALL are used to region based information around a site
     //
-    // TODO this will not work correctly for the haplotype calling right now:
-    //
-    const int pileup_stage(get_pileup_stage_no(opt));
+    const int pileupStageIndex(get_pileup_stage_no(opt));
 
-    const auto& stages(dopt.getPostCalLStage());
-    const unsigned stageCount(stages.size());
-    for (unsigned i(0); i<stageCount; ++i)
+    const auto& postCallStages(dopt.getPostCallStage());
+    const unsigned postCallStageCount(postCallStages.size());
+    for (unsigned postCallStageIndex(0); postCallStageIndex<postCallStageCount; ++postCallStageIndex)
     {
-        sdata.add_stage(SIZE+i,pileup_stage,stages[i]);
+        sdata.add_stage(SIZE+postCallStageIndex,pileupStageIndex,postCallStages[postCallStageIndex]);
     }
 
     return sdata;
@@ -327,7 +284,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _ref(ref)
     , _streams(streams)
     , _rmi(STARLING_INIT_LARGEST_READ_SIZE)
-      //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
+    //, _largest_indel_size(std::min(opt.max_indel_size,STARLING_INIT_LARGEST_INDEL_SIZE)) -- tmp change for GRUOPER handling
     , _largest_indel_ref_span(opt.max_indel_size)
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)
@@ -335,6 +292,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _n_samples(n_samples)
     , _is_variant_windows(! _opt.variant_windows.empty())
     , _pileupCleaner(opt)
+    , _indelBuffer(opt,dopt,ref)
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
@@ -478,10 +436,10 @@ reset()
 
 bool
 starling_pos_processor_base::
-insert_indel(const indel_observation& obs,
-             const unsigned sample_no)
+insert_indel(
+    const IndelObservation& obs,
+    const unsigned sampleId)
 {
-    //
     // ppr advance is controlled by the start positions of reads and
     // relatively cheap to store (so long as we aren't including
     // gigantic insert sequences) and do not scale up linearly with
@@ -527,7 +485,7 @@ insert_indel(const indel_observation& obs,
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.max_indel_size));
         update_largest_indel_ref_span(len);
 
-        bool is_novel(sample(sample_no).indel_sync().insert_indel(obs));
+        bool is_novel(getIndelBuffer().addIndelObservation(sampleId, obs));
         if (obs.data.is_forced_output) _is_skip_process_pos=false;
 
         return is_novel;
@@ -587,7 +545,7 @@ is_estimated_depth_range_ge_than(
 
 // TODO use boost::optional here:
 //
-std::pair<bool,align_id_t>
+boost::optional<align_id_t>
 starling_pos_processor_base::
 insert_read(
     const bam_record& br,
@@ -596,6 +554,8 @@ insert_read(
     const MAPLEVEL::index_t maplev,
     const unsigned sample_no)
 {
+    boost::optional<align_id_t> retval;
+
     if (0 != strcmp(_chrom_name.c_str(),chrom_name))
     {
         log_os << "ERROR: starling_pos_processor_base.insert_read(): read has unexpected sequence name: '" << chrom_name << "' expecting: '" << _chrom_name << "'\n"
@@ -613,9 +573,8 @@ insert_read(
     {
         log_os << "WARNING: skipping alignment for read: " << read_key(br)
                << " which falls outside of the read buffer\n";
-        return std::make_pair(false,0);
+        return retval;
     }
-
 
     starling_read_buffer& rbuff(sample(sample_no).read_buff);
 
@@ -624,7 +583,7 @@ insert_read(
     {
         if (rbuff.size() >= _opt.maxBufferedReads)
         {
-            return std::make_pair(false,0);
+            return retval;
         }
     }
 
@@ -642,16 +601,16 @@ insert_read(
         }
     }
 
-    const std::pair<bool,align_id_t> res(rbuff.add_read_alignment(br,al,maplev));
-    if (! res.first) return res;
+    retval.reset(rbuff.add_read_alignment(br,al,maplev));
 
     // must initialize initial read_segments "by-hand":
     //
     // TODO get this streamlined into the pos-processor
     //
+    if (retval)
     {
-        const starling_read* sread_ptr(rbuff.get_read(res.second));
-        assert(NULL!=sread_ptr);
+        const starling_read* sread_ptr(rbuff.get_read(*retval));
+        assert(nullptr!=sread_ptr);
 
         // update depth-buffer for the whole read:
         load_read_in_depth_buffer(sread_ptr->get_full_segment(),sample_no);
@@ -661,7 +620,7 @@ insert_read(
         init_read_segment(sread_ptr->get_segment(seg_id),sample_no);
     }
 
-    return res;
+    return retval;
 }
 
 
@@ -862,9 +821,9 @@ align_pos(const pos_t pos)
 {
     known_pos_range realign_buffer_range(get_realignment_range(pos, _stageman.get_stage_data()));
 
-    for (unsigned s(0); s<_n_samples; ++s)
+    for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
     {
-        sample_info& sif(sample(s));
+        sample_info& sif(sample(sampleIndex));
         read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
         for (read_segment_iter::ret_val r; true; ri.next())
         {
@@ -876,7 +835,8 @@ align_pos(const pos_t pos)
             {
                 try
                 {
-                    realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,rseg,sif.indel_sync());
+                    realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex,rseg,
+                                           getIndelBuffer());
                 }
                 catch (...)
                 {
@@ -953,83 +913,45 @@ process_pos(const int stage_no,
 #endif
         //        consolidate_candidate_indel_pos(pos);
 
-        if (! _opt.is_htype_calling)
+        if (! _opt.is_write_candidate_indels_only)
         {
-            if (! _opt.is_write_candidate_indels_only)
-            {
-                //        clean_pos(pos);
-                align_pos(pos);
-                pileup_pos_reads(pos);
-                // if(_opt.is_realigned_read_file) {
-                //     rebuffer_pos_reads(pos);
-                // }
+            //        clean_pos(pos);
+            align_pos(pos);
+            pileup_pos_reads(pos);
+            // if(_opt.is_realigned_read_file) {
+            //     rebuffer_pos_reads(pos);
+            // }
 
-                write_reads(pos);
-            }
-
-            //previously cleared read-buffer here
-
-        }
-        else
-        {
-            if (! _opt.is_write_candidate_indels_only)
-            {
-                //        clean_pos(pos);
-                align_pos(pos);
-                rebuffer_pos_reads(pos);
-            }
+            write_reads(pos);
         }
 
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
-        if (! _opt.is_htype_calling)
+        if (! _opt.is_write_candidate_indels_only)
         {
-            if (! _opt.is_write_candidate_indels_only)
+            if (is_pos_reportable(pos))
             {
-                if (is_pos_reportable(pos))
-                {
-                    process_pos_variants(pos);
-                }
+                process_pos_variants(pos);
             }
-
-            for (unsigned s(0); s<_n_samples; ++s)
-            {
-                sample(s).indel_buff.clear_pos(pos);
-            }
-
-            // everything else:
-            post_align_clear_pos(pos);
         }
 
+        getIndelBuffer().clearPosition(pos);
+
+        // everything else:
+        post_align_clear_pos(pos);
     }
     else if (stage_no==STAGE::CLEAR_SITE_ANNOTATION)
     {
-        assert (! _opt.is_htype_calling);
-
         _forced_output_pos.erase(pos);
         _ploidy_regions.removeToPos(pos);
         clear_pos_annotation(pos);
     }
     else if (stage_no==STAGE::CLEAR_READ_BUFFER)
     {
-        if (! _opt.is_htype_calling)
+        for (unsigned s(0); s<_n_samples; ++s)
         {
-            for (unsigned s(0); s<_n_samples; ++s)
-            {
-                sample(s).read_buff.clear_to_pos(pos);
-            }
-        }
-    }
-    else if (stage_no==STAGE::POST_REGION)
-    {
-        assert(_opt.is_htype_calling);
-
-        if (! _opt.is_write_candidate_indels_only)
-        {
-            // mothballing this...
-            //process_htype_pos(pos);
-            _forced_output_pos.erase(pos);
+            sample(s).read_buff.clear_to_pos(pos);
         }
     }
     else if (stage_no==STAGE::POST_CALL)
@@ -1047,20 +969,6 @@ process_pos(const int stage_no,
                 sif.bc_buff.clear_to_pos(pos);
             }
         }
-    }
-    else if (stage_no==STAGE::POST_READ)
-    {
-        assert(_opt.is_htype_calling);
-
-        for (unsigned s(0); s<_n_samples; ++s)
-        {
-            sample(s).read_buff.clear_to_pos(pos);
-        }
-        for (unsigned s(0); s<_n_samples; ++s)
-        {
-            sample(s).indel_buff.clear_pos(pos);
-        }
-
     }
     else if (stage_no>=STAGE::SIZE)
     {
@@ -1107,15 +1015,14 @@ update_ranksum_and_mapq_count(
     const uint8_t call_id,
     const uint8_t qscore,
     const uint8_t mapq,
-    const uint8_t adjustedMapq,
     const unsigned cycle,
     const bool is_submapped)
 {
     // assume pos is already valid:
 
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.insert_mapq_count(pos,mapq,adjustedMapq);
-    bcbuff.update_ranksums(_ref.get_base(pos),pos,call_id,qscore,adjustedMapq,cycle,is_submapped);
+    bcbuff.insert_mapq_count(pos,mapq);
+    bcbuff.update_ranksums(_ref.get_base(pos),pos,call_id,qscore,mapq,cycle,is_submapped);
 }
 
 
@@ -1134,7 +1041,7 @@ update_somatic_features(
     // assume pos is already valid:
 
     auto& bcbuff(sample(sample_no).bc_buff);
-    bcbuff.insert_mapq_count(pos,mapq,mapq);
+    bcbuff.insert_mapq_count(pos,mapq);
 
     if (is_tier1 && (sample_no != 0) && (! is_call_filter))
     {
@@ -1176,33 +1083,29 @@ insert_hap_cand(const pos_t pos,
 
 void
 starling_pos_processor_base::
-write_candidate_indels_pos(const pos_t pos)
+write_candidate_indels_pos(
+    const pos_t pos)
 {
-    static const unsigned sample_no(0);
-
     const pos_t output_pos(pos+1);
-    typedef indel_buffer::const_iterator ciiter;
-
-    sample_info& sif(sample(sample_no));
-    ciiter i(sif.indel_buff.pos_iter(pos));
-    const ciiter i_end(sif.indel_buff.pos_iter(pos+1));
-
     std::ostream& bos(*_streams.candidate_indel_osptr());
 
-    for (; i!=i_end; ++i)
+    auto indelIter(getIndelBuffer().positionIterator(pos));
+    const auto indelIterEnd(getIndelBuffer().positionIterator(pos + 1));
+
+    for (; indelIter!=indelIterEnd; ++indelIter)
     {
-        const indel_key& ik(i->first);
-        const indel_data& id(get_indel_data(i));
-        if (! sif.indel_sync().is_candidate_indel(ik,id)) continue;
+        const IndelKey& indelKey(indelIter->first);
+        const IndelData& indelData(getIndelData(indelIter));
+        if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         bos << _chrom_name << "\t"
             << output_pos << "\t"
-            << INDEL::get_index_label(ik.type) << "\t"
-            << ik.length << "\t";
-        if (INDEL::SWAP==ik.type)
+            << INDEL::get_index_label(indelKey.type) << "\t"
+            << indelKey.length << "\t";
+        if (INDEL::SWAP==indelKey.type)
         {
-            bos << ik.swap_dlength << "\t";
+            bos << indelKey.swap_dlength << "\t";
         }
-        bos << id.get_insert_seq() << "\n";
+        bos << indelData.getInsertSeq() << "\n";
     }
 }
 
@@ -1304,8 +1207,6 @@ void
 starling_pos_processor_base::
 pileup_pos_reads(const pos_t pos)
 {
-    static const bool is_include_submapped(false);
-
     for (unsigned s(0); s<_n_samples; ++s)
     {
         read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
@@ -1315,10 +1216,7 @@ pileup_pos_reads(const pos_t pos)
             r=ri.get_ptr();
             if (nullptr==r.first) break;
             const read_segment& rseg(r.first->get_segment(r.second));
-            if (is_include_submapped || rseg.is_tier1or2_mapping())
-            {
-                pileup_read_segment(rseg,s);
-            }
+            pileup_read_segment(rseg,s);
             ri.next();
         }
     }
@@ -1559,14 +1457,7 @@ pileup_read_segment(const read_segment& rseg,
                 // update extended feature metrics (including submapped reads):
                 if (_opt.is_compute_germline_scoring_metrics())
                 {
-                    /// \TODO Morten -- consider improving MQ, MQ0 and RankSumMQ by:
-                    ///  1) removing the if (! submapped) here
-                    ///  2) collapsing mapq and adjustedMapq to just mapq
-                    ///
-                    if (! is_submapped)
-                    {
-                        update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,adjustedMapq,align_strand_read_pos,is_submapped);
-                    }
+                    update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,align_strand_read_pos,is_submapped);
                 }
                 else if (_opt.is_compute_somatic_scoring_metrics)
                 {

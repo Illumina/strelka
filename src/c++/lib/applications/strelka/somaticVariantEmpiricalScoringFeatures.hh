@@ -19,7 +19,7 @@
 //
 
 /*
- *      Author: mkallberg
+ *      Author: Morten Kallberg
  */
 
 #pragma once
@@ -55,8 +55,8 @@ struct SOMATIC_SNV_SCORING_FEATURES
         n_mapq0,
         strandBias,
         ReadPosRankSum,
-		MQ0_FRAC,
-		LOR,
+        MQ0_FRAC,
+        LOR,
         SIZE
     };
 
@@ -91,7 +91,7 @@ struct SOMATIC_SNV_SCORING_FEATURES
         case MQ0_FRAC:
             return "MQ0_FRAC";
         case LOR:
-        	return "LogOddsRatio";
+            return "LogOddsRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -124,7 +124,6 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
 
     enum index_t
     {
-		AFR,
         altmap,
         altpos,
         SIZE
@@ -136,8 +135,6 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
     {
         switch (idx)
         {
-        case AFR:
-            return "AlleleFreqRatio";
         case altmap:
             return "altmap";
         case altpos:

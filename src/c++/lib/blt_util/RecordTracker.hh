@@ -31,8 +31,8 @@
 
 #include "starling_common/indel_core.hh"
 #include "starling_common/starling_diploid_indel.hh"
-#include "starling_common/indel_key.hh"
-#include "starling_common/indel_data.hh"
+#include "starling_common/IndelKey.hh"
+#include "starling_common/IndelData.hh"
 
 #include "boost/icl/discrete_interval.hpp"
 #include "boost/icl/interval_map.hpp"
@@ -135,8 +135,8 @@ struct IndelGenotype
     }
 
     bool altMatch(
-        const indel_key& ik,
-        const indel_data& id) const;
+        const IndelKey& indelKey,
+        const IndelData& indelData) const;
 
     vcf_record vcfr;
     pos_t pos;

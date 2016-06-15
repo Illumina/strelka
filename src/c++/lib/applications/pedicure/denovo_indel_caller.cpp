@@ -89,8 +89,8 @@ get_indel_het_grid_lhood(
     const double indel_real_lnp,
     const double ref_error_lnp,
     const double ref_real_lnp,
-    const indel_key& ik,
-    const indel_data& id,
+    const IndelKey& indelKey,
+    const IndelSampleData& indelSampleData,
     const bool is_include_tier2,
     const bool is_use_alt_indel,
     double* const lhood)
@@ -111,7 +111,7 @@ get_indel_het_grid_lhood(
             sample_opt,
             indel_error_lnp,indel_real_lnp,
             ref_error_lnp,ref_real_lnp,
-            ik,id,het_ratio,
+            indelKey,indelSampleData,het_ratio,
             is_include_tier2,is_use_alt_indel,
             lhood[ratioIndex],
             lhood[ratioCount-(ratioIndex+1)]);
@@ -370,7 +370,7 @@ static
 bool
 is_multi_indel_allele(
     const starling_base_deriv_options& dopt,
-    const std::vector<const indel_data*>& allIndelData,
+    const IndelData& indelData,
     const bool is_include_tier2,
     bool& is_overlap)
 {
@@ -384,19 +384,19 @@ is_multi_indel_allele(
     };
 
     // get total pprob:
-    read_path_scores total_pprob;
-    const unsigned sampleSize(allIndelData.size());
+    ReadPathScores total_pprob;
+    const unsigned sampleSize(indelData.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
     {
         const bool isInit(sampleIndex==0);
-        get_sum_path_pprob(dopt, *(allIndelData[sampleIndex]), is_include_tier2, is_use_alt_indel, total_pprob, isInit);
+        get_sum_path_pprob(dopt, indelData.getSampleData(sampleIndex), is_include_tier2, is_use_alt_indel, total_pprob, isInit);
     }
 
     // next determine the top two indel alleles:
     std::vector<std::pair<double,int> > scores;
     scores.push_back(std::make_pair(-total_pprob.indel,static_cast<int>(INDEL)));
     scores.push_back(std::make_pair(-total_pprob.ref,static_cast<int>(REF)));
-    const read_path_scores::alt_indel_t& ai(total_pprob.alt_indel);
+    const ReadPathScores::alt_indel_t& ai(total_pprob.alt_indel);
     const int ais(ai.size());
     for (int i(0); i<ais; ++i)
     {
@@ -448,8 +448,6 @@ is_multi_indel_allele(
 
 
 
-///
-///
 void
 get_denovo_indel_call(
     const pedicure_options& opt,
@@ -458,8 +456,8 @@ get_denovo_indel_call(
     const std::vector<const starling_sample_options*>& sampleOptions,
     const double indel_error_prob,
     const double ref_error_prob,
-    const indel_key& ik,
-    const std::vector<const indel_data*>& allIndelData,
+    const IndelKey& indelKey,
+    const IndelData& indelData,
     const bool is_use_alt_indel,
     denovo_indel_call& dinc)
 {
@@ -470,11 +468,9 @@ get_denovo_indel_call(
     static const double het_bias(0.0);
 
     // set is_forced_output
-    for (const indel_data* idp : allIndelData)
+    if (indelData.is_forced_output)
     {
-        if (! idp->is_forced_output) continue;
-        dinc.is_forced_output=true;
-        break;
+        dinc.is_forced_output = true;
     }
 
     /// TODO: stop computing this stuff three times for every indel
@@ -484,7 +480,7 @@ get_denovo_indel_call(
     const double ref_error_lnp(std::log(ref_error_prob));
     const double ref_real_lnp(std::log(1.-ref_error_prob));
 
-    const unsigned sampleSize(allIndelData.size());
+    const unsigned sampleSize(indelData.getSampleCount());
     std::vector<indel_state_t> sampleLhood(sampleSize);
 
     std::array<denovo_indel_call::result_set,PEDICURE_TIERS::SIZE> tier_rs;
@@ -511,7 +507,7 @@ get_denovo_indel_call(
 #if 0
         std::cerr << "BUG: testing tier/ik: " << i << " " << ik;
 #endif
-        ismulti = (is_multi_indel_allele(dopt,allIndelData,is_include_tier2,dinc.rs.is_overlap));
+        ismulti = (is_multi_indel_allele(dopt,indelData,is_include_tier2,dinc.rs.is_overlap));
         if (ismulti)
         {
             tier_rs[tierIndex].dindel_qphred=0;
@@ -525,12 +521,12 @@ get_denovo_indel_call(
         for (unsigned sampleIndex(0); sampleIndex<sampleSize; ++sampleIndex)
         {
             const starling_sample_options& sampleOpt(*(sampleOptions[sampleIndex]));
-            const indel_data& sid(*(allIndelData[sampleIndex]));
+            const IndelSampleData& indelSampleData(indelData.getSampleData(sampleIndex));
 
             indel_digt_caller::get_indel_digt_lhood(
                 opt,dopt,sampleOpt,
-                indel_error_prob,ref_error_prob,ik,
-                sid,
+                indel_error_prob,ref_error_prob,indelKey,
+                indelSampleData,
                 is_het_bias, het_bias,
                 is_include_tier2, is_use_alt_indel,
                 sampleLhood[sampleIndex].data());
@@ -539,7 +535,7 @@ get_denovo_indel_call(
                 opt,dopt,sampleOpt,
                 indel_error_lnp,indel_real_lnp,
                 ref_error_lnp,ref_real_lnp,
-                ik,sid,
+                indelKey,indelSampleData,
                 is_include_tier2,is_use_alt_indel,
                 sampleLhood[sampleIndex].data()+STAR_DIINDEL::SIZE);
 

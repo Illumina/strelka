@@ -366,7 +366,9 @@ write_site_record(
         {
 #ifdef SUPPORT_LEGACY_EVS_TRAINING_SCRIPTS
             os << ';';
-            os << "MQ=" << si.MQ;
+            os << "MQ=" << si.mapqRMS;
+            os << ';';
+            os << "MQ0=" << si.mapqZeroCount;
             os << ';';
             os << "MQRankSum=" << si.MQRankSum;
             os << ';';
@@ -711,14 +713,14 @@ write_indel_record(
     os << _chrom << '\t'   // CHROM
        << ii.pos << '\t'   // POS
        << ".\t"            // ID
-       << call._iri.vcf_ref_seq << '\t'; // REF
+       << call._indelReportInfo.vcf_ref_seq << '\t'; // REF
 
     // ALT
 
     for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
         if (i > 0) os << ',';
-        os << ii._calls[i]._iri.vcf_indel_seq;
+        os << ii._calls[i]._indelReportInfo.vcf_indel_seq;
     }
     os << '\t';
 
@@ -739,7 +741,7 @@ write_indel_record(
     os << "RU=";
     for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
-        const auto& iri(ii._calls[i]._iri);
+        const auto& iri(ii._calls[i]._indelReportInfo);
         if (i > 0) os << ',';
         if (iri.is_repeat_unit() && iri.repeat_unit.size() <= 20)
         {
@@ -754,7 +756,7 @@ write_indel_record(
     os << "REFREP=";
     for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
-        const auto& iri(ii._calls[i]._iri);
+        const auto& iri(ii._calls[i]._indelReportInfo);
         if (i > 0) os << ',';
 
         if (iri.is_repeat_unit())
@@ -770,7 +772,7 @@ write_indel_record(
     os << "IDREP=";
     for (unsigned i = 0; i <ii._calls.size(); ++i)
     {
-        const auto& iri(ii._calls[i]._iri);
+        const auto& iri(ii._calls[i]._indelReportInfo);
 
         if (i > 0) os << ',';
 
@@ -819,39 +821,39 @@ write_indel_record(
 
     os << ':' << ((call.empiricalVariantScore>=0) ? call.empiricalVariantScore : call.gqx);
 
-    os << ':' << call._isri.depth;
+    os << ':' << call._indelSampleReportInfo.tier1Depth;
 
     // SAMPLE AD/ADF/ADR:
     {
         auto orderRefReads = [](const GermlineDiploidIndelSimpleGenotypeInfo& a, const GermlineDiploidIndelSimpleGenotypeInfo& b)
         {
-            return (a._isri.n_q30_ref_reads < b._isri.n_q30_ref_reads);
+            return (a._indelSampleReportInfo.n_q30_ref_reads < b._indelSampleReportInfo.n_q30_ref_reads);
         };
 
         const auto maxRefCountIter(
             std::max_element(ii._calls.begin(),ii._calls.end(),orderRefReads));
 
-        const auto& maxRefIsri(maxRefCountIter->_isri);
+        const auto& maxRefIsri(maxRefCountIter->_indelSampleReportInfo);
 
         // AD
         os << ':' << maxRefIsri.n_q30_ref_reads;
         for (const auto& icall : ii._calls)
         {
-            os << ',' << icall._isri.n_q30_indel_reads;
+            os << ',' << icall._indelSampleReportInfo.n_q30_indel_reads;
         }
 
         // ADF
         os << ':' << maxRefIsri.n_q30_ref_reads_fwd;
         for (const auto& icall : ii._calls)
         {
-            os << ',' << icall._isri.n_q30_indel_reads_fwd;
+            os << ',' << icall._indelSampleReportInfo.n_q30_indel_reads_fwd;
         }
 
         // ADR
         os << ':' << maxRefIsri.n_q30_ref_reads_rev;
         for (const auto& icall : ii._calls)
         {
-            os << ',' << icall._isri.n_q30_indel_reads_rev;
+            os << ',' << icall._indelSampleReportInfo.n_q30_indel_reads_rev;
         }
     }
 
@@ -919,10 +921,10 @@ write_indel_record(
         os << _chrom << '\t'   // CHROM
            << ii.pos << '\t'   // POS
            << ".\t"            // ID
-           << call._iri.vcf_ref_seq << '\t'; // REF
+           << call._indelReportInfo.vcf_ref_seq << '\t'; // REF
 
         // ALT
-        os << call._iri.vcf_indel_seq;
+        os << call._indelReportInfo.vcf_indel_seq;
         os << '\t';
 
         os << call.gq << '\t'; //QUAL
@@ -936,9 +938,9 @@ write_indel_record(
         os << call.cigar;
         os << ';';
         os << "RU=";
-        if (call._iri.is_repeat_unit() && call._iri.repeat_unit.size() <= 20)
+        if (call._indelReportInfo.is_repeat_unit() && call._indelReportInfo.repeat_unit.size() <= 20)
         {
-            os << call._iri.repeat_unit;
+            os << call._indelReportInfo.repeat_unit;
         }
         else
         {
@@ -946,16 +948,16 @@ write_indel_record(
         }
         os << ';';
         os << "REFREP=";
-        if (call._iri.is_repeat_unit())
+        if (call._indelReportInfo.is_repeat_unit())
         {
-            os << call._iri.ref_repeat_count;
+            os << call._indelReportInfo.ref_repeat_count;
         }
 
         os << ';';
         os << "IDREP=";
-        if (call._iri.is_repeat_unit())
+        if (call._indelReportInfo.is_repeat_unit())
         {
-            os << call._iri.indel_repeat_count;
+            os << call._indelReportInfo.indel_repeat_count;
         }
 
 
@@ -970,19 +972,19 @@ write_indel_record(
 
         os << ':' << call.gqx;
 
-        os << ':' << call._isri.depth;
+        os << ':' << call._indelSampleReportInfo.tier1Depth;
 
         // AD:
-        os << ':' << call._isri.n_q30_ref_reads
-           << ',' << call._isri.n_q30_indel_reads;
+        os << ':' << call._indelSampleReportInfo.n_q30_ref_reads
+           << ',' << call._indelSampleReportInfo.n_q30_indel_reads;
 
         // ADF
-        os << ':' << call._isri.n_q30_ref_reads_fwd
-           << ',' << call._isri.n_q30_indel_reads_fwd;
+        os << ':' << call._indelSampleReportInfo.n_q30_ref_reads_fwd
+           << ',' << call._indelSampleReportInfo.n_q30_indel_reads_fwd;
 
         // ADR
-        os << ':' << call._isri.n_q30_ref_reads_rev
-           << ',' << call._isri.n_q30_indel_reads_rev;
+        os << ':' << call._indelSampleReportInfo.n_q30_ref_reads_rev
+           << ',' << call._indelSampleReportInfo.n_q30_indel_reads_rev;
 
         // VF
         {

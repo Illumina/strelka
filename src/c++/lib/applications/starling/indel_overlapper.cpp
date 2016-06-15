@@ -87,7 +87,7 @@ void indel_overlapper::process(std::unique_ptr<GermlineIndelCallInfo> indel)
     auto& call(ii->first());
 
     // we can't handle breakends at all right now:
-    if (call._ik.is_breakpoint()) return;
+    if (call._indelKey.is_breakpoint()) return;
 
     const bool is_nonvariant_indel = check_is_nonvariant_indel(call._dindel);
 
@@ -105,7 +105,7 @@ void indel_overlapper::process(std::unique_ptr<GermlineIndelCallInfo> indel)
     }
     else
     {
-        _indel_end_pos=std::max(_indel_end_pos,call._ik.right_pos());
+        _indel_end_pos=std::max(_indel_end_pos,call._indelKey.right_pos());
         _indel_buffer.push_back(std::move(ii));
     }
 }
@@ -147,7 +147,7 @@ is_simple_indel_overlap(
 
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
-    const pos_t indel_end_pos=std::max(ic1._ik.right_pos(),ic0._ik.right_pos());
+    const pos_t indel_end_pos=std::max(ic1._indelKey.right_pos(),ic0._indelKey.right_pos());
     const pos_t indel_begin_pos(ii0.pos-1);
 
     // get the VCF ALT string associated with overlapping indel:
@@ -157,10 +157,10 @@ is_simple_indel_overlap(
         const auto& ic(ii.first());
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
-        const unsigned trail_len(indel_end_pos-ic._ik.right_pos());
+        const unsigned trail_len(indel_end_pos-ic._indelKey.right_pos());
         ref.get_substring(indel_end_pos-trail_len,trail_len,trailing_seq);
 
-        return leading_seq + ic._iri.vcf_indel_seq + trailing_seq;
+        return leading_seq + ic._indelReportInfo.vcf_indel_seq + trailing_seq;
     };
     const std::string alt0 = get_overlap_alt(*indel_buffer[0]);
     const std::string alt1 = get_overlap_alt(*indel_buffer[1]);

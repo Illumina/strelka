@@ -27,7 +27,7 @@
 
 #include "candidate_alignment.hh"
 
-#include "starling_common/indel_synchronizer.hh"
+#include "starling_common/IndelBuffer.hh"
 #include "starling_common/starling_read_segment.hh"
 #include "starling_common/starling_base_shared.hh"
 
@@ -35,10 +35,7 @@
 #include <vector>
 
 
-typedef indel_buffer::iterator iiter;
-typedef indel_buffer::const_iterator ciiter;
-
-typedef std::map<indel_key,bool> indel_status_map_t;
+typedef std::map<IndelKey,bool> indel_status_map_t;
 
 
 /// use the most likely alignment for each indel state for every indel
@@ -50,7 +47,8 @@ score_indels(
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sample_opt,
     const read_segment& rseg,
-    indel_synchronizer& isync,
+    IndelBuffer& indelBuffer,
+    const unsigned sampleId,
     const std::set<candidate_alignment>& candAlignments,
     const bool is_incomplete_search,
     const std::vector<double>& candAlignmentScores,

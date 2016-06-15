@@ -17,29 +17,18 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 /*
-*  Created on: Oct 10, 2013
  * Author: Morten Kallberg
  */
 
 #include "ScoringModelManager.hh"
 
-#include "common/Exceptions.hh"
-
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string.hpp"
-#include "boost/algorithm/string/classification.hpp"
 
-#include <cassert>
-#include <cstdlib>     /* atof */
-
-#include <exception>
-#include <sstream>
-#include <string>
 #include <iostream>
 #include <fstream>
-#include <iterator>
-#include <map>
 
 
 //#define DEBUG_CAL
@@ -78,7 +67,8 @@ classify_site(
     {
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
-        si.computeEmpiricalScoringFeatures(_isReportEVSFeatures, _dopt.norm_depth, smod);
+        const bool isUniformDepthExpected(_dopt.is_max_depth());
+        si.computeEmpiricalScoringFeatures(isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, smod);
     }
 
     //si.smod.filters.reset(); // make sure no filters have been applied prior
@@ -98,7 +88,7 @@ ScoringModelManager::
 checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const
 {
     const auto& call(ii.first());
-    return ((call._iri.it == INDEL::INSERT || call._iri.it == INDEL::DELETE) &&
+    return ((call._indelReportInfo.it == INDEL::INSERT || call._indelReportInfo.it == INDEL::DELETE) &&
             (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // empirical scoring does not handle homref sites properly
 }
 
@@ -136,7 +126,8 @@ classify_indel_impl(
     {
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
-        call.computeEmpiricalScoringFeatures(_isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
+        const bool isUniformDepthExpected(_dopt.is_max_depth());
+        call.computeEmpiricalScoringFeatures(isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
     }
 
     if ( (! is_default_model()) && isVariantUsableInEVSModel )
@@ -158,6 +149,8 @@ classify_indel(
 {
     classify_indel_impl(checkIsVariantUsableInEVSModel(ii),ii,call);
 }
+
+
 
 void
 ScoringModelManager::
@@ -233,12 +226,12 @@ default_classify_indel(
 
     if (this->_dopt.is_max_depth())
     {
-        if (call._isri.depth > this->_dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if (call._indelSampleReportInfo.tier1Depth > this->_dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 
     if (this->_opt.is_max_ref_rep)
     {
-        const auto& iri(call._iri);
+        const auto& iri(call._indelReportInfo);
         if (iri.is_repeat_unit())
         {
             if ((iri.repeat_unit.size() <= 2) &&

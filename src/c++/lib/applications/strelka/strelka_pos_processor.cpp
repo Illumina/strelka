@@ -28,7 +28,6 @@
 #include "strelka_pos_processor.hh"
 
 #include "blt_util/log.hh"
-#include "calibration/IndelErrorModel.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_base_stages.hh"
 
@@ -59,7 +58,7 @@ strelka_pos_processor(
     // set sample-specific parameter overrides:
     normal_sif.sample_opt.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
 
-    // setup indel syncronizers:
+    // setup indel syncronizer:
     {
         double max_candidate_normal_sample_depth(-1.);
         if (dopt.sfilter.is_max_depth())
@@ -82,13 +81,18 @@ strelka_pos_processor(
             }
         }
 
-        indel_sync_data isdata;
-        isdata.register_sample(normal_sif.indel_buff,normal_sif.estdepth_buff,normal_sif.estdepth_buff_tier2,
-                               normal_sif.sample_opt, max_candidate_normal_sample_depth, NORMAL);
-        isdata.register_sample(tumor_sif.indel_buff,tumor_sif.estdepth_buff,tumor_sif.estdepth_buff_tier2,
-                               tumor_sif.sample_opt, -1., TUMOR);
-        normal_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,dopt,ref,isdata,NORMAL));
-        tumor_sif.indel_sync_ptr.reset(new indel_synchronizer(opt,dopt,ref,isdata,TUMOR));
+        /// TODO: setup a stronger sample id handler -- using the version from manta would be a good start here
+        sample_id_t sample_id;
+        sample_id = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
+                                                    max_candidate_normal_sample_depth);
+
+        assert(sample_id == NORMAL);
+
+        sample_id = getIndelBuffer().registerSample(tumor_sif.estdepth_buff, tumor_sif.estdepth_buff_tier2, -1.);
+
+        assert(sample_id == TUMOR);
+
+        getIndelBuffer().finalizeSamples();
     }
 
     // setup indel avg window:
@@ -190,8 +194,8 @@ process_pos_snp_somatic(const pos_t pos)
                 sgtg.sn = *snp;
             }
         }
-//        std::ostream& bos(*_streams.somatic_snv_osptr());
-        std::ostream& bos(std::cout);
+        std::ostream& bos(*_streams.somatic_snv_osptr());
+//        std::ostream& bos(std::cout);
 
         // have to keep tier1 counts for filtration purposes:
 #ifdef SOMATIC_DEBUG
@@ -262,33 +266,24 @@ process_pos_indel_somatic(const pos_t pos)
     sample_info& normal_sif(sample(NORMAL));
     sample_info& tumor_sif(sample(TUMOR));
 
-    // with indel synchronization turned on in this model, we should
-    // only need to iterate through one sample or the other -- for now
-    // we just pick one -- would be nicer in the future to have a way
-    // to
-    //
-    typedef indel_buffer::const_iterator ciiter;
-    ciiter i(tumor_sif.indel_buff.pos_iter(pos));
-    const ciiter i_end(tumor_sif.indel_buff.pos_iter(pos+1));
+    auto indelIter(getIndelBuffer().positionIterator(pos));
+    const auto indelIterEnd(getIndelBuffer().positionIterator(pos + 1));
 
-    for (; i!=i_end; ++i)
+    for (; indelIter != indelIterEnd; ++indelIter)
     {
-        const indel_key& ik(i->first);
+        const IndelKey& indelKey(indelIter->first);
 
         // don't write breakpoint output:
-        if (ik.is_breakpoint()) continue;
+        if (indelKey.is_breakpoint()) continue;
 
-        const indel_data& tumor_id(get_indel_data(i));
+        const IndelData& indelData(getIndelData(indelIter));
 
-        if (! tumor_sif.indel_sync().is_candidate_indel(ik,tumor_id)) continue;
+        if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
 
-        const indel_data* normal_id_ptr(normal_sif.indel_buff.get_indel_data_ptr(ik));
-        assert(NULL != normal_id_ptr);
-        const indel_data& normal_id(*normal_id_ptr);
+        const IndelSampleData& normalIndelSampleData(indelData.getSampleData(NORMAL));
+        const IndelSampleData& tumorIndelSampleData(indelData.getSampleData(TUMOR));
 
-        if (normal_id.read_path_lnp.empty() && tumor_id.read_path_lnp.empty()) continue;
-
-        //bool is_indel(false);
+        if (normalIndelSampleData.read_path_lnp.empty() && tumorIndelSampleData.read_path_lnp.empty()) continue;
 
         if (_opt.is_somatic_indel())
         {
@@ -296,24 +291,20 @@ process_pos_indel_somatic(const pos_t pos)
             // local small repeat info is available to the indel
             // caller
 
-            // get iri from either sample:
-            starling_indel_report_info iri;
-            get_starling_indel_report_info(ik,tumor_id,_ref,iri);
+            starling_indel_report_info indelReportInfo;
+            get_starling_indel_report_info(indelKey,indelData,_ref,indelReportInfo);
 
             // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
-            if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
-
-            double refToIndelErrorProb(0);
-            double indelToRefErrorProb(0);
-            _dopt.getIndelErrorModel().getIndelErrorRate(iri, refToIndelErrorProb, indelToRefErrorProb);
+            if (indelReportInfo.vcf_indel_seq == indelReportInfo.vcf_ref_seq) continue;
 
             somatic_indel_call sindel;
             static const bool is_use_alt_indel(true);
             _dopt.sicaller_grid().get_somatic_indel(_opt,_dopt,
                                                     normal_sif.sample_opt,
                                                     tumor_sif.sample_opt,
-                                                    refToIndelErrorProb,indelToRefErrorProb,
-                                                    ik,normal_id,tumor_id,
+                                                    indelData.errorRates.refToIndelErrorProb,
+                                                    indelData.errorRates.indelToRefErrorProb,
+                                                    indelKey, indelData, NORMAL,TUMOR,
                                                     is_use_alt_indel,
                                                     sindel);
 
@@ -322,21 +313,21 @@ process_pos_indel_somatic(const pos_t pos)
                 // get sample specific info:
                 SomaticIndelVcfInfo siInfo;
                 siInfo.sindel = sindel;
-                siInfo.iri = iri;
+                siInfo.indelReportInfo = indelReportInfo;
 
                 for (unsigned t(0); t<2; ++t)
                 {
                     const bool is_include_tier2(t!=0);
-                    get_starling_indel_sample_report_info(_dopt,ik,normal_id,normal_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_dopt,indelKey,normalIndelSampleData,normal_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.nisri[t]);
-                    get_starling_indel_sample_report_info(_dopt,ik,tumor_id,tumor_sif.bc_buff,
+                    get_starling_indel_sample_report_info(_dopt,indelKey,tumorIndelSampleData,tumor_sif.bc_buff,
                                                           is_include_tier2,is_use_alt_indel,
                                                           siInfo.tisri[t]);
                 }
 
-                pos_t indel_pos(ik.pos);
-                if (ik.type != INDEL::BP_RIGHT)
+                pos_t indel_pos(indelKey.pos);
+                if (indelKey.type != INDEL::BP_RIGHT)
                 {
                     indel_pos -= 1;
                 }
@@ -360,8 +351,8 @@ process_pos_indel_somatic(const pos_t pos)
                 for (; i!=i_end; ++i)
                 {
                     const align_id_t read_id(i->first);
-                    const read_path_scores& lnp(i->second);
-                    const read_path_scores pprob(indel_lnp_to_pprob(_dopt,lnp));
+                    const ReadPathScores& lnp(i->second);
+                    const ReadPathScores pprob(indel_lnp_to_pprob(_dopt,lnp));
                     const starling_read* srptr(sif.read_buff.get_read(read_id));
 
                     report_os << "read key: ";

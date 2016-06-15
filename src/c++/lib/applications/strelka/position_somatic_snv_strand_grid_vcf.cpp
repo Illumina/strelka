@@ -43,6 +43,44 @@ safeFrac(const unsigned num, const D denom)
 }
 
 
+double
+calculateLogOddsRatio(  const CleanedPileup& n1_cpi,
+                        const CleanedPileup& t1_cpi,
+                        const blt_options& opt)
+{
+
+    /**
+     * Calculate LOR feature (log odds ratio for  T_REF T_ALT
+     *                                            N_REF N_ALT)
+     */
+    std::array<unsigned,N_BASE> n_tier1_base_counts;
+    std::array<unsigned,N_BASE> t_tier1_base_counts;
+    n1_cpi.cleanedPileup().get_known_counts(n_tier1_base_counts,opt.used_allele_count_min_qscore);
+    t1_cpi.cleanedPileup().get_known_counts(t_tier1_base_counts,opt.used_allele_count_min_qscore);
+    const unsigned ref_index(base_to_id(n1_cpi.cleanedPileup().get_ref_base()));
+    unsigned n_ref=0;
+    unsigned n_alt=0;
+    unsigned t_ref=0;
+    unsigned t_alt=0;
+    for (unsigned b(0); b<N_BASE; ++b)
+    {
+        if (b==ref_index)
+            n_ref += n_tier1_base_counts[b];
+        else
+            n_alt += n_tier1_base_counts[b];
+    }
+    for (unsigned b(0); b<N_BASE; ++b)
+    {
+        if (b==ref_index)
+            t_ref += t_tier1_base_counts[b];
+        else
+            t_alt += t_tier1_base_counts[b];
+    }
+    double LOR = log10((t_ref+0.5)*(n_alt+0.5) / (t_alt+0.5) / (n_ref+0.5));
+
+    return LOR;
+}
+
 /// set sample specific empirical scoring features
 ///
 // similar to 'write_vcf_sample_info' below, redundancy needed to get order of output right
@@ -183,13 +221,14 @@ get_scoring_features(
     get_single_sample_scoring_features(opt,dopt,t1_cpi,t2_cpi,(!isNormalSample),smod);
 
     //MQ
-    const unsigned n_mapq(n1_cpi.rawPileup().n_mapq+t1_cpi.rawPileup().n_mapq);
-    const double sum_sq_mapq(n1_cpi.rawPileup().sum_sq_mapq + t1_cpi.rawPileup().sum_sq_mapq);
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::MQ,std::sqrt(safeFrac(sum_sq_mapq,n_mapq)));
+    MapqTracker mapqTracker(n1_cpi.rawPileup().mapqTracker);
+    mapqTracker.merge(t1_cpi.rawPileup().mapqTracker);
+    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::MQ, mapqTracker.getRMS());
 
     //n_mapq0
-    const unsigned n_mapq0(n1_cpi.rawPileup().n_mapq0+t1_cpi.rawPileup().n_mapq0);
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq0+n_mapq));
+    const unsigned n_mapq(mapqTracker.count);
+    const unsigned n_mapq0(mapqTracker.zeroCount);
+    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq));
 
     //ReadPosRankSum
     const double ReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_u_stat();
@@ -200,47 +239,15 @@ get_scoring_features(
 
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::MQ0_FRAC, safeFrac(n_mapq0,n_mapq));
 
-    /**
-     * Calculate LOR feature (log odds ratio for  T_REF T_ALT
-     *                                            N_REF N_ALT)
-     */
-    std::array<unsigned,N_BASE> n_tier1_base_counts;
-    std::array<unsigned,N_BASE> t_tier1_base_counts;
-    n1_cpi.cleanedPileup().get_known_counts(n_tier1_base_counts,opt.used_allele_count_min_qscore);
-    t1_cpi.cleanedPileup().get_known_counts(t_tier1_base_counts,opt.used_allele_count_min_qscore);
-    const unsigned ref_index(base_to_id(n1_cpi.cleanedPileup().get_ref_base()));
-    unsigned n_ref=0;
-    unsigned n_alt=0;
-    unsigned t_ref=0;
-    unsigned t_alt=0;
-    for (unsigned b(0); b<N_BASE; ++b)
-    {
-        if (b==ref_index)
-        	n_ref += n_tier1_base_counts[b];
-        else
-        	n_alt += n_tier1_base_counts[b];
-    }
-    for (unsigned b(0); b<N_BASE; ++b)
-    {
-        if (b==ref_index)
-        	t_ref += t_tier1_base_counts[b];
-        else
-        	t_alt += t_tier1_base_counts[b];
-    }
+    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::LOR, calculateLogOddsRatio(n1_cpi,t1_cpi,opt));
 
-    double LOR = log10((t_ref+0.5)*(n_alt+0.5) / (t_alt+0.5) / (n_ref+0.5));
-
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::LOR, LOR);
-
-    // features not used in the current EVS model but feature candidates/exploratory for new EVS models:
+    // features not used in the current EVS model but feature candidates/exploratory for new EVS models
     if (opt.isReportEVSFeatures)
     {
         /// TODO better handling of default values for in cases where altpos or altmap are not defined (0 is not a good default)
         //Altpos
-        smod.features.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::altpos,altpos);
-        smod.features.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::altmap,altmap);
-    	smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::AFR, 1.0);
-
+        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::altpos,altpos);
+        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::altmap,altmap);
     }
 }
 
@@ -367,7 +374,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             // See STARKA-257 github comment for more detail on this fit
             auto recal_somatic_snv_score = [](double& score)
             {
-                return 2.57*score+0.94;
+                return 2.51*score+0.98;
             };
 
             smod.EVS = recal_somatic_snv_score(smod.EVS);
@@ -426,14 +433,11 @@ write_vcf_somatic_snv_genotype_strand_grid(
         os << std::fixed << std::setprecision(2);
 
         // m_mapq includes all calls, even from reads below the mapq threshold:
-        const unsigned n_mapq(n1_epd.rawPileup().n_mapq+t1_epd.rawPileup().n_mapq);
-        os << ";DP=" << n_mapq;
+        MapqTracker mapqTracker(n1_epd.rawPileup().mapqTracker);
+        mapqTracker.merge(t1_epd.rawPileup().mapqTracker);
+        os << ";DP=" << mapqTracker.count;
         os << ";MQ=" << smod.features.get(SOMATIC_SNV_SCORING_FEATURES::MQ);
-
-        {
-            const unsigned n_mapq0(n1_epd.rawPileup().n_mapq0+t1_epd.rawPileup().n_mapq0);
-            os << ";MQ0=" << n_mapq0;
-        }
+        os << ";MQ0=" << mapqTracker.zeroCount;
 
 //        os << ";ALTPOS=";
 //        if (smod.features.test(SOMATIC_SNV_SCORING_FEATURES::altpos))
@@ -469,13 +473,12 @@ write_vcf_somatic_snv_genotype_strand_grid(
             }
             os << smod.features.get(static_cast<SOMATIC_SNV_SCORING_FEATURES::index_t>(featureIndex));
         }
-        for (unsigned featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
+        for (int featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
         {
             os << ",";
             os << smod.dfeatures.get(static_cast<SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
         }
     }
-
 
     //FORMAT:
     os << '\t'

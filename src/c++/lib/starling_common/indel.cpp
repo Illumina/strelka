@@ -31,7 +31,7 @@
 
 std::ostream&
 operator<<(std::ostream& os,
-           const indel_observation& obs)
+           const IndelObservation& obs)
 {
 
     os << obs.key << obs.data;

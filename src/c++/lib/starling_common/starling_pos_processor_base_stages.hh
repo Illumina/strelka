@@ -32,10 +32,8 @@ enum index_t
     HEAD,
     READ_BUFFER,
     POST_ALIGN,
-    POST_REGION, // haplotype specific stage
-    POST_READ,  // haplotype specific stage
-    CLEAR_SITE_ANNOTATION, // non-haplotype mode
-    CLEAR_READ_BUFFER, // non-haplotype mode: placement depends on various options:
+    CLEAR_SITE_ANNOTATION,
+    CLEAR_READ_BUFFER, // placement depends on various options
     POST_CALL,
     SIZE
 };

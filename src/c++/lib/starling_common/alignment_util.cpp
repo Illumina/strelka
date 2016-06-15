@@ -89,7 +89,7 @@ get_alignment_zone(const alignment& al,
 
 bool
 is_indel_in_alignment(const alignment& al,
-                      const indel_key& ik,
+                      const IndelKey& indelKey,
                       pos_range& read_indel_pr)
 {
     using namespace ALIGNPATH;
@@ -104,7 +104,7 @@ is_indel_in_alignment(const alignment& al,
     const unsigned aps(path.size());
     while (path_index<aps)
     {
-        if (ref_head_pos > ik.right_pos()) return false;
+        if (ref_head_pos > indelKey.right_pos()) return false;
 
         const path_segment& ps(path[path_index]);
 
@@ -123,15 +123,15 @@ is_indel_in_alignment(const alignment& al,
             {
                 if (path_index<ends.first)
                 {
-                    if (      (ref_head_pos==ik.pos) &&
-                              (INDEL::BP_RIGHT==ik.type))
+                    if (      (ref_head_pos==indelKey.pos) &&
+                              (INDEL::BP_RIGHT==indelKey.type))
                     {
                         read_indel_pr.set_end_pos(read_offset+ps.length);
                         return true;
                     }
-                    else if ((ref_head_pos==ik.right_pos()) &&
-                             ((INDEL::INSERT==ik.type) || (INDEL::SWAP==ik.type)) &&
-                             (ps.length <= ik.length))
+                    else if ((ref_head_pos==indelKey.right_pos()) &&
+                             ((INDEL::INSERT==indelKey.type) || (INDEL::SWAP==indelKey.type)) &&
+                             (ps.length <= indelKey.length))
                     {
                         read_indel_pr.set_end_pos(read_offset+ps.length);
                         return true;
@@ -141,15 +141,15 @@ is_indel_in_alignment(const alignment& al,
             }
             else
             {
-                if (      (ref_head_pos==ik.pos) &&
-                          (INDEL::BP_LEFT==ik.type))
+                if (      (ref_head_pos==indelKey.pos) &&
+                          (INDEL::BP_LEFT==indelKey.type))
                 {
                     read_indel_pr.set_begin_pos(read_offset);
                     return true;
                 }
-                else if ((ref_head_pos==ik.pos) &&
-                         ((INDEL::INSERT==ik.type) || (INDEL::SWAP==ik.type)) &&
-                         (ps.length <= ik.length))
+                else if ((ref_head_pos==indelKey.pos) &&
+                         ((INDEL::INSERT==indelKey.type) || (INDEL::SWAP==indelKey.type)) &&
+                         (ps.length <= indelKey.length))
                 {
                     read_indel_pr.set_begin_pos(read_offset);
                     return true;
@@ -162,9 +162,9 @@ is_indel_in_alignment(const alignment& al,
             const swap_info sinfo(path,path_index);
             n_seg=sinfo.n_seg;
 
-            if ((ref_head_pos==ik.pos) &&
-                (sinfo.insert_length==ik.length) &&
-                (sinfo.delete_length==ik.swap_dlength))
+            if ((ref_head_pos==indelKey.pos) &&
+                (sinfo.insert_length==indelKey.length) &&
+                (sinfo.delete_length==indelKey.swap_dlength))
             {
                 read_indel_pr.set_begin_pos(read_offset);
                 read_indel_pr.set_end_pos(read_offset+sinfo.insert_length);
@@ -174,13 +174,13 @@ is_indel_in_alignment(const alignment& al,
         }
         else if (is_segment_type_indel(path[path_index].type))
         {
-            if ((ref_head_pos==ik.pos) &&
-                (ps.length == ik.length) &&
-                (((INSERT==ps.type) && (INDEL::INSERT==ik.type)) ||
-                 ((DELETE==ps.type) && (INDEL::DELETE==ik.type))))
+            if ((ref_head_pos==indelKey.pos) &&
+                (ps.length == indelKey.length) &&
+                (((INSERT==ps.type) && (INDEL::INSERT==indelKey.type)) ||
+                 ((DELETE==ps.type) && (INDEL::DELETE==indelKey.type))))
             {
                 read_indel_pr.set_begin_pos(read_offset);
-                const unsigned insert_length(INDEL::INSERT==ik.type ? ps.length : 0);
+                const unsigned insert_length(INDEL::INSERT==indelKey.type ? ps.length : 0);
                 read_indel_pr.set_end_pos(read_offset+insert_length);
                 return true;
             }

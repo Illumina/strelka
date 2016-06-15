@@ -61,23 +61,24 @@ copy_ref_subseq(const reference_contig_segment& ref,
 ///
 static
 void
-get_vcf_summary_strings(const indel_key& ik,
-                        const indel_data& id,
-                        const reference_contig_segment& ref,
-                        std::string& vcf_indel_seq,
-                        std::string& vcf_ref_seq)
+get_vcf_summary_strings(
+    const IndelKey& indelKey,
+    const IndelData& indelData,
+    const reference_contig_segment& ref,
+    std::string& vcf_indel_seq,
+    std::string& vcf_ref_seq)
 {
-    if       (ik.is_breakpoint())
+    if       (indelKey.is_breakpoint())
     {
-        if       (ik.type == INDEL::BP_LEFT)
+        if       (indelKey.type == INDEL::BP_LEFT)
         {
-            copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_ref_seq);
-            vcf_indel_seq = vcf_ref_seq + id.get_insert_seq() + '.';
+            copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos,vcf_ref_seq);
+            vcf_indel_seq = vcf_ref_seq + indelData.getInsertSeq() + '.';
         }
-        else if (ik.type == INDEL::BP_RIGHT)
+        else if (indelKey.type == INDEL::BP_RIGHT)
         {
-            copy_ref_subseq(ref,ik.pos,ik.pos+1,vcf_ref_seq);
-            vcf_indel_seq = '.' + id.get_insert_seq() + vcf_ref_seq;
+            copy_ref_subseq(ref,indelKey.pos,indelKey.pos+1,vcf_ref_seq);
+            vcf_indel_seq = '.' + indelData.getInsertSeq() + vcf_ref_seq;
         }
         else
         {
@@ -86,9 +87,9 @@ get_vcf_summary_strings(const indel_key& ik,
     }
     else
     {
-        copy_ref_subseq(ref,ik.pos-1,ik.pos+ik.delete_length(),vcf_ref_seq);
-        copy_ref_subseq(ref,ik.pos-1,ik.pos,vcf_indel_seq);
-        vcf_indel_seq += id.get_insert_seq();
+        copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos+indelKey.delete_length(),vcf_ref_seq);
+        copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos,vcf_indel_seq);
+        vcf_indel_seq += indelData.getInsertSeq();
     }
 }
 
@@ -96,47 +97,48 @@ get_vcf_summary_strings(const indel_key& ik,
 
 static
 void
-set_repeat_info(const indel_key& ik,
-                const reference_contig_segment& ref,
-                starling_indel_report_info& iri)
+set_repeat_info(
+    const IndelKey& indelKey,
+    const reference_contig_segment& ref,
+    starling_indel_report_info& indelReportInfo)
 {
-    if (! ((iri.it == INDEL::INSERT) ||
-           (iri.it == INDEL::DELETE) ||
-           (iri.it == INDEL::SWAP))) return;
+    if (! ((indelReportInfo.it == INDEL::INSERT) ||
+           (indelReportInfo.it == INDEL::DELETE) ||
+           (indelReportInfo.it == INDEL::SWAP))) return;
 
     unsigned insert_repeat_count(0);
     unsigned delete_repeat_count(0);
 
-    if       (iri.it == INDEL::INSERT)
+    if       (indelReportInfo.it == INDEL::INSERT)
     {
-        get_vcf_seq_repeat_unit(iri.vcf_indel_seq,iri.repeat_unit,insert_repeat_count);
+        get_vcf_seq_repeat_unit(indelReportInfo.vcf_indel_seq,indelReportInfo.repeat_unit,insert_repeat_count);
     }
-    else if (iri.it == INDEL::DELETE)
+    else if (indelReportInfo.it == INDEL::DELETE)
     {
-        get_vcf_seq_repeat_unit(iri.vcf_ref_seq,iri.repeat_unit,delete_repeat_count);
+        get_vcf_seq_repeat_unit(indelReportInfo.vcf_ref_seq,indelReportInfo.repeat_unit,delete_repeat_count);
     }
-    else if (iri.it == INDEL::SWAP)
+    else if (indelReportInfo.it == INDEL::SWAP)
     {
         std::string insert_ru;
         std::string delete_ru;
-        get_vcf_seq_repeat_unit(iri.vcf_indel_seq,insert_ru,insert_repeat_count);
-        get_vcf_seq_repeat_unit(iri.vcf_ref_seq,delete_ru,delete_repeat_count);
+        get_vcf_seq_repeat_unit(indelReportInfo.vcf_indel_seq,insert_ru,insert_repeat_count);
+        get_vcf_seq_repeat_unit(indelReportInfo.vcf_ref_seq,delete_ru,delete_repeat_count);
         if ((insert_ru != delete_ru) || insert_ru.empty()) return;
 
-        iri.repeat_unit=insert_ru;
+        indelReportInfo.repeat_unit=insert_ru;
     }
     else
     {
         assert(false && "Unexpected indel type");
     }
-    iri.repeat_unit_length=iri.repeat_unit.size();
+    indelReportInfo.repeat_unit_length=indelReportInfo.repeat_unit.size();
 
     // count repeats in contextual sequence:
     unsigned indel_context_repeat_count(0);
     {
-        const pos_t indel_begin_pos(ik.pos);
-        const pos_t indel_end_pos(ik.right_pos());
-        const int repeat_unit_size(static_cast<int>(iri.repeat_unit.size()));
+        const pos_t indel_begin_pos(indelKey.pos);
+        const pos_t indel_end_pos(indelKey.right_pos());
+        const int repeat_unit_size(static_cast<int>(indelReportInfo.repeat_unit.size()));
 
         // count upstream repeats:
         for (pos_t i(indel_begin_pos-repeat_unit_size); i>=0; i-=repeat_unit_size)
@@ -144,7 +146,7 @@ set_repeat_info(const indel_key& ik,
             bool is_repeat(true);
             for (int j(0); j<repeat_unit_size; ++j)
             {
-                if (ref.get_base(i+j) != iri.repeat_unit[j])
+                if (ref.get_base(i+j) != indelReportInfo.repeat_unit[j])
                 {
                     is_repeat = false;
                     break;
@@ -161,7 +163,7 @@ set_repeat_info(const indel_key& ik,
             bool is_repeat(true);
             for (int j(0); j<repeat_unit_size; ++j)
             {
-                if (ref.get_base(i+j) != iri.repeat_unit[j])
+                if (ref.get_base(i+j) != indelReportInfo.repeat_unit[j])
                 {
                     is_repeat = false;
                     break;
@@ -172,44 +174,45 @@ set_repeat_info(const indel_key& ik,
         }
     }
 
-    iri.ref_repeat_count = indel_context_repeat_count+delete_repeat_count;
-    iri.indel_repeat_count = indel_context_repeat_count+insert_repeat_count;
+    indelReportInfo.ref_repeat_count = indel_context_repeat_count+delete_repeat_count;
+    indelReportInfo.indel_repeat_count = indel_context_repeat_count+insert_repeat_count;
 }
 
 
 
 void
-get_starling_indel_report_info(const indel_key& ik,
-                               const indel_data& id,
-                               const reference_contig_segment& ref,
-                               starling_indel_report_info& iri)
+get_starling_indel_report_info(
+    const IndelKey& indelKey,
+    const IndelData& indelData,
+    const reference_contig_segment& ref,
+    starling_indel_report_info& indelReportInfo)
 {
     // indel summary info
-    get_vcf_summary_strings(ik,id,ref,iri.vcf_indel_seq,iri.vcf_ref_seq);
+    get_vcf_summary_strings(indelKey,indelData,ref,indelReportInfo.vcf_indel_seq,indelReportInfo.vcf_ref_seq);
 
-    iri.it=ik.type;
+    indelReportInfo.it=indelKey.type;
 
-    const pos_t indel_begin_pos(ik.pos);
-    const pos_t indel_end_pos(ik.right_pos());
+    const pos_t indel_begin_pos(indelKey.pos);
+    const pos_t indel_end_pos(indelKey.right_pos());
 
     // repeat analysis:
-    set_repeat_info(ik,ref,iri);
+    set_repeat_info(indelKey,ref,indelReportInfo);
 
     // interrupted hpol compuation:
-    iri.ihpol=get_interrupted_hpol_size(indel_begin_pos-1,ref);
-    iri.ihpol=std::max(iri.ihpol,get_interrupted_hpol_size(indel_begin_pos,ref));
+    indelReportInfo.ihpol=get_interrupted_hpol_size(indel_begin_pos-1,ref);
+    indelReportInfo.ihpol=std::max(indelReportInfo.ihpol,get_interrupted_hpol_size(indel_begin_pos,ref));
     if (indel_begin_pos != indel_end_pos)
     {
-        iri.ihpol=std::max(iri.ihpol,get_interrupted_hpol_size(indel_end_pos-1,ref));
-        iri.ihpol=std::max(iri.ihpol,get_interrupted_hpol_size(indel_end_pos,ref));
+        indelReportInfo.ihpol=std::max(indelReportInfo.ihpol,get_interrupted_hpol_size(indel_end_pos-1,ref));
+        indelReportInfo.ihpol=std::max(indelReportInfo.ihpol,get_interrupted_hpol_size(indel_end_pos,ref));
     }
 }
 
 
 
-read_path_scores
+ReadPathScores
 indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
-                   const read_path_scores& path_lnp,
+                   const ReadPathScores& path_lnp,
                    const bool is_tier2_pass,
                    const bool is_use_alt_indel)
 {
@@ -222,8 +225,8 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
     static const double allele_prior(1./static_cast<double>(n_alleles));
     static const double allele_lnprior(std::log(allele_prior));
 
-    read_path_scores pprob;
-    read_path_scores::score_t pprob_nonsite = dopt.get_nonsite_path_lnp(is_tier2_pass,path_lnp.nsite) + dopt.nonsite_lnprior;
+    ReadPathScores pprob;
+    ReadPathScores::score_t pprob_nonsite = dopt.get_nonsite_path_lnp(is_tier2_pass,path_lnp.nsite) + dopt.nonsite_lnprior;
     pprob.ref     = path_lnp.ref     + dopt.site_lnprior + allele_lnprior;
     pprob.indel   = path_lnp.indel   + dopt.site_lnprior + allele_lnprior;
 
@@ -283,13 +286,14 @@ indel_lnp_to_pprob(const starling_base_deriv_options& dopt,
 
 
 void
-get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
-                                      const indel_key& ik,
-                                      const indel_data& id,
-                                      const pos_basecall_buffer& bc_buff,
-                                      const bool is_tier2_pass,
-                                      const bool is_use_alt_indel,
-                                      starling_indel_sample_report_info& isri)
+get_starling_indel_sample_report_info(
+    const starling_base_deriv_options& dopt,
+    const IndelKey& indelKey,
+    const IndelSampleData& indelSampleData,
+    const pos_basecall_buffer& bc_buff,
+    const bool is_tier2_pass,
+    const bool is_use_alt_indel,
+    starling_indel_sample_report_info& isri)
 {
     // get read info:
     {
@@ -297,18 +301,14 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
 
         unsigned n_subscore_reads(0);
 
-        isri.n_mapq = id.n_mapq;
-        isri.n_mapq0 = id.n_mapq0;
-        isri.sum_sq_mapq = id.sum_sq_mapq;
-
-        for (const auto& val : id.read_path_lnp)
+        for (const auto& val : indelSampleData.read_path_lnp)
         {
-            const read_path_scores& path_lnp(val.second);
+            const ReadPathScores& path_lnp(val.second);
 
             // optionally skip tier2 data:
             if ((! is_tier2_pass) && (! path_lnp.is_tier1_read)) continue;
 
-            const read_path_scores pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
+            const ReadPathScores pprob(indel_lnp_to_pprob(dopt,path_lnp,is_tier2_pass,is_use_alt_indel));
             if       (pprob.ref >= path_pprob_thresh)
             {
                 isri.n_q30_ref_reads++;
@@ -382,22 +382,23 @@ get_starling_indel_sample_report_info(const starling_base_deriv_options& dopt,
 
         // total number of reads with non-zero, yet insufficient indel
         // breakpoint overlap
-        const unsigned n_suboverlap_tier1_reads(id.suboverlap_tier1_read_ids.size());
+        const unsigned n_suboverlap_tier1_reads(indelSampleData.suboverlap_tier1_read_ids.size());
         isri.n_other_reads = (n_subscore_reads+n_suboverlap_tier1_reads);
 
         if (is_tier2_pass)
         {
-            const unsigned n_suboverlap_tier2_reads(id.suboverlap_tier2_read_ids.size());
+            const unsigned n_suboverlap_tier2_reads(indelSampleData.suboverlap_tier2_read_ids.size());
             isri.n_other_reads += n_suboverlap_tier2_reads;
         }
     }
 
     {
-        // get depth of indel:
-        pos_t depth_pos(ik.pos-1);
-        if (ik.type==INDEL::BP_RIGHT) depth_pos=ik.pos;
+        // get various indel stats from the pileup:
+        pos_t depth_pos(indelKey.pos-1);
+        if (indelKey.type==INDEL::BP_RIGHT) depth_pos=indelKey.pos;
         const snp_pos_info& spi(bc_buff.get_pos(depth_pos));
-        isri.depth=spi.calls.size();
+        isri.tier1Depth=spi.calls.size();
+        isri.mapqTracker=spi.mapqTracker;
     }
 }
 
@@ -410,7 +411,7 @@ void starling_indel_sample_report_info::dump(std::ostream& os) const
        << ",n_q30_indel_reads=" << n_q30_indel_reads
        << ",n_q30_alt_reads=" << n_q30_alt_reads
        << ",n_other_reads=" << n_other_reads
-       << ",depth=" << depth;
+       << ",tier1Depth=" << tier1Depth;
 }
 
 std::ostream& operator<<(std::ostream& os, const starling_indel_sample_report_info& obj)

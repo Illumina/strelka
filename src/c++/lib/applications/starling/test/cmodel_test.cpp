@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
     calibration_models cm(opts, gvcf_options);
 
 
-    indel_key ik(233030782, INDEL::INSERT, 4);
+    IndelKey ik(233030782, INDEL::INSERT, 4);
     starling_diploid_indel  dindel;
     dindel.ploidy=2;
     dindel.max_gt=STAR_DIINDEL::HET;
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE( test_cmodel_gqx )
 
 
 
-    indel_key ik2(233030782, INDEL::INSERT, 8);
+    IndelKey ik2(233030782, INDEL::INSERT, 8);
 
     starling_diploid_indel  dindel2;
 

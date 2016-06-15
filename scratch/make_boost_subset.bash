@@ -22,7 +22,7 @@ for ddir in doc more status; do
 done
 
 # remove unused headers for larger sub-libraries:
-for f in asio geometry gil graph interprocess polygon python signals signals2; do
+for f in asio geometry gil graph polygon python signals signals2; do
     rm -rf $subset_name/boost/$f*
 done
 

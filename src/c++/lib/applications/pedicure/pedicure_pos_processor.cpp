@@ -30,7 +30,6 @@
 #include "denovo_snv_call_vcf.hh"
 
 #include "blt_util/log.hh"
-#include "calibration/IndelErrorModel.hh"
 #include "starling_common/starling_indel_report_info.hh"
 
 #include <iomanip>
@@ -76,23 +75,17 @@ pedicure_pos_processor(
 
     using namespace PEDICURE_SAMPLETYPE;
 
-    // setup indel syncronizers:
+    // setup indel syncronizer:
     {
-        indel_sync_data isdata;
         for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
         {
             const bool isProband(_opt.alignFileOpt.alignmentSampleInfo.getSampleInfo(sampleIndex).stype == PROBAND);
             double max_candidate_sample_depth(isProband ? max_candidate_proband_sample_depth : -1);
             sample_info& sif(sample(sampleIndex));
-            isdata.register_sample(sif.indel_buff,sif.estdepth_buff,sif.estdepth_buff_tier2,
-                                   sif.sample_opt, max_candidate_sample_depth, sampleIndex);
+            getIndelBuffer().registerSample(sif.estdepth_buff, sif.estdepth_buff_tier2, max_candidate_sample_depth);
         }
 
-        for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
-        {
-            sample_info& sif(sample(sampleIndex));
-            sif.indel_sync_ptr.reset(new indel_synchronizer(opt, dopt, ref, isdata, sampleIndex));
-        }
+        getIndelBuffer().finalizeSamples();
     }
 }
 
@@ -211,37 +204,27 @@ process_pos_indel_denovo(const pos_t pos)
 {
     using namespace PEDICURE_SAMPLETYPE;
 
-    // because of indel syncronization we should get all the indels by iterating
-    // through any of our samples. The proband is the only sample that's guaranteed
-    // to exist, so we standardize on it here:
     const SampleInfoManager& sinfo(_opt.alignFileOpt.alignmentSampleInfo);
-    const unsigned probandIndex(sinfo.getTypeIndexList(PROBAND)[0]);
-    const sample_info& proband_sif(sample(probandIndex));
 
-    typedef indel_buffer::const_iterator ciiter;
-    ciiter i(proband_sif.indel_buff.pos_iter(pos));
-    const ciiter i_end(proband_sif.indel_buff.pos_iter(pos+1));
+    auto it(getIndelBuffer().positionIterator(pos));
+    const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
-    for (; i!=i_end; ++i)
+    for (; it!=it_end; ++it)
     {
-        const indel_key& ik(i->first);
+        const IndelKey& indelKey(it->first);
 
         // don't write breakpoint output:
-        if (ik.is_breakpoint()) continue;
+        if (indelKey.is_breakpoint()) continue;
 
-        const indel_data& proband_id(get_indel_data(i));
+        const IndelData& indelData(getIndelData(it));
 
-        if (! proband_sif.indel_sync().is_candidate_indel(ik,proband_id)) continue;
+        if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
 
         // assert that indel data exists for all samples, make sure alt alignments are scored in at least one sample:
         bool isAllEmpty(true);
-        std::vector<const indel_data*> allIndelData(_n_samples);
         for (unsigned sampleIndex(0); sampleIndex<_n_samples; sampleIndex++)
         {
-            const indel_data* idp = sample(sampleIndex).indel_buff.get_indel_data_ptr(ik);
-            allIndelData[sampleIndex] = idp;
-            assert(nullptr != idp);
-            if (! idp->read_path_lnp.empty()) isAllEmpty = false;
+            if (! indelData.getSampleData(sampleIndex).read_path_lnp.empty()) isAllEmpty = false;
         }
 
         if (isAllEmpty) continue;
@@ -251,15 +234,11 @@ process_pos_indel_denovo(const pos_t pos)
         // caller
 
         // get iri from either sample:
-        starling_indel_report_info iri;
-        get_starling_indel_report_info(ik,proband_id,_ref,iri);
+        starling_indel_report_info indelReportInfo;
+        get_starling_indel_report_info(indelKey, indelData, _ref, indelReportInfo);
 
         // STARKA-248 filter invalid indel. TODO: filter this issue earlier (occurs as, e.g. 1D1I which matches ref)
-        if (iri.vcf_indel_seq == iri.vcf_ref_seq) continue;
-
-        double refToIndelErrorProb(0);
-        double indelToRefErrorProb(0);
-        _dopt.getIndelErrorModel().getIndelErrorRate(iri,refToIndelErrorProb,indelToRefErrorProb);
+        if (indelReportInfo.vcf_indel_seq == indelReportInfo.vcf_ref_seq) continue;
 
         denovo_indel_call dindel;
 
@@ -276,8 +255,8 @@ process_pos_indel_denovo(const pos_t pos)
             _dopt,
             sinfo,
             sampleOptions,
-            refToIndelErrorProb,indelToRefErrorProb,
-            ik,allIndelData,
+            indelData.errorRates.refToIndelErrorProb,indelData.errorRates.indelToRefErrorProb,
+            indelKey,indelData,
             is_use_alt_indel,
             dindel);
 
@@ -291,14 +270,14 @@ process_pos_indel_denovo(const pos_t pos)
                 for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
                 {
                     get_starling_indel_sample_report_info(
-                        _dopt,ik,*(allIndelData[sampleIndex]),sample(sampleIndex).bc_buff,
+                        _dopt,indelKey,indelData.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,
                         is_include_tier2,is_use_alt_indel,
                         isri[sampleIndex][tierIndex]);
                 }
             }
 
-            pos_t indel_pos(ik.pos);
-            if (ik.type != INDEL::BP_RIGHT)
+            pos_t indel_pos(indelKey.pos);
+            if (indelKey.type != INDEL::BP_RIGHT)
             {
                 indel_pos -= 1;
             }
@@ -311,13 +290,14 @@ process_pos_indel_denovo(const pos_t pos)
                 << output_pos << '\t'
                 << ".";
 
-            denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, iri, isri, bos);
+            denovo_indel_call_vcf(_opt, _dopt, sinfo, dindel, indelReportInfo, isri, bos);
             bos << "\n";
 
             aggregate_vcf(_chrom_name,output_pos,bos.str());
         }
     }
 }
+
 
 
 // needs replaced by a more comprehensive record integration

@@ -27,6 +27,7 @@
 #include "germlineVariantEmpiricalScoringFeatures.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
+#include "blt_util/math_util.hh"
 #include "blt_util/PolymorphicObject.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 
@@ -177,16 +178,15 @@ std::ostream& operator<<(std::ostream& os,const GermlineVariantSimpleGenotypeInf
 struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
     GermlineIndelSimpleGenotypeInfo(
-        const indel_key& ik,
-        const indel_data& id,
-        const starling_indel_report_info iri,
-        const starling_indel_sample_report_info& isri)
-        : _ik(ik)
-        , _id(id)
-        , _iri(iri)
-        , _isri(isri)
-    {
-    }
+        const IndelKey& indelKey,
+        const IndelData& indelData,
+        const starling_indel_report_info indelReportInfo,
+        const starling_indel_sample_report_info& indelSampleReportInfo)
+        : _indelKey(indelKey)
+        , _indelData(indelData)
+        , _indelReportInfo(indelReportInfo)
+        , _indelSampleReportInfo(indelSampleReportInfo)
+    {}
 
     void
     clear()
@@ -201,11 +201,11 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
         const unsigned lead=1,
         const unsigned trail=0);
 
-    const indel_key _ik;
-    const indel_data _id;
+    const IndelKey _indelKey;
+    const IndelData _indelData;
     // TODO: make the indel overlapping code create a new call, then revert this to const
-    starling_indel_report_info _iri;
-    const starling_indel_sample_report_info _isri;
+    starling_indel_report_info _indelReportInfo;
+    const starling_indel_sample_report_info _indelSampleReportInfo;
 
     ALIGNPATH::path_t cigar;
 
@@ -220,17 +220,19 @@ std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo&
 /// restrict to diploid calling models
 struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
-    GermlineDiploidIndelSimpleGenotypeInfo(const indel_key& ik,
-                                           const indel_data& id,
-                                           const starling_indel_report_info& iri,
-                                           const starling_indel_sample_report_info& isri,
-                                           const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
-        : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
+    GermlineDiploidIndelSimpleGenotypeInfo(
+        const IndelKey& indelKey,
+        const IndelData& indelData,
+        const starling_indel_report_info& indelReportInfo,
+        const starling_indel_sample_report_info& indelSampleReportInfo,
+        const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
+        : GermlineIndelSimpleGenotypeInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _dindel(dindel)
     {}
 
     void
     computeEmpiricalScoringFeatures(
+        const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
         const double chromDepth,
         const bool isHetalt);
@@ -333,7 +335,7 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
 /// restrict to the case where variant is site/SNV and calling model is continuous
 struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
-    GermlineContinuousSiteSimpleGenotypeInfo(int totalDepth, int alleleDepth, BASE_ID::index_t base)
+    GermlineContinuousSiteSimpleGenotypeInfo(unsigned totalDepth, unsigned alleleDepth, BASE_ID::index_t base)
         : _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
         , _base(base)
@@ -342,10 +344,11 @@ struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGe
 
     double variant_frequency() const
     {
-        return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0;
+        return safeFrac(_alleleDepth, _totalDepth);
     }
-    int _totalDepth;
-    int _alleleDepth;
+
+    unsigned _totalDepth;
+    unsigned _alleleDepth;
     BASE_ID::index_t _base;
 };
 
@@ -353,9 +356,14 @@ struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGe
 /// restrict to the case where variant is indel and calling model is continuous
 struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
 {
-    GermlineContinuousIndelSimpleGenotypeInfo(unsigned totalDepth, unsigned alleleDepth,
-                                              const indel_key& ik, const indel_data& id, const starling_indel_report_info& iri, const starling_indel_sample_report_info& isri)
-        : GermlineIndelSimpleGenotypeInfo(ik, id, iri, isri)
+    GermlineContinuousIndelSimpleGenotypeInfo(
+        unsigned totalDepth,
+        unsigned alleleDepth,
+        const IndelKey& indelKey,
+        const IndelData& indelData,
+        const starling_indel_report_info& indelReportInfo,
+        const starling_indel_sample_report_info& indelSampleReportInfo)
+        : GermlineIndelSimpleGenotypeInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
     {
@@ -364,8 +372,9 @@ struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGen
 
     double variant_frequency() const
     {
-        return _totalDepth > 0 ? _alleleDepth / (double)_totalDepth : 0.0;
+        return safeFrac(_alleleDepth,_totalDepth);
     }
+
     unsigned _totalDepth;
     unsigned _alleleDepth;
 };
@@ -395,13 +404,14 @@ struct GermlineIndelCallInfo
 /// specify that calling model is diploid
 struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
 {
-    GermlineDiploidIndelCallInfo(const indel_key& init_ik,
-                                 const indel_data& init_id,
-                                 const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
-                                 const starling_indel_report_info& init_iri,
-                                 const starling_indel_sample_report_info& init_isri) : GermlineIndelCallInfo(init_ik.pos)
+    GermlineDiploidIndelCallInfo(
+        const IndelKey& initIndelKey,
+        const IndelData& initIndelData,
+        const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
+        const starling_indel_report_info& initIndelReportInfo,
+        const starling_indel_sample_report_info& initIndelSampleReportInfo) : GermlineIndelCallInfo(initIndelKey.pos)
     {
-        _calls.emplace_back(init_ik, init_id, init_iri, init_isri, init_dindel);
+        _calls.emplace_back(initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
     }
 
     bool is_forced_output() const override
@@ -423,6 +433,7 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
     {
         for (auto& x : _calls) x.set_filter(filter);
     }
+
     pos_t end() const override;
 
     void add_overlap(const reference_contig_segment& ref, GermlineDiploidIndelCallInfo& overlap);
@@ -567,6 +578,7 @@ struct GermlineSiteCallInfo : public PolymorphicObject
     char ref = 'N';
     unsigned n_used_calls = 0;
     unsigned n_unused_calls = 0;
+
     unsigned hpol = 0;
 
     unsigned spanning_deletions;
@@ -621,6 +633,7 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
 
     void
     computeEmpiricalScoringFeatures(
+        const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
         const double chromDepth,
         GermlineDiploidSiteSimpleGenotypeInfo& smod2) const;
@@ -668,7 +681,9 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
     std::string phased_ref, phased_alt, phased_AD, phased_ADF, phased_ADR;
     diploid_genotype dgt;
     double hapscore = 0;
-    double MQ = 0;				 // RMS of mapping qualities
+    double mapqRMS = 0;
+    unsigned mapqZeroCount = 0;
+    unsigned mapqCount = 0;
 
     //only meaningful for het calls
     double ReadPosRankSum = 0;  // Uses Mann-Whitney Rank Sum Test for the distance from the end of the read containing an alternate allele.
@@ -676,7 +691,6 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
     double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
     double avgBaseQ = 0;
     double rawPos = 0;
-    unsigned mapq_zero = 0;     // The number of spanning reads that do not pass the command-line mapq test
 
     GermlineDiploidSiteSimpleGenotypeInfo smod;
 };
@@ -767,7 +781,7 @@ struct GermlineContinuousIndelCallInfo : public GermlineIndelCallInfo
     bool is_forced_output() const override
     {
         for (auto& call : calls)
-            if (call._id.is_forced_output)
+            if (call._indelData.is_forced_output)
                 return true;
         return false;
     }
@@ -776,7 +790,7 @@ struct GermlineContinuousIndelCallInfo : public GermlineIndelCallInfo
     {
         pos_t result = 0;
         for (auto& x : calls)
-            result = std::max(result, x._ik.right_pos());
+            result = std::max(result, x._indelKey.right_pos());
         return result;
     }
 

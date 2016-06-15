@@ -72,15 +72,6 @@ operator<<(std::ostream& os,
 }
 
 
-double
-snp_pos_info::
-get_rms_mq() const
-{
-    if (n_mapq==0)
-        return 0.0;
-    return std::sqrt(sum_sq_mapq/n_mapq);
-}
-
 
 double
 snp_pos_info::
@@ -95,7 +86,6 @@ double
 snp_pos_info::
 get_mq_ranksum() const
 {
-//	cout << mq_ranksum << endl;
     return mq_ranksum.get_u_stat();
 }
 
