@@ -172,12 +172,6 @@ struct starling_base_options : public blt_options
 
     std::vector<avg_window_data> variant_windows;
 
-    // Test if an indel is not in the two most likely indel alleles
-    // among a conflicting set.  if not remove from variant
-    // calling. This option is for single sample calling only.
-    //
-    bool is_noise_indel_filter = false;
-
     // Assume a ploidy-based prior (0%, 50%, 100% or 0% 100% for haploid, diploid
     // If false, a continuous model is used
     bool is_ploidy_prior = true;

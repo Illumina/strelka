@@ -319,89 +319,6 @@ get_sum_path_pprob(
 
 
 
-// Run a simple approx noise-filter first for sites with many indel
-// alleles
-//
-// The goal of this filter is to identify obvious invalid cases where
-// these are detectable without a full haplotype model -- it thus will
-// let some obvious noise cases through.
-//
-// is_include_alt_indel == true is implied by calling this function
-//
-static
-bool
-is_diploid_indel_noise(
-    const starling_base_deriv_options& dopt,
-    const IndelSampleData& indelSampleData,
-    const bool is_tier2_pass)
-{
-    static const bool is_use_alt_indel(true);
-
-    // test is to *sum* the likelihoods supporting each indel:
-    //
-
-    // first sum every read intersecting the indel:
-    ReadPathScores total_pprob;
-    get_sum_path_pprob(dopt,indelSampleData,is_tier2_pass,is_use_alt_indel,total_pprob);
-
-    enum iallele_t
-    {
-        INDEL = -2,
-        REF = -1
-    };
-
-    // next determine the top two indel alleles:
-    int max1_id(INDEL);
-    int max2_id(REF);
-    double max1(total_pprob.indel);
-    double max2(total_pprob.ref);
-    if (max1<max2)
-    {
-        std::swap(max1,max2);
-        std::swap(max1_id,max2_id);
-    }
-    const ReadPathScores::alt_indel_t& ai(total_pprob.alt_indel);
-    const int ais(ai.size());
-    for (int i(0); i<ais; ++i)
-    {
-        if       (ai[i].second>max1)
-        {
-            max2=max1;
-            max2_id=max1_id;
-            max1=ai[i].second;
-            max1_id=i;
-        }
-        else if (ai[i].second>max2)
-        {
-            max2=ai[i].second;
-            max2_id=i;
-        }
-    }
-
-#if 0
-    std::cerr << "BUG: id: " << id;
-    std::cerr << "BUG: total_pprob: " << total_pprob << "\n";
-    std::cerr << "BUG: max1_id,max2_id " << max1_id << " " << max2_id << "\n";
-#endif
-
-    // If the top two alleles are both alternate indels, check that
-    // they interfere with each other.  If not, we are forced to make
-    // the conservative assumption that they occur as part of the same
-    // haplotype:
-    //
-    if (max1_id>=0 && max2_id>=0)
-    {
-        if (! is_indel_conflict(ai[max1_id].first,ai[max2_id].first))
-        {
-            return (total_pprob.ref>total_pprob.indel);
-        }
-    }
-
-    return ((max1_id!=INDEL) && (max2_id!=INDEL));
-}
-
-
-
 void
 indel_digt_caller::
 get_indel_digt_lhood(
@@ -512,12 +429,6 @@ starling_indel_call_pprob_digt(
     static const bool is_tier2_pass(false);
 
     const bool is_haploid(dindel.is_haploid());
-
-    if (opt.is_noise_indel_filter && is_diploid_indel_noise(dopt,indelSampleData,is_tier2_pass))
-    {
-        dindel.is_indel=false;
-        return;
-    }
 
     // turn off het bias in haploid case:
     const bool is_het_bias((!is_haploid) && opt.is_bindel_diploid_het_bias);
