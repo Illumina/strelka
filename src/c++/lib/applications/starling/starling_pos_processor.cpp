@@ -693,7 +693,7 @@ starling_diploid_indel
 locusGenotypeToDindel(
     const AlleleGroupGenotype& locusGenotype,
     const unsigned alleleId,
-    const int groupLocusPloidy,
+    const unsigned groupLocusPloidy,
     const bool isForcedOuput,
     const bool isZeroCoverage)
 {
@@ -746,6 +746,10 @@ locusGenotypeToDindel(
 
 
 /// TEMPORARY
+///
+/// Note that ploidy provided here is the actual ploidy value for this locus rather than the one used by the
+/// caller, these two values should only be different when ploidy==0
+///
 static
 bool
 hackDiplotypeCallToCopyNumberCalls(
@@ -757,7 +761,7 @@ hackDiplotypeCallToCopyNumberCalls(
     const pos_t targetPos,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const AlleleGroupGenotype& locusGenotype,
-    const int groupLocusPloidy,
+    const unsigned groupLocusPloidy,
     const bool isForcedOutput,
     gvcf_aggregator& gvcfer)
 {
@@ -806,15 +810,6 @@ process_pos_indel_single_sample_digt(
     /// TODO remove this legacy option, germline calling is *always and only* gvcf output now:
     assert(_opt.gvcf.is_gvcf_output());
 
-    // Current multiploid indel model can handle a het or hom indel
-    // allele vs. reference, or two intersecting non-reference indel
-    // alleles. (note that indel intersection is evaluated only in
-    // terms of breakpoints -- so, for instance, a small het deletion
-    // could occur within a large het deletion and the two would be
-    // treated as non-interacting -- this is just an artifact of how
-    // the methods are coded,)
-    //
-
     sample_info& sif(sample(sampleId));
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
@@ -855,7 +850,7 @@ process_pos_indel_single_sample_digt(
 
     if (orthogonalVariantAlleles.empty()) return;
 
-    // determine region ploidy
+    // determine ploidy for this locus
     //
     // Assume entire allele group is covered by one ploidy type in nearly all cases,
     // in case of a conflict use the highest ploidy overlapped by the group.
@@ -869,8 +864,15 @@ process_pos_indel_single_sample_digt(
         groupLocusPloidy=std::max(groupLeftPloidy,groupRightPloidy);
     }
 
-    // if groupLocusPloidy > orthogonalVariantAlleleCount, order alleles according to read evidence,
-    // and take the top 'groupLocusPloidy' allele candidates (besides the reference)
+    // groupLocusPloidy of 0 is treated as a special case, if this happens the
+    // entire calling method reverts to a ploidy of 2, but the locus ploidy is
+    // passed into the gVCF writer as 0. The gVCF writer can decide what to do
+    // with this information from there.
+    //
+    const unsigned callerPloidy((groupLocusPloidy==0) ? 2 : groupLocusPloidy);
+
+    // if callerPloidy > orthogonalVariantAlleleCount, order alleles according to read evidence,
+    // and take the top 'callerPloidy' allele candidates (besides the reference)
     //
     // track all forcedOutput alleles in a separate group (even if they go into topVariant group)
     // to ensure that these are output even if not included in the most likely genotype
@@ -879,7 +881,6 @@ process_pos_indel_single_sample_digt(
     OrthogonalVariantAlleleCandidateGroup forcedOutputAlleleGroup;
     {
         const unsigned orthogonalVariantAlleleCount(orthogonalVariantAlleles.size());
-
         for (unsigned alleleIndex(0); alleleIndex < orthogonalVariantAlleleCount; alleleIndex++)
         {
             const IndelData& indelData(orthogonalVariantAlleles.data(alleleIndex));
@@ -889,16 +890,16 @@ process_pos_indel_single_sample_digt(
             }
         }
 
-        // rank and select top N alleles, N=groupLocusPloidy
-        assert(groupLocusPloidy>0);
-        selectTopOrthogonalAllelesInSample(sampleId, orthogonalVariantAlleles, groupLocusPloidy, topVariantAlleleGroup);
+        // rank and select top N alleles, N=callerPloidy
+        assert(callerPloidy>0);
+        selectTopOrthogonalAllelesInSample(sampleId, orthogonalVariantAlleles, callerPloidy, topVariantAlleleGroup);
     }
 
     // refine topVariantAlleleGroup to consider alts shared by all top alleles, then rerank
     if (not topVariantAlleleGroup.empty())
     {
         addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
-                                   groupLocusPloidy, getIndelBuffer(), topVariantAlleleGroup);
+                                   callerPloidy, getIndelBuffer(), topVariantAlleleGroup);
     }
 
     // score and report topVariantAlleleGroup
@@ -906,7 +907,7 @@ process_pos_indel_single_sample_digt(
     AlleleGroupGenotype locusGenotype;
     bool isOutputAlleles(false);
     {
-        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), groupLocusPloidy,
+        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), callerPloidy,
                                             sampleId, topVariantAlleleGroup, locusGenotype);
 
         // (1) TEMPORARY hack called variant alleles into old dindel structure(s)
@@ -938,7 +939,8 @@ process_pos_indel_single_sample_digt(
 
         if (not forcedOutputAlleleGroup.empty())
         {
-            for (unsigned variantAlleleIndex(0); variantAlleleIndex < 2; ++variantAlleleIndex)
+            const unsigned topVariantAlleleCount(topVariantAlleleGroup.size());
+            for (unsigned variantAlleleIndex(0); variantAlleleIndex < topVariantAlleleCount; variantAlleleIndex++)
             {
                 if (AG_GENOTYPE::isAllelePresent(locusGenotype.maxGenotypeIndex, variantAlleleIndex))
                 {
@@ -954,7 +956,7 @@ process_pos_indel_single_sample_digt(
         {
             AlleleGroupGenotype forcedAlleleLocusGenotype;
             getGenotypeLhoodsForForcedOutputAllele(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(),
-                                                   groupLocusPloidy, sampleId, topVariantAlleleGroup,
+                                                   callerPloidy, sampleId, topVariantAlleleGroup,
                                                    forcedOutputAlleleGroup,
                                                    forcedOutputAlleleIndex, forcedAlleleLocusGenotype);
 
