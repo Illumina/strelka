@@ -49,12 +49,12 @@ get_sum_path_pprob(
 /// get expected allele ratio for long indels
 void
 get_het_observed_allele_ratio(
-        const unsigned read_length,
-        const unsigned min_overlap,
-        const IndelKey& indelKey,
-        const double het_allele_ratio,
-        double& log_ref_prob,
-        double& log_indel_prob);
+    const unsigned read_length,
+    const unsigned min_overlap,
+    const IndelKey& indelKey,
+    const double het_allele_ratio,
+    double& log_ref_prob,
+    double& log_indel_prob);
 
 
 /// precalculates prior distributions based on theta value:

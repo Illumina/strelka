@@ -110,7 +110,7 @@ which_interfering_indel(
 
     ci iter(current_indels.begin());
     const ci iter_end(current_indels.end());
-    for(;iter != iter_end; ++iter)
+    for (; iter != iter_end; ++iter)
     {
         const IndelKey& currentIndel(*iter);
         if (is_indel_conflict(currentIndel, new_indel)) return iter;

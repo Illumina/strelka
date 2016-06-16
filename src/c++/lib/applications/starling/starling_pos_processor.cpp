@@ -651,38 +651,44 @@ insertIndelInGvcf(
 /// TEMPORARY
 namespace AG_GENOTYPE
 {
-    static
-    STAR_DIINDEL::index_t
-    mapAlleleToDindel(
-        const unsigned genotypeId,
-        const unsigned alleleId)
+static
+STAR_DIINDEL::index_t
+mapAlleleToDindel(
+    const unsigned genotypeId,
+    const unsigned alleleId)
+{
+    if (alleleId == 0)
     {
-        if (alleleId == 0)
+        switch (static_cast<index_t>(genotypeId))
         {
-            switch(static_cast<index_t>(genotypeId))
-            {
-                case HOM0: return STAR_DIINDEL::HOM;
-                case HET0:
-                case HET01: return STAR_DIINDEL::HET;
-                default:    return STAR_DIINDEL::NOINDEL;
-            }
-        }
-        else if (alleleId == 1)
-        {
-            switch(static_cast<index_t>(genotypeId))
-            {
-                case HOM1: return STAR_DIINDEL::HOM;
-                case HET1:
-                case HET01: return STAR_DIINDEL::HET;
-                default:    return STAR_DIINDEL::NOINDEL;
-            }
-        }
-        else
-        {
-            assert(false and "Unknown alleleId");
-            return STAR_DIINDEL::SIZE;
+        case HOM0:
+            return STAR_DIINDEL::HOM;
+        case HET0:
+        case HET01:
+            return STAR_DIINDEL::HET;
+        default:
+            return STAR_DIINDEL::NOINDEL;
         }
     }
+    else if (alleleId == 1)
+    {
+        switch (static_cast<index_t>(genotypeId))
+        {
+        case HOM1:
+            return STAR_DIINDEL::HOM;
+        case HET1:
+        case HET01:
+            return STAR_DIINDEL::HET;
+        default:
+            return STAR_DIINDEL::NOINDEL;
+        }
+    }
+    else
+    {
+        assert(false and "Unknown alleleId");
+        return STAR_DIINDEL::SIZE;
+    }
+}
 }
 
 

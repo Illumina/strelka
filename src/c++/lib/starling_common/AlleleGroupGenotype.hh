@@ -53,11 +53,14 @@ struct GenotypeInfo
         }
         else if (_ploidy==2)
         {
-            switch(_alleleCount)
+            switch (_alleleCount)
             {
-                case 1: return 1;
-                case 2: return 3;
-                case 3: return 6;
+            case 1:
+                return 1;
+            case 2:
+                return 3;
+            case 3:
+                return 6;
             }
         }
         assert(false && "Unexpected ploidy or haplotype count");
@@ -69,8 +72,8 @@ struct GenotypeInfo
     /// for chomosomeIndex N, where N<ploidy
     uint8_t
     getHapIndexFromGenotypeIndex(
-            const uint8_t genotypeIndex,
-            const uint8_t chromIndex) const
+        const uint8_t genotypeIndex,
+        const uint8_t chromIndex) const
     {
 
     }
@@ -125,95 +128,95 @@ struct AlleleGroupGenotype
 
 namespace AG_GENOTYPE
 {
-    enum index_t
-    {
-        HOMREF,
-        HOM0,
-        HET0,
-        HOM1,
-        HET1,
-        HET01,
-        SIZE
-    };
+enum index_t
+{
+    HOMREF,
+    HOM0,
+    HET0,
+    HOM1,
+    HET1,
+    HET01,
+    SIZE
+};
 
-    inline
-    bool
-    isAllelePresent(
-        const unsigned genotypeId,
-        const unsigned alleleId)
+inline
+bool
+isAllelePresent(
+    const unsigned genotypeId,
+    const unsigned alleleId)
+{
+    if (alleleId==0)
     {
-        if (alleleId==0)
+        switch (static_cast<index_t>(genotypeId))
         {
-            switch (static_cast<index_t>(genotypeId))
-            {
-                case HOM0:
-                case HET0:
-                case HET01:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-        else if (alleleId == 1)
-        {
-            switch (static_cast<index_t>(genotypeId))
-            {
-                case HOM1:
-                case HET1:
-                case HET01:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-        else
-        {
-            assert(false and "Unsupported alleleId");
+        case HOM0:
+        case HET0:
+        case HET01:
+            return true;
+        default:
             return false;
         }
     }
-
-    /// return the heterozygous genotype including alleleId and reference
-    inline
-    index_t
-    getAlleleHetId(
-        const unsigned alleleId)
+    else if (alleleId == 1)
     {
-        if (alleleId == 0)
+        switch (static_cast<index_t>(genotypeId))
         {
-            return HET0;
-        }
-        else if(alleleId == 1)
-        {
-            return HET1;
-        }
-        else
-        {
-            assert(false and "Unsupported alleleId");
-            return SIZE;
+        case HOM1:
+        case HET1:
+        case HET01:
+            return true;
+        default:
+            return false;
         }
     }
-
-    /// return the homozygous genotype including alleleId and reference
-    inline
-    index_t
-    getAlleleHomId(
-        const unsigned alleleId)
+    else
     {
-        if (alleleId == 0)
-        {
-            return HOM0;
-        }
-        else if(alleleId == 1)
-        {
-            return HOM1;
-        }
-        else
-        {
-            assert(false and "Unsupported alleleId");
-            return SIZE;
-        }
+        assert(false and "Unsupported alleleId");
+        return false;
     }
+}
+
+/// return the heterozygous genotype including alleleId and reference
+inline
+index_t
+getAlleleHetId(
+    const unsigned alleleId)
+{
+    if (alleleId == 0)
+    {
+        return HET0;
+    }
+    else if (alleleId == 1)
+    {
+        return HET1;
+    }
+    else
+    {
+        assert(false and "Unsupported alleleId");
+        return SIZE;
+    }
+}
+
+/// return the homozygous genotype including alleleId and reference
+inline
+index_t
+getAlleleHomId(
+    const unsigned alleleId)
+{
+    if (alleleId == 0)
+    {
+        return HOM0;
+    }
+    else if (alleleId == 1)
+    {
+        return HOM1;
+    }
+    else
+    {
+        assert(false and "Unsupported alleleId");
+        return SIZE;
+    }
+}
 
 }
 
@@ -272,7 +275,7 @@ struct GenotypePriors
 
     }
 
-    const double *
+    const double*
     get2Allele(const bool isHaploid) const
     {
         if (isHaploid)
@@ -285,7 +288,7 @@ struct GenotypePriors
         }
     }
 
-    const double *
+    const double*
     get3Allele(const bool isHaploid) const
     {
         if (isHaploid)
@@ -298,7 +301,7 @@ struct GenotypePriors
         }
     }
 
-    const double *
+    const double*
     get2AllelePolymorphic(const bool isHaploid) const
     {
         if (isHaploid)
@@ -311,7 +314,7 @@ struct GenotypePriors
         }
     }
 
-    const double *
+    const double*
     get3AllelePolymorphic(const bool isHaploid) const
     {
         if (isHaploid)
@@ -341,17 +344,17 @@ struct GenotypePriors
 
 void
 getVariantAlleleGroupGenotypeLhoods(
-    const starling_base_deriv_options &dopt,
+    const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
     const GenotypePriors& genotypePriors,
     const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
-    AlleleGroupGenotype&locusGenotype);
+    AlleleGroupGenotype& locusGenotype);
 
 void
 getGenotypeLhoodsForForcedOutputAllele(
-    const starling_base_deriv_options &dopt,
+    const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
     const GenotypePriors& genotypePriors,
     const unsigned groupLocusPloidy,

@@ -30,10 +30,16 @@
 struct LogValuePair
 {
     double
-    getValue() const { return _value; }
+    getValue() const
+    {
+        return _value;
+    }
 
     double
-    getLogValue() const { return _logValue; }
+    getLogValue() const
+    {
+        return _logValue;
+    }
 
     void
     updateValue(const double value)
