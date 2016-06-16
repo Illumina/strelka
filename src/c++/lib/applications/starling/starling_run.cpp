@@ -171,7 +171,7 @@ starling_run(
             if     (INPUT_TYPE::PLOIDY_REGION == currentIndex)
             {
                 known_pos_range2 ploidyRange(bedRecord.begin,bedRecord.end);
-                const int ploidy(parsePloidyFromBedStrict(bedRecord.line));
+                const unsigned ploidy(parsePloidyFromBedStrict(bedRecord.line));
                 if ((ploidy == 0) || (ploidy == 1))
                 {
                     const bool retval(sppr.insert_ploidy_region(ploidyRange,ploidy));

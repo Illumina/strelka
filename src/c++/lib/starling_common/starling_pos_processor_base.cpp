@@ -521,7 +521,7 @@ bool
 starling_pos_processor_base::
 insert_ploidy_region(
     const known_pos_range2& range,
-    const int ploidy)
+    const unsigned ploidy)
 {
     assert(ploidy==0 || ploidy==1);
     _stageman.validate_new_pos_value(range.begin_pos(),STAGE::READ_BUFFER);

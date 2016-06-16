@@ -29,8 +29,8 @@
 #include "boost/optional.hpp"
 
 
-boost::optional<int>
+boost::optional<unsigned>
 parsePloidyFromBed(const char* line);
 
-int
+unsigned
 parsePloidyFromBedStrict(const char* line);

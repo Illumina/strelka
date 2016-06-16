@@ -860,11 +860,11 @@ process_pos_indel_single_sample_digt(
     // Assume entire allele group is covered by one ploidy type in nearly all cases,
     // in case of a conflict use the highest ploidy overlapped by the group.
     //
-    int groupLocusPloidy(0);
+    unsigned groupLocusPloidy(0);
     {
         const known_pos_range alleleGroupRange(orthogonalVariantAlleles.getReferenceRange());
-        const int groupLeftPloidy(get_ploidy(alleleGroupRange.begin_pos));
-        const int groupRightPloidy(get_ploidy(alleleGroupRange.end_pos));
+        const unsigned groupLeftPloidy(get_ploidy(alleleGroupRange.begin_pos));
+        const unsigned groupRightPloidy(get_ploidy(alleleGroupRange.end_pos));
 
         groupLocusPloidy=std::max(groupLeftPloidy,groupRightPloidy);
     }
@@ -895,16 +895,19 @@ process_pos_indel_single_sample_digt(
     }
 
     // refine topVariantAlleleGroup to consider alts shared by all top alleles, then rerank
-    addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
-                               groupLocusPloidy, getIndelBuffer(), topVariantAlleleGroup);
+    if (not topVariantAlleleGroup.empty())
+    {
+        addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
+                                   groupLocusPloidy, getIndelBuffer(), topVariantAlleleGroup);
+    }
 
     // score and report topVariantAlleleGroup
     //
     AlleleGroupGenotype locusGenotype;
     bool isOutputAlleles(false);
     {
-        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), sampleId,
-                                            topVariantAlleleGroup, locusGenotype);
+        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), groupLocusPloidy,
+                                            sampleId, topVariantAlleleGroup, locusGenotype);
 
         // (1) TEMPORARY hack called variant alleles into old dindel structure(s)
         static const bool isForcedOutput(false);
@@ -950,8 +953,9 @@ process_pos_indel_single_sample_digt(
              forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
         {
             AlleleGroupGenotype forcedAlleleLocusGenotype;
-            getGenotypeLhoodsForForcedOutputAllele(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), sampleId,
-                                                   topVariantAlleleGroup, forcedOutputAlleleGroup,
+            getGenotypeLhoodsForForcedOutputAllele(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(),
+                                                   groupLocusPloidy, sampleId, topVariantAlleleGroup,
+                                                   forcedOutputAlleleGroup,
                                                    forcedOutputAlleleIndex, forcedAlleleLocusGenotype);
 
             // TEMPORARY, the above function should be set to compress <*> and REF alleles to just REF for now,

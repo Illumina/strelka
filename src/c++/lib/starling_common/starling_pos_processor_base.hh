@@ -142,7 +142,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     bool
     insert_ploidy_region(
         const known_pos_range2& range,
-        const int ploidy);
+        const unsigned ploidy);
 
 #if 0
     starling_read*
@@ -551,11 +551,11 @@ protected:
         return (_forced_output_pos.find(pos) != _forced_output_pos.end());
     }
 
-    int
+    unsigned
     get_ploidy(const pos_t pos) const
     {
         const auto val(_ploidy_regions.isIntersectRegion(pos));
-        return (val ? *val : 2);
+        return (val ? *val : 2u);
     }
 
     //////////////////////////////////
@@ -599,7 +599,7 @@ protected:
 
     PileupCleaner _pileupCleaner;
 
-    RegionPayloadTracker<int> _ploidy_regions;
+    RegionPayloadTracker<unsigned> _ploidy_regions;
 
 private:
     IndelBuffer _indelBuffer;

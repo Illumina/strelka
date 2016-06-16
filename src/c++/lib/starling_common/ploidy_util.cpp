@@ -29,10 +29,10 @@
 
 
 
-boost::optional<int>
+boost::optional<unsigned>
 parsePloidyFromBed(const char* line)
 {
-    boost::optional<int> result;
+    boost::optional<unsigned> result;
 
     if (line == nullptr) return result;
 
@@ -46,7 +46,7 @@ parsePloidyFromBed(const char* line)
     }
 
     const char* s(line);
-    int val = illumina::blt_util::parse_int(s);
+    const unsigned val = illumina::blt_util::parse_unsigned(s);
     if (s != line) result.reset(val);
 
     return result;
@@ -54,7 +54,7 @@ parsePloidyFromBed(const char* line)
 
 
 
-int
+unsigned
 parsePloidyFromBedStrict(const char* line)
 {
     using namespace illumina::common;
@@ -65,7 +65,7 @@ parsePloidyFromBedStrict(const char* line)
         oss << "ERROR: can't parse ploidy (column 5) from bed record: '" << line << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
-    if ((*ploidy < 0) || (*ploidy > 2))
+    if (*ploidy > 2)
     {
         std::ostringstream oss;
         oss << "ERROR: parsed unsupported ploidy value (" << *ploidy << ") from bed record: '" << line << "'\n";

@@ -101,14 +101,15 @@ logLhoodToLocusGenotype(
     const GenotypePriors& genotypePriors,
     const unsigned gtCount,
     const bool is3AlleleModel,
+    const bool isHaploid,
     double* logLhood,
     AlleleGroupGenotype& locusGenotype)
 {
     // mult by prior distro to get unnormalized pprob:
-    const double* genotypeLogPrior(genotypePriors.prior2AlleleDiploid);
+    const double* genotypeLogPrior(genotypePriors.get2Allele(isHaploid));
     if (is3AlleleModel)
     {
-        genotypeLogPrior = (genotypePriors.prior3AlleleDiploid);
+        genotypeLogPrior = (genotypePriors.get3Allele(isHaploid));
     }
 
     for (unsigned gt(0); gt<gtCount; ++gt)
@@ -140,10 +141,10 @@ logLhoodToLocusGenotype(
     // add new poly calls (this trashes lhood):
     {
         // mult by prior distro to get unnormalized pprob:
-        const double* genotypeLogPriorPolymorphic(genotypePriors.prior2AlleleDiploidPolymorphic);
+        const double* genotypeLogPriorPolymorphic(genotypePriors.get2AllelePolymorphic(isHaploid));
         if (is3AlleleModel)
         {
-            genotypeLogPriorPolymorphic = (genotypePriors.prior3AlleleDiploidPolymorphic);
+            genotypeLogPriorPolymorphic = (genotypePriors.get3AllelePolymorphic(isHaploid));
         }
 
         for (unsigned gt(0); gt<gtCount; ++gt)
@@ -162,71 +163,74 @@ getVariantAlleleGroupGenotypeLhoods(
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
     const GenotypePriors& genotypePriors,
+    const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     AlleleGroupGenotype& locusGenotype)
 {
-    // fix this on first pass
-    static const uint8_t ploidy(2);
-
-    assert(ploidy>0);
-    assert(alleleGroup.size()<=ploidy);
-    assert(ploidy<3);
+    assert(groupLocusPloidy>0u);
+    assert(alleleGroup.size()<=groupLocusPloidy);
+    assert(groupLocusPloidy<3u);
 
     const uint8_t nonRefAlleleCount(alleleGroup.size());
     const uint8_t fullAlleleCount(nonRefAlleleCount+1);
 
-    GenotypeInfo ginfo(ploidy,fullAlleleCount);
+    GenotypeInfo ginfo(groupLocusPloidy, fullAlleleCount);
     const unsigned gtCount(ginfo.genotypeCount());
     assert(gtCount<=AlleleGroupGenotype::MAX_GENOTYPE_COUNT);
     double logLhood[AlleleGroupGenotype::MAX_GENOTYPE_COUNT];
     std::fill(logLhood,logLhood+gtCount,0.);
+    const bool is3AlleleModel(fullAlleleCount == 3);
 
-    const unsigned nonRefAllele0Index(0);
-    const IndelKey& allele0Key(alleleGroup.key(nonRefAllele0Index));
-    const IndelData& allele0Data(alleleGroup.data(nonRefAllele0Index));
-    const IndelSampleData& allele0SampleData(allele0Data.getSampleData(sampleId));
-
-    const bool is3AlleleModel(fullAlleleCount==3);
-    const unsigned nonRefAllele1Index(is3AlleleModel ? 1 : 0);
-    const IndelKey& allele1Key(alleleGroup.key(nonRefAllele1Index));
-    const IndelData& allele1Data(alleleGroup.data(nonRefAllele1Index));
-    const IndelSampleData& allele1SampleData(allele1Data.getSampleData(sampleId));
-
-    for (const auto& score : allele0SampleData.read_path_lnp)
+    if (nonRefAlleleCount>0)
     {
-        const auto readIndex(score.first);
-        const ReadPathScores& allele0ReadScores(score.second);
+        const unsigned nonRefAllele0Index(0);
+        const IndelKey& allele0Key(alleleGroup.key(nonRefAllele0Index));
+        const IndelData& allele0Data(alleleGroup.data(nonRefAllele0Index));
+        const IndelSampleData& allele0SampleData(allele0Data.getSampleData(sampleId));
 
-        if (! allele0ReadScores.is_tier1_read) continue;
+        const unsigned nonRefAllele1Index(is3AlleleModel ? 1 : 0);
+        const IndelKey& allele1Key(alleleGroup.key(nonRefAllele1Index));
+        const IndelData& allele1Data(alleleGroup.data(nonRefAllele1Index));
+        const IndelSampleData& allele1SampleData(allele1Data.getSampleData(sampleId));
 
-        const ReadPathScores* allele1ReadScoresPtr(nullptr);
-        if (is3AlleleModel)
+        for (const auto& score : allele0SampleData.read_path_lnp)
         {
-            /// skip this read if it's not aligned to both alleles:
-            const auto allele1ReadScoresIter(allele1SampleData.read_path_lnp.find(readIndex));
-            if (allele1ReadScoresIter == allele1SampleData.read_path_lnp.end()) continue;
-            allele1ReadScoresPtr = (&(allele1ReadScoresIter->second));
-        }
+            const auto readIndex(score.first);
+            const ReadPathScores& allele0ReadScores(score.second);
 
-        double refAllele_lnp(allele0ReadScores.ref);
-        const double variantAllele0_lnp(allele0ReadScores.indel);
-        double variantAllele1_lnp(variantAllele0_lnp);
-        
-        if (is3AlleleModel)
-        {
-            const ReadPathScores& allele1ReadScores(*allele1ReadScoresPtr);
-            refAllele_lnp = std::max(refAllele_lnp,(double)allele1ReadScores.ref);
-            variantAllele1_lnp = allele1ReadScores.indel;
-        }
+            if (!allele0ReadScores.is_tier1_read) continue;
 
-        accumulateLogLhoodFromReadObservation(dopt, sampleOptions,
-                                              allele0ReadScores.nsite, allele0ReadScores.read_length, is3AlleleModel,
-                                              refAllele_lnp, variantAllele0_lnp, variantAllele1_lnp,
-                                              allele0Key, allele1Key, logLhood);
+            const ReadPathScores* allele1ReadScoresPtr(nullptr);
+            if (is3AlleleModel)
+            {
+                /// skip this read if it's not aligned to both alleles:
+                const auto allele1ReadScoresIter(allele1SampleData.read_path_lnp.find(readIndex));
+                if (allele1ReadScoresIter == allele1SampleData.read_path_lnp.end()) continue;
+                allele1ReadScoresPtr = (&(allele1ReadScoresIter->second));
+            }
+
+            double refAllele_lnp(allele0ReadScores.ref);
+            const double variantAllele0_lnp(allele0ReadScores.indel);
+            double variantAllele1_lnp(variantAllele0_lnp);
+
+            if (is3AlleleModel)
+            {
+                const ReadPathScores& allele1ReadScores(*allele1ReadScoresPtr);
+                refAllele_lnp = std::max(refAllele_lnp, (double) allele1ReadScores.ref);
+                variantAllele1_lnp = allele1ReadScores.indel;
+            }
+
+            accumulateLogLhoodFromReadObservation(dopt, sampleOptions,
+                                                  allele0ReadScores.nsite, allele0ReadScores.read_length,
+                                                  is3AlleleModel,
+                                                  refAllele_lnp, variantAllele0_lnp, variantAllele1_lnp,
+                                                  allele0Key, allele1Key, logLhood);
+        }
     }
 
-    logLhoodToLocusGenotype(genotypePriors, gtCount, is3AlleleModel, logLhood, locusGenotype);
+    const bool isHaploid(groupLocusPloidy==1);
+    logLhoodToLocusGenotype(genotypePriors, gtCount, is3AlleleModel, isHaploid, logLhood, locusGenotype);
 }
 
 
@@ -291,6 +295,7 @@ getGenotypeLhoodsForForcedOutputAllele(
     const starling_base_deriv_options &dopt,
     const starling_sample_options& sampleOptions,
     const GenotypePriors& genotypePriors,
+    const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
     const OrthogonalVariantAlleleCandidateGroup& forcedOutputAlleleGroup,
@@ -299,17 +304,14 @@ getGenotypeLhoodsForForcedOutputAllele(
 {
     static const double log0(-std::numeric_limits<double>::infinity());
 
-    // fix this on first pass
-    static const uint8_t ploidy(2);
-
-    assert(ploidy>0);
-    assert(ploidy<3);
+    assert(groupLocusPloidy>0u);
+    assert(groupLocusPloidy<3u);
 
     // this is a fixed allele set: {ref, forced output allele, everything else}
     const uint8_t fullAlleleCount(3);
     const bool is3AlleleModel(fullAlleleCount==3);
 
-    GenotypeInfo ginfo(ploidy,fullAlleleCount);
+    GenotypeInfo ginfo(groupLocusPloidy,fullAlleleCount);
     const unsigned gtCount(ginfo.genotypeCount());
     assert(gtCount<=AlleleGroupGenotype::MAX_GENOTYPE_COUNT);
     double logLhood[AlleleGroupGenotype::MAX_GENOTYPE_COUNT];
@@ -341,13 +343,23 @@ getGenotypeLhoodsForForcedOutputAllele(
         }
         maxVariantAllele_lnp = log0;
 
-        accumulateLogLhoodFromReadObservation(dopt, sampleOptions,
-                                              forcedOutputAlleleReadScores.nsite,
+        const IndelKey* maxVariantAlleleKeyPtr(nullptr);
+        if (maxVariantAlleleIndex<variantAlleleGroup.size())
+        {
+            maxVariantAlleleKeyPtr = &variantAlleleGroup.key(maxVariantAlleleIndex);
+        }
+        else
+        {
+            maxVariantAlleleKeyPtr = &forcedOutputIndelKey;
+        }
+
+        accumulateLogLhoodFromReadObservation(dopt, sampleOptions, forcedOutputAlleleReadScores.nsite,
                                               forcedOutputAlleleReadScores.read_length, is3AlleleModel,
                                               refAllele_lnp, forcedOutputAllele_lnp, maxVariantAllele_lnp,
-                                              forcedOutputIndelKey, variantAlleleGroup.key(maxVariantAlleleIndex),
+                                              forcedOutputIndelKey, *maxVariantAlleleKeyPtr,
                                               logLhood);
     }
 
-    logLhoodToLocusGenotype(genotypePriors, gtCount, is3AlleleModel, logLhood, locusGenotype);
+    const bool isHaploid(groupLocusPloidy==1);
+    logLhoodToLocusGenotype(genotypePriors, gtCount, is3AlleleModel, isHaploid, logLhood, locusGenotype);
 }

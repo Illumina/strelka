@@ -238,6 +238,10 @@ struct GenotypePriors
         prior2AlleleHaploid[AG_GENOTYPE::HOM0]=std::log(theta);
         prior2AlleleHaploid[AG_GENOTYPE::HET0]=log0;
 
+        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF]=std::log(0.5);
+        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HOM0]=std::log(0.5);
+        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HET0]=log0;
+
         prior3AlleleDiploid[AG_GENOTYPE::HOMREF]=std::log(1.-(theta*3./2.));
         prior3AlleleDiploid[AG_GENOTYPE::HOM0]=std::log(theta/2.);
         prior3AlleleDiploid[AG_GENOTYPE::HET0]=std::log(theta);
@@ -252,13 +256,72 @@ struct GenotypePriors
         prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET1]=std::log(0.5*theta);
         prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET01]=std::log(0.5*theta);
 
-
         prior3AlleleHaploid[AG_GENOTYPE::HOMREF]=std::log(1.-theta);
         prior3AlleleHaploid[AG_GENOTYPE::HOM0]=std::log(theta);
         prior3AlleleHaploid[AG_GENOTYPE::HET0]=log0;
         prior3AlleleHaploid[AG_GENOTYPE::HOM1]=std::log(theta*theta);
         prior3AlleleHaploid[AG_GENOTYPE::HET1]=log0;
         prior3AlleleHaploid[AG_GENOTYPE::HET01]=log0;
+
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF]=std::log(0.5);
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOM0]=std::log(0.5);
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET0]=log0;
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOM1]=std::log(0.5*theta);
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET1]=log0;
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET01]=log0;
+
+    }
+
+    const double *
+    get2Allele(const bool isHaploid) const
+    {
+        if (isHaploid)
+        {
+            return prior2AlleleHaploid;
+        }
+        else
+        {
+            return prior2AlleleDiploid;
+        }
+    }
+
+    const double *
+    get3Allele(const bool isHaploid) const
+    {
+        if (isHaploid)
+        {
+            return prior3AlleleHaploid;
+        }
+        else
+        {
+            return prior3AlleleDiploid;
+        }
+    }
+
+    const double *
+    get2AllelePolymorphic(const bool isHaploid) const
+    {
+        if (isHaploid)
+        {
+            return prior2AlleleHaploidPolymorphic;
+        }
+        else
+        {
+            return prior2AlleleDiploidPolymorphic;
+        }
+    }
+
+    const double *
+    get3AllelePolymorphic(const bool isHaploid) const
+    {
+        if (isHaploid)
+        {
+            return prior3AlleleHaploidPolymorphic;
+        }
+        else
+        {
+            return prior3AlleleDiploidPolymorphic;
+        }
     }
 
     double prior2AlleleDiploid[3];
@@ -269,6 +332,9 @@ struct GenotypePriors
 
     double prior2AlleleDiploidPolymorphic[3];
     double prior3AlleleDiploidPolymorphic[6];
+
+    double prior2AlleleHaploidPolymorphic[3];
+    double prior3AlleleHaploidPolymorphic[6];
 };
 
 
@@ -278,6 +344,7 @@ getVariantAlleleGroupGenotypeLhoods(
     const starling_base_deriv_options &dopt,
     const starling_sample_options& sampleOptions,
     const GenotypePriors& genotypePriors,
+    const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     AlleleGroupGenotype&locusGenotype);
@@ -287,6 +354,7 @@ getGenotypeLhoodsForForcedOutputAllele(
     const starling_base_deriv_options &dopt,
     const starling_sample_options& sampleOptions,
     const GenotypePriors& genotypePriors,
+    const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
     const OrthogonalVariantAlleleCandidateGroup& forcedOutputAlleleGroup,
