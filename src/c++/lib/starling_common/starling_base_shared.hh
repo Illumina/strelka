@@ -84,8 +84,6 @@ struct starling_base_options : public blt_options
     // parameters inherited from varling caller:
     //
     double bindel_diploid_theta = 0.0001;
-    double bindel_diploid_het_bias = 0;
-    bool is_bindel_diploid_het_bias = false;
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
 

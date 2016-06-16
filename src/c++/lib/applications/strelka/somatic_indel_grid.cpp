@@ -187,10 +187,6 @@ get_somatic_indel(
     // for now, lhood calculation of tumor and normal are independent:
 
     // get likelihood of each genotype
-    static const bool is_normal_het_bias(false);
-    static const bool is_tumor_het_bias(false);
-    static const double normal_het_bias(0.0);
-    static const double tumor_het_bias(0.0);
     double normal_lhood[DIGT_GRID::PRESTRAND_SIZE];
     double tumor_lhood[DIGT_GRID::PRESTRAND_SIZE];
 
@@ -236,12 +232,10 @@ get_somatic_indel(
 
         indel_digt_caller::get_indel_digt_lhood(opt,dopt,normal_opt,
                                                 indelKey,normalIndelSampleData,
-                                                is_normal_het_bias,normal_het_bias,
                                                 is_include_tier2,is_use_alt_indel,
                                                 normal_lhood);
         indel_digt_caller::get_indel_digt_lhood(opt,dopt,tumor_opt,
                                                 indelKey,tumorIndelSampleData,
-                                                is_tumor_het_bias,tumor_het_bias,
                                                 is_include_tier2,is_use_alt_indel,
                                                 tumor_lhood);
 

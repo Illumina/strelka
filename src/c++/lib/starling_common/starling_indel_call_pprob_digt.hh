@@ -114,8 +114,6 @@ struct indel_digt_caller : private boost::noncopyable
         const starling_sample_options& sample_opt,
         const IndelKey& indelKey,
         const IndelSampleData& indelSampleData,
-        const bool is_het_bias,
-        const double het_bias,
         const bool is_include_tier2,
         const bool is_use_alt_indel,
         double* const lhood);

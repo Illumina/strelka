@@ -327,8 +327,6 @@ get_indel_digt_lhood(
     const starling_sample_options& sample_opt,
     const IndelKey& indelKey,
     const IndelSampleData& indelSampleData,
-    const bool is_het_bias,
-    const double het_bias,
     const bool is_tier2_pass,
     const bool is_use_alt_indel,
     double* const lhood)
@@ -392,6 +390,14 @@ get_indel_digt_lhood(
     }
 
 
+
+    // mothballing het-bias feature as implemented in this indel model, but keeping as a template for
+    // implementation in the new diplotype model. het_bias doc is:
+    //
+    // "                    - Set bias term for the heterozygous state in the bindel model, such that\n"
+    // "                      hets are expected at allele ratios in the range [0.5-x,0.5+x] (default: 0)\n"
+    static const bool is_het_bias(false);
+    static const double het_bias(0.);
     if (is_het_bias)
     {
         // loop is currently setup to assume a uniform het ratio subgenotype prior
@@ -430,13 +436,9 @@ starling_indel_call_pprob_digt(
 
     const bool is_haploid(dindel.is_haploid());
 
-    // turn off het bias in haploid case:
-    const bool is_het_bias((!is_haploid) && opt.is_bindel_diploid_het_bias);
-
     // get likelihood of each genotype:
     double lhood[STAR_DIINDEL::SIZE];
     get_indel_digt_lhood(opt,dopt,sample_opt,indelKey,indelSampleData,
-                         is_het_bias,opt.bindel_diploid_het_bias,
                          is_tier2_pass,is_use_alt_indel,lhood);
 
     // mult by prior distro to get unnormalized pprob:

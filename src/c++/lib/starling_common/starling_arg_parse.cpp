@@ -100,10 +100,6 @@ legacy_starling_arg_parse(
         {
             set_nploid_arg(i,ad,opt.is_bsnp_nploid,opt.bsnp_nploid_ploidy,opt.bsnp_nploid_snp_prob);
         }
-        else if (ad.argstr[i]=="-bindel-diploid-het-bias")
-        {
-            set_xrange_arg(i,ad,opt.is_bindel_diploid_het_bias,opt.bindel_diploid_het_bias,true);
-        }
         else if (ad.argstr[i]=="-anom-distro-table-alpha")
         {
             set_xrange_arg(i,ad,opt.is_adis_table,opt.adis_table_alpha);

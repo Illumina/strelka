@@ -456,9 +456,6 @@ get_denovo_indel_call(
     // for now, lhood calculation of each sample is independent:
 
     // get likelihood of each genotype
-    static const bool is_het_bias(false);
-    static const double het_bias(0.0);
-
     // set is_forced_output
     if (indelData.is_forced_output)
     {
@@ -511,7 +508,6 @@ get_denovo_indel_call(
             indel_digt_caller::get_indel_digt_lhood(
                 opt,dopt,sampleOpt,
                 indelKey, indelSampleData,
-                is_het_bias, het_bias,
                 is_include_tier2, is_use_alt_indel,
                 sampleLhood[sampleIndex].data());
 
@@ -559,8 +555,6 @@ get_denovo_indel_call(
 
         }
     }
-
-
 
     if (! dinc.is_forced_output)
     {
