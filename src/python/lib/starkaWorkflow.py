@@ -193,7 +193,7 @@ class StarkaWorkflow(WorkflowRunner) :
         # read fasta index
         (self.params.chromOrder,self.params.chromSizes) = getFastaChromOrderSize(indexRefFasta)
 
-        self.params.isHighDepthFilter = (not self.params.isExome)
+        self.params.isHighDepthFilter = (not (self.params.isExome or self.params.isRNA))
 
 
     def setCallMemMb(self) :

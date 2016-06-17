@@ -62,6 +62,8 @@ You must specify a BAM or CRAM file for the sample.
                          "as OffTarget. File must be tabix indexed. (no default)")
         group.add_option("--callContinuousVf", type="string", dest="callContinuousVf", metavar="CHROM", action="append",
                          help="Call variants on CHROM without a ploidy prior assumption, issuing calls with continuous variant frequencies (no default)")
+        group.add_option("--rna", dest="isRNA", action="store_true",
+                         help="Set options for RNA-Seq input.")
 
         StarkaWorkflowOptionsBase.addWorkflowGroupOptions(self,group)
 
@@ -79,6 +81,7 @@ You must specify a BAM or CRAM file for the sample.
         defaults.update({
             'runDir' : 'StarlingWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
+            'configDir' : configDir,
             'evsModelFile' : joinFile(configDir,'germlineVariantScoringModels.txt'),
             'evsModelName' : "QScoreHPDRE100_v4",
             'callContinuousVf' : []

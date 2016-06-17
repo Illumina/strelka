@@ -148,6 +148,9 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
 
         isExome = False
 
+        # isRNA is shared by all Strelka workflows, but only can be set for the germline calling case:
+        isRNA = False
+
         isRetainTempFiles = False
 
         # Empirical Variant Scoring:

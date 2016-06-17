@@ -34,7 +34,7 @@ pyflowDir=os.path.join(scriptDir,"pyflow")
 sys.path.append(os.path.abspath(pyflowDir))
 
 from configBuildTimeInfo import workflowVersion
-from configureUtil import safeSetBool, getIniSections, dumpIniSections
+from configureUtil import safeSetBool, getIniSections, dumpIniSections, joinFile
 from pyflow import WorkflowRunner
 from sharedWorkflow import getMkdirCmd, getRmdirCmd, runDepthFromAlignments
 from starkaWorkflow import runCount, SharedPathInfo, \
@@ -133,6 +133,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     segFiles.stats.append(self.paths.getTmpRunStatsPath(segStr))
     segCmd.extend(["--stats-file", quote(segFiles.stats[-1])])
+
+    # RNA-Seq het calls are considered over a wider frequency range:
+    if self.params.isRNA:
+        segCmd.extend(['-bsnp-diploid-het-bias', '0.40'])
 
     # Empirical Variant Scoring(EVS):
     if self.params.isEVS :
@@ -350,6 +354,10 @@ class StarlingWorkflow(StarkaWorkflow) :
 
         if self.params.isExome :
             self.params.isEVS = False
+
+        if self.params.isRNA :
+            self.params.evsModelFile = joinFile(self.params.configDir,'RNAVariantScoringModels.json')
+            self.params.evsModelName = "RNASeq"
 
 
     def getSuccessMessage(self) :
