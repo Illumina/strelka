@@ -36,21 +36,21 @@ gvcf_aggregator(
     const std::string& sampleName,
     std::ostream* osptr,
     const pos_basecall_buffer& bc_buff)
-    : _CM(opt, dopt.gvcf)
+    : _scoringModels(opt, dopt.gvcf)
 {
     if (! opt.gvcf.is_gvcf_output())
         throw std::invalid_argument("gvcf_aggregator cannot be constructed with nothing to do.");
 
-    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(new gvcf_writer(opt, dopt, ref, nocompress_regions, sampleName, osptr, _CM));
+    std::shared_ptr<variant_pipe_stage_base> nextPipeStage(new gvcf_writer(opt, dopt, ref, nocompress_regions, sampleName, osptr, _scoringModels));
     if (opt.is_ploidy_prior)
     {
-        std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_CM, ref, nextPipeStage));
+        std::shared_ptr<variant_pipe_stage_base> overlapper(new indel_overlapper(_scoringModels, ref, nextPipeStage));
         _codon_phaser.reset(new Codon_phaser(opt, bc_buff, ref, overlapper));
         nextPipeStage = _codon_phaser;
     }
     std::shared_ptr<variant_pipe_stage_base> targeted_region_processor(
         new bed_stream_processor(opt.gvcf.targeted_regions_bedfile, opt.bam_seq_name.c_str(), nextPipeStage));
-    _head.reset(new variant_prefilter_stage(_CM, targeted_region_processor));
+    _head.reset(new variant_prefilter_stage(_scoringModels, targeted_region_processor));
 }
 
 gvcf_aggregator::~gvcf_aggregator()

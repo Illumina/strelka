@@ -17,8 +17,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
+
 /*
- *  Created on: Aug 20, 2014
  *      Author: Morten Kallberg
  */
 

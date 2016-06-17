@@ -67,7 +67,7 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
     }
 
-    if (opt.is_max_snv_sb && (!CM.is_current_logistic()))
+    if (opt.is_max_snv_sb && (!CM.isLegacyLogisticEVSModel()))
     {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
@@ -80,24 +80,36 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
     }
 
-    if (opt.is_max_ref_rep && !CM.is_current_logistic())
+    if (opt.is_max_ref_rep && !CM.isLegacyLogisticEVSModel())
     {
         std::ostringstream oss;
         oss << "Locus contains an indel allele occurring in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    if (CM.is_current_logistic())
+    if (not CM.isNoEVSModel())
     {
-        for (unsigned varType(0); varType<CALIBRATION_MODEL::SIZE; ++varType)
+        if (CM.isLegacyLogisticEVSModel())
         {
-            using namespace CALIBRATION_MODEL;
-            if (varType == HetAltSNP) continue;
+            for (unsigned varType(0); varType < LEGACY_CALIBRATION_MODEL::SIZE; ++varType)
+            {
+                using namespace LEGACY_CALIBRATION_MODEL;
+                if (varType == HetAltSNP) continue;
 
-            const var_case vti(static_cast<var_case>(varType));
+                const var_case vti(static_cast<var_case>(varType));
+                std::ostringstream oss;
+                oss << "Locus GQX is less than " << CM.get_case_cutoff(vti) << " for " << get_label_header(vti);
+                write_vcf_filter(os, GERMLINE_VARIANT_VCF_FILTERS::get_label(get_Qscore_filter(vti)),
+                                 oss.str().c_str());
+            }
+        }
+        else
+        {
+            /// TODO may need to expand this to include actual thresholds
             std::ostringstream oss;
-            oss << "Locus GQX is less than " << CM.get_case_cutoff(vti)  << " for " << get_label_header(vti);
-            write_vcf_filter(os,GERMLINE_VARIANT_VCF_FILTERS::get_label(get_Qscore_filter(vti)),oss.str().c_str());
+            oss << "Locus GQX is below minimum threshold";
+            write_vcf_filter(os, GERMLINE_VARIANT_VCF_FILTERS::get_label(GERMLINE_VARIANT_VCF_FILTERS::LowGQX),
+                             oss.str().c_str());
         }
     }
 
@@ -110,7 +122,7 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(PhasingConflict),oss.str().c_str());
     }
 
-    if ((! chrom_depth.empty()))
+    if (! chrom_depth.empty())
     {
         std::ostringstream oss;
         oss << "Locus depth is greater than " << opt.max_depth_factor << "x the mean chromosome depth";

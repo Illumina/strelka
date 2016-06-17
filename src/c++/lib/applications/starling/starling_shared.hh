@@ -83,6 +83,9 @@ struct starling_options : public starling_base_options
     // Size of the window we are phasing in, default is codon range (=3)
     int phasing_window = 3;
 
+    // apply special behaviors for RNA-Seq analysis
+    bool isRNA = false;
+
     gvcf_options gvcf;
 };
 

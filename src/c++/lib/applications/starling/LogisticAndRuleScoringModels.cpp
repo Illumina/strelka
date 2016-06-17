@@ -19,14 +19,13 @@
 //
 
 /*
- *      Author: Morten Kallberg
+ *  \author Morten Kallberg
  */
 
 #include "LogisticAndRuleScoringModels.hh"
 
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
-
 
 #include <iostream>
 #include <fstream>
@@ -49,6 +48,89 @@ getFeatureMap(
         ret.insert(std::make_pair(FEATURESET::get_feature_label(findex),features.get(findex)));
     }
     return ret;
+}
+
+
+
+LogisticAndRuleScoringModels::
+LogisticAndRuleScoringModels(
+    const gvcf_deriv_options& dopt,
+    const std::string& model_file,
+    const std::string& name) :
+    _dopt(dopt)
+{
+
+    using namespace boost::algorithm;
+
+    assert (not model_file.empty());
+    assert (not name.empty());
+
+#ifdef DEBUG_CAL
+    log_os << "Loading logisitic and qrule models from file: " << model_file << "\n";
+#endif
+
+    std::ifstream myReadFile;
+    myReadFile.open(model_file.c_str());
+
+    if (! myReadFile)
+    {
+        using namespace illumina::common;
+
+        std::ostringstream oss;
+        oss << "ERROR: Failed to load germline variant scoring file '" << model_file << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+
+    std::string parspace;
+    std::string submodel;
+
+    bool isInCurrentModel(false);
+
+    while (!myReadFile.eof())
+    {
+        std::vector<std::string> tokens;
+        {
+            std::string output;
+            std::getline(myReadFile,output);
+            split(tokens, output, is_any_of(" \t")); // tokenize string
+        }
+
+        //case new model
+        if (tokens.at(0).substr(0,3)=="###")
+        {
+            if (isInCurrentModel) break;
+            isInCurrentModel=(tokens.at(1)==name);
+
+            if (! isInCurrentModel) continue;
+            _modelType=tokens.at(2);
+        }
+
+        if (! isInCurrentModel) continue;
+        //load submodel
+        if (tokens.at(0)=="#")
+        {
+            submodel = tokens.at(1);
+            parspace = tokens.at(2);
+        }
+            //case load parameters
+        else
+        {
+            if (tokens.size()>1)
+            {
+                _pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
+            }
+        }
+    }
+
+    if (! isInCurrentModel)
+    {
+        using namespace illumina::common;
+
+        std::ostringstream oss;
+        oss << "ERROR: unrecognized variant scoring model name: '" << name << "'\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
+    assert(not _pars.empty());
 }
 
 
@@ -180,7 +262,7 @@ prior_adjustment(
 void
 LogisticAndRuleScoringModels::
 apply_site_qscore_filters(
-    const CALIBRATION_MODEL::var_case var_case,
+    const LEGACY_CALIBRATION_MODEL::var_case var_case,
     const GermlineDiploidSiteCallInfo& si,
     GermlineDiploidSiteSimpleGenotypeInfo& smod) const
 {
@@ -212,7 +294,7 @@ apply_site_qscore_filters(
 
     if (smod.empiricalVariantScore < get_var_threshold(var_case))
     {
-        smod.set_filter(CALIBRATION_MODEL::get_Qscore_filter(var_case)); // more sophisticated filter setting here
+        smod.set_filter(LEGACY_CALIBRATION_MODEL::get_Qscore_filter(var_case)); // more sophisticated filter setting here
     }
 }
 
@@ -221,7 +303,7 @@ apply_site_qscore_filters(
 void
 LogisticAndRuleScoringModels::
 apply_indel_qscore_filters(
-    const CALIBRATION_MODEL::var_case var_case,
+    const LEGACY_CALIBRATION_MODEL::var_case var_case,
     const GermlineDiploidIndelCallInfo& ii,
     GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
@@ -244,7 +326,7 @@ apply_indel_qscore_filters(
 
     if (call.empiricalVariantScore < get_var_threshold(var_case))
     {
-        call.set_filter(CALIBRATION_MODEL::get_Qscore_filter(var_case));
+        call.set_filter(LEGACY_CALIBRATION_MODEL::get_Qscore_filter(var_case));
     }
 }
 
@@ -252,10 +334,10 @@ apply_indel_qscore_filters(
 int
 LogisticAndRuleScoringModels::
 logistic_score(
-    const CALIBRATION_MODEL::var_case var_case,
+    const LEGACY_CALIBRATION_MODEL::var_case var_case,
     const featuremap& features) const
 {
-    const std::string var_case_label(CALIBRATION_MODEL::get_label(var_case));
+    const std::string var_case_label(LEGACY_CALIBRATION_MODEL::get_label(var_case));
 
     // normalize
     const auto case_pars(this->_pars.at(var_case_label));
@@ -273,9 +355,9 @@ logistic_score(
 int
 LogisticAndRuleScoringModels::
 get_var_threshold(
-    const CALIBRATION_MODEL::var_case& my_case) const
+    const LEGACY_CALIBRATION_MODEL::var_case& my_case) const
 {
-    return this->_pars.at(CALIBRATION_MODEL::get_label(my_case)).at("PassThreshold").at("Q");
+    return this->_pars.at(LEGACY_CALIBRATION_MODEL::get_label(my_case)).at("PassThreshold").at("Q");
 }
 
 bool
@@ -295,14 +377,14 @@ score_site_instance(
 {
     if (is_logistic_model())   //case we are using a logistic regression mode
     {
-        CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HomSNP);
+        LEGACY_CALIBRATION_MODEL::var_case var_case(LEGACY_CALIBRATION_MODEL::HomSNP);
         if (si.is_het())
-            var_case = CALIBRATION_MODEL::HetSNP;
+            var_case = LEGACY_CALIBRATION_MODEL::HetSNP;
 
 #undef HETALTSNPMODEL
 #ifdef HETALTSNPMODEL // future-proofing: do not remove unless you are sure we will not be adding hetalt SNP model to scoring
         if (si.is_hetalt())
-            var_case = CALIBRATION_MODEL::HetAltSNP;
+            var_case = LEGACY_CALIBRATION_MODEL::HetAltSNP;
         //else
 #endif
 
@@ -340,25 +422,25 @@ score_indel_instance(
 {
     if (is_logistic_model())   //case we are using a logistic regression mode
     {
-        CALIBRATION_MODEL::var_case var_case(CALIBRATION_MODEL::HetDel);
+        LEGACY_CALIBRATION_MODEL::var_case var_case(LEGACY_CALIBRATION_MODEL::HetDel);
         switch (ii.first()._indelReportInfo.it)
         {
         case INDEL::DELETE:
         {
             if (ii.is_hetalt())
-                var_case = CALIBRATION_MODEL::HetAltDel;
+                var_case = LEGACY_CALIBRATION_MODEL::HetAltDel;
             else if (! ii.is_het())
-                var_case = CALIBRATION_MODEL::HomDel;
+                var_case = LEGACY_CALIBRATION_MODEL::HomDel;
         }
         break;
         case INDEL::INSERT:
         {
             if (ii.is_hetalt())
-                var_case = CALIBRATION_MODEL::HetAltIns;
+                var_case = LEGACY_CALIBRATION_MODEL::HetAltIns;
             else if (ii.is_het())
-                var_case = CALIBRATION_MODEL::HetIns;
+                var_case = LEGACY_CALIBRATION_MODEL::HetIns;
             else
-                var_case = CALIBRATION_MODEL::HomIns;
+                var_case = LEGACY_CALIBRATION_MODEL::HomIns;
         }
         break;
         default:

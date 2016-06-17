@@ -19,7 +19,7 @@
 //
 
 /*
- *      Author: Morten Kallberg
+ *  \author Morten Kallberg
  */
 
 #pragma once
@@ -30,7 +30,7 @@
 #include <vector>
 #include <map>
 
-namespace CALIBRATION_MODEL
+namespace LEGACY_CALIBRATION_MODEL
 {
 
 enum var_case
@@ -140,7 +140,6 @@ get_Qscore_filter(const unsigned var_case)
 
 
 typedef std::map<std::string, double> featuremap;
-typedef std::map<std::string, std::map<std::string, featuremap > > parmap;
 
 /// this captures a number of concepts, including a logistic regression model
 /// a rule based filtration service and a variant object to model features
@@ -149,13 +148,9 @@ typedef std::map<std::string, std::map<std::string, featuremap > > parmap;
 struct LogisticAndRuleScoringModels
 {
     LogisticAndRuleScoringModels(
-        const std::string& type,
-        const gvcf_deriv_options& init_dopt,
-        const parmap& myPars) :
-        _dopt(init_dopt),
-        _modelType(type),
-        _pars(myPars)
-    {}
+        const gvcf_deriv_options& dopt,
+        const std::string& model_file,
+        const std::string& name);
 
     void
     score_site_instance(
@@ -171,15 +166,17 @@ struct LogisticAndRuleScoringModels
 
     int
     get_var_threshold(
-        const CALIBRATION_MODEL::var_case& my_case) const;
+        const LEGACY_CALIBRATION_MODEL::var_case& my_case) const;
 
 private:
+
+    typedef std::map<std::string, std::map<std::string, featuremap > > parmap;
 
     double normal_depth() const;
 
     int
     logistic_score(
-        const CALIBRATION_MODEL::var_case var_case,
+        const LEGACY_CALIBRATION_MODEL::var_case var_case,
         const featuremap& features) const;
 
     void
@@ -209,13 +206,13 @@ private:
 
     void
     apply_site_qscore_filters(
-        const CALIBRATION_MODEL::var_case my_case,
+        const LEGACY_CALIBRATION_MODEL::var_case my_case,
         const GermlineDiploidSiteCallInfo& si,
         GermlineDiploidSiteSimpleGenotypeInfo& smod) const;
 
     void
     apply_indel_qscore_filters(
-        const CALIBRATION_MODEL::var_case my_case,
+        const LEGACY_CALIBRATION_MODEL::var_case my_case,
         const GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 

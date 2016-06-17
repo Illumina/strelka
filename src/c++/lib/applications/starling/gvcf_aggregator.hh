@@ -62,7 +62,7 @@ public:
     void reset();
 
 private:
-    ScoringModelManager _CM;
+    ScoringModelManager _scoringModels;
 
     std::shared_ptr<Codon_phaser> _codon_phaser;
     std::shared_ptr<variant_pipe_stage_base> _head;

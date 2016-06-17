@@ -39,8 +39,8 @@ struct VariantScoringModelServer
     VariantScoringModelServer(
         const VariantScoringModelMetadata::featureMap_t& featureMap,
         const std::string& model_file,
-        const SCORING_CALL_TYPE::index_t ctype,
-        const SCORING_VARIANT_TYPE::index_t vtype);
+        const SCORING_CALL_TYPE::index_t callType,
+        const SCORING_VARIANT_TYPE::index_t variantType);
 
     double
     scoreVariant(

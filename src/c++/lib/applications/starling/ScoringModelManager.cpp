@@ -19,16 +19,10 @@
 //
 
 /*
- * Author: Morten Kallberg
+ * \author Morten Kallberg
  */
 
 #include "ScoringModelManager.hh"
-
-#include "boost/algorithm/string/split.hpp"
-#include "boost/algorithm/string.hpp"
-
-#include <iostream>
-#include <fstream>
 
 
 //#define DEBUG_CAL
@@ -39,21 +33,68 @@
 
 
 
+ScoringModelManager::
+ScoringModelManager(
+    const starling_options& opt,
+    const gvcf_deriv_options& gvcfDerivedOptions)
+    : _opt(opt.gvcf),
+      _dopt(gvcfDerivedOptions),
+      _isReportEVSFeatures(opt.isReportEVSFeatures)
+{
+    if (not opt.germline_variant_scoring_models_filename.empty())
+    {
+        if (opt.isRNA)
+        {
+            assert (opt.germline_variant_scoring_model_name.empty());
+
+            _snvScoringModelPtr.reset(
+                new VariantScoringModelServer(
+                    GERMLINE_SNV_SCORING_FEATURES::getFeatureMap(),
+                    opt.germline_variant_scoring_models_filename,
+                    SCORING_CALL_TYPE::RNA,
+                    SCORING_VARIANT_TYPE::SNV)
+            );
+
+            _indelScoringModelPtr.reset(
+                new VariantScoringModelServer(
+                    GERMLINE_INDEL_SCORING_FEATURES::getFeatureMap(),
+                    opt.germline_variant_scoring_models_filename,
+                    SCORING_CALL_TYPE::RNA,
+                    SCORING_VARIANT_TYPE::INDEL)
+            );
+
+            _snvEVSThreshold = (_snvScoringModelPtr->scoreFilterThreshold());
+            _indelEVSThreshold = (_indelScoringModelPtr->scoreFilterThreshold());
+        }
+        else
+        {
+            assert (not opt.germline_variant_scoring_model_name.empty());
+            _legacyModelPtr.reset(
+                new LogisticAndRuleScoringModels(_dopt, opt.germline_variant_scoring_models_filename,
+                                                 opt.germline_variant_scoring_model_name));
+        }
+    }
+ }
+
+
+
 int
 ScoringModelManager::
 get_case_cutoff(
-    const CALIBRATION_MODEL::var_case my_case) const
+    const LEGACY_CALIBRATION_MODEL::var_case my_case) const
 {
-    if (is_default_model()) return 0;
-    return get_model().get_var_threshold(my_case);
+    if (isNoEVSModel()) return 0;
+    if (not isLegacyModel()) return 0;
+    return getLegacyModel().get_var_threshold(my_case);
 }
 
 
 
-bool ScoringModelManager::is_current_logistic() const
+bool ScoringModelManager::isLegacyLogisticEVSModel() const
 {
-    if (is_default_model()) return false;
-    return get_model().is_logistic_model();
+    if (isNoEVSModel()) return false;
+    if (not isLegacyModel()) return false;
+    return getLegacyModel().is_logistic_model();
 }
 
 
@@ -72,9 +113,30 @@ classify_site(
     }
 
     //si.smod.filters.reset(); // make sure no filters have been applied prior
-    if ((si.dgt.is_snp) && (!is_default_model()))
+    if ((si.dgt.is_snp) && (!isNoEVSModel()))
     {
-        get_model().score_site_instance(si, smod);
+        if (isLegacyModel())
+        {
+            getLegacyModel().score_site_instance(si, smod);
+        }
+        else
+        {
+            if (smod.features.empty())
+            {
+                static const bool isComputeDevelopmentFeatures(false);
+                const bool isUniformDepthExpected(_dopt.is_max_depth());
+                si.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, smod);
+            }
+            smod.empiricalVariantScore = static_cast<int>(_snvScoringModelPtr->scoreVariant(smod.features.getAll()));
+
+            static const int maxEmpiricalVariantScore(60);
+            smod.empiricalVariantScore = std::min(smod.empiricalVariantScore, maxEmpiricalVariantScore);
+
+            if (smod.empiricalVariantScore < _snvEVSThreshold)
+            {
+                smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+            }
+        }
     }
     else
     {
@@ -130,9 +192,31 @@ classify_indel_impl(
         call.computeEmpiricalScoringFeatures(isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
     }
 
-    if ( (! is_default_model()) && isVariantUsableInEVSModel )
+    if ( (!isNoEVSModel()) && isVariantUsableInEVSModel )
     {
-        get_model().score_indel_instance(ii, call);
+        if (isLegacyModel())
+        {
+            getLegacyModel().score_indel_instance(ii, call);
+        }
+        else
+        {
+            if (call.features.empty())
+            {
+                static const bool isComputeDevelopmentFeatures(false);
+                const bool isUniformDepthExpected(_dopt.is_max_depth());
+                call.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, ii.is_hetalt());
+            }
+            call.empiricalVariantScore = static_cast<int>(_indelScoringModelPtr->scoreVariant(call.features.getAll()));
+
+            static const int maxEmpiricalVariantScore(60);
+            call.empiricalVariantScore = std::min(call.empiricalVariantScore, maxEmpiricalVariantScore);
+
+            if (call.empiricalVariantScore < _indelEVSThreshold)
+            {
+                call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+            }
+        }
+
     }
     else
     {
@@ -241,87 +325,4 @@ default_classify_indel(
             }
         }
     }
-}
-
-
-
-void
-ScoringModelManager::
-load_models(
-    const std::string& model_file,
-    const std::string& name)
-{
-    using namespace boost::algorithm;
-
-    if (model_file.empty()) return;
-    if (name.empty()) return;
-
-#ifdef DEBUG_CAL
-    log_os << "Loading models from file: " << model_file << "\n";
-#endif
-    std::ifstream myReadFile;
-    myReadFile.open(model_file.c_str());
-
-    if (! myReadFile)
-    {
-        using namespace illumina::common;
-
-        std::ostringstream oss;
-        oss << "ERROR: Failed to load germline variant scoring file '" << model_file << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
-
-    std::string parspace;
-    std::string submodel;
-    std::string modelType;
-    parmap pars;
-
-    bool isInCurrentModel(false);
-
-    while (!myReadFile.eof())
-    {
-        std::vector<std::string> tokens;
-        {
-            std::string output;
-            std::getline(myReadFile,output);
-            split(tokens, output, is_any_of(" \t")); // tokenize string
-        }
-
-        //case new model
-        if (tokens.at(0).substr(0,3)=="###")
-        {
-            if (isInCurrentModel) break;
-            isInCurrentModel=(tokens.at(1)==name);
-
-            if (! isInCurrentModel) continue;
-            modelType=tokens.at(2);
-        }
-
-        if (! isInCurrentModel) continue;
-        //load submodel
-        if (tokens.at(0)=="#")
-        {
-            submodel = tokens.at(1);
-            parspace = tokens.at(2);
-        }
-        //case load parameters
-        else
-        {
-            if (tokens.size()>1)
-            {
-                pars[submodel][parspace][tokens.at(0)] = atof(tokens.at(1).c_str());
-            }
-        }
-    }
-
-    if (! isInCurrentModel)
-    {
-        using namespace illumina::common;
-
-        std::ostringstream oss;
-        oss << "ERROR: unrecognized variant scoring model name: '" << name << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
-    assert(! pars.empty());
-    modelPtr.reset(new LogisticAndRuleScoringModels(modelType,_dopt,pars));
 }
