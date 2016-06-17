@@ -119,36 +119,56 @@ set(const char* s)
 
 bool
 vcf_record::
-is_left_shifted() const
+is_normalized() const
 {
+    // normalized indels are left-aligned, reference-padded, and parsimonious
+    // normalized SNVs are a single differing base
+    // normalized MNVs minimally have differing bases at the beginning and end
+    // of the ref and alt alleles
+    // see http://genome.sph.umich.edu/wiki/Variant_Normalization
     unsigned ref_length = ref.size();
 
     for (const auto& alt_allele : alt)
     {
-        // This should exclude SNPs.  If indels are
-        // reference-padded, the first base of the ref
-        // and alt alleles should always have the same
-        // base
-        unsigned alt_length = alt_allele.size();
-        if ( (*alt_allele.begin()) == (*ref.begin()))
+        // all normalized variants must differ at the last ref and alt base
+        // this checks for right-padding, i.e. parsimony
+        if((*alt_allele.rbegin()) == (*ref.rbegin()))
         {
-            for (unsigned i = ref_length - 1, j = alt_length - 1; ; ++i, ++j)
+            return false;
+        }
+
+        unsigned alt_length = alt_allele.size();
+        if(alt_length != ref_length)
+        {
+            // this checks that indels are reference-padded
+            if ( (*alt_allele.begin()) == (*ref.begin()))
             {
-                // if the ref and alt allele are not equal at some point from the right side,
-                // then it is left-shifted (but could still be right-padded)
-                if (ref[i] != alt_allele[j])
+                // this checks that they're left-shifted
+                for (unsigned i = ref_length - 1, j = alt_length - 1; ; ++i, ++j)
                 {
-                    break;
-                }
-                else if (i == 0 || j == 0)
-                {
-                    return false;
+                    if (ref[i] != alt_allele[j])
+                    {
+                        break;
+                    }
+                    else if (i == 0 || j == 0)
+                    {
+                        return false;
+                    }
                 }
             }
         }
         else
         {
-            assert (alt_length == ref_length && ref_length == 1);
+            // we already checked that the last base of an SNV/MNV
+            // differed between alt and ref at the beginning of the
+            // loop
+            if (ref_length > 1)
+            {
+                if ((*alt_allele.begin()) == (*ref.begin()))
+                {
+                    return false;
+                }
+            }
         }
     }
     return true;

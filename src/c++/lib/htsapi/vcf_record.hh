@@ -90,7 +90,7 @@ struct vcf_record
         return true;
     }
 
-    bool is_left_shifted() const;
+    bool is_normalized() const;
 
     std::string chrom;
     int pos = 0;
