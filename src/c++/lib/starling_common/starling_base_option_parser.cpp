@@ -107,9 +107,9 @@ get_starling_base_option_parser(
      "Minimum open-ended breakpoint sequence length required to become a breakpoint candidate")
     ("candidate-indel-input-vcf",
      po::value(&opt.input_candidate_indel_vcf)->multitoken(),
-     "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files.")
+     "Add candidate indels from the specified vcf file. Option can be provided multiple times to combine evidence from multiple vcf files.  Strelka will exit with an error if candidate indels are not normalized.")
     ("force-output-vcf", po::value(&opt.force_output_vcf)->multitoken(),
-     "For each site or indel in the vcf file to be written to the snv or indel output, even if no variant is found. An indels submitted will also be treated as candidate indels. Option can be provided multiple times to combine multiple vcf files.")
+     "Force each site or indel in the vcf file to be written to the snv or indel output, even if no variant is found. Any indels submitted will also be treated as candidate indels. Option can be provided multiple times to combine multiple vcf files. Strelka will exit with an error if variants are not normalized.")
     ("upstream-oligo-size", po::value(&opt.upstream_oligo_size),
      "Treat reads as if they have an upstream oligo anchor for purposes of meeting minimum breakpoint overlap in support of an indel.")
     ;
