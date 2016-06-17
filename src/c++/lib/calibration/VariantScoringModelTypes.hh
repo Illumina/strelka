@@ -31,6 +31,7 @@ namespace SCORING_CALL_TYPE
 {
 enum index_t
 {
+    RNA,
     SOMATIC,
     SIZE
 };
@@ -41,8 +42,10 @@ get_label(const index_t i)
 {
     switch (i)
     {
+    case RNA:
+        return "RNASeq";
     case SOMATIC:
-        return "somatic_rf"; // Temporary, change this to SOMATIC
+        return "Somatic";
     default:
         assert(false && "Unknown scoring model call type.");
         return nullptr;
