@@ -19,7 +19,7 @@
 //
 
 /*
- *      Author: mkallberg
+ *      Author: Morten Kallberg
  */
 
 #pragma once
@@ -52,11 +52,11 @@ struct SOMATIC_SNV_SCORING_FEATURES
         N_DP_RATE,
         TIER1_ALT_RATE,
         MQ,
-        MQ0_FRAC,
+        n_mapq0,
         strandBias,
         ReadPosRankSum,
-        altmap,
-        altpos,
+        MQ0_FRAC,
+        LOR,
         SIZE
     };
 
@@ -82,16 +82,16 @@ struct SOMATIC_SNV_SCORING_FEATURES
             return "TIER1_ALT_RATE";
         case MQ:
             return "MQ";
-        case MQ0_FRAC:
-            return "MQ0_FRAC";
+        case n_mapq0:
+            return "n_mapq0";
         case strandBias:
             return "strandBias";
         case ReadPosRankSum:
             return "ReadPosRankSum";
-        case altmap:
-            return "altmap";
-        case altpos:
-            return "altpos";
+        case MQ0_FRAC:
+            return "MQ0_FRAC";
+        case LOR:
+            return "LogOddsRatio";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -124,7 +124,8 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
 
     enum index_t
     {
-        LOR,
+        altmap,
+        altpos,
         SIZE
     };
 
@@ -134,8 +135,10 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
     {
         switch (idx)
         {
-        case LOR:
-            return "LogOddsRatio";
+        case altmap:
+            return "altmap";
+        case altpos:
+            return "altpos";
         default:
             assert(false && "Unknown feature");
             return nullptr;

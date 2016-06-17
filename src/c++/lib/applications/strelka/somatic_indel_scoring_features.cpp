@@ -133,8 +133,8 @@ calculateTumorNoiseRate(const starling_indel_sample_report_info& tumorIndelSampl
 
 double
 calculateLogAltRatio(
-     const starling_indel_sample_report_info& normalIndelSampleReportInfo,
-     const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
+    const starling_indel_sample_report_info& normalIndelSampleReportInfo,
+    const starling_indel_sample_report_info& tumorIndelSampleReportInfo)
 {
     const unsigned n_ref_reads = normalIndelSampleReportInfo.n_q30_ref_reads;
     const unsigned t_alt_reads = tumorIndelSampleReportInfo.n_q30_indel_reads;

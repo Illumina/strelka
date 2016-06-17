@@ -75,7 +75,7 @@ SequenceErrorCountsPosProcessor(
         }
 
         const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                       _max_candidate_normal_sample_depth);
+                                                                      _max_candidate_normal_sample_depth);
 
         assert(syncSampleId == sampleId);
 

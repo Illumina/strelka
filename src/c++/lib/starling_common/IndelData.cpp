@@ -124,7 +124,7 @@ addIndelObservation(
 
     if (! obs_data.insert_seq.empty())
     {
-        if((not _indelKey.is_breakpoint()) and (obs_data.insert_seq.size() != _indelKey.insert_length()))
+        if ((not _indelKey.is_breakpoint()) and (obs_data.insert_seq.size() != _indelKey.insert_length()))
         {
             using namespace illumina::common;
 

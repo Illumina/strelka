@@ -43,6 +43,44 @@ safeFrac(const unsigned num, const D denom)
 }
 
 
+double
+calculateLogOddsRatio(  const CleanedPileup& n1_cpi,
+                        const CleanedPileup& t1_cpi,
+                        const blt_options& opt)
+{
+
+    /**
+     * Calculate LOR feature (log odds ratio for  T_REF T_ALT
+     *                                            N_REF N_ALT)
+     */
+    std::array<unsigned,N_BASE> n_tier1_base_counts;
+    std::array<unsigned,N_BASE> t_tier1_base_counts;
+    n1_cpi.cleanedPileup().get_known_counts(n_tier1_base_counts,opt.used_allele_count_min_qscore);
+    t1_cpi.cleanedPileup().get_known_counts(t_tier1_base_counts,opt.used_allele_count_min_qscore);
+    const unsigned ref_index(base_to_id(n1_cpi.cleanedPileup().get_ref_base()));
+    unsigned n_ref=0;
+    unsigned n_alt=0;
+    unsigned t_ref=0;
+    unsigned t_alt=0;
+    for (unsigned b(0); b<N_BASE; ++b)
+    {
+        if (b==ref_index)
+            n_ref += n_tier1_base_counts[b];
+        else
+            n_alt += n_tier1_base_counts[b];
+    }
+    for (unsigned b(0); b<N_BASE; ++b)
+    {
+        if (b==ref_index)
+            t_ref += t_tier1_base_counts[b];
+        else
+            t_alt += t_tier1_base_counts[b];
+    }
+    double LOR = log10((t_ref+0.5)*(n_alt+0.5) / (t_alt+0.5) / (n_ref+0.5));
+
+    return LOR;
+}
+
 /// set sample specific empirical scoring features
 ///
 // similar to 'write_vcf_sample_info' below, redundancy needed to get order of output right
@@ -190,7 +228,7 @@ get_scoring_features(
     //n_mapq0
     const unsigned n_mapq(mapqTracker.count);
     const unsigned n_mapq0(mapqTracker.zeroCount);
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::MQ0_FRAC, safeFrac(n_mapq0,n_mapq));
+    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::n_mapq0, safeFrac(n_mapq0,n_mapq));
 
     //ReadPosRankSum
     const double ReadPosRankSum = t1_cpi.rawPileup().read_pos_ranksum.get_u_stat();
@@ -199,48 +237,17 @@ get_scoring_features(
     //StrandBias
     smod.features.set(SOMATIC_SNV_SCORING_FEATURES::strandBias,rs.strandBias);
 
-    /// TODO better handling of default values for cases where alpos or altmap are not defined (0 is not a good default)
-    ///
-    //Altpos
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::altpos,altpos);
-    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::altmap,altmap);
+    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::MQ0_FRAC, safeFrac(n_mapq0,n_mapq));
 
+    smod.features.set(SOMATIC_SNV_SCORING_FEATURES::LOR, calculateLogOddsRatio(n1_cpi,t1_cpi,opt));
+
+    // features not used in the current EVS model but feature candidates/exploratory for new EVS models
     if (opt.isReportEVSFeatures)
     {
-        // features not used in the current EVS model but feature candidates/exploratory for new EVS models:
-
-        /**
-         * Calculate LOR feature (log odds ratio for  T_REF T_ALT
-         *                                            N_REF N_ALT)
-         */
-        std::array<unsigned,N_BASE> n_tier1_base_counts;
-        std::array<unsigned,N_BASE> t_tier1_base_counts;
-        n1_cpi.cleanedPileup().get_known_counts(n_tier1_base_counts,opt.used_allele_count_min_qscore);
-        t1_cpi.cleanedPileup().get_known_counts(t_tier1_base_counts,opt.used_allele_count_min_qscore);
-        const unsigned ref_index(base_to_id(n1_cpi.cleanedPileup().get_ref_base()));
-        unsigned n_ref=0;
-        unsigned n_alt=0;
-        unsigned t_ref=0;
-        unsigned t_alt=0;
-        for (unsigned b(0); b<N_BASE; ++b)
-        {
-            if (b==ref_index)
-                n_ref += n_tier1_base_counts[b];
-            else
-                n_alt += n_tier1_base_counts[b];
-        }
-        for (unsigned b(0); b<N_BASE; ++b)
-        {
-            if (b==ref_index)
-                t_ref += t_tier1_base_counts[b];
-            else
-                t_alt += t_tier1_base_counts[b];
-        }
-
-        double LOR = log10((t_ref+0.5)*(n_alt+0.5) / ((t_alt+0.5) / (n_ref+0.5)));
-
-        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::LOR, LOR);
-
+        /// TODO better handling of default values for in cases where altpos or altmap are not defined (0 is not a good default)
+        //Altpos
+        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::altpos,altpos);
+        smod.dfeatures.set(SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::altmap,altmap);
     }
 }
 
@@ -367,7 +374,7 @@ write_vcf_somatic_snv_genotype_strand_grid(
             // See STARKA-257 github comment for more detail on this fit
             auto recal_somatic_snv_score = [](double& score)
             {
-                return 2.57*score+0.94;
+                return 2.51*score+0.98;
             };
 
             smod.EVS = recal_somatic_snv_score(smod.EVS);
@@ -432,17 +439,17 @@ write_vcf_somatic_snv_genotype_strand_grid(
         os << ";MQ=" << smod.features.get(SOMATIC_SNV_SCORING_FEATURES::MQ);
         os << ";MQ0=" << mapqTracker.zeroCount;
 
-        os << ";ALTPOS=";
-        if (smod.features.test(SOMATIC_SNV_SCORING_FEATURES::altpos))
-            os << (int)smod.features.get(SOMATIC_SNV_SCORING_FEATURES::altpos);
-        else
-            os << '.';
+//        os << ";ALTPOS=";
+//        if (smod.features.test(SOMATIC_SNV_SCORING_FEATURES::altpos))
+//            os << (int)smod.features.get(SOMATIC_SNV_SCORING_FEATURES::altpos);
+//        else
+//            os << '.';
 
-        os << ";ALTMAP=";
-        if (smod.features.test(SOMATIC_SNV_SCORING_FEATURES::altmap))
-            os << (int)smod.features.get(SOMATIC_SNV_SCORING_FEATURES::altmap);
-        else
-            os << '.';
+//        os << ";ALTMAP=";
+//        if (smod.features.test(SOMATIC_SNV_SCORING_FEATURES::altmap))
+//            os << (int)smod.features.get(SOMATIC_SNV_SCORING_FEATURES::altmap);
+//        else
+//            os << '.';
 
         os << ";ReadPosRankSum=" << smod.features.get(SOMATIC_SNV_SCORING_FEATURES::ReadPosRankSum);
         os << ";SNVSB=" << smod.features.get(SOMATIC_SNV_SCORING_FEATURES::strandBias);

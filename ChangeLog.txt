@@ -1,3 +1,4 @@
+- STREL-111 Updated somatic EVS model to support liquid tumor and bwamem bams
 - STREL-116 fix germline MQ/MQ0, EVS feature norm, add new EVS dev features
 - STREL-104 provide corrected germline MQ/MQ0, EVS feature norm and exome support
 - STREL-101 update to simplified log-linear indel error rates

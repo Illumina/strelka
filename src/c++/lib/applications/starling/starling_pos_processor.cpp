@@ -123,7 +123,7 @@ starling_pos_processor(
         }
 
         const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                       max_candidate_normal_sample_depth);
+                                                                      max_candidate_normal_sample_depth);
 
         assert(syncSampleId == sampleId);
 
