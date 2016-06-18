@@ -64,7 +64,7 @@ strelka_deriv_options(
     {
         somaticSnvScoringModel.reset(
             new VariantScoringModelServer(
-                SOMATIC_SNV_SCORING_FEATURES::getFeatureMap(),
+                SOMATIC_SNV_SCORING_FEATURES().getFeatureMap(),
                 opt.somatic_snv_scoring_model_filename,
                 SCORING_CALL_TYPE::SOMATIC,
                 SCORING_VARIANT_TYPE::SNV)
@@ -74,7 +74,7 @@ strelka_deriv_options(
     {
         somaticIndelScoringModel.reset(
             new VariantScoringModelServer(
-                SOMATIC_INDEL_SCORING_FEATURES::getFeatureMap(),
+                SOMATIC_INDEL_SCORING_FEATURES().getFeatureMap(),
                 opt.somatic_indel_scoring_model_filename,
                 SCORING_CALL_TYPE::SOMATIC,
                 SCORING_VARIANT_TYPE::INDEL)

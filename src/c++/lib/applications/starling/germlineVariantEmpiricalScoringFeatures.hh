@@ -30,11 +30,18 @@
 #include <cassert>
 
 
-struct GERMLINE_SNV_SCORING_FEATURES
+struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
 {
     static
+    const FeatureSet&
+    getInstance()
+    {
+        static const GERMLINE_SNV_SCORING_FEATURES featureSet;
+        return featureSet;
+    }
+
     const char*
-    get_name()
+    getName() const override
     {
         return "GERMLINE_SNV_SCORING_FEATURES";
     }
@@ -62,9 +69,14 @@ struct GERMLINE_SNV_SCORING_FEATURES
         SIZE
     };
 
-    static
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
     const char*
-    get_feature_label(const unsigned idx)
+    getFeatureLabel(const unsigned idx) const override
     {
         switch (idx)
         {
@@ -103,27 +115,25 @@ struct GERMLINE_SNV_SCORING_FEATURES
             return nullptr;
         }
     }
-
-    static
-    const VariantScoringModelMetadata::featureMap_t&
-    getFeatureMap()
-    {
-        static const FeatureMapMaker<GERMLINE_SNV_SCORING_FEATURES> fmm;
-        return fmm.result;
-    }
 };
 
 
-///
 /// additional experimental features not used in the current scoring model
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
+struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 {
     static
+    const FeatureSet&
+    getInstance()
+    {
+        static const GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES featureSet;
+        return featureSet;
+    }
+
     const char*
-    get_name()
+    getName() const override
     {
         return "GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES";
     }
@@ -146,9 +156,14 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
         SIZE
     };
 
-    static
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
     const char*
-    get_feature_label(const unsigned idx)
+    getFeatureLabel(const unsigned idx) const override
     {
         switch (idx)
         {
@@ -183,15 +198,23 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES
             return nullptr;
         }
     }
+
 };
 
 
 
-struct GERMLINE_INDEL_SCORING_FEATURES
+struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
 {
     static
+    const FeatureSet&
+    getInstance()
+    {
+        static const GERMLINE_INDEL_SCORING_FEATURES featureSet;
+        return featureSet;
+    }
+
     const char*
-    get_name()
+    getName() const override
     {
         return "GERMLINE_INDEL_SCORING_FEATURES";
     }
@@ -214,9 +237,14 @@ struct GERMLINE_INDEL_SCORING_FEATURES
         SIZE
     };
 
-    static
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
     const char*
-    get_feature_label(const unsigned idx)
+    getFeatureLabel(const unsigned idx) const override
     {
         switch (idx)
         {
@@ -247,14 +275,6 @@ struct GERMLINE_INDEL_SCORING_FEATURES
             return nullptr;
         }
     }
-
-    static
-    const VariantScoringModelMetadata::featureMap_t&
-    getFeatureMap()
-    {
-        static const FeatureMapMaker<GERMLINE_INDEL_SCORING_FEATURES> fmm;
-        return fmm.result;
-    }
 };
 
 
@@ -262,11 +282,18 @@ struct GERMLINE_INDEL_SCORING_FEATURES
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
+struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 {
     static
+    const FeatureSet&
+    getInstance()
+    {
+        static const GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES featureSet;
+        return featureSet;
+    }
+
     const char*
-    get_name()
+    getName() const override
     {
         return "GERMLINE_INDEL_DEVELOPMENT_SCORING_FEATURES";
     }
@@ -290,9 +317,14 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES
         SIZE
     };
 
-    static
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
     const char*
-    get_feature_label(const unsigned idx)
+    getFeatureLabel(const unsigned idx) const override
     {
         switch (idx)
         {

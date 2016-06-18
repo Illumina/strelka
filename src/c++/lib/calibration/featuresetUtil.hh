@@ -25,26 +25,58 @@
 #include "calibration/VariantScoringModelMetadata.hh"
 #include "common/Exceptions.hh"
 
+#include "boost/dynamic_bitset.hpp"
+
 #include <cassert>
 
-#include <bitset>
 #include <sstream>
 #include <string>
 
 
-template <typename FEATURESET>
-struct FeatureMapMaker
+struct FeatureSet
 {
-    FeatureMapMaker()
+    virtual
+    unsigned
+    size() const = 0;
+
+    virtual
+    const char*
+    getName() const = 0;
+
+    virtual
+    const char*
+    getFeatureLabel(const unsigned idx) const = 0;
+
+    /// feature map is typically used to verify a feature set match to a particular model
+    VariantScoringModelMetadata::featureMap_t
+    getFeatureMap() const
     {
-        for (unsigned i(0); i<FEATURESET::SIZE; ++i)
+        VariantScoringModelMetadata::featureMap_t result;
+
+        const unsigned featureSize(size());
+        for (unsigned featureIndex(0); featureIndex<featureSize; ++featureIndex)
         {
-            result.insert(std::make_pair(std::string(FEATURESET::get_feature_label(i)),i));
+            result.insert(std::make_pair(std::string(getFeatureLabel(featureIndex)),featureIndex));
         }
+
+        return result;
     }
 
-    VariantScoringModelMetadata::featureMap_t result;
+protected:
+    FeatureSet() = default;
+private:
+    FeatureSet(const FeatureSet&) = delete;
+    FeatureSet& operator=(const FeatureSet&) = delete;
 };
+
+
+/// output the primary and development feature set labels, and check for dup labels
+void
+writeExtendedFeatureSet(
+    const FeatureSet& primaryFeatureSet,
+    const FeatureSet& developmentFeatureSet,
+    const char* featureTypeLabel,
+    std::ostream& os);
 
 
 /// simple feature organizer
@@ -52,17 +84,22 @@ struct FeatureMapMaker
 /// (1) doesn't mix up features with other tracking info
 /// (2) generates no system calls after initialization
 ///
-template <typename FEATURESET>
 struct VariantScoringFeatureKeeper
 {
-    VariantScoringFeatureKeeper()
+    explicit
+    VariantScoringFeatureKeeper(
+        const FeatureSet& featureSet)
+    : _featureSet(featureSet),
+      _isFeatureSet(featureSet.size()),
+      _featureVal(featureSet.size())
     {
         clear();
-        _featureVal.resize(FEATURESET::SIZE);
     }
 
     void
-    set(const typename FEATURESET::index_t featureIndex,double val)
+    set(
+        const unsigned featureIndex,
+        const double featureValue)
     {
         if (test(featureIndex))
         {
@@ -70,22 +107,22 @@ struct VariantScoringFeatureKeeper
 
             std::ostringstream oss;
             oss << "ERROR: attempted to set scoring feature twice."
-                << " Feature: '" << FEATURESET::get_feature_label(featureIndex) << "'"
-                << " from set: '" << FEATURESET::get_name() << "'\n";
+                << " Feature: '" << _featureSet.getFeatureLabel(featureIndex) << "'"
+                << " from set: '" << _featureSet.getName() << "'\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
-        _featureVal[featureIndex] = val;
+        _featureVal[featureIndex] = featureValue;
         _isFeatureSet.set(featureIndex);
     }
 
     double
-    get(const typename FEATURESET::index_t i) const
+    get(const unsigned featureIndex) const
     {
-        if (! test(i))
+        if (! test(featureIndex))
         {
             assert(false && "Requesting undefined feature");
         }
-        return _featureVal[i];
+        return _featureVal[featureIndex];
     }
 
     const VariantScoringModelBase::featureInput_t&
@@ -95,20 +132,21 @@ struct VariantScoringFeatureKeeper
     }
 
     bool
-    test(const typename FEATURESET::index_t i) const
+    test(const unsigned featureIndex) const
     {
-        return _isFeatureSet.test(i);
+        assert(featureIndex < _isFeatureSet.size());
+        return _isFeatureSet.test(featureIndex);
     }
 
     void
     write(
         std::ostream& os) const
     {
-        const unsigned featureSize(FEATURESET::SIZE);
+        const unsigned featureSize(_featureSet.size());
         for (unsigned featureIndex(0); featureIndex<featureSize; ++featureIndex)
         {
             if (featureIndex > 0) os << ',';
-            os << FEATURESET::get_feature_label(featureIndex) << ":" << get(featureIndex);
+            os << _featureSet.getFeatureLabel(featureIndex) << ":" << get(featureIndex);
         }
     }
 
@@ -124,8 +162,15 @@ struct VariantScoringFeatureKeeper
         return _isFeatureSet.none();
     }
 
+    const FeatureSet&
+    getFeatureSet() const
+    {
+        return _featureSet;
+    }
+
 private:
-    std::bitset<FEATURESET::SIZE> _isFeatureSet;
+    const FeatureSet& _featureSet;
+    boost::dynamic_bitset<> _isFeatureSet;
     VariantScoringModelBase::featureInput_t _featureVal;
 };
 

@@ -47,9 +47,12 @@ ScoringModelManager(
         {
             assert (opt.germline_variant_scoring_model_name.empty());
 
+            std::unique_ptr<FeatureSet> snvFeatureSetPtr(new GERMLINE_SNV_SCORING_FEATURES());
+            std::unique_ptr<FeatureSet> indelFeatureSetPtr(new GERMLINE_INDEL_SCORING_FEATURES());
+
             _snvScoringModelPtr.reset(
                 new VariantScoringModelServer(
-                    GERMLINE_SNV_SCORING_FEATURES::getFeatureMap(),
+                    snvFeatureSetPtr->getFeatureMap(),
                     opt.germline_variant_scoring_models_filename,
                     SCORING_CALL_TYPE::RNA,
                     SCORING_VARIANT_TYPE::SNV)
@@ -57,7 +60,7 @@ ScoringModelManager(
 
             _indelScoringModelPtr.reset(
                 new VariantScoringModelServer(
-                    GERMLINE_INDEL_SCORING_FEATURES::getFeatureMap(),
+                    indelFeatureSetPtr->getFeatureMap(),
                     opt.germline_variant_scoring_models_filename,
                     SCORING_CALL_TYPE::RNA,
                     SCORING_VARIANT_TYPE::INDEL)

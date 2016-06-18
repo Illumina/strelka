@@ -186,6 +186,8 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
         , _indelData(indelData)
         , _indelReportInfo(indelReportInfo)
         , _indelSampleReportInfo(indelSampleReportInfo)
+        , features(GERMLINE_INDEL_SCORING_FEATURES::getInstance())
+        , developmentFeatures(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::getInstance())
     {}
 
     void
@@ -210,8 +212,8 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
     ALIGNPATH::path_t cigar;
 
     /// production and development features used in the empirical scoring model:
-    VariantScoringFeatureKeeper<GERMLINE_INDEL_SCORING_FEATURES> features;
-    VariantScoringFeatureKeeper<GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES> developmentFeatures;
+    VariantScoringFeatureKeeper features;
+    VariantScoringFeatureKeeper developmentFeatures;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo& shi);
@@ -284,6 +286,8 @@ get_label(const unsigned idx)
 struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
 {
     GermlineDiploidSiteSimpleGenotypeInfo()
+    : features(GERMLINE_SNV_SCORING_FEATURES::getInstance()),
+      developmentFeatures(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::getInstance())
     {
         clear();
     }
@@ -327,8 +331,8 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
     unsigned max_gt;
 
     /// production and development features used in the empirical scoring model:
-    VariantScoringFeatureKeeper<GERMLINE_SNV_SCORING_FEATURES> features;
-    VariantScoringFeatureKeeper<GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES> developmentFeatures;
+    VariantScoringFeatureKeeper features;
+    VariantScoringFeatureKeeper developmentFeatures;
 };
 
 

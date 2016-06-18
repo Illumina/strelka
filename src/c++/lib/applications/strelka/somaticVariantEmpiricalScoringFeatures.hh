@@ -30,8 +30,16 @@
 #include <cassert>
 
 
-struct SOMATIC_SNV_SCORING_FEATURES
+struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
 {
+    static
+    const FeatureSet&
+    getInstance()
+    {
+        static const SOMATIC_SNV_SCORING_FEATURES featureSet;
+        return featureSet;
+    }
+
     static
     const char*
     get_name()
@@ -98,13 +106,25 @@ struct SOMATIC_SNV_SCORING_FEATURES
         }
     }
 
-    static
-    const VariantScoringModelMetadata::featureMap_t&
-    getFeatureMap()
+    const char*
+    getName() const override
     {
-        static const FeatureMapMaker<SOMATIC_SNV_SCORING_FEATURES> fmm;
-        return fmm.result;
+        return get_name();
     }
+
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
+
+    const char*
+    getFeatureLabel(const unsigned idx) const override
+    {
+        return get_feature_label(idx);
+    }
+
 };
 
 
@@ -113,8 +133,16 @@ struct SOMATIC_SNV_SCORING_FEATURES
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
+struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 {
+    static
+    const FeatureSet&
+    getInstance()
+    {
+        static const SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES featureSet;
+        return featureSet;
+    }
+
     static
     const char*
     get_name()
@@ -144,15 +172,42 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES
             return nullptr;
         }
     }
+
+    const char*
+    getName() const override
+    {
+        return get_name();
+    }
+
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
+
+    const char*
+    getFeatureLabel(const unsigned idx) const override
+    {
+        return get_feature_label(idx);
+    }
+
 };
 
 
 
-struct SOMATIC_INDEL_SCORING_FEATURES
+struct SOMATIC_INDEL_SCORING_FEATURES : public FeatureSet
 {
     static
+    const FeatureSet&
+    getInstance()
+    {
+        static const SOMATIC_INDEL_SCORING_FEATURES featureSet;
+        return featureSet;
+    }
+
     const char*
-    get_name()
+    getName() const override
     {
         return "SOMATIC_INDEL_SCORING_FEATURES";
     }
@@ -174,9 +229,15 @@ struct SOMATIC_INDEL_SCORING_FEATURES
         SIZE
     };
 
-    static
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
+
     const char*
-    get_feature_label(const unsigned idx)
+    getFeatureLabel(const unsigned idx) const override
     {
         switch (idx)
         {
@@ -206,13 +267,6 @@ struct SOMATIC_INDEL_SCORING_FEATURES
         }
     }
 
-    static
-    const VariantScoringModelMetadata::featureMap_t&
-    getFeatureMap()
-    {
-        static const FeatureMapMaker<SOMATIC_INDEL_SCORING_FEATURES> fmm;
-        return fmm.result;
-    }
 };
 
 
@@ -221,8 +275,16 @@ struct SOMATIC_INDEL_SCORING_FEATURES
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES
+struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 {
+    static
+    const FeatureSet&
+    getInstance()
+    {
+        static const SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES featureSet;
+        return featureSet;
+    }
+
     static
     const char*
     get_name()
@@ -264,5 +326,25 @@ struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES
             return nullptr;
         }
     }
+
+    const char*
+    getName() const override
+    {
+        return get_name();
+    }
+
+    unsigned
+    size() const override
+    {
+        return SIZE;
+    }
+
+
+    const char*
+    getFeatureLabel(const unsigned idx) const override
+    {
+        return get_feature_label(idx);
+    }
+
 };
 

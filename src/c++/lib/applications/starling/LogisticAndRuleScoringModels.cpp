@@ -35,17 +35,17 @@
 /// the logistic regression model still requires an actual string map -- something we want
 /// to move away from, but this provides a bridge for now:
 ///
-template <typename FEATURESET>
 featuremap
 getFeatureMap(
-    const VariantScoringFeatureKeeper<FEATURESET>& features)
+    const VariantScoringFeatureKeeper& features)
 {
-    typedef typename FEATURESET::index_t findex_t;
+    const FeatureSet& featureSet(features.getFeatureSet());
+
     featuremap ret;
-    for (unsigned index(0); index<FEATURESET::SIZE; ++index)
+    const unsigned featureSize(featureSet.size());
+    for (unsigned featureIndex(0); featureIndex<featureSize; ++featureIndex)
     {
-        const findex_t findex(static_cast<findex_t>(index));
-        ret.insert(std::make_pair(FEATURESET::get_feature_label(findex),features.get(findex)));
+        ret.insert(std::make_pair(featureSet.getFeatureLabel(featureIndex),features.get(featureIndex)));
     }
     return ret;
 }

@@ -153,21 +153,6 @@ add_gvcf_filters(
 
 
 
-static
-void
-repeatedFeatureLabelError(
-    const char* label,
-    const std::string& featureLabel)
-{
-    using namespace illumina::common;
-
-    std::ostringstream oss;
-    oss << "ERROR: repeated " << label << " EVS training feature label '" << featureLabel << "'\n";
-    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-}
-
-
-
 void
 finish_gvcf_header(
     const starling_options& opt,
@@ -247,62 +232,16 @@ finish_gvcf_header(
 
     if (opt.isReportEVSFeatures)
     {
-        std::set<std::string> featureLabels;
         os << "##snv_scoring_features=";
-        for (unsigned featureIndex = 0; featureIndex < GERMLINE_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
-        {
-            if (featureIndex > 0)
-            {
-                os << ",";
-            }
-            const std::string featureLabel(GERMLINE_SNV_SCORING_FEATURES::get_feature_label(featureIndex));
-            const auto retVal = featureLabels.insert(featureLabel);
-            if (not retVal.second)
-            {
-                repeatedFeatureLabelError("SNV", featureLabel);
-            }
-            os << featureLabel;
-        }
-        for (unsigned featureIndex = 0; featureIndex < GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-        {
-            os << ',';
-            const std::string featureLabel(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
-            const auto retVal = featureLabels.insert(featureLabel);
-            if (not retVal.second)
-            {
-                repeatedFeatureLabelError("SNV", featureLabel);
-            }
-            os << featureLabel;
-        }
+        writeExtendedFeatureSet(GERMLINE_SNV_SCORING_FEATURES::getInstance(),
+                                GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::getInstance(),
+                                "SNV", os);
         os << "\n";
 
-        featureLabels.clear();
         os << "##indel_scoring_features=";
-        for (unsigned featureIndex = 0; featureIndex < GERMLINE_INDEL_SCORING_FEATURES::SIZE; ++featureIndex)
-        {
-            if (featureIndex > 0)
-            {
-                os << ",";
-            }
-            const std::string featureLabel(GERMLINE_INDEL_SCORING_FEATURES::get_feature_label(featureIndex));
-            const auto retVal = featureLabels.insert(featureLabel);
-            if (not retVal.second)
-            {
-                repeatedFeatureLabelError("indel", featureLabel);
-            }
-            os << featureLabel;
-        }
-        for (unsigned featureIndex = 0; featureIndex < GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-        {
-            os << ',';
-            const std::string featureLabel(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::get_feature_label(featureIndex));
-            const auto retVal = featureLabels.insert(featureLabel);
-            if (not retVal.second)
-            {
-                repeatedFeatureLabelError("indel", featureLabel);
-            }
-            os << featureLabel;
-        }
+        writeExtendedFeatureSet(GERMLINE_INDEL_SCORING_FEATURES::getInstance(),
+                                GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::getInstance(),
+                                "indel", os);
         os << "\n";
     }
 

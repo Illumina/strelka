@@ -146,18 +146,40 @@ private:
 };
 
 
-template<typename _evs_featureset,
-         typename _evs_dev_featureset>
 struct strelka_shared_modifiers
 {
     bool isEVS = false;
     double EVS = 0;
     strelka_filter_keeper filters;
-    VariantScoringFeatureKeeper<_evs_featureset> features;
-    VariantScoringFeatureKeeper<_evs_dev_featureset> dfeatures;
+    VariantScoringFeatureKeeper features;
+    VariantScoringFeatureKeeper dfeatures;
+protected:
+    /// protected so that subclass is resposible for lifetime
+    /// of featureSets
+    strelka_shared_modifiers(
+        const FeatureSet& featureSet,
+        const FeatureSet& developmentFeatureSet)
+    : features(featureSet),
+      dfeatures(developmentFeatureSet)
+    {}
 };
 
 
-typedef strelka_shared_modifiers<SOMATIC_SNV_SCORING_FEATURES, SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES> strelka_shared_modifiers_snv;
-typedef strelka_shared_modifiers<SOMATIC_INDEL_SCORING_FEATURES, SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES> strelka_shared_modifiers_indel;
+struct strelka_shared_modifiers_snv : public strelka_shared_modifiers
+{
+    strelka_shared_modifiers_snv()
+        : strelka_shared_modifiers(
+        SOMATIC_SNV_SCORING_FEATURES::getInstance(),
+        SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::getInstance())
+    {}
+};
 
+
+struct strelka_shared_modifiers_indel : public strelka_shared_modifiers
+{
+    strelka_shared_modifiers_indel()
+        : strelka_shared_modifiers(
+        SOMATIC_INDEL_SCORING_FEATURES::getInstance(),
+        SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES::getInstance())
+    {}
+};
