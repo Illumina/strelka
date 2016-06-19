@@ -94,14 +94,13 @@ private:
 };
 
 
-/// first push into a generalized Allele Genotype object which
-/// could apply to SNVs and indels
+/// generalized allele genotype object which could apply to SNVs and indels
 ///
 /// to make this a high performance object, we fix the array sizes
 /// for now
 ///
 /// genotype ordering follows VCF convention
-////
+///
 /// first allele is always the implicit reference allele
 ///
 struct AlleleGroupGenotype
@@ -176,7 +175,7 @@ isAllelePresent(
     }
 }
 
-/// return the heterozygous genotype including alleleId and reference
+/// return the heterozygous genotype composed of (alleleId, reference allele)
 inline
 index_t
 getAlleleHetId(
@@ -197,7 +196,7 @@ getAlleleHetId(
     }
 }
 
-/// return the homozygous genotype including alleleId and reference
+/// return the homozygous genotype composed by alleleId
 inline
 index_t
 getAlleleHomId(

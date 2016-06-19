@@ -23,11 +23,11 @@
 #include "OrthogonalVariantAlleleCandidateGroup.hh"
 
 
-/// ranks the allels in the input 'alleles' set according
+/// ranks the alleles in the input 'alleles' set according
 /// to supporting read evidence in sample 'sampleId'
 ///
 /// \param[in] sampleId index of the sample from which ranking evidence will be drawn
-/// \param[in] alleleGroup unsoted list of input alleles
+/// \param[in] alleleGroup unsorted list of input alleles
 ///
 void
 rankOrthogonalAllelesInSample(

@@ -250,7 +250,7 @@ updateFromAlleleGroup(
     double& refAllele_lnp,
     double& variantAlleleGroup_lnp)
 {
-    bool isAnyAlleleEligable(false);
+    bool isAnyAlleleEligible(false);
     bool isAnyAlleleScored(false);
     unsigned maxVariantAlleleIndex(0);
 
@@ -260,7 +260,7 @@ updateFromAlleleGroup(
         const IndelKey& variantAlleleKey(variantAlleleGroup.key(variantAlleleIndex));
         if (variantAlleleKey == excludeAlleleKey) continue;
 
-        isAnyAlleleEligable = true;
+        isAnyAlleleEligible = true;
 
         const IndelData& id(variantAlleleGroup.data(variantAlleleIndex));
         const IndelSampleData& isd(id.getSampleData(sampleId));
@@ -277,10 +277,9 @@ updateFromAlleleGroup(
             variantAlleleGroup_lnp = AlleleReadScores.indel;
             maxVariantAlleleIndex = variantAlleleIndex;
         }
-        variantAlleleGroup_lnp = std::max(variantAlleleGroup_lnp, (double) AlleleReadScores.indel);
     }
 
-    if (isAnyAlleleEligable and (not isAnyAlleleScored))
+    if (isAnyAlleleEligible and (not isAnyAlleleScored))
     {
         variantAlleleGroup_lnp = std::max(variantAlleleGroup_lnp, refAllele_lnp);
     }

@@ -502,9 +502,10 @@ process_pos_indel_single_sample(
 
 
 
-/// TEMPORARY
 /// refine topVariantAlleleGroup to consider alts shared by all top alleles, then rerank
 /// and re-select top groupLocusPloidy alleles
+///
+/// TODO: move this to a shared N-ploid genotype service module
 static
 void
 addAllelesAtOtherPositions(
@@ -615,7 +616,9 @@ addAllelesAtOtherPositions(
 
 
 
-/// TEMPORARY
+/// facilitiate final bookkeeping required to insert starling_diploid_indel in gVCF
+///
+/// TODO retire the starling_diploid_indel based indel stream to gVCF
 static
 void
 insertIndelInGvcf(
@@ -647,8 +650,9 @@ insertIndelInGvcf(
 }
 
 
-
-/// TEMPORARY
+/// translate AG_GENOTYPE to older genotype indices
+///
+/// TODO retire the old STAR_DIINDEL scheme and remove these conversion routines
 namespace AG_GENOTYPE
 {
 static
@@ -693,7 +697,7 @@ mapAlleleToDindel(
 
 
 
-/// TEMPORARY
+/// TODO remove this function once we eliminate starling_diploid_indel as an intermediary format
 static
 starling_diploid_indel
 locusGenotypeToDindel(
@@ -751,11 +755,13 @@ locusGenotypeToDindel(
 
 
 
-/// TEMPORARY
+/// convert the new AlleleGroupGenotype format to 0..N similar starling_diploid_indel intermediates as a
+/// tempoary way for this method to communicate with the gVCF writer
 ///
 /// Note that ploidy provided here is the actual ploidy value for this locus rather than the one used by the
 /// caller, these two values should only be different when ploidy==0
 ///
+/// TODO remove this function once we eliminate starling_diploid_indel as an intermediary format
 static
 bool
 hackDiplotypeCallToCopyNumberCalls(
@@ -820,17 +826,19 @@ process_pos_indel_single_sample_digt(
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
-    // define groups of overlapping alleles:
+    // define groups of overlapping alleles to rank and then genotype.
     //
-    // alleles should form "conflict graphs", where an edge exists
-    // between two alleles which cannot exist together on the same haplotype
+    // overlapping alleles can be thought to form "conflict graphs", where an edge exists between two alleles
+    // which cannot exist together on the same haplotype (called orthogonal alleles below). Without phasing
+    // information, we can only (accurately) genotype among sets of alleles forming a clique in the graph.
     //
-    // When only evaluating alleles at a single position in one sample, this graph is a clique,
-    // so the process of picking the mostly likely candidates is simple, we can pick the top
-    // two alleles (by some evidence metric), and add in the refernece if it is not one of the
-    // top two.
+    // Given above constraint, we first identify all candidates at the current position (which form a clique by
+    // definition), and then greedily add the top-ranking overlapping alleles at other positions if they
+    // preserve the orthogonal clique relationship of the set.
     //
-    // This method will have to be redesigned for multi-sample and/or non-clique conflict graphs.
+    // Once we have the largest possible allele set, the reference is implicitey added and all alleles are
+    // ranked. The top N are kept, N= ploicy. The reference is restored for the genotyping process if it is not
+    // in the top N.
     //
     OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
     for (; it!=it_end; ++it)
@@ -877,10 +885,10 @@ process_pos_indel_single_sample_digt(
     //
     const unsigned callerPloidy((groupLocusPloidy==0) ? 2 : groupLocusPloidy);
 
-    // if callerPloidy > orthogonalVariantAlleleCount, order alleles according to read evidence,
-    // and take the top 'callerPloidy' allele candidates (besides the reference)
+    // add candidate alleles to topVariant group, then order (including reference) according to
+    // read evidence and take the top N allele candidates, N = callerPloidy
     //
-    // track all forcedOutput alleles in a separate group (even if they go into topVariant group)
+    // track all forced output alleles in a separate group (even if they go into topVariant group)
     // to ensure that these are output even if not included in the most likely genotype
     //
     OrthogonalVariantAlleleCandidateGroup topVariantAlleleGroup;
@@ -901,22 +909,24 @@ process_pos_indel_single_sample_digt(
         selectTopOrthogonalAllelesInSample(sampleId, orthogonalVariantAlleles, callerPloidy, topVariantAlleleGroup);
     }
 
-    // refine topVariantAlleleGroup to consider alts shared by all top alleles, then rerank
+    // at this point topVariantAlleleGroup represents the best alleles at the current position, now we
+    // add conflicting alleles at other positions and re-rank, re-select the top alleles again:
     if (not topVariantAlleleGroup.empty())
     {
         addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
                                    callerPloidy, getIndelBuffer(), topVariantAlleleGroup);
     }
 
-    // score and report topVariantAlleleGroup
+    // genotype and report topVariantAlleleGroup
     //
     AlleleGroupGenotype locusGenotype;
     bool isOutputAlleles(false);
     {
+        // genotype the top N alleles
         getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), callerPloidy,
                                             sampleId, topVariantAlleleGroup, locusGenotype);
 
-        // (1) TEMPORARY hack called variant alleles into old dindel structure(s)
+        // coerce output into older data-structures for gVCF output
         static const bool isForcedOutput(false);
         isOutputAlleles = (hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, sampleId, pos,
                                                               topVariantAlleleGroup, locusGenotype,
@@ -926,25 +936,25 @@ process_pos_indel_single_sample_digt(
     // score and report any remaining forced output alleles
     //
     {
-        /// (2) trim the forcedGT allele set to take out any alleles already called as variants:
-        auto eraseForced = [&](const unsigned variantAlleleIndex)
-        {
-            const IndelKey& alleleKey(topVariantAlleleGroup.key(variantAlleleIndex));
-
-            /// TMP: brute-force the gt match search:
-            const unsigned forcedCount(forcedOutputAlleleGroup.size());
-            for (unsigned forcedIndex(0); forcedIndex < forcedCount; ++forcedIndex)
-            {
-                if (forcedOutputAlleleGroup.key(forcedIndex) == alleleKey)
-                {
-                    forcedOutputAlleleGroup.alleles.erase(forcedOutputAlleleGroup.alleles.begin() + forcedIndex);
-                    break;
-                }
-            }
-        };
-
+        // trim the forced output allele set to take out any alleles already called as variants:
         if (not forcedOutputAlleleGroup.empty())
         {
+            auto eraseForced = [&](const unsigned variantAlleleIndex)
+            {
+                const IndelKey& alleleKey(topVariantAlleleGroup.key(variantAlleleIndex));
+
+                /// TMP: brute-force the gt match search:
+                const unsigned forcedCount(forcedOutputAlleleGroup.size());
+                for (unsigned forcedIndex(0); forcedIndex < forcedCount; ++forcedIndex)
+                {
+                    if (forcedOutputAlleleGroup.key(forcedIndex) == alleleKey)
+                    {
+                        forcedOutputAlleleGroup.alleles.erase(forcedOutputAlleleGroup.alleles.begin() + forcedIndex);
+                        break;
+                    }
+                }
+            };
+
             const unsigned topVariantAlleleCount(topVariantAlleleGroup.size());
             for (unsigned variantAlleleIndex(0); variantAlleleIndex < topVariantAlleleCount; variantAlleleIndex++)
             {
@@ -955,7 +965,7 @@ process_pos_indel_single_sample_digt(
             }
         }
 
-        // enumerate support for remaining forcedOutput alleles compared to orthogonal genotyped variant alleles above
+        // enumerate support for remaining forced output alleles compared to orthogonal genotyped variant alleles above
         const unsigned forcedOutputAlleleCount(forcedOutputAlleleGroup.size());
         for (unsigned forcedOutputAlleleIndex(0);
              forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
@@ -966,11 +976,14 @@ process_pos_indel_single_sample_digt(
                                                    forcedOutputAlleleGroup,
                                                    forcedOutputAlleleIndex, forcedAlleleLocusGenotype);
 
-            // TEMPORARY, the above function should be set to compress <*> and REF alleles to just REF for now,
+            // The above function should be set to force <*> and REF alleles into just REF for now,
             // so the most likely genotype should not contain the second allele
+            //
+            // This alleles compression should be relaxed once we have a way to express this in
+            // the output.
             assert(not AG_GENOTYPE::isAllelePresent(forcedAlleleLocusGenotype.maxGenotypeIndex, 1));
 
-            // TEMPORARY fake an allele group with only the forced output allele so that we can output using
+            // fake an allele group with only the forced output allele so that we can output using
             // standard data structures
             OrthogonalVariantAlleleCandidateGroup fakeForcedOutputAlleleGroup;
             fakeForcedOutputAlleleGroup.addVariantAllele(forcedOutputAlleleGroup.alleles[forcedOutputAlleleIndex]);
