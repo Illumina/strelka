@@ -65,9 +65,6 @@ ScoringModelManager(
                     SCORING_CALL_TYPE::RNA,
                     SCORING_VARIANT_TYPE::INDEL)
             );
-
-            _snvEVSThreshold = (_snvScoringModelPtr->scoreFilterThreshold());
-            _indelEVSThreshold = (_indelScoringModelPtr->scoreFilterThreshold());
         }
         else
         {
@@ -135,7 +132,7 @@ classify_site(
             static const int maxEmpiricalVariantScore(60);
             smod.empiricalVariantScore = std::min(smod.empiricalVariantScore, maxEmpiricalVariantScore);
 
-            if (smod.empiricalVariantScore < _snvEVSThreshold)
+            if (smod.empiricalVariantScore < snvEVSThreshold())
             {
                 smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
             }
@@ -214,7 +211,7 @@ classify_indel_impl(
             static const int maxEmpiricalVariantScore(60);
             call.empiricalVariantScore = std::min(call.empiricalVariantScore, maxEmpiricalVariantScore);
 
-            if (call.empiricalVariantScore < _indelEVSThreshold)
+            if (call.empiricalVariantScore < indelEVSThreshold())
             {
                 call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
             }

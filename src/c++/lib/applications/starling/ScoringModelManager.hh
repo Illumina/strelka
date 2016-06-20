@@ -108,6 +108,18 @@ private:
         return static_cast<bool>(_legacyModelPtr);
     }
 
+    double
+    snvEVSThreshold() const
+    {
+        return _snvScoringModelPtr->scoreFilterThreshold();
+    }
+
+    double
+    indelEVSThreshold() const
+    {
+        return _indelScoringModelPtr->scoreFilterThreshold();
+    }
+
     // for setting the vcf header filters
     const gvcf_options& _opt;
     const gvcf_deriv_options& _dopt;
@@ -117,8 +129,4 @@ private:
 
     std::unique_ptr<VariantScoringModelServer> _snvScoringModelPtr;
     std::unique_ptr<VariantScoringModelServer> _indelScoringModelPtr;
-
-    double _snvEVSThreshold = 0;
-    double _indelEVSThreshold = 0;
 };
-
