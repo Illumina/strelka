@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"TGCCCTTTGGCAGAGCAGGTGTGCTGTGCTG");
 
-    vcfs.set_region("chr10:89717700-89717800");
+    vcfs.set_region("chr10:89717700-89717810");
 
     // tests that we can reset VCF regions
     BOOST_REQUIRE( vcfs.next() );
@@ -211,6 +211,21 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     BOOST_REQUIRE_EQUAL(vptr->pos, 89717785);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"AC");
+
+    BOOST_REQUIRE( vcfs.next() );
+    vptr = vcfs.get_record_ptr();
+    assert(vptr != nullptr);
+
+    // VCF record test for
+    // chr10   89717790        COMPLEX GAGCTGTG   AGCT ...
+    // testing that complex allele is reported as normalized
+    BOOST_REQUIRE( vptr->is_valid() );
+    BOOST_REQUIRE( vptr->is_indel() );
+    BOOST_REQUIRE( ! vptr->is_snv() );
+    BOOST_REQUIRE( vptr->is_normalized());
+    BOOST_REQUIRE_EQUAL(vptr->pos, 89717790);
+    BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
+    BOOST_REQUIRE_EQUAL(vptr->alt[0],"AGCT");
 
     // testing that next returns false after last valid variant
     // (test file has an invalid variant at the end that should be

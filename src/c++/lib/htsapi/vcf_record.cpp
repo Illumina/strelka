@@ -123,8 +123,8 @@ is_normalized() const
 {
     // normalized indels are left-aligned, reference-padded, and parsimonious
     // normalized SNVs are a single differing base
-    // normalized MNVs minimally have differing bases at the beginning and end
-    // of the ref and alt alleles
+    // normalized MNVs (and complex alleles) have differing bases at the beginning
+    // and end of the ref and alt alleles
     // see http://genome.sph.umich.edu/wiki/Variant_Normalization
     unsigned ref_length = ref.size();
 
@@ -156,6 +156,9 @@ is_normalized() const
                     }
                 }
             }
+            // if the first and last bases of alleles with two differing lengths
+            // do not match, the record represents a complex allele, and fulfills
+            // normalization requirements
         }
         else
         {
