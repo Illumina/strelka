@@ -139,7 +139,19 @@ struct VariantScoringFeatureKeeper
     }
 
     void
-    write(
+    writeValues(
+        std::ostream& os) const
+    {
+        const unsigned featureSize(_featureSet.size());
+        for (unsigned featureIndex(0); featureIndex<featureSize; ++featureIndex)
+        {
+            if (featureIndex > 0) os << ',';
+            os << get(featureIndex);
+        }
+    }
+
+    void
+    dump(
         std::ostream& os) const
     {
         const unsigned featureSize(_featureSet.size());

@@ -465,19 +465,9 @@ write_vcf_somatic_snv_genotype_strand_grid(
         const StreamScoper ss(os);
         os << std::setprecision(5);
         os << ";EVSF=";
-        for (unsigned featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_FEATURES::SIZE; ++featureIndex)
-        {
-            if (featureIndex > 0)
-            {
-                os << ",";
-            }
-            os << smod.features.get(static_cast<SOMATIC_SNV_SCORING_FEATURES::index_t>(featureIndex));
-        }
-        for (int featureIndex = 0; featureIndex < SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::SIZE; ++featureIndex)
-        {
-            os << ",";
-            os << smod.dfeatures.get(static_cast<SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES::index_t>(featureIndex));
-        }
+        smod.features.writeValues(os);
+        os << ",";
+        smod.dfeatures.writeValues(os);
     }
 
     //FORMAT:
