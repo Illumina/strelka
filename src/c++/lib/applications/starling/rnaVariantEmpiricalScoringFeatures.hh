@@ -19,7 +19,7 @@
 //
 
 /*
- *      Author: mkallberg
+ *  \author mkallberg
  */
 
 #pragma once
@@ -29,42 +29,42 @@
 #include <cassert>
 
 
-struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
+struct RNA_SNV_SCORING_FEATURES : public FeatureSet
 {
     static
     const FeatureSet&
     getInstance()
     {
-        static const GERMLINE_SNV_SCORING_FEATURES featureSet;
+        static const RNA_SNV_SCORING_FEATURES featureSet;
         return featureSet;
     }
 
     const char*
     getName() const override
     {
-        return "GERMLINE_SNV_SCORING_FEATURES";
+        return "RNA_SNV_SCORING_FEATURES";
     }
 
     /** any change here must be done together with changing
-        src/python/scoringModelTraining/germline/lib/features/StrelkaSNV.py
+        src/python/scoringModelTraining/rna/lib/features/StrelkaSNV.py
      */
     enum index_t
     {
+        GT,
         QUAL,
-        F_GQX,
-        F_GQ,
-        I_SNVSB,
-        I_SNVHPOL,
         F_DP,
         F_DPF,
+        F_GQ,
+        F_GQX,
+        I_AvgBaseQ,
+        I_AvgPos,
+        I_BaseQRankSum,
+        I_ReadPosRankSum,
+        I_SNVHPOL,
+        I_SNVSB,
         AD0,
         AD1,
-        I_MQ,
-        I_ReadPosRankSum,
-        I_BaseQRankSum,
-        I_MQRankSum,
-        ABlower,
-        AB,
+        ADR,
         SIZE
     };
 
@@ -79,36 +79,36 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
+        case GT:
+            return "GT";
         case QUAL:
             return "QUAL";
-        case F_GQX:
-            return "F_GQX";
-        case F_GQ:
-            return "F_GQ";
-        case I_SNVSB:
-            return "I_SNVSB";
-        case I_SNVHPOL:
-            return "I_SNVHPOL";
         case F_DP:
             return "F_DP";
         case F_DPF:
             return "F_DPF";
+        case F_GQ:
+            return "F_GQ";
+        case F_GQX:
+            return "F_GQX";
+        case I_AvgBaseQ:
+            return "I_AvgBaseQ";
+        case I_AvgPos:
+             return "I_AvgPos";
+        case I_BaseQRankSum:
+            return "I_BaseQRankSum";
+        case I_ReadPosRankSum:
+            return "I_ReadPosRankSum";
+        case I_SNVHPOL:
+            return "I_SNVHPOL";
+        case I_SNVSB:
+            return "I_SNVSB";
         case AD0:
             return "AD0";
         case AD1:
             return "AD1";
-        case I_MQ:
-            return "I_MQ";
-        case I_ReadPosRankSum:
-            return "I_ReadPosRankSum";
-        case I_BaseQRankSum:
-            return "I_BaseQRankSum";
-        case I_MQRankSum:
-            return "I_MQRankSum";
-        case ABlower:
-            return "ABlower";
-        case AB:
-            return "AB";
+        case ADR:
+            return "ADR";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -117,33 +117,33 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
 };
 
 
+///
 /// additional experimental features not used in the current scoring model
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
+struct RNA_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 {
     static
     const FeatureSet&
     getInstance()
     {
-        static const GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES featureSet;
+        static const RNA_SNV_SCORING_DEVELOPMENT_FEATURES featureSet;
         return featureSet;
     }
 
     const char*
     getName() const override
     {
-        return "GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES";
+        return "RNA_SNV_SCORING_DEVELOPMENT_FEATURES";
     }
 
     enum index_t
     {
-        I_RawPos,
-        I_RawBaseQ,
+        I_MQ,
+        I_MQRankSum,
         mapqZeroFraction,
         F_DP_NORM,
-        TDP_NORM,
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
@@ -166,16 +166,14 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case I_RawPos:
-            return "I_RawPos";
-        case I_RawBaseQ:
-            return "I_RawBaseQ";
+        case I_MQ:
+            return "I_MQ";
+        case I_MQRankSum:
+            return "I_MQRankSum";
         case mapqZeroFraction:
             return "mapqZeroFraction";
         case F_DP_NORM:
             return "F_DP_NORM";
-        case TDP_NORM:
-            return "TDP_NORM";
         case QUAL_NORM:
             return "QUAL_NORM";
         case F_GQX_NORM:
@@ -197,28 +195,27 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return nullptr;
         }
     }
-
 };
 
 
 
-struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
+struct RNA_INDEL_SCORING_FEATURES : public FeatureSet
 {
     static
     const FeatureSet&
     getInstance()
     {
-        static const GERMLINE_INDEL_SCORING_FEATURES featureSet;
+        static const RNA_INDEL_SCORING_FEATURES featureSet;
         return featureSet;
     }
 
     const char*
     getName() const override
     {
-        return "GERMLINE_INDEL_SCORING_FEATURES";
+        return "RNA_INDEL_SCORING_FEATURES";
     }
 
-    /** Make sure the features are the same as used in the model
+    /** Make sure the features are the same as used in the python training code
      */
     enum index_t
     {
@@ -281,20 +278,20 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
 ///
 /// these should only be output as part of a non-default training mode
 ///
-struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
+struct RNA_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 {
     static
     const FeatureSet&
     getInstance()
     {
-        static const GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES featureSet;
+        static const RNA_INDEL_SCORING_DEVELOPMENT_FEATURES featureSet;
         return featureSet;
     }
 
     const char*
     getName() const override
     {
-        return "GERMLINE_INDEL_DEVELOPMENT_SCORING_FEATURES";
+        return "RNA_INDEL_DEVELOPMENT_SCORING_FEATURES";
     }
 
     enum index_t
@@ -303,7 +300,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         F_MQ,
         mapqZeroFraction,
         F_DPI_NORM,
-        TDP_NORM,
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
@@ -335,8 +331,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "mapqZeroFraction";
         case F_DPI_NORM:
             return "F_DPI_NORM";
-        case TDP_NORM:
-            return "TDP_NORM";
         case QUAL_NORM:
             return "QUAL_NORM";
         case F_GQX_NORM:

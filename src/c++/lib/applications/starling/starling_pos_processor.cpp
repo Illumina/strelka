@@ -283,7 +283,7 @@ process_pos_snp_single_sample_impl(
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
 
-    std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced));
+    std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(_dopt.gvcf, pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced));
     si->n_used_calls=cpi.n_used_calls();
     si->n_unused_calls=cpi.n_unused_calls();
 
@@ -603,7 +603,7 @@ static
 void
 insertIndelInGvcf(
     const starling_base_options& opt,
-    const starling_base_deriv_options& dopt,
+    const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const pos_basecall_buffer& basecallBuffer,
     const IndelKey& indelKey,
@@ -626,7 +626,7 @@ insertIndelInGvcf(
     get_starling_indel_sample_report_info(opt, dopt, indelKey, indelSampleData, basecallBuffer,
                                           is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
 
-    gvcfer.add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(indelKey, indelData, dindel, indelReportInfo, indelSampleReportInfo)));
+    gvcfer.add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(dopt.gvcf, indelKey, indelData, dindel, indelReportInfo, indelSampleReportInfo)));
 }
 
 
@@ -746,7 +746,7 @@ static
 bool
 hackDiplotypeCallToCopyNumberCalls(
     const starling_base_options& opt,
-    const starling_base_deriv_options& dopt,
+    const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const pos_basecall_buffer& basecallBuffer,
     const unsigned sampleId,
@@ -1021,7 +1021,7 @@ process_pos_indel_single_sample_continuous(
 
         starling_indel_sample_report_info isri;
         get_starling_indel_sample_report_info(_opt, _dopt,indelKey,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
-        starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, indelReportInfo, isri, *info);
+        starling_continuous_variant_caller::add_indel_call(_opt, _dopt.gvcf, indelKey, indelData, indelReportInfo, isri, *info);
     }
     if (info && (info->is_indel() || info->is_forced_output()))
     {

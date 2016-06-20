@@ -47,17 +47,17 @@ struct ScoringModelManager
         const gvcf_deriv_options& gvcfDerivedOptions);
 
     void
-    classify_site(
+        classify_site(
         const GermlineDiploidSiteCallInfo& si,
         GermlineDiploidSiteSimpleGenotypeInfo& smod) const;
 
     void
-    classify_indel(
+        classify_indel(
         const GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     void
-    classify_indels(
+        classify_indels(
         std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indels) const;
 
     // mimics behavior of previous hard filters
@@ -69,7 +69,7 @@ struct ScoringModelManager
 
 
     int
-    get_case_cutoff(const LEGACY_CALIBRATION_MODEL::var_case my_case) const;
+        get_case_cutoff(const LEGACY_CALIBRATION_MODEL::var_case my_case) const;
 
     bool
     isNoEVSModel() const
@@ -78,13 +78,14 @@ struct ScoringModelManager
     }
 
     bool
-    isLegacyLogisticEVSModel() const;
+        isLegacyLogisticEVSModel() const;
 
 private:
     LogisticAndRuleScoringModels& getLegacyModel()
     {
         return *_legacyModelPtr;
     }
+
     const LogisticAndRuleScoringModels& getLegacyModel() const
     {
         return *_legacyModelPtr;
@@ -97,7 +98,7 @@ private:
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     void
-    classify_indel_impl(
+        classify_indel_impl(
         const bool is_model_usable,
         const GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
@@ -124,6 +125,7 @@ private:
     const gvcf_options& _opt;
     const gvcf_deriv_options& _dopt;
     bool _isReportEVSFeatures;
+    bool _isRNA;
 
     std::unique_ptr<LogisticAndRuleScoringModels> _legacyModelPtr;
 

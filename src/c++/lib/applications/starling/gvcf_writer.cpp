@@ -64,6 +64,7 @@ gvcf_writer(
     , _dopt(dopt.gvcf)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
+    , _empty_site(_dopt)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _CM(cm)
 {

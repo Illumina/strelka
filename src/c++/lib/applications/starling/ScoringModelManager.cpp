@@ -39,30 +39,31 @@ ScoringModelManager(
     const gvcf_deriv_options& gvcfDerivedOptions)
     : _opt(opt.gvcf),
       _dopt(gvcfDerivedOptions),
-      _isReportEVSFeatures(opt.isReportEVSFeatures)
+      _isReportEVSFeatures(opt.isReportEVSFeatures),
+      _isRNA(opt.isRNA)
 {
     if (not opt.germline_variant_scoring_models_filename.empty())
     {
+        /// this if is TEMPORARY until legacy support is taken out:
         if (opt.isRNA)
         {
-            assert (opt.germline_variant_scoring_model_name.empty());
+            const SCORING_CALL_TYPE::index_t callType(opt.isRNA ? SCORING_CALL_TYPE::RNA : SCORING_CALL_TYPE::GERMLINE);
 
-            std::unique_ptr<FeatureSet> snvFeatureSetPtr(new GERMLINE_SNV_SCORING_FEATURES());
-            std::unique_ptr<FeatureSet> indelFeatureSetPtr(new GERMLINE_INDEL_SCORING_FEATURES());
+            assert (opt.germline_variant_scoring_model_name.empty());
 
             _snvScoringModelPtr.reset(
                 new VariantScoringModelServer(
-                    snvFeatureSetPtr->getFeatureMap(),
+                    _dopt.snvFeatureSet.getFeatureMap(),
                     opt.germline_variant_scoring_models_filename,
-                    SCORING_CALL_TYPE::RNA,
+                    callType,
                     SCORING_VARIANT_TYPE::SNV)
             );
 
             _indelScoringModelPtr.reset(
                 new VariantScoringModelServer(
-                    indelFeatureSetPtr->getFeatureMap(),
+                    _dopt.indelFeatureSet.getFeatureMap(),
                     opt.germline_variant_scoring_models_filename,
-                    SCORING_CALL_TYPE::RNA,
+                    callType,
                     SCORING_VARIANT_TYPE::INDEL)
             );
         }
@@ -109,7 +110,7 @@ classify_site(
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
         const bool isUniformDepthExpected(_dopt.is_max_depth());
-        si.computeEmpiricalScoringFeatures(isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, smod);
+        si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, smod);
     }
 
     //si.smod.filters.reset(); // make sure no filters have been applied prior
@@ -125,7 +126,7 @@ classify_site(
             {
                 static const bool isComputeDevelopmentFeatures(false);
                 const bool isUniformDepthExpected(_dopt.is_max_depth());
-                si.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, smod);
+                si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, smod);
             }
             smod.empiricalVariantScore = static_cast<int>(_snvScoringModelPtr->scoreVariant(smod.features.getAll()));
 
@@ -189,7 +190,7 @@ classify_indel_impl(
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
         const bool isUniformDepthExpected(_dopt.is_max_depth());
-        call.computeEmpiricalScoringFeatures(isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
+        call.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
     }
 
     if ( (!isNoEVSModel()) && isVariantUsableInEVSModel )
@@ -204,7 +205,7 @@ classify_indel_impl(
             {
                 static const bool isComputeDevelopmentFeatures(false);
                 const bool isUniformDepthExpected(_dopt.is_max_depth());
-                call.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, ii.is_hetalt());
+                call.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, ii.is_hetalt());
             }
             call.empiricalVariantScore = static_cast<int>(_indelScoringModelPtr->scoreVariant(call.features.getAll()));
 
@@ -216,7 +217,6 @@ classify_indel_impl(
                 call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
             }
         }
-
     }
     else
     {

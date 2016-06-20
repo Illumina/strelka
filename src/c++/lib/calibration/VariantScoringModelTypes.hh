@@ -31,6 +31,7 @@ namespace SCORING_CALL_TYPE
 {
 enum index_t
 {
+    GERMLINE,
     RNA,
     SOMATIC,
     SIZE
@@ -42,6 +43,8 @@ get_label(const index_t i)
 {
     switch (i)
     {
+    case GERMLINE:
+        return "Germline";
     case RNA:
         return "RNASeq";
     case SOMATIC:

@@ -61,302 +61,118 @@ public:
     }
 };
 
-// positive tests
 
-BOOST_AUTO_TEST_CASE( simple_3mer )
+
+static
+std::shared_ptr<dummy_variant_sink>
+getTestSink(
+    const char* refSeq,
+    const char* read1Seq,
+    const char* read2Seq,
+    const int phasingWindow,
+    const int depth)
 {
+    assert(strlen(read1Seq) == strlen(read2Seq));
+
     reference_contig_segment rcs;
-    rcs.seq() = "ACGTACGTACGT";
+    rcs.seq() = refSeq;
     pos_basecall_buffer bc_buff(rcs);
 
-    auto r1 = "ACGTACGTAC";
-    auto r2 = "ACGTGCTTAC";
     pos_t read_pos = 0;
 
     // add 2 haplotypes of reads
-    for (int i = 0; i < 10; i++)
-        insert_read(r1, read_pos, bc_buff);
-    for (int i = 0; i < 10; i++)
-        insert_read(r2, read_pos, bc_buff);
-
+    for (int i = 0; i < depth; i++)
+    {
+        insert_read(read1Seq, read_pos, bc_buff);
+        insert_read(read2Seq, read_pos, bc_buff);
+    }
     starling_options opt;
-    opt.phasing_window = 3;
+    opt.phasing_window = phasingWindow;
     opt.do_codon_phasing = true;
+    opt.is_user_genome_size = true;
+    opt.user_genome_size = rcs.seq().size();
+    opt.bam_seq_name = "dummy";
+    starling_deriv_options dopt(opt, rcs);
 
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    dummy_variant_sink& sink(*next);
 
-
-    for (int i = 0; r1[i]; i++)
+    for (int i = 0; read1Seq[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(
+            new GermlineDiploidSiteCallInfo(dopt.gvcf, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
+        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(read1Seq[i]), base_to_id(read2Seq[i]));
+        si->dgt.is_snp = si->ref != read1Seq[i] || si->ref != read2Seq[i];
 
         phaser.process(std::move(si));
     }
     phaser.flush();
-    BOOST_CHECK_EQUAL("GCT", sink.the_sites.front()->phased_alt);
 
+    return next;
+}
+
+static
+void
+positiveTest(
+    const char* refSeq,
+    const char* read1Seq,
+    const char* read2Seq,
+    const int phasingWindow,
+    const char* expectedPhasedAlt)
+{
+    const auto next = getTestSink(refSeq, read1Seq, read2Seq, phasingWindow, 10);
+    BOOST_CHECK_EQUAL(expectedPhasedAlt, next->the_sites.front()->phased_alt);
+}
+
+// positive tests
+BOOST_AUTO_TEST_CASE( simple_3mer )
+{
+    positiveTest("ACGTACGTACGT", "ACGTACGTAC", "ACGTGCTTAC", 3, "GCT");
 }
 
 BOOST_AUTO_TEST_CASE( two_adjacent_3mers )
 {
-    reference_contig_segment rcs;
-    rcs.seq() = "ACGTACGTACGTACGT";
-    pos_basecall_buffer bc_buff(rcs);
-
-    auto r1 = "ACGTACGTACGTACGT";
-    auto r2 = "ACGTGCTTGCTTACGT";
-    pos_t read_pos = 0;
-
-    // add 2 haplotypes of reads
-    for (int i = 0; i < 10; i++)
-        insert_read(r1, read_pos, bc_buff);
-    for (int i = 0; i < 10; i++)
-        insert_read(r2, read_pos, bc_buff);
-
-    starling_options opt;
-    opt.phasing_window = 3;
-    opt.do_codon_phasing = true;
-
-    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
-    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    dummy_variant_sink& sink(*next);
-
-
-
-    for (int i = 0; r1[i]; i++)
-    {
-        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
-        si->smod.is_covered = si->smod.is_used_covered = true;
-        si->dgt.ref_gt = base_to_id(si->ref);
-
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
-
-        phaser.process(std::move(si));
-    }
-    phaser.flush();
-    BOOST_CHECK_EQUAL("GCTTGCT", sink.the_sites.front()->phased_alt);
+    positiveTest("ACGTACGTACGTACGT", "ACGTACGTACGTACGT", "ACGTGCTTGCTTACGT", 3, "GCTTGCT");
 }
 
 BOOST_AUTO_TEST_CASE( handles_snps_at_start )
 {
-    reference_contig_segment rcs;
-    rcs.seq() = "ACGTACGTACGT";
-    pos_basecall_buffer bc_buff(rcs);
-
-    auto r1 = "ACGTACGTAC";
-    auto r2 = "GGGTACGTAC";
-    pos_t read_pos = 0;
-
-    // add 2 haplotypes of reads
-    for (int i = 0; i < 10; i++)
-        insert_read(r1, read_pos, bc_buff);
-    for (int i = 0; i < 10; i++)
-        insert_read(r2, read_pos, bc_buff);
-
-    starling_options opt;
-    opt.phasing_window = 3;
-    opt.do_codon_phasing = true;
-
-    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
-    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    dummy_variant_sink& sink(*next);
-
-    for (int i = 0; r1[i]; i++)
-    {
-        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
-        si->smod.is_covered = si->smod.is_used_covered = true;
-        si->dgt.ref_gt = base_to_id(si->ref);
-
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
-
-        phaser.process(std::move(si));
-    }
-    phaser.flush();
-    BOOST_CHECK_EQUAL("GG", sink.the_sites.front()->phased_alt);
+    positiveTest("ACGTACGTACGT", "ACGTACGTAC", "GGGTACGTAC", 3, "GG");
 }
 
 
 BOOST_AUTO_TEST_CASE( respects_phasing_window )
 {
-    reference_contig_segment rcs;
-    rcs.seq() = "ACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT";
-    pos_basecall_buffer bc_buff(rcs);
-
-    auto r1 = "ACGTACGTACGTACGTACGTACGT";
-    auto r2 = "ACGTAAGAACGGAGGTACGTACGT";
-    pos_t read_pos = 0;
-
-    // add 2 haplotypes of reads
-    for (int i = 0; i < 10; i++)
-        insert_read(r1, read_pos, bc_buff);
-    for (int i = 0; i < 10; i++)
-        insert_read(r2, read_pos, bc_buff);
-
-    starling_options opt;
-    opt.phasing_window = 5;
-    opt.do_codon_phasing = true;
-
-    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
-    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    dummy_variant_sink& sink(*next);
-
-
-    for (int i = 0; r1[i]; i++)
-    {
-        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
-        si->smod.is_covered = si->smod.is_used_covered = true;
-        si->dgt.ref_gt = base_to_id(si->ref);
-
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
-
-        phaser.process(std::move(si));
-    }
-    phaser.flush();
-    BOOST_CHECK_EQUAL ("AGAACGGAG", sink.the_sites.front()->phased_alt);
+    positiveTest("ACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT", "ACGTACGTACGTACGTACGTACGT",
+                 "ACGTAAGAACGGAGGTACGTACGT", 5, "AGAACGGAG");
 }
 
 BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps)
 {
-    reference_contig_segment rcs;
-    rcs.seq() = "ACGTACGTACGT";
-    pos_basecall_buffer bc_buff(rcs);
-
-    auto r1 = "ACATGCGTAC";
-    auto r2 = "ACCTCCGTAC";
-    pos_t read_pos = 0;
-
-    // add 2 haplotypes of reads
-    for (int i = 0; i < 10; i++)
-        insert_read(r1, read_pos, bc_buff);
-    for (int i = 0; i < 10; i++)
-        insert_read(r2, read_pos, bc_buff);
-
-    starling_options opt;
-    opt.phasing_window = 3;
-    opt.do_codon_phasing = true;
-
-    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
-    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    dummy_variant_sink& sink(*next);
-
-
-    for (int i = 0; r1[i]; i++)
-    {
-        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
-        si->smod.is_covered = si->smod.is_used_covered = true;
-        si->dgt.ref_gt = base_to_id(si->ref);
-
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
-
-        phaser.process(std::move(si));
-    }
-    phaser.flush();
-    BOOST_CHECK_EQUAL("ATG,CTC", sink.the_sites.front()->phased_alt);
+    positiveTest("ACGTACGTACGT", "ACATGCGTAC", "ACCTCCGTAC", 3, "ATG,CTC");
 }
 
 BOOST_AUTO_TEST_CASE(test_overlapping_phased_snps_different_size)
 {
-    reference_contig_segment rcs;
-    rcs.seq() = "ACGTACGTACGT";
-    pos_basecall_buffer bc_buff(rcs);
-
-    auto r1 = "ACGAAAGTAC";
-    auto r2 = "ACATCCGTAC";
-    pos_t read_pos = 0;
-
-    // add 2 haplotypes of reads
-    for (int i = 0; i < 10; i++)
-        insert_read(r1, read_pos, bc_buff);
-    for (int i = 0; i < 10; i++)
-        insert_read(r2, read_pos, bc_buff);
-
-    starling_options opt;
-    opt.phasing_window = 5;
-    opt.do_codon_phasing = true;
-
-    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
-    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    dummy_variant_sink& sink(*next);
-
-    for (int i = 0; r1[i]; i++)
-    {
-        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
-        si->smod.is_covered = si->smod.is_used_covered = true;
-        si->dgt.ref_gt = base_to_id(si->ref);
-
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
-
-        phaser.process(std::move(si));
-    }
-    phaser.flush();
-    BOOST_CHECK_EQUAL("ATCC,GAAA", sink.the_sites.front()->phased_alt);
+    positiveTest("ACGTACGTACGT", "ACGAAAGTAC", "ACATCCGTAC", 5, "ATCC,GAAA");
 }
 
 
 // negative tests
 BOOST_AUTO_TEST_CASE( just_one_snp )
 {
-    reference_contig_segment rcs;
-    rcs.seq() = "ACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT";
-    pos_basecall_buffer bc_buff(rcs);
+    const auto next = getTestSink("ACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT", "ACGTACGT", "ACGGACGT", 3, 10);
 
-    auto r1 = "ACGTACGT";
-    auto r2 = "ACGGACGT";
-    pos_t read_pos = 0;
-
-    // add 2 haplotypes of reads
-    for (int i = 0; i < 10; i++)
-        insert_read(r1, read_pos, bc_buff);
-    for (int i = 0; i < 10; i++)
-        insert_read(r2, read_pos, bc_buff);
-
-    starling_options opt;
-    opt.phasing_window = 3;
-    opt.do_codon_phasing = true;
-
-    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
-    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    dummy_variant_sink& sink(*next);
-
-
-    for (int i = 0; r1[i]; i++)
-    {
-        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
-        si->smod.is_covered = si->smod.is_used_covered = true;
-        si->smod.gq = si->dgt.genome.snp_qphred = si->smod.empiricalVariantScore = 40;
-        si->dgt.ref_gt = base_to_id(si->ref);
-
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
-
-        phaser.process(std::move(si));
-    }
-    phaser.flush();
-    for (auto& phased_variant : sink.the_sites)
+    for (auto& phased_variant : next->the_sites)
     {
         BOOST_CHECK(!phased_variant->smod.filters.any());
         BOOST_CHECK(!phased_variant->smod.is_phased_region);
     }
-    BOOST_CHECK_EQUAL(sink.the_sites.size(), 1);
+    BOOST_CHECK_EQUAL(next->the_sites.size(), 1);
 }
 
 BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
@@ -389,6 +205,10 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     starling_options opt;
     opt.phasing_window = 3;
     opt.do_codon_phasing = true;
+    opt.is_user_genome_size = true;
+    opt.user_genome_size = rcs.seq().size();
+    opt.bam_seq_name = "dummy";
+    starling_deriv_options dopt(opt, rcs);
 
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
@@ -398,7 +218,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(dopt.gvcf, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->smod.gq = si->dgt.genome.snp_qphred = si->smod.empiricalVariantScore = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
@@ -418,45 +238,11 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
 
 BOOST_AUTO_TEST_CASE( low_depth_doesnt_phase )
 {
-    reference_contig_segment rcs;
-    rcs.seq() = "ACGTACGTACGT";
-    pos_basecall_buffer bc_buff(rcs);
+    const auto next = getTestSink("ACGTACGTACGT", "ACGTACGTAC", "ACGTGCTTAC", 3, 4);
 
-    auto r1 = "ACGTACGTAC";
-    auto r2 = "ACGTGCTTAC";
-    pos_t read_pos = 0;
-
-    // add 2 haplotypes of reads, but only 4X
-    for (int i = 0; i < 4; i++)
-        insert_read(r1, read_pos, bc_buff);
-    for (int i = 0; i < 4; i++)
-        insert_read(r2, read_pos, bc_buff);
-
-    starling_options opt;
-    opt.phasing_window = 3;
-    opt.do_codon_phasing = true;
-
-    std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
-    Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    dummy_variant_sink& sink(*next);
-
-
-    for (int i = 0; r1[i]; i++)
-    {
-        const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(read_pos + i, rcs.get_base(read_pos + i), spi, 30));
-        si->smod.is_covered = si->smod.is_used_covered = true;
-        si->dgt.ref_gt = base_to_id(si->ref);
-
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
-        si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
-
-        phaser.process(std::move(si));
-    }
-    phaser.flush();
-    BOOST_CHECK_EQUAL(2, sink.the_sites.size());
-    BOOST_CHECK(sink.the_sites.front()->smod.is_phasing_insufficient_depth);
-    BOOST_CHECK(sink.the_sites.back()->smod.is_phasing_insufficient_depth);
+    BOOST_CHECK_EQUAL(2, next->the_sites.size());
+    BOOST_CHECK(next->the_sites.front()->smod.is_phasing_insufficient_depth);
+    BOOST_CHECK(next->the_sites.back()->smod.is_phasing_insufficient_depth);
 
 }
 

@@ -25,6 +25,7 @@
 #pragma once
 
 #include "blt_util/chrom_depth_map.hh"
+#include "calibration/featuresetUtil.hh"
 
 #include <string>
 #include <vector>
@@ -91,7 +92,8 @@ struct gvcf_deriv_options
 {
     gvcf_deriv_options(
         const gvcf_options& opt,
-        const std::string& bam_seq_name);
+        const std::string& bam_seq_name,
+        const bool isRNA);
 
     bool
     is_max_depth() const
@@ -103,4 +105,9 @@ struct gvcf_deriv_options
     double max_depth = 0;
     double norm_depth = 0;
     cdmap_t chrom_depth;
+
+    const FeatureSet& snvFeatureSet;
+    const FeatureSet& snvDevelopmentFeatureSet;
+    const FeatureSet& indelFeatureSet;
+    const FeatureSet& indelDevelopmentFeatureSet;
 };

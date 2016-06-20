@@ -23,7 +23,6 @@
 ///
 
 #include "gvcf_header.hh"
-#include "germlineVariantEmpiricalScoringFeatures.hh"
 #include "gvcf_locus_info.hh"
 #include "blt_util/io_util.hh"
 #include "htsapi/bam_header_util.hh"
@@ -233,14 +232,14 @@ finish_gvcf_header(
     if (opt.isReportEVSFeatures)
     {
         os << "##snv_scoring_features=";
-        writeExtendedFeatureSet(GERMLINE_SNV_SCORING_FEATURES::getInstance(),
-                                GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::getInstance(),
+        writeExtendedFeatureSet(dopt.snvFeatureSet,
+                                dopt.snvDevelopmentFeatureSet,
                                 "SNV", os);
         os << "\n";
 
         os << "##indel_scoring_features=";
-        writeExtendedFeatureSet(GERMLINE_INDEL_SCORING_FEATURES::getInstance(),
-                                GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::getInstance(),
+        writeExtendedFeatureSet(dopt.indelFeatureSet,
+                                dopt.indelDevelopmentFeatureSet,
                                 "indel", os);
         os << "\n";
     }

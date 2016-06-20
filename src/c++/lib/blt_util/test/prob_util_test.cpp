@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE( test_softmax_factor_scale )
     // test using softmax as a "safe" way to mult probs by interesting factors:
     //
 
-    // test1: a case where we can mult by a factor easily
+    // positiveTest: a case where we can mult by a factor easily
     {
         static const double val(0.000001);
         static const double factor(100);

@@ -29,9 +29,6 @@
 
 #include "starling_pile_test_run.hh"
 
-//#include "blt_util/istream_line_splitter.hh"
-//#include "blt_util/parse_util.hh"
-//#include "blt_util/seq_util.hh"
 #include "gvcf_locus_info.hh"
 #include "starling_common/PileupCleaner.hh"
 
@@ -68,7 +65,7 @@ call(
     static PileupCleaner pileupCleaner(_opt);
     const bool is_forced(true);
 
-    std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(pos,pi.get_ref_base(),pi,_opt.used_allele_count_min_qscore, is_forced));
+    std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(_dopt_ptr->gvcf, pos,pi.get_ref_base(),pi,_opt.used_allele_count_min_qscore, is_forced));
 
     // recreate data cache:
     CleanedPileup cpi;

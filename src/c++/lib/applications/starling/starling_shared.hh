@@ -100,7 +100,7 @@ struct starling_deriv_options : public starling_base_deriv_options
         const starling_options& opt,
         const reference_contig_segment& ref)
         : base_t(opt,ref),
-          gvcf(opt.gvcf,opt.bam_seq_name)
+          gvcf(opt.gvcf, opt.bam_seq_name, opt.isRNA)
     {}
 
     gvcf_deriv_options gvcf;

@@ -48,83 +48,63 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
 {
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1", std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    const gvcf_options gvcfOptions;
+    const std::string& chromName = "dummy";
+    const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, chromName, false);
 
+    auto getNewSite = [&](const pos_t pos)
+    {
+        std::unique_ptr<GermlineDiploidSiteCallInfo> site(new GermlineDiploidSiteCallInfo(gvcfDerivOptions));
+        site->pos = pos;
+        return std::move(site);
+    };
 
-    std::unique_ptr<GermlineDiploidSiteCallInfo> site(new GermlineDiploidSiteCallInfo());
-
-    site->pos = 50;
-    bsp.process(std::move(site));
-
-    BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
-    site.reset(new GermlineDiploidSiteCallInfo());
-    site->pos = 105;
-
-    bsp.process(std::move(site));
-    BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
-
-    site.reset(new GermlineDiploidSiteCallInfo());
-    site->pos = 150;
-
-    bsp.process(std::move(site));
+    bsp.process(std::move(getNewSite(50)));
     BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    site.reset(new GermlineDiploidSiteCallInfo());
-    site->pos = 250;
-
-    bsp.process(std::move(site));
+    bsp.process(std::move(getNewSite(105)));
     BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
+    bsp.process(std::move(getNewSite(150)));
+    BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
+
+    bsp.process(std::move(getNewSite(250)));
+    BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 }
 
 BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 {
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1", std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
+    const gvcf_options gvcfOptions;
+    const std::string& chromName = "dummy";
+    const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, chromName, false);
 
+    auto getNewIndel = [&](const pos_t pos)
+    {
+        const IndelKey indelKey(pos);
+        std::unique_ptr<GermlineDiploidIndelCallInfo>
+            indel(new GermlineDiploidIndelCallInfo(
+            gvcfDerivOptions,
+            indelKey,
+            IndelData(1,indelKey),
+            GermlineDiploidIndelSimpleGenotypeInfoCore(),
+            starling_indel_report_info(),
+            starling_indel_sample_report_info()));
 
-    std::unique_ptr<GermlineDiploidIndelCallInfo> site;
-    IndelKey indelKey;
-    indelKey.pos=50;
-    site.reset(new GermlineDiploidIndelCallInfo(indelKey,
-                                                IndelData(1,indelKey),
-                                                GermlineDiploidIndelSimpleGenotypeInfoCore(),
-                                                starling_indel_report_info(),
-                                                starling_indel_sample_report_info()));
+        return std::move(indel);
+    };
 
-    bsp.process(std::move(site));
-
+    bsp.process(std::move(getNewIndel(50)));
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    indelKey.pos=105;
-    site.reset(new GermlineDiploidIndelCallInfo(indelKey,
-                                                IndelData(1,indelKey),
-                                                GermlineDiploidIndelSimpleGenotypeInfoCore(),
-                                                starling_indel_report_info(),
-                                                starling_indel_sample_report_info()));
-
-
-    bsp.process(std::move(site));
+    bsp.process(std::move(getNewIndel(105)));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    indelKey.pos=150;
-    site.reset(new GermlineDiploidIndelCallInfo(indelKey,
-                                                IndelData(1,indelKey),
-                                                GermlineDiploidIndelSimpleGenotypeInfoCore(),
-                                                starling_indel_report_info(),
-                                                starling_indel_sample_report_info()));
-
-
-    bsp.process(std::move(site));
+    bsp.process(std::move(getNewIndel(150)));
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    indelKey.pos=250;
-    site.reset(new GermlineDiploidIndelCallInfo(indelKey,
-                                                IndelData(1,indelKey),
-                                                GermlineDiploidIndelSimpleGenotypeInfoCore(),
-                                                starling_indel_report_info(),
-                                                starling_indel_sample_report_info()));
-
-    bsp.process(std::move(site));
+    bsp.process(std::move(getNewIndel(250)));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 }
 

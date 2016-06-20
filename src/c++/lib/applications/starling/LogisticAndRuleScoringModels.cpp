@@ -392,9 +392,10 @@ score_site_instance(
         // compute scoring features if this hasn't already been done:
         if (smod.features.empty())
         {
+            static const bool isRNA(false);
             static const bool isComputeDevelopmentFeatures(false);
             const bool isUniformDepthExpected(_dopt.is_max_depth());
-            si.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, normal_depth(), smod);
+            si.computeEmpiricalScoringFeatures(isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, normal_depth(), smod);
         }
         smod.empiricalVariantScore = logistic_score(var_case, getFeatureMap(smod.features));
         apply_site_qscore_filters(var_case, si, smod);
@@ -452,9 +453,10 @@ score_indel_instance(
         // compute scoring features if this hasn't already been done:
         if (call.features.empty())
         {
+            static const bool isRNA(false);
             static const bool isComputeDevelopmentFeatures(false);
             const bool isUniformDepthExpected(_dopt.is_max_depth());
-            call.computeEmpiricalScoringFeatures(isUniformDepthExpected, isComputeDevelopmentFeatures, normal_depth(), ii.is_hetalt());
+            call.computeEmpiricalScoringFeatures(isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, normal_depth(), ii.is_hetalt());
         }
         call.empiricalVariantScore = logistic_score(var_case, getFeatureMap(call.features));
         apply_indel_qscore_filters(var_case, ii, call);

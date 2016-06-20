@@ -52,14 +52,17 @@ BOOST_AUTO_TEST_SUITE( indel_overlapper_test )
 BOOST_AUTO_TEST_CASE( simple_indel_test )
 {
     // fake various high-level data structures with as many defaults as possible
-    starling_options opt;
-
     reference_contig_segment rcs;
     rcs.seq() = "ACGGGGTTGGACGATGCTACGATCGATCGCGTACCTACGATCGACTACGACTGCGACGATCGACGATCGACGATCGATCGATCGACGTACGACACGTACGATCGATCGATCGATCGACTCGATCAGCTCATGCATCG";
 
-    gvcf_deriv_options gvcf_dopt(opt.gvcf, "chr1");
+    starling_options opt;
+    opt.bam_seq_name="chr1";
+    opt.is_user_genome_size = true;
+    opt.user_genome_size = rcs.seq().size();
 
-    ScoringModelManager cm(opt,gvcf_dopt);
+    starling_deriv_options dopt(opt,rcs);
+
+    ScoringModelManager cm(opt, dopt.gvcf);
 
     std::shared_ptr<variant_pipe_stage_base> next(new dummy_variant_sink);
     indel_overlapper overlap(cm, rcs, next);
@@ -74,7 +77,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     indelKey.type=INDEL::DELETE;
     indelKey.length=2;
 
-    std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(indelKey,indelData,dindel,indelReportInfo,isri));
+    std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(dopt.gvcf, indelKey,indelData,dindel,indelReportInfo,isri));
     overlap.process(std::move(ii));
 
     overlap.flush();
@@ -86,14 +89,17 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
 BOOST_AUTO_TEST_CASE( conflicting_indel_test )
 {
     // fake various high-level data structures with as many defaults as possible
-    starling_options opt;
-
     reference_contig_segment rcs;
     rcs.seq() = "ACGGGGTTGGACGATGCTACGATCGATCGCGTACCTACGATCGACTACGACTGCGACGATCGACGATCGACGATCGATCGATCGACGTACGACACGTACGATCGATCGATCGATCGACTCGATCAGCTCATGCATCG";
 
-    gvcf_deriv_options gvcf_dopt(opt.gvcf, "chr1");
+    starling_options opt;
+    opt.bam_seq_name="chr1";
+    opt.is_user_genome_size = true;
+    opt.user_genome_size = rcs.seq().size();
 
-    ScoringModelManager cm(opt,gvcf_dopt);
+    starling_deriv_options dopt(opt,rcs);
+
+    ScoringModelManager cm(opt, dopt.gvcf);
 
     std::shared_ptr<variant_pipe_stage_base> next(new dummy_variant_sink);
     indel_overlapper overlap(cm, rcs, next);
@@ -121,7 +127,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
         ik=iks[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(ik,indelData,dindel,indelReportInfo,isri));
+        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(dopt.gvcf, ik,indelData,dindel,indelReportInfo,isri));
         overlap.process(std::move(ii));
     }
 
@@ -134,14 +140,17 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
 BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
 {
     // fake various high-level data structures with as many defaults as possible
-    starling_options opt;
-
     reference_contig_segment rcs;
     rcs.seq() = "ACGGGGTTGGACGATGCTACGATCGATCGCGTACCTACGATCGACTACGACTGCGACGATCGACGATCGACGATCGATCGATCGACGTACGACACGTACGATCGATCGATCGATCGACTCGATCAGCTCATGCATCG";
 
-    gvcf_deriv_options gvcf_dopt(opt.gvcf, "chr1");
+    starling_options opt;
+    opt.bam_seq_name="chr1";
+    opt.is_user_genome_size = true;
+    opt.user_genome_size = rcs.seq().size();
 
-    ScoringModelManager cm(opt,gvcf_dopt);
+    starling_deriv_options dopt(opt,rcs);
+
+    ScoringModelManager cm(opt, dopt.gvcf);
 
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     indel_overlapper overlap(cm, rcs, next);
@@ -169,7 +178,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
         indelKey=indelKeys[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(indelKey,indelData,dindel,indelReportInfo,isri));
+        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(dopt.gvcf, indelKey,indelData,dindel,indelReportInfo,isri));
         overlap.process(std::move(ii));
     }
 
