@@ -46,7 +46,7 @@ get_label(const index_t i)
     case GERMLINE:
         return "Germline";
     case RNA:
-        return "RNASeq";
+        return "RNAseq";
     case SOMATIC:
         return "Somatic";
     default:

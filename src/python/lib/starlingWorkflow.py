@@ -137,11 +137,13 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     # RNA-Seq het calls are considered over a wider frequency range:
     if self.params.isRNA:
         segCmd.extend(['-bsnp-diploid-het-bias', '0.40'])
+        segCmd.extend(['--use-rna-scoring'])
 
     # Empirical Variant Scoring(EVS):
     if self.params.isEVS :
         segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
-        segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
+        if self.params.evsModelName is not None :
+            segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
 
     if self.params.indelErrorModelName is not None :
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
@@ -357,7 +359,7 @@ class StarlingWorkflow(StarkaWorkflow) :
 
         if self.params.isRNA :
             self.params.evsModelFile = joinFile(self.params.configDir,'RNAVariantScoringModels.json')
-            self.params.evsModelName = "RNASeq"
+            self.params.evsModelName = None
 
 
     def getSuccessMessage(self) :

@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
 {
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1", std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    const gvcf_options gvcfOptions;
+    const gvcf_options gvcfOptions = gvcf_options();
     const std::string& chromName = "dummy";
     const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, chromName, false);
 
@@ -56,19 +56,19 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
     {
         std::unique_ptr<GermlineDiploidSiteCallInfo> site(new GermlineDiploidSiteCallInfo(gvcfDerivOptions));
         site->pos = pos;
-        return std::move(site);
+        return site;
     };
 
-    bsp.process(std::move(getNewSite(50)));
+    bsp.process(getNewSite(50));
     BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    bsp.process(std::move(getNewSite(105)));
+    bsp.process(getNewSite(105));
     BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    bsp.process(std::move(getNewSite(150)));
+    bsp.process(getNewSite(150));
     BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    bsp.process(std::move(getNewSite(250)));
+    bsp.process(getNewSite(250));
     BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 }
 
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
 {
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     bed_stream_processor bsp(TEST_DATA_PATH "/bed_stream_test.bed.gz", "chr1", std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
-    const gvcf_options gvcfOptions;
+    const gvcf_options gvcfOptions = gvcf_options();
     const std::string& chromName = "dummy";
     const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, chromName, false);
 
@@ -92,19 +92,19 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
             starling_indel_report_info(),
             starling_indel_sample_report_info()));
 
-        return std::move(indel);
+        return indel;
     };
 
-    bsp.process(std::move(getNewIndel(50)));
+    bsp.process(getNewIndel(50));
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    bsp.process(std::move(getNewIndel(105)));
+    bsp.process(getNewIndel(105));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    bsp.process(std::move(getNewIndel(150)));
+    bsp.process(getNewIndel(150));
     BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 
-    bsp.process(std::move(getNewIndel(250)));
+    bsp.process(getNewIndel(250));
     BOOST_REQUIRE(next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
 }
 

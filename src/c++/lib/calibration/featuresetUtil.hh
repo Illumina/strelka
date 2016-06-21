@@ -23,6 +23,7 @@
 
 #include "calibration/VariantScoringModelBase.hh"
 #include "calibration/VariantScoringModelMetadata.hh"
+#include "blt_util/PolymorphicObject.hh"
 #include "common/Exceptions.hh"
 
 #include "boost/dynamic_bitset.hpp"
@@ -33,7 +34,7 @@
 #include <string>
 
 
-struct FeatureSet
+struct FeatureSet : public PolymorphicObject
 {
     virtual
     unsigned
@@ -64,8 +65,11 @@ struct FeatureSet
 
 protected:
     FeatureSet() = default;
+
+    explicit
+    FeatureSet(const FeatureSet&) = default;
+
 private:
-    FeatureSet(const FeatureSet&) = delete;
     FeatureSet& operator=(const FeatureSet&) = delete;
 };
 

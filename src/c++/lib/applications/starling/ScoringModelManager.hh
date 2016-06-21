@@ -72,20 +72,21 @@ struct ScoringModelManager
         get_case_cutoff(const LEGACY_CALIBRATION_MODEL::var_case my_case) const;
 
     bool
-    isNoEVSModel() const
+    isEVSSiteModel() const
     {
-        return (not (_legacyModelPtr || (_snvScoringModelPtr && _indelScoringModelPtr)));
+        return (isLegacyModel() || _snvScoringModelPtr);
     }
 
     bool
-        isLegacyLogisticEVSModel() const;
-
-private:
-    LogisticAndRuleScoringModels& getLegacyModel()
+    isEVSIndelModel() const
     {
-        return *_legacyModelPtr;
+        return (isLegacyModel() || _indelScoringModelPtr);
     }
 
+    bool
+    isLegacyLogisticEVSModel() const;
+
+private:
     const LogisticAndRuleScoringModels& getLegacyModel() const
     {
         return *_legacyModelPtr;

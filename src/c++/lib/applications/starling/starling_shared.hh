@@ -68,7 +68,7 @@ struct starling_options : public starling_base_options
     bool
     is_compute_germline_scoring_metrics() const override
     {
-        return (isReportEVSFeatures || (! germline_variant_scoring_model_name.empty()));
+        return (isReportEVSFeatures || (! germline_variant_scoring_models_filename.empty()));
     }
 
     /// germline scoring models

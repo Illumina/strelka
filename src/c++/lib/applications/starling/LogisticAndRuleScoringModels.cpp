@@ -35,6 +35,7 @@
 /// the logistic regression model still requires an actual string map -- something we want
 /// to move away from, but this provides a bridge for now:
 ///
+static
 featuremap
 getFeatureMap(
     const VariantScoringFeatureKeeper& features)

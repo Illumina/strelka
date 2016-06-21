@@ -97,6 +97,8 @@ get_starling_option_parser(
      "File providing germline empirical variant scoring models")
     ("variant-scoring-model-name", po::value(&opt.germline_variant_scoring_model_name),
      "The scoring model for germline variants")
+    ("use-rna-scoring", po::value(&opt.isRNA)->zero_tokens(),
+     "Change to RNA-Seq analysis settings")
     ;
 
     po::options_description starling_parse_opt("Germline calling options");

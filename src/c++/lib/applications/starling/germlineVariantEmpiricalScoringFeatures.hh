@@ -35,7 +35,7 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
     const FeatureSet&
     getInstance()
     {
-        static const GERMLINE_SNV_SCORING_FEATURES featureSet;
+        static const auto featureSet = GERMLINE_SNV_SCORING_FEATURES();
         return featureSet;
     }
 
@@ -127,7 +127,7 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     const FeatureSet&
     getInstance()
     {
-        static const GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES featureSet;
+        static const auto featureSet = GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES();
         return featureSet;
     }
 
@@ -208,7 +208,7 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
     const FeatureSet&
     getInstance()
     {
-        static const GERMLINE_INDEL_SCORING_FEATURES featureSet;
+        static const auto featureSet = GERMLINE_INDEL_SCORING_FEATURES();
         return featureSet;
     }
 
@@ -287,7 +287,7 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     const FeatureSet&
     getInstance()
     {
-        static const GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES featureSet;
+        static const auto featureSet = GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES();
         return featureSet;
     }
 

@@ -36,7 +36,7 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
     const FeatureSet&
     getInstance()
     {
-        static const SOMATIC_SNV_SCORING_FEATURES featureSet;
+        static const auto featureSet = SOMATIC_SNV_SCORING_FEATURES();
         return featureSet;
     }
 
@@ -139,7 +139,7 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     const FeatureSet&
     getInstance()
     {
-        static const SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES featureSet;
+        static const auto featureSet = SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES();
         return featureSet;
     }
 
@@ -202,7 +202,7 @@ struct SOMATIC_INDEL_SCORING_FEATURES : public FeatureSet
     const FeatureSet&
     getInstance()
     {
-        static const SOMATIC_INDEL_SCORING_FEATURES featureSet;
+        static const auto featureSet = SOMATIC_INDEL_SCORING_FEATURES();
         return featureSet;
     }
 
@@ -281,7 +281,7 @@ struct SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     const FeatureSet&
     getInstance()
     {
-        static const SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES featureSet;
+        static const auto featureSet = SOMATIC_INDEL_SCORING_DEVELOPMENT_FEATURES();
         return featureSet;
     }
 

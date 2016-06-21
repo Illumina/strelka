@@ -121,9 +121,9 @@ Deserialize(
     using namespace SMODEL_ENTRY_TYPE;
 //    this->name      = Clean_string(root[get_label(NAME)].asString());
 //    this->version   = Clean_string(root[get_label(VERSION)].asString());
-    date      = Clean_string(root[get_label(DATE)].asString());
-    ModelType 		= root[get_label(MODELTYPE)].asString();
-    FilterCutoff		= root[get_label(FILTERCUTOFF)].asDouble();
+    date  = Clean_string(root[get_label(DATE)].asString());
+    ModelType = root[get_label(MODELTYPE)].asString();
+    FilterCutoff = root[get_label(FILTERCUTOFF)].asDouble();
 
     // read and validate features:
     const Json::Value featureRoot = root[get_label(FEATURES)];
@@ -143,6 +143,38 @@ Deserialize(
         assert(expectedIndex == fiter->second);
         expectedIndex++;
     }
-    assert(expectedIndex == featureMap.size());
+
+    if (expectedIndex != featureMap.size())
+    {
+        using namespace illumina::common;
+
+        std::ostringstream oss;
+        oss << "ERROR: scoring feature count specified in modelfile (" << expectedIndex << ")"
+            << " does not match expected feature count (" << featureMap.size() << ")\n";
+        {
+            bool isFirst(true);
+            oss << "\tModelfile features: {";
+            for (const auto& val : featureRoot)
+            {
+                if (not isFirst) oss << ",";
+                oss << val.asString();
+                isFirst=false;
+            }
+            oss << "}\n";
+        }
+        {
+            bool isFirst(true);
+            oss << "\tExpected features: {";
+            for (const auto& val : featureMap)
+            {
+                if (not isFirst) oss << ",";
+                oss << val.first;
+                isFirst=false;
+            }
+            oss << "}\n";
+        }
+        oss << "\n";
+        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+    }
 }
 

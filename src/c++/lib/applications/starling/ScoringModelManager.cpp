@@ -59,6 +59,8 @@ ScoringModelManager(
                     SCORING_VARIANT_TYPE::SNV)
             );
 
+            /// TEMPORARY suspend indel RF file load until a valid model file exists
+#if 0
             _indelScoringModelPtr.reset(
                 new VariantScoringModelServer(
                     _dopt.indelFeatureSet.getFeatureMap(),
@@ -66,6 +68,7 @@ ScoringModelManager(
                     callType,
                     SCORING_VARIANT_TYPE::INDEL)
             );
+#endif
         }
         else
         {
@@ -84,7 +87,6 @@ ScoringModelManager::
 get_case_cutoff(
     const LEGACY_CALIBRATION_MODEL::var_case my_case) const
 {
-    if (isNoEVSModel()) return 0;
     if (not isLegacyModel()) return 0;
     return getLegacyModel().get_var_threshold(my_case);
 }
@@ -93,7 +95,6 @@ get_case_cutoff(
 
 bool ScoringModelManager::isLegacyLogisticEVSModel() const
 {
-    if (isNoEVSModel()) return false;
     if (not isLegacyModel()) return false;
     return getLegacyModel().is_logistic_model();
 }
@@ -114,7 +115,7 @@ classify_site(
     }
 
     //si.smod.filters.reset(); // make sure no filters have been applied prior
-    if ((si.dgt.is_snp) && (!isNoEVSModel()))
+    if (si.dgt.is_snp && isEVSSiteModel())
     {
         if (isLegacyModel())
         {
@@ -193,7 +194,7 @@ classify_indel_impl(
         call.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
     }
 
-    if ( (!isNoEVSModel()) && isVariantUsableInEVSModel )
+    if (isEVSIndelModel() && isVariantUsableInEVSModel)
     {
         if (isLegacyModel())
         {

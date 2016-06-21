@@ -86,30 +86,27 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
     }
 
-    if (not CM.isNoEVSModel())
+    if (CM.isLegacyLogisticEVSModel())
     {
-        if (CM.isLegacyLogisticEVSModel())
+        for (unsigned varType(0); varType < LEGACY_CALIBRATION_MODEL::SIZE; ++varType)
         {
-            for (unsigned varType(0); varType < LEGACY_CALIBRATION_MODEL::SIZE; ++varType)
-            {
-                using namespace LEGACY_CALIBRATION_MODEL;
-                if (varType == HetAltSNP) continue;
+            using namespace LEGACY_CALIBRATION_MODEL;
+            if (varType == HetAltSNP) continue;
 
-                const var_case vti(static_cast<var_case>(varType));
-                std::ostringstream oss;
-                oss << "Locus GQX is less than " << CM.get_case_cutoff(vti) << " for " << get_label_header(vti);
-                write_vcf_filter(os, GERMLINE_VARIANT_VCF_FILTERS::get_label(get_Qscore_filter(vti)),
-                                 oss.str().c_str());
-            }
-        }
-        else
-        {
-            /// TODO may need to expand this to include actual thresholds
+            const var_case vti(static_cast<var_case>(varType));
             std::ostringstream oss;
-            oss << "Locus GQX is below minimum threshold";
-            write_vcf_filter(os, GERMLINE_VARIANT_VCF_FILTERS::get_label(GERMLINE_VARIANT_VCF_FILTERS::LowGQX),
+            oss << "Locus GQX is less than " << CM.get_case_cutoff(vti) << " for " << get_label_header(vti);
+            write_vcf_filter(os, GERMLINE_VARIANT_VCF_FILTERS::get_label(get_Qscore_filter(vti)),
                              oss.str().c_str());
         }
+    }
+    else if (CM.isEVSSiteModel() or CM.isEVSIndelModel())
+    {
+        /// TODO may need to expand this to include actual thresholds
+        std::ostringstream oss;
+        oss << "Locus GQX is below minimum threshold";
+        write_vcf_filter(os, GERMLINE_VARIANT_VCF_FILTERS::get_label(GERMLINE_VARIANT_VCF_FILTERS::LowGQX),
+                         oss.str().c_str());
     }
 
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
