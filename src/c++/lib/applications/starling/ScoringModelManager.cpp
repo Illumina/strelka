@@ -199,6 +199,11 @@ classify_indel_impl(
         {
             getLegacyModel().score_indel_instance(ii, call);
         }
+        else if (_isRNA)
+        {
+            // TEMPORARY HACK TO DISABLE RNA RF for indels
+            default_classify_indel(call);
+        }
         else
         {
             if (call.features.empty())
