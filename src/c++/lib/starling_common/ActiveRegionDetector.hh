@@ -53,8 +53,8 @@ public:
         _bufferStartPos = 0;
 
         _numVariants = 0;
-        _activeRegionStartPos = -MaxBufferSize;
-        _prevVariantPos = -_maxDetectionWindowSize - 1;
+        _activeRegionStartPos = 0;
+        _prevVariantPos = 0;
     }
 
     void insertMatch(const align_id_t alignId, const pos_t pos, const char baseChar);
