@@ -292,8 +292,8 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
     explicit
     GermlineDiploidSiteSimpleGenotypeInfo(
         const gvcf_deriv_options& gvcfDerivedOptions)
-    : features(gvcfDerivedOptions.snvFeatureSet),
-      developmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
+        : features(gvcfDerivedOptions.snvFeatureSet),
+          developmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {
         clear();
     }

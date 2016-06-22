@@ -110,7 +110,10 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     insert_indel(const IndelObservation& obs,
                  const unsigned sampleId);
 
-    bool is_active_region_detector_enabled() { return _opt.is_short_haplotype_calling_enabled; }
+    bool is_active_region_detector_enabled()
+    {
+        return _opt.is_short_haplotype_calling_enabled;
+    }
     ActiveRegionDetector&
     get_active_region_detector()
     {

@@ -113,7 +113,7 @@ LogisticAndRuleScoringModels(
             submodel = tokens.at(1);
             parspace = tokens.at(2);
         }
-            //case load parameters
+        //case load parameters
         else
         {
             if (tokens.size()>1)

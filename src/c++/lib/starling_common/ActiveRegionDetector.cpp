@@ -40,7 +40,7 @@ ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, 
 }
 
 void
-ActiveRegionDetector::insertIndel(const IndelObservation &indelObservation)
+ActiveRegionDetector::insertIndel(const IndelObservation& indelObservation)
 {
     auto pos = indelObservation.key.pos;
     const int indelCount = 4;
@@ -148,18 +148,18 @@ void ActiveRegionDetector::setHaplotypeBaseSnv(const align_id_t id, const pos_t 
     std::string baseStr;
     switch (baseChar)
     {
-        case 'A':
-            baseStr = strA;
-            break;
-        case 'C':
-            baseStr = strC;
-            break;
-        case 'G':
-            baseStr = strG;
-            break;
-        case 'T':
-            baseStr = strT;
-            break;
+    case 'A':
+        baseStr = strA;
+        break;
+    case 'C':
+        baseStr = strC;
+        break;
+    case 'G':
+        baseStr = strG;
+        break;
+    case 'T':
+        baseStr = strT;
+        break;
     }
     _haplotypeBase[id % MaxDepth][pos % MaxBufferSize] = baseStr;
 }

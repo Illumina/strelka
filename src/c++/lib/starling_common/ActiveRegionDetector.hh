@@ -32,22 +32,23 @@
 #include <list>
 #include <set>
 
-class ActiveRegionDetector {
+class ActiveRegionDetector
+{
 public:
     static const unsigned MaxBufferSize = 1000;
     static const unsigned MaxDepth = 1000;
 
     ActiveRegionDetector(
-            unsigned maxDetectionWindowSize = 30,
-            unsigned minNumMismatchesPerPosition = 9,
-            unsigned minNumVariantsPerRegion = 2) :
-            _maxDetectionWindowSize(maxDetectionWindowSize),
-            _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
-            _minNumVariantsPerRegion(minNumVariantsPerRegion),
-            _variantCounter(MaxBufferSize),
-            _alignIdsCurrentActiveRegion(),
-            _positionToAlignIds(MaxBufferSize, std::list<align_id_t>()),
-            _haplotypeBase(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string()))
+        unsigned maxDetectionWindowSize = 30,
+        unsigned minNumMismatchesPerPosition = 9,
+        unsigned minNumVariantsPerRegion = 2) :
+        _maxDetectionWindowSize(maxDetectionWindowSize),
+        _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
+        _minNumVariantsPerRegion(minNumVariantsPerRegion),
+        _variantCounter(MaxBufferSize),
+        _alignIdsCurrentActiveRegion(),
+        _positionToAlignIds(MaxBufferSize, std::list<align_id_t>()),
+        _haplotypeBase(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string()))
 
     {
         _bufferStartPos = 0;
@@ -59,11 +60,14 @@ public:
 
     void insertMatch(const align_id_t alignId, const pos_t pos, const char baseChar);
     void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
-    void insertIndel(const IndelObservation &indelObservation);
+    void insertIndel(const IndelObservation& indelObservation);
     void updateStartPosition(const pos_t pos);
     void updateEndPosition(const pos_t pos);
-    bool isEmpty() const { return _activeRegions.empty(); }
-    std::list<ActiveRegion> &getActiveRegions();
+    bool isEmpty() const
+    {
+        return _activeRegions.empty();
+    }
+    std::list<ActiveRegion>& getActiveRegions();
 
 private:
     unsigned _maxDetectionWindowSize;
@@ -120,12 +124,12 @@ private:
 
     void setHaplotypeBaseSnv(const align_id_t id, const pos_t pos, char baseChar);
 
-    inline void setHaplotypeBase(const align_id_t id, const pos_t pos, const std::string &base)
+    inline void setHaplotypeBase(const align_id_t id, const pos_t pos, const std::string& base)
     {
         _haplotypeBase[id % MaxDepth][pos % MaxBufferSize] = base;
     }
 
-    inline void concatenateHaplotypeBase(const align_id_t id, const pos_t pos, const std::string &base)
+    inline void concatenateHaplotypeBase(const align_id_t id, const pos_t pos, const std::string& base)
     {
         _haplotypeBase[id % MaxDepth][pos % MaxBufferSize] += base;
     }

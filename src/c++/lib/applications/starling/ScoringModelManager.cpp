@@ -78,7 +78,7 @@ ScoringModelManager(
                                                  opt.germline_variant_scoring_model_name));
         }
     }
- }
+}
 
 
 

@@ -26,7 +26,7 @@
 #include <string>
 #include <iostream>
 
-void ActiveRegion::insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string &base)
+void ActiveRegion::insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base)
 {
     if (!_alignIdToHaplotype.count(align_id))
     {
@@ -50,7 +50,7 @@ void ActiveRegion::printHaplotypeSequences() const
         if (_alignIdReachingEnd.find(alignId) == _alignIdReachingEnd.end())
             haplotype += "*";
 
-        if(!haplotypeCounter.count(haplotype))
+        if (!haplotypeCounter.count(haplotype))
             haplotypeCounter[haplotype] = 1;
         else
         {

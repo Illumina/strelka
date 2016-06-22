@@ -94,7 +94,7 @@ struct RNA_SNV_SCORING_FEATURES : public FeatureSet
         case I_AvgBaseQ:
             return "I_AvgBaseQ";
         case I_AvgPos:
-             return "I_AvgPos";
+            return "I_AvgPos";
         case I_BaseQRankSum:
             return "I_BaseQRankSum";
         case I_ReadPosRankSum:

@@ -93,9 +93,9 @@ struct VariantScoringFeatureKeeper
     explicit
     VariantScoringFeatureKeeper(
         const FeatureSet& featureSet)
-    : _featureSet(featureSet),
-      _isFeatureSet(featureSet.size()),
-      _featureVal(featureSet.size())
+        : _featureSet(featureSet),
+          _isFeatureSet(featureSet.size()),
+          _featureVal(featureSet.size())
     {
         clear();
     }

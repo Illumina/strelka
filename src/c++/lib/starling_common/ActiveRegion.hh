@@ -41,12 +41,27 @@ public:
         _alignIdReachingEnd()
     {}
 
-    pos_t getStart() const { return _start; }
-    pos_t getEnd() const { return _end; }
-    unsigned getLength() const { return _end - _start + 1; }
-    unsigned getNumVariants() const { return _numVariants; }
-    bool contains(pos_t pos) const { return pos >= _start && pos <= _end; }
-    void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string &base);
+    pos_t getStart() const
+    {
+        return _start;
+    }
+    pos_t getEnd() const
+    {
+        return _end;
+    }
+    unsigned getLength() const
+    {
+        return _end - _start + 1;
+    }
+    unsigned getNumVariants() const
+    {
+        return _numVariants;
+    }
+    bool contains(pos_t pos) const
+    {
+        return pos >= _start && pos <= _end;
+    }
+    void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
     void printHaplotypeSequences() const;
 
 private:
