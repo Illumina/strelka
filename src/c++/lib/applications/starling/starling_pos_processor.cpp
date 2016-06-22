@@ -225,15 +225,6 @@ process_pos_snp_single_sample_continuous(
     {
         report_counts(good_pi,si->n_unused_calls,si->pos+1,*_streams.counts_osptr());
     }
-    if (si->is_snp())
-    {
-        // this needs to be updated no matter where the snp-call is written to:
-        if (_is_variant_windows)
-        {
-            _variant_print_pos.insert(pos);
-            _is_skip_process_pos=false;
-        }
-    }
 
     if (_opt.gvcf.is_gvcf_output())
     {
@@ -440,17 +431,6 @@ process_pos_snp_single_sample_impl(
             write_snp_prefix_info("LSNP",output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,report_os);
             report_os << " " << lsc << "\n";
         }
-#endif
-        if (si->dgt.is_snp)
-        {
-            // this needs to be updated no matter where the snp-call is written to:
-            if (_is_variant_windows)
-            {
-                _variant_print_pos.insert(pos);
-                _is_skip_process_pos=false;
-            }
-        }
-#if 0
         if (mgt.is_snp)
         {
             write_snp_prefix_info("BSNP1",output_pos,pi.ref_base,_site_info.n_used_calls,_site_info.n_unused_calls,report_os);
@@ -920,7 +900,6 @@ process_pos_indel_single_sample_digt(
     // genotype and report topVariantAlleleGroup
     //
     AlleleGroupGenotype locusGenotype;
-    bool isOutputAlleles(false);
     {
         // genotype the top N alleles
         getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), callerPloidy,
@@ -928,9 +907,9 @@ process_pos_indel_single_sample_digt(
 
         // coerce output into older data-structures for gVCF output
         static const bool isForcedOutput(false);
-        isOutputAlleles = (hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, sampleId, pos,
-                                                              topVariantAlleleGroup, locusGenotype,
-                                                              groupLocusPloidy, isForcedOutput, *_gvcfer));
+        hackDiplotypeCallToCopyNumberCalls(_opt, _dopt, _ref, sif.bc_buff, sampleId, pos,
+                                           topVariantAlleleGroup, locusGenotype,
+                                           groupLocusPloidy, isForcedOutput, *_gvcfer);
     }
 
     // score and report any remaining forced output alleles
@@ -992,16 +971,7 @@ process_pos_indel_single_sample_digt(
                                                pos, fakeForcedOutputAlleleGroup,
                                                forcedAlleleLocusGenotype, groupLocusPloidy, isForcedOutput,
                                                *_gvcfer);
-
-            isOutputAlleles = true;
         }
-    }
-
-    // finalize response to any reported indels for this pos:
-    if (isOutputAlleles and _is_variant_windows)
-    {
-        _variant_print_pos.insert(pos);
-        _is_skip_process_pos=false;
     }
 }
 
@@ -1058,12 +1028,6 @@ process_pos_indel_single_sample_continuous(
         if (_opt.gvcf.is_gvcf_output())
         {
             _gvcfer->add_indel(std::move(info));
-        }
-
-        if (_is_variant_windows)
-        {
-            _variant_print_pos.insert(pos);
-            _is_skip_process_pos=false;
         }
     }
 }

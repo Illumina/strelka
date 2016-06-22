@@ -54,12 +54,6 @@ struct starling_streams_base : public blt_streams
         return _candidate_indel_osptr.get();
     }
 
-    std::ostream*
-    variant_window_osptr(const unsigned window_no) const
-    {
-        return _window_osptr.at(window_no).get();
-    }
-
 protected:
     bam_dumper*
     initialize_realign_bam(
@@ -75,18 +69,9 @@ protected:
                                     const prog_info& pinfo,
                                     const std::string& filename);
 
-    static
-    std::ostream*
-    initialize_window_file(const starling_base_options& opt,
-                           const prog_info& pinfo,
-                           const avg_window_data& awd,
-                           const SampleSetSummary& si);
-
     std::unique_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];
 private:
     std::unique_ptr<std::ostream> _candidate_indel_osptr;
 protected:
     unsigned _n_samples;
-private:
-    std::vector<std::shared_ptr<std::ostream>> _window_osptr;
 };

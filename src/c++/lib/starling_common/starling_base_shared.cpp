@@ -36,15 +36,6 @@
 
 
 
-std::ostream&
-operator<<(std::ostream& os, const avg_window_data& awd)
-{
-    os << "flank_size: " << awd.flank_size << " file: " << awd.filename << "\n";
-    return os;
-}
-
-
-
 starling_base_deriv_options::
 starling_base_deriv_options(
     const starling_base_options& opt,
@@ -88,29 +79,14 @@ starling_base_deriv_options(
         nonsite_lnprior=log1p_switch(-site_prior);
     }
 
-    //
     // register post-call stages:
     //
 
-    // register variant_windows as post-call stages:
-    const unsigned vs(opt.variant_windows.size());
-    for (unsigned i(0); i<vs; ++i)
-    {
-        const unsigned stage_no(addPostCallStage(opt.variant_windows[i].flank_size));
-
-        if (i == 0)
-        {
-            variant_window_first_stage=stage_no;
-        }
-        if ((i+1) == vs)
-        {
-            variant_window_last_stage=stage_no;
-        }
-    }
+    // no post-call stages remain in latest design!
 }
 
 
-// required for unique_ptr
+// dtor is required here for unique_ptr
 starling_base_deriv_options::
 ~starling_base_deriv_options() {}
 

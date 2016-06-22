@@ -43,23 +43,6 @@ enum { STARLING_MAX_READ_SIZE = 25000 };
 
 
 
-struct avg_window_data
-{
-    bool
-    operator<(const avg_window_data& rhs) const
-    {
-        return (flank_size < rhs.flank_size);
-    }
-
-    unsigned flank_size;
-    std::string filename;
-};
-
-std::ostream&
-operator<<(std::ostream& os, const avg_window_data& awd);
-
-
-
 struct starling_base_options : public blt_options
 {
     typedef blt_options base_t;
@@ -171,8 +154,6 @@ struct starling_base_options : public blt_options
     bool is_write_candidate_indels_only = false;
 
     double indel_nonsite_match_prob = 0.25;
-
-    std::vector<avg_window_data> variant_windows;
 
     // Assume a ploidy-based prior (0%, 50%, 100% or 0% 100% for haploid, diploid
     // If false, a continuous model is used

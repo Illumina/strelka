@@ -171,14 +171,6 @@ get_pileup_stage_no(const starling_base_options& /*opt*/)
     return (static_cast<int>(POST_ALIGN));
 }
 
-// stage into which pileup entries must fit:
-static
-int
-get_last_static_stage_no(const starling_base_options& /*opt*/)
-{
-    return (static_cast<int>(POST_CALL));
-}
-
 // given largest read, and indel ref span per read, get stage
 // lengths:
 //
@@ -286,7 +278,6 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)
     , _chrom_name(_opt.bam_seq_name)
     , _n_samples(n_samples)
-    , _is_variant_windows(! _opt.variant_windows.empty())
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
 {
@@ -972,7 +963,7 @@ process_pos(const int stage_no,
     }
     else if (stage_no>=STAGE::SIZE)
     {
-        run_post_call_step(stage_no,pos);
+        run_post_call_step(stage_no, pos);
     }
     else
     {
@@ -1596,52 +1587,3 @@ get_empty_dgt(const char ref) const
         return static_cast<const diploid_genotype&>(n_dgt);
     }
 }
-
-
-
-void
-starling_pos_processor_base::
-run_post_call_step(
-    const int stage_no,
-    const pos_t pos)
-{
-    if (_variant_print_pos.count(pos)==0) return;
-
-    const int pcn(STAGE::get_last_static_stage_no(_opt));
-    assert(stage_no>pcn);
-
-    // convert stage_no to window_no:
-    assert(stage_no >= static_cast<int>(_dopt.variant_window_first_stage));
-    assert(stage_no <= static_cast<int>(_dopt.variant_window_last_stage));
-
-    const unsigned window_no(stage_no-_dopt.variant_window_first_stage);
-    const unsigned vs(_opt.variant_windows.size());
-
-    assert(window_no<vs);
-
-    const pos_t output_pos(pos+1);
-    std::ostream& bos(*_streams.variant_window_osptr(window_no));
-
-    bos << _chrom_name << '\t' << output_pos;
-
-    {
-        const StreamScoper ss(bos);
-        bos << std::setprecision(2) << std::fixed;
-
-        for (unsigned s(0); s<_n_samples; ++s)
-        {
-            const win_avg_set& was(sample(s).wav.get_win_avg_set(window_no));
-            bos << '\t' << was.ss_used_win.avg()
-                << '\t' << was.ss_filt_win.avg()
-                << '\t' << was.ss_submap_win.avg();
-        }
-    }
-
-    bos << '\n';
-
-    if ((window_no+1) == vs)
-    {
-        _variant_print_pos.erase(pos);
-    }
-}
-

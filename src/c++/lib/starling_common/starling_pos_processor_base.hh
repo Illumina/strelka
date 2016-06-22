@@ -295,12 +295,7 @@ public:
             , ssn(knownref_report_size)
             , used_ssn(knownref_report_size)
             , wav()
-        {
-            for (const auto& val : opt.variant_windows)
-            {
-                wav.add_win(val.flank_size*2);
-            }
-        }
+        {}
 
         pos_basecall_buffer bc_buff;
         starling_read_buffer read_buff;
@@ -473,8 +468,9 @@ protected:
     virtual
     void
     run_post_call_step(
-        const int stage_no,
-        const pos_t pos);
+        const int /*stage_no*/,
+        const pos_t /*pos*/)
+    {}
 
     unsigned
     get_largest_read_size() const
@@ -524,7 +520,6 @@ private:
                 if (! sif.bc_buff.empty()) return false;
             }
             if (! _indelBuffer.empty()) return false;
-            if (! _variant_print_pos.empty()) return false;
             if (! _forced_output_pos.empty()) return false;
             if (! derived_empty()) return false;
             _is_skip_process_pos=true;
@@ -587,10 +582,7 @@ protected:
     std::unique_ptr<nploid_info> _ninfo;
     std::unique_ptr<double> _ws;
 
-    std::set<pos_t> _variant_print_pos;
     std::set<pos_t> _forced_output_pos;
-
-    bool _is_variant_windows;
 
     PileupCleaner _pileupCleaner;
 
