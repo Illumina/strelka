@@ -51,7 +51,7 @@ You must specify a BAM or CRAM file for the sample.
 
     def addWorkflowGroupOptions(self,group) :
         group.add_option("--bam", type="string",dest="bamList",metavar="FILE", action="append",
-                         help="Sample BAM or CRAM file. [required] (no default)")
+                         help="Sample BAM or CRAM file. May be specified more than once, multiple inputs will be treated as each BAM file representing a different sample. [required] (no default)")
         group.add_option("--ploidy", type="string", dest="ploidyBed", metavar="FILE",
                          help="Provide ploidy bed file. The bed records should provide either 1 or 0 in the 5th 'score' column to "
                          "indicate haploid or deleted status respectively. File must be tabix indexed. (no default)")
@@ -110,14 +110,15 @@ You must specify a BAM or CRAM file for the sample.
 
         StarkaWorkflowOptionsBase.validateOptionExistence(self,options)
 
+        def safeLen(x) :
+            if x is None : return 0
+            return len(x)
+
+        if safeLen(options.bamList) == 0 :
+            raise OptParseException("No input sample alignment files specified")
+
         bcheck = BamSetChecker()
-
-        def singleAppender(bamList,label):
-            if len(bamList) > 1 :
-                raise OptParseException("More than one %s sample BAM/CRAM files specified" % (label))
-            bcheck.appendBams(bamList,label)
-
-        singleAppender(options.bamList,"Input")
+        bcheck.appendBams(options.bamList,"Input")
         bcheck.check(options.htsfileBin,
                      options.referenceFasta)
 

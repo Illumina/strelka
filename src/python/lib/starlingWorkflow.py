@@ -50,7 +50,7 @@ __version__ = workflowVersion
 def starlingRunDepthFromAlignments(self,taskPrefix="getChromDepth",dependencies=None):
     bamList=[]
     if len(self.params.bamList) :
-        bamList.append(self.params.bamList[0])
+        bamList = self.params.bamList
     else :
         return set()
 
