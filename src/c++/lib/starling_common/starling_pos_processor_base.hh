@@ -347,18 +347,6 @@ protected:
     }
 
 public:
-    // data for haplotoype regions, shared between all samples:
-    //
-    struct htype_region_data
-    {
-        htype_region_data()
-            : is_first_region(true)
-            , region_alignment(0) {}
-
-        bool is_first_region;
-        pos_t region_alignment;
-    };
-
     ///////////////////////////////
     // static methods:
     //
@@ -601,8 +589,6 @@ protected:
 
     std::set<pos_t> _variant_print_pos;
     std::set<pos_t> _forced_output_pos;
-
-    htype_region_data _hregion;
 
     bool _is_variant_windows;
 
