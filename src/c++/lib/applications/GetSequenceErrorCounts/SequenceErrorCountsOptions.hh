@@ -25,6 +25,7 @@
 #pragma once
 
 #include "blt_util/chrom_depth_map.hh"
+#include "options/AlignmentFileOptions.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
@@ -65,6 +66,8 @@ struct SequenceErrorCountsOptions : public starling_base_options
     {
         return (! observationsBedFilename.empty());
     }
+
+    AlignmentFileOptions alignFileOpt;
 
     std::string chrom_depth_file;
     double max_depth_factor = 3.;

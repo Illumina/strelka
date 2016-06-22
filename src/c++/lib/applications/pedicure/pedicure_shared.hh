@@ -67,9 +67,7 @@ struct pedicure_options : public starling_base_options
     typedef starling_base_options base_t;
 
     pedicure_options()
-    {
-        is_bam_filename_used = false;
-    }
+    {}
 
     bool
     is_denovo_callable() const

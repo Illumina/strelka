@@ -28,12 +28,10 @@
 
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/log.hh"
-#include "htsapi/bam_header_util.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
-#include <sstream>
 
 
 
@@ -66,47 +64,28 @@ strelka_run(
 
     const pos_range& rlimit(dopt.report_range_limit);
 
-    assert(! opt.tumor_bam_filename.empty());
-
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
     HtsMergeStreamer streamData(bam_region.c_str());
-    const bam_streamer& tumorReadStream(streamData.registerBam(opt.tumor_bam_filename.c_str(),STRELKA_SAMPLE_TYPE::TUMOR));
-    const bam_hdr_t& tumorReadHeader(tumorReadStream.get_header());
 
-    std::unique_ptr<bam_streamer> normal_read_stream_ptr;
-
-    if (! opt.bam_filename.empty())
+    std::vector<unsigned> registrationIndices;
+    for (const bool isTumor : opt.alignFileOpt.isAlignmentTumor)
     {
-        const bam_streamer& normalReadStream(streamData.registerBam(opt.bam_filename.c_str(),STRELKA_SAMPLE_TYPE::NORMAL));
-
-        if (! check_header_compatibility(normalReadStream.get_header(),tumorReadHeader))
-        {
-            std::ostringstream oss;
-            oss << "ERROR: Normal and tumor BAM/CRAM files have incompatible headers.\n";
-            oss << "\tnormal_bam_file:\t'" << opt.bam_filename << "'\n";
-            oss << "\ttumor_bam_file:\t'" << opt.tumor_bam_filename << "'\n";
-            throw blt_exception(oss.str().c_str());
-        }
+        const unsigned rindex(isTumor ? STRELKA_SAMPLE_TYPE::TUMOR : STRELKA_SAMPLE_TYPE::NORMAL);
+        registrationIndices.push_back(rindex);
     }
 
-    const int32_t tid(tumorReadStream.target_name_to_id(opt.bam_seq_name.c_str()));
-    if (tid < 0)
-    {
-        std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << opt.tumor_bam_filename << "'\n";
-        throw blt_exception(oss.str().c_str());
-    }
+    const bam_hdr_t& referenceHeader(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
 
     const StrelkaSampleSetSummary ssi;
-    strelka_streams client_io(opt, dopt, pinfo, tumorReadHeader,ssi);
+    strelka_streams client_io(opt, dopt, pinfo, referenceHeader,ssi);
     strelka_pos_processor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
     static const bool noRequireNormalized(false);
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, tumorReadHeader, streamData, noRequireNormalized);
-    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, tumorReadHeader, streamData);
+    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader, streamData, noRequireNormalized);
+    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
-    registerVcfList(opt.noise_vcf, INPUT_TYPE::NOISE_VARIANTS, tumorReadHeader, streamData);
+    registerVcfList(opt.noise_vcf, INPUT_TYPE::NOISE_VARIANTS, referenceHeader, streamData);
 
     while (streamData.next())
     {

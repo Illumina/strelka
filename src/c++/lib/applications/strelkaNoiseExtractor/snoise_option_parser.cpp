@@ -24,8 +24,8 @@
 
 #include "snoise_option_parser.hh"
 
-#include "../../starling_common/starling_base_option_parser.hh"
-#include "blt_common/blt_arg_validate.hh"
+#include "options/AlignmentFileOptionsParser.hh"
+#include "starling_common/starling_base_option_parser.hh"
 
 
 
@@ -33,6 +33,8 @@ po::options_description
 get_snoise_option_parser(
     snoise_options& opt)
 {
+    po::options_description aligndesc(getOptionsDescription(opt.alignFileOpt));
+
     po::options_description snoise_opt("Strelka noise extractor");
     snoise_opt.add_options()
     ("skip-vcf-header",
@@ -40,7 +42,7 @@ get_snoise_option_parser(
      "Skip vcf output header");
 
     po::options_description visible("Options");
-    visible.add(snoise_opt);
+    visible.add(aligndesc).add(snoise_opt);
 
     return visible;
 }
@@ -53,7 +55,13 @@ finalize_snoise_options(
     const po::variables_map& vm,
     snoise_options& opt)
 {
-    // nothing to validate in this layer:
+    parseOptions(vm, opt.alignFileOpt);
+    std::string errorMsg;
+    if (checkOptions(opt.alignFileOpt, errorMsg))
+    {
+        pinfo.usage(errorMsg.c_str());
+        //usage(log_os,prog,visible,errorMsg.c_str());
+    }
 
     finalize_starling_base_options(pinfo,vm,opt);
 }

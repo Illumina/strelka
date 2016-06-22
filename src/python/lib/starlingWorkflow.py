@@ -153,7 +153,7 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.append("--report-evs-features")
 
     for bamPath in self.params.bamList :
-        segCmd.extend(["-bam-file",quote(bamPath)])
+        segCmd.extend(["--align-file",bamPath])
 
     if not isFirstSegment :
         segCmd.append("--gvcf-skip-header")

@@ -25,10 +25,21 @@
 
 #pragma once
 
+#include "HtsMergeStreamer.hh"
 #include "htsapi/bam_record.hh"
 #include "htsapi/bam_streamer.hh"
 #include "htsapi/vcf_record.hh"
+#include "options/AlignmentFileOptions.hh"
 #include "starling_common/starling_pos_processor_base.hh"
+
+
+/// register a set of alignment files to the hts streamer and verify consistency conditions.
+const bam_hdr_t&
+registerAlignments(
+    const starling_base_options& opt,
+    const AlignmentFileOptions& alignFileOpt,
+    const std::vector<unsigned>& registrationIndices,
+    HtsMergeStreamer& streamData);
 
 
 /// format the bam region string from the program options and

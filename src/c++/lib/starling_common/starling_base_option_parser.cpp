@@ -158,11 +158,6 @@ write_starling_legacy_options(
     const starling_base_options& default_opt,
     std::ostream& os)
 {
-    if (default_opt.is_bam_filename_used)
-    {
-        os <<
-           " -bam-file file     - Analyze reads from 'file' in sorted & indexed BAM/CRAM format (required) \n"; // (use \"" << STDIN_FILENAME << "\" for stdin)\n"
-    }
     os <<
        " -bam-seq-name name - Analyze reads aligned to chromosome 'name' in the reads file (required)\n"
        " -samtools-reference file\n"

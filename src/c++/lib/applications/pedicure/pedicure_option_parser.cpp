@@ -101,11 +101,6 @@ finalize_pedicure_options(
         pinfo.usage("max-depth-factor must not be less than 0");
     }
 
-    if (! opt.bam_filename.empty())
-    {
-        pinfo.usage("standard bam input not accepted for de-novo calling");
-    }
-
     if (opt.denovo_filename.empty())
     {
         pinfo.usage("de-novo variant output filename is required");

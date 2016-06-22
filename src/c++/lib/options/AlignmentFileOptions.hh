@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Strelka - Small Variant Caller
-// Copyright (c) 2009-2016 Illumina, Inc.
+// Manta - Structural Variant and Indel Caller
+// Copyright (c) 2013-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,19 +18,17 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
 
 #pragma once
 
-#include "options/AlignmentFileOptions.hh"
-#include "starling_common/starling_base_shared.hh"
+#include <string>
+#include <vector>
 
 
-struct snoise_options : public starling_base_options
+/// BAM/CRAM input file object shared by all programs which require these as input
+struct AlignmentFileOptions
 {
-    AlignmentFileOptions alignFileOpt;
+    typedef std::vector<std::string> files_t;
 
-    bool is_skip_header = false;
+    files_t alignmentFilename;
 };

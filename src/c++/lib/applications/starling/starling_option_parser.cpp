@@ -24,6 +24,7 @@
 
 
 #include "starling_option_parser.hh"
+#include "options/AlignmentFileOptionsParser.hh"
 
 #include "boost/filesystem.hpp"
 
@@ -40,6 +41,8 @@ po::options_description
 get_starling_option_parser(
     starling_options& opt)
 {
+    po::options_description aligndesc(getOptionsDescription(opt.alignFileOpt));
+
     po::options_description gvcf_opt("gVCF options");
     gvcf_opt.add_options()
     ("gvcf-file", po::value(&opt.gvcf.out_file),
@@ -102,7 +105,7 @@ get_starling_option_parser(
     ;
 
     po::options_description starling_parse_opt("Germline calling options");
-    starling_parse_opt.add(gvcf_opt).add(phase_opt).add(score_opt);
+    starling_parse_opt.add(aligndesc).add(gvcf_opt).add(phase_opt).add(score_opt);
 
     // final assembly
     po::options_description visible("Options");
@@ -128,18 +131,12 @@ finalize_starling_options(
     const po::variables_map& vm,
     starling_options& opt)
 {
-    if (opt.bam_filename.empty())
+    parseOptions(vm, opt.alignFileOpt);
+    std::string errorMsg;
+    if (checkOptions(opt.alignFileOpt, errorMsg))
     {
-        pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned sample reads");
-    }
-    else
-    {
-        if (! boost::filesystem::exists(opt.bam_filename))
-        {
-            std::ostringstream oss;
-            oss << "Submitted BAM/CRAM file does not exist: '" << opt.bam_filename << "'";
-            pinfo.usage(oss.str().c_str());
-        }
+        pinfo.usage(errorMsg.c_str());
+        //usage(log_os,prog,visible,errorMsg.c_str());
     }
 
     // gvcf option handlers:

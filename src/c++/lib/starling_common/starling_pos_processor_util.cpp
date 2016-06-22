@@ -37,6 +37,7 @@
 #include "blt_util/log.hh"
 #include "blt_util/qscore.hh"
 #include "common/Exceptions.hh"
+#include "htsapi/bam_header_util.hh"
 #include "htsapi/align_path_bam_util.hh"
 #include "htsapi/bam_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
@@ -44,6 +45,59 @@
 #include <cassert>
 
 #include <sstream>
+
+
+
+const bam_hdr_t&
+registerAlignments(
+    const starling_base_options& opt,
+    const AlignmentFileOptions& alignFileOpt,
+    const std::vector<unsigned>& registrationIndices,
+    HtsMergeStreamer& streamData)
+{
+    assert(registrationIndices.size() == alignFileOpt.alignmentFilename.size());
+
+    const bam_hdr_t* referenceHeaderPtr(nullptr);
+
+    const unsigned alignmentFileCount(alignFileOpt.alignmentFilename.size());
+    for (unsigned alignmentFileIndex(0); alignmentFileIndex<alignmentFileCount; ++alignmentFileIndex)
+    {
+        const std::string& alignFile(alignFileOpt.alignmentFilename[alignmentFileIndex]);
+        const unsigned bamIndex(registrationIndices[alignmentFileIndex]);
+        const bam_streamer& readStream(streamData.registerBam(alignFile.c_str(), bamIndex));
+
+        if (nullptr == referenceHeaderPtr)
+        {
+            referenceHeaderPtr = &readStream.get_header();
+
+            // check that target chrom exists in sample:
+            const int32_t tid(readStream.target_name_to_id(opt.bam_seq_name.c_str()));
+            if (tid < 0)
+            {
+                using namespace illumina::common;
+                std::ostringstream oss;
+                oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << alignFile << "'\n";
+                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            }
+        }
+        else
+        {
+            // check that all header chrom details match the first header:
+            if (! check_header_compatibility(readStream.get_header(),*referenceHeaderPtr))
+            {
+                using namespace illumina::common;
+                std::ostringstream oss;
+                oss << "ERROR: input BAM/CRAM files have incompatible headers.\n";
+                oss << "\tfile1:\t'" << alignFileOpt.alignmentFilename[0] << "'\n";
+                oss << "\tfile2:\t'" << alignFile << "'\n";
+                BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+            }
+        }
+    }
+
+    assert(nullptr != referenceHeaderPtr);
+    return (*referenceHeaderPtr);
+}
 
 
 

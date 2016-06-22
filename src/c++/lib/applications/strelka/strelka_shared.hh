@@ -24,8 +24,9 @@
 
 #pragma once
 
-#include "../../calibration/VariantScoringModelServer.hh"
 #include "blt_util/chrom_depth_map.hh"
+#include "calibration/VariantScoringModelServer.hh"
+#include "options/TumorNormalAlignmentFileOptions.hh"
 #include "starling_common/starling_base_shared.hh"
 
 
@@ -100,7 +101,7 @@ struct strelka_options : public starling_base_options
         return (! somatic_indel_scoring_model_filename.empty());
     }
 
-    std::string tumor_bam_filename;
+    TumorNormalAlignmentFileOptions alignFileOpt;
 
     std::string tumor_realigned_read_filename;
 

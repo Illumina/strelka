@@ -64,8 +64,6 @@ pedicure_run(
 
     const pos_range& rlimit(dopt.report_range_limit);
 
-    assert(opt.bam_filename.empty());
-
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
 
     HtsMergeStreamer streamData(bam_region.c_str());

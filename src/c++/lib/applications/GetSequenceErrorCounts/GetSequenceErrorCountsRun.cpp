@@ -31,15 +31,12 @@
 
 #include "appstats/RunStatsManager.hh"
 #include "blt_util/log.hh"
-#include "common/Exceptions.hh"
 #include "htsapi/align_path_bam_util.hh"
 #include "starling_common/HtsMergeStreamerUtil.hh"
 #include "starling_common/ploidy_util.hh"
 #include "starling_common/starling_ref_seq.hh"
 #include "starling_common/starling_pos_processor_util.hh"
 
-#include <sstream>
-#include <algorithm>
 
 
 namespace INPUT_TYPE
@@ -112,38 +109,28 @@ getSequenceErrorCountsRun(
     const SequenceErrorCountsDerivOptions dopt(opt,ref);
     const pos_range& rlimit(dopt.report_range_limit);
 
-    assert(! opt.bam_filename.empty());
-
     const std::string bam_region(get_starling_bam_region_string(opt,dopt));
     HtsMergeStreamer streamData(bam_region.c_str());
-    const bam_streamer& readStream(streamData.registerBam(opt.bam_filename.c_str()));
-    const bam_hdr_t& readHeader(readStream.get_header());
 
-    const int32_t tid(readStream.target_name_to_id(opt.bam_seq_name.c_str()));
-    if (tid < 0)
-    {
-        using namespace illumina::common;
-
-        std::ostringstream oss;
-        oss << "ERROR: seq_name: '" << opt.bam_seq_name << "' is not found in the header of BAM/CRAM file: '" << opt.bam_filename << "'\n";
-        BOOST_THROW_EXCEPTION(LogicException(oss.str()));
-    }
+    std::vector<unsigned> registrationIndices(opt.alignFileOpt.alignmentFilename.size(),0);
+    const bam_hdr_t& referenceHeader(registerAlignments(opt, opt.alignFileOpt, registrationIndices, streamData));
 
     SampleSetSummary ssi;
-    SequenceErrorCountsStreams client_io(opt,pinfo,readHeader,ssi);
+    SequenceErrorCountsStreams client_io(opt,pinfo,referenceHeader,ssi);
 
     SequenceErrorCountsPosProcessor sppr(opt,dopt,ref,client_io);
     starling_read_counts brc;
 
     static const bool noRequireNormalized(false);
-    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, readHeader,
+    registerVcfList(opt.input_candidate_indel_vcf, INPUT_TYPE::CANDIDATE_INDELS, referenceHeader,
                     streamData, noRequireNormalized);
-    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, readHeader, streamData);
+    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
+    registerVcfList(opt.force_output_vcf, INPUT_TYPE::FORCED_GT_VARIANTS, referenceHeader, streamData);
 
     if (! opt.knownVariantsFile.empty())
     {
         const vcf_streamer& vcfStream(streamData.registerVcf(opt.knownVariantsFile.c_str(), INPUT_TYPE::KNOWN_VARIANTS));
-        vcfStream.validateBamHeaderChromSync(readHeader);
+        vcfStream.validateBamHeaderChromSync(referenceHeader);
     }
 
     for (const std::string& excludeRegionFilename : opt.excludedRegionsFileList)

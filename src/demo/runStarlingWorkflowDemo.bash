@@ -63,6 +63,7 @@ fi
 
 cmd="$configScript \
 --bam='$dataDir/NA12891_dupmark_chr20_region.bam' \
+--bam='$dataDir/NA12892_dupmark_chr20_region.bam' \
 --referenceFasta='$dataDir/chr20_860k_only.fa' \
 --callMemMb=1024 \
 --exome \

@@ -23,6 +23,8 @@
 ///
 
 #include "SequenceErrorCountsOptionsParser.hh"
+#include "options/AlignmentFileOptionsParser.hh"
+
 
 #include "boost/filesystem.hpp"
 
@@ -40,6 +42,8 @@ po::options_description
 getSequenceErrorCountsOptionsParser(
     SequenceErrorCountsOptions& opt)
 {
+    po::options_description aligndesc(getOptionsDescription(opt.alignFileOpt));
+
     po::options_description count_opt("Error count options");
     count_opt.add_options()
     ("chrom-depth-file", po::value(&opt.chrom_depth_file),
@@ -59,7 +63,7 @@ getSequenceErrorCountsOptionsParser(
 
     // final assembly
     po::options_description visible("Options");
-    visible.add(count_opt);
+    visible.add(aligndesc).add(count_opt);
 
     po::options_description visible2(get_starling_base_option_parser(opt));
     visible.add(visible2);
@@ -81,18 +85,12 @@ finalizeSequenceErrorCountsOptions(
     const po::variables_map& vm,
     SequenceErrorCountsOptions& opt)
 {
-    if (opt.bam_filename.empty())
+    parseOptions(vm, opt.alignFileOpt);
+    std::string errorMsg;
+    if (checkOptions(opt.alignFileOpt, errorMsg))
     {
-        pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned sample reads");
-    }
-    else
-    {
-        if (! boost::filesystem::exists(opt.bam_filename))
-        {
-            std::ostringstream oss;
-            oss << "Submitted BAM/CRAM file does not exist: '" << opt.bam_filename << "'";
-            pinfo.usage(oss.str().c_str());
-        }
+        pinfo.usage(errorMsg.c_str());
+        //usage(log_os,prog,visible,errorMsg.c_str());
     }
 
     if (opt.countsFilename.empty())

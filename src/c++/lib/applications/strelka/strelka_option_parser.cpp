@@ -25,6 +25,8 @@
 #include "strelka_option_parser.hh"
 
 #include "blt_common/blt_arg_validate.hh"
+#include "options/AlignmentFileOptionsParser.hh"
+#include "options/TumorNormalAlignmentFileOptionsParser.hh"
 #include "starling_common/starling_base_option_parser.hh"
 #include "starling_common/Tier2OptionsParser.hh"
 
@@ -34,12 +36,7 @@ po::options_description
 get_strelka_option_parser(
     strelka_options& opt)
 {
-    po::options_description strelka_parse_opt_ti("Tumor-sample input");
-    strelka_parse_opt_ti.add_options()
-    ("tumor-bam-file",
-     po::value(&opt.tumor_bam_filename),
-     "BAM/CRAM file containing read alignments for the tumor sample (required)")
-    ;
+    po::options_description aligndesc(getOptionsDescription(opt.alignFileOpt));
 
     po::options_description strelka_parse_opt_to("Tumor-sample output");
     strelka_parse_opt_to.add_options()
@@ -131,7 +128,7 @@ get_strelka_option_parser(
 
     po::options_description strelka_parse_opt("Two-sample options");
     strelka_parse_opt
-    .add(strelka_parse_opt_ti).add(strelka_parse_opt_to)
+    .add(aligndesc).add(strelka_parse_opt_to)
     .add(strelka_parse_opt_sv).add(strelka_parse_opt_filter)
     .add(tier2_opt).add(score_opt);
 
@@ -160,9 +157,38 @@ finalize_strelka_options(
     const po::variables_map& vm,
     strelka_options& opt)
 {
-    if (opt.tumor_bam_filename.empty())
+    parseOptions(vm, opt.alignFileOpt);
+    std::string errorMsg;
+    if (checkOptions(opt.alignFileOpt, errorMsg))
     {
-        pinfo.usage("Must specify a sorted & indexed BAM/CRAM file containing aligned tumor sample reads");
+        pinfo.usage(errorMsg.c_str());
+        //usage(log_os,prog,visible,errorMsg.c_str());
+    }
+
+    {
+        unsigned normalCount(0);
+        unsigned tumorCount(0);
+        for (const bool isTumor : opt.alignFileOpt.isAlignmentTumor)
+        {
+            if (isTumor)
+            {
+                tumorCount++;
+            }
+            else
+            {
+                normalCount++;
+            }
+        }
+
+        // undocumented research option to provide zero normal input. somatic caller will run but no sensible scores yet
+        if (normalCount > 1)
+        {
+            pinfo.usage("Must specify no more than one normal sample alignment file.");
+        }
+        if (tumorCount != 1)
+        {
+            pinfo.usage("Must specify exactly one tumor sample alignment file.");
+        }
     }
 
     check_option_arg_range(pinfo,opt.somatic_snv_rate,"somatic-snv-rate",0.,1.);

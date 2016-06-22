@@ -27,11 +27,7 @@
 #include "starling_option_parser.hh"
 #include "starling_run.hh"
 
-#include "blt_util/blt_exception.hh"
-#include "blt_util/log.hh"
-#include "common/Exceptions.hh"
 #include "starling_common/starling_arg_parse.hh"
-#include <cassert>
 #include <cstdlib>
 
 

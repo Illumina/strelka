@@ -126,9 +126,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
         segCmd.append("--report-evs-features")
 
     for bamPath in self.params.normalBamList :
-        segCmd.extend(["-bam-file", bamPath])
+        segCmd.extend(["--normal-align-file", bamPath])
     for bamPath in self.params.tumorBamList :
-        segCmd.extend(["--tumor-bam-file", bamPath])
+        segCmd.extend(["--tumor-align-file", bamPath])
 
     tmpSnvPath = self.paths.getTmpSegmentSnvPath(segStr)
     segFiles.snv.append(tmpSnvPath+".gz")
