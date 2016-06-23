@@ -54,11 +54,8 @@ struct read_key
     operator<(const read_key& rhs) const
     {
         if (read_no()<rhs.read_no()) return true;
-        if (read_no()==rhs.read_no())
-        {
-            return (strcmp(qname(),rhs.qname())<0);
-        }
-        return false;
+        if (read_no()!=rhs.read_no()) return false;
+        return (strcmp(qname(),rhs.qname())<0);
     }
 
     bool

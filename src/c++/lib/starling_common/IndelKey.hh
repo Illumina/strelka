@@ -62,29 +62,21 @@ struct IndelKey
     operator<(const IndelKey& rhs) const
     {
         if (pos < rhs.pos) return true;
-        if (pos == rhs.pos)
-        {
-            return gtcore(rhs);
-        }
-        return false;
+        if (pos != rhs.pos) return false;
+        return gtcore(rhs);
     }
 
     bool
     gtcore(const IndelKey& rhs) const
     {
         if (type < rhs.type) return true;
-        if (type == rhs.type)
-        {
-            if ((type == INDEL::NONE) ||
-                (type == INDEL::BP_LEFT) ||
-                (type == INDEL::BP_RIGHT)) return false;
-            if (length < rhs.length) return true;
-            if (length == rhs.length)
-            {
-                if (swap_dlength < rhs.swap_dlength) return true;
-            }
-        }
-        return false;
+        if (type != rhs.type) return false;
+        if ((type == INDEL::NONE) ||
+            (type == INDEL::BP_LEFT) ||
+            (type == INDEL::BP_RIGHT)) return false;
+        if (length < rhs.length) return true;
+        if (length != rhs.length) return false;
+        return (swap_dlength < rhs.swap_dlength);
     }
 
     bool

@@ -74,24 +74,18 @@ struct alignment
     operator<(const alignment& rhs) const
     {
         if (pos<rhs.pos) return true;
-        if (pos==rhs.pos)
+        if (pos!=rhs.pos) return false;
+        if (is_fwd_strand<rhs.is_fwd_strand) return true;
+        if (is_fwd_strand!=rhs.is_fwd_strand) return false;
+
+        const unsigned ps(path.size());
+        const unsigned rps(rhs.path.size());
+        if (ps<rps) return true;
+        if (ps!=rps) return false;
+        for (unsigned i(0); i<ps; ++i)
         {
-            if (is_fwd_strand<rhs.is_fwd_strand) return true;
-            if (is_fwd_strand==rhs.is_fwd_strand)
-            {
-                const unsigned ps(path.size());
-                const unsigned rps(rhs.path.size());
-                if (ps<rps) return true;
-                if (ps==rps)
-                {
-                    for (unsigned i(0); i<ps; ++i)
-                    {
-                        if (path[i]<rhs.path[i]) return true;
-                        if (path[i]==rhs.path[i]) continue;
-                        return false;
-                    }
-                }
-            }
+            if (path[i]<rhs.path[i]) return true;
+            if (not (path[i]==rhs.path[i])) return false;
         }
         return false;
     }

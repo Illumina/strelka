@@ -202,10 +202,8 @@ private:
         bool
         operator<(const HtsRecordSortData& rhs) const
         {
-            if (pos != rhs.pos)
-            {
-                return (pos > rhs.pos);
-            }
+            if (pos > rhs.pos) return true;
+            if (pos != rhs.pos) return false;
             return (order > rhs.order);
         }
 

@@ -165,12 +165,9 @@ struct IndelBackgroundObservation
     operator<(
         const IndelBackgroundObservation& rhs) const
     {
-        if (depth == rhs.depth)
-        {
-            return (backgroundStatus < rhs.backgroundStatus);
-        }
-
-        return (depth < rhs.depth);
+        if (depth < rhs.depth) return true;
+        if (depth != rhs.depth) return false;
+        return (backgroundStatus < rhs.backgroundStatus);
     }
 
     template<class Archive>
@@ -293,16 +290,14 @@ struct IndelErrorContextObservation
     operator<(
         const IndelErrorContextObservation& rhs) const
     {
-        if (refCount == rhs.refCount)
+        if (refCount < rhs.refCount) return true;
+        if (refCount != rhs.refCount) return false;
+        for (unsigned signalIndex(0); signalIndex<INDEL_SIGNAL_TYPE::SIZE; ++signalIndex)
         {
-            for (unsigned signalIndex(0); signalIndex<INDEL_SIGNAL_TYPE::SIZE; ++signalIndex)
-            {
-                if (signalCounts[signalIndex] == rhs.signalCounts[signalIndex]) continue;
-                return (signalCounts[signalIndex] < rhs.signalCounts[signalIndex]);
-            }
-            return (variantStatus < rhs.variantStatus);
+            if (signalCounts[signalIndex] == rhs.signalCounts[signalIndex]) continue;
+            return (signalCounts[signalIndex] < rhs.signalCounts[signalIndex]);
         }
-        return (refCount < rhs.refCount);
+        return (variantStatus < rhs.variantStatus);
     }
 
     template<class Archive>

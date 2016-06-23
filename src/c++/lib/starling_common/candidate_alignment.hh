@@ -35,15 +35,10 @@ struct candidate_alignment
     operator<(const candidate_alignment& rhs) const
     {
         if (al < rhs.al) return true;
-        if (al == rhs.al)
-        {
-            if (leading_indel_key < rhs.leading_indel_key) return true;
-            if (leading_indel_key == rhs.leading_indel_key)
-            {
-                return (trailing_indel_key < rhs.trailing_indel_key);
-            }
-        }
-        return false;
+        if (not (al == rhs.al)) return false;
+        if (leading_indel_key < rhs.leading_indel_key) return true;
+        if (not (leading_indel_key == rhs.leading_indel_key)) return false;
+        return (trailing_indel_key < rhs.trailing_indel_key);
     }
 
     alignment al;
