@@ -47,8 +47,8 @@
 /// information associated with each candidate indel intersecting an alignment
 struct starling_align_indel_info
 {
-    bool is_present = false;
-    bool is_remove_only = false; // candidate can be toggled off during search but not added
+    bool is_present = false; ///< candidate indel is present in the alignment already
+    bool is_remove_only = false; ///< candidate indel can be toggled off during search but not added
 };
 
 
@@ -156,9 +156,9 @@ dump_indel_status(const starling_align_indel_status& ismap,
 
 
 
-// is an indel either a candidate indel or in at least one of the
-// discovery alignments for this read?
-//
+/// is an indel either a candidate indel or in at least one of the
+/// discovery alignments for this read?
+///
 static
 bool
 is_usable_indel(
@@ -699,7 +699,16 @@ candidate_alignment_search(
     // next check for recursive termination:
     if (depth == indel_order.size())
     {
-        cal_set.insert(cal);
+        indel_set_t calIndels;
+        for (unsigned i(0); i<depth; ++i)
+        {
+            const IndelKey& indelKey(indel_order[i]);
+            if (not indel_status_map[indelKey].is_present) continue;
+            calIndels.insert(indelKey);
+        }
+        candidate_alignment calWithKeys(cal);
+        calWithKeys.setIndels(calIndels);
+        cal_set.insert(std::move(calWithKeys));
         return;
     }
 
@@ -707,13 +716,9 @@ candidate_alignment_search(
     {
         // Check for very high candidate indel density. If found, indel
         // search toggling is turned down to the minimum level which still
-        // allows simple calls (distance 1 from input alignemnt). The intention
+        // allows simple calls (distance 1 from input alignment). The intention
         // is to allow basic indel calling to proceed in practical time
         // through regions with very high numbers of candidate indels.
-        //
-        // This filter was introduced to handle a large set of predictions
-        // made by grouper in a low complexity CT-rich region of human
-        // NCBI37:chr16:33954000-33956000
         //
         // TODO: Note the expression for indel density doesn't account for
         // a possibly large number of indels intersected by a large
@@ -763,7 +768,7 @@ candidate_alignment_search(
     // start or end position may be skipped if a deletion spans one or
     // both of these points
     //
-    // edge-indels only be pinned on one side
+    // edge-indels can only be pinned on one side
     //
     const IndelKey& cindel(indel_order[depth]);
     const bool is_cindel_on(indel_status_map[cindel].is_present);
