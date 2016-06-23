@@ -306,21 +306,21 @@ process_simple_indel(const unsigned max_indel_size,
 // assumes that path is already validated for seq!!!
 //
 unsigned
-add_alignment_indels_to_sppr(const unsigned max_indel_size,
-                             const reference_contig_segment& ref,
-                             const alignment& al,
-                             const bam_seq_base& read_seq,
-                             starling_pos_processor_base& sppr,
-                             const INDEL_ALIGN_TYPE::index_t iat,
-                             const align_id_t id,
-                             const unsigned sample_no,
-                             const std::pair<bool,bool>& edge_pin,
-                             const bool is_mapq_zero)
+add_alignment_indels_to_sppr(
+    const unsigned max_indel_size,
+    const reference_contig_segment& ref,
+    const alignment& al,
+    const bam_seq_base& read_seq,
+    starling_pos_processor_base& sppr,
+    const INDEL_ALIGN_TYPE::index_t iat,
+    const align_id_t id,
+    const unsigned sample_no,
+    const std::pair<bool,bool>& edge_pin,
+    const bool is_mapq_zero)
 {
     using namespace ALIGNPATH;
 
     const unsigned seq_len(read_seq.size());
-//    log_os << rs << "\n";
     if (is_apath_invalid(al.path,seq_len))
     {
         std::ostringstream oss;

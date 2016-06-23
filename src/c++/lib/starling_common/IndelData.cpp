@@ -193,7 +193,7 @@ operator<<(
     for (const auto& indel : rps.alt_indel)
     {
         const IndelKey& indelKey(indel.first);
-        os << " alt-" << indelKey.pos << "-" << INDEL::get_index_label(indelKey.type) << indelKey.length << ": " << indel.second;
+        os << " alt-score: " << indel.second << " key: " << indelKey;
     }
 #endif
 

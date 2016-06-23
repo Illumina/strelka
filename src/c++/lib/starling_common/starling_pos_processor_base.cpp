@@ -684,21 +684,19 @@ load_read_in_depth_buffer(const read_segment& rseg,
 // only acts on genomic mapped reads:
 void
 starling_pos_processor_base::
-init_read_segment(const read_segment& rseg,
-                  const unsigned sample_no)
+init_read_segment(
+    const read_segment& rseg,
+    const unsigned sample_no)
 {
     const alignment& al(rseg.genome_align());
     if (al.empty()) return;
 
     const MAPLEVEL::index_t maplev(rseg.genome_align_maplev());
-    //    const bool is_usable_mapping(MAPLEVEL::TIER1_MAPPED == maplev);
-
     const INDEL_ALIGN_TYPE::index_t iat(translate_maplev_to_indel_type(maplev));
 
     const bam_seq bseq(rseg.get_bam_read());
     try
     {
-//        const read_stats rs = read_stats(rseg.map_qual(),rseg.qual());
         const unsigned total_indel_ref_span_per_read =
             add_alignment_indels_to_sppr(_opt.max_indel_size,_ref,
                                          al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin(), rseg.map_qual() == 0);

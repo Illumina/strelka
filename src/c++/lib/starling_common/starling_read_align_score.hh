@@ -31,7 +31,10 @@
 #include "starling_common/starling_base_shared.hh"
 
 
-
+/// return score of candidate alignment cal for read segment rseg
+///
+/// essentially this is P(read | haplotype), where read=rseg and haplotype=ref+candidate alignment
+///
 double
 score_candidate_alignment(
     const starling_base_options& opt,
