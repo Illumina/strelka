@@ -127,6 +127,7 @@ is_normalized() const
     // and end of the ref and alt alleles
     // see http://genome.sph.umich.edu/wiki/Variant_Normalization
     unsigned ref_length = ref.size();
+    assert (ref_length != 0);
 
     for (const auto& alt_allele : alt)
     {
@@ -138,6 +139,7 @@ is_normalized() const
         }
 
         unsigned alt_length = alt_allele.size();
+        assert (alt_length != 0);
         if(alt_length != ref_length)
         {
             // this checks that indels are reference-padded
