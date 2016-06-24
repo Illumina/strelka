@@ -57,6 +57,9 @@ struct vcf_streamer : public hts_streamer
     validateBamHeaderChromSync(
         const bam_hdr_t& header) const;
 
+    void requireNormalized() {_requireNormalized = true;}
+    void noRequireNormalized() {_requireNormalized = false;}
+
 private:
     bcf_hdr_t* _hdr;
     vcf_record _vcfrec;
