@@ -93,6 +93,9 @@ hts_streamer::
 set_region(
     const char* region)
 {
+    // free _titr if it's already been set to avoid memory leaks
+    if (nullptr != _titr) tbx_itr_destroy(_titr);
+
     _titr = tbx_itr_querys(_tidx, region);
     if (nullptr == _titr)
     {

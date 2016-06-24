@@ -51,7 +51,7 @@ getSequenceErrorCountsOptionsParser(
     ("observation-bed-file", po::value(&opt.observationsBedFilename),
      "write all observed indels to BED file (if not specified, individual indels will not be reported)")
     ("known-variants-vcf-file", po::value(&opt.knownVariantsFile),
-     "VCF file specifying true variant genotypes.  The pattern analyzer will exit with an error if variants are not normalized.")
+     "VCF file specifying true variant genotypes.  Variants must be normalized.")
     ("excluded-regions-bed-file",
      po::value(&opt.excludedRegionsFileList)->multitoken(),
      "BED file specifying regions to exclude from counting. File must be tabix indexed. Argument can be provided multiple times to specify multiple exclusions.")
