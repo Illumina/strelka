@@ -131,6 +131,9 @@ is_normalized() const
 
     for (const auto& alt_allele : alt)
     {
+        unsigned alt_length = alt_allele.size();
+        assert (alt_length != 0);
+
         // all normalized variants must differ at the last ref and alt base
         // this checks for right-padding, i.e. parsimony
         if((*alt_allele.rbegin()) == (*ref.rbegin()))
@@ -138,8 +141,6 @@ is_normalized() const
             return false;
         }
 
-        unsigned alt_length = alt_allele.size();
-        assert (alt_length != 0);
         if(alt_length != ref_length)
         {
             // this checks that indels are reference-padded

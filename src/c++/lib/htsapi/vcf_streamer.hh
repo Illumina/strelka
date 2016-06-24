@@ -60,4 +60,5 @@ struct vcf_streamer : public hts_streamer
 private:
     bcf_hdr_t* _hdr;
     vcf_record _vcfrec;
+    bool _requireNormalized;
 };
