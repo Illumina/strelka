@@ -144,13 +144,11 @@ starling_run(
             {
                 if (vcfRecord.is_indel())
                 {
-                    assert(vcfRecord.is_normalized() && "Please normalize candidate indel VCF (e.g. with vt)");
                     process_candidate_indel(opt.max_indel_size, vcfRecord, sppr);
                 }
             }
             else if (INPUT_TYPE::FORCED_GT_VARIANTS == currentIndex)     // process forced genotype tests from vcf file(s)
             {
-                assert(vcfRecord.is_normalized() && "Please normalize forced genotype VCF (e.g. with vt)");
                 if (vcfRecord.is_indel())
                 {
                     static const unsigned sample_no(0);
