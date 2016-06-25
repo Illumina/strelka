@@ -124,7 +124,10 @@ is_normalized() const
     // normalized indels are left-aligned, reference-padded, and parsimonious
     // normalized SNVs are a single differing base
     // normalized MNVs (and complex alleles) have differing bases at the beginning
-    // and end of the ref and alt alleles
+    // and end of the ref and alt alleles.  However, many input VCFs have
+    // reference-padded MNVs, which should not affect Strelka's calling, so for
+    // now, we're allowing variants to violate left-parsimony in MNVs and complex
+    // alleles
     // see http://genome.sph.umich.edu/wiki/Variant_Normalization
     unsigned ref_length = ref.size();
     assert (ref_length != 0);
@@ -134,14 +137,21 @@ is_normalized() const
         unsigned alt_length = alt_allele.size();
         assert (alt_length != 0);
 
-        // all normalized variants must differ at the last ref and alt base
-        // this checks for right-padding, i.e. parsimony
-        if((*alt_allele.rbegin()) == (*ref.rbegin()))
+        // all normalized variants with the same length ref and alt 
+        // must differ at the last ref and alt base.  Any indel that
+        // has more than one base in both the ref and the alt must
+        // also differ at the last base (this should only happen at
+        // complex indels).  This checks for right-padding, i.e. parsimony
+        if ((alt_length > 1 && ref_length > 1) ||
+            alt_length == ref_length)
         {
-            return false;
+            if ((*alt_allele.rbegin()) == (*ref.rbegin()))
+            {
+                return false;
+            }
         }
 
-        if(alt_length != ref_length)
+        if (alt_length != ref_length)
         {
             // this checks that indels are reference-padded
             if ( (*alt_allele.begin()) == (*ref.begin()))
@@ -163,19 +173,6 @@ is_normalized() const
             // do not match, the record represents a complex allele, and fulfills
             // normalization requirements
         }
-        // else
-        // {
-        //     // we already checked that the last base of an SNV/MNV
-        //     // differed between alt and ref at the beginning of the
-        //     // loop
-        //     if (ref_length > 1)
-        //     {
-        //         if ((*alt_allele.begin()) == (*ref.begin()))
-        //         {
-        //             return false;
-        //         }
-        //     }
-        // }
     }
     return true;
 }
