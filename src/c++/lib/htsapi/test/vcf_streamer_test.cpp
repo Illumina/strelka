@@ -171,17 +171,19 @@ BOOST_AUTO_TEST_CASE( test_vcf_streamer_region )
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"AGG");
 
-    BOOST_REQUIRE_THROW( vcfs.next(), illumina::common::LogicException );
+    BOOST_REQUIRE( vcfs.next() );
     vptr = vcfs.get_record_ptr();
     assert(vptr != nullptr);
 
     // VCF record test for
     // chr10   89717782        INVALID_MNV_2   ACG     AGT     ...
-    // testing that MNV is not reported as normalized
+    // testing that MNV is reported as normalized, despite first base
+    // matching (Manta returns MNV candidates with reference-padding, so
+    // this is to maintain consistency with its inputs)
     BOOST_REQUIRE( vptr->is_valid() );
     BOOST_REQUIRE( vptr->is_indel() );
     BOOST_REQUIRE( ! vptr->is_snv() );
-    BOOST_REQUIRE( ! vptr->is_normalized());
+    BOOST_REQUIRE( vptr->is_normalized());
     BOOST_REQUIRE_EQUAL(vptr->pos, 89717782);
     BOOST_REQUIRE_EQUAL(vptr->alt.size(),1u);
     BOOST_REQUIRE_EQUAL(vptr->alt[0],"AGT");

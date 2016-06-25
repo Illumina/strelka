@@ -163,19 +163,19 @@ is_normalized() const
             // do not match, the record represents a complex allele, and fulfills
             // normalization requirements
         }
-        else
-        {
-            // we already checked that the last base of an SNV/MNV
-            // differed between alt and ref at the beginning of the
-            // loop
-            if (ref_length > 1)
-            {
-                if ((*alt_allele.begin()) == (*ref.begin()))
-                {
-                    return false;
-                }
-            }
-        }
+        // else
+        // {
+        //     // we already checked that the last base of an SNV/MNV
+        //     // differed between alt and ref at the beginning of the
+        //     // loop
+        //     if (ref_length > 1)
+        //     {
+        //         if ((*alt_allele.begin()) == (*ref.begin()))
+        //         {
+        //             return false;
+        //         }
+        //     }
+        // }
     }
     return true;
 }
