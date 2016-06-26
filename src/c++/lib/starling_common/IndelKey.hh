@@ -28,6 +28,8 @@
 #include "blt_util/pos_range.hh"
 #include "starling_common/indel_core.hh"
 
+#include <cassert>
+
 #include <iosfwd>
 
 
@@ -52,7 +54,17 @@ struct IndelKey
         const unsigned l=0,
         const unsigned sl=0)
         : pos(p), type(t), length(l), swap_dlength(sl)
-    {}
+    {
+        validate();
+    }
+
+    void
+    validate() const
+    {
+        // insertSequence/deletionlength is not intended for breakpoint types:
+        assert((not is_breakpoint()) or (delete_length()==0));
+        assert((not is_breakpoint()) or (insert_length()==0));
+    }
 
     // default sort is based on left-most position of the indel (note
     // we consider breakpoints to have the same left and right
