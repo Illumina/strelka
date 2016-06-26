@@ -44,8 +44,8 @@
 struct IndelObservationData
 {
     bool is_noise = false;
-    bool is_external_candidate = false;
-    bool is_forced_output = false; // results of gt tests must be output even for very unlikely cases
+    bool is_external_candidate = false; ///< if true, the allele is automatically promoted to candidate status
+    bool is_forced_output = false; ///< if true, the allele must be scored in output
     INDEL_ALIGN_TYPE::index_t iat = INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ;
     align_id_t id = 0;
     std::string insert_seq;
@@ -154,6 +154,11 @@ struct InsertSequenceManager
     void
     addObservation(const std::string& seq)
     {
+        if (seq.empty())
+        {
+            _exception("Attempting to add empty insertion sequence");
+        }
+
         if (_is_consensus)
         {
             _exception("Attempting to add insert observation after finalizing");
