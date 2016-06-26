@@ -34,8 +34,9 @@
 
 
 std::ostream&
-operator<<(std::ostream& os,
-           const candidate_alignment& cal)
+operator<<(
+    std::ostream& os,
+    const candidate_alignment& cal)
 {
     os << "CANDIDATE_ALIGNMENT: " << cal.al;
     os << "CANDIDATE_ALIGNMENT_LEAD: " << cal.leading_indel_key;

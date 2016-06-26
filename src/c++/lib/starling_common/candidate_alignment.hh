@@ -51,7 +51,7 @@ struct candidate_alignment
     }
 
     /// a new extension to specify the exact keys of all indels included
-    /// in the alignmnet. this is a transitional bandaid required to
+    /// in the alignment. this is a transitional bandaid required to
     /// distinguish insertions with different sequences, which can't
     /// be expressed in the path of the alignment structure below
     ///
@@ -64,10 +64,16 @@ struct candidate_alignment
         _isIndelsSet = true;
     }
 
+    const indel_set_t&
+    getIndels() const
+    {
+        assert(_isIndelsSet);
+        return _indels;
+    }
+
     alignment al;
     IndelKey leading_indel_key;
     IndelKey trailing_indel_key;
-
 
 private:
     indel_set_t _indels;

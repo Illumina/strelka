@@ -242,14 +242,12 @@ bool
 is_equiv_candidate(
     const candidate_alignment& cal1,
     const candidate_alignment& cal2,
-    const unsigned max_indel_size,
     indel_pair_set& equiv_keys)
 {
     equiv_keys.clear();
 
-    indel_set_t is1,is2;
-    get_alignment_indels(cal1,max_indel_size,is1);
-    get_alignment_indels(cal2,max_indel_size,is2);
+    const indel_set_t& is1(cal1.getIndels());
+    const indel_set_t& is2(cal2.getIndels());
 
     const unsigned s1(is1.size());
     const unsigned s2(is2.size());
@@ -354,7 +352,6 @@ late_indel_normalization_filter(
             if (smoothScores[sortedIndex2]+equiv_lnp_range < smoothScores[sortedIndex1]) break;
             const bool is_equiv(is_equiv_candidate(*(candAlignmentPtrs[sortedIndex1]),
                                                    *(candAlignmentPtrs[sortedIndex2]),
-                                                   opt.max_indel_size,
                                                    indelPairs));
 
             if (! is_equiv) continue;
@@ -533,7 +530,7 @@ score_indels(
     const candidate_alignment& maxCandAlignment(*maxCandAlignmentPtr);
 
     indel_set_t indelsToEvaluate;
-    indel_set_t indelsInMaxCandAlignment;
+    const indel_set_t& indelsInMaxCandAlignment(maxCandAlignment.getIndels());
     {
         const known_pos_range maxCandAlignmentRange(get_soft_clip_alignment_range(maxCandAlignment.al));
 
@@ -542,7 +539,6 @@ score_indels(
                << "VARMIT: max_cal.al: " << maxCandAlignment.al << "\n"
                << "VARMIT: max_pr: " << maxCandAlignmentRange << "\n";
 #endif
-        get_alignment_indels(maxCandAlignment,opt.max_indel_size,indelsInMaxCandAlignment);
 #ifdef DEBUG_ALIGN
         log_os << "VARMIT max_path extracted indels:\n";
         dump_indel_set(indelsInMaxCandAlignment,log_os);
@@ -590,8 +586,7 @@ score_indels(
 
                         if (isFilterCandAlignment[candAlignmentIndex]) continue;
 
-                        indel_set_t indelsInCandAlignment;
-                        get_alignment_indels(candAlignment,opt.max_indel_size,indelsInCandAlignment);
+                        const indel_set_t& indelsInCandAlignment(candAlignment.getIndels());
                         const bool isIndelInCandAlignment(indelsInCandAlignment.count(evaluationIndel)!=0);
                         if (! isIndelInCandAlignment) continue;
 
@@ -697,8 +692,7 @@ score_indels(
 
             const double score(candAlignmentScores[candAlignmentIndex]);
 
-            indel_set_t indelsInCandAlignment;
-            get_alignment_indels(candAlignment,opt.max_indel_size,indelsInCandAlignment);
+            const indel_set_t& indelsInCandAlignment(candAlignment.getIndels());
 
             indel_set_t nonCandidateIndelsOrthogonalToEvaluationIndels;
 

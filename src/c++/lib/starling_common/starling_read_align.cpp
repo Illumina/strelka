@@ -699,13 +699,18 @@ candidate_alignment_search(
     // next check for recursive termination:
     if (depth == indel_order.size())
     {
+        const auto cal_strict_pr(get_strict_alignment_range(cal.al));
         indel_set_t calIndels;
-        for (unsigned i(0); i<depth; ++i)
+        for (const auto& indelVal : indel_status_map)
         {
-            const IndelKey& indelKey(indel_order[i]);
-            if (not indel_status_map[indelKey].is_present) continue;
+            if (not indelVal.second.is_present) continue;
+            const IndelKey& indelKey(indelVal.first);
+            if (not is_range_intersect_indel_breakpoints(cal_strict_pr, indelKey)) continue;
             calIndels.insert(indelKey);
         }
+        if (cal.leading_indel_key.type != INDEL::NONE) calIndels.insert(cal.leading_indel_key);
+        if (cal.trailing_indel_key.type != INDEL::NONE) calIndels.insert(cal.trailing_indel_key);
+
         candidate_alignment calWithKeys(cal);
         calWithKeys.setIndels(calIndels);
         cal_set.insert(std::move(calWithKeys));
@@ -992,15 +997,11 @@ get_extra_path_info(const ALIGNPATH::path_t& p)
 static
 unsigned int
 get_candidate_indel_count(
-    const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
     const candidate_alignment& cal)
 {
-    indel_set_t is;
-    get_alignment_indels(cal,opt.max_indel_size,is);
-
     unsigned val(0);
-    for (const IndelKey& indelKey : is)
+    for (const IndelKey& indelKey : cal.getIndels())
     {
         if (indelBuffer.isCandidateIndel(indelKey)) val++;
     }
@@ -1009,17 +1010,16 @@ get_candidate_indel_count(
 
 
 
-// some rather involved tie breaking for alignments with the same score:
-//
-// 1. choose the alignment with the fewest indels
-// 2. choose the alignment with the fewest private indel
-// 2. choose the alignment with the smallest insertion length
-// 3. choose the alignment with the smallest deletion length
-//
+/// some rather involved tie breaking for alignments with the same score:
+///
+/// 1. choose the alignment with the fewest indels
+/// 2. choose the alignment with the fewest private indel
+/// 2. choose the alignment with the smallest insertion length
+/// 3. choose the alignment with the smallest deletion length
+///
 static
 bool
 is_first_cal_preferred(
-    const starling_base_options& opt,
     const IndelBuffer& indelBuffer,
     const candidate_alignment& c1,
     const candidate_alignment& c2)
@@ -1030,8 +1030,8 @@ is_first_cal_preferred(
     if (epi2.indel_count < epi1.indel_count) return false;
     if (epi2.indel_count == epi1.indel_count)
     {
-        const unsigned cic1(get_candidate_indel_count(opt, indelBuffer, c1));
-        const unsigned cic2(get_candidate_indel_count(opt, indelBuffer, c2));
+        const unsigned cic1(get_candidate_indel_count(indelBuffer, c1));
+        const unsigned cic2(get_candidate_indel_count(indelBuffer, c2));
         if (cic2 > cic1) return false;
         if (cic2 == cic1)
         {
@@ -1186,7 +1186,7 @@ score_candidate_alignments(
             // score is calculated, but it's still not preferred)
             //
             if ((path_lnp<=maxCandAlignmentScore) &&
-                is_first_cal_preferred(opt, indelBuffer, *maxCandAlignmentPtr, ical)) continue;
+                is_first_cal_preferred(indelBuffer, *maxCandAlignmentPtr, ical)) continue;
         }
         maxCandAlignmentScore=path_lnp;
         maxCandAlignmentPtr=&ical;
@@ -1267,7 +1267,7 @@ score_candidate_alignments(
         const candidate_alignment& ical(*cal_iter);
         smooth_cal_pool.push_back(&ical);
         if ((NULL==smooth_cal_ptr) ||
-            (!is_first_cal_preferred(opt, indelBuffer, *smooth_cal_ptr, ical)))
+            (!is_first_cal_preferred(indelBuffer, *smooth_cal_ptr, ical)))
         {
             smooth_path_lnp=candAlignmentScores[cal_index];
             smooth_cal_ptr=&ical;
