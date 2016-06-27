@@ -52,10 +52,6 @@ write_vcf_sample_info(
     std::array<unsigned,N_BASE> tier1_base_counts;
     tier1_cpi.cleanedPileup().get_known_counts(tier1_base_counts,opt.used_allele_count_min_qscore);
 
-    //Adding filter on a per sample level
-//    if (dsc.gqx[sampleIndex] < opt.dfilter.dsnv_qual_lowerbound)
-//	   smod.set_filter(PEDICURE_VCF_FILTERS::LowGQX);
-
     double frac = safeFrac(tier1_cpi.n_unused_calls(),tier1_cpi.n_calls());
     if (frac > opt.dfilter.snv_max_filtered_basecall_frac)
         smod.set_filter(PEDICURE_VCF_FILTERS::DPF);
@@ -77,11 +73,11 @@ write_vcf_sample_info(
         os << "," << tier1_base_counts[dsc.alts[i]];
 
     // PL field
-    os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
-    for (unsigned i=3; i<dsc.Sampleplhoods[sampleIndex].size(); ++i)
-    {
-        os << "," << dsc.Sampleplhoods[sampleIndex][i];
-    }
+//    os << ':' << dsc.Sampleplhoods[sampleIndex][0] << "," << dsc.Sampleplhoods[sampleIndex][1] << "," << dsc.Sampleplhoods[sampleIndex][2];
+//    for (unsigned i=3; i<dsc.Sampleplhoods[sampleIndex].size(); ++i)
+//    {
+//        os << "," << dsc.Sampleplhoods[sampleIndex][i];
+//    }
 
 }
 

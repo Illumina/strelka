@@ -94,10 +94,6 @@ denovo_indel_call_vcf(
             }
         }
 
-//        if (rs.is_overlap)
-//        {
-//            smod.set_filter(PEDICURE_VCF_FILTERS::OverlapConflict);
-//        }
 
         for (unsigned sampleIndex(0); sampleIndex<sinfo.size(); sampleIndex++)
         {
@@ -124,27 +120,6 @@ denovo_indel_call_vcf(
             smod.set_filter(PEDICURE_VCF_FILTERS::iHpol);
         }
 
-
-//        {
-//            const int normalFilt(wasNormal.ss_filt_win.avg());
-//            const int normalUsed(wasNormal.ss_used_win.avg());
-//            const float normalWinFrac(safeFrac(normalFilt,(normalFilt+normalUsed)));
-//
-//            const int tumorFilt(wasTumor.ss_filt_win.avg());
-//            const int tumorUsed(wasTumor.ss_used_win.avg());
-//            const float tumorWinFrac(safeFrac(tumorFilt,(tumorFilt+tumorUsed)));
-//
-//            if ((normalWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac) ||
-//                (tumorWinFrac >= opt.sfilter.indelMaxWindowFilteredBasecallFrac))
-//            {
-//                smod.set_filter(STRELKA_VCF_FILTERS::IndelBCNoise);
-//            }
-//        }
-
-//        if ((rs.ntype != NTYPE::REF) || (rs.sindel_from_ntype_qphred < opt.sfilter.sindelQuality_LowerBound))
-//        {
-//            smod.set_filter(STRELKA_VCF_FILTERS::QSI_ref);
-//        }
 
     }
 
