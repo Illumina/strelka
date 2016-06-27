@@ -708,7 +708,7 @@ init_read_segment(const read_segment& rseg,
     }
     catch (...)
     {
-        log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << rseg.key() << "\n";
+        log_os << "\nException caught in add_alignment_indels_to_sppr() while processing record: " << rseg << "\n";
         throw;
     }
 }

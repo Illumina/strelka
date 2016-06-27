@@ -122,16 +122,15 @@ process_edge_insert(const unsigned max_indel_size,
 ///
 static
 void
-process_edge_delete(const unsigned max_indel_size,
-                    const ALIGNPATH::path_t& path,
-                    const bam_seq_base& bseq,
-                    starling_pos_processor_base& sppr,
-                    IndelObservation& obs,
-                    const unsigned sample_no,
-                    const unsigned path_index,
-                    const unsigned read_offset,
-                    const pos_t ref_head_pos,
-                    const bool is_pinned_indel)
+process_edge_delete(
+    const unsigned max_indel_size,
+    const ALIGNPATH::path_t& path,
+    starling_pos_processor_base& sppr,
+    IndelObservation& obs,
+    const unsigned sample_no,
+    const unsigned path_index,
+    const pos_t ref_head_pos,
+    const bool is_pinned_indel)
 {
     using namespace ALIGNPATH;
 
@@ -150,8 +149,6 @@ process_edge_delete(const unsigned max_indel_size,
 #ifdef SPI_DEBUG
     log_os << "FOOBAR: adding pinned edge indel: " << obs.key << "\n";
 #endif
-
-    bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
     finish_indel_sppr(obs,sppr,sample_no);
 }
 
@@ -426,9 +423,7 @@ add_alignment_indels_to_sppr(const unsigned max_indel_size,
             {
                 if (is_pinned_indel)
                 {
-                    process_edge_delete(max_indel_size,al.path,read_seq,
-                                        sppr,obs,sample_no,
-                                        path_index,read_offset,ref_head_pos,
+                    process_edge_delete(max_indel_size, al.path, sppr, obs, sample_no, path_index, ref_head_pos,
                                         is_pinned_indel);
                 }
             }
