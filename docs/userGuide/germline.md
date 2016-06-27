@@ -3,6 +3,26 @@ Strelka User Guide - Germline gVCF workflow
 
 [User Guide Home](README.md)
 
+## Table of Contents
+[] (BEGIN automated TOC section, any edits will be overwritten on next source refresh)
+* [Introduction](#introduction)
+* [Method Overview](#method-overview)
+* [Capabilities](#capabilities)
+* [Input requirements](#input-requirements)
+* [Outputs](#outputs)
+  * [Genome VCF (gVCF)](#genome-vcf-gvcf)
+  * [Statistics](#statistics)
+* [Run configuration and Execution](#run-configuration-and-execution)
+  * [Configuration](#configuration)
+    * [Advanced configuration options](#advanced-configuration-options)
+  * [Execution](#execution)
+    * [Advanced execution options](#advanced-execution-options)
+  * [Extended use cases](#extended-use-cases)
+    * [Exome/Targeted](#exometargeted)
+    * [RNA-Seq](#rna-seq)
+    * [Heteroplasmic/non-ploidy calling](#heteroplasmicnon-ploidy-calling)
+[] (END automated TOC section, any edits will be overwritten on next source refresh)
+
 ## Introduction
 
 Starling is a small variant caller for short sequencing reads. It is capable of calling snps and small indels. Starling will call simple and complex indels up to a specified maximum size. The output of all variant calls is combined with reference block calls to produce a single gVCF output file for the genome.
@@ -23,7 +43,15 @@ filtration and scoring. These steps are described in more detail below:
 
 ## Capabilities
 
-WGS. WES. RNA-Seq. Amplicon
+TODO:
+- Variant types:
+- input read limitations:
+- Assay types: WGS. WES. Amplicon
+
+RNA-Seq analysis is still in development and not fully supported. It
+can be configured with the `--rna` flag. This will adjust filtration
+levels, heterozygous allele ratio expectations and empirical scoring
+details (more details are provided further below).
 
 ## Input requirements
 
@@ -90,7 +118,9 @@ The workflow is configured with the script: `${STRELKA_INSTALL_PATH}/bin/configu
 . Running this script with no arguments will display all standard configuration
 options to specify input alignment files, the reference sequence and the output run folder.
 Note that all input alignment and reference sequence files must contain the same chromosome names
-in the same order. Starka's default settings assume a whole genome DNA-Seq analysis.
+in the same order. Strelka's default settings assume a whole genome DNA-Seq analysis,
+but there are configuration options for exome/targeted sequencing analysis in addition to RNA-Seq.
+
 
 Simple WGS Analysis -- Example Configuration:
 
@@ -147,6 +177,14 @@ Example execution on an SGE cluster:
 
 `${STRELKA_ANALYSIS_PATH}/runWorkflow.py -m sge -j 36`
 
+#### Advanced execution options
+
+These options are useful for workflow development and debugging:
+
+* Stderr logging can be disabled with `--quiet` argument. Note this log is
+  replicated to `${STRELKA_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt`
+  so there is no loss of log information.
+
 ### Extended use cases
 
 #### Exome/Targeted
@@ -159,6 +197,16 @@ WGS case but cannot be applied correctly to a targeted analysis. It also
 changes the indel error model and quality scoring to a Qrule, which is
 less tuned for WGS.
 
+#### RNA-Seq
+
+Supplying the '--rna' flag at configuration time will provide
+experimental settings for RNA-Seq variant calling. At present this flag
+disables all high depth filters which are designed to exclude
+pericentromeric reference compressions in the WGS case but cannot be
+applied correctly to RNA-Seq analysis. In addition the expected allele freqeuncy
+of heterozgous variants is expanded to account for ASE and a custom RNA-Seq
+empirical scoring model is used.
+
 #### Heteroplasmic/non-ploidy calling
 
 Supplying the '--callContinuousVf chrName' argument at configuration time will
@@ -167,14 +215,6 @@ Instead, variants will be called with continuous frequencies and scored using a 
 model. This is useful for detecting variants in mixed populations. This
 argument may be passed multiple times to specify multiple chromosomes to
 call in this manner.
-
-#### Advanced execution options
-
-These options are useful for workflow development and debugging:
-
-* Stderr logging can be disabled with `--quiet` argument. Note this log is
-  replicated to `${STRELKA_ANALYSIS_PATH}/workspace/pyflow.data/logs/pyflow_log.txt`
-  so there is no loss of log information.
 
 [1]: http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41
 [2]: http://ctsa.github.io/pyflow/
