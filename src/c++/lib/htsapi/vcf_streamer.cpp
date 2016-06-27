@@ -77,10 +77,11 @@ check_bam_bcf_header_compatability(
 vcf_streamer::
 vcf_streamer(
     const char* filename,
-    const char* region) :
+    const char* region,
+    const bool isRequireNormalized) :
     hts_streamer(filename,region),
     _hdr(nullptr),
-    _requireNormalized(true)
+    _isRequireNormalized(isRequireNormalized)
 {
     //
     // note with the switch to samtools 1.X vcf/bcf still involve predominantly separate
@@ -138,7 +139,7 @@ next(
         }
         if (! _vcfrec.is_valid()) continue;
         if (is_indel_only && (! _vcfrec.is_indel())) continue;
-        if ( _requireNormalized)
+        if ( _isRequireNormalized)
         {
             if (! _vcfrec.is_normalized())
             {

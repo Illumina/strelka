@@ -1,3 +1,4 @@
+- STARKA-371 enforce indel normalization on vcf input
 - STARKA-372 prototype RNA-Seq support
 - STREL-50 add active region detection and short haplotype enumeration
 - STREL-103 add new diplotype model for germline indels
