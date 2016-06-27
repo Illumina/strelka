@@ -78,7 +78,7 @@ struct starling_base_options : public blt_options
 
     // parameter to enable/disable short haplotype calling
     // it's always false for now
-    bool is_short_haplotype_calling_enabled = false;
+    bool is_short_haplotype_calling_enabled = true;
 
     // to contribute to a breakpoint likelihood, a read must have at least
     // this many bases on each side of the breakpoint:

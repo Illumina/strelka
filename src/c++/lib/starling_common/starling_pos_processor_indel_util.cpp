@@ -445,7 +445,7 @@ add_alignment_indels_to_sppr(
         }
         else if (!is_mapq_zero && sppr.is_active_region_detector_enabled() && is_segment_align_match(ps.type))
         {
-            // to detect active regions
+            // detect active regions (match/mismatch)
             for (unsigned j(0); j < ps.length; ++j)
             {
                 const pos_t ref_pos(ref_head_pos + static_cast<pos_t>(j));
@@ -466,6 +466,7 @@ add_alignment_indels_to_sppr(
 
         if (sppr.is_active_region_detector_enabled() && !is_mapq_zero && obs.key.type != INDEL::NONE)
         {
+            // detect active region (indel)
             active_region_detector.insertIndel(obs);
         }
 

@@ -19,40 +19,21 @@
 //
 
 ///
-/// \author Chris Saunders
+/// \author Sangtae Kim
 ///
 
 #pragma once
 
+#include "ActiveRegion.hh"
+#include "starling_pos_processor_base.hh"
 
-#include "starling_common/IndelKey.hh"
-#include "starling_common/IndelData.hh"
-
-#include <iosfwd>
-
-
-/// Represents a single indel observation
-struct IndelObservation
-{
-    IndelKey key;
-    IndelObservationData data;
-};
-
-
-
-/// Represents all information about an indel
-struct indel
-{
-    IndelKey key;
-    IndelData data;
-};
-
-struct ComplexAlleleObservation
-{
-
-};
-
-// Debugging dump:
-std::ostream& operator<<(std::ostream& os, const IndelObservation& obs);
-std::ostream& operator<<(std::ostream& os, const indel& in);
+unsigned addComplexAlleleToSppr(const reference_contig_segment &ref,
+                                const alignment &al,
+                                const bam_seq_base &read_seq,
+                                starling_pos_processor_base& sppr,
+                                const INDEL_ALIGN_TYPE::index_t iat,
+                                const align_id_t id,
+                                const unsigned sample_no,
+                                const std::pair<bool, bool> &edge_pin,
+                                const bool is_mapq_zero);
 

@@ -32,24 +32,25 @@
 #include <list>
 #include <set>
 
-class ActiveRegionDetector
-{
+/// An agent that detects active regions
+class ActiveRegionDetector {
 public:
     static const unsigned MaxBufferSize = 1000;
     static const unsigned MaxDepth = 1000;
 
     ActiveRegionDetector(
-        unsigned maxDetectionWindowSize = 30,
-        unsigned minNumMismatchesPerPosition = 9,
-        unsigned minNumVariantsPerRegion = 2) :
-        _maxDetectionWindowSize(maxDetectionWindowSize),
-        _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
-        _minNumVariantsPerRegion(minNumVariantsPerRegion),
-        _variantCounter(MaxBufferSize),
-        _alignIdsCurrentActiveRegion(),
-        _positionToAlignIds(MaxBufferSize, std::list<align_id_t>()),
-        _haplotypeBase(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string()))
-
+            const reference_contig_segment& ref,
+            unsigned maxDetectionWindowSize = 30,
+            unsigned minNumMismatchesPerPosition = 9,
+            unsigned minNumVariantsPerRegion = 2) :
+            _ref(ref),
+            _maxDetectionWindowSize(maxDetectionWindowSize),
+            _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
+            _minNumVariantsPerRegion(minNumVariantsPerRegion),
+            _variantCounter(MaxBufferSize),
+            _alignIdsCurrentActiveRegion(),
+            _positionToAlignIds(MaxBufferSize, std::list<align_id_t>()),
+            _haplotypeBase(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string()))
     {
         _bufferStartPos = 0;
 
@@ -70,6 +71,7 @@ public:
     std::list<ActiveRegion>& getActiveRegions();
 
 private:
+    const reference_contig_segment& _ref;
     unsigned _maxDetectionWindowSize;
     unsigned _minNumMismatchesPerPosition;
     unsigned _minNumVariantsPerRegion;

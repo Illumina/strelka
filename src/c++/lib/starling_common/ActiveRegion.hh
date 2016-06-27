@@ -35,8 +35,8 @@
 class ActiveRegion
 {
 public:
-    ActiveRegion(pos_t start, pos_t end, unsigned numVariants):
-        _start(start), _end(end), _numVariants(numVariants),
+    ActiveRegion(pos_t start, pos_t end, unsigned numVariants, const std::string& refSeq):
+        _start(start), _end(end), _numVariants(numVariants), _refSeq(refSeq),
         _alignIdToHaplotype(),
         _alignIdReachingEnd()
     {}
@@ -63,11 +63,15 @@ public:
     }
     void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
     void printHaplotypeSequences() const;
+    void testAlign(const std::string& seq, const std::string& ref) const;
+    const std::string& getReferenceSeq() const { return _refSeq; }
+//    void createComplexAlleles() const;
 
 private:
     pos_t _start;
     pos_t _end;
     unsigned _numVariants;
+    const std::string& _refSeq;
 
     std::map<align_id_t, std::string> _alignIdToHaplotype;
 

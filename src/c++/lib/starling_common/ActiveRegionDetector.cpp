@@ -82,8 +82,7 @@ ActiveRegionDetector::updateStartPosition(const pos_t pos)
 
     if (_activeRegions.empty()) return;
 
-    ActiveRegion front =  _activeRegions.front();
-    if (front.getStart() == pos)
+    if (_activeRegions.front().getStart() == pos)
     {
         _activeRegions.pop_front();
     }
@@ -99,10 +98,12 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
         if (_numVariants >= _minNumVariantsPerRegion)
         {
             // close existing active region
-            ActiveRegion activeRegion = ActiveRegion(_activeRegionStartPos, _prevVariantPos, _numVariants);
+            std::string refStr = "";
+            _ref.get_substring(_activeRegionStartPos, _prevVariantPos - _activeRegionStartPos + 1, refStr);
+            ActiveRegion activeRegion = ActiveRegion(_activeRegionStartPos, _prevVariantPos, _numVariants, refStr);
             _activeRegions.push_back(activeRegion);
             // add haplotype bases
-            std::cout << '>' << (_activeRegionStartPos+1) << '\t' << (_prevVariantPos+1) << '\t' << _numVariants << std::endl;
+            std::cout << '>' << (_activeRegionStartPos+1) << '\t' << (_prevVariantPos+1) << '\t' << refStr << std::endl;
             for (pos_t activeRegionPos(_activeRegionStartPos); activeRegionPos<=_prevVariantPos; ++activeRegionPos)
             {
                 for (align_id_t alignId : getPositionToAlignIds(activeRegionPos))
@@ -138,7 +139,6 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
         _prevVariantPos = pos;
 
     clearPos(pos - _maxDetectionWindowSize - 50);
-
     // max_deletion_size = 50
     // TODO: remaining
 }

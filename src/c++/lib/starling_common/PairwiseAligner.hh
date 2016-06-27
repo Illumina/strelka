@@ -19,40 +19,15 @@
 //
 
 ///
-/// \author Chris Saunders
+/// \author Sangtae Kim
 ///
 
 #pragma once
 
-
-#include "starling_common/IndelKey.hh"
-#include "starling_common/IndelData.hh"
-
-#include <iosfwd>
-
-
-/// Represents a single indel observation
-struct IndelObservation
+class PairwiseAligner
 {
-    IndelKey key;
-    IndelObservationData data;
+public:
+    PairwiseAligner(const string &refSequence, const string &);
+private:
+    void Align();
 };
-
-
-
-/// Represents all information about an indel
-struct indel
-{
-    IndelKey key;
-    IndelData data;
-};
-
-struct ComplexAlleleObservation
-{
-
-};
-
-// Debugging dump:
-std::ostream& operator<<(std::ostream& os, const IndelObservation& obs);
-std::ostream& operator<<(std::ostream& os, const indel& in);
-

@@ -280,6 +280,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _n_samples(n_samples)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
+    , _active_region_detector(ref)
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
@@ -876,7 +877,10 @@ process_pos(const int stage_no,
     {
         init_read_segment_pos(pos);
         if (_opt.is_short_haplotype_calling_enabled)
+        {
             _active_region_detector.updateEndPosition(pos);
+
+        }
 
         if (_opt.is_write_candidate_indels())
         {

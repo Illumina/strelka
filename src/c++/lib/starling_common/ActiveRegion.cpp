@@ -23,8 +23,13 @@
 ///
 
 #include "ActiveRegion.hh"
-#include <string>
+#include "IndelKey.hh"
+#include "indel.hh"
+#include "alignment/GlobalAligner.hh"
+#include "blt_util/align_path.hh"
+
 #include <iostream>
+
 
 void ActiveRegion::insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base)
 {
@@ -67,8 +72,25 @@ void ActiveRegion::printHaplotypeSequences() const
         unsigned count = entry.second;
         if ((count >= 3) && (count >= maxCount/4))
         {
-            std::cout << haplotype.c_str() << '\t' << count << std::endl;
+            if (haplotype[0] == '.' || haplotype[haplotype.length()-1] == '*') continue;
+            std::cout << haplotype.c_str() << '\t' << count;
+            testAlign(haplotype, _refSeq);
+            std::cout << std::endl;
         }
+        testAlign("AGAGCTCCGGTAGC", "GCTCCGGCAGC");
+        std::cout << std::endl;
     }
 }
+
+void ActiveRegion::testAlign(const std::string& seq, const std::string& ref) const
+{
+    AlignmentScores<int> scores(1,-4,-6,-1,-4);
+    GlobalAligner<int> aligner(scores);
+    AlignmentResult<int> result;
+    aligner.align(seq.begin(),seq.end(),ref.begin(),ref.end(),result);
+    std::cout << '\t' << apath_to_cigar(result.align.apath);
+    std::cout << '\t' << result.align.apath;
+}
+
+
 
