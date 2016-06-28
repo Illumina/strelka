@@ -230,10 +230,10 @@ computeEmpiricalScoringFeatures(
 
         // how unreliable are the read mappings near this locus?
         features.set(GERMLINE_INDEL_SCORING_FEATURES::F_MQ,
-                                (_indelSampleReportInfo.mapqTracker.getRMS()));
+                     (_indelSampleReportInfo.mapqTracker.getRMS()));
 
         features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1_NORM,
-                                (_indelSampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
+                     (_indelSampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
 
         features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX_EXACT, (gqx));
 
@@ -502,7 +502,7 @@ computeEmpiricalScoringFeatures(
         smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (ReadPosRankSum));
 
         smod2.features.set(GERMLINE_SNV_SCORING_FEATURES::AD1_NORM,
-                                      (r1 * filteredLocusDepthFactor));
+                           (r1 * filteredLocusDepthFactor));
 
         // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
         /// TODO: convert this to pvalue based on Poisson distro?
@@ -531,7 +531,7 @@ computeEmpiricalScoringFeatures(
                 // +1e-30 to avoid log(0) in extreme cases
                 smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::ABlower, (-log(allelebiaslower + 1.e-30)));
                 smod2.developmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AB,
-                                   (-log(std::min(1., 2. * std::min(allelebiaslower, allelebiasupper)) + 1.e-30)));
+                                              (-log(std::min(1., 2. * std::min(allelebiaslower, allelebiasupper)) + 1.e-30)));
             }
 
             //The average baseQ of the position of alt allele
