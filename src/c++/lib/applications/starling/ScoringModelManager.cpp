@@ -87,6 +87,7 @@ bool ScoringModelManager::isLegacyLogisticEVSModel() const
 }
 
 
+
 void
 ScoringModelManager::
 classify_site(
@@ -116,7 +117,7 @@ classify_site(
                 const bool isUniformDepthExpected(_dopt.is_max_depth());
                 si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, smod);
             }
-            smod.empiricalVariantScore = static_cast<int>(_snvScoringModelPtr->scoreVariant(smod.features.getAll()));
+            smod.empiricalVariantScore = error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(smod.features.getAll()));
 
             static const int maxEmpiricalVariantScore(60);
             smod.empiricalVariantScore = std::min(smod.empiricalVariantScore, maxEmpiricalVariantScore);
@@ -134,14 +135,18 @@ classify_site(
     }
 }
 
+
+
 bool
 ScoringModelManager::
 checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const
 {
     const auto& call(ii.first());
-    return ((call._indelReportInfo.it == SimplifiedIndelReportType::INSERT || call._indelReportInfo.it == SimplifiedIndelReportType::DELETE) &&
+    return ((call._indelReportInfo.it == SimplifiedIndelReportType::INSERT || call._indelReportInfo.it == SimplifiedIndelReportType::DELETE || call.._indelReportInfo.it == SimplifiedIndelReportType::SWAP) &&
             (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // empirical scoring does not handle homref sites properly
 }
+
+
 
 void
 ScoringModelManager::
@@ -200,7 +205,7 @@ classify_indel_impl(
                 const bool isUniformDepthExpected(_dopt.is_max_depth());
                 call.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, ii.is_hetalt());
             }
-            call.empiricalVariantScore = static_cast<int>(_indelScoringModelPtr->scoreVariant(call.features.getAll()));
+            call.empiricalVariantScore = error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(call.features.getAll()));
 
             static const int maxEmpiricalVariantScore(60);
             call.empiricalVariantScore = std::min(call.empiricalVariantScore, maxEmpiricalVariantScore);
@@ -216,6 +221,7 @@ classify_indel_impl(
         default_classify_indel(call);
     }
 }
+
 
 
 void
@@ -247,7 +253,6 @@ classify_indels(
         classify_indel_impl(isVariantUsableInEVSModel,ii,ii.first());
     }
 }
-
 
 
 
@@ -290,7 +295,6 @@ default_classify_site(
 
 
 
-// default rules based indel model
 void
 ScoringModelManager::
 default_classify_indel(

@@ -42,6 +42,7 @@ struct VariantScoringModelServer
         const SCORING_CALL_TYPE::index_t callType,
         const SCORING_VARIANT_TYPE::index_t variantType);
 
+    /// \return prob variant call is false
     double
     scoreVariant(
         const VariantScoringModelBase::featureInput_t& features) const

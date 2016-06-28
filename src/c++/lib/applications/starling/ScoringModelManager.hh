@@ -60,11 +60,12 @@ struct ScoringModelManager
     classify_indels(
         std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indels) const;
 
-    // mimics behavior of previous hard filters
+    /// default rules based site model
     void default_classify_site(
         const GermlineSiteCallInfo& si,
         GermlineVariantSimpleGenotypeInfo& call) const;
 
+    /// default rules based indel model
     void default_classify_indel(GermlineIndelSimpleGenotypeInfo& call) const;
 
 
@@ -113,13 +114,15 @@ private:
     double
     snvEVSThreshold() const
     {
-        return _snvScoringModelPtr->scoreFilterThreshold();
+        return _opt.min_gqx;
+//        return _snvScoringModelPtr->scoreFilterThreshold();
     }
 
     double
     indelEVSThreshold() const
     {
-        return _indelScoringModelPtr->scoreFilterThreshold();
+        return _opt.min_gqx;
+//        return _indelScoringModelPtr->scoreFilterThreshold();
     }
 
     // for setting the vcf header filters
