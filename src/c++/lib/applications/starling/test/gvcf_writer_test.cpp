@@ -73,8 +73,6 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     opt.is_user_genome_size = true;
     opt.user_genome_size = rcs.seq().size();
     opt.bam_seq_name = "dummy";
-    opt.germline_variant_scoring_models_filename = TEST_CONFIG_PATH;
-    opt.germline_variant_scoring_model_name = "QScoreHPDRE100_v4";
     starling_deriv_options dopt(opt,rcs);
 
     const snp_pos_info& spi(bc_buff.get_pos(snp_pos));

@@ -42,41 +42,28 @@ ScoringModelManager(
       _isReportEVSFeatures(opt.isReportEVSFeatures),
       _isRNA(opt.isRNA)
 {
-    if (not opt.germline_variant_scoring_models_filename.empty())
+    const SCORING_CALL_TYPE::index_t callType(opt.isRNA ? SCORING_CALL_TYPE::RNA : SCORING_CALL_TYPE::GERMLINE);
+
+    if (not opt.snv_scoring_model_filename.empty())
     {
-        /// this if is TEMPORARY until legacy support is taken out:
-        if (opt.isRNA)
-        {
-            const SCORING_CALL_TYPE::index_t callType(opt.isRNA ? SCORING_CALL_TYPE::RNA : SCORING_CALL_TYPE::GERMLINE);
+        _snvScoringModelPtr.reset(
+            new VariantScoringModelServer(
+                _dopt.snvFeatureSet.getFeatureMap(),
+                opt.snv_scoring_model_filename,
+                callType,
+                SCORING_VARIANT_TYPE::SNV)
+        );
+    }
 
-            assert (opt.germline_variant_scoring_model_name.empty());
-
-            _snvScoringModelPtr.reset(
-                new VariantScoringModelServer(
-                    _dopt.snvFeatureSet.getFeatureMap(),
-                    opt.germline_variant_scoring_models_filename,
-                    callType,
-                    SCORING_VARIANT_TYPE::SNV)
-            );
-
-            /// TEMPORARY suspend indel RF file load until a valid model file exists
-#if 0
-            _indelScoringModelPtr.reset(
-                new VariantScoringModelServer(
-                    _dopt.indelFeatureSet.getFeatureMap(),
-                    opt.germline_variant_scoring_models_filename,
-                    callType,
-                    SCORING_VARIANT_TYPE::INDEL)
-            );
-#endif
-        }
-        else
-        {
-            assert (not opt.germline_variant_scoring_model_name.empty());
-            _legacyModelPtr.reset(
-                new LogisticAndRuleScoringModels(_dopt, opt.germline_variant_scoring_models_filename,
-                                                 opt.germline_variant_scoring_model_name));
-        }
+    if (not opt.indel_scoring_model_filename.empty())
+    {
+        _indelScoringModelPtr.reset(
+            new VariantScoringModelServer(
+                _dopt.indelFeatureSet.getFeatureMap(),
+                opt.indel_scoring_model_filename,
+                callType,
+                SCORING_VARIANT_TYPE::INDEL)
+        );
     }
 }
 

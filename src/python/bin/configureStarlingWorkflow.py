@@ -82,8 +82,8 @@ You must specify a BAM or CRAM file for the sample.
             'runDir' : 'StarlingWorkflow',
             'bgzip9Bin' : joinFile(libexecDir,"bgzip9"),
             'configDir' : configDir,
-            'evsModelFile' : joinFile(configDir,'germlineVariantScoringModels.txt'),
-            'evsModelName' : "QScoreHPDRE100_v4",
+            'germlineSnvScoringModelFile' : joinFile(configDir,'germlineVariantScoringModels.json'),
+            'germlineIndelScoringModelFile' : joinFile(configDir,'germlineVariantScoringModels.json'),
             'callContinuousVf' : []
             })
         return defaults

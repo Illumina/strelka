@@ -141,9 +141,10 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
 
     # Empirical Variant Scoring(EVS):
     if self.params.isEVS :
-        segCmd.extend(['--variant-scoring-models-file',quote(self.params.evsModelFile)])
-        if self.params.evsModelName is not None :
-            segCmd.extend(['--variant-scoring-model-name',self.params.evsModelName])
+        if self.params.germlineSnvScoringModelFile is not None :
+            segCmd.extend(['--snv-scoring-model-file', self.params.germlineSnvScoringModelFile])
+        if self.params.germlineIndelScoringModelFile is not None :
+            segCmd.extend(['--indel-scoring-model-file', self.params.germlineIndelScoringModelFile])
 
     if self.params.indelErrorModelName is not None :
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
@@ -358,8 +359,8 @@ class StarlingWorkflow(StarkaWorkflow) :
             self.params.isEVS = False
 
         if self.params.isRNA :
-            self.params.evsModelFile = joinFile(self.params.configDir,'RNAVariantScoringModels.json')
-            self.params.evsModelName = None
+            self.params.germlineSnvScoringModelFile = joinFile(self.params.configDir,'RNAVariantScoringModels.json')
+            self.params.germlineIndelScoringModelFile = None
 
 
     def getSuccessMessage(self) :

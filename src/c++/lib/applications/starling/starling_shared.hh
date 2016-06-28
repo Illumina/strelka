@@ -68,14 +68,12 @@ struct starling_options : public starling_base_options
     bool
     is_compute_germline_scoring_metrics() const override
     {
-        return (isReportEVSFeatures || (! germline_variant_scoring_models_filename.empty()));
+        return (isReportEVSFeatures || (! snv_scoring_model_filename.empty()) || (! indel_scoring_model_filename.empty()));
     }
 
-    /// germline scoring models
-    std::string germline_variant_scoring_models_filename;
-
-    /// Which scoring model should we use?
-    std::string germline_variant_scoring_model_name;
+    /// empirical scoring models
+    std::string snv_scoring_model_filename;
+    std::string indel_scoring_model_filename;
 
     // Apply codon phasing:
     bool do_codon_phasing = false;
