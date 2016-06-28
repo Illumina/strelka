@@ -196,6 +196,9 @@ public:
     bool is_forced_output;
     bool is_zero_coverage;
 
+    /// true if this allele was indentified as a hetalt 'early', ie. in the diplotype model.
+    bool is_diplotype_model_hetalt = false;
+
     std::vector<unsigned> phredLoghood;
 };
 

@@ -207,32 +207,41 @@ computeEmpiricalScoringFeatures(
     }
     else
     {
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::QUAL, (_dindel.indel_qphred * chromDepthFactor));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX, (gqx * chromDepthFactor));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::REFREP1, (_indelReportInfo.ref_repeat_count));
+        {
+            double genotype(0);
+            if (_dindel.max_gt == STAR_DIINDEL::HOM)
+            {
+                genotype = 1;
+            }
+            else
+            {
+                if (_dindel.is_diplotype_model_hetalt) genotype = 2;
+            }
+            features.set(GERMLINE_INDEL_SCORING_FEATURES::GENO, genotype);
+        }
+
         features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (_indelReportInfo.indel_repeat_count));
         features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (_indelReportInfo.repeat_unit.length()));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::AD0,
-                     (_indelSampleReportInfo.n_confident_ref_reads * chromDepthFactor));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1,
-                     (_indelSampleReportInfo.n_confident_indel_reads * chromDepthFactor));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::AD2,
-                     (_indelSampleReportInfo.n_confident_alt_reads * chromDepthFactor));
-        features.set(GERMLINE_INDEL_SCORING_FEATURES::F_DPI, (_indelSampleReportInfo.tier1Depth * chromDepthFactor));
 
         // +1e-30 to avoid log(0) in extreme cases
         features.set(GERMLINE_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower + 1.e-30)));
         features.set(GERMLINE_INDEL_SCORING_FEATURES::AB,
                      (-std::log(std::min(1., 2. * std::min(allelebiaslower, allelebiasupper)) + 1.e-30)));
 
+        // how unreliable are the read mappings near this locus?
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::F_MQ,
+                                (_indelSampleReportInfo.mapqTracker.getRMS()));
+
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1_NORM,
+                                (_indelSampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
+
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX_EXACT, (gqx));
+
         // compute any experimental features not currently used in production
         if (isComputeDevelopmentFeatures)
         {
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (gqx * chromDepthFactor));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::REFREP1, (_indelReportInfo.ref_repeat_count));
 
-            // how unreliable are the read mappings near this locus?
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ,
-                                    (_indelSampleReportInfo.mapqTracker.getRMS()));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
                                     (_indelSampleReportInfo.mapqTracker.getZeroFrac()));
 
@@ -260,17 +269,15 @@ computeEmpiricalScoringFeatures(
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
                                     (_indelSampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
-                                    (_indelSampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM,
                                     (_indelSampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (_dindel.indel_qphred));
-            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (gqx));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (gq));
         }
     }
 }
+
 
 
 static

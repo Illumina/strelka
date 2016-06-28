@@ -207,17 +207,14 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
      */
     enum index_t
     {
-        QUAL,
-        F_GQX,
-        REFREP1,
+        GENO,
         IDREP1,
         RULEN1,
-        AD0,
-        AD1,
-        AD2,
         ABlower,
         AB,
-        F_DPI,
+        F_MQ,
+        AD1_NORM,
+        F_GQX_EXACT,
         SIZE
     };
 
@@ -232,28 +229,22 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case QUAL:
-            return "QUAL";
-        case F_GQX:
-            return "F_GQX";
-        case REFREP1:
-            return "REFREP1";
+        case GENO:
+            return "GENO";
         case IDREP1:
             return "IDREP1";
         case RULEN1:
             return "RULEN1";
-        case AD0:
-            return "AD0";
-        case AD1:
-            return "AD1";
-        case AD2:
-            return "AD2";
         case ABlower:
             return "ABlower";
         case AB:
             return "AB";
-        case F_DPI:
-            return "F_DPI";
+        case F_MQ:
+            return "F_MQ";
+        case AD1_NORM:
+            return "AD1_NORM";
+        case F_GQX_EXACT:
+            return "F_GQX_EXACT";
         default:
             assert(false && "Unknown feature");
             return nullptr;
@@ -284,8 +275,7 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
 
     enum index_t
     {
-        F_GQ,
-        F_MQ,
+        REFREP1,
         mapqZeroFraction,
         F_DPI_NORM,
         TDP_NORM,
@@ -293,10 +283,8 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         F_GQX_NORM,
         F_GQ_NORM,
         AD0_NORM,
-        AD1_NORM,
         AD2_NORM,
         QUAL_EXACT,
-        F_GQX_EXACT,
         F_GQ_EXACT,
         SIZE
     };
@@ -312,10 +300,8 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-        case F_GQ:
-            return "F_GQ";
-        case F_MQ:
-            return "F_MQ";
+        case REFREP1:
+            return "REFREP1";
         case mapqZeroFraction:
             return "mapqZeroFraction";
         case F_DPI_NORM:
@@ -330,14 +316,10 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "F_GQ_NORM";
         case AD0_NORM:
             return "AD0_NORM";
-        case AD1_NORM:
-            return "AD1_NORM";
         case AD2_NORM:
             return "AD2_NORM";
         case QUAL_EXACT:
             return "QUAL_EXACT";
-        case F_GQX_EXACT:
-            return "F_GQX_EXACT";
         case F_GQ_EXACT:
             return "F_GQ_EXACT";
         default:

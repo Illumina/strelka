@@ -692,6 +692,11 @@ locusGenotypeToDindel(
     dindel.is_zero_coverage = isZeroCoverage;
     dindel.ploidy = groupLocusPloidy;
 
+    if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
+    {
+        dindel.is_diplotype_model_hetalt = true;
+    }
+
     dindel.pprob[STAR_DIINDEL::NOINDEL] = locusGenotype.posteriorProb[AG_GENOTYPE::HOMREF];
     dindel.pprob[STAR_DIINDEL::HET] = locusGenotype.posteriorProb[AG_GENOTYPE::getAlleleHetId(alleleId)];
     dindel.pprob[STAR_DIINDEL::HOM] = locusGenotype.posteriorProb[AG_GENOTYPE::getAlleleHomId(alleleId)];
