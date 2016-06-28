@@ -42,8 +42,7 @@ void
 add_gvcf_filters(
     const starling_options& sopt,
     const cdmap_t& chrom_depth,
-    std::ostream& os,
-    const ScoringModelManager& CM)
+    std::ostream& os)
 {
     const gvcf_options& opt(sopt.gvcf);
 
@@ -65,7 +64,7 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighBaseFilt),oss.str().c_str());
     }
 
-    if (opt.is_max_snv_sb && (!CM.isLegacyLogisticEVSModel()))
+    if (opt.is_max_snv_sb)
     {
         std::ostringstream oss;
         oss << "SNV strand bias value (SNVSB) exceeds " << opt.max_snv_sb;
@@ -78,34 +77,11 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
     }
 
-    if (opt.is_max_ref_rep() && !CM.isLegacyLogisticEVSModel())
+    if (opt.is_max_ref_rep())
     {
         std::ostringstream oss;
         oss << "Locus contains an indel allele occurring in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;
         write_vcf_filter(os,get_label(HighRefRep),oss.str().c_str());
-    }
-
-    if (CM.isLegacyLogisticEVSModel())
-    {
-        for (unsigned varType(0); varType < LEGACY_CALIBRATION_MODEL::SIZE; ++varType)
-        {
-            using namespace LEGACY_CALIBRATION_MODEL;
-            if (varType == HetAltSNP) continue;
-
-            const var_case vti(static_cast<var_case>(varType));
-            std::ostringstream oss;
-            oss << "Locus GQX is less than " << CM.get_case_cutoff(vti) << " for " << get_label_header(vti);
-            write_vcf_filter(os, GERMLINE_VARIANT_VCF_FILTERS::get_label(get_Qscore_filter(vti)),
-                             oss.str().c_str());
-        }
-    }
-    else if (CM.isEVSSiteModel() or CM.isEVSIndelModel())
-    {
-        /// TODO may need to expand this to include actual thresholds
-        std::ostringstream oss;
-        oss << "Locus GQX is below minimum threshold";
-        write_vcf_filter(os, GERMLINE_VARIANT_VCF_FILTERS::get_label(GERMLINE_VARIANT_VCF_FILTERS::LowGQX),
-                         oss.str().c_str());
     }
 
     // Inconsistent phasing, meaning we cannot confidently identify haplotypes in windows
@@ -129,8 +105,8 @@ add_gvcf_filters(
         for (const auto& val : chrom_depth)
         {
             const std::string& chrom(val.first);
-            const double max_depth(opt.max_depth_factor*val.second);
-            os << "##MaxDepth_" << chrom << '=' << max_depth << "\n";
+            const double expectedDepth(val.second);
+            os << "##Depth_" << chrom << '=' << expectedDepth << "\n";
         }
     }
 
@@ -154,8 +130,7 @@ finish_gvcf_header(
     const gvcf_deriv_options& dopt,
     const cdmap_t& chrom_depth,
     const std::string& sample_name,
-    std::ostream& os,
-    const ScoringModelManager& CM)
+    std::ostream& os)
 {
     //INFO:
     os << "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the region described in this record\">\n";
@@ -222,7 +197,7 @@ finish_gvcf_header(
 
     // FILTER:
 
-    add_gvcf_filters(opt,chrom_depth,os,CM);
+    add_gvcf_filters(opt, chrom_depth, os);
 
 
     if (opt.isReportEVSFeatures)

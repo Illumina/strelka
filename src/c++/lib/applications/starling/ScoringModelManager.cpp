@@ -69,25 +69,6 @@ ScoringModelManager(
 
 
 
-int
-ScoringModelManager::
-get_case_cutoff(
-    const LEGACY_CALIBRATION_MODEL::var_case my_case) const
-{
-    if (not isLegacyModel()) return 0;
-    return getLegacyModel().get_var_threshold(my_case);
-}
-
-
-
-bool ScoringModelManager::isLegacyLogisticEVSModel() const
-{
-    if (not isLegacyModel()) return false;
-    return getLegacyModel().is_logistic_model();
-}
-
-
-
 void
 ScoringModelManager::
 classify_site(
@@ -105,27 +86,20 @@ classify_site(
     //si.smod.filters.reset(); // make sure no filters have been applied prior
     if (si.dgt.is_snp && isEVSSiteModel())
     {
-        if (isLegacyModel())
+        if (smod.features.empty())
         {
-            getLegacyModel().score_site_instance(si, smod);
+            static const bool isComputeDevelopmentFeatures(false);
+            const bool isUniformDepthExpected(_dopt.is_max_depth());
+            si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, smod);
         }
-        else
+        smod.empiricalVariantScore = error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(smod.features.getAll()));
+
+        static const int maxEmpiricalVariantScore(60);
+        smod.empiricalVariantScore = std::min(smod.empiricalVariantScore, maxEmpiricalVariantScore);
+
+        if (smod.empiricalVariantScore < snvEVSThreshold())
         {
-            if (smod.features.empty())
-            {
-                static const bool isComputeDevelopmentFeatures(false);
-                const bool isUniformDepthExpected(_dopt.is_max_depth());
-                si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, smod);
-            }
-            smod.empiricalVariantScore = error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(smod.features.getAll()));
-
-            static const int maxEmpiricalVariantScore(60);
-            smod.empiricalVariantScore = std::min(smod.empiricalVariantScore, maxEmpiricalVariantScore);
-
-            if (smod.empiricalVariantScore < snvEVSThreshold())
-            {
-                smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
-            }
+            smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }
     }
     else
@@ -188,32 +162,20 @@ classify_indel_impl(
 
     if (isEVSIndelModel() && isVariantUsableInEVSModel)
     {
-        if (isLegacyModel())
+        if (call.features.empty())
         {
-            getLegacyModel().score_indel_instance(ii, call);
+            static const bool isComputeDevelopmentFeatures(false);
+            const bool isUniformDepthExpected(_dopt.is_max_depth());
+            call.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, ii.is_hetalt());
         }
-        else if (_isRNA)
-        {
-            // TEMPORARY HACK TO DISABLE RNA RF for indels
-            default_classify_indel(call);
-        }
-        else
-        {
-            if (call.features.empty())
-            {
-                static const bool isComputeDevelopmentFeatures(false);
-                const bool isUniformDepthExpected(_dopt.is_max_depth());
-                call.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, ii.is_hetalt());
-            }
-            call.empiricalVariantScore = error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(call.features.getAll()));
+        call.empiricalVariantScore = error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(call.features.getAll()));
 
-            static const int maxEmpiricalVariantScore(60);
-            call.empiricalVariantScore = std::min(call.empiricalVariantScore, maxEmpiricalVariantScore);
+        static const int maxEmpiricalVariantScore(60);
+        call.empiricalVariantScore = std::min(call.empiricalVariantScore, maxEmpiricalVariantScore);
 
-            if (call.empiricalVariantScore < indelEVSThreshold())
-            {
-                call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
-            }
+        if (call.empiricalVariantScore < indelEVSThreshold())
+        {
+            call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }
     }
     else

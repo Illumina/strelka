@@ -41,5 +41,4 @@ finish_gvcf_header(
     const gvcf_deriv_options& dopt,
     const cdmap_t& chrom_depth,
     const std::string& sample_name,
-    std::ostream& os,
-    const ScoringModelManager& CM);
+    std::ostream& os);

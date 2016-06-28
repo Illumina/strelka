@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "LogisticAndRuleScoringModels.hh"
+#include "gvcf_locus_info.hh"
 #include "starling_shared.hh"
 #include "calibration/VariantScoringModelServer.hh"
 
@@ -68,31 +68,19 @@ struct ScoringModelManager
     /// default rules based indel model
     void default_classify_indel(GermlineIndelSimpleGenotypeInfo& call) const;
 
-
-    int
-    get_case_cutoff(const LEGACY_CALIBRATION_MODEL::var_case my_case) const;
-
     bool
     isEVSSiteModel() const
     {
-        return (isLegacyModel() || _snvScoringModelPtr);
+        return static_cast<bool>(_snvScoringModelPtr);
     }
 
     bool
     isEVSIndelModel() const
     {
-        return (isLegacyModel() || _indelScoringModelPtr);
+        return static_cast<bool>(_indelScoringModelPtr);
     }
-
-    bool
-    isLegacyLogisticEVSModel() const;
 
 private:
-    const LogisticAndRuleScoringModels& getLegacyModel() const
-    {
-        return *_legacyModelPtr;
-    }
-
     bool checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const;
 
     void set_indel_modifiers(
@@ -104,12 +92,6 @@ private:
         const bool is_model_usable,
         const GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
-
-    bool
-    isLegacyModel() const
-    {
-        return static_cast<bool>(_legacyModelPtr);
-    }
 
     double
     snvEVSThreshold() const
@@ -130,8 +112,6 @@ private:
     const gvcf_deriv_options& _dopt;
     bool _isReportEVSFeatures;
     bool _isRNA;
-
-    std::unique_ptr<LogisticAndRuleScoringModels> _legacyModelPtr;
 
     std::unique_ptr<VariantScoringModelServer> _snvScoringModelPtr;
     std::unique_ptr<VariantScoringModelServer> _indelScoringModelPtr;
