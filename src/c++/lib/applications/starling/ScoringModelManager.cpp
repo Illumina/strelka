@@ -310,13 +310,13 @@ default_classify_indel(
         if (call._indelSampleReportInfo.tier1Depth > this->_dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 
-    if (this->_opt.is_max_ref_rep)
+    if (_opt.is_max_ref_rep())
     {
         const auto& iri(call._indelReportInfo);
         if (iri.is_repeat_unit())
         {
             if ((iri.repeat_unit.size() <= 2) &&
-                (static_cast<int>(iri.ref_repeat_count) > this->_opt.max_ref_rep))
+                (static_cast<int>(iri.ref_repeat_count) > _opt.max_ref_rep))
             {
                 call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
             }

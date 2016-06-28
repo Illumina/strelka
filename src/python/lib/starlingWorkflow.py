@@ -119,7 +119,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segCmd.extend(["--gvcf-file","-"])
     segCmd.extend(['--gvcf-min-gqx','5'])
     segCmd.extend(['--gvcf-max-snv-strand-bias','10'])
-    segCmd.extend(['--gvcf-max-indel-ref-repeat', '-1'])
     segCmd.extend(['-min-qscore','17'])
     segCmd.extend(['-bsnp-ssd-no-mismatch', '0.35'])
     segCmd.extend(['-bsnp-ssd-one-mismatch', '0.6'])

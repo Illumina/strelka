@@ -145,7 +145,6 @@ finalize_starling_options(
     // gvcf option handlers:
     opt.gvcf.is_min_gqx = (opt.gvcf.min_gqx >= 0);
     opt.gvcf.is_max_snv_hpol = (opt.gvcf.max_snv_hpol >= 0);
-    opt.gvcf.is_max_ref_rep = (opt.gvcf.max_ref_rep >= 0);
 
     if (opt.gvcf.block_percent_tol > 100)
     {

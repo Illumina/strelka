@@ -78,7 +78,7 @@ add_gvcf_filters(
         write_vcf_filter(os,get_label(HighSNVHPOL),oss.str().c_str());
     }
 
-    if (opt.is_max_ref_rep && !CM.isLegacyLogisticEVSModel())
+    if (opt.is_max_ref_rep() && !CM.isLegacyLogisticEVSModel())
     {
         std::ostringstream oss;
         oss << "Locus contains an indel allele occurring in a homopolymer or dinucleotide track with a reference repeat greater than " << opt.max_ref_rep;

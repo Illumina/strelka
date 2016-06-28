@@ -36,13 +36,19 @@ struct gvcf_options
     bool
     is_depth_filter() const
     {
-        return (! chrom_depth_file.empty());
+        return (!chrom_depth_file.empty());
     }
 
     bool
     is_gvcf_output() const
     {
-        return (! out_file.empty());
+        return (!out_file.empty());
+    }
+
+    bool
+    is_max_ref_rep() const
+    {
+        return (max_ref_rep >= 0);
     }
 
 
@@ -60,7 +66,6 @@ struct gvcf_options
     double max_snv_sb = 10;
     bool is_max_snv_hpol = true;
     int max_snv_hpol = -1;
-    bool is_max_ref_rep = true;
     int max_ref_rep = -1;
 
     // blocking scheme:
