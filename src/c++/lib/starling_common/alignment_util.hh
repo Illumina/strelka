@@ -120,13 +120,3 @@ getAlignmentFromBamRecord(
     const bam_record& br,
     alignment& al);
 
-#if 0
-/// Shift all indels as far "to the left" as possible -- note that
-/// some indels may be lost. Returns true if the alignment was changed.
-///
-bool
-normalize_alignment(alignment& al,
-                    const std::string& read_seq,
-                    const std::string& ref_seq);
-#endif
-
