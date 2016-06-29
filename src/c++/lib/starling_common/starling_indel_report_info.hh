@@ -31,6 +31,50 @@
 #include <string>
 
 
+namespace SimplifiedIndelReportType
+{
+/// some components of the indel reporting need to reduce all alternate alleles to the following
+/// simplified states
+///
+enum index_t
+{
+    INSERT,
+    DELETE,
+    SWAP,
+    BREAKPOINT,
+    OTHER
+};
+
+inline
+index_t
+getRateType(
+    const IndelKey& indelKey)
+{
+    if     (indelKey.isPrimitiveDeletionAllele())
+    {
+        return DELETE;
+    }
+    else if (indelKey.isPrimitiveInsertionAllele())
+    {
+        return INSERT;
+    }
+    else if (indelKey.type == INDEL::INDEL)
+    {
+        return SWAP;
+    }
+    else if (indelKey.is_breakpoint())
+    {
+        return BREAKPOINT;
+    }
+    else
+    {
+        return OTHER;
+    }
+}
+}
+
+
+
 /// indel summary information which is shared between all samples:
 ///
 struct starling_indel_report_info
@@ -54,7 +98,7 @@ struct starling_indel_report_info
     unsigned ihpol = 0; ///< interrupted homopolymer length
 
     // not directly reported, but handy to have pre-calculated:
-    INDEL::index_t it = INDEL::NONE;
+    SimplifiedIndelReportType::index_t it = SimplifiedIndelReportType::OTHER;
 };
 
 std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj);

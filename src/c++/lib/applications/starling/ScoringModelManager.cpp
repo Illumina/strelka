@@ -152,7 +152,7 @@ ScoringModelManager::
 checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const
 {
     const auto& call(ii.first());
-    return ((call._indelReportInfo.it == INDEL::INSERT || call._indelReportInfo.it == INDEL::DELETE) &&
+    return ((call._indelReportInfo.it == SimplifiedIndelReportType::INSERT || call._indelReportInfo.it == SimplifiedIndelReportType::DELETE) &&
             (call._dindel.max_gt != STAR_DIINDEL::NOINDEL) ); // empirical scoring does not handle homref sites properly
 }
 

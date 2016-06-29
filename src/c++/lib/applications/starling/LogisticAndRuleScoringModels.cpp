@@ -427,7 +427,7 @@ score_indel_instance(
         LEGACY_CALIBRATION_MODEL::var_case var_case(LEGACY_CALIBRATION_MODEL::HetDel);
         switch (ii.first()._indelReportInfo.it)
         {
-        case INDEL::DELETE:
+        case SimplifiedIndelReportType::DELETE:
         {
             if (ii.is_hetalt())
                 var_case = LEGACY_CALIBRATION_MODEL::HetAltDel;
@@ -435,7 +435,7 @@ score_indel_instance(
                 var_case = LEGACY_CALIBRATION_MODEL::HomDel;
         }
         break;
-        case INDEL::INSERT:
+        case SimplifiedIndelReportType::INSERT:
         {
             if (ii.is_hetalt())
                 var_case = LEGACY_CALIBRATION_MODEL::HetAltIns;

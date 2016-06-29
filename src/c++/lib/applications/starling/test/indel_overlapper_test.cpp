@@ -74,8 +74,8 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     const starling_indel_sample_report_info isri;
 
     indelKey.pos=6;
-    indelKey.type=INDEL::DELETE;
-    indelKey.length=2;
+    indelKey.type=INDEL::INDEL;
+    indelKey.deletionLength=2;
 
     std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(dopt.gvcf, indelKey,indelData,dindel,indelReportInfo,isri));
     overlap.process(std::move(ii));
@@ -106,10 +106,10 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
 
     IndelKey iks[] =
     {
-        IndelKey(10,INDEL::DELETE,10),
-        IndelKey(15,INDEL::DELETE,30),
-        IndelKey(20,INDEL::DELETE,1),
-        IndelKey(25,INDEL::DELETE,1),
+        IndelKey(10,INDEL::INDEL,10),
+        IndelKey(15,INDEL::INDEL,30),
+        IndelKey(20,INDEL::INDEL,1),
+        IndelKey(25,INDEL::INDEL,1),
     };
 
     int max_gts[] = { 2,0,2,2 };
@@ -157,10 +157,10 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
 
     IndelKey indelKeys[] =
     {
-        IndelKey(10,INDEL::DELETE,10),
-        IndelKey(12,INDEL::DELETE,1),
-        IndelKey(15,INDEL::DELETE,1),
-        IndelKey(18,INDEL::DELETE,1),
+        IndelKey(10,INDEL::INDEL,10),
+        IndelKey(12,INDEL::INDEL,1),
+        IndelKey(15,INDEL::INDEL,1),
+        IndelKey(18,INDEL::INDEL,1),
     };
 
     int max_gts[] = { 2,2,0,2 };

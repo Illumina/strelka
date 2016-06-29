@@ -22,9 +22,44 @@
 /// \author Chris Saunders
 ///
 
-#include "starling_common/IndelKey.hh"
+#include "IndelKey.hh"
+#include "common/Exceptions.hh"
 
 #include <iostream>
+#include <sstream>
+
+
+
+void
+IndelKey::
+validate() const
+{
+    using namespace illumina::common;
+
+    // insertSequence/deletionlength is not intended for breakpoint types:
+    if (is_breakpoint())
+    {
+        if ((delete_length() != 0) or (insert_length() != 0))
+        {
+            std::ostringstream oss;
+            oss << "ERROR: invalid allele type -- breakpoint also has insertion/deletion defined '" << (*this) << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+    }
+
+#if 0
+    // an indel with zero insert and delete length is assumed to be an error:
+    if (type == INDEL::INDEL)
+    {
+        if ((delete_length() == 0) and (insert_length() == 0))
+        {
+            std::ostringstream oss;
+            oss << "ERROR: invalid allele type -- indel with no insertion/deletion variant defined '" << (*this) << "'\n";
+            BOOST_THROW_EXCEPTION(LogicException(oss.str()));
+        }
+    }
+#endif
+}
 
 
 
@@ -35,8 +70,8 @@ operator<<(
 {
     os << "INDEL pos: " << indelKey.pos
        << " type: " << INDEL::get_index_label(indelKey.type)
-       << " len: " << indelKey.length
-       << " swap_dlen: " << indelKey.swap_dlength << "\n";
+       << " deleteLength: " << indelKey.delete_length()
+       << " insertSeq: " << indelKey.insert_seq() << "\n";
     return os;
 }
 

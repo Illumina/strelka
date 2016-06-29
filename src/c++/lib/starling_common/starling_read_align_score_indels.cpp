@@ -261,7 +261,8 @@ is_equiv_candidate(
     {
         if (*it1==*it2) continue;
         if (it1->type != it2->type) return false;
-        if (it1->length != it2->length) return false;
+        if (it1->delete_length() != it2->delete_length()) return false;
+        if (it1->insert_seq() != it2->insert_seq()) return false;
         equiv_keys.insert(std::make_pair(*it1,*it2));
     }
     return true;
@@ -539,6 +540,7 @@ score_indels(
                << "VARMIT: max_cal.al: " << maxCandAlignment.al << "\n"
                << "VARMIT: max_pr: " << maxCandAlignmentRange << "\n";
 #endif
+
 #ifdef DEBUG_ALIGN
         log_os << "VARMIT max_path extracted indels:\n";
         dump_indel_set(indelsInMaxCandAlignment,log_os);

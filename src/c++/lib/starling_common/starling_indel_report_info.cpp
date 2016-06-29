@@ -73,12 +73,12 @@ get_vcf_summary_strings(
         if       (indelKey.type == INDEL::BP_LEFT)
         {
             copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos,vcf_ref_seq);
-            vcf_indel_seq = vcf_ref_seq + indelData.getInsertSeq() + '.';
+            vcf_indel_seq = vcf_ref_seq + indelData.getBreakpointInsertSeq() + '.';
         }
         else if (indelKey.type == INDEL::BP_RIGHT)
         {
             copy_ref_subseq(ref,indelKey.pos,indelKey.pos+1,vcf_ref_seq);
-            vcf_indel_seq = '.' + indelData.getInsertSeq() + vcf_ref_seq;
+            vcf_indel_seq = '.' + indelData.getBreakpointInsertSeq() + vcf_ref_seq;
         }
         else
         {
@@ -89,7 +89,7 @@ get_vcf_summary_strings(
     {
         copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos+indelKey.delete_length(),vcf_ref_seq);
         copy_ref_subseq(ref,indelKey.pos-1,indelKey.pos,vcf_indel_seq);
-        vcf_indel_seq += indelData.getInsertSeq();
+        vcf_indel_seq += indelKey.insert_seq();
     }
 }
 
@@ -102,22 +102,22 @@ set_repeat_info(
     const reference_contig_segment& ref,
     starling_indel_report_info& indelReportInfo)
 {
-    if (! ((indelReportInfo.it == INDEL::INSERT) ||
-           (indelReportInfo.it == INDEL::DELETE) ||
-           (indelReportInfo.it == INDEL::SWAP))) return;
+    if (! ((indelReportInfo.it == SimplifiedIndelReportType::INSERT) ||
+           (indelReportInfo.it == SimplifiedIndelReportType::DELETE) ||
+           (indelReportInfo.it == SimplifiedIndelReportType::SWAP))) return;
 
     unsigned insert_repeat_count(0);
     unsigned delete_repeat_count(0);
 
-    if       (indelReportInfo.it == INDEL::INSERT)
+    if       (indelReportInfo.it == SimplifiedIndelReportType::INSERT)
     {
         get_vcf_seq_repeat_unit(indelReportInfo.vcf_indel_seq,indelReportInfo.repeat_unit,insert_repeat_count);
     }
-    else if (indelReportInfo.it == INDEL::DELETE)
+    else if (indelReportInfo.it == SimplifiedIndelReportType::DELETE)
     {
         get_vcf_seq_repeat_unit(indelReportInfo.vcf_ref_seq,indelReportInfo.repeat_unit,delete_repeat_count);
     }
-    else if (indelReportInfo.it == INDEL::SWAP)
+    else if (indelReportInfo.it == SimplifiedIndelReportType::SWAP)
     {
         std::string insert_ru;
         std::string delete_ru;
@@ -190,7 +190,7 @@ get_starling_indel_report_info(
     // indel summary info
     get_vcf_summary_strings(indelKey,indelData,ref,indelReportInfo.vcf_indel_seq,indelReportInfo.vcf_ref_seq);
 
-    indelReportInfo.it=indelKey.type;
+    indelReportInfo.it=SimplifiedIndelReportType::getRateType(indelKey);
 
     const pos_t indel_begin_pos(indelKey.pos);
     const pos_t indel_end_pos(indelKey.right_pos());

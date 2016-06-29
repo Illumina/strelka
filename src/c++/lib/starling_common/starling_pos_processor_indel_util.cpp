@@ -102,15 +102,14 @@ process_edge_insert(
         if (ps.length > max_indel_size) return;
 
         obs.key.pos=ref_head_pos;
-        obs.key.length = ps.length;
         assert(ps.type == INSERT);
-        obs.key.type=INDEL::INSERT;
+        obs.key.type=INDEL::INDEL;
 
 #ifdef SPI_DEBUG
         log_os << "FOOBAR: adding pinned edge indel: " << obs.key << "\n";
 #endif
 
-        bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
+        bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.key.insertSequence);
 
         finish_indel_sppr(obs,sppr,sample_no);
     }
@@ -144,9 +143,9 @@ process_edge_delete(
     if (ps.length > max_indel_size) return;
 
     obs.key.pos=ref_head_pos;
-    obs.key.length = ps.length;
+    obs.key.deletionLength = ps.length;
     assert(ps.type == DELETE);
-    obs.key.type=INDEL::DELETE;
+    obs.key.type=INDEL::INDEL;
 
 #ifdef SPI_DEBUG
     log_os << "FOOBAR: adding pinned edge indel: " << obs.key << "\n";
@@ -192,10 +191,9 @@ process_swap(
     if (swap_size <= max_indel_size)
     {
         obs.key.pos=ref_head_pos;
-        obs.key.length=sinfo.insert_length;
-        obs.key.swap_dlength=sinfo.delete_length;
-        obs.key.type = INDEL::SWAP;
-        bam_seq_to_str(bseq,read_offset,read_offset+sinfo.insert_length,obs.data.insert_seq);
+        obs.key.deletionLength=sinfo.delete_length;
+        obs.key.type = INDEL::INDEL;
+        bam_seq_to_str(bseq,read_offset,read_offset+sinfo.insert_length,obs.key.insertSequence);
         finish_indel_sppr(obs,sppr,sample_no);
 
     }
@@ -204,23 +202,21 @@ process_swap(
         // left side BP:
         {
             obs.key.pos=ref_head_pos;
-            obs.key.length=swap_size;
             obs.key.type=INDEL::BP_LEFT;
             const unsigned start(read_offset);
             const unsigned size(bseq.size()-read_offset);
             const unsigned end(start+std::min(size,max_indel_size));
-            bam_seq_to_str(bseq,start,end,obs.data.insert_seq);
+            bam_seq_to_str(bseq,start,end,obs.data.breakpointInsertionSequence);
             finish_indel_sppr(obs,sppr,sample_no);
         }
 
         // right side BP:
         {
             obs.key.pos=ref_head_pos+sinfo.delete_length;
-            obs.key.length=swap_size;
             obs.key.type=INDEL::BP_RIGHT;
             const unsigned next_read_offset(read_offset+sinfo.insert_length);
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
-            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.insert_seq);
+            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.breakpointInsertionSequence);
             finish_indel_sppr(obs,sppr,sample_no);
         }
     }
@@ -259,20 +255,18 @@ process_simple_indel(
             obs.data.is_noise=false;
         }
     }
+
     if (ps.length <= max_indel_size)
     {
         obs.key.pos=ref_head_pos;
-        obs.key.length = ps.length;
-        if (ps.type == INSERT)
+        obs.key.type=INDEL::INDEL;
+        if (ps.type == DELETE)
         {
-            obs.key.type=INDEL::INSERT;
-//            log_os << "l: " << bseq << "\n";
-            bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.data.insert_seq);
-
+            obs.key.deletionLength = ps.length;
         }
         else
         {
-            obs.key.type=INDEL::DELETE;
+            bam_seq_to_str(bseq,read_offset,read_offset+ps.length,obs.key.insertSequence);
         }
         finish_indel_sppr(obs,sppr,sample_no);
     }
@@ -281,24 +275,22 @@ process_simple_indel(
         // left side BP:
         {
             obs.key.pos=ref_head_pos;
-            obs.key.length=ps.length;
             obs.key.type=INDEL::BP_LEFT;
             const unsigned start(read_offset);
             const unsigned size(bseq.size()-read_offset);
             const unsigned end(start+std::min(size,max_indel_size));
-            bam_seq_to_str(bseq,start,end,obs.data.insert_seq);
+            bam_seq_to_str(bseq,start,end,obs.data.breakpointInsertionSequence);
             finish_indel_sppr(obs,sppr,sample_no);
         }
         // right side BP:
         {
             obs.key.pos=ref_head_pos;
             if (ps.type == DELETE) obs.key.pos+=ps.length;
-            obs.key.length=ps.length;
             obs.key.type=INDEL::BP_RIGHT;
 
             const unsigned next_read_offset(read_offset+((ps.type==INSERT) ? ps.length : 0));
             const unsigned start_offset(next_read_offset-std::min(next_read_offset,max_indel_size));
-            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.insert_seq);
+            bam_seq_to_str(bseq,start_offset,next_read_offset,obs.data.breakpointInsertionSequence);
             finish_indel_sppr(obs,sppr,sample_no);
         }
     }

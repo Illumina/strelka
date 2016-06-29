@@ -38,7 +38,7 @@ test_indel_placement(
     const unsigned read_length(100);
 
     indel_set_t iset;
-    const IndelKey ikfixed(1075,INDEL::DELETE,1);
+    const IndelKey ikfixed(1075,INDEL::INDEL,1);
     iset.insert(ikfixed);
     iset.insert(indelKey);
 
@@ -62,23 +62,24 @@ path_compare(const std::string& expect,
 
 BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 {
+    const char* insertSeq10 = "AAAAACCCCC";
     {
         // basic delete
-        IndelKey ik(1050,INDEL::DELETE,10);
+        IndelKey ik(1050,INDEL::INDEL,10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("50M10D15M1D35M",cal.al.path);
     }
 
     {
         // basic insert
-        IndelKey ik(1050,INDEL::INSERT,10);
+        IndelKey ik(1050,INDEL::INDEL, 0, insertSeq10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("50M10I25M1D15M",cal.al.path);
     }
 
     {
         // basic swap
-        IndelKey ik(1050,INDEL::SWAP,10,5);
+        IndelKey ik(1050,INDEL::INDEL, 5, insertSeq10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("50M5D10I20M1D20M",cal.al.path);
     }
@@ -86,7 +87,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
     {
         // trailing edge insert
-        IndelKey ik(1091,INDEL::INSERT,10);
+        IndelKey ik(1091,INDEL::INDEL, 0, insertSeq10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("75M1D15M10I",cal.al.path);
         BOOST_CHECK_EQUAL(cal.trailing_indel_key,ik);
@@ -94,7 +95,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
     {
         // trailing edge insert
-        IndelKey ik(1096,INDEL::INSERT,10);
+        IndelKey ik(1096,INDEL::INDEL, 0, insertSeq10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("75M1D20M5I",cal.al.path);
         BOOST_CHECK_EQUAL(cal.trailing_indel_key,ik);
@@ -102,7 +103,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
     {
         // trailing edge insert miss
-        IndelKey ik(1101,INDEL::INSERT,10);
+        IndelKey ik(1101,INDEL::INDEL, 0, insertSeq10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("75M1D25M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.trailing_indel_key.type,INDEL::NONE);
@@ -110,7 +111,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
     {
         // leading edge insert miss
-        IndelKey ik(1000,INDEL::INSERT,10);
+        IndelKey ik(1000,INDEL::INDEL, 0, insertSeq10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("75M1D25M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key.type,INDEL::NONE);
@@ -119,7 +120,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
     {
         // leading edge insert
-        IndelKey ik(1000,INDEL::INSERT,10);
+        IndelKey ik(1000,INDEL::INDEL, 0, insertSeq10);
         candidate_alignment cal = test_indel_placement(ik,5);
         path_compare("5I75M1D20M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key,ik);
@@ -128,7 +129,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
     {
         // leading edge swap
-        IndelKey ik(1000,INDEL::SWAP,10,5);
+        IndelKey ik(1000,INDEL::INDEL, 5, insertSeq10);
         candidate_alignment cal = test_indel_placement(ik,5);
         path_compare("5I5D70M1D25M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key,ik);
@@ -137,7 +138,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
     {
         // leading edge delete:
-        IndelKey ik(1000,INDEL::DELETE,10);
+        IndelKey ik(1000,INDEL::INDEL,10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("10D65M1D35M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key,ik);
@@ -146,7 +147,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
     {
         // trailing edge delete:
-        IndelKey ik(1101,INDEL::DELETE,10);
+        IndelKey ik(1101,INDEL::INDEL,10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("75M1D25M10D",cal.al.path);
         BOOST_CHECK_EQUAL(cal.trailing_indel_key,ik);
@@ -155,7 +156,7 @@ BOOST_AUTO_TEST_CASE( test_make_start_pos_alignment )
 
     {
         // trailing off-edge delete:
-        IndelKey ik(1102,INDEL::DELETE,10);
+        IndelKey ik(1102,INDEL::INDEL,10);
         candidate_alignment cal = test_indel_placement(ik);
         path_compare("75M1D25M",cal.al.path);
         BOOST_CHECK_EQUAL(cal.leading_indel_key.type,INDEL::NONE);
@@ -179,7 +180,7 @@ test_end_pin_indel_placement(
     const unsigned read_length(100);
 
     indel_set_t iset;
-    const IndelKey ikfixed(1075,INDEL::DELETE,1);
+    const IndelKey ikfixed(1075,INDEL::INDEL,1);
     iset.insert(ikfixed);
     iset.insert(indelKey);
 
@@ -195,9 +196,10 @@ test_end_pin_indel_placement(
 
 BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 {
+    const char* insertSeq10 = "AAAAACCCCC";
     {
         // basic delete:
-        IndelKey ik(1050,INDEL::DELETE,10);
+        IndelKey ik(1050,INDEL::INDEL,10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,989);
@@ -206,7 +208,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // basic insert:
-        IndelKey ik(1050,INDEL::INSERT,10);
+        IndelKey ik(1050,INDEL::INDEL, 0, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,1009);
@@ -215,7 +217,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // basic swap:
-        IndelKey ik(1050,INDEL::SWAP,10,5);
+        IndelKey ik(1050,INDEL::INDEL, 5, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,1004);
@@ -224,7 +226,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // leading edge insert:
-        IndelKey ik(1005,INDEL::INSERT,10);
+        IndelKey ik(1005,INDEL::INDEL, 0, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,1005);
@@ -233,7 +235,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // leading edge insert miss:
-        IndelKey ik(999,INDEL::INSERT,10);
+        IndelKey ik(999,INDEL::INDEL, 0, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,999);
@@ -242,7 +244,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // leading edge insert far miss:
-        IndelKey ik(99,INDEL::INSERT,10);
+        IndelKey ik(99,INDEL::INDEL, 0, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,999);
@@ -251,7 +253,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // leading edge swap:
-        IndelKey ik(1000,INDEL::SWAP,10,5);
+        IndelKey ik(1000,INDEL::INDEL, 5, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,1000);
@@ -260,7 +262,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // trailing edge insert:
-        IndelKey ik(1100,INDEL::INSERT,10);
+        IndelKey ik(1100,INDEL::INDEL, 0, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik,95);
         BOOST_CHECK_EQUAL(res.first,1004);
@@ -269,7 +271,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // trailing edge insert edge miss:
-        IndelKey ik(1100,INDEL::INSERT,10);
+        IndelKey ik(1100,INDEL::INDEL, 0, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,999);
@@ -278,7 +280,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // trail edge insert miss:
-        IndelKey ik(1110,INDEL::INSERT,10);
+        IndelKey ik(1110,INDEL::INDEL, 0, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,999);
@@ -287,7 +289,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // trailing edge insert far miss:
-        IndelKey ik(2000,INDEL::INSERT,10);
+        IndelKey ik(2000,INDEL::INDEL, 0, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,999);
@@ -296,7 +298,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // near (but not over) trailing edge swap:
-        IndelKey ik(1094,INDEL::SWAP,10,5);
+        IndelKey ik(1094,INDEL::INDEL, 5, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,1004);
@@ -305,7 +307,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // trailing edge swap:
-        IndelKey ik(1095,INDEL::SWAP,10,5);
+        IndelKey ik(1095,INDEL::INDEL, 5, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik);
         BOOST_CHECK_EQUAL(res.first,994);
@@ -314,7 +316,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // trailing edge swap:
-        IndelKey ik(1095,INDEL::SWAP,10,5);
+        IndelKey ik(1095,INDEL::INDEL, 5, insertSeq10);
 
         const std::pair<int,int> res = test_end_pin_indel_placement(ik,95);
         BOOST_CHECK_EQUAL(res.first,999);
@@ -323,7 +325,7 @@ BOOST_AUTO_TEST_CASE( test_end_pin_start_pos )
 
     {
         // interfering indel should cause an exception:
-        const IndelKey ik(1074,INDEL::DELETE,1);
+        const IndelKey ik(1074,INDEL::INDEL,1);
         BOOST_CHECK_THROW(test_end_pin_indel_placement(ik),blt_exception);
     }
 }

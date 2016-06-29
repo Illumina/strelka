@@ -47,16 +47,16 @@ ActiveRegionDetector::insertIndel(const IndelObservation& indelObservation)
 
     auto alignId = indelObservation.data.id;
     auto indelKey = indelObservation.key;
-    if (indelKey.type == INDEL::INSERT)
+    if (indelKey.isPrimitiveInsertionAllele())
     {
         addCount(pos - 1, indelCount);
         addCount(pos, indelCount);
-        concatenateHaplotypeBase(alignId, pos - 1, indelObservation.data.insert_seq);
+        concatenateHaplotypeBase(alignId, pos - 1, indelObservation.key.insert_seq());
         addAlignIdToPos(alignId, pos - 1);
     }
-    else if (indelKey.type == INDEL::DELETE)
+    else if (indelKey.isPrimitiveDeletionAllele())
     {
-        unsigned length = indelObservation.key.length;
+        unsigned length = indelObservation.key.deletionLength;
         for (unsigned i(0); i<length; ++i)
         {
             addCount(pos + i, indelCount);

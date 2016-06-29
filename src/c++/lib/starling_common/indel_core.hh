@@ -52,10 +52,6 @@
 // Skips (introns) are *not* added here. They are treated as invariant
 // alignment elements in the original read.
 //
-// The Swap type is initially used to represent combined
-// insertion/deletion events, but will be used in the future for
-// general alternate haplotypes.
-//
 // The "NONE" type is used for some indel lookup methods, because it sorts
 // ahead of all other types at a given position:
 //
@@ -64,11 +60,9 @@ namespace INDEL
 enum index_t
 {
     NONE,
-    INSERT,
-    DELETE,
+    INDEL,
     BP_LEFT,
     BP_RIGHT,
-    SWAP
 };
 
 inline
@@ -79,16 +73,12 @@ get_index_label(index_t id)
     {
     case NONE:
         return "NONE";
-    case INSERT:
-        return "INSERT";
-    case DELETE:
-        return "DELETE";
+    case INDEL:
+        return "INDEL";
     case BP_LEFT:
         return "BP_LEFT";
     case BP_RIGHT:
         return "BP_RIGHT";
-    case SWAP:
-        return "SWAP";
     default:
         return "UNKNOWN";
     }

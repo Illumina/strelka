@@ -26,6 +26,7 @@
 
 #include "alignment.hh"
 #include "starling_common/indel_set.hh"
+#include "starling_read_segment.hh"
 
 #include <cassert>
 
@@ -88,6 +89,8 @@ std::ostream& operator<<(std::ostream& os, const candidate_alignment& cal);
 // get the keys of the indels present in the candidate alignment
 //
 void
-get_alignment_indels(const candidate_alignment& cal,
-                     const unsigned max_indel_size,
-                     indel_set_t& indels);
+get_alignment_indels(
+    const candidate_alignment& cal,
+    const read_segment& rseg,
+    const unsigned max_indel_size,
+    indel_set_t& indels);

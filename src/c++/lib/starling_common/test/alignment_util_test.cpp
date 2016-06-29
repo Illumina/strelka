@@ -64,20 +64,6 @@ BOOST_AUTO_TEST_CASE( test_alignment_zone )
 }
 
 
-BOOST_AUTO_TEST_CASE( test_indel_in_alignment )
-{
-    alignment al;
-    al.pos = 100;
-    ALIGNPATH::cigar_to_apath("2S2I2M2I2M2S",al.path);
-
-    IndelKey indelKey(102,INDEL::INSERT,2);
-
-    pos_range pr;
-    BOOST_REQUIRE(is_indel_in_alignment(al,indelKey,pr));
-    BOOST_REQUIRE_EQUAL(pr,pos_range(6,8));
-}
-
-
 static
 alignment
 get_test_alignment()

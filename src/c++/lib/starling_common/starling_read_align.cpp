@@ -346,7 +346,7 @@ make_start_pos_alignment(
 
         // note this relies on the single extra base of separation
         // required between indels during indel conflict detection:
-        const bool is_edge_delete((INDEL::DELETE == indelKey.type) && (indelKey.pos == ref_start_pos));
+        const bool is_edge_delete((indelKey.isPrimitiveDeletionAllele()) && (indelKey.pos == ref_start_pos));
         if ((indelKey.pos <= ref_head_pos) && (!is_edge_delete))
         {
             std::ostringstream oss;
@@ -361,8 +361,8 @@ make_start_pos_alignment(
         assert(is_first_intersecting_indel || (match_segment>0));
 
         // remaining read segment match segment added after indel loop:
-        if (read_head_pos+match_segment>read_length ||
-            ((read_head_pos+match_segment)==read_length && (indelKey.type!=INDEL::DELETE)))
+        if (((read_head_pos+match_segment) > read_length) ||
+            (((read_head_pos+match_segment) == read_length) && (not indelKey.isPrimitiveDeletionAllele())))
         {
             break;
         }
@@ -374,38 +374,39 @@ make_start_pos_alignment(
             read_head_pos += match_segment;
         }
 
-        if       (indelKey.type==INDEL::INSERT ||
-                  indelKey.type==INDEL::SWAP)
+        if (indelKey.type == INDEL::INDEL)
         {
-            if (indelKey.type==INDEL::SWAP)
+            if (indelKey.delete_length() > 0)
             {
-                add_path_segment(apath,DELETE,ref_head_pos,indelKey.swap_dlength);
+                add_path_segment(apath, DELETE, ref_head_pos, indelKey.delete_length());
             }
 
-            const unsigned max_insert_length(read_length-read_head_pos);
-            const unsigned insert_length(std::min(indelKey.length,max_insert_length));
-            add_path_segment(apath,INSERT,read_head_pos,insert_length);
+            if (indelKey.insert_length() > 0)
+            {
+                const unsigned max_insert_length(read_length - read_head_pos);
+                const unsigned insert_length(std::min(indelKey.insert_length(), max_insert_length));
+                add_path_segment(apath, INSERT, read_head_pos, insert_length);
 
-            const bool is_final(indelKey.length>=max_insert_length);
-            if (is_final)
-            {
-                cal.trailing_indel_key=indelKey;
-                break;
-            }
-        }
-        else if (indelKey.type==INDEL::DELETE)
-        {
-            add_path_segment(apath,DELETE,ref_head_pos,indelKey.length);
-            if (match_segment==0)
-            {
-                cal.leading_indel_key=indelKey;
+                const bool is_final(indelKey.insert_length() >= max_insert_length);
+                if (is_final)
+                {
+                    cal.trailing_indel_key = indelKey;
+                    break;
+                }
             }
             else
             {
-                const bool is_final(read_head_pos==static_cast<pos_t>(read_length));
-                if (is_final)
+                if (match_segment == 0)
                 {
-                    cal.trailing_indel_key=indelKey;
+                    cal.leading_indel_key = indelKey;
+                }
+                else
+                {
+                    const bool is_final(read_head_pos == static_cast<pos_t>(read_length));
+                    if (is_final)
+                    {
+                        cal.trailing_indel_key = indelKey;
+                    }
                 }
             }
         }
@@ -478,24 +479,17 @@ get_end_pin_start_pos(
         if (is_trailing_indel)   // deal with trailing-edge insert/breakpoint case first
         {
             assert((is_first) && (ref_start_pos==ref_end_pos));
-            assert((indelKey.type == INDEL::INSERT) ||
-                   (indelKey.type == INDEL::DELETE) ||
-                   (indelKey.type == INDEL::SWAP) ||
+            assert((indelKey.type == INDEL::INDEL) ||
                    (indelKey.type == INDEL::BP_LEFT));
 
-            if ((indelKey.type == INDEL::INSERT) ||
-                (indelKey.type == INDEL::SWAP))
+            if (indelKey.type == INDEL::INDEL)
             {
-                assert(indelKey.length>=(read_length-read_end_pos));
-            }
+                if (indelKey.insert_length() > 0)
+                {
+                    assert(indelKey.insert_length() >= (read_length - read_end_pos));
+                }
 
-            if       (indelKey.type==INDEL::SWAP)
-            {
-                ref_start_pos -= indelKey.swap_dlength;
-            }
-            else if (indelKey.type==INDEL::DELETE)
-            {
-                ref_start_pos -= indelKey.length;
+                ref_start_pos -= indelKey.delete_length();
             }
         }
         else     // deal with normal case:
@@ -531,15 +525,14 @@ get_end_pin_start_pos(
 
             if (read_start_pos==0) return;
 
-            if       (indelKey.type==INDEL::INSERT || indelKey.type==INDEL::SWAP)
+            if (indelKey.type == INDEL::INDEL)
             {
-                ref_start_pos -= indelKey.swap_dlength;
-                if (static_cast<pos_t>(indelKey.length) >= read_start_pos) return;
-                read_start_pos -= indelKey.length;
-            }
-            else if (indelKey.type==INDEL::DELETE)
-            {
-                ref_start_pos -= indelKey.length;
+                ref_start_pos -= indelKey.delete_length();
+                if (indelKey.insert_length() > 0)
+                {
+                    if (static_cast<pos_t>(indelKey.insert_length()) >= read_start_pos) return;
+                    read_start_pos -= indelKey.insert_length();
+                }
             }
             else if (indelKey.type==INDEL::BP_RIGHT)
             {
@@ -882,7 +875,7 @@ candidate_alignment_search(
     }
 
     // check whether this is an equal-length swap, in which case alignment 3 is unnecessary:
-    if ((cindel.type==INDEL::SWAP) && (cindel.length==cindel.swap_dlength)) return;
+    if ((cindel.type==INDEL::INDEL) && (cindel.delete_length()==cindel.insert_length())) return;
 
     // alignment 3) -- insert or delete indel and pin the end position
     //
@@ -1378,21 +1371,34 @@ score_candidate_alignments_and_indels(
 
 
 
-/// Initialize a candidate alignment with edge indels set according
-/// to those in the input alignment
-///
-/// Normally we're worried about incomplete edge insertions.
-/// In this case load them on the cal edges.
+static
+void
+bam_seq_to_str(
+    const bam_seq_base& bs,
+    const unsigned start,
+    const unsigned end,
+    std::string& s)
+{
+    s.clear();
+    for (unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
+}
+
+
+
+/// Initialize a candidate alignment from a standard alignment.
 ///
 static
 void
-load_cal_with_edge_indels(const alignment& al,
-                          candidate_alignment& cal)
+getCandidateAlignment(
+    const alignment& al,
+    const read_segment& rseg,
+    candidate_alignment& cal)
 {
     using namespace ALIGNPATH;
 
     cal.al=al;
 
+    pos_t read_pos(0);
     pos_t ref_pos(al.pos);
 
     const std::pair<unsigned,unsigned> ends(get_match_edge_segments(al.path));
@@ -1402,16 +1408,16 @@ load_cal_with_edge_indels(const alignment& al,
         const path_segment& ps(al.path[i]);
         if ((INSERT == ps.type) || (DELETE == ps.type))
         {
-            INDEL::index_t itype;
+            IndelKey indelKey(ref_pos,INDEL::INDEL);
             if (INSERT == ps.type)
             {
-                itype = INDEL::INSERT;
+                bam_seq_to_str(rseg.get_bam_read(),read_pos,read_pos+ps.length,indelKey.insertSequence);
             }
             else
             {
-                itype = INDEL::DELETE;
+                indelKey.deletionLength = ps.length;
             }
-            const IndelKey indelKey(ref_pos,itype,ps.length);
+
             if     (i<ends.first)
             {
                 cal.leading_indel_key = indelKey;
@@ -1421,6 +1427,7 @@ load_cal_with_edge_indels(const alignment& al,
                 cal.trailing_indel_key = indelKey;
             }
         }
+        if (is_segment_type_read_length(ps.type)) read_pos += ps.length;
         if (is_segment_type_ref_length(ps.type)) ref_pos += ps.length;
     }
 }
@@ -1446,7 +1453,7 @@ get_candidate_alignments(
     std::vector<IndelKey> indel_order;
 
     candidate_alignment cal;
-    load_cal_with_edge_indels(inputAlignment,cal);
+    getCandidateAlignment(inputAlignment, rseg, cal);
 
 #ifdef DEBUG_ALIGN
     std::cerr << "VARMIT starting search from input alignment: " << cal;
@@ -1465,7 +1472,7 @@ get_candidate_alignments(
     //
     {
         indel_set_t candidateAlignmentIndels;
-        get_alignment_indels(cal,opt.max_indel_size,candidateAlignmentIndels);
+        get_alignment_indels(cal,rseg,opt.max_indel_size,candidateAlignmentIndels);
 
         for (const IndelKey& indelKey : candidateAlignmentIndels)
         {

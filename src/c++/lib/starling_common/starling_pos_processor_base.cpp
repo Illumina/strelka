@@ -1088,13 +1088,17 @@ write_candidate_indels_pos(
         if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         bos << _chrom_name << "\t"
             << output_pos << "\t"
-            << INDEL::get_index_label(indelKey.type) << "\t"
-            << indelKey.length << "\t";
-        if (INDEL::SWAP==indelKey.type)
+            << INDEL::get_index_label(indelKey.type) << "\t";
+        if (indelKey.is_breakpoint())
         {
-            bos << indelKey.swap_dlength << "\t";
+            bos << 0 << "\t" << indelData.getBreakpointInsertSeq();
         }
-        bos << indelData.getInsertSeq() << "\n";
+        else
+        {
+            bos << indelKey.deletionLength << "\t"
+                << indelKey.insert_seq();
+        }
+        bos << "\n";
     }
 }
 

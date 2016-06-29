@@ -122,9 +122,7 @@ get_het_observed_allele_ratio(
     double& log_ref_prob,
     double& log_indel_prob)
 {
-    assert((indelKey.type==INDEL::INSERT) ||
-           (indelKey.type==INDEL::DELETE) ||
-           (indelKey.type == INDEL::SWAP));
+    assert(indelKey.type==INDEL::INDEL);
 
     // the expected relative read depth for two breakpoints separated by a distance of 0:
     const unsigned base_expect( (read_length+1)<(2*min_overlap) ? 0 : (read_length+1)-(2*min_overlap) );

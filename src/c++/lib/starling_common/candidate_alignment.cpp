@@ -47,11 +47,26 @@ operator<<(
 
 
 
+static
+void
+bam_seq_to_str(
+    const bam_seq_base& bs,
+    const unsigned start,
+    const unsigned end,
+    std::string& s)
+{
+    s.clear();
+    for (unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
+}
+
+
+
 // get the keys of the indels present in the candidate alignment
 //
 void
 get_alignment_indels(
     const candidate_alignment& cal,
+    const read_segment& rseg,
     const unsigned max_indel_size,
     indel_set_t& indels)
 {
@@ -108,7 +123,9 @@ get_alignment_indels(
             const unsigned swap_size(std::max(sinfo.insert_length,sinfo.delete_length));
             if (swap_size <= max_indel_size)
             {
-                indels.insert(IndelKey(ref_head_pos,INDEL::SWAP,sinfo.insert_length,sinfo.delete_length));
+                std::string insertSequence;
+                bam_seq_to_str(rseg.get_bam_read(),read_offset,read_offset+sinfo.insert_length, insertSequence);
+                indels.insert(IndelKey(ref_head_pos,INDEL::INDEL,sinfo.delete_length, insertSequence.c_str()));
             }
             else
             {
@@ -122,8 +139,16 @@ get_alignment_indels(
         {
             if (ps.length <= max_indel_size)
             {
-                const INDEL::index_t id( (ps.type==INSERT) ? INDEL::INSERT : INDEL::DELETE );
-                indels.insert(IndelKey(ref_head_pos,id,ps.length));
+                IndelKey indelKey(ref_head_pos,INDEL::INDEL);
+                if (INSERT == ps.type)
+                {
+                    bam_seq_to_str(rseg.get_bam_read(),read_offset,read_offset+ps.length,indelKey.insertSequence);
+                }
+                else
+                {
+                    indelKey.deletionLength = ps.length;
+                }
+                indels.insert(indelKey);
             }
             else
             {

@@ -446,34 +446,19 @@ convert_vcfrecord_to_indel_allele(
     if ((insert_length > static_cast<int>(max_indel_size)) ||
         (delete_length > static_cast<int>(max_indel_size))) return false;
 
-    // starling indel pos is at the first changed base but zero-indexed:
-    obs.key.pos = (vcf_indel.pos+xfix.first-1);
-    if (insert_length>0)
-    {
-        if (delete_length>0)
-        {
-            obs.key.type = INDEL::SWAP;
-            obs.key.swap_dlength = delete_length;
-        }
-        else
-        {
-            obs.key.type = INDEL::INSERT;
-        }
-        obs.key.length = insert_length;
-        obs.data.insert_seq = std::string(alt.begin()+xfix.first,alt.end()-xfix.second);
-    }
-    else if (delete_length>0)
-    {
-        obs.key.type = INDEL::DELETE;
-        obs.key.length = delete_length;
-    }
-    else
+    if ((insert_length==0) and (delete_length==0))
     {
         using namespace illumina::common;
         std::ostringstream oss;
         oss << "ERROR: Can't parse vcf indel: '" << vcf_indel << "'\n";
         BOOST_THROW_EXCEPTION(LogicException(oss.str()));
     }
+
+    // starling indel pos is at the first changed base but zero-indexed:
+    obs.key.pos = (vcf_indel.pos+xfix.first-1);
+    obs.key.type = INDEL::INDEL;
+    obs.key.deletionLength = delete_length;
+    obs.key.insertSequence = std::string(alt.begin()+xfix.first,alt.end()-xfix.second);
     return true;
 }
 

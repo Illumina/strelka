@@ -115,8 +115,22 @@ getGenotypeString(
 }
 
 
-IndelVariant::
-IndelVariant(
+
+static
+bool
+testIsFirstBaseMatching(
+    const std::string& a,
+    const std::string& b)
+{
+    if (a.empty() or b.empty()) return false;
+    return (a[0] == b[0]);
+}
+
+
+
+static
+IndelKey
+convertVcfAltToIndel(
     const vcf_record& vcfr,
     const std::string& alt_instance)
 {
@@ -127,36 +141,27 @@ IndelVariant(
     // AFAIK, the only way for alt_length and ref_length to be
     // equal would be for the record to be a SNP
 
-    alt_string = alt_instance;
-    ref_string = vcfr.ref;
+    const bool isFirstBaseMatching(testIsFirstBaseMatching(vcfr.ref, alt_instance));
+    const pos_t startPosOffset((isFirstBaseMatching ? 1 : 0));
+    IndelKey indelKey;
+    indelKey.pos = (vcfr.pos -1) + startPosOffset;
+    indelKey.type = INDEL::INDEL;
+    indelKey.deletionLength = ref_length - startPosOffset;
+    indelKey.insertSequence = alt_instance.substr(startPosOffset);
 
-    if (ref_length < alt_length)
-    {
-        type = INDEL::INSERT;
-        length = alt_length - ref_length;
-        insert_sequence = alt_instance.substr(1);
-    }
-    else
-    {
-        type = INDEL::DELETE;
-        length = ref_length - alt_length;
-    }
+    return indelKey;
 }
+
 
 
 bool
 IndelGenotype::
 altMatch(
-    const IndelKey& indelKey,
-    const IndelData& indelData) const
+    const IndelKey& indelKey) const
 {
     for (const auto& alt : alts)
     {
-        if ((indelKey.type == alt.type) && (indelKey.length == alt.length))
-        {
-            if (indelKey.type == INDEL::DELETE) return true;
-            if (indelData.getInsertSeq() == alt.insert_sequence) return true;
-        }
+        if (indelKey == alt) return true;
     }
     return false;
 }
@@ -169,13 +174,8 @@ extractAlts()
     max_delete_length = 0;
     for (const auto& alt_str : vcfr.alt)
     {
-        IndelVariant variant_instance = IndelVariant(vcfr, alt_str);
-        alts.push_back(variant_instance);
-
-        if (variant_instance.type == INDEL::DELETE)
-        {
-            max_delete_length = std::max(max_delete_length, variant_instance.length);
-        }
+        alts.push_back(convertVcfAltToIndel(vcfr, alt_str));
+        max_delete_length = std::max(max_delete_length, alts.back().deletionLength);
     }
 }
 
@@ -297,7 +297,7 @@ addVcfRecord(
         pos_t start_pos = vcfRecord.pos;
         pos_t end_pos   = start_pos + genotype_instance.max_delete_length + 1;
 
-        interval_t interval = boost::icl::discrete_interval<pos_t>::right_open(start_pos, end_pos);
+        interval_t interval = interval_t::right_open(start_pos, end_pos);
         indel_value_t record_set;
         record_set.insert(genotype_instance);
 
@@ -320,24 +320,6 @@ dump(
         }
         os << "}\n";
     }
-}
-
-
-std::ostream&
-operator<<(
-    std::ostream& os,
-    const IndelVariant& var)
-{
-    // os << "Original ref string: " << var.ref_string << "\n";
-    // os << "Original alt string: " << var.alt_string << "\n";
-    os << "Indel variant type: " << INDEL::get_index_label(var.type) << "\n";
-    os << "Indel length: " << var.length << "\n";
-    if (var.type == INDEL::INSERT)
-    {
-        os << "Inserted sequence: " << var.insert_sequence << "\n";
-    }
-
-    return os;
 }
 
 

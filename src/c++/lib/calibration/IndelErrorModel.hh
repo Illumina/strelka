@@ -43,6 +43,7 @@ struct IndelErrorModel
     /// Retrieve indel error rates for a specific indel type
     void
     getIndelErrorRate(
+        const IndelKey& indelKey,
         const starling_indel_report_info& indelReportInfo,
         double& refToIndelErrorProb,
         double& indelToRefErrorProb) const;

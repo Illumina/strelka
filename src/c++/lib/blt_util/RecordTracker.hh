@@ -29,10 +29,8 @@
 
 #include "htsapi/vcf_record.hh"
 
-#include "starling_common/indel_core.hh"
 #include "starling_common/starling_diploid_indel.hh"
 #include "starling_common/IndelKey.hh"
-#include "starling_common/IndelData.hh"
 
 #include "boost/icl/discrete_interval.hpp"
 #include "boost/icl/interval_map.hpp"
@@ -77,46 +75,12 @@ label(
 }
 }
 
-struct IndelVariant
-{
-    IndelVariant(
-        const vcf_record& vcfr,
-        const std::string& alt_instance);
-
-    INDEL::index_t type;
-    unsigned length;
-    std::string insert_sequence;
-    std::string alt_string;
-    std::string ref_string;
-};
-
-
-struct IndelVariantSort
-{
-    bool
-    operator()(
-        const IndelVariant& lhs,
-        const IndelVariant& rhs)
-    {
-        // respect the enum ordering in indel_core
-        if (lhs.type < rhs.type) return true;
-        if (lhs.type == rhs.type)
-        {
-            // if both indels have the same type, the shorter one
-            // is less than the larger one
-            if (lhs.length < rhs.length) return true;
-        }
-
-        return false;
-    }
-};
-
 
 struct IndelGenotype
 {
     // alts are stored in a vector to maintain the ordering
     // of alts in the VCF file
-    typedef std::vector<IndelVariant> alt_vec_t;
+    typedef std::vector<IndelKey> alt_vec_t;
     IndelGenotype(
         const vcf_record& in_vcfr)
         : vcfr(in_vcfr)
@@ -134,9 +98,10 @@ struct IndelGenotype
         return false;
     }
 
-    bool altMatch(
-        const IndelKey& indelKey,
-        const IndelData& indelData) const;
+    // return true if the vcf record contains a match to indelKey
+    bool
+    altMatch(
+        const IndelKey& indelKey) const;
 
     vcf_record vcfr;
     pos_t pos;
@@ -234,11 +199,6 @@ private:
 
     indel_record_t _records;
 };
-
-std::ostream&
-operator<<(
-    std::ostream& os,
-    const IndelVariant& var);
 
 std::ostream&
 operator<<(

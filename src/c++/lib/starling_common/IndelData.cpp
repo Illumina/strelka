@@ -122,17 +122,22 @@ addIndelObservation(
     if (! is_external_candidate) is_external_candidate=obs_data.is_external_candidate;
     if (! is_forced_output) is_forced_output=obs_data.is_forced_output;
 
-    if (! obs_data.insert_seq.empty())
+    if (_indelKey.is_breakpoint())
     {
-        if ((not _indelKey.is_breakpoint()) and (obs_data.insert_seq.size() != _indelKey.insert_length()))
+        _breakpointInsertSeq.addObservation(obs_data.breakpointInsertionSequence);
+    }
+    else
+    {
+        if (not obs_data.breakpointInsertionSequence.empty())
         {
             using namespace illumina::common;
 
             std::ostringstream oss;
-            oss << "ERROR: indel obs insert length '" << obs_data.insert_seq.size() << "' does not match expected length for indel: " << _indelKey;
+            oss << "ERROR: indel observation sets breakpoint insertion sequence for a non-breakpoint allele: " << _indelKey << "\n";
+            oss << "\tobservationData: " << obs_data << "\n";
             BOOST_THROW_EXCEPTION(LogicException(oss.str()));
         }
-        _insert_seq.addObservation(obs_data.insert_seq);
+
     }
 
     getSampleData(sampleId).addIndelObservation(obs_data);
@@ -150,7 +155,7 @@ operator<<(
     os << "is_forced_output: " << obs.is_forced_output << "\n";
     os << "type: " << INDEL_ALIGN_TYPE::label(obs.iat) << "\n";
     os << "align_id: " << obs.id << "\n";
-    os << "insert_seq: " << obs.insert_seq << "\n";
+    os << "breakpointInsertionSequence: " << obs.breakpointInsertionSequence << "\n";
     return os;
 }
 
@@ -205,18 +210,19 @@ operator<<(
 
 
 void
-InsertSequenceManager::
+BreakpointInsertSequenceManager::
 _exception(const char* msg) const
 {
+    using namespace illumina::common;
     std::ostringstream oss;
-    oss << "Exception in InsertSequenceManager: " << msg;
-    throw blt_exception(oss.str().c_str());
+    oss << "Exception in BreakpointInsertSequenceManager: " << msg;
+    BOOST_THROW_EXCEPTION(LogicException(oss.str()));
 }
 
 
 
 void
-InsertSequenceManager::
+BreakpointInsertSequenceManager::
 _finalize()
 {
     unsigned count(0);
@@ -277,7 +283,7 @@ operator<<(
     os << "is_external_candidate: " << indelData.is_external_candidate << "\n";
     os << "is_forced_output: " << indelData.is_forced_output << "\n";
 
-    os << "seq: " << indelData.getInsertSeq() << "\n";
+    os << "breakpointInsertionSequence: " << indelData.getBreakpointInsertSeq() << "\n";
 
     const unsigned sampleCount(indelData.getSampleCount());
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)

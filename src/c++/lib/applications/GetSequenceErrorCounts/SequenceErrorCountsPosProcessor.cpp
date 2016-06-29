@@ -128,7 +128,6 @@ bool
 isKnownVariantMatch(
     const RecordTracker::indel_value_t& knownVariants,
     const IndelKey& indelKey,
-    const IndelData& indelData,
     RecordTracker::indel_value_t& overlap)
 {
     if (knownVariants.empty()) return false;
@@ -140,7 +139,7 @@ isKnownVariantMatch(
     // the inserted sequence must match
     for (const auto& kv : knownVariants)
     {
-        if (kv.altMatch(indelKey, indelData)) overlap.insert(kv);
+        if (kv.altMatch(indelKey)) overlap.insert(kv);
     }
     return (! overlap.empty());
 }
@@ -477,7 +476,7 @@ process_pos_error_counts(
             if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
-        if (! (indelKey.type == INDEL::DELETE || indelKey.type == INDEL::INSERT)) continue;
+        if (! (indelKey.isPrimitiveDeletionAllele() || indelKey.isPrimitiveInsertionAllele())) continue;
 
         // all indels at the same position are conflicting:
         if (_groups.empty()) _groups.resize(1);
@@ -520,7 +519,7 @@ process_pos_error_counts(
             }
 
             RecordTracker::indel_value_t overlappingRecords;
-            isKnownVariantMatch(knownVariantRecords, indelKey, indelData, overlappingRecords);
+            isKnownVariantMatch(knownVariantRecords, indelKey, overlappingRecords);
 
             IndelErrorContextObservation obs;
 
@@ -538,11 +537,11 @@ process_pos_error_counts(
             {
                 std::ostream& obs_os(*_streams.observation_bed_osptr());
                 obs_os << _opt.bam_seq_name << "\t";
-                obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.length << "\t" << INDEL::get_index_label(indelKey.type) << "\t";
+                obs_os << indelKey.pos << "\t" << indelKey.pos + indelKey.deletionLength << "\t" << INDEL::get_index_label(indelKey.type) << "\t";
                 obs_os << indelReportInfo.repeat_unit << "\t" << indelReportInfo.ref_repeat_count << "\t";
                 obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
                 obs_os << context.repeatCount << "\t" << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
-                obs_os << indelKey.length << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
+                obs_os << indelKey.deletionLength << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
                 obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }

@@ -209,9 +209,7 @@ isCandidateIndelImplTest(
         get_starling_indel_report_info(indelKey, indelData, _ref, indelReportInfo);
         double refToIndelErrorProb;
         double indelToRefErrorProb;
-        _dopt.getIndelErrorModel().getIndelErrorRate(indelReportInfo,
-                                                     refToIndelErrorProb,
-                                                     indelToRefErrorProb);
+        _dopt.getIndelErrorModel().getIndelErrorRate(indelKey, indelReportInfo, refToIndelErrorProb, indelToRefErrorProb);
         indelData.errorRates.refToIndelErrorProb.updateValue(refToIndelErrorProb);
         indelData.errorRates.indelToRefErrorProb.updateValue(indelToRefErrorProb);
 
@@ -248,7 +246,7 @@ isCandidateIndelImplTest(
     // call getInsertSize() instead of asking for the insert seq
     // so as to not finalize any incomplete insertions:
     if (indelKey.is_breakpoint() &&
-        (_opt.min_candidate_indel_open_length > indelData.getInsertSize()))
+        (_opt.min_candidate_indel_open_length > indelData.getBreakpointInsertSize()))
     {
         return false;
     }

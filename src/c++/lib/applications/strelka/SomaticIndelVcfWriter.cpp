@@ -214,8 +214,7 @@ writeSomaticIndelVcfGrid(
         smod.dfeatures.writeValues(os);
     }
 
-    if ((siInfo.indelReportInfo.it == INDEL::BP_LEFT) ||
-        (siInfo.indelReportInfo.it == INDEL::BP_RIGHT))
+    if (siInfo.indelReportInfo.it == SimplifiedIndelReportType::BREAKPOINT)
     {
         os << ";SVTYPE=BND";
     }
