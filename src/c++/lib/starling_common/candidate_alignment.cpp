@@ -112,9 +112,9 @@ get_alignment_indels(
             }
             else
             {
-                indels.insert(IndelKey(ref_head_pos,INDEL::BP_LEFT,swap_size));
+                indels.insert(IndelKey(ref_head_pos,INDEL::BP_LEFT));
                 const pos_t right_pos(ref_head_pos+sinfo.delete_length);
-                indels.insert(IndelKey(right_pos,INDEL::BP_RIGHT,swap_size));
+                indels.insert(IndelKey(right_pos,INDEL::BP_RIGHT));
             }
 
         }
@@ -127,9 +127,9 @@ get_alignment_indels(
             }
             else
             {
-                indels.insert(IndelKey(ref_head_pos,INDEL::BP_LEFT,ps.length));
+                indels.insert(IndelKey(ref_head_pos,INDEL::BP_LEFT));
                 const pos_t right_pos(ref_head_pos+((ps.type==INSERT) ? 0 : ps.length));
-                indels.insert(IndelKey(right_pos,INDEL::BP_RIGHT,ps.length));
+                indels.insert(IndelKey(right_pos,INDEL::BP_RIGHT));
             }
 
         }

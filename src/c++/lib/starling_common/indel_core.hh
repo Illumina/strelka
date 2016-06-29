@@ -25,20 +25,19 @@
 #pragma once
 
 
-//
 // Breakpoints refer to both insertions and deletions which exceed
-// the method's max_indel_size In this case we try to account for the
-// breakpoint during snp-calling, but do not attempt to call the indel
-// using the same methods used for small indels.
+// the method's max_indel_size. In this case we try to account for the
+// breakpoint during realignment (to improve snp-calling), but do not
+// attempt to call the indel using the same methods used for small indels.
 //
 // Positions: Internally all positions are stored using zero-indexed
 // position numbers.  For small indels and left breakpoints, we store
 // the position of the first affected position. For right breakpoints,
 // we store the first positions *after* the last affected
 // position. Positions are stored in this manner so that the indels
-// follow the starling range convention
+// follow Strelka's range convention
 //
-// Large indel breakpoints are expected to be rare and to possibly
+// Large indels are expected to be rare and to possibly
 // have an unknown size (especially for insertions). Thus the indel
 // length is not used in this case. To accommodate multiple different
 // lengths at a single location, an advisory length may be inserted

@@ -56,10 +56,11 @@ finish_indel_sppr(IndelObservation& obs,
 
 static
 void
-bam_seq_to_str(const bam_seq_base& bs,
-               const unsigned start,
-               const unsigned end,
-               std::string& s)
+bam_seq_to_str(
+    const bam_seq_base& bs,
+    const unsigned start,
+    const unsigned end,
+    std::string& s)
 {
     s.clear();
     for (unsigned i(start); i<end; ++i) s.push_back(bs.get_char(i));
@@ -71,23 +72,24 @@ const unsigned max_cand_filter_insert_size(10);
 
 
 
-// Handle edge inserts. For contigs we take the edge insert verbatim. For contig
+/// Handle edge inserts. For contigs we take the edge insert verbatim. For contig
 // reads we need to find out what (usually larger) indel this edge corresponds to.
-// for regular reads we record this as a private indel (ie. it does not count towards
-// candidacy.
-//
+/// for regular reads we record this as a private indel (ie. it does not count towards
+/// candidacy.
+///
 static
 void
-process_edge_insert(const unsigned max_indel_size,
-                    const ALIGNPATH::path_t& path,
-                    const bam_seq_base& bseq,
-                    starling_pos_processor_base& sppr,
-                    IndelObservation& obs,
-                    const unsigned sample_no,
-                    const unsigned path_index,
-                    const unsigned read_offset,
-                    const pos_t ref_head_pos,
-                    const bool is_pinned_indel)
+process_edge_insert(
+    const unsigned max_indel_size,
+    const ALIGNPATH::path_t& path,
+    const bam_seq_base& bseq,
+    starling_pos_processor_base& sppr,
+    IndelObservation& obs,
+    const unsigned sample_no,
+    const unsigned path_index,
+    const unsigned read_offset,
+    const pos_t ref_head_pos,
+    const bool is_pinned_indel)
 {
     using namespace ALIGNPATH;
 
@@ -118,7 +120,7 @@ process_edge_insert(const unsigned max_indel_size,
 
 /// handle edge deletions
 ///
-/// currently these are only alllowed for indels adjacent to an intron
+/// currently these are only allowed for indels adjacent to an intron
 ///
 static
 void
@@ -162,15 +164,16 @@ process_edge_delete(
 //
 static
 unsigned
-process_swap(const unsigned max_indel_size,
-             const ALIGNPATH::path_t& path,
-             const bam_seq_base& bseq,
-             starling_pos_processor_base& sppr,
-             IndelObservation& obs,
-             const unsigned sample_no,
-             const unsigned path_index,
-             const unsigned read_offset,
-             const pos_t ref_head_pos)
+process_swap(
+    const unsigned max_indel_size,
+    const ALIGNPATH::path_t& path,
+    const bam_seq_base& bseq,
+    starling_pos_processor_base& sppr,
+    IndelObservation& obs,
+    const unsigned sample_no,
+    const unsigned path_index,
+    const unsigned read_offset,
+    const pos_t ref_head_pos)
 {
     using namespace ALIGNPATH;
 
@@ -232,15 +235,16 @@ process_swap(const unsigned max_indel_size,
 //
 static
 void
-process_simple_indel(const unsigned max_indel_size,
-                     const ALIGNPATH::path_t& path,
-                     const bam_seq_base& bseq,
-                     starling_pos_processor_base& sppr,
-                     IndelObservation& obs,
-                     const unsigned sample_no,
-                     const unsigned path_index,
-                     const unsigned read_offset,
-                     const pos_t ref_head_pos)
+process_simple_indel(
+    const unsigned max_indel_size,
+    const ALIGNPATH::path_t& path,
+    const bam_seq_base& bseq,
+    starling_pos_processor_base& sppr,
+    IndelObservation& obs,
+    const unsigned sample_no,
+    const unsigned path_index,
+    const unsigned read_offset,
+    const pos_t ref_head_pos)
 {
     using namespace ALIGNPATH;
 
@@ -481,5 +485,3 @@ add_alignment_indels_to_sppr(
 
     return total_indel_ref_span_per_read;
 }
-
-

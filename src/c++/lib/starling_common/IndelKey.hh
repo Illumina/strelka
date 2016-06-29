@@ -102,17 +102,8 @@ struct IndelKey
 
     pos_t right_pos() const
     {
-        if     (type==INDEL::DELETE)
-        {
-            return pos+length;
-        }
-        else if (type==INDEL::SWAP)
-        {
-            return pos+swap_dlength;
-        }
-        return pos;
+        return pos+delete_length();
     }
-
 
     // generalize some length concepts:
     //
@@ -173,7 +164,8 @@ struct IndelKey
         return breakpoint_pos_range();
     }
 
-    bool is_breakpoint() const
+    bool
+    is_breakpoint() const
     {
         return ((type == INDEL::BP_LEFT) || (type == INDEL::BP_RIGHT));
     }
@@ -194,15 +186,11 @@ struct right_pos_indel_key_sorter
                const IndelKey& i2) const
     {
         if (i1.right_pos() < i2.right_pos()) return true;
-        if (i1.right_pos() == i2.right_pos())
-        {
-            return i1.gtcore(i2);
-        }
-        return false;
+        if (i1.right_pos() != i2.right_pos()) return false;
+        return i1.gtcore(i2);
     }
 };
 #endif
 
 
 std::ostream& operator<<(std::ostream& os, const IndelKey& indelKey);
-

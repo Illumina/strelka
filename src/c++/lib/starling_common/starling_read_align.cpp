@@ -264,11 +264,12 @@ add_path_segment(
 /// see unit tests
 static
 candidate_alignment
-make_start_pos_alignment(const pos_t ref_start_pos,
-                         const pos_t read_start_pos,
-                         const bool is_fwd_strand,
-                         const unsigned read_length,
-                         const indel_set_t& indels)
+make_start_pos_alignment(
+    const pos_t ref_start_pos,
+    const pos_t read_start_pos,
+    const bool is_fwd_strand,
+    const unsigned read_length,
+    const indel_set_t& indels)
 {
     using namespace ALIGNPATH;
 
@@ -323,20 +324,18 @@ make_start_pos_alignment(const pos_t ref_start_pos,
             }
 
             assert((apath.empty()) && (ref_head_pos==ref_start_pos));
-            assert((indelKey.type == INDEL::INSERT) ||
-                   (indelKey.type == INDEL::SWAP) ||
+            assert((indelKey.insert_length() > 0) ||
                    (indelKey.type == INDEL::BP_RIGHT));
 
-            if ((indelKey.type == INDEL::INSERT) ||
-                (indelKey.type == INDEL::SWAP))
+            if (indelKey.insert_length() > 0)
             {
-                assert(static_cast<pos_t>(indelKey.length)>=read_start_pos);
+                assert(static_cast<pos_t>(indelKey.insert_length())>=read_start_pos);
             }
 
             apath.push_back(path_segment(INSERT,read_start_pos));
-            if (indelKey.type == INDEL::SWAP)
+            if (indelKey.delete_length() > 0)
             {
-                add_path_segment(apath,DELETE,ref_head_pos,indelKey.swap_dlength);
+                add_path_segment(apath,DELETE,ref_head_pos,indelKey.delete_length());
             }
             cal.leading_indel_key=indelKey;
             continue;
@@ -442,12 +441,13 @@ make_start_pos_alignment(const pos_t ref_start_pos,
 /// see unit tests
 static
 void
-get_end_pin_start_pos(const indel_set_t& indels,
-                      const unsigned read_length,
-                      const pos_t ref_end_pos,
-                      const pos_t read_end_pos,
-                      pos_t& ref_start_pos,
-                      pos_t& read_start_pos)
+get_end_pin_start_pos(
+    const indel_set_t& indels,
+    const unsigned read_length,
+    const pos_t ref_end_pos,
+    const pos_t read_end_pos,
+    pos_t& ref_start_pos,
+    pos_t& read_start_pos)
 {
     assert(read_length>0);
     assert(ref_end_pos>0);
@@ -1177,7 +1177,7 @@ score_candidate_alignments(
         // check that this is not the first iteration, then determine if this
         // cal will be the new max value:
         //
-        if (NULL!=maxCandAlignmentPtr)
+        if (nullptr != maxCandAlignmentPtr)
         {
             if (path_lnp<maxCandAlignmentScore) continue;
 
@@ -1640,7 +1640,7 @@ realign_and_score_read(
 
     if (! inputAlignment.is_realignable(opt.max_indel_size)) return;
 
-    if (!check_for_candidate_indel_overlap(realign_buffer_range, rseg, indelBuffer)) return;
+    if (! check_for_candidate_indel_overlap(realign_buffer_range, rseg, indelBuffer)) return;
 
     const alignment normedAlignment(normalizeInputAlignmnet(rseg));
 
