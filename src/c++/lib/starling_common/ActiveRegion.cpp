@@ -25,8 +25,6 @@
 #include "ActiveRegion.hh"
 #include "IndelKey.hh"
 #include "indel.hh"
-#include "alignment/GlobalAligner.hh"
-#include "blt_util/align_path.hh"
 
 #include <iostream>
 
@@ -44,7 +42,7 @@ void ActiveRegion::insertHaplotypeBase(align_id_t align_id, pos_t pos, const std
         _alignIdReachingEnd.insert(align_id);
 }
 
-void ActiveRegion::printHaplotypeSequences() const
+void ActiveRegion::createComplexAlleles() const
 {
     std::map<std::string, unsigned> haplotypeCounter;
     unsigned maxCount = 0;
@@ -70,26 +68,65 @@ void ActiveRegion::printHaplotypeSequences() const
     {
         std::string haplotype = entry.first;
         unsigned count = entry.second;
-        if ((count >= 3) && (count >= maxCount/4))
+//        if ((count >= 3) && (count >= maxCount/4))
+        if (count >= 2)
         {
-            if (haplotype[0] == '.' || haplotype[haplotype.length()-1] == '*') continue;
-            std::cout << haplotype.c_str() << '\t' << count;
-            testAlign(haplotype, _refSeq);
-            std::cout << std::endl;
+            if (haplotype.length() == 0 || haplotype[0] == '.' || haplotype[haplotype.length()-1] == '*') continue;
+            printVariants(haplotype, _refSeq);
         }
-        testAlign("AGAGCTCCGGTAGC", "GCTCCGGCAGC");
-        std::cout << std::endl;
     }
 }
 
-void ActiveRegion::testAlign(const std::string& seq, const std::string& ref) const
+void ActiveRegion::printVariants(const std::string &haploptypeSeq, const std::string &referenceSeq) const
 {
-    AlignmentScores<int> scores(1,-4,-6,-1,-4);
-    GlobalAligner<int> aligner(scores);
     AlignmentResult<int> result;
-    aligner.align(seq.begin(),seq.end(),ref.begin(),ref.end(),result);
-    std::cout << '\t' << apath_to_cigar(result.align.apath);
-    std::cout << '\t' << result.align.apath;
+    _aligner.align(haploptypeSeq.begin(),haploptypeSeq.end(),referenceSeq.begin(),referenceSeq.end(),result);
+    ALIGNPATH::path_t alignPath = result.align.apath;
+
+//    std::cout << referenceSeq << '\t' << haploptypeSeq << '\t' << alignPath << '\t' << result.align.beginPos << '\t' << result.score << std::endl;
+    pos_t pos = _start+1;
+    pos_t referenceIndex = 0;
+    pos_t haplotypeIndex = 0;
+    if (result.align.beginPos > 0)
+    {
+        std::cout << "DELETE" << '\t' << pos+1 << '\t' << referenceSeq.substr(0, result.align.beginPos) << '\t' << std::endl;
+        pos += result.align.beginPos;
+        referenceIndex += result.align.beginPos;
+    }
+
+    for (unsigned pathIndex(0); pathIndex<alignPath.size(); ++pathIndex)
+    {
+        const ALIGNPATH::path_segment &pathSegment(alignPath[pathIndex]);
+        unsigned segmentLength = pathSegment.length;
+
+        switch (pathSegment.type)
+        {
+            case ALIGNPATH::SEQ_MATCH:
+                pos += segmentLength;
+                referenceIndex += segmentLength;
+                haplotypeIndex += segmentLength;
+                break;
+            case ALIGNPATH::SEQ_MISMATCH:
+                for (unsigned i(0); i<segmentLength; ++i)
+                {
+                    std::cout << "MISMATCH" << '\t' << pos++ << '\t' << referenceSeq[referenceIndex++];
+                    std::cout << '\t' << haploptypeSeq[haplotypeIndex++] << std::endl;
+                }
+                break;
+            case ALIGNPATH::INSERT:
+            case ALIGNPATH::SOFT_CLIP:
+                std::cout << "INSERT" << '\t' << pos << '\t' << haploptypeSeq.substr(haplotypeIndex, segmentLength) << std::endl;
+                haplotypeIndex += segmentLength;
+                break;
+            case ALIGNPATH::DELETE:
+                std::cout << "DELETE" << '\t' << pos << '\t' << referenceSeq.substr(referenceIndex, segmentLength) << std::endl;
+                pos += segmentLength;
+                referenceIndex += segmentLength;
+                break;
+            default:
+                std::cout << "Wrong2: " << pathSegment.type << std::endl;
+        }
+    }
 }
 
 

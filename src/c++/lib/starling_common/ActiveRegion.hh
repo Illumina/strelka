@@ -26,6 +26,8 @@
 
 #include "blt_util/blt_types.hh"
 #include "starling_common/starling_types.hh"
+#include "alignment/GlobalAligner.hh"
+#include "blt_util/align_path.hh"
 
 #include <string>
 #include <map>
@@ -38,7 +40,9 @@ public:
     ActiveRegion(pos_t start, pos_t end, unsigned numVariants, const std::string& refSeq):
         _start(start), _end(end), _numVariants(numVariants), _refSeq(refSeq),
         _alignIdToHaplotype(),
-        _alignIdReachingEnd()
+        _alignIdReachingEnd(),
+        _scores(1,-4,-5,-1,-1000),
+        _aligner(_scores)
     {}
 
     pos_t getStart() const
@@ -62,8 +66,8 @@ public:
         return pos >= _start && pos <= _end;
     }
     void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
-    void printHaplotypeSequences() const;
-    void testAlign(const std::string& seq, const std::string& ref) const;
+    void createComplexAlleles() const;
+    void printVariants(const std::string &haploptypeSeq, const std::string &referenceSeq) const;
     const std::string& getReferenceSeq() const { return _refSeq; }
 //    void createComplexAlleles() const;
 
@@ -76,4 +80,7 @@ private:
     std::map<align_id_t, std::string> _alignIdToHaplotype;
 
     std::set<align_id_t> _alignIdReachingEnd;
+
+    AlignmentScores<int> _scores;
+    GlobalAligner<int> _aligner;
 };

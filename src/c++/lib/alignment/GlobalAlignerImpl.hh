@@ -65,9 +65,9 @@ align(
     for (unsigned queryIndex(0); queryIndex<=querySize; queryIndex++)
     {
         ScoreVal& val((*thisSV)[queryIndex]);
-        val.match = queryIndex * scores.offEdge;
+        val.match = queryIndex == 0 ? 0 : badVal;
         val.del = badVal;
-        val.ins = badVal;
+        val.ins = queryIndex == 0 ? badVal : scores.open + queryIndex*scores.extend;
     }
 
     BackTrace<ScoreType> btrace;
@@ -79,10 +79,9 @@ align(
             std::swap(thisSV,prevSV);
 
             {
-                // disallow start from the insert or delete state:
                 ScoreVal& val((*thisSV)[0]);
-                val.match = 0;
-                val.del = badVal;
+                val.match = badVal;
+                val.del = scores.open + refIndex*scores.extend;
                 val.ins = badVal;
             }
 
@@ -110,10 +109,10 @@ align(
                                       headScore.del,
                                       sval.match + scores.open,
                                       sval.del,
-                                      sval.ins);
+                                      badVal);
 
                     headScore.del += scores.extend;
-                    if (0==queryIndex) headScore.del = badVal;
+//                    if (0==queryIndex) headScore.del = badVal;
                 }
 
                 // update insert
@@ -126,7 +125,7 @@ align(
                                       sval.ins);
 
                     headScore.ins += scores.extend;
-                    if (0==queryIndex) headScore.ins = badVal;
+//                    if (0==queryIndex) headScore.ins = badVal;
                 }
 
 #ifdef DEBUG_ALN
@@ -138,23 +137,23 @@ align(
 #ifdef DEBUG_ALN
             log_os << "\n";
 #endif
-
-            // get backtrace info:
-            {
-                const ScoreVal& sval((*thisSV)[querySize]);
-                const ScoreType thisMax(sval.match);
-                updateBacktrace(thisMax,refIndex+1,querySize,btrace);
-            }
         }
     }
 
-    // also allow for the case where query falls-off the end of the reference:
-    for (unsigned queryIndex(0); queryIndex<querySize; queryIndex++)
-    {
-        const ScoreVal& sval((*thisSV)[queryIndex]);
-        const ScoreType thisMax(sval.match + (querySize-queryIndex) * scores.offEdge);
-        updateBacktrace(thisMax,refSize,queryIndex,btrace);
-    }
+    const ScoreVal& sval((*thisSV)[querySize]);
+    ScoreType thisMax;
+    auto ptr = this->max3(thisMax, sval.match, sval.del, sval.ins);
+    AlignState::index_t state;
+    if (ptr == 0)
+        state = AlignState::MATCH;
+    else if (ptr == 1)
+        state = AlignState::DELETE;
+    else if (ptr == 2)
+        state = AlignState::INSERT;
+    else
+        assert(false && "Unexpected Index Value");
+
+    updateBacktrace(thisMax,refSize,querySize,btrace, state);
 
 #ifdef DEBUG_ALN
     log_os << "btrace-start queryIndex: " << queryBegin << " refIndex: " << refBegin << " state: " << AlignState::label(btrace.state) << " maxScore: " << btrace.max << "\n";

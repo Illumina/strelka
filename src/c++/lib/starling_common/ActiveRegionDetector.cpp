@@ -103,7 +103,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             ActiveRegion activeRegion = ActiveRegion(_activeRegionStartPos, _prevVariantPos, _numVariants, refStr);
             _activeRegions.push_back(activeRegion);
             // add haplotype bases
-            std::cout << '>' << (_activeRegionStartPos+1) << '\t' << (_prevVariantPos+1) << '\t' << refStr << std::endl;
+//            std::cout << '>' << (_activeRegionStartPos+1) << '\t' << (_prevVariantPos+1) << '\t' << refStr << std::endl;
             for (pos_t activeRegionPos(_activeRegionStartPos); activeRegionPos<=_prevVariantPos; ++activeRegionPos)
             {
                 for (align_id_t alignId : getPositionToAlignIds(activeRegionPos))
@@ -112,7 +112,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
                                                      getHaplotypeBase(alignId, activeRegionPos));
                 }
             }
-            activeRegion.printHaplotypeSequences();
+            activeRegion.createComplexAlleles();
         }
         if (!isCurrentPosCandidateVariant)
         {
