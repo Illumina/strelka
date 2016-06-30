@@ -141,9 +141,9 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     # Empirical Variant Scoring(EVS):
     if self.params.isEVS :
         if self.params.germlineSnvScoringModelFile is not None :
-            segCmd.extend(['--snv-scoring-model-file', self.params.germlineSnvScoringModelFile])
+            segCmd.extend(['--snv-scoring-model-file', quote(self.params.germlineSnvScoringModelFile)])
         if self.params.germlineIndelScoringModelFile is not None :
-            segCmd.extend(['--indel-scoring-model-file', self.params.germlineIndelScoringModelFile])
+            segCmd.extend(['--indel-scoring-model-file', quote(self.params.germlineIndelScoringModelFile)])
 
     if self.params.indelErrorModelName is not None :
         segCmd.extend(['--indel-error-model-name',self.params.indelErrorModelName])
