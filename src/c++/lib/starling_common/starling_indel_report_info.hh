@@ -33,9 +33,9 @@
 
 namespace SimplifiedIndelReportType
 {
+
 /// some components of the indel reporting need to reduce all alternate alleles to the following
-/// simplified states
-///
+/// simplified states:
 enum index_t
 {
     INSERT,
