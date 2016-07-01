@@ -119,7 +119,6 @@ strelka_streams(
         {
             write_vcf_audit(opt,pinfo,cmdline,header,fos);
             fos << "##content=strelka somatic snv calls\n"
-                << "##germlineSnvTheta=" << opt.bsnp_diploid_theta << "\n"
                 << "##priorSomaticSnvRate=" << opt.somatic_snv_rate << "\n";
 
             // this is already captured in commandline call to strelka written to the vcf header:
@@ -225,7 +224,6 @@ strelka_streams(
         {
             write_vcf_audit(opt,pinfo,cmdline,header,fos);
             fos << "##content=strelka somatic indel calls\n"
-                << "##germlineIndelTheta=" << opt.bindel_diploid_theta << "\n"
                 << "##priorSomaticIndelRate=" << opt.somatic_indel_rate << "\n";
 
             // this is already captured in commandline call to strelka written to the vcf header:

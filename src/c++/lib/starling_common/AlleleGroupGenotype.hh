@@ -220,58 +220,58 @@ getAlleleHomId(
 }
 
 
-struct GenotypePriors
+
+struct ContextGenotypePriors
 {
-    explicit
-    GenotypePriors(
+    void
+    initialize(
         const double theta)
     {
         static const double log0(-std::numeric_limits<double>::infinity());
 
-        prior2AlleleDiploid[AG_GENOTYPE::HOMREF]=std::log(1.-(theta*3/2));
-        prior2AlleleDiploid[AG_GENOTYPE::HOM0]=std::log(theta/2.);
-        prior2AlleleDiploid[AG_GENOTYPE::HET0]=std::log(theta);
+        prior2AlleleDiploid[AG_GENOTYPE::HOMREF] = std::log(1. - (theta * 3 / 2));
+        prior2AlleleDiploid[AG_GENOTYPE::HOM0] = std::log(theta / 2.);
+        prior2AlleleDiploid[AG_GENOTYPE::HET0] = std::log(theta);
 
-        prior2AlleleDiploidPolymorphic[AG_GENOTYPE::HOMREF]=std::log(0.25);
-        prior2AlleleDiploidPolymorphic[AG_GENOTYPE::HOM0]=std::log(0.25);
-        prior2AlleleDiploidPolymorphic[AG_GENOTYPE::HET0]=std::log(0.5);
+        prior2AlleleDiploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.25);
+        prior2AlleleDiploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.25);
+        prior2AlleleDiploidPolymorphic[AG_GENOTYPE::HET0] = std::log(0.5);
 
-        prior2AlleleHaploid[AG_GENOTYPE::HOMREF]=std::log(1.-theta);
-        prior2AlleleHaploid[AG_GENOTYPE::HOM0]=std::log(theta);
-        prior2AlleleHaploid[AG_GENOTYPE::HET0]=log0;
+        prior2AlleleHaploid[AG_GENOTYPE::HOMREF] = std::log(1. - theta);
+        prior2AlleleHaploid[AG_GENOTYPE::HOM0] = std::log(theta);
+        prior2AlleleHaploid[AG_GENOTYPE::HET0] = log0;
 
-        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF]=std::log(0.5);
-        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HOM0]=std::log(0.5);
-        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HET0]=log0;
+        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.5);
+        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.5);
+        prior2AlleleHaploidPolymorphic[AG_GENOTYPE::HET0] = log0;
 
-        prior3AlleleDiploid[AG_GENOTYPE::HOMREF]=std::log(1.-(theta*3./2.));
-        prior3AlleleDiploid[AG_GENOTYPE::HOM0]=std::log(theta/2.);
-        prior3AlleleDiploid[AG_GENOTYPE::HET0]=std::log(theta);
-        prior3AlleleDiploid[AG_GENOTYPE::HOM1]=std::log(theta*theta/2);
-        prior3AlleleDiploid[AG_GENOTYPE::HET1]=std::log(theta*theta);
-        prior3AlleleDiploid[AG_GENOTYPE::HET01]=std::log(theta*theta);
+        prior3AlleleDiploid[AG_GENOTYPE::HOMREF] = std::log(1. - (theta * 3. / 2.));
+        prior3AlleleDiploid[AG_GENOTYPE::HOM0] = std::log(theta / 2.);
+        prior3AlleleDiploid[AG_GENOTYPE::HET0] = std::log(theta);
+        prior3AlleleDiploid[AG_GENOTYPE::HOM1] = std::log(theta * theta / 2);
+        prior3AlleleDiploid[AG_GENOTYPE::HET1] = std::log(theta * theta);
+        prior3AlleleDiploid[AG_GENOTYPE::HET01] = std::log(theta * theta);
 
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HOMREF]=std::log(0.25);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HOM0]=std::log(0.25);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET0]=std::log(0.5);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HOM1]=std::log(0.25*theta);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET1]=std::log(0.5*theta);
-        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET01]=std::log(0.5*theta);
+        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.25);
+        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.25);
+        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET0] = std::log(0.5);
+        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.25 * theta);
+        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET1] = std::log(0.5 * theta);
+        prior3AlleleDiploidPolymorphic[AG_GENOTYPE::HET01] = std::log(0.5 * theta);
 
-        prior3AlleleHaploid[AG_GENOTYPE::HOMREF]=std::log(1.-theta);
-        prior3AlleleHaploid[AG_GENOTYPE::HOM0]=std::log(theta);
-        prior3AlleleHaploid[AG_GENOTYPE::HET0]=log0;
-        prior3AlleleHaploid[AG_GENOTYPE::HOM1]=std::log(theta*theta);
-        prior3AlleleHaploid[AG_GENOTYPE::HET1]=log0;
-        prior3AlleleHaploid[AG_GENOTYPE::HET01]=log0;
+        prior3AlleleHaploid[AG_GENOTYPE::HOMREF] = std::log(1. - theta);
+        prior3AlleleHaploid[AG_GENOTYPE::HOM0] = std::log(theta);
+        prior3AlleleHaploid[AG_GENOTYPE::HET0] = log0;
+        prior3AlleleHaploid[AG_GENOTYPE::HOM1] = std::log(theta * theta);
+        prior3AlleleHaploid[AG_GENOTYPE::HET1] = log0;
+        prior3AlleleHaploid[AG_GENOTYPE::HET01] = log0;
 
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF]=std::log(0.5);
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOM0]=std::log(0.5);
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET0]=log0;
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOM1]=std::log(0.5*theta);
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET1]=log0;
-        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET01]=log0;
-
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOMREF] = std::log(0.5);
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOM0] = std::log(0.5);
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET0] = log0;
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HOM1] = std::log(0.5 * theta);
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET1] = log0;
+        prior3AlleleHaploidPolymorphic[AG_GENOTYPE::HET01] = log0;
     }
 
     const double*
@@ -341,11 +341,50 @@ struct GenotypePriors
 
 
 
+struct GenotypePriorSet
+{
+    GenotypePriorSet(
+        const double lowRepeatTheta,
+        const double highRepeatTheta,
+        const unsigned highRepeatCount)
+        : _priors(highRepeatCount)
+    {
+        assert(highRepeatCount>0);
+
+        // this is the zero-indexed endpoint of the ramp, so we hit the
+        // constant high error rate at an hpol length of repeatCountSwitchPoint+1
+        static const unsigned repeatCountSwitchPoint(15);
+
+
+        for (unsigned patternRepeatCount=1; patternRepeatCount <= highRepeatCount; ++patternRepeatCount)
+        {
+            const unsigned patternRepeatCountIndex(patternRepeatCount-1);
+            const double highValueFraction(std::min((patternRepeatCountIndex),repeatCountSwitchPoint)/static_cast<double>(repeatCountSwitchPoint));
+            const double theta((1.-highValueFraction)*lowRepeatTheta + highValueFraction*highRepeatTheta);
+            _priors[patternRepeatCountIndex].initialize(theta);
+        }
+    }
+
+    const ContextGenotypePriors&
+    getContextSpecificPriorSet(
+        const unsigned patternRepeatCount) const
+    {
+        assert(patternRepeatCount>0);
+        const unsigned patternRepeatCountIndex(std::min(patternRepeatCount,static_cast<unsigned>(_priors.size()))-1);
+        return _priors[patternRepeatCountIndex];
+    }
+
+private:
+    std::vector<ContextGenotypePriors> _priors;
+};
+
+
+
 void
 getVariantAlleleGroupGenotypeLhoods(
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
-    const GenotypePriors& genotypePriors,
+    const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
@@ -355,7 +394,7 @@ void
 getGenotypeLhoodsForForcedOutputAllele(
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
-    const GenotypePriors& genotypePriors,
+    const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,

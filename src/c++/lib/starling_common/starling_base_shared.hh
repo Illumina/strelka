@@ -67,6 +67,12 @@ struct starling_base_options : public blt_options
     // parameters inherited from varling caller:
     //
     double bindel_diploid_theta = 0.0001;
+
+    // use this theta in long homopolymers (germline only)
+    double indelHighRepeatTheta = 0.01;
+    // definition of "long homopolymer" above
+    unsigned indelHighRepeatCount = 16;
+
     uint32_t user_genome_size = 0; // genome size specified by user for the indel calling model -- actual value used is in deriv_options.
     bool is_user_genome_size = false;
 
@@ -228,7 +234,7 @@ struct starling_sample_options
 
 struct IndelErrorModel;
 struct indel_digt_caller;
-struct GenotypePriors;
+struct GenotypePriorSet;
 
 
 // data deterministically derived from the input options:
@@ -271,7 +277,7 @@ struct starling_base_deriv_options : public blt_deriv_options
         return *_indelErrorModel;
     }
 
-    const GenotypePriors&
+    const GenotypePriorSet&
     getIndelGenotypePriors() const
     {
         return *_indelGenotypePriors;
@@ -306,7 +312,7 @@ public:
 private:
     std::unique_ptr<IndelErrorModel> _indelErrorModel;
     std::unique_ptr<indel_digt_caller> _incaller; // object to precalculate bindel_diploid priors..
-    std::unique_ptr<GenotypePriors> _indelGenotypePriors;
+    std::unique_ptr<GenotypePriorSet> _indelGenotypePriors;
 
     std::vector<unsigned> _postCallStage;
 };

@@ -98,7 +98,7 @@ accumulateLogLhoodFromReadObservation(
 static
 void
 logLhoodToLocusGenotype(
-    const GenotypePriors& genotypePriors,
+    const ContextGenotypePriors& genotypePriors,
     const unsigned gtCount,
     const bool is3AlleleModel,
     const bool isHaploid,
@@ -162,7 +162,7 @@ void
 getVariantAlleleGroupGenotypeLhoods(
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
-    const GenotypePriors& genotypePriors,
+    const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
@@ -181,6 +181,19 @@ getVariantAlleleGroupGenotypeLhoods(
     double logLhood[AlleleGroupGenotype::MAX_GENOTYPE_COUNT];
     std::fill(logLhood,logLhood+gtCount,0.);
     const bool is3AlleleModel(fullAlleleCount == 3);
+
+    unsigned patternRepeatCount(1);
+    if (nonRefAlleleCount==1)
+    {
+        const unsigned nonRefAllele0Index(0);
+        const IndelKey& allele0Key(alleleGroup.key(nonRefAllele0Index));
+        const IndelData& allele0Data(alleleGroup.data(nonRefAllele0Index));
+
+        starling_indel_report_info indelReportInfo;
+        get_starling_indel_report_info(allele0Key, allele0Data, ref, indelReportInfo);
+        patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
+    }
+    const ContextGenotypePriors& genotypePriors(dopt.getIndelGenotypePriors().getContextSpecificPriorSet(patternRepeatCount));
 
     if (nonRefAlleleCount>0)
     {
@@ -293,7 +306,7 @@ void
 getGenotypeLhoodsForForcedOutputAllele(
     const starling_base_deriv_options& dopt,
     const starling_sample_options& sampleOptions,
-    const GenotypePriors& genotypePriors,
+    const reference_contig_segment& ref,
     const unsigned groupLocusPloidy,
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& variantAlleleGroup,
@@ -319,6 +332,14 @@ getGenotypeLhoodsForForcedOutputAllele(
     const IndelKey& forcedOutputIndelKey(forcedOutputAlleleGroup.key(forcedOutputAlleleIndex));
     const IndelData& forcedOutputIndelData(forcedOutputAlleleGroup.data(forcedOutputAlleleIndex));
     const IndelSampleData& forcedOutputIndelSampleData(forcedOutputIndelData.getSampleData(sampleId));
+
+    unsigned patternRepeatCount=1;
+    {
+        starling_indel_report_info indelReportInfo;
+        get_starling_indel_report_info(forcedOutputIndelKey, forcedOutputIndelData, ref, indelReportInfo);
+        patternRepeatCount=std::max(1u,indelReportInfo.ref_repeat_count);
+    }
+    const ContextGenotypePriors& genotypePriors(dopt.getIndelGenotypePriors().getContextSpecificPriorSet(patternRepeatCount));
 
     for (const auto& score : forcedOutputIndelSampleData.read_path_lnp)
     {

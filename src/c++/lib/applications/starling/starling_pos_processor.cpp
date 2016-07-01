@@ -795,7 +795,7 @@ process_pos_indel_single_sample_digt(
     AlleleGroupGenotype locusGenotype;
     {
         // genotype the top N alleles
-        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(), callerPloidy,
+        getVariantAlleleGroupGenotypeLhoods(_dopt, sif.sample_opt, _ref, callerPloidy,
                                             sampleId, topVariantAlleleGroup, locusGenotype);
 
         // coerce output into older data-structures for gVCF output
@@ -843,7 +843,7 @@ process_pos_indel_single_sample_digt(
              forcedOutputAlleleIndex < forcedOutputAlleleCount; ++forcedOutputAlleleIndex)
         {
             AlleleGroupGenotype forcedAlleleLocusGenotype;
-            getGenotypeLhoodsForForcedOutputAllele(_dopt, sif.sample_opt, _dopt.getIndelGenotypePriors(),
+            getGenotypeLhoodsForForcedOutputAllele(_dopt, sif.sample_opt, _ref,
                                                    callerPloidy, sampleId, topVariantAlleleGroup,
                                                    forcedOutputAlleleGroup,
                                                    forcedOutputAlleleIndex, forcedAlleleLocusGenotype);
