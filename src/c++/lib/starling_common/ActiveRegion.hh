@@ -28,6 +28,7 @@
 #include "starling_common/starling_types.hh"
 #include "alignment/GlobalAligner.hh"
 #include "blt_util/align_path.hh"
+#include "IndelBuffer.hh"
 
 #include <string>
 #include <map>
@@ -66,10 +67,8 @@ public:
         return pos >= _start && pos <= _end;
     }
     void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
-    void createComplexAlleles() const;
-    void printVariants(const std::string &haploptypeSeq, const std::string &referenceSeq) const;
+    void addComplexAllelesToIndelBuffer(IndelBuffer& indelBuffer, std::set<pos_t>& polySites) const;
     const std::string& getReferenceSeq() const { return _refSeq; }
-//    void createComplexAlleles() const;
 
 private:
     pos_t _start;
@@ -78,9 +77,13 @@ private:
     const std::string& _refSeq;
 
     std::map<align_id_t, std::string> _alignIdToHaplotype;
-
     std::set<align_id_t> _alignIdReachingEnd;
-
     AlignmentScores<int> _scores;
     GlobalAligner<int> _aligner;
+
+    void addPrimitiveAllelesToIndelBuffer(
+            const std::string &haploptypeSeq,
+            std::vector<align_id_t>& alignIdList,
+            IndelBuffer& indelBuffer,
+            std::set<pos_t>& polySites) const;
 };

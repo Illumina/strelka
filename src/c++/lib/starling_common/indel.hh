@@ -47,11 +47,6 @@ struct indel
     IndelData data;
 };
 
-struct ComplexAlleleObservation
-{
-
-};
-
 // Debugging dump:
 std::ostream& operator<<(std::ostream& os, const IndelObservation& obs);
 std::ostream& operator<<(std::ostream& os, const indel& in);

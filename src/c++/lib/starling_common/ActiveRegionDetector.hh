@@ -28,6 +28,7 @@
 #include "blt_util/blt_types.hh"
 #include "starling_read_segment.hh"
 #include "indel.hh"
+#include "IndelBuffer.hh"
 #include <vector>
 #include <list>
 #include <set>
@@ -40,10 +41,12 @@ public:
 
     ActiveRegionDetector(
             const reference_contig_segment& ref,
+            IndelBuffer& indelBuffer,
             unsigned maxDetectionWindowSize = 30,
             unsigned minNumMismatchesPerPosition = 9,
             unsigned minNumVariantsPerRegion = 2) :
             _ref(ref),
+            _indelBuffer(indelBuffer),
             _maxDetectionWindowSize(maxDetectionWindowSize),
             _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
             _minNumVariantsPerRegion(minNumVariantsPerRegion),
@@ -68,10 +71,12 @@ public:
     {
         return _activeRegions.empty();
     }
-    std::list<ActiveRegion>& getActiveRegions();
+    bool isPolymorphicSite(const pos_t pos) const;
 
 private:
     const reference_contig_segment& _ref;
+    IndelBuffer& _indelBuffer;
+
     unsigned _maxDetectionWindowSize;
     unsigned _minNumMismatchesPerPosition;
     unsigned _minNumVariantsPerRegion;
@@ -94,6 +99,9 @@ private:
     std::vector<align_id_t> _alignIdsCurrentActiveRegion;
     std::vector<std::list<align_id_t>> _positionToAlignIds;
     std::vector<std::vector<std::string>> _haplotypeBase;
+
+    // record polymorphic sites
+    std::set<pos_t> _polySites;
 
     bool isCandidateVariant(const pos_t pos) const;
 

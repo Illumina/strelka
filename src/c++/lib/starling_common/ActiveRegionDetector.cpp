@@ -112,7 +112,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
                                                      getHaplotypeBase(alignId, activeRegionPos));
                 }
             }
-            activeRegion.createComplexAlleles();
+            activeRegion.addComplexAllelesToIndelBuffer(_indelBuffer, _polySites);
         }
         if (!isCurrentPosCandidateVariant)
         {
@@ -170,8 +170,7 @@ ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
     return getCount(pos) >= _minNumMismatchesPerPosition;
 }
 
-std::list<ActiveRegion>&
-ActiveRegionDetector::getActiveRegions()
+bool ActiveRegionDetector::isPolymorphicSite(const pos_t pos) const
 {
-    return _activeRegions;
+    return _polySites.find(pos) != _polySites.end();
 }

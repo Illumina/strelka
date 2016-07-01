@@ -280,7 +280,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _n_samples(n_samples)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
-    , _active_region_detector(ref)
+    , _active_region_detector(ref, _indelBuffer)
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
@@ -1363,6 +1363,7 @@ pileup_read_segment(const read_segment& rseg,
                 // skip position outside of report range:
                 if (! is_pos_reportable(ref_pos)) continue;
 
+                bool isPolySite = _active_region_detector.isPolymorphicSite(ref_pos);
 
                 bool isFirstBaseCallFromMatchSeg(false);
                 const bool isFirstFromMatchSeg((j==0) || (read_pos==read_begin) || (! is_pos_reportable(ref_pos-1)));
@@ -1430,12 +1431,12 @@ pileup_read_segment(const read_segment& rseg,
                     bool is_tier2_call_filter(is_call_filter);
                     if (! is_call_filter && _opt.is_max_win_mismatch)
                     {
-                        is_call_filter = _rmi[read_pos].mismatch_filter_map;
+                        is_call_filter = _rmi[read_pos].mismatch_filter_map && !isPolySite;
                         if (! _opt.tier2.is_tier2_no_mismatch_density_filter)
                         {
                             if (_opt.tier2.is_tier2_mismatch_density_filter_count)
                             {
-                                is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map;
+                                is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map && !isPolySite;
                             }
                             else
                             {
