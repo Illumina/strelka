@@ -47,12 +47,12 @@ struct VariantScoringModelServer
     scoreVariant(
         const VariantScoringModelBase::featureInput_t& features) const
     {
-        return _model->getProb(features);
+        return std::max(0.,std::min(1.,(_meta.probScale * _model->getProb(features))));
     }
 
     double scoreFilterThreshold() const
     {
-        return _meta.FilterCutoff;
+        return _meta.filterCutoff;
     }
 
 private:

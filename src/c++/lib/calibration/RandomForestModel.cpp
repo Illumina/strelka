@@ -100,7 +100,7 @@ Deserialize(
         _forest.emplace_back();
         DecisionTree& dtree(_forest.back());
 
-        // loop through the three paramter categories (TREE,VOTE, DECISION) for each tree
+        // loop through the three parameter categories (TREE,VOTE, DECISION) for each tree
         for (int i(0); i<SIZE; ++i)
         {
             const index_t nodeTypeIndex(static_cast<index_t>(i));

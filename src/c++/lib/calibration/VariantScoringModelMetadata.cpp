@@ -37,6 +37,7 @@ enum index_t
     MODELTYPE,
     FILTERCUTOFF,
     FEATURES,
+    CALIBRATION,
     SIZE
 };
 
@@ -58,6 +59,8 @@ get_label(const index_t i)
         return "FilterCutoff";
     case FEATURES:
         return "Features";
+    case CALIBRATION:
+        return "Calibration";
     default:
         assert(false && "Unknown serialized calibration model entry type");
         return nullptr;
@@ -119,11 +122,16 @@ Deserialize(
     const Json::Value& root)
 {
     using namespace SMODEL_ENTRY_TYPE;
-//    this->name      = Clean_string(root[get_label(NAME)].asString());
-//    this->version   = Clean_string(root[get_label(VERSION)].asString());
     date  = Clean_string(root[get_label(DATE)].asString());
     ModelType = root[get_label(MODELTYPE)].asString();
-    FilterCutoff = root[get_label(FILTERCUTOFF)].asDouble();
+    filterCutoff = root[get_label(FILTERCUTOFF)].asDouble();
+
+    // read optional calibration items:
+    const Json::Value caliRoot = root[get_label(CALIBRATION)];
+    if (not caliRoot.isNull())
+    {
+        probScale = caliRoot.get("Scale", probScale).asDouble();
+    }
 
     // read and validate features:
     const Json::Value featureRoot = root[get_label(FEATURES)];
