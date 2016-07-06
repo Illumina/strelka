@@ -46,3 +46,15 @@ selectTopOrthogonalAllelesInSample(
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned selectionSize,
     OrthogonalVariantAlleleCandidateGroup& topAlleleGroup);
+
+
+/// refine alleleGroup to consider alts shared by all alleles, then rerank
+/// and re-select top groupLocusPloidy alleles
+///
+void addAllelesAtOtherPositions(
+    const pos_t pos,
+    const pos_t largest_total_indel_ref_span_per_read,
+    const unsigned sampleId,
+    const int groupLocusPloidy,
+    const IndelBuffer& indelBuffer,
+    OrthogonalVariantAlleleCandidateGroup& alleleGroup);

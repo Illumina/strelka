@@ -482,121 +482,7 @@ process_pos_indel_single_sample(
 
 
 
-/// refine topVariantAlleleGroup to consider alts shared by all top alleles, then rerank
-/// and re-select top groupLocusPloidy alleles
-///
-/// TODO: move this to a shared N-ploid genotype service module
-static
-void
-addAllelesAtOtherPositions(
-    const pos_t pos,
-    const pos_t largest_total_indel_ref_span_per_read,
-    const unsigned sampleId,
-    const int groupLocusPloidy,
-    const IndelBuffer& indelBuffer,
-    OrthogonalVariantAlleleCandidateGroup& alleleGroup)
-{
-    const pos_t minIndelBufferPos(pos-largest_total_indel_ref_span_per_read);
-
-    const unsigned inputAlleleCount(alleleGroup.size());
-
-    // first get the set of candidate alt alleles from another position
-    //
-    std::vector<IndelKey> filteredAltAlleles;
-    {
-        const known_pos_range inputAlleleGroupRange(alleleGroup.getReferenceRange());
-
-        // extend end_pos by one to ensure that we find indels adjacent to the right end of the range
-        /// TODO add strict definition and unit tests to rangeIterator wrt adjacent indels
-        const auto indelIterPair(indelBuffer.rangeIterator(inputAlleleGroupRange.begin_pos, inputAlleleGroupRange.end_pos+1));
-        for (auto altAlleleIter(indelIterPair.first); altAlleleIter!=indelIterPair.second; ++altAlleleIter)
-        {
-            const IndelKey& altAlleleKey(altAlleleIter->first);
-
-            // all alleles with this starting position have already been
-            // considered..
-            if (altAlleleKey.pos == pos) continue;
-
-            // filter out indels which have already been cleared out of the indel buffer:
-            if (altAlleleKey.pos < minIndelBufferPos) continue;
-
-            // no breakpoints:
-            if (altAlleleKey.is_breakpoint()) continue;
-
-            // must be orthogonal to all input alleles:
-            {
-                bool isOrthogonalToAllInputAlleles(true);
-                for (unsigned inputAlleleIndex(0); inputAlleleIndex < inputAlleleCount; inputAlleleIndex++)
-                {
-                    const IndelKey& inputAlleleKey(alleleGroup.key(inputAlleleIndex));
-                    if (is_indel_conflict(altAlleleKey, inputAlleleKey)) continue;
-                    isOrthogonalToAllInputAlleles = false;
-                    break;
-                }
-                if (not isOrthogonalToAllInputAlleles) continue;
-            }
-
-            const IndelData& altAlleleData(getIndelData(altAlleleIter));
-
-            // must be a candidate allele:
-            if (not indelBuffer.isCandidateIndel(altAlleleKey, altAlleleData)) continue;
-
-            // made it! add allele to the set we move forward with:
-            filteredAltAlleles.push_back(altAlleleKey);
-        }
-    }
-
-    if (filteredAltAlleles.empty()) return;
-
-    OrthogonalVariantAlleleCandidateGroup altAlleleGroup;
-    for (const auto& altAlleleKey : filteredAltAlleles)
-    {
-        const auto altIter(indelBuffer.getIndelIter(altAlleleKey));
-        altAlleleGroup.addVariantAllele(altIter);
-    }
-
-    if (altAlleleGroup.size()>1)
-    {
-        // rank alt alleles and include from highest to lowest unless interference clique is broken:
-        unsigned referenceRank(0);
-        OrthogonalVariantAlleleCandidateGroup rankedAltAlleleGroup;
-        rankOrthogonalAllelesInSample(sampleId, altAlleleGroup, rankedAltAlleleGroup, referenceRank);
-
-        altAlleleGroup.clear();
-
-        for (const auto& rankedAltAlleleIter : rankedAltAlleleGroup.alleles)
-        {
-            bool isGroupOrthogonal(true);
-            for (const auto& altAlleleIter : altAlleleGroup.alleles)
-            {
-                if (not is_indel_conflict(rankedAltAlleleIter->first, altAlleleIter->first))
-                {
-                    isGroupOrthogonal = false;
-                    break;
-                }
-            }
-            if (isGroupOrthogonal)
-            {
-                altAlleleGroup.alleles.push_back(rankedAltAlleleIter);
-            }
-        }
-    }
-
-    // put all qualifying alts back together with variants to form an extended allele set:
-    OrthogonalVariantAlleleCandidateGroup extendedVariantAlleleGroup(alleleGroup);
-    for (const auto& altAlleleIter : altAlleleGroup.alleles)
-    {
-        extendedVariantAlleleGroup.alleles.push_back(altAlleleIter);
-    }
-
-    // rerank and reselect top N alleles, N=groupLocusPloidy
-    //
-    selectTopOrthogonalAllelesInSample(sampleId, extendedVariantAlleleGroup, groupLocusPloidy, alleleGroup);
-}
-
-
-
-/// facilitiate final bookkeeping required to insert starling_diploid_indel in gVCF
+/// facilitate final bookkeeping required to insert starling_diploid_indel in gVCF
 ///
 /// TODO retire the starling_diploid_indel based indel stream to gVCF
 static
@@ -628,6 +514,7 @@ insertIndelInGvcf(
 
     gvcfer.add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(dopt.gvcf, indelKey, indelData, dindel, indelReportInfo, indelSampleReportInfo)));
 }
+
 
 
 /// translate AG_GENOTYPE to older genotype indices
@@ -822,7 +709,7 @@ process_pos_indel_single_sample_digt(
     // preserve the orthogonal clique relationship of the set.
     //
     // Once we have the largest possible allele set, the reference is implicitey added and all alleles are
-    // ranked. The top N are kept, N= ploicy. The reference is restored for the genotyping process if it is not
+    // ranked. The top N are kept, N= ploidy. The reference is restored for the genotyping process if it is not
     // in the top N.
     //
     OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
