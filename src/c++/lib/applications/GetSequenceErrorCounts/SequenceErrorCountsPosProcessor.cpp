@@ -21,9 +21,8 @@
 #include "SequenceErrorCountsPosProcessor.hh"
 #include "blt_common/ref_context.hh"
 #include "common/OutStream.hh"
-#include "starling_common/OrthogonalVariantAlleleCandidateGroup.hh"
+#include "starling_common/OrthogonalVariantAlleleCandidateGroupUtil.hh"
 #include "starling_common/starling_indel_call_pprob_digt.hh"
-#include "starling_common/starling_diploid_indel.hh"
 
 #include <algorithm>
 #include <vector>
@@ -122,7 +121,6 @@ addKnownVariant(
 }
 
 
-
 static
 bool
 isKnownVariantMatch(
@@ -146,99 +144,41 @@ isKnownVariantMatch(
 
 
 
-#include "blt_util/math_util.hh"
-#include "blt_util/prob_util.hh"
-
-/// order overlapping indels by total read support in one sample
-///
-/// \param[out] referenceRank rank of the reference among all haplotypes, with 0 being the best (highest scoring)
-///
 static
 void
 getOrthogonalHaplotypeSupportCounts(
-    const OrthogonalVariantAlleleCandidateGroup& hg,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned sampleId,
     std::vector<unsigned>& support,
-    const bool is_tier1_only = true)
+    const bool isTier1Only = true)
 {
-    const unsigned nonrefHapCount(hg.size());
-    assert(nonrefHapCount!=0);
-
-    std::set<unsigned> readIds;
+    const unsigned nonrefAlleleCount(alleleGroup.size());
+    assert(nonrefAlleleCount!=0);
 
     // intersection of read ids which have a likelihood evaluated over all candidate haplotypes:
-    {
-        std::map<unsigned,unsigned> countReadIds;
-        for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; nonrefHapIndex++)
-        {
-            const IndelSampleData& indelSampleData(hg.data(nonrefHapIndex).getSampleData(sampleId));
-            for (const auto& score : indelSampleData.read_path_lnp)
-            {
-                if (is_tier1_only && (! score.second.is_tier1_read)) continue;
-
-                const auto iter(countReadIds.find(score.first));
-                if (iter==countReadIds.end())
-                {
-                    countReadIds.insert(std::make_pair(score.first,1));
-                }
-                else
-                {
-                    iter->second += 1;
-                }
-            }
-        }
-
-        for (const auto& value : countReadIds)
-        {
-            if (value.second >= nonrefHapCount)
-            {
-                readIds.insert(value.first);
-            }
-        }
-    }
-
+    std::set<unsigned> readIds;
+    getAlleleGroupIntersectionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
 
     // count of all haplotypes including reference
-    const unsigned allHapCount(nonrefHapCount+1);
-    const unsigned refHapIndex(nonrefHapCount);
+    const unsigned fullAlleleCount(nonrefAlleleCount+1);
 
     support.clear();
-    support.resize(allHapCount,0);
+    support.resize(fullAlleleCount,0);
 
-    std::vector<double> lhood(allHapCount);
     for (const auto readId : readIds)
     {
-        static const double log0(-std::numeric_limits<double>::infinity());
-        std::fill(lhood.begin(),lhood.end(),log0);
-        for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; nonrefHapIndex++)
+        std::vector<double> lhood(fullAlleleCount);
+        getAlleleLikelihoodsFromRead(sampleId, alleleGroup, readId, lhood);
+        for (unsigned fullAlleleIndex(0); fullAlleleIndex<fullAlleleCount; fullAlleleIndex++)
         {
-            const IndelSampleData& indelSampleData(hg.data(nonrefHapIndex).getSampleData(sampleId));
-
-            const auto iditer(indelSampleData.read_path_lnp.find(readId));
-
-            if (iditer==indelSampleData.read_path_lnp.end())
+            if (lhood[fullAlleleIndex]>0.999)
             {
-                // note we've set readIds to intersection now so this should never happen:
-                continue;
-            }
-
-            const ReadPathScores& path_lnp(iditer->second);
-
-            lhood[refHapIndex] = std::max(lhood[refHapIndex],static_cast<double>(path_lnp.ref));
-            lhood[nonrefHapIndex] = path_lnp.indel;
-        }
-        unsigned maxIndex(0);
-        normalize_ln_distro(lhood.begin(),lhood.end(),maxIndex);
-
-        for (unsigned allHapIndex(0); allHapIndex<allHapCount; allHapIndex++)
-        {
-            if (lhood[allHapIndex]>0.999)
-            {
-                support[allHapIndex]++;
+                support[fullAlleleIndex]++;
             }
         }
     }
 }
+
 
 
 static
@@ -448,20 +388,28 @@ process_pos_error_counts(
     if (isSkipIndel) return;
 
 
-    // define groups of overlapping indels:
+    // define groups of overlapping alleles to rank and then genotype.
     //
-    // indels which form "conflict cliques" go into a single indel
-    // group for scoring together
+    // overlapping alleles can be thought to form "conflict graphs", where an edge exists between two alleles
+    // which cannot exist together on the same haplotype (called orthogonal alleles below). Without phasing
+    // information, we can only (accurately) genotype among sets of alleles forming a clique in the graph.
     //
-    // this design should look overblown within this function, it
-    // is intended to generalize across multiple positions, in which
-    // case we will have to deal with non-clique conflict patterns.
+    // Given above constraint, we first identify all candidates at the current position (which form a clique by
+    // definition), and then greedily add the top-ranking overlapping alleles at other positions if they
+    // preserve the orthogonal clique relationship of the set.
     //
-    std::vector<OrthogonalVariantAlleleCandidateGroup> _groups;
+    // Once we have the largest possible allele set, the reference is implicitly added and all alleles are
+    // ranked. The top N are kept. The reference is restored for the genotyping process if it is not
+    // in the top N.
+    //
+    // for conventional calling we set N = ploidy. For the error analysis case, we set N = some reasonably
+    // large number
+    //
 
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
+    OrthogonalVariantAlleleCandidateGroup orthogonalVariantAlleles;
     for (; it!=it_end; ++it)
     {
         const IndelKey& indelKey(it->first);
@@ -470,39 +418,66 @@ process_pos_error_counts(
         if (indelKey.is_breakpoint()) continue;
 
         const bool isForcedOutput(indelData.is_forced_output);
-
-        if (! isForcedOutput)
+        if (not isForcedOutput)
         {
-            if (!getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
+            const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
+            const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
+
+            if (isZeroCoverage) continue;
+            if (not getIndelBuffer().isCandidateIndel(indelKey, indelData)) continue;
         }
 
         if (! (indelKey.isPrimitiveDeletionAllele() || indelKey.isPrimitiveInsertionAllele())) continue;
 
-        // all indels at the same position are conflicting:
-        if (_groups.empty()) _groups.resize(1);
-        OrthogonalVariantAlleleCandidateGroup& hg(_groups[0]);
-        hg.addVariantAllele(it);
+        // all alleles at the same position are automatically conflicting/orthogonal:
+        orthogonalVariantAlleles.addVariantAllele(it);
     }
 
-    // buffer observations until we get through all overlaping indels at this site:
-    std::map<IndelErrorContext,IndelErrorContextObservation> indelObservations;
 
+    // this takes the place of the ploidy argument we use during real variant calling -- the
+    // question is: should we set this to 2 and filter out the items we normally filter out during
+    // variant calling? Or do we want ot try to capture something closer to the true underlying noise
+    // distribution?
+    //
+    // in this case we choose the latter in principal (favor true noise vs what the germline caller seees),
+    // but still set an upper-limit on the total number of overlapping variants, recognizing that we can't
+    // handle the noise accurately as variant density goes up
+    //
+    const unsigned maxOverlap(4);
+
+
+    if (orthogonalVariantAlleles.size() > maxOverlap) return;
 
     // check for any known variants overlapping this position
     RecordTracker::indel_value_t knownVariantRecords;
     _knownVariants.intersectingRecord(pos, knownVariantRecords);
 
-    if (! _groups.empty())
-    {
-        const OrthogonalVariantAlleleCandidateGroup& hg(_groups[0]);
-        const unsigned nonrefHapCount(hg.size());
-        std::vector<unsigned> support;
-        getOrthogonalHaplotypeSupportCounts(hg, sampleId, support);
+    // buffer observations until we get through all overlapping indels at this position:
+    std::map<IndelErrorContext,IndelErrorContextObservation> indelObservations;
 
-        for (unsigned nonrefHapIndex(0); nonrefHapIndex<nonrefHapCount; ++nonrefHapIndex)
+    if (not orthogonalVariantAlleles.empty())
+    {
         {
-            const IndelKey& indelKey(hg.key(nonrefHapIndex));
-            const IndelData& indelData(hg.data(nonrefHapIndex));
+            const bool isEveryAltIncluded = \
+                addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
+                                           (maxOverlap + 1), getIndelBuffer(), orthogonalVariantAlleles);
+
+            if (not isEveryAltIncluded) return;
+
+            if (orthogonalVariantAlleles.size() > maxOverlap) return;
+        }
+        
+        const unsigned nonrefAlleleCount(orthogonalVariantAlleles.size());
+        std::vector<unsigned> support;
+        getOrthogonalHaplotypeSupportCounts(orthogonalVariantAlleles, sampleId, support);
+
+        for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; ++nonrefAlleleIndex)
+        {
+            const IndelKey& indelKey(orthogonalVariantAlleles.key(nonrefAlleleIndex));
+
+            if (indelKey.pos != pos) continue;
+
+            const IndelData& indelData(orthogonalVariantAlleles.data(nonrefAlleleIndex));
 
             starling_indel_report_info indelReportInfo;
             get_starling_indel_report_info(indelKey, indelData,_ref,indelReportInfo);
@@ -524,8 +499,8 @@ process_pos_error_counts(
             IndelErrorContextObservation obs;
 
             const INDEL_SIGNAL_TYPE::index_t sigIndex(getIndelType(indelReportInfo));
-            obs.signalCounts[sigIndex] = support[nonrefHapIndex];
-            obs.refCount = support[nonrefHapCount];
+            obs.signalCounts[sigIndex] = support[nonrefAlleleIndex];
+            obs.refCount = support[nonrefAlleleCount];
             obs.assignKnownStatus(overlappingRecords);
 
             // an indel candidate can have 0 q30 indel reads when it is only supported by
@@ -533,7 +508,7 @@ process_pos_error_counts(
             // see lib/starling_common/starling_read_util.cpp::get_valid_alignment_range)
             // in this case, we're not going to report the incidence as noise, since it's
             // not a read we would consider in variant calling
-            if (support[nonrefHapIndex] > 0 && _opt.is_write_observations())
+            if (support[nonrefAlleleIndex] > 0 && _opt.is_write_observations())
             {
                 std::ostream& obs_os(*_streams.observation_bed_osptr());
                 obs_os << _opt.bam_seq_name << "\t";
@@ -541,7 +516,7 @@ process_pos_error_counts(
                 obs_os << indelReportInfo.repeat_unit << "\t" << indelReportInfo.ref_repeat_count << "\t";
                 obs_os << GENOTYPE_STATUS::label(obs.variantStatus) << "\t";
                 obs_os << context.repeatCount << "\t" << INDEL_SIGNAL_TYPE::label(sigIndex) << "\t";
-                obs_os << indelKey.deletionLength << "\t" << nonrefHapIndex + 1 << "/" << nonrefHapCount << "\t";
+                obs_os << indelKey.deletionLength << "\t" << nonrefAlleleIndex + 1 << "/" << nonrefAlleleCount << "\t";
                 obs_os << obs.signalCounts[sigIndex] << "\t" << obs.refCount << "\t";
                 obs_os << std::accumulate(support.begin(), support.end(), 0) << std::endl;
             }
@@ -588,12 +563,10 @@ process_pos_error_counts(
         IndelBackgroundObservation obs;
         obs.depth = depth;
         obs.assignKnownStatus(knownVariantRecords);
+
         // the assumption is that a background position should have
         // the variant status of any overlapping known variants,
         // regardless of whether the genotypes match
-
-        // std::cout << "POS: " << pos << std::endl;
-        // std::cout << obs << std::endl;
 
         // always add hpol=1:
         if (! indelObservations.count(context))

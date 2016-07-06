@@ -22,6 +22,35 @@
 
 #include "OrthogonalVariantAlleleCandidateGroup.hh"
 
+/// find all readIds which support at least one allele in this group
+///
+void
+getAlleleGroupUnionReadIds(
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    std::set<unsigned>& readIds,
+    const bool isTier1Only);
+
+
+/// find all readIds which support all alleles in this group
+///
+void
+getAlleleGroupIntersectionReadIds(
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    std::set<unsigned>& readIds,
+    const bool isTier1Only);
+
+
+/// get allele likelihoods from read 'readId'
+///
+void
+getAlleleLikelihoodsFromRead(
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    const unsigned readId,
+    std::vector<double>& lhood);
+
 
 /// ranks the alleles in the input 'alleles' set according
 /// to supporting read evidence in sample 'sampleId'
@@ -48,10 +77,14 @@ selectTopOrthogonalAllelesInSample(
     OrthogonalVariantAlleleCandidateGroup& topAlleleGroup);
 
 
-/// refine alleleGroup to consider alts shared by all alleles, then rerank
-/// and re-select top groupLocusPloidy alleles
+/// augment alleleGroup with overlapping alleles that have position other than 'pos',
+/// then rerank and re-select top groupLocusPloidy alleles
 ///
-void addAllelesAtOtherPositions(
+/// \return true if every alt allele which otherwise qualifies was included based on
+///         forming an orthogonal clique with the full allele set
+///
+bool
+addAllelesAtOtherPositions(
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
     const unsigned sampleId,

@@ -26,6 +26,72 @@
 
 
 
+/// report all readIds which support at least one allele in this group
+///
+void
+getAlleleGroupUnionReadIds(
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    std::set<unsigned>& readIds,
+    const bool is_tier1_only)
+{
+    const unsigned nonrefAlleleCount(alleleGroup.size());
+    for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex < nonrefAlleleCount; nonrefAlleleIndex++)
+    {
+        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
+        for (const auto& score : isd.read_path_lnp)
+        {
+            if (is_tier1_only && (! score.second.is_tier1_read)) continue;
+
+            readIds.insert(score.first);
+        }
+    }
+}
+
+
+
+/// report all readIds which support all alleles in this group
+///
+void
+getAlleleGroupIntersectionReadIds(
+    const unsigned sampleId,
+    const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
+    std::set<unsigned>& readIds,
+    const bool isTier1Only)
+{
+    const unsigned nonrefAlleleCount(alleleGroup.size());
+    std::map<unsigned,unsigned> countReadIds;
+    for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
+    {
+        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
+        for (const auto& score : isd.read_path_lnp)
+        {
+            if (isTier1Only && (! score.second.is_tier1_read)) continue;
+
+            const auto iter(countReadIds.find(score.first));
+            if (iter==countReadIds.end())
+            {
+                countReadIds.insert(std::make_pair(score.first,1));
+            }
+            else
+            {
+                iter->second += 1;
+            }
+        }
+    }
+
+    // filter countReadIds down to only the reads found for all alleles:
+    for (const auto& value : countReadIds)
+    {
+        if (value.second >= nonrefAlleleCount)
+        {
+            readIds.insert(value.first);
+        }
+    }
+}
+
+
+
 /// find set of read ids which support the entire set of alleles in alleleGroup
 static
 void
@@ -34,69 +100,31 @@ getAlleleGroupSupportingReadIds(
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     std::set<unsigned>& readIds)
 {
-    const unsigned nonrefAlleleCount(alleleGroup.size());
-
+    static const bool isTier1Only(false);
     // compile option below to use reads which only support a subset of alleles vs all alleles, no measurable difference
     // now, but could be important with longer alleles?
 #if 0
-    // union of read ids
-    for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
-    {
-        const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
-        for (const auto& score : isd.read_path_lnp)
-        {
-            readIds.insert(score.first);
-        }
-    }
+    getAlleleGroupUnionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
 #else
-    // intersection of read ids
-    {
-        std::map<unsigned,unsigned> countReadIds;
-        for (unsigned nonrefAlleleIndex(0); nonrefAlleleIndex<nonrefAlleleCount; nonrefAlleleIndex++)
-        {
-            const IndelSampleData& isd(alleleGroup.data(nonrefAlleleIndex).getSampleData(sampleId));
-            for (const auto& score : isd.read_path_lnp)
-            {
-                const auto iter(countReadIds.find(score.first));
-                if (iter==countReadIds.end())
-                {
-                    countReadIds.insert(std::make_pair(score.first,1));
-                }
-                else
-                {
-                    iter->second += 1;
-                }
-            }
-        }
-
-        // filter countReadIds down to only the reads found for all alleles:
-        for (const auto& value : countReadIds)
-        {
-            if (value.second >= nonrefAlleleCount)
-            {
-                readIds.insert(value.first);
-            }
-        }
-    }
+    getAlleleGroupIntersectionReadIds(sampleId, alleleGroup, readIds, isTier1Only);
 #endif
-
 }
 
 
+
 /// enumerate allele support from read 'readId'
-static
 void
-accumulateAlleleSupportFromRead(
+getAlleleLikelihoodsFromRead(
     const unsigned sampleId,
     const OrthogonalVariantAlleleCandidateGroup& alleleGroup,
     const unsigned readId,
-    std::vector<double>& support)
+    std::vector<double>& lhood)
 {
     const unsigned nonrefAlleleCount(alleleGroup.size());
     const unsigned fullAlleleCount(nonrefAlleleCount+1);
     const unsigned refAlleleIndex(nonrefAlleleCount);
 
-    std::vector<double> lhood(fullAlleleCount);
+    lhood.resize(fullAlleleCount);
 
     bool isZeroAlleleCoverage(true);
     bool isPartialAlleleCoverage(false);
@@ -143,11 +171,6 @@ accumulateAlleleSupportFromRead(
 
     unsigned maxIndex(0);
     normalize_ln_distro(lhood.begin(),lhood.end(),maxIndex);
-
-    for (unsigned fullAlleleIndex(0); fullAlleleIndex<fullAlleleCount; fullAlleleIndex++)
-    {
-        support[fullAlleleIndex] += lhood[fullAlleleIndex];
-    }
 }
 
 
@@ -192,7 +215,12 @@ rankOrthogonalAllelesInSample(
     std::vector<double> support(fullAlleleCount,0.);
     for (const auto readId : readIds)
     {
-        accumulateAlleleSupportFromRead(sampleId, alleleGroup, readId, support);
+        std::vector<double> lhood(fullAlleleCount);
+        getAlleleLikelihoodsFromRead(sampleId, alleleGroup, readId, lhood);
+        for (unsigned fullAlleleIndex(0); fullAlleleIndex<fullAlleleCount; fullAlleleIndex++)
+        {
+            support[fullAlleleIndex] += lhood[fullAlleleIndex];
+        }
     }
 
     rankedAlleleGroup.clear();
@@ -237,7 +265,7 @@ selectTopOrthogonalAllelesInSample(
 
 
 
-void
+bool
 addAllelesAtOtherPositions(
     const pos_t pos,
     const pos_t largest_total_indel_ref_span_per_read,
@@ -249,8 +277,11 @@ addAllelesAtOtherPositions(
     const pos_t minIndelBufferPos(pos-largest_total_indel_ref_span_per_read);
 
     const unsigned inputAlleleCount(alleleGroup.size());
+    assert(inputAlleleCount!=0);
 
-    // first get the set of candidate alt alleles from another position
+    bool isEveryAltOrthogonal(true);
+
+    // first get the set of candidate alt alleles from positions other than 'pos'
     //
     std::vector<IndelKey> filteredAltAlleles;
     {
@@ -273,6 +304,10 @@ addAllelesAtOtherPositions(
             // no breakpoints:
             if (altAlleleKey.is_breakpoint()) continue;
 
+            // must be a candidate allele:
+            const IndelData& altAlleleData(getIndelData(altAlleleIter));
+            if (not indelBuffer.isCandidateIndel(altAlleleKey, altAlleleData)) continue;
+
             // must be orthogonal to all input alleles:
             {
                 bool isOrthogonalToAllInputAlleles(true);
@@ -283,20 +318,19 @@ addAllelesAtOtherPositions(
                     isOrthogonalToAllInputAlleles = false;
                     break;
                 }
-                if (not isOrthogonalToAllInputAlleles) continue;
+                if (not isOrthogonalToAllInputAlleles)
+                {
+                    isEveryAltOrthogonal = false;
+                    continue;
+                }
             }
-
-            const IndelData& altAlleleData(getIndelData(altAlleleIter));
-
-            // must be a candidate allele:
-            if (not indelBuffer.isCandidateIndel(altAlleleKey, altAlleleData)) continue;
 
             // made it! add allele to the set we move forward with:
             filteredAltAlleles.push_back(altAlleleKey);
         }
     }
 
-    if (filteredAltAlleles.empty()) return;
+    if (filteredAltAlleles.empty()) return isEveryAltOrthogonal;
 
     OrthogonalVariantAlleleCandidateGroup altAlleleGroup;
     for (const auto& altAlleleKey : filteredAltAlleles)
@@ -342,4 +376,6 @@ addAllelesAtOtherPositions(
     // rerank and reselect top N alleles, N=groupLocusPloidy
     //
     selectTopOrthogonalAllelesInSample(sampleId, extendedVariantAlleleGroup, groupLocusPloidy, alleleGroup);
+
+    return isEveryAltOrthogonal;
 }
