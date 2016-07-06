@@ -1,19 +1,19 @@
 {
-	"$schema": "http://json-schema.org/draft-04/hyper-schema#",
-	"title": "EmpiricalVariantScoringModel",
-	"description": "JSON schema describing empirical scoring model details for small variants in Strelka",
-	"type": "object",
+    "$schema": "http://json-schema.org/draft-04/hyper-schema#",
+    "title": "EmpiricalVariantScoringModel",
+    "description": "JSON schema describing empirical scoring model details for small variants in Strelka",
+    "type": "object",
     "properties": {
         "CalibrationModels": {
             "description": "Property is actually a key describing the application type",
             "comment": "This really should be an applicationType property in the model metadata, with these values provided as keys",
-	        "type": "object",
+            "type": "object",
             "minProperties": 1,
             "patternProperties": {
                 "^(Germline|RNAseq|Somatic)$": {
                     "description": "Property is actually a key describing the variant type",
                     "comment": "This really should be a variantType property in the model metadata, with these values provided as keys",
-	                "type": "object",
+                    "type": "object",
                     "minProperties": 1,
                     "patternProperties": {
                         "^(SNP|INDEL)$": {
@@ -39,7 +39,7 @@
                 "Calibration":
                 {
                     "description": "Transformations of the raw model error prob to improve calibration of result",
-	                "type": "object",
+                    "type": "object",
                     "properties": {
                         "Scale": {
                             "type": "number",
