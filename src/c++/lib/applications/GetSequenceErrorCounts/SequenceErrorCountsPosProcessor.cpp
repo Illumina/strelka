@@ -394,16 +394,14 @@ process_pos_error_counts(
     // which cannot exist together on the same haplotype (called orthogonal alleles below). Without phasing
     // information, we can only (accurately) genotype among sets of alleles forming a clique in the graph.
     //
-    // Given above constraint, we first identify all candidates at the current position (which form a clique by
-    // definition), and then greedily add the top-ranking overlapping alleles at other positions if they
-    // preserve the orthogonal clique relationship of the set.
+    // Given above constraint, we first identify all candidates alleles with a start position at the current
+    // allele genotyper position (these form a clique by definition), and then greedily add the top-ranking
+    // overlapping alleles with different start positions if they preserve the orthogonal clique relationship
+    // of the set.
     //
-    // Once we have the largest possible allele set, the reference is implicitly added and all alleles are
-    // ranked. The top N are kept. The reference is restored for the genotyping process if it is not
-    // in the top N.
-    //
-    // for conventional calling we set N = ploidy. For the error analysis case, we set N = some reasonably
-    // large number
+    // Once we have the largest possible allele set, we skip this locus if the total number of alleles is too
+    // large. Otherwise, read support for each allele in the overlapping set is enumberated. For all alleles that
+    // start at this position, we record the supporing counts in the indel error analysis counting structure.
     //
 
     auto it(getIndelBuffer().positionIterator(pos));
@@ -459,14 +457,14 @@ process_pos_error_counts(
     {
         {
             const bool isEveryAltIncluded = \
-                addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
-                                           (maxOverlap + 1), getIndelBuffer(), orthogonalVariantAlleles);
+                                            addAllelesAtOtherPositions(pos, get_largest_total_indel_ref_span_per_read(), sampleId,
+                                                                       (maxOverlap + 1), getIndelBuffer(), orthogonalVariantAlleles);
 
             if (not isEveryAltIncluded) return;
 
             if (orthogonalVariantAlleles.size() > maxOverlap) return;
         }
-        
+
         const unsigned nonrefAlleleCount(orthogonalVariantAlleles.size());
         std::vector<unsigned> support;
         getOrthogonalHaplotypeSupportCounts(orthogonalVariantAlleles, sampleId, support);

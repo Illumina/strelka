@@ -22,7 +22,7 @@
 
 #include "OrthogonalVariantAlleleCandidateGroup.hh"
 
-/// find all readIds which support at least one allele in this group
+/// find all readIds for which a likelihood has been computed for at least one allele in this group
 ///
 void
 getAlleleGroupUnionReadIds(
@@ -32,7 +32,7 @@ getAlleleGroupUnionReadIds(
     const bool isTier1Only);
 
 
-/// find all readIds which support all alleles in this group
+/// find all readIds for which a likelihood has been computed for all alleles in this group
 ///
 void
 getAlleleGroupIntersectionReadIds(

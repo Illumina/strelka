@@ -704,9 +704,10 @@ process_pos_indel_single_sample_digt(
     // which cannot exist together on the same haplotype (called orthogonal alleles below). Without phasing
     // information, we can only (accurately) genotype among sets of alleles forming a clique in the graph.
     //
-    // Given above constraint, we first identify all candidates at the current position (which form a clique by
-    // definition), and then greedily add the top-ranking overlapping alleles at other positions if they
-    // preserve the orthogonal clique relationship of the set.
+    // Given above constraint, we first identify all candidates alleles with a start position at the current
+    // allele genotyper position (these form a clique by definition), and then greedily add the top-ranking
+    // overlapping alleles with different start positions if they preserve the orthogonal clique relationship
+    // of the set.
     //
     // Once we have the largest possible allele set, the reference is implicitey added and all alleles are
     // ranked. The top N are kept, N= ploidy. The reference is restored for the genotyping process if it is not
