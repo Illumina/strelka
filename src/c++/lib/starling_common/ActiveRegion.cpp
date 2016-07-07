@@ -83,7 +83,7 @@ void ActiveRegion::addComplexAllelesToIndelBuffer(IndelBuffer& indelBuffer, std:
         if (haplotype.length() == 0 || haplotype[0] == '.' || haplotype[haplotype.length()-1] == '*') continue;
 
         std::vector<align_id_t> alignIdList = entry.second;
-        if (alignIdList.size() >= secondLargestCount && alignIdList.size() >= totalCount*0.45)
+        if (alignIdList.size() >= secondLargestCount && alignIdList.size() >= totalCount*0.4)
         {
             addPrimitiveAllelesToIndelBuffer(haplotype, alignIdList, indelBuffer, polySites);
         }

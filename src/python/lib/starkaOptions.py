@@ -86,7 +86,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
                               "for a sample of unusual depth.")
         group.add_option("--retainTempFiles", dest="isRetainTempFiles", action="store_true",
                          help="Keep all temporary files (for workflow debugging)")
-        group.add_option("--disableEVS", dest="isEVS", action="store_true",
+        group.add_option("--disableEVS", dest="isEVS", action="store_false",
                          help="Disable empirical variant scoring.")
         group.add_option("--reportEVSFeatures", dest="isReportEVSFeatures", action="store_true",
                          help="Report all Empirical Variant Scoring (EVS) features in VCF output.")
@@ -154,7 +154,7 @@ class StarkaWorkflowOptionsBase(ConfigureWorkflowOptions) :
         isRetainTempFiles = False
 
         # Empirical Variant Scoring:
-        isEVS = False
+        isEVS = True
         isReportEVSFeatures = False
 
         indelErrorModelName = None
