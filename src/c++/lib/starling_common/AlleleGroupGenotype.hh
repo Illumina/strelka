@@ -351,15 +351,11 @@ struct GenotypePriorSet
     {
         assert(highRepeatCount>0);
 
-        // this is the zero-indexed endpoint of the ramp, so we hit the
-        // constant high error rate at an hpol length of repeatCountSwitchPoint+1
-        static const unsigned repeatCountSwitchPoint(15);
-
-
+        const unsigned highRepeatCountIndex(highRepeatCount-1);
         for (unsigned patternRepeatCount=1; patternRepeatCount <= highRepeatCount; ++patternRepeatCount)
         {
             const unsigned patternRepeatCountIndex(patternRepeatCount-1);
-            const double highValueFraction(std::min((patternRepeatCountIndex),repeatCountSwitchPoint)/static_cast<double>(repeatCountSwitchPoint));
+            const double highValueFraction(std::min(patternRepeatCountIndex,highRepeatCountIndex)/static_cast<double>(highRepeatCountIndex));
             const double theta((1.-highValueFraction)*lowRepeatTheta + highValueFraction*highRepeatTheta);
             _priors[patternRepeatCountIndex].initialize(theta);
         }

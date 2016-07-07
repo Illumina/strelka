@@ -1,3 +1,4 @@
+- STREL-138 adjust indel theta based on hpol context in germline model
 - STREL-124 integrate new RF scoring model for germline variants
 - STREL-128 correctly call overlapping same pos/same length insertions
 - STARKA-372 prototype RNA-Seq support

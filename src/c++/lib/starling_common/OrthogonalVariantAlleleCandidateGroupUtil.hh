@@ -22,6 +22,7 @@
 
 #include "OrthogonalVariantAlleleCandidateGroup.hh"
 
+
 /// find all readIds for which a likelihood has been computed for at least one allele in this group
 ///
 void

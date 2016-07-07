@@ -20,10 +20,10 @@
 
 #include "AlleleGroupGenotype.hh"
 
+#include "starling_indel_call_pprob_digt.hh"
 #include "blt_util/math_util.hh"
 #include "blt_util/prob_util.hh"
 #include "blt_util/qscore.hh"
-#include "starling_indel_call_pprob_digt.hh"
 
 
 
@@ -91,8 +91,8 @@ accumulateLogLhoodFromReadObservation(
         const double het01_lnp(log_sum(variantAllele0_lnp+(logHet0Allele0Prior-normalizeHetRatio),variantAllele1_lnp+(logHet1Allele1Prior-normalizeHetRatio)));
         logLhood[AG_GENOTYPE::HET01] += integrate_out_sites(dopt,nsite,het01_lnp,false);
     }
-
 }
+
 
 
 static
@@ -136,7 +136,6 @@ logLhoodToLocusGenotype(
             locusGenotype.phredLoghood[gt] = ln_error_prob_to_qphred(logLhood[gt]-logLhood[maxIndex]);
         }
     }
-
 
     // add new poly calls (this trashes lhood):
     {

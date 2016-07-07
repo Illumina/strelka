@@ -77,7 +77,7 @@ The counting process itself uses the same mapped read scanning and realignment s
  \item no indel errors are allowed when read likelihood for each indel allele is computed
  \item there is no restriction on the number of overlapping allele candidates based on ploidy
  \item there is an arbitrary restriction of no more than 4 overlapping allele candidates for practical complexity management, if more than this are found the whole locus is skipped
- \item if the set of overlapping alleles at a locus are not all mutually incompable with the same haplotype the locus is skipped
+ \item if the set of overlapping alleles at a locus are not all mutually incompatible with the same haplotype the locus is skipped
  \end{enumerate}
 Note that item (2) above means that an alignment gap observed once in an input read is treated as a "candidate" for the purpose of error evaluation, thus an attempt is made to realign all other reads to that indel, and in the process the likelihood of each read supporting the given indel is found. Item (3) above means that all read likelihoods for each indel allele have to be explained by basecalling errors only.
 
