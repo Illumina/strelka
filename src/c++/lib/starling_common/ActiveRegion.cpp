@@ -56,12 +56,14 @@ void ActiveRegion::addComplexAllelesToIndelBuffer(IndelBuffer& indelBuffer, std:
     // determine count threshold to select 2 haplotypes with the largest counts
     unsigned largestCount = 0;
     unsigned secondLargestCount = 0;
+    unsigned totalCount = 0;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         std::string haplotype = entry.first;
         if (haplotype.length() == 0 || haplotype[0] == '.' || haplotype[haplotype.length()-1] == '*') continue;
 
         auto count = entry.second.size();
+        totalCount += count;
         if (count > secondLargestCount)
         {
             if (count > largestCount)
@@ -81,7 +83,7 @@ void ActiveRegion::addComplexAllelesToIndelBuffer(IndelBuffer& indelBuffer, std:
         if (haplotype.length() == 0 || haplotype[0] == '.' || haplotype[haplotype.length()-1] == '*') continue;
 
         std::vector<align_id_t> alignIdList = entry.second;
-        if (alignIdList.size() >= secondLargestCount)
+        if (alignIdList.size() >= secondLargestCount && alignIdList.size() >= totalCount*0.45)
         {
             addPrimitiveAllelesToIndelBuffer(haplotype, alignIdList, indelBuffer, polySites);
         }
@@ -131,6 +133,7 @@ void ActiveRegion::addPrimitiveAllelesToIndelBuffer(
             case ALIGNPATH::SEQ_MISMATCH:
                 for (unsigned i(0); i<segmentLength; ++i)
                 {
+//                    std::cout << "Poly\t" << (pos+1) << std::endl;
                     polySites.insert(pos);
                     ++pos;
                     ++referenceIndex;
