@@ -33,7 +33,6 @@
 #include <sstream>
 
 
-const double MAX_MONOPLOID_THETA(1.);
 const double MAX_DIPLOID_THETA(0.38068); // solution of: 0 = 1/3*(theta**2) + (5/2)*theta - 1
 
 
@@ -77,31 +76,10 @@ validate_blt_opt(
     const prog_info& pinfo,
     const blt_options& opt)
 {
-    if (opt.is_min_win_qscore && opt.min_win_qscore_flank_size > MAX_FLANK_SIZE)
-    {
-        std::ostringstream oss;
-        oss << "min-window-qscore flank size exceeds max value of: " << MAX_FLANK_SIZE;
-        pinfo.usage(oss.str().c_str());
-    }
-
     if (opt.is_max_win_mismatch && opt.max_win_mismatch_flank_size > MAX_FLANK_SIZE)
     {
         std::ostringstream oss;
         oss << "max-window-mismatch flank size exceeds max value of: " << MAX_FLANK_SIZE;
-        pinfo.usage(oss.str().c_str());
-    }
-
-    if (opt.is_adis_win_lrt && opt.adis_win_lrt_flank_size > MAX_FLANK_SIZE)
-    {
-        std::ostringstream oss;
-        oss << "anom-distro-window-lrt flank size exceeds max value of: " << MAX_FLANK_SIZE;
-        pinfo.usage(oss.str().c_str());
-    }
-
-    if (opt.bsnp_monoploid_theta>MAX_MONOPLOID_THETA)
-    {
-        std::ostringstream oss;
-        oss << "monoploid heterozygosity exceeds maximum value of: " << MAX_MONOPLOID_THETA;
         pinfo.usage(oss.str().c_str());
     }
 

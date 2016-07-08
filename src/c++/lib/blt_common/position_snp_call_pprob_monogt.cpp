@@ -18,8 +18,7 @@
 //
 //
 
-/// \file
-
+///
 /// \author Chris Saunders
 ///
 #include "blt_common/position_snp_call_pprob_monogt.hh"
@@ -36,14 +35,11 @@
 
 
 
-///
-///
 void
 position_snp_call_pprob_monogt(const double theta,
                                const snp_pos_info& pi,
                                monoploid_genotype& mgt)
 {
-
     if (pi.get_ref_base()=='N') return;
 
     const unsigned n_calls(pi.calls.size());

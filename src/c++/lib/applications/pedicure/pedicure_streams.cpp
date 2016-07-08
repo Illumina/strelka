@@ -86,8 +86,7 @@ pedicure_streams(
     const PedicureSampleSetSummary& ssi)
     : base_t(opt,pinfo,ssi)
 {
-    assert(! opt.is_realigned_read_file);
-
+    assert(! opt.is_realigned_read_file());
 
     const char* const cmdline(opt.cmdline.c_str());
 

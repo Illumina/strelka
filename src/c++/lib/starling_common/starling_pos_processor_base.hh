@@ -583,7 +583,6 @@ protected:
 
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
     std::unique_ptr<nploid_info> _ninfo;
-    std::unique_ptr<double> _ws;
 
     std::set<pos_t> _forced_output_pos;
 

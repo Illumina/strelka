@@ -95,7 +95,7 @@ strelka_streams(
 {
     {
         using namespace STRELKA_SAMPLE_TYPE;
-        if (opt.is_realigned_read_file)
+        if (opt.is_realigned_read_file())
         {
             _realign_bam_ptr[NORMAL].reset(initialize_realign_bam(opt.realigned_read_filename,header));
         }

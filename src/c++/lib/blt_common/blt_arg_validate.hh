@@ -29,7 +29,6 @@
 #include "blt_util/prog_info.hh"
 
 
-extern const double MAX_MONOPLOID_THETA;
 extern const double MAX_DIPLOID_THETA;
 
 

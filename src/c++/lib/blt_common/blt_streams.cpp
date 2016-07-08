@@ -144,7 +144,6 @@ setup_nonref_output(const blt_options& opt,
     write_file_audit(opt,pinfo,cmdline,fos);
     fos << "#$ COLUMNS seq_name pos bcalls_used bcalls_filt ref Q(snv) max_gt Q(max_gt)";
 
-    //        if(opt.is_print_used_allele_counts) {
     for (unsigned b(0); b<N_BASE; ++b)
     {
         fos << " " << id_to_base(b) << "_used";
@@ -154,7 +153,6 @@ setup_nonref_output(const blt_options& opt,
     {
         fos << " " << id_to_base(b) << "_meanQ";
     }
-    //}
 
     fos << "\n";
 }
@@ -249,7 +247,6 @@ blt_streams(
         write_file_audit(opt,pinfo,cmdline,fos);
         fos << "#$ COLUMNS seq_name pos bcalls_used bcalls_filt ref Q(snv) max_gt Q(max_gt)";
 
-        //        if(opt.is_print_used_allele_counts) {
         for (unsigned b(0); b<N_BASE; ++b)
         {
             fos << " " << id_to_base(b) << "_used";
@@ -259,7 +256,6 @@ blt_streams(
         {
             fos << " " << id_to_base(b) << "_meanQ";
         }
-        //}
 
         fos << "\n";
     }

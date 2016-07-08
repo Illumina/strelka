@@ -291,13 +291,6 @@ starling_pos_processor_base(const starling_base_options& opt,
         _sample[i].reset(new sample_info(_opt, ref, report_size,knownref_report_size,&_ric));
     }
 
-#ifdef HAVE_FISHER_EXACT_TEST
-    if (_opt.is_adis_table)
-    {
-        _ws.reset(get_exact_test_ws());
-    }
-#endif
-
     if (_opt.is_bsnp_nploid)
     {
         _ninfo.reset(new nploid_info(_opt.bsnp_nploid_ploidy));
@@ -1422,8 +1415,6 @@ pileup_read_segment(const read_segment& rseg,
                 {
                     bool is_call_filter((call_code == BAM_BASE::ANY) ||
                                         (qscore < _opt.min_qscore));
-
-                    assert(! _opt.is_min_win_qscore);
 
                     bool is_tier2_call_filter(is_call_filter);
                     if (! is_call_filter && _opt.is_max_win_mismatch)

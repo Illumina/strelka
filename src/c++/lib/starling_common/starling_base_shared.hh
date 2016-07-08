@@ -64,6 +64,12 @@ struct starling_base_options : public blt_options
         return (! candidate_indel_filename.empty());
     }
 
+    bool
+    is_realigned_read_file() const
+    {
+        return (not realigned_read_filename.empty());
+    }
+
     // parameters inherited from varling caller:
     //
     double bindel_diploid_theta = 0.0001;
@@ -130,8 +136,6 @@ struct starling_base_options : public blt_options
     // clip the section of a read which aligns equally well to two or
     // more paths before pileup or realigned read output
     bool is_clip_ambiguous_path = true;
-
-    bool is_realigned_read_file = false;
 
     // this option imposes a consistency criteria on alignments with
     // nearly equal score to favor certain alignments even if they do

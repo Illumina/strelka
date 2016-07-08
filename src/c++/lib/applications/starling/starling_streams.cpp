@@ -79,7 +79,7 @@ starling_streams(
         _gvcf_osptr = initialize_gvcf_file(opt,pinfo,opt.gvcf.out_file,header,_gvcf_osptr_auto);
     }
 
-    if (opt.is_realigned_read_file)
+    if (opt.is_realigned_read_file())
     {
         _realign_bam_ptr[0].reset(initialize_realign_bam(opt.realigned_read_filename, header));
     }
