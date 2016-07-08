@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Manta - Structural Variant and Indel Caller
-// Copyright (c) 2013-2016 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 //
 //
 
-/// derived from ELAND implementation by Tony Cox
+/// derived from Manta
 
 #pragma once
 
@@ -29,16 +29,14 @@
 ///
 /// alignment outputs start positions and CIGAR-style alignment
 /// expression of query to reference. Alignment of
-/// query is global -- query can "fall-off" either end of the reference,
-/// in this case, each unaligned position is given an "off-edge" score and
-/// the base is soft-clipped in the alignment
+/// query is global -- query cannot "fall-off" either end of the reference
 ///
 /// transition from insert to delete is free and allowed, but not reverse
 ///
 template <typename ScoreType>
-struct GlobalAligner : public SingleRefAlignerBase<ScoreType>
+struct GlobalNoClippingAligner : public SingleRefAlignerBase<ScoreType>
 {
-    GlobalAligner(
+    GlobalNoClippingAligner(
         const AlignmentScores<ScoreType>& scores) :
         SingleRefAlignerBase<ScoreType>(scores)
     {}
@@ -104,4 +102,4 @@ private:
 };
 
 
-#include "alignment/GlobalAlignerImpl.hh"
+#include "alignment/GlobalNoClippingAlignerImpl.hh"

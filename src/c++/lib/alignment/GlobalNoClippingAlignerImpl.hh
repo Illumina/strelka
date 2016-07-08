@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Manta - Structural Variant and Indel Caller
-// Copyright (c) 2013-2016 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 //
 //
 
-/// derived from ELAND implementation by Tony Cox
+/// derived from Manta
 
 //#define DEBUG_ALN
 
@@ -34,7 +34,7 @@
 template <typename ScoreType>
 template <typename SymIter>
 void
-GlobalAligner<ScoreType>::
+GlobalNoClippingAligner<ScoreType>::
 align(
     const SymIter queryBegin, const SymIter queryEnd,
     const SymIter refBegin, const SymIter refEnd,
@@ -67,7 +67,7 @@ align(
         ScoreVal& val((*thisSV)[queryIndex]);
         val.match = queryIndex == 0 ? 0 : badVal;
         val.del = badVal;
-        val.ins = queryIndex == 0 ? badVal : scores.open + queryIndex*scores.extend;
+        val.ins = queryIndex == 0 ? badVal : scores.open + (ScoreType)(queryIndex*scores.extend);
     }
 
     BackTrace<ScoreType> btrace;
@@ -81,11 +81,12 @@ align(
             {
                 ScoreVal& val((*thisSV)[0]);
                 val.match = badVal;
-                val.del = scores.open + refIndex*scores.extend;
+                val.del = scores.open + (ScoreType)((refIndex+1)*scores.extend);
                 val.ins = badVal;
             }
 
             unsigned queryIndex(0);
+
             for (SymIter queryIter(queryBegin); queryIter != queryEnd; ++queryIter, ++queryIndex)
             {
                 // update match
@@ -112,7 +113,6 @@ align(
                                       badVal);
 
                     headScore.del += scores.extend;
-//                    if (0==queryIndex) headScore.del = badVal;
                 }
 
                 // update insert
@@ -125,9 +125,7 @@ align(
                                       sval.ins);
 
                     headScore.ins += scores.extend;
-//                    if (0==queryIndex) headScore.ins = badVal;
                 }
-
 #ifdef DEBUG_ALN
                 log_os << "i1i2: " << queryIndex+1 << " " << refIndex+1 << "\n";
                 log_os << headScore.match << ":" << headScore.del << ":" << headScore.ins << "/"

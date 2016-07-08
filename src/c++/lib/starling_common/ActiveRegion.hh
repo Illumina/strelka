@@ -26,7 +26,7 @@
 
 #include "blt_util/blt_types.hh"
 #include "starling_common/starling_types.hh"
-#include "alignment/GlobalAligner.hh"
+#include "alignment/GlobalNoClippingAligner.hh"
 #include "blt_util/align_path.hh"
 #include "IndelBuffer.hh"
 
@@ -79,7 +79,7 @@ private:
     std::map<align_id_t, std::string> _alignIdToHaplotype;
     std::set<align_id_t> _alignIdReachingEnd;
     AlignmentScores<int> _scores;
-    GlobalAligner<int> _aligner;
+    GlobalNoClippingAligner<int> _aligner;
 
     void addPrimitiveAllelesToIndelBuffer(
             const std::string &haploptypeSeq,

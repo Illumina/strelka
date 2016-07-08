@@ -53,7 +53,7 @@ void ActiveRegion::addComplexAllelesToIndelBuffer(IndelBuffer& indelBuffer, std:
         haplotypeToAlignIdSet[haplotype].push_back(alignId);
     }
 
-    // determine count threshold to select 2 haplotypes with the largest counts
+    // determine threshold to select 2 haplotypes with the largest counts
     unsigned largestCount = 0;
     unsigned secondLargestCount = 0;
     unsigned totalCount = 0;
@@ -75,7 +75,6 @@ void ActiveRegion::addComplexAllelesToIndelBuffer(IndelBuffer& indelBuffer, std:
                 secondLargestCount = count;
         }
     }
-
 
     for (const auto& entry : haplotypeToAlignIdSet)
     {
@@ -99,8 +98,6 @@ void ActiveRegion::addPrimitiveAllelesToIndelBuffer(
     AlignmentResult<int> result;
     _aligner.align(haploptypeSeq.begin(),haploptypeSeq.end(),_refSeq.begin(),_refSeq.end(),result);
     ALIGNPATH::path_t alignPath = result.align.apath;
-
-//    unsigned sampleId = 0;  // TODO: this is a temporary solution
 
     pos_t pos = _start;
     pos_t referenceIndex = 0;
