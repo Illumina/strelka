@@ -1363,8 +1363,6 @@ pileup_read_segment(const read_segment& rseg,
                 // skip position outside of report range:
                 if (! is_pos_reportable(ref_pos)) continue;
 
-//                bool isPolySite = _active_region_detector.isPolymorphicSite(ref_pos);
-
                 bool isFirstBaseCallFromMatchSeg(false);
                 const bool isFirstFromMatchSeg((j==0) || (read_pos==read_begin) || (! is_pos_reportable(ref_pos-1)));
                 if (isFirstFromMatchSeg)
@@ -1431,12 +1429,12 @@ pileup_read_segment(const read_segment& rseg,
                     bool is_tier2_call_filter(is_call_filter);
                     if (! is_call_filter && _opt.is_max_win_mismatch)
                     {
-                        is_call_filter = _rmi[read_pos].mismatch_filter_map; // && !isPolySite;
+                        is_call_filter = _rmi[read_pos].mismatch_filter_map;
                         if (! _opt.tier2.is_tier2_no_mismatch_density_filter)
                         {
                             if (_opt.tier2.is_tier2_mismatch_density_filter_count)
                             {
-                                is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map; // && !isPolySite;
+                                is_tier2_call_filter = _rmi[read_pos].tier2_mismatch_filter_map;
                             }
                             else
                             {

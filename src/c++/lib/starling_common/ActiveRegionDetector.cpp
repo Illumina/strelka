@@ -71,8 +71,6 @@ ActiveRegionDetector::insertIndel(const IndelObservation& indelObservation)
     }
 }
 
-//static int activeRegionIndex = 0;
-
 void
 ActiveRegionDetector::updateStartPosition(const pos_t pos)
 {
@@ -100,7 +98,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             // close existing active region
             std::string refStr = "";
             _ref.get_substring(_activeRegionStartPos, _prevVariantPos - _activeRegionStartPos + 1, refStr);
-            ActiveRegion activeRegion = ActiveRegion(_activeRegionStartPos, _prevVariantPos, _numVariants, refStr);
+            ActiveRegion activeRegion = ActiveRegion(_activeRegionStartPos, _prevVariantPos, refStr, _aligner);
             _activeRegions.push_back(activeRegion);
             // add haplotype bases
             for (pos_t activeRegionPos(_activeRegionStartPos); activeRegionPos<=_prevVariantPos; ++activeRegionPos)
@@ -111,7 +109,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
                                                      getHaplotypeBase(alignId, activeRegionPos));
                 }
             }
-            activeRegion.addComplexAllelesToIndelBuffer(_indelBuffer, _polySites);
+            activeRegion.processHaplotypes(_indelBuffer, _polySites);
         }
         if (!isCurrentPosCandidateVariant)
         {

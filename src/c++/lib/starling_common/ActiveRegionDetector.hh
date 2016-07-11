@@ -39,6 +39,13 @@ public:
     static const unsigned MaxBufferSize = 1000;
     static const unsigned MaxDepth = 1000;
 
+    // alignment scores, same as bwa default values
+    static const int ScoreMatch = 1;
+    static const int ScoreMismatch = -4;
+    static const int ScoreOpen = -5;
+    static const int ScoreExtend = -1;
+    static const int ScoreOffEdge = -10000;
+
     ActiveRegionDetector(
             const reference_contig_segment& ref,
             IndelBuffer& indelBuffer,
@@ -53,7 +60,8 @@ public:
             _variantCounter(MaxBufferSize),
             _alignIdsCurrentActiveRegion(),
             _positionToAlignIds(MaxBufferSize, std::list<align_id_t>()),
-            _haplotypeBase(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string()))
+            _haplotypeBase(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
+            _aligner(AlignmentScores<int>(ScoreMatch,ScoreMismatch,ScoreOpen,ScoreExtend,ScoreOffEdge))
     {
         _bufferStartPos = 0;
 
@@ -102,6 +110,10 @@ private:
 
     // record polymorphic sites
     std::set<pos_t> _polySites;
+
+    // aligner to be used in active regions
+//    AlignmentScores<int> _scores;
+    GlobalNoClippingAligner<int> _aligner;
 
     bool isCandidateVariant(const pos_t pos) const;
 

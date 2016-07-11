@@ -144,10 +144,6 @@ struct IndelBuffer
         const IndelKey& indelKey,
         const IndelData& indelData) const
     {
-//        if (!indelData.isDiscoveredInActiveRegion)
-//        {
-//            return false;
-//        }
         if (! indelData.status.is_candidate_indel_cached)
         {
             isCandidateIndelImpl(indelKey, indelData);

@@ -38,12 +38,13 @@
 class ActiveRegion
 {
 public:
-    ActiveRegion(pos_t start, pos_t end, unsigned numVariants, const std::string& refSeq):
-        _start(start), _end(end), _numVariants(numVariants), _refSeq(refSeq),
+    const float HaplotypeFrequencyThreshold = 0.4; // minimum haplotype frequency to be considered in MMDF relaxation
+
+    ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalNoClippingAligner<int>& aligner):
+        _start(start), _end(end), _refSeq(refSeq),
+        _aligner(aligner),
         _alignIdToHaplotype(),
-        _alignIdReachingEnd(),
-        _scores(1,-4,-5,-1,-1000),
-        _aligner(_scores)
+        _alignIdReachingEnd()
     {}
 
     pos_t getStart() const
@@ -58,32 +59,26 @@ public:
     {
         return _end - _start + 1;
     }
-    unsigned getNumVariants() const
-    {
-        return _numVariants;
-    }
     bool contains(pos_t pos) const
     {
         return pos >= _start && pos <= _end;
     }
     void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
-    void addComplexAllelesToIndelBuffer(IndelBuffer& indelBuffer, std::set<pos_t>& polySites) const;
+    void processHaplotypes(IndelBuffer &indelBuffer, std::set<pos_t> &polySites) const;
     const std::string& getReferenceSeq() const { return _refSeq; }
 
 private:
     pos_t _start;
     pos_t _end;
-    unsigned _numVariants;
     const std::string& _refSeq;
+    const GlobalNoClippingAligner<int> _aligner;
 
     std::map<align_id_t, std::string> _alignIdToHaplotype;
     std::set<align_id_t> _alignIdReachingEnd;
-    AlignmentScores<int> _scores;
-    GlobalNoClippingAligner<int> _aligner;
 
-    void addPrimitiveAllelesToIndelBuffer(
+    void convertToPrimitiveAlleles(
             const std::string &haploptypeSeq,
-            std::vector<align_id_t>& alignIdList,
-            IndelBuffer& indelBuffer,
-            std::set<pos_t>& polySites) const;
+            std::vector<align_id_t> &alignIdList,
+            IndelBuffer &indelBuffer,
+            std::set<pos_t> &polySites) const;
 };

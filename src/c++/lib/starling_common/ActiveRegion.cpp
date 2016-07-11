@@ -28,6 +28,7 @@ void ActiveRegion::insertHaplotypeBase(align_id_t align_id, pos_t pos, const std
 {
     if (!_alignIdToHaplotype.count(align_id))
     {
+        // first occurrence of this alignment
         _alignIdToHaplotype[align_id] = std::string();
         for (int i=_start; i<pos; ++i)
             _alignIdToHaplotype[align_id] += '.';
@@ -37,18 +38,19 @@ void ActiveRegion::insertHaplotypeBase(align_id_t align_id, pos_t pos, const std
         _alignIdReachingEnd.insert(align_id);
 }
 
-void ActiveRegion::addComplexAllelesToIndelBuffer(IndelBuffer& indelBuffer, std::set<pos_t>& polySites) const
+// decompose haplotypes into primitive alleles
+void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, std::set<pos_t> &polySites) const
 {
     std::map<std::string, std::vector<align_id_t>> haplotypeToAlignIdSet;
     for (const auto& entry : _alignIdToHaplotype)
     {
         align_id_t alignId = entry.first;
         std::string haplotype = entry.second;
+        // append '*' if the read doesn't reach the end of the active region
         if (_alignIdReachingEnd.find(alignId) == _alignIdReachingEnd.end())
             haplotype += "*";
 
-        auto count = haplotypeToAlignIdSet.count(haplotype);
-        if (!count)
+        if (!haplotypeToAlignIdSet.count(haplotype))
             haplotypeToAlignIdSet[haplotype] = std::vector<align_id_t>();
         haplotypeToAlignIdSet[haplotype].push_back(alignId);
     }
@@ -82,18 +84,19 @@ void ActiveRegion::addComplexAllelesToIndelBuffer(IndelBuffer& indelBuffer, std:
         if (haplotype.length() == 0 || haplotype[0] == '.' || haplotype[haplotype.length()-1] == '*') continue;
 
         std::vector<align_id_t> alignIdList = entry.second;
-        if (alignIdList.size() >= secondLargestCount && alignIdList.size() >= totalCount*0.4)
+        auto numReads = alignIdList.size();
+        if (numReads >= secondLargestCount && numReads >= totalCount*HaplotypeFrequencyThreshold)
         {
-            addPrimitiveAllelesToIndelBuffer(haplotype, alignIdList, indelBuffer, polySites);
+            convertToPrimitiveAlleles(haplotype, alignIdList, indelBuffer, polySites);
         }
     }
 }
 
-void ActiveRegion::addPrimitiveAllelesToIndelBuffer(
-        const std::string& haploptypeSeq,
-        std::vector<align_id_t>& /*alignIdList*/,
-        IndelBuffer& /*indelBuffer*/,
-        std::set<pos_t>& polySites) const
+void ActiveRegion::convertToPrimitiveAlleles(
+        const std::string &haploptypeSeq,
+        std::vector<align_id_t> & /*alignIdList*/,
+        IndelBuffer & /*indelBuffer*/,
+        std::set<pos_t> &polySites) const
 {
     AlignmentResult<int> result;
     _aligner.align(haploptypeSeq.begin(),haploptypeSeq.end(),_refSeq.begin(),_refSeq.end(),result);
@@ -147,7 +150,6 @@ void ActiveRegion::addPrimitiveAllelesToIndelBuffer(
 //                indelObservation.data.insert_seq = haploptypeSeq.substr(haplotypeIndex, segmentLength);
 //                indelObservation.data.is_discovered_in_active_region = true;
 //                indelBuffer.addIndelObservation(sampleId, indelObservation);
-
                 haplotypeIndex += segmentLength;
                 break;
             }

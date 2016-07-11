@@ -70,7 +70,7 @@ IndelSampleData::
 addIndelObservation(
     const IndelObservationData& obs_data)
 {
-    const bool isAbstractObservation(obs_data.is_external_candidate || obs_data.is_forced_output || obs_data.is_discovered_in_active_region);
+    const bool isAbstractObservation(obs_data.is_external_candidate || obs_data.is_forced_output);
 
     if (! isAbstractObservation)
     {
@@ -140,7 +140,6 @@ addIndelObservation(
 
     }
 
-    isDiscoveredInActiveRegion = obs_data.is_discovered_in_active_region;
     getSampleData(sampleId).addIndelObservation(obs_data);
 }
 
