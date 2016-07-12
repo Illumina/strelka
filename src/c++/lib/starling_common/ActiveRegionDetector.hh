@@ -109,7 +109,7 @@ private:
     std::vector<std::vector<std::string>> _haplotypeBase;
 
     // record polymorphic sites
-    std::set<pos_t> _polySites;
+    RangeSet _polySites;
 
     // aligner to be used in active regions
 //    AlignmentScores<int> _scores;

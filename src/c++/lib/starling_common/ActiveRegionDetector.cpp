@@ -84,6 +84,8 @@ ActiveRegionDetector::updateStartPosition(const pos_t pos)
     {
         _activeRegions.pop_front();
     }
+
+    _polySites.eraseTo(pos);
 }
 
 void
@@ -169,5 +171,5 @@ ActiveRegionDetector::isCandidateVariant(const pos_t pos) const
 
 bool ActiveRegionDetector::isPolymorphicSite(const pos_t pos) const
 {
-    return _polySites.find(pos) != _polySites.end();
+    return _polySites.isKeyPresent(pos);
 }

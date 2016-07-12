@@ -34,11 +34,14 @@
 #include <map>
 #include <set>
 
+typedef RangeMap<pos_t,unsigned char> RangeSet;
+
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
 {
 public:
     const float HaplotypeFrequencyThreshold = 0.4; // minimum haplotype frequency to be considered in MMDF relaxation
+    const char missingPrefix = '.';
 
     ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalNoClippingAligner<int>& aligner):
         _start(start), _end(end), _refSeq(refSeq),
@@ -64,7 +67,7 @@ public:
         return pos >= _start && pos <= _end;
     }
     void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
-    void processHaplotypes(IndelBuffer &indelBuffer, std::set<pos_t> &polySites) const;
+    void processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites) const;
     const std::string& getReferenceSeq() const { return _refSeq; }
 
 private:
@@ -80,5 +83,5 @@ private:
             const std::string &haploptypeSeq,
             const std::vector<align_id_t> &alignIdList,
             IndelBuffer &indelBuffer,
-            std::set<pos_t> &polySites) const;
+            RangeSet &polySites) const;
 };

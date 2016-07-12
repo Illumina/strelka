@@ -901,9 +901,6 @@ process_pos(const int stage_no,
         }
 #endif
         //        consolidate_candidate_indel_pos(pos);
-        if (_opt.is_short_haplotype_calling_enabled)
-            _active_region_detector.updateStartPosition(pos);
-
         if (! _opt.is_write_candidate_indels_only)
         {
             //        clean_pos(pos);
@@ -916,6 +913,8 @@ process_pos(const int stage_no,
             write_reads(pos);
         }
 
+        if (_opt.is_short_haplotype_calling_enabled)
+            _active_region_detector.updateStartPosition(pos);
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
