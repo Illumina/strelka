@@ -78,7 +78,7 @@ private:
 
     void convertToPrimitiveAlleles(
             const std::string &haploptypeSeq,
-            std::vector<align_id_t> &alignIdList,
+            const std::vector<align_id_t> &alignIdList,
             IndelBuffer &indelBuffer,
             std::set<pos_t> &polySites) const;
 };

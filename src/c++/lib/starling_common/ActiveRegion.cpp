@@ -62,7 +62,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, std::set<pos_t> &
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         std::string haplotype = entry.first;
-        if (haplotype.length() == 0 || haplotype[0] == '.' || haplotype[haplotype.length()-1] == '*') continue;
+        if (haplotype.empty() || haplotype[0] == '.' || haplotype.back() == '*') continue;
 
         auto count = entry.second.size();
         totalCount += count;
@@ -80,10 +80,10 @@ void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, std::set<pos_t> &
 
     for (const auto& entry : haplotypeToAlignIdSet)
     {
-        std::string haplotype = entry.first;
-        if (haplotype.length() == 0 || haplotype[0] == '.' || haplotype[haplotype.length()-1] == '*') continue;
+        const std::string& haplotype(entry.first);
+        if (haplotype.empty() || haplotype[0] == '.' || haplotype.back() == '*') continue;
 
-        std::vector<align_id_t> alignIdList = entry.second;
+        const auto& alignIdList(entry.second);
         auto numReads = alignIdList.size();
         if (numReads >= secondLargestCount && numReads >= totalCount*HaplotypeFrequencyThreshold)
         {
@@ -94,7 +94,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, std::set<pos_t> &
 
 void ActiveRegion::convertToPrimitiveAlleles(
         const std::string &haploptypeSeq,
-        std::vector<align_id_t> & /*alignIdList*/,
+        const std::vector<align_id_t> & /*alignIdList*/,
         IndelBuffer & /*indelBuffer*/,
         std::set<pos_t> &polySites) const
 {
