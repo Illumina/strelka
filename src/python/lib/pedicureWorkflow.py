@@ -72,7 +72,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segStr = str(gseg.id)
 
     segCmd = [ self.params.pedicureBin ]
-    segCmd.append("-clobber")
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
 
 #    segCmd.extend(["-min-qscore","0"])  # consider this once we go back to a quality based scoring model

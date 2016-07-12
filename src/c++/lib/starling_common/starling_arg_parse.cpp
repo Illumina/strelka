@@ -142,10 +142,6 @@ legacy_starling_arg_parse(
         {
             set_filename_arg(i,ad,opt.is_counts,opt.counts_filename);
         }
-        else if (ad.argstr[i]=="-clobber")
-        {
-            opt.is_clobber = true;
-        }
         else if (ad.argstr[i]=="-bam-file")
         {
             if (opt.is_bam_filename_used)

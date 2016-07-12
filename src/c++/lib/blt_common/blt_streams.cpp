@@ -18,8 +18,6 @@
 //
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
 
@@ -40,17 +38,8 @@ void
 open_ofstream(const prog_info& pinfo,
               const std::string& filename,
               const char* label,
-              const bool is_clobber,
               std::ofstream& fos)
 {
-    std::ifstream tis(filename.c_str());
-    if (tis && (! is_clobber))
-    {
-        std::ostringstream oss;
-        oss << label << " file already exists: " << filename;
-        pinfo.usage(oss.str().c_str());
-    }
-
     fos.open(filename.c_str());
     if (!fos)
     {
@@ -149,7 +138,7 @@ setup_nonref_output(const blt_options& opt,
     std::ofstream* fosptr(new std::ofstream);
     osptr.reset(fosptr);
     std::ofstream& fos(*fosptr);
-    open_ofstream(pinfo,filename,label,opt.is_clobber,fos);
+    open_ofstream(pinfo,filename,label,fos);
 
     fos << "# ** " << pinfo.name() << " nonref allele test file **\n";
     write_file_audit(opt,pinfo,cmdline,fos);
@@ -202,10 +191,9 @@ blt_streams::
 open_ofstream(const prog_info& pinfo,
               const std::string& filename,
               const char* label,
-              const bool is_clobber,
               std::ofstream& fos)
 {
-    ::open_ofstream(pinfo,filename,label,is_clobber,fos);
+    ::open_ofstream(pinfo,filename,label,fos);
 }
 
 
@@ -222,7 +210,7 @@ blt_streams(
         std::ofstream* fosptr(new std::ofstream);
         _report_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.report_filename,"report",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.report_filename,"report",fos);
 
         write_audit(opt,pinfo,cmdline,fos);
     }
@@ -232,7 +220,7 @@ blt_streams(
         std::ofstream* fosptr(new std::ofstream);
         _counts_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.counts_filename,"counts",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.counts_filename,"counts",fos);
 
 
         fos << "# ** " << pinfo.name() << " counts file **\n";
@@ -255,7 +243,7 @@ blt_streams(
         std::ofstream* fosptr(new std::ofstream);
         _nonref_test_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.nonref_test_filename,"nonref test",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.nonref_test_filename,"nonref test",fos);
 
         fos << "# ** " << pinfo.name() << " nonref allele test file **\n";
         write_file_audit(opt,pinfo,cmdline,fos);

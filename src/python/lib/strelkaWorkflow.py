@@ -79,7 +79,6 @@ def callGenomeSegment(self, gseg, segFiles, taskPrefix="", dependencies=None) :
     segStr = str(gseg.id)
 
     segCmd = [ self.params.strelkaBin ]
-    segCmd.append("-clobber")
     segCmd.append("-filter-unanchored")
     segCmd.extend(["-min-mapping-quality",str(self.params.minTier1Mapq)])
     segCmd.extend(["-min-qscore","0"])

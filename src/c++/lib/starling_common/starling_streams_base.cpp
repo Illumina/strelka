@@ -18,8 +18,6 @@
 //
 //
 
-/// \file
-
 /// \author Chris Saunders
 ///
 
@@ -36,10 +34,7 @@
 bam_dumper*
 starling_streams_base::
 initialize_realign_bam(
-    const bool is_clobber,
-    const prog_info& pinfo,
     const std::string& filename,
-    const char* label,
     const bam_hdr_t& header)
 {
     // \TODO consider putting extra info into BAM header:
@@ -47,11 +42,6 @@ initialize_realign_bam(
     //fp->header = bam_header_dup((const bam_header_t*)aux);
     //fos << "@PG\tID:" << pinfo.name() << "\tVN:" << pinfo.version() << "\tCL:" << cmdline << "\n";
 
-    if (! is_clobber)   // weak clobber test:
-    {
-        std::ofstream fos;
-        open_ofstream(pinfo,filename,label,is_clobber,fos);
-    }
     return new bam_dumper(filename.c_str(),header);
 }
 
@@ -67,7 +57,7 @@ initialize_candidate_indel_file(const starling_base_options& opt,
 
     std::ofstream* fosptr(new std::ofstream);
     std::ofstream& fos(*fosptr);
-    open_ofstream(pinfo,filename,"candidate-indel",opt.is_clobber,fos);
+    open_ofstream(pinfo,filename,"candidate-indel",fos);
 
     fos << "# ** " << pinfo.name();
     fos << " candidate-indel file **\n";

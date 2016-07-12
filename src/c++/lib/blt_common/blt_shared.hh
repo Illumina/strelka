@@ -147,7 +147,6 @@ struct blt_options
 
     std::string counts_filename;
 
-    bool is_clobber = true;
     bool is_report_range_ref = false;
     bool is_print_all_poly_gt = false; // print the posterior probabilities for all genotypes
     bool is_print_used_allele_counts = false; // print allele counts as in CASAVA 1.7 output

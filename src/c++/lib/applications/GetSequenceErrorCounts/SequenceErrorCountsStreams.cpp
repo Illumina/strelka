@@ -47,6 +47,6 @@ SequenceErrorCountsStreams(
         std::ofstream* fosptr(new std::ofstream);
         _observation_bed_osptr.reset(fosptr);
         std::ofstream& fos(*fosptr);
-        open_ofstream(pinfo,opt.observationsBedFilename,"obs_bed",opt.is_clobber,fos);
+        open_ofstream(pinfo,opt.observationsBedFilename,"obs_bed",fos);
     }
 }
