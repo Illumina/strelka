@@ -876,7 +876,7 @@ process_pos(const int stage_no,
     if        (stage_no==STAGE::HEAD)
     {
         init_read_segment_pos(pos);
-        if (_opt.is_short_haplotype_calling_enabled)
+        if (is_active_region_detector_enabled())
         {
             _active_region_detector.updateEndPosition(pos);
 
@@ -913,7 +913,7 @@ process_pos(const int stage_no,
             write_reads(pos);
         }
 
-        if (_opt.is_short_haplotype_calling_enabled)
+        if (is_active_region_detector_enabled())
             _active_region_detector.updateStartPosition(pos);
     }
     else if (stage_no==STAGE::POST_ALIGN)
