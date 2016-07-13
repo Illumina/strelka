@@ -60,8 +60,7 @@ public:
             _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
             _minNumVariantsPerRegion(minNumVariantsPerRegion),
             _variantCounter(MaxBufferSize),
-            _alignIdsCurrentActiveRegion(),
-            _positionToAlignIds(MaxBufferSize, std::list<align_id_t>()),
+            _positionToAlignIds(MaxBufferSize, std::vector<align_id_t>(MaxDepth)),
             _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
             _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
             _aligner(AlignmentScores<int>(ScoreMatch,ScoreMismatch,ScoreOpen,ScoreExtend,ScoreOffEdge))
@@ -111,8 +110,7 @@ private:
     std::vector<unsigned> _variantCounter;
 
     // for haplotypes
-    std::vector<align_id_t> _alignIdsCurrentActiveRegion;
-    std::vector<std::list<align_id_t>> _positionToAlignIds;
+    std::vector<std::vector<align_id_t>> _positionToAlignIds;
     std::vector<std::vector<VariantType>> _variantInfo;
     std::vector<std::vector<std::string>> _insertSeqBuffer;
     char _snvBuffer[MaxDepth][MaxBufferSize];
@@ -143,11 +141,11 @@ private:
     inline void addAlignIdToPos(const align_id_t alignId, const pos_t pos)
     {
         int index = pos % MaxBufferSize;
-        if (_positionToAlignIds[index].back() != alignId)
+        if (_positionToAlignIds[index].empty() || _positionToAlignIds[index].back() != alignId)
             _positionToAlignIds[index].push_back(alignId);
     }
 
-    inline std::list<align_id_t> getPositionToAlignIds(const pos_t pos) const
+    inline std::vector<align_id_t> getPositionToAlignIds(const pos_t pos) const
     {
         return _positionToAlignIds[pos % MaxBufferSize];
     }
