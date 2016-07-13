@@ -23,6 +23,7 @@
 ///
 
 #include "blt_util/blt_exception.hh"
+#include "blt_util/log.hh"
 #include "htsapi/bam_dumper.hh"
 
 #include <cassert>
@@ -67,8 +68,8 @@ bam_dumper::
         const int retval = hts_close(_hfp);
         if (retval != 0)
         {
-            std::cerr << "Failed to close SAM/BAM/CRAM file: '" << name() <<"'\n";
-            exit(EXIT_FAILURE);
+            log_os << "Failed to close SAM/BAM/CRAM file: '" << name() <<"'\n";
+            std::exit(EXIT_FAILURE);
         }
     }
 }

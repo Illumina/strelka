@@ -344,5 +344,3 @@ check_ln_distro(It i,
     }
     return sum;
 }
-
-
