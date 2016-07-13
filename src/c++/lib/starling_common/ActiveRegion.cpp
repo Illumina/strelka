@@ -71,22 +71,23 @@ void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySit
             if (count > largestCount)
             {
                 secondLargestCount = largestCount;
-                largestCount = count;
+                largestCount = (unsigned)count;
             }
             else
-                secondLargestCount = count;
+                secondLargestCount = (unsigned)count;
         }
     }
 
     for (const auto& entry : haplotypeToAlignIdSet)
     {
         const std::string& haplotype(entry.first);
-        if (haplotype.empty() || haplotype[0] == '.') continue;
+        if (haplotype.empty() || haplotype[0] == missingPrefix) continue;
 
         const auto& alignIdList(entry.second);
         auto numReads = alignIdList.size();
         if (numReads >= secondLargestCount && numReads >= totalCount*HaplotypeFrequencyThreshold)
         {
+//            std::cout << haplotype << std::endl;
             convertToPrimitiveAlleles(haplotype, alignIdList, indelBuffer, polySites);
         }
     }

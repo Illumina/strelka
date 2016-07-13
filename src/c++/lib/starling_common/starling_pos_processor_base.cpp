@@ -280,7 +280,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _n_samples(n_samples)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
-    , _active_region_detector(ref, _indelBuffer)
+    , _active_region_detector(ref, _indelBuffer, opt.max_indel_size)
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 

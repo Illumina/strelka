@@ -459,7 +459,7 @@ add_alignment_indels_to_sppr(
                 }
                 else
                 {
-                    active_region_detector.insertMatch(id, ref_pos, base_char);
+                    active_region_detector.insertMatch(id, ref_pos);
                 }
             }
         }

@@ -49,18 +49,21 @@ public:
     ActiveRegionDetector(
             const reference_contig_segment& ref,
             IndelBuffer& indelBuffer,
+            unsigned maxDeletionSize,
             unsigned maxDetectionWindowSize = 30,
             unsigned minNumMismatchesPerPosition = 9,
             unsigned minNumVariantsPerRegion = 2) :
             _ref(ref),
             _indelBuffer(indelBuffer),
+            _maxDeletionSize(maxDeletionSize),
             _maxDetectionWindowSize(maxDetectionWindowSize),
             _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
             _minNumVariantsPerRegion(minNumVariantsPerRegion),
             _variantCounter(MaxBufferSize),
             _alignIdsCurrentActiveRegion(),
             _positionToAlignIds(MaxBufferSize, std::list<align_id_t>()),
-            _haplotypeBase(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
+            _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
+            _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
             _aligner(AlignmentScores<int>(ScoreMatch,ScoreMismatch,ScoreOpen,ScoreExtend,ScoreOffEdge))
     {
         _bufferStartPos = 0;
@@ -70,7 +73,7 @@ public:
         _prevVariantPos = 0;
     }
 
-    void insertMatch(const align_id_t alignId, const pos_t pos, const char baseChar);
+    void insertMatch(const align_id_t alignId, const pos_t pos);
     void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
     void insertIndel(const IndelObservation& indelObservation);
     void updateStartPosition(const pos_t pos);
@@ -81,18 +84,22 @@ public:
     }
     bool isPolymorphicSite(const pos_t pos) const;
 
+    enum VariantType {
+        MATCH,
+        MISMATCH,
+        DELETE,
+        INSERT,
+        MISMATCH_INSERT
+    };
+
 private:
     const reference_contig_segment& _ref;
     IndelBuffer& _indelBuffer;
 
+    unsigned _maxDeletionSize;
     unsigned _maxDetectionWindowSize;
     unsigned _minNumMismatchesPerPosition;
     unsigned _minNumVariantsPerRegion;
-
-    const std::string strA = "A";
-    const std::string strC = "C";
-    const std::string strG = "G";
-    const std::string strT = "T";
 
     pos_t _bufferStartPos;
 
@@ -106,13 +113,14 @@ private:
     // for haplotypes
     std::vector<align_id_t> _alignIdsCurrentActiveRegion;
     std::vector<std::list<align_id_t>> _positionToAlignIds;
-    std::vector<std::vector<std::string>> _haplotypeBase;
+    std::vector<std::vector<VariantType>> _variantInfo;
+    std::vector<std::vector<std::string>> _insertSeqBuffer;
+    char _snvBuffer[MaxDepth][MaxBufferSize];
 
     // record polymorphic sites
     RangeSet _polySites;
 
     // aligner to be used in active regions
-//    AlignmentScores<int> _scores;
     GlobalNoClippingAligner<int> _aligner;
 
     bool isCandidateVariant(const pos_t pos) const;
@@ -144,22 +152,11 @@ private:
         return _positionToAlignIds[pos % MaxBufferSize];
     }
 
-    void setHaplotypeBaseSnv(const align_id_t id, const pos_t pos, char baseChar);
-
-    inline void setHaplotypeBase(const align_id_t id, const pos_t pos, const std::string& base)
-    {
-        _haplotypeBase[id % MaxDepth][pos % MaxBufferSize] = base;
-    }
-
-    inline void concatenateHaplotypeBase(const align_id_t id, const pos_t pos, const std::string& base)
-    {
-        _haplotypeBase[id % MaxDepth][pos % MaxBufferSize] += base;
-    }
-
-    inline const std::string& getHaplotypeBase(const align_id_t id, const pos_t pos) const
-    {
-        return _haplotypeBase[id % MaxDepth][pos % MaxBufferSize];
-    }
+    void setMatch(const align_id_t id, const pos_t pos);
+    void setMismatch(const align_id_t id, const pos_t pos, char baseChar);
+    void setDelete(const align_id_t id, const pos_t pos);
+    void setInsert(const align_id_t id, const pos_t pos, const std::string& insertSeq);
+    void setHaplotypeBase(const align_id_t id, const pos_t pos, std::string& base) const;
 
     inline void clearPos(pos_t pos)
     {
