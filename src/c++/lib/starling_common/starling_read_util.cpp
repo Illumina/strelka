@@ -28,6 +28,7 @@
 
 #include "blt_util/blt_exception.hh"
 #include "starling_common/starling_base_shared.hh"
+#include "ActiveRegionDetector.hh"
 
 #include <cassert>
 
@@ -133,6 +134,7 @@ create_mismatch_filter_map(const blt_options& client_opt,
                            const bam_seq_base& read_seq,
                            const unsigned read_begin,
                            const unsigned read_end,
+                           const ActiveRegionDetector& activeRegionDetector,
                            read_mismatch_info& rmi)
 {
 
@@ -181,7 +183,8 @@ create_mismatch_filter_map(const blt_options& client_opt,
                 if (read_seq.get_char(read_pos) != ref_seq.get_char(ref_pos))
                 {
                     rmi[read_pos].is_mismatch=true;
-                    dd.inc(read_pos,1);
+                    if (!activeRegionDetector.isPolymorphicSite(ref_pos))
+                        dd.inc(read_pos,1);
                 }
             }
             read_head_pos += ps.length;

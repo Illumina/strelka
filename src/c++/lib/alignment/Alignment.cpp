@@ -18,46 +18,16 @@
 //
 //
 
-///
-/// \author Chris Saunders
-///
+#include "alignment/Alignment.hh"
 
-#include "RunStatsManager.hh"
-#include "common/Exceptions.hh"
-
-#include <fstream>
 #include <iostream>
-#include <sstream>
 
 
-
-RunStatsManager::
-RunStatsManager(
-    const std::string& outputFile)
-    : _osPtr(nullptr)
+std::ostream&
+operator<<(std::ostream& os, const Alignment& align)
 {
-    if (outputFile.empty()) return;
-    _osPtr = new std::ofstream(outputFile.c_str());
-    if (! *_osPtr)
-    {
-        std::ostringstream oss;
-        oss << "ERROR: Can't open output file: " << outputFile << '\n';
-        BOOST_THROW_EXCEPTION(illumina::common::LogicException(oss.str()));
-    }
-
-    lifeTime.resume();
+    os << "start: " << align.beginPos << " cigar: " << apath_to_cigar(align.apath);
+    return os;
 }
 
 
-
-RunStatsManager::
-~RunStatsManager()
-{
-    if (_osPtr != nullptr)
-    {
-        lifeTime.stop();
-        runStats.runStatsData.lifeTime=lifeTime.getTimes();
-        runStats.save(*_osPtr);
-        delete _osPtr;
-    }
-}

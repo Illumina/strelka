@@ -26,17 +26,26 @@
 
 #include "blt_util/blt_types.hh"
 #include "starling_common/starling_types.hh"
+#include "alignment/GlobalNoClippingAligner.hh"
+#include "blt_util/align_path.hh"
+#include "IndelBuffer.hh"
 
 #include <string>
 #include <map>
 #include <set>
 
+typedef RangeMap<pos_t,unsigned char> RangeSet;
+
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
 {
 public:
-    ActiveRegion(pos_t start, pos_t end, unsigned numVariants):
-        _start(start), _end(end), _numVariants(numVariants),
+    const float HaplotypeFrequencyThreshold = 0.4; // minimum haplotype frequency to be considered in MMDF relaxation
+    const char missingPrefix = '.';
+
+    ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalNoClippingAligner<int>& aligner):
+        _start(start), _end(end), _refSeq(refSeq),
+        _aligner(aligner),
         _alignIdToHaplotype(),
         _alignIdReachingEnd()
     {}
@@ -53,23 +62,26 @@ public:
     {
         return _end - _start + 1;
     }
-    unsigned getNumVariants() const
-    {
-        return _numVariants;
-    }
     bool contains(pos_t pos) const
     {
         return pos >= _start && pos <= _end;
     }
     void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
-    void printHaplotypeSequences() const;
+    void processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites) const;
+    const std::string& getReferenceSeq() const { return _refSeq; }
 
 private:
     pos_t _start;
     pos_t _end;
-    unsigned _numVariants;
+    const std::string& _refSeq;
+    const GlobalNoClippingAligner<int> _aligner;
 
     std::map<align_id_t, std::string> _alignIdToHaplotype;
-
     std::set<align_id_t> _alignIdReachingEnd;
+
+    void convertToPrimitiveAlleles(
+            const std::string &haploptypeSeq,
+            const std::vector<align_id_t> &alignIdList,
+            IndelBuffer &indelBuffer,
+            RangeSet &polySites) const;
 };

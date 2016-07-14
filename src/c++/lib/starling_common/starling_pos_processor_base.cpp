@@ -280,6 +280,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _n_samples(n_samples)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
+    , _active_region_detector(ref, _indelBuffer, opt.max_indel_size)
 {
     assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
 
@@ -875,8 +876,11 @@ process_pos(const int stage_no,
     if        (stage_no==STAGE::HEAD)
     {
         init_read_segment_pos(pos);
-        if (_opt.is_short_haplotype_calling_enabled)
+        if (is_active_region_detector_enabled())
+        {
             _active_region_detector.updateEndPosition(pos);
+
+        }
 
         if (_opt.is_write_candidate_indels())
         {
@@ -897,9 +901,6 @@ process_pos(const int stage_no,
         }
 #endif
         //        consolidate_candidate_indel_pos(pos);
-        if (_opt.is_short_haplotype_calling_enabled)
-            _active_region_detector.updateStartPosition(pos);
-
         if (! _opt.is_write_candidate_indels_only)
         {
             //        clean_pos(pos);
@@ -912,6 +913,8 @@ process_pos(const int stage_no,
             write_reads(pos);
         }
 
+        if (is_active_region_detector_enabled())
+            _active_region_detector.updateStartPosition(pos);
     }
     else if (stage_no==STAGE::POST_ALIGN)
     {
@@ -1317,7 +1320,7 @@ pileup_read_segment(const read_segment& rseg,
     if ((! is_submapped) && _opt.is_max_win_mismatch)
     {
         const rc_segment_bam_seq ref_bseq(_ref);
-        create_mismatch_filter_map(_opt,best_al,ref_bseq,bseq,read_begin,read_end,_rmi);
+        create_mismatch_filter_map(_opt,best_al,ref_bseq,bseq,read_begin,read_end,_active_region_detector, _rmi);
         if (_opt.tier2.is_tier2_mismatch_density_filter_count)
         {
             const int max_pass(_opt.tier2.tier2_mismatch_density_filter_count);
@@ -1358,7 +1361,6 @@ pileup_read_segment(const read_segment& rseg,
                 const pos_t ref_pos(ref_head_pos+static_cast<pos_t>(j));
                 // skip position outside of report range:
                 if (! is_pos_reportable(ref_pos)) continue;
-
 
                 bool isFirstBaseCallFromMatchSeg(false);
                 const bool isFirstFromMatchSeg((j==0) || (read_pos==read_begin) || (! is_pos_reportable(ref_pos-1)));

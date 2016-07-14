@@ -112,7 +112,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
 
     bool is_active_region_detector_enabled()
     {
-        return _opt.is_short_haplotype_calling_enabled;
+        return _opt.is_short_haplotyping_enabled;
     }
     ActiveRegionDetector&
     get_active_region_detector()
