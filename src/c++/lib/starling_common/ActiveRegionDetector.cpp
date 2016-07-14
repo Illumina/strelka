@@ -99,12 +99,12 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             // close existing active region
             std::string refStr = "";
             _ref.get_substring(_activeRegionStartPos, _prevVariantPos - _activeRegionStartPos + 1, refStr);
-            ActiveRegion activeRegion = ActiveRegion(_activeRegionStartPos, _prevVariantPos, refStr, _aligner);
-            _activeRegions.push_back(activeRegion);
+            _activeRegions.emplace_back(_activeRegionStartPos, _prevVariantPos, refStr, _aligner);
+            ActiveRegion& activeRegion(_activeRegions.back());
             // add haplotype bases
             for (pos_t activeRegionPos(_activeRegionStartPos); activeRegionPos<=_prevVariantPos; ++activeRegionPos)
             {
-                for (align_id_t alignId : getPositionToAlignIds(activeRegionPos))
+                for (const align_id_t alignId : getPositionToAlignIds(activeRegionPos))
                 {
                     std::string haplotypeBase;
                     setHaplotypeBase(alignId, activeRegionPos, haplotypeBase);
@@ -127,7 +127,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
     }
     else
     {
-        // this position doesn't extend the existing active region
+        // this position extends the existing active region
         if (isCurrentPosCandidateVariant)
         {
             ++_numVariants;

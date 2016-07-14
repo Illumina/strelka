@@ -145,7 +145,7 @@ private:
             _positionToAlignIds[index].push_back(alignId);
     }
 
-    inline std::vector<align_id_t> getPositionToAlignIds(const pos_t pos) const
+    inline const std::vector<align_id_t>& getPositionToAlignIds(const pos_t pos) const
     {
         return _positionToAlignIds[pos % MaxBufferSize];
     }

@@ -101,7 +101,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 {
     AlignmentResult<int> result;
     _aligner.align(haploptypeSeq.begin(),haploptypeSeq.end(),_refSeq.begin(),_refSeq.end(),result);
-    ALIGNPATH::path_t alignPath = result.align.apath;
+    const ALIGNPATH::path_t& alignPath = result.align.apath;
 
     pos_t referencePos = _start;
     pos_t haplotypePosOffset = 0;
