@@ -103,9 +103,8 @@ void ActiveRegion::convertToPrimitiveAlleles(
     _aligner.align(haploptypeSeq.begin(),haploptypeSeq.end(),_refSeq.begin(),_refSeq.end(),result);
     ALIGNPATH::path_t alignPath = result.align.apath;
 
-    pos_t pos = _start;
-    pos_t referenceIndex = 0;
-    pos_t haplotypeIndex = 0;
+    pos_t referencePos = _start;
+    pos_t haplotypePosOffset = 0;
     if (result.align.beginPos > 0)
     {
 //        IndelObservation indelObservation;
@@ -115,8 +114,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 //        indelObservation.data.is_discovered_in_active_region = true;
 //        indelBuffer.addIndelObservation(sampleId, indelObservation);
 
-        pos += result.align.beginPos;
-        referenceIndex += result.align.beginPos;
+        referencePos += result.align.beginPos;
     }
 
     for (unsigned pathIndex(0); pathIndex<alignPath.size(); ++pathIndex)
@@ -127,18 +125,16 @@ void ActiveRegion::convertToPrimitiveAlleles(
         switch (pathSegment.type)
         {
             case ALIGNPATH::SEQ_MATCH:
-                pos += segmentLength;
-                referenceIndex += segmentLength;
-                haplotypeIndex += segmentLength;
+                referencePos += segmentLength;
+                haplotypePosOffset += segmentLength;
                 break;
             case ALIGNPATH::SEQ_MISMATCH:
                 for (unsigned i(0); i<segmentLength; ++i)
                 {
 //                    std::cout << "Poly\t" << (pos+1) << std::endl;
-                    polySites.getRef(pos) = 1;
-                    ++pos;
-                    ++referenceIndex;
-                    ++haplotypeIndex;
+                    polySites.getRef(referencePos) = 1;
+                    ++referencePos;
+                    ++haplotypePosOffset;
                 }
                 break;
             case ALIGNPATH::INSERT:
@@ -151,7 +147,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 //                indelObservation.data.insert_seq = haploptypeSeq.substr(haplotypeIndex, segmentLength);
 //                indelObservation.data.is_discovered_in_active_region = true;
 //                indelBuffer.addIndelObservation(sampleId, indelObservation);
-                haplotypeIndex += segmentLength;
+                haplotypePosOffset += segmentLength;
                 break;
             }
             case ALIGNPATH::DELETE:
@@ -163,8 +159,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 //                indelObservation.data.is_discovered_in_active_region = true;
 //                indelBuffer.addIndelObservation(sampleId, indelObservation);
 
-                pos += segmentLength;
-                referenceIndex += segmentLength;
+                referencePos += segmentLength;
                 break;
             }
             default:
