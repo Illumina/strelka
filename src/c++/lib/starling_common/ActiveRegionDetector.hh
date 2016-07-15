@@ -60,7 +60,7 @@ public:
             _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
             _minNumVariantsPerRegion(minNumVariantsPerRegion),
             _variantCounter(MaxBufferSize),
-            _positionToAlignIds(MaxBufferSize, std::vector<align_id_t>(MaxDepth)),
+            _positionToAlignIds(MaxBufferSize),
             _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
             _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
             _aligner(AlignmentScores<int>(ScoreMatch,ScoreMismatch,ScoreOpen,ScoreExtend,ScoreOffEdge))
