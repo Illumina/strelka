@@ -26,7 +26,7 @@
 
 #include "blt_util/blt_types.hh"
 #include "starling_common/starling_types.hh"
-#include "alignment/GlobalNoClippingAligner.hh"
+#include "alignment/GlobalAligner.hh"
 #include "blt_util/align_path.hh"
 #include "IndelBuffer.hh"
 
@@ -43,7 +43,7 @@ public:
     const float HaplotypeFrequencyThreshold = 0.4; // minimum haplotype frequency to be considered in MMDF relaxation
     const char missingPrefix = '.';
 
-    ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalNoClippingAligner<int>& aligner):
+    ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalAligner<int>& aligner):
         _start(start), _end(end), _refSeq(refSeq),
         _aligner(aligner),
         _alignIdToHaplotype(),
@@ -74,7 +74,7 @@ private:
     pos_t _start;
     pos_t _end;
     const std::string& _refSeq;
-    const GlobalNoClippingAligner<int> _aligner;
+    const GlobalAligner<int> _aligner;
 
     std::map<align_id_t, std::string> _alignIdToHaplotype;
     std::set<align_id_t> _alignIdReachingEnd;

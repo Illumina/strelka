@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Strelka - Small Variant Caller
-// Copyright (c) 2009-2016 Illumina, Inc.
+// Manta - Structural Variant and Indel Caller
+// Copyright (c) 2013-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,9 +18,8 @@
 //
 //
 
-/// derived from Manta
+/// derived from ELAND implementation by Tony Cox
 
-//#define DEBUG_ALN
 
 #include <cassert>
 
@@ -34,7 +33,7 @@
 template <typename ScoreType>
 template <typename SymIter>
 void
-GlobalNoClippingAligner<ScoreType>::
+GlobalAligner<ScoreType>::
 align(
     const SymIter queryBegin, const SymIter queryEnd,
     const SymIter refBegin, const SymIter refEnd,
@@ -59,16 +58,46 @@ align(
 
     static const ScoreType badVal(-10000);
 
-    // global alignment of query -- disallow start from insertion or deletion
-    // state, query can 'fall-off' the end of a short reference, in which case it will
-    // be soft-clipped and each base off the end will be scored as offEdge:
+#if 0
+    auto safeScore = [&] (const int score) -> ScoreType
+    {
+        return std::max(score, static_cast<int>(badVal));
+    };
+#endif
+
+    // global alignment of query
+    //
+    // disallow start from the delete state, control start from insert state with flag
+    //
+    // query can 'fall-off' the end of a short reference, in which case it will
+    // be soft-clipped and each base off the end will be scored as offEdge
+    //
     for (unsigned queryIndex(0); queryIndex<=querySize; queryIndex++)
     {
+        PtrVal& headPtr(_ptrMat.val(queryIndex,0));
         ScoreVal& val((*thisSV)[queryIndex]);
-        val.match = queryIndex == 0 ? 0 : badVal;
+        headPtr.match = AlignState::MATCH;
+        val.match = queryIndex * scores.offEdge;
+        headPtr.del = AlignState::MATCH;
         val.del = badVal;
-        val.ins = queryIndex == 0 ? badVal : scores.open + (ScoreType)(queryIndex*scores.extend);
+        if (not scores.isAllowEdgeInsertion)
+        {
+            headPtr.ins = AlignState::MATCH;
+            val.ins = badVal;
+        }
+        else
+        {
+            headPtr.ins = AlignState::INSERT;
+            val.ins = scores.open + (queryIndex * scores.extend);
+        }
     }
+
+#ifdef DEBUG_ALN_MATRIX
+    // store full matrix of scores to print out later, don't turn this debug option on for large references!
+    std::vector<ScoreVec> storeScores;
+
+    storeScores.push_back(*thisSV);
+#endif
 
     BackTrace<ScoreType> btrace;
 
@@ -79,14 +108,28 @@ align(
             std::swap(thisSV,prevSV);
 
             {
+                // control start from delete state with flag
+                PtrVal& headPtr(_ptrMat.val(0,refIndex+1));
                 ScoreVal& val((*thisSV)[0]);
-                val.match = badVal;
-                val.del = scores.open + (ScoreType)((refIndex+1)*scores.extend);
+                if (not scores.isRequireEdgeDeletion)
+                {
+                    headPtr.match = AlignState::MATCH;
+                    val.match = 0;
+                    headPtr.del = AlignState::MATCH;
+                    val.del = badVal;
+                }
+                else
+                {
+                    headPtr.match = AlignState::MATCH;
+                    val.match = badVal;
+                    headPtr.del = AlignState::DELETE;
+                    val.del = scores.open + ((refIndex+1) * scores.extend);
+                }
+                headPtr.ins = AlignState::MATCH;
                 val.ins = badVal;
             }
 
             unsigned queryIndex(0);
-
             for (SymIter queryIter(queryBegin); queryIter != queryEnd; ++queryIter, ++queryIndex)
             {
                 // update match
@@ -110,9 +153,10 @@ align(
                                       headScore.del,
                                       sval.match + scores.open,
                                       sval.del,
-                                      badVal);
+                                      sval.ins + scores.insertDelete);
 
                     headScore.del += scores.extend;
+                    if (0==refIndex) headScore.del = badVal;
                 }
 
                 // update insert
@@ -125,7 +169,9 @@ align(
                                       sval.ins);
 
                     headScore.ins += scores.extend;
+                    if (0==queryIndex) headScore.ins = badVal;
                 }
+
 #ifdef DEBUG_ALN
                 log_os << "i1i2: " << queryIndex+1 << " " << refIndex+1 << "\n";
                 log_os << headScore.match << ":" << headScore.del << ":" << headScore.ins << "/"
@@ -135,26 +181,49 @@ align(
 #ifdef DEBUG_ALN
             log_os << "\n";
 #endif
+
+#ifdef DEBUG_ALN_MATRIX
+            storeScores.push_back(*thisSV);
+#endif
+
+            // record potential backtrace start point, unless full reference sequence must be explained
+            if (not scores.isRequireEdgeDeletion)
+            {
+                const ScoreVal& sval((*thisSV)[querySize]);
+                updateBacktrace(sval.match,refIndex+1,querySize,btrace);
+            }
         }
     }
 
-    const ScoreVal& sval((*thisSV)[querySize]);
-    ScoreType thisMax;
-    auto ptr = this->max3(thisMax, sval.match, sval.del, sval.ins);
-    AlignState::index_t state;
-    if (ptr == 0)
-        state = AlignState::MATCH;
-    else if (ptr == 1)
-        state = AlignState::DELETE;
-    else if (ptr == 2)
-        state = AlignState::INSERT;
-    else
-        assert(false && "Unexpected Index Value");
+    // optionally require that full reference sequence is explained
+    if (scores.isRequireEdgeDeletion)
+    {
+        const ScoreVal& sval((*thisSV)[querySize]);
+        updateBacktrace(sval.match,refSize,querySize,btrace, AlignState::MATCH);
+        updateBacktrace(sval.del,refSize,querySize,btrace, AlignState::DELETE);
+    }
 
-    updateBacktrace(thisMax,refSize,querySize,btrace, state);
+    // optionally allow for trailing insertion
+    if (scores.isAllowEdgeInsertion)
+    {
+        const ScoreVal& sval((*thisSV)[querySize]);
+        updateBacktrace(sval.ins,refSize,querySize,btrace, AlignState::INSERT);
+    }
 
-#ifdef DEBUG_ALN
-    log_os << "btrace-start queryIndex: " << queryBegin << " refIndex: " << refBegin << " state: " << AlignState::label(btrace.state) << " maxScore: " << btrace.max << "\n";
+    // also allow for the case where query falls-off the end of the reference:
+    for (unsigned queryIndex(0); queryIndex<querySize; queryIndex++)
+    {
+        const ScoreVal& sval((*thisSV)[queryIndex]);
+        const ScoreType thisMax(sval.match + (querySize-queryIndex) * scores.offEdge);
+        updateBacktrace(thisMax,refSize,queryIndex,btrace);
+    }
+
+#ifdef DEBUG_ALN_MATRIX
+    std::vector<AlignState::index_t> dumpStates {AlignState::MATCH, AlignState::DELETE, AlignState::INSERT};
+    this->dumpTables(queryBegin, queryEnd,
+                     refBegin, refEnd,
+                     querySize, _ptrMat,
+                     dumpStates, storeScores);
 #endif
 
     this->backTraceAlignment(

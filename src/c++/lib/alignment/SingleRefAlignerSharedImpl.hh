@@ -20,6 +20,46 @@
 
 #include <iostream>
 
+#if defined(DEBUG_ALN) || defined(DEBUG_ALN_MATRIX)
+#include "blt_util/log.hh"
+#endif
+
+
+#ifdef DEBUG_ALN_MATRIX
+template <typename ScoreType>
+template <typename SymIter, typename MatrixType, typename ScoreValType>
+void
+SingleRefAlignerBase<ScoreType>::
+dumpTables(
+    const SymIter queryBegin, const SymIter queryEnd,
+    const SymIter refBegin, const SymIter refEnd,
+    const size_t querySize,
+    const MatrixType& ptrMatrix,
+    const std::vector<AlignState::index_t>& dumpStates,
+    const std::vector<std::vector<ScoreValType>>& storeScores) const
+{
+    const unsigned stateSize(dumpStates.size());
+    for (unsigned stateIndex(0); stateIndex<stateSize; ++stateIndex)
+    {
+        const AlignState::index_t sIndex(dumpStates[stateIndex]);
+        log_os << "******** Dumping matrix for state: " << AlignState::label(sIndex) << " ********\n";
+        {
+            unsigned queryIndex(0);
+            log_os << "REF    -";
+            for (SymIter queryIter(queryBegin); queryIter != queryEnd; ++queryIter, ++queryIndex)
+            {
+                log_os << "   " << *queryIter;
+            }
+            log_os << "\n";
+        }
+
+        // dump state before refIndex 0
+        unsigned storeIndex(0);
+        this->dumpSingleRefTable(refBegin,refEnd,querySize,ptrMatrix,storeScores, '1', sIndex, storeIndex, log_os);
+    }
+}
+#endif
+
 
 template <typename ScoreType>
 std::ostream&
@@ -51,6 +91,11 @@ backTraceAlignment(
     assert(btrace.refBegin <= refSize);
     assert(btrace.queryBegin <= querySize);
 
+#ifdef DEBUG_ALN
+    log_os << "qSize: " << querySize << " refSize: " << refSize << "\n";
+    log_os << "bt-start max: " << btrace.max << " refBegin: " << btrace.refBegin << " qBegin: " << btrace.queryBegin << " state: " << AlignState::label(btrace.state) << "\n";
+#endif
+
     result.score = btrace.max;
 
     // traceback:
@@ -64,23 +109,34 @@ backTraceAlignment(
         ps.length = (querySize-btrace.queryBegin);
     }
 
-    while ((btrace.queryBegin>0) && (btrace.refBegin>0))
+    while (true)
     {
-        const AlignState::index_t nextMatrix(ptrMatrix.val(btrace.queryBegin,btrace.refBegin).getStatePtr(btrace.state));
+        const AlignState::index_t nextState(ptrMatrix.val(btrace.queryBegin,btrace.refBegin).getStatePtr(btrace.state));
+
+#ifdef DEBUG_ALN
+        log_os << "bt-iter queryIndex: " << btrace.queryBegin
+               << " refIndex: " << btrace.refBegin
+               << " state: " << AlignState::label(btrace.state)
+               << " next: " << AlignState::label(nextState)
+               << "\n";
+#endif
 
         if (btrace.state==AlignState::MATCH)
         {
+            if ((btrace.queryBegin<1) or (btrace.refBegin<1)) break;
             AlignerUtil::updatePath(apath,ps,ALIGNPATH::MATCH);
             btrace.queryBegin--;
             btrace.refBegin--;
         }
         else if ((btrace.state==AlignState::DELETE) || (btrace.state==AlignState::JUMP))
         {
+            if (btrace.refBegin<1) break;
             AlignerUtil::updatePath(apath,ps,ALIGNPATH::DELETE);
             btrace.refBegin--;
         }
         else if ((btrace.state==AlignState::INSERT) || (btrace.state==AlignState::JUMPINS))
         {
+            if (btrace.queryBegin<1) break;
             AlignerUtil::updatePath(apath,ps,ALIGNPATH::INSERT);
             btrace.queryBegin--;
         }
@@ -88,7 +144,7 @@ backTraceAlignment(
         {
             assert(false && "Unknown align state");
         }
-        btrace.state=nextMatrix;
+        btrace.state=nextState;
         ps.length++;
     }
 
@@ -112,5 +168,4 @@ backTraceAlignment(
     {
         apath_add_seqmatch(queryBegin, queryEnd, (refBegin+result.align.beginPos), refEnd, apath);
     }
-
 }

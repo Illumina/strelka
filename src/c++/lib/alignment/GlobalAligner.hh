@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Strelka - Small Variant Caller
-// Copyright (c) 2009-2016 Illumina, Inc.
+// Manta - Structural Variant and Indel Caller
+// Copyright (c) 2013-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 //
 //
 
-/// derived from Manta
+/// derived from ELAND implementation by Tony Cox
 
 #pragma once
 
@@ -29,14 +29,16 @@
 ///
 /// alignment outputs start positions and CIGAR-style alignment
 /// expression of query to reference. Alignment of
-/// query is global -- query cannot "fall-off" either end of the reference
+/// query is global -- query can "fall-off" either end of the reference,
+/// in this case, each unaligned position is given an "off-edge" score and
+/// the base is soft-clipped in the alignment
 ///
 /// transition from insert to delete is free and allowed, but not reverse
 ///
 template <typename ScoreType>
-struct GlobalNoClippingAligner : public SingleRefAlignerBase<ScoreType>
+struct GlobalAligner : public SingleRefAlignerBase<ScoreType>
 {
-    GlobalNoClippingAligner(
+    GlobalAligner(
         const AlignmentScores<ScoreType>& scores) :
         SingleRefAlignerBase<ScoreType>(scores)
     {}
@@ -54,9 +56,26 @@ private:
     // insert and delete are for query wrt reference
     struct ScoreVal
     {
+        ScoreType
+        getScore(const AlignState::index_t i) const
+        {
+            switch (i)
+            {
+            case AlignState::MATCH:
+                return match;
+            case AlignState::DELETE:
+                return del;
+            case AlignState::INSERT:
+                return ins;
+            default:
+                assert(false && "Unexpected Index Value");
+                return 0;
+            }
+        }
+
         ScoreType match;
-        ScoreType ins;
         ScoreType del;
+        ScoreType ins;
     };
 
     struct PtrVal
@@ -78,10 +97,10 @@ private:
             {
             case AlignState::MATCH:
                 return match;
-            case AlignState::INSERT:
-                return ins;
             case AlignState::DELETE:
                 return del;
+            case AlignState::INSERT:
+                return ins;
             default:
                 assert(false && "Unexpected Index Value");
                 return 0;
@@ -90,8 +109,8 @@ private:
 
     public:
         code_t match : 2;
-        code_t ins : 2;
         code_t del : 2;
+        code_t ins : 2;
     };
 
     // add the matrices here to reduce allocations over many alignment calls:
@@ -102,4 +121,4 @@ private:
 };
 
 
-#include "alignment/GlobalNoClippingAlignerImpl.hh"
+#include "alignment/GlobalAlignerImpl.hh"

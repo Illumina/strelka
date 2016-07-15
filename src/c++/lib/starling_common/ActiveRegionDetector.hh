@@ -29,6 +29,7 @@
 #include "starling_read_segment.hh"
 #include "indel.hh"
 #include "IndelBuffer.hh"
+
 #include <vector>
 #include <list>
 #include <set>
@@ -44,7 +45,7 @@ public:
     static const int ScoreMismatch = -4;
     static const int ScoreOpen = -5;
     static const int ScoreExtend = -1;
-    static const int ScoreOffEdge = -10000;
+    static const int ScoreOffEdge = -100;
 
     ActiveRegionDetector(
             const reference_contig_segment& ref,
@@ -63,7 +64,7 @@ public:
             _positionToAlignIds(MaxBufferSize),
             _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
             _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
-            _aligner(AlignmentScores<int>(ScoreMatch,ScoreMismatch,ScoreOpen,ScoreExtend,ScoreOffEdge))
+            _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
         _bufferStartPos = 0;
 
@@ -119,7 +120,7 @@ private:
     RangeSet _polySites;
 
     // aligner to be used in active regions
-    GlobalNoClippingAligner<int> _aligner;
+    GlobalAligner<int> _aligner;
 
     bool isCandidateVariant(const pos_t pos) const;
 
