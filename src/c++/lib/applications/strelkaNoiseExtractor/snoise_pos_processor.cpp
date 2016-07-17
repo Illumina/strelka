@@ -32,7 +32,7 @@ snoise_pos_processor(
     const starling_base_deriv_options& dopt,
     const reference_contig_segment& ref,
     const snoise_streams& streams)
-    : base_t(opt,dopt,ref,streams,1),
+    : base_t(opt,dopt,ref,streams, opt.alignFileOpt.alignmentFilename.size()),
       _streams(streams)
 {
     static const unsigned sampleId(0);

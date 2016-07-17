@@ -316,18 +316,26 @@ public:
     };
 
     sample_info&
-    sample(const unsigned sample_no = 0)
+    sample(const unsigned sampleIndex = 0)
     {
-        return *_sample[sample_no];
+        assert(sampleIndex < getSampleCount());
+        return *_sample[sampleIndex];
     }
 
     const sample_info&
-    sample(const unsigned sample_no = 0) const
+    sample(const unsigned sampleIndex = 0) const
     {
-        return *_sample[sample_no];
+        assert(sampleIndex < getSampleCount());
+        return *_sample[sampleIndex];
     }
 
 protected:
+    unsigned
+    getSampleCount() const
+    {
+        return _sample.size();
+    }
+
     IndelBuffer&
     getIndelBuffer()
     {
@@ -519,7 +527,8 @@ private:
     {
         if (! _is_skip_process_pos)
         {
-            for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
+            const unsigned sampleCount(getSampleCount());
+            for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
             {
                 const sample_info& sif(sample(sampleIndex));
                 if (! sif.read_buff.empty()) return false;
@@ -581,8 +590,7 @@ protected:
     // used to keep read id's unique across multiple samples:
     read_id_counter _ric;
 
-    unsigned _n_samples;
-    std::array<std::unique_ptr<sample_info>,MAX_SAMPLE> _sample;
+    std::vector<std::unique_ptr<sample_info>> _sample;
 
     std::unique_ptr<diploid_genotype> _empty_dgt[N_BASE];
     std::unique_ptr<nploid_info> _ninfo;

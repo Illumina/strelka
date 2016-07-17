@@ -35,7 +35,7 @@ SequenceErrorCountsPosProcessor(
     const SequenceErrorCountsDerivOptions& dopt,
     const reference_contig_segment& ref,
     const SequenceErrorCountsStreams& streams)
-    : base_t(opt,dopt,ref,streams,1),
+    : base_t(opt,dopt,ref,streams, opt.alignFileOpt.alignmentFilename.size()),
       _opt(opt),
       _streams(streams)
 {

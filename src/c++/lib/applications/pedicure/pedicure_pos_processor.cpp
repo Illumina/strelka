@@ -47,7 +47,7 @@ pedicure_pos_processor(
     , _dopt(dopt)
     , _streams(streams)
     , _icallProcessor(streams.denovo_callable_osptr())
-    , _tier2_cpi(_n_samples)
+    , _tier2_cpi(getSampleCount())
 {
     /// get max proband depth
     double max_candidate_proband_sample_depth(-1.);
@@ -77,7 +77,8 @@ pedicure_pos_processor(
 
     // setup indel syncronizer:
     {
-        for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
+        const unsigned sampleCount(getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             const bool isProband(_opt.alignFileOpt.alignmentSampleInfo.getSampleInfo(sampleIndex).stype == PROBAND);
             double max_candidate_sample_depth(isProband ? max_candidate_proband_sample_depth : -1);
@@ -107,7 +108,7 @@ process_pos_snp_denovo(const pos_t pos)
         if (probandCpi.cleanedPileup().calls.empty()) return;
     }
 
-    const unsigned sampleCount(_n_samples);
+    const unsigned sampleCount(getSampleCount());
     cpiPtrTiers_t pileups;
     pileups[PEDICURE_TIERS::TIER1].resize(sampleCount);
     pileups[PEDICURE_TIERS::TIER2].resize(sampleCount);
@@ -205,6 +206,7 @@ process_pos_indel_denovo(const pos_t pos)
     using namespace PEDICURE_SAMPLETYPE;
 
     const SampleInfoManager& sinfo(_opt.alignFileOpt.alignmentSampleInfo);
+    const unsigned sampleCount(getSampleCount());
 
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
@@ -222,7 +224,7 @@ process_pos_indel_denovo(const pos_t pos)
 
         // assert that indel data exists for all samples, make sure alt alignments are scored in at least one sample:
         bool isAllEmpty(true);
-        for (unsigned sampleIndex(0); sampleIndex<_n_samples; sampleIndex++)
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
             if (! indelData.getSampleData(sampleIndex).read_path_lnp.empty()) isAllEmpty = false;
         }
@@ -243,8 +245,8 @@ process_pos_indel_denovo(const pos_t pos)
         denovo_indel_call dindel;
 
         // considate sample_options:
-        std::vector<const starling_sample_options*> sampleOptions(_n_samples);
-        for (unsigned sampleIndex(0); sampleIndex<_n_samples; sampleIndex++)
+        std::vector<const starling_sample_options*> sampleOptions(sampleCount);
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; sampleIndex++)
         {
             sampleOptions[sampleIndex] = &(sample(sampleIndex).sample_opt);
         }
@@ -262,11 +264,11 @@ process_pos_indel_denovo(const pos_t pos)
         if (dindel.is_output())
         {
             // get sample specific info:
-            std::vector<isriTiers_t> isri(_n_samples);
+            std::vector<isriTiers_t> isri(sampleCount);
             for (unsigned tierIndex(0); tierIndex<PEDICURE_TIERS::SIZE; ++tierIndex)
             {
                 const bool is_include_tier2(tierIndex==1);
-                for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++ sampleIndex)
+                for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++ sampleIndex)
                 {
                     get_starling_indel_sample_report_info(
                         _opt, _dopt,indelKey,indelData.getSampleData(sampleIndex),sample(sampleIndex).bc_buff,

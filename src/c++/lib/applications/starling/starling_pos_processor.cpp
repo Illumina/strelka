@@ -85,7 +85,7 @@ starling_pos_processor(
     const starling_deriv_options& dopt,
     const reference_contig_segment& ref,
     const starling_streams& streams)
-    : base_t(opt,dopt,ref,streams,1),
+    : base_t(opt,dopt,ref,streams, opt.alignFileOpt.alignmentFilename.size()),
       _opt(opt),
       _dopt(dopt),
       _streams(streams)

@@ -72,13 +72,15 @@ initialize_candidate_indel_file(
 
 
 starling_streams_base::
-starling_streams_base(const starling_base_options& opt,
-                      const prog_info& pinfo,
-                      const SampleSetSummary& si)
-    : base_t(opt,pinfo)
-    , _n_samples(si.size())
+starling_streams_base(
+    const starling_base_options& opt,
+    const prog_info& pinfo,
+    const SampleSetSummary& si)
+    : base_t(opt,pinfo),
+      _realign_bam_ptr(si.size()),
+      _n_samples(si.size())
 {
-    assert((_n_samples>0) && (_n_samples<=MAX_SAMPLE));
+    assert(_n_samples>0);
 
     if (opt.is_write_candidate_indels())
     {

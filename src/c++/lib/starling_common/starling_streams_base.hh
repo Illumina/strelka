@@ -67,7 +67,7 @@ protected:
         const prog_info& pinfo,
         const std::string& filename);
 
-    std::unique_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];
+    std::vector<std::unique_ptr<bam_dumper>> _realign_bam_ptr;
 private:
     std::unique_ptr<std::ostream> _candidate_indel_osptr;
 protected:

@@ -279,12 +279,12 @@ starling_pos_processor_base(
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)
     , _chrom_name(_opt.bam_seq_name)
-    , _n_samples(sampleCount)
+    , _sample(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
     , _active_region_detector(ref, _indelBuffer, opt.max_indel_size)
 {
-    assert((_n_samples != 0) && (_n_samples <= MAX_SAMPLE));
+    assert(sampleCount != 0);
 
     const unsigned report_size(_dopt.report_range.size());
     const unsigned knownref_report_size(get_ref_seq_known_size(_ref,_dopt.report_range));
@@ -530,8 +530,7 @@ is_estimated_depth_range_ge_than(
 }
 
 
-// TODO use boost::optional here:
-//
+
 boost::optional<align_id_t>
 starling_pos_processor_base::
 insert_read(
@@ -714,17 +713,14 @@ init_read_segment(
 
 
 
-// For all read segments buffered at the current position:
-// 1) process genomic alignment of read segment for indels
-// 2) add genomic alignment of read segment to estdepth
-//
 void
 starling_pos_processor_base::
 init_read_segment_pos(const pos_t pos)
 {
-    for (unsigned s(0); s<_n_samples; ++s)
+    const unsigned sampleCount(getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
+        read_segment_iter ri(sample(sampleIndex).read_buff.get_pos_read_segment_iter(pos));
         for (read_segment_iter::ret_val r; true; ri.next())
         {
             r=ri.get_ptr();
@@ -735,8 +731,7 @@ init_read_segment_pos(const pos_t pos)
             // the second segment or higher:
             //
             if (r.second<2) continue;
-            init_read_segment(r.first->get_segment(r.second),s);
-
+            init_read_segment(r.first->get_segment(r.second),sampleIndex);
         }
     }
 }
@@ -793,7 +788,8 @@ align_pos(const pos_t pos)
 {
     known_pos_range realign_buffer_range(get_realignment_range(pos, _stageman.get_stage_data()));
 
-    for (unsigned sampleIndex(0); sampleIndex<_n_samples; ++sampleIndex)
+    const unsigned sampleCount(getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         sample_info& sif(sample(sampleIndex));
         read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
@@ -802,29 +798,27 @@ align_pos(const pos_t pos)
             r=ri.get_ptr();
             if (nullptr == r.first) break;
             read_segment& rseg(r.first->get_segment(r.second));
-            if (_opt.is_realign_submapped_reads ||
-                rseg.is_tier1or2_mapping())
+            if (not (_opt.is_realign_submapped_reads || rseg.is_tier1or2_mapping())) continue;
+
+            try
             {
-                try
+                realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex,rseg,
+                                       getIndelBuffer());
+            }
+            catch (...)
+            {
+                log_os << "ERROR: Exception caught in align_pos() while realigning segment: "
+                       << static_cast<int>(r.second) << " of read: " << (*r.first) << "\n";
+                throw;
+            }
+            // check that read has not been realigned too far to the left:
+            if (rseg.is_realigned)
+            {
+                if (! _stageman.is_new_pos_value_valid(rseg.realignment.pos,STAGE::POST_ALIGN))
                 {
-                    realign_and_score_read(_opt,_dopt,sif.sample_opt,_ref,realign_buffer_range,sampleIndex,rseg,
-                                           getIndelBuffer());
-                }
-                catch (...)
-                {
-                    log_os << "ERROR: Exception caught in align_pos() while realigning segment: "
-                           << static_cast<int>(r.second) << " of read: " << (*r.first) << "\n";
-                    throw;
-                }
-                // check that read has not been realigned too far to the left:
-                if (rseg.is_realigned)
-                {
-                    if (! _stageman.is_new_pos_value_valid(rseg.realignment.pos,STAGE::POST_ALIGN))
-                    {
-                        log_os << "WARNING: read realigned outside bounds of realignment stage buffer. Skipping...\n"
-                               << "\tread: " << rseg.key() << "\n";
-                        rseg.is_invalid_realignment=true;
-                    }
+                    log_os << "WARNING: read realigned outside bounds of realignment stage buffer. Skipping...\n"
+                           << "\tread: " << rseg.key() << "\n";
+                    rseg.is_invalid_realignment=true;
                 }
             }
         }
@@ -853,6 +847,8 @@ process_pos(const int stage_no,
 #endif
 
     if (empty()) return;
+
+    const unsigned sampleCount(getSampleCount());
 
     if        (stage_no==STAGE::HEAD)
     {
@@ -918,9 +914,9 @@ process_pos(const int stage_no,
     }
     else if (stage_no==STAGE::CLEAR_READ_BUFFER)
     {
-        for (unsigned s(0); s < _n_samples; ++s)
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            sample(s).read_buff.clear_to_pos(pos);
+            sample(sampleIndex).read_buff.clear_to_pos(pos);
         }
     }
     else if (stage_no==STAGE::CLEAR_INDEL_BUFFER)
@@ -929,9 +925,9 @@ process_pos(const int stage_no,
     }
     else if (stage_no==STAGE::POST_CALL)
     {
-        for (unsigned s(0); s<_n_samples; ++s)
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            sample_info& sif(sample(s));
+            sample_info& sif(sample(sampleIndex));
             sif.estdepth_buff.clear_pos(pos);
             sif.estdepth_buff_tier2.clear_pos(pos);
 
@@ -1115,9 +1111,10 @@ rebuffer_pos_reads(const pos_t pos)
     //
     typedef std::pair<std::pair<align_id_t,seg_id_t>,pos_t> read_pos_t;
 
-    for (unsigned s(0); s<_n_samples; ++s)
+    const unsigned sampleCount(getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        sample_info& sif(sample(s));
+        sample_info& sif(sample(sampleIndex));
         std::vector<read_pos_t> new_read_pos;
         read_segment_iter ri(sif.read_buff.get_pos_read_segment_iter(pos));
         for (read_segment_iter::ret_val r; true; ri.next())
@@ -1153,13 +1150,14 @@ void
 starling_pos_processor_base::
 write_reads(const pos_t pos)
 {
-    for (unsigned s(0); s<_n_samples; ++s)
+    const unsigned sampleCount(getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        bam_dumper* bamd_ptr(_streams.realign_bam_ptr(s));
+        bam_dumper* bamd_ptr(_streams.realign_bam_ptr(sampleIndex));
         if (NULL == bamd_ptr) continue;
         bam_dumper& bamd(*bamd_ptr);
 
-        read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
+        read_segment_iter ri(sample(sampleIndex).read_buff.get_pos_read_segment_iter(pos));
         read_segment_iter::ret_val r;
 
         while (true)
@@ -1184,16 +1182,17 @@ void
 starling_pos_processor_base::
 pileup_pos_reads(const pos_t pos)
 {
-    for (unsigned s(0); s<_n_samples; ++s)
+    const unsigned sampleCount(getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        read_segment_iter ri(sample(s).read_buff.get_pos_read_segment_iter(pos));
+        read_segment_iter ri(sample(sampleIndex).read_buff.get_pos_read_segment_iter(pos));
         read_segment_iter::ret_val r;
         while (true)
         {
             r=ri.get_ptr();
             if (nullptr==r.first) break;
             const read_segment& rseg(r.first->get_segment(r.second));
-            pileup_read_segment(rseg,s);
+            pileup_read_segment(rseg, sampleIndex);
             ri.next();
         }
     }
@@ -1516,9 +1515,10 @@ void
 starling_pos_processor_base::
 process_pos_variants(const pos_t pos)
 {
-    for (unsigned sampleId(0); sampleId<_n_samples; ++sampleId)
+    const unsigned sampleCount(getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        process_pos_site_stats(pos,sampleId);
+        process_pos_site_stats(pos,sampleIndex);
     }
     process_pos_variants_impl(pos);
 }
