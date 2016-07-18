@@ -18,9 +18,8 @@
 //
 //
 
-/*
- *      Author: mkallberg
- */
+///  \author mkallberg
+///
 
 #pragma once
 
@@ -57,7 +56,6 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
         I_BaseQRankSum,
         I_MQRankSum,
         I_ReadPosRankSum,
-        AD1_NORM,
         TDP_NORM,
         F_DP_NORM,
         F_GQX_EXACT,
@@ -89,8 +87,6 @@ struct GERMLINE_SNV_SCORING_FEATURES : public FeatureSet
             return "I_MQRankSum";
         case I_ReadPosRankSum:
             return "I_ReadPosRankSum";
-        case AD1_NORM:
-            return "AD1_NORM";
         case TDP_NORM:
             return "TDP_NORM";
         case F_DP_NORM:
@@ -138,8 +134,7 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         AD0_NORM,
         QUAL_EXACT,
         F_GQ_EXACT,
-
-
+        AD1_NORM,
         SIZE
     };
 
@@ -154,7 +149,6 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         switch (idx)
         {
-
         case ABlower:
             return "ABlower";
         case AB:
@@ -177,12 +171,13 @@ struct GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "QUAL_EXACT";
         case F_GQ_EXACT:
             return "F_GQ_EXACT";
+        case AD1_NORM:
+            return "AD1_NORM";
         default:
             assert(false && "Unknown feature");
             return nullptr;
         }
     }
-
 };
 
 
@@ -213,6 +208,7 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
         ABlower,
         AB,
         F_MQ,
+        TDP_NORM,
         AD1_NORM,
         F_GQX_EXACT,
         SIZE
@@ -241,6 +237,8 @@ struct GERMLINE_INDEL_SCORING_FEATURES : public FeatureSet
             return "AB";
         case F_MQ:
             return "F_MQ";
+        case TDP_NORM:
+            return "TDP_NORM";
         case AD1_NORM:
             return "AD1_NORM";
         case F_GQX_EXACT:
@@ -278,7 +276,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
         REFREP1,
         mapqZeroFraction,
         F_DPI_NORM,
-        TDP_NORM,
         QUAL_NORM,
         F_GQX_NORM,
         F_GQ_NORM,
@@ -306,8 +303,6 @@ struct GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "mapqZeroFraction";
         case F_DPI_NORM:
             return "F_DPI_NORM";
-        case TDP_NORM:
-            return "TDP_NORM";
         case QUAL_NORM:
             return "QUAL_NORM";
         case F_GQX_NORM:
