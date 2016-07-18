@@ -31,8 +31,6 @@
 
 struct starling_options : public starling_base_options
 {
-    typedef starling_options base_t;
-
     starling_options()
     {
         // set command-line defaults for starling only:
@@ -48,9 +46,6 @@ struct starling_options : public starling_base_options
         /// This scaling is not used for (1) indel candidate selection (2) somatic calling, or any other models outside of diploid genotyping
         isIndelErrorRateFactor = true;
         indelErrorRateFactor = 100.;
-
-        // TODO double-check with MK:
-        ///upstream_oligo_size = 10;
     }
 
     bool

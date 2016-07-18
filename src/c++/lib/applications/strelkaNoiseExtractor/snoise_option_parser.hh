@@ -38,9 +38,9 @@ po::options_description
 get_snoise_option_parser(snoise_options& opt);
 
 
-// validate options and process any required quick consistency
-// adjustments
-//
+/// validate options and process any required quick consistency
+/// adjustments
+///
 void
 finalize_snoise_options(
     const prog_info& pinfo,

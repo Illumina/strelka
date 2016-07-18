@@ -36,10 +36,8 @@
 #include <cmath>
 
 
-// starling max read size increases to the highest observed read size,
-// up to the following practical limit:
-//
-enum { STARLING_MAX_READ_SIZE = 25000 };
+/// this limit is set as an arbitrary sanity-check
+enum { STRELKA_MAX_READ_SIZE = 25000 };
 
 
 
@@ -48,7 +46,6 @@ struct starling_base_options : public blt_options
     typedef blt_options base_t;
 
     starling_base_options()
-//      : readConfidentSupportThreshold(readConfidentSupportThresholdDefault)
     {}
 
     virtual
@@ -70,7 +67,6 @@ struct starling_base_options : public blt_options
         return (not realigned_read_filename.empty());
     }
 
-    // parameters inherited from varling caller:
     //
     double bindel_diploid_theta = 0.0001;
 
@@ -240,8 +236,8 @@ struct indel_digt_caller;
 struct GenotypePriorSet;
 
 
-// data deterministically derived from the input options:
-//
+/// data deterministically derived from the input options:
+///
 struct starling_base_deriv_options : public blt_deriv_options
 {
     typedef blt_deriv_options base_t;

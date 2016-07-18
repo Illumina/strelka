@@ -134,9 +134,9 @@ strelka_run(
 
             // Approximate begin range filter: (removed for RNA-Seq)
             //if((current_pos+MAX_READ_SIZE+MAX_INDEL_SIZE) <= rlimit.begin_pos) continue;
-            process_genomic_read(opt,ref,streamData.getCurrentBamStreamer(),
-                                 streamData.getCurrentBam(),currentPos,
-                                 rlimit.begin_pos,brc,sppr,currentIndex);
+            processInputReadAlignment(opt, ref, streamData.getCurrentBamStreamer(),
+                                      streamData.getCurrentBam(), currentPos,
+                                      rlimit.begin_pos, brc, sppr, currentIndex);
         }
         else if (HTS_TYPE::VCF == currentHtsType)
         {

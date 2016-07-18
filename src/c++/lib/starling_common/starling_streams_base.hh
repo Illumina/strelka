@@ -43,9 +43,9 @@ struct starling_streams_base : public blt_streams
         const SampleSetSummary& si);
 
     bam_dumper*
-    realign_bam_ptr(const unsigned sample_no) const
+    realign_bam_ptr(const unsigned sampleIndex) const
     {
-        return _realign_bam_ptr[sample_no].get();
+        return _realign_bam_ptr[sampleIndex].get();
     }
 
     std::ostream*
@@ -62,9 +62,10 @@ protected:
 
     static
     std::ostream*
-    initialize_candidate_indel_file(const starling_base_options& opt,
-                                    const prog_info& pinfo,
-                                    const std::string& filename);
+    initialize_candidate_indel_file(
+        const starling_base_options& opt,
+        const prog_info& pinfo,
+        const std::string& filename);
 
     std::unique_ptr<bam_dumper> _realign_bam_ptr[MAX_SAMPLE];
 private:

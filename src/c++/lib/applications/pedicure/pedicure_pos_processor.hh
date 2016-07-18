@@ -22,12 +22,6 @@
 /// \author Chris Saunders
 ///
 
-///
-/// note coding convention for all ranges '_pos fields' is:
-/// XXX_begin_pos is zero-indexed position at the beginning of the range
-/// XXX_end_pos is zero-index position 1 step after the end of the range
-///
-
 #pragma once
 
 
@@ -81,9 +75,4 @@ private:
     DenovoCallableProcessor _icallProcessor;
 
     std::vector<CleanedPileup> _tier2_cpi;
-
-//    extra_position_data _tier2_epd[MAX_SAMPLE];
-
-//    unsigned _indelRegionIndexNormal;
-//    unsigned _indelRegionIndexTumor;
 };

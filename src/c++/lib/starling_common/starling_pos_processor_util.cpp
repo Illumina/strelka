@@ -100,10 +100,19 @@ is_valid_bam_seq(const bam_seq& bs)
     return true;
 }
 
+
+
+/// sanity-check bam record for general validity, and strelka-specific restrictions
+///
+/// most issues here will trigger an error/exit
+///
+/// \return false if read should be filtered
+///
 static
 bool
-check_bam_record(const bam_streamer& read_stream,
-                 const bam_record& read)
+checkBamRecord(
+    const bam_streamer& read_stream,
+    const bam_record& read)
 {
     const unsigned rs(read.read_size());
 
@@ -114,9 +123,9 @@ check_bam_record(const bam_streamer& read_stream,
         exit(EXIT_FAILURE);
     }
 
-    if (rs > STARLING_MAX_READ_SIZE)
+    if (rs > STRELKA_MAX_READ_SIZE)
     {
-        log_os << "ERROR: maximum read size (" << STARLING_MAX_READ_SIZE << ") exceeded in input read alignment record:\n";
+        log_os << "ERROR: maximum read size (" << STRELKA_MAX_READ_SIZE << ") exceeded in input read alignment record:\n";
         read_stream.report_state(log_os);
         exit(EXIT_FAILURE);
     }
@@ -241,12 +250,14 @@ get_map_level(const starling_base_options& opt,
 
 
 
+/// check if read is overdepth, but only if max input depth option is set
 static
 bool
-is_al_overdepth(const starling_base_options& opt,
-                const starling_pos_processor_base& sppr,
-                const unsigned sample_no,
-                const alignment& al)
+is_al_overdepth(
+    const starling_base_options& opt,
+    const starling_pos_processor_base& sppr,
+    const unsigned sample_no,
+    const alignment& al)
 {
     using namespace ALIGNPATH;
 
@@ -274,11 +285,8 @@ is_al_overdepth(const starling_base_options& opt,
 
 
 
-// handles genomic read alignments -- reads are parsed, their indels
-// are extracted and buffered, and the reads themselves are buffered
-//
 void
-process_genomic_read(
+processInputReadAlignment(
     const starling_base_options& opt,
     const reference_contig_segment& ref,
     const bam_streamer& read_stream,
@@ -287,9 +295,9 @@ process_genomic_read(
     const pos_t /*report_begin_pos*/,
     starling_read_counts& brc,
     starling_pos_processor_base& sppr,
-    const unsigned sample_no)
+    const unsigned sampleIndex)
 {
-    // Read filters which are *always* on, because Strelka
+    // Read filters which are *always* on, because we
     // can't do anything sensible with these reads. This filtration
     // is shared with the chrom depth estimation routine.
     //
@@ -307,33 +315,16 @@ process_genomic_read(
 
     MAPLEVEL::index_t maplev(get_map_level(opt,read));
 
-    // RNAseq modification, qscore 255 used as flag
-    // do not throw exception but rather ignore read
-    // logic implemented in check_bam_record
-    const bool allGood  = check_bam_record(read_stream,read);
-    if (!allGood)
+    const bool isKeepRecord(checkBamRecord(read_stream, read));
+    if (not isKeepRecord)
     {
 //        log_os << "Skipping read " << read << "\n";
         return;
     }
 
-    // secondary range filter check:
-    //   (removed as part of RNA-Seq modifications)
-    //
-    //if(base_pos+static_cast<pos_t>(read.read_size())+MAX_INDEL_SIZE <= report_begin_pos) return;
-
-
-
-    // extract indels and add to indel map:
-    //
-    // TODO: settle how to handle reads which fail mapping score but could be realigned
-    //
-    // include submapped reads for realignment only if we are writing out the realigned cases
-    // ** feature disabled for now -- unmapped reads are ignored unless they come from grouper
+    // sanity-check/filter/normalize the remaining mapped reads
     //
     {
-        //    if(is_usable_mapping or opt.is_realign_submapped_reads){ // or opt.is_realigned_read_file){
-
         // if we're seeing an unmapped read, it's still expected to
         // have a position and chrom assignment
         //
@@ -364,13 +355,13 @@ process_genomic_read(
                 return;
             }
 
-            if (is_al_overdepth(opt,sppr,sample_no,al))
+            if (is_al_overdepth(opt,sppr,sampleIndex,al))
             {
                 brc.max_depth++;
                 return;
             }
 
-            // normalize/left-shift the input alignment before inserting into the read buffer below:
+            // normalize/left-shift the input alignment
             const rc_segment_bam_seq refBamSeq(ref);
             const bam_seq readBamSeq(read.get_bam_read());
             normalizeAlignment(refBamSeq,readBamSeq,al);
@@ -380,7 +371,7 @@ process_genomic_read(
         try
         {
             const char* chrom_name(read_stream.target_id_to_name(read.target_id()));
-            sppr.insert_read(read,al,chrom_name,maplev,sample_no);
+            sppr.insert_read(read,al,chrom_name,maplev,sampleIndex);
         }
         catch (...)
         {
@@ -471,7 +462,7 @@ process_candidate_indel(
     const unsigned max_indel_size,
     const vcf_record& vcf_indel,
     starling_pos_processor_base& sppr,
-    const unsigned sample_no,
+    const unsigned sampleIndex,
     const bool is_forced_output)
 {
     assert (vcf_indel.is_indel());
@@ -487,6 +478,6 @@ process_candidate_indel(
         obs.data.is_external_candidate = true;
         obs.data.is_forced_output = is_forced_output;
 
-        sppr.insert_indel(obs,sample_no);
+        sppr.insert_indel(obs,sampleIndex);
     }
 }

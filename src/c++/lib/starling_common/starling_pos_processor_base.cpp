@@ -261,11 +261,12 @@ get_stage_data(
 }
 
 starling_pos_processor_base::
-starling_pos_processor_base(const starling_base_options& opt,
-                            const starling_base_deriv_options& dopt,
-                            const reference_contig_segment& ref,
-                            const starling_streams_base& streams,
-                            const unsigned n_samples)
+starling_pos_processor_base(
+    const starling_base_options& opt,
+    const starling_base_deriv_options& dopt,
+    const reference_contig_segment& ref,
+    const starling_streams_base& streams,
+    const unsigned sampleCount)
     : base_t()
     , _opt(opt)
     , _dopt(dopt)
@@ -277,7 +278,7 @@ starling_pos_processor_base(const starling_base_options& opt,
     , _largest_total_indel_ref_span_per_read(_largest_indel_ref_span)
     , _stageman(STAGE::get_stage_data(STARLING_INIT_LARGEST_READ_SIZE, get_largest_total_indel_ref_span_per_read(), _opt, _dopt),dopt.report_range,*this)
     , _chrom_name(_opt.bam_seq_name)
-    , _n_samples(n_samples)
+    , _n_samples(sampleCount)
     , _pileupCleaner(opt)
     , _indelBuffer(opt,dopt,ref)
     , _active_region_detector(ref, _indelBuffer, opt.max_indel_size)
@@ -286,9 +287,9 @@ starling_pos_processor_base(const starling_base_options& opt,
 
     const unsigned report_size(_dopt.report_range.size());
     const unsigned knownref_report_size(get_ref_seq_known_size(_ref,_dopt.report_range));
-    for (unsigned i(0); i<_n_samples; ++i)
+    for (auto& sampleVal : _sample)
     {
-        _sample[i].reset(new sample_info(_opt, ref, report_size,knownref_report_size,&_ric));
+        sampleVal.reset(new sample_info(_opt, ref, report_size, knownref_report_size, &_ric));
     }
 
     if (_opt.is_bsnp_nploid)
@@ -349,7 +350,7 @@ bool
 starling_pos_processor_base::
 update_largest_read_size(const unsigned rs)
 {
-    if (rs>STARLING_MAX_READ_SIZE) return false;
+    if (rs>STRELKA_MAX_READ_SIZE) return false;
 
     if (rs<=get_largest_read_size()) return true;
     _rmi.resize(rs);
@@ -531,7 +532,7 @@ insert_read(
     const alignment& al,
     const char* chrom_name,
     const MAPLEVEL::index_t maplev,
-    const unsigned sample_no)
+    const unsigned sampleIndex)
 {
     boost::optional<align_id_t> retval;
 
@@ -548,6 +549,7 @@ insert_read(
     // ok so long as we know it will not generate any candidate indels
     // in this region:
     //
+    /// TODO this should never happen, investigate/fix turn this into an assertion
     if (! _stageman.is_new_pos_value_valid(al.pos,STAGE::HEAD))
     {
         log_os << "WARNING: skipping alignment for read: " << read_key(br)
@@ -555,7 +557,7 @@ insert_read(
         return retval;
     }
 
-    starling_read_buffer& rbuff(sample(sample_no).read_buff);
+    starling_read_buffer& rbuff(sample(sampleIndex).read_buff);
 
     // check whether the read buffer has reached max capacity
     if (_opt.isMaxBufferedReads())
@@ -592,11 +594,11 @@ insert_read(
         assert(nullptr!=sread_ptr);
 
         // update depth-buffer for the whole read:
-        load_read_in_depth_buffer(sread_ptr->get_full_segment(),sample_no);
+        load_read_in_depth_buffer(sread_ptr->get_full_segment(),sampleIndex);
 
         // update other data for only the first read segment
         const seg_id_t seg_id(sread_ptr->is_segmented() ? 1 : 0 );
-        init_read_segment(sread_ptr->get_segment(seg_id),sample_no);
+        init_read_segment(sread_ptr->get_segment(seg_id),sampleIndex);
     }
 
     return retval;
@@ -675,12 +677,11 @@ load_read_in_depth_buffer(const read_segment& rseg,
 
 
 
-// only acts on genomic mapped reads:
 void
 starling_pos_processor_base::
 init_read_segment(
     const read_segment& rseg,
-    const unsigned sample_no)
+    const unsigned sampleIndex)
 {
     const alignment& al(rseg.genome_align());
     if (al.empty()) return;
@@ -693,10 +694,9 @@ init_read_segment(
     {
         const unsigned total_indel_ref_span_per_read =
             add_alignment_indels_to_sppr(_opt.max_indel_size,_ref,
-                                         al,bseq,*this,iat,rseg.id(),sample_no,rseg.get_segment_edge_pin(), rseg.map_qual() == 0);
+                                         al,bseq,*this,iat,rseg.id(),sampleIndex,rseg.get_segment_edge_pin(), rseg.map_qual() == 0);
 
         update_largest_total_indel_ref_span_per_read(total_indel_ref_span_per_read);
-
     }
     catch (...)
     {
@@ -780,18 +780,6 @@ get_realignment_range(const pos_t pos,
 
 
 
-// For all reads buffered at the current position:
-// 1) determine the set of candidate indels that the read overlaps
-// 2) determine the set of private indels within the read's discovery alignments
-// 3) Find the most likely alignment given both sets of indels
-// 4) evaluate the probability that the read supports each candidate indel vs. the reference
-//
-// these occur in subsequent methods:
-//
-// 5) process most-likely alignment for snp-calling
-// 5a) insert most-likely alignment into output read buffer (re-link within same data-structure?)
-// 6) remove read from input read buffer
-
 void
 starling_pos_processor_base::
 align_pos(const pos_t pos)
@@ -833,13 +821,6 @@ align_pos(const pos_t pos)
                 }
             }
         }
-
-#ifdef ESTDEPTH_DUMP
-        if (sif.estdepth_buff.val(pos)>0)
-        {
-            log_os << "ESTDEPTH: pos,val: " << pos << " " << sif.estdepth_buff.val(pos) << "\n";
-        }
-#endif
     }
 }
 
@@ -1215,8 +1196,9 @@ pileup_pos_reads(const pos_t pos)
 
 void
 starling_pos_processor_base::
-pileup_read_segment(const read_segment& rseg,
-                    const unsigned sample_no)
+pileup_read_segment(
+    const read_segment& rseg,
+    const unsigned sampleIndex)
 {
     // get the best alignment for the read:
     const alignment* best_al_ptr(&(rseg.genome_align()));
@@ -1444,16 +1426,16 @@ pileup_read_segment(const read_segment& rseg,
                 // update extended feature metrics (including submapped reads):
                 if (_opt.is_compute_germline_scoring_metrics())
                 {
-                    update_ranksum_and_mapq_count(ref_pos,sample_no,call_id,qscore,mapq,align_strand_read_pos,is_submapped);
+                    update_ranksum_and_mapq_count(ref_pos,sampleIndex,call_id,qscore,mapq,align_strand_read_pos,is_submapped);
                 }
                 else if (_opt.is_compute_somatic_scoring_metrics)
                 {
-                    update_somatic_features(ref_pos,sample_no,is_tier1,call_id,current_call_filter,mapq,read_pos,read_size);
+                    update_somatic_features(ref_pos,sampleIndex,is_tier1,call_id,current_call_filter,mapq,read_pos,read_size);
                 }
 
                 if (is_submapped)
                 {
-                    insert_pos_submap_count(ref_pos,sample_no);
+                    insert_pos_submap_count(ref_pos,sampleIndex);
                     continue;
                 }
 
@@ -1461,7 +1443,7 @@ pileup_read_segment(const read_segment& rseg,
 
                 if (_opt.is_compute_hapscore)
                 {
-                    insert_hap_cand(ref_pos,sample_no,is_tier1,
+                    insert_hap_cand(ref_pos,sampleIndex,is_tier1,
                                     bseq,qual,read_pos);
                 }
 
@@ -1474,7 +1456,7 @@ pileup_read_segment(const read_segment& rseg,
                                                    isLastBaseCallFromMatchSeg);
 
                     insert_pos_basecall(ref_pos,
-                                        sample_no,
+                                        sampleIndex,
                                         is_tier1,
                                         bc);
                 }
@@ -1504,11 +1486,11 @@ pileup_read_segment(const read_segment& rseg,
 
                     if (is_submapped)
                     {
-                        insert_pos_submap_count(ref_pos,sample_no);
+                        insert_pos_submap_count(ref_pos,sampleIndex);
                     }
                     else
                     {
-                        insert_pos_spandel_count(ref_pos,sample_no);
+                        insert_pos_spandel_count(ref_pos,sampleIndex);
                     }
                 }
             }
@@ -1563,22 +1545,5 @@ process_pos_site_stats(
     else
     {
         sif.wav.insert_null(pos);
-    }
-}
-
-
-
-const diploid_genotype&
-starling_pos_processor_base::
-get_empty_dgt(const char ref) const
-{
-    if (ref!='N')
-    {
-        return static_cast<const diploid_genotype&>(*_empty_dgt[base_to_id(ref)]);
-    }
-    else
-    {
-        static const diploid_genotype n_dgt;
-        return static_cast<const diploid_genotype&>(n_dgt);
     }
 }

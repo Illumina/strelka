@@ -49,9 +49,10 @@ initialize_realign_bam(
 
 std::ostream*
 starling_streams_base::
-initialize_candidate_indel_file(const starling_base_options& opt,
-                                const prog_info& pinfo,
-                                const std::string& filename)
+initialize_candidate_indel_file(
+    const starling_base_options& opt,
+    const prog_info& pinfo,
+    const std::string& filename)
 {
     const char* const cmdline(opt.cmdline.c_str());
 

@@ -43,7 +43,7 @@ usage(const char* xmessage) const
        "\n" << name() << " - estimate sequence error patterns from mapped reads\n"
        "\tversion: " << version() << "\n"
        "\n"
-       "usage: " << name() << " -bam-file file [options] > event_report\n"
+       "usage: " << name() << "[options] > event_report\n"
        "\n";
 
     static SequenceErrorCountsOptions default_opt;
