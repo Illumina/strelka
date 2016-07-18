@@ -35,29 +35,31 @@ snoise_pos_processor(
     : base_t(opt,dopt,ref,streams, opt.alignFileOpt.alignmentFilename.size()),
       _streams(streams)
 {
-    static const unsigned sampleId(0);
-
-    // setup indel syncronizers:
+    // setup indel buffer:
     {
-        sample_info& normal_sif(sample(sampleId));
-
-        double max_candidate_normal_sample_depth(-1.);
+        double maxIndelCandidateDepthSumOverNormalSamples(-1.);
 
         if (opt.max_candidate_indel_depth > 0.)
         {
-            if (max_candidate_normal_sample_depth > 0.)
+            if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
             {
-                max_candidate_normal_sample_depth = std::min(max_candidate_normal_sample_depth,static_cast<double>(opt.max_candidate_indel_depth));
+                maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,static_cast<double>(opt.max_candidate_indel_depth));
             }
             else
             {
-                max_candidate_normal_sample_depth = opt.max_candidate_indel_depth;
+                maxIndelCandidateDepthSumOverNormalSamples = opt.max_candidate_indel_depth;
             }
         }
 
-        const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                                      max_candidate_normal_sample_depth);
-        assert(syncSampleId == sampleId);
+        getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
+
+        const unsigned sampleCount(getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            sample_info& sif(sample(sampleIndex));
+            getIndelBuffer().registerSample(sif.estdepth_buff, sif.estdepth_buff_tier2, true);
+        }
+
         getIndelBuffer().finalizeSamples();
     }
 }

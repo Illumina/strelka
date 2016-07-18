@@ -75,7 +75,7 @@ pedicure_pos_processor(
 
     using namespace PEDICURE_SAMPLETYPE;
 
-    // setup indel syncronizer:
+    // setup indel buffer:
     {
         const unsigned sampleCount(getSampleCount());
         for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)

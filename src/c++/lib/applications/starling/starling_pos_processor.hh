@@ -31,7 +31,6 @@
 #include "starling_common/starling_pos_processor_base.hh"
 
 
-
 ///
 ///
 struct starling_pos_processor : public starling_pos_processor_base

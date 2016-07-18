@@ -101,35 +101,38 @@ starling_pos_processor(
                           sample(sampleId).bc_buff));
     }
 
-    // setup indel syncronizer:
+    // setup indel buffer:
     {
-        sample_info& normal_sif(sample(0));
+        double maxIndelCandidateDepthSumOverNormalSamples(-1.);
 
-        double max_candidate_normal_sample_depth(-1.);
         if (dopt.gvcf.is_max_depth())
         {
             if (opt.max_candidate_indel_depth_factor > 0.)
             {
-                max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.gvcf.max_depth);
+                maxIndelCandidateDepthSumOverNormalSamples = (opt.max_candidate_indel_depth_factor * dopt.gvcf.max_depth);
             }
         }
 
         if (opt.max_candidate_indel_depth > 0.)
         {
-            if (max_candidate_normal_sample_depth > 0.)
+            if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
             {
-                max_candidate_normal_sample_depth = std::min(max_candidate_normal_sample_depth,static_cast<double>(opt.max_candidate_indel_depth));
+                maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,static_cast<double>(opt.max_candidate_indel_depth));
             }
             else
             {
-                max_candidate_normal_sample_depth = opt.max_candidate_indel_depth;
+                maxIndelCandidateDepthSumOverNormalSamples = opt.max_candidate_indel_depth;
             }
         }
 
-        const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                                      max_candidate_normal_sample_depth);
+        getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
 
-        assert(syncSampleId == sampleId);
+        const unsigned sampleCount(getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        {
+            sample_info& sif(sample(sampleIndex));
+            getIndelBuffer().registerSample(sif.estdepth_buff, sif.estdepth_buff_tier2, true);
+        }
 
         getIndelBuffer().finalizeSamples();
     }

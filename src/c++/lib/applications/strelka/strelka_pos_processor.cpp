@@ -26,7 +26,6 @@
 #include "position_somatic_snv_strand_grid_vcf.hh"
 #include "somatic_indel_grid.hh"
 #include "strelka_pos_processor.hh"
-
 #include "blt_util/log.hh"
 #include "starling_common/starling_indel_report_info.hh"
 #include "starling_common/starling_pos_processor_base_stages.hh"
@@ -58,37 +57,38 @@ strelka_pos_processor(
     // set sample-specific parameter overrides:
     normal_sif.sample_opt.min_read_bp_flank = opt.normal_sample_min_read_bp_flank;
 
-    // setup indel syncronizer:
+    // setup indel buffer:
     {
-        double max_candidate_normal_sample_depth(-1.);
+        double maxIndelCandidateDepthSumOverNormalSamples(-1.);
         if (dopt.sfilter.is_max_depth())
         {
             if (opt.max_candidate_indel_depth_factor > 0.)
             {
-                max_candidate_normal_sample_depth = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_chrom_depth);
+                maxIndelCandidateDepthSumOverNormalSamples = (opt.max_candidate_indel_depth_factor * dopt.sfilter.max_chrom_depth);
             }
         }
 
         if (opt.max_candidate_indel_depth > 0.)
         {
-            if (max_candidate_normal_sample_depth > 0.)
+            if (maxIndelCandidateDepthSumOverNormalSamples > 0.)
             {
-                max_candidate_normal_sample_depth = std::min(max_candidate_normal_sample_depth,static_cast<double>(opt.max_candidate_indel_depth));
+                maxIndelCandidateDepthSumOverNormalSamples = std::min(maxIndelCandidateDepthSumOverNormalSamples,static_cast<double>(opt.max_candidate_indel_depth));
             }
             else
             {
-                max_candidate_normal_sample_depth = opt.max_candidate_indel_depth;
+                maxIndelCandidateDepthSumOverNormalSamples = opt.max_candidate_indel_depth;
             }
         }
 
+        getIndelBuffer().setMaxCandidateDepth(maxIndelCandidateDepthSumOverNormalSamples);
+
         /// TODO: setup a stronger sample id handler -- using the version from manta would be a good start here
         sample_id_t sample_id;
-        sample_id = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                    max_candidate_normal_sample_depth);
+        sample_id = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2, true);
 
         assert(sample_id == NORMAL);
 
-        sample_id = getIndelBuffer().registerSample(tumor_sif.estdepth_buff, tumor_sif.estdepth_buff_tier2, -1.);
+        sample_id = getIndelBuffer().registerSample(tumor_sif.estdepth_buff, tumor_sif.estdepth_buff_tier2, false);
 
         assert(sample_id == TUMOR);
 

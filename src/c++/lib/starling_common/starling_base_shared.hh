@@ -116,7 +116,9 @@ struct starling_base_options : public blt_options
     int max_read_indel_toggle = 5; // if a read samples more than max indel changes, we skip realignment
     double max_candidate_indel_density = 0.15; // max number of candidate indels per read base, if exceeded search is curtailed to toggle depth=1
 
-    // max estimated read depth for indels to reach candidacy for realignment and indel calling. Non-positive value disables this
+    // max estimated read depth for indels to reach candidacy for realignment and indel calling. If estimated
+    // depth summed over all (non-tumor) samples exceeds this value in any sample, candidacy is disabled.
+    // Non-positive value turns this filter off.
     int max_candidate_indel_depth = -1;
 
     // depth factor above filtration filter cutoff where

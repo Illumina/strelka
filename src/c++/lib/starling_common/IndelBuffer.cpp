@@ -37,11 +37,11 @@ IndelBuffer::
 registerSample(
     const depth_buffer& db,
     const depth_buffer& db2,
-    const double max_depth)
+    const bool isCountTowardsDepthFilter)
 {
     assert(! _isFinalized);
     const unsigned sampleIndex(_indelSampleData.size());
-    _indelSampleData.emplace_back(db,db2,max_depth);
+    _indelSampleData.emplace_back(db,db2,isCountTowardsDepthFilter);
     return sampleIndex;
 }
 
@@ -264,17 +264,21 @@ isCandidateIndelImplTest(
     //
     // test against max_depth:
     //
-    const unsigned sampleCount(getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    if (_maxCandidateDepth > 0.)
     {
-        const double max_depth(getIndelSampleData(sampleIndex).max_depth);
-        if (max_depth <= 0.) continue;
+        const pos_t depthPos(indelKey.pos-1);
+        const unsigned sampleCount(getSampleCount());
+        double estimatedLocusDepth(0);
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            if (not getIndelSampleData(sampleIndex).isCountTowardsDepthFilter) continue;
 
-        const unsigned estdepth(ebuff(sampleIndex).val(indelKey.pos-1));
-        const unsigned estdepth2(ebuff2(sampleIndex).val(indelKey.pos-1));
-        if ((estdepth+estdepth2) > max_depth) return false;
+            const unsigned estdepth(ebuff(sampleIndex).val(depthPos));
+            const unsigned estdepth2(ebuff2(sampleIndex).val(depthPos));
+            estimatedLocusDepth += (estdepth + estdepth2);
+        }
+        if (estimatedLocusDepth > _maxCandidateDepth) return false;
     }
-
     return true;
 }
 
@@ -350,4 +354,12 @@ dump(std::ostream& os) const
     os << "INDEL_BUFFER DUMP ON\n";
     dump_range(_indelBuffer.begin(),_indelBuffer.end(),os);
     os << "INDEL_BUFFER DUMP OFF\n";
+}
+
+void
+IndelBuffer::
+setMaxCandidateDepth(
+    const double maxCandidateDepth)
+{
+    _maxCandidateDepth = maxCandidateDepth;
 }

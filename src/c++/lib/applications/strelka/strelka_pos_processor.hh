@@ -48,7 +48,6 @@ struct strelka_pos_processor : public starling_pos_processor_base
         const reference_contig_segment& ref,
         const strelka_streams& streams);
 
-
     void
     insert_noise_pos(
         const pos_t pos,

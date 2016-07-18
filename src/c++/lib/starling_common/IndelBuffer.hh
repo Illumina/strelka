@@ -48,11 +48,23 @@ struct IndelBuffer
     {}
 
     /// prior to executing any other functions, each sample must be registered:
+    ///
+    /// \param[in] isCountTowardsDepthFilter if true, sample is included in the set used to determine depth filtration
+    ///                                      (typically only tumors are excluded)
+    ///
     unsigned
     registerSample(
         const depth_buffer& db,
         const depth_buffer& db2,
-        const double max_depth);
+        const bool isCountTowardsDepthFilter);
+
+    /// filter candidates where depth summed over all indicated samples is higher than max depth
+    ///
+    /// \param[in] maxCandidateDepth max candidate depth, any value greater than zero enables the filter
+    ///
+    void
+    setMaxCandidateDepth(
+        const double maxCandidateDepth);
 
     /// registration must be followed with a finalization step:
     void
@@ -63,9 +75,9 @@ struct IndelBuffer
     }
 
     typedef IndelData indel_buffer_value_t;
-    typedef std::map<IndelKey,indel_buffer_value_t> indel_buffer_t;
-    typedef indel_buffer_t::iterator iterator;
-    typedef indel_buffer_t::const_iterator const_iterator;
+    typedef std::map<IndelKey,indel_buffer_value_t> indel_buffer_data_t;
+    typedef indel_buffer_data_t::iterator iterator;
+    typedef indel_buffer_data_t::const_iterator const_iterator;
 
     /// \returns true if this indel is novel to the buffer
     ///
@@ -184,21 +196,21 @@ struct IndelBuffer
 
 private:
 
-    /// helper struct for indel_syncronizer
+    /// helper struct for IndelBuffer
     struct IndelBufferSampleData
     {
         IndelBufferSampleData(
             const depth_buffer& db,
             const depth_buffer& db2,
-            const double init_max_depth)
+            const bool initIsCountTowardsDepthFilter)
             : dbp(&db)
             , dbp2(&db2)
-            , max_depth(init_max_depth)
+            , isCountTowardsDepthFilter(initIsCountTowardsDepthFilter)
         {}
 
         const depth_buffer* dbp;
         const depth_buffer* dbp2;
-        double max_depth;
+        bool isCountTowardsDepthFilter; ///< if false, this sample is ignored for depth filtration purposes (typically tumors)
     };
 
     /// test whether the indel should be promoted to
@@ -266,8 +278,9 @@ private:
     const min_count_binom_gte_cache& _countCache;
 
     bool _isFinalized = false;
+    double _maxCandidateDepth = -1.0;
     indelSampleData_t _indelSampleData;
-    indel_buffer_t _indelBuffer;
+    indel_buffer_data_t _indelBuffer;
 };
 
 

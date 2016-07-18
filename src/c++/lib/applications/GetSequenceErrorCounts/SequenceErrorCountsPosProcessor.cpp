@@ -39,6 +39,10 @@ SequenceErrorCountsPosProcessor(
       _opt(opt),
       _streams(streams)
 {
+    // not generalized to multi-sample yet:
+    assert(getSampleCount()==1);
+    static const unsigned sampleId(0);
+
     // check that we have write permission on the output file early:
     {
         OutStream outs(opt.countsFilename);
@@ -48,9 +52,7 @@ SequenceErrorCountsPosProcessor(
         }
     }
 
-    static const unsigned sampleId(0);
-
-    // setup indel syncronizer:
+    // setup indel buffer
     {
         sample_info& normal_sif(sample(sampleId));
 
@@ -74,8 +76,9 @@ SequenceErrorCountsPosProcessor(
             }
         }
 
-        const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2,
-                                                                      _max_candidate_normal_sample_depth);
+        getIndelBuffer().setMaxCandidateDepth(_max_candidate_normal_sample_depth);
+
+        const unsigned syncSampleId = getIndelBuffer().registerSample(normal_sif.estdepth_buff, normal_sif.estdepth_buff_tier2, true);
 
         assert(syncSampleId == sampleId);
 
