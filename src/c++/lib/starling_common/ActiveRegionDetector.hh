@@ -35,7 +35,8 @@
 #include <set>
 
 /// An agent that detects active regions
-class ActiveRegionDetector {
+class ActiveRegionDetector
+{
 public:
     static const unsigned MaxBufferSize = 1000;
     static const unsigned MaxDepth = 1000;
@@ -48,23 +49,23 @@ public:
     static const int ScoreOffEdge = -100;
 
     ActiveRegionDetector(
-            const reference_contig_segment& ref,
-            IndelBuffer& indelBuffer,
-            unsigned maxDeletionSize,
-            unsigned maxDetectionWindowSize = 30,
-            unsigned minNumMismatchesPerPosition = 9,
-            unsigned minNumVariantsPerRegion = 2) :
-            _ref(ref),
-            _indelBuffer(indelBuffer),
-            _maxDeletionSize(maxDeletionSize),
-            _maxDetectionWindowSize(maxDetectionWindowSize),
-            _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
-            _minNumVariantsPerRegion(minNumVariantsPerRegion),
-            _variantCounter(MaxBufferSize),
-            _positionToAlignIds(MaxBufferSize),
-            _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
-            _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
-            _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
+        const reference_contig_segment& ref,
+        IndelBuffer& indelBuffer,
+        unsigned maxDeletionSize,
+        unsigned maxDetectionWindowSize = 30,
+        unsigned minNumMismatchesPerPosition = 9,
+        unsigned minNumVariantsPerRegion = 2) :
+        _ref(ref),
+        _indelBuffer(indelBuffer),
+        _maxDeletionSize(maxDeletionSize),
+        _maxDetectionWindowSize(maxDetectionWindowSize),
+        _minNumMismatchesPerPosition(minNumMismatchesPerPosition),
+        _minNumVariantsPerRegion(minNumVariantsPerRegion),
+        _variantCounter(MaxBufferSize),
+        _positionToAlignIds(MaxBufferSize),
+        _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
+        _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
+        _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
     {
         _bufferStartPos = 0;
 
@@ -84,7 +85,8 @@ public:
     }
     bool isPolymorphicSite(const pos_t pos) const;
 
-    enum VariantType {
+    enum VariantType
+    {
         MATCH,
         MISMATCH,
         DELETE,

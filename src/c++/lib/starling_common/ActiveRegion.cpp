@@ -39,7 +39,7 @@ void ActiveRegion::insertHaplotypeBase(align_id_t align_id, pos_t pos, const std
 }
 
 // decompose haplotypes into primitive alleles
-void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites) const
+void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const
 {
     std::map<std::string, std::vector<align_id_t>> haplotypeToAlignIdSet;
     for (const auto& entry : _alignIdToHaplotype)
@@ -94,10 +94,10 @@ void ActiveRegion::processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySit
 }
 
 void ActiveRegion::convertToPrimitiveAlleles(
-        const std::string &haploptypeSeq,
-        const std::vector<align_id_t> & /*alignIdList*/,
-        IndelBuffer & /*indelBuffer*/,
-        RangeSet &polySites) const
+    const std::string& haploptypeSeq,
+    const std::vector<align_id_t>& /*alignIdList*/,
+    IndelBuffer& /*indelBuffer*/,
+    RangeSet& polySites) const
 {
     AlignmentResult<int> result;
     _aligner.align(haploptypeSeq.begin(),haploptypeSeq.end(),_refSeq.begin(),_refSeq.end(),result);
@@ -119,27 +119,27 @@ void ActiveRegion::convertToPrimitiveAlleles(
 
     for (unsigned pathIndex(0); pathIndex<alignPath.size(); ++pathIndex)
     {
-        const ALIGNPATH::path_segment &pathSegment(alignPath[pathIndex]);
+        const ALIGNPATH::path_segment& pathSegment(alignPath[pathIndex]);
         unsigned segmentLength = pathSegment.length;
 
         switch (pathSegment.type)
         {
-            case ALIGNPATH::SEQ_MATCH:
-                referencePos += segmentLength;
-                haplotypePosOffset += segmentLength;
-                break;
-            case ALIGNPATH::SEQ_MISMATCH:
-                for (unsigned i(0); i<segmentLength; ++i)
-                {
-//                    std::cout << "Poly\t" << (pos+1) << std::endl;
-                    polySites.getRef(referencePos) = 1;
-                    ++referencePos;
-                    ++haplotypePosOffset;
-                }
-                break;
-            case ALIGNPATH::INSERT:
-            case ALIGNPATH::SOFT_CLIP:
+        case ALIGNPATH::SEQ_MATCH:
+            referencePos += segmentLength;
+            haplotypePosOffset += segmentLength;
+            break;
+        case ALIGNPATH::SEQ_MISMATCH:
+            for (unsigned i(0); i<segmentLength; ++i)
             {
+//                    std::cout << "Poly\t" << (pos+1) << std::endl;
+                polySites.getRef(referencePos) = 1;
+                ++referencePos;
+                ++haplotypePosOffset;
+            }
+            break;
+        case ALIGNPATH::INSERT:
+        case ALIGNPATH::SOFT_CLIP:
+        {
 //                IndelObservation indelObservation;
 //                indelObservation.key.pos = pos;
 //                indelObservation.key.type = INDEL::INSERT;
@@ -147,11 +147,11 @@ void ActiveRegion::convertToPrimitiveAlleles(
 //                indelObservation.data.insert_seq = haploptypeSeq.substr(haplotypeIndex, segmentLength);
 //                indelObservation.data.is_discovered_in_active_region = true;
 //                indelBuffer.addIndelObservation(sampleId, indelObservation);
-                haplotypePosOffset += segmentLength;
-                break;
-            }
-            case ALIGNPATH::DELETE:
-            {
+            haplotypePosOffset += segmentLength;
+            break;
+        }
+        case ALIGNPATH::DELETE:
+        {
 //                IndelObservation indelObservation;
 //                indelObservation.key.pos = pos;
 //                indelObservation.key.type = INDEL::DELETE;
@@ -159,11 +159,11 @@ void ActiveRegion::convertToPrimitiveAlleles(
 //                indelObservation.data.is_discovered_in_active_region = true;
 //                indelBuffer.addIndelObservation(sampleId, indelObservation);
 
-                referencePos += segmentLength;
-                break;
-            }
-            default:
-                assert(false && "Unexpected alignment segment");
+            referencePos += segmentLength;
+            break;
+        }
+        default:
+            assert(false && "Unexpected alignment segment");
         }
     }
 }

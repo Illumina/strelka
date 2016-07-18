@@ -1,7 +1,7 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Manta - Structural Variant and Indel Caller
-// Copyright (c) 2013-2016 Illumina, Inc.
+// Strelka - Small Variant Caller
+// Copyright (c) 2009-2016 Illumina, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -50,9 +50,9 @@ dumpSingleRefTable(
     boost::io::ios_all_saver guard(os);
 
     auto printVal = [](
-                    const ScoreType& val,
-                    const char fromSym,
-                    std::ostream& pos)
+                        const ScoreType& val,
+                        const char fromSym,
+                        std::ostream& pos)
     {
         if (val<-900)
         {
@@ -66,7 +66,7 @@ dumpSingleRefTable(
     };
 
     auto printQueryRow = [&](
-        const unsigned qrefIndex)
+                             const unsigned qrefIndex)
     {
         for (unsigned queryIndex(0); queryIndex <= querySize; ++queryIndex)
         {

@@ -67,8 +67,11 @@ public:
         return pos >= _start && pos <= _end;
     }
     void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
-    void processHaplotypes(IndelBuffer &indelBuffer, RangeSet &polySites) const;
-    const std::string& getReferenceSeq() const { return _refSeq; }
+    void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const;
+    const std::string& getReferenceSeq() const
+    {
+        return _refSeq;
+    }
 
 private:
     pos_t _start;
@@ -80,8 +83,8 @@ private:
     std::set<align_id_t> _alignIdReachingEnd;
 
     void convertToPrimitiveAlleles(
-            const std::string &haploptypeSeq,
-            const std::vector<align_id_t> &alignIdList,
-            IndelBuffer &indelBuffer,
-            RangeSet &polySites) const;
+        const std::string& haploptypeSeq,
+        const std::vector<align_id_t>& alignIdList,
+        IndelBuffer& indelBuffer,
+        RangeSet& polySites) const;
 };

@@ -173,20 +173,20 @@ void ActiveRegionDetector::setHaplotypeBase(const align_id_t id, const pos_t pos
     const auto variant = _variantInfo[idIndex][posIndex];
     switch (variant)
     {
-        case MATCH:
-            base = _ref.get_base(pos);
-            break;
-        case MISMATCH:
-            base = std::string(1, _snvBuffer[idIndex][posIndex]);
-            break;
-        case DELETE:
-            base = "";
-            break;
-        case INSERT:
-            base = _ref.get_base(pos) + _insertSeqBuffer[idIndex][posIndex];
-            break;
-        case MISMATCH_INSERT:
-            base = _snvBuffer[idIndex][posIndex] + _insertSeqBuffer[idIndex][posIndex];
+    case MATCH:
+        base = _ref.get_base(pos);
+        break;
+    case MISMATCH:
+        base = std::string(1, _snvBuffer[idIndex][posIndex]);
+        break;
+    case DELETE:
+        base = "";
+        break;
+    case INSERT:
+        base = _ref.get_base(pos) + _insertSeqBuffer[idIndex][posIndex];
+        break;
+    case MISMATCH_INSERT:
+        base = _snvBuffer[idIndex][posIndex] + _insertSeqBuffer[idIndex][posIndex];
     }
 }
 
