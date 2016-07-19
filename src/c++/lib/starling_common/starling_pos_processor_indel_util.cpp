@@ -423,6 +423,12 @@ add_alignment_indels_to_sppr(
                                         is_pinned_indel);
                 }
             }
+            else if (ps.type == SOFT_CLIP)
+            {
+                active_region_detector.insertSoftClipStart(ref_head_pos);
+                if (is_begin_edge) active_region_detector.insertSoftClipStart(ref_head_pos - 1);
+                else active_region_detector.insertSoftClipStart(ref_head_pos + 1);
+            }
         }
         else if (is_swap_start)
         {
@@ -443,7 +449,7 @@ add_alignment_indels_to_sppr(
                                  sppr,obs,sample_no,
                                  path_index,read_offset,ref_head_pos);
         }
-        else if (!is_mapq_zero && sppr.is_active_region_detector_enabled() && is_segment_align_match(ps.type))
+        else if (sppr.is_active_region_detector_enabled() && !is_mapq_zero && is_segment_align_match(ps.type))
         {
             // detect active regions (match/mismatch)
             for (unsigned j(0); j < ps.length; ++j)

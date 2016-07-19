@@ -39,6 +39,12 @@ ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, 
 }
 
 void
+ActiveRegionDetector::insertSoftClipStart(const pos_t pos)
+{
+    addCount(pos, 1);
+}
+
+void
 ActiveRegionDetector::insertIndel(const IndelObservation& indelObservation)
 {
     auto pos = indelObservation.key.pos;
@@ -91,7 +97,7 @@ void
 ActiveRegionDetector::updateEndPosition(const pos_t pos)
 {
     bool isCurrentPosCandidateVariant = isCandidateVariant(pos);
-    if (pos - _activeRegionStartPos  >= (int)_maxDetectionWindowSize && pos - _prevVariantPos > 1)
+    if ((pos - _activeRegionStartPos  >= (int)_maxDetectionWindowSize && pos - _prevVariantPos > 1) || (pos - _prevVariantPos >= 15))
     {
         // this position doesn't extend the existing active region
         if (_numVariants >= _minNumVariantsPerRegion)
@@ -100,6 +106,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             std::string refStr = "";
             _ref.get_substring(_activeRegionStartPos, _prevVariantPos - _activeRegionStartPos + 1, refStr);
             _activeRegions.emplace_back(_activeRegionStartPos, _prevVariantPos, refStr, _aligner);
+//            std::cout << _activeRegionStartPos+1 << '\t' << _prevVariantPos+1 << '\t' << refStr << std::endl;
             ActiveRegion& activeRegion(_activeRegions.back());
             // add haplotype bases
             for (pos_t activeRegionPos(_activeRegionStartPos); activeRegionPos<=_prevVariantPos; ++activeRegionPos)

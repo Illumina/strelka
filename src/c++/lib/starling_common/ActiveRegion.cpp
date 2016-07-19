@@ -56,8 +56,9 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
     }
 
     // determine threshold to select 2 haplotypes with the largest counts
-    unsigned largestCount = 0;
-    unsigned secondLargestCount = 0;
+    unsigned largestCount = 2;
+    unsigned secondLargestCount = 2;
+    unsigned thirdLargestCount = 2;
     unsigned totalCount = 0;
     for (const auto& entry : haplotypeToAlignIdSet)
     {
@@ -66,15 +67,24 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
 
         auto count = entry.second.size();
         totalCount += count;
-        if (count > secondLargestCount)
+        if (count > thirdLargestCount)
         {
-            if (count > largestCount)
+            if (count > secondLargestCount)
             {
-                secondLargestCount = largestCount;
-                largestCount = (unsigned)count;
+                if (count > largestCount)
+                {
+                    thirdLargestCount = secondLargestCount;
+                    secondLargestCount = largestCount;
+                    largestCount = (unsigned)count;
+                }
+                else
+                {
+                    thirdLargestCount = secondLargestCount;
+                    secondLargestCount = (unsigned)count;
+                }
             }
             else
-                secondLargestCount = (unsigned)count;
+                thirdLargestCount = (unsigned)count;
         }
     }
 
@@ -85,10 +95,11 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
 
         const auto& alignIdList(entry.second);
         auto numReads = alignIdList.size();
-        if (numReads >= secondLargestCount && numReads >= totalCount*HaplotypeFrequencyThreshold)
+        if (numReads >= thirdLargestCount)
         {
 //            std::cout << haplotype << std::endl;
-            convertToPrimitiveAlleles(haplotype, alignIdList, indelBuffer, polySites);
+            convertToPrimitiveAlleles(haplotype, alignIdList, numReads >= totalCount*HaplotypeFrequencyThreshold,
+                                      indelBuffer, polySites);
         }
     }
 }
@@ -96,6 +107,7 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
 void ActiveRegion::convertToPrimitiveAlleles(
     const std::string& haploptypeSeq,
     const std::vector<align_id_t>& /*alignIdList*/,
+    const bool relaxMMDF,
     IndelBuffer& /*indelBuffer*/,
     RangeSet& polySites) const
 {
@@ -113,7 +125,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 //        indelObservation.key.length = result.align.beginPos;
 //        indelObservation.data.is_discovered_in_active_region = true;
 //        indelBuffer.addIndelObservation(sampleId, indelObservation);
-
+        std::cout << "DELETE\t" << (referencePos+1) << '\t' << _refSeq.substr(referencePos-_start, result.align.beginPos) << std::endl;
         referencePos += result.align.beginPos;
     }
 
@@ -132,7 +144,8 @@ void ActiveRegion::convertToPrimitiveAlleles(
             for (unsigned i(0); i<segmentLength; ++i)
             {
 //                    std::cout << "Poly\t" << (pos+1) << std::endl;
-                polySites.getRef(referencePos) = 1;
+                if (relaxMMDF)
+                    polySites.getRef(referencePos) = 1;
                 ++referencePos;
                 ++haplotypePosOffset;
             }
@@ -147,6 +160,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 //                indelObservation.data.insert_seq = haploptypeSeq.substr(haplotypeIndex, segmentLength);
 //                indelObservation.data.is_discovered_in_active_region = true;
 //                indelBuffer.addIndelObservation(sampleId, indelObservation);
+            std::cout << "INSERT\t" << (referencePos+1) << '\t' << haploptypeSeq.substr(haplotypePosOffset, segmentLength) << std::endl;
             haplotypePosOffset += segmentLength;
             break;
         }
@@ -158,7 +172,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
 //                indelObservation.key.length = segmentLength;
 //                indelObservation.data.is_discovered_in_active_region = true;
 //                indelBuffer.addIndelObservation(sampleId, indelObservation);
-
+            std::cout << "DELETE\t" << (referencePos+1) << '\t' << _refSeq.substr(referencePos-_start, segmentLength) << std::endl;
             referencePos += segmentLength;
             break;
         }
