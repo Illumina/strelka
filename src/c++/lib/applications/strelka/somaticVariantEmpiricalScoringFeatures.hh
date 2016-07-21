@@ -53,17 +53,12 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
     enum index_t
     {
         QSS_NT,
-        N_FDP_RATE,
-        T_FDP_RATE,
-        N_SDP_RATE,
-        T_SDP_RATE,
         N_DP_RATE,
         TIER1_ALT_RATE,
         MQ,
-        n_mapq0,
+		MQ0_FRAC,
         strandBias,
         ReadPosRankSum,
-        MQ0_FRAC,
         LOR,
         SIZE
     };
@@ -76,28 +71,18 @@ struct SOMATIC_SNV_SCORING_FEATURES : public FeatureSet
         {
         case QSS_NT:
             return "QSS_NT";
-        case N_FDP_RATE:
-            return "N_FDP_RATE";
-        case T_FDP_RATE:
-            return "T_FDP_RATE";
-        case N_SDP_RATE:
-            return "N_SDP_RATE";
-        case T_SDP_RATE:
-            return "T_SDP_RATE";
-        case N_DP_RATE:
-            return "N_DP_RATE";
         case TIER1_ALT_RATE:
             return "TIER1_ALT_RATE";
         case MQ:
             return "MQ";
-        case n_mapq0:
-            return "n_mapq0";
+        case MQ0_FRAC:
+            return "MQ0_FRAC";
         case strandBias:
             return "strandBias";
         case ReadPosRankSum:
             return "ReadPosRankSum";
-        case MQ0_FRAC:
-            return "MQ0_FRAC";
+        case N_DP_RATE:
+            return "N_DP_RATE";
         case LOR:
             return "LogOddsRatio";
         default:
@@ -154,6 +139,10 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
     {
         altmap,
         altpos,
+		N_FDP_RATE,
+		T_FDP_RATE,
+		N_SDP_RATE,
+		T_SDP_RATE,
         SIZE
     };
 
@@ -167,6 +156,14 @@ struct SOMATIC_SNV_SCORING_DEVELOPMENT_FEATURES : public FeatureSet
             return "altmap";
         case altpos:
             return "altpos";
+        case N_FDP_RATE:
+            return "N_FDP_RATE";
+        case T_FDP_RATE:
+            return "T_FDP_RATE";
+        case N_SDP_RATE:
+            return "N_SDP_RATE";
+        case T_SDP_RATE:
+            return "T_SDP_RATE";
         default:
             assert(false && "Unknown feature");
             return nullptr;
