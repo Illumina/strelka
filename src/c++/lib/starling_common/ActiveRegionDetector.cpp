@@ -38,11 +38,11 @@ ActiveRegionDetector::insertMismatch(const align_id_t alignId, const pos_t pos, 
     addAlignIdToPos(alignId, pos);
 }
 
-void
-ActiveRegionDetector::insertSoftClipStart(const pos_t pos)
-{
-    addCount(pos, 1);
-}
+//void
+//ActiveRegionDetector::insertSoftClipStart(const pos_t pos)
+//{
+//    addCount(pos, 1);
+//}
 
 void
 ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservation& indelObservation)
@@ -109,7 +109,7 @@ ActiveRegionDetector::updateEndPosition(const pos_t pos)
             // close existing active region
             std::string refStr = "";
             _ref.get_substring(_activeRegionStartPos, _prevVariantPos - _activeRegionStartPos + 1, refStr);
-            _activeRegions.emplace_back(_activeRegionStartPos, _prevVariantPos, refStr, _aligner);
+            _activeRegions.emplace_back(_activeRegionStartPos, _prevVariantPos, refStr, _aligner, _alignIdToAlignInfo);
 //            std::cout << _activeRegionStartPos+1 << '\t' << _prevVariantPos+1 << '\t' << refStr << std::endl;
             ActiveRegion& activeRegion(_activeRegions.back());
             // add haplotype bases

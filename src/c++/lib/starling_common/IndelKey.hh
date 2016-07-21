@@ -158,12 +158,15 @@ struct IndelKey
     void
     validate() const;
 
+//    bool
+//    isOrthogonal(IndelKey other) const;
+
     pos_t pos;
     INDEL::index_t type;
     unsigned deletionLength;
     std::string insertSequence; ///< insert sequence used for complete types only, not for breakends
 
-
+//    unsigned activeRegionId;
 };
 
 

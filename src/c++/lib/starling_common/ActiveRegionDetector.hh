@@ -39,7 +39,7 @@ class ActiveRegionDetector
 {
 public:
     static const unsigned MaxBufferSize = 1000;
-    static const unsigned MaxDepth = 1000;
+    static const unsigned MaxDepth = ActiveRegion::MaxDepth;
 
     // alignment scores, same as bwa default values
     static const int ScoreMatch = 1;
@@ -47,6 +47,7 @@ public:
     static const int ScoreOpen = -5;
     static const int ScoreExtend = -1;
     static const int ScoreOffEdge = -100;
+
 
     ActiveRegionDetector(
         const reference_contig_segment& ref,
@@ -63,6 +64,7 @@ public:
         _minNumVariantsPerRegion(minNumVariantsPerRegion),
         _variantCounter(MaxBufferSize),
         _positionToAlignIds(MaxBufferSize),
+        _alignIdToAlignInfo(MaxDepth),
         _variantInfo(MaxDepth, std::vector<VariantType>(MaxBufferSize, VariantType())),
         _insertSeqBuffer(MaxDepth, std::vector<std::string>(MaxBufferSize, std::string())),
         _aligner(AlignmentScores<int>(ScoreMatch, ScoreMismatch, ScoreOpen, ScoreExtend, ScoreOffEdge, ScoreOpen, true, true))
@@ -77,9 +79,17 @@ public:
     void insertMatch(const align_id_t alignId, const pos_t pos);
     void insertMismatch(const align_id_t alignId, const pos_t pos, const char baseChar);
     void insertIndel(const unsigned sampleId, const IndelObservation& indelObservation);
-    void insertSoftClipStart(const pos_t pos);
+//    void insertSoftClipStart(const pos_t pos);
     void updateStartPosition(const pos_t pos);
     void updateEndPosition(const pos_t pos);
+
+    inline void setAlignInfo(const align_id_t alignId, unsigned sampleId, INDEL_ALIGN_TYPE::index_t indelAlignType)
+    {
+        AlignInfo& alignInfo = _alignIdToAlignInfo[alignId % MaxDepth];
+        alignInfo.sampleId = sampleId;
+        alignInfo.indelAlignType = indelAlignType;
+    }
+
     bool isEmpty() const
     {
         return _activeRegions.empty();
@@ -115,6 +125,10 @@ private:
 
     // for haplotypes
     std::vector<std::vector<align_id_t>> _positionToAlignIds;
+
+    // to store align information
+    std::vector<AlignInfo> _alignIdToAlignInfo;
+
     std::vector<std::vector<VariantType>> _variantInfo;
     std::vector<std::vector<std::string>> _insertSeqBuffer;
     char _snvBuffer[MaxDepth][MaxBufferSize];

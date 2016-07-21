@@ -36,16 +36,27 @@
 
 typedef RangeMap<pos_t,unsigned char> RangeSet;
 
+struct AlignInfo
+{
+    AlignInfo() {}
+
+    unsigned sampleId;
+    INDEL_ALIGN_TYPE::index_t indelAlignType;
+};
+
 /// Represent all haplotypes found in the current active region
 class ActiveRegion
 {
 public:
+    static const unsigned MaxDepth = 1000;
+    static const unsigned MinHaplotypeCount = 3;
     const float HaplotypeFrequencyThreshold = 0.4; // minimum haplotype frequency to be considered in MMDF relaxation
     const char missingPrefix = '.';
 
-    ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalAligner<int>& aligner):
+    ActiveRegion(pos_t start, pos_t end, const std::string& refSeq, const GlobalAligner<int>& aligner, const std::vector<AlignInfo>& alignIdToAlignInfo):
         _start(start), _end(end), _refSeq(refSeq),
         _aligner(aligner),
+        _alignIdToAlignInfo(alignIdToAlignInfo),
         _alignIdToHaplotype(),
         _alignIdReachingEnd()
     {}
@@ -66,18 +77,15 @@ public:
     {
         return pos >= _start && pos <= _end;
     }
-    void insertHaplotypeBase(align_id_t align_id, pos_t pos, const std::string& base);
+    void insertHaplotypeBase(align_id_t alignId, pos_t pos, const std::string& base);
     void processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySites) const;
-    const std::string& getReferenceSeq() const
-    {
-        return _refSeq;
-    }
 
 private:
     pos_t _start;
     pos_t _end;
     const std::string& _refSeq;
     const GlobalAligner<int> _aligner;
+    const std::vector<AlignInfo>&  _alignIdToAlignInfo;
 
     std::map<align_id_t, std::string> _alignIdToHaplotype;
     std::set<align_id_t> _alignIdReachingEnd;

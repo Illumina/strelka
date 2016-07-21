@@ -274,10 +274,12 @@ void
 IndelBuffer::
 isCandidateIndelImpl(
     const IndelKey& indelKey,
-    const IndelData& indelData) const
+    const IndelData& indelData,
+    const bool setIsCandidateIndel) const
 {
     const bool is_candidate(isCandidateIndelImplTest(indelKey, indelData));
-    indelData.status.is_candidate_indel = is_candidate;
+    if (setIsCandidateIndel)
+        indelData.status.is_candidate_indel = is_candidate;
     indelData.status.is_candidate_indel_cached = true;
 }
 

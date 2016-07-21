@@ -346,6 +346,10 @@ add_alignment_indels_to_sppr(
     const unsigned aps(al.path.size());
 
     auto& active_region_detector(sppr.get_active_region_detector());
+    if (sppr.is_active_region_detector_enabled())
+    {
+        active_region_detector.setAlignInfo(id, sample_no, iat);
+    }
 
     while (path_index<aps)
     {
@@ -424,12 +428,16 @@ add_alignment_indels_to_sppr(
                                         is_pinned_indel);
                 }
             }
-            else if (ps.type == SOFT_CLIP)
-            {
-                active_region_detector.insertSoftClipStart(ref_head_pos);
-                if (is_begin_edge) active_region_detector.insertSoftClipStart(ref_head_pos - 1);
-                else active_region_detector.insertSoftClipStart(ref_head_pos + 1);
-            }
+//            else if (ps.type == SOFT_CLIP)
+//            {
+//                if(sppr.is_active_region_detector_enabled() && !is_mapq_zero)
+//                {
+//                    // soft clips may trigger active regions
+//                    active_region_detector.insertSoftClipStart(ref_head_pos);
+//                    if (is_begin_edge) active_region_detector.insertSoftClipStart(ref_head_pos - 1);
+//                    else active_region_detector.insertSoftClipStart(ref_head_pos + 1);
+//                }
+//            }
         }
         else if (is_swap_start)
         {
@@ -470,12 +478,6 @@ add_alignment_indels_to_sppr(
                 }
             }
         }
-
-//        if (sppr.is_active_region_detector_enabled() && !is_mapq_zero && obs.key.type != INDEL::NONE)
-//        {
-//            // detect active region (indel)
-//            active_region_detector.insertIndel(obs);
-//        }
 
         for (unsigned i(0); i<n_seg; ++i)
         {

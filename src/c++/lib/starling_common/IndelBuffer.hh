@@ -146,7 +146,10 @@ struct IndelBuffer
     {
         if (! indelData.status.is_candidate_indel_cached)
         {
-            isCandidateIndelImpl(indelKey, indelData);
+            bool setIsCandidateIndel = !_opt.is_short_haplotyping_enabled || indelData.is_external_candidate;
+            // if short haplotyping is enabled, do not set isCandidateIndel for internal candidates
+            // because indel candidacy is determined exclusively in active regions
+            isCandidateIndelImpl(indelKey, indelData, setIsCandidateIndel);
         }
         return indelData.status.is_candidate_indel;
     }
@@ -180,6 +183,12 @@ struct IndelBuffer
 
     void
     dump(std::ostream& os) const;
+
+    void
+    isCandidateIndelImpl(
+            const IndelKey& indelKey,
+            const IndelData& indelData,
+            const bool setIsCandidateIndel) const;
 
 private:
 
@@ -215,11 +224,6 @@ private:
 
     bool
     isCandidateIndelImplTest(
-        const IndelKey& indelKey,
-        const IndelData& indelData) const;
-
-    void
-    isCandidateIndelImpl(
         const IndelKey& indelKey,
         const IndelData& indelData) const;
 

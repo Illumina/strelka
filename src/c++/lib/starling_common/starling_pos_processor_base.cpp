@@ -859,7 +859,7 @@ process_pos(const int stage_no,
         init_read_segment_pos(pos);
         if (is_active_region_detector_enabled())
         {
-            _active_region_detector.updateEndPosition(pos-1);
+            _active_region_detector.updateEndPosition(pos);
 
         }
 
