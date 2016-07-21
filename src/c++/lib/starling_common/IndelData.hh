@@ -46,6 +46,7 @@ struct IndelObservationData
     bool is_noise = false;
     bool is_external_candidate = false; ///< if true, the allele is automatically promoted to candidate status
     bool is_forced_output = false; ///< if true, the allele must be scored in output
+    bool is_low_map_quality = false;
     INDEL_ALIGN_TYPE::index_t iat = INDEL_ALIGN_TYPE::GENOME_SUBMAP_READ;
     align_id_t id = 0;
 

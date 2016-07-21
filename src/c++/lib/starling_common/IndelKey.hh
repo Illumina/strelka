@@ -162,6 +162,8 @@ struct IndelKey
     INDEL::index_t type;
     unsigned deletionLength;
     std::string insertSequence; ///< insert sequence used for complete types only, not for breakends
+
+
 };
 
 

@@ -45,35 +45,39 @@ ActiveRegionDetector::insertSoftClipStart(const pos_t pos)
 }
 
 void
-ActiveRegionDetector::insertIndel(const IndelObservation& indelObservation)
+ActiveRegionDetector::insertIndel(const unsigned sampleId, const IndelObservation& indelObservation)
 {
     auto pos = indelObservation.key.pos;
     const int indelCount = 4;
 
     auto alignId = indelObservation.data.id;
     auto indelKey = indelObservation.key;
-    if (indelKey.isPrimitiveInsertionAllele())
+    if (!indelObservation.data.is_low_map_quality)
     {
-        addCount(pos - 1, indelCount);
-        addCount(pos, indelCount);
-        setInsert(alignId, pos - 1, indelObservation.key.insert_seq());
-        addAlignIdToPos(alignId, pos - 1);
-    }
-    else if (indelKey.isPrimitiveDeletionAllele())
-    {
-        unsigned length = indelObservation.key.deletionLength;
-        for (unsigned i(0); i<length; ++i)
+        if (indelKey.isPrimitiveInsertionAllele())
         {
-            addCount(pos + i, indelCount);
-            setDelete(alignId, pos + i);
-            addAlignIdToPos(alignId, pos + i);
+            addCount(pos - 1, indelCount);
+            addCount(pos, indelCount);
+            setInsert(alignId, pos - 1, indelObservation.key.insert_seq());
+            addAlignIdToPos(alignId, pos - 1);
         }
-        addCount(pos - 1, indelCount);
+        else if (indelKey.isPrimitiveDeletionAllele())
+        {
+            unsigned length = indelObservation.key.deletionLength;
+            for (unsigned i(0); i<length; ++i)
+            {
+                addCount(pos + i, indelCount);
+                setDelete(alignId, pos + i);
+                addAlignIdToPos(alignId, pos + i);
+            }
+            addCount(pos - 1, indelCount);
+        }
+        else
+        {
+            // ignore BP_LEFT, BP_RIGHT, SWAP
+        }
     }
-    else
-    {
-        // ignore BP_LEFT, BP_RIGHT, SWAP
-    }
+    _indelBuffer.addIndelObservation(sampleId, indelObservation);
 }
 
 void

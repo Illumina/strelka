@@ -100,6 +100,25 @@ void ActiveRegion::processHaplotypes(IndelBuffer& indelBuffer, RangeSet& polySit
 //            std::cout << haplotype << std::endl;
             convertToPrimitiveAlleles(haplotype, alignIdList, numReads >= totalCount*HaplotypeFrequencyThreshold,
                                       indelBuffer, polySites);
+//            if (haplotype != _refSeq)
+//            {
+//                IndelKey indelKey(_start, INDEL::INDEL, getLength(), haplotype.c_str());
+//                for (auto alignId : alignIdList)
+//                {
+//                    IndelObservationData indelObservationData;
+//                    indelObservationData.iat = INDEL_ALIGN_TYPE::GENOME_TIER1_READ; // TODO: this may not be accurate
+//                    indelObservationData.id = alignId;
+//                    indelBuffer.addIndelObservation(0, {indelKey, indelObservationData}); // TODO: sample id is assumed to be 0
+//                }
+//                indelBuffer.getIndelDataPtr(indelKey)->status = {true, true};   // set as a candidate indel
+//            }
+//                IndelObservation indelObservation;
+//                indelObservation.key.pos = pos;
+//                indelObservation.key.type = INDEL::DELETE;
+//                indelObservation.key.length = segmentLength;
+//                indelObservation.data.is_discovered_in_active_region = true;
+//                indelBuffer.addIndelObservation(sampleId, indelObservation);
+
         }
     }
 }
@@ -119,13 +138,7 @@ void ActiveRegion::convertToPrimitiveAlleles(
     pos_t haplotypePosOffset = 0;
     if (result.align.beginPos > 0)
     {
-//        IndelObservation indelObservation;
-//        indelObservation.key.pos = pos;
-//        indelObservation.key.type = INDEL::DELETE;
-//        indelObservation.key.length = result.align.beginPos;
-//        indelObservation.data.is_discovered_in_active_region = true;
-//        indelBuffer.addIndelObservation(sampleId, indelObservation);
-        std::cout << "DELETE\t" << (referencePos+1) << '\t' << _refSeq.substr(referencePos-_start, result.align.beginPos) << std::endl;
+//        std::cout << "DELETE\t" << (referencePos+1) << '\t' << _refSeq.substr(referencePos-_start, result.align.beginPos) << std::endl;
         referencePos += result.align.beginPos;
     }
 
@@ -143,7 +156,6 @@ void ActiveRegion::convertToPrimitiveAlleles(
         case ALIGNPATH::SEQ_MISMATCH:
             for (unsigned i(0); i<segmentLength; ++i)
             {
-//                    std::cout << "Poly\t" << (pos+1) << std::endl;
                 if (relaxMMDF)
                     polySites.getRef(referencePos) = 1;
                 ++referencePos;
@@ -153,26 +165,13 @@ void ActiveRegion::convertToPrimitiveAlleles(
         case ALIGNPATH::INSERT:
         case ALIGNPATH::SOFT_CLIP:
         {
-//                IndelObservation indelObservation;
-//                indelObservation.key.pos = pos;
-//                indelObservation.key.type = INDEL::INSERT;
-//                indelObservation.key.length = segmentLength;
-//                indelObservation.data.insert_seq = haploptypeSeq.substr(haplotypeIndex, segmentLength);
-//                indelObservation.data.is_discovered_in_active_region = true;
-//                indelBuffer.addIndelObservation(sampleId, indelObservation);
-            std::cout << "INSERT\t" << (referencePos+1) << '\t' << haploptypeSeq.substr(haplotypePosOffset, segmentLength) << std::endl;
+//            std::cout << "INSERT\t" << (referencePos+1) << '\t' << haploptypeSeq.substr(haplotypePosOffset, segmentLength) << std::endl;
             haplotypePosOffset += segmentLength;
             break;
         }
         case ALIGNPATH::DELETE:
         {
-//                IndelObservation indelObservation;
-//                indelObservation.key.pos = pos;
-//                indelObservation.key.type = INDEL::DELETE;
-//                indelObservation.key.length = segmentLength;
-//                indelObservation.data.is_discovered_in_active_region = true;
-//                indelBuffer.addIndelObservation(sampleId, indelObservation);
-            std::cout << "DELETE\t" << (referencePos+1) << '\t' << _refSeq.substr(referencePos-_start, segmentLength) << std::endl;
+//            std::cout << "DELETE\t" << (referencePos+1) << '\t' << _refSeq.substr(referencePos-_start, segmentLength) << std::endl;
             referencePos += segmentLength;
             break;
         }

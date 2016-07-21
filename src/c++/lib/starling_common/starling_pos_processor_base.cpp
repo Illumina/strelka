@@ -416,7 +416,7 @@ reset()
 
 
 
-bool
+void
 starling_pos_processor_base::
 insert_indel(
     const IndelObservation& obs,
@@ -467,10 +467,15 @@ insert_indel(
         const unsigned len(std::min(static_cast<unsigned>((obs.key.delete_length())),_opt.max_indel_size));
         update_largest_indel_ref_span(len);
 
-        bool is_novel(getIndelBuffer().addIndelObservation(sampleId, obs));
+        if (is_active_region_detector_enabled())
+        {
+            _active_region_detector.insertIndel(sampleId, obs);
+        }
+        else
+        {
+            getIndelBuffer().addIndelObservation(sampleId, obs);
+        }
         if (obs.data.is_forced_output) _is_skip_process_pos=false;
-
-        return is_novel;
     }
     catch (...)
     {
@@ -478,6 +483,8 @@ insert_indel(
         throw;
     }
 }
+
+
 
 void
 starling_pos_processor_base::

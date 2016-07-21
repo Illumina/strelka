@@ -364,6 +364,7 @@ add_alignment_indels_to_sppr(
         IndelObservation obs;
         obs.data.iat = iat;
         obs.data.id = id;
+        obs.data.is_low_map_quality = is_mapq_zero;
 
         if (! is_segment_align_match(ps.type))
         {
@@ -470,11 +471,11 @@ add_alignment_indels_to_sppr(
             }
         }
 
-        if (sppr.is_active_region_detector_enabled() && !is_mapq_zero && obs.key.type != INDEL::NONE)
-        {
-            // detect active region (indel)
-            active_region_detector.insertIndel(obs);
-        }
+//        if (sppr.is_active_region_detector_enabled() && !is_mapq_zero && obs.key.type != INDEL::NONE)
+//        {
+//            // detect active region (indel)
+//            active_region_detector.insertIndel(obs);
+//        }
 
         for (unsigned i(0); i<n_seg; ++i)
         {

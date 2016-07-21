@@ -46,6 +46,9 @@ struct starling_options : public starling_base_options
         /// This scaling is not used for (1) indel candidate selection (2) somatic calling, or any other models outside of diploid genotyping
         isIndelErrorRateFactor = true;
         indelErrorRateFactor = 100.;
+
+        // turn on short haplotying
+        is_short_haplotyping_enabled = true;
     }
 
     bool

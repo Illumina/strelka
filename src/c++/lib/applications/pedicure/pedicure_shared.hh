@@ -69,9 +69,6 @@ struct pedicure_options : public starling_base_options
     pedicure_options()
     {
         is_bam_filename_used = false;
-
-        // turn off short haplotying
-        is_short_haplotyping_enabled = false;
     }
 
     bool

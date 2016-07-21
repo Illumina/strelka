@@ -106,7 +106,7 @@ struct starling_pos_processor_base : public pos_processor_base, private boost::n
     //
     // returns true if this indel is novel to the buffer
     //
-    bool
+    void
     insert_indel(const IndelObservation& obs,
                  const unsigned sampleId);
 

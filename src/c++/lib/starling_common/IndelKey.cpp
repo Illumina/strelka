@@ -62,7 +62,6 @@ validate() const
 }
 
 
-
 std::ostream&
 operator<<(
     std::ostream& os,
