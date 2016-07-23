@@ -47,15 +47,6 @@ enum index_t
     PloidyConflict,
     OffTarget,
     LowGQX,
-    LowQscoreHetSNP,
-    LowQscoreHomSNP,
-    LowQscoreHetAltSNP,
-    LowQscoreHetIns,
-    LowQscoreHomIns,
-    LowQscoreHetAltIns,
-    LowQscoreHetDel,
-    LowQscoreHomDel,
-    LowQscoreHetAltDel,
     PhasingConflict,
     HighBaseFilt,
     HighDepth,
@@ -75,24 +66,6 @@ get_label(const unsigned idx)
         return "HighDepth";
     case LowGQX:
         return "LowGQX";
-    case LowQscoreHetSNP:
-        return "LowGQXHetSNP";
-    case LowQscoreHomSNP:
-        return "LowGQXHomSNP";
-    case LowQscoreHetAltSNP:
-        return "LowGQXHetAltSNP";
-    case LowQscoreHetIns:
-        return "LowGQXHetIns";
-    case LowQscoreHomIns:
-        return "LowGQXHomIns";
-    case LowQscoreHetAltIns:
-        return "LowGQXHetAltIns";
-    case LowQscoreHetDel:
-        return "LowGQXHetDel";
-    case LowQscoreHomDel:
-        return "LowGQXHomDel";
-    case LowQscoreHetAltDel:
-        return "LowGQXHetAltDel";
     case PhasingConflict:
         return "PhasingConflict";
     case HighSNVSB:
