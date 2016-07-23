@@ -39,7 +39,7 @@
 
 
 void
-GermlineVariantSimpleGenotypeInfo::
+LocusFilterKeeper::
 write_filters(std::ostream& os) const
 {
     if (filters.none())

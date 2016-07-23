@@ -92,23 +92,9 @@ get_label(const unsigned idx)
 }
 
 
-/// this object contains information shared by any germline variant allele
-///
-/// variant here means SNV or indel
-///
-/// SimpleGenotype here means information pertaining to the core genotyping algorithm for SNVs or Indels (where for indels this genotype is
-///    restricted to a single alt allele). This information is suplemnted with additional details requred for full VCF records in the "Call"
-///    objects further below
-///
-/// model types where this is used include diploid/haploid and continuous single sample calling, but not contrastive (ie. tumor-normal) models
-///
-struct GermlineVariantSimpleGenotypeInfo : public PolymorphicObject
-{
-    GermlineVariantSimpleGenotypeInfo()
-    {
-        clear();
-    }
 
+struct LocusFilterKeeper
+{
     void
     set_filter(const GERMLINE_VARIANT_VCF_FILTERS::index_t i)
     {
@@ -127,11 +113,39 @@ struct GermlineVariantSimpleGenotypeInfo : public PolymorphicObject
     void
     clear()
     {
+        filters.reset();
+    }
+
+private:
+    std::bitset<GERMLINE_VARIANT_VCF_FILTERS::SIZE> filters;
+};
+
+
+
+/// this object contains information shared by any germline variant allele
+///
+/// variant here means SNV or indel
+///
+/// SimpleGenotype here means information pertaining to the core genotyping algorithm for SNVs or Indels (where for indels this genotype is
+///    restricted to a single alt allele). This information is suplemnted with additional details requred for full VCF records in the "Call"
+///    objects further below
+///
+/// model types where this is used include diploid/haploid and continuous single sample calling, but not contrastive (ie. tumor-normal) models
+///
+struct GermlineVariantSimpleGenotypeInfo : public PolymorphicObject
+{
+    GermlineVariantSimpleGenotypeInfo()
+    {
+        clear();
+    }
+
+    void
+    clear()
+    {
         gqx = 0;
         gq = 0;
         strand_bias = 0;
         empiricalVariantScore = -1;
-        filters.reset();
     }
 
     int gqx=0;
@@ -140,8 +154,6 @@ struct GermlineVariantSimpleGenotypeInfo : public PolymorphicObject
 
     // The empirically calibrated quality-score of the site, if -1 no EVS is available
     int empiricalVariantScore = -1;
-
-    std::bitset<GERMLINE_VARIANT_VCF_FILTERS::SIZE> filters;
 };
 
 
@@ -382,6 +394,7 @@ struct GermlineIndelCallInfo
     virtual pos_t end() const = 0;
 
     pos_t pos;
+    LocusFilterKeeper filterKeeper;
 };
 
 
@@ -416,7 +429,7 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
     }
     void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
-        for (auto& x : _calls) x.set_filter(filter);
+        filterKeeper.set_filter(filter);
     }
 
     pos_t end() const override;
@@ -570,6 +583,8 @@ struct GermlineSiteCallInfo : public PolymorphicObject
     bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
     bool forcedOutput = false;
 
+    LocusFilterKeeper filterKeeper;
+
 private:
     std::array<unsigned,N_BASE> fwd_counts;
     std::array<unsigned,N_BASE> rev_counts;
@@ -603,7 +618,7 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
 
     void set_filter (GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
-        smod.set_filter(filter);
+        filterKeeper.set_filter(filter);
     }
 
     const char*
@@ -716,7 +731,7 @@ struct GermlineContinuousSiteCallInfo : public GermlineSiteCallInfo
     }
     void set_filter (GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
-        for (auto& call : calls) call.set_filter(filter);
+        filterKeeper.set_filter(filter);
     }
     bool is_nonref() const override
     {
@@ -758,7 +773,7 @@ struct GermlineContinuousIndelCallInfo : public GermlineIndelCallInfo
 
     void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
     {
-        for (auto& call : calls) call.set_filter(filter);
+        filterKeeper.set_filter(filter);
     }
 
 
