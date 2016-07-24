@@ -417,7 +417,7 @@ void indel_overlapper::modify_indel_overlap_site(
     // this interacts poorly with empirical scoring)
     if (! ii.filters.none())
     {
-        si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
+        si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
     }
 
 #ifdef DEBUG_GVCF
@@ -433,7 +433,7 @@ void indel_overlapper::modify_indel_overlap_site(
     {
         if (DIGT::is_het(si.smod.max_gt))
         {
-            si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
+            si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
             //si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
         }
         else
@@ -456,12 +456,12 @@ void indel_overlapper::modify_indel_overlap_site(
             si.smod.is_zero_ploidy=true;
             if (si.dgt.is_noploid())
             {
-                si.filters.unset_filter(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+                si.filters.unset(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
             }
         }
         else
         {
-            si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
+            si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
         }
     }
     else if (ploidy!=2)
@@ -478,7 +478,7 @@ void indel_overlapper::modify_indel_overlap_site(
 
 void indel_overlapper::modify_indel_conflict_site(GermlineDiploidSiteLocusInfo& si)
 {
-    si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
+    si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 }
 
 // figure out the per-site ploidy inside of indel based on each haplotype's match descriptor:
@@ -522,7 +522,7 @@ indel_overlapper::modify_conflict_indel_record()
     {
         ii->first().set_hap_cigar();
 
-        ii->set_filter(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
+        ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 
         _CM.classify_indel(*ii, ii->first());
     }

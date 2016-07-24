@@ -74,7 +74,7 @@ void bed_stream_processor::process(std::unique_ptr<GermlineSiteLocusInfo> si)
         if (_current_record == nullptr || si->pos < _current_record->begin || si->pos >= _current_record->end)
         {
             // TODO: make sure we don't apply to stuff we shouldn't? No coverage? I dunno
-            si->set_filter(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
+            si->filters.set(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
         }
     }
     _sink->process(std::move(si));
@@ -88,7 +88,7 @@ void bed_stream_processor::process(std::unique_ptr<GermlineIndelLocusInfo> ii)
         // include indels if they start in a targeted region
         if (_current_record == nullptr || ii->pos < _current_record->begin || ii->pos >= _current_record->end)
         {
-            ii->set_filter(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
+            ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
         }
     }
     _sink->process(std::move(ii));

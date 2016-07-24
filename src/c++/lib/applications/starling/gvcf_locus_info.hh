@@ -115,19 +115,19 @@ struct LocusFilterKeeper
     }
 
     void
-    set_filter(const GERMLINE_VARIANT_VCF_FILTERS::index_t i)
+    set(const GERMLINE_VARIANT_VCF_FILTERS::index_t i)
     {
         filters.set(i);
     }
 
     void
-    unset_filter(const GERMLINE_VARIANT_VCF_FILTERS::index_t i)
+    unset(const GERMLINE_VARIANT_VCF_FILTERS::index_t i)
     {
         filters.reset(i);
     }
 
     void
-    write_filters(std::ostream& os) const;
+    write(std::ostream& os) const;
 
     bool
     operator==(const LocusFilterKeeper& rhs) const
@@ -161,11 +161,6 @@ struct LocusInfo : public PolymorphicObject
     clear()
     {
         filters.clear();
-    }
-
-    void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter)
-    {
-        filters.set_filter(filter);
     }
 
     LocusFilterKeeper filters;

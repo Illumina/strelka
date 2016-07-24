@@ -104,7 +104,7 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineSiteLocusInfo> inf
         {
             if (! si->is_print_unknowngt())
             {
-                si->filters.set_filter(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+                si->filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
             }
         }
 
@@ -134,7 +134,7 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelLocusInfo> in
         // add filter for all indels in no-ploid regions:
         if (ii->first()._dindel.is_noploid())
         {
-            ii->set_filter(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+            ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
         }
 
         _sink->process(std::move(ii));

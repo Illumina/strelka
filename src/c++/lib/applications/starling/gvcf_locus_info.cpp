@@ -40,7 +40,7 @@
 
 void
 LocusFilterKeeper::
-write_filters(std::ostream& os) const
+write(std::ostream& os) const
 {
     if (filters.none())
     {
