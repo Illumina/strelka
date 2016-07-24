@@ -56,9 +56,9 @@ public:
         return _codon_phaser && _codon_phaser->is_in_block();
     }
 
-    void add_site(std::unique_ptr<GermlineSiteCallInfo> si);
+    void add_site(std::unique_ptr<GermlineSiteLocusInfo> si);
 
-    void add_indel(std::unique_ptr<GermlineIndelCallInfo> info);
+    void add_indel(std::unique_ptr<GermlineIndelLocusInfo> info);
     void reset();
 
 private:

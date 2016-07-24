@@ -75,7 +75,7 @@ double starling_continuous_variant_caller::strand_bias(
 void starling_continuous_variant_caller::position_snp_call_continuous(
     const starling_base_options& opt,
     const snp_pos_info& good_pi,
-    GermlineContinuousSiteCallInfo& info)
+    GermlineContinuousSiteLocusInfo& info)
 {
     unsigned totalDepth = info.spanning_deletions;
     for (unsigned base_id(0); base_id<N_BASE; ++base_id)
@@ -89,7 +89,7 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
         auto vf = info.alleleObservationCounts(base_id) / (double)totalDepth;
         if (vf > opt.min_het_vf || force)
         {
-            GermlineContinuousSiteSimpleGenotypeInfo call(totalDepth, info.alleleObservationCounts(base_id), (BASE_ID::index_t)base_id);
+            GermlineContinuousSiteAlleleInfo call(totalDepth, info.alleleObservationCounts(base_id), (BASE_ID::index_t)base_id);
             call.gqx = call.gq = poisson_qscore(info.alleleObservationCounts(base_id), totalDepth, (unsigned)opt.min_qscore, 40);
 
             if (ref_base_id != base_id)
@@ -117,7 +117,7 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
 
                 call.strand_bias = strand_bias(fwdAlt, revAlt, fwdOther, revOther, opt.noise_floor);
             }
-            info.calls.push_back(call);
+            info.altAlleles.push_back(call);
         }
     };
 
@@ -126,7 +126,7 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
     {
         generateCallInfo(base_id, info.forcedOutput);
     }
-    if (info.calls.empty())
+    if (info.altAlleles.empty())
     {
         // force at least a call for the reference so that we can assign filters to the locus (filters are in the calls)
         generateCallInfo(ref_base_id, true);
@@ -142,22 +142,22 @@ void starling_continuous_variant_caller::add_indel_call(
     const IndelData& indelData,
     const starling_indel_report_info& indelReportInfo,
     const starling_indel_sample_report_info& indelSampleReportInfo,
-    GermlineContinuousIndelCallInfo& info)
+    GermlineContinuousIndelLocusInfo& info)
 {
     // determine VF
     double vf = indelSampleReportInfo.n_confident_indel_reads / ((double)indelSampleReportInfo.total_confident_reads());
     if (vf > opt.min_het_vf || indelData.is_forced_output)
     {
-        info.calls.emplace_back(
+        info.altAlleles.emplace_back(
             gvcfDerivedOptions,
             indelSampleReportInfo.total_confident_reads(), indelSampleReportInfo.n_confident_indel_reads,
             indelKey, indelData, indelReportInfo, indelSampleReportInfo);
-        GermlineContinuousIndelSimpleGenotypeInfo& call = info.calls.back();
+        GermlineContinuousIndelAlleleInfo& call = info.altAlleles.back();
         call.gqx = call.gq = poisson_qscore(indelSampleReportInfo.n_confident_indel_reads, indelSampleReportInfo.total_confident_reads(), (unsigned)opt.min_qscore, 40);
     }
-    if (!info.calls.empty())
+    if (!info.altAlleles.empty())
     {
-        info.is_het = info.calls.size() > 1 || info.calls.front().variant_frequency() < (1-opt.min_het_vf);
+        info.is_het = info.altAlleles.size() > 1 || info.altAlleles.front().variant_frequency() < (1-opt.min_het_vf);
     }
 }
 

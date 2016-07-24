@@ -66,7 +66,7 @@ struct Codon_phaser : public variant_pipe_stage_base
     static
     bool
     is_phasable_site(
-        const std::unique_ptr<GermlineDiploidSiteCallInfo>& si)
+        const std::unique_ptr<GermlineDiploidSiteLocusInfo>& si)
     {
         return (si->dgt.is_snp && si->is_het());
     }
@@ -83,8 +83,8 @@ struct Codon_phaser : public variant_pipe_stage_base
         return block_start != -1;
     }
 
-    void process(std::unique_ptr<GermlineSiteCallInfo> si) override;
-    void process(std::unique_ptr<GermlineIndelCallInfo> ii) override;
+    void process(std::unique_ptr<GermlineSiteLocusInfo> si) override;
+    void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override;
 
 private:
     void flush_impl() override;
@@ -92,7 +92,7 @@ private:
     /// add site to buffer
     ///
     /// \returns true when the buffer should be printed as a phased block
-    bool add_site(std::unique_ptr<GermlineDiploidSiteCallInfo> si);
+    bool add_site(std::unique_ptr<GermlineDiploidSiteLocusInfo> si);
 
     void make_record();                 // make phased record
 
@@ -107,7 +107,7 @@ private:
     void output_buffer();
 
 
-    std::vector<std::unique_ptr<GermlineDiploidSiteCallInfo>> _buffer;
+    std::vector<std::unique_ptr<GermlineDiploidSiteLocusInfo>> _buffer;
     const starling_options& opt;
     const pos_basecall_buffer& bc_buff;  // pass along the relevant pileup buffer
     const reference_contig_segment& ref;

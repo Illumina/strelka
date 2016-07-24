@@ -72,8 +72,8 @@ ScoringModelManager(
 void
 ScoringModelManager::
 classify_site(
-    GermlineDiploidSiteCallInfo& si,
-    GermlineDiploidSiteSimpleGenotypeInfo& smod) const
+    GermlineDiploidSiteLocusInfo& si,
+    GermlineDiploidSiteAlleleInfo& smod) const
 {
     if (si.dgt.is_snp && _isReportEVSFeatures)
     {
@@ -113,7 +113,7 @@ classify_site(
 
 bool
 ScoringModelManager::
-checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const
+checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const
 {
     const auto& call(ii.first());
     return ((call._indelReportInfo.it == SimplifiedIndelReportType::INSERT ||
@@ -127,8 +127,8 @@ checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const
 void
 ScoringModelManager::
 set_indel_modifiers(
-    const GermlineDiploidIndelCallInfo& ii,
-    GermlineDiploidIndelSimpleGenotypeInfo& call) const
+    const GermlineDiploidIndelLocusInfo& ii,
+    GermlineDiploidIndelAlleleInfo& call) const
 {
     const auto& dindel(ii.first()._dindel);
     if ((dindel.max_gt != dindel.max_gt_poly) || dindel.is_zero_coverage)
@@ -149,8 +149,8 @@ void
 ScoringModelManager::
 classify_indel_impl(
     const bool isVariantUsableInEVSModel,
-    GermlineDiploidIndelCallInfo& ii,
-    GermlineDiploidIndelSimpleGenotypeInfo& call) const
+    GermlineDiploidIndelLocusInfo& ii,
+    GermlineDiploidIndelAlleleInfo& call) const
 {
     set_indel_modifiers(ii, call);
 
@@ -191,8 +191,8 @@ classify_indel_impl(
 void
 ScoringModelManager::
 classify_indel(
-    GermlineDiploidIndelCallInfo& ii,
-    GermlineDiploidIndelSimpleGenotypeInfo& call) const
+    GermlineDiploidIndelLocusInfo& ii,
+    GermlineDiploidIndelAlleleInfo& call) const
 {
     classify_indel_impl(checkIsVariantUsableInEVSModel(ii),ii,call);
 }
@@ -202,7 +202,7 @@ classify_indel(
 void
 ScoringModelManager::
 classify_indels(
-    std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indels) const
+    std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>>& indels) const
 {
     bool isVariantUsableInEVSModel = true;
     for (const auto& indel : indels)
@@ -213,7 +213,7 @@ classify_indels(
 
     for (auto& indel : indels)
     {
-        GermlineDiploidIndelCallInfo& ii(*indel);
+        GermlineDiploidIndelLocusInfo& ii(*indel);
         classify_indel_impl(isVariantUsableInEVSModel,ii,ii.first());
     }
 }
@@ -223,8 +223,8 @@ classify_indels(
 void
 ScoringModelManager::
 default_classify_site(
-    GermlineSiteCallInfo& si,
-    const GermlineVariantSimpleGenotypeInfo& call) const
+    GermlineSiteLocusInfo& si,
+    const GermlineVariantAlleleInfo& call) const
 {
     if (_opt.is_min_gqx)
     {
@@ -262,8 +262,8 @@ default_classify_site(
 void
 ScoringModelManager::
 default_classify_indel(
-    GermlineIndelCallInfo& ii,
-    const GermlineIndelSimpleGenotypeInfo& call) const
+    GermlineIndelLocusInfo& ii,
+    const GermlineIndelAlleleInfo& call) const
 {
     if (this->_opt.is_min_gqx)
     {

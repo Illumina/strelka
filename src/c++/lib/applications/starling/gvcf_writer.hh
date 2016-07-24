@@ -52,15 +52,15 @@ struct gvcf_writer : public variant_pipe_stage_base
         const ScoringModelManager& cm);
 
 
-    void process(std::unique_ptr<GermlineSiteCallInfo>) override;
-    void process(std::unique_ptr<GermlineIndelCallInfo>) override;
+    void process(std::unique_ptr<GermlineSiteLocusInfo>) override;
+    void process(std::unique_ptr<GermlineIndelLocusInfo>) override;
 
 
 private:
     void flush_impl() override;
 
-    void add_site_internal(GermlineDiploidSiteCallInfo& si);
-    void add_site_internal(GermlineContinuousSiteCallInfo& si);
+    void add_site_internal(GermlineDiploidSiteLocusInfo& si);
+    void add_site_internal(GermlineContinuousSiteLocusInfo& si);
     void write_block_site_record();
 
     // queue site record for writing, after
@@ -84,17 +84,17 @@ private:
         _block.join(si);
     }
 
-    void write_site_record(const GermlineDiploidSiteCallInfo& si) const;
-    void write_site_record(const GermlineContinuousSiteCallInfo& si) const;
+    void write_site_record(const GermlineDiploidSiteLocusInfo& si) const;
+    void write_site_record(const GermlineContinuousSiteLocusInfo& si) const;
     void write_site_record(const gvcf_block_site_record& si) const;
 
-    void write_indel_record(const GermlineDiploidIndelCallInfo& ii) const;
-    void write_indel_record(const GermlineContinuousIndelCallInfo& ii) const;
+    void write_indel_record(const GermlineDiploidIndelLocusInfo& ii) const;
+    void write_indel_record(const GermlineContinuousIndelLocusInfo& ii) const;
 
     /// fill in missing sites
     void skip_to_pos(const pos_t target_pos);
 
-    const GermlineDiploidSiteCallInfo&
+    const GermlineDiploidSiteLocusInfo&
     get_empty_site(const pos_t pos)
     {
         _empty_site.pos = pos;
@@ -111,11 +111,11 @@ private:
     const gvcf_deriv_options _dopt;
     gvcf_block_site_record _block;
     pos_t _head_pos;
-    GermlineDiploidSiteCallInfo _empty_site;
+    GermlineDiploidSiteLocusInfo _empty_site;
 
-    std::unique_ptr<GermlineDiploidIndelCallInfo> _last_indel;
+    std::unique_ptr<GermlineDiploidIndelLocusInfo> _last_indel;
 
-    void filter_site_by_last_indel_overlap(GermlineDiploidSiteCallInfo& si);
+    void filter_site_by_last_indel_overlap(GermlineDiploidSiteLocusInfo& si);
 
     gvcf_compressor _gvcf_comp;
     const ScoringModelManager& _CM;

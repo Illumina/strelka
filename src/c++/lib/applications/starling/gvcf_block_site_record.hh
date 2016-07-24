@@ -32,7 +32,7 @@
 
 /// manages compressed site record blocks output in the gVCF
 ///
-struct gvcf_block_site_record : public GermlineSiteCallInfo
+struct gvcf_block_site_record : public GermlineSiteLocusInfo
 {
     explicit
     gvcf_block_site_record(const gvcf_options& opt)
@@ -45,7 +45,7 @@ struct gvcf_block_site_record : public GermlineSiteCallInfo
     void
     reset()
     {
-        GermlineSiteCallInfo::clear();
+        GermlineSiteLocusInfo::clear();
 
         allele.clear();
 
@@ -61,16 +61,16 @@ struct gvcf_block_site_record : public GermlineSiteCallInfo
     }
 
     /// determine if the given site could be joined to this block:
-    bool test(const GermlineDiploidSiteCallInfo& si) const;
+    bool test(const GermlineDiploidSiteLocusInfo& si) const;
 
     /// add site to the current block
-    void join(const GermlineDiploidSiteCallInfo& si);
+    void join(const GermlineDiploidSiteLocusInfo& si);
 
     /// determine if the given site could be joined to this block:
-    bool test(const GermlineContinuousSiteCallInfo& si) const;
+    bool test(const GermlineContinuousSiteLocusInfo& si) const;
 
     /// add site to the current block
-    void join(const GermlineContinuousSiteCallInfo& si);
+    void join(const GermlineContinuousSiteLocusInfo& si);
 
     const char* get_gt() const
     {
@@ -95,7 +95,7 @@ private:
     }
 
 public:
-    GermlineVariantSimpleGenotypeInfo allele;
+    GermlineVariantAlleleInfo allele;
 
     const double frac_tol;
     const int abs_tol;

@@ -213,7 +213,7 @@ process_pos_snp_single_sample_continuous(
 
     if (pi.calls.empty() && !is_forced) return;
 
-    std::unique_ptr<GermlineSiteCallInfo> si(new GermlineContinuousSiteCallInfo(pos,pi.get_ref_base(),good_pi,
+    std::unique_ptr<GermlineSiteLocusInfo> si(new GermlineContinuousSiteLocusInfo(pos,pi.get_ref_base(),good_pi,
                                                                                 _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
 
     si->n_used_calls=cpi.n_used_calls();
@@ -222,7 +222,7 @@ process_pos_snp_single_sample_continuous(
     si->hpol=get_snp_hpol_size(pos,_ref);
 
 
-    starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, (GermlineContinuousSiteCallInfo&)*si);
+    starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, (GermlineContinuousSiteLocusInfo&)*si);
 
     if (_opt.is_counts)
     {
@@ -286,7 +286,7 @@ process_pos_snp_single_sample_impl(
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
 
-    std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(_dopt.gvcf, pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced));
     si->n_used_calls=cpi.n_used_calls();
     si->n_unused_calls=cpi.n_unused_calls();
 
@@ -487,7 +487,7 @@ insertIndelInGvcf(
     get_starling_indel_sample_report_info(opt, dopt, indelKey, indelSampleData, basecallBuffer,
                                           is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
 
-    gvcfer.add_indel(std::unique_ptr<GermlineIndelCallInfo>(new GermlineDiploidIndelCallInfo(dopt.gvcf, indelKey, indelData, dindel, indelReportInfo, indelSampleReportInfo)));
+    gvcfer.add_indel(std::unique_ptr<GermlineIndelLocusInfo>(new GermlineDiploidIndelLocusInfo(dopt.gvcf, indelKey, indelData, dindel, indelReportInfo, indelSampleReportInfo)));
 }
 
 
@@ -860,7 +860,7 @@ process_pos_indel_single_sample_continuous(
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
-    std::unique_ptr<GermlineContinuousIndelCallInfo> info;
+    std::unique_ptr<GermlineContinuousIndelLocusInfo> info;
 
     for (; it!=it_end; ++it)
     {
@@ -885,7 +885,7 @@ process_pos_indel_single_sample_continuous(
         static const bool is_use_alt_indel(true);
 
         if (!info)
-            info.reset(new GermlineContinuousIndelCallInfo(pos));
+            info.reset(new GermlineContinuousIndelLocusInfo(pos));
 
         starling_indel_sample_report_info isri;
         get_starling_indel_sample_report_info(_opt, _dopt,indelKey,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);

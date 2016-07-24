@@ -68,11 +68,11 @@ write_filters(std::ostream& os) const
 
 
 pos_t
-GermlineDiploidIndelCallInfo::
+GermlineDiploidIndelLocusInfo::
 end() const
 {
     pos_t result = 0;
-    for (auto& x : _calls)
+    for (auto& x : altAlleles)
         result = std::max(result, x._indelKey.right_pos());
     return result;
 }
@@ -107,13 +107,13 @@ add_cigar_to_ploidy(
 
 
 void
-GermlineDiploidIndelCallInfo::
+GermlineDiploidIndelLocusInfo::
 add_overlap(
     const reference_contig_segment& ref,
-    GermlineDiploidIndelCallInfo& overlap)
+    GermlineDiploidIndelLocusInfo& overlap)
 {
-    assert(_calls.size() == 1);
-    assert(overlap._calls.size() == 1);
+    assert(altAlleles.size() == 1);
+    assert(overlap.altAlleles.size() == 1);
 
     auto& call(first());
     auto& overlap_call(overlap.first());
@@ -134,7 +134,7 @@ add_overlap(
 
     ploidy.resize(indel_end_pos-pos,0);
 
-    auto munge_indel = [&] (GermlineDiploidIndelCallInfo& ii)
+    auto munge_indel = [&] (GermlineDiploidIndelLocusInfo& ii)
     {
         auto& this_call(ii.first());
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
@@ -175,13 +175,13 @@ add_overlap(
     call.gqx = std::min(call.gqx, overlap.first().gqx);
     call.gq = std::min(call.gq, overlap.first().gq);
 
-    _calls.push_back(overlap.first());
+    altAlleles.push_back(overlap.first());
 }
 
 
 
 void
-GermlineDiploidIndelCallInfo::
+GermlineDiploidIndelLocusInfo::
 getPloidyError(
     const unsigned offset) const
 {
@@ -195,13 +195,13 @@ getPloidyError(
 
 
 void
-GermlineDiploidSiteCallInfo::
+GermlineDiploidSiteLocusInfo::
 computeEmpiricalScoringFeatures(
     const bool isRNA,
     const bool isUniformDepthExpected,
     const bool isComputeDevelopmentFeatures,
     const double chromDepth,
-    GermlineDiploidSiteSimpleGenotypeInfo& smod2) const
+    GermlineDiploidSiteAlleleInfo& smod2) const
 {
     const double chromDepthFactor(safeFrac(1, chromDepth));
 
@@ -369,7 +369,7 @@ computeEmpiricalScoringFeatures(
 
 std::ostream&
 operator<<(std::ostream& os,
-           const GermlineDiploidSiteCallInfo& si)
+           const GermlineDiploidSiteLocusInfo& si)
 {
     os << "pos: " << (si.pos+1) << " " << si.get_gt();
     return os;
@@ -378,11 +378,11 @@ operator<<(std::ostream& os,
 
 
 void
-GermlineDiploidIndelCallInfo::
+GermlineDiploidIndelLocusInfo::
 dump(std::ostream& os) const
 {
     os << "digt_indel_info\n";
-    os << "nCalls: " << _calls.size() << " isOverlap: " << _is_overlap << "\n";
+    os << "nCalls: " << altAlleles.size() << " isOverlap: " << _is_overlap << "\n";
     os << "ploidy: ";
     for (const unsigned pl : ploidy)
     {
@@ -390,7 +390,7 @@ dump(std::ostream& os) const
     }
     os << "\n";
     os << "Calls:\n";
-    for (const auto& cl : _calls)
+    for (const auto& cl : altAlleles)
     {
         os << cl << "\n";
     }

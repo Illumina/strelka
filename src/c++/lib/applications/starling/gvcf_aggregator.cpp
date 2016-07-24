@@ -60,13 +60,13 @@ gvcf_aggregator::~gvcf_aggregator()
 
 void
 gvcf_aggregator::
-add_site(std::unique_ptr<GermlineSiteCallInfo> si)
+add_site(std::unique_ptr<GermlineSiteLocusInfo> si)
 {
     _head->process(std::move(si));
 }
 
 void
-gvcf_aggregator::add_indel(std::unique_ptr<GermlineIndelCallInfo> info)
+gvcf_aggregator::add_indel(std::unique_ptr<GermlineIndelLocusInfo> info)
 {
     _head->process(std::move(info));
 }

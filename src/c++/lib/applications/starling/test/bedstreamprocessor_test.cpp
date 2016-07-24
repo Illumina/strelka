@@ -30,15 +30,15 @@ class dummy_variant_sink : public variant_pipe_stage_base
 {
 public:
     dummy_variant_sink() : variant_pipe_stage_base() {}
-    std::vector<std::unique_ptr<GermlineDiploidSiteCallInfo>> the_sites;
-    std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>> the_indels;
-    void process(std::unique_ptr<GermlineSiteCallInfo> si) override
+    std::vector<std::unique_ptr<GermlineDiploidSiteLocusInfo>> the_sites;
+    std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>> the_indels;
+    void process(std::unique_ptr<GermlineSiteLocusInfo> si) override
     {
-        the_sites.push_back(downcast<GermlineDiploidSiteCallInfo>(std::move(si)));
+        the_sites.push_back(downcast<GermlineDiploidSiteLocusInfo>(std::move(si)));
     }
-    void process(std::unique_ptr<GermlineIndelCallInfo> ii) override
+    void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override
     {
-        the_indels.push_back(downcast<GermlineDiploidIndelCallInfo>(std::move(ii)));
+        the_indels.push_back(downcast<GermlineDiploidIndelLocusInfo>(std::move(ii)));
     }
 };
 
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
 
     auto getNewSite = [&](const pos_t pos)
     {
-        std::unique_ptr<GermlineDiploidSiteCallInfo> site(new GermlineDiploidSiteCallInfo(gvcfDerivOptions));
+        std::unique_ptr<GermlineDiploidSiteLocusInfo> site(new GermlineDiploidSiteLocusInfo(gvcfDerivOptions));
         site->pos = pos;
         return site;
     };
@@ -87,8 +87,8 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
     auto getNewIndel = [&](const pos_t pos)
     {
         const IndelKey indelKey(pos);
-        std::unique_ptr<GermlineDiploidIndelCallInfo>
-        indel(new GermlineDiploidIndelCallInfo(
+        std::unique_ptr<GermlineDiploidIndelLocusInfo>
+        indel(new GermlineDiploidIndelLocusInfo(
                   gvcfDerivOptions,
                   indelKey,
                   IndelData(1,indelKey),

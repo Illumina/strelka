@@ -41,7 +41,7 @@
 
 
 void
-GermlineIndelSimpleGenotypeInfo::
+GermlineIndelAlleleInfo::
 set_hap_cigar(
     const unsigned lead,
     const unsigned trail)
@@ -70,7 +70,7 @@ set_hap_cigar(
 
 
 void
-GermlineDiploidIndelSimpleGenotypeInfo::
+GermlineDiploidIndelAlleleInfo::
 computeEmpiricalScoringFeatures(
     const bool isRNA,
     const bool isUniformDepthExpected,
@@ -243,13 +243,13 @@ computeEmpiricalScoringFeatures(
 
 std::ostream&
 operator<<(std::ostream& os,
-           const GermlineVariantSimpleGenotypeInfo& shmod)
+           const GermlineVariantAlleleInfo& shmod)
 {
     os << "gqx: " << shmod.gqx
        << " gq: " << shmod.gq;
-    if (typeid(shmod) == typeid(GermlineDiploidIndelSimpleGenotypeInfo))
+    if (typeid(shmod) == typeid(GermlineDiploidIndelAlleleInfo))
     {
-        auto imod = dynamic_cast<const GermlineDiploidIndelSimpleGenotypeInfo&>(shmod);
+        auto imod = dynamic_cast<const GermlineDiploidIndelAlleleInfo&>(shmod);
 
         os << " max_gt: " << DIGT::label(imod.max_gt);
     }
@@ -259,9 +259,9 @@ operator<<(std::ostream& os,
 
 std::ostream&
 operator<<(std::ostream& os,
-           const GermlineDiploidSiteSimpleGenotypeInfo& smod)
+           const GermlineDiploidSiteAlleleInfo& smod)
 {
-    os << static_cast<GermlineVariantSimpleGenotypeInfo>(smod) << '\n';
+    os << static_cast<GermlineVariantAlleleInfo>(smod) << '\n';
 
     os << "is_unknown: " << smod.is_unknown;
     os << " is_covered: " << smod.is_covered;
@@ -281,9 +281,9 @@ operator<<(std::ostream& os,
 std::ostream&
 operator<<(
     std::ostream& os,
-    const GermlineIndelSimpleGenotypeInfo& shi)
+    const GermlineIndelAlleleInfo& shi)
 {
-    os << static_cast<GermlineVariantSimpleGenotypeInfo>(shi) << '\n';
+    os << static_cast<GermlineVariantAlleleInfo>(shi) << '\n';
 
     os << "IndelKey: " << shi._indelKey << "\n";
     //os << "indel_data: " << shi._id << "\n";
@@ -299,9 +299,9 @@ operator<<(
 std::ostream&
 operator<<(
     std::ostream& os,
-    const GermlineDiploidIndelSimpleGenotypeInfo& dic)
+    const GermlineDiploidIndelAlleleInfo& dic)
 {
-    os << static_cast<GermlineIndelSimpleGenotypeInfo>(dic) << '\n';
+    os << static_cast<GermlineIndelAlleleInfo>(dic) << '\n';
 
     dic._dindel.dump(os);
 

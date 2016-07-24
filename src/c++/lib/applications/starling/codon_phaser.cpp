@@ -37,9 +37,9 @@
 #endif
 
 
-void Codon_phaser::process(std::unique_ptr<GermlineSiteCallInfo> site)
+void Codon_phaser::process(std::unique_ptr<GermlineSiteLocusInfo> site)
 {
-    std::unique_ptr<GermlineDiploidSiteCallInfo> si(downcast<GermlineDiploidSiteCallInfo>(std::move(site)));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(downcast<GermlineDiploidSiteLocusInfo>(std::move(site)));
     if (opt.do_codon_phasing && (is_phasable_site(si) || is_in_block()))
     {
         auto emptyBuffer = add_site(std::move(si));
@@ -65,7 +65,7 @@ void Codon_phaser::flush_impl()
 }
 
 // the Codon phaser can't work across indels, so flush any in-progress phasing
-void Codon_phaser::process(std::unique_ptr<GermlineIndelCallInfo> ii)
+void Codon_phaser::process(std::unique_ptr<GermlineIndelLocusInfo> ii)
 {
     if (opt.do_codon_phasing && is_in_block())
     {
@@ -90,7 +90,7 @@ void Codon_phaser::output_buffer()
 
 // Add a SNP site to the phasing buffer
 bool
-Codon_phaser::add_site(std::unique_ptr<GermlineDiploidSiteCallInfo> si)
+Codon_phaser::add_site(std::unique_ptr<GermlineDiploidSiteLocusInfo> si)
 {
 #ifdef DEBUG_CODON
     log_os << __FUNCTION__ << ": input si " << *si << "\n";

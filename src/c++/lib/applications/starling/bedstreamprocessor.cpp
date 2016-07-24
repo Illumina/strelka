@@ -66,7 +66,7 @@ void bed_stream_processor::load_next_region_if_needed(pos_t position)
         load_next_region();
 }
 
-void bed_stream_processor::process(std::unique_ptr<GermlineSiteCallInfo> si)
+void bed_stream_processor::process(std::unique_ptr<GermlineSiteLocusInfo> si)
 {
     if (this->_bed_streamer)
     {
@@ -80,7 +80,7 @@ void bed_stream_processor::process(std::unique_ptr<GermlineSiteCallInfo> si)
     _sink->process(std::move(si));
 }
 
-void bed_stream_processor::process(std::unique_ptr<GermlineIndelCallInfo> ii)
+void bed_stream_processor::process(std::unique_ptr<GermlineIndelLocusInfo> ii)
 {
     if (this->_bed_streamer)
     {

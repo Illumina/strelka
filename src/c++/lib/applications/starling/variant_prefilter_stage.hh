@@ -30,12 +30,12 @@ struct ScoringModelManager;
 struct variant_prefilter_stage : public variant_pipe_stage_base
 {
     variant_prefilter_stage(const ScoringModelManager& model, std::shared_ptr<variant_pipe_stage_base> destination);
-    void process(std::unique_ptr<GermlineSiteCallInfo> si) override;
-    void process(std::unique_ptr<GermlineIndelCallInfo> ii) override;
+    void process(std::unique_ptr<GermlineSiteLocusInfo> si) override;
+    void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override;
 
     static void  add_site_modifiers(
-        GermlineDiploidSiteCallInfo& si,
-        GermlineDiploidSiteSimpleGenotypeInfo& smod,
+        GermlineDiploidSiteLocusInfo& si,
+        GermlineDiploidSiteAlleleInfo& smod,
         const ScoringModelManager& model);
 
 private:

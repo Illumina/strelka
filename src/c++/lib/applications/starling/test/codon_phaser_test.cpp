@@ -48,14 +48,14 @@ class dummy_variant_sink : public variant_pipe_stage_base
 {
 public:
     dummy_variant_sink() : variant_pipe_stage_base() {}
-    std::vector<std::unique_ptr<GermlineDiploidSiteCallInfo>> the_sites;
-    std::vector<std::unique_ptr<GermlineIndelCallInfo>> the_indels;
-    void process(std::unique_ptr<GermlineSiteCallInfo> site) override
+    std::vector<std::unique_ptr<GermlineDiploidSiteLocusInfo>> the_sites;
+    std::vector<std::unique_ptr<GermlineIndelLocusInfo>> the_indels;
+    void process(std::unique_ptr<GermlineSiteLocusInfo> site) override
     {
-        auto si(downcast<GermlineDiploidSiteCallInfo>(std::move(site)));
+        auto si(downcast<GermlineDiploidSiteLocusInfo>(std::move(site)));
         if (si->is_het() || si->is_hetalt() ) the_sites.push_back(std::move(si));
     }
-    void process(std::unique_ptr<GermlineIndelCallInfo> ii) override
+    void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override
     {
         the_indels.push_back(std::move(ii));
     }
@@ -100,8 +100,8 @@ getTestSink(
     for (int i = 0; read1Seq[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(
-            new GermlineDiploidSiteCallInfo(dopt.gvcf, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteLocusInfo> si(
+            new GermlineDiploidSiteLocusInfo(dopt.gvcf, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteCallInfo> si(new GermlineDiploidSiteCallInfo(dopt.gvcf, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->smod.gq = si->dgt.genome.snp_qphred = si->smod.empiricalVariantScore = 40;
         si->dgt.ref_gt = base_to_id(si->ref);

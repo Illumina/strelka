@@ -173,13 +173,13 @@ struct LocusInfo : public PolymorphicObject
 
 
 /// represents an indel call at the level of a full VCF record, containing possibly multiple alleles/SimpleGenotypes
-struct GermlineIndelCallInfo : public LocusInfo
+struct GermlineIndelLocusInfo : public LocusInfo
 {
-    explicit GermlineIndelCallInfo(const pos_t init_pos)
+    explicit GermlineIndelLocusInfo(const pos_t init_pos)
         : pos(init_pos)
     {}
 
-    virtual ~GermlineIndelCallInfo() {}
+    virtual ~GermlineIndelLocusInfo() {}
 
     virtual bool is_forced_output() const = 0;
     virtual bool is_indel() const = 0;
@@ -191,30 +191,30 @@ struct GermlineIndelCallInfo : public LocusInfo
 
 
 /// specify that calling model is diploid
-struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
+struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
 {
-    GermlineDiploidIndelCallInfo(
+    GermlineDiploidIndelLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
         const IndelKey& initIndelKey,
         const IndelData& initIndelData,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
         const starling_indel_report_info& initIndelReportInfo,
-        const starling_indel_sample_report_info& initIndelSampleReportInfo) : GermlineIndelCallInfo(initIndelKey.pos)
+        const starling_indel_sample_report_info& initIndelSampleReportInfo) : GermlineIndelLocusInfo(initIndelKey.pos)
     {
-        _calls.emplace_back(gvcfDerivedOptions, initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
+        altAlleles.emplace_back(gvcfDerivedOptions, initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
     }
 
     bool is_forced_output() const override
     {
-        return std::any_of(_calls.begin(), _calls.end(),
-                           [](const GermlineDiploidIndelSimpleGenotypeInfo& x)
+        return std::any_of(altAlleles.begin(), altAlleles.end(),
+                           [](const GermlineDiploidIndelAlleleInfo& x)
         {
             return x._dindel.is_forced_output;
         });
     }
     bool is_indel() const override
     {
-        return std::any_of(_calls.begin(), _calls.end(), [](const GermlineDiploidIndelSimpleGenotypeInfo& x)
+        return std::any_of(altAlleles.begin(), altAlleles.end(), [](const GermlineDiploidIndelAlleleInfo& x)
         {
             return x._dindel.isIndel();
         });
@@ -222,7 +222,7 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
 
     pos_t end() const override;
 
-    void add_overlap(const reference_contig_segment& ref, GermlineDiploidIndelCallInfo& overlap);
+    void add_overlap(const reference_contig_segment& ref, GermlineDiploidIndelLocusInfo& overlap);
 
     const char*
     get_gt() const
@@ -258,7 +258,7 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
     bool
     is_het() const
     {
-        return (static_cast<int>(_calls.front().max_gt)>1);
+        return (static_cast<int>(altAlleles.front().max_gt)>1);
     }
 
     // the site ploidy within the indel at offset x
@@ -293,13 +293,13 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
         return 2;
     }
 
-    const GermlineDiploidIndelSimpleGenotypeInfo& first() const
+    const GermlineDiploidIndelAlleleInfo& first() const
     {
-        return _calls.front();
+        return altAlleles.front();
     }
-    GermlineDiploidIndelSimpleGenotypeInfo& first()
+    GermlineDiploidIndelAlleleInfo& first()
     {
-        return _calls.front();
+        return altAlleles.front();
     }
 
     void
@@ -318,19 +318,20 @@ public:
     // used to flag hetalt
     bool _is_overlap=false;
 
-    std::vector<GermlineDiploidIndelSimpleGenotypeInfo> _calls;
+    std::vector<GermlineDiploidIndelAlleleInfo> altAlleles;
 };
 
 
 
 /// represents an site call at the level of a full VCF record, containing possibly multiple alleles
-struct GermlineSiteCallInfo : public LocusInfo
+struct GermlineSiteLocusInfo : public LocusInfo
 {
-    GermlineSiteCallInfo(const pos_t init_pos,
-                         const char init_ref,
-                         const snp_pos_info& good_pi,
-                         const int used_allele_count_min_qscore,
-                         const bool is_forced_output = false)
+    GermlineSiteLocusInfo(
+        const pos_t init_pos,
+        const char init_ref,
+        const snp_pos_info& good_pi,
+        const int used_allele_count_min_qscore,
+        const bool is_forced_output = false)
     {
         pos=(init_pos);
         ref=(init_ref);
@@ -340,7 +341,7 @@ struct GermlineSiteCallInfo : public LocusInfo
         spanning_deletions = good_pi.n_spandel;
     }
 
-    GermlineSiteCallInfo() = default;
+    GermlineSiteLocusInfo() = default;
 
     virtual bool is_snp() const = 0;
     virtual bool is_nonref() const = 0;
@@ -391,21 +392,21 @@ private:
 
 
 /// specify that calling model is diploid
-struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
+struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
 {
-    GermlineDiploidSiteCallInfo(
+    GermlineDiploidSiteLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
         const pos_t init_pos,
         const char init_ref,
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
         const bool is_forced_output = false)
-        : GermlineSiteCallInfo(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
+        : GermlineSiteLocusInfo(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
           smod(gvcfDerivedOptions)
     {}
 
     explicit
-    GermlineDiploidSiteCallInfo(
+    GermlineDiploidSiteLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions)
         : smod(gvcfDerivedOptions)
     {}
@@ -439,7 +440,7 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
         const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
         const double chromDepth,
-        GermlineDiploidSiteSimpleGenotypeInfo& smod2) const;
+        GermlineDiploidSiteAlleleInfo& smod2) const;
 
     bool
     is_het() const
@@ -495,22 +496,22 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
     double avgBaseQ = 0;
     double rawPos = 0;
 
-    GermlineDiploidSiteSimpleGenotypeInfo smod;
+    GermlineDiploidSiteAlleleInfo smod;
 };
 
-std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteCallInfo& si);
+std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteLocusInfo& si);
 
 
 /// specify that variant is site/SNV and a continuous frequency calling model
-struct GermlineContinuousSiteCallInfo : public GermlineSiteCallInfo
+struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
 {
-    GermlineContinuousSiteCallInfo(
+    GermlineContinuousSiteLocusInfo(
         const pos_t init_pos,
         const char init_ref,
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
         const double min_het_vf,
-        const bool is_forced_output = false) : GermlineSiteCallInfo(init_pos,
+        const bool is_forced_output = false) : GermlineSiteLocusInfo(init_pos,
                                                                         init_ref,
                                                                         good_pi,
                                                                         used_allele_count_min_qscore,
@@ -527,15 +528,15 @@ struct GermlineContinuousSiteCallInfo : public GermlineSiteCallInfo
     bool is_nonref() const override
     {
         auto ref_id = base_to_id(ref);
-        return calls.end() !=
-               std::find_if(calls.begin(), calls.end(),
-                            [&](const GermlineContinuousSiteSimpleGenotypeInfo& call)
+        return altAlleles.end() !=
+               std::find_if(altAlleles.begin(), altAlleles.end(),
+                            [&](const GermlineContinuousSiteAlleleInfo& call)
         {
             return call._base != ref_id;
         });
     }
 
-    const char* get_gt(const GermlineContinuousSiteSimpleGenotypeInfo& call) const
+    const char* get_gt(const GermlineContinuousSiteAlleleInfo& call) const
     {
         if (call._base == base_to_id(ref))
             return "0/0";
@@ -548,23 +549,23 @@ struct GermlineContinuousSiteCallInfo : public GermlineSiteCallInfo
     }
 
     bool _is_snp = false;
-    std::vector<GermlineContinuousSiteSimpleGenotypeInfo> calls;
+    std::vector<GermlineContinuousSiteAlleleInfo> altAlleles;
 private:
     double _min_het_vf;
 };
 
 
 /// specify that variant is indel and a continuous frequency calling model
-struct GermlineContinuousIndelCallInfo : public GermlineIndelCallInfo
+struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 {
-    explicit GermlineContinuousIndelCallInfo(const pos_t init_pos)
-        : GermlineIndelCallInfo(init_pos)
+    explicit GermlineContinuousIndelLocusInfo(const pos_t init_pos)
+        : GermlineIndelLocusInfo(init_pos)
     {
     }
 
     bool is_indel() const override
     {
-        for (auto& call : calls)
+        for (auto& call : altAlleles)
         {
             if (call._alleleDepth > 0)
                 return true;
@@ -574,7 +575,7 @@ struct GermlineContinuousIndelCallInfo : public GermlineIndelCallInfo
 
     bool is_forced_output() const override
     {
-        for (auto& call : calls)
+        for (auto& call : altAlleles)
             if (call._indelData.is_forced_output)
                 return true;
         return false;
@@ -583,7 +584,7 @@ struct GermlineContinuousIndelCallInfo : public GermlineIndelCallInfo
     pos_t end() const override
     {
         pos_t result = 0;
-        for (auto& x : calls)
+        for (auto& x : altAlleles)
             result = std::max(result, x._indelKey.right_pos());
         return result;
     }
@@ -596,9 +597,6 @@ struct GermlineContinuousIndelCallInfo : public GermlineIndelCallInfo
             return "1/1";
     }
 
-    std::vector<GermlineContinuousIndelSimpleGenotypeInfo> calls;
+    std::vector<GermlineContinuousIndelAlleleInfo> altAlleles;
     bool is_het=false;
 };
-
-
-

@@ -83,7 +83,7 @@ static const char* map_gt_to_homref(const char* gt)
 
 bool
 gvcf_block_site_record::
-test(const GermlineDiploidSiteCallInfo& si) const
+test(const GermlineDiploidSiteLocusInfo& si) const
 {
     if (count==0) return true;
 
@@ -131,7 +131,7 @@ test(const GermlineDiploidSiteCallInfo& si) const
 
 void
 gvcf_block_site_record::
-join(const GermlineDiploidSiteCallInfo& si)
+join(const GermlineDiploidSiteLocusInfo& si)
 {
     if (count == 0)
     {
@@ -159,14 +159,14 @@ join(const GermlineDiploidSiteCallInfo& si)
 
 bool
 gvcf_block_site_record::
-test(const GermlineContinuousSiteCallInfo& si) const
+test(const GermlineContinuousSiteLocusInfo& si) const
 {
-    if (si.calls.size() != 1)
+    if (si.altAlleles.size() != 1)
         return false;
 
     if (count==0) return true;
 
-    if (has_call && si.calls.empty())
+    if (has_call && si.altAlleles.empty())
         return false;
 
 
@@ -181,7 +181,7 @@ test(const GermlineContinuousSiteCallInfo& si) const
 
     if (is_nonref() || si.is_nonref()) return false;
 
-    if (gt != map_gt_to_homref(si.get_gt(si.calls.front()))) return false;
+    if (gt != map_gt_to_homref(si.get_gt(si.altAlleles.front()))) return false;
 
     // coverage states must match:
     if (is_covered != (si.n_used_calls != 0 || si.n_unused_calls != 0)) return false;
@@ -190,7 +190,7 @@ test(const GermlineContinuousSiteCallInfo& si) const
     if (has_call)
     {
         // test blocking values:
-        if (! is_new_value_blockable(si.calls.front().gqx,
+        if (! is_new_value_blockable(si.altAlleles.front().gqx,
                                      block_gqx,frac_tol,abs_tol,
                                      true,
                                      true))
@@ -216,15 +216,15 @@ test(const GermlineContinuousSiteCallInfo& si) const
 
 
 void
-gvcf_block_site_record::join(const GermlineContinuousSiteCallInfo& si)
+gvcf_block_site_record::join(const GermlineContinuousSiteLocusInfo& si)
 {
     if (count == 0)
     {
         pos = si.pos;
-        if (!si.calls.empty())
+        if (!si.altAlleles.empty())
         {
             filters = si.filters;
-            gt = map_gt_to_homref(si.get_gt(si.calls.front()));
+            gt = map_gt_to_homref(si.get_gt(si.altAlleles.front()));
             setNonRef(si.is_nonref());
             // TODO: handle no coverage regions in continuous
             has_call = true;
@@ -240,9 +240,9 @@ gvcf_block_site_record::join(const GermlineContinuousSiteCallInfo& si)
     }
 
     // TODO: handle no coverage regions in continuous
-    if (si.calls.size() == 1)
+    if (si.altAlleles.size() == 1)
     {
-        block_gqx.add(si.calls.front().gqx);
+        block_gqx.add(si.altAlleles.front().gqx);
     }
 
     block_dpu.add(si.n_used_calls);

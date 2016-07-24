@@ -48,27 +48,27 @@ struct ScoringModelManager
 
     void
     classify_site(
-        GermlineDiploidSiteCallInfo& si,
-        GermlineDiploidSiteSimpleGenotypeInfo& smod) const;
+        GermlineDiploidSiteLocusInfo& si,
+        GermlineDiploidSiteAlleleInfo& smod) const;
 
     void
     classify_indel(
-        GermlineDiploidIndelCallInfo& ii,
-        GermlineDiploidIndelSimpleGenotypeInfo& call) const;
+        GermlineDiploidIndelLocusInfo& ii,
+        GermlineDiploidIndelAlleleInfo& call) const;
 
     void
     classify_indels(
-        std::vector<std::unique_ptr<GermlineDiploidIndelCallInfo>>& indels) const;
+        std::vector<std::unique_ptr<GermlineDiploidIndelLocusInfo>>& indels) const;
 
     /// default rules based site model
     void default_classify_site(
-        GermlineSiteCallInfo& si,
-        const GermlineVariantSimpleGenotypeInfo& call) const;
+        GermlineSiteLocusInfo& si,
+        const GermlineVariantAlleleInfo& call) const;
 
     /// default rules based indel model
     void default_classify_indel(
-        GermlineIndelCallInfo& ii,
-        const GermlineIndelSimpleGenotypeInfo& call) const;
+        GermlineIndelLocusInfo& ii,
+        const GermlineIndelAlleleInfo& call) const;
 
     bool
     isEVSSiteModel() const
@@ -83,17 +83,17 @@ struct ScoringModelManager
     }
 
 private:
-    bool checkIsVariantUsableInEVSModel(const GermlineDiploidIndelCallInfo& ii) const;
+    bool checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const;
 
     void set_indel_modifiers(
-        const GermlineDiploidIndelCallInfo& ii,
-        GermlineDiploidIndelSimpleGenotypeInfo& call) const;
+        const GermlineDiploidIndelLocusInfo& ii,
+        GermlineDiploidIndelAlleleInfo& call) const;
 
     void
     classify_indel_impl(
         const bool is_model_usable,
-        GermlineDiploidIndelCallInfo& ii,
-        GermlineDiploidIndelSimpleGenotypeInfo& call) const;
+        GermlineDiploidIndelLocusInfo& ii,
+        GermlineDiploidIndelAlleleInfo& call) const;
 
     double
     snvEVSThreshold() const

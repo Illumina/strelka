@@ -40,7 +40,7 @@ gvcf_compressor(
 bool
 gvcf_compressor::
 is_site_compressable(
-    const GermlineSiteCallInfo& si) const
+    const GermlineSiteLocusInfo& si) const
 {
     if (si.forcedOutput) return false;
     if (! _opt.is_block_compression) return false;

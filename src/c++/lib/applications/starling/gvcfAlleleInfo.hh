@@ -32,7 +32,6 @@
 #include "starling_common/starling_indel_call_pprob_digt.hh"
 #include "gvcf_options.hh"
 
-#include <bitset>
 #include <iosfwd>
 #include <map>
 
@@ -47,9 +46,9 @@
 ///
 /// model types where this is used include diploid/haploid and continuous single sample calling, but not contrastive (ie. tumor-normal) models
 ///
-struct GermlineVariantSimpleGenotypeInfo : public PolymorphicObject
+struct GermlineVariantAlleleInfo : public PolymorphicObject
 {
-    GermlineVariantSimpleGenotypeInfo()
+    GermlineVariantAlleleInfo()
     {
         clear();
     }
@@ -72,13 +71,13 @@ struct GermlineVariantSimpleGenotypeInfo : public PolymorphicObject
 };
 
 
-std::ostream& operator<<(std::ostream& os,const GermlineVariantSimpleGenotypeInfo& shmod);
+std::ostream& operator<<(std::ostream& os,const GermlineVariantAlleleInfo& shmod);
 
 
 /// restrict to the case where variant is indel
-struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
+struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
 {
-    GermlineIndelSimpleGenotypeInfo(
+    GermlineIndelAlleleInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
         const IndelKey& indelKey,
         const IndelData& indelData,
@@ -95,7 +94,7 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
     void
     clear()
     {
-        GermlineVariantSimpleGenotypeInfo::clear();
+        GermlineVariantAlleleInfo::clear();
         cigar.clear();
         features.clear();
         developmentFeatures.clear();
@@ -118,20 +117,20 @@ struct GermlineIndelSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInf
     VariantScoringFeatureKeeper developmentFeatures;
 };
 
-std::ostream& operator<<(std::ostream& os,const GermlineIndelSimpleGenotypeInfo& shi);
+std::ostream& operator<<(std::ostream& os,const GermlineIndelAlleleInfo& shi);
 
 
 /// restrict to diploid calling models
-struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
+struct GermlineDiploidIndelAlleleInfo : public GermlineIndelAlleleInfo
 {
-    GermlineDiploidIndelSimpleGenotypeInfo(
+    GermlineDiploidIndelAlleleInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
         const starling_indel_sample_report_info& indelSampleReportInfo,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
-        : GermlineIndelSimpleGenotypeInfo(gvcfDerivedOptions, indelKey, indelData, indelReportInfo, indelSampleReportInfo)
+        : GermlineIndelAlleleInfo(gvcfDerivedOptions, indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _dindel(dindel)
     {}
 
@@ -151,7 +150,7 @@ struct GermlineDiploidIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenoty
     unsigned max_gt=0;
 };
 
-std::ostream& operator<<(std::ostream& os,const GermlineDiploidIndelSimpleGenotypeInfo& dic);
+std::ostream& operator<<(std::ostream& os,const GermlineDiploidIndelAlleleInfo& dic);
 
 
 
@@ -187,10 +186,10 @@ get_label(const unsigned idx)
 
 
 /// restrict to the case where variant is site/SNV and calling model is diploid
-struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
+struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
 {
     explicit
-    GermlineDiploidSiteSimpleGenotypeInfo(
+    GermlineDiploidSiteAlleleInfo(
         const gvcf_deriv_options& gvcfDerivedOptions)
         : features(gvcfDerivedOptions.snvFeatureSet),
           developmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
@@ -201,7 +200,7 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
     void
     clear()
     {
-        GermlineVariantSimpleGenotypeInfo::clear();
+        GermlineVariantAlleleInfo::clear();
         is_unknown=true;
         is_covered=false;
         is_used_covered=false;
@@ -235,7 +234,7 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
 
     MODIFIED_SITE_GT::index_t modified_gt;
     unsigned max_gt;
-
+    
     /// production and development features used in the empirical scoring model:
     VariantScoringFeatureKeeper features;
     VariantScoringFeatureKeeper developmentFeatures;
@@ -243,9 +242,9 @@ struct GermlineDiploidSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenot
 
 
 /// restrict to the case where variant is site/SNV and calling model is continuous
-struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGenotypeInfo
+struct GermlineContinuousSiteAlleleInfo : public GermlineVariantAlleleInfo
 {
-    GermlineContinuousSiteSimpleGenotypeInfo(unsigned totalDepth, unsigned alleleDepth, BASE_ID::index_t base)
+    GermlineContinuousSiteAlleleInfo(unsigned totalDepth, unsigned alleleDepth, BASE_ID::index_t base)
         : _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
         , _base(base)
@@ -264,9 +263,9 @@ struct GermlineContinuousSiteSimpleGenotypeInfo : public GermlineVariantSimpleGe
 
 
 /// restrict to the case where variant is indel and calling model is continuous
-struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGenotypeInfo
+struct GermlineContinuousIndelAlleleInfo : public GermlineIndelAlleleInfo
 {
-    GermlineContinuousIndelSimpleGenotypeInfo(
+    GermlineContinuousIndelAlleleInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
         unsigned totalDepth,
         unsigned alleleDepth,
@@ -274,7 +273,7 @@ struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGen
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
         const starling_indel_sample_report_info& indelSampleReportInfo)
-        : GermlineIndelSimpleGenotypeInfo(gvcfDerivedOptions, indelKey, indelData, indelReportInfo, indelSampleReportInfo)
+        : GermlineIndelAlleleInfo(gvcfDerivedOptions, indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
     {
@@ -290,4 +289,4 @@ struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGen
     unsigned _alleleDepth;
 };
 
-std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteSimpleGenotypeInfo& smod);
+std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteAlleleInfo& smod);

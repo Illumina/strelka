@@ -41,7 +41,7 @@ struct gvcf_compressor
     /// or if the block should be written out
     bool
     is_site_compressable(
-        const GermlineSiteCallInfo& si) const;
+        const GermlineSiteLocusInfo& si) const;
 
     /// determine if a range of positions could be excluded
     /// (in the absence of variant signal)

@@ -29,17 +29,17 @@ struct dummy_variant_sink : public variant_pipe_stage_base
 {
     dummy_variant_sink() : variant_pipe_stage_base() {}
 
-    void process(std::unique_ptr<GermlineSiteCallInfo> si) override
+    void process(std::unique_ptr<GermlineSiteLocusInfo> si) override
     {
         the_sites.push_back(std::move(si));
     }
-    void process(std::unique_ptr<GermlineIndelCallInfo> ii) override
+    void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override
     {
         the_indels.push_back(std::move(ii));
     }
 
-    std::vector<std::unique_ptr<GermlineSiteCallInfo>> the_sites;
-    std::vector<std::unique_ptr<GermlineIndelCallInfo>> the_indels;
+    std::vector<std::unique_ptr<GermlineSiteLocusInfo>> the_sites;
+    std::vector<std::unique_ptr<GermlineIndelLocusInfo>> the_indels;
 };
 
 
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     indelKey.type=INDEL::INDEL;
     indelKey.deletionLength=2;
 
-    std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(dopt.gvcf, indelKey,indelData,dindel,indelReportInfo,isri));
+    std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, indelKey,indelData,dindel,indelReportInfo,isri));
     overlap.process(std::move(ii));
 
     overlap.flush();
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
         ik=iks[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(dopt.gvcf, ik,indelData,dindel,indelReportInfo,isri));
+        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, ik,indelData,dindel,indelReportInfo,isri));
         overlap.process(std::move(ii));
     }
 
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
         indelKey=indelKeys[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelCallInfo> ii(new GermlineDiploidIndelCallInfo(dopt.gvcf, indelKey,indelData,dindel,indelReportInfo,isri));
+        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, indelKey,indelData,dindel,indelReportInfo,isri));
         overlap.process(std::move(ii));
     }
 

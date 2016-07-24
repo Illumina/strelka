@@ -32,11 +32,11 @@
 class variant_pipe_stage_base
 {
 public:
-    virtual void process(std::unique_ptr<GermlineSiteCallInfo> si)
+    virtual void process(std::unique_ptr<GermlineSiteLocusInfo> si)
     {
         if (_sink) _sink->process(std::move(si));
     }
-    virtual void process(std::unique_ptr<GermlineIndelCallInfo> ii)
+    virtual void process(std::unique_ptr<GermlineIndelLocusInfo> ii)
     {
         if (_sink) _sink->process(std::move(ii));
     }

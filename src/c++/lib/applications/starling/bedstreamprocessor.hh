@@ -35,8 +35,8 @@ class bed_stream_processor : public variant_pipe_stage_base
 public:
     bed_stream_processor(const std::string& bed_file_name, const std::string& region, std::shared_ptr<variant_pipe_stage_base> next_stage);
 
-    void process(std::unique_ptr<GermlineSiteCallInfo> si) override;
-    void process(std::unique_ptr<GermlineIndelCallInfo> ii) override;
+    void process(std::unique_ptr<GermlineSiteLocusInfo> si) override;
+    void process(std::unique_ptr<GermlineIndelLocusInfo> ii) override;
 private:
     std::unique_ptr<bed_streamer> _bed_streamer;
     const bed_record* _current_record;
