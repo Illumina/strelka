@@ -365,8 +365,9 @@ add_overlap(
     call._dindel.max_gt_qphred = std::min(call._dindel.max_gt_qphred, overlap.first()._dindel.max_gt_qphred);
 
 
-    // combine filter flags
-    call.filters |= overlap.first().filters;
+    // combine filter flags from overlapping loci:
+    filters.merge(overlap.filters);
+
     // combine QScores. Since the "unset" value is -1, this complex logic is necessary
     if (call.empiricalVariantScore <0)
         call.empiricalVariantScore = overlap.first().empiricalVariantScore;
@@ -579,9 +580,6 @@ operator<<(std::ostream& os,
 
         os << " max_gt: " << DIGT::label(imod.max_gt);
     }
-
-    os << " filters: ";
-    shmod.write_filters(os);
 
     return os;
 }

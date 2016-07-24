@@ -34,7 +34,7 @@ struct variant_prefilter_stage : public variant_pipe_stage_base
     void process(std::unique_ptr<GermlineIndelCallInfo> ii) override;
 
     static void  add_site_modifiers(
-        const GermlineDiploidSiteCallInfo& si,
+        GermlineDiploidSiteCallInfo& si,
         GermlineDiploidSiteSimpleGenotypeInfo& smod,
         const ScoringModelManager& model);
 

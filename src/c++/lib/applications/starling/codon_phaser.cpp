@@ -378,7 +378,7 @@ create_phased_record()
         for (auto& val : _buffer)
         {
             if (! is_phasable_site(val)) continue;
-            val->smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict);
+            val->set_filter(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict);
         }
         return;
     }

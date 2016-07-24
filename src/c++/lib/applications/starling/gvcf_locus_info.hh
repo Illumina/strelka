@@ -95,6 +95,24 @@ get_label(const unsigned idx)
 
 struct LocusFilterKeeper
 {
+    bool
+    test(const GERMLINE_VARIANT_VCF_FILTERS::index_t i) const
+    {
+        return filters.test(i);
+    }
+
+    bool
+    none() const
+    {
+        return filters.none();
+    }
+
+    bool
+    any() const
+    {
+        return filters.any();
+    }
+
     void
     set_filter(const GERMLINE_VARIANT_VCF_FILTERS::index_t i)
     {
@@ -109,6 +127,19 @@ struct LocusFilterKeeper
 
     void
     write_filters(std::ostream& os) const;
+
+    bool
+    operator==(const LocusFilterKeeper& rhs) const
+    {
+        return (filters == rhs.filters);
+    }
+
+    // bit-wise or over each flag
+    void
+    merge(const LocusFilterKeeper& filterKeeper)
+    {
+        filters |= filterKeeper.filters;
+    }
 
     void
     clear()
@@ -378,8 +409,26 @@ struct GermlineContinuousIndelSimpleGenotypeInfo : public GermlineIndelSimpleGen
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteSimpleGenotypeInfo& smod);
 
 
+/// represents a locus in the sense of multiple alleles which interact in some way such that they would be represented in a single VCF record
+struct LocusInfo : public PolymorphicObject
+{
+    void
+    clear()
+    {
+        filters.clear();
+    }
+
+    void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter)
+    {
+        filters.set_filter(filter);
+    }
+
+    LocusFilterKeeper filters;
+};
+
+
 /// represents an indel call at the level of a full VCF record, containing possibly multiple alleles/SimpleGenotypes
-struct GermlineIndelCallInfo
+struct GermlineIndelCallInfo : public LocusInfo
 {
     explicit GermlineIndelCallInfo(const pos_t init_pos)
         : pos(init_pos)
@@ -389,12 +438,10 @@ struct GermlineIndelCallInfo
 
     virtual bool is_forced_output() const = 0;
     virtual bool is_indel() const = 0;
-    virtual void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) = 0;
     // the EXCLUSIVE end of the variant (i.e. open)
     virtual pos_t end() const = 0;
 
     pos_t pos;
-    LocusFilterKeeper filterKeeper;
 };
 
 
@@ -426,10 +473,6 @@ struct GermlineDiploidIndelCallInfo : public GermlineIndelCallInfo
         {
             return x._dindel.isIndel();
         });
-    }
-    void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
-    {
-        filterKeeper.set_filter(filter);
     }
 
     pos_t end() const override;
@@ -536,7 +579,7 @@ public:
 
 
 /// represents an site call at the level of a full VCF record, containing possibly multiple alleles
-struct GermlineSiteCallInfo : public PolymorphicObject
+struct GermlineSiteCallInfo : public LocusInfo
 {
     GermlineSiteCallInfo(const pos_t init_pos,
                          const char init_ref,
@@ -555,7 +598,6 @@ struct GermlineSiteCallInfo : public PolymorphicObject
     GermlineSiteCallInfo() = default;
 
     virtual bool is_snp() const = 0;
-    virtual void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) = 0;
     virtual bool is_nonref() const = 0;
 
     unsigned
@@ -572,6 +614,20 @@ struct GermlineSiteCallInfo : public PolymorphicObject
         return (is_fwd_strand ? fwd_counts[base_id] : rev_counts[base_id]);
     }
 
+    void
+    clear()
+    {
+        LocusInfo::clear();
+        pos = 0;
+        ref = 'N';
+        n_used_calls = 0;
+        n_unused_calls = 0;
+        hpol = 0;
+        spanning_deletions = 0;
+        Unphasable = false;
+        forcedOutput = false;
+    }
+
     pos_t pos = 0;
     char ref = 'N';
     unsigned n_used_calls = 0;
@@ -579,11 +635,9 @@ struct GermlineSiteCallInfo : public PolymorphicObject
 
     unsigned hpol = 0;
 
-    unsigned spanning_deletions;
+    unsigned spanning_deletions = 0;
     bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
     bool forcedOutput = false;
-
-    LocusFilterKeeper filterKeeper;
 
 private:
     std::array<unsigned,N_BASE> fwd_counts;
@@ -614,11 +668,6 @@ struct GermlineDiploidSiteCallInfo : public GermlineSiteCallInfo
     bool is_snp() const override
     {
         return dgt.is_snp;
-    }
-
-    void set_filter (GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
-    {
-        filterKeeper.set_filter(filter);
     }
 
     const char*
@@ -729,10 +778,7 @@ struct GermlineContinuousSiteCallInfo : public GermlineSiteCallInfo
     {
         return _is_snp;
     }
-    void set_filter (GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
-    {
-        filterKeeper.set_filter(filter);
-    }
+
     bool is_nonref() const override
     {
         auto ref_id = base_to_id(ref);
@@ -770,12 +816,6 @@ struct GermlineContinuousIndelCallInfo : public GermlineIndelCallInfo
         : GermlineIndelCallInfo(init_pos)
     {
     }
-
-    void set_filter(GERMLINE_VARIANT_VCF_FILTERS::index_t filter) override
-    {
-        filterKeeper.set_filter(filter);
-    }
-
 
     bool is_indel() const override
     {

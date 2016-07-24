@@ -48,12 +48,12 @@ struct ScoringModelManager
 
     void
     classify_site(
-        const GermlineDiploidSiteCallInfo& si,
+        GermlineDiploidSiteCallInfo& si,
         GermlineDiploidSiteSimpleGenotypeInfo& smod) const;
 
     void
     classify_indel(
-        const GermlineDiploidIndelCallInfo& ii,
+        GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     void
@@ -62,11 +62,13 @@ struct ScoringModelManager
 
     /// default rules based site model
     void default_classify_site(
-        const GermlineSiteCallInfo& si,
-        GermlineVariantSimpleGenotypeInfo& call) const;
+        GermlineSiteCallInfo& si,
+        const GermlineVariantSimpleGenotypeInfo& call) const;
 
     /// default rules based indel model
-    void default_classify_indel(GermlineIndelSimpleGenotypeInfo& call) const;
+    void default_classify_indel(
+        GermlineIndelCallInfo& ii,
+        const GermlineIndelSimpleGenotypeInfo& call) const;
 
     bool
     isEVSSiteModel() const
@@ -90,7 +92,7 @@ private:
     void
     classify_indel_impl(
         const bool is_model_usable,
-        const GermlineDiploidIndelCallInfo& ii,
+        GermlineDiploidIndelCallInfo& ii,
         GermlineDiploidIndelSimpleGenotypeInfo& call) const;
 
     double

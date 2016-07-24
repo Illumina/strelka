@@ -32,7 +32,7 @@
 
 /// manages compressed site record blocks output in the gVCF
 ///
-struct gvcf_block_site_record : public GermlineVariantSimpleGenotypeInfo
+struct gvcf_block_site_record : public GermlineSiteCallInfo
 {
     explicit
     gvcf_block_site_record(const gvcf_options& opt)
@@ -45,6 +45,10 @@ struct gvcf_block_site_record : public GermlineVariantSimpleGenotypeInfo
     void
     reset()
     {
+        GermlineSiteCallInfo::clear();
+
+        allele.clear();
+
         count=0;
         block_gqx.reset();
         block_dpu.reset();
@@ -52,10 +56,8 @@ struct gvcf_block_site_record : public GermlineVariantSimpleGenotypeInfo
         pos=-1;
         ref=(char)0;
         gt = ".";
-        has_call = is_covered = is_used_covered = is_nonref=false;
+        has_call = is_covered = is_used_covered = _isNonRef=false;
         ploidy = 0;
-
-        GermlineVariantSimpleGenotypeInfo::clear();
     }
 
     /// determine if the given site could be joined to this block:
@@ -75,13 +77,29 @@ struct gvcf_block_site_record : public GermlineVariantSimpleGenotypeInfo
         return gt.c_str();
     }
 
+    bool is_snp() const override
+    {
+        return false;
+    }
+
+    bool is_nonref() const override
+    {
+        return _isNonRef;
+    }
+
+private:
+    void
+    setNonRef(const bool isNonRef)
+    {
+        _isNonRef = isNonRef;
+    }
+
+public:
+    GermlineVariantSimpleGenotypeInfo allele;
 
     const double frac_tol;
     const int abs_tol;
     int count;
-    pos_t pos;
-    char ref;
-    bool is_nonref;
     bool is_covered;
     bool is_used_covered;
     int ploidy;
@@ -92,4 +110,7 @@ struct gvcf_block_site_record : public GermlineVariantSimpleGenotypeInfo
 
     bool has_call;
     //stream_stat _blockMQ;
+
+private:
+    bool _isNonRef;
 };

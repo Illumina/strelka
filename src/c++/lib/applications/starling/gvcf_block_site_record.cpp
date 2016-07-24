@@ -91,9 +91,9 @@ test(const GermlineDiploidSiteCallInfo& si) const
     if ((pos+count) != si.pos) return false;
 
     // filters must match:
-    if (filters != si.smod.filters) return false;
+    if (not (filters == si.filters)) return false;
 
-    if (is_nonref || si.is_nonref()) return false;
+    if (is_nonref() || si.is_nonref()) return false;
 
     if (gt != map_gt_to_homref(si.get_gt())) return false;
 
@@ -136,8 +136,8 @@ join(const GermlineDiploidSiteCallInfo& si)
     if (count == 0)
     {
         pos = si.pos;
-        filters = si.smod.filters;
-        is_nonref = si.is_nonref();
+        filters = si.filters;
+        setNonRef(si.is_nonref());
         gt = map_gt_to_homref(si.get_gt());
         is_used_covered = si.smod.is_used_covered;
         is_covered = si.smod.is_covered;
@@ -177,9 +177,9 @@ test(const GermlineContinuousSiteCallInfo& si) const
     if ((pos+count) != si.pos) return false;
 
     // filters must match:
-    if (filters != si.calls.front().filters) return false;
+    if (not (filters == si.filters)) return false;
 
-    if (is_nonref || si.is_nonref()) return false;
+    if (is_nonref() || si.is_nonref()) return false;
 
     if (gt != map_gt_to_homref(si.get_gt(si.calls.front()))) return false;
 
@@ -223,9 +223,9 @@ gvcf_block_site_record::join(const GermlineContinuousSiteCallInfo& si)
         pos = si.pos;
         if (!si.calls.empty())
         {
-            filters = si.calls.front().filters;
+            filters = si.filters;
             gt = map_gt_to_homref(si.get_gt(si.calls.front()));
-            is_nonref = si.is_nonref();
+            setNonRef(si.is_nonref());
             // TODO: handle no coverage regions in continuous
             has_call = true;
         }

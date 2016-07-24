@@ -72,7 +72,7 @@ ScoringModelManager(
 void
 ScoringModelManager::
 classify_site(
-    const GermlineDiploidSiteCallInfo& si,
+    GermlineDiploidSiteCallInfo& si,
     GermlineDiploidSiteSimpleGenotypeInfo& smod) const
 {
     if (si.dgt.is_snp && _isReportEVSFeatures)
@@ -99,7 +99,7 @@ classify_site(
 
         if (smod.empiricalVariantScore < snvEVSThreshold())
         {
-            smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+            si.filters.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }
     }
     else
@@ -149,7 +149,7 @@ void
 ScoringModelManager::
 classify_indel_impl(
     const bool isVariantUsableInEVSModel,
-    const GermlineDiploidIndelCallInfo& ii,
+    GermlineDiploidIndelCallInfo& ii,
     GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
     set_indel_modifiers(ii, call);
@@ -177,12 +177,12 @@ classify_indel_impl(
 
         if (call.empiricalVariantScore < indelEVSThreshold())
         {
-            call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+            ii.filters.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }
     }
     else
     {
-        default_classify_indel(call);
+        default_classify_indel(ii, call);
     }
 }
 
@@ -191,7 +191,7 @@ classify_indel_impl(
 void
 ScoringModelManager::
 classify_indel(
-    const GermlineDiploidIndelCallInfo& ii,
+    GermlineDiploidIndelCallInfo& ii,
     GermlineDiploidIndelSimpleGenotypeInfo& call) const
 {
     classify_indel_impl(checkIsVariantUsableInEVSModel(ii),ii,call);
@@ -223,16 +223,16 @@ classify_indels(
 void
 ScoringModelManager::
 default_classify_site(
-    const GermlineSiteCallInfo& si,
-    GermlineVariantSimpleGenotypeInfo& call) const
+    GermlineSiteCallInfo& si,
+    const GermlineVariantSimpleGenotypeInfo& call) const
 {
     if (_opt.is_min_gqx)
     {
-        if (call.gqx<_opt.min_gqx) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        if (call.gqx<_opt.min_gqx) si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
     if (_dopt.is_max_depth())
     {
-        if ((si.n_used_calls+si.n_unused_calls) > _dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if ((si.n_used_calls+si.n_unused_calls) > _dopt.max_depth) si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
     // high DPFratio filter
     if (_opt.is_max_base_filt)
@@ -241,18 +241,18 @@ default_classify_site(
         if (total_calls>0)
         {
             const double filt(static_cast<double>(si.n_unused_calls)/static_cast<double>(total_calls));
-            if (filt>_opt.max_base_filt) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
+            if (filt>_opt.max_base_filt) si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighBaseFilt);
         }
     }
     if (si.is_snp())
     {
         if (_opt.is_max_snv_sb)
         {
-            if (call.strand_bias>_opt.max_snv_sb) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
+            if (call.strand_bias>_opt.max_snv_sb) si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVSB);
         }
         if (_opt.is_max_snv_hpol)
         {
-            if (static_cast<int>(si.hpol)>_opt.max_snv_hpol) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
+            if (static_cast<int>(si.hpol)>_opt.max_snv_hpol) si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighSNVHPOL);
         }
     }
 }
@@ -262,16 +262,17 @@ default_classify_site(
 void
 ScoringModelManager::
 default_classify_indel(
-    GermlineIndelSimpleGenotypeInfo& call) const
+    GermlineIndelCallInfo& ii,
+    const GermlineIndelSimpleGenotypeInfo& call) const
 {
     if (this->_opt.is_min_gqx)
     {
-        if (call.gqx<_opt.min_gqx) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        if (call.gqx<_opt.min_gqx) ii.set_filter(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
 
     if (this->_dopt.is_max_depth())
     {
-        if (call._indelSampleReportInfo.tier1Depth > this->_dopt.max_depth) call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
+        if (call._indelSampleReportInfo.tier1Depth > this->_dopt.max_depth) ii.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 
     if (_opt.is_max_ref_rep())
@@ -282,7 +283,7 @@ default_classify_indel(
             if ((iri.repeat_unit.size() <= 2) &&
                 (static_cast<int>(iri.ref_repeat_count) > _opt.max_ref_rep))
             {
-                call.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
+                ii.set_filter(GERMLINE_VARIANT_VCF_FILTERS::HighRefRep);
             }
         }
     }

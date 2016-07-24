@@ -344,7 +344,7 @@ write_site_record(
     os << '\t';
 
     // FILTER:
-    si.smod.write_filters(os);
+    si.filters.write_filters(os);
     os << '\t';
 
     // INFO:
@@ -562,7 +562,7 @@ write_site_record(
         os << call.gq << '\t';
 
         // FILTER:
-        call.write_filters(os);
+        si.filters.write_filters(os);
         os << '\t';
 
         // INFO
@@ -654,7 +654,7 @@ write_site_record(
     os << '\t';
 
     // FILTER:
-    si.write_filters(os);
+    si.filters.write_filters(os);
     os << '\t';
 
     // INFO:
@@ -718,7 +718,7 @@ write_indel_record(
     os << call._dindel.indel_qphred << '\t'; //QUAL
 
     // FILTER:
-    call.write_filters(os);
+    ii.filters.write_filters(os);
     os << '\t';
 
     // INFO
@@ -911,7 +911,7 @@ write_indel_record(
         os << call.gq << '\t'; //QUAL
 
         // FILTER:
-        call.write_filters(os);
+        ii.filters.write_filters(os);
         os << '\t';
 
         // INFO

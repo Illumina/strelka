@@ -379,7 +379,7 @@ void indel_overlapper::modify_overlapping_site(const GermlineDiploidIndelCallInf
     const pos_t offset(si.pos-ii.pos);
     assert(offset>=0);
 
-    if (ii.first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict))
+    if (ii.filters.test(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict))
     {
         modify_indel_conflict_site(si);
     }
@@ -415,9 +415,9 @@ void indel_overlapper::modify_indel_overlap_site(
     // if overlapping indel has any filters, mark as site conflict
     // (note that we formerly had the site inherit indel filters, but
     // this interacts poorly with empirical scoring)
-    if (! ii.first().filters.none())
+    if (! ii.filters.none())
     {
-        si.smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
+        si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
     }
 
 #ifdef DEBUG_GVCF
@@ -433,7 +433,7 @@ void indel_overlapper::modify_indel_overlap_site(
     {
         if (DIGT::is_het(si.smod.max_gt))
         {
-            si.smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
+            si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
             //si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
         }
         else
@@ -456,12 +456,12 @@ void indel_overlapper::modify_indel_overlap_site(
             si.smod.is_zero_ploidy=true;
             if (si.dgt.is_noploid())
             {
-                si.smod.unset_filter(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+                si.filters.unset_filter(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
             }
         }
         else
         {
-            si.smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
+            si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
         }
     }
     else if (ploidy!=2)
@@ -478,7 +478,7 @@ void indel_overlapper::modify_indel_overlap_site(
 
 void indel_overlapper::modify_indel_conflict_site(GermlineDiploidSiteCallInfo& si)
 {
-    si.smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
+    si.set_filter(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 }
 
 // figure out the per-site ploidy inside of indel based on each haplotype's match descriptor:
@@ -522,7 +522,7 @@ indel_overlapper::modify_conflict_indel_record()
     {
         ii->first().set_hap_cigar();
 
-        ii->first().set_filter(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
+        ii->set_filter(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 
         _CM.classify_indel(*ii, ii->first());
     }

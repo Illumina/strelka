@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
 
     for (auto& phased_variant : next->the_sites)
     {
-        BOOST_CHECK(!phased_variant->smod.filters.any());
+        BOOST_CHECK(!phased_variant->filters.any());
         BOOST_CHECK(!phased_variant->smod.is_phased_region);
     }
     BOOST_CHECK_EQUAL(next->the_sites.size(), 1);
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     phaser.flush();
     for (auto& site : sink.the_sites)
     {
-        BOOST_CHECK(! site->is_het() || site->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict));
+        BOOST_CHECK(! site->is_het() || site->filters.test(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict));
         BOOST_CHECK(!site->smod.is_phased_region);
     }
 }

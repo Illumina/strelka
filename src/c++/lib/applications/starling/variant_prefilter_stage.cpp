@@ -44,7 +44,7 @@ set_site_gt(const diploid_genotype::result_set& rs,
 
 
 void variant_prefilter_stage::add_site_modifiers(
-    const GermlineDiploidSiteCallInfo& si,
+    GermlineDiploidSiteCallInfo& si,
     GermlineDiploidSiteSimpleGenotypeInfo& smod,
     const ScoringModelManager& model)
 {
@@ -104,7 +104,7 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineSiteCallInfo> info
         {
             if (! si->is_print_unknowngt())
             {
-                si->smod.set_filter(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+                si->filters.set_filter(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
             }
         }
 
@@ -149,9 +149,9 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelCallInfo> inf
             if (call._indelKey.is_breakpoint()) return;
         }
 
-        for (auto& call : ii->calls)
+        for (const auto& call : ii->calls)
         {
-            _model.default_classify_indel(call);
+            _model.default_classify_indel(*ii, call);
         }
         _sink->process(std::move(ii));
     }

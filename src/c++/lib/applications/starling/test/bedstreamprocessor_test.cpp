@@ -59,17 +59,21 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
         return site;
     };
 
+    auto testOffTarget = [&]() {
+        return next->the_sites.back()->filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
+    };
+
     bsp.process(getNewSite(50));
-    BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(! testOffTarget());
 
     bsp.process(getNewSite(105));
-    BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(testOffTarget());
 
     bsp.process(getNewSite(150));
-    BOOST_REQUIRE(!next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(! testOffTarget());
 
     bsp.process(getNewSite(250));
-    BOOST_REQUIRE(next->the_sites.back()->smod.filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(testOffTarget());
 }
 
 BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
@@ -95,19 +99,22 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
         return indel;
     };
 
+    auto testOffTarget = [&]() {
+        return next->the_indels.back()->filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget);
+    };
+
     bsp.process(getNewIndel(50));
-    BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(! testOffTarget());
 
     bsp.process(getNewIndel(105));
-    BOOST_REQUIRE(next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(testOffTarget());
 
     bsp.process(getNewIndel(150));
-    BOOST_REQUIRE(!next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(! testOffTarget());
 
     bsp.process(getNewIndel(250));
-    BOOST_REQUIRE(next->the_indels.back()->first().filters.test(GERMLINE_VARIANT_VCF_FILTERS::OffTarget));
+    BOOST_REQUIRE(testOffTarget());
 }
 
 
 BOOST_AUTO_TEST_SUITE_END()
-
