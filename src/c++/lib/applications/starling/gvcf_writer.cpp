@@ -390,14 +390,14 @@ write_site_record(
 #endif
 
             // EVS features may not be computed for certain records, so check first:
-            if (! si.smod.features.empty())
+            if (! si.EVSFeatures.empty())
             {
                 const StreamScoper ss(os);
                 os << std::setprecision(5);
                 os << ";EVSF=";
-                si.smod.features.writeValues(os);
+                si.EVSFeatures.writeValues(os);
                 os << ",";
-                si.smod.developmentFeatures.writeValues(os);
+                si.EVSDevelopmentFeatures.writeValues(os);
             }
         }
 

@@ -80,19 +80,19 @@ classify_site(
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
         const bool isUniformDepthExpected(_dopt.is_max_depth());
-        si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, smod);
+        si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth);
     }
 
     //si.smod.filters.reset(); // make sure no filters have been applied prior
     if (si.dgt.is_snp && isEVSSiteModel())
     {
-        if (smod.features.empty())
+        if (si.EVSFeatures.empty())
         {
             static const bool isComputeDevelopmentFeatures(false);
             const bool isUniformDepthExpected(_dopt.is_max_depth());
-            si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, smod);
+            si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth);
         }
-        smod.empiricalVariantScore = error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(smod.features.getAll()));
+        smod.empiricalVariantScore = error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(si.EVSFeatures.getAll()));
 
         static const int maxEmpiricalVariantScore(60);
         smod.empiricalVariantScore = std::min(smod.empiricalVariantScore, maxEmpiricalVariantScore);

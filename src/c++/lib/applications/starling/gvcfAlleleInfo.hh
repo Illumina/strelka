@@ -188,11 +188,7 @@ get_label(const unsigned idx)
 /// restrict to the case where variant is site/SNV and calling model is diploid
 struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
 {
-    explicit
-    GermlineDiploidSiteAlleleInfo(
-        const gvcf_deriv_options& gvcfDerivedOptions)
-        : features(gvcfDerivedOptions.snvFeatureSet),
-          developmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
+    GermlineDiploidSiteAlleleInfo()
     {
         clear();
     }
@@ -209,14 +205,6 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
         is_phasing_insufficient_depth=false;
         modified_gt=MODIFIED_SITE_GT::NONE;
         max_gt=0;
-        clearEVSFeatures();
-    }
-
-    void
-    clearEVSFeatures()
-    {
-        features.clear();
-        developmentFeatures.clear();
     }
 
     bool
@@ -234,10 +222,6 @@ struct GermlineDiploidSiteAlleleInfo : public GermlineVariantAlleleInfo
 
     MODIFIED_SITE_GT::index_t modified_gt;
     unsigned max_gt;
-    
-    /// production and development features used in the empirical scoring model:
-    VariantScoringFeatureKeeper features;
-    VariantScoringFeatureKeeper developmentFeatures;
 };
 
 

@@ -470,7 +470,7 @@ void indel_overlapper::modify_indel_overlap_site(
     }
 
     // after all those changes we need to rerun the site filters:
-    si.smod.clearEVSFeatures();
+    si.clearEVSFeatures();
     model.classify_site(si, si.smod);
 }
 

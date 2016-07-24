@@ -402,13 +402,15 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         const int used_allele_count_min_qscore,
         const bool is_forced_output = false)
         : GermlineSiteLocusInfo(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
-          smod(gvcfDerivedOptions)
+          EVSFeatures(gvcfDerivedOptions.snvFeatureSet),
+          EVSDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
 
     explicit
     GermlineDiploidSiteLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions)
-        : smod(gvcfDerivedOptions)
+        : EVSFeatures(gvcfDerivedOptions.snvFeatureSet),
+          EVSDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
 
     bool is_snp() const override
@@ -439,8 +441,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         const bool isRNA,
         const bool isUniformDepthExpected,
         const bool isComputeDevelopmentFeatures,
-        const double chromDepth,
-        GermlineDiploidSiteAlleleInfo& smod2) const;
+        const double chromDepth);
 
     bool
     is_het() const
@@ -482,6 +483,13 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         return ((!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
     }
 
+    void
+    clearEVSFeatures()
+    {
+        EVSFeatures.clear();
+        EVSDevelopmentFeatures.clear();
+    }
+
     std::string phased_ref, phased_alt, phased_AD, phased_ADF, phased_ADR;
     diploid_genotype dgt;
     double hapscore = 0;
@@ -495,6 +503,10 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     double MQRankSum = 0;       // Uses Mann-Whitney Rank Sum Test for MQs (ref bases vs alternate alleles)
     double avgBaseQ = 0;
     double rawPos = 0;
+
+    /// production and development features used in the empirical scoring model:
+    VariantScoringFeatureKeeper EVSFeatures;
+    VariantScoringFeatureKeeper EVSDevelopmentFeatures;
 
     GermlineDiploidSiteAlleleInfo smod;
 };
