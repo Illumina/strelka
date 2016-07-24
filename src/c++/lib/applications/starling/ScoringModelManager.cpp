@@ -92,12 +92,12 @@ classify_site(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             si.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth);
         }
-        smod.empiricalVariantScore = error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(si.EVSFeatures.getAll()));
+        si.empiricalVariantScore = error_prob_to_qphred(_snvScoringModelPtr->scoreVariant(si.EVSFeatures.getAll()));
 
         static const int maxEmpiricalVariantScore(60);
-        smod.empiricalVariantScore = std::min(smod.empiricalVariantScore, maxEmpiricalVariantScore);
+        si.empiricalVariantScore = std::min(si.empiricalVariantScore, maxEmpiricalVariantScore);
 
-        if (smod.empiricalVariantScore < snvEVSThreshold())
+        if (si.empiricalVariantScore < snvEVSThreshold())
         {
             si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }
@@ -170,12 +170,12 @@ classify_indel_impl(
             const bool isUniformDepthExpected(_dopt.is_max_depth());
             call.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, ii.is_hetalt());
         }
-        call.empiricalVariantScore = error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(call.features.getAll()));
+        ii.empiricalVariantScore = error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(call.features.getAll()));
 
         static const int maxEmpiricalVariantScore(60);
-        call.empiricalVariantScore = std::min(call.empiricalVariantScore, maxEmpiricalVariantScore);
+        ii.empiricalVariantScore = std::min(ii.empiricalVariantScore, maxEmpiricalVariantScore);
 
-        if (call.empiricalVariantScore < indelEVSThreshold())
+        if (ii.empiricalVariantScore < indelEVSThreshold())
         {
             ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
         }

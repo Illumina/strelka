@@ -305,7 +305,7 @@ operator<<(
 
     dic._dindel.dump(os);
 
-    os << "EVS: " << dic.empiricalVariantScore << " max_gt: " << dic.max_gt << "\n";
+    os << " max_gt: " << dic.max_gt << "\n";
 
     return os;
 }

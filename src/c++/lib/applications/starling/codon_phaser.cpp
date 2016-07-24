@@ -361,7 +361,7 @@ create_phased_record()
                 is_min_gq_idx1 = true;
             }
             min_qual = std::min(si->dgt.genome.snp_qphred,min_qual);
-            min_EVS = std::min(si->smod.empiricalVariantScore,min_EVS);
+            min_EVS = std::min(si->empiricalVariantScore,min_EVS);
         }
     }
     if (!is_min_gq_idx0)
@@ -460,7 +460,7 @@ create_phased_record()
     base->dgt.genome.snp_qphred  = min_qual;
     base->dgt.phredLoghood       = pls;
     base->smod.gqx               = std::min(min_gq,min_qual);
-    base->smod.empiricalVariantScore            = min_EVS;
+    base->empiricalVariantScore  = min_EVS;
 
     base->phased_alt = alt.str();
     base->phased_AD  = AD.str();

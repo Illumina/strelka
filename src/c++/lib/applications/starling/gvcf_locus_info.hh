@@ -160,9 +160,14 @@ struct LocusInfo : public PolymorphicObject
     void
     clear()
     {
+        empiricalVariantScore = -1;
         filters.clear();
     }
 
+    /// The empirically calibrated quality-score of the locus, if -1 no locus EVS is available
+    int empiricalVariantScore = -1;
+
+    /// All locus-ldevel filteres
     LocusFilterKeeper filters;
 };
 

@@ -115,13 +115,13 @@ add_overlap(
     assert(altAlleles.size() == 1);
     assert(overlap.altAlleles.size() == 1);
 
-    auto& call(first());
-    auto& overlap_call(overlap.first());
+    auto& firstAllele(first());
+    auto& overlapAllele(overlap.first());
 
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
     std::string leading_seq,trailing_seq;
-    auto indel_end_pos=std::max(overlap_call._indelKey.right_pos(),call._indelKey.right_pos());
+    auto indel_end_pos=std::max(overlapAllele._indelKey.right_pos(),firstAllele._indelKey.right_pos());
 
     const pos_t indel_begin_pos(pos-1);
 
@@ -130,7 +130,7 @@ add_overlap(
     // make extended vcf ref seq:
     std::string tmp;
     ref.get_substring(indel_begin_pos,(indel_end_pos-indel_begin_pos),tmp);
-    call._indelReportInfo.vcf_ref_seq = tmp;
+    firstAllele._indelReportInfo.vcf_ref_seq = tmp;
 
     ploidy.resize(indel_end_pos-pos,0);
 
@@ -160,20 +160,20 @@ add_overlap(
     }
 
     //reduce qual and gt to the lowest of the set:
-    call._dindel.indel_qphred = std::min(call._dindel.indel_qphred, overlap.first()._dindel.indel_qphred);
-    call._dindel.max_gt_qphred = std::min(call._dindel.max_gt_qphred, overlap.first()._dindel.max_gt_qphred);
+    firstAllele._dindel.indel_qphred = std::min(firstAllele._dindel.indel_qphred, overlap.first()._dindel.indel_qphred);
+    firstAllele._dindel.max_gt_qphred = std::min(firstAllele._dindel.max_gt_qphred, overlap.first()._dindel.max_gt_qphred);
 
 
     // combine filter flags from overlapping loci:
     filters.merge(overlap.filters);
 
-    // combine QScores. Since the "unset" value is -1, this complex logic is necessary
-    if (call.empiricalVariantScore <0)
-        call.empiricalVariantScore = overlap.first().empiricalVariantScore;
-    else if (overlap.first().empiricalVariantScore >= 0)
-        call.empiricalVariantScore = std::min(call.empiricalVariantScore, overlap.first().empiricalVariantScore);
-    call.gqx = std::min(call.gqx, overlap.first().gqx);
-    call.gq = std::min(call.gq, overlap.first().gq);
+    // combine EVS values. Since the "unset" value is -1, this complex logic is necessary
+    if (empiricalVariantScore <0)
+        empiricalVariantScore = overlap.empiricalVariantScore;
+    else if (overlap.empiricalVariantScore >= 0)
+        empiricalVariantScore = std::min(empiricalVariantScore, overlap.empiricalVariantScore);
+    firstAllele.gqx = std::min(firstAllele.gqx, overlap.first().gqx);
+    firstAllele.gq = std::min(firstAllele.gq, overlap.first().gq);
 
     altAlleles.push_back(overlap.first());
 }

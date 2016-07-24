@@ -440,9 +440,9 @@ write_site_record(
     }
     if (si.smod.is_gqx())
     {
-        if (si.smod.empiricalVariantScore>=0)
+        if (si.empiricalVariantScore>=0)
         {
-            os << si.smod.empiricalVariantScore;
+            os << si.empiricalVariantScore;
         }
         else
         {
@@ -800,7 +800,7 @@ write_indel_record(
     os << ii.get_gt() << ':'
        << call.gq;
 
-    os << ':' << ((call.empiricalVariantScore>=0) ? call.empiricalVariantScore : call.gqx);
+    os << ':' << ((ii.empiricalVariantScore>=0) ? ii.empiricalVariantScore : call.gqx);
 
     os << ':' << call._indelSampleReportInfo.tier1Depth;
 

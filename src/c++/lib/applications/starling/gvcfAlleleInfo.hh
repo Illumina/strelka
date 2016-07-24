@@ -59,15 +59,11 @@ struct GermlineVariantAlleleInfo : public PolymorphicObject
         gqx = 0;
         gq = 0;
         strand_bias = 0;
-        empiricalVariantScore = -1;
     }
 
     int gqx=0;
     int gq=0;
     double strand_bias = 0;
-
-    // The empirically calibrated quality-score of the site, if -1 no EVS is available
-    int empiricalVariantScore = -1;
 };
 
 
