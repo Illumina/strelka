@@ -546,12 +546,10 @@ locusGenotypeToDindel(
     const AlleleGroupGenotype& locusGenotype,
     const unsigned alleleId,
     const unsigned groupLocusPloidy,
-    const bool isForcedOuput,
-    const bool isZeroCoverage)
+    const bool isForcedOuput)
 {
     starling_diploid_indel dindel;
     dindel.is_forced_output = isForcedOuput;
-    dindel.is_zero_coverage = isZeroCoverage;
     dindel.ploidy = groupLocusPloidy;
 
     if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
@@ -643,11 +641,8 @@ hackDiplotypeCallToCopyNumberCalls(
 
         isOutputAnyAlleles=true;
 
-        const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
-        const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
-
         starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex,
-                                                            groupLocusPloidy, isForcedOutput, isZeroCoverage));
+                                                            groupLocusPloidy, isForcedOutput));
         insertIndelInGvcf(opt, dopt, ref, basecallBuffer, indelKey, indelData, sampleId, dindel, gvcfer);
     }
     return isOutputAnyAlleles;

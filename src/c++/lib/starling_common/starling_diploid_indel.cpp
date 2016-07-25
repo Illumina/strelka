@@ -38,8 +38,7 @@ dump(std::ostream& os) const
        << ",max_gt_qphred=" << max_gt_qphred
        << ",max_gt_poly=" << max_gt_poly
        << ",max_gt_poly_qphred=" << max_gt_poly_qphred
-       << ",is_forced_output=" << is_forced_output
-       << ",is_zero_coverage=" << is_zero_coverage;
+       << ",is_forced_output=" << is_forced_output;
 }
 
 

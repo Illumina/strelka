@@ -131,7 +131,8 @@ set_indel_modifiers(
     GermlineDiploidIndelAlleleInfo& call) const
 {
     const auto& dindel(ii.first()._dindel);
-    if ((dindel.max_gt != dindel.max_gt_poly) || dindel.is_zero_coverage)
+    /// max_gt != max_gt_poly indicates we're in a boundary zone between variant and hom-ref call
+    if (dindel.max_gt != dindel.max_gt_poly)
     {
         call.gqx=0;
     }
