@@ -132,7 +132,7 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelLocusInfo> in
         if (ii->first()._indelKey.is_breakpoint()) return;
 
         // add filter for all indels in no-ploid regions:
-        if (ii->first()._dindel.is_noploid())
+        if (ii->first()._dindel.ploidy.isNoploid())
         {
             ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
         }

@@ -846,7 +846,7 @@ write_indel_record(
         using namespace STAR_DIINDEL;
         const auto& dindel(ii.altAlleles[0]._dindel);
         const auto& pls(dindel.phredLoghood);
-        if (dindel.is_haploid())
+        if (dindel.ploidy.isHaploid())
         {
             os << pls[NOINDEL] << ','
                << pls[HOM];

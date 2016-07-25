@@ -235,7 +235,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         {
             return "1/2";
         }
-        else if (first()._dindel.is_haploid())
+        else if (first()._dindel.ploidy.isHaploid())
         {
             using namespace STAR_DIINDEL;
 
@@ -270,7 +270,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
     get_ploidy(const unsigned offset) const
     {
         auto& dindel(first()._dindel);
-        if (dindel.is_noploid()) return 0;
+        if (dindel.ploidy.isNoploid()) return 0;
 
         if (!is_hetalt())
         {
@@ -282,7 +282,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
             case HET:
                 return 1;
             case NOINDEL:
-                return (dindel.is_haploid() ? 1 : 2);
+                return (dindel.ploidy.isHaploid() ? 1 : 2);
             }
             assert(0);
         }

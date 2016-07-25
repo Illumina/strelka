@@ -432,7 +432,7 @@ starling_indel_call_pprob_digt(
     // no immediate plans to include this for regular indel-calling:
     static const bool is_tier2_pass(false);
 
-    const bool is_haploid(dindel.is_haploid());
+    const bool is_haploid(dindel.ploidy.isHaploid());
 
     // get likelihood of each genotype:
     double lhood[STAR_DIINDEL::SIZE];

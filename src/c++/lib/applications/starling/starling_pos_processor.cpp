@@ -550,7 +550,7 @@ locusGenotypeToDindel(
 {
     starling_diploid_indel dindel;
     dindel.is_forced_output = isForcedOuput;
-    dindel.ploidy = groupLocusPloidy;
+    dindel.ploidy.setPloidy(groupLocusPloidy);
 
     if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
     {
