@@ -82,7 +82,7 @@ gvcf_writer(
         finish_gvcf_header(_opt, _dopt, _dopt.chrom_depth, sampleName, *_osptr);
     }
 
-    variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.smod, cm);
+    variant_prefilter_stage::add_site_modifiers(_empty_site, _empty_site.allele, cm);
 }
 
 
@@ -185,7 +185,7 @@ add_site_internal(
     GermlineDiploidSiteLocusInfo& si)
 {
     filter_site_by_last_indel_overlap(si);
-    if (si.smod.is_phased_region)
+    if (si.allele.is_phased_region)
     {
         _head_pos=si.pos+si.phased_ref.length();
     }
@@ -223,7 +223,7 @@ get_visible_alt_order(
     for (unsigned b(0); b<N_BASE; ++b)
     {
         if (b==si.dgt.ref_gt) continue;
-        if (! DIGT::expect2(b,si.smod.max_gt)) continue;
+        if (! DIGT::expect2(b,si.allele.max_gt)) continue;
         altOrder.push_back(b);
     }
 
@@ -305,7 +305,7 @@ write_site_record(
        << (si.pos+1) << '\t'  // POS
        << ".\t";           // ID
 
-    if (si.smod.is_phased_region)
+    if (si.allele.is_phased_region)
     {
         os  << si.phased_ref << '\t'; // REF
     }
@@ -316,12 +316,12 @@ write_site_record(
 
     // ALT
     std::vector<uint8_t> altOrder;
-    const bool isNoAlt(si.smod.is_unknown);
+    const bool isNoAlt(si.allele.is_unknown);
     if (isNoAlt)
     {
         os << '.';
     }
-    else if (si.smod.is_phased_region)
+    else if (si.allele.is_phased_region)
     {
         os << si.phased_alt;
     }
@@ -353,7 +353,7 @@ write_site_record(
         os << "SNVSB=";
         {
             const StreamScoper ss(os);
-            os << std::fixed << std::setprecision(1) << si.smod.strand_bias;
+            os << std::fixed << std::setprecision(1) << si.allele.strand_bias;
         }
         os << ';';
         os << "SNVHPOL=" << si.hpol;
@@ -401,7 +401,7 @@ write_site_record(
             }
         }
 
-        if (si.smod.is_phasing_insufficient_depth)
+        if (si.allele.is_phasing_insufficient_depth)
         {
             os << ";Unphased";
         }
@@ -412,7 +412,7 @@ write_site_record(
     }
     os << '\t';
 
-    const bool is_nonref_gt(si.smod.max_gt != si.dgt.ref_gt);
+    const bool is_nonref_gt(si.allele.max_gt != si.dgt.ref_gt);
     const bool is_print_pl(is_nonref_gt || si.dgt.is_snp);
 
     //FORMAT
@@ -436,9 +436,9 @@ write_site_record(
     os << si.get_gt() << ':';
     if (si.dgt.is_snp)
     {
-        os << si.smod.gq << ':';
+        os << si.allele.gq << ':';
     }
-    if (si.smod.is_gqx())
+    if (si.allele.is_gqx())
     {
         if (si.empiricalVariantScore>=0)
         {
@@ -446,7 +446,7 @@ write_site_record(
         }
         else
         {
-            os << si.smod.gqx;
+            os << si.allele.gqx;
         }
     }
     else
@@ -462,7 +462,7 @@ write_site_record(
     {
         // pass
     }
-    else if (si.smod.is_phased_region)
+    else if (si.allele.is_phased_region)
     {
         os << ':' << si.phased_AD
            << ':' << si.phased_ADF
@@ -484,7 +484,7 @@ write_site_record(
         os << ':';
         if (si.is_hetalt())
         {
-            const unsigned print_gt(si.smod.max_gt);
+            const unsigned print_gt(si.allele.max_gt);
             const uint8_t a0(DIGT::get_allele(print_gt,0));
             const uint8_t a1(DIGT::get_allele(print_gt,1));
             os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
@@ -494,14 +494,14 @@ write_site_record(
                << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a0,a1)] << ','
                << si.dgt.phredLoghood[DIGT::get_gt_with_alleles(a1,a1)];
         }
-        else if (si.dgt.is_haploid() || (si.smod.modified_gt == MODIFIED_SITE_GT::ONE))
+        else if (si.dgt.is_haploid() || (si.allele.modified_gt == MODIFIED_SITE_GT::ONE))
         {
             os << si.dgt.phredLoghood[si.dgt.ref_gt] << ','
-               << si.dgt.phredLoghood[si.smod.max_gt];
+               << si.dgt.phredLoghood[si.allele.max_gt];
         }
         else
         {
-            const unsigned print_gt(si.smod.max_gt);
+            const unsigned print_gt(si.allele.max_gt);
             const uint8_t a0(DIGT::get_allele(print_gt,0));
             const uint8_t a1(DIGT::get_allele(print_gt,1));
             uint8_t alt(a0);

@@ -199,7 +199,7 @@ create_phased_record()
         for (auto& si : _buffer)
         {
             if (si->is_het())
-                si->smod.is_phasing_insufficient_depth = true;
+                si->allele.is_phasing_insufficient_depth = true;
         }
         return;
     }
@@ -336,7 +336,7 @@ create_phased_record()
             // call, particularly at a site that is triallelic with one ref allele. In that case, it is
             // important to skip those calls' contribution to the resultant statistics. This logic causes
             // us to skip over these variants.
-            if (!is_genotype_represented(si->smod.max_gt, unsigned(si->pos - _buffer[0]->pos),
+            if (!is_genotype_represented(si->allele.max_gt, unsigned(si->pos - _buffer[0]->pos),
                                          max_alleles[0].first, max_alleles[1].first))
             {
 #ifdef DEBUG_CODON
@@ -348,14 +348,14 @@ create_phased_record()
                 continue;
             }
 
-            if ((! is_min_gq_idx0) || (si->smod.gq < _buffer.at(min_gq_idx0)->smod.gq))
+            if ((! is_min_gq_idx0) || (si->allele.gq < _buffer.at(min_gq_idx0)->allele.gq))
             {
                 min_gq_idx1 = min_gq_idx0;
                 if (is_min_gq_idx0) is_min_gq_idx1 = true;
                 min_gq_idx0 = i;
                 is_min_gq_idx0 = true;
             }
-            if ((i != min_gq_idx0) && ( (! is_min_gq_idx1) || (si->smod.gq < _buffer.at(min_gq_idx1)->smod.gq)))
+            if ((i != min_gq_idx0) && ( (! is_min_gq_idx1) || (si->allele.gq < _buffer.at(min_gq_idx1)->allele.gq)))
             {
                 min_gq_idx1 = i;
                 is_min_gq_idx1 = true;
@@ -388,8 +388,8 @@ create_phased_record()
     int min_gq(maxInt);
     {
         const auto& minsi0(*(_buffer.at(min_gq_idx0)));
-        min_gq = minsi0.smod.gq;
-        max_gt = minsi0.smod.max_gt;
+        min_gq = minsi0.allele.gq;
+        max_gt = minsi0.allele.max_gt;
         pls = minsi0.dgt.phredLoghood;
         ref_gt = minsi0.dgt.ref_gt;
 
@@ -421,8 +421,8 @@ create_phased_record()
 
             // hetalt site:
             const auto& minsi1(*(_buffer.at(min_gq_idx1)));
-            const uint8_t bx(DIGT::get_allele(minsi1.smod.max_gt,0));
-            const uint8_t by(DIGT::get_allele(minsi1.smod.max_gt,1));
+            const uint8_t bx(DIGT::get_allele(minsi1.allele.max_gt,0));
+            const uint8_t by(DIGT::get_allele(minsi1.allele.max_gt,1));
 
             // phase b0/b1 to match max_allele order;
             const bool is_swap2(max_alleles[1].first[min_gq_idx1] == id_to_base(bx));
@@ -451,15 +451,15 @@ create_phased_record()
     auto& base = this->_buffer.at(0);
 
     base->phased_ref = this->reference;
-    base->smod.is_unknown = false;
-    base->smod.max_gt = max_gt;
+    base->allele.is_unknown = false;
+    base->allele.max_gt = max_gt;
     base->dgt.ref_gt = ref_gt;
 
     // set various quality fields conservatively
-    base->smod.gq                = min_gq;
+    base->allele.gq                = min_gq;
     base->dgt.genome.snp_qphred  = min_qual;
     base->dgt.phredLoghood       = pls;
-    base->smod.gqx               = std::min(min_gq,min_qual);
+    base->allele.gqx               = std::min(min_gq,min_qual);
     base->empiricalVariantScore  = min_EVS;
 
     base->phased_alt = alt.str();
@@ -467,7 +467,7 @@ create_phased_record()
     base->phased_ADF  = ADF.str();
     base->phased_ADR  = ADR.str();
 
-    base->smod.is_phased_region = true;
+    base->allele.is_phased_region = true;
     const int reads_ignored = (this->total_reads-allele_sum);
     base->n_used_calls = this->total_reads - reads_ignored;
     base->n_unused_calls = this->total_reads_unused + reads_ignored; // second term mark all alleles that we didnt use as unused reads

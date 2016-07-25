@@ -51,7 +51,7 @@ void variant_prefilter_stage::add_site_modifiers(
     smod.clear();
     smod.is_unknown=(si.ref=='N');
     smod.is_used_covered=(si.n_used_calls!=0);
-    smod.is_covered=(si.smod.is_used_covered || si.n_unused_calls!=0);
+    smod.is_covered=(si.allele.is_used_covered || si.n_unused_calls!=0);
     smod.strand_bias=si.dgt.strand_bias;
 
     if     (smod.is_unknown)
@@ -88,16 +88,16 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineSiteLocusInfo> inf
     {
         auto si(downcast<GermlineDiploidSiteLocusInfo>(std::move(info)));
 
-        add_site_modifiers(*si, si->smod, _model);
+        add_site_modifiers(*si, si->allele, _model);
         if (si->dgt.is_haploid())
         {
-            if (si->smod.max_gt == si->dgt.ref_gt)
+            if (si->allele.max_gt == si->dgt.ref_gt)
             {
-                si->smod.modified_gt=MODIFIED_SITE_GT::ZERO;
+                si->allele.modified_gt=MODIFIED_SITE_GT::ZERO;
             }
             else
             {
-                si->smod.modified_gt=MODIFIED_SITE_GT::ONE;
+                si->allele.modified_gt=MODIFIED_SITE_GT::ONE;
             }
         }
         else if (si->dgt.is_noploid())

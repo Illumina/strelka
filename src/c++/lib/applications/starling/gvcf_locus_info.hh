@@ -173,14 +173,18 @@ struct LocusSampleInfo
 struct LocusInfo : public PolymorphicObject
 {
     explicit
-    LocusInfo(const unsigned sampleCount)
-      : _sampleCount(sampleCount),
+    LocusInfo(
+        const unsigned sampleCount,
+        const pos_t initPos = 0)
+      : pos(initPos),
+       _sampleCount(sampleCount),
         _sampleInfo(sampleCount)
     {}
 
     void
     clear()
     {
+        pos = 0;
         empiricalVariantScore = -1;
         filters.clear();
         for (auto& sample : _sampleInfo)
@@ -188,12 +192,6 @@ struct LocusInfo : public PolymorphicObject
             sample.clear();
         }
     }
-
-    /// The empirically calibrated quality-score of the locus, if -1 no locus EVS is available
-    int empiricalVariantScore = -1;
-
-    /// All locus-ldevel filteres
-    GermlineFilterKeeper filters;
 
     unsigned
     getSampleCount() const
@@ -213,6 +211,15 @@ struct LocusInfo : public PolymorphicObject
         return _sampleInfo[sampleIndex];
     }
 
+    /// zero-index position of the locus, alleles may not all start here:
+    pos_t pos = 0;
+
+    /// The empirically calibrated quality-score of the locus, if -1 no locus EVS is available
+    int empiricalVariantScore = -1;
+
+    /// All locus-ldevel filteres
+    GermlineFilterKeeper filters;
+
 private:
     unsigned _sampleCount;
     std::vector<LocusSampleInfo> _sampleInfo;
@@ -225,9 +232,8 @@ struct GermlineIndelLocusInfo : public LocusInfo
     explicit
     GermlineIndelLocusInfo(
         const unsigned sampleCount,
-        const pos_t init_pos)
-        : LocusInfo(sampleCount),
-          pos(init_pos)
+        const pos_t initPos)
+        : LocusInfo(sampleCount, initPos)
     {}
 
     virtual ~GermlineIndelLocusInfo() {}
@@ -236,8 +242,6 @@ struct GermlineIndelLocusInfo : public LocusInfo
     virtual bool is_indel() const = 0;
     // the EXCLUSIVE end of the variant (i.e. open)
     virtual pos_t end() const = 0;
-
-    pos_t pos;
 };
 
 
@@ -403,14 +407,13 @@ struct GermlineSiteLocusInfo : public LocusInfo
 {
     GermlineSiteLocusInfo(
         const unsigned sampleCount,
-        const pos_t init_pos,
+        const pos_t initPos,
         const char init_ref,
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
         const bool is_forced_output = false)
-      : LocusInfo(sampleCount)
+      : LocusInfo(sampleCount, initPos)
     {
-        pos=(init_pos);
         ref=(init_ref);
         forcedOutput = is_forced_output;
         good_pi.get_known_counts(fwd_counts,used_allele_count_min_qscore,true);
@@ -447,7 +450,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
     clear()
     {
         LocusInfo::clear();
-        pos = 0;
         ref = 'N';
         n_used_calls = 0;
         n_unused_calls = 0;
@@ -457,7 +459,6 @@ struct GermlineSiteLocusInfo : public LocusInfo
         forcedOutput = false;
     }
 
-    pos_t pos = 0;
     char ref = 'N';
     unsigned n_used_calls = 0;
     unsigned n_unused_calls = 0;
@@ -507,9 +508,9 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     const char*
     get_gt() const
     {
-        if       (smod.modified_gt != MODIFIED_SITE_GT::NONE)
+        if       (allele.modified_gt != MODIFIED_SITE_GT::NONE)
         {
-            return MODIFIED_SITE_GT::get_label(smod.modified_gt);
+            return MODIFIED_SITE_GT::get_label(allele.modified_gt);
         }
         else if (is_print_unknowngt())
         {
@@ -517,7 +518,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
         }
         else
         {
-            const unsigned print_gt(smod.max_gt);
+            const unsigned print_gt(allele.max_gt);
             return DIGT::get_vcf_gt(print_gt,dgt.ref_gt);
         }
     }
@@ -532,14 +533,14 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     bool
     is_het() const
     {
-        unsigned print_gt(smod.max_gt);
+        unsigned print_gt(allele.max_gt);
         return DIGT::is_het(print_gt);
     }
 
     bool
     is_hetalt() const
     {
-        unsigned print_gt(smod.max_gt);
+        unsigned print_gt(allele.max_gt);
         const uint8_t a0(DIGT::get_allele(print_gt,0));
         const uint8_t a1(DIGT::get_allele(print_gt,1));
         return ((a0!=a1) && (dgt.ref_gt != a0) && (dgt.ref_gt != a1));
@@ -548,25 +549,25 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     bool
     is_nonref() const override
     {
-        return (smod.max_gt != dgt.ref_gt);
+        return (allele.max_gt != dgt.ref_gt);
     }
 
     bool
     is_print_unknowngt() const
     {
-        return (smod.is_unknown || (!smod.is_used_covered));
+        return (allele.is_unknown || (!allele.is_used_covered));
     }
 
     bool
     is_deletion() const
     {
-        return ((!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
+        return ((!allele.is_unknown) && allele.is_used_covered && (!allele.is_zero_ploidy) && (is_nonref()));
     }
 
     bool
     is_qual() const
     {
-        return ((!smod.is_unknown) && smod.is_used_covered && (!smod.is_zero_ploidy) && (is_nonref()));
+        return ((!allele.is_unknown) && allele.is_used_covered && (!allele.is_zero_ploidy) && (is_nonref()));
     }
 
     void
@@ -594,7 +595,7 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
     VariantScoringFeatureKeeper EVSFeatures;
     VariantScoringFeatureKeeper EVSDevelopmentFeatures;
 
-    GermlineDiploidSiteAlleleInfo smod;
+    GermlineDiploidSiteAlleleInfo allele;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteLocusInfo& si);

@@ -215,7 +215,7 @@ computeEmpiricalScoringFeatures(
     for (unsigned b(0); b < N_BASE; ++b)
     {
         if (b == dgt.ref_gt) continue;
-        if (DIGT::expect2(b, smod.max_gt))
+        if (DIGT::expect2(b, allele.max_gt))
         {
             altBase = b;
         }
@@ -239,8 +239,8 @@ computeEmpiricalScoringFeatures(
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::QUAL, (dgt.genome.snp_qphred * chromDepthFactor));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_DP, (n_used_calls * chromDepthFactor));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_DPF, (n_unused_calls * chromDepthFactor));
-        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQ, (smod.gq * chromDepthFactor));
-        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQX, (smod.gqx * chromDepthFactor));
+        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQ, (allele.gq * chromDepthFactor));
+        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::F_GQX, (allele.gqx * chromDepthFactor));
 
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::I_AvgBaseQ, (avgBaseQ));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::I_AvgPos, (rawPos));
@@ -249,7 +249,7 @@ computeEmpiricalScoringFeatures(
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::I_ReadPosRankSum, (ReadPosRankSum));
 
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::I_SNVHPOL, (hpol));
-        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (smod.strand_bias));
+        EVSFeatures.set(RNA_SNV_SCORING_FEATURES::I_SNVSB, (allele.strand_bias));
 
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::AD0, (r0 * chromDepthFactor));
         EVSFeatures.set(RNA_SNV_SCORING_FEATURES::AD1, (r1 * chromDepthFactor));
@@ -270,9 +270,9 @@ computeEmpiricalScoringFeatures(
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
                                           (dgt.genome.snp_qphred * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                          (smod.gqx * filteredLocusDepthFactor));
+                                          (allele.gqx * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                          (smod.gq * filteredLocusDepthFactor));
+                                          (allele.gq * filteredLocusDepthFactor));
 
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
                                           (r0 * filteredLocusDepthFactor));
@@ -281,8 +281,8 @@ computeEmpiricalScoringFeatures(
 
             EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
                                           (dgt.genome.snp_qphred));
-            EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (smod.gqx));
-            EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (smod.gq));
+            EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (allele.gqx));
+            EVSDevelopmentFeatures.set(RNA_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (allele.gq));
         }
     }
     else
@@ -296,7 +296,7 @@ computeEmpiricalScoringFeatures(
 
         EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::I_MQ, (mapqRMS));
         EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVHPOL, (hpol));
-        EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (smod.strand_bias));
+        EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::I_SNVSB, (allele.strand_bias));
         EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::I_MQRankSum, (MQRankSum));
         EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::I_ReadPosRankSum, (ReadPosRankSum));
 
@@ -313,7 +313,7 @@ computeEmpiricalScoringFeatures(
         // how noisy is the locus?
         EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::F_DP_NORM, locusUsedDepthFraction);
 
-        EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::F_GQX_EXACT, (smod.gqx));
+        EVSFeatures.set(GERMLINE_SNV_SCORING_FEATURES::F_GQX_EXACT, (allele.gqx));
 
         // compute any experimental features not currently used in production
         //
@@ -348,17 +348,17 @@ computeEmpiricalScoringFeatures(
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
                                           (dgt.genome.snp_qphred * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
-                                          (smod.gqx * filteredLocusDepthFactor));
+                                          (allele.gqx * filteredLocusDepthFactor));
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
-                                          (smod.gq * filteredLocusDepthFactor));
+                                          (allele.gq * filteredLocusDepthFactor));
 
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
                                           (r0 * filteredLocusDepthFactor));
 
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT,
                                           (dgt.genome.snp_qphred));
-
-            EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (smod.gq));
+       
+            EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (allele.gq));
 
             EVSDevelopmentFeatures.set(GERMLINE_SNV_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
                                           (r1 * filteredLocusDepthFactor));

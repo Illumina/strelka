@@ -98,16 +98,16 @@ test(const GermlineDiploidSiteLocusInfo& si) const
     if (gt != map_gt_to_homref(si.get_gt())) return false;
 
     // coverage states must match:
-    if (is_covered != si.smod.is_covered) return false;
-    if (is_used_covered != si.smod.is_used_covered) return false;
+    if (is_covered != si.allele.is_covered) return false;
+    if (is_used_covered != si.allele.is_used_covered) return false;
 
     // ploidy must match
     if (ploidy != si.dgt.ploidy) return false;
 
     // test blocking values:
-    if (! is_new_value_blockable(si.smod.gqx,
+    if (! is_new_value_blockable(si.allele.gqx,
                                  block_gqx,frac_tol,abs_tol,
-                                 si.smod.is_gqx(),
+                                 si.allele.is_gqx(),
                                  has_call))
     {
         return false;
@@ -139,16 +139,16 @@ join(const GermlineDiploidSiteLocusInfo& si)
         filters = si.filters;
         setNonRef(si.is_nonref());
         gt = map_gt_to_homref(si.get_gt());
-        is_used_covered = si.smod.is_used_covered;
-        is_covered = si.smod.is_covered;
+        is_used_covered = si.allele.is_used_covered;
+        is_covered = si.allele.is_covered;
         ploidy = si.dgt.ploidy;
-        has_call = si.smod.is_gqx();
+        has_call = si.allele.is_gqx();
         ref = si.ref;
     }
 
-    if (si.smod.is_gqx())
+    if (si.allele.is_gqx())
     {
-        block_gqx.add(si.smod.gqx);
+        block_gqx.add(si.allele.gqx);
     }
 
     block_dpu.add(si.n_used_calls);

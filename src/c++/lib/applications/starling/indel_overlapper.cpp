@@ -426,34 +426,34 @@ void indel_overlapper::modify_indel_overlap_site(
 
     // limit qual and gq values to those of the indel
     si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred, ii.getFirstAltAllele()._dindel.indel_qphred);
-    si.smod.gqx = std::min(si.smod.gqx, ii.getFirstAltAllele()._dindel.max_gt_qphred);
+    si.allele.gqx = std::min(si.allele.gqx, ii.getFirstAltAllele()._dindel.max_gt_qphred);
 
     // change ploidy:
     if (ploidy==1)
     {
-        if (DIGT::is_het(si.smod.max_gt))
+        if (DIGT::is_het(si.allele.max_gt))
         {
             si.filters.set(GERMLINE_VARIANT_VCF_FILTERS::SiteConflict);
             //si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
         }
         else
         {
-            if (si.smod.max_gt == si.dgt.ref_gt)
+            if (si.allele.max_gt == si.dgt.ref_gt)
             {
-                si.smod.modified_gt=MODIFIED_SITE_GT::ZERO;
+                si.allele.modified_gt=MODIFIED_SITE_GT::ZERO;
             }
             else
             {
-                si.smod.modified_gt=MODIFIED_SITE_GT::ONE;
+                si.allele.modified_gt=MODIFIED_SITE_GT::ONE;
             }
         }
     }
     else if (ploidy==0)
     {
-        if (si.smod.max_gt == si.dgt.ref_gt)
+        if (si.allele.max_gt == si.dgt.ref_gt)
         {
-            si.smod.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
-            si.smod.is_zero_ploidy=true;
+            si.allele.modified_gt=MODIFIED_SITE_GT::UNKNOWN;
+            si.allele.is_zero_ploidy=true;
             if (si.dgt.is_noploid())
             {
                 si.filters.unset(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
@@ -471,7 +471,7 @@ void indel_overlapper::modify_indel_overlap_site(
 
     // after all those changes we need to rerun the site filters:
     si.clearEVSFeatures();
-    model.classify_site(si, si.smod);
+    model.classify_site(si, si.allele);
 }
 
 

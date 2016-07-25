@@ -104,10 +104,10 @@ getTestSink(
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<GermlineDiploidSiteLocusInfo> si(
             new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
-        si->smod.is_covered = si->smod.is_used_covered = true;
+        si->allele.is_covered = si->allele.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(read1Seq[i]), base_to_id(read2Seq[i]));
+        si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(read1Seq[i]), base_to_id(read2Seq[i]));
         si->dgt.is_snp = si->ref != read1Seq[i] || si->ref != read2Seq[i];
 
         phaser.process(std::move(si));
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE( just_one_snp )
     for (auto& phased_variant : next->the_sites)
     {
         BOOST_CHECK(!phased_variant->filters.any());
-        BOOST_CHECK(!phased_variant->smod.is_phased_region);
+        BOOST_CHECK(!phased_variant->allele.is_phased_region);
     }
     BOOST_CHECK_EQUAL(next->the_sites.size(), 1);
 }
@@ -222,11 +222,11 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
-        si->smod.is_covered = si->smod.is_used_covered = true;
-        si->smod.gq = si->dgt.genome.snp_qphred = si->empiricalVariantScore = 40;
+        si->allele.is_covered = si->allele.is_used_covered = true;
+        si->allele.gq = si->dgt.genome.snp_qphred = si->empiricalVariantScore = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
 
-        si->smod.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
+        si->allele.max_gt = DIGT::get_gt_with_alleles(base_to_id(r1[i]),base_to_id(r2[i]));
         si->dgt.is_snp = si->ref != r1[i] || si->ref != r2[i];
 
         phaser.process(std::move(si));
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     for (auto& site : sink.the_sites)
     {
         BOOST_CHECK(! site->is_het() || site->filters.test(GERMLINE_VARIANT_VCF_FILTERS::PhasingConflict));
-        BOOST_CHECK(!site->smod.is_phased_region);
+        BOOST_CHECK(!site->allele.is_phased_region);
     }
 }
 
@@ -244,8 +244,8 @@ BOOST_AUTO_TEST_CASE( low_depth_doesnt_phase )
     const auto next = getTestSink("ACGTACGTACGT", "ACGTACGTAC", "ACGTGCTTAC", 3, 4);
 
     BOOST_CHECK_EQUAL(2, next->the_sites.size());
-    BOOST_CHECK(next->the_sites.front()->smod.is_phasing_insufficient_depth);
-    BOOST_CHECK(next->the_sites.back()->smod.is_phasing_insufficient_depth);
+    BOOST_CHECK(next->the_sites.front()->allele.is_phasing_insufficient_depth);
+    BOOST_CHECK(next->the_sites.back()->allele.is_phasing_insufficient_depth);
 
 }
 
