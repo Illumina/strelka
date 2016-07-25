@@ -380,6 +380,180 @@ operator<<(std::ostream& os,
 
 void
 GermlineDiploidIndelLocusInfo::
+computeEmpiricalScoringFeatures(
+    const bool isRNA,
+    const bool isUniformDepthExpected,
+    const bool isComputeDevelopmentFeatures,
+    const double chromDepth)
+{
+    /// TODO: generalize to multiple alts:
+    const auto firstAltAllele(first());
+
+    const double filteredLocusDepth(firstAltAllele._indelSampleReportInfo.tier1Depth);
+    const double locusDepth(firstAltAllele._indelSampleReportInfo.mapqTracker.count);
+    const double confidentDepth(firstAltAllele._indelSampleReportInfo.total_confident_reads());
+
+    const double chromDepthFactor(safeFrac(1,chromDepth));
+    const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
+    const double locusDepthFactor(safeFrac(1,locusDepth));
+    const double confidentDepthFactor(safeFrac(1,confidentDepth));
+
+    // cdf of binomial prob of seeing no more than the number of 'allele A' reads out of A reads + B reads, given p=0.5
+    // cdf of binomial prob of seeing no more than the number of 'allele B' reads out of A reads + B reads, given p=0.5
+    double allelebiaslower;
+    double allelebiasupper;
+    {
+        // allele bias metrics
+        const double r0(firstAltAllele._indelSampleReportInfo.n_confident_ref_reads);
+        const double r1(firstAltAllele._indelSampleReportInfo.n_confident_indel_reads);
+        const double r2(firstAltAllele._indelSampleReportInfo.n_confident_alt_reads);
+
+        if (is_hetalt())
+        {
+            allelebiaslower = cdf(boost::math::binomial(r2 + r1, 0.5), r1);
+            allelebiasupper = cdf(boost::math::binomial(r2 + r1, 0.5), r2);
+        }
+        else
+        {
+            allelebiaslower = cdf(boost::math::binomial(r0 + r1, 0.5), r0);
+            allelebiasupper = cdf(boost::math::binomial(r0 + r1, 0.5), r1);
+        }
+    }
+
+    if (isRNA)
+    {
+        features.set(RNA_INDEL_SCORING_FEATURES::QUAL, (firstAltAllele._dindel.indel_qphred * chromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::F_GQX, (firstAltAllele.gqx * chromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::REFREP1, (firstAltAllele._indelReportInfo.ref_repeat_count));
+        features.set(RNA_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele._indelReportInfo.indel_repeat_count));
+        features.set(RNA_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele._indelReportInfo.repeat_unit.length()));
+        features.set(RNA_INDEL_SCORING_FEATURES::AD0,
+                     (firstAltAllele._indelSampleReportInfo.n_confident_ref_reads * chromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::AD1,
+                     (firstAltAllele._indelSampleReportInfo.n_confident_indel_reads * chromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::AD2,
+                     (firstAltAllele._indelSampleReportInfo.n_confident_alt_reads * chromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::F_DPI, (firstAltAllele._indelSampleReportInfo.tier1Depth * chromDepthFactor));
+
+        // +1e-30 to avoid log(0) in extreme cases
+        features.set(RNA_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower + 1.e-30)));
+        features.set(RNA_INDEL_SCORING_FEATURES::AB,
+                     (-std::log(std::min(1., 2. * std::min(allelebiaslower, allelebiasupper)) + 1.e-30)));
+
+
+        // compute any experimental features not currently used in production
+        if (isComputeDevelopmentFeatures)
+        {
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ, (firstAltAllele.gqx * chromDepthFactor));
+
+            // how unreliable are the read mappings near this locus?
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ,
+                                    (firstAltAllele._indelSampleReportInfo.mapqTracker.getRMS()));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
+                                    (firstAltAllele._indelSampleReportInfo.mapqTracker.getZeroFrac()));
+
+            // how noisy is the locus?
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM,
+                                    (filteredLocusDepth * locusDepthFactor));
+
+
+            // all of the features below are simply renormalized replacements of the current production feature set
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
+                                    (firstAltAllele._dindel.indel_qphred * filteredLocusDepthFactor));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
+                                    (firstAltAllele.gqx * filteredLocusDepthFactor));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
+                                    (firstAltAllele.gq * filteredLocusDepthFactor));
+
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
+                                    (firstAltAllele._indelSampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
+                                    (firstAltAllele._indelSampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM,
+                                    (firstAltAllele._indelSampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
+
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (firstAltAllele._dindel.indel_qphred));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (firstAltAllele.gqx));
+            developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstAltAllele.gq));
+        }
+    }
+    else
+    {
+        {
+            double genotype(0);
+            if (firstAltAllele._dindel.max_gt == STAR_DIINDEL::HOM)
+            {
+                genotype = 1;
+            }
+            else
+            {
+                if (firstAltAllele._dindel.is_diplotype_model_hetalt) genotype = 2;
+            }
+            features.set(GERMLINE_INDEL_SCORING_FEATURES::GENO, genotype);
+        }
+
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele._indelReportInfo.indel_repeat_count));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele._indelReportInfo.repeat_unit.length()));
+
+        // +1e-30 to avoid log(0) in extreme cases
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower + 1.e-30)));
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::AB,
+                     (-std::log(std::min(1., 2. * std::min(allelebiaslower, allelebiasupper)) + 1.e-30)));
+
+        // how unreliable are the read mappings near this locus?
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::F_MQ,
+                     (firstAltAllele._indelSampleReportInfo.mapqTracker.getRMS()));
+
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1_NORM,
+                     (firstAltAllele._indelSampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
+
+        features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX_EXACT, (firstAltAllele.gqx));
+
+        // compute any experimental features not currently used in production
+        if (isComputeDevelopmentFeatures)
+        {
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::REFREP1, (firstAltAllele._indelReportInfo.ref_repeat_count));
+
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
+                                    (firstAltAllele._indelSampleReportInfo.mapqTracker.getZeroFrac()));
+
+            // how noisy is the locus?
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM,
+                                    (filteredLocusDepth * locusDepthFactor));
+
+            // how surprising is the depth relative to expect? This is the only value will be modified for exome/targeted runs
+            //
+            /// TODO: convert this to pvalue based on Poisson distro?
+            double relativeLocusDepth(1.);
+            if (isUniformDepthExpected)
+            {
+                relativeLocusDepth = (locusDepth * chromDepthFactor);
+            }
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::TDP_NORM, relativeLocusDepth);
+
+            // all of the features below are simply renormalized replacements of the current production feature set
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_NORM,
+                                    (firstAltAllele._dindel.indel_qphred * filteredLocusDepthFactor));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_NORM,
+                                    (firstAltAllele.gqx * filteredLocusDepthFactor));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_NORM,
+                                    (firstAltAllele.gq * filteredLocusDepthFactor));
+
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
+                                    (firstAltAllele._indelSampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM,
+                                    (firstAltAllele._indelSampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
+
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (firstAltAllele._dindel.indel_qphred));
+            developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstAltAllele.gq));
+        }
+    }
+}
+
+
+
+void
+GermlineDiploidIndelLocusInfo::
 dump(std::ostream& os) const
 {
     os << "digt_indel_info\n";

@@ -159,18 +159,18 @@ classify_indel_impl(
         // when reporting is turned on, we need to compute EVS features
         // for any usable variant regardless of EVS model type:
         const bool isUniformDepthExpected(_dopt.is_max_depth());
-        call.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth, ii.is_hetalt());
+        ii.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, _isReportEVSFeatures, _dopt.norm_depth);
     }
 
     if (isEVSIndelModel() && isVariantUsableInEVSModel)
     {
-        if (call.features.empty())
+        if (ii.features.empty())
         {
             static const bool isComputeDevelopmentFeatures(false);
             const bool isUniformDepthExpected(_dopt.is_max_depth());
-            call.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth, ii.is_hetalt());
+            ii.computeEmpiricalScoringFeatures(_isRNA, isUniformDepthExpected, isComputeDevelopmentFeatures, _dopt.norm_depth);
         }
-        ii.empiricalVariantScore = error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(call.features.getAll()));
+        ii.empiricalVariantScore = error_prob_to_qphred(_indelScoringModelPtr->scoreVariant(ii.features.getAll()));
 
         static const int maxEmpiricalVariantScore(60);
         ii.empiricalVariantScore = std::min(ii.empiricalVariantScore, maxEmpiricalVariantScore);

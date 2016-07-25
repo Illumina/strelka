@@ -199,9 +199,13 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         const IndelData& initIndelData,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
         const starling_indel_report_info& initIndelReportInfo,
-        const starling_indel_sample_report_info& initIndelSampleReportInfo) : GermlineIndelLocusInfo(initIndelKey.pos)
+        const starling_indel_sample_report_info& initIndelSampleReportInfo)
+        : GermlineIndelLocusInfo(initIndelKey.pos)
+        , features(gvcfDerivedOptions.indelFeatureSet)
+        , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
+
     {
-        altAlleles.emplace_back(gvcfDerivedOptions, initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
+        altAlleles.emplace_back(initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
     }
 
     bool is_forced_output() const override
@@ -303,6 +307,13 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
     }
 
     void
+    computeEmpiricalScoringFeatures(
+        const bool isRNA,
+        const bool isUniformDepthExpected,
+        const bool isComputeDevelopmentFeatures,
+        const double chromDepth);
+
+    void
     dump(std::ostream& os) const;
 
 private:
@@ -319,6 +330,10 @@ public:
     bool _is_overlap=false;
 
     std::vector<GermlineDiploidIndelAlleleInfo> altAlleles;
+
+    /// production and development features used in the empirical scoring model:
+    VariantScoringFeatureKeeper features;
+    VariantScoringFeatureKeeper developmentFeatures;
 };
 
 

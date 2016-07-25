@@ -74,7 +74,6 @@ std::ostream& operator<<(std::ostream& os,const GermlineVariantAlleleInfo& shmod
 struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
 {
     GermlineIndelAlleleInfo(
-        const gvcf_deriv_options& gvcfDerivedOptions,
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info indelReportInfo,
@@ -83,8 +82,6 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
         , _indelData(indelData)
         , _indelReportInfo(indelReportInfo)
         , _indelSampleReportInfo(indelSampleReportInfo)
-        , features(gvcfDerivedOptions.indelFeatureSet)
-        , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
     {}
 
     void
@@ -92,8 +89,6 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
     {
         GermlineVariantAlleleInfo::clear();
         cigar.clear();
-        features.clear();
-        developmentFeatures.clear();
     }
 
     void set_hap_cigar(
@@ -107,10 +102,6 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
     const starling_indel_sample_report_info _indelSampleReportInfo;
 
     ALIGNPATH::path_t cigar;
-
-    /// production and development features used in the empirical scoring model:
-    VariantScoringFeatureKeeper features;
-    VariantScoringFeatureKeeper developmentFeatures;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineIndelAlleleInfo& shi);
@@ -120,23 +111,14 @@ std::ostream& operator<<(std::ostream& os,const GermlineIndelAlleleInfo& shi);
 struct GermlineDiploidIndelAlleleInfo : public GermlineIndelAlleleInfo
 {
     GermlineDiploidIndelAlleleInfo(
-        const gvcf_deriv_options& gvcfDerivedOptions,
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
         const starling_indel_sample_report_info& indelSampleReportInfo,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
-        : GermlineIndelAlleleInfo(gvcfDerivedOptions, indelKey, indelData, indelReportInfo, indelSampleReportInfo)
+        : GermlineIndelAlleleInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _dindel(dindel)
     {}
-
-    void
-    computeEmpiricalScoringFeatures(
-        const bool isRNA,
-        const bool isUniformDepthExpected,
-        const bool isComputeDevelopmentFeatures,
-        const double chromDepth,
-        const bool isHetalt);
 
     /// TODO: this object is only here to trigger an auto copy ctor, seems like we can simplify now?
     /// TODO: Make indel_overlapper create new call objects, then revert this to const
@@ -246,14 +228,13 @@ struct GermlineContinuousSiteAlleleInfo : public GermlineVariantAlleleInfo
 struct GermlineContinuousIndelAlleleInfo : public GermlineIndelAlleleInfo
 {
     GermlineContinuousIndelAlleleInfo(
-        const gvcf_deriv_options& gvcfDerivedOptions,
         unsigned totalDepth,
         unsigned alleleDepth,
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
         const starling_indel_sample_report_info& indelSampleReportInfo)
-        : GermlineIndelAlleleInfo(gvcfDerivedOptions, indelKey, indelData, indelReportInfo, indelSampleReportInfo)
+        : GermlineIndelAlleleInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
         , _totalDepth(totalDepth)
         , _alleleDepth(alleleDepth)
     {

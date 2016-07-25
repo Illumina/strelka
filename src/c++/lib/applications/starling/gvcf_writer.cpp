@@ -780,14 +780,14 @@ write_indel_record(
     if (_opt.isReportEVSFeatures)
     {
         // EVS features may not be computed for certain records, so check first:
-        if (! call.features.empty())
+        if (! ii.features.empty())
         {
             const StreamScoper ss(os);
             os << std::setprecision(5);
             os << ";EVSF=";
-            call.features.writeValues(os);
+            ii.features.writeValues(os);
             os << ",";
-            call.developmentFeatures.writeValues(os);
+            ii.developmentFeatures.writeValues(os);
         }
     }
 

@@ -39,7 +39,6 @@ struct starling_continuous_variant_caller
 
     static void add_indel_call(
         const starling_base_options& opt,
-        const gvcf_deriv_options& gvcfDerivedOptions,
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
