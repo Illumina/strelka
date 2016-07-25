@@ -57,8 +57,8 @@ BOOST_AUTO_TEST_CASE( call_from_counts )
     for (int i=0; i<40; i++)
         pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
 
-
-    GermlineContinuousSiteLocusInfo info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
+    const unsigned sampleCount(1);
+    GermlineContinuousSiteLocusInfo info(sampleCount, 10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
 
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
     auto C = std::find_if(info.altAlleles.begin(), info.altAlleles.end(), [&](const GermlineContinuousSiteAlleleInfo& call)
@@ -112,8 +112,8 @@ BOOST_AUTO_TEST_CASE( do_not_call_low_vf )
     for (int i=0; i<93; i++)
         pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
 
-
-    GermlineContinuousSiteLocusInfo info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
+    const unsigned sampleCount(1);
+    GermlineContinuousSiteLocusInfo info(sampleCount, 10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
 
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
     auto C = std::find_if(info.altAlleles.begin(), info.altAlleles.end(), [&](const GermlineContinuousSiteAlleleInfo& call)
@@ -160,8 +160,8 @@ BOOST_AUTO_TEST_CASE( gt_forced_output_calculated_correctly )
     for (int i=0; i<93; i++)
         pileup.calls.emplace_back(base_to_id('A'), 30, false, 0, 0, false, false, false, false, false);
 
-
-    GermlineContinuousSiteLocusInfo info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf, true);
+    const unsigned sampleCount(1);
+    GermlineContinuousSiteLocusInfo info(sampleCount, 10, 'A', pileup, opt.min_qscore, opt.min_het_vf, true);
 
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
     auto C = std::find_if(info.altAlleles.begin(), info.altAlleles.end(), [&](const GermlineContinuousSiteAlleleInfo& call)
@@ -220,8 +220,8 @@ BOOST_AUTO_TEST_CASE( homalt_called_correctly )
     for (int i=0; i<98; i++)
         pileup.calls.emplace_back(base_to_id('T'), 30, false, 0, 0, false, false, false, false, false);
 
-
-    GermlineContinuousSiteLocusInfo info(10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
+    const unsigned sampleCount(1);
+    GermlineContinuousSiteLocusInfo info(sampleCount, 10, 'A', pileup, opt.min_qscore, opt.min_het_vf);
 
     starling_continuous_variant_caller::position_snp_call_continuous(opt, pileup, info);
 

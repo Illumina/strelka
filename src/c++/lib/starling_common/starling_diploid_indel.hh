@@ -131,72 +131,6 @@ label(const unsigned idx)
 }
 
 
-struct SamplePloidyState
-{
-    void
-    setPloidy(const int ploidy)
-    {
-        assert(ploidy<=2 && ploidy>=-1);
-        _ploidy = ploidy;
-    }
-
-    int
-    getPloidy() const
-    {
-        return _ploidy;
-    }
-
-    bool
-    isDiploid() const
-    {
-        return (2 == _ploidy);
-    }
-
-    bool
-    isHaploid() const
-    {
-        return (1 == _ploidy);
-    }
-
-    bool
-    isNoploid() const
-    {
-        return (0 == _ploidy);
-    }
-
-    bool
-    isContinuous() const
-    {
-        return (-1 == _ploidy);
-    }
-
-private:
-    /// ploidy: current accept up to 2. 1 is haploid, 0 is "noploid" (inside a deletion) and -1 is continuous
-    int _ploidy = 2;
-};
-
-std::ostream&
-operator<<(std::ostream& os, const SamplePloidyState& sps);
-
-
-
-inline
-std::ostream&
-operator<<(std::ostream& os, const SamplePloidyState& sps)
-{
-    if (sps.isContinuous())
-    {
-        os << "continuous";
-    }
-    else
-    {
-        os << sps.getPloidy();
-    }
-    return os;
-}
-
-
-
 // separate out core with automatic copy ctor:
 //
 struct GermlineDiploidIndelSimpleGenotypeInfoCore
@@ -233,8 +167,6 @@ protected:
     }
 
 public:
-
-    SamplePloidyState ploidy;
 
     unsigned max_gt;
     int indel_qphred;

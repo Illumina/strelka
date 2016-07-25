@@ -201,6 +201,8 @@ process_pos_snp_single_sample_continuous(
 {
     if (sample_no!=0) return;
 
+    const unsigned sampleCount(1);
+
     sample_info& sif(sample(sample_no));
 
     const CleanedPileup& cpi(sif.cpi);
@@ -213,7 +215,7 @@ process_pos_snp_single_sample_continuous(
 
     if (pi.calls.empty() && !is_forced) return;
 
-    std::unique_ptr<GermlineSiteLocusInfo> si(new GermlineContinuousSiteLocusInfo(pos,pi.get_ref_base(),good_pi,
+    std::unique_ptr<GermlineSiteLocusInfo> si(new GermlineContinuousSiteLocusInfo(sampleCount,pos,pi.get_ref_base(),good_pi,
                                                                                 _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
 
     si->n_used_calls=cpi.n_used_calls();
@@ -270,6 +272,8 @@ process_pos_snp_single_sample_impl(
     //
     if (sample_no!=0) return;
 
+    const unsigned sampleCount(1);
+
     const bool is_forced(is_forced_output_pos(pos));
 
     // the second term in is_skippable below forces sites to go through the pipeline
@@ -286,7 +290,7 @@ process_pos_snp_single_sample_impl(
     const extended_pos_info& good_epi(cpi.getExtendedPosInfo());
 
 
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(_dopt.gvcf, sampleCount, pos,pi.get_ref_base(),good_pi,_opt.used_allele_count_min_qscore, is_forced));
     si->n_used_calls=cpi.n_used_calls();
     si->n_unused_calls=cpi.n_unused_calls();
 
@@ -465,6 +469,7 @@ void
 insertIndelInGvcf(
     const starling_base_options& opt,
     const starling_deriv_options& dopt,
+    const unsigned groupLocusPloidy,
     const reference_contig_segment& ref,
     const pos_basecall_buffer& basecallBuffer,
     const IndelKey& indelKey,
@@ -475,6 +480,8 @@ insertIndelInGvcf(
 {
     static const bool is_tier2_pass(false);
     static const bool is_use_alt_indel(false);
+
+    const unsigned sampleCount(1);
 
     // sample-independent info:
     starling_indel_report_info indelReportInfo;
@@ -487,7 +494,14 @@ insertIndelInGvcf(
     get_starling_indel_sample_report_info(opt, dopt, indelKey, indelSampleData, basecallBuffer,
                                           is_tier2_pass, is_use_alt_indel, indelSampleReportInfo);
 
-    gvcfer.add_indel(std::unique_ptr<GermlineIndelLocusInfo>(new GermlineDiploidIndelLocusInfo(dopt.gvcf, indelKey, indelData, dindel, indelReportInfo, indelSampleReportInfo)));
+    std::unique_ptr<GermlineIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey, indelData, dindel, indelReportInfo, indelSampleReportInfo));
+
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+    {
+        ii->getSample(sampleIndex).ploidy.setPloidy(groupLocusPloidy);
+    }
+
+    gvcfer.add_indel(std::move(ii));
 }
 
 
@@ -545,12 +559,10 @@ starling_diploid_indel
 locusGenotypeToDindel(
     const AlleleGroupGenotype& locusGenotype,
     const unsigned alleleId,
-    const unsigned groupLocusPloidy,
     const bool isForcedOuput)
 {
     starling_diploid_indel dindel;
     dindel.is_forced_output = isForcedOuput;
-    dindel.ploidy.setPloidy(groupLocusPloidy);
 
     if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
     {
@@ -642,8 +654,8 @@ hackDiplotypeCallToCopyNumberCalls(
         isOutputAnyAlleles=true;
 
         starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex,
-                                                            groupLocusPloidy, isForcedOutput));
-        insertIndelInGvcf(opt, dopt, ref, basecallBuffer, indelKey, indelData, sampleId, dindel, gvcfer);
+                                                            isForcedOutput));
+        insertIndelInGvcf(opt, dopt, groupLocusPloidy, ref, basecallBuffer, indelKey, indelData, sampleId, dindel, gvcfer);
     }
     return isOutputAnyAlleles;
 }
@@ -850,6 +862,7 @@ process_pos_indel_single_sample_continuous(
     // and only for sample 0. working on generalization:
     //
     if (sampleId!=0) return;
+    const unsigned sampleCount(1);
 
     sample_info& sif(sample(sampleId));
     auto it(getIndelBuffer().positionIterator(pos));
@@ -880,7 +893,7 @@ process_pos_indel_single_sample_continuous(
         static const bool is_use_alt_indel(true);
 
         if (!info)
-            info.reset(new GermlineContinuousIndelLocusInfo(pos));
+            info.reset(new GermlineContinuousIndelLocusInfo(sampleCount, pos));
 
         starling_indel_sample_report_info isri;
         get_starling_indel_sample_report_info(_opt, _dopt,indelKey,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);

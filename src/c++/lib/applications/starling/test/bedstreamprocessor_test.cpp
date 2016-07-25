@@ -52,9 +52,11 @@ BOOST_AUTO_TEST_CASE( filters_snps_before_and_after_range )
     const std::string& chromName = "dummy";
     const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, chromName, false);
 
+    const unsigned sampleCount(1);
+
     auto getNewSite = [&](const pos_t pos)
     {
-        std::unique_ptr<GermlineDiploidSiteLocusInfo> site(new GermlineDiploidSiteLocusInfo(gvcfDerivOptions));
+        std::unique_ptr<GermlineDiploidSiteLocusInfo> site(new GermlineDiploidSiteLocusInfo(gvcfDerivOptions, sampleCount));
         site->pos = pos;
         return site;
     };
@@ -83,6 +85,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
     const gvcf_options gvcfOptions = gvcf_options();
     const std::string& chromName = "dummy";
     const gvcf_deriv_options gvcfDerivOptions(gvcfOptions, chromName, false);
+    const unsigned sampleCount(1);
 
     auto getNewIndel = [&](const pos_t pos)
     {
@@ -90,6 +93,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
         std::unique_ptr<GermlineDiploidIndelLocusInfo>
         indel(new GermlineDiploidIndelLocusInfo(
                   gvcfDerivOptions,
+                  sampleCount,
                   indelKey,
                   IndelData(1,indelKey),
                   GermlineDiploidIndelSimpleGenotypeInfoCore(),

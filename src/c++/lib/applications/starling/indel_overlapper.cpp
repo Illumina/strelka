@@ -84,7 +84,7 @@ void indel_overlapper::process(std::unique_ptr<GermlineIndelLocusInfo> indel)
 {
     auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(indel)));
 
-    auto& call(ii->first());
+    auto& call(ii->getFirstAltAllele());
 
     // we can't handle breakends at all right now:
     if (call._indelKey.is_breakpoint()) return;
@@ -131,8 +131,8 @@ is_simple_indel_overlap(
     const GermlineDiploidIndelLocusInfo& ii0(*indel_buffer[0]);
     const GermlineDiploidIndelLocusInfo& ii1(*indel_buffer[1]);
 
-    const GermlineDiploidIndelAlleleInfo& ic0(ii0.first());
-    const GermlineDiploidIndelAlleleInfo& ic1(ii1.first());
+    const GermlineDiploidIndelAlleleInfo& ic0(ii0.getFirstAltAllele());
+    const GermlineDiploidIndelAlleleInfo& ic1(ii1.getFirstAltAllele());
 
     const bool isTwoHets = (is_het_indel(ic0._dindel) && is_het_indel(ic1._dindel));
 
@@ -154,7 +154,7 @@ is_simple_indel_overlap(
     auto get_overlap_alt = [&] (const GermlineDiploidIndelLocusInfo& ii)
     {
         std::string leading_seq,trailing_seq;
-        const auto& ic(ii.first());
+        const auto& ic(ii.getFirstAltAllele());
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
         const unsigned trail_len(indel_end_pos-ic._indelKey.right_pos());
@@ -386,7 +386,7 @@ void indel_overlapper::modify_overlapping_site(const GermlineDiploidIndelLocusIn
     else
     {
         modify_indel_overlap_site( ii,
-                                   ii.get_ploidy(offset),
+                                   ii.getSitePloidy(offset),
                                    si, model);
     }
 }
@@ -396,8 +396,8 @@ void
 indel_overlapper::
 modify_single_indel_record(GermlineDiploidIndelLocusInfo& ii)
 {
-    ii.first().set_hap_cigar();
-    _CM.classify_indel(ii, ii.first());
+    ii.getFirstAltAllele().set_hap_cigar();
+    _CM.classify_indel(ii, ii.getFirstAltAllele());
 }
 
 
@@ -425,8 +425,8 @@ void indel_overlapper::modify_indel_overlap_site(
 #endif
 
     // limit qual and gq values to those of the indel
-    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred,ii.first()._dindel.indel_qphred);
-    si.smod.gqx = std::min(si.smod.gqx,ii.first()._dindel.max_gt_qphred);
+    si.dgt.genome.snp_qphred = std::min(si.dgt.genome.snp_qphred, ii.getFirstAltAllele()._dindel.indel_qphred);
+    si.smod.gqx = std::min(si.smod.gqx, ii.getFirstAltAllele()._dindel.max_gt_qphred);
 
     // change ploidy:
     if (ploidy==1)
@@ -520,11 +520,11 @@ indel_overlapper::modify_conflict_indel_record()
 
     for (auto& ii : _indel_buffer)
     {
-        ii->first().set_hap_cigar();
+        ii->getFirstAltAllele().set_hap_cigar();
 
         ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::IndelConflict);
 
-        _CM.classify_indel(*ii, ii->first());
+        _CM.classify_indel(*ii, ii->getFirstAltAllele());
     }
 }
 

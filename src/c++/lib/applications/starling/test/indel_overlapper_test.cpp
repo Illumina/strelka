@@ -77,7 +77,8 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     indelKey.type=INDEL::INDEL;
     indelKey.deletionLength=2;
 
-    std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, indelKey,indelData,dindel,indelReportInfo,isri));
+    const unsigned sampleCount(1);
+    std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey,indelData,dindel,indelReportInfo,isri));
     overlap.process(std::move(ii));
 
     overlap.flush();
@@ -121,13 +122,14 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
     const starling_indel_report_info indelReportInfo;
     const starling_indel_sample_report_info isri;
 
+    const unsigned sampleCount(1);
     const unsigned keyCount(sizeof(iks)/sizeof(IndelKey));
     for (unsigned i(0); i<keyCount; ++i)
     {
         ik=iks[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, ik,indelData,dindel,indelReportInfo,isri));
+        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, ik,indelData,dindel,indelReportInfo,isri));
         overlap.process(std::move(ii));
     }
 
@@ -172,13 +174,14 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
     const starling_indel_report_info indelReportInfo;
     const starling_indel_sample_report_info isri;
 
+    const unsigned sampleCount(1);
     const unsigned keyCount(sizeof(indelKeys)/sizeof(IndelKey));
     for (unsigned i(0); i<keyCount; ++i)
     {
         indelKey=indelKeys[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, indelKey,indelData,dindel,indelReportInfo,isri));
+        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey,indelData,dindel,indelReportInfo,isri));
         overlap.process(std::move(ii));
     }
 

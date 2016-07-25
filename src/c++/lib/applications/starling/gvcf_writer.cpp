@@ -64,7 +64,7 @@ gvcf_writer(
     , _dopt(dopt.gvcf)
     , _block(_opt.gvcf)
     , _head_pos(dopt.report_range.begin_pos)
-    , _empty_site(_dopt)
+    , _empty_site(_dopt, 1)
     , _gvcf_comp(opt.gvcf,nocompress_regions)
     , _CM(cm)
 {
@@ -699,7 +699,7 @@ write_indel_record(
     const GermlineDiploidIndelLocusInfo& ii) const
 {
     std::ostream& os(*_osptr);
-    auto& call(ii.first());
+    auto& call(ii.getFirstAltAllele());
 
     os << _chrom << '\t'   // CHROM
        << ii.pos << '\t'   // POS
@@ -794,95 +794,107 @@ write_indel_record(
     os << '\t';
 
     //FORMAT
-    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:PL" << '\t';
+    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:FT:PL";
 
     //SAMPLE
-    os << ii.get_gt() << ':'
-       << call.gq;
-
-    os << ':' << ((ii.empiricalVariantScore>=0) ? ii.empiricalVariantScore : call.gqx);
-
-    os << ':' << call._indelSampleReportInfo.tier1Depth;
-
-    // SAMPLE AD/ADF/ADR:
+    const unsigned sampleCount(ii.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
-        auto orderRefReads = [](const GermlineDiploidIndelAlleleInfo& a, const GermlineDiploidIndelAlleleInfo& b)
+        const auto& sampleInfo(ii.getSample(sampleIndex));
+
+        os << '\t';
+
+        os << ii.get_gt() << ':'
+           << call.gq;
+
+        os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : call.gqx);
+
+        os << ':' << call._indelSampleReportInfo.tier1Depth;
+
+        // SAMPLE AD/ADF/ADR:
         {
-            return (a._indelSampleReportInfo.n_confident_ref_reads < b._indelSampleReportInfo.n_confident_ref_reads);
-        };
+            auto orderRefReads = [](const GermlineDiploidIndelAlleleInfo& a, const GermlineDiploidIndelAlleleInfo& b) {
+                return (a._indelSampleReportInfo.n_confident_ref_reads <
+                        b._indelSampleReportInfo.n_confident_ref_reads);
+            };
 
-        const auto maxRefCountIter(
-            std::max_element(ii.altAlleles.begin(),ii.altAlleles.end(),orderRefReads));
+            const auto maxRefCountIter(
+                std::max_element(ii.altAlleles.begin(), ii.altAlleles.end(), orderRefReads));
 
-        const auto& maxRefIsri(maxRefCountIter->_indelSampleReportInfo);
+            const auto& maxRefIsri(maxRefCountIter->_indelSampleReportInfo);
 
-        // AD
-        os << ':' << maxRefIsri.n_confident_ref_reads;
-        for (const auto& icall : ii.altAlleles)
-        {
-            os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads;
+            // AD
+            os << ':' << maxRefIsri.n_confident_ref_reads;
+            for (const auto& icall : ii.altAlleles)
+            {
+                os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads;
+            }
+
+            // ADF
+            os << ':' << maxRefIsri.n_confident_ref_reads_fwd;
+            for (const auto& icall : ii.altAlleles)
+            {
+                os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads_fwd;
+            }
+
+            // ADR
+            os << ':' << maxRefIsri.n_confident_ref_reads_rev;
+            for (const auto& icall : ii.altAlleles)
+            {
+                os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads_rev;
+            }
+
+            // FT
+            os << ':';
+            sampleInfo.filters.write(os);
         }
 
-        // ADF
-        os << ':' << maxRefIsri.n_confident_ref_reads_fwd;
-        for (const auto& icall : ii.altAlleles)
+        // PL field
+        os << ":";
+        const unsigned altAleleCount(ii.altAlleles.size());
+        if (altAleleCount == 1)
         {
-            os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads_fwd;
+            using namespace STAR_DIINDEL;
+            const auto& dindel(ii.altAlleles[0]._dindel);
+            const auto& pls(dindel.phredLoghood);
+            if (sampleInfo.ploidy.isHaploid())
+            {
+                os << pls[NOINDEL] << ','
+                   << pls[HOM];
+            }
+            else
+            {
+                os << pls[NOINDEL] << ','
+                   << pls[HET] << ','
+                   << pls[HOM];
+            }
         }
-
-        // ADR
-        os << ':' << maxRefIsri.n_confident_ref_reads_rev;
-        for (const auto& icall : ii.altAlleles)
+        else if (altAleleCount == 2)
         {
-            os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads_rev;
-        }
-    }
+            // very roughly approximate the overlapping indel PL values
+            //
+            // 1. 0/0 - this is always maxQ
+            // 2. 0/1 - set ot 0/0 from indel1
+            // 3. 1/1 - set to 1/1 from indel0
+            // 4. 0/2 - set to 0/0 from indel0
+            // 5. 1/2 - this is always 0
+            // 6. 2/2 - set to 1/1 from indel1
+            //
+            using namespace STAR_DIINDEL;
+            const auto& pls0(ii.altAlleles[0]._dindel.phredLoghood);
+            const auto& pls1(ii.altAlleles[1]._dindel.phredLoghood);
 
-    // PL field
-    os << ":";
-    const unsigned icount(ii.altAlleles.size());
-    if (icount == 1)
-    {
-        using namespace STAR_DIINDEL;
-        const auto& dindel(ii.altAlleles[0]._dindel);
-        const auto& pls(dindel.phredLoghood);
-        if (dindel.ploidy.isHaploid())
-        {
-            os << pls[NOINDEL] << ','
-               << pls[HOM];
+            os << GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ << ','
+               << pls1[NOINDEL] << ','
+               << pls0[HOM] << ','
+               << pls0[NOINDEL] << ','
+               << 0 << ','
+               << pls1[HOM];
         }
         else
         {
-            os << pls[NOINDEL] << ','
-               << pls[HET] << ','
-               << pls[HOM];
+            assert(false && "Unexpected indel count");
         }
-    }
-    else if (icount == 2)
-    {
-        // very roughly approximate the overlapping indel PL values
-        //
-        // 1. 0/0 - this is always maxQ
-        // 2. 0/1 - set ot 0/0 from indel1
-        // 3. 1/1 - set to 1/1 from indel0
-        // 4. 0/2 - set to 0/0 from indel0
-        // 5. 1/2 - this is always 0
-        // 6. 2/2 - set to 1/1 from indel1
-        //
-        using namespace STAR_DIINDEL;
-        const auto& pls0(ii.altAlleles[0]._dindel.phredLoghood);
-        const auto& pls1(ii.altAlleles[1]._dindel.phredLoghood);
-
-        os << GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ << ','
-           << pls1[NOINDEL] << ','
-           << pls0[HOM] << ','
-           << pls0[NOINDEL] << ','
-           << 0 << ','
-           << pls1[HOM];
-    }
-    else
-    {
-        assert(false && "Unexpected indel count");
     }
 
     os << '\n';

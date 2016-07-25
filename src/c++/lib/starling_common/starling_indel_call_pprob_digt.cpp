@@ -415,7 +415,7 @@ get_indel_digt_lhood(
 }
 
 
-
+#if 0
 ///
 ///
 void
@@ -483,3 +483,4 @@ starling_indel_call_pprob_digt(
     normalize_ln_distro(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly);
     dindel.max_gt_poly_qphred=error_prob_to_qphred(prob_comp(lhood,lhood+STAR_DIINDEL::SIZE,dindel.max_gt_poly));
 }
+#endif

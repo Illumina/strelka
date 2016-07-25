@@ -39,7 +39,7 @@
 
 
 void
-LocusFilterKeeper::
+GermlineFilterKeeper::
 write(std::ostream& os) const
 {
     if (filters.none())
@@ -115,8 +115,8 @@ add_overlap(
     assert(altAlleles.size() == 1);
     assert(overlap.altAlleles.size() == 1);
 
-    auto& firstAllele(first());
-    auto& overlapAllele(overlap.first());
+    auto& firstAllele(getFirstAltAllele());
+    auto& overlapAllele(overlap.getFirstAltAllele());
 
     // there's going to be 1 (possibly empty) fill range in front of one haplotype
     // and one possibly empty fill range on the back of one haplotype
@@ -132,11 +132,11 @@ add_overlap(
     ref.get_substring(indel_begin_pos,(indel_end_pos-indel_begin_pos),tmp);
     firstAllele._indelReportInfo.vcf_ref_seq = tmp;
 
-    ploidy.resize(indel_end_pos-pos,0);
+    sitePloidy.resize(indel_end_pos-pos,0);
 
     auto munge_indel = [&] (GermlineDiploidIndelLocusInfo& ii)
     {
-        auto& this_call(ii.first());
+        auto& this_call(ii.getFirstAltAllele());
         // extend leading sequence start back 1 for vcf compat, and end back 1 to concat with vcf_indel_seq
         ref.get_substring(indel_begin_pos,(ii.pos-indel_begin_pos)-1,leading_seq);
         const unsigned trail_len(indel_end_pos-this_call._indelKey.right_pos());
@@ -148,20 +148,20 @@ add_overlap(
                                 trailing_seq.size());
 
         // add to the ploidy object:
-        add_cigar_to_ploidy(this_call.cigar,ploidy);
+        add_cigar_to_ploidy(this_call.cigar,sitePloidy);
     };
     munge_indel(*this);
     munge_indel(overlap);
 
     // we only combine pairs of simple het indels on different haplotpyes, so this assertion must hold:
-    for (const unsigned pl : ploidy)
+    for (const unsigned pl : sitePloidy)
     {
         assert(pl<2);
     }
 
     //reduce qual and gt to the lowest of the set:
-    firstAllele._dindel.indel_qphred = std::min(firstAllele._dindel.indel_qphred, overlap.first()._dindel.indel_qphred);
-    firstAllele._dindel.max_gt_qphred = std::min(firstAllele._dindel.max_gt_qphred, overlap.first()._dindel.max_gt_qphred);
+    firstAllele._dindel.indel_qphred = std::min(firstAllele._dindel.indel_qphred, overlap.getFirstAltAllele()._dindel.indel_qphred);
+    firstAllele._dindel.max_gt_qphred = std::min(firstAllele._dindel.max_gt_qphred, overlap.getFirstAltAllele()._dindel.max_gt_qphred);
 
 
     // combine filter flags from overlapping loci:
@@ -172,10 +172,10 @@ add_overlap(
         empiricalVariantScore = overlap.empiricalVariantScore;
     else if (overlap.empiricalVariantScore >= 0)
         empiricalVariantScore = std::min(empiricalVariantScore, overlap.empiricalVariantScore);
-    firstAllele.gqx = std::min(firstAllele.gqx, overlap.first().gqx);
-    firstAllele.gq = std::min(firstAllele.gq, overlap.first().gq);
+    firstAllele.gqx = std::min(firstAllele.gqx, overlap.getFirstAltAllele().gqx);
+    firstAllele.gq = std::min(firstAllele.gq, overlap.getFirstAltAllele().gq);
 
-    altAlleles.push_back(overlap.first());
+    altAlleles.push_back(overlap.getFirstAltAllele());
 }
 
 
@@ -188,7 +188,7 @@ getPloidyError(
     using namespace illumina::common;
 
     std::ostringstream oss;
-    oss << "ERROR: get_ploidy offset '" << offset << "' exceeds ploidy region size '" << ploidy.size() << "'\n";
+    oss << "ERROR: get_ploidy offset '" << offset << "' exceeds ploidy region size '" << sitePloidy.size() << "'\n";
     BOOST_THROW_EXCEPTION(LogicException(oss.str()));
 }
 
@@ -387,7 +387,7 @@ computeEmpiricalScoringFeatures(
     const double chromDepth)
 {
     /// TODO: generalize to multiple alts:
-    const auto firstAltAllele(first());
+    const auto firstAltAllele(getFirstAltAllele());
 
     const double filteredLocusDepth(firstAltAllele._indelSampleReportInfo.tier1Depth);
     const double locusDepth(firstAltAllele._indelSampleReportInfo.mapqTracker.count);
@@ -559,7 +559,7 @@ dump(std::ostream& os) const
     os << "digt_indel_info\n";
     os << "nCalls: " << altAlleles.size() << " isOverlap: " << _is_overlap << "\n";
     os << "ploidy: ";
-    for (const unsigned pl : ploidy)
+    for (const unsigned pl : sitePloidy)
     {
         os << " " << pl;
     }

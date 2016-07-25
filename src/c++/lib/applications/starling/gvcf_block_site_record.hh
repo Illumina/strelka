@@ -36,7 +36,8 @@ struct gvcf_block_site_record : public GermlineSiteLocusInfo
 {
     explicit
     gvcf_block_site_record(const gvcf_options& opt)
-        : frac_tol(static_cast<double>(opt.block_percent_tol)/100.)
+        : GermlineSiteLocusInfo(1),
+          frac_tol(static_cast<double>(opt.block_percent_tol)/100.)
         , abs_tol(opt.block_abs_tol)
     {
         reset();

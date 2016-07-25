@@ -113,9 +113,9 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineSiteLocusInfo> inf
     else
     {
         auto si(downcast<GermlineContinuousSiteLocusInfo>(std::move(info)));
-        for (auto& call : si->altAlleles)
+        for (auto& altAllele : si->altAlleles)
         {
-            _model.default_classify_site(*si, call);
+            _model.default_classify_site(*si, altAllele);
         }
 
         _sink->process(std::move(si));
@@ -129,12 +129,17 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelLocusInfo> in
         auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(info)));
 
         // we can't handle breakends at all right now:
-        if (ii->first()._indelKey.is_breakpoint()) return;
+        if (ii->getFirstAltAllele()._indelKey.is_breakpoint()) return;
 
         // add filter for all indels in no-ploid regions:
-        if (ii->first()._dindel.ploidy.isNoploid())
+        const unsigned sampleCount(ii->getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
-            ii->filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+            LocusSampleInfo& sampleInfo(ii->getSample(sampleIndex));
+            if (sampleInfo.ploidy.isNoploid())
+            {
+                sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
+            }
         }
 
         _sink->process(std::move(ii));
@@ -144,14 +149,14 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelLocusInfo> in
         auto ii(downcast<GermlineContinuousIndelLocusInfo>(std::move(info)));
 
         // we can't handle breakends at all right now:
-        for (const auto& call : ii->altAlleles)
+        for (const auto& altAllele : ii->altAlleles)
         {
-            if (call._indelKey.is_breakpoint()) return;
+            if (altAllele._indelKey.is_breakpoint()) return;
         }
 
-        for (const auto& call : ii->altAlleles)
+        for (const auto& altAllele : ii->altAlleles)
         {
-            _model.default_classify_indel(*ii, call);
+            _model.default_classify_indel(*ii, altAllele);
         }
         _sink->process(std::move(ii));
     }

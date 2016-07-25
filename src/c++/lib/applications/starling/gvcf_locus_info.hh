@@ -26,6 +26,7 @@
 
 #include "gvcfAlleleInfo.hh"
 #include "germlineVariantEmpiricalScoringFeatures.hh"
+#include "ploidyUtil.hh"
 #include "blt_common/position_snp_call_pprob_digt.hh"
 #include "blt_util/align_path.hh"
 #include "blt_util/math_util.hh"
@@ -94,7 +95,7 @@ get_label(const unsigned idx)
 
 
 
-struct LocusFilterKeeper
+struct GermlineFilterKeeper
 {
     bool
     test(const GERMLINE_VARIANT_VCF_FILTERS::index_t i) const
@@ -130,14 +131,14 @@ struct LocusFilterKeeper
     write(std::ostream& os) const;
 
     bool
-    operator==(const LocusFilterKeeper& rhs) const
+    operator==(const GermlineFilterKeeper& rhs) const
     {
         return (filters == rhs.filters);
     }
 
     // bit-wise or over each flag
     void
-    merge(const LocusFilterKeeper& filterKeeper)
+    merge(const GermlineFilterKeeper& filterKeeper)
     {
         filters |= filterKeeper.filters;
     }
@@ -153,30 +154,80 @@ private:
 };
 
 
+/// property shared by all variants at a locus within one sample
+struct LocusSampleInfo
+{
+    void
+    clear()
+    {
+        ploidy.reset();
+        filters.clear();
+    }
+
+    SamplePloidyState ploidy;
+    GermlineFilterKeeper filters; ///< only for sample-specific filters
+};
+
 
 /// represents a locus in the sense of multiple alleles which interact in some way such that they would be represented in a single VCF record
 struct LocusInfo : public PolymorphicObject
 {
+    explicit
+    LocusInfo(const unsigned sampleCount)
+      : _sampleCount(sampleCount),
+        _sampleInfo(sampleCount)
+    {}
+
     void
     clear()
     {
         empiricalVariantScore = -1;
         filters.clear();
+        for (auto& sample : _sampleInfo)
+        {
+            sample.clear();
+        }
     }
 
     /// The empirically calibrated quality-score of the locus, if -1 no locus EVS is available
     int empiricalVariantScore = -1;
 
     /// All locus-ldevel filteres
-    LocusFilterKeeper filters;
+    GermlineFilterKeeper filters;
+
+    unsigned
+    getSampleCount() const
+    {
+        return _sampleInfo.size();
+    }
+
+    LocusSampleInfo&
+    getSample(const unsigned sampleIndex)
+    {
+        return _sampleInfo[sampleIndex];
+    }
+
+    const LocusSampleInfo&
+    getSample(const unsigned sampleIndex) const
+    {
+        return _sampleInfo[sampleIndex];
+    }
+
+private:
+    unsigned _sampleCount;
+    std::vector<LocusSampleInfo> _sampleInfo;
 };
 
 
 /// represents an indel call at the level of a full VCF record, containing possibly multiple alleles/SimpleGenotypes
 struct GermlineIndelLocusInfo : public LocusInfo
 {
-    explicit GermlineIndelLocusInfo(const pos_t init_pos)
-        : pos(init_pos)
+    explicit
+    GermlineIndelLocusInfo(
+        const unsigned sampleCount,
+        const pos_t init_pos)
+        : LocusInfo(sampleCount),
+          pos(init_pos)
     {}
 
     virtual ~GermlineIndelLocusInfo() {}
@@ -195,12 +246,13 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
 {
     GermlineDiploidIndelLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
+        const unsigned sampleCount,
         const IndelKey& initIndelKey,
         const IndelData& initIndelData,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
         const starling_indel_report_info& initIndelReportInfo,
         const starling_indel_sample_report_info& initIndelSampleReportInfo)
-        : GermlineIndelLocusInfo(initIndelKey.pos)
+        : GermlineIndelLocusInfo(sampleCount, initIndelKey.pos)
         , features(gvcfDerivedOptions.indelFeatureSet)
         , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
 
@@ -228,18 +280,21 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
 
     void add_overlap(const reference_contig_segment& ref, GermlineDiploidIndelLocusInfo& overlap);
 
+    ///TODO STREL-125 move this method to sample-level
     const char*
     get_gt() const
     {
+        const auto& ploidy(getSample(0).ploidy);
+
         if (this->is_hetalt())
         {
             return "1/2";
         }
-        else if (first()._dindel.ploidy.isHaploid())
+        else if (ploidy.isHaploid())
         {
             using namespace STAR_DIINDEL;
 
-            switch (first().max_gt)
+            switch (getFirstAltAllele().max_gt)
             {
             case NOINDEL:
                 return "0";
@@ -250,15 +305,17 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
                 return "X";
             }
         }
-        return STAR_DIINDEL::get_gt_label(first().max_gt);
+        return STAR_DIINDEL::get_gt_label(getFirstAltAllele().max_gt);
     }
 
+    ///TODO STREL-125 move this method to sample-level
     bool
     is_hetalt() const
     {
         return (_is_overlap);
     }
 
+    ///TODO STREL-125 move this method to sample-level
     bool
     is_het() const
     {
@@ -266,11 +323,14 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
     }
 
     // the site ploidy within the indel at offset x
+    ///TODO STREL-125 move this method to sample-level
     unsigned
-    get_ploidy(const unsigned offset) const
+    getSitePloidy(const unsigned offset) const
     {
-        auto& dindel(first()._dindel);
-        if (dindel.ploidy.isNoploid()) return 0;
+        const auto& ploidy(getSample(0).ploidy);
+
+        auto& dindel(getFirstAltAllele()._dindel);
+        if (ploidy.isNoploid()) return 0;
 
         if (!is_hetalt())
         {
@@ -282,26 +342,26 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
             case HET:
                 return 1;
             case NOINDEL:
-                return (dindel.ploidy.isHaploid() ? 1 : 2);
+                return (ploidy.isHaploid() ? 1 : 2);
             }
             assert(0);
         }
         else
         {
-            if (offset>=ploidy.size())
+            if (offset>=sitePloidy.size())
             {
                 getPloidyError(offset);
             }
-            return ploidy[offset];
+            return sitePloidy[offset];
         }
         return 2;
     }
 
-    const GermlineDiploidIndelAlleleInfo& first() const
+    const GermlineDiploidIndelAlleleInfo& getFirstAltAllele() const
     {
         return altAlleles.front();
     }
-    GermlineDiploidIndelAlleleInfo& first()
+    GermlineDiploidIndelAlleleInfo& getFirstAltAllele()
     {
         return altAlleles.front();
     }
@@ -324,7 +384,7 @@ private:
 public:
 
     /// represent site ploidy over the reference span of the overlapping indel set in the event of overlap:
-    std::vector<unsigned> ploidy;
+    std::vector<unsigned> sitePloidy;
 
     // used to flag hetalt
     bool _is_overlap=false;
@@ -342,11 +402,13 @@ public:
 struct GermlineSiteLocusInfo : public LocusInfo
 {
     GermlineSiteLocusInfo(
+        const unsigned sampleCount,
         const pos_t init_pos,
         const char init_ref,
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
         const bool is_forced_output = false)
+      : LocusInfo(sampleCount)
     {
         pos=(init_pos);
         ref=(init_ref);
@@ -356,7 +418,13 @@ struct GermlineSiteLocusInfo : public LocusInfo
         spanning_deletions = good_pi.n_spandel;
     }
 
-    GermlineSiteLocusInfo() = default;
+    explicit
+    GermlineSiteLocusInfo(
+        const unsigned sampleCount)
+        : LocusInfo(sampleCount)
+    {}
+
+    //GermlineSiteLocusInfo() = default;
 
     virtual bool is_snp() const = 0;
     virtual bool is_nonref() const = 0;
@@ -411,20 +479,23 @@ struct GermlineDiploidSiteLocusInfo : public GermlineSiteLocusInfo
 {
     GermlineDiploidSiteLocusInfo(
         const gvcf_deriv_options& gvcfDerivedOptions,
+        const unsigned sampleCount,
         const pos_t init_pos,
         const char init_ref,
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
         const bool is_forced_output = false)
-        : GermlineSiteLocusInfo(init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
+        : GermlineSiteLocusInfo(sampleCount, init_pos, init_ref, good_pi, used_allele_count_min_qscore, is_forced_output),
           EVSFeatures(gvcfDerivedOptions.snvFeatureSet),
           EVSDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
 
     explicit
     GermlineDiploidSiteLocusInfo(
-        const gvcf_deriv_options& gvcfDerivedOptions)
-        : EVSFeatures(gvcfDerivedOptions.snvFeatureSet),
+        const gvcf_deriv_options& gvcfDerivedOptions,
+        const unsigned sampleCount)
+        : GermlineSiteLocusInfo(sampleCount),
+          EVSFeatures(gvcfDerivedOptions.snvFeatureSet),
           EVSDevelopmentFeatures(gvcfDerivedOptions.snvDevelopmentFeatureSet)
     {}
 
@@ -533,17 +604,20 @@ std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteLocusInfo& si
 struct GermlineContinuousSiteLocusInfo : public GermlineSiteLocusInfo
 {
     GermlineContinuousSiteLocusInfo(
+        const unsigned sampleCount,
         const pos_t init_pos,
         const char init_ref,
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
         const double min_het_vf,
-        const bool is_forced_output = false) : GermlineSiteLocusInfo(init_pos,
-                                                                        init_ref,
-                                                                        good_pi,
-                                                                        used_allele_count_min_qscore,
-                                                                        is_forced_output)
-        , _min_het_vf(min_het_vf)
+        const bool is_forced_output = false)
+        : GermlineSiteLocusInfo(sampleCount,
+                                init_pos,
+                                init_ref,
+                                good_pi,
+                                used_allele_count_min_qscore,
+                                is_forced_output),
+          _min_het_vf(min_het_vf)
     {
     }
 
@@ -585,8 +659,11 @@ private:
 /// specify that variant is indel and a continuous frequency calling model
 struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 {
-    explicit GermlineContinuousIndelLocusInfo(const pos_t init_pos)
-        : GermlineIndelLocusInfo(init_pos)
+    explicit
+    GermlineContinuousIndelLocusInfo(
+        const unsigned sampleCount,
+        const pos_t init_pos)
+        : GermlineIndelLocusInfo(sampleCount, init_pos)
     {
     }
 

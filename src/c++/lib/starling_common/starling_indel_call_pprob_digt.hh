@@ -64,6 +64,7 @@ struct indel_digt_caller : private boost::noncopyable
     explicit
     indel_digt_caller(const double theta);
 
+#if 0
     /// \brief call an indel @ pos by calculating the posterior probability
     /// of all possible genotypes for a diploid individual.
     ///
@@ -76,6 +77,7 @@ struct indel_digt_caller : private boost::noncopyable
         const IndelSampleData& indelSampleData,
         const bool is_use_alt_indel,
         starling_diploid_indel& dindel) const;
+#endif
 
     const double*
     lnprior_genomic(const bool is_haploid = false) const

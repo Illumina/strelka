@@ -75,8 +75,9 @@ BOOST_AUTO_TEST_CASE( unphased_flag_written )
     opt.bam_seq_name = "dummy";
     starling_deriv_options dopt(opt,rcs);
 
+    const unsigned sampleCount(1);
     const snp_pos_info& spi(bc_buff.get_pos(snp_pos));
-    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, snp_pos, rcs.get_base(snp_pos), spi, 30));
+    std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, snp_pos, rcs.get_base(snp_pos), spi, 30));
     si->smod.is_covered = si->smod.is_used_covered = true;
     si->dgt.ref_gt = base_to_id(si->ref);
 

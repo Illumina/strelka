@@ -18,45 +18,26 @@
 //
 //
 
-#include "starling_diploid_indel.hh"
+///
+/// \author Chris Saunders
+///
+
+#include "ploidyUtil.hh"
 
 #include <iostream>
 
 
 
-const int GermlineDiploidIndelSimpleGenotypeInfoCore::maxQ = 999;
-
-
-
-void
-GermlineDiploidIndelSimpleGenotypeInfoCore::
-dump(std::ostream& os) const
+std::ostream&
+operator<<(std::ostream& os, const SamplePloidyState& sps)
 {
-    os << "max_gt=" << max_gt
-       << ",indel_qphred=" << indel_qphred
-       << ",max_gt_qphred=" << max_gt_qphred
-       << ",max_gt_poly=" << max_gt_poly
-       << ",max_gt_poly_qphred=" << max_gt_poly_qphred
-       << ",is_forced_output=" << is_forced_output;
-}
-
-
-
-void
-starling_diploid_indel::
-dump(std::ostream& os) const
-{
-    GermlineDiploidIndelSimpleGenotypeInfoCore::dump(os);
-    os << ",pprob=[";
-
-    bool isFirst(true);
-    for (const auto p : pprob)
+    if (sps.isContinuous())
     {
-        if (! isFirst) os << ',';
-        os << p;
-        isFirst=false;
+        os << "continuous";
     }
-    os << ']';
+    else
+    {
+        os << sps.getPloidy();
+    }
+    return os;
 }
-
-

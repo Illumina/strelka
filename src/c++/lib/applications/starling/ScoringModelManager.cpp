@@ -115,7 +115,7 @@ bool
 ScoringModelManager::
 checkIsVariantUsableInEVSModel(const GermlineDiploidIndelLocusInfo& ii) const
 {
-    const auto& call(ii.first());
+    const auto& call(ii.getFirstAltAllele());
     return ((call._indelReportInfo.it == SimplifiedIndelReportType::INSERT ||
              call._indelReportInfo.it == SimplifiedIndelReportType::DELETE ||
              call._indelReportInfo.it == SimplifiedIndelReportType::SWAP) &&
@@ -130,7 +130,7 @@ set_indel_modifiers(
     const GermlineDiploidIndelLocusInfo& ii,
     GermlineDiploidIndelAlleleInfo& call) const
 {
-    const auto& dindel(ii.first()._dindel);
+    const auto& dindel(ii.getFirstAltAllele()._dindel);
     /// max_gt != max_gt_poly indicates we're in a boundary zone between variant and hom-ref call
     if (dindel.max_gt != dindel.max_gt_poly)
     {
@@ -215,7 +215,7 @@ classify_indels(
     for (auto& indel : indels)
     {
         GermlineDiploidIndelLocusInfo& ii(*indel);
-        classify_indel_impl(isVariantUsableInEVSModel,ii,ii.first());
+        classify_indel_impl(isVariantUsableInEVSModel,ii, ii.getFirstAltAllele());
     }
 }
 

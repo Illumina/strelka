@@ -97,11 +97,13 @@ getTestSink(
     std::shared_ptr<dummy_variant_sink> next(new dummy_variant_sink);
     Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
 
+    const unsigned sampleCount(1);
+
     for (int i = 0; read1Seq[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
         std::unique_ptr<GermlineDiploidSiteLocusInfo> si(
-            new GermlineDiploidSiteLocusInfo(dopt.gvcf, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+            new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->dgt.ref_gt = base_to_id(si->ref);
 
@@ -214,11 +216,12 @@ BOOST_AUTO_TEST_CASE( read_break_causes_phasing_conflict )
     Codon_phaser phaser(opt, bc_buff, rcs, std::dynamic_pointer_cast<variant_pipe_stage_base>(next));
     dummy_variant_sink& sink(*next);
 
+    const unsigned sampleCount(1);
 
     for (int i = 0; r1[i]; i++)
     {
         const snp_pos_info& spi(bc_buff.get_pos(read_pos + i));
-        std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
+        std::unique_ptr<GermlineDiploidSiteLocusInfo> si(new GermlineDiploidSiteLocusInfo(dopt.gvcf, sampleCount, read_pos + i, rcs.get_base(read_pos + i), spi, 30));
         si->smod.is_covered = si->smod.is_used_covered = true;
         si->smod.gq = si->dgt.genome.snp_qphred = si->empiricalVariantScore = 40;
         si->dgt.ref_gt = base_to_id(si->ref);
