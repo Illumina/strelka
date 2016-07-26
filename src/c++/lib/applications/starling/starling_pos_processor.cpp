@@ -199,8 +199,11 @@ process_pos_snp_single_sample_continuous(
     const pos_t pos,
     const unsigned sample_no)
 {
+    assert(_opt.gvcf.is_gvcf_output());
+
     if (sample_no!=0) return;
 
+    /// TODO STREL-125 generalize to multisample
     const unsigned sampleCount(1);
 
     sample_info& sif(sample(sample_no));
@@ -215,25 +218,44 @@ process_pos_snp_single_sample_continuous(
 
     if (pi.calls.empty() && !is_forced) return;
 
-    std::unique_ptr<GermlineSiteLocusInfo> si(new GermlineContinuousSiteLocusInfo(sampleCount,pos,pi.get_ref_base(),good_pi,
-                                                                                _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced));
+    GermlineContinuousSiteLocusInfo locusInfo(sampleCount, pos, pi.get_ref_base(), good_pi,
+                                            _opt.used_allele_count_min_qscore, _opt.min_het_vf, is_forced);
 
-    si->n_used_calls=cpi.n_used_calls();
-    si->n_unused_calls=cpi.n_unused_calls();
+    locusInfo.n_used_calls = cpi.n_used_calls();
+    locusInfo.n_unused_calls = cpi.n_unused_calls();
     // hpol filter
-    si->hpol=get_snp_hpol_size(pos,_ref);
-
-
-    starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, (GermlineContinuousSiteLocusInfo&)*si);
+    locusInfo.hpol = get_snp_hpol_size(pos, _ref);
 
     if (_opt.is_counts)
     {
-        report_counts(good_pi,si->n_unused_calls,si->pos+1,*_streams.counts_osptr());
+        report_counts(good_pi, locusInfo.n_unused_calls, locusInfo.pos + 1, *_streams.counts_osptr());
     }
 
-    if (_opt.gvcf.is_gvcf_output())
+    // report one locus (ie. vcf record) per alt allele in continuous mode
+    bool isSiteAddedForPosition(false);
+
+    auto addBase = [&](const uint8_t baseId, const bool isForcedOutput)
     {
-        _gvcfer->add_site(std::move(si));
+        std::unique_ptr<GermlineContinuousSiteLocusInfo> si(new GermlineContinuousSiteLocusInfo(locusInfo));
+        starling_continuous_variant_caller::position_snp_call_continuous(_opt, good_pi, baseId, isForcedOutput,
+                                                                         (GermlineContinuousSiteLocusInfo&) *si);
+        if (not si->altAlleles.empty())
+        {
+            isSiteAddedForPosition = true;
+            _gvcfer->add_site(std::move(si));
+        }
+    };
+
+    for (unsigned baseId(0); baseId < N_BASE; ++baseId)
+    {
+        addBase(baseId,is_forced);
+    }
+
+    /// ensure that at least one base is added for site
+    if (not isSiteAddedForPosition)
+    {
+        const uint8_t refBaseId = base_to_id(locusInfo.ref);
+        addBase(refBaseId,true);
     }
 }
 
@@ -867,8 +889,6 @@ process_pos_indel_single_sample_continuous(
     auto it(getIndelBuffer().positionIterator(pos));
     const auto it_end(getIndelBuffer().positionIterator(pos + 1));
 
-    std::unique_ptr<GermlineContinuousIndelLocusInfo> info;
-
     for (; it!=it_end; ++it)
     {
         const IndelKey& indelKey(it->first);
@@ -891,19 +911,20 @@ process_pos_indel_single_sample_continuous(
         static const bool is_tier2_pass(false);
         static const bool is_use_alt_indel(true);
 
-        if (!info)
-            info.reset(new GermlineContinuousIndelLocusInfo(sampleCount, pos));
+        std::unique_ptr<GermlineContinuousIndelLocusInfo> locusInfo(new GermlineContinuousIndelLocusInfo(sampleCount, pos));
 
         starling_indel_sample_report_info isri;
         get_starling_indel_sample_report_info(_opt, _dopt,indelKey,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
-        starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, indelReportInfo, isri, *info);
-    }
-    if (info && (info->is_indel() || info->isForcedOutput()))
-    {
-        if (_opt.gvcf.is_gvcf_output())
+        starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, indelReportInfo, isri, *locusInfo);
+
+        if (locusInfo->is_indel() || locusInfo->isForcedOutput())
         {
-            _gvcfer->add_indel(std::move(info));
+            if (_opt.gvcf.is_gvcf_output())
+            {
+                _gvcfer->add_indel(std::move(locusInfo));
+            }
         }
+
     }
 }
 

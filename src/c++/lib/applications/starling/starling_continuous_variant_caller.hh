@@ -35,6 +35,8 @@ struct starling_continuous_variant_caller
     static void position_snp_call_continuous(
         const starling_base_options& opt,
         const snp_pos_info& good_pi,
+        const unsigned baseId,
+        const bool isForcedOutput,
         GermlineContinuousSiteLocusInfo& locusInfo);
 
     static void add_indel_call(

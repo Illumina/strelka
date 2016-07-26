@@ -537,121 +537,116 @@ gvcf_writer::
 write_site_record(
     const GermlineContinuousSiteLocusInfo& si) const
 {
-    bool site_is_nonref = si.is_nonref();
     auto ref_base_id = base_to_id(si.ref);
 
-    for (auto& allele : si.altAlleles)
+    assert(si.altAlleles.size() == 1);
+    const auto& allele(si.altAlleles.front());
+
+    std::vector<uint8_t> altOrder;
+    const bool is_no_alt(allele._base == ref_base_id);
+    if (! is_no_alt)
     {
-        std::vector<uint8_t> altOrder;
-        const bool is_no_alt(allele._base == ref_base_id);
-        if (! is_no_alt)
+        altOrder.push_back(allele._base);
+    }
+
+    std::ostream& os(*_osptr);
+
+    os << _chrom << '\t'  // CHROM
+       << (si.pos+1) << '\t'  // POS
+       << ".\t";           // ID
+
+    os  << si.ref << '\t'; // REF
+
+    std::string gt(si.get_gt(allele));
+
+    // ALT
+    if (is_no_alt)
+        os << ".";
+    else
+        os << id_to_base(allele._base);
+    os << '\t';
+
+    // QUAL:
+    os << si.anyVariantAlleleQuality << '\t';
+
+    // FILTER:
+    si.filters.write(os);
+    os << '\t';
+
+    // INFO
+    std::ostringstream info;
+
+    if (si._is_snp)
+    {
+        info << "SNVSB=";
         {
-            altOrder.push_back(allele._base);
+            const StreamScoper ss(info);
+            info << std::fixed << std::setprecision(1) << allele.strand_bias;
         }
+        info << ';';
+        info << "SNVHPOL=" << si.hpol;
+    }
 
-        // do not output the call for reference if the site has variants unless it is forced output
-        if (!si.isForcedOutput && site_is_nonref && is_no_alt)
-            continue;
+    if (!is_no_alt)
+    {
+        if (_opt.do_codon_phasing)
+        {
+            if (!info.str().empty())
+                info << ";";
+            info << "Unphased"; // TODO: placeholder until we do phasing on continuous variants
+        }
+    }
 
-        std::ostream& os(*_osptr);
+    os << (info.str().empty() ? "." : info.str()) << "\t";
 
-        os << _chrom << '\t'  // CHROM
-           << (si.pos+1) << '\t'  // POS
-           << ".\t";           // ID
+    //FORMAT
+    os << "GT";
+    os << ":GQ";
+    os << ":GQX";
+    os << ":DP:DPF";
+    if (!is_no_alt)
+    {
+        os << ":AD:ADF:ADR";
+    }
+    os << "FT:VF";
 
-        os  << si.ref << '\t'; // REF
+    //SAMPLE
+    const unsigned sampleCount(si.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        const auto& sampleInfo(si.getSample(sampleIndex));
 
-        std::string gt(si.get_gt(allele));
-
-        // ALT
-        if (is_no_alt)
-            os << ".";
-        else
-            os << id_to_base(allele._base);
         os << '\t';
-
-        // QUAL:
-        os << si.anyVariantAlleleQuality << '\t';
-
-        // FILTER:
-        si.filters.write(os);
-        os << '\t';
-
-        // INFO
-        std::ostringstream info;
-
-        if (si._is_snp)
-        {
-            info << "SNVSB=";
-            {
-                const StreamScoper ss(info);
-                info << std::fixed << std::setprecision(1) << allele.strand_bias;
-            }
-            info << ';';
-            info << "SNVHPOL=" << si.hpol;
-        }
-
-        if (!is_no_alt)
-        {
-            if (_opt.do_codon_phasing)
-            {
-                if (!info.str().empty())
-                    info << ";";
-                info << "Unphased"; // TODO: placeholder until we do phasing on continuous variants
-            }
-        }
-
-        os << (info.str().empty() ? "." : info.str()) << "\t";
-
-        //FORMAT
-        os << "GT";
-        os << ":GQ";
-        os << ":GQX";
-        os << ":DP:DPF";
-        if (!is_no_alt)
-        {
-            os << ":AD:ADF:ADR";
-        }
-        os << "FT:VF";
 
         //SAMPLE
-        const unsigned sampleCount(si.getSampleCount());
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        os << gt
+           << ':' << sampleInfo.gq
+           << ':' << allele.gqx;
+
+        // DP:DPF
+        os << ':' << si.n_used_calls << ':' << si.n_unused_calls;
+
+        if (!is_no_alt)
         {
-            const auto& sampleInfo(si.getSample(sampleIndex));
-
-            os << '\t';
-
-            //SAMPLE
-            os << gt
-               << ':' << sampleInfo.gq
-               << ':' << allele.gqx;
-
-            // DP:DPF
-            os << ':' << si.n_used_calls << ':' << si.n_unused_calls;
-
-            if (!is_no_alt)
-            {
-                os << ':';
-                print_site_ad(si, altOrder, os);
-                os << ':';
-                print_site_ad_strand(si, altOrder, true, os);
-                os << ':';
-                print_site_ad_strand(si, altOrder, false, os);
-            }
-
-            // FT
             os << ':';
-            sampleInfo.filters.write(os);
-
-            // VF
-            {
-                const StreamScoper ss(os);
-                os << ':' << std::fixed << std::setprecision(3) << allele.variant_frequency();
-            }
+            print_site_ad(si, altOrder, os);
+            os << ':';
+            print_site_ad_strand(si, altOrder, true, os);
+            os << ':';
+            print_site_ad_strand(si, altOrder, false, os);
         }
-        os << '\n';
+
+        // FT
+        os << ':';
+        sampleInfo.filters.write(os);
+
+        // VF
+        {
+            const StreamScoper ss(os);
+            os << ':' << std::fixed << std::setprecision(3) << allele.variant_frequency();
+        }
     }
+    os << '\n';
 }
 
 
@@ -933,91 +928,91 @@ write_indel_record(
 {
     std::ostream& os(*_osptr);
 
-    for (auto& allele : ii.altAlleles)
+    os << _chrom << '\t'   // CHROM
+       << ii.pos << '\t'   // POS
+       << ".\t";            // ID
+
+    assert(ii.altAlleles.size() == 1);
+    const auto& allele(ii.altAlleles.front());
+
+    os << allele._indelReportInfo.vcf_ref_seq << '\t'; // REF
+
+    // ALT
+    os << allele._indelReportInfo.vcf_indel_seq;
+    os << '\t';
+
+    os << ii.anyVariantAlleleQuality << '\t'; //QUAL
+
+    // FILTER:
+    ii.filters.write(os);
+    os << '\t';
+
+    // INFO
+    os << "CIGAR=";
+    os << allele.cigar;
+    os << ';';
+    os << "RU=";
+    if (allele._indelReportInfo.is_repeat_unit() && allele._indelReportInfo.repeat_unit.size() <= 20)
     {
-        os << _chrom << '\t'   // CHROM
-           << ii.pos << '\t'   // POS
-           << ".\t"            // ID
-           << allele._indelReportInfo.vcf_ref_seq << '\t'; // REF
+        os << allele._indelReportInfo.repeat_unit;
+    }
+    else
+    {
+        os << '.';
+    }
+    os << ';';
+    os << "REFREP=";
+    if (allele._indelReportInfo.is_repeat_unit())
+    {
+        os << allele._indelReportInfo.ref_repeat_count;
+    }
 
-        // ALT
-        os << allele._indelReportInfo.vcf_indel_seq;
-        os << '\t';
+    os << ';';
+    os << "IDREP=";
+    if (allele._indelReportInfo.is_repeat_unit())
+    {
+        os << allele._indelReportInfo.indel_repeat_count;
+    }
 
-        os << ii.anyVariantAlleleQuality << '\t'; //QUAL
 
-        // FILTER:
-        ii.filters.write(os);
-        os << '\t';
+    os << '\t';
 
-        // INFO
-        os << "CIGAR=";
-        os << allele.cigar;
-        os << ';';
-        os << "RU=";
-        if (allele._indelReportInfo.is_repeat_unit() && allele._indelReportInfo.repeat_unit.size() <= 20)
-        {
-            os << allele._indelReportInfo.repeat_unit;
-        }
-        else
-        {
-            os << '.';
-        }
-        os << ';';
-        os << "REFREP=";
-        if (allele._indelReportInfo.is_repeat_unit())
-        {
-            os << allele._indelReportInfo.ref_repeat_count;
-        }
+    //FORMAT
+    os << "GT:GQ:GQX:DPI:AD:ADF:ADR:VF";
 
-        os << ';';
-        os << "IDREP=";
-        if (allele._indelReportInfo.is_repeat_unit())
-        {
-            os << allele._indelReportInfo.indel_repeat_count;
-        }
-
+    //SAMPLE
+    const unsigned sampleCount(ii.getSampleCount());
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        const auto& sampleInfo(ii.getSample(sampleIndex));
 
         os << '\t';
-
-        //FORMAT
-        os << "GT:GQ:GQX:DPI:AD:ADF:ADR:VF";
 
         //SAMPLE
-        const unsigned sampleCount(ii.getSampleCount());
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+        os << ii.get_gt() << ':'
+           << sampleInfo.gq;
+
+        os << ':' << allele.gqx;
+
+        os << ':' << allele._indelSampleReportInfo.tier1Depth;
+
+        // AD:
+        os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads
+           << ',' << allele._indelSampleReportInfo.n_confident_indel_reads;
+
+        // ADF
+        os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads_fwd
+           << ',' << allele._indelSampleReportInfo.n_confident_indel_reads_fwd;
+
+        // ADR
+        os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads_rev
+           << ',' << allele._indelSampleReportInfo.n_confident_indel_reads_rev;
+
+        // VF
         {
-            const auto& sampleInfo(ii.getSample(sampleIndex));
-
-            os << '\t';
-
-            //SAMPLE
-            os << ii.get_gt() << ':'
-               << sampleInfo.gq;
-
-            os << ':' << allele.gqx;
-
-            os << ':' << allele._indelSampleReportInfo.tier1Depth;
-
-            // AD:
-            os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads
-               << ',' << allele._indelSampleReportInfo.n_confident_indel_reads;
-
-            // ADF
-            os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads_fwd
-               << ',' << allele._indelSampleReportInfo.n_confident_indel_reads_fwd;
-
-            // ADR
-            os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads_rev
-               << ',' << allele._indelSampleReportInfo.n_confident_indel_reads_rev;
-
-            // VF
-            {
-                const StreamScoper ss(os);
-                os << ':' << std::setprecision(3) << allele.variant_frequency();
-            }
+            const StreamScoper ss(os);
+            os << ':' << std::setprecision(3) << allele.variant_frequency();
         }
-        os << '\n';
     }
+    os << '\n';
 }
-
