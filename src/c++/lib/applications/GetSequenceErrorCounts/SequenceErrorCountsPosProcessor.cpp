@@ -418,7 +418,7 @@ process_pos_error_counts(
 
         if (indelKey.is_breakpoint()) continue;
 
-        const bool isForcedOutput(indelData.is_forced_output);
+        const bool isForcedOutput(indelData.isForcedOutput);
         if (not isForcedOutput)
         {
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));

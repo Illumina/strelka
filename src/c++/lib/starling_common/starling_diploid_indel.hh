@@ -175,8 +175,6 @@ public:
     unsigned max_gt_poly;
     int max_gt_poly_qphred;
 
-    bool is_forced_output;
-
     /// true if this allele was indentified as a hetalt 'early', ie. in the diplotype model.
     bool is_diplotype_model_hetalt = false;
 

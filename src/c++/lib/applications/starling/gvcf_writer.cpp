@@ -538,7 +538,7 @@ write_site_record(
         }
 
         // do not output the call for reference if the site has variants unless it is forced output
-        if (!si.forcedOutput && site_is_nonref && is_no_alt)
+        if (!si.isForcedOutput && site_is_nonref && is_no_alt)
             continue;
 
         std::ostream& os(*_osptr);

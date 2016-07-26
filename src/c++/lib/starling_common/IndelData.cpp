@@ -120,7 +120,7 @@ addIndelObservation(
 
     // never reset the flags to false if they are true already
     if (! is_external_candidate) is_external_candidate=obs_data.is_external_candidate;
-    if (! is_forced_output) is_forced_output=obs_data.is_forced_output;
+    if (! isForcedOutput) isForcedOutput=obs_data.is_forced_output;
 
     if (_indelKey.is_breakpoint())
     {
@@ -281,7 +281,7 @@ operator<<(
 {
     os << "IndelKey: " << indelData._indelKey << "\n";
     os << "is_external_candidate: " << indelData.is_external_candidate << "\n";
-    os << "is_forced_output: " << indelData.is_forced_output << "\n";
+    os << "is_forced_output: " << indelData.isForcedOutput << "\n";
 
     os << "breakpointInsertionSequence: " << indelData.getBreakpointInsertSeq() << "\n";
 

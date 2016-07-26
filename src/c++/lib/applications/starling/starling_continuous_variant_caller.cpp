@@ -124,7 +124,7 @@ void starling_continuous_variant_caller::position_snp_call_continuous(
 
     for (unsigned base_id(0); base_id<N_BASE; ++base_id)
     {
-        generateCallInfo(base_id, info.forcedOutput);
+        generateCallInfo(base_id, info.isForcedOutput);
     }
     if (info.altAlleles.empty())
     {
@@ -145,7 +145,7 @@ void starling_continuous_variant_caller::add_indel_call(
 {
     // determine VF
     double vf = indelSampleReportInfo.n_confident_indel_reads / ((double)indelSampleReportInfo.total_confident_reads());
-    if (vf > opt.min_het_vf || indelData.is_forced_output)
+    if (vf > opt.min_het_vf || indelData.isForcedOutput)
     {
         info.altAlleles.emplace_back(
             indelSampleReportInfo.total_confident_reads(), indelSampleReportInfo.n_confident_indel_reads,

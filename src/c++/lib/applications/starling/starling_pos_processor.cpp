@@ -558,11 +558,9 @@ static
 starling_diploid_indel
 locusGenotypeToDindel(
     const AlleleGroupGenotype& locusGenotype,
-    const unsigned alleleId,
-    const bool isForcedOuput)
+    const unsigned alleleId)
 {
     starling_diploid_indel dindel;
-    dindel.is_forced_output = isForcedOuput;
 
     if (locusGenotype.maxGenotypeIndex == AG_GENOTYPE::HET01)
     {
@@ -651,10 +649,11 @@ hackDiplotypeCallToCopyNumberCalls(
 
         if (indelKey.pos != targetPos) continue;
 
+        assert ((not isForcedOutput) || indelData.isForcedOutput);
+
         isOutputAnyAlleles=true;
 
-        starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex,
-                                                            isForcedOutput));
+        starling_diploid_indel dindel(locusGenotypeToDindel(locusGenotype, genotypeAlleleIndex));
         insertIndelInGvcf(opt, dopt, groupLocusPloidy, ref, basecallBuffer, indelKey, indelData, sampleId, dindel, gvcfer);
     }
     return isOutputAnyAlleles;
@@ -703,7 +702,7 @@ process_pos_indel_single_sample_digt(
 
         if (indelKey.is_breakpoint()) continue;
 
-        const bool isForcedOutput(indelData.is_forced_output);
+        const bool isForcedOutput(indelData.isForcedOutput);
         if (not isForcedOutput)
         {
             const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
@@ -753,7 +752,7 @@ process_pos_indel_single_sample_digt(
         for (unsigned alleleIndex(0); alleleIndex < orthogonalVariantAlleleCount; alleleIndex++)
         {
             const IndelData& indelData(orthogonalVariantAlleles.data(alleleIndex));
-            if (indelData.is_forced_output)
+            if (indelData.isForcedOutput)
             {
                 forcedOutputAlleleGroup.addVariantAllele(orthogonalVariantAlleles.iter(alleleIndex));
             }
@@ -874,7 +873,7 @@ process_pos_indel_single_sample_continuous(
     {
         const IndelKey& indelKey(it->first);
         const IndelData& indelData(getIndelData(it));
-        const bool isForcedOutput(indelData.is_forced_output);
+        const bool isForcedOutput(indelData.isForcedOutput);
 
         const IndelSampleData& indelSampleData(indelData.getSampleData(sampleId));
         const bool isZeroCoverage(indelSampleData.read_path_lnp.empty());
@@ -899,7 +898,7 @@ process_pos_indel_single_sample_continuous(
         get_starling_indel_sample_report_info(_opt, _dopt,indelKey,indelSampleData,sif.bc_buff, is_tier2_pass,is_use_alt_indel,isri);
         starling_continuous_variant_caller::add_indel_call(_opt, indelKey, indelData, indelReportInfo, isri, *info);
     }
-    if (info && (info->is_indel() || info->is_forced_output()))
+    if (info && (info->is_indel() || info->isForcedOutput()))
     {
         if (_opt.gvcf.is_gvcf_output())
         {

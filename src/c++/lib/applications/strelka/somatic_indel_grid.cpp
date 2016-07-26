@@ -190,7 +190,7 @@ get_somatic_indel(
     double normal_lhood[DIGT_GRID::PRESTRAND_SIZE];
     double tumor_lhood[DIGT_GRID::PRESTRAND_SIZE];
 
-    sindel.is_forced_output=indelData.is_forced_output;
+    sindel.is_forced_output=indelData.isForcedOutput;
 
     const IndelSampleData& normalIndelSampleData(indelData.getSampleData(normalId));
     const IndelSampleData& tumorIndelSampleData(indelData.getSampleData(tumorId));

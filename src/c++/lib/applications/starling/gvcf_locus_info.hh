@@ -238,7 +238,7 @@ struct GermlineIndelLocusInfo : public LocusInfo
 
     virtual ~GermlineIndelLocusInfo() {}
 
-    virtual bool is_forced_output() const = 0;
+    virtual bool isForcedOutput() const = 0;
     virtual bool is_indel() const = 0;
     // the EXCLUSIVE end of the variant (i.e. open)
     virtual pos_t end() const = 0;
@@ -264,14 +264,15 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         altAlleles.emplace_back(initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
     }
 
-    bool is_forced_output() const override
+    bool isForcedOutput() const override
     {
-        return std::any_of(altAlleles.begin(), altAlleles.end(),
-                           [](const GermlineDiploidIndelAlleleInfo& x)
+        for (const auto& altAllele : altAlleles)
         {
-            return x._dindel.is_forced_output;
-        });
+            if (altAllele.isForcedOutput) return true;
+        }
+        return false;
     }
+
     bool is_indel() const override
     {
         return std::any_of(altAlleles.begin(), altAlleles.end(), [](const GermlineDiploidIndelAlleleInfo& x)
@@ -411,11 +412,11 @@ struct GermlineSiteLocusInfo : public LocusInfo
         const char init_ref,
         const snp_pos_info& good_pi,
         const int used_allele_count_min_qscore,
-        const bool is_forced_output = false)
+        const bool initIsForcedOutput = false)
       : LocusInfo(sampleCount, initPos)
     {
         ref=(init_ref);
-        forcedOutput = is_forced_output;
+        isForcedOutput = initIsForcedOutput;
         good_pi.get_known_counts(fwd_counts,used_allele_count_min_qscore,true);
         good_pi.get_known_counts(rev_counts,used_allele_count_min_qscore,false);
         spanning_deletions = good_pi.n_spandel;
@@ -456,7 +457,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
         hpol = 0;
         spanning_deletions = 0;
         Unphasable = false;
-        forcedOutput = false;
+        isForcedOutput = false;
     }
 
     char ref = 'N';
@@ -467,7 +468,7 @@ struct GermlineSiteLocusInfo : public LocusInfo
 
     unsigned spanning_deletions = 0;
     bool Unphasable = false;        // Set to true if the site should never be included in a phasing block
-    bool forcedOutput = false;
+    bool isForcedOutput = false;
 
 private:
     std::array<unsigned,N_BASE> fwd_counts;
@@ -678,11 +679,12 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
         return false;
     }
 
-    bool is_forced_output() const override
+    bool isForcedOutput() const override
     {
-        for (auto& call : altAlleles)
-            if (call._indelData.is_forced_output)
-                return true;
+        for (const auto& altAllele : altAlleles)
+        {
+            if (altAllele.isForcedOutput) return true;
+        }
         return false;
     }
 

@@ -36,8 +36,7 @@ dump(std::ostream& os) const
        << ",indel_qphred=" << indel_qphred
        << ",max_gt_qphred=" << max_gt_qphred
        << ",max_gt_poly=" << max_gt_poly
-       << ",max_gt_poly_qphred=" << max_gt_poly_qphred
-       << ",is_forced_output=" << is_forced_output;
+       << ",max_gt_poly_qphred=" << max_gt_poly_qphred;
 }
 
 

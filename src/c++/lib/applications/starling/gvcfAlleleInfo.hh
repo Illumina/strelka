@@ -59,11 +59,14 @@ struct GermlineVariantAlleleInfo : public PolymorphicObject
         gqx = 0;
         gq = 0;
         strand_bias = 0;
+        isForcedOutput = false;
     }
 
     int gqx=0;
     int gq=0;
     double strand_bias = 0;
+
+    bool isForcedOutput = false;
 };
 
 
@@ -79,10 +82,11 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
         const starling_indel_report_info indelReportInfo,
         const starling_indel_sample_report_info& indelSampleReportInfo)
         : _indelKey(indelKey)
-        , _indelData(indelData)
         , _indelReportInfo(indelReportInfo)
         , _indelSampleReportInfo(indelSampleReportInfo)
-    {}
+    {
+        isForcedOutput = indelData.isForcedOutput;
+    }
 
     void
     clear()
@@ -96,7 +100,6 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
         const unsigned trail=0);
 
     const IndelKey _indelKey;
-    const IndelData _indelData;
     // TODO: make the indel overlapping code create a new call, then revert this to const
     starling_indel_report_info _indelReportInfo;
     const starling_indel_sample_report_info _indelSampleReportInfo;

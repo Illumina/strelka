@@ -295,7 +295,7 @@ public:
     bool is_external_candidate = false;
 
     // if true candidates should be output even if very unlikely:
-    bool is_forced_output = false;
+    bool isForcedOutput = false;
 
     bool isConfirmedInActiveRegion = false;
 

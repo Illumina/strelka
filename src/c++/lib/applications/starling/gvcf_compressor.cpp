@@ -42,7 +42,7 @@ gvcf_compressor::
 is_site_compressable(
     const GermlineSiteLocusInfo& si) const
 {
-    if (si.forcedOutput) return false;
+    if (si.isForcedOutput) return false;
     if (! _opt.is_block_compression) return false;
 
     if (si.is_snp()) return false;

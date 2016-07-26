@@ -84,15 +84,15 @@ void indel_overlapper::process(std::unique_ptr<GermlineIndelLocusInfo> indel)
 {
     auto ii(downcast<GermlineDiploidIndelLocusInfo>(std::move(indel)));
 
-    auto& call(ii->getFirstAltAllele());
+    auto& altAllele(ii->getFirstAltAllele());
 
     // we can't handle breakends at all right now:
-    if (call._indelKey.is_breakpoint()) return;
+    if (altAllele._indelKey.is_breakpoint()) return;
 
-    const bool is_nonvariant_indel = check_is_nonvariant_indel(call._dindel);
+    const bool is_nonvariant_indel = check_is_nonvariant_indel(altAllele._dindel);
 
     // don't handle homozygous reference calls unless genotyping is forced
-    if (is_nonvariant_indel && !call._dindel.is_forced_output) return;
+    if (is_nonvariant_indel && !altAllele.isForcedOutput) return;
 
     if (ii->pos>_indel_end_pos)
     {
@@ -105,7 +105,7 @@ void indel_overlapper::process(std::unique_ptr<GermlineIndelLocusInfo> indel)
     }
     else
     {
-        _indel_end_pos=std::max(_indel_end_pos,call._indelKey.right_pos());
+        _indel_end_pos=std::max(_indel_end_pos,altAllele._indelKey.right_pos());
         _indel_buffer.push_back(std::move(ii));
     }
 }

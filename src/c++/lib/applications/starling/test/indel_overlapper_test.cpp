@@ -116,9 +116,9 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
     int max_gts[] = { 2,0,2,2 };
 
     IndelKey ik;
-    const IndelData indelData(1,ik);
+    IndelData indelData(1,ik);
+    indelData.isForcedOutput = true;
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
-    dindel.is_forced_output = true;
     const starling_indel_report_info indelReportInfo;
     const starling_indel_sample_report_info isri;
 
@@ -168,9 +168,9 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
     int max_gts[] = { 2,2,0,2 };
 
     IndelKey indelKey;
-    const IndelData indelData(1,indelKey);
+    IndelData indelData(1,indelKey);
+    indelData.isForcedOutput = true;
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
-    dindel.is_forced_output = true;
     const starling_indel_report_info indelReportInfo;
     const starling_indel_sample_report_info isri;
 

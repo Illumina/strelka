@@ -457,7 +457,7 @@ get_denovo_indel_call(
 
     // get likelihood of each genotype
     // set is_forced_output
-    if (indelData.is_forced_output)
+    if (indelData.isForcedOutput)
     {
         dinc.is_forced_output = true;
     }
