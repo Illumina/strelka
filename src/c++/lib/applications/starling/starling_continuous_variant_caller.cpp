@@ -148,47 +148,73 @@ position_snp_call_continuous(
 }
 
 
-void starling_continuous_variant_caller::add_indel_call(
+void
+starling_continuous_variant_caller::
+add_indel_call(
     const starling_base_options& opt,
     const IndelKey& indelKey,
     const IndelData& indelData,
     const starling_indel_report_info& indelReportInfo,
-    const starling_indel_sample_report_info& indelSampleReportInfo,
     GermlineContinuousIndelLocusInfo& locusInfo)
 {
     // continuous caller reports only one alt per vcf record (locus)
     assert(locusInfo.altAlleles.empty());
 
-    // determine VF
-    const double vf = indelSampleReportInfo.n_confident_indel_reads / ((double)indelSampleReportInfo.total_confident_reads());
-    if (vf > opt.min_het_vf || indelData.isForcedOutput)
-    {
-        locusInfo.altAlleles.emplace_back(
-            indelSampleReportInfo.total_confident_reads(), indelSampleReportInfo.n_confident_indel_reads,
-            indelKey, indelData, indelReportInfo, indelSampleReportInfo);
-        GermlineContinuousIndelAlleleInfo& allele = locusInfo.altAlleles.back();
-        const unsigned sampleCount(locusInfo.getSampleCount());
-        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
-        {
-            auto& sampleInfo(locusInfo.getSample(sampleIndex));
+    // first test to see if this indel qualifies as a variant in any sample
+    //
+    const unsigned sampleCount(locusInfo.getSampleCount());
 
-            allele.gqx = sampleInfo.gq = poisson_qscore(indelSampleReportInfo.n_confident_indel_reads,
-                                                    indelSampleReportInfo.total_confident_reads(),
-                                                    (unsigned) opt.min_qscore, 40);
-        }
-    }
-    if (!locusInfo.altAlleles.empty())
+    if (not indelData.isForcedOutput)
     {
-        locusInfo.is_het = locusInfo.altAlleles.front().variant_frequency() < (1-opt.min_het_vf);
+        bool isIncludeIndel(false);
+        for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
+        {
+            const auto& sampleIndelInfo(locusInfo.getIndelSample(sampleIndex));
+            const double alleleFrequency(sampleIndelInfo.alleleFrequency());
+            if (alleleFrequency > opt.min_het_vf)
+            {
+                isIncludeIndel = true;
+                break;
+            }
+        }
+        if (not isIncludeIndel) return;
+    }
+
+    // indel qualifies!
+    //
+    // Insert indel and compute GQ for each sample
+
+    locusInfo.altAlleles.emplace_back(
+        indelKey, indelData, indelReportInfo);
+    GermlineContinuousIndelAlleleInfo& allele = locusInfo.altAlleles.back();
+
+    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    {
+        const auto& sampleIndelInfo(locusInfo.getIndelSample(sampleIndex));
+        const auto& sampleReportInfo(sampleIndelInfo.reportInfo);
+
+        LocusSampleInfo& sampleInfo(locusInfo.getSample(sampleIndex));
+
+        allele.gqx = sampleInfo.gq = poisson_qscore(sampleReportInfo.n_confident_indel_reads,
+                                                    sampleReportInfo.total_confident_reads(),
+                                                    (unsigned) opt.min_qscore, 40);
+
+        // use diploid gt codes as a convenient way to summarize the continuous variant calls:
+        static const unsigned hetGtIndex(VCFUTIL::getDiploidGenotypeIndex(0,1));
+        static const unsigned homGtIndex(VCFUTIL::getDiploidGenotypeIndex(1,1));
+
+        const bool isHetLike(sampleIndelInfo.alleleFrequency() < (1 - opt.min_het_vf));
+
+        sampleInfo.max_gt = (isHetLike ? hetGtIndex : homGtIndex);
     }
 
     // get the qual score:
+    //
     locusInfo.anyVariantAlleleQuality = 0;
-    const unsigned sampleCount(locusInfo.getSampleCount());
-    for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
+    for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
     {
         auto& sampleInfo(locusInfo.getSample(sampleIndex));
-        locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality,sampleInfo.gq);
+        locusInfo.anyVariantAlleleQuality = std::max(locusInfo.anyVariantAlleleQuality, sampleInfo.gq);
     }
 }
 

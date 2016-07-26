@@ -71,14 +71,13 @@ BOOST_AUTO_TEST_CASE( simple_indel_test )
     const IndelData indelData(1,indelKey);
     const GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
     const starling_indel_report_info indelReportInfo;
-    const starling_indel_sample_report_info isri;
 
     indelKey.pos=6;
     indelKey.type=INDEL::INDEL;
     indelKey.deletionLength=2;
 
     const unsigned sampleCount(1);
-    std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey,indelData,dindel,indelReportInfo,isri));
+    std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey,indelData,dindel,indelReportInfo));
     overlap.process(std::move(ii));
 
     overlap.flush();
@@ -120,7 +119,6 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
     indelData.isForcedOutput = true;
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
     const starling_indel_report_info indelReportInfo;
-    const starling_indel_sample_report_info isri;
 
     const unsigned sampleCount(1);
     const unsigned keyCount(sizeof(iks)/sizeof(IndelKey));
@@ -129,7 +127,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test )
         ik=iks[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, ik,indelData,dindel,indelReportInfo,isri));
+        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, ik,indelData,dindel,indelReportInfo));
         overlap.process(std::move(ii));
     }
 
@@ -172,7 +170,6 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
     indelData.isForcedOutput = true;
     GermlineDiploidIndelSimpleGenotypeInfoCore dindel;
     const starling_indel_report_info indelReportInfo;
-    const starling_indel_sample_report_info isri;
 
     const unsigned sampleCount(1);
     const unsigned keyCount(sizeof(indelKeys)/sizeof(IndelKey));
@@ -181,7 +178,7 @@ BOOST_AUTO_TEST_CASE( conflicting_indel_test2 )
         indelKey=indelKeys[i];
         dindel.max_gt=max_gts[i];
         dindel.max_gt_poly=max_gts[i];
-        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey,indelData,dindel,indelReportInfo,isri));
+        std::unique_ptr<GermlineDiploidIndelLocusInfo> ii(new GermlineDiploidIndelLocusInfo(dopt.gvcf, sampleCount, indelKey,indelData,dindel,indelReportInfo));
         overlap.process(std::move(ii));
     }
 

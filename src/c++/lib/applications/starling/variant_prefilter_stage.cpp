@@ -141,7 +141,7 @@ void variant_prefilter_stage::process(std::unique_ptr<GermlineIndelLocusInfo> in
         for (unsigned sampleIndex(0); sampleIndex < sampleCount; ++sampleIndex)
         {
             LocusSampleInfo& sampleInfo(ii->getSample(sampleIndex));
-            if (sampleInfo.ploidy.isNoploid())
+            if (sampleInfo.getPloidy().isNoploid())
             {
                 sampleInfo.filters.set(GERMLINE_VARIANT_VCF_FILTERS::PloidyConflict);
             }

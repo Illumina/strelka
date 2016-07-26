@@ -94,9 +94,7 @@ private:
     void process_pos_indel_single_sample_digt(
         const pos_t pos,
         const unsigned sampleId);
-    void process_pos_indel_single_sample_continuous(
-        const pos_t pos,
-        const unsigned sampleId);
+    void process_pos_indel_single_sample_continuous(const pos_t pos);
 
     void
     write_counts(const pos_range& output_report_range) const override;

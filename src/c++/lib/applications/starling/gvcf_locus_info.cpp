@@ -396,13 +396,16 @@ computeEmpiricalScoringFeatures(
 {
     ///TODO STREL-125 generalize to multi-sample
     const auto& firstSampleInfo(getSample(0));
+    const auto& firstIndelSampleInfo(getIndelSample(0));
 
     /// TODO STREL-125 generalize to multiple alts:
     const auto& firstAltAllele(getFirstAltAllele());
 
-    const double filteredLocusDepth(firstAltAllele._indelSampleReportInfo.tier1Depth);
-    const double locusDepth(firstAltAllele._indelSampleReportInfo.mapqTracker.count);
-    const double confidentDepth(firstAltAllele._indelSampleReportInfo.total_confident_reads());
+    const auto& sampleReportInfo(firstIndelSampleInfo.reportInfo);
+
+    const double filteredLocusDepth(sampleReportInfo.tier1Depth);
+    const double locusDepth(sampleReportInfo.mapqTracker.count);
+    const double confidentDepth(sampleReportInfo.total_confident_reads());
 
     const double chromDepthFactor(safeFrac(1,chromDepth));
     const double filteredLocusDepthFactor(safeFrac(1,filteredLocusDepth));
@@ -415,9 +418,9 @@ computeEmpiricalScoringFeatures(
     double allelebiasupper;
     {
         // allele bias metrics
-        const double r0(firstAltAllele._indelSampleReportInfo.n_confident_ref_reads);
-        const double r1(firstAltAllele._indelSampleReportInfo.n_confident_indel_reads);
-        const double r2(firstAltAllele._indelSampleReportInfo.n_confident_alt_reads);
+        const double r0(sampleReportInfo.n_confident_ref_reads);
+        const double r1(sampleReportInfo.n_confident_indel_reads);
+        const double r2(sampleReportInfo.n_confident_alt_reads);
 
         if (is_hetalt())
         {
@@ -439,12 +442,12 @@ computeEmpiricalScoringFeatures(
         features.set(RNA_INDEL_SCORING_FEATURES::IDREP1, (firstAltAllele._indelReportInfo.indel_repeat_count));
         features.set(RNA_INDEL_SCORING_FEATURES::RULEN1, (firstAltAllele._indelReportInfo.repeat_unit.length()));
         features.set(RNA_INDEL_SCORING_FEATURES::AD0,
-                     (firstAltAllele._indelSampleReportInfo.n_confident_ref_reads * chromDepthFactor));
+                     (sampleReportInfo.n_confident_ref_reads * chromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::AD1,
-                     (firstAltAllele._indelSampleReportInfo.n_confident_indel_reads * chromDepthFactor));
+                     (sampleReportInfo.n_confident_indel_reads * chromDepthFactor));
         features.set(RNA_INDEL_SCORING_FEATURES::AD2,
-                     (firstAltAllele._indelSampleReportInfo.n_confident_alt_reads * chromDepthFactor));
-        features.set(RNA_INDEL_SCORING_FEATURES::F_DPI, (firstAltAllele._indelSampleReportInfo.tier1Depth * chromDepthFactor));
+                     (sampleReportInfo.n_confident_alt_reads * chromDepthFactor));
+        features.set(RNA_INDEL_SCORING_FEATURES::F_DPI, (sampleReportInfo.tier1Depth * chromDepthFactor));
 
         // +1e-30 to avoid log(0) in extreme cases
         features.set(RNA_INDEL_SCORING_FEATURES::ABlower, (-std::log(allelebiaslower + 1.e-30)));
@@ -459,9 +462,9 @@ computeEmpiricalScoringFeatures(
 
             // how unreliable are the read mappings near this locus?
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_MQ,
-                                    (firstAltAllele._indelSampleReportInfo.mapqTracker.getRMS()));
+                                    (sampleReportInfo.mapqTracker.getRMS()));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
-                                    (firstAltAllele._indelSampleReportInfo.mapqTracker.getZeroFrac()));
+                                    (sampleReportInfo.mapqTracker.getZeroFrac()));
 
             // how noisy is the locus?
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM,
@@ -477,11 +480,11 @@ computeEmpiricalScoringFeatures(
                                     (firstSampleInfo.gq * filteredLocusDepthFactor));
 
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
-                                    (firstAltAllele._indelSampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
+                                    (sampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD1_NORM,
-                                    (firstAltAllele._indelSampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
+                                    (sampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM,
-                                    (firstAltAllele._indelSampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
+                                    (sampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
 
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (firstAltAllele._dindel.indel_qphred));
             developmentFeatures.set(RNA_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQX_EXACT, (firstAltAllele.gqx));
@@ -513,10 +516,10 @@ computeEmpiricalScoringFeatures(
 
         // how unreliable are the read mappings near this locus?
         features.set(GERMLINE_INDEL_SCORING_FEATURES::F_MQ,
-                     (firstAltAllele._indelSampleReportInfo.mapqTracker.getRMS()));
+                     (sampleReportInfo.mapqTracker.getRMS()));
 
         features.set(GERMLINE_INDEL_SCORING_FEATURES::AD1_NORM,
-                     (firstAltAllele._indelSampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
+                     (sampleReportInfo.n_confident_indel_reads * confidentDepthFactor));
 
         features.set(GERMLINE_INDEL_SCORING_FEATURES::F_GQX_EXACT, (firstAltAllele.gqx));
 
@@ -526,7 +529,7 @@ computeEmpiricalScoringFeatures(
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::REFREP1, (firstAltAllele._indelReportInfo.ref_repeat_count));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::mapqZeroFraction,
-                                    (firstAltAllele._indelSampleReportInfo.mapqTracker.getZeroFrac()));
+                                    (sampleReportInfo.mapqTracker.getZeroFrac()));
 
             // how noisy is the locus?
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_DPI_NORM,
@@ -551,9 +554,9 @@ computeEmpiricalScoringFeatures(
                                     (firstSampleInfo.gq * filteredLocusDepthFactor));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD0_NORM,
-                                    (firstAltAllele._indelSampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
+                                    (sampleReportInfo.n_confident_ref_reads * confidentDepthFactor));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::AD2_NORM,
-                                    (firstAltAllele._indelSampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
+                                    (sampleReportInfo.n_confident_alt_reads * confidentDepthFactor));
 
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::QUAL_EXACT, (firstAltAllele._dindel.indel_qphred));
             developmentFeatures.set(GERMLINE_INDEL_SCORING_DEVELOPMENT_FEATURES::F_GQ_EXACT, (firstSampleInfo.gq));

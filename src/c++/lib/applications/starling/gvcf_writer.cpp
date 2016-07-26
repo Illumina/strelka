@@ -820,6 +820,8 @@ write_indel_record(
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         const auto& sampleInfo(ii.getSample(sampleIndex));
+        const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
+        const auto& sampleReportInfo(indelSampleInfo.reportInfo);
 
         os << '\t';
 
@@ -828,10 +830,11 @@ write_indel_record(
 
         os << ':' << ((ii.empiricalVariantScore >= 0) ? ii.empiricalVariantScore : firstAllele.gqx);
 
-        os << ':' << firstAllele._indelSampleReportInfo.tier1Depth;
+        os << ':' << sampleReportInfo.tier1Depth;
 
         // SAMPLE AD/ADF/ADR:
         {
+#if 0
             auto orderRefReads = [](const GermlineDiploidIndelAlleleInfo& a, const GermlineDiploidIndelAlleleInfo& b) {
                 return (a._indelSampleReportInfo.n_confident_ref_reads <
                         b._indelSampleReportInfo.n_confident_ref_reads);
@@ -862,6 +865,7 @@ write_indel_record(
             {
                 os << ',' << icall._indelSampleReportInfo.n_confident_indel_reads_rev;
             }
+#endif
 
             // FT
             os << ':';
@@ -870,13 +874,30 @@ write_indel_record(
 
         // PL field
         os << ":";
+#if 0
+        {
+            bool isFirst(true);
+            for (const auto pls : sampleInfo.genotypePhredLoghood)
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    os << ',';
+                }
+                os << pls;
+            }
+        }
+#else
         const unsigned altAleleCount(ii.altAlleles.size());
         if (altAleleCount == 1)
         {
             using namespace STAR_DIINDEL;
             const auto& dindel(ii.altAlleles[0]._dindel);
             const auto& pls(dindel.phredLoghood);
-            if (sampleInfo.ploidy.isHaploid())
+            if (sampleInfo.getPloidy().isHaploid())
             {
                 os << pls[NOINDEL] << ','
                    << pls[HOM];
@@ -914,6 +935,7 @@ write_indel_record(
         {
             assert(false && "Unexpected indel count");
         }
+#endif
     }
 
     os << '\n';
@@ -985,6 +1007,8 @@ write_indel_record(
     for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
     {
         const auto& sampleInfo(ii.getSample(sampleIndex));
+        const auto& indelSampleInfo(ii.getIndelSample(sampleIndex));
+        const auto& sampleReportInfo(indelSampleInfo.reportInfo);
 
         os << '\t';
 
@@ -994,24 +1018,24 @@ write_indel_record(
 
         os << ':' << allele.gqx;
 
-        os << ':' << allele._indelSampleReportInfo.tier1Depth;
+        os << ':' << sampleReportInfo.tier1Depth;
 
         // AD:
-        os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads
-           << ',' << allele._indelSampleReportInfo.n_confident_indel_reads;
+        os << ':' << sampleReportInfo.n_confident_ref_reads
+           << ',' << sampleReportInfo.n_confident_indel_reads;
 
         // ADF
-        os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads_fwd
-           << ',' << allele._indelSampleReportInfo.n_confident_indel_reads_fwd;
+        os << ':' << sampleReportInfo.n_confident_ref_reads_fwd
+           << ',' << sampleReportInfo.n_confident_indel_reads_fwd;
 
         // ADR
-        os << ':' << allele._indelSampleReportInfo.n_confident_ref_reads_rev
-           << ',' << allele._indelSampleReportInfo.n_confident_indel_reads_rev;
+        os << ':' << sampleReportInfo.n_confident_ref_reads_rev
+           << ',' << sampleReportInfo.n_confident_indel_reads_rev;
 
         // VF
         {
             const StreamScoper ss(os);
-            os << ':' << std::setprecision(3) << allele.variant_frequency();
+            os << ':' << std::setprecision(3) << indelSampleInfo.alleleFrequency();
         }
     }
     os << '\n';

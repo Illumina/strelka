@@ -154,20 +154,160 @@ private:
 };
 
 
+struct VCFUTIL
+{
+    static
+    unsigned
+    getDiploidGenotypeIndex(
+        const uint8_t allele0Index,
+        const uint8_t allele1Index)
+    {
+        assert(allele0Index<=allele1Index);
+        return allele0Index+(allele1Index*(allele1Index+1)/2);
+    }
+};
+
+
+///
+///
+/// store data indexed by genotype, as ordered by the VCF standard
+///
+struct GenotypeLikelihoods
+{
+    typedef std::vector<unsigned> data_t;
+    typedef data_t::const_iterator const_iterator;
+
+    const_iterator
+    begin() const
+    {
+        return _genotypePhredLoghood.begin();
+    }
+
+    const_iterator
+    end() const
+    {
+        return _genotypePhredLoghood.end();
+    }
+
+    void
+    clear()
+    {
+        _ploidy=0;
+        _genotypePhredLoghood.clear();
+    }
+
+    void
+    setPloidy(const int ploidy)
+    {
+        _ploidy=ploidy;
+    }
+
+    unsigned&
+    getGenotypeLikelihood(
+        const uint8_t allele0Index)
+    {
+        const unsigned index(getGenotypeIndex(allele0Index));
+        if (index>=_genotypePhredLoghood.size())
+        {
+            _genotypePhredLoghood.resize(index+1,0);
+        }
+        return _genotypePhredLoghood[index];
+    }
+
+    unsigned
+    getGenotypeLikelihood(
+        const uint8_t allele0Index) const
+    {
+        const unsigned index(getGenotypeIndex(allele0Index));
+        assert(index<_genotypePhredLoghood.size());
+        return _genotypePhredLoghood[index];
+    }
+
+    unsigned&
+    getGenotypeLikelihood(
+        const uint8_t allele0Index,
+        const uint8_t allele1Index)
+    {
+        const unsigned index(getGenotypeIndex(allele0Index, allele1Index));
+        if (index>=_genotypePhredLoghood.size())
+        {
+            const unsigned index2(getGenotypeIndex(allele1Index, allele1Index));
+            _genotypePhredLoghood.resize(index2+1,0);
+        }
+        return _genotypePhredLoghood[index];
+    }
+
+    unsigned
+    getGenotypeLikelihood(
+        const uint8_t allele0Index,
+        const uint8_t allele1Index) const
+    {
+        const unsigned index(getGenotypeIndex(allele0Index, allele1Index));
+        assert(index<_genotypePhredLoghood.size());
+        return _genotypePhredLoghood[index];
+    }
+
+
+private:
+    unsigned
+    getGenotypeIndex(
+        const uint8_t allele0Index) const
+    {
+        assert(_ploidy==1);
+        return allele0Index;
+    }
+
+    unsigned
+    getGenotypeIndex(
+        const uint8_t allele0Index,
+        const uint8_t allele1Index) const
+    {
+        assert(_ploidy==2);
+        VCFUTIL::getDiploidGenotypeIndex(allele0Index,allele1Index);
+    }
+
+    int _ploidy = 0;
+
+    /// likelihoods for all possible genotypes, defined as a function of ploidy and altAllele count
+    std::vector<unsigned> _genotypePhredLoghood;
+};
+
+
 /// property shared by all variants at a locus within one sample
 struct LocusSampleInfo
 {
     void
     clear()
     {
-        ploidy.reset();
+        _ploidy.reset();
         gq = 0;
+        max_gt = 0;
+        genotypePhredLoghood.clear();
         filters.clear();
     }
 
-    SamplePloidyState ploidy;
+    const SamplePloidyState&
+    getPloidy() const
+    {
+        return _ploidy;
+    }
+
+    void
+    setPloidy(const int ploidy)
+    {
+        _ploidy.setPloidy(ploidy);
+        genotypePhredLoghood.setPloidy(ploidy);
+    }
+
+
     int gq=0;
+    unsigned max_gt=0;
     GermlineFilterKeeper filters; ///< only for sample-specific filters
+
+    /// likelihoods for all possible genotypes, defined as a function of ploidy and altAllele count
+    GenotypeLikelihoods genotypePhredLoghood;
+private:
+    SamplePloidyState _ploidy;
 };
 
 
@@ -223,7 +363,7 @@ struct LocusInfo : public PolymorphicObject
     /// The empirically calibrated quality-score of the locus, if -1 no locus EVS is available
     int empiricalVariantScore = -1;
 
-    /// All locus-ldevel filteres
+    /// All locus-level filters
     GermlineFilterKeeper filters;
 
 private:
@@ -232,6 +372,16 @@ private:
 };
 
 
+struct GermlineIndelSampleInfo
+{
+    double alleleFrequency() const
+    {
+        return safeFrac(reportInfo.n_confident_indel_reads, reportInfo.total_confident_reads());
+    }
+
+    starling_indel_sample_report_info reportInfo;
+};
+
 /// represents an indel call at the level of a full VCF record, containing possibly multiple alleles/SimpleGenotypes
 struct GermlineIndelLocusInfo : public LocusInfo
 {
@@ -239,7 +389,8 @@ struct GermlineIndelLocusInfo : public LocusInfo
     GermlineIndelLocusInfo(
         const unsigned sampleCount,
         const pos_t initPos)
-        : LocusInfo(sampleCount, initPos)
+        : LocusInfo(sampleCount, initPos),
+          _indelSampleInfo(sampleCount)
     {}
 
     virtual ~GermlineIndelLocusInfo() {}
@@ -248,6 +399,21 @@ struct GermlineIndelLocusInfo : public LocusInfo
     virtual bool is_indel() const = 0;
     // the EXCLUSIVE end of the variant (i.e. open)
     virtual pos_t end() const = 0;
+
+    GermlineIndelSampleInfo&
+    getIndelSample(const unsigned sampleIndex)
+    {
+        return _indelSampleInfo[sampleIndex];
+    }
+
+    const GermlineIndelSampleInfo&
+    getIndelSample(const unsigned sampleIndex) const
+    {
+        return _indelSampleInfo[sampleIndex];
+    }
+
+private:
+    std::vector<GermlineIndelSampleInfo> _indelSampleInfo;
 };
 
 
@@ -260,14 +426,13 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
         const IndelKey& initIndelKey,
         const IndelData& initIndelData,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& init_dindel,
-        const starling_indel_report_info& initIndelReportInfo,
-        const starling_indel_sample_report_info& initIndelSampleReportInfo)
+        const starling_indel_report_info& initIndelReportInfo)
         : GermlineIndelLocusInfo(sampleCount, initIndelKey.pos)
         , features(gvcfDerivedOptions.indelFeatureSet)
         , developmentFeatures(gvcfDerivedOptions.indelDevelopmentFeatureSet)
 
     {
-        altAlleles.emplace_back(initIndelKey, initIndelData, initIndelReportInfo, initIndelSampleReportInfo, init_dindel);
+        altAlleles.emplace_back(initIndelKey, initIndelData, initIndelReportInfo, init_dindel);
     }
 
     bool isForcedOutput() const override
@@ -295,7 +460,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
     const char*
     get_gt() const
     {
-        const auto& ploidy(getSample(0).ploidy);
+        const auto& ploidy(getSample(0).getPloidy());
 
         if (this->is_hetalt())
         {
@@ -338,7 +503,7 @@ struct GermlineDiploidIndelLocusInfo : public GermlineIndelLocusInfo
     unsigned
     getSitePloidy(const unsigned offset) const
     {
-        const auto& ploidy(getSample(0).ploidy);
+        const auto& ploidy(getSample(0).getPloidy());
 
         auto& dindel(getFirstAltAllele()._dindel);
         if (ploidy.isNoploid()) return 0;
@@ -677,10 +842,11 @@ struct GermlineContinuousIndelLocusInfo : public GermlineIndelLocusInfo
 
     bool is_indel() const override
     {
-        for (auto& call : altAlleles)
+        const unsigned sampleCount(getSampleCount());
+        for (unsigned sampleIndex(0); sampleIndex<sampleCount; ++sampleIndex)
         {
-            if (call._alleleDepth > 0)
-                return true;
+            /// TODO STREL-125 -- account for more than one allele in each sample
+            if (getIndelSample(sampleIndex).reportInfo.n_confident_indel_reads > 0) return true;
         }
         return false;
     }

@@ -118,7 +118,6 @@ operator<<(
     os << "IndelKey: " << shi._indelKey << "\n";
     //os << "indel_data: " << shi._id << "\n";
     os << "indel_report_info: " << shi._indelReportInfo << "\n";
-    os << "indel_sample_info: " << shi._indelSampleReportInfo << "\n";
     os << "cigar: " << shi.cigar << "\n";
 
     return os;

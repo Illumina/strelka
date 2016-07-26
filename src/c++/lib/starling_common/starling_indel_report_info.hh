@@ -108,6 +108,8 @@ std::ostream& operator<<(std::ostream& os, const starling_indel_report_info& obj
 ///
 struct starling_indel_sample_report_info
 {
+    /// TODO STREL-125 sample_report_info is still designed for only one alt allele
+
     starling_indel_sample_report_info() {}
 
     unsigned n_confident_ref_reads = 0;

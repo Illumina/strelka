@@ -274,22 +274,26 @@ void
 ScoringModelManager::
 default_classify_indel(
     GermlineIndelLocusInfo& ii,
-    const GermlineIndelAlleleInfo& call) const
+    const GermlineIndelAlleleInfo& allele) const
 {
     if (this->_opt.is_min_gqx)
     {
-        if (call.gqx<_opt.min_gqx) ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
+        if (allele.gqx<_opt.min_gqx) ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::LowGQX);
     }
 
     if (this->_dopt.is_max_depth())
     {
-        if (call._indelSampleReportInfo.tier1Depth > this->_dopt.max_depth)
+        /// TODO STREL-125 generalize to multiple samples
+        const auto& firstIndelSampleInfo(ii.getIndelSample(0));
+        const auto& sampleReportInfo(firstIndelSampleInfo.reportInfo);
+
+        if (sampleReportInfo.tier1Depth > this->_dopt.max_depth)
             ii.filters.set(GERMLINE_VARIANT_VCF_FILTERS::HighDepth);
     }
 
     if (_opt.is_max_ref_rep())
     {
-        const auto& iri(call._indelReportInfo);
+        const auto& iri(allele._indelReportInfo);
         if (iri.is_repeat_unit())
         {
             if ((iri.repeat_unit.size() <= 2) &&

@@ -97,8 +97,7 @@ BOOST_AUTO_TEST_CASE( filters_indels_before_and_after_range )
                   indelKey,
                   IndelData(1,indelKey),
                   GermlineDiploidIndelSimpleGenotypeInfoCore(),
-                  starling_indel_report_info(),
-                  starling_indel_sample_report_info()));
+                  starling_indel_report_info()));
 
         return indel;
     };

@@ -64,6 +64,7 @@ struct GermlineVariantAlleleInfo : public PolymorphicObject
     int gqx=0;
     double strand_bias = 0;
 
+    ///< this allele must appear in the VCF output:
     bool isForcedOutput = false;
 };
 
@@ -77,11 +78,9 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
     GermlineIndelAlleleInfo(
         const IndelKey& indelKey,
         const IndelData& indelData,
-        const starling_indel_report_info indelReportInfo,
-        const starling_indel_sample_report_info& indelSampleReportInfo)
+        const starling_indel_report_info indelReportInfo)
         : _indelKey(indelKey)
         , _indelReportInfo(indelReportInfo)
-        , _indelSampleReportInfo(indelSampleReportInfo)
     {
         isForcedOutput = indelData.isForcedOutput;
     }
@@ -100,7 +99,6 @@ struct GermlineIndelAlleleInfo : public GermlineVariantAlleleInfo
     const IndelKey _indelKey;
     // TODO: make the indel overlapping code create a new call, then revert this to const
     starling_indel_report_info _indelReportInfo;
-    const starling_indel_sample_report_info _indelSampleReportInfo;
 
     ALIGNPATH::path_t cigar;
 };
@@ -115,9 +113,8 @@ struct GermlineDiploidIndelAlleleInfo : public GermlineIndelAlleleInfo
         const IndelKey& indelKey,
         const IndelData& indelData,
         const starling_indel_report_info& indelReportInfo,
-        const starling_indel_sample_report_info& indelSampleReportInfo,
         const GermlineDiploidIndelSimpleGenotypeInfoCore& dindel)
-        : GermlineIndelAlleleInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
+        : GermlineIndelAlleleInfo(indelKey, indelData, indelReportInfo)
         , _dindel(dindel)
     {}
 
@@ -229,26 +226,13 @@ struct GermlineContinuousSiteAlleleInfo : public GermlineVariantAlleleInfo
 struct GermlineContinuousIndelAlleleInfo : public GermlineIndelAlleleInfo
 {
     GermlineContinuousIndelAlleleInfo(
-        unsigned totalDepth,
-        unsigned alleleDepth,
         const IndelKey& indelKey,
         const IndelData& indelData,
-        const starling_indel_report_info& indelReportInfo,
-        const starling_indel_sample_report_info& indelSampleReportInfo)
-        : GermlineIndelAlleleInfo(indelKey, indelData, indelReportInfo, indelSampleReportInfo)
-        , _totalDepth(totalDepth)
-        , _alleleDepth(alleleDepth)
+        const starling_indel_report_info& indelReportInfo)
+        : GermlineIndelAlleleInfo(indelKey, indelData, indelReportInfo)
     {
         set_hap_cigar(0,0);
     }
-
-    double variant_frequency() const
-    {
-        return safeFrac(_alleleDepth,_totalDepth);
-    }
-
-    unsigned _totalDepth;
-    unsigned _alleleDepth;
 };
 
 std::ostream& operator<<(std::ostream& os,const GermlineDiploidSiteAlleleInfo& smod);

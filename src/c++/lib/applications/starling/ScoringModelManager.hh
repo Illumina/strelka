@@ -68,7 +68,7 @@ struct ScoringModelManager
     /// default rules based indel model
     void default_classify_indel(
         GermlineIndelLocusInfo& ii,
-        const GermlineIndelAlleleInfo& call) const;
+        const GermlineIndelAlleleInfo& allele) const;
 
     bool
     isEVSSiteModel() const
